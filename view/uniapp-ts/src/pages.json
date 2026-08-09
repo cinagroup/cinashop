@@ -1,0 +1,303 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/goods/cate",
+      "style": {
+        "navigationBarTitleText": "分类"
+      }
+    },
+    {
+      "path": "pages/discover/index",
+      "style": {
+        "navigationBarTitleText": "逛逛"
+      }
+    },
+    {
+      "path": "pages/cart/index",
+      "style": {
+        "navigationBarTitleText": "购物车"
+      }
+    },
+    {
+      "path": "pages/user/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/goods/list",
+      "style": {
+        "navigationBarTitleText": "商品列表"
+      }
+    },
+    {
+      "path": "pages/goods/detail",
+      "style": {
+        "navigationBarTitleText": "商品详情"
+      }
+    },
+    {
+      "path": "pages/auth/login",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/auth/register",
+      "style": {
+        "navigationBarTitleText": "注册"
+      }
+    },
+    {
+      "path": "pages/user/changePassword",
+      "style": {
+        "navigationBarTitleText": "修改密码"
+      }
+    },
+    {
+      "path": "pages/order/confirm",
+      "style": {
+        "navigationBarTitleText": "确认订单"
+      }
+    },
+    {
+      "path": "pages/order/list",
+      "style": {
+        "navigationBarTitleText": "我的订单"
+      }
+    },
+    {
+      "path": "pages/order/detail",
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
+    },
+    {
+      "path": "pages/order/express",
+      "style": {
+        "navigationBarTitleText": "物流查询"
+      }
+    },
+    {
+      "path": "pages/order/reply",
+      "style": {
+        "navigationBarTitleText": "订单评价"
+      }
+    },
+    {
+      "path": "pages/order/refundApply",
+      "style": {
+        "navigationBarTitleText": "申请退款"
+      }
+    },
+    {
+      "path": "pages/order/refundList",
+      "style": {
+        "navigationBarTitleText": "退款记录"
+      }
+    },
+    {
+      "path": "pages/order/refundDetail",
+      "style": {
+        "navigationBarTitleText": "退款详情"
+      }
+    },
+    {
+      "path": "pages/user/integral",
+      "style": {
+        "navigationBarTitleText": "积分商城"
+      }
+    },
+    {
+      "path": "pages/user/sign",
+      "style": {
+        "navigationBarTitleText": "每日签到"
+      }
+    },
+    {
+      "path": "pages/user/profile",
+      "style": {
+        "navigationBarTitleText": "个人资料"
+      }
+    },
+    {
+      "path": "pages/user/couponCenter",
+      "style": {
+        "navigationBarTitleText": "领券中心"
+      }
+    },
+    {
+      "path": "pages/user/messageDetail",
+      "style": {
+        "navigationBarTitleText": "消息详情"
+      }
+    },
+    {
+      "path": "pages/user/integralLogs",
+      "style": {
+        "navigationBarTitleText": "积分明细"
+      }
+    },
+    {
+      "path": "pages/user/kefu",
+      "style": {
+        "navigationBarTitleText": "在线客服"
+      }
+    },
+    {
+      "path": "pages/user/balanceLogs",
+      "style": {
+        "navigationBarTitleText": "余额明细"
+      }
+    },
+    {
+      "path": "pages/user/address",
+      "style": {
+        "navigationBarTitleText": "收货地址"
+      }
+    },
+    {
+      "path": "pages/user/collect",
+      "style": {
+        "navigationBarTitleText": "我的收藏"
+      }
+    },
+    {
+      "path": "pages/user/coupon",
+      "style": {
+        "navigationBarTitleText": "我的优惠券"
+      }
+    },
+    {
+      "path": "pages/user/finance",
+      "style": {
+        "navigationBarTitleText": "分销中心"
+      }
+    },
+    {
+      "path": "pages/user/spread",
+      "style": {
+        "navigationBarTitleText": "分销推广"
+      }
+    },
+    {
+      "path": "pages/user/bank",
+      "style": {
+        "navigationBarTitleText": "银行卡管理"
+      }
+    },
+    {
+      "path": "pages/user/vipOpen",
+      "style": {
+        "navigationBarTitleText": "SVIP 会员"
+      }
+    },
+    {
+      "path": "pages/user/invoice",
+      "style": {
+        "navigationBarTitleText": "我的发票"
+      }
+    },
+    {
+      "path": "pages/goods/search",
+      "style": {
+        "navigationBarTitleText": "搜索"
+      }
+    },
+    {
+      "path": "pages/goods/commentList",
+      "style": {
+        "navigationBarTitleText": "商品评价"
+      }
+    },
+    {
+      "path": "pages/activity/index",
+      "style": {
+        "navigationBarTitleText": "营销活动"
+      }
+    },
+    {
+      "path": "pages/activity/detail",
+      "style": {
+        "navigationBarTitleText": "拼团详情"
+      }
+    },
+    {
+      "path": "pages/activity/seckillDetail",
+      "style": {
+        "navigationBarTitleText": "秒杀详情"
+      }
+    },
+    {
+      "path": "pages/activity/bargainDetail",
+      "style": {
+        "navigationBarTitleText": "砍价详情"
+      }
+    },
+    {
+      "path": "pages/order/payResult",
+      "style": {
+        "navigationBarTitleText": "支付结果"
+      }
+    },
+    {
+      "path": "pages/user/level",
+      "style": {
+        "navigationBarTitleText": "会员等级"
+      }
+    },
+    {
+      "path": "pages/user/recharge",
+      "style": {
+        "navigationBarTitleText": "余额充值"
+      }
+    },
+    {
+      "path": "pages/user/message",
+      "style": {
+        "navigationBarTitleText": "消息中心"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#282828",
+    "selectedColor": "#E93323",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/goods/cate",
+        "text": "分类"
+      },
+      {
+        "pagePath": "pages/discover/index",
+        "text": "逛逛"
+      },
+      {
+        "pagePath": "pages/cart/index",
+        "text": "购物车"
+      },
+      {
+        "pagePath": "pages/user/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "CinaShop",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f5f5f5"
+  }
+}

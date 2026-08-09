@@ -1,0 +1,74 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "cinashop-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ─── 观察性 ───────────────────────────────────────────────
+[observability]
+enabled = true
+
+# ─── Hyperdrive (连接外部 PostgreSQL) ─────────────────────
+# 新: 腾讯云 PG (Workers VPC → Tunnel → 私有 PG, 2026-08-08 切换)
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "9748c294e21c49a99579c9cef70102e0"  # cinashop-pg (VPC Service 019fe223 → tunnel cinaseek_pg → PG:5432)
+localConnectionString = "postgresql://crmeb:crmeb@localhost:5432/crmeb"
+
+# ─── Upstash Redis (REST API) ─────────────────────────────
+# 创建命令: wrangler kv namespace create CONFIG_KV
+# 把返回的 id 填入下面 (本地 dev 无所谓, 部署前必须替换)
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "f79a153ac6ee408891f6118c06d4f9a8"
+
+# Upstash Redis 通过 secret 设置 (UPSTASH_REDIS_URL / UPSTASH_REDIS_TOKEN)
+[vars]
+
+# ─── Queues ───────────────────────────────────────────────
+[[queues.producers]]
+binding = "ORDER_QUEUE"
+queue = "cinashop-order"
+
+[[queues.consumers]]
+queue = "cinashop-order"
+max_batch_size = 10
+max_batch_timeout = 2
+max_retries = 3
+dead_letter_queue = "cinashop-order-dlq"
+
+# ─── Durable Objects ──────────────────────────────────────
+[[durable_objects.bindings]]
+name = "TOKEN_BUCKET"
+class_name = "TokenBucketDO"
+
+[[durable_objects.bindings]]
+name = "ORDER_LOCK"
+class_name = "OrderLockDO"
+
+[[durable_objects.bindings]]
+name = "SEQUENCE"
+class_name = "SequenceDO"
+
+[[durable_objects.bindings]]
+name = "CHAT_ROOM"
+class_name = "ChatRoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TokenBucketDO", "OrderLockDO", "SequenceDO"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["ChatRoomDO"]
+
+# ─── 定时任务 ─────────────────────────────────────────────
+[triggers]
+crons = ["*/5 * * * *"]  # M1 占位, M3 接入自动收货/拼团超时
+
+# ─── 本地开发环境变量 ─────────────────────────────────────
+[env.staging]
+name = "cinashop-api-staging"
+
+[env.production]
+name = "cinashop-api"

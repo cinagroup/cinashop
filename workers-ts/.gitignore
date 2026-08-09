@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+.dev.vars
+dist/
+*.log
+.DS_Store
+
+# Drizzle
+migrations/meta/
+
+# Vitest
+coverage/

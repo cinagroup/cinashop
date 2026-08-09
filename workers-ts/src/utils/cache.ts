@@ -1,0 +1,102 @@
+/**
+ * Upstash Redis 封装
+ *
+ * 对应 PHP crmeb/services/CacheService.php + RedisService。
+ *
+ * Workers 不能开 TCP 长连接, 所以用 Upstash 的 REST API (@upstash/redis)。
+ * 这反而更适合 Workers (无连接数限制)。
+ *
+ * Token bucket 相关方法保留 PHP 命名 (getTokenBucket/setTokenBucket/clearToken),
+ * 便于对照。
+ */
+import { Redis } from "@upstash/redis/cloudflare";
+import type { Env } from "@/env";
+
+/** Token bucket 存储结构 (对应 PHP CacheService::setTokenBucket 的 value) */
+export interface TokenBucket {
+  uid: number;
+  type: string;
+  token: string;
+  exp: number; // 秒
+}
+
+let _redis: Redis | null = null;
+
+/** 惰性单例 (同一 isolate 复用, 避免重复创建 client) */
+export function getRedis(env: Env): Redis | null {
+  if (_redis) return _redis;
+  if (!env.UPSTASH_REDIS_URL || !env.UPSTASH_REDIS_TOKEN) {
+    return null; // Redis 未配置, 调用方降级处理
+  }
+  _redis = new Redis({
+    url: env.UPSTASH_REDIS_URL,
+    token: env.UPSTASH_REDIS_TOKEN,
+  });
+  return _redis;
+}
+
+/** key 前缀 (PHP cache.stores.redis.prefix, 默认空) */
+const PREFIX = "";
+
+// ─── Token Bucket (鉴权令牌桶) ─────────────────────────────
+
+/** token bucket key 前缀 */
+const TB_PREFIX = "tb_";
+
+/** 取令牌桶 (对应 CacheService::getTokenBucket) */
+export async function getTokenBucket(key: string, env: Env): Promise<TokenBucket | null> {
+  const r = getRedis(env);
+  if (!r) return null; // Redis 未配置, 降级
+  const raw = await r.get<TokenBucket>(PREFIX + TB_PREFIX + key);
+  return raw ?? null;
+}
+
+/** 存令牌桶, 带 TTL (对应 CacheService::setTokenBucket) */
+export async function setTokenBucket(
+  key: string,
+  bucket: TokenBucket,
+  env: Env,
+): Promise<boolean> {
+  const r = getRedis(env);
+  if (!r) return true; // Redis 未配置, 跳过 (JWT 仍有效)
+  const result = await r.set(PREFIX + TB_PREFIX + key, bucket, { ex: bucket.exp });
+  return result === "OK";
+}
+
+/** 清除令牌桶 (对应 CacheService::clearToken) */
+export async function clearToken(key: string, env: Env): Promise<boolean> {
+  const r = getRedis(env);
+  if (!r) return true;
+  const count = await r.del(PREFIX + TB_PREFIX + key);
+  return count > 0;
+}
+
+// ─── 通用缓存 (对应 CacheService::get/set/delete) ──────────
+
+export async function cacheGet<T>(key: string, env: Env): Promise<T | null> {
+  const r = getRedis(env);
+  if (!r) return null;
+  return r.get<T>(PREFIX + key);
+}
+
+export async function cacheSet(
+  key: string,
+  value: unknown,
+  env: Env,
+  ttlSeconds?: number,
+): Promise<boolean> {
+  const r = getRedis(env);
+  if (!r) return true;
+  const result =
+    ttlSeconds !== undefined
+      ? await r.set(PREFIX + key, value, { ex: ttlSeconds })
+      : await r.set(PREFIX + key, value);
+  return result === "OK";
+}
+
+export async function cacheDelete(key: string, env: Env): Promise<boolean> {
+  const r = getRedis(env);
+  if (!r) return true;
+  const count = await r.del(PREFIX + key);
+  return count > 0;
+}

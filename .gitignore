@@ -1,0 +1,44 @@
+# ─── 依赖 ─────────────────────────────────────────────
+node_modules/
+
+# ─── 构建产物 ─────────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ─── Cloudflare / Wrangler ────────────────────────────
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# ─── 环境变量 / 密钥 ──────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Vitest / 测试产物 ────────────────────────────────
+coverage/
+.nyc_output/
+
+# ─── Drizzle 迁移元数据 ───────────────────────────────
+migrations/meta/
+
+# ─── 日志 / 缓存 ──────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+
+# ─── 系统 / 编辑器 ────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─── MCP / 工具产物（不入库） ─────────────────────────
+.playwright-mcp/
+.zcode/plans/
