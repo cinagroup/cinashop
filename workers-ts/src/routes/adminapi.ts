@@ -171,6 +171,14 @@ adminapiRoutes.post("/article/save", adminAuth, AdminCrud.adminArticleSave);
 adminapiRoutes.delete("/article/del/:id", adminAuth, AdminCrud.adminArticleDel);
 adminapiRoutes.get("/log/list", adminAuth, AdminCrud.adminLogList);
 
+// ─── 分销管理 + 通知模板 + 短信配置 (M24) ─────────────────
+adminapiRoutes.get("/spread/list", adminAuth, AdminCrud.adminSpreadList);
+adminapiRoutes.get("/brokerage/list", adminAuth, AdminCrud.adminBrokerageList);
+adminapiRoutes.get("/notification/list", adminAuth, AdminCrud.adminNotificationList);
+adminapiRoutes.post("/notification/save", adminAuth, AdminCrud.adminNotificationSave);
+adminapiRoutes.get("/sms/config", adminAuth, AdminCrud.adminSmsConfig);
+adminapiRoutes.post("/sms/config", adminAuth, AdminCrud.adminSmsConfigSave);
+
 // ─── 未实现端点兜底 (必须最后注册, 否则吞掉后续路由) ─────────
 adminapiRoutes.all("/*", (c) =>
   c.json({ status: 501, msg: `接口 ${c.req.path} 尚未迁移到 Workers`, data: null }),

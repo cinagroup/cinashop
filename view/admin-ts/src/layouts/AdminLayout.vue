@@ -104,6 +104,14 @@
           <el-icon><Tickets /></el-icon>
           <span>操作日志</span>
         </el-menu-item>
+        <el-menu-item index="/agent">
+          <el-icon><Share /></el-icon>
+          <span>分销管理</span>
+        </el-menu-item>
+        <el-menu-item index="/setting/notification">
+          <el-icon><Bell /></el-icon>
+          <span>通知配置</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -173,6 +181,8 @@ const activeMenu = computed(() => {
   if (path.startsWith("/content/article")) return "/content/article";
   if (path.startsWith("/content/dise")) return "/content/dise";
   if (path.startsWith("/system/log")) return "/system/log";
+  if (path.startsWith("/agent")) return "/agent";
+  if (path.startsWith("/setting")) return "/setting/notification";
   return "/dashboard";
 });
 

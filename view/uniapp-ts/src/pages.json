@@ -194,6 +194,12 @@
       }
     },
     {
+      "path": "pages/user/payPassword",
+      "style": {
+        "navigationBarTitleText": "支付密码"
+      }
+    },
+    {
       "path": "pages/user/vipOpen",
       "style": {
         "navigationBarTitleText": "SVIP 会员"

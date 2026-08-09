@@ -1706,7 +1706,7 @@ export async function adminLogList(c: C) {
 export async function adminSpreadList(c: C) {
   const container = c.get("container");
   const { sql } = await import("drizzle-orm");
-  const { user: userTable, userBrokerage } = await import("@/models/schema");
+  const { user: userTable } = await import("@/models/schema");
   const page = Number(c.req.query("page") ?? 1);
   const limit = Number(c.req.query("limit") ?? 20);
 
@@ -1836,7 +1836,6 @@ export async function adminSmsConfigSave(c: C) {
   const container = c.get("container");
   const { eq } = await import("drizzle-orm");
   const { systemConfig } = await import("@/models/schema");
-  const now = Math.floor(Date.now() / 1000);
   for (const [key, value] of Object.entries(body)) {
     const existing = await container.db
       .select()

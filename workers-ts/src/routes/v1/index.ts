@@ -705,3 +705,11 @@ v1Routes.get("/admin/article/list", adminAuth, AdminCrud.adminArticleList);
 v1Routes.post("/admin/article/save", adminAuth, AdminCrud.adminArticleSave);
 v1Routes.delete("/admin/article/del/:id", adminAuth, AdminCrud.adminArticleDel);
 v1Routes.get("/admin/log/list", adminAuth, AdminCrud.adminLogList);
+
+// 分销管理 + 通知模板 + 短信配置 (M24)
+v1Routes.get("/admin/spread/list", adminAuth, AdminCrud.adminSpreadList);
+v1Routes.get("/admin/brokerage/list", adminAuth, AdminCrud.adminBrokerageList);
+v1Routes.get("/admin/notification/list", adminAuth, AdminCrud.adminNotificationList);
+v1Routes.post("/admin/notification/save", adminAuth, AdminCrud.adminNotificationSave);
+v1Routes.get("/admin/sms/config", adminAuth, AdminCrud.adminSmsConfig);
+v1Routes.post("/admin/sms/config", adminAuth, AdminCrud.adminSmsConfigSave);

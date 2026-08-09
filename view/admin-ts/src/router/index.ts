@@ -176,6 +176,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/system/LogList.vue"),
         meta: { title: "操作日志" },
       },
+      {
+        path: "agent",
+        name: "agent",
+        component: () => import("@/pages/agent/AgentList.vue"),
+        meta: { title: "分销管理" },
+      },
+      {
+        path: "setting/notification",
+        name: "setting-notification",
+        component: () => import("@/pages/setting/NotificationList.vue"),
+        meta: { title: "通知配置" },
+      },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
