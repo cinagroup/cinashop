@@ -140,12 +140,12 @@ describe("dedicated customer-service migration", () => {
     expect(() => parseKefuSessionCursor("91")).toThrow("会话游标错误");
   });
 
-  it("mounts 47 PHP-compatible HTTP routes, WebSocket, and a signed asset alias", () => {
+  it("mounts 48 PHP-compatible HTTP routes, safe replacements, WebSocket, and a signed asset alias", () => {
     const routes = readFileSync("src/routes/kefuapi.ts", "utf8");
     const app = readFileSync("src/app.ts", "utf8");
     const middleware = readFileSync("src/middleware/kefu-auth.ts", "utf8");
     const registrations = routes.match(/kefuapiRoutes\.(?:get|post|put|delete)\(/g) ?? [];
-    expect(registrations).toHaveLength(49);
+    expect(registrations).toHaveLength(51);
     expect(routes.indexOf('post("/login"')).toBeLessThan(
       routes.indexOf('use("*", kefuAuthMiddleware)'),
     );
@@ -176,6 +176,10 @@ describe("dedicated customer-service migration", () => {
     expect(routes).toContain('get("/refund/list", KefuController.refundList)');
     expect(routes).toContain('post("/refund/remark/:id", KefuController.updateRefundRemark)');
     expect(routes).toContain('get("/refund/refund/:id", KefuController.refundForm)');
+    expect(routes).toContain('put("/refund/agree/:id", KefuController.agreeRefundReturn)');
+    expect(routes).toContain('put("/refund/refund/:id", KefuController.refundOrder)');
+    expect(routes).not.toContain('get("/refund/agree/:');
+    expect(routes).not.toContain('post("/order/refund"');
     expect(routes).toContain('post("/order/delivery/:id", KefuController.deliverOrder)');
     expect(routes).toContain('put("/order/split_delivery/:id", KefuController.splitDelivery)');
     expect(routes).toContain('put("/order/write_update/:order_id", KefuController.writeoffByPublicId)');

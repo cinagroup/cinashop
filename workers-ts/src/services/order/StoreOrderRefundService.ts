@@ -77,8 +77,18 @@ export interface RefundExecutionScope {
   expectedRefundOrderId?: string;
   expectedStoreOrderId?: number;
   expectedRefundAmountCents?: number;
+  expectedRefundedAmountCents?: number;
   requireSystemVisible?: boolean;
   requirePaid?: boolean;
+  /**
+   * Optional caller authorization that must run before the refund/order locks.
+   * Kefu uses this to serialize against conversation transfer and prove that
+   * the agent still owns the customer at the exact refund decision boundary.
+   */
+  authorizeBeforeRefundLock?: (
+    tx: DbClient,
+    refund: typeof storeOrderRefund.$inferSelect,
+  ) => Promise<void>;
 }
 
 type RefundExecutionScopeInput = number | RefundExecutionScope;
@@ -145,6 +155,12 @@ function assertRefundExecutionScope(
       throw new ValidateException("历史已退款金额与售后单金额不一致，请先人工核对");
     }
   }
+  if (
+    scope.expectedRefundedAmountCents !== undefined &&
+    amountToCents(refund.refundedPrice) !== scope.expectedRefundedAmountCents
+  ) {
+    throw new ValidateException("历史已退款金额已变化，请刷新后重试");
+  }
 }
 
 function assertPaymentOrderScope(
@@ -167,6 +183,13 @@ async function lockRefundExecutionSnapshot(
   refundId: number,
   scope?: RefundExecutionScope,
 ) {
+  const preliminary = (await tx
+    .select()
+    .from(storeOrderRefund)
+    .where(eq(storeOrderRefund.id, refundId))
+    .limit(1))[0];
+  if (!preliminary) throw new NotFoundException("退款记录不存在");
+  await scope?.authorizeBeforeRefundLock?.(tx, preliminary);
   await lockRefundExecution(tx, refundId);
   const refunds = await tx
     .select()
@@ -204,6 +227,13 @@ export async function finalizeStoreOrderRefund(
 ): Promise<RefundFinalizationOutcome> {
   const scope = normalizeRefundExecutionScope(scopeInput);
   return withTx(container, async (tx) => {
+    const preliminary = (await tx
+      .select()
+      .from(storeOrderRefund)
+      .where(eq(storeOrderRefund.id, refundId))
+      .limit(1))[0];
+    if (!preliminary) throw new NotFoundException("退款记录不存在");
+    await scope?.authorizeBeforeRefundLock?.(tx, preliminary);
     await lockRefundExecution(tx, refundId);
     const refunds = await tx
       .select()
@@ -1195,8 +1225,11 @@ export class StoreOrderRefundService {
   }
 
   /** 事务包装器 */
-  private async runInTx<T>(db: DbClient, fn: (tx: DbClient) => Promise<T>): Promise<T> {
-    return db.transaction(async (tx) => fn(tx as unknown as DbClient));
+  private async runInTx<T>(_db: DbClient, fn: (tx: DbClient) => Promise<T>): Promise<T> {
+    // Keep the validated per-client search_path used by production-isolation
+    // audits. Calling db.transaction directly would bypass withTx's SET LOCAL
+    // and could silently fall through to public through Hyperdrive.
+    return withTx(this.container, fn);
   }
 }
 

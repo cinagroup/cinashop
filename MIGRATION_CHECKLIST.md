@@ -1,6 +1,6 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
-审计基线：`main@34394ce`（2026-08-27，已推送并确认与 `origin/main` 一致）。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 只读核验；主 Worker 和正式前端没有因本次审计被发布。
+审计基线：`main@6d5e928`（2026-08-27，已推送并确认与 `origin/main` 一致）。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；仅在随机 schema 执行隔离场景，主 Worker 和正式前端没有因本次审计被发布。
 
 ## 审计结论
 
@@ -11,27 +11,27 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 217 表；Worker 内嵌 217 表；表/列/主键漂移 0 | 完成 |
 | 生产目标结构 | 217/217 表；缺失 0、额外 0 | 完成 |
-| PHP HTTP 合同 | 精确注册 519/1,912；其中 15 条接入明确 501 | 注册 27.1%，静态可执行上限 26.4% |
+| PHP HTTP 合同 | 精确注册 520/1,912；其中 15 条接入明确 501；2 条有证据退役 | 原始注册 27.2%，原始静态可执行上限 26.4% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 110 文件、640 项通过 | 本地业务回归通过 |
+| Worker 单元测试 | 111 文件、645 项通过 | 本地业务回归通过 |
 | Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
 | CI | 仓库没有 `.github/workflows` | 未建立 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
-静态路由统计由 `cd workers-ts && npm run audit:routes` 生成。参数名差异会归一化，ThinkPHP `resource` 会按 `only/except` 展开，通配 501 不计为覆盖。该统计仍只是上限：它不证明权限、响应字段、并发状态机、数据或第三方副作用等价。
+静态路由统计由 `cd workers-ts && npm run audit:routes` 生成。参数名差异会归一化，ThinkPHP `resource` 会按 `only/except` 展开，通配 501 不计为覆盖。`audit/legacy-route-decisions.json` 只允许带源代码证据、原因和替代合同的退役项；退役路由仍保留在原始 PHP 分母和缺失数中，另列可执行缺口与有效覆盖，不能靠删分母粉饰进度。该统计仍只是上限：它不证明权限、响应字段、并发状态机、数据或第三方副作用等价。
 
 ### 路由合同分布
 
-| 面 | PHP | Workers | 精确匹配 | 明确 501 | 缺失 | 静态可执行上限 |
-|---|---:|---:|---:|---:|---:|---:|
-| `/api` | 460 | 551 | 164 | 0 | 296 | 35.7% |
-| `/adminapi` | 1,156 | 470 | 202 | 15 | 954 | 16.2% |
-| `/supplierapi` | 184 | 112 | 79 | 0 | 105 | 42.9% |
-| `/kefuapi` | 63 | 49 | 47 | 0 | 16 | 74.6% |
-| `/outapi` | 41 | 27 | 27 | 0 | 14 | 65.9% |
-| `/erpapi` | 8 | 0 | 0 | 0 | 8 | 0% |
-| 合计 | 1,912 | 1,209 | 519 | 15 | 1,393 | 26.4% |
+| 面 | PHP | Workers | 精确匹配 | 明确 501 | 原始缺失 | 已退役 | 可执行缺口 | 原始/有效可执行上限 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `/api` | 460 | 551 | 164 | 0 | 296 | 0 | 296 | 35.7% / 35.7% |
+| `/adminapi` | 1,156 | 470 | 202 | 15 | 954 | 0 | 954 | 16.2% / 16.2% |
+| `/supplierapi` | 184 | 112 | 79 | 0 | 105 | 0 | 105 | 42.9% / 42.9% |
+| `/kefuapi` | 63 | 51 | 48 | 0 | 15 | 2 | 13 | 76.2% / 78.7% |
+| `/outapi` | 41 | 27 | 27 | 0 | 14 | 0 | 14 | 65.9% / 65.9% |
+| `/erpapi` | 8 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% |
+| 合计 | 1,912 | 1,211 | 520 | 15 | 1,392 | 2 | 1,390 | 26.4% / 26.4% |
 
 最大缺口组：`/api` 的 v2 54、admin 51、PC 22、order 19、user 13、marketing 13、store 12、work 10；`/adminapi` 的 setting 153、marketing 115、product 98、user 78、app 76、supplier 67、order 57；`/supplierapi` 的 order 30、product 16、file 11、admin 8。精确逐路由清单以 `audit:routes` JSON 为准，不在本文复制 1,393 行。
 
@@ -61,7 +61,7 @@
 
 ## P0：生产结构与真实数据
 
-- [x] **AUD-001 可重复路由审计器**：新增 `workers-ts/scripts/route-parity-audit.ts` 和 `npm run audit:routes`；验收为 Kefu 63/47、Out 41/27、ERP 8/0 与人工核对一致。
+- [x] **AUD-001 可重复路由审计器**：`workers-ts/scripts/route-parity-audit.ts` 与 `npm run audit:routes` 当前验收为 Kefu 63/48、Out 41/27、ERP 8/0；新增有证据退役清单并同时输出原始缺失、退役和可执行缺口，清单漂移、重复或与 TS 注册冲突时直接失败。
 - [x] **AUD-002 生产只读目录审计**：通过一次性认证 Worker 读取表名、目录计数、迁移控制和非敏感业务计数；三次临时 Worker 均已删除，生产无写入。
 - [x] **DB-001 创建小票任务账本表**：已应用外部 `0090_print_job_outbox.sql`（Worker 内嵌 `migration_0097`），创建 `order_print_job` 与 `order_print_job_action`；二次执行只返回 `already exists, skipping`，六张业务表指纹不变。生产引擎随机 schema 场景确认自动/手工幂等、租户隔离、Queue 脱敏、并发单次调用、UNKNOWN 不盲重试与三类人工处置全部通过，临时 schema/Worker 已删除。
 - [x] **DB-002 创建电子面单任务账本表**：已应用外部 `0091_electronic_waybill_outbox.sql`（Worker 内嵌 `migration_0098`），创建 `order_waybill_job` 与 `order_waybill_job_action`；二次执行幂等，六张业务表指纹不变，最终四张任务表均为空。生产引擎随机 schema 场景确认请求重放、根单活跃任务、租户隔离、Queue 脱敏、提供商未知/拒绝/本地失败、人工处置与履约精确一次全部通过。
@@ -76,7 +76,7 @@
 ## P0：资金、回调与认证边界
 
 - [ ] **CORE-001 支付/业务回调**：迁移并验签 `ANY /api/pay/notify/:type`、`order_call_back`、微信/小程序/企业微信/同城配送回调；要求重放保护、事件账本、乱序处理和对账任务。
-- [ ] **CORE-002 客服资金退款**：补齐 `PUT /kefuapi/refund/refund/:id` 及其同意退款合同；金额绑定订单与售后、提供商幂等、处理中/未知状态、主动查询、重复回调和客服归属必须验证。
+- [x] **CORE-002 客服资金退款**：已补齐认证 `PUT /kefuapi/refund/refund/:id`，只接受同意动作；提交金额必须等于售后权威金额，历史部分退款失败关闭，完成重放收敛。核心退款 scope 绑定 store/supplier/customer/refund/order/金额/已退金额，并在退款锁前通过授权回调锁定客服会话，转接立即撤权。正式 Hyperdrive 随机 schema 重跑完整退款状态机，金额错配、余额/积分/渠道账本、累计并发、补偿、回调/主动对账既有门禁继续通过；客服专项的金额篡改、单次入账、重复提交、部分历史和转接撤权全部通过，`public_state_unchanged=true`。生产支付 Secret 仍未配置，代码完成不代表渠道已启用。
 - [ ] **CORE-003 对外 API 资金与用户写入**：在 HMAC ACL 下恢复或正式废弃 Out API 的退款、商品/分类/优惠券/用户写入；每条接口必须有独立权限 ID、幂等键和不可变审计。
 - [ ] **CORE-004 认证入口合同**：处理旧 `GET /api/verify_code`、AJCaptcha 别名、短信登录/重置、社交登录及可选参数差异；统一 Turnstile/用途绑定/手机号限流/一次性消费。
 - [ ] **CORE-005 默认管理员与 Token 兼容**：确认生产无历史默认密码，轮换管理员密码；验证 `APP_KEY` 与旧 PHP token 兼容策略，记录切换/失效时间。
@@ -116,8 +116,8 @@
 
 - [ ] **KEFU-001 扫码/微信登录 4 条**：`ticket/[:appid]`、`key`、`scan/:key`、`wechat`；需要一次性挑战、回调验签、重放保护和账号绑定。
 - [ ] **KEFU-002 游客链路 8 条**：`tourist/user|adv|feedback|order|product|chat|upload`；必须签发短期游客会话，限制订单/商品作用域，上传走隔离 R2，不能恢复弱公共令牌。
-- [ ] **KEFU-003 面单模板与旧退款入口**：`POST /order/refund`、`GET /order/temp`；先澄清 PHP 方法/字段矛盾，面单只读模板与可重试签发任务分离。
-- [ ] **KEFU-004 退款同意与资金退款**：`GET /refund/agree/:order_id` 的旧 query/path 矛盾需形成兼容合同；资金退款按 CORE-002 验收。
+- [ ] **KEFU-003 面单模板与旧退款入口（部分完成）**：PHP `POST /order/refund` 指向不存在的 `Order::refund()`，已带控制器证据正式退役并指向表单 GET + 售后资金 PUT；剩余 `GET /order/temp` 仍需把只读模板目录与可重试签发任务分离，生产 OnePass Secret/平台与供应商模板配置均缺失。
+- [x] **KEFU-004 退款同意与资金退款**：PHP `GET /refund/agree/:order_id` 同时存在 GET 写副作用、忽略 path 改读 query、状态日志 `oid` 错用退款 ID，已带证据退役；替代为认证幂等 `PUT /refund/agree/:id`，在客服归属锁后原子更新售后/原订单并只写一条正确订单日志。资金退款按 CORE-002 完成生产 PostgreSQL 隔离验收。
 - [ ] **KEFU-005 真实账号浏览器 E2E**：迁移至少一个有效客服账号后验证密码登录限流、WS hibernation、断线重连、上传/重签、转接三端通知、日限额、多会话、商品/订单/售后权限。
 
 ## P1：Out API 与 ERP
@@ -156,4 +156,4 @@
 
 ## 当前下一步
 
-`DB-001`、`DB-002` 已完成并重新只读核对生产达到 217/217。下一项 `DB-003` 涉及删除冲突配置，必须先由运营确认权威值；`DATA-001` 需要源 MySQL 连接。等待外部条件期间继续处理不依赖真实凭据的路由合同，优先从 Kefu 剩余订单/退款合同和 Out API 安全写入边界开始；第三方配置和正式发布仍需要用户提供外部条件或明确批准。
+`DB-001`、`DB-002`、`CORE-002`、`KEFU-004` 已完成；生产仍为 217/217，客服原始精确匹配升至 48/63，另有 2 条证据化退役，剩余可执行缺口 13 条。`DB-003` 涉及删除冲突配置，必须先由运营确认权威值；`DATA-001` 需要源 MySQL 连接；Kefu 剩余扫码/微信、游客和面单模板分别依赖新安全合同或第三方配置。等待外部条件期间下一批处理 Out API 安全写入边界；第三方配置和正式发布仍需要用户提供外部条件或明确批准。

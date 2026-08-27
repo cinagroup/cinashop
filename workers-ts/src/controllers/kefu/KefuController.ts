@@ -36,7 +36,7 @@ function orders(c: C) {
 }
 
 function orderManagement(c: C) {
-  return new KefuOrderManagementService(c.get("container"));
+  return new KefuOrderManagementService(c.get("container"), c.env);
 }
 
 function fulfillment(c: C) {
@@ -287,6 +287,23 @@ export async function orderRefundForm(c: C) {
 
 export async function refundForm(c: C) {
   return jsonOk(c, await orderManagement(c).refundForm(kefuUid(c), c.req.param("id")));
+}
+
+export async function agreeRefundReturn(c: C) {
+  return jsonOk(
+    c,
+    await orderManagement(c).agreeReturn(kefuUid(c), c.req.param("id")),
+    "已同意退货",
+  );
+}
+
+export async function refundOrder(c: C) {
+  const result = await orderManagement(c).refundOrder(
+    kefuUid(c),
+    c.req.param("id"),
+    await body(c),
+  );
+  return jsonOk(c, result, result.completed ? "退款成功" : "退款已受理，等待渠道确认");
 }
 
 export async function expressList(c: C) {

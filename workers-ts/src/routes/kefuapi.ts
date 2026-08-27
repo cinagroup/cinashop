@@ -56,6 +56,8 @@ kefuapiRoutes.put("/order/split_delivery/:id", KefuController.splitDelivery);
 kefuapiRoutes.get("/refund/list", KefuController.refundList);
 kefuapiRoutes.post("/refund/remark/:id", KefuController.updateRefundRemark);
 kefuapiRoutes.get("/refund/refund/:id", KefuController.refundForm);
+kefuapiRoutes.put("/refund/agree/:id", KefuController.agreeRefundReturn);
+kefuapiRoutes.put("/refund/refund/:id", KefuController.refundOrder);
 
 kefuapiRoutes.get("/service/list", KefuController.serviceChat);
 kefuapiRoutes.get("/service/info", KefuController.serviceInfo);

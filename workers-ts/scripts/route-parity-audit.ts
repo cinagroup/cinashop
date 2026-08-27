@@ -27,12 +27,23 @@ interface SurfaceDefinition {
   tsFiles: Array<{ file: string; prefix: string }>;
 }
 
+interface LegacyRouteDecision {
+  surface: string;
+  method: Method;
+  path: string;
+  status: "retired";
+  reason: string;
+  evidence: string[];
+  replacement: string;
+}
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workerRoot = resolve(scriptDir, "..");
 const repositoryRoot = resolve(workerRoot, "..");
 const phpRoot = resolve(
   process.env.CINASHOP_PHP_ROOT ?? join(repositoryRoot, "..", "cinashop-php"),
 );
+const decisionFile = join(workerRoot, "audit", "legacy-route-decisions.json");
 
 const surfaces: SurfaceDefinition[] = [
   {
@@ -290,9 +301,54 @@ function key(route: RouteRecord): string {
   return `${route.method} ${route.normalizedPath}`;
 }
 
+function decisionKey(decision: LegacyRouteDecision): string {
+  return `${decision.method} ${normalizePath(decision.path)}`;
+}
+
+function loadRouteDecisions(): LegacyRouteDecision[] {
+  const parsed = JSON.parse(readFileSync(decisionFile, "utf8")) as {
+    version?: unknown;
+    decisions?: unknown;
+  };
+  if (parsed.version !== 1 || !Array.isArray(parsed.decisions)) {
+    throw new Error(`Invalid legacy route decision manifest: ${decisionFile}`);
+  }
+  const decisions = parsed.decisions as LegacyRouteDecision[];
+  const seen = new Set<string>();
+  const evidenceExists = (reference: string): boolean => {
+    const match = /^(cinashop-php\/[A-Za-z0-9_./-]+):(\d+)$/.exec(reference);
+    if (!match) return false;
+    const absolute = resolve(repositoryRoot, "..", match[1]);
+    if (!existsSync(absolute)) return false;
+    const line = Number(match[2]);
+    return Number.isSafeInteger(line) && line > 0 && line <= readFileSync(absolute, "utf8").split("\n").length;
+  };
+  for (const decision of decisions) {
+    if (
+      decision.status !== "retired" ||
+      !surfaces.some((surface) => surface.name === decision.surface) ||
+      !["GET", "POST", "PUT", "DELETE", "PATCH", "ANY"].includes(decision.method) ||
+      !decision.path.startsWith("/") ||
+      !decision.reason?.trim() ||
+      !decision.replacement?.trim() ||
+      !Array.isArray(decision.evidence) ||
+      decision.evidence.length === 0 ||
+      decision.evidence.some((item) => !item?.trim() || !evidenceExists(item))
+    ) {
+      throw new Error(`Invalid retired route decision: ${JSON.stringify(decision)}`);
+    }
+    const manifestKey = `${decision.surface} ${decisionKey(decision)}`;
+    if (seen.has(manifestKey)) throw new Error(`Duplicate retired route decision: ${manifestKey}`);
+    seen.add(manifestKey);
+  }
+  return decisions;
+}
+
 if (!existsSync(join(phpRoot, "route", "api.php"))) {
   throw new Error(`PHP source not found at ${phpRoot}; set CINASHOP_PHP_ROOT`);
 }
+
+const routeDecisions = loadRouteDecisions();
 
 const reports = surfaces.map((surface) => {
   const php = unique(parsePhpRoutes(surface.phpFile));
@@ -301,7 +357,24 @@ const reports = surfaces.map((surface) => {
   const matched = php.filter((route) => tsByKey.has(key(route)));
   const unavailable = matched.filter((route) => tsByKey.get(key(route))?.unavailable);
   const missing = php.filter((route) => !tsByKey.has(key(route)));
+  const surfaceDecisions = routeDecisions.filter((decision) => decision.surface === surface.name);
+  const phpByKey = new Map(php.map((route) => [key(route), route]));
+  const retired = surfaceDecisions.map((decision) => {
+    const route = phpByKey.get(decisionKey(decision));
+    if (!route) {
+      throw new Error(
+        `Retired route decision no longer matches PHP authority: ${surface.name} ${decisionKey(decision)}`,
+      );
+    }
+    if (tsByKey.has(key(route))) {
+      throw new Error(`Retired route is also registered in TypeScript: ${surface.name} ${key(route)}`);
+    }
+    return { ...route, decision };
+  });
+  const retiredKeys = new Set(retired.map((route) => key(route)));
+  const actionableMissing = missing.filter((route) => !retiredKeys.has(key(route)));
   const additions = ts.filter((route) => !route.path.includes("*") && !php.some((item) => key(item) === key(route)));
+  const effectivePhp = php.length - retired.length;
   return {
     surface: surface.name,
     php: php.length,
@@ -310,11 +383,18 @@ const reports = surfaces.map((surface) => {
     executableMatched: matched.length - unavailable.length,
     unavailable: unavailable.length,
     missing: missing.length,
+    retired: retired.length,
+    actionableMissing: actionableMissing.length,
     coveragePercent: Number(((matched.length / Math.max(php.length, 1)) * 100).toFixed(1)),
     executableCoveragePercent: Number(
       (((matched.length - unavailable.length) / Math.max(php.length, 1)) * 100).toFixed(1),
     ),
+    effectiveExecutableCoveragePercent: Number(
+      (((matched.length - unavailable.length) / Math.max(effectivePhp, 1)) * 100).toFixed(1),
+    ),
     missingRoutes: missing,
+    actionableMissingRoutes: actionableMissing,
+    retiredRoutes: retired,
     unavailableRoutes: unavailable.map((route) => ({
       ...route,
       tsTarget: tsByKey.get(key(route))?.target,
@@ -331,8 +411,19 @@ const totals = reports.reduce(
     executableMatched: result.executableMatched + report.executableMatched,
     unavailable: result.unavailable + report.unavailable,
     missing: result.missing + report.missing,
+    retired: result.retired + report.retired,
+    actionableMissing: result.actionableMissing + report.actionableMissing,
   }),
-  { php: 0, ts: 0, matched: 0, executableMatched: 0, unavailable: 0, missing: 0 },
+  {
+    php: 0,
+    ts: 0,
+    matched: 0,
+    executableMatched: 0,
+    unavailable: 0,
+    missing: 0,
+    retired: 0,
+    actionableMissing: 0,
+  },
 );
 
 process.stdout.write(
@@ -347,6 +438,9 @@ process.stdout.write(
         executableCoveragePercent: Number(
           ((totals.executableMatched / Math.max(totals.php, 1)) * 100).toFixed(1),
         ),
+        effectiveExecutableCoveragePercent: Number(
+          ((totals.executableMatched / Math.max(totals.php - totals.retired, 1)) * 100).toFixed(1),
+        ),
       },
       surfaces: reports,
       limitations: [
@@ -354,6 +448,7 @@ process.stdout.write(
         "ThinkPHP resource routes are expanded to the standard seven REST actions after only/except filters.",
         "Wildcard 501 fallbacks never count as migrated routes.",
         "Routes wired to handlers named *Unavailable or containing an inline 501 are registered but not executable.",
+        "Retired routes remain in the raw PHP denominator and missing count; effective coverage excludes only manifest entries with source evidence and a replacement.",
       ],
     },
     null,

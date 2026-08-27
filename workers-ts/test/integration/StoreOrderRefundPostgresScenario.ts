@@ -1,4 +1,4 @@
-import { asc, count, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
 import {
   storePink,
   storeOrder,
@@ -7,6 +7,7 @@ import {
   storeOrderRefund,
   storeOrderRefundPayment,
   storeOrderStatus,
+  storeServiceRecord,
   storeProduct,
   storeProductAttrValue,
   supplierFlowingWater,
@@ -27,6 +28,7 @@ import {
   finalizeStoreOrderRefund,
   type RefundFinalizationOutcome,
 } from "@/services/order/StoreOrderRefundService";
+import { KefuOrderManagementService } from "@/services/kefu/KefuOrderManagementService";
 import { ScheduledMaintenanceService } from "@/services/order/ScheduledMaintenanceService";
 import type {
   Env,
@@ -48,6 +50,7 @@ const CLONED_TABLES = [
   "store_order_refund",
   "store_order_refund_payment",
   "store_order_status",
+  "store_service_record",
   "store_product",
   "store_product_attr_value",
 ] as const;
@@ -75,6 +78,7 @@ interface PublicSnapshot {
   refunds: number;
   refund_payments: number;
   statuses: number;
+  service_records: number;
   products: number;
   skus: number;
   user_bill_sequence: string | null;
@@ -174,6 +178,18 @@ export interface StoreOrderRefundPostgresReport {
     partial_refund_cart_ids: number[];
     partial_balance: string;
     completed_groups_left_in_scan: number;
+  };
+  kefu_refund_decisions: {
+    return_changed_once: boolean;
+    return_replay_converged: boolean;
+    tampered_amount_rejected: boolean;
+    money_completed_once: boolean;
+    money_replay_converged: boolean;
+    partial_history_rejected: boolean;
+    transfer_revoked: boolean;
+    balance: string;
+    bill_rows: number;
+    return_status_rows: number;
   };
 }
 
@@ -323,6 +339,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
       (SELECT count(*)::integer FROM public.store_order_refund) AS refunds,
       (SELECT count(*)::integer FROM public.store_order_refund_payment) AS refund_payments,
       (SELECT count(*)::integer FROM public.store_order_status) AS statuses,
+      (SELECT count(*)::integer FROM public.store_service_record) AS service_records,
       (SELECT count(*)::integer FROM public.store_product) AS products,
       (SELECT count(*)::integer FROM public.store_product_attr_value) AS skus,
       (SELECT last_value::text FROM pg_sequences
@@ -348,7 +365,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, base: number): Promise<void> {
   await withSchema(db, schemaName, async (container) => {
     const tx = container.db;
-    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
     const compensation = compensationIds(base);
     const timeout = timeoutIds(base);
     await tx.insert(userTable).values([...offsets.map((offset) => {
@@ -537,7 +554,29 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
     addRefund(5, ids(base, 5).refundC, "3.34", "C");
     addRefund(6, ids(base, 6).refundA, "10.00", "A");
     addRefund(11, ids(base, 11).refundA, "3.00", "A", true, true);
+    addRefund(13, ids(base, 13).refundA, "10.00", "A");
+    refundRows[refundRows.length - 1].applyType = 2;
+    addRefund(14, ids(base, 14).refundA, "10.00", "A");
+    addRefund(15, ids(base, 15).refundA, "10.00", "A");
+    refundRows[refundRows.length - 1].refundedPrice = "1.00";
+    addRefund(16, ids(base, 16).refundA, "10.00", "A");
     await tx.insert(storeOrderRefund).values(refundRows);
+
+    await tx.insert(storeServiceRecord).values([13, 14, 15, 16].map((offset) => ({
+      id: base + 60_000 + offset,
+      userId: base + 50_000 + offset,
+      toUid: ids(base, offset).uid,
+      nickname: `kefu-refund-${offset}`,
+      avatar: "",
+      isTourist: 0,
+      online: 1,
+      type: 1,
+      addTime: 1_700_000_000,
+      updateTime: 1_700_000_000,
+      mssageNum: 0,
+      message: "",
+      messageType: 1,
+    })));
 
     const provider = ids(base, 4);
     await tx.insert(storeOrderRefundPayment).values({
@@ -1542,6 +1581,118 @@ async function runPinkTimeoutRedeliveryRecovery(
   });
 }
 
+async function rejectsOperation(operation: () => Promise<unknown>): Promise<boolean> {
+  try {
+    await operation();
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+async function runKefuRefundDecisions(
+  db: DbClient,
+  base: number,
+): Promise<StoreOrderRefundPostgresReport["kefu_refund_decisions"]> {
+  const service = new KefuOrderManagementService(createContainerFromDb(db), {} as Env);
+  const returnFixture = ids(base, 13);
+  const moneyFixture = ids(base, 14);
+  const partialFixture = ids(base, 15);
+  const revokedFixture = ids(base, 16);
+  const returnKefuUid = base + 50_013;
+  const moneyKefuUid = base + 50_014;
+  const partialKefuUid = base + 50_015;
+  const revokedKefuUid = base + 50_016;
+
+  const firstReturn = await service.agreeReturn(returnKefuUid, returnFixture.refundA);
+  const replayReturn = await service.agreeReturn(returnKefuUid, returnFixture.refundA);
+  const tamperedAmountRejected = await rejectsOperation(() => service.refundOrder(
+    moneyKefuUid,
+    moneyFixture.refundA,
+    { type: 1, refund_price: "9.99" },
+  ));
+  const firstMoney = await service.refundOrder(
+    moneyKefuUid,
+    moneyFixture.refundA,
+    { type: 1, refund_price: "10.00" },
+  );
+  const replayMoney = await service.refundOrder(
+    moneyKefuUid,
+    moneyFixture.refundA,
+    { type: 1, refund_price: "10.00" },
+  );
+  const partialHistoryRejected = await rejectsOperation(() => service.refundOrder(
+    partialKefuUid,
+    partialFixture.refundA,
+    { type: 1, refund_price: "10.00" },
+  ));
+  const scopedContainer = createContainerFromDb(db);
+  await withTx(scopedContainer, (tx) =>
+    tx.delete(storeServiceRecord).where(eq(storeServiceRecord.userId, revokedKefuUid)));
+  const transferRevoked = await rejectsOperation(() => service.refundOrder(
+    revokedKefuUid,
+    revokedFixture.refundA,
+    { type: 1, refund_price: "10.00" },
+  ));
+
+  const state = await withTx(scopedContainer, async (tx) => {
+    const [returnRefund, returnOrder, moneyRefund, moneyOrder, account] = await Promise.all([
+      tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id, returnFixture.refundA)).limit(1),
+      tx.select().from(storeOrder).where(eq(storeOrder.id, returnFixture.orderId)).limit(1),
+      tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id, moneyFixture.refundA)).limit(1),
+      tx.select().from(storeOrder).where(eq(storeOrder.id, moneyFixture.orderId)).limit(1),
+      tx.select().from(userTable).where(eq(userTable.uid, moneyFixture.uid)).limit(1),
+    ]);
+    const billRows = await tx.select({ value: count() }).from(userBill).where(and(
+      eq(userBill.uid, moneyFixture.uid),
+      eq(userBill.linkId, moneyRefund[0]?.orderId ?? ""),
+      eq(userBill.type, "pay_product_refund"),
+    ));
+    const returnStatusRows = await tx.select({ value: count() }).from(storeOrderStatus).where(and(
+      eq(storeOrderStatus.oid, returnFixture.orderId),
+      eq(storeOrderStatus.changeType, "kefu_refund_return"),
+    ));
+    return { returnRefund, returnOrder, moneyRefund, moneyOrder, account, billRows, returnStatusRows };
+  });
+
+  const result = {
+    return_changed_once: firstReturn.changed === true,
+    return_replay_converged: replayReturn.changed === false,
+    tampered_amount_rejected: tamperedAmountRejected,
+    money_completed_once:
+      firstMoney.completed === true &&
+      state.moneyRefund[0]?.refundType === 6 &&
+      state.moneyRefund[0]?.refundedPrice === "10.00" &&
+      state.moneyOrder[0]?.refundPrice === "10.00",
+    money_replay_converged: replayMoney.completed === true,
+    partial_history_rejected: partialHistoryRejected,
+    transfer_revoked: transferRevoked,
+    balance: state.account[0]?.nowMoney ?? "missing",
+    bill_rows: Number(state.billRows[0]?.value ?? 0),
+    return_status_rows: Number(state.returnStatusRows[0]?.value ?? 0),
+  };
+  assertCondition(
+    result.return_changed_once &&
+      result.return_replay_converged &&
+      state.returnRefund[0]?.refundType === 4 &&
+      state.returnOrder[0]?.refundStatus === 1 &&
+      state.returnOrder[0]?.refundType === 4 &&
+      result.return_status_rows === 1,
+    `Kefu return decision did not converge: ${JSON.stringify(result)}`,
+  );
+  assertCondition(
+    result.tampered_amount_rejected &&
+      result.money_completed_once &&
+      result.money_replay_converged &&
+      result.partial_history_rejected &&
+      result.transfer_revoked &&
+      result.balance === "10.00" &&
+      result.bill_rows === 1,
+    `Kefu money refund boundary failed: ${JSON.stringify(result)}`,
+  );
+  return result;
+}
+
 export async function runStoreOrderRefundPostgresScenario(
   connectionString: string,
 ): Promise<StoreOrderRefundPostgresReport> {
@@ -1550,7 +1701,11 @@ export async function runStoreOrderRefundPostgresScenario(
   const adminDb = createDbFromConnectionString(connectionString, 1);
   const concurrentDbA = createDbFromConnectionString(connectionString, 1);
   const concurrentDbB = createDbFromConnectionString(connectionString, 1);
-  const clients = [adminDb.$client, concurrentDbA.$client, concurrentDbB.$client];
+  const kefuDb = createDbFromConnectionString(connectionString, 1, {
+    searchPath: schemaName,
+    applicationName: "cinashop_kefu_refund_audit",
+  });
+  const clients = [adminDb.$client, concurrentDbA.$client, concurrentDbB.$client, kefuDb.$client];
   let created = false;
   let report: Omit<StoreOrderRefundPostgresReport, "schema_removed" | "public_state_unchanged"> | undefined;
   let before: PublicSnapshot | undefined;
@@ -1631,6 +1786,7 @@ export async function runStoreOrderRefundPostgresScenario(
       schemaName,
       base,
     );
+    const kefuRefundDecisions = await runKefuRefundDecisions(kefuDb, base);
     report = {
       server_version: versionRows[0]?.server_version ?? "unknown",
       schema_created: true,
@@ -1643,6 +1799,7 @@ export async function runStoreOrderRefundPostgresScenario(
       cumulative_compensation_invariants: cumulativeCompensationInvariants,
       pink_leader_refund_promotion: pinkLeaderRefundPromotion,
       pink_timeout_redelivery_recovery: pinkTimeoutRedeliveryRecovery,
+      kefu_refund_decisions: kefuRefundDecisions,
     };
   } finally {
     try {

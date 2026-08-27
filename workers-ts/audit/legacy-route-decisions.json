@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "decisions": [
+    {
+      "surface": "kefu",
+      "method": "POST",
+      "path": "/kefuapi/order/refund",
+      "status": "retired",
+      "reason": "The registered PHP target Order/refund does not exist; the controller only defines refundForm and refundOld, while the GET form route is also incorrectly wired to Order/refund.",
+      "evidence": [
+        "cinashop-php/route/kefu.php:62",
+        "cinashop-php/app/controller/kefu/Order.php:203",
+        "cinashop-php/app/controller/kefu/Order.php:220"
+      ],
+      "replacement": "GET /kefuapi/order/refund_form/:id for the form and PUT /kefuapi/refund/refund/:id for an authorized after-sale refund"
+    },
+    {
+      "surface": "kefu",
+      "method": "GET",
+      "path": "/kefuapi/refund/agree/:order_id",
+      "status": "retired",
+      "reason": "The PHP GET mutates refund state, ignores the path parameter, reads a query parameter with the same name, and writes an order-status row using the refund id as oid.",
+      "evidence": [
+        "cinashop-php/route/kefu.php:130",
+        "cinashop-php/app/controller/kefu/RefundOrder.php:143",
+        "cinashop-php/app/services/order/StoreOrderRefundServices.php:562"
+      ],
+      "replacement": "PUT /kefuapi/refund/agree/:id"
+    }
+  ]
+}

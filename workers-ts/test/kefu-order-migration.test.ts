@@ -5,7 +5,10 @@ import {
   parseKefuOrderStatus,
 } from "../src/services/kefu/KefuOrderService";
 import { normalizeKefuDeliveryInput } from "../src/services/kefu/KefuFulfillmentService";
-import { parseKefuOrderEditInput } from "../src/services/kefu/KefuOrderManagementService";
+import {
+  parseKefuOrderEditInput,
+  parseKefuRefundDecisionInput,
+} from "../src/services/kefu/KefuOrderManagementService";
 
 describe("customer-service order/refund context migration", () => {
   it("keeps PHP status values while bounding page inputs", () => {
@@ -81,7 +84,23 @@ describe("customer-service order/refund context migration", () => {
       .toThrow("实际支付金额超出允许范围");
   });
 
-  it("registers the six non-payment management contracts behind kefu auth", () => {
+  it("binds customer-service money refunds to one exact authoritative amount", () => {
+    expect(parseKefuRefundDecisionInput({ refund_price: "44.91" })).toEqual({
+      type: 1,
+      refundPriceCents: 4491,
+    });
+    expect(parseKefuRefundDecisionInput({ type: "1", refund_price: 0 })).toEqual({
+      type: 1,
+      refundPriceCents: 0,
+    });
+    expect(() => parseKefuRefundDecisionInput({ type: 2, refund_price: "44.91" }))
+      .toThrow("仅接受同意操作");
+    expect(() => parseKefuRefundDecisionInput({ refund_price: "44.911" }))
+      .toThrow("退款金额格式错误");
+    expect(() => parseKefuRefundDecisionInput({})).toThrow("请输入退款金额");
+  });
+
+  it("registers management and refund decisions behind kefu auth", () => {
     const routes = readFileSync("src/routes/kefuapi.ts", "utf8");
     const service = readFileSync("src/services/kefu/KefuOrderManagementService.ts", "utf8");
     for (const route of [
@@ -91,6 +110,8 @@ describe("customer-service order/refund context migration", () => {
       'get("/order/refund_form/:id"',
       'post("/refund/remark/:id"',
       'get("/refund/refund/:id"',
+      'put("/refund/agree/:id"',
+      'put("/refund/refund/:id"',
     ]) expect(routes).toContain(route);
     expect(routes.indexOf('use("*", kefuAuthMiddleware)')).toBeLessThan(routes.indexOf('get("/order/edit/:id"'));
     expect(service).toContain("pg_advisory_xact_lock");
@@ -98,7 +119,26 @@ describe("customer-service order/refund context migration", () => {
     expect(service).toContain('changeType: "order_edit"');
     expect(service).toContain('changeType: "kefu_order_remark"');
     expect(service).toContain('changeType: "kefu_refund_remark"');
+    expect(service).toContain('changeType: "kefu_refund_return"');
+    expect(service).toContain("expectedRefundedAmountCents: completedReplay ? authorizedCents : 0");
+    expect(service).toContain("authorizeBeforeRefundLock");
+    expect(service).toContain("await lockKefuConversationOwnership(tx, kefuUid, current.uid)");
+    expect(service).toContain("退款金额与售后单权威金额不一致");
+    expect(service).toContain("历史部分退款");
     expect(service).not.toContain("set({ totalPrice");
+  });
+
+  it("records evidence-backed retirements without hiding them from raw coverage", () => {
+    const decisions = JSON.parse(readFileSync("audit/legacy-route-decisions.json", "utf8"));
+    const audit = readFileSync("scripts/route-parity-audit.ts", "utf8");
+    expect(decisions.decisions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ method: "POST", path: "/kefuapi/order/refund", status: "retired" }),
+      expect.objectContaining({ method: "GET", path: "/kefuapi/refund/agree/:order_id", status: "retired" }),
+    ]));
+    expect(decisions.decisions.every((item: { evidence?: string[] }) => item.evidence?.length)).toBe(true);
+    expect(audit).toContain("actionableMissingRoutes");
+    expect(audit).toContain("effectiveExecutableCoveragePercent");
+    expect(audit).toContain("Retired routes remain in the raw PHP denominator");
   });
 
   it("normalizes manual express, registered delivery, and virtual fulfillment inputs", () => {

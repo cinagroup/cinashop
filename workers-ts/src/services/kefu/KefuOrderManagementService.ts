@@ -13,6 +13,12 @@ import {
   ownedKefuConversation,
 } from "@/services/kefu/KefuOwnership";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
+import { lockOrderSettlement } from "@/services/order/OrderBrokerageService";
+import {
+  lockRefundExecution,
+  StoreOrderRefundService,
+} from "@/services/order/StoreOrderRefundService";
+import type { Env } from "@/env";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_ORDER_ID_LENGTH = 50;
@@ -53,6 +59,11 @@ export interface KefuManagementForm {
   action: string;
   method: "PUT";
   fields: KefuManagementFormField[];
+}
+
+export interface KefuRefundDecisionInput {
+  type: 1;
+  refundPriceCents: number;
 }
 
 function positiveInteger(value: unknown, label: string): number {
@@ -98,6 +109,17 @@ function parseMoneyCents(value: unknown, label: string): number {
 
 function optionalMoneyCents(value: unknown, label: string): number | undefined {
   return value === undefined ? undefined : parseMoneyCents(value, label);
+}
+
+export function parseKefuRefundDecisionInput(
+  input: Record<string, unknown>,
+): KefuRefundDecisionInput {
+  const type = input.type === undefined ? 1 : Number(input.type);
+  if (type !== 1) {
+    throw new ValidateException("客服资金退款仅接受同意操作，拒绝退款请使用独立审核入口");
+  }
+  if (input.refund_price === undefined) throw new ValidateException("请输入退款金额");
+  return { type: 1, refundPriceCents: parseMoneyCents(input.refund_price, "退款金额") };
 }
 
 function parseGainIntegral(value: unknown): number {
@@ -203,13 +225,12 @@ async function lockOwnedOrder(
   return rows[0];
 }
 
-async function lockOwnedRefund(
+async function selectOwnedRefundForUpdate(
   db: DbClient,
   kefuUid: number,
   id: number,
   preliminaryUid: number,
 ): Promise<RefundRow> {
-  await lockKefuConversationOwnership(db, kefuUid, preliminaryUid);
   const rows = await db.select().from(storeOrderRefund).where(and(
     eq(storeOrderRefund.id, id),
     eq(storeOrderRefund.uid, preliminaryUid),
@@ -226,6 +247,16 @@ async function lockOwnedRefund(
   )).limit(1))[0];
   if (!order) throw new NotFoundException("售后订单关联的原订单不存在");
   return rows[0];
+}
+
+async function lockOwnedRefund(
+  db: DbClient,
+  kefuUid: number,
+  id: number,
+  preliminaryUid: number,
+): Promise<RefundRow> {
+  await lockKefuConversationOwnership(db, kefuUid, preliminaryUid);
+  return selectOwnedRefundForUpdate(db, kefuUid, id, preliminaryUid);
 }
 
 function orderEditForm(row: OrderRow): KefuManagementForm {
@@ -257,7 +288,10 @@ function refundForm(title: string, action: string, orderId: string, remainingCen
 }
 
 export class KefuOrderManagementService {
-  constructor(private readonly container: Container) {}
+  constructor(
+    private readonly container: Container,
+    private readonly env?: Env,
+  ) {}
 
   private async visibleOrder(kefuUid: number, idValue: unknown): Promise<OrderRow> {
     const id = positiveInteger(idValue, "订单ID");
@@ -271,16 +305,20 @@ export class KefuOrderManagementService {
     return row;
   }
 
-  private async visibleRefund(kefuUid: number, idValue: unknown): Promise<RefundRow> {
+  private async visibleRefund(
+    kefuUid: number,
+    idValue: unknown,
+    db: DbClient = this.container.db,
+  ): Promise<RefundRow> {
     const id = positiveInteger(idValue, "退款ID");
-    const row = (await this.container.db.select().from(storeOrderRefund).where(and(
+    const row = (await db.select().from(storeOrderRefund).where(and(
       eq(storeOrderRefund.id, id),
       eq(storeOrderRefund.isCancel, 0),
       eq(storeOrderRefund.isDel, 0),
-      ownedRefundConversation(this.container.db, kefuUid),
+      ownedRefundConversation(db, kefuUid),
     )).limit(1))[0];
     if (!row) throw new NotFoundException("售后订单不存在或不属于当前会话");
-    const order = (await this.container.db.select({ id: storeOrder.id }).from(storeOrder).where(and(
+    const order = (await db.select({ id: storeOrder.id }).from(storeOrder).where(and(
       eq(storeOrder.id, row.storeOrderId),
       eq(storeOrder.uid, row.uid),
       eq(storeOrder.isDel, 0),
@@ -458,5 +496,103 @@ export class KefuOrderManagementService {
       throw new ValidateException("订单已退款");
     }
     return refundForm("退款处理", `/refund/refund/${refund.id}`, refund.orderId, allowedCents - refundedCents);
+  }
+
+  async agreeReturn(kefuUidValue: unknown, idValue: unknown) {
+    const kefuUid = positiveInteger(kefuUidValue, "客服身份");
+    const id = positiveInteger(idValue, "退款ID");
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
+      await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+      const preliminary = (await tx.select({
+        uid: storeOrderRefund.uid,
+        storeOrderId: storeOrderRefund.storeOrderId,
+      }).from(storeOrderRefund).where(and(
+        eq(storeOrderRefund.id, id),
+        eq(storeOrderRefund.isCancel, 0),
+        eq(storeOrderRefund.isDel, 0),
+      )).limit(1))[0];
+      if (!preliminary) throw new NotFoundException("售后订单不存在或不属于当前会话");
+
+      await lockKefuConversationOwnership(tx, kefuUid, preliminary.uid);
+      await lockRefundExecution(tx, id);
+      await lockOrderSettlement(tx, preliminary.storeOrderId);
+      const refund = await selectOwnedRefundForUpdate(tx, kefuUid, id, preliminary.uid);
+      const order = (await tx.select().from(storeOrder).where(and(
+        eq(storeOrder.id, refund.storeOrderId),
+        eq(storeOrder.uid, refund.uid),
+        eq(storeOrder.isDel, 0),
+        eq(storeOrder.isSystemDel, 0),
+      )).limit(1).for("update"))[0];
+      if (!order) throw new NotFoundException("售后订单关联的原订单不存在");
+      if (![2, 3].includes(refund.applyType)) throw new ValidateException("该售后类型不需要退货");
+      if (refund.refundType === 4) {
+        if (order.refundStatus !== 1 || order.refundType !== 4) {
+          throw new ValidateException("售后与原订单退货状态不一致，请先人工核对");
+        }
+        return { id, order_id: refund.orderId, changed: false };
+      }
+      if (![0, 1, 2].includes(refund.refundType)) throw new ValidateException("售后状态不允许同意退货");
+
+      const updated = await tx.update(storeOrderRefund).set({ refundType: 4 }).where(and(
+        eq(storeOrderRefund.id, id),
+        eq(storeOrderRefund.uid, refund.uid),
+        eq(storeOrderRefund.refundType, refund.refundType),
+        eq(storeOrderRefund.isCancel, 0),
+        eq(storeOrderRefund.isDel, 0),
+      )).returning({ id: storeOrderRefund.id });
+      if (!updated[0]) throw new ValidateException("售后记录已被处理");
+      const orderUpdated = await tx.update(storeOrder).set({ refundStatus: 1, refundType: 4 }).where(and(
+        eq(storeOrder.id, order.id),
+        eq(storeOrder.uid, refund.uid),
+      )).returning({ id: storeOrder.id });
+      if (!orderUpdated[0]) throw new ValidateException("原订单退货状态更新失败");
+      await tx.insert(storeOrderStatus).values({
+        oid: order.id,
+        changeType: "kefu_refund_return",
+        changeMessage: `客服 ${kefuUid} 同意退货，等待用户寄回`,
+        changeTime: Math.floor(Date.now() / 1000),
+      });
+      return { id, order_id: refund.orderId, changed: true };
+    });
+  }
+
+  async refundOrder(
+    kefuUidValue: unknown,
+    idValue: unknown,
+    body: Record<string, unknown>,
+  ) {
+    if (!this.env) throw new Error("客服退款服务缺少运行环境");
+    const kefuUid = positiveInteger(kefuUidValue, "客服身份");
+    const id = positiveInteger(idValue, "退款ID");
+    const input = parseKefuRefundDecisionInput(body);
+    // Hyperdrive may serve transaction-external reads from cache. The
+    // authorization snapshot must be a fresh transaction before its exact
+    // values are bound into the locked refund state machine.
+    const refund = await withTx(this.container, (tx) => this.visibleRefund(kefuUid, id, tx));
+    const authorizedCents = decimalToCents(refund.refundPrice);
+    const refundedCents = decimalToCents(refund.refundedPrice);
+    const completedReplay = refund.refundType === 6 && refundedCents === authorizedCents;
+    if (!completedReplay && refundedCents !== 0) {
+      throw new ValidateException("该售后存在历史部分退款，请先人工核对后处理");
+    }
+    if (input.refundPriceCents !== authorizedCents) {
+      throw new ValidateException("退款金额与售后单权威金额不一致");
+    }
+
+    return new StoreOrderRefundService(this.container, this.env).agreeRefund(id, {
+      expectedStoreId: refund.storeId,
+      expectedSupplierId: refund.supplierId,
+      expectedUid: refund.uid,
+      expectedRefundOrderId: refund.orderId,
+      expectedStoreOrderId: refund.storeOrderId,
+      expectedRefundAmountCents: authorizedCents,
+      expectedRefundedAmountCents: completedReplay ? authorizedCents : 0,
+      requireSystemVisible: true,
+      requirePaid: true,
+      authorizeBeforeRefundLock: async (tx, current) => {
+        await lockKefuConversationOwnership(tx, kefuUid, current.uid);
+      },
+    });
   }
 }

@@ -238,6 +238,9 @@ describe("third-party API migration boundary", () => {
     expect(refundSource).toContain("assertRefundExecutionScope(refund, order, scope)");
     expect(refundSource).toContain("assertPaymentOrderScope(paymentOrder, scope)");
     expect(refundSource).toContain("expectedRefundAmountCents");
+    expect(refundSource).toContain("expectedRefundedAmountCents");
+    expect(refundSource).toContain("authorizeBeforeRefundLock");
+    expect(refundSource).toContain("return withTx(this.container, fn)");
     expect(refundSource).toContain("await lockOrderSettlement(tx, refund.storeOrderId)");
     expect(refundSource).toContain("lockRefundExecutionSnapshot(tx, refundId, scope)");
     expect(refundSource).toContain("Hyperdrive can cache transaction-external reads");
