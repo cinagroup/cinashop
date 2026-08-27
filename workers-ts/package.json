@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "data:schema-audit": "tsx scripts/mysql-to-postgres.ts schema-audit",
+    "audit:routes": "tsx scripts/route-parity-audit.ts",
     "data:plan": "tsx scripts/mysql-to-postgres.ts plan",
     "data:copy": "tsx scripts/mysql-to-postgres.ts copy",
     "data:verify": "tsx scripts/mysql-to-postgres.ts verify",

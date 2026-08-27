@@ -1,5 +1,19 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 提交后全量复审（2026-08-27，`main@34394ce`）
+
+本轮先确认累计迁移提交 `34394ce` 已推送，且本地 `HEAD`、`origin/main` 与 GitHub 远端引用完全一致。随后新增可重复静态路由审计器，按 ThinkPHP 嵌套 group、标准 resource 展开、HTTP 方法和归一化参数对 PHP 权威路由与 Hono 注册逐项比较；通配 501 不算覆盖，显式接到 `*Unavailable`/501 的路由单列。结果是六个业务面共有 1,912 条 PHP 唯一合同，Workers 注册 1,209 条、精确匹配 519 条（27.1%），其中 15 条仍为明确 501，因此静态可执行匹配上限为 504/1,912（26.4%）。分面为 API 164/460、Admin 202/1,156（15 条 501）、Supplier 79/184、Kefu 47/63、Out 27/41、ERP 0/8。该口径比此前按已审计业务域描述的进度更严格，也证明不能用客服 74.6% 或结构覆盖率代表整体迁移完成度。
+
+一次性认证只读 Worker 通过正式 Hyperdrive 重新读取生产目录后自动删除。生产 PostgreSQL 16.14 当前为 2,930 列、670 索引、200 主键；201 张 PHP 共有表都存在，16 张 Worker 专用表中存在 12 张，缺少 `order_print_job`、`order_print_job_action`、`order_waybill_job`、`order_waybill_job_action`，即生产为 213/217 表（98.2%）。数据迁移控制运行数仍为 0，本机 `SOURCE_MYSQL_URL`/`TARGET_POSTGRES_URL` 均未设置，`data:plan` 因缺源连接失败。生产有商品 71、订单 29、明细 28、售后 3，但客服账号/会话为 0、商品描述/访问/商品分类关系均为 0；3 条客服消息成为“有历史消息但没有可登录客服/会话”的待核对孤立数据证据。`system_config` 仍有 6 个重复键和 20 条额外历史行，未在无法判断权威值时擅自删除。
+
+Cloudflare 资源侧已确认 Hyperdrive、CONFIG_KV、私有 `cinashop-assets`、订单 Queue 和两级 DLQ 存在；主 Worker Secret 只有 APP_KEY、DEBUG、内部聊天/运维 token 与两个 Upstash 项，支付、短信、Turnstile 和电子面单凭据均未配置。主 Worker仍保持 `9f1fd655-e60f-41c1-8280-738bc85d73ef`；Admin/H5 Pages 最新生产来源仍为 `48297d2`，PC 没有可追踪 Source，Supplier/Kefu 尚无 Pages 项目。仓库没有 GitHub Actions，Windows runtime 套件仍未进入断言。完整分级缺口、阻塞条件与验收门槛已固化在 `MIGRATION_CHECKLIST.md`，后续按编号逐项实现。
+
+随后按 checklist 的 DB-001/DB-002 使用固定 DDL 一次性 Worker 应用 `0090_print_job_outbox.sql` 和 `0091_electronic_waybill_outbox.sql`。入口只接受认证后的 `/apply-print`、`/apply-waybill`，不接受请求 SQL；事务固定 `search_path=public`、`lock_timeout=3s`、`statement_timeout=30s` 并取得 advisory lock，在事务内比较 `print_document/store_order/store_order_cart_info/system_config/store_config/express_company` 六表行数与内容摘要，任何变化都会抛错回滚。首次在 Secret 刚更新后立即调用收到 Cloudflare 1042，独立只读检查确认四表仍不存在、业务指纹不变，未盲目重试；等待部署传播并接入 tail 后重新调用成功。两组 DDL 均执行第二次，日志只有 PostgreSQL `42P07 already exists, skipping`，业务指纹始终一致。
+
+最终使用新的临时只读 Worker 把生产表名与仓库 schema-audit 的 217 表清单做集合差，生产为 217/217、missing/extra 均为空，目录更新为 3,021 列、696 索引、204 主键；四张任务/动作表均为 0 行，商品 71、订单 29、明细 28、售后 3 等业务计数不变。迁移后同一 Worker 内重复目录查询一度显示缓存的 215 表，而目标表存在性查询已为 true；独立事务/新审计 Worker返回 217，确认这是 Hyperdrive SELECT 缓存而非结构缺失。所有临时迁移/审计 Worker和一次性 Secret均已删除，主 Worker未发布。
+
+迁移完成后分别重跑小票和电子面单生产引擎隔离场景。小票场景 `schema_created/schema_removed/public_state_unchanged=true`、临时 schema 0，自动创建/支付、无效提供商跳过、自动/手工重放、租户账本、Queue 只含引用、提供商并发单次调用、HTML 转义、歧义结果不重试、确认重试/已发送/关闭及不可变动作全部通过。面单场景同样保持 `public` 不变并清理 schema，创建重放、根单活跃任务、租户边界、不可变动作、Queue 脱敏、HTTPS 协议/字段方向、歧义结果、明确拒绝、提供商成功但本地提交失败、应用已有单号、人工重试/确认/关闭、履约与通知精确一次全部通过。两个正式任务表及动作表仍为 0 行；生产打印机配置 0、平台/供应商面单配置 0，因此结构和状态机完成不代表提供商已可上线。
+
 审计更新：2026-08-27
 
 ## 结论
