@@ -12,6 +12,7 @@ export class CommunityDao extends BaseDao<typeof community> {
       type: (v) => eq(community.type, Number(v)),
       status: (v) => eq(community.status, Number(v)),
       isVerify: (v) => eq(community.isVerify, Number(v)),
+      isDel: (v) => eq(community.isDel, Number(v)),
     });
   }
 
@@ -20,7 +21,7 @@ export class CommunityDao extends BaseDao<typeof community> {
     return this.db
       .select()
       .from(community)
-      .where(and(eq(community.status, 1), eq(community.isVerify, 1)))
+      .where(and(eq(community.status, 1), eq(community.isVerify, 1), eq(community.isDel, 0)))
       .orderBy(sql`${community.addTime} DESC`)
       .limit(limit)
       .offset((page - 1) * limit);
@@ -32,6 +33,23 @@ export class CommunityDao extends BaseDao<typeof community> {
       .select()
       .from(community)
       .where(eq(community.id, id))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  /** Public detail must obey the same moderation/deletion gates as the feed. */
+  async getVisibleById(id: number) {
+    const rows = await this.db
+      .select()
+      .from(community)
+      .where(
+        and(
+          eq(community.id, id),
+          eq(community.status, 1),
+          eq(community.isVerify, 1),
+          eq(community.isDel, 0),
+        ),
+      )
       .limit(1);
     return rows[0] ?? null;
   }
@@ -59,7 +77,14 @@ export class CommunityCommentDao extends BaseDao<typeof communityComment> {
     return this.db
       .select()
       .from(communityComment)
-      .where(and(eq(communityComment.communityId, communityId), eq(communityComment.isDel, 0)))
+      .where(
+        and(
+          eq(communityComment.communityId, communityId),
+          eq(communityComment.isDel, 0),
+          eq(communityComment.isShow, 1),
+          eq(communityComment.isVerify, 1),
+        ),
+      )
       .orderBy(sql`${communityComment.addTime} DESC`)
       .limit(limit)
       .offset((page - 1) * limit);

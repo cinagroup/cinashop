@@ -1,0 +1,126 @@
+/**
+ * Legacy third-party API accounts and interface documentation.
+ *
+ * Every PHP column is retained for lossless import. Worker runtime code must
+ * never authenticate with or return apppwd/push_password; appsecret is the
+ * only credential verifier and is stored as a bcrypt hash.
+ */
+import {
+  bigserial,
+  check,
+  index,
+  integer,
+  pgTable,
+  serial,
+  smallint,
+  text,
+  varchar,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+
+export const outAccount = pgTable(
+  "out_account",
+  {
+    id: serial("id").primaryKey(),
+    appid: varchar("appid", { length: 50 }).default("").notNull(),
+    appsecret: varchar("appsecret", { length: 100 }).default("").notNull(),
+    /** Legacy plaintext duplicate. Import-only; Worker writes always clear it. */
+    apppwd: varchar("apppwd", { length: 100 }).default("").notNull(),
+    title: varchar("title", { length: 200 }).default("").notNull(),
+    status: smallint("status").default(1).notNull(),
+    rules: text("rules"),
+    addTime: integer("add_time").default(0).notNull(),
+    lastTime: integer("last_time").default(0).notNull(),
+    ip: varchar("ip", { length: 30 }).default("").notNull(),
+    isDel: smallint("is_del").default(0).notNull(),
+    pushOpen: smallint("push_open").default(0).notNull(),
+    pushAccount: varchar("push_account", { length: 255 }).default("").notNull(),
+    pushPassword: varchar("push_password", { length: 255 }).default("").notNull(),
+    pushTokenUrl: varchar("push_token_url", { length: 255 }).default("").notNull(),
+    userUpdatePush: varchar("user_update_push", { length: 255 }).default("").notNull(),
+    orderCreatePush: varchar("order_create_push", { length: 255 }).default("").notNull(),
+    orderPayPush: varchar("order_pay_push", { length: 255 }).default("").notNull(),
+    refundCreatePush: varchar("refund_create_push", { length: 255 }).default("").notNull(),
+    refundCancelPush: varchar("refund_cancel_push", { length: 255 }).default("").notNull(),
+  },
+  (table) => [
+    index("out_account_active_appid")
+      .on(table.appid, table.id)
+      .where(sql`${table.isDel} = 0`),
+    index("out_account_status_time").on(table.isDel, table.status, table.addTime, table.id),
+  ],
+);
+
+export const outInterface = pgTable(
+  "out_interface",
+  {
+    id: serial("id").primaryKey(),
+    pid: integer("pid").default(0).notNull(),
+    type: smallint("type").default(0).notNull(),
+    name: varchar("name", { length: 255 }).default("").notNull(),
+    describe: text("describe"),
+    method: varchar("method", { length: 255 }).default("").notNull(),
+    url: varchar("url", { length: 255 }).default("").notNull(),
+    requestParams: text("request_params"),
+    returnParams: text("return_params"),
+    requestExample: text("request_example"),
+    returnExample: text("return_example"),
+    errorCode: text("error_code"),
+    isDel: smallint("is_del").default(0).notNull(),
+  },
+  (table) => [
+    index("out_interface_active_tree")
+      .on(table.pid, table.id)
+      .where(sql`${table.isDel} = 0`),
+    index("out_interface_active_route")
+      .on(table.method, table.url, table.id)
+      .where(sql`${table.isDel} = 0`),
+  ],
+);
+
+/**
+ * Append-only, privacy-preserving access evidence for sensitive Out API calls.
+ *
+ * Paths, IP addresses, user agents, query values, request bodies and response
+ * bodies are never stored. Stable HMAC digests allow correlation without
+ * turning the audit table into a second PII store.
+ */
+export const outApiAudit = pgTable(
+  "out_api_audit",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    outAccountId: integer("out_account_id").default(0).notNull(),
+    appidSnapshot: varchar("appid_snapshot", { length: 50 }).default("").notNull(),
+    method: varchar("method", { length: 12 }).default("").notNull(),
+    routeTemplate: varchar("route_template", { length: 128 }).default("").notNull(),
+    operation: varchar("operation", { length: 16 }).default("read").notNull(),
+    resourceHash: varchar("resource_hash", { length: 64 }).default("").notNull(),
+    queryFields: varchar("query_fields", { length: 255 }).default("").notNull(),
+    ipHash: varchar("ip_hash", { length: 64 }).default("").notNull(),
+    userAgentHash: varchar("user_agent_hash", { length: 64 }).default("").notNull(),
+    outcome: varchar("outcome", { length: 16 }).default("success").notNull(),
+    resultCode: integer("result_code").default(200).notNull(),
+    durationMs: integer("duration_ms").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (table) => [
+    index("out_audit_account_time").on(table.outAccountId, table.addTime, table.id),
+    index("out_audit_route_time").on(table.routeTemplate, table.addTime, table.id),
+    index("out_audit_outcome_time").on(table.outcome, table.addTime, table.id),
+    check("out_audit_operation_ck", sql`${table.operation} IN ('read', 'write')`),
+    check("out_audit_outcome_ck", sql`${table.outcome} IN ('success', 'denied', 'rate_limited', 'error')`),
+    check("out_audit_result_code_ck", sql`${table.resultCode} BETWEEN 0 AND 999999`),
+    check("out_audit_duration_ck", sql`${table.durationMs} BETWEEN 0 AND 3600000`),
+    check("out_audit_add_time_ck", sql`${table.addTime} >= 0`),
+    check(
+      "out_audit_hashes_ck",
+      sql`(${table.resourceHash} = '' OR ${table.resourceHash} ~ '^[0-9a-f]{64}$')
+        AND (${table.ipHash} = '' OR ${table.ipHash} ~ '^[0-9a-f]{64}$')
+        AND (${table.userAgentHash} = '' OR ${table.userAgentHash} ~ '^[0-9a-f]{64}$')`,
+    ),
+  ],
+);
+
+export type OutAccount = typeof outAccount.$inferSelect;
+export type OutInterface = typeof outInterface.$inferSelect;
+export type OutApiAudit = typeof outApiAudit.$inferSelect;

@@ -7,10 +7,26 @@
  *   - app/webscoket/Manager.php (WebSocket 入口)
  */
 import type { Context } from "hono";
-import { jsonOk, jsonFail } from "@/utils/json";
+import { jsonOk, jsonFail, jsonRaw } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { AdminAuthService } from "@/services/admin/AdminAuthService";
+import {
+  AdminDashboardService,
+  parseAdminHomeCycle,
+} from "@/services/admin/AdminDashboardService";
+import {
+  AdminStatisticService,
+  parseAdminStatisticRange,
+  parseCategoryIds,
+  parseProductRankingSort,
+} from "@/services/admin/AdminStatisticService";
+import {
+  AdminExtendedStatisticService,
+  parseAdminStatisticChannel,
+  parseUserRegionSort,
+} from "@/services/admin/AdminExtendedStatisticService";
 import type { AppVariables, Env } from "@/env";
+import { upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -31,11 +47,189 @@ export async function adminLogin(c: C) {
   }
 }
 
-/** GET /api/admin/home/header — Dashboard 统计 */
-export async function adminDashboard(c: C) {
-  const svc = new AdminAuthService(c.get("container"), c.env);
-  const stats = await svc.dashboard();
-  return jsonOk(c, stats);
+/** GET /adminapi/home/header — PHP 首页四项统计卡片。 */
+export async function adminHomeHeader(c: C) {
+  return jsonOk(c, await new AdminDashboardService(c.get("container")).header());
+}
+
+/** Historical v1 controller name retained for the /api/admin alias. */
+export const adminDashboard = adminHomeHeader;
+
+/** GET /adminapi/home/order?cycle=... — 订单金额/数量周期图。 */
+export async function adminOrderChart(c: C) {
+  const cycle = parseAdminHomeCycle(c.req.query("cycle"));
+  return jsonOk(c, await new AdminDashboardService(c.get("container")).orderChart(cycle));
+}
+
+/** GET /adminapi/home/user — 30 天新增用户与消费分层。 */
+export async function adminUserChart(c: C) {
+  return jsonOk(c, await new AdminDashboardService(c.get("container")).userChart());
+}
+
+/** GET /adminapi/home/rank — PHP 当前稳定契约为空列表。 */
+export async function adminPurchaseRanking(c: C) {
+  return jsonOk(c, new AdminDashboardService(c.get("container")).purchaseRanking());
+}
+
+function statisticService(c: C): AdminStatisticService {
+  return new AdminStatisticService(c.get("container"));
+}
+
+function extendedStatisticService(c: C): AdminExtendedStatisticService {
+  return new AdminExtendedStatisticService(c.get("container"));
+}
+
+/** GET /adminapi/statistic/order/get_basic — PHP 订单统计基础卡片。 */
+export async function adminStatisticOrderBasic(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("time"));
+  return jsonOk(c, await statisticService(c).orderBasic(range));
+}
+
+/** GET /adminapi/statistic/order/get_trend — PHP 订单六序列趋势。 */
+export async function adminStatisticOrderTrend(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("time"));
+  return jsonOk(c, await statisticService(c).orderTrend(range));
+}
+
+/** GET /adminapi/statistic/order/get_channel — 订单渠道分布。 */
+export async function adminStatisticOrderChannel(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("time"));
+  return jsonOk(c, await statisticService(c).orderChannel(range));
+}
+
+/** GET /adminapi/statistic/order/get_type — 订单类型金额分布。 */
+export async function adminStatisticOrderType(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("time"));
+  return jsonOk(c, await statisticService(c).orderType(range));
+}
+
+/** GET /adminapi/statistic/product/get_basic — PHP 商品漏斗与环比。 */
+export async function adminStatisticProductBasic(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("data"));
+  return jsonOk(c, await statisticService(c).productBasic(range));
+}
+
+/** GET /adminapi/statistic/product/get_trend — 商品访问/支付/退款趋势。 */
+export async function adminStatisticProductTrend(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("data"));
+  return jsonOk(c, await statisticService(c).productTrend(range));
+}
+
+/** GET /adminapi/statistic/product/get_product_ranking — 商品经营排行。 */
+export async function adminStatisticProductRanking(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("data"));
+  const sort = parseProductRankingSort(c.req.query("sort"));
+  const categoryValues = c.req.queries("cate_id") ?? [];
+  const categoryIds = parseCategoryIds(categoryValues);
+  const limit = Number(c.req.query("limit") ?? 20);
+  return jsonOk(c, await statisticService(c).productRanking(range, sort, categoryIds, limit));
+}
+
+/** GET /adminapi/statistic/product/get_excel — PHP 商品统计导出元数据。 */
+export async function adminStatisticProductExport(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("data"));
+  return jsonOk(c, await extendedStatisticService(c).productExport(range));
+}
+
+function userStatisticRequest(c: C) {
+  return {
+    range: parseAdminStatisticRange(c.req.query("data")),
+    channel: parseAdminStatisticChannel(c.req.query("channel_type")),
+  };
+}
+
+/** GET /adminapi/statistic/user/get_basic — 用户基础指标与环比。 */
+export async function adminStatisticUserBasic(c: C) {
+  const { range, channel } = userStatisticRequest(c);
+  return jsonOk(c, await extendedStatisticService(c).userBasic(range, channel));
+}
+
+/** GET /adminapi/statistic/user/get_trend — 用户五序列趋势。 */
+export async function adminStatisticUserTrend(c: C) {
+  const { range, channel } = userStatisticRequest(c);
+  return jsonOk(c, await extendedStatisticService(c).userTrend(range, channel));
+}
+
+/** GET /adminapi/statistic/user/get_wechat — 微信关注概况。 */
+export async function adminStatisticUserWechat(c: C) {
+  const { range } = userStatisticRequest(c);
+  return jsonOk(c, await extendedStatisticService(c).userWechat(range));
+}
+
+/** GET /adminapi/statistic/user/get_wechat_trend — 微信关注趋势。 */
+export async function adminStatisticUserWechatTrend(c: C) {
+  const { range } = userStatisticRequest(c);
+  return jsonOk(c, await extendedStatisticService(c).userWechatTrend(range));
+}
+
+/** GET /adminapi/statistic/user/get_region — 用户地域分布。 */
+export async function adminStatisticUserRegion(c: C) {
+  const { range, channel } = userStatisticRequest(c);
+  const sort = parseUserRegionSort(c.req.query("sort"));
+  return jsonOk(c, await extendedStatisticService(c).userRegion(range, channel, sort));
+}
+
+/** GET /adminapi/statistic/user/get_sex — 用户性别分布。 */
+export async function adminStatisticUserSex(c: C) {
+  const { range, channel } = userStatisticRequest(c);
+  return jsonOk(c, await extendedStatisticService(c).userSex(range, channel));
+}
+
+/** GET /adminapi/statistic/user/get_excel — PHP 用户统计导出元数据。 */
+export async function adminStatisticUserExport(c: C) {
+  const { range, channel } = userStatisticRequest(c);
+  return jsonOk(c, await extendedStatisticService(c).userExport(range, channel));
+}
+
+/** GET /adminapi/statistic/trade/top_trade — 今日与本月交易概况。 */
+export async function adminStatisticTradeTop(c: C) {
+  return jsonOk(c, await extendedStatisticService(c).tradeTop());
+}
+
+/** GET /adminapi/statistic/trade/bottom_trade — 交易十项指标。 */
+export async function adminStatisticTradeBottom(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("data"));
+  return jsonOk(c, await extendedStatisticService(c).tradeBottom(range));
+}
+
+/** GET /adminapi/statistic/balance/get_basic — 余额生命周期总览。 */
+export async function adminStatisticBalanceBasic(c: C) {
+  return jsonOk(c, await extendedStatisticService(c).balanceBasic());
+}
+
+/** GET /adminapi/statistic/balance/get_trend — 余额积累/消耗趋势。 */
+export async function adminStatisticBalanceTrend(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("time"));
+  return jsonOk(c, await extendedStatisticService(c).balanceTrend(range));
+}
+
+/** GET /adminapi/statistic/balance/get_channel — 余额来源分布。 */
+export async function adminStatisticBalanceChannel(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("time"));
+  return jsonOk(c, await extendedStatisticService(c).balanceChannel(range));
+}
+
+/** GET /adminapi/statistic/balance/get_type — 余额消耗类型。 */
+export async function adminStatisticBalanceType(c: C) {
+  const range = parseAdminStatisticRange(c.req.query("time"));
+  return jsonOk(c, await extendedStatisticService(c).balanceType(range));
+}
+
+/** Deprecated TypeScript-only overview alias, now backed by the canonical service. */
+export async function adminStatisticOverview(c: C) {
+  return jsonOk(c, await statisticService(c).legacyOverview());
+}
+
+/** Deprecated TypeScript-only trend alias, now backed by the canonical service. */
+export async function adminStatisticTrend(c: C) {
+  const days = Number(c.req.query("days") ?? 7);
+  return jsonOk(c, await statisticService(c).legacyTrend(days));
+}
+
+/** Deprecated TypeScript-only rank alias, now backed by the canonical service. */
+export async function adminStatisticRank(c: C) {
+  const limit = Number(c.req.query("limit") ?? 10);
+  return jsonOk(c, await statisticService(c).legacyRank(limit));
 }
 
 /** GET /api/admin/new_push — 管理员消息通知数 */
@@ -50,77 +244,12 @@ export async function adminNewPush(c: C) {
  * query: uid (对方), limit
  */
 export async function chatHistory(c: C) {
-  const uid = c.get("uid");
-  if (!uid) return jsonFail(c, "请先登录");
-  const toUid = Number(c.req.query("uid") ?? 0);
-  const limit = Number(c.req.query("limit") ?? 50);
-  if (!toUid) return jsonFail(c, "参数错误");
-  const list = await c.get("container").storeServiceLogDao.getConversation(uid, toUid, limit);
-  return jsonOk(c, list);
+  return jsonRaw(c, 501, "管理员不能充当客服身份，请使用独立客服工作台");
 }
 
 /** GET /api/admin/service/sessions — 客服会话列表 (按用户聚合最近消息) */
 export async function chatSessions(c: C) {
-  const adminId = c.get("adminId") ?? 0;
-  if (!adminId) return jsonFail(c, "请先登录");
-  const container = c.get("container");
-  const { sql, desc } = await import("drizzle-orm");
-  const schema = await import("@/models/schema");
-  const storeServiceLog = schema.storeServiceLog;
-  const userTable = schema.user;
-
-  // 最近 30 条消息按对方 uid 去重, 取每个会话的最新一条
-  const rows = await container.db
-    .select({
-      peerUid: sql<number>`CASE WHEN ${storeServiceLog.uid} = ${adminId} THEN ${storeServiceLog.toUid} ELSE ${storeServiceLog.uid} END`,
-      msn: storeServiceLog.msn,
-      addTime: storeServiceLog.addTime,
-      type: storeServiceLog.type,
-    })
-    .from(storeServiceLog)
-    .where(
-      sql`${storeServiceLog.uid} = ${adminId} OR ${storeServiceLog.toUid} = ${adminId} OR ${storeServiceLog.toUid} = 0`,
-    )
-    .orderBy(desc(storeServiceLog.addTime))
-    .limit(100);
-
-  // 按 peerUid 保留最新一条
-  const sessionsMap = new Map<number, { peerUid: number; msn: string; addTime: number; unread: number }>();
-  for (const row of rows) {
-    if (!sessionsMap.has(row.peerUid)) {
-      sessionsMap.set(row.peerUid, {
-        peerUid: row.peerUid,
-        msn: row.msn,
-        addTime: row.addTime,
-        unread: row.type === 0 ? 1 : 0,
-      });
-    } else if (row.type === 0) {
-      const s = sessionsMap.get(row.peerUid)!;
-      s.unread += 1;
-    }
-  }
-
-  // 补用户昵称
-  const sessions = [...sessionsMap.values()].sort((a, b) => b.addTime - a.addTime).slice(0, 20);
-  const peers = sessions.map((s) => s.peerUid);
-  let userMap = new Map<number, { nickname: string; avatar: string; phone: string }>();
-  if (peers.length) {
-    const users = await container.db
-      .select({ uid: userTable.uid, nickname: userTable.nickname, avatar: userTable.avatar, phone: userTable.phone })
-      .from(userTable)
-      .where(sql`${userTable.uid} IN (${sql.join(peers, sql`,` )})`);
-    userMap = new Map(users.map((u) => [u.uid, { nickname: u.nickname, avatar: u.avatar, phone: u.phone }]));
-  }
-
-  return jsonOk(
-    c,
-    sessions.map((s) => ({
-      ...s,
-      nickname: userMap.get(s.peerUid)?.nickname ?? `用户${s.peerUid}`,
-      avatar: userMap.get(s.peerUid)?.avatar ?? "",
-      phone: userMap.get(s.peerUid)?.phone ?? "",
-    })),
-  );
+  return jsonRaw(c, 501, "管理员不能读取客服私有会话，请使用独立客服工作台");
 }
 
 /**
@@ -128,86 +257,20 @@ export async function chatSessions(c: C) {
  *
  * 对应 PHP swoole websocket 入口。
  * 通过 Durable Object (ChatRoomDO) 处理。
- * query: uid, type (1=user 2=kefu), to_uid
+ * query: type (1=user 2=kefu), to_uid。uid 只能来自已验证 token。
  */
 export async function wsUpgrade(c: C): Promise<Response> {
-  const url = new URL(c.req.url);
-  const uid = url.searchParams.get("uid") ?? "0";
-  const type = url.searchParams.get("type") ?? "1";
-  const toUid = url.searchParams.get("to_uid") ?? "0";
-
-  // 路由到 ChatRoomDO (单例, 全部连接共享一个 DO 实例)
-  // v2: 新实例名强制使用含持久化逻辑的新类 (旧实例保留旧代码不自动重启)
-  const id = c.env.CHAT_ROOM.idFromName("global-v2");
-  const stub = c.env.CHAT_ROOM.get(id);
-
-  // 转发 WebSocket 升级请求到 DO (必须保留原始 Upgrade/Connection 头, 否则 DO 返回 426)
-  const doUrl = new URL("https://internal/ws");
-  doUrl.searchParams.set("uid", uid);
-  doUrl.searchParams.set("type", type);
-  doUrl.searchParams.set("to_uid", toUid);
-
-  const headers = new Headers(c.req.raw.headers);
-  headers.delete("host");
-  const upstream = new Request(doUrl.toString(), {
-    method: "GET",
-    headers,
+  if (c.req.query("type") && c.req.query("type") !== "1") {
+    return jsonRaw(c, 403, "客服 WebSocket 必须使用独立客服 token");
+  }
+  return upgradeChatSocket(c, {
+    role: 1,
+    principalUid: c.get("uid"),
+    toUid: c.req.query("to_uid"),
   });
-  return stub.fetch(upstream);
-}
-
-/** POST /api/internal/chat_save — DO 回调: 持久化客服消息到 store_service_log */
-export async function chatSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    uid?: number;
-    to_uid?: number;
-    msn?: string;
-    msn_type?: number;
-    add_time?: number;
-    is_tourist?: number;
-  };
-  const container = c.get("container");
-  await container.storeServiceLogDao.save({
-    merId: 0,
-    uid: body.uid ?? 0,
-    toUid: body.to_uid ?? 0,
-    msn: body.msn ?? "",
-    isTourist: body.is_tourist ?? 0,
-    timeNode: 0,
-    addTime: body.add_time ?? Math.floor(Date.now() / 1000),
-    type: 0,
-    remind: 0,
-    msnType: body.msn_type ?? 1,
-  });
-  return c.json({ status: 200, msg: "ok", data: null });
 }
 
 /** POST /api/admin/service/send — 客服回复用户 (REST 持久化) */
 export async function serviceReply(c: C) {
-  const adminId = c.get("adminId") ?? 0;
-  if (!adminId) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as {
-    to_uid?: number;
-    msn?: string;
-    msn_type?: number;
-  };
-  const toUid = Number(body.to_uid ?? 0);
-  const msn = String(body.msn ?? "").trim();
-  if (!toUid) return jsonFail(c, "参数错误");
-  if (!msn) return jsonFail(c, "消息不能为空");
-  const container = c.get("container");
-  const now = Math.floor(Date.now() / 1000);
-  const row = await container.storeServiceLogDao.save({
-    merId: 0,
-    uid: adminId,
-    toUid,
-    msn,
-    isTourist: 0,
-    timeNode: 0,
-    addTime: now,
-    type: 0,
-    remind: 0,
-    msnType: body.msn_type ?? 1,
-  });
-  return jsonOk(c, { id: row.id, addTime: now });
+  return jsonRaw(c, 501, "管理员不能发送客服消息，请使用独立客服工作台");
 }

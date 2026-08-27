@@ -7,10 +7,168 @@
  *   - UserRelationServices (productRelation 收藏)
  *   - UserSignServices (sign 签到)
  */
-import { eq, sql } from "drizzle-orm";
-import { user as userTable } from "@/models/schema";
-import type { Container } from "@/lib/di";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
+import {
+  memberRight,
+  systemConfig,
+  systemSignReward,
+  user as userTable,
+  userBill,
+  userSign,
+} from "@/models/schema";
+import type { Container, DbClient } from "@/lib/di";
+import { withTx } from "@/lib/di";
+import { detectUserLevel } from "@/services/order/OrderRewardService";
+import {
+  calculateSignReward,
+  type SignRewardRule,
+} from "@/services/system/SystemSignRewardService";
+import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { ValidateException, NotFoundException } from "@/utils/errors";
+import { nextContinuousSignDays, signDayWindow, type SignDayWindow } from "@/utils/sign";
+
+const SIGN_LOCK_NAMESPACE = 731_623;
+const SIGN_CONFIG_KEYS = [
+  "sign_status",
+  "sign_in_switch",
+  "sign_mode",
+  "sign_give_point",
+  "sign_in_integral",
+  "sign_give_exp",
+  "member_func_status",
+  "member_card_status",
+] as const;
+
+interface SignStats {
+  signedToday: boolean;
+  signedYesterday: boolean;
+  cumulativeDays: number;
+}
+
+interface SignConfig {
+  enabled: boolean;
+  signMode: number;
+  basePoint: number;
+  baseExp: number;
+  memberFunctionEnabled: boolean;
+  memberCardEnabled: boolean;
+}
+
+function assertUid(uid: number): void {
+  if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("用户ID错误");
+}
+
+function pickConfig(
+  values: Readonly<Record<string, string>>,
+  primary: string,
+  alias?: string,
+): string | undefined {
+  if (Object.prototype.hasOwnProperty.call(values, primary)) return values[primary];
+  return alias && Object.prototype.hasOwnProperty.call(values, alias) ? values[alias] : undefined;
+}
+
+function nonNegativeConfig(value: string | undefined, fallback: number): number {
+  const parsed = parseConfigInteger(value, fallback);
+  return parsed >= 0 && parsed <= 1_000_000 ? parsed : fallback;
+}
+
+function decimalToHundredths(value: string | number): number {
+  const normalized = normalizeConfigScalar(String(value));
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) throw new Error("用户经验格式无效");
+  const [whole, fraction = ""] = normalized.split(".");
+  const units = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+  if (!Number.isSafeInteger(units)) throw new Error("用户经验超出安全范围");
+  return units;
+}
+
+function hundredthsToDecimal(value: number): string {
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error("用户经验超出安全范围");
+  return `${Math.floor(value / 100)}.${String(value % 100).padStart(2, "0")}`;
+}
+
+async function getSignStats(db: DbClient, uid: number, window: SignDayWindow): Promise<SignStats> {
+  const rows = await db
+    .select({
+      signedToday: sql<boolean>`COUNT(*) FILTER (
+        WHERE ${userSign.addTime} >= ${window.todayStart}
+          AND ${userSign.addTime} < ${window.tomorrowStart}
+      ) > 0`,
+      signedYesterday: sql<boolean>`COUNT(*) FILTER (
+        WHERE ${userSign.addTime} >= ${window.yesterdayStart}
+          AND ${userSign.addTime} < ${window.todayStart}
+      ) > 0`,
+      cumulativeDays: sql<number>`COUNT(*)::int`,
+    })
+    .from(userSign)
+    .where(eq(userSign.uid, uid));
+  return rows[0] ?? { signedToday: false, signedYesterday: false, cumulativeDays: 0 };
+}
+
+async function loadSignConfig(db: DbClient): Promise<SignConfig> {
+  const rows = await db
+    .select({ menuName: systemConfig.menuName, value: systemConfig.value })
+    .from(systemConfig)
+    .where(
+      and(
+        eq(systemConfig.isStore, 0),
+        inArray(systemConfig.menuName, [...SIGN_CONFIG_KEYS]),
+      ),
+    )
+    .orderBy(asc(systemConfig.id));
+  const values: Record<string, string> = {};
+  for (const row of rows) values[row.menuName] = row.value;
+  const rawMode = parseConfigInteger(values.sign_mode, -1);
+  return {
+    enabled: parseConfigInteger(pickConfig(values, "sign_status", "sign_in_switch"), 1) !== 0,
+    signMode: rawMode === 0 || rawMode === 1 ? rawMode : -1,
+    basePoint: nonNegativeConfig(
+      pickConfig(values, "sign_give_point", "sign_in_integral"),
+      0,
+    ),
+    baseExp: nonNegativeConfig(values.sign_give_exp, 0),
+    memberFunctionEnabled: parseConfigInteger(values.member_func_status, 1) === 1,
+    memberCardEnabled: parseConfigInteger(values.member_card_status, 1) === 1,
+  };
+}
+
+async function calculateConfiguredSignReward(
+  db: DbClient,
+  account: Pick<typeof userTable.$inferSelect, "isMoneyLevel" | "levelStatus">,
+  config: SignConfig,
+  continuousDays: number,
+  cumulativeDays: number,
+) {
+  const rules = await db
+    .select()
+    .from(systemSignReward)
+    .where(
+      or(
+        and(eq(systemSignReward.type, 0), eq(systemSignReward.days, continuousDays)),
+        and(eq(systemSignReward.type, 1), eq(systemSignReward.days, cumulativeDays)),
+      ),
+    )
+    .orderBy(asc(systemSignReward.id));
+  let pointMultiplier = 1;
+  if (config.memberCardEnabled && account.isMoneyLevel > 0) {
+    const rights = await db
+      .select({ number: memberRight.number })
+      .from(memberRight)
+      .where(and(eq(memberRight.rightType, "sign"), eq(memberRight.status, 1)))
+      .orderBy(asc(memberRight.id))
+      .limit(1);
+    if (rights[0]?.number && rights[0].number > 0) pointMultiplier = rights[0].number;
+  }
+  return calculateSignReward({
+    basePoint: config.basePoint,
+    baseExp: config.baseExp,
+    continuousDays,
+    cumulativeDays,
+    rules: rules as SignRewardRule[],
+    memberFunctionEnabled: config.memberFunctionEnabled,
+    levelActive: account.levelStatus === 1,
+    pointMultiplier,
+  });
+}
 
 export class UserCenterService {
   constructor(private readonly container: Container) {}
@@ -118,64 +276,165 @@ export class UserCenterService {
    *   4. 基础积分 + 连续/累计奖励 (从 system_config 读)
    *   5. 记 sign 流水 + 加积分
    */
-  async sign(uid: number): Promise<{ point: number; exp: number; continuousDays: number }> {
-    const c = this.container;
+  async sign(uid: number): Promise<{
+    point: number;
+    exp: number;
+    sign_point: number;
+    sign_exp: number;
+    continuousDays: number;
+    cumulativeDays: number;
+  }> {
+    assertUid(uid);
+    const now = Math.floor(Date.now() / 1000);
+    const window = signDayWindow(now);
+    return withTx(this.container, async (tx) => {
+      // The source has no one-sign-per-day unique key. Serialize per user and
+      // then lock the account row so concurrent requests cannot double-award.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${SIGN_LOCK_NAMESPACE}, ${uid})`);
+      const accounts = await tx
+        .select()
+        .from(userTable)
+        .where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0)))
+        .limit(1)
+        .for("update");
+      const account = accounts[0];
+      if (!account) throw new NotFoundException("用户不存在");
 
-    // 1. 今日已签到
-    if (await c.userSignDao.isSignedToday(uid)) {
-      throw new ValidateException("今日已签到");
-    }
-
-    // 2. 连续天数
-    const signedYesterday = await c.userSignDao.isSignedYesterday(uid);
-    const user = await c.userDao.findForAuth(uid);
-    if (!user) throw new NotFoundException("用户不存在");
-
-    let signNum = signedYesterday ? (user.signNum ?? 0) + 1 : 1;
-
-    // 3. 基础积分 (从 system_config 读, 默认 0)
-    // M5 简化: 基础积分固定 + 连续奖励递增
-    let point = 1; // 基础 1 积分
-    let exp = 0;
-    // 连续签到奖励 (简化版: 每 7 天翻倍)
-    if (signNum % 7 === 0) point += 5;
-
-    const cumulativeDays = (await c.userSignDao.getCumulativeDays(uid)) + 1;
-    void cumulativeDays; // M5 预留: 返回给前端展示累计天数
-
-    // 4. 事务: 写 sign 记录 + 加积分 + 更新 sign_num
-    const newBalance = user.integral + point;
-    await c.db.transaction(async (tx) => {
-      await tx.insert((await import("@/models/schema")).userSign).values({
-        uid,
-        title: `连续签到第${signNum}天`,
-        number: point,
-        balance: newBalance,
-        expNum: exp,
-        expBalance: Number(user.exp) + exp,
-        addTime: Math.floor(Date.now() / 1000),
+      const stats = await getSignStats(tx, uid, window);
+      if (stats.signedToday) throw new ValidateException("今日已签到");
+      const config = await loadSignConfig(tx);
+      if (!config.enabled) throw new ValidateException("签到功能未开启");
+      const continuousDays = nextContinuousSignDays({
+        currentDays: account.signNum,
+        signedYesterday: stats.signedYesterday,
+        signMode: config.signMode,
+        weekday: window.weekday,
+        dayOfMonth: window.dayOfMonth,
       });
+      // The PHP service queried the pre-insert count and was off by one. Use
+      // the day being awarded so a configured day-1 cumulative reward fires.
+      const cumulativeDays = stats.cumulativeDays + 1;
+      const reward = await calculateConfiguredSignReward(
+        tx,
+        account,
+        config,
+        continuousDays,
+        cumulativeDays,
+      );
+      const nextIntegral = account.integral + reward.point;
+      if (!Number.isSafeInteger(nextIntegral)) throw new ValidateException("用户积分超出安全范围");
+      const currentExp = decimalToHundredths(account.exp);
+      const nextExp = currentExp + reward.exp * 100;
+      if (!Number.isSafeInteger(nextExp)) throw new ValidateException("用户经验超出安全范围");
+      const expBalance = hundredthsToDecimal(nextExp);
+      const title = "签到奖励";
 
+      await tx.insert(userSign).values({
+        uid,
+        title,
+        number: reward.point,
+        balance: nextIntegral,
+        expNum: reward.exp,
+        expBalance: Math.trunc(nextExp / 100),
+        addTime: now,
+      });
+      const billRows: Array<typeof userBill.$inferInsert> = [];
+      if (reward.point > 0) {
+        billRows.push({
+          uid,
+          linkId: "0",
+          pm: 1,
+          title,
+          category: "integral",
+          type: "sign",
+          eventKey: "sign",
+          number: String(reward.point),
+          balance: String(nextIntegral),
+          mark: title,
+          status: 1,
+          addTime: now,
+        });
+      }
+      if (reward.exp > 0) {
+        billRows.push({
+          uid,
+          linkId: "0",
+          pm: 1,
+          title,
+          category: "exp",
+          type: "sign",
+          eventKey: "sign",
+          number: String(reward.exp),
+          balance: expBalance,
+          mark: title,
+          status: 1,
+          addTime: now,
+        });
+      }
+      if (billRows.length) await tx.insert(userBill).values(billRows);
       await tx
         .update(userTable)
-        .set({
-          integral: sql`integral + ${point}`,
-          signNum,
-        })
+        .set(reward.exp > 0
+          ? { integral: nextIntegral, exp: expBalance, signNum: continuousDays }
+          : { integral: nextIntegral, signNum: continuousDays })
         .where(eq(userTable.uid, uid));
+      if (reward.exp > 0) {
+        await detectUserLevel(tx, uid, account.nickname, nextExp, now);
+      }
+      return {
+        point: reward.point,
+        exp: reward.exp,
+        sign_point: reward.point,
+        sign_exp: reward.exp,
+        continuousDays,
+        cumulativeDays,
+      };
     });
-
-    return { point, exp, continuousDays: signNum };
   }
 
   /** 签到状态 (今日是否签、连续天数) */
-  async signStatus(uid: number): Promise<{ signedToday: boolean; continuousDays: number; cumulativeDays: number }> {
-    const c = this.container;
-    const user = await c.userDao.findForAuth(uid);
+  async signStatus(uid: number): Promise<{
+    signedToday: boolean;
+    continuousDays: number;
+    cumulativeDays: number;
+    integral: number;
+    exp: number;
+    enabled: boolean;
+  }> {
+    assertUid(uid);
+    const account = await this.container.userDao.findForAuth(uid);
+    if (!account) throw new NotFoundException("用户不存在");
+    const window = signDayWindow();
+    const [stats, config] = await Promise.all([
+      getSignStats(this.container.db, uid, window),
+      loadSignConfig(this.container.db),
+    ]);
+    const continuousDays = stats.signedToday
+      ? account.signNum
+      : nextContinuousSignDays({
+          currentDays: account.signNum,
+          signedYesterday: stats.signedYesterday,
+          signMode: config.signMode,
+          weekday: window.weekday,
+          dayOfMonth: window.dayOfMonth,
+        });
+    const cumulativeDays = stats.signedToday
+      ? stats.cumulativeDays
+      : stats.cumulativeDays + 1;
+    const reward = await calculateConfiguredSignReward(
+      this.container.db,
+      account,
+      config,
+      continuousDays,
+      cumulativeDays,
+    );
     return {
-      signedToday: await c.userSignDao.isSignedToday(uid),
-      continuousDays: user?.signNum ?? 0,
-      cumulativeDays: await c.userSignDao.getCumulativeDays(uid),
+      signedToday: stats.signedToday,
+      continuousDays: account.signNum,
+      cumulativeDays: stats.cumulativeDays,
+      integral: reward.point,
+      exp: reward.exp,
+      enabled: config.enabled,
     };
   }
 }

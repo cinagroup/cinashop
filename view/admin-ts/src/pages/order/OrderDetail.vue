@@ -27,6 +27,29 @@
         </el-descriptions>
       </el-card>
 
+      <el-card
+        v-if="canAdminWriteoff"
+        class="section"
+        shadow="never"
+      >
+        <template #header>{{ order.deliveryType === "send" ? "送达核销" : "门店核销" }}</template>
+        <div class="writeoff-entry">
+          <el-input
+            v-model="writeoffCode"
+            maxlength="12"
+            placeholder="扫描或输入客户出示的12位核销码"
+            @keyup.enter="previewWriteoff"
+          />
+          <el-button type="primary" :loading="writeoffLoading" @click="previewWriteoff">校验核销码</el-button>
+        </div>
+        <el-alert
+          title="管理端核销会直接进入订单结算；请当面确认客户、履约人员和商品后操作。"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
+      </el-card>
+
       <!-- 金额信息 -->
       <el-card class="section" shadow="never">
         <template #header>金额信息</template>
@@ -70,18 +93,67 @@
       </el-card>
     </template>
     <el-empty v-else-if="!loading" description="订单不存在" />
+
+    <el-dialog v-model="writeoffVisible" title="确认订单核销" width="min(720px, 94vw)" destroy-on-close>
+      <template v-if="writeoffPreview">
+        <el-descriptions :column="2" border class="writeoff-summary">
+          <el-descriptions-item label="订单号">{{ writeoffPreview.order_id }}</el-descriptions-item>
+          <el-descriptions-item label="客户">{{ writeoffPreview.real_name }} {{ writeoffPreview.user_phone }}</el-descriptions-item>
+        </el-descriptions>
+        <el-table :data="writeoffPreview.cart_info" border>
+          <el-table-column label="商品" min-width="220">
+            <template #default="{ row }">{{ writeoffProductName(row.cart_info) }}</template>
+          </el-table-column>
+          <el-table-column label="总次数" prop="write_times" width="90" />
+          <el-table-column label="剩余" prop="write_surplus_times" width="90" />
+          <el-table-column label="本次核销" width="170">
+            <template #default="{ row }">
+              <el-input-number
+                v-model="writeoffQuantities[row.id]"
+                :min="0"
+                :max="row.write_surplus_times"
+                :disabled="row.write_surplus_times <= 0"
+              />
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <template #footer>
+        <el-button @click="writeoffVisible = false">取消</el-button>
+        <el-button :loading="writeoffLoading" @click="executeWriteoff(false)">核销选定数量</el-button>
+        <el-button type="danger" :loading="writeoffLoading" @click="executeWriteoff(true)">全部核销</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { apiAdminOrderDetail } from "@/api/order";
+import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  apiAdminOrderDetail,
+  apiAdminWriteoff,
+  apiAdminWriteoffInfo,
+  type AdminWriteoffPreview,
+} from "@/api/order";
 
 const route = useRoute();
 // 后端返回 camelCase 字段 (drizzle 映射)
 const order = ref<Record<string, any> | null>(null);
 const loading = ref(true);
+const writeoffCode = ref("");
+const writeoffVisible = ref(false);
+const writeoffLoading = ref(false);
+const writeoffPreview = ref<AdminWriteoffPreview | null>(null);
+const writeoffQuantities = ref<Record<number, number>>({});
+const canAdminWriteoff = computed(() => Boolean(
+  order.value?.paid === 1 &&
+  (
+    (order.value.shippingType === 2 && [0, 5].includes(order.value.status)) ||
+    (order.value.deliveryType === "send" && [1, 5].includes(order.value.status))
+  ),
+));
 
 const cartInfo = computed(() => {
   const ci = (order.value as any)?.cartInfo;
@@ -92,6 +164,10 @@ const statusText = computed(() => {
   const o = order.value;
   if (!o) return "";
   if (o.paid === 0) return "待支付";
+  if (o.shippingType === 2 && o.status === 0) return "待到店核销";
+  if (o.shippingType === 2 && o.status === 5) return "部分核销";
+  if (o.deliveryType === "send" && o.status === 1) return "配送中，待送达核销";
+  if (o.deliveryType === "send" && o.status === 5) return "部分送达核销";
   switch (o.status) {
     case 0: return "待发货";
     case 1: return "待收货";
@@ -116,10 +192,74 @@ function formatTime(ts: number): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-onMounted(async () => {
-  const orderId = route.params.orderId as string;
+function writeoffProductName(snapshot: Record<string, unknown> | null): string {
+  if (!snapshot || typeof snapshot !== "object") return "商品";
+  const product = snapshot.product;
+  if (!product || typeof product !== "object" || Array.isArray(product)) return "商品";
+  const value = (product as Record<string, unknown>).storeName;
+  return typeof value === "string" && value ? value : "商品";
+}
+
+async function previewWriteoff() {
+  const code = writeoffCode.value.trim();
+  if (!/^\d{12}$/.test(code)) return ElMessage.warning("请输入12位核销码");
+  writeoffLoading.value = true;
   try {
-    order.value = await apiAdminOrderDetail(orderId);
+    const preview = await apiAdminWriteoffInfo(code);
+    if (preview.order_id !== order.value?.orderId) {
+      return ElMessage.error("核销码不属于当前订单");
+    }
+    writeoffPreview.value = preview;
+    writeoffQuantities.value = Object.fromEntries(
+      preview.cart_info.map((item) => [item.id, item.write_surplus_times]),
+    );
+    writeoffVisible.value = true;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "核销码校验失败");
+  } finally {
+    writeoffLoading.value = false;
+  }
+}
+
+async function executeWriteoff(all: boolean) {
+  if (!writeoffPreview.value || writeoffLoading.value) return;
+  const items = all
+    ? undefined
+    : writeoffPreview.value.cart_info
+        .map((item) => ({ order_cart_id: item.id, quantity: Number(writeoffQuantities.value[item.id] ?? 0) }))
+        .filter((item) => item.quantity > 0);
+  if (!all && !items?.length) return ElMessage.warning("请选择本次核销数量");
+  try {
+    await ElMessageBox.confirm(
+      all ? "确认核销该订单全部剩余商品并进入结算？" : "确认核销选定商品数量？",
+      "不可撤销操作",
+      { type: "warning", confirmButtonText: "确认核销" },
+    );
+  } catch {
+    return;
+  }
+  writeoffLoading.value = true;
+  try {
+    const result = await apiAdminWriteoff(writeoffCode.value.trim(), items);
+    ElMessage.success(result.completed ? "订单已全部核销" : "部分核销成功，客户核销码已更新");
+    writeoffVisible.value = false;
+    writeoffCode.value = "";
+    await loadOrder();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "核销失败");
+  } finally {
+    writeoffLoading.value = false;
+  }
+}
+
+async function loadOrder() {
+  const orderId = route.params.orderId as string;
+  order.value = await apiAdminOrderDetail(orderId);
+}
+
+onMounted(async () => {
+  try {
+    await loadOrder();
   } catch (e) {
     console.error("订单详情加载失败", e);
   } finally {
@@ -156,5 +296,16 @@ onMounted(async () => {
   height: 48px;
   border-radius: 6px;
   flex-shrink: 0;
+}
+
+.writeoff-entry {
+  display: flex;
+  gap: 12px;
+  max-width: 620px;
+  margin-bottom: 14px;
+}
+
+.writeoff-summary {
+  margin-bottom: 16px;
 }
 </style>

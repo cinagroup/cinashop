@@ -6,6 +6,7 @@
 import type { Context } from "hono";
 import { jsonOk } from "@/utils/json";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { LegacyContentService } from "@/services/system/LegacyContentService";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
@@ -93,9 +94,16 @@ export async function searchWords(c: C) {
 /** GET /api/user_agreement/:type — 用户协议 (type: 1=用户协议 2=隐私政策) */
 export async function getUserAgreement(c: C) {
   const type = c.req.param("type") ?? "1";
-  const svc = new SystemConfigService(c.get("container"), c.env);
-  // 协议内容存系统配置
-  const key = type === "2" ? "privacy_policy" : "user_agreement";
-  const content = await svc.get(key);
-  return jsonOk(c, { content, type: Number(type) });
+  const content = await new LegacyContentService(c.get("container")).agreement(type);
+  return jsonOk(c, { content, type });
+}
+
+/** GET /api/get_open_adv — PHP-compatible splash advertisement. */
+export async function getOpenAdv(c: C) {
+  return jsonOk(c, await new LegacyContentService(c.get("container")).openAdv());
+}
+
+/** GET /api/user/service/get_adv — PHP-compatible customer-service content. */
+export async function getKfAdv(c: C) {
+  return jsonOk(c, { content: await new LegacyContentService(c.get("container")).kfAdv() });
 }

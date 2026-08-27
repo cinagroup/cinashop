@@ -15,8 +15,17 @@ export function apiCartAdd(params: {
   unique: string;
   cartNum: number;
   type?: number;
+  activityId?: number;
 }): Promise<{ id: number; cartNum: number }> {
   return getData(request.post<{ id: number; cartNum: number }>("/cart/add", params));
+}
+
+/** 一次创建完整套餐的多行立即购买购物车。 */
+export function apiDiscountCartAdd(params: {
+  discountId: number;
+  discountInfos: Array<{ id: number; product_id: number; unique: string }>;
+}): Promise<{ cartId: number[]; cartIds: number[]; cartNum: number; discountId: number }> {
+  return getData(request.post("/cart/add", { ...params, type: 5, new: 1 }));
 }
 
 /** 修改数量 (POST /api/cart/num) */

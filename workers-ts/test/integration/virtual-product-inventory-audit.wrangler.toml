@@ -1,0 +1,9 @@
+name = "cinashop-virtual-inventory-audit-template"
+main = "VirtualProductInventoryAuditWorker.ts"
+compatibility_date = "2026-08-13"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "9748c294e21c49a99579c9cef70102e0"

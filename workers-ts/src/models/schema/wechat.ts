@@ -49,5 +49,6 @@ export const wechatUser = pgTable(
     uniqueIndex("wu_openid_uq").on(t.openid),
     index("wu_unionid").on(t.unionid),
     index("wu_uid").on(t.uid),
+    index("wu_uid_type_latest").on(t.uid, t.userType, t.id),
   ],
 );

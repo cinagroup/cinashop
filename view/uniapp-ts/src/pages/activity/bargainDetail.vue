@@ -66,7 +66,7 @@
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";
-import { apiCartAdd, apiOrderCreate, apiAddressList } from "@/api/order";
+import { apiCartAdd } from "@/api/order";
 import { useAuthStore } from "@/stores/auth";
 
 const bargain = ref<any>(null);
@@ -132,30 +132,16 @@ async function buyNow() {
   if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
   if (!myBargain.value || myBargain.value.status !== 3) return;
   try {
-    const addrs = await apiAddressList().catch(() => [] as any[]);
-    const addr = addrs.find((a: any) => a.is_default === 1) ?? addrs[0];
-    if (!addr) {
-      uni.showToast({ title: "请先添加收货地址", icon: "none" });
-      uni.navigateTo({ url: "/pages/user/address" });
-      return;
-    }
     const cart = await apiCartAdd({
       productId: bargain.value.productId,
       unique: "sku00001",
       cartNum: 1,
-    });
-    const key = `bargain-${Date.now()}`;
-    const order = await apiOrderCreate(key, {
-      cartIds: [cart.id],
-      realName: (addr as any).real_name ?? (addr as any).realName,
-      userPhone: (addr as any).phone,
-      province: (addr as any).province ?? "",
-      userAddress: `${(addr as any).city ?? ""}${(addr as any).district ?? ""}${(addr as any).detail ?? ""}`,
       type: 2,
-      bargainUserId: myBargain.value.id,
+      activityId: bargainId.value,
     });
-    uni.showToast({ title: "下单成功", icon: "success" });
-    setTimeout(() => uni.redirectTo({ url: `/pages/order/detail?orderId=${order.orderId}` }), 800);
+    uni.navigateTo({
+      url: `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=2&bargainUserId=${myBargain.value.id}`,
+    });
   } catch (e) {
     uni.showToast({ title: e instanceof Error ? e.message : "购买失败", icon: "none" });
   }

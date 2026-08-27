@@ -5,7 +5,7 @@
  *
  * 核心: SKU 行查询 (库存/价格/销量权威来源), 聚合查询 (min/max/sum)。
  */
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
 import { storeProductAttrValue } from "@/models/schema";
 
@@ -27,23 +27,30 @@ export class StoreProductAttrValueDao extends BaseDao<typeof storeProductAttrVal
       );
   }
 
-  /** 按 unique 取单行 (cart 标识) */
-  async getByUnique(unique: string) {
+  /** 按 unique 取单行；活动链路必须同时传 type/productId，避免跨活动碰撞。 */
+  async getByUnique(unique: string, type?: number, productId?: number) {
+    const predicates = [eq(storeProductAttrValue.unique, unique)];
+    if (type !== undefined) predicates.push(eq(storeProductAttrValue.type, type));
+    if (productId !== undefined) predicates.push(eq(storeProductAttrValue.productId, productId));
     const rows = await this.db
       .select()
       .from(storeProductAttrValue)
-      .where(eq(storeProductAttrValue.unique, unique))
+      .where(and(...predicates))
       .limit(1);
     return rows[0] ?? null;
   }
 
-  /** 按 suk 取单行 */
-  async getBySuk(productId: number, suk: string) {
+  /** 按 product/type/suk 取单行；默认只读普通商品 SKU。 */
+  async getBySuk(productId: number, suk: string, type = 0) {
     const rows = await this.db
       .select()
       .from(storeProductAttrValue)
       .where(
-        sql`${storeProductAttrValue.productId} = ${productId} AND ${storeProductAttrValue.suk} = ${suk}`,
+        and(
+          eq(storeProductAttrValue.productId, productId),
+          eq(storeProductAttrValue.type, type),
+          eq(storeProductAttrValue.suk, suk),
+        ),
       )
       .limit(1);
     return rows[0] ?? null;

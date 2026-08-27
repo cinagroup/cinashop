@@ -3,6 +3,37 @@
  */
 import request, { getData } from "@/utils/request";
 
+export interface DiscountPackageSku {
+  id: number;
+  unique: string;
+  suk: string;
+  price: string;
+  stock: number;
+  image?: string;
+  product_price: string;
+}
+
+export interface DiscountPackageProduct {
+  id: number;
+  product_id: number;
+  title: string;
+  image: string;
+  type: number;
+  productValue: DiscountPackageSku[];
+}
+
+export interface DiscountPackage {
+  id: number;
+  title: string;
+  image: string;
+  type: number;
+  freeShipping: number;
+  isSupportRefund: number;
+  min_price: string;
+  max_discounts_price: string;
+  products: DiscountPackageProduct[];
+}
+
 /** 可领取优惠券 (GET /api/coupons) */
 export function apiCoupons(): Promise<unknown[]> {
   return getData(request.get<unknown[]>("/coupons"));
@@ -68,15 +99,12 @@ export function apiCombinationPink(id: number): Promise<unknown> {
   return getData(request.get<unknown>(`/combination/pink/${id}`));
 }
 
-/** 加入拼团 (POST /api/pink) */
-export function apiJoinPink(
-  data: { combinationId: number; productId: number; orderId: string },
-): Promise<{ pinkId: number; isLeader: boolean }> {
-  return getData(
-    request.post<{ pinkId: number; isLeader: boolean }>("/pink", {
-      combination_id: data.combinationId,
-      product_id: data.productId,
-      order_id: data.orderId,
-    }),
-  );
+/** 拼团成功人数与头像 (GET /api/pink) */
+export function apiPinkStats(type = 1): Promise<{ pink_count: number; avatars: string[] }> {
+  return getData(request.get<{ pink_count: number; avatars: string[] }>("/pink", { params: { type } }));
+}
+
+/** 商品可购买的固定/任选搭配套餐。 */
+export function apiDiscountPackages(productId: number): Promise<DiscountPackage[]> {
+  return getData(request.get<DiscountPackage[]>(`/store_discounts/list/${productId}`));
 }

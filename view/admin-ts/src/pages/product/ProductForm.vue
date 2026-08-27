@@ -52,7 +52,9 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="submitting" @click="submit">保存</el-button>
+          <el-button v-if="!isEdit" :loading="draftSaving" @click="clearDraft">删除草稿</el-button>
           <el-button @click="$router.back()">取消</el-button>
+          <el-text v-if="!isEdit && draftStatus" type="info">{{ draftStatus }}</el-text>
         </el-form-item>
       </el-form>
     </el-card>
@@ -60,19 +62,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import {
   apiAdminProductCreate,
   apiAdminProductUpdate,
   apiAdminProductDetail,
+  apiAdminProductDraft,
+  apiAdminProductDraftDelete,
+  apiAdminProductDraftSave,
 } from "@/api/product";
 import { apiAdminCategoryList, type CategoryItem } from "@/api/category";
 
 const route = useRoute();
 const router = useRouter();
 const submitting = ref(false);
+const draftSaving = ref(false);
+const draftStatus = ref("");
+const draftReady = ref(false);
+let draftTimer: ReturnType<typeof setTimeout> | null = null;
 const categories = ref<CategoryItem[]>([]);
 
 const isEdit = computed(() => !!route.params.id);
@@ -102,6 +111,9 @@ async function submit() {
       await apiAdminProductUpdate(Number(route.params.id), { ...form });
     } else {
       await apiAdminProductCreate({ ...form });
+      draftReady.value = false;
+      if (draftTimer) clearTimeout(draftTimer);
+      await apiAdminProductDraftDelete().catch(() => null);
     }
     ElMessage.success("保存成功");
     router.push("/product");
@@ -111,6 +123,50 @@ async function submit() {
     submitting.value = false;
   }
 }
+
+function restoreDraft(value: Record<string, unknown>) {
+  const stringFields = ["store_name", "store_info", "image", "unit_name", "keyword", "cate_id"] as const;
+  const numberFields = ["price", "ot_price", "stock", "sort", "is_vip", "vip_price", "is_show"] as const;
+  for (const key of stringFields) {
+    if (typeof value[key] === "string") form[key] = value[key];
+  }
+  for (const key of numberFields) {
+    const parsed = Number(value[key]);
+    if (Number.isFinite(parsed)) form[key] = parsed;
+  }
+}
+
+async function saveDraft() {
+  if (isEdit.value || !draftReady.value) return;
+  draftSaving.value = true;
+  try {
+    await apiAdminProductDraftSave({ ...form });
+    draftStatus.value = `草稿已自动保存 ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  } catch {
+    draftStatus.value = "草稿自动保存失败";
+  } finally {
+    draftSaving.value = false;
+  }
+}
+
+async function clearDraft() {
+  if (draftTimer) clearTimeout(draftTimer);
+  draftSaving.value = true;
+  try {
+    await apiAdminProductDraftDelete();
+    draftStatus.value = "服务器草稿已删除，当前表单内容保留";
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "删除草稿失败");
+  } finally {
+    draftSaving.value = false;
+  }
+}
+
+watch(form, () => {
+  if (isEdit.value || !draftReady.value) return;
+  if (draftTimer) clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => void saveDraft(), 1_000);
+}, { deep: true });
 
 onMounted(async () => {
   try {
@@ -137,7 +193,23 @@ onMounted(async () => {
     } catch (e) {
       ElMessage.error(e instanceof Error ? e.message : "加载失败");
     }
+  } else {
+    try {
+      const cached = await apiAdminProductDraft();
+      if (!Array.isArray(cached.info) && Object.keys(cached.info).length) {
+        restoreDraft(cached.info);
+        draftStatus.value = "已恢复服务器草稿";
+      }
+    } catch {
+      draftStatus.value = "草稿读取失败";
+    } finally {
+      draftReady.value = true;
+    }
   }
+});
+
+onBeforeUnmount(() => {
+  if (draftTimer) clearTimeout(draftTimer);
 });
 </script>
 

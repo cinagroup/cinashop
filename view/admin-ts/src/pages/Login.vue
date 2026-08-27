@@ -30,7 +30,7 @@
           登录
         </el-button>
       </el-form>
-      <p class="hint">默认账号: admin / crmeb.com</p>
+      <p class="hint">管理员账号由部署负责人安全初始化</p>
     </div>
   </div>
 </template>

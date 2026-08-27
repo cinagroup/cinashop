@@ -21,6 +21,9 @@
     <!-- 工具栏 -->
     <el-card shadow="never">
       <div class="toolbar">
+        <el-button type="warning" plain @click="$router.push('/product/virtual-alerts')">
+          卡密预警
+        </el-button>
         <el-button type="primary" @click="$router.push('/product/create')">
           添加商品
         </el-button>
@@ -55,9 +58,17 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="260" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
+            <el-button
+              v-if="row.product_type === 1"
+              link
+              type="primary"
+              @click="$router.push(`/product/virtual/${row.id}`)"
+            >
+              卡密库存
+            </el-button>
+            <el-button v-if="row.product_type !== 1" link type="primary" @click="$router.push(`/product/edit/${row.id}`)">
               编辑
             </el-button>
             <el-button link :type="row.is_show === 1 ? 'warning' : 'success'" @click="toggleShow(row)">

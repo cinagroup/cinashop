@@ -38,7 +38,7 @@
             <el-table-column label="状态" width="80">
               <template #default="{ row }">
                 <el-tag :type="row.status === 1 ? 'success' : row.status === -1 ? 'danger' : 'warning'" size="small">
-                  {{ { 0: '冻结', 1: '有效', '-1': '无效' }[row.status] || '?' }}
+                  {{ brokerageStatusLabel(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -72,6 +72,16 @@ function formatTime(ts: number): string {
   const d = new Date(ts * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+const brokerageStatusLabels: Record<number, string> = {
+  [-1]: "无效",
+  0: "冻结",
+  1: "有效",
+};
+
+function brokerageStatusLabel(status: unknown): string {
+  return brokerageStatusLabels[Number(status)] ?? "?";
 }
 
 async function loadSpread(p = 1) {

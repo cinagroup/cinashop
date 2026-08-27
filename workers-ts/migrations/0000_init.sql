@@ -92,7 +92,10 @@ CREATE TABLE IF NOT EXISTS "system_config" (
 CREATE INDEX IF NOT EXISTS "system_config_menu_name_idx" ON "system_config" ("menu_name");
 CREATE INDEX IF NOT EXISTS "system_config_is_store_idx" ON "system_config" ("is_store");
 
--- 插入测试配置 (备案号, 可删)
-INSERT INTO "system_config" ("menu_name", "value", "info") VALUES
-  ('record_No', '京ICP备12345678号', '网站备案号')
-ON CONFLICT DO NOTHING;
+-- menu_name 只有普通索引；按全局作用域显式判重，避免重复执行时不断追加。
+INSERT INTO "system_config" ("menu_name", "value", "info")
+SELECT 'record_No', '京ICP备12345678号', '网站备案号'
+WHERE NOT EXISTS (
+  SELECT 1 FROM "system_config"
+  WHERE "menu_name" = 'record_No' AND "is_store" = 0
+);

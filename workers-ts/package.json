@@ -8,13 +8,23 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "types": "wrangler types worker-configuration.d.ts --env-interface WorkerBindings --include-runtime false",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "data:schema-audit": "tsx scripts/mysql-to-postgres.ts schema-audit",
+    "data:plan": "tsx scripts/mysql-to-postgres.ts plan",
+    "data:copy": "tsx scripts/mysql-to-postgres.ts copy",
+    "data:verify": "tsx scripts/mysql-to-postgres.ts verify",
+    "typecheck": "npm run typecheck:unit && npm run typecheck:runtime",
+    "typecheck:unit": "tsc --noEmit",
+    "typecheck:runtime": "tsc -p tsconfig.runtime-test.json --noEmit",
+    "test": "npm run test:unit && npm run test:runtime",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:runtime": "vitest run --config vitest.worker.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:runtime:watch": "vitest --config vitest.worker.config.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",
@@ -22,15 +32,19 @@
     "drizzle-orm": "^0.36.4",
     "hono": "^4.6.14",
     "jose": "^5.9.6",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241218.0",
+    "@cloudflare/vitest-pool-workers": "0.21.2",
+    "@cloudflare/workers-types": "^5.20260809.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^26.1.2",
     "drizzle-kit": "^0.30.1",
+    "mysql2": "3.23.2",
+    "tsx": "4.23.11",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
-    "wrangler": "^3.95.0"
+    "vitest": "^4.1.10",
+    "wrangler": "4.122.0"
   }
 }

@@ -15,12 +15,20 @@
  *     通过 SINGLE_DEVICE_LOGIN 配置开关。
  */
 import { DurableObject } from "cloudflare:workers";
+import {
+  advanceRateWindows,
+  type RateLimitDecision,
+  type RateLimitPolicy,
+  type RateWindow,
+} from "@/services/out/OutRateLimitPolicy";
 
 interface BucketState {
   token: string; // 当前有效 token
   tokenKey: string; // md5(token)
   exp: number; // 过期时间戳(秒)
 }
+
+const RATE_WINDOWS_KEY = "out-rate-windows";
 
 export class TokenBucketDO extends DurableObject {
   /**
@@ -52,8 +60,43 @@ export class TokenBucketDO extends DurableObject {
     await this.ctx.storage.delete("current");
   }
 
+  /**
+   * Atomically consume several fixed-window policies for one coordination
+   * subject (for example an Out account or one unauthenticated source IP).
+   * All counters live in one persisted object so a request can never consume
+   * only part of its account/IP policies.
+   */
+  async consumeRateLimit(
+    policies: RateLimitPolicy[],
+    windowSeconds: number,
+  ): Promise<RateLimitDecision> {
+    const now = Date.now();
+    const previous = await this.ctx.storage.get<Record<string, RateWindow>>(RATE_WINDOWS_KEY) ?? {};
+    const { windows, decision } = advanceRateWindows(previous, policies, now, windowSeconds);
+    await this.ctx.storage.put(RATE_WINDOWS_KEY, windows);
+    const alarm = await this.ctx.storage.getAlarm();
+    const nextReset = Math.min(...Object.values(windows).map((window) => window.resetAt));
+    if (alarm === null || alarm > nextReset) await this.ctx.storage.setAlarm(nextReset);
+    return decision;
+  }
+
   /** alarm 触发时清理过期状态 */
   override async alarm(): Promise<void> {
-    await this.ctx.storage.delete("current");
+    const now = Date.now();
+    const current = await this.ctx.storage.get<BucketState>("current");
+    const previous = await this.ctx.storage.get<Record<string, RateWindow>>(RATE_WINDOWS_KEY) ?? {};
+    const windows = Object.fromEntries(
+      Object.entries(previous).filter(([, window]) => window.resetAt > now),
+    ) as Record<string, RateWindow>;
+
+    if (current && current.exp * 1000 <= now) await this.ctx.storage.delete("current");
+    if (Object.keys(windows).length) await this.ctx.storage.put(RATE_WINDOWS_KEY, windows);
+    else if (Object.keys(previous).length) await this.ctx.storage.delete(RATE_WINDOWS_KEY);
+
+    const nextTimes = [
+      current && current.exp * 1000 > now ? current.exp * 1000 : null,
+      ...Object.values(windows).map((window) => window.resetAt),
+    ].filter((value): value is number => value !== null);
+    if (nextTimes.length) await this.ctx.storage.setAlarm(Math.min(...nextTimes));
   }
 }

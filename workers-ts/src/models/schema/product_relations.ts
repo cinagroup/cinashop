@@ -19,7 +19,9 @@ import {
   smallint,
   text,
   char,
+  timestamp,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // ─── 商品分类 ────────────────────────────────────────────────
@@ -62,7 +64,7 @@ export const storeProductRelation = pgTable(
     productId: integer("product_id").default(0).notNull(),
     /** 关联的分类/品牌/标签ID (取决于 type) */
     relationId: integer("relation_id").default(0).notNull(),
-    /** 一级分类ID (type=1 时冗余) */
+    /** 所选分类的即时父分类 ID（type=1 时冗余，保持 PHP 运行时语义） */
     relationPid: integer("relation_pid").default(0).notNull(),
     status: smallint("status").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
@@ -163,6 +165,41 @@ export const storeProductAttrValue = pgTable(
   ],
 );
 
+// ─── 商品详情 ────────────────────────────────────────────────
+export const storeProductDescription = pgTable(
+  "store_product_description",
+  {
+    productId: integer("product_id").default(0).notNull(),
+    description: text("description"),
+    /** 0=普通商品，保留旧表商品类型维度 */
+    type: smallint("type").default(0).notNull(),
+  },
+  (t) => [
+    uniqueIndex("spd_product_type_unique").on(t.productId, t.type),
+    index("spd_type_product").on(t.type, t.productId),
+  ],
+);
+
+// ─── 商品库存变更审计 ────────────────────────────────────────
+export const storeProductStockRecord = pgTable(
+  "store_product_stock_record",
+  {
+    id: serial("id").primaryKey(),
+    storeId: integer("store_id").default(0).notNull(),
+    productId: integer("product_id").default(0).notNull(),
+    unique: varchar("unique", { length: 32 }).default("").notNull(),
+    costPrice: decimal("cost_price", { precision: 12, scale: 2 }).default("0.00").notNull(),
+    number: integer("number").default(0).notNull(),
+    /** 1=入库，0=出库 */
+    pm: smallint("pm").default(1).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (t) => [
+    index("spsr_product_time").on(t.productId, t.addTime),
+    index("spsr_unique_time").on(t.unique, t.addTime),
+  ],
+);
+
 // ─── 商品标签 ────────────────────────────────────────────────
 export const storeProductLabel = pgTable(
   "store_product_label",
@@ -192,15 +229,96 @@ export const storeProductLabel = pgTable(
 
 
 // ─── 用户标签 ────────────────────────────────────────────────
-import { smallint as _sm } from "drizzle-orm/pg-core";
+// Product assurance catalog shown on product detail pages. PHP keeps the
+// catalog separate from type=5 rows in store_product_relation.
+export const storeProductEnsure = pgTable(
+  "store_product_ensure",
+  {
+    id: serial("id").primaryKey(),
+    /** 0=platform, 2=supplier */
+    type: smallint("type").default(0).notNull(),
+    relationId: integer("relation_id").default(0).notNull(),
+    name: varchar("name", { length: 255 }).default("").notNull(),
+    image: varchar("image", { length: 255 }).default("").notNull(),
+    desc: varchar("desc", { length: 255 }).default("").notNull(),
+    sort: integer("sort").default(0).notNull(),
+    status: smallint("status").default(1).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (t) => [
+    index("spe_type").on(t.type),
+    index("spe_scope_active").on(t.type, t.relationId, t.status, t.sort, t.id),
+  ],
+);
+
+// Append-only product behaviour evidence used for visit history and product
+// conversion statistics. delete_time is a soft-delete timestamp in the PHP API.
+export const storeProductLog = pgTable(
+  "store_product_log",
+  {
+    id: serial("id").primaryKey(),
+    type: varchar("type", { length: 16 }).default("visit").notNull(),
+    productId: integer("product_id").default(0).notNull(),
+    uid: integer("uid").default(0).notNull(),
+    visitNum: smallint("visit_num").default(0).notNull(),
+    cartNum: integer("cart_num").default(0).notNull(),
+    orderNum: integer("order_num").default(0).notNull(),
+    payNum: integer("pay_num").default(0).notNull(),
+    payPrice: decimal("pay_price", { precision: 10, scale: 2 }).default("0.00").notNull(),
+    costPrice: decimal("cost_price", { precision: 10, scale: 2 }).default("0.00").notNull(),
+    payUid: integer("pay_uid").default(0).notNull(),
+    refundNum: integer("refund_num").default(0).notNull(),
+    refundPrice: decimal("refund_price", { precision: 10, scale: 2 }).default("0.00").notNull(),
+    collectNum: smallint("collect_num").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+    deleteTime: timestamp("delete_time", { mode: "date" }),
+  },
+  (t) => [
+    index("spl_type").on(t.type),
+    index("spl_product_id").on(t.productId),
+    index("spl_uid").on(t.uid),
+    index("spl_add_time").on(t.addTime),
+    index("spl_uid_type").on(t.uid, t.type),
+    index("spl_user_source_latest").on(t.uid, t.type, t.addTime.desc(), t.productId),
+    index("spl_visit_history").on(t.uid, t.type, t.deleteTime, t.addTime, t.id),
+  ],
+);
+
+// Per-user/product visit aggregate. The legacy table has no uniqueness
+// constraint, so historical duplicate rows remain legal; runtime writes lock
+// a deterministic scope instead of inventing a migration-time unique key.
+export const storeVisit = pgTable(
+  "store_visit",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id").default(0).notNull(),
+    productType: varchar("product_type", { length: 32 }).default("").notNull(),
+    cateId: integer("cate_id").default(0).notNull(),
+    type: char("type", { length: 50 }).default("").notNull(),
+    uid: integer("uid").default(0).notNull(),
+    count: integer("count").default(0).notNull(),
+    content: varchar("content", { length: 255 }).default("").notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (t) => [
+    index("sv_product_id").on(t.productId),
+    index("sv_user_product").on(t.uid, t.productId, t.productType, t.id),
+  ],
+);
+
 export const userLabel = pgTable(
   "user_label",
   {
     id: serial("id").primaryKey(),
-    name: varchar("name", { length: 64 }).default("").notNull(),
+    type: smallint("type").default(0).notNull(),
+    relationId: integer("relation_id").default(0).notNull(),
+    labelCate: integer("label_cate").default(0).notNull(),
+    name: varchar("name", { length: 255 }).default("").notNull(),
+    tagId: varchar("tag_id", { length: 64 }).default("").notNull(),
     color: varchar("color", { length: 32 }).default("").notNull(),
     sort: integer("sort").default(0).notNull(),
     status: smallint("status").default(1).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
+  (t) => [index("ulabel_scope_cate").on(t.type, t.relationId, t.labelCate, t.id)],
 );

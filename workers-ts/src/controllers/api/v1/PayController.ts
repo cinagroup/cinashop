@@ -8,7 +8,19 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
+import {
+  findMembershipOrderByOrderId,
+  PaidMembershipService,
+} from "@/services/user/PaidMembershipService";
+import { CheckoutCashierService } from "@/services/payment/CheckoutCashierService";
+import {
+  findRechargeOrderByOrderId,
+  RechargePaymentService,
+} from "@/services/payment/RechargePaymentService";
+import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
+import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
 import type { AppVariables, Env } from "@/env";
+import { verifyAlipayNotification, type AlipayParams } from "@/utils/alipay";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -17,7 +29,7 @@ type C = Context<{ Bindings: Env; Variables: AppVariables }>;
  * 用户发起支付 (对应 PHP StoreOrder::pay)
  * body: { uni: orderId, paytype: 'yue'|'weixin'|'alipay'|'offline' }
  *
- * M23: yue (余额), weixin (JSAPI), alipay (H5 跳转) 均实现
+ * Every positive-value rail is dispatched after effective readiness checks.
  */
 export async function orderPay(c: C) {
   const uid = c.get("uid");
@@ -25,32 +37,22 @@ export async function orderPay(c: C) {
   const body = (await c.req.json().catch(() => ({}))) as {
     uni?: string;
     paytype?: string;
+    from?: string;
   };
   if (!body.uni) return jsonFail(c, "参数错误");
   const paytype = body.paytype ?? "yue";
+  if (body.uni.startsWith("cz")) return jsonFail(c, "充值订单请使用充值支付接口");
 
   const svc = new StoreOrderPayService(c.get("container"), c.env);
   try {
-    if (paytype === "yue") {
-      // 充值单 (cz 前缀) 走充值到账, 否则走订单支付
-      if (body.uni.startsWith("cz")) {
-        await svc.rechargePay(uid, body.uni, "yue");
-        return jsonOk(c, { paid: true }, "充值成功");
-      }
-      const result = await svc.yuePay(uid, body.uni);
-      return jsonOk(c, result, "支付成功");
-    }
-    if (paytype === "weixin") {
-      // M23: 微信支付预下单 — 返回 JSAPI 参数 (实际下单依赖商户号配置)
-      // 未配置商户号时回退到余额支付提示
-      return jsonFail(c, "微信支付需要配置商户号, 请使用余额支付");
-    }
-    if (paytype === "alipay") {
-      // M23: 支付宝 H5 支付 — 返回跳转 URL
-      const payUrl = await svc.alipayPay(uid, body.uni);
-      return jsonOk(c, { payUrl, payType: "alipay" }, "支付宝下单成功");
-    }
-    return jsonFail(c, `不支持的支付方式: ${paytype}`);
+    const result = await svc.pay(
+      uid,
+      body.uni,
+      paytype,
+      body.from ?? c.req.header("Form-type") ?? "h5",
+      clientIp(c),
+    );
+    return jsonOk(c, result, result.paid === true ? "支付成功" : "支付下单成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
@@ -58,55 +60,154 @@ export async function orderPay(c: C) {
 }
 
 /**
- * ANY /api/pay/notify/:type
- * 支付回调 (M23: 落地实现)
- *
- * type=wechat: 验证 JSON 签名 → paySuccess
- * type=alipay: 验证表单签名 → paySuccess
- * 未配置密钥时: 按 trade_status=TRADE_SUCCESS / return_code=SUCCESS 触发 (调试模式)
+ * POST /api/pay/notify/alipay
+ * 支付宝异步回调：RSA2 验签，并校验 app_id、seller_id、订单号和金额。
  */
-export async function payNotify(c: C) {
-  const type = c.req.param("type");
-  const svc = new StoreOrderPayService(c.get("container"), c.env);
-
+export async function alipayNotify(c: C) {
+  const publicKey = c.env.ALIPAY_PUBLIC_KEY;
+  const appId = c.env.ALIPAY_APP_ID;
+  if (!publicKey || !appId) {
+    console.error("[alipayNotify] missing ALIPAY_PUBLIC_KEY or ALIPAY_APP_ID");
+    return c.text("failure", 500);
+  }
   try {
-    if (type === "alipay") {
-      // 支付宝回调 (POST 表单)
-      const form = await c.req.parseBody();
-      const tradeStatus = (form as Record<string, string>).trade_status ?? "";
-      const outTradeNo = (form as Record<string, string>).out_trade_no ?? "";
-      const tradeNo = (form as Record<string, string>).trade_no ?? "";
+    const body = await c.req.parseBody({ all: false });
+    const params: AlipayParams = {};
+    for (const [key, value] of Object.entries(body)) {
+      if (typeof value === "string") params[key] = value;
+    }
 
-      if (tradeStatus === "TRADE_SUCCESS" || tradeStatus === "TRADE_FINISHED") {
-        if (outTradeNo) {
-          await svc.paySuccessByOrderId(outTradeNo, "alipay", tradeNo);
-        }
-      }
-      // 支付宝要求返回 "success" 文本
+    if (!(await verifyAlipayNotification(params, publicKey))) {
+      console.warn("[alipayNotify] signature verification failed");
+      return c.text("failure", 400);
+    }
+    if (params.app_id !== appId) {
+      console.warn("[alipayNotify] app_id mismatch");
+      return c.text("failure", 400);
+    }
+    if (c.env.ALIPAY_SELLER_ID && params.seller_id !== c.env.ALIPAY_SELLER_ID) {
+      console.warn("[alipayNotify] seller_id mismatch");
+      return c.text("failure", 400);
+    }
+
+    const tradeStatus = params.trade_status ?? "";
+    if (tradeStatus !== "TRADE_SUCCESS" && tradeStatus !== "TRADE_FINISHED") {
       return c.text("success", 200);
     }
 
-    if (type === "wechat") {
-      // 微信支付回调 (POST JSON)
-      const body = await c.req.json().catch(() => ({}));
-      const resultCode = body?.event_type === "TRANSACTION.SUCCESS" || body?.trade_state === "SUCCESS";
-      const orderId = body?.out_trade_no ?? body?.resource?.out_trade_no ?? "";
-
-      if (resultCode && orderId) {
-        const tradeNo = body?.transaction_id ?? "";
-        await svc.paySuccessByOrderId(orderId, "weixin", tradeNo);
-      }
-      // 微信要求返回 JSON {"code":"SUCCESS"}
-      return c.json({ code: "SUCCESS", message: "成功" }, 200);
+    const outTradeNo = params.out_trade_no ?? "";
+    const tradeNo = params.trade_no ?? "";
+    const container = c.get("container");
+    const [order, membershipOrder, rechargeOrder] = outTradeNo
+      ? await Promise.all([
+          container.storeOrderDao.findByOrderId(outTradeNo),
+          findMembershipOrderByOrderId(container, outTradeNo),
+          findRechargeOrderByOrderId(container, outTradeNo),
+        ])
+      : [null, null, null];
+    if ([order, membershipOrder, rechargeOrder].filter(Boolean).length !== 1 || !tradeNo) {
+      console.warn("[alipayNotify] order or trade number missing");
+      return c.text("failure", 400);
     }
 
-    // 其他类型: 通用处理
+    const notifiedCents = moneyToCents(params.total_amount);
+    const expectedCents = moneyToCents(
+      order?.payPrice ?? membershipOrder?.payPrice ?? rechargeOrder?.price,
+    );
+    if (notifiedCents === null || expectedCents === null || notifiedCents !== expectedCents) {
+      console.warn("[alipayNotify] amount mismatch");
+      return c.text("failure", 400);
+    }
+
+    const settled = rechargeOrder
+      ? await new RechargePaymentService(container, c.env).settleExternalPayment(
+          outTradeNo,
+          "alipay",
+          tradeNo,
+          notifiedCents,
+        )
+      : membershipOrder
+      ? await new PaidMembershipService(container, c.env).settleExternalPayment(
+          outTradeNo,
+          "alipay",
+          tradeNo,
+          notifiedCents,
+        )
+      : await new StoreOrderPayService(container, c.env).paySuccessByOrderId(
+          outTradeNo,
+          "alipay",
+          tradeNo,
+        );
+    if (!settled) {
+      return c.text("failure", 400);
+    }
     return c.text("success", 200);
   } catch (e) {
-    console.error("[payNotify] error:", e);
-    // 支付宝/微信回调失败时仍返回 200 避免重试风暴 (可补单)
-    return c.text("success", 200);
+    console.error("[alipayNotify] processing failed:", e);
+    return c.text("failure", 500);
   }
+}
+
+/** GET /api/order/cashier/:orderId/:type? */
+export async function orderCashier(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const orderId = c.req.param("orderId");
+  if (!orderId) return jsonFail(c, "参数错误");
+  try {
+    const result = await new CheckoutCashierService(c.get("container"), c.env)
+      .get(uid, orderId, c.req.param("type") || "order");
+    return jsonOk(c, result);
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/payment/readiness — public method state without credential values. */
+export async function paymentReadiness(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  return jsonOk(c, await getPaymentReadiness(c.get("container"), c.env));
+}
+
+/** POST /api/recharge/pay — provider-backed recharge payment only. */
+export async function rechargePay(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = (await c.req.json().catch(() => ({}))) as {
+    uni?: string;
+    paytype?: string;
+    from?: string;
+  };
+  if (!body.uni) return jsonFail(c, "参数错误");
+  if ((body.paytype ?? "weixin") !== "weixin") {
+    return jsonFail(c, "充值暂仅支持微信支付");
+  }
+  try {
+    const result = await new RechargePaymentService(c.get("container"), c.env)
+      .startWechatPayment(
+        uid,
+        body.uni,
+        body.from ?? c.req.header("Form-type") ?? "h5",
+        clientIp(c),
+      );
+    return jsonOk(c, result, "支付下单成功");
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+function moneyToCents(value: unknown): number | null {
+  if (typeof value !== "string" || !/^\d+(?:\.\d{1,2})?$/.test(value)) {
+    return null;
+  }
+  const amount = Number(value);
+  if (!Number.isSafeInteger(Math.round(amount * 100))) {
+    return null;
+  }
+  return Math.round(amount * 100);
 }
 
 // ─── 售后退款 ────────────────────────────────────────────────
@@ -125,7 +226,7 @@ export async function refundApply(c: C) {
     cartIds?: number[];
   };
 
-  const svc = new StoreOrderRefundService(c.get("container"));
+  const svc = new StoreOrderRefundService(c.get("container"), c.env);
   try {
     const result = await svc.applyRefund({
       uid,
@@ -149,7 +250,7 @@ export async function refundCancel(c: C) {
   if (!uid) return jsonFail(c, "请先登录");
   const refundId = Number(c.req.param("uni"));
   if (!refundId) return jsonFail(c, "参数错误");
-  const svc = new StoreOrderRefundService(c.get("container"));
+  const svc = new StoreOrderRefundService(c.get("container"), c.env);
   try {
     await svc.cancelApply(uid, refundId);
     return jsonOk(c, null, "取消成功");
@@ -163,7 +264,7 @@ export async function refundCancel(c: C) {
 export async function refundList(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const svc = new StoreOrderRefundService(c.get("container"));
+  const svc = new StoreOrderRefundService(c.get("container"), c.env);
   const list = await svc.listByUser(uid);
   return jsonOk(c, list);
 }
@@ -174,7 +275,7 @@ export async function refundDetail(c: C) {
   if (!uid) return jsonFail(c, "请先登录");
   const refundId = Number(c.req.param("uni"));
   if (!refundId) return jsonFail(c, "参数错误");
-  const svc = new StoreOrderRefundService(c.get("container"));
+  const svc = new StoreOrderRefundService(c.get("container"), c.env);
   const detail = await svc.detail(uid, refundId);
   return jsonOk(c, detail);
 }

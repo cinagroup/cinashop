@@ -41,14 +41,33 @@ export const storeBargainUser = pgTable(
     uid: integer("uid").default(0).notNull(),
     bargainId: integer("bargain_id").default(0).notNull(),
     bargainPriceMin: decimal("bargain_price_min", { precision: 12, scale: 2 }).default("0.00").notNull(),
-    /** 当前砍后价 */
+    /** 开始参与时的原始砍价；当前价 = bargain_price - price。 */
     bargainPrice: decimal("bargain_price", { precision: 12, scale: 2 }).default("0.00").notNull(),
     /** 已砍掉金额 */
     price: decimal("price", { precision: 12, scale: 2 }).default("0.00").notNull(),
-    /** 1参与中 2失败 3成功 */
+    /** 1参与中 2失败 3可购买 4已创建订单 */
     status: smallint("status").default(1).notNull(),
     addTime: integer("add_time").default(0).notNull(),
     isDel: smallint("is_del").default(0).notNull(),
   },
   (t) => [index("sbu_uid").on(t.uid), index("sbu_bargain").on(t.bargainId)],
+);
+
+/** 砍价帮助明细；历史表只以 id 唯一，运行时用事务锁阻止新的重复帮助。 */
+export const storeBargainUserHelp = pgTable(
+  "store_bargain_user_help",
+  {
+    id: serial("id").primaryKey(),
+    uid: integer("uid").default(0).notNull(),
+    bargainId: integer("bargain_id").default(0).notNull(),
+    bargainUserId: integer("bargain_user_id").default(0).notNull(),
+    price: decimal("price", { precision: 12, scale: 2 }).default("0.00").notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+    /** 1=发起者自己砍，0=好友帮砍。 */
+    type: smallint("type").default(0).notNull(),
+  },
+  (t) => [
+    index("sbuh_participation").on(t.bargainUserId, t.id),
+    index("sbuh_helper_activity").on(t.uid, t.bargainId, t.type),
+  ],
 );

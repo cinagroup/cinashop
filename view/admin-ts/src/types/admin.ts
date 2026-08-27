@@ -18,6 +18,7 @@ export interface AdminLoginResult {
     real_name: string;
     level: number;
     roles: string;
+    division_id?: number;
   };
   unique_auth: string[];
   menus: MenuNode[];
@@ -40,9 +41,7 @@ export interface MenuNode {
 
 /** Dashboard 统计 */
 export interface DashboardData {
-  sales: StatCard;
-  order: StatCard;
-  user: StatCard;
+  info: StatCard[];
 }
 
 export interface StatCard {
@@ -52,11 +51,52 @@ export interface StatCard {
   total: string | number;
   title: string;
   total_name: string;
+  date: string;
+}
+
+export type DashboardCycle = "thirtyday" | "week" | "month" | "year";
+
+export interface DashboardOrderSeries {
+  name: string;
+  type: "bar" | "line";
+  data: number[];
+  yAxisIndex?: number;
+}
+
+export interface DashboardOrderChart {
+  yAxis: { maxnum: number; maxprice: number };
+  legend: string[];
+  xAxis: string[];
+  series: DashboardOrderSeries[];
+  pre_cycle: {
+    count: { data: number };
+    price: { data: number };
+  };
+  cycle: {
+    count: { data: number; percent: number; is_plus: -1 | 0 | 1 };
+    price: { data: number; percent: number; is_plus: -1 | 0 | 1 };
+  };
+}
+
+export interface DashboardUserChart {
+  legend: string[];
+  yAxis: { maxnum: number };
+  xAxis: string[];
+  series: number[];
+  bing_xdata: string[];
+  bing_data: Array<{
+    name: string;
+    value: number;
+    itemStyle: { color: string };
+  }>;
 }
 
 /** Admin 商品 */
 export interface AdminProduct {
   id: number;
+  product_type: number;
+  type: number;
+  relation_id: number;
   store_name: string;
   store_info: string;
   image: string;
@@ -78,17 +118,19 @@ export interface AdminProduct {
 /** Admin 订单 */
 export interface AdminOrder {
   id: number;
-  order_id: string;
+  orderId: string;
   uid: number;
-  real_name: string;
-  user_phone: string;
-  total_num: number;
-  total_price: string;
-  pay_price: string;
-  pay_type: string;
+  realName: string;
+  userPhone: string;
+  totalNum: number;
+  totalPrice: string;
+  payPrice: string;
+  payType: string;
   paid: number;
   status: number;
-  add_time: number;
+  shippingType: number;
+  deliveryType: string;
+  addTime: number;
   remark: string;
 }
 

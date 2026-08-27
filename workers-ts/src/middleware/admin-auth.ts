@@ -13,6 +13,8 @@ import { AuthException, ApiErrorCode } from "@/utils/errors";
 import { verifyToken, md5 } from "@/utils/jwt";
 import { clearToken } from "@/utils/cache";
 import type { AppVariables, Env } from "@/env";
+import { extractToken } from "@/middleware/auth";
+import { AdminPermissionService } from "@/services/admin/AdminPermissionService";
 
 export function adminAuthMiddleware(): MiddlewareHandler<{
   Bindings: Env;
@@ -21,10 +23,7 @@ export function adminAuthMiddleware(): MiddlewareHandler<{
   return async (c, next) => {
     c.set("adminId", 0);
 
-    const token =
-      c.req.header("Authori-zation")?.replace(/^Bearer\s+/, "").trim() ||
-      c.req.header("Authorization")?.replace(/^Bearer\s+/, "").trim() ||
-      "";
+    const token = extractToken(c) ?? "";
 
     if (!token || token === "undefined") {
       throw new AuthException("请登录", ApiErrorCode.ERR_LOGIN);
@@ -58,7 +57,7 @@ export function adminAuthMiddleware(): MiddlewareHandler<{
     // Layer 3: 查 admin
     const container = c.get("container");
     const admin = await container.systemAdminDao.get(payload.id);
-    if (!admin || !admin.status || admin.isDel) {
+    if (!admin || admin.adminType !== 1 || !admin.status || admin.isDel) {
       throw new AuthException("账号不存在或已禁用", ApiErrorCode.ERR_BANNED);
     }
 
@@ -69,13 +68,22 @@ export function adminAuthMiddleware(): MiddlewareHandler<{
     }
 
     c.set("adminId", admin.id);
-    c.set("adminInfo", {
+    const adminInfo = {
       id: admin.id,
       account: admin.account,
       level: admin.level,
       roles: admin.roles,
       realName: admin.realName,
-    });
+      divisionId: admin.divisionId,
+    };
+    c.set("adminInfo", adminInfo);
+
+    // 超级管理员(level=0)由权限服务显式跳过；其他管理员按角色规则服务端强制校验。
+    await new AdminPermissionService(container).assertAuthorized(
+      adminInfo,
+      c.req.method,
+      c.req.routePath,
+    );
 
     await next();
   };

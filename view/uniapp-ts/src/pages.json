@@ -20,6 +20,12 @@
       }
     },
     {
+      "path": "pages/discover/people",
+      "style": {
+        "navigationBarTitleText": "社区关系"
+      }
+    },
+    {
       "path": "pages/cart/index",
       "style": {
         "navigationBarTitleText": "购物车"
@@ -56,9 +62,27 @@
       }
     },
     {
+      "path": "pages/auth/reset",
+      "style": {
+        "navigationBarTitleText": "找回密码"
+      }
+    },
+    {
+      "path": "pages/auth/smsChallenge",
+      "style": {
+        "navigationBarTitleText": "安全验证"
+      }
+    },
+    {
       "path": "pages/user/changePassword",
       "style": {
         "navigationBarTitleText": "修改密码"
+      }
+    },
+    {
+      "path": "pages/user/phone",
+      "style": {
+        "navigationBarTitleText": "手机号管理"
       }
     },
     {
@@ -202,7 +226,13 @@
     {
       "path": "pages/user/vipOpen",
       "style": {
-        "navigationBarTitleText": "SVIP 会员"
+        "navigationBarTitleText": "付费会员"
+      }
+    },
+    {
+      "path": "pages/annex/vip_active/index",
+      "style": {
+        "navigationBarTitleText": "会员卡激活"
       }
     },
     {
@@ -269,6 +299,32 @@
       "path": "pages/user/message",
       "style": {
         "navigationBarTitleText": "消息中心"
+      }
+    },
+    {
+      "path": "pages/activity/lottery",
+      "style": {
+        "navigationBarTitleText": "幸运抽奖",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/activity/lotteryRecords",
+      "style": {
+        "navigationBarTitleText": "我的奖品",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/user/supplierApply",
+      "style": {
+        "navigationBarTitleText": "供应商入驻"
+      }
+    },
+    {
+      "path": "pages/operator/writeoff",
+      "style": {
+        "navigationBarTitleText": "履约核销"
       }
     }
   ],

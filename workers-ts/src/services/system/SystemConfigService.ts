@@ -8,14 +8,23 @@
  * Workers 环境配置变更频率低, KV 缓存 30 分钟足够; 变更后通过 cacheDelete 失效)。
  */
 import type { Container } from "@/lib/di";
-import type { Env } from "@/env";
+import { normalizeConfigScalar } from "@/utils/config";
 
 const CACHE_TTL = 30 * 60; // 30 分钟
+
+/** Narrow binding contract used by config readers and integration harnesses. */
+export interface SystemConfigEnv {
+  CONFIG_KV: {
+    get(key: string): Promise<string | null>;
+    put(key: string, value: string, options?: KVNamespacePutOptions): Promise<void>;
+    delete(key: string): Promise<void>;
+  };
+}
 
 export class SystemConfigService {
   constructor(
     private readonly container: Container,
-    private readonly env: Env,
+    private readonly env: SystemConfigEnv,
   ) {}
 
   /**
@@ -27,10 +36,10 @@ export class SystemConfigService {
 
     // KV 命中
     const cached = await this.env.CONFIG_KV.get(cacheKey);
-    if (cached !== null) return cached;
+    if (cached !== null) return normalizeConfigScalar(cached);
 
     // 未命中 → 读 DB
-    const value = await this.container.systemConfigDao.getValue(menuName);
+    const value = normalizeConfigScalar(await this.container.systemConfigDao.getValue(menuName));
 
     // 回填 KV
     await this.env.CONFIG_KV.put(cacheKey, value, { expirationTtl: CACHE_TTL });
@@ -47,7 +56,7 @@ export class SystemConfigService {
     for (const name of menuNames) {
       const cached = await this.env.CONFIG_KV.get(`cfg_${name}`);
       if (cached !== null) {
-        out[name] = cached;
+        out[name] = normalizeConfigScalar(cached);
       } else {
         miss.push(name);
       }
@@ -56,7 +65,7 @@ export class SystemConfigService {
     if (miss.length > 0) {
       const values = await this.container.systemConfigDao.getValues(miss);
       for (const name of miss) {
-        const v = values[name] ?? "";
+        const v = normalizeConfigScalar(values[name]);
         out[name] = v;
         await this.env.CONFIG_KV.put(`cfg_${name}`, v, { expirationTtl: CACHE_TTL });
       }

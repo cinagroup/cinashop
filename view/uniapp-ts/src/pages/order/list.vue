@@ -4,10 +4,10 @@
     <view class="tabs">
       <view
         v-for="t in tabs"
-        :key="t.type"
+        :key="String(t.status)"
         class="tab"
-        :class="{ active: activeType === t.type }"
-        @tap="switchTab(t.type)"
+        :class="{ active: activeStatus === t.status }"
+        @tap="switchTab(t.status)"
       >
         {{ t.name }}
       </view>
@@ -34,7 +34,7 @@
         <view class="order-footer">
           <text class="order-price">¥{{ order.pay_price }}</text>
           <view v-if="order.paid === 0" class="pay-btn" @tap="pay(order)">去支付</view>
-          <view v-if="order.paid === 1 && order.status === 0" class="pay-btn" @tap="cancel(order)">取消订单</view>
+          <view v-if="order.paid === 1 && order.status === 0" class="pay-btn" @tap="goDetail(order.order_id)">查看订单</view>
         </view>
       </view>
       <view v-if="hasMore" class="load-more" @tap="loadMore">加载更多</view>
@@ -47,20 +47,21 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
-import { apiOrderList, apiOrderPay, apiOrderCancel } from "@/api/order";
+import { apiOrderList } from "@/api/order";
 import type { OrderInfo } from "@/types/order";
 
 const orders = ref<OrderInfo[]>([]);
-const activeType = ref<number | undefined>();
+const activeStatus = ref<number | undefined>();
 const page = ref(1);
 const hasMore = ref(true);
 
 const tabs = [
-  { type: undefined as number | undefined, name: "全部" },
-  { type: 0, name: "待付款" },
-  { type: 1, name: "待发货" },
-  { type: 2, name: "待收货" },
-  { type: 3, name: "已完成" },
+  { status: undefined as number | undefined, name: "全部" },
+  { status: 0, name: "待付款" },
+  { status: 1, name: "待发货" },
+  { status: 2, name: "待收货" },
+  { status: 3, name: "待评价" },
+  { status: 4, name: "已完成" },
 ];
 
 function statusText(order: OrderInfo): string {
@@ -74,8 +75,8 @@ function statusText(order: OrderInfo): string {
   }
 }
 
-function switchTab(type: number | undefined) {
-  activeType.value = type;
+function switchTab(status: number | undefined) {
+  activeStatus.value = status;
   load(true);
 }
 
@@ -85,7 +86,7 @@ async function load(reset = false) {
     orders.value = [];
   }
   try {
-    const rows = await apiOrderList({ type: activeType.value, page: page.value, limit: 10 });
+    const rows = await apiOrderList({ status: activeStatus.value, page: page.value, limit: 10 });
     orders.value = [...orders.value, ...rows];
     hasMore.value = rows.length >= 10;
   } catch (e) {
@@ -98,24 +99,8 @@ async function loadMore() {
   await load();
 }
 
-async function pay(order: OrderInfo) {
-  try {
-    await apiOrderPay(order.order_id);
-    uni.showToast({ title: "支付成功", icon: "success" });
-    load();
-  } catch (e) {
-    uni.showToast({ title: e instanceof Error ? e.message : "支付失败", icon: "none" });
-  }
-}
-
-async function cancel(order: OrderInfo) {
-  try {
-    await apiOrderCancel(order.order_id);
-    uni.showToast({ title: "已取消", icon: "success" });
-    load();
-  } catch (e) {
-    uni.showToast({ title: e instanceof Error ? e.message : "取消失败", icon: "none" });
-  }
+function pay(order: OrderInfo) {
+  goDetail(order.order_id);
 }
 
 function goDetail(orderId: string) {
@@ -123,12 +108,12 @@ function goDetail(orderId: string) {
 }
 
 onLoad((options) => {
-  activeType.value = options?.type !== undefined ? Number(options.type) : undefined;
-  load();
+  const requested = options?.status ?? options?.type;
+  activeStatus.value = requested !== undefined ? Number(requested) : undefined;
 });
 
 onShow(() => {
-  load();
+  load(true);
 });
 </script>
 

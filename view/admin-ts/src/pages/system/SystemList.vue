@@ -41,7 +41,12 @@
         <el-table :data="roleList" border>
           <el-table-column prop="id" label="ID" width="60" />
           <el-table-column prop="roleName" label="角色名称" min-width="160" />
-          <el-table-column prop="rules" label="权限规则" min-width="200" show-overflow-tooltip />
+          <el-table-column label="权限规则" min-width="240">
+            <template #default="{ row }">
+              <el-tag v-for="key in row.permissionKeys" :key="key" size="small" class="rule-tag">{{ key }}</el-tag>
+              <span v-if="!row.permissionKeys?.length">未配置</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="level" label="等级" width="80" />
           <el-table-column label="状态" width="80">
             <template #default="{ row }">
@@ -61,7 +66,11 @@
     </el-tabs>
 
     <!-- 管理员弹窗 -->
-    <el-dialog v-model="adminDialog.show" :title="adminDialog.id ? '编辑管理员' : '新增管理员'" width="480px">
+    <el-dialog
+      v-model="adminDialog.show"
+      :title="adminDialog.id ? '编辑管理员' : '新增管理员'"
+      width="min(480px, calc(100vw - 24px))"
+    >
       <el-form label-width="80px">
         <el-form-item label="账号">
           <el-input v-model="adminDialog.account" :disabled="!!adminDialog.id" placeholder="登录账号" />
@@ -73,7 +82,7 @@
           <el-input v-model="adminDialog.phone" placeholder="手机号" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="adminDialog.pwd" type="password" show-password :placeholder="adminDialog.id ? '不修改留空' : '默认 123456'" />
+          <el-input v-model="adminDialog.pwd" type="password" show-password :placeholder="adminDialog.id ? '不修改留空；修改至少 12 位' : '至少 12 位'" />
         </el-form-item>
         <el-form-item label="角色ID">
           <el-input v-model="adminDialog.roles" placeholder="角色ID（逗号分隔）" />
@@ -89,13 +98,28 @@
     </el-dialog>
 
     <!-- 角色弹窗 -->
-    <el-dialog v-model="roleDialog.show" :title="roleDialog.id ? '编辑角色' : '新增角色'" width="440px">
+    <el-dialog
+      v-model="roleDialog.show"
+      :title="roleDialog.id ? '编辑角色' : '新增角色'"
+      width="min(620px, calc(100vw - 24px))"
+    >
       <el-form label-width="80px">
         <el-form-item label="角色名称">
           <el-input v-model="roleDialog.role_name" placeholder="角色名称" />
         </el-form-item>
         <el-form-item label="等级">
           <el-input-number v-model="roleDialog.level" :min="0" :max="9" />
+        </el-form-item>
+        <el-form-item label="菜单权限">
+          <el-tree
+            ref="permissionTreeRef"
+            class="permission-tree"
+            :data="permissionTree"
+            node-key="key"
+            show-checkbox
+            default-expand-all
+            :props="{ label: 'label', children: 'children' }"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -107,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import {
@@ -118,12 +142,19 @@ import {
   apiAdminSystemRoleDel,
   type AdminAccount,
   type RoleItem,
+  type PermissionTreeNode,
+  apiAdminPermissionTree,
 } from "@/api/system";
 
 const activeTab = ref("admin");
 const loading = ref(true);
 const adminList = ref<AdminAccount[]>([]);
 const roleList = ref<RoleItem[]>([]);
+const permissionTree = ref<PermissionTreeNode[]>([]);
+const permissionTreeRef = ref<{
+  setCheckedKeys: (keys: string[]) => void;
+  getCheckedKeys: (leafOnly?: boolean) => unknown[];
+} | null>(null);
 
 const adminDialog = reactive({
   show: false,
@@ -133,7 +164,7 @@ const adminDialog = reactive({
   phone: "",
   pwd: "",
   roles: "",
-  level: 0,
+  level: 1,
 });
 
 const roleDialog = reactive({
@@ -141,6 +172,7 @@ const roleDialog = reactive({
   id: 0,
   role_name: "",
   level: 0,
+  permissionKeys: [] as string[],
 });
 
 function formatTime(ts: number): string {
@@ -178,13 +210,14 @@ function openAdminForm(row?: AdminAccount) {
     adminDialog.real_name = "";
     adminDialog.phone = "";
     adminDialog.roles = "";
-    adminDialog.level = 0;
+    adminDialog.level = 1;
   }
   adminDialog.pwd = "";
   adminDialog.show = true;
 }
 
 async function saveAdmin() {
+  if (!adminDialog.id && adminDialog.pwd.length < 12) return ElMessage.warning("新管理员密码至少 12 位");
   try {
     await apiAdminSystemAdminSave({
       id: adminDialog.id || undefined,
@@ -203,26 +236,32 @@ async function saveAdmin() {
   }
 }
 
-function openRoleForm(row?: RoleItem) {
+async function openRoleForm(row?: RoleItem) {
   if (row) {
     roleDialog.id = row.id;
     roleDialog.role_name = row.roleName;
     roleDialog.level = row.level;
+    roleDialog.permissionKeys = [...(row.permissionKeys ?? [])];
   } else {
     roleDialog.id = 0;
     roleDialog.role_name = "";
     roleDialog.level = 0;
+    roleDialog.permissionKeys = [];
   }
   roleDialog.show = true;
+  await nextTick();
+  permissionTreeRef.value?.setCheckedKeys(roleDialog.permissionKeys);
 }
 
 async function saveRole() {
   if (!roleDialog.role_name) return ElMessage.warning("请输入角色名称");
   try {
+    const rules = (permissionTreeRef.value?.getCheckedKeys(true) ?? []).map(String).join(",");
     await apiAdminSystemRoleSave({
       id: roleDialog.id || undefined,
       role_name: roleDialog.role_name,
       level: roleDialog.level,
+      rules,
     });
     ElMessage.success(roleDialog.id ? "更新成功" : "创建成功");
     roleDialog.show = false;
@@ -246,6 +285,7 @@ async function delRole(row: RoleItem) {
 onMounted(() => {
   loadAdmin();
   loadRoles();
+  apiAdminPermissionTree().then((data) => { permissionTree.value = data; }).catch(() => { permissionTree.value = []; });
 });
 </script>
 
@@ -259,5 +299,18 @@ onMounted(() => {
 .page-head h3 {
   font-size: 16px;
   margin: 0;
+}
+
+.rule-tag {
+  margin: 2px 4px 2px 0;
+}
+
+.permission-tree {
+  width: 100%;
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 </style>

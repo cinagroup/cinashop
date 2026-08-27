@@ -8,6 +8,7 @@ import type { Context } from "hono";
 import { jsonOk } from "@/utils/json";
 import { StoreProductService, type GoodsListParams } from "@/services/product/StoreProductService";
 import { StoreCategoryService } from "@/services/product/StoreCategoryService";
+import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -53,6 +54,21 @@ export async function detail(c: C) {
   const uid = c.get("uid");
   const svc = new StoreProductService(c.get("container"), c.env);
   const info = await svc.getProductDetail(id, uid);
+  c.executionCtx.waitUntil(
+    new ProductExperienceService(c.get("container"))
+      // PHP's normal-product ProductLogJob passes the product id into the
+      // legacy store_visit.cate_id slot. Preserve that odd contract so copied
+      // and newly written aggregates remain comparable.
+      .recordVisit(uid, id, id)
+      .catch((error: unknown) => {
+        console.error(JSON.stringify({
+          event: "product_visit_record_failed",
+          productId: id,
+          uid,
+          message: error instanceof Error ? error.message : String(error),
+        }));
+      }),
+  );
   return jsonOk(c, info);
 }
 

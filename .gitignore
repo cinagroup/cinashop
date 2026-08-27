@@ -9,6 +9,7 @@ tsconfig.tsbuildinfo
 
 # ─── Cloudflare / Wrangler ────────────────────────────
 .wrangler/
+.wrangler*/
 .dev.vars
 .dev.vars.*
 

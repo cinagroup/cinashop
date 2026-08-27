@@ -1,7 +1,7 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "cinashop-api"
 main = "src/index.ts"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-08-09"
 compatibility_flags = ["nodejs_compat"]
 
 # ─── 观察性 ───────────────────────────────────────────────
@@ -22,8 +22,21 @@ localConnectionString = "postgresql://crmeb:crmeb@localhost:5432/crmeb"
 binding = "CONFIG_KV"
 id = "f79a153ac6ee408891f6118c06d4f9a8"
 
+# Private object storage. Objects are served only through signed Worker URLs;
+# create this bucket before the first deployment that enables attachment upload.
+[[r2_buckets]]
+binding = "ASSETS_BUCKET"
+bucket_name = "cinashop-assets"
+
 # Upstash Redis 通过 secret 设置 (UPSTASH_REDIS_URL / UPSTASH_REDIS_TOKEN)
 [vars]
+NODE_ENV = "production"
+INTERNAL_API_URL = "https://cinashop-api.cinagroup.workers.dev"
+ORDER_DLQ_NAME = "cinashop-order-dlq"
+OUT_API_LOGIN_LIMIT_PER_MINUTE = "10"
+OUT_API_REFRESH_LIMIT_PER_MINUTE = "30"
+OUT_API_READ_LIMIT_PER_MINUTE = "120"
+OUT_API_WRITE_LIMIT_PER_MINUTE = "30"
 
 # ─── Queues ───────────────────────────────────────────────
 [[queues.producers]]
@@ -36,6 +49,15 @@ max_batch_size = 10
 max_batch_timeout = 2
 max_retries = 3
 dead_letter_queue = "cinashop-order-dlq"
+
+# Dead letters become persistent PostgreSQL alert records before acknowledgement.
+# A second queue preserves messages when PostgreSQL archival itself repeatedly fails.
+[[queues.consumers]]
+queue = "cinashop-order-dlq"
+max_batch_size = 10
+max_batch_timeout = 2
+max_retries = 10
+dead_letter_queue = "cinashop-order-dlq-unarchived"
 
 # ─── Durable Objects ──────────────────────────────────────
 [[durable_objects.bindings]]
@@ -64,4 +86,4 @@ new_sqlite_classes = ["ChatRoomDO"]
 
 # ─── 定时任务 ─────────────────────────────────────────────
 [triggers]
-crons = ["*/5 * * * *"]  # M1 占位, M3 接入自动收货/拼团超时
+crons = ["*/5 * * * *"]  # Queue 驱动的 outbox/未支付取消/拼团超时退款/履约/直播/退款对账分页工作流

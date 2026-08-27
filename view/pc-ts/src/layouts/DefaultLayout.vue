@@ -155,6 +155,33 @@ onMounted(async () => {
   color: #e64340;
 }
 
+@media (max-width: 768px) {
+  .header-inner {
+    height: 56px;
+    gap: 10px;
+    padding-inline: 12px;
+  }
+
+  .logo-img {
+    height: 34px;
+  }
+
+  .nav,
+  .search-input {
+    display: none;
+  }
+
+  .actions {
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .action-link {
+    white-space: nowrap;
+    font-size: 13px;
+  }
+}
+
 .main {
   min-height: calc(100vh - 150px);
 }

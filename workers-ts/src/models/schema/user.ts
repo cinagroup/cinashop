@@ -19,7 +19,9 @@ import {
   smallint,
   text,
   index,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const user = pgTable(
   "user",
@@ -91,6 +93,18 @@ export const user = pgTable(
     levelExtendInfo: text("level_extend_info"),
     isFirstOrder: smallint("is_first_order").default(0).notNull(),
     isNewcomer: smallint("is_newcomer").default(0).notNull(),
+    replaceOrderNum: varchar("replace_order_num", { length: 32 }).default("").notNull(),
+    divisionName: varchar("division_name", { length: 32 }).default("").notNull(),
+    /** 0普通用户 1事业部 2代理商 3员工。 */
+    divisionType: integer("division_type").default(0).notNull(),
+    divisionStatus: integer("division_status").default(0).notNull(),
+    divisionId: integer("division_id").default(0).notNull(),
+    agentId: integer("agent_id").default(0).notNull(),
+    staffId: integer("staff_id").default(0).notNull(),
+    divisionPercent: integer("division_percent").default(0).notNull(),
+    divisionEndTime: integer("division_end_time").default(0).notNull(),
+    divisionChangeTime: integer("division_change_time").default(0).notNull(),
+    divisionInvite: integer("division_invite").default(0).notNull(),
   },
   (t) => [
     index("account").on(t.account),
@@ -102,6 +116,12 @@ export const user = pgTable(
     index("phone").on(t.phone),
     index("index_0").on(t.deleteTime),
     index("add_time_delete_sex").on(t.addTime, t.deleteTime, t.sex),
+    index("user_division_parent").on(t.divisionId, t.agentId, t.staffId),
+    index("user_division_role").on(t.divisionType, t.divisionStatus, t.divisionEndTime),
+    index("user_division_invite").on(t.divisionInvite).where(sql`${t.divisionInvite} <> 0`),
+    check("user_division_type_ck", sql`${t.divisionType} BETWEEN 0 AND 3`),
+    check("user_division_status_ck", sql`${t.divisionStatus} BETWEEN 0 AND 1`),
+    check("user_division_percent_ck", sql`${t.divisionPercent} BETWEEN 0 AND 100`),
   ],
 );
 

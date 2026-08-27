@@ -39,9 +39,11 @@ export const storeOrderRefund = pgTable(
     /** 已退金额 (部分退款用) */
     refundedPrice: decimal("refunded_price", { precision: 12, scale: 2 }).default("0.00").notNull(),
     refundReason: varchar("refund_reason", { length: 255 }).default("").notNull(),
-    refundPhone: varchar("refund_phone", { length: 20 }).default("").notNull(),
-    refundExpress: varchar("refund_express", { length: 50 }).default("").notNull(),
-    refundExpressName: varchar("refund_express_name", { length: 50 }).default("").notNull(),
+    /** 1=快递退回 2=到店退货；保留旧库原始选择。 */
+    refundGoodsType: smallint("refund_goods_type").default(1).notNull(),
+    refundPhone: varchar("refund_phone", { length: 32 }).default("").notNull(),
+    refundExpress: varchar("refund_express", { length: 100 }).default("").notNull(),
+    refundExpressName: varchar("refund_express_name", { length: 255 }).default("").notNull(),
     refundExplain: varchar("refund_explain", { length: 255 }).default("").notNull(),
     refundImg: text("refund_img"),
     refundGoodsExplain: varchar("refund_goods_explain", { length: 255 }).default("").notNull(),
@@ -77,6 +79,7 @@ export const storeOrderStatus = pgTable(
   },
   (t) => [
     index("sos_oid").on(t.oid),
+    index("sos_oid_change_time").on(t.oid, t.changeTime),
     index("sos_change_type").on(t.changeType),
     index("sos_change_time").on(t.changeTime),
   ],

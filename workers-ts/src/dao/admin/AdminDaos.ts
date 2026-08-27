@@ -1,7 +1,7 @@
 /**
  * 管理后台 Dao (M7)
  */
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
 import { systemAdmin, storeServiceLog } from "@/models/schema";
 
@@ -24,6 +24,32 @@ export class SystemAdminDao extends BaseDao<typeof systemAdmin> {
       .where(eq(systemAdmin.account, account))
       .limit(1);
     return rows[0] ?? null;
+  }
+
+  /** 按账号和后台类型查询，避免平台管理员与供应商账号串域。 */
+  async findByAccountAndType(account: string, adminType: number) {
+    const rows = await this.db
+      .select()
+      .from(systemAdmin)
+      .where(and(eq(systemAdmin.account, account), eq(systemAdmin.adminType, adminType)))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async accountExistsForOtherAdmin(account: string, adminType: number, adminId: number) {
+    const rows = await this.db
+      .select({ id: systemAdmin.id })
+      .from(systemAdmin)
+      .where(
+        and(
+          eq(systemAdmin.account, account),
+          eq(systemAdmin.adminType, adminType),
+          ne(systemAdmin.id, adminId),
+          eq(systemAdmin.isDel, 0),
+        ),
+      )
+      .limit(1);
+    return rows.length > 0;
   }
 
   /** 按手机号查 */

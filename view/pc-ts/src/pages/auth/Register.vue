@@ -11,6 +11,14 @@
           <el-input v-model="form.account" placeholder="请输入手机号" :maxlength="11" />
         </el-form-item>
         <el-form-item>
+          <div class="code-row">
+            <el-input v-model="form.captcha" placeholder="请输入 6 位验证码" :maxlength="6" />
+            <el-button :loading="codeSending" :disabled="countdown > 0" @click="sendCode">
+              {{ countdown > 0 ? `${countdown}s 后重试` : "获取验证码" }}
+            </el-button>
+          </div>
+        </el-form-item>
+        <el-form-item>
           <el-input v-model="form.password" type="password" placeholder="请输入密码 (至少6位)" show-password />
         </el-form-item>
         <el-form-item>
@@ -29,26 +37,53 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { onUnmounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { apiRegister } from "@/api/auth";
+import { apiRegister, apiRequestCode } from "@/api/auth";
+import { requestSmsChallenge } from "@/composables/smsChallenge";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const loading = ref(false);
-const form = reactive({ account: "", password: "", confirm: "" });
+const codeSending = ref(false);
+const countdown = ref(0);
+let countdownTimer: ReturnType<typeof setInterval> | undefined;
+const form = reactive({ account: "", captcha: "", password: "", confirm: "" });
+
+async function sendCode() {
+  if (!/^1\d{10}$/.test(form.account)) return ElMessage.warning("请输入正确的手机号");
+  codeSending.value = true;
+  try {
+    const key = await requestSmsChallenge(form.account, "register");
+    await apiRequestCode(form.account, "register", key);
+    ElMessage.success("验证码任务已提交");
+    countdown.value = 60;
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      countdown.value -= 1;
+      if (countdown.value <= 0 && countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = undefined;
+      }
+    }, 1000);
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : "验证码发送失败");
+  } finally {
+    codeSending.value = false;
+  }
+}
 
 async function doRegister() {
   if (!/^1\d{10}$/.test(form.account)) return ElMessage.warning("请输入正确的手机号");
+  if (!/^\d{6}$/.test(form.captcha)) return ElMessage.warning("请输入 6 位验证码");
   if (form.password.length < 6) return ElMessage.warning("密码至少 6 位");
   if (form.password !== form.confirm) return ElMessage.warning("两次密码不一致");
   loading.value = true;
   try {
-    const result = await apiRegister(form.account, form.password, form.confirm);
-    authStore.token = result.token;
-    localStorage.setItem("pc_token", result.token);
+    const result = await apiRegister(form.account, form.captcha, form.password, form.confirm);
+    authStore.applyLogin(result);
     ElMessage.success("注册成功");
     router.push("/");
   } catch (e) {
@@ -57,6 +92,10 @@ async function doRegister() {
     loading.value = false;
   }
 }
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer);
+});
 </script>
 
 <style scoped>
@@ -84,6 +123,12 @@ async function doRegister() {
 .logo-img {
   width: 120px;
   height: 50px;
+}
+
+.code-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
 }
 
 .title {

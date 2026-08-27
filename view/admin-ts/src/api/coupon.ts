@@ -3,6 +3,9 @@
  */
 import request, { getData } from "@/utils/request";
 
+const previewMode =
+  import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
+
 export interface CouponItem {
   id: number;
   couponTitle: string;
@@ -49,5 +52,12 @@ export function apiAdminStatisticOverview(): Promise<{
   yesterday: { orderCount: number; sales: string };
   total: { orderCount: number; sales: string; productCount: number; userCount: number; refundCount: number };
 }> {
+  if (previewMode) {
+    return Promise.resolve({
+      today: { orderCount: 19, sales: "2687.20" },
+      yesterday: { orderCount: 16, sales: "2148.80" },
+      total: { orderCount: 1286, sales: "186420.50", productCount: 71, userCount: 368, refundCount: 12 },
+    });
+  }
   return getData(request.get("/statistic/overview"));
 }

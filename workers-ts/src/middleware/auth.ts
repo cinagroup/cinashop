@@ -29,12 +29,15 @@ interface AuthOptions {
   force: boolean;
 }
 
-/** 从 header 提取 token (对应 PHP 优先 Authori-zation, 兜底 Authorization) */
-function extractToken(c: Context): string | null {
+/** 从 HTTP header 或 WebSocket 子协议提取 token。 */
+export function extractToken(c: Context): string | null {
   const h1 = c.req.header("Authori-zation");
   if (h1) return h1.replace(/^Bearer\s+/, "").trim();
   const h2 = c.req.header("Authorization");
   if (h2) return h2.replace(/^Bearer\s+/, "").trim();
+  const protocols = c.req.header("Sec-WebSocket-Protocol")?.split(",") ?? [];
+  const authProtocol = protocols.map((value) => value.trim()).find((value) => value.startsWith("cinashop-auth."));
+  if (authProtocol) return authProtocol.slice("cinashop-auth.".length);
   return null;
 }
 
@@ -100,7 +103,7 @@ export function authMiddleware(opts: AuthOptions): MiddlewareHandler<{
     }
 
     // Layer 2: JWT 签名 + exp
-    let payload: { id: number; type: string; auth?: string };
+    let payload: { id: number; type: string; auth?: string; exp: number };
     try {
       payload = await verifyToken(token, env.APP_KEY);
     } catch {
@@ -149,6 +152,10 @@ export function authMiddleware(opts: AuthOptions): MiddlewareHandler<{
     c.set("uid", user.uid);
     c.set("user", toAuthUser(user));
     c.set("isLogin", true);
+    c.set("socketTokenKey", key);
+    c.set("socketTokenExp", payload.exp);
+    c.set("socketAuthId", user.uid);
+    c.set("socketAuthVersion", payload.auth ?? "");
     await next();
   };
 }

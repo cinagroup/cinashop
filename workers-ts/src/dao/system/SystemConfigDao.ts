@@ -4,7 +4,7 @@
  * 对应 PHP app/dao/system/SystemConfigDao.php。
  * 主要功能: 按 menu_name 取 value (对应 sys_config() 助手)。
  */
-import { eq, and } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
 import { systemConfig } from "@/models/schema/system";
 
@@ -24,6 +24,9 @@ export class SystemConfigDao extends BaseDao<typeof systemConfig> {
       .select({ value: systemConfig.value })
       .from(systemConfig)
       .where(and(eq(systemConfig.menuName, menuName), eq(systemConfig.isStore, isStore)))
+      // 历史版本曾重复插入默认配置。优先业务 sort，再取最新记录，避免
+      // PostgreSQL 在重复键上以不确定的物理顺序返回示例值。
+      .orderBy(desc(systemConfig.sort), desc(systemConfig.id))
       .limit(1) as Promise<{ value: string }[]>);
     return rows[0]?.value ?? "";
   }
@@ -34,7 +37,9 @@ export class SystemConfigDao extends BaseDao<typeof systemConfig> {
     const rows = await (this.db
       .select({ menuName: systemConfig.menuName, value: systemConfig.value })
       .from(systemConfig)
-      .where(eq(systemConfig.isStore, isStore)) as Promise<
+      .where(and(inArray(systemConfig.menuName, menuNames), eq(systemConfig.isStore, isStore)))
+      // 下面的归并由后者覆盖前者；因此高 sort / 新 id 与 getValue 一致。
+      .orderBy(asc(systemConfig.sort), asc(systemConfig.id)) as Promise<
       { menuName: string; value: string }[]
     >);
     const set = new Set(menuNames);

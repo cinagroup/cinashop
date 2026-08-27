@@ -93,25 +93,26 @@ export async function createToken(
  * 失败抛异常 (jwtVerify 抛 JWSSignatureVerificationFailed / JWTExpired 等),
  * 调用方在 auth 中间件捕获后转 AuthException(410001)。
  *
- * @returns { id, type, auth }
+ * @returns { id, type, auth, exp }
  */
 export async function verifyToken(
   token: string,
   secret: string,
-): Promise<{ id: number; type: TokenType; auth?: string }> {
+): Promise<{ id: number; type: TokenType; auth?: string; exp: number }> {
   const { payload } = await jwtVerify(
     token,
     new TextEncoder().encode(secret),
     { algorithms: ["HS256"], clockTolerance: 60 },
   );
   const p = payload as unknown as CrmebJWTPayload;
-  if (!p.jti || typeof p.jti.id !== "number") {
+  if (!p.jti || typeof p.jti.id !== "number" || typeof p.exp !== "number" || !Number.isSafeInteger(p.exp)) {
     throw new Error("invalid jti claim");
   }
   return {
     id: p.jti.id,
     type: p.jti.type,
     auth: p.auth,
+    exp: p.exp,
   };
 }
 

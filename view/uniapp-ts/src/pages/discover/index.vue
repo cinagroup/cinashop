@@ -2,8 +2,28 @@
   <view class="discover">
     <view class="top-bar">
       <text class="top-title">逛逛</text>
-      <text class="publish-btn" @tap="openPublish">＋ 发布</text>
+      <view class="top-actions">
+        <text class="people-btn" @tap="openPeople">好友与关注</text>
+        <text class="publish-btn" @tap="openPublish">＋ 发布</text>
+      </view>
     </view>
+
+    <scroll-view v-if="highlights.length" scroll-x class="follow-strip" :show-scrollbar="false">
+      <view class="follow-row">
+        <view
+          v-for="item in highlights"
+          :key="item.relation_id"
+          class="follow-person"
+          @tap="openPeople"
+        >
+          <view class="avatar-wrap">
+            <image class="follow-avatar" :src="item.author_image || fallbackAvatar" mode="aspectFill" />
+            <view v-if="item.is_new" class="new-dot" />
+          </view>
+          <text class="follow-name">{{ item.author || "社区用户" }}</text>
+        </view>
+      </view>
+    </scroll-view>
 
     <!-- 帖子列表 -->
     <view v-if="posts.length" class="feed">
@@ -90,6 +110,8 @@ import {
   apiCommunitySave,
   apiCommentList,
   apiCommentSave,
+  apiCommunityFollowHighlights,
+  communityPreviewMode,
   type CommunityPost,
   type CommunityComment,
 } from "@/api/community";
@@ -103,7 +125,9 @@ const liked = ref(false);
 const commentText = ref("");
 const showPublish = ref(false);
 const publishForm = ref({ title: "", content: "" });
+const highlights = ref<Awaited<ReturnType<typeof apiCommunityFollowHighlights>>>([]);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
+const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Ccircle cx='36' cy='36' r='36' fill='%23eceff3'/%3E%3Ccircle cx='36' cy='28' r='12' fill='%23c8cdd5'/%3E%3Cpath d='M13 66c3-14 11-22 23-22s20 8 23 22' fill='%23c8cdd5'/%3E%3C/svg%3E";
 
 function formatTime(ts: number): string {
   if (!ts) return "";
@@ -118,10 +142,19 @@ async function load() {
   } catch {
     posts.value = [];
   }
+  if (authStore.isLoggedIn || communityPreviewMode) {
+    try {
+      highlights.value = await apiCommunityFollowHighlights();
+    } catch {
+      highlights.value = [];
+    }
+  } else {
+    highlights.value = [];
+  }
 }
 
 function requireLogin(): boolean {
-  if (authStore.isLoggedIn) return true;
+  if (authStore.isLoggedIn || communityPreviewMode) return true;
   uni.navigateTo({ url: "/pages/auth/login" });
   return false;
 }
@@ -129,6 +162,11 @@ function requireLogin(): boolean {
 function openPublish() {
   if (!requireLogin()) return;
   showPublish.value = true;
+}
+
+function openPeople() {
+  if (!requireLogin()) return;
+  uni.navigateTo({ url: "/pages/discover/people" });
 }
 
 async function publish() {
@@ -139,7 +177,7 @@ async function publish() {
     await apiCommunitySave({
       title: publishForm.value.title.trim() || undefined,
       content: publishForm.value.content.trim(),
-      content_type: 2,
+      content_type: 1,
     });
     uni.showToast({ title: "发布成功", icon: "success" });
     showPublish.value = false;
@@ -213,6 +251,18 @@ onMounted(load);
   font-weight: 700;
 }
 
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.people-btn {
+  color: #555;
+  font-size: 24rpx;
+  padding: 9rpx 10rpx;
+}
+
 .publish-btn {
   color: #e93323;
   font-size: 26rpx;
@@ -225,6 +275,60 @@ onMounted(load);
   display: flex;
   flex-direction: column;
   gap: 20rpx;
+}
+
+.follow-strip {
+  width: 100%;
+  margin-bottom: 20rpx;
+  border-radius: 16rpx;
+  background: #fff;
+}
+
+.follow-row {
+  display: flex;
+  gap: 24rpx;
+  min-width: max-content;
+  padding: 20rpx 24rpx;
+}
+
+.follow-person {
+  width: 92rpx;
+  text-align: center;
+}
+
+.avatar-wrap {
+  position: relative;
+  width: 72rpx;
+  height: 72rpx;
+  margin: 0 auto;
+}
+
+.follow-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #f0f1f3;
+}
+
+.new-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 15rpx;
+  height: 15rpx;
+  border: 3rpx solid #fff;
+  border-radius: 50%;
+  background: #e93323;
+}
+
+.follow-name {
+  display: block;
+  overflow: hidden;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 20rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .post-card {

@@ -22,14 +22,18 @@ export class StoreCouponIssueDao extends BaseDao<typeof storeCouponIssue> {
     });
   }
 
-  /** 可领取的优惠券列表 (status=0 且未过期) */
+  /** PHP 手动领取券列表 (status=1, 未删除且在领取窗口内)。 */
   async getIssueList() {
     const now = new Date().toISOString();
     return this.db
       .select()
       .from(storeCouponIssue)
       .where(
-        sql`${storeCouponIssue.status} = 0 AND (${storeCouponIssue.receiveType} = 0 OR (${storeCouponIssue.receiveType} = 1 AND ${storeCouponIssue.startTime} <= ${now} AND ${storeCouponIssue.endTime} >= ${now}))`,
+        sql`${storeCouponIssue.status} = 1
+          AND ${storeCouponIssue.isDel} = 0
+          AND ${storeCouponIssue.receiveType} = 1
+          AND (${storeCouponIssue.startTime} IS NULL OR ${storeCouponIssue.startTime} <= ${now})
+          AND (${storeCouponIssue.endTime} IS NULL OR ${storeCouponIssue.endTime} >= ${now})`,
       )
       .orderBy(sql`${storeCouponIssue.sort} DESC, ${storeCouponIssue.addTime} DESC`);
   }
@@ -76,11 +80,17 @@ export class StoreSeckillDao extends BaseDao<typeof storeSeckill> {
 
   /** 按时间段取秒杀商品 (time_id 逗号分隔 → PG string_to_array 匹配) */
   async getByTimeId(timeId: string) {
+    const now = new Date().toISOString();
     return this.db
       .select()
       .from(storeSeckill)
       .where(
-        sql`${timeId} = ANY(string_to_array(${storeSeckill.timeId}, ',')) AND ${storeSeckill.status} = 1`,
+        sql`${timeId} = ANY(string_to_array(${storeSeckill.timeId}, ','))
+          AND ${storeSeckill.status} = 1
+          AND ${storeSeckill.isShow} = 1
+          AND ${storeSeckill.isDel} = 0
+          AND (${storeSeckill.startTime} IS NULL OR ${storeSeckill.startTime} <= ${now})
+          AND (${storeSeckill.stopTime} IS NULL OR ${storeSeckill.stopTime} >= ${now})`,
       )
       .orderBy(sql`${storeSeckill.sort} DESC`);
   }
@@ -124,7 +134,11 @@ export class StoreCombinationDao extends BaseDao<typeof storeCombination> {
       .select()
       .from(storeCombination)
       .where(
-        sql`${storeCombination.status} = 1 AND (${storeCombination.stopTime} IS NULL OR ${storeCombination.stopTime} >= ${now})`,
+        sql`${storeCombination.status} = 1
+          AND ${storeCombination.isShow} = 1
+          AND ${storeCombination.isDel} = 0
+          AND (${storeCombination.startTime} IS NULL OR ${storeCombination.startTime} <= ${now})
+          AND (${storeCombination.stopTime} IS NULL OR ${storeCombination.stopTime} >= ${now})`,
       )
       .orderBy(sql`${storeCombination.sort} DESC`);
   }
@@ -151,7 +165,10 @@ export class StoreBargainDao extends BaseDao<typeof storeBargain> {
       .select()
       .from(storeBargain)
       .where(
-        sql`${storeBargain.status} = 1 AND (${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= ${now})`,
+        sql`${storeBargain.status} = 1
+          AND ${storeBargain.isDel} = 0
+          AND (${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= ${now})
+          AND (${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= ${now})`,
       )
       .orderBy(sql`${storeBargain.sort} DESC`);
   }
@@ -176,7 +193,11 @@ export class StoreIntegralDao extends BaseDao<typeof storeIntegral> {
     return this.db
       .select()
       .from(storeIntegral)
-      .where(eq(storeIntegral.status, 1))
+      .where(
+        sql`${storeIntegral.status} = 1
+          AND ${storeIntegral.isShow} = 1
+          AND ${storeIntegral.isDel} = 0`,
+      )
       .orderBy(sql`${storeIntegral.sort} DESC, ${storeIntegral.addTime} DESC`)
       .limit(limit)
       .offset((page - 1) * limit);

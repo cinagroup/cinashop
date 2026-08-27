@@ -11,6 +11,7 @@
  *
  * Workers 每个请求是独立 isolate, 每请求建一次连接, Hyperdrive 内部复用池。
  */
+import { sql } from "drizzle-orm";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "@/models/schema";
@@ -48,12 +49,24 @@ import {
 import { WechatUserDao } from "@/services/wechat/WechatAuthService";
 import { SystemAdminDao, StoreServiceLogDao } from "@/dao/admin/AdminDaos";
 import { StoreProductReplyDao } from "@/dao/product/ReplyDaos";
+import { SystemSupplierDao } from "@/dao/supplier/SupplierDaos";
 import type { Env } from "@/env";
 
 /** Drizzle DB 类型 (postgres-js 驱动) */
 export type DbClient = PostgresJsDatabase<Record<string, never>> & {
   $client: ReturnType<typeof postgres>;
 };
+
+export interface DbConnectionOptions {
+  /** Restrict every connection to one validated PostgreSQL schema. */
+  searchPath?: string;
+  /** Visible in pg_stat_activity and PostgreSQL logs. */
+  applicationName?: string;
+}
+
+const POSTGRES_IDENTIFIER = /^[a-z_][a-z0-9_]{0,62}$/;
+const POSTGRES_APPLICATION_NAME = /^[A-Za-z0-9._-]{1,63}$/;
+const transactionSearchPaths = new WeakMap<DbClient, string>();
 
 /**
  * 从 Hyperdrive 建立 postgres.js 客户端。
@@ -62,12 +75,40 @@ export type DbClient = PostgresJsDatabase<Record<string, never>> & {
  * 注意: prepare=false 是 Cloudflare Workers + postgres.js 的必需配置
  * (Workers 不支持 prepared statements 跨请求复用)。
  */
-export function createDb(env: Env): DbClient {
-  const client = postgres(env.HYPERDRIVE.connectionString, {
+export function createDbFromConnectionString(
+  connectionString: string,
+  maxConnections = 5,
+  options: DbConnectionOptions = {},
+): DbClient {
+  if (!connectionString.trim()) throw new Error("PostgreSQL connection string is required");
+  if (!Number.isSafeInteger(maxConnections) || maxConnections < 1 || maxConnections > 10) {
+    throw new Error("PostgreSQL client connection limit must be between 1 and 10");
+  }
+  if (options.searchPath && !POSTGRES_IDENTIFIER.test(options.searchPath)) {
+    throw new Error("PostgreSQL search path must be one safe schema identifier");
+  }
+  if (options.applicationName && !POSTGRES_APPLICATION_NAME.test(options.applicationName)) {
+    throw new Error("PostgreSQL application name contains unsupported characters");
+  }
+
+  const connection: Record<string, string> = {};
+  // Hyperdrive forwards PostgreSQL's standard startup `options` parameter,
+  // but may not preserve a custom `search_path` startup key.
+  if (options.searchPath) connection.options = `-c search_path=${options.searchPath}`;
+  if (options.applicationName) connection.application_name = options.applicationName;
+
+  const client = postgres(connectionString, {
     prepare: false,
-    max: 5, // Hyperdrive 已池化, 客户端少建连接
+    max: maxConnections,
+    connection,
   });
-  return drizzle(client, { schema }) as unknown as DbClient;
+  const db = drizzle(client, { schema }) as unknown as DbClient;
+  if (options.searchPath) transactionSearchPaths.set(db, options.searchPath);
+  return db;
+}
+
+export function createDb(env: Env): DbClient {
+  return createDbFromConnectionString(env.HYPERDRIVE.connectionString);
 }
 
 export interface Container {
@@ -109,10 +150,12 @@ export interface Container {
   storeServiceLogDao: StoreServiceLogDao;
   // M8 商品评价
   replyDao: StoreProductReplyDao;
+  // Supplier 独立后台
+  systemSupplierDao: SystemSupplierDao;
 }
 
-export function createContainer(env: Env): Container {
-  const db = createDb(env);
+/** Build a request-scoped container around an existing Drizzle client/transaction. */
+export function createContainerFromDb(db: DbClient): Container {
   return {
     db,
     userDao: new UserDao(db),
@@ -151,7 +194,12 @@ export function createContainer(env: Env): Container {
     storeServiceLogDao: new StoreServiceLogDao(db),
     // M8
     replyDao: new StoreProductReplyDao(db),
+    systemSupplierDao: new SystemSupplierDao(db),
   };
+}
+
+export function createContainer(env: Env): Container {
+  return createContainerFromDb(createDb(env));
 }
 
 /**
@@ -169,5 +217,11 @@ export async function withTx<T>(
   container: Container,
   fn: (tx: DbClient) => Promise<T>,
 ): Promise<T> {
-  return container.db.transaction(async (tx) => fn(tx as unknown as DbClient));
+  const searchPath = transactionSearchPaths.get(container.db);
+  return container.db.transaction(async (tx) => {
+    if (searchPath) {
+      await tx.execute(sql.raw(`SET LOCAL search_path TO "${searchPath}"`));
+    }
+    return fn(tx as unknown as DbClient);
+  });
 }

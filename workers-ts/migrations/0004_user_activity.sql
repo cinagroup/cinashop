@@ -141,9 +141,12 @@ CREATE TABLE IF NOT EXISTS "store_coupon_user" (
   "end_time" TIMESTAMP,
   "use_time" TIMESTAMP,
   "type" SMALLINT DEFAULT 1 NOT NULL,
-  "receive_time" INTEGER DEFAULT 0 NOT NULL
+  "receive_time" INTEGER DEFAULT 0 NOT NULL,
+  "receive_source" VARCHAR(32) DEFAULT 'send' NOT NULL,
+  "is_fail" SMALLINT DEFAULT 0 NOT NULL
 );
 CREATE INDEX IF NOT EXISTS "scu_uid_status_idx" ON "store_coupon_user" ("uid", "status");
+CREATE INDEX IF NOT EXISTS "scu_uid_issue" ON "store_coupon_user" ("uid", "issue_coupon_id");
 
 -- 秒杀/拼团/砍价/积分商品 (结构相似, 简化建表)
 CREATE TABLE IF NOT EXISTS "store_seckill" (
@@ -169,8 +172,11 @@ CREATE INDEX IF NOT EXISTS "ss_time_idx" ON "store_seckill" ("time_id");
 
 CREATE TABLE IF NOT EXISTS "store_seckill_time" (
   "id" SERIAL PRIMARY KEY,
-  "start_time" VARCHAR(8) DEFAULT '' NOT NULL,
-  "end_time" VARCHAR(8) DEFAULT '' NOT NULL,
+  "title" VARCHAR(255),
+  "pic" VARCHAR(255) DEFAULT '' NOT NULL,
+  "describe" VARCHAR(255) DEFAULT '' NOT NULL,
+  "start_time" VARCHAR(16) DEFAULT '' NOT NULL,
+  "end_time" VARCHAR(16) DEFAULT '' NOT NULL,
   "status" SMALLINT DEFAULT 1 NOT NULL,
   "add_time" INTEGER DEFAULT 0 NOT NULL
 );

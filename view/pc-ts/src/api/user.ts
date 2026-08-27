@@ -3,6 +3,16 @@
  */
 import request, { getData } from "@/utils/request";
 
+export interface UserInfo {
+  uid: number;
+  account?: string;
+  phone?: string;
+  nickname?: string;
+  now_money?: string;
+  integral?: number;
+  [key: string]: unknown;
+}
+
 /** 收藏列表 (GET /api/collect/user) */
 export function apiCollectList(): Promise<number[]> {
   return getData(request.get<number[]>("/collect/user"));
@@ -29,6 +39,6 @@ export function apiBalance(): Promise<unknown> {
 }
 
 /** 用户信息 (GET /api/user/info) */
-export function apiUserInfo(): Promise<unknown> {
-  return getData(request.get("/user/info"));
+export function apiUserInfo(): Promise<UserInfo> {
+  return getData(request.get<UserInfo>("/user/info"));
 }

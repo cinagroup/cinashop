@@ -11,6 +11,7 @@ import {
   userRecharge,
   userInvoice,
 } from "@/models/schema";
+import { signDayWindow } from "@/utils/sign";
 
 // ─── 收货地址 ────────────────────────────────────────────────
 export class UserAddressDao extends BaseDao<typeof userAddress> {
@@ -137,32 +138,32 @@ export class UserSignDao extends BaseDao<typeof userSign> {
 
   /** 今日是否签到 */
   async isSignedToday(uid: number): Promise<boolean> {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const rows = await this.db
-      .select({ id: userSign.id })
-      .from(userSign)
-      .where(and(eq(userSign.uid, uid), sql`${userSign.addTime} >= ${Math.floor(todayStart.getTime() / 1000)}`))
-      .limit(1);
-    return rows.length > 0;
-  }
-
-  /** 昨日是否签到 (判断连续) */
-  async isSignedYesterday(uid: number): Promise<boolean> {
-    const yStart = new Date();
-    yStart.setDate(yStart.getDate() - 1);
-    yStart.setHours(0, 0, 0, 0);
-    const yEnd = new Date();
-    yEnd.setDate(yEnd.getDate() - 1);
-    yEnd.setHours(23, 59, 59, 999);
+    const window = signDayWindow();
     const rows = await this.db
       .select({ id: userSign.id })
       .from(userSign)
       .where(
         and(
           eq(userSign.uid, uid),
-          sql`${userSign.addTime} >= ${Math.floor(yStart.getTime() / 1000)}`,
-          sql`${userSign.addTime} <= ${Math.floor(yEnd.getTime() / 1000)}`,
+          sql`${userSign.addTime} >= ${window.todayStart}`,
+          sql`${userSign.addTime} < ${window.tomorrowStart}`,
+        ),
+      )
+      .limit(1);
+    return rows.length > 0;
+  }
+
+  /** 昨日是否签到 (判断连续) */
+  async isSignedYesterday(uid: number): Promise<boolean> {
+    const window = signDayWindow();
+    const rows = await this.db
+      .select({ id: userSign.id })
+      .from(userSign)
+      .where(
+        and(
+          eq(userSign.uid, uid),
+          sql`${userSign.addTime} >= ${window.yesterdayStart}`,
+          sql`${userSign.addTime} < ${window.todayStart}`,
         ),
       )
       .limit(1);

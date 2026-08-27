@@ -44,6 +44,10 @@
         <text>🔒 修改密码</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="go('/pages/user/phone')">
+        <text>📱 手机号管理</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="go('/pages/user/address')">
         <text>📍 收货地址</text>
         <text class="arrow">›</text>
@@ -64,12 +68,24 @@
         <text>💸 分销中心</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="go('/pages/user/supplierApply')">
+        <text>🏪 供应商入驻</text>
+        <text class="arrow">›</text>
+      </view>
+      <view v-if="operatorProfile?.can_writeoff" class="menu-item operator-entry" @tap="goOperator">
+        <text>✅ 履约核销</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="go('/pages/user/invoice')">
         <text>🧾 我的发票</text>
         <text class="arrow">›</text>
       </view>
       <view class="menu-item" @tap="go('/pages/user/level')">
         <text>🏅 会员等级</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-item" @tap="go('/pages/user/vipOpen')">
+        <text>👑 付费会员</text>
         <text class="arrow">›</text>
       </view>
       <view class="menu-item" @tap="go('/pages/user/recharge')">
@@ -100,6 +116,10 @@
         <text>🎯 营销活动</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="go('/pages/activity/lottery')">
+        <text>🎲 幸运抽奖</text>
+        <text class="arrow">›</text>
+      </view>
     </view>
 
     <!-- 退出登录 -->
@@ -108,9 +128,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+import { onShow } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
+import { apiLogout } from "@/api/auth";
+import { apiWriteoffOperatorProfile, type WriteoffOperatorProfile } from "@/api/order";
 
 const authStore = useAuthStore();
+const operatorProfile = ref<WriteoffOperatorProfile | null>(null);
 
 function goLogin() {
   if (!authStore.isLoggedIn) {
@@ -127,10 +152,32 @@ function go(url: string) {
   uni.navigateTo({ url });
 }
 
-function logout() {
+function goOperator() {
+  const role = operatorProfile.value?.staff_stores.length ? "staff" : "delivery";
+  go(`/pages/operator/writeoff?role=${role}`);
+}
+
+async function logout() {
+  try {
+    await apiLogout();
+  } catch {
+    // 本地凭据仍必须清理，避免退出接口异常把用户困在登录态。
+  }
   authStore.clear();
   uni.showToast({ title: "已退出登录", icon: "success" });
 }
+
+onShow(async () => {
+  if (!authStore.isLoggedIn) {
+    operatorProfile.value = null;
+    return;
+  }
+  try {
+    operatorProfile.value = await apiWriteoffOperatorProfile();
+  } catch {
+    operatorProfile.value = null;
+  }
+});
 </script>
 
 <style scoped>
@@ -216,6 +263,11 @@ function logout() {
 
 .menu-item:last-child {
   border-bottom: none;
+}
+
+.operator-entry {
+  color: #c6281c;
+  font-weight: 600;
 }
 
 .arrow {

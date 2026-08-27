@@ -16,6 +16,9 @@ import { containerMiddleware } from "@/middleware/container";
 import { errorHandler } from "@/middleware/error";
 import { apiRoutes } from "@/routes";
 import { adminapiRoutes } from "@/routes/adminapi";
+import { supplierapiRoutes } from "@/routes/supplierapi";
+import { outapiRoutes } from "@/routes/outapi";
+import { kefuapiRoutes } from "@/routes/kefuapi";
 import type { AppVariables, Env } from "@/env";
 
 export function createApp() {
@@ -39,10 +42,19 @@ export function createApp() {
   // 5. Admin 前端兼容路由 (/adminapi/*)
   app.route("/adminapi", adminapiRoutes);
 
-  // 5. 404 (对应 PHP Route::miss)
+  // 6. Supplier 独立后台兼容路由 (/supplierapi/*)
+  app.route("/supplierapi", supplierapiRoutes);
+
+  // 7. PHP-compatible third-party API routes use a separate token/ACL domain.
+  app.route("/outapi", outapiRoutes);
+
+  // 8. Dedicated customer-service token and data scope (/kefuapi/*).
+  app.route("/kefuapi", kefuapiRoutes);
+
+  // 9. 404 (对应 PHP Route::miss)
   app.notFound((c) => c.json({ status: 404, msg: "not found", data: null }));
 
-  // 6. 错误兜底
+  // 10. 错误兜底
   app.onError(errorHandler);
 
   return app;

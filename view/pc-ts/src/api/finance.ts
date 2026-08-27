@@ -51,12 +51,42 @@ export function apiInvoiceDel(id: number): Promise<null> {
   return getData(request.delete(`/invoice/del/${id}`));
 }
 
+export interface RechargeQuota {
+  id: number;
+  price: string;
+  give_money: string;
+}
+
+export interface RechargeIndexData {
+  recharge_quota: RechargeQuota[];
+  recharge_attention: string[];
+  user_extract_balance_status: number;
+}
+
 /** 充值套餐 (GET /api/recharge/index) */
-export function apiRechargeIndex(): Promise<unknown> {
+export function apiRechargeIndex(): Promise<RechargeIndexData> {
   return getData(request.get("/recharge/index"));
 }
 
 /** 创建充值订单 (POST /api/recharge/recharge) */
-export function apiRechargeCreate(price: number, channel = "h5"): Promise<{ orderId: string; price: string }> {
-  return getData(request.post("/recharge/recharge", { price, channel }));
+export function apiRechargeCreate(
+  price: number,
+  channel = "h5",
+  rechargeId = 0,
+): Promise<{ orderId: string; price: string }> {
+  return getData(request.post("/recharge/recharge", {
+    price,
+    channel,
+    rechar_id: rechargeId,
+    type: 0,
+  }));
+}
+
+/** 佣金转余额 (PHP recharge type=1). */
+export function apiBrokerageToBalance(price: number): Promise<{
+  orderId: string;
+  nowMoney: string;
+  brokeragePrice: string;
+}> {
+  return getData(request.post("/recharge/recharge", { price, type: 1, from: "balance" }));
 }

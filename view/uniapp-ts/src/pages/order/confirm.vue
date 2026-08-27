@@ -1,7 +1,15 @@
 <template>
   <view class="confirm-page">
+    <view class="section">
+      <view class="delivery-title">配送方式</view>
+      <view class="delivery-options">
+        <view class="delivery-option" :class="{ active: shippingType === 1 }" @tap="shippingType = 1">快递配送</view>
+        <view class="delivery-option" :class="{ active: shippingType === 2 }" @tap="shippingType = 2">门店自提</view>
+      </view>
+    </view>
+
     <!-- 地址 -->
-    <view class="section" @tap="showAddress">
+    <view v-if="shippingType === 1" class="section" @tap="showAddress">
       <template v-if="selectedAddr">
         <view class="addr-top">
           <text class="addr-name">{{ selectedAddr.real_name }}</text>
@@ -16,6 +24,30 @@
       <view v-else class="addr-empty">请选择收货地址 ›</view>
     </view>
 
+    <view v-else class="section">
+      <view class="delivery-title">选择自提门店</view>
+      <view
+        v-for="store in pickupStores"
+        :key="store.id"
+        class="pickup-store"
+        :class="{ active: selectedStoreId === store.id }"
+        @tap="selectedStoreId = store.id"
+      >
+        <text class="pickup-store-name">{{ store.name }}</text>
+        <text class="pickup-store-address">{{ store.address }}{{ store.detailed_address }}</text>
+        <text class="pickup-store-hours">{{ store.day_time || store.valid_time || "营业时间以门店通知为准" }}</text>
+      </view>
+      <view v-if="!pickupStores.length" class="addr-empty">暂无营业中的自提门店</view>
+      <view class="pickup-contact-row">
+        <text>联系人</text>
+        <input v-model="pickupContact.realName" maxlength="32" placeholder="请输入自提联系人" />
+      </view>
+      <view class="pickup-contact-row">
+        <text>手机号</text>
+        <input v-model="pickupContact.phone" type="number" maxlength="18" placeholder="请输入手机号" />
+      </view>
+    </view>
+
     <!-- 商品 -->
     <view class="section">
       <view class="cart-line" v-for="item in displayItems" :key="item.id">
@@ -27,15 +59,32 @@
         <view class="cart-info">
           <view class="cart-name">{{ item.productInfo?.storeName }}</view>
           <view class="cart-bottom">
-            <text class="cart-price">¥{{ item.productInfo?.price }}</text>
+            <text class="cart-price">
+              <template v-if="item.type === 4">{{ item.productInfo?.integral }}积分 + </template>
+              ¥{{ item.productInfo?.price }}
+            </text>
             <text class="cart-num">x{{ item.cartNum }}</text>
           </view>
         </view>
       </view>
     </view>
 
+    <SystemFormFields
+      v-if="customForm.length"
+      v-model="customForm"
+      :title="systemFormName"
+    />
+
+    <view v-if="firstOrderQuote?.couponExclusive" class="section row">
+      <text class="row-label">首单优惠</text>
+      <text v-if="firstOrderDiscount > 0" class="coupon-discount">
+        -¥{{ firstOrderDiscount.toFixed(2) }}
+      </text>
+      <text v-else class="row-value">已启用（不与优惠券叠加）</text>
+    </view>
+
     <!-- 优惠券 -->
-    <view class="section row" @tap="openCouponSheet">
+    <view v-else-if="!isIntegralOrder" class="section row" @tap="openCouponSheet">
       <text class="row-label">优惠券</text>
       <text v-if="selectedCoupon" class="coupon-discount">
         -¥{{ couponDiscount }}
@@ -79,8 +128,9 @@
     <view class="submit-bar">
       <view class="total-area">
         <text class="total-label">合计: </text>
+        <text v-if="isIntegralOrder" class="integral-total">{{ totalIntegral }}积分 + </text>
         <text class="total-price">¥{{ totalPay }}</text>
-        <text v-if="couponDiscount > 0" class="total-save">(已优惠 ¥{{ couponDiscount }})</text>
+        <text v-if="totalDiscount > 0" class="total-save">(已优惠 ¥{{ totalDiscount.toFixed(2) }})</text>
       </view>
       <view class="submit-btn" :class="{ disabled: submitting }" @tap="submit">
         {{ submitting ? "提交中..." : "提交订单" }}
@@ -147,9 +197,14 @@ import { onLoad, onShow } from "@dcloudio/uni-app";
 import { useCartStore } from "@/stores/cart";
 import {
   apiAddressList,
+  apiFirstOrderQuote,
   apiOrderCreate,
+  apiOrderSystemForm,
+  apiPickupStores,
 } from "@/api/order";
-import type { UserAddress, CartItem } from "@/types/order";
+import type { UserAddress, CartItem, FirstOrderQuote, PickupStore } from "@/types/order";
+import type { SystemFormComponent } from "@/types/systemForm";
+import SystemFormFields from "@/components/SystemFormFields.vue";
 
 interface UserCoupon {
   id: number;
@@ -164,15 +219,27 @@ interface UserCoupon {
 const cartStore = useCartStore();
 const addresses = ref<UserAddress[]>([]);
 const selectedAddr = ref<UserAddress | null>(null);
+const shippingType = ref<1 | 2>(1);
+const pickupStores = ref<PickupStore[]>([]);
+const selectedStoreId = ref(0);
+const pickupContact = ref({ realName: "", phone: "" });
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
-// ─── 模式: cart=购物车结算 buy=立即购买(单个) ───
+// ─── 模式: cart=购物车结算 buy=立即购买(一项或一个多行套餐) ───
 const mode = ref<"cart" | "buy">("cart");
-const buyCartId = ref(0);
+const buyCartIds = ref<number[]>([]);
+const activityParams = ref<{
+  type?: number;
+  pinkId?: number;
+  combinationId?: number;
+  seckillId?: number;
+  bargainUserId?: number;
+}>({});
 
 // ─── 优惠券 ───
 const usableCoupons = ref<UserCoupon[]>([]);
 const selectedCoupon = ref<UserCoupon | null>(null);
+const firstOrderQuote = ref<FirstOrderQuote | null>(null);
 
 // ─── 支付/备注 ───
 const payType = ref("yue");
@@ -182,11 +249,15 @@ const submitting = ref(false);
 // ─── 弹窗 ───
 const addrSheetVisible = ref(false);
 const couponSheetVisible = ref(false);
+const customForm = ref<SystemFormComponent[]>([]);
+const systemFormName = ref("");
+const systemFormError = ref("");
 
-/** 结算商品: buy 模式只显示指定 cart */
+/** 结算商品: buy 模式只显示 URL 明确指定的购物车行。 */
 const displayItems = computed<CartItem[]>(() => {
-  if (mode.value === "buy" && buyCartId.value) {
-    return cartStore.items.filter((i) => i.id === buyCartId.value);
+  if (mode.value === "buy" && buyCartIds.value.length) {
+    const ids = new Set(buyCartIds.value);
+    return cartStore.items.filter((i) => ids.has(i.id));
   }
   return cartStore.checkedItems;
 });
@@ -199,6 +270,7 @@ const goodsTotal = computed(() =>
 );
 
 const couponDiscount = computed(() => {
+  if (firstOrderQuote.value?.couponExclusive) return 0;
   if (!selectedCoupon.value) return 0;
   const c = selectedCoupon.value;
   if (Number(c.type) === 2) {
@@ -208,21 +280,94 @@ const couponDiscount = computed(() => {
   return Math.min(Number(c.couponPrice), goodsTotal.value);
 });
 
-const totalPay = computed(() =>
-  Math.max(0, Math.round((goodsTotal.value - couponDiscount.value) * 100) / 100).toFixed(2),
+const firstOrderDiscount = computed(() =>
+  Number(firstOrderQuote.value?.firstOrderPrice ?? 0),
 );
+
+const totalDiscount = computed(() => firstOrderDiscount.value + couponDiscount.value);
+
+const totalPay = computed(() =>
+  Math.max(0, Math.round((goodsTotal.value - totalDiscount.value) * 100) / 100).toFixed(2),
+);
+
+const isIntegralOrder = computed(() =>
+  activityParams.value.type === 4 || displayItems.value.some((item) => item.type === 4),
+);
+
+const totalIntegral = computed(() =>
+  displayItems.value.reduce(
+    (sum, item) => sum + Number(item.productInfo?.integral ?? 0) * item.cartNum,
+    0,
+  ),
+);
+
+function choiceText(value: unknown): string {
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  if (!value || typeof value !== "object") return "";
+  const record = value as Record<string, unknown>;
+  const candidate = record.val ?? record.value ?? record.label;
+  return typeof candidate === "string" || typeof candidate === "number" ? String(candidate) : "";
+}
+
+function initializeComponent(item: SystemFormComponent): SystemFormComponent {
+  let value = item.value;
+  const hasValue = Array.isArray(value) ? value.length > 0 : String(value ?? "").trim().length > 0;
+  if (!hasValue && item.name === "texts") value = item.defaultValConfig?.value ?? "";
+  else if (!hasValue && item.name === "radios") value = choiceText(item.wordsConfig?.list?.[0]);
+  else if (item.name === "uploadPicture" || item.name === "dateranges") value = hasValue && Array.isArray(value) ? value : [];
+  else if (!hasValue) value = "";
+  return { ...item, value };
+}
+
+async function loadSystemForm() {
+  const ids = [...new Set(displayItems.value
+    .map((item) => Number(item.productInfo?.systemFormId ?? 0))
+    .filter((id) => id > 0))];
+  customForm.value = [];
+  systemFormName.value = "";
+  systemFormError.value = ids.length > 1 ? "同一订单不能包含不同的自定义表单" : "";
+  if (systemFormError.value || !ids[0]) return;
+  try {
+    const form = await apiOrderSystemForm(ids[0]);
+    systemFormName.value = form.name;
+    customForm.value = form.value.map(initializeComponent);
+  } catch (error) {
+    systemFormError.value = error instanceof Error ? error.message : "系统表单加载失败";
+  }
+}
 
 async function loadAddresses() {
   try {
     addresses.value = await apiAddressList();
     selectedAddr.value =
       addresses.value.find((a) => a.is_default) ?? addresses.value[0] ?? null;
+    if (selectedAddr.value && !pickupContact.value.realName && !pickupContact.value.phone) {
+      pickupContact.value = {
+        realName: selectedAddr.value.real_name,
+        phone: selectedAddr.value.phone,
+      };
+    }
   } catch {
     // ignore
   }
 }
 
+async function loadPickupStores() {
+  try {
+    pickupStores.value = await apiPickupStores();
+    selectedStoreId.value = pickupStores.value[0]?.id ?? 0;
+  } catch {
+    pickupStores.value = [];
+    selectedStoreId.value = 0;
+  }
+}
+
 async function loadCoupons() {
+  if (isIntegralOrder.value || firstOrderQuote.value?.couponExclusive) {
+    usableCoupons.value = [];
+    selectedCoupon.value = null;
+    return;
+  }
   try {
     const list = await httpGetCoupons();
     const now = Date.now();
@@ -234,6 +379,20 @@ async function loadCoupons() {
     });
   } catch {
     usableCoupons.value = [];
+  }
+}
+
+async function loadFirstOrderQuote() {
+  const cartIds = displayItems.value.map((item) => item.id);
+  if (!cartIds.length) {
+    firstOrderQuote.value = null;
+    return;
+  }
+  try {
+    firstOrderQuote.value = await apiFirstOrderQuote(cartIds);
+    if (firstOrderQuote.value.couponExclusive) selectedCoupon.value = null;
+  } catch {
+    firstOrderQuote.value = null;
   }
 }
 
@@ -276,9 +435,21 @@ function pickCoupon(c: UserCoupon) {
 
 async function submit() {
   if (submitting.value) return;
-  if (!selectedAddr.value) return uni.showToast({ title: "请选择收货地址", icon: "none" });
+  if (shippingType.value === 1 && !selectedAddr.value) {
+    return uni.showToast({ title: "请选择收货地址", icon: "none" });
+  }
+  if (shippingType.value === 2 && !selectedStoreId.value) {
+    return uni.showToast({ title: "请选择自提门店", icon: "none" });
+  }
+  if (
+    shippingType.value === 2
+    && (!pickupContact.value.realName.trim() || !pickupContact.value.phone.trim())
+  ) {
+    return uni.showToast({ title: "请填写自提联系人和手机号", icon: "none" });
+  }
   const items = displayItems.value;
   if (!items.length) return uni.showToast({ title: "请选择商品", icon: "none" });
+  if (systemFormError.value) return uni.showToast({ title: systemFormError.value, icon: "none" });
 
   const addr = selectedAddr.value;
   const key = `uni_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -286,12 +457,20 @@ async function submit() {
   try {
     const result = await apiOrderCreate(key, {
       cartIds: items.map((i) => i.id),
-      realName: addr.real_name,
-      userPhone: addr.phone,
-      province: addr.province,
-      userAddress: `${addr.city}${addr.district}${addr.detail}`,
-      couponId: selectedCoupon.value?.id,
+      realName: shippingType.value === 1 ? addr?.real_name : pickupContact.value.realName.trim(),
+      userPhone: shippingType.value === 1 ? addr?.phone : pickupContact.value.phone.trim(),
+      province: shippingType.value === 1 ? addr?.province : "",
+      userAddress: shippingType.value === 1 && addr
+        ? `${addr.city}${addr.district}${addr.detail}`
+        : "",
+      shippingType: shippingType.value,
+      storeId: shippingType.value === 2 ? selectedStoreId.value : 0,
+      couponId: isIntegralOrder.value || firstOrderQuote.value?.couponExclusive
+        ? undefined
+        : selectedCoupon.value?.id,
       mark: mark.value,
+      customForm: customForm.value,
+      ...activityParams.value,
     });
     uni.showToast({ title: "订单创建成功", icon: "success" });
     if (mode.value !== "buy") await cartStore.fetchList();
@@ -312,29 +491,37 @@ async function httpGetCoupons(): Promise<UserCoupon[]> {
 }
 
 onLoad((options) => {
-  if (options?.mode === "buy" && options?.cartId) {
+  const rawCartIds = String(options?.cartIds ?? options?.cartId ?? "");
+  const parsedCartIds = [...new Set(rawCartIds
+    .split(",")
+    .map(Number)
+    .filter((id) => Number.isSafeInteger(id) && id > 0))];
+  if (options?.mode === "buy" && parsedCartIds.length && parsedCartIds.length <= 100) {
     mode.value = "buy";
-    buyCartId.value = Number(options.cartId);
+    buyCartIds.value = parsedCartIds;
   }
+  activityParams.value = {
+    type: Number(options?.type ?? 0) || undefined,
+    pinkId: Number(options?.pinkId ?? 0) || undefined,
+    combinationId: Number(options?.combinationId ?? 0) || undefined,
+    seckillId: Number(options?.seckillId ?? 0) || undefined,
+    bargainUserId: Number(options?.bargainUserId ?? 0) || undefined,
+  };
 });
 
-onShow(() => {
+onShow(async () => {
   // buy 模式: 需要拉购物车找到对应项
-  if (mode.value === "buy" && buyCartId.value) {
-    cartStore.fetchList().then(() => {
-      const target = cartStore.items.find((i) => i.id === buyCartId.value);
-      if (target) {
-        cartStore.items.forEach((i) => (i.checked = i.id === buyCartId.value));
-      } else {
-        // 加购项可能未同步, 刷新一次
-        cartStore.fetchList();
-      }
-    });
+  if (mode.value === "buy" && buyCartIds.value.length) {
+    await cartStore.fetchList();
+    const ids = new Set(buyCartIds.value);
+    const targetCount = cartStore.items.filter((i) => ids.has(i.id)).length;
+    if (targetCount === ids.size) cartStore.items.forEach((i) => (i.checked = ids.has(i.id)));
+    else await cartStore.fetchList();
   } else if (!cartStore.items.length) {
-    cartStore.fetchList();
+    await cartStore.fetchList();
   }
-  loadAddresses();
-  loadCoupons();
+  await loadFirstOrderQuote();
+  await Promise.all([loadAddresses(), loadCoupons(), loadSystemForm(), loadPickupStores()]);
 });
 </script>
 
@@ -354,6 +541,68 @@ onShow(() => {
 .row {
   display: flex;
   align-items: center;
+}
+
+.delivery-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 18rpx;
+}
+
+.delivery-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.delivery-option {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx;
+  border: 2rpx solid #eee;
+  border-radius: 12rpx;
+  color: #666;
+}
+
+.delivery-option.active,
+.pickup-store.active {
+  border-color: #e93323;
+  background: #fff5f4;
+  color: #e93323;
+}
+
+.pickup-store {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  border: 2rpx solid #eee;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 14rpx;
+}
+
+.pickup-store-name {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.pickup-store-address,
+.pickup-store-hours {
+  color: #666;
+  font-size: 24rpx;
+}
+
+.pickup-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 18rpx 0;
+  border-top: 1rpx solid #f2f2f2;
+  font-size: 26rpx;
+}
+
+.pickup-contact-row input {
+  flex: 1;
+  text-align: right;
 }
 
 .row-label {
@@ -524,6 +773,12 @@ onShow(() => {
 .total-price {
   color: #e93323;
   font-size: 36rpx;
+  font-weight: 700;
+}
+
+.integral-total {
+  color: #f76b1c;
+  font-size: 30rpx;
   font-weight: 700;
 }
 

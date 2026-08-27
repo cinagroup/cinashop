@@ -17,8 +17,8 @@
           <div class="pink-people">
             {{ info.people }} 人成团
           </div>
-          <el-button type="danger" size="large" style="width: 220px" :loading="joining" @click="join">
-            立即参团
+          <el-button type="danger" size="large" style="width: 220px" :loading="joining" @click="join()">
+            立即开团
           </el-button>
         </div>
       </div>
@@ -38,6 +38,15 @@
           <div class="pink-item-status">
             <el-tag v-if="(p as any).status === 1" type="success">拼团中</el-tag>
             <el-tag v-else type="info">已完成</el-tag>
+            <el-button
+              v-if="(p as any).status === 1"
+              type="danger"
+              size="small"
+              :loading="joining"
+              @click="join(Number((p as any).id))"
+            >
+              参加该团
+            </el-button>
           </div>
         </div>
       </div>
@@ -52,10 +61,8 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { apiCombinationPink, apiJoinPink } from "@/api/activity";
+import { apiCombinationPink } from "@/api/activity";
 import { apiCartAdd } from "@/api/cart";
-import { apiOrderCreate } from "@/api/order";
-import { apiAddressList } from "@/api/order";
 
 const route = useRoute();
 const router = useRouter();
@@ -75,49 +82,25 @@ function progressOf(p: unknown) {
   return Math.min(100, Math.round((people / total) * 100));
 }
 
-/** 参团: 加购 → 创建订单(type=2) → 生成团记录 → 跳支付 */
-async function join() {
+/** 开团: 活动加购 → 统一结算页填写地址/系统表单 → 创建拼团订单。 */
+async function join(pinkId = 0) {
   joining.value = true;
   try {
-    // 1. 地址 (取默认/第一个)
-    const addrs = await apiAddressList();
-    const addr = addrs.find((a) => (a as any).is_default === 1) ?? addrs[0];
-    if (!addr) {
-      ElMessage.warning("请先在个人中心添加收货地址");
-      router.push("/user/address");
-      return;
-    }
-
-    // 2. 加购 (拼团商品 SKU, 简化用首个 unique)
     const cart = await apiCartAdd({
       productId: (combo.value as any).productId,
       unique: "sku00001",
       cartNum: 1,
-      type: 2,
+      type: 3,
+      activityId: comboId,
     });
-
-    // 3. 创建订单 (type=2 拼团)
-    const key = `pink-${Date.now()}`;
-    const order = await apiOrderCreate(key, {
-      cartIds: [cart.id],
-      realName: (addr as any).real_name,
-      userPhone: (addr as any).phone,
-      province: (addr as any).province ?? "",
-      userAddress: (addr as any).detail ?? "",
-      type: 2,
+    router.push({
+      path: "/checkout",
+      query: pinkId > 0
+        ? { mode: "buy", cartId: String(cart.id), type: "3", pinkId: String(pinkId) }
+        : { mode: "buy", cartId: String(cart.id), type: "3", combinationId: String(comboId) },
     });
-
-    // 4. 生成团记录
-    await apiJoinPink({
-      combinationId: comboId,
-      productId: (combo.value as any).productId,
-      orderId: order.orderId,
-    });
-
-    ElMessage.success("参团成功, 请完成支付");
-    router.push(`/order/${order.orderId}`);
   } catch (e) {
-    ElMessage.error((e as Error).message || "参团失败");
+    ElMessage.error((e as Error).message || (pinkId > 0 ? "参团失败" : "开团失败"));
   } finally {
     joining.value = false;
   }
@@ -214,6 +197,12 @@ onMounted(async () => {
 
 .pink-item-info {
   flex: 1;
+}
+
+.pink-item-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .pink-item-name {

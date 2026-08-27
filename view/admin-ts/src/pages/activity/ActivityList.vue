@@ -2,7 +2,7 @@
   <div class="activity-page">
     <div class="page-head">
       <h2>营销活动</h2>
-      <div>
+      <div v-if="activeTab !== 'discounts'">
         <el-tag type="success" class="count-tag">当前 {{ list.length }} 个活动</el-tag>
         <el-button type="primary" size="small" @click="openForm()">＋ 新增活动</el-button>
       </div>
@@ -14,8 +14,11 @@
       <el-tab-pane label="拼团" name="combination" />
       <el-tab-pane label="砍价" name="bargain" />
       <el-tab-pane label="积分商城" name="integral" />
+      <el-tab-pane label="优惠套餐" name="discounts" />
     </el-tabs>
 
+    <DiscountPackageManager v-if="activeTab === 'discounts'" />
+    <template v-else>
     <el-table :data="list" v-loading="loading" border>
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column prop="storeName" label="活动名称" />
@@ -180,6 +183,7 @@
       </el-table>
       <el-empty v-if="!bargainUsers.length" description="暂无砍价记录" />
     </el-dialog>
+    </template>
   </div>
 </template>
 
@@ -200,8 +204,11 @@ import {
   type ActivityItem,
 } from "@/api/activity";
 import { ElMessageBox } from "element-plus";
+import DiscountPackageManager from "@/pages/activity/DiscountPackageManager.vue";
 
-const activeTab = ref("seckill");
+const previewMode =
+  import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
+const activeTab = ref(previewMode ? "discounts" : "seckill");
 const list = ref<ActivityItem[]>([]);
 const loading = ref(true);
 const pinkVisible = ref(false);
@@ -271,7 +278,7 @@ async function load() {
     switch (activeTab.value) {
       case "seckill":
         list.value = await apiAdminSeckillList();
-        loadTimes();
+        void loadTimes();
         break;
       case "combination":
         list.value = await apiAdminCombinationList();
@@ -281,6 +288,10 @@ async function load() {
         break;
       case "integral":
         list.value = await apiAdminIntegralList();
+        break;
+      case "discounts":
+        list.value = [];
+        seckillTimes.value = [];
         break;
     }
   } catch (e) {
@@ -307,19 +318,19 @@ async function toggleStatus(row: ActivityItem) {
 function openForm(row?: ActivityItem) {
   if (row) {
     form.id = row.id;
-    form.productId = row.productId;
-    form.storeName = row.storeName;
-    form.image = row.image;
-    form.price = row.price;
-    form.otPrice = row.otPrice;
-    form.stock = row.stock;
-    form.quota = row.quota;
+    form.productId = row.productId ?? 1;
+    form.storeName = row.storeName ?? "";
+    form.image = row.image ?? "";
+    form.price = row.price ?? "";
+    form.otPrice = row.otPrice ?? "";
+    form.stock = row.stock ?? 0;
+    form.quota = row.quota ?? row.stock ?? 0;
     form.num = (row as any).num ?? 2;
     form.people = (row as any).people ?? 2;
     form.minPrice = (row as any).minPrice ?? "";
     form.integral = (row as any).integral ?? 100;
     form.sort = row.sort ?? 90;
-    form.status = row.status;
+    form.status = row.status ?? 1;
   } else {
     form.id = 0;
     form.productId = 1;

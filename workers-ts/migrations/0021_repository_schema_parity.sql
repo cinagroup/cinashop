@@ -1,0 +1,36 @@
+-- Reconcile the filesystem and Worker-embedded schema paths. All statements
+-- are idempotent so this also repairs databases created by either older path.
+ALTER TABLE "store_order"
+  ADD COLUMN IF NOT EXISTS "refund_type" SMALLINT DEFAULT 0 NOT NULL;
+
+ALTER TABLE "store_service"
+  ADD COLUMN IF NOT EXISTS "mer_id" INTEGER DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "notify" SMALLINT DEFAULT 1 NOT NULL;
+
+ALTER TABLE "wechat_user"
+  ADD COLUMN IF NOT EXISTS "city" VARCHAR(64) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "language" VARCHAR(64) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "province" VARCHAR(64) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "country" VARCHAR(64) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "remark" VARCHAR(256) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "groupid" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "tagid_list" VARCHAR(256) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "second" INTEGER DEFAULT 0 NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "store_service_record" (
+  "id" SERIAL PRIMARY KEY,
+  "user_id" INTEGER DEFAULT 0 NOT NULL,
+  "to_uid" INTEGER DEFAULT 0 NOT NULL,
+  "nickname" VARCHAR(50) DEFAULT '' NOT NULL,
+  "avatar" VARCHAR(255) DEFAULT '' NOT NULL,
+  "is_tourist" SMALLINT DEFAULT 0 NOT NULL,
+  "online" SMALLINT DEFAULT 0 NOT NULL,
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL,
+  "update_time" INTEGER DEFAULT 0 NOT NULL,
+  "mssage_num" INTEGER DEFAULT 0 NOT NULL,
+  "message" TEXT DEFAULT '' NOT NULL,
+  "message_type" SMALLINT DEFAULT 1 NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS "ssr_to_uid_idx" ON "store_service_record" ("to_uid");

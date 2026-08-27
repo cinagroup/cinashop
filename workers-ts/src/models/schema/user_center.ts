@@ -23,6 +23,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ─── 收货地址 ────────────────────────────────────────────────
 export const userAddress = pgTable(
@@ -66,6 +67,9 @@ export const userRelation = pgTable(
     // 修复 PHP 缺失的唯一约束: 防并发重复收藏
     uniqueIndex("ur_uid_rel_type_cat").on(t.uid, t.relationId, t.type, t.category),
     index("ur_uid_type").on(t.uid, t.type),
+    index("ur_user_product_collect_latest")
+      .on(t.uid, t.addTime.desc(), t.id.desc(), t.relationId)
+      .where(sql`${t.type} = 'collect' AND ${t.category} = 'product'`),
   ],
 );
 
@@ -123,6 +127,7 @@ export const userRecharge = pgTable(
     /** 赠送金额 */
     givePrice: decimal("give_price", { precision: 12, scale: 2 }).default("0.00").notNull(),
     rechargeType: varchar("recharge_type", { length: 32 }).default("").notNull(),
+    authCode: varchar("auth_code", { length: 50 }).default("").notNull(),
     paid: smallint("paid").default(0).notNull(),
     payTime: integer("pay_time").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
@@ -131,8 +136,9 @@ export const userRecharge = pgTable(
     remarks: varchar("remarks", { length: 255 }).default("").notNull(),
   },
   (t) => [
-    uniqueIndex("ur_order_id").on(t.orderId),
+    index("ur_order_id_lookup").on(t.orderId),
     index("ur_uid").on(t.uid),
+    index("ur_uid_paid_time").on(t.uid, t.paid, t.addTime, t.id),
   ],
 );
 

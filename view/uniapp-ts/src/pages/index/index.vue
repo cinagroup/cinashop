@@ -1,5 +1,27 @@
 <template>
   <view class="home">
+    <view v-if="showOpenAdv" class="open-adv-mask" @tap="closeOpenAdv">
+      <view class="open-adv-card" @tap.stop>
+        <video
+          v-if="openAdv.type === 'video'"
+          class="open-adv-media"
+          :src="openAdv.video_link"
+          autoplay
+          muted
+          object-fit="cover"
+          @ended="closeOpenAdv"
+        />
+        <image
+          v-else
+          class="open-adv-media"
+          :src="openAdvImage"
+          mode="aspectFill"
+          @tap="followOpenAdv"
+        />
+        <view class="open-adv-close" @tap="closeOpenAdv">跳过</view>
+      </view>
+    </view>
+
     <!-- Logo -->
     <view class="logo-wrap">
       <image src="/static/logo.png" class="logo-img" mode="aspectFit" />
@@ -70,15 +92,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { computed, onBeforeUnmount, ref, onMounted } from "vue";
 import { onPullDownRefresh } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
+import { apiOpenAdv, type OpenAdvConfig } from "@/api/legacyContent";
 
 const goods = ref<GoodsItem[]>([]);
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
+const showOpenAdv = ref(false);
+const openAdv = ref<OpenAdvConfig>({
+  status: 0,
+  time: 3,
+  interval_time: 24,
+  type: "pic",
+  value: [],
+  video_link: "",
+});
+let openAdvTimer: ReturnType<typeof setTimeout> | null = null;
+const openAdvItem = computed(() => openAdv.value.value.find((item) => item.status === 1 && item.img));
+const openAdvImage = computed(() => openAdvItem.value?.img ?? "");
 
 const banners = [
   { image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=750&h=300&fit=crop", link: "/pages/activity/index" },
@@ -100,6 +135,36 @@ async function load() {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadOpenAdv() {
+  try {
+    const config = await apiOpenAdv();
+    if (config.status !== 1) return;
+    if (config.type === "pic" && !config.value.some((item) => item.status === 1 && item.img)) return;
+    if (config.type === "video" && !config.video_link) return;
+    const lastShown = Number(uni.getStorageSync("cinashop_open_adv_last") || 0);
+    const intervalMs = Math.max(0, config.interval_time) * 60 * 60 * 1_000;
+    if (lastShown > 0 && intervalMs > 0 && Date.now() - lastShown < intervalMs) return;
+    openAdv.value = config;
+    showOpenAdv.value = true;
+    uni.setStorageSync("cinashop_open_adv_last", Date.now());
+    openAdvTimer = setTimeout(closeOpenAdv, Math.max(1, config.time) * 1_000);
+  } catch {
+    // 开屏内容失败不能阻断首页。
+  }
+}
+
+function closeOpenAdv() {
+  showOpenAdv.value = false;
+  if (openAdvTimer) clearTimeout(openAdvTimer);
+  openAdvTimer = null;
+}
+
+function followOpenAdv() {
+  const link = openAdvItem.value?.link ?? "";
+  closeOpenAdv();
+  if (link.startsWith("/pages/")) uni.navigateTo({ url: link });
 }
 
 function onSearch(e: { detail: { value: string } }) {
@@ -145,12 +210,57 @@ onPullDownRefresh(async () => {
   uni.stopPullDownRefresh();
 });
 
-onMounted(load);
+onMounted(() => {
+  void load();
+  void loadOpenAdv();
+});
+
+onBeforeUnmount(closeOpenAdv);
 </script>
 
 <style scoped>
 .home {
   padding: 20rpx;
+}
+
+.open-adv-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+  background: rgba(0, 0, 0, 0.72);
+  box-sizing: border-box;
+}
+
+.open-adv-card {
+  position: relative;
+  width: 640rpx;
+  max-width: 88vw;
+  max-height: 78vh;
+  overflow: hidden;
+  border-radius: 24rpx;
+  background: #111;
+}
+
+.open-adv-media {
+  display: block;
+  width: 100%;
+  height: 760rpx;
+  max-height: 72vh;
+}
+
+.open-adv-close {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  padding: 10rpx 22rpx;
+  border-radius: 28rpx;
+  color: #fff;
+  font-size: 24rpx;
+  background: rgba(0, 0, 0, 0.58);
 }
 
 .logo-wrap {

@@ -8,9 +8,12 @@
 
     <!-- 基本信息 -->
     <view class="info-card">
-      <view class="info-row">
+      <view class="info-row interactive" @tap="openPhoneSettings">
         <text class="label">手机号</text>
-        <text class="value">{{ userInfo.phone || "—" }}</text>
+        <view class="value phone-value">
+          <text>{{ userInfo.phone || "未绑定" }}</text>
+          <text class="arrow">›</text>
+        </view>
       </view>
       <view class="info-row">
         <text class="label">UID</text>
@@ -76,6 +79,10 @@ function formatTime(ts: number): string {
   const d = new Date(ts * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function openPhoneSettings() {
+  uni.navigateTo({ url: "/pages/user/phone" });
 }
 
 async function load() {
@@ -162,6 +169,21 @@ onMounted(load);
 .value {
   font-size: 26rpx;
   color: #333;
+}
+
+.interactive {
+  cursor: pointer;
+}
+
+.phone-value {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.arrow {
+  color: #bbb;
+  font-size: 32rpx;
 }
 
 .edit-card {

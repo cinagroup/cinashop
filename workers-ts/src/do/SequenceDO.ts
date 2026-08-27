@@ -8,17 +8,18 @@
  *       1 bit 符号 | 41 bit 毫秒时间戳 | 10 bit worker | 12 bit 序列号
  *   - 时间起点: 2020-06-05 (与 PHP setStartTimeStamp 一致)
  *   - worker id: 通过 DO 实例 id 哈希得到 (Workers 多 isolate 天然分散)
- *   - 序列号: DO 内部计数器, 同毫秒内递增, blockConcurrencyWhile 保证唯一
+ *   - 序列号: SQLite 持久化计数器, 同毫秒内递增, DO input gate 保证唯一
  *
  * 为什么用 DO 而非 Upstash:
  *   雪花 ID 的序列号要求强一致 + 单点顺序, DO 单线程执行天然满足。
  *   Upstash REST 跨网络, 同毫秒并发会冲突。
  *
  * sharding: 单例 DO (id 固定为 "seq"), 全局一个序列源。
- * 性能: DO 内部计数极快, 单 DO 可承担每秒数万 ID (受 DO 限流影响)。
+ * 性能: SQLite 同步单行更新, 单 DO 吞吐受 DO 限流影响。
  * 生产高并发可按业务分片 (order/product/...), 这里用 prefix 区分。
  */
 import { DurableObject } from "cloudflare:workers";
+import type { Env } from "@/env";
 
 /** 雪花起点 (2020-06-05 00:00:00 UTC, 与 PHP 一致) */
 const EPOCH = Date.UTC(2020, 5, 5);
@@ -29,57 +30,55 @@ const SEQ_BITS = 12;
 const MAX_WORKER = (1 << WORKER_BITS) - 1; // 1023
 const MAX_SEQ = (1 << SEQ_BITS) - 1; // 4095
 
-interface SeqState {
-  lastTs: number; // 上次时间戳 (毫秒, 相对 EPOCH)
-  seq: number; // 当前序列号
-}
-
-export class SequenceDO extends DurableObject {
-  private state: SeqState = { lastTs: -1, seq: 0 };
+export class SequenceDO extends DurableObject<Env> {
   /** worker id (从 DO id 哈希, 0-1023) */
   private workerId: number;
 
-  constructor(state: DurableObjectState) {
-    super(state, {} as never);
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
     // 用 DO 实例 name 哈希出 workerId (稳定且唯一)
-    const name = state.id.name ?? "seq";
+    const name = ctx.id.name ?? "seq";
     this.workerId = hashStr(name) & MAX_WORKER;
+
+    // 序列必须在 isolate 回收后继续存在。SQLite 调用是同步的，因此读取和更新
+    // 单例行会保持在同一个 DO input gate 内，无需 blockConcurrencyWhile。
+    this.ctx.storage.sql.exec(`
+      CREATE TABLE IF NOT EXISTS sequence_state (
+        singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+        last_ts INTEGER NOT NULL,
+        seq INTEGER NOT NULL
+      )
+    `);
+    this.ctx.storage.sql.exec(
+      "INSERT OR IGNORE INTO sequence_state (singleton, last_ts, seq) VALUES (1, -1, 0)",
+    );
   }
 
   /**
    * 生成单个雪花 ID。
-   * 同一 DO 实例内 blockConcurrencyWhile 串行, 保证唯一。
+   * SQLite 同步事务与 DO input gate 共同保证唯一，并跨实例回收保存状态。
    */
   async nextId(): Promise<string> {
-    return this.ctx.blockConcurrencyWhile(() => {
-      const now = Date.now() - EPOCH;
-      let seq = 0;
-      if (now === this.state.lastTs) {
-        // 同毫秒: 序列号递增
-        this.state.seq = (this.state.seq + 1) & MAX_SEQ;
-        if (this.state.seq === 0) {
-          // 序列号耗尽, 等到下一毫秒
-          return this.waitNextMs(now).then((ts) => {
-            this.state.lastTs = ts;
-            this.state.seq = 0;
-            return this.compose(ts, 0);
-          });
-        }
-        seq = this.state.seq;
-      } else if (now > this.state.lastTs) {
-        this.state.lastTs = now;
-        this.state.seq = 0;
-        seq = 0;
-      } else {
-        // 时钟回拨 (极少见): 等待
-        return this.waitNextMs(this.state.lastTs).then((ts) => {
-          this.state.lastTs = ts;
-          this.state.seq = 0;
-          return this.compose(ts, 0);
-        });
-      }
-      return Promise.resolve(this.compose(now, seq));
-    });
+    const persisted = this.ctx.storage.sql
+      .exec("SELECT last_ts AS lastTs, seq FROM sequence_state WHERE singleton = 1")
+      .one() as { lastTs: number; seq: number };
+    const physicalTs = Date.now() - EPOCH;
+    let ts = Math.max(physicalTs, persisted.lastTs);
+    let seq = ts === persisted.lastTs ? persisted.seq + 1 : 0;
+
+    // 不在 ID 分配中 yield。单毫秒序列耗尽时推进逻辑时钟，避免异步等待
+    // 期间另一条 RPC 插入并覆盖较新的序列状态。
+    if (seq > MAX_SEQ) {
+      ts = persisted.lastTs + 1;
+      seq = 0;
+    }
+
+    this.ctx.storage.sql.exec(
+      "UPDATE sequence_state SET last_ts = ?, seq = ? WHERE singleton = 1",
+      ts,
+      seq,
+    );
+    return this.compose(ts, seq);
   }
 
   /**
@@ -98,16 +97,6 @@ export class SequenceDO extends DurableObject {
       (BigInt(this.workerId) << BigInt(SEQ_BITS)) |
       BigInt(seq);
     return id.toString();
-  }
-
-  /** 自旋等到下一毫秒 */
-  private async waitNextMs(after: number): Promise<number> {
-    let ts = Date.now() - EPOCH;
-    while (ts <= after) {
-      await new Promise((r) => setTimeout(r, 0));
-      ts = Date.now() - EPOCH;
-    }
-    return ts;
   }
 
   /**

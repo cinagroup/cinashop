@@ -12,6 +12,7 @@ import {
   smallint,
   text,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 /** 站内信内容 */
@@ -19,17 +20,28 @@ export const systemMessage = pgTable(
   "system_message",
   {
     id: serial("id").primaryKey(),
+    /** Worker transactional-outbox idempotency key; legacy imported rows remain NULL. */
+    eventKey: varchar("event_key", { length: 128 }),
+    mark: varchar("mark", { length: 50 }).default("").notNull(),
     /** 消息标题 */
-    title: varchar("title", { length: 255 }).default("").notNull(),
+    title: varchar("title", { length: 256 }).default("").notNull(),
     /** 消息内容 */
     content: text("content"),
     /** 0=全部用户 */
     userId: integer("user_id").default(0).notNull(),
+    /** PHP 每用户消息的已读快照；新广播消息仍使用 user_message。 */
+    look: smallint("look").default(0).notNull(),
     type: smallint("type").default(0).notNull(),
     status: smallint("status").default(1).notNull(),
     addTime: integer("add_time").default(0).notNull(),
+    isDel: smallint("is_del").default(0).notNull(),
   },
-  (t) => [index("sm_user").on(t.userId), index("sm_add_time").on(t.addTime)],
+  (t) => [
+    uniqueIndex("smsg_event_key_uq").on(t.eventKey),
+    index("sm_user").on(t.userId),
+    index("sm_add_time").on(t.addTime),
+    index("smsg_visible_user").on(t.userId, t.status, t.isDel, t.addTime),
+  ],
 );
 
 /** 用户消息状态 (已读) */

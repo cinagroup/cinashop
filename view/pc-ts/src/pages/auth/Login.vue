@@ -27,6 +27,9 @@
             >
               登录
             </el-button>
+            <div class="password-help">
+              <router-link to="/forgot-password">忘记密码?</router-link>
+            </div>
           </el-form>
         </el-tab-pane>
         <el-tab-pane label="手机号登录" name="mobile">
@@ -37,8 +40,8 @@
             <el-form-item label="验证码">
               <div class="code-row">
                 <el-input v-model="form.captcha" placeholder="请输入验证码" size="large" />
-                <el-button size="large" :disabled="countdown > 0" @click="sendCode">
-                  {{ countdown > 0 ? `${countdown}s` : "获取验证码" }}
+                <el-button size="large" :loading="codeSending" :disabled="countdown > 0" @click="sendCode">
+                  {{ countdown > 0 ? `${countdown}s 后重试` : "获取验证码" }}
                 </el-button>
               </div>
             </el-form-item>
@@ -62,10 +65,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { onUnmounted, ref, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
+import { apiRequestCode } from "@/api/auth";
+import { requestSmsChallenge } from "@/composables/smsChallenge";
 
 const route = useRoute();
 const router = useRouter();
@@ -74,6 +79,8 @@ const authStore = useAuthStore();
 const tab = ref("account");
 const loading = ref(false);
 const countdown = ref(0);
+const codeSending = ref(false);
+let countdownTimer: ReturnType<typeof setInterval> | undefined;
 const form = reactive({
   account: "",
   password: "",
@@ -101,13 +108,47 @@ async function handleLogin() {
   }
 }
 
-function handleMobileLogin() {
-  ElMessage.info("手机号验证码登录接入中, 请使用账号登录");
+async function handleMobileLogin() {
+  if (!/^1\d{10}$/.test(form.phone)) return ElMessage.warning("请输入正确的手机号");
+  if (!/^\d{6}$/.test(form.captcha)) return ElMessage.warning("请输入 6 位验证码");
+  loading.value = true;
+  try {
+    await authStore.mobileLogin(form.phone, form.captcha);
+    ElMessage.success("登录成功");
+    redirectAfterLogin();
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : "登录失败");
+  } finally {
+    loading.value = false;
+  }
 }
 
-function sendCode() {
-  ElMessage.info("验证码发送接入中");
+async function sendCode() {
+  if (!/^1\d{10}$/.test(form.phone)) return ElMessage.warning("请输入正确的手机号");
+  codeSending.value = true;
+  try {
+    const key = await requestSmsChallenge(form.phone, "mobile");
+    await apiRequestCode(form.phone, "mobile", key);
+    ElMessage.success("验证码任务已提交");
+    countdown.value = 60;
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      countdown.value -= 1;
+      if (countdown.value <= 0 && countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = undefined;
+      }
+    }, 1000);
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : "验证码发送失败");
+  } finally {
+    codeSending.value = false;
+  }
 }
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer);
+});
 </script>
 
 <style scoped>
@@ -153,6 +194,17 @@ function sendCode() {
 
 .to-register a {
   color: #e64340;
+  text-decoration: none;
+}
+
+.password-help {
+  margin-top: 12px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.password-help a {
+  color: #777;
   text-decoration: none;
 }
 </style>

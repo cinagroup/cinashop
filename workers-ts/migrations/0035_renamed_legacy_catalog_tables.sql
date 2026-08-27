@@ -1,0 +1,40 @@
+-- Preserve every eb_express column before importing it into express_company.
+ALTER TABLE "express_company"
+  ALTER COLUMN "code" TYPE VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS "partner_id" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "partner_key" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "net" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "check_man" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "partner_name" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "is_code" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "courier_name" VARCHAR(100) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "customer_name" VARCHAR(100) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "code_name" VARCHAR(100) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "account" VARCHAR(100) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "key" VARCHAR(100) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "net_name" VARCHAR(100) DEFAULT '' NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ec_visible_sort"
+  ON "express_company" ("is_show", "status", "sort" DESC);
+
+-- eb_article stores numeric values in varchar columns and keeps article body
+-- content in eb_article_content. Preserve its complete metadata here; content
+-- remains the target-owned body column until the separate content table is joined.
+ALTER TABLE "system_article"
+  ALTER COLUMN "author" TYPE VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS "image_input" VARCHAR(255) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "share_title" VARCHAR(255) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "share_synopsis" VARCHAR(255) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "visit" INTEGER DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "likes" INTEGER DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "sort" INTEGER DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "url" VARCHAR(255) DEFAULT '' NOT NULL,
+  ADD COLUMN IF NOT EXISTS "hide" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "admin_id" INTEGER DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "mer_id" INTEGER DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "product_id" INTEGER DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "is_hot" SMALLINT DEFAULT 0 NOT NULL,
+  ADD COLUMN IF NOT EXISTS "is_banner" SMALLINT DEFAULT 0 NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "sa_visible_sort"
+  ON "system_article" ("status", "is_del", "hide", "sort" DESC);

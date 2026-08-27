@@ -6,6 +6,7 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { UserCenterService } from "@/services/user/UserCenterService";
 import { ActivityService } from "@/services/activity/ActivityService";
+import { StoreDiscountService } from "@/services/activity/StoreDiscountService";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -158,6 +159,15 @@ export async function seckillIndex(c: C) {
   return jsonOk(c, await svc.seckillTimes());
 }
 
+/** GET /api/store_discounts/list/:product_id — legacy bundle list. */
+export async function discountList(c: C) {
+  const service = new StoreDiscountService(c.get("container"));
+  const productId = Number(c.req.param("product_id"));
+  const page = Number(c.req.query("page") ?? "1");
+  const limit = Number(c.req.query("limit") ?? "10");
+  return jsonOk(c, await service.listForProduct(productId, page, limit));
+}
+
 export async function seckillList(c: C) {
   const svc = new ActivityService(c.get("container"));
   // 路由 /seckill/list/:time 是路径参数
@@ -208,10 +218,23 @@ export async function integralExchange(c: C) {
   if (!uid) return jsonFail(c, "请先登录");
   const id = Number(c.req.param("id") ?? "0");
   if (!id) return jsonFail(c, "参数错误");
-  const body = (await c.req.json().catch(() => ({}))) as { num?: number };
+  const body = (await c.req.json().catch(() => ({}))) as {
+    num?: number;
+    unique?: string;
+    key?: string;
+    customForm?: unknown;
+    custom_form?: unknown;
+  };
   const svc = new ActivityService(c.get("container"));
   try {
-    const result = await svc.exchange(uid, id, Number(body.num ?? 1));
+    const result = await svc.exchange(
+      uid,
+      id,
+      Number(body.num ?? 1),
+      body.unique ?? "",
+      body.key ?? c.req.header("Idempotency-Key") ?? "",
+      body.customForm ?? body.custom_form,
+    );
     return jsonOk(c, result, "兑换成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);

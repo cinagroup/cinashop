@@ -1,0 +1,52 @@
+# Local-only workerd bindings for @cloudflare/vitest-pool-workers.
+# No binding in this file points at a deployed Cloudflare resource.
+name = "cinashop-api-runtime-test"
+main = "src/index.ts"
+compatibility_date = "2026-08-09"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+NODE_ENV = "test"
+INTERNAL_API_URL = "https://runtime-test.invalid"
+ORDER_DLQ_NAME = "cinashop-order-runtime-test-dlq"
+APP_KEY = "runtime-test-app-key"
+UPSTASH_REDIS_URL = "https://runtime-test.invalid"
+UPSTASH_REDIS_TOKEN = "runtime-test-token"
+WECHAT_MCH_PRIVATE_KEY = "runtime-test-private-key"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "00000000000000000000000000000000"
+localConnectionString = "postgresql://runtime:runtime@127.0.0.1:1/runtime?connect_timeout=1"
+
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "00000000000000000000000000000000"
+
+[[queues.producers]]
+binding = "ORDER_QUEUE"
+queue = "cinashop-order-runtime-test"
+
+[[durable_objects.bindings]]
+name = "TOKEN_BUCKET"
+class_name = "TokenBucketDO"
+
+[[durable_objects.bindings]]
+name = "ORDER_LOCK"
+class_name = "OrderLockDO"
+
+[[durable_objects.bindings]]
+name = "SEQUENCE"
+class_name = "SequenceDO"
+
+[[durable_objects.bindings]]
+name = "CHAT_ROOM"
+class_name = "ChatRoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TokenBucketDO", "OrderLockDO", "SequenceDO"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["ChatRoomDO"]

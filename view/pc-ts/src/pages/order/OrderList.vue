@@ -50,12 +50,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { apiOrderList, apiOrderPay, apiOrderTake } from "@/api/order";
+import { ElMessage } from "element-plus";
+import { apiOrderList, apiOrderTake } from "@/api/order";
+import { useRouter } from "vue-router";
 import type { OrderInfo } from "@/types/order";
 
 const activeTab = ref("all");
 const orders = ref<OrderInfo[]>([]);
+const router = useRouter();
 
 function statusText(order: OrderInfo): string {
   if (order.paid === 0) return "待支付";
@@ -74,32 +76,21 @@ function statusText(order: OrderInfo): string {
 }
 
 async function reload() {
-  const typeMap: Record<string, number | undefined> = {
+  const statusMap: Record<string, number | undefined> = {
     all: undefined,
-    unpaid: -1,
-    pending: 0,
-    shipping: 1,
+    unpaid: 0,
+    pending: 1,
+    shipping: 2,
   };
   try {
-    orders.value = await apiOrderList({ type: typeMap[activeTab.value], page: 1, limit: 20 });
+    orders.value = await apiOrderList({ status: statusMap[activeTab.value], page: 1, limit: 20 });
   } catch (e) {
     console.error("订单列表加载失败", e);
   }
 }
 
-async function pay(order: OrderInfo) {
-  try {
-    await ElMessageBox.confirm(`确认使用余额支付 ¥${order.pay_price}?`, "支付确认");
-  } catch {
-    return;
-  }
-  try {
-    await apiOrderPay(order.order_id, "yue");
-    ElMessage.success("支付成功");
-    reload();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "支付失败");
-  }
+function pay(order: OrderInfo) {
+  void router.push(`/order/${order.order_id}`);
 }
 
 async function take(order: OrderInfo) {

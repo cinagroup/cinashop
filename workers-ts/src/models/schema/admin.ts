@@ -17,6 +17,7 @@ import {
   text,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ─── 管理员 ──────────────────────────────────────────────────
 export const systemAdmin = pgTable(
@@ -41,10 +42,16 @@ export const systemAdmin = pgTable(
     /** 0=超级管理员 (跳过权限检查) */
     level: smallint("level").default(1).notNull(),
     status: smallint("status").default(1).notNull(),
+    /** 旧后台图片上传方式：0 本地、1 网络、2 扫码。 */
+    isWay: smallint("is_way").default(0).notNull(),
     divisionId: integer("division_id").default(0).notNull(),
     isDel: smallint("is_del").default(0).notNull(),
   },
-  (t) => [index("sa_account").on(t.account), index("sa_status").on(t.status)],
+  (t) => [
+    index("sa_account").on(t.account),
+    index("sa_status").on(t.status),
+    index("sa_division").on(t.divisionId, t.isDel, t.status),
+  ],
 );
 
 // ─── 角色 ────────────────────────────────────────────────────
@@ -58,6 +65,65 @@ export const systemRole = pgTable("system_role", {
   level: smallint("level").default(0).notNull(),
   status: smallint("status").default(1).notNull(),
 });
+
+// ─── 后台菜单/接口权限 ────────────────────────────────────────────────
+// 保留 PHP eb_system_menus 的字段，便于已迁移角色中的数字 rules 继续解析。
+export const systemMenus = pgTable(
+  "system_menus",
+  {
+    id: serial("id").primaryKey(),
+    pid: integer("pid").default(0).notNull(),
+    type: smallint("type").default(1).notNull(),
+    icon: varchar("icon", { length: 50 }).default("").notNull(),
+    menuName: varchar("menu_name", { length: 64 }).default("").notNull(),
+    module: varchar("module", { length: 32 }).default("").notNull(),
+    controller: varchar("controller", { length: 64 }).default("").notNull(),
+    action: varchar("action", { length: 32 }).default("").notNull(),
+    apiUrl: varchar("api_url", { length: 255 }).default("").notNull(),
+    methods: varchar("methods", { length: 32 }).default("").notNull(),
+    params: varchar("params", { length: 512 }).default("[]").notNull(),
+    sort: integer("sort").default(1).notNull(),
+    isShow: smallint("is_show").default(1).notNull(),
+    isShowPath: smallint("is_show_path").default(0).notNull(),
+    access: smallint("access").default(1).notNull(),
+    menuPath: varchar("menu_path", { length: 255 }).default("").notNull(),
+    path: varchar("path", { length: 255 }).default("").notNull(),
+    authType: smallint("auth_type").default(0).notNull(),
+    header: varchar("header", { length: 50 }).default("").notNull(),
+    isHeader: smallint("is_header").default(0).notNull(),
+    uniqueAuth: varchar("unique_auth", { length: 150 }).default("").notNull(),
+    isDel: smallint("is_del").default(0).notNull(),
+  },
+  (t) => [
+    index("sm_parent_sort").on(t.type, t.pid, t.sort),
+    index("sm_unique_auth").on(t.uniqueAuth, t.isDel),
+    index("sm_api_method").on(t.type, t.authType, t.methods, t.apiUrl, t.isDel),
+  ],
+);
+
+// ─── 管理员操作日志 ────────────────────────────────────────────
+export const systemLog = pgTable(
+  "system_log",
+  {
+    id: serial("id").primaryKey(),
+    storeId: integer("store_id").default(0).notNull(),
+    adminId: integer("admin_id").default(0).notNull(),
+    adminName: varchar("admin_name", { length: 64 }).default("").notNull(),
+    path: varchar("path", { length: 128 }).default("").notNull(),
+    page: varchar("page", { length: 64 }).default("").notNull(),
+    method: varchar("method", { length: 12 }).default("").notNull(),
+    /** Worker-native action summary; legacy rows retain page/method/path separately. */
+    action: varchar("action", { length: 255 }).default("").notNull(),
+    ip: varchar("ip", { length: 45 }).default("").notNull(),
+    type: varchar("type", { length: 32 }).default("").notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+    merchantId: integer("merchant_id").default(0).notNull(),
+  },
+  (t) => [
+    index("syslog_admin_time").on(t.adminId, t.addTime),
+    index("syslog_type_time").on(t.type, t.addTime),
+  ],
+);
 
 // ─── 客服账号 ────────────────────────────────────────────────
 export const storeService = pgTable(
@@ -80,7 +146,56 @@ export const storeService = pgTable(
     uniqid: varchar("uniqid", { length: 50 }).default("").notNull(),
     isDel: smallint("is_del").default(0).notNull(),
   },
-  (t) => [index("ss_account").on(t.account)],
+  (t) => [
+    index("ss_account").on(t.account),
+    index("ss_active_online")
+      .on(t.online, t.id)
+      .where(sql`${t.isDel} = 0 AND ${t.status} = 1 AND ${t.accountStatus} = 1`),
+    index("ss_active_uid")
+      .on(t.uid, t.id)
+      .where(sql`${t.isDel} = 0 AND ${t.status} = 1 AND ${t.accountStatus} = 1`),
+  ],
+);
+
+// ─── 用户反馈 ────────────────────────────────────────────────
+export const storeServiceFeedback = pgTable(
+  "store_service_feedback",
+  {
+    id: serial("id").primaryKey(),
+    uid: integer("uid").default(0).notNull(),
+    relaName: varchar("rela_name", { length: 255 }).default("").notNull(),
+    phone: varchar("phone", { length: 30 }).default("").notNull(),
+    content: varchar("content", { length: 500 }).default("").notNull(),
+    make: varchar("make", { length: 255 }).default("").notNull(),
+    /** 0=unread/unprocessed, 1=processed */
+    status: smallint("status").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (t) => [
+    index("ssf_uid").on(t.uid),
+    index("ssf_status_time").on(t.status, t.addTime, t.id),
+  ],
+);
+
+// ─── 客服快捷话术 ────────────────────────────────────────────
+export const storeServiceSpeechcraft = pgTable(
+  "store_service_speechcraft",
+  {
+    id: serial("id").primaryKey(),
+    /** 0=platform-global, otherwise the legacy customer-service user id */
+    kefuId: integer("kefu_id").default(0).notNull(),
+    /** category.id where type=0/group=1 and owner_id matches kefu_id */
+    cateId: integer("cate_id").default(0).notNull(),
+    title: varchar("title", { length: 100 }).default("").notNull(),
+    message: varchar("message", { length: 255 }).default("").notNull(),
+    sort: integer("sort").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (t) => [
+    index("sss_kefu_id").on(t.kefuId),
+    index("sss_cate_id").on(t.cateId),
+    index("sss_scope_sort").on(t.kefuId, t.cateId, t.sort, t.id),
+  ],
 );
 
 // ─── 聊天消息记录 ───────────────────────────────────────────
@@ -107,6 +222,10 @@ export const storeServiceLog = pgTable(
   (t) => [
     index("ssl_uid_toUid").on(t.uid, t.toUid),
     index("ssl_add_time").on(t.addTime),
+    index("ssl_chat_history").on(t.uid, t.toUid, t.isTourist, t.id),
+    index("ssl_unread_direction")
+      .on(t.uid, t.toUid, t.isTourist, t.id)
+      .where(sql`${t.type} = 0`),
   ],
 );
 
@@ -130,5 +249,33 @@ export const storeServiceRecord = pgTable(
     message: text("message").default("").notNull(),
     messageType: smallint("message_type").default(1).notNull(),
   },
-  (t) => [index("ssr_to_uid").on(t.toUid)],
+  (t) => [
+    index("ssr_to_uid").on(t.toUid),
+    index("ssr_kefu_recent").on(t.toUid, t.isTourist, t.updateTime, t.id),
+    index("ssr_kefu_inbox").on(t.userId, t.isTourist, t.updateTime, t.id),
+    index("ssr_direction").on(t.userId, t.toUid, t.isTourist, t.id),
+  ],
+);
+
+// ─── 客服转接审计 ───────────────────────────────────────────
+// Message bodies stay in store_service_log. This table records only the
+// immutable ownership transition needed for idempotency and operations audit.
+export const storeServiceTransfer = pgTable(
+  "store_service_transfer",
+  {
+    requestKey: varchar("request_key", { length: 36 }).primaryKey(),
+    customerUid: integer("customer_uid").notNull(),
+    fromKefuUid: integer("from_kefu_uid").notNull(),
+    toKefuUid: integer("to_kefu_uid").notNull(),
+    fromServiceId: integer("from_service_id").notNull(),
+    toServiceId: integer("to_service_id").notNull(),
+    sourceRecordId: integer("source_record_id").notNull(),
+    targetRecordId: integer("target_record_id").notNull(),
+    copiedMessageCount: integer("copied_message_count").default(0).notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("sst_customer_time").on(t.customerUid, t.createdAt, t.requestKey),
+    index("sst_target_time").on(t.toKefuUid, t.createdAt, t.requestKey),
+  ],
 );

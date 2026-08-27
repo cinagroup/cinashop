@@ -87,9 +87,3 @@ CREATE TABLE IF NOT EXISTS "store_service_record" (
   "message_type" SMALLINT DEFAULT 1 NOT NULL
 );
 CREATE INDEX IF NOT EXISTS "ssr_to_uid_idx" ON "store_service_record" ("to_uid");
-
--- 插入默认管理员 (admin / crmeb.com)
--- 密码 crmeb.com 的 bcrypt hash ($2y$ 前缀, bcryptjs 兼容 $2a$)
-INSERT INTO "system_admin" ("account", "pwd", "real_name", "level", "status", "add_time") VALUES
-  ('admin', '$2a$10$q8wMkJ9ckLSI07bDpLudNehyYuooB6DP3wlmxw9eX/1TSX/4BUur2', '超级管理员', 0, 1, EXTRACT(EPOCH FROM NOW())::int)
-ON CONFLICT DO NOTHING;

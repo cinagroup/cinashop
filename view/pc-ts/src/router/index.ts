@@ -27,8 +27,10 @@ const routes: RouteRecordRaw[] = [
       { path: "order", name: "order-list", component: () => import("@/pages/order/OrderList.vue") },
       { path: "login", name: "login", component: () => import("@/pages/auth/Login.vue") },
       { path: "register", name: "register", component: () => import("@/pages/auth/Register.vue"), meta: { title: "注册" } },
+      { path: "forgot-password", name: "forgot-password", component: () => import("@/pages/auth/ForgotPassword.vue"), meta: { title: "找回密码" } },
       // 用户中心
       { path: "user", name: "user", component: () => import("@/pages/user/UserCenter.vue") },
+      { path: "user/phone", name: "user-phone", component: () => import("@/pages/user/PhoneSettings.vue"), meta: { title: "手机号管理" } },
       { path: "user/address", name: "user-address", component: () => import("@/pages/user/AddressList.vue") },
       { path: "user/collect", name: "user-collect", component: () => import("@/pages/user/CollectList.vue") },
       { path: "user/coupon", name: "user-coupon", component: () => import("@/pages/user/CouponList.vue") },

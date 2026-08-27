@@ -6,6 +6,7 @@
  */
 import { Hono } from "hono";
 import { v1Routes } from "./v1";
+import { v2Routes } from "./v2";
 import type { AppVariables, Env } from "@/env";
 
 export const apiRoutes = new Hono<{
@@ -17,4 +18,4 @@ export const apiRoutes = new Hono<{
 // route/api.php 的 /api/logout 实际是 app\controller\api\v1\Login::logout
 // 只有 v2 才是真正的 URL 前缀 (/api/v2/*)
 apiRoutes.route("/", v1Routes);
-// M2: apiRoutes.route("/v2", v2Routes);
+apiRoutes.route("/v2", v2Routes);

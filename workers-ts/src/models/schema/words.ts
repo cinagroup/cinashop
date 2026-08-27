@@ -25,5 +25,6 @@ export const storeProductWords = pgTable("store_product_words", {
   sort: smallint("sort").default(0).notNull(),
   isSearch: smallint("is_search").default(0).notNull(),
   isHot: smallint("is_hot").default(0).notNull(),
+  isDel: smallint("is_del").default(0).notNull(),
   addTime: integer("add_time").default(0).notNull(),
 });

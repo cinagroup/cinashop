@@ -57,6 +57,7 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
     productId: number,
     unique: string,
     type = 0,
+    activityId = 0,
   ): Promise<(typeof storeCart.$inferSelect) | null> {
     const rows = await this.db
       .select()
@@ -67,6 +68,7 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
           eq(storeCart.productId, productId),
           eq(storeCart.productAttrUnique, unique),
           eq(storeCart.type, type),
+          eq(storeCart.activityId, activityId),
           eq(storeCart.isDel, 0),
           eq(storeCart.isPay, 0),
         ),

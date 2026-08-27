@@ -45,9 +45,8 @@
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";
-import { apiCartAdd, apiOrderCreate } from "@/api/order";
+import { apiCartAdd } from "@/api/order";
 import { useAuthStore } from "@/stores/auth";
-import { apiAddressList } from "@/api/order";
 
 const info = ref<any>(null);
 const authStore = useAuthStore();
@@ -79,32 +78,17 @@ async function buyNow() {
   if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
   if (!info.value) return;
   try {
-    // 秒杀: 加购(type=1) → 直接下单 (type=1 + seckillId)
-    const addrs = await apiAddressList().catch(() => [] as any[]);
-    const addr = addrs.find((a: any) => a.is_default === 1) ?? addrs[0];
-    if (!addr) {
-      uni.showToast({ title: "请先添加收货地址", icon: "none" });
-      uni.navigateTo({ url: "/pages/user/address" });
-      return;
-    }
+    // 秒杀活动加购后统一进入结算页，地址和系统表单都在那里提交。
     const cart = await apiCartAdd({
       productId: info.value.productId,
       unique: "sku00001",
       cartNum: 1,
-    });
-    // 后端 unique 匹配 SKU, 这里需要活动 SKU unique
-    const key = `seckill-${Date.now()}`;
-    const order = await apiOrderCreate(key, {
-      cartIds: [cart.id],
-      realName: (addr as any).real_name ?? (addr as any).realName,
-      userPhone: (addr as any).phone,
-      province: (addr as any).province ?? "",
-      userAddress: `${(addr as any).city ?? ""}${(addr as any).district ?? ""}${(addr as any).detail ?? ""}`,
       type: 1,
-      seckillId: seckillId.value,
+      activityId: seckillId.value,
     });
-    uni.showToast({ title: "下单成功", icon: "success" });
-    setTimeout(() => uni.redirectTo({ url: `/pages/order/detail?orderId=${order.orderId}` }), 800);
+    uni.navigateTo({
+      url: `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=1&seckillId=${seckillId.value}`,
+    });
   } catch (e) {
     uni.showToast({ title: e instanceof Error ? e.message : "抢购失败", icon: "none" });
   }

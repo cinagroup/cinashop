@@ -12,12 +12,177 @@
 import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import type { AppVariables, Env } from "@/env";
+import {
+  AdminPermissionService,
+  assertDelegablePermissions,
+  normalizeRoleRules,
+} from "@/services/admin/AdminPermissionService";
+import { ValidateException } from "@/utils/errors";
+import { withTx } from "@/lib/di";
+import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
+import {
+  platformMetadataOwner,
+  ProductMetadataService,
+} from "@/services/product/ProductMetadataService";
+import { UserSegmentationService } from "@/services/user/UserSegmentationService";
+import { SystemMetadataService } from "@/services/system/SystemMetadataService";
+import { SystemSignRewardService } from "@/services/system/SystemSignRewardService";
+import { AgentLevelTaskService } from "@/services/agent/AgentLevelTaskService";
+import {
+  calculateCouponDiscountCents,
+  parseCouponScopeIds,
+  ProductCouponService,
+} from "@/services/activity/ProductCouponService";
+import { StoreOperationsService } from "@/services/store/StoreOperationsService";
+import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
+import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
+
+async function assertRoleAssignmentsWithinActor(
+  c: C,
+  roleIds: string | undefined,
+  requireEveryRole = true,
+): Promise<void> {
+  const actor = c.get("adminInfo");
+  if (!actor) throw new ValidateException("管理员身份不存在");
+  const permissions = new AdminPermissionService(c.get("container"));
+  const assignment = await permissions.resolveRoleAssignment(roleIds);
+  if (requireEveryRole && assignment.missingRoleIds.length) {
+    throw new ValidateException(`角色不存在或已停用: ${assignment.missingRoleIds.join(",")}`);
+  }
+  if (actor.level !== 0) {
+    if (assignment.legacyRuleIds.length) {
+      throw new ValidateException("包含旧版数字菜单规则的角色只能由超级管理员委派");
+    }
+    const granted = await permissions.resolveAdminPermissionKeys(actor);
+    assertDelegablePermissions(granted, assignment.keys);
+  }
+}
+
+async function assertRoleRulesWithinActor(c: C, rules: string): Promise<void> {
+  const actor = c.get("adminInfo");
+  if (!actor) throw new ValidateException("管理员身份不存在");
+  if (actor.level === 0) return;
+  if (rules.split(",").some((rule) => /^\d+$/.test(rule.trim()))) {
+    throw new ValidateException("旧版数字菜单规则只能由超级管理员迁移");
+  }
+  const permissions = new AdminPermissionService(c.get("container"));
+  const [granted, requested] = await Promise.all([
+    permissions.resolveAdminPermissionKeys(actor),
+    permissions.resolveRulePermissionKeys(rules),
+  ]);
+  assertDelegablePermissions(granted, requested);
+}
 
 // ═══════════════════════════════════════════════════════════
 // 商品管理
 // ═══════════════════════════════════════════════════════════
+
+function productMetadata(c: C) {
+  return new ProductMetadataService(c.get("container"));
+}
+
+function metadataId(c: C, allowZero = false): number {
+  const value = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(value) || value < (allowZero ? 0 : 1)) {
+    throw new ValidateException("ID错误");
+  }
+  return value;
+}
+
+async function metadataBody(c: C): Promise<Record<string, unknown>> {
+  const value: unknown = await c.req.json().catch(() => null);
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ValidateException("请求数据格式错误");
+  }
+  return value as Record<string, unknown>;
+}
+
+export async function adminProductUnitAll(c: C) {
+  return jsonOk(c, await productMetadata(c).allUnits(platformMetadataOwner));
+}
+
+export async function adminProductUnitList(c: C) {
+  return jsonOk(c, await productMetadata(c).unitList(platformMetadataOwner, c.req.query()));
+}
+
+export async function adminProductUnitDetail(c: C) {
+  return jsonOk(c, await productMetadata(c).unitDetail(platformMetadataOwner, metadataId(c)));
+}
+
+export async function adminProductUnitSave(c: C) {
+  const id = metadataId(c, true);
+  const result = await productMetadata(c).saveUnit(
+    platformMetadataOwner,
+    id,
+    await metadataBody(c),
+  );
+  return jsonOk(c, result, id === 0 ? "保存成功" : "修改成功");
+}
+
+export async function adminProductUnitDelete(c: C) {
+  await productMetadata(c).deleteUnit(platformMetadataOwner, metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function adminProductRuleList(c: C) {
+  return jsonOk(c, await productMetadata(c).ruleList(platformMetadataOwner, c.req.query()));
+}
+
+export async function adminProductRuleTemplates(c: C) {
+  return jsonOk(c, await productMetadata(c).ruleTemplates(platformMetadataOwner));
+}
+
+export async function adminProductRuleDetail(c: C) {
+  return jsonOk(c, await productMetadata(c).ruleDetail(platformMetadataOwner, metadataId(c)));
+}
+
+export async function adminProductRuleSave(c: C) {
+  const result = await productMetadata(c).saveRule(
+    platformMetadataOwner,
+    metadataId(c, true),
+    await metadataBody(c),
+  );
+  return jsonOk(c, result, "保存成功");
+}
+
+export async function adminProductRuleDelete(c: C) {
+  await productMetadata(c).deleteRule(platformMetadataOwner, metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function adminProductSpecsList(c: C) {
+  return jsonOk(
+    c,
+    await productMetadata(c).specTemplateList(platformMetadataOwner, c.req.query()),
+  );
+}
+
+export async function adminProductSpecsAll(c: C) {
+  return jsonOk(c, await productMetadata(c).allSpecTemplates(platformMetadataOwner));
+}
+
+export async function adminProductSpecsDetail(c: C) {
+  return jsonOk(
+    c,
+    await productMetadata(c).specTemplateDetail(platformMetadataOwner, metadataId(c)),
+  );
+}
+
+export async function adminProductSpecsSave(c: C) {
+  const result = await productMetadata(c).saveSpecTemplate(
+    platformMetadataOwner,
+    metadataId(c, true),
+    await metadataBody(c),
+  );
+  return jsonOk(c, result, "保存成功");
+}
+
+export async function adminProductSpecsDelete(c: C) {
+  await productMetadata(c).deleteSpecTemplate(platformMetadataOwner, metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
 
 /** GET /api/admin/product/list — 商品列表 */
 export async function adminProductList(c: C) {
@@ -48,6 +213,30 @@ export async function adminProductDetail(c: C) {
   const product = await c.get("container").storeProductDao.getById(id);
   if (!product) return jsonFail(c, "商品不存在");
   return jsonOk(c, product);
+}
+
+/** GET /api/admin/product/coupons/:id — 支付后赠券关系 */
+export async function adminProductCoupons(c: C) {
+  const id = Number(c.req.param("id") ?? "0");
+  const list = await new ProductCouponService(c.get("container")).list(id);
+  return jsonOk(c, {
+    list,
+    coupon_ids: list.map((item) => item.issue_coupon_id),
+  });
+}
+
+/** PUT /api/admin/product/coupons/:id — 原子替换支付后赠券关系 */
+export async function adminProductCouponsReplace(c: C) {
+  const id = Number(c.req.param("id") ?? "0");
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const hasSnakeCase = Object.prototype.hasOwnProperty.call(body, "coupon_ids");
+  const hasCamelCase = Object.prototype.hasOwnProperty.call(body, "couponIds");
+  if (!hasSnakeCase && !hasCamelCase) throw new ValidateException("缺少coupon_ids参数");
+  const result = await new ProductCouponService(c.get("container")).replace(
+    id,
+    hasSnakeCase ? body.coupon_ids : body.couponIds,
+  );
+  return jsonOk(c, result, "保存成功");
 }
 
 /** POST /api/admin/product/create — 创建商品 */
@@ -143,7 +332,7 @@ export async function adminOrderList(c: C) {
 
 /** GET /api/admin/order/detail/:orderId — 订单详情 */
 export async function adminOrderDetail(c: C) {
-  const orderId = c.req.param("orderId") ?? "";
+  const orderId = c.req.param("orderId") ?? c.req.param("id") ?? "";
   const container = c.get("container");
   const order = await container.storeOrderDao.findByOrderId(orderId);
   if (!order) return jsonFail(c, "订单不存在");
@@ -171,30 +360,193 @@ export async function adminOrderRemark(c: C) {
 
 /** POST /api/admin/order/delivery/:orderId — 发货 */
 export async function adminOrderDelivery(c: C) {
-  const orderId = c.req.param("orderId") ?? "";
-  const body = (await c.req.json().catch(() => ({}))) as {
-    delivery_type?: string;
-    delivery_name?: string;
-    delivery_id?: string;
-  };
+  const orderId = c.req.param("orderId") ?? c.req.param("id") ?? "";
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const container = c.get("container");
-  const order = await container.storeOrderDao.findByOrderId(orderId);
-  if (!order) return jsonFail(c, "订单不存在");
-  if (!order.paid) return jsonFail(c, "订单未支付");
-  if (order.status !== 0) return jsonFail(c, "订单状态不允许发货");
-
-  await container.storeOrderDao.update(order.id, { status: 1 });
-  await container.storeOrderStatusDao.log(
-    order.id,
-    "delivery_goods",
-    `已发货: ${body.delivery_name ?? ""} ${body.delivery_id ?? ""}`,
-  );
+  const rawType = String(body.delivery_type ?? "express").trim().toLowerCase();
+  const deliveryType = rawType === "1" ? "send" : rawType;
+  if (!["express", "send", "fictitious"].includes(deliveryType)) {
+    return jsonFail(c, "发货类型错误");
+  }
+  let deliveryName = String(body.delivery_name ?? body.sh_delivery_name ?? "").trim();
+  let deliveryId = String(body.delivery_id ?? body.sh_delivery_id ?? "").trim();
+  let deliveryUid = 0;
+  let deliveryServiceId = 0;
+  let fictitiousContent = "";
+  if (deliveryType === "send") {
+    deliveryUid = Number(body.delivery_uid ?? body.sh_delivery_uid ?? 0);
+    if (!Number.isSafeInteger(deliveryUid) || deliveryUid <= 0) {
+      return jsonFail(c, "请选择配送员");
+    }
+    const delivery = await new StoreOperationsService(container).requireActiveDelivery(deliveryUid);
+    deliveryServiceId = delivery.id;
+    deliveryName = delivery.nickname;
+    deliveryId = delivery.phone;
+  } else if (deliveryType === "express") {
+    if (!deliveryName) return jsonFail(c, "请选择快递公司");
+    if (!deliveryId) return jsonFail(c, "请输入快递单号");
+  } else {
+    fictitiousContent = String(body.fictitious_content ?? "").trim();
+    deliveryName = "";
+    deliveryId = "";
+  }
+  if (deliveryName.length > 64 || deliveryId.length > 64 || fictitiousContent.length > 500) {
+    return jsonFail(c, "发货信息长度超限");
+  }
+  const { and, eq, sql } = await import("drizzle-orm");
+  const { deliveryService, orderWaybillJob, storeOrder, storeOrderStatus, storePink, user } = await import("@/models/schema");
+  const now = Math.floor(Date.now() / 1000);
+  const changeMessage = deliveryType === "fictitious"
+    ? `虚拟发货: ${fictitiousContent}`
+    : `已发货: ${deliveryName} ${deliveryId}`;
+  await withTx(container, async (tx) => {
+    const rows = await tx
+      .select({
+        id: storeOrder.id,
+        orderId: storeOrder.orderId,
+        uid: storeOrder.uid,
+        userAddress: storeOrder.userAddress,
+        paid: storeOrder.paid,
+        status: storeOrder.status,
+        pid: storeOrder.pid,
+        type: storeOrder.type,
+        pinkId: storeOrder.pinkId,
+        shippingType: storeOrder.shippingType,
+        supplierAllocationStatus: storeOrder.supplierAllocationStatus,
+      })
+      .from(storeOrder)
+      .where(and(eq(storeOrder.orderId, orderId), eq(storeOrder.isDel, 0)))
+      .limit(1)
+      .for("update");
+    const order = rows[0];
+    if (!order) throw new ValidateException("订单不存在");
+    if (!order.paid) throw new ValidateException("订单未支付");
+    if (order.shippingType === 2) throw new ValidateException("门店自提订单不能发货，请使用核销流程");
+    if (order.supplierAllocationStatus === 1) {
+      throw new ValidateException("订单正在按供应商分配，请稍后刷新");
+    }
+    if (order.pid === -1) throw new ValidateException("请从拆分后的履约子单发货");
+    if (order.status !== 0) throw new ValidateException("订单状态不允许发货");
+    const rootOrderId = order.pid > 0 ? order.pid : order.id;
+    const activeWaybill = await tx
+      .select({ id: orderWaybillJob.id })
+      .from(orderWaybillJob)
+      .where(and(
+        eq(orderWaybillJob.rootOrderId, rootOrderId),
+        sql`${orderWaybillJob.status} IN (
+          'PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'RETRYABLE', 'UNKNOWN', 'DEAD'
+        )`,
+      ))
+      .limit(1)
+      .for("key share");
+    if (activeWaybill[0]) {
+      throw new ValidateException("订单存在进行中的电子面单任务，请先在面单账本中处理");
+    }
+    if (order.type === 3) {
+      const pink = await tx
+        .select({ status: storePink.status })
+        .from(storePink)
+        .where(eq(storePink.id, order.pinkId))
+        .limit(1)
+        .for("key share");
+      if (!pink[0] || pink[0].status !== 2) {
+        throw new ValidateException("拼团尚未成功，不能发货");
+      }
+    }
+    let verifyCode = "";
+    if (deliveryType === "send") {
+      const activeDelivery = await tx
+        .select({ id: deliveryService.id })
+        .from(deliveryService)
+        .innerJoin(user, eq(user.uid, deliveryService.uid))
+        .where(and(
+          eq(deliveryService.id, deliveryServiceId),
+          eq(deliveryService.uid, deliveryUid),
+          eq(deliveryService.type, 0),
+          eq(deliveryService.relationId, 0),
+          eq(deliveryService.status, 1),
+          eq(deliveryService.isDel, 0),
+          eq(user.status, 1),
+          eq(user.isDel, 0),
+        ))
+        .limit(1)
+        .for("update");
+      if (!activeDelivery[0]) throw new ValidateException("配送员已停用，请重新选择");
+      verifyCode = await generatePickupVerifyCode(tx);
+    }
+    await tx
+      .update(storeOrder)
+      .set({
+        status: 1,
+        deliveryType,
+        deliveryName,
+        deliveryId,
+        deliveryUid,
+        verifyCode,
+        fictitiousContent,
+        isStockUp: 1,
+      })
+      .where(eq(storeOrder.id, order.id));
+    await tx.insert(storeOrderStatus).values({
+      oid: order.id,
+      changeType: "delivery_goods",
+      changeMessage,
+      changeTime: now,
+    });
+    await enqueueOrderDeliveryNoticeEvent(tx, {
+      orderId: order.id,
+      orderNo: order.orderId,
+      userId: order.uid,
+      userAddress: order.userAddress,
+      deliveryType: deliveryType as "express" | "send" | "fictitious",
+      deliveryName,
+      deliveryId,
+    }, now);
+  });
   return jsonOk(c, null, "发货成功");
 }
 
 // ═══════════════════════════════════════════════════════════
 // 用户管理
 // ═══════════════════════════════════════════════════════════
+
+function userSegmentation(c: C) {
+  return new UserSegmentationService(c.get("container"));
+}
+
+export async function adminUserGroupList(c: C) {
+  return jsonOk(c, await userSegmentation(c).groupList(c.req.query()));
+}
+
+export async function adminUserGroupSave(c: C) {
+  return jsonOk(c, await userSegmentation(c).saveGroup(await metadataBody(c)), "提交成功");
+}
+
+export async function adminUserGroupDelete(c: C) {
+  await userSegmentation(c).deleteGroup(metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function adminUserLabels(c: C) {
+  return jsonOk(c, await userSegmentation(c).userLabels(metadataId(c)));
+}
+
+export async function adminUserLabelsSet(c: C) {
+  await userSegmentation(c).setUserLabels(metadataId(c), await metadataBody(c));
+  return jsonOk(c, null, "设置成功");
+}
+
+export async function adminUsersSetGroup(c: C) {
+  const body = await metadataBody(c);
+  await userSegmentation(c).assignGroup(body.uids ?? body.uid, body.group_id);
+  return jsonOk(c, null, "设置成功");
+}
+
+export async function adminUsersSetLabel(c: C) {
+  const body = await metadataBody(c);
+  await userSegmentation(c).addUserLabels(body.uids ?? body.uid, body.label_id ?? body.label_ids);
+  return jsonOk(c, null, "设置成功");
+}
 
 /** GET /api/admin/user/list — 用户列表 */
 export async function adminUserList(c: C) {
@@ -206,6 +558,7 @@ export async function adminUserList(c: C) {
   const where: Record<string, unknown> = { isDel: 0 };
   if (q.uid) where.uid = Number(q.uid);
   if (q.phone) where.phone = q.phone;
+  if (q.group_id) where.groupId = Number(q.group_id);
 
   const list = await container.userDao.selectList({ where, page, limit });
   return jsonOk(c, { list, page, limit });
@@ -219,7 +572,8 @@ export async function adminUserInfo(c: C) {
   // 隐藏敏感字段
   const { pwd: _pwd, ...safeUser } = user;
   void _pwd;
-  return jsonOk(c, safeUser);
+  const labels = await userSegmentation(c).userLabels(id);
+  return jsonOk(c, { ...safeUser, label_id: labels });
 }
 
 /** POST /api/admin/user/update/:id — 编辑用户 */
@@ -235,6 +589,7 @@ export async function adminUserUpdate(c: C) {
   if (body.phone !== undefined) updateData.phone = body.phone;
   if (body.status !== undefined) updateData.status = body.status;
   if (body.level !== undefined) updateData.level = body.level;
+  await userSegmentation(c).updateUserAssignments(id, body.group_id, body.label_id);
   if (Object.keys(updateData).length > 0) {
     await container.userDao.update(id, updateData);
   }
@@ -306,6 +661,150 @@ export async function adminConfigSave(c: C) {
   return jsonOk(c, null, "保存成功");
 }
 
+function systemMetadata(c: C) {
+  return new SystemMetadataService(c.get("container"));
+}
+
+export async function adminConfigTabList(c: C) {
+  return jsonOk(c, await systemMetadata(c).configTabList(c.req.query()));
+}
+
+export async function adminConfigTabSave(c: C) {
+  return jsonOk(
+    c,
+    await systemMetadata(c).saveConfigTab(0, await metadataBody(c)),
+    "添加配置分类成功",
+  );
+}
+
+export async function adminConfigTabUpdate(c: C) {
+  return jsonOk(
+    c,
+    await systemMetadata(c).saveConfigTab(metadataId(c), await metadataBody(c)),
+    "修改成功",
+  );
+}
+
+export async function adminConfigTabDelete(c: C) {
+  await systemMetadata(c).deleteConfigTab(metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function adminConfigTabStatus(c: C) {
+  await systemMetadata(c).setConfigTabStatus(metadataId(c), c.req.param("status"));
+  return jsonOk(c, null, "设置成功");
+}
+
+export async function adminSystemFormList(c: C) {
+  return jsonOk(c, await systemMetadata(c).formList(c.req.query()));
+}
+
+export async function adminSystemFormAll(c: C) {
+  return jsonOk(c, await systemMetadata(c).allSystemForms());
+}
+
+export async function adminSystemFormInfo(c: C) {
+  const info = await systemMetadata(c).formInfo(
+    metadataId(c),
+    c.req.query("type") === "1",
+  );
+  return jsonOk(c, { info });
+}
+
+export async function adminSystemFormSave(c: C) {
+  return jsonOk(
+    c,
+    await systemMetadata(c).saveForm(metadataId(c, true), await metadataBody(c)),
+    "保存成功",
+  );
+}
+
+export async function adminSystemFormRename(c: C) {
+  await systemMetadata(c).renameForm(metadataId(c), await metadataBody(c));
+  return jsonOk(c, null, "修改成功");
+}
+
+export async function adminSystemFormDelete(c: C) {
+  await systemMetadata(c).deleteForm(metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function adminSystemFormStatus(c: C) {
+  await systemMetadata(c).setFormStatus(metadataId(c), c.req.param("is_show"));
+  return jsonOk(c, null, "设置成功");
+}
+
+export async function adminSystemFormData(c: C) {
+  return jsonOk(c, await systemMetadata(c).formDataList(metadataId(c), c.req.query()));
+}
+
+function signRewards(c: C) {
+  return new SystemSignRewardService(c.get("container"));
+}
+
+export async function adminSignRewardList(c: C) {
+  return jsonOk(c, await signRewards(c).list(c.req.query()));
+}
+
+export async function adminSignRewardAdd(c: C) {
+  return jsonOk(c, await signRewards(c).form(0, c.req.query("type")));
+}
+
+export async function adminSignRewardEdit(c: C) {
+  return jsonOk(c, await signRewards(c).form(metadataId(c), undefined));
+}
+
+export async function adminSignRewardSave(c: C) {
+  return jsonOk(
+    c,
+    await signRewards(c).save(metadataId(c, true), await metadataBody(c)),
+    "编辑成功",
+  );
+}
+
+export async function adminSignRewardDelete(c: C) {
+  await signRewards(c).delete(metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
+
+function agentLevelTasks(c: C) {
+  return new AgentLevelTaskService(c.get("container"));
+}
+
+export async function adminAgentLevelTaskList(c: C) {
+  return jsonOk(c, await agentLevelTasks(c).adminList(c.req.query()));
+}
+
+export async function adminAgentLevelTaskCreateForm(c: C) {
+  return jsonOk(c, await agentLevelTasks(c).form(0, c.req.query("level_id")));
+}
+
+export async function adminAgentLevelTaskEditForm(c: C) {
+  return jsonOk(c, await agentLevelTasks(c).form(metadataId(c), undefined));
+}
+
+export async function adminAgentLevelTaskCreate(c: C) {
+  return jsonOk(c, await agentLevelTasks(c).save(0, await metadataBody(c)), "添加等级任务成功");
+}
+
+export async function adminAgentLevelTaskUpdate(c: C) {
+  return jsonOk(
+    c,
+    await agentLevelTasks(c).save(metadataId(c), await metadataBody(c)),
+    "修改成功",
+  );
+}
+
+export async function adminAgentLevelTaskDelete(c: C) {
+  await agentLevelTasks(c).delete(metadataId(c));
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function adminAgentLevelTaskStatus(c: C) {
+  await agentLevelTasks(c).setStatus(metadataId(c), c.req.param("status"));
+  return jsonOk(c, null, "设置成功");
+}
+
 // ═══════════════════════════════════════════════════════════
 // 退款审核
 // ═══════════════════════════════════════════════════════════
@@ -336,10 +835,10 @@ export async function adminRefundAgree(c: C) {
   const id = Number(c.req.param("id") ?? "0");
   if (!id) return jsonFail(c, "参数错误");
   const { StoreOrderRefundService } = await import("@/services/order/StoreOrderRefundService");
-  const svc = new StoreOrderRefundService(c.get("container"));
+  const svc = new StoreOrderRefundService(c.get("container"), c.env);
   try {
-    await svc.agreeRefund(id);
-    return jsonOk(c, null, "退款成功");
+    const result = await svc.agreeRefund(id);
+    return jsonOk(c, result, result.completed ? "退款成功" : "退款已受理，等待渠道确认");
   } catch (e) {
     if (e instanceof Error) return jsonFail(c, e.message);
     throw e;
@@ -352,7 +851,7 @@ export async function adminRefundRefuse(c: C) {
   if (!id) return jsonFail(c, "参数错误");
   const body = (await c.req.json().catch(() => ({}))) as { refuse_reason?: string };
   const { StoreOrderRefundService } = await import("@/services/order/StoreOrderRefundService");
-  const svc = new StoreOrderRefundService(c.get("container"));
+  const svc = new StoreOrderRefundService(c.get("container"), c.env);
   try {
     await svc.refuseRefund(id, body.refuse_reason ?? "不满足退款条件");
     return jsonOk(c, null, "已拒绝退款");
@@ -448,40 +947,131 @@ export async function adminCouponSave(c: C) {
     title?: string;
     coupon_price?: string;
     use_min_price?: string;
+    type?: number;
+    coupon_type?: number;
+    product_id?: unknown;
+    category_id?: unknown;
+    brand_id?: unknown;
     day?: number;
     status?: number;
     sort?: number;
+    total_count?: number;
+    receive_limit?: number;
+    receive_type?: number;
+    is_permanent?: number;
   };
   const container = c.get("container");
-  if (body.id) {
-    await container.storeCouponIssueDao.update(body.id, {
-      couponTitle: body.title,
-      couponPrice: body.coupon_price,
-      useMinPrice: body.use_min_price,
-      day: body.day,
-      status: body.status,
+  const { eq } = await import("drizzle-orm");
+  const { storeCouponIssue, storeCouponProduct } = await import("@/models/schema");
+  const saved = await withTx(container, async (tx) => {
+    const existing = body.id
+      ? (
+          await tx
+            .select()
+            .from(storeCouponIssue)
+            .where(eq(storeCouponIssue.id, body.id))
+            .limit(1)
+            .for("update")
+        )[0] ?? null
+      : null;
+    if (body.id && !existing) throw new ValidateException("优惠券不存在");
+
+    const scopeType = Number(body.type ?? existing?.couponType ?? 0);
+    const discountType = Number(body.coupon_type ?? existing?.type ?? 1);
+    if (![0, 1, 2, 3].includes(scopeType)) throw new ValidateException("优惠券适用范围错误");
+    if (![1, 2].includes(discountType)) throw new ValidateException("优惠券优惠类型错误");
+
+    const rawProductIds = parseCouponScopeIds(body.product_id ?? existing?.productId);
+    const rawCategoryIds = parseCouponScopeIds(body.category_id ?? existing?.category_id);
+    const rawBrandIds = parseCouponScopeIds(body.brand_id ?? existing?.brandId);
+    const productId = scopeType === 2 ? rawProductIds.join(",") : "0";
+    const categoryId = scopeType === 1 ? String(rawCategoryIds.at(-1) ?? 0) : "0";
+    const brandId = scopeType === 3 ? String(rawBrandIds.at(-1) ?? 0) : "0";
+    if (scopeType === 1 && categoryId === "0") throw new ValidateException("请选择优惠券适用分类");
+    if (scopeType === 2 && productId === "") throw new ValidateException("请选择优惠券适用商品");
+    if (scopeType === 2 && productId.length > 500) {
+      throw new ValidateException("优惠券适用商品数量过多");
+    }
+    if (scopeType === 3 && brandId === "0") throw new ValidateException("请选择优惠券适用品牌");
+
+    const couponPrice = String(body.coupon_price ?? existing?.couponPrice ?? "0");
+    const useMinPrice = String(body.use_min_price ?? existing?.useMinPrice ?? "0");
+    if (!/^\d+(?:\.\d{1,2})?$/.test(useMinPrice)) {
+      throw new ValidateException("优惠券使用门槛格式错误");
+    }
+    if (Number(couponPrice) <= 0) throw new ValidateException("优惠券金额或折扣必须大于0");
+    calculateCouponDiscountCents({
+      discountType,
+      couponPrice,
+      eligibleSubtotalCents: 10_000,
     });
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-  const row = await container.storeCouponIssueDao.save({
-    couponType: 1,
-    couponTitle: body.title ?? "优惠券",
-    type: 1,
-    couponPrice: body.coupon_price ?? "0",
-    useMinPrice: body.use_min_price ?? "0",
-    productId: "0",
-    category_id: "0",
-    brandId: "0",
-    totalCount: 0,
-    remainCount: 0,
-    receiveLimit: 1,
-    receiveType: 0,
-    day: body.day ?? 7,
-    status: body.status ?? 0,
-    sort: body.sort ?? 0,
-    addTime: Math.floor(Date.now() / 1000),
+
+    const receiveType = Number(body.receive_type ?? existing?.receiveType ?? 1);
+    const isPermanent = receiveType === 2
+      ? 1
+      : Number(body.is_permanent ?? existing?.isPermanent ?? 1);
+    const totalCount = receiveType === 2
+      ? 0
+      : Number(body.total_count ?? existing?.totalCount ?? 0);
+    const receiveLimit = Number(body.receive_limit ?? existing?.receiveLimit ?? 1);
+    if (!Number.isSafeInteger(totalCount) || totalCount < 0) {
+      throw new ValidateException("优惠券发行量必须是非负整数");
+    }
+    if (!Number.isSafeInteger(receiveLimit) || receiveLimit < 0) {
+      throw new ValidateException("优惠券限领数量必须是非负整数");
+    }
+    const claimedCount = existing && !existing.isPermanent
+      ? Math.max(0, existing.totalCount - existing.remainCount)
+      : 0;
+    const remainCount = isPermanent ? totalCount : Math.max(0, totalCount - claimedCount);
+    const values = {
+      couponType: scopeType,
+      couponTitle: body.title ?? existing?.couponTitle ?? "优惠券",
+      title: body.title ?? existing?.title ?? "优惠券",
+      type: discountType,
+      couponPrice,
+      useMinPrice,
+      productId,
+      category_id: categoryId,
+      brandId,
+      legacyProductIds: productId,
+      legacyCategoryId: Number(categoryId),
+      legacyBrandId: Number(brandId),
+      totalCount,
+      remainCount,
+      receiveLimit,
+      receiveType,
+      day: Number(body.day ?? existing?.day ?? 7),
+      isPermanent,
+      status: Number(body.status ?? existing?.status ?? 1),
+      sort: Number(body.sort ?? existing?.sort ?? 0),
+    };
+
+    const issueId = body.id
+      ? (
+          await tx
+            .update(storeCouponIssue)
+            .set(values)
+            .where(eq(storeCouponIssue.id, body.id))
+            .returning({ id: storeCouponIssue.id })
+        )[0]?.id
+      : (
+          await tx
+            .insert(storeCouponIssue)
+            .values({ ...values, addTime: Math.floor(Date.now() / 1000) })
+            .returning({ id: storeCouponIssue.id })
+        )[0]?.id;
+    if (!issueId) throw new Error("优惠券保存失败");
+
+    await tx.delete(storeCouponProduct).where(eq(storeCouponProduct.couponId, issueId));
+    if (scopeType === 2) {
+      await tx.insert(storeCouponProduct).values(
+        rawProductIds.map((item) => ({ couponId: issueId, productId: item })),
+      );
+    }
+    return { id: issueId };
   });
-  return jsonOk(c, { id: row.id }, "创建成功");
+  return jsonOk(c, saved, body.id ? "更新成功" : "创建成功");
 }
 
 /** POST /api/admin/coupon/status/:id — 上架/下架 */
@@ -497,76 +1087,8 @@ export async function adminCouponStatus(c: C) {
 export async function adminCouponDel(c: C) {
   const id = Number(c.req.param("id") ?? "0");
   const container = c.get("container");
-  await container.storeCouponIssueDao.delete(id);
+  await container.storeCouponIssueDao.update(id, { isDel: 1, status: -1 });
   return jsonOk(c, null, "删除成功");
-}
-
-// ═══════════════════════════════════════════════════════════
-// 数据统计
-// ═══════════════════════════════════════════════════════════
-
-/** GET /api/admin/statistic/overview — 统计概览 */
-export async function adminStatisticOverview(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { storeOrder, storeProduct, user, storeOrderRefund } = await import("@/models/schema");
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStart = Math.floor(today.getTime() / 1000);
-  const yesterdayStart = todayStart - 86400;
-
-  // 今日订单数 + 销售额
-  const orderStats = await container.db
-    .select({
-      todayCount: sql<number>`COUNT(*) FILTER (WHERE ${storeOrder.payTime} >= ${todayStart} AND ${storeOrder.paid} = 1)::int`,
-      todaySales: sql<string>`COALESCE(SUM(${storeOrder.payPrice}) FILTER (WHERE ${storeOrder.payTime} >= ${todayStart} AND ${storeOrder.paid} = 1), 0)::numeric(12,2)`,
-      totalCount: sql<number>`COUNT(*) FILTER (WHERE ${storeOrder.paid} = 1)::int`,
-      totalSales: sql<string>`COALESCE(SUM(${storeOrder.payPrice}) FILTER (WHERE ${storeOrder.paid} = 1), 0)::numeric(12,2)`,
-    })
-    .from(storeOrder);
-
-  // 昨日销售
-  const yesterdayStats = await container.db
-    .select({
-      sales: sql<string>`COALESCE(SUM(${storeOrder.payPrice}) FILTER (WHERE ${storeOrder.payTime} >= ${yesterdayStart} AND ${storeOrder.payTime} < ${todayStart} AND ${storeOrder.paid} = 1), 0)::numeric(12,2)`,
-      count: sql<number>`COUNT(*) FILTER (WHERE ${storeOrder.payTime} >= ${yesterdayStart} AND ${storeOrder.payTime} < ${todayStart} AND ${storeOrder.paid} = 1)::int`,
-    })
-    .from(storeOrder);
-
-  // 商品数 + 用户数
-  const productCount = await container.db
-    .select({ c: sql<number>`COUNT(*)::int` })
-    .from(storeProduct)
-    .then((r) => r[0]?.c ?? 0);
-
-  const userCount = await container.db
-    .select({ c: sql<number>`COUNT(*)::int` })
-    .from(user)
-    .then((r) => r[0]?.c ?? 0);
-
-  const refundCount = await container.db
-    .select({ c: sql<number>`COUNT(*)::int` })
-    .from(storeOrderRefund)
-    .then((r) => r[0]?.c ?? 0);
-
-  return jsonOk(c, {
-    today: {
-      orderCount: Number(orderStats[0]?.todayCount ?? 0),
-      sales: String(orderStats[0]?.todaySales ?? "0"),
-    },
-    yesterday: {
-      orderCount: Number(yesterdayStats[0]?.count ?? 0),
-      sales: String(yesterdayStats[0]?.sales ?? "0"),
-    },
-    total: {
-      orderCount: Number(orderStats[0]?.totalCount ?? 0),
-      sales: String(orderStats[0]?.totalSales ?? "0"),
-      productCount,
-      userCount,
-      refundCount,
-    },
-  });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -691,8 +1213,12 @@ export async function adminPinkList(c: C) {
     .select({
       id: storePink.id,
       uid: storePink.uid,
+      nickname: storePink.nickname,
       orderId: storePink.orderId,
       people: storePink.people,
+      memberCount: storePink.memberCount,
+      totalNum: storePink.totalNum,
+      totalPrice: storePink.totalPrice,
       status: storePink.status,
       addTime: storePink.addTime,
     })
@@ -834,33 +1360,69 @@ export async function adminSystemAdminSave(c: C) {
   const container = c.get("container");
   const { eq } = await import("drizzle-orm");
   const { systemAdmin } = await import("@/models/schema");
+  const actor = c.get("adminInfo");
+  if (!actor) throw new ValidateException("管理员身份不存在");
   // 管理员密码与登录一致用 bcrypt (AdminAuthService.login 用 bcrypt 校验)
   const bcrypt = (await import("bcryptjs")).default;
-  const hashPwd = (pwd: string) => bcrypt.hashSync(pwd, 10);
+  const hashPwd = (pwd: string) => bcrypt.hash(pwd, 12);
+
+  const normalizeRoleIds = (value: string | undefined): string | undefined => {
+    if (value === undefined) return undefined;
+    const ids = [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))];
+    if (ids.some((id) => !/^[1-9]\d*$/.test(id))) throw new ValidateException("角色 ID 格式错误");
+    return ids.join(",");
+  };
+  const normalizedRoles = normalizeRoleIds(body.roles);
+  if (body.level !== undefined && (!Number.isInteger(body.level) || body.level < 0 || body.level > 9)) {
+    throw new ValidateException("管理员等级必须为 0 到 9 的整数");
+  }
+  if (body.status !== undefined && body.status !== 0 && body.status !== 1) {
+    throw new ValidateException("管理员状态参数错误");
+  }
 
   if (body.id) {
+    const target = await container.db
+      .select({ level: systemAdmin.level, roles: systemAdmin.roles })
+      .from(systemAdmin)
+      .where(eq(systemAdmin.id, body.id))
+      .limit(1);
+    if (!target[0]) throw new ValidateException("管理员不存在");
+    if (actor.level !== 0 && (target[0].level === 0 || body.level === 0)) {
+      throw new ValidateException("只有超级管理员可以管理超级管理员账号");
+    }
+    if (actor.level !== 0) {
+      await assertRoleAssignmentsWithinActor(c, target[0].roles, false);
+    }
+    if (normalizedRoles !== undefined) {
+      await assertRoleAssignmentsWithinActor(c, normalizedRoles);
+    }
+    if (body.pwd && body.pwd.length < 12) throw new ValidateException("管理员密码至少 12 位");
     const updates: Record<string, unknown> = {};
     if (body.real_name !== undefined) updates.realName = body.real_name;
     if (body.phone !== undefined) updates.phone = body.phone;
-    if (body.roles !== undefined) updates.roles = body.roles;
+    if (normalizedRoles !== undefined) updates.roles = normalizedRoles;
     if (body.level !== undefined) updates.level = body.level;
     if (body.status !== undefined) updates.status = body.status;
-    if (body.pwd) updates.pwd = hashPwd(body.pwd);
+    if (body.pwd) updates.pwd = await hashPwd(body.pwd);
     await container.db.update(systemAdmin).set(updates).where(eq(systemAdmin.id, body.id));
     return jsonOk(c, { id: body.id }, "更新成功");
   }
 
-  if (!body.account) return jsonFail(c, "账号不能为空");
+  if (!body.account?.trim()) return jsonFail(c, "账号不能为空");
+  if (!body.pwd || body.pwd.length < 12) return jsonFail(c, "新管理员密码至少 12 位");
+  const newLevel = body.level ?? 1;
+  if (actor.level !== 0 && newLevel === 0) throw new ValidateException("只有超级管理员可以创建超级管理员账号");
+  await assertRoleAssignmentsWithinActor(c, normalizedRoles ?? "");
   const now = Math.floor(Date.now() / 1000);
   const row = await container.db
     .insert(systemAdmin)
     .values({
-      account: body.account,
-      pwd: hashPwd(body.pwd || "123456"),
+      account: body.account.trim(),
+      pwd: await hashPwd(body.pwd),
       realName: body.real_name ?? "",
       phone: body.phone ?? "",
-      roles: body.roles ?? "",
-      level: body.level ?? 0,
+      roles: normalizedRoles ?? "",
+      level: newLevel,
       status: body.status ?? 1,
       adminType: 1,
       relationId: 0,
@@ -883,7 +1445,38 @@ export async function adminSystemRoleList(c: C) {
     .where(sql`${systemRole.status} >= 0`)
     .orderBy(sql`${systemRole.id} DESC`)
     .limit(50);
-  return jsonOk(c, rows);
+  const permissionSets = await new AdminPermissionService(container).resolveManyRulePermissionKeys(
+    rows.map((row) => row.rules),
+  );
+  return jsonOk(c, rows.map((row, index) => ({ ...row, permissionKeys: permissionSets[index] ?? [] })));
+}
+
+/** GET /adminapi/integral/order/list — unified store_order(type=4) list. */
+export async function adminIntegralOrderList(c: C) {
+  const q = c.req.query();
+  const service = new StoreIntegralOrderService(c.get("container"), c.env);
+  return jsonOk(
+    c,
+    await service.adminList({
+      page: Number(q.page ?? 1),
+      limit: Number(q.limit ?? 10),
+      status: q.status !== undefined && q.status !== "" ? Number(q.status) : undefined,
+      paid: q.paid !== undefined && q.paid !== "" ? Number(q.paid) : undefined,
+      uid: q.uid ? Number(q.uid) : undefined,
+      orderId: q.order_id || undefined,
+    }),
+  );
+}
+
+/** GET /adminapi/integral/order/chart */
+export async function adminIntegralOrderChart(c: C) {
+  const service = new StoreIntegralOrderService(c.get("container"), c.env);
+  return jsonOk(c, await service.adminChart());
+}
+
+/** GET /adminapi/system_menus/tree — 当前 Worker 已登记的菜单级权限树 */
+export async function adminSystemPermissionTree(c: C) {
+  return jsonOk(c, new AdminPermissionService(c.get("container")).permissionTree());
 }
 
 /** POST /api/admin/system_role/save — 新增/编辑角色 */
@@ -898,20 +1491,43 @@ export async function adminSystemRoleSave(c: C) {
   const container = c.get("container");
   const { eq } = await import("drizzle-orm");
   const { systemRole } = await import("@/models/schema");
+  const normalizedRules = body.rules === undefined ? undefined : normalizeRoleRules(body.rules);
+  const roleName = body.role_name?.trim();
+  if (body.role_name !== undefined && !roleName) throw new ValidateException("角色名称不能为空");
+  if (body.level !== undefined && (!Number.isInteger(body.level) || body.level < 0 || body.level > 9)) {
+    throw new ValidateException("角色等级必须为 0 到 9 的整数");
+  }
+  if (body.status !== undefined && body.status !== 0 && body.status !== 1) {
+    throw new ValidateException("角色状态参数错误");
+  }
 
   if (body.id) {
+    const existing = await container.db
+      .select({ rules: systemRole.rules })
+      .from(systemRole)
+      .where(eq(systemRole.id, body.id))
+      .limit(1);
+    if (!existing[0]) throw new ValidateException("角色不存在");
+    await assertRoleRulesWithinActor(c, existing[0].rules);
+    if (normalizedRules !== undefined) await assertRoleRulesWithinActor(c, normalizedRules);
+    const updates: Record<string, unknown> = {};
+    if (roleName !== undefined) updates.roleName = roleName;
+    if (normalizedRules !== undefined) updates.rules = normalizedRules;
+    if (body.level !== undefined) updates.level = body.level;
+    if (body.status !== undefined) updates.status = body.status;
     await container.db
       .update(systemRole)
-      .set({ roleName: body.role_name ?? "", rules: body.rules ?? "", level: body.level ?? 0, status: body.status ?? 1 })
+      .set(updates)
       .where(eq(systemRole.id, body.id));
     return jsonOk(c, { id: body.id }, "更新成功");
   }
 
+  await assertRoleRulesWithinActor(c, normalizedRules ?? "");
   const row = await container.db
     .insert(systemRole)
     .values({
-      roleName: body.role_name ?? "新角色",
-      rules: body.rules ?? "",
+      roleName: roleName ?? "新角色",
+      rules: normalizedRules ?? "",
       level: body.level ?? 0,
       status: body.status ?? 1,
       type: 0,
@@ -927,6 +1543,13 @@ export async function adminSystemRoleDel(c: C) {
   const container = c.get("container");
   const { eq } = await import("drizzle-orm");
   const { systemRole } = await import("@/models/schema");
+  const existing = await container.db
+    .select({ rules: systemRole.rules })
+    .from(systemRole)
+    .where(eq(systemRole.id, id))
+    .limit(1);
+  if (!existing[0]) throw new ValidateException("角色不存在");
+  await assertRoleRulesWithinActor(c, existing[0].rules);
   await container.db.update(systemRole).set({ status: -1 }).where(eq(systemRole.id, id));
   return jsonOk(c, null, "删除成功");
 }
@@ -958,9 +1581,18 @@ export async function adminExtractList(c: C) {
       bankName: userExtract.bankName,
       realName: userExtract.realName,
       extractNumber: userExtract.extractNumber,
+      bankCode: userExtract.bankCode,
+      bankAddress: userExtract.bankAddress,
+      alipayCode: userExtract.alipayCode,
+      wechat: userExtract.wechat,
+      qrcodeUrl: userExtract.qrcodeUrl,
       extractPrice: userExtract.extractPrice,
+      extractFee: userExtract.extractFee,
+      mark: userExtract.mark,
+      balance: userExtract.balance,
       status: userExtract.status,
       failMsg: userExtract.failMsg,
+      failTime: userExtract.failTime,
       addTime: userExtract.addTime,
       nickname: userTable.nickname,
       account: userTable.account,
@@ -976,10 +1608,20 @@ export async function adminExtractList(c: C) {
     .select({ c: sql<number>`COUNT(*)::int` })
     .from(userExtract)
     .where(where as never);
-  return jsonOk(c, { list: rows, total: totalRows[0]?.c ?? 0 });
+  const list = rows.map((row) => ({
+    ...row,
+    extractNumber:
+      row.extractNumber ||
+      (row.extractType === "alipay"
+        ? row.alipayCode
+        : row.extractType === "weixin" || row.extractType === "wx"
+          ? row.wechat
+          : row.bankCode),
+  }));
+  return jsonOk(c, { list, total: totalRows[0]?.c ?? 0 });
 }
 
-/** POST /api/admin/extract/status/:id — 提现审核 (status=1 通过 / 2 拒绝) */
+/** POST /api/admin/extract/status/:id — 提现审核 (API status=1 通过 / 2 拒绝) */
 export async function adminExtractStatus(c: C) {
   const id = Number(c.req.param("id") ?? "0");
   const body = (await c.req.json().catch(() => ({}))) as { status?: number; fail_msg?: string };
@@ -987,39 +1629,48 @@ export async function adminExtractStatus(c: C) {
   const { eq, and, sql } = await import("drizzle-orm");
   const { userExtract, userBrokerage, user: userTable } = await import("@/models/schema");
 
-  const rec = await container.db
-    .select()
-    .from(userExtract)
-    .where(eq(userExtract.id, id))
-    .limit(1);
-  if (!rec[0]) return jsonFail(c, "提现记录不存在");
-  if (rec[0].status !== 0) return jsonFail(c, "该记录已审核");
+  const rejected = body.status === 2 || body.status === -1;
+  const newStatus = rejected ? -1 : 1;
+  const now = Math.floor(Date.now() / 1000);
+  const updated = await withTx(container, async (tx) => {
+    const records = await tx
+      .update(userExtract)
+      .set({
+        status: newStatus,
+        failMsg: rejected ? (body.fail_msg ?? "审核拒绝") : "",
+        failTime: rejected ? now : 0,
+      })
+      .where(and(eq(userExtract.id, id), eq(userExtract.status, 0)))
+      .returning({
+        uid: userExtract.uid,
+        extractPrice: userExtract.extractPrice,
+        extractFee: userExtract.extractFee,
+      });
+    const record = records[0];
+    if (!record) return false;
 
-  const newStatus = body.status === 2 ? 2 : 1;
-  await container.db
-    .update(userExtract)
-    .set({ status: newStatus, failMsg: newStatus === 2 ? (body.fail_msg ?? "审核拒绝") : "" })
-    .where(eq(userExtract.id, id));
-
-  if (newStatus === 2) {
-    // 拒绝 → 返还佣金 + 流水标记无效
-    const price = Number(rec[0].extractPrice);
-    await container.db
-      .update(userTable)
-      .set({ brokeragePrice: sql`brokerage_price + ${price.toFixed(2)}` })
-      .where(eq(userTable.uid, rec[0].uid));
-    await container.db
-      .update(userBrokerage)
-      .set({ status: -1 })
-      .where(and(eq(userBrokerage.linkId, String(id)), eq(userBrokerage.category, "extract")));
-  } else {
-    // 通过 → 提现流水置有效
-    await container.db
-      .update(userBrokerage)
-      .set({ status: 1 })
-      .where(and(eq(userBrokerage.linkId, String(id)), eq(userBrokerage.category, "extract")));
-  }
-  return jsonOk(c, null, newStatus === 2 ? "已拒绝" : "已通过");
+    if (rejected) {
+      // PHP deducts gross amount (net extract_price + extract_fee); reject restores both.
+      await tx
+        .update(userTable)
+        .set({
+          brokeragePrice: sql`${userTable.brokeragePrice} + ${record.extractPrice} + ${record.extractFee}`,
+        })
+        .where(eq(userTable.uid, record.uid));
+      await tx
+        .update(userBrokerage)
+        .set({ status: -1 })
+        .where(and(eq(userBrokerage.linkId, String(id)), eq(userBrokerage.category, "extract")));
+    } else {
+      await tx
+        .update(userBrokerage)
+        .set({ status: 1 })
+        .where(and(eq(userBrokerage.linkId, String(id)), eq(userBrokerage.category, "extract")));
+    }
+    return true;
+  });
+  if (!updated) return jsonFail(c, "提现记录不存在或已审核");
+  return jsonOk(c, null, rejected ? "已拒绝" : "已通过");
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1218,7 +1869,18 @@ export async function adminShippingTemplateSave(c: C) {
   if (!body.name) return jsonFail(c, "请输入模板名称");
   const row = await container.db
     .insert(shippingTemplates)
-    .values({ name: body.name, type: body.type ?? 1, sort: body.sort ?? 0, status: body.status ?? 1, isDel: 0, addTime: now })
+    .values({
+      ownerType: 0,
+      relationId: 0,
+      name: body.name,
+      type: body.type ?? 1,
+      appoint: 0,
+      noDelivery: 0,
+      sort: body.sort ?? 0,
+      status: body.status ?? 1,
+      isDel: 0,
+      addTime: now,
+    })
     .returning({ id: shippingTemplates.id });
   const tid = row[0].id;
   for (const r of body.regions ?? []) {
@@ -1432,65 +2094,6 @@ export async function adminActivityDel(c: C) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// 统计趋势 (M21: 图表数据)
-// ═══════════════════════════════════════════════════════════
-
-/** GET /api/admin/statistic/trend — 近7天/30天订单与销售额趋势 */
-export async function adminStatisticTrend(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { storeOrder } = await import("@/models/schema");
-  const days = Number(c.req.query("days") ?? 7);
-  const now = new Date();
-  const start = new Date(now);
-  start.setDate(start.getDate() - days + 1);
-  start.setHours(0, 0, 0, 0);
-  const startTs = Math.floor(start.getTime() / 1000);
-
-  const rows = await container.db
-    .select({
-      date: sql<string>`to_char(to_timestamp(${storeOrder.payTime}) AT TIME ZONE 'UTC', 'YYYY-MM-DD')`,
-      orderCount: sql<number>`COUNT(*)::int`,
-      sales: sql<string>`COALESCE(SUM(${storeOrder.payPrice}), 0)::numeric(12,2)`,
-    })
-    .from(storeOrder)
-    .where(sql`${storeOrder.payTime} >= ${startTs} AND ${storeOrder.paid} = 1`)
-    .groupBy(sql`1`)
-    .orderBy(sql`1`);
-
-  // 填充空日期
-  const result: { date: string; orderCount: number; sales: number }[] = [];
-  for (let i = 0; i < days; i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    const p = (n: number) => String(n).padStart(2, "0");
-    const key = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-    const found = (rows as unknown[]).find((r: any) => r.date === key);
-    result.push({ date: key, orderCount: found ? Number((found as any).orderCount) : 0, sales: found ? Number((found as any).sales) : 0 });
-  }
-  return jsonOk(c, result);
-}
-
-/** GET /api/admin/statistic/rank — 商品销量 TOP */
-export async function adminStatisticRank(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { storeOrderCartInfo } = await import("@/models/schema");
-  const limit = Number(c.req.query("limit") ?? 10);
-  const rows = await container.db
-    .select({
-      productId: storeOrderCartInfo.productId,
-      name: sql<string>`MAX(${storeOrderCartInfo.cartInfo}->>'product'->>'storeName')`,
-      salesCount: sql<number>`SUM(${storeOrderCartInfo.cartNum})::int`,
-    })
-    .from(storeOrderCartInfo)
-    .groupBy(storeOrderCartInfo.productId)
-    .orderBy(sql`SUM(${storeOrderCartInfo.cartNum}) DESC`)
-    .limit(limit);
-  return jsonOk(c, rows);
-}
-
-// ═══════════════════════════════════════════════════════════
 // 商品标签 + 用户标签 (M21)
 // ═══════════════════════════════════════════════════════════
 
@@ -1567,7 +2170,15 @@ export async function adminUserLabelSave(c: C) {
   }
   if (!body.name) return jsonFail(c, "请输入标签名");
   const row = await container.db.insert(userLabel).values({
-    name: body.name, color: body.color ?? "#e93323", sort: body.sort ?? 0, status: body.status ?? 1, addTime: now,
+    type: 0,
+    relationId: 0,
+    labelCate: 0,
+    name: body.name,
+    tagId: "",
+    color: body.color ?? "#e93323",
+    sort: body.sort ?? 0,
+    status: body.status ?? 1,
+    addTime: now,
   }).returning({ id: userLabel.id });
   return jsonOk(c, { id: row[0].id }, "创建成功");
 }
@@ -1575,10 +2186,7 @@ export async function adminUserLabelSave(c: C) {
 /** DELETE /api/admin/user_label/del/:id */
 export async function adminUserLabelDel(c: C) {
   const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { userLabel } = await import("@/models/schema");
-  await container.db.delete(userLabel).where(eq(userLabel.id, id));
+  await userSegmentation(c).deletePlatformLabel(id);
   return jsonOk(c, null, "删除成功");
 }
 
@@ -1591,7 +2199,12 @@ export async function adminDiseList(c: C) {
   const container = c.get("container");
   const { sql } = await import("drizzle-orm");
   const rows = await container.db.execute(sql`
-    SELECT id, name, title, status, type, add_time FROM "system_dise" WHERE "is_del" = 0 ORDER BY "id" DESC LIMIT 100
+    SELECT id, name, title, status, type, add_time,
+      COALESCE(NULLIF(content, ''), value, '') AS content
+    FROM "system_dise"
+    WHERE "is_del" = 0
+    ORDER BY "id" DESC
+    LIMIT 100
   `);
   const arr = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
   return jsonOk(c, arr);
@@ -1608,7 +2221,9 @@ export async function adminDiseSave(c: C) {
   if (body.id) {
     await container.db.execute(sql`
       UPDATE "system_dise" SET "name" = ${body.name ?? ""}, "title" = ${body.title ?? ""},
-        "content" = ${body.content ?? ""}, "type" = ${body.type ?? 0}, "status" = ${body.status ?? 1}
+        "content" = COALESCE(${body.content ?? null}, "content"),
+        "value" = COALESCE(${body.content ?? null}, "value"),
+        "type" = ${body.type ?? 0}, "status" = ${body.status ?? 1}
       WHERE "id" = ${body.id}
     `);
     return jsonOk(c, { id: body.id }, "更新成功");
@@ -1616,7 +2231,7 @@ export async function adminDiseSave(c: C) {
   if (!body.name) return jsonFail(c, "请输入页面名称");
   await container.db.execute(sql`
     INSERT INTO "system_dise" ("name", "title", "content", "type", "status", "is_del", "value", "add_time")
-    VALUES (${body.name}, ${body.title ?? ""}, ${body.content ?? ""}, ${body.type ?? 0}, ${body.status ?? 1}, 0, '', ${now})
+    VALUES (${body.name}, ${body.title ?? ""}, ${body.content ?? ""}, ${body.type ?? 0}, ${body.status ?? 1}, 0, ${body.content ?? ""}, ${now})
   `);
   return jsonOk(c, null, "创建成功");
 }
@@ -1639,7 +2254,13 @@ export async function adminArticleList(c: C) {
   const container = c.get("container");
   const { sql } = await import("drizzle-orm");
   const rows = await container.db.execute(sql`
-    SELECT id, cid, title, author, status, add_time FROM "system_article" WHERE "is_del" = 0 ORDER BY "id" DESC LIMIT 100
+    SELECT sa.id, sa.cid, sa.title, sa.author, sa.status, sa.add_time,
+      COALESCE(NULLIF(sa.content, ''), ac.content, '') AS content
+    FROM "system_article" sa
+    LEFT JOIN "article_content" ac ON ac.nid = sa.id
+    WHERE sa.is_del = 0
+    ORDER BY sa.id DESC
+    LIMIT 100
   `);
   const arr = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
   return jsonOk(c, arr);
@@ -1655,16 +2276,30 @@ export async function adminArticleSave(c: C) {
   const now = Math.floor(Date.now() / 1000);
   if (body.id) {
     await container.db.execute(sql`
-      UPDATE "system_article" SET "cid" = ${body.cid ?? 0}, "title" = ${body.title ?? ""},
-        "author" = ${body.author ?? ""}, "content" = ${body.content ?? ""}, "status" = ${body.status ?? 1}
-      WHERE "id" = ${body.id}
+      WITH updated AS (
+        UPDATE "system_article"
+        SET "cid" = COALESCE(${body.cid ?? null}, "cid"), "title" = ${body.title ?? ""},
+          "author" = ${body.author ?? ""}, "content" = ${body.content ?? ""},
+          "status" = ${body.status ?? 1}
+        WHERE "id" = ${body.id}
+        RETURNING "id", "content"
+      )
+      INSERT INTO "article_content" ("nid", "content")
+      SELECT "id", "content" FROM updated
+      ON CONFLICT ("nid") DO UPDATE SET "content" = EXCLUDED."content"
     `);
     return jsonOk(c, { id: body.id }, "更新成功");
   }
   if (!body.title) return jsonFail(c, "请输入标题");
   await container.db.execute(sql`
-    INSERT INTO "system_article" ("cid", "title", "author", "content", "status", "is_del", "add_time")
-    VALUES (${body.cid ?? 0}, ${body.title}, ${body.author ?? ""}, ${body.content ?? ""}, ${body.status ?? 1}, 0, ${now})
+    WITH inserted AS (
+      INSERT INTO "system_article" ("cid", "title", "author", "content", "status", "is_del", "add_time")
+      VALUES (${body.cid ?? 0}, ${body.title}, ${body.author ?? ""}, ${body.content ?? ""}, ${body.status ?? 1}, 0, ${now})
+      RETURNING "id", "content"
+    )
+    INSERT INTO "article_content" ("nid", "content")
+    SELECT "id", "content" FROM inserted
+    ON CONFLICT ("nid") DO UPDATE SET "content" = EXCLUDED."content"
   `);
   return jsonOk(c, null, "创建成功");
 }
@@ -1786,7 +2421,12 @@ export async function adminNotificationList(c: C) {
   const container = c.get("container");
   const { sql } = await import("drizzle-orm");
   const rows = await container.db.execute(sql`
-    SELECT * FROM "notification_template" ORDER BY "id" ASC LIMIT 100
+    SELECT id, title, content,
+      CASE "legacy_type" WHEN 0 THEN 'routine' WHEN 1 THEN 'wechat' ELSE "type" END AS type,
+      mark, status, add_time, notification_id, legacy_type, kid, example, tempid
+    FROM "notification_template"
+    ORDER BY "id" ASC
+    LIMIT 100
   `);
   const arr = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
   return jsonOk(c, arr);
@@ -1799,17 +2439,19 @@ export async function adminNotificationSave(c: C) {
   };
   const container = c.get("container");
   const { sql } = await import("drizzle-orm");
+  const legacyType = body.type === "routine" ? 0 : body.type === "wechat" ? 1 : -1;
   if (body.id) {
     await container.db.execute(sql`
       UPDATE "notification_template" SET "title" = ${body.title ?? ""}, "content" = ${body.content ?? ""},
-        "status" = ${body.status ?? 1}, "type" = ${body.type ?? "wechat"}
+        "status" = ${body.status ?? 1}, "type" = COALESCE(${body.type ?? null}, "type"),
+        "legacy_type" = CASE WHEN ${body.type ?? null} IS NULL THEN "legacy_type" ELSE ${legacyType} END
       WHERE "id" = ${body.id}
     `);
     return jsonOk(c, { id: body.id }, "更新成功");
   }
   await container.db.execute(sql`
-    INSERT INTO "notification_template" ("title", "content", "status", "type", "mark", "add_time")
-    VALUES (${body.title ?? ""}, ${body.content ?? ""}, ${body.status ?? 1}, ${body.type ?? "wechat"}, '', ${Math.floor(Date.now()/1000)})
+    INSERT INTO "notification_template" ("title", "content", "status", "type", "legacy_type", "mark", "add_time")
+    VALUES (${body.title ?? ""}, ${body.content ?? ""}, ${body.status ?? 1}, ${body.type ?? "wechat"}, ${legacyType}, '', ${Math.floor(Date.now()/1000)})
   `);
   return jsonOk(c, null, "创建成功");
 }

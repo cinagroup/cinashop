@@ -12,6 +12,7 @@ import {
   decimal,
   smallint,
   text,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const systemUserLevel = pgTable("system_user_level", {
@@ -36,3 +37,29 @@ export const systemUserLevel = pgTable("system_user_level", {
 });
 
 export type SystemUserLevel = typeof systemUserLevel.$inferSelect;
+
+/** 用户已取得的等级记录，对应 PHP eb_user_level。 */
+export const userLevel = pgTable(
+  "user_level",
+  {
+    id: serial("id").primaryKey(),
+    uid: integer("uid").default(0).notNull(),
+    levelId: integer("level_id").default(0).notNull(),
+    grade: integer("grade").default(0).notNull(),
+    validTime: integer("valid_time").default(0).notNull(),
+    isForever: smallint("is_forever").default(0).notNull(),
+    merId: integer("mer_id").default(0).notNull(),
+    status: smallint("status").default(0).notNull(),
+    mark: varchar("mark", { length: 255 }).default("").notNull(),
+    remind: smallint("remind").default(0).notNull(),
+    isDel: smallint("is_del").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+    discount: integer("discount").default(0).notNull(),
+  },
+  (t) => [
+    index("ul_uid_status_del").on(t.uid, t.status, t.isDel),
+    index("ul_uid_level").on(t.uid, t.levelId),
+  ],
+);
+
+export type UserLevel = typeof userLevel.$inferSelect;

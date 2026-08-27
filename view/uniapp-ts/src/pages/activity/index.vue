@@ -75,6 +75,14 @@
       </view>
       <view v-else class="empty">暂无拼团活动</view>
     </view>
+    <view v-if="active === 'lottery'" class="body">
+      <view class="lottery-entry" @tap="goLottery">
+        <text class="lottery-kicker">LUCKY DRAW</text>
+        <text class="lottery-title">幸运抽奖</text>
+        <text class="lottery-copy">积分、余额、支付、评价与邀请都能参与</text>
+        <view class="lottery-button">立即参与 ›</view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -92,6 +100,7 @@ const tabs = [
   { key: "seckill", name: "限时秒杀" },
   { key: "bargain", name: "砍价" },
   { key: "combination", name: "拼团" },
+  { key: "lottery", name: "抽奖" },
 ];
 const active = ref("seckill");
 const slots = ref<unknown[]>([]);
@@ -164,6 +173,10 @@ function goCombination(id: number) {
 
 function goMyBargain() {
   uni.navigateTo({ url: `/pages/activity/bargainDetail?mine=1` });
+}
+
+function goLottery() {
+  uni.navigateTo({ url: "/pages/activity/lottery" });
 }
 
 onMounted(() => {
@@ -301,4 +314,23 @@ onMounted(() => {
   margin-top: 20rpx;
   padding: 20rpx;
 }
+
+.lottery-entry {
+  min-height: 300rpx;
+  padding: 44rpx 36rpx;
+  border-radius: 24rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #6d2214, #ed5130 68%, #ffad56);
+  box-shadow: 0 16rpx 40rpx rgba(170, 58, 32, 0.22);
+  box-sizing: border-box;
+}
+
+.lottery-kicker, .lottery-title, .lottery-copy {
+  display: block;
+}
+
+.lottery-kicker { font-size: 20rpx; letter-spacing: 4rpx; opacity: 0.72; }
+.lottery-title { margin-top: 20rpx; font-size: 46rpx; font-weight: 800; }
+.lottery-copy { margin-top: 12rpx; font-size: 24rpx; opacity: 0.86; }
+.lottery-button { display: inline-block; margin-top: 34rpx; padding: 14rpx 24rpx; border: 1rpx solid rgba(255,255,255,.45); border-radius: 999rpx; background: rgba(255,255,255,.14); font-size: 24rpx; }
 </style>

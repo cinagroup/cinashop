@@ -1,8 +1,10 @@
 <template>
   <router-view />
+  <SmsChallengeDialog />
 </template>
 
 <script setup lang="ts">
+import SmsChallengeDialog from "@/components/auth/SmsChallengeDialog.vue";
 </script>
 
 <style>

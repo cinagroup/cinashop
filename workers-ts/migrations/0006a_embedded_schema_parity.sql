@@ -1,0 +1,277 @@
+-- Physical counterparts for legacy tables that previously existed only in
+-- MigrationService's Worker-embedded path. This file must sort before 0007+
+-- ALTER migrations so a fresh filesystem-driven migration is executable.
+
+CREATE TABLE IF NOT EXISTS "store_bargain_user" (
+  "id" SERIAL PRIMARY KEY,
+  "uid" INTEGER DEFAULT 0 NOT NULL,
+  "bargain_id" INTEGER DEFAULT 0 NOT NULL,
+  "bargain_price_min" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "bargain_price" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "price" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "user_brokerage" (
+  "id" SERIAL PRIMARY KEY,
+  "uid" INTEGER DEFAULT 0 NOT NULL,
+  "link_id" VARCHAR(32) DEFAULT '0' NOT NULL,
+  "pm" SMALLINT DEFAULT 0 NOT NULL,
+  "title" VARCHAR(64) DEFAULT '' NOT NULL,
+  "category" VARCHAR(64) DEFAULT '' NOT NULL,
+  "type" VARCHAR(64) DEFAULT '' NOT NULL,
+  "number" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "balance" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "mark" VARCHAR(512) DEFAULT '' NOT NULL,
+  "status" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "user_extract" (
+  "id" SERIAL PRIMARY KEY,
+  "uid" INTEGER DEFAULT 0 NOT NULL,
+  "extract_type" VARCHAR(32) DEFAULT '' NOT NULL,
+  "bank_name" VARCHAR(64) DEFAULT '' NOT NULL,
+  "bank_code" VARCHAR(64) DEFAULT '' NOT NULL,
+  "bank_address" VARCHAR(255) DEFAULT '' NOT NULL,
+  "real_name" VARCHAR(32) DEFAULT '' NOT NULL,
+  "extract_number" VARCHAR(64) DEFAULT '' NOT NULL,
+  "extract_price" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "status" SMALLINT DEFAULT 0 NOT NULL,
+  "fail_msg" VARCHAR(255) DEFAULT '' NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "store_product_words" (
+  "id" SERIAL PRIMARY KEY,
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "relation_id" INTEGER DEFAULT 0 NOT NULL,
+  "name" VARCHAR(128) DEFAULT '' NOT NULL,
+  "color" VARCHAR(32) DEFAULT '' NOT NULL,
+  "bg_color" VARCHAR(32) DEFAULT '' NOT NULL,
+  "border_color" VARCHAR(32) DEFAULT '' NOT NULL,
+  "icon" VARCHAR(128) DEFAULT '' NOT NULL,
+  "is_show" SMALLINT DEFAULT 0 NOT NULL,
+  "sort" SMALLINT DEFAULT 0 NOT NULL,
+  "is_search" SMALLINT DEFAULT 0 NOT NULL,
+  "is_hot" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "system_message" (
+  "id" SERIAL PRIMARY KEY,
+  "mark" VARCHAR(50) DEFAULT '' NOT NULL,
+  "title" VARCHAR(256) DEFAULT '' NOT NULL,
+  "content" TEXT,
+  "user_id" INTEGER DEFAULT 0 NOT NULL,
+  "look" SMALLINT DEFAULT 0 NOT NULL,
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "user_message" (
+  "id" SERIAL PRIMARY KEY,
+  "uid" INTEGER DEFAULT 0 NOT NULL,
+  "message_id" INTEGER DEFAULT 0 NOT NULL,
+  "is_read" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "community" (
+  "id" SERIAL PRIMARY KEY,
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "relation_id" INTEGER DEFAULT 0 NOT NULL,
+  "content_type" SMALLINT DEFAULT 1 NOT NULL,
+  "title" VARCHAR(255) DEFAULT '' NOT NULL,
+  "image" VARCHAR(255) DEFAULT '' NOT NULL,
+  "video_url" VARCHAR(255) DEFAULT '' NOT NULL,
+  "slider_image" TEXT,
+  "content" TEXT,
+  "topic_id" TEXT,
+  "product_id" TEXT,
+  "like_num" INTEGER DEFAULT 0 NOT NULL,
+  "collect_num" INTEGER DEFAULT 0 NOT NULL,
+  "play_num" INTEGER DEFAULT 0 NOT NULL,
+  "comment_num" INTEGER DEFAULT 0 NOT NULL,
+  "share_num" INTEGER DEFAULT 0 NOT NULL,
+  "star" SMALLINT DEFAULT 1 NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "is_recommend" SMALLINT DEFAULT 0 NOT NULL,
+  "is_verify" SMALLINT DEFAULT 1 NOT NULL,
+  "refusal" VARCHAR(255) DEFAULT '' NOT NULL,
+  "sort" SMALLINT DEFAULT 0 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL,
+  "verify_time" INTEGER DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "community_comment" (
+  "id" SERIAL PRIMARY KEY,
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "uid" INTEGER DEFAULT 0 NOT NULL,
+  "reply_id" INTEGER DEFAULT 0 NOT NULL,
+  "reply_uid" INTEGER DEFAULT 0 NOT NULL,
+  "comment_reply_id" INTEGER DEFAULT 0 NOT NULL,
+  "comment_reply_uid" INTEGER DEFAULT 0 NOT NULL,
+  "community_id" INTEGER DEFAULT 0 NOT NULL,
+  "nickname" VARCHAR(64) DEFAULT '' NOT NULL,
+  "avatar" VARCHAR(255) DEFAULT '' NOT NULL,
+  "comment_num" INTEGER DEFAULT 0 NOT NULL,
+  "like_num" INTEGER DEFAULT 0 NOT NULL,
+  "content" VARCHAR(1000) DEFAULT '' NOT NULL,
+  "ip" VARCHAR(32) DEFAULT '' NOT NULL,
+  "city" VARCHAR(255) DEFAULT '' NOT NULL,
+  "is_verify" SMALLINT DEFAULT 1 NOT NULL,
+  "is_show" SMALLINT DEFAULT 1 NOT NULL,
+  "is_reply" SMALLINT DEFAULT 0 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL,
+  "update_time" INTEGER DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "store_product_reply" (
+  "id" SERIAL PRIMARY KEY,
+  "product_id" INTEGER DEFAULT 0 NOT NULL,
+  "oid" INTEGER DEFAULT 0 NOT NULL,
+  "unique" VARCHAR(50) DEFAULT '' NOT NULL,
+  "uid" INTEGER DEFAULT 0 NOT NULL,
+  "nickname" VARCHAR(128) DEFAULT '' NOT NULL,
+  "avatar" VARCHAR(256) DEFAULT '' NOT NULL,
+  "comment" VARCHAR(1024) DEFAULT '' NOT NULL,
+  "sku" VARCHAR(255) DEFAULT '' NOT NULL,
+  "product_score" SMALLINT DEFAULT 5 NOT NULL,
+  "service_score" SMALLINT DEFAULT 5 NOT NULL,
+  "logistics_score" SMALLINT DEFAULT 5 NOT NULL,
+  "pics" TEXT DEFAULT '[]',
+  "is_reply" SMALLINT DEFAULT 0 NOT NULL,
+  "merchant_reply" VARCHAR(500) DEFAULT '' NOT NULL,
+  "merchant_reply_time" INTEGER DEFAULT 0 NOT NULL,
+  "praise" INTEGER DEFAULT 0 NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "top" SMALLINT DEFAULT 0 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "spr_product_id" ON "store_product_reply" ("product_id");
+CREATE INDEX IF NOT EXISTS "spr_uid" ON "store_product_reply" ("uid");
+CREATE INDEX IF NOT EXISTS "spr_unique" ON "store_product_reply" ("unique");
+
+CREATE TABLE IF NOT EXISTS "store_product_reply_comment" (
+  "id" SERIAL PRIMARY KEY,
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "relation_id" INTEGER DEFAULT 0 NOT NULL,
+  "reply_id" INTEGER DEFAULT 0 NOT NULL,
+  "pid" INTEGER DEFAULT 0 NOT NULL,
+  "uid" INTEGER DEFAULT 0 NOT NULL,
+  "nickname" VARCHAR(128) DEFAULT '' NOT NULL,
+  "avatar" VARCHAR(256) DEFAULT '' NOT NULL,
+  "content" VARCHAR(1000) DEFAULT '' NOT NULL,
+  "praise" INTEGER DEFAULT 0 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL,
+  "update_time" INTEGER DEFAULT 0 NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "sprc_reply_id" ON "store_product_reply_comment" ("reply_id");
+
+CREATE TABLE IF NOT EXISTS "shipping_templates" (
+  "id" SERIAL PRIMARY KEY,
+  "owner_type" SMALLINT DEFAULT 0 NOT NULL,
+  "relation_id" INTEGER DEFAULT 0 NOT NULL,
+  "name" VARCHAR(255) DEFAULT '' NOT NULL,
+  "type" SMALLINT DEFAULT 1 NOT NULL,
+  "appoint" SMALLINT DEFAULT 0 NOT NULL,
+  "no_delivery" SMALLINT DEFAULT 0 NOT NULL,
+  "sort" INTEGER DEFAULT 0 NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "shipping_templates_region" (
+  "id" SERIAL PRIMARY KEY,
+  "template_id" INTEGER DEFAULT 0 NOT NULL,
+  "region_id" INTEGER DEFAULT 0 NOT NULL,
+  "region_name" VARCHAR(255) DEFAULT '' NOT NULL,
+  "first" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "first_price" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "continue" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "continue_price" NUMERIC(12,2) DEFAULT '0.00' NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "str_template" ON "shipping_templates_region" ("template_id");
+
+CREATE TABLE IF NOT EXISTS "express_company" (
+  "id" SERIAL PRIMARY KEY,
+  "code" VARCHAR(32) DEFAULT '' NOT NULL,
+  "name" VARCHAR(64) DEFAULT '' NOT NULL,
+  "is_show" SMALLINT DEFAULT 1 NOT NULL,
+  "sort" INTEGER DEFAULT 0 NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "user_label" (
+  "id" SERIAL PRIMARY KEY,
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "relation_id" INTEGER DEFAULT 0 NOT NULL,
+  "label_cate" INTEGER DEFAULT 0 NOT NULL,
+  "name" VARCHAR(255) DEFAULT '' NOT NULL,
+  "tag_id" VARCHAR(64) DEFAULT '' NOT NULL,
+  "color" VARCHAR(32) DEFAULT '' NOT NULL,
+  "sort" INTEGER DEFAULT 0 NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "system_dise" (
+  "id" SERIAL PRIMARY KEY,
+  "name" VARCHAR(128) DEFAULT '' NOT NULL,
+  "title" VARCHAR(255) DEFAULT '' NOT NULL,
+  "content" TEXT DEFAULT '',
+  "value" TEXT DEFAULT '',
+  "type" SMALLINT DEFAULT 0 NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "system_article" (
+  "id" SERIAL PRIMARY KEY,
+  "cid" INTEGER DEFAULT 0 NOT NULL,
+  "title" VARCHAR(255) DEFAULT '' NOT NULL,
+  "author" VARCHAR(64) DEFAULT '' NOT NULL,
+  "content" TEXT DEFAULT '',
+  "synopsis" VARCHAR(500) DEFAULT '' NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "is_del" SMALLINT DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "system_log" (
+  "id" SERIAL PRIMARY KEY,
+  "store_id" INTEGER DEFAULT 0 NOT NULL,
+  "admin_id" INTEGER DEFAULT 0 NOT NULL,
+  "admin_name" VARCHAR(64) DEFAULT '' NOT NULL,
+  "path" VARCHAR(128) DEFAULT '' NOT NULL,
+  "page" VARCHAR(64) DEFAULT '' NOT NULL,
+  "method" VARCHAR(12) DEFAULT '' NOT NULL,
+  "action" VARCHAR(255) DEFAULT '' NOT NULL,
+  "ip" VARCHAR(45) DEFAULT '' NOT NULL,
+  "type" VARCHAR(32) DEFAULT '' NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL,
+  "merchant_id" INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "notification_template" (
+  "id" SERIAL PRIMARY KEY,
+  "title" VARCHAR(128) DEFAULT '' NOT NULL,
+  "content" TEXT DEFAULT '',
+  "type" VARCHAR(32) DEFAULT 'wechat' NOT NULL,
+  "mark" VARCHAR(128) DEFAULT '' NOT NULL,
+  "status" SMALLINT DEFAULT 1 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL
+);

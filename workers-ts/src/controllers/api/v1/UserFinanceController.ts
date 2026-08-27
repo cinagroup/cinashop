@@ -13,6 +13,7 @@ import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
+import { CapitalFlowService } from "@/services/finance/CapitalFlowService";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -77,6 +78,11 @@ export async function extractCash(c: C) {
     extract_number?: string;
     extract_price?: string;
     bank_name?: string;
+    bank_code?: string;
+    bank_address?: string;
+    alipay_code?: string;
+    wechat?: string;
+    qrcode_url?: string;
   };
   const svc = new UserFinanceService(c.get("container"));
   try {
@@ -86,6 +92,11 @@ export async function extractCash(c: C) {
       extractNumber: body.extract_number ?? "",
       extractPrice: body.extract_price ?? "0",
       bankName: body.bank_name,
+      bankCode: body.bank_code,
+      bankAddress: body.bank_address,
+      alipayCode: body.alipay_code,
+      wechat: body.wechat,
+      qrcodeUrl: body.qrcode_url,
     });
     return jsonOk(c, result, "提现申请已提交");
   } catch (e) {
@@ -201,4 +212,22 @@ export async function balanceLogs(c: C) {
     limit,
   });
   return jsonOk(c, list);
+}
+
+/** GET /api/user/money_list/9 — external cash purchase/membership records. */
+export async function capitalLogs(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const q = c.req.query();
+  const service = new CapitalFlowService(c.get("container"));
+  return jsonOk(
+    c,
+    await service.listForUser(
+      uid,
+      Number(q.start ?? 0),
+      Number(q.stop ?? 0),
+      Number(q.page ?? 1),
+      Number(q.limit ?? 10),
+    ),
+  );
 }

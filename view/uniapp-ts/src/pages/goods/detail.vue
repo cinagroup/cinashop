@@ -33,6 +33,22 @@
         </view>
       </view>
 
+      <view v-if="discountPackages.length" class="package-section">
+        <view class="package-heading">搭配购</view>
+        <view
+          v-for="item in discountPackages"
+          :key="item.id"
+          class="package-card"
+          @tap="openPackage(item)"
+        >
+          <view>
+            <view class="package-name">{{ item.title }}</view>
+            <view class="package-meta">{{ item.type === 0 ? "固定套餐" : "任选套餐" }} · {{ item.products.length }}件可选</view>
+          </view>
+          <view class="package-price">¥{{ item.min_price }} 起 ›</view>
+        </view>
+      </view>
+
       <!-- 商品评价 -->
       <view class="reply-section">
         <view class="reply-head">
@@ -123,6 +139,48 @@
           </view>
         </view>
       </view>
+
+      <view v-if="packageVisible" class="mask" @tap="packageVisible = false">
+        <view class="sheet package-sheet" @tap.stop>
+          <view class="package-sheet-title">{{ selectedPackage?.title }}</view>
+          <scroll-view scroll-y class="package-scroll">
+            <view
+              v-for="entry in selectedPackage?.products || []"
+              :key="entry.id"
+              class="package-product"
+            >
+              <view class="package-select" @tap="togglePackageProduct(entry)">
+                <text :class="{ active: packageChoices[entry.id]?.selected }">
+                  {{ packageChoices[entry.id]?.selected ? "✓" : "○" }}
+                </text>
+                <text>{{ isRequiredPackageEntry(entry) ? "必选" : "可选" }}</text>
+              </view>
+              <image class="package-image" :src="entry.image || placeholder" mode="aspectFill" />
+              <view class="package-product-info">
+                <view class="package-product-name">{{ entry.title }}</view>
+                <view class="package-skus">
+                  <view
+                    v-for="sku in entry.productValue.filter((item) => item.stock > 0)"
+                    :key="sku.unique"
+                    class="package-sku"
+                    :class="{ active: packageChoices[entry.id]?.unique === sku.unique }"
+                    @tap="pickPackageSku(entry.id, sku.unique)"
+                  >
+                    {{ sku.suk }} ¥{{ sku.price }}
+                  </view>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+          <view class="package-total">
+            <text>已选 {{ selectedPackageCount }} 件</text>
+            <text>套餐价 ¥{{ selectedPackageTotal }}</text>
+          </view>
+          <view class="sheet-btn" :class="{ disabled: packageBuying }" @tap="buyPackage">
+            {{ packageBuying ? "处理中..." : "立即结算套餐" }}
+          </view>
+        </view>
+      </view>
     </view>
     <view v-else class="empty">商品不存在或已下架</view>
   </view>
@@ -132,10 +190,15 @@
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { apiGoodsDetail } from "@/api/product";
-import { apiCartAdd } from "@/api/order";
+import {
+  apiCartAdd,
+  apiDiscountCartAdd,
+  apiDiscountPackages,
+} from "@/api/order";
 import { apiReplyConfig, apiReplyList } from "@/api/order";
 import { useAuthStore } from "@/stores/auth";
 import type { GoodsDetail } from "@/types/product";
+import type { DiscountPackage, DiscountPackageProduct } from "@/types/order";
 
 interface SkuItem {
   id: number;
@@ -151,6 +214,24 @@ const detail = ref<GoodsDetail | null>(null);
 const authStore = useAuthStore();
 const replies = ref<unknown[]>([]);
 const replyStats = ref({ total: 0, avgScore: "0.0", goodRate: 100 });
+const discountPackages = ref<DiscountPackage[]>([]);
+const selectedPackage = ref<DiscountPackage | null>(null);
+const packageVisible = ref(false);
+const packageBuying = ref(false);
+const packageChoices = ref<Record<number, { selected: boolean; unique: string }>>({});
+const selectedPackageCount = computed(() =>
+  Object.values(packageChoices.value).filter((choice) => choice.selected).length,
+);
+const selectedPackageTotal = computed(() => {
+  if (!selectedPackage.value) return "0.00";
+  const cents = selectedPackage.value.products.reduce((sum, entry) => {
+    const choice = packageChoices.value[entry.id];
+    if (!choice?.selected) return sum;
+    const price = entry.productValue.find((sku) => sku.unique === choice.unique)?.price ?? "0";
+    return sum + Math.round(Number(price) * 100);
+  }, 0);
+  return (cents / 100).toFixed(2);
+});
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 // ─── SKU 弹窗状态 ───
@@ -199,6 +280,63 @@ async function confirmSku() {
   }
 }
 
+function isRequiredPackageEntry(entry: DiscountPackageProduct): boolean {
+  return selectedPackage.value?.type === 0 || entry.type === 1;
+}
+
+function openPackage(item: DiscountPackage) {
+  if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
+  selectedPackage.value = item;
+  packageChoices.value = Object.fromEntries(item.products.map((entry) => [
+    entry.id,
+    {
+      selected: item.type === 0 || entry.type === 1,
+      unique: entry.productValue.find((sku) => sku.stock > 0)?.unique ?? "",
+    },
+  ]));
+  packageVisible.value = true;
+}
+
+function togglePackageProduct(entry: DiscountPackageProduct) {
+  if (isRequiredPackageEntry(entry)) return;
+  const choice = packageChoices.value[entry.id];
+  if (choice) choice.selected = !choice.selected;
+}
+
+function pickPackageSku(entryId: number, unique: string) {
+  const choice = packageChoices.value[entryId];
+  if (choice) choice.unique = unique;
+}
+
+async function buyPackage() {
+  const item = selectedPackage.value;
+  if (!item || packageBuying.value) return;
+  const selected = item.products.filter((entry) => packageChoices.value[entry.id]?.selected);
+  if (selected.length < 2) return uni.showToast({ title: "套餐至少选择两件商品", icon: "none" });
+  if (selected.some((entry) => !packageChoices.value[entry.id]?.unique)) {
+    return uni.showToast({ title: "请选择全部已选商品的规格", icon: "none" });
+  }
+  packageBuying.value = true;
+  try {
+    const result = await apiDiscountCartAdd({
+      discountId: item.id,
+      discountInfos: selected.map((entry) => ({
+        id: entry.id,
+        product_id: entry.product_id,
+        unique: packageChoices.value[entry.id].unique,
+      })),
+    });
+    packageVisible.value = false;
+    uni.navigateTo({
+      url: `/pages/order/confirm?mode=buy&cartIds=${result.cartIds.join(",")}&type=5`,
+    });
+  } catch (error) {
+    uni.showToast({ title: error instanceof Error ? error.message : "套餐加入结算失败", icon: "none" });
+  } finally {
+    packageBuying.value = false;
+  }
+}
+
 function formatTime(ts: number): string {
   if (!ts) return "";
   const d = new Date(ts * 1000);
@@ -237,7 +375,12 @@ onLoad(async (options) => {
   const id = Number(options?.id);
   if (!id) return;
   try {
-    detail.value = await apiGoodsDetail(id);
+    const [goods, packages] = await Promise.all([
+      apiGoodsDetail(id),
+      apiDiscountPackages(id).catch(() => []),
+    ]);
+    detail.value = goods;
+    discountPackages.value = packages;
     loadReplies(id);
     // 初始化 SKU 列表: 优先 attr_value, 兜底单规格
     const attrValue = (detail.value as any).attr_value as SkuItem[] | undefined;
@@ -322,6 +465,125 @@ onLoad(async (options) => {
   background: #fff;
   padding: 24rpx;
   margin-top: 20rpx;
+}
+
+.package-section {
+  background: #fff;
+  padding: 24rpx;
+  margin-top: 20rpx;
+}
+
+.package-heading,
+.package-sheet-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.package-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 2rpx solid #ffd8d5;
+  background: #fff8f7;
+  border-radius: 12rpx;
+  padding: 18rpx;
+  margin-top: 12rpx;
+}
+
+.package-name {
+  font-size: 27rpx;
+  font-weight: 600;
+}
+
+.package-meta {
+  color: #999;
+  font-size: 22rpx;
+  margin-top: 6rpx;
+}
+
+.package-price {
+  color: #e93323;
+  font-size: 25rpx;
+}
+
+.package-sheet {
+  max-height: 78vh;
+}
+
+.package-scroll {
+  max-height: 760rpx;
+}
+
+.package-product {
+  display: flex;
+  gap: 16rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f2f2f2;
+}
+
+.package-select {
+  width: 76rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #999;
+  font-size: 22rpx;
+}
+
+.package-select .active {
+  color: #e93323;
+  font-size: 30rpx;
+}
+
+.package-image {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 10rpx;
+  flex-shrink: 0;
+}
+
+.package-product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.package-product-name {
+  font-size: 26rpx;
+  margin-bottom: 12rpx;
+}
+
+.package-skus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.package-sku {
+  border: 2rpx solid #eee;
+  border-radius: 8rpx;
+  padding: 8rpx 12rpx;
+  color: #666;
+  font-size: 22rpx;
+}
+
+.package-sku.active {
+  border-color: #e93323;
+  color: #e93323;
+  background: #fff5f4;
+}
+
+.package-total {
+  display: flex;
+  justify-content: space-between;
+  color: #e93323;
+  font-size: 28rpx;
+  padding-top: 20rpx;
+}
+
+.sheet-btn.disabled {
+  opacity: 0.6;
 }
 
 .spec-entry {

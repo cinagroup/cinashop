@@ -3,12 +3,12 @@
     <view v-if="order" class="body">
       <!-- 订单商品 -->
       <view class="goods-card">
-        <view v-for="item in orderItems" :key="(item as any).id" class="goods-line">
+        <view v-for="item in orderItems" :key="item.id" class="goods-line">
           <view class="goods-info">
-            <view class="goods-name">{{ (item as any).name }}</view>
-            <view class="goods-sku">{{ (item as any).sku || "" }}</view>
+            <view class="goods-name">{{ item.name }}</view>
+            <view class="goods-sku">{{ item.sku }}</view>
           </view>
-          <view class="goods-price">¥{{ (item as any).price }}</view>
+          <view class="goods-price">¥{{ item.price }}</view>
         </view>
       </view>
 
@@ -40,9 +40,11 @@
           v-model="form.comment"
           class="comment-textarea"
           placeholder="分享你的购物体验, 帮助更多买家..."
-          :maxlength="500"
+          :maxlength="512"
         />
-        <view class="submit-btn" @tap="submit">提交评价</view>
+        <view class="submit-btn" :class="{ disabled: submitting }" @tap="submit">
+          {{ submitting ? "提交中..." : "提交评价" }}
+        </view>
       </view>
     </view>
     <view v-else class="empty">订单不存在</view>
@@ -56,6 +58,7 @@ import { apiOrderDetail, apiReplySubmit } from "@/api/order";
 import type { OrderInfo } from "@/types/order";
 
 const order = ref<OrderInfo | null>(null);
+const submitting = ref(false);
 const form = ref({
   productScore: 5,
   serviceScore: 5,
@@ -63,40 +66,57 @@ const form = ref({
   comment: "",
 });
 
-const orderItems = computed(() => {
-  const ci = (order.value as any)?.cart_info;
-  if (!Array.isArray(ci)) return [];
-  // cart_info 字段是 JSON 字符串, 解析出商品名/价格/规格
-  return ci.map((item: any) => {
-    let info: any = {};
-    try {
-      info = JSON.parse(item.cart_info || "{}");
-    } catch {
-      // ignore
-    }
-    const product = info.product || info;
+interface ReplyOrderItem {
+  id: number;
+  unique: string;
+  name: string;
+  price: string;
+  sku: string;
+}
+
+function parseSnapshot(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object") return value as Record<string, unknown>;
+  if (typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+const orderItems = computed<ReplyOrderItem[]>(() => {
+  const rows = order.value?.cart_info ?? [];
+  return rows.map((item) => {
+    const snapshot = parseSnapshot(item.cart_info);
+    const product = parseSnapshot(snapshot.product ?? snapshot.productInfo ?? snapshot);
+    const sku = parseSnapshot(snapshot.sku ?? product.attrInfo);
     return {
       id: item.id,
       unique: item.unique,
-      name: product.storeName || product.store_name || "商品",
-      price: product.price || "0",
-      sku: product.attrInfo?.suk || "",
+      name: String(product.storeName ?? product.store_name ?? "商品"),
+      price: String(sku.price ?? product.price ?? "0"),
+      sku: String(sku.suk ?? ""),
     };
   });
 });
 
 async function submit() {
-  if (!order.value) return;
+  if (!order.value || submitting.value) return;
+  if (order.value.status !== 2) {
+    return uni.showToast({ title: "当前订单不能评价", icon: "none" });
+  }
   if (!form.value.comment.trim()) {
     return uni.showToast({ title: "请填写评价内容", icon: "none" });
   }
   const items = orderItems.value;
   if (!items.length) return uni.showToast({ title: "订单商品不存在", icon: "none" });
 
+  submitting.value = true;
   try {
     // 逐商品提交评价 (unique 从 cart_info 取)
     for (const item of items) {
-      const unique = (item as any).unique || "";
+      const unique = item.unique;
       if (!unique) continue;
       await apiReplySubmit({
         unique,
@@ -110,6 +130,8 @@ async function submit() {
     setTimeout(() => uni.navigateBack(), 1200);
   } catch (e) {
     uni.showToast({ title: (e as Error).message || "评价失败", icon: "none" });
+  } finally {
+    submitting.value = false;
   }
 }
 
@@ -217,6 +239,11 @@ onLoad(async (query) => {
   padding: 22rpx 0;
   font-size: 30rpx;
   margin-top: 20rpx;
+}
+
+.submit-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .empty {

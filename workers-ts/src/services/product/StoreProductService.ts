@@ -9,6 +9,8 @@ import type { Env } from "@/env";
 import { cacheGet, cacheSet } from "@/utils/cache";
 import { NotFoundException } from "@/utils/errors";
 import { UserLevelService } from "@/services/user/UserLevelService";
+import { ProductExperienceService } from "@/services/product/ProductExperienceService";
+import { UserBehaviorService } from "@/services/user/UserBehaviorService";
 
 /** 默认分页大小 (对应 PHP database.page.defaultLimit) */
 const DEFAULT_LIMIT = 10;
@@ -87,13 +89,26 @@ export class StoreProductService {
     if (params.salesOrder) where.salesOrder = params.salesOrder;
     if (params.defaultOrder !== undefined) where.defaultOrder = params.defaultOrder;
 
-    // ids 处理
+    // Explicit product scopes participate in the cached keyword query instead
+    // of replacing its result afterwards.
     if (params.ids) {
       const ids = String(params.ids)
         .split(",")
         .map(Number)
         .filter((n) => n > 0);
       if (ids.length) where.ids = ids;
+    }
+
+    // PHP UserSearchServices::vicSearch caches the complete matching id set for
+    // two hours, then stores/updates the user's search history before paging.
+    const searchKeyword = params.store_name?.trim();
+    if (searchKeyword) {
+      const searchIds = await new UserBehaviorService(this.container)
+        .resolveProductSearch(_uid, searchKeyword, where);
+      if (searchIds.length > 0) {
+        where.ids = searchIds;
+        delete where.store_name;
+      }
     }
 
     // 2. 分页
@@ -244,7 +259,9 @@ export class StoreProductService {
     const cacheKey = `product_info_${id}`;
     const cached = await cacheGet<Record<string, unknown>>(cacheKey, this.env);
     if (cached) {
-      return { ...cached, userCollect: false, userLike: 0 };
+      const ensure = await new ProductExperienceService(this.container)
+        .productEnsures(id, cached.ensureId);
+      return { ...cached, ensure, userCollect: false, userLike: 0 };
     }
 
     // 2. 查商品
@@ -314,11 +331,17 @@ export class StoreProductService {
       sales: s.sales,
     }));
 
+    // Product assurance definitions are a separate catalog. Resolve both the
+    // legacy ensure_id CSV and type=5 relation rows, filtering disabled entries.
+    detail.ensure = await new ProductExperienceService(this.container)
+      .productEnsures(id, product.ensureId);
+
     // 7. 回填缓存 (注意: 缓存不含 userCollect 等用户态字段)
     const cacheable = { ...detail };
     delete cacheable.userCollect;
     delete cacheable.userLike;
     delete cacheable.uid;
+    delete cacheable.ensure;
     await cacheSet(cacheKey, cacheable, this.env, 600);
     return detail;
   }

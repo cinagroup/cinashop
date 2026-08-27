@@ -19,6 +19,10 @@
         <span class="icon">📍</span>
         <span>收货地址</span>
       </router-link>
+      <router-link to="/user/phone" class="menu-item">
+        <span class="icon">📱</span>
+        <span>手机号管理</span>
+      </router-link>
       <router-link to="/user/collect" class="menu-item">
         <span class="icon">⭐</span>
         <span>我的收藏</span>

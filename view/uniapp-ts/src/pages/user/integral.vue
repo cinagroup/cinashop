@@ -10,41 +10,102 @@
 
     <!-- 积分商品 -->
     <view v-if="list.length" class="goods-grid">
-      <view v-for="g in list" :key="(g as any).id" class="goods-card">
+      <view v-for="g in list" :key="g.id" class="goods-card">
         <image
           class="goods-image"
-          :src="(g as any).image || placeholder"
+          :src="g.image || placeholder"
           mode="aspectFill"
         />
         <view class="goods-info">
-          <view class="goods-name">{{ (g as any).storeName }}</view>
+          <view class="goods-name">{{ g.storeName }}</view>
           <view class="goods-bottom">
             <view class="integral-price">
-              <text class="int-val">{{ (g as any).integral }}</text>
+              <text class="int-val">{{ g.integral }}</text>
               <text class="int-unit">积分</text>
-              <text v-if="Number((g as any).price) > 0" class="cash-price">+¥{{ (g as any).price }}</text>
+              <text v-if="Number(g.price) > 0" class="cash-price">+¥{{ g.price }}</text>
             </view>
             <view class="exchange-btn" @tap="exchange(g)">兑换</view>
           </view>
-          <view class="goods-stock" v-if="Number((g as any).stock) <= 0">已兑完</view>
+          <view class="goods-stock" v-if="Number(g.stock) <= 0">已兑完</view>
         </view>
       </view>
     </view>
     <view v-else class="empty">暂无积分商品</view>
+
+    <view v-if="skuVisible" class="mask" @tap="closeSku()">
+      <view class="sku-sheet" @tap.stop>
+        <view class="sku-title">{{ pendingDetail?.storeInfo.storeName }}</view>
+        <view class="sku-options">
+          <view
+            v-for="sku in pendingDetail?.skus ?? []"
+            :key="sku.id"
+            class="sku-option"
+            :class="{ active: selectedSku?.id === sku.id, disabled: sku.stock <= 0 }"
+            @tap="sku.stock > 0 && (selectedSku = sku)"
+          >
+            <text>{{ sku.suk || "默认规格" }}</text>
+            <text>{{ sku.integral }}积分 + ¥{{ sku.price }}</text>
+          </view>
+        </view>
+        <view class="quantity-row">
+          <text>兑换数量</text>
+          <view class="quantity-stepper">
+            <button size="mini" @tap="quantity = Math.max(1, quantity - 1)">−</button>
+            <text>{{ quantity }}</text>
+            <button size="mini" @tap="increaseQuantity">＋</button>
+          </view>
+        </view>
+        <view class="sku-actions">
+          <button @tap="closeSku()">取消</button>
+          <button class="confirm-button" :loading="submitting" @tap="confirmExchange">去结算</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
+import { apiCartAdd } from "@/api/order";
 
-const list = ref<unknown[]>([]);
+interface IntegralItem {
+  id: number;
+  image: string;
+  storeName: string;
+  integral: number;
+  price: string;
+  stock: number;
+  systemFormId: number;
+}
+
+interface IntegralSku {
+  id: number;
+  unique: string;
+  suk: string;
+  image: string;
+  price: string;
+  integral: number;
+  stock: number;
+}
+
+interface IntegralDetail {
+  storeInfo: IntegralItem & { productId: number; onceNum: number };
+  skus: IntegralSku[];
+}
+
+const list = ref<IntegralItem[]>([]);
 const points = ref("0");
+const skuVisible = ref(false);
+const pendingDetail = ref<IntegralDetail | null>(null);
+const selectedSku = ref<IntegralSku | null>(null);
+const quantity = ref(1);
+const submitting = ref(false);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 async function load() {
   try {
-    list.value = await http.get<unknown[]>("/store_integral/list", { page: 1, limit: 20 });
+    list.value = await http.get<IntegralItem[]>("/store_integral/list", { page: 1, limit: 20 });
   } catch {
     list.value = [];
   }
@@ -56,14 +117,63 @@ async function load() {
   }
 }
 
-async function exchange(item: unknown) {
+async function exchange(item: IntegralItem) {
+  if (submitting.value || item.stock <= 0) return;
+  submitting.value = true;
   try {
-    const res = await http.post<{ orderId: string }>(`/store_integral/exchange/${(item as any).id}`, { num: 1 });
-    uni.showToast({ title: `兑换成功 ${res.orderId}`, icon: "none" });
-    load();
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || "兑换失败", icon: "none" });
+    const detail = await http.get<IntegralDetail>(`/store_integral/detail/${item.id}`);
+    const first = detail.skus.find((sku) => sku.stock > 0) ?? null;
+    if (!first) throw new Error("积分商品规格已兑完");
+    pendingDetail.value = detail;
+    selectedSku.value = first;
+    quantity.value = 1;
+    skuVisible.value = true;
+  } catch (error) {
+    uni.showToast({ title: error instanceof Error ? error.message : "积分商品加载失败", icon: "none" });
+  } finally {
+    submitting.value = false;
   }
+}
+
+async function confirmExchange() {
+  if (submitting.value || !pendingDetail.value || !selectedSku.value) return;
+  submitting.value = true;
+  try {
+    const detail = pendingDetail.value;
+    const cart = await apiCartAdd({
+      productId: detail.storeInfo.productId,
+      unique: selectedSku.value.unique,
+      cartNum: quantity.value,
+      type: 4,
+      activityId: detail.storeInfo.id,
+    });
+    closeSku(true);
+    uni.navigateTo({
+      url: `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=4`,
+    });
+  } catch (error) {
+    uni.showToast({ title: error instanceof Error ? error.message : "加入结算失败", icon: "none" });
+  } finally {
+    submitting.value = false;
+  }
+}
+
+function increaseQuantity() {
+  const limit = Math.min(
+    selectedSku.value?.stock ?? 1,
+    pendingDetail.value?.storeInfo.onceNum && pendingDetail.value.storeInfo.onceNum > 0
+      ? pendingDetail.value.storeInfo.onceNum
+      : Number.MAX_SAFE_INTEGER,
+  );
+  quantity.value = Math.min(quantity.value + 1, limit);
+}
+
+function closeSku(force = false) {
+  if (submitting.value && force !== true) return;
+  skuVisible.value = false;
+  pendingDetail.value = null;
+  selectedSku.value = null;
+  quantity.value = 1;
 }
 
 function goSign() {
@@ -209,4 +319,17 @@ onMounted(load);
   color: #666;
   margin-bottom: 20rpx;
 }
+
+.mask { position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.5); display: flex; align-items: flex-end; }
+.sku-sheet { width: 100%; max-height: 80vh; padding: 28rpx 20rpx; box-sizing: border-box; background: #f5f5f5; border-radius: 24rpx 24rpx 0 0; }
+.sku-title { font-size: 30rpx; font-weight: 600; margin-bottom: 20rpx; }
+.sku-options { display: flex; flex-wrap: wrap; gap: 14rpx; max-height: 42vh; overflow-y: auto; }
+.sku-option { display: flex; flex-direction: column; gap: 6rpx; min-width: 200rpx; padding: 16rpx; background: #fff; border: 2rpx solid #eee; border-radius: 12rpx; font-size: 24rpx; }
+.sku-option.active { color: #f76b1c; border-color: #f76b1c; }
+.sku-option.disabled { opacity: 0.45; }
+.quantity-row { display: flex; align-items: center; justify-content: space-between; margin-top: 24rpx; }
+.quantity-stepper { display: flex; align-items: center; gap: 20rpx; }
+.quantity-stepper button { margin: 0; }
+.sku-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; padding-top: 24rpx; }
+.confirm-button { background: #f76b1c; color: #fff; }
 </style>

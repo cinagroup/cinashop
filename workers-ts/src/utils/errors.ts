@@ -9,6 +9,7 @@ export const ApiErrorCode = {
   ERR_EXPIRED: 410001, // 登录已过期
   ERR_BANNED: 410002, // 已被禁止登录
   ERR_SAVE_TOKEN: 400001, // token 保存失败
+  ERR_AUTH: 400011, // 暂无权限访问
 } as const;
 
 /**
@@ -47,5 +48,18 @@ export class NotFoundException extends ApiException {
   constructor(message = "数据不存在") {
     super(message, 404);
     this.name = "NotFoundException";
+  }
+}
+
+/** Strongly-consistent edge rate limit; unlike ordinary compatibility errors
+ * this is also surfaced as an HTTP 429 so third-party clients can back off. */
+export class RateLimitException extends ApiException {
+  constructor(
+    message = "请求过于频繁，请稍后重试",
+    public readonly retryAfterSeconds = 60,
+    public readonly recordAudit = true,
+  ) {
+    super(message, 429);
+    this.name = "RateLimitException";
   }
 }

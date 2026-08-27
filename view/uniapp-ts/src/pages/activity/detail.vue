@@ -19,13 +19,16 @@
             <view class="pink-people">{{ p.people }} / {{ (info as any).people }} 人</view>
             <view class="progress"><view class="progress-bar" :style="{ width: Math.min(100, (p.people / (info as any).people) * 100) + '%' }" /></view>
           </view>
-          <text class="pink-status" v-if="p.status === 1">拼团中</text>
+          <view v-if="p.status === 1" class="pink-actions">
+            <text class="pink-status">拼团中</text>
+            <text class="pink-join" @tap="join(Number(p.id))">参加该团</text>
+          </view>
           <text class="pink-status done" v-else>已完成</text>
         </view>
         <view v-else class="empty">暂无进行中的拼团</view>
       </view>
 
-      <view class="join-btn" @tap="join">立即参团</view>
+      <view class="join-btn" @tap="join()">立即开团</view>
     </view>
     <view v-else class="empty">拼团活动不存在或已结束</view>
   </view>
@@ -46,37 +49,24 @@ async function load(id: number) {
   }
 }
 
-async function join() {
+async function join(pinkId = 0) {
   try {
     const combo = info.value?.combination;
     if (!combo) return;
-    // 简化: 创建普通订单后开团 (同 PC 端流程)
-    const addrs = await http.get<any[]>("/address/list").catch(() => [] as any[]);
-    const addr = addrs.find((a) => a.is_default === 1) ?? addrs[0];
-    if (!addr) {
-      uni.showToast({ title: "请先添加收货地址", icon: "none" });
-      uni.navigateTo({ url: "/pages/user/address" });
-      return;
-    }
-    const cart = await http.post<any>("/cart/add", { productId: combo.productId, unique: "sku00001", cartNum: 1, type: 2 });
-    const key = `pink-${Date.now()}`;
-    const order = await http.post<any>(`/order/create/${key}`, {
-      cartIds: [cart.id],
-      realName: addr.real_name,
-      userPhone: addr.phone,
-      province: addr.province ?? "",
-      userAddress: addr.detail ?? "",
-      type: 2,
+    const cart = await http.post<{ id: number }>("/cart/add", {
+      productId: combo.productId,
+      unique: "sku00001",
+      cartNum: 1,
+      type: 3,
+      activityId: combo.id,
     });
-    await http.post<any>("/pink", {
-      combination_id: combo.id,
-      product_id: combo.productId,
-      order_id: order.orderId,
+    uni.navigateTo({
+      url: pinkId > 0
+        ? `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=3&pinkId=${pinkId}`
+        : `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=3&combinationId=${combo.id}`,
     });
-    uni.showToast({ title: "参团成功, 请完成支付", icon: "success" });
-    setTimeout(() => uni.navigateTo({ url: `/pages/order/detail?orderId=${order.orderId}` }), 800);
   } catch (e) {
-    uni.showToast({ title: (e as Error).message || "参团失败", icon: "none" });
+    uni.showToast({ title: (e as Error).message || (pinkId > 0 ? "参团失败" : "开团失败"), icon: "none" });
   }
 }
 
@@ -177,6 +167,20 @@ onLoad((query) => {
 .pink-status {
   font-size: 24rpx;
   color: #e93323;
+}
+
+.pink-actions {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.pink-join {
+  background: #e93323;
+  color: #fff;
+  border-radius: 24rpx;
+  padding: 8rpx 18rpx;
+  font-size: 22rpx;
 }
 
 .pink-status.done {

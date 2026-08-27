@@ -9,6 +9,22 @@ import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
+interface BargainHelpBody {
+  bargain_user_id?: number;
+  bargainId?: number;
+  bargainUserUid?: number;
+}
+
+async function resolveBargainUserId(
+  svc: ActivityJoinService,
+  body: BargainHelpBody,
+): Promise<number> {
+  if (Number.isSafeInteger(body.bargain_user_id) && (body.bargain_user_id ?? 0) > 0) {
+    return body.bargain_user_id!;
+  }
+  return svc.resolveBargainUserId(Number(body.bargainId ?? 0), Number(body.bargainUserUid ?? 0));
+}
+
 // ═══ 拼团 ═════════════════════════════════════════════════
 
 /** GET /api/combination/pink/:id — 拼团详情含进行中的团 */
@@ -25,40 +41,22 @@ export async function pinkInfo(c: C) {
   }
 }
 
-/** POST /api/pink — 参与拼团 (k_id=0 开团, k_id>0 参团) */
-export async function joinPink(c: C) {
-  const uid = c.get("uid");
-  if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as {
-    combination_id?: number;
-    product_id?: number;
-    order_id?: string;
-    k_id?: number;
-  };
-  if (!body.combination_id) return jsonFail(c, "参数错误");
+/** GET /api/pink — 拼团成功人数与头像；实际参团只能经订单创建。 */
+export async function pinkStats(c: C) {
+  const type = Number(c.req.query("type") ?? "1");
   const svc = new ActivityJoinService(c.get("container"));
-  try {
-    const result = await svc.joinPink(uid, {
-      combinationId: body.combination_id,
-      productId: body.product_id ?? 0,
-      orderId: body.order_id ?? `p${Date.now()}`,
-      kId: body.k_id ?? 0,
-    });
-    return jsonOk(c, result, result.isLeader ? "开团成功" : "参团成功");
-  } catch (e) {
-    if (e instanceof ValidateException) return jsonFail(c, e.message);
-    throw e;
-  }
+  return jsonOk(c, await svc.pinkStats(Number.isSafeInteger(type) ? type : 1));
 }
 
 /** POST /api/combination/remove — 取消开团 */
 export async function removePink(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { id?: number };
-  const svc = new ActivityJoinService(c.get("container"));
-  await svc.removePink(uid, body.id ?? 0);
-  return jsonOk(c, null, "已取消开团");
+  const body = (await c.req.json().catch(() => ({}))) as { id?: number; cid?: number };
+  if (!body.id || !body.cid) return jsonFail(c, "缺少参数");
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  const result = await svc.removePink(uid, body.id, body.cid);
+  return jsonOk(c, result, result.completed ? "拼团已取消并退款" : "退款处理中");
 }
 
 // ═══ 砍价 ═════════════════════════════════════════════════
@@ -67,11 +65,15 @@ export async function removePink(c: C) {
 export async function startBargain(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { bargain_id?: number };
-  if (!body.bargain_id) return jsonFail(c, "参数错误");
+  const body = (await c.req.json().catch(() => ({}))) as {
+    bargain_id?: number;
+    bargainId?: number;
+  };
+  const bargainId = Number(body.bargain_id ?? body.bargainId ?? 0);
+  if (!bargainId) return jsonFail(c, "参数错误");
   const svc = new ActivityJoinService(c.get("container"));
   try {
-    return jsonOk(c, await svc.startBargain(uid, body.bargain_id), "砍价已开启");
+    return jsonOk(c, await svc.startBargain(uid, bargainId), "砍价已开启");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
@@ -82,10 +84,61 @@ export async function startBargain(c: C) {
 export async function helpBargain(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { bargain_user_id?: number };
+  const body = (await c.req.json().catch(() => ({}))) as BargainHelpBody;
   const svc = new ActivityJoinService(c.get("container"));
   try {
-    return jsonOk(c, await svc.helpBargain(uid, body.bargain_user_id ?? 0), "帮砍成功");
+    const bargainUserId = await resolveBargainUserId(svc, body);
+    return jsonOk(c, await svc.helpBargain(uid, bargainUserId), "帮砍成功");
+  } catch (e) {
+    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    throw e;
+  }
+}
+
+/** POST /api/bargain/help/price — 当前用户本次砍掉金额 */
+export async function bargainHelpPrice(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = (await c.req.json().catch(() => ({}))) as BargainHelpBody;
+  const svc = new ActivityJoinService(c.get("container"));
+  try {
+    return jsonOk(c, await svc.bargainHelpPrice(uid, await resolveBargainUserId(svc, body)));
+  } catch (e) {
+    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    throw e;
+  }
+}
+
+/** POST /api/bargain/help/count — 帮砍进度和当前用户资格 */
+export async function bargainHelpCount(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = (await c.req.json().catch(() => ({}))) as BargainHelpBody;
+  const svc = new ActivityJoinService(c.get("container"));
+  try {
+    return jsonOk(c, await svc.bargainHelpCount(uid, await resolveBargainUserId(svc, body)));
+  } catch (e) {
+    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    throw e;
+  }
+}
+
+/** POST /api/bargain/help/list — 帮砍明细 */
+export async function bargainHelpList(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = (await c.req.json().catch(() => ({}))) as BargainHelpBody & {
+    page?: number;
+    limit?: number;
+  };
+  const svc = new ActivityJoinService(c.get("container"));
+  try {
+    const bargainUserId = await resolveBargainUserId(svc, body);
+    return jsonOk(c, await svc.bargainHelpList(
+      bargainUserId,
+      Number(body.page ?? 1),
+      Number(body.limit ?? 20),
+    ));
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;

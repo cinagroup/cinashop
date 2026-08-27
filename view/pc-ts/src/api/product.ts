@@ -73,6 +73,6 @@ export function apiReplySubmit(params: {
   serviceScore: number;
   logisticsScore: number;
   pics?: string[];
-}): Promise<{ id: number }> {
+}): Promise<{ id: number; oid: number; completed: boolean; to_lottery: false }> {
   return getData(request.post(`/reply/submit`, params));
 }
