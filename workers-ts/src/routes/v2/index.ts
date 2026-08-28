@@ -10,6 +10,7 @@ import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorContro
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
+import * as V2UserCompatibilityController from "@/controllers/api/v1/V2UserCompatibilityController";
 import type { AppVariables, Env } from "@/env";
 
 export const v2Routes = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -36,6 +37,13 @@ v2Routes.get("/coupons", authMiddleware({ force: false }), UserActivityControlle
 v2Routes.get("/user/search_list", authMiddleware({ force: false }), UserBehaviorController.searchList);
 v2Routes.get("/user/clean_search", authMiddleware({ force: true }), UserBehaviorController.cleanSearch);
 v2Routes.get("/user/service/record", authMiddleware({ force: true }), UserMessageController.customerServiceRecord);
+
+// PHP v2 user profile, ledger and referral contracts used by the legacy UniApp.
+v2Routes.post("/user/user_update", authMiddleware({ force: true }), V2UserCompatibilityController.updateRoutineProfile);
+v2Routes.get("/user/wechat", authMiddleware({ force: true }), V2UserCompatibilityController.refreshWechatProfile);
+v2Routes.get("/user/money_list/:type", authMiddleware({ force: true }), V2UserCompatibilityController.moneyList);
+v2Routes.get("/agent/agent_user_list/:type", authMiddleware({ force: true }), V2UserCompatibilityController.agentUserList);
+v2Routes.get("/agent/agent_info", authMiddleware({ force: true }), V2UserCompatibilityController.agentInfo);
 
 // PHP v2 invoice endpoints. The mutating GET delete is retained only for client compatibility.
 v2Routes.get("/invoice", authMiddleware({ force: true }), UserFinanceController.invoiceListV2);

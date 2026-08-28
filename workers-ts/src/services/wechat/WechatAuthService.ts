@@ -18,6 +18,7 @@ import {
   StoreNewcomerService,
 } from "@/services/activity/StoreNewcomerService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { V2UserCompatibilityService } from "@/services/user/V2UserCompatibilityService";
 
 const SOCIAL_PENDING_TTL_SECONDS = 15 * 60;
 const SOCIAL_PENDING_PREFIX = "social_pending:";
@@ -280,6 +281,48 @@ export class WechatAuthService {
   }
 
   /**
+   * Refresh an already-authenticated user's official-account profile.
+   * The OAuth code and provider response establish the openid; the caller can
+   * never choose which social identity is written.
+   */
+  async refreshOfficialProfile(
+    uid: number,
+    code: string,
+    ip = "",
+  ): Promise<{ nickname: string; avatar: string; is_complete: 1 }> {
+    if (!code) throw new ValidateException("code 不能为空");
+    const token = await this.oauthAccessToken(code, "wechat");
+    let official: {
+      nickname?: string;
+      headimgurl?: string;
+      sex?: number;
+      language?: string;
+      city?: string;
+      province?: string;
+      country?: string;
+    };
+    try {
+      official = await this.officialUserInfo(token.openid);
+    } catch (error) {
+      throw new ValidateException(
+        `更新公众号用户信息失败：${error instanceof Error ? error.message : "微信接口错误"}`,
+      );
+    }
+    const oauth = await this.oauthUserInfo(token.access_token, token.openid);
+    return new V2UserCompatibilityService(this.container).refreshVerifiedOfficialProfile(
+      uid,
+      {
+        openid: token.openid,
+        ...official,
+        nickname: oauth.nickname ?? official.nickname ?? "",
+        headimgurl: oauth.headimgurl ?? official.headimgurl ?? "",
+        sex: oauth.sex ?? official.sex ?? 0,
+      },
+      ip,
+    );
+  }
+
+  /**
    * Continue a provider-verified identity without trusting client identity
    * fields. When phone binding is mandatory, no new user is created until the
    * independent SMS confirmation completes.
@@ -403,6 +446,36 @@ export class WechatAuthService {
     const url = `https://api.weixin.qq.com/sns/userinfo?access_token=${accessToken}&openid=${openid}&lang=zh_CN`;
     const resp = await fetch(url);
     return (await resp.json()) as { nickname?: string; headimgurl?: string; sex?: number };
+  }
+
+  /** Official-account subscriber profile (the second provider read used by PHP). */
+  private async officialUserInfo(openid: string): Promise<{
+    nickname?: string;
+    headimgurl?: string;
+    sex?: number;
+    language?: string;
+    city?: string;
+    province?: string;
+    country?: string;
+  }> {
+    const accessToken = await this.getAccessToken();
+    const url = `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${accessToken}&openid=${encodeURIComponent(openid)}&lang=zh_CN`;
+    const resp = await fetch(url);
+    const data = (await resp.json()) as {
+      nickname?: string;
+      headimgurl?: string;
+      sex?: number;
+      language?: string;
+      city?: string;
+      province?: string;
+      country?: string;
+      errcode?: number;
+      errmsg?: string;
+    };
+    if (!resp.ok || data.errcode) {
+      throw new Error(data.errmsg || `HTTP ${resp.status}`);
+    }
+    return data;
   }
 
   /** 获取 jsapi_ticket (带缓存) */

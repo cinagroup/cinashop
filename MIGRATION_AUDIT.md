@@ -1344,6 +1344,32 @@ API-003 仍不能标记整体完成：付款码只有签发端，TS 收银消费
 
 剩余 26 条为 AUTH 16、USER 5、PROMO 3、HOME 2。COUPON 的精确静态缺口已归零，但生产没有启用/有效/新人/SVIP 弹窗模板，两张范围/领取证据表为空，旧 UniApp 页面已不在当前仓库，真实账号/预发/正式发布 E2E 也未完成，因此 API-004-COUPON 和整体 API-004 继续保持未勾选；下一批进入 API-004-USER，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
 
+## API-004-USER 五条用户/分销合同审计（2026-08-28）
+
+### PHP 权威语义、客户端证据与安全收敛
+
+本批逐行核对 PHP v2 User/Agent 控制器、用户资金/佣金/提现服务及旧 UniApp API 包装器，新增认证 `POST /api/v2/user/user_update`、`GET /api/v2/user/wechat`、`GET /api/v2/user/money_list/:type`、`GET /api/v2/agent/agent_user_list/:type` 和 `GET /api/v2/agent/agent_info`。旧端确认 `user_update` 提交 `{userInfo}`；`user/wechat` 只有包装器，未发现当前页面直接调用；资金和推广页仍依赖路径 type、旧 snake_case 字段、`income/expend` 汇总、退款/提现状态文案及规则/收益轮播。
+
+资料更新只接受 nickname/avatar/sex/language/city/province/country 白名单，在短事务内锁定当前 active 用户及其 routine 身份，同步核心昵称/头像、最后登录时间/IP和小程序完成标记，不允许客户端修改 UID、余额、积分、推广人或 openid。公众号刷新只接受一次性 OAuth code：服务端换取 openid、读取公众号订阅资料并以 OAuth 用户资料补全，再要求该 openid 已作为当前 UID 的 active `wechat` 身份存在才更新；客户端不能直接选择或占用其他账户 openid。缺配置、未绑定、身份不属于当前 UID 都失败关闭。
+
+`money_list/:type` 恢复 0 全部余额、1 支出、2 收入、3 佣金、4 提现和 9 资金流六种旧合同；余额账批量读取退款/充值状态，佣金账批量读取提现状态，提现只返回 `extract/extract_money/extract_fail`，资金流只返回 type 1/7。所有列表都限定当前 UID、最多 100 行且不写资金。`agent_user_list/:type` 有意修复 PHP 控制器忽略路径参数、错误读取 query `type` 而使“已下单好友”页签失效的问题，type 1 现在精确筛选 `pay_count>0`；同时把 PHP `%H:%m` 中错误的月份占位修为真实分钟。`agent_info` 仅汇总当前 UID 的有效佣金收入，并以内连接 active 用户生成最多 10 条轮播，避免生产孤儿账留下空昵称或泄露无归属金额。
+
+### 正式生产只读与随机 schema 证据
+
+摘要令牌保护的一次性 `cinashop-v2-user-compatibility-audit` Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产读取固定 `search_path=public`、`statement_timeout=30s` 和 `SET TRANSACTION READ ONLY`。PostgreSQL 16.14 当前用户 3/active 3、微信身份 0，重复 active UID/channel 与微信孤儿均为 0；精确配置键和名称模式候选中都没有 WeChat/Routine AppID/Secret。余额账 0、资金流 0；佣金 7、提现 5、充值 6、退款 3 条分别全部是用户孤儿。推广用户 1 条、孤儿推广父级 0、已下单推广用户 0，分销协议 `type=2` 为 0。首个 active UID 的余额/支出/收入/佣金/提现/资金/推广列表都为空，佣金轮播经 active 用户内连接后也为空，规则和收益仍保持字符串合同。
+
+`user_money`/`user_brokerage` 总关系大小分别为 24,576/81,920 字节；空余额账按 UID 倒序限 10 的计划为顺序扫描加排序。当前零行/小样本不支持投机增加索引，DATA-003/004 复制真实资金数据后必须重跑 UID、类型和时间窗口计划。尤其不能把 7/5/6/3 条孤儿账自动绑定给现有三个用户或直接删除：它们需要按源 MySQL 主键、UID、金额、订单/充值/提现关系和序列逐条对账。
+
+随机 `codex_api004_user_*` schema 克隆用户、微信身份、余额、佣金、提现、充值、退款、资金流与协议九张表。真实服务完成 routine 资料、公众号资料、核心资料、外部身份不变、余额三类过滤、退款投影、佣金/提现/资金过滤、推广路径 type 和规则收益共 11/11 断言；合成计数为余额 3、佣金 4、提现 3、资金 2、推广 2、已下单推广 1、轮播 2。最终版本 `9b82c63c-f52c-4396-974e-1a6a2d624908` 返回 `public_state_unchanged=true`，临时 schema `0→0` 并删除，审计 Worker 和摘要 secret 也已删除。
+
+隔离探针的前两次失败均发生在测试装置而非业务断言：第一次证实 Hyperdrive 不保证把连接启动级 `search_path` 保留给后续 autocommit 查询，第二次证实不能在显式外层事务数据库上再次调用依赖 `client.begin()` 的写服务。两次随机 schema 和 Worker 都在 `finally` 清理，`public` 没有合成写入；最终装置让写服务在限定 search path 的根连接中自行开启事务，读取使用显式事务级 `SET LOCAL`，完成全部断言和公共指纹核验。
+
+### 当前量化与剩余 21 条
+
+注释感知的静态审计现为 PHP 1,904、Workers 1,305、精确匹配 613、可执行匹配 596、明确不可用 17、原始缺失 1,291、证据化退役 3、可执行缺口 1,288；精确/可执行/退役后有效覆盖为 32.2%/31.3%/31.4%。`/api` 为 PHP 457、Workers 631、精确 243、可执行 241、不可用 2、可执行缺口 213；`/api/v2` 精确缺口 `26→21`。124 个单元测试文件/717 项和双 TypeScript 配置通过；主 Worker minify dry-run 为 2,431.47 KiB/gzip 602.58 KiB，USER 审计 Worker为 386.06 KiB/gzip 87.98 KiB。Windows runtime 仍在 0 条断言前以 `workerd` 0xc0000005 失败，不能记为通过。
+
+剩余 21 条为 AUTH 16、PROMO 3、HOME 2。USER 的精确静态缺口已归零，但生产微信身份、AppID/Secret、余额/资金流和分销协议为空，现有佣金/提现/充值/退款又全部是用户孤儿，旧 UniApp 页面已不在当前仓库，真实微信 OAuth、真实账号、预发和正式发布 E2E 均未完成，因此 API-004-USER 和整体 API-004 继续保持未勾选；下一批进入 API-004-PROMO，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。
