@@ -25,6 +25,61 @@ import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageS
 import { grantReferralLotteryChance } from "@/services/activity/LotteryService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 
+const USER_INVOICE_LOCK_NAMESPACE = 21_406;
+
+type UserInvoiceRow = typeof userInvoice.$inferSelect;
+
+interface InvoiceListQuery {
+  page?: unknown;
+  limit?: unknown;
+  headerType?: unknown;
+  type?: unknown;
+}
+
+export interface LegacyUserInvoice {
+  id: number;
+  uid: number;
+  header_type: number;
+  type: number;
+  name: string;
+  duty_number: string;
+  drawer_phone: string;
+  email: string;
+  tell: string;
+  address: string;
+  bank: string;
+  card_number: string;
+  is_default: number;
+  is_del: number;
+  add_time: number;
+}
+
+/** Keep the v2 UniApp contract independent from Drizzle's camelCase field names. */
+export function legacyUserInvoice(row: UserInvoiceRow): LegacyUserInvoice {
+  return {
+    id: row.id,
+    uid: row.uid,
+    header_type: row.headerType,
+    type: row.type,
+    name: row.name,
+    duty_number: row.dutyNumber,
+    drawer_phone: row.drawerPhone,
+    email: row.email,
+    tell: row.tell,
+    address: row.address,
+    bank: row.bank,
+    card_number: row.cardNumber,
+    is_default: row.isDefault,
+    is_del: row.isDel,
+    add_time: row.addTime,
+  };
+}
+
+function positiveInteger(value: unknown, fallback: number, maximum: number): number {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
+}
+
 export interface RechargeQuota {
   id: number;
   price: string;
@@ -618,11 +673,50 @@ export class UserFinanceService {
   // 发票
   // ═══════════════════════════════════════════════════════════
 
-  /** 发票列表 (invoice) */
-  async invoiceList(uid: number): Promise<(typeof userInvoice.$inferSelect)[]> {
-    return this.container.userInvoiceDao.selectList({
-      where: { uid, isDel: 0 },
-    });
+  /** 发票列表 (invoice): PHP filters and ordering; passing params enables v2 pagination. */
+  async invoiceList(
+    uid: number,
+    params?: InvoiceListQuery,
+  ): Promise<UserInvoiceRow[]> {
+    const page = positiveInteger(params?.page, 1, 1_000_000);
+    const limit = positiveInteger(params?.limit, 10, 100);
+    const conditions = [eq(userInvoice.uid, uid), eq(userInvoice.isDel, 0)];
+    const headerType = Number(params?.headerType);
+    const type = Number(params?.type);
+    if (headerType === 1 || headerType === 2) conditions.push(eq(userInvoice.headerType, headerType));
+    if (type === 1 || type === 2) conditions.push(eq(userInvoice.type, type));
+    let query = this.container.db
+      .select()
+      .from(userInvoice)
+      .where(and(...conditions))
+      .orderBy(desc(userInvoice.isDefault), desc(userInvoice.id))
+      .$dynamic();
+    if (params) query = query.limit(limit).offset((page - 1) * limit);
+    const rows = await query;
+    return rows;
+  }
+
+  async invoiceListLegacy(
+    uid: number,
+    params: InvoiceListQuery = {},
+  ): Promise<LegacyUserInvoice[]> {
+    return (await this.invoiceList(uid, params)).map(legacyUserInvoice);
+  }
+
+  /** A user may only read their own active invoice; PHP v2 omitted this ownership check. */
+  async invoiceDetail(uid: number, id: number): Promise<UserInvoiceRow | null> {
+    if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("参数错误!");
+    const rows = await this.container.db
+      .select()
+      .from(userInvoice)
+      .where(and(eq(userInvoice.id, id), eq(userInvoice.uid, uid), eq(userInvoice.isDel, 0)))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async invoiceDetailLegacy(uid: number, id: number): Promise<LegacyUserInvoice | null> {
+    const row = await this.invoiceDetail(uid, id);
+    return row ? legacyUserInvoice(row) : null;
   }
 
   /** 保存发票 (invoice/save, 含新增/编辑) */
@@ -634,71 +728,168 @@ export class UserFinanceService {
       type: number;
       name: string;
       dutyNumber: string;
+      drawerPhone: string;
       email?: string;
+      tell?: string;
+      address?: string;
+      bank?: string;
+      cardNumber?: string;
       isDefault?: number;
     },
-  ): Promise<{ id: number }> {
-    const c = this.container;
-    if (!params.name) throw new ValidateException("发票抬头不能为空");
-    if (!params.dutyNumber) throw new ValidateException("税号不能为空");
-
-    const now = Math.floor(Date.now() / 1000);
-    if (params.id) {
-      const existing = await c.userInvoiceDao.get(params.id);
-      if (!existing || existing.uid !== uid) {
-        throw new NotFoundException("发票不存在");
-      }
-      await c.userInvoiceDao.update(params.id, {
-        headerType: params.headerType,
-        type: params.type,
-        name: params.name,
-        dutyNumber: params.dutyNumber,
-        email: params.email ?? "",
-      });
-      if (params.isDefault) await this.setDefault(uid, params.id);
-      return { id: params.id };
+  ): Promise<{ id: number; created: boolean }> {
+    const invoiceId = Number(params.id ?? 0);
+    if (!Number.isSafeInteger(invoiceId) || invoiceId < 0) throw new ValidateException("参数错误!");
+    const drawerPhone = params.drawerPhone.trim();
+    const name = params.name.trim();
+    let headerType = Number(params.headerType);
+    const invoiceType = Number(params.type) === 2 ? 2 : 1;
+    let dutyNumber = params.dutyNumber.trim().toUpperCase();
+    let tell = params.tell?.trim() ?? "";
+    let address = params.address?.trim() ?? "";
+    let bank = params.bank?.trim() ?? "";
+    let cardNumber = params.cardNumber?.trim() ?? "";
+    if (!drawerPhone) throw new ValidateException("请填写开票手机号");
+    if (!/^1[3-9]\d{9}$/.test(drawerPhone)) throw new ValidateException("手机号码格式不正确");
+    if (!name) throw new ValidateException("请填写发票抬头（开具发票企业名称）");
+    if (headerType !== 1 && headerType !== 2) headerType = dutyNumber ? 2 : 1;
+    if (headerType === 1 && !/^[^\x00-\x7F]{2,60}$/u.test(name)) {
+      throw new ValidateException("请填写正确的发票抬头（开具发票企业名称）");
+    }
+    if (headerType === 2 && !/^[0-9A-Za-z&()（）\p{L}\p{N}]{2,100}$/u.test(name)) {
+      throw new ValidateException("请填写正确的发票抬头（开具发票企业名称）");
+    }
+    if (headerType === 2 && !dutyNumber) throw new ValidateException("请填写发票税号");
+    if (headerType === 2 && !/^(?:[A-Z0-9]{15}|[A-Z0-9]{17}|[A-Z0-9]{18}|[A-Z0-9]{20})$/.test(dutyNumber)) {
+      throw new ValidateException("请填写正确的发票税号");
+    }
+    if (headerType === 1) {
+      dutyNumber = "";
+      tell = "";
+      address = "";
+      bank = "";
+      cardNumber = "";
     }
 
-    const row = await c.userInvoiceDao.save({
-      uid,
-      headerType: params.headerType,
-      type: params.type,
-      name: params.name,
-      dutyNumber: params.dutyNumber,
-      email: params.email ?? "",
-      isDefault: params.isDefault ?? 0,
-      addTime: now,
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${USER_INVOICE_LOCK_NAMESPACE}, ${uid})`);
+      const duplicate = await tx
+        .select({ id: userInvoice.id })
+        .from(userInvoice)
+        .where(and(
+          eq(userInvoice.uid, uid),
+          eq(userInvoice.name, name),
+          eq(userInvoice.drawerPhone, drawerPhone),
+          eq(userInvoice.isDel, 0),
+        ))
+        .limit(1);
+      if (duplicate[0] && duplicate[0].id !== invoiceId) {
+        throw new ValidateException("该发票已经存在");
+      }
+      const values = {
+        headerType,
+        type: invoiceType,
+        name,
+        dutyNumber,
+        drawerPhone,
+        email: params.email?.trim() ?? "",
+        tell,
+        address,
+        bank,
+        cardNumber,
+        isDefault: Number(params.isDefault) === 1 ? 1 : 0,
+      } as const;
+      let id: number;
+      let created = false;
+      if (invoiceId) {
+        const rows = await tx
+          .select({ id: userInvoice.id })
+          .from(userInvoice)
+          .where(and(eq(userInvoice.id, invoiceId), eq(userInvoice.uid, uid), eq(userInvoice.isDel, 0)))
+          .limit(1)
+          .for("update");
+        if (!rows[0]) throw new NotFoundException("发票不存在");
+        id = rows[0].id;
+        await tx.update(userInvoice).set(values).where(eq(userInvoice.id, id));
+      } else {
+        const rows = await tx
+          .insert(userInvoice)
+          .values({ ...values, uid, addTime: Math.floor(Date.now() / 1000) })
+          .returning({ id: userInvoice.id });
+        id = rows[0]!.id;
+        created = true;
+      }
+      if (values.isDefault) {
+        await tx
+          .update(userInvoice)
+          .set({ isDefault: 0 })
+          .where(and(
+            eq(userInvoice.uid, uid),
+            eq(userInvoice.headerType, values.headerType),
+            eq(userInvoice.type, values.type),
+            eq(userInvoice.isDel, 0),
+          ));
+        await tx.update(userInvoice).set({ isDefault: 1 }).where(eq(userInvoice.id, id));
+      }
+      return { id, created };
     });
-    if (params.isDefault) await this.setDefault(uid, row.id);
-    return { id: row.id };
   }
 
   /** 删除发票 (invoice/del/:id) */
   async invoiceDel(uid: number, id: number): Promise<void> {
-    const c = this.container;
-    const invoice = await c.userInvoiceDao.get(id);
-    if (!invoice || invoice.uid !== uid) throw new NotFoundException("发票不存在");
-    await c.userInvoiceDao.update(id, { isDel: 1 });
+    if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("参数错误!");
+    await withTx(this.container, async (tx) => {
+      await tx
+        .update(userInvoice)
+        .set({ isDel: 1, isDefault: 0 })
+        .where(and(eq(userInvoice.id, id), eq(userInvoice.uid, uid), eq(userInvoice.isDel, 0)));
+    });
   }
 
   /** 设置默认发票 (invoice/set_default/:id) */
   async setDefault(uid: number, id: number): Promise<void> {
-    const c = this.container;
-    await c.db
-      .update(userInvoice)
-      .set({ isDefault: 0 })
-      .where(eq(userInvoice.uid, uid));
-    await c.db
-      .update(userInvoice)
-      .set({ isDefault: 1 })
-      .where(and(eq(userInvoice.id, id), eq(userInvoice.uid, uid)));
+    if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("参数错误!");
+    await withTx(this.container, async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${USER_INVOICE_LOCK_NAMESPACE}, ${uid})`);
+      const rows = await tx
+        .select({ id: userInvoice.id, headerType: userInvoice.headerType, type: userInvoice.type })
+        .from(userInvoice)
+        .where(and(eq(userInvoice.id, id), eq(userInvoice.uid, uid), eq(userInvoice.isDel, 0)))
+        .limit(1)
+        .for("update");
+      const invoice = rows[0];
+      if (!invoice) throw new NotFoundException("发票不存在");
+      await tx
+        .update(userInvoice)
+        .set({ isDefault: 0 })
+        .where(and(
+          eq(userInvoice.uid, uid),
+          eq(userInvoice.headerType, invoice.headerType),
+          eq(userInvoice.type, invoice.type),
+          eq(userInvoice.isDel, 0),
+        ));
+      await tx.update(userInvoice).set({ isDefault: 1 }).where(eq(userInvoice.id, id));
+    });
   }
 
   /** 获取默认发票 (invoice/get_default/:type) */
-  async getDefault(uid: number): Promise<(typeof userInvoice.$inferSelect) | null> {
-    const rows = await this.container.userInvoiceDao.selectList({
-      where: { uid, isDefault: 1, isDel: 0 },
-    });
+  async getDefault(uid: number, type: number): Promise<UserInvoiceRow | null> {
+    const safeType = type === 2 ? 2 : 1;
+    const rows = await this.container.db
+      .select()
+      .from(userInvoice)
+      .where(and(
+        eq(userInvoice.uid, uid),
+        eq(userInvoice.type, safeType),
+        eq(userInvoice.isDefault, 1),
+        eq(userInvoice.isDel, 0),
+      ))
+      .orderBy(desc(userInvoice.id))
+      .limit(1);
     return rows[0] ?? null;
+  }
+
+  async getDefaultLegacy(uid: number, type: number): Promise<LegacyUserInvoice | null> {
+    const row = await this.getDefault(uid, type);
+    return row ? legacyUserInvoice(row) : null;
   }
 }

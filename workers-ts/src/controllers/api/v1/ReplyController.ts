@@ -25,7 +25,7 @@ export async function replyConfig(c: C) {
 
 /** GET /reply/list/:productId — 评价列表 */
 export async function replyList(c: C) {
-  const productId = Number(c.req.param("productId") ?? "0");
+  const productId = Number(c.req.param("productId") ?? c.req.param("id") ?? "0");
   if (!Number.isSafeInteger(productId) || productId <= 0) return jsonFail(c, "参数错误");
   const q = c.req.query();
   const svc = new ReplyService(c.get("container"));

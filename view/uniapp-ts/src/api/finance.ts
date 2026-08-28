@@ -39,6 +39,7 @@ export interface Invoice {
   type: number;
   name: string;
   dutyNumber: string;
+  drawerPhone: string;
   email: string;
   isDefault: number;
   addTime: number;
@@ -87,6 +88,8 @@ export function apiInvoiceSave(params: {
   type: number;
   name: string;
   duty_number?: string;
+  drawer_phone?: string;
+  drawerPhone?: string;
   email?: string;
   is_default?: number;
 }): Promise<{ id: number }> {

@@ -123,31 +123,82 @@ export async function invoiceList(c: C) {
   return jsonOk(c, await svc.invoiceList(uid));
 }
 
-/** POST /api/invoice/save — 保存发票 */
-export async function invoiceSave(c: C) {
+/** GET /api/v2/invoice — legacy snake_case contract. */
+export async function invoiceListV2(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
+  const svc = new UserFinanceService(c.get("container"));
+  return jsonOk(c, await svc.invoiceListLegacy(uid, {
+    page: c.req.query("page"),
+    limit: c.req.query("limit"),
+    headerType: c.req.query("header_type"),
+    type: c.req.query("type"),
+  }));
+}
+
+/** GET /api/v2/invoice/detail/:id — ownership-scoped legacy invoice payload. */
+export async function invoiceDetail(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const svc = new UserFinanceService(c.get("container"));
+  return jsonOk(c, (await svc.invoiceDetailLegacy(uid, Number(c.req.param("id")))) ?? []);
+}
+
+async function persistInvoice(c: C, uid: number) {
   const body = (await c.req.json().catch(() => ({}))) as {
     id?: number;
     header_type?: number;
     type?: number;
     name?: string;
     duty_number?: string;
+    drawer_phone?: string;
+    drawerPhone?: string;
     email?: string;
+    tell?: string;
+    address?: string;
+    bank?: string;
+    card_number?: string;
     is_default?: number;
   };
   const svc = new UserFinanceService(c.get("container"));
+  return svc.invoiceSave(uid, {
+    id: body.id,
+    headerType: body.header_type ?? 1,
+    type: body.type ?? 1,
+    name: body.name ?? "",
+    dutyNumber: body.duty_number ?? "",
+    drawerPhone: body.drawer_phone ?? body.drawerPhone ?? "",
+    email: body.email,
+    tell: body.tell,
+    address: body.address,
+    bank: body.bank,
+    cardNumber: body.card_number,
+    isDefault: body.is_default,
+  });
+}
+
+/** POST /api/invoice/save — existing camelCase client response. */
+export async function invoiceSave(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
   try {
-    const result = await svc.invoiceSave(uid, {
-      id: body.id,
-      headerType: body.header_type ?? 1,
-      type: body.type ?? 1,
-      name: body.name ?? "",
-      dutyNumber: body.duty_number ?? "",
-      email: body.email,
-      isDefault: body.is_default,
-    });
-    return jsonOk(c, result, "保存成功");
+    const result = await persistInvoice(c, uid);
+    return jsonOk(c, { id: result.id }, "保存成功");
+  } catch (e) {
+    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    throw e;
+  }
+}
+
+/** POST /api/v2/invoice/save — PHP add/edit response compatibility. */
+export async function invoiceSaveV2(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  try {
+    const result = await persistInvoice(c, uid);
+    return result.created
+      ? jsonOk(c, { id: result.id }, "添加发票成功")
+      : jsonOk(c, [], "修改发票成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
@@ -179,7 +230,17 @@ export async function invoiceGetDefault(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new UserFinanceService(c.get("container"));
-  return jsonOk(c, await svc.getDefault(uid));
+  const invoice = await svc.getDefault(uid, Number(c.req.param("type")));
+  return invoice ? jsonOk(c, invoice) : jsonOk(c, [], "empty");
+}
+
+/** GET /api/v2/invoice/get_default/:type — legacy snake_case contract. */
+export async function invoiceGetDefaultV2(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const svc = new UserFinanceService(c.get("container"));
+  const invoice = await svc.getDefaultLegacy(uid, Number(c.req.param("type")));
+  return invoice ? jsonOk(c, invoice) : jsonOk(c, [], "empty");
 }
 
 /** GET /api/user/integral_logs — 积分明细 (user_bill category=integral) */

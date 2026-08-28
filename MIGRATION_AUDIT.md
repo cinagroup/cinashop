@@ -1242,6 +1242,34 @@ PHP 对照确认核销不是单一 `store_order.status` 更新：必须同时验
 
 API-003 仍不能标记整体完成：付款码只有签发端，TS 收银消费端尚未迁移；客服扫码登录等待 KEFU-001；生产缺微信小程序真实凭据和会员激活配置；旧 PC/UniApp 与五端浏览器 E2E、Linux Workers runtime、预发和正式发布都没有完成。下一批可进入 API-004 `/api/v2` 的真实客户端调用审计，同时保留这些门禁。
 
+## API-004 `/api/v2` 首批兼容迁移审计（2026-08-28）
+
+### 54 条权威缺口与客户端事实
+
+迁移前 PHP `/api/v2` 共 58 条合同，Workers 只有抽奖 4 条精确匹配，因此缺口为 54。逐项扫描旧 `view/uniapp` 的 API 包装器、页面、组件和 store，以及新 `admin-ts`、`pc-ts`、`supplier-ts`、`uniapp-ts`、`kefu-ts` 后，结论不能简化成“v2 已废弃”：新五端只有 `uniapp-ts` 的 4 条抽奖仍直接使用 v2，但旧 UniApp 仍真实调用微信/小程序登录、发票、购物车、商品属性、DIY、优惠券、分销、客服记录、搜索和评价。促销商品/赠品两个包装器尚未发现页面调用，这只构成待退役证据之一，不能直接从 PHP 分母删除。
+
+首批选择不依赖新增第三方凭据、且现有 TypeScript 服务已经具备主要状态机的 15 条合同：可选认证搜索列表、认证搜索清理、客服记录；用户发票列表/详情/保存/默认设置/默认读取/旧 GET 删除 6 条；订单补开发票/开票列表/开票详情 3 条；分销等级/等级任务 2 条；可选认证评价列表 1 条。鉴权边界逐条保持 PHP 的 `force=false/true`，评价适配器同时接受 v1 的 `:productId` 与 v2 的 `:id`，等级任务继续读取 PHP 实际使用的 query `id/level_id`。旧 GET 删除发票是有意保留的客户端兼容面，不作为新客户端推荐写法；v1 的 DELETE 合同继续存在。
+
+### 发票合同、安全与 PostgreSQL 状态机
+
+旧 PHP 发票详情调用 `getInvoice(id)` 时没有传 UID，已登录用户可按自增 ID 读取其他用户的开票抬头、税号、电话、地址和银行资料。新详情固定 `id + uid + is_del=0`，不存在或不属于当前用户时返回兼容空结构，不泄露记录是否存在。列表恢复 `header_type/type` 筛选、`is_default desc,id desc` 排序、页码和最多 100 条上限；v2 单独投影 `header_type/duty_number/drawer_phone/card_number/is_default/add_time` 等 snake_case，v1 继续返回现有 TypeScript 前端使用的 camelCase，避免修复旧端时回归新端。
+
+保存恢复手机号、邮箱、企业电话、地址、银行和账号字段；手机号、个人/企业抬头和 15/17/18/20 位税号均在写入前验证，个人抬头会清空企业字段。相同 UID 下的 `name + drawer_phone` 查重、新增/编辑和默认切换由用户级 PostgreSQL advisory lock 串行化，不在持锁事务中调用外部服务。编辑、删除、默认设置全部再次按 UID 和有效状态限定；默认项只清理同一“抬头类型 + 发票类型”，与 PHP DAO 一致。删除也改为显式短事务，既保证隔离审计能强制 `SET LOCAL search_path`，也不依赖 Hyperdrive 不保证保留的启动级 schema 参数。订单补开发票继续使用既有订单发票服务的用户/订单/发票归属检查、订单级 advisory lock、退款状态门禁和重复申请阻断。
+
+### 正式 Hyperdrive 证据
+
+一次性 `cinashop-v2-compatibility-audit` Worker 绑定用户指定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产状态和合同读取均固定 `search_path=public`、`statement_timeout=30s`、`SET TRANSACTION READ ONLY`。PostgreSQL 16.14 当前有用户发票 2 条且均有效、订单发票 0、有效搜索历史 0、客服消息 3、有效分销等级 5、有效等级任务 0；真实用户上的发票列表、搜索列表、订单发票列表和商品评价四类调用都返回数组合同，抽样商品评价 2 条，审计输出不包含搜索词、发票资料或消息正文。
+
+`user_invoice` 当前只有主键索引，针对不存在 UID 的发票列表计划执行 0.032ms、shared hit 7、read 0，表也只有 2 行，因此本批没有直接向生产添加投机索引；DATA-003 恢复真实数据后必须重跑该计划，并根据 `uid + is_del + is_default + id` 访问形状评估组合索引。随机 `codex_api004_*` schema 克隆生产 `user_invoice` 并创建独立临时序列，避免推进 `public` 自增序列；真实服务的新增、snake_case 投影、跨 UID 隔离、默认读取、重复拒绝和软删 6/6 通过，`public_state_unchanged=true`、临时 schema `0→0`。
+
+验证过程透明记录了三个审计脚手架信号：首次把 Drizzle 事务句柄再次作为根连接开启事务，写场景在业务播种前以 `begin is not a function` 回滚；第二次证明 Hyperdrive 不保留自定义启动级 `search_path`，事务写入在临时 schema、非事务读取却回到 `public`，场景随后删除 schema；第三次连续调用时边缘返回瞬时 Cloudflare 1042。最终改为独立连接建 schema、所有写事务由服务执行 `SET LOCAL`、审计读取逐次用只读事务固定 schema、独立连接清理，并在实时 tail 下成功。成功隔离版本 `d1fedaa7-fa12-4ae0-9c31-ced25e50cfd2`，最终只读版本 `8d1dc88c-827d-4ebe-80c1-25a6f0a49e3c`；每次外层均删除 Worker，最终临时 Worker和 Secret均不存在，主 Worker未部署。
+
+### 当前量化与剩余 39 条
+
+静态审计现在为 PHP 1,904、Workers 1,287、精确匹配 595、可执行匹配 578、明确不可用 17、原始缺失 1,309、证据化退役 3、可执行缺口 1,306；精确/可执行覆盖为 31.3%/30.4%。`/api` 为 PHP 457、Workers 613、精确 225、可执行 223、不可用 2、可执行缺口 231；`/api/v2` 缺口从 54 降到 39。120 个单元测试文件/693 项、双 Worker TypeScript 配置、受影响 `uniapp-ts` 类型检查、主 Worker和审计 Worker minify dry-run均通过；主包 2,388.45 KiB/gzip 590.74 KiB，审计包 395.69 KiB/gzip 91.23 KiB。Windows runtime仍在 0 条断言前以 `workerd` 0xc0000005 失败，不能记为通过。
+
+剩余 39 条按依赖拆为：微信/小程序登录与手机号绑定 16；DIY/绑定/门店/换色/商品详情/城市 6；重置/列表/SKU/改数量购物车 4；新人/今日/可领优惠券 3；微信资料/分类资金明细/推广用户/推广收益与规则 5；促销商品/赠品/凑单 3；首页和关注状态 2。现有通用优惠券列表忽略 v2 的 UID、商品/品牌和排序条件，现有 v1 首页也不是 v2 响应的直接别名，不能为了降低路由缺口挂一个近似处理器。16 条认证合同需要真实微信凭据、code 一次性消费、手机号凭据解密、限流与重放保护，继续与 CORE-004 联合处理；其余按 API-004-DIY/CART/COUPON/USER/PROMO/HOME checklist 逐批完成。API-004 因此仍未完成。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。
