@@ -132,6 +132,17 @@ export async function index(c: C) {
   );
 }
 
+/** GET /api/subscribe — legacy component-compatible optional-auth follow status. */
+export async function subscribe(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  return jsonOk(c, {
+    subscribe: await new PublicCatalogService(c.get("container"), c.env).subscribe(
+      c.get("uid") ?? 0,
+      { anonymousDefault: true },
+    ),
+  });
+}
+
 /** GET /api/menu/user — user-centre menu and DIY layout. */
 export async function menuUser(c: C) {
   return jsonOk(
@@ -150,6 +161,26 @@ export async function menuUserData(c: C) {
 
 function v2PublicService(c: C) {
   return new V2PublicCompatibilityService(c.get("container"), c.env);
+}
+
+/** GET /api/v2/index — compact legacy v2 homepage contract. */
+export async function indexV2(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  return jsonOk(
+    c,
+    await new PublicCatalogService(c.get("container"), c.env).homeV2(c.get("uid") ?? 0),
+  );
+}
+
+/** GET /api/v2/subscribe — official-account follow status. */
+export async function subscribeV2(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  return jsonOk(c, {
+    subscribe: await new PublicCatalogService(c.get("container"), c.env).subscribe(
+      c.get("uid") ?? 0,
+      { anonymousDefault: false, userType: "wechat" },
+    ),
+  });
 }
 
 /** GET /api/v2/diy/get_diy/:name? — public legacy DIY payload. */

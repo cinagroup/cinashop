@@ -91,6 +91,7 @@ v1Routes.get("/assets/:id", AttachmentController.asset);
 // ─── 商品域 (可选登录, 对应 PHP AuthTokenMiddleware force=false) ──
 // 无需登录浏览, 带 token 时返回收藏状态等
 v1Routes.get("/index", authMiddleware({ force: false }), PublicController.index);
+v1Routes.get("/subscribe", authMiddleware({ force: false }), PublicController.subscribe);
 v1Routes.get("/menu/user", authMiddleware({ force: false }), PublicController.menuUser);
 v1Routes.get("/menu/date", authMiddleware({ force: false }), PublicController.menuUserData);
 v1Routes.get("/user/activity", authMiddleware({ force: false }), UserProfileController.activity);

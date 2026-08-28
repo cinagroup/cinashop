@@ -29,6 +29,10 @@ v2Routes.get("/diy/color_change/:name", PublicController.colorChangeV2);
 v2Routes.get("/diy/product_detail", PublicController.productDetailDiyV2);
 v2Routes.get("/cityList", PublicController.cityListV2);
 
+// PHP v2 compact homepage and official-account follow status (optional authentication).
+v2Routes.get("/index", authMiddleware({ force: false }), PublicController.indexV2);
+v2Routes.get("/subscribe", authMiddleware({ force: false }), PublicController.subscribeV2);
+
 // PHP v2 coupon catalogue/popups. These endpoints are read-only; newcomer issuance stayed disabled.
 v2Routes.get("/new_coupon", authMiddleware({ force: true }), UserActivityController.couponNewV2);
 v2Routes.get("/get_today_coupon", authMiddleware({ force: false }), UserActivityController.couponTodayV2);

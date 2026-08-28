@@ -1392,6 +1392,28 @@ API-003 仍不能标记整体完成：付款码只有签发端，TS 收银消费
 
 剩余 18 条为 AUTH 16、HOME 2。PROMO 的精确静态缺口已归零，但生产没有任何促销规则/辅助范围或品牌/标签关系，旧 UniApp 页面调用缺失，源 MySQL 未复制，订单级促销叠加仍属于 API-006，真实账号、旧端、预发和正式发布 E2E 均未完成，因此 API-004-PROMO 与整体 API-004 继续保持未勾选；下一批进入 API-004-HOME，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
 
+## API-004-HOME 两条首页合同与旧端关注合同审计（2026-08-28）
+
+### PHP 权威语义、客户端证据与收敛决策
+
+本批逐行核对 PHP `route/api.php`、v2 首页控制器、`StoreProductService`、`WechatUser` 查询以及旧 UniApp `api/public.js` 和首页关注组件。PHP v2 注册的是可选登录 `GET /api/v2/index` 与 `GET /api/v2/subscribe`；旧 UniApp 当前实际调用的却是 v1 `GET /api/subscribe`，该路由此前也未迁移。因此本批恢复三条精确合同：v2 首页只返回根字段 `info/benefit/likeInfo/subscribe/tengxun_map_key/site_name`，其中 `info` 只含 `fastList/bastList/firstList`；v2 关注接口匿名为 false，登录后只查询当前 UID 最新、未删除、`user_type=wechat` 的公众号身份；v1 关注接口保持旧组件的匿名 true，并在登录后查询当前 UID 最新未删除的任意来源身份。三条响应均为 `private, no-store`，避免把用户关注状态写入共享缓存。
+
+PHP 的 `fastList` 读取 `pid>0` 的可见子分类，而既有 Workers v1 首页误取 `level=0/type=0` 根分类；该既有偏差一并修复。`fast_number/bast_number/first_number/promotion_number` 保持 PHP 的整数前缀语义，但增加 100 条服务端上限；精品、新品、促销和热门分别复用 `type=3/relation_id=3/4/2/1` 的权威推荐关系及商品会员可见性。既有 Workers 商品装饰还把预售压成两个状态，本批恢复 PHP `checkPresaleProductPay` 的四态：0 非预售、1 未开始、2 进行中、3 已结束。品牌和标签继续批量读取，不引入按商品 N+1。秒杀、砍价和拼团等运行中活动标签仍依赖 API-006，不因本批首页形状完成而被宣称已迁移。
+
+### 正式生产只读与随机 schema 证据
+
+摘要令牌保护的一次性 `cinashop-v2-home-compatibility-audit` Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产读取固定 `search_path=public`、短 statement timeout 与只读事务。PostgreSQL 16.14 当前有可见根分类 6、可见子分类 18、父级孤儿 0、自指分类 0、可售平台商品 71；旧 `is_hot/is_benefit/is_best/is_new` 标记和权威首页推荐关系均为 0，品牌/标签关系也为 0。六个相关配置只有一条启用且非空的 `site_name`（长度 8），四个数量配置及 `tengxun_map_key` 均缺失；`wechat_user` 总行数、active 公众号身份、已关注公众号身份及 UID 孤儿均为 0。分类查询因当前小表选择顺序扫描和排序，首页推荐关系查询命中 `spr_kefu_category_product` index-only scan；没有足够证据新增索引。
+
+真实匿名与登录 v2 首页都返回精确六个根字段和三个 `info` 子字段，因生产配置/关系缺失，四类商品和快捷分类列表均为空；匿名首页 `subscribe=true`，登录首页为 false。独立调用中，匿名 v1/v2 关注分别为 true/false，真实登录账号的 v1/v2 都为 false，符合当前微信身份空集。这里的空首页内容是 DATA-001/配置运营缺口，不是迁移完成证据。
+
+随机 `codex_api004_home_*` schema 克隆配置、分类、商品、推荐关系、品牌/标签和微信身份表。真实服务完成精确根形状、精确 `info` 形状、只返回子分类、精品、新品与预售四态、促销、热门、品牌/标签装饰、首页关注、v2 公众号身份选择、v1 旧组件差异和配置投影共 12/12 断言。最终代码版本 `5eb02811-8e80-438a-85ec-f5c6d62bbec5` 返回 `public_state_unchanged=true`，临时 schema `0→0` 并删除，审计 Worker 和摘要 secret 已删除。首次合同/隔离请求因审计 Worker 未提供 `CONFIG_KV` 绑定而在数据库动作前失败；补入只返回 miss 的内存 KV 后重跑通过。另一次 secret 更新遭遇 Cloudflare 控制面瞬时网络错误，对应请求为 403 且未进入数据库；这些探针都没有向 `public` 写入。
+
+### 当前量化与剩余 16 条
+
+注释感知的静态审计现为 PHP 1,904、Workers 1,311、精确匹配 619、可执行匹配 602、明确不可用 17、原始缺失 1,285、证据化退役 3、可执行缺口 1,282；精确/可执行/退役后有效覆盖为 32.5%/31.6%/31.7%。`/api` 为 PHP 457、Workers 637、精确 249、可执行 247、不可用 2、可执行缺口 207；`/api/v2` 精确缺口 `18→16`，另补回 v1 `GET /api/subscribe`。126 个单元测试文件/731 项和双 TypeScript 配置通过；主 Worker minify dry-run 为 2,443.49 KiB/gzip 605.68 KiB，HOME 审计 Worker为 978.94 KiB/gzip 177.70 KiB。Windows runtime 仍在 0 条断言前以 `workerd` 0xc0000005 失败，不能记为通过。
+
+剩余 16 条全部属于 AUTH。HOME 的精确静态缺口已归零，但生产缺少四个数量配置、首页推荐关系、微信身份和地图 key，运行中营销标签仍属于 API-006，源 MySQL 未复制，真实微信、媒体、旧端、预发和正式发布 E2E 均未完成，因此 API-004-HOME 和整体 API-004 继续保持未勾选；AUTH 在取得真实微信凭据并完成一次性凭据、限流和重放保护前保持阻塞，下一批转入 API-005 `/api/pc`。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。

@@ -67,6 +67,28 @@ export function normalizeCatalogPage(page: unknown, limit: unknown, defaultLimit
   };
 }
 
+export function legacyHomeLimit(value: unknown): number {
+  const match = String(value ?? "").trim().match(/^[+-]?\d+/);
+  if (!match) return 0;
+  const parsed = Number(match[0]);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? Math.min(parsed, MAX_LIMIT) : 0;
+}
+
+export function legacyPresalePayStatus(
+  isPresale: unknown,
+  startTime: unknown,
+  endTime: unknown,
+  now = Math.floor(Date.now() / 1_000),
+): number {
+  if (Number(isPresale) !== 1) return 0;
+  const start = int(startTime);
+  const end = int(endTime);
+  if (start > now) return 1;
+  if (start <= now && end >= now) return 2;
+  if (end < now) return 3;
+  return 0;
+}
+
 function plainObject(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -244,8 +266,7 @@ export class PublicCatalogService {
         pic: storeProductCategory.pic,
       }).from(storeProductCategory).where(and(
         eq(storeProductCategory.isShow, 1),
-        eq(storeProductCategory.level, 0),
-        eq(storeProductCategory.type, 0),
+        gt(storeProductCategory.pid, 0),
       )).orderBy(desc(storeProductCategory.sort), desc(storeProductCategory.id)).limit(100),
       this.products.getRecommendProducts(uid, { isBest: true, productTypes: [0, 1, 2, 3], limit: 100 }),
       this.products.getRecommendProducts(uid, { isNew: true, productTypes: [0, 1, 2, 3], limit: 100 }),
@@ -287,6 +308,78 @@ export class PublicCatalogService {
       tengxun_map_key: configs.tengxun_map_key ?? "",
       explosive_money: groups.index_categy_images,
     };
+  }
+
+  /** PHP v2 homepage: deliberately narrower than the v1 homepage payload. */
+  async homeV2(uid: number): Promise<Record<string, unknown>> {
+    const [configs, subscribe] = await Promise.all([
+      this.config.getMany([
+        "fast_number",
+        "bast_number",
+        "first_number",
+        "promotion_number",
+        "tengxun_map_key",
+        "site_name",
+      ]),
+      this.subscribe(uid, { anonymousDefault: true, userType: "wechat" }),
+    ]);
+    const fastNumber = legacyHomeLimit(configs.fast_number);
+    const bastNumber = legacyHomeLimit(configs.bast_number);
+    const firstNumber = legacyHomeLimit(configs.first_number);
+    const promotionNumber = legacyHomeLimit(configs.promotion_number);
+    const [fastList, bastList, firstList, benefit, likeInfo] = await Promise.all([
+      fastNumber
+        ? this.container.db.select({
+          id: storeProductCategory.id,
+          cate_name: storeProductCategory.cateName,
+          pid: storeProductCategory.pid,
+          pic: storeProductCategory.pic,
+        }).from(storeProductCategory).where(and(
+          gt(storeProductCategory.pid, 0),
+          eq(storeProductCategory.isShow, 1),
+        )).orderBy(desc(storeProductCategory.sort), desc(storeProductCategory.id)).limit(fastNumber)
+        : Promise.resolve([]),
+      bastNumber
+        ? this.products.getRecommendProducts(uid, { isBest: true, limit: bastNumber })
+        : Promise.resolve([]),
+      firstNumber
+        ? this.products.getRecommendProducts(uid, { isNew: true, limit: firstNumber })
+        : Promise.resolve([]),
+      promotionNumber
+        ? this.products.getRecommendProducts(uid, { isBenefit: true, limit: promotionNumber })
+        : Promise.resolve([]),
+      this.products.getRecommendProducts(uid, { isHot: true, limit: 3 }),
+    ]);
+    return {
+      info: {
+        fastList,
+        bastList: await this.decorateProducts(bastList),
+        firstList: await this.decorateProducts(firstList),
+      },
+      benefit: await this.decorateProducts(benefit),
+      likeInfo: await this.decorateProducts(likeInfo),
+      subscribe,
+      tengxun_map_key: configs.tengxun_map_key ?? "",
+      site_name: configs.site_name ?? "",
+    };
+  }
+
+  /** v1 defaults anonymous users to followed; v2 /subscribe defaults them to false. */
+  async subscribe(
+    uid: number,
+    options: { anonymousDefault: boolean; userType?: string },
+  ): Promise<boolean> {
+    if (!Number.isSafeInteger(uid) || uid <= 0) return options.anonymousDefault;
+    const rows = await this.container.db.select({ subscribe: wechatUser.subscribe })
+      .from(wechatUser)
+      .where(and(
+        eq(wechatUser.uid, uid),
+        eq(wechatUser.isDel, 0),
+        options.userType ? eq(wechatUser.userType, options.userType) : undefined,
+      ))
+      .orderBy(desc(wechatUser.id))
+      .limit(1);
+    return Boolean(rows[0]?.subscribe);
   }
 
   async menuUser(uid: number): Promise<Record<string, unknown>> {
@@ -630,9 +723,11 @@ export class PublicCatalogService {
       ...item,
       brand_name: brandMap.get(int(item.brand_id)) ?? "",
       store_label: csvIds(item.store_label_id).flatMap((id) => labelMap.get(id) ?? []),
-      presale_pay_status: Number(item.is_presale_product) === 1
-        ? (int(item.presale_start_time) > Math.floor(Date.now() / 1_000) ? 0 : 1)
-        : 0,
+      presale_pay_status: legacyPresalePayStatus(
+        item.is_presale_product,
+        item.presale_start_time,
+        item.presale_end_time,
+      ),
     }));
   }
 }
