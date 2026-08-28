@@ -8,6 +8,7 @@ import { jsonOk } from "@/utils/json";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { LegacyContentService } from "@/services/system/LegacyContentService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
+import { V2PublicCompatibilityService } from "@/services/content/V2PublicCompatibilityService";
 import { jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
@@ -145,4 +146,56 @@ export async function menuUserData(c: C) {
     c,
     await new PublicCatalogService(c.get("container"), c.env).menuUserData(c.get("uid") ?? 0),
   );
+}
+
+function v2PublicService(c: C) {
+  return new V2PublicCompatibilityService(c.get("container"), c.env);
+}
+
+/** GET /api/v2/diy/get_diy/:name? — public legacy DIY payload. */
+export async function getDiyV2(c: C) {
+  try {
+    return jsonOk(c, await v2PublicService(c).diy(c.req.param("name") ?? ""));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/v2/bind_status — whether login must bind a mobile number. */
+export async function bindPhoneStatusV2(c: C) {
+  return jsonOk(c, await v2PublicService(c).bindPhoneStatus());
+}
+
+/** GET /api/v2/diy/get_store_status — self-pickup feature gate. */
+export async function storeStatusV2(c: C) {
+  return jsonOk(c, await v2PublicService(c).storeStatus());
+}
+
+/** GET /api/v2/diy/color_change/:name — theme and category switches. */
+export async function colorChangeV2(c: C) {
+  try {
+    return jsonOk(c, await v2PublicService(c).colorChange(c.req.param("name")));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/v2/diy/product_detail — legacy product-detail visual settings. */
+export async function productDetailDiyV2(c: C) {
+  return jsonOk(c, await v2PublicService(c).productDetail());
+}
+
+/** GET /api/v2/cityList — parse a slash-delimited imported WeChat address. */
+export async function cityListV2(c: C) {
+  try {
+    const data = await v2PublicService(c).cityList(c.req.query("address"));
+    return data === null
+      ? jsonFail(c, "地址暂未录入，请联系管理员")
+      : jsonOk(c, data);
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
 }

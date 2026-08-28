@@ -4,6 +4,7 @@ import * as LotteryController from "@/controllers/api/v1/LotteryController";
 import * as AgentLevelController from "@/controllers/api/v1/AgentLevelController";
 import * as OrderController from "@/controllers/api/v1/OrderController";
 import * as ProductController from "@/controllers/api/v1/ProductController";
+import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
@@ -16,6 +17,14 @@ v2Routes.get("/lottery/info/:factor?", authMiddleware({ force: true }), LotteryC
 v2Routes.post("/lottery", authMiddleware({ force: true }), LotteryController.draw);
 v2Routes.post("/lottery/receive", authMiddleware({ force: true }), LotteryController.receive);
 v2Routes.get("/lottery/record", authMiddleware({ force: true }), LotteryController.records);
+
+// PHP v2 public DIY/configuration and imported-address compatibility contracts.
+v2Routes.get("/diy/get_diy/:name?", PublicController.getDiyV2);
+v2Routes.get("/bind_status", PublicController.bindPhoneStatusV2);
+v2Routes.get("/diy/get_store_status", PublicController.storeStatusV2);
+v2Routes.get("/diy/color_change/:name", PublicController.colorChangeV2);
+v2Routes.get("/diy/product_detail", PublicController.productDetailDiyV2);
+v2Routes.get("/cityList", PublicController.cityListV2);
 
 // PHP v2 user/search and customer-service contracts used by the legacy UniApp.
 v2Routes.get("/user/search_list", authMiddleware({ force: false }), UserBehaviorController.searchList);

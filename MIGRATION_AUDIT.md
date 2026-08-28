@@ -1294,6 +1294,30 @@ API-003 仍不能标记整体完成：付款码只有签发端，TS 收银消费
 
 剩余 35 条为 AUTH 16、DIY 6、COUPON 3、USER 5、PROMO 3、HOME 2。CART 的精确静态缺口已归零，但生产 69/71 有效商品缺 SKU、商品属性 0、源 MySQL 未复制、旧 UniApp 页面已不在当前仓库、真实账号/真机/预发和正式发布均未完成，所以整个 API-004 和发布门禁仍不能勾选；下一批继续 API-004-DIY/COUPON/USER，AUTH 保持 CORE-004 的真实微信凭据与重放保护门禁。
 
+## API-004-DIY 六条公开配置与城市合同审计（2026-08-28）
+
+### PHP 权威语义与兼容实现
+
+本批逐行核对 PHP `route/api.php` 的 v2 无需授权组、`v2/PublicController.php`、`DiyServices`、`CityAreaServices/Dao` 和 `CityArea` 模型，精确恢复 `GET /api/v2/diy/get_diy/:name?`、`bind_status`、`diy/get_store_status`、`diy/color_change/:name`、`diy/product_detail` 与 `cityList`。六条路由不挂认证中间件，与 PHP 的公开边界一致；没有把现有 v1 首页/导航或旧 `system_city` 近似别名成这些响应。源 `diy` 继续通过数据迁移 manifest 显式映射到目标 `system_dise`，不重新引入第二张运行时权威表。
+
+默认 DIY 按 `status=1 + type=1` 读取，命名 DIY 按 `template_name` 精确读取；JSON 上限为 2 MiB，畸形 JSON 保持 `null` 而不是在 isolate 中无界解析。商品详情严格复刻 PHP `array_merge(default, array_intersect_key(saved, default))`：保存值可覆盖 19 个历史键，但未知键不会进入用户合同；商品分类则复刻 `array_merge(default, saved)`，保留合法扩展键。绑定、总门店、自提、导航、分类层级和商品视频开关统一读取现有 `SystemConfigService`，门店总开关缺失时按 PHP 默认 1、自提缺失按 0，返回仍是 `status/store_status/navigation/product_category_level/product_detail/product_video_status/product_category` 旧字段。旧 `get_thumb_water` 只在 `image_thumb_status` 开启时做提供商缩略图；生产该配置和 DIY 数据均不存在，本实现保留源媒体 URL，不伪造旧 OSS 变体，后续媒体迁移仍必须按私有 R2 合同验收。
+
+`cityList` 接受旧微信导入地址的 `/省/市/区/街道` 形式，去掉一次 `北京市/北京市` 这类直辖市重复段，最多 8 段、每段最多 100 字。每段名称用参数化精确等值匹配，唯一 `LIKE` 模式只由已经确认的数字祖先 ID 生成，不允许用户 `%/_` 形成任意路径扫描；找到的目标和 `path` 祖先一次批量读取，所有祖先的一层 `children` 也只做一次批量查询，避免按返回行 N+1。缺地址返回“地址不存在”，首段未录入返回“地址暂未录入，请联系管理员”，均保持 PHP 业务失败信封。
+
+### 正式生产只读与随机 schema 证据
+
+摘要令牌保护的一次性 Worker `cinashop-v2-public-diy-compatibility-audit` 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产事务固定 `search_path=public`、`statement_timeout=30s` 和 `SET TRANSACTION READ ONLY`。PostgreSQL 16.14 当前 `system_dise=0`、有效首页 DIY=0、`type=3` DIY=0、重复 `template_name+type` 范围=0；`city_area=0`、根节点=0、最大层级=0、孤儿/自指=0。两表连索引分别占 32,768/24,576 字节，DIY 有 `system_dise_pkey/sd_template_type/sd_status_type`，城市有 `city_area_pkey/ca_parent/ca_path`。零行数据无法产生有意义的城市名称执行计划，本批没有向生产添加投机索引；完整城市从源库复制后应重跑名称/祖先计划，再决定是否需要名称索引。
+
+本批 8 个相关配置中只有 `site_url` 存在，而且有 5 条历史值（最高优先值为 `https://cinashop-pc.pages.dev`，另有 4 条示例域名）；绑定、门店、自提、导航、分类层级、商品视频和缩略图配置均缺失。真实服务因此正确返回空首页/命名 DIY、`bind.status=false`、`store_status=0`、换色三个整数 0、商品详情/分类默认值以及空城市数组。该证据说明代码能在现有结构上读取并安全降级，但 `diy/city_area/system_config` 源数据尚未完成迁移，`site_url` 冲突仍归 DB-003 由运营确认，不能把默认响应记作内容迁移完成。
+
+随机 `codex_api004_diy_*` schema 克隆生产 `system_dise/city_area/system_config`，所有播种和读取都在显式 `SET LOCAL search_path` 事务内完成。真实服务验证默认/命名 DIY、强制绑定、门店/自提、换色/导航/分类层级、商品详情未知键剔除、分类扩展键保留、四级城市链、重复直辖市段和缺失城市，共 10/10 断言通过；四级结果为“审计省/审计市/审计区/审计街道”，区级父项的一层 children 同时包含目标区和旁区。最终 `public` 三张表行数不变、`public_state_unchanged=true`、临时 schema `0→0`，审计版本 `87068c4f-6859-4240-8b28-8c930c987638` 和摘要变量随 Worker 一并删除。独立部署列表确认主 Worker 仍 100% 运行 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，没有发布本批代码。
+
+### 当前量化与剩余 29 条
+
+注释感知的静态审计现为 PHP 1,904、Workers 1,297、精确匹配 605、可执行匹配 588、明确不可用 17、原始缺失 1,299、证据化退役 3、可执行缺口 1,296；精确/可执行覆盖为 31.8%/30.9%。`/api` 为 PHP 457、Workers 623、精确 235、可执行 233、不可用 2、可执行缺口 221；`/api/v2` 精确缺口 `35→29`。122 个单元测试文件/702 项和双 TypeScript 配置通过；主 Worker minify dry-run 为 2,406.65 KiB/gzip 595.35 KiB，DIY 审计 Worker 为 371.74 KiB/gzip 84.56 KiB。Windows runtime 仍在 0 条断言前以 `workerd` 0xc0000005 失败，不能记为通过。
+
+剩余 29 条为 AUTH 16、COUPON 3、USER 5、PROMO 3、HOME 2。DIY 的精确静态缺口已归零，但生产 DIY/城市为空、权威配置未复制、旧 UniApp 页面已不在当前仓库，媒体 R2、真实账号/真机、预发和正式发布也未完成，因此 API-004-DIY 与整体 API-004 继续保持未勾选；下一批进入 API-004-COUPON/USER，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。
