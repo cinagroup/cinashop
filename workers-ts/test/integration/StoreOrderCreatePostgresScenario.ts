@@ -1,5 +1,9 @@
-import { count, eq, inArray, sql } from "drizzle-orm";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 import {
+  memberRight,
+  storeCouponIssue,
+  storeCouponIssueUser,
+  storeCouponUser,
   storeBargain,
   storeBargainUser,
   storeCart,
@@ -8,11 +12,15 @@ import {
   storeOrder,
   storeOrderCartInfo,
   storeOrderStatus,
+  storeOrderProductCouponReward,
   storeProduct,
   storeProductAttrValue,
+  storeProductCoupon,
   storeSeckill,
   systemStore,
+  systemUserLevel,
   user,
+  userBill,
 } from "@/models/schema";
 import {
   createContainerFromDb,
@@ -27,6 +35,9 @@ import {
   type CreateOrderParams,
   type StoreOrderCreationRuntime,
 } from "@/services/order/StoreOrderCreateService";
+import { grantPaidOrderProductCoupons } from "@/services/activity/ProductCouponService";
+import { LegacyOrderCompatibilityService } from "@/services/order/LegacyOrderCompatibilityService";
+import { MigrationService } from "@/services/MigrationService";
 
 const CLONED_TABLES = [
   "user",
@@ -44,12 +55,24 @@ const CLONED_TABLES = [
   "store_combination",
   "store_pink",
   "store_integral",
+  "system_user_level",
+  "member_right",
+  "store_coupon_issue",
+  "store_coupon_issue_user",
+  "store_coupon_user",
+  "store_product_coupon",
+  "shipping_templates",
+  "shipping_templates_region",
+  "shipping_templates_free",
+  "shipping_templates_no_delivery",
 ] as const;
 
 const LOCAL_SEQUENCE_TABLES = [
   "store_order",
   "store_order_cart_info",
   "store_order_status",
+  "user_bill",
+  "store_coupon_user",
 ] as const;
 
 interface PublicSnapshot {
@@ -125,6 +148,23 @@ export interface StoreOrderCreatePostgresReport {
     resources_restored: boolean;
     cancel_status_rows: number;
   };
+  pricing_and_reward_policy: {
+    quote_matches_order: boolean;
+    raw_total: string;
+    member_total: string;
+    coupon_discount: string;
+    integral_discount: string;
+    used_integral: string;
+    frozen_integral_excluded: boolean;
+    raw_postage: string;
+    paid_postage: string;
+    pay_price: string;
+    reward_calls: number[];
+    one_coupon_for_duplicate_links: boolean;
+    reward_inventory_decrement: number;
+    reward_ledger_rows: number;
+    prize_coupon_rows: number;
+  };
 }
 
 interface FixtureIds {
@@ -164,6 +204,17 @@ interface FixtureIds {
     activitySkuUnique: string;
     activityId: number;
   };
+  pricing: {
+    levelId: number;
+    productId: number;
+    secondProductId: number;
+    skuId: number;
+    cartId: number;
+    skuUnique: string;
+    discountIssueId: number;
+    discountCouponUserId: number;
+    rewardIssueId: number;
+  };
 }
 
 function assertCondition(condition: unknown, message: string): asserts condition {
@@ -184,7 +235,7 @@ function makeSchemaName(): string {
 function makeFixtureIds(base: number): FixtureIds {
   return {
     storeId: base + 100,
-    users: [base + 1, base + 2, base + 3, base + 4, base + 5, base + 6, base + 7],
+    users: [base + 1, base + 2, base + 3, base + 4, base + 5, base + 6, base + 7, base + 8],
     sameCart: {
       productId: base + 1_000,
       skuId: base + 2_000,
@@ -234,6 +285,17 @@ function makeFixtureIds(base: number): FixtureIds {
       activitySkuUnique: "itcr0407",
       activityId: base + 5_006,
     },
+    pricing: {
+      levelId: base + 7_000,
+      productId: base + 1_007,
+      secondProductId: base + 1_008,
+      skuId: base + 2_008,
+      cartId: base + 3_010,
+      skuUnique: "itcr0008",
+      discountIssueId: base + 8_000,
+      discountCouponUserId: base + 8_001,
+      rewardIssueId: base + 8_002,
+    },
   };
 }
 
@@ -251,6 +313,36 @@ function createRuntime(): StoreOrderCreationRuntime {
       const random = new Uint32Array(2);
       crypto.getRandomValues(random);
       return `wxit${Date.now().toString(36)}${random[0].toString(36)}${random[1].toString(36)}`.slice(0, 32);
+    },
+  };
+}
+
+function createPricingRuntime(): StoreOrderCreationRuntime {
+  const values: Record<string, string> = {
+    member_func_status: "1",
+    member_card_status: "1",
+    svip_price_status: "1",
+    integral_ratio_status: "1",
+    integral_ratio: "0.01",
+    integral_max_type: "1",
+    integral_max_num: "200",
+    integral_max_rate: "0",
+    whole_free_shipping: "0",
+    store_free_postage: "0",
+    offline_postage: "0",
+  };
+  return {
+    CONFIG_KV: {
+      async get(key: string) {
+        return values[key.replace(/^cfg_/, "")] ?? "0";
+      },
+      async put() {},
+      async delete() {},
+    },
+    async nextOrderId() {
+      const random = new Uint32Array(2);
+      crypto.getRandomValues(random);
+      return `wxprice${Date.now().toString(36)}${random[0].toString(36)}${random[1].toString(36)}`.slice(0, 32);
     },
   };
 }
@@ -336,8 +428,43 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       nickname: `create user ${index}`,
       status: 1,
       isDel: 0,
-      integral: index === 6 ? 100 : 0,
+      integral: index === 6 ? 100 : index === 7 ? 500 : 0,
+      level: index === 7 ? ids.pricing.levelId : 0,
+      isMoneyLevel: index === 7 ? 1 : 0,
+      overdueTime: index === 7 ? Math.floor(Date.now() / 1000) + 86_400 : 0,
+      isFirstOrder: index === 7 ? 1 : 0,
     })));
+    await tx.insert(systemUserLevel).values({
+      id: ids.pricing.levelId,
+      name: "pricing integration level",
+      discount: "90",
+      isShow: 1,
+      isDel: 0,
+    });
+    await tx.insert(memberRight).values([{
+      rightType: "vip_price",
+      title: "VIP price",
+      number: 1,
+      status: 1,
+    }, {
+      rightType: "express",
+      title: "Express discount",
+      number: 50,
+      status: 1,
+    }]);
+    await tx.insert(userBill).values({
+      id: ids.pricing.discountCouponUserId + 100,
+      uid: ids.users[7],
+      linkId: "pricing-frozen",
+      pm: 1,
+      title: "frozen points fixture",
+      category: "integral",
+      type: "gain",
+      number: "100.00",
+      balance: "500.00",
+      frozenTime: Math.floor(Date.now() / 1000) + 86_400,
+      status: 1,
+    });
     await tx.insert(systemStore).values({
       id: ids.storeId,
       name: "create-order integration store",
@@ -354,6 +481,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       [ids.bargain.productId, 1, "bargain"],
       [ids.combination.productId, 1, "combination"],
       [ids.integral.productId, 2, "integral"],
+      [ids.pricing.productId, 5, "pricing"],
     ] as const;
     await tx.insert(storeProduct).values(products.map(([id, stock, name]) => ({
       id,
@@ -364,6 +492,9 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       isShow: 1,
       isDel: 0,
       systemFormId: 0,
+      isVip: id === ids.pricing.productId ? 1 : 0,
+      freight: id === ids.pricing.productId ? 2 : 1,
+      postage: id === ids.pricing.productId ? "2.50" : "0.00",
     })));
     const skus = [
       [ids.sameCart.skuId, ids.sameCart.productId, ids.sameCart.skuUnique, 5],
@@ -373,6 +504,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       [ids.bargain.skuId, ids.bargain.productId, ids.bargain.skuUnique, 1],
       [ids.combination.skuId, ids.combination.productId, ids.combination.skuUnique, 1],
       [ids.integral.skuId, ids.integral.productId, ids.integral.skuUnique, 2],
+      [ids.pricing.skuId, ids.pricing.productId, ids.pricing.skuUnique, 5],
     ] as const;
     await tx.insert(storeProductAttrValue).values(skus.map(([id, productId, unique, stock]) => ({
       id,
@@ -384,6 +516,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       stock,
       sales: 0,
       type: 0,
+      vipPrice: id === ids.pricing.skuId ? "8.00" : "0.00",
     })));
     await tx.insert(storeProductAttrValue).values({
       id: ids.integral.activitySkuId,
@@ -427,7 +560,67 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       { id: ids.integral.cartId, uid: ids.users[6], productId: ids.integral.productId,
         productAttrUnique: ids.integral.skuUnique, cartNum: 1, type: 4,
         activityId: ids.integral.activityId, status: 1, isPay: 0, isDel: 0 },
+      { id: ids.pricing.cartId, uid: ids.users[7], productId: ids.pricing.productId,
+        productAttrUnique: ids.pricing.skuUnique, cartNum: 2, type: 0,
+        status: 1, isPay: 0, isDel: 0 },
     ]);
+    const couponStart = new Date(Date.now() - 86_400_000);
+    const couponEnd = new Date(Date.now() + 30 * 86_400_000);
+    await tx.insert(storeCouponIssue).values([{
+      id: ids.pricing.discountIssueId,
+      couponType: 0,
+      couponTitle: "pricing discount",
+      title: "pricing discount",
+      type: 1,
+      couponPrice: "3.00",
+      useMinPrice: "0.00",
+      totalCount: 10,
+      remainCount: 10,
+      startTime: couponStart,
+      endTime: couponEnd,
+      useStartTime: couponStart,
+      useEndTime: couponEnd,
+      status: 1,
+      isDel: 0,
+    }, {
+      id: ids.pricing.rewardIssueId,
+      couponType: 0,
+      couponTitle: "paid order reward",
+      title: "paid order reward",
+      type: 1,
+      couponPrice: "1.00",
+      useMinPrice: "0.00",
+      totalCount: 10,
+      remainCount: 10,
+      day: 30,
+      status: 1,
+      isDel: 0,
+    }]);
+    await tx.insert(storeCouponUser).values({
+      id: ids.pricing.discountCouponUserId,
+      uid: ids.users[7],
+      issueCouponId: ids.pricing.discountIssueId,
+      couponTitle: "pricing discount",
+      couponPrice: "3.00",
+      useMinPrice: "0.00",
+      status: 0,
+      startTime: couponStart,
+      endTime: couponEnd,
+      type: 1,
+      receiveSource: "send",
+      isFail: 0,
+    });
+    await tx.insert(storeProductCoupon).values([{
+      id: ids.pricing.rewardIssueId + 100,
+      productId: ids.pricing.productId,
+      issueCouponId: ids.pricing.rewardIssueId,
+      title: "paid order reward",
+    }, {
+      id: ids.pricing.rewardIssueId + 101,
+      productId: ids.pricing.secondProductId,
+      issueCouponId: ids.pricing.rewardIssueId,
+      title: "paid order reward",
+    }]);
 
     await tx.insert(storeSeckill).values({
       id: ids.seckill.activityId,
@@ -876,6 +1069,167 @@ async function runIntegralReservationCancel(
   });
 }
 
+async function runPricingAndRewardPolicy(
+  firstDb: DbClient,
+  secondDb: DbClient,
+  observerDb: DbClient,
+  schemaName: string,
+  ids: FixtureIds,
+): Promise<StoreOrderCreatePostgresReport["pricing_and_reward_policy"]> {
+  const uid = ids.users[7];
+  const params = orderParams(
+    ids,
+    uid,
+    `pricing-${ids.storeId}`,
+    ids.pricing.cartId,
+    {
+      shippingType: 1,
+      storeId: 0,
+      province: "Integration Province",
+      userAddress: "Integration Province Integration City Integration Street",
+      couponId: ids.pricing.discountCouponUserId,
+      useIntegral: true,
+      payType: "yue",
+      type: 0,
+    },
+  );
+  const quote = await withSchema(observerDb, schemaName, (container) =>
+    StoreOrderCreateService.createWithRuntime(
+      container,
+      createPricingRuntime(),
+      params,
+      { preview: true },
+    )
+  );
+  const created = await withSchema(observerDb, schemaName, (container) =>
+    StoreOrderCreateService.createWithRuntime(container, createPricingRuntime(), params)
+  );
+  const order = await withSchema(observerDb, schemaName, async (container) => {
+    const rows = await container.db
+      .select()
+      .from(storeOrder)
+      .where(eq(storeOrder.orderId, created.orderId))
+      .limit(1);
+    const row = rows[0];
+    assertCondition(row, "pricing order was not created");
+    await container.db.insert(storeOrderCartInfo).values({
+      uid,
+      oid: row.id,
+      cartId: String(ids.pricing.cartId + 1),
+      unique: `pricing-reward-${ids.storeId}`,
+      productId: ids.pricing.secondProductId,
+      skuUnique: "pricing-reward-secondary",
+      cartNum: 1,
+      surplusNum: 1,
+      splitSurplusNum: 1,
+      cartInfo: JSON.stringify({ product: { id: ids.pricing.secondProductId } }),
+    });
+    await container.db
+      .update(storeOrder)
+      .set({ paid: 1, payType: "yue", payTime: Math.floor(Date.now() / 1000) })
+      .where(eq(storeOrder.id, row.id));
+    return row;
+  });
+
+  const rewardCalls = await Promise.all([
+    withSchema(firstDb, schemaName, ({ db }) =>
+      grantPaidOrderProductCoupons(db, order.id, uid, Math.floor(Date.now() / 1000))
+    ),
+    withSchema(secondDb, schemaName, ({ db }) =>
+      grantPaidOrderProductCoupons(db, order.id, uid, Math.floor(Date.now() / 1000))
+    ),
+  ]);
+
+  const state = await withSchema(observerDb, schemaName, async (container) => {
+    const [orders, accounts, deductionBills, rewardIssues, rewardCoupons, ledgers, issueUsers] =
+      await Promise.all([
+        container.db.select().from(storeOrder).where(eq(storeOrder.id, order.id)).limit(1),
+        container.db.select().from(user).where(eq(user.uid, uid)).limit(1),
+        container.db.select().from(userBill).where(and(
+          eq(userBill.uid, uid),
+          eq(userBill.eventKey, "order_integral_deduction"),
+        )),
+        container.db.select().from(storeCouponIssue)
+          .where(eq(storeCouponIssue.id, ids.pricing.rewardIssueId)).limit(1),
+        container.db.select().from(storeCouponUser).where(and(
+          eq(storeCouponUser.uid, uid),
+          eq(storeCouponUser.issueCouponId, ids.pricing.rewardIssueId),
+          eq(storeCouponUser.receiveSource, "order"),
+        )),
+        container.db.select().from(storeOrderProductCouponReward)
+          .where(eq(storeOrderProductCouponReward.orderId, order.id)),
+        container.db.select().from(storeCouponIssueUser).where(and(
+          eq(storeCouponIssueUser.uid, uid),
+          eq(storeCouponIssueUser.issueCouponId, ids.pricing.rewardIssueId),
+        )),
+      ]);
+    const prize = await new LegacyOrderCompatibilityService(container, {} as never)
+      .orderPrize(uid, created.orderId);
+    return {
+      order: orders[0],
+      account: accounts[0],
+      deductionBills,
+      rewardIssue: rewardIssues[0],
+      rewardCoupons,
+      ledgers,
+      issueUsers,
+      prize,
+    };
+  });
+  assertCondition(state.order && state.account && state.rewardIssue, "pricing/reward state is incomplete");
+  const quoteMatchesOrder =
+    state.order.totalPrice === (quote.totalCents / 100).toFixed(2) &&
+    state.order.couponPrice === (quote.couponPriceCents / 100).toFixed(2) &&
+    state.order.deductionPrice === (quote.deductionCents / 100).toFixed(2) &&
+    state.order.totalPostage === (quote.totalPostageCents / 100).toFixed(2) &&
+    state.order.payPostage === (quote.payPostageCents / 100).toFixed(2) &&
+    state.order.payPrice === (quote.payCents / 100).toFixed(2) &&
+    state.order.useIntegral === quote.usedIntegralPoints.toFixed(2);
+  const oneCouponForDuplicateLinks =
+    [...rewardCalls].sort((a, b) => a - b).join(",") === "0,1" &&
+    state.rewardCoupons.length === 1 &&
+    state.ledgers.length === 1 &&
+    state.issueUsers.length === 1;
+  const frozenIntegralExcluded =
+    quote.usedIntegralPoints === 200 &&
+    quote.surplusIntegralPoints === 200 &&
+    state.account.integral === 300 &&
+    state.deductionBills.length === 1;
+  assertCondition(
+    quote.rawTotalCents === 2_000 && quote.totalCents === 1_600 &&
+      quote.memberDiscountCents === 400 && quote.paidMemberDiscountCents === 400,
+    `member quote drifted: ${JSON.stringify(quote)}`,
+  );
+  assertCondition(
+    quote.couponPriceCents === 300 && quote.deductionCents === 200 &&
+      quote.totalPostageCents === 500 && quote.payPostageCents === 250 &&
+      quote.payCents === 1_350,
+    `coupon/integral/postage quote drifted: ${JSON.stringify(quote)}`,
+  );
+  assertCondition(quoteMatchesOrder, "preview and persisted order totals diverged");
+  assertCondition(frozenIntegralExcluded, "frozen points were treated as spendable");
+  assertCondition(oneCouponForDuplicateLinks, "duplicate product links granted duplicate coupons");
+  assertCondition(state.rewardIssue.remainCount === 9, "reward inventory was not decremented once");
+  assertCondition(state.prize.coupons.length === 1, "order prize did not expose the durable coupon reward");
+  return {
+    quote_matches_order: quoteMatchesOrder,
+    raw_total: (quote.rawTotalCents / 100).toFixed(2),
+    member_total: (quote.totalCents / 100).toFixed(2),
+    coupon_discount: (quote.couponPriceCents / 100).toFixed(2),
+    integral_discount: (quote.deductionCents / 100).toFixed(2),
+    used_integral: quote.usedIntegralPoints.toFixed(2),
+    frozen_integral_excluded: frozenIntegralExcluded,
+    raw_postage: (quote.totalPostageCents / 100).toFixed(2),
+    paid_postage: (quote.payPostageCents / 100).toFixed(2),
+    pay_price: (quote.payCents / 100).toFixed(2),
+    reward_calls: rewardCalls,
+    one_coupon_for_duplicate_links: oneCouponForDuplicateLinks,
+    reward_inventory_decrement: 10 - state.rewardIssue.remainCount,
+    reward_ledger_rows: state.ledgers.length,
+    prize_coupon_rows: state.prize.coupons.length,
+  };
+}
+
 export async function runStoreOrderCreatePostgresScenario(
   connectionString: string,
 ): Promise<StoreOrderCreatePostgresReport> {
@@ -918,6 +1272,10 @@ export async function runStoreOrderCreatePostgresScenario(
           `ALTER TABLE ${schemaIdentifier}.${tableIdentifier} ALTER COLUMN "id" SET DEFAULT nextval('${schemaName}.${table}_id_seq_it'::regclass)`,
         );
       }
+      await tx.unsafe(`SET LOCAL search_path TO ${schemaIdentifier}`);
+      await tx.unsafe(
+        new MigrationService({} as never).orderProductCouponRewardMigrationSqlForVerification(),
+      );
     });
     created = true;
 
@@ -940,6 +1298,13 @@ export async function runStoreOrderCreatePostgresScenario(
     const bargainReservationCancel = await runBargainReservationCancel(adminDb, schemaName, ids);
     const combinationReservationCancel = await runCombinationReservationCancel(adminDb, schemaName, ids);
     const integralReservationCancel = await runIntegralReservationCancel(adminDb, schemaName, ids);
+    const pricingAndRewardPolicy = await runPricingAndRewardPolicy(
+      concurrentDbA,
+      concurrentDbB,
+      observerDb,
+      schemaName,
+      ids,
+    );
     report = {
       server_version: versionRows[0]?.server_version ?? "unknown",
       schema_created: true,
@@ -950,6 +1315,7 @@ export async function runStoreOrderCreatePostgresScenario(
       bargain_reservation_cancel: bargainReservationCancel,
       combination_reservation_cancel: combinationReservationCancel,
       integral_reservation_cancel: integralReservationCancel,
+      pricing_and_reward_policy: pricingAndRewardPolicy,
     };
   } finally {
     try {

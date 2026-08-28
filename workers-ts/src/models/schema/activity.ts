@@ -23,6 +23,7 @@ import {
   smallint,
   timestamp,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // ─── 优惠券模板 (可领取) ───────────────────────────────────
@@ -159,6 +160,27 @@ export const storeProductCoupon = pgTable(
   (table) => [
     index("spc_product").on(table.productId, table.id),
     index("spc_issue").on(table.issueCouponId, table.productId),
+  ],
+);
+
+// ─── 支付后商品赠券的订单归属/幂等证据 ─────────────────────
+// PHP 把这份结果短存 Redis；Workers 需要可重放、可审计的 PostgreSQL 证据，
+// 否则无法安全回答 /order/prize，也无法独立阻断同一订单重复发券。
+export const storeOrderProductCouponReward = pgTable(
+  "store_order_product_coupon_reward",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id").notNull(),
+    uid: integer("uid").notNull(),
+    productId: integer("product_id").notNull(),
+    issueCouponId: integer("issue_coupon_id").notNull(),
+    couponUserId: integer("coupon_user_id").notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (table) => [
+    uniqueIndex("sopcr_order_issue_uq").on(table.orderId, table.issueCouponId),
+    uniqueIndex("sopcr_coupon_user_uq").on(table.couponUserId),
+    index("sopcr_uid_order").on(table.uid, table.orderId, table.id),
   ],
 );
 

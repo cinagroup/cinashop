@@ -1,11 +1,124 @@
-import { createDbFromConnectionString } from "@/lib/di";
+import { createContainerFromDb, createDbFromConnectionString } from "@/lib/di";
 import { runStoreOrderCreatePostgresScenario } from "./StoreOrderCreatePostgresScenario";
 import { runStoreOrderPaymentCancelPostgresScenario } from "./StoreOrderPaymentCancelPostgresScenario";
 import { runStoreOrderRefundPostgresScenario } from "./StoreOrderRefundPostgresScenario";
+import { MigrationService } from "@/services/MigrationService";
 
 type AuditEnv = Pick<WorkerBindings, "HYPERDRIVE"> & {
   AUDIT_TOKEN_SHA256: string;
 };
+
+const BUSINESS_FINGERPRINT_SQL = `
+  SELECT jsonb_build_object(
+    'user', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public."user" t),
+    'store_order', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_order t),
+    'store_order_cart_info', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_order_cart_info t),
+    'store_coupon_issue', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_coupon_issue t),
+    'store_coupon_user', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_coupon_user t),
+    'store_order_refund', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_order_refund t),
+    'system_config', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.system_config t),
+    'sequences', (SELECT coalesce(jsonb_object_agg(sequencename, last_value ORDER BY sequencename), '{}'::jsonb)
+      FROM pg_sequences WHERE schemaname = 'public'
+        AND sequencename <> 'store_order_product_coupon_reward_id_seq')
+  )::text AS fingerprint
+`;
+
+async function rewardMigrationState(connectionString: string) {
+  const db = createDbFromConnectionString(connectionString, 1, {
+    applicationName: "cinashop_api002_reward_migration_state",
+  });
+  try {
+    return await db.$client.begin(async (tx) => {
+      await tx`SET LOCAL search_path TO public`;
+      await tx`SET TRANSACTION READ ONLY`;
+      const catalog = await tx<Array<Record<string, unknown>>>`
+        SELECT
+          (SELECT count(*)::int FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE') AS tables,
+          (SELECT count(*)::int FROM information_schema.columns
+            WHERE table_schema = 'public') AS columns,
+          (SELECT count(*)::int FROM pg_indexes WHERE schemaname = 'public') AS indexes,
+          (SELECT count(*)::int FROM pg_constraint
+            WHERE contype = 'p' AND connamespace = 'public'::regnamespace) AS primary_keys
+      `;
+      const target = await tx<Array<Record<string, unknown>>>`
+        SELECT
+          to_regclass('public.store_order_product_coupon_reward') IS NOT NULL AS exists,
+          (SELECT count(*)::int FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'store_order_product_coupon_reward') AS columns,
+          (SELECT count(*)::int FROM pg_indexes
+            WHERE schemaname = 'public' AND tablename = 'store_order_product_coupon_reward') AS indexes,
+          (SELECT count(*)::int FROM pg_constraint
+            WHERE conrelid = to_regclass('public.store_order_product_coupon_reward')) AS constraints
+      `;
+      const targetState = target[0] ?? {};
+      if (targetState.exists === true) {
+        const rows = await tx<Array<{ exact_rows: number }>>`
+          SELECT count(*)::int AS exact_rows FROM public.store_order_product_coupon_reward
+        `;
+        targetState.exact_rows = rows[0]?.exact_rows ?? -1;
+      } else {
+        targetState.exact_rows = null;
+      }
+      const fingerprint = await tx.unsafe<Array<{ fingerprint: string }>>(BUSINESS_FINGERPRINT_SQL);
+      return {
+        catalog: catalog[0] ?? {},
+        target: targetState,
+        business_fingerprint: fingerprint[0]?.fingerprint ?? "",
+      };
+    });
+  } finally {
+    await db.$client.end({ timeout: 1 });
+  }
+}
+
+async function applyRewardMigration(connectionString: string) {
+  const before = await rewardMigrationState(connectionString);
+  const db = createDbFromConnectionString(connectionString, 1, {
+    applicationName: "cinashop_api002_reward_migration",
+  });
+  const service = new MigrationService(createContainerFromDb(db));
+  const migration = service.orderProductCouponRewardMigrationSqlForVerification();
+  const applications: Array<{ business_fingerprint_unchanged: boolean }> = [];
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      applications.push(await db.$client.begin(async (tx) => {
+        await tx`SET LOCAL search_path TO public`;
+        await tx`SET LOCAL lock_timeout = '3s'`;
+        await tx`SET LOCAL statement_timeout = '30s'`;
+        await tx`SELECT pg_advisory_xact_lock(hashtext('cinashop-api002-reward-migration'))`;
+        const fingerprintBefore = await tx.unsafe<Array<{ fingerprint: string }>>(BUSINESS_FINGERPRINT_SQL);
+        await tx.unsafe(migration);
+        const fingerprintAfter = await tx.unsafe<Array<{ fingerprint: string }>>(BUSINESS_FINGERPRINT_SQL);
+        if (!fingerprintBefore[0] || fingerprintBefore[0].fingerprint !== fingerprintAfter[0]?.fingerprint) {
+          throw new Error("business fingerprint changed inside reward DDL transaction");
+        }
+        return { business_fingerprint_unchanged: true };
+      }));
+    }
+  } finally {
+    await db.$client.end({ timeout: 1 });
+  }
+  const after = await rewardMigrationState(connectionString);
+  if (before.business_fingerprint !== after.business_fingerprint) {
+    throw new Error("public business fingerprint changed across reward migration");
+  }
+  return { before, applications, after, business_fingerprint_unchanged: true };
+}
 
 async function authorize(request: Request, verifier: string): Promise<boolean> {
   if (!verifier) return false;
@@ -121,6 +234,16 @@ export default {
         const payment = await runStoreOrderPaymentCancelPostgresScenario(env.HYPERDRIVE.connectionString);
         const refund = await runStoreOrderRefundPostgresScenario(env.HYPERDRIVE.connectionString);
         return Response.json({ creation, payment, refund });
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : String(error) },
+          { status: 500 },
+        );
+      }
+    }
+    if (request.method === "POST" && pathname === "/migrate-reward") {
+      try {
+        return Response.json(await applyRewardMigration(env.HYPERDRIVE.connectionString));
       } catch (error) {
         return Response.json(
           { error: error instanceof Error ? error.message : String(error) },

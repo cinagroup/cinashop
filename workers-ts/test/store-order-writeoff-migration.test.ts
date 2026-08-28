@@ -57,7 +57,10 @@ describe("pickup-store and writeoff migration", () => {
     expect(source).toContain("inArray(storeOrderRefund.refundType, OPEN_REFUND_TYPES)");
     expect(refund).toContain("Refund applications, writeoff, receipt, and refund execution share one order lock");
     expect(refund).toContain("export async function applyOrderRefund(");
-    expect(refund).toContain("return applyOrderRefund(this.container, params)");
+    expect(refund).toContain('get("refund_time_available")');
+    expect(refund).toContain(
+      "return applyOrderRefund(this.container, params, parseRefundTimeDays(configured))",
+    );
     expect(refund).toContain("await lockOrderSettlement(tx, candidate.id)");
     expect(refund).toContain("item.writeTimes > item.writeSurplusTimes");
     expect(refund).toContain("订单已有核销记录，请仅选择未核销商品申请售后");

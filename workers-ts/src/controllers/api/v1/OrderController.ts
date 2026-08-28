@@ -186,6 +186,7 @@ export async function orderCreate(c: C) {
     cart_ids?: number[];
     cartId?: string | number | number[];
     addressId?: number;
+    address_id?: number;
     realName?: string;
     userPhone?: string;
     province?: string;
@@ -197,7 +198,8 @@ export async function orderCreate(c: C) {
     shipping_type?: number;
     storeId?: number;
     store_id?: number;
-    useIntegral?: number;
+    useIntegral?: boolean | number;
+    use_integral?: boolean | number;
     /** M17: 活动下单参数 */
     type?: number;
     pinkId?: number;
@@ -207,6 +209,7 @@ export async function orderCreate(c: C) {
     bargainUserId?: number;
     bargainId?: number;
     couponId?: number;
+    coupon_id?: number;
     payType?: string;
     pay_type?: string;
     from?: string;
@@ -231,7 +234,7 @@ export async function orderCreate(c: C) {
   }
 
   const firstCart = cartIds.length ? await c.get("container").storeCartDao.get(cartIds[0]) : null;
-  const addressId = Number(body.addressId ?? 0);
+  const addressId = Number(body.addressId ?? body.address_id ?? 0);
   const address = addressId > 0 ? await c.get("container").userAddressDao.get(addressId) : null;
   if (address && (address.uid !== uid || address.isDel !== 0)) return jsonFail(c, "收货地址不存在");
 
@@ -253,14 +256,15 @@ export async function orderCreate(c: C) {
       mark: body.mark,
       shippingType: body.shippingType ?? body.shipping_type,
       storeId: body.storeId ?? body.store_id,
-      useIntegral: body.useIntegral,
+      useIntegral: body.useIntegral ?? body.use_integral,
+      payType: body.payType ?? body.pay_type,
       userIp: clientIp(c),
       type: body.type ?? firstCart?.type,
       pinkId: body.pinkId,
       combinationId: body.combinationId,
       seckillId: body.seckillId ?? body.seckill_id,
       bargainUserId: body.bargainUserId ?? body.bargainId,
-      couponId: body.couponId,
+      couponId: body.couponId ?? body.coupon_id,
       customForm: body.customForm ?? body.custom_form,
     });
     const requestedPayType = String(body.payType ?? body.pay_type ?? "").trim().toLowerCase();
@@ -337,7 +341,17 @@ export async function orderConfirm(c: C) {
   try {
     const cartIds = parseLegacyCartIds(body.cartIds ?? body.cart_ids ?? body.cartId);
     const result = await new LegacyOrderCompatibilityService(c.get("container"), c.env)
-      .checkoutPreview(uid, cartIds, Number(body.addressId ?? body.address_id ?? 0));
+      .checkoutPreview(uid, cartIds, {
+        addressId: Number(body.addressId ?? body.address_id ?? 0),
+        couponId: Number(body.couponId ?? body.coupon_id ?? 0),
+        shippingType: Number(body.shippingType ?? body.shipping_type ?? 1),
+        storeId: Number(body.storeId ?? body.store_id ?? 0),
+        type: body.type === undefined ? undefined : Number(body.type),
+        seckillId: Number(body.seckillId ?? body.seckill_id ?? 0) || undefined,
+        bargainUserId: Number(body.bargainUserId ?? body.bargainId ?? 0) || undefined,
+        pinkId: Number(body.pinkId ?? body.pink_id ?? 0) || undefined,
+        combinationId: Number(body.combinationId ?? body.combination_id ?? 0) || undefined,
+      });
     return jsonOk(c, result);
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);
@@ -357,8 +371,20 @@ export async function orderComputed(c: C) {
     const preview = await service.checkoutPreview(
       uid,
       cartIds,
-      Number(body.addressId ?? body.address_id ?? 0),
-      key,
+      {
+        addressId: Number(body.addressId ?? body.address_id ?? 0),
+        existingKey: key,
+        couponId: Number(body.couponId ?? body.coupon_id ?? 0),
+        useIntegral: Number(body.useIntegral ?? body.use_integral ?? 0) > 0,
+        shippingType: Number(body.shippingType ?? body.shipping_type ?? 1),
+        storeId: Number(body.storeId ?? body.store_id ?? 0),
+        payType: String(body.payType ?? body.pay_type ?? "yue"),
+        type: body.type === undefined ? undefined : Number(body.type),
+        seckillId: Number(body.seckillId ?? body.seckill_id ?? 0) || undefined,
+        bargainUserId: Number(body.bargainUserId ?? body.bargainId ?? 0) || undefined,
+        pinkId: Number(body.pinkId ?? body.pink_id ?? 0) || undefined,
+        combinationId: Number(body.combinationId ?? body.combination_id ?? 0) || undefined,
+      },
     );
     return jsonOk(c, preview.priceGroup);
   } catch (error) {

@@ -5,6 +5,7 @@ import {
   storeCouponIssue,
   storeCouponIssueUser,
   storeCouponUser,
+  storeOrderProductCouponReward,
   storeOrderCartInfo,
   storeProduct,
   storeProductCoupon,
@@ -176,7 +177,17 @@ export async function grantPaidOrderProductCoupons(
     .where(inArray(storeProductCoupon.productId, productIds))
     .orderBy(asc(storeProductCoupon.issueCouponId), asc(storeProductCoupon.id));
   if (!links.length) return 0;
-  const issueIds = [...new Set(links.map((link) => link.issueCouponId).filter((id) => id > 0))];
+  // PHP queries coupon templates with `WHERE id IN (...)`, so one template is
+  // granted once per paid order even when multiple purchased products point to
+  // the same template. Preserve the first stable product relation as evidence.
+  const linkByIssue = new Map<number, typeof links[number]>();
+  for (const link of links) {
+    if (link.issueCouponId > 0 && !linkByIssue.has(link.issueCouponId)) {
+      linkByIssue.set(link.issueCouponId, link);
+    }
+  }
+  const issueIds = [...linkByIssue.keys()];
+  if (!issueIds.length) return 0;
   const issues = await tx
     .select()
     .from(storeCouponIssue)
@@ -184,9 +195,19 @@ export async function grantPaidOrderProductCoupons(
     .orderBy(asc(storeCouponIssue.id))
     .for("update");
   const byId = new Map(issues.map((issue) => [issue.id, issue]));
+  const existingRewards = await tx
+    .select({ issueCouponId: storeOrderProductCouponReward.issueCouponId })
+    .from(storeOrderProductCouponReward)
+    .where(and(
+      eq(storeOrderProductCouponReward.orderId, orderId),
+      inArray(storeOrderProductCouponReward.issueCouponId, issueIds),
+    ));
+  const rewardedIssues = new Set(existingRewards.map((reward) => reward.issueCouponId));
   let granted = 0;
-  for (const link of links) {
-    const issue = byId.get(link.issueCouponId);
+  for (const issueId of issueIds) {
+    if (rewardedIssues.has(issueId)) continue;
+    const link = linkByIssue.get(issueId)!;
+    const issue = byId.get(issueId);
     if (!issue || !issueUsableForGrant(issue, now)) continue;
     const unlimited = issue.totalCount === 0 || issue.isPermanent === 1;
     if (!unlimited) {
@@ -201,20 +222,33 @@ export async function grantPaidOrderProductCoupons(
     const rolling = issue.day > 0;
     const startTime = rolling ? new Date(now * 1000) : issue.useStartTime;
     const endTime = rolling ? new Date((now + issue.day * 86_400) * 1000) : issue.useEndTime;
-    await tx.insert(storeCouponUser).values({
+    const couponUsers = await tx
+      .insert(storeCouponUser)
+      .values({
+        uid,
+        issueCouponId: issue.id,
+        couponTitle: issue.couponTitle || issue.title,
+        couponPrice: issue.couponPrice,
+        useMinPrice: issue.useMinPrice,
+        status: 0,
+        startTime,
+        endTime,
+        useTime: null,
+        type: issue.type,
+        receiveTime: now,
+        receiveSource: "order",
+        isFail: 0,
+      })
+      .returning({ id: storeCouponUser.id });
+    const couponUser = couponUsers[0];
+    if (!couponUser) throw new Error("订单商品赠券写入失败");
+    await tx.insert(storeOrderProductCouponReward).values({
+      orderId,
       uid,
+      productId: link.productId,
       issueCouponId: issue.id,
-      couponTitle: issue.couponTitle || issue.title,
-      couponPrice: issue.couponPrice,
-      useMinPrice: issue.useMinPrice,
-      status: 0,
-      startTime,
-      endTime,
-      useTime: null,
-      type: issue.type,
-      receiveTime: now,
-      receiveSource: "order",
-      isFail: 0,
+      couponUserId: couponUser.id,
+      addTime: now,
     });
     if (issue.category !== 2) {
       await tx.insert(storeCouponIssueUser).values({

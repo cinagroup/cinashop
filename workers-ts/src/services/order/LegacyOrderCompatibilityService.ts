@@ -5,6 +5,9 @@ import {
   storeOrder,
   storeOrderCartInfo,
   storeOrderRefund,
+  storeOrderProductCouponReward,
+  storeCouponIssue,
+  storeCouponUser,
   storeOrderWriteoff,
   storeProduct,
   systemStore,
@@ -12,6 +15,7 @@ import {
 import { CheckoutCashierService } from "@/services/payment/CheckoutCashierService";
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { StoreCartService } from "@/services/order/StoreCartService";
+import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -20,6 +24,21 @@ const LEGACY_ALIPAY_TTL_SECONDS = 5 * 60;
 const MAX_CHECKOUT_ITEMS = 200;
 
 type LegacyCartSelection = { cartId: number; cartNum?: number };
+
+export interface LegacyCheckoutPreviewOptions {
+  addressId?: number;
+  existingKey?: string;
+  couponId?: number;
+  useIntegral?: boolean | number;
+  shippingType?: number;
+  storeId?: number;
+  payType?: string;
+  type?: number;
+  seckillId?: number;
+  bargainUserId?: number;
+  pinkId?: number;
+  combinationId?: number;
+}
 
 function record(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -270,12 +289,10 @@ export class LegacyOrderCompatibilityService {
   async checkoutPreview(
     uid: number,
     cartIds: number[],
-    addressId = 0,
-    existingKey?: string,
+    options: LegacyCheckoutPreviewOptions = {},
   ) {
     const rows = await this.checkoutRows(uid, cartIds);
-    const subtotal = rows.reduce((sum, item) => sum + Number(item.sumPrice ?? 0), 0);
-    if (!Number.isFinite(subtotal) || subtotal < 0) throw new ValidateException("商品金额无效");
+    const addressId = Number(options.addressId ?? 0);
     const [account, readiness, requestedAddress] = await Promise.all([
       this.container.userDao.findForAuth(uid),
       getPaymentReadiness(this.container, this.env),
@@ -285,20 +302,64 @@ export class LegacyOrderCompatibilityService {
     const address = requestedAddress && requestedAddress.uid === uid && requestedAddress.isDel === 0
       ? requestedAddress
       : null;
-    const key = existingKey ?? await this.rememberCheckout(uid, cartIds);
-    const sumPrice = subtotal.toFixed(2);
+    const firstCart = await this.container.storeCartDao.get(cartIds[0]);
+    if (!firstCart || firstCart.uid !== uid) throw new ValidateException("购物车商品已失效");
+    const type = options.type ?? firstCart.type;
+    const quote = await new StoreOrderCreateService(this.container, this.env).quoteOrder({
+      uid,
+      cartIds,
+      realName: address?.realName,
+      userPhone: address?.phone,
+      province: address?.province,
+      cityId: address?.cityId,
+      userAddress: address
+        ? [address.province, address.city, address.district, address.street, address.detail]
+            .filter(Boolean)
+            .join(" ")
+        : undefined,
+      shippingType: options.shippingType,
+      storeId: options.storeId,
+      useIntegral: options.useIntegral,
+      payType: options.payType,
+      type,
+      seckillId: options.seckillId ?? (type === 1 ? firstCart.activityId : undefined),
+      bargainUserId: options.bargainUserId,
+      pinkId: options.pinkId,
+      combinationId: options.combinationId ?? (type === 3 ? firstCart.activityId : undefined),
+    });
+    const quotedItems = new Map(quote.items.map((item) => [item.cartId, item]));
+    for (const row of rows) {
+      const item = quotedItems.get(Number(row.id));
+      if (!item) throw new ValidateException("结算商品报价不完整");
+      const quantity = Number(row.cart_num ?? row.cartNum ?? 0);
+      row.truePrice = (item.unitPriceCents / 100).toFixed(2);
+      row.vip_truePrice = (item.discountCents / 100).toFixed(2);
+      row.price_type = item.priceType;
+      row.sumPrice = (item.rawUnitPriceCents * quantity / 100).toFixed(2);
+    }
+    const key = options.existingKey ?? await this.rememberCheckout(uid, cartIds);
+    const money = (cents: number) => (cents / 100).toFixed(2);
     const priceGroup = {
-      sumPrice,
-      totalPrice: sumPrice,
-      pay_price: sumPrice,
-      pay_postage: "0.00",
-      storePostage: "0.00",
-      storePostageDiscount: "0.00",
-      vipPrice: "0.00",
-      couponPrice: "0.00",
-      coupon_price: "0.00",
-      deduction_price: "0.00",
-      firstOrderPrice: "0.00",
+      sumPrice: money(quote.rawTotalCents),
+      totalPrice: money(quote.totalCents),
+      total_price: money(quote.totalCents),
+      pay_price: money(quote.payCents),
+      total_postage: money(quote.totalPostageCents),
+      pay_postage: money(quote.payPostageCents),
+      storePostage: money(quote.totalPostageCents),
+      storePostageDiscount: money(quote.postageDiscountCents),
+      vipPrice: money(quote.memberDiscountCents),
+      levelPrice: money(quote.levelDiscountCents),
+      memberPrice: money(quote.paidMemberDiscountCents),
+      couponPrice: money(quote.couponPriceCents),
+      coupon_price: money(quote.couponPriceCents),
+      deduction_price: money(quote.deductionCents),
+      usedIntegral: quote.usedIntegralPoints,
+      SurplusIntegral: quote.surplusIntegralPoints,
+      firstOrderPrice: money(quote.firstOrderPriceCents),
+      first_order_price: money(quote.firstOrderPriceCents),
+      storeFreePostage: money(quote.storeFreePostageCents),
+      isStoreFreePostage: quote.isStoreFreePostage,
     };
     return {
       addressInfo: legacyAddress(address ? address as unknown as Record<string, unknown> : null),
@@ -312,7 +373,11 @@ export class LegacyOrderCompatibilityService {
         integral: account.integral,
         vip: account.level > 0 || account.isMoneyLevel === 1,
       },
-      deduction: { coupon_price: "0.00", deduction_price: "0.00" },
+      deduction: {
+        coupon_price: money(quote.couponPriceCents),
+        deduction_price: money(quote.deductionCents),
+        vip_price: money(quote.memberDiscountCents),
+      },
       orderKey: key,
       priceGroup,
       give_coupon: [],
@@ -495,11 +560,24 @@ export class LegacyOrderCompatibilityService {
   async orderPrize(uid: number, orderNumber: string) {
     const order = await this.container.storeOrderDao.findByOrderId(orderNumber);
     if (!order || order.uid !== uid) throw new NotFoundException("订单不存在");
-    const giftRows = await this.container.db
-      .select()
-      .from(storeOrderCartInfo)
-      .where(and(eq(storeOrderCartInfo.oid, order.id), eq(storeOrderCartInfo.isGift, 1)))
-      .orderBy(storeOrderCartInfo.id);
+    const [giftRows, couponRows] = await Promise.all([
+      this.container.db
+        .select()
+        .from(storeOrderCartInfo)
+        .where(and(eq(storeOrderCartInfo.oid, order.id), eq(storeOrderCartInfo.isGift, 1)))
+        .orderBy(storeOrderCartInfo.id),
+      this.container.db
+        .select({ reward: storeOrderProductCouponReward, coupon: storeCouponUser, issue: storeCouponIssue })
+        .from(storeOrderProductCouponReward)
+        .innerJoin(storeCouponUser, eq(storeCouponUser.id, storeOrderProductCouponReward.couponUserId))
+        .innerJoin(storeCouponIssue, eq(storeCouponIssue.id, storeOrderProductCouponReward.issueCouponId))
+        .where(and(
+          eq(storeOrderProductCouponReward.orderId, order.id),
+          eq(storeOrderProductCouponReward.uid, uid),
+          eq(storeCouponUser.uid, uid),
+        ))
+        .orderBy(storeOrderProductCouponReward.id),
+    ]);
     const gift = giftRows.map((item) => {
       const snapshot = record(parseJson(item.cartInfo));
       const product = record(snapshot.productInfo ?? snapshot.product);
@@ -508,10 +586,26 @@ export class LegacyOrderCompatibilityService {
         store_name: String(product.store_name ?? product.storeName ?? ""),
       };
     });
-    const coupons = parseJson(order.giveCoupon);
+    const coupons = couponRows.map(({ coupon, issue }) => ({
+      id: coupon.id,
+      cid: coupon.issueCouponId,
+      coupon_title: coupon.couponTitle,
+      coupon_price: Number(coupon.couponPrice),
+      use_min_price: Number(coupon.useMinPrice),
+      add_time: coupon.startTime?.toISOString().slice(0, 10) ?? "",
+      end_time: coupon.endTime?.toISOString().slice(0, 10) ?? "",
+      type: coupon.receiveSource,
+      applicable_type: issue.type,
+      coupon_type: issue.couponType,
+      product_id: issue.productId,
+      category_id: issue.category_id,
+      brand_id: issue.brandId,
+    }));
     return {
-      coupons: Array.isArray(coupons) ? coupons : [],
-      integral: Number(order.giveIntegral ?? 0),
+      coupons,
+      // The legacy endpoint reports only the immediate prize payload. Order
+      // points are accounted separately and PHP returns zero here.
+      integral: 0,
       exp: 0,
       gift,
     };

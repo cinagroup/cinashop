@@ -14,7 +14,7 @@
  *   - 积分回退: 按累计退款比例回退赠送积分并返还抵扣积分，避免多次部分退款舍入漂移
  *   - 余额退 (yueRefund): user.now_money += refundPrice, 带 user_bill 流水
  */
-import { and, asc, eq, gt, inArray, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, ne, or, sql } from "drizzle-orm";
 import {
   storeOrder,
   storeOrderCartInfo,
@@ -51,6 +51,7 @@ import {
 import { WechatApiError, WechatPayService } from "@/services/wechat/WechatPayService";
 import { reconcileRefundedPink } from "@/services/activity/PinkLifecycleService";
 import { enqueueOrderRefundRefusedNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { SystemConfigService } from "@/services/system/SystemConfigService";
 
 const REFUND_LOCK_NAMESPACE = 63841;
 const REQUEST_LEASE_SECONDS = 120;
@@ -111,12 +112,38 @@ interface RefundCartSelection {
 
 interface RefundApplicationOptions {
   reuseExisting: boolean;
+  refundTimeDays: number;
 }
 
 interface RefundPricingLine {
   cartId: number;
   cartNum: number;
   lineCents: number;
+}
+
+export function isRefundWindowOpen(
+  receivedAt: number,
+  refundTimeDays: number,
+  now: number,
+): boolean {
+  if (!Number.isSafeInteger(refundTimeDays) || refundTimeDays < 0) {
+    throw new ValidateException("售后期限配置无效");
+  }
+  if (refundTimeDays === 0 || receivedAt <= 0) return true;
+  if (!Number.isSafeInteger(receivedAt) || !Number.isSafeInteger(now) || now < 0) {
+    throw new ValidateException("订单收货时间无效");
+  }
+  return receivedAt + refundTimeDays * 86_400 >= now;
+}
+
+function parseRefundTimeDays(value: string): number {
+  const normalized = value.trim() || "0";
+  if (!/^\d+$/.test(normalized)) throw new ValidateException("售后期限配置无效");
+  const days = Number(normalized);
+  if (!Number.isSafeInteger(days) || days > 36_500) {
+    throw new ValidateException("售后期限配置无效");
+  }
+  return days;
 }
 
 /**
@@ -583,6 +610,27 @@ async function createOrderRefundApplication(
       throw new ValidateException("订单正在按供应商分配，请稍后刷新");
     }
     if (order.pid === -1) throw new ValidateException("请从拆分后的履约子单申请售后");
+    if (options.refundTimeDays > 0) {
+      const receiptRows = await tx
+        .select({ changeTime: storeOrderStatus.changeTime })
+        .from(storeOrderStatus)
+        .where(and(
+          eq(storeOrderStatus.oid, order.id),
+          inArray(storeOrderStatus.changeType, ["user_take_delivery", "take_delivery"]),
+        ))
+        .orderBy(desc(storeOrderStatus.changeTime), desc(storeOrderStatus.id))
+        .limit(1);
+      if (
+        receiptRows[0] &&
+        !isRefundWindowOpen(
+          receiptRows[0].changeTime,
+          options.refundTimeDays,
+          Math.floor(Date.now() / 1000),
+        )
+      ) {
+        throw new ValidateException("订单已超过售后期限");
+      }
+    }
 
     const previousRefunds = await tx
       .select()
@@ -830,8 +878,9 @@ async function createOrderRefundApplication(
 export async function applyOrderRefund(
   container: Container,
   params: ApplyOrderRefundInput,
+  refundTimeDays = 0,
 ): Promise<{ refundId: number }> {
-  return createOrderRefundApplication(container, params, { reuseExisting: false });
+  return createOrderRefundApplication(container, params, { reuseExisting: false, refundTimeDays });
 }
 
 /**
@@ -844,7 +893,7 @@ export async function ensureAutomaticOrderRefund(
   container: Container,
   params: ApplyOrderRefundInput,
 ): Promise<{ refundId: number }> {
-  return createOrderRefundApplication(container, params, { reuseExisting: true });
+  return createOrderRefundApplication(container, params, { reuseExisting: true, refundTimeDays: 0 });
 }
 
 export class StoreOrderRefundService {
@@ -875,7 +924,9 @@ export class StoreOrderRefundService {
    * 注意: 不改 store_order.refund_status (与 PHP 一致, 仅创建 refund 记录)
    */
   async applyRefund(params: ApplyOrderRefundInput): Promise<{ refundId: number }> {
-    return applyOrderRefund(this.container, params);
+    const configured = await new SystemConfigService(this.container, this.env)
+      .get("refund_time_available");
+    return applyOrderRefund(this.container, params, parseRefundTimeDays(configured));
   }
 
   /**

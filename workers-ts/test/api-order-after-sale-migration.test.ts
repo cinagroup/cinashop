@@ -5,7 +5,15 @@ import {
   parseLegacyCartIds,
   parseLegacyRefundSelections,
 } from "@/services/order/LegacyOrderCompatibilityService";
-import { calculateAuthoritativeRefundCents } from "@/services/order/StoreOrderRefundService";
+import {
+  calculateAuthoritativeRefundCents,
+  isRefundWindowOpen,
+} from "@/services/order/StoreOrderRefundService";
+import {
+  calculateIntegralDeduction,
+  calculateMemberUnitPriceCents,
+  isPaidMembershipActive,
+} from "@/services/order/StoreOrderCreateService";
 
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
@@ -74,6 +82,59 @@ describe("API-002 order and after-sale migration", () => {
     )).toBe(334);
   });
 
+  it("enforces the PHP receipt-based after-sale boundary inclusively", () => {
+    const receivedAt = 1_700_000_000;
+    expect(isRefundWindowOpen(receivedAt, 0, receivedAt + 99_999_999)).toBe(true);
+    expect(isRefundWindowOpen(receivedAt, 7, receivedAt + 7 * 86_400)).toBe(true);
+    expect(isRefundWindowOpen(receivedAt, 7, receivedAt + 7 * 86_400 + 1)).toBe(false);
+    expect(isRefundWindowOpen(0, 7, receivedAt + 99_999_999)).toBe(true);
+  });
+
+  it("uses member and integral policies shared by preview and order creation", () => {
+    expect(isPaidMembershipActive({ isMoneyLevel: 1, isEverLevel: 0, overdueTime: 101 }, 100))
+      .toBe(true);
+    expect(isPaidMembershipActive({ isMoneyLevel: 1, isEverLevel: 0, overdueTime: 100 }, 100))
+      .toBe(false);
+    expect(isPaidMembershipActive({ isMoneyLevel: 0, isEverLevel: 1, overdueTime: 0 }, 100))
+      .toBe(true);
+    expect(calculateMemberUnitPriceCents({
+      basePriceCents: 10_000,
+      levelDiscountPercent: 90,
+      paidMemberPriceCents: 8_000,
+      paidMemberActive: true,
+      paidMemberPriceEnabled: true,
+      productPaidMemberPriceEnabled: true,
+    })).toEqual({ unitPriceCents: 8_000, discountCents: 2_000, priceType: "member" });
+    expect(calculateMemberUnitPriceCents({
+      basePriceCents: 10_000,
+      levelDiscountPercent: 90,
+      paidMemberPriceCents: 8_000,
+      paidMemberActive: false,
+      paidMemberPriceEnabled: true,
+      productPaidMemberPriceEnabled: true,
+    })).toEqual({ unitPriceCents: 9_000, discountCents: 1_000, priceType: "level" });
+    expect(calculateIntegralDeduction({
+      requested: true,
+      enabled: true,
+      usablePoints: 500,
+      payableCents: 10_000,
+      ratio: "0.01",
+      maxType: 1,
+      maxNum: 200,
+      maxRate: 0,
+    })).toEqual({ deductionCents: 200, usedPoints: 200, surplusPoints: 300 });
+    expect(calculateIntegralDeduction({
+      requested: true,
+      enabled: true,
+      usablePoints: 500,
+      payableCents: 1_000,
+      ratio: "0.01",
+      maxType: 2,
+      maxNum: 0,
+      maxRate: 20,
+    })).toEqual({ deductionCents: 200, usedPoints: 200, surplusPoints: 300 });
+  });
+
   it("uses short-lived opaque checkout and Alipay keys instead of trusting client totals", () => {
     const compatibility = source("src/services/order/LegacyOrderCompatibilityService.ts");
     const controller = source("src/controllers/api/v1/OrderController.ts");
@@ -83,6 +144,8 @@ describe("API-002 order and after-sale migration", () => {
     expect(compatibility).toContain("expirationTtl: LEGACY_ALIPAY_TTL_SECONDS");
     expect(controller).toContain("StoreOrderCreateService");
     expect(controller).toContain("checkoutCartIds(uid, key)");
+    expect(compatibility).toContain(".quoteOrder({");
+    expect(compatibility).not.toContain('pay_postage: "0.00"');
   });
 
   it("binds after-sale mutations to the authenticated user and guarded states", () => {
@@ -93,6 +156,8 @@ describe("API-002 order and after-sale migration", () => {
     expect(refund).toContain("![3, 6].includes(refund.refundType)");
     expect(refund).toContain("退款商品数量超过可退数量");
     expect(refund).toContain("pg_advisory_xact_lock");
+    expect(refund).toContain('get("refund_time_available")');
+    expect(refund).toContain('inArray(storeOrderStatus.changeType, ["user_take_delivery", "take_delivery"])');
   });
 
   it("retires only the PHP route whose controller method does not exist", () => {

@@ -51,6 +51,7 @@ import {
   storeNewcomer,
   storeDiscounts,
   systemStore,
+  memberRight,
 } from "@/models/schema";
 import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
@@ -99,6 +100,7 @@ import {
   type ResolvedDiscountPackageItem,
 } from "@/services/activity/StoreDiscountService";
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
+import { SystemConfigService } from "@/services/system/SystemConfigService";
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -114,7 +116,10 @@ export interface CreateOrderParams {
   mark?: string;
   shippingType?: number;
   storeId?: number;
-  useIntegral?: number;
+  /** Legacy contract: truthy means use the server-calculated maximum available points. */
+  useIntegral?: boolean | number;
+  /** Needed for PHP-compatible offline-postage policy. */
+  payType?: string;
   userIp: string;
   /** 活动类型: 0普通 1秒杀 2砍价 3拼团 4积分 5套餐 7新人专享 */
   type?: number;
@@ -135,6 +140,241 @@ export interface CreateOrderParams {
 /** Infrastructure needed by the real order-creation core. */
 export interface StoreOrderCreationRuntime extends SystemConfigEnv {
   nextOrderId(): Promise<string>;
+}
+
+export interface OrderPricingQuote {
+  rawTotalCents: number;
+  totalCents: number;
+  payCents: number;
+  totalPostageCents: number;
+  payPostageCents: number;
+  postageDiscountCents: number;
+  couponPriceCents: number;
+  firstOrderPriceCents: number;
+  deductionCents: number;
+  usedIntegralPoints: number;
+  surplusIntegralPoints: number;
+  memberDiscountCents: number;
+  levelDiscountCents: number;
+  paidMemberDiscountCents: number;
+  storeFreePostageCents: number;
+  isStoreFreePostage: boolean;
+  totalNum: number;
+  items: Array<{
+    cartId: number;
+    rawUnitPriceCents: number;
+    unitPriceCents: number;
+    discountCents: number;
+    priceType: "" | "level" | "member";
+  }>;
+}
+
+interface OrderPricingConfig {
+  memberFunctionEnabled: boolean;
+  paidMemberEnabled: boolean;
+  paidMemberPriceEnabled: boolean;
+  integralEnabled: boolean;
+  integralRatio: string;
+  integralMaxType: number;
+  integralMaxNum: number;
+  integralMaxRate: number;
+  wholeFreeShipping: boolean;
+  storeFreePostageCents: number;
+  offlinePostage: boolean;
+  expressDiscountPercent: number;
+}
+
+function configInteger(value: string, fallback: number): number {
+  const normalized = value.trim();
+  if (!normalized) return fallback;
+  if (!/^-?\d+$/.test(normalized)) throw new ValidateException("订单金额配置无效");
+  const result = Number(normalized);
+  if (!Number.isSafeInteger(result)) throw new ValidateException("订单金额配置超出安全范围");
+  return result;
+}
+
+async function loadOrderPricingConfig(
+  container: Container,
+  runtime: SystemConfigEnv,
+): Promise<OrderPricingConfig> {
+  const [values, rightRows] = await Promise.all([
+    new SystemConfigService(container, runtime).getMany([
+      "member_func_status",
+      "member_card_status",
+      "svip_price_status",
+      "integral_ratio_status",
+      "integral_ratio",
+      "integral_max_type",
+      "integral_max_num",
+      "integral_max_rate",
+      "whole_free_shipping",
+      "store_free_postage",
+      "offline_postage",
+    ]),
+    container.db
+      .select({
+        rightType: memberRight.rightType,
+        number: memberRight.number,
+        status: memberRight.status,
+      })
+      .from(memberRight)
+      .where(inArray(memberRight.rightType, ["vip_price", "express"]))
+      .orderBy(memberRight.id),
+  ]);
+  const rights = new Map<string, (typeof rightRows)[number]>();
+  for (const right of rightRows) {
+    if (!rights.has(right.rightType)) rights.set(right.rightType, right);
+  }
+  const paidMemberEnabled = configInteger(values.member_card_status, 1) === 1;
+  const vipPriceRight = rights.get("vip_price");
+  const expressRight = rights.get("express");
+  let storeFreePostageCents = 0;
+  try {
+    storeFreePostageCents = decimalToCents(values.store_free_postage || "0");
+  } catch {
+    throw new ValidateException("满额包邮配置无效");
+  }
+  return {
+    memberFunctionEnabled: configInteger(values.member_func_status, 1) === 1,
+    paidMemberEnabled,
+    paidMemberPriceEnabled: paidMemberEnabled &&
+      configInteger(values.svip_price_status, 1) === 1 &&
+      vipPriceRight?.status === 1 && vipPriceRight.number > 0,
+    integralEnabled: configInteger(values.integral_ratio_status, 0) === 1,
+    integralRatio: values.integral_ratio || "0",
+    integralMaxType: configInteger(values.integral_max_type, 1),
+    integralMaxNum: configInteger(values.integral_max_num, 200),
+    integralMaxRate: configInteger(values.integral_max_rate, 0),
+    wholeFreeShipping: configInteger(values.whole_free_shipping, 0) === 1,
+    storeFreePostageCents,
+    offlinePostage: configInteger(values.offline_postage, 0) === 1,
+    expressDiscountPercent: paidMemberEnabled && expressRight?.status === 1
+      ? expressRight.number
+      : 0,
+  };
+}
+
+export function isPaidMembershipActive(
+  account: Pick<typeof userTable.$inferSelect, "isMoneyLevel" | "isEverLevel" | "overdueTime">,
+  now: number,
+): boolean {
+  return account.isEverLevel === 1 || (
+    account.isMoneyLevel > 0 && account.overdueTime > now
+  );
+}
+
+async function usableIntegralPoints(
+  db: DbClient,
+  uid: number,
+  balance: number,
+  now: number,
+): Promise<number> {
+  const rows = await db
+    .select({
+      frozen: sql<number>`COALESCE(FLOOR(SUM(${userBill.number})), 0)::int`,
+    })
+    .from(userBill)
+    .where(and(eq(userBill.uid, uid), sql`${userBill.frozenTime} > ${now}`));
+  const frozen = Number(rows[0]?.frozen ?? 0);
+  if (!Number.isSafeInteger(frozen)) throw new ValidateException("冻结积分金额无效");
+  return Math.max(0, balance - Math.max(0, frozen));
+}
+
+export function calculateMemberUnitPriceCents(input: {
+  basePriceCents: number;
+  levelDiscountPercent: number;
+  paidMemberPriceCents: number;
+  paidMemberActive: boolean;
+  paidMemberPriceEnabled: boolean;
+  productPaidMemberPriceEnabled: boolean;
+}): { unitPriceCents: number; discountCents: number; priceType: "" | "level" | "member" } {
+  if (!Number.isSafeInteger(input.basePriceCents) || input.basePriceCents < 0) {
+    throw new ValidateException("商品价格无效");
+  }
+  if (input.basePriceCents === 0) {
+    return { unitPriceCents: 0, discountCents: 0, priceType: "" };
+  }
+  const percent = Number.isFinite(input.levelDiscountPercent)
+    ? Math.max(0, Math.min(100, Math.trunc(input.levelDiscountPercent)))
+    : 100;
+  const levelPrice = Math.max(1, Math.floor(input.basePriceCents * percent / 100));
+  let unitPriceCents = levelPrice;
+  let priceType: "" | "level" | "member" = levelPrice < input.basePriceCents ? "level" : "";
+  if (
+    input.paidMemberActive && input.paidMemberPriceEnabled &&
+    input.productPaidMemberPriceEnabled && input.paidMemberPriceCents > 0 &&
+    input.paidMemberPriceCents < unitPriceCents
+  ) {
+    unitPriceCents = input.paidMemberPriceCents;
+    priceType = "member";
+  }
+  return {
+    unitPriceCents,
+    discountCents: Math.max(0, input.basePriceCents - unitPriceCents),
+    priceType,
+  };
+}
+
+function decimalToMillionths(value: string): bigint {
+  const normalized = value.trim();
+  if (!/^\d+(?:\.\d{1,6})?$/.test(normalized)) {
+    throw new ValidateException("积分抵扣比例配置无效");
+  }
+  const [whole, fraction = ""] = normalized.split(".");
+  return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, "0"));
+}
+
+export function calculateIntegralDeduction(input: {
+  requested: boolean;
+  enabled: boolean;
+  usablePoints: number;
+  payableCents: number;
+  ratio: string;
+  maxType: number;
+  maxNum: number;
+  maxRate: number;
+}): { deductionCents: number; usedPoints: number; surplusPoints: number } {
+  if (
+    !Number.isSafeInteger(input.usablePoints) || input.usablePoints < 0 ||
+    !Number.isSafeInteger(input.payableCents) || input.payableCents < 0
+  ) {
+    throw new ValidateException("积分余额或订单金额无效");
+  }
+  if (!input.requested || !input.enabled || input.usablePoints === 0 || input.payableCents === 0) {
+    return { deductionCents: 0, usedPoints: 0, surplusPoints: input.usablePoints };
+  }
+  const ratio = decimalToMillionths(input.ratio);
+  if (ratio <= 0n) return { deductionCents: 0, usedPoints: 0, surplusPoints: input.usablePoints };
+  const centsForPoints = (points: number): number => {
+    const cents = BigInt(points) * ratio * 100n / 1_000_000n;
+    const result = Number(cents);
+    if (!Number.isSafeInteger(result)) throw new ValidateException("积分抵扣金额超出安全范围");
+    return result;
+  };
+  let candidatePoints = input.usablePoints;
+  let deductionCents: number;
+  if (input.maxType === 1) {
+    if (input.maxNum > 0) candidatePoints = Math.min(candidatePoints, input.maxNum);
+    deductionCents = Math.min(input.payableCents, centsForPoints(candidatePoints));
+  } else if (input.maxType === 2) {
+    deductionCents = centsForPoints(candidatePoints);
+    if (input.maxRate > 0 && input.maxRate <= 100) {
+      deductionCents = Math.min(deductionCents, Math.floor(input.payableCents * input.maxRate / 100));
+    }
+    deductionCents = Math.min(deductionCents, input.payableCents);
+  } else {
+    throw new ValidateException("积分抵扣上限类型配置无效");
+  }
+  const usedPoints = deductionCents === 0
+    ? 0
+    : Math.min(candidatePoints, Number(
+        (BigInt(deductionCents) * 1_000_000n + ratio * 100n - 1n) / (ratio * 100n),
+      ));
+  return {
+    deductionCents,
+    usedPoints,
+    surplusPoints: Math.max(0, input.usablePoints - usedPoints),
+  };
 }
 
 export interface CancelStoreOrderInput {
@@ -581,17 +821,52 @@ export class StoreOrderCreateService {
     );
   }
 
+  /** Read-only checkout quote that executes the same pre-transaction pricing path as createOrder. */
+  async quoteOrder(
+    params: Omit<CreateOrderParams, "key" | "userIp">,
+  ): Promise<OrderPricingQuote> {
+    return StoreOrderCreateService.createWithRuntime(
+      this.container,
+      {
+        CONFIG_KV: this.env.CONFIG_KV,
+        nextOrderId: async () => {
+          throw new Error("只读报价不应生成订单号");
+        },
+      },
+      {
+        ...params,
+        key: `preview_${crypto.randomUUID().replaceAll("-", "")}`,
+        userIp: "0.0.0.0",
+      },
+      { preview: true },
+    );
+  }
+
   /** 真实创建逻辑 (DB 事务内) */
+  static createWithRuntime(
+    c: Container,
+    runtime: StoreOrderCreationRuntime,
+    params: CreateOrderParams,
+  ): Promise<{ orderId: string; key: string }>;
+  static createWithRuntime(
+    c: Container,
+    runtime: StoreOrderCreationRuntime,
+    params: CreateOrderParams,
+    options: { preview: true },
+  ): Promise<OrderPricingQuote>;
   static async createWithRuntime(
     c: Container,
     runtime: StoreOrderCreationRuntime,
     params: CreateOrderParams,
-  ): Promise<{ orderId: string; key: string }> {
+    options?: { preview?: boolean },
+  ): Promise<{ orderId: string; key: string } | OrderPricingQuote> {
     const { uid, key, cartIds } = params;
 
     // 幂等检查 (对应 PHP StoreOrder::create 第 188 行)
-    const existing = await c.storeOrderDao.findByUnique(uid, key);
-    if (existing) return { orderId: existing.orderId, key };
+    if (!options?.preview) {
+      const existing = await c.storeOrderDao.findByUnique(uid, key);
+      if (existing) return { orderId: existing.orderId, key };
+    }
 
     if (!cartIds.length) throw new ValidateException("请选择要购买的商品");
     if (cartIds.length > 200) throw new ValidateException("单次下单商品不能超过200项");
@@ -683,8 +958,26 @@ export class StoreOrderCreateService {
         throw new ValidateException("新人专享活动未开启");
       }
     }
+    const [user, pricingConfig] = await Promise.all([
+      c.userDao.findForAuth(uid),
+      loadOrderPricingConfig(c, runtime),
+    ]);
+    if (!user) throw new NotFoundException("用户不存在");
+    const level = pricingConfig.memberFunctionEnabled && user.level > 0
+      ? await c.systemUserLevelDao.getById(user.level)
+      : null;
+    const levelDiscountPercent = level && level.isShow === 1 && level.isDel === 0
+      ? (Number(level.discount) || 100)
+      : 100;
+    const pricingNow = Math.floor(Date.now() / 1000);
+    const activePaidMember = pricingConfig.paidMemberEnabled
+      && isPaidMembershipActive(user, pricingNow);
     let totalNum = 0;
     let totalCents = 0;
+    let rawTotalCents = 0;
+    let memberDiscountCents = 0;
+    let levelDiscountCents = 0;
+    let paidMemberDiscountCents = 0;
     let bargainActivityId = 0;
     let orderSystemFormId = 0;
     let pinkCombinationId = 0;
@@ -713,7 +1006,9 @@ export class StoreOrderCreateService {
       }
 
       // 活动价 (M17: 秒杀/砍价/拼团替换 SKU 价)
-      let unitPriceCents = Math.round(Number(sku.price) * 100);
+      const rawUnitPriceCents = decimalToCents(sku.price);
+      let unitPriceCents = rawUnitPriceCents;
+      let priceType: "" | "level" | "member" = "";
       let integralActivity: typeof storeIntegral.$inferSelect | null = null;
       let activitySku: typeof storeProductAttrValue.$inferSelect | null = null;
       let discountItem: ResolvedDiscountPackageItem | null = null;
@@ -863,6 +1158,19 @@ export class StoreOrderCreateService {
         unitPriceCents = Math.round(Number(activitySku.price) * 100);
       }
 
+      if (type === 0 && cart.activityId === 0) {
+        const memberPrice = calculateMemberUnitPriceCents({
+          basePriceCents: rawUnitPriceCents,
+          levelDiscountPercent,
+          paidMemberPriceCents: decimalToCents(sku.vipPrice),
+          paidMemberActive: activePaidMember,
+          paidMemberPriceEnabled: pricingConfig.paidMemberPriceEnabled,
+          productPaidMemberPriceEnabled: product.isVip === 1,
+        });
+        unitPriceCents = memberPrice.unitPriceCents;
+        priceType = memberPrice.priceType;
+      }
+
       if (itemSystemFormId > 0) {
         if (orderSystemFormId > 0 && orderSystemFormId !== itemSystemFormId) {
           throw new ValidateException("同一订单不能包含不同的自定义表单");
@@ -872,6 +1180,11 @@ export class StoreOrderCreateService {
 
       totalNum += cart.cartNum;
       totalCents += unitPriceCents * cart.cartNum;
+      rawTotalCents += rawUnitPriceCents * cart.cartNum;
+      const lineMemberDiscount = Math.max(0, rawUnitPriceCents - unitPriceCents) * cart.cartNum;
+      memberDiscountCents += lineMemberDiscount;
+      if (priceType === "level") levelDiscountCents += lineMemberDiscount;
+      if (priceType === "member") paidMemberDiscountCents += lineMemberDiscount;
       supplierIds.add(product.type === 2 ? product.relationId : 0);
       orderItems.push({
         cart,
@@ -880,7 +1193,9 @@ export class StoreOrderCreateService {
         activitySku,
         integralActivity,
         discountItem,
+        rawUnitPriceCents,
         unitPriceCents,
+        priceType,
       });
     }
     const requiresSupplierAllocation = supplierIds.size > 1;
@@ -920,12 +1235,16 @@ export class StoreOrderCreateService {
     );
     const orderMerId = merIds.size === 1 ? [...merIds][0] : 0;
 
-    const user = await c.userDao.findForAuth(uid);
-    if (!user) throw new NotFoundException("用户不存在");
     const firstOrderConfig: FirstOrderDiscountConfig = type === 0
       ? await loadFirstOrderDiscountConfig(c, runtime)
       : { enabled: false, limitEnabled: true, limitDays: 0, payPercent: 100, limitCents: 0 };
     const preliminaryNow = Math.floor(Date.now() / 1000);
+    const preliminaryUsableIntegral = await usableIntegralPoints(
+      c.db,
+      uid,
+      user.integral,
+      preliminaryNow,
+    );
     const preliminaryFirstOrderEligible = firstOrderAccountEligible(
       user,
       firstOrderConfig,
@@ -942,37 +1261,51 @@ export class StoreOrderCreateService {
     let couponPriceCents = couponResolution.priceCents;
     let couponRow = couponResolution.row;
 
-    // 3. 订单号 (生产环境由 SequenceDO 提供；集成场景注入隔离生成器)
-    const orderId = (await runtime.nextOrderId()).trim();
-    if (!orderId) throw new Error("订单号生成失败");
-
-    // 4. 积分抵扣 (可选, 对应 PHP deductIntegral)
-    const useIntegral = params.useIntegral ?? 0;
-    if (!Number.isSafeInteger(useIntegral) || useIntegral < 0) {
-      throw new ValidateException("抵扣积分必须是非负整数");
+    // 3. 积分抵扣。PHP 的 useIntegral 是布尔开关，具体使用数量必须由
+    // 账户余额、兑换比例与系统上限共同决定，客户端不能指定扣多少积分。
+    const rawUseIntegral = params.useIntegral ?? false;
+    if (
+      typeof rawUseIntegral !== "boolean" &&
+      (!Number.isSafeInteger(rawUseIntegral) || rawUseIntegral < 0)
+    ) {
+      throw new ValidateException("积分抵扣开关无效");
     }
-    if (type === 4 && useIntegral > 0) {
+    const wantsIntegral = rawUseIntegral === true || (
+      typeof rawUseIntegral === "number" && rawUseIntegral > 0
+    );
+    if (type === 4 && wantsIntegral) {
       throw new ValidateException("积分商品不能叠加普通订单积分抵扣");
     }
     if (type === 4 && user.integral < requiredIntegral) {
       throw new ValidateException(`积分不足, 需要 ${requiredIntegral} 积分`);
     }
-    let deductionCents = 0;
-    if (useIntegral > 0) {
-      if (user.integral < useIntegral) throw new ValidateException("积分不足");
-      // 简化: 100 积分 = 1 元 (实际从 system_config 读比例, M4 补)
-      deductionCents = Math.min(
-        useIntegral * 1,
-        Math.max(0, totalCents - couponPriceCents - firstOrderPriceCents),
-      );
-    }
-    let usedIntegralPoints = deductionCents;
+    let integralQuote = calculateIntegralDeduction({
+      requested: wantsIntegral && type === 0,
+      enabled: pricingConfig.integralEnabled,
+      usablePoints: preliminaryUsableIntegral,
+      payableCents: Math.max(0, totalCents - couponPriceCents - firstOrderPriceCents),
+      ratio: pricingConfig.integralRatio,
+      maxType: pricingConfig.integralMaxType,
+      maxNum: pricingConfig.integralMaxNum,
+      maxRate: pricingConfig.integralMaxRate,
+    });
+    let deductionCents = integralQuote.deductionCents;
+    let usedIntegralPoints = integralQuote.usedPoints;
+    let surplusIntegralPoints = integralQuote.surplusPoints;
 
-    // 4c. 运费计算: 快递按商品 freight 规则和目的地费率计费；自提不收运费。
+    // 4. 运费计算: 原始运费、满额/线下包邮和 SVIP 运费权益分层保存。
+    let totalPostageCents = 0;
     let postageCents = 0;
+    let postageDiscountCents = 0;
+    let isStoreFreePostage = false;
     const postageExempt = orderItems.every(({ product }) => [1, 2].includes(product.productType));
+    const hasDeliveryAddress = Boolean(
+      (params.cityId ?? 0) > 0 || params.province?.trim() || params.userAddress?.trim(),
+    );
+    isStoreFreePostage = shippingType === 1 && pricingConfig.wholeFreeShipping
+      && totalCents >= pricingConfig.storeFreePostageCents;
     if (
-      shippingType === 1 && !postageExempt &&
+      shippingType === 1 && hasDeliveryAddress && !postageExempt && !isStoreFreePostage &&
       !(type === 5 && discountPackage?.discount.freeShipping === 1)
     ) {
       const templateIds = Array.from(
@@ -1051,7 +1384,7 @@ export class StoreOrderCreateService {
         : [];
       try {
         const regionIds = expandShippingRegionIds(params.cityId, cityRows[0]?.path);
-        postageCents = calculateOrderPostageCents(
+        totalPostageCents = calculateOrderPostageCents(
           orderItems.map(({ cart, product, sku, integralActivity, unitPriceCents }) => ({
             freight: integralActivity?.freight ?? product.freight,
             postage: integralActivity?.postage ?? product.postage,
@@ -1074,11 +1407,54 @@ export class StoreOrderCreateService {
         throw error;
       }
     }
+    postageCents = totalPostageCents;
+    const payType = String(params.payType ?? "").trim().toLowerCase();
+    if (payType === "offline" && pricingConfig.offlinePostage) {
+      postageCents = 0;
+    } else if (postageCents > 0 && activePaidMember) {
+      const percent = pricingConfig.expressDiscountPercent;
+      if (percent > 0 && percent < 100) {
+        postageCents = Math.floor(postageCents * percent / 100);
+      }
+    }
+    postageDiscountCents = Math.max(0, totalPostageCents - postageCents);
     let payCents = Math.max(
       0,
       totalCents - couponPriceCents - firstOrderPriceCents - deductionCents + postageCents,
     );
     let actualProductCents = Math.max(0, payCents - postageCents);
+    if (options?.preview) {
+      return {
+        rawTotalCents,
+        totalCents,
+        payCents,
+        totalPostageCents,
+        payPostageCents: postageCents,
+        postageDiscountCents,
+        couponPriceCents,
+        firstOrderPriceCents,
+        deductionCents,
+        usedIntegralPoints,
+        surplusIntegralPoints,
+        memberDiscountCents,
+        levelDiscountCents,
+        paidMemberDiscountCents,
+        storeFreePostageCents: pricingConfig.storeFreePostageCents,
+        isStoreFreePostage,
+        totalNum,
+        items: orderItems.map(({ cart, rawUnitPriceCents, unitPriceCents, priceType }) => ({
+          cartId: cart.id,
+          rawUnitPriceCents,
+          unitPriceCents,
+          discountCents: Math.max(0, rawUnitPriceCents - unitPriceCents),
+          priceType,
+        })),
+      };
+    }
+
+    // 5. 订单号只在真实创建时生成；只读报价不会消耗 Sequence DO 编号。
+    const orderId = (await runtime.nextOrderId()).trim();
+    if (!orderId) throw new Error("订单号生成失败");
     let brokerage = await buildOrderBrokerageSnapshot(c, runtime, {
       orderType: type,
       buyer: user,
@@ -1115,7 +1491,7 @@ export class StoreOrderCreateService {
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
 
       const now = Math.floor(Date.now() / 1000);
-      if (preliminaryFirstOrderEligible) {
+      if (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && type === 0)) {
         // 不同幂等键也必须按用户串行化首单资格。资格、订单和消费标记同事务提交，
         // 因此库存/快照等后续步骤失败时不会永久吃掉首单优惠。
         const lockedUsers = await tx
@@ -1126,13 +1502,11 @@ export class StoreOrderCreateService {
           .for("update");
         const lockedUser = lockedUsers[0];
         if (!lockedUser) throw new NotFoundException("用户不存在");
-        const finalFirstOrderEligible = firstOrderAccountEligible(
-          lockedUser,
-          firstOrderConfig,
-          now,
-        ) && !(await hasPaidNonNewcomerOrder(tx, uid));
+        const finalFirstOrderEligible = preliminaryFirstOrderEligible &&
+          firstOrderAccountEligible(lockedUser, firstOrderConfig, now) &&
+          !(await hasPaidNonNewcomerOrder(tx, uid));
 
-        if (!finalFirstOrderEligible) {
+        if (preliminaryFirstOrderEligible && !finalFirstOrderEligible) {
           couponResolution = await resolveOrderCoupon(
             createContainerFromDb(tx),
             uid,
@@ -1142,32 +1516,45 @@ export class StoreOrderCreateService {
           couponPriceCents = couponResolution.priceCents;
           couponRow = couponResolution.row;
           firstOrderPriceCents = 0;
-          if (useIntegral > 0 && lockedUser.integral < useIntegral) {
-            throw new ValidateException("积分不足");
-          }
-          deductionCents = useIntegral > 0
-            ? Math.min(useIntegral, Math.max(0, totalCents - couponPriceCents))
-            : 0;
-          usedIntegralPoints = deductionCents;
-          payCents = Math.max(
-            0,
-            totalCents - couponPriceCents - deductionCents + postageCents,
-          );
-          actualProductCents = Math.max(0, payCents - postageCents);
-          brokerage = await buildOrderBrokerageSnapshot(createContainerFromDb(tx), runtime, {
-            orderType: type,
-            buyer: lockedUser,
-            actualProductCents,
-            items: orderItems.map(({ cart, product, sku, unitPriceCents }) => ({
-              grossCents: unitPriceCents * cart.cartNum,
-              costCents: decimalToCents(sku.cost) * cart.cartNum,
-              quantity: cart.cartNum,
-              specified: product.isSub === 1,
-              specifiedOneCents: decimalToCents(sku.brokerage),
-              specifiedTwoCents: decimalToCents(sku.brokerageTwo),
-            })),
-          });
-        } else if (firstOrderPriceCents > 0) {
+        }
+        const lockedUsableIntegral = await usableIntegralPoints(
+          tx,
+          uid,
+          lockedUser.integral,
+          now,
+        );
+        integralQuote = calculateIntegralDeduction({
+          requested: wantsIntegral && type === 0,
+          enabled: pricingConfig.integralEnabled,
+          usablePoints: lockedUsableIntegral,
+          payableCents: Math.max(0, totalCents - couponPriceCents - firstOrderPriceCents),
+          ratio: pricingConfig.integralRatio,
+          maxType: pricingConfig.integralMaxType,
+          maxNum: pricingConfig.integralMaxNum,
+          maxRate: pricingConfig.integralMaxRate,
+        });
+        deductionCents = integralQuote.deductionCents;
+        usedIntegralPoints = integralQuote.usedPoints;
+        surplusIntegralPoints = integralQuote.surplusPoints;
+        payCents = Math.max(
+          0,
+          totalCents - couponPriceCents - firstOrderPriceCents - deductionCents + postageCents,
+        );
+        actualProductCents = Math.max(0, payCents - postageCents);
+        brokerage = await buildOrderBrokerageSnapshot(createContainerFromDb(tx), runtime, {
+          orderType: type,
+          buyer: lockedUser,
+          actualProductCents,
+          items: orderItems.map(({ cart, product, sku, unitPriceCents }) => ({
+            grossCents: unitPriceCents * cart.cartNum,
+            costCents: decimalToCents(sku.cost) * cart.cartNum,
+            quantity: cart.cartNum,
+            specified: product.isSub === 1,
+            specifiedOneCents: decimalToCents(sku.brokerage),
+            specifiedTwoCents: decimalToCents(sku.brokerageTwo),
+          })),
+        });
+        if (finalFirstOrderEligible && firstOrderPriceCents > 0) {
           const consumed = await tx
             .update(userTable)
             .set({ isFirstOrder: 1 })
@@ -1542,7 +1929,7 @@ export class StoreOrderCreateService {
           cartId: cartIds.join(","),
           totalNum,
           totalPrice: (totalCents / 100).toFixed(2),
-          totalPostage: (postageCents / 100).toFixed(2),
+          totalPostage: (totalPostageCents / 100).toFixed(2),
           payPrice: (payCents / 100).toFixed(2),
           deductionPrice: (deductionCents / 100).toFixed(2),
           firstOrderPrice: (firstOrderPriceCents / 100).toFixed(2),
@@ -2127,7 +2514,9 @@ interface OrderItem {
   activitySku: typeof storeProductAttrValue.$inferSelect | null;
   integralActivity: typeof storeIntegral.$inferSelect | null;
   discountItem: ResolvedDiscountPackageItem | null;
+  rawUnitPriceCents: number;
   unitPriceCents: number;
+  priceType: "" | "level" | "member";
 }
 
 function parseCartSnapshot(value: string | null): unknown {

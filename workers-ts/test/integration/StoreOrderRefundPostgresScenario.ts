@@ -25,6 +25,7 @@ import {
 } from "@/lib/di";
 import {
   applyOrderRefund,
+  ensureAutomaticOrderRefund,
   finalizeStoreOrderRefund,
   type RefundFinalizationOutcome,
 } from "@/services/order/StoreOrderRefundService";
@@ -143,6 +144,12 @@ export interface StoreOrderRefundPostgresReport {
     full_refund_price: string;
     full_refund_num: number;
     full_snapshot_exact: boolean;
+  };
+  refund_window_policy: {
+    expired_user_rejected: boolean;
+    automatic_bypass_created: boolean;
+    unreceived_user_created: boolean;
+    refund_rows: number;
   };
   provider_amount_binding: {
     mismatch_rolled_back: boolean;
@@ -373,7 +380,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, base: number): Promise<void> {
   await withSchema(db, schemaName, async (container) => {
     const tx = container.db;
-    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     const compensation = compensationIds(base);
     const timeout = timeoutIds(base);
     await tx.insert(userTable).values([...offsets.map((offset) => {
@@ -410,7 +417,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         unique: `refund-${base}-${offset}`,
         uid: fixture.uid,
         cartId: offset < 2 ? String(fixture.cartId) : "",
-        totalNum: offset === 17 ? 10 : offset < 2 || [9, 10].includes(offset) ? 1 : 2,
+        totalNum: offset === 17 ? 10 : offset < 2 || [9, 10, 19, 20].includes(offset) ? 1 : 2,
         totalPrice: offset === 12 ? "0.00" : offset === 17 ? "99.00" : "10.00",
         payPrice: offset === 12 ? "0.00" : offset === 17 ? "99.00" : "10.00",
         payIntegral: offset === 12 ? 60 : 0,
@@ -567,7 +574,29 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       splitSurplusNum: 1,
       cartInfo: JSON.stringify({ sum_true_price: "4.00", sku: { price: "4.00" } }),
     });
+    for (const offset of [19, 20]) {
+      const windowFixture = ids(base, offset);
+      cartInfoRows.push({
+        id: windowFixture.cartInfoId,
+        uid: windowFixture.uid,
+        oid: windowFixture.orderId,
+        cartId: String(windowFixture.cartId),
+        unique: `refund-cart-${base}-${offset}`,
+        productId: windowFixture.productId,
+        skuUnique: "",
+        cartNum: 1,
+        surplusNum: 1,
+        splitSurplusNum: 1,
+        cartInfo: JSON.stringify({ sum_true_price: "10.00", sku: { price: "10.00" } }),
+      });
+    }
     await tx.insert(storeOrderCartInfo).values(cartInfoRows);
+    await tx.insert(storeOrderStatus).values({
+      oid: ids(base, 19).orderId,
+      changeType: "user_take_delivery",
+      changeMessage: "expired receipt fixture",
+      changeTime: Math.floor(Date.now() / 1000) - 8 * 86_400,
+    });
 
     const refundRows: Array<typeof storeOrderRefund.$inferInsert> = [];
     const addRefund = (
@@ -1814,6 +1843,65 @@ async function runAuthoritativeRefundApplication(
   return result;
 }
 
+async function runRefundWindowPolicy(
+  db: DbClient,
+  schemaName: string,
+  base: number,
+): Promise<StoreOrderRefundPostgresReport["refund_window_policy"]> {
+  const expired = ids(base, 19);
+  const unreceived = ids(base, 20);
+  let expiredUserRejected = false;
+  try {
+    await withSchema(db, schemaName, (container) =>
+      applyOrderRefund(container, {
+        uid: expired.uid,
+        orderId: expired.orderNo,
+        refundReason: "expired user refund",
+        refundExplain: "expired user refund",
+        applyType: 1,
+      }, 7)
+    );
+  } catch (error) {
+    expiredUserRejected = error instanceof Error && error.message.includes("超过售后期限");
+  }
+  const automatic = await withSchema(db, schemaName, (container) =>
+    ensureAutomaticOrderRefund(container, {
+      uid: expired.uid,
+      orderId: expired.orderNo,
+      refundReason: "automatic refund bypass",
+      refundExplain: "automatic refund bypass",
+      applyType: 1,
+    })
+  );
+  const unreceivedCreated = await withSchema(db, schemaName, (container) =>
+    applyOrderRefund(container, {
+      uid: unreceived.uid,
+      orderId: unreceived.orderNo,
+      refundReason: "unreceived user refund",
+      refundExplain: "unreceived user refund",
+      applyType: 1,
+    }, 7)
+  );
+  const rows = await withSchema(db, schemaName, ({ db: tx }) =>
+    tx.select({ value: count() }).from(storeOrderRefund).where(inArray(
+      storeOrderRefund.storeOrderId,
+      [expired.orderId, unreceived.orderId],
+    ))
+  );
+  const result = {
+    expired_user_rejected: expiredUserRejected,
+    automatic_bypass_created: automatic.refundId > 0,
+    unreceived_user_created: unreceivedCreated.refundId > 0,
+    refund_rows: Number(rows[0]?.value ?? 0),
+  };
+  assertCondition(
+    result.expired_user_rejected && result.automatic_bypass_created &&
+      result.unreceived_user_created && result.refund_rows === 2,
+    `refund-window policy drifted: ${JSON.stringify(result)}`,
+  );
+  return result;
+}
+
 export async function runStoreOrderRefundPostgresScenario(
   connectionString: string,
 ): Promise<StoreOrderRefundPostgresReport> {
@@ -1894,6 +1982,7 @@ export async function runStoreOrderRefundPostgresScenario(
       schemaName,
       base,
     );
+    const refundWindowPolicy = await runRefundWindowPolicy(adminDb, schemaName, base);
     const providerAmountBinding = await runProviderAmountBinding(adminDb, schemaName, base);
     const cumulativeCompensationInvariants = await runCumulativeCompensationInvariants(
       adminDb,
@@ -1922,6 +2011,7 @@ export async function runStoreOrderRefundPostgresScenario(
       cumulative_exact_refund_race: cumulativeExactRefundRace,
       pure_integral_refund: pureIntegralRefund,
       authoritative_refund_application: authoritativeRefundApplication,
+      refund_window_policy: refundWindowPolicy,
       provider_amount_binding: providerAmountBinding,
       cumulative_compensation_invariants: cumulativeCompensationInvariants,
       pink_leader_refund_promotion: pinkLeaderRefundPromotion,

@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { MIGRATION_TABLES } from "../scripts/data-migration/manifest";
-import { storeProductCoupon } from "../src/models/schema";
+import {
+  storeOrderProductCouponReward,
+  storeProductCoupon,
+} from "../src/models/schema";
+import { MigrationService } from "../src/services/MigrationService";
 import { requiredAdminPermission } from "../src/services/admin/AdminPermissionService";
 import {
   calculateCouponDiscountCents,
@@ -103,12 +107,41 @@ describe("product coupon migration", () => {
     expect(grants).toContain('.for("update")');
     expect(grants).toContain("storeCouponIssue.remainCount} > 0");
     expect(grants).toContain('receiveSource: "order"');
+    expect(grants).toContain("linkByIssue");
+    expect(grants).toContain("storeOrderProductCouponReward");
     expect(receive).toContain('.for("update")');
     expect(receive).toContain("received >= issue.receiveLimit");
     expect(receive).not.toContain("storeCouponUserDao.countReceived");
     expect(admin).toContain("couponType: scopeType");
     expect(admin).toContain("totalCount - claimedCount");
     expect(admin).not.toContain("couponType: 1,");
+  });
+
+  it("persists one auditable reward per order/template and embeds byte-equivalent DDL", () => {
+    expect(getTableName(storeOrderProductCouponReward)).toBe("store_order_product_coupon_reward");
+    expect(Object.keys(getTableColumns(storeOrderProductCouponReward))).toEqual([
+      "id",
+      "orderId",
+      "uid",
+      "productId",
+      "issueCouponId",
+      "couponUserId",
+      "addTime",
+    ]);
+    const external = readFileSync("migrations/0100_order_product_coupon_reward.sql", "utf8").trim();
+    const embedded = new MigrationService({} as never)
+      .orderProductCouponRewardMigrationSqlForVerification()
+      .trim();
+    expect(embedded).toBe(external);
+    expect(external).toContain('"sopcr_order_issue_uq"');
+    expect(external).toContain('"sopcr_coupon_user_uq"');
+
+    const compatibility = readFileSync(
+      "src/services/order/LegacyOrderCompatibilityService.ts",
+      "utf8",
+    );
+    expect(compatibility).toContain("integral: 0");
+    expect(compatibility).toContain("storeOrderProductCouponReward");
   });
 
   it("restores dual product-coupon admin routes under the product ACL", () => {
