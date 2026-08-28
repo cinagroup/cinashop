@@ -46,6 +46,11 @@ export class MigrationService {
     return this.migration_0103();
   }
 
+  /** Exact Out product replay DDL used by production-engine verification. */
+  outProductWriteReplayMigrationSqlForVerification(): string {
+    return this.migration_0104();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -157,6 +162,7 @@ export class MigrationService {
       this.migration_0101(),
       this.migration_0102(),
       this.migration_0103(),
+      this.migration_0104(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -5768,5 +5774,34 @@ CREATE INDEX IF NOT EXISTS "so_kefu_customer_orders"
 CREATE INDEX IF NOT EXISTS "sor_kefu_customer_refunds"
   ON "store_order_refund" ("uid", "add_time" DESC, "id" DESC)
   WHERE "is_cancel" = 0 AND "is_del" = 0;`;
+  }
+
+  private migration_0104(): string {
+    return `-- Transactional replay ledger for third-party product writes. The ledger is
+-- deliberately content-free: no product names, barcodes, stock values, request
+-- bodies or response bodies are persisted, only a canonical request digest.
+CREATE TABLE IF NOT EXISTS "out_product_write_replay" (
+  "id" BIGSERIAL PRIMARY KEY,
+  "out_account_id" INTEGER NOT NULL,
+  "operation" VARCHAR(32) NOT NULL,
+  "request_key" VARCHAR(36) NOT NULL,
+  "request_hash" VARCHAR(64) NOT NULL,
+  "product_id" INTEGER DEFAULT 0 NOT NULL,
+  "result_count" INTEGER DEFAULT 0 NOT NULL,
+  "add_time" INTEGER DEFAULT 0 NOT NULL,
+  CONSTRAINT "opwr_operation_ck" CHECK (
+    "operation" IN ('product_create', 'product_update', 'product_show', 'stock_upload')
+  ),
+  CONSTRAINT "opwr_identity_ck" CHECK (
+    "out_account_id" > 0 AND "product_id" >= 0
+      AND "result_count" >= 0 AND "add_time" >= 0
+  ),
+  CONSTRAINT "opwr_request_hash_ck" CHECK ("request_hash" ~ '^[0-9a-f]{64}$')
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "opwr_account_operation_key_uq"
+  ON "out_product_write_replay" ("out_account_id", "operation", "request_key");
+CREATE INDEX IF NOT EXISTS "opwr_product_history"
+  ON "out_product_write_replay" ("product_id", "id");`;
   }
 }

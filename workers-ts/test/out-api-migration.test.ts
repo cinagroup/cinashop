@@ -79,10 +79,11 @@ describe("third-party API migration boundary", () => {
     expect(parseOutRules({ rules: [3] })).toEqual([]);
   });
 
-  it("registers 14 bounded reads and fifteen audited write routes behind ACL", () => {
+  it("registers 14 bounded reads and nineteen audited write routes behind ACL", () => {
     const app = readFileSync("src/app.ts", "utf8");
     const routes = readFileSync("src/routes/outapi.ts", "utf8");
     const middleware = readFileSync("src/middleware/out-auth.ts", "utf8");
+    const cors = readFileSync("src/middleware/cors.ts", "utf8");
     expect(app).toContain('app.route("/outapi", outapiRoutes)');
     expect(routes).toContain('outapiRoutes.post("/get_token"');
     expect(routes).toContain('outapiRoutes.post("/refresh_token"');
@@ -114,10 +115,17 @@ describe("third-party API migration boundary", () => {
     expect(routes).toContain('outapiRoutes.put(\n  "/refund/remark/:order_id"');
     expect(routes).toContain('outapiRoutes.put(\n  "/refund/refuse/:order_id"');
     expect(routes).toContain('outapiRoutes.put(\n  "/refund/:order_id"');
-    expect(routes.match(/outapiRoutes\.put\(/g)).toHaveLength(13);
-    expect(routes).not.toMatch(/outapiRoutes\.(?:post|delete)\("\/(?:product|order|refund|user|coupon)/i);
+    expect(routes).toContain('outapiRoutes.post(\n  "/product"');
+    expect(routes).toContain('outapiRoutes.put(\n  "/product/:id"');
+    expect(routes).toContain('outapiRoutes.put(\n  "/product/set_show/:id/:is_show"');
+    expect(routes).toContain('outapiRoutes.put(\n  "/product/stock/upload"');
+    expect(routes.indexOf('"/product/stock/upload"')).toBeLessThan(routes.indexOf('"/product/:id"'));
+    expect(routes.indexOf('"/product/set_show/:id/:is_show"')).toBeLessThan(routes.indexOf('"/product/:id"'));
+    expect(routes.match(/outapiRoutes\.put\(/g)).toHaveLength(16);
+    expect(routes).not.toMatch(/outapiRoutes\.(?:post|delete)\("\/(?:order|refund|user|coupon)/i);
     expect(routes).toContain("}, 501));");
     expect(middleware).toContain("assertInterfacePermission");
+    expect(cors).toContain('"Idempotency-Key"');
   });
 
   it("validates category writes and serializes hierarchy changes with reference gates", () => {

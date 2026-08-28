@@ -18,6 +18,7 @@ export const corsMiddleware = cors({
     "Content-Type",
     "Authori-zation", // CRMEB 自定义 header (避开某些服务器 Authorization 被吞的问题)
     "Authorization",
+    "Idempotency-Key",
     "X-Requested-With",
   ],
   exposeHeaders: ["Content-Disposition"],

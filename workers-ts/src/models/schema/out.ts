@@ -14,6 +14,7 @@ import {
   serial,
   smallint,
   text,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -121,6 +122,40 @@ export const outApiAudit = pgTable(
   ],
 );
 
+/**
+ * Transactional replay ledger for externally-triggered product writes.
+ * Request payloads, product names, barcodes and inventory values are never
+ * stored here; only a canonical SHA-256 digest and bounded result identifiers.
+ */
+export const outProductWriteReplay = pgTable(
+  "out_product_write_replay",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    outAccountId: integer("out_account_id").notNull(),
+    operation: varchar("operation", { length: 32 }).notNull(),
+    requestKey: varchar("request_key", { length: 36 }).notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).notNull(),
+    productId: integer("product_id").default(0).notNull(),
+    resultCount: integer("result_count").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (table) => [
+    uniqueIndex("opwr_account_operation_key_uq")
+      .on(table.outAccountId, table.operation, table.requestKey),
+    index("opwr_product_history").on(table.productId, table.id),
+    check(
+      "opwr_operation_ck",
+      sql`${table.operation} IN ('product_create', 'product_update', 'product_show', 'stock_upload')`,
+    ),
+    check(
+      "opwr_identity_ck",
+      sql`${table.outAccountId} > 0 AND ${table.productId} >= 0 AND ${table.resultCount} >= 0 AND ${table.addTime} >= 0`,
+    ),
+    check("opwr_request_hash_ck", sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`),
+  ],
+);
+
 export type OutAccount = typeof outAccount.$inferSelect;
 export type OutInterface = typeof outInterface.$inferSelect;
 export type OutApiAudit = typeof outApiAudit.$inferSelect;
+export type OutProductWriteReplay = typeof outProductWriteReplay.$inferSelect;

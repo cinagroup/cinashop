@@ -85,6 +85,10 @@ export interface SupplierStockAdjustment {
   stock: number;
 }
 
+export interface PhysicalProductNormalizationOptions {
+  requireSettlePrice?: boolean;
+}
+
 function asRecord(value: unknown, message = "参数格式错误"): UnknownRecord {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new ValidateException(message);
@@ -243,6 +247,7 @@ export function normalizeSupplierProductSkus(
   value: unknown,
   dimensions: SupplierProductDimension[],
   specType: 0 | 1,
+  options: PhysicalProductNormalizationOptions = {},
 ): SupplierProductSku[] {
   const rows = Array.isArray(value)
     ? value
@@ -263,7 +268,11 @@ export function normalizeSupplierProductSkus(
       }
     }
     const price = decimalString(row.price, "销售价", true);
-    const settlePrice = decimalString(firstValue(row, "settle_price", "settlePrice"), "结算价", true);
+    const settlePrice = decimalString(
+      firstValue(row, "settle_price", "settlePrice"),
+      "结算价",
+      options.requireSettlePrice !== false,
+    );
     const brokerage = decimalString(row.brokerage, "一级佣金");
     const brokerageTwo = decimalString(firstValue(row, "brokerage_two", "brokerageTwo"), "二级佣金");
     if (moneyCents(brokerage) + moneyCents(brokerageTwo) > moneyCents(price)) {
@@ -300,7 +309,10 @@ export function normalizeSupplierProductSkus(
   return skus;
 }
 
-export function normalizeSupplierPhysicalProductInput(input: UnknownRecord): SupplierPhysicalProductInput {
+export function normalizeSupplierPhysicalProductInput(
+  input: UnknownRecord,
+  options: PhysicalProductNormalizationOptions = {},
+): SupplierPhysicalProductInput {
   const productType = integerValue(firstValue(input, "product_type", "productType"), "商品类型", 0, 4);
   if (productType !== PHYSICAL_PRODUCT_TYPE) {
     throw new ValidateException("当前迁移阶段仅支持实物商品，卡密、优惠券、虚拟商品和次卡暂不可创建");
@@ -340,7 +352,7 @@ export function normalizeSupplierPhysicalProductInput(input: UnknownRecord): Sup
     description: optionalString(input.description, "商品详情", 200_000),
     specType,
     dimensions,
-    skus: normalizeSupplierProductSkus(input.attrs, dimensions, specType),
+    skus: normalizeSupplierProductSkus(input.attrs, dimensions, specType, options),
     postage: decimalString(input.postage, "运费"),
     tempId: integerValue(firstValue(input, "temp_id", "tempId"), "运费模板"),
     isPostage: flagValue(firstValue(input, "is_postage", "isPostage"), "包邮状态", 0),

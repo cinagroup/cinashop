@@ -55,6 +55,10 @@ function privateResponse(c: C) {
   c.header("X-Content-Type-Options", "nosniff");
 }
 
+function idempotencyKey(c: C): string {
+  return c.req.header("Idempotency-Key") ?? "";
+}
+
 export async function getToken(c: C) {
   await enforceOutAnonymousRateLimit(c, "login");
   const body = await readJsonObject(c);
@@ -131,6 +135,55 @@ export async function productList(c: C) {
 
 export async function productInfo(c: C) {
   return jsonOk(c, await service(c).productInfo(c.req.param("id")));
+}
+
+export async function productCreate(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 1024 * 1024);
+  return jsonOk(
+    c,
+    await service(c).createProduct(c.get("outInfo")!, body, idempotencyKey(c)),
+    "保存商品信息成功",
+  );
+}
+
+export async function productUpdate(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 1024 * 1024);
+  return jsonOk(
+    c,
+    await service(c).updateProduct(
+      c.get("outInfo")!,
+      c.req.param("id"),
+      body,
+      idempotencyKey(c),
+    ),
+    "修改商品信息成功",
+  );
+}
+
+export async function productSetShow(c: C) {
+  privateResponse(c);
+  return jsonOk(
+    c,
+    await service(c).setProductShow(
+      c.get("outInfo")!,
+      c.req.param("id"),
+      c.req.param("is_show"),
+      idempotencyKey(c),
+    ),
+    "设置成功",
+  );
+}
+
+export async function productStockUpload(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 64 * 1024);
+  return jsonOk(
+    c,
+    await service(c).uploadProductStock(c.get("outInfo")!, body, idempotencyKey(c)),
+    "操作成功",
+  );
 }
 
 export async function orderList(c: C) {

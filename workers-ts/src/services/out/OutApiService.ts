@@ -47,6 +47,7 @@ import {
 } from "@/services/order/StoreOrderRefundService";
 import { amountToCents } from "@/services/payment/RefundGateway";
 import { StoreProductService, type GoodsListParams } from "@/services/product/StoreProductService";
+import { OutProductService } from "@/services/out/OutProductService";
 import {
   normalizeSupplierDeliveryInput,
   normalizeSupplierSplitCartInput,
@@ -85,6 +86,10 @@ const SUPPORTED_WRITE_ROUTES = new Set([
   "put /category/{id}",
   "delete /category/{id}",
   "put /category/set_show/{id}/{is_show}",
+  "post /product",
+  "put /product/{id}",
+  "put /product/set_show/{id}/{is_show}",
+  "put /product/stock/upload",
   "put /order/delivery/{order_id}",
   "put /order/distribution/{order_id}",
   "put /order/invoice/{order_id}",
@@ -1691,12 +1696,55 @@ export class OutApiService {
   async productInfo(idInput: unknown) {
     const id = positiveInteger(idInput);
     if (!id) throw new ValidateException("参数错误");
-    const product = await this.container.storeProductDao.getById(id);
-    if (!product || product.isDel) throw new NotFoundException("商品不存在");
+    const product = await new OutProductService(this.container).detail(id);
     return {
       ...(toSnakeValue(product) as Record<string, unknown>),
       pages_url: `/pages/goods_details/index?id=${id}`,
     };
+  }
+
+  async createProduct(
+    account: AuthenticatedOutAccount,
+    input: Record<string, unknown>,
+    requestKey: unknown,
+  ) {
+    return new OutProductService(this.container).save(account, 0, input, requestKey);
+  }
+
+  async updateProduct(
+    account: AuthenticatedOutAccount,
+    idInput: unknown,
+    input: Record<string, unknown>,
+    requestKey: unknown,
+  ) {
+    return new OutProductService(this.container).save(
+      account,
+      outCategoryId(idInput),
+      input,
+      requestKey,
+    );
+  }
+
+  async setProductShow(
+    account: AuthenticatedOutAccount,
+    idInput: unknown,
+    isShowInput: unknown,
+    requestKey: unknown,
+  ) {
+    return new OutProductService(this.container).setShow(
+      account,
+      outCategoryId(idInput),
+      isShowInput,
+      requestKey,
+    );
+  }
+
+  async uploadProductStock(
+    account: AuthenticatedOutAccount,
+    input: Record<string, unknown>,
+    requestKey: unknown,
+  ) {
+    return new OutProductService(this.container).uploadStock(account, input, requestKey);
   }
 
   async orderList(query: Record<string, unknown>) {

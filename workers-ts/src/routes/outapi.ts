@@ -43,6 +43,26 @@ outapiRoutes.get(
   outAuthMiddleware("GET", "/product/list"),
   OutApiController.productList,
 );
+outapiRoutes.post(
+  "/product",
+  outAuthMiddleware("POST", "/product"),
+  OutApiController.productCreate,
+);
+outapiRoutes.put(
+  "/product/stock/upload",
+  outAuthMiddleware("PUT", "/product/stock/upload"),
+  OutApiController.productStockUpload,
+);
+outapiRoutes.put(
+  "/product/set_show/:id/:is_show",
+  outAuthMiddleware("PUT", "/product/set_show/{id}/{is_show}"),
+  OutApiController.productSetShow,
+);
+outapiRoutes.put(
+  "/product/:id",
+  outAuthMiddleware("PUT", "/product/{id}"),
+  OutApiController.productUpdate,
+);
 outapiRoutes.get(
   "/product/:id",
   outAuthMiddleware("GET", "/product/{id}"),
