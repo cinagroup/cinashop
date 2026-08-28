@@ -286,5 +286,9 @@ export const userBill = pgTable(
     uniqueIndex("ub_order_reward_uq")
       .on(t.uid, t.linkId, t.eventKey)
       .where(sql`${t.eventKey} IN ('pay_give_integral', 'order_give_integral', 'order_give_exp')`),
+    uniqueIndex("ub_out_request_uq")
+      .on(t.uid, t.linkId, t.eventKey)
+      .where(sql`${t.eventKey} IN ('out_system_add_integral', 'out_system_sub_integral')
+        AND ${t.linkId} ~ '^[0-9a-f]{32}$'`),
   ],
 );

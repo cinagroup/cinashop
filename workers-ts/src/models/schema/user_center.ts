@@ -109,7 +109,13 @@ export const userMoney = pgTable(
     status: smallint("status").default(1).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
-  (t) => [index("um_uid").on(t.uid), index("um_type_link").on(t.type, t.linkId)],
+  (t) => [
+    index("um_uid").on(t.uid),
+    index("um_type_link").on(t.type, t.linkId),
+    uniqueIndex("um_out_request_uq")
+      .on(t.uid, t.linkId, t.type)
+      .where(sql`${t.type} IN ('system_add', 'system_sub') AND ${t.linkId} ~ '^[0-9a-f]{32}$'`),
+  ],
 );
 
 // ─── 充值订单 ────────────────────────────────────────────────

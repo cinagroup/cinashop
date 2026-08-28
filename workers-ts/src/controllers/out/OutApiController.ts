@@ -382,3 +382,43 @@ export async function userInfo(c: C) {
   privateResponse(c);
   return jsonOk(c, await service(c).userInfo(c.req.param("uid")));
 }
+
+export async function userCreate(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 16 * 1024);
+  return jsonOk(
+    c,
+    await service(c).createUser(c.get("outInfo")!, body, idempotencyKey(c)),
+    "添加成功",
+  );
+}
+
+export async function userUpdate(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 16 * 1024);
+  return jsonOk(
+    c,
+    await service(c).updateUser(
+      c.get("outInfo")!,
+      c.req.param("uid"),
+      body,
+      idempotencyKey(c),
+    ),
+    "修改成功",
+  );
+}
+
+export async function userGive(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 4 * 1024);
+  return jsonOk(
+    c,
+    await service(c).giveUser(
+      c.get("outInfo")!,
+      c.req.param("uid"),
+      body,
+      idempotencyKey(c),
+    ),
+    "操作成功",
+  );
+}

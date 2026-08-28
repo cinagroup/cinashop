@@ -49,6 +49,7 @@ import { amountToCents } from "@/services/payment/RefundGateway";
 import { StoreProductService, type GoodsListParams } from "@/services/product/StoreProductService";
 import { OutProductService } from "@/services/out/OutProductService";
 import { OutCouponService } from "@/services/out/OutCouponService";
+import { OutUserService } from "@/services/out/OutUserService";
 import {
   normalizeSupplierDeliveryInput,
   normalizeSupplierSplitCartInput,
@@ -105,6 +106,9 @@ const SUPPORTED_WRITE_ROUTES = new Set([
   "post /coupon",
   "put /coupon/status/{id}/{status}",
   "delete /coupon/{id}",
+  "post /user",
+  "put /user/{uid}",
+  "put /user/give/{uid}",
 ]);
 
 const MAX_FILTER_TEXT = 100;
@@ -2015,6 +2019,32 @@ export class OutApiService {
     requestKey: unknown,
   ) {
     return new OutCouponService(this.container).delete(account, id, requestKey);
+  }
+
+  async createUser(
+    account: AuthenticatedOutAccount,
+    input: Record<string, unknown>,
+    requestKey: unknown,
+  ) {
+    return new OutUserService(this.container, this.env).create(account, input, requestKey);
+  }
+
+  async updateUser(
+    account: AuthenticatedOutAccount,
+    uid: unknown,
+    input: Record<string, unknown>,
+    requestKey: unknown,
+  ) {
+    return new OutUserService(this.container, this.env).update(account, uid, input, requestKey);
+  }
+
+  async giveUser(
+    account: AuthenticatedOutAccount,
+    uid: unknown,
+    input: Record<string, unknown>,
+    requestKey: unknown,
+  ) {
+    return new OutUserService(this.container, this.env).give(account, uid, input, requestKey);
   }
 
   async userLevelList(query: Record<string, unknown>) {

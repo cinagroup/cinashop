@@ -645,6 +645,26 @@ PHP 权威合同是 `POST /outapi/coupon`、`PUT /outapi/coupon/status/:id/:stat
 
 本批静态审计更新为 PHP 1,912、TS 1,222、精确匹配531、可执行匹配516、明确501为15、退役2、可执行缺口1,379；Out 为38/41（92.7%），只剩用户新增、修改和资金/积分赠送3条。结构审计为源201/201表和全部源列覆盖、目标219表、18张Worker专用表、外部/内嵌表集合与列/主键漂移0。113个单元测试文件/657项和双TypeScript配置已通过；Wrangler 4.122.0 主 Worker minify dry-run 为2,265.38 KiB/gzip 558.16 KiB。Windows runtime再次在进入断言前由`workerd`以`0xc0000005`退出，不能记为通过。主`cinashop-api`未部署本批代码，因此生产账本前置完成不等于三条优惠券路由已在线开放。
 
+### 用户写入续审（2026-08-28）
+
+PHP 权威合同是 `POST /outapi/user`、`PUT /outapi/user/:uid` 和 `PUT /outapi/user/give/:uid`。发布的 Out 接口目录把新增手机号标为必填；赠送合同的 `money_status/money/integration_status/integration` 四项也全部标为必填，示例中的 `days/coupon` 并不在控制器实际读取字段中。源码审计发现旧新增虽然文档要求手机号，控制器却允许空手机号；`true_pwd` 完全不校验；更新缺省值会把未提交的姓名、证件、生日、备注、状态、等级、手机号、地址、分组、性别和地区批量清空。更新还允许请求伪造 `adminId` 写入资金流水关联值，只检查一级父子关系而不能阻止更深推广环，更新密码也没有新增时的长度/弱口令门禁。
+
+更严重的是旧 `UserServices::updateInfo` 没有显式事务：余额流水、积分流水、等级/标签/微信性别、推广关系和用户主表可能部分提交。余额超额扣减会收敛到 0，积分超额扣减却直接变负；同时修改余额和积分时，外部推送变量被后者覆盖，只通知最后一项。新实现保留 PHP 兼容字段和手机号/MD5 登录边界，但采用严格 allowlist、列宽/枚举/日期/JSON/身份证校验；新增必须有中国大陆格式手机号，活动用户手机号由数据库 partial unique index 兜底。密码为空时生成不可登录的随机口令摘要，不再落空 MD5；显式密码要求 6～128 位、拒绝 `123456`，并在提供确认密码时要求完全一致。更新改成安全 partial semantics，只修改请求实际出现的字段；未迁移字段（包括可伪造的 `adminId`）明确拒绝而不是静默丢弃。
+
+新增用户在同一事务创建用户、平台标签、会员等级、新人资格/积分/整元余额/优惠券赠礼和社区作者资料。等级切换会停用原 `user_level`、复用或新建目标记录并同步 `user.level/exp/level_status`；标签只接受启用的平台 `type=0/relation_id=0` 行并精确替换；分组必须真实存在。推广换绑先取得全局关系锁，再检查最多 100 层完整祖先链，阻止自身、任意深度后代和已有历史环；解绑/换绑同时原子修正旧/新父级 `spread_count`、事业部/代理/员工快照、`user_spread` 历史和好友证据。手机号目录、标签和回放账本分别使用事务级 advisory lock，用户资金和资料使用行锁；事务通过 Hyperdrive/transaction pooling 使用未命名语句，没有在请求间保存全局可变状态。
+
+三条写路由都要求 UUID-v4 `Idempotency-Key`。新增 `out_user_write_replay` 只保存 Out 账户、操作、请求键、canonical SHA-256、用户 ID、两类流水 ID 和时间，不保存姓名、手机号、证件、生日、资料、请求体或响应体；密码在进入 canonical 摘要前先用 `APP_KEY` 做 HMAC，避免回放摘要成为弱口令离线字典。账户+操作+key 唯一，同 key/同语义返回原结果，同 key/不同语义拒绝。余额以整数分计算，积分以安全整数计算；增加检查目标列上限，减少统一取 `min(请求值, 当前值)`，所以余额与积分都不会因本接口变负。实际非零变化分别写 PHP 兼容的 `user_money system_add/system_sub` 和 `user_bill category=integral/type=system_add|system_sub`，链接 ID 为去连字符 UUID；两个 partial unique index 独立阻止重复资金证据。资料、推广、主余额/积分、两类流水和回放账本都在同一个短事务，任何流水约束故障会全部回滚。
+
+外部 `0099_out_user_write_replay.sql` 与 Worker 内嵌 `migration_0106` 字节等价。生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 的 DDL 前置只读为 PostgreSQL 16.14、用户 3/活动用户3/删除0、合法非空手机号3、重复手机号组0、畸形手机号0、负余额0、负积分0、系统余额/积分流水0、用户等级/标签/分组/社区资料0、有效 Out 账户/接口0、临时 schema 0。DDL 在固定 `search_path=public`、3 秒锁超时、30 秒语句超时和独立 advisory lock 下执行两次均成功；业务表全行及序列指纹不变。最终回放表为 9 列、4 约束、3 索引、0 行，活动手机号/余额证据/积分证据三个 guard index 均 `valid/ready`；生产目录更新为 220 表、3,046 列、708 索引、207 主键。
+
+一次性 `cinashop-out-user-audit` 随后在同一生产实例创建随机 `codex_out_user_*` schema，克隆 Out 接口、用户、余额/积分流水、分组/标签、等级、推广/好友、社区和微信身份 13 张真实表，替换全部私有序列，并在隔离 schema 应用完全相同的 0106 DDL。场景逐条验证 3/3 ACL 放行和未授权路由拒绝、同 key 双连接只新增一名用户、创建重放/冲突、不同 key 重复手机号拒绝、用户/新人标记/社区/标签/等级原子创建、口令非空且不等于明文、部分更新不清空手机号和备注、手机号连同 phone-account 登录别名安全更新、标签/分组/等级/微信性别同步、重复手机号更新拒绝、任意深度推广环拒绝、解绑再换绑的计数/快照/历史/好友原子一致，以及余额和积分同 key 双连接各严格一条流水。
+
+资金负向继续覆盖同 key 不同金额拒绝、`12.50/150` 超额扣减后余额与积分均精确归零且流水记录实际扣减量、活动手机号/两类证据重复组均为0。给 `user_money` 注入 `NOT VALID` 故障约束后，更新请求先修改姓名和余额、再在流水插入处失败；最终姓名、余额和回放行全部回滚，证明不再复现 PHP 部分提交。隔离观察为合成用户5、回放7、余额流水2、积分流水2、推广历史1；回放 JSON 不含合成手机号或名称。最终 `schema_created/schema_removed/public_state_unchanged=true`、前缀 schema 0，生产用户/流水/回放仍为3/0/0。临时 Worker版本 `3fc6e1e6-f679-4e56-a7ec-ea0a28101737` 已删除，URL 返回404，Wrangler API 返回不存在 `10007`。
+
+本批静态审计更新为 PHP 1,912、TS 1,225、精确匹配534、可执行匹配519、明确501为15、退役2、可执行缺口1,376；Out 为41/41（100%）。结构审计为源201/201表和全部源列覆盖、目标220表、19张Worker专用表、外部/内嵌表集合与列/主键漂移0。114个单元测试文件/662项、双TypeScript配置和主 Worker minify dry-run 均通过；dry-run 为2,289.37 KiB/gzip 564.19 KiB。Windows runtime再次在进入断言前由`workerd`以`0xc0000005`退出且测试数为0，不能记为通过。主`cinashop-api`仍为100%版本`9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有发布，所以三条用户路由尚未在线开放。
+
+41/41 是静态 HTTP 路由合同覆盖，不等于 Out 业务域已经真实投产。生产仍没有有效 Out 账户或逐路由权限目录，无法做真实 token、PII 最小权限和客户调用验收。PHP `out.outPush` 还会在提交后直接请求 `out_account.user_update_push` 任意 URL：没有可靠重试、没有签名/去重，能触达内网且余额+积分同时变化只保留最后一项。该行为没有原样复制；已在 checklist 新增 OUT-005，要求真实客户先确认事件协议、HTTPS 域名 allowlist 和签名，再以事务 outbox + Queue + UNKNOWN 对账实现。主 Worker发布、真实账户导入、限流/审计真实验收和安全回调完成前，不能把 Out API 宣称为生产完成。
+
 ### 生产 Hyperdrive 证据与剩余阻塞
 
 临时审计 Worker 直接绑定生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。只读分布为 PostgreSQL 16.14、有效 Out 账户 0、Out 接口 0、GET 接口 0、订单 29、有效退款 3、优惠券 1、会员等级 3、有效用户 3、可用快递公司 2、审计前临时 schema 0。生产业务表已有读接口样本，但没有迁入任何真实 Out 账户或权限目录，因此无法也不会伪造生产 token、客户权限或真实调用验收；这再次证明源 MySQL 配置/数据复制尚未完成。
@@ -661,7 +681,7 @@ PHP 权威合同是 `POST /outapi/coupon`、`PUT /outapi/coupon/status/:id/:stat
 
 资金退款场景随后在随机 `codex_out_refund_money_*` schema 克隆 Out 目录、用户/账单、订单/退款/渠道状态、奖励/供应商/拼团/商品等 16 张生产表，并为所有可能写入的账本与状态表替换 schema 私有序列。`PUT /refund/{order_id}` 权限放行且缺权拒绝；同一余额退款双连接调用均完成，其中 1 次识别为幂等重放，余额 `5.00→15.00`、退款状态 `1→6`、`refunded_price=10.00`，资金账和退款状态各严格 1 行。缺金额、同售后单部分金额、`store_id!=0` 越界和 `refund_type=6` 但 `refunded_price!=refund_price` 的历史矛盾状态全部拒绝且资金不变。`type=2` 首次拒绝、完全重放和不同原因防覆盖通过。状态日志故障约束使余额、退款状态和账单全部回滚，移除后同请求重试只入账一次。报告为 PostgreSQL 16.14、`schema_created/schema_removed/public_state_unchanged=true`，执行前后 `codex_out_%` schema 均为 0，公共 16 表行数及 7 条公共序列完全一致，审计表仍 0 行；临时 Worker 删除后 Cloudflare API 返回 `10007`。主 Worker 未发布，也没有调用真实微信/支付宝商户退款。
 
-本地双 TypeScript 配置通过，完整单元套件为 94 个文件、535 项全通过（该历史快照已由优惠券续审的 113 文件/657 项覆盖）。Cloudflare 本地 runtime 套件再次在加载测试前由 Windows `workerd` 以 `0xc0000005` access violation 崩溃，因此不能写成 runtime 通过；生产 Hyperdrive 隔离场景提供了真实 Worker/PostgreSQL 执行证据，但不替代 Linux runtime/CI。当前结论是“Out 安全账户/token/逐路由 ACL + 14 条 GET + 22 条写路由 + 强一致限流与脱敏访问审计已完成代码面并通过生产引擎隔离验证”；源 Out 账户/接口目录复制、真实客户最小权限/PII 审核、真实 Durable Object RPC/429、微信/支付宝真实退款与回调/对账、通知模板/渠道配置复制及真实第三方验收、用户写接口、CI/runtime、发布和回滚演练仍未完成。
+本地双 TypeScript 配置通过，优惠券续审时的 113 个文件/657 项历史快照已由用户写迁移的 114 个文件/662 项全通过覆盖。Cloudflare 本地 runtime 套件再次在加载测试前由 Windows `workerd` 以 `0xc0000005` access violation 崩溃，因此不能写成 runtime 通过；生产 Hyperdrive 隔离场景提供了真实 Worker/PostgreSQL 执行证据，但不替代 Linux runtime/CI。当前结论是“Out 安全账户/token/逐路由 ACL + 14 条 GET + 25 条写路由 + 强一致限流与脱敏访问审计已完成代码面并通过生产引擎隔离验证”；源 Out 账户/接口目录复制、真实客户最小权限/PII 审核、真实 Durable Object RPC/429、微信/支付宝真实退款与回调/对账、通知模板/渠道配置复制及真实第三方验收、安全用户变更回调（OUT-005）、CI/runtime、发布和回滚演练仍未完成。
 
 ## 发货与拒绝退款通知迁移详细审计（2026-08-15）
 

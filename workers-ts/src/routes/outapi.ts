@@ -188,6 +188,21 @@ outapiRoutes.get(
   outAuthMiddleware("GET", "/user/info/{uid}"),
   OutApiController.userInfo,
 );
+outapiRoutes.post(
+  "/user",
+  outAuthMiddleware("POST", "/user"),
+  OutApiController.userCreate,
+);
+outapiRoutes.put(
+  "/user/give/:uid",
+  outAuthMiddleware("PUT", "/user/give/{uid}"),
+  OutApiController.userGive,
+);
+outapiRoutes.put(
+  "/user/:uid",
+  outAuthMiddleware("PUT", "/user/{uid}"),
+  OutApiController.userUpdate,
+);
 
 outapiRoutes.all("/*", (c) => c.json({
   status: 501,

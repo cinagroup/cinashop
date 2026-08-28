@@ -188,8 +188,45 @@ export const outCouponWriteReplay = pgTable(
   ],
 );
 
+/**
+ * Content-free replay ledger for Out API user writes. Names, phone numbers,
+ * identity-card values, profile fields and request/response bodies are never
+ * persisted here; only a canonical digest and bounded result identifiers.
+ */
+export const outUserWriteReplay = pgTable(
+  "out_user_write_replay",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    outAccountId: integer("out_account_id").notNull(),
+    operation: varchar("operation", { length: 32 }).notNull(),
+    requestKey: varchar("request_key", { length: 36 }).notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).notNull(),
+    userId: integer("user_id").default(0).notNull(),
+    moneyLedgerId: integer("money_ledger_id").default(0).notNull(),
+    integralLedgerId: integer("integral_ledger_id").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (table) => [
+    uniqueIndex("ouwr_account_operation_key_uq")
+      .on(table.outAccountId, table.operation, table.requestKey),
+    index("ouwr_user_history").on(table.userId, table.id),
+    check(
+      "ouwr_operation_ck",
+      sql`${table.operation} IN ('user_create', 'user_update', 'user_give')`,
+    ),
+    check(
+      "ouwr_identity_ck",
+      sql`${table.outAccountId} > 0 AND ${table.userId} > 0
+        AND ${table.moneyLedgerId} >= 0 AND ${table.integralLedgerId} >= 0
+        AND ${table.addTime} >= 0`,
+    ),
+    check("ouwr_request_hash_ck", sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`),
+  ],
+);
+
 export type OutAccount = typeof outAccount.$inferSelect;
 export type OutInterface = typeof outInterface.$inferSelect;
 export type OutApiAudit = typeof outApiAudit.$inferSelect;
 export type OutProductWriteReplay = typeof outProductWriteReplay.$inferSelect;
 export type OutCouponWriteReplay = typeof outCouponWriteReplay.$inferSelect;
+export type OutUserWriteReplay = typeof outUserWriteReplay.$inferSelect;

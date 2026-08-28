@@ -79,7 +79,7 @@ describe("third-party API migration boundary", () => {
     expect(parseOutRules({ rules: [3] })).toEqual([]);
   });
 
-  it("registers 14 bounded reads and twenty-two audited write routes behind ACL", () => {
+  it("registers 14 bounded reads and twenty-five audited write routes behind ACL", () => {
     const app = readFileSync("src/app.ts", "utf8");
     const routes = readFileSync("src/routes/outapi.ts", "utf8");
     const middleware = readFileSync("src/middleware/out-auth.ts", "utf8");
@@ -122,10 +122,14 @@ describe("third-party API migration boundary", () => {
     expect(routes).toContain('outapiRoutes.post(\n  "/coupon"');
     expect(routes).toContain('outapiRoutes.put(\n  "/coupon/status/:id/:status"');
     expect(routes).toContain('outapiRoutes.delete(\n  "/coupon/:id"');
+    expect(routes).toContain('outapiRoutes.post(\n  "/user"');
+    expect(routes).toContain('outapiRoutes.put(\n  "/user/give/:uid"');
+    expect(routes).toContain('outapiRoutes.put(\n  "/user/:uid"');
+    expect(routes.indexOf('"/user/give/:uid"')).toBeLessThan(routes.indexOf('"/user/:uid"'));
     expect(routes.indexOf('"/product/stock/upload"')).toBeLessThan(routes.indexOf('"/product/:id"'));
     expect(routes.indexOf('"/product/set_show/:id/:is_show"')).toBeLessThan(routes.indexOf('"/product/:id"'));
-    expect(routes.match(/outapiRoutes\.put\(/g)).toHaveLength(17);
-    expect(routes).not.toMatch(/outapiRoutes\.(?:post|delete)\("\/(?:order|refund|user)/i);
+    expect(routes.match(/outapiRoutes\.put\(/g)).toHaveLength(19);
+    expect(routes).not.toMatch(/outapiRoutes\.(?:post|delete)\("\/(?:order|refund)/i);
     expect(routes).toContain("}, 501));");
     expect(middleware).toContain("assertInterfacePermission");
     expect(cors).toContain('"Idempotency-Key"');

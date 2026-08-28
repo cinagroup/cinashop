@@ -19,6 +19,7 @@ import {
   smallint,
   text,
   index,
+  uniqueIndex,
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -114,6 +115,9 @@ export const user = pgTable(
     index("work_uid").on(t.workUid),
     index("is_promoter").on(t.isPromoter, t.phone),
     index("phone").on(t.phone),
+    uniqueIndex("user_active_phone_uq")
+      .on(t.phone)
+      .where(sql`${t.isDel} = 0 AND ${t.deleteTime} IS NULL AND ${t.phone} <> ''`),
     index("index_0").on(t.deleteTime),
     index("add_time_delete_sex").on(t.addTime, t.deleteTime, t.sex),
     index("user_division_parent").on(t.divisionId, t.agentId, t.staffId),
