@@ -3,6 +3,7 @@ import {
   asc,
   desc,
   eq,
+  inArray,
   lt,
   or,
   sql,
@@ -652,6 +653,78 @@ export class KefuRealtimeService {
 
   async serviceList(onlineOnly = false) {
     return withTx(this.container, async (tx) => listServices(tx, onlineOnly));
+  }
+
+  /** PHP /api/user/record — the authenticated user's conversation summaries. */
+  async userConversationList(
+    userUid: number,
+    query: Record<string, string>,
+  ) {
+    integer(userUid, "用户身份", { min: 1 });
+    const page = integer(query.page, "页码", { min: 1, max: 100_000, fallback: 1 });
+    const limit = integer(query.limit, "每页数量", { min: 1, max: MAX_CHAT_HISTORY_LIMIT, fallback: 10 });
+    const nickname = String(query.nickname ?? "").trim();
+    if (nickname.length > 50) throw new ValidateException("客服昵称过长");
+    const conditions: SQL[] = [
+      eq(storeServiceRecord.userId, userUid),
+      eq(storeServiceRecord.isTourist, 0),
+    ];
+    if (nickname) {
+      const pattern = `%${nickname}%`;
+      conditions.push(sql`(
+        ${storeServiceRecord.nickname} ILIKE ${pattern}
+        OR ${storeServiceRecord.toUid}::text LIKE ${pattern}
+      )`);
+    }
+    const rows = await this.container.db
+      .select()
+      .from(storeServiceRecord)
+      .where(and(...conditions))
+      .orderBy(desc(storeServiceRecord.updateTime), desc(storeServiceRecord.id))
+      .limit(limit)
+      .offset((page - 1) * limit);
+    if (!rows.length) return [];
+
+    const serviceUids = [...new Set(rows.map((row) => row.toUid))];
+    const services = await this.container.db
+      .select({
+        id: storeService.id,
+        uid: storeService.uid,
+        nickname: storeService.nickname,
+        avatar: storeService.avatar,
+      })
+      .from(storeService)
+      .where(inArray(storeService.uid, serviceUids))
+      .orderBy(desc(storeService.id));
+    const serviceByUid = new Map<number, (typeof services)[number]>();
+    for (const service of services) {
+      if (!serviceByUid.has(service.uid)) serviceByUid.set(service.uid, service);
+    }
+
+    const imageIndexes = rows.flatMap((row, index) =>
+      row.messageType === 3 && parseCanonicalAttachmentId(row.message) ? [index] : []
+    );
+    const signed = imageIndexes.length
+      ? await signAttachmentReferences(
+          this.env.APP_KEY,
+          imageIndexes.map((index) => rows[index].message),
+          60 * 60,
+        )
+      : [];
+    const signedByIndex = new Map(imageIndexes.map((index, offset) => [index, signed[offset]]));
+    return rows.map((row, index) => {
+      const service = serviceByUid.get(row.toUid);
+      const message = signedByIndex.get(index)
+        ?? (row.messageType === 1 ? Array.from(row.message).slice(0, 10).join("") : row.message);
+      return {
+        ...mapRecord(row),
+        nickname: service?.nickname || row.nickname,
+        avatar: service?.avatar || row.avatar,
+        message,
+        _update_time: new Date((row.updateTime + 8 * 60 * 60) * 1_000)
+          .toISOString().slice(0, 16).replace("T", " "),
+      };
+    });
   }
 
   async userRecord(

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { maskPhpComments } from "./php-source";
 
 type Method = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "ANY";
 
@@ -171,11 +172,12 @@ function phpGroups(source: string): GroupRange[] {
 function parsePhpRoutes(file: string): RouteRecord[] {
   const absolute = join(phpRoot, file);
   const source = readFileSync(absolute, "utf8");
-  const groups = phpGroups(source);
+  const searchable = maskPhpComments(source);
+  const groups = phpGroups(searchable);
   const routes: RouteRecord[] = [];
   const pattern = /Route::(get|post|put|delete|patch|any|resource)\s*\(\s*(['"])(.*?)\2\s*,\s*(['"])(.*?)\4/g;
 
-  for (const match of source.matchAll(pattern)) {
+  for (const match of searchable.matchAll(pattern)) {
     const offset = match.index ?? 0;
     const routeType = match[1].toLowerCase();
     const path = match[3];
@@ -202,7 +204,7 @@ function parsePhpRoutes(file: string): RouteRecord[] {
       continue;
     }
 
-    const statement = source.slice(offset, source.indexOf(";", offset) + 1);
+    const statement = searchable.slice(offset, searchable.indexOf(";", offset) + 1);
     const actions = ["index", "create", "save", "read", "edit", "update", "delete"];
     const only = statement.match(/->only\s*\(\s*\[([\s\S]*?)\]\s*\)/)?.[1];
     const except = statement.match(/->except\s*\(\s*\[([\s\S]*?)\]\s*\)/)?.[1];
@@ -445,6 +447,7 @@ process.stdout.write(
       surfaces: reports,
       limitations: [
         "Static route registration coverage does not prove response, permission, state-machine, data, or third-party parity.",
+        "PHP line and block comments are masked before parsing, so disabled route declarations do not count as authority.",
         "ThinkPHP resource routes are expanded to the standard seven REST actions after only/except filters.",
         "Wildcard 501 fallbacks never count as migrated routes.",
         "Routes wired to handlers named *Unavailable or containing an inline 501 are registered but not executable.",

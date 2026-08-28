@@ -103,6 +103,10 @@ describe("customer-service realtime migration", () => {
       realtime.indexOf(".insert(storeServiceLog)"),
     );
     expect(realtime).toContain("signAttachmentReferences(appKey, [message.msn], 60 * 60)");
+    expect(realtime).toContain("async userConversationList(");
+    expect(realtime).toContain("eq(storeServiceRecord.userId, userUid)");
+    expect(realtime).toContain("eq(storeServiceRecord.isTourist, 0)");
+    expect(realtime).toContain("parseCanonicalAttachmentId(row.message)");
     expect(core).toContain("return signImageMessages(rows.reverse().map(formatMessage), this.env?.APP_KEY)");
   });
 

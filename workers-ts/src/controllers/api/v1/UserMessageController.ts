@@ -210,6 +210,13 @@ export async function customerServiceRecord(c: C) {
   return jsonOk(c, await realtime(c).userRecord(uid, c.req.query()));
 }
 
+/** GET /api/user/record — current user's customer-service conversation summaries. */
+export async function customerServiceConversationList(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  return jsonOk(c, await realtime(c).userConversationList(uid, c.req.query()));
+}
+
 /** POST /api/service/send — persisted first, then delivered to the agent's principal DO. */
 export async function serviceSend(c: C) {
   const uid = c.get("uid");

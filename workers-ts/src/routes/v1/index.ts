@@ -16,6 +16,7 @@ import * as PayController from "@/controllers/api/v1/PayController";
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
 import * as UserLevelController from "@/controllers/api/v1/UserLevelController";
+import * as UserProfileController from "@/controllers/api/v1/UserProfileController";
 import * as CommunityController from "@/controllers/api/v1/CommunityController";
 import * as ActivityJoinController from "@/controllers/api/v1/ActivityJoinController";
 import * as AdminLotteryController from "@/controllers/api/v1/AdminLotteryController";
@@ -92,6 +93,7 @@ v1Routes.get("/assets/:id", AttachmentController.asset);
 v1Routes.get("/index", authMiddleware({ force: false }), PublicController.index);
 v1Routes.get("/menu/user", authMiddleware({ force: false }), PublicController.menuUser);
 v1Routes.get("/menu/date", authMiddleware({ force: false }), PublicController.menuUserData);
+v1Routes.get("/user/activity", authMiddleware({ force: false }), UserProfileController.activity);
 v1Routes.get("/category", authMiddleware({ force: false }), ProductController.category);
 v1Routes.get("/category_version", ProductController.categoryVersion);
 v1Routes.get("/level_category", ProductController.levelCategory);
@@ -127,6 +129,8 @@ v1Routes.get(
 
 // ─── 需授权接口 ────────────────────────────────────────────────
 v1Routes.get("/logout", authMiddleware({ force: true }), LoginController.logout);
+v1Routes.get("/user/code", authMiddleware({ force: true }), UserProfileController.userCodeUnavailable);
+v1Routes.post("/user/code", authMiddleware({ force: true }), UserProfileController.userCodeUnavailable);
 v1Routes.get("/newcomer/info", authMiddleware({ force: true }), NewcomerController.info);
 v1Routes.get("/newcomer/gift", authMiddleware({ force: true }), NewcomerController.gift);
 v1Routes.get(
@@ -347,6 +351,8 @@ v1Routes.post("/division/agent/spread", authMiddleware({ force: true }), Divisio
 // ─── 会员等级 (补全) ───────────────────────────────────────────
 v1Routes.get("/user/level/grade", authMiddleware({ force: false }), UserLevelController.levelGrade);
 v1Routes.get("/user/level/info", authMiddleware({ force: true }), UserLevelController.levelInfo);
+v1Routes.get("/user/level/detection", authMiddleware({ force: true }), UserLevelController.levelDetection);
+v1Routes.get("/user/level/activate_info", authMiddleware({ force: true }), UserLevelController.levelActivateInfo);
 v1Routes.post("/user/level/activate", authMiddleware({ force: true }), UserLevelController.levelActivate);
 v1Routes.get("/user/level/expList", authMiddleware({ force: true }), UserLevelController.levelExpList);
 
@@ -414,12 +420,24 @@ v1Routes.post("/recharge/recharge", authMiddleware({ force: true }), UserMessage
 v1Routes.get("/recharge/index", authMiddleware({ force: true }), UserMessageController.rechargeIndex);
 
 // ─── 站内信 (补全) ─────────────────────────────────────────────
+v1Routes.get("/user", authMiddleware({ force: true }), UserProfileController.personalHome);
+v1Routes.get("/userinfo", authMiddleware({ force: true }), UserProfileController.userInfo);
+v1Routes.get("/user/rand_code", authMiddleware({ force: true }), UserProfileController.randCode);
+v1Routes.post("/user/share", authMiddleware({ force: true }), UserProfileController.userShare);
+v1Routes.get("/user/share/words", authMiddleware({ force: true }), UserProfileController.shareWords);
+v1Routes.get("/user/routine_code", authMiddleware({ force: true }), UserProfileController.routineCode);
+v1Routes.get("/user/spread_info", authMiddleware({ force: true }), UserProfileController.spreadInfo);
 v1Routes.get("/user/info", authMiddleware({ force: true }), UserMessageController.userInfo);
 v1Routes.post("/user/edit", authMiddleware({ force: true }), UserMessageController.userEdit);
 v1Routes.get("/service/chat_history", authMiddleware({ force: true }), UserMessageController.serviceChatHistory);
 v1Routes.post("/service/send", authMiddleware({ force: true }), UserMessageController.serviceSend);
 v1Routes.get("/user/service/list", authMiddleware({ force: false }), UserMessageController.customerServiceList);
 v1Routes.get("/user/service/record", authMiddleware({ force: true }), UserMessageController.customerServiceRecord);
+v1Routes.get(
+  "/user/record",
+  authMiddleware({ force: true }),
+  UserMessageController.customerServiceConversationList,
+);
 v1Routes.post(
   "/user/service/feedback",
   authMiddleware({ force: true }),

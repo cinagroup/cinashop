@@ -110,6 +110,19 @@ export async function cacheSet(
   return result === "OK";
 }
 
+/** Set a TTL-bound value only when the key does not already exist. */
+export async function cacheSetIfAbsent(
+  key: string,
+  value: unknown,
+  env: RedisEnv,
+  ttlSeconds: number,
+): Promise<boolean> {
+  const r = getRedis(env);
+  if (!r) return false;
+  const result = await r.set(PREFIX + key, value, { ex: ttlSeconds, nx: true });
+  return result === "OK";
+}
+
 export async function cacheDelete(key: string, env: RedisEnv): Promise<boolean> {
   const r = getRedis(env);
   if (!r) return true;

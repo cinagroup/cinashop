@@ -175,6 +175,36 @@ export class WechatMiniProgramCodeService {
     return `data:${code.contentType};base64,${base64}`;
   }
 
+  /** Build the authenticated user's distributor mini-program code. */
+  async createUserSpreadDataUrl(uid: number): Promise<string | null> {
+    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("用户ID错误");
+    const config = new SystemConfigService(this.container, this.env);
+    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
+    const appId = values.routine_appId?.trim() ?? "";
+    const appSecret = values.routine_appsecret?.trim() ?? "";
+    if (!appId || !appSecret) return null;
+
+    const cacheKey = `routine_code:user_spread:${appId}:${uid}`;
+    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
+    if (cached?.base64 && cached.contentType) {
+      return `data:${cached.contentType};base64,${cached.base64}`;
+    }
+
+    let accessToken = await this.getAccessToken(appId, appSecret);
+    let code: { bytes: Uint8Array; contentType: string };
+    try {
+      code = await this.fetchInviteCode(accessToken, uid);
+    } catch (error) {
+      if (!(error instanceof WechatMiniProgramApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
+      await cacheDelete(`routine_access_token:${appId}`, this.env);
+      accessToken = await this.getAccessToken(appId, appSecret, true);
+      code = await this.fetchInviteCode(accessToken, uid);
+    }
+    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
+    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
+    return `data:${encoded.contentType};base64,${encoded.base64}`;
+  }
+
   async renderAgentInviteCode(
     uid: number,
     expires: number,
