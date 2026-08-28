@@ -175,6 +175,43 @@ export class WechatMiniProgramCodeService {
     return `data:${code.contentType};base64,${base64}`;
   }
 
+  /** Build the fixed paid-membership page code used by the legacy PC shop. */
+  async createPaidMembershipDataUrl(): Promise<string | null> {
+    return this.createFixedPathDataUrl(
+      "paid_membership",
+      "pages/annex/vip_paid/index",
+      "付费会员",
+    );
+  }
+
+  /** Build a product-detail unlimited code with the same scene as CRMEB. */
+  async createProductDetailDataUrl(productId: number): Promise<string | null> {
+    if (!Number.isSafeInteger(productId) || productId <= 0) {
+      throw new ValidateException("商品ID错误");
+    }
+    const config = new SystemConfigService(this.container, this.env);
+    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
+    const appId = values.routine_appId?.trim() ?? "";
+    const appSecret = values.routine_appsecret?.trim() ?? "";
+    if (!appId || !appSecret) return null;
+
+    const cacheKey = `routine_code:product_detail:${appId}:${productId}`;
+    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
+    if (cached?.base64 && cached.contentType) {
+      return `data:${cached.contentType};base64,${cached.base64}`;
+    }
+    const load = (token: string) => this.fetchUnlimitedCode(
+      token,
+      `id=${productId}&spid=0`,
+      "pages/goods_details/index",
+      "商品详情",
+    );
+    const code = await this.fetchWithTokenRefresh(appId, appSecret, load);
+    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
+    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
+    return `data:${encoded.contentType};base64,${encoded.base64}`;
+  }
+
   /** Build the authenticated user's distributor mini-program code. */
   async createUserSpreadDataUrl(uid: number): Promise<string | null> {
     if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("用户ID错误");
@@ -268,6 +305,47 @@ export class WechatMiniProgramCodeService {
     }
   }
 
+  private async createFixedPathDataUrl(
+    cacheSuffix: string,
+    path: string,
+    label: string,
+  ): Promise<string | null> {
+    const config = new SystemConfigService(this.container, this.env);
+    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
+    const appId = values.routine_appId?.trim() ?? "";
+    const appSecret = values.routine_appsecret?.trim() ?? "";
+    if (!appId || !appSecret) return null;
+    const cacheKey = `routine_code:${cacheSuffix}:${appId}`;
+    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
+    if (cached?.base64 && cached.contentType) {
+      return `data:${cached.contentType};base64,${cached.base64}`;
+    }
+    const code = await this.fetchWithTokenRefresh(
+      appId,
+      appSecret,
+      (token) => this.fetchPathCode(token, path, label),
+    );
+    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
+    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
+    return `data:${encoded.contentType};base64,${encoded.base64}`;
+  }
+
+  private async fetchWithTokenRefresh(
+    appId: string,
+    appSecret: string,
+    load: (accessToken: string) => Promise<{ bytes: Uint8Array; contentType: string }>,
+  ): Promise<{ bytes: Uint8Array; contentType: string }> {
+    let accessToken = await this.getAccessToken(appId, appSecret);
+    try {
+      return await load(accessToken);
+    } catch (error) {
+      if (!(error instanceof WechatMiniProgramApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
+      await cacheDelete(`routine_access_token:${appId}`, this.env);
+      accessToken = await this.getAccessToken(appId, appSecret, true);
+      return load(accessToken);
+    }
+  }
+
   private async getAccessToken(appId: string, appSecret: string, forceRefresh = false): Promise<string> {
     const cacheKey = `routine_access_token:${appId}`;
     if (!forceRefresh) {
@@ -335,13 +413,21 @@ export class WechatMiniProgramCodeService {
   private async fetchMembershipActivationCode(
     accessToken: string,
   ): Promise<{ bytes: Uint8Array; contentType: string }> {
+    return this.fetchPathCode(accessToken, "pages/annex/vip_active/index", "会员激活");
+  }
+
+  private async fetchPathCode(
+    accessToken: string,
+    path: string,
+    label: string,
+  ): Promise<{ bytes: Uint8Array; contentType: string }> {
     const url = new URL("https://api.weixin.qq.com/wxa/getwxacode");
     url.searchParams.set("access_token", accessToken);
     const response = await this.fetcher(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        path: "pages/annex/vip_active/index",
+        path,
         check_path: true,
         env_version: "release",
         width: 430,
@@ -352,21 +438,53 @@ export class WechatMiniProgramCodeService {
       const data = (await response.json()) as WechatErrorResponse;
       throw new WechatMiniProgramApiError(
         Number(data.errcode ?? response.status),
-        `生成小程序会员激活码失败: ${data.errmsg ?? response.statusText}`,
+        `生成小程序${label}码失败: ${data.errmsg ?? response.statusText}`,
       );
     }
     const contentLength = Number(response.headers.get("Content-Length") ?? 0);
     if (!response.ok || (contentLength > 0 && contentLength > MAX_CODE_BYTES)) {
-      throw new ValidateException("微信返回的小程序会员激活码无效或过大");
+      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
     }
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (!bytes.byteLength || bytes.byteLength > MAX_CODE_BYTES) {
-      throw new ValidateException("微信返回的小程序会员激活码无效或过大");
+      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
     }
     return {
       bytes,
       contentType: contentType.startsWith("image/") ? contentType : "image/png",
     };
+  }
+
+  private async fetchUnlimitedCode(
+    accessToken: string,
+    scene: string,
+    page: string,
+    label: string,
+  ): Promise<{ bytes: Uint8Array; contentType: string }> {
+    const url = new URL("https://api.weixin.qq.com/wxa/getwxacodeunlimit");
+    url.searchParams.set("access_token", accessToken);
+    const response = await this.fetcher(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scene, page, check_path: true, env_version: "release", width: 430 }),
+    });
+    const contentType = response.headers.get("Content-Type")?.split(";", 1)[0]?.trim().toLowerCase() ?? "";
+    if (contentType === "application/json" || contentType === "text/plain") {
+      const data = (await response.json()) as WechatErrorResponse;
+      throw new WechatMiniProgramApiError(
+        Number(data.errcode ?? response.status),
+        `生成小程序${label}码失败: ${data.errmsg ?? response.statusText}`,
+      );
+    }
+    const contentLength = Number(response.headers.get("Content-Length") ?? 0);
+    if (!response.ok || (contentLength > 0 && contentLength > MAX_CODE_BYTES)) {
+      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (!bytes.byteLength || bytes.byteLength > MAX_CODE_BYTES) {
+      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
+    }
+    return { bytes, contentType: contentType.startsWith("image/") ? contentType : "image/png" };
   }
 
   private imageResponse(bytes: Uint8Array, contentType: string): Response {

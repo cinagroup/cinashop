@@ -133,6 +133,40 @@ export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
   },
   cid: (value) => {
     if (!value) return undefined;
+    const id = Number(value);
+    return inArray(
+      storeProduct.id,
+      sql`(SELECT relation.product_id
+        FROM store_product_relation AS relation
+        WHERE relation.type = 1
+          AND relation.relation_id IN (
+            SELECT category.id
+            FROM store_product_category AS category
+            WHERE category.id = ${id}
+              OR category.path = ${String(id)}
+              OR category.path LIKE ${`${id},%`}
+              OR category.path LIKE ${`%,${id},%`}
+              OR category.path LIKE ${`%,${id}`}
+          ))` as never,
+    );
+  },
+  sid: (value) => {
+    if (!value) return undefined;
+    const id = Number(value);
+    return inArray(
+      storeProduct.id,
+      sql`(SELECT relation.product_id
+        FROM store_product_relation AS relation
+        WHERE relation.type = 1
+          AND relation.relation_id IN (
+            SELECT category.id
+            FROM store_product_category AS category
+            WHERE category.id = ${id} OR category.pid = ${id}
+          ))` as never,
+    );
+  },
+  tid: (value) => {
+    if (!value) return undefined;
     return relationIn(1, [Number(value)]);
   },
 

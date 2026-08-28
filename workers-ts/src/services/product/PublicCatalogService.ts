@@ -701,7 +701,7 @@ export class PublicCatalogService {
     return { list: await this.decorateProducts(rows.map(productListRow)), count: Number(countRows[0]?.count ?? 0) };
   }
 
-  private async decorateProducts(list: Record<string, unknown>[]) {
+  async decorateProducts(list: Record<string, unknown>[]) {
     if (!list.length) return list;
     const brandIds = [...new Set(list.map((item) => int(item.brand_id)).filter(Boolean))];
     const labelIds = [...new Set(list.flatMap((item) => csvIds(item.store_label_id)))];

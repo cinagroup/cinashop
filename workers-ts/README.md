@@ -383,6 +383,8 @@ npm run deploy --env staging   # 预发
 
 ## 已知待办
 
+- [x] 精确注册 PHP `/api/pc` 22 条兼容合同，19 条恢复 PC banner/分类/商品/城市/公司/二维码与 UID 作用域的购物车/资金/订单/收藏/售后；共享商品查询同步修复 `cid/sid/tid/selectId/news/type` 和 SVIP 可见性偏差。生产 Hyperdrive 只读与随机 schema 15/15 通过，`public` 指纹不变，临时 Worker/schema 已删除
+- [ ] 以一次性挑战、扫码主体绑定、OAuth state/PKCE 或等价保护、限流和重放账本重建 PC 微信登录；当前 `pc/key`、`pc/scan/:key`、`pc/wechat_auth` 故意 501。还需复制/运营确认 PC 分类关系、banner、城市和 14 个缺失候选配置，再完成真实账号、旧 Nuxt/新 PC、预发与发布 E2E
 - [x] 恢复 API v2 三条促销只读兼容合同：活动商品、赠品信息和登录态凑单；按 active 平台父规则执行全场/指定/排除/品牌/标签五类范围，保留 PHP 折扣截断、阶梯与券/赠品 SKU 投影，并修复商品 DAO 的显式 `ids` 过去只排序不筛选而导致范围扩散的问题。生产 Hyperdrive 只读确认促销/辅助表均为 0；随机 schema 12/12、`public_state_unchanged=true`、临时 schema `0→0`，一次性审计 Worker 已删除
 - [ ] 从源 MySQL 复制并由运营复核促销父子规则、商品/品牌/标签范围、券与赠品 SKU；补齐 API-006 订单促销叠加并完成旧 UniApp/真实账号/预发 E2E 后，才可把 PROMO 域判为完成
 - [x] 恢复客服独立 token 域及 22 条核心 PHP 路由，固定账号 ID/聊天 UID 双身份、会话与聊天成员作用域、用户分群、个人话术/分类 owner；登录前以 HMAC 脱敏来源和 Durable Object 实施 10 次/分钟强一致限流。生产 `0092` 四索引已应用，随机 schema 13 项断言和业务行/序列不变验证通过

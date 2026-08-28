@@ -143,6 +143,7 @@ function catalogParams(c: C): GoodsListParams & { productId?: string } {
     selectId: q.selectId ? Number(q.selectId) : undefined,
     brand_id: q.brand_id,
     news: q.news ? Number(q.news) : undefined,
+    type: q.type,
     ids: q.ids,
     productId: q.productId,
   };

@@ -400,7 +400,10 @@ export class StoreCartService {
   }
 
   /** PHP v2 `/cart_list`: normal, reusable cart rows in the old mixed-case shape. */
-  async listLegacyV2(uid: number): Promise<Record<string, unknown>[]> {
+  async listLegacyV2(
+    uid: number,
+    options: { includeInvalid?: boolean } = {},
+  ): Promise<Record<string, unknown>[]> {
     const carts = await this.container.db
       .select()
       .from(storeCart)
@@ -412,7 +415,7 @@ export class StoreCartService {
         eq(storeCart.isDel, 0),
         eq(storeCart.isPay, 0),
         eq(storeCart.isNew, 0),
-        eq(storeCart.status, 1),
+        options.includeInvalid ? undefined : eq(storeCart.status, 1),
       ))
       .orderBy(desc(storeCart.addTime), desc(storeCart.id));
     if (carts.length === 0) return [];
@@ -441,7 +444,9 @@ export class StoreCartService {
     const result: Record<string, unknown>[] = [];
     for (const cart of carts) {
       const product = productById.get(cart.productId);
-      if (!product || product.isDel !== 0 || product.isShow !== 1 || product.isVerify !== 1) continue;
+      if (!product) continue;
+      const productValid = product.isDel === 0 && product.isShow === 1 && product.isVerify === 1;
+      if (!options.includeInvalid && !productValid) continue;
       const sku = skuByProductUnique.get(`${cart.productId}:${cart.productAttrUnique}`);
       const rawPrice = String(sku?.price ?? product.price);
       const rawPriceCents = decimalToCents(rawPrice);
@@ -496,7 +501,7 @@ export class StoreCartService {
         truePrice: price,
         sum_price: rawPriceCents / 100,
         integral: 0,
-        is_valid: 1,
+        is_valid: productValid && cart.status === 1 && Boolean(sku?.suk) && stock > 0 ? 1 : 0,
         productInfo: {
           id: product.id,
           type: product.type,
@@ -523,6 +528,20 @@ export class StoreCartService {
       });
     }
     return result;
+  }
+
+  /** PHP PC `/get_cart_list`: preserve both usable and expired cart rows. */
+  async listLegacyPc(uid: number): Promise<{
+    valid: Record<string, unknown>[];
+    invalid: Record<string, unknown>[];
+  }> {
+    const rows = await this.listLegacyV2(uid, { includeInvalid: true });
+    const valid: Record<string, unknown>[] = [];
+    const invalid: Record<string, unknown>[] = [];
+    for (const row of rows) {
+      (Number(row.is_valid) === 1 ? valid : invalid).push(row);
+    }
+    return { valid, invalid };
   }
 
   /** Secure owner-scoped implementation of PHP v2 `resetCart`. */

@@ -16,6 +16,7 @@ import {
   storeCart,
   storeProductAttr,
   storeProductAttrValue,
+  storeProductCategory,
   systemForm,
 } from "@/models/schema";
 import { parseSystemFormDefinition } from "@/services/system/SystemMetadataService";
@@ -39,6 +40,7 @@ export interface GoodsListParams {
   salesOrder?: "" | "asc" | "desc";
   news?: number; // → is_new
   type?: string; // → status
+  product_types?: number[];
   ids?: string;
   promotions_type?: number;
   defaultOrder?: number;
@@ -161,11 +163,35 @@ export class StoreProductService {
       isVipProduct: 0, // 非 svip 专属 (默认隐藏 svip 商品)
     };
 
+    if (_uid) {
+      const current = await this.container.userDao.findForAuth(_uid);
+      if (current?.isMoneyLevel) where.isVipProduct = -1;
+    }
+
+    let sid = params.sid;
+    let cid = params.cid;
+    let tid = params.tid;
+    if (params.selectId && (!sid || !cid)) {
+      const categories = await this.container.db
+        .select({ level: storeProductCategory.level })
+        .from(storeProductCategory)
+        .where(eq(storeProductCategory.id, params.selectId))
+        .limit(1);
+      const level = categories[0]?.level ?? 0;
+      if (level === 0) cid = params.selectId;
+      else if (level === 1) sid = params.selectId;
+      else tid = params.selectId;
+    }
+
     if (params.store_name) where.store_name = params.store_name;
-    if (params.news) where.is_new = 1;
+    if (params.store_name) where.pid = 0;
+    if (params.news) where.timeOrder = 1;
     if (params.cate_id) where.cateId = String(params.cate_id).split(",").map(Number);
-    if (params.cid) where.cid = params.cid;
-    if (params.tid) where.cateId = [params.tid];
+    if (cid) where.cid = cid;
+    if (sid) where.sid = sid;
+    if (tid) where.tid = tid;
+    if (params.type !== undefined && params.type !== "") where.status = Number(params.type);
+    if (params.product_types?.length) where.productType = params.product_types;
     if (params.brand_id) where.brandId = String(params.brand_id).split(",").map(Number);
     if (params.priceOrder) where.priceOrder = params.priceOrder;
     if (params.salesOrder) where.salesOrder = params.salesOrder;

@@ -1414,6 +1414,34 @@ PHP 的 `fastList` 读取 `pid>0` 的可见子分类，而既有 Workers v1 首�
 
 剩余 16 条全部属于 AUTH。HOME 的精确静态缺口已归零，但生产缺少四个数量配置、首页推荐关系、微信身份和地图 key，运行中营销标签仍属于 API-006，源 MySQL 未复制，真实微信、媒体、旧端、预发和正式发布 E2E 均未完成，因此 API-004-HOME 和整体 API-004 继续保持未勾选；AUTH 在取得真实微信凭据并完成一次性凭据、限流和重放保护前保持阻塞，下一批转入 API-005 `/api/pc`。
 
+## API-005 `/api/pc` 22 条合同迁移审计（2026-08-28）
+
+### PHP 权威语义、客户端使用与安全边界
+
+本批逐行核对 PHP `route/api.php:571-604`、`app/controller/api/pc/*`、`app/services/pc/*`、旧 Nuxt PC 和当前 `view/pc-ts`。PHP 权威面共 22 条：4 条无登录路由、12 条可选登录读路由、6 条强制登录用户数据路由。旧 Nuxt 使用公司信息、微信 AppID/OAuth、banner、分类/商品/推荐、城市、二维码、购物车、资金、订单、收藏和售后；旧 `key/scan` 扫码块已被注释。新 `pc-ts` 已改用共享 v1 `/login` 、`/products`、`/cart/list`、`/user/balance`和 `/order/list` 等合同，没有继续暴露旧 PC 微信 OAuth UI。因此 22 条是迁移兼容面，不能因新客户端不再调用就直接删除。
+
+`GET /pc/key` 生成一个未绑定请求方的缓存 key，`GET /pc/scan/:key` 在 key 被写入用户 `uniqid` 后可直接签发 token；旧 `wechat_auth` 又使用静态 OAuth state 且不校验一次性挑战。照搬会重新引入令牌窃取和登录 CSRF，所以三条路由精确注册为 501 `*Unavailable`，并指向已有 `/api/login`；`get_appid` 仅读取公开 AppID 和版本，保持可执行。这三条 501 是明确安全决策，不计入静态可执行覆盖；后续 CORE-004 必须以一次性挑战、扫码主体绑定、轮询授权、OAuth state/PKCE 或等价保护、限流和重放账本重建，不能只把 PHP 缓存逻辑换成 Redis。
+
+### 兼容实现与迁移中发现的偏差
+
+新 `PcCompatibilityService` 与独立控制器恢复了 PC banner、首页分类/商品、手机购买配置、付费会员/商品小程序码、商品列表/推荐/优品、城市树、订单支付轮询、公司/备案/友链、微信二维码和六条登录用户合同。购物车按 PHP 拆为 `valid/invalid`，余额 0/1/2、佣金 3、提现 4 复用已验证的旧账本投影，订单/收藏/售后返回旧 `list/count` 信封。六条个人数据路由全部 `force=true`，购物车、订单、收藏、流水和售后查询都以中间件 UID 作用域；PC 售后商品 POST 直接复用已有订单归属复核实现。小程序码只在 `product_phone_buy_url=2` 且存在真实小程序凭据时调用微信；H5 付费会员使用本地 SVG data URL，不写附件或暴露密钥。
+
+审计同时确认共享商品列表并未等价迁移 PHP：`cid` 只查精确 relation ID，`sid` 和 `selectId` 未执行，`tid` 误用普通分类数组，`news` 误解为新品标签而不是时间排序，`type→status` 丢失，SVIP 用户仍被强制隐藏专属商品。本批修正为：`cid` 覆盖当前分类及 `path` 后代，`sid` 覆盖当前分类及直接子类，`tid` 精确叶子；`selectId` 先读 level 映射 `cid/sid/tid`；关键词强制 `pid=0`，`news→timeOrder`、`type→status`，PC 只返回 `product_type 0..3`，SVIP 身份放开专属可见性。这一修正也提高了共享 v1 `/products` 的 PHP 等价性。PC 订单搜索恢复订单号、姓名、手机、当前用户账号和商品名/关键词范围，同时保持根订单与售后状态的 PHP 分支。
+
+### 生产 Hyperdrive 只读与随机 schema 证据
+
+一次性 `cinashop-api005-pc-audit` Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。`/state` 和 `/contracts` 固定 `search_path=public`、设置短 statement timeout 并强制 `SET TRANSACTION READ ONLY`；`/isolated` 只在随机 `codex_api005_pc_*` schema 克隆表并播种合成数据。PostgreSQL 16.14 生产当前有可售商品 71、可见根分类 6，但 active `type=1/status=1` 分类关系 0、PC banner 0、`city_area` 0。17 个 PC 候选配置仅存在 `record_No/site_name/site_url` 3 个；微信开放平台 AppID、PC logo/友链/备案、微信二维码和小程序凭据都未就绪。生产还有开放购物车 2、可见订单 28、可见售后 3、商品收藏 1，余额流水 0。
+
+真实公开合同在单一只读事务中返回商品 `count=71/page=5`；分类首页、banner、城市、四类推荐、优品和微信二维码为空，与当前数据/配置一致；不存在的订单状态为 false，倒计时受边界约束。该空结果是 DATA-001～006 与运营配置缺口，不是 PC 内容已完成的证据。本轮没有使用生产用户 token 调用六条个人数据 HTTP 路由，因此不宣称真实账号 E2E；其 UID 作用域由随机 schema 真实服务调用验证。
+
+随机 schema 完成三级 `cid/sid/tid`、分类首页 `list/count`、PC banner、公司排序/logo、可展开城市、有效/失效购物车、余额流水、订单归属、收藏归属、售后归属、推荐标签、优品标签和付费会员 H5 二维码共 15/15 断言。最终 `public` 的商品/关系/分类/购物车/订单/售后/余额/收藏/配置九组指纹不变，临时 schema `0→0`，审计 Worker 删除后 URL 返回 404。第一次调度中 `/state` 已通过，但二次 secret 发布造成后续请求命中旧版本并返回 403，该 Worker 随即在 `finally` 删除，没有进入隔离写入场景。重跑改为首次发布一次性注入令牌摘要，全部通过后清理。
+
+### 量化结果、测试与剩余门禁
+
+注释感知静态审计现为 PHP 1,904、Workers 1,333、精确匹配 641、可执行匹配 621、明确不可用 20、原始缺失 1,263、证据化退役 3、可执行缺口 1,260；精确/可执行/退役后有效覆盖为 33.7%/32.6%/32.7%。`/api` 为 PHP 457、Workers 659、精确 271、可执行 266、不可用 5、可执行缺口 185。API-005 自身 22 条精确匹配、19 条可执行、3 条安全 501，静态缺口归零。127 个单元测试文件/737 项和双 TypeScript 配置通过；主 Worker minify dry-run 为 2,459.06 KiB/gzip 610.08 KiB，API-005 审计 Worker 为 684.39 KiB/gzip 169.71 KiB。主生产 Worker 仍为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有发布主 Worker。
+
+API-005 仍不能标记整体完成：源 MySQL 未连接，active 分类关系、PC banner、城市和 14/17 候选配置未复制/确认；真实小程序 AppID/Secret 取码、安全 PC 微信登录、生产用户 token 六路由、旧 Nuxt 桌面/移动、新 `pc-ts`、预发、影子流量和正式发布都未验收。下一批可按 API-006 的 marketing/bargain/combination/seckill 子域继续，PC 登录与 API-004-AUTH 则继续受 CORE-004 的真实凭据、一次性消费、限流和重放门禁约束。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。

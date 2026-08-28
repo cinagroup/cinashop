@@ -17,7 +17,7 @@
  *   - 库存扣减加 WHERE stock>=n 守卫 (PHP decStockIncSales 缺失, 靠事务行锁兜底)
  *   - 不使用 Durable Object 包裹空操作来伪装数据库事务已串行化
  */
-import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 import {
   storeCart,
   storeOrder,
@@ -2162,21 +2162,50 @@ export class StoreOrderCreateService {
     return db.transaction(async (tx) => fn(tx as unknown as DbClient));
   }
 
-  /** 订单列表 */
-  async list(
+  private orderListConditions(
     uid: number,
-    opts: { type?: number; status?: number; paid?: number; page?: number; limit?: number },
-  ) {
-    const page = Math.max(1, Math.trunc(opts.page ?? 1));
-    const limit = Math.max(1, Math.min(Math.trunc(opts.limit ?? 10), 100));
-    const conditions = [
+    opts: {
+      type?: number;
+      status?: number;
+      paid?: number;
+      search?: string;
+      legacyPcRoot?: boolean;
+    },
+  ): SQL[] {
+    const conditions: SQL[] = [
       eq(storeOrder.uid, uid),
       eq(storeOrder.isDel, 0),
       eq(storeOrder.isSystemDel, 0),
-      sql`${storeOrder.pid} <> -1`,
     ];
+    if (opts.legacyPcRoot) {
+      if (opts.status === undefined || ![-1, -2, -3].includes(opts.status)) {
+        conditions.push(eq(storeOrder.pid, 0));
+      }
+    } else {
+      conditions.push(sql`${storeOrder.pid} <> -1`);
+    }
     if (opts.type !== undefined) conditions.push(eq(storeOrder.type, opts.type));
     if (opts.paid !== undefined) conditions.push(eq(storeOrder.paid, opts.paid));
+    if (opts.search?.trim()) {
+      const pattern = `%${opts.search.trim()}%`;
+      conditions.push(or(
+        ilike(storeOrder.orderId, pattern),
+        ilike(storeOrder.realName, pattern),
+        ilike(storeOrder.userPhone, pattern),
+        sql`EXISTS (
+          SELECT 1 FROM "user" AS account
+          WHERE account.uid = ${storeOrder.uid}
+            AND (account.nickname ILIKE ${pattern} OR account.phone ILIKE ${pattern}
+              OR account.uid::text ILIKE ${pattern})
+        )`,
+        sql`EXISTS (
+          SELECT 1 FROM store_order_cart_info AS cart
+          JOIN store_product AS product ON product.id = cart.product_id
+          WHERE cart.oid = ${storeOrder.id}
+            AND (product.store_name ILIKE ${pattern} OR product.keyword ILIKE ${pattern})
+        )`,
+      )!);
+    }
     if (opts.status !== undefined) {
       switch (opts.status) {
         case 0:
@@ -2269,6 +2298,25 @@ export class StoreOrderCreateService {
           throw new ValidateException("订单状态筛选无效");
       }
     }
+    return conditions;
+  }
+
+  /** 订单列表 */
+  async list(
+    uid: number,
+    opts: {
+      type?: number;
+      status?: number;
+      paid?: number;
+      page?: number;
+      limit?: number;
+      search?: string;
+      legacyPcRoot?: boolean;
+    },
+  ) {
+    const page = Math.max(1, Math.trunc(opts.page ?? 1));
+    const limit = Math.max(1, Math.min(Math.trunc(opts.limit ?? 10), 100));
+    const conditions = this.orderListConditions(uid, opts);
     const orders = await this.container.db
       .select()
       .from(storeOrder)
@@ -2294,6 +2342,22 @@ export class StoreOrderCreateService {
       virtualInfo: null,
       cartInfo: cartsByOrder.get(order.id) ?? [],
     }));
+  }
+
+  /** PHP PC order-list envelope with an exact count and owner-scoped rows. */
+  async listLegacyPc(
+    uid: number,
+    opts: { status?: number; search?: string; page?: number; limit?: number },
+  ) {
+    const scoped = { ...opts, legacyPcRoot: true };
+    const [list, countRows] = await Promise.all([
+      this.list(uid, scoped),
+      this.container.db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(storeOrder)
+        .where(and(...this.orderListConditions(uid, scoped))),
+    ]);
+    return { list, count: Number(countRows[0]?.count ?? 0) };
   }
 
   /** 订单详情 */

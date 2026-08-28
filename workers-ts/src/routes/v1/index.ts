@@ -44,6 +44,7 @@ import * as SupplierApplicationController from "@/controllers/api/v1/SupplierApp
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
 import * as NewcomerController from "@/controllers/api/v1/NewcomerController";
 import * as MemberCardController from "@/controllers/api/v1/MemberCardController";
+import * as PcCompatibilityController from "@/controllers/api/v1/PcCompatibilityController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
@@ -74,6 +75,12 @@ v1Routes.post("/user/change_password", authMiddleware({ force: true }), LoginCon
 v1Routes.post("/user/updatePhone", authMiddleware({ force: true }), LoginController.updatePhone);
 v1Routes.post("/user/binding", authMiddleware({ force: true }), LoginController.bindPhone);
 
+// ─── 旧 PC 商城登录面 ─────────────────────────────────────
+v1Routes.get("/pc/key", PcCompatibilityController.keyUnavailable);
+v1Routes.get("/pc/scan/:key", PcCompatibilityController.scanUnavailable);
+v1Routes.get("/pc/get_appid", PcCompatibilityController.getAppid);
+v1Routes.get("/pc/wechat_auth", PcCompatibilityController.wechatAuthUnavailable);
+
 // ─── 无需授权接口 ─────────────────────────────────────────────
 v1Routes.get("/site_config", PublicController.getSiteConfig);
 v1Routes.get("/get_copyright", PublicController.getCopyright);
@@ -87,6 +94,20 @@ v1Routes.get("/navigation/:template_name", PublicController.navigation);
 v1Routes.get("/user/service/get_adv", authMiddleware({ force: false }), PublicController.getKfAdv);
 v1Routes.get("/kefu/tourist/adv", PublicController.getKfAdv);
 v1Routes.get("/assets/:id", AttachmentController.asset);
+
+// ─── 旧 PC 商城公共/可选登录面 ────────────────────────────────
+v1Routes.get("/pc/get_pay_vip_code", authMiddleware({ force: false }), PcCompatibilityController.getPayVipCode);
+v1Routes.get("/pc/get_product_phone_buy", authMiddleware({ force: false }), PcCompatibilityController.getProductPhoneBuy);
+v1Routes.get("/pc/get_banner", authMiddleware({ force: false }), PcCompatibilityController.getBanner);
+v1Routes.get("/pc/get_category_product", authMiddleware({ force: false }), PcCompatibilityController.getCategoryProduct);
+v1Routes.get("/pc/get_products", authMiddleware({ force: false }), PcCompatibilityController.getProducts);
+v1Routes.get("/pc/get_product_code/:product_id", authMiddleware({ force: false }), PcCompatibilityController.getProductCode);
+v1Routes.get("/pc/get_city/:pid", authMiddleware({ force: false }), PcCompatibilityController.getCity);
+v1Routes.get("/pc/check_order_status/:order_id/:end_time", authMiddleware({ force: false }), PcCompatibilityController.checkOrderStatus);
+v1Routes.get("/pc/get_company_info", authMiddleware({ force: false }), PcCompatibilityController.getCompanyInfo);
+v1Routes.get("/pc/get_recommend/:type", authMiddleware({ force: false }), PcCompatibilityController.getRecommend);
+v1Routes.get("/pc/get_wechat_qrcode", authMiddleware({ force: false }), PcCompatibilityController.getWechatQrcode);
+v1Routes.get("/pc/get_good_product", authMiddleware({ force: false }), PcCompatibilityController.getGoodProduct);
 
 // ─── 商品域 (可选登录, 对应 PHP AuthTokenMiddleware force=false) ──
 // 无需登录浏览, 带 token 时返回收藏状态等
@@ -129,6 +150,13 @@ v1Routes.get(
 );
 
 // ─── 需授权接口 ────────────────────────────────────────────────
+v1Routes.get("/pc/get_cart_list", authMiddleware({ force: true }), PcCompatibilityController.getCartList);
+v1Routes.get("/pc/get_balance_record/:type", authMiddleware({ force: true }), PcCompatibilityController.getBalanceRecord);
+v1Routes.get("/pc/get_order_list", authMiddleware({ force: true }), PcCompatibilityController.getOrderList);
+v1Routes.get("/pc/get_collect_list", authMiddleware({ force: true }), PcCompatibilityController.getCollectList);
+v1Routes.post("/pc/order/refund/cart_info", authMiddleware({ force: true }), PcCompatibilityController.refundCartInfoList);
+v1Routes.get("/pc/order/refund/list", authMiddleware({ force: true }), PcCompatibilityController.refundList);
+
 v1Routes.get("/logout", authMiddleware({ force: true }), LoginController.logout);
 v1Routes.get("/user/code", authMiddleware({ force: true }), UserProfileController.userCodeUnavailable);
 v1Routes.post("/user/code", authMiddleware({ force: true }), UserProfileController.userCodeUnavailable);
