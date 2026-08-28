@@ -81,16 +81,33 @@ v1Routes.get("/search/keyword", PublicController.searchWords);
 v1Routes.get("/user_agreement/:type", PublicController.getUserAgreement);
 v1Routes.get("/agreement/:type", PublicController.getUserAgreement);
 v1Routes.get("/get_open_adv", PublicController.getOpenAdv);
+v1Routes.get("/navigation", PublicController.navigation);
+v1Routes.get("/navigation/:template_name", PublicController.navigation);
 v1Routes.get("/user/service/get_adv", authMiddleware({ force: false }), PublicController.getKfAdv);
 v1Routes.get("/kefu/tourist/adv", PublicController.getKfAdv);
 v1Routes.get("/assets/:id", AttachmentController.asset);
 
 // ─── 商品域 (可选登录, 对应 PHP AuthTokenMiddleware force=false) ──
 // 无需登录浏览, 带 token 时返回收藏状态等
+v1Routes.get("/index", authMiddleware({ force: false }), PublicController.index);
+v1Routes.get("/menu/user", authMiddleware({ force: false }), PublicController.menuUser);
+v1Routes.get("/menu/date", authMiddleware({ force: false }), PublicController.menuUserData);
 v1Routes.get("/category", authMiddleware({ force: false }), ProductController.category);
 v1Routes.get("/category_version", ProductController.categoryVersion);
 v1Routes.get("/level_category", ProductController.levelCategory);
 v1Routes.get("/products", authMiddleware({ force: false }), ProductController.lst);
+v1Routes.get("/presale/list", authMiddleware({ force: false }), ProductController.presaleList);
+v1Routes.get("/search/recommend/:type", authMiddleware({ force: false }), ProductController.searchRecommend);
+v1Routes.get("/search/filter", authMiddleware({ force: false }), ProductController.searchFilter);
+v1Routes.get("/brand", authMiddleware({ force: false }), ProductController.brand);
+v1Routes.get("/product/rank/category", authMiddleware({ force: false }), ProductController.rankCategory);
+v1Routes.get("/product/rank/:type", authMiddleware({ force: false }), ProductController.rankList);
+v1Routes.get("/product/detail/recommend/:id", authMiddleware({ force: false }), ProductController.detailRecommend);
+v1Routes.get("/product/detail/activity/:id", authMiddleware({ force: false }), ProductController.detailActivity);
+v1Routes.get("/product/detail_content/:id", authMiddleware({ force: false }), ProductController.detailContent);
+v1Routes.get("/groom/list/:type", authMiddleware({ force: false }), ProductController.groomList);
+v1Routes.get("/product/hot", authMiddleware({ force: false }), ProductController.productHot);
+v1Routes.get("/product/detail/:id/:type", authMiddleware({ force: false }), ProductController.detail);
 v1Routes.get("/product/detail/:id", authMiddleware({ force: false }), ProductController.detail);
 v1Routes.get(
   "/newcomer/product_list",
@@ -449,6 +466,7 @@ v1Routes.post("/store_integral/order/del", authMiddleware({ force: true }), Orde
 // ─── 商品评价 (M8) ─────────────────────────────────────────────
 v1Routes.get("/reply/config/:productId", authMiddleware({ force: false }), ReplyController.replyConfig);
 v1Routes.get("/reply/list/:productId", authMiddleware({ force: false }), ReplyController.replyList);
+v1Routes.get("/reply/comment/:id", authMiddleware({ force: false }), ReplyController.commentList);
 v1Routes.post("/reply/submit", authMiddleware({ force: true }), ReplyController.submitReply);
 v1Routes.post("/reply/praise/:id", authMiddleware({ force: true }), ReplyController.praiseReply);
 v1Routes.post("/reply/unpraise/:id", authMiddleware({ force: true }), ReplyController.unpraiseReply);

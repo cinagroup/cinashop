@@ -24,6 +24,36 @@ Cloudflare 资源侧已确认 Hyperdrive、CONFIG_KV、私有 `cinashop-assets`�
 
 静态路由复审因此变为 Workers 1,211、精确匹配 520/1,912（27.2%）、明确 501 为 15、原始缺失 1,392；原始可执行匹配 505/1,912（26.4%）。Kefu 为 Workers 51、精确/可执行 48/63（76.2%）、原始缺失 15，其中退役 2、剩余可执行缺口 13，有效可执行上限 48/61（78.7%）。13 条是扫码/微信 4、游客 8 和面单模板 1；OnePass Secret 与模板配置仍缺失。所有临时 Worker均已删除，主 Worker和 Kefu 前端没有发布，生产支付渠道也未因本批代码而启用。
 
+## API-001 公共首页与商品发现迁移审计（2026-08-28）
+
+### PHP 权威合同与迁移前差距
+
+逐项核对 `route/api.php`、`PublicController`、`DiyServices`、`StoreProductServices`、`StoreProductRankServices`、`StoreProductReplyServices` 与评价 DAO 后，本批界定为 17 条缺失 GET 合同：导航、首页、个人中心菜单/数据、预售、搜索推荐/筛选、品牌、排行分类/列表、详情推荐/活动/可选类型、详情正文、首页推荐、热门和评价回复。既有 `/products`、商品详情、分类和评价列表/统计虽然已经注册，但审计发现 `/products.count` 永远为 `null`，商品详情只返回 TS 驼峰平铺结构且收藏状态永远为 false，评价统计返回 `total/avgScore/goodRate/picsCount` 而不是 PHP 的 `sum_count/good_count/in_count/poor_count/reply_chance/reply_star`，评价列表也忽略好/中/差类型。
+
+PHP 的推荐标志已不再以 `store_product.is_hot/is_best/...` 为权威，而是通过 `store_product_relation.type=3` 的关系 ID 1～5；TypeScript searcher 原本已实现这一点，本批所有首页/推荐/排行读取统一复用该路径。系统组合数据仍是 `system_group_data.value` 中 `{type,value}` 嵌套 JSON，导航从指定模板、活动 `type=1` 或 `default` 页面中寻找 `pageFoot`。这些细节不能用硬编码空数组或旧商品布尔列替代。
+
+### 当前实现与查询边界
+
+新增 `PublicCatalogService`，集中实现 17 条路由和 PHP 响应形状；同一次组合数据读取批量连接 `system_group/system_group_data`，品牌与门店标签按整页 ID 批量装配，不进行逐商品 N+1。配置批量读取改为并行 KV get、一次数据库 miss 查询和并行 KV 回填。商品推荐统一强制上架、未删、审核通过、平台根商品和非 SVIP 专属；登录 SVIP 才放宽专属商品。所有页码归一化且 `limit<=100`，模板名走字符白名单，旧 JSON 有大小、字段数和原型污染键边界。
+
+`/products` 现在使用与列表完全相同的 searcher 谓词返回精确 count。销量、评分和收藏排行只允许固定排序枚举，分类选择通过已迁移分类树解析，不把请求排序拼进 SQL。详情恢复可选 SKU 类型、真实收藏读取和类型隔离缓存键；控制器同时返回现有 PC/UniApp 使用的 snake_case 平铺字段，以及 PHP 客户端需要的 `storeInfo/productAttr/productValue` 外层。评价统计按 PHP 三档定义计算并保留现 TS 兼容别名；列表支持 `type=1/2/3`，评论回复批量读取用户和点赞关系。未审核或已删除评价继续不公开，这是相对 PHP 缺少 status 条件的有意安全收紧。
+
+详情活动读取当前生产可表达的商品券、套餐和直接商品促销关系，并对预售直接返回空活动结构；没有伪造优惠后到手价。个人中心菜单按已迁移全局开关和用户推广/事业部状态过滤，未迁移的客服、配送等身份不会被猜测为可用。生产数据为空时所有接口返回稳定空结构，不把缺数据转换成 500。
+
+### 生产 Hyperdrive 证据与数据缺口
+
+一次性认证 Worker 绑定用户指定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产合同调用固定 `search_path=public`、`statement_timeout=30s` 并执行 `SET TRANSACTION READ ONLY`：`/products` 得到精确 count 71 和首屏 ID 71～62；销量榜前八为 `1,70,68,66,64,62,60,58`，评分榜与收藏榜均成功返回 8 条，一级排行分类为 6 条。首页响应 14 个顶层键完整，导航与推荐/品牌/活动/预售为空且没有异常。此前 `EXPLAIN (ANALYZE, BUFFERS)` 的销量榜在 71 行规模使用顺序扫描和 top-N heapsort，仅 4 个 shared hit block、0 read、执行 0.095ms，因此没有为当前微小数据量增加投机索引。
+
+同一只读审计精确解释了空结果：71 个可售商品全部为 `product_type=0`，五类旧布尔标志和 `type=3` 推荐关系均为 0；分类/品牌关系、商品描述、预售、促销/关系、套餐/关系、商品券关系、DIY 页面、首页组合定义/数据和评价回复均为 0。品牌表有 1 行、分类有 24 行，但商品 `brand_id` 样本为 0 且关系未迁；评价表有 2 行，但抽样商品 71 没有评价。相关配置只有 5 个 distinct key/9 行且存在 1 组重复。准确结论是读取代码和目标引擎验证完成，源首页内容、推荐关系、商品正文和营销数据没有完成迁移。
+
+随机 `codex_api001_*` schema 复制相关生产表结构并播种两件隔离商品、分类、品牌、标签、推荐关系、描述、预售、导航、组合数据、三档评价和评价回复。真实服务的 12 类断言全部通过：组合值解包、`pageFoot` 导航、热卖/精品/优品推荐、品牌、搜索标签、详情正文、进行中预售、好/中/差统计、评价筛选和评论回复。场景返回 `cleanup=dropped`；随后生产复核 `temporary_schemas=0`。临时 Worker 成功场景版本为 `c16791d1-43ac-4b04-8956-516419409bbc`，最终只读复核版本为 `fed0a0ad-03a3-435c-8e9e-a99b25ae19cd`，审计结束后 Worker 已删除。本批没有对 `public` 执行 DDL 或业务写入，也没有部署主 Worker/前端。
+
+### 工程验证与当前判定
+
+静态路由复审从 534 提升到 551/1,912，TS 注册从 1,225 到 1,243；`/api` 从 164/460 提升到 181/460，总代码可执行匹配为 536、证据化退役 2、可执行缺口 1,359。新增 5 项 API-001 测试后，全量为 115 文件/667 项通过；双 TypeScript 配置通过，审计 Worker dry-run 为 970.66 KiB / gzip 175.47 KiB。Windows Workers runtime 仍在加载断言前以 `workerd` 0xc0000005 失败，不能记为 runtime 测试通过。
+
+本项可以判定为“公共首页/商品发现读取合同、PostgreSQL 语义和现有生产商品对账完成”，不能判定为“真实首页和商品运营数据已迁移”或“线上已更新”。后者继续由 DATA-001～006、DB-003 和 REL-002 管理：需要只读源 MySQL、逐表复制/校验、运营确认重复配置，并在明确批准后发布主 Worker，使用真实前端同时对照 PHP 验收首页、详情、筛选、预售和评价。
+
 审计更新：2026-08-28
 
 ## 结论

@@ -7,6 +7,9 @@ import type { Context } from "hono";
 import { jsonOk } from "@/utils/json";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { LegacyContentService } from "@/services/system/LegacyContentService";
+import { PublicCatalogService } from "@/services/product/PublicCatalogService";
+import { jsonFail } from "@/utils/json";
+import { ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
@@ -106,4 +109,40 @@ export async function getOpenAdv(c: C) {
 /** GET /api/user/service/get_adv — PHP-compatible customer-service content. */
 export async function getKfAdv(c: C) {
   return jsonOk(c, { content: await new LegacyContentService(c.get("container")).kfAdv() });
+}
+
+/** GET /api/navigation/:template_name? — legacy DIY bottom navigation. */
+export async function navigation(c: C) {
+  try {
+    const data = await new PublicCatalogService(c.get("container"), c.env)
+      .navigation(c.req.param("template_name") ?? "");
+    return jsonOk(c, data);
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/index — legacy homepage payload. */
+export async function index(c: C) {
+  return jsonOk(
+    c,
+    await new PublicCatalogService(c.get("container"), c.env).home(c.get("uid") ?? 0),
+  );
+}
+
+/** GET /api/menu/user — user-centre menu and DIY layout. */
+export async function menuUser(c: C) {
+  return jsonOk(
+    c,
+    await new PublicCatalogService(c.get("container"), c.env).menuUser(c.get("uid") ?? 0),
+  );
+}
+
+/** GET /api/menu/date — PHP keeps the historical `date` spelling. */
+export async function menuUserData(c: C) {
+  return jsonOk(
+    c,
+    await new PublicCatalogService(c.get("container"), c.env).menuUserData(c.get("uid") ?? 0),
+  );
 }

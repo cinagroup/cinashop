@@ -52,9 +52,13 @@ export class SystemConfigService {
     const out: Record<string, string> = {};
 
     // 先批量查 KV (KV 不支持批量 get, 循环; 但 KV 读便宜)
+    const names = [...new Set(menuNames)];
+    const cachedValues = await Promise.all(
+      names.map((name) => this.env.CONFIG_KV.get(`cfg_${name}`)),
+    );
     const miss: string[] = [];
-    for (const name of menuNames) {
-      const cached = await this.env.CONFIG_KV.get(`cfg_${name}`);
+    for (const [index, name] of names.entries()) {
+      const cached = cachedValues[index];
       if (cached !== null) {
         out[name] = normalizeConfigScalar(cached);
       } else {
@@ -64,11 +68,13 @@ export class SystemConfigService {
 
     if (miss.length > 0) {
       const values = await this.container.systemConfigDao.getValues(miss);
+      const writes: Promise<void>[] = [];
       for (const name of miss) {
         const v = normalizeConfigScalar(values[name]);
         out[name] = v;
-        await this.env.CONFIG_KV.put(`cfg_${name}`, v, { expirationTtl: CACHE_TTL });
+        writes.push(this.env.CONFIG_KV.put(`cfg_${name}`, v, { expirationTtl: CACHE_TTL }));
       }
+      await Promise.all(writes);
     }
     return out;
   }

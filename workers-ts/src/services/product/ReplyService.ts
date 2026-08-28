@@ -4,12 +4,14 @@
  * 对齐 PHP StoreOrderCommentServices：评价归属订单，逐商品幂等；全部非赠品
  * 评价完成后订单由 status=2 进入 status=3。自动评价走同一事务状态机。
  */
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import {
   storeOrder,
   storeOrderCartInfo,
   storeOrderStatus,
   storeProductReply,
+  storeProductReplyComment,
+  user,
   userRelation,
 } from "@/models/schema";
 import type { Container, DbClient } from "@/lib/di";
@@ -260,10 +262,11 @@ export class ReplyService {
     return this.container.replyDao.stats(productId);
   }
 
-  async replyList(productId: number, page = 1, limit = 10, uid = 0) {
+  async replyList(productId: number, page = 1, limit = 10, uid = 0, type = 0) {
     const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
     const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(Math.trunc(limit), 100)) : 10;
-    const list = await this.container.replyDao.listByProduct(productId, safePage, safeLimit);
+    const safeType = [1, 2, 3].includes(type) ? type : 0;
+    const list = await this.container.replyDao.listByProduct(productId, safePage, safeLimit, safeType);
     let praised = new Set<number>();
     if (uid && list.length) {
       const relations = await this.container.db
@@ -280,10 +283,75 @@ export class ReplyService {
       praised = new Set(relations.map((item) => item.id));
     }
     return list.map((item) => ({
-      ...item,
+      id: item.id,
+      product_id: item.productId,
+      uid: item.uid,
       nickname: anonymizeNickname(item.nickname),
+      avatar: item.avatar,
+      comment: item.comment || "此用户没有填写评价",
+      suk: item.sku,
+      sku: item.sku,
+      product_score: item.productScore,
+      service_score: item.serviceScore,
+      delivery_score: item.deliveryScore,
+      star: Math.round((item.productScore + item.serviceScore + item.deliveryScore) / 3),
       pics: this.parsePics(item.pics),
-      isPraise: praised.has(item.id),
+      merchant_reply: item.merchantReply,
+      merchant_reply_content: item.merchantReplyContent,
+      merchant_reply_time: this.formatTime(item.merchantReplyTime),
+      add_time: this.formatTime(item.addTime),
+      praise: item.praise,
+      is_praise: praised.has(item.id),
+    }));
+  }
+
+  async commentList(replyId: number, page = 1, limit = 10, uid = 0) {
+    const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
+    const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(Math.trunc(limit), 100)) : 10;
+    const roots = await this.container.db.select().from(storeProductReplyComment).where(and(
+      eq(storeProductReplyComment.replyId, replyId),
+      eq(storeProductReplyComment.pid, 0),
+      eq(storeProductReplyComment.isDel, 0),
+    )).orderBy(desc(storeProductReplyComment.praise), desc(storeProductReplyComment.addTime))
+      .limit(safeLimit).offset((safePage - 1) * safeLimit);
+    if (!roots.length) return [];
+    const children = await this.container.db.select().from(storeProductReplyComment).where(and(
+      inArray(storeProductReplyComment.pid, roots.map((item) => item.id)),
+      eq(storeProductReplyComment.isDel, 0),
+    )).orderBy(desc(storeProductReplyComment.praise), desc(storeProductReplyComment.addTime));
+    const commentIds = [...roots, ...children].map((item) => item.id);
+    const userIds = [...new Set([...roots, ...children].map((item) => item.uid).filter(Boolean))];
+    const [users, relations] = await Promise.all([
+      userIds.length ? this.container.db.select({
+        uid: user.uid, nickname: user.nickname, avatar: user.avatar,
+      }).from(user).where(inArray(user.uid, userIds)) : [],
+      uid ? this.container.db.select({ id: userRelation.relationId }).from(userRelation).where(and(
+        eq(userRelation.uid, uid), eq(userRelation.type, "like"),
+        eq(userRelation.category, "comment"), inArray(userRelation.relationId, commentIds),
+      )) : [],
+    ]);
+    const userMap = new Map(users.map((item) => [item.uid, item]));
+    const praised = new Set(relations.map((item) => item.id));
+    const serialize = (item: typeof storeProductReplyComment.$inferSelect) => {
+      const current = userMap.get(item.uid);
+      return {
+        id: item.id, reply_id: item.replyId, pid: item.pid, uid: item.uid,
+        content: item.content, praise: item.praise,
+        create_time: this.formatTime(item.addTime, true),
+        update_time: this.formatTime(item.updateTime, true),
+        is_praise: praised.has(item.id),
+        user: {
+          uid: item.uid,
+          nickname: anonymizeNickname(current?.nickname || item.nickname || "用户"),
+          avatar: current?.avatar || item.avatar || "",
+          level_name: "",
+          vip_status: "",
+        },
+      };
+    };
+    return roots.map((root) => ({
+      ...serialize(root),
+      children: children.filter((item) => item.pid === root.id).map(serialize)[0] ?? null,
     }));
   }
 
@@ -466,5 +534,12 @@ export class ReplyService {
     } catch {
       return [];
     }
+  }
+
+  private formatTime(value: number, seconds = false): string {
+    if (!value) return "";
+    const date = new Date(value * 1_000);
+    const iso = date.toISOString().replace("T", " ");
+    return seconds ? iso.slice(0, 19) : iso.slice(0, 16);
   }
 }

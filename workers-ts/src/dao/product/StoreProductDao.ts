@@ -55,6 +55,7 @@ export class StoreProductDao extends BaseDao<typeof storeProduct> {
     const salesOrder = where.salesOrder as string | undefined;
     const defaultOrder = Number(where.defaultOrder ?? 0);
     const timeOrder = Number(where.timeOrder ?? 0);
+    const rankOrder = String(where.rankOrder ?? "");
 
     if (ids && ids.length > 0 && !priceOrder && !salesOrder) {
       // 保持 ids 顺序
@@ -62,6 +63,12 @@ export class StoreProductDao extends BaseDao<typeof storeProduct> {
         ids.map((id, i) => sql`WHEN ${id} THEN ${i}`),
         sql` `,
       )} END`;
+    } else if (rankOrder === "sales") {
+      orderSQL = sql`COALESCE(${storeProduct.sales}, 0) + COALESCE(${storeProduct.ficti}, 0) DESC, ${storeProduct.sort} DESC, ${storeProduct.id} DESC`;
+    } else if (rankOrder === "star") {
+      orderSQL = sql`${storeProduct.star} DESC, ${storeProduct.sort} DESC, ${storeProduct.id} DESC`;
+    } else if (rankOrder === "collect") {
+      orderSQL = sql`${storeProduct.collect} DESC, ${storeProduct.sort} DESC, ${storeProduct.id} DESC`;
     } else if (priceOrder === "desc") {
       orderSQL = desc(storeProduct.price);
     } else if (priceOrder === "asc") {
@@ -93,6 +100,7 @@ export class StoreProductDao extends BaseDao<typeof storeProduct> {
         delivery_type: storeProduct.deliveryType,
         product_type: storeProduct.productType,
         store_name: storeProduct.storeName,
+        store_info: storeProduct.storeInfo,
         cate_id: storeProduct.cateId,
         image: storeProduct.image,
         sales: sql<number>`COALESCE(${storeProduct.sales}, 0) + COALESCE(${storeProduct.ficti}, 0)`,
@@ -130,6 +138,16 @@ export class StoreProductDao extends BaseDao<typeof storeProduct> {
 
     const result = await q;
     return result as unknown as Record<string, unknown>[];
+  }
+
+  /** Count with exactly the same searcher predicates as getSearchList. */
+  async countSearch(where: Record<string, unknown>): Promise<number> {
+    const cond = this.buildWhere(where);
+    const rows = await this.db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(storeProduct)
+      .where(cond ?? sql`true`);
+    return Number(rows[0]?.count ?? 0);
   }
 
   /**

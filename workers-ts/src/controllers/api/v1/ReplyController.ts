@@ -31,8 +31,27 @@ export async function replyList(c: C) {
   const svc = new ReplyService(c.get("container"));
   return jsonOk(
     c,
-    await svc.replyList(productId, Number(q.page ?? 1), Number(q.limit ?? 10), c.get("uid") ?? 0),
+    await svc.replyList(
+      productId,
+      Number(q.page ?? 1),
+      Number(q.limit ?? 10),
+      c.get("uid") ?? 0,
+      Number(q.type ?? 0),
+    ),
   );
+}
+
+/** GET /reply/comment/:id — public nested replies for a product review. */
+export async function commentList(c: C) {
+  const replyId = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(replyId) || replyId <= 0) return jsonFail(c, "缺少参数");
+  const q = c.req.query();
+  return jsonOk(c, await new ReplyService(c.get("container")).commentList(
+    replyId,
+    Number(q.page ?? 1),
+    Number(q.limit ?? 10),
+    c.get("uid") ?? 0,
+  ));
 }
 
 /** POST /reply/submit — 提交评价 (订单完成后) */

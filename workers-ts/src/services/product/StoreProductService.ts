@@ -38,6 +38,21 @@ export interface GoodsListParams {
   limit?: number;
 }
 
+export interface RecommendProductParams {
+  ids?: number[];
+  cateIds?: number[];
+  productTypes?: number[];
+  isHot?: boolean;
+  isBenefit?: boolean;
+  isBest?: boolean;
+  isNew?: boolean;
+  isGood?: boolean;
+  isVip?: boolean;
+  rankOrder?: "sales" | "star" | "collect";
+  page?: number;
+  limit?: number;
+}
+
 export class StoreProductService {
   constructor(
     private readonly container: Container,
@@ -129,10 +144,45 @@ export class StoreProductService {
       this.postProcessRow(item, discount, levelName);
     }
 
-    // 5. count (M2 简化: 不返回精确 count, 前端用 hasMore 判断; count=null)
-    const count = list.length < limit ? null : null; // TODO: 精确 count
+    // 5. 精确 count 与 PHP `{list,count}` 契约保持一致。
+    const count = await this.container.storeProductDao.countSearch(where);
 
     return { list, count };
+  }
+
+  /** 公共首页、推荐和榜单共用的可售商品读取路径。 */
+  async getRecommendProducts(
+    uid: number,
+    params: RecommendProductParams = {},
+  ): Promise<Record<string, unknown>[]> {
+    const where: Record<string, unknown> = {
+      status: 1,
+      isShow: 1,
+      isDel: 0,
+      isVerify: 1,
+      pid: 0,
+      isVipProduct: 0,
+    };
+    if (uid) {
+      const user = await this.container.userDao.findForAuth(uid);
+      if (user?.isMoneyLevel) where.isVipProduct = -1;
+    }
+    if (params.ids?.length) where.ids = params.ids;
+    if (params.cateIds?.length) where.cateId = params.cateIds;
+    if (params.productTypes?.length) where.productType = params.productTypes;
+    if (params.isHot) where.isHot = 1;
+    if (params.isBenefit) where.isBenefit = 1;
+    if (params.isBest) where.isBest = 1;
+    if (params.isNew) where.isNew = 1;
+    if (params.isGood) where.isGood = 1;
+    if (params.isVip) where.isVip = 1;
+    if (params.rankOrder) where.rankOrder = params.rankOrder;
+
+    const [page, limit] = this.getPageValue(params.page, params.limit);
+    const list = await this.container.storeProductDao.getSearchList({ where, page, limit });
+    const { discount, levelName } = await this.getUserDiscount(uid);
+    for (const item of list) this.postProcessRow(item, discount, levelName);
+    return list;
   }
 
   /**
@@ -254,14 +304,21 @@ export class StoreProductService {
    *
    * 缓存: Upstash 存 600s (对应 PHP getCacheProductInfo)
    */
-  async getProductDetail(id: number, uid: number): Promise<Record<string, unknown>> {
+  async getProductDetail(id: number, uid: number, type = 0): Promise<Record<string, unknown>> {
+    if (!Number.isSafeInteger(type) || type < 0 || type > 7) {
+      throw new NotFoundException("商品类型不存在");
+    }
     // 1. 缓存
-    const cacheKey = `product_info_${id}`;
+    const cacheKey = type === 0 ? `product_info_${id}` : `product_info_${id}_${type}`;
     const cached = await cacheGet<Record<string, unknown>>(cacheKey, this.env);
     if (cached) {
-      const ensure = await new ProductExperienceService(this.container)
-        .productEnsures(id, cached.ensureId);
-      return { ...cached, ensure, userCollect: false, userLike: 0 };
+      const [ensure, userCollect] = await Promise.all([
+        new ProductExperienceService(this.container).productEnsures(id, cached.ensureId),
+        uid ? this.container.userRelationDao.be({
+          uid, relationId: id, type: "collect", category: "product",
+        }) : false,
+      ]);
+      return { ...cached, ensure, userCollect, userLike: 0, uid };
     }
 
     // 2. 查商品
@@ -291,7 +348,7 @@ export class StoreProductService {
 
     // 4. 价格区间: 多规格从 attr_value 取 min/max, 单规格用 product.price
     if (product.specType === 1) {
-      const range = await this.container.storeProductAttrValueDao.getPriceRange(id);
+      const range = await this.container.storeProductAttrValueDao.getPriceRange(id, type);
       detail.price = range.min > 0 ? String(range.min) : String(product.price);
       detail.min_price = range.min;
       detail.max_price = range.max;
@@ -319,7 +376,7 @@ export class StoreProductService {
     detail.spec_type = product.specType;
 
     // 6b. SKU 列表 (M18: 规格弹窗用, 单规格也返回一条)
-    const skus = await this.container.storeProductAttrValueDao.getByProductId(id);
+    const skus = await this.container.storeProductAttrValueDao.getByProductId(id, type);
     detail.attr_value = skus.map((s) => ({
       id: s.id,
       unique: s.unique,
@@ -335,6 +392,10 @@ export class StoreProductService {
     // legacy ensure_id CSV and type=5 relation rows, filtering disabled entries.
     detail.ensure = await new ProductExperienceService(this.container)
       .productEnsures(id, product.ensureId);
+
+    detail.userCollect = uid ? await this.container.userRelationDao.be({
+      uid, relationId: id, type: "collect", category: "product",
+    }) : false;
 
     // 7. 回填缓存 (注意: 缓存不含 userCollect 等用户态字段)
     const cacheable = { ...detail };
