@@ -83,6 +83,48 @@ export async function categoryInfo(c: C) {
   return jsonOk(c, await service(c).categoryInfo(c.req.param("id")));
 }
 
+export async function categoryCreate(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 8 * 1024);
+  return jsonOk(
+    c,
+    await service(c).createCategory(c.get("outInfo")!, body),
+    "添加成功",
+  );
+}
+
+export async function categoryUpdate(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 8 * 1024);
+  return jsonOk(
+    c,
+    await service(c).updateCategory(c.get("outInfo")!, c.req.param("id"), body),
+    "修改成功",
+  );
+}
+
+export async function categoryDelete(c: C) {
+  privateResponse(c);
+  return jsonOk(
+    c,
+    await service(c).deleteCategory(c.get("outInfo")!, c.req.param("id")),
+    "删除成功",
+  );
+}
+
+export async function categorySetShow(c: C) {
+  privateResponse(c);
+  return jsonOk(
+    c,
+    await service(c).setCategoryShow(
+      c.get("outInfo")!,
+      c.req.param("id"),
+      c.req.param("is_show"),
+    ),
+    "设置成功",
+  );
+}
+
 export async function productList(c: C) {
   return jsonOk(c, await service(c).productList(c.req.query()));
 }

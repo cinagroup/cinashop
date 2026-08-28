@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { outAccount, outApiAudit, outInterface } from "@/models/schema";
 import { requiredAdminPermission } from "@/services/admin/AdminPermissionService";
 import {
+  normalizeOutCategoryInput,
   normalizeOutInvoiceInput,
   normalizeOutInvoiceStatusInput,
   normalizeOutRefundPriceAction,
@@ -78,7 +79,7 @@ describe("third-party API migration boundary", () => {
     expect(parseOutRules({ rules: [3] })).toEqual([]);
   });
 
-  it("registers 14 bounded reads and exactly eleven audited write routes behind ACL", () => {
+  it("registers 14 bounded reads and fifteen audited write routes behind ACL", () => {
     const app = readFileSync("src/app.ts", "utf8");
     const routes = readFileSync("src/routes/outapi.ts", "utf8");
     const middleware = readFileSync("src/middleware/out-auth.ts", "utf8");
@@ -95,6 +96,13 @@ describe("third-party API migration boundary", () => {
     }
     expect(routes.indexOf('"/order/express_list"')).toBeLessThan(routes.indexOf('"/order/:order_id"'));
     expect(routes.indexOf('"/refund/list"')).toBeLessThan(routes.indexOf('"/refund/:order_id"'));
+    expect(routes).toContain('outapiRoutes.post(\n  "/category"');
+    expect(routes).toContain('outapiRoutes.put(\n  "/category/:id"');
+    expect(routes).toContain('outapiRoutes.delete(\n  "/category/:id"');
+    expect(routes).toContain('outapiRoutes.put(\n  "/category/set_show/:id/:is_show"');
+    expect(routes.indexOf('"/category/set_show/:id/:is_show"')).toBeLessThan(
+      routes.indexOf('"/category/:id"'),
+    );
     expect(routes).toContain('outapiRoutes.put(\n  "/order/delivery/:order_id"');
     expect(routes).toContain('outapiRoutes.put(\n  "/order/distribution/:order_id"');
     expect(routes).toContain('outapiRoutes.put(\n  "/order/invoice/:order_id"');
@@ -106,10 +114,66 @@ describe("third-party API migration boundary", () => {
     expect(routes).toContain('outapiRoutes.put(\n  "/refund/remark/:order_id"');
     expect(routes).toContain('outapiRoutes.put(\n  "/refund/refuse/:order_id"');
     expect(routes).toContain('outapiRoutes.put(\n  "/refund/:order_id"');
-    expect(routes.match(/outapiRoutes\.put\(/g)).toHaveLength(11);
-    expect(routes).not.toMatch(/outapiRoutes\.(?:post|delete)\("\/(?:category|product|order|refund|user|coupon)/i);
+    expect(routes.match(/outapiRoutes\.put\(/g)).toHaveLength(13);
+    expect(routes).not.toMatch(/outapiRoutes\.(?:post|delete)\("\/(?:product|order|refund|user|coupon)/i);
     expect(routes).toContain("}, 501));");
     expect(middleware).toContain("assertInterfacePermission");
+  });
+
+  it("validates category writes and serializes hierarchy changes with reference gates", () => {
+    expect(normalizeOutCategoryInput({
+      pid: "2",
+      cate_name: "  茶器  ",
+      pic: "/uploads/category/tea.png",
+      big_pic: "https://cdn.example.com/tea.png",
+      sort: "9",
+      is_show: "1",
+    })).toEqual({
+      pid: 2,
+      cateName: "茶器",
+      pic: "/uploads/category/tea.png",
+      bigPic: "https://cdn.example.com/tea.png",
+      sort: 9,
+      isShow: 1,
+    });
+    expect(() => normalizeOutCategoryInput({ cate_name: "" })).toThrow("分类名称不能为空");
+    expect(() => normalizeOutCategoryInput({ cate_name: "a".repeat(31) })).toThrow("分类名称过长");
+    expect(() => normalizeOutCategoryInput({ cate_name: "茶器", pid: true })).toThrow("上级分类参数错误");
+    expect(() => normalizeOutCategoryInput({ cate_name: "茶器", is_show: 2 })).toThrow("分类状态参数错误");
+    expect(() => normalizeOutCategoryInput({ cate_name: "茶器", pic: "http://example.com/a.png" }))
+      .toThrow("移动端分类图必须是HTTPS地址或站内绝对路径");
+    expect(() => normalizeOutCategoryInput({ cate_name: "茶器", pic: "//example.com/a.png" }))
+      .toThrow("移动端分类图必须是HTTPS地址或站内绝对路径");
+
+    const source = readFileSync("src/services/out/OutApiService.ts", "utf8");
+    const save = source.match(/private async savePlatformCategory\([^]*?\n  \}/)?.[0] ?? "";
+    const remove = source.match(/async deleteCategory\([^]*?\n  \}/)?.[0] ?? "";
+    const show = source.match(/async setCategoryShow\([^]*?\n  \}/)?.[0] ?? "";
+    for (const method of [save, remove, show]) {
+      expect(method).toContain("withTx(this.container");
+      expect(method).toContain("lockPlatformCategoryCatalog");
+      expect(method).toContain("idempotent");
+    }
+    expect(save).toContain("不能将分类移动到自身或其子分类下");
+    expect(save).toContain("移动后分类层级将超过三级");
+    expect(save).toContain("sibling.cateName === input.cateName");
+    expect(save).toContain("storeProductRelation");
+    expect(remove).toContain("storeProductRelation");
+    expect(remove).toContain("storeProduct.cateId");
+    expect(remove).toContain("storeProductCate");
+    expect(remove).toContain("storeProductCategoryBrand");
+    expect(remove).toContain("分类下仍有商品或库存引用，不能删除");
+    expect(remove).toContain("A malformed or legacy cross-tenant relation");
+    expect(show).toContain("eq(storeProductCategory.pid, categoryId)");
+    expect(source).toContain('LOCK TABLE "store_product_category" IN SHARE ROW EXCLUSIVE MODE');
+    expect(source).not.toMatch(/deleteCategory\([^]*?\.delete\(storeProduct\)/);
+
+    const scenario = readFileSync("test/integration/OutApiCategoryPostgresScenario.ts", "utf8");
+    expect(scenario).toContain("codex_out_category_");
+    expect(scenario).toContain("concurrent_create_single_row");
+    expect(scenario).toContain("move_rollback_atomic");
+    expect(scenario).toContain("public product/category tables or sequences changed");
+    expect(scenario).toContain("DROP SCHEMA ${schema} CASCADE");
   });
 
   it("preserves the legacy invoice validation contract within PostgreSQL column bounds", () => {

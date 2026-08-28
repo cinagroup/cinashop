@@ -28,7 +28,11 @@ import {
   storeOrderRefund,
   storeOrderRefundPayment,
   storeOrderStatus,
+  storeProduct,
+  storeProductCate,
   storeProductCategory,
+  storeProductCategoryBrand,
+  storeProductRelation,
   systemUserLevel,
   user,
 } from "@/models/schema";
@@ -77,6 +81,10 @@ const SUPPORTED_READ_ROUTES = new Set([
   "get /user/info/{uid}",
 ]);
 const SUPPORTED_WRITE_ROUTES = new Set([
+  "post /category",
+  "put /category/{id}",
+  "delete /category/{id}",
+  "put /category/set_show/{id}/{is_show}",
   "put /order/delivery/{order_id}",
   "put /order/distribution/{order_id}",
   "put /order/invoice/{order_id}",
@@ -93,6 +101,9 @@ const SUPPORTED_WRITE_ROUTES = new Set([
 const MAX_FILTER_TEXT = 100;
 const MAX_JSON_SNAPSHOT_BYTES = 1024 * 1024;
 const MAX_ID_FILTERS = 100;
+const OUT_CATEGORY_LOCK_NAMESPACE = 744_210_001;
+const PLATFORM_PRODUCT_TYPE = 0;
+const CATEGORY_RELATION_TYPE = 1;
 
 type OrderRow = typeof storeOrder.$inferSelect;
 type CartRow = typeof storeOrderCartInfo.$inferSelect;
@@ -120,9 +131,96 @@ export interface OutApiAuditInput {
   durationMs: number;
 }
 
+export interface OutCategoryInput {
+  pid: number;
+  cateName: string;
+  pic: string;
+  bigPic: string;
+  sort: number;
+  isShow: 0 | 1;
+}
+
 function positiveInteger(value: unknown, fallback = 0): number {
   const parsed = Number(value ?? fallback);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function strictInteger(
+  value: unknown,
+  label: string,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  if (value === undefined || value === null || value === "") {
+    if (!Number.isSafeInteger(fallback) || fallback < minimum || fallback > maximum) {
+      throw new ValidateException(`${label}参数错误`);
+    }
+    return fallback;
+  }
+  if (typeof value !== "number" && typeof value !== "string") {
+    throw new ValidateException(`${label}参数错误`);
+  }
+  const text = String(value).trim();
+  if (!/^-?\d+$/.test(text)) throw new ValidateException(`${label}参数错误`);
+  const parsed = Number(text);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new ValidateException(`${label}参数错误`);
+  }
+  return parsed;
+}
+
+function outCategoryAsset(value: unknown, label: string, maxLength: number): string {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value !== "string") throw new ValidateException(`${label}格式错误`);
+  const normalized = value.trim();
+  if (normalized.length > maxLength) throw new ValidateException(`${label}过长`);
+  if (/[\u0000-\u001f\u007f]/u.test(normalized) || normalized.includes("\\")) {
+    throw new ValidateException(`${label}格式错误`);
+  }
+  if (normalized.startsWith("/") && !normalized.startsWith("//")) return normalized;
+  let url: URL;
+  try {
+    url = new URL(normalized);
+  } catch {
+    throw new ValidateException(`${label}必须是HTTPS地址或站内绝对路径`);
+  }
+  if (url.protocol !== "https:" || url.username || url.password) {
+    throw new ValidateException(`${label}必须是HTTPS地址或站内绝对路径`);
+  }
+  return normalized;
+}
+
+export function normalizeOutCategoryInput(input: Record<string, unknown>): OutCategoryInput {
+  if (typeof input.cate_name !== "string") throw new ValidateException("分类名称不能为空");
+  const cateName = input.cate_name.trim().normalize("NFC");
+  if (!cateName) throw new ValidateException("分类名称不能为空");
+  if (cateName.length > 30) throw new ValidateException("分类名称过长");
+  if (/[\u0000-\u001f\u007f]/u.test(cateName)) throw new ValidateException("分类名称格式错误");
+  const isShow = strictInteger(input.is_show, "分类状态", 0, 0, 1);
+  return {
+    pid: strictInteger(input.pid, "上级分类", 0, 0, 2_147_483_647),
+    cateName,
+    pic: outCategoryAsset(input.pic, "移动端分类图", 512),
+    bigPic: outCategoryAsset(input.big_pic, "PC端分类图", 255),
+    sort: strictInteger(input.sort, "分类排序", 0, 0, 1_000_000),
+    isShow: isShow as 0 | 1,
+  };
+}
+
+function outCategoryId(value: unknown): number {
+  return strictInteger(value, "分类ID", 0, 1, 2_147_483_647);
+}
+
+async function lockPlatformCategoryCatalog(tx: DbClient, includeProductReferences = false) {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(${OUT_CATEGORY_LOCK_NAMESPACE}, 0)`);
+  // The table lock also serializes legacy/Admin writers that do not know the
+  // Worker advisory-lock namespace. Category writes are rare and bounded.
+  await tx.execute(sql`LOCK TABLE "store_product_category" IN SHARE ROW EXCLUSIVE MODE`);
+  if (includeProductReferences) {
+    // Keep the reference check and delete atomic against product/catalog writes.
+    await tx.execute(sql`LOCK TABLE "store_product", "store_product_relation", "store_product_cate", "store_product_category_brand" IN SHARE ROW EXCLUSIVE MODE`);
+  }
 }
 
 function pageValues(query: Record<string, unknown>): { page: number; limit: number } {
@@ -1276,6 +1374,301 @@ export class OutApiService {
       )).limit(1);
     if (!rows[0]) throw new NotFoundException("分类不存在");
     return toSnakeValue(rows[0]);
+  }
+
+  async createCategory(
+    _account: AuthenticatedOutAccount,
+    rawInput: Record<string, unknown>,
+  ) {
+    return this.savePlatformCategory(0, rawInput);
+  }
+
+  async updateCategory(
+    _account: AuthenticatedOutAccount,
+    idInput: unknown,
+    rawInput: Record<string, unknown>,
+  ) {
+    return this.savePlatformCategory(outCategoryId(idInput), rawInput);
+  }
+
+  private async savePlatformCategory(
+    categoryId: number,
+    rawInput: Record<string, unknown>,
+  ) {
+    const input = normalizeOutCategoryInput(rawInput);
+    return withTx(this.container, async (tx) => {
+      await lockPlatformCategoryCatalog(tx);
+      const all = await tx
+        .select()
+        .from(storeProductCategory)
+        .where(and(
+          eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+          eq(storeProductCategory.relationId, 0),
+        ))
+        .for("update");
+      const existing = categoryId > 0 ? all.find((row) => row.id === categoryId) : undefined;
+      if (categoryId > 0 && !existing) throw new NotFoundException("分类不存在");
+      const byId = new Map(all.map((row) => [row.id, row]));
+      const parent = input.pid > 0 ? byId.get(input.pid) : undefined;
+      if (input.pid > 0 && !parent) throw new ValidateException("上级分类不存在");
+
+      const children = new Map<number, typeof all>();
+      for (const row of all) children.set(row.pid, [...(children.get(row.pid) ?? []), row]);
+      if (existing) {
+        const descendants = new Set<number>();
+        const stack = [existing.id];
+        while (stack.length) {
+          const currentId = stack.pop()!;
+          for (const child of children.get(currentId) ?? []) {
+            if (child.id === existing.id || descendants.has(child.id)) {
+              throw new ValidateException("分类层级数据存在循环，请先修复");
+            }
+            descendants.add(child.id);
+            stack.push(child.id);
+          }
+        }
+        if (input.pid === existing.id || descendants.has(input.pid)) {
+          throw new ValidateException("不能将分类移动到自身或其子分类下");
+        }
+      }
+
+      const parentChain: number[] = [];
+      const parentChainSeen = new Set<number>();
+      let cursor = parent;
+      while (cursor) {
+        if (parentChainSeen.has(cursor.id)) {
+          throw new ValidateException("上级分类层级数据存在循环，请先修复");
+        }
+        parentChainSeen.add(cursor.id);
+        parentChain.unshift(cursor.id);
+        if (cursor.pid === 0) break;
+        cursor = byId.get(cursor.pid);
+        if (!cursor) throw new ValidateException("上级分类层级数据不完整，请先修复");
+      }
+      const level = parentChain.length;
+      if (level > 2) throw new ValidateException("商品分类最多三级");
+      const path = parentChain.join(",");
+      const normalizedName = input.cateName.toLowerCase();
+      const sibling = all.find((row) =>
+        row.pid === input.pid && row.id !== categoryId &&
+        row.cateName.trim().normalize("NFC").toLowerCase() === normalizedName
+      );
+
+      if (!existing) {
+        if (sibling) {
+          const sameRequest = sibling.cateName === input.cateName &&
+            sibling.pic === input.pic && sibling.bigPic === input.bigPic &&
+            sibling.sort === input.sort && sibling.isShow === input.isShow &&
+            sibling.path === path && sibling.level === level;
+          if (sameRequest) return { id: sibling.id, idempotent: true };
+          throw new ValidateException("该分类已经存在");
+        }
+        const inserted = await tx
+          .insert(storeProductCategory)
+          .values({
+            pid: input.pid,
+            type: PLATFORM_PRODUCT_TYPE,
+            relationId: 0,
+            cateName: input.cateName,
+            path,
+            level,
+            pic: input.pic,
+            bigPic: input.bigPic,
+            sort: input.sort,
+            isShow: input.isShow,
+            addTime: Math.floor(Date.now() / 1000),
+          })
+          .returning({ id: storeProductCategory.id });
+        return { id: inserted[0].id, idempotent: false };
+      }
+
+      if (sibling) throw new ValidateException("该分类已经存在");
+      const hierarchyPlan: Array<{
+        row: typeof storeProductCategory.$inferSelect;
+        path: string;
+        level: number;
+      }> = [{ row: existing, path, level }];
+      const planned = new Set<number>([existing.id]);
+      const planChildren = (parentId: number, parentPath: string, parentLevel: number): void => {
+        for (const child of children.get(parentId) ?? []) {
+          if (planned.has(child.id)) throw new ValidateException("分类层级数据存在循环，请先修复");
+          const childLevel = parentLevel + 1;
+          if (childLevel > 2) throw new ValidateException("移动后分类层级将超过三级");
+          const childPath = [parentPath, String(parentId)].filter(Boolean).join(",");
+          planned.add(child.id);
+          hierarchyPlan.push({ row: child, path: childPath, level: childLevel });
+          planChildren(child.id, childPath, childLevel);
+        }
+      };
+      planChildren(existing.id, path, level);
+
+      const baseUnchanged = existing.pid === input.pid && existing.cateName === input.cateName &&
+        existing.pic === input.pic && existing.bigPic === input.bigPic &&
+        existing.sort === input.sort && existing.isShow === input.isShow;
+      const hierarchyUnchanged = hierarchyPlan.every((item) =>
+        item.row.path === item.path && item.row.level === item.level
+      );
+      if (baseUnchanged && hierarchyUnchanged) {
+        return { id: existing.id, idempotent: true };
+      }
+
+      await tx
+        .update(storeProductCategory)
+        .set({
+          pid: input.pid,
+          cateName: input.cateName,
+          pic: input.pic,
+          bigPic: input.bigPic,
+          sort: input.sort,
+          isShow: input.isShow,
+          path,
+          level,
+        })
+        .where(and(
+          eq(storeProductCategory.id, existing.id),
+          eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+          eq(storeProductCategory.relationId, 0),
+        ));
+      for (const item of hierarchyPlan.slice(1)) {
+        if (item.row.path === item.path && item.row.level === item.level) continue;
+        await tx
+          .update(storeProductCategory)
+          .set({ path: item.path, level: item.level })
+          .where(and(
+            eq(storeProductCategory.id, item.row.id),
+            eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+            eq(storeProductCategory.relationId, 0),
+          ));
+      }
+      const affectedIds = hierarchyPlan.map((item) => item.row.id);
+      await tx
+        .update(storeProductRelation)
+        .set({ relationPid: storeProductCategory.pid })
+        .from(storeProductCategory)
+        .where(and(
+          eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
+          eq(storeProductRelation.relationId, storeProductCategory.id),
+          eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+          eq(storeProductCategory.relationId, 0),
+          inArray(storeProductCategory.id, affectedIds),
+        ));
+      return { id: existing.id, idempotent: false };
+    });
+  }
+
+  async deleteCategory(
+    _account: AuthenticatedOutAccount,
+    idInput: unknown,
+  ) {
+    const categoryId = outCategoryId(idInput);
+    return withTx(this.container, async (tx) => {
+      await lockPlatformCategoryCatalog(tx, true);
+      const rows = await tx
+        .select({
+          id: storeProductCategory.id,
+          type: storeProductCategory.type,
+          relationId: storeProductCategory.relationId,
+        })
+        .from(storeProductCategory)
+        .where(eq(storeProductCategory.id, categoryId))
+        .limit(1)
+        .for("update");
+      const category = rows[0];
+      if (!category) return { id: categoryId, idempotent: true };
+      if (category.type !== PLATFORM_PRODUCT_TYPE || category.relationId !== 0) {
+        throw new NotFoundException("分类不存在");
+      }
+      const child = await tx
+        .select({ id: storeProductCategory.id })
+        .from(storeProductCategory)
+        .where(and(
+          eq(storeProductCategory.pid, categoryId),
+          eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+          eq(storeProductCategory.relationId, 0),
+        ))
+        .limit(1);
+      if (child[0]) throw new ValidateException("请先删除下级分类");
+
+      // Category IDs are global. A malformed or legacy cross-tenant relation
+      // is still a real reference and must block destructive deletion.
+      const activeProductScope = eq(storeProduct.isDel, 0);
+      const relationReference = await tx
+        .select({ id: storeProductRelation.id })
+        .from(storeProductRelation)
+        .innerJoin(storeProduct, eq(storeProduct.id, storeProductRelation.productId))
+        .where(and(
+          eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
+          eq(storeProductRelation.relationId, categoryId),
+          activeProductScope,
+        ))
+        .limit(1);
+      const csvReference = await tx
+        .select({ id: storeProduct.id })
+        .from(storeProduct)
+        .where(and(
+          activeProductScope,
+          sql`${String(categoryId)} = ANY(string_to_array(replace(${storeProduct.cateId}, ' ', ''), ','))`,
+        ))
+        .limit(1);
+      const legacyCateReference = await tx
+        .select({ id: storeProductCate.id })
+        .from(storeProductCate)
+        .innerJoin(storeProduct, eq(storeProduct.id, storeProductCate.productId))
+        .where(and(eq(storeProductCate.cateId, categoryId), activeProductScope))
+        .limit(1);
+      const categoryBrandReference = await tx
+        .select({ id: storeProductCategoryBrand.id })
+        .from(storeProductCategoryBrand)
+        .innerJoin(storeProduct, eq(storeProduct.id, storeProductCategoryBrand.productId))
+        .where(and(eq(storeProductCategoryBrand.cateId, categoryId), activeProductScope))
+        .limit(1);
+      if (relationReference[0] || csvReference[0] || legacyCateReference[0] || categoryBrandReference[0]) {
+        throw new ValidateException("分类下仍有商品或库存引用，不能删除");
+      }
+      await tx.delete(storeProductCategory).where(and(
+        eq(storeProductCategory.id, categoryId),
+        eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+        eq(storeProductCategory.relationId, 0),
+      ));
+      return { id: categoryId, idempotent: false };
+    });
+  }
+
+  async setCategoryShow(
+    _account: AuthenticatedOutAccount,
+    idInput: unknown,
+    isShowInput: unknown,
+  ) {
+    const categoryId = outCategoryId(idInput);
+    const isShow = strictInteger(isShowInput, "分类状态", -1, 0, 1) as 0 | 1;
+    return withTx(this.container, async (tx) => {
+      await lockPlatformCategoryCatalog(tx);
+      const rows = await tx
+        .select({ id: storeProductCategory.id, isShow: storeProductCategory.isShow })
+        .from(storeProductCategory)
+        .where(and(
+          or(
+            eq(storeProductCategory.id, categoryId),
+            eq(storeProductCategory.pid, categoryId),
+          ),
+          eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+          eq(storeProductCategory.relationId, 0),
+        ))
+        .for("update");
+      if (!rows.some((row) => row.id === categoryId)) throw new NotFoundException("分类不存在");
+      const idempotent = rows.every((row) => row.isShow === isShow);
+      if (!idempotent) {
+        await tx
+          .update(storeProductCategory)
+          .set({ isShow })
+          .where(and(
+            inArray(storeProductCategory.id, rows.map((row) => row.id)),
+            eq(storeProductCategory.type, PLATFORM_PRODUCT_TYPE),
+            eq(storeProductCategory.relationId, 0),
+          ));
+      }
+      return { id: categoryId, is_show: isShow, updated: rows.length, idempotent };
+    });
   }
 
   async productList(query: Record<string, unknown>) {

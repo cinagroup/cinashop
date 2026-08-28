@@ -8,6 +8,26 @@ export const outapiRoutes = new Hono<{ Bindings: Env; Variables: AppVariables }>
 outapiRoutes.post("/get_token", OutApiController.getToken);
 outapiRoutes.post("/refresh_token", OutApiController.refreshToken);
 
+outapiRoutes.post(
+  "/category",
+  outAuthMiddleware("POST", "/category"),
+  OutApiController.categoryCreate,
+);
+outapiRoutes.put(
+  "/category/set_show/:id/:is_show",
+  outAuthMiddleware("PUT", "/category/set_show/{id}/{is_show}"),
+  OutApiController.categorySetShow,
+);
+outapiRoutes.put(
+  "/category/:id",
+  outAuthMiddleware("PUT", "/category/{id}"),
+  OutApiController.categoryUpdate,
+);
+outapiRoutes.delete(
+  "/category/:id",
+  outAuthMiddleware("DELETE", "/category/{id}"),
+  OutApiController.categoryDelete,
+);
 outapiRoutes.get(
   "/category/list",
   outAuthMiddleware("GET", "/category/list"),
