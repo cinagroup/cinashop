@@ -1831,6 +1831,53 @@ export class StoreOrderCreateService {
             inArray(storeOrder.refundStatus, [0, 3]),
           );
           break;
+        case 5:
+          conditions.push(
+            eq(storeOrder.paid, 1),
+            inArray(storeOrder.status, [0, 1, 5]),
+            eq(storeOrder.shippingType, 2),
+            inArray(storeOrder.refundStatus, [0, 3]),
+          );
+          break;
+        case 6:
+          conditions.push(
+            eq(storeOrder.paid, 1),
+            eq(storeOrder.status, 2),
+            eq(storeOrder.shippingType, 2),
+            inArray(storeOrder.refundStatus, [0, 3]),
+          );
+          break;
+        case 7:
+          conditions.push(
+            eq(storeOrder.paid, 1),
+            eq(storeOrder.status, 4),
+            inArray(storeOrder.refundStatus, [0, 3]),
+          );
+          break;
+        case 8:
+          conditions.push(
+            eq(storeOrder.paid, 1),
+            inArray(storeOrder.status, [0, 1, 2, 5]),
+            eq(storeOrder.shippingType, 2),
+            inArray(storeOrder.refundStatus, [0, 3]),
+          );
+          break;
+        case 9:
+          conditions.push(
+            eq(storeOrder.paid, 1),
+            inArray(storeOrder.status, [2, 3]),
+            inArray(storeOrder.refundStatus, [0, 3]),
+          );
+          break;
+        case -1:
+          conditions.push(eq(storeOrder.paid, 1), inArray(storeOrder.refundStatus, [1, 4]));
+          break;
+        case -2:
+          conditions.push(eq(storeOrder.paid, 1), eq(storeOrder.refundStatus, 2));
+          break;
+        case -3:
+          conditions.push(eq(storeOrder.paid, 1), inArray(storeOrder.refundStatus, [1, 2, 4]));
+          break;
         default:
           throw new ValidateException("订单状态筛选无效");
       }

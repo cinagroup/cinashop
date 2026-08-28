@@ -136,6 +136,14 @@ export interface StoreOrderRefundPostgresReport {
     returned_integral: number;
     bill_rows: number;
   };
+  authoritative_refund_application: {
+    partial_refund_price: string;
+    partial_refund_num: number;
+    partial_snapshot_exact: boolean;
+    full_refund_price: string;
+    full_refund_num: number;
+    full_snapshot_exact: boolean;
+  };
   provider_amount_binding: {
     mismatch_rolled_back: boolean;
     retry_completed: boolean;
@@ -365,7 +373,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, base: number): Promise<void> {
   await withSchema(db, schemaName, async (container) => {
     const tx = container.db;
-    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
     const compensation = compensationIds(base);
     const timeout = timeoutIds(base);
     await tx.insert(userTable).values([...offsets.map((offset) => {
@@ -402,9 +410,9 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         unique: `refund-${base}-${offset}`,
         uid: fixture.uid,
         cartId: offset < 2 ? String(fixture.cartId) : "",
-        totalNum: offset < 2 || [9, 10].includes(offset) ? 1 : 2,
-        totalPrice: offset === 12 ? "0.00" : "10.00",
-        payPrice: offset === 12 ? "0.00" : "10.00",
+        totalNum: offset === 17 ? 10 : offset < 2 || [9, 10].includes(offset) ? 1 : 2,
+        totalPrice: offset === 12 ? "0.00" : offset === 17 ? "99.00" : "10.00",
+        payPrice: offset === 12 ? "0.00" : offset === 17 ? "99.00" : "10.00",
         payIntegral: offset === 12 ? 60 : 0,
         useIntegral: offset === 5 ? "5.00" : "0.00",
         spreadUid: offset === 5 ? compensation.receiverUid : 0,
@@ -506,6 +514,58 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       surplusNum: 1,
       splitSurplusNum: 1,
       cartInfo: JSON.stringify({ line: "pure-integral-second" }),
+    });
+    const partialPricing = ids(base, 17);
+    cartInfoRows.push({
+      id: partialPricing.cartInfoId,
+      uid: partialPricing.uid,
+      oid: partialPricing.orderId,
+      cartId: String(partialPricing.cartId),
+      unique: `refund-cart-${base}-17a`,
+      productId: partialPricing.productId,
+      skuUnique: "",
+      cartNum: 1,
+      surplusNum: 1,
+      splitSurplusNum: 1,
+      cartInfo: JSON.stringify({ sum_true_price: "90.00", sku: { price: "90.00" } }),
+    }, {
+      id: base + 110_017,
+      uid: partialPricing.uid,
+      oid: partialPricing.orderId,
+      cartId: String(base + 100_017),
+      unique: `refund-cart-${base}-17b`,
+      productId: partialPricing.productId + 1,
+      skuUnique: "",
+      cartNum: 9,
+      surplusNum: 9,
+      splitSurplusNum: 9,
+      cartInfo: JSON.stringify({ sum_true_price: "9.00", sku: { price: "1.00" } }),
+    });
+    const fullPricing = ids(base, 18);
+    cartInfoRows.push({
+      id: fullPricing.cartInfoId,
+      uid: fullPricing.uid,
+      oid: fullPricing.orderId,
+      cartId: String(fullPricing.cartId),
+      unique: `refund-cart-${base}-18a`,
+      productId: fullPricing.productId,
+      skuUnique: "",
+      cartNum: 1,
+      surplusNum: 1,
+      splitSurplusNum: 1,
+      cartInfo: JSON.stringify({ sum_true_price: "6.00", sku: { price: "6.00" } }),
+    }, {
+      id: base + 110_018,
+      uid: fullPricing.uid,
+      oid: fullPricing.orderId,
+      cartId: String(base + 100_018),
+      unique: `refund-cart-${base}-18b`,
+      productId: fullPricing.productId + 1,
+      skuUnique: "",
+      cartNum: 1,
+      surplusNum: 1,
+      splitSurplusNum: 1,
+      cartInfo: JSON.stringify({ sum_true_price: "4.00", sku: { price: "4.00" } }),
     });
     await tx.insert(storeOrderCartInfo).values(cartInfoRows);
 
@@ -1693,6 +1753,67 @@ async function runKefuRefundDecisions(
   return result;
 }
 
+async function runAuthoritativeRefundApplication(
+  db: DbClient,
+  schemaName: string,
+  base: number,
+): Promise<StoreOrderRefundPostgresReport["authoritative_refund_application"]> {
+  const partial = ids(base, 17);
+  const full = ids(base, 18);
+  const result = await withSchema(db, schemaName, async (container) => {
+    const partialCreated = await applyOrderRefund(container, {
+      uid: partial.uid,
+      orderId: partial.orderNo,
+      refundReason: "partial price audit",
+      refundExplain: "server snapshot pricing",
+      applyType: 1,
+      cartSelections: [{ cartId: partial.cartId, cartNum: 1 }],
+    });
+    const fullCreated = await applyOrderRefund(container, {
+      uid: full.uid,
+      orderId: full.orderNo,
+      refundReason: "full snapshot audit",
+      refundExplain: "exact cart quantities",
+      applyType: 1,
+    });
+    const rows = await container.db
+      .select()
+      .from(storeOrderRefund)
+      .where(inArray(storeOrderRefund.id, [partialCreated.refundId, fullCreated.refundId]))
+      .orderBy(asc(storeOrderRefund.id));
+    const partialRefund = rows.find((row) => row.id === partialCreated.refundId);
+    const fullRefund = rows.find((row) => row.id === fullCreated.refundId);
+    const partialSnapshot = JSON.parse(partialRefund?.cartInfo ?? "{}") as { cartIds?: unknown[] };
+    const fullSnapshot = JSON.parse(fullRefund?.cartInfo ?? "{}") as { cartIds?: unknown[] };
+    return {
+      partial_refund_price: partialRefund?.refundPrice ?? "",
+      partial_refund_num: partialRefund?.refundNum ?? 0,
+      partial_snapshot_exact: JSON.stringify(partialSnapshot.cartIds) === JSON.stringify([
+        { cartId: partial.cartId, cartNum: 1 },
+      ]),
+      full_refund_price: fullRefund?.refundPrice ?? "",
+      full_refund_num: fullRefund?.refundNum ?? 0,
+      full_snapshot_exact: JSON.stringify(fullSnapshot.cartIds) === JSON.stringify([
+        { cartId: full.cartId, cartNum: 1 },
+        { cartId: base + 100_018, cartNum: 1 },
+      ]),
+    };
+  });
+  assertCondition(
+    result.partial_refund_price === "90.00" &&
+      result.partial_refund_num === 1 &&
+      result.partial_snapshot_exact,
+    `authoritative partial refund application drifted: ${JSON.stringify(result)}`,
+  );
+  assertCondition(
+    result.full_refund_price === "10.00" &&
+      result.full_refund_num === 2 &&
+      result.full_snapshot_exact,
+    `full refund cart snapshot drifted: ${JSON.stringify(result)}`,
+  );
+  return result;
+}
+
 export async function runStoreOrderRefundPostgresScenario(
   connectionString: string,
 ): Promise<StoreOrderRefundPostgresReport> {
@@ -1768,6 +1889,11 @@ export async function runStoreOrderRefundPostgresScenario(
       base,
     );
     const pureIntegralRefund = await runPureIntegralRefund(adminDb, schemaName, base);
+    const authoritativeRefundApplication = await runAuthoritativeRefundApplication(
+      adminDb,
+      schemaName,
+      base,
+    );
     const providerAmountBinding = await runProviderAmountBinding(adminDb, schemaName, base);
     const cumulativeCompensationInvariants = await runCumulativeCompensationInvariants(
       adminDb,
@@ -1795,6 +1921,7 @@ export async function runStoreOrderRefundPostgresScenario(
       cumulative_over_refund_race: cumulativeOverRefundRace,
       cumulative_exact_refund_race: cumulativeExactRefundRace,
       pure_integral_refund: pureIntegralRefund,
+      authoritative_refund_application: authoritativeRefundApplication,
       provider_amount_binding: providerAmountBinding,
       cumulative_compensation_invariants: cumulativeCompensationInvariants,
       pink_leader_refund_promotion: pinkLeaderRefundPromotion,

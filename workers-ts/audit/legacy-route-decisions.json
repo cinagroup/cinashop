@@ -26,6 +26,19 @@
         "cinashop-php/app/services/order/StoreOrderRefundServices.php:562"
       ],
       "replacement": "PUT /kefuapi/refund/agree/:id"
+    },
+    {
+      "surface": "api",
+      "method": "GET",
+      "path": "/api/order/nopay",
+      "status": "retired",
+      "reason": "The PHP route points to StoreOrder/get_noPay, but the StoreOrder controller has no such method and ends after callBack; no first-party storefront call was found during the API-002 source audit.",
+      "evidence": [
+        "cinashop-php/route/api.php:360",
+        "cinashop-php/app/controller/api/v1/order/StoreOrder.php:1242",
+        "cinashop-php/app/controller/api/v1/order/StoreOrder.php:1340"
+      ],
+      "replacement": "GET /api/order/data for unpaid_count, or GET /api/order/list?status=0 for unpaid orders"
     }
   ]
 }

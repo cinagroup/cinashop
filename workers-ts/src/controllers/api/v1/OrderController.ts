@@ -8,11 +8,17 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { StoreCartService } from "@/services/order/StoreCartService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
+import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderInvoiceService } from "@/services/order/StoreOrderInvoiceService";
 import { StoreDeliveryOrderService } from "@/services/order/StoreDeliveryOrderService";
 import { ExpressService } from "@/services/order/ExpressService";
 import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
 import { SystemMetadataService } from "@/services/system/SystemMetadataService";
+import {
+  LegacyOrderCompatibilityService,
+  parseLegacyCartIds,
+  parseLegacyRefundSelections,
+} from "@/services/order/LegacyOrderCompatibilityService";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -177,6 +183,9 @@ export async function orderCreate(c: C) {
 
   const body = (await c.req.json().catch(() => ({}))) as {
     cartIds?: number[];
+    cart_ids?: number[];
+    cartId?: string | number | number[];
+    addressId?: number;
     realName?: string;
     userPhone?: string;
     province?: string;
@@ -194,37 +203,81 @@ export async function orderCreate(c: C) {
     pinkId?: number;
     combinationId?: number;
     seckillId?: number;
+    seckill_id?: number;
     bargainUserId?: number;
+    bargainId?: number;
     couponId?: number;
+    payType?: string;
+    pay_type?: string;
+    from?: string;
     customForm?: unknown;
     custom_form?: unknown;
   };
-  if (!body.cartIds?.length) return jsonFail(c, "请选择要购买的商品");
+  let cartIds: number[] = [];
+  try {
+    const rawCartIds = body.cartIds ?? body.cart_ids ?? body.cartId;
+    cartIds = rawCartIds === undefined
+      ? await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+          .checkoutCartIds(uid, key)
+      : parseLegacyCartIds(rawCartIds);
+  } catch (error) {
+    if (error instanceof ValidateException) {
+      // Let the service return an existing idempotent order even after the
+      // short-lived confirmation snapshot expired.
+      cartIds = [];
+    } else {
+      throw error;
+    }
+  }
+
+  const firstCart = cartIds.length ? await c.get("container").storeCartDao.get(cartIds[0]) : null;
+  const addressId = Number(body.addressId ?? 0);
+  const address = addressId > 0 ? await c.get("container").userAddressDao.get(addressId) : null;
+  if (address && (address.uid !== uid || address.isDel !== 0)) return jsonFail(c, "收货地址不存在");
 
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
   try {
     const result = await svc.createOrder({
       uid,
       key,
-      cartIds: body.cartIds,
-      realName: body.realName,
-      userPhone: body.userPhone,
-      province: body.province,
-      cityId: body.cityId ?? body.city_id,
-      userAddress: body.userAddress,
+      cartIds,
+      realName: body.realName ?? address?.realName,
+      userPhone: body.userPhone ?? address?.phone,
+      province: body.province ?? address?.province,
+      cityId: body.cityId ?? body.city_id ?? address?.cityId,
+      userAddress: body.userAddress ?? (address
+        ? [address.province, address.city, address.district, address.street, address.detail]
+            .filter(Boolean)
+            .join(" ")
+        : undefined),
       mark: body.mark,
       shippingType: body.shippingType ?? body.shipping_type,
       storeId: body.storeId ?? body.store_id,
       useIntegral: body.useIntegral,
       userIp: clientIp(c),
-      type: body.type,
+      type: body.type ?? firstCart?.type,
       pinkId: body.pinkId,
       combinationId: body.combinationId,
-      seckillId: body.seckillId,
-      bargainUserId: body.bargainUserId,
+      seckillId: body.seckillId ?? body.seckill_id,
+      bargainUserId: body.bargainUserId ?? body.bargainId,
       couponId: body.couponId,
       customForm: body.customForm ?? body.custom_form,
     });
+    const requestedPayType = String(body.payType ?? body.pay_type ?? "").trim().toLowerCase();
+    if (requestedPayType) {
+      const payment = await new StoreOrderPayService(c.get("container"), c.env).pay(
+        uid,
+        result.orderId,
+        requestedPayType,
+        body.from ?? c.req.header("Form-type") ?? "h5",
+        clientIp(c),
+      );
+      if (payment.pay_type === "alipay" && payment.paid === false) {
+        payment.pay_key = await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+          .createAlipayKey(uid, result.orderId);
+      }
+      return jsonOk(c, { ...result, ...payment }, payment.paid === true ? "支付成功" : "订单创建成功");
+    }
     return jsonOk(c, result, "订单创建成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
@@ -256,6 +309,196 @@ export async function orderDetail(c: C) {
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
   const detail = await svc.detail(uid, orderId);
   return jsonOk(c, detail);
+}
+
+/** POST /api/order/check_shipping — legacy checkout delivery selector. */
+export async function orderCheckShipping(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = await readBoundedJsonObject(c);
+  try {
+    const cartIds = parseLegacyCartIds(body.cartIds ?? body.cart_ids ?? body.cartId);
+    return jsonOk(
+      c,
+      await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+        .checkShipping(uid, cartIds),
+    );
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** POST /api/order/confirm — legacy checkout preview backed by a short-lived KV key. */
+export async function orderConfirm(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = await readBoundedJsonObject(c);
+  try {
+    const cartIds = parseLegacyCartIds(body.cartIds ?? body.cart_ids ?? body.cartId);
+    const result = await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+      .checkoutPreview(uid, cartIds, Number(body.addressId ?? body.address_id ?? 0));
+    return jsonOk(c, result);
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** POST /api/order/computed/:key — display quote; createOrder remains authoritative. */
+export async function orderComputed(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const key = c.req.param("key") ?? "";
+  const body = await readBoundedJsonObject(c);
+  try {
+    const service = new LegacyOrderCompatibilityService(c.get("container"), c.env);
+    const cartIds = await service.checkoutCartIds(uid, key);
+    const preview = await service.checkoutPreview(
+      uid,
+      cartIds,
+      Number(body.addressId ?? body.address_id ?? 0),
+      key,
+    );
+    return jsonOk(c, preview.priceGroup);
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/order/data — PHP-compatible order/refund counters. */
+export async function orderData(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  return jsonOk(
+    c,
+    await new LegacyOrderCompatibilityService(c.get("container"), c.env).orderData(uid),
+  );
+}
+
+/** POST /api/order/prize/:orderId — paid-order rewards summary. */
+export async function orderPrize(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  try {
+    return jsonOk(
+      c,
+      await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+        .orderPrize(uid, c.req.param("orderId") ?? ""),
+    );
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/order/write/records/:id — user-owned writeoff trail. */
+export async function orderWriteoffRecords(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const id = Number(c.req.param("id"));
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "参数错误");
+  try {
+    return jsonOk(
+      c,
+      await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+        .writeoffRecords(
+          uid,
+          id,
+          Number(c.req.query("page") ?? 1),
+          Number(c.req.query("limit") ?? 10),
+        ),
+    );
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/order/refund/reason */
+export async function orderRefundReason(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  return jsonOk(
+    c,
+    await new LegacyOrderCompatibilityService(c.get("container"), c.env).refundReasons(),
+  );
+}
+
+/** GET /api/order/refund/cart_info/:id */
+export async function orderRefundCartInfo(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const id = Number(c.req.param("id"));
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少发货ID");
+  try {
+    const rawSelections = c.req.query("cart_ids");
+    const selections = rawSelections ? parseLegacyRefundSelections(JSON.parse(rawSelections)) : [];
+    return jsonOk(
+      c,
+      await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+        .refundCartInfo(uid, id, selections),
+    );
+  } catch (error) {
+    if (error instanceof SyntaxError) return jsonFail(c, "退款商品参数错误");
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** POST /api/order/refund/cart_info */
+export async function orderRefundCartInfoList(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = await readBoundedJsonObject(c);
+  const id = Number(body.id ?? 0);
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少发货ID");
+  try {
+    return jsonOk(
+      c,
+      await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+        .refundCartInfoSummary(uid, id, parseLegacyRefundSelections(body.cart_ids ?? body.cartIds)),
+    );
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** POST /api/order/product — legacy evaluation product snapshot. */
+export async function orderProduct(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const body = await readBoundedJsonObject(c);
+  const unique = String(body.unique ?? "").trim();
+  if (!unique) return jsonFail(c, "评价商品不存在");
+  try {
+    return jsonOk(
+      c,
+      await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+        .orderProduct(uid, unique),
+    );
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/order/pay_cashier — latest unpaid in-store cashier order. */
+export async function orderPayCashier(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  try {
+    return jsonOk(
+      c,
+      await new LegacyOrderCompatibilityService(c.get("container"), c.env)
+        .payCashierOrder(uid, Number(c.req.query("store_id") ?? 0)),
+    );
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
 }
 
 /** POST /api/order/first_order_quote — 服务端只读首单报价，建单时仍会事务内复核。 */
@@ -387,10 +630,10 @@ export async function orderMakeUpInvoice(c: C) {
 export async function orderTake(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string };
+  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string; uni?: string };
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
   try {
-    await svc.take(uid, body.order_id ?? "");
+    await svc.take(uid, body.order_id ?? body.uni ?? "");
     return jsonOk(c, null, "已确认收货");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
@@ -402,10 +645,10 @@ export async function orderTake(c: C) {
 export async function orderCancel(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string };
+  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string; id?: string };
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
   try {
-    await svc.cancel(uid, body.order_id ?? "");
+    await svc.cancel(uid, body.order_id ?? body.id ?? "");
     return jsonOk(c, null, "已取消");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
@@ -417,20 +660,25 @@ export async function orderCancel(c: C) {
 export async function orderDel(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string };
+  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string; uni?: string };
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
-  await svc.del(uid, body.order_id ?? "");
-  return jsonOk(c, null, "已删除");
+  try {
+    await svc.del(uid, body.order_id ?? body.uni ?? "");
+    return jsonOk(c, null, "已删除");
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
 }
 
 /** POST /api/order/again — 再次购买 */
 export async function orderAgain(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string };
+  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string; uni?: string };
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
   try {
-    const result = await svc.again(uid, body.order_id ?? "");
+    const result = await svc.again(uid, body.order_id ?? body.uni ?? "");
     return jsonOk(c, result, "已加入购物车");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);

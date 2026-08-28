@@ -14,7 +14,7 @@
  *   - 积分回退: 按累计退款比例回退赠送积分并返还抵扣积分，避免多次部分退款舍入漂移
  *   - 余额退 (yueRefund): user.now_money += refundPrice, 带 user_bill 流水
  */
-import { and, asc, eq, gt, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne, or, sql } from "drizzle-orm";
 import {
   storeOrder,
   storeOrderCartInfo,
@@ -101,10 +101,120 @@ export interface ApplyOrderRefundInput {
   refundImg?: string;
   applyType: number;
   cartIds?: number[];
+  cartSelections?: Array<{ cartId: number; cartNum: number }>;
+}
+
+interface RefundCartSelection {
+  cartId: number;
+  cartNum?: number;
 }
 
 interface RefundApplicationOptions {
   reuseExisting: boolean;
+}
+
+interface RefundPricingLine {
+  cartId: number;
+  cartNum: number;
+  lineCents: number;
+}
+
+/**
+ * Allocate the authoritative order cash total over immutable cart snapshots,
+ * then return only the newly selected quantity. BigInt keeps the proportional
+ * allocation exact even near PostgreSQL numeric limits.
+ */
+export function calculateAuthoritativeRefundCents(
+  paidCents: number,
+  lines: RefundPricingLine[],
+  completedQuantities: ReadonlyMap<number, number>,
+  selections: ReadonlyArray<{ cartId: number; cartNum: number }>,
+): number {
+  if (!Number.isSafeInteger(paidCents) || paidCents < 0 || !lines.length) {
+    throw new ValidateException("订单退款金额快照无效");
+  }
+  const seen = new Set<number>();
+  for (const line of lines) {
+    if (
+      !Number.isSafeInteger(line.cartId) || line.cartId <= 0 || seen.has(line.cartId) ||
+      !Number.isSafeInteger(line.cartNum) || line.cartNum <= 0 ||
+      !Number.isSafeInteger(line.lineCents) || line.lineCents < 0
+    ) {
+      throw new ValidateException("订单退款商品快照无效");
+    }
+    seen.add(line.cartId);
+  }
+
+  const rawWeights = lines.map((line) => line.lineCents);
+  const weights = rawWeights.some((weight) => weight > 0)
+    ? rawWeights
+    : lines.map((line) => line.cartNum);
+  const totalWeight = weights.reduce((sum, weight) => sum + BigInt(weight), 0n);
+  if (totalWeight <= 0n) throw new ValidateException("订单退款商品金额无效");
+  const total = BigInt(paidCents);
+  const allocations = weights.map((weight) => Number(total * BigInt(weight) / totalWeight));
+  const fractions = weights.map((weight, index) => ({
+    index,
+    remainder: total * BigInt(weight) % totalWeight,
+  }));
+  let centsLeft = paidCents - allocations.reduce((sum, value) => sum + value, 0);
+  fractions.sort((left, right) =>
+    left.remainder === right.remainder
+      ? left.index - right.index
+      : left.remainder > right.remainder ? -1 : 1);
+  for (let index = 0; index < centsLeft; index += 1) {
+    allocations[fractions[index].index] += 1;
+  }
+
+  const lineById = new Map(lines.map((line, index) => [line.cartId, { line, allocation: allocations[index] }]));
+  let refundCents = 0;
+  for (const selection of selections) {
+    const entry = lineById.get(selection.cartId);
+    if (!entry) throw new ValidateException("退款商品不属于当前订单");
+    const completed = completedQuantities.get(selection.cartId) ?? 0;
+    const end = completed + selection.cartNum;
+    if (
+      !Number.isSafeInteger(completed) || completed < 0 ||
+      !Number.isSafeInteger(selection.cartNum) || selection.cartNum <= 0 ||
+      end > entry.line.cartNum
+    ) {
+      throw new ValidateException("退款商品件数超过可退数量");
+    }
+    const allocation = BigInt(entry.allocation);
+    const denominator = BigInt(entry.line.cartNum);
+    const before = allocation * BigInt(completed) / denominator;
+    const after = allocation * BigInt(end) / denominator;
+    refundCents += Number(after - before);
+  }
+  if (!Number.isSafeInteger(refundCents) || refundCents < 0 || refundCents > paidCents) {
+    throw new ValidateException("退款金额计算失败");
+  }
+  return refundCents;
+}
+
+function refundSnapshotLineCents(cart: typeof storeOrderCartInfo.$inferSelect): number {
+  let snapshot: Record<string, unknown> = {};
+  try {
+    const parsed = JSON.parse(cart.cartInfo ?? "{}");
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      snapshot = parsed as Record<string, unknown>;
+    }
+  } catch {
+    snapshot = {};
+  }
+  const summed = amountToCents(String(snapshot.sum_true_price ?? snapshot.sumTruePrice ?? ""));
+  if (summed !== null && summed >= 0) return summed;
+  const product = snapshot.productInfo && typeof snapshot.productInfo === "object"
+    ? snapshot.productInfo as Record<string, unknown>
+    : {};
+  const sku = snapshot.sku && typeof snapshot.sku === "object"
+    ? snapshot.sku as Record<string, unknown>
+    : {};
+  const unit = amountToCents(String(
+    snapshot.truePrice ?? snapshot.true_price ?? product.truePrice ?? product.price ?? sku.price ?? "",
+  ));
+  if (unit === null || unit < 0 || !Number.isSafeInteger(unit * cart.cartNum)) return 0;
+  return unit * cart.cartNum;
 }
 
 function normalizeRefundExecutionScope(
@@ -347,6 +457,40 @@ export async function finalizeStoreOrderRefund(
     await reverseOrderRewards(tx, order, cumulativeCents, now, cumulativeNum);
     await reverseOrderBrokerage(tx, order, cumulativeCents, now);
 
+    const finalizedSelections = parseRefundCartSelections(refund.cartInfo);
+    if (finalizedSelections.length) {
+      let remaining = refund.refundNum;
+      for (const selection of finalizedSelections) {
+        const cartRows = await tx
+          .select()
+          .from(storeOrderCartInfo)
+          .where(and(
+            eq(storeOrderCartInfo.oid, order.id),
+            or(
+              eq(storeOrderCartInfo.id, selection.cartId),
+              eq(storeOrderCartInfo.cartId, String(selection.cartId)),
+            ),
+          ))
+          .limit(2);
+        if (cartRows.length !== 1) throw new ValidateException("退款商品快照无法唯一定位");
+        const quantity = selection.cartNum ?? Math.min(cartRows[0].cartNum, remaining);
+        if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > remaining) {
+          throw new ValidateException("退款商品数量与退款单不一致");
+        }
+        const updatedCart = await tx
+          .update(storeOrderCartInfo)
+          .set({ refundNum: sql`${storeOrderCartInfo.refundNum} + ${quantity}` })
+          .where(and(
+            eq(storeOrderCartInfo.id, cartRows[0].id),
+            sql`${storeOrderCartInfo.refundNum} + ${quantity} <= ${storeOrderCartInfo.cartNum}`,
+          ))
+          .returning({ id: storeOrderCartInfo.id });
+        if (!updatedCart[0]) throw new ValidateException("退款商品数量超过可退数量");
+        remaining -= quantity;
+      }
+      if (remaining !== 0) throw new ValidateException("退款商品数量与退款单不一致");
+    }
+
     if (order.status === 0) {
       await restoreRefundStock(tx, order.id, refund.refundNum, refund.cartInfo);
       if (fullyRefunded && order.type === 5 && order.activityId > 0) {
@@ -413,6 +557,13 @@ async function createOrderRefundApplication(
 ): Promise<{ refundId: number }> {
   const { uid, orderId } = params;
   if (![1, 2].includes(params.applyType)) throw new ValidateException("退款申请类型无效");
+  const refundReason = params.refundReason.trim();
+  const refundExplain = params.refundExplain.trim();
+  const refundImg = (params.refundImg ?? "").trim();
+  if (!refundReason || refundReason.length > 255) throw new ValidateException("请填写有效的退款原因");
+  if (refundExplain.length > 255 || refundImg.length > 8_192) {
+    throw new ValidateException("退款说明或凭证信息过长");
+  }
   const candidate = await container.storeOrderDao.findByOrderId(orderId);
   if (!candidate) throw new NotFoundException("订单不存在");
 
@@ -467,61 +618,143 @@ async function createOrderRefundApplication(
       throw new ValidateException("订单支付金额已全部退款");
     }
 
-    const completedCartIds = new Set<number>();
-    let completedWithoutCartSnapshot = false;
-    for (const item of completedRefunds) {
-      const ids = parseRefundCartIds(item.cartInfo);
-      if (ids.length === 0) completedWithoutCartSnapshot = true;
-      for (const id of ids) completedCartIds.add(id);
-    }
-    if (completedWithoutCartSnapshot) {
-      throw new ValidateException("历史整单退款已完成，不能再次申请退款");
-    }
-
     let refundNum = Math.max(
       0,
       order.totalNum - completedRefunds.reduce((sum, item) => sum + item.refundNum, 0),
     );
     let refundCents = remainingCents;
     let refundCartIds: number[] = [];
+    let refundCartSnapshot: Array<number | { cartId: number; cartNum: number }> = [];
     const cartInfos = await tx
       .select()
       .from(storeOrderCartInfo)
       .where(eq(storeOrderCartInfo.oid, order.id))
       .orderBy(asc(storeOrderCartInfo.id));
     if (!cartInfos.length) throw new Error("订单缺少商品快照，不能安全申请退款");
-    if (params.cartIds?.length) {
-      const requestedCartIds = [...new Set(params.cartIds.map(Number))];
-      if (
-        requestedCartIds.some((id) => !Number.isSafeInteger(id) || id <= 0) ||
-        requestedCartIds.some((id) => completedCartIds.has(id))
-      ) {
-        throw new ValidateException("退款商品无效或已经退款");
+    const cartByIdentifier = new Map<number, typeof cartInfos[number]>();
+    for (const cart of cartInfos) {
+      const legacyId = Number(cart.cartId);
+      for (const identifier of [cart.id, legacyId]) {
+        if (!Number.isSafeInteger(identifier) || identifier <= 0) continue;
+        const existing = cartByIdentifier.get(identifier);
+        if (existing && existing.id !== cart.id) {
+          throw new ValidateException("订单退款商品标识存在歧义，请先完成数据核对");
+        }
+        cartByIdentifier.set(identifier, cart);
       }
-      const selected = cartInfos.filter((item) => requestedCartIds.includes(Number(item.cartId)));
-      if (selected.length !== requestedCartIds.length) {
-        throw new ValidateException("退款商品不属于当前订单");
+    }
+    const completedQuantities = new Map<number, number>();
+    let completedWithoutCartSnapshot = false;
+    for (const item of completedRefunds) {
+      const selections = parseRefundCartSelections(item.cartInfo);
+      if (!selections.length) {
+        completedWithoutCartSnapshot = true;
+        continue;
       }
-      if (selected.some((item) => item.isSupportRefund !== 1)) {
+      let remaining = item.refundNum;
+      for (const selection of selections) {
+        const cart = cartByIdentifier.get(selection.cartId);
+        if (!cart) throw new ValidateException("历史退款商品快照无法定位");
+        const canonicalId = Number(cart.cartId);
+        if (!Number.isSafeInteger(canonicalId) || canonicalId <= 0) {
+          throw new ValidateException("历史退款商品标识无效");
+        }
+        const quantity = selection.cartNum ?? Math.min(cart.cartNum, remaining);
+        if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > remaining) {
+          throw new ValidateException("历史退款商品数量无效");
+        }
+        completedQuantities.set(canonicalId, (completedQuantities.get(canonicalId) ?? 0) + quantity);
+        remaining -= quantity;
+      }
+      if (remaining !== 0) throw new ValidateException("历史退款商品数量与退款单不一致");
+    }
+    if (completedWithoutCartSnapshot) {
+      throw new ValidateException("历史整单退款已完成，不能再次申请退款");
+    }
+    const pricingLines = cartInfos.map((cart) => {
+      const cartId = Number(cart.cartId);
+      if (!Number.isSafeInteger(cartId) || cartId <= 0) {
+        throw new ValidateException("订单退款商品标识无效");
+      }
+      return {
+        cartId,
+        cartNum: cart.cartNum,
+        lineCents: refundSnapshotLineCents(cart),
+      };
+    });
+    const remainingQuantity = pricingLines.reduce(
+      (sum, line) => sum + line.cartNum - (completedQuantities.get(line.cartId) ?? 0),
+      0,
+    );
+    if (!Number.isSafeInteger(remainingQuantity) || remainingQuantity <= 0) {
+      throw new ValidateException("订单商品已全部退款");
+    }
+
+    const requested = params.cartSelections?.length
+      ? params.cartSelections.map((item) => ({ cartId: Number(item.cartId), cartNum: Number(item.cartNum) }))
+      : params.cartIds?.length
+        ? params.cartIds.map((cartId) => ({ cartId: Number(cartId), cartNum: undefined }))
+        : [];
+    if (requested.length) {
+      const selected = requested.map((selection) => {
+        if (!Number.isSafeInteger(selection.cartId) || selection.cartId <= 0) {
+          throw new ValidateException("退款商品无效或已经退款");
+        }
+        const cart = cartByIdentifier.get(selection.cartId);
+        if (!cart) throw new ValidateException("退款商品不属于当前订单");
+        const canonicalId = Number(cart.cartId);
+        if (!Number.isSafeInteger(canonicalId) || canonicalId <= 0) {
+          throw new ValidateException("退款商品标识无效");
+        }
+        return { selection, cart, canonicalId };
+      });
+      if (new Set(selected.map((item) => item.canonicalId)).size !== selected.length) {
+        throw new ValidateException("退款商品不能重复选择");
+      }
+      if (selected.some(({ cart }) => cart.isSupportRefund !== 1)) {
         throw new ValidateException("所选商品不支持退款");
       }
-      if (selected.some((item) => item.writeTimes > item.writeSurplusTimes)) {
-        throw new ValidateException("所选商品已有核销记录，不能按整行申请退款");
+      if (selected.some(({ cart }) => cart.writeTimes > cart.writeSurplusTimes)) {
+        throw new ValidateException("所选商品已有核销记录，不能申请退款");
       }
-      refundNum = selected.reduce((sum, item) => sum + item.cartNum, 0);
+      refundCartSnapshot = selected.map(({ selection, cart, canonicalId }) => {
+        const available = cart.cartNum - (completedQuantities.get(canonicalId) ?? 0);
+        const quantity = selection.cartNum ?? available;
+        if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > available) {
+          throw new ValidateException("退款商品件数超过可退数量");
+        }
+        return params.cartSelections?.length
+          ? { cartId: canonicalId, cartNum: quantity }
+          : canonicalId;
+      });
+      refundCartIds = selected.map((item) => item.canonicalId);
+      refundNum = refundCartSnapshot.reduce<number>(
+        (sum, item, index) => sum + (typeof item === "number"
+          ? selected[index].cart.cartNum - (completedQuantities.get(item) ?? 0)
+          : item.cartNum),
+        0,
+      );
       if (refundNum > order.totalNum) throw new ValidateException("退款数量超过订单商品总数");
-      refundCartIds = requestedCartIds;
       refundCents = pureIntegralOrder
         ? 0
-        : order.totalNum > 0
-        ? Math.min(
-            remainingCents,
-            Math.floor((paidCents * refundNum) / order.totalNum),
-          )
-        : 0;
-    } else if (completedCartIds.size > 0) {
+        : refundNum === remainingQuantity
+          ? remainingCents
+          : Math.min(
+              remainingCents,
+              calculateAuthoritativeRefundCents(
+                paidCents,
+                pricingLines,
+                completedQuantities,
+                selected.map(({ canonicalId, selection, cart }) => ({
+                  cartId: canonicalId,
+                  cartNum: selection.cartNum
+                    ?? cart.cartNum - (completedQuantities.get(canonicalId) ?? 0),
+                })),
+              ),
+            );
+    } else if (completedQuantities.size > 0) {
       const remainingCartInfos = cartInfos.filter(
-        (item) => !completedCartIds.has(Number(item.cartId)),
+        (item) => (completedQuantities.get(Number(item.cartId)) ?? 0) < item.cartNum,
       );
       if (remainingCartInfos.some((item) => item.isSupportRefund !== 1)) {
         throw new ValidateException("剩余商品不支持退款");
@@ -533,7 +766,15 @@ async function createOrderRefundApplication(
       ) {
         throw new ValidateException("历史退款商品快照不完整，不能安全补齐剩余退款");
       }
-      refundNum = remainingCartInfos.reduce((sum, item) => sum + item.cartNum, 0);
+      refundCartSnapshot = remainingCartInfos.map((item) => ({
+        cartId: Number(item.cartId),
+        cartNum: item.cartNum - (completedQuantities.get(Number(item.cartId)) ?? 0),
+      }));
+      refundNum = refundCartSnapshot.reduce<number>(
+        (sum, item) => sum + (typeof item === "number" ? 0 : item.cartNum),
+        0,
+      );
+      refundCents = pureIntegralOrder ? 0 : remainingCents;
     } else {
       if (cartInfos.some((item) => item.isSupportRefund !== 1)) {
         throw new ValidateException("订单包含不支持退款的商品");
@@ -541,6 +782,14 @@ async function createOrderRefundApplication(
       if (cartInfos.some((item) => item.writeTimes > item.writeSurplusTimes)) {
         throw new ValidateException("订单已有核销记录，请仅选择未核销商品申请售后");
       }
+      refundCartSnapshot = cartInfos.map((item) => {
+        const cartId = Number(item.cartId);
+        if (!Number.isSafeInteger(cartId) || cartId <= 0) {
+          throw new ValidateException("订单退款商品标识无效");
+        }
+        return { cartId, cartNum: item.cartNum };
+      });
+      refundCartIds = refundCartSnapshot.map((item) => typeof item === "number" ? item : item.cartId);
     }
     if (refundNum <= 0 || (!pureIntegralOrder && refundCents <= 0)) {
       throw new ValidateException("没有可退款的商品或金额");
@@ -560,10 +809,10 @@ async function createOrderRefundApplication(
         refundType: 0,
         refundNum,
         refundPrice,
-        refundReason: params.refundReason,
-        refundExplain: params.refundExplain,
-        refundImg: params.refundImg ?? "",
-        cartInfo: JSON.stringify({ cartIds: refundCartIds }),
+        refundReason,
+        refundExplain,
+        refundImg,
+        cartInfo: JSON.stringify({ cartIds: refundCartSnapshot.length ? refundCartSnapshot : refundCartIds }),
         addTime: now,
       })
       .returning({ id: storeOrderRefund.id });
@@ -571,7 +820,7 @@ async function createOrderRefundApplication(
     await tx.insert(storeOrderStatus).values({
       oid: order.id,
       changeType: "apply_refund",
-      changeMessage: `用户申请退款，原因：${params.refundReason}`,
+      changeMessage: `用户申请退款，原因：${refundReason}`,
       changeTime: now,
     });
     return { refundId: inserted[0].id };
@@ -603,6 +852,22 @@ export class StoreOrderRefundService {
     private readonly container: Container,
     private readonly env: Env,
   ) {}
+
+  private async resolveUserRefund(uid: number, identifier: string) {
+    const value = identifier.trim();
+    if (!value || value.length > 50) throw new ValidateException("退款单号无效");
+    const numericId = Number(value);
+    const predicate = Number.isSafeInteger(numericId) && numericId > 0
+      ? or(eq(storeOrderRefund.id, numericId), eq(storeOrderRefund.orderId, value))
+      : eq(storeOrderRefund.orderId, value);
+    const rows = await this.container.db
+      .select()
+      .from(storeOrderRefund)
+      .where(and(eq(storeOrderRefund.uid, uid), predicate))
+      .limit(2);
+    if (rows.length !== 1) throw new NotFoundException("退款记录不存在");
+    return rows[0];
+  }
 
   /**
    * 用户申请退款 (对应 PHP applyRefund)
@@ -1203,6 +1468,143 @@ export class StoreOrderRefundService {
     });
   }
 
+  async cancelApplyByIdentifier(uid: number, identifier: string): Promise<void> {
+    const refund = await this.resolveUserRefund(uid, identifier);
+    await this.cancelApply(uid, refund.id);
+  }
+
+  /** 用户提交退货物流；只允许已同意退货的本人售后单从 4 -> 5。 */
+  async submitReturnExpress(uid: number, input: {
+    id: number;
+    refundExpress: string;
+    refundPhone?: string;
+    refundExpressName?: string;
+    refundGoodsImg?: string;
+    refundGoodsExplain?: string;
+  }): Promise<void> {
+    if (!Number.isSafeInteger(input.id) || input.id <= 0) throw new ValidateException("参数错误");
+    const express = input.refundExpress.trim();
+    if (!express || express.length > 100) throw new ValidateException("请填写有效的退货快递单号");
+    const phone = (input.refundPhone ?? "").trim();
+    const expressName = (input.refundExpressName ?? "").trim();
+    const goodsImg = (input.refundGoodsImg ?? "").trim();
+    const goodsExplain = (input.refundGoodsExplain ?? "").trim();
+    if (phone.length > 32 || expressName.length > 255 || goodsExplain.length > 255 || goodsImg.length > 8_192) {
+      throw new ValidateException("退货物流信息过长");
+    }
+    await this.runInTx(this.container.db, async (tx) => {
+      await this.lockRefund(tx, input.id);
+      const rows = await tx
+        .select()
+        .from(storeOrderRefund)
+        .where(and(eq(storeOrderRefund.id, input.id), eq(storeOrderRefund.uid, uid)))
+        .limit(1)
+        .for("update");
+      const refund = rows[0];
+      if (!refund || refund.isCancel || refund.isDel) throw new NotFoundException("退款记录不存在");
+      if (refund.applyType !== 2 || refund.refundType !== 4) {
+        throw new ValidateException("当前售后状态不能提交退货物流");
+      }
+      const updated = await tx
+        .update(storeOrderRefund)
+        .set({
+          refundType: 5,
+          refundExpress: express,
+          refundPhone: phone,
+          refundExpressName: expressName,
+          refundGoodsImg: goodsImg,
+          refundGoodsExplain: goodsExplain,
+        })
+        .where(and(
+          eq(storeOrderRefund.id, input.id),
+          eq(storeOrderRefund.uid, uid),
+          eq(storeOrderRefund.refundType, 4),
+          eq(storeOrderRefund.isCancel, 0),
+          eq(storeOrderRefund.isDel, 0),
+        ))
+        .returning({ id: storeOrderRefund.id });
+      if (!updated[0]) throw new ValidateException("售后状态已变化，请刷新后重试");
+      await tx.insert(storeOrderStatus).values({
+        oid: refund.storeOrderId,
+        changeType: "refund_express",
+        changeMessage: `用户已退货，快递单号：${express}`.slice(0, 256),
+        changeTime: Math.floor(Date.now() / 1000),
+      });
+    });
+  }
+
+  /** 被拒售后再次申请；复制原权威商品/原因快照，不接受客户端改价。 */
+  async reapply(uid: number, refundId: number): Promise<{ refundId: number }> {
+    const previous = await this.resolveUserRefund(uid, String(refundId));
+    if (previous.isCancel || previous.isDel || previous.refundType !== 3) {
+      throw new ValidateException("当前售后状态不能再次申请");
+    }
+    const order = await this.container.storeOrderDao.get(previous.storeOrderId);
+    if (!order || order.uid !== uid) throw new NotFoundException("订单不存在");
+    const selections = parseRefundCartSelections(previous.cartInfo);
+    const exact = selections.length && selections.every((item) => item.cartNum !== undefined)
+      ? selections.map((item) => ({ cartId: item.cartId, cartNum: item.cartNum! }))
+      : undefined;
+    return this.applyRefund({
+      uid,
+      orderId: order.orderId,
+      refundReason: previous.refundReason,
+      refundExplain: previous.refundExplain,
+      refundImg: previous.refundImg ?? "",
+      applyType: previous.applyType,
+      ...(exact ? { cartSelections: exact } : { cartIds: selections.map((item) => item.cartId) }),
+    });
+  }
+
+  /** 用户删除已退款/已拒绝售后记录，同时按 PHP 合同隐藏对应订单。 */
+  async deleteTerminal(uid: number, identifier: string): Promise<void> {
+    const candidate = await this.resolveUserRefund(uid, identifier);
+    await this.runInTx(this.container.db, async (tx) => {
+      await this.lockRefund(tx, candidate.id);
+      const rows = await tx
+        .select()
+        .from(storeOrderRefund)
+        .where(and(eq(storeOrderRefund.id, candidate.id), eq(storeOrderRefund.uid, uid)))
+        .limit(1)
+        .for("update");
+      const refund = rows[0];
+      if (!refund || refund.isDel) throw new NotFoundException("退款记录不存在");
+      if (![3, 6].includes(refund.refundType)) throw new ValidateException("当前状态不能删除退款单");
+      await tx
+        .update(storeOrderRefund)
+        .set({ isDel: 1 })
+        .where(and(eq(storeOrderRefund.id, refund.id), eq(storeOrderRefund.isDel, 0)));
+      const orders = await tx
+        .select()
+        .from(storeOrder)
+        .where(and(eq(storeOrder.id, refund.storeOrderId), eq(storeOrder.uid, uid)))
+        .limit(1)
+        .for("update");
+      const order = orders[0];
+      if (!order) throw new NotFoundException("订单不存在");
+      await tx.update(storeOrder).set({ isDel: 1 }).where(eq(storeOrder.id, order.id));
+      if (order.pid > 0) {
+        const remaining = await tx
+          .select({ id: storeOrder.id })
+          .from(storeOrder)
+          .where(and(eq(storeOrder.pid, order.pid), eq(storeOrder.isDel, 0)))
+          .limit(1);
+        if (!remaining.length) {
+          await tx
+            .update(storeOrder)
+            .set({ isDel: 1 })
+            .where(and(eq(storeOrder.id, order.pid), eq(storeOrder.uid, uid)));
+        }
+      }
+      await tx.insert(storeOrderStatus).values({
+        oid: order.id,
+        changeType: "remove_refund_order",
+        changeMessage: "用户删除终态售后记录",
+        changeTime: Math.floor(Date.now() / 1000),
+      });
+    });
+  }
+
   /**
    * 库存回退 (对应 PHP regressionStock)
    * 增加 SKU + 主商品库存, 减少销量
@@ -1215,9 +1617,8 @@ export class StoreOrderRefundService {
   }
 
   /** 退款详情 */
-  async detail(uid: number, refundId: number) {
-    const refund = await this.container.storeOrderRefundDao.get(refundId);
-    if (!refund || refund.uid !== uid) throw new NotFoundException("退款记录不存在");
+  async detail(uid: number, refundId: number | string) {
+    const refund = await this.resolveUserRefund(uid, String(refundId));
     return {
       ...refund,
       cartInfo: refund.cartInfo ? JSON.parse(refund.cartInfo) : null,
@@ -1256,14 +1657,22 @@ async function restoreRefundStock(
     .select()
     .from(storeOrderCartInfo)
     .where(eq(storeOrderCartInfo.oid, orderId));
-  const selectedCartIds = parseRefundCartIds(cartInfoSnapshot);
-  const selected = selectedCartIds.length
-    ? cartInfos.filter((item) => selectedCartIds.includes(Number(item.cartId)))
-    : cartInfos;
+  const requestedSelections = parseRefundCartSelections(cartInfoSnapshot);
+  const selected = requestedSelections.length
+    ? requestedSelections.map((selection) => {
+        const matches = cartInfos.filter((item) =>
+          item.id === selection.cartId || Number(item.cartId) === selection.cartId);
+        if (matches.length !== 1) throw new ValidateException("退款商品快照无法唯一定位");
+        return { row: matches[0], requestedNum: selection.cartNum };
+      })
+    : cartInfos.map((row) => ({ row, requestedNum: undefined }));
   let remaining = refundNum;
-  for (const ci of selected) {
-    const num = Math.min(ci.cartNum, remaining);
+  for (const { row: ci, requestedNum } of selected) {
+    const num = requestedNum ?? Math.min(ci.cartNum, remaining);
     if (num <= 0) continue;
+    if (!Number.isSafeInteger(num) || num > ci.cartNum || num > remaining) {
+      throw new ValidateException("退款商品数量与退款单不一致");
+    }
     remaining -= num;
 
     let baseSkuId = 0;
@@ -1350,7 +1759,7 @@ async function restoreRefundStock(
   if (remaining > 0) throw new ValidateException("退款商品快照与退款数量不一致");
 }
 
-function parseRefundCartIds(value: string | null): number[] {
+function parseRefundCartSelections(value: string | null): RefundCartSelection[] {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -1361,15 +1770,28 @@ function parseRefundCartIds(value: string | null): number[] {
           && Array.isArray((parsed as { cartIds?: unknown }).cartIds)
         ? (parsed as { cartIds: unknown[] }).cartIds
         : [];
-    return [...new Set(values
-      .map((item) => {
+    const selections = values.map((item) => {
         if (item !== null && typeof item === "object") {
           const record = item as Record<string, unknown>;
-          return Number(record.cartId ?? record.cart_id ?? record.id);
+          const cartId = Number(record.cartId ?? record.cart_id ?? record.id);
+          const rawNum = record.cartNum ?? record.cart_num;
+          return {
+            cartId,
+            ...(rawNum === undefined ? {} : { cartNum: Number(rawNum) }),
+          };
         }
-        return Number(item);
+        return { cartId: Number(item) };
       })
-      .filter((item) => Number.isSafeInteger(item) && item > 0))];
+      .filter((item) =>
+        Number.isSafeInteger(item.cartId) && item.cartId > 0 &&
+        (item.cartNum === undefined || (Number.isSafeInteger(item.cartNum) && item.cartNum > 0))
+      );
+    const seen = new Set<number>();
+    return selections.filter((item) => {
+      if (seen.has(item.cartId)) return false;
+      seen.add(item.cartId);
+      return true;
+    });
   } catch {
     return [];
   }

@@ -227,6 +227,14 @@ v1Routes.post(
 
 // ─── 订单 (M3) ─────────────────────────────────────────────────
 v1Routes.post("/order/create/:key", authMiddleware({ force: true }), OrderController.orderCreate);
+v1Routes.post("/order/check_shipping", authMiddleware({ force: true }), OrderController.orderCheckShipping);
+v1Routes.post("/order/confirm", authMiddleware({ force: true }), OrderController.orderConfirm);
+v1Routes.post("/order/computed/:key", authMiddleware({ force: true }), OrderController.orderComputed);
+v1Routes.get("/order/data", authMiddleware({ force: true }), OrderController.orderData);
+v1Routes.post("/order/prize/:orderId", authMiddleware({ force: true }), OrderController.orderPrize);
+v1Routes.get("/order/write/records/:id", authMiddleware({ force: true }), OrderController.orderWriteoffRecords);
+v1Routes.post("/order/product", authMiddleware({ force: true }), OrderController.orderProduct);
+v1Routes.get("/order/pay_cashier", authMiddleware({ force: true }), OrderController.orderPayCashier);
 v1Routes.get("/order/system_form/:id", authMiddleware({ force: true }), OrderController.orderSystemForm);
 v1Routes.get("/order/list", authMiddleware({ force: true }), OrderController.orderList);
 v1Routes.get("/order/detail/:uni", authMiddleware({ force: true }), OrderController.orderDetail);
@@ -259,6 +267,7 @@ v1Routes.post("/recharge/pay", authMiddleware({ force: true }), PayController.re
 v1Routes.all("/pay/notify/wechat", WechatController.wechatPayNotify);
 v1Routes.post("/pay/notify/wechat/refund", WechatController.wechatRefundNotify);
 v1Routes.post("/pay/notify/alipay", PayController.alipayNotify);
+v1Routes.get("/ali_pay", PayController.aliPay);
 // 微信 JSAPI 下单
 v1Routes.post("/order/wechat_pay", authMiddleware({ force: true }), WechatController.wechatPayOrder);
 
@@ -267,6 +276,13 @@ v1Routes.post("/order/refund/apply/:id", authMiddleware({ force: true }), PayCon
 v1Routes.post("/order/refund/cancel/:uni", authMiddleware({ force: true }), PayController.refundCancel);
 v1Routes.get("/order/refund/list", authMiddleware({ force: true }), PayController.refundList);
 v1Routes.get("/order/refund/detail/:uni", authMiddleware({ force: true }), PayController.refundDetail);
+v1Routes.get("/order/refund/reason", authMiddleware({ force: true }), OrderController.orderRefundReason);
+v1Routes.get("/order/refund/cart_info/:id", authMiddleware({ force: true }), OrderController.orderRefundCartInfo);
+v1Routes.post("/order/refund/cart_info", authMiddleware({ force: true }), OrderController.orderRefundCartInfoList);
+v1Routes.post("/order/refund/verify", authMiddleware({ force: true }), PayController.refundVerify);
+v1Routes.post("/order/refund/express", authMiddleware({ force: true }), PayController.refundExpress);
+v1Routes.post("/order/refund/again/:id", authMiddleware({ force: true }), PayController.refundAgain);
+v1Routes.get("/order/refund/del/:uni", authMiddleware({ force: true }), PayController.refundDelete);
 
 // ─── 用户中心: 地址 (M5) ───────────────────────────────────────
 v1Routes.get("/address/list", authMiddleware({ force: true }), UserActivityController.addressList);

@@ -54,6 +54,56 @@ PHP 的推荐标志已不再以 `store_product.is_hot/is_best/...` 为权威，�
 
 本项可以判定为“公共首页/商品发现读取合同、PostgreSQL 语义和现有生产商品对账完成”，不能判定为“真实首页和商品运营数据已迁移”或“线上已更新”。后者继续由 DATA-001～006、DB-003 和 REL-002 管理：需要只读源 MySQL、逐表复制/校验、运营确认重复配置，并在明确批准后发布主 Worker，使用真实前端同时对照 PHP 验收首页、详情、筛选、预售和评价。
 
+## API-002 订单与售后详细迁移审计（2026-08-28）
+
+### 19 项合同逐项判定
+
+迁移前标注的 19 项不是 19 个都应照抄的控制器方法。逐行对照 `route/api.php`、`StoreOrder.php`、`StoreOrderRefund.php`、`StoreOrderServices.php`、`StoreOrderRefundServices.php` 及旧 PC/UniApp 调用后，当前判定如下：
+
+| # | PHP 合同 | 当前处理 | 审计判定 |
+|---:|---|---|---|
+| 1 | `POST /api/order/comment` | 进入本批前已精确匹配，继续复用现有评价状态机 | 已有代码；不重复实现 |
+| 2 | `GET /api/ali_pay` | 新增五分钟随机不透明 `pay_key`，只从服务端 KV 恢复 UID/订单并重新生成支付宝请求 | 代码完成；有意忽略客户端 `quitUrl`，避免开放重定向 |
+| 3 | `POST /api/order/check_shipping` | 校验购物车归属/有效状态，按商品配送能力、门店开关和有效门店返回类型 | 代码完成；生产没有有效门店可验真实自提 |
+| 4 | `POST /api/order/confirm` | 返回地址、购物车、用户、支付就绪状态并写 30 分钟确认键 | 部分完成；展示定价仍不完整 |
+| 5 | `POST /api/order/computed/:key` | 绑定当前用户的确认键并返回金额结构 | 部分完成；尚未复用完整运费/券/会员/积分/首单定价核心 |
+| 6 | `GET /api/order/data` | 恢复 PHP 字符串计数与支付开关 | 基本完成；旧 `type/search/refund_type` 组合筛选尚未全部复刻 |
+| 7 | `POST /api/order/prize/:orderId` | 用户归属校验后返回订单奖励/赠品快照 | 部分完成；旧商品券发放副作用尚未恢复 |
+| 8 | `GET /api/order/write/records/:id` | 用户归属、分页上限和核销记录/商品快照读取 | 代码完成；生产核销记录为 0 |
+| 9 | `GET /api/order/refund/reason` | 读取并标准化 `stor_reason` | 代码完成；生产配置缺失，真实返回为空 |
+| 10 | `GET /api/order/refund/cart_info/:id` | 用户订单归属、可退数量和旧/新商品快照兼容 | 代码完成 |
+| 11 | `POST /api/order/refund/cart_info` | 返回选中商品、订单状态和进行中件数摘要 | 代码完成；改价展示细节仍需旧客户端 E2E |
+| 12 | `POST /api/order/refund/verify` | 作为按订单号申请的兼容入口，复用同一退款核心 | 代码完成；不接受客户端退款金额 |
+| 13 | `POST /api/order/refund/express` | 只允许本人、退货申请、已同意状态 4 在退款锁内转为 5 | 代码完成；生产无该状态样本 |
+| 14 | `POST /api/order/refund/again/:id` | 只允许本人被拒状态，复制原原因与商品数量快照重新申请 | 代码完成；比 PHP 更严格 |
+| 15 | `GET /api/order/refund/del/:uni` | 只允许本人拒绝/已退款终态，事务内软删售后与订单并维护父单 | 代码完成；保留旧 GET 写合同仅为兼容 |
+| 16 | `POST /api/order/product` | 按评价商品唯一键和 UID 读取旧/新订单快照 | 代码完成 |
+| 17 | `GET /api/order/pay_cashier` | 只读本人最新未付收银订单并复用统一 cashier | 代码完成；生产无 `shipping_type=4` 样本 |
+| 18 | `GET /api/order/nopay` | PHP 路由指向不存在的 `StoreOrder::get_noPay()`，一方前端也未调用 | 证据化退役；替代为 `/order/data` 或 `/order/list?status=0` |
+| 19 | `ANY /api/order_call_back` | 未注册 | 转入 CORE-001；旧实现只用 `sms_token` AES 解密后写订单，没有独立签名、时间窗、nonce/事件账本或乱序对账，不能原样迁移 |
+
+除新增 16 条精确路由外，本批还加固已存在但不在静态缺口中的 `order/create/:key`、`order/pay`、取消、收货、删除、再次购买、退款申请/取消/列表/详情：同时接受必要的 PHP snake/camel 参数；订单列表补齐状态 5～9 与 -1～-3；创建仍由短事务内购物车认领、库存守卫和 UID+key 幂等状态机决定最终金额；支付宝兼容入口使用一次性短期随机键，不把 UID、订单号或回跳地址交给匿名请求决定。
+
+### 退款金额、数量与状态机审计
+
+初版部分退款实现虽然拒绝客户端 `refund_price`，但按“退款件数/订单总件数”分配金额。这个算法在不同单价商品中会退错钱，例如 1 件 90 元和 9 件合计 9 元的订单，选择高价商品会错误得到 9.90 元。现已改为读取不可变 `store_order_cart_info.cart_info` 的 `sum_true_price`，把订单实付整数分用 BigInt 按商品行权重确定性分配，再按该行已完成/本次件数取累计差；选择全部剩余商品时强制收敛到尚未退款的精确余额。整单退款不再保存空商品集合，而是保存每行 `{cartId,cartNum}`，因此售后金额、退款件数、`store_order_cart_info.refund_num` 与库存恢复使用同一权威快照。历史无商品快照的已完成整单退款继续失败关闭，避免猜测剩余可退数量。
+
+所有用户售后写入均以认证 UID 二次限定；申请在订单结算 advisory lock 和订单行锁下阻止并发进行中申请，校验已付、供应商分配状态、可退商品和核销数量。退货物流固定从 4→5，再次申请固定从拒绝态 3 创建新单，删除仅允许 3/6；取消、拒绝、完成、渠道账本、订单镜像、积分/余额/佣金/供应商补偿和状态日志继续在既有固定锁序与短事务中执行。请求原因、说明、图片和物流字段增加非空/长度上限。仍待补齐的业务政策是 PHP `refund_time_available` 收货后售后时限；在它接入并有边界测试前，API-002 不能标记完成。
+
+### 生产 Hyperdrive 数据与执行计划
+
+临时认证 Worker 绑定用户指定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，只读事务固定 `search_path=public`、`statement_timeout=20s`、`SET TRANSACTION READ ONLY`。生产为 PostgreSQL 16.14：订单 29、可见 28、未付 8、已付 20；状态分布 `0:23 / 1:1 / 3:4 / -2:1`，支付方式 `yue:18 / alipay:1 / integral:1 / 空:9`，29 单全为 `shipping_type=1` 且 `delivery_type` 全空。订单商品 28（支持退款 28、孤儿 0），售后 3（`refund_type 0:2 / 6:1`、孤儿 0、UID/Supplier 归属错配 0），订单累计件数快照错配 0。
+
+生产数据同时暴露出明确阻塞：退款支付账本 0、订单发票 0、核销 0、配送订单 0、商品赠券关系 0、退款理由配置 0、有效门店 0；用户发票 2、用户券 4、运费模板 1。完整性检查中已付无支付方式 0、全退但没有完成售后 0，存在 1 单发货状态却没有物流类型/单号，需要 DATA-006 人工核对。用户订单列表在当前 29 行上选择顺序扫描，计划/执行分别约 0.111/0.038ms、shared hit 6、read 0；虽然存在 UID 索引，优化器对微小表选择顺扫合理，本批未凭小样本新增索引。
+
+### 生产隔离验证、回归与残余风险
+
+最终临时 Worker 版本 `eb1aafad-070a-4293-98a1-caae92f00b04` 在正式 Hyperdrive 上依次创建随机 `codex_create_order_it_*`、`codex_pay_cancel_it_*`、`codex_refund_it_*` schema，直接调用生产代码。下单场景验证同购物车竞争、同 key 并发幂等、超卖拒绝、秒杀/砍价/拼团/积分预留与取消归还；支付场景验证取消原子回滚、双取消、支付取消竞争、渠道/余额/积分幂等、outbox 失败回滚和余额不足；退款场景验证重复完成、失败回滚、累计超额与精确并发、纯积分、渠道金额绑定、积分/佣金/供应商/拼团补偿、拼团超时重复投递和客服授权边界。新增高低价申请返回 `partial_refund_price=90.00/refund_num=1/partial_snapshot_exact=true`，整单返回 `10.00/2/full_snapshot_exact=true`。三组均报告 `schema_removed=true`、`public_state_unchanged=true`；末次复核订单仍 29、售后 3、订单商品 28、全部 `codex_*` schema 为 0。临时 Worker与 Secret 随后删除，主 Worker没有部署。
+
+静态路由因此从 551 提升到 567/1,912，TS 注册从 1,243 到 1,259；`/api` 从 181 提升到 197/460。总可执行精确匹配为 552，明确 501 为 15，证据化退役 3，原始缺失 1,345、可执行缺口 1,342。双 TypeScript 配置、审计 Worker打包和主 Worker `wrangler deploy --dry-run --minify` 通过；主包为 2,345.48 KiB / gzip 579.21 KiB。全量单元测试为 116 文件/674 项通过。Windows runtime 仍在加载断言前因 `workerd` 0xc0000005 失败，0 条 runtime 断言执行。
+
+本批当前判定是“静态订单组缺口基本收口、核心写状态机和生产 PostgreSQL 隔离证据成立”，不是 API-002 完成。继续项按优先级为：复用同一权威定价核心完成 confirm/computed；恢复并幂等化支付后商品券奖励；接入售后时限；用旧 PC/UniApp 与新五端完成订单/退款浏览器 E2E；由 DATA-001～006 迁移退款原因、门店、发票、核销、配送和商品券关系；由 CORE-001 设计安全 `order_call_back`；最后在明确批准后预发/发布。
+
 审计更新：2026-08-28
 
 ## 结论
@@ -1037,7 +1087,7 @@ PHP 对照确认核销不是单一 `store_order.status` 更新：必须同时验
 | 检查 | 结果 |
 |---|---|
 | Workers `npm run typecheck` | 通过；普通源码与 Workers runtime 测试分别检查 |
-| Workers `npm run test:unit` | 112 个测试文件、651 个测试通过；数据迁移用例覆盖 201 表 manifest、201/201 源列完整度、218 张目标表、外部/内嵌迁移等价、混合整数/文本键及 12 张无键表的全行多重集策略。客服转接与商品上下文的迁移等价、路由、授权边界、幂等、查询合同和实时投递合同已纳入回归；Out 分类与商品写入的路由、严格输入、平台作用域、层级/库存锁、引用门禁、回放账本和脱敏合同已纳入回归；其余社区、真实资金退款、通知、系统表单、拼团、核销、付费会员、建单、支付/取消、退款和卡密运营断言继续通过 |
+| Workers `npm run test:unit` | 116 个测试文件、674 个测试通过；除既有迁移、客服、Out、社区、资金、通知、活动、核销、会员、建单/支付/取消/退款和卡密断言外，API-002 新增路由清单、旧参数解析、短期确认/支付宝键、售后用户/状态门禁、证据化退役，以及不同单价商品的服务端退款金额分配断言 |
 | Admin 首页统计 + 生产 Hyperdrive 隔离场景（本轮） | 通过；四条 PHP 合同分别恢复，UTC 切日和删除数据混入口径已修复。PostgreSQL 16.14 随机 schema 的四卡、系统删除订单、上/本期金额数量、30 天零填充、用户曲线、删除用户/访问和空排行 8 项断言全部为 true；`schema_removed=true`、临时 schema 0、`public` 三表行数前后不变。生产只读为订单 29、用户 3、访问日志 0，本月/近 30 天有效订单 19 单、2,687.20 元。真实运行还抓出并修复 30 天上期键被本期日期槽位归零的问题；本地浏览器 1280×720 与 390×844 均通过，3 图表、周期切换、零控制台错误和零横向溢出均有证据；全部临时 Worker 已删除，主 Worker/Admin 未发布 |
 | Admin 订单/商品统计 + 生产 Hyperdrive 隔离场景（本轮） | 通过；恢复订单基础/趋势/来源/类型和商品基础/趋势/经营排行 7 条 PHP 主合同，旧三端点改为同服务兼容别名。PostgreSQL 16.14 随机 schema 的精确金额/数量、根单与删除过滤、连续 3 日桶、分类/排行及旧别名东八区共 12 项断言全部为 true；`schema_removed=true`、临时 schema 0、`public` 八表行数前后不变。生产近 30 天为支付 20 单/2,787.10 元、优惠 2 单/20.00 元、退款 0；商品行为/分类关系为空，排行 0。浏览器 1280×720 和 390×844 验证两标签、排序、订单 6 卡/3 图、商品 10 卡/趋势/8 行预览排行，修复浮点尾数后零控制台错误、零横向溢出；临时 Worker 已删除，主 Worker/Admin 未发布，Excel 导出和用户/交易/余额统计未迁移 |
 | 社区客户端长尾 + 生产 Hyperdrive 隔离场景（本轮） | 通过；生产 PostgreSQL 16.14 的三个客户端查询索引定义精确有效，帖子/评论/话题/关系/商品日志/收藏关系为 `2/2/0/0/0/1`。随机 schema 真实执行作者预览、越权拒绝、重新审核、筛选、点赞/精选、分享并发、嵌套评论、评论点赞并发、删除级联、商品来源和话题计数，全部布尔断言为 true；`schema_removed=true`、临时 schema 0、`public_state_unchanged=true`。真实运行发现并修复待审作者预览误调用公开浏览和数字话题数组 `ANY` 绑定两个缺陷；临时 Worker 删除，主 Worker 未部署 |
@@ -1047,6 +1097,7 @@ PHP 对照确认核销不是单一 `store_order.status` 更新：必须同时验
 | 优惠套餐 Admin + 生产 Hyperdrive 隔离场景（本轮） | 通过；生产套餐/关联/`type=5` 属性/结果/SKU与孤儿记录均为 0。随机 schema 中商品/基础 SKU/标签选择为 `3/4/2`；固定保存为 2 关系/2 属性/2 结果/3 SKU、最小价 `14.50`，转任选后保留关系 ID 和活动 `unique`、精确清理移除项、字段往返正确。强制写失败全回滚，未来定时启用、主商品缺货拒绝/恢复、软删隐藏和关联保留均通过；`schema_removed=true`、`temporary_schemas_after=0`、`public_state_unchanged=true`，临时 Worker 删除，主 Worker未部署 |
 | 生产 PostgreSQL/Hyperdrive 核销隔离场景 | 通过；PostgreSQL 16.14 随机临时 schema、11 张克隆表和退款/核销/状态私有序列中完成自提部分/最终核销、配送越权/送达、重复身份拒绝、未成团拒绝/成团放行、双连接同码并发、售后/核销竞争和共享收货防绕过。同码并发严格为 1 成功/1 拒绝/1 不可变记录；售后竞争严格为 1 成功/1 业务拒绝且无锁超时/死锁；临时 schema 删除确认、`public` 业务行数及三条公共序列前后完全一致；临时 Worker 删除后 URL 为 404 |
 | 生产 PostgreSQL/Hyperdrive 支付/取消隔离场景 | 通过；PostgreSQL 16.14 随机临时 schema、8 张克隆表和状态/outbox 私有序列中完成取消日志故障回滚/重试、双连接取消竞争、支付/取消竞争、重复支付回调和 outbox 故障回滚/重试。最新复跑中支付赢得支付/取消竞争；相同交易号并发为 1 次 `paid`/1 次 `already-paid`/1 条 outbox，随后不同交易号回调严格拒绝，发票仍只更新一次。余额、积分余额、0 元支付及不足/故障回滚也全部通过；无锁超时/死锁，schema 删除、`public` 快照不变，临时 Worker删除，主 Worker未部署 |
+| API-002 订单/售后生产 Hyperdrive 审计与隔离场景 | 通过已实现范围；生产只读为订单/明细/售后 `29/28/3`，孤儿/归属错配/件数错配均 0，临时 schema 0。最终随机 schema 重跑下单、支付取消和完整退款三组状态机，新增不等价价格申请精确得到 `90.00` 而非件数比例，整单保存 2 条精确商品数量；三组 `schema_removed/public_state_unchanged=true`。临时 Worker `eb1aafad-070a-4293-98a1-caae92f00b04` 及 Secret 已删除，主 Worker未部署；confirm/computed 完整定价、商品券奖励、售后时限、真实数据/E2E 和安全回调仍未完成 |
 | 生产支付就绪只读审计 + 充值回调 Hyperdrive 隔离场景 | 通过；真实生产开关为微信/支付宝/余额/线下全部关闭，微信 AppID/商户号/证书序列和主 Worker 支付 secrets 不完整，因此新版收银台会全部禁用。生产充值 6 条（未付 5、已付 1），已付历史行无 `trade_no`，重复订单号 0，本轮未修改。随机 schema 中双连接同一回调严格为 `1 paid + 1 already-paid`，余额 `10.00→135.00`、账单 1；重放幂等，错误金额零落账，冲突交易号/重复订单均拒绝。schema 删除且 `public.user/user_recharge/user_bill` 快照不变，临时 Worker 删除，主 Worker未部署 |
 | 生产 PostgreSQL/Hyperdrive 退款隔离场景 | 通过；PostgreSQL 16.14 随机临时 schema 中调用真实退款申请/完成核心。同单重复余额退款为 1 次完成/1 次幂等返回，余额/账单/状态/库存只变一次；账单故障全回滚后可重试；`6+6` 并发超额只允许一笔，`4+6` 两笔精确完成为全额；第三方渠道确认金额不匹配零落账、修正后重试成功。新增纯积分两行退款得到部分状态 3/积分 70、全退状态 2/积分 100、累计返还 60/账单 2，重放幂等。临时 schema 删除，`public` 行数/序列前后一致；一次性 Worker 删除，主 Worker 未部署 |
 | 真实 Cloudflare Queue / DLQ + 生产 Hyperdrive 隔离场景 | 通过；独立主队列与 DLQ、临时 Worker 和随机隔离 schema 中，显式 retry 与消费者首投抛错均从 `attempts=1` 在第 2 次投递恢复；持续失败消息完成主队列 `attempts=1/2/3/4` 后进入 DLQ，DLQ 使用新消息 ID 且 `attempts` 重置为 1。由此修正短信 `attempts>=8` 不可达分支为与 `max_retries=3` 对齐的第 4 次失败收口。`public` 前后均为 207 表/190 序列，schema、两个消费者、Worker 和两条队列均删除，临时 URL 为 404；主 Worker 未部署。该项是平台故障语义证据，不是支付 outbox/拼团/SMS 业务 E2E |
@@ -1108,7 +1159,7 @@ PHP 对照确认核销不是单一 `store_order.status` 更新：必须同时验
 | Admin 公众号内容浏览器验收（本轮） | 本地 `/content/wechat?preview=1` 在默认桌面通过；预留回复、关键字、图文与消息历史标签可见，关键字“二维码”入口打开就绪图片弹窗并显示 Queue 重试边界。控制台零 warning/error、无框架错误层。使用本地预览数据，不是 PostgreSQL/Hyperdrive、真实微信二维码或公众号回调 E2E |
 | Admin 渠道二维码浏览器验收（本轮） | 本地 `/content/wechat-qrcode?preview=1` 在默认桌面与 390×844 通过；页面身份、异步生成提示、三条渠道数据、统计抽屉、完整新建表单与回复类型切换均可交互。窄屏使用卡片而非桌面表格，文档 `scrollWidth=clientWidth=390`，重试生成入口可见；两视口控制台零 warning/error、无框架错误层。使用本地预览数据，不是 PostgreSQL/Hyperdrive、Queue 或微信 E2E |
 | Admin 公众号会员卡浏览器验收（本轮） | 本地 `/content/wechat-card?preview=1` 的桌面视口通过；概览、卡配置与领取/激活标签可切换，card_id、code 与 openid 示例均只显示掩码，页面没有外部写入控件。用户要求转入详细审计后浏览器会话重置，本轮未完成该新页的 390×844 与控制台复核，因此不把移动端标为通过；使用本地预览数据，不是 PostgreSQL/Hyperdrive 或微信 E2E |
-| Wrangler 4.122.0 直接执行 `deploy --dry-run --minify`（本轮） | 通过；2026-08-28 最新上传体积 2,265.38 KiB（gzip 558.16 KiB），输出 `--dry-run: exiting now.`，识别 4 个 DO、KV、Queue、Hyperdrive `9748c294e21c49a99579c9cef70102e0`、`ASSETS_BUCKET (cinashop-assets)`、Out API 四项限流变量与 `ORDER_DLQ_NAME`；线上版本本轮未变更，仍以 Cloudflare API 证据为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，未执行主 Worker 生产部署 |
+| Wrangler 4.122.0 直接执行 `deploy --dry-run --minify`（本轮） | 通过；2026-08-28 最新上传体积 2,345.48 KiB（gzip 579.21 KiB），输出 `--dry-run: exiting now.`，识别 4 个 DO、KV、Queue、Hyperdrive `9748c294e21c49a99579c9cef70102e0`、`ASSETS_BUCKET (cinashop-assets)`、Out API 四项限流变量与 `ORDER_DLQ_NAME`；本轮没有执行主 Worker 生产部署 |
 | Cloudflare 正式 R2 / 备份 DLQ 资源验收（本轮） | 已创建 APAC/Standard `cinashop-assets` 和 Queue `cinashop-order-dlq-unarchived`（ID `ec0ef96ffcd3429da48500cdf90ca532`）。R2 对 `codex-audit/69680504ff71/roundtrip.json` 完成精确写读删；临时 Worker `codex-cinashop-resource-audit-5e7c2a6f`（版本 `cf66d1ab-b8e5-4361-ad44-19673e8b86e0`）把审计消息 `b42b9093acf5488aa8bde0be` 以 `attempts=1` 从正式备份 Queue 消费并写入正式 R2 receipt 后 ack。receipt、consumer 和临时 Worker 均已删除，临时 URL 返回 404；最终 R2 为 0 对象/0 B，备份 Queue 为 0 producers/0 consumers，原 `cinashop-order` 仍只有 `cinashop-api` 一组生产者/消费者，原 `cinashop-order-dlq` 仍为 0/0，主 Worker 保持 100% 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef` |
 | Pages 发布 | H5 `15330769-f7ef-4635-81f5-4e7b4e2dba4a`、Admin `00ac193e-be07-464e-8e77-b89295e9df7a` 已发布到 production/main |
 
