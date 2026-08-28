@@ -11,6 +11,7 @@ import * as UserActivityController from "@/controllers/api/v1/UserActivityContro
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
 import * as V2UserCompatibilityController from "@/controllers/api/v1/V2UserCompatibilityController";
+import * as V2PromotionCompatibilityController from "@/controllers/api/v1/V2PromotionCompatibilityController";
 import type { AppVariables, Env } from "@/env";
 
 export const v2Routes = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -32,6 +33,11 @@ v2Routes.get("/cityList", PublicController.cityListV2);
 v2Routes.get("/new_coupon", authMiddleware({ force: true }), UserActivityController.couponNewV2);
 v2Routes.get("/get_today_coupon", authMiddleware({ force: false }), UserActivityController.couponTodayV2);
 v2Routes.get("/coupons", authMiddleware({ force: false }), UserActivityController.couponListV2);
+
+// PHP v2 promotion product, gift and authenticated order-collection compatibility contracts.
+v2Routes.get("/promotions/productList/:type", V2PromotionCompatibilityController.productList);
+v2Routes.get("/promotions/give_info/:id", V2PromotionCompatibilityController.giveInfo);
+v2Routes.get("/promotions/collect_order/product", authMiddleware({ force: true }), V2PromotionCompatibilityController.collectOrderProduct);
 
 // PHP v2 user/search and customer-service contracts used by the legacy UniApp.
 v2Routes.get("/user/search_list", authMiddleware({ force: false }), UserBehaviorController.searchList);

@@ -1370,6 +1370,28 @@ API-003 仍不能标记整体完成：付款码只有签发端，TS 收银消费
 
 剩余 21 条为 AUTH 16、PROMO 3、HOME 2。USER 的精确静态缺口已归零，但生产微信身份、AppID/Secret、余额/资金流和分销协议为空，现有佣金/提现/充值/退款又全部是用户孤儿，旧 UniApp 页面已不在当前仓库，真实微信 OAuth、真实账号、预发和正式发布 E2E 均未完成，因此 API-004-USER 和整体 API-004 继续保持未勾选；下一批进入 API-004-PROMO，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
 
+## API-004-PROMO 三条促销合同审计（2026-08-28）
+
+### PHP 权威语义、客户端证据与收敛决策
+
+本批逐行核对 PHP `route/api.php`、v2 `StorePromotions` 控制器、促销 Service/DAO、商品列表服务和模型访问器，恢复公开 `GET /api/v2/promotions/productList/:type`、公开 `GET /api/v2/promotions/give_info/:id` 与强制登录 `GET /api/v2/promotions/collect_order/product?promotions_id=`。旧 UniApp 源码只保留前两条 API 包装器，页面/组件未发现调用；编译产物因共享模块仍包含前两条 URL，但第三条 URL 不存在。这个证据说明当前 UI 依赖弱，却不足以退役 PHP 真实注册合同：促销规则仍参与商品、购物车和订单计价，因此选择恢复有边界的只读兼容接口，而不是从审计分母删除。
+
+商品合同只接受当前时间窗内、`pid=0/type=1/store_id=0/status=1/is_del=0` 的平台父活动，支持促销类型 1～6、页码上限 1,000、每页上限 100、最多 200 个 active 活动和 5,000 个候选商品。参与范围精确恢复 1 全场、2 指定商品、3 排除整商品、4 品牌、5 商品标签；列表只保留上架、未删、审核通过、平台根商品和会员可见性。类型 1 价格按 PHP `bcdiv(discount,100,2)` 后 `bcmul(price,ratio,2)` 的两位截断语义计算；类型 1～4 返回 `promotions`，类型 5/6 分别返回 `activity_frame/activity_background`。赠品信息把父规则置于子阶梯之前，批量装配积分、券、赠品商品和普通 SKU；登录态凑单返回父规则及子阶梯，并对失效活动失败关闭。相较 PHP 原凑单实现未复核 active 状态、新实现有意阻止客户端用过期/停用 ID 浏览活动范围。
+
+隔离场景第一次因 PostgreSQL 保留字列 `unique` 未加引号在夹具插入阶段回滚；修正后，第二次场景揭示一个真实的跨域缺陷：`StoreProductDao` 过去只用 `where.ids` 生成 CASE 排序，却因为搜索器缺少 `ids` 谓词而不产生 `id IN (...)`，所有显式商品范围都会静默扩散为全目录。统一商品搜索器现把 `ids` 参数化约束为正整数 `IN` 集合，空/非法集合失败关闭，同时保留原排序语义。该修复不仅服务促销，也修复推荐、关键词缓存复用等既有显式 ID 列表路径；PROMO 单测增加对应静态回归门禁。
+
+### 正式生产只读与随机 schema 证据
+
+摘要令牌保护的一次性 `cinashop-v2-promotion-compatibility-audit` Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产读取固定 `search_path=public`、`statement_timeout=30s/40s` 和 `SET TRANSACTION READ ONLY`。PostgreSQL 16.14 当前 `store_promotions=0`、`store_promotions_auxiliary=0`，父/子、active 平台父活动、活动/范围类型分布均为空；规则孤儿、辅助孤儿、辅助商品/券/SKU 孤儿均为 0。当前有 71 个可售平台商品，但品牌/标签商品关系为 0；促销主表/辅助表关系大小为 114,688/49,152 字节。active 活动计划命中 `sp_parent`，辅助范围计划命中复合索引；零行小表不支持新增索引。六类商品目录、赠品与凑单真实合同均按空数据返回兼容空结构，非法类型和非法赠品 ID 也失败关闭。
+
+随机 `codex_api004_promo_*` schema 克隆促销、辅助、商品、商品关系、券、SKU 和用户七张表。真实服务验证全场/指定/排除/品牌/标签五类范围、85% 折扣截断、活动边框/背景、登录态四类凑单范围、父子阶梯、两级积分、赠券、赠品 SKU、过期赠品空对象与过期凑单拒绝共 12/12；六类商品目录长度为 `6/1/5/1/1/1`，赠品聚合为积分 2、券 1、商品 1。最终代码版本 `ada79730-c649-448c-bb25-431726bd1743` 返回 `public_state_unchanged=true`，临时 schema `0→0` 并删除；审计 Worker 和摘要 secret 已删除。两次失败探针均在事务回滚或 `finally` 后确认临时 schema 为 0，生产促销/商品指纹不变。
+
+### 当前量化与剩余 18 条
+
+注释感知的静态审计现为 PHP 1,904、Workers 1,308、精确匹配 616、可执行匹配 599、明确不可用 17、原始缺失 1,288、证据化退役 3、可执行缺口 1,285；精确/可执行/退役后有效覆盖为 32.4%/31.5%/31.5%。`/api` 为 PHP 457、Workers 634、精确 246、可执行 244、不可用 2、可执行缺口 210；`/api/v2` 精确缺口 `21→18`。125 个单元测试文件/725 项和双 TypeScript 配置通过；主 Worker minify dry-run 为 2,441.20 KiB/gzip 605.27 KiB，PROMO 审计 Worker为 969.20 KiB/gzip 175.06 KiB。Windows runtime 仍在 0 条断言前以 `workerd` 0xc0000005 失败，不能记为通过。
+
+剩余 18 条为 AUTH 16、HOME 2。PROMO 的精确静态缺口已归零，但生产没有任何促销规则/辅助范围或品牌/标签关系，旧 UniApp 页面调用缺失，源 MySQL 未复制，订单级促销叠加仍属于 API-006，真实账号、旧端、预发和正式发布 E2E 均未完成，因此 API-004-PROMO 与整体 API-004 继续保持未勾选；下一批进入 API-004-HOME，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。

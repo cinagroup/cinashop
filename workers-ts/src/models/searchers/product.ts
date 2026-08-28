@@ -48,6 +48,14 @@ function relationIn(type: number, relationIds: number[]): SQL {
 }
 
 export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
+  // Explicit product-id scopes also drive CASE ordering in StoreProductDao.
+  // Keep the predicate here so a requested subset cannot silently widen to all products.
+  ids: (value) => {
+    const ids = Array.isArray(value) ? (value as number[]) : [Number(value)];
+    const valid = ids.filter((id) => Number.isSafeInteger(id) && id > 0);
+    return valid.length ? inArray(storeProduct.id, valid) : sql`false`;
+  },
+
   // ─── 状态机 (8 种) ────────────────────────────────────────
   status: (value) => {
     const v = Number(value);

@@ -1,0 +1,20 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "cinashop-v2-promotion-compatibility-audit",
+  "main": "V2PromotionCompatibilityAuditWorker.ts",
+  "compatibility_date": "2026-08-28",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "9748c294e21c49a99579c9cef70102e0"
+    }
+  ]
+}
