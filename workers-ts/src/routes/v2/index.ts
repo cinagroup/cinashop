@@ -7,6 +7,7 @@ import * as ProductController from "@/controllers/api/v1/ProductController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
+import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
 import type { AppVariables, Env } from "@/env";
@@ -25,6 +26,11 @@ v2Routes.get("/diy/get_store_status", PublicController.storeStatusV2);
 v2Routes.get("/diy/color_change/:name", PublicController.colorChangeV2);
 v2Routes.get("/diy/product_detail", PublicController.productDetailDiyV2);
 v2Routes.get("/cityList", PublicController.cityListV2);
+
+// PHP v2 coupon catalogue/popups. These endpoints are read-only; newcomer issuance stayed disabled.
+v2Routes.get("/new_coupon", authMiddleware({ force: true }), UserActivityController.couponNewV2);
+v2Routes.get("/get_today_coupon", authMiddleware({ force: false }), UserActivityController.couponTodayV2);
+v2Routes.get("/coupons", authMiddleware({ force: false }), UserActivityController.couponListV2);
 
 // PHP v2 user/search and customer-service contracts used by the legacy UniApp.
 v2Routes.get("/user/search_list", authMiddleware({ force: false }), UserBehaviorController.searchList);

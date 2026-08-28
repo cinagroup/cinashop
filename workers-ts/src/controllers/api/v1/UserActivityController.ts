@@ -6,6 +6,7 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { UserCenterService } from "@/services/user/UserCenterService";
 import { ActivityService } from "@/services/activity/ActivityService";
+import { V2CouponCompatibilityService } from "@/services/activity/V2CouponCompatibilityService";
 import { StoreDiscountService } from "@/services/activity/StoreDiscountService";
 import type { AppVariables, Env } from "@/env";
 
@@ -128,6 +129,41 @@ export async function signStatus(c: C) {
 export async function couponList(c: C) {
   const svc = new ActivityService(c.get("container"));
   return jsonOk(c, await svc.couponList());
+}
+
+/** GET /api/v2/coupons — PHP v2 scoped coupon catalogue. */
+export async function couponListV2(c: C) {
+  const service = new V2CouponCompatibilityService(c.get("container"));
+  try {
+    return jsonOk(c, await service.available(c.get("uid") ?? 0, c.req.query()));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/v2/new_coupon — read-only newcomer coupon popup contract. */
+export async function couponNewV2(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const service = new V2CouponCompatibilityService(c.get("container"));
+  try {
+    return jsonOk(c, await service.newCoupons(uid));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/v2/get_today_coupon — optional-user daily coupon popup contract. */
+export async function couponTodayV2(c: C) {
+  const service = new V2CouponCompatibilityService(c.get("container"));
+  try {
+    return jsonOk(c, await service.today(c.get("uid") ?? 0));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
 }
 
 export async function couponReceive(c: C) {

@@ -1318,6 +1318,32 @@ API-003 仍不能标记整体完成：付款码只有签发端，TS 收银消费
 
 剩余 29 条为 AUTH 16、COUPON 3、USER 5、PROMO 3、HOME 2。DIY 的精确静态缺口已归零，但生产 DIY/城市为空、权威配置未复制、旧 UniApp 页面已不在当前仓库，媒体 R2、真实账号/真机、预发和正式发布也未完成，因此 API-004-DIY 与整体 API-004 继续保持未勾选；下一批进入 API-004-COUPON/USER，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
 
+## API-004-COUPON 三条优惠券合同审计（2026-08-28）
+
+### PHP 权威语义、迁移列交换与只读边界
+
+本批逐行核对 PHP `v2/activity/StoreCoupons.php`、`StoreCouponIssueServices`、DAO 与模型关系，精确恢复认证 `GET /api/v2/new_coupon`、可选认证 `GET /api/v2/get_today_coupon` 和 `GET /api/v2/coupons`。新人接口只读取新人券、空图片与 `add_time===last_time` 的首次展示标志；PHP 中“会员领取优惠券”调用已经注释，本实现不借兼容接口恢复隐含写入。今日券保持匿名/SVIP 可见 `receive_type in (1,4)`、普通登录用户只见 `receive_type=1`，按 Asia/Shanghai 当日 `add_time`、`sort desc,id desc` 最多 10 条；会员卡开关关闭或账户不是永久/未过期付费会员时均不得看到 SVIP 弹窗券。
+
+数据迁移 manifest 有意把源 PHP `type`（0 通用、1 分类、2 商品、3 品牌）写到目标 `coupon_type`，把源 `coupon_type`（满减/折扣方式）写到目标 `type`，并把 `coupon_time/product_id/category_id/brand_id` 分别写到 `day/legacy_product_ids/legacy_category_id/legacy_brand_id`。原通用 `ActivityService.couponList()` 直接返回目标 camelCase 且忽略 UID、范围、计数和排序，不能别名。本批新增独立兼容投影，明确交换回源 `type/coupon_type`，恢复 30 余个 snake_case 字段、金额数值化、固定/领取后有效期、`used/is_use`、`products` 和 `[通用,分类,商品,品牌]` 四类计数；商品关系表存在时与编码范围对账，不一致沿用正式下单的失败关闭规则。
+
+可领取条件保持 PHP 的启用/未删、剩余量或永久、领取窗口和使用窗口规则；`type=-1` 只看未来 24 小时结束的领取窗口。商品上下文一次读取商品、直接分类及其即时父级、品牌及其父级，再构造参数化范围条件；价格排序按源折扣方式计算，时间/默认排序继续叠加最终 `sort desc,id desc`。页面最多 100 条，新人券的历史无分页合同设置 1,000 条安全上限并在超过时失败，不允许无界内存响应。UID 领取记录、`store_coupon_product` 和四类计数并行批量读取；每券一件展示商品由单条 `LATERAL` 查询完成，没有逐券 N+1，也没有 `sql.raw` 拼接用户值。
+
+### 正式生产只读与随机 schema 证据
+
+摘要令牌保护的一次性 `cinashop-v2-coupon-compatibility-audit` Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产读取固定 `search_path=public`、`statement_timeout=30s` 和 `SET TRANSACTION READ ONLY`。PostgreSQL 16.14 当前 `store_coupon_issue=1`，但启用、手动领取、新人、SVIP 弹窗和当前有效模板均为 0；唯一模板的目标 scope 为 1。`store_coupon_user=4` 且孤儿为 0，`store_coupon_issue_user=0`、`store_coupon_product=0`，半开领取窗口、固定期缺结束时间和范围孤儿也均为 0。`member_card_status` 唯一值为 `1`。模板/用户券表连索引分别为 65,536/40,960 字节；生产现有模板索引为主键、`sci_claim_window/sci_scope`，用户券为主键和 `scu_uid_issue`。当前小样本的有效券计划是顺序扫描加排序，本批不凭一条模板创建投机索引；真实模板复制后应重跑领取窗口、UID 和 scope 计划。
+
+真实用户、商品上的匿名列表、商品上下文列表、新人券、匿名今日券与登录今日券都返回兼容空结构，四类计数为 0，五项结构断言通过且未输出用户或商品标识。这证明新代码能直接读取生产 PostgreSQL 并在无可运营模板时正确降级；它不证明源优惠券数据已迁移。生产的 4 张历史用户券虽然都有现存模板引用，但两张无主键领取/商品范围证据表为空，而且没有启用模板，DATA-003/004 仍必须从源 MySQL 复制并做多重集、库存、领取窗口、范围和用户券对账。
+
+随机 `codex_api004_coupon_*` schema 克隆生产模板、用户券、商品范围、商品/分类/品牌、用户和配置八张表。真实服务验证四类列表/计数均为 `[1,1,1,1]`，商品上下文仍匹配四类，精确商品券过滤只返回一条并恢复源 `type=2/coupon_type=2/product_id`，精确品牌页签按商品品牌及其即时父级返回一条；这有意修正 PHP 在 `type=3 + product_id` 分支丢失已派生品牌、转而错误检查 `product_id` 范围而使旧 UniApp 品牌页签为空的问题。已领券使用用户券起止日，四类券各返回一件适用商品；新人券只读且 `show=1`，今日券匿名 5、普通用户 4、永久 SVIP 5。11/11 断言全部通过，`public_state_unchanged=true`，临时 schema `0→0` 并删除。
+
+生产隔离验证还发现并修复一处仅 PostgreSQL 执行时暴露的参数类型问题：批量样例商品 CTE 的独立 `VALUES ($1)` 被 postgres.js 推断为 text，与整数模板主键连接时报 `integer = text`，现显式转换为 `::integer`。首轮夹具 Date 参数序列化失败和定位该类型问题的事务都在创建 schema 的同一事务内回滚，后续 Worker 均在 `finally` 删除；一次调用收到边缘 1042 后，状态探针与初版隔离场景通过，加入品牌页签断言后的最终版本 `d1576fe4-0ff7-4c2f-902f-7412085c8011` 无重试错误完成全部 11 项断言。审计 Worker、摘要变量和随机 schema 最终均不存在；独立部署列表再次确认主 `cinashop-api` 仍 100% 运行 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有正式发布。
+
+### 当前量化与剩余 26 条
+
+注释感知的静态审计现为 PHP 1,904、Workers 1,300、精确匹配 608、可执行匹配 591、明确不可用 17、原始缺失 1,296、证据化退役 3、可执行缺口 1,293；精确/可执行/退役后有效覆盖为 31.9%/31.0%/31.1%。`/api` 为 PHP 457、Workers 626、精确 238、可执行 236、不可用 2、可执行缺口 218；`/api/v2` 精确缺口 `29→26`。123 个单元测试文件/709 项和双 TypeScript 配置通过；主 Worker minify dry-run为 2,419.33 KiB/gzip 599.08 KiB，COUPON 审计 Worker为 383.92 KiB/gzip 87.30 KiB。Windows runtime仍在 0 条断言前以 `workerd` 0xc0000005 失败，不能记为通过。
+
+剩余 26 条为 AUTH 16、USER 5、PROMO 3、HOME 2。COUPON 的精确静态缺口已归零，但生产没有启用/有效/新人/SVIP 弹窗模板，两张范围/领取证据表为空，旧 UniApp 页面已不在当前仓库，真实账号/预发/正式发布 E2E 也未完成，因此 API-004-COUPON 和整体 API-004 继续保持未勾选；下一批进入 API-004-USER，AUTH 仍受 CORE-004 的真实微信凭据、一次性凭据和重放保护门禁。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。
