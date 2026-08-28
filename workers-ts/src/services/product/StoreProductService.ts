@@ -11,6 +11,14 @@ import { NotFoundException } from "@/utils/errors";
 import { UserLevelService } from "@/services/user/UserLevelService";
 import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import { UserBehaviorService } from "@/services/user/UserBehaviorService";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import {
+  storeCart,
+  storeProductAttr,
+  storeProductAttrValue,
+  systemForm,
+} from "@/models/schema";
+import { parseSystemFormDefinition } from "@/services/system/SystemMetadataService";
 
 /** 默认分页大小 (对应 PHP database.page.defaultLimit) */
 const DEFAULT_LIMIT = 10;
@@ -51,6 +59,65 @@ export interface RecommendProductParams {
   rankOrder?: "sales" | "star" | "collect";
   page?: number;
   limit?: number;
+}
+
+export function parseLegacyProductAttrValues(value: string): string[] {
+  const normalized = value.trim();
+  if (!normalized) return [];
+  try {
+    const parsed = JSON.parse(normalized) as unknown;
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => String(item).trim()).filter(Boolean);
+    }
+  } catch {
+    // Older rows store the same values as a comma-delimited string.
+  }
+  return normalized.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function legacyProductInfo(
+  product: NonNullable<Awaited<ReturnType<Container["storeProductDao"]["getById"]>>>,
+): Record<string, unknown> {
+  return {
+    id: product.id,
+    pid: product.pid,
+    type: product.type,
+    product_type: product.productType,
+    relation_id: product.relationId,
+    image: product.image,
+    recommend_image: product.recommendImage,
+    slider_image: product.sliderImage,
+    store_name: product.storeName,
+    store_info: product.storeInfo,
+    keyword: product.keyword,
+    bar_code: product.barCode,
+    cate_id: product.cateId,
+    price: String(product.price),
+    vip_price: String(product.vipPrice),
+    ot_price: String(product.otPrice),
+    delivery_type: String(product.deliveryType || "").split(",").filter(Boolean),
+    freight: product.freight,
+    postage: String(product.postage),
+    temp_id: product.tempId,
+    unit_name: product.unitName,
+    sort: product.sort,
+    star: String(product.star),
+    collect: product.collect,
+    ficti: product.ficti,
+    sales: product.sales,
+    stock: product.stock,
+    is_show: product.isShow,
+    is_del: product.isDel,
+    is_verify: product.isVerify,
+    is_vip: product.isVip,
+    is_vip_product: product.isVipProduct,
+    is_presale_product: product.isPresaleProduct,
+    presale_start_time: product.presaleStartTime,
+    presale_end_time: product.presaleEndTime,
+    spec_type: product.specType,
+    system_form_id: product.systemFormId,
+    custom_form: [],
+  };
 }
 
 export class StoreProductService {
@@ -294,6 +361,138 @@ export class StoreProductService {
   }
 
   /**
+   * PHP v2 `/get_attr/:id/:type` compatibility payload.
+   *
+   * The second path argument is the legacy "include cart quantity" flag, not
+   * an activity/SKU type. `productValue` must therefore be keyed by `suk`;
+   * the old UniApp builds a comma-delimited attribute selection and indexes
+   * this object directly with that value.
+   */
+  async getLegacyProductAttr(
+    id: number,
+    uid: number,
+    includeCartQuantity: boolean,
+  ): Promise<{
+    storeInfo: Record<string, unknown>;
+    productAttr: Record<string, unknown>[];
+    productValue: Record<string, Record<string, unknown>>;
+  }> {
+    if (!Number.isSafeInteger(id) || id <= 0) throw new NotFoundException("商品不存在");
+    const product = await this.container.storeProductDao.getById(id);
+    if (!product) throw new NotFoundException("商品不存在");
+
+    const [attrs, skus, formRows] = await Promise.all([
+      this.container.db
+        .select()
+        .from(storeProductAttr)
+        .where(and(eq(storeProductAttr.productId, id), eq(storeProductAttr.type, 0)))
+        .orderBy(asc(storeProductAttr.id)),
+      this.container.db
+        .select()
+        .from(storeProductAttrValue)
+        .where(and(eq(storeProductAttrValue.productId, id), eq(storeProductAttrValue.type, 0)))
+        .orderBy(asc(storeProductAttrValue.id)),
+      product.systemFormId > 0
+        ? this.container.db
+          .select({ value: systemForm.value })
+          .from(systemForm)
+          .where(and(
+            eq(systemForm.id, product.systemFormId),
+            eq(systemForm.status, 1),
+            eq(systemForm.isDel, 0),
+          ))
+          .limit(1)
+        : Promise.resolve([]),
+    ]);
+
+    const cartQuantity = new Map<string, number>();
+    const uniqueValues = [...new Set(skus.map((sku) => sku.unique).filter(Boolean))];
+    if (includeCartQuantity && uid > 0 && uniqueValues.length > 0) {
+      const cartRows = await this.container.db
+        .select({
+          unique: storeCart.productAttrUnique,
+          quantity: sql<number>`COALESCE(SUM(${storeCart.cartNum}), 0)::int`,
+        })
+        .from(storeCart)
+        .where(and(
+          eq(storeCart.uid, uid),
+          eq(storeCart.productId, id),
+          eq(storeCart.type, 0),
+          eq(storeCart.activityId, 0),
+          eq(storeCart.isPay, 0),
+          eq(storeCart.isDel, 0),
+          eq(storeCart.isNew, 0),
+          eq(storeCart.status, 1),
+          inArray(storeCart.productAttrUnique, uniqueValues),
+        ))
+        .groupBy(storeCart.productAttrUnique);
+      for (const row of cartRows) cartQuantity.set(row.unique, Number(row.quantity));
+    }
+
+    const productAttr = attrs.map((attr) => {
+      const values = parseLegacyProductAttrValues(attr.attrValues);
+      return {
+        id: attr.id,
+        product_id: attr.productId,
+        attr_name: attr.attrName,
+        attr_values: values,
+        type: attr.type,
+        attr_value: values.map((value) => ({ attr: value, check: false })),
+      };
+    });
+    const productValue = Object.fromEntries(skus.map((sku) => [sku.suk, {
+      id: sku.id,
+      product_id: sku.productId,
+      product_type: sku.productType,
+      suk: sku.suk,
+      stock: sku.stock,
+      sum_stock: sku.sumStock,
+      sales: sku.sales,
+      price: String(sku.price),
+      settle_price: String(sku.settlePrice),
+      integral: sku.integral,
+      image: sku.image,
+      small_image: sku.image,
+      unique: sku.unique,
+      cost: String(sku.cost),
+      bar_code: sku.barCode,
+      ot_price: String(sku.otPrice),
+      vip_price: String(sku.vipPrice),
+      weight: String(sku.weight),
+      volume: String(sku.volume),
+      brokerage: String(sku.brokerage),
+      brokerage_two: String(sku.brokerageTwo),
+      type: sku.type,
+      quota: sku.quota,
+      quota_show: sku.quotaShow,
+      code: sku.code,
+      disk_info: sku.diskInfo,
+      product_stock: sku.stock,
+      ...(includeCartQuantity ? { cart_num: cartQuantity.get(sku.unique) ?? 0 } : {}),
+    }]));
+
+    const storeInfo = legacyProductInfo(product);
+    const customForm = formRows[0]?.value ? parseSystemFormDefinition(formRows[0].value) : [];
+    storeInfo.custom_form = customForm;
+    storeInfo.cart_button = customForm.length > 0 || product.isPresaleProduct > 0 || product.productType > 0 ? 0 : 1;
+    const skuPrices = skus.map((sku) => Number(sku.price)).filter(Number.isFinite);
+    const minPrice = skuPrices.length > 0 ? Math.min(...skuPrices) : Number(product.price);
+    const maxPrice = skuPrices.length > 0 ? Math.max(...skuPrices) : Number(product.price);
+    const { discount, levelName } = await this.getUserDiscount(uid);
+    const quoted = this.getMinPrice(
+      String(product.specType === 1 ? minPrice : product.price),
+      product.isVip,
+      String(product.vipPrice),
+      discount,
+      levelName,
+    );
+    storeInfo.min_price = minPrice;
+    storeInfo.max_price = maxPrice;
+    storeInfo.price_type = quoted.price_type;
+    return { storeInfo, productAttr, productValue };
+  }
+
+  /**
    * 商品详情 (对应 PHP productDetail)
    *
    * M2 实现核心字段:
@@ -386,6 +585,8 @@ export class StoreProductService {
       vip_price: String(s.vipPrice ?? "0"),
       stock: s.stock,
       sales: s.sales,
+      image: s.image,
+      small_image: s.image,
     }));
 
     // Product assurance definitions are a separate catalog. Resolve both the

@@ -1270,6 +1270,30 @@ API-003 仍不能标记整体完成：付款码只有签发端，TS 收银消费
 
 剩余 39 条按依赖拆为：微信/小程序登录与手机号绑定 16；DIY/绑定/门店/换色/商品详情/城市 6；重置/列表/SKU/改数量购物车 4；新人/今日/可领优惠券 3；微信资料/分类资金明细/推广用户/推广收益与规则 5；促销商品/赠品/凑单 3；首页和关注状态 2。现有通用优惠券列表忽略 v2 的 UID、商品/品牌和排序条件，现有 v1 首页也不是 v2 响应的直接别名，不能为了降低路由缺口挂一个近似处理器。16 条认证合同需要真实微信凭据、code 一次性消费、手机号凭据解密、限流与重放保护，继续与 CORE-004 联合处理；其余按 API-004-DIY/CART/COUPON/USER/PROMO/HOME checklist 逐批完成。API-004 因此仍未完成。
 
+## API-004-CART 四条购物车合同审计（2026-08-28）
+
+### PHP 语义、旧客户端调用与修复边界
+
+本批精确恢复认证 `POST /api/v2/reset_cart`、`GET /api/v2/cart_list`、`GET /api/v2/get_attr/:id/:type` 与 `POST /api/v2/set_cart_num`。PHP 的第二个 `get_attr` 路径参数虽然命名为 `type`，控制器实际把它当“是否回填购物车数量”的布尔标志；`productValue` 必须以逗号拼接后的 `suk` 为键，而不是 SKU `unique`。新适配器按 `suk` 建键，恢复 `product_id/product_stock/cart_num/small_image` 等旧端 snake_case 字段，同时兼容生产历史中 JSON 数组和逗号串两种 `attr_values` 存法；`productAttr[*].attr_value` 继续返回 `{attr,check:false}`。`storeInfo` 恢复自定义表单、预售/虚拟商品购物车按钮和价格类型，普通详情 SKU 也补回 `image/small_image`。
+
+旧 PHP `resetCart` 在“目标规格购物车不存在”分支直接按客户端提供的 cart ID 更新，没有再次限定 UID、未支付、未删除、非立即购买和普通活动范围；`setCartNum` 查找已有行时也缺这些状态谓词，并可能把减法写成负数。新实现先以用户级 PostgreSQL transaction advisory lock 串行化同一用户的购物车写入，再在短事务中以 `FOR UPDATE` 锁定归属行，以 `FOR SHARE` 复核有效商品与普通 SKU，固定 `type=0/activity_id=0/store_id=0/is_pay=0/is_del=0/is_new=0/status=1`，数量只接受正整数且受 `SMALLINT` 与实时库存上限约束。换规格遇到目标行时原子合并并软删来源行；精确设置、增加、减少到零和空 `unique` 选首个 SKU 均保持 PHP 调用语义，但负数量、跨用户 ID、已支付/已删/立即购买行和失效 SKU 均失败关闭。事务内不调用 KV、支付或其他外部服务。
+
+审计旧 v1 调用时还发现 `/api/cart/num` 的 PHP `type=2` 表示“传入商品 ID，服务端再找当前用户购物车 ID”，原 TypeScript 只接受 `id + cartNum`，会误把商品 ID 当购物车 ID且忽略旧字段 `number`。该兼容缺口一并修复，查找范围同样限定当前 UID 与有效普通购物车，最终修改仍由既有 owner check 和库存复核执行。v2 列表改成一次购物车查询、一次商品批量查询和一次 SKU 批量查询，不引入逐行商品/SKU N+1；等级价与有效付费会员价复用正式建单的整数分算法和相同开关/权益条件，`truePrice/vip_truePrice/price_type` 不再由展示接口另造一套浮点规则。
+
+### 正式 Hyperdrive 只读与随机 schema 证据
+
+一次性、摘要令牌保护的 `cinashop-v2-cart-compatibility-audit` Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产读取固定 `search_path=public`、`statement_timeout=30s` 与 `SET TRANSACTION READ ONLY`。PostgreSQL 16.14 当前 `store_cart` 共 27 行、有效普通购物车 2 行/2 个用户；71 个有效商品中只有 2 个商品有普通 SKU，共 2 行 SKU，普通商品属性为 0 行，另外 69 个有效商品没有任何普通 SKU。两条有效购物车的失效商品、缺失 SKU、非正数/超库存、重复 UID+商品+规格范围均为 0，普通 SKU 孤儿也为 0。真实购物车列表和真实有 SKU 商品的属性接口合同均通过，列表返回旧混合字段，`productValue` 实际以 `suk` 建键；当前生产抽样商品是单规格，因此 `productAttr=[]` 属于源数据现状而非读取异常。
+
+`store_cart` 只有主键索引，整表连索引共 24,576 字节；不存在 UID 的完整列表谓词执行计划为顺序扫描加内存排序，执行 0.026ms、shared hit 1、read 0。当前仅 27 行时创建复合索引没有收益，本批没有改生产 DDL；但这也暴露生产次级索引与仓库初始迁移定义存在漂移。DATA-003 恢复真实购物车/规格数据后必须重新审计，并优先评估只覆盖有效普通购物车的部分索引 `(uid, add_time DESC, id DESC) WHERE type=0 AND activity_id=0 AND store_id=0 AND is_del=0 AND is_pay=0 AND is_new=0 AND status=1`，不能在小样本上预先宣称需要或直接创建。
+
+随机 `codex_api004_cart_*` schema 克隆生产 `user/store_product/store_product_attr/store_product_attr_value/store_cart`，购物车使用 schema 私有序列，所有播种和读取都显式 `SET LOCAL search_path`。真实服务的初始列表、`productValue[suk]` 与属性结构、增加、换规格、创建目标规格后合并、跨 UID 拒绝、减至零软删，以及两条独立 Hyperdrive 连接同时给空规格购物车加一后收敛为单行数量 2，共 9/9 断言通过；最终三行测试购物车均软删，`public` 四张业务表行数前后不变，临时 schema `0→0`。首次部署版本 `ed72e01c-f43d-40a8-b9b4-75dade505f0e` 的三次连续边缘调用都在进入 Worker 前返回 Cloudflare 1042；改为低频单端点后，只读版本 `a176fda9-f24e-4641-8329-9119bc320203`、首轮合同/隔离版本 `c934c2a3-3a32-48ae-9206-e8055a1e7692`、扩展状态版本 `8c40974a-f9b7-4cb4-8b94-28c498453d68` 和最终并发版本 `40ec1799-f65f-46c7-b4ac-7660ca97711a` 均成功。每个临时 Worker 已删除，随机 schema 清理完成，主 `cinashop-api` 没有部署；独立部署列表复核生产仍 100% 运行 `9f1fd655-e60f-41c1-8280-738bc85d73ef`。
+
+### 当前量化与剩余 35 条
+
+注释感知的静态审计现为 PHP 1,904、Workers 1,291、精确匹配 599、可执行匹配 582、明确不可用 17、原始缺失 1,305、证据化退役 3、可执行缺口 1,302；精确/可执行覆盖为 31.5%/30.6%。`/api` 为 PHP 457、Workers 617、精确 229、可执行 227、不可用 2、可执行缺口 227；`/api/v2` 精确缺口 `39→35`。121 个单元测试文件/698 项、双 TypeScript 配置、主 Worker 与 CART 审计 Worker minify dry-run均通过；主包 2,401.52 KiB/gzip 593.91 KiB，审计包 518.67 KiB/gzip 120.81 KiB。Windows runtime 仍在 0 条断言前以 `workerd` 0xc0000005 失败，不能记为通过。
+
+剩余 35 条为 AUTH 16、DIY 6、COUPON 3、USER 5、PROMO 3、HOME 2。CART 的精确静态缺口已归零，但生产 69/71 有效商品缺 SKU、商品属性 0、源 MySQL 未复制、旧 UniApp 页面已不在当前仓库、真实账号/真机/预发和正式发布均未完成，所以整个 API-004 和发布门禁仍不能勾选；下一批继续 API-004-DIY/COUPON/USER，AUTH 保持 CORE-004 的真实微信凭据与重放保护门禁。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。

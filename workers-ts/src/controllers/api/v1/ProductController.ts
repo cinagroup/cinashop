@@ -112,6 +112,26 @@ export async function detail(c: C) {
   });
 }
 
+/** GET /api/v2/get_attr/:id/:type (`type` is the include-cart-count flag). */
+export async function getProductAttrV2(c: C) {
+  const id = Number(c.req.param("id"));
+  const includeCartQuantity = Number(c.req.param("type"));
+  if (
+    !Number.isSafeInteger(id) || id <= 0 ||
+    !Number.isSafeInteger(includeCartQuantity) || includeCartQuantity < 0
+  ) {
+    return jsonFail(c, "参数错误");
+  }
+  try {
+    const data = await new StoreProductService(c.get("container"), c.env)
+      .getLegacyProductAttr(id, c.get("uid") ?? 0, includeCartQuantity !== 0);
+    return jsonOk(c, data);
+  } catch (error) {
+    if (error instanceof NotFoundException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
 function catalogParams(c: C): GoodsListParams & { productId?: string } {
   const q = c.req.query();
   return {

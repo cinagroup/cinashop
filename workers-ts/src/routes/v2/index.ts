@@ -3,6 +3,7 @@ import { authMiddleware } from "@/middleware/auth";
 import * as LotteryController from "@/controllers/api/v1/LotteryController";
 import * as AgentLevelController from "@/controllers/api/v1/AgentLevelController";
 import * as OrderController from "@/controllers/api/v1/OrderController";
+import * as ProductController from "@/controllers/api/v1/ProductController";
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
@@ -35,3 +36,9 @@ v2Routes.get("/order/invoice_detail/:uni", authMiddleware({ force: true }), Orde
 v2Routes.get("/agent/level_list", authMiddleware({ force: true }), AgentLevelController.levelList);
 v2Routes.get("/agent/level_task_list", authMiddleware({ force: true }), AgentLevelController.levelTaskList);
 v2Routes.get("/reply/list/:id", authMiddleware({ force: false }), ReplyController.replyList);
+
+// PHP v2 shopping-cart and SKU-selection contracts used by the old UniApp.
+v2Routes.post("/reset_cart", authMiddleware({ force: true }), OrderController.cartResetV2);
+v2Routes.get("/cart_list", authMiddleware({ force: true }), OrderController.cartListV2);
+v2Routes.get("/get_attr/:id/:type", authMiddleware({ force: true }), ProductController.getProductAttrV2);
+v2Routes.post("/set_cart_num", authMiddleware({ force: true }), OrderController.cartSetNumV2);

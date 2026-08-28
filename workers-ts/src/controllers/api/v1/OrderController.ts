@@ -5,7 +5,7 @@
  */
 import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
-import { ValidateException } from "@/utils/errors";
+import { ApiException, ValidateException } from "@/utils/errors";
 import { StoreCartService } from "@/services/order/StoreCartService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
@@ -137,18 +137,76 @@ export async function cartList(c: C) {
 export async function cartNum(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as {
+  const body = await readBoundedJsonObject(c) as {
     id?: number;
     cartNum?: number;
+    number?: number;
+    type?: number;
   };
   if (!body.id) return jsonFail(c, "参数错误");
   const svc = new StoreCartService(c.get("container"));
   try {
-    await svc.setNum(uid, Number(body.id), Number(body.cartNum ?? 1));
+    const id = Number(body.id);
+    const quantity = Number(body.cartNum ?? body.number ?? 1);
+    if (!id || !Number.isSafeInteger(quantity) || quantity <= 0) {
+      return jsonFail(c, "参数错误!");
+    }
+    if (Number(body.type ?? 1) === 2) {
+      await svc.setNormalNumByProductLegacy(uid, id, quantity);
+    } else {
+      await svc.setNum(uid, id, quantity);
+    }
     return jsonOk(c, null, "修改成功");
   } catch (e) {
-    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    if (e instanceof ApiException) return jsonFail(c, e.message);
     throw e;
+  }
+}
+
+/** POST /api/v2/reset_cart */
+export async function cartResetV2(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  try {
+    const body = await readBoundedJsonObject(c);
+    await new StoreCartService(c.get("container"), c.env).resetLegacyV2({
+      uid,
+      id: Number(body.id ?? 0),
+      productId: Number(body.product_id ?? body.productId ?? 0),
+      unique: String(body.unique ?? ""),
+      cartNum: Number(body.num ?? body.cart_num ?? body.cartNum ?? 1),
+    });
+    return jsonOk(c, null, "修改成功");
+  } catch (error) {
+    if (error instanceof ApiException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/v2/cart_list */
+export async function cartListV2(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  return jsonOk(c, await new StoreCartService(c.get("container"), c.env).listLegacyV2(uid));
+}
+
+/** POST /api/v2/set_cart_num */
+export async function cartSetNumV2(c: C) {
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  try {
+    const body = await readBoundedJsonObject(c);
+    await new StoreCartService(c.get("container"), c.env).setProductQuantityLegacy({
+      uid,
+      productId: Number(body.product_id ?? body.productId ?? 0),
+      cartNum: Number(body.num ?? body.cart_num ?? body.cartNum ?? 0),
+      unique: String(body.unique ?? ""),
+      mode: Number(body.type ?? -1),
+    });
+    return jsonOk(c, null, "操作成功");
+  } catch (error) {
+    if (error instanceof ApiException) return jsonFail(c, error.message);
+    throw error;
   }
 }
 

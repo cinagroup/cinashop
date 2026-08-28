@@ -3,9 +3,9 @@
  *
  * 对应 PHP app/services/order/StoreCartServices.php (核心方法: addCart/getCartList/setCartNum/delCart)
  */
-import type { Container } from "@/lib/di";
+import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
-import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
+import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
   quoteFirstOrderDiscount,
@@ -18,14 +18,117 @@ import {
   type DiscountPackageSelectionInput,
 } from "@/services/activity/StoreDiscountService";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
-import { storeDiscounts, storeDiscountsProducts, storeOrder } from "@/models/schema";
+import {
+  calculateMemberUnitPriceCents,
+  isPaidMembershipActive,
+} from "@/services/order/StoreOrderCreateService";
+import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
+import {
+  storeCart,
+  storeDiscounts,
+  storeDiscountsProducts,
+  memberRight,
+  storeOrder,
+  storeProduct,
+  storeProductAttrValue,
+} from "@/models/schema";
+
+const CART_ADVISORY_LOCK_NAMESPACE = 1128354388;
+
+async function lockCartUser(tx: DbClient, uid: number): Promise<void> {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_ADVISORY_LOCK_NAMESPACE}, ${uid})`);
+}
+
+async function normalProductAndSku(tx: DbClient, productId: number, unique: string) {
+  const productRows = await tx
+    .select()
+    .from(storeProduct)
+    .where(eq(storeProduct.id, productId))
+    .limit(1)
+    .for("share");
+  const product = productRows[0];
+  if (!product || product.isDel !== 0 || product.isShow !== 1 || product.isVerify !== 1) {
+    throw new ValidateException("该商品已下架或删除");
+  }
+  if (
+    product.isPresaleProduct > 0 && product.presaleEndTime > 0 &&
+    product.presaleEndTime < Math.floor(Date.now() / 1000)
+  ) {
+    throw new ValidateException("预售活动已结束");
+  }
+
+  const predicates = [
+    eq(storeProductAttrValue.productId, productId),
+    eq(storeProductAttrValue.type, 0),
+  ];
+  if (unique) predicates.push(eq(storeProductAttrValue.unique, unique));
+  const skuRows = await tx
+    .select()
+    .from(storeProductAttrValue)
+    .where(and(...predicates))
+    .orderBy(asc(storeProductAttrValue.id))
+    .limit(1)
+    .for("share");
+  const sku = skuRows[0];
+  if (!sku) throw new ValidateException("请选择有效的商品属性");
+  return { product, sku };
+}
 
 export class StoreCartService {
   constructor(
     private readonly container: Container,
     private readonly env?: Env,
   ) {}
+
+  private async legacyCartPricing(uid: number): Promise<{
+    levelDiscountPercent: number;
+    paidMemberActive: boolean;
+    paidMemberPriceEnabled: boolean;
+  }> {
+    const fallback = {
+      levelDiscountPercent: 100,
+      paidMemberActive: false,
+      paidMemberPriceEnabled: false,
+    };
+    if (!this.env) return fallback;
+    const [account, values, rights] = await Promise.all([
+      this.container.userDao.findForAuth(uid),
+      new SystemConfigService(this.container, this.env).getMany([
+        "member_func_status",
+        "member_card_status",
+        "svip_price_status",
+      ]),
+      this.container.db
+        .select({ status: memberRight.status, number: memberRight.number })
+        .from(memberRight)
+        .where(eq(memberRight.rightType, "vip_price"))
+        .orderBy(asc(memberRight.id))
+        .limit(1),
+    ]);
+    if (!account) return fallback;
+    const enabled = (value: string | undefined, defaultValue = 1) => {
+      const parsed = Number(value ?? defaultValue);
+      return Number.isFinite(parsed) ? Math.trunc(parsed) === 1 : defaultValue === 1;
+    };
+    const memberFunctionEnabled = enabled(values.member_func_status);
+    const paidMemberEnabled = enabled(values.member_card_status);
+    const level = memberFunctionEnabled && account.level > 0
+      ? await this.container.systemUserLevelDao.getById(account.level)
+      : null;
+    const discount = level && level.isShow === 1 && level.isDel === 0
+      ? (Number(level.discount) || 100)
+      : 100;
+    const right = rights[0];
+    return {
+      levelDiscountPercent: discount,
+      paidMemberActive: paidMemberEnabled && isPaidMembershipActive(
+        account,
+        Math.floor(Date.now() / 1000),
+      ),
+      paidMemberPriceEnabled: paidMemberEnabled && enabled(values.svip_price_status) &&
+        right?.status === 1 && right.number > 0,
+    };
+  }
 
   /**
    * 加入购物车 (对应 PHP StoreCart::addCart)
@@ -294,6 +397,343 @@ export class StoreCartService {
       });
     }
     return result;
+  }
+
+  /** PHP v2 `/cart_list`: normal, reusable cart rows in the old mixed-case shape. */
+  async listLegacyV2(uid: number): Promise<Record<string, unknown>[]> {
+    const carts = await this.container.db
+      .select()
+      .from(storeCart)
+      .where(and(
+        eq(storeCart.uid, uid),
+        eq(storeCart.type, 0),
+        eq(storeCart.activityId, 0),
+        eq(storeCart.storeId, 0),
+        eq(storeCart.isDel, 0),
+        eq(storeCart.isPay, 0),
+        eq(storeCart.isNew, 0),
+        eq(storeCart.status, 1),
+      ))
+      .orderBy(desc(storeCart.addTime), desc(storeCart.id));
+    if (carts.length === 0) return [];
+
+    const productIds = [...new Set(carts.map((cart) => cart.productId))];
+    const uniqueValues = [...new Set(carts.map((cart) => cart.productAttrUnique).filter(Boolean))];
+    const [products, skus] = await Promise.all([
+      this.container.db.select().from(storeProduct).where(inArray(storeProduct.id, productIds)),
+      uniqueValues.length > 0
+        ? this.container.db
+          .select()
+          .from(storeProductAttrValue)
+          .where(and(
+            eq(storeProductAttrValue.type, 0),
+            inArray(storeProductAttrValue.productId, productIds),
+            inArray(storeProductAttrValue.unique, uniqueValues),
+          ))
+        : Promise.resolve([]),
+    ]);
+    const productById = new Map(products.map((product) => [product.id, product]));
+    const skuByProductUnique = new Map(
+      skus.map((sku) => [`${sku.productId}:${sku.unique}`, sku] as const),
+    );
+    const pricing = await this.legacyCartPricing(uid);
+
+    const result: Record<string, unknown>[] = [];
+    for (const cart of carts) {
+      const product = productById.get(cart.productId);
+      if (!product || product.isDel !== 0 || product.isShow !== 1 || product.isVerify !== 1) continue;
+      const sku = skuByProductUnique.get(`${cart.productId}:${cart.productAttrUnique}`);
+      const rawPrice = String(sku?.price ?? product.price);
+      const rawPriceCents = decimalToCents(rawPrice);
+      const quoted = calculateMemberUnitPriceCents({
+        basePriceCents: rawPriceCents,
+        levelDiscountPercent: pricing.levelDiscountPercent,
+        paidMemberPriceCents: decimalToCents(sku?.vipPrice ?? product.vipPrice),
+        paidMemberActive: pricing.paidMemberActive,
+        paidMemberPriceEnabled: pricing.paidMemberPriceEnabled,
+        productPaidMemberPriceEnabled: product.isVip === 1,
+      });
+      const price = quoted.unitPriceCents / 100;
+      const stock = sku?.stock ?? product.stock;
+      const attrInfo = {
+        id: sku?.id ?? 0,
+        product_id: cart.productId,
+        product_type: sku?.productType ?? product.productType,
+        suk: sku?.suk || "已失效",
+        stock: sku?.stock ?? 0,
+        sales: sku?.sales ?? 0,
+        price: String(sku?.price ?? product.price),
+        vip_price: String(sku?.vipPrice ?? product.vipPrice),
+        ot_price: String(sku?.otPrice ?? product.otPrice),
+        cost: String(sku?.cost ?? product.cost),
+        image: sku?.image || product.image,
+        unique: sku?.unique ?? cart.productAttrUnique,
+      };
+      result.push({
+        id: cart.id,
+        uid: cart.uid,
+        type: cart.type,
+        product_id: cart.productId,
+        product_type: cart.productType,
+        activity_id: cart.activityId,
+        store_id: cart.storeId,
+        staff_id: cart.staffId,
+        product_attr_unique: cart.productAttrUnique,
+        cart_num: cart.cartNum,
+        add_time: cart.addTime,
+        is_pay: cart.isPay,
+        is_del: cart.isDel,
+        is_new: cart.isNew,
+        status: cart.status,
+        is_gift: 0,
+        attrStatus: Boolean(sku?.stock),
+        vip_truePrice: quoted.discountCents / 100,
+        price_type: quoted.priceType,
+        costPrice: Number(sku?.cost ?? product.cost),
+        trueStock: stock,
+        branch_stock: stock,
+        branch_sales: sku?.sales ?? product.sales,
+        truePrice: price,
+        sum_price: rawPriceCents / 100,
+        integral: 0,
+        is_valid: 1,
+        productInfo: {
+          id: product.id,
+          type: product.type,
+          product_type: product.productType,
+          relation_id: product.relationId,
+          image: product.image,
+          store_name: product.storeName,
+          store_info: product.storeInfo,
+          price: String(product.price),
+          vip_price: String(product.vipPrice),
+          ot_price: String(product.otPrice),
+          stock: product.stock,
+          sales: product.sales,
+          ficti: product.ficti,
+          unit_name: product.unitName,
+          delivery_type: String(product.deliveryType || "").split(",").filter(Boolean),
+          temp_id: product.tempId,
+          is_vip: product.isVip,
+          is_presale_product: product.isPresaleProduct,
+          system_form_id: product.systemFormId,
+          store_label: [],
+          attrInfo,
+        },
+      });
+    }
+    return result;
+  }
+
+  /** Secure owner-scoped implementation of PHP v2 `resetCart`. */
+  async resetLegacyV2(params: {
+    uid: number;
+    id: number;
+    productId: number;
+    unique: string;
+    cartNum: number;
+  }): Promise<{ id: number; cartNum: number }> {
+    if (
+      !Number.isSafeInteger(params.id) || params.id <= 0 ||
+      !Number.isSafeInteger(params.productId) || params.productId <= 0 ||
+      !Number.isSafeInteger(params.cartNum) || params.cartNum <= 0 || params.cartNum > 32767 ||
+      !params.unique.trim()
+    ) {
+      throw new ValidateException("参数错误");
+    }
+    return withTx(this.container, async (tx) => {
+      await lockCartUser(tx, params.uid);
+      const sourceRows = await tx
+        .select()
+        .from(storeCart)
+        .where(and(
+          eq(storeCart.id, params.id),
+          eq(storeCart.uid, params.uid),
+          eq(storeCart.productId, params.productId),
+          eq(storeCart.type, 0),
+          eq(storeCart.activityId, 0),
+          eq(storeCart.storeId, 0),
+          eq(storeCart.isDel, 0),
+          eq(storeCart.isPay, 0),
+          eq(storeCart.isNew, 0),
+          eq(storeCart.status, 1),
+        ))
+        .limit(1)
+        .for("update");
+      const source = sourceRows[0];
+      if (!source) throw new NotFoundException("购物车项不存在");
+      const { sku } = await normalProductAndSku(tx, params.productId, params.unique.trim());
+      if (sku.stock <= 0) throw new ValidateException("选择的规格库存不足");
+
+      const targetRows = await tx
+        .select()
+        .from(storeCart)
+        .where(and(
+          eq(storeCart.uid, params.uid),
+          eq(storeCart.productId, params.productId),
+          eq(storeCart.productAttrUnique, sku.unique),
+          eq(storeCart.type, 0),
+          eq(storeCart.activityId, 0),
+          eq(storeCart.storeId, 0),
+          eq(storeCart.isDel, 0),
+          eq(storeCart.isPay, 0),
+          eq(storeCart.isNew, 0),
+          eq(storeCart.status, 1),
+        ))
+        .orderBy(asc(storeCart.id))
+        .for("update");
+      const target = targetRows[0];
+      const now = Math.floor(Date.now() / 1000);
+      if (target && target.id !== source.id) {
+        const cartNum = Math.min(target.cartNum + params.cartNum, sku.stock, 32767);
+        await tx.update(storeCart).set({ cartNum, addTime: now }).where(and(
+          eq(storeCart.id, target.id),
+          eq(storeCart.uid, params.uid),
+        ));
+        await tx.update(storeCart).set({ isDel: 1 }).where(and(
+          eq(storeCart.id, source.id),
+          eq(storeCart.uid, params.uid),
+        ));
+        return { id: target.id, cartNum };
+      }
+      if (params.cartNum > sku.stock) {
+        throw new ValidateException(`库存不足, 当前库存 ${sku.stock}`);
+      }
+      await tx.update(storeCart).set({
+        productAttrUnique: sku.unique,
+        cartNum: params.cartNum,
+        addTime: now,
+      }).where(and(eq(storeCart.id, source.id), eq(storeCart.uid, params.uid)));
+      return { id: source.id, cartNum: params.cartNum };
+    });
+  }
+
+  /** PHP v2 `setCartNum` mode: -1=set, 0=subtract, 1=add. */
+  async setProductQuantityLegacy(params: {
+    uid: number;
+    productId: number;
+    unique: string;
+    cartNum: number;
+    mode: number;
+  }): Promise<{ id: number; cartNum: number; deleted: boolean }> {
+    if (
+      !Number.isSafeInteger(params.productId) || params.productId <= 0 ||
+      !Number.isSafeInteger(params.cartNum) || params.cartNum <= 0 || params.cartNum > 32767 ||
+      ![-1, 0, 1].includes(params.mode)
+    ) {
+      throw new ValidateException("参数错误");
+    }
+    return withTx(this.container, async (tx) => {
+      await lockCartUser(tx, params.uid);
+      const { product, sku } = await normalProductAndSku(tx, params.productId, params.unique.trim());
+      const rows = await tx
+        .select()
+        .from(storeCart)
+        .where(and(
+          eq(storeCart.uid, params.uid),
+          eq(storeCart.productId, params.productId),
+          eq(storeCart.productAttrUnique, sku.unique),
+          eq(storeCart.type, 0),
+          eq(storeCart.activityId, 0),
+          eq(storeCart.storeId, 0),
+          eq(storeCart.isDel, 0),
+          eq(storeCart.isPay, 0),
+          eq(storeCart.isNew, 0),
+          eq(storeCart.status, 1),
+        ))
+        .orderBy(asc(storeCart.id))
+        .for("update");
+      const existing = rows[0];
+      if (!existing && params.mode === 0) throw new NotFoundException("购物车项不存在");
+
+      let desired = params.cartNum;
+      if (existing) {
+        if (params.mode === 0) desired = existing.cartNum - params.cartNum;
+        else if (params.mode === 1) {
+          if (existing.cartNum >= sku.stock) {
+            throw new ValidateException(`该商品库存只有${sku.stock}`);
+          }
+          desired = Math.min(existing.cartNum + params.cartNum, sku.stock, 32767);
+        }
+      }
+      if (desired <= 0 && existing) {
+        await tx.update(storeCart).set({ isDel: 1 }).where(and(
+          eq(storeCart.id, existing.id),
+          eq(storeCart.uid, params.uid),
+        ));
+        return { id: existing.id, cartNum: 0, deleted: true };
+      }
+      if (desired > sku.stock) throw new ValidateException(`该商品库存不足${desired}`);
+      const now = Math.floor(Date.now() / 1000);
+      if (existing) {
+        await tx.update(storeCart).set({ cartNum: desired, addTime: now }).where(and(
+          eq(storeCart.id, existing.id),
+          eq(storeCart.uid, params.uid),
+        ));
+        return { id: existing.id, cartNum: desired, deleted: false };
+      }
+      const inserted = await tx.insert(storeCart).values({
+        uid: params.uid,
+        productId: params.productId,
+        productType: product.productType,
+        productAttrUnique: sku.unique,
+        cartNum: desired,
+        type: 0,
+        activityId: 0,
+        storeId: 0,
+        isPay: 0,
+        isDel: 0,
+        isNew: 0,
+        status: 1,
+        addTime: now,
+      }).returning({ id: storeCart.id });
+      return { id: inserted[0].id, cartNum: desired, deleted: false };
+    });
+  }
+
+  /** v1 compatibility: type=2 identifies and updates the row by product id atomically. */
+  async setNormalNumByProductLegacy(uid: number, productId: number, cartNum: number): Promise<void> {
+    if (
+      !Number.isSafeInteger(productId) || productId <= 0 ||
+      !Number.isSafeInteger(cartNum) || cartNum <= 0 || cartNum > 32767
+    ) {
+      throw new ValidateException("参数错误!");
+    }
+    await withTx(this.container, async (tx) => {
+      await lockCartUser(tx, uid);
+      const rows = await tx
+        .select()
+        .from(storeCart)
+        .where(and(
+          eq(storeCart.uid, uid),
+          eq(storeCart.productId, productId),
+          eq(storeCart.type, 0),
+          eq(storeCart.activityId, 0),
+          eq(storeCart.storeId, 0),
+          eq(storeCart.isPay, 0),
+          eq(storeCart.isDel, 0),
+          eq(storeCart.isNew, 0),
+          eq(storeCart.status, 1),
+        ))
+        .orderBy(desc(storeCart.addTime), desc(storeCart.id))
+        .limit(1)
+        .for("update");
+      const cart = rows[0];
+      if (!cart) throw new NotFoundException("购物车项不存在");
+      const { sku } = await normalProductAndSku(tx, productId, cart.productAttrUnique);
+      if (cartNum > sku.stock) throw new ValidateException(`库存不足${cartNum}`);
+      await tx.update(storeCart).set({
+        cartNum,
+        addTime: Math.floor(Date.now() / 1000),
+      }).where(and(
+        eq(storeCart.id, cart.id),
+        eq(storeCart.uid, uid),
+        eq(storeCart.isPay, 0),
+        eq(storeCart.isDel, 0),
+        eq(storeCart.isNew, 0),
+        eq(storeCart.status, 1),
+      ));
+    });
   }
 
   /** 修改数量 (对应 PHP StoreCart::setCartNum) */
