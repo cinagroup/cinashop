@@ -631,6 +631,20 @@ PHP 权威路由是 `POST /outapi/product`、`PUT /outapi/product/:id`、`PUT /o
 
 最终本地门禁为 112 个测试文件/651 项全部通过、双 TypeScript 配置通过、主 Worker Wrangler 4.122.0 minify dry-run 2,246.05 KiB/gzip 553.56 KiB、`git diff --check` 无错误。静态路由审计变为 PHP 1,912、TS 1,219、精确 528、可执行 513、明确 501 为 15、退役 2、可执行缺口 1,382；Out 为 35/41（85.4%），只剩优惠券 3 条和用户 3 条。Windows runtime 仍在进入任何断言前由 `workerd` 以 `0xc0000005` 崩溃，明确记为环境失败；主 `cinashop-api` 仍未部署本批代码，因此生产数据库前置已就绪不等于四条路由已经线上可调用。
 
+### 优惠券写入续审（2026-08-28）
+
+PHP 权威合同是 `POST /outapi/coupon`、`PUT /outapi/coupon/status/:id/:status` 和 `DELETE /outapi/coupon/:id`。逐字段审计确认迁移存在两组交换语义：PHP `type` 是适用范围、`coupon_type` 是满减/折扣模式，而 PostgreSQL 目标列分别为 `coupon_type` 和 `type`；PHP `coupon_time/start_use_time/end_use_time` 则映射为 `day/use_start_time/use_end_time`。旧 Out 列表因此把 `coupon_type` 过滤到了范围列、把 query `type=send` 错当数字优惠类型，响应又把交换后的目标列名直接暴露给客户端。现已恢复 PHP 查询与输出合同：`coupon_type` 过滤目标 `type`，`type=send` 同时校验赠送券、状态、库存、领取窗口和使用有效期，响应重建 PHP 的 `type/coupon_type/product_id/category_id/brand_id/start_use_time/end_use_time/coupon_time` 并移除目标迁移辅助列。
+
+金额审计还发现跨服务的高风险倍率错误。PHP 折扣券用 `85` 表示支付 85%（8.5 折），计算式是 `price * coupon_price / 100`；旧 TypeScript `calculateCouponDiscountCents` 却把 `8.5` 当成 85%，使 Out/Admin 创建值和下单核销语义相差 10 倍。计算现统一为 0–100 百分比、整数分和 BigInt 中间值：`85.00` 对 10.01 元产生 1.50 元优惠，`100.00` 为 0 优惠，超过 100 失败关闭。新增接口只接受 PHP 实际字段，名称/金额/整数/列宽/领取与使用窗口先归一化；限量券总量必须大于 0，领取方式 2/3 强制不限量，固定有效期必须有完整使用起止时间，滚动天数不能与固定时间混用。Out 当前没有 `brand_id` 输入合同，因此创建仅开放通用、平台分类、平台实物商品三种范围；未迁移字段和跨 Supplier/已删除/非实物商品都拒绝，不能静默丢弃。
+
+新增 `out_coupon_write_replay` 内容脱敏事务账本。三类写请求均强制 UUID-v4 `Idempotency-Key`，唯一键为账户+操作+key，只保存 canonical SHA-256、优惠券 ID、结果状态和时间，不保存标题、金额、折扣、范围、日期或请求/响应体。同 key/同语义返回原结果，同 key/不同语义拒绝；优惠券目录 advisory lock 与模板行锁使双连接创建和状态切换收敛。启用会重新验证标题、优惠模式、领取方式、发行余量、未过期窗口和实际平台分类/商品/品牌关系。停用只阻止未来发放；已经领取的用户券仍按快照使用。删除固定为 `is_del=1/status=-1`，保留 `store_coupon_issue` 和 `store_coupon_product`，因为下单仍需模板和适用商品关系校验已领商品券；同时统计已领、已用、占用和领取证据，并在仍有活动商品赠券、有效抽奖、有效促销或启用新人礼包配置时拒绝删除。PHP 原删除误删的是支付后赠券 `store_product_coupon`、却遗留真正适用范围 `store_coupon_product`，该错误没有复制。
+
+外部 `0098_out_coupon_write_replay.sql` 与 Worker 内嵌 `migration_0105` 字节等价。生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 在固定 `search_path=public`、锁/语句超时和 advisory lock 下直接应用同一 DDL 两次，验证 8 列、4 约束、3 索引、0 行且业务表指纹不变；目录更新为 PostgreSQL 16.14、219 表、3,037 列、702 索引、206 主键。生产实际只有 1 张未删除但未启用的满减品类券，用户券 4 张（未用2、已用2、占用0），领取证据0、适用商品关系0、商品支付后赠券0、优惠券抽奖0、促销优惠券关系0、新人礼包优惠券配置未启用。该分布足以证明历史数据很小且关系不完整，不代表真实 Out 客户验收；生产仍没有有效 Out 账户或接口权限目录。
+
+最终随机 `codex_out_coupon_*` schema 场景的 ACL 3/3、同 key 双连接单行创建、创建重放/冲突、跨租户和严格字段拒绝、PHP 列交换、状态并发/重放、过期启用拒绝、`send` 列表、商品赠券/抽奖/促销/新人礼包四类删除冲突、已领券范围保留、删除重放、数据库故障全回滚及账本无业务内容全部为 true；`schema_created/schema_removed/public_state_unchanged=true`、临时 schema 0。隔离验证也保留一次审计事故：服务事务已固定 search path，但准备冲突的事务外夹具仍被 Hyperdrive 写入 `public`，新增用户券 ID 5、配置 ID 504–506、抽奖/奖品 500/501 和促销 600。发现后停止场景，专用最小修复 Worker 在单事务、表锁和唯一全字段证明下精确删除 1 张用户券、1 条领取证据、抽奖/奖品各1、促销1、配置3；只有序列仍精确为5/506且剩余最大 ID 为4/503时才恢复序列。独立读回确认所有事故标记为0，用户券4、领取证据0、配置最大ID/序列503，生产前后最终业务状态一致。最终场景加入静态门禁，`runScenario` 禁止任何事务外 `container.db`；事故清理端点和 Worker 已从源码/Cloudflare 删除。
+
+本批静态审计更新为 PHP 1,912、TS 1,222、精确匹配531、可执行匹配516、明确501为15、退役2、可执行缺口1,379；Out 为38/41（92.7%），只剩用户新增、修改和资金/积分赠送3条。结构审计为源201/201表和全部源列覆盖、目标219表、18张Worker专用表、外部/内嵌表集合与列/主键漂移0。113个单元测试文件/657项和双TypeScript配置已通过；Wrangler 4.122.0 主 Worker minify dry-run 为2,265.38 KiB/gzip 558.16 KiB。Windows runtime再次在进入断言前由`workerd`以`0xc0000005`退出，不能记为通过。主`cinashop-api`未部署本批代码，因此生产账本前置完成不等于三条优惠券路由已在线开放。
+
 ### 生产 Hyperdrive 证据与剩余阻塞
 
 临时审计 Worker 直接绑定生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。只读分布为 PostgreSQL 16.14、有效 Out 账户 0、Out 接口 0、GET 接口 0、订单 29、有效退款 3、优惠券 1、会员等级 3、有效用户 3、可用快递公司 2、审计前临时 schema 0。生产业务表已有读接口样本，但没有迁入任何真实 Out 账户或权限目录，因此无法也不会伪造生产 token、客户权限或真实调用验收；这再次证明源 MySQL 配置/数据复制尚未完成。
@@ -647,7 +661,7 @@ PHP 权威路由是 `POST /outapi/product`、`PUT /outapi/product/:id`、`PUT /o
 
 资金退款场景随后在随机 `codex_out_refund_money_*` schema 克隆 Out 目录、用户/账单、订单/退款/渠道状态、奖励/供应商/拼团/商品等 16 张生产表，并为所有可能写入的账本与状态表替换 schema 私有序列。`PUT /refund/{order_id}` 权限放行且缺权拒绝；同一余额退款双连接调用均完成，其中 1 次识别为幂等重放，余额 `5.00→15.00`、退款状态 `1→6`、`refunded_price=10.00`，资金账和退款状态各严格 1 行。缺金额、同售后单部分金额、`store_id!=0` 越界和 `refund_type=6` 但 `refunded_price!=refund_price` 的历史矛盾状态全部拒绝且资金不变。`type=2` 首次拒绝、完全重放和不同原因防覆盖通过。状态日志故障约束使余额、退款状态和账单全部回滚，移除后同请求重试只入账一次。报告为 PostgreSQL 16.14、`schema_created/schema_removed/public_state_unchanged=true`，执行前后 `codex_out_%` schema 均为 0，公共 16 表行数及 7 条公共序列完全一致，审计表仍 0 行；临时 Worker 删除后 Cloudflare API 返回 `10007`。主 Worker 未发布，也没有调用真实微信/支付宝商户退款。
 
-本地双 TypeScript 配置通过，完整单元套件为 94 个文件、535 项全通过（该历史快照已由商品续审的 112 文件/651 项覆盖）。Cloudflare 本地 runtime 套件再次在加载测试前由 Windows `workerd` 以 `0xc0000005` access violation 崩溃，因此不能写成 runtime 通过；生产 Hyperdrive 隔离场景提供了真实 Worker/PostgreSQL 执行证据，但不替代 Linux runtime/CI。当前结论是“Out 安全账户/token/逐路由 ACL + 14 条 GET + 19 条写路由 + 强一致限流与脱敏访问审计已完成代码面并通过生产引擎隔离验证”；源 Out 账户/接口目录复制、真实客户最小权限/PII 审核、真实 Durable Object RPC/429、微信/支付宝真实退款与回调/对账、通知模板/渠道配置复制及真实第三方验收、优惠券/用户写接口、CI/runtime、发布和回滚演练仍未完成。
+本地双 TypeScript 配置通过，完整单元套件为 94 个文件、535 项全通过（该历史快照已由优惠券续审的 113 文件/657 项覆盖）。Cloudflare 本地 runtime 套件再次在加载测试前由 Windows `workerd` 以 `0xc0000005` access violation 崩溃，因此不能写成 runtime 通过；生产 Hyperdrive 隔离场景提供了真实 Worker/PostgreSQL 执行证据，但不替代 Linux runtime/CI。当前结论是“Out 安全账户/token/逐路由 ACL + 14 条 GET + 22 条写路由 + 强一致限流与脱敏访问审计已完成代码面并通过生产引擎隔离验证”；源 Out 账户/接口目录复制、真实客户最小权限/PII 审核、真实 Durable Object RPC/429、微信/支付宝真实退款与回调/对账、通知模板/渠道配置复制及真实第三方验收、用户写接口、CI/runtime、发布和回滚演练仍未完成。
 
 ## 发货与拒绝退款通知迁移详细审计（2026-08-15）
 
@@ -1044,7 +1058,7 @@ PHP 对照确认核销不是单一 `store_order.status` 更新：必须同时验
 | Admin 公众号内容浏览器验收（本轮） | 本地 `/content/wechat?preview=1` 在默认桌面通过；预留回复、关键字、图文与消息历史标签可见，关键字“二维码”入口打开就绪图片弹窗并显示 Queue 重试边界。控制台零 warning/error、无框架错误层。使用本地预览数据，不是 PostgreSQL/Hyperdrive、真实微信二维码或公众号回调 E2E |
 | Admin 渠道二维码浏览器验收（本轮） | 本地 `/content/wechat-qrcode?preview=1` 在默认桌面与 390×844 通过；页面身份、异步生成提示、三条渠道数据、统计抽屉、完整新建表单与回复类型切换均可交互。窄屏使用卡片而非桌面表格，文档 `scrollWidth=clientWidth=390`，重试生成入口可见；两视口控制台零 warning/error、无框架错误层。使用本地预览数据，不是 PostgreSQL/Hyperdrive、Queue 或微信 E2E |
 | Admin 公众号会员卡浏览器验收（本轮） | 本地 `/content/wechat-card?preview=1` 的桌面视口通过；概览、卡配置与领取/激活标签可切换，card_id、code 与 openid 示例均只显示掩码，页面没有外部写入控件。用户要求转入详细审计后浏览器会话重置，本轮未完成该新页的 390×844 与控制台复核，因此不把移动端标为通过；使用本地预览数据，不是 PostgreSQL/Hyperdrive 或微信 E2E |
-| Wrangler 4.122.0 直接执行 `deploy --dry-run --minify`（本轮） | 通过；2026-08-28 最新上传体积 2,227.49 KiB（gzip 549.58 KiB），输出 `--dry-run: exiting now.`，识别 4 个 DO、KV、Queue、Hyperdrive `9748c294e21c49a99579c9cef70102e0`、`ASSETS_BUCKET (cinashop-assets)`、Out API 四项限流变量与 `ORDER_DLQ_NAME`；线上版本本轮未变更，仍以 Cloudflare API 证据为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，未执行主 Worker 生产部署 |
+| Wrangler 4.122.0 直接执行 `deploy --dry-run --minify`（本轮） | 通过；2026-08-28 最新上传体积 2,265.38 KiB（gzip 558.16 KiB），输出 `--dry-run: exiting now.`，识别 4 个 DO、KV、Queue、Hyperdrive `9748c294e21c49a99579c9cef70102e0`、`ASSETS_BUCKET (cinashop-assets)`、Out API 四项限流变量与 `ORDER_DLQ_NAME`；线上版本本轮未变更，仍以 Cloudflare API 证据为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，未执行主 Worker 生产部署 |
 | Cloudflare 正式 R2 / 备份 DLQ 资源验收（本轮） | 已创建 APAC/Standard `cinashop-assets` 和 Queue `cinashop-order-dlq-unarchived`（ID `ec0ef96ffcd3429da48500cdf90ca532`）。R2 对 `codex-audit/69680504ff71/roundtrip.json` 完成精确写读删；临时 Worker `codex-cinashop-resource-audit-5e7c2a6f`（版本 `cf66d1ab-b8e5-4361-ad44-19673e8b86e0`）把审计消息 `b42b9093acf5488aa8bde0be` 以 `attempts=1` 从正式备份 Queue 消费并写入正式 R2 receipt 后 ack。receipt、consumer 和临时 Worker 均已删除，临时 URL 返回 404；最终 R2 为 0 对象/0 B，备份 Queue 为 0 producers/0 consumers，原 `cinashop-order` 仍只有 `cinashop-api` 一组生产者/消费者，原 `cinashop-order-dlq` 仍为 0/0，主 Worker 保持 100% 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef` |
 | Pages 发布 | H5 `15330769-f7ef-4635-81f5-4e7b4e2dba4a`、Admin `00ac193e-be07-464e-8e77-b89295e9df7a` 已发布到 production/main |
 

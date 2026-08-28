@@ -158,6 +158,21 @@ outapiRoutes.get(
   outAuthMiddleware("GET", "/coupon/list"),
   OutApiController.couponList,
 );
+outapiRoutes.post(
+  "/coupon",
+  outAuthMiddleware("POST", "/coupon"),
+  OutApiController.couponCreate,
+);
+outapiRoutes.put(
+  "/coupon/status/:id/:status",
+  outAuthMiddleware("PUT", "/coupon/status/{id}/{status}"),
+  OutApiController.couponStatus,
+);
+outapiRoutes.delete(
+  "/coupon/:id",
+  outAuthMiddleware("DELETE", "/coupon/{id}"),
+  OutApiController.couponDelete,
+);
 outapiRoutes.get(
   "/user_level/list",
   outAuthMiddleware("GET", "/user_level/list"),

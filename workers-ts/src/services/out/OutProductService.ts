@@ -19,6 +19,7 @@ import {
   type SupplierProductSku,
 } from "@/services/supplier/SupplierProductManagementService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -242,26 +243,7 @@ export function normalizeOutStockUpload(input: UnknownRecord): StockUploadItem[]
 }
 
 export function normalizeOutProductRequestKey(value: unknown): string {
-  if (typeof value !== "string") throw new ValidateException("缺少 Idempotency-Key");
-  const key = value.trim().toLowerCase();
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(key)) {
-    throw new ValidateException("Idempotency-Key 必须是 UUID v4");
-  }
-  return key;
-}
-
-function canonicalJson(value: unknown): string {
-  if (value === undefined) return "null";
-  if (value === null || typeof value !== "object") return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  const record = value as UnknownRecord;
-  return `{${Object.keys(record).sort().map((key) =>
-    `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
-}
-
-async function requestHash(value: unknown): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonicalJson(value)));
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return normalizeOutRequestKey(value);
 }
 
 function generateOpaque(length: number): string {
@@ -369,7 +351,7 @@ export class OutProductService {
     const key = normalizeOutProductRequestKey(requestKeyInput);
     const input = normalizeOutPhysicalProductInput(rawInput);
     const operation: ProductWriteOperation = productId > 0 ? "product_update" : "product_create";
-    const hash = await requestHash({ operation, productId, input });
+    const hash = await outRequestHash({ operation, productId, input });
     return withTx(this.container, async (tx) => {
       const replay = await replayResult(tx, account.id, operation, key, hash);
       if (replay) {
@@ -410,7 +392,7 @@ export class OutProductService {
         }
         const requestedSuks = input.skus.map((sku) => sku.suk).sort();
         const currentSuks = currentSkus.map((sku) => sku.suk).sort();
-        if (canonicalJson(requestedSuks) !== canonicalJson(currentSuks)) {
+        if (JSON.stringify(requestedSuks) !== JSON.stringify(currentSuks)) {
           throw new ValidateException("Out API 修改商品不能增删SKU，请使用运营后台调整规格");
         }
       }
@@ -664,7 +646,7 @@ export class OutProductService {
   ) {
     const key = normalizeOutProductRequestKey(requestKeyInput);
     const isShow = flag(isShowInput, "商品状态", 0);
-    const hash = await requestHash({ operation: "product_show", productId, isShow });
+    const hash = await outRequestHash({ operation: "product_show", productId, isShow });
     return withTx(this.container, async (tx) => {
       const replay = await replayResult(tx, account.id, "product_show", key, hash);
       if (replay) return { id: replay.productId, is_show: isShow, idempotent: true };
@@ -705,7 +687,7 @@ export class OutProductService {
   async uploadStock(account: OutAccountIdentity, raw: UnknownRecord, requestKeyInput: unknown) {
     const key = normalizeOutProductRequestKey(requestKeyInput);
     const items = normalizeOutStockUpload(raw);
-    const hash = await requestHash({ operation: "stock_upload", items });
+    const hash = await outRequestHash({ operation: "stock_upload", items });
     return withTx(this.container, async (tx) => {
       const replay = await replayResult(tx, account.id, "stock_upload", key, hash);
       if (replay) return { updated: replay.resultCount, idempotent: true };

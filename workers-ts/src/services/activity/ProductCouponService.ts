@@ -103,7 +103,8 @@ function decimalToHundredths(value: string, label: string): number {
 
 /**
  * Calculate a coupon discount using integer arithmetic only.
- * Discount coupons store 8.5 as 85%; full-reduction coupons store a money value.
+ * PHP stores discount coupons as a percentage: 85 means 85% (8.5折).
+ * Full-reduction coupons store a money value.
  */
 export function calculateCouponDiscountCents(input: {
   discountType: number;
@@ -114,12 +115,15 @@ export function calculateCouponDiscountCents(input: {
     throw new ValidateException("优惠券适用金额无效");
   }
   if (input.discountType === 2) {
-    const rateThousandths = decimalToHundredths(input.couponPrice, "优惠券折扣");
-    if (rateThousandths <= 0 || rateThousandths > 1_000) {
-      throw new ValidateException("优惠券折扣必须大于0且不超过10折");
+    const storedHundredths = decimalToHundredths(input.couponPrice, "优惠券折扣");
+    if (storedHundredths <= 0 || storedHundredths > 10_000) {
+      throw new ValidateException("优惠券折扣必须大于0且不超过100");
     }
+    // PHP uses bcdiv(coupon_price, 100, 2), which truncates the stored
+    // percentage to a whole percent before multiplying the subtotal.
+    const payPercent = Math.floor(storedHundredths / 100);
     return Number(
-      BigInt(input.eligibleSubtotalCents) * BigInt(1_000 - rateThousandths) / 1_000n,
+      BigInt(input.eligibleSubtotalCents) * BigInt(100 - payPercent) / 100n,
     );
   }
   const faceValueCents = decimalToHundredths(input.couponPrice, "优惠券面额");

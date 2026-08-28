@@ -69,19 +69,24 @@ describe("product coupon migration", () => {
     })).toBe(1_234);
     expect(calculateCouponDiscountCents({
       discountType: 2,
-      couponPrice: "8.50",
+      couponPrice: "85.00",
       eligibleSubtotalCents: 1_001,
     })).toBe(150);
     expect(calculateCouponDiscountCents({
       discountType: 2,
-      couponPrice: "10.00",
+      couponPrice: "85.99",
+      eligibleSubtotalCents: 1_001,
+    })).toBe(150);
+    expect(calculateCouponDiscountCents({
+      discountType: 2,
+      couponPrice: "100.00",
       eligibleSubtotalCents: 1_001,
     })).toBe(0);
     expect(() => calculateCouponDiscountCents({
       discountType: 2,
-      couponPrice: "10.01",
+      couponPrice: "100.01",
       eligibleSubtotalCents: 1_001,
-    })).toThrow("不超过10折");
+    })).toThrow("不超过100");
   });
 
   it("enforces coupon scope at order creation and grants links inside paid outbox", () => {

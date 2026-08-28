@@ -155,7 +155,41 @@ export const outProductWriteReplay = pgTable(
   ],
 );
 
+/**
+ * Content-free replay ledger for Out API coupon writes. Coupon titles, values,
+ * scopes, dates and request/response bodies are intentionally never retained.
+ */
+export const outCouponWriteReplay = pgTable(
+  "out_coupon_write_replay",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    outAccountId: integer("out_account_id").notNull(),
+    operation: varchar("operation", { length: 32 }).notNull(),
+    requestKey: varchar("request_key", { length: 36 }).notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).notNull(),
+    couponId: integer("coupon_id").default(0).notNull(),
+    resultStatus: smallint("result_status").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (table) => [
+    uniqueIndex("ocwr_account_operation_key_uq")
+      .on(table.outAccountId, table.operation, table.requestKey),
+    index("ocwr_coupon_history").on(table.couponId, table.id),
+    check(
+      "ocwr_operation_ck",
+      sql`${table.operation} IN ('coupon_create', 'coupon_status', 'coupon_delete')`,
+    ),
+    check(
+      "ocwr_identity_ck",
+      sql`${table.outAccountId} > 0 AND ${table.couponId} > 0
+        AND ${table.resultStatus} BETWEEN -1 AND 1 AND ${table.addTime} >= 0`,
+    ),
+    check("ocwr_request_hash_ck", sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`),
+  ],
+);
+
 export type OutAccount = typeof outAccount.$inferSelect;
 export type OutInterface = typeof outInterface.$inferSelect;
 export type OutApiAudit = typeof outApiAudit.$inferSelect;
 export type OutProductWriteReplay = typeof outProductWriteReplay.$inferSelect;
+export type OutCouponWriteReplay = typeof outCouponWriteReplay.$inferSelect;

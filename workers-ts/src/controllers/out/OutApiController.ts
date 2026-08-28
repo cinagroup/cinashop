@@ -336,6 +336,39 @@ export async function couponList(c: C) {
   return jsonOk(c, await service(c).couponList(c.req.query()));
 }
 
+export async function couponCreate(c: C) {
+  privateResponse(c);
+  const body = await readJsonObject(c, 16 * 1024);
+  return jsonOk(
+    c,
+    await service(c).createCoupon(c.get("outInfo")!, body, idempotencyKey(c)),
+    "添加成功!",
+  );
+}
+
+export async function couponStatus(c: C) {
+  privateResponse(c);
+  return jsonOk(
+    c,
+    await service(c).setCouponStatus(
+      c.get("outInfo")!,
+      c.req.param("id"),
+      c.req.param("status"),
+      idempotencyKey(c),
+    ),
+    "修改成功",
+  );
+}
+
+export async function couponDelete(c: C) {
+  privateResponse(c);
+  return jsonOk(
+    c,
+    await service(c).deleteCoupon(c.get("outInfo")!, c.req.param("id"), idempotencyKey(c)),
+    "删除成功!",
+  );
+}
+
 export async function userLevelList(c: C) {
   return jsonOk(c, await service(c).userLevelList(c.req.query()));
 }

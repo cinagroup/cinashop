@@ -48,6 +48,7 @@ import {
 import { amountToCents } from "@/services/payment/RefundGateway";
 import { StoreProductService, type GoodsListParams } from "@/services/product/StoreProductService";
 import { OutProductService } from "@/services/out/OutProductService";
+import { OutCouponService } from "@/services/out/OutCouponService";
 import {
   normalizeSupplierDeliveryInput,
   normalizeSupplierSplitCartInput,
@@ -101,6 +102,9 @@ const SUPPORTED_WRITE_ROUTES = new Set([
   "put /refund/remark/{order_id}",
   "put /refund/refuse/{order_id}",
   "put /refund/{order_id}",
+  "post /coupon",
+  "put /coupon/status/{id}/{status}",
+  "delete /coupon/{id}",
 ]);
 
 const MAX_FILTER_TEXT = 100;
@@ -1916,13 +1920,37 @@ export class OutApiService {
     const { page, limit } = pageValues(query);
     const filters: SQL[] = [eq(storeCouponIssue.isDel, 0)];
     const status = optionalInteger(query.status, "优惠券状态") ?? 1;
+    if (status < -1 || status > 1) throw new ValidateException("优惠券状态参数错误");
     filters.push(eq(storeCouponIssue.status, status));
     const receiveType = optionalInteger(query.receive_type, "领取方式");
-    if (receiveType !== undefined) filters.push(eq(storeCouponIssue.receiveType, receiveType));
-    const couponType = optionalInteger(query.coupon_type, "适用类型");
-    if (couponType !== undefined) filters.push(eq(storeCouponIssue.couponType, couponType));
-    const type = optionalInteger(query.type, "优惠类型");
-    if (type !== undefined) filters.push(eq(storeCouponIssue.type, type));
+    if (receiveType !== undefined && (receiveType < 0 || receiveType > 3)) {
+      throw new ValidateException("领取方式参数错误");
+    }
+    if (receiveType) filters.push(eq(storeCouponIssue.receiveType, receiveType));
+    // PHP coupon_type is the discount mode; the migration deliberately stores
+    // it in target column `type` to avoid conflating it with scope.
+    const couponType = optionalInteger(query.coupon_type, "优惠类型");
+    if (couponType !== undefined) {
+      if (couponType !== 1 && couponType !== 2) throw new ValidateException("优惠类型参数错误");
+      filters.push(eq(storeCouponIssue.type, couponType));
+    }
+    const receive = String(query.type ?? "").trim();
+    if (receive === "send") {
+      const now = new Date();
+      filters.push(
+        eq(storeCouponIssue.receiveType, 3),
+        eq(storeCouponIssue.status, 1),
+        or(
+          and(lte(storeCouponIssue.startTime, now), gte(storeCouponIssue.endTime, now)),
+          and(isNull(storeCouponIssue.startTime), isNull(storeCouponIssue.endTime)),
+        )!,
+        or(
+          sql`${storeCouponIssue.day} > 0`,
+          and(eq(storeCouponIssue.day, 0), gte(storeCouponIssue.useEndTime, now)),
+        )!,
+        or(sql`${storeCouponIssue.remainCount} > 0`, eq(storeCouponIssue.isPermanent, 1))!,
+      );
+    }
     const keyword = filterText(query.coupon_title ?? query.keyword, "优惠券名称");
     if (keyword) filters.push(ilike(storeCouponIssue.couponTitle, `%${keyword}%`));
     const where = and(...filters);
@@ -1933,13 +1961,60 @@ export class OutApiService {
       this.container.db.select({ count: count() }).from(storeCouponIssue).where(where),
     ]);
     return {
-      list: rows.map((row) => ({
-        ...(toSnakeValue(row) as Record<string, unknown>),
-        coupon_time: row.day > 0 ? `${row.day}天` : "固定有效期",
-      })),
+      list: rows.map((row) => {
+        const item = toSnakeValue(row) as Record<string, unknown>;
+        delete item.day;
+        delete item.legacy_product_ids;
+        delete item.legacy_category_id;
+        delete item.legacy_brand_id;
+        delete item.use_start_time;
+        delete item.use_end_time;
+        const fixedDays = row.useStartTime && row.useEndTime
+          ? Math.ceil((row.useEndTime.getTime() - row.useStartTime.getTime()) / 86_400_000)
+          : 0;
+        return {
+          ...item,
+          // Restore PHP response names after the target-schema column swap.
+          type: row.couponType,
+          coupon_type: row.type,
+          product_id: row.legacyProductIds || row.productId,
+          category_id: row.legacyCategoryId || Number(row.category_id) || 0,
+          brand_id: row.legacyBrandId || Number(row.brandId) || 0,
+          start_time: row.startTime ? Math.floor(row.startTime.getTime() / 1_000) : 0,
+          end_time: row.endTime ? Math.floor(row.endTime.getTime() / 1_000) : 0,
+          start_use_time: row.useStartTime ? Math.floor(row.useStartTime.getTime() / 1_000) : 0,
+          end_use_time: row.useEndTime ? Math.floor(row.useEndTime.getTime() / 1_000) : 0,
+          coupon_time: `${row.day > 0 ? row.day : fixedDays}天`,
+        };
+      }),
       count: Number(total[0]?.count ?? 0),
       pages_url: "/pages/activity/coupon/index",
     };
+  }
+
+  async createCoupon(
+    account: AuthenticatedOutAccount,
+    input: Record<string, unknown>,
+    requestKey: unknown,
+  ) {
+    return new OutCouponService(this.container).create(account, input, requestKey);
+  }
+
+  async setCouponStatus(
+    account: AuthenticatedOutAccount,
+    id: unknown,
+    status: unknown,
+    requestKey: unknown,
+  ) {
+    return new OutCouponService(this.container).setStatus(account, id, status, requestKey);
+  }
+
+  async deleteCoupon(
+    account: AuthenticatedOutAccount,
+    id: unknown,
+    requestKey: unknown,
+  ) {
+    return new OutCouponService(this.container).delete(account, id, requestKey);
   }
 
   async userLevelList(query: Record<string, unknown>) {
