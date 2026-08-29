@@ -84,8 +84,28 @@ export async function wechatAuth(c: C) {
   if (!code) return jsonFail(c, "code 不能为空");
   const svc = new WechatAuthService(c.get("container"), c.env);
   try {
-    const result = await svc.oauthLogin(code, clientIp(c));
+    const result = await svc.oauthLogin(code, clientIp(c), {
+      state: c.req.query("state"),
+      spreadUid: Number.parseInt(c.req.query("spread_spid") ?? "0", 10) || 0,
+    });
+    c.header("Cache-Control", "private, no-store, max-age=0");
     return jsonOk(c, result, "登录成功");
+  } catch (e) {
+    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    throw e;
+  }
+}
+
+/** POST /api/wechat/oauth_state — create a one-time login-CSRF state. */
+export async function wechatOauthState(c: C) {
+  try {
+    const result = await new WechatAuthService(c.get("container"), c.env)
+      .createOauthState(clientIp(c));
+    c.header("Cache-Control", "no-store, max-age=0");
+    return jsonOk(c, {
+      state: result.state,
+      expires_in: result.expiresIn,
+    });
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;

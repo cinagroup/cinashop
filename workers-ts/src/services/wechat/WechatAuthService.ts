@@ -8,7 +8,15 @@ import { withTx, type Container } from "@/lib/di";
 import type { Env } from "@/env";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { createToken, md5 } from "@/utils/jwt";
-import { cacheGet, cacheSet, cacheTake, getRedis, setTokenBucket } from "@/utils/cache";
+import {
+  cacheDelete,
+  cacheGet,
+  cacheSet,
+  cacheSetIfAbsent,
+  cacheTake,
+  getRedis,
+  setTokenBucket,
+} from "@/utils/cache";
 import { decryptMiniProgramData } from "@/utils/wechat-crypto";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { UserBehaviorService } from "@/services/user/UserBehaviorService";
@@ -22,6 +30,13 @@ import { V2UserCompatibilityService } from "@/services/user/V2UserCompatibilityS
 
 const SOCIAL_PENDING_TTL_SECONDS = 15 * 60;
 const SOCIAL_PENDING_PREFIX = "social_pending:";
+const ROUTINE_LOGIN_PREFIX = "routine_login:";
+const OAUTH_STATE_PREFIX = "wechat_oauth_state:";
+const WECHAT_CODE_PREFIX = "wechat_code_used:";
+const WECHAT_CODE_TTL_SECONDS = 10 * 60;
+const WECHAT_AUTH_LIMIT_PER_MINUTE = 30;
+const WECHAT_RESPONSE_MAX_BYTES = 32 * 1024;
+const WECHAT_FETCH_TIMEOUT_MS = 8_000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type SocialUserType = "wechat" | "routine" | "apple";
@@ -39,11 +54,34 @@ export interface VerifiedSocialIdentity {
 interface PendingSocialIdentity extends VerifiedSocialIdentity {
   version: 1;
   issuedAt: number;
+  auditIp: string;
 }
 
 export type SocialAuthResult =
-  | { token: string; expiresTime: number; uid: number }
+  | {
+    token: string;
+    expiresTime: number;
+    uid: number;
+    userInfo: { uid: number; nickname: string; avatar: string; phone: string; user_type: string };
+    storeUserAvatar: number;
+  }
   | { bindPhone: true; key: string; expiresIn: number };
+
+interface RoutineLoginTicket {
+  version: 1;
+  purpose: "routine_login";
+  identity: VerifiedSocialIdentity;
+  requiresPhone: boolean;
+  issuedAt: number;
+  auditIp: string;
+}
+
+interface WechatOauthState {
+  version: 1;
+  purpose: "wechat_oauth_login";
+  auditIp: string;
+  issuedAt: number;
+}
 
 function phoneBindingRequired(value: string): boolean {
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
@@ -80,8 +118,41 @@ function validPendingIdentity(value: unknown): value is PendingSocialIdentity {
     && ["wechat", "routine", "apple"].includes(String(pending.userType))
     && Number.isSafeInteger(pending.issuedAt)
     && Number(pending.issuedAt) > 0
+    && typeof pending.auditIp === "string"
+    && pending.auditIp.length === 24
     && age >= -60
     && age <= SOCIAL_PENDING_TTL_SECONDS + 60;
+}
+
+function validRoutineLoginTicket(value: unknown): value is RoutineLoginTicket {
+  if (!value || typeof value !== "object") return false;
+  const ticket = value as Partial<RoutineLoginTicket>;
+  const age = Math.floor(Date.now() / 1000) - Number(ticket.issuedAt ?? 0);
+  return ticket.version === 1
+    && ticket.purpose === "routine_login"
+    && typeof ticket.requiresPhone === "boolean"
+    && typeof ticket.auditIp === "string"
+    && ticket.auditIp.length === 24
+    && validPendingIdentity({
+      ...(ticket.identity ?? {}),
+      version: 1,
+      issuedAt: ticket.issuedAt,
+      auditIp: ticket.auditIp,
+    })
+    && age >= -60
+    && age <= SOCIAL_PENDING_TTL_SECONDS + 60;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function normalizedAuditIp(value: string): Promise<string> {
+  const input = value.trim().slice(0, 128) || "unknown";
+  return (await sha256Hex(input)).slice(0, 24);
 }
 
 // ─── Dao ─────────────────────────────────────────────────────
@@ -120,6 +191,244 @@ export class WechatAuthService {
   ) {}
 
   /**
+   * Create a one-time OAuth state bound to the requesting network. Login
+   * callbacks must consume it before exchanging a provider code.
+   */
+  async createOauthState(ip = ""): Promise<{ state: string; expiresIn: number }> {
+    const redis = getRedis(this.env);
+    if (!redis) throw new ValidateException("微信授权状态缓存尚未配置");
+    const auditIp = await normalizedAuditIp(ip);
+    const minute = Math.floor(Date.now() / 60_000);
+    const count = await redis.eval<[string], number>(
+      "local n=redis.call('incr',KEYS[1]); if n==1 then redis.call('expire',KEYS[1],ARGV[1]) end; return n",
+      [`wechat_oauth_state_rate_${auditIp}_${minute}`],
+      ["61"],
+    );
+    if (Number(count) > WECHAT_AUTH_LIMIT_PER_MINUTE) {
+      throw new ValidateException("微信授权状态请求过于频繁，请稍后重试");
+    }
+    const state = crypto.randomUUID();
+    const issuedAt = Math.floor(Date.now() / 1000);
+    const stored = await cacheSetIfAbsent(
+      OAUTH_STATE_PREFIX + state,
+      {
+        version: 1,
+        purpose: "wechat_oauth_login",
+        auditIp,
+        issuedAt,
+      } satisfies WechatOauthState,
+      this.env,
+      SOCIAL_PENDING_TTL_SECONDS,
+    );
+    if (!stored) throw new ValidateException("微信授权状态创建失败，请重试");
+    return { state, expiresIn: SOCIAL_PENDING_TTL_SECONDS };
+  }
+
+  /** Begin the PHP v2 auth_type flow without creating a user or token. */
+  async beginMiniProgramLogin(params: {
+    code: string;
+    spreadUid?: number;
+    ip?: string;
+  }): Promise<{ bindPhone: boolean; key: string; expiresIn: number }> {
+    const session = await this.code2Session(params.code, "routine", params.ip ?? "");
+    const identity = normalizeIdentity({
+      openid: session.openid,
+      unionid: session.unionid ?? "",
+      userType: "routine",
+      spreadUid: params.spreadUid,
+    });
+    const [existing, requiredConfig] = await Promise.all([
+      this.findExistingIdentityUser(identity),
+      new SystemConfigService(this.container, this.env).get("store_user_mobile"),
+    ]);
+    const requiresPhone = phoneBindingRequired(requiredConfig) && !existing?.phone;
+    const key = crypto.randomUUID();
+    const stored = await cacheSetIfAbsent(
+      ROUTINE_LOGIN_PREFIX + key,
+      {
+        version: 1,
+        purpose: "routine_login",
+        identity,
+        requiresPhone,
+        issuedAt: Math.floor(Date.now() / 1000),
+        auditIp: await normalizedAuditIp(params.ip ?? ""),
+      } satisfies RoutineLoginTicket,
+      this.env,
+      SOCIAL_PENDING_TTL_SECONDS,
+    );
+    if (!stored) throw new ValidateException("小程序登录凭据创建失败，请重试");
+    return { bindPhone: requiresPhone, key, expiresIn: SOCIAL_PENDING_TTL_SECONDS };
+  }
+
+  /** Atomically consume auth_type's key and issue a token. */
+  async completeMiniProgramLogin(
+    keyValue: unknown,
+    ip = "",
+  ): Promise<Extract<SocialAuthResult, { token: string }>> {
+    const preview = await this.peekRoutineLoginTicket(keyValue, ip);
+    if (preview.requiresPhone) {
+      throw new ValidateException("请先绑定手机号");
+    }
+    const ticket = await this.takeRoutineLoginTicket(keyValue, ip);
+    const uid = await this.reconcileVerifiedIdentity(ticket.identity);
+    return this.issueSocialToken(uid, ip, ticket.identity.spreadUid);
+  }
+
+  async assertMiniProgramPhoneLoginCredential(params: {
+    key?: unknown;
+    code?: unknown;
+    ip?: string;
+  }): Promise<void> {
+    const key = String(params.key ?? "").trim();
+    const code = String(params.code ?? "").trim();
+    if ((key ? 1 : 0) + (code ? 1 : 0) !== 1) {
+      throw new ValidateException("小程序登录凭据有误，请重新授权");
+    }
+    if (key) {
+      await this.peekRoutineLoginTicket(key, params.ip ?? "");
+    } else if (code.length > 512) {
+      throw new ValidateException("微信授权 code 无效");
+    }
+  }
+
+  /**
+   * Finish a Mini Program identity with an independently scoped SMS code.
+   * The controller consumes that code before entering this method.
+   */
+  async miniProgramPhoneLogin(params: {
+    key?: unknown;
+    code?: string;
+    phone: string;
+    spreadUid?: number;
+    ip?: string;
+  }): Promise<Extract<SocialAuthResult, { token: string }>> {
+    const key = String(params.key ?? "").trim();
+    const code = String(params.code ?? "").trim();
+    if ((key ? 1 : 0) + (code ? 1 : 0) !== 1) {
+      throw new ValidateException("小程序登录凭据有误，请重新授权");
+    }
+    let identity: VerifiedSocialIdentity;
+    if (key) {
+      identity = (await this.takeRoutineLoginTicket(key, params.ip ?? "")).identity;
+    } else {
+      const session = await this.code2Session(code, "routine", params.ip ?? "");
+      identity = normalizeIdentity({
+        openid: session.openid,
+        unionid: session.unionid ?? "",
+        userType: "routine",
+        spreadUid: params.spreadUid,
+      });
+    }
+    const uid = await this.reconcileVerifiedIdentity({ ...identity, phone: params.phone });
+    return this.issueSocialToken(uid, params.ip ?? "", identity.spreadUid);
+  }
+
+  /**
+   * Bind a provider-verified Mini Program identity to a provider-verified
+   * phone credential. Supports the current phone code and the legacy
+   * encryptedData/iv contract; neither credential can be replayed.
+   */
+  async miniProgramPhoneCredentialLogin(params: {
+    key?: unknown;
+    code?: string;
+    phoneCode?: string;
+    iv?: string;
+    encryptedData?: string;
+    spreadUid?: number;
+    ip?: string;
+    issueToken?: boolean;
+  }): Promise<Extract<SocialAuthResult, { token: string }> | { uid: number }> {
+    const key = String(params.key ?? "").trim();
+    const loginCode = String(params.code ?? "").trim();
+    const phoneCode = String(params.phoneCode ?? "").trim();
+    const ip = params.ip ?? "";
+    let ticket: RoutineLoginTicket | null = null;
+    if (key) ticket = await this.peekRoutineLoginTicket(key, ip);
+
+    let identity: VerifiedSocialIdentity | null = ticket?.identity ?? null;
+    let phone = "";
+    if (phoneCode) {
+      if (!identity && !loginCode) {
+        throw new ValidateException("请先完成小程序身份授权");
+      }
+      if (loginCode) {
+        const session = await this.code2Session(loginCode, "routine", ip);
+        const fromCode = normalizeIdentity({
+          openid: session.openid,
+          unionid: session.unionid ?? "",
+          userType: "routine",
+          spreadUid: params.spreadUid,
+        });
+        if (identity && identity.openid !== fromCode.openid) {
+          throw new ValidateException("小程序身份与手机号凭据不匹配");
+        }
+        identity = identity ?? fromCode;
+      }
+      phone = await this.phoneNumberFromCode(phoneCode, ip);
+    } else {
+      if (!loginCode || !params.iv || !params.encryptedData) {
+        throw new ValidateException("手机号凭据参数有误");
+      }
+      const session = await this.code2Session(loginCode, "routine", ip);
+      const fromCode = normalizeIdentity({
+        openid: session.openid,
+        unionid: session.unionid ?? "",
+        userType: "routine",
+        spreadUid: params.spreadUid,
+      });
+      if (identity && identity.openid !== fromCode.openid) {
+        throw new ValidateException("小程序身份与手机号凭据不匹配");
+      }
+      identity = identity ?? fromCode;
+      let decrypted: Record<string, unknown>;
+      try {
+        decrypted = await decryptMiniProgramData(
+          params.encryptedData,
+          session.session_key,
+          params.iv,
+        );
+      } catch {
+        throw new ValidateException("手机号解密失败，请重新授权");
+      }
+      const appId = await this.getAppId("routine");
+      const watermark = decrypted.watermark as { appid?: unknown } | undefined;
+      if (String(watermark?.appid ?? "") !== appId) {
+        throw new ValidateException("手机号凭据所属小程序不匹配");
+      }
+      phone = String(decrypted.purePhoneNumber ?? decrypted.phoneNumber ?? "").trim();
+    }
+    if (!identity || !/^1\d{10}$/.test(phone)) {
+      throw new ValidateException("手机号凭据无效");
+    }
+    if (ticket) {
+      const consumed = await this.takeRoutineLoginTicket(key, ip);
+      if (consumed.identity.openid !== identity.openid) {
+        throw new ValidateException("小程序身份凭据不匹配");
+      }
+      identity = consumed.identity;
+    }
+    const uid = await this.reconcileVerifiedIdentity({ ...identity, phone });
+    if (params.issueToken === false) return { uid };
+    return this.issueSocialToken(uid, ip, identity.spreadUid);
+  }
+
+  /** PHP v2 routine silent/profile aliases share one provider-verified core. */
+  async miniProgramSilentLogin(params: {
+    code: string;
+    spreadUid?: number;
+    ip?: string;
+    forcePendingForNew?: boolean;
+  }): Promise<SocialAuthResult> {
+    const session = await this.code2Session(params.code, "routine", params.ip ?? "");
+    return this.loginVerifiedIdentity({
+      openid: session.openid,
+      unionid: session.unionid ?? "",
+      userType: "routine",
+      spreadUid: params.spreadUid,
+    }, params.ip ?? "", { forcePendingForNew: params.forcePendingForNew });
+  }
+
+  /**
    * 小程序登录 (对应 PHP RoutineServices::mp_auth)
    *
    * 流程:
@@ -137,7 +446,7 @@ export class WechatAuthService {
     if (!code) throw new ValidateException("code 不能为空");
 
     // 1. code2session
-    const session = await this.code2Session(code, "routine");
+    const session = await this.code2Session(code, "routine", params.ip ?? "");
     const { openid, session_key, unionid } = session;
 
     // 2. 查/建用户
@@ -175,11 +484,12 @@ export class WechatAuthService {
     if (!user.status) throw new ValidateException("您已被禁止登录");
 
     const { token, exp } = await createToken(uid, "api", user.pwd, this.env.APP_KEY);
-    await setTokenBucket(
+    const stored = await setTokenBucket(
       (await import("@/utils/jwt")).md5(token),
       { uid, type: "api", token, exp: exp - Math.floor(Date.now() / 1000) + 60 },
       this.env,
     );
+    if (!stored) throw new ValidateException("登录状态保存失败，请重试");
 
     await new UserBehaviorService(this.container)
       .recordLoginVisit(uid, params.ip)
@@ -206,7 +516,7 @@ export class WechatAuthService {
     if (!Number.isSafeInteger(params.uid) || params.uid <= 0) {
       throw new ValidateException("请先登录");
     }
-    const session = await cacheGet<{ openid?: string; sessionKey?: string }>(
+    const session = await cacheTake<{ openid?: string; sessionKey?: string }>(
       `session_key_uid:${params.uid}`,
       this.env,
     );
@@ -224,7 +534,19 @@ export class WechatAuthService {
       .limit(1);
     if (!linked[0]) throw new ValidateException("微信身份与当前账号不匹配，请重新登录");
 
-    const data = await decryptMiniProgramData(params.encryptedData, session.sessionKey, params.iv);
+    let data: Record<string, unknown>;
+    try {
+      data = await decryptMiniProgramData(params.encryptedData, session.sessionKey, params.iv);
+    } catch {
+      throw new ValidateException("手机号解密失败，请重新登录");
+    } finally {
+      await cacheDelete(`session_key:${session.openid}`, this.env).catch(() => false);
+    }
+    const appId = await this.getAppId("routine");
+    const watermark = data.watermark as { appid?: unknown } | undefined;
+    if (String(watermark?.appid ?? "") !== appId) {
+      throw new ValidateException("手机号凭据所属小程序不匹配");
+    }
     const phone = (data.purePhoneNumber ?? data.phoneNumber) as string;
     if (!/^1\d{10}$/.test(phone)) throw new ValidateException("手机号解密失败");
 
@@ -248,11 +570,17 @@ export class WechatAuthService {
    *   3. 查/建用户
    *   4. 发 token
    */
-  async oauthLogin(code: string, ip = ""): Promise<SocialAuthResult> {
+  async oauthLogin(
+    code: string,
+    ip = "",
+    options: { state?: unknown; spreadUid?: number; forcePendingForNew?: boolean } = {},
+  ): Promise<SocialAuthResult> {
     if (!code) throw new ValidateException("code 不能为空");
 
+    await this.consumeOauthState(options.state, ip);
+
     // 1. code 换 access_token + openid
-    const tokenResp = await this.oauthAccessToken(code, "wechat");
+    const tokenResp = await this.oauthAccessToken(code, "wechat", ip);
     const { access_token, openid, unionid } = tokenResp;
 
     // 2. 取 userinfo
@@ -277,7 +605,8 @@ export class WechatAuthService {
       nickname,
       avatar: headimgurl,
       sex,
-    }, ip);
+      spreadUid: options.spreadUid,
+    }, ip, { forcePendingForNew: options.forcePendingForNew });
   }
 
   /**
@@ -291,7 +620,7 @@ export class WechatAuthService {
     ip = "",
   ): Promise<{ nickname: string; avatar: string; is_complete: 1 }> {
     if (!code) throw new ValidateException("code 不能为空");
-    const token = await this.oauthAccessToken(code, "wechat");
+    const token = await this.oauthAccessToken(code, "wechat", ip);
     let official: {
       nickname?: string;
       headimgurl?: string;
@@ -330,13 +659,16 @@ export class WechatAuthService {
   async loginVerifiedIdentity(
     input: VerifiedSocialIdentity,
     ip = "",
+    options: { forcePendingForNew?: boolean } = {},
   ): Promise<SocialAuthResult> {
     const identity = normalizeIdentity(input);
     const config = await new SystemConfigService(this.container, this.env)
       .get("store_user_mobile");
-    if (phoneBindingRequired(config)) {
+    if (phoneBindingRequired(config) || options.forcePendingForNew) {
       const existing = await this.findExistingIdentityUser(identity);
-      if (!existing?.phone) return this.createPendingIdentity(identity);
+      if (!existing || (phoneBindingRequired(config) && !existing.phone)) {
+        return this.createPendingIdentity(identity, ip);
+      }
       return this.issueSocialToken(existing.uid, ip, identity.spreadUid);
     }
 
@@ -345,12 +677,12 @@ export class WechatAuthService {
   }
 
   /** Ensure a pending key exists before consuming the independent SMS code. */
-  async assertPendingIdentity(keyValue: unknown): Promise<void> {
+  async assertPendingIdentity(keyValue: unknown, ip = ""): Promise<void> {
     const key = String(keyValue ?? "").trim();
     if (!UUID_PATTERN.test(key)) throw new ValidateException("社交绑定凭据无效或已过期");
     if (!getRedis(this.env)) throw new ValidateException("社交绑定缓存尚未配置");
     const pending = await cacheGet<PendingSocialIdentity>(SOCIAL_PENDING_PREFIX + key, this.env);
-    if (!validPendingIdentity(pending)) {
+    if (!validPendingIdentity(pending) || pending.auditIp !== await normalizedAuditIp(ip)) {
       throw new ValidateException("社交绑定凭据无效或已过期");
     }
   }
@@ -364,7 +696,7 @@ export class WechatAuthService {
     keyValue: unknown,
     phone: string,
     ip = "",
-  ): Promise<{ token: string; expiresTime: number; uid: number }> {
+  ): Promise<Extract<SocialAuthResult, { token: string }>> {
     const key = String(keyValue ?? "").trim();
     if (!UUID_PATTERN.test(key)) throw new ValidateException("社交绑定凭据无效或已过期");
     if (!getRedis(this.env)) throw new ValidateException("社交绑定缓存尚未配置");
@@ -372,7 +704,7 @@ export class WechatAuthService {
       SOCIAL_PENDING_PREFIX + key,
       this.env,
     );
-    if (!validPendingIdentity(pending)) {
+    if (!validPendingIdentity(pending) || pending.auditIp !== await normalizedAuditIp(ip)) {
       throw new ValidateException("社交绑定凭据无效或已过期");
     }
     const uid = await this.reconcileVerifiedIdentity({ ...pending, phone });
@@ -403,35 +735,198 @@ export class WechatAuthService {
     return { appId, timestamp, nonceStr, signature };
   }
 
+  private async consumeOauthState(stateValue: unknown, ip: string): Promise<void> {
+    const state = String(stateValue ?? "").trim();
+    if (!UUID_PATTERN.test(state)) {
+      throw new ValidateException("微信授权状态无效或已过期");
+    }
+    if (!getRedis(this.env)) throw new ValidateException("微信授权状态缓存尚未配置");
+    const record = await cacheTake<WechatOauthState>(OAUTH_STATE_PREFIX + state, this.env);
+    const age = Math.floor(Date.now() / 1000) - Number(record?.issuedAt ?? 0);
+    if (
+      !record
+      || record.version !== 1
+      || record.purpose !== "wechat_oauth_login"
+      || record.auditIp !== await normalizedAuditIp(ip)
+      || !Number.isSafeInteger(record.issuedAt)
+      || age < -60
+      || age > SOCIAL_PENDING_TTL_SECONDS + 60
+    ) {
+      throw new ValidateException("微信授权状态无效或已过期");
+    }
+  }
+
+  private routineTicketKey(value: unknown): string {
+    const key = String(value ?? "").trim();
+    if (!UUID_PATTERN.test(key)) throw new ValidateException("小程序登录凭据无效或已过期");
+    if (!getRedis(this.env)) throw new ValidateException("小程序登录缓存尚未配置");
+    return key;
+  }
+
+  private async peekRoutineLoginTicket(value: unknown, ip: string): Promise<RoutineLoginTicket> {
+    const key = this.routineTicketKey(value);
+    const ticket = await cacheGet<RoutineLoginTicket>(ROUTINE_LOGIN_PREFIX + key, this.env);
+    if (!validRoutineLoginTicket(ticket) || ticket.auditIp !== await normalizedAuditIp(ip)) {
+      throw new ValidateException("小程序登录凭据无效或已过期");
+    }
+    return ticket;
+  }
+
+  private async takeRoutineLoginTicket(value: unknown, ip: string): Promise<RoutineLoginTicket> {
+    const key = this.routineTicketKey(value);
+    const ticket = await cacheTake<RoutineLoginTicket>(ROUTINE_LOGIN_PREFIX + key, this.env);
+    if (!validRoutineLoginTicket(ticket) || ticket.auditIp !== await normalizedAuditIp(ip)) {
+      throw new ValidateException("小程序登录凭据无效或已过期");
+    }
+    return ticket;
+  }
+
+  private async claimProviderCode(
+    channel: "routine_login" | "routine_phone" | "wechat_oauth",
+    codeValue: string,
+    ip: string,
+  ): Promise<string> {
+    const code = String(codeValue ?? "").trim();
+    if (!code || code.length > 512) throw new ValidateException("微信授权 code 无效");
+    const redis = getRedis(this.env);
+    if (!redis) throw new ValidateException("微信授权重放缓存尚未配置");
+    const auditIp = await normalizedAuditIp(ip);
+    const minute = Math.floor(Date.now() / 60_000);
+    const count = await redis.eval<[string], number>(
+      "local n=redis.call('incr',KEYS[1]); if n==1 then redis.call('expire',KEYS[1],ARGV[1]) end; return n",
+      [`wechat_auth_rate_${channel}_${auditIp}_${minute}`],
+      ["61"],
+    );
+    if (Number(count) > WECHAT_AUTH_LIMIT_PER_MINUTE) {
+      throw new ValidateException("微信授权请求过于频繁，请稍后重试");
+    }
+    const digest = await sha256Hex(`${channel}:${code}`);
+    const claimed = await cacheSetIfAbsent(
+      `${WECHAT_CODE_PREFIX}${channel}:${digest}`,
+      { usedAt: Math.floor(Date.now() / 1000) },
+      this.env,
+      WECHAT_CODE_TTL_SECONDS,
+    );
+    if (!claimed) throw new ValidateException("微信授权 code 已使用或已过期");
+    return code;
+  }
+
+  private async fetchWechatJson(
+    url: string,
+    init?: RequestInit,
+  ): Promise<Record<string, unknown>> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), WECHAT_FETCH_TIMEOUT_MS);
+    try {
+      const response = await fetch(url, { ...init, signal: controller.signal });
+      const declared = Number(response.headers.get("content-length") ?? "0");
+      if (Number.isFinite(declared) && declared > WECHAT_RESPONSE_MAX_BYTES) {
+        throw new Error("Wechat response exceeded size limit");
+      }
+      if (!response.body) throw new Error("Wechat response body was empty");
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let total = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > WECHAT_RESPONSE_MAX_BYTES) {
+          await reader.cancel();
+          throw new Error("Wechat response exceeded size limit");
+        }
+        chunks.push(value);
+      }
+      const bytes = new Uint8Array(total);
+      let offset = 0;
+      for (const chunk of chunks) {
+        bytes.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      const parsed = JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("Wechat response was not an object");
+      }
+      return parsed as Record<string, unknown>;
+    } catch (error) {
+      if (error instanceof ValidateException) throw error;
+      throw new ValidateException("微信授权服务暂时不可用，请重试");
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async phoneNumberFromCode(codeValue: string, ip: string): Promise<string> {
+    const code = await this.claimProviderCode("routine_phone", codeValue, ip);
+    const accessToken = await this.getMiniProgramAccessToken();
+    const url = new URL("https://api.weixin.qq.com/wxa/business/getuserphonenumber");
+    url.searchParams.set("access_token", accessToken);
+    const data = await this.fetchWechatJson(url.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    }) as {
+      errcode?: number;
+      errmsg?: string;
+      phone_info?: { phoneNumber?: string; purePhoneNumber?: string };
+    };
+    if (Number(data.errcode ?? 0) !== 0) {
+      throw new ValidateException(`手机号凭据验证失败: ${String(data.errmsg ?? "微信接口错误")}`);
+    }
+    const phone = String(data.phone_info?.purePhoneNumber ?? data.phone_info?.phoneNumber ?? "").trim();
+    if (!/^1\d{10}$/.test(phone)) throw new ValidateException("手机号凭据无效");
+    return phone;
+  }
+
   // ─── 内部: 微信 API 调用 ─────────────────────────────────
 
   /** jscode2session (小程序) */
-  private async code2Session(code: string, _type: string): Promise<{
+  private async code2Session(codeValue: string, _type: string, ip = ""): Promise<{
     openid: string;
     session_key: string;
     unionid?: string;
   }> {
     const appId = await this.getAppId("routine");
     const secret = await this.getAppSecret("routine");
-    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
-    const resp = await fetch(url);
-    const data = (await resp.json()) as { openid?: string; session_key?: string; unionid?: string; errcode?: number; errmsg?: string };
+    const code = await this.claimProviderCode("routine_login", codeValue, ip);
+    const url = new URL("https://api.weixin.qq.com/sns/jscode2session");
+    url.searchParams.set("appid", appId);
+    url.searchParams.set("secret", secret);
+    url.searchParams.set("js_code", code);
+    url.searchParams.set("grant_type", "authorization_code");
+    const data = await this.fetchWechatJson(url.toString()) as {
+      openid?: string;
+      session_key?: string;
+      unionid?: string;
+      errcode?: number;
+      errmsg?: string;
+    };
     if (data.errcode) throw new ValidateException(`微信登录失败: ${data.errmsg}`);
     if (!data.openid || !data.session_key) throw new ValidateException("微信登录失败: 未返回 openid");
     return { openid: data.openid, session_key: data.session_key, unionid: data.unionid };
   }
 
   /** OAuth access_token (公众号) */
-  private async oauthAccessToken(code: string, _type: string): Promise<{
+  private async oauthAccessToken(codeValue: string, _type: string, ip = ""): Promise<{
     access_token: string;
     openid: string;
     unionid?: string;
   }> {
     const appId = await this.getAppId("wechat");
     const secret = await this.getAppSecret("wechat");
-    const url = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${appId}&secret=${secret}&code=${code}&grant_type=authorization_code`;
-    const resp = await fetch(url);
-    const data = (await resp.json()) as { access_token?: string; openid?: string; unionid?: string; errcode?: number; errmsg?: string };
+    const code = await this.claimProviderCode("wechat_oauth", codeValue, ip);
+    const url = new URL("https://api.weixin.qq.com/sns/oauth2/access_token");
+    url.searchParams.set("appid", appId);
+    url.searchParams.set("secret", secret);
+    url.searchParams.set("code", code);
+    url.searchParams.set("grant_type", "authorization_code");
+    const data = await this.fetchWechatJson(url.toString()) as {
+      access_token?: string;
+      openid?: string;
+      unionid?: string;
+      errcode?: number;
+      errmsg?: string;
+    };
     if (data.errcode) throw new ValidateException(`OAuth 失败: ${data.errmsg}`);
     if (!data.access_token || !data.openid) throw new ValidateException("OAuth 失败");
     return { access_token: data.access_token, openid: data.openid, unionid: data.unionid };
@@ -443,9 +938,15 @@ export class WechatAuthService {
     headimgurl?: string;
     sex?: number;
   }> {
-    const url = `https://api.weixin.qq.com/sns/userinfo?access_token=${accessToken}&openid=${openid}&lang=zh_CN`;
-    const resp = await fetch(url);
-    return (await resp.json()) as { nickname?: string; headimgurl?: string; sex?: number };
+    const url = new URL("https://api.weixin.qq.com/sns/userinfo");
+    url.searchParams.set("access_token", accessToken);
+    url.searchParams.set("openid", openid);
+    url.searchParams.set("lang", "zh_CN");
+    return await this.fetchWechatJson(url.toString()) as {
+      nickname?: string;
+      headimgurl?: string;
+      sex?: number;
+    };
   }
 
   /** Official-account subscriber profile (the second provider read used by PHP). */
@@ -459,9 +960,11 @@ export class WechatAuthService {
     country?: string;
   }> {
     const accessToken = await this.getAccessToken();
-    const url = `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${accessToken}&openid=${encodeURIComponent(openid)}&lang=zh_CN`;
-    const resp = await fetch(url);
-    const data = (await resp.json()) as {
+    const url = new URL("https://api.weixin.qq.com/cgi-bin/user/info");
+    url.searchParams.set("access_token", accessToken);
+    url.searchParams.set("openid", openid);
+    url.searchParams.set("lang", "zh_CN");
+    const data = await this.fetchWechatJson(url.toString()) as {
       nickname?: string;
       headimgurl?: string;
       sex?: number;
@@ -472,9 +975,7 @@ export class WechatAuthService {
       errcode?: number;
       errmsg?: string;
     };
-    if (!resp.ok || data.errcode) {
-      throw new Error(data.errmsg || `HTTP ${resp.status}`);
-    }
+    if (data.errcode) throw new Error(data.errmsg || "微信接口错误");
     return data;
   }
 
@@ -485,11 +986,21 @@ export class WechatAuthService {
     if (cached) return cached;
 
     const accessToken = await this.getAccessToken();
-    const url = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${accessToken}&type=jsapi`;
-    const resp = await fetch(url);
-    const data = (await resp.json()) as { ticket?: string; expires_in?: number; errcode?: number };
-    if (!data.ticket) throw new ValidateException("获取 jsapi_ticket 失败");
-    await cacheSet("jsapi_ticket", data.ticket, this.env, data.expires_in ?? 7200);
+    const url = new URL("https://api.weixin.qq.com/cgi-bin/ticket/getticket");
+    url.searchParams.set("access_token", accessToken);
+    url.searchParams.set("type", "jsapi");
+    const data = await this.fetchWechatJson(url.toString()) as {
+      ticket?: string;
+      expires_in?: number;
+      errcode?: number;
+      errmsg?: string;
+    };
+    if (!data.ticket || data.errcode) {
+      throw new ValidateException(`获取 jsapi_ticket 失败: ${String(data.errmsg ?? "微信接口错误")}`);
+    }
+    if (!(await cacheSet("jsapi_ticket", data.ticket, this.env, data.expires_in ?? 7200))) {
+      throw new ValidateException("jsapi_ticket 缓存失败");
+    }
     return data.ticket;
   }
 
@@ -501,11 +1012,49 @@ export class WechatAuthService {
 
     const appId = await this.getAppId("wechat");
     const secret = await this.getAppSecret("wechat");
-    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${secret}`;
-    const resp = await fetch(url);
-    const data = (await resp.json()) as { access_token?: string; expires_in?: number; errcode?: number };
-    if (!data.access_token) throw new ValidateException("获取 access_token 失败");
-    await cacheSet("wechat_access_token", data.access_token, this.env, (data.expires_in ?? 7200) - 200);
+    const url = new URL("https://api.weixin.qq.com/cgi-bin/token");
+    url.searchParams.set("grant_type", "client_credential");
+    url.searchParams.set("appid", appId);
+    url.searchParams.set("secret", secret);
+    const data = await this.fetchWechatJson(url.toString()) as {
+      access_token?: string;
+      expires_in?: number;
+      errcode?: number;
+      errmsg?: string;
+    };
+    if (!data.access_token || data.errcode) {
+      throw new ValidateException(`获取 access_token 失败: ${String(data.errmsg ?? "微信接口错误")}`);
+    }
+    const ttl = Math.max(60, Number(data.expires_in ?? 7200) - 200);
+    if (!(await cacheSet("wechat_access_token", data.access_token, this.env, ttl))) {
+      throw new ValidateException("公众号 access_token 缓存失败");
+    }
+    return data.access_token;
+  }
+
+  /** Mini Program access token used by the current phone-number code API. */
+  private async getMiniProgramAccessToken(): Promise<string> {
+    const cached = await cacheGet<string>("routine_access_token", this.env);
+    if (cached) return cached;
+    const appId = await this.getAppId("routine");
+    const secret = await this.getAppSecret("routine");
+    const url = new URL("https://api.weixin.qq.com/cgi-bin/token");
+    url.searchParams.set("grant_type", "client_credential");
+    url.searchParams.set("appid", appId);
+    url.searchParams.set("secret", secret);
+    const data = await this.fetchWechatJson(url.toString()) as {
+      access_token?: string;
+      expires_in?: number;
+      errcode?: number;
+      errmsg?: string;
+    };
+    if (!data.access_token || data.errcode) {
+      throw new ValidateException(`获取小程序 access_token 失败: ${String(data.errmsg ?? "微信接口错误")}`);
+    }
+    const ttl = Math.max(60, Number(data.expires_in ?? 7200) - 200);
+    if (!(await cacheSet("routine_access_token", data.access_token, this.env, ttl))) {
+      throw new ValidateException("小程序 access_token 缓存失败");
+    }
     return data.access_token;
   }
 
@@ -513,6 +1062,7 @@ export class WechatAuthService {
 
   private async createPendingIdentity(
     identity: VerifiedSocialIdentity,
+    ip: string,
   ): Promise<{ bindPhone: true; key: string; expiresIn: number }> {
     if (!getRedis(this.env)) throw new ValidateException("社交绑定缓存尚未配置");
     const key = crypto.randomUUID();
@@ -520,6 +1070,7 @@ export class WechatAuthService {
       ...identity,
       version: 1,
       issuedAt: Math.floor(Date.now() / 1000),
+      auditIp: await normalizedAuditIp(ip),
     };
     const stored = await cacheSet(
       SOCIAL_PENDING_PREFIX + key,
@@ -580,6 +1131,22 @@ export class WechatAuthService {
         });
     }
 
+    const [profiles, storeUserAvatarValue] = await Promise.all([
+      this.container.db.select({
+        uid: userTable.uid,
+        nickname: userTable.nickname,
+        avatar: userTable.avatar,
+        phone: userTable.phone,
+        userType: userTable.userType,
+      }).from(userTable).where(and(
+        eq(userTable.uid, uid),
+        eq(userTable.isDel, 0),
+      )).limit(1),
+      new SystemConfigService(this.container, this.env).get("store_user_avatar"),
+    ]);
+    const profile = profiles[0];
+    if (!profile) throw new NotFoundException("用户不存在");
+    const storeUserAvatar = Number.parseInt(storeUserAvatarValue, 10) || 0;
     const { token, exp } = await createToken(uid, "api", user.pwd, this.env.APP_KEY);
     const stored = await setTokenBucket(
       md5(token),
@@ -597,7 +1164,19 @@ export class WechatAuthService {
           message: error instanceof Error ? error.message : String(error),
         }));
       });
-    return { token, expiresTime: exp, uid };
+    return {
+      token,
+      expiresTime: exp,
+      uid,
+      userInfo: {
+        uid,
+        nickname: profile.nickname,
+        avatar: profile.avatar,
+        phone: profile.phone,
+        user_type: profile.userType,
+      },
+      storeUserAvatar,
+    };
   }
 
   /**

@@ -4,7 +4,7 @@
  * 对应 PHP app/controller/api/v1/Login.php
  */
 import type { Context } from "hono";
-import { jsonOk, jsonFail } from "@/utils/json";
+import { jsonOk, jsonFail, jsonRaw } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { LoginService } from "@/services/user/LoginService";
 import { SmsVerificationService } from "@/services/message/SmsVerificationService";
@@ -231,6 +231,41 @@ export async function verifyCode(c: C) {
   }
 }
 
+/**
+ * GET /api/verify_code — legacy method alias.
+ *
+ * Unlike PHP's unbound nonce, this alias requires phone + type in the query so
+ * the resulting Turnstile challenge cannot be moved across users or purposes.
+ * New clients must keep using POST to avoid placing a phone number in URL logs.
+ */
+export async function legacyVerifyCode(c: C) {
+  try {
+    const phone = c.req.query("phone") ?? c.req.query("account");
+    const type = c.req.query("type");
+    if (!phone || !type) {
+      throw new ValidateException("旧 GET verify_code 必须提供 phone 和 type；建议升级为 POST");
+    }
+    const result = await new SmsVerificationService(c.get("container"), c.env)
+      .createPublicChallenge(phone, type, clientIp(c));
+    c.header("Cache-Control", "no-store, max-age=0");
+    return jsonOk(c, { ...result, challenge_url: challengeUrl(c, result.key) });
+  } catch (e) {
+    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    throw e;
+  }
+}
+
+/** AJCaptcha cannot validate Turnstile tokens; keep aliases explicit and closed. */
+export function ajcaptchaUnavailable(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return jsonRaw(c, 410, "AJCaptcha 已迁移为 Turnstile，请使用 verify_code.challenge_url");
+}
+
+export function smsCaptchaUnavailable(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return jsonRaw(c, 410, "图片验证码已迁移为 Turnstile，请使用 verify_code.challenge_url");
+}
+
 /** POST /api/verify_code/complete — Siteverify 后将挑战标记为已验证。 */
 export async function completeVerifyCode(c: C) {
   const body = await readJsonObject(c);
@@ -442,7 +477,7 @@ export async function bindPendingSocialIdentity(c: C) {
   try {
     // Check the bearer capability before consuming a separately scoped SMS
     // code. Atomic GETDEL happens only after SMS validation succeeds.
-    await social.assertPendingIdentity(key);
+    await social.assertPendingIdentity(key, clientIp(c));
     await new SmsVerificationService(c.get("container"), c.env)
       .consumeUserCode("user_social_binding", phone, body.captcha);
     const result = await social.completePendingPhoneBinding(key, phone, clientIp(c));

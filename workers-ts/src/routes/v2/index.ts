@@ -12,9 +12,30 @@ import * as UserFinanceController from "@/controllers/api/v1/UserFinanceControll
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
 import * as V2UserCompatibilityController from "@/controllers/api/v1/V2UserCompatibilityController";
 import * as V2PromotionCompatibilityController from "@/controllers/api/v1/V2PromotionCompatibilityController";
+import * as V2WechatAuthController from "@/controllers/api/v1/V2WechatAuthController";
 import type { AppVariables, Env } from "@/env";
 
 export const v2Routes = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+
+// PHP v2 WeChat/Mini Program authentication contracts. All provider codes,
+// OAuth state, pending identities and SMS proofs are one-time capabilities.
+v2Routes.post("/wechat/oauth_state", V2WechatAuthController.oauthState);
+v2Routes.get("/routine/auth_type", V2WechatAuthController.routineAuthType);
+v2Routes.get("/routine/auth_login", V2WechatAuthController.routineAuthLogin);
+v2Routes.post("/routine/auth_binding_phone", V2WechatAuthController.routineAuthBindingPhone);
+v2Routes.post("/routine/phone_login", V2WechatAuthController.routinePhoneLogin);
+v2Routes.post("/routine/binding_phone", V2WechatAuthController.routineBindingPhone);
+v2Routes.get("/wechat/auth_login", V2WechatAuthController.wechatAuthLogin);
+v2Routes.post("/wechat/auth_binding_phone", V2WechatAuthController.wechatAuthBindingPhone);
+v2Routes.get("/wechat/routine_auth", V2WechatAuthController.routineLegacyAuth);
+v2Routes.get("/wechat/silence_auth", V2WechatAuthController.routineSilentNoLogin);
+v2Routes.get("/wechat/silence_auth_login", V2WechatAuthController.routineSilentLogin);
+v2Routes.post("/auth_bindind_phone", V2WechatAuthController.routineAuthBindingPhone);
+v2Routes.post("/phone_silence_auth", V2WechatAuthController.routinePhoneLogin);
+v2Routes.get("/wechat/auth", V2WechatAuthController.wechatLegacyAuth);
+v2Routes.get("/wechat/wx_silence_auth", V2WechatAuthController.wechatSilentNoLogin);
+v2Routes.get("/wechat/wx_silence_auth_login", V2WechatAuthController.wechatSilentLogin);
+v2Routes.post("/phone_wx_silence_auth", V2WechatAuthController.wechatAuthBindingPhone);
 
 v2Routes.get("/lottery/info/:factor?", authMiddleware({ force: true }), LotteryController.info);
 v2Routes.post("/lottery", authMiddleware({ force: true }), LotteryController.draw);

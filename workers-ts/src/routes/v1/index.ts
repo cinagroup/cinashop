@@ -63,9 +63,13 @@ export const v1Routes = new Hono<{
 v1Routes.post("/login", LoginController.login);
 v1Routes.post("/login/mobile", LoginController.mobile);
 v1Routes.post("/verify_code", LoginController.verifyCode);
+v1Routes.get("/verify_code", LoginController.legacyVerifyCode);
 v1Routes.post("/verify_code/complete", LoginController.completeVerifyCode);
 v1Routes.get("/verify_code/status", LoginController.verifyCodeStatus);
 v1Routes.get("/turnstile/challenge", LoginController.turnstileChallenge);
+v1Routes.get("/ajcaptcha", LoginController.ajcaptchaUnavailable);
+v1Routes.post("/ajcheck", LoginController.ajcaptchaUnavailable);
+v1Routes.get("/sms_captcha", LoginController.smsCaptchaUnavailable);
 v1Routes.post("/register/verify", LoginController.requestCode);
 v1Routes.post("/register", LoginController.register);
 v1Routes.post("/register/reset", LoginController.reset);
@@ -954,6 +958,7 @@ async function provisionInitialAdmin(
 // 小程序登录 (无需 auth)
 v1Routes.post("/wechat/mp_auth", WechatController.mpAuth);
 // 公众号 OAuth (无需 auth)
+v1Routes.post("/wechat/oauth_state", WechatController.wechatOauthState);
 v1Routes.get("/wechat/auth", WechatController.wechatAuth);
 // JS-SDK 配置 (无需 auth)
 v1Routes.get("/wechat/config", WechatController.wechatConfig);

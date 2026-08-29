@@ -1622,6 +1622,38 @@ API-006-CHECKOUT 的新订单代码和隔离状态机证据已经收口，但整
 - 2 个已支付历史活动单已具备可验证退款兼容，但没有自动发起退款或改写订单；是否退款继续遵循用户/客服业务决定。
 - 真实旧 UniApp 用户、真实微信/支付宝/线下渠道、预发/影子流量、正式发布和发布后观察均未完成；正式发布仍需明确批准。
 
+## API-004-AUTH / CORE-004 认证迁移详细审计（2026-08-29）
+
+### PHP 权威合同、调用端与迁移前风险
+
+PHP `route/api.php:437-469` 注册 16 条 v2 微信/小程序登录与绑定合同：`routine/auth_type`、`auth_login`、`auth_binding_phone`、`phone_login`、`binding_phone`，公众号 `wechat/auth_login`、`auth_binding_phone`，小程序 `routine_auth/silence_auth/silence_auth_login`，历史拼写错误 `auth_bindind_phone`，以及 `phone_silence_auth`、`wechat/auth`、`wx_silence_auth/wx_silence_auth_login`、`phone_wx_silence_auth`。旧 UniApp 的 `api/public.js`、`api/user.js`、`api/api.js`、登录/绑定组件、`libs/routine.js` 和 `App.vue` 仍调用这些合同；小程序使用 `auth_type→key→auth_login`，公众号只提交 `code/spread_spid`，多个绑定页仍把短信用途错误写成 `reset`。新 `uniapp-ts` 已使用 POST+Turnstile 短信流，但尚无真实微信社交登录 UI。
+
+PHP 原实现把授权临时值放入两小时 MD5 缓存，未按用途绑定也不是一次性消费；短信仍共享 `code_<phone>` 命名空间，旧 GET `verify_code` 可签发未绑定手机号/用途的 nonce；AJCaptcha 路径可与短信流程混用。公众号 OAuth state 由客户端随机或固定生成，服务端不签发、不校验、不消费；小程序 session/手机号凭据也可在缓存期限内重放。迁移不能逐字复制这些弱点，因此旧客户端必须升级，无法在不降低安全边界的前提下做到完全透明兼容。
+
+### 16 条精确合同与统一认证核心
+
+本批精确注册全部 16 条 v2 路径，并新增 v1/v2 `POST /wechat/oauth_state`。小程序 `auth_type` 先用真实 `jscode2session` 解析服务端身份，再签发 15 分钟、来源网络绑定的一次性票据；`auth_login` 原子消费票据。手机号同时支持当前微信 `phone_code` 的服务端 `getuserphonenumber` 与旧 `encryptedData/iv`，旧格式在 AES 解密后还验证 `watermark.appid`；从不信任客户端直接提交的手机号。短信绑定只消费 `user_social_binding` purpose，不能拿注册、登录、重置、普通换绑验证码交叉使用。
+
+公众号登录先原子消费 15 分钟、来源网络绑定的服务端 OAuth state，再交换 code；小程序登录 code、手机号 code 和公众号 OAuth code 分渠道做 SHA-256 摘要并以 Redis `SET NX` 全局占用 10 分钟，同一来源/渠道限制 30 次/分钟。provider 响应统一限制 8 秒和 32 KiB，只接受 JSON object，查询参数用 `URLSearchParams` 编码。临时社交身份、登录票据、state、旧 `session_key_uid` 均一次性消费；所有认证响应 `private, no-store`。社交身份与手机号在 PostgreSQL advisory lock 和短事务中确定性合并，拒绝跨渠道 openid、分裂 unionid、历史软删身份和手机号冲突；token 响应只返回 UID、昵称、头像、手机号、用户类型及 PHP 兼容别名，不返回密码摘要、账号或登录 IP。
+
+旧 `GET /api/verify_code` 仅保留受限别名：必须在 query 明确提供 `phone+type` 并创建真实 Turnstile challenge，同时提示新客户端改用 POST，避免手机号进入 URL 日志。`GET /api/ajcaptcha`、`POST /api/ajcheck`、`GET /api/sms_captcha` 精确注册但返回 410 和迁移说明，未实现固定 200。Turnstile 核心继续校验服务端 Siteverify、action、cdata、hostname、时间窗和一次性 token，挑战绑定手机号、purpose 与 IP，验证码再按手机号/IP/全局频率限制并用 Redis GETDEL 消费。
+
+### 生产 Hyperdrive 直接只读证据
+
+用户明确授权直接使用生产数据库后，一次性 `cinashop-api004-auth-audit` Worker 绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。审计固定 `search_path=public`，使用 `REPEATABLE READ, READ ONLY`、30 秒 statement timeout、2 秒 lock timeout，只返回计数、配置存在性、索引与不可逆摘要，不返回手机号、openid、unionid、配置值或其他 PII/Secret。PostgreSQL 16.14 当前为用户 3、活跃用户 3、活跃且无手机号 0；`wechat_user` 总数/活跃数均 0，空 openid、孤儿、重复 openid、分裂 unionid 均 0；`sms_record` 总数/成功数均 0；临时认证 schema 为 0。
+
+`routine_appId`、`routine_appsecret`、`wechat_appid`、`wechat_appsecret`、`store_user_mobile`、`store_user_avatar`、`verify_expire_time` 七个精确配置键均为 0 行，模糊候选配置名也为 0；`VERIFICATION_CODE_TIME` 短信通知模板不存在。生产 Worker Secret 清单只有 APP_KEY、DEBUG、内部/运维 token 与 Upstash Redis 两项，缺 Turnstile Secret、阿里云 SMS key/secret/sign/template 和微信凭据。`wechat_user` 的 openid/uid/unionid 相关索引以及 `sms_record` 的手机号/IP/结果时间索引均存在，本批不需要且没有执行生产 DDL。用户、微信身份、短信三组不可逆指纹在只读事务中获取；没有 DML/DDL。
+
+审计临时 Worker 版本 `6382b911-31d4-4072-aec4-e7839e3598e3` 已在 `finally` 删除，删除后 URL 返回 404。主生产 Worker 始终保持 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，没有发布或切流。
+
+### 量化验证与未完成门禁
+
+注释感知静态审计现为 PHP 1,904、Workers 1,378、精确匹配 685、可执行匹配 662、明确不可用 23、原始缺失 1,219、证据化退役 3、可执行缺口 1,216；精确/可执行/退役后有效覆盖为 36.0%/34.8%/34.8%。`/api` 为 PHP 457、Workers 704、精确 315、可执行 307、不可用 8、原始缺失 142、可执行缺口 141；`/api/v2` 精确缺口为 0。本批相对前一批增加 20 个 PHP 精确匹配：16 条 v2 认证、旧 GET verify_code 和三条明确不可用 captcha 别名；新增 OAuth state 是安全扩展，不进入 PHP 匹配分子。
+
+定向认证 16/16、全量 131 个单元测试文件/767 项、双 TypeScript 配置通过；主 Worker minify dry-run 为 2,524.86 KiB/gzip 624.84 KiB，认证审计 Worker为 50.11 KiB/gzip 18.78 KiB。Windows runtime 测试仍在加载断言前因 `workerd` 0xc0000005 原生访问冲突失败，测试数为 0，不能记为通过。
+
+API-004-AUTH 与 CORE-004 仍不勾选整体完成：生产没有微信、短信和 Turnstile 凭据或非空社交/SMS 样本；旧 UniApp 必须先接入服务端 OAuth state、显式短信 purpose 和 Turnstile，错误使用 `reset` 的绑定页面必须修正；还需真实手机号/短信、微信开放平台/公众号/小程序真机、真实用户 token、预发/影子流量、正式发布和发布后观察。PC 的 `key/scan/wechat_auth` 与客服 `ticket/key/scan/wechat` 仍是独立 CORE-004 缺口，必须重建一次性扫码主体/确认/消费状态机，不能解除现有 501 安全阻塞或复用 PHP 弱 token 缓存。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
