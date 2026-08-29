@@ -8,6 +8,7 @@ import { jsonFail, jsonOk } from "@/utils/json";
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
 export async function productList(c: C) {
+  c.header("Cache-Control", "private, no-store");
   return jsonOk(
     c,
     await new StoreNewcomerService(c.get("container"), c.env)
@@ -16,6 +17,7 @@ export async function productList(c: C) {
 }
 
 export async function productDetail(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const id = Number(c.req.param("id"));
   if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少参数");
   try {
@@ -39,6 +41,7 @@ export async function productDetail(c: C) {
 }
 
 export async function info(c: C) {
+  c.header("Cache-Control", "private, no-store");
   return jsonOk(
     c,
     await new StoreNewcomerService(c.get("container"), c.env).info(c.get("uid"), false),
@@ -46,6 +49,7 @@ export async function info(c: C) {
 }
 
 export async function gift(c: C) {
+  c.header("Cache-Control", "private, no-store");
   return jsonOk(
     c,
     await new StoreNewcomerService(c.get("container"), c.env).info(c.get("uid"), true),

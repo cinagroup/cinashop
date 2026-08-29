@@ -1476,7 +1476,33 @@ H5 分享码使用校验过的 `site_url` 生成本地 SVG data URL；小程序�
 
 注释感知静态审计现为 PHP 1,904、Workers 1,343、精确匹配 652、可执行匹配 632、明确不可用 20、原始缺失 1,252、证据化退役 3、可执行缺口 1,249；精确/可执行/退役后有效覆盖为 34.2%/33.2%/33.2%。`/api` 为 PHP 457、Workers 669、精确 282、可执行 277、不可用 5、原始缺失 175、可执行缺口 174；本子批次相对 API-005 精确/可执行各增 11。全量 128 个单元测试文件/744 项通过，双 TypeScript 配置通过；主 Worker minify dry-run 为 2,470.39 KiB/gzip 612.22 KiB，API-006 审计 Worker dry-run 为 1,519.22 KiB/gzip 269.29 KiB。Windows runtime 仍在 0 条断言前以 `workerd` 0xc0000005 失败，不记为通过。主生产 Worker 仍为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批未发布主 Worker。
 
-API-006-ACTIVITY 仍不勾选整体完成：需从源 MySQL/运营补齐两组活动内容和小程序凭据，使用真实用户 token 与真实微信验证旧 UniApp，完成预发/影子流量并经明确批准后发布。API-006-MARKETING 下一个可独立子批是新人 4 条；短视频 9 条先受两表、源数据和私有媒体门禁。API-006-CHECKOUT 还必须另行审计活动资格、限购/库存、建单/支付、成团/失败、超时/取消/退款和奖励状态机。
+API-006-ACTIVITY 仍不勾选整体完成：需从源 MySQL/运营补齐两组活动内容和小程序凭据，使用真实用户 token 与真实微信验证旧 UniApp，完成预发/影子流量并经明确批准后发布。API-006-MARKETING 的新人 4 条已在下一节收口核心代码与隔离证据；当前下一子批是仍受两表、源数据和私有媒体门禁的短视频 9 条。API-006-CHECKOUT 还必须另行审计活动资格、限购/库存、建单/支付、成团/失败、超时/取消/退款和奖励状态机。
+
+## API-006 营销/活动详细迁移审计（MARKETING-NEWCOMER 子批次，2026-08-29）
+
+### 精确路由、旧端调用和本批发现的假匹配
+
+PHP 权威路由位于 `/api/marketing` 组：可选登录 `GET newcomer/product_list`、`GET newcomer/product_detail/:id`，强制登录 `GET newcomer/info`、`GET newcomer/gift`。旧 UniApp 的 `api/activity.js`、`api/store.js` 及新人列表、商品详情、首页新人模块、个人中心仍直接调用这四个带 `/marketing` 前缀的地址。Workers 此前已有较完整的 `StoreNewcomerService`，却只注册 `/api/newcomer/*`，所以业务代码存在并不等于 PHP 精确合同已迁移；本批新增四条原始路径，同时保留无前缀路径作为 TS 扩展别名，认证边界不变。
+
+逐字段审计发现不能只加路由别名：列表过去按 `id asc`，PHP 是 `id desc`；未过滤 `store_product.is_verify=1`；`ot_price` 错误优先取活动表，而 PHP 选择活动 `price` 后合并基础商品关系，划线价来自基础商品。详情把 Drizzle camelCase 对象直接并入 `storeInfo`，旧端需要的 snake_case、品牌/描述/标签/保障、评价、配置均不完整；`productAttr` 被固定为空，`productValue` 又以 `unique` 为键，而旧 UniApp 用逗号拼接规格并按 `suk` 查表，因此多规格新人商品无法选择和下单。已购数也把子订单、已删除未付款单一并累计，`gift` 还错误携带只属于 `info` 的 `last_time`。
+
+### 兼容恢复和安全边界
+
+列表现按新人开关、专享开关、`is_newcomer`、注册时限和已支付新人单判断资格，分页限制为 1..100，按活动 ID 倒序，只返回未删除活动及已上架、未删除、审核通过的基础商品，活动价与基础商品划线价分离。详情保持 PHP 的可选登录浏览，但拒绝软删活动和不可售/未审核基础商品；返回旧端 snake_case `storeInfo`，活动 SKU 仍以 `type=7, product_id=store_newcomer.id` 读取并按 `suk` 建 `productValue`，价格取活动 SKU，库存取对应基础 `type=0` SKU 的实时值。规格维度来自基础商品并只保留实际参与活动的值；品牌、标签、保障、描述、收藏、最近评价/好评率、六项详情配置和顶级活动订单已购数均恢复。四条响应都设置 `private, no-store`，不让资格、收藏、礼包或用户券被共享缓存。
+
+`info` 与 `gift` 继续保持 PHP 的差异：两者都只读配置和当前 UID 券，`info` 在新人总开关启用时返回协议及 `last_time`，`gift` 还要求注册时间等于最后登录时间且仍有专享资格，并且不返回协议和截止时间。没有恢复任何 GET 自动发券或写配置副作用。加入购物车和建单仍使用既有服务端资格复核、一件限购、活动/基础 SKU 对应和用户行锁内原子消费资格，不依赖展示响应。
+
+### 生产 Hyperdrive 数据面与隔离合同证据
+
+一次性 `cinashop-api006-marketing-audit` Worker 直接绑定用户指定的 Hyperdrive。生产盘点在 `search_path=public`、只读事务、3 秒锁超时和 25 秒语句超时下完成：PostgreSQL 16.14，`store_newcomer=0`、`store_product=71`、`store_product_attr_value=2`、用户 3、订单 29、用户关系 1；`newcomer_status/newcomer_limit_status/newcomer_limit_time`、注册积分/余额/券开关和值、首单开关/折扣/上限、`register_price_status` 共 13 个前台配置全部不存在有效值。生产已有 `store_newcomer_product_id`、`store_newcomer_active_id`、`store_newcomer_product_active` 三个索引，因此本子批无需生产 DDL。真实 `StoreNewcomerService` 的列表、info、gift 3/3 合同在只读事务中返回与关闭配置和空目录一致的安全空结构；这证明降级正确，不证明运营数据已迁移。
+
+随机 `codex_api006_newcomer_*` schema 克隆 `cache`、新人目录、商品/属性/SKU/描述/品牌/标签/保障/关系/评价、用户/收藏/券/订单/配置共 16 张表，直接调用真实 service。合成场景验证 PHP 倒序与审核可见性、过期/已使用资格拒绝、未审核详情拒绝、`productValue[Red|Blue]`、基础 SKU `3/0` 实时库存、活动规格过滤、活动价 `9.90` 与基础划线价 `120.00`、品牌/描述/标签/保障/收藏/评价、六项详情配置、顶级订单已购数 `3`、info 的协议/截止时间和 gift 的字段排除，共 10/10 通过。清理后 16 张 `public` 表全行多重集指纹完全不变，临时 schema `0→0`；一次性密钥和 Worker 删除，URL 返回 HTTP 404。主 `cinashop-api` 始终保持 100% 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`。
+
+### 量化、门禁和下一子批
+
+注释感知静态审计现为 PHP 1,904、Workers 1,347、精确匹配 656、可执行匹配 636、明确不可用 20、原始缺失 1,248、证据化退役 3、可执行缺口 1,245；精确/可执行/退役后有效覆盖为 34.5%/33.4%/33.5%。`/api` 为 PHP 457、Workers 673、精确 286、可执行 281、不可用 5、原始缺失 171、可执行缺口 170；相对 ACTIVITY 子批精确/可执行各增 4。定向新人测试与既有新人测试 12/12、全量 129 个单元测试文件/750 项、双 TypeScript 配置通过；主 Worker minify dry-run 为 2,474.37 KiB/gzip 613.09 KiB，API-006 审计 Worker dry-run 为 1,573.72 KiB/gzip 280.81 KiB。Windows runtime 的既有 `workerd` 0xc0000005 环境故障仍不记为通过。
+
+API-006-MARKETING-NEWCOMER 仍不勾选整体完成：源 MySQL 未连接，13 个前台配置、目录、`type=7` SKU、赠券和领取证据没有复制，生产无非空样本，也未使用真实用户 token 跑旧 UniApp/真机、预发或正式发布。下一个独立子批是短视频 9 条；生产完全没有 PHP 权威的 `video`、`video_comment` 两表，必须先恢复精确结构和迁移 manifest，明确视频/封面等媒体进入私有 R2 的对象键与签名读取边界，再实现列表/详情/商品、评论写入/回复/删除和关系状态机。
 
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 

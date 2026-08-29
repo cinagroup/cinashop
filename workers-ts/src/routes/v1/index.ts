@@ -139,7 +139,17 @@ v1Routes.get(
   NewcomerController.productList,
 );
 v1Routes.get(
+  "/marketing/newcomer/product_list",
+  authMiddleware({ force: false }),
+  NewcomerController.productList,
+);
+v1Routes.get(
   "/newcomer/product_detail/:id",
+  authMiddleware({ force: false }),
+  NewcomerController.productDetail,
+);
+v1Routes.get(
+  "/marketing/newcomer/product_detail/:id",
   authMiddleware({ force: false }),
   NewcomerController.productDetail,
 );
@@ -162,6 +172,8 @@ v1Routes.get("/user/code", authMiddleware({ force: true }), UserProfileControlle
 v1Routes.post("/user/code", authMiddleware({ force: true }), UserProfileController.userCodeUnavailable);
 v1Routes.get("/newcomer/info", authMiddleware({ force: true }), NewcomerController.info);
 v1Routes.get("/newcomer/gift", authMiddleware({ force: true }), NewcomerController.gift);
+v1Routes.get("/marketing/newcomer/info", authMiddleware({ force: true }), NewcomerController.info);
+v1Routes.get("/marketing/newcomer/gift", authMiddleware({ force: true }), NewcomerController.gift);
 v1Routes.get(
   "/user/member/card/index",
   authMiddleware({ force: true }),

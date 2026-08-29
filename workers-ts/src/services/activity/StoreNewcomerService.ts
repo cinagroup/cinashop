@@ -1,14 +1,18 @@
-import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import type { Env } from "@/env";
 import {
   storeNewcomer,
+  storeBrand,
   storeCouponIssue,
   storeCouponIssueUser,
   storeCouponUser,
   storeOrder,
   storeProduct,
+  storeProductDescription,
+  storeProductLabel,
   storeProductAttrValue,
+  userRelation,
   userBill,
   userMoney,
   user as userTable,
@@ -20,7 +24,12 @@ import {
   type SystemConfigEnv,
 } from "@/services/system/SystemConfigService";
 import { DatabaseCacheService } from "@/services/system/DatabaseCacheService";
-import { StoreProductService } from "@/services/product/StoreProductService";
+import {
+  parseLegacyProductAttrValues,
+  StoreProductService,
+} from "@/services/product/StoreProductService";
+import { ProductExperienceService } from "@/services/product/ProductExperienceService";
+import { ReplyService } from "@/services/product/ReplyService";
 
 const CONFIG_KEYS = [
   "newcomer_status",
@@ -37,6 +46,45 @@ const CONFIG_KEYS = [
   "first_order_discount_limit",
   "register_price_status",
 ] as const;
+
+const DETAIL_CONFIG_KEYS = [
+  "routine_contact_type",
+  "site_name",
+  "share_qrcode",
+  "store_self_mention",
+  "store_func_status",
+  "product_poster_title",
+] as const;
+
+function parsePositiveIds(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return [...new Set(value.map(Number).filter((id) => Number.isSafeInteger(id) && id > 0))];
+  }
+  return [...new Set(String(value ?? "")
+    .split(",")
+    .map((item) => Number(item.trim()))
+    .filter((id) => Number.isSafeInteger(id) && id > 0))];
+}
+
+function parseJsonArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseJsonValue(value: unknown): unknown {
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return [];
+  }
+}
 
 export interface NewcomerEligibilityConfig {
   enabled: boolean;
@@ -542,9 +590,10 @@ export class StoreNewcomerService {
           eq(storeNewcomer.isDel, 0),
           eq(storeProduct.isDel, 0),
           eq(storeProduct.isShow, 1),
+          eq(storeProduct.isVerify, 1),
         ),
       )
-      .orderBy(asc(storeNewcomer.id))
+      .orderBy(desc(storeNewcomer.id))
       .limit(limit)
       .offset((page - 1) * limit);
     return rows.map(({ newcomer, product }) => ({
@@ -558,39 +607,150 @@ export class StoreNewcomerService {
       store_name: product.storeName,
       stock: product.stock,
       sales: product.sales,
-      ot_price: String(newcomer.otPrice || product.otPrice),
+      // PHP selects only the activity price, then merges the base-product
+      // relation; the base product therefore remains the strike-price source.
+      ot_price: String(product.otPrice),
     }));
   }
 
   async detail(uid: number, id: number): Promise<Record<string, unknown>> {
     const newcomer = await this.getActive(id);
     if (!newcomer) throw new NotFoundException("新人商品已下架或删除");
-    const base = await new StoreProductService(this.container, this.env)
-      .getProductDetail(newcomer.productId, uid);
-    const activitySkus = await this.container.db
-      .select()
-      .from(storeProductAttrValue)
-      .where(
-        and(
-          eq(storeProductAttrValue.productId, newcomer.id),
-          eq(storeProductAttrValue.type, 7),
-        ),
-      )
-      .orderBy(asc(storeProductAttrValue.id));
-    const baseSkus = await this.container.storeProductAttrValueDao.getByProductId(
-      newcomer.productId,
-      0,
-    );
+    const product = await this.container.storeProductDao.getById(newcomer.productId);
+    if (!product || !product.isShow || product.isDel || product.isVerify !== 1) {
+      throw new NotFoundException("原商品已下架或删除");
+    }
+
+    const labelIds = parsePositiveIds(product.storeLabelId);
+    const productService = new StoreProductService(this.container, this.env);
+    const replyService = new ReplyService(this.container);
+    const [legacy, activitySkus, baseSkus, descriptions, brands, labels, ensures, collection, configs, reply, replyStats] =
+      await Promise.all([
+        productService.getLegacyProductAttr(newcomer.productId, uid, false),
+        this.container.db
+          .select()
+          .from(storeProductAttrValue)
+          .where(
+            and(
+              eq(storeProductAttrValue.productId, newcomer.id),
+              eq(storeProductAttrValue.type, 7),
+            ),
+          )
+          .orderBy(asc(storeProductAttrValue.id)),
+        this.container.storeProductAttrValueDao.getByProductId(newcomer.productId, 0),
+        this.container.db
+          .select({ description: storeProductDescription.description })
+          .from(storeProductDescription)
+          .where(
+            and(
+              eq(storeProductDescription.productId, newcomer.productId),
+              eq(storeProductDescription.type, 0),
+            ),
+          )
+          .limit(1),
+        product.brandId > 0
+          ? this.container.db
+            .select({ brandName: storeBrand.brandName })
+            .from(storeBrand)
+            .where(
+              and(
+                eq(storeBrand.id, product.brandId),
+                eq(storeBrand.isShow, 1),
+                eq(storeBrand.isDel, 0),
+              ),
+            )
+            .limit(1)
+          : Promise.resolve([]),
+        labelIds.length
+          ? this.container.db
+            .select({
+              id: storeProductLabel.id,
+              label_name: storeProductLabel.labelName,
+              style_type: storeProductLabel.styleType,
+              color: storeProductLabel.color,
+              bg_color: storeProductLabel.bgColor,
+              border_color: storeProductLabel.borderColor,
+              icon: storeProductLabel.icon,
+            })
+            .from(storeProductLabel)
+            .where(
+              and(
+                inArray(storeProductLabel.id, labelIds),
+                eq(storeProductLabel.status, 1),
+                eq(storeProductLabel.isShow, 1),
+              ),
+            )
+          : Promise.resolve([]),
+        new ProductExperienceService(this.container)
+          .productEnsures(newcomer.productId, product.ensureId),
+        uid > 0
+          ? this.container.db
+            .select({ id: userRelation.id })
+            .from(userRelation)
+            .where(
+              and(
+                eq(userRelation.uid, uid),
+                eq(userRelation.relationId, newcomer.productId),
+                eq(userRelation.type, "collect"),
+                eq(userRelation.category, "product"),
+              ),
+            )
+            .limit(1)
+          : Promise.resolve([]),
+        new SystemConfigService(this.container, this.env).getMany([...DETAIL_CONFIG_KEYS]),
+        replyService.replyList(newcomer.productId, 1, 1, uid),
+        replyService.replyConfig(newcomer.productId),
+      ]);
     const baseStockBySuk = new Map(baseSkus.map((sku) => [sku.suk, sku.stock]));
-    const productValue = Object.fromEntries(activitySkus.map((sku) => [sku.unique, {
-      id: sku.id,
-      unique: sku.unique,
-      suk: sku.suk || "默认",
-      price: String(sku.price),
-      ot_price: String(sku.otPrice),
-      stock: baseStockBySuk.get(sku.suk) ?? 0,
-      sales: sku.sales,
-    }]));
+    const baseSkuBySuk = new Map(baseSkus.map((sku) => [sku.suk, sku]));
+    const productValue = Object.fromEntries(activitySkus.map((sku) => {
+      const baseSku = baseSkuBySuk.get(sku.suk);
+      const baseStock = baseStockBySuk.get(sku.suk) ?? 0;
+      return [sku.suk, {
+        id: sku.id,
+        product_id: sku.productId,
+        product_type: sku.productType,
+        unique: sku.unique,
+        suk: sku.suk || "默认",
+        price: String(sku.price),
+        ot_price: String(sku.otPrice),
+        vip_price: "0",
+        stock: baseStock,
+        sum_stock: sku.sumStock,
+        sales: sku.sales,
+        image: sku.image || baseSku?.image || product.image,
+        small_image: sku.image || baseSku?.image || product.image,
+        settle_price: String(sku.settlePrice),
+        integral: sku.integral,
+        cost: String(sku.cost),
+        bar_code: sku.barCode,
+        weight: String(sku.weight),
+        volume: String(sku.volume),
+        brokerage: String(sku.brokerage),
+        brokerage_two: String(sku.brokerageTwo),
+        type: sku.type,
+        quota: sku.quota,
+        quota_show: sku.quotaShow,
+        code: sku.code,
+        disk_info: sku.diskInfo,
+        product_stock: baseStock,
+        product_price: String(baseSku?.price ?? "0.00"),
+      }];
+    }));
+
+    const participatingValues = activitySkus.map((sku) => sku.suk.split(","));
+    const productAttr = legacy.productAttr.map((attr, index) => {
+      const raw = Array.isArray(attr.attr_values)
+        ? attr.attr_values.map(String)
+        : parseLegacyProductAttrValues(String(attr.attr_values ?? ""));
+      const allowed = new Set(participatingValues.map((values) => values[index]).filter(Boolean));
+      const values = allowed.size > 0 ? raw.filter((value) => allowed.has(value)) : raw;
+      return {
+        ...attr,
+        attr_values: values,
+        attr_value: values.map((value) => ({ attr: value, check: false })),
+      };
+    });
     const buyRows = uid > 0
       ? await this.container.db
           .select({ count: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
@@ -600,25 +760,65 @@ export class StoreNewcomerService {
               eq(storeOrder.uid, uid),
               eq(storeOrder.type, 7),
               eq(storeOrder.activityId, newcomer.id),
+              inArray(storeOrder.pid, [0, -1]),
+              or(
+                eq(storeOrder.paid, 1),
+                and(eq(storeOrder.paid, 0), eq(storeOrder.isDel, 0)),
+              ),
             ),
           )
       : [];
+    const storeFuncStatus = parseConfigInteger(configs.store_func_status, 1) ? 1 : 0;
+    const sliderImages = parseJsonArray(product.sliderImage);
+    const storeInfo = {
+      ...legacy.storeInfo,
+      id: newcomer.id,
+      product_id: newcomer.productId,
+      type: product.type,
+      relation_id: product.relationId,
+      product_type: product.productType,
+      title: product.storeName,
+      info: product.storeInfo,
+      images: sliderImages,
+      slider_image: sliderImages,
+      video_link: product.videoOpen ? product.videoLink : "",
+      price: String(newcomer.price),
+      ot_price: String(product.otPrice),
+      sales: product.sales,
+      total: product.sales + product.ficti,
+      image_base: product.image,
+      small_image: product.image,
+      description: descriptions[0]?.description ?? "",
+      brand_name: brands[0]?.brandName ?? "",
+      store_label_id: labelIds,
+      store_label: labelIds.flatMap((labelId) => labels.find((label) => label.id === labelId) ?? []),
+      ensure_id: parsePositiveIds(product.ensureId),
+      ensure: ensures,
+      specs: parseJsonValue(product.specs),
+      userCollect: collection.length > 0,
+      userLike: 0,
+      uid,
+      stock: product.stock,
+      product_stock: product.stock,
+      unique: activitySkus[0]?.unique ?? "",
+      attr_value: Object.values(productValue),
+    };
     return {
-      storeInfo: {
-        ...base,
-        id: newcomer.id,
-        product_id: newcomer.productId,
-        type: newcomer.type,
-        relation_id: newcomer.relationId,
-        product_type: newcomer.productType,
-        price: String(newcomer.price),
-        otPrice: String(newcomer.otPrice),
-        sales: newcomer.sales,
-        attr_value: Object.values(productValue),
-      },
-      productAttr: [],
+      storeInfo,
+      productAttr,
       productValue,
       buy_num: Number(buyRows[0]?.count ?? 0),
+      reply,
+      replyChance: Number(replyStats.reply_chance ?? 100),
+      replyCount: Number(replyStats.sum_count ?? 0),
+      routine_contact_type: Math.max(0, parseConfigInteger(configs.routine_contact_type, 0)),
+      store_func_status: storeFuncStatus,
+      store_self_mention: storeFuncStatus
+        ? Math.max(0, parseConfigInteger(configs.store_self_mention, 0))
+        : 0,
+      site_name: configs.site_name ?? "",
+      share_qrcode: Math.max(0, parseConfigInteger(configs.share_qrcode, 0)),
+      product_poster_title: configs.product_poster_title ?? "",
     };
   }
 
@@ -673,9 +873,11 @@ export class StoreNewcomerService {
       register_price_status: priceEnabled ? 1 : 0,
       product_count: Number(productCountRows[0]?.count ?? 0),
       coupon_count: coupons.length,
-      last_time: limitEnabled && limitDays > 0 ? account.addTime + limitDays * 86_400 : 0,
     };
     if (!giftOnly) {
+      response.last_time = limitEnabled && limitDays > 0
+        ? account.addTime + limitDays * 86_400
+        : 0;
       response.newcomer_agreement = await new DatabaseCacheService(this.container)
         .get("newcomer_agreement", "");
     }
