@@ -17,6 +17,8 @@ describe("订单退款 PostgreSQL 迁移", () => {
     expect(source).toContain("await finalizeStoreOrderRefund(this.container, refundId)");
     expect(source).toContain("paidCents === 0 && order.type === 4 && order.payIntegral > 0");
     expect(source).toContain("cumulativeNum >= order.totalNum");
+    expect(source).toContain("missingLegacyActivityMain && legacyActivitySnapshot");
+    expect(source).toContain("退款砍价活动无法唯一定位");
   });
 
   it("供应商部分退款按累计目标求增量，不因逐笔四舍五入超额", () => {
@@ -53,6 +55,7 @@ describe("订单退款 PostgreSQL 迁移", () => {
     expect(scenario).toContain("pure integral partial refund did not return points by quantity");
     expect(scenario).toContain("pure integral full refund or replay invariant drifted");
     expect(scenario).toContain("activity refund did not restore all four inventory layers");
+    expect(scenario).toContain("retired activity refund did not restore only the surviving inventory layers");
     expect(scenario).toContain("provider amount mismatch changed refund business state");
     expect(scenario).toContain("integration supplier transaction failure");
     expect(scenario).toContain("cumulative compensation failure did not roll back every ledger");

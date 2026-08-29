@@ -161,6 +161,22 @@ describe("API-002 order and after-sale migration", () => {
     expect(refund).toContain('inArray(storeOrderStatus.changeType, ["user_take_delivery", "take_delivery"])');
   });
 
+  it("keeps the production checkout recovery audit read-only and PII-free", () => {
+    const worker = source("test/integration/ApiOrderAfterSaleAuditWorker.ts");
+    const recovery = worker.slice(
+      worker.indexOf("async function readCheckoutRecoveryEvidence"),
+      worker.indexOf("export default"),
+    );
+    expect(worker).toContain('pathname === "/checkout-recovery"');
+    expect(recovery).toContain("SET TRANSACTION READ ONLY");
+    expect(recovery).toContain('pii_projection: "none"');
+    expect(recovery).toContain("snapshot_key_shapes");
+    expect(recovery).toContain("limit_lower_bounds");
+    expect(recovery).not.toContain("real_name");
+    expect(recovery).not.toContain("user_phone");
+    expect(recovery).not.toContain("user_address");
+  });
+
   it("retires only the PHP route whose controller method does not exist", () => {
     const decisions = JSON.parse(source("audit/legacy-route-decisions.json")) as {
       decisions: Array<{ surface: string; method: string; path: string }>;

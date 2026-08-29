@@ -25,6 +25,7 @@ import {
   storeDiscounts,
   storeSeckill,
   storeBargain,
+  storeBargainUser,
   storeCombination,
   storeIntegral,
   storeProduct,
@@ -1703,7 +1704,7 @@ export async function lockRefundExecution(tx: DbClient, refundId: number): Promi
 
 async function restoreRefundStock(
   tx: DbClient,
-  order: Pick<typeof storeOrder.$inferSelect, "id" | "type" | "activityId">,
+  order: Pick<typeof storeOrder.$inferSelect, "id" | "uid" | "type" | "activityId">,
   refundNum: number,
   cartInfoSnapshot: string | null,
 ): Promise<void> {
@@ -1720,6 +1721,43 @@ async function restoreRefundStock(
         return { row: matches[0], requestedNum: selection.cartNum };
       })
     : cartInfos.map((row) => ({ row, requestedNum: undefined }));
+  let effectiveActivityId = order.activityId;
+  let missingLegacyActivityMain = false;
+  if (order.type === 1) {
+    const rows = order.activityId > 0
+      ? await tx.select({ id: storeSeckill.id }).from(storeSeckill)
+          .where(eq(storeSeckill.id, order.activityId)).limit(1)
+      : [];
+    missingLegacyActivityMain = !rows[0];
+  } else if (order.type === 2) {
+    const directRows = order.activityId > 0
+      ? await tx.select({ id: storeBargain.id }).from(storeBargain)
+          .where(eq(storeBargain.id, order.activityId)).limit(1)
+      : [];
+    if (!directRows[0]) {
+      const participants = await tx
+        .select({ bargainId: storeBargainUser.bargainId })
+        .from(storeBargainUser)
+        .where(and(
+          eq(storeBargainUser.uid, order.uid),
+          eq(storeBargainUser.id, order.activityId),
+        ))
+        .limit(2);
+      if (participants.length !== 1) {
+        throw new ValidateException("退款砍价活动无法唯一定位");
+      }
+      effectiveActivityId = participants[0].bargainId;
+      const rows = await tx.select({ id: storeBargain.id }).from(storeBargain)
+        .where(eq(storeBargain.id, effectiveActivityId)).limit(1);
+      missingLegacyActivityMain = !rows[0];
+    }
+  } else if (order.type === 3) {
+    const rows = order.activityId > 0
+      ? await tx.select({ id: storeCombination.id }).from(storeCombination)
+          .where(eq(storeCombination.id, order.activityId)).limit(1)
+      : [];
+    missingLegacyActivityMain = !rows[0];
+  }
   let remaining = refundNum;
   for (const { row: ci, requestedNum } of selected) {
     const num = requestedNum ?? Math.min(ci.cartNum, remaining);
@@ -1731,6 +1769,7 @@ async function restoreRefundStock(
 
     let baseSkuId = 0;
     let activitySkuId = 0;
+    let legacyActivitySnapshot = false;
     try {
       const snapshot = JSON.parse(ci.cartInfo ?? "{}") as {
         sku?: { id?: unknown };
@@ -1738,9 +1777,12 @@ async function restoreRefundStock(
       };
       baseSkuId = Number(snapshot.sku?.id ?? 0);
       activitySkuId = Number(snapshot.activitySku?.id ?? 0);
+      legacyActivitySnapshot = !Object.prototype.hasOwnProperty.call(snapshot, "activitySku")
+        && Number.isSafeInteger(baseSkuId) && baseSkuId > 0;
     } catch {
       baseSkuId = 0;
       activitySkuId = 0;
+      legacyActivitySnapshot = false;
     }
     if (!Number.isSafeInteger(baseSkuId) || baseSkuId <= 0) {
       const baseRows = await tx
@@ -1764,7 +1806,11 @@ async function restoreRefundStock(
           stock: sql`stock + ${num}`,
           sales: sql`GREATEST(sales - ${num}, 0)`,
         })
-        .where(eq(storeProductAttrValue.id, baseSkuId))
+        .where(and(
+          eq(storeProductAttrValue.id, baseSkuId),
+          eq(storeProductAttrValue.productId, ci.productId),
+          eq(storeProductAttrValue.type, 0),
+        ))
         .returning({ id: storeProductAttrValue.id });
       if (!baseSkuRows[0]) throw new ValidateException("退款商品规格库存无法回退");
     }
@@ -1778,28 +1824,33 @@ async function restoreRefundStock(
       .returning({ id: storeProduct.id });
     if (!productRows[0]) throw new ValidateException("退款商品库存无法回退");
     if ([1, 2, 3, 4].includes(order.type)) {
-      const activityId = order.activityId;
+      const activityId = effectiveActivityId;
       if (!Number.isSafeInteger(activityId) || activityId <= 0) {
         throw new ValidateException("退款活动标识无效");
       }
-      if (!Number.isSafeInteger(activitySkuId) || activitySkuId <= 0) {
+      if (
+        (!Number.isSafeInteger(activitySkuId) || activitySkuId <= 0)
+        && !(missingLegacyActivityMain && legacyActivitySnapshot)
+      ) {
         throw new ValidateException("退款活动商品规格快照缺失");
       }
-      const activitySkuRows = await tx
-        .update(storeProductAttrValue)
-        .set({
-          stock: sql`stock + ${num}`,
-          quota: sql`quota + ${num}`,
-          sales: sql`GREATEST(sales - ${num}, 0)`,
-        })
-        .where(
-          and(
-            eq(storeProductAttrValue.id, activitySkuId),
-            eq(storeProductAttrValue.productId, activityId),
-            eq(storeProductAttrValue.type, order.type),
-          ),
-        )
-        .returning({ id: storeProductAttrValue.id });
+      const activitySkuRows = Number.isSafeInteger(activitySkuId) && activitySkuId > 0
+        ? await tx
+            .update(storeProductAttrValue)
+            .set({
+              stock: sql`stock + ${num}`,
+              quota: sql`quota + ${num}`,
+              sales: sql`GREATEST(sales - ${num}, 0)`,
+            })
+            .where(
+              and(
+                eq(storeProductAttrValue.id, activitySkuId),
+                eq(storeProductAttrValue.productId, activityId),
+                eq(storeProductAttrValue.type, order.type),
+              ),
+            )
+            .returning({ id: storeProductAttrValue.id })
+        : [];
       const activityRows = order.type === 1
         ? await tx.update(storeSeckill).set({
             stock: sql`stock + ${num}`,
@@ -1823,7 +1874,10 @@ async function restoreRefundStock(
                 quota: sql`quota + ${num}`,
                 sales: sql`GREATEST(sales - ${num}, 0)`,
               }).where(eq(storeIntegral.id, activityId)).returning({ id: storeIntegral.id });
-      if (!activitySkuRows[0] || !activityRows[0]) {
+      if (
+        (!activitySkuRows[0] && !(missingLegacyActivityMain && legacyActivitySnapshot))
+        || (!activityRows[0] && !missingLegacyActivityMain)
+      ) {
         throw new ValidateException("活动商品库存无法完整回退");
       }
     }

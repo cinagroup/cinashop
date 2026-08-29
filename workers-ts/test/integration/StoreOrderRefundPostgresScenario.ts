@@ -155,6 +155,14 @@ export interface StoreOrderRefundPostgresReport {
     activity_sku_restored: boolean;
     activity_main_restored: boolean;
   };
+  retired_activity_refund: {
+    completed: boolean;
+    replay_converged: boolean;
+    balance: string;
+    base_product_restored: boolean;
+    base_sku_restored: boolean;
+    retired_activity_remained_absent: boolean;
+  };
   refund_window_policy: {
     expired_user_rejected: boolean;
     automatic_bypass_created: boolean;
@@ -325,6 +333,10 @@ function activityRefundIds(base: number) {
   };
 }
 
+function retiredActivityRefundId(base: number): number {
+  return base + 50_022;
+}
+
 function decimalCents(value: string | number): number {
   const normalized = String(value);
   const [whole = "0", fraction = ""] = normalized.split(".");
@@ -398,7 +410,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, base: number): Promise<void> {
   await withSchema(db, schemaName, async (container) => {
     const tx = container.db;
-    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
     const compensation = compensationIds(base);
     const timeout = timeoutIds(base);
     await tx.insert(userTable).values([...offsets.map((offset) => {
@@ -425,19 +437,21 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       const fixture = ids(base, offset);
       return {
         id: fixture.orderId,
-        type: offset === 12 ? 4 : offset === 21 ? 1 : [5, 6, 7, 8, 9, 10, 11].includes(offset) ? 3 : 0,
+        type: offset === 12 ? 4 : [21, 22].includes(offset) ? 1 : [5, 6, 7, 8, 9, 10, 11].includes(offset) ? 3 : 0,
         activityId: [9, 10].includes(offset)
           ? timeout.failedCombinationId
           : offset === 11
             ? timeout.partialCombinationId
             : offset === 21
               ? activityRefundIds(base).activityId
+              : offset === 22
+                ? retiredActivityRefundId(base)
               : 0,
         orderId: fixture.orderNo,
         unique: `refund-${base}-${offset}`,
         uid: fixture.uid,
         cartId: offset < 2 ? String(fixture.cartId) : "",
-        totalNum: offset === 17 ? 10 : offset < 2 || [9, 10, 19, 20].includes(offset) ? 1 : 2,
+        totalNum: offset === 17 ? 10 : offset < 2 || [9, 10, 19, 20, 22].includes(offset) ? 1 : 2,
         totalPrice: offset === 12 ? "0.00" : offset === 17 ? "99.00" : "10.00",
         payPrice: offset === 12 ? "0.00" : offset === 17 ? "99.00" : "10.00",
         payIntegral: offset === 12 ? 60 : 0,
@@ -455,7 +469,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
                 : 0,
         paid: 1,
         payType: offset === 12 ? "integral" : offset === 4 ? "weixin" : "yue",
-        status: offset < 2 || offset === 21 ? 0 : 1,
+        status: offset < 2 || [21, 22].includes(offset) ? 0 : 1,
         productType: offset === 12 ? 2 : 0,
         refundStatus: [7, 8].includes(offset) ? 0 : 1,
         refundType: 0,
@@ -477,7 +491,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         isDel: 0,
       };
     }));
-    await tx.insert(storeProduct).values([0, 1, 21].map((offset) => {
+    await tx.insert(storeProduct).values([0, 1, 21, 22].map((offset) => {
       const fixture = ids(base, offset);
       return {
         id: fixture.productId,
@@ -486,7 +500,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         sales: 1,
       };
     }));
-    await tx.insert(storeProductAttrValue).values([0, 1, 21].map((offset) => {
+    await tx.insert(storeProductAttrValue).values([0, 1, 21, 22].map((offset) => {
       const fixture = ids(base, offset);
       return {
         id: fixture.skuId,
@@ -524,7 +538,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       isShow: 1,
       isDel: 0,
     });
-    const cartInfoRows: Array<typeof storeOrderCartInfo.$inferInsert> = [0, 1, 9, 10, 11, 12, 21].map((offset) => {
+    const cartInfoRows: Array<typeof storeOrderCartInfo.$inferInsert> = [0, 1, 9, 10, 11, 12, 21, 22].map((offset) => {
       const fixture = ids(base, offset);
       return {
         id: fixture.cartInfoId,
@@ -538,11 +552,21 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         cartNum: 1,
         surplusNum: 1,
         splitSurplusNum: 1,
-        cartInfo: JSON.stringify({
-          product: { activityId: offset === 21 ? activityRefund.activityId : 0 },
-          sku: { id: fixture.skuId },
-          activitySku: offset === 21 ? { id: activityRefund.activitySkuId } : null,
-        }),
+        cartInfo: JSON.stringify(offset === 22
+          ? {
+              product: { activityId: retiredActivityRefundId(base) },
+              sku: {
+                id: fixture.skuId,
+                unique: skuUnique(offset),
+                suk: `refund-sku-${offset}`,
+                price: "10.00",
+              },
+            }
+          : {
+              product: { activityId: offset === 21 ? activityRefund.activityId : 0 },
+              sku: { id: fixture.skuId },
+              activitySku: offset === 21 ? { id: activityRefund.activitySkuId } : null,
+            }),
       };
     });
     cartInfoRows.push({
@@ -701,6 +725,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
     refundRows[refundRows.length - 1].refundedPrice = "1.00";
     addRefund(16, ids(base, 16).refundA, "10.00", "A");
     addRefund(21, ids(base, 21).refundA, "10.00", "A", true);
+    addRefund(22, ids(base, 22).refundA, "10.00", "A", true);
     await tx.insert(storeOrderRefund).values(refundRows);
 
     await tx.insert(storeServiceRecord).values([13, 14, 15, 16].map((offset) => ({
@@ -1943,6 +1968,49 @@ async function runActivityInventoryRefund(
   });
 }
 
+async function runRetiredActivityRefund(
+  db: DbClient,
+  schemaName: string,
+  base: number,
+): Promise<StoreOrderRefundPostgresReport["retired_activity_refund"]> {
+  const fixture = ids(base, 22);
+  const first = await withSchema(db, schemaName, (container) =>
+    finalizeStoreOrderRefund(container, fixture.refundA, 1_700_001_100));
+  const replay = await withSchema(db, schemaName, (container) =>
+    finalizeStoreOrderRefund(container, fixture.refundA, 1_700_001_101));
+  return withSchema(db, schemaName, async (container) => {
+    const [accounts, products, skus, activities] = await Promise.all([
+      container.db.select({ balance: userTable.nowMoney }).from(userTable)
+        .where(eq(userTable.uid, fixture.uid)).limit(1),
+      container.db.select({ stock: storeProduct.stock, sales: storeProduct.sales })
+        .from(storeProduct).where(eq(storeProduct.id, fixture.productId)).limit(1),
+      container.db.select({ stock: storeProductAttrValue.stock, sales: storeProductAttrValue.sales })
+        .from(storeProductAttrValue).where(eq(storeProductAttrValue.id, fixture.skuId)).limit(1),
+      container.db.select({ value: count() }).from(storeSeckill)
+        .where(eq(storeSeckill.id, retiredActivityRefundId(base))),
+    ]);
+    const completed = first === "completed";
+    const replayConverged = replay === "already-completed";
+    const baseProductRestored = products[0]?.stock === 10 && products[0]?.sales === 0;
+    const baseSkuRestored = skus[0]?.stock === 10 && skus[0]?.sales === 0;
+    const retiredActivityRemainedAbsent = activities[0]?.value === 0;
+    assertCondition(completed && replayConverged, "retired activity refund did not converge");
+    assertCondition(accounts[0]?.balance === "10.00", "retired activity refund balance mismatch");
+    assertCondition(
+      baseProductRestored && baseSkuRestored && retiredActivityRemainedAbsent,
+      "retired activity refund did not restore only the surviving inventory layers",
+    );
+    return {
+      completed,
+      replay_converged: replayConverged,
+      balance: accounts[0]?.balance ?? "missing",
+      base_product_restored: baseProductRestored,
+      base_sku_restored: baseSkuRestored,
+      retired_activity_remained_absent: retiredActivityRemainedAbsent,
+    };
+  });
+}
+
 async function runRefundWindowPolicy(
   db: DbClient,
   schemaName: string,
@@ -2083,6 +2151,7 @@ export async function runStoreOrderRefundPostgresScenario(
       base,
     );
     const activityInventoryRefund = await runActivityInventoryRefund(adminDb, schemaName, base);
+    const retiredActivityRefund = await runRetiredActivityRefund(adminDb, schemaName, base);
     const refundWindowPolicy = await runRefundWindowPolicy(adminDb, schemaName, base);
     const providerAmountBinding = await runProviderAmountBinding(adminDb, schemaName, base);
     const cumulativeCompensationInvariants = await runCumulativeCompensationInvariants(
@@ -2113,6 +2182,7 @@ export async function runStoreOrderRefundPostgresScenario(
       pure_integral_refund: pureIntegralRefund,
       authoritative_refund_application: authoritativeRefundApplication,
       activity_inventory_refund: activityInventoryRefund,
+      retired_activity_refund: retiredActivityRefund,
       refund_window_policy: refundWindowPolicy,
       provider_amount_binding: providerAmountBinding,
       cumulative_compensation_invariants: cumulativeCompensationInvariants,

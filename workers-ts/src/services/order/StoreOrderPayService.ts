@@ -16,6 +16,11 @@ import {
   storeOrder,
   userBill as userBillTable,
   storeOrderInvoice,
+  storeOrderCartInfo,
+  storeProductAttrValue,
+  storeSeckill,
+  storeBargain,
+  storeCombination,
 } from "@/models/schema";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
@@ -106,6 +111,66 @@ async function debitRequiredOrderIntegral(
 }
 
 /**
+ * Marketing orders created by the current Worker always carry an immutable
+ * activitySku id.  Pre-fix rows without that evidence cannot be paid safely:
+ * a later cancellation/refund could not prove which activity inventory layer
+ * to restore.  Keep the final callback transaction guarded as well as every
+ * payment-initiation path so an old or bypassed client cannot evade the check.
+ */
+export async function assertActivityOrderPaymentEvidence(
+  db: DbClient,
+  order: typeof storeOrder.$inferSelect,
+): Promise<void> {
+  if (![1, 2, 3].includes(order.type)) return;
+  const cartRows = await db
+    .select({ cartInfo: storeOrderCartInfo.cartInfo })
+    .from(storeOrderCartInfo)
+    .where(eq(storeOrderCartInfo.oid, order.id));
+  if (!cartRows.length) {
+    throw new ValidateException("历史活动订单商品快照缺失，请取消后重新下单");
+  }
+  for (const cart of cartRows) {
+    let activitySkuId = 0;
+    try {
+      const snapshot = JSON.parse(cart.cartInfo ?? "{}") as {
+        activitySku?: { id?: unknown } | null;
+      };
+      const parsedId = Number(snapshot.activitySku?.id ?? 0);
+      if (Number.isSafeInteger(parsedId) && parsedId > 0) activitySkuId = parsedId;
+    } catch {
+      activitySkuId = 0;
+    }
+    if (!activitySkuId) {
+      throw new ValidateException("历史活动订单数据不完整，请取消后重新下单");
+    }
+    const activitySkuRows = await db
+      .select({ id: storeProductAttrValue.id })
+      .from(storeProductAttrValue)
+      .where(and(
+        eq(storeProductAttrValue.id, activitySkuId),
+        eq(storeProductAttrValue.productId, order.activityId),
+        eq(storeProductAttrValue.type, order.type),
+      ))
+      .limit(1);
+    if (!activitySkuRows[0]) {
+      throw new ValidateException("活动商品规格已失效，请取消后重新下单");
+    }
+  }
+
+  const activityRows = order.type === 1
+    ? await db.select({ id: storeSeckill.id }).from(storeSeckill)
+        .where(eq(storeSeckill.id, order.activityId)).limit(1)
+    : order.type === 2
+      ? await db.select({ id: storeBargain.id }).from(storeBargain)
+          .where(eq(storeBargain.id, order.activityId)).limit(1)
+      : await db.select({ id: storeCombination.id }).from(storeCombination)
+          .where(eq(storeCombination.id, order.activityId)).limit(1);
+  if (!activityRows[0]) {
+    throw new ValidateException("活动已失效，请取消后重新下单");
+  }
+}
+
+/**
  * Atomically transition an unpaid order to paid and persist its outbox event.
  * Queue delivery is intentionally left to the service after this transaction.
  */
@@ -139,6 +204,8 @@ export async function applyStoreOrderPayment(
     if (order.status !== 0 || order.isDel !== 0) {
       return { outcome: "not-payable", outbox: null };
     }
+
+    await assertActivityOrderPaymentEvidence(tx, order);
 
     await debitRequiredOrderIntegral(tx, order, now);
 
@@ -199,6 +266,7 @@ export async function applyStoreOrderBalancePayment(
     if (order.status !== 0 || order.isDel !== 0) {
       return { outcome: "not-payable", outbox: null };
     }
+    await assertActivityOrderPaymentEvidence(tx, order);
     await assertPinkOrderPayable(tx, order);
     await debitRequiredOrderIntegral(tx, order, now);
 
@@ -312,6 +380,7 @@ export class StoreOrderPayService {
     if (!order || order.uid !== uid || order.isDel !== 0) throw new NotFoundException("订单不存在");
     if (order.paid === 1) return { order_id: orderId, paid: true, pay_type: order.payType };
     if (order.status !== 0) throw new ValidateException("订单状态不允许支付");
+    await assertActivityOrderPaymentEvidence(this.container.db, order);
     await assertPinkOrderPayable(this.container.db, order);
     const invalidTime = await getOrderInvalidTime(
       this.container,
@@ -363,6 +432,7 @@ export class StoreOrderPayService {
     if (!order || order.uid !== uid || order.isDel !== 0) throw new NotFoundException("订单不存在");
     if (order.paid === 1) throw new ValidateException("订单已支付");
     if (order.status !== 0) throw new ValidateException("订单状态不允许支付");
+    await assertActivityOrderPaymentEvidence(this.container.db, order);
     await assertPinkOrderPayable(this.container.db, order);
     const identity = await resolveWechatPaymentIdentity(
       this.container,
@@ -405,6 +475,7 @@ export class StoreOrderPayService {
       if (order.paid === 1) return { order_id: orderId, paid: true, pay_type: order.payType };
       if (order.status !== 0) throw new ValidateException("订单状态不允许支付");
       assertMarketingOfflinePaymentAllowed(order.type, from);
+      await assertActivityOrderPaymentEvidence(tx, order);
       await assertPinkOrderPayable(tx, order);
       await tx
         .update(storeOrder)
@@ -468,6 +539,7 @@ export class StoreOrderPayService {
     if (order.uid !== uid) throw new ValidateException("订单不属于当前用户");
     if (order.paid) throw new ValidateException("订单已支付");
     if (order.status !== 0 || order.isDel) throw new ValidateException("订单状态不允许支付");
+    await assertActivityOrderPaymentEvidence(c.db, order);
     await assertPinkOrderPayable(c.db, order);
 
     const appId = this.env.ALIPAY_APP_ID;

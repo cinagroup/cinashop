@@ -34,6 +34,7 @@ const CLONED_TABLES = [
   "store_order_cart_info",
   "store_product",
   "store_product_attr_value",
+  "store_seckill",
   "store_order_status",
   "store_order_outbox",
   "store_order_invoice",
@@ -147,6 +148,13 @@ export interface StoreOrderPaymentCancelPostgresReport {
     funds_unchanged: boolean;
     order_unchanged: boolean;
   };
+  retired_activity_order: {
+    payment_rejected: boolean;
+    funds_unchanged: boolean;
+    cancelled: boolean;
+    base_inventory_restored: boolean;
+    audit_status_written: boolean;
+  };
 }
 
 interface FixtureState {
@@ -253,10 +261,10 @@ function fixtureUid(base: number, offset: number): number {
 async function seedFixtures(db: DbClient, schemaName: string, base: number): Promise<void> {
   await withSchema(db, schemaName, async (container) => {
     const tx = container.db;
-    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     await tx.insert(userTable).values([
       { uid: base + 1, account: `payment-${base}`.slice(0, 32), nowMoney: "0.00", status: 1, isDel: 0 },
-      ...[5, 6, 7, 8, 9, 10, 11].map((offset) => ({
+      ...[5, 6, 7, 8, 9, 10, 11, 12].map((offset) => ({
         uid: fixtureUid(base, offset),
         account: `balance-${base}-${offset}`.slice(0, 32),
         nowMoney: offset === 6 ? "5.00" : offset === 9 ? "0.00" : "20.00",
@@ -290,7 +298,9 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       return {
         id: ids.cartId,
         uid: fixtureUid(base, offset),
+        type: offset === 12 ? 1 : 0,
         productId: ids.productId,
+        activityId: offset === 12 ? base + 9_000 : 0,
         productAttrUnique: String(10_000_000 + offset),
         cartNum: 1,
         isPay: 1,
@@ -315,6 +325,8 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         isDel: 0,
         isSystemDel: 0,
         supplierAllocationStatus: 0,
+        type: offset === 12 ? 1 : 0,
+        activityId: offset === 12 ? base + 9_000 : 0,
       };
     }));
     await tx.insert(storeOrderCartInfo).values(offsets.map((offset) => {
@@ -330,7 +342,17 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         cartNum: 1,
         surplusNum: 1,
         splitSurplusNum: 1,
-        cartInfo: JSON.stringify({ sku: { id: ids.skuId } }),
+        cartInfo: JSON.stringify(offset === 12
+          ? {
+              product: { id: ids.productId, activityId: base + 9_000 },
+              sku: {
+                id: ids.skuId,
+                unique: String(10_000_000 + offset),
+                suk: `sku-${offset}`,
+                price: "10.00",
+              },
+            }
+          : { sku: { id: ids.skuId } }),
       };
     }));
     await tx.insert(storeOrderInvoice).values([2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((offset) => {
@@ -996,6 +1018,55 @@ async function runIntegralInsufficient(db: DbClient, schemaName: string, base: n
   });
 }
 
+async function runRetiredActivityOrderDisposition(
+  db: DbClient,
+  schemaName: string,
+  base: number,
+) {
+  const ids = fixtureIds(base, 12);
+  const uid = fixtureUid(base, 12);
+  const rejection = await withSchema(db, schemaName, async (container) => expectRejected(
+    () => applyStoreOrderBalancePayment(container, { uid, orderId: ids.orderNo }),
+    "retired activity payment",
+  ));
+  const paymentRejected = /历史活动订单数据不完整/.test(rejection)
+    && !/lock timeout|deadlock|canceling statement/i.test(rejection);
+  assertCondition(paymentRejected, "retired activity payment did not fail at the evidence guard");
+
+  const beforeCancel = await withSchema(db, schemaName, (container) =>
+    readBalanceFixtureState(container, base, 12));
+  const fundsUnchanged = beforeCancel.balance === "20.00"
+    && beforeCancel.billRows === 0
+    && beforeCancel.paid === 0
+    && beforeCancel.outboxRows === 0;
+  assertCondition(fundsUnchanged, "retired activity payment touched funds or order state");
+
+  await withSchema(db, schemaName, (container) =>
+    cancelStoreOrder(container, { uid, orderId: ids.orderNo }));
+  return withSchema(db, schemaName, async (container) => {
+    const [state, statuses] = await Promise.all([
+      readBalanceFixtureState(container, base, 12),
+      container.db.select({ message: storeOrderStatus.changeMessage })
+        .from(storeOrderStatus)
+        .where(and(
+          eq(storeOrderStatus.oid, ids.orderId),
+          eq(storeOrderStatus.changeType, "cancel"),
+        )),
+    ]);
+    assertCancelledState(state, "retired activity cancel");
+    const auditStatusWritten = statuses.length === 1
+      && statuses[0]?.message === "用户取消历史失效活动订单并恢复现存占用资源";
+    assertCondition(auditStatusWritten, "retired activity cancellation audit status is missing");
+    return {
+      payment_rejected: paymentRejected,
+      funds_unchanged: fundsUnchanged,
+      cancelled: state.status === -2 && state.isDel === 1,
+      base_inventory_restored: state.productStock === 10 && state.skuStock === 10,
+      audit_status_written: auditStatusWritten,
+    };
+  });
+}
+
 export async function runStoreOrderPaymentCancelPostgresScenario(
   connectionString: string,
 ): Promise<StoreOrderPaymentCancelPostgresReport> {
@@ -1092,6 +1163,11 @@ export async function runStoreOrderPaymentCancelPostgresScenario(
       base,
     );
     const integralInsufficient = await runIntegralInsufficient(adminDb, schemaName, base);
+    const retiredActivityOrder = await runRetiredActivityOrderDisposition(
+      adminDb,
+      schemaName,
+      base,
+    );
     report = {
       server_version: versionRows[0]?.server_version ?? "unknown",
       schema_created: true,
@@ -1107,6 +1183,7 @@ export async function runStoreOrderPaymentCancelPostgresScenario(
       zero_balance_payment: zeroBalancePayment,
       integral_balance_payment: integralBalancePayment,
       integral_insufficient: integralInsufficient,
+      retired_activity_order: retiredActivityOrder,
     };
   } finally {
     try {

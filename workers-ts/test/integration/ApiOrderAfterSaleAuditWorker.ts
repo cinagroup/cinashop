@@ -330,6 +330,314 @@ async function readState(connectionString: string) {
   }
 }
 
+/**
+ * Read only the non-PII evidence needed to decide whether legacy activity SKU
+ * rows and purchase limits can be reconstructed.  Order/user identifiers and
+ * free-form snapshot fields deliberately never leave PostgreSQL.
+ */
+async function readCheckoutRecoveryEvidence(connectionString: string) {
+  const db = createDbFromConnectionString(connectionString, 1, {
+    applicationName: "cinashop_api006_checkout_recovery_audit",
+  });
+  try {
+    return await db.$client.begin(async (tx) => {
+      await tx`SET LOCAL search_path TO public`;
+      await tx`SET LOCAL statement_timeout = '20s'`;
+      await tx`SET LOCAL lock_timeout = '2s'`;
+      await tx`SET TRANSACTION READ ONLY`;
+
+      const activityConfiguration = await tx<Array<Record<string, unknown>>>`
+        SELECT kind, activity_type, activity_id, product_id, price, min_price, cost,
+          once_num, num, stock, quota, sales, status, is_show, is_del,
+          start_time, stop_time
+        FROM (
+          SELECT 'seckill'::text AS kind, 1::smallint AS activity_type,
+            id AS activity_id, product_id, price::text, NULL::text AS min_price,
+            cost::text, once_num, num, stock, quota, sales, status, is_show,
+            is_del, start_time, stop_time
+          FROM store_seckill
+          UNION ALL
+          SELECT 'bargain'::text AS kind, 2::smallint AS activity_type,
+            id AS activity_id, product_id, price::text, min_price::text,
+            cost::text, NULL::integer AS once_num, num, stock, quota, sales,
+            status, NULL::smallint AS is_show, is_del, start_time, stop_time
+          FROM store_bargain
+          UNION ALL
+          SELECT 'combination'::text AS kind, 3::smallint AS activity_type,
+            id AS activity_id, product_id, price::text, NULL::text AS min_price,
+            cost::text, once_num, num, stock, quota, sales, status, is_show,
+            is_del, start_time, stop_time
+          FROM store_combination
+        ) activity
+        ORDER BY activity_type, activity_id
+      `;
+
+      const baseSkuCandidates = await tx<Array<Record<string, unknown>>>`
+        WITH activity_products AS (
+          SELECT 1::smallint AS activity_type, id AS activity_id, product_id FROM store_seckill
+          UNION ALL
+          SELECT 2::smallint, id, product_id FROM store_bargain
+          UNION ALL
+          SELECT 3::smallint, id, product_id FROM store_combination
+        )
+        SELECT activity.activity_type, activity.activity_id, activity.product_id,
+          row_number() OVER (
+            PARTITION BY activity.activity_type, activity.activity_id
+            ORDER BY sku.id
+          )::integer AS candidate_ordinal,
+          sku.suk, sku.unique, sku.price::text, sku.cost::text,
+          sku.stock, sku.quota, sku.sales
+        FROM activity_products activity
+        JOIN store_product_attr_value sku
+          ON sku.type = 0 AND sku.product_id = activity.product_id
+        ORDER BY activity.activity_type, activity.activity_id, sku.id
+      `;
+
+      const orderSnapshots = await tx<Array<Record<string, unknown>>>`
+        WITH parsed AS (
+          SELECT row_number() OVER (ORDER BY o.add_time, o.id, ci.id)::integer AS order_line_ordinal,
+            o.uid, o.type, o.activity_id, o.paid, o.status, o.is_del,
+            o.is_system_del, o.pid, o.total_num, o.total_price::text,
+            o.pay_price::text, o.coupon_price::text, o.deduction_price::text,
+            o.promotions_price::text,
+            count(*) OVER (PARTITION BY o.id)::integer AS order_line_count,
+            ci.product_id, ci.cart_num,
+            ci.sku_unique,
+            ci.cart_info IS JSON AS json_valid,
+            CASE WHEN ci.cart_info IS JSON THEN ci.cart_info::jsonb ELSE '{}'::jsonb END AS snapshot
+          FROM store_order o
+          JOIN store_order_cart_info ci ON ci.oid = o.id
+          WHERE o.type IN (1, 2, 3)
+        ), normalized AS (
+          SELECT parsed.*,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,suk}', ''),
+              NULLIF(snapshot #>> '{activitySku,suk}', ''),
+              NULLIF(snapshot #>> '{sku,suk}', '')
+            ) AS snapshot_suk,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,unique}', ''),
+              NULLIF(snapshot #>> '{activitySku,unique}', ''),
+              NULLIF(snapshot #>> '{sku,unique}', ''),
+              NULLIF(snapshot #>> '{product_attr_unique}', ''),
+              NULLIF(sku_unique, '')
+            ) AS snapshot_unique,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,price}', ''),
+              NULLIF(snapshot #>> '{activitySku,price}', ''),
+              NULLIF(snapshot #>> '{sku,price}', ''),
+              NULLIF(snapshot #>> '{truePrice}', '')
+            ) AS snapshot_price,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,cost}', ''),
+              NULLIF(snapshot #>> '{costPrice}', '')
+            ) AS snapshot_cost,
+            snapshot ? 'activitySku' AS has_worker_activity_sku
+          FROM parsed
+        )
+        SELECT order_line_ordinal, type, activity_id, product_id, paid, status,
+          is_del, is_system_del, pid, total_num, total_price, pay_price,
+          coupon_price, deduction_price, promotions_price, order_line_count,
+          cart_num, json_valid,
+          has_worker_activity_sku, snapshot_suk, snapshot_unique,
+          snapshot_price, snapshot_cost,
+          (SELECT count(*)::integer FROM store_product_attr_value base
+            WHERE base.type = 0 AND base.product_id = normalized.product_id
+              AND base.suk = normalized.snapshot_suk) AS base_suk_match_count,
+          (SELECT count(*)::integer FROM store_product_attr_value activity_sku
+            WHERE activity_sku.type = normalized.type
+              AND activity_sku.product_id = normalized.activity_id
+              AND activity_sku.unique = normalized.snapshot_unique)
+            AS existing_activity_unique_match_count
+        FROM normalized
+        ORDER BY order_line_ordinal
+      `;
+
+      const bargainOrderResolution = await tx<Array<Record<string, unknown>>>`
+        WITH bargain_orders AS (
+          SELECT row_number() OVER (ORDER BY o.add_time, o.id)::integer AS order_ordinal,
+            o.uid, o.activity_id, o.paid, o.status, o.is_del, o.is_system_del
+          FROM store_order o
+          WHERE o.type = 2
+        )
+        SELECT orders.order_ordinal, orders.activity_id, orders.paid,
+          orders.status, orders.is_del, orders.is_system_del,
+          count(participant.id)::integer AS matching_participants,
+          coalesce(jsonb_agg(jsonb_build_object(
+            'participant_id', participant.id,
+            'bargain_id', participant.bargain_id,
+            'status', participant.status,
+            'is_del', participant.is_del,
+            'bargain_price', participant.bargain_price::text,
+            'cut_price', participant.price::text,
+            'minimum_price', participant.bargain_price_min::text
+          ) ORDER BY participant.id) FILTER (WHERE participant.id IS NOT NULL), '[]'::jsonb)
+            AS participant_evidence
+        FROM bargain_orders orders
+        LEFT JOIN store_bargain_user participant
+          ON participant.uid = orders.uid
+          AND (participant.id = orders.activity_id OR participant.bargain_id = orders.activity_id)
+        GROUP BY orders.order_ordinal, orders.activity_id, orders.paid,
+          orders.status, orders.is_del, orders.is_system_del
+        ORDER BY orders.order_ordinal
+      `;
+
+      const snapshotKeyShapes = await tx<Array<Record<string, unknown>>>`
+        WITH parsed AS (
+          SELECT CASE WHEN ci.cart_info IS JSON
+              THEN ci.cart_info::jsonb ELSE '{}'::jsonb END AS snapshot
+          FROM store_order o
+          JOIN store_order_cart_info ci ON ci.oid = o.id
+          WHERE o.type IN (1, 2, 3)
+        )
+        SELECT DISTINCT
+          (SELECT coalesce(jsonb_agg(key ORDER BY key), '[]'::jsonb)
+            FROM jsonb_object_keys(snapshot) AS key) AS top_level_keys,
+          (SELECT coalesce(jsonb_agg(key ORDER BY key), '[]'::jsonb)
+            FROM jsonb_object_keys(CASE
+              WHEN jsonb_typeof(snapshot -> 'productInfo') = 'object'
+                THEN snapshot -> 'productInfo' ELSE '{}'::jsonb END) AS key)
+            AS product_info_keys,
+          (SELECT coalesce(jsonb_agg(key ORDER BY key), '[]'::jsonb)
+            FROM jsonb_object_keys(CASE
+              WHEN jsonb_typeof(snapshot #> '{productInfo,attrInfo}') = 'object'
+                THEN snapshot #> '{productInfo,attrInfo}' ELSE '{}'::jsonb END) AS key)
+            AS attr_info_keys
+        FROM parsed
+      `;
+
+      const historicalActivityCarts = await tx<Array<Record<string, unknown>>>`
+        SELECT row_number() OVER (ORDER BY add_time, id)::integer AS cart_ordinal,
+          type, activity_id, product_id, product_attr_unique, cart_num,
+          is_pay, is_del, status,
+          (SELECT count(*)::integer FROM store_product_attr_value activity_sku
+            WHERE activity_sku.type = cart.type
+              AND activity_sku.product_id = cart.activity_id
+              AND activity_sku.unique = cart.product_attr_unique)
+            AS existing_activity_unique_match_count,
+          (SELECT count(*)::integer FROM store_product_attr_value base
+            WHERE base.type = 0 AND base.product_id = cart.product_id
+              AND base.unique = cart.product_attr_unique)
+            AS base_unique_match_count
+        FROM store_cart cart
+        WHERE type IN (1, 2, 3)
+        ORDER BY add_time, id
+      `;
+
+      const limitLowerBounds = await tx<Array<Record<string, unknown>>>`
+        WITH relevant AS (
+          SELECT uid, type, activity_id, total_num, paid, status, is_del,
+            is_system_del, pid
+          FROM store_order
+          WHERE type IN (1, 3) AND pid IN (0, -1)
+        ), reserved_per_user AS (
+          SELECT type, activity_id, uid, sum(total_num)::integer AS reserved_total
+          FROM relevant
+          WHERE paid = 1 OR (paid = 0 AND is_del = 0 AND is_system_del = 0)
+          GROUP BY type, activity_id, uid
+        ), bounds AS (
+          SELECT type, activity_id,
+            max(total_num)::integer AS observed_once_num_lower_bound,
+            max(reserved_total)::integer AS observed_total_num_lower_bound
+          FROM relevant
+          LEFT JOIN reserved_per_user USING (type, activity_id, uid)
+          GROUP BY type, activity_id
+        )
+        SELECT bounds.type, bounds.activity_id,
+          bounds.observed_once_num_lower_bound,
+          bounds.observed_total_num_lower_bound,
+          CASE WHEN bounds.type = 1 THEN seckill.once_num ELSE combination.once_num END
+            AS configured_once_num,
+          CASE WHEN bounds.type = 1 THEN seckill.num ELSE combination.num END
+            AS configured_total_num
+        FROM bounds
+        LEFT JOIN store_seckill seckill
+          ON bounds.type = 1 AND seckill.id = bounds.activity_id
+        LEFT JOIN store_combination combination
+          ON bounds.type = 3 AND combination.id = bounds.activity_id
+        ORDER BY bounds.type, bounds.activity_id
+      `;
+
+      const recoverySummary = await tx<Array<Record<string, unknown>>>`
+        WITH parsed AS (
+          SELECT o.paid, o.status, o.is_del, o.is_system_del, o.type,
+            o.activity_id, ci.product_id, ci.sku_unique,
+            CASE WHEN ci.cart_info IS JSON THEN ci.cart_info::jsonb ELSE '{}'::jsonb END AS snapshot
+          FROM store_order o
+          JOIN store_order_cart_info ci ON ci.oid = o.id
+          WHERE o.type IN (1, 2, 3)
+        ), normalized AS (
+          SELECT parsed.*,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,suk}', ''),
+              NULLIF(snapshot #>> '{activitySku,suk}', ''),
+              NULLIF(snapshot #>> '{sku,suk}', '')
+            ) AS snapshot_suk,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,unique}', ''),
+              NULLIF(snapshot #>> '{activitySku,unique}', ''),
+              NULLIF(snapshot #>> '{sku,unique}', ''),
+              NULLIF(snapshot #>> '{product_attr_unique}', ''),
+              NULLIF(sku_unique, '')
+            ) AS snapshot_unique,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,price}', ''),
+              NULLIF(snapshot #>> '{activitySku,price}', ''),
+              NULLIF(snapshot #>> '{sku,price}', ''),
+              NULLIF(snapshot #>> '{truePrice}', '')
+            ) AS snapshot_price,
+            COALESCE(
+              NULLIF(snapshot #>> '{productInfo,attrInfo,cost}', ''),
+              NULLIF(snapshot #>> '{costPrice}', '')
+            ) AS snapshot_cost
+          FROM parsed
+        ), evidence AS (
+          SELECT normalized.*,
+            (SELECT count(*) FROM store_product_attr_value base
+              WHERE base.type = 0 AND base.product_id = normalized.product_id
+                AND base.suk = normalized.snapshot_suk) AS base_matches
+          FROM normalized
+        )
+        SELECT count(*)::integer AS activity_order_lines,
+          count(*) FILTER (WHERE snapshot_suk IS NOT NULL)::integer AS lines_with_suk,
+          count(*) FILTER (WHERE snapshot_unique IS NOT NULL)::integer AS lines_with_unique,
+          count(*) FILTER (WHERE snapshot_price IS NOT NULL)::integer AS lines_with_price,
+          count(*) FILTER (WHERE snapshot_cost IS NOT NULL)::integer AS lines_with_cost,
+          count(*) FILTER (WHERE base_matches = 1)::integer AS lines_with_unique_base_suk_match,
+          count(*) FILTER (WHERE base_matches = 0)::integer AS lines_without_base_suk_match,
+          count(*) FILTER (WHERE base_matches > 1)::integer AS lines_with_ambiguous_base_suk_match,
+          count(*) FILTER (
+            WHERE paid = 0 AND status = 0 AND is_del = 0 AND is_system_del = 0
+          )::integer AS unpaid_visible_lines,
+          count(*) FILTER (
+            WHERE paid = 0 AND status = 0 AND is_del = 0 AND is_system_del = 0
+              AND snapshot_suk IS NOT NULL AND snapshot_unique IS NOT NULL
+              AND snapshot_price IS NOT NULL AND snapshot_cost IS NOT NULL
+              AND base_matches = 1
+          )::integer AS unpaid_lines_with_complete_rebuild_evidence
+        FROM evidence
+      `;
+
+      const fingerprint = await tx.unsafe<Array<{ fingerprint: string }>>(BUSINESS_FINGERPRINT_SQL);
+      return {
+        transaction: "READ ONLY",
+        pii_projection: "none",
+        activity_configuration: activityConfiguration,
+        base_sku_candidates: baseSkuCandidates,
+        activity_order_snapshots: orderSnapshots,
+        snapshot_key_shapes: snapshotKeyShapes,
+        bargain_order_resolution: bargainOrderResolution,
+        historical_activity_carts: historicalActivityCarts,
+        limit_lower_bounds: limitLowerBounds,
+        recovery_summary: recoverySummary[0] ?? {},
+        business_fingerprint: fingerprint[0]?.fingerprint ?? "",
+      };
+    });
+  } finally {
+    await db.$client.end({ timeout: 1 });
+  }
+}
+
 export default {
   async fetch(request: Request, env: AuditEnv): Promise<Response> {
     if (!(await authorize(request, env.AUDIT_TOKEN_SHA256))) {
@@ -352,6 +660,16 @@ export default {
     if (request.method === "POST" && pathname === "/migrate-reward") {
       try {
         return Response.json(await applyRewardMigration(env.HYPERDRIVE.connectionString));
+      } catch (error) {
+        return Response.json(
+          { error: error instanceof Error ? error.message : String(error) },
+          { status: 500 },
+        );
+      }
+    }
+    if (request.method === "GET" && pathname === "/checkout-recovery") {
+      try {
+        return Response.json(await readCheckoutRecoveryEvidence(env.HYPERDRIVE.connectionString));
       } catch (error) {
         return Response.json(
           { error: error instanceof Error ? error.message : String(error) },

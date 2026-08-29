@@ -417,6 +417,44 @@ export async function cancelStoreOrder(
       .orderBy(storeOrderCartInfo.id);
     if (!cartInfos.length) throw new Error(`订单 ${orderId} 缺少商品快照，无法安全取消`);
 
+    let missingLegacyActivityMain = false;
+    let bargainParticipant: { id: number; bargainId: number } | null = null;
+    if (order.type === 1) {
+      const rows = order.activityId > 0
+        ? await tx.select({ id: storeSeckill.id }).from(storeSeckill)
+            .where(eq(storeSeckill.id, order.activityId)).limit(1)
+        : [];
+      missingLegacyActivityMain = !rows[0];
+    } else if (order.type === 2) {
+      const bargainUsers = await tx
+        .select({ id: storeBargainUser.id, bargainId: storeBargainUser.bargainId })
+        .from(storeBargainUser)
+        .where(
+          and(
+            eq(storeBargainUser.uid, uid),
+            eq(storeBargainUser.status, 4),
+            or(
+              eq(storeBargainUser.bargainId, order.activityId),
+              eq(storeBargainUser.id, order.activityId),
+            ),
+          ),
+        )
+        .limit(2);
+      if (bargainUsers.length !== 1) {
+        throw new Error(`订单 ${orderId} 的砍价参与记录无法唯一定位`);
+      }
+      bargainParticipant = bargainUsers[0];
+      const rows = await tx.select({ id: storeBargain.id }).from(storeBargain)
+        .where(eq(storeBargain.id, bargainParticipant.bargainId)).limit(1);
+      missingLegacyActivityMain = !rows[0];
+    } else if (order.type === 3) {
+      const rows = order.activityId > 0
+        ? await tx.select({ id: storeCombination.id }).from(storeCombination)
+            .where(eq(storeCombination.id, order.activityId)).limit(1)
+        : [];
+      missingLegacyActivityMain = !rows[0];
+    }
+
     const cancelled = await tx
       .update(storeOrder)
       .set({ status: -2, isDel: 1 })
@@ -435,6 +473,7 @@ export async function cancelStoreOrder(
     for (const item of cartInfos) {
       let snapshotSkuId = 0;
       let snapshotActivitySkuId = 0;
+      let legacyActivitySnapshot = false;
       try {
         const snapshot = JSON.parse(item.cartInfo ?? "{}") as {
           sku?: { id?: unknown };
@@ -446,9 +485,12 @@ export async function cancelStoreOrder(
         if (Number.isSafeInteger(parsedActivitySkuId) && parsedActivitySkuId > 0) {
           snapshotActivitySkuId = parsedActivitySkuId;
         }
+        legacyActivitySnapshot = !Object.prototype.hasOwnProperty.call(snapshot, "activitySku")
+          && Number.isSafeInteger(parsedId) && parsedId > 0;
       } catch {
         snapshotSkuId = 0;
         snapshotActivitySkuId = 0;
+        legacyActivitySnapshot = false;
       }
       if (!snapshotSkuId) {
         const legacySkus = await tx
@@ -473,7 +515,11 @@ export async function cancelStoreOrder(
           stock: sql`stock + ${item.cartNum}`,
           sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
         })
-        .where(eq(storeProductAttrValue.id, snapshotSkuId))
+        .where(and(
+          eq(storeProductAttrValue.id, snapshotSkuId),
+          eq(storeProductAttrValue.productId, item.productId),
+          eq(storeProductAttrValue.type, 0),
+        ))
         .returning({ id: storeProductAttrValue.id });
       const productRestored = await tx
         .update(storeProduct)
@@ -487,26 +533,31 @@ export async function cancelStoreOrder(
         throw new Error(`订单 ${orderId} 的商品库存无法完整恢复`);
       }
       if ([1, 2, 3, 4].includes(order.type)) {
-        if (!snapshotActivitySkuId) {
+        if (!snapshotActivitySkuId && !(missingLegacyActivityMain && legacyActivitySnapshot)) {
           throw new Error(`订单 ${orderId} 的活动 SKU 快照缺失，无法安全取消`);
         }
-        const activitySkuRestored = await tx
-          .update(storeProductAttrValue)
-          .set({
-            stock: sql`stock + ${item.cartNum}`,
-            quota: sql`quota + ${item.cartNum}`,
-            sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
-          })
-          .where(
-            and(
-              eq(storeProductAttrValue.id, snapshotActivitySkuId),
-              eq(storeProductAttrValue.productId, order.activityId),
-              eq(storeProductAttrValue.type, order.type),
-            ),
-          )
-          .returning({ id: storeProductAttrValue.id });
-        if (!activitySkuRestored.length) {
-          throw new Error(`订单 ${orderId} 的活动 SKU 库存无法恢复`);
+        if (snapshotActivitySkuId) {
+          const activitySkuProductId = order.type === 2
+            ? (bargainParticipant?.bargainId ?? 0)
+            : order.activityId;
+          const activitySkuRestored = await tx
+            .update(storeProductAttrValue)
+            .set({
+              stock: sql`stock + ${item.cartNum}`,
+              quota: sql`quota + ${item.cartNum}`,
+              sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
+            })
+            .where(
+              and(
+                eq(storeProductAttrValue.id, snapshotActivitySkuId),
+                eq(storeProductAttrValue.productId, activitySkuProductId),
+                eq(storeProductAttrValue.type, order.type),
+              ),
+            )
+            .returning({ id: storeProductAttrValue.id });
+          if (!activitySkuRestored.length) {
+            throw new Error(`订单 ${orderId} 的活动 SKU 库存无法恢复`);
+          }
         }
       }
 
@@ -566,26 +617,11 @@ export async function cancelStoreOrder(
         })
         .where(eq(storeSeckill.id, order.activityId))
         .returning({ id: storeSeckill.id });
-      if (!restored.length) throw new Error(`订单 ${orderId} 的秒杀库存无法恢复`);
-    } else if (order.type === 2 && order.activityId) {
-      const bargainUsers = await tx
-        .select({ id: storeBargainUser.id, bargainId: storeBargainUser.bargainId })
-        .from(storeBargainUser)
-        .where(
-          and(
-            eq(storeBargainUser.uid, uid),
-            eq(storeBargainUser.status, 4),
-            or(
-              eq(storeBargainUser.bargainId, order.activityId),
-              eq(storeBargainUser.id, order.activityId),
-            ),
-          ),
-        )
-        .limit(2);
-      if (bargainUsers.length !== 1) {
-        throw new Error(`订单 ${orderId} 的砍价参与记录无法唯一定位`);
+      if (!restored.length && !missingLegacyActivityMain) {
+        throw new Error(`订单 ${orderId} 的秒杀库存无法恢复`);
       }
-      const bargainUser = bargainUsers[0];
+    } else if (order.type === 2 && order.activityId) {
+      if (!bargainParticipant) throw new Error(`订单 ${orderId} 的砍价参与记录无法唯一定位`);
       const restored = await tx
         .update(storeBargain)
         .set({
@@ -593,15 +629,17 @@ export async function cancelStoreOrder(
           stock: sql`stock + ${order.totalNum}`,
           sales: sql`GREATEST(sales - ${order.totalNum}, 0)`,
         })
-        .where(eq(storeBargain.id, bargainUser.bargainId))
+        .where(eq(storeBargain.id, bargainParticipant.bargainId))
         .returning({ id: storeBargain.id });
-      if (!restored.length) throw new Error(`订单 ${orderId} 的砍价库存无法恢复`);
+      if (!restored.length && !missingLegacyActivityMain) {
+        throw new Error(`订单 ${orderId} 的砍价库存无法恢复`);
+      }
       const bargainUserRestored = await tx
         .update(storeBargainUser)
         .set({ status: 3 })
         .where(
           and(
-            eq(storeBargainUser.id, bargainUser.id),
+            eq(storeBargainUser.id, bargainParticipant.id),
             eq(storeBargainUser.status, 4),
           ),
         )
@@ -619,7 +657,9 @@ export async function cancelStoreOrder(
         })
         .where(eq(storeCombination.id, order.activityId))
         .returning({ id: storeCombination.id });
-      if (!restored.length) throw new Error(`订单 ${orderId} 的拼团库存无法恢复`);
+      if (!restored.length && !missingLegacyActivityMain) {
+        throw new Error(`订单 ${orderId} 的拼团库存无法恢复`);
+      }
     } else if (order.type === 4 && order.activityId) {
       const restored = await tx
         .update(storeIntegral)
@@ -630,7 +670,9 @@ export async function cancelStoreOrder(
         })
         .where(eq(storeIntegral.id, order.activityId))
         .returning({ id: storeIntegral.id });
-      if (!restored.length) throw new Error(`订单 ${orderId} 的积分商品库存无法恢复`);
+      if (!restored.length && !missingLegacyActivityMain) {
+        throw new Error(`订单 ${orderId} 的积分商品库存无法恢复`);
+      }
     } else if (order.type === 5 && order.activityId) {
       const restored = await tx
         .update(storeDiscounts)
@@ -655,7 +697,9 @@ export async function cancelStoreOrder(
     await tx.insert(storeOrderStatus).values({
       oid: order.id,
       changeType: "cancel",
-      changeMessage: "用户取消订单并恢复占用资源",
+      changeMessage: missingLegacyActivityMain
+        ? "用户取消历史失效活动订单并恢复现存占用资源"
+        : "用户取消订单并恢复占用资源",
       changeTime: Math.floor(Date.now() / 1000),
     });
   });

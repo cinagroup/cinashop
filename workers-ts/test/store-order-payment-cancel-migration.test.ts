@@ -15,6 +15,9 @@ describe("订单支付与取消 PostgreSQL 迁移", () => {
     const payment = readFileSync("src/services/order/StoreOrderPayService.ts", "utf8");
     const outbox = readFileSync("src/services/order/OrderOutboxService.ts", "utf8");
     expect(payment).toContain("export async function applyStoreOrderPayment(");
+    expect(payment).toContain("export async function assertActivityOrderPaymentEvidence(");
+    expect(payment).toContain("历史活动订单数据不完整，请取消后重新下单");
+    expect(payment).toContain("await assertActivityOrderPaymentEvidence(tx, order);");
     expect(payment).toContain("const outbox = await enqueueOrderPaidEvent(tx, paidOrder, now);");
     expect(payment).toContain("const paymentResult = await applyStoreOrderPayment(this.container");
     expect(outbox).toContain("export async function enqueueOrderPaidEvent(");
@@ -52,6 +55,8 @@ describe("订单支付与取消 PostgreSQL 迁移", () => {
     expect(scenario).toContain("zero-value balance payment wrote inconsistent evidence");
     expect(scenario).toContain("duplicate integral balance payments must debit money and points exactly once");
     expect(scenario).toContain("insufficient required integral was not rejected by a business guard");
+    expect(scenario).toContain("retired activity payment did not fail at the evidence guard");
+    expect(scenario).toContain("用户取消历史失效活动订单并恢复现存占用资源");
     expect(scenario).toContain("DROP SCHEMA ${schemaIdentifier} CASCADE");
     expect(scenario).toContain("public business rows or sequences changed");
   });
