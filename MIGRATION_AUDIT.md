@@ -1652,7 +1652,39 @@ PHP 原实现把授权临时值放入两小时 MD5 缓存，未按用途绑定�
 
 定向认证 16/16、全量 131 个单元测试文件/767 项、双 TypeScript 配置通过；主 Worker minify dry-run 为 2,524.86 KiB/gzip 624.84 KiB，认证审计 Worker为 50.11 KiB/gzip 18.78 KiB。Windows runtime 测试仍在加载断言前因 `workerd` 0xc0000005 原生访问冲突失败，测试数为 0，不能记为通过。
 
-API-004-AUTH 与 CORE-004 仍不勾选整体完成：生产没有微信、短信和 Turnstile 凭据或非空社交/SMS 样本；旧 UniApp 必须先接入服务端 OAuth state、显式短信 purpose 和 Turnstile，错误使用 `reset` 的绑定页面必须修正；还需真实手机号/短信、微信开放平台/公众号/小程序真机、真实用户 token、预发/影子流量、正式发布和发布后观察。PC 的 `key/scan/wechat_auth` 与客服 `ticket/key/scan/wechat` 仍是独立 CORE-004 缺口，必须重建一次性扫码主体/确认/消费状态机，不能解除现有 501 安全阻塞或复用 PHP 弱 token 缓存。
+API-004-AUTH 与 CORE-004 仍不勾选整体完成：生产没有微信、短信和 Turnstile 凭据或非空社交/SMS 样本；旧 UniApp 必须先接入服务端 OAuth state、显式短信 purpose 和 Turnstile，错误使用 `reset` 的绑定页面必须修正；还需真实手机号/短信、微信开放平台/公众号/小程序真机、真实用户 token、预发/影子流量、正式发布和发布后观察。PC 与客服的扫码/OAuth 代码已在下一节按独立 CORE-004 子批重建，不再属于 501 缺口；但凭据、非空身份/客服数据、前端接入与远端 E2E 仍未完成，不能据此勾选整体完成。
+
+## CORE-004-PC-KEFU 一次性扫码与开放平台 OAuth 迁移审计（2026-08-29）
+
+### PHP 权威合同、调用端与迁移前风险
+
+PHP PC 面精确注册 `GET /api/pc/key`、`GET /api/pc/scan/:key`、`GET /api/pc/get_appid`、`GET /api/pc/wechat_auth`；客服面有密码登录、`GET /kefuapi/key`、`GET /kefuapi/scan/:key`、`GET /kefuapi/config`、`GET /kefuapi/wechat`，用户端以认证 `GET/POST /api/user/code` 完成扫码确认。旧实现用 `md5(time+uniqid)` 生成一个缓存 key，并让同一个可见二维码 key 同时承担轮询 bearer；移动端把该 key 写入 `store_service.uniqid`，PC 又从 `user.uniqid` 读取，挑战没有 subject、audience、purpose、独立 poll secret 或可靠的一次性消费语义。旧 Nuxt PC 的 OAuth state 还是固定常量，扫码 UI 已注释；旧 UniApp 扫码页只实现客服文案，GET query 与 POST JSON 又使用同一 `code`。客服旧路径也没有在所有登录分支一致校验 `account_status`。这些弱点不能为兼容而复制。
+
+新 `pc-ts` 目前只有密码/安全短信登录，新 `kefu-ts` 只有密码登录；本批没有伪造一个无法形成闭环的二维码页面。旧 Nuxt PC、新 PC、旧 UniApp 和新客服工作台都仍需接入下述新合同，故“后端可执行”不等于前端流程完成。
+
+### Durable Object 扫码状态机
+
+新增的扫码服务以随机 UUID 作为二维码公开 key，另生成 256 位私有 `poll_token`，DO 只保存其 SHA-256；挑战固定 `pc_user` 或 `kefu_agent` audience，状态严格按 `pending→scanned→approved→consumed` 推进并由 alarm 到期清理。创建和轮询分别使用 HMAC 后的来源 IP 做每分钟 20/180 次限制。认证用户通过 `GET /api/user/code` 首次扫码时绑定唯一 UID；客服 audience 还要求该 UID 唯一映射到启用、未删除且 `account_status=1` 的客服。`POST /api/user/code` 只允许同一 UID 批准，浏览器轮询必须额外提供二维码中不存在的 `X-Scan-Poll-Token`；错误 audience 不能消费批准，成功签发 token 后挑战只可消费一次。实现不再读写 `user.uniqid` 或 `store_service.uniqid`。
+
+PC 的四条 PHP 精确合同现均可执行，并增加 `POST /api/pc/oauth_state`；客服新增可执行的 `key/scan/wechat` 和安全扩展 `POST /kefuapi/oauth_state`。PC 扫码成功后重新读取用户启用状态再发用户 token；客服则重新读取用户、客服删除/启用/账号状态及 UID 绑定再发客服 token，避免扫码后到轮询间的撤权竞态。
+
+### 开放平台 OAuth 身份边界
+
+开放平台 Web OAuth state 由服务端生成，15 分钟一次性、绑定来源 IP 与 PC/客服 audience；授权 code 按 SHA-256 占用 10 分钟并限制每 IP/audience 30 次/分钟。token 和 userinfo 响应均有 8 秒超时、32 KiB 上限，只接受对象 JSON 且必须取得 unionid。`wechat_open_app_id/wechat_open_app_secret` 直接从 PostgreSQL 精确读取，secret 不进入 CONFIG_KV 或响应。PC 只在校验后的 `user_type=pc` 身份上做确定性合并并重新验证账号；客服绝不自动创建账号，unionid 必须数据库级 `DISTINCT` 唯一映射到一个活跃用户，再唯一映射到一个活跃客服，任何分裂或歧义都失败关闭。
+
+### 生产 Hyperdrive 只读审计与受控 DDL
+
+一次性 Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，生产读取使用 `REPEATABLE READ, READ ONLY`、固定 `search_path=public`、30 秒语句超时和 2 秒锁超时，只返回计数、布尔配置存在性、索引及不可逆摘要。PostgreSQL 16.14 当前用户 3/活跃 3；`wechat_user` 总数/活跃/unionid/PC 身份均为 0，`store_service` 总数/活跃均为 0，旧两类 `uniqid` 扫码键均为 0；孤儿、分裂 unionid、多活跃客服绑定等指标也都是 0。后者只是因为表为空，不能充当真实身份或客服 E2E 证据。`site_name` 有唯一非空候选，而 `wechat_open_app_id` 与 `wechat_open_app_secret` 均为 0 行，因此当前生产开放平台登录会安全失败。
+
+审计发现 `system_config` 缺少匹配精确读取顺序的复合索引，遂新增外部 `0103_system_config_lookup.sql` 与 Worker 内嵌 `migration_0110`：`(is_store,menu_name,sort DESC,id DESC)`。生产短事务固定 `search_path=public`、5 秒锁超时和 30 秒语句超时；首次应用及最终版本 `de92831f-b662-435e-bde3-2e7dda5b6803` 连续两次重复应用，执行前后均为 48 行、结构指纹均为 `796fd6f63ee478c5c919afc9140b235a`，每次精确读回同一索引定义，无 DML、无配置值返回。只读版本 `b318d80a-7979-4708-b11a-49d4545ad3a1`、首轮 DDL 版本 `4446f6ca-063e-43dd-a4fa-13dd8d012fa5` 和最终复核版本均已删除；最终 URL 返回 404。主生产 Worker 始终为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，没有部署或切流。
+
+### 量化验证与未完成门禁
+
+最新注释感知路由审计为 PHP 1,904、Workers 1,383、精确匹配 688、可执行匹配 670、明确不可用 18、原始缺失 1,216、证据化退役 3、可执行缺口 1,213；精确/可执行/退役后有效覆盖为 36.1%/35.2%/35.2%。`/api` 为 457/705、精确 315、可执行 312、不可用 3、缺失 142、可执行缺口 141；PC 22 条全部可执行，`/api/v2` 精确缺口为 0。`/kefuapi` 为 63/55、精确及可执行 51、缺失 12、退役 2、可执行缺口 10，有效可执行上限 83.6%。`ANY /kefuapi/ticket/[:appid]` 及 tourist 访客面仍是独立缺口，不能用扫码客服 token 绕过访客授权设计。
+
+双 TypeScript 配置、定向 23/23、全量 132 个单元测试文件/771 项、PC 与 Kefu 生产构建均通过；主 Worker minify dry-run 为 2,541.75 KiB/gzip 629.14 KiB，审计 Worker为 94.09 KiB/gzip 24.03 KiB。新增 DO 完整状态转换 runtime 用例已通过类型检查，但 Windows `workerd` 仍在 0 条断言前以 `0xc0000005` 启动失败，不能记为 runtime 通过。
+
+CORE-004 与 API-005 仍不勾选整体完成：生产没有开放平台 app id/secret、微信身份或客服账号，无法执行正向远端验证；旧 Nuxt PC 固定 state 与注释扫码 UI、旧 UniApp 扫码确认、新 `pc-ts/kefu-ts` 都尚未升级；真实浏览器/真机、真实用户/客服、预发、影子流量、正式发布与发布后观察均未完成。代码已消除旧缓存 bearer 和 501 缺口，但没有把这些外部与前端门禁伪装成完成。
 
 ## 完成定义
 

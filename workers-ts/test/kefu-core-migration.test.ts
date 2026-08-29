@@ -140,17 +140,18 @@ describe("dedicated customer-service migration", () => {
     expect(() => parseKefuSessionCursor("91")).toThrow("会话游标错误");
   });
 
-  it("mounts 48 PHP-compatible HTTP routes, safe replacements, WebSocket, and a signed asset alias", () => {
+  it("mounts PHP-compatible HTTP routes, secure login replacements, WebSocket, and a signed asset alias", () => {
     const routes = readFileSync("src/routes/kefuapi.ts", "utf8");
     const app = readFileSync("src/app.ts", "utf8");
     const middleware = readFileSync("src/middleware/kefu-auth.ts", "utf8");
     const registrations = routes.match(/kefuapiRoutes\.(?:get|post|put|delete)\(/g) ?? [];
-    expect(registrations).toHaveLength(51);
+    expect(registrations).toHaveLength(55);
     expect(routes.indexOf('post("/login"')).toBeLessThan(
       routes.indexOf('use("*", kefuAuthMiddleware)'),
     );
     expect(routes).not.toContain("/ticket/");
-    expect(routes).not.toContain("/wechat");
+    expect(routes).toContain('get("/wechat", KefuController.wechatLogin)');
+    expect(routes).toContain('post("/oauth_state", KefuController.oauthState)');
     expect(routes).toContain('get("/service/list", KefuController.serviceChat)');
     expect(routes.indexOf('get("/assets/:id", AttachmentController.asset)')).toBeLessThan(
       routes.indexOf('use("*", kefuAuthMiddleware)'),

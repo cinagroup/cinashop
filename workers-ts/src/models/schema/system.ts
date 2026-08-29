@@ -45,6 +45,7 @@ export const systemConfig = pgTable(
     index("is_store").on(t.isStore),
     index("config_tab_id").on(t.configTabId),
     index("menu_name").on(t.menuName),
+    index("system_config_lookup").on(t.isStore, t.menuName, t.sort.desc(), t.id.desc()),
   ],
 );
 

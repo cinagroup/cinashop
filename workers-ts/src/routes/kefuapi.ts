@@ -10,9 +10,12 @@ export const kefuapiRoutes = new Hono<{
   Variables: AppVariables;
 }>();
 
-// Public bootstrap and password login. QR/official-account login stays closed
-// until its one-time challenge and WeChat callback can be verified end to end.
+// Public bootstrap and login surfaces use separate, rate-limited security domains.
 kefuapiRoutes.post("/login", KefuController.login);
+kefuapiRoutes.get("/key", KefuController.loginKey);
+kefuapiRoutes.get("/scan/:key", KefuController.scanLogin);
+kefuapiRoutes.post("/oauth_state", KefuController.oauthState);
+kefuapiRoutes.get("/wechat", KefuController.wechatLogin);
 kefuapiRoutes.get("/config", KefuController.config);
 kefuapiRoutes.get("/copyright", KefuController.copyright);
 // Signed URLs cannot attach an Authorization header; signature verification is the access grant.

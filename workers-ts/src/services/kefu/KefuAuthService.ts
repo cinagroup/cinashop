@@ -53,22 +53,8 @@ export class KefuAuthService {
     private readonly env: KefuAuthEnv,
   ) {}
 
-  async login(input: Record<string, unknown>) {
-    const account = text(input.account, "账号", 64);
-    const password = text(input.password, "密码", 128);
-    const rows = await this.container.db
-      .select()
-      .from(storeService)
-      .where(and(eq(storeService.account, account), eq(storeService.isDel, 0)))
-      .limit(1);
-    const kefu = rows[0];
-    if (!kefu) throw new ValidateException("账号或密码错误");
-    const hash = kefu.password.replace(/^\$2[by]\$/, "$2a$");
-    const valid = await bcrypt.compare(password, hash).catch(() => false);
-    if (!valid) {
-      throw new ValidateException("账号或密码错误");
-    }
-    if (!kefu.status || !kefu.accountStatus) {
+  private async issue(kefu: typeof storeService.$inferSelect) {
+    if (!kefu.status || !kefu.accountStatus || kefu.isDel) {
       throw new ValidateException("您已被禁止登录");
     }
     if (!Number.isSafeInteger(kefu.uid) || kefu.uid <= 0) {
@@ -99,6 +85,43 @@ export class KefuAuthService {
       exp_time: exp,
       kefuInfo: publicKefuIdentity(kefu),
     };
+  }
+
+  async login(input: Record<string, unknown>) {
+    const account = text(input.account, "账号", 64);
+    const password = text(input.password, "密码", 128);
+    const rows = await this.container.db
+      .select()
+      .from(storeService)
+      .where(and(eq(storeService.account, account), eq(storeService.isDel, 0)))
+      .limit(1);
+    const kefu = rows[0];
+    if (!kefu) throw new ValidateException("账号或密码错误");
+    const hash = kefu.password.replace(/^\$2[by]\$/, "$2a$");
+    const valid = await bcrypt.compare(password, hash).catch(() => false);
+    if (!valid) {
+      throw new ValidateException("账号或密码错误");
+    }
+    return this.issue(kefu);
+  }
+
+  /** Re-read and issue for an identity already proven by scan/OAuth. */
+  async loginByVerifiedIdentity(kefuId: number, uid: number) {
+    if (!Number.isSafeInteger(kefuId) || kefuId <= 0 || !Number.isSafeInteger(uid) || uid <= 0) {
+      throw new ValidateException("客服登录身份无效");
+    }
+    const rows = await this.container.db
+      .select()
+      .from(storeService)
+      .where(and(
+        eq(storeService.id, kefuId),
+        eq(storeService.uid, uid),
+        eq(storeService.isDel, 0),
+      ))
+      .limit(1);
+    const kefu = rows[0];
+    if (!kefu) throw new ValidateException("客服登录身份不存在或已失效");
+    return this.issue(kefu);
   }
 
   async logout(token: string, kefuId: number) {

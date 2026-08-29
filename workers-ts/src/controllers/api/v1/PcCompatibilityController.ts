@@ -1,9 +1,11 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { PcCompatibilityService } from "@/services/pc/PcCompatibilityService";
+import { ScanLoginService } from "@/services/auth/ScanLoginService";
+import { WechatOpenWebAuthService } from "@/services/wechat/WechatOpenWebAuthService";
 import type { GoodsListParams } from "@/services/product/StoreProductService";
 import { ValidateException } from "@/utils/errors";
-import { jsonFail, jsonOk, jsonRaw } from "@/utils/json";
+import { jsonFail, jsonOk } from "@/utils/json";
 import { orderRefundCartInfoList } from "@/controllers/api/v1/OrderController";
 
 type C = Context<{
@@ -16,24 +18,48 @@ function service(c: C) {
   return new PcCompatibilityService(c.get("container"), c.env);
 }
 
-function unavailable(c: C, message: string) {
-  c.header("Cache-Control", "no-store");
-  return jsonRaw(c, 501, message, { replacement: "/api/login" });
+function clientIp(c: C): string {
+  return (
+    c.req.header("CF-Connecting-IP")
+    ?? c.req.header("X-Forwarded-For")?.split(",")[0]?.trim()
+    ?? c.req.header("X-Real-IP")
+    ?? "0.0.0.0"
+  ).slice(0, 128);
 }
 
-/** The PHP key was a bearer-equivalent cache key and is intentionally not recreated. */
-export function keyUnavailable(c: C) {
-  return unavailable(c, "PC 扫码登录挑战尚未安全迁移");
+function scanService(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return new ScanLoginService(c.get("container"), c.env);
 }
 
-/** The PHP poll endpoint accepted an unbound caller key and could mint a token. */
-export function scanUnavailable(c: C) {
-  return unavailable(c, "PC 扫码登录轮询尚未安全迁移");
+/** Create a QR key plus a browser-only poll secret. */
+export async function key(c: C) {
+  return jsonOk(c, await scanService(c).create("pc_user", clientIp(c)));
 }
 
-/** The old OAuth callback did not validate a one-time state and is login-CSRF prone. */
-export function wechatAuthUnavailable(c: C) {
-  return unavailable(c, "PC 微信 OAuth 需先完成一次性 state 挑战迁移");
+/** Polling never accepts the bearer-equivalent secret in the URL. */
+export async function scan(c: C) {
+  return jsonOk(c, await scanService(c).poll(
+    "pc_user",
+    c.req.param("key"),
+    c.req.header("X-Scan-Poll-Token"),
+    clientIp(c),
+  ));
+}
+
+export async function oauthState(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
+    .createOauthState("pc_user", clientIp(c));
+  return jsonOk(c, { state: result.state, expires_in: result.expiresIn });
+}
+
+/** Open-platform callback requires a one-time, audience/IP-bound state. */
+export async function wechatAuth(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
+    .login("pc_user", c.req.query("code"), c.req.query("state"), clientIp(c));
+  return jsonOk(c, result, "登录成功");
 }
 
 export async function getAppid(c: C) {

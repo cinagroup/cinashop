@@ -1,8 +1,10 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { UserProfileService } from "@/services/user/UserProfileService";
+import { ScanLoginService } from "@/services/auth/ScanLoginService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
-import { jsonFail, jsonOk, jsonRaw } from "@/utils/json";
+import { jsonFail, jsonOk } from "@/utils/json";
+import { readBoundedJsonObject } from "@/utils/request-body";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -68,10 +70,23 @@ export async function spreadInfo(c: C) {
   return response(c, () => service(c).spreadInfo(uid(c)));
 }
 
-/**
- * The PHP QR-login contract accepts a caller-controlled cache key and is not a
- * safe authentication challenge. Keep the exact route explicit but closed.
- */
-export function userCodeUnavailable(c: C) {
-  return jsonRaw(c, 501, "客服扫码登录尚未启用安全的一次性挑战流程");
+function scanCode(c: C): string {
+  return c.req.query("code") ?? c.req.query("key") ?? "";
+}
+
+/** GET /api/user/code — inspect and bind an authenticated mobile scan. */
+export async function inspectLoginCode(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return response(c, () => new ScanLoginService(c.get("container"), c.env)
+    .inspect(scanCode(c), uid(c)));
+}
+
+/** POST /api/user/code — approve only the same mobile uid that inspected. */
+export async function approveLoginCode(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return response(c, async () => {
+    const payload = await readBoundedJsonObject(c.req.raw, 4 * 1024);
+    return new ScanLoginService(c.get("container"), c.env)
+      .approve(payload.code ?? payload.key ?? scanCode(c), uid(c));
+  });
 }

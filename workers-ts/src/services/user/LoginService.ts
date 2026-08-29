@@ -67,6 +67,26 @@ export class LoginService {
   }
 
   /**
+   * Issue an API token only after another server-side flow has established the
+   * exact user id (for example a one-time QR challenge or provider OAuth).
+   * The current database status is always re-read immediately before issuing.
+   */
+  async loginByVerifiedUid(
+    uid: number,
+    ip = "",
+  ): Promise<{ token: string; expires_time: number }> {
+    if (!Number.isSafeInteger(uid) || uid <= 0) {
+      throw new ValidateException("登录身份无效");
+    }
+    const user = await this.container.userDao.findForAuth(uid);
+    if (!user) throw new ValidateException("登录身份不存在或已失效");
+    if (!user.status) throw new ValidateException("已被禁止,请联系管理员");
+    const result = await this.issueToken(user);
+    await this.container.userDao.touchLogin(uid, ip);
+    return result;
+  }
+
+  /**
    * 账号密码登录 (对应 PHP LoginServices::login)
    *
    * @param account 手机号 (PHP 用 phone 查询)

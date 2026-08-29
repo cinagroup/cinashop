@@ -81,10 +81,11 @@ v1Routes.post("/user/updatePhone", authMiddleware({ force: true }), LoginControl
 v1Routes.post("/user/binding", authMiddleware({ force: true }), LoginController.bindPhone);
 
 // ─── 旧 PC 商城登录面 ─────────────────────────────────────
-v1Routes.get("/pc/key", PcCompatibilityController.keyUnavailable);
-v1Routes.get("/pc/scan/:key", PcCompatibilityController.scanUnavailable);
+v1Routes.get("/pc/key", PcCompatibilityController.key);
+v1Routes.get("/pc/scan/:key", PcCompatibilityController.scan);
 v1Routes.get("/pc/get_appid", PcCompatibilityController.getAppid);
-v1Routes.get("/pc/wechat_auth", PcCompatibilityController.wechatAuthUnavailable);
+v1Routes.post("/pc/oauth_state", PcCompatibilityController.oauthState);
+v1Routes.get("/pc/wechat_auth", PcCompatibilityController.wechatAuth);
 
 // ─── 无需授权接口 ─────────────────────────────────────────────
 v1Routes.get("/site_config", PublicController.getSiteConfig);
@@ -173,8 +174,8 @@ v1Routes.post("/pc/order/refund/cart_info", authMiddleware({ force: true }), PcC
 v1Routes.get("/pc/order/refund/list", authMiddleware({ force: true }), PcCompatibilityController.refundList);
 
 v1Routes.get("/logout", authMiddleware({ force: true }), LoginController.logout);
-v1Routes.get("/user/code", authMiddleware({ force: true }), UserProfileController.userCodeUnavailable);
-v1Routes.post("/user/code", authMiddleware({ force: true }), UserProfileController.userCodeUnavailable);
+v1Routes.get("/user/code", authMiddleware({ force: true }), UserProfileController.inspectLoginCode);
+v1Routes.post("/user/code", authMiddleware({ force: true }), UserProfileController.approveLoginCode);
 v1Routes.get("/newcomer/info", authMiddleware({ force: true }), NewcomerController.info);
 v1Routes.get("/newcomer/gift", authMiddleware({ force: true }), NewcomerController.gift);
 v1Routes.get("/marketing/newcomer/info", authMiddleware({ force: true }), NewcomerController.info);

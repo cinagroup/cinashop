@@ -3,6 +3,8 @@ import type { AppVariables, Env } from "@/env";
 import { extractToken } from "@/middleware/auth";
 import { enforceKefuLoginRateLimit } from "@/middleware/kefu-rate-limit";
 import { KefuAuthService } from "@/services/kefu/KefuAuthService";
+import { ScanLoginService } from "@/services/auth/ScanLoginService";
+import { WechatOpenWebAuthService } from "@/services/wechat/WechatOpenWebAuthService";
 import { KefuCoreService } from "@/services/kefu/KefuCoreService";
 import { KefuFulfillmentService } from "@/services/kefu/KefuFulfillmentService";
 import { KefuOrderManagementService } from "@/services/kefu/KefuOrderManagementService";
@@ -65,9 +67,48 @@ async function body(c: C) {
   return readBoundedJsonObject(c.req.raw, MAX_KEFU_BODY_BYTES);
 }
 
+function clientIp(c: C): string {
+  return (
+    c.req.header("CF-Connecting-IP")
+    ?? c.req.header("X-Forwarded-For")?.split(",")[0]?.trim()
+    ?? c.req.header("X-Real-IP")
+    ?? "0.0.0.0"
+  ).slice(0, 128);
+}
+
 export async function login(c: C) {
   await enforceKefuLoginRateLimit(c);
   const result = await new KefuAuthService(c.get("container"), c.env).login(await body(c));
+  return jsonOk(c, result, "登录成功");
+}
+
+export async function loginKey(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return jsonOk(c, await new ScanLoginService(c.get("container"), c.env)
+    .create("kefu_agent", clientIp(c)));
+}
+
+export async function scanLogin(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return jsonOk(c, await new ScanLoginService(c.get("container"), c.env).poll(
+    "kefu_agent",
+    c.req.param("key"),
+    c.req.header("X-Scan-Poll-Token"),
+    clientIp(c),
+  ));
+}
+
+export async function oauthState(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
+    .createOauthState("kefu_agent", clientIp(c));
+  return jsonOk(c, { state: result.state, expires_in: result.expiresIn });
+}
+
+export async function wechatLogin(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
+    .login("kefu_agent", c.req.query("code"), c.req.query("state"), clientIp(c));
   return jsonOk(c, result, "登录成功");
 }
 

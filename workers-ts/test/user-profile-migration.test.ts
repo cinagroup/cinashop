@@ -23,12 +23,16 @@ describe("PHP user-profile migration", () => {
     expect(routes).not.toContain('get("/user/record", authMiddleware({ force: true }), UserMessageController.customerServiceRecord)');
   });
 
-  it("keeps the weak PHP QR-login cache handshake explicitly unavailable", () => {
+  it("replaces the weak PHP QR cache handshake with authenticated inspect/approve", () => {
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/UserProfileController.ts", "utf8");
-    expect(routes.match(/UserProfileController\.userCodeUnavailable/g)).toHaveLength(2);
-    expect(controller).toContain("jsonRaw(c, 501");
-    expect(controller).toContain("一次性挑战");
+    expect(routes).toContain('UserProfileController.inspectLoginCode');
+    expect(routes).toContain('UserProfileController.approveLoginCode');
+    expect(routes).not.toContain("userCodeUnavailable");
+    expect(controller).toContain("new ScanLoginService");
+    expect(controller).toContain(".inspect(scanCode(c), uid(c))");
+    expect(controller).toContain(".approve(payload.code ?? payload.key ?? scanCode(c), uid(c))");
+    expect(controller).toContain("readBoundedJsonObject(c.req.raw, 4 * 1024)");
   });
 
   it("projects the self profile without credential or IP columns", () => {

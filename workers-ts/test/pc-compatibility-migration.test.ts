@@ -54,12 +54,15 @@ describe("API-005 legacy PC compatibility", () => {
     }
   });
 
-  it("fails closed for the three unsafe token-minting/OAuth routes", () => {
-    expect(routes).toContain('PcCompatibilityController.keyUnavailable');
-    expect(routes).toContain('PcCompatibilityController.scanUnavailable');
-    expect(routes).toContain('PcCompatibilityController.wechatAuthUnavailable');
-    expect(controller).toContain('jsonRaw(c, 501');
-    expect(controller).toContain('一次性 state');
+  it("replaces the unsafe token-minting/OAuth routes with one-time challenges", () => {
+    expect(routes).toContain('PcCompatibilityController.key');
+    expect(routes).toContain('PcCompatibilityController.scan');
+    expect(routes).toContain('PcCompatibilityController.wechatAuth');
+    expect(routes).toContain('post("/pc/oauth_state", PcCompatibilityController.oauthState)');
+    expect(controller).toContain('create("pc_user", clientIp(c))');
+    expect(controller).toContain('c.req.header("X-Scan-Poll-Token")');
+    expect(controller).toContain('.createOauthState("pc_user", clientIp(c))');
+    expect(controller).not.toContain('jsonRaw(c, 501');
   });
 
   it("preserves hierarchical cid/sid/tid and PC selectId semantics", () => {

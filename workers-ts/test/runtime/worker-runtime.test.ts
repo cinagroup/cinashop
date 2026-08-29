@@ -120,3 +120,40 @@ describe("SequenceDO durability", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+describe("Scan-login Durable Object state", () => {
+  it("binds, approves, audience-checks, and consumes one challenge exactly once", async () => {
+    const stub = testEnv.TOKEN_BUCKET.getByName("scan-login:runtime-contract");
+    const now = Math.floor(Date.now() / 1000);
+    const pollTokenHash = "a".repeat(64);
+    await expect(stub.createScanLoginChallenge({
+      version: 1,
+      audience: "kefu_agent",
+      stage: "pending",
+      pollTokenHash,
+      issuedAt: now,
+      expiresAt: now + 600,
+    })).resolves.toBe(true);
+
+    const pending = await stub.getScanLoginChallenge();
+    expect(pending).toMatchObject({ audience: "kefu_agent", stage: "pending" });
+    expect(pending).not.toHaveProperty("pollTokenHash");
+    await expect(stub.markScanLoginChallengeScanned(17)).resolves.toMatchObject({
+      stage: "scanned",
+      scannedUid: 17,
+    });
+    await expect(stub.markScanLoginChallengeScanned(18)).resolves.toBeNull();
+    await expect(stub.pollScanLoginChallenge(pollTokenHash, "kefu_agent")).resolves
+      .toMatchObject({ status: 1, audience: "kefu_agent" });
+    await expect(stub.approveScanLoginChallenge(18, 9)).resolves.toBeNull();
+    await expect(stub.approveScanLoginChallenge(17, 9)).resolves.toMatchObject({
+      stage: "approved",
+    });
+    await expect(stub.pollScanLoginChallenge(pollTokenHash, "pc_user")).resolves
+      .toEqual({ status: 0 });
+    await expect(stub.pollScanLoginChallenge(pollTokenHash, "kefu_agent")).resolves
+      .toEqual({ status: 3, audience: "kefu_agent", uid: 17, kefuId: 9 });
+    await expect(stub.pollScanLoginChallenge(pollTokenHash, "kefu_agent")).resolves
+      .toEqual({ status: 0 });
+  });
+});

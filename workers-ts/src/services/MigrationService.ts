@@ -76,6 +76,11 @@ export class MigrationService {
     return this.migration_0109();
   }
 
+  /** Exact deterministic system-configuration lookup DDL. */
+  systemConfigLookupMigrationSqlForVerification(): string {
+    return this.migration_0110();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -193,6 +198,7 @@ export class MigrationService {
       this.migration_0107(),
       this.migration_0108(),
       this.migration_0109(),
+      this.migration_0110(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -6007,5 +6013,12 @@ CREATE INDEX IF NOT EXISTS "video_comment_thread"
 CREATE INDEX IF NOT EXISTS "video_comment_owner"
   ON "video_comment" ("uid", "id" DESC)
   WHERE "is_del" = 0;`;
+  }
+
+  private migration_0110(): string {
+    return `-- Deterministic global/store configuration reads filter by scope + key and
+-- choose the greatest business sort, then newest id.
+CREATE INDEX IF NOT EXISTS "system_config_lookup"
+  ON "system_config" ("is_store", "menu_name", "sort" DESC, "id" DESC);`;
   }
 }

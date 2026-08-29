@@ -39,7 +39,7 @@ const WECHAT_RESPONSE_MAX_BYTES = 32 * 1024;
 const WECHAT_FETCH_TIMEOUT_MS = 8_000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export type SocialUserType = "wechat" | "routine" | "apple";
+export type SocialUserType = "wechat" | "routine" | "apple" | "pc";
 
 export interface VerifiedSocialIdentity {
   openid: string;
@@ -92,7 +92,7 @@ function normalizeIdentity(input: VerifiedSocialIdentity): VerifiedSocialIdentit
   const unionid = String(input.unionid ?? "").trim();
   if (!openid || openid.length > 100) throw new ValidateException("社交身份无效");
   if (unionid.length > 30) throw new ValidateException("社交身份无效");
-  if (!["wechat", "routine", "apple"].includes(input.userType)) {
+  if (!["wechat", "routine", "apple", "pc"].includes(input.userType)) {
     throw new ValidateException("社交身份渠道无效");
   }
   const spreadUid = Number(input.spreadUid ?? 0);
@@ -115,7 +115,7 @@ function validPendingIdentity(value: unknown): value is PendingSocialIdentity {
     && typeof pending.openid === "string"
     && pending.openid.length > 0
     && pending.openid.length <= 100
-    && ["wechat", "routine", "apple"].includes(String(pending.userType))
+    && ["wechat", "routine", "apple", "pc"].includes(String(pending.userType))
     && Number.isSafeInteger(pending.issuedAt)
     && Number(pending.issuedAt) > 0
     && typeof pending.auditIp === "string"
