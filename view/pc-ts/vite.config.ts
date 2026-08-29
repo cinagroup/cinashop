@@ -19,10 +19,16 @@ export default defineConfig({
       "/api": {
         target: apiProxyTarget,
         changeOrigin: true,
+        ws: true,
       },
       "/adminapi": {
         target: apiProxyTarget,
         changeOrigin: true,
+      },
+      "/kefuapi": {
+        target: apiProxyTarget,
+        changeOrigin: true,
+        ws: true,
       },
     },
   },

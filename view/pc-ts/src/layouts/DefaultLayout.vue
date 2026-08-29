@@ -14,6 +14,7 @@
           <router-link to="/bargain" class="nav-link">砍价</router-link>
           <router-link to="/combination" class="nav-link">拼团</router-link>
           <router-link to="/community" class="nav-link">社区</router-link>
+          <router-link to="/service" class="nav-link">客服</router-link>
         </nav>
         <div class="actions">
           <el-input

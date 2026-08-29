@@ -40,6 +40,7 @@ const routes: RouteRecordRaw[] = [
       { path: "user/level", name: "user-level", component: () => import("@/pages/user/UserLevel.vue") },
       { path: "user/recharge", name: "user-recharge", component: () => import("@/pages/user/Recharge.vue") },
       { path: "community", name: "community", component: () => import("@/pages/community/Community.vue") },
+      { path: "service", name: "customer-service", component: () => import("@/pages/service/CustomerService.vue"), meta: { title: "在线客服" } },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: "/" },

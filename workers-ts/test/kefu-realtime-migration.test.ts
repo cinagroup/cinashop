@@ -137,6 +137,34 @@ describe("customer-service realtime migration", () => {
     expect(client).toContain('msn_type: 3');
   });
 
+  it("replaces the legacy PC appChat random UID contract with signed visitor sessions", () => {
+    const api = readFileSync("../view/pc-ts/src/api/customerService.ts", "utf8");
+    const socket = readFileSync("../view/pc-ts/src/services/customerServiceSocket.ts", "utf8");
+    const page = readFileSync("../view/pc-ts/src/pages/service/CustomerService.vue", "utf8");
+    const router = readFileSync("../view/pc-ts/src/router/index.ts", "utf8");
+    const layout = readFileSync("../view/pc-ts/src/layouts/DefaultLayout.vue", "utf8");
+    const apiProxy = readFileSync("../view/pc-ts/functions/api/[[path]].ts", "utf8");
+    const kefuProxy = readFileSync("../view/pc-ts/functions/kefuapi/[[path]].ts", "utf8");
+
+    expect(api).toContain('"X-Visitor-Token": token');
+    expect(api).toContain('visitorRequest.get("/tourist/user"');
+    expect(api).toContain('visitorRequest.get("/tourist/chat"');
+    expect(api).toContain('visitorRequest.post("/tourist/upload"');
+    expect(socket).toContain('return "/kefuapi/tourist/ws"');
+    expect(socket).toContain("`cinashop-visitor.${this.identity.token}`");
+    expect(socket).toContain("`cinashop-auth.${this.identity.token}`");
+    expect(socket).not.toContain("tourist_uid=");
+    expect(socket).not.toContain("token=");
+    expect(page).toContain("apiRegisteredServiceRecord");
+    expect(page).toContain("apiVisitorBootstrap");
+    expect(page).toContain("游客实时连接尚未就绪");
+    expect(page).not.toContain("v-html");
+    expect(router).toContain('path: "service"');
+    expect(layout).toContain('to="/service"');
+    expect(apiProxy).toContain("if (upstream.status === 101) return upstream");
+    expect(kefuProxy).toContain("if (upstream.status === 101) return upstream");
+  });
+
   it("keeps the external and embedded realtime index migrations byte-equivalent", () => {
     const migration = readFileSync("migrations/0093_kefu_realtime_indexes.sql", "utf8").trim();
     const embedded = readFileSync("src/services/MigrationService.ts", "utf8")

@@ -1753,8 +1753,36 @@ HTTP 使用 `X-Visitor-Token`，WebSocket 使用 `cinashop-visitor.<token>`；�
 - [x] 接入新 UniApp 未登录客服页和 Kefu 工作台游客会话；注册用户订单与游客 token 保持严格分离。
 - [ ] 从源 MySQL 复制并人工复核客服账号/bcrypt 密码/UID 绑定、会话/消息、话术/分类和游客内容。生产当前客服与会话均为 0，3 条历史消息仍需来源对账。
 - [ ] 以受限测试客服和匿名浏览器/真机验证创建限流、token 过期/撤销、WebSocket hibernation、图片 R2、未读、并发发送与游客转接；当前空客服数据无法提供正向生产 E2E。
-- [ ] 升级仍使用旧 tourist token/随机 UID 合同的 Admin 客服端，完成旧/新客户端兼容验收；补齐开放平台与面单配置/Secrets 后再验证扫码/OAuth和模板目录。
+- [x] 以 PC `/service` 替换旧 Admin 项目中面向顾客的 `appChat`，移除 URL bearer 与客户端自报 `tourist_uid`，接入签名游客会话并完成本地桌面/移动浏览器合同验收。
+- [ ] 完成旧 `appChat` 生产退流与真实账号/游客兼容验收；补齐开放平台与面单配置/Secrets 后再验证扫码/OAuth和模板目录。
 - [ ] 解决或绕开本机 `workerd 0xc0000005`，在 Linux CI/兼容主机运行 runtime WebSocket/DO 测试；随后完成预发、影子流量、明确发布批准和发布后观察。主 Worker与前端当前均未发布。
+
+## KEFU-PC 旧 appChat 安全替换审计（2026-08-29）
+
+### 源客户端与协议结论
+
+旧客户聊天入口不在商城 PC 工程，而是嵌在 `cinashop-php/view/admin/src/pages/kefu/appChat`。它本质上是面向顾客的公开聊天页，不是客服监管后台：匿名客户端自行生成/携带 `tourist_uid`，WebSocket URL 还会附带 token 查询参数。随机数字 UID 不能证明会话所有权，URL bearer 也会进入代理、访问日志和历史记录；因此这段实现不能原样搬运，也不能用旧合同兼容层继续接受客户端声明的游客身份。
+
+新入口落在 `view/pc-ts` 的 `/service`。已登录用户继续读取 `/api/user/service/record`，通过 `/api/ws/kefu?type=1&to_uid=...` 与 `cinashop-auth.<token>` 通信，并只在 socket 不可用时调用注册用户 REST 发送；未登录用户创建或复用服务端签发的 visitor token，通过 `X-Visitor-Token` 调用 `tourist/user|chat|upload`，WebSocket 固定 `/kefuapi/tourist/ws` 与 `cinashop-visitor.<token>` 子协议。游客 URL 不含 token 或 `tourist_uid`，断线时明确失败而不会落入注册用户写接口。页面只按文本节点渲染普通消息，图片只接受消息类型 3，不使用 `v-html`；订单信息仍限定登录后的订单域。
+
+### 代理、转接与浏览器验收
+
+Vite 的 `/api`、`/kefuapi` 都启用 WebSocket 代理；Cloudflare Pages Functions 分别提供同源代理，并在上游返回 101 时直接保留 WebSocket 对象，避免把升级响应重建为普通 HTTP。注册用户 URL 中的 `to_uid` 由服务端会话选择；客服转接提交后，Durable Object 会把当前用户/游客 socket attachment 的 `toUid` 原子更新到新客服，PC 收到 `to_transfer` 后只更新界面身份，后续消息继续由数据库归属与更新后的 attachment 双重校验。
+
+本地浏览器先用失败关闭合同返回“暂无客服人员在线，请稍后联系”：桌面和 390×844 移动视口均完整显示错误与“重新连接”，没有白屏、框架异常或控制台错误。随后用只接受 `/kefuapi/tourist/ws`、拒绝查询参数 token/`tourist_uid`、并要求 `cinashop-visitor.mock.visitor.token` 子协议的受控 WebSocket mock 做正向验证；服务端记录 `SOCKET_PROTOCOL_OK`，页面显示签名游客、在线客服与欢迎消息，合成文本点击发送后只回显一次，控制台仍为空。该结果证明前端合同和同源 WebSocket 路径，不代表生产真实客服、Hyperdrive 持久化或 R2 已做正向 E2E。
+
+### 数据边界、验证与待完成 checklist
+
+本批重新核查迁移工具所需连接条件：`SOURCE_MYSQL_URL=false`、`TARGET_POSTGRES_URL=false`，旧 PHP 根目录没有 `.env`，本机没有 3306 监听或 MySQL/MariaDB 服务。生产 PostgreSQL/Hyperdrive 已在上一批直接完成 `0104` 幂等 DDL与业务指纹复核，但源库不可达时无法可信复制客服账号、密码、UID 绑定、会话/消息、话术/分类和游客内容；本批未写生产业务数据、未部署主 Worker或前端。
+
+路由量化保持 PHP 1,904、Workers 1,393、精确匹配 697、可执行匹配 679、明确不可用 18、原始缺失 1,207、退役 4、可执行缺口 1,203，覆盖为 36.6%/35.7%/35.7%；客服域 60/63 可执行，余下 3 条均有源证据退役，`actionableMissing=0`、有效覆盖 100%。Worker 双 TypeScript 配置、134 个单元测试文件/782 项、PC 生产构建和 Pages Functions 编译通过；新增客服 chunk 为 CSS 4.40 KiB/gzip 1.46 KiB、JS 10.83 KiB/gzip 4.78 KiB。PC 主入口仍为 1,099.76 KiB/gzip 365.76 KiB，是全局性能待办而非本批回归。Windows runtime 的既有 `workerd 0xc0000005` 仍未解决。
+
+- [x] 完成旧 `appChat` 身份/传输/渲染审计，并在新 PC 同时接入注册用户和签名游客协议。
+- [x] 保留 Pages/Vite WebSocket 升级，验证 URL 无 bearer/随机游客 UID，游客断线失败关闭且发送不双写。
+- [x] 完成桌面、移动安全失败态和受控正向签名游客 WebSocket/消息单次回显浏览器验收。
+- [ ] 取得只读源 MySQL 连接后运行 `schema-audit → plan → copy → verify`，由运营复核客服密码、UID 绑定、消息/会话和内容；当前连接条件缺失。
+- [ ] 在生产补入受限测试客服后验证真实 visitor bootstrap、Hyperdrive 消息、WebSocket hibernation、R2、未读、转接、过期/撤销与限流；再完成旧页面退流、预发、影子流量和明确发布批准。
+- [ ] 继续处理全局 1,203 个可执行路由缺口、PC 主包拆分、OAuth/扫码、ERP 与移动端长尾；客服路由有效 100% 不等于全站迁移完成。
 
 ## 完成定义
 
