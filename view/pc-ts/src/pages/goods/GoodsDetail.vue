@@ -71,7 +71,12 @@
             >
               立即购买
             </el-button>
-            <el-button size="large" :type="collected ? 'warning' : 'default'" @click="toggleCollect">
+            <el-button
+              size="large"
+              :type="collected ? 'warning' : 'default'"
+              :loading="collectSubmitting"
+              @click="toggleCollect"
+            >
               {{ collected ? "已收藏" : "收藏" }}
             </el-button>
           </div>
@@ -165,6 +170,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { apiGoodsDetail, apiReplyConfig, apiReplyList } from "@/api/product";
 import { apiCartAdd, apiDiscountCartAdd } from "@/api/cart";
+import { apiCollectAdd, apiCollectDel } from "@/api/user";
 import {
   apiDiscountPackages,
   type DiscountPackage,
@@ -179,6 +185,7 @@ const detail = ref<GoodsDetail | null>(null);
 const loading = ref(true);
 const qty = ref(1);
 const collected = ref(false);
+const collectSubmitting = ref(false);
 const replies = ref<unknown[]>([]);
 const replyStats = ref({ total: 0, avgScore: "0.0", goodRate: 100 });
 const discountPackages = ref<DiscountPackage[]>([]);
@@ -317,10 +324,21 @@ function buyNow() {
   addToCart();
 }
 
-function toggleCollect() {
+async function toggleCollect() {
   if (!isLoggedIn()) return router.push({ path: "/login", query: { redirect: route.fullPath } });
-  collected.value = !collected.value;
-  ElMessage.success(collected.value ? "收藏成功" : "已取消收藏");
+  if (!detail.value || collectSubmitting.value) return;
+  const nextCollected = !collected.value;
+  collectSubmitting.value = true;
+  try {
+    if (nextCollected) await apiCollectAdd([detail.value.id]);
+    else await apiCollectDel([detail.value.id]);
+    collected.value = nextCollected;
+    ElMessage.success(nextCollected ? "收藏成功" : "已取消收藏");
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "收藏操作失败");
+  } finally {
+    collectSubmitting.value = false;
+  }
 }
 
 onMounted(load);

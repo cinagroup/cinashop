@@ -1834,6 +1834,63 @@ UniApp 新增认证扫码确认页：未登录先进入登录并返回，批准�
 
 下一批路由缺口按第一方调用价值和现有可复用服务排序为：USER-CENTER-COMPAT 9 条（地址详情/默认、批量收藏、签到配置/记录/月历/提醒），DIY-HOME-WIDGETS 8 条，PUBLIC-ARTICLE 7 条。三批共 24 条；全部完成后全局可执行缺口预计由 1,203 降至 1,179，`/api` 由 141 降至 117。优先从 USER-CENTER-COMPAT 开始，因为新 UniApp 当前“设默认地址”调用了要求完整地址的保存接口，属于可复现功能缺陷，并且底层地址/收藏/签到服务大多已经存在。
 
+## USER-CENTER-COMPAT 地址、收藏与签到详细迁移审计（2026-08-29）
+
+### 九条 PHP 权威合同与实现边界
+
+本批补齐九条强制登录的 PHP 精确合同：`GET /api/address/detail/:id`、`POST /api/address/default/set`、`POST /api/collect/all`、`GET /api/sign/config`、`GET /api/sign/list`、`GET /api/sign/month`、`POST /api/sign/user`、`GET /api/sign/remind/:status`、`GET /api/sign/calendar`。地址、收藏、签到合计 18 个个性化 handler 均显式返回 `Cache-Control: private, no-store`，避免用户数据进入共享缓存。它们不是简单的路由别名：地址要恢复旧 snake_case 响应和表单兼容，收藏要同时覆盖商品/视频与批量参数，签到要按上海自然日而不是 Worker 所在时区解释日历、月份和连续记录。
+
+地址详情、保存、删除和设默认现在都以认证 UID 二次限定，不能凭地址 ID跨用户读取或修改。保存路径会归一化省/市/区/街道，处理直辖市重复段，校验或解析 `city_id`；设默认在用户级 advisory lock、候选行锁和同一事务内清除旧默认并设置新默认，避免并发后留下多条默认或无默认。新 UniApp 地址页不再用“完整保存”冒充设默认，也不再在缺少城市 ID 时默默丢弃该字段。底层 `BaseDao` 同时修复了 P0 作用域问题：`null`、数组、空对象和畸形过滤不再生成无条件读取；更新、删除和增减遇到无条件时直接失败关闭。
+
+收藏兼容同时支持 `product`、`video`，接受旧端标量、数组、`id[]` 和逗号分隔批量载荷并限制批量上限。关系写入使用 `(uid,relation_id,type,category)` 显式唯一冲突目标和固定商品/视频锁序；商品日志只记录首次新增的关系，商品/视频收藏计数使用集合 SQL按当前关系重算，不再按请求条数盲加减。列表保留 `product_id`、`is_del`、`is_show`、`is_fail`、`promotions` 等旧端稳定字段，对可见商品再做真实目录与促销装饰；商品和视频分别保持作用域，删除也不会跨 category/type。PC 商品详情与收藏页已改为真实 add/del 和 `{list,count}` 合同，失败时不会伪造成功状态；UniApp 收藏页会清理旧页残留并读取真实计数。
+
+签到兼容服务恢复配置、记录、月份汇总、签到、提醒偏好状态和日历，固定使用 Asia/Shanghai 日界线，月份接受 `YYYY-M`/`YYYY-MM` 且限制合理范围；有效 SVIP 只接受永久或未过期状态。用户查询只投影积分、连续签到和会员判断所需字段，不再读取/返回完整用户行；积分配置和冻结积分筛选按目标数据语义收紧。UniApp 签到页现在尊重功能开关、显示真实奖励并实际提交签到，不再用前端静态成功态代替服务端结果。
+
+`GET /api/sign/remind/:status` 只恢复用户提醒偏好写入，不能视为签到提醒闭环。PHP 的真实投递链由 `SystemTimer` 中 `mark=sign_remind_time` 的任务触发，继续调用 `UserSignServices::userSignRemind()`，最终经 `notice.notice` 发送；Worker 的 `scheduled()` 当前只调用 `enqueueScheduledRun` 入队订单维护，全仓没有签到提醒的定时扫描、消费或通知发送实现。端点迁移与通知投递必须作为两项独立验收，后者是发布门禁。
+
+### 生产 PostgreSQL 16.14 事实与六索引变更
+
+用户授权直接使用生产数据库后，临时鉴权审计 Worker 绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。只读阶段使用 `REPEATABLE READ, READ ONLY`、固定 `search_path=public` 和有界超时，只返回聚合计数、布尔完整性指标和索引定义，不返回地址、手机号、用户资料、配置值或其他 PII/Secret。
+
+生产地址共 5 行且有效 5 行，涉及 4 个 owner；默认地址 2 行，多默认 owner 为 0，但有地址而无默认的 owner 为 2。owner 孤儿为 4 行、3 个 distinct UID；5 行 `city_id` 全为 0，`city_area` 与 `system_city` 都是 0 行。因此当前目标库没有足够城市目录验证任何真实正向地址保存，不能把代码兼容解释成城市数据迁移完成。
+
+`user_relation`、收藏关系和商品收藏各 1 行，四列重复为 0；关系 owner 孤儿 1、商品孤儿 0，现有收藏缺对应商品收藏日志 1。`user_sign` 为 1 行，同一上海自然日重复为 0，签到 owner 孤儿 1。地址、关系、签到三个域合并共有 5 个 distinct 孤儿 owner，三域共同 UID 为 0，说明不能用一条映射猜测覆盖全部孤儿。商品共 71 行，存储的收藏总数为 0、按关系计算的真实总数为 1；漂移商品 1、最大差值 1，商品收藏日志总数 0。
+
+生产前五个目标索引已完成后，又新增唯一表达式索引 `us_uid_shanghai_day_uq`：`user_sign(uid, (((add_time::bigint + 28800) / 86400)))`，由数据库统一阻断 PHP/Worker跨运行时同一上海自然日重复签到。生产预检重复组为 0；受控迁移连续执行两次均返回 `indexCount=6`、`DML=false`、`businessRowsUnchanged=true`，随后精确读回表、表达式、键顺序、唯一性和访问方法。索引目录由 728 增至 729；六个 USER-CENTER 目标定义均已幂等复验。Worker 捕获该唯一索引触发的 SQLSTATE `23505` 并转换为稳定业务错误“今日已签到”，不会向客户端泄漏数据库异常。临时 Worker 已删除；主 Worker前后仍为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有发布应用代码或前端。
+
+### 生产随机 schema 真实 service 证据
+
+临时 Worker 在生产 Hyperdrive 的随机 schema 中直接调用真实地址、收藏和签到 service，最终地址 3/3、收藏 5/5、签到 5/5，共 13/13 断言通过。地址覆盖归属、默认切换和城市路径；收藏覆盖商品/视频、批量关系、日志与权威计数；签到覆盖上海日界线、奖励、重复行为，以及同一上海自然日不同秒由数据库唯一索引拒绝。每个顶层事务都显式执行 `SET LOCAL search_path`，不依赖连接 startup 参数；13 张 `public` 表的全行指纹前后完全一致，临时 schema 计数不变且最终删除，临时 Worker 在部署列表中确认不存在。
+
+首轮 harness 因 Hyperdrive 未可靠保留 startup `search_path` 而失败，失败发生后随机 schema 安全清理，13 张 `public` 表无变化；修正为每个顶层事务显式设置本地 search path 后，完整 13/13 场景通过。这个过程是隔离装置修复，不是业务断言失败，也没有把合成数据写入 `public`。
+
+生产孤儿、商品收藏计数和缺日志都没有自动修复。源 MySQL不可用时，删除孤儿、重绑 UID、补日志或改计数都会掩盖来源问题；即使一次性校正，旧 PHP若继续并行写关系而不采用同一计数/日志状态机，漂移仍会重新出现。签到数据库唯一性门禁已经关闭，但上线仍建议单运行时或统一锁序以减少冲突重试。
+
+默认地址 partial unique 本批仍明确推迟，但 Worker 顺序已经为未来约束兼容：地址编辑在 `isDefault=1` 时先只更新普通字段，再由 helper 执行清旧→设新；`isDefault=0` 才直接把当前记录清零。剩余阻断来自旧 PHP仍先设新再清旧、只按裸地址 ID写入的越权风险、非事务写入，以及混合写流量尚未切走。必须先修 PHP，或把地址写入切到单一运行时后，才能安全增加 partial unique。收藏关系已有四列唯一索引，但商品/视频计数仍可能被 PHP 与 Worker并行更新写回覆盖。默认地址和收藏跨栈问题继续作为发布门禁，不能因签到唯一索引落地而一并标记完成。
+
+### 路由量化、验证与未完成项
+
+最新注释感知审计为 PHP 1,904、Workers 1,404、精确匹配 706、可执行匹配 688、明确不可用 18、原始缺失 1,198、证据化退役 4、可执行缺口 1,194；精确/可执行/退役后有效覆盖为 37.1%/36.1%/36.2%。`/api` 为 PHP 457、Workers 715、精确匹配 324、可执行匹配 321、明确不可用 3、原始缺失 133、退役 1、可执行缺口 132，对应覆盖 70.9%/70.2%/70.4%。本批九条合同全部精确且可执行，相对前一批把全局和 `/api` 可执行缺口各减少 9。
+
+Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签到奖励边界共 27/27；双 TypeScript 配置、PC 生产 build、UniApp typecheck/H5 build 均通过。主 Worker minify dry-run 为 2,607.61 KiB/gzip 647.22 KiB。Windows runtime仍在进入断言前受既有 `workerd 0xc0000005` 阻断，不能记为 runtime 通过。生产随机 schema 真实 service 13/13 已补齐，但没有使用真实生产 token 执行地址、收藏和签到的正向 HTTP E2E。
+
+- [x] 九条地址/收藏/签到 PHP 精确路由及强制认证边界已注册；18 个个性化 handler 均为 `private, no-store`，BaseDao 空条件读写已失败关闭。
+- [x] PC 收藏、UniApp 地址/收藏/签到已接入新合同，并通过类型检查和生产构建。
+- [x] 六个生产索引已幂等应用、独立复验且业务行/指纹不变；`us_uid_shanghai_day_uq` 已关闭跨 PHP/Worker同一上海自然日重复签到门禁，Worker将 SQLSTATE `23505` 转为“今日已签到”；临时 Worker 已删除，主 Worker未发布。
+- [ ] 取得源 MySQL并迁移/复核 `city_area/system_city`，为现有五条 `city_id=0` 地址建立可解释映射；当前不能进行真实正向地址保存 E2E。
+- [ ] 对 5 个 distinct 用户中心孤儿 owner 逐项确定源 UID，随后受控修复关系、签到、商品收藏计数和缺日志；同时解决 PHP 并行写造成计数再次漂移的问题。
+- [x] 生产随机 schema 的真实 service 地址 3/3、收藏 5/5、签到 5/5 共 13/13 通过；包含同一上海自然日不同秒唯一性断言，13 张 `public` 表全行指纹不变，临时 schema/Worker 已清理。
+- [ ] 以受限真实 token 在生产或预发完成地址、商品/视频收藏和签到正向 HTTP E2E。
+- [x] 上海自然日签到数据库唯一性已通过生产索引、二次幂等迁移和随机 schema 同日不同秒断言关闭；仍建议签到单运行时或统一锁序。
+- [ ] Worker 已改为普通字段更新后由 helper 清旧→设新；仍需修旧 PHP 裸地址 ID越权、非事务和先设新→清旧顺序，或切到地址单运行时，再评估默认地址 partial unique；当前未添加该约束。
+- [ ] 解决收藏在 PHP/Worker跨栈并行写下的计数竞态，并完成切流或持续对账验证。
+- [ ] 恢复 `sign_remind_time` 定时扫描、可重试消费和 `notice` 通知投递，验证关闭偏好、不重复发送、失败重试及按上海日界线选择用户；当前只有提醒偏好端点。
+- [ ] 在 DIY-HOME-WIDGETS 中补齐可选登录 `GET /api/diy/sign`（PHP `homeDiysignData`）并核对旧客户端响应；九条 USER-CENTER 精确路由不包含这条页面组合合同。
+- [ ] 继续补活动详情中秒杀/拼团/砍价装饰与水印兼容；这些跨域展示细节不能因本批收藏字段稳定而视为完成。
+- [ ] 在 Linux/兼容主机运行 Workers runtime，完成预发、影子流量、明确发布批准和发布后观察；主 Worker与 PC/UniApp当前均未发布。
+
+下一代码批次为 DIY-HOME-WIDGETS，并把审计新发现的可选登录 `GET /api/diy/sign`（PHP `homeDiysignData`）纳入同批，其后为 PUBLIC-ARTICLE 7 条。USER-CENTER-COMPAT 总项保持未勾选，直到源数据、默认地址/收藏跨栈门禁、签到提醒投递、真实 token流程和发布门禁全部获得证据；签到唯一性门禁已关闭，但仍建议单运行时/统一锁序。主 Worker仍是旧版本，未发布本批代码。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

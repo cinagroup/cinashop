@@ -187,6 +187,7 @@ export interface UserAddress {
   province: string;
   city: string;
   district: string;
+  city_id: number;
   detail: string;
   is_default: number;
 }

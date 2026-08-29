@@ -94,7 +94,12 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from "vue";
 import { onShow } from "@dcloudio/uni-app";
-import { apiAddressList, apiAddressSave, apiAddressDel } from "@/api/order";
+import {
+  apiAddressList,
+  apiAddressSave,
+  apiAddressSetDefault,
+  apiAddressDel,
+} from "@/api/order";
 import { REGIONS } from "@/utils/region";
 import type { UserAddress } from "@/types/order";
 
@@ -111,6 +116,7 @@ const form = reactive({
   province: "",
   city: "",
   district: "",
+  city_id: 0,
   detail: "",
 });
 
@@ -140,9 +146,15 @@ function confirmRegion() {
   const c = currentCities.value[cityIdx.value];
   const d = currentDistricts.value[districtIdx.value];
   if (p && c && d) {
+    const regionChanged = form.province !== p.name
+      || form.city !== c.name
+      || form.district !== d;
     form.province = p.name;
     form.city = c.name;
     form.district = d;
+    // 静态地区数据不含数据库 ID；地区变化后交由后端按名称重新解析，
+    // 避免把编辑前的 city_id 与新省市区组合保存。
+    if (regionChanged) form.city_id = 0;
   }
   regionVisible.value = false;
 }
@@ -163,13 +175,26 @@ function openEdit(addr?: UserAddress) {
     form.province = addr.province || "";
     form.city = addr.city || "";
     form.district = addr.district || "";
+    form.city_id = addr.city_id ?? 0;
     form.detail = addr.detail;
     // 回填选择器索引
     const pi = regionProvs.findIndex((p) => p.name === form.province);
     if (pi >= 0) {
       provIdx.value = pi;
       const ci = regionProvs[pi].cities.findIndex((c) => c.name === form.city);
-      cityIdx.value = ci >= 0 ? ci : 0;
+      if (ci >= 0) {
+        cityIdx.value = ci;
+        const di = regionProvs[pi].cities[ci].districts.findIndex(
+          (district) => district === form.district,
+        );
+        districtIdx.value = di >= 0 ? di : 0;
+      } else {
+        cityIdx.value = 0;
+        districtIdx.value = 0;
+      }
+    } else {
+      provIdx.value = 0;
+      cityIdx.value = 0;
       districtIdx.value = 0;
     }
   } else {
@@ -179,6 +204,7 @@ function openEdit(addr?: UserAddress) {
     form.province = "";
     form.city = "";
     form.district = "";
+    form.city_id = 0;
     form.detail = "";
     provIdx.value = 0;
     cityIdx.value = 0;
@@ -205,8 +231,8 @@ async function save() {
       province: form.province,
       city: form.city,
       district: form.district,
+      city_id: form.city_id,
       detail: form.detail,
-      is_default: 0,
     });
     uni.showToast({ title: "保存成功", icon: "success" });
     showForm.value = false;
@@ -218,9 +244,9 @@ async function save() {
 
 async function setDefault(addr: UserAddress) {
   try {
-    await apiAddressSave({ id: addr.id, is_default: 1 });
+    await apiAddressSetDefault(addr.id);
     uni.showToast({ title: "已设为默认", icon: "success" });
-    load();
+    await load();
   } catch (e) {
     uni.showToast({ title: e instanceof Error ? e.message : "操作失败", icon: "none" });
   }

@@ -47,6 +47,10 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
    * - 未命中的 key → 兜底 eq(列, 值); 列不存在则跳过 (与 PHP filterWhere 一致)
    */
   buildWhere(where: WhereInput): SQL | undefined {
+    // Callers are statically typed, but request data can still reach a DAO
+    // through an unsafe cast. Treat non-record filters as invalid instead of
+    // throwing (null) or iterating array/string indexes.
+    if (!where || typeof where !== "object" || Array.isArray(where)) return undefined;
     const conds: SQL[] = [];
     const columns = this.cols;
     for (const [key, value] of Object.entries(where)) {
@@ -75,15 +79,19 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
   async get(
     id: number | WhereInput,
   ): Promise<TTable["$inferSelect"] | null> {
-    const where =
-      typeof id === "number"
-        ? eq(this.pk, id as never)
-        : this.buildWhere(id);
+    if (typeof id === "number" && !Number.isSafeInteger(id)) return null;
+    const where = typeof id === "number"
+      ? eq(this.pk, id as never)
+      : this.buildWhere(id);
+
+    // A malformed runtime filter (for example a string passed through a TS
+    // cast) must not silently become `WHERE true` and expose the first row.
+    if (!where) return null;
 
     const rows = await this.db
       .select()
       .from(this.table)
-      .where(where ?? sql`true`)
+      .where(where)
       .limit(1);
     return (rows[0] as TTable["$inferSelect"] | undefined) ?? null;
   }
@@ -96,10 +104,11 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
   /** 是否存在 */
   async be(where: WhereInput): Promise<boolean> {
     const cond = this.buildWhere(where);
+    if (!cond) return false;
     const rows = await this.db
       .select({ c: sql<number>`1` })
       .from(this.table)
-      .where(cond ?? sql`true`)
+      .where(cond)
       .limit(1);
     return rows.length > 0;
   }
@@ -168,19 +177,25 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
     id: number | WhereInput,
     data: Partial<TTable["$inferInsert"]>,
   ): Promise<void> {
-    const where =
-      typeof id === "number" ? eq(this.pk, id as never) : this.buildWhere(id);
+    if (typeof id === "number" && !Number.isSafeInteger(id)) {
+      throw new Error("Refusing update with an invalid primary key");
+    }
+    const where = typeof id === "number" ? eq(this.pk, id as never) : this.buildWhere(id);
+    if (!where) throw new Error("Refusing unscoped update");
     await this.db
       .update(this.table)
       .set(data as never)
-      .where(where ?? sql`true`);
+      .where(where);
   }
 
   /** delete (硬删除; 软删除用 update deleteTime) */
   async delete(id: number | WhereInput): Promise<void> {
-    const where =
-      typeof id === "number" ? eq(this.pk, id as never) : this.buildWhere(id);
-    await this.db.delete(this.table).where(where ?? sql`true`);
+    if (typeof id === "number" && !Number.isSafeInteger(id)) {
+      throw new Error("Refusing delete with an invalid primary key");
+    }
+    const where = typeof id === "number" ? eq(this.pk, id as never) : this.buildWhere(id);
+    if (!where) throw new Error("Refusing unscoped delete");
+    await this.db.delete(this.table).where(where);
   }
 
   /**
@@ -204,6 +219,7 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
     n: number,
   ): Promise<void> {
     const cond = this.buildWhere(where);
+    if (!cond) throw new Error("Refusing unscoped increment");
     const col = this.cols[field];
     if (!col) throw new Error(`字段不存在: ${field}`);
     await this.db
@@ -211,7 +227,7 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
       .set({
         [field]: sql`${col} + ${n}`,
       } as never)
-      .where(cond ?? sql`true`);
+      .where(cond);
   }
 
   /**
@@ -227,13 +243,12 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
     n: number,
   ): Promise<boolean> {
     const condBase = this.buildWhere(where);
+    if (!condBase) throw new Error("Refusing unscoped decrement");
     const col = this.cols[field];
     if (!col) throw new Error(`字段不存在: ${field}`);
 
     // 完整 WHERE = 基础条件 AND field >= n
-    const fullCond = condBase
-      ? and(condBase, sql`${col} >= ${n}`)
-      : sql`${col} >= ${n}`;
+    const fullCond = and(condBase, sql`${col} >= ${n}`);
 
     const rows = await this.db
       .update(this.table)

@@ -2,6 +2,7 @@
  * 用户 API
  */
 import request, { getData } from "@/utils/request";
+import type { GoodsItem } from "@/types/product";
 
 export interface UserInfo {
   uid: number;
@@ -14,8 +15,17 @@ export interface UserInfo {
 }
 
 /** 收藏列表 (GET /api/collect/user) */
-export function apiCollectList(): Promise<number[]> {
-  return getData(request.get<number[]>("/collect/user"));
+export interface CollectListResult {
+  list: GoodsItem[];
+  count: number;
+}
+
+export function apiCollectList(params: {
+  page?: number;
+  limit?: number;
+  category?: string;
+} = {}): Promise<CollectListResult> {
+  return getData(request.get<CollectListResult>("/collect/user", { params }));
 }
 
 /** 收藏商品 (POST /api/collect/add) */

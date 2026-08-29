@@ -97,18 +97,20 @@ export class UserRelationDao extends BaseDao<typeof userRelation> {
   async addCollect(uid: number, relationIds: number[], category = "product"): Promise<number> {
     let count = 0;
     for (const rid of relationIds) {
-      try {
-        await this.db.insert(userRelation).values({
+      const rows = await this.db
+        .insert(userRelation)
+        .values({
           uid,
           relationId: rid,
           type: "collect",
           category,
           addTime: Math.floor(Date.now() / 1000),
-        });
-        count++;
-      } catch {
-        // UNIQUE 冲突 = 已收藏, 跳过
-      }
+        })
+        .onConflictDoNothing({
+          target: [userRelation.uid, userRelation.relationId, userRelation.type, userRelation.category],
+        })
+        .returning({ id: userRelation.id });
+      count += rows.length;
     }
     return count;
   }

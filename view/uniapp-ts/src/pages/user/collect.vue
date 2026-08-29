@@ -23,8 +23,12 @@
 import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";
-import { apiGoodsList } from "@/api/product";
 import type { GoodsItem } from "@/types/product";
+
+interface CollectListResult {
+  list: GoodsItem[];
+  count: number;
+}
 
 const products = ref<GoodsItem[]>([]);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
@@ -44,13 +48,16 @@ async function unstar(id: number) {
 }
 
 onShow(async () => {
+  products.value = [];
   try {
-    const ids = await http.get<number[]>("/collect/user");
-    if (ids.length) {
-      const result = await http.get<{ list: GoodsItem[] }>("/products", { ids: ids.join(","), limit: 50 });
-      products.value = result.list ?? [];
-    }
+    const result = await http.get<CollectListResult>("/collect/user", {
+      page: 1,
+      limit: 50,
+      category: "product",
+    });
+    products.value = result.list ?? [];
   } catch (e) {
+    products.value = [];
     console.error("收藏加载失败", e);
   }
 });

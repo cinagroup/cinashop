@@ -7,6 +7,7 @@
  */
 import type { Container } from "@/lib/di";
 import { sql } from "drizzle-orm";
+import { USER_CENTER_COMPATIBILITY_INDEX_SQL } from "@/migrations/userCenterCompatibility";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -84,6 +85,11 @@ export class MigrationService {
   /** Exact anonymous customer-service session DDL used by production verification. */
   kefuVisitorSessionMigrationSqlForVerification(): string {
     return this.migration_0111();
+  }
+
+  /** Exact user-center compatibility index DDL used by production verification. */
+  userCenterCompatibilityIndexMigrationSqlForVerification(): string {
+    return this.migration_0112();
   }
 
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
@@ -205,6 +211,7 @@ export class MigrationService {
       this.migration_0109(),
       this.migration_0110(),
       this.migration_0111(),
+      this.migration_0112(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -6086,5 +6093,9 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS "sst_customer_scope_time"
   ON "store_service_transfer" ("customer_uid", "is_tourist", "created_at", "request_key");`;
+  }
+
+  private migration_0112(): string {
+    return USER_CENTER_COMPATIBILITY_INDEX_SQL;
   }
 }

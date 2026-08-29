@@ -227,6 +227,10 @@ export function apiAddressSave(params: Partial<UserAddress>): Promise<{ id: numb
   return http.post<{ id: number }>("/address/edit", params as Record<string, unknown>);
 }
 
+export function apiAddressSetDefault(id: number): Promise<null> {
+  return http.post<null>("/address/default/set", { id });
+}
+
 export interface OrderTrackingPackage {
   orderId: string;
   deliveryStatus: string;

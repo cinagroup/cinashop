@@ -5,7 +5,11 @@ import { MIGRATION_TABLES } from "../scripts/data-migration/manifest";
 import { systemSignReward } from "../src/models/schema";
 import { requiredAdminPermission } from "../src/services/admin/AdminPermissionService";
 import { calculateSignReward } from "../src/services/system/SystemSignRewardService";
-import { nextContinuousSignDays, signDayWindow } from "../src/utils/sign";
+import {
+  effectiveContinuousSignDays,
+  nextContinuousSignDays,
+  signDayWindow,
+} from "../src/utils/sign";
 
 describe("system sign reward migration", () => {
   it("preserves the exact five-column source contract", () => {
@@ -109,6 +113,30 @@ describe("system sign reward migration", () => {
       weekday: 1,
       dayOfMonth: 10,
     })).toBe(10);
+    expect(effectiveContinuousSignDays({
+      currentDays: 9,
+      signedToday: false,
+      signedYesterday: true,
+      signMode: 1,
+      weekday: 1,
+      dayOfMonth: 10,
+    })).toBe(0);
+    expect(effectiveContinuousSignDays({
+      currentDays: 9,
+      signedToday: false,
+      signedYesterday: false,
+      signMode: 0,
+      weekday: 3,
+      dayOfMonth: 20,
+    })).toBe(0);
+    expect(effectiveContinuousSignDays({
+      currentDays: 9,
+      signedToday: true,
+      signedYesterday: false,
+      signMode: 1,
+      weekday: 1,
+      dayOfMonth: 10,
+    })).toBe(9);
   });
 
   it("restores both admin surfaces and transactionally closes double-award gaps", () => {

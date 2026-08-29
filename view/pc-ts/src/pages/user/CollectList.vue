@@ -1,7 +1,7 @@
 <template>
   <div class="collect-list container">
     <h2 class="title">我的收藏</h2>
-    <div v-if="productIds.length" class="goods-grid">
+    <div v-if="products.length" class="goods-grid">
       <div
         v-for="item in products"
         :key="item.id"
@@ -26,22 +26,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { apiCollectList } from "@/api/user";
-import { apiGoodsList } from "@/api/product";
 import type { GoodsItem } from "@/types/product";
 
-const productIds = ref<number[]>([]);
 const products = ref<GoodsItem[]>([]);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 onMounted(async () => {
+  products.value = [];
   try {
-    productIds.value = await apiCollectList();
-    if (productIds.value.length) {
-      // 后端商品列表支持 ids 参数 (逗号分隔)
-      const result = await apiGoodsList({ ids: productIds.value.join(","), limit: 50 });
-      products.value = result.list;
-    }
+    const result = await apiCollectList({ page: 1, limit: 50, category: "product" });
+    products.value = result.list ?? [];
   } catch (e) {
+    products.value = [];
     console.error("收藏加载失败", e);
   }
 });

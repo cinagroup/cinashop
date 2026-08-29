@@ -368,6 +368,45 @@ export class V2PromotionCompatibilityService {
     });
   }
 
+  /**
+   * Attach the three legacy catalogue promotion slots to an existing product
+   * list. Collection/history endpoints need these stable keys but must retain
+   * unavailable products that the public recommendation query filters out.
+   */
+  async decorateCatalogProducts(
+    list: readonly Record<string, unknown>[],
+  ): Promise<Record<string, unknown>[]> {
+    if (!list.length) return [];
+    const productIds = [...new Set(list
+      .map((item) => Number(item.product_id ?? item.id))
+      .filter((id) => Number.isSafeInteger(id) && id > 0))];
+    const promotions = await this.activePromotions();
+    const auxiliaries = await this.scopeAuxiliaries(promotions);
+    const relations = await this.productRelations(productIds);
+    return list.map((item) => {
+      const productId = Number(item.product_id ?? item.id);
+      const matches = promotions.filter((promotion) => this.matches(
+        productId,
+        relations.get(productId),
+        promotion,
+        auxiliaries,
+      ));
+      const promotion = matches.find((row) => row.promotionsType >= 1 && row.promotionsType <= 4);
+      const frame = matches.find((row) => row.promotionsType === 5);
+      const background = matches.find((row) => row.promotionsType === 6);
+      return {
+        ...item,
+        promotions: promotion ? promotionCatalogProjection(promotion) : {},
+        activity_frame: frame
+          ? { id: frame.id, name: frame.name, image: frame.image }
+          : [],
+        activity_background: background
+          ? { id: background.id, name: background.name, image: background.image }
+          : [],
+      };
+    });
+  }
+
   async productList(typeValue: unknown, query: Record<string, unknown>) {
     const type = phpInteger(typeValue);
     if (type < 1 || type > 6) return { list: [] };

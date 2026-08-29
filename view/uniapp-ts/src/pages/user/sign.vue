@@ -4,8 +4,8 @@
     <view class="sign-card">
       <view class="sign-title">每日签到</view>
       <view class="sign-points">我的积分: {{ points }}</view>
-      <view class="sign-btn" :class="{ done: signed }" @tap="doSign">
-        {{ signed ? "今日已签到" : "立即签到" }}
+      <view class="sign-btn" :class="{ done: signed || !enabled }" @tap="doSign">
+        {{ !enabled ? "签到未开启" : signed ? "今日已签到" : "立即签到" }}
       </view>
     </view>
 
@@ -27,15 +27,30 @@ import { http } from "@/utils/request";
 
 const points = ref("0");
 const signed = ref(false);
-const signIntegral = ref(1);
+const enabled = ref(false);
+const signIntegral = ref(0);
+
+interface SignStatus {
+  signedToday?: boolean;
+  isSign?: number;
+  continuousDays: number;
+  integral?: number;
+  enabled?: boolean;
+}
+
+interface SignResult {
+  sign_point?: number;
+  point?: number;
+}
 
 async function load() {
   try {
-    const status = await http.get<{ signedToday?: boolean; isSign?: number; continuousDays: number; integral?: number }>("/sign/status");
+    const status = await http.get<SignStatus>("/sign/status");
     signed.value = status.signedToday === true || status.isSign === 1;
-    signIntegral.value = status.integral || 1;
+    enabled.value = status.enabled ?? true;
+    signIntegral.value = status.integral ?? 0;
   } catch {
-    // 静默
+    enabled.value = false;
   }
   try {
     const info = await http.get<Record<string, unknown>>("/user/info");
@@ -46,11 +61,13 @@ async function load() {
 }
 
 async function doSign() {
+  if (!enabled.value) return uni.showToast({ title: "签到功能未开启", icon: "none" });
   if (signed.value) return uni.showToast({ title: "今日已签到", icon: "none" });
   try {
-    await http.post<null>("/sign/integral");
-    uni.showToast({ title: `签到成功 +${signIntegral.value} 积分`, icon: "success" });
-    load();
+    const result = await http.post<SignResult>("/sign/integral");
+    const awardedPoint = result.sign_point ?? result.point ?? 0;
+    uni.showToast({ title: `签到成功 +${awardedPoint} 积分`, icon: "success" });
+    await load();
   } catch (e) {
     uni.showToast({ title: (e as Error).message || "签到失败", icon: "none" });
   }

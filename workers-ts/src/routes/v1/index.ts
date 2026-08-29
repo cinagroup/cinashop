@@ -349,13 +349,16 @@ v1Routes.get("/order/refund/del/:uni", authMiddleware({ force: true }), PayContr
 
 // ─── 用户中心: 地址 (M5) ───────────────────────────────────────
 v1Routes.get("/address/list", authMiddleware({ force: true }), UserActivityController.addressList);
+v1Routes.get("/address/detail/:id", authMiddleware({ force: true }), UserActivityController.addressDetail);
 v1Routes.get("/address/default", authMiddleware({ force: true }), UserActivityController.addressDefault);
+v1Routes.post("/address/default/set", authMiddleware({ force: true }), UserActivityController.addressDefaultSet);
 v1Routes.post("/address/edit", authMiddleware({ force: true }), UserActivityController.addressEdit);
 v1Routes.post("/address/del", authMiddleware({ force: true }), UserActivityController.addressDel);
 
 // ─── 用户中心: 收藏 (M5) ───────────────────────────────────────
 v1Routes.post("/collect/add", authMiddleware({ force: true }), UserActivityController.collectAdd);
 v1Routes.post("/collect/del", authMiddleware({ force: true }), UserActivityController.collectDel);
+v1Routes.post("/collect/all", authMiddleware({ force: true }), UserActivityController.collectAll);
 v1Routes.get("/collect/user", authMiddleware({ force: true }), UserActivityController.collectList);
 v1Routes.get(
   "/user/visit_list",
@@ -371,6 +374,12 @@ v1Routes.delete(
 // ─── 用户中心: 签到 (M5) ───────────────────────────────────────
 v1Routes.post("/sign/integral", authMiddleware({ force: true }), UserActivityController.signDo);
 v1Routes.get("/sign/status", authMiddleware({ force: true }), UserActivityController.signStatus);
+v1Routes.get("/sign/config", authMiddleware({ force: true }), UserActivityController.signConfig);
+v1Routes.get("/sign/list", authMiddleware({ force: true }), UserActivityController.signList);
+v1Routes.get("/sign/month", authMiddleware({ force: true }), UserActivityController.signMonth);
+v1Routes.post("/sign/user", authMiddleware({ force: true }), UserActivityController.signUser);
+v1Routes.get("/sign/remind/:status", authMiddleware({ force: true }), UserActivityController.signRemind);
+v1Routes.get("/sign/calendar", authMiddleware({ force: true }), UserActivityController.signCalendar);
 
 // ─── 分销/佣金/提现 (补全) ─────────────────────────────────────
 v1Routes.post("/user/spread", authMiddleware({ force: true }), UserFinanceController.bindSpread);

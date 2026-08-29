@@ -41,3 +41,28 @@ export function nextContinuousSignDays(input: {
   if (!Number.isSafeInteger(next)) throw new Error("连续签到天数超出安全范围");
   return next;
 }
+
+/**
+ * Continuous days already earned in the active cycle. PHP only resets the
+ * stored user.sign_num while writing the next sign, so previews otherwise
+ * show a stale streak after a missed day or at a week/month boundary.
+ */
+export function effectiveContinuousSignDays(input: {
+  currentDays: number;
+  signedToday: boolean;
+  signedYesterday: boolean;
+  signMode: number;
+  weekday: number;
+  dayOfMonth: number;
+}): number {
+  const current = Math.max(0, Math.trunc(input.currentDays));
+  if (!Number.isSafeInteger(current)) throw new Error("连续签到天数超出安全范围");
+  if (input.signedToday) return current;
+  return nextContinuousSignDays({
+    currentDays: current,
+    signedYesterday: input.signedYesterday,
+    signMode: input.signMode,
+    weekday: input.weekday,
+    dayOfMonth: input.dayOfMonth,
+  }) - 1;
+}

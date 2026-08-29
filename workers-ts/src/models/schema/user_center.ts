@@ -11,6 +11,7 @@
  *
  * 关键修复 (相比 PHP):
  *   - user_relation 加 UNIQUE(uid, relation_id, type, category) 修复 PHP 并发重复收藏 bug
+ *   - user_sign 加 UNIQUE(uid, 上海自然日) 阻断 PHP/Worker 跨运行时重复签到
  *   - 默认地址用应用层保证唯一 (PHP 也是应用层)
  */
 import {
@@ -46,7 +47,7 @@ export const userAddress = pgTable(
     isDel: smallint("is_del").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
-  (t) => [index("ua_uid").on(t.uid)],
+  (t) => [index("ua_uid_idx").on(t.uid)],
 );
 
 // ─── 收藏/点赞 (多态关系表) ────────────────────────────────
@@ -65,8 +66,11 @@ export const userRelation = pgTable(
   },
   (t) => [
     // 修复 PHP 缺失的唯一约束: 防并发重复收藏
-    uniqueIndex("ur_uid_rel_type_cat").on(t.uid, t.relationId, t.type, t.category),
-    index("ur_uid_type").on(t.uid, t.type),
+    uniqueIndex("ur_uid_rel_type_cat_idx").on(t.uid, t.relationId, t.type, t.category),
+    index("ur_uid_type_idx").on(t.uid, t.type),
+    index("ur_collect_category_relation_idx")
+      .on(t.category, t.relationId)
+      .where(sql`${t.type} = 'collect'`),
     index("ur_user_product_collect_latest")
       .on(t.uid, t.addTime.desc(), t.id.desc(), t.relationId)
       .where(sql`${t.type} = 'collect' AND ${t.category} = 'product'`),
@@ -89,7 +93,11 @@ export const userSign = pgTable(
     expBalance: integer("exp_balance").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
-  (t) => [index("us_uid_time").on(t.uid, t.addTime)],
+  (t) => [
+    index("us_uid_time_idx").on(t.uid, t.addTime),
+    uniqueIndex("us_uid_shanghai_day_uq")
+      .on(t.uid, sql`(((${t.addTime})::bigint + 28800) / 86400)`),
+  ],
 );
 
 // ─── 余额流水 (钱) ──────────────────────────────────────────
