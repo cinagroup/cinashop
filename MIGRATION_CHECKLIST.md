@@ -1,6 +1,6 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
-审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002、OUT-003、OUT-004、API-001、API-002、API-003、API-004 全部子批次和 API-005 PC 兼容面进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；商品、优惠券、用户写入回放账本及订单商品赠券归属账本 DDL 已直接应用。除这些固定、幂等且有业务指纹守卫的 DDL 外，API-001～API-005 对 `public` 只读，合成业务场景只在随机 schema 执行；主 Worker 和正式前端没有因本次审计被发布。
+审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002～004、API-001～005 与 API-006-ACTIVITY 进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；四类写入回放/归属账本 DDL 及 API-006 两个部分索引已直接应用。API-006 索引执行两遍验证幂等，11 组业务指纹不变；其余审计对 `public` 只读，合成业务场景只在随机 schema 执行。主 Worker 和正式前端没有因本次审计被发布。
 
 ## 审计结论
 
@@ -11,9 +11,9 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 221 表；Worker 内嵌 221 表；表/列/主键漂移 0 | 完成 |
 | 生产目标结构 | 221/221 表；缺失 0、额外 0 | 完成 |
-| PHP HTTP 合同 | 精确匹配 641/1,904；其中 20 条接入明确 501；3 条有证据退役 | 精确注册 33.7%，静态可执行上限 32.6%，退役后有效上限 32.7% |
+| PHP HTTP 合同 | 精确匹配 652/1,904；其中 20 条接入明确 501；3 条有证据退役 | 精确注册 34.2%，静态可执行上限 33.2%，退役后有效上限 33.2% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 127 文件、737 项通过 | 本地业务回归通过 |
+| Worker 单元测试 | 128 文件、744 项通过 | 本地业务回归通过 |
 | Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
 | CI | 仓库没有 `.github/workflows` | 未建立 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
@@ -25,19 +25,19 @@
 
 | 面 | PHP | Workers | 精确匹配 | 明确 501 | 原始缺失 | 已退役 | 可执行缺口 | 原始/有效可执行上限 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 659 | 271 | 5 | 186 | 1 | 185 | 58.2% / 58.3% |
+| `/api` | 457 | 669 | 282 | 5 | 175 | 1 | 174 | 60.6% / 60.7% |
 | `/adminapi` | 1,153 | 470 | 202 | 15 | 951 | 0 | 951 | 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% |
 | `/kefuapi` | 63 | 51 | 48 | 0 | 15 | 2 | 13 | 76.2% / 78.7% |
 | `/outapi` | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% |
-| 合计 | 1,904 | 1,333 | 641 | 20 | 1,263 | 3 | 1,260 | 32.6% / 32.7% |
+| 合计 | 1,904 | 1,343 | 652 | 20 | 1,252 | 3 | 1,249 | 33.2% / 33.2% |
 
-API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证合同。API-005 已将 PHP `/api/pc` 22 条全部精确注册：19 条可执行，`key/scan/wechat_auth` 3 条因旧流程的 token 换取与 OAuth state 缺失明确 501。因此 PC 精确静态缺口归零，但生产数据/配置、新旧 PC 真实流程、预发和发布仍未完成。下一层大缺口组包括 `/api` 的认证、内嵌 admin、marketing、store 与 work；`/adminapi` 的 setting、marketing、product、user、app、supplier、order；`/supplierapi` 的 order、product、file、admin。精确逐路由清单以 `audit:routes` JSON 为准，不在本文复制 1,263 行。
+API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证合同。API-005 已将 PHP `/api/pc` 22 条全部精确注册：19 条可执行，3 条安全 501。API-006-ACTIVITY 再新增 11 条可执行精确合同，将 `/api` 可执行匹配从 266 提升到 277，缺失从 186 降到 175。下一层大缺口组包括 `/api` 的认证、内嵌 admin、marketing、store 与 work；精确逐路由清单以 `audit:routes` JSON 为准。
 
 ### 生产数据库事实
 
-- PostgreSQL 16.14；应用订单商品赠券归属账本后，生产 `public` 当前 221 表、3,053 列、712 索引、208 主键。
+- PostgreSQL 16.14；应用 API-006 两个活动查询索引后，生产 `public` 当前 221 表、3,053 列、714 索引、208 主键。
 - `order_print_job`、`order_print_job_action`、`order_waybill_job`、`order_waybill_job_action` 已创建且行数为 0。
 - `out_product_write_replay`、`out_coupon_write_replay` 均为 8 列，`out_user_write_replay` 为 9 列；三表都是 4 约束、3 索引且当前 0 行。新增 `store_order_product_coupon_reward` 为 7 列、4 索引、2 约束、0 行；有效手机号、Out 余额流水、Out 积分流水三个唯一索引均有效，仓库 221 表清单与生产集合差均为空。
 - 商品 71、订单 29、订单明细 28、售后 3；客服账号 0、会话 0，但客服消息历史 3。
@@ -51,6 +51,7 @@ API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证
 - API-004-PROMO 只读复核确认促销主表/辅助表均为 0，父规则、子规则、五类范围、券/赠品/SKU 孤儿也均为 0；71 个可售平台商品存在，但品牌/标签关系为 0。真实三类合同返回兼容空结构；随机 schema 对全场、指定、排除、品牌、标签范围、折扣截断、边框/背景、阶梯规则、积分/券/赠品 SKU、登录态凑单及失效门禁共 12/12 通过，`public_state_unchanged=true`、临时 schema `0→0`。隔离审计同时发现并修复商品 DAO 的 `ids` 过去只排序不筛选、会把显式范围扩散为全目录的问题；生产仍需从源 MySQL 复制促销规则及范围后重审。
 - API-004-HOME 只读复核确认可见根分类 6、可见二级分类 18，孤儿父级和自指均为 0；71 个可售商品的旧 `is_hot/is_benefit/is_best/is_new` 标记全为 0，权威 `type=3/relation_id=1..4` 首页推荐关系也全为 0。六个首页配置只有 `site_name` 存在，微信身份仍为 0；真实匿名/登录首页返回精确六字段空商品结构，匿名首页关注为 true、登录关注为 false。随机 schema 的精确根/子形状、二级分类、四类推荐、品牌/标签、预售四态、v1/v2 匿名差异与公众号身份选择共 12/12 通过，`public_state_unchanged=true`、临时 schema `0→0`；同时恢复旧 UniApp 实际调用的 v1 `subscribe`。
 - API-005-PC 只读复核确认 71 个可售商品、6 个可见根分类，但 active 分类关系、PC banner 和城市均为 0；17 个 PC 候选配置只存在 `record_No/site_name/site_url` 3 个。生产还有开放购物车 2、可见订单 28、可见售后 3、商品收藏 1，但余额流水 0。真实公开合同返回商品 `count=71/page=5`，其余内容空集与当前数据一致。随机 schema 对三级 `cid/sid/tid`、分类首页、banner/公司/城市、有效/失效购物车、余额、订单/收藏/售后 UID 作用域、推荐/优品及付费会员二维码共 15/15 通过，`public_state_unchanged=true`、临时 schema `0→0`，审计 Worker 已删除且 URL 返回 404。
+- API-006-ACTIVITY 只读复核确认秒杀/时段 `1/3`、拼团/团记录 `1/2`、砍价/参与/帮砍 `1/4/0`，活动订单 7、已支付 3。`routine_lovely`、`combination_banner` 内容和小程序 AppID/Secret、秒杀 banner、砍价订阅配置均缺失。短视频的 `video/video_comment` 两表生产完全不存在，`store_newcomer=0`；因此 marketing 13 条不能只补路由。随机 schema 的配置/banner、H5/小程序码、拼团/砍价海报、归属拒绝、分享原子计数、旧列表字段、`bargainId` 取消及两个部分索引共 14/14 通过，`public_state_unchanged=true`、临时 schema `0→0`。两个生产索引执行两遍幂等，11 组业务指纹不变；临时 Worker 已删除且 URL 返回 404。
 - 数据迁移控制表存在但运行记录为 0；源 MySQL 连接变量缺失，`npm run data:plan` 明确失败为 `SOURCE_MYSQL_URL is required`。
 - `system_config` 有 6 个重复键、20 条额外历史行；其中 `site_url` 曾同时出现示例值和实际 Pages 值，不能自动删除。
 
@@ -105,7 +106,10 @@ API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证
   - [ ] **API-004-PROMO 3 条促销（核心代码和生产隔离验证已收口）**：按 PHP 认证边界注册公开 `productList/:type`、公开 `give_info/:id` 与强制登录 `collect_order/product`；只读取 active、未删除、平台父规则，商品列表支持全场、指定、排除、品牌、标签五类范围及活动边框/背景，折扣按 PHP 两段 bcmath 截断，赠品信息批量读取券、商品与普通 SKU，凑单返回父/子阶梯。服务对分页、活动数和商品数设上限，并对失效活动失败关闭；隔离审计还修复统一商品搜索中 `ids` 只排序不筛选的范围扩散缺陷。生产促销/辅助数据为 0，随机 schema 12/12、公共指纹不变和清理均通过。仍不勾选：旧 UniApp 仅有前两条包装器且页面调用缺失，源 MySQL 规则/范围未复制，生产无真实活动、品牌/标签关系或赠品样本，订单促销叠加仍属 API-006，真实账号/旧端/预发/发布 E2E 未完成。
   - [ ] **API-004-HOME 2 条首页/关注状态（核心代码和生产隔离验证已收口）**：`v2/index` 只返回 `info/benefit/likeInfo/subscribe/tengxun_map_key/site_name`，不把 v1 banner 等扩展字段混入；快捷分类修正为 PHP 的可见 `pid>0` 二级分类，数量按 PHP 整数前缀并封顶 100，精品/新品/促销/热门沿用权威商品关系与会员可见性，预售状态恢复 0 非预售、1 未开始、2 进行中、3 已结束。`v2/subscribe` 只读取当前 UID 最新未删除公众号身份，匿名为 false；旧 UniApp 实际使用的 v1 `subscribe` 同步恢复，匿名为 true。三条响应均 `private, no-store`。生产内容区因四个数量配置、推荐关系和微信身份缺失而为空；随机 schema 12/12、公共指纹不变和清理均通过。仍不勾选：需从源 MySQL 复制并运营确认首页配置/推荐关系/微信身份，商品秒杀/砍价/拼团标签依赖 API-006，媒体/真实微信/旧端/预发/发布 E2E 未完成。
 - [ ] **API-005 `/api/pc` 22 条合同（核心代码与生产隔离验证已收口）**：22 条全部精确注册，其中 19 条可执行；商品列表恢复 PHP 三级 `cid/sid/tid/selectId`、`news→timeOrder`、`type→status`、会员专属可见性和 0..3 PC 商品类型，并恢复分类首页、公司/城市、PC banner、推荐/优品、二维码、购物车有效/失效分流、余额、订单、收藏和售后 `list/count`。六条用户数据合同全部强制登录且按 UID 作用域；`key/scan/wechat_auth` 因旧 token 换取和无一次性 OAuth state 明确 501，归 CORE-004 重建，不伪装成可执行。生产 Hyperdrive 只读与随机 schema 15/15 通过。本项仍不勾选：active 分类关系、PC banner、城市和 14/17 候选配置未复制，生产登录用户 token 未用于真实六接口验收，小程序码/微信 OAuth、旧 Nuxt PC、新 `pc-ts`、桌面/移动浏览器、预发和正式发布都未完成。
-- [ ] **API-006 营销/活动缺口**：处理 marketing 13、bargain 4、combination 4、seckill 3 及其资格、库存、支付、超时、退款和奖励状态机。
+- [ ] **API-006 营销/活动主批次**：静态精确缺口原始清单为 marketing 13、bargain 4、combination 4、seckill 3；活动兼容子批次已将后三组 11 条收口，但整体仍受订单状态机、真实数据/配置、前端 E2E 和发布门禁限制。
+  - [ ] **API-006-ACTIVITY 11 条秒杀/拼团/砍价精确缺口合同（新增端点核心代码、生产只读与隔离验证已收口）**：已精确补齐 `seckill/detail/:id/[:time]`、秒杀/拼团 `detail_code` 和 `code`、拼团 banner/海报、砍价 config/start-user/share/poster；二维码仅内存返回 data URL，不写公开附件，个性化码/海报强制登录并校验 UID 归属。砍价分享用短事务原子累加，列表恢复 `title/image/residue_price/pay_status/datatime`，取消同时接受旧客户端 `bargainId`。生产两个部分索引已幂等应用，隔离场景 14/14 通过。本项仍不勾选：早先已算静态匹配的秒杀/拼团/砍价 detail 响应仍比 PHP 简化，生产活动组内容和小程序凭据未迁移，未用真实用户 token/真实微信执行旧 UniApp、未验收预发/影子流量，且主 Worker 未发布。
+  - [ ] **API-006-MARKETING 13 条短视频/新人活动（待完成）**：新人 `product_list/detail/info/gift` 4 条有 `store_newcomer` 结构但生产 0 行；短视频列表/详情/商品、评论发布/回复/删除与关系 9 条所需 `video` 和 `video_comment` 在生产不存在。先完成表结构、源数据和私有媒体迁移，再实现权限/软删除/分页/关系合同，不得以空数据伪装完成。
+  - [ ] **API-006-CHECKOUT 活动订单状态机（待完成）**：逐类对齐秒杀/拼团/砍价的资格、限购、库存与销量、报价与建单、支付、超时、成团/失败、取消/退款、积分/优惠券/佣金奖励，并用双连接竞态、回调重放和失败补偿证明。
 - [ ] **API-007 社区/内容/DIY**：补齐 article 7、reply 4、diy 8 以及仍被 UniApp 调用的社区合同；媒体统一走私有 R2。
 - [ ] **API-008 门店/企业微信/内嵌 Admin**：处理 store 12、work 10、`/api/admin` 51；外部写操作必须 Queue 化，不能同步调用第三方。
 
@@ -174,4 +178,4 @@ API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证
 
 ## 当前下一步
 
-`DB-001`、`DB-002`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；`API-002`、`API-003`、API-004-CART/DIY/COUPON/USER/PROMO/HOME 与 API-005-PC 的核心代码及生产隔离验证已收口。API-004 剩余 16 条全属真实微信/小程序认证；API-005 为 19 条可执行 + 3 条安全 501。仓库与生产结构均为 221/221。最新静态路由审计为 PHP 1,904、TS 1,333、精确匹配 641、可执行匹配 621、明确不可用 20、证据化退役 3、可执行缺口 1,260；`/api` 为精确 271/457、可执行 266，Out 为 41/41。真实内容/城市/关系/配置和源 MySQL 数据仍未复制，认证/回调、第三方凭据、真实用户与五端 E2E、预发和正式发布仍是门禁。下一批进入 **API-006 营销/活动** 前应先以现有 checklist 拆分子域；API-004-AUTH 与 PC 微信登录继续归 CORE-004，正式发布仍需用户明确批准。
+`DB-001`、`DB-002`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；`API-002`、`API-003`、API-004-CART/DIY/COUPON/USER/PROMO/HOME、API-005-PC 与 API-006-ACTIVITY 的核心代码及生产隔离验证已收口。仓库与生产表结构均为 221/221。最新静态路由审计为 PHP 1,904、TS 1,343、精确匹配 652、可执行匹配 632、明确不可用 20、证据化退役 3、可执行缺口 1,249；`/api` 为精确 282/457、可执行 277，Out 为 41/41。下一个可独立执行批次是 **API-006-MARKETING 的新人 4 条**；短视频 9 条先受 `video/video_comment` 结构、源数据和私有媒体迁移门禁。API-006-CHECKOUT、API-004-AUTH/CORE-004、真实用户 E2E、预发和正式发布仍未完成；正式发布仍需用户明确批准。

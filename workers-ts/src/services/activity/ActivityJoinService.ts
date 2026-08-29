@@ -8,6 +8,7 @@
 import { eq, and, desc, gt, inArray, or, sql } from "drizzle-orm";
 import {
   storePink,
+  storeSeckill,
   storeCombination,
   storeBargain,
   storeBargainUser,
@@ -20,6 +21,13 @@ import type { Env } from "@/env";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
+import { PublicCatalogService } from "@/services/product/PublicCatalogService";
+import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { createQrSvgDataUrl } from "@/services/user/MembershipScanService";
+import {
+  WechatMiniProgramCodeService,
+  type LegacyActivityCodeType,
+} from "@/services/wechat/WechatMiniProgramCodeService";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
 
@@ -53,6 +61,99 @@ export class ActivityJoinService {
     private readonly container: Container,
     private readonly env?: Env,
   ) {}
+
+  private runtimeEnv(): Env {
+    if (!this.env) throw new Error("活动兼容服务缺少运行环境");
+    return this.env;
+  }
+
+  private async routineCode(
+    type: LegacyActivityCodeType,
+    id: number,
+    uid: number,
+  ): Promise<string> {
+    try {
+      return await new WechatMiniProgramCodeService(
+        this.container,
+        this.runtimeEnv(),
+      ).createActivityDataUrl(type, id, uid) ?? "";
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: "legacy_activity_code_failed",
+        type,
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      return "";
+    }
+  }
+
+  async bargainConfig(): Promise<Record<string, unknown>> {
+    const groups = await new PublicCatalogService(
+      this.container,
+      this.runtimeEnv(),
+    ).groupDataMany(["routine_lovely"]);
+    return groups.routine_lovely?.[2] ?? {};
+  }
+
+  async combinationBanner(): Promise<Record<string, unknown>[]> {
+    const groups = await new PublicCatalogService(
+      this.container,
+      this.runtimeEnv(),
+    ).groupDataMany(["combination_banner"]);
+    return groups.combination_banner ?? [];
+  }
+
+  async activityDetailCode(
+    type: 1 | 3,
+    id: number,
+    uid: number,
+    query: { time?: string; status?: string },
+  ): Promise<{ code_base: string }> {
+    if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("缺少参数");
+    const exists = type === 1
+      ? await this.container.db.select({ id: storeSeckill.id }).from(storeSeckill)
+          .where(and(eq(storeSeckill.id, id), eq(storeSeckill.status, 1), eq(storeSeckill.isShow, 1), eq(storeSeckill.isDel, 0))).limit(1)
+      : await this.container.db.select({ id: storeCombination.id }).from(storeCombination)
+          .where(and(eq(storeCombination.id, id), eq(storeCombination.status, 1), eq(storeCombination.isShow, 1), eq(storeCombination.isDel, 0))).limit(1);
+    if (!exists[0]) throw new NotFoundException(type === 1 ? "秒杀商品不存在" : "拼团商品不存在");
+
+    const raw = await new SystemConfigService(this.container, this.runtimeEnv()).get("site_url");
+    let url: URL;
+    try {
+      url = new URL(typeof raw === "string" ? raw.trim() : "");
+    } catch {
+      throw new ValidateException("站点地址 site_url 未正确配置");
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      throw new ValidateException("站点地址 site_url 必须使用 HTTP 或 HTTPS");
+    }
+    url.pathname = `${url.pathname.replace(/\/$/, "")}/pages/activity/goods_details/index`;
+    url.hash = "";
+    url.search = new URLSearchParams({
+      type: String(type),
+      id: String(id),
+      spid: String(uid),
+      ...(type === 1 && query.time ? { time: query.time.slice(0, 64) } : {}),
+      ...(type === 1 && query.status ? { status: query.status.slice(0, 32) } : {}),
+    }).toString();
+    return { code_base: createQrSvgDataUrl(url.toString()) };
+  }
+
+  async activityRoutineCode(
+    type: 1 | 3,
+    id: number,
+    uid: number,
+  ): Promise<{ code: string }> {
+    if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("缺少参数");
+    const exists = type === 1
+      ? await this.container.db.select({ id: storeSeckill.id }).from(storeSeckill)
+          .where(and(eq(storeSeckill.id, id), eq(storeSeckill.status, 1), eq(storeSeckill.isShow, 1), eq(storeSeckill.isDel, 0))).limit(1)
+      : await this.container.db.select({ id: storeCombination.id }).from(storeCombination)
+          .where(and(eq(storeCombination.id, id), eq(storeCombination.status, 1), eq(storeCombination.isShow, 1), eq(storeCombination.isDel, 0))).limit(1);
+    if (!exists[0]) throw new NotFoundException(type === 1 ? "秒杀商品不存在" : "拼团商品不存在");
+    return { code: await this.routineCode(type, id, uid) };
+  }
 
   // ═══ 拼团 ═════════════════════════════════════════════════
 
@@ -160,6 +261,62 @@ export class ActivityJoinService {
     return {
       pink_count: Number(countRows[0]?.count ?? 0),
       avatars: uids.map((uid) => avatarsByUid.get(uid) ?? "").filter(Boolean),
+    };
+  }
+
+  async combinationPoster(uid: number, pinkId: number) {
+    if (!Number.isSafeInteger(uid) || uid <= 0 || !Number.isSafeInteger(pinkId) || pinkId <= 0) {
+      throw new ValidateException("参数错误");
+    }
+    const pinkRows = await this.container.db
+      .select()
+      .from(storePink)
+      .where(eq(storePink.id, pinkId))
+      .limit(1);
+    const pink = pinkRows[0];
+    if (!pink) throw new NotFoundException("拼团记录不存在");
+    const rootId = pink.kId > 0 ? pink.kId : pink.id;
+    const [combinationRows, memberRows, ownMembershipRows] = await Promise.all([
+      this.container.db
+        .select({
+          title: storeCombination.storeName,
+          image: storeCombination.image,
+          otPrice: storeCombination.otPrice,
+        })
+        .from(storeCombination)
+        .where(and(
+          eq(storeCombination.id, pink.combinationId),
+          eq(storeCombination.isDel, 0),
+        ))
+        .limit(1),
+      this.container.db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(storePink)
+        .where(and(
+          or(eq(storePink.id, rootId), eq(storePink.kId, rootId)),
+          eq(storePink.isRefund, 0),
+        )),
+      this.container.db
+        .select({ id: storePink.id })
+        .from(storePink)
+        .where(and(
+          or(eq(storePink.id, rootId), eq(storePink.kId, rootId)),
+          eq(storePink.uid, uid),
+          eq(storePink.isRefund, 0),
+        ))
+        .limit(1),
+    ]);
+    const combination = combinationRows[0];
+    if (!combination) throw new NotFoundException("拼团商品不存在");
+    if (!ownMembershipRows[0]) throw new NotFoundException("拼团记录不存在");
+    const memberCount = Number(memberRows[0]?.count ?? 0);
+    return {
+      title: combination.title,
+      url: await this.routineCode(31, pinkId, uid),
+      image: combination.image,
+      price: pink.price,
+      label: `${pink.people}人团`,
+      msg: `划线价￥${combination.otPrice} 还差${Math.max(0, pink.people - memberCount)}人拼团成功`,
     };
   }
 
@@ -287,6 +444,101 @@ export class ActivityJoinService {
       if (!rows[0]) throw new Error("砍价参与记录创建失败");
       return rows[0];
     });
+  }
+
+  async bargainStartUser(bargainId: number, ownerUid: number) {
+    if (!Number.isSafeInteger(bargainId) || bargainId <= 0 || !Number.isSafeInteger(ownerUid) || ownerUid <= 0) {
+      throw new ValidateException("参数错误");
+    }
+    const rows = await this.container.db
+      .select({ nickname: user.nickname, avatar: user.avatar })
+      .from(storeBargainUser)
+      .innerJoin(user, and(
+        eq(user.uid, storeBargainUser.uid),
+        eq(user.status, 1),
+        eq(user.isDel, 0),
+      ))
+      .where(and(
+        eq(storeBargainUser.bargainId, bargainId),
+        eq(storeBargainUser.uid, ownerUid),
+        eq(storeBargainUser.isDel, 0),
+      ))
+      .orderBy(desc(storeBargainUser.id))
+      .limit(1);
+    if (!rows[0]) throw new NotFoundException("用户砍价信息未查到");
+    return rows[0];
+  }
+
+  async bargainShare(bargainId: number) {
+    if (!Number.isSafeInteger(bargainId) || bargainId <= 0) throw new ValidateException("参数错误");
+    return withTx(this.container, async (tx) => {
+      const updated = await tx
+        .update(storeBargain)
+        .set({ share: sql`${storeBargain.share} + 1` })
+        .where(and(eq(storeBargain.id, bargainId), eq(storeBargain.isDel, 0)))
+        .returning({ id: storeBargain.id });
+      if (!updated[0]) throw new NotFoundException("砍价活动不存在");
+      const [bargainTotals, userTotals, payTotals] = await Promise.all([
+        tx.select({
+          look: sql<string>`COALESCE(SUM(${storeBargain.look}), 0)::text`,
+          share: sql<string>`COALESCE(SUM(${storeBargain.share}), 0)::text`,
+        }).from(storeBargain),
+        tx.select({ count: sql<number>`COUNT(*)::int` }).from(storeBargainUserHelp),
+        tx.select({ count: sql<number>`COUNT(*)::int` }).from(storeOrder).where(and(
+          eq(storeOrder.activityId, bargainId),
+          eq(storeOrder.type, 2),
+          eq(storeOrder.isDel, 0),
+          eq(storeOrder.isSystemDel, 0),
+        )),
+      ]);
+      return {
+        lookCount: Number(bargainTotals[0]?.look ?? 0),
+        userCount: Number(userTotals[0]?.count ?? 0),
+        payCount: Number(payTotals[0]?.count ?? 0),
+        shareCount: Number(bargainTotals[0]?.share ?? 0),
+      };
+    });
+  }
+
+  async bargainPoster(uid: number, bargainId: number) {
+    if (!Number.isSafeInteger(uid) || uid <= 0 || !Number.isSafeInteger(bargainId) || bargainId <= 0) {
+      throw new ValidateException("参数错误");
+    }
+    const [bargains, participations] = await Promise.all([
+      this.container.db.select({
+        title: storeBargain.title,
+        image: storeBargain.image,
+        price: storeBargain.price,
+        minimum: storeBargain.minPrice,
+        quota: storeBargain.quota,
+      }).from(storeBargain).where(and(
+        eq(storeBargain.id, bargainId),
+        eq(storeBargain.isDel, 0),
+      )).limit(1),
+      this.container.db.select({
+        price: storeBargainUser.price,
+        minimum: storeBargainUser.bargainPriceMin,
+      }).from(storeBargainUser).where(and(
+        eq(storeBargainUser.bargainId, bargainId),
+        eq(storeBargainUser.uid, uid),
+        eq(storeBargainUser.isDel, 0),
+      )).orderBy(desc(storeBargainUser.id)).limit(1),
+    ]);
+    const bargain = bargains[0];
+    if (!bargain) throw new NotFoundException("砍价信息没有查到");
+    if (bargain.quota <= 0) throw new ValidateException("砍价已结束");
+    const participation = participations[0];
+    if (!participation) throw new NotFoundException("用户砍价信息未查到");
+    const currentCents = Math.max(0, decimalToCents(bargain.price) - decimalToCents(participation.price));
+    const remainingCents = Math.max(0, currentCents - decimalToCents(participation.minimum));
+    return {
+      url: await this.routineCode(2, bargainId, uid),
+      title: bargain.title,
+      image: bargain.image,
+      price: centsToDecimal(currentCents),
+      label: "已砍至",
+      msg: `还差${centsToDecimal(remainingCents)}元即可砍价成功`,
+    };
   }
 
   /** 帮砍：每个参与记录串行处理，保留帮助明细并执行人数/次数限制。 */
@@ -485,8 +737,19 @@ export class ActivityJoinService {
     const safePage = Number.isSafeInteger(page) && page > 0 ? page : 1;
     const safeLimit = Number.isSafeInteger(limit) && limit > 0 ? Math.min(limit, 100) : 20;
     return this.container.db
-      .select()
+      .select({
+        id: storeBargainUserHelp.id,
+        uid: storeBargainUserHelp.uid,
+        bargain_id: storeBargainUserHelp.bargainId,
+        bargain_user_id: storeBargainUserHelp.bargainUserId,
+        price: storeBargainUserHelp.price,
+        add_time: storeBargainUserHelp.addTime,
+        type: storeBargainUserHelp.type,
+        nickname: user.nickname,
+        avatar: user.avatar,
+      })
       .from(storeBargainUserHelp)
+      .leftJoin(user, eq(user.uid, storeBargainUserHelp.uid))
       .where(eq(storeBargainUserHelp.bargainUserId, bargainUserId))
       .orderBy(desc(storeBargainUserHelp.id))
       .limit(safeLimit)
@@ -494,20 +757,60 @@ export class ActivityJoinService {
   }
 
   /** 我的砍价列表 (bargain/user/list) */
-  async myBargains(uid: number) {
-    return this.container.db
-      .select()
+  async myBargains(uid: number, page = 1, limit = 20) {
+    const safePage = Number.isSafeInteger(page) && page > 0 ? Math.min(page, 10_000) : 1;
+    const safeLimit = Number.isSafeInteger(limit) && limit > 0 ? Math.min(limit, 100) : 20;
+    const rows = await this.container.db
+      .select({
+        id: storeBargainUser.id,
+        uid: storeBargainUser.uid,
+        bargain_id: storeBargainUser.bargainId,
+        bargain_price_min: storeBargainUser.bargainPriceMin,
+        bargain_price: storeBargainUser.bargainPrice,
+        price: storeBargainUser.price,
+        status: storeBargainUser.status,
+        add_time: sql<string>`to_char(to_timestamp(${storeBargainUser.addTime}) AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD HH24:MI:SS')`,
+        title: storeBargain.title,
+        image: storeBargain.image,
+        datatime: sql<string>`CASE WHEN ${storeBargain.stopTime} IS NULL THEN '' ELSE to_char(${storeBargain.stopTime}, 'YYYY-MM-DD HH24:MI:SS') END`,
+        stopTime: storeBargain.stopTime,
+      })
       .from(storeBargainUser)
+      .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))
       .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0)))
-      .orderBy(sql`${storeBargainUser.addTime} DESC`)
-      .limit(20);
+      .orderBy(desc(storeBargainUser.addTime), desc(storeBargainUser.id))
+      .limit(safeLimit)
+      .offset((safePage - 1) * safeLimit);
+    const now = Date.now();
+    return rows.map(({ stopTime, ...row }) => {
+      const residueCents = Math.max(0, decimalToCents(row.bargain_price) - decimalToCents(row.price));
+      const effectiveStatus = row.status === 1 && stopTime && stopTime.getTime() < now ? 2 : row.status;
+      return {
+        ...row,
+        status: effectiveStatus,
+        residue_price: centsToDecimal(residueCents),
+        pay_status: residueCents <= decimalToCents(row.bargain_price_min) && effectiveStatus !== 3,
+      };
+    });
   }
 
   /** 取消砍价 (bargain/user/cancel) */
-  async cancelBargain(uid: number, id: number): Promise<void> {
-    await this.container.db
+  async cancelBargain(uid: number, input: { id?: number; bargainId?: number }): Promise<void> {
+    const id = Number(input.id ?? 0);
+    const bargainId = Number(input.bargainId ?? 0);
+    if ((!Number.isSafeInteger(id) || id < 0) || (!Number.isSafeInteger(bargainId) || bargainId < 0) || (!id && !bargainId)) {
+      throw new ValidateException("参数错误");
+    }
+    const updated = await this.container.db
       .update(storeBargainUser)
       .set({ isDel: 1, status: 2 })
-      .where(and(eq(storeBargainUser.id, id), eq(storeBargainUser.uid, uid)));
+      .where(and(
+        eq(storeBargainUser.uid, uid),
+        eq(storeBargainUser.isDel, 0),
+        eq(storeBargainUser.status, 1),
+        id ? eq(storeBargainUser.id, id) : eq(storeBargainUser.bargainId, bargainId),
+      ))
+      .returning({ id: storeBargainUser.id });
+    if (!updated[0]) throw new ValidateException("状态错误");
   }
 }

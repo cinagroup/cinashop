@@ -1442,6 +1442,42 @@ PHP 的 `fastList` 读取 `pid>0` 的可见子分类，而既有 Workers v1 首�
 
 API-005 仍不能标记整体完成：源 MySQL 未连接，active 分类关系、PC banner、城市和 14/17 候选配置未复制/确认；真实小程序 AppID/Secret 取码、安全 PC 微信登录、生产用户 token 六路由、旧 Nuxt 桌面/移动、新 `pc-ts`、预发、影子流量和正式发布都未验收。下一批可按 API-006 的 marketing/bargain/combination/seckill 子域继续，PC 登录与 API-004-AUTH 则继续受 CORE-004 的真实凭据、一次性消费、限流和重放门禁约束。
 
+## API-006 营销/活动详细迁移审计（ACTIVITY 子批次，2026-08-29）
+
+### PHP 权威面、旧客户端使用与缺口分组
+
+本批对照 `route/api.php`、`StoreSeckill`、`StoreCombination`、`StoreBargain`、相应 service 及旧 `view/uniapp/api/activity.js` 和页面调用。API-006 在本批前共有 24 条精确静态缺口：秒杀 3、拼团 4、砍价 4、marketing 13。旧 UniApp 仍实际调用分享二维码、小程序码、拼团 banner/海报、砍价发起人/分享/海报，不能因新前端页面少就退役。本子批次精确收口其中 11 条：
+
+- 秒杀：`GET /seckill/detail/:id/:time?`、`GET /seckill/detail_code/:id`、`GET /seckill/code/:id`。
+- 拼团：`GET /combination/detail_code/:id`、`GET /combination/banner_list`、`GET /combination/poster_info/:id`、`GET /combination/code/:id`。
+- 砍价：`GET /bargain/config`、`POST /bargain/start/user`、`POST /bargain/share`、`GET /bargain/poster_info/:bargainId`。
+
+剩余 13 条是 marketing：新人 `product_list/detail/info/gift` 4 条，短视频列表/详情/商品、评论发布/回复/删除、评论关系和视频关系 9 条。这 13 条仍是待完成 checklist，不因 ACTIVITY 路由收口而并入“完成”。
+
+### 兼容实现、安全边界与已修复偏差
+
+H5 分享码使用校验过的 `site_url` 生成本地 SVG data URL；小程序码严格恢复 PHP 的 page/scene 映射，场景不得超过 32 bytes，仅在存在真实 `routine_appId/routine_appsecret` 时请求微信，返回内存 data URL 并限时缓存，不写入公开附件表或 R2 公开路径。公开 config/banner 与 H5 详情码保持可选登录；包含用户归属的小程序码、拼团/砍价海报、发起人和分享统计强制登录。拼团海报要求当前 UID 属于该团，砍价海报/发起人必须有实际参与记录，避免任意用户信息枚举。个性化响应统一 `private, no-store`。
+
+砍价分享不复制 PHP 的响应后队列累加，而是在短事务中原子 `share+1` 后返回 post-increment 统计，订单统计只包含未删除活动订单。已有 `bargain/user/cancel` 只接受内部记录 `id`，而旧 UniApp 实际发送 `bargainId`；现在两者都支持且只能软删当前 UID 活动中的记录。旧我的砍价页需要的 `title/image/residue_price/pay_status/datatime` 和分页过去缺失，现已恢复，分页上限 100；帮砍列表补回 nickname/avatar。GET 列表对过期记录只做响应投影，不隐式修改数据。PHP 拼团 `detail_code` 还存在读错 id 和拼接 `type=3id` 的旧 bug，TS 按路径 id 和正确 `&` 组装，不复制已知错误。
+
+需要特别区分“本批新增的 11 条精确合同”和“之前已被静态计为匹配的活动详情”。现有 `seckill/detail`、`combination/detail`、`bargain/detail` 在本批前就已注册，但 Workers 响应远比 PHP 简化；例如秒杀详情仍缺 PHP `storeInfo/reply/replyChance/replyCount`、已购数、收藏、配送/标签/保障、时段 `last_time/status` 与商品 SKU 信息。这些不会出现在“精确缺失路由”统计里，却是真实迁移缺口；已放入 API-006-ACTIVITY/CHECKOUT 的剩余响应与状态机门禁，是本项不勾选的另一原因。
+
+### 生产 Hyperdrive 库存、合同和隔离状态机证据
+
+一次性 `cinashop-api006-marketing-audit` Worker 绑定指定 Hyperdrive。生产目录审计固定 `search_path=public`、`SET TRANSACTION READ ONLY`、短 statement/lock timeout，只返回表/列/索引与非敏感计数。PostgreSQL 16.14 当前为：`store_seckill=1`、`store_seckill_time=3`、`store_combination=1`、`store_pink=2`、`store_bargain=1`、`store_bargain_user=4`、`store_bargain_user_help=0`；活跃秒杀/拼团/砍价均为 1，活跃团 1，活跃砍价参与 2，活动订单 7，已支付 3。生产只读真实 service 合同对 config/banner、秒杀/拼团 H5 码、发起人形状和有界列表 6/6 通过。
+
+内容与配置缺口非常明确：`system_group=0`、`system_group_data=0`，所以 `routine_lovely` 和 `combination_banner` 均无数据；`routine_appId`、`routine_appsecret`、`share_qrcode`、`seckill_header_banner`、`bargain_subscribe` 均不存在有效值。这意味着小程序码当前安全返回空字符串，不是小程序分享已完成。marketing 数据面更严重：`store_newcomer=0`，而 PHP 短视频 9 条合同依赖的 `video` 和 `video_comment` 两表在生产完全不存在。因此 API-006-MARKETING 必须先补结构/源数据/私有媒体，不能先返回伪空结果再宣称迁移。
+
+随机 `codex_api006_activity_*` schema 克隆 11 张必需表，使用真实 `ActivityJoinService` 验证砍价 config、拼团 banner、两类 H5 码、无凭据小程序码安全降级、拼团海报/归属拒绝、砍价发起人、海报/归属拒绝、分享原子统计、旧列表字段、取消归属及索引 DDL，14/14 通过。最终随机 schema 删除，11 组 `public` 业务表计数/主键和不变，临时 schema `0→0`。审计 Worker 每次都在 `finally` 删除，最终 URL 返回 404。早期两次隔离失败分别是在 Drizzle 事务上再开嵌套事务，以及 Hyperdrive 不保证传递启动参数 `search_path`；两次清理都成功且临时 schema 回到 0。最终方案在每个事务显式 `SET LOCAL search_path`，并让需要嵌套写事务的分享统计使用独立连接。
+
+### 生产索引变更、量化结果与剩余门禁
+
+审计发现生产 `store_bargain_user` 只有主键，与列表、发起、海报和取消的 `uid+bargain_id+status+is_del` 查询不匹配；活动订单统计也缺 `activity_id+type` 范围索引。外部 `0101_activity_compatibility_indexes.sql` 与 Worker 内嵌 `migration_0108` 现完全同步，且 schema 新建表定义也包含同名部分索引。经用户明确授权直接使用生产库后，一次性 Worker 以 3 秒 lock timeout、25 秒 statement timeout 应用 `sbu_uid_bargain_active` 与 `so_activity_type_visible`，同一 DDL 执行两遍幂等成功，11 组业务指纹不变，临时 schema 为 0。
+
+注释感知静态审计现为 PHP 1,904、Workers 1,343、精确匹配 652、可执行匹配 632、明确不可用 20、原始缺失 1,252、证据化退役 3、可执行缺口 1,249；精确/可执行/退役后有效覆盖为 34.2%/33.2%/33.2%。`/api` 为 PHP 457、Workers 669、精确 282、可执行 277、不可用 5、原始缺失 175、可执行缺口 174；本子批次相对 API-005 精确/可执行各增 11。全量 128 个单元测试文件/744 项通过，双 TypeScript 配置通过；主 Worker minify dry-run 为 2,470.39 KiB/gzip 612.22 KiB，API-006 审计 Worker dry-run 为 1,519.22 KiB/gzip 269.29 KiB。Windows runtime 仍在 0 条断言前以 `workerd` 0xc0000005 失败，不记为通过。主生产 Worker 仍为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批未发布主 Worker。
+
+API-006-ACTIVITY 仍不勾选整体完成：需从源 MySQL/运营补齐两组活动内容和小程序凭据，使用真实用户 token 与真实微信验证旧 UniApp，完成预发/影子流量并经明确批准后发布。API-006-MARKETING 下一个可独立子批是新人 4 条；短视频 9 条先受两表、源数据和私有媒体门禁。API-006-CHECKOUT 还必须另行审计活动资格、限购/库存、建单/支付、成团/失败、超时/取消/退款和奖励状态机。
+
 构建仍有两个信号：Admin/PC/Supplier 应用壳主包超过 1 MiB，需要后续继续按需引入和拆包；Workers runtime 测试池、隔离绑定与用例已经加入，但当前 Windows build 26200 即使已安装 VC++ x64 Runtime 14.51，最小无绑定 Worker 仍在加载测试前发生 `0xc0000005` 原生访问冲突，因此本轮只有 runtime 测试类型检查证据，不能声称 workerd 用例通过。项目当前锁定 Wrangler 4.122.0、`@cloudflare/vitest-pool-workers` 0.21.2、Vitest 4.1.10 和兼容的 Workers 类型包；下一步应在 Linux CI/另一台 Windows x64 主机复现并向 Cloudflare 提交最小案例，而不是继续把问题归因于 CinaShop 业务代码。
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。

@@ -13,6 +13,7 @@ import {
   timestamp,
   index,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /** 拼团团 (已建, 补充字段) — 直接使用现有 */
 export const storePinkFull = pgTable(
@@ -50,7 +51,13 @@ export const storeBargainUser = pgTable(
     addTime: integer("add_time").default(0).notNull(),
     isDel: smallint("is_del").default(0).notNull(),
   },
-  (t) => [index("sbu_uid").on(t.uid), index("sbu_bargain").on(t.bargainId)],
+  (t) => [
+    index("sbu_uid").on(t.uid),
+    index("sbu_bargain").on(t.bargainId),
+    index("sbu_uid_bargain_active")
+      .on(t.uid, t.bargainId, t.status, t.id)
+      .where(sql`${t.isDel} = 0`),
+  ],
 );
 
 /** 砍价帮助明细；历史表只以 id 唯一，运行时用事务锁阻止新的重复帮助。 */

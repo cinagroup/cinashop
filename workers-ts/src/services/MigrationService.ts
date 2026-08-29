@@ -66,6 +66,11 @@ export class MigrationService {
     return this.migration_0107();
   }
 
+  /** Exact legacy activity index DDL used by production-engine verification. */
+  activityCompatibilityIndexMigrationSqlForVerification(): string {
+    return this.migration_0108();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -181,6 +186,7 @@ export class MigrationService {
       this.migration_0105(),
       this.migration_0106(),
       this.migration_0107(),
+      this.migration_0108(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -5922,5 +5928,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS "sopcr_coupon_user_uq"
   ON "store_order_product_coupon_reward" ("coupon_user_id");
 CREATE INDEX IF NOT EXISTS "sopcr_uid_order"
   ON "store_order_product_coupon_reward" ("uid", "order_id", "id");`;
+  }
+
+  private migration_0108(): string {
+    return `-- API-006 legacy activity compatibility queries.
+CREATE INDEX IF NOT EXISTS "sbu_uid_bargain_active"
+  ON "store_bargain_user" ("uid", "bargain_id", "status", "id")
+  WHERE "is_del" = 0;
+
+CREATE INDEX IF NOT EXISTS "so_activity_type_visible"
+  ON "store_order" ("activity_id", "type")
+  WHERE "type" IN (1, 2, 3) AND "is_del" = 0 AND "is_system_del" = 0;`;
   }
 }

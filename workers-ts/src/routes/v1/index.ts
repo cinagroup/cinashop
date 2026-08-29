@@ -496,14 +496,22 @@ v1Routes.get("/coupons/user/:types", authMiddleware({ force: true }), UserActivi
 // ─── 秒杀 (M5) ─────────────────────────────────────────────────
 v1Routes.get("/seckill/index", authMiddleware({ force: false }), UserActivityController.seckillIndex);
 v1Routes.get("/seckill/list/:time", authMiddleware({ force: false }), UserActivityController.seckillList);
-v1Routes.get("/seckill/detail/:id", authMiddleware({ force: false }), UserActivityController.seckillDetail);
+v1Routes.get("/seckill/detail_code/:id", authMiddleware({ force: false }), ActivityJoinController.seckillDetailCode);
+v1Routes.get("/seckill/code/:id", authMiddleware({ force: true }), ActivityJoinController.seckillCode);
+v1Routes.get("/seckill/detail/:id/:time?", authMiddleware({ force: false }), UserActivityController.seckillDetail);
 
 // ─── 拼团 (M5) ─────────────────────────────────────────────────
 v1Routes.get("/combination/list", authMiddleware({ force: false }), UserActivityController.combinationList);
+v1Routes.get("/combination/banner_list", authMiddleware({ force: false }), ActivityJoinController.combinationBanner);
+v1Routes.get("/combination/detail_code/:id", authMiddleware({ force: false }), ActivityJoinController.combinationDetailCode);
+v1Routes.get("/combination/code/:id", authMiddleware({ force: true }), ActivityJoinController.combinationCode);
+v1Routes.get("/combination/poster_info/:id", authMiddleware({ force: true }), ActivityJoinController.combinationPosterInfo);
 v1Routes.get("/combination/detail/:id", authMiddleware({ force: false }), UserActivityController.combinationDetail);
 
 // ─── 砍价 (M5) ─────────────────────────────────────────────────
 v1Routes.get("/bargain/list", authMiddleware({ force: false }), UserActivityController.bargainList);
+v1Routes.get("/bargain/config", authMiddleware({ force: false }), ActivityJoinController.bargainConfig);
+v1Routes.get("/bargain/poster_info/:bargainId", authMiddleware({ force: true }), ActivityJoinController.bargainPosterInfo);
 v1Routes.get("/bargain/detail/:id", authMiddleware({ force: false }), UserActivityController.bargainDetail);
 
 // ─── 活动参与 (拼团/砍价, 补全) ───────────────────────────────
@@ -511,6 +519,8 @@ v1Routes.get("/combination/pink/:id", authMiddleware({ force: false }), Activity
 v1Routes.get("/pink", authMiddleware({ force: false }), ActivityJoinController.pinkStats);
 v1Routes.post("/combination/remove", authMiddleware({ force: true }), ActivityJoinController.removePink);
 v1Routes.post("/bargain/start", authMiddleware({ force: true }), ActivityJoinController.startBargain);
+v1Routes.post("/bargain/start/user", authMiddleware({ force: true }), ActivityJoinController.bargainStartUser);
+v1Routes.post("/bargain/share", authMiddleware({ force: true }), ActivityJoinController.bargainShare);
 v1Routes.post("/bargain/help", authMiddleware({ force: true }), ActivityJoinController.helpBargain);
 v1Routes.post("/bargain/help/price", authMiddleware({ force: true }), ActivityJoinController.bargainHelpPrice);
 v1Routes.post("/bargain/help/count", authMiddleware({ force: true }), ActivityJoinController.bargainHelpCount);

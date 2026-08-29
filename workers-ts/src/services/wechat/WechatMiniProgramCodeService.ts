@@ -28,6 +28,8 @@ interface WechatErrorResponse {
   errmsg?: string;
 }
 
+export type LegacyActivityCodeType = 1 | 2 | 3 | 31;
+
 export class WechatMiniProgramApiError extends Error {
   constructor(
     readonly code: number,
@@ -207,6 +209,47 @@ export class WechatMiniProgramCodeService {
       "商品详情",
     );
     const code = await this.fetchWithTokenRefresh(appId, appSecret, load);
+    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
+    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
+    return `data:${encoded.contentType};base64,${encoded.base64}`;
+  }
+
+  /** Build the legacy UniApp activity code without persisting a public attachment. */
+  async createActivityDataUrl(
+    type: LegacyActivityCodeType,
+    id: number,
+    uid: number,
+  ): Promise<string | null> {
+    if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(uid) || uid < 0) {
+      throw new ValidateException("活动码参数错误");
+    }
+    const descriptor = type === 1
+      ? { page: "pages/activity/goods_details/index", scene: `id=${id}&spid=${uid}&type=1`, label: "秒杀" }
+      : type === 3
+        ? { page: "pages/activity/goods_details/index", scene: `id=${id}&spid=${uid}&type=3`, label: "拼团" }
+        : type === 2
+          ? { page: "pages/activity/goods_bargain_details/index", scene: `id=${id}&spid=${uid}`, label: "砍价" }
+          : { page: "pages/activity/goods_combination_status/index", scene: `id=${id}&spid=${uid}`, label: "拼团状态" };
+    if (new TextEncoder().encode(descriptor.scene).byteLength > 32) {
+      throw new ValidateException("活动码场景参数过长");
+    }
+
+    const config = new SystemConfigService(this.container, this.env);
+    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
+    const appId = values.routine_appId?.trim() ?? "";
+    const appSecret = values.routine_appsecret?.trim() ?? "";
+    if (!appId || !appSecret) return null;
+
+    const cacheKey = `routine_code:activity:${appId}:${type}:${id}:${uid}`;
+    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
+    if (cached?.base64 && cached.contentType) {
+      return `data:${cached.contentType};base64,${cached.base64}`;
+    }
+    const code = await this.fetchWithTokenRefresh(
+      appId,
+      appSecret,
+      (token) => this.fetchUnlimitedCode(token, descriptor.scene, descriptor.page, descriptor.label),
+    );
     const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
     await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
     return `data:${encoded.contentType};base64,${encoded.base64}`;

@@ -9,6 +9,10 @@ import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
+function privateNoStore(c: C): void {
+  c.header("Cache-Control", "private, no-store");
+}
+
 interface BargainHelpBody {
   bargain_user_id?: number;
   bargainId?: number;
@@ -61,6 +65,63 @@ export async function removePink(c: C) {
 
 // ═══ 砍价 ═════════════════════════════════════════════════
 
+/** GET /api/combination/banner_list — 旧 UniApp 拼团轮播图。 */
+export async function combinationBanner(c: C) {
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.combinationBanner());
+}
+
+/** GET /api/combination/detail_code/:id — 拼团 H5 分享二维码。 */
+export async function combinationDetailCode(c: C) {
+  privateNoStore(c);
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.activityDetailCode(
+    3,
+    Number(c.req.param("id") ?? "0"),
+    Number(c.get("uid") ?? 0),
+    {},
+  ));
+}
+
+/** GET /api/combination/code/:id — 拼团小程序码。 */
+export async function combinationCode(c: C) {
+  privateNoStore(c);
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.activityRoutineCode(3, Number(c.req.param("id") ?? "0"), c.get("uid")));
+}
+
+/** GET /api/combination/poster_info/:id — 当前用户拼团海报数据。 */
+export async function combinationPosterInfo(c: C) {
+  privateNoStore(c);
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.combinationPoster(c.get("uid"), Number(c.req.param("id") ?? "0")));
+}
+
+/** GET /api/seckill/detail_code/:id — 秒杀 H5 分享二维码。 */
+export async function seckillDetailCode(c: C) {
+  privateNoStore(c);
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.activityDetailCode(
+    1,
+    Number(c.req.param("id") ?? "0"),
+    Number(c.get("uid") ?? 0),
+    { time: c.req.query("time"), status: c.req.query("status") },
+  ));
+}
+
+/** GET /api/seckill/code/:id — 秒杀小程序码。 */
+export async function seckillCode(c: C) {
+  privateNoStore(c);
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.activityRoutineCode(1, Number(c.req.param("id") ?? "0"), c.get("uid")));
+}
+
+/** GET /api/bargain/config — 旧端砍价页配置。 */
+export async function bargainConfig(c: C) {
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.bargainConfig());
+}
+
 /** POST /api/bargain/start — 发起砍价 */
 export async function startBargain(c: C) {
   const uid = c.get("uid");
@@ -78,6 +139,43 @@ export async function startBargain(c: C) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
   }
+}
+
+/** POST /api/bargain/start/user — 砍价发起人基本信息。 */
+export async function bargainStartUser(c: C) {
+  privateNoStore(c);
+  const body = (await c.req.json().catch(() => ({}))) as {
+    bargainId?: number;
+    bargain_id?: number;
+    bargainUserUid?: number;
+    bargain_user_uid?: number;
+  };
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.bargainStartUser(
+    Number(body.bargainId ?? body.bargain_id ?? 0),
+    Number(body.bargainUserUid ?? body.bargain_user_uid ?? 0),
+  ));
+}
+
+/** POST /api/bargain/share — 原子累加分享次数并返回活动统计。 */
+export async function bargainShare(c: C) {
+  privateNoStore(c);
+  const body = (await c.req.json().catch(() => ({}))) as {
+    bargainId?: number;
+    bargain_id?: number;
+  };
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.bargainShare(Number(body.bargainId ?? body.bargain_id ?? 0)));
+}
+
+/** GET /api/bargain/poster_info/:bargainId — 当前用户砍价海报数据。 */
+export async function bargainPosterInfo(c: C) {
+  privateNoStore(c);
+  const svc = new ActivityJoinService(c.get("container"), c.env);
+  return jsonOk(c, await svc.bargainPoster(
+    c.get("uid"),
+    Number(c.req.param("bargainId") ?? "0"),
+  ));
 }
 
 /** POST /api/bargain/help — 帮砍 */
@@ -150,15 +248,26 @@ export async function myBargains(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new ActivityJoinService(c.get("container"));
-  return jsonOk(c, await svc.myBargains(uid));
+  return jsonOk(c, await svc.myBargains(
+    uid,
+    Number(c.req.query("page") ?? "1"),
+    Number(c.req.query("limit") ?? "20"),
+  ));
 }
 
 /** POST /api/bargain/user/cancel — 取消砍价 */
 export async function cancelBargain(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { id?: number };
+  const body = (await c.req.json().catch(() => ({}))) as {
+    id?: number;
+    bargainId?: number;
+    bargain_id?: number;
+  };
   const svc = new ActivityJoinService(c.get("container"));
-  await svc.cancelBargain(uid, body.id ?? 0);
+  await svc.cancelBargain(uid, {
+    id: Number(body.id ?? 0),
+    bargainId: Number(body.bargainId ?? body.bargain_id ?? 0),
+  });
   return jsonOk(c, null, "已取消");
 }

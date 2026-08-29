@@ -185,6 +185,9 @@ export const storeOrder = pgTable(
     index("so_division_agent_id").on(t.divisionAgentId),
     index("so_division_staff_id").on(t.divisionStaffId),
     index("so_erp_order_id").on(t.erpOrderId),
+    index("so_activity_type_visible")
+      .on(t.activityId, t.type)
+      .where(sql`${t.type} IN (1, 2, 3) AND ${t.isDel} = 0 AND ${t.isSystemDel} = 0`),
     check(
       "so_division_brokerage_ck",
       sql`${t.divisionBrokerage} >= 0 AND ${t.divisionAgentBrokerage} >= 0 AND ${t.divisionStaffBrokerage} >= 0`,
