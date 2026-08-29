@@ -1,5 +1,9 @@
-/** Forward-only 0106 upgrade shared by Worker migration and audit code. */
-export const USER_CENTER_COMPATIBILITY_INDEX_SQL = `
+-- Forward-only USER-CENTER upgrade: keep play events append-only while all
+-- other relationship kinds remain idempotent.
+-- Run through the transactional migration runner; SET LOCAL is not a
+-- standalone psql transaction boundary.
+-- The partial unique relation index is required by the explicit four-column
+-- ON CONFLICT target used for idempotent non-play writes. Play rows are events.
 SET LOCAL lock_timeout = '5s';
 SET LOCAL statement_timeout = '30s';
 
@@ -193,4 +197,3 @@ BEGIN
   END LOOP;
 END
 $user_center_index_verification$;
-`.trim();

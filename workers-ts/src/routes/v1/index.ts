@@ -44,6 +44,7 @@ import * as SupplierApplicationController from "@/controllers/api/v1/SupplierApp
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
 import * as NewcomerController from "@/controllers/api/v1/NewcomerController";
 import * as ShortVideoController from "@/controllers/api/v1/ShortVideoController";
+import * as DiyHomeController from "@/controllers/api/v1/DiyHomeController";
 import * as MemberCardController from "@/controllers/api/v1/MemberCardController";
 import * as PcCompatibilityController from "@/controllers/api/v1/PcCompatibilityController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
@@ -52,6 +53,7 @@ import * as WaybillJobController from "@/controllers/system/WaybillJobController
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import { adminAuthMiddleware } from "@/middleware/admin-auth";
 import { operationsAuthMiddleware } from "@/middleware/operations-auth";
+import { stationOpenMiddleware } from "@/middleware/station-open";
 import type { AppVariables, Env } from "@/env";
 
 export const v1Routes = new Hono<{
@@ -101,6 +103,47 @@ v1Routes.get("/navigation/:template_name", PublicController.navigation);
 v1Routes.get("/user/service/get_adv", authMiddleware({ force: false }), PublicController.getKfAdv);
 v1Routes.get("/kefu/tourist/adv", PublicController.getKfAdv);
 v1Routes.get("/assets/:id", AttachmentController.asset);
+
+// ─── 旧 UniApp DIY 首页组件 ─────────────────────────────────
+// StationOpen must run before optional auth, matching the outer PHP route group.
+v1Routes.get("/diy/get_diy/:id?", stationOpenMiddleware(), DiyHomeController.getDiy);
+v1Routes.get("/diy/diy_version/:id?", stationOpenMiddleware(), DiyHomeController.diyVersion);
+v1Routes.get(
+  "/diy/user_info",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  DiyHomeController.userInfo,
+);
+v1Routes.get(
+  "/diy/video_list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  DiyHomeController.videoList,
+);
+v1Routes.get(
+  "/diy/newcomer_list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  DiyHomeController.newcomerList,
+);
+v1Routes.get(
+  "/diy/product_rank",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  DiyHomeController.productRank,
+);
+v1Routes.get(
+  "/diy/sign",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  DiyHomeController.sign,
+);
+v1Routes.get(
+  "/diy/get_suspended",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  DiyHomeController.suspended,
+);
 
 // ─── 旧 PC 商城公共/可选登录面 ────────────────────────────────
 v1Routes.get("/pc/get_pay_vip_code", authMiddleware({ force: false }), PcCompatibilityController.getPayVipCode);

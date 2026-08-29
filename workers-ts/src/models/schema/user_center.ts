@@ -10,7 +10,7 @@
  *   - eb_user_invoice   发票
  *
  * 关键修复 (相比 PHP):
- *   - user_relation 加 UNIQUE(uid, relation_id, type, category) 修复 PHP 并发重复收藏 bug
+ *   - user_relation 对非 play 关系加 UNIQUE(uid, relation_id, type, category)，播放记录允许重复
  *   - user_sign 加 UNIQUE(uid, 上海自然日) 阻断 PHP/Worker 跨运行时重复签到
  *   - 默认地址用应用层保证唯一 (PHP 也是应用层)
  */
@@ -58,15 +58,17 @@ export const userRelation = pgTable(
     uid: integer("uid").default(0).notNull(),
     /** 关联的商品/文章/视频 ID */
     relationId: integer("relation_id").default(0).notNull(),
-    /** 'collect' | 'like' */
+    /** 'collect' | 'like' | 'play' */
     type: varchar("type", { length: 32 }).default("").notNull(),
     /** 'product' | 'seckill' | 'article' | 'video' */
     category: varchar("category", { length: 32 }).default("").notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    // 修复 PHP 缺失的唯一约束: 防并发重复收藏
-    uniqueIndex("ur_uid_rel_type_cat_idx").on(t.uid, t.relationId, t.type, t.category),
+    // 非播放关系保持幂等；每次播放都需要保留独立关系记录。
+    uniqueIndex("ur_uid_rel_type_cat_idx")
+      .on(t.uid, t.relationId, t.type, t.category)
+      .where(sql`${t.type} <> 'play'`),
     index("ur_uid_type_idx").on(t.uid, t.type),
     index("ur_collect_category_relation_idx")
       .on(t.category, t.relationId)

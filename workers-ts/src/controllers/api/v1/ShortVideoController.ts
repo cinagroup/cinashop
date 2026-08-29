@@ -29,7 +29,7 @@ export async function list(c: C) {
   const result = await service(c).list(c.get("uid") ?? 0, c.req.query());
   if (result.playIds.length) {
     c.executionCtx.waitUntil(
-      service(c).recordPlays(result.playIds)
+      service(c).recordPlays(result.playIds, c.get("uid") ?? 0)
         .catch((error) => console.error(JSON.stringify({ event: "short_video_play_record_failed", error: String(error) }))),
     );
   }

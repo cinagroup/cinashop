@@ -202,9 +202,12 @@ async function isolatedScenario(connectionString: string, env: AuditEnv) {
         writer.toggleVideoRelation(100, "like", 10),
       ]);
       const commentLike = await writer.toggleCommentRelation(100, "like", 1000);
-      await read((service) => service.recordPlays([10]));
+      await read((service) => service.recordPlays([10], 100));
       const [final] = await root.unsafe<Array<Record<string, unknown>>>(
-        `SELECT play_num, like_num, comment_num FROM "${schemaName}".video WHERE id=10`,
+        `SELECT play_num, like_num, comment_num,
+           (SELECT count(*)::integer FROM "${schemaName}".user_relation
+            WHERE uid=100 AND relation_id=10 AND type='play' AND category='video') AS play_relation_count
+         FROM "${schemaName}".video WHERE id=10`,
       );
       const commentsAfter = await read((service) => service.comments(100, 10, 0, 1, 20));
       const assertions = {
@@ -224,6 +227,7 @@ async function isolatedScenario(connectionString: string, env: AuditEnv) {
         concurrent_toggle_converged: toggleA.status !== toggleB.status && Number(final?.like_num ?? -1) === 0,
         comment_relation_atomic: commentLike.status === 1 && commentsAfter[0]?.is_like === true,
         play_and_comment_counters_exact: Number(final?.play_num ?? 0) === 1 && Number(final?.comment_num ?? -1) === 2,
+        play_relation_recorded: Number(final?.play_relation_count ?? 0) === 1,
       };
       if (Object.values(assertions).some((value) => !value)) throw new Error(`isolated assertions failed: ${JSON.stringify(assertions)}`);
       report = { assertions, assertion_count: Object.keys(assertions).length };

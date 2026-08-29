@@ -42,6 +42,8 @@ describe("API v2 public DIY compatibility migration", () => {
     expect(parseLegacyDiyJson('{"name":"pageFoot"}')).toEqual({ name: "pageFoot" });
     expect(parseLegacyDiyJson("bad")).toBeNull();
     expect(parseLegacyDiyJson(`"${"x".repeat(2_000_001)}"`)).toBeNull();
+    expect(parseLegacyDiyJson(`"${"中".repeat(666_667)}"`)).toBeNull();
+    expect(parseLegacyDiyJson(`"${"😀".repeat(500_001)}"`)).toBeNull();
     expect(normalizeLegacyAddress("/北京市/北京市/朝阳区/")).toEqual(["北京市", "朝阳区"]);
     expect(normalizeLegacyAddress("广东省/深圳市/南山区")).toEqual(["广东省", "深圳市", "南山区"]);
     expect(normalizeLegacyAddress("A/".repeat(9))).toEqual([]);

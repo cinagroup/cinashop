@@ -137,12 +137,14 @@ async function audit(connectionString: string) {
           (SELECT count(*)::integer FROM (
              SELECT uid, relation_id, type, category
              FROM user_relation
+             WHERE type <> 'play'
              GROUP BY uid, relation_id, type, category
              HAVING count(*) > 1
            ) duplicate_relations) AS duplicate_relation_groups,
           (SELECT COALESCE(sum(rows - 1), 0)::integer FROM (
              SELECT count(*)::integer AS rows
              FROM user_relation
+             WHERE type <> 'play'
              GROUP BY uid, relation_id, type, category
              HAVING count(*) > 1
            ) duplicate_relations) AS excess_relation_rows,
@@ -327,6 +329,7 @@ async function applyCompatibilityIndexes(connectionString: string) {
           (SELECT count(*)::integer FROM (
              SELECT uid, relation_id, type, category
              FROM user_relation
+             WHERE type <> 'play'
              GROUP BY uid, relation_id, type, category
              HAVING count(*) > 1
            ) duplicates) AS duplicate_relation_groups
@@ -338,7 +341,7 @@ async function applyCompatibilityIndexes(connectionString: string) {
            ) duplicates) AS duplicate_sign_day_groups
       `;
       if (Number(before[0]?.duplicate_relation_groups ?? -1) !== 0) {
-        throw new Error("duplicate user_relation rows block the unique index");
+        throw new Error("duplicate non-play user_relation rows block the unique index");
       }
       if (Number(before[0]?.duplicate_sign_day_groups ?? -1) !== 0) {
         throw new Error("duplicate Shanghai-day user_sign rows block the unique index");

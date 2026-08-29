@@ -112,7 +112,41 @@ PHP 支付后赠券按券模板 ID 去重，即同一订单购买多个关联同
 
 本批当前判定是“静态订单组缺口、权威展示定价、支付后商品券奖励和售后期限的核心代码及生产隔离证据已收口”，仍不是 API-002 完成。剩余门禁是：API-006 一般促销叠加；旧 PC/UniApp 与新五端的订单/退款浏览器 E2E；DATA-001～006 的退款原因、门店、发票、核销、配送和商品券真实关系；CORE-001 安全 `order_call_back`；以及经明确批准后的预发/正式发布。等待这些外部条件期间可以进入 API-003 用户中心。
 
-审计更新：2026-08-28
+## DIY-HOME-WIDGETS 迁移审计（2026-08-30）
+
+### 权威合同与路由进度
+
+本批以 `cinashop-php/route/api.php`、`app/controller/api/v1/diy/Diy.php` 及 DIY、短视频、新人、优惠券、商品排行、签到 service 为权威，逐字段复核公开 `GET /api/diy/get_diy/:id?`、`diy_version/:id?` 和可选登录 `user_info/video_list/newcomer_list/product_rank/sign/get_suspended`。八条此前均未精确注册；现已全部恢复，并保持外层 `StationOpen` 先于可选认证。`station_open` 配置缺失按 PHP 默认开放；已存在的值按 `json_decode(..., true)` 后的 PHP 真值判断，`0/false/null/空字符串/空数组/空对象/损坏 JSON` 都返回业务码 `410010`。静态路由审计因此更新为 PHP `1,904`、TS `1,412`、精确/可执行 `714/696`、不可用 18、原始缺失 1,190、退役 4、可执行缺口 1,186，覆盖 `37.5%/36.6%/36.6%`；`/api` 为 TS 723、精确/可执行 `332/329`、缺失 125、可执行缺口 124，覆盖 `72.6%/72.0%/72.1%`。
+
+### 严格 PHP 对照发现与修复
+
+审计不是只补路由。Admin 原“DIY 装修”会混写 `content/value`、把 `type=1/3` 降为 0、保存后不刷新版本，且允许删除默认页、悬浮配置或启用中的首页；现改为严格 DTO、独立 JSON 列、不可变合同字段、请求/JSON 复杂度上限、事务行锁、单调更新时间与新版本，并在前后端双重保护删除。旧导入 JSON仍直接从 `value` 编辑，不再用 `content` 的 fallback 覆盖它。
+
+服务端继续修复了以下确定偏差：DIY JSON 的 2 MB 上限改为 UTF-8 字节而不是 UTF-16 code unit；新人不合资格的 `newcomer_integral` 保持 PHP 的空数组，匿名券保留原始 Unix/DECIMAL 类型，登录券恢复中文 accessor、`tidyCouponList` 的未开始/首 24 小时/可用/已用/过期分支、数值 `_type/pc_type`、日期别名和 issue bind 字段；默认开启的配置读取新增 presence API，严格区分“行缺失”和“显式空”。DIY 视频使用专用查询，固定 `sort DESC,id DESC`、最多 10 条，只返回视频表字段及 `product_info/product_num/type_name/type_image`，不再额外查询普通视频接口的关系、直播和 UI 播放状态；service 额外返回内部 `playIds`，HTTP GET 只返回 `list`，controller 用 `playIds` 在 `waitUntil` 中把播放计数及 append-only 关系事件同事务记录。公开分页把最大数据库 OFFSET 限为 10,000，超出时在查询前失败，避免匿名大页请求放大 PostgreSQL/Hyperdrive 扫描。
+
+商品三榜恢复 `sort/presale_day`，并把 `member_card_status`、`svip_price_status`、`member_right(right_type=vip_price,status=1)` 三重门禁纳入 VIP 价格；连续签到首页卡片固定上海周一至周日二维 7 格，不套 SVIP 倍率。PHP 在删除非末尾 `pageFoot` 后可能保留数字键缺口并把 JSON 数组编码为 object，本实现有意压紧为稳定数组；但显式非零 ID 未命中后回退默认页仍按 PHP 原始 `$id` 保留 `pageFoot`。PHP `get_thumb_water('mid')` 在缩略图开关开启时依赖旧上传驱动，Cloudflare 私有 R2 的等价变换策略尚未确定，保留为发布门禁。
+
+原 `ur_uid_rel_type_cat_idx` 是全局四列唯一，会阻止同一用户重复播放同一视频。已发布的外部 `0105` 保持字节不变，新建前向 `0106_user_relation_play_partial_unique.sql` 才把唯一范围收窄为 `type <> 'play'`；Worker 内嵌 `0112` 复用同一升级 SQL，避免已有迁移账本跳过原地改写。Drizzle 的非播放写入使用同一 predicate 的显式 conflict target；播放事件为 append-only，计数与事件同事务。外部 `0106`、内嵌迁移、schema 定义和生产审计 Worker 使用同一精确定义，遇到未知同名索引会失败关闭。
+
+### 生产 Hyperdrive 证据
+
+通过用户指定 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 部署一次性 SHA-256 Bearer 保护 Worker。授权边界实测 GET 为 404、无 token POST 为 403；生产审计在 `REPEATABLE READ, READ ONLY`、`search_path=public`、锁/语句超时下执行，只返回聚合、结构和布尔门禁，不返回配置值、PII、业务 ID、媒体引用或指纹正文。
+
+24 张主依赖表和 2 张真实装饰链支持表全部存在，临时 schema 为 0。`system_dise=0`；21 个候选配置只存在 6 个键，缺 15 个，`site_url/sign_give_point/sign_status` 各有重复历史。用户 3/活跃 3、可见等级 3；用户券 4、当前可用 0、运行时已过期但持久状态仍未更新 2、券 owner 孤儿 3；关系 1 且 owner 孤儿 1，商品收藏计数漂移 1；签到 1 且 owner 孤儿 1，连续奖励 0。视频、新人商品、促销均 0，有效 VIP 价格权益 0；71 个商品可返回销量/评分/收藏各 3 条排行。八类真实 service 均返回合法结构，但这些空内容和孤儿是源数据/运营配置缺口，不是代码完成的证明。
+
+生产索引端点先确认非播放关系和上海自然日签到重复组均为 0，再在 advisory lock 和短事务中执行 USER-CENTER 六索引迁移两遍。事务显式使用 `search_path=public,pg_temp`，把 PostgreSQL 隐式临时 schema 放到最后，并验证未限定 `user_relation` 实际解析到 `public`；地址、关系、签到三表使用全部列的 `to_jsonb(row)` 摘要。结果为 `applied=true/replayed=true`、精确索引 6、地址/关系/签到行数 `5/1/1`、DML=false、业务全行指纹不变；前后依赖表索引总数均为 90，因为本次是全局唯一到部分唯一的一换一升级。
+
+### 随机 schema 与清理证据
+
+随机 schema 克隆 24+2 张表，重建 25 个 identity/serial 绑定并确认外部序列依赖 0；每个顶层事务把 `pg_temp` 显式置于随机 schema 之后、固定 `TIME ZONE UTC`，并用 `to_regclass('system_dise')` 证明未限定表实际解析到随机 schema。真实 `DiyHomeCompatibilityService`/`ShortVideoService` 依次验证 DIY 5、用户聚合 3、视频 4、新人 7、三榜 4、签到 3、悬浮窗 2，共 28 项断言全部通过。24+2 张 `public` 表全行摘要和 25 条 public 序列状态前后相同，播放写只发生在隔离 schema，随机 schema 在 `finally` 删除，未使用真实外部绑定，也没有返回 fixture 数据。
+
+首轮部署在 Secret 版本传播窗口遇到空传输，数据库尚未访问即由 `finally` 删除；随后隔离断言先后暴露“显式 ID 回退”预期错误和 fixture 会话时区不确定，两次均先完成 schema/Worker 清理且 public 指纹不变。修正测试 harness 后最终完整通过。一次性 Worker `cinashop-diy-home-widgets-audit` 与 Secret 均已删除，URL 返回 404；主 `cinashop-api` 未部署本批代码。
+
+### 当前判定
+
+DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和目标 PostgreSQL 隔离场景已收口，但父项仍不能完成：生产 DIY、视频、新人和促销内容为空，15/21 配置缺失且 3 键重复；新 UniApp 还没有类型化 client、allowlist renderer、版本缓存、微页面、首页组件和全局悬浮导航；R2 缩略图策略、旧端真实 token E2E、预发、影子流量、主 Worker/Pages 发布均未完成。下一代码批进入 PUBLIC-ARTICLE 7 条，数据与发布门禁继续独立跟踪。
+
+审计更新：2026-08-30
 
 ## 结论
 
@@ -1885,11 +1919,11 @@ Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签
 - [ ] Worker 已改为普通字段更新后由 helper 清旧→设新；仍需修旧 PHP 裸地址 ID越权、非事务和先设新→清旧顺序，或切到地址单运行时，再评估默认地址 partial unique；当前未添加该约束。
 - [ ] 解决收藏在 PHP/Worker跨栈并行写下的计数竞态，并完成切流或持续对账验证。
 - [ ] 恢复 `sign_remind_time` 定时扫描、可重试消费和 `notice` 通知投递，验证关闭偏好、不重复发送、失败重试及按上海日界线选择用户；当前只有提醒偏好端点。
-- [ ] 在 DIY-HOME-WIDGETS 中补齐可选登录 `GET /api/diy/sign`（PHP `homeDiysignData`）并核对旧客户端响应；九条 USER-CENTER 精确路由不包含这条页面组合合同。
+- [x] 可选登录 `GET /api/diy/sign`（PHP `homeDiysignData`）已由 DIY-HOME-WIDGETS 服务端批次补齐；真实旧客户端 token/E2E 仍属于发布门禁。
 - [ ] 继续补活动详情中秒杀/拼团/砍价装饰与水印兼容；这些跨域展示细节不能因本批收藏字段稳定而视为完成。
 - [ ] 在 Linux/兼容主机运行 Workers runtime，完成预发、影子流量、明确发布批准和发布后观察；主 Worker与 PC/UniApp当前均未发布。
 
-下一代码批次为 DIY-HOME-WIDGETS，并把审计新发现的可选登录 `GET /api/diy/sign`（PHP `homeDiysignData`）纳入同批，其后为 PUBLIC-ARTICLE 7 条。USER-CENTER-COMPAT 总项保持未勾选，直到源数据、默认地址/收藏跨栈门禁、签到提醒投递、真实 token流程和发布门禁全部获得证据；签到唯一性门禁已关闭，但仍建议单运行时/统一锁序。主 Worker仍是旧版本，未发布本批代码。
+DIY-HOME-WIDGETS 八条服务端合同现已收口；下一代码批次为 PUBLIC-ARTICLE 7 条，其后处理 reply 4 条与仍被 UniApp 调用的社区合同。USER-CENTER-COMPAT 总项保持未勾选，直到源数据、默认地址/收藏跨栈门禁、签到提醒投递、真实 token流程和发布门禁全部获得证据；签到唯一性门禁已关闭，但仍建议单运行时/统一锁序。主 Worker仍是旧版本，未发布本批代码。
 
 ## 完成定义
 

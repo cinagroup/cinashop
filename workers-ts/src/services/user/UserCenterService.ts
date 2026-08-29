@@ -697,6 +697,7 @@ export class UserCenterService {
         })))
         .onConflictDoNothing({
           target: [userRelation.uid, userRelation.relationId, userRelation.type, userRelation.category],
+          where: sql`${userRelation.type} <> 'play'`,
         })
         .returning({ relationId: userRelation.relationId });
       const insertedIds = inserted.map((row) => row.relationId);

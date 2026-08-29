@@ -14,6 +14,14 @@ function routeStatement(method: string, path: string): string {
   return routes.slice(start, routes.indexOf(";", start));
 }
 
+function sourceBlock(source: string, start: string, end: string): string {
+  const startIndex = source.indexOf(start);
+  expect(startIndex).toBeGreaterThanOrEqual(0);
+  const endIndex = source.indexOf(end, startIndex + start.length);
+  expect(endIndex).toBeGreaterThan(startIndex);
+  return source.slice(startIndex, endIndex);
+}
+
 describe("API-006 short-video compatibility", () => {
   it("registers all nine PHP paths with the original authentication boundaries", () => {
     for (const path of [
@@ -38,6 +46,20 @@ describe("API-006 short-video compatibility", () => {
   it("keeps viewer-specific and legacy GET-write responses out of shared caches", () => {
     expect(controller).toContain('c.header("Cache-Control", "private, no-store")');
     expect(controller).toContain("c.executionCtx.waitUntil(");
+  });
+
+  it("records every visible play event with its atomic counter update", () => {
+    const recordPlays = sourceBlock(service, "async recordPlays(", "async info(");
+    expect(controller).toContain('recordPlays(result.playIds, c.get("uid") ?? 0)');
+    expect(recordPlays).toContain("ids: number[], uid: number");
+    expect(recordPlays).toContain("withTx(this.container, async (tx)");
+    expect(recordPlays).toContain("GREATEST(${video.playNum} + 1, 0)");
+    expect(recordPlays).toContain(".returning({ id: video.id })");
+    expect(recordPlays).toContain("tx.insert(userRelation)");
+    expect(recordPlays).toContain("played.map(({ id })");
+    expect(recordPlays).toContain('type: "play"');
+    expect(recordPlays).toContain('category: "video"');
+    expect(recordPlays).not.toContain("onConflictDoNothing");
   });
 
   it("enforces storefront visibility and does not leak unreviewed recommendations", () => {

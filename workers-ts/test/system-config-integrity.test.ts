@@ -55,5 +55,25 @@ describe("system configuration migration integrity", () => {
       site_url: "https://cinashop-pc.pages.dev",
     });
     expect(batchBuilder.orderBy).toHaveBeenCalledOnce();
+
+    const presenceBuilder: Record<string, ReturnType<typeof vi.fn>> = {};
+    presenceBuilder.select = vi.fn(() => presenceBuilder);
+    presenceBuilder.from = vi.fn(() => presenceBuilder);
+    presenceBuilder.where = vi.fn(() => presenceBuilder);
+    presenceBuilder.orderBy = vi.fn(async () => [
+      { menuName: "newcomer_limit_status", value: "1" },
+      { menuName: "newcomer_limit_status", value: "" },
+    ]);
+
+    const presenceDao = new SystemConfigDao(presenceBuilder as never);
+    await expect(presenceDao.getValuesWithPresence([
+      "newcomer_limit_status",
+      "missing_key",
+      "newcomer_limit_status",
+    ])).resolves.toEqual({
+      newcomer_limit_status: { exists: true, value: "" },
+      missing_key: { exists: false, value: "" },
+    });
+    expect(presenceBuilder.orderBy).toHaveBeenCalledOnce();
   });
 });

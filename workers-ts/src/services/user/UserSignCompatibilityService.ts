@@ -129,6 +129,16 @@ function nonNegativeConfig(value: string | undefined, fallback: number): number 
   return parsed >= 0 && parsed <= 1_000_000 ? parsed : fallback;
 }
 
+function configIntegerWithPresence(
+  values: Readonly<Record<string, string>>,
+  key: string,
+  missingFallback: number,
+): number {
+  return Object.hasOwn(values, key)
+    ? parseConfigInteger(values[key], 0)
+    : missingFallback;
+}
+
 async function loadConfig(db: DbClient): Promise<CompatConfig> {
   const rows = await db
     .select({ name: systemConfig.menuName, value: systemConfig.value })
@@ -140,17 +150,17 @@ async function loadConfig(db: DbClient): Promise<CompatConfig> {
     .orderBy(asc(systemConfig.sort), asc(systemConfig.id));
   const values: Record<string, string> = {};
   for (const row of rows) values[row.name] = normalizeConfigScalar(row.value);
-  const rawSignMode = parseConfigInteger(values.sign_mode, 1);
+  const rawSignMode = configIntegerWithPresence(values, "sign_mode", 1);
   return {
     signMode: rawSignMode === 0 ? 0 : 1,
     basePoint: nonNegativeConfig(values.sign_give_point, 0),
     baseExp: nonNegativeConfig(values.sign_give_exp, 0),
-    memberFunctionEnabled: parseConfigInteger(values.member_func_status, 1) === 1,
-    memberCardEnabled: parseConfigInteger(values.member_card_status, 1) === 1,
+    memberFunctionEnabled: configIntegerWithPresence(values, "member_func_status", 1) === 1,
+    memberCardEnabled: configIntegerWithPresence(values, "member_card_status", 1) === 1,
     signRemindSwitch: parseConfigInteger(values.sign_remind, 0),
     signStatus: parseConfigInteger(values.sign_status, 0),
     integralEffectiveStatus: parseConfigInteger(values.integral_effective_status, 0),
-    integralEffectiveTime: parseConfigInteger(values.integral_effective_time, 3),
+    integralEffectiveTime: configIntegerWithPresence(values, "integral_effective_time", 3),
     brokerageStatus: parseConfigInteger(values.store_brokerage_statu, 0),
   };
 }
@@ -377,6 +387,75 @@ function wholeNumber(value: unknown): number {
 
 export class UserSignCompatibilityService {
   constructor(private readonly container: Container) {}
+
+  /**
+   * Legacy homepage widget contract (`/api/diy/sign`).  It intentionally does
+   * not reuse `config()`: the old widget is always a Monday-Sunday grid, keeps
+   * the base reward (no SVIP multiplier/milestone overlay), and permits uid=0.
+   */
+  async homeDiy(uid: number) {
+    const safeUid = Number.isSafeInteger(uid) && uid > 0 ? uid : 0;
+    const now = Math.floor(Date.now() / 1_000);
+    const window = currentWeekWindow(now);
+    const today = signDayWindow(now);
+    const [config, records, rewards, todayRows] = await Promise.all([
+      loadConfig(this.container.db),
+      safeUid > 0
+        ? this.container.db
+          .select({ addTime: userSign.addTime })
+          .from(userSign)
+          .where(and(
+            eq(userSign.uid, safeUid),
+            gte(userSign.addTime, window.start),
+            lt(userSign.addTime, window.end),
+          ))
+        : Promise.resolve([]),
+      this.container.db
+        .select({
+          id: systemSignReward.id,
+          type: systemSignReward.type,
+          days: systemSignReward.days,
+          point: systemSignReward.point,
+          exp: systemSignReward.exp,
+        })
+        .from(systemSignReward)
+        .where(eq(systemSignReward.type, 0))
+        .orderBy(asc(systemSignReward.days), asc(systemSignReward.id))
+        .limit(1),
+      safeUid > 0
+        ? this.container.db
+          .select({ value: sql<boolean>`COUNT(*) > 0` })
+          .from(userSign)
+          .where(and(
+            eq(userSign.uid, safeUid),
+            gte(userSign.addTime, today.todayStart),
+            lt(userSign.addTime, today.tomorrowStart),
+          ))
+        : Promise.resolve([]),
+    ]);
+    const signed = new Set(records.map((row) => dateKey(row.addTime)));
+    const todayKey = dateKey(today.todayStart);
+    const type = config.basePoint === 0 && config.memberFunctionEnabled && config.baseExp > 0 ? 2 : 1;
+    const signList = Array.from({ length: 7 }, (_, offset) => {
+      const timestamp = window.start + offset * DAY_SECONDS;
+      const local = localDate(timestamp);
+      const key = dateKey(timestamp);
+      return {
+        day: `${local.getUTCMonth() + 1}/${String(local.getUTCDate()).padStart(2, "0")}`,
+        is_sign: signed.has(key),
+        sign_day: key === todayKey,
+        type,
+        point: config.basePoint,
+      };
+    });
+    return {
+      signList: [signList],
+      nextContinuousSignRewardList: rewards,
+      checkSign: todayRows[0]?.value ?? false,
+      signStatus: config.signStatus,
+      sign_give_point: config.basePoint,
+    };
+  }
 
   async config(uid: number) {
     const now = Math.floor(Date.now() / 1000);

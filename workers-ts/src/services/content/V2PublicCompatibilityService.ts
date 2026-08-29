@@ -8,6 +8,7 @@ import { ValidateException } from "@/utils/errors";
 
 const MAX_DIY_BYTES = 2_000_000;
 const MAX_ADDRESS_SEGMENTS = 8;
+const UTF8_ENCODER = new TextEncoder();
 
 export const LEGACY_PRODUCT_DETAIL_DEFAULT = {
   navList: [0, 1, 2, 3, 4],
@@ -44,7 +45,12 @@ function record(value: unknown): Record<string, unknown> | null {
 
 /** PHP json_decode(..., true), bounded so a corrupt DIY row cannot exhaust a Worker isolate. */
 export function parseLegacyDiyJson(value: string | null | undefined): unknown {
-  if (value === null || value === undefined || value.length > MAX_DIY_BYTES) return null;
+  if (
+    value === null
+    || value === undefined
+    || value.length > MAX_DIY_BYTES
+    || UTF8_ENCODER.encode(value).byteLength > MAX_DIY_BYTES
+  ) return null;
   try {
     return JSON.parse(value);
   } catch {

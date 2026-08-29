@@ -8,6 +8,12 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
 import { systemConfig } from "@/models/schema/system";
 
+export interface SystemConfigValueWithPresence {
+  exists: boolean;
+  /** Raw database value. Missing keys deliberately use an empty placeholder. */
+  value: string;
+}
+
 export class SystemConfigDao extends BaseDao<typeof systemConfig> {
   constructor(db: DB) {
     super(db, systemConfig, {});
@@ -46,6 +52,38 @@ export class SystemConfigDao extends BaseDao<typeof systemConfig> {
     const out: Record<string, string> = {};
     for (const r of rows) {
       if (set.has(r.menuName)) out[r.menuName] = r.value;
+    }
+    return out;
+  }
+
+  /**
+   * Batch-read raw configuration values without collapsing a missing row into an
+   * explicitly stored empty string. This intentionally bypasses CONFIG_KV: the
+   * legacy `sys_config($key, $default)` contract applies the default only when
+   * the row is absent, while an explicit empty value remains falsey.
+   */
+  async getValuesWithPresence(
+    menuNames: string[],
+    isStore = 0,
+  ): Promise<Record<string, SystemConfigValueWithPresence>> {
+    const names = [...new Set(menuNames)];
+    const out: Record<string, SystemConfigValueWithPresence> = Object.fromEntries(
+      names.map((name) => [name, { exists: false, value: "" }]),
+    );
+    if (names.length === 0) return out;
+
+    const rows = await (this.db
+      .select({ menuName: systemConfig.menuName, value: systemConfig.value })
+      .from(systemConfig)
+      .where(and(inArray(systemConfig.menuName, names), eq(systemConfig.isStore, isStore)))
+      // Later rows overwrite earlier rows, matching getValue/getValues priority.
+      .orderBy(asc(systemConfig.sort), asc(systemConfig.id)) as Promise<
+      { menuName: string; value: string }[]
+    >);
+    for (const row of rows) {
+      if (Object.hasOwn(out, row.menuName)) {
+        out[row.menuName] = { exists: true, value: row.value };
+      }
     }
     return out;
   }

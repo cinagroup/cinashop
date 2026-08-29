@@ -22,8 +22,11 @@ describe("legacy content and notification migration", () => {
       "../view/admin-ts/src/pages/setting/NotificationList.vue",
       "utf8",
     );
-    expect(controller).toContain("COALESCE(NULLIF(content, ''), value, '') AS content");
-    expect(controller).toContain('"value" = COALESCE(${body.content ?? null}, "value")');
+    expect(controller).toContain("value: systemDise.value");
+    expect(controller).toContain("content: systemDise.content");
+    expect(controller).toContain("...(body.value !== undefined ? { value: body.value } : {})");
+    expect(controller).toContain("...(body.content !== undefined ? { content: body.content } : {})");
+    expect(controller).not.toContain("COALESCE(NULLIF(content, ''), value, '') AS content");
     expect(controller).toContain("CASE \"legacy_type\" WHEN 0 THEN 'routine' WHEN 1 THEN 'wechat'");
     expect(notificationPage).toContain('<el-option value="routine" label="小程序订阅" />');
   });

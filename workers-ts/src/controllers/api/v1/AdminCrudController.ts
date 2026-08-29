@@ -2194,54 +2194,329 @@ export async function adminUserLabelDel(c: C) {
 // DIY 装修/自定义页面 (M22)
 // ═══════════════════════════════════════════════════════════
 
+const ADMIN_DISE_MAX_BODY_BYTES = 4_100_000;
+const ADMIN_DISE_MAX_VALUE_BYTES = 2_000_000;
+const ADMIN_DISE_MAX_CONTENT_BYTES = 2_000_000;
+const ADMIN_DISE_ALLOWED_SAVE_KEYS = new Set([
+  "id",
+  "create_kind",
+  "name",
+  "title",
+  "value",
+  "content",
+  "status",
+]);
+const ADMIN_DISE_UNSAFE_JSON_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+interface AdminDiseEditableFields {
+  name?: string;
+  title?: string;
+  value?: string;
+  content?: string;
+  status?: 0 | 1;
+}
+
+export type AdminDiseSaveInput =
+  | ({ mode: "update"; id: number } & AdminDiseEditableFields)
+  | ({
+      mode: "create";
+      createKind: "diy_page";
+      name: string;
+      title?: string;
+      value: string;
+      content?: string;
+    });
+
+export interface AdminDiseDeletionCandidate {
+  id: number;
+  status: number;
+  type: number;
+  isDiy: number;
+  templateName: string;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function utf8Length(value: string): number {
+  return new TextEncoder().encode(value).byteLength;
+}
+
+function optionalAdminDiseString(
+  source: Record<string, unknown>,
+  key: "name" | "title" | "content",
+  maxBytes: number,
+  trim = false,
+): string | undefined {
+  if (!Object.prototype.hasOwnProperty.call(source, key)) return undefined;
+  const raw = source[key];
+  if (typeof raw !== "string") throw new ValidateException(`${key}必须是字符串`);
+  const value = trim ? raw.trim() : raw;
+  if (utf8Length(value) > maxBytes) throw new ValidateException(`${key}内容过长`);
+  return value;
+}
+
+/** Parse, bound and canonicalize the JSON contract stored in system_dise.value. */
+export function normalizeAdminDiseJson(raw: unknown): string {
+  if (typeof raw !== "string") throw new ValidateException("value必须是JSON字符串");
+  const source = raw.trim();
+  if (!source) throw new ValidateException("value不能为空");
+  if (utf8Length(source) > ADMIN_DISE_MAX_VALUE_BYTES) {
+    throw new ValidateException("value内容过长");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source) as unknown;
+  } catch {
+    throw new ValidateException("value不是有效JSON");
+  }
+  if (parsed === null) throw new ValidateException("value不能为null");
+
+  const queue: Array<{ value: unknown; depth: number }> = [{ value: parsed, depth: 0 }];
+  let visited = 0;
+  while (queue.length) {
+    const current = queue.pop()!;
+    visited += 1;
+    if (visited > 100_000 || current.depth > 64) {
+      throw new ValidateException("value结构过于复杂");
+    }
+    if (typeof current.value !== "object" || current.value === null) continue;
+    for (const [key, child] of Object.entries(current.value)) {
+      if (ADMIN_DISE_UNSAFE_JSON_KEYS.has(key)) {
+        throw new ValidateException(`value包含不安全字段: ${key}`);
+      }
+      queue.push({ value: child, depth: current.depth + 1 });
+    }
+  }
+  return JSON.stringify(parsed);
+}
+
+/** Strict DTO parser: immutable columns and unknown request fields are rejected. */
+export function parseAdminDiseSaveInput(raw: unknown): AdminDiseSaveInput {
+  if (!isPlainRecord(raw)) throw new ValidateException("请求体必须是JSON对象");
+  const unknownKeys = Object.keys(raw).filter((key) => !ADMIN_DISE_ALLOWED_SAVE_KEYS.has(key));
+  if (unknownKeys.length) throw new ValidateException(`不支持的字段: ${unknownKeys.join(",")}`);
+
+  const name = optionalAdminDiseString(raw, "name", 255, true);
+  const title = optionalAdminDiseString(raw, "title", 255, true);
+  const content = optionalAdminDiseString(raw, "content", ADMIN_DISE_MAX_CONTENT_BYTES);
+  const value = Object.prototype.hasOwnProperty.call(raw, "value")
+    ? normalizeAdminDiseJson(raw.value)
+    : undefined;
+
+  let status: 0 | 1 | undefined;
+  if (Object.prototype.hasOwnProperty.call(raw, "status")) {
+    if (raw.status !== 0 && raw.status !== 1) throw new ValidateException("status只能为0或1");
+    status = raw.status;
+  }
+  if (value !== undefined && content !== undefined && value === content) {
+    throw new ValidateException("value与content必须独立维护，不能写入相同内容");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(raw, "id")) {
+    if (!Number.isSafeInteger(raw.id) || (raw.id as number) <= 0) {
+      throw new ValidateException("ID错误");
+    }
+    if (Object.prototype.hasOwnProperty.call(raw, "create_kind")) {
+      throw new ValidateException("更新请求不能包含create_kind");
+    }
+    const editable: AdminDiseEditableFields = { name, title, value, content, status };
+    if (Object.values(editable).every((item) => item === undefined)) {
+      throw new ValidateException("没有可更新的字段");
+    }
+    if (name !== undefined && !name) throw new ValidateException("页面名称不能为空");
+    return { mode: "update", id: raw.id as number, ...editable };
+  }
+
+  if (raw.create_kind !== "diy_page") {
+    throw new ValidateException("新增页面必须使用create_kind=diy_page安全合同");
+  }
+  if (!name) throw new ValidateException("页面名称不能为空");
+  if (value === undefined) throw new ValidateException("新增页面必须提供value");
+  if (status !== undefined && status !== 0) {
+    throw new ValidateException("新增页面必须先以停用状态保存");
+  }
+  return { mode: "create", createKind: "diy_page", name, title, value, content };
+}
+
+export function adminDiseDeletionProtectionReason(
+  row: AdminDiseDeletionCandidate,
+): string | null {
+  const templateName = row.templateName.trim().toLowerCase();
+  if (row.id === 1 || templateName === "default") return "默认页面不能删除";
+  if (templateName === "suspended_window") return "悬浮配置不能删除";
+  if (row.status === 1 && row.type === 1 && row.isDiy === 1) return "启用中的首页不能删除";
+  return null;
+}
+
+function newAdminDiseVersion(nowMs = Date.now()): string {
+  return `${nowMs.toString(36)}-${crypto.randomUUID()}`;
+}
+
+async function readAdminDiseSaveInput(c: C): Promise<AdminDiseSaveInput> {
+  const declaredLength = Number(c.req.header("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > ADMIN_DISE_MAX_BODY_BYTES) {
+    throw new ValidateException("请求体过大");
+  }
+  const text = await c.req.text();
+  if (utf8Length(text) > ADMIN_DISE_MAX_BODY_BYTES) throw new ValidateException("请求体过大");
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text) as unknown;
+  } catch {
+    throw new ValidateException("请求体不是有效JSON");
+  }
+  return parseAdminDiseSaveInput(raw);
+}
+
 /** GET /api/admin/dise/list — 自定义页面列表 */
 export async function adminDiseList(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const rows = await container.db.execute(sql`
-    SELECT id, name, title, status, type, add_time,
-      COALESCE(NULLIF(content, ''), value, '') AS content
-    FROM "system_dise"
-    WHERE "is_del" = 0
-    ORDER BY "id" DESC
-    LIMIT 100
-  `);
-  const arr = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
-  return jsonOk(c, arr);
+  const { desc, eq } = await import("drizzle-orm");
+  const { systemDise } = await import("@/models/schema");
+  const rows = await container.db
+    .select({
+      id: systemDise.id,
+      name: systemDise.name,
+      title: systemDise.title,
+      value: systemDise.value,
+      content: systemDise.content,
+      status: systemDise.status,
+      type: systemDise.type,
+      templateName: systemDise.templateName,
+      isDiy: systemDise.isDiy,
+      isShow: systemDise.isShow,
+      version: systemDise.version,
+      addTime: systemDise.addTime,
+      updateTime: systemDise.updateTime,
+    })
+    .from(systemDise)
+    .where(eq(systemDise.isDel, 0))
+    .orderBy(desc(systemDise.id))
+    .limit(100);
+  return jsonOk(c, rows.map((row) => {
+    const reason = adminDiseDeletionProtectionReason(row);
+    return {
+      id: row.id,
+      name: row.name,
+      title: row.title,
+      value: row.value ?? "",
+      content: row.content ?? "",
+      status: row.status,
+      type: row.type,
+      template_name: row.templateName,
+      is_diy: row.isDiy,
+      is_show: row.isShow,
+      version: row.version,
+      add_time: row.addTime,
+      update_time: row.updateTime,
+      delete_protected: reason !== null,
+      delete_protection_reason: reason ?? "",
+    };
+  }));
 }
 
 /** POST /api/admin/dise/save — 自定义页面增改 */
 export async function adminDiseSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number; name?: string; title?: string; content?: string; type?: number; status?: number;
-  };
+  c.header("Cache-Control", "private, no-store");
+  const body = await readAdminDiseSaveInput(c);
   const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
+  const { and, eq, sql } = await import("drizzle-orm");
+  const { systemDise } = await import("@/models/schema");
   const now = Math.floor(Date.now() / 1000);
-  if (body.id) {
-    await container.db.execute(sql`
-      UPDATE "system_dise" SET "name" = ${body.name ?? ""}, "title" = ${body.title ?? ""},
-        "content" = COALESCE(${body.content ?? null}, "content"),
-        "value" = COALESCE(${body.content ?? null}, "value"),
-        "type" = ${body.type ?? 0}, "status" = ${body.status ?? 1}
-      WHERE "id" = ${body.id}
-    `);
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-  if (!body.name) return jsonFail(c, "请输入页面名称");
-  await container.db.execute(sql`
-    INSERT INTO "system_dise" ("name", "title", "content", "type", "status", "is_del", "value", "add_time")
-    VALUES (${body.name}, ${body.title ?? ""}, ${body.content ?? ""}, ${body.type ?? 0}, ${body.status ?? 1}, 0, ${body.content ?? ""}, ${now})
-  `);
-  return jsonOk(c, null, "创建成功");
+  const result = await withTx(container, async (tx) => {
+    const version = newAdminDiseVersion();
+    if (body.mode === "create") {
+      const inserted = await tx.insert(systemDise).values({
+        name: body.name,
+        title: body.title ?? body.name,
+        value: body.value,
+        content: body.content ?? "",
+        type: 1,
+        templateName: "",
+        isDiy: 1,
+        isShow: 0,
+        status: 0,
+        isDel: 0,
+        version,
+        addTime: now,
+        updateTime: now,
+      }).returning({
+        id: systemDise.id,
+        version: systemDise.version,
+        updateTime: systemDise.updateTime,
+      });
+      return inserted[0];
+    }
+
+    const existing = (await tx
+      .select({ id: systemDise.id, value: systemDise.value })
+      .from(systemDise)
+      .where(and(eq(systemDise.id, body.id), eq(systemDise.isDel, 0)))
+      .limit(1)
+      .for("update"))[0];
+    if (!existing) throw new ValidateException("页面不存在或已删除");
+    // A metadata-only update must not reactivate or re-version a row whose
+    // persisted DIY contract is already corrupt.
+    if (body.value === undefined) normalizeAdminDiseJson(existing.value);
+
+    const updated = await tx.update(systemDise).set({
+      ...(body.name !== undefined ? { name: body.name } : {}),
+      ...(body.title !== undefined ? { title: body.title } : {}),
+      ...(body.value !== undefined ? { value: body.value } : {}),
+      ...(body.content !== undefined ? { content: body.content } : {}),
+      ...(body.status !== undefined ? { status: body.status } : {}),
+      version,
+      updateTime: sql<number>`GREATEST(${systemDise.updateTime} + 1, ${now})`,
+    }).where(and(eq(systemDise.id, body.id), eq(systemDise.isDel, 0))).returning({
+      id: systemDise.id,
+      version: systemDise.version,
+      updateTime: systemDise.updateTime,
+    });
+    if (!updated[0]) throw new ValidateException("页面更新失败");
+    return updated[0];
+  });
+  return jsonOk(c, {
+    id: result.id,
+    version: result.version,
+    update_time: result.updateTime,
+  }, body.mode === "create" ? "创建成功" : "更新成功");
 }
 
 /** DELETE /api/admin/dise/del/:id */
 export async function adminDiseDel(c: C) {
   const id = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("ID错误");
+  c.header("Cache-Control", "private, no-store");
   const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  await container.db.execute(sql`UPDATE "system_dise" SET "is_del" = 1 WHERE "id" = ${id}`);
+  const { and, eq, sql } = await import("drizzle-orm");
+  const { systemDise } = await import("@/models/schema");
+  const now = Math.floor(Date.now() / 1000);
+  await withTx(container, async (tx) => {
+    const row = (await tx.select({
+      id: systemDise.id,
+      status: systemDise.status,
+      type: systemDise.type,
+      isDiy: systemDise.isDiy,
+      templateName: systemDise.templateName,
+    }).from(systemDise)
+      .where(and(eq(systemDise.id, id), eq(systemDise.isDel, 0)))
+      .limit(1)
+      .for("update"))[0];
+    if (!row) throw new ValidateException("页面不存在或已删除");
+    const reason = adminDiseDeletionProtectionReason(row);
+    if (reason) throw new ValidateException(reason);
+
+    await tx.update(systemDise).set({
+      isDel: 1,
+      status: 0,
+      version: newAdminDiseVersion(),
+      updateTime: sql<number>`GREATEST(${systemDise.updateTime} + 1, ${now})`,
+    }).where(and(eq(systemDise.id, id), eq(systemDise.isDel, 0)));
+  });
   return jsonOk(c, null, "删除成功");
 }
 

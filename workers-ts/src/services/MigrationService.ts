@@ -220,7 +220,10 @@ export class MigrationService {
           // Hyperdrive may reuse a PostgreSQL connection whose session-level
           // search_path was changed by another client. Every migration is
           // therefore atomic and explicitly pinned to the production schema.
-          await tx.execute(sql.raw("SET LOCAL search_path TO public"));
+          // pg_temp is implicitly searched first when omitted. Listing it
+          // explicitly after public prevents a pooled session's temp objects
+          // from intercepting unqualified migration DDL.
+          await tx.execute(sql.raw("SET LOCAL search_path TO public, pg_temp"));
           await tx.execute(sql.raw(migrations[i]));
         });
         executed.push(String(i).padStart(4, "0"));

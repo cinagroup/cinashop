@@ -28,8 +28,12 @@ const collectCompatSource = readFileSync(
   "utf8",
 );
 const userCenterSchemaSource = readFileSync("src/models/schema/user_center.ts", "utf8");
-const externalIndexMigration = readFileSync(
+const originalIndexMigration = readFileSync(
   "migrations/0105_user_center_compatibility_indexes.sql",
+  "utf8",
+);
+const externalIndexUpgrade = readFileSync(
+  "migrations/0106_user_relation_play_partial_unique.sql",
   "utf8",
 );
 
@@ -225,7 +229,7 @@ describe("USER-CENTER-COMPAT migration", () => {
   });
 
   describe("collection side effects", () => {
-    const explicitRelationConflict = /\.onConflictDoNothing\(\{\s*target:\s*\[\s*userRelation\.uid,\s*userRelation\.relationId,\s*userRelation\.type,\s*userRelation\.category,?\s*\],?\s*\}\)/s;
+    const explicitRelationConflict = /\.onConflictDoNothing\(\{\s*target:\s*\[\s*userRelation\.uid,\s*userRelation\.relationId,\s*userRelation\.type,\s*userRelation\.category,?\s*\],\s*where:\s*sql`\$\{userRelation\.type\} <> 'play'`,?\s*\}\)/s;
 
     it("uses an explicit logical conflict target at every collection insert", () => {
       for (const source of [userCenterSource, userCenterDaoSource]) {
@@ -309,10 +313,22 @@ describe("USER-CENTER-COMPAT migration", () => {
       ];
       for (const name of names) {
         expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain(`"${name}"`);
-        expect(externalIndexMigration).toContain(`"${name}"`);
+        expect(externalIndexUpgrade).toContain(`"${name}"`);
         expect(userCenterSchemaSource).toContain(`"${name}"`);
       }
+      expect(originalIndexMigration).toContain(
+        'ON "user_relation" ("uid", "relation_id", "type", "category");',
+      );
+      expect(originalIndexMigration).not.toContain('WHERE "type" <> \'play\'');
       expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain("CREATE UNIQUE INDEX IF NOT EXISTS");
+      expect(userCenterSchemaSource).toContain(".where(sql`${t.type} <> 'play'`)");
+      expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain('WHERE "type" <> \'play\'');
+      expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain("DO $user_relation_unique_upgrade$");
+      expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain("legacy.predicate_sql IS NOT DISTINCT FROM ''");
+      expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain("legacy.is_unconstrained IS NOT DISTINCT FROM true");
+      expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain("EXECUTE format('DROP INDEX %I.%I'");
+      expect(USER_CENTER_COMPATIBILITY_INDEX_SQL).toContain("'type::text<>''play''::text'");
+      expect(USER_CENTER_COMPATIBILITY_INDEX_SQL.match(/DROP INDEX/g)).toHaveLength(1);
       expect(USER_CENTER_COMPATIBILITY_INDEX_SQL)
         .toContain('((("add_time"::bigint + 28800) / 86400))');
       const beforeShanghaiMidnight = Math.floor(Date.parse("2026-08-29T15:59:59.000Z") / 1000);
@@ -320,7 +336,7 @@ describe("USER-CENTER-COMPAT migration", () => {
       const shanghaiDayBucket = (timestamp: number) => Math.floor((timestamp + 28_800) / 86_400);
       expect(shanghaiDayBucket(atShanghaiMidnight))
         .toBe(shanghaiDayBucket(beforeShanghaiMidnight) + 1);
-      const externalExecutableSql = externalIndexMigration
+      const externalExecutableSql = externalIndexUpgrade
         .split(/\r?\n/)
         .filter((line) => !line.trimStart().startsWith("--"))
         .join("\n")

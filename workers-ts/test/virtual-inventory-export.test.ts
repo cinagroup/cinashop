@@ -18,7 +18,7 @@ describe("virtual-inventory controlled sensitive export", () => {
       ?.trim();
     expect(auditSql).toBe(migration);
     const migrationService = readFileSync("src/services/MigrationService.ts", "utf8");
-    expect(migrationService).toContain('SET LOCAL search_path TO public');
+    expect(migrationService).toContain('SET LOCAL search_path TO public, pg_temp');
     expect(migration).toContain('CREATE UNIQUE INDEX IF NOT EXISTS "svie_token_hash_uq"');
     expect(migration).toContain("TIMESTAMPTZ");
     expect(migration).not.toContain("card_no");

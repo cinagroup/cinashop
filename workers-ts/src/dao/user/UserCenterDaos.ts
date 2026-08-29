@@ -108,6 +108,7 @@ export class UserRelationDao extends BaseDao<typeof userRelation> {
         })
         .onConflictDoNothing({
           target: [userRelation.uid, userRelation.relationId, userRelation.type, userRelation.category],
+          where: sql`${userRelation.type} <> 'play'`,
         })
         .returning({ id: userRelation.id });
       count += rows.length;

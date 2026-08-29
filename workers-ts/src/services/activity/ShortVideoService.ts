@@ -1,4 +1,5 @@
 import { and, count, desc as orderDesc, eq, inArray, sql } from "drizzle-orm";
+import type { SystemConfigValueWithPresence } from "@/dao/system/SystemConfigDao";
 import type { Env } from "@/env";
 import { type Container, type DbClient, withTx } from "@/lib/di";
 import {
@@ -12,6 +13,7 @@ import {
 import { StoreProductService } from "@/services/product/StoreProductService";
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { normalizeConfigScalar } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const RELATION_LOCK_NAMESPACE = 505_633;
@@ -19,6 +21,26 @@ const COMMENT_LOCK_NAMESPACE = 505_634;
 const MAX_VIDEO_PAGE = 10;
 const MAX_COMMENT_PAGE = 20;
 type RelationType = "like" | "collect" | "share";
+
+/** PHP applies the default only when the configuration row is absent. */
+export function legacyConfigEnabledWithPresence(
+  setting: SystemConfigValueWithPresence | undefined,
+  missingDefault = true,
+): boolean {
+  if (!setting?.exists) return missingDefault;
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(setting.value);
+  } catch {
+    decoded = null;
+  }
+  if (decoded === null || decoded === false) return false;
+  if (typeof decoded === "number") return Number.isFinite(decoded) && decoded !== 0;
+  if (typeof decoded === "string") return decoded !== "" && decoded !== "0";
+  if (Array.isArray(decoded)) return decoded.length > 0;
+  if (typeof decoded === "object") return Object.keys(decoded).length > 0;
+  return Boolean(decoded);
+}
 
 function positiveId(value: unknown, label = "参数"): number {
   const parsed = Number(value);
@@ -49,6 +71,11 @@ function parseProductIds(raw: string): number[] {
     if (seen.size >= 100) break;
   }
   return [...seen];
+}
+
+/** ThinkPHP Video::getProductIdAttr preserves explode() string tokens. */
+export function legacyVideoProductIds(value: string): string[] {
+  return value ? value.split(",") : [];
 }
 
 function shanghaiParts(epoch: number): Record<string, string> {
@@ -157,9 +184,17 @@ export class ShortVideoService {
 
     const ids = rows.map((row) => row.id);
     const productIdsByVideo = new Map(rows.map((row) => [row.id, parseProductIds(row.productId)]));
+    const legacyProductIdsByVideo = new Map(
+      rows.map((row) => [row.id, legacyVideoProductIds(row.productId)]),
+    );
     const allProductIds = [...new Set([...productIdsByVideo.values()].flat())];
     const visibleProducts = allProductIds.length
-      ? await this.container.db.select({ id: storeProduct.id }).from(storeProduct).where(and(
+      ? await this.container.db.select({
+        id: storeProduct.id,
+        store_name: storeProduct.storeName,
+        image: storeProduct.image,
+        price: storeProduct.price,
+      }).from(storeProduct).where(and(
         inArray(storeProduct.id, allProductIds),
         eq(storeProduct.isShow, 1),
         eq(storeProduct.isDel, 0),
@@ -184,10 +219,19 @@ export class ShortVideoService {
       eq(liveRoom.status, 1),
       inArray(liveRoom.liveStatus, [101, 105, 106]),
     ));
-    const media = await signAttachmentReferences(
-      this.env.APP_KEY,
-      rows.flatMap((row) => [row.image, row.videoUrl]),
-    );
+    const [media, productMedia] = await Promise.all([
+      signAttachmentReferences(
+        this.env.APP_KEY,
+        rows.flatMap((row) => [row.image, row.videoUrl]),
+      ),
+      signAttachmentReferences(this.env.APP_KEY, visibleProducts.map((item) => item.image)),
+    ]);
+    const visibleProductMap = new Map(visibleProducts.map((item, index) => [item.id, {
+      id: item.id,
+      store_name: item.store_name,
+      image: productMedia[index],
+      price: item.price,
+    }]));
 
     return {
       playIds: ids,
@@ -200,7 +244,8 @@ export class ShortVideoService {
           image: media[index * 2],
           desc: row.desc,
           video_url: media[index * 2 + 1],
-          product_id: productIds,
+          product_id: legacyProductIdsByVideo.get(row.id) ?? [],
+          product_info: productIds.flatMap((id) => visibleProductMap.get(id) ?? []),
           product_num: productIds.filter((id) => visibleProductIds.has(id)).length,
           is_show: row.isShow,
           is_recommend: row.isRecommend,
@@ -230,12 +275,120 @@ export class ShortVideoService {
     };
   }
 
-  async recordPlays(ids: number[]): Promise<void> {
+  /**
+   * DIY-home projection matching VideoServices::getDiyVideoList().
+   *
+   * This deliberately does not reuse list(): the normal mobile-video contract
+   * performs relation/live lookups and appends playback UI state that the PHP
+   * DIY endpoint never returned.
+   */
+  async listDiy(_uid: number, params: Record<string, string | undefined>) {
+    const configs = await this.container.systemConfigDao.getValuesWithPresence([
+      "video_func_status",
+      "site_name",
+      "wap_login_logo",
+    ]);
+    if (!legacyConfigEnabledWithPresence(configs.video_func_status)) {
+      return { list: [], playIds: [] as number[] };
+    }
+
+    const page = paging(params.page, params.limit, MAX_VIDEO_PAGE);
+    const rows = await this.container.db
+      .select()
+      .from(video)
+      .where(visibleVideo())
+      .orderBy(orderDesc(video.sort), orderDesc(video.id))
+      .limit(page.limit)
+      .offset(page.offset);
+    if (rows.length === 0) return { list: [], playIds: [] as number[] };
+
+    const ids = rows.map((row) => row.id);
+    const productIdsByVideo = new Map(rows.map((row) => [row.id, parseProductIds(row.productId)]));
+    const legacyProductIdsByVideo = new Map(
+      rows.map((row) => [row.id, legacyVideoProductIds(row.productId)]),
+    );
+    const allProductIds = [...new Set([...productIdsByVideo.values()].flat())];
+    const visibleProducts = allProductIds.length
+      ? await this.container.db.select({
+        id: storeProduct.id,
+        store_name: storeProduct.storeName,
+        image: storeProduct.image,
+        price: storeProduct.price,
+      }).from(storeProduct).where(and(
+        inArray(storeProduct.id, allProductIds),
+        eq(storeProduct.isShow, 1),
+        eq(storeProduct.isDel, 0),
+        eq(storeProduct.isVerify, 1),
+      ))
+      : [];
+    const [media, productMedia] = await Promise.all([
+      signAttachmentReferences(
+        this.env.APP_KEY,
+        rows.flatMap((row) => [row.image, row.videoUrl]),
+      ),
+      signAttachmentReferences(this.env.APP_KEY, visibleProducts.map((item) => item.image)),
+    ]);
+    const visibleProductMap = new Map(visibleProducts.map((item, index) => [item.id, {
+      id: item.id,
+      store_name: item.store_name,
+      image: productMedia[index],
+      price: item.price,
+    }]));
+    const siteName = normalizeConfigScalar(configs.site_name?.value);
+    const siteImage = normalizeConfigScalar(configs.wap_login_logo?.value);
+
+    return {
+      playIds: ids,
+      list: rows.map((row, index) => {
+        const productIds = productIdsByVideo.get(row.id) ?? [];
+        const productInfo = productIds.flatMap((id) => visibleProductMap.get(id) ?? []);
+        return {
+          id: row.id,
+          type: row.type,
+          relation_id: row.relationId,
+          image: media[index * 2],
+          desc: row.desc,
+          video_url: media[index * 2 + 1],
+          product_id: legacyProductIdsByVideo.get(row.id) ?? [],
+          is_show: row.isShow,
+          is_recommend: row.isRecommend,
+          sort: row.sort,
+          is_verify: row.isVerify,
+          comment_num: row.commentNum,
+          like_num: row.likeNum,
+          collect_num: row.collectNum,
+          share_num: row.shareNum,
+          play_num: row.playNum,
+          add_time: formatEpoch(row.addTime),
+          is_del: row.isDel,
+          product_info: productInfo,
+          product_num: productInfo.length,
+          type_name: siteName,
+          type_image: siteImage,
+        };
+      }),
+    };
+  }
+
+  async recordPlays(ids: number[], uid: number): Promise<void> {
     const unique = [...new Set(ids.filter((id) => Number.isSafeInteger(id) && id > 0))].slice(0, MAX_VIDEO_PAGE);
     if (!unique.length) return;
-    await this.container.db.update(video)
-      .set({ playNum: sql`GREATEST(${video.playNum} + 1, 0)` })
-      .where(and(inArray(video.id, unique), visibleVideo()));
+    const actorUid = Number.isSafeInteger(uid) && uid > 0 ? uid : 0;
+    await withTx(this.container, async (tx) => {
+      const played = await tx.update(video)
+        .set({ playNum: sql`GREATEST(${video.playNum} + 1, 0)` })
+        .where(and(inArray(video.id, unique), visibleVideo()))
+        .returning({ id: video.id });
+      if (!played.length) return;
+      const addTime = Math.floor(Date.now() / 1000);
+      await tx.insert(userRelation).values(played.map(({ id }) => ({
+        uid: actorUid,
+        relationId: id,
+        type: "play",
+        category: "video",
+        addTime,
+      })));
+    });
   }
 
   async info(idValue: unknown) {
