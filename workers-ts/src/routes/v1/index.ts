@@ -43,6 +43,7 @@ import * as PromoterApplicationController from "@/controllers/api/v1/PromoterApp
 import * as SupplierApplicationController from "@/controllers/api/v1/SupplierApplicationController";
 import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorController";
 import * as NewcomerController from "@/controllers/api/v1/NewcomerController";
+import * as ShortVideoController from "@/controllers/api/v1/ShortVideoController";
 import * as MemberCardController from "@/controllers/api/v1/MemberCardController";
 import * as PcCompatibilityController from "@/controllers/api/v1/PcCompatibilityController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
@@ -174,6 +175,17 @@ v1Routes.get("/newcomer/info", authMiddleware({ force: true }), NewcomerControll
 v1Routes.get("/newcomer/gift", authMiddleware({ force: true }), NewcomerController.gift);
 v1Routes.get("/marketing/newcomer/info", authMiddleware({ force: true }), NewcomerController.info);
 v1Routes.get("/marketing/newcomer/gift", authMiddleware({ force: true }), NewcomerController.gift);
+
+// ─── 短视频 (PHP activity/Video 兼容面) ─────────────────────
+v1Routes.get("/marketing/short_video", authMiddleware({ force: false }), ShortVideoController.list);
+v1Routes.get("/marketing/short_video/info/:id", authMiddleware({ force: false }), ShortVideoController.info);
+v1Routes.get("/marketing/short_video/comment/:id", authMiddleware({ force: false }), ShortVideoController.comments);
+v1Routes.get("/marketing/short_video/product/:id", authMiddleware({ force: false }), ShortVideoController.products);
+v1Routes.post("/marketing/short_video/comment/:id/:pid", authMiddleware({ force: true }), ShortVideoController.saveComment);
+v1Routes.get("/marketing/short_video/comment_reply/:pid", authMiddleware({ force: true }), ShortVideoController.commentReplies);
+v1Routes.delete("/marketing/short_video/comment/:id", authMiddleware({ force: true }), ShortVideoController.deleteComment);
+v1Routes.get("/marketing/short_video/comment/:type/:id", authMiddleware({ force: true }), ShortVideoController.commentRelation);
+v1Routes.get("/marketing/short_video/:type/:id", authMiddleware({ force: true }), ShortVideoController.videoRelation);
 v1Routes.get(
   "/user/member/card/index",
   authMiddleware({ force: true }),

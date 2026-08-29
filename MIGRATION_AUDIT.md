@@ -1508,6 +1508,36 @@ API-006-MARKETING-NEWCOMER 仍不勾选整体完成：源 MySQL 未连接，13 �
 
 对于已经执行过旧迁移的环境，历史默认管理员密码不会被本次源码变更自动轮换，仍必须人工检查并更换。
 
+## API-006 营销/活动详细迁移审计（MARKETING-SHORT-VIDEO 子批次，2026-08-29）
+
+### PHP 运行时合同与“没有权威 DDL”的证据
+
+PHP `route/api.php` 的 `/api/marketing` 组注册 9 条短视频合同：可选登录的列表、推荐详情、顶级评论、关联商品，以及强制登录的评论发布、回复列表、本人删除、评论关系和视频关系。旧 UniApp `view/uniapp/api/short-video.js` 仍逐条调用这些地址。控制器、`VideoServices`、`VideoCommentServices`、模型、DAO 与播放计数 Job 都存在且实际读写字段，因此不能把它们当作死代码退役。
+
+但进一步证据推翻了上一子批“先恢复精确源表结构和 manifest”的假设：本地 `.version` 为 CRMEB-PRO v3.1.1，而本地 `public/install/crmeb.sql` 的 201 张表没有 `eb_video/eb_video_comment`；[CRMEB Pro v3.1.1 发布页](https://www.crmeb.com/ask/thread/51014)与[官方 v3.1 数据字典](https://doc.crmeb.com/pro_s/PRO_V3_1/16504)也没有两表定义。也就是说，发布包留下了可执行代码和客户端调用，却没有可复制的权威 DDL/源数据合同。本批据实际运行时读写字段创建保守的 Worker 兼容扩展：URL 采用 `varchar(2048)`，未知历史长度的描述、评论和逗号商品 ID 采用 `text`，不添加无法由源证据支持的外键或窄约束；两表不加入只对齐 PHP 201 张共享源表的数据迁移 manifest。
+
+### 精确接口、媒体与状态机边界
+
+新增 `ShortVideoService`、独立控制器与 9 条精确路由。列表按 `video_func_status`、`is_show=1/is_del=0/is_verify=1`、最大 10 条和 PHP 三类排序读取；恢复商品 ID 数组、可见商品数、站点名/logo、直播状态、用户点赞/收藏、上海时区日期和旧播放器临时字段，播放数通过 `waitUntil` 批量递增而不为每次播放制造 `user_relation` 唯一键冲突。推荐查询额外强制 `is_verify=1`，这是对 PHP 遗漏审核条件的有意安全修正。关联商品复用统一商品服务，只计算上架、未删、已审核商品，并恢复 `promotions={}` 与门店 `store_id`。
+
+封面、视频、评论头像统一支持规范引用 `/api/assets/:id`，响应时用 `APP_KEY` 生成短时签名；历史 HTTPS URL 原样保留，不暴露 R2 对象键。所有 9 条响应都设置 `private, no-store`，包括为兼容旧客户端而保留的 GET 关系写入。当前上传服务仍只接受图片，且生产两表为空，所以这只是安全读取边界，不是视频媒体迁移完成证据；DATA-005 仍需取得真实对象和归属后迁入 `cinashop-assets`。
+
+评论发布限制 500 个 Unicode 字符并拒绝控制字符；回复目标必须未删除且属于路径指定的同一视频，嵌套回复扁平到根评论。新实现不为旧兼容额外采集请求 IP 或推断城市，减少不必要 PII；删除只能由评论 UID 本人执行，并把视频评论计数非负回退一次。视频/评论的 `like|collect|share` 使用事务级 advisory lock、现有 `user_relation(uid,relation_id,type,category)` 唯一键和同事务非负计数更新，修复 PHP 检查后插入/删除再分离更新计数的竞态。
+
+### 生产 PostgreSQL DDL 与随机 schema 证据
+
+外部 `0102_short_video_compatibility.sql` 与 Worker 内嵌 `migration_0109` 字节等价，创建 `video` 18 列、`video_comment` 17 列，以及最新/默认/推荐列表、评论线程/归属 5 个部分索引。一次性 `cinashop-api006-short-video-audit` Worker 绑定用户指定的 Hyperdrive。生产写入前只读状态是 PostgreSQL 16.14、221 表/3,053 列/714 索引、短视频两表不存在、临时 schema 0。
+
+先在随机 `codex_api006_short_video_*` schema 克隆配置、用户、关系、商品和直播间五张依赖表，应用同一 DDL 两遍并直接调用真实 `ShortVideoService`。12/12 断言覆盖审核可见性与排序、推荐模式专属过滤、规范媒体签名/历史 URL、关联商品审核过滤、推荐详情审核过滤、评论会员/回复投影、跨视频回复拒绝、嵌套回复扁平、本人删除、同一视频点赞的双连接并发 add/remove 收敛、评论关系与播放/评论精确计数。场景结束后五张 `public` 业务表逐行多重集摘要完全不变，临时 schema `0→0`。
+
+隔离门禁通过后，生产事务设置 3 秒锁超时、25 秒语句超时、固定 `search_path=public` 和事务 advisory lock，执行同一 DDL 两遍均成功；最终索引复核又补上控制器默认 `order_type=0` 的 `sort DESC,id DESC` 部分索引，并用同一完整 DDL 再次幂等应用。最终生产为 223 表/3,088 列/721 索引/210 主键；两张新表合计 35 列、7 个含主键索引，均为 0 行。`system_config/user/user_relation/store_product/live_room` 的行数与逐行摘要执行前后完全一致。审计 Worker 删除后 URL 返回 404，随机 schema 为 0；主 `cinashop-api` 未部署。
+
+### 量化结果与剩余门禁
+
+注释感知静态审计现为 PHP 1,904、Workers 1,356、精确匹配 665、可执行匹配 645、明确不可用 20、原始缺失 1,239、证据化退役 3、可执行缺口 1,236；精确/可执行/退役后有效覆盖为 34.9%/33.9%/33.9%。`/api` 为 PHP 457、Workers 682、精确 295、可执行 290、不可用 5、原始缺失 162、可执行缺口 161；本子批精确/可执行各增 9。定向短视频与数据结构测试 40/40、全量 130 个单元测试文件/758 项、双 TypeScript 配置通过；主 Worker minify dry-run 为 4,465.06 KiB/gzip 840.54 KiB，审计 Worker为 1,221.79 KiB/gzip 214.88 KiB。Windows runtime 的既有 `workerd` 0xc0000005 环境故障仍不记为通过。
+
+API-006-MARKETING-SHORT-VIDEO 仍不勾选整体完成：生产视频/评论为 0，没有权威源表、源行或媒体对象可复制，也没有后台短视频管理/视频上传合同；尚未用真实用户 token 跑旧 UniApp/真机、预发或影子流量，主 Worker未发布。下一批可转向 API-006-CHECKOUT 活动订单状态机；短视频真实内容与私有 R2 媒体作为明确数据/运营门禁继续保留，不能把安全空表解释为业务迁移完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -1,6 +1,6 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
-审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002～004、API-001～005、API-006-ACTIVITY 与 API-006-MARKETING-NEWCOMER 进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；四类写入回放/归属账本 DDL 及 API-006 两个部分索引已直接应用。API-006 索引执行两遍验证幂等，11 组业务指纹不变；其余审计对 `public` 只读，合成业务场景只在随机 schema 执行。主 Worker 和正式前端没有因本次审计被发布。
+审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002～004、API-001～005、API-006-ACTIVITY、API-006-MARKETING-NEWCOMER 与 API-006-MARKETING-SHORT-VIDEO 进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；四类写入回放/归属账本 DDL、API-006 两个部分索引及短视频兼容扩展表已直接应用。短视频 DDL 执行两遍验证幂等，五张既有业务表逐行摘要不变；其余合成业务场景只在随机 schema 执行。主 Worker 和正式前端没有因本次审计被发布。
 
 ## 审计结论
 
@@ -9,11 +9,11 @@
 | 维度 | 当前证据 | 判定 |
 |---|---:|---|
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
-| 仓库目标结构 | 外部 SQL 221 表；Worker 内嵌 221 表；表/列/主键漂移 0 | 完成 |
-| 生产目标结构 | 221/221 表；缺失 0、额外 0 | 完成 |
-| PHP HTTP 合同 | 精确匹配 656/1,904；其中 20 条接入明确 501；3 条有证据退役 | 精确注册 34.5%，静态可执行上限 33.4%，退役后有效上限 33.5% |
+| 仓库目标结构 | 外部 SQL 223 表；Worker 内嵌 223 表；表/列/主键漂移 0 | 完成 |
+| 生产目标结构 | 223/223 表；缺失 0、额外 0 | 完成 |
+| PHP HTTP 合同 | 精确匹配 665/1,904；其中 20 条接入明确 501；3 条有证据退役 | 精确注册 34.9%，静态可执行上限 33.9%，退役后有效上限 33.9% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 129 文件、750 项通过 | 本地业务回归通过 |
+| Worker 单元测试 | 130 文件、758 项通过 | 本地业务回归通过 |
 | Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
 | CI | 仓库没有 `.github/workflows` | 未建立 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
@@ -25,21 +25,21 @@
 
 | 面 | PHP | Workers | 精确匹配 | 明确 501 | 原始缺失 | 已退役 | 可执行缺口 | 原始/有效可执行上限 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 673 | 286 | 5 | 171 | 1 | 170 | 61.5% / 61.6% |
+| `/api` | 457 | 682 | 295 | 5 | 162 | 1 | 161 | 63.5% / 63.6% |
 | `/adminapi` | 1,153 | 470 | 202 | 15 | 951 | 0 | 951 | 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% |
 | `/kefuapi` | 63 | 51 | 48 | 0 | 15 | 2 | 13 | 76.2% / 78.7% |
 | `/outapi` | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% |
-| 合计 | 1,904 | 1,347 | 656 | 20 | 1,248 | 3 | 1,245 | 33.4% / 33.5% |
+| 合计 | 1,904 | 1,356 | 665 | 20 | 1,239 | 3 | 1,236 | 33.9% / 33.9% |
 
-API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证合同。API-005 已将 PHP `/api/pc` 22 条全部精确注册：19 条可执行，3 条安全 501。API-006-ACTIVITY 新增 11 条、API-006-MARKETING-NEWCOMER 再新增 4 条可执行精确合同，将 `/api` 可执行匹配从 266 提升到 281，缺失从 186 降到 171。下一层大缺口组包括 `/api` 的认证、内嵌 admin、marketing 短视频、store 与 work；精确逐路由清单以 `audit:routes` JSON 为准。
+API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证合同。API-005 已将 PHP `/api/pc` 22 条全部精确注册：19 条可执行，3 条安全 501。API-006-ACTIVITY 新增 11 条、API-006-MARKETING-NEWCOMER 新增 4 条、API-006-MARKETING-SHORT-VIDEO 新增 9 条可执行精确合同，将 `/api` 可执行匹配从 266 提升到 290，缺失从 186 降到 162。下一层大缺口组包括 `/api` 的认证、内嵌 admin、store 与 work；精确逐路由清单以 `audit:routes` JSON 为准。
 
 ### 生产数据库事实
 
-- PostgreSQL 16.14；应用 API-006 两个活动查询索引后，生产 `public` 当前 221 表、3,053 列、714 索引、208 主键。
+- PostgreSQL 16.14；应用短视频兼容扩展 DDL 后，生产 `public` 当前 223 表、3,088 列、721 索引、210 主键。
 - `order_print_job`、`order_print_job_action`、`order_waybill_job`、`order_waybill_job_action` 已创建且行数为 0。
-- `out_product_write_replay`、`out_coupon_write_replay` 均为 8 列，`out_user_write_replay` 为 9 列；三表都是 4 约束、3 索引且当前 0 行。新增 `store_order_product_coupon_reward` 为 7 列、4 索引、2 约束、0 行；有效手机号、Out 余额流水、Out 积分流水三个唯一索引均有效，仓库 221 表清单与生产集合差均为空。
+- `out_product_write_replay`、`out_coupon_write_replay` 均为 8 列，`out_user_write_replay` 为 9 列；三表都是 4 约束、3 索引且当前 0 行。新增 `store_order_product_coupon_reward` 为 7 列、4 索引、2 约束、0 行；有效手机号、Out 余额流水、Out 积分流水三个唯一索引均有效，仓库 223 表清单与生产集合差均为空。
 - 商品 71、订单 29、订单明细 28、售后 3；客服账号 0、会话 0，但客服消息历史 3。
 - API-001 只读复核确认 71 个商品均为可售平台普通商品；6 个一级分类可读，精确商品分页总数为 71，销量/评分/收藏三类排行均返回真实 ID。商品描述、五类推荐关系、分类/品牌关系、预售、促销、套餐、商品券关系、DIY 页面、首页组合数据和评价回复均为空；这些接口返回空是生产内容数据缺失，不是读取异常，仍需 DATA-001～006 从源 MySQL 复制并对账。
 - API-002 只读复核确认订单 29（可见 28、未付 8、已付 20）、订单商品 28、售后 3；订单商品孤儿、售后孤儿、售后归属错配、累计件数快照错配均为 0。生产没有退款理由配置、订单发票、核销、配送订单或有效门店，29 单 `delivery_type` 全空，且 1 单发货状态缺物流标识；这些属于真实数据/运营配置缺口。用户订单列表在当前 29 行规模采用 0.038ms 顺序扫描、6 个共享命中且 0 磁盘读，不凭小样本臆造索引。
@@ -53,6 +53,7 @@ API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证
 - API-005-PC 只读复核确认 71 个可售商品、6 个可见根分类，但 active 分类关系、PC banner 和城市均为 0；17 个 PC 候选配置只存在 `record_No/site_name/site_url` 3 个。生产还有开放购物车 2、可见订单 28、可见售后 3、商品收藏 1，但余额流水 0。真实公开合同返回商品 `count=71/page=5`，其余内容空集与当前数据一致。随机 schema 对三级 `cid/sid/tid`、分类首页、banner/公司/城市、有效/失效购物车、余额、订单/收藏/售后 UID 作用域、推荐/优品及付费会员二维码共 15/15 通过，`public_state_unchanged=true`、临时 schema `0→0`，审计 Worker 已删除且 URL 返回 404。
 - API-006-ACTIVITY 只读复核确认秒杀/时段 `1/3`、拼团/团记录 `1/2`、砍价/参与/帮砍 `1/4/0`，活动订单 7、已支付 3。`routine_lovely`、`combination_banner` 内容和小程序 AppID/Secret、秒杀 banner、砍价订阅配置均缺失。短视频的 `video/video_comment` 两表生产完全不存在，`store_newcomer=0`；因此 marketing 13 条不能只补路由。随机 schema 的配置/banner、H5/小程序码、拼团/砍价海报、归属拒绝、分享原子计数、旧列表字段、`bargainId` 取消及两个部分索引共 14/14 通过，`public_state_unchanged=true`、临时 schema `0→0`。两个生产索引执行两遍幂等，11 组业务指纹不变；临时 Worker 已删除且 URL 返回 404。
 - API-006-MARKETING-NEWCOMER 只读复核确认 `store_newcomer=0`，13 个前台新人配置全部缺失；生产真实 service 的列表/info/gift 均返回与当前关闭配置一致的安全空结构。随机 schema 对倒序/可见性、资格过期/已使用、`productValue[suk]`、基础 SKU 实时库存、可选属性、详情元数据/评价/配置、PHP 顶级订单已购数及 info/gift 差异共 10/10 通过；16 张 `public` 表指纹不变、临时 schema `0→0`，临时 Worker 删除且 URL 返回 404。生产已有三个 `store_newcomer` 索引，无需 DDL。
+- API-006-MARKETING-SHORT-VIDEO 精确补齐 9 条合同；生产新增 Worker 自有兼容扩展 `video` 18 列、`video_comment` 17 列及 5 个查询索引，两表当前均 0 行。随机 schema 真实 service 对可见性/排序、推荐专属过滤、私有媒体签名、商品过滤、审核推荐、评论投影、跨视频回复拒绝、嵌套回复、删除归属、并发关系切换、评论关系和计数 12/12 通过；五张 `public` 既有业务表逐行摘要不变、临时 schema `0→0`，临时 Worker 删除且 URL 返回 404。PHP v3.1.1 安装 SQL和同版官方数据字典都没有这两张表，故不把它们伪列为 201 张源表或加入共享数据 manifest；生产没有视频行，媒体和运营内容仍未迁移。
 - 数据迁移控制表存在但运行记录为 0；源 MySQL 连接变量缺失，`npm run data:plan` 明确失败为 `SOURCE_MYSQL_URL is required`。
 - `system_config` 有 6 个重复键、20 条额外历史行；其中 `site_url` 曾同时出现示例值和实际 Pages 值，不能自动删除。
 
@@ -109,9 +110,9 @@ API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证
 - [ ] **API-005 `/api/pc` 22 条合同（核心代码与生产隔离验证已收口）**：22 条全部精确注册，其中 19 条可执行；商品列表恢复 PHP 三级 `cid/sid/tid/selectId`、`news→timeOrder`、`type→status`、会员专属可见性和 0..3 PC 商品类型，并恢复分类首页、公司/城市、PC banner、推荐/优品、二维码、购物车有效/失效分流、余额、订单、收藏和售后 `list/count`。六条用户数据合同全部强制登录且按 UID 作用域；`key/scan/wechat_auth` 因旧 token 换取和无一次性 OAuth state 明确 501，归 CORE-004 重建，不伪装成可执行。生产 Hyperdrive 只读与随机 schema 15/15 通过。本项仍不勾选：active 分类关系、PC banner、城市和 14/17 候选配置未复制，生产登录用户 token 未用于真实六接口验收，小程序码/微信 OAuth、旧 Nuxt PC、新 `pc-ts`、桌面/移动浏览器、预发和正式发布都未完成。
 - [ ] **API-006 营销/活动主批次**：静态精确缺口原始清单为 marketing 13、bargain 4、combination 4、seckill 3；活动兼容子批次已将后三组 11 条收口，但整体仍受订单状态机、真实数据/配置、前端 E2E 和发布门禁限制。
   - [ ] **API-006-ACTIVITY 11 条秒杀/拼团/砍价精确缺口合同（新增端点核心代码、生产只读与隔离验证已收口）**：已精确补齐 `seckill/detail/:id/[:time]`、秒杀/拼团 `detail_code` 和 `code`、拼团 banner/海报、砍价 config/start-user/share/poster；二维码仅内存返回 data URL，不写公开附件，个性化码/海报强制登录并校验 UID 归属。砍价分享用短事务原子累加，列表恢复 `title/image/residue_price/pay_status/datatime`，取消同时接受旧客户端 `bargainId`。生产两个部分索引已幂等应用，隔离场景 14/14 通过。本项仍不勾选：早先已算静态匹配的秒杀/拼团/砍价 detail 响应仍比 PHP 简化，生产活动组内容和小程序凭据未迁移，未用真实用户 token/真实微信执行旧 UniApp、未验收预发/影子流量，且主 Worker 未发布。
-  - [ ] **API-006-MARKETING 13 条短视频/新人活动**：已收口新人 4 条的精确路径和核心合同，剩余短视频 9 条仍无表结构。
+  - [ ] **API-006-MARKETING 13 条短视频/新人活动**：新人 4 条与短视频 9 条的精确路径和核心合同均已收口；整体仍受源数据/运营配置、私有媒体、真实旧端 E2E 和发布门禁限制。
     - [ ] **API-006-MARKETING-NEWCOMER 4 条（核心代码、生产只读与隔离验证已收口）**：补齐 `/marketing/newcomer/product_list`、`product_detail/:id`、`info`、`gift`，保留原 `/newcomer/*` 扩展别名；公开/强制登录边界与 PHP 一致，四类响应均 `private, no-store`。列表恢复 `id desc`、审核可见性和基础商品划线价；详情恢复旧 UniApp 实际依赖的 snake_case、`productValue[suk]`、活动价/基础 SKU 实时库存、可选规格、品牌/标签/保障/描述/评价/收藏/配置及 PHP 顶级订单已购数；礼包不再错误返回仅 info 才有的 `last_time/newcomer_agreement`。生产 13 配置和目录均空，真实合同 3/3、随机 schema 10/10、公共指纹和清理均通过。仍不勾选：源 MySQL 配置/目录/type=7 SKU/赠券证据未复制，生产没有非空样本，未以真实 token 跑旧 UniApp/真机/预发，主 Worker未发布。
-    - [ ] **API-006-MARKETING-SHORT-VIDEO 9 条（待完成）**：列表/详情/商品、评论发布/回复/删除、评论关系和视频点赞/收藏/分享所需 `video`、`video_comment` 在生产不存在；先补精确源表结构和迁移 manifest，再迁移私有媒体、权限/软删除/分页/关系合同，不得以空数据伪装完成。
+    - [ ] **API-006-MARKETING-SHORT-VIDEO 9 条（核心代码、生产 DDL 与隔离验证已收口）**：精确补齐列表/详情/商品、评论发布/回复/删除、评论关系和视频点赞/收藏/分享，认证边界与 PHP 一致，所有响应 `private, no-store`。列表恢复审核可见性、三类排序、推荐模式专属过滤、商品数、站点/直播/用户关系字段和异步播放计数；封面、视频和头像支持 `/api/assets/:id` 私有签名，旧 HTTPS 引用原样兼容。评论限制 500 Unicode 字符、拒绝控制字符，不再为了兼容额外采集 IP/城市；回复必须属于同一视频并扁平到根评论，删除只允许本人。关系切换使用事务级 advisory lock、既有唯一键和非负计数，修复 PHP 检查后写入的并发漂移；推荐详情额外强制 `is_verify=1`，不复制 PHP 的未审核泄漏。PHP v3.1.1 运行时代码虽读写两表，但本地安装 SQL与同版官方数据字典均无 DDL，因此新增 `video/video_comment` 明确标为 Worker 兼容扩展，不加入 201 表共享数据 manifest。生产 DDL 两遍幂等后为 223 表/3,088 列/721 索引，新增两表 `18/17` 列、7 个含主键索引且均 0 行；随机 schema 12/12，五张业务表摘要不变，临时 schema `0→0`。仍不勾选：没有权威源表或源数据可复制，生产视频/评论均空，封面/视频尚无对象进入私有 R2，未以真实 token 跑旧 UniApp/真机/预发，主 Worker未发布。
   - [ ] **API-006-CHECKOUT 活动订单状态机（待完成）**：逐类对齐秒杀/拼团/砍价的资格、限购、库存与销量、报价与建单、支付、超时、成团/失败、取消/退款、积分/优惠券/佣金奖励，并用双连接竞态、回调重放和失败补偿证明。
 - [ ] **API-007 社区/内容/DIY**：补齐 article 7、reply 4、diy 8 以及仍被 UniApp 调用的社区合同；媒体统一走私有 R2。
 - [ ] **API-008 门店/企业微信/内嵌 Admin**：处理 store 12、work 10、`/api/admin` 51；外部写操作必须 Queue 化，不能同步调用第三方。
@@ -181,4 +182,4 @@ API-004 全部子批次后，`/api/v2` 仍剩 16 条真实微信/小程序认证
 
 ## 当前下一步
 
-`DB-001`、`DB-002`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；`API-002`、`API-003`、API-004-CART/DIY/COUPON/USER/PROMO/HOME、API-005-PC、API-006-ACTIVITY 与 API-006-MARKETING-NEWCOMER 的核心代码及生产隔离验证已收口。当前已迁移清单仍为仓库/生产 221/221，但 PHP 短视频的两张未建表尚未进入该清单。最新静态路由审计为 PHP 1,904、TS 1,347、精确匹配 656、可执行匹配 636、明确不可用 20、证据化退役 3、可执行缺口 1,245；`/api` 为精确 286/457、可执行 281，Out 为 41/41。下一个可独立执行批次是 **API-006-MARKETING-SHORT-VIDEO 9 条**：先恢复 `video/video_comment` 精确结构、manifest 和私有媒体边界，再做接口与生产隔离验证。API-006-CHECKOUT、API-004-AUTH/CORE-004、真实用户 E2E、预发和正式发布仍未完成；正式发布仍需用户明确批准。
+`DB-001`、`DB-002`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；`API-002`、`API-003`、API-004-CART/DIY/COUPON/USER/PROMO/HOME、API-005-PC、API-006-ACTIVITY、API-006-MARKETING-NEWCOMER 与 API-006-MARKETING-SHORT-VIDEO 的核心代码及生产隔离验证已收口。当前仓库/生产结构清单为 223/223；短视频两表是 Worker 兼容扩展，不冒充 PHP 安装 SQL的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,356、精确匹配 665、可执行匹配 645、明确不可用 20、证据化退役 3、可执行缺口 1,236；`/api` 为精确 295/457、可执行 290，Out 为 41/41。下一个可独立执行批次是 **API-006-CHECKOUT 活动订单状态机**；API-004-AUTH/CORE-004、短视频真实内容与 R2 媒体、真实用户 E2E、预发和正式发布仍未完成，正式发布仍需用户明确批准。
