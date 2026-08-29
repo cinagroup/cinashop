@@ -8,7 +8,7 @@ import { LoginService } from "@/services/user/LoginService";
 import { WechatAuthService } from "@/services/wechat/WechatAuthService";
 import { cacheSetIfAbsent, cacheTake, getRedis } from "@/utils/cache";
 import { normalizeConfigScalar } from "@/utils/config";
-import { ValidateException } from "@/utils/errors";
+import { ServiceUnavailableException, ValidateException } from "@/utils/errors";
 
 const STATE_TTL_SECONDS = 15 * 60;
 const PROVIDER_CODE_TTL_SECONDS = 10 * 60;
@@ -24,6 +24,7 @@ interface OpenWebOauthState {
   purpose: "open_web_oauth_login";
   audience: ScanLoginAudience;
   auditIp: string;
+  clientOrigin: string;
   issuedAt: number;
 }
 
@@ -39,6 +40,13 @@ async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(
     new Uint8Array(digest),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+function randomHex(bytes: number): string {
+  return Array.from(
+    crypto.getRandomValues(new Uint8Array(bytes)),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
 }
@@ -60,10 +68,14 @@ export class WechatOpenWebAuthService {
     private readonly env: Env,
   ) {}
 
-  async createOauthState(audienceInput: ScanLoginAudience, ip = "") {
+  async createOauthState(
+    audienceInput: ScanLoginAudience,
+    ip = "",
+    clientOrigin = "",
+  ) {
     const audience = audienceValue(audienceInput);
     const redis = getRedis(this.env);
-    if (!redis) throw new ValidateException("微信授权状态缓存尚未配置");
+    if (!redis) throw new ServiceUnavailableException("微信授权状态存储不可用");
     const source = await auditIp(ip);
     const minute = Math.floor(Date.now() / 60_000);
     const count = await redis.eval<[string], number>(
@@ -75,30 +87,34 @@ export class WechatOpenWebAuthService {
       throw new ValidateException("微信授权状态请求过于频繁，请稍后重试");
     }
     const state = crypto.randomUUID();
+    const verifier = randomHex(32);
+    const verifierHash = await sha256Hex(verifier);
     const stored = await cacheSetIfAbsent(
-      STATE_PREFIX + state,
+      `${STATE_PREFIX}${state}:${verifierHash}`,
       {
         version: 1,
         purpose: "open_web_oauth_login",
         audience,
         auditIp: source,
+        clientOrigin,
         issuedAt: Math.floor(Date.now() / 1000),
       } satisfies OpenWebOauthState,
       this.env,
       STATE_TTL_SECONDS,
     );
     if (!stored) throw new ValidateException("微信授权状态创建失败，请重试");
-    return { state, expiresIn: STATE_TTL_SECONDS };
+    return { state, expiresIn: STATE_TTL_SECONDS, verifier };
   }
 
   async login(
     audienceInput: ScanLoginAudience,
     codeValue: unknown,
     stateValue: unknown,
+    verifierValue: unknown,
     ip = "",
   ) {
     const audience = audienceValue(audienceInput);
-    await this.consumeState(audience, stateValue, ip);
+    await this.consumeState(audience, stateValue, verifierValue);
     const code = await this.claimCode(audience, codeValue, ip);
     const identity = await this.exchangeCode(code);
     if (audience === "pc_user") return this.loginPc(identity, ip);
@@ -108,20 +124,27 @@ export class WechatOpenWebAuthService {
   private async consumeState(
     audience: ScanLoginAudience,
     stateValue: unknown,
-    ip: string,
+    verifierValue: unknown,
   ): Promise<void> {
     const state = String(stateValue ?? "").trim();
-    if (!UUID_PATTERN.test(state) || !getRedis(this.env)) {
+    const verifier = String(verifierValue ?? "").trim().toLowerCase();
+    if (!getRedis(this.env)) {
+      throw new ServiceUnavailableException("微信授权状态存储不可用");
+    }
+    if (!UUID_PATTERN.test(state) || !/^[a-f0-9]{64}$/.test(verifier)) {
       throw new ValidateException("微信授权状态无效或已过期");
     }
-    const record = await cacheTake<OpenWebOauthState>(STATE_PREFIX + state, this.env);
+    const record = await cacheTake<OpenWebOauthState>(
+      `${STATE_PREFIX}${state}:${await sha256Hex(verifier)}`,
+      this.env,
+    );
     const age = Math.floor(Date.now() / 1000) - Number(record?.issuedAt ?? 0);
     if (
       !record
       || record.version !== 1
       || record.purpose !== "open_web_oauth_login"
       || record.audience !== audience
-      || record.auditIp !== await auditIp(ip)
+      || !record.clientOrigin
       || !Number.isSafeInteger(record.issuedAt)
       || age < -60
       || age > STATE_TTL_SECONDS + 60
@@ -138,7 +161,7 @@ export class WechatOpenWebAuthService {
     const code = String(codeValue ?? "").trim();
     if (!code || code.length > 512) throw new ValidateException("微信授权 code 无效");
     const redis = getRedis(this.env);
-    if (!redis) throw new ValidateException("微信授权重放缓存尚未配置");
+    if (!redis) throw new ServiceUnavailableException("微信授权重放存储不可用");
     const source = await auditIp(ip);
     const minute = Math.floor(Date.now() / 60_000);
     const count = await redis.eval<[string], number>(
@@ -159,15 +182,12 @@ export class WechatOpenWebAuthService {
     return code;
   }
 
-  /** Credentials remain in PostgreSQL and are never cached into public/config KV. */
+  /** AppID is public configuration; AppSecret is accepted only as a Worker Secret. */
   private async openPlatformConfig(): Promise<{ appId: string; secret: string }> {
-    const raw = await this.container.systemConfigDao.getValues([
-      "wechat_open_app_id",
-      "wechat_open_app_secret",
-    ]);
+    const raw = await this.container.systemConfigDao.getValues(["wechat_open_app_id"]);
     const appId = normalizeConfigScalar(raw.wechat_open_app_id);
-    const secret = normalizeConfigScalar(raw.wechat_open_app_secret);
-    if (!appId || !secret) throw new ValidateException("微信开放平台登录尚未配置");
+    const secret = String(this.env.WECHAT_OPEN_APP_SECRET ?? "").trim();
+    if (!appId || !secret) throw new ServiceUnavailableException("微信开放平台登录尚未配置");
     return { appId, secret };
   }
 
@@ -290,7 +310,7 @@ export class WechatOpenWebAuthService {
       return parsed as Record<string, unknown>;
     } catch (error) {
       if (error instanceof ValidateException) throw error;
-      throw new ValidateException("微信开放平台服务暂时不可用，请重试");
+      throw new ServiceUnavailableException("微信开放平台服务暂时不可用，请重试");
     } finally {
       clearTimeout(timeout);
     }

@@ -3,16 +3,15 @@
  * 对应 PHP app/http/middleware/AllowOriginMiddleware.php
  */
 import { cors } from "hono/cors";
+import type { Env } from "@/env";
+import { isAllowedCorsOrigin } from "@/services/auth/TrustedAuthClient";
 
 /**
- * 允许跨域。origin 从配置读, 默认允许所有 (CRMEB 默认行为)。
- * 生产环境应在 wrangler.toml 配 ALLOWED_ORIGINS。
+ * 只反射精确允许的来源；生产环境没有 ALLOWED_ORIGINS 时不返回 ACAO。
+ * 非生产环境额外接受 localhost/127.0.0.1/[::1] 的 HTTP Origin。
  */
 export const corsMiddleware = cors({
-  origin: (origin) => {
-    // CRMEB 默认放行所有来源; 如需收紧, 在此处校验 origin 白名单
-    return origin ?? "*";
-  },
+  origin: (origin, c) => isAllowedCorsOrigin(origin, c.env as Env) ? origin : null,
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: [
     "Content-Type",

@@ -58,10 +58,12 @@ describe("API-005 legacy PC compatibility", () => {
     expect(routes).toContain('PcCompatibilityController.key');
     expect(routes).toContain('PcCompatibilityController.scan');
     expect(routes).toContain('PcCompatibilityController.wechatAuth');
+    expect(routes).toContain('post("/pc/key", PcCompatibilityController.key)');
     expect(routes).toContain('post("/pc/oauth_state", PcCompatibilityController.oauthState)');
-    expect(controller).toContain('create("pc_user", clientIp(c))');
+    expect(controller).toContain('allowlistedAuthRequest(c.req.raw, c.env, "pc_user")');
     expect(controller).toContain('c.req.header("X-Scan-Poll-Token")');
-    expect(controller).toContain('.createOauthState("pc_user", clientIp(c))');
+    expect(controller).toContain('.createOauthState("pc_user", clientIp(c), client.origin)');
+    expect(controller).toContain('oauthBrowserVerifier(c, "pc_user", state)');
     expect(controller).not.toContain('jsonRaw(c, 501');
   });
 

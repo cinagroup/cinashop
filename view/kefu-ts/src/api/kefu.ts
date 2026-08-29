@@ -3,6 +3,7 @@ import type {
   AttachmentUpload,
   ChatMessage,
   KefuIdentity,
+  KefuClientConfig,
   KefuOrderDetail,
   KefuOrderEditResult,
   KefuOrderSummary,
@@ -20,6 +21,8 @@ import type {
   KefuWriteoffInfo,
   KefuWriteoffResult,
   LoginResult,
+  KefuScanChallenge,
+  KefuScanPollResult,
   SessionPage,
   Speechcraft,
   SpeechcraftCategory,
@@ -35,6 +38,19 @@ export const kefuApi = {
     method: "POST",
     body: JSON.stringify({ account, password }),
   }),
+  config: () => apiRequest<KefuClientConfig>("/kefuapi/config"),
+  createScanChallenge: () => apiRequest<KefuScanChallenge>("/kefuapi/key", {
+    method: "POST",
+  }),
+  pollScanChallenge: (key: string, pollToken: string) =>
+    apiRequest<KefuScanPollResult>(`/kefuapi/scan/${encodeURIComponent(key)}`, {
+      headers: { "X-Scan-Poll-Token": pollToken },
+    }),
+  createOauthState: () => apiRequest<{ state: string; expires_in: number }>("/kefuapi/oauth_state", {
+    method: "POST",
+  }),
+  wechatLogin: (code: string, state: string) =>
+    apiRequest<LoginResult>(`/kefuapi/wechat${queryString({ code, state })}`),
   logout: () => apiRequest<null>("/kefuapi/user/logout", { method: "POST" }),
   info: () => apiRequest<KefuIdentity>("/kefuapi/service/info"),
   uploadImage: (file: File) => {

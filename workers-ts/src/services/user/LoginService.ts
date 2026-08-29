@@ -16,7 +16,11 @@ import { and, eq, or, sql } from "drizzle-orm";
 import { withTx, type Container } from "@/lib/di";
 import type { Env } from "@/env";
 import { user as userTable } from "@/models/schema";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import {
+  NotFoundException,
+  ServiceUnavailableException,
+  ValidateException,
+} from "@/utils/errors";
 import { createToken, md5 } from "@/utils/jwt";
 import { setTokenBucket, type TokenBucket } from "@/utils/cache";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
@@ -30,6 +34,12 @@ export class LoginService {
     private readonly container: Container,
     private readonly env: Env,
   ) {}
+
+  private requireTokenStoreConfig(): void {
+    if (!this.env.UPSTASH_REDIS_URL || !this.env.UPSTASH_REDIS_TOKEN) {
+      throw new ServiceUnavailableException("登录状态存储不可用");
+    }
+  }
 
   private async findUniquePhoneUser(phone: string) {
     const rows = await this.container.db.select({
@@ -48,12 +58,14 @@ export class LoginService {
     return rows[0] ?? null;
   }
 
-  private async issueToken(user: { uid: number; pwd: string }) {
+  private async issueToken(user: { uid: number; pwd: string }, issuedAtSeconds?: number) {
     const { token, exp } = await createToken(
       user.uid,
       "api",
-      user.pwd,
+      md5(user.pwd),
       this.env.APP_KEY,
+      "cinashop",
+      issuedAtSeconds,
     );
     const bucket: TokenBucket = {
       uid: user.uid,
@@ -62,7 +74,7 @@ export class LoginService {
       exp: exp - Math.floor(Date.now() / 1000) + 60,
     };
     const ok = await setTokenBucket(md5(token), bucket, this.env);
-    if (!ok) throw new Error("token 保存失败");
+    if (!ok) throw new ServiceUnavailableException("登录状态存储不可用");
     return { token, expires_time: exp };
   }
 
@@ -74,6 +86,7 @@ export class LoginService {
   async loginByVerifiedUid(
     uid: number,
     ip = "",
+    issuedAtSeconds?: number,
   ): Promise<{ token: string; expires_time: number }> {
     if (!Number.isSafeInteger(uid) || uid <= 0) {
       throw new ValidateException("登录身份无效");
@@ -81,7 +94,7 @@ export class LoginService {
     const user = await this.container.userDao.findForAuth(uid);
     if (!user) throw new ValidateException("登录身份不存在或已失效");
     if (!user.status) throw new ValidateException("已被禁止,请联系管理员");
-    const result = await this.issueToken(user);
+    const result = await this.issueToken(user, issuedAtSeconds);
     await this.container.userDao.touchLogin(uid, ip);
     return result;
   }
@@ -127,7 +140,7 @@ export class LoginService {
     }
 
     // 6. 创建 JWT (对应 PHP createToken(uid, 'api', $user->pwd))
-    //    auth claim = md5(pwd), 改密后旧 token 失效
+    //    PHP BaseServices 会再做一次 md5，因此 auth = md5(数据库中的 pwd 哈希)。
     const result = await this.issueToken(u);
 
     // 8. 更新登录信息并尝试永久绑定推广关系。无效邀请码不阻断登录。
@@ -155,6 +168,8 @@ export class LoginService {
     ip = "0.0.0.0",
     userType = "h5",
   ): Promise<{ token: string; expires_time: number }> {
+    // Fail before creating a user when bearer revocation storage is not even configured.
+    this.requireTokenStoreConfig();
     const c = this.container;
     const now = Math.floor(Date.now() / 1000);
     const registration = await new StoreNewcomerService(c, this.env).registrationState();
@@ -212,6 +227,8 @@ export class LoginService {
     ip: string,
     userType = "h5",
   ): Promise<{ token: string; expires_time: number }> {
+    // SMS login may create a user, so reject a known-broken token store first.
+    this.requireTokenStoreConfig();
     let current = await this.findUniquePhoneUser(phone);
     if (!current) {
       const now = Math.floor(Date.now() / 1000);

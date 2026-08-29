@@ -5,8 +5,9 @@ const SECRET = "crmeb_app_key";
 
 describe("jwt", () => {
   it("createToken → verifyToken 往返一致", async () => {
-    const pwdMd5 = md5("password123");
-    const { token, exp } = await createToken(42, "api", pwdMd5, SECRET);
+    const storedPasswordHash = md5("password123");
+    const authoritativeAuth = md5(storedPasswordHash);
+    const { token, exp } = await createToken(42, "api", authoritativeAuth, SECRET);
 
     expect(token.split(".")).toHaveLength(3);
     expect(exp).toBeGreaterThan(Math.floor(Date.now() / 1000));
@@ -14,7 +15,8 @@ describe("jwt", () => {
     const payload = await verifyToken(token, SECRET);
     expect(payload.id).toBe(42);
     expect(payload.type).toBe("api");
-    expect(payload.auth).toBe(pwdMd5);
+    expect(payload.auth).toBe(authoritativeAuth);
+    expect(payload.auth).not.toBe(storedPasswordHash);
   });
 
   it("签名错误抛异常", async () => {
@@ -30,7 +32,7 @@ describe("jwt", () => {
 
   it("默认密码识别 (md5('123456'))", () => {
     const defaultPwd = md5("123456");
-    // auth 中间件里: user.pwd !== md5('123456') 跳过 auth claim 校验
+    // 仅验证兼容哈希；鉴权中间件仍必须精确核对 JWT auth claim。
     expect(defaultPwd).toBe("e10adc3949ba59abbe56e057f20f883e");
   });
 });

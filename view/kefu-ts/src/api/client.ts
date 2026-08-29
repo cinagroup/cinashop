@@ -26,9 +26,9 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
   if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
-  const token = localStorage.getItem(KEFU_TOKEN_KEY);
+  const token = sessionStorage.getItem(KEFU_TOKEN_KEY);
   if (token) headers.set("Authori-zation", `Bearer ${token}`);
-  const response = await fetch(apiUrl(path), { ...init, headers });
+  const response = await fetch(apiUrl(path), { ...init, headers, credentials: "include" });
   let envelope: ApiEnvelope<T>;
   try {
     envelope = await response.json() as ApiEnvelope<T>;
@@ -37,6 +37,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
   if (!response.ok || envelope.status !== 200) {
     if (response.status === 401 || envelope.status === 401) {
+      sessionStorage.removeItem(KEFU_TOKEN_KEY);
+      sessionStorage.removeItem(KEFU_INFO_KEY);
       localStorage.removeItem(KEFU_TOKEN_KEY);
       localStorage.removeItem(KEFU_INFO_KEY);
       window.dispatchEvent(new Event("kefu-auth-expired"));

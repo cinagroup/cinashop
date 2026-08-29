@@ -19,7 +19,7 @@ export class ApiError extends Error {
 export const http = axios.create({
   baseURL:
     import.meta.env.VITE_API_BASE_URL ??
-    "https://cinashop-api.cinagroup.workers.dev/supplierapi",
+    "/supplierapi",
   timeout: 20_000,
 });
 

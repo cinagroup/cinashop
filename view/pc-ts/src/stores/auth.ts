@@ -47,15 +47,17 @@ export const useAuthStore = defineStore("auth", {
     },
 
     /** 退出登录 */
-    async logout(): Promise<void> {
+    async logout(): Promise<boolean> {
+      let serverRevoked = true;
       try {
         await apiLogout();
       } catch {
-        // 忽略退出失败
+        serverRevoked = false;
       }
       this.token = "";
       this.uid = 0;
       clearAuth();
+      return serverRevoked;
     },
   },
 });

@@ -90,7 +90,9 @@ describe("phone authentication migration", () => {
     ]) expect(routes).toContain(route);
     expect(controller).toContain("MAX_AUTH_BODY_BYTES = 4 * 1024");
     expect(controller).not.toContain("c.req.json(");
-    expect(controller).toContain("clearToken(md5(token), c.env)");
+    expect(controller).toContain("const key = md5(token)");
+    expect(controller).toContain("await clearToken(key, c.env)");
+    expect(controller).toContain("disconnectToken(key)");
     expect(controller).toContain('consumeUserCode("user_register"');
     expect(controller).toContain('consumeUserCode("user_login"');
     expect(controller).toContain('consumeUserCode("user_password_reset"');

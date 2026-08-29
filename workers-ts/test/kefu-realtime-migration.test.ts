@@ -94,6 +94,10 @@ describe("customer-service realtime migration", () => {
     );
     expect(durableObject).toContain("acceptWebSocket");
     expect(durableObject).toContain("serializeAttachment");
+    expect(durableObject).toContain("activeDeliverySession");
+    expect(durableObject.match(/await this\.activeDeliverySession\(socket, service\)/g)).toHaveLength(3);
+    expect(durableObject).toContain("await this.service().assertSession(session)");
+    expect(durableObject).toContain('socket.close(4001, "Session revoked")');
     expect(durableObject).not.toContain("global-v2");
     expect(durableObject).not.toContain("INTERNAL_API_URL");
     expect(durableObject).not.toContain("/internal/chat_save");

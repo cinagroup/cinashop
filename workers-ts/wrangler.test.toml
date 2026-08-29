@@ -13,6 +13,11 @@ APP_KEY = "runtime-test-app-key"
 UPSTASH_REDIS_URL = "https://runtime-test.invalid"
 UPSTASH_REDIS_TOKEN = "runtime-test-token"
 WECHAT_MCH_PRIVATE_KEY = "runtime-test-private-key"
+ALLOWED_ORIGINS = "https://runtime-test.invalid"
+AUTH_ALLOWED_ORIGINS = "https://runtime-test.invalid"
+PC_AUTH_ALLOWED_ORIGINS = "https://runtime-test.invalid"
+KEFU_AUTH_ALLOWED_ORIGINS = "https://runtime-test.invalid"
+WECHAT_OPEN_APP_SECRET = "runtime-test-open-secret"
 
 [[hyperdrive]]
 binding = "HYPERDRIVE"

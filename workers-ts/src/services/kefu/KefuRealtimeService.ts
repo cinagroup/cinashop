@@ -39,7 +39,10 @@ const CHAT_LOCK_NAMESPACE = 91310002;
 const MAX_CHAT_MESSAGE_LENGTH = 2_000;
 const MAX_CHAT_HISTORY_LIMIT = 100;
 
-type RealtimeEnv = Pick<Env, "UPSTASH_REDIS_URL" | "UPSTASH_REDIS_TOKEN" | "APP_KEY">;
+type RealtimeEnv = Pick<
+  Env,
+  "UPSTASH_REDIS_URL" | "UPSTASH_REDIS_TOKEN" | "APP_KEY"
+> & { NODE_ENV?: Env["NODE_ENV"] };
 
 export interface ChatSocketSession {
   principalUid: number;
@@ -171,7 +174,11 @@ function assertSessionShape(session: ChatSocketSession): void {
   }
 }
 
-async function assertDatabaseIdentity(db: DbClient, session: ChatSocketSession): Promise<void> {
+async function assertDatabaseIdentity(
+  db: DbClient,
+  session: ChatSocketSession,
+  allowLegacyUserAuth = false,
+): Promise<void> {
   if (session.role === 2) {
     const rows = await db
       .select({
@@ -180,12 +187,15 @@ async function assertDatabaseIdentity(db: DbClient, session: ChatSocketSession):
         password: storeService.password,
       })
       .from(storeService)
+      .innerJoin(userTable, eq(userTable.uid, storeService.uid))
       .where(and(
         eq(storeService.id, session.authId),
         eq(storeService.uid, session.principalUid),
         eq(storeService.isDel, 0),
         eq(storeService.status, 1),
         eq(storeService.accountStatus, 1),
+        eq(userTable.isDel, 0),
+        eq(userTable.status, 1),
       ))
       .limit(2);
     if (rows.length !== 1 || md5(rows[0].password) !== session.authVersion) {
@@ -228,7 +238,15 @@ async function assertDatabaseIdentity(db: DbClient, session: ChatSocketSession):
       ))
       .limit(1)
   )[0];
-  if (!user || (user.pwd !== md5("123456") && user.pwd !== session.authVersion)) {
+  // User JWTs follow PHP's md5(stored password hash) contract. The second
+  // comparison is a migration bridge for tokens issued by the earlier Worker;
+  // role=1 sessions may use the bridge only when this request proved that the
+  // exact md5(token) Redis bucket is active. It therefore expires with that
+  // bucket (at most 7 days + 60 seconds after the old issuer is retired).
+  if (!user || (
+    session.authVersion !== md5(user.pwd)
+    && !(allowLegacyUserAuth && session.authVersion === user.pwd)
+  )) {
     throw new AuthException("用户登录状态已失效");
   }
 }
@@ -568,30 +586,33 @@ export class KefuRealtimeService {
     private readonly env: RealtimeEnv,
   ) {}
 
-  private async assertSessionCredentials(session: ChatSocketSession): Promise<void> {
+  private async assertSessionCredentials(session: ChatSocketSession): Promise<boolean> {
     assertSessionShape(session);
     if (session.expiresAt <= Math.floor(Date.now() / 1000)) {
       throw new AuthException("聊天登录已过期");
     }
     const hasRedis = Boolean(this.env.UPSTASH_REDIS_URL && this.env.UPSTASH_REDIS_TOKEN);
-    if (hasRedis && session.role !== 3) {
+    let activeUserTokenBucket = false;
+    if (session.role !== 3) {
       const bucket = await getTokenBucket(session.tokenKey, this.env);
       const expectedType = session.role === 2 ? "kefu" : "api";
-      if (!bucket || bucket.type !== expectedType || Number(bucket.uid) !== session.authId) {
+      if (hasRedis && (!bucket || bucket.type !== expectedType || Number(bucket.uid) !== session.authId)) {
         throw new AuthException("聊天登录状态已失效");
       }
+      activeUserTokenBucket = session.role === 1 && hasRedis && !!bucket;
     }
+    return activeUserTokenBucket;
   }
 
   async assertSession(session: ChatSocketSession): Promise<void> {
-    await this.assertSessionCredentials(session);
-    await withTx(this.container, async (tx) => assertDatabaseIdentity(tx, session));
+    const allowLegacyUserAuth = await this.assertSessionCredentials(session);
+    await withTx(this.container, async (tx) => assertDatabaseIdentity(tx, session, allowLegacyUserAuth));
   }
 
   async setOnline(session: ChatSocketSession, online: boolean): Promise<void> {
-    await this.assertSessionCredentials(session);
+    const allowLegacyUserAuth = await this.assertSessionCredentials(session);
     await withTx(this.container, async (tx) => {
-      await assertDatabaseIdentity(tx, session);
+      await assertDatabaseIdentity(tx, session, allowLegacyUserAuth);
       if (session.role === 2) {
         await tx
           .update(storeService)
@@ -632,7 +653,7 @@ export class KefuRealtimeService {
     session: ChatSocketSession,
     input: { toUid: unknown; message: unknown; messageType: unknown },
   ): Promise<PersistedRealtimeMessage> {
-    await this.assertSessionCredentials(session);
+    const allowLegacyUserAuth = await this.assertSessionCredentials(session);
     const toUid = integer(input.toUid, "接收用户", { min: 1 });
     if (toUid !== session.toUid) throw new ValidateException("请先切换到目标会话");
     if (toUid === session.principalUid) throw new ValidateException("不能和自己聊天");
@@ -643,7 +664,7 @@ export class KefuRealtimeService {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
       await lockConversation(tx, session.role, session.principalUid, toUid, session.isTourist);
-      await assertDatabaseIdentity(tx, session);
+      await assertDatabaseIdentity(tx, session, allowLegacyUserAuth);
       await assertTarget(tx, session, toUid);
       await assertConversationAssignment(tx, session, toUid);
       const message = messageType === 3
@@ -735,12 +756,12 @@ export class KefuRealtimeService {
   }
 
   async switchConversation(session: ChatSocketSession, toUidValue: unknown): Promise<number> {
-    await this.assertSessionCredentials(session);
+    const allowLegacyUserAuth = await this.assertSessionCredentials(session);
     const toUid = integer(toUidValue, "会话用户", { min: 1 });
     if (toUid === session.principalUid) throw new ValidateException("不能和自己聊天");
     await withTx(this.container, async (tx) => {
       await lockConversation(tx, session.role, session.principalUid, toUid, session.isTourist);
-      await assertDatabaseIdentity(tx, session);
+      await assertDatabaseIdentity(tx, session, allowLegacyUserAuth);
       await assertTarget(tx, session, toUid);
       await assertConversationAssignment(tx, session, toUid);
       await tx

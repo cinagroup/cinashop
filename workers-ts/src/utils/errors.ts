@@ -63,3 +63,31 @@ export class RateLimitException extends ApiException {
     this.name = "RateLimitException";
   }
 }
+
+/** Security-boundary failures that must carry a real HTTP error status.
+ * Ordinary PHP-compatible validation errors intentionally retain their
+ * historical HTTP-200 envelope semantics. */
+export class HttpApiException extends ApiException {
+  constructor(
+    message: string,
+    code: number,
+    public readonly httpStatus: 400 | 403 | 409 | 503,
+  ) {
+    super(message, code);
+    this.name = "HttpApiException";
+  }
+}
+
+export class ForbiddenException extends HttpApiException {
+  constructor(message = "请求来源不受信任") {
+    super(message, 403, 403);
+    this.name = "ForbiddenException";
+  }
+}
+
+export class ServiceUnavailableException extends HttpApiException {
+  constructor(message = "登录服务暂时不可用，请稍后重试") {
+    super(message, 503, 503);
+    this.name = "ServiceUnavailableException";
+  }
+}

@@ -483,9 +483,9 @@ export class WechatAuthService {
     if (!user) throw new NotFoundException("用户创建失败");
     if (!user.status) throw new ValidateException("您已被禁止登录");
 
-    const { token, exp } = await createToken(uid, "api", user.pwd, this.env.APP_KEY);
+    const { token, exp } = await createToken(uid, "api", md5(user.pwd), this.env.APP_KEY);
     const stored = await setTokenBucket(
-      (await import("@/utils/jwt")).md5(token),
+      md5(token),
       { uid, type: "api", token, exp: exp - Math.floor(Date.now() / 1000) + 60 },
       this.env,
     );
@@ -1147,7 +1147,7 @@ export class WechatAuthService {
     const profile = profiles[0];
     if (!profile) throw new NotFoundException("用户不存在");
     const storeUserAvatar = Number.parseInt(storeUserAvatarValue, 10) || 0;
-    const { token, exp } = await createToken(uid, "api", user.pwd, this.env.APP_KEY);
+    const { token, exp } = await createToken(uid, "api", md5(user.pwd), this.env.APP_KEY);
     const stored = await setTokenBucket(
       md5(token),
       { uid, type: "api", token, exp: exp - Math.floor(Date.now() / 1000) + 60 },

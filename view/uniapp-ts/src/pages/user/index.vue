@@ -158,13 +158,22 @@ function goOperator() {
 }
 
 async function logout() {
+  let serverRevoked = true;
   try {
     await apiLogout();
   } catch {
-    // 本地凭据仍必须清理，避免退出接口异常把用户困在登录态。
+    serverRevoked = false;
   }
   authStore.clear();
-  uni.showToast({ title: "已退出登录", icon: "success" });
+  if (serverRevoked) {
+    uni.showToast({ title: "已退出登录", icon: "success" });
+  } else {
+    uni.showModal({
+      title: "本机已退出",
+      content: "服务器会话撤销未确认，旧会话可能持续到过期。如需立即失效，请修改密码或联系管理员。",
+      showCancel: false,
+    });
+  }
 }
 
 onShow(async () => {

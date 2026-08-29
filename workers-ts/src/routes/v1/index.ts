@@ -82,6 +82,7 @@ v1Routes.post("/user/binding", authMiddleware({ force: true }), LoginController.
 
 // ─── 旧 PC 商城登录面 ─────────────────────────────────────
 v1Routes.get("/pc/key", PcCompatibilityController.key);
+v1Routes.post("/pc/key", PcCompatibilityController.key);
 v1Routes.get("/pc/scan/:key", PcCompatibilityController.scan);
 v1Routes.get("/pc/get_appid", PcCompatibilityController.getAppid);
 v1Routes.post("/pc/oauth_state", PcCompatibilityController.oauthState);

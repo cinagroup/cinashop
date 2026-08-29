@@ -74,6 +74,12 @@
       }
     },
     {
+      "path": "pages/auth/scanLogin",
+      "style": {
+        "navigationBarTitleText": "确认扫码登录"
+      }
+    },
+    {
       "path": "pages/user/changePassword",
       "style": {
         "navigationBarTitleText": "修改密码"

@@ -9,11 +9,11 @@
 | 维度 | 当前证据 | 判定 |
 |---|---:|---|
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
-| 仓库目标结构 | 外部 SQL 223 表；Worker 内嵌 223 表；表/列/主键漂移 0 | 完成 |
-| 生产目标结构 | 223/223 表；缺失 0、额外 0；系统配置查询索引已补齐 | 完成 |
-| PHP HTTP 合同 | 精确匹配 693/1,904；其中 18 条明确不可用；4 条有证据退役 | 精确注册 36.4%，静态可执行上限 35.5%，退役后有效上限 35.5% |
+| 仓库目标结构 | 外部 SQL 224 表；Worker 内嵌 224 表；表/列/主键漂移 0 | 完成 |
+| 生产目标结构 | 224/224 表；缺失 0、额外 0；系统配置查询索引和游客会话表已补齐 | 完成 |
+| PHP HTTP 合同 | 精确匹配 697/1,904；其中 18 条明确不可用；4 条有证据退役 | 精确注册 36.6%，静态可执行上限 35.7%，退役后有效上限 35.7% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 133 文件、778 项通过 | 本地业务回归通过 |
+| Worker 单元测试 | 135 文件、787 项通过 | 本地业务回归通过 |
 | Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
 | CI | 仓库没有 `.github/workflows` | 未建立 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
@@ -25,19 +25,19 @@
 
 | 面 | PHP | Workers | 精确匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 原始/有效可执行上限 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 705 | 315 | 3 | 142 | 1 | 141 | 68.3% / 68.4% |
+| `/api` | 457 | 706 | 315 | 3 | 142 | 1 | 141 | 68.3% / 68.4% |
 | `/adminapi` | 1,153 | 470 | 202 | 15 | 951 | 0 | 951 | 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% |
-| `/kefuapi` | 63 | 60 | 56 | 0 | 7 | 3 | 4 | 88.9% / 93.3% |
+| `/kefuapi` | 63 | 66 | 60 | 0 | 3 | 3 | 0 | 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% |
-| 合计 | 1,904 | 1,388 | 693 | 18 | 1,211 | 4 | 1,207 | 35.5% / 35.5% |
+| 合计 | 1,904 | 1,395 | 697 | 18 | 1,207 | 4 | 1,203 | 35.7% / 35.7% |
 
-API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 签发端点是安全扩展，不进入 PHP 匹配分子。客服本批又恢复游客广告、反馈配置/提交、公开商品和只读面单模板 5 条合同；`ticket/[:appid]` 因 PHP 控制器根本没有目标方法且无第一方调用而带证据退役。当前客服只剩 4 条需要签名访客会话的身份型合同；逐路由清单以 `audit:routes` JSON 为准。
+API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
 ### 生产数据库事实
 
-- PostgreSQL 16.14；应用短视频兼容扩展和系统配置查询索引 DDL 后，生产 `public` 当前 223 表、3,088 列、722 索引、210 主键。
+- PostgreSQL 16.14；应用短视频兼容扩展、系统配置查询索引和游客会话 DDL 后，生产 `public` 当前 224 表、3,099 列、727 索引、211 主键。
 - `order_print_job`、`order_print_job_action`、`order_waybill_job`、`order_waybill_job_action` 已创建且行数为 0。
 - `out_product_write_replay`、`out_coupon_write_replay` 均为 8 列，`out_user_write_replay` 为 9 列；三表都是 4 约束、3 索引且当前 0 行。新增 `store_order_product_coupon_reward` 为 7 列、4 索引、2 约束、0 行；有效手机号、Out 余额流水、Out 积分流水三个唯一索引均有效，仓库 223 表清单与生产集合差均为空。
 - 商品 71、订单 29、订单明细 28、售后 3；客服账号 0、会话 0，但客服消息历史 3。
@@ -51,7 +51,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - API-004-PROMO 只读复核确认促销主表/辅助表均为 0，父规则、子规则、五类范围、券/赠品/SKU 孤儿也均为 0；71 个可售平台商品存在，但品牌/标签关系为 0。真实三类合同返回兼容空结构；随机 schema 对全场、指定、排除、品牌、标签范围、折扣截断、边框/背景、阶梯规则、积分/券/赠品 SKU、登录态凑单及失效门禁共 12/12 通过，`public_state_unchanged=true`、临时 schema `0→0`。隔离审计同时发现并修复商品 DAO 的 `ids` 过去只排序不筛选、会把显式范围扩散为全目录的问题；生产仍需从源 MySQL 复制促销规则及范围后重审。
 - API-004-HOME 只读复核确认可见根分类 6、可见二级分类 18，孤儿父级和自指均为 0；71 个可售商品的旧 `is_hot/is_benefit/is_best/is_new` 标记全为 0，权威 `type=3/relation_id=1..4` 首页推荐关系也全为 0。六个首页配置只有 `site_name` 存在，微信身份仍为 0；真实匿名/登录首页返回精确六字段空商品结构，匿名首页关注为 true、登录关注为 false。随机 schema 的精确根/子形状、二级分类、四类推荐、品牌/标签、预售四态、v1/v2 匿名差异与公众号身份选择共 12/12 通过，`public_state_unchanged=true`、临时 schema `0→0`；同时恢复旧 UniApp 实际调用的 v1 `subscribe`。
 - API-005-PC 只读复核确认 71 个可售商品、6 个可见根分类，但 active 分类关系、PC banner 和城市均为 0；17 个 PC 候选配置只存在 `record_No/site_name/site_url` 3 个。生产还有开放购物车 2、可见订单 28、可见售后 3、商品收藏 1，但余额流水 0。真实公开合同返回商品 `count=71/page=5`，其余内容空集与当前数据一致。随机 schema 对三级 `cid/sid/tid`、分类首页、banner/公司/城市、有效/失效购物车、余额、订单/收藏/售后 UID 作用域、推荐/优品及付费会员二维码共 15/15 通过，`public_state_unchanged=true`、临时 schema `0→0`，审计 Worker 已删除且 URL 返回 404。
-- CORE-004-PC-KEFU 生产只读复核确认用户 3/活跃 3，`wechat_user=0`、`store_service=0`，旧 `user.uniqid/store_service.uniqid` 扫码键均为 0；所有孤儿、多用户 unionid、多客服绑定指标也为 0，但空表不能作为真实登录 E2E 证据。`wechat_open_app_id`、`wechat_open_app_secret` 均无配置行，故开放平台 OAuth 当前必然安全失败。为精确配置读取新增 `system_config_lookup(is_store,menu_name,sort DESC,id DESC)`，生产短事务连续执行两次均保持 48 行及结构指纹 `796fd6f63ee478c5c919afc9140b235a`，无 DML、无配置值返回；临时 Worker 删除后 404，主 Worker版本未变。
+- CORE-004-PC-KEFU 最新生产只读复核确认用户 3/活跃 3，`wechat_user=0`、`store_service=0`，旧 `user.uniqid/store_service.uniqid` 扫码键均为 0，`codex_%` 临时 schema 为 0；所有孤儿、多用户 unionid、多客服绑定指标也为 0，但空表不能作为真实登录 E2E 证据。`wechat_open_app_id` 和历史数据库键 `wechat_open_app_secret` 均无配置行；运行时 AppSecret 已改为只接受 `WECHAT_OPEN_APP_SECRET` Worker Secret，不会回退数据库。`system_config_lookup` 及身份索引均存在；专用只读 Worker 已删除，主 Worker版本未变。
+- JWT 的 HS256/`APP_KEY`/`jti` 与普通用户 `auth=md5(user.pwd)` 已恢复 PHP 合同，但会话 bucket 尚不跨运行时互通：PHP 使用可配置前缀的 `md5(token)` + PHP serialize，Worker 使用 `tb_<md5(token)>` + JSON/Upstash。正式切换必须选择全量鉴权切流并强制重新登录，或先完成双读/迁移桥；混合鉴权流量当前为 P1 阻断，不能把 JWT 可验证误写成旧会话无感兼容。
 - KEFU-TOURIST 只读复核确认公开商品 71/71、客服账号/会话/反馈/游客记录均为 0，客服日志 3 条但游客日志 0；`kf_adv`、`service_feedback`、`tourist_avatar` 和全部 `config_export_*` 均为 0 行。审计只返回计数、布尔存在性、索引和结构指纹，不返回配置值或 PII，不执行 DML/DDL。临时 Worker `e7e190c3-4454-4371-8cd0-d632fdcc23b2` 已删除且 URL 404，主 Worker仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef`。
 - API-006-ACTIVITY 只读复核确认秒杀/时段 `1/3`、拼团/团记录 `1/2`、砍价/参与/帮砍 `1/4/0`，活动订单 7、已支付 3。`routine_lovely`、`combination_banner` 内容和小程序 AppID/Secret、秒杀 banner、砍价订阅配置均缺失。短视频的 `video/video_comment` 两表生产完全不存在，`store_newcomer=0`；因此 marketing 13 条不能只补路由。随机 schema 的配置/banner、H5/小程序码、拼团/砍价海报、归属拒绝、分享原子计数、旧列表字段、`bargainId` 取消及两个部分索引共 14/14 通过，`public_state_unchanged=true`、临时 schema `0→0`。两个生产索引执行两遍幂等，11 组业务指纹不变；临时 Worker 已删除且 URL 返回 404。
 - API-006-MARKETING-NEWCOMER 只读复核确认 `store_newcomer=0`，13 个前台新人配置全部缺失；生产真实 service 的列表/info/gift 均返回与当前关闭配置一致的安全空结构。随机 schema 对倒序/可见性、资格过期/已使用、`productValue[suk]`、基础 SKU 实时库存、可选属性、详情元数据/评价/配置、PHP 顶级订单已购数及 info/gift 差异共 10/10 通过；16 张 `public` 表指纹不变、临时 schema `0→0`，临时 Worker 删除且 URL 返回 404。生产已有三个 `store_newcomer` 索引，无需 DDL。
@@ -64,7 +65,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 - 已存在并匹配仓库配置：Hyperdrive、`cinashop-api-CONFIG_KV`、`cinashop-assets` R2、`cinashop-order`、`cinashop-order-dlq`、`cinashop-order-dlq-unarchived`。
 - 主 Worker 当前只有 6 个 Secret 名：`APP_KEY`、`DEBUG`、`INTERNAL_CHAT_TOKEN`、`OPERATIONS_TOKEN`、`UPSTASH_REDIS_URL`、`UPSTASH_REDIS_TOKEN`。
-- 支付、短信、Turnstile、电子面单所需 Secret 当前未配置；即使代码存在也不能投入生产。
+- 支付、短信、Turnstile、电子面单和 `WECHAT_OPEN_APP_SECRET` 当前未配置；即使代码存在也不能投入生产。
 
 ## 执行规则
 
@@ -77,7 +78,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## P0：生产结构与真实数据
 
-- [x] **AUD-001 可重复路由审计器**：`workers-ts/scripts/route-parity-audit.ts` 与 `npm run audit:routes` 当前验收为 Kefu 63/48、Out 41/41、ERP 8/0；新增有证据退役清单并同时输出原始缺失、退役和可执行缺口，清单漂移、重复或与 TS 注册冲突时直接失败。PHP 注释遮蔽修复排除了 8 条已经注释的伪合同：API 点赞 2、会员任务 1，Admin 文件读写 3，Supplier 核销 2。
+- [x] **AUD-001 可重复路由审计器**：`workers-ts/scripts/route-parity-audit.ts` 与 `npm run audit:routes` 当前验收为 Kefu 60/63 可执行、3 条退役且 `actionableMissing=0`，Out 41/41、ERP 8/0；有证据退役清单同时输出原始缺失、退役和可执行缺口，清单漂移、重复或与 TS 注册冲突时直接失败。PHP 注释遮蔽修复排除了 8 条已经注释的伪合同：API 点赞 2、会员任务 1，Admin 文件读写 3，Supplier 核销 2。
 - [x] **AUD-002 生产只读目录审计**：通过一次性认证 Worker 读取表名、目录计数、迁移控制和非敏感业务计数；三次临时 Worker 均已删除，生产无写入。
 - [x] **DB-001 创建小票任务账本表**：已应用外部 `0090_print_job_outbox.sql`（Worker 内嵌 `migration_0097`），创建 `order_print_job` 与 `order_print_job_action`；二次执行只返回 `already exists, skipping`，六张业务表指纹不变。生产引擎随机 schema 场景确认自动/手工幂等、租户隔离、Queue 脱敏、并发单次调用、UNKNOWN 不盲重试与三类人工处置全部通过，临时 schema/Worker 已删除。
 - [x] **DB-002 创建电子面单任务账本表**：已应用外部 `0091_electronic_waybill_outbox.sql`（Worker 内嵌 `migration_0098`），创建 `order_waybill_job` 与 `order_waybill_job_action`；二次执行幂等，六张业务表指纹不变，最终四张任务表均为空。生产引擎随机 schema 场景确认请求重放、根单活跃任务、租户隔离、Queue 脱敏、提供商未知/拒绝/本地失败、人工处置与履约精确一次全部通过。
@@ -95,14 +96,16 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **CORE-001 支付/业务回调**：迁移并验签 `ANY /api/pay/notify/:type`、`order_call_back`、微信/小程序/企业微信/同城配送回调；要求重放保护、事件账本、乱序处理和对账任务。
 - [x] **CORE-002 客服资金退款**：已补齐认证 `PUT /kefuapi/refund/refund/:id`，只接受同意动作；提交金额必须等于售后权威金额，历史部分退款失败关闭，完成重放收敛。核心退款 scope 绑定 store/supplier/customer/refund/order/金额/已退金额，并在退款锁前通过授权回调锁定客服会话，转接立即撤权。正式 Hyperdrive 随机 schema 重跑完整退款状态机，金额错配、余额/积分/渠道账本、累计并发、补偿、回调/主动对账既有门禁继续通过；客服专项的金额篡改、单次入账、重复提交、部分历史和转接撤权全部通过，`public_state_unchanged=true`。生产支付 Secret 仍未配置，代码完成不代表渠道已启用。
 - [x] **CORE-003 对外 API 资金与用户写入**：退款、分类、实物商品、优惠券和用户三条写入均已在逐路由 ACL、HMAC 脱敏访问审计和幂等状态机下恢复；余额/积分写入与不可变流水同事务，用户新增/资料/等级/标签/推广关系也不再部分提交。每条接口仍必须绑定独立权限 ID，不得因导入目录而自动开放；生产当前没有 Out 账户/接口目录，代码完成不代表真实客户已启用。
-- [ ] **CORE-004 认证入口合同（用户端、PC 与客服核心代码及生产只读审计已收口）**：旧 `GET /api/verify_code` 现必须显式带手机号和用途并创建真实 Turnstile 挑战；AJCaptcha、AJCheck 和图片验证码别名明确返回 410，不提供固定成功。短信与微信身份按独立 purpose、来源网络、频率和一次性消费执行，所有微信响应读取有 8 秒/32 KiB 上限。PC/客服扫码改为 Durable Object 的 `pending→scanned→approved→consumed` 挑战：二维码公钥与浏览器私有 poll secret 分离、扫码主体和 audience 固定、批准必须同一用户、成功仅可消费一次；不再读写 PHP 的 `uniqid`。PC/客服开放平台 OAuth 都使用服务端一次性 state 和 code 重放保护；客服绝不自动创建账号，必须唯一映射到启用用户与唯一启用客服。本项仍不勾选：生产没有 Turnstile、阿里云短信、短信模板或任何微信开放平台/公众号/小程序凭据，也没有微信身份或客服账号样本；旧 UniApp、旧 Nuxt PC、新 `pc-ts/kefu-ts` 尚未接入新挑战，真实短信/微信/前端/预发/发布 E2E 均未完成。
-- [ ] **CORE-005 默认管理员与 Token 兼容**：确认生产无历史默认密码，轮换管理员密码；验证 `APP_KEY` 与旧 PHP token 兼容策略，记录切换/失效时间。
+- [ ] **CORE-004 认证入口合同（本地安全闭环已完成，生产闭环未完成）**：旧 `GET /api/verify_code` 现必须显式带手机号和用途并创建真实 Turnstile 挑战；AJCaptcha、AJCheck 和图片验证码别名明确返回 410。短信与微信身份按独立 purpose、频率和一次性消费执行，provider 响应限制 8 秒/32 KiB。
+  - [x] **扫码/OAuth 本地安全闭环**：PC/客服挑战使用 `pending→scanned→approved→issuing→delivered`，二维码公钥与私有 poll secret 分离，扫码主体/audience/白名单浏览器来源/请求站点/粗粒度设备固定，批准必须同一用户；这些 Origin/UA 字段只供人工核对，不是客户端证明。固定签发时间、租约和 delivered 持久化保证响应丢失后重试交付同一 token。CORS 只反射精确 allowlist，OAuth verifier 使用按 audience+state 隔离的 `__Host-*` HttpOnly/Secure/SameSite=Lax Cookie，AppSecret 只接受 `WECHAT_OPEN_APP_SECRET`。用户 JWT 已恢复 PHP 的 `auth=md5(user.pwd)`，旧 Worker 单层 claim 只在精确 `tb_` bucket 活跃时最多兼容 7 天+60 秒；默认密码不再跳过。生产 bucket 读/写/删异常均真实 503，HTTP、心跳及三类 WebSocket 下行会复核 bucket/期限/数据库身份，注销主动断开；注销删除失败时四端清本地但明确提示服务端撤销未确认。PC/Kefu 使用 per-tab `sessionStorage` 并初始化清除旧 `localStorage`；PC、Kefu 与 UniApp 确认页已接入并通过桌面/390×844 受控浏览器回归。
+  - [ ] **生产认证闭环（BLOCKED：需切换策略、凭据、数据与发布批准）**：先明确全量切流强制重新登录，或实现 PHP/Worker bucket 双读/迁移桥；配置开放平台 `wechat_open_app_id`、`WECHAT_OPEN_APP_SECRET`、Kefu 精确生产 Origin和同源 Pages proxy，迁移微信身份与客服账号；补 Turnstile/边缘证明、异常挑战预算及二维码中继风险评估，再完成真实短信/微信、真实账号、真机、Linux runtime、预发、影子流量、明确发布和发布后观察。生产当前没有 Turnstile、阿里云短信、短信模板或微信开放平台/公众号/小程序凭据，也没有微信身份或客服账号样本。
+- [ ] **CORE-005 默认管理员与 Token 切换**：确认生产无历史默认密码并轮换管理员密码；核对生产 `APP_KEY`。代码已恢复 PHP JWT auth 摘要，并以精确 `tb_` bucket 为旧 Worker token 提供最长 7 天+60 秒过渡，但 PHP 与 Worker bucket 格式不兼容；必须记录旧签发器停用时间、强制重新登录/迁移桥方案、兼容分支删除时间，并禁止未经验证的鉴权流量回退。
 
 ## P1：用户端 `/api` 路由批次
 
 - [x] **API-001 公共首页与商品发现**：新增 17 条 PHP 精确 GET 合同，覆盖导航、首页、个人中心菜单/摘要、品牌、搜索筛选/推荐、三类排行、详情推荐/活动/正文/可选类型、首页推荐、热门、预售和评价回复；`/products` 恢复精确 `count`，详情同时保留 TS 平铺字段与 PHP `storeInfo/productValue`，评价恢复 PHP 六字段统计并保留现 TS 别名。组合配置、品牌/标签和用户态采用批量查询，分页上限 100；生产 `public` 只读事务以 71 个真实商品验证分页和排行，随机 schema 12 项断言验证非空推荐/品牌/标签/导航/描述/预售/评价分档后删除。生产推荐/内容/活动空集已明确归因 DATA-001～006，不能把代码完成解释为源数据已迁移或线上已发布。
 - [ ] **API-002 订单与售后 19 条缺口（核心代码与生产隔离验证已收口）**：原 19 项中，`POST /order/comment` 已在 API-001 前完成；本批新增 16 条精确合同，覆盖配送能力、确认单、金额预览、订单统计/奖励/核销记录/评价商品/门店收银、退款原因/商品摘要/兼容申请/退货物流/再次申请/终态删除，以及五分钟不透明键的支付宝兼容入口。`GET /order/nopay` 的 PHP 控制器方法不存在且无一方调用，已带源行证据退役；`ANY /order_call_back` 转入 CORE-001，禁止复制旧 AES 解密后无签名、无重放账本的写状态逻辑。确认与计算接口现在和正式建单共用权威报价路径：普通等级价、有效 SVIP 商品价、优惠券、首单、服务端积分上限、冻结积分排除、固定/模板运费、满额/线下包邮及 SVIP 运费权益不再由展示端另算；`useIntegral` 恢复为 PHP 布尔开关，客户端不能指定扣减点数。支付后商品赠券按模板去重、库存与用户券同事务，并通过订单归属账本阻断重放；`/order/prize` 从持久证据读取，不再依赖两小时缓存。用户售后按 `refund_time_available` 和最后收货状态执行含边界的期限校验，自动退款不受用户申请期限阻断。生产 Hyperdrive 随机 schema 验证报价 `20.00→16.00`、券 `3.00`、积分 `2.00/200`、运费 `5.00→2.50`、实付 `13.50` 与落单完全一致；同模板双商品并发发券结果为 `0/1`、库存只减 1、账本/奖品各 1；过期用户申请拒绝、自动退款放行、未收货申请放行。既有并发/超卖/支付取消/退款补偿场景继续通过，全部 `schema_removed=true/public_state_unchanged=true`。本项仍不勾选：生产商品赠券关系、退款理由、门店、核销和配送样本为空；促销叠加属于 API-006 尚未迁移；旧 PC/UniApp 与新五端浏览器 E2E、预发和正式发布均未完成。
-- [ ] **API-003 用户中心 13 条精确路由（核心代码与生产隔离验证已收口）**：审计确认“13”是 PHP `/api/user*` 的精确未匹配路由，不是地址、收藏、账单等 13 个业务域；这些域多数早已有实现。本批补齐会员检测/激活表单、活动状态、客服会话摘要、个人中心、安全自资料、付款随机码、分享记录/口令、小程序推广码和推广海报。会员激活不再接受客户端 `levelId`，配置门禁、资料白名单、积分/余额/券奖励与等级检测均在用户行锁和同一事务内，并写不可变流水；个人中心不复制 PHP 的 GET 生成条码/自动晋升副作用，也不返回密码摘要、账号、登录随机值、IP、缓存清理时间或客服扫码键。分享使用用户行锁和账单证据实现 300 秒冷却；付款码由 Web Crypto 生成并以 Redis `SET NX EX` 原子竞争，在强一致 Redis 中缓存 600 秒，并发请求复用同一个赢家码。旧 `GET/POST /user/code` 已改接 CORE-004 Durable Object 挑战：GET 由已认证用户扫码并绑定主体，POST 只允许同一用户批准；不再接受任意缓存键置 `0`。生产 `public` 在单一 `READ ONLY` 事务中完成活动、自资料、个人中心、推广海报、客服会话摘要和分享口令 6 类结构/敏感字段断言，返回 108 个个人中心键、当前会话摘要 0 条；随机 schema 的会员 7 项奖励/等级断言、重复激活拒绝、分享只写 1 条证据、重复分享拒绝和 6 位码复用均通过。生产仅有 `member_func_status=1`，其余激活表单/奖励配置缺失，因此真实会员激活当前不会开启。一次审计夹具因 Hyperdrive 未保留启动级 `search_path` 误入 `public`，已按固定 ID/标签在事务内精确删除；最终 9 类标记均为 0、临时 schema 前后均为空，后续所有播种强制使用 `SET LOCAL search_path`。本项仍不勾选：付款码尚无 TS 收银消费端，扫码确认前端尚未接入，微信小程序真实凭据/码生成、旧 PC/UniApp 与五端 E2E、预发和正式发布均未完成。
+- [ ] **API-003 用户中心 13 条精确路由（核心代码与生产隔离验证已收口）**：审计确认“13”是 PHP `/api/user*` 的精确未匹配路由，不是地址、收藏、账单等 13 个业务域；这些域多数早已有实现。本批补齐会员检测/激活表单、活动状态、客服扫码 GET/POST、客服会话摘要、个人中心、安全自资料、付款随机码、分享记录/口令、小程序推广码和推广海报。会员激活不再接受客户端 `levelId`，配置门禁、资料白名单、积分/余额/券奖励与等级检测均在用户行锁和同一事务内，并写不可变流水；个人中心不复制 PHP 的 GET 生成条码/自动晋升副作用，也不返回密码摘要、账号、登录随机值、IP、缓存清理时间或客服扫码键。分享使用用户行锁和账单证据实现 300 秒冷却；付款码由 Web Crypto 生成并以 Redis `SET NX EX` 原子竞争，在强一致 Redis 中缓存 600 秒，并发请求复用同一个赢家码。旧 `GET/POST /user/code` 已改接 CORE-004 Durable Object 挑战：GET 由已认证用户扫码并绑定主体，POST 只允许同一用户批准或拒绝；不再接受任意缓存键置 `0`。UniApp 扫码确认页现已本地接入并显示请求目标/站点/设备，同时明确这些字段只供人工核对。生产 `public` 在单一 `READ ONLY` 事务中完成活动、自资料、个人中心、推广海报、客服会话摘要和分享口令 6 类结构/敏感字段断言，返回 108 个个人中心键、当前会话摘要 0 条；随机 schema 的会员 7 项奖励/等级断言、重复激活拒绝、分享只写 1 条证据、重复分享拒绝和 6 位码复用均通过。生产仅有 `member_func_status=1`，其余激活表单/奖励配置缺失，因此真实会员激活当前不会开启。一次审计夹具因 Hyperdrive 未保留启动级 `search_path` 误入 `public`，已按固定 ID/标签在事务内精确删除；最终 9 类标记均为 0、临时 schema 前后均为空，后续所有播种强制使用 `SET LOCAL search_path`。本项仍不勾选：付款码尚无 TS 收银消费端，生产扫码正向验收被微信/客服数据和凭据阻断；微信小程序真实凭据/码生成、旧 PC/UniApp 与五端 E2E、预发和正式发布均未完成。
 - [ ] **API-004 `/api/v2` 54→16 条缺口**：已审计旧 UniApp、`admin-ts`、`pc-ts`、`supplier-ts`、`uniapp-ts` 与 `kefu-ts`；新五端只有 UniApp 抽奖仍直接调用 v2，旧 UniApp 则广泛依赖登录、发票、购物车、DIY、优惠券、分销和评价合同。首批新增 15 条精确路由：搜索列表/清理、客服记录、发票 6、订单发票 3、分销等级 2、评价 1。发票列表/详情/默认值恢复旧端 snake_case 与分页/筛选，新增/编辑补齐手机号、税号和银行字段；单条详情修复 PHP 未按 UID 限定的越权读取，默认项和查重用用户级短事务锁串行化，旧 GET 删除只作为兼容入口且仍按 UID 限定。CART 批次再补重置、列表、SKU 属性和改数量 4 条，恢复 `productValue[suk]`、旧 snake_case/混合字段、批量列表和权威会员价，并用用户级 advisory lock、行锁、归属/状态/库存复核修复 PHP 的跨 UID cart ID 与负数量风险；旧 v1 `type=2 + number` 商品 ID 改数量合同也已恢复。DIY 批次再补 6 条公开配置/城市合同，保持无认证边界、PHP 两种 DIY 合并规则、配置默认值和直辖市重复段地址语义。COUPON 批次再补新人、今日和可领取 3 条只读合同，恢复迁移后 `type/coupon_type` 语义、UID 已领状态、商品/分类/品牌范围、排序、四类计数与 SVIP 弹窗门禁。USER 批次再补资料、微信刷新、三类资金列表和两条分销合同，所有列表按当前 UID 读取并隐藏孤儿历史。PROMO 批次再补活动商品、赠品信息和登录态凑单 3 条只读合同，以 active 平台父活动为权威并恢复五类商品范围、折扣、阶梯和赠品组合。HOME 批次再补紧凑首页和关注状态 2 条，并额外恢复真实旧端调用的 v1 关注合同；生产与随机 schema 证据详见下项。剩余清单：
   - [ ] **API-004-AUTH 16 条微信/小程序登录与绑定（精确路由和安全核心已收口）**：16 条 PHP v2 路径已全部精确注册，并新增 v1/v2 `POST wechat/oauth_state`。`auth_type→auth_login` 使用一次性小程序票据；手机号支持当前微信 `phone_code` 服务端核验和旧 `encryptedData/iv`，旧解密额外验证 watermark AppID；短信路径只消费 `user_social_binding` purpose；公众号 OAuth 必须消费服务端 state。provider code 以渠道摘要全局占用 10 分钟并按来源/渠道 30 次/分钟限流，临时身份、票据、state 和旧 session key 均一次性使用；社交合并在 advisory lock/事务下拒绝 openid、unionid、手机号冲突，响应只投影安全用户字段。生产只读审计为用户 3、活跃且无手机号 0、`wechat_user=0`、`sms_record=0`，所需七项配置全空且生产 Worker 缺微信/短信/Turnstile Secret。本项仍不勾选：没有真实凭据、非空社交样本、旧 UniApp 升级、真机/真实短信与微信、预发和正式发布证据；不得为兼容退回 PHP 的两小时 MD5 弱缓存或无 state OAuth。
   - [ ] **API-004-DIY 6 条公共配置/城市（核心代码和生产隔离验证已收口）**：`get_diy`、绑定开关、门店开关、换色、商品详情 DIY 和地址解析均已按 PHP 无认证边界注册；`diy → system_dise` 继续使用迁移 manifest 的显式改名，商品详情只接受旧默认键、分类 DIY 保留扩展键，城市最多解析 8 段并以精确名称和数字祖先路径查询，缺参数/未录入提示保持旧合同。生产只读确认 `system_dise=0`、`city_area=0`，8 个相关配置仅 `site_url` 存在且有 5 条历史重复，因此当前空 DIY、默认开关和无法解析城市是源数据未复制；随机 schema 的默认/命名 DIY、6 个配置、商品/分类合并、四级地址、重复直辖市段和缺失城市 10/10 通过，`public_state_unchanged=true`、临时 schema `0→0`。仍不勾选：需从源 MySQL 复制 DIY/城市/权威配置并解决 `site_url` 冲突，迁移媒体到私有 R2 后做旧 UniApp/真机/预发/发布 E2E。
@@ -111,7 +114,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [ ] **API-004-USER 5 条用户/分销（核心代码和生产隔离验证已收口）**：`user_update` 只接受旧 `userInfo` 的昵称、头像、性别、语言和地区白名单，在用户与微信身份行锁下同步当前活跃账户；`user/wechat` 从服务端 OAuth code 换取 openid，再读取公众号资料并只更新该 UID 已绑定的 active `wechat` 身份，不接受客户端指定 openid。`money_list/:type` 恢复 0 全部余额、1 支出、2 收入、3 佣金、4 提现、9 资金流和旧 snake_case/退款状态字段；所有分页上限 100、关联批量读取且保持资金只读。`agent_user_list/:type` 修复 PHP 忽略路径 type 导致已下单页签失效及 `%H:%m` 把月份当分钟两处错误，`agent_info` 只统计当前用户收入并以内连接过滤孤儿/停用用户轮播。生产与随机 schema 证据均通过。仍不勾选：生产没有微信身份/AppID/Secret、余额与资金流为空，7 条佣金、5 条提现、6 条充值、3 条退款全是用户孤儿，且分销协议为空；需完成源 MySQL 逐表对账、真实微信 OAuth/旧 UniApp/账号/预发/发布 E2E。
   - [ ] **API-004-PROMO 3 条促销（核心代码和生产隔离验证已收口）**：按 PHP 认证边界注册公开 `productList/:type`、公开 `give_info/:id` 与强制登录 `collect_order/product`；只读取 active、未删除、平台父规则，商品列表支持全场、指定、排除、品牌、标签五类范围及活动边框/背景，折扣按 PHP 两段 bcmath 截断，赠品信息批量读取券、商品与普通 SKU，凑单返回父/子阶梯。服务对分页、活动数和商品数设上限，并对失效活动失败关闭；隔离审计还修复统一商品搜索中 `ids` 只排序不筛选的范围扩散缺陷。生产促销/辅助数据为 0，随机 schema 12/12、公共指纹不变和清理均通过。仍不勾选：旧 UniApp 仅有前两条包装器且页面调用缺失，源 MySQL 规则/范围未复制，生产无真实活动、品牌/标签关系或赠品样本，订单促销叠加仍属 API-006，真实账号/旧端/预发/发布 E2E 未完成。
   - [ ] **API-004-HOME 2 条首页/关注状态（核心代码和生产隔离验证已收口）**：`v2/index` 只返回 `info/benefit/likeInfo/subscribe/tengxun_map_key/site_name`，不把 v1 banner 等扩展字段混入；快捷分类修正为 PHP 的可见 `pid>0` 二级分类，数量按 PHP 整数前缀并封顶 100，精品/新品/促销/热门沿用权威商品关系与会员可见性，预售状态恢复 0 非预售、1 未开始、2 进行中、3 已结束。`v2/subscribe` 只读取当前 UID 最新未删除公众号身份，匿名为 false；旧 UniApp 实际使用的 v1 `subscribe` 同步恢复，匿名为 true。三条响应均 `private, no-store`。生产内容区因四个数量配置、推荐关系和微信身份缺失而为空；随机 schema 12/12、公共指纹不变和清理均通过。仍不勾选：需从源 MySQL 复制并运营确认首页配置/推荐关系/微信身份，商品秒杀/砍价/拼团标签依赖 API-006，媒体/真实微信/旧端/预发/发布 E2E 未完成。
-- [ ] **API-005 `/api/pc` 22 条合同（核心代码与生产审计已收口）**：22 条现全部可执行；既有商品、分类、公司/城市、banner、推荐/优品、二维码及六条 UID 作用域用户合同保持不变。`GET key/scan/:key/wechat_auth` 已从 501 重建为一次性扫码和开放平台 OAuth，另提供 `POST /api/pc/oauth_state` 安全扩展；poll 必须携带二维码外的私有 `X-Scan-Poll-Token`，错误 audience 不能消费批准。生产 Hyperdrive 只读审计和索引 DDL 已验证。本项仍不勾选：active 分类关系、PC banner、城市和 14/17 既有候选配置未复制，开放平台 app id/secret 缺失，生产没有微信身份或客服样本；旧 Nuxt PC 的固定 state、注释扫码 UI和新 `pc-ts` 尚未升级，真实桌面/移动浏览器、预发和正式发布都未完成。
+- [ ] **API-005 `/api/pc` 22 条合同（核心代码、三端本地接入与生产审计已收口）**：22 条现全部可执行；既有商品、分类、公司/城市、banner、推荐/优品、二维码及六条 UID 作用域用户合同保持不变。`GET key/scan/:key/wechat_auth` 已从 501 重建为来源白名单、按 state 隔离的浏览器 verifier Cookie、可重试一次性交付的扫码/OAuth 合同，另提供 POST key 和 `POST /api/pc/oauth_state` 安全扩展；poll 必须携带二维码外的私有 `X-Scan-Poll-Token`，错误 audience 不能消费批准。新 PC、Kefu 和 UniApp 确认页已经本地接入并通过桌面/移动浏览器回归。本项仍不勾选：Origin/UA 与二维码中继不构成客户端证明，active 分类关系、PC banner、城市和 14/17 既有候选配置未复制，生产开放平台 AppID/Worker Secret 缺失，没有微信身份或客服样本；旧 Nuxt PC 仍需退流，真实微信/账号/真机、预发和正式发布都未完成。
 - [ ] **API-006 营销/活动主批次**：静态精确缺口原始清单为 marketing 13、bargain 4、combination 4、seckill 3；活动兼容子批次已将后三组 11 条收口，但整体仍受订单状态机、真实数据/配置、前端 E2E 和发布门禁限制。
   - [ ] **API-006-ACTIVITY 11 条秒杀/拼团/砍价精确缺口合同（新增端点核心代码、生产只读与隔离验证已收口）**：已精确补齐 `seckill/detail/:id/[:time]`、秒杀/拼团 `detail_code` 和 `code`、拼团 banner/海报、砍价 config/start-user/share/poster；二维码仅内存返回 data URL，不写公开附件，个性化码/海报强制登录并校验 UID 归属。砍价分享用短事务原子累加，列表恢复 `title/image/residue_price/pay_status/datatime`，取消同时接受旧客户端 `bargainId`。生产两个部分索引已幂等应用，隔离场景 14/14 通过。本项仍不勾选：早先已算静态匹配的秒杀/拼团/砍价 detail 响应仍比 PHP 简化，生产活动组内容和小程序凭据未迁移，未用真实用户 token/真实微信执行旧 UniApp、未验收预发/影子流量，且主 Worker 未发布。
   - [ ] **API-006-MARKETING 13 条短视频/新人活动**：新人 4 条与短视频 9 条的精确路径和核心合同均已收口；整体仍受源数据/运营配置、私有媒体、真实旧端 E2E 和发布门禁限制。
@@ -144,8 +147,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## P1：Kefu `/kefuapi`
 
-- [ ] **KEFU-001 扫码/微信登录（核心代码完成，外部验收未完成）**：`key`、`scan/:key`、`wechat` 已改为一次性挑战、OAuth state/code 重放保护和唯一账号绑定；`ticket/[:appid]` 的 PHP 目标方法不存在且无第一方调用，已带证据退役。仍缺开放平台凭据、非空客服/微信身份、前端接入和真实 E2E。
-- [ ] **KEFU-002 游客链路 8 条（4 条安全内容合同完成）**：已恢复 `adv`、反馈 GET/POST、公开 `product`；匿名反馈以 HMAC 来源做每 IP 5/小时和全局 300/小时强一致限流，公开商品强制未删/上架/审核。`tourist/user|order|chat|upload` 仍须先签发短期访客会话、限制订单/消息/对象作用域并让上传走隔离 R2，不能恢复 PHP 的可猜 9 位 ID 或任意客户端 UID/token。
+- [ ] **KEFU-001 扫码/微信登录（核心和前端本地接入完成，外部验收未完成）**：`key`、`scan/:key`、`wechat` 已改为浏览器来源白名单、按 state 隔离的 verifier Cookie、可重试一次性挑战、OAuth state/code 重放保护和唯一账号绑定；密码/扫码/OAuth 签发、HTTP 与 WebSocket 均要求客服未删除、业务/账号状态启用，并要求绑定用户存在且启用。Kefu 登录页及 UniApp 确认页已接入并通过桌面/移动受控回归。`ticket/[:appid]` 的 PHP 目标方法不存在且无第一方调用，已带证据退役。仍缺 Kefu 正式 Origin、同源 Pages proxy、开放平台凭据、非空客服/微信身份、反二维码中继风险处置和真实 E2E。
+- [ ] **KEFU-002 游客链路 8 条（安全拆分与客户端接入完成，生产 E2E 未完成）**：广告、反馈 GET/POST、公开商品、签名 visitor bootstrap、登录用户订单归属、游客聊天、隔离 R2 上传及游客 WebSocket 均已实现；24 小时 visitor audience、数据库 token 摘要/撤销、权威客服分配、独立 UID、`is_tourist` 未读/转接/实时隔离已通过随机 schema 与本地客户端验证。生产客服/会话/游客内容仍为空，必须迁移真实账号后验证 Hyperdrive、R2、WebSocket hibernation、过期/撤销、限流与转接。
 - [ ] **KEFU-003 面单模板与旧退款入口（核心代码完成，生产配置未完成）**：PHP `POST /order/refund` 指向不存在的 `Order::refund()`，已带控制器证据退役并指向表单 GET + 售后资金 PUT；认证 `GET /order/temp` 已恢复固定 HTTPS 一号通只读目录，带 10 秒超时、32 KiB 上限、固定路径和输入约束，与可重试签发账本分离。生产全部 `config_export_*` 和 `CRMEB_ONEPASS_*` Secret 名均缺失，所以当前明确未启用。
 - [x] **KEFU-004 退款同意与资金退款**：PHP `GET /refund/agree/:order_id` 同时存在 GET 写副作用、忽略 path 改读 query、状态日志 `oid` 错用退款 ID，已带证据退役；替代为认证幂等 `PUT /refund/agree/:id`，在客服归属锁后原子更新售后/原订单并只写一条正确订单日志。资金退款按 CORE-002 完成生产 PostgreSQL 隔离验收。
 - [ ] **KEFU-005 真实账号浏览器 E2E**：迁移至少一个有效客服账号后验证密码登录限流、WS hibernation、断线重连、上传/重签、转接三端通知、日限额、多会话、商品/订单/售后权限。
@@ -167,24 +170,24 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **CFG-003 微信支付/退款**：配置商户私钥、API v3 key、平台公钥/证书 ID、通知 URL；用测试商户覆盖支付、退款、重复/乱序通知和主动查询。
 - [ ] **CFG-004 支付宝**：配置 app/seller、私钥、公钥、通知/返回 URL；验证签名、重复通知、未知结果与对账。
 - [ ] **CFG-005 CRMEB 一号通**：配置 access/secret 与平台/供应商面单参数；验证签发、明确拒绝、断线未知、已有单号处置与禁止盲重试。
-- [ ] **CFG-006 微信公众号/小程序/企微**：逐能力配置 app/secret、token/AES、可信域名和回调；每项单独启用，不使用一个总开关掩盖缺失配置。
+- [ ] **CFG-006 微信公众号/小程序/开放平台/企微**：逐能力配置 app/secret、token/AES、微信侧授权域名和回调；开放平台 AppID 使用精确 `wechat_open_app_id`，AppSecret 只用 `WECHAT_OPEN_APP_SECRET`，PC/Kefu 必须分别配置精确 `PC_AUTH_ALLOWED_ORIGINS` / `KEFU_AUTH_ALLOWED_ORIGINS` 与同源 callback proxy，并验证 audience+state 隔离的 verifier Cookie。每项单独启用，不使用一个总开关掩盖缺失配置。
 - [ ] **CFG-007 打印与物流提供商**：迁移打印机凭据、物流 AppCode；验证脱敏、租户隔离、UNKNOWN 人工处置及 Queue/DLQ。
 
 ## P2：前端、测试与发布
 
 - [ ] **FE-001 Admin 页面补齐**：旧 Admin 378 个 Vue 页面组件，新 Admin TS 55；组件数不可直接当覆盖率，需按 ADM checklist 建页面/路由/API/E2E 映射并消灭当前业务入口的 501。
-- [ ] **FE-002 PC 对账**：旧 PC 30、新 PC TS 29 个页面组件；完成 22 条 `/api/pc` 合同、支付回跳、手机号安全验证和全订单生命周期 E2E。
-- [ ] **FE-003 UniApp 对账**：旧 250、新 54 个页面组件；按 `pages.json` 核对活动、社区、会员、分销、客服、门店、核销及各小程序平台条件编译。
-- [ ] **FE-004 Supplier 对账**：旧 41、新 13 个页面组件；完成订单/商品/售后/财务/打印/面单/附件真实流程与移动布局。
-- [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；除已通过的预览履约流外，必须用真实账号和生产兼容数据验证。
+- [ ] **FE-002 PC 对账**：旧 PC 30、新 PC TS 29 个页面组件；22 条 `/api/pc` 合同和扫码/OAuth 本地 UI闭环已完成。token/UID 已改为 per-tab `sessionStorage`，刷新保留、新标签页不共享且启动清除旧持久值；关闭标签页不等于服务端 logout。仍需支付回跳、手机号安全验证、旧 Nuxt退流和全订单生命周期真实 E2E。
+- [ ] **FE-003 UniApp 对账**：旧 250、新 55 个页面组件；扫码登录确认页已完成目标/Origin/设备核对和本地登录返回闭环，仍需按 `pages.json` 核对活动、社区、会员、分销、客服、门店、核销及各小程序平台条件编译。
+- [ ] **FE-004 Supplier 对账**：旧 41、新 13 个页面组件；浏览器 API 已改为同源 `/supplierapi`，新增 Pages Function 和 Vite proxy，不再默认直连 Worker，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署尚未验收。继续完成订单/商品/售后/财务/打印/面单/附件真实流程与移动布局。
+- [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
 - [ ] **TEST-001 Linux CI**：建立 GitHub Actions，锁定 Node/npm，运行 Worker 单元/类型/runtime、五端构建、Kefu 测试、schema drift、route audit 和 secret scan。
 - [ ] **TEST-002 Workers runtime**：在 Linux 或受支持主机让 `test:runtime` 真正进入断言；覆盖 Cron、Queue ack/retry/DLQ、KV、DO、WebSocket hibernation 和 R2。
 - [ ] **TEST-003 性能与可观测性**：为 Hyperdrive 慢查询、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单设置指标、结构化日志和告警阈值。
 - [ ] **REL-001 发布候选门禁**：所有 P0 完成，相关 P1 域完成；生成变更清单、DB 前置、Secret/资源检查、回滚版本和 smoke tests。
 - [ ] **REL-002 主 Worker 发布（BLOCKED：需明确批准）**：发布当前候选，确认版本流量 100%，执行健康/安全负向/关键只读和受控写 smoke test。
-- [ ] **REL-003 Pages 发布（BLOCKED：需明确批准）**：为 Admin、H5、PC、Supplier、Kefu 建立明确项目映射，先预览后正式；记录每个 deployment ID 与 Git SHA。
+- [ ] **REL-003 Pages 发布（BLOCKED：需明确批准）**：为 Admin、H5、PC、Supplier、Kefu 建立明确项目映射，逐项目核对同源 proxy、`WORKERS_API`、正式 Origin 与 `ALLOWED_ORIGINS`/PC/Kefu 专用 allowlist，先预览后正式；记录每个 deployment ID 与 Git SHA。
 - [ ] **REL-004 发布后观察与旧 PHP 下线**：至少观察登录/写入/支付/退款/Queue/Hyperdrive/R2/DO；完成流量切换、回滚演练、旧回调撤销和旧数据库只读封存后才能下线 PHP。
 
 ## 当前下一步
 
-`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；`API-002`、`API-003`、API-004-AUTH/CART/DIY/COUPON/USER/PROMO/HOME、API-005-PC、API-006 各子批、KEFU-001 核心、KEFU-002 四条安全内容合同与 KEFU-003 核心代码及生产审计/隔离验证已收口。当前仓库/生产结构清单为 223/223；短视频两表是 Worker 兼容扩展，不冒充 PHP 安装 SQL 的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,388、精确匹配 693、可执行匹配 675、明确不可用 18、证据化退役 4、可执行缺口 1,207；`/api` 为精确 315/457、可执行 312、不可用 3、可执行缺口 141，`/kefuapi` 为精确/可执行 56/63、可执行缺口 4、退役后有效上限 93.3%，Out 为 41/41；`/api/v2` 与 `/api/pc` 精确缺口均为 0。客服剩余四条都依赖先定义并接入签名访客会话，不允许用可猜 UID、API 用户 token 或公开上传绕过身份边界；生产又没有客服账号、游客内容配置、面单配置或一号通 Secret，故真实客服浏览器/访客/面单 E2E 仍被阻断。CHECKOUT-DATA 仍等待活动 SKU/限购来源和 4 个未支付历史单处置批准；短视频真实内容与 R2 媒体、真实用户 E2E、预发和正式发布仍未完成，正式发布仍需用户明确批准。
+`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；CORE-004 的扫码/OAuth本地安全闭环、API-005 三端登录接入、KEFU-001 核心/前端和 KEFU-002 安全游客协议已收口，但总项继续等待生产凭据、数据和发布。当前仓库/生产结构清单为 224/224；短视频两表和游客会话等 23 张表是 Worker 扩展，不冒充 PHP 安装 SQL 的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,395、精确匹配 697、可执行匹配 679、明确不可用 18、证据化退役 4、可执行缺口 1,203；`/api` 为精确 315/457、可执行 312、不可用 3、可执行缺口 141，`/kefuapi` 为精确/可执行 60/63、3 条退役、`actionableMissing=0`，Out 为 41/41；`/api/v2` 与 `/api/pc` 精确缺口均为 0。生产仍没有微信身份、客服账号、开放平台 AppID/Secret、游客内容/面单配置或源 MySQL，主 Worker/Pages也未发布当前代码。任何生产认证切换前，先完成 CORE-005 的“全量强制重新登录或 bucket 迁移桥”决策与演练。下一实现批按价值排序为 USER-CENTER-COMPAT 9 条、DIY-HOME-WIDGETS 8 条、PUBLIC-ARTICLE 7 条；先做 USER-CENTER-COMPAT，修复新 UniApp 默认地址的可复现错误并补齐签到/收藏兼容。CHECKOUT-DATA、真实支付/微信、Linux runtime、预发、影子流量和正式发布仍分别受其现有门禁约束，正式发布必须另行获得明确批准。

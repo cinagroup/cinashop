@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { DataAnalysis, Goods, List, Menu, Printer, RefreshLeft, Setting, SwitchButton, Tickets, Tools, Wallet } from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import { previewMode } from "@/api/supplier";
 
@@ -33,8 +34,11 @@ async function navigate(path: string) {
 
 async function signOut() {
   mobileOpen.value = false;
-  await auth.signOut();
+  const serverRevoked = await auth.signOut();
   await router.push("/login");
+  if (!serverRevoked) {
+    ElMessage.warning("本机已退出，但服务器会话撤销未确认；旧会话可能持续到过期，请联系管理员禁用账号或重置密码");
+  }
 }
 </script>
 

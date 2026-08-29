@@ -13,7 +13,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const preview = import.meta.env.DEV && to.query.preview === "1";
-  const authenticated = Boolean(localStorage.getItem(KEFU_TOKEN_KEY));
+  const authenticated = Boolean(sessionStorage.getItem(KEFU_TOKEN_KEY));
   if (to.path !== "/login" && !authenticated && !preview) {
     return { path: "/login", query: { redirect: to.fullPath } };
   }

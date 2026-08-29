@@ -56,6 +56,16 @@ export interface Env extends WorkerBindings {
   TURNSTILE_EXPECTED_HOSTNAMES?: string;
   /** Comma-separated Sign in with Apple client IDs (Service ID / bundle ID audiences). */
   APPLE_SIGN_IN_CLIENT_IDS?: string;
+  /** Browser origins allowed to read CORS responses. Exact origins, comma-separated. */
+  ALLOWED_ORIGINS?: string;
+  /** Legacy PC-only fallback for QR/OAuth bootstrap; prefer PC_AUTH_ALLOWED_ORIGINS. */
+  AUTH_ALLOWED_ORIGINS?: string;
+  /** Exact browser origins allowed to bootstrap PC-user QR/OAuth login. */
+  PC_AUTH_ALLOWED_ORIGINS?: string;
+  /** Exact browser origins allowed to bootstrap Kefu QR/OAuth login. No PC fallback. */
+  KEFU_AUTH_ALLOWED_ORIGINS?: string;
+  /** WeChat Open Platform AppSecret. Never store this in system_config. */
+  WECHAT_OPEN_APP_SECRET?: string;
   /** 开发运维接口专用 token; 通过 wrangler secret put 设置 */
   OPERATIONS_TOKEN?: string;
   /** 首次迁移时创建管理员所用账号；默认 admin，仅在账号不存在时创建 */

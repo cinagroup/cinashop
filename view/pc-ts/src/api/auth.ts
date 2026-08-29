@@ -20,6 +20,29 @@ export interface SmsChallenge {
   challenge_url: string;
 }
 
+export interface PcAppConfig {
+  appid: string;
+  version: string;
+}
+
+export interface ScanLoginChallenge {
+  key: string;
+  poll_token: string;
+  time: number;
+  expires_in: number;
+  audience: "pc_user";
+}
+
+export type ScanLoginPollResult =
+  | { status: 0 }
+  | { status: 1 | 2; audience: "pc_user"; expiresAt: number }
+  | { status: 3; token: string; exp_time: number };
+
+export interface OauthStateResult {
+  state: string;
+  expires_in: number;
+}
+
 /** 账号密码登录 (POST /api/login) */
 export function apiLogin(account: string, password: string): Promise<LoginResult> {
   return getData(
@@ -42,6 +65,36 @@ export function apiLogout(): Promise<null> {
 /** 创建绑定手机号和用途的人机验证挑战。 */
 export function apiVerifyCode(phone: string, type: UserSmsType): Promise<SmsChallenge> {
   return getData(request.post<SmsChallenge>("/verify_code", { phone, type }));
+}
+
+/** Public WeChat Open Platform AppID. The secret never reaches the browser. */
+export function apiPcAppConfig(): Promise<PcAppConfig> {
+  return getData(request.get<PcAppConfig>("/pc/get_appid"));
+}
+
+/** New clients use POST so browsers always attach an Origin header. */
+export function apiCreatePcScanChallenge(): Promise<ScanLoginChallenge> {
+  return getData(request.post<ScanLoginChallenge>("/pc/key"));
+}
+
+export function apiPollPcScanChallenge(
+  key: string,
+  pollToken: string,
+): Promise<ScanLoginPollResult> {
+  return getData(request.get<ScanLoginPollResult>(`/pc/scan/${encodeURIComponent(key)}`, {
+    headers: { "X-Scan-Poll-Token": pollToken },
+  }));
+}
+
+/** Sets an HttpOnly browser verifier cookie and returns only the public state. */
+export function apiCreatePcOauthState(): Promise<OauthStateResult> {
+  return getData(request.post<OauthStateResult>("/pc/oauth_state"));
+}
+
+export function apiPcWechatAuth(code: string, state: string): Promise<{ token: string; exp_time: number }> {
+  return getData(request.get<{ token: string; exp_time: number }>("/pc/wechat_auth", {
+    params: { code, state },
+  }));
 }
 
 /** 服务端状态确认，防止客户端仅凭 postMessage 绕过验证。 */

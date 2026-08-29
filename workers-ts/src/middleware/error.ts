@@ -5,7 +5,7 @@
  * 放在 Hono app.onError。
  */
 import type { Context } from "hono";
-import { ApiException, RateLimitException } from "@/utils/errors";
+import { ApiException, HttpApiException, RateLimitException } from "@/utils/errors";
 import { jsonRaw } from "@/utils/json";
 
 export function errorHandler(err: Error, c: Context) {
@@ -13,6 +13,13 @@ export function errorHandler(err: Error, c: Context) {
     c.header("Retry-After", String(err.retryAfterSeconds));
     c.header("Cache-Control", "private, no-store");
     return c.json({ status: err.code, msg: err.message, data: null }, 429);
+  }
+  if (err instanceof HttpApiException) {
+    c.header("Cache-Control", "private, no-store");
+    return c.json(
+      { status: err.code, msg: err.message, data: null },
+      err.httpStatus,
+    );
   }
   // 已知的业务异常: 用其携带的 code/msg
   if (err instanceof ApiException) {

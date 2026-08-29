@@ -4,7 +4,7 @@ import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
 import { storeService } from "@/models/schema";
 import { clearToken, setTokenBucket } from "@/utils/cache";
-import { ApiErrorCode, ApiException, ValidateException } from "@/utils/errors";
+import { ServiceUnavailableException, ValidateException } from "@/utils/errors";
 import { createToken, md5 } from "@/utils/jwt";
 
 export interface KefuIdentity {
@@ -20,7 +20,7 @@ export interface KefuIdentity {
 export type KefuAuthEnv = Pick<
   Env,
   "APP_KEY" | "UPSTASH_REDIS_URL" | "UPSTASH_REDIS_TOKEN"
->;
+> & { NODE_ENV?: Env["NODE_ENV"] };
 
 function text(value: unknown, label: string, maximum: number): string {
   if (typeof value !== "string" || !value.trim()) {
@@ -53,12 +53,16 @@ export class KefuAuthService {
     private readonly env: KefuAuthEnv,
   ) {}
 
-  private async issue(kefu: typeof storeService.$inferSelect) {
+  private async issue(kefu: typeof storeService.$inferSelect, issuedAtSeconds?: number) {
     if (!kefu.status || !kefu.accountStatus || kefu.isDel) {
       throw new ValidateException("您已被禁止登录");
     }
     if (!Number.isSafeInteger(kefu.uid) || kefu.uid <= 0) {
       throw new ValidateException("客服账号未绑定有效用户");
+    }
+    const owner = await this.container.userDao.findForAuth(kefu.uid);
+    if (!owner || !owner.status) {
+      throw new ValidateException("客服绑定用户不存在或已禁用");
     }
 
     const { token, exp } = await createToken(
@@ -66,6 +70,8 @@ export class KefuAuthService {
       "kefu",
       md5(kefu.password),
       this.env.APP_KEY,
+      "cinashop",
+      issuedAtSeconds,
     );
     const stored = await setTokenBucket(
       md5(token),
@@ -78,7 +84,7 @@ export class KefuAuthService {
       this.env,
     );
     if (!stored) {
-      throw new ApiException("登录状态保存失败", ApiErrorCode.ERR_SAVE_TOKEN);
+      throw new ServiceUnavailableException("客服登录状态存储不可用");
     }
     return {
       token,
@@ -106,7 +112,7 @@ export class KefuAuthService {
   }
 
   /** Re-read and issue for an identity already proven by scan/OAuth. */
-  async loginByVerifiedIdentity(kefuId: number, uid: number) {
+  async loginByVerifiedIdentity(kefuId: number, uid: number, issuedAtSeconds?: number) {
     if (!Number.isSafeInteger(kefuId) || kefuId <= 0 || !Number.isSafeInteger(uid) || uid <= 0) {
       throw new ValidateException("客服登录身份无效");
     }
@@ -121,7 +127,7 @@ export class KefuAuthService {
       .limit(1);
     const kefu = rows[0];
     if (!kefu) throw new ValidateException("客服登录身份不存在或已失效");
-    return this.issue(kefu);
+    return this.issue(kefu, issuedAtSeconds);
   }
 
   async logout(token: string, kefuId: number) {

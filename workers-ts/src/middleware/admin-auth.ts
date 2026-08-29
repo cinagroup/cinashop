@@ -11,7 +11,7 @@
 import type { MiddlewareHandler } from "hono";
 import { AuthException, ApiErrorCode } from "@/utils/errors";
 import { verifyToken, md5 } from "@/utils/jwt";
-import { clearToken } from "@/utils/cache";
+import { clearToken, getTokenBucket } from "@/utils/cache";
 import type { AppVariables, Env } from "@/env";
 import { extractToken } from "@/middleware/auth";
 import { AdminPermissionService } from "@/services/admin/AdminPermissionService";
@@ -33,11 +33,10 @@ export function adminAuthMiddleware(): MiddlewareHandler<{
     const key = md5(token);
 
     // Layer 1: token bucket
+    const bucket = await getTokenBucket(key, env);
     const hasRedis = !!(env.UPSTASH_REDIS_URL && env.UPSTASH_REDIS_TOKEN);
     if (hasRedis) {
-      const { getTokenBucket: gtb } = await import("@/utils/cache");
-      const bucket = await gtb(key, env);
-      if (!bucket || bucket.type !== "admin") {
+      if (!bucket || bucket.type !== "admin" || bucket.token !== token) {
         throw new AuthException("请登录", ApiErrorCode.ERR_LOGIN);
       }
     }
@@ -59,6 +58,9 @@ export function adminAuthMiddleware(): MiddlewareHandler<{
     const admin = await container.systemAdminDao.get(payload.id);
     if (!admin || admin.adminType !== 1 || !admin.status || admin.isDel) {
       throw new AuthException("账号不存在或已禁用", ApiErrorCode.ERR_BANNED);
+    }
+    if (hasRedis && bucket && Number(bucket.uid) !== Number(payload.id)) {
+      throw new AuthException("管理员登录状态有误", ApiErrorCode.ERR_BANNED);
     }
 
     // Layer 4: auth claim

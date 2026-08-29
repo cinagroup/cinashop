@@ -19,10 +19,10 @@ export const kefuAuthMiddleware: MiddlewareHandler<{
   }
 
   const key = md5(token);
+  const bucket = await getTokenBucket(key, c.env);
   const hasRedis = Boolean(c.env.UPSTASH_REDIS_URL && c.env.UPSTASH_REDIS_TOKEN);
   if (hasRedis) {
-    const bucket = await getTokenBucket(key, c.env);
-    if (!bucket || bucket.type !== "kefu") {
+    if (!bucket || bucket.type !== "kefu" || bucket.token !== token) {
       throw new AuthException("请登录", ApiErrorCode.ERR_LOGIN);
     }
   }
@@ -36,6 +36,9 @@ export const kefuAuthMiddleware: MiddlewareHandler<{
   }
   if (payload.type !== "kefu") {
     throw new AuthException("无客服权限", ApiErrorCode.ERR_BANNED);
+  }
+  if (hasRedis && bucket && Number(bucket.uid) !== Number(payload.id)) {
+    throw new AuthException("客服登录状态有误", ApiErrorCode.ERR_BANNED);
   }
 
   const rows = await c.get("container").db
@@ -54,6 +57,11 @@ export const kefuAuthMiddleware: MiddlewareHandler<{
   if (!kefu || kefu.uid <= 0) {
     await clearToken(key, c.env).catch(() => undefined);
     throw new AuthException("客服账号不存在、已禁用或未绑定用户", ApiErrorCode.ERR_BANNED);
+  }
+  const owner = await c.get("container").userDao.findForAuth(kefu.uid);
+  if (!owner || !owner.status) {
+    await clearToken(key, c.env).catch(() => undefined);
+    throw new AuthException("客服绑定用户不存在或已禁用", ApiErrorCode.ERR_BANNED);
   }
   if (payload.auth !== md5(kefu.password)) {
     await clearToken(key, c.env).catch(() => undefined);

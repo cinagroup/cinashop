@@ -39,6 +39,25 @@ export interface LoginResult {
   kefuInfo: KefuIdentity;
 }
 
+export interface KefuClientConfig {
+  appid: string;
+  site_name: string;
+  version: string;
+}
+
+export interface KefuScanChallenge {
+  key: string;
+  poll_token: string;
+  time: number;
+  expires_in: number;
+  audience: "kefu_agent";
+}
+
+export type KefuScanPollResult =
+  | { status: 0 }
+  | { status: 1 | 2; audience: "kefu_agent"; expiresAt: number }
+  | ({ status: 3 } & LoginResult);
+
 export interface AttachmentUpload {
   att_id: number;
   name: string;

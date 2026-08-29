@@ -1126,8 +1126,8 @@ function toggleAvailability() {
 
 async function logout() {
   realtime.close();
-  await auth.logout();
-  await router.replace("/login");
+  const serverRevoked = await auth.logout();
+  await router.replace(serverRevoked ? "/login" : "/login?logout=local-only");
 }
 
 function handleExpired() { void router.replace("/login"); }

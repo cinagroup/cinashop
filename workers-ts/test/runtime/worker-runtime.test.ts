@@ -122,7 +122,36 @@ describe("SequenceDO durability", () => {
 });
 
 describe("Scan-login Durable Object state", () => {
-  it("binds, approves, audience-checks, and consumes one challenge exactly once", async () => {
+  it("lets only the scanning uid reject and invalidate a pending approval", async () => {
+    const stub = testEnv.TOKEN_BUCKET.getByName("scan-login:runtime-rejection");
+    const now = Math.floor(Date.now() / 1000);
+    const pollTokenHash = "b".repeat(64);
+    await expect(stub.createScanLoginChallenge({
+      version: 1,
+      audience: "pc_user",
+      stage: "pending",
+      pollTokenHash,
+      issuedAt: now,
+      expiresAt: now + 600,
+      clientOrigin: "https://runtime-test.invalid",
+      clientDevice: "Test · Browser",
+      target: "CinaShop PC 商城",
+    })).resolves.toBe(true);
+    await expect(stub.markScanLoginChallengeScanned(17)).resolves.toMatchObject({
+      stage: "scanned",
+      scannedUid: 17,
+    });
+    await expect(stub.rejectScanLoginChallenge(18)).resolves.toBeNull();
+    await expect(stub.rejectScanLoginChallenge(17)).resolves.toMatchObject({
+      stage: "scanned",
+      scannedUid: 17,
+    });
+    await expect(stub.getScanLoginChallenge()).resolves.toBeNull();
+    await expect(stub.pollScanLoginChallenge(pollTokenHash, "pc_user")).resolves
+      .toEqual({ status: 0 });
+  });
+
+  it("binds, approves, audience-checks, and redelivers one fixed token", async () => {
     const stub = testEnv.TOKEN_BUCKET.getByName("scan-login:runtime-contract");
     const now = Math.floor(Date.now() / 1000);
     const pollTokenHash = "a".repeat(64);
@@ -133,6 +162,9 @@ describe("Scan-login Durable Object state", () => {
       pollTokenHash,
       issuedAt: now,
       expiresAt: now + 600,
+      clientOrigin: "https://runtime-test.invalid",
+      clientDevice: "Test · Browser",
+      target: "CinaShop 客服工作台",
     })).resolves.toBe(true);
 
     const pending = await stub.getScanLoginChallenge();
@@ -151,9 +183,37 @@ describe("Scan-login Durable Object state", () => {
     });
     await expect(stub.pollScanLoginChallenge(pollTokenHash, "pc_user")).resolves
       .toEqual({ status: 0 });
+    const claim = await stub.pollScanLoginChallenge(pollTokenHash, "kefu_agent");
+    expect(claim).toMatchObject({ status: 4, uid: 17, kefuId: 9 });
+    if (claim.status !== 4) throw new Error("issuance claim missing");
     await expect(stub.pollScanLoginChallenge(pollTokenHash, "kefu_agent")).resolves
-      .toEqual({ status: 3, audience: "kefu_agent", uid: 17, kefuId: 9 });
+      .toMatchObject({ status: 1, audience: "kefu_agent" });
+    const kefuInfo = {
+      id: 9,
+      uid: 17,
+      account: "service-17",
+      avatar: "",
+      nickname: "客服 17",
+      phone: "",
+      online: 0,
+    };
+    await expect(stub.completeScanLoginChallenge(
+      claim.lease,
+      "fixed-runtime-token",
+      now + 3600,
+      kefuInfo,
+    )).resolves.toEqual({
+      status: 3,
+      token: "fixed-runtime-token",
+      exp_time: now + 3600,
+      kefuInfo,
+    });
     await expect(stub.pollScanLoginChallenge(pollTokenHash, "kefu_agent")).resolves
-      .toEqual({ status: 0 });
+      .toEqual({
+        status: 3,
+        token: "fixed-runtime-token",
+        exp_time: now + 3600,
+        kefuInfo,
+      });
   });
 });

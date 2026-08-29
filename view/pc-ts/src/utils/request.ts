@@ -15,6 +15,7 @@ import { getToken, clearAuth } from "@/utils/auth";
 const request: AxiosInstance = axios.create({
   baseURL: "/api",
   timeout: 30000,
+  withCredentials: true,
 });
 
 // 请求拦截

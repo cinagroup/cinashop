@@ -12,6 +12,7 @@ import { WechatAuthService } from "@/services/wechat/WechatAuthService";
 import { extractToken } from "@/middleware/auth";
 import { clearToken } from "@/utils/cache";
 import { md5 } from "@/utils/jwt";
+import { chatPrincipalName } from "@/services/kefu/KefuSocketGateway";
 import { readBoundedJsonObject } from "@/utils/request-body";
 import type { AppVariables, Env } from "@/env";
 
@@ -357,7 +358,14 @@ export async function requestCode(c: C) {
  */
 export async function logout(c: C) {
   const token = extractToken(c);
-  if (token) await clearToken(md5(token), c.env);
+  if (token) {
+    const key = md5(token);
+    await clearToken(key, c.env);
+    const uid = c.get("uid") ?? 0;
+    if (uid > 0) {
+      await c.env.CHAT_ROOM.getByName(chatPrincipalName(1, uid)).disconnectToken(key);
+    }
+  }
   return jsonOk(c, null, "退出成功");
 }
 

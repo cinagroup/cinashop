@@ -318,7 +318,7 @@ async function runCore(dbA: DbClient, dbB: DbClient, name: string): Promise<Omit
     .resetPassword("13910000001", "ResetPass-901"));
   const resetUser = await withSchema(dbA, name, (container) => oneUser(container, registeredUser.uid));
   const passwordResetInvalidatesOldAuth = resetUser?.pwd === md5("ResetPass-901")
-    && oldClaims.auth !== resetUser.pwd;
+    && oldClaims.auth !== md5(resetUser.pwd);
   assertCondition(passwordResetInvalidatesOldAuth, "password reset did not invalidate old auth claim");
 
   const occupiedPhoneRejected = await rejectsValidation(

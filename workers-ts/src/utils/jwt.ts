@@ -55,18 +55,21 @@ export function md5(input: string): string {
  *
  * @param id 用户/管理员 ID
  * @param type token 类型
- * @param pwdMd5 用户密码的 md5, 作为 auth claim (改密后失效)
+ * @param authDigest 已按 PHP BaseServices::createToken 计算的 auth 摘要。
+ * 对密码类账号，这个值是 md5(数据库中存储的密码哈希)，而不是存储值本身。
  * @param secret APP_KEY
  * @param iss 签发方 (域名)
  */
 export async function createToken(
   id: number,
   type: TokenType,
-  pwdMd5: string,
+  authDigest: string,
   secret: string,
   iss = "cinashop",
+  issuedAtSeconds?: number,
 ): Promise<{ token: string; exp: number }> {
-  const now = Math.floor(Date.now() / 1000);
+  const now = issuedAtSeconds ?? Math.floor(Date.now() / 1000);
+  if (!Number.isSafeInteger(now) || now <= 0) throw new Error("invalid token issuance time");
   const exp = now + EXP_SECONDS[type];
   // jti 是对象 (与 PHP 一致), jose 类型不认, 用 unknown 断言
   const payload: CrmebJWTPayload = {
@@ -76,7 +79,7 @@ export async function createToken(
     nbf: now,
     exp,
     jti: { id, type },
-    auth: pwdMd5,
+    auth: authDigest,
   };
   const token = await new SignJWT(
     payload as unknown as import("jose").JWTPayload,

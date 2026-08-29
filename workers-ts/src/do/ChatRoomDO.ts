@@ -156,6 +156,26 @@ export class ChatRoomDO extends DurableObject<Env> {
     return new KefuRealtimeService(createContainer(this.env), this.env);
   }
 
+  /** Revalidate hibernated sockets before any server-initiated delivery. */
+  private async activeDeliverySession(
+    socket: WebSocket,
+    service: KefuRealtimeService,
+  ): Promise<ChatSocketSession | null> {
+    const session = sessionOf(socket);
+    if (!session || session.expiresAt <= Math.floor(Date.now() / 1_000)) {
+      socket.close(4001, session ? "Session expired" : "Invalid session");
+      return null;
+    }
+    try {
+      await service.assertSession(session);
+      return session;
+    } catch (error) {
+      structuredError("chat_delivery_session_revoked", error, session);
+      socket.close(4001, "Session revoked");
+      return null;
+    }
+  }
+
   override async fetch(request: Request): Promise<Response> {
     if (request.method !== "GET" || request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
@@ -205,7 +225,13 @@ export class ChatRoomDO extends DurableObject<Env> {
     }
 
     if (envelope.type === "ping") {
-      ws.send(JSON.stringify({ type: "ping", data: { now: Math.floor(Date.now() / 1000) } }));
+      try {
+        await this.service().assertSession(session);
+        ws.send(JSON.stringify({ type: "ping", data: { now: Math.floor(Date.now() / 1000) } }));
+      } catch (error) {
+        structuredError("chat_ping_session_revoked", error, session);
+        ws.close(4001, "Session revoked");
+      }
       return;
     }
 
@@ -310,8 +336,9 @@ export class ChatRoomDO extends DurableObject<Env> {
 
     let connected = 0;
     let viewing = 0;
+    const service = this.service();
     for (const socket of this.ctx.getWebSockets()) {
-      const session = sessionOf(socket);
+      const session = await this.activeDeliverySession(socket, service);
       if (
         !session || session.principalUid !== message.to_uid
         || session.isTourist !== message.is_tourist
@@ -342,12 +369,13 @@ export class ChatRoomDO extends DurableObject<Env> {
     if (!Number.isSafeInteger(uid) || uid <= 0) throw new Error("invalid presence payload");
     if (isTourist !== 0 && isTourist !== 1) throw new Error("invalid presence scope");
     let delivered = 0;
+    const service = this.service();
     const payload = JSON.stringify({
       type: "online",
       data: { uid, online: online ? 1 : 0, is_tourist: isTourist },
     });
     for (const socket of this.ctx.getWebSockets()) {
-      const session = sessionOf(socket);
+      const session = await this.activeDeliverySession(socket, service);
       if (!session || session.toUid !== uid || session.isTourist !== isTourist) continue;
       try {
         socket.send(payload);
@@ -366,9 +394,10 @@ export class ChatRoomDO extends DurableObject<Env> {
       ? (event.data.is_tourist === 1 ? 3 : 1)
       : 2;
     let delivered = 0;
+    const service = this.service();
     const payload = JSON.stringify(event);
     for (const socket of this.ctx.getWebSockets()) {
-      const session = sessionOf(socket);
+      const session = await this.activeDeliverySession(socket, service);
       if (
         !session || session.role !== expectedRole
         || session.isTourist !== event.data.is_tourist

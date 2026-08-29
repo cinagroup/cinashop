@@ -74,19 +74,34 @@ function scanCode(c: C): string {
   return c.req.query("code") ?? c.req.query("key") ?? "";
 }
 
+function clientIp(c: C): string {
+  return (
+    c.req.header("CF-Connecting-IP")
+    ?? c.req.header("X-Forwarded-For")?.split(",")[0]?.trim()
+    ?? c.req.header("X-Real-IP")
+    ?? "0.0.0.0"
+  ).slice(0, 128);
+}
+
 /** GET /api/user/code — inspect and bind an authenticated mobile scan. */
 export async function inspectLoginCode(c: C) {
   c.header("Cache-Control", "no-store, max-age=0");
+  c.header("Referrer-Policy", "no-referrer");
   return response(c, () => new ScanLoginService(c.get("container"), c.env)
-    .inspect(scanCode(c), uid(c)));
+    .inspect(scanCode(c), uid(c), clientIp(c)));
 }
 
-/** POST /api/user/code — approve only the same mobile uid that inspected. */
+/** POST /api/user/code — approve or reject only as the mobile uid that inspected. */
 export async function approveLoginCode(c: C) {
   c.header("Cache-Control", "no-store, max-age=0");
+  c.header("Referrer-Policy", "no-referrer");
   return response(c, async () => {
     const payload = await readBoundedJsonObject(c.req.raw, 4 * 1024);
-    return new ScanLoginService(c.get("container"), c.env)
-      .approve(payload.code ?? payload.key ?? scanCode(c), uid(c));
+    const action = String(payload.action ?? "approve").trim();
+    const login = new ScanLoginService(c.get("container"), c.env);
+    const key = payload.code ?? payload.key ?? scanCode(c);
+    if (action === "reject") return login.reject(key, uid(c), clientIp(c));
+    if (action !== "approve") throw new ValidateException("扫码登录操作无效");
+    return login.approve(key, uid(c), clientIp(c));
   });
 }

@@ -43,6 +43,7 @@ CRMEB PRO → Cloudflare Workers 渐进式迁移。
 - 用户注册、手机验证码登录、找回密码、手机号绑定/更换及社交账号补绑均使用用途隔离的 6 位短信能力；旧 AJCaptcha 已替换为 Cloudflare Turnstile。挑战绑定手机号、用途、原始客户端网络和 5 分钟时效，服务端强制校验 Siteverify `hostname/action/cdata` 后才可原子消费并进入 PostgreSQL/Queue。PC 使用受控 iframe，UniApp H5/App/小程序使用全屏 WebView 并在返回后复核服务端状态（本地完成并通过生产 Hyperdrive 只读指纹与真实 Worker Siteverify 传输验证；主 Worker未发布，生产 Turnstile/Aliyun 配置和真实短信 E2E 尚未完成）
 - 保留小程序直播间、商品、主播及房间商品关系；恢复用户直播列表、回放读取、Admin 只读目录，以及 Cron→Queue 的直播间/商品状态同步。创建/删除直播间、商品提审/删除和导入商品等非幂等微信写接口继续关闭（本地完成；生产迁移和真实小程序验证尚未执行）
 - 客服独立 `/kefuapi` 已恢复 60/63 条 PHP 精确合同，其余 `ticket` 与两条不安全退款合同有源证据退役，退役后有效可执行覆盖 100%。游客链路使用 24 小时签名会话、10 亿起步独立 UID、数据库 token 摘要/撤销状态、权威客服分配、`is_tourist` 实时隔离和独立 R2 owner；`tourist/order` 仍只接受正常登录用户并复核订单归属。生产已幂等应用 `0104` 且新表为 0 行；Kefu、UniApp 和 PC `/service` 已接入，旧 `appChat` 的随机 UID/URL bearer 合同不再进入新客户端，但主 Worker/前端未发布；生产客服账号/会话、游客内容配置、面单配置与一号通 Secret 均为空
+- PC/Kefu 扫码与开放平台登录已完成本地安全闭环：精确 Origin/CORS 白名单、二维码公钥与私有 poll secret 分离、请求站点/设备人工核对、`pending→scanned→approved→issuing→delivered` 可重试交付、按 state 隔离的浏览器 verifier Cookie、OAuth state/code 重放保护和 Redis/token store 失败关闭；Origin/UA 不被当作客户端证明。用户 JWT `auth` 已恢复 PHP 的 `md5(user.pwd)`，旧 Worker 单层值只在精确活跃 bucket 中短期兼容；Kefu 同时复核客服与绑定用户状态，PC/Kefu bearer 改为 per-tab `sessionStorage`。心跳和三类聊天下行在发送前重验 bucket/期限/数据库身份，注销会主动断开。PC、Kefu 与 UniApp 确认页已通过桌面/390×844 受控浏览器回归（主 Worker/前端尚未发布；生产缺开放平台 AppID、`WECHAT_OPEN_APP_SECRET`、微信身份、客服账号、Kefu 正式 Origin和同源 proxy）
 
 未完成的主要范围包括 Supplier 生产数据/账号迁移、旧后台的大部分功能、客服生产数据与真实端到端、ERP 独立接口、移动端长尾页面、生产数据迁移与真实支付/Cloudflare 远端验收。不要按历史 M1～M24 标签推断迁移完成度。
 
@@ -78,16 +79,22 @@ workers-ts/
 ### 1. Searcher 注册表 (替代 PHP 反射)
 PHP 的 `BaseDao::search()` 用反射自动调用 `search<Key>Attr`。TS 改为显式注册表 (`src/models/searchers/types.ts`),类型安全且无运行时反射开销。详见 `src/dao/user/UserDao.ts`。
 
-### 2. 鉴权双层验证 (与 PHP 兼容)
+### 2. 鉴权双层验证
 ```
 header token
-  → md5(token) → Upstash token bucket (快失败)
+  → md5(token) → Upstash 精确匹配 token/type/uid
   → jose.jwtVerify (签名 + exp)
-  → DB 查 user (status 校验)
-  → auth claim = md5(pwd) 校验 (改密后失效)
+  → DB 查身份与启用状态
+  → 普通用户 auth = md5(user.pwd) 校验 (改密后失效)
+  → 早期 Worker auth=user.pwd 仅凭精确活跃 bucket 限时兼容
   → c.set('uid', ...) c.set('user', ...)
 ```
-JWT 用 HS256 + `APP_KEY`, 与 PHP 互通。Token bucket 存 Upstash Redis。
+生产缺 Redis、读取异常、写入/删除失败时返回 503，不降级为仅验证 JWT。JWT 的
+HS256、`APP_KEY`、对象型 `jti` 和普通用户 auth claim 已与 PHP 对齐；但完整会话尚不
+跨运行时互通：PHP bucket 是可配置前缀的 `md5(token)` + PHP serialize，Worker 是
+`tb_<md5(token)>` + JSON/Upstash。正式切换必须全量鉴权切流并强制重新登录，或先完成
+键名、编码、TTL 与撤销语义都经过验证的双读/迁移桥；不得把“JWT 可验”写成“旧 token
+无感互通”。
 
 ### 3. 事务与一致性
 - 普通读写: Hyperdrive (PostgreSQL) + Drizzle 事务
@@ -122,9 +129,13 @@ npm install
 ```bash
 cp .env.example .dev.vars
 # 编辑 .dev.vars 填入:
-#   APP_KEY          (与 PHP .env 的 app.app_key 一致, 否则旧 token 不互通)
+#   APP_KEY          (与 PHP .env 的 app.app_key 一致；只保证 JWT 签名层可兼容)
 #   UPSTASH_REDIS_URL
 #   UPSTASH_REDIS_TOKEN
+#   ALLOWED_ORIGINS
+#   PC_AUTH_ALLOWED_ORIGINS
+#   KEFU_AUTH_ALLOWED_ORIGINS
+#   WECHAT_OPEN_APP_SECRET
 #   TURNSTILE_SECRET_KEY
 #   TURNSTILE_SITE_KEY
 #   TURNSTILE_EXPECTED_HOSTNAMES
@@ -194,6 +205,12 @@ npm run typecheck       # 普通源码与 runtime 测试分别检查
 Hyperdrive、KV 或 Queue。Windows 运行 workerd 前需安装最新版 Microsoft Visual C++
 2015-2022 x64 Redistributable；旧版 `msvcp140.dll` / `vcruntime140.dll` 会在
 runtime 启动时产生原生访问冲突。
+
+2026-08-29 本批最终本地证据：Worker 单元测试 135 文件/787 项、双 TypeScript 配置、
+PC/Kefu/Supplier 构建、Kefu 7/7、UniApp 类型检查/H5 构建和 Supplier Pages Function
+独立类型检查均通过；Wrangler 4.122.0 `deploy --dry-run --minify` 为
+2,575.75 KiB/gzip 638.51 KiB。Windows runtime 仍在 0 条断言前以 `0xc0000005`
+退出，不能记为通过。
 
 ### 7. 旧 MySQL 数据迁移
 
@@ -309,6 +326,7 @@ wrangler queues create cinashop-order-dlq
 wrangler secret put APP_KEY
 wrangler secret put UPSTASH_REDIS_URL
 wrangler secret put UPSTASH_REDIS_TOKEN
+wrangler secret put WECHAT_OPEN_APP_SECRET
 wrangler secret put OPERATIONS_TOKEN
 wrangler secret put INITIAL_ADMIN_PASSWORD
 wrangler secret put WECHAT_MCH_PRIVATE_KEY
@@ -322,6 +340,20 @@ wrangler secret put ALIYUN_SMS_ACCESS_KEY_SECRET
 wrangler secret put ALIYUN_SMS_SIGN_NAME
 wrangler secret put TURNSTILE_SECRET_KEY
 ```
+
+PC/Kefu 开放平台登录的 AppID 可来自精确 `wechat_open_app_id` 配置；AppSecret
+只允许通过 `WECHAT_OPEN_APP_SECRET` Worker Secret 注入，不得写入
+`system_config`、KV、响应或客户端环境。生产还必须设置精确的
+`ALLOWED_ORIGINS`、`PC_AUTH_ALLOWED_ORIGINS` 与 `KEFU_AUTH_ALLOWED_ORIGINS`；
+两类登录白名单按 audience 隔离，Kefu 正式域名确定前保持其列表为空并失败关闭，
+不得用通配 Origin 临时放开。Origin 与 User-Agent 只能减少浏览器跨站请求并供用户
+人工核对，非浏览器可伪造，不能充当客户端/设备认证。OAuth callback 必须经同源 Pages
+Function（或同站点自定义 API 域名）；不要让 Pages 直接跨站请求 `workers.dev`，否则
+`SameSite=Lax` verifier Cookie 不会发送。
+
+Supplier 浏览器端也默认使用同源 `/supplierapi` Pages Function；正式 Pages 项目需设置并
+验收 `WORKERS_API`。若任何前端选择绕过同源 proxy 直连 Worker，其正式 Origin 必须精确
+加入 `ALLOWED_ORIGINS`，不能使用通配符。
 
 用户短信入口还必须设置非密钥 `TURNSTILE_SITE_KEY` 与
 `TURNSTILE_EXPECTED_HOSTNAMES`。后者是逗号分隔的精确 widget hostname，不能填写
@@ -356,14 +388,17 @@ npm run deploy --env staging   # 预发
 
 ---
 
-## 与 PHP 共存策略 (双跑过渡)
+## 与 PHP 共存策略（会话隔离的双跑过渡）
 
 本项目放在 `cinashop/workers-ts/`, 不影响 PHP 主项目 (`cinashop/` 根目录)。过渡期:
 
-1. **PHP 后端继续运行** (域名: `api.example.com`)
-2. **Workers 后端独立部署** (域名: `api-ts.example.com` 或路由前缀 `/ts/`)
-3. **前端按配置切换 baseURL** (灰度切量)
-4. **M3 订单上线前** 启用影子流量比对 (5% → 20% → 50% → 100%)
+1. **PHP 后端继续运行**（域名示例 `api.example.com`）。
+2. **Workers 后端独立部署**（域名示例 `api-ts.example.com`）；当前两端 token bucket
+   键名/编码不兼容，不能把同一个 bearer 在两端任意跳转。
+3. **灰度按完整鉴权域切换**，测试账号可分别登录；禁止把同一登录会话的接口随机分流到
+   PHP 与 Worker。
+4. 正式用户切换前明确二选一：全量切流并强制重新登录，或完成可撤销、保 TTL 的 bucket
+   双读/迁移桥。之后再做影子读流量和 5% → 20% → 50% → 100% 业务切量。
 
 ---
 
@@ -371,9 +406,10 @@ npm run deploy --env staging   # 预发
 
 | 约定 | 说明 |
 |------|------|
-| 密码哈希 | `md5(password)` (与 PHP 兼容, 不要改 bcrypt) |
-| JWT 密钥 | `APP_KEY` 必须与 PHP `.env` 的 `app.app_key` 一致 |
-| 响应信封 | `{status, msg, data}`, HTTP 恒 200 (与前端契约一致) |
+| 普通用户密码 | 历史库存为 `md5(password)`；JWT auth claim 为 `md5(user.pwd)`，不要混淆两层用途 |
+| 其他身份凭据 | Admin/Supplier/Kefu 使用历史 bcrypt 库存，Out 使用历史 appsecret hash；JWT auth 都是 `md5(库存凭据)` |
+| JWT 密钥 | `APP_KEY` 必须与 PHP `.env` 的 `app.app_key` 一致，但 token bucket 仍需单独切换方案 |
+| 响应信封 | 业务兼容响应保持 `{status, msg, data}`；来源拒绝、认证基础设施不可用等安全/系统错误使用真实 4xx/5xx，并禁止缓存 |
 | token header | 优先 `Authori-zation`, 兜底 `Authorization` (与 PHP 一致) |
 | 错误码 | `410000` 未登录 / `410001` 过期 / `410002` 封禁 (与 PHP 一致) |
 | 表名 | 无前缀 (PHP 是 `eb_user`, 这里是 `user`); 共库时需调整 |
@@ -384,13 +420,14 @@ npm run deploy --env staging   # 预发
 ## 已知待办
 
 - [x] 精确注册 PHP `/api/pc` 22 条兼容合同，19 条恢复 PC banner/分类/商品/城市/公司/二维码与 UID 作用域的购物车/资金/订单/收藏/售后；共享商品查询同步修复 `cid/sid/tid/selectId/news/type` 和 SVIP 可见性偏差。生产 Hyperdrive 只读与随机 schema 15/15 通过，`public` 指纹不变，临时 Worker/schema 已删除
-- [ ] 以一次性挑战、扫码主体绑定、OAuth state/PKCE 或等价保护、限流和重放账本重建 PC 微信登录；当前 `pc/key`、`pc/scan/:key`、`pc/wechat_auth` 故意 501。还需复制/运营确认 PC 分类关系、banner、城市和 14 个缺失候选配置，再完成真实账号、旧 Nuxt/新 PC、预发与发布 E2E
+- [x] 以精确来源白名单、二维码公钥/私有 poll secret 分离、扫码主体/audience 绑定、按 state 隔离的浏览器 verifier Cookie、OAuth state/code 重放保护、可重试 token 交付、限流和失败关闭重建 PC/Kefu 登录；Origin/UA 只供核对而非身份证明，PC、Kefu 与 UniApp 扫码确认已完成本地接入和桌面/移动浏览器回归
+- [ ] 配置生产 `wechat_open_app_id`、`WECHAT_OPEN_APP_SECRET` 和 Kefu 精确 Origin，迁移微信身份/客服账号，并用真实微信、真实账号、浏览器/真机、预发和发布完成正向 E2E；当前主 Worker/前端未发布，PC 分类关系、banner、城市和 14 个候选配置也仍待复制/运营确认
 - [x] 恢复 API v2 三条促销只读兼容合同：活动商品、赠品信息和登录态凑单；按 active 平台父规则执行全场/指定/排除/品牌/标签五类范围，保留 PHP 折扣截断、阶梯与券/赠品 SKU 投影，并修复商品 DAO 的显式 `ids` 过去只排序不筛选而导致范围扩散的问题。生产 Hyperdrive 只读确认促销/辅助表均为 0；随机 schema 12/12、`public_state_unchanged=true`、临时 schema `0→0`，一次性审计 Worker 已删除
 - [ ] 从源 MySQL 复制并由运营复核促销父子规则、商品/品牌/标签范围、券与赠品 SKU；补齐 API-006 订单促销叠加并完成旧 UniApp/真实账号/预发 E2E 后，才可把 PROMO 域判为完成
 - [x] 恢复客服独立 token 域及 22 条核心 PHP 路由，固定账号 ID/聊天 UID 双身份、会话与聊天成员作用域、用户分群、个人话术/分类 owner；登录前以 HMAC 脱敏来源和 Durable Object 实施 10 次/分钟强一致限流。生产 `0092` 四索引已应用，随机 schema 13 项断言和业务行/序列不变验证通过
 - [x] 为 `tourist/user|order|chat|upload` 建立安全兼容层：24 小时 HS256 visitor audience、SHA-256 token 摘要与撤销/期限复核、权威客服分配、游客 UID 独立序列、`is_tourist` WebSocket/未读/转接隔离、R2 `module_type=4` owner，以及登录用户订单归属门禁；Kefu 工作台和 UniApp 已接入。生产 `0104` 经随机 schema、两次幂等应用和业务指纹验证，新游客表为 0 行
 - [x] 用 PC `/service` 替换旧 Admin 项目中面向顾客的 `appChat`：登录用户沿用 `/api`，匿名用户只使用 `X-Visitor-Token` 与 `cinashop-visitor.<token>` 子协议；URL 不含 token/`tourist_uid`，游客断线不回退到登录用户 REST 写接口。Pages/Vite 双代理保留 WebSocket 101；桌面、390×844 移动端的安全失败态及受控签名游客正向消息单次回显均已通过浏览器验收
-- [ ] 从源 MySQL 复制并复核客服账号/bcrypt 密码/用户绑定、会话/消息、话术/分类与游客内容；当前没有 `SOURCE_MYSQL_URL`、旧 `.env`、本机 3306 监听或 MySQL/MariaDB 服务，生产客服账号、会话也均为 0，无法做正向生产游客分配/WebSocket/R2/转接 E2E。补齐测试客服后，还需完成旧页面退流、扫码/OAuth、限流、浏览器/真机、预发、影子流量并取得明确发布批准。不存在控制器目标的旧 `ticket` 不恢复，ERP 写入在回调验签和幂等协议完成前保持关闭
+- [ ] 从源 MySQL 复制并复核客服账号/bcrypt 密码/用户绑定、会话/消息、话术/分类与游客内容；当前没有 `SOURCE_MYSQL_URL`、旧 `.env`、本机 3306 监听或 MySQL/MariaDB 服务，生产客服账号、会话也均为 0，无法做正向生产游客分配/WebSocket/R2/转接或真实扫码/OAuth E2E。补齐测试客服后，还需完成旧页面退流、生产限流、浏览器/真机、预发、影子流量并取得明确发布批准。不存在控制器目标的旧 `ticket` 不恢复，ERP 写入在回调验签和幂等协议完成前保持关闭
 - [x] 将 Out API 扩展为 14 条有界 GET，以及订单/退款备注、确认收货、人工快递发货、人工快递拆单发货、既有配送信息更正、发票资料/状态、同意退货、拒绝售后和真实资金退款 11 条 PUT；逐路由 ACL、`store_id=0` 平台范围、PII 禁缓存、IP+账号强一致限流、HMAC 脱敏审计、共享订单/退款锁、请求摘要重放、拆单金额/数量守恒、配送员权威值、发票唯一关联、渠道状态互斥、权威金额绑定、余额 exactly-once、并发单写与失败回滚已通过单元及生产 Hyperdrive 随机隔离 schema 验证
 - [ ] 从源 MySQL 复制 `out_account/out_interface` 并由真实客户确认最小权限与 PII 字段；生产当前两表有效行均为 0。主 Worker 发布后验证真实 Durable Object RPC/429、真实审计写入与客户端退避，再用测试商户完成微信/支付宝退款、回调与对账，并为配送员重新分配及 PHP 发货通知/小程序上报建立幂等 Queue/outbox；任意外部推送继续禁用
 - [x] 在生产 PostgreSQL/Hyperdrive 随机隔离 schema 上验证下单并发、取消补偿和支付/取消竞态；公共业务数据/序列前后不变

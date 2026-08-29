@@ -21,10 +21,10 @@ export const supplierAuthMiddleware: MiddlewareHandler<{
   }
 
   const key = md5(token);
+  const bucket = await getTokenBucket(key, c.env);
   const hasRedis = Boolean(c.env.UPSTASH_REDIS_URL && c.env.UPSTASH_REDIS_TOKEN);
   if (hasRedis) {
-    const bucket = await getTokenBucket(key, c.env);
-    if (!bucket || bucket.type !== "supplier") {
+    if (!bucket || bucket.type !== "supplier" || bucket.token !== token) {
       throw new AuthException("请登录", ApiErrorCode.ERR_LOGIN);
     }
   }
@@ -38,6 +38,9 @@ export const supplierAuthMiddleware: MiddlewareHandler<{
   }
   if (payload.type !== "supplier") {
     throw new AuthException("无供应商权限", ApiErrorCode.ERR_BANNED);
+  }
+  if (hasRedis && bucket && Number(bucket.uid) !== Number(payload.id)) {
+    throw new AuthException("供应商登录状态有误", ApiErrorCode.ERR_BANNED);
   }
 
   const container = c.get("container");

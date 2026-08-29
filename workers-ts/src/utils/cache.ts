@@ -10,9 +10,11 @@
  * 便于对照。
  */
 import { Redis } from "@upstash/redis/cloudflare";
+import { ServiceUnavailableException } from "@/utils/errors";
 export interface RedisEnv {
   UPSTASH_REDIS_URL: string;
   UPSTASH_REDIS_TOKEN: string;
+  NODE_ENV?: string;
 }
 
 /** Token bucket 存储结构 (对应 PHP CacheService::setTokenBucket 的 value) */
@@ -49,9 +51,18 @@ const TB_PREFIX = "tb_";
 /** 取令牌桶 (对应 CacheService::getTokenBucket) */
 export async function getTokenBucket(key: string, env: RedisEnv): Promise<TokenBucket | null> {
   const r = getRedis(env);
-  if (!r) return null; // Redis 未配置, 降级
-  const raw = await r.get<TokenBucket>(PREFIX + TB_PREFIX + key);
-  return raw ?? null;
+  if (!r) {
+    if (env.NODE_ENV === "production") {
+      throw new ServiceUnavailableException("令牌状态存储不可用");
+    }
+    return null;
+  }
+  try {
+    const raw = await r.get<TokenBucket>(PREFIX + TB_PREFIX + key);
+    return raw ?? null;
+  } catch {
+    throw new ServiceUnavailableException("令牌状态存储不可用");
+  }
 }
 
 /** 存令牌桶, 带 TTL (对应 CacheService::setTokenBucket) */
@@ -61,17 +72,32 @@ export async function setTokenBucket(
   env: RedisEnv,
 ): Promise<boolean> {
   const r = getRedis(env);
-  if (!r) return true; // Redis 未配置, 跳过 (JWT 仍有效)
-  const result = await r.set(PREFIX + TB_PREFIX + key, bucket, { ex: bucket.exp });
-  return result === "OK";
+  if (!r) throw new ServiceUnavailableException("令牌状态存储不可用");
+  try {
+    const result = await r.set(PREFIX + TB_PREFIX + key, bucket, { ex: bucket.exp });
+    if (result !== "OK") throw new ServiceUnavailableException("令牌状态存储不可用");
+    return true;
+  } catch (error) {
+    if (error instanceof ServiceUnavailableException) throw error;
+    throw new ServiceUnavailableException("令牌状态存储不可用");
+  }
 }
 
 /** 清除令牌桶 (对应 CacheService::clearToken) */
 export async function clearToken(key: string, env: RedisEnv): Promise<boolean> {
   const r = getRedis(env);
-  if (!r) return true;
-  const count = await r.del(PREFIX + TB_PREFIX + key);
-  return count > 0;
+  if (!r) {
+    if (env.NODE_ENV === "production") {
+      throw new ServiceUnavailableException("令牌状态存储不可用");
+    }
+    return true;
+  }
+  try {
+    const count = await r.del(PREFIX + TB_PREFIX + key);
+    return count > 0;
+  } catch {
+    throw new ServiceUnavailableException("令牌状态存储不可用");
+  }
 }
 
 // ─── 通用缓存 (对应 CacheService::get/set/delete) ──────────

@@ -2,6 +2,12 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { PcCompatibilityService } from "@/services/pc/PcCompatibilityService";
 import { ScanLoginService } from "@/services/auth/ScanLoginService";
+import {
+  clearOauthBrowserVerifier,
+  oauthBrowserVerifier,
+  setOauthBrowserVerifier,
+} from "@/services/auth/OauthBrowserCookie";
+import { allowlistedAuthRequest } from "@/services/auth/TrustedAuthClient";
 import { WechatOpenWebAuthService } from "@/services/wechat/WechatOpenWebAuthService";
 import type { GoodsListParams } from "@/services/product/StoreProductService";
 import { ValidateException } from "@/utils/errors";
@@ -29,12 +35,17 @@ function clientIp(c: C): string {
 
 function scanService(c: C) {
   c.header("Cache-Control", "no-store, max-age=0");
+  c.header("Referrer-Policy", "no-referrer");
   return new ScanLoginService(c.get("container"), c.env);
 }
 
 /** Create a QR key plus a browser-only poll secret. */
 export async function key(c: C) {
-  return jsonOk(c, await scanService(c).create("pc_user", clientIp(c)));
+  return jsonOk(c, await scanService(c).create(
+    "pc_user",
+    allowlistedAuthRequest(c.req.raw, c.env, "pc_user"),
+    clientIp(c),
+  ));
 }
 
 /** Polling never accepts the bearer-equivalent secret in the URL. */
@@ -49,16 +60,28 @@ export async function scan(c: C) {
 
 export async function oauthState(c: C) {
   c.header("Cache-Control", "no-store, max-age=0");
+  c.header("Referrer-Policy", "no-referrer");
+  const client = allowlistedAuthRequest(c.req.raw, c.env, "pc_user");
   const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
-    .createOauthState("pc_user", clientIp(c));
+    .createOauthState("pc_user", clientIp(c), client.origin);
+  setOauthBrowserVerifier(c, "pc_user", result.state, result.verifier, result.expiresIn);
   return jsonOk(c, { state: result.state, expires_in: result.expiresIn });
 }
 
-/** Open-platform callback requires a one-time, audience/IP-bound state. */
+/** Open-platform callback requires a one-time, audience/browser-bound state. */
 export async function wechatAuth(c: C) {
   c.header("Cache-Control", "no-store, max-age=0");
+  c.header("Referrer-Policy", "no-referrer");
+  const state = c.req.query("state") ?? "";
   const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
-    .login("pc_user", c.req.query("code"), c.req.query("state"), clientIp(c));
+    .login(
+      "pc_user",
+      c.req.query("code"),
+      state,
+      oauthBrowserVerifier(c, "pc_user", state),
+      clientIp(c),
+    );
+  clearOauthBrowserVerifier(c, "pc_user", state);
   return jsonOk(c, result, "登录成功");
 }
 

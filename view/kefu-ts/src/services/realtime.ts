@@ -64,7 +64,7 @@ export class KefuRealtimeClient {
       this.socket = null;
       previous.close(1000, "reconnecting");
     }
-    const token = localStorage.getItem(KEFU_TOKEN_KEY);
+    const token = sessionStorage.getItem(KEFU_TOKEN_KEY);
     if (!token) throw new Error("客服登录状态无效");
     this.manuallyClosed = false;
     this.callbacks.onState("connecting");

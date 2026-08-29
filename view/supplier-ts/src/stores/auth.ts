@@ -24,15 +24,18 @@ export const useAuthStore = defineStore("supplier-auth", () => {
     localStorage.setItem("supplier-user", JSON.stringify(result.user_info));
   }
 
-  async function signOut() {
+  async function signOut(): Promise<boolean> {
+    let serverRevoked = true;
     try {
       await supplierApi.logout();
-    } finally {
-      token.value = "";
-      user.value = null;
-      localStorage.removeItem("supplier-token");
-      localStorage.removeItem("supplier-user");
+    } catch {
+      serverRevoked = false;
     }
+    token.value = "";
+    user.value = null;
+    localStorage.removeItem("supplier-token");
+    localStorage.removeItem("supplier-user");
+    return serverRevoked;
   }
 
   return { token, user, signIn, signOut };

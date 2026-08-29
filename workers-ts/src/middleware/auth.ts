@@ -90,12 +90,18 @@ export function authMiddleware(opts: AuthOptions): MiddlewareHandler<{
     const env = c.env;
     const key = md5(token);
 
-    // Layer 1: token bucket (Redis 不可用时降级到纯 JWT)
+    // Layer 1: token bucket. Production never degrades to a bearer-only JWT;
+    // local/test environments may omit Redis for isolated unit work.
     const bucket = await getTokenBucket(key, env);
     const hasRedis = !!(c.env.UPSTASH_REDIS_URL && c.env.UPSTASH_REDIS_TOKEN);
     if (hasRedis) {
       // Redis 可用时, bucket 校验是必须的
-      if (!bucket || (typeof bucket.uid !== "number" && typeof bucket.uid !== "string")) {
+      if (
+        !bucket
+        || bucket.type !== "api"
+        || bucket.token !== token
+        || (typeof bucket.uid !== "number" && typeof bucket.uid !== "string")
+      ) {
         if (force) throw new AuthException("请登录", ApiErrorCode.ERR_LOGIN);
         await next();
         return;
@@ -109,6 +115,12 @@ export function authMiddleware(opts: AuthOptions): MiddlewareHandler<{
     } catch {
       await clearToken(key, env).catch(() => {});
       if (force) throw new AuthException("登录已过期,请重新登录", ApiErrorCode.ERR_EXPIRED);
+      await next();
+      return;
+    }
+
+    if (payload.type !== "api") {
+      if (force) throw new AuthException("无用户端权限", ApiErrorCode.ERR_BANNED);
       await next();
       return;
     }
@@ -138,11 +150,17 @@ export function authMiddleware(opts: AuthOptions): MiddlewareHandler<{
       return;
     }
 
-    // Layer 4: auth claim 校验 (改密后旧 token 失效)
-    // LoginService 传的 auth = user.pwd (md5 hash 本身)
-    // 所以这里直接比较 payload.auth === user.pwd
-    // 与 PHP 一致: 默认密码 md5('123456') 跳过此校验
-    if (user.pwd !== md5("123456") && payload.auth !== user.pwd) {
+    // Layer 4: PHP BaseServices::createToken 会把数据库密码哈希再 md5 一次。
+    // 迁移初期的 Worker 曾错误地直接写入 user.pwd；旧值只在当前 token 的
+    // 精确 Redis bucket 仍活跃时兼容。旧签发器修复后，该窗口最多持续一个
+    // API token bucket 生命周期（7 天 + 60 秒），且改密仍会立即使其失效。
+    const authoritativeAuth = md5(user.pwd);
+    const activeLegacyWorkerToken = hasRedis
+      && bucket?.type === "api"
+      && bucket.token === token
+      && Number(bucket.uid) === Number(user.uid)
+      && payload.auth === user.pwd;
+    if (payload.auth !== authoritativeAuth && !activeLegacyWorkerToken) {
       if (force) throw new AuthException("登录已过期,请重新登录", ApiErrorCode.ERR_EXPIRED);
       await next();
       return;

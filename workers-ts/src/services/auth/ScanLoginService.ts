@@ -6,13 +6,19 @@ import type {
   ScanLoginAudience,
   ScanLoginChallengeView,
 } from "@/do/TokenBucketDO";
+import type { AuthRequestMetadata } from "@/services/auth/TrustedAuthClient";
 import { KefuAuthService } from "@/services/kefu/KefuAuthService";
 import { LoginService } from "@/services/user/LoginService";
-import { RateLimitException, ValidateException } from "@/utils/errors";
+import {
+  RateLimitException,
+  ServiceUnavailableException,
+  ValidateException,
+} from "@/utils/errors";
 
 const CHALLENGE_TTL_SECONDS = 10 * 60;
 const CREATE_LIMIT_PER_MINUTE = 20;
 const POLL_LIMIT_PER_MINUTE = 180;
+const MOBILE_LIMIT_PER_MINUTE = 30;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const POLL_TOKEN_PATTERN = /^[a-f0-9]{64}$/;
 
@@ -70,6 +76,11 @@ function publicChallenge(view: ScanLoginChallengeView) {
     audience: view.audience,
     stage: view.stage,
     expires_in: Math.max(0, view.expiresAt - Math.floor(Date.now() / 1000)),
+    target: {
+      name: view.target,
+      origin: view.clientOrigin,
+      device: view.clientDevice,
+    },
   };
 }
 
@@ -84,14 +95,19 @@ export class ScanLoginService {
   }
 
   private async enforceRateLimit(
-    operation: "create" | "poll",
+    operation: "create" | "poll" | "inspect" | "approve" | "reject",
     ip: string,
+    uid = 0,
   ): Promise<void> {
     const source = await hmacHex(
       this.env.APP_KEY,
-      `scan-login:${operation}\u0000${ip.trim().slice(0, 128) || "unknown"}`,
+      `scan-login:${operation}\u0000${uid}\u0000${ip.trim().slice(0, 128) || "unknown"}`,
     );
-    const limit = operation === "create" ? CREATE_LIMIT_PER_MINUTE : POLL_LIMIT_PER_MINUTE;
+    const limit = operation === "create"
+      ? CREATE_LIMIT_PER_MINUTE
+      : operation === "poll"
+        ? POLL_LIMIT_PER_MINUTE
+        : MOBILE_LIMIT_PER_MINUTE;
     const decision = await this.env.TOKEN_BUCKET
       .getByName(`scan-login-rate:${source.slice(0, 32)}`)
       .consumeRateLimit([{ key: operation, limit }], 60);
@@ -123,7 +139,7 @@ export class ScanLoginService {
     return rows[0];
   }
 
-  async create(audience: ScanLoginAudience, ip = "") {
+  async create(audience: ScanLoginAudience, client: AuthRequestMetadata, ip = "") {
     if (!(["pc_user", "kefu_agent"] as const).includes(audience)) {
       throw new ValidateException("扫码登录场景无效");
     }
@@ -138,6 +154,9 @@ export class ScanLoginService {
       pollTokenHash: await sha256Hex(secret),
       issuedAt,
       expiresAt: issuedAt + CHALLENGE_TTL_SECONDS,
+      clientOrigin: client.origin,
+      clientDevice: client.device,
+      target: client.target,
     });
     if (!created) throw new ValidateException("扫码登录挑战创建失败，请重试");
     return {
@@ -150,8 +169,9 @@ export class ScanLoginService {
   }
 
   /** Authenticated mobile inspection atomically binds the first scanning uid. */
-  async inspect(keyValue: unknown, uid: number) {
+  async inspect(keyValue: unknown, uid: number, ip = "") {
     const key = challengeKey(keyValue);
+    await this.enforceRateLimit("inspect", ip, uid);
     await this.activeUser(uid);
     const current = await this.stub(key).getScanLoginChallenge();
     if (!current) throw new ValidateException("二维码已过期，请重新扫描");
@@ -162,8 +182,9 @@ export class ScanLoginService {
   }
 
   /** Authenticated mobile approval is restricted to the uid that inspected. */
-  async approve(keyValue: unknown, uid: number) {
+  async approve(keyValue: unknown, uid: number, ip = "") {
     const key = challengeKey(keyValue);
+    await this.enforceRateLimit("approve", ip, uid);
     await this.activeUser(uid);
     const current = await this.stub(key).getScanLoginChallenge();
     if (!current) throw new ValidateException("二维码已过期，请重新扫描");
@@ -171,6 +192,20 @@ export class ScanLoginService {
     const approved = await this.stub(key).approveScanLoginChallenge(uid, kefu?.id);
     if (!approved) throw new ValidateException("请使用扫描二维码的同一账号确认登录");
     return publicChallenge(approved);
+  }
+
+  /** Authenticated rejection removes only the still-scanned challenge owned by this uid. */
+  async reject(keyValue: unknown, uid: number, ip = "") {
+    const key = challengeKey(keyValue);
+    await this.enforceRateLimit("reject", ip, uid);
+    await this.activeUser(uid);
+    const rejected = await this.stub(key).rejectScanLoginChallenge(uid);
+    if (!rejected) throw new ValidateException("登录请求已失效或无法拒绝");
+    return {
+      ...publicChallenge(rejected),
+      stage: "rejected" as const,
+      expires_in: 0,
+    };
   }
 
   /** Browser polling requires the non-URL secret and consumes approval once. */
@@ -185,20 +220,35 @@ export class ScanLoginService {
     await this.enforceRateLimit("poll", ip);
     const current = await this.stub(key).getScanLoginChallenge();
     if (!current || current.audience !== audience) return { status: 0 as const };
-    const result = await this.stub(key).pollScanLoginChallenge(await sha256Hex(token), audience);
-    if (result.status !== 3) return result;
-    if (audience === "pc_user") {
-      const issued = await new LoginService(this.container, this.env)
-        .loginByVerifiedUid(result.uid, ip);
-      return {
-        status: 3 as const,
-        token: issued.token,
-        exp_time: issued.expires_time,
-      };
+    const stub = this.stub(key);
+    const result = await stub.pollScanLoginChallenge(await sha256Hex(token), audience);
+    if (result.status !== 4) return result;
+    try {
+      if (audience === "pc_user") {
+        const issued = await new LoginService(this.container, this.env)
+          .loginByVerifiedUid(result.uid, ip, result.tokenIssuedAt);
+        const delivered = await stub.completeScanLoginChallenge(
+          result.lease,
+          issued.token,
+          issued.expires_time,
+        );
+        if (!delivered) throw new ServiceUnavailableException();
+        return delivered;
+      }
+      if (!result.kefuId) throw new ValidateException("客服扫码登录身份无效");
+      const issued = await new KefuAuthService(this.container, this.env)
+        .loginByVerifiedIdentity(result.kefuId, result.uid, result.tokenIssuedAt);
+      const delivered = await stub.completeScanLoginChallenge(
+        result.lease,
+        issued.token,
+        issued.exp_time,
+        issued.kefuInfo,
+      );
+      if (!delivered) throw new ServiceUnavailableException();
+      return delivered;
+    } catch (error) {
+      await stub.releaseScanLoginIssuance(result.lease).catch(() => {});
+      throw error;
     }
-    if (!result.kefuId) throw new ValidateException("客服扫码登录身份无效");
-    const issued = await new KefuAuthService(this.container, this.env)
-      .loginByVerifiedIdentity(result.kefuId, result.uid);
-    return { status: 3 as const, ...issued };
   }
 }

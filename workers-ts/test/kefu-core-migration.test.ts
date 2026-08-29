@@ -144,13 +144,16 @@ describe("dedicated customer-service migration", () => {
     const routes = readFileSync("src/routes/kefuapi.ts", "utf8");
     const app = readFileSync("src/app.ts", "utf8");
     const middleware = readFileSync("src/middleware/kefu-auth.ts", "utf8");
+    const authService = readFileSync("src/services/kefu/KefuAuthService.ts", "utf8");
+    const realtime = readFileSync("src/services/kefu/KefuRealtimeService.ts", "utf8");
     const registrations = routes.match(/kefuapiRoutes\.(?:get|post|put|delete)\(/g) ?? [];
-    expect(registrations).toHaveLength(65);
+    expect(registrations).toHaveLength(66);
     expect(routes.indexOf('post("/login"')).toBeLessThan(
       routes.indexOf('use("*", kefuAuthMiddleware)'),
     );
     expect(routes).not.toContain("/ticket/");
     expect(routes).toContain('get("/wechat", KefuController.wechatLogin)');
+    expect(routes).toContain('post("/key", KefuController.loginKey)');
     expect(routes).toContain('post("/oauth_state", KefuController.oauthState)');
     expect(routes).toContain('get("/service/list", KefuController.serviceChat)');
     expect(routes.indexOf('get("/assets/:id", AttachmentController.asset)')).toBeLessThan(
@@ -187,7 +190,12 @@ describe("dedicated customer-service migration", () => {
     expect(routes).toContain('put("/order/write_update/:order_id", KefuController.writeoffByPublicId)');
     expect(app).toContain('app.route("/kefuapi", kefuapiRoutes)');
     expect(middleware).toContain('payload.type !== "kefu"');
+    expect(middleware).toContain("bucket.token !== token");
     expect(middleware).toContain("payload.auth !== md5(kefu.password)");
+    expect(middleware).toContain('userDao.findForAuth(kefu.uid)');
+    expect(authService).toContain('userDao.findForAuth(kefu.uid)');
+    expect(realtime).toContain('.innerJoin(userTable, eq(userTable.uid, storeService.uid))');
+    expect(realtime).toContain('eq(userTable.status, 1)');
     expect(middleware).not.toContain("adminAuthMiddleware");
   });
 

@@ -10,7 +10,7 @@
  *
  * sharding: 每个 uid 一个 DO 实例 (id = uid 字符串)。
  *
- * 注: M1 阶段 token bucket 主存 Upstash (与 PHP 兼容),
+ * 注: M1 阶段 token bucket 主存 Upstash；Worker 的 key/JSON 格式不与 PHP bucket 互通，
  *     DO 作为可选的"单设备登录"增强, 默认不启用。
  *     通过 SINGLE_DEVICE_LOGIN 配置开关。
  */
@@ -29,7 +29,17 @@ interface BucketState {
 }
 
 export type ScanLoginAudience = "pc_user" | "kefu_agent";
-export type ScanLoginStage = "pending" | "scanned" | "approved";
+export type ScanLoginStage = "pending" | "scanned" | "approved" | "issuing" | "delivered";
+
+export interface ScanLoginKefuIdentity {
+  id: number;
+  uid: number;
+  account: string;
+  avatar: string;
+  nickname: string;
+  phone: string;
+  online: number;
+}
 
 export interface ScanLoginChallengeState {
   version: 1;
@@ -38,9 +48,18 @@ export interface ScanLoginChallengeState {
   pollTokenHash: string;
   issuedAt: number;
   expiresAt: number;
+  clientOrigin: string;
+  clientDevice: string;
+  target: string;
   scannedUid?: number;
   approvedUid?: number;
   approvedKefuId?: number;
+  issuanceLease?: string;
+  issuanceLeaseExpiresAt?: number;
+  tokenIssuedAt?: number;
+  deliveredToken?: string;
+  deliveredExp?: number;
+  deliveredKefuInfo?: ScanLoginKefuIdentity;
 }
 
 export interface ScanLoginChallengeView {
@@ -48,6 +67,9 @@ export interface ScanLoginChallengeView {
   stage: ScanLoginStage;
   issuedAt: number;
   expiresAt: number;
+  clientOrigin: string;
+  clientDevice: string;
+  target: string;
   scannedUid?: number;
 }
 
@@ -56,7 +78,15 @@ export type ScanLoginPollResult =
   | { status: 1 | 2; audience: ScanLoginAudience; expiresAt: number }
   | {
     status: 3;
-    audience: ScanLoginAudience;
+    token: string;
+    exp_time: number;
+    kefuInfo?: ScanLoginKefuIdentity;
+  }
+  | {
+    /** Internal issuance claim. Controllers never return this status. */
+    status: 4;
+    lease: string;
+    tokenIssuedAt: number;
     uid: number;
     kefuId?: number;
   };
@@ -94,6 +124,11 @@ export class TokenBucketDO extends DurableObject {
         || !["pc_user", "kefu_agent"].includes(state.audience)
         || state.stage !== "pending"
         || !/^[a-f0-9]{64}$/.test(state.pollTokenHash)
+        || !/^https?:\/\/[^\s/]+(?::\d+)?$/.test(state.clientOrigin)
+        || !state.clientDevice
+        || state.clientDevice.length > 80
+        || !state.target
+        || state.target.length > 80
         || state.issuedAt > now + 60
         || state.expiresAt <= now
       ) return false;
@@ -114,6 +149,9 @@ export class TokenBucketDO extends DurableObject {
       stage: state.stage,
       issuedAt: state.issuedAt,
       expiresAt: state.expiresAt,
+      clientOrigin: state.clientOrigin,
+      clientDevice: state.clientDevice,
+      target: state.target,
       scannedUid: state.scannedUid,
     };
   }
@@ -135,6 +173,9 @@ export class TokenBucketDO extends DurableObject {
         stage: state.stage,
         issuedAt: state.issuedAt,
         expiresAt: state.expiresAt,
+        clientOrigin: state.clientOrigin,
+        clientDevice: state.clientDevice,
+        target: state.target,
         scannedUid: state.scannedUid,
       };
     });
@@ -156,7 +197,10 @@ export class TokenBucketDO extends DurableObject {
         state.approvedUid = uid;
         if (state.audience === "kefu_agent") state.approvedKefuId = Number(kefuId);
         await this.ctx.storage.put(SCAN_LOGIN_KEY, state);
-      } else if (state.stage !== "approved" || state.approvedUid !== uid) {
+      } else if (
+        !["approved", "issuing", "delivered"].includes(state.stage)
+        || state.approvedUid !== uid
+      ) {
         return null;
       }
       return {
@@ -164,12 +208,41 @@ export class TokenBucketDO extends DurableObject {
         stage: state.stage,
         issuedAt: state.issuedAt,
         expiresAt: state.expiresAt,
+        clientOrigin: state.clientOrigin,
+        clientDevice: state.clientDevice,
+        target: state.target,
         scannedUid: state.scannedUid,
       };
     });
   }
 
-  /** Poll with the browser-only secret; approval is atomically consumed once. */
+  /** Reject and remove only a still-scanned challenge owned by this mobile uid. */
+  async rejectScanLoginChallenge(uid: number): Promise<ScanLoginChallengeView | null> {
+    return this.ctx.blockConcurrencyWhile(async () => {
+      const state = await this.liveScanLoginState(Math.floor(Date.now() / 1000));
+      if (
+        !state
+        || state.stage !== "scanned"
+        || state.scannedUid !== uid
+      ) return null;
+      const view: ScanLoginChallengeView = {
+        audience: state.audience,
+        stage: state.stage,
+        issuedAt: state.issuedAt,
+        expiresAt: state.expiresAt,
+        clientOrigin: state.clientOrigin,
+        clientDevice: state.clientDevice,
+        target: state.target,
+        scannedUid: state.scannedUid,
+      };
+      await this.ctx.storage.delete(SCAN_LOGIN_KEY);
+      return view;
+    });
+  }
+
+  /** Claim token issuance with the browser-only secret. The approved challenge
+   * remains retryable, and a fixed issuance timestamp makes retries produce the
+   * same JWT if Redis or the final DO write briefly fails. */
   async pollScanLoginChallenge(
     pollTokenHash: string,
     expectedAudience: ScanLoginAudience,
@@ -187,14 +260,87 @@ export class TokenBucketDO extends DurableObject {
       if (state.stage === "scanned") {
         return { status: 1, audience: state.audience, expiresAt: state.expiresAt };
       }
+      if (state.stage === "delivered") {
+        if (!state.deliveredToken || !state.deliveredExp) return { status: 0 };
+        return {
+          status: 3,
+          token: state.deliveredToken,
+          exp_time: state.deliveredExp,
+          ...(state.deliveredKefuInfo ? { kefuInfo: state.deliveredKefuInfo } : {}),
+        };
+      }
       if (!state.approvedUid) return { status: 0 };
-      await this.ctx.storage.delete(SCAN_LOGIN_KEY);
+      const now = Math.floor(Date.now() / 1000);
+      if (
+        state.stage === "issuing"
+        && Number(state.issuanceLeaseExpiresAt ?? 0) > now
+      ) {
+        return { status: 1, audience: state.audience, expiresAt: state.expiresAt };
+      }
+      if (state.stage !== "approved" && state.stage !== "issuing") return { status: 0 };
+      state.stage = "issuing";
+      state.issuanceLease = crypto.randomUUID();
+      state.issuanceLeaseExpiresAt = now + 30;
+      state.tokenIssuedAt ??= now;
+      await this.ctx.storage.put(SCAN_LOGIN_KEY, state);
       return {
-        status: 3,
-        audience: state.audience,
+        status: 4,
+        lease: state.issuanceLease,
+        tokenIssuedAt: state.tokenIssuedAt,
         uid: state.approvedUid,
         ...(state.approvedKefuId ? { kefuId: state.approvedKefuId } : {}),
       };
+    });
+  }
+
+  /** Persist the already-saved bearer before returning it to the browser.
+   * Repeating the same completion is idempotent. */
+  async completeScanLoginChallenge(
+    lease: string,
+    token: string,
+    expTime: number,
+    kefuInfo?: ScanLoginKefuIdentity,
+  ): Promise<{ status: 3; token: string; exp_time: number; kefuInfo?: ScanLoginKefuIdentity } | null> {
+    return this.ctx.blockConcurrencyWhile(async () => {
+      const state = await this.liveScanLoginState(Math.floor(Date.now() / 1000));
+      if (!state || !token || token.length > 4096 || !Number.isSafeInteger(expTime)) return null;
+      if (state.stage === "delivered") {
+        return state.deliveredToken === token && state.deliveredExp === expTime
+          ? {
+              status: 3,
+              token,
+              exp_time: expTime,
+              ...(state.deliveredKefuInfo ? { kefuInfo: state.deliveredKefuInfo } : {}),
+            }
+          : null;
+      }
+      if (state.stage !== "issuing" || state.issuanceLease !== lease) return null;
+      state.stage = "delivered";
+      state.deliveredToken = token;
+      state.deliveredExp = expTime;
+      if (kefuInfo) state.deliveredKefuInfo = kefuInfo;
+      delete state.issuanceLease;
+      delete state.issuanceLeaseExpiresAt;
+      await this.ctx.storage.put(SCAN_LOGIN_KEY, state);
+      return {
+        status: 3,
+        token,
+        exp_time: expTime,
+        ...(kefuInfo ? { kefuInfo } : {}),
+      };
+    });
+  }
+
+  /** Release only the matching issuance lease. A stale request cannot roll a
+   * newer claim back to approved. */
+  async releaseScanLoginIssuance(lease: string): Promise<void> {
+    await this.ctx.blockConcurrencyWhile(async () => {
+      const state = await this.liveScanLoginState(Math.floor(Date.now() / 1000));
+      if (!state || state.stage !== "issuing" || state.issuanceLease !== lease) return;
+      state.stage = "approved";
+      delete state.issuanceLease;
+      delete state.issuanceLeaseExpiresAt;
+      await this.ctx.storage.put(SCAN_LOGIN_KEY, state);
     });
   }
 

@@ -15,6 +15,7 @@ export const kefuapiRoutes = new Hono<{
 // Public bootstrap and login surfaces use separate, rate-limited security domains.
 kefuapiRoutes.post("/login", KefuController.login);
 kefuapiRoutes.get("/key", KefuController.loginKey);
+kefuapiRoutes.post("/key", KefuController.loginKey);
 kefuapiRoutes.get("/scan/:key", KefuController.scanLogin);
 kefuapiRoutes.post("/oauth_state", KefuController.oauthState);
 kefuapiRoutes.get("/wechat", KefuController.wechatLogin);

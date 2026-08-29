@@ -30,8 +30,10 @@ describe("PHP user-profile migration", () => {
     expect(routes).toContain('UserProfileController.approveLoginCode');
     expect(routes).not.toContain("userCodeUnavailable");
     expect(controller).toContain("new ScanLoginService");
-    expect(controller).toContain(".inspect(scanCode(c), uid(c))");
-    expect(controller).toContain(".approve(payload.code ?? payload.key ?? scanCode(c), uid(c))");
+    expect(controller).toContain(".inspect(scanCode(c), uid(c), clientIp(c))");
+    expect(controller).toContain("const key = payload.code ?? payload.key ?? scanCode(c)");
+    expect(controller).toContain('if (action === "reject") return login.reject(key, uid(c), clientIp(c))');
+    expect(controller).toContain("return login.approve(key, uid(c), clientIp(c))");
     expect(controller).toContain("readBoundedJsonObject(c.req.raw, 4 * 1024)");
   });
 

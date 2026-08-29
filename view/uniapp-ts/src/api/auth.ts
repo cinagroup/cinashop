@@ -29,6 +29,19 @@ export interface AppleSignInChallenge {
   expiresIn: number;
 }
 
+export interface ScanLoginTarget {
+  name: string;
+  origin: string;
+  device: string;
+}
+
+export interface ScanLoginApproval {
+  audience: "pc_user" | "kefu_agent";
+  stage: "pending" | "scanned" | "approved" | "issuing" | "delivered" | "rejected";
+  expires_in: number;
+  target: ScanLoginTarget;
+}
+
 export type SocialLoginResult =
   | { token: string; expiresTime: number; uid: number }
   | { bindPhone: true; key: string; expiresIn: number };
@@ -101,6 +114,21 @@ export function apiBindPhone(phone: string, captcha: string): Promise<null> {
 
 export function apiUpdatePhone(phone: string, captcha: string): Promise<null> {
   return http.post<null>("/user/updatePhone", { phone, captcha });
+}
+
+/** Authenticated first scan atomically binds this challenge to the current UID. */
+export function apiInspectLoginCode(key: string): Promise<ScanLoginApproval> {
+  return http.get<ScanLoginApproval>("/user/code", { key });
+}
+
+/** Explicit approval is accepted only from the same UID that inspected it. */
+export function apiApproveLoginCode(key: string): Promise<ScanLoginApproval> {
+  return http.post<ScanLoginApproval>("/user/code", { key, action: "approve" });
+}
+
+/** Rejecting cancels the server-side challenge; it is not a local-only dismissal. */
+export function apiRejectLoginCode(key: string): Promise<ScanLoginApproval> {
+  return http.post<ScanLoginApproval>("/user/code", { key, action: "reject" });
 }
 
 export function apiAppleSignInChallenge(): Promise<AppleSignInChallenge> {

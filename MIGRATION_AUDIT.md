@@ -1782,7 +1782,57 @@ Vite 的 `/api`、`/kefuapi` 都启用 WebSocket 代理；Cloudflare Pages Funct
 - [x] 完成桌面、移动安全失败态和受控正向签名游客 WebSocket/消息单次回显浏览器验收。
 - [ ] 取得只读源 MySQL 连接后运行 `schema-audit → plan → copy → verify`，由运营复核客服密码、UID 绑定、消息/会话和内容；当前连接条件缺失。
 - [ ] 在生产补入受限测试客服后验证真实 visitor bootstrap、Hyperdrive 消息、WebSocket hibernation、R2、未读、转接、过期/撤销与限流；再完成旧页面退流、预发、影子流量和明确发布批准。
-- [ ] 继续处理全局 1,203 个可执行路由缺口、PC 主包拆分、OAuth/扫码、ERP 与移动端长尾；客服路由有效 100% 不等于全站迁移完成。
+- [ ] 继续处理全局 1,203 个可执行路由缺口、PC 主包拆分、ERP 与移动端长尾；客服路由有效 100% 不等于全站迁移完成。
+
+## CORE-004-PC-KEFU 扫码/OAuth 安全续审与三端登录闭环（2026-08-29）
+
+### 生产 PostgreSQL 直接只读证据
+
+用户明确授权直接使用生产数据库后，专用临时 Worker `cinashop-pc-kefu-login-audit` 仅绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。审计事务固定为 `REPEATABLE READ, READ ONLY`，只读取聚合计数、布尔配置存在性和索引元数据，不返回配置值、手机号、openid、unionid、token 或其他 PII/Secret，也没有执行 DML/DDL。PostgreSQL 16.14 当前用户 3、活跃用户 3；旧 `user.uniqid/store_service.uniqid` 扫码键均为 0；微信身份、活跃 unionid、PC 微信身份、客服账号和活跃客服均为 0；`codex_%` 临时 schema 也为 0。
+
+`site_name` 有唯一非空候选，`wechat_open_app_id` 和历史数据库键 `wechat_open_app_secret` 均为 0 行。`system_config_lookup`、用户/微信身份/客服 UID 查询索引均存在，不需要新增生产 DDL。临时 Worker 已删除。空身份、空客服及缺 AppID/Secret 只证明功能会失败关闭，不能作为生产正向扫码或 OAuth E2E 证据。
+
+### 扫码状态机、重试与失败关闭
+
+上一节记录的 `pending→scanned→approved→consumed` 已被更完整的交付状态机取代：内部状态现在为 `pending→scanned→approved→issuing→delivered`。`issuing` 使用 30 秒租约并固定 token 签发时间；登录 token 先写强一致 token store，再在返回浏览器前持久化为 `delivered`。响应丢失或浏览器重试会重新交付完全相同的 token；签发失败只释放仍匹配的租约，不再提前删除已批准挑战。二维码仍只含公开 UUID，256 位 `poll_token` 只保留在浏览器闭包并通过 `X-Scan-Poll-Token` 发送，不进入 QR、DOM、URL 或日志。
+
+创建/轮询继续执行来源级 20/180 次每分钟限制，移动端查看与批准另增加 UID+IP 组合的 30 次每分钟限制。PC 发 token 前重读用户启用状态；客服同时重读 `store_service.is_del=0/status=1/account_status=1`、正 UID、绑定用户存在/未删除/启用及 UID 唯一关系，HTTP 中间件与 WebSocket 会话继续复核。禁用绑定用户会立即使客服 token 失效，不能只凭有效客服 JWT 继续访问。
+
+生产 token bucket 读取在 Redis 缺配置或网络异常时统一返回 HTTP 503，签发写入在缺配置、网络失败或非 `OK` 时同样失败关闭；API、Admin、Supplier、Kefu 与 Out 分别复核 token/type/uid，不能降级为只验 JWT。注销删除 bucket 也已采用同样的生产 503 语义。PC、UniApp、Kefu 与 Supplier 即使注销请求失败也会清除本机 bearer 并完成导航，但不再谎报服务端撤销成功，而会明确警告旧会话可能持续到过期；普通用户可改密或联系管理员，后台身份需由管理员禁用账号或重置密码，不能用新令牌再次注销来撤销已丢失的旧令牌。普通用户和客服成功主动退出会断开对应 token 的聊天连接；DO 对心跳以及消息、在线状态和转接三类被动下行，在发送前重新检查到期时间、Redis/访客会话和数据库身份，失效连接以 4001 关闭，因此休眠连接不能在 logout、TTL 到期、改密或禁用后继续收信。
+
+普通用户数据库 `pwd` 仍是 PHP 兼容的 `md5(password)`；PHP `BaseServices::createToken` 实际写入的 JWT `auth` 是 `md5(user.pwd)`。密码、短信、微信、扫码与 OAuth 的 Worker 签发已统一为这一权威摘要，默认密码也不再跳过 auth 校验。早期 Worker 错签的 `auth=user.pwd` 只在当前 `tb_` bucket 精确匹配 token/type/uid 时临时接受；旧签发器退役后最多延续现有 API bucket 的 7 天加 60 秒，并应在发布观察期后删除兼容分支。
+
+这不等于旧 PHP 会话无缝互通。PHP bucket 使用可配置 `REDIS_PREFIX + md5(token)` 和 PHP `serialize()`，Worker 使用 `tb_<md5(token)>` 与 JSON/Upstash；即使 `APP_KEY` 和 Redis 实例相同，两边也默认互相拒绝。正式切换必须二选一：全量鉴权切流并强制重新登录、禁止回退 PHP，或先实现并验证键名/序列化/TTL/撤销一致的双读或一次性迁移桥。当前未实现后者，混合鉴权流量是 P1 发布阻断。
+
+### OAuth、Origin、Cookie 与 Secret 边界
+
+全局 CORS 不再反射任意 Origin，只对 `ALLOWED_ORIGINS` 的精确来源返回 ACAO；生产扫码/OAuth 创建还按 audience 分别要求浏览器请求来源进入 `PC_AUTH_ALLOWED_ORIGINS` 或 `KEFU_AUTH_ALLOWED_ORIGINS`，客服入口不再继承 PC/H5 列表。服务端把目标名称、请求携带的精确 Origin、粗粒度 User-Agent 设备类别和 audience 固化到挑战，移动端批准前显示这些核对字段。旧 GET key 合同保留：浏览器省略 Origin 时只接受对应 audience 精确白名单内的 Referer origin；新 PC/Kefu 客户端使用 POST key 安全扩展，以可靠携带 Origin。
+
+开放平台 state 除 audience 和白名单 Origin 外，再绑定随机 256 位浏览器 verifier。verifier 仅进入按 audience **及 state** 隔离的 `__Host-cinashop-pc-oauth-<state>` 或 `__Host-cinashop-kefu-oauth-<state>` Cookie，并设置 `HttpOnly; Secure; SameSite=Lax; Path=/`；并行标签页不再互相覆盖。Redis key 使用 state 与 verifier 摘要隔离，错误浏览器不能消费正确 state。callback 成功后清理对应 state Cookie，前端也先从地址栏移除 `code/state` 再处理结果。OAuth 必须经同源 Pages Function（或同站点自定义 API 域名），不能把 Kefu Pages 直接跨站请求 `workers.dev`，否则 Lax Cookie 不会随 callback fetch 发送。AppID 仍从精确 `wechat_open_app_id` 配置读取；AppSecret 现在只接受 Worker Secret `WECHAT_OPEN_APP_SECRET`。上一节“从 `system_config` 读取 AppSecret”的实现已经被取代，即使以后出现数据库同名行也不会使用。
+
+这里的 Origin 和 User-Agent 不是客户端证明：非浏览器请求可伪造两者，攻击者也可能中继二维码诱导用户确认。因此这些值只用于浏览器跨站收敛和人工核对，不能被服务端当作设备认证。移动端现明确提示“仅在本人刚主动发起登录时确认”；生产上线仍需评估 Turnstile/边缘证明、异常挑战尝试预算和反二维码中继措施，不能把 allowlist 描述为密码学可信边界。
+
+当前生产 `ALLOWED_ORIGINS` 配置 PC 与 H5 的精确 Pages 来源，`PC_AUTH_ALLOWED_ORIGINS` 只配置 PC Pages；`KEFU_AUTH_ALLOWED_ORIGINS` 刻意未设置。Kefu 尚无正式 Pages 项目和已批准生产 Origin，因此其扫码/OAuth 创建会真实返回 503，而不是继承 PC/H5 白名单；不得为临时可用而扩大 allowlist。生产 Worker Secret 清单也没有 `WECHAT_OPEN_APP_SECRET`，开放平台登录继续安全关闭。
+
+### PC、Kefu 与 UniApp 三端闭环
+
+新 PC 登录页已接入账号、短信、扫码三种模式和微信开放平台入口；扫码使用串行轮询，在切换 tab、组件卸载或过期时停止；成功回跳只接受站内路径，OAuth callback 会先清理 URL 中的 `code/state`。新 Kefu 登录页已接入密码、扫码和微信开放平台入口，请求携带同源凭据，扫码私有 secret 不进入 QR/DOM/URL，成功结果进入独立客服 auth store。PC 的 token/UID 与 Kefu 的 token/identity 已从 `localStorage` 改为当前标签页的 `sessionStorage`，模块初始化立即清除同名旧持久值，避免并行 OAuth 标签页出现 UI 身份和真实 bearer 错位；刷新当前标签页保留，新标签页不继承，关闭标签页也不等于服务端撤销，显式 logout 才会删除 bucket。`sessionStorage` 仍可被同源 XSS 读取，不能描述成 HttpOnly 防护。
+
+UniApp 新增认证扫码确认页：未登录先进入登录并返回，批准前显示目标名称、精确站点、设备和剩余时间，并提供显式确认/拒绝；用户取消登录返回时会看到可重试入口，不再停在空白卡片。Supplier 浏览器 API 也已从直连 `workers.dev/supplierapi` 改为同源 `/supplierapi`，新增 Pages Function 和 Vite 本地代理；代码级 CORS 阻断已消除，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署验收仍未完成。
+
+本地受控 mock 的既有真实浏览器回归覆盖 PC 1440×900、Kefu 桌面和 UniApp 390×844：PC/Kefu 均完成 pending→scanned 展示，二维码为 data URL 且 DOM 不含 `poll_token`；PC OAuth callback 清除参数后只跳转到 `/register`；移动端登录返回后显示 `CinaShop PC 商城`、`https://cinashop-pc.pages.dev` 与 `Windows · Chrome`，确认和拒绝终态均完成视觉回归。PC、Kefu 控制台无 error/warning；UniApp 只有框架依赖自身的 vue-router 弃用提示，没有应用错误、白屏或遮挡。
+
+随后增强的状态化 Node mock 在内存中维护 `pending/scanned/approved/delivered/rejected`，按 key 绑定扫描与批准/拒绝，批准后重复交付同一 token/有效期，并验证 audience 隔离的 OAuth state+Cookie、错误 Cookie、跨 audience 和一次性消费。它仍使用每个 audience 固定的 challenge/poll token 和合成身份，进程重启即丢失，也不模拟 `issuing` 租约、DO 并发、Redis、真实 JWT、Hyperdrive、Origin/CORS、微信提供方或网络不确定性。本次协议自检与此前视觉回归是两层独立证据，均不能替代真实 Worker、微信和生产数据 E2E；同 audience 并行二维码标签页仍需真实实现回归。
+
+### 最新量化、验证与上线门禁
+
+最新注释感知路由审计为 PHP 1,904、Workers 1,395、精确匹配 697、可执行匹配 679、明确不可用 18、原始缺失 1,207、证据化退役 4、可执行缺口 1,203；覆盖为 36.6%/35.7%/35.7%。`/api` 为 315/457 精确、312 可执行、3 不可用、可执行缺口 141；`/kefuapi` 为 60/63 精确且全部可执行，余下 3 条均有证据退役，`actionableMissing=0`、退役后有效覆盖 100%。新增 POST key/OAuth 端点属于安全扩展，不改变 PHP 精确匹配分子。
+
+仓库 schema audit 为源 201、目标 224、共享 201、缺源列 0、外部/内嵌迁移 224/224 且表/列/主键漂移 0。Worker 双 TypeScript 配置、135 个单元测试文件/787 项、PC/Kefu/Supplier 生产构建、Kefu 7/7 测试、UniApp 类型检查和 H5 构建、Supplier Pages Function 独立类型检查均通过；主 Worker minify dry-run 为 2,575.75 KiB/gzip 638.51 KiB。Windows runtime 仍在 0 条断言前以 `workerd 0xc0000005` 启动失败，不能记为 runtime 通过。
+
+本地安全闭环完成不等于生产登录完成。主生产 Worker仍为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有部署主 Worker或正式前端；生产缺 `wechat_open_app_id`、`WECHAT_OPEN_APP_SECRET`、微信身份和客服账号，且没有源 MySQL连接可复制身份与客服数据。还需确定 Kefu 正式 Origin，配置同源 Pages proxy 与开放平台，迁移并人工复核真实身份/客服，明确“全量切流强制重新登录”或完成 PHP/Worker bucket 迁移桥，完成真实微信、真实账号、真机、Linux runtime、预发、影子流量、明确发布批准和发布后观察。Supplier 同源 proxy 虽已进入源码，正式 Pages 项目和映射同样未发布。技术债仍包括 Origin/UA 及二维码中继不具密码学客户端证明、每次扫码 RPC 使用 `blockConcurrencyWhile`，以及错误 poll secret 只有来源级限流、尚无挑战级尝试预算。
+
+下一批路由缺口按第一方调用价值和现有可复用服务排序为：USER-CENTER-COMPAT 9 条（地址详情/默认、批量收藏、签到配置/记录/月历/提醒），DIY-HOME-WIDGETS 8 条，PUBLIC-ARTICLE 7 条。三批共 24 条；全部完成后全局可执行缺口预计由 1,203 降至 1,179，`/api` 由 141 降至 117。优先从 USER-CENTER-COMPAT 开始，因为新 UniApp 当前“设默认地址”调用了要求完整地址的保存接口，属于可复现功能缺陷，并且底层地址/收藏/签到服务大多已经存在。
 
 ## 完成定义
 

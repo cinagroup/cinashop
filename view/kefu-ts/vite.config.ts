@@ -2,6 +2,9 @@ import { fileURLToPath, URL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 
+const apiProxyTarget = process.env.CINASHOP_API_PROXY_TARGET
+  ?? "https://cinashop-api.cinagroup.workers.dev";
+
 export default defineConfig({
   plugins: [vue()],
   resolve: {
@@ -12,7 +15,7 @@ export default defineConfig({
     port: 5178,
     proxy: {
       "/kefuapi": {
-        target: "https://cinashop-api.cinagroup.workers.dev",
+        target: apiProxyTarget,
         changeOrigin: true,
         ws: true,
       },

@@ -1305,8 +1305,9 @@ export class OutApiService {
       throw new AuthException("请登录");
     }
     const key = md5(token);
-    if (this.env.UPSTASH_REDIS_URL && this.env.UPSTASH_REDIS_TOKEN) {
-      const bucket = await getTokenBucket(key, this.env);
+    const bucket = await getTokenBucket(key, this.env);
+    const hasRedis = Boolean(this.env.UPSTASH_REDIS_URL && this.env.UPSTASH_REDIS_TOKEN);
+    if (hasRedis) {
       if (!bucket || bucket.type !== "out" || bucket.token !== token) {
         throw new AuthException("登录已过期");
       }
@@ -1319,6 +1320,9 @@ export class OutApiService {
       throw new AuthException("登录已过期");
     }
     if (payload.type !== "out") throw new AuthException("暂无对外接口权限");
+    if (hasRedis && bucket && Number(bucket.uid) !== Number(payload.id)) {
+      throw new AuthException("对外接口登录状态有误");
+    }
     const account = await this.accountRow(payload.id).catch(async (error: unknown) => {
       await clearToken(key, this.env).catch(() => undefined);
       throw error;
