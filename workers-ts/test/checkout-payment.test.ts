@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { orderCancelHours } from "../src/services/payment/OrderPaymentPolicy";
+import {
+  assertMarketingOfflinePaymentAllowed,
+  orderCancelHours,
+} from "../src/services/payment/OrderPaymentPolicy";
 import { normalizeWechatPaymentChannel } from "../src/services/payment/WechatPaymentIdentity";
 import { parseRechargeQuota } from "../src/services/user/UserFinanceService";
 
@@ -29,6 +32,21 @@ describe("checkout payment migration", () => {
     expect(orderCancelHours(3, config)).toBe(5);
     expect(orderCancelHours(4, config)).toBe(6);
     expect(orderCancelHours(7, config)).toBe(3);
+  });
+
+  it("allows marketing offline payment only on the PC channel", () => {
+    expect(() => assertMarketingOfflinePaymentAllowed(0, "h5")).not.toThrow();
+    expect(() => assertMarketingOfflinePaymentAllowed(1, "pc")).not.toThrow();
+    expect(() => assertMarketingOfflinePaymentAllowed(3, "PC")).not.toThrow();
+    expect(() => assertMarketingOfflinePaymentAllowed(1, "h5"))
+      .toThrow("营销商品不能使用线下支付");
+    expect(() => assertMarketingOfflinePaymentAllowed(2, undefined))
+      .toThrow("营销商品不能使用线下支付");
+
+    const create = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
+    const pay = readFileSync("src/services/order/StoreOrderPayService.ts", "utf8");
+    expect(create).toContain("assertMarketingOfflinePaymentAllowed(type, params.from)");
+    expect(pay).toContain("assertMarketingOfflinePaymentAllowed(order.type, from)");
   });
 
   it("keeps recharge crediting behind provider-verified callbacks", () => {

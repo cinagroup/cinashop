@@ -19,6 +19,33 @@ const BUSINESS_FINGERPRINT_SQL = `
     'store_order_cart_info', (SELECT jsonb_build_object('rows', count(*)::text,
       'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
       FROM public.store_order_cart_info t),
+    'store_cart', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_cart t),
+    'store_product', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_product t),
+    'store_product_attr_value', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_product_attr_value t),
+    'store_seckill', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_seckill t),
+    'store_bargain', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_bargain t),
+    'store_bargain_user', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_bargain_user t),
+    'store_combination', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_combination t),
+    'store_pink', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_pink t),
+    'store_integral', (SELECT jsonb_build_object('rows', count(*)::text,
+      'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
+      FROM public.store_integral t),
     'store_coupon_issue', (SELECT jsonb_build_object('rows', count(*)::text,
       'digest', md5(coalesce(sum(hashtextextended(to_jsonb(t)::text, 0)::numeric)::text, '')))
       FROM public.store_coupon_issue t),
@@ -203,6 +230,84 @@ async function readState(connectionString: string) {
           FROM store_order_cart_info GROUP BY oid
         ) c ON c.oid = o.id
       `;
+      const checkout = await tx<Array<Record<string, unknown>>>`
+        SELECT
+          (SELECT COALESCE(jsonb_object_agg(type::text, total), '{}'::jsonb)
+            FROM (SELECT type, count(*)::integer AS total FROM store_cart
+              GROUP BY type ORDER BY type) d) AS cart_type_distribution,
+          (SELECT count(*)::integer FROM store_cart
+            WHERE type IN (1, 2, 3) AND is_pay = 0 AND is_del = 0 AND status = 1)
+            AS active_legacy_activity_carts,
+          (SELECT COALESCE(jsonb_object_agg(type::text, total), '{}'::jsonb)
+            FROM (SELECT type, count(*)::integer AS total FROM store_order
+              GROUP BY type ORDER BY type) d) AS order_type_distribution,
+          (SELECT COALESCE(jsonb_object_agg(type::text, total), '{}'::jsonb)
+            FROM (SELECT type, count(*)::integer AS total FROM store_product_attr_value
+              GROUP BY type ORDER BY type) d) AS sku_type_distribution,
+          (SELECT jsonb_build_object(
+            'seckill', (SELECT count(*)::integer FROM store_seckill),
+            'bargain', (SELECT count(*)::integer FROM store_bargain),
+            'bargain_user', (SELECT count(*)::integer FROM store_bargain_user),
+            'combination', (SELECT count(*)::integer FROM store_combination),
+            'pink', (SELECT count(*)::integer FROM store_pink),
+            'integral', (SELECT count(*)::integer FROM store_integral)
+          )) AS activity_rows,
+          (SELECT count(*)::integer
+            FROM store_product_attr_value av
+            WHERE av.type IN (1, 2, 3) AND NOT EXISTS (
+              SELECT 1 FROM store_seckill s WHERE av.type = 1 AND s.id = av.product_id
+              UNION ALL
+              SELECT 1 FROM store_bargain b WHERE av.type = 2 AND b.id = av.product_id
+              UNION ALL
+              SELECT 1 FROM store_combination c WHERE av.type = 3 AND c.id = av.product_id
+            )) AS orphan_legacy_activity_skus,
+          (SELECT count(*)::integer
+            FROM store_product_attr_value av
+            LEFT JOIN store_seckill s ON av.type = 1 AND s.id = av.product_id
+            LEFT JOIN store_bargain b ON av.type = 2 AND b.id = av.product_id
+            LEFT JOIN store_combination c ON av.type = 3 AND c.id = av.product_id
+            WHERE av.type IN (1, 2, 3)
+              AND COALESCE(s.product_id, b.product_id, c.product_id) IS NOT NULL
+              AND NOT EXISTS (
+                SELECT 1 FROM store_product_attr_value base
+                WHERE base.type = 0
+                  AND base.product_id = COALESCE(s.product_id, b.product_id, c.product_id)
+                  AND base.suk = av.suk
+              )) AS activity_skus_without_base_match,
+          (SELECT count(*)::integer FROM store_seckill
+            WHERE status = 1 AND is_show = 1 AND is_del = 0 AND (once_num <= 0 OR num <= 0))
+            AS active_seckill_invalid_limits,
+          (SELECT count(*)::integer FROM store_combination
+            WHERE status = 1 AND is_show = 1 AND is_del = 0 AND (once_num <= 0 OR num <= 0))
+            AS active_combination_invalid_limits,
+          (SELECT count(*)::integer
+            FROM store_order o JOIN store_order_cart_info ci ON ci.oid = o.id
+            WHERE o.type IN (1, 2, 3) AND ci.cart_info NOT LIKE '%"activitySku"%')
+            AS legacy_activity_order_snapshots_without_activity_sku,
+          (SELECT count(*)::integer FROM store_order
+            WHERE type IN (1, 2, 3) AND paid = 0 AND status = 0 AND is_del = 0)
+            AS unpaid_visible_activity_orders,
+          (SELECT count(*)::integer
+            FROM store_order o JOIN store_order_cart_info ci ON ci.oid = o.id
+            WHERE o.type IN (1, 2, 3) AND o.paid = 0 AND o.status = 0 AND o.is_del = 0
+              AND ci.cart_info NOT LIKE '%"activitySku"%')
+            AS unpaid_activity_snapshots_without_activity_sku,
+          (SELECT COALESCE(jsonb_agg(row_to_json(d) ORDER BY d.kind, d.id), '[]'::jsonb)
+            FROM (
+              SELECT 'seckill'::text AS kind, id, once_num, num, stock, quota, status, is_show, is_del
+              FROM store_seckill
+              UNION ALL
+              SELECT 'combination'::text AS kind, id, once_num, num, stock, quota, status, is_show, is_del
+              FROM store_combination
+            ) d) AS limited_activity_configuration,
+          (SELECT COALESCE(jsonb_object_agg(key, total), '{}'::jsonb)
+            FROM (
+              SELECT concat(type, ':paid=', paid, ':status=', status, ':del=', is_del) AS key,
+                count(*)::integer AS total
+              FROM store_order WHERE type IN (1, 2, 3)
+              GROUP BY type, paid, status, is_del ORDER BY type, paid, status, is_del
+            ) d) AS activity_order_lifecycle_distribution
+      `;
       const plans = await tx<Array<{ "QUERY PLAN": unknown }>>`
         EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
         SELECT id, order_id, paid, status, refund_status, add_time
@@ -211,9 +316,12 @@ async function readState(connectionString: string) {
         ORDER BY add_time DESC, id DESC
         LIMIT 10
       `;
+      const fingerprint = await tx.unsafe<Array<{ fingerprint: string }>>(BUSINESS_FINGERPRINT_SQL);
       return {
         state: state[0] ?? {},
         integrity: integrity[0] ?? {},
+        checkout: checkout[0] ?? {},
+        business_fingerprint: fingerprint[0]?.fingerprint ?? "",
         user_order_list_plan: plans[0]?.["QUERY PLAN"] ?? null,
       };
     });

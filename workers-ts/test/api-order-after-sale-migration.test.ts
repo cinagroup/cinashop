@@ -145,6 +145,7 @@ describe("API-002 order and after-sale migration", () => {
     expect(controller).toContain("StoreOrderCreateService");
     expect(controller).toContain("checkoutCartIds(uid, key)");
     expect(compatibility).toContain(".quoteOrder({");
+    expect(compatibility).toContain("couponId: options.couponId");
     expect(compatibility).not.toContain('pay_postage: "0.00"');
   });
 

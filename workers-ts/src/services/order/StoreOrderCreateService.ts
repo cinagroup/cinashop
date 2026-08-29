@@ -101,6 +101,8 @@ import {
 } from "@/services/activity/StoreDiscountService";
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
+import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -120,6 +122,8 @@ export interface CreateOrderParams {
   useIntegral?: boolean | number;
   /** Needed for PHP-compatible offline-postage policy. */
   payType?: string;
+  /** Client channel; marketing orders allow offline payment only on PC. */
+  from?: unknown;
   userIp: string;
   /** 活动类型: 0普通 1秒杀 2砍价 3拼团 4积分 5套餐 7新人专享 */
   type?: number;
@@ -482,9 +486,9 @@ export async function cancelStoreOrder(
       if (!skuRestored.length || !productRestored.length) {
         throw new Error(`订单 ${orderId} 的商品库存无法完整恢复`);
       }
-      if (order.type === 4) {
+      if ([1, 2, 3, 4].includes(order.type)) {
         if (!snapshotActivitySkuId) {
-          throw new Error(`订单 ${orderId} 的积分活动 SKU 快照缺失，无法安全取消`);
+          throw new Error(`订单 ${orderId} 的活动 SKU 快照缺失，无法安全取消`);
         }
         const activitySkuRestored = await tx
           .update(storeProductAttrValue)
@@ -497,12 +501,12 @@ export async function cancelStoreOrder(
             and(
               eq(storeProductAttrValue.id, snapshotActivitySkuId),
               eq(storeProductAttrValue.productId, order.activityId),
-              eq(storeProductAttrValue.type, 4),
+              eq(storeProductAttrValue.type, order.type),
             ),
           )
           .returning({ id: storeProductAttrValue.id });
         if (!activitySkuRestored.length) {
-          throw new Error(`订单 ${orderId} 的积分活动 SKU 库存无法恢复`);
+          throw new Error(`订单 ${orderId} 的活动 SKU 库存无法恢复`);
         }
       }
 
@@ -898,6 +902,12 @@ export class StoreOrderCreateService {
     if (carts.some((cart) => cart.type !== type)) {
       throw new ValidateException("购物车活动类型与订单类型不匹配");
     }
+    if (
+      !options?.preview &&
+      String(params.payType ?? "").trim().toLowerCase() === "offline"
+    ) {
+      assertMarketingOfflinePaymentAllowed(type, params.from);
+    }
     if (type > 0 && type !== 5 && carts.length !== 1) {
       throw new ValidateException("活动订单一次只能购买一种商品");
     }
@@ -979,8 +989,11 @@ export class StoreOrderCreateService {
     let levelDiscountCents = 0;
     let paidMemberDiscountCents = 0;
     let bargainActivityId = 0;
+    let bargainParticipantId = 0;
     let orderSystemFormId = 0;
     let pinkCombinationId = 0;
+    let legacyActivityOnceNum = 0;
+    let legacyActivityTotalNum = 0;
     let integralActivityId = 0;
     let requiredIntegral = 0;
     const orderItems: OrderItem[] = [];
@@ -995,11 +1008,22 @@ export class StoreOrderCreateService {
         throw new ValidateException(`商品「${product.storeName}」类型已变化，请重新购买`);
       }
       let itemSystemFormId = product.systemFormId;
-      const sku = await c.storeProductAttrValueDao.getByUnique(
+      let activitySku: typeof storeProductAttrValue.$inferSelect | null = null;
+      let sku = await c.storeProductAttrValueDao.getByUnique(
         cart.productAttrUnique,
         0,
         product.id,
       );
+      if (!sku && [1, 2, 3].includes(type)) {
+        const pair = await resolveLegacyActivitySkuPair(c.db, {
+          activityId: cart.activityId,
+          productId: product.id,
+          type: type as 1 | 2 | 3,
+          unique: cart.productAttrUnique,
+        });
+        sku = pair.baseSku;
+        activitySku = pair.activitySku;
+      }
       if (!sku) throw new NotFoundException(`商品规格不存在`);
       if (sku.productId !== product.id) {
         throw new ValidateException("商品规格与商品不匹配");
@@ -1010,35 +1034,91 @@ export class StoreOrderCreateService {
       let unitPriceCents = rawUnitPriceCents;
       let priceType: "" | "level" | "member" = "";
       let integralActivity: typeof storeIntegral.$inferSelect | null = null;
-      let activitySku: typeof storeProductAttrValue.$inferSelect | null = null;
       let discountItem: ResolvedDiscountPackageItem | null = null;
+      let activityName = "";
+      let activityImage = "";
+      let activityFreight: number | null = null;
+      let activityPostage: string | null = null;
+      let activityTempId: number | null = null;
+      let activityGiveIntegral: string | null = null;
       if (type === 1 && params.seckillId) {
         const seckill = await c.db
           .select()
           .from(storeSeckill)
           .where(eq(storeSeckill.id, params.seckillId))
           .limit(1);
-        if (!seckill[0] || seckill[0].status !== 1) throw new ValidateException("秒杀活动不存在或已结束");
+        if (
+          !seckill[0] || seckill[0].status !== 1 || seckill[0].isShow !== 1 || seckill[0].isDel !== 0 ||
+          (seckill[0].startTime !== null && seckill[0].startTime.getTime() > Date.now()) ||
+          (seckill[0].stopTime !== null && seckill[0].stopTime.getTime() < Date.now())
+        ) throw new ValidateException("秒杀活动不存在或已结束");
         if (seckill[0].productId !== product.id) throw new ValidateException("秒杀商品不匹配");
         if (cart.activityId !== seckill[0].id) throw new ValidateException("秒杀购物车与活动不匹配");
         itemSystemFormId = seckill[0].systemFormId;
-        if (cart.cartNum > (seckill[0].num || 99)) throw new ValidateException("超过秒杀限购数量");
-        unitPriceCents = Math.round(Number(seckill[0].price) * 100);
+        legacyActivityOnceNum = seckill[0].onceNum;
+        legacyActivityTotalNum = seckill[0].num;
+        if (legacyActivityOnceNum <= 0 || legacyActivityTotalNum <= 0) {
+          throw new ValidateException("秒杀限购配置无效");
+        }
+        if (cart.cartNum > legacyActivityOnceNum) {
+          throw new ValidateException(`每个订单限购 ${legacyActivityOnceNum} 件`);
+        }
+        if (!activitySku) {
+          const pair = await resolveLegacyActivitySkuPair(c.db, {
+            activityId: seckill[0].id,
+            productId: product.id,
+            type: 1,
+            unique: cart.productAttrUnique,
+            suk: sku.suk,
+          });
+          if (pair.baseSku.id !== sku.id) throw new ValidateException("秒杀规格与基础规格不匹配");
+          activitySku = pair.activitySku;
+        }
+        const available = Math.min(
+          seckill[0].stock, seckill[0].quota, activitySku.stock, activitySku.quota,
+          sku.stock, product.stock,
+        );
+        if (available < cart.cartNum) throw new ValidateException("秒杀库存不足");
+        unitPriceCents = decimalToCents(activitySku.price);
+        activityName = seckill[0].storeName;
+        activityImage = seckill[0].image;
+        activityFreight = seckill[0].freight;
+        activityPostage = seckill[0].postage;
+        activityTempId = seckill[0].tempId;
+        activityGiveIntegral = seckill[0].giveIntegral;
       } else if (type === 2 && params.bargainUserId) {
-        const bu = await c.db
+        const candidates = await c.db
           .select()
           .from(storeBargainUser)
-          .where(and(eq(storeBargainUser.id, params.bargainUserId), eq(storeBargainUser.uid, uid)))
-          .limit(1);
-        if (!bu[0]) throw new ValidateException("砍价记录不存在");
-        // 必须砍到最低价才能购买 (对应 PHP: status=3 表示可购买)
-        if (bu[0].status !== 3) throw new ValidateException("还未砍到最低价, 请继续砍价");
+          .where(and(
+            eq(storeBargainUser.uid, uid),
+            eq(storeBargainUser.isDel, 0),
+            inArray(storeBargainUser.status, [1, 3]),
+            or(
+              eq(storeBargainUser.id, params.bargainUserId),
+              eq(storeBargainUser.bargainId, params.bargainUserId),
+            ),
+          ))
+          .orderBy(desc(storeBargainUser.id))
+          .limit(3);
+        const matching = candidates.filter((candidate) => candidate.bargainId === cart.activityId);
+        if (matching.length !== 1) throw new ValidateException("砍价记录不存在或不唯一");
+        const participant = matching[0];
+        if (
+          decimalToCents(participant.bargainPrice) - decimalToCents(participant.price) >
+            decimalToCents(participant.bargainPriceMin)
+        ) throw new ValidateException("还未砍到最低价, 请继续砍价");
+        bargainParticipantId = participant.id;
         const bargain = await c.db
           .select()
           .from(storeBargain)
-          .where(eq(storeBargain.id, bu[0].bargainId))
+          .where(eq(storeBargain.id, participant.bargainId))
           .limit(1);
-        if (!bargain[0] || bargain[0].status !== 1) {
+        if (
+          !bargain[0] || bargain[0].status !== 1 || bargain[0].isDel !== 0 ||
+          (bargain[0].startTime !== null && bargain[0].startTime.getTime() > Date.now()) ||
+          (bargain[0].stopTime !== null && bargain[0].stopTime.getTime() < Date.now())
+        ) {
           throw new ValidateException("砍价活动不存在或已结束");
         }
         if (bargain[0].productId !== product.id) {
@@ -1047,15 +1127,37 @@ export class StoreOrderCreateService {
         if (cart.activityId !== bargain[0].id) throw new ValidateException("砍价购物车与活动不匹配");
         itemSystemFormId = bargain[0].systemFormId;
         bargainActivityId = bargain[0].id;
+        if (!activitySku) {
+          const pair = await resolveLegacyActivitySkuPair(c.db, {
+            activityId: bargain[0].id,
+            productId: product.id,
+            type: 2,
+            unique: cart.productAttrUnique,
+            suk: sku.suk,
+          });
+          if (pair.baseSku.id !== sku.id) throw new ValidateException("砍价规格与基础规格不匹配");
+          activitySku = pair.activitySku;
+        }
+        const available = Math.min(
+          bargain[0].stock, bargain[0].quota, activitySku.stock, activitySku.quota,
+          sku.stock, product.stock,
+        );
+        if (available < cart.cartNum) throw new ValidateException("砍价库存不足");
         const bargainOriginalCents = Math.max(
-          decimalToCents(bu[0].bargainPrice),
+          decimalToCents(participant.bargainPrice),
           decimalToCents(bargain[0].price),
         );
-        const bargainMinimumCents = decimalToCents(bu[0].bargainPriceMin);
+        const bargainMinimumCents = decimalToCents(participant.bargainPriceMin);
         unitPriceCents = Math.max(
           bargainMinimumCents,
-          bargainOriginalCents - decimalToCents(bu[0].price),
+          bargainOriginalCents - decimalToCents(participant.price),
         );
+        activityName = bargain[0].storeName || bargain[0].title;
+        activityImage = bargain[0].image;
+        activityFreight = bargain[0].freight;
+        activityPostage = bargain[0].postage;
+        activityTempId = bargain[0].tempId;
+        activityGiveIntegral = bargain[0].giveIntegral;
       } else if (type === 3) {
         // 参团从已有团解析活动；开团直接使用 combinationId。
         if (params.pinkId && params.pinkId > 0) {
@@ -1075,11 +1177,44 @@ export class StoreOrderCreateService {
           .from(storeCombination)
           .where(eq(storeCombination.id, pinkCombinationId))
           .limit(1);
-        if (!comboRow[0] || comboRow[0].status !== 1) throw new ValidateException("拼团活动不存在或已结束");
+        if (
+          !comboRow[0] || comboRow[0].status !== 1 || comboRow[0].isShow !== 1 || comboRow[0].isDel !== 0 ||
+          (comboRow[0].startTime !== null && comboRow[0].startTime.getTime() > Date.now()) ||
+          (comboRow[0].stopTime !== null && comboRow[0].stopTime.getTime() < Date.now())
+        ) throw new ValidateException("拼团活动不存在或已结束");
         if (comboRow[0].productId !== product.id) throw new ValidateException("拼团商品不匹配");
         if (cart.activityId !== comboRow[0].id) throw new ValidateException("拼团购物车与活动不匹配");
         itemSystemFormId = comboRow[0].systemFormId;
-        unitPriceCents = Math.round(Number(comboRow[0].price) * 100);
+        legacyActivityOnceNum = comboRow[0].onceNum;
+        legacyActivityTotalNum = comboRow[0].num;
+        if (legacyActivityOnceNum <= 0 || legacyActivityTotalNum <= 0) {
+          throw new ValidateException("拼团限购配置无效");
+        }
+        if (cart.cartNum > legacyActivityOnceNum) {
+          throw new ValidateException(`每个订单限购 ${legacyActivityOnceNum} 件`);
+        }
+        if (!activitySku) {
+          const pair = await resolveLegacyActivitySkuPair(c.db, {
+            activityId: comboRow[0].id,
+            productId: product.id,
+            type: 3,
+            unique: cart.productAttrUnique,
+            suk: sku.suk,
+          });
+          if (pair.baseSku.id !== sku.id) throw new ValidateException("拼团规格与基础规格不匹配");
+          activitySku = pair.activitySku;
+        }
+        const available = Math.min(
+          comboRow[0].stock, comboRow[0].quota, activitySku.stock, activitySku.quota,
+          sku.stock, product.stock,
+        );
+        if (available < cart.cartNum) throw new ValidateException("拼团库存不足");
+        unitPriceCents = decimalToCents(activitySku.price);
+        activityName = comboRow[0].storeName;
+        activityImage = comboRow[0].image;
+        activityFreight = comboRow[0].freight;
+        activityPostage = comboRow[0].postage;
+        activityTempId = comboRow[0].tempId;
       } else if (type === 4) {
         integralActivityId = cart.activityId;
         const activityRows = await c.db
@@ -1196,20 +1331,46 @@ export class StoreOrderCreateService {
         rawUnitPriceCents,
         unitPriceCents,
         priceType,
+        activityName,
+        activityImage,
+        activityFreight,
+        activityPostage,
+        activityTempId,
+        activityGiveIntegral,
       });
     }
     const requiresSupplierAllocation = supplierIds.size > 1;
     const supplierId = requiresSupplierAllocation
       ? 0
       : supplierIds.values().next().value ?? 0;
+    if ([1, 3].includes(type)) {
+      const activityId = type === 1 ? (params.seckillId ?? 0) : pinkCombinationId;
+      const purchaseRows = await c.db
+        .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
+        .from(storeOrder)
+        .where(and(
+          eq(storeOrder.uid, uid),
+          eq(storeOrder.type, type),
+          eq(storeOrder.activityId, activityId),
+          inArray(storeOrder.pid, [0, -1]),
+          or(
+            eq(storeOrder.paid, 1),
+            and(eq(storeOrder.paid, 0), eq(storeOrder.isDel, 0)),
+          ),
+        ));
+      if ((purchaseRows[0]?.total ?? 0) + totalNum > legacyActivityTotalNum) {
+        throw new ValidateException(`每人总共限购 ${legacyActivityTotalNum} 件`);
+      }
+    }
     const gainIntegral = calculateProductIntegralSnapshot(
-      orderItems.map(({ cart, product }) => ({
-        giveIntegral: product.giveIntegral,
+      orderItems.map(({ cart, product, activityGiveIntegral }) => ({
+        giveIntegral: activityGiveIntegral ?? product.giveIntegral,
         quantity: cart.cartNum,
       })),
     );
     const totalCostCents = orderItems.reduce(
-      (sum, { cart, sku }) => sum + decimalToCents(sku.cost) * cart.cartNum,
+      (sum, { cart, sku, activitySku }) =>
+        sum + decimalToCents(activitySku?.cost ?? sku.cost) * cart.cartNum,
       0,
     );
     const productTypes = new Set(orderItems.map(({ cart }) => cart.productType));
@@ -1254,8 +1415,8 @@ export class StoreOrderCreateService {
       ? calculateFirstOrderDiscountCents(totalCents, firstOrderConfig)
       : 0;
 
-    // PHP 的首单优惠优先于且排斥优惠券/营销活动；首单资格成立时不校验客户端券。
-    let couponResolution = preliminaryFirstOrderEligible
+    // PHP 的首单优惠优先于且排斥优惠券/营销活动；营销订单会静默忽略普通优惠券。
+    let couponResolution = preliminaryFirstOrderEligible || type !== 0
       ? { priceCents: 0, row: null }
       : await resolveOrderCoupon(c, uid, params.couponId, orderItems);
     let couponPriceCents = couponResolution.priceCents;
@@ -1311,8 +1472,8 @@ export class StoreOrderCreateService {
       const templateIds = Array.from(
         new Set(
           orderItems
-            .map(({ product, integralActivity }) => {
-              const tempId = integralActivity?.tempId ?? product.tempId;
+            .map(({ product, integralActivity, activityTempId }) => {
+              const tempId = activityTempId ?? integralActivity?.tempId ?? product.tempId;
               return tempId > 0 ? tempId : 1;
             }),
         ),
@@ -1385,10 +1546,13 @@ export class StoreOrderCreateService {
       try {
         const regionIds = expandShippingRegionIds(params.cityId, cityRows[0]?.path);
         totalPostageCents = calculateOrderPostageCents(
-          orderItems.map(({ cart, product, sku, integralActivity, unitPriceCents }) => ({
-            freight: integralActivity?.freight ?? product.freight,
-            postage: integralActivity?.postage ?? product.postage,
-            tempId: integralActivity?.tempId ?? product.tempId,
+          orderItems.map(({
+            cart, product, sku, integralActivity, unitPriceCents,
+            activityFreight, activityPostage, activityTempId,
+          }) => ({
+            freight: activityFreight ?? integralActivity?.freight ?? product.freight,
+            postage: activityPostage ?? integralActivity?.postage ?? product.postage,
+            tempId: activityTempId ?? integralActivity?.tempId ?? product.tempId,
             quantity: cart.cartNum,
             unitPrice: (unitPriceCents / 100).toFixed(2),
             weight: sku.weight,
@@ -1738,6 +1902,60 @@ export class StoreOrderCreateService {
 
       // 5a0. 活动库存与拼团团 (M17: 事务内保证一致)
       let finalPinkId = 0;
+      const reserveLegacyActivitySku = async (
+        activityType: 1 | 2 | 3,
+        activityId: number,
+        label: string,
+      ) => {
+        const activitySku = orderItems[0]?.activitySku;
+        if (!activitySku) throw new ValidateException(`${label}规格信息无效`);
+        const updated = await tx
+          .update(storeProductAttrValue)
+          .set({
+            stock: sql`stock - ${totalNum}`,
+            quota: sql`quota - ${totalNum}`,
+            sales: sql`sales + ${totalNum}`,
+          })
+          .where(and(
+            eq(storeProductAttrValue.id, activitySku.id),
+            eq(storeProductAttrValue.productId, activityId),
+            eq(storeProductAttrValue.type, activityType),
+            sql`stock >= ${totalNum}`,
+            sql`quota >= ${totalNum}`,
+          ))
+          .returning({ id: storeProductAttrValue.id });
+        if (!updated[0]) throw new ValidateException(`${label}规格库存不足`);
+      };
+      if ([1, 3].includes(type)) {
+        const activityId = type === 1 ? (params.seckillId ?? 0) : pinkCombinationId;
+        await tx.execute(sql`
+          SELECT pg_advisory_xact_lock(
+            hashtextextended(${`cinashop:activity-limit:${type}:${uid}:${activityId}`}, 0::bigint)
+          )
+        `);
+        const purchaseRows = await tx
+          .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
+          .from(storeOrder)
+          .where(and(
+            eq(storeOrder.uid, uid),
+            eq(storeOrder.type, type),
+            eq(storeOrder.activityId, activityId),
+            inArray(storeOrder.pid, [0, -1]),
+            or(
+              eq(storeOrder.paid, 1),
+              and(eq(storeOrder.paid, 0), eq(storeOrder.isDel, 0)),
+            ),
+          ));
+        if (legacyActivityOnceNum <= 0 || totalNum > legacyActivityOnceNum) {
+          throw new ValidateException(`每个订单限购 ${legacyActivityOnceNum} 件`);
+        }
+        if (
+          legacyActivityTotalNum <= 0 ||
+          (purchaseRows[0]?.total ?? 0) + totalNum > legacyActivityTotalNum
+        ) {
+          throw new ValidateException(`每人总共限购 ${legacyActivityTotalNum} 件`);
+        }
+      }
       if (type === 1 && params.seckillId) {
         // 秒杀: 扣活动 quota (守卫)
         const sk = await tx
@@ -1761,11 +1979,16 @@ export class StoreOrderCreateService {
           )
           .returning({ id: storeSeckill.id });
         if (!sk.length) throw new ValidateException("秒杀库存不足");
+        await reserveLegacyActivitySku(1, params.seckillId, "秒杀");
       } else if (type === 2 && params.bargainUserId) {
         // 砍价: 扣活动库存 + 标记记录已购买 (status=4)
         const bargain = await tx
           .update(storeBargain)
-          .set({ quota: sql`quota - 1`, stock: sql`stock - 1`, sales: sql`sales + 1` })
+          .set({
+            quota: sql`quota - ${totalNum}`,
+            stock: sql`stock - ${totalNum}`,
+            sales: sql`sales + ${totalNum}`,
+          })
           .where(
             and(
               eq(storeBargain.id, bargainActivityId),
@@ -1773,8 +1996,8 @@ export class StoreOrderCreateService {
               eq(storeBargain.isDel, 0),
               sql`(${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= NOW())`,
               sql`(${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= NOW())`,
-              sql`quota >= 1`,
-              sql`stock >= 1`,
+              sql`quota >= ${totalNum}`,
+              sql`stock >= ${totalNum}`,
             ),
           )
           .returning({ id: storeBargain.id });
@@ -1784,13 +2007,15 @@ export class StoreOrderCreateService {
           .set({ status: 4 })
           .where(
             and(
-              eq(storeBargainUser.id, params.bargainUserId),
+              eq(storeBargainUser.id, bargainParticipantId),
               eq(storeBargainUser.uid, uid),
-              eq(storeBargainUser.status, 3),
+              eq(storeBargainUser.isDel, 0),
+              inArray(storeBargainUser.status, [1, 3]),
             ),
           )
           .returning({ id: storeBargainUser.id });
         if (!bargainUser.length) throw new ValidateException("砍价记录已被使用");
+        await reserveLegacyActivitySku(2, bargainActivityId, "砍价");
       } else if (type === 3) {
         // 拼团: 扣活动库存 (守卫)
         const comb = await tx
@@ -1814,6 +2039,7 @@ export class StoreOrderCreateService {
           )
           .returning({ id: storeCombination.id });
         if (!comb.length) throw new ValidateException("拼团库存不足");
+        await reserveLegacyActivitySku(3, pinkCombinationId, "拼团");
 
         const comboRow = await tx
           .select()
@@ -2000,6 +2226,9 @@ export class StoreOrderCreateService {
           integralActivity,
           discountItem,
           unitPriceCents,
+          activityName,
+          activityImage,
+          activityGiveIntegral,
         } = item;
         // SKU 库存 — 守卫失败抛异常, 事务回滚
         const skuUpdated = await tx
@@ -2043,10 +2272,12 @@ export class StoreOrderCreateService {
           sum_true_price: (lineNetCents / 100).toFixed(2),
           product: {
             id: product.id,
-            activityId: integralActivity?.id ?? 0,
-            storeName: discountItem?.entry.title || integralActivity?.storeName || product.storeName,
-            image: activitySku?.image || integralActivity?.image || product.image,
-            giveIntegral: String(product.giveIntegral),
+            activityId: cart.activityId,
+            storeName:
+              activityName || discountItem?.entry.title || integralActivity?.storeName ||
+              product.storeName,
+            image: activityImage || activitySku?.image || integralActivity?.image || product.image,
+            giveIntegral: activityGiveIntegral ?? String(product.giveIntegral),
             integral: activitySku?.integral ?? 0,
           },
           sku: {
@@ -2581,6 +2812,12 @@ interface OrderItem {
   rawUnitPriceCents: number;
   unitPriceCents: number;
   priceType: "" | "level" | "member";
+  activityName: string;
+  activityImage: string;
+  activityFreight: number | null;
+  activityPostage: string | null;
+  activityTempId: number | null;
+  activityGiveIntegral: string | null;
 }
 
 function parseCartSnapshot(value: string | null): unknown {

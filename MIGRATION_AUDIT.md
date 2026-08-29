@@ -1538,6 +1538,46 @@ PHP `route/api.php` 的 `/api/marketing` 组注册 9 条短视频合同：可选
 
 API-006-MARKETING-SHORT-VIDEO 仍不勾选整体完成：生产视频/评论为 0，没有权威源表、源行或媒体对象可复制，也没有后台短视频管理/视频上传合同；尚未用真实用户 token 跑旧 UniApp/真机、预发或影子流量，主 Worker未发布。下一批可转向 API-006-CHECKOUT 活动订单状态机；短视频真实内容与私有 R2 媒体作为明确数据/运营门禁继续保留，不能把安全空表解释为业务迁移完成。
 
+## API-006 营销/活动详细迁移审计（CHECKOUT 活动订单状态机子批次，2026-08-29）
+
+### PHP 权威语义与本批确认的迁移缺口
+
+本批逐行对照 PHP `StoreCartServices`、`StoreSeckillServices`、`StoreBargainServices`、`StoreCombinationServices`、`StorePinkServices`、`StoreOrderCreateServices`、`StoreOrderSuccessServices`、`StoreOrderTakeServices`、`ProductCouponJob`、`OrderCreateAfterJob`、`StoreOrderRefundServices` 与 `StoreOrderDao::getBuyCount`。旧 UniApp 加购发送的是 `uniqueId`、`new/is_new`、`secKillId`、`bargainId`、`combinationId`、`storeIntegralId`、`newcomerId`，其中秒杀/砍价/拼团的 `unique` 属于 `store_product_attr_value(type=1/2/3, product_id=activity_id)`；Workers 此前只接受通用 `unique/type/activityId` 并要求 `type=0` 基础 SKU，因此旧端活动加购会失败。
+
+更严重的是库存与价格层级。PHP 以活动 SKU 的 `suk` 关联基础 SKU，秒杀/拼团按活动 SKU 定价，建单同时扣活动主表、活动 SKU、基础 SKU和基础商品，未支付取消及未发货退款反向恢复这些层。原 Workers 按活动主表最低价计秒杀/拼团，只扣活动主表和基础库存；取消缺活动 SKU，退款除积分商品外也没有活动层回补，会造成多规格错价和活动 SKU 漂移。秒杀/拼团还缺 `once_num` 单笔限购与 `num` 累计限购的 PHP 语义；仅凭加购预检也无法阻止同一 UID 用不同幂等 key 并发绕过。砍价旧载荷的 `bargainId` 是活动 ID，不一定是参与记录 ID；历史完成态又同时存在 status 1 且已到最低价和 status 3 两种数据。
+
+结算后置规则也有两个容易遗漏的边界。PHP 对所有 `type!=0` 营销订单把普通 `couponId` 静默清零，且除 PC 渠道外禁止营销订单使用 `offline`；原 Workers 会解析并核销秒杀/砍价/拼团的普通优惠券，也可能先创建订单再在线下支付入口报错。继续追踪支付/收货事件后确认：普通商品积分、实付返积分与分佣只在 `type=0` 结算，Workers 现有门禁一致；商品关联赠券仍由所有已支付商品订单触发，支付获得抽奖次数则只排除 `offline` 和 `type=8`，现有 outbox 逻辑也与 PHP 一致，无需误删营销订单的这些奖励。
+
+### 实现收口与状态机边界
+
+新增单一活动 SKU 解析器，以 `(activity_id,type,suk)` 严格映射 `(product_id,type=0,suk)`；同时接受旧活动 SKU unique、新基础 SKU unique，缺失或歧义一律失败关闭。购物车控制器恢复全部旧字段、PHP 优先级和 `cartId` 响应别名；加购与列表校验活动有效期/可见性、参与资格、四层库存和活动展示价，并把持久购物车规格规范化为基础 unique。
+
+建单现以活动 SKU 作为秒杀/拼团权威价格及活动成本，活动名称、图片、赠送积分、固定运费和模板 ID 进入同源报价与不可变订单快照。秒杀/拼团读取 `once_num/num`；事务内先以 `hashtextextended('cinashop:activity-limit:type:uid:activityId')` 获取 advisory lock，再累计已支付订单与未删除未支付顶级订单，阻断不同 key 的竞态绕过。砍价同时按参与记录 ID或活动 ID定位当前 UID 唯一记录，兼容 status 1/3 但必须实际到最低价，主活动按购买件数而不是固定 1 扣减。
+
+普通优惠券现对全部 `type!=0` 营销订单保持 `coupon_id=0/coupon_price=0`，不读取、不占用也不核销客户端提交的用户券；确认/计算兼容服务原本接收 `couponId` 却漏传给同源报价，本批同时补齐该字段，使普通订单确认页与最终建单继续使用同一张券，营销订单确认价则稳定为 0 券优惠。普通订单的首单/优惠券互斥、积分和运费报价路径不变。营销 `offline` 在建单服务内按 `from` 先验校验，非 PC 请求在订单 INSERT 和购物车认领前失败；支付服务及事务内 `offlinePay` 再做同一门禁，覆盖历史未支付订单和任何未来内部调用。收银台继续展示 PHP 原有的全局线下支付开关，最终是否允许由带渠道上下文的建单/支付入口权威决定。
+
+创建对活动主表、活动 SKU、基础 SKU、基础商品四层分别使用带库存/配额谓词的原子 UPDATE；任何一层失败即回滚购物车认领和订单。取消从快照 ID 恢复四层库存/销量/配额，并恢复砍价参与记录；退款只沿用 PHP 的 `order.status=0` 未发货回库边界，但同样恢复四层。现有 `PinkLifecycleService/PinkTimeoutService` 已有未支付参团预留、团长行串行、支付激活、成团、超时失败、自动退款重试、发货门禁和退款后重新选主/重挂成员，本批复核后未另造平行状态机。支付过渡/outbox 的事务性和重放防护也由既有生产场景继续覆盖。
+
+### 生产 Hyperdrive 数据审计与上线阻断
+
+一次性摘要令牌 Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，所有生产读取固定 `search_path=public`、短 statement timeout 和只读事务。PostgreSQL 16.14 当前订单 29，其中普通/秒杀/砍价/拼团为 `22/2/2/3`；活动生命周期为秒杀未付/已付各 1、砍价未付/已付各 1、拼团未付 2/已付且已发货 1。购物车历史类型分布为普通/秒杀/砍价/拼团 `23/1/1/2`，当前有效未支付活动购物车为 0。
+
+生产数据不能支持新状态机上线：`store_product_attr_value` 只有 2 行且全部 `type=0`，`type=1/2/3` 活动 SKU 为 0；秒杀 ID 7 为 `once_num=0,num=2,stock=quota=100`，拼团 ID 27 为 `once_num=0,num=0,stock=quota=100`，两项 active 配置都不满足 PHP 限购语义。7 个活动订单对应 6 个商品快照，6 个都没有 `activitySku`；其中 4 个是仍未支付、状态 0、未删除的订单，也全部缺活动 SKU 快照。新实现会安全拒绝不完整的新活动订单，并会拒绝对缺快照历史单做不完整回库，因此在数据回填/人工处置前不能发布主 Worker。另有 1 个已发货订单缺物流单号，是既有生产完整性缺口，不由本批改写历史状态。
+
+### 隔离竞态、失败补偿与审计事故
+
+真实 `StoreOrderCreateService` 场景在随机 PostgreSQL schema 中新增三类活动 SKU，活动 unique 与基础 `suk` 映射，并用不同活动价验证快照。秒杀并发库存只产生一个赢家且取消恢复四层；同 UID 两个购物车、不同 key、库存充足时仍只有一个订单，另一个明确被累计 `num=1` 拒绝；砍价以旧活动 ID 找到参与记录并恢复 status 3，携带一张有效普通用户券时订单仍为 `coupon_id=0/coupon_price=0.00`、用户券保持未使用；同一购物车以 H5 `offline` 建单明确被拒绝，目标 key 订单数为 0 且购物车 `is_pay=0`。拼团和积分取消也完整恢复，普通订单报价/建单、会员/券/积分/运费和支付后赠券原场景继续通过。
+
+退款场景新增已支付未发货秒杀单，余额退款完成后基础商品、基础 SKU、活动 SKU、秒杀主表四层均从 `stock=9/sales=1` 恢复到 `stock=10/sales=0`，活动两层 quota 也从 9 恢复到 10；既有重复退款、失败回滚、超额/精确并发、纯积分、渠道金额绑定、佣金/供应商/拼团补偿、超时重投和客服决策全部通过。最终整套创建、支付/取消、退款场景的三个随机 schema 都 `schema_removed=true/public_state_unchanged=true`。
+
+增强全行指纹时还发现测试夹具自身的隔离缺口：`member_right` 虽克隆到随机 schema，但 serial 默认仍绑定 `public.member_right_id_seq`，三次创建回放把生产序列从审计前的 3 消耗到 9，业务行没有变化。最终夹具把 `member_right` 纳入私有序列表；一次性修复 Worker仅在 `member_right` 精确为 1 行、max ID 1、固定全行摘要且序列精确为 9 时执行 `setval(...,3,true)`，首次错误的行数假设被前置条件拒绝且没有写入，收紧条件后恢复并读回 3。修复 Worker删除后 404。加入优惠券和线下支付门禁后的最终版本 `6db570d3-e641-4e79-888b-0437b8434dc3` 再次完成整套创建/支付取消/退款复验，三个随机 schema 均删除，生产活动/商品/购物车/订单/售后等表的全行摘要和所有公共序列前后完全相同，`member_right_id_seq=3→3`、临时 schema 0，审计 Worker删除后 URL 返回 404。最终成功前的一次边缘 `1042` 和一次错误认证头 403 都发生在场景入口之前，对应临时 Worker也均已删除。
+
+### 验证结果与剩余 checklist
+
+本地双 TypeScript 配置通过；130 个单元测试文件 760 项全部通过。Wrangler 4.122.0 主 Worker `deploy --dry-run --minify` 通过，体积 2,503.82 KiB/gzip 620.12 KiB；没有发布主 Worker。Windows Workers runtime 套件连续两次在 0 条断言前因 `workerd` 原生 `0xc0000005` 启动失败，按环境阻塞记录，不算通过；生产 Cloudflare 临时 Worker的真实运行结果提供了本批运行时证据。
+
+API-006-CHECKOUT 的代码和隔离状态机证据已经收口，但整体 checklist 仍不勾选。下一步必须取得源 MySQL或业务备份中的 `type=1/2/3` SKU 与限购配置，校验每个活动 SKU 的 `suk` 都有唯一基础 SKU，并对 4 个未支付历史活动单选择可证明的快照回填或人工取消方案；之后才能用真实旧 UniApp 用户、真实支付渠道、预发/影子流量验收，再经明确批准发布。若源数据仍不可访问，应转入可独立推进的 API-004-AUTH/CORE-004，而不是伪造活动 SKU或猜测限购值。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

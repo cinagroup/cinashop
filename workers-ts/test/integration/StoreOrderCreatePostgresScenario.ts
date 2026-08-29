@@ -73,6 +73,7 @@ const LOCAL_SEQUENCE_TABLES = [
   "store_order_status",
   "user_bill",
   "store_coupon_user",
+  "member_right",
 ] as const;
 
 interface PublicSnapshot {
@@ -130,15 +131,27 @@ export interface StoreOrderCreatePostgresReport {
     business_rejected: boolean;
     loser_cart_rolled_back: boolean;
     resources_restored: boolean;
+    authoritative_activity_sku: boolean;
     cancel_status_rows: number;
+  };
+  seckill_cumulative_limit: {
+    successes: number;
+    rejections: number;
+    limit_rejected: boolean;
+    active_orders: number;
+    activity_sku_decrements: number;
   };
   bargain_reservation_cancel: {
     bargain_user_restored: boolean;
     resources_restored: boolean;
+    authoritative_activity_sku: boolean;
+    marketing_coupon_ignored: boolean;
+    marketing_offline_rejected_before_create: boolean;
     cancel_status_rows: number;
   };
   combination_reservation_cancel: {
     resources_restored: boolean;
+    authoritative_activity_sku: boolean;
     cancel_status_rows: number;
   };
   integral_reservation_cancel: {
@@ -176,23 +189,29 @@ interface FixtureIds {
   seckill: {
     productId: number;
     skuId: number;
+    activitySkuId: number;
     cartIds: [number, number];
     skuUnique: string;
+    activitySkuUnique: string;
     activityId: number;
   };
   bargain: {
     productId: number;
     skuId: number;
+    activitySkuId: number;
     cartId: number;
     skuUnique: string;
+    activitySkuUnique: string;
     activityId: number;
     bargainUserId: number;
   };
   combination: {
     productId: number;
     skuId: number;
+    activitySkuId: number;
     cartId: number;
     skuUnique: string;
+    activitySkuUnique: string;
     activityId: number;
   };
   integral: {
@@ -213,6 +232,7 @@ interface FixtureIds {
     skuUnique: string;
     discountIssueId: number;
     discountCouponUserId: number;
+    activityCouponUserId: number;
     rewardIssueId: number;
   };
 }
@@ -257,23 +277,29 @@ function makeFixtureIds(base: number): FixtureIds {
     seckill: {
       productId: base + 1_003,
       skuId: base + 2_003,
+      activitySkuId: base + 2_103,
       cartIds: [base + 3_005, base + 3_006],
       skuUnique: "itcr0004",
+      activitySkuUnique: "itcr0104",
       activityId: base + 5_003,
     },
     bargain: {
       productId: base + 1_004,
       skuId: base + 2_004,
+      activitySkuId: base + 2_104,
       cartId: base + 3_007,
       skuUnique: "itcr0005",
+      activitySkuUnique: "itcr0205",
       activityId: base + 5_004,
       bargainUserId: base + 6_004,
     },
     combination: {
       productId: base + 1_005,
       skuId: base + 2_005,
+      activitySkuId: base + 2_105,
       cartId: base + 3_008,
       skuUnique: "itcr0006",
+      activitySkuUnique: "itcr0306",
       activityId: base + 5_005,
     },
     integral: {
@@ -295,6 +321,7 @@ function makeFixtureIds(base: number): FixtureIds {
       discountIssueId: base + 8_000,
       discountCouponUserId: base + 8_001,
       rewardIssueId: base + 8_002,
+      activityCouponUserId: base + 8_003,
     },
   };
 }
@@ -518,7 +545,46 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       type: 0,
       vipPrice: id === ids.pricing.skuId ? "8.00" : "0.00",
     })));
-    await tx.insert(storeProductAttrValue).values({
+    await tx.insert(storeProductAttrValue).values([{
+      id: ids.seckill.activitySkuId,
+      productId: ids.seckill.activityId,
+      productType: 0,
+      suk: `sku-${ids.seckill.skuId}`,
+      unique: ids.seckill.activitySkuUnique,
+      price: "6.25",
+      cost: "3.00",
+      stock: 1,
+      quota: 1,
+      quotaShow: 1,
+      sales: 0,
+      type: 1,
+    }, {
+      id: ids.bargain.activitySkuId,
+      productId: ids.bargain.activityId,
+      productType: 0,
+      suk: `sku-${ids.bargain.skuId}`,
+      unique: ids.bargain.activitySkuUnique,
+      price: "5.00",
+      cost: "3.00",
+      stock: 1,
+      quota: 1,
+      quotaShow: 1,
+      sales: 0,
+      type: 2,
+    }, {
+      id: ids.combination.activitySkuId,
+      productId: ids.combination.activityId,
+      productType: 0,
+      suk: `sku-${ids.combination.skuId}`,
+      unique: ids.combination.activitySkuUnique,
+      price: "6.75",
+      cost: "3.00",
+      stock: 1,
+      quota: 1,
+      quotaShow: 1,
+      sales: 0,
+      type: 3,
+    }, {
       id: ids.integral.activitySkuId,
       productId: ids.integral.activityId,
       productType: 0,
@@ -532,7 +598,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       quotaShow: 2,
       sales: 0,
       type: 4,
-    });
+    }]);
 
     await tx.insert(storeCart).values([
       { id: ids.sameCart.cartId, uid: ids.users[0], productId: ids.sameCart.productId,
@@ -546,16 +612,16 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       { id: ids.oversell.cartIds[1], uid: ids.users[2], productId: ids.oversell.productId,
         productAttrUnique: ids.oversell.skuUnique, cartNum: 1, type: 0, status: 1, isPay: 0, isDel: 0 },
       { id: ids.seckill.cartIds[0], uid: ids.users[3], productId: ids.seckill.productId,
-        productAttrUnique: ids.seckill.skuUnique, cartNum: 1, type: 1, activityId: ids.seckill.activityId,
+        productAttrUnique: ids.seckill.activitySkuUnique, cartNum: 1, type: 1, activityId: ids.seckill.activityId,
         status: 1, isPay: 0, isDel: 0 },
       { id: ids.seckill.cartIds[1], uid: ids.users[4], productId: ids.seckill.productId,
-        productAttrUnique: ids.seckill.skuUnique, cartNum: 1, type: 1, activityId: ids.seckill.activityId,
+        productAttrUnique: ids.seckill.activitySkuUnique, cartNum: 1, type: 1, activityId: ids.seckill.activityId,
         status: 1, isPay: 0, isDel: 0 },
       { id: ids.bargain.cartId, uid: ids.users[0], productId: ids.bargain.productId,
-        productAttrUnique: ids.bargain.skuUnique, cartNum: 1, type: 2, activityId: ids.bargain.activityId,
+        productAttrUnique: ids.bargain.activitySkuUnique, cartNum: 1, type: 2, activityId: ids.bargain.activityId,
         status: 1, isPay: 0, isDel: 0 },
       { id: ids.combination.cartId, uid: ids.users[5], productId: ids.combination.productId,
-        productAttrUnique: ids.combination.skuUnique, cartNum: 1, type: 3,
+        productAttrUnique: ids.combination.activitySkuUnique, cartNum: 1, type: 3,
         activityId: ids.combination.activityId, status: 1, isPay: 0, isDel: 0 },
       { id: ids.integral.cartId, uid: ids.users[6], productId: ids.integral.productId,
         productAttrUnique: ids.integral.skuUnique, cartNum: 1, type: 4,
@@ -596,7 +662,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       status: 1,
       isDel: 0,
     }]);
-    await tx.insert(storeCouponUser).values({
+    await tx.insert(storeCouponUser).values([{
       id: ids.pricing.discountCouponUserId,
       uid: ids.users[7],
       issueCouponId: ids.pricing.discountIssueId,
@@ -609,7 +675,20 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       type: 1,
       receiveSource: "send",
       isFail: 0,
-    });
+    }, {
+      id: ids.pricing.activityCouponUserId,
+      uid: ids.users[0],
+      issueCouponId: ids.pricing.discountIssueId,
+      couponTitle: "marketing order ignored coupon",
+      couponPrice: "3.00",
+      useMinPrice: "0.00",
+      status: 0,
+      startTime: couponStart,
+      endTime: couponEnd,
+      type: 1,
+      receiveSource: "send",
+      isFail: 0,
+    }]);
     await tx.insert(storeProductCoupon).values([{
       id: ids.pricing.rewardIssueId + 100,
       productId: ids.pricing.productId,
@@ -628,6 +707,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       storeName: "create-order seckill",
       price: "6.00",
       num: 99,
+      onceNum: 1,
       quota: 1,
       stock: 1,
       sales: 0,
@@ -665,6 +745,8 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       storeName: "create-order combination",
       price: "6.00",
       people: 2,
+      num: 99,
+      onceNum: 1,
       quota: 1,
       stock: 1,
       sales: 0,
@@ -880,22 +962,39 @@ async function runSeckillReservationCancel(
     cancelStoreOrder(container, { uid: attempts[winnerIndex].uid, orderId: winner.value.orderId })
   );
   return withSchema(adminDb, schemaName, async (container) => {
-    const [activities, loserCarts, state, orders] = await Promise.all([
+    const [activities, activitySkus, loserCarts, state, orders] = await Promise.all([
       container.db.select({ quota: storeSeckill.quota, stock: storeSeckill.stock, sales: storeSeckill.sales })
         .from(storeSeckill).where(eq(storeSeckill.id, ids.seckill.activityId)).limit(1),
+      container.db.select({ quota: storeProductAttrValue.quota, stock: storeProductAttrValue.stock,
+        sales: storeProductAttrValue.sales }).from(storeProductAttrValue)
+        .where(eq(storeProductAttrValue.id, ids.seckill.activitySkuId)).limit(1),
       container.db.select({ isPay: storeCart.isPay }).from(storeCart).where(eq(storeCart.id, loserCartId)).limit(1),
       productState(container, ids.seckill.productId, ids.seckill.skuId),
-      container.db.select({ id: storeOrder.id }).from(storeOrder).where(eq(storeOrder.orderId, winner.value.orderId)).limit(1),
+      container.db.select({ id: storeOrder.id, payPrice: storeOrder.payPrice }).from(storeOrder)
+        .where(eq(storeOrder.orderId, winner.value.orderId)).limit(1),
     ]);
-    assertCondition(activities[0] && orders[0], "seckill state disappeared");
+    assertCondition(activities[0] && activitySkus[0] && orders[0], "seckill state disappeared");
+    const cartInfos = await container.db.select({ cartInfo: storeOrderCartInfo.cartInfo })
+      .from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, orders[0].id)).limit(1);
+    const snapshot = JSON.parse(cartInfos[0]?.cartInfo ?? "{}") as {
+      product?: { activityId?: number };
+      sku?: { price?: string };
+      activitySku?: { id?: number };
+    };
+    const authoritativeActivitySku = orders[0].payPrice === "6.25"
+      && snapshot.product?.activityId === ids.seckill.activityId
+      && snapshot.sku?.price === "6.25"
+      && snapshot.activitySku?.id === ids.seckill.activitySkuId;
     const statusRows = await container.db.select({ value: count() }).from(storeOrderStatus)
       .where(eq(storeOrderStatus.oid, orders[0].id));
     const restored = activities[0].quota === 1 && activities[0].stock === 1 && activities[0].sales === 0
+      && activitySkus[0].quota === 1 && activitySkus[0].stock === 1 && activitySkus[0].sales === 0
       && state.product.stock === 2 && state.product.sales === 0
       && state.sku.stock === 2 && state.sku.sales === 0;
     assertCondition(businessRejected, "seckill loser was not rejected by the activity guard");
     assertCondition(loserCarts[0]?.isPay === 0, "seckill loser cart claim was not rolled back");
     assertCondition(restored, "seckill cancellation did not restore all stock");
+    assertCondition(authoritativeActivitySku, "seckill did not use and snapshot the authoritative activity SKU");
     assertCondition(statusRows[0]?.value === 1, "seckill cancellation status evidence missing");
     return {
       successes: 1,
@@ -903,6 +1002,7 @@ async function runSeckillReservationCancel(
       business_rejected: businessRejected,
       loser_cart_rolled_back: loserCarts[0]?.isPay === 0,
       resources_restored: restored,
+      authoritative_activity_sku: authoritativeActivitySku,
       cancel_status_rows: statusRows[0]?.value ?? 0,
     };
   });
@@ -913,38 +1013,176 @@ async function runBargainReservationCancel(
   schemaName: string,
   ids: FixtureIds,
 ) {
+  const offlineKey = `bargain-offline-${ids.storeId}`;
+  let offlineRejection = "";
+  try {
+    await createOrder(db, schemaName, orderParams(
+      ids,
+      ids.users[0],
+      offlineKey,
+      ids.bargain.cartId,
+      {
+        type: 2,
+        bargainUserId: ids.bargain.activityId,
+        payType: "offline",
+        from: "h5",
+      },
+    ));
+  } catch (error) {
+    offlineRejection = rejectionMessage(error);
+  }
+  const offlineState = await withSchema(db, schemaName, async (container) => {
+    const [orders, carts] = await Promise.all([
+      container.db.select({ value: count() }).from(storeOrder)
+        .where(eq(storeOrder.unique, offlineKey)),
+      container.db.select({ isPay: storeCart.isPay }).from(storeCart)
+        .where(eq(storeCart.id, ids.bargain.cartId)).limit(1),
+    ]);
+    return { orders: orders[0]?.value ?? 0, cartIsPay: carts[0]?.isPay ?? -1 };
+  });
+  const marketingOfflineRejectedBeforeCreate =
+    offlineRejection.includes("营销商品不能使用线下支付")
+    && offlineState.orders === 0
+    && offlineState.cartIsPay === 0;
+  assertCondition(
+    marketingOfflineRejectedBeforeCreate,
+    "marketing offline payment was not rejected before order creation",
+  );
+
   const result = await createOrder(db, schemaName, orderParams(
     ids,
     ids.users[0],
     `bargain-${ids.storeId}`,
     ids.bargain.cartId,
-    { type: 2, bargainUserId: ids.bargain.bargainUserId },
+    {
+      type: 2,
+      bargainUserId: ids.bargain.activityId,
+      couponId: ids.pricing.activityCouponUserId,
+    },
   ));
   await withSchema(db, schemaName, (container) =>
     cancelStoreOrder(container, { uid: ids.users[0], orderId: result.orderId })
   );
   return withSchema(db, schemaName, async (container) => {
-    const [activities, participants, state, orders] = await Promise.all([
+    const [activities, activitySkus, participants, state, orders, coupons] = await Promise.all([
       container.db.select({ quota: storeBargain.quota, stock: storeBargain.stock, sales: storeBargain.sales })
         .from(storeBargain).where(eq(storeBargain.id, ids.bargain.activityId)).limit(1),
+      container.db.select({ quota: storeProductAttrValue.quota, stock: storeProductAttrValue.stock,
+        sales: storeProductAttrValue.sales }).from(storeProductAttrValue)
+        .where(eq(storeProductAttrValue.id, ids.bargain.activitySkuId)).limit(1),
       container.db.select({ status: storeBargainUser.status }).from(storeBargainUser)
         .where(eq(storeBargainUser.id, ids.bargain.bargainUserId)).limit(1),
       productState(container, ids.bargain.productId, ids.bargain.skuId),
-      container.db.select({ id: storeOrder.id }).from(storeOrder).where(eq(storeOrder.orderId, result.orderId)).limit(1),
+      container.db.select({
+        id: storeOrder.id,
+        payPrice: storeOrder.payPrice,
+        couponId: storeOrder.couponId,
+        couponPrice: storeOrder.couponPrice,
+      }).from(storeOrder)
+        .where(eq(storeOrder.orderId, result.orderId)).limit(1),
+      container.db.select({ status: storeCouponUser.status }).from(storeCouponUser)
+        .where(eq(storeCouponUser.id, ids.pricing.activityCouponUserId)).limit(1),
     ]);
-    assertCondition(activities[0] && participants[0] && orders[0], "bargain state disappeared");
+    assertCondition(activities[0] && activitySkus[0] && participants[0] && orders[0], "bargain state disappeared");
+    const cartInfos = await container.db.select({ cartInfo: storeOrderCartInfo.cartInfo })
+      .from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, orders[0].id)).limit(1);
+    const snapshot = JSON.parse(cartInfos[0]?.cartInfo ?? "{}") as {
+      product?: { activityId?: number };
+      sku?: { price?: string };
+      activitySku?: { id?: number };
+    };
+    const authoritativeActivitySku = orders[0].payPrice === "5.00"
+      && snapshot.product?.activityId === ids.bargain.activityId
+      && snapshot.sku?.price === "5.00"
+      && snapshot.activitySku?.id === ids.bargain.activitySkuId;
+    const marketingCouponIgnored = orders[0].couponId === 0
+      && orders[0].couponPrice === "0.00"
+      && coupons[0]?.status === 0;
     const statusRows = await container.db.select({ value: count() }).from(storeOrderStatus)
       .where(eq(storeOrderStatus.oid, orders[0].id));
     const restored = activities[0].quota === 1 && activities[0].stock === 1 && activities[0].sales === 0
+      && activitySkus[0].quota === 1 && activitySkus[0].stock === 1 && activitySkus[0].sales === 0
       && state.product.stock === 1 && state.product.sales === 0
       && state.sku.stock === 1 && state.sku.sales === 0;
     assertCondition(participants[0].status === 3, "bargain participant was not restored to purchasable state");
     assertCondition(restored, "bargain cancellation did not restore all stock");
+    assertCondition(authoritativeActivitySku, "bargain did not use and snapshot the authoritative activity SKU");
+    assertCondition(marketingCouponIgnored, "marketing order consumed an ordinary coupon");
     assertCondition(statusRows[0]?.value === 1, "bargain cancellation status evidence missing");
     return {
       bargain_user_restored: participants[0].status === 3,
       resources_restored: restored,
+      authoritative_activity_sku: authoritativeActivitySku,
+      marketing_coupon_ignored: marketingCouponIgnored,
+      marketing_offline_rejected_before_create: marketingOfflineRejectedBeforeCreate,
       cancel_status_rows: statusRows[0]?.value ?? 0,
+    };
+  });
+}
+
+async function runSeckillCumulativeLimit(
+  firstDb: DbClient,
+  secondDb: DbClient,
+  adminDb: DbClient,
+  schemaName: string,
+  ids: FixtureIds,
+) {
+  const uid = ids.users[3];
+  await withSchema(adminDb, schemaName, async ({ db }) => {
+    await db.update(storeCart).set({
+      uid,
+      isPay: 0,
+      isDel: 0,
+      status: 1,
+      productAttrUnique: ids.seckill.activitySkuUnique,
+    }).where(inArray(storeCart.id, ids.seckill.cartIds));
+    await db.update(storeProduct).set({ stock: 2, sales: 0 })
+      .where(eq(storeProduct.id, ids.seckill.productId));
+    await db.update(storeProductAttrValue).set({ stock: 2, sales: 0 })
+      .where(eq(storeProductAttrValue.id, ids.seckill.skuId));
+    await db.update(storeProductAttrValue).set({ stock: 2, quota: 2, sales: 0 })
+      .where(eq(storeProductAttrValue.id, ids.seckill.activitySkuId));
+    await db.update(storeSeckill).set({ stock: 2, quota: 2, sales: 0, onceNum: 1, num: 1 })
+      .where(eq(storeSeckill.id, ids.seckill.activityId));
+  });
+
+  const settled = await Promise.allSettled(ids.seckill.cartIds.map((cartId, index) =>
+    createOrder(index === 0 ? firstDb : secondDb, schemaName, orderParams(
+      ids,
+      uid,
+      `seckill-limit-${index}-${ids.storeId}`,
+      cartId,
+      { type: 1, seckillId: ids.seckill.activityId },
+    ))
+  ));
+  const successes = settled.filter((result) => result.status === "fulfilled").length;
+  const rejected = settled.filter((result) => result.status === "rejected");
+  const limitRejected = rejected.length === 1
+    && rejectionMessage(rejected[0].reason).includes("每人总共限购 1 件");
+  return withSchema(adminDb, schemaName, async (container) => {
+    const [orders, activitySkus] = await Promise.all([
+      container.db.select({ value: count() }).from(storeOrder).where(and(
+        eq(storeOrder.uid, uid),
+        eq(storeOrder.type, 1),
+        eq(storeOrder.activityId, ids.seckill.activityId),
+        eq(storeOrder.isDel, 0),
+      )),
+      container.db.select({ stock: storeProductAttrValue.stock }).from(storeProductAttrValue)
+        .where(eq(storeProductAttrValue.id, ids.seckill.activitySkuId)).limit(1),
+    ]);
+    const activeOrders = orders[0]?.value ?? 0;
+    const activitySkuDecrements = 2 - (activitySkus[0]?.stock ?? 2);
+    assertCondition(successes === 1 && rejected.length === 1,
+      "same-user cumulative activity limit did not choose one winner");
+    assertCondition(limitRejected, "same-user cumulative activity limit was not authoritative");
+    assertCondition(activeOrders === 1 && activitySkuDecrements === 1,
+      "activity limit rollback left order or SKU inventory side effects");
+    return {
+      successes,
+      rejections: rejected.length,
+      limit_rejected: limitRejected,
+      active_orders: activeOrders,
+      activity_sku_decrements: activitySkuDecrements,
     };
   });
 }
@@ -965,22 +1203,40 @@ async function runCombinationReservationCancel(
     cancelStoreOrder(container, { uid: ids.users[5], orderId: result.orderId })
   );
   return withSchema(db, schemaName, async (container) => {
-    const [activities, state, orders] = await Promise.all([
+    const [activities, activitySkus, state, orders] = await Promise.all([
       container.db.select({ quota: storeCombination.quota, stock: storeCombination.stock, sales: storeCombination.sales })
         .from(storeCombination).where(eq(storeCombination.id, ids.combination.activityId)).limit(1),
+      container.db.select({ quota: storeProductAttrValue.quota, stock: storeProductAttrValue.stock,
+        sales: storeProductAttrValue.sales }).from(storeProductAttrValue)
+        .where(eq(storeProductAttrValue.id, ids.combination.activitySkuId)).limit(1),
       productState(container, ids.combination.productId, ids.combination.skuId),
-      container.db.select({ id: storeOrder.id }).from(storeOrder).where(eq(storeOrder.orderId, result.orderId)).limit(1),
+      container.db.select({ id: storeOrder.id, payPrice: storeOrder.payPrice }).from(storeOrder)
+        .where(eq(storeOrder.orderId, result.orderId)).limit(1),
     ]);
-    assertCondition(activities[0] && orders[0], "combination state disappeared");
+    assertCondition(activities[0] && activitySkus[0] && orders[0], "combination state disappeared");
+    const cartInfos = await container.db.select({ cartInfo: storeOrderCartInfo.cartInfo })
+      .from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, orders[0].id)).limit(1);
+    const snapshot = JSON.parse(cartInfos[0]?.cartInfo ?? "{}") as {
+      product?: { activityId?: number };
+      sku?: { price?: string };
+      activitySku?: { id?: number };
+    };
+    const authoritativeActivitySku = orders[0].payPrice === "6.75"
+      && snapshot.product?.activityId === ids.combination.activityId
+      && snapshot.sku?.price === "6.75"
+      && snapshot.activitySku?.id === ids.combination.activitySkuId;
     const statusRows = await container.db.select({ value: count() }).from(storeOrderStatus)
       .where(eq(storeOrderStatus.oid, orders[0].id));
     const restored = activities[0].quota === 1 && activities[0].stock === 1 && activities[0].sales === 0
+      && activitySkus[0].quota === 1 && activitySkus[0].stock === 1 && activitySkus[0].sales === 0
       && state.product.stock === 1 && state.product.sales === 0
       && state.sku.stock === 1 && state.sku.sales === 0;
     assertCondition(restored, "combination cancellation did not restore all stock");
+    assertCondition(authoritativeActivitySku, "combination did not use and snapshot the authoritative activity SKU");
     assertCondition(statusRows[0]?.value === 1, "combination cancellation status evidence missing");
     return {
       resources_restored: restored,
+      authoritative_activity_sku: authoritativeActivitySku,
       cancel_status_rows: statusRows[0]?.value ?? 0,
     };
   });
@@ -1295,6 +1551,9 @@ export async function runStoreOrderCreatePostgresScenario(
     const seckillReservationCancel = await runSeckillReservationCancel(
       concurrentDbA, concurrentDbB, adminDb, schemaName, ids,
     );
+    const seckillCumulativeLimit = await runSeckillCumulativeLimit(
+      concurrentDbA, concurrentDbB, adminDb, schemaName, ids,
+    );
     const bargainReservationCancel = await runBargainReservationCancel(adminDb, schemaName, ids);
     const combinationReservationCancel = await runCombinationReservationCancel(adminDb, schemaName, ids);
     const integralReservationCancel = await runIntegralReservationCancel(adminDb, schemaName, ids);
@@ -1312,6 +1571,7 @@ export async function runStoreOrderCreatePostgresScenario(
       concurrent_idempotence: concurrentIdempotence,
       stock_oversell_guard: stockOversellGuard,
       seckill_reservation_cancel: seckillReservationCancel,
+      seckill_cumulative_limit: seckillCumulativeLimit,
       bargain_reservation_cancel: bargainReservationCancel,
       combination_reservation_cancel: combinationReservationCancel,
       integral_reservation_cancel: integralReservationCancel,

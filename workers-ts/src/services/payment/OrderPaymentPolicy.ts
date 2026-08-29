@@ -1,6 +1,7 @@
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { ValidateException } from "@/utils/errors";
 
 const CANCEL_CONFIG_KEYS = [
   "order_activity_time",
@@ -15,6 +16,17 @@ function configHours(value: string | undefined, fallback: number): number {
   if (!value?.trim()) return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+/** PHP parity: marketing orders may use offline payment only from the PC channel. */
+export function assertMarketingOfflinePaymentAllowed(
+  orderType: number,
+  from: unknown,
+): void {
+  const channel = typeof from === "string" ? from.trim().toLowerCase() : "";
+  if (orderType !== 0 && channel !== "pc") {
+    throw new ValidateException("营销商品不能使用线下支付");
+  }
 }
 
 export function orderCancelHours(

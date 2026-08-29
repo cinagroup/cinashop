@@ -10,6 +10,7 @@ import {
   storeServiceRecord,
   storeProduct,
   storeProductAttrValue,
+  storeSeckill,
   supplierFlowingWater,
   supplierTransactions,
   user as userTable,
@@ -54,6 +55,7 @@ const CLONED_TABLES = [
   "store_service_record",
   "store_product",
   "store_product_attr_value",
+  "store_seckill",
 ] as const;
 
 const LOCAL_SEQUENCE_TABLES = [
@@ -82,6 +84,7 @@ interface PublicSnapshot {
   service_records: number;
   products: number;
   skus: number;
+  seckills: number;
   user_bill_sequence: string | null;
   user_brokerage_sequence: string | null;
   supplier_flow_sequence: string | null;
@@ -144,6 +147,13 @@ export interface StoreOrderRefundPostgresReport {
     full_refund_price: string;
     full_refund_num: number;
     full_snapshot_exact: boolean;
+  };
+  activity_inventory_refund: {
+    completed: boolean;
+    base_product_restored: boolean;
+    base_sku_restored: boolean;
+    activity_sku_restored: boolean;
+    activity_main_restored: boolean;
   };
   refund_window_policy: {
     expired_user_rejected: boolean;
@@ -308,6 +318,13 @@ function pureIntegralIds(base: number) {
   };
 }
 
+function activityRefundIds(base: number) {
+  return {
+    activityId: base + 50_021,
+    activitySkuId: base + 40_021,
+  };
+}
+
 function decimalCents(value: string | number): number {
   const normalized = String(value);
   const [whole = "0", fraction = ""] = normalized.split(".");
@@ -357,6 +374,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
       (SELECT count(*)::integer FROM public.store_service_record) AS service_records,
       (SELECT count(*)::integer FROM public.store_product) AS products,
       (SELECT count(*)::integer FROM public.store_product_attr_value) AS skus,
+      (SELECT count(*)::integer FROM public.store_seckill) AS seckills,
       (SELECT last_value::text FROM pg_sequences
         WHERE schemaname = 'public' AND sequencename = 'user_bill_id_seq') AS user_bill_sequence,
       (SELECT last_value::text FROM pg_sequences
@@ -380,7 +398,7 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, base: number): Promise<void> {
   await withSchema(db, schemaName, async (container) => {
     const tx = container.db;
-    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    const offsets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
     const compensation = compensationIds(base);
     const timeout = timeoutIds(base);
     await tx.insert(userTable).values([...offsets.map((offset) => {
@@ -407,12 +425,14 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       const fixture = ids(base, offset);
       return {
         id: fixture.orderId,
-        type: offset === 12 ? 4 : [5, 6, 7, 8, 9, 10, 11].includes(offset) ? 3 : 0,
+        type: offset === 12 ? 4 : offset === 21 ? 1 : [5, 6, 7, 8, 9, 10, 11].includes(offset) ? 3 : 0,
         activityId: [9, 10].includes(offset)
           ? timeout.failedCombinationId
           : offset === 11
             ? timeout.partialCombinationId
-            : 0,
+            : offset === 21
+              ? activityRefundIds(base).activityId
+              : 0,
         orderId: fixture.orderNo,
         unique: `refund-${base}-${offset}`,
         uid: fixture.uid,
@@ -435,7 +455,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
                 : 0,
         paid: 1,
         payType: offset === 12 ? "integral" : offset === 4 ? "weixin" : "yue",
-        status: offset < 2 ? 0 : 1,
+        status: offset < 2 || offset === 21 ? 0 : 1,
         productType: offset === 12 ? 2 : 0,
         refundStatus: [7, 8].includes(offset) ? 0 : 1,
         refundType: 0,
@@ -457,7 +477,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         isDel: 0,
       };
     }));
-    await tx.insert(storeProduct).values([0, 1].map((offset) => {
+    await tx.insert(storeProduct).values([0, 1, 21].map((offset) => {
       const fixture = ids(base, offset);
       return {
         id: fixture.productId,
@@ -466,7 +486,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         sales: 1,
       };
     }));
-    await tx.insert(storeProductAttrValue).values([0, 1].map((offset) => {
+    await tx.insert(storeProductAttrValue).values([0, 1, 21].map((offset) => {
       const fixture = ids(base, offset);
       return {
         id: fixture.skuId,
@@ -475,9 +495,36 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         unique: skuUnique(offset),
         stock: 9,
         sales: 1,
+        type: 0,
       };
     }));
-    const cartInfoRows: Array<typeof storeOrderCartInfo.$inferInsert> = [0, 1, 9, 10, 11, 12].map((offset) => {
+    const activityRefund = activityRefundIds(base);
+    await tx.insert(storeProductAttrValue).values({
+      id: activityRefund.activitySkuId,
+      productId: activityRefund.activityId,
+      suk: "refund-sku-21",
+      unique: "rfac0021",
+      price: "6.25",
+      stock: 9,
+      quota: 9,
+      sales: 1,
+      type: 1,
+    });
+    await tx.insert(storeSeckill).values({
+      id: activityRefund.activityId,
+      productId: ids(base, 21).productId,
+      storeName: "refund activity product",
+      price: "6.25",
+      num: 2,
+      onceNum: 1,
+      stock: 9,
+      quota: 9,
+      sales: 1,
+      status: 1,
+      isShow: 1,
+      isDel: 0,
+    });
+    const cartInfoRows: Array<typeof storeOrderCartInfo.$inferInsert> = [0, 1, 9, 10, 11, 12, 21].map((offset) => {
       const fixture = ids(base, offset);
       return {
         id: fixture.cartInfoId,
@@ -491,7 +538,11 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         cartNum: 1,
         surplusNum: 1,
         splitSurplusNum: 1,
-        cartInfo: JSON.stringify({ sku: { id: fixture.skuId } }),
+        cartInfo: JSON.stringify({
+          product: { activityId: offset === 21 ? activityRefund.activityId : 0 },
+          sku: { id: fixture.skuId },
+          activitySku: offset === 21 ? { id: activityRefund.activitySkuId } : null,
+        }),
       };
     });
     cartInfoRows.push({
@@ -649,6 +700,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
     addRefund(15, ids(base, 15).refundA, "10.00", "A");
     refundRows[refundRows.length - 1].refundedPrice = "1.00";
     addRefund(16, ids(base, 16).refundA, "10.00", "A");
+    addRefund(21, ids(base, 21).refundA, "10.00", "A", true);
     await tx.insert(storeOrderRefund).values(refundRows);
 
     await tx.insert(storeServiceRecord).values([13, 14, 15, 16].map((offset) => ({
@@ -1843,6 +1895,54 @@ async function runAuthoritativeRefundApplication(
   return result;
 }
 
+async function runActivityInventoryRefund(
+  db: DbClient,
+  schemaName: string,
+  base: number,
+) {
+  const fixture = ids(base, 21);
+  const activity = activityRefundIds(base);
+  const outcome = await withSchema(db, schemaName, (container) =>
+    finalizeStoreOrderRefund(container, fixture.refundA, 1_700_001_000));
+  return withSchema(db, schemaName, async (container) => {
+    const [products, baseSkus, activitySkus, activities] = await Promise.all([
+      container.db.select({ stock: storeProduct.stock, sales: storeProduct.sales })
+        .from(storeProduct).where(eq(storeProduct.id, fixture.productId)).limit(1),
+      container.db.select({ stock: storeProductAttrValue.stock, sales: storeProductAttrValue.sales })
+        .from(storeProductAttrValue).where(eq(storeProductAttrValue.id, fixture.skuId)).limit(1),
+      container.db.select({ stock: storeProductAttrValue.stock, quota: storeProductAttrValue.quota,
+        sales: storeProductAttrValue.sales }).from(storeProductAttrValue)
+        .where(eq(storeProductAttrValue.id, activity.activitySkuId)).limit(1),
+      container.db.select({ stock: storeSeckill.stock, quota: storeSeckill.quota,
+        sales: storeSeckill.sales }).from(storeSeckill)
+        .where(eq(storeSeckill.id, activity.activityId)).limit(1),
+    ]);
+    const baseProductRestored = products[0]?.stock === 10 && products[0]?.sales === 0;
+    const baseSkuRestored = baseSkus[0]?.stock === 10 && baseSkus[0]?.sales === 0;
+    const activitySkuRestored = activitySkus[0]?.stock === 10
+      && activitySkus[0]?.quota === 10 && activitySkus[0]?.sales === 0;
+    const activityMainRestored = activities[0]?.stock === 10
+      && activities[0]?.quota === 10 && activities[0]?.sales === 0;
+    assertCondition(outcome === "completed", "activity refund did not complete");
+    assertCondition(
+      baseProductRestored && baseSkuRestored && activitySkuRestored && activityMainRestored,
+      `activity refund did not restore all four inventory layers: ${JSON.stringify({
+        product: products[0],
+        baseSku: baseSkus[0],
+        activitySku: activitySkus[0],
+        activity: activities[0],
+      })}`,
+    );
+    return {
+      completed: outcome === "completed",
+      base_product_restored: baseProductRestored,
+      base_sku_restored: baseSkuRestored,
+      activity_sku_restored: activitySkuRestored,
+      activity_main_restored: activityMainRestored,
+    };
+  });
+}
+
 async function runRefundWindowPolicy(
   db: DbClient,
   schemaName: string,
@@ -1982,6 +2082,7 @@ export async function runStoreOrderRefundPostgresScenario(
       schemaName,
       base,
     );
+    const activityInventoryRefund = await runActivityInventoryRefund(adminDb, schemaName, base);
     const refundWindowPolicy = await runRefundWindowPolicy(adminDb, schemaName, base);
     const providerAmountBinding = await runProviderAmountBinding(adminDb, schemaName, base);
     const cumulativeCompensationInvariants = await runCumulativeCompensationInvariants(
@@ -2011,6 +2112,7 @@ export async function runStoreOrderRefundPostgresScenario(
       cumulative_exact_refund_race: cumulativeExactRefundRace,
       pure_integral_refund: pureIntegralRefund,
       authoritative_refund_application: authoritativeRefundApplication,
+      activity_inventory_refund: activityInventoryRefund,
       refund_window_policy: refundWindowPolicy,
       provider_amount_binding: providerAmountBinding,
       cumulative_compensation_invariants: cumulativeCompensationInvariants,

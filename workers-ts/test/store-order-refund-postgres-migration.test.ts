@@ -52,6 +52,7 @@ describe("订单退款 PostgreSQL 迁移", () => {
     expect(scenario).toContain("exact cumulative refunds did not preserve the paid total");
     expect(scenario).toContain("pure integral partial refund did not return points by quantity");
     expect(scenario).toContain("pure integral full refund or replay invariant drifted");
+    expect(scenario).toContain("activity refund did not restore all four inventory layers");
     expect(scenario).toContain("provider amount mismatch changed refund business state");
     expect(scenario).toContain("integration supplier transaction failure");
     expect(scenario).toContain("cumulative compensation failure did not roll back every ledger");

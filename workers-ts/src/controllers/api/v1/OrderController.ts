@@ -77,11 +77,21 @@ export async function cartAdd(c: C) {
     const body = await readBoundedJsonObject(c) as {
       productId?: number;
       unique?: string;
+      uniqueId?: string;
       cartNum?: number;
       type?: number;
       isNew?: number;
+      is_new?: number;
+      new?: number;
       activityId?: number;
       activity_id?: number;
+      secKillId?: number;
+      seckillId?: number;
+      seckill_id?: number;
+      bargainId?: number;
+      combinationId?: number;
+      storeIntegralId?: number;
+      newcomerId?: number;
       discountId?: number;
       discount_id?: number;
       discountInfos?: unknown[];
@@ -107,17 +117,32 @@ export async function cartAdd(c: C) {
       const result = await svc.addDiscountPackage({ uid, discountId, selections });
       return jsonOk(c, result, "套餐已加入结算");
     }
-    if (!body.productId || !body.unique) return jsonFail(c, "参数错误");
+    const legacyActivity = body.secKillId ?? body.seckillId ?? body.seckill_id
+      ? { type: 1, id: Number(body.secKillId ?? body.seckillId ?? body.seckill_id) }
+      : body.bargainId
+        ? { type: 2, id: Number(body.bargainId) }
+        : body.combinationId
+          ? { type: 3, id: Number(body.combinationId) }
+          : body.storeIntegralId
+            ? { type: 4, id: Number(body.storeIntegralId) }
+            : body.newcomerId
+              ? { type: 7, id: Number(body.newcomerId) }
+              : null;
+    const unique = String(body.unique ?? body.uniqueId ?? "").trim();
+    const activityType = Number(body.type ?? legacyActivity?.type ?? 0);
+    if (!body.productId || (!unique && ![1, 2, 3].includes(activityType))) {
+      return jsonFail(c, "参数错误");
+    }
     const result = await svc.add({
       uid,
       productId: Number(body.productId),
-      unique: body.unique,
+      unique,
       cartNum: Number(body.cartNum ?? 1),
-      type: Number(body.type ?? 0),
-      isNew: body.isNew ?? 0,
-      activityId: Number(body.activityId ?? body.activity_id ?? 0),
+      type: activityType,
+      isNew: body.isNew ?? body.is_new ?? body.new ?? 0,
+      activityId: Number(body.activityId ?? body.activity_id ?? legacyActivity?.id ?? 0),
     });
-    return jsonOk(c, result, "加入购物车成功");
+    return jsonOk(c, { ...result, cartId: result.id }, "加入购物车成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
@@ -295,6 +320,8 @@ export async function orderCreate(c: C) {
   const addressId = Number(body.addressId ?? body.address_id ?? 0);
   const address = addressId > 0 ? await c.get("container").userAddressDao.get(addressId) : null;
   if (address && (address.uid !== uid || address.isDel !== 0)) return jsonFail(c, "收货地址不存在");
+  const requestedPayType = String(body.payType ?? body.pay_type ?? "").trim().toLowerCase();
+  const paymentChannel = body.from ?? c.req.header("Form-type") ?? "h5";
 
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
   try {
@@ -316,6 +343,7 @@ export async function orderCreate(c: C) {
       storeId: body.storeId ?? body.store_id,
       useIntegral: body.useIntegral ?? body.use_integral,
       payType: body.payType ?? body.pay_type,
+      from: paymentChannel,
       userIp: clientIp(c),
       type: body.type ?? firstCart?.type,
       pinkId: body.pinkId,
@@ -325,13 +353,12 @@ export async function orderCreate(c: C) {
       couponId: body.couponId ?? body.coupon_id,
       customForm: body.customForm ?? body.custom_form,
     });
-    const requestedPayType = String(body.payType ?? body.pay_type ?? "").trim().toLowerCase();
     if (requestedPayType) {
       const payment = await new StoreOrderPayService(c.get("container"), c.env).pay(
         uid,
         result.orderId,
         requestedPayType,
-        body.from ?? c.req.header("Form-type") ?? "h5",
+        paymentChannel,
         clientIp(c),
       );
       if (payment.pay_type === "alipay" && payment.paid === false) {

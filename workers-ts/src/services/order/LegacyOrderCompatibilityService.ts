@@ -321,6 +321,7 @@ export class LegacyOrderCompatibilityService {
       storeId: options.storeId,
       useIntegral: options.useIntegral,
       payType: options.payType,
+      couponId: options.couponId,
       type,
       seckillId: options.seckillId ?? (type === 1 ? firstCart.activityId : undefined),
       bargainUserId: options.bargainUserId,

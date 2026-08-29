@@ -30,8 +30,14 @@ describe("订单创建 PostgreSQL 事务迁移", () => {
     expect(scenario).toContain("same key did not return the same order twice");
     expect(scenario).toContain("oversell rollback left order/cart side effects");
     expect(scenario).toContain("seckill cancellation did not restore all stock");
+    expect(scenario).toContain("seckill did not use and snapshot the authoritative activity SKU");
+    expect(scenario).toContain("same-user cumulative activity limit was not authoritative");
     expect(scenario).toContain("bargain cancellation did not restore all stock");
+    expect(scenario).toContain("bargain did not use and snapshot the authoritative activity SKU");
+    expect(scenario).toContain("marketing order consumed an ordinary coupon");
+    expect(scenario).toContain("marketing offline payment was not rejected before order creation");
     expect(scenario).toContain("combination cancellation did not restore all stock");
+    expect(scenario).toContain("combination did not use and snapshot the authoritative activity SKU");
     expect(scenario).toContain("integral order did not reserve authoritative price, points and inventory");
     expect(scenario).toContain("integral cancellation did not restore all three inventory layers");
     expect(scenario).toContain("DROP SCHEMA ${schemaIdentifier} CASCADE");

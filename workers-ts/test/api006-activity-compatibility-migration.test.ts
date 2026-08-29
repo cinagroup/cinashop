@@ -8,6 +8,10 @@ const service = readFileSync("src/services/activity/ActivityJoinService.ts", "ut
 const codeService = readFileSync("src/services/wechat/WechatMiniProgramCodeService.ts", "utf8");
 const migrationService = readFileSync("src/services/MigrationService.ts", "utf8");
 const migration = readFileSync("migrations/0101_activity_compatibility_indexes.sql", "utf8");
+const orderController = readFileSync("src/controllers/api/v1/OrderController.ts", "utf8");
+const cartService = readFileSync("src/services/order/StoreCartService.ts", "utf8");
+const orderCreateService = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
+const activitySkuService = readFileSync("src/services/activity/ActivityOrderSkuService.ts", "utf8");
 
 function routeStatement(path: string): string {
   const start = routes.indexOf(`"${path}"`);
@@ -113,5 +117,21 @@ describe("API-006 legacy activity compatibility", () => {
       remainingPeople: 1,
       percent: 10,
     })).toThrow("砍价剩余金额无效");
+  });
+
+  it("preserves legacy activity cart aliases and bridges activity SKU identity to base SKU", () => {
+    for (const alias of [
+      "uniqueId", "secKillId", "bargainId", "combinationId", "storeIntegralId", "newcomerId",
+    ]) expect(orderController).toContain(alias);
+    expect(orderController).toContain("cartId: result.id");
+    expect(cartService).toContain("resolveLegacyActivitySkuPair");
+    expect(activitySkuService).toContain('throw new ValidateException("商品规格标识无效")');
+    expect(cartService).toContain("legacyActivityPurchased + quantity > legacyActivityTotalNum");
+    expect(cartService).toContain("displayStock = Math.max(0, Math.min(");
+    expect(orderCreateService).toContain("cinashop:activity-limit:${type}:${uid}:${activityId}");
+    expect(orderCreateService).toContain("await reserveLegacyActivitySku(1");
+    expect(orderCreateService).toContain("await reserveLegacyActivitySku(2");
+    expect(orderCreateService).toContain("await reserveLegacyActivitySku(3");
+    expect(orderCreateService).toContain("preliminaryFirstOrderEligible || type !== 0");
   });
 });

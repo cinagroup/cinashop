@@ -61,7 +61,7 @@ describe("bargain user help migration", () => {
   it("charges current bargain price and restores the PHP help companion routes", () => {
     const order = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
-    expect(order).toContain("bargainOriginalCents - decimalToCents(bu[0].price)");
+    expect(order).toContain("bargainOriginalCents - decimalToCents(participant.price)");
     expect(order).not.toContain("unitPriceCents = Math.round(Number(bu[0].bargainPrice) * 100)");
     expect(routes).toContain('/bargain/help/price"');
     expect(routes).toContain('/bargain/help/count"');

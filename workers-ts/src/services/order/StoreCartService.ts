@@ -22,15 +22,23 @@ import {
   calculateMemberUnitPriceCents,
   isPaidMembershipActive,
 } from "@/services/order/StoreOrderCreateService";
+import {
+  resolveLegacyActivitySkuPair,
+  type LegacyActivitySkuPair,
+} from "@/services/activity/ActivityOrderSkuService";
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import {
+  storeBargain,
+  storeBargainUser,
   storeCart,
+  storeCombination,
   storeDiscounts,
   storeDiscountsProducts,
   memberRight,
   storeOrder,
   storeProduct,
   storeProductAttrValue,
+  storeSeckill,
 } from "@/models/schema";
 
 const CART_ADVISORY_LOCK_NAMESPACE = 1128354388;
@@ -164,6 +172,12 @@ export class StoreCartService {
     // 1. 校验商品。新人活动传入的 unique 属于 type=7 SKU；购物车改存
     // 对应 type=0 base unique，使下单与退款只修改基础库存。
     let product;
+    let legacyActivitySku: LegacyActivitySkuPair | null = null;
+    let legacyActivityOnceNum = 0;
+    let legacyActivityTotalNum = 0;
+    let legacyActivityPurchased = 0;
+    let legacyActivityStock = Number.MAX_SAFE_INTEGER;
+    let legacyActivityQuota = Number.MAX_SAFE_INTEGER;
     let integralContext: Awaited<ReturnType<StoreCartService["resolveIntegralSku"]>> | null = null;
     if (type === 4) {
       integralContext = await this.resolveIntegralSku({
@@ -192,6 +206,115 @@ export class StoreCartService {
       product = resolved.product;
       productId = resolved.product.id;
       unique = resolved.baseSku.unique;
+    } else if ([1, 2, 3].includes(type)) {
+      if (!Number.isSafeInteger(activityId) || activityId <= 0) {
+        throw new ValidateException("缺少活动商品信息");
+      }
+      const now = new Date();
+      let activityProductId = 0;
+      let activityStatus = 0;
+      let activityIsDel = 0;
+      let activityIsShow = 1;
+      let activityStart: Date | null = null;
+      let activityStop: Date | null = null;
+      if (type === 1) {
+        const rows = await this.container.db.select().from(storeSeckill)
+          .where(eq(storeSeckill.id, activityId)).limit(1);
+        const activity = rows[0];
+        if (!activity) throw new ValidateException("秒杀活动不存在");
+        activityProductId = activity.productId;
+        activityStatus = activity.status;
+        activityIsDel = activity.isDel;
+        activityIsShow = activity.isShow;
+        activityStart = activity.startTime;
+        activityStop = activity.stopTime;
+        legacyActivityOnceNum = activity.onceNum;
+        legacyActivityTotalNum = activity.num;
+        legacyActivityStock = activity.stock;
+        legacyActivityQuota = activity.quota;
+      } else if (type === 2) {
+        const rows = await this.container.db.select().from(storeBargain)
+          .where(eq(storeBargain.id, activityId)).limit(1);
+        const activity = rows[0];
+        if (!activity) throw new ValidateException("砍价活动不存在");
+        activityProductId = activity.productId;
+        activityStatus = activity.status;
+        activityIsDel = activity.isDel;
+        activityStart = activity.startTime;
+        activityStop = activity.stopTime;
+        legacyActivityStock = activity.stock;
+        legacyActivityQuota = activity.quota;
+        const participants = await this.container.db
+          .select({
+            bargainPrice: storeBargainUser.bargainPrice,
+            bargainPriceMin: storeBargainUser.bargainPriceMin,
+            price: storeBargainUser.price,
+          })
+          .from(storeBargainUser)
+          .where(and(
+            eq(storeBargainUser.uid, uid),
+            eq(storeBargainUser.bargainId, activityId),
+            eq(storeBargainUser.isDel, 0),
+            inArray(storeBargainUser.status, [1, 3]),
+          ))
+          .orderBy(desc(storeBargainUser.id))
+          .limit(1);
+        const participant = participants[0];
+        if (
+          !participant ||
+          decimalToCents(participant.bargainPrice) - decimalToCents(participant.price) >
+            decimalToCents(participant.bargainPriceMin)
+        ) {
+          throw new ValidateException("砍价未成功");
+        }
+      } else {
+        const rows = await this.container.db.select().from(storeCombination)
+          .where(eq(storeCombination.id, activityId)).limit(1);
+        const activity = rows[0];
+        if (!activity) throw new ValidateException("拼团活动不存在");
+        activityProductId = activity.productId;
+        activityStatus = activity.status;
+        activityIsDel = activity.isDel;
+        activityIsShow = activity.isShow;
+        activityStart = activity.startTime;
+        activityStop = activity.stopTime;
+        legacyActivityOnceNum = activity.onceNum;
+        legacyActivityTotalNum = activity.num;
+        legacyActivityStock = activity.stock;
+        legacyActivityQuota = activity.quota;
+      }
+      if (
+        activityStatus !== 1 || activityIsDel !== 0 || activityIsShow !== 1 ||
+        (activityStart !== null && activityStart.getTime() > now.getTime()) ||
+        (activityStop !== null && activityStop.getTime() < now.getTime())
+      ) {
+        throw new ValidateException("活动已结束或商品已下架");
+      }
+      if (activityProductId !== productId) throw new ValidateException("活动商品与基础商品不匹配");
+      legacyActivitySku = await resolveLegacyActivitySkuPair(this.container.db, {
+        activityId,
+        productId,
+        type: type as 1 | 2 | 3,
+        unique,
+      });
+      unique = legacyActivitySku.baseSku.unique;
+      product = await this.container.storeProductDao.getById(productId);
+      if ([1, 3].includes(type)) {
+        const totals = await this.container.db
+          .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
+          .from(storeOrder)
+          .where(and(
+            eq(storeOrder.uid, uid),
+            eq(storeOrder.type, type),
+            eq(storeOrder.activityId, activityId),
+            inArray(storeOrder.pid, [0, -1]),
+            or(
+              eq(storeOrder.paid, 1),
+              and(eq(storeOrder.paid, 0), eq(storeOrder.isDel, 0)),
+            ),
+          ));
+        legacyActivityPurchased = totals[0]?.total ?? 0;
+      }
     } else {
       product = await this.container.storeProductDao.getById(productId);
     }
@@ -210,6 +333,32 @@ export class StoreCartService {
       throw new ValidateException(`库存不足, 当前库存 ${sku.stock}`);
     }
 
+    const assertLegacyActivityQuantity = (quantity: number) => {
+      if (!legacyActivitySku) return;
+      if (type !== 2 && legacyActivityOnceNum <= 0) {
+        throw new ValidateException("活动单笔限购配置无效");
+      }
+      if (type !== 2 && quantity > legacyActivityOnceNum) {
+        throw new ValidateException(`每个订单限购 ${legacyActivityOnceNum} 件`);
+      }
+      if (type !== 2 && legacyActivityTotalNum <= 0) {
+        throw new ValidateException("活动累计限购配置无效");
+      }
+      if (type !== 2 && legacyActivityPurchased + quantity > legacyActivityTotalNum) {
+        throw new ValidateException(`每人总共限购 ${legacyActivityTotalNum} 件`);
+      }
+      const available = Math.min(
+        legacyActivityStock,
+        legacyActivityQuota,
+        legacyActivitySku.activitySku.stock,
+        legacyActivitySku.activitySku.quota,
+        legacyActivitySku.baseSku.stock,
+        product.stock,
+      );
+      if (available < quantity) throw new ValidateException(`活动商品库存不足, 当前库存 ${Math.max(0, available)}`);
+    };
+    assertLegacyActivityQuantity(cartNum);
+
     // 3. 合并或新建
     const existing = await this.container.storeCartDao.findExisting(
       uid,
@@ -221,6 +370,7 @@ export class StoreCartService {
     if (existing) {
       const newNum = existing.cartNum + cartNum;
       if (type === 7 && newNum > 1) throw new ValidateException("新人专享商品限购一件");
+      assertLegacyActivityQuantity(newNum);
       if (integralContext) {
         await this.assertIntegralQuantity(uid, integralContext, newNum);
       } else if (newNum > sku.stock) {
@@ -294,7 +444,99 @@ export class StoreCartService {
       let displayName = product.storeName;
       let displayImage = product.image;
       let displayStock = sku?.stock ?? product.stock;
-      if (cart.type === 5 && cart.activityId > 0 && sku) {
+      if ([1, 2, 3].includes(cart.type) && cart.activityId > 0 && sku) {
+        try {
+          const pair = await resolveLegacyActivitySkuPair(this.container.db, {
+            activityId: cart.activityId,
+            productId: cart.productId,
+            type: cart.type as 1 | 2 | 3,
+            unique: cart.productAttrUnique,
+            suk: sku.suk,
+          });
+          const now = Date.now();
+          let activityStock = 0;
+          let activityQuota = 0;
+          if (cart.type === 1) {
+            const rows = await this.container.db.select().from(storeSeckill)
+              .where(eq(storeSeckill.id, cart.activityId)).limit(1);
+            const activity = rows[0];
+            if (
+              !activity || activity.productId !== product.id || activity.status !== 1 ||
+              activity.isShow !== 1 || activity.isDel !== 0 ||
+              activity.onceNum <= 0 || activity.num <= 0 ||
+              (activity.startTime !== null && activity.startTime.getTime() > now) ||
+              (activity.stopTime !== null && activity.stopTime.getTime() < now)
+            ) throw new ValidateException("秒杀活动已失效");
+            price = Number(pair.activitySku.price);
+            displayName = activity.storeName || product.storeName;
+            displayImage = pair.activitySku.image || activity.image || product.image;
+            activityStock = activity.stock;
+            activityQuota = activity.quota;
+          } else if (cart.type === 2) {
+            const [activities, participants] = await Promise.all([
+              this.container.db.select().from(storeBargain)
+                .where(eq(storeBargain.id, cart.activityId)).limit(1),
+              this.container.db.select().from(storeBargainUser).where(and(
+                eq(storeBargainUser.uid, uid),
+                eq(storeBargainUser.bargainId, cart.activityId),
+                eq(storeBargainUser.isDel, 0),
+                inArray(storeBargainUser.status, [1, 3]),
+              )).orderBy(desc(storeBargainUser.id)).limit(1),
+            ]);
+            const activity = activities[0];
+            const participant = participants[0];
+            if (
+              !activity || !participant || activity.productId !== product.id ||
+              activity.status !== 1 || activity.isDel !== 0 ||
+              (activity.startTime !== null && activity.startTime.getTime() > now) ||
+              (activity.stopTime !== null && activity.stopTime.getTime() < now) ||
+              decimalToCents(participant.bargainPrice) - decimalToCents(participant.price) >
+                decimalToCents(participant.bargainPriceMin)
+            ) throw new ValidateException("砍价活动已失效");
+            price = Math.max(
+              decimalToCents(participant.bargainPriceMin),
+              Math.max(
+                decimalToCents(participant.bargainPrice),
+                decimalToCents(activity.price),
+              ) - decimalToCents(participant.price),
+            ) / 100;
+            displayName = activity.storeName || activity.title || product.storeName;
+            displayImage = pair.activitySku.image || activity.image || product.image;
+            activityStock = activity.stock;
+            activityQuota = activity.quota;
+          } else {
+            const rows = await this.container.db.select().from(storeCombination)
+              .where(eq(storeCombination.id, cart.activityId)).limit(1);
+            const activity = rows[0];
+            if (
+              !activity || activity.productId !== product.id || activity.status !== 1 ||
+              activity.isShow !== 1 || activity.isDel !== 0 ||
+              activity.onceNum <= 0 || activity.num <= 0 ||
+              (activity.startTime !== null && activity.startTime.getTime() > now) ||
+              (activity.stopTime !== null && activity.stopTime.getTime() < now)
+            ) throw new ValidateException("拼团活动已失效");
+            price = Number(pair.activitySku.price);
+            displayName = activity.storeName || product.storeName;
+            displayImage = pair.activitySku.image || activity.image || product.image;
+            activityStock = activity.stock;
+            activityQuota = activity.quota;
+          }
+          displayStock = Math.max(0, Math.min(
+            pair.baseSku.stock,
+            product.stock,
+            pair.activitySku.stock,
+            pair.activitySku.quota,
+            activityStock,
+            activityQuota,
+          ));
+          if (!Number.isFinite(price) || price < 0 || displayStock < 1) {
+            throw new ValidateException("活动商品已失效");
+          }
+        } catch {
+          result.push({ ...cart, isValid: false, productInfo: null });
+          continue;
+        }
+      } else if (cart.type === 5 && cart.activityId > 0 && sku) {
         const [discountRows, entryRows] = await Promise.all([
           this.container.db
             .select()

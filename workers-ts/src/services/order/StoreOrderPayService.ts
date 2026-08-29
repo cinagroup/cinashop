@@ -33,7 +33,10 @@ import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
-import { getOrderInvalidTime } from "@/services/payment/OrderPaymentPolicy";
+import {
+  assertMarketingOfflinePaymentAllowed,
+  getOrderInvalidTime,
+} from "@/services/payment/OrderPaymentPolicy";
 
 /** 支付方式常量 (对应 PHP PayServices) */
 export const PayType = {
@@ -319,6 +322,9 @@ export class StoreOrderPayService {
     if (invalidTime > 0 && invalidTime <= Math.floor(Date.now() / 1000)) {
       throw new ValidateException("订单已超过支付时限");
     }
+    if (normalizedPayType === PayType.OFFLINE) {
+      assertMarketingOfflinePaymentAllowed(order.type, from);
+    }
 
     if (decimalToCents(order.payPrice) === 0) {
       await this.yuePay(uid, orderId);
@@ -344,7 +350,7 @@ export class StoreOrderPayService {
         payUrl: await this.alipayPay(uid, orderId),
       };
     }
-    return this.offlinePay(uid, orderId);
+    return this.offlinePay(uid, orderId, from);
   }
 
   async wechatPay(
@@ -382,7 +388,11 @@ export class StoreOrderPayService {
     };
   }
 
-  async offlinePay(uid: number, orderId: string): Promise<Record<string, unknown>> {
+  async offlinePay(
+    uid: number,
+    orderId: string,
+    from: unknown = "h5",
+  ): Promise<Record<string, unknown>> {
     return withTx(this.container, async (tx) => {
       const rows = await tx
         .select()
@@ -394,6 +404,7 @@ export class StoreOrderPayService {
       if (!order || order.uid !== uid || order.isDel !== 0) throw new NotFoundException("订单不存在");
       if (order.paid === 1) return { order_id: orderId, paid: true, pay_type: order.payType };
       if (order.status !== 0) throw new ValidateException("订单状态不允许支付");
+      assertMarketingOfflinePaymentAllowed(order.type, from);
       await assertPinkOrderPayable(tx, order);
       await tx
         .update(storeOrder)
