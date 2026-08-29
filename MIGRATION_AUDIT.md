@@ -1712,6 +1712,50 @@ PHP 在 `route/kefu.php` 注册 8 条游客合同：`user`、`adv`、反馈 GET/
 
 双 TypeScript 配置、定向 21/21 和全量 133 个单元测试文件/778 项通过；主 Worker minify dry-run 为 2,545.81 KiB/gzip 630.16 KiB，审计 Worker minify dry-run 为 48.94 KiB/gzip 18.44 KiB。运行时仍受本机 Windows `workerd` 既有 `0xc0000005` 阻断，本批未把静态/Node 结果伪记为 Workers runtime 通过。KEFU-001～003 仍不整体勾选：生产没有客服账号、游客内容/面单配置或开放平台/一号通凭据，新 Kefu 工作台和旧 Admin 客服端尚未接入签名访客协议与新扫码/OAuth，真实 WebSocket、R2、第三方模板、浏览器/预发/发布验收均未完成。
 
+## KEFU-VISITOR 签名游客会话与剩余四合同收口（2026-08-29）
+
+### 旧 PHP 真实语义与迁移决定
+
+对 `Common.php`、旧 Admin 客服页面、`appChat` 和 Swoole handler 逐项复核后，剩余四条并非同一种“游客权限”。`tourist/user` 在未登录时生成可猜的 9 位随机 UID 并交给客户端，真正匿名消息依靠客户端把该 UID 带进 WebSocket；`tourist/chat`、`tourist/order/:order_id` 和 `tourist/upload` 反而都解析裸 API 用户 token，其中 chat/order 读取登录用户的消息或订单，upload 也以登录 UID 做 100 次/日限制。把旧随机 UID 或客户端提交的 `tourist_uid` 原样恢复会允许身份冒用；把 visitor token 用于订单又会扩大匿名权限。因此新合同刻意拆开：`tourist/order` 只接受正常 `api` 登录并调用已有 UID 归属订单详情；`tourist/user/chat/upload` 使用独立、不可与用户/客服 token 混用的游客会话；另增加 `tourist/ws` 作为匿名实时闭环。旧客户端若仍把 API token 传给 tourist chat/upload，必须升级，服务端不提供弱兼容回退。
+
+### 会话、客服分配与数据库边界
+
+新增外部 `0104_kefu_visitor_session.sql` 与 Worker 内嵌 `migration_0111`。`kefu_visitor_uid_seq` 从 `1000000000` 起、上限为 PostgreSQL `INTEGER` 最大值，避免与当前用户 UID 空间碰撞并继续兼容旧消息表整数列。`kefu_visitor_session` 只保存随机 session UUID、visitor UID、权威 `service_id/kefu_uid`、SHA-256 token 摘要、非 PII 昵称/头像和创建/过期/最后活动/撤销时间；不保存原始 bearer、IP、消息或订单。24 小时 HS256 JWT 固定 issuer `cinashop-kefu-visitor`、audience `cinashop-kefu`、subject=session UUID，并同时复核签名、数据库摘要、UID、精确过期时间、撤销状态和唯一启用客服。创建前对 HMAC 后的来源执行 10 次/小时桶及 1,000 次/小时全局桶；短事务取得独立 advisory lock，在所有在线、启用且聊天 UID 唯一的客服中按当前活跃游客会话数和客服 ID 稳定选择。生产当前客服 0 行，因此不会生成无归属游客会话。
+
+HTTP 使用 `X-Visitor-Token`，WebSocket 使用 `cinashop-visitor.<token>`；原始 token 在 Worker 中间件验签后即剥离，Durable Object 只收到 MD5 连接键、SHA-256 auth version、visitor UID 和绝对过期时间。正常用户继续使用 `cinashop-auth.<token>`，客服继续使用专用 kefu token，三种 token 域不互认。
+
+### 实时、转接与 R2 对象作用域
+
+实时角色从 user/kefu 两类扩为 registered user=1、kefu=2、visitor=3，主体分别命名为 `user:<uid>`、`kefu:<uid>`、`visitor:<uid>`。每个 socket attachment 增加不可变 `isTourist=0|1`；角色 1 只能为 0、角色 3 只能为 1，客服 socket 可按当前会话选择 0/1。数据库身份、目标、客服归属、advisory lock、消息插入、两向摘要、未读数、已读、在线状态、DO 投递和前端 reducer 全部同时匹配 UID 与 tourist flag，同一个数字 UID 也不能跨注册用户/游客命名空间串话。游客首次发送时才创建 `is_tourist=1` 客服摘要；游客历史只读取数据库会话所分配客服与该 visitor UID 的双向日志。
+
+转接审计表增加 `is_tourist` 约束和 `(customer_uid,is_tourist,created_at,request_key)` 索引。游客转接在同一事务内锁定当前 visitor session、源/目标客服与两向会话，复制对应 `is_tourist=1` 历史、迁移摘要、更新 `kefu_visitor_session.service_id/kefu_uid`、删除源归属并写不可变审计；重放键同时绑定游客 flag。事务提交后，原客服、目标客服和 visitor DO 的事件也带作用域，旧 socket 会立即被权威数据库归属拒绝。
+
+游客图片在读取 multipart 前执行每会话 30 次/日和全局 2,000 次/小时强一致限流，沿用 10.25 MiB 请求、10 MiB 文件、魔数/MIME 双校验。R2 键固定为 `attachments/visitor/<visitorUid>/<年>/<月>/<UUID>`，附件元数据为 `type=3/relation_id=<visitorUid>/module_type=4`，与用户 `module_type=3` 和客服 `module_type=2` 分离；消息落库前再次验证 owner，日志只保存规范 `/api/assets/:id`，响应才投影短时签名地址。
+
+### 前端闭环
+
+`view/uniapp-ts` 客服页在登录用户时保留 `/api/user/service/record`、用户 WebSocket和用户 R2 上传；未登录时创建或复用本地 visitor token，调用 `tourist/user`、`tourist/chat`、`tourist/ws` 和 `tourist/upload`。游客 WebSocket未连接时不会把消息错误回退到登录用户 REST 写接口。`view/kefu-ts` 同时加载 `is_tourist=0/1` 两页会话，切换命名空间时重建带 flag 的客服 socket；游客资料不调用用户详情、标签、订单或商品派生接口，只展示匿名会话身份，图片、消息与转接保持游客 flag。会话 reducer新增相同数字 UID 的跨作用域回归测试。
+
+### 生产 DDL、指纹与临时资源证据
+
+专用认证迁移 Worker 绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。随机 `codex_kefu_visitor_*` schema 先执行转接和游客完整 DDL，插入一条仅存在于临时 schema 的合成会话，验证首个 UID 精确为 `1000000000`，再执行同一 DDL第二遍并整笔回滚；最终 `schema_removed=true`。生产事务固定 `search_path=public`、3 秒锁超时、30 秒语句超时和迁移 advisory lock。首次提交后的即时元数据复核曾返回一次结构可见性误报；独立只读状态确认 DDL已完整原子提交而非部分结构。随后同一 DDL连续再应用两次均返回 `applied=true/business_fingerprint_unchanged=true`。
+
+最终生产为 224 张表；新游客表 0 行、11 列、6 个约束、5 个索引，独立序列存在；`store_service_transfer.is_tourist`、检查约束和作用域索引均存在。执行前后客服 0、客服会话 0、客服日志 3、订单 29，`store_service/store_service_record/store_service_log/store_order` 行数与逐行摘要完全一致。状态/验证 Worker `cinashop-kefu-visitor-state-67dd06f6fd` 与 `cinashop-kefu-visitor-verify-f243641c76` 均已删除且 URL 返回 404；主生产 Worker仍 100% 使用 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有发布或切流。
+
+### 最新量化结果与待完成 checklist
+
+路由审计现在为 PHP 1,904、Workers 1,393、精确匹配 697、可执行匹配 679、明确不可用 18、原始缺失 1,207、证据化退役 4、可执行缺口 1,203；精确/可执行/退役后有效覆盖为 36.6%/35.7%/35.7%。`/kefuapi` 为 PHP 63、Workers 65、精确/可执行 60、原始缺失 3、退役 3、`actionableMissing=0`，退役后有效可执行覆盖为 100%。这表示有实现决策的客服路由缺口已清零，不表示客服业务数据或生产运行完成。
+
+全量 134 个 Worker 单元测试文件/781 项、双 TypeScript 配置、Kefu 7 项 reducer/作用域测试与生产构建、UniApp 类型检查和主 Worker minify dry-run均通过；主包为 2,562.30 KiB/gzip 634.18 KiB。Windows Workers runtime仍受既有 `workerd 0xc0000005` 阻断，不能把 Node/Vite/类型结果记为真实 runtime 通过。
+
+- [x] 完成剩余四条 PHP 精确合同的安全权限拆分、签名游客会话、客服分配、实时/未读/转接作用域和独立 R2 owner。
+- [x] 在生产 PostgreSQL 16.14 随机 schema 验证 UID 序列、约束、重放和回滚，并对生产完整 DDL执行至少两次幂等复核；业务指纹不变，临时 Worker/schema 已删除。
+- [x] 接入新 UniApp 未登录客服页和 Kefu 工作台游客会话；注册用户订单与游客 token 保持严格分离。
+- [ ] 从源 MySQL 复制并人工复核客服账号/bcrypt 密码/UID 绑定、会话/消息、话术/分类和游客内容。生产当前客服与会话均为 0，3 条历史消息仍需来源对账。
+- [ ] 以受限测试客服和匿名浏览器/真机验证创建限流、token 过期/撤销、WebSocket hibernation、图片 R2、未读、并发发送与游客转接；当前空客服数据无法提供正向生产 E2E。
+- [ ] 升级仍使用旧 tourist token/随机 UID 合同的 Admin 客服端，完成旧/新客户端兼容验收；补齐开放平台与面单配置/Secrets 后再验证扫码/OAuth和模板目录。
+- [ ] 解决或绕开本机 `workerd 0xc0000005`，在 Linux CI/兼容主机运行 runtime WebSocket/DO 测试；随后完成预发、影子流量、明确发布批准和发布后观察。主 Worker与前端当前均未发布。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

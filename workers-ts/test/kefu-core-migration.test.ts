@@ -145,7 +145,7 @@ describe("dedicated customer-service migration", () => {
     const app = readFileSync("src/app.ts", "utf8");
     const middleware = readFileSync("src/middleware/kefu-auth.ts", "utf8");
     const registrations = routes.match(/kefuapiRoutes\.(?:get|post|put|delete)\(/g) ?? [];
-    expect(registrations).toHaveLength(60);
+    expect(registrations).toHaveLength(65);
     expect(routes.indexOf('post("/login"')).toBeLessThan(
       routes.indexOf('use("*", kefuAuthMiddleware)'),
     );

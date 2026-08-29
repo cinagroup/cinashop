@@ -431,6 +431,7 @@ export async function runKefuCorePostgresScenario(
     });
 
     const userSession: ChatSocketSession = {
+      isTourist: 0,
       principalUid: 2001,
       role: 1,
       toUid: 1001,
@@ -441,6 +442,7 @@ export async function runKefuCorePostgresScenario(
       connectedAt: Math.floor(Date.now() / 1000),
     };
     const kefuSession: ChatSocketSession = {
+      isTourist: 0,
       principalUid: 1001,
       role: 2,
       toUid: 2001,

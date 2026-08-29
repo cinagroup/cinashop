@@ -17,6 +17,7 @@ import {
   withTx,
 } from "@/lib/di";
 import {
+  kefuVisitorSession,
   storeService,
   storeServiceLog,
   storeServiceRecord,
@@ -43,6 +44,7 @@ type RealtimeEnv = Pick<Env, "UPSTASH_REDIS_URL" | "UPSTASH_REDIS_TOKEN" | "APP_
 export interface ChatSocketSession {
   principalUid: number;
   role: ChatRole;
+  isTourist: 0 | 1;
   toUid: number;
   authId: number;
   tokenKey: string;
@@ -58,7 +60,7 @@ export interface PersistedRealtimeMessage {
   msn: string;
   msn_type: number;
   add_time: number;
-  is_tourist: 0;
+  is_tourist: 0 | 1;
   type: number;
   nickname: string;
   avatar: string;
@@ -83,7 +85,7 @@ export interface PersistedRealtimeMessage {
 
 export function parseChatRole(value: unknown): ChatRole {
   const parsed = Number(value);
-  if (parsed !== 1 && parsed !== 2) throw new ValidateException("聊天角色无效");
+  if (parsed !== 1 && parsed !== 2 && parsed !== 3) throw new ValidateException("聊天角色无效");
   return parsed;
 }
 
@@ -157,6 +159,10 @@ function mapRecord(row: typeof storeServiceRecord.$inferSelect) {
 function assertSessionShape(session: ChatSocketSession): void {
   integer(session.principalUid, "聊天身份", { min: 1 });
   parseChatRole(session.role);
+  integer(session.isTourist, "游客状态", { min: 0, max: 1 });
+  if ((session.role === 1 && session.isTourist !== 0) || (session.role === 3 && session.isTourist !== 1)) {
+    throw new AuthException("聊天身份与游客状态不匹配");
+  }
   integer(session.toUid, "会话用户", { min: 0 });
   integer(session.authId, "认证身份", { min: 1 });
   integer(session.expiresAt, "登录有效期", { min: 1 });
@@ -188,6 +194,28 @@ async function assertDatabaseIdentity(db: DbClient, session: ChatSocketSession):
     return;
   }
 
+  if (session.role === 3) {
+    const now = Math.floor(Date.now() / 1_000);
+    const visitor = (
+      await db
+        .select({
+          visitorUid: kefuVisitorSession.visitorUid,
+          tokenHash: kefuVisitorSession.tokenHash,
+        })
+        .from(kefuVisitorSession)
+        .where(and(
+          eq(kefuVisitorSession.visitorUid, session.authId),
+          eq(kefuVisitorSession.visitorUid, session.principalUid),
+          eq(kefuVisitorSession.tokenHash, session.authVersion),
+          eq(kefuVisitorSession.revokedAt, 0),
+          sql`${kefuVisitorSession.expiresAt} > ${now}`,
+        ))
+        .limit(1)
+    )[0];
+    if (!visitor) throw new AuthException("游客会话已失效");
+    return;
+  }
+
   const user = (
     await db
       .select({ uid: userTable.uid, pwd: userTable.pwd })
@@ -207,10 +235,10 @@ async function assertDatabaseIdentity(db: DbClient, session: ChatSocketSession):
 
 async function assertTarget(
   db: DbClient,
-  role: ChatRole,
+  session: ChatSocketSession,
   toUid: number,
 ): Promise<{ nickname: string; avatar: string }> {
-  if (role === 1) {
+  if (session.role === 1 || session.role === 3) {
     const services = await db
       .select({ nickname: storeService.nickname, avatar: storeService.avatar })
       .from(storeService)
@@ -223,6 +251,23 @@ async function assertTarget(
       .limit(2);
     if (services.length !== 1) throw new NotFoundException("客服不存在、已禁用或身份不唯一");
     return services[0];
+  }
+
+  if (session.isTourist === 1) {
+    const visitor = (
+      await db
+        .select({ nickname: kefuVisitorSession.nickname, avatar: kefuVisitorSession.avatar })
+        .from(kefuVisitorSession)
+        .where(and(
+          eq(kefuVisitorSession.visitorUid, toUid),
+          eq(kefuVisitorSession.kefuUid, session.principalUid),
+          eq(kefuVisitorSession.revokedAt, 0),
+          sql`${kefuVisitorSession.expiresAt} > ${Math.floor(Date.now() / 1_000)}`,
+        ))
+        .limit(1)
+    )[0];
+    if (!visitor) throw new NotFoundException("游客会话不存在、已过期或已转接");
+    return visitor;
   }
 
   const user = (
@@ -242,16 +287,48 @@ async function assertConversationAssignment(
   toUid: number,
 ): Promise<void> {
   if (session.role === 2) {
+    if (session.isTourist === 1) {
+      const ownedVisitor = await db
+        .select({ visitorUid: kefuVisitorSession.visitorUid })
+        .from(kefuVisitorSession)
+        .where(and(
+          eq(kefuVisitorSession.visitorUid, toUid),
+          eq(kefuVisitorSession.kefuUid, session.principalUid),
+          eq(kefuVisitorSession.revokedAt, 0),
+          sql`${kefuVisitorSession.expiresAt} > ${Math.floor(Date.now() / 1_000)}`,
+        ))
+        .limit(1);
+      if (!ownedVisitor[0]) throw new NotFoundException("当前客服与该游客没有会话");
+      return;
+    }
     const owned = await db
       .select({ id: storeServiceRecord.id })
       .from(storeServiceRecord)
       .where(and(
         eq(storeServiceRecord.userId, session.principalUid),
         eq(storeServiceRecord.toUid, toUid),
-        eq(storeServiceRecord.isTourist, 0),
+        eq(storeServiceRecord.isTourist, session.isTourist),
       ))
       .limit(1);
     if (!owned[0]) throw new NotFoundException("当前客服与该用户没有会话");
+    return;
+  }
+
+  if (session.role === 3) {
+    const assigned = (
+      await db
+        .select({ kefuUid: kefuVisitorSession.kefuUid })
+        .from(kefuVisitorSession)
+        .where(and(
+          eq(kefuVisitorSession.visitorUid, session.principalUid),
+          eq(kefuVisitorSession.revokedAt, 0),
+          sql`${kefuVisitorSession.expiresAt} > ${Math.floor(Date.now() / 1_000)}`,
+        ))
+        .limit(1)
+    )[0];
+    if (!assigned || assigned.kefuUid !== toUid) {
+      throw new ValidateException("客服会话已转接，请刷新后重试");
+    }
     return;
   }
 
@@ -261,7 +338,7 @@ async function assertConversationAssignment(
       .from(storeServiceRecord)
       .where(and(
         eq(storeServiceRecord.toUid, session.principalUid),
-        eq(storeServiceRecord.isTourist, 0),
+        eq(storeServiceRecord.isTourist, session.isTourist),
       ))
       .orderBy(desc(storeServiceRecord.updateTime), desc(storeServiceRecord.id))
       .limit(1)
@@ -280,7 +357,7 @@ async function assertOwnedImageAttachment(
   if (!attachmentId) throw new ValidateException("图片消息引用无效");
   const expectedType = session.role === 2 ? 1 : 3;
   const expectedRelationId = session.role === 2 ? session.authId : session.principalUid;
-  const expectedModuleType = session.role === 2 ? 2 : 3;
+  const expectedModuleType = session.role === 2 ? 2 : session.role === 3 ? 4 : 3;
   const row = (
     await db
       .select({ id: systemAttachment.attId })
@@ -323,6 +400,21 @@ async function senderProfile(
     if (!row) throw new AuthException("客服登录状态已失效");
     return row;
   }
+  if (session.role === 3) {
+    const row = (
+      await db
+        .select({ nickname: kefuVisitorSession.nickname, avatar: kefuVisitorSession.avatar })
+        .from(kefuVisitorSession)
+        .where(and(
+          eq(kefuVisitorSession.visitorUid, session.principalUid),
+          eq(kefuVisitorSession.tokenHash, session.authVersion),
+          eq(kefuVisitorSession.revokedAt, 0),
+        ))
+        .limit(1)
+    )[0];
+    if (!row) throw new AuthException("游客会话已失效");
+    return row;
+  }
   const row = (
     await db
       .select({ nickname: userTable.nickname, avatar: userTable.avatar })
@@ -334,13 +426,19 @@ async function senderProfile(
   return row;
 }
 
-async function lockConversation(db: DbClient, role: ChatRole, senderUid: number, toUid: number) {
-  const userUid = role === 1 ? senderUid : toUid;
+async function lockConversation(
+  db: DbClient,
+  role: ChatRole,
+  senderUid: number,
+  toUid: number,
+  isTourist: 0 | 1,
+) {
+  const userUid = role === 1 || role === 3 ? senderUid : toUid;
   const kefuUid = role === 2 ? senderUid : toUid;
   await db.execute(sql`
     SELECT pg_advisory_xact_lock(
       ${CHAT_LOCK_NAMESPACE},
-      hashtext(${`kefu:${kefuUid}:user:${userUid}`})
+      hashtext(${`kefu:${kefuUid}:customer:${isTourist}:${userUid}`})
     )
   `);
 }
@@ -349,6 +447,7 @@ async function unreadCount(
   db: DbClient,
   senderUid: number,
   recipientUid: number,
+  isTourist: 0 | 1,
 ): Promise<number> {
   return (
     await db
@@ -357,7 +456,7 @@ async function unreadCount(
       .where(and(
         eq(storeServiceLog.uid, senderUid),
         eq(storeServiceLog.toUid, recipientUid),
-        eq(storeServiceLog.isTourist, 0),
+        eq(storeServiceLog.isTourist, isTourist),
         eq(storeServiceLog.type, 0),
       ))
   )[0]?.count ?? 0;
@@ -375,6 +474,7 @@ async function saveRecipientRecord(
     avatar: string;
     unread: number;
     now: number;
+    isTourist: 0 | 1;
   },
 ) {
   const existing = (
@@ -384,7 +484,7 @@ async function saveRecipientRecord(
       .where(and(
         eq(storeServiceRecord.userId, input.recipientUid),
         eq(storeServiceRecord.toUid, input.senderUid),
-        eq(storeServiceRecord.isTourist, 0),
+        eq(storeServiceRecord.isTourist, input.isTourist),
       ))
       .orderBy(desc(storeServiceRecord.id))
       .limit(1)
@@ -417,7 +517,7 @@ async function saveRecipientRecord(
           toUid: input.senderUid,
           nickname: input.nickname,
           avatar: input.avatar,
-          isTourist: 0,
+          isTourist: input.isTourist,
           online: 1,
           type: input.senderRole,
           addTime: input.now,
@@ -436,7 +536,7 @@ async function saveRecipientRecord(
     .where(and(
       eq(storeServiceRecord.userId, input.senderUid),
       eq(storeServiceRecord.toUid, input.recipientUid),
-      eq(storeServiceRecord.isTourist, 0),
+      eq(storeServiceRecord.isTourist, input.isTourist),
     ));
   return record;
 }
@@ -474,7 +574,7 @@ export class KefuRealtimeService {
       throw new AuthException("聊天登录已过期");
     }
     const hasRedis = Boolean(this.env.UPSTASH_REDIS_URL && this.env.UPSTASH_REDIS_TOKEN);
-    if (hasRedis) {
+    if (hasRedis && session.role !== 3) {
       const bucket = await getTokenBucket(session.tokenKey, this.env);
       const expectedType = session.role === 2 ? "kefu" : "api";
       if (!bucket || bucket.type !== expectedType || Number(bucket.uid) !== session.authId) {
@@ -501,7 +601,10 @@ export class KefuRealtimeService {
       await tx
         .update(storeServiceRecord)
         .set({ online: online ? 1 : 0 })
-        .where(and(eq(storeServiceRecord.toUid, session.principalUid), eq(storeServiceRecord.isTourist, 0)));
+        .where(and(
+          eq(storeServiceRecord.toUid, session.principalUid),
+          eq(storeServiceRecord.isTourist, session.isTourist),
+        ));
     });
   }
 
@@ -518,7 +621,10 @@ export class KefuRealtimeService {
       await tx
         .update(storeServiceRecord)
         .set({ online: 0 })
-        .where(and(eq(storeServiceRecord.toUid, session.principalUid), eq(storeServiceRecord.isTourist, 0)));
+        .where(and(
+          eq(storeServiceRecord.toUid, session.principalUid),
+          eq(storeServiceRecord.isTourist, session.isTourist),
+        ));
     });
   }
 
@@ -536,9 +642,9 @@ export class KefuRealtimeService {
     const persisted = await withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
-      await lockConversation(tx, session.role, session.principalUid, toUid);
+      await lockConversation(tx, session.role, session.principalUid, toUid, session.isTourist);
       await assertDatabaseIdentity(tx, session);
-      await assertTarget(tx, session.role, toUid);
+      await assertTarget(tx, session, toUid);
       await assertConversationAssignment(tx, session, toUid);
       const message = messageType === 3
         ? await assertOwnedImageAttachment(tx, session, suppliedMessage)
@@ -553,7 +659,7 @@ export class KefuRealtimeService {
             uid: session.principalUid,
             toUid,
             msn: message,
-            isTourist: 0,
+            isTourist: session.isTourist,
             timeNode: 0,
             addTime: now,
             type: 0,
@@ -562,7 +668,7 @@ export class KefuRealtimeService {
           })
           .returning()
       )[0];
-      const unread = await unreadCount(tx, session.principalUid, toUid);
+      const unread = await unreadCount(tx, session.principalUid, toUid, session.isTourist);
       const record = await saveRecipientRecord(tx, {
         senderUid: session.principalUid,
         recipientUid: toUid,
@@ -573,6 +679,7 @@ export class KefuRealtimeService {
         avatar: profile.avatar,
         unread,
         now,
+        isTourist: session.isTourist,
       });
       return {
         id: row.id,
@@ -581,7 +688,7 @@ export class KefuRealtimeService {
         msn: row.msn,
         msn_type: row.msnType,
         add_time: row.addTime,
-        is_tourist: 0 as const,
+        is_tourist: session.isTourist,
         type: row.type,
         nickname: profile.nickname,
         avatar: profile.avatar,
@@ -599,7 +706,13 @@ export class KefuRealtimeService {
 
   async markMessageRead(message: PersistedRealtimeMessage): Promise<void> {
     await withTx(this.container, async (tx) => {
-      await lockConversation(tx, message.sender_role, message.uid, message.to_uid);
+      await lockConversation(
+        tx,
+        message.sender_role,
+        message.uid,
+        message.to_uid,
+        message.is_tourist,
+      );
       await tx
         .update(storeServiceLog)
         .set({ type: 1 })
@@ -607,16 +720,16 @@ export class KefuRealtimeService {
           eq(storeServiceLog.id, message.id),
           eq(storeServiceLog.uid, message.uid),
           eq(storeServiceLog.toUid, message.to_uid),
-          eq(storeServiceLog.isTourist, 0),
+          eq(storeServiceLog.isTourist, message.is_tourist),
         ));
-      const unread = await unreadCount(tx, message.uid, message.to_uid);
+      const unread = await unreadCount(tx, message.uid, message.to_uid, message.is_tourist);
       await tx
         .update(storeServiceRecord)
         .set({ messageNum: unread })
         .where(and(
           eq(storeServiceRecord.userId, message.to_uid),
           eq(storeServiceRecord.toUid, message.uid),
-          eq(storeServiceRecord.isTourist, 0),
+          eq(storeServiceRecord.isTourist, message.is_tourist),
         ));
     });
   }
@@ -626,9 +739,9 @@ export class KefuRealtimeService {
     const toUid = integer(toUidValue, "会话用户", { min: 1 });
     if (toUid === session.principalUid) throw new ValidateException("不能和自己聊天");
     await withTx(this.container, async (tx) => {
-      await lockConversation(tx, session.role, session.principalUid, toUid);
+      await lockConversation(tx, session.role, session.principalUid, toUid, session.isTourist);
       await assertDatabaseIdentity(tx, session);
-      await assertTarget(tx, session.role, toUid);
+      await assertTarget(tx, session, toUid);
       await assertConversationAssignment(tx, session, toUid);
       await tx
         .update(storeServiceLog)
@@ -636,7 +749,7 @@ export class KefuRealtimeService {
         .where(and(
           eq(storeServiceLog.uid, toUid),
           eq(storeServiceLog.toUid, session.principalUid),
-          eq(storeServiceLog.isTourist, 0),
+          eq(storeServiceLog.isTourist, session.isTourist),
           eq(storeServiceLog.type, 0),
         ));
       await tx
@@ -645,7 +758,7 @@ export class KefuRealtimeService {
         .where(and(
           eq(storeServiceRecord.userId, session.principalUid),
           eq(storeServiceRecord.toUid, toUid),
-          eq(storeServiceRecord.isTourist, 0),
+          eq(storeServiceRecord.isTourist, session.isTourist),
         ));
     });
     return toUid;

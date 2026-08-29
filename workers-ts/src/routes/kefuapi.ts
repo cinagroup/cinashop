@@ -3,6 +3,8 @@ import type { AppVariables, Env } from "@/env";
 import * as KefuController from "@/controllers/kefu/KefuController";
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import { kefuAuthMiddleware } from "@/middleware/kefu-auth";
+import { authMiddleware } from "@/middleware/auth";
+import { visitorAuthMiddleware } from "@/middleware/visitor-auth";
 
 /** PHP-compatible dedicated customer-service security domain. */
 export const kefuapiRoutes = new Hono<{
@@ -22,6 +24,11 @@ kefuapiRoutes.get("/tourist/adv", KefuController.touristAdvertisement);
 kefuapiRoutes.get("/tourist/feedback", KefuController.touristFeedbackInfo);
 kefuapiRoutes.post("/tourist/feedback", KefuController.touristSubmitFeedback);
 kefuapiRoutes.get("/tourist/product/:id", KefuController.touristProduct);
+kefuapiRoutes.get("/tourist/user", KefuController.touristUser);
+kefuapiRoutes.get("/tourist/chat", visitorAuthMiddleware, KefuController.touristChat);
+kefuapiRoutes.get("/tourist/order/:order_id", authMiddleware({ force: true }), KefuController.touristOrder);
+kefuapiRoutes.get("/tourist/ws", visitorAuthMiddleware, KefuController.touristWebsocket);
+kefuapiRoutes.post("/tourist/upload", visitorAuthMiddleware, AttachmentController.visitorUploadImage);
 // Signed URLs cannot attach an Authorization header; signature verification is the access grant.
 kefuapiRoutes.get("/assets/:id", AttachmentController.asset);
 

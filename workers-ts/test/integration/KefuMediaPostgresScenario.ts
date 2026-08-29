@@ -240,6 +240,7 @@ export async function runKefuMediaPostgresScenario(
     const signedBytes = new Uint8Array(await signedObject.arrayBuffer());
 
     const kefuSession: ChatSocketSession = {
+      isTourist: 0,
       principalUid: 1001,
       role: 2,
       toUid: 2001,
@@ -250,6 +251,7 @@ export async function runKefuMediaPostgresScenario(
       connectedAt: Date.now(),
     };
     const userSession: ChatSocketSession = {
+      isTourist: 0,
       principalUid: 2001,
       role: 1,
       toUid: 1001,

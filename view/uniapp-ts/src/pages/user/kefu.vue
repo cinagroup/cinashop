@@ -73,6 +73,16 @@ interface ServiceRecord {
   online: number;
 }
 
+interface VisitorBootstrap {
+  uid: number;
+  nickname: string;
+  avatar: string;
+  online: number;
+  tourist_uid: number;
+  visitor_token: string;
+  expires_in: number;
+}
+
 interface DisplayMessage {
   id: number | string;
   msn: string;
@@ -90,6 +100,9 @@ const serviceUid = ref(0);
 const serviceNickname = ref("");
 const serviceAvatar = ref("");
 const serviceOnline = ref(false);
+const visitorUid = ref(0);
+const visitorToken = ref("");
+const VISITOR_TOKEN_STORAGE_KEY = "cinashop_kefu_visitor_token";
 let socket: UniApp.SocketTask | null = null;
 let socketReady = false;
 let disposed = false;
@@ -112,13 +125,63 @@ function appendMessage(message: ChatMessage) {
     id: message.id,
     msn: message.msn,
     addTime: message.add_time ?? message.addTime ?? Math.floor(Date.now() / 1000),
-    mine: message.uid === authStore.uid,
+    mine: message.uid === (authStore.uid || visitorUid.value),
     msnType: message.msn_type ?? message.msnType ?? 1,
   });
 }
 
+function kefuGet<T>(path: string, token = ""): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const header: Record<string, string> = { "Form-type": getFormType() };
+    if (token) header["X-Visitor-Token"] = token;
+    uni.request({
+      url: `${API_BASE}/kefuapi/${path.replace(/^\/+/, "")}`,
+      method: "GET",
+      header,
+      success: (response) => {
+        const body = response.data as { status?: number; msg?: string; data?: T };
+        if (body?.status === 200) resolve(body.data as T);
+        else reject(new Error(body?.msg ?? "游客客服请求失败"));
+      },
+      fail: (error) => reject(new Error(error.errMsg ?? "网络错误")),
+    });
+  });
+}
+
+async function loadVisitorRecord() {
+  let stored = String(uni.getStorageSync(VISITOR_TOKEN_STORAGE_KEY) || "");
+  let bootstrap: VisitorBootstrap;
+  try {
+    bootstrap = await kefuGet<VisitorBootstrap>("tourist/user", stored);
+  } catch (error) {
+    if (!stored) throw error;
+    uni.removeStorageSync(VISITOR_TOKEN_STORAGE_KEY);
+    stored = "";
+    bootstrap = await kefuGet<VisitorBootstrap>("tourist/user");
+  }
+  visitorToken.value = bootstrap.visitor_token;
+  visitorUid.value = bootstrap.tourist_uid;
+  uni.setStorageSync(VISITOR_TOKEN_STORAGE_KEY, bootstrap.visitor_token);
+  serviceUid.value = bootstrap.uid;
+  serviceNickname.value = bootstrap.nickname;
+  serviceAvatar.value = bootstrap.avatar;
+  serviceOnline.value = bootstrap.online === 1;
+  const history = await kefuGet<ChatMessage[]>("tourist/chat?limit=50", bootstrap.visitor_token);
+  messages.value = history.map((record) => ({
+    id: record.id,
+    msn: record.msn,
+    addTime: record.add_time ?? record.addTime ?? 0,
+    mine: record.uid === bootstrap.tourist_uid,
+    msnType: record.msn_type ?? record.msnType ?? 1,
+  }));
+}
+
 async function loadRecord() {
   try {
+    if (!authStore.uid || !authStore.token) {
+      await loadVisitorRecord();
+      return;
+    }
     const result = await http.get<ServiceRecord>("/user/service/record", { limit: 50 });
     serviceUid.value = result.uid;
     serviceNickname.value = result.nickname;
@@ -149,12 +212,17 @@ function websocketBase(): string {
 }
 
 function connect() {
-  if (!authStore.uid || !authStore.token || !serviceUid.value || socket) return;
+  const registered = Boolean(authStore.uid && authStore.token);
+  if ((!registered && !visitorToken.value) || !serviceUid.value || socket) return;
   const base = websocketBase();
   if (!base) return;
   const task = uni.connectSocket({
-    url: `${base}/api/ws/kefu?type=1&to_uid=${serviceUid.value}`,
-    protocols: ["cinashop", `cinashop-auth.${authStore.token}`],
+    url: registered
+      ? `${base}/api/ws/kefu?type=1&to_uid=${serviceUid.value}`
+      : `${base}/kefuapi/tourist/ws`,
+    protocols: registered
+      ? ["cinashop", `cinashop-auth.${authStore.token}`]
+      : ["cinashop", `cinashop-visitor.${visitorToken.value}`],
     success: () => undefined,
     fail: () => {
       socketReady = false;
@@ -216,7 +284,12 @@ function sendOverSocket(text: string, messageType = 1): Promise<void> {
     socket.send({
       data: JSON.stringify({
         type: "chat",
-        data: { to_uid: serviceUid.value, msn: text, msn_type: messageType },
+        data: {
+          to_uid: serviceUid.value,
+          msn: text,
+          msn_type: messageType,
+          is_tourist: authStore.uid && authStore.token ? 0 : 1,
+        },
       }),
       success: () => resolve(),
       fail: () => reject(new Error("socket send failed")),
@@ -239,14 +312,15 @@ function previewImage(current: string) {
 function uploadChatImage(filePath: string): Promise<{ url: string }> {
   return new Promise((resolve, reject) => {
     uni.uploadFile({
-      url: `${API_BASE}/api/upload/image`,
+      url: authStore.uid && authStore.token
+        ? `${API_BASE}/api/upload/image`
+        : `${API_BASE}/kefuapi/tourist/upload`,
       filePath,
       name: "file",
       formData: { pid: "0" },
-      header: {
-        "Authori-zation": `Bearer ${authStore.token}`,
-        "Form-type": getFormType(),
-      },
+      header: authStore.uid && authStore.token
+        ? { "Authori-zation": `Bearer ${authStore.token}`, "Form-type": getFormType() }
+        : { "X-Visitor-Token": visitorToken.value, "Form-type": getFormType() },
       success: (response) => {
         let parsed: unknown = null;
         try { parsed = JSON.parse(response.data) as unknown; } catch { parsed = null; }
@@ -287,13 +361,15 @@ async function chooseAndSendImage() {
     const attachment = await uploadChatImage(selected.tempFilePaths[0]);
     if (socketReady) {
       await sendOverSocket(attachment.url, 3);
-    } else {
+    } else if (authStore.uid && authStore.token) {
       const persisted = await http.post<ChatMessage>("/service/send", {
         to_uid: serviceUid.value,
         msn: attachment.url,
         msn_type: 3,
       });
       appendMessage(persisted);
+    } else {
+      throw new Error("游客实时连接尚未就绪，请稍后重试");
     }
   } catch (error) {
     uni.showToast({
@@ -313,6 +389,9 @@ async function send() {
     if (socketReady) {
       await sendOverSocket(text);
       return;
+    }
+    if (!authStore.uid || !authStore.token) {
+      throw new Error("游客实时连接尚未就绪，请稍后重试");
     }
     const persisted = await http.post<ChatMessage>("/service/send", {
       to_uid: serviceUid.value,

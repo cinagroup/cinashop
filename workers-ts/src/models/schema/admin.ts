@@ -272,10 +272,39 @@ export const storeServiceTransfer = pgTable(
     sourceRecordId: integer("source_record_id").notNull(),
     targetRecordId: integer("target_record_id").notNull(),
     copiedMessageCount: integer("copied_message_count").default(0).notNull(),
+    isTourist: smallint("is_tourist").default(0).notNull(),
     createdAt: integer("created_at").notNull(),
   },
   (t) => [
     index("sst_customer_time").on(t.customerUid, t.createdAt, t.requestKey),
+    index("sst_customer_scope_time").on(t.customerUid, t.isTourist, t.createdAt, t.requestKey),
     index("sst_target_time").on(t.toKefuUid, t.createdAt, t.requestKey),
+  ],
+);
+
+// ─── 匿名客服会话 ───────────────────────────────────────────
+// The token is stored only as SHA-256. A dedicated high UID range preserves
+// the legacy integer chat columns without colliding with registered users.
+export const kefuVisitorSession = pgTable(
+  "kefu_visitor_session",
+  {
+    sessionId: varchar("session_id", { length: 36 }).primaryKey(),
+    visitorUid: integer("visitor_uid")
+      .default(sql`nextval('"kefu_visitor_uid_seq"')`)
+      .notNull()
+      .unique(),
+    serviceId: integer("service_id").notNull(),
+    kefuUid: integer("kefu_uid").notNull(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+    nickname: varchar("nickname", { length: 50 }).default("").notNull(),
+    avatar: varchar("avatar", { length: 255 }).default("").notNull(),
+    createdAt: integer("created_at").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    lastSeenAt: integer("last_seen_at").notNull(),
+    revokedAt: integer("revoked_at").default(0).notNull(),
+  },
+  (t) => [
+    index("kvs_active_expiry").on(t.expiresAt, t.visitorUid),
+    index("kvs_kefu_active").on(t.kefuUid, t.expiresAt, t.visitorUid),
   ],
 );

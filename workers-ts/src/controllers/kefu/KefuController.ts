@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { extractToken } from "@/middleware/auth";
+import { extractVisitorToken } from "@/middleware/visitor-auth";
 import { enforceKefuLoginRateLimit } from "@/middleware/kefu-rate-limit";
 import { KefuAuthService } from "@/services/kefu/KefuAuthService";
 import { ScanLoginService } from "@/services/auth/ScanLoginService";
@@ -13,6 +14,8 @@ import { KefuProductService } from "@/services/kefu/KefuProductService";
 import { chatPrincipalName, upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
 import { KefuTransferService } from "@/services/kefu/KefuTransferService";
 import { KefuTouristService } from "@/services/kefu/KefuTouristService";
+import { KefuVisitorSessionService } from "@/services/kefu/KefuVisitorSessionService";
+import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { CustomerServiceCatalogService } from "@/services/message/CustomerServiceCatalogService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
@@ -135,6 +138,39 @@ export async function touristProduct(c: C) {
   return jsonOk(c, await tourist(c).productInfo(c.req.param("id")));
 }
 
+export async function touristUser(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return jsonOk(c, await new KefuVisitorSessionService(c.get("container"), c.env)
+    .bootstrap(extractVisitorToken(c), clientIp(c)));
+}
+
+export async function touristChat(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  const identity = c.get("visitorSession");
+  if (!identity) throw new ValidateException("游客会话无效");
+  return jsonOk(c, await new KefuVisitorSessionService(c.get("container"), c.env).history(
+    identity,
+    c.req.query("upperId") ?? c.req.query("upper_id"),
+    c.req.query("limit"),
+  ));
+}
+
+export async function touristOrder(c: C) {
+  return jsonOk(c, await new StoreOrderCreateService(c.get("container"), c.env)
+    .detail(c.get("uid"), c.req.param("order_id") ?? ""));
+}
+
+export async function touristWebsocket(c: C): Promise<Response> {
+  const identity = c.get("visitorSession");
+  if (!identity) throw new ValidateException("游客会话无效");
+  return upgradeChatSocket(c, {
+    role: 3,
+    principalUid: identity.visitorUid,
+    toUid: identity.kefuUid,
+    isTourist: 1,
+  });
+}
+
 export async function config(c: C) {
   return jsonOk(c, await core(c).clientConfig());
 }
@@ -163,6 +199,7 @@ export async function websocket(c: C): Promise<Response> {
     role: 2,
     principalUid: kefuUid(c),
     toUid: c.req.query("to_uid"),
+    isTourist: c.req.query("is_tourist"),
   });
 }
 
@@ -196,6 +233,7 @@ export async function transfer(c: C) {
     ...payload,
     uid: payload.uid ?? c.req.query("uid"),
     kefuToUid: payload.kefuToUid ?? payload.kefu_to_uid ?? c.req.query("kefuToUid") ?? c.req.query("kefu_to_uid"),
+    is_tourist: payload.is_tourist ?? payload.isTourist ?? c.req.query("is_tourist"),
     request_key: payload.request_key ?? payload.requestKey ?? c.req.header("Idempotency-Key"),
   };
   const result = await new KefuTransferService(c.get("container")).transfer(
@@ -212,6 +250,7 @@ export async function transfer(c: C) {
           request_key: result.request_key,
           uid: result.uid,
           toUid: result.to_uid,
+          is_tourist: result.is_tourist,
           nickname: result.targetInfo.nickname,
           avatar: result.targetInfo.avatar,
         },
@@ -222,13 +261,15 @@ export async function transfer(c: C) {
           request_key: result.request_key,
           recored: result.recored,
           kefuInfo: result.kefuInfo,
+          is_tourist: result.is_tourist,
         },
       }),
-      c.env.CHAT_ROOM.getByName(chatPrincipalName(1, result.uid)).deliverTransfer({
+      c.env.CHAT_ROOM.getByName(chatPrincipalName(result.is_tourist ? 3 : 1, result.uid)).deliverTransfer({
         type: "to_transfer",
         data: {
           request_key: result.request_key,
           toUid: result.to_uid,
+          is_tourist: result.is_tourist,
           nickname: result.targetInfo.nickname,
           avatar: result.targetInfo.avatar,
           online: result.targetInfo.online,

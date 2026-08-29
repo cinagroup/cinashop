@@ -8,8 +8,12 @@ import {
   R2_IMAGE_TYPE,
   supplierAttachmentScope,
   userAttachmentScope,
+  visitorAttachmentScope,
 } from "@/services/system/AttachmentService";
-import { enforceKefuUploadRateLimit } from "@/middleware/kefu-rate-limit";
+import {
+  enforceKefuUploadRateLimit,
+  enforceVisitorUploadRateLimit,
+} from "@/middleware/kefu-rate-limit";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
 
@@ -203,6 +207,16 @@ export async function kefuUploadImage(c: C) {
   await enforceKefuUploadRateLimit(c);
   const { file, pid } = await boundedMultipartImage(c);
   const result = await service(c).uploadImage(kefuAttachmentScope(c.get("kefuId") ?? 0), file, pid);
+  return jsonOk(c, result, "图片上传成功!");
+}
+
+/** Visitor uploads are isolated from both registered-user and agent R2 namespaces. */
+export async function visitorUploadImage(c: C) {
+  await enforceVisitorUploadRateLimit(c);
+  const identity = c.get("visitorSession");
+  if (!identity) throw new ValidateException("游客会话无效");
+  const { file, pid } = await boundedMultipartImage(c);
+  const result = await service(c).uploadImage(visitorAttachmentScope(identity.visitorUid), file, pid);
   return jsonOk(c, result, "图片上传成功!");
 }
 

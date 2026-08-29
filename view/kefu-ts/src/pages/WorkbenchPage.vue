@@ -135,6 +135,7 @@ const unreadTotal = computed(() => sessions.value.reduce((sum, item) => sum + it
 const allLabels = computed(() => labelCategories.value.flatMap((category) => category.label));
 const selectedLabels = computed(() => allLabels.value.filter((item) => item.disabled));
 const kefuUid = computed(() => auth.identity?.uid ?? 0);
+const isTouristSession = computed(() => selected.value?.is_tourist === 1);
 const orderContextCount = computed(() => orderContextTab.value === "orders" ? orderItems.value.length : refundItems.value.length);
 
 function notify(message: string) {
@@ -689,17 +690,22 @@ async function initialize() {
       await scrollToLatest();
       return;
     }
-    const [page, groupList] = await Promise.all([
+    const [customerPage, visitorPage, groupList] = await Promise.all([
       kefuApi.sessions({ limit: 60, is_tourist: 0 }),
+      kefuApi.sessions({ limit: 60, is_tourist: 1 }),
       kefuApi.groups(),
       auth.refreshIdentity(),
     ]);
-    sessions.value = page.list;
+    sessions.value = [...customerPage.list, ...visitorPage.list]
+      .sort((left, right) => right.update_time - left.update_time || right.id - left.id);
     groups.value = groupList;
     selected.value = sessions.value[0] ?? null;
     if (selected.value) await openSession(selected.value);
     await loadSpeechcraft();
-    realtime.connect(selected.value?.to_uid ?? 0);
+    realtime.connect(
+      selected.value?.to_uid ?? 0,
+      selected.value?.is_tourist === 1 ? 1 : 0,
+    );
   } catch (cause) {
     notify(cause instanceof Error ? cause.message : "工作台加载失败");
   } finally {
@@ -725,15 +731,39 @@ async function openSession(session: SessionRecord) {
       await scrollToLatest();
       return;
     }
-    const [history, userInfo, labels] = await Promise.all([
-      kefuApi.history(session.to_uid, { limit: 60, is_tourist: session.is_tourist }),
-      kefuApi.userInfo(session.to_uid),
-      kefuApi.userLabels(session.to_uid),
-    ]);
-    messages.value = history;
-    customer.value = userInfo;
-    labelCategories.value = labels;
-    realtime.selectConversation(session.to_uid);
+    if (session.is_tourist === 1) {
+      messages.value = await kefuApi.history(session.to_uid, { limit: 60, is_tourist: 1 });
+      customer.value = {
+        uid: session.to_uid,
+        nickname: session.nickname,
+        avatar: session.avatar,
+        spread_uid: 0,
+        spread_name: "",
+        is_promoter: 0,
+        birthday: "",
+        now_money: "0",
+        user_type: "visitor",
+        level: 0,
+        level_name: "游客会话",
+        group_id: 0,
+        group_name: "",
+        phone: "",
+        is_money_level: 0,
+        labelNames: [],
+        labels: [],
+      };
+      labelCategories.value = [];
+    } else {
+      const [history, userInfo, labels] = await Promise.all([
+        kefuApi.history(session.to_uid, { limit: 60, is_tourist: 0 }),
+        kefuApi.userInfo(session.to_uid),
+        kefuApi.userLabels(session.to_uid),
+      ]);
+      messages.value = history;
+      customer.value = userInfo;
+      labelCategories.value = labels;
+    }
+    realtime.selectConversation(session.to_uid, session.is_tourist === 1 ? 1 : 0);
     await Promise.all([loadOrderContext(), loadProductContext()]);
     await scrollToLatest();
   } catch (cause) {
@@ -756,28 +786,42 @@ function handleRealtimeEvent(event: RealtimeEvent) {
     const message = event.data as ChatMessage;
     sessions.value = updateSessionFromMessage(sessions.value, message, kefuUid.value);
     const peerUid = message.uid === kefuUid.value ? message.to_uid : message.uid;
-    if (selected.value?.to_uid === peerUid) {
+    if (
+      selected.value?.to_uid === peerUid
+      && selected.value.is_tourist === message.is_tourist
+    ) {
       messages.value = upsertMessage(messages.value, message);
       void scrollToLatest();
     }
     return;
   }
   if (event.type === "mssage_num") {
-    const data = event.data as { uid: number; num: number; recored?: SessionRecord };
-    const session = sessions.value.find((item) => item.to_uid === data.uid);
-    if (session) session.mssage_num = selected.value?.to_uid === data.uid ? 0 : data.num;
+    const data = event.data as { uid: number; is_tourist: number; num: number; recored?: SessionRecord };
+    const session = sessions.value.find((item) =>
+      item.to_uid === data.uid && item.is_tourist === data.is_tourist
+    );
+    if (session) {
+      session.mssage_num = selected.value?.to_uid === data.uid
+        && selected.value.is_tourist === data.is_tourist ? 0 : data.num;
+    }
     else if (data.recored?.id) sessions.value.unshift({ ...data.recored, phone: data.recored.phone ?? "" });
     return;
   }
   if (event.type === "online") {
-    const data = event.data as { uid: number; online: number };
-    const session = sessions.value.find((item) => item.to_uid === data.uid);
+    const data = event.data as { uid: number; online: number; is_tourist: number };
+    const session = sessions.value.find((item) =>
+      item.to_uid === data.uid && item.is_tourist === data.is_tourist
+    );
     if (session) session.online = data.online;
     return;
   }
   if (event.type === "transfer_out") {
-    const data = event.data as { uid: number; nickname?: string };
-    void removeTransferredSession(data.uid, `会话已转接给${data.nickname ? ` ${data.nickname}` : "其他客服"}`);
+    const data = event.data as { uid: number; is_tourist: number; nickname?: string };
+    void removeTransferredSession(
+      data.uid,
+      data.is_tourist,
+      `会话已转接给${data.nickname ? ` ${data.nickname}` : "其他客服"}`,
+    );
     return;
   }
   if (event.type === "transfer") {
@@ -789,9 +833,11 @@ function handleRealtimeEvent(event: RealtimeEvent) {
   }
 }
 
-async function removeTransferredSession(uid: number, message?: string) {
-  const wasSelected = selected.value?.to_uid === uid;
-  sessions.value = sessions.value.filter((item) => item.to_uid !== uid);
+async function removeTransferredSession(uid: number, isTourist: number, message?: string) {
+  const wasSelected = selected.value?.to_uid === uid && selected.value.is_tourist === isTourist;
+  sessions.value = sessions.value.filter((item) =>
+    item.to_uid !== uid || item.is_tourist !== isTourist
+  );
   if (wasSelected) {
     transferOpen.value = false;
     selected.value = null;
@@ -807,7 +853,7 @@ async function removeTransferredSession(uid: number, message?: string) {
     const next = sessions.value[0];
     if (next) await openSession(next);
     else {
-      realtime.connect(0);
+      realtime.connect(0, 0);
       mobileChat.value = false;
     }
   }
@@ -856,10 +902,11 @@ async function confirmTransfer() {
         uid: session.to_uid,
         kefuToUid: transferTargetUid.value,
         request_key: transferRequestKey.value,
+        is_tourist: session.is_tourist === 1 ? 1 : 0,
       });
     }
     transferOpen.value = false;
-    await removeTransferredSession(session.to_uid);
+    await removeTransferredSession(session.to_uid, session.is_tourist);
     notify(`已转接给 ${target?.nickname ?? "目标客服"}`);
   } catch (cause) {
     // Keep request_key unchanged: a retry after an uncertain network outcome is safe.
@@ -874,7 +921,7 @@ function sendMessage() {
   if (!selected.value || !text) return;
   if (text.length > 2000) return notify("消息不能超过 2000 个字符");
   if (preview) {
-    const message: ChatMessage = { id: Date.now(), uid: kefuUid.value, to_uid: selected.value.to_uid, msn: text, is_tourist: 0, add_time: Math.floor(Date.now() / 1000), type: 1, msn_type: 1 };
+    const message: ChatMessage = { id: Date.now(), uid: kefuUid.value, to_uid: selected.value.to_uid, msn: text, is_tourist: selected.value.is_tourist, add_time: Math.floor(Date.now() / 1000), type: 1, msn_type: 1 };
     messages.value = upsertMessage(messages.value, message);
     sessions.value = updateSessionFromMessage(sessions.value, message, kefuUid.value);
     composer.value = "";
@@ -927,7 +974,7 @@ async function sendSelectedImage(event: Event) {
         uid: kefuUid.value,
         to_uid: session.to_uid,
         msn: await readPreviewImage(file),
-        is_tourist: 0,
+        is_tourist: session.is_tourist,
         add_time: Math.floor(Date.now() / 1000),
         type: 1,
         msn_type: 3,
@@ -1150,7 +1197,7 @@ onBeforeUnmount(() => {
         <button class="mobile-icon back-button" title="返回会话" @click="mobileChat = false"><UiIcon name="back" /></button>
         <template v-if="selected">
           <span class="avatar header-avatar">{{ initials(selected.nickname) }}</span>
-          <div class="chat-identity"><h2>{{ selected.nickname }} <i :class="{ online: selected.online }"></i></h2><p>UID {{ selected.to_uid }} · {{ maskedPhone(selected.phone) }}</p></div>
+          <div class="chat-identity"><h2>{{ selected.nickname }} <i :class="{ online: selected.online }"></i></h2><p>UID {{ selected.to_uid }} · {{ selected.is_tourist ? '游客会话' : maskedPhone(selected.phone) }}</p></div>
           <div class="header-labels"><span v-for="label in selectedLabels.slice(0, 2)" :key="label.id">{{ label.label_name }}</span></div>
           <span class="socket-status" :class="socketState">{{ preview ? '预览数据' : socketState === 'open' ? '实时连接' : socketState === 'connecting' ? '连接中' : '已断开' }}</span>
           <button class="transfer-button" title="转接会话" @click="openTransfer"><UiIcon name="users" /><span>转接</span></button>
@@ -1195,22 +1242,25 @@ onBeforeUnmount(() => {
       <header class="mobile-drawer-header"><h2>客户资料</h2><button title="关闭" @click="mobileInspector = false"><UiIcon name="close" /></button></header>
       <template v-if="customer && selected">
         <section class="customer-card">
-          <div class="customer-title"><span class="avatar inspector-avatar">{{ initials(customer.nickname) }}</span><div><h2>{{ customer.nickname }}</h2><p>{{ customer.level_name || '普通会员' }}</p></div></div>
+          <div class="customer-title"><span class="avatar inspector-avatar">{{ initials(customer.nickname) }}</span><div><h2>{{ customer.nickname }}</h2><p>{{ isTouristSession ? '匿名游客' : customer.level_name || '普通会员' }}</p></div></div>
           <dl>
             <div><dt>UID</dt><dd>{{ customer.uid }}</dd></div>
-            <div><dt>手机号</dt><dd>{{ maskedPhone(customer.phone) }}</dd></div>
-            <div><dt>账户余额</dt><dd>¥{{ customer.now_money }}</dd></div>
-            <div><dt>客户分组</dt><dd><select :value="customer.group_id" @change="updateGroup"><option v-for="group in groups" :key="group.id" :value="group.id">{{ group.group_name }}</option></select></dd></div>
+            <div v-if="isTouristSession"><dt>身份</dt><dd>独立签名游客会话</dd></div>
+            <template v-else>
+              <div><dt>手机号</dt><dd>{{ maskedPhone(customer.phone) }}</dd></div>
+              <div><dt>账户余额</dt><dd>¥{{ customer.now_money }}</dd></div>
+              <div><dt>客户分组</dt><dd><select :value="customer.group_id" @change="updateGroup"><option v-for="group in groups" :key="group.id" :value="group.id">{{ group.group_name }}</option></select></dd></div>
+            </template>
           </dl>
-          <div class="label-heading"><span>客户标签</span><button @click="labelsEditing = !labelsEditing">{{ labelsEditing ? '取消' : '编辑' }}</button></div>
-          <div v-if="labelsEditing" class="label-editor">
+          <div v-if="!isTouristSession" class="label-heading"><span>客户标签</span><button @click="labelsEditing = !labelsEditing">{{ labelsEditing ? '取消' : '编辑' }}</button></div>
+          <div v-if="!isTouristSession && labelsEditing" class="label-editor">
             <div v-for="category in labelCategories" :key="category.id"><small>{{ category.name }}</small><div class="label-list"><button v-for="label in category.label" :key="label.id" :class="{ selected: label.disabled }" @click="toggleLabel(label.id)">{{ label.label_name }}</button></div></div>
             <button class="secondary-button" :disabled="savingLabels" @click="saveLabels">{{ savingLabels ? '保存中…' : '保存标签' }}</button>
           </div>
-          <div v-else class="label-list display-labels"><span v-for="label in selectedLabels" :key="label.id">{{ label.label_name }}</span><em v-if="!selectedLabels.length">暂无标签</em></div>
+          <div v-else-if="!isTouristSession" class="label-list display-labels"><span v-for="label in selectedLabels" :key="label.id">{{ label.label_name }}</span><em v-if="!selectedLabels.length">暂无标签</em></div>
         </section>
 
-        <section class="order-context" aria-labelledby="order-context-title">
+        <section v-if="!isTouristSession" class="order-context" aria-labelledby="order-context-title">
           <header>
             <div><p class="eyebrow">ORDER</p><h2 id="order-context-title">订单与售后</h2></div>
             <span>{{ orderContextTabLabel(orderContextTab) }} {{ orderContextCount }}</span>
@@ -1241,7 +1291,7 @@ onBeforeUnmount(() => {
           <div v-else class="order-empty">暂无{{ orderContextTabLabel(orderContextTab) }}</div>
         </section>
 
-        <section class="product-context" aria-labelledby="product-context-title">
+        <section v-if="!isTouristSession" class="product-context" aria-labelledby="product-context-title">
           <header>
             <div><p class="eyebrow">CONTEXT</p><h2 id="product-context-title">商品上下文</h2></div>
             <span>{{ productTabLabel(productTab) }} {{ productItems.length }}</span>

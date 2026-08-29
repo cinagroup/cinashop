@@ -42,7 +42,7 @@ CRMEB PRO → Cloudflare Workers 渐进式迁移。
 - 保留 `system_user_apply` 供应商入驻历史与 `sms_record` 短信审计；恢复用户提交/重提、Admin 审核/备注和短信激活页面。旧 PHP 的跨用户申请覆盖与手机号后六位默认密码不再兼容：所有用户写入按登录 UID 限定，审批只创建冻结账号，申请人验证原手机号并设置至少 12 位密码后才启用（本地完成；阿里云短信 secret、生产迁移和真实发送尚未配置/执行）
 - 用户注册、手机验证码登录、找回密码、手机号绑定/更换及社交账号补绑均使用用途隔离的 6 位短信能力；旧 AJCaptcha 已替换为 Cloudflare Turnstile。挑战绑定手机号、用途、原始客户端网络和 5 分钟时效，服务端强制校验 Siteverify `hostname/action/cdata` 后才可原子消费并进入 PostgreSQL/Queue。PC 使用受控 iframe，UniApp H5/App/小程序使用全屏 WebView 并在返回后复核服务端状态（本地完成并通过生产 Hyperdrive 只读指纹与真实 Worker Siteverify 传输验证；主 Worker未发布，生产 Turnstile/Aliyun 配置和真实短信 E2E 尚未完成）
 - 保留小程序直播间、商品、主播及房间商品关系；恢复用户直播列表、回放读取、Admin 只读目录，以及 Cron→Queue 的直播间/商品状态同步。创建/删除直播间、商品提审/删除和导入商品等非幂等微信写接口继续关闭（本地完成；生产迁移和真实小程序验证尚未执行）
-- 客服独立 `/kefuapi` 已恢复 56/63 条 PHP 精确合同：专用账号 token、一次性扫码/OAuth、会话/聊天权限、用户分组/标签、话术、订单/售后/履约、游客广告/反馈/公开商品，以及固定 HTTPS 的只读面单模板目录；`ticket` 与两条不安全退款合同有源证据退役。游客反馈按 HMAC 来源和全局桶限流，公开商品强制可见性；剩余 4 条游客身份型合同在签名访客会话完成前保持关闭（主 Worker未发布；生产客服账号/会话、游客内容配置、面单配置与一号通 Secret 均为空）
+- 客服独立 `/kefuapi` 已恢复 60/63 条 PHP 精确合同，其余 `ticket` 与两条不安全退款合同有源证据退役，退役后有效可执行覆盖 100%。游客链路使用 24 小时签名会话、10 亿起步独立 UID、数据库 token 摘要/撤销状态、权威客服分配、`is_tourist` 实时隔离和独立 R2 owner；`tourist/order` 仍只接受正常登录用户并复核订单归属。生产已幂等应用 `0104` 且新表为 0 行，Kefu/UniApp 前端已接入但主 Worker/前端未发布；生产客服账号/会话、游客内容配置、面单配置与一号通 Secret 均为空
 
 未完成的主要范围包括 Supplier 生产数据/账号迁移、旧后台的大部分功能、客服前端与长尾接口、ERP 独立接口、移动端长尾页面、生产数据迁移与真实支付/Cloudflare 远端验收。不要按历史 M1～M24 标签推断迁移完成度。
 
@@ -388,7 +388,8 @@ npm run deploy --env staging   # 预发
 - [x] 恢复 API v2 三条促销只读兼容合同：活动商品、赠品信息和登录态凑单；按 active 平台父规则执行全场/指定/排除/品牌/标签五类范围，保留 PHP 折扣截断、阶梯与券/赠品 SKU 投影，并修复商品 DAO 的显式 `ids` 过去只排序不筛选而导致范围扩散的问题。生产 Hyperdrive 只读确认促销/辅助表均为 0；随机 schema 12/12、`public_state_unchanged=true`、临时 schema `0→0`，一次性审计 Worker 已删除
 - [ ] 从源 MySQL 复制并由运营复核促销父子规则、商品/品牌/标签范围、券与赠品 SKU；补齐 API-006 订单促销叠加并完成旧 UniApp/真实账号/预发 E2E 后，才可把 PROMO 域判为完成
 - [x] 恢复客服独立 token 域及 22 条核心 PHP 路由，固定账号 ID/聊天 UID 双身份、会话与聊天成员作用域、用户分群、个人话术/分类 owner；登录前以 HMAC 脱敏来源和 Durable Object 实施 10 次/分钟强一致限流。生产 `0092` 四索引已应用，随机 schema 13 项断言和业务行/序列不变验证通过
-- [ ] 从源 MySQL 复制并复核客服账号/bcrypt 密码/用户绑定、会话/消息、话术/分类；为 `tourist/user|order|chat|upload` 定义签名短期访客会话及对象作用域，接入隔离 R2；升级 Kefu/旧端扫码、OAuth 与访客协议，再以真实账号验证登录限流、WebSocket、转接、履约和浏览器 E2E。不存在控制器目标的旧 `ticket` 不恢复，ERP 写入在回调验签和幂等协议完成前保持关闭
+- [x] 为 `tourist/user|order|chat|upload` 建立安全兼容层：24 小时 HS256 visitor audience、SHA-256 token 摘要与撤销/期限复核、权威客服分配、游客 UID 独立序列、`is_tourist` WebSocket/未读/转接隔离、R2 `module_type=4` owner，以及登录用户订单归属门禁；Kefu 工作台和 UniApp 已接入。生产 `0104` 经随机 schema、两次幂等应用和业务指纹验证，新游客表为 0 行
+- [ ] 从源 MySQL 复制并复核客服账号/bcrypt 密码/用户绑定、会话/消息、话术/分类与游客内容；当前生产客服账号、会话均为 0，无法做正向游客分配/WebSocket/R2/转接 E2E。补齐测试客服后，还需升级仍在使用的旧 Admin 客服端、验证扫码/OAuth、限流、浏览器/真机、预发、影子流量并取得明确发布批准。不存在控制器目标的旧 `ticket` 不恢复，ERP 写入在回调验签和幂等协议完成前保持关闭
 - [x] 将 Out API 扩展为 14 条有界 GET，以及订单/退款备注、确认收货、人工快递发货、人工快递拆单发货、既有配送信息更正、发票资料/状态、同意退货、拒绝售后和真实资金退款 11 条 PUT；逐路由 ACL、`store_id=0` 平台范围、PII 禁缓存、IP+账号强一致限流、HMAC 脱敏审计、共享订单/退款锁、请求摘要重放、拆单金额/数量守恒、配送员权威值、发票唯一关联、渠道状态互斥、权威金额绑定、余额 exactly-once、并发单写与失败回滚已通过单元及生产 Hyperdrive 随机隔离 schema 验证
 - [ ] 从源 MySQL 复制 `out_account/out_interface` 并由真实客户确认最小权限与 PII 字段；生产当前两表有效行均为 0。主 Worker 发布后验证真实 Durable Object RPC/429、真实审计写入与客户端退避，再用测试商户完成微信/支付宝退款、回调与对账，并为配送员重新分配及 PHP 发货通知/小程序上报建立幂等 Queue/outbox；任意外部推送继续禁用
 - [x] 在生产 PostgreSQL/Hyperdrive 随机隔离 schema 上验证下单并发、取消补偿和支付/取消竞态；公共业务数据/序列前后不变

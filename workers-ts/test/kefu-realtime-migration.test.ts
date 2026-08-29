@@ -21,6 +21,7 @@ describe("customer-service realtime migration", () => {
   it("partitions Durable Objects by authenticated role and principal", () => {
     expect(chatPrincipalName(1, 42)).toBe("user:42");
     expect(chatPrincipalName(2, 42)).toBe("kefu:42");
+    expect(chatPrincipalName(3, 1_000_000_000)).toBe("visitor:1000000000");
     expect(() => chatPrincipalName(1, 0)).toThrow("聊天身份无效");
   });
 
@@ -48,7 +49,21 @@ describe("customer-service realtime migration", () => {
       toUid: 1001,
       authId: 2001,
       tokenKey: VALID_SESSION_HEADERS["X-Chat-Token-Key"],
+      isTourist: 0,
     });
+    const visitor = parseChatSessionRequest(new Request("https://chat.internal/connect", {
+      headers: {
+        ...VALID_SESSION_HEADERS,
+        "X-Chat-Principal-Uid": "1000000000",
+        "X-Chat-Role": "3",
+        "X-Chat-Is-Tourist": "1",
+        "X-Chat-Auth-Id": "1000000000",
+      },
+    }));
+    expect(visitor).toMatchObject({ role: 3, isTourist: 1, principalUid: 1_000_000_000 });
+    expect(() => parseChatSessionRequest(new Request("https://chat.internal/connect", {
+      headers: { ...VALID_SESSION_HEADERS, "X-Chat-Role": "3", "X-Chat-Is-Tourist": "0" },
+    }))).toThrow("invalid chat session");
     expect(() => parseChatSessionRequest(new Request("https://chat.internal/connect", {
       headers: { ...VALID_SESSION_HEADERS, "X-Chat-To-Uid": "2001" },
     }))).toThrow("invalid chat session");

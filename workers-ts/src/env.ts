@@ -225,6 +225,8 @@ export interface AppVariables {
   socketTokenExp?: number;
   socketAuthId?: number;
   socketAuthVersion?: string;
+  /** Worker-owned anonymous customer-service session; never contains the raw token. */
+  visitorSession?: import("@/services/kefu/KefuVisitorSessionService").KefuVisitorIdentity;
   /** DI 容器 (container 中间件注入, 对应 PHP app()->make) */
   container: import("@/lib/di").Container;
   /** 当前登录管理员 ID (adminAuthMiddleware 注入) */

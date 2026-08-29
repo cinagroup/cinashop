@@ -6,8 +6,10 @@ export interface RealtimeCallbacks {
   onState(state: "connecting" | "open" | "closed"): void;
 }
 
-export function kefuSocketPath(toUid: number): string {
-  return toUid > 0 ? `/kefuapi/ws?to_uid=${toUid}` : "/kefuapi/ws";
+export function kefuSocketPath(toUid: number, isTourist: 0 | 1): string {
+  const query = new URLSearchParams({ is_tourist: String(isTourist) });
+  if (toUid > 0) query.set("to_uid", String(toUid));
+  return `/kefuapi/ws?${query.toString()}`;
 }
 
 export function upsertMessage(list: ChatMessage[], message: ChatMessage): ChatMessage[] {
@@ -25,7 +27,9 @@ export function updateSessionFromMessage(
   kefuUid: number,
 ): SessionRecord[] {
   const peerUid = message.uid === kefuUid ? message.to_uid : message.uid;
-  const index = sessions.findIndex((item) => item.to_uid === peerUid);
+  const index = sessions.findIndex((item) =>
+    item.to_uid === peerUid && item.is_tourist === message.is_tourist
+  );
   if (index < 0) return sessions;
   const next = [...sessions];
   const current = next[index];
@@ -46,11 +50,13 @@ export class KefuRealtimeClient {
   private reconnectTimer: number | null = null;
   private manuallyClosed = false;
   private currentToUid = 0;
+  private currentIsTourist: 0 | 1 = 0;
 
   constructor(private readonly callbacks: RealtimeCallbacks) {}
 
-  connect(toUid?: number): void {
+  connect(toUid?: number, isTourist?: 0 | 1): void {
     if (toUid !== undefined && toUid >= 0) this.currentToUid = toUid;
+    if (isTourist !== undefined) this.currentIsTourist = isTourist;
     this.stopHeartbeat();
     this.stopReconnect();
     if (this.socket) {
@@ -63,7 +69,8 @@ export class KefuRealtimeClient {
     this.manuallyClosed = false;
     this.callbacks.onState("connecting");
     const connectedToUid = this.currentToUid;
-    const socket = new WebSocket(websocketUrl(kefuSocketPath(connectedToUid)), [
+    const connectedIsTourist = this.currentIsTourist;
+    const socket = new WebSocket(websocketUrl(kefuSocketPath(connectedToUid, connectedIsTourist)), [
       "cinashop",
       `cinashop-auth.${token}`,
     ]);
@@ -72,7 +79,11 @@ export class KefuRealtimeClient {
       if (this.socket !== socket) return;
       this.callbacks.onState("open");
       this.heartbeat = window.setInterval(() => this.send("ping", {}), 25_000);
-      if (this.currentToUid > 0 && this.currentToUid !== connectedToUid) {
+      if (
+        this.currentToUid > 0
+        && this.currentIsTourist === connectedIsTourist
+        && this.currentToUid !== connectedToUid
+      ) {
         this.send("to_chat", { id: this.currentToUid });
       }
     });
@@ -95,7 +106,13 @@ export class KefuRealtimeClient {
     });
   }
 
-  selectConversation(uid: number): void {
+  selectConversation(uid: number, isTourist: 0 | 1): void {
+    if (this.currentIsTourist !== isTourist) {
+      this.currentToUid = uid;
+      this.currentIsTourist = isTourist;
+      this.connect();
+      return;
+    }
     this.currentToUid = uid;
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.send("to_chat", { id: uid });
@@ -103,7 +120,12 @@ export class KefuRealtimeClient {
   }
 
   sendMessage(uid: number, message: string, messageType = 1): void {
-    this.send("chat", { to_uid: uid, msn: message, msn_type: messageType, is_tourist: 0 });
+    this.send("chat", {
+      to_uid: uid,
+      msn: message,
+      msn_type: messageType,
+      is_tourist: this.currentIsTourist,
+    });
   }
 
   setOnline(online: boolean): void {

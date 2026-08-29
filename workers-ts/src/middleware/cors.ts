@@ -16,10 +16,12 @@ export const corsMiddleware = cors({
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: [
     "Content-Type",
+    "Form-type",
     "Authori-zation", // CRMEB 自定义 header (避开某些服务器 Authorization 被吞的问题)
     "Authorization",
     "Idempotency-Key",
     "X-Scan-Poll-Token",
+    "X-Visitor-Token",
     "X-Requested-With",
   ],
   exposeHeaders: ["Content-Disposition"],

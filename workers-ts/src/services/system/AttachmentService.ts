@@ -18,7 +18,7 @@ const CATEGORY_LOCK_NAMESPACE = 505_609;
 export interface AttachmentScope {
   type: 1 | 3 | 4;
   relationId: number;
-  moduleType: 1 | 2 | 3;
+  moduleType: 1 | 2 | 3 | 4;
 }
 
 export interface DetectedImage {
@@ -41,6 +41,11 @@ export function userAttachmentScope(uid: number): AttachmentScope {
 /** PHP customer-service uploads used module_type=2; relationId now isolates each agent. */
 export function kefuAttachmentScope(kefuId: number): AttachmentScope {
   return { type: 1, relationId: positiveId(kefuId, "客服ID"), moduleType: 2 };
+}
+
+/** Anonymous visitors use a separate module namespace from registered users. */
+export function visitorAttachmentScope(visitorUid: number): AttachmentScope {
+  return { type: 3, relationId: positiveId(visitorUid, "游客ID"), moduleType: 4 };
 }
 
 export function canonicalAttachmentPath(id: number): string {
@@ -120,7 +125,7 @@ export function isAttachmentObjectCleanupMessage(
     candidate.keys.every((key) =>
       typeof key === "string" &&
       key.length <= 180 &&
-      /^attachments\/(?:admin|supplier|user|kefu)\/[1-9]\d*\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:jpg|png|webp|gif)$/.test(key)
+      /^attachments\/(?:admin|supplier|user|kefu|visitor)\/[1-9]\d*\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:jpg|png|webp|gif)$/.test(key)
     );
 }
 
@@ -205,8 +210,9 @@ function formatBytes(value: string): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
-function scopeFolder(scope: AttachmentScope): "admin" | "supplier" | "user" | "kefu" {
+function scopeFolder(scope: AttachmentScope): "admin" | "supplier" | "user" | "kefu" | "visitor" {
   if (scope.moduleType === 2) return "kefu";
+  if (scope.moduleType === 4) return "visitor";
   return scope.type === 1 ? "admin" : scope.type === 4 ? "supplier" : "user";
 }
 

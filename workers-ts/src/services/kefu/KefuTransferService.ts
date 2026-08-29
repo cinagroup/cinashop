@@ -2,6 +2,7 @@ import { and, desc, eq, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
+  kefuVisitorSession,
   storeService,
   storeServiceRecord,
   storeServiceTransfer,
@@ -15,6 +16,12 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 function positiveInteger(value: unknown, label: string): number {
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new ValidateException(`${label}无效`);
+  return parsed;
+}
+
+function touristFlag(value: unknown): 0 | 1 {
+  const parsed = Number(value ?? 0);
+  if (parsed !== 0 && parsed !== 1) throw new ValidateException("游客状态无效");
   return parsed;
 }
 
@@ -49,6 +56,7 @@ export interface KefuTransferResult {
   from_uid: number;
   to_uid: number;
   copied_message_count: number;
+  is_tourist: 0 | 1;
   recored: KefuTransferRecord | null;
   kefuInfo: { uid: number; nickname: string; avatar: string };
   targetInfo: { uid: number; nickname: string; avatar: string; online: number };
@@ -72,11 +80,16 @@ function mapRecord(row: typeof storeServiceRecord.$inferSelect): KefuTransferRec
   };
 }
 
-async function lockConversation(db: DbClient, kefuUid: number, customerUid: number): Promise<void> {
+async function lockConversation(
+  db: DbClient,
+  kefuUid: number,
+  customerUid: number,
+  isTourist: 0 | 1,
+): Promise<void> {
   await db.execute(sql`
     SELECT pg_advisory_xact_lock(
       ${CHAT_LOCK_NAMESPACE},
-      hashtext(${`kefu:${kefuUid}:user:${customerUid}`})
+      hashtext(${`kefu:${kefuUid}:customer:${isTourist}:${customerUid}`})
     )
   `);
 }
@@ -115,6 +128,7 @@ export class KefuTransferService {
     const fromServiceId = positiveInteger(fromServiceIdValue, "客服身份");
     const fromKefuUid = positiveInteger(fromKefuUidValue, "客服聊天身份");
     const customerUid = positiveInteger(input.uid, "转接用户");
+    const isTourist = touristFlag(input.is_tourist ?? input.isTourist);
     const toKefuUid = positiveInteger(input.kefuToUid ?? input.kefu_to_uid, "目标客服");
     if (customerUid === toKefuUid || fromKefuUid === toKefuUid) {
       throw new ValidateException("自己不能转接给自己");
@@ -133,11 +147,11 @@ export class KefuTransferService {
       await tx.execute(sql`
         SELECT pg_advisory_xact_lock(
           ${TRANSFER_LOCK_NAMESPACE},
-          hashtext(${`kefu-transfer:user:${customerUid}`})
+          hashtext(${`kefu-transfer:customer:${isTourist}:${customerUid}`})
         )
       `);
       for (const kefuUid of [fromKefuUid, toKefuUid].sort((a, b) => a - b)) {
-        await lockConversation(tx, kefuUid, customerUid);
+        await lockConversation(tx, kefuUid, customerUid, isTourist);
       }
 
       const existingAudit = (
@@ -153,6 +167,7 @@ export class KefuTransferService {
           existingAudit.fromKefuUid !== fromKefuUid ||
           existingAudit.toKefuUid !== toKefuUid ||
           existingAudit.fromServiceId !== fromServiceId
+          || existingAudit.isTourist !== isTourist
         ) throw new ValidateException("转接请求键已用于其他操作");
         const [sourceInfo, targetInfo] = await Promise.all([
           tx.select({ uid: storeService.uid, nickname: storeService.nickname, avatar: storeService.avatar })
@@ -168,6 +183,7 @@ export class KefuTransferService {
           from_uid: fromKefuUid,
           to_uid: toKefuUid,
           copied_message_count: existingAudit.copiedMessageCount,
+          is_tourist: isTourist,
           recored: null,
           kefuInfo: sourceInfo[0],
           targetInfo: targetInfo[0],
@@ -190,13 +206,29 @@ export class KefuTransferService {
       const sourceInfo = sourceServices[0];
       const targetInfo = await targetProfile(tx, toKefuUid);
 
+      if (isTourist === 1) {
+        const visitor = await tx
+          .select({ visitorUid: kefuVisitorSession.visitorUid })
+          .from(kefuVisitorSession)
+          .where(and(
+            eq(kefuVisitorSession.visitorUid, customerUid),
+            eq(kefuVisitorSession.serviceId, fromServiceId),
+            eq(kefuVisitorSession.kefuUid, fromKefuUid),
+            eq(kefuVisitorSession.revokedAt, 0),
+            sql`${kefuVisitorSession.expiresAt} > ${Math.floor(Date.now() / 1_000)}`,
+          ))
+          .limit(1)
+          .for("update");
+        if (visitor.length !== 1) throw new NotFoundException("游客会话不存在、已过期或已转接");
+      }
+
       const sourceRecords = await tx
         .select()
         .from(storeServiceRecord)
         .where(and(
           eq(storeServiceRecord.userId, fromKefuUid),
           eq(storeServiceRecord.toUid, customerUid),
-          eq(storeServiceRecord.isTourist, 0),
+          eq(storeServiceRecord.isTourist, isTourist),
         ))
         .orderBy(desc(storeServiceRecord.id))
         .limit(2)
@@ -211,7 +243,7 @@ export class KefuTransferService {
         .where(and(
           eq(storeServiceRecord.userId, toKefuUid),
           eq(storeServiceRecord.toUid, customerUid),
-          eq(storeServiceRecord.isTourist, 0),
+          eq(storeServiceRecord.isTourist, isTourist),
         ))
         .orderBy(desc(storeServiceRecord.id))
         .limit(2)
@@ -234,7 +266,7 @@ export class KefuTransferService {
           WHERE (
             ("uid" = ${fromKefuUid} AND "to_uid" = ${customerUid}) OR
             ("uid" = ${customerUid} AND "to_uid" = ${fromKefuUid})
-          ) AND "is_tourist" = 0
+          ) AND "is_tourist" = ${isTourist}
           ORDER BY "id" ASC
           RETURNING "id"
         )
@@ -263,7 +295,7 @@ export class KefuTransferService {
             toUid: customerUid,
             nickname: sourceRecord.nickname,
             avatar: sourceRecord.avatar,
-            isTourist: 0,
+            isTourist,
             online: sourceRecord.online,
             type: sourceRecord.type,
             addTime: now,
@@ -281,7 +313,7 @@ export class KefuTransferService {
         .where(and(
           eq(storeServiceRecord.userId, customerUid),
           or(eq(storeServiceRecord.toUid, fromKefuUid), eq(storeServiceRecord.toUid, toKefuUid)),
-          eq(storeServiceRecord.isTourist, 0),
+          eq(storeServiceRecord.isTourist, isTourist),
         ))
         .orderBy(desc(storeServiceRecord.updateTime), desc(storeServiceRecord.id))
         .for("update");
@@ -304,7 +336,7 @@ export class KefuTransferService {
           toUid: toKefuUid,
           nickname: targetInfo.nickname,
           avatar: targetInfo.avatar,
-          isTourist: 0,
+          isTourist,
           online: targetInfo.online,
           type: 2,
           addTime: now,
@@ -318,13 +350,27 @@ export class KefuTransferService {
       await tx.delete(storeServiceRecord).where(and(
         eq(storeServiceRecord.userId, fromKefuUid),
         eq(storeServiceRecord.toUid, customerUid),
-        eq(storeServiceRecord.isTourist, 0),
+        eq(storeServiceRecord.isTourist, isTourist),
       ));
       await tx.delete(storeServiceRecord).where(and(
         eq(storeServiceRecord.userId, customerUid),
         eq(storeServiceRecord.toUid, fromKefuUid),
-        eq(storeServiceRecord.isTourist, 0),
+        eq(storeServiceRecord.isTourist, isTourist),
       ));
+
+      if (isTourist === 1) {
+        const updated = await tx.update(kefuVisitorSession).set({
+          serviceId: targetInfo.id,
+          kefuUid: toKefuUid,
+          lastSeenAt: now,
+        }).where(and(
+          eq(kefuVisitorSession.visitorUid, customerUid),
+          eq(kefuVisitorSession.serviceId, fromServiceId),
+          eq(kefuVisitorSession.kefuUid, fromKefuUid),
+          eq(kefuVisitorSession.revokedAt, 0),
+        )).returning({ visitorUid: kefuVisitorSession.visitorUid });
+        if (updated.length !== 1) throw new ValidateException("游客会话转接发生并发冲突");
+      }
 
       await tx.insert(storeServiceTransfer).values({
         requestKey,
@@ -336,6 +382,7 @@ export class KefuTransferService {
         sourceRecordId: sourceRecord.id,
         targetRecordId: targetRecord.id,
         copiedMessageCount,
+        isTourist,
         createdAt: now,
       });
 
@@ -346,6 +393,7 @@ export class KefuTransferService {
         from_uid: fromKefuUid,
         to_uid: toKefuUid,
         copied_message_count: copiedMessageCount,
+        is_tourist: isTourist,
         recored: mapRecord(targetRecord),
         kefuInfo: { uid: sourceInfo.uid, nickname: sourceInfo.nickname, avatar: sourceInfo.avatar },
         targetInfo: { uid: targetInfo.uid, nickname: targetInfo.nickname, avatar: targetInfo.avatar, online: targetInfo.online },

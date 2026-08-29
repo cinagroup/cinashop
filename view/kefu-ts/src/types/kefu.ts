@@ -331,7 +331,7 @@ export interface ChatMessage {
   msn_type: number;
   nickname?: string;
   avatar?: string;
-  sender_role?: 1 | 2;
+  sender_role?: 1 | 2 | 3;
   recored?: SessionRecord;
 }
 

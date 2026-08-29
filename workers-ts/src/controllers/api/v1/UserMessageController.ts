@@ -41,6 +41,7 @@ function userSocketSession(c: C, toUid: number): ChatSocketSession {
   return {
     principalUid,
     role: 1,
+    isTourist: 0,
     toUid,
     authId,
     tokenKey,

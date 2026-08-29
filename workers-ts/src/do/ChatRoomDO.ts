@@ -26,12 +26,20 @@ export interface DeliveryResult {
 export type TransferDeliveryEvent =
   | {
       type: "transfer_out";
-      data: { request_key: string; uid: number; toUid: number; nickname: string; avatar: string };
+      data: {
+        request_key: string;
+        uid: number;
+        toUid: number;
+        is_tourist: 0 | 1;
+        nickname: string;
+        avatar: string;
+      };
     }
   | {
       type: "transfer";
       data: {
         request_key: string;
+        is_tourist: 0 | 1;
         recored: {
           id: number;
           user_id: number;
@@ -52,7 +60,14 @@ export type TransferDeliveryEvent =
     }
   | {
       type: "to_transfer";
-      data: { request_key: string; toUid: number; nickname: string; avatar: string; online: number };
+      data: {
+        request_key: string;
+        toUid: number;
+        is_tourist: 0 | 1;
+        nickname: string;
+        avatar: string;
+        online: number;
+      };
     };
 
 const TRANSFER_REQUEST_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -60,7 +75,8 @@ const TRANSFER_REQUEST_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-
 function validTransferEvent(event: TransferDeliveryEvent): boolean {
   if (
     !event || !event.data || typeof event.data.request_key !== "string" ||
-    !TRANSFER_REQUEST_KEY_PATTERN.test(event.data.request_key)
+    !TRANSFER_REQUEST_KEY_PATTERN.test(event.data.request_key) ||
+    (event.data.is_tourist !== 0 && event.data.is_tourist !== 1)
   ) return false;
   if (event.type === "transfer_out") {
     return Number.isSafeInteger(event.data.uid) && event.data.uid > 0 &&
@@ -91,6 +107,9 @@ function sessionOf(ws: WebSocket): ChatSocketSession | null {
   try {
     if (
       parseChatRole(session.role) !== session.role ||
+      (session.isTourist !== 0 && session.isTourist !== 1) ||
+      (session.role === 1 && session.isTourist !== 0) ||
+      (session.role === 3 && session.isTourist !== 1) ||
       !Number.isSafeInteger(session.principalUid) ||
       Number(session.principalUid) <= 0 ||
       !Number.isSafeInteger(session.toUid) ||
@@ -109,6 +128,10 @@ function sessionOf(ws: WebSocket): ChatSocketSession | null {
   } catch {
     return null;
   }
+}
+
+function peerRole(session: ChatSocketSession): ChatRole {
+  return session.role === 2 ? (session.isTourist === 1 ? 3 : 1) : 2;
 }
 
 function errorMessage(error: unknown): string {
@@ -210,7 +233,7 @@ export class ChatRoomDO extends DurableObject<Env> {
       message: data.msn,
       messageType: data.msn_type ?? data.type,
     });
-    const recipientRole: ChatRole = session.role === 2 ? 1 : 2;
+    const recipientRole = peerRole(session);
     const recipient = this.env.CHAT_ROOM.getByName(
       chatPrincipalName(recipientRole, persisted.to_uid),
     );
@@ -236,17 +259,17 @@ export class ChatRoomDO extends DurableObject<Env> {
     const toUid = await this.service().switchConversation(session, data.id ?? data.to_uid);
     const next = { ...session, toUid };
     ws.serializeAttachment(next);
-    const recipientRole: ChatRole = session.role === 2 ? 1 : 2;
+    const recipientRole = peerRole(session);
     try {
       await this.env.CHAT_ROOM
         .getByName(chatPrincipalName(recipientRole, toUid))
-        .deliverPresence(session.principalUid, true);
+        .deliverPresence(session.principalUid, true, session.isTourist);
     } catch (error) {
       structuredError("chat_presence_delivery_failed", error, session);
     }
     ws.send(JSON.stringify({
       type: "mssage_num",
-      data: { uid: toUid, num: 0, recored: {} },
+      data: { uid: toUid, is_tourist: session.isTourist, num: 0, recored: {} },
     }));
   }
 
@@ -262,13 +285,16 @@ export class ChatRoomDO extends DurableObject<Env> {
     if (session.toUid > 0) {
       try {
         await this.env.CHAT_ROOM
-          .getByName(chatPrincipalName(1, session.toUid))
-          .deliverPresence(session.principalUid, online === 1);
+          .getByName(chatPrincipalName(peerRole(session), session.toUid))
+          .deliverPresence(session.principalUid, online === 1, session.isTourist);
       } catch (error) {
         structuredError("chat_presence_delivery_failed", error, session);
       }
     }
-    ws.send(JSON.stringify({ type: "online", data: { online, uid: session.principalUid } }));
+    ws.send(JSON.stringify({
+      type: "online",
+      data: { online, uid: session.principalUid, is_tourist: session.isTourist },
+    }));
   }
 
   /** RPC invoked only after PostgreSQL persistence has committed. */
@@ -277,7 +303,8 @@ export class ChatRoomDO extends DurableObject<Env> {
       !Number.isSafeInteger(message.id) || message.id <= 0 ||
       !Number.isSafeInteger(message.uid) || message.uid <= 0 ||
       !Number.isSafeInteger(message.to_uid) || message.to_uid <= 0 ||
-      (message.sender_role !== 1 && message.sender_role !== 2) ||
+      (message.sender_role !== 1 && message.sender_role !== 2 && message.sender_role !== 3) ||
+      (message.is_tourist !== 0 && message.is_tourist !== 1) ||
       typeof message.msn !== "string" || message.msn.length > 2_000
     ) throw new Error("invalid delivery payload");
 
@@ -285,7 +312,10 @@ export class ChatRoomDO extends DurableObject<Env> {
     let viewing = 0;
     for (const socket of this.ctx.getWebSockets()) {
       const session = sessionOf(socket);
-      if (!session || session.principalUid !== message.to_uid) continue;
+      if (
+        !session || session.principalUid !== message.to_uid
+        || session.isTourist !== message.is_tourist
+      ) continue;
       connected += 1;
       const isViewing = session.toUid === message.uid;
       if (isViewing) viewing += 1;
@@ -296,6 +326,7 @@ export class ChatRoomDO extends DurableObject<Env> {
               type: "mssage_num",
               data: {
                 uid: message.uid,
+                is_tourist: message.is_tourist,
                 num: message.recored.mssage_num,
                 recored: message.recored,
               },
@@ -307,13 +338,17 @@ export class ChatRoomDO extends DurableObject<Env> {
     return { connected, viewing };
   }
 
-  async deliverPresence(uid: number, online: boolean): Promise<number> {
+  async deliverPresence(uid: number, online: boolean, isTourist: 0 | 1): Promise<number> {
     if (!Number.isSafeInteger(uid) || uid <= 0) throw new Error("invalid presence payload");
+    if (isTourist !== 0 && isTourist !== 1) throw new Error("invalid presence scope");
     let delivered = 0;
-    const payload = JSON.stringify({ type: "online", data: { uid, online: online ? 1 : 0 } });
+    const payload = JSON.stringify({
+      type: "online",
+      data: { uid, online: online ? 1 : 0, is_tourist: isTourist },
+    });
     for (const socket of this.ctx.getWebSockets()) {
       const session = sessionOf(socket);
-      if (!session || session.toUid !== uid) continue;
+      if (!session || session.toUid !== uid || session.isTourist !== isTourist) continue;
       try {
         socket.send(payload);
         delivered += 1;
@@ -327,12 +362,17 @@ export class ChatRoomDO extends DurableObject<Env> {
   /** PostgreSQL transfer commit must happen before this RPC is invoked. */
   async deliverTransfer(event: TransferDeliveryEvent): Promise<number> {
     if (!validTransferEvent(event)) throw new Error("invalid transfer delivery payload");
-    const expectedRole: ChatRole = event.type === "to_transfer" ? 1 : 2;
+    const expectedRole: ChatRole = event.type === "to_transfer"
+      ? (event.data.is_tourist === 1 ? 3 : 1)
+      : 2;
     let delivered = 0;
     const payload = JSON.stringify(event);
     for (const socket of this.ctx.getWebSockets()) {
       const session = sessionOf(socket);
-      if (!session || session.role !== expectedRole) continue;
+      if (
+        !session || session.role !== expectedRole
+        || session.isTourist !== event.data.is_tourist
+      ) continue;
       if (event.type === "transfer_out" && session.toUid === event.data.uid) {
         session.toUid = 0;
         socket.serializeAttachment(session);
@@ -379,10 +419,10 @@ export class ChatRoomDO extends DurableObject<Env> {
     try {
       await this.service().setDisconnected(session);
       if (session.toUid > 0) {
-        const recipientRole: ChatRole = session.role === 2 ? 1 : 2;
+        const recipientRole = peerRole(session);
         await this.env.CHAT_ROOM
           .getByName(chatPrincipalName(recipientRole, session.toUid))
-          .deliverPresence(session.principalUid, false);
+          .deliverPresence(session.principalUid, false, session.isTourist);
       }
     } catch (error) {
       structuredError("chat_socket_offline_update_failed", error, session);

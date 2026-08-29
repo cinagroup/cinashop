@@ -49,7 +49,7 @@ export const kefuApi = {
     apiRequest<ChatMessage[]>(`/kefuapi/service/list${queryString({ uid, ...input })}`),
   transferTargets: (nickname = "") =>
     apiRequest<{ list: TransferTarget[]; count: number }>(`/kefuapi/service/transfer_list${queryString({ nickname, limit: 100 })}`),
-  transfer: (input: { uid: number; kefuToUid: number; request_key: string }) =>
+  transfer: (input: { uid: number; kefuToUid: number; request_key: string; is_tourist: 0 | 1 }) =>
     apiRequest<TransferResult>("/kefuapi/service/transfer", {
       method: "POST",
       headers: { "Idempotency-Key": input.request_key },

@@ -19,7 +19,7 @@ describe("customer-service tourist compatibility migration", () => {
     }));
   });
 
-  it("registers only the four identity-independent tourist contracts", () => {
+  it("registers identity-bearing tourist contracts behind purpose-specific authentication", () => {
     const routes = readFileSync("src/routes/kefuapi.ts", "utf8");
     for (const contract of [
       'get("/tourist/adv", KefuController.touristAdvertisement)',
@@ -27,12 +27,31 @@ describe("customer-service tourist compatibility migration", () => {
       'post("/tourist/feedback", KefuController.touristSubmitFeedback)',
       'get("/tourist/product/:id", KefuController.touristProduct)',
     ]) expect(routes).toContain(contract);
-    for (const unsafe of [
-      'get("/tourist/user"',
-      'get("/tourist/chat"',
-      'get("/tourist/order/:order_id"',
-      'post("/tourist/upload"',
-    ]) expect(routes).not.toContain(unsafe);
+    expect(routes).toContain('get("/tourist/user", KefuController.touristUser)');
+    expect(routes).toContain('get("/tourist/chat", visitorAuthMiddleware, KefuController.touristChat)');
+    expect(routes).toContain('get("/tourist/order/:order_id", authMiddleware({ force: true }), KefuController.touristOrder)');
+    expect(routes).toContain('get("/tourist/ws", visitorAuthMiddleware, KefuController.touristWebsocket)');
+    expect(routes).toContain('post("/tourist/upload", visitorAuthMiddleware, AttachmentController.visitorUploadImage)');
+    expect(routes.indexOf('get("/tourist/user"')).toBeLessThan(
+      routes.indexOf('use("*", kefuAuthMiddleware)'),
+    );
+  });
+
+  it("uses signed, revocable, non-PII visitor sessions and isolated attachment ownership", () => {
+    const service = readFileSync("src/services/kefu/KefuVisitorSessionService.ts", "utf8");
+    const middleware = readFileSync("src/middleware/visitor-auth.ts", "utf8");
+    const cors = readFileSync("src/middleware/cors.ts", "utf8");
+    const attachments = readFileSync("src/services/system/AttachmentService.ts", "utf8");
+    expect(service).toContain('const VISITOR_ISSUER = "cinashop-kefu-visitor"');
+    expect(service).toContain('.setAudience(VISITOR_AUDIENCE)');
+    expect(service).toContain('tokenHash = await sha256Hex(token)');
+    expect(service).not.toContain('ip: ip');
+    expect(service).not.toContain('rawToken');
+    expect(middleware).toContain('c.set("socketAuthVersion", identity.tokenHash)');
+    expect(cors).toContain('"Form-type"');
+    expect(cors).toContain('"X-Visitor-Token"');
+    expect(attachments).toContain('moduleType: 4');
+    expect(attachments).toContain('return "visitor"');
   });
 
   it("stores anonymous feedback as uid zero with PHP-compatible escaping", async () => {

@@ -45,16 +45,21 @@ export function parseChatSessionRequest(request: Request): ChatSocketSession {
   const principalUid = parseInteger(request.headers.get("X-Chat-Principal-Uid"), 1);
   const role = parseChatRole(request.headers.get("X-Chat-Role"));
   const toUid = parseInteger(request.headers.get("X-Chat-To-Uid"), 0);
+  const isTourist = parseInteger(request.headers.get("X-Chat-Is-Tourist"), 0);
   const authId = parseInteger(request.headers.get("X-Chat-Auth-Id"), 1);
   const expiresAt = parseInteger(request.headers.get("X-Chat-Token-Exp"), 1);
   const tokenKey = request.headers.get("X-Chat-Token-Key") ?? "";
   const authVersion = request.headers.get("X-Chat-Auth-Version") ?? "";
-  if (!CHAT_TOKEN_KEY_PATTERN.test(tokenKey) || !authVersion || principalUid === toUid) {
+  if (
+    !CHAT_TOKEN_KEY_PATTERN.test(tokenKey) || !authVersion || principalUid === toUid
+    || isTourist > 1 || (role === 1 && isTourist !== 0) || (role === 3 && isTourist !== 1)
+  ) {
     throw new Error("invalid chat session");
   }
   return {
     principalUid,
     role,
+    isTourist: isTourist as 0 | 1,
     toUid,
     authId,
     tokenKey,

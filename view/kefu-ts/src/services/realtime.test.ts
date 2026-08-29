@@ -33,8 +33,8 @@ const message = (id: number, uid = 2001, toUid = 1001): ChatMessage => ({
 
 describe("customer-service realtime reducers", () => {
   it("reconnects to the last selected customer path", () => {
-    expect(kefuSocketPath(0)).toBe("/kefuapi/ws");
-    expect(kefuSocketPath(2002)).toBe("/kefuapi/ws?to_uid=2002");
+    expect(kefuSocketPath(0, 0)).toBe("/kefuapi/ws?is_tourist=0");
+    expect(kefuSocketPath(2002, 1)).toBe("/kefuapi/ws?is_tourist=1&to_uid=2002");
   });
 
   it("routes signed image assets through the standalone Pages proxy", () => {
@@ -70,5 +70,14 @@ describe("customer-service realtime reducers", () => {
   it("does not invent a session when a pushed peer is outside the loaded page", () => {
     const sessions = [session(1, 2001)];
     expect(updateSessionFromMessage(sessions, message(30, 2009, 1001), 1001)).toBe(sessions);
+  });
+
+  it("does not cross-update registered and visitor sessions with the same numeric peer", () => {
+    const registered = session(1, 2001);
+    const visitor = { ...session(2, 2001), is_tourist: 1 };
+    const visitorMessage = { ...message(31), is_tourist: 1 };
+    const result = updateSessionFromMessage([registered, visitor], visitorMessage, 1001);
+    expect(result[0]).toMatchObject({ id: 2, message: "message-31", is_tourist: 1 });
+    expect(result[1]).toMatchObject({ id: 1, message: "old", is_tourist: 0 });
   });
 });
