@@ -1686,6 +1686,32 @@ PC 的四条 PHP 精确合同现均可执行，并增加 `POST /api/pc/oauth_sta
 
 CORE-004 与 API-005 仍不勾选整体完成：生产没有开放平台 app id/secret、微信身份或客服账号，无法执行正向远端验证；旧 Nuxt PC 固定 state 与注释扫码 UI、旧 UniApp 扫码确认、新 `pc-ts/kefu-ts` 都尚未升级；真实浏览器/真机、真实用户/客服、预发、影子流量、正式发布与发布后观察均未完成。代码已消除旧缓存 bearer 和 501 缺口，但没有把这些外部与前端门禁伪装成完成。
 
+## KEFU-TOURIST 游客安全内容与面单模板迁移审计（2026-08-29）
+
+### PHP 权威合同、第一方调用与死路由结论
+
+PHP 在 `route/kefu.php` 注册 8 条游客合同：`user`、`adv`、反馈 GET/POST、`order/:order_id`、`product/:id`、`chat`、`upload`；旧 Admin 客服 PC/移动组件实际调用这些合同。另有 `ANY /kefuapi/ticket/[:appid]` 指向 `Login/ticket`，但 111 行的 `app/controller/kefu/Login.php` 只定义 login、wechatAuth、getAppid、getLoginKey、scanLogin，既没有 `ticket()`，仓库也没有第一方调用。该路由已写入证据化退役清单，替代方向是认证用户现有客服会话合同；匿名会话必须另行定义签名访客票据，不能把一个不存在的 PHP 方法臆造成兼容实现。
+
+旧游客实现不能原样迁移。`tourist/user` 匿名创建可猜的 9 位 UID，客户端可自行提交 `tourist_uid`；游客 chat/order/upload 又分别接收裸 API 用户 token 或客户端身份，旧 WebSocket 的 guest 方向与消息表 `is_tourist` 语义不一致。匿名反馈接受姓名、电话和正文却没有强一致频控；公开商品读取也没有强制未删除、上架和审核条件。当前 `ChatRoomDO` 只支持已认证用户和客服，且用户流固定 `is_tourist=0`，因此仅补四条 HTTP 路由无法形成安全游客实时闭环。
+
+### 已恢复的四条身份无关合同
+
+本批只恢复 `GET tourist/adv`、`GET/POST tourist/feedback`、`GET tourist/product/:id`。广告和反馈说明复用统一配置解析；公开商品新增 `is_del=0 AND is_show=1 AND is_verify=1` 权威门禁。匿名反馈兼容 PHP 的 `uid=0` 与 HTML 转义，但在写库前用 APP_KEY 对来源 IP 做 HMAC，DO 名不含原始 IP；每个来源每小时 5 次并叠加全局每小时 300 次强一致桶。四条公共响应均 `Cache-Control: no-store`。`tourist/user|order|chat|upload` 明确保留为缺口，下一步必须先完成短期签名访客会话、客服分配、订单/消息对象授权、R2 上传前缀和 WebSocket 协议，再补前端；没有生成随机 UID 或接受 API 用户 token 的临时兼容层。
+
+认证 `GET /kefuapi/order/temp` 同批恢复。PHP 实际调用一号通 `v2/expr_dump/temp?com=...` 并由 PC/移动发货组件读取 `title/temp_id/pic/code`。新实现固定 `https://sms.crmeb.net/api/` 域和路径，carrier code 只允许有界字母数字、下划线、连字符，登录与模板响应均有 10 秒超时、32 KiB 上限、禁止重定向；Access/Secret 只来自 Worker Secret。该 GET 只读目录与已有不可逆面单签发 Queue/UNKNOWN 账本完全分离，不会因查询模板分配单号。
+
+### 生产 Hyperdrive 与 Cloudflare 配置证据
+
+一次性 Worker 直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，在 `REPEATABLE READ, READ ONLY`、固定 `search_path=public`、30 秒语句和 2 秒锁超时下只返回计数、布尔配置存在性、索引及结构指纹。PostgreSQL 16.14 当前商品 71、满足公开门禁 71；客服总数/活跃/在线均 0，反馈/匿名反馈/待处理均 0，客服会话/游客会话均 0，客服日志 3、游客日志 0。反馈与会话空集指纹均为 `d41d8cd98f00b204e9800998ecf8427e`，日志结构指纹为 `b0fd27713eca268241f89a78fbb1d4f2`。
+
+`kf_adv`、`service_feedback`、`tourist_avatar` 以及 `config_export_open/id/temp_id/siid/to_name/to_tel/to_address` 全部为 0 行/无选中值；审计不返回任何配置值、反馈 PII 或聊天内容，也未执行 DML/DDL。主 Worker Secret 名单仍只有 APP_KEY、DEBUG、内部聊天/运维和两个 Upstash 项，`CRMEB_ONEPASS_ACCESS_KEY/SECRET_KEY` 不存在。因此四条游客内容合同会按当前空配置返回安全空值，而模板查询在生产明确失败关闭；这不是内容或第三方验收完成。临时审计版本 `e7e190c3-4454-4371-8cd0-d632fdcc23b2` 已随独立 Worker 删除，URL 返回 404；主生产 Worker 前后均为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，没有发布或切流。
+
+### 量化结果、验证与剩余门禁
+
+最新路由审计为 PHP 1,904、Workers 1,388、精确匹配 693、可执行匹配 675、明确不可用 18、原始缺失 1,211、证据化退役 4、可执行缺口 1,207；精确/可执行/退役后有效覆盖为 36.4%/35.5%/35.5%。`/kefuapi` 为 PHP 63、Workers 60、精确及可执行 56、原始缺失 7、退役 3、可执行缺口 4，有效可执行上限 93.3%。剩余四条精确为 `GET tourist/user`、`GET tourist/order/:order_id`、`GET tourist/chat`、`POST tourist/upload`。
+
+双 TypeScript 配置、定向 21/21 和全量 133 个单元测试文件/778 项通过；主 Worker minify dry-run 为 2,545.81 KiB/gzip 630.16 KiB，审计 Worker minify dry-run 为 48.94 KiB/gzip 18.44 KiB。运行时仍受本机 Windows `workerd` 既有 `0xc0000005` 阻断，本批未把静态/Node 结果伪记为 Workers runtime 通过。KEFU-001～003 仍不整体勾选：生产没有客服账号、游客内容/面单配置或开放平台/一号通凭据，新 Kefu 工作台和旧 Admin 客服端尚未接入签名访客协议与新扫码/OAuth，真实 WebSocket、R2、第三方模板、浏览器/预发/发布验收均未完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

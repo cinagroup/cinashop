@@ -174,8 +174,16 @@ export class KefuProductService {
       .limit(20);
   }
 
-  async productInfo(idValue: unknown) {
+  async productInfo(idValue: unknown, publicOnly = false) {
     const id = parseKefuProductId(idValue);
+    const conditions: SQL[] = [eq(storeProduct.id, id)];
+    if (publicOnly) {
+      conditions.push(
+        eq(storeProduct.isDel, 0),
+        eq(storeProduct.isShow, 1),
+        eq(storeProduct.isVerify, 1),
+      );
+    }
     const row = (
       await this.container.db
         .select({
@@ -198,7 +206,7 @@ export class KefuProductService {
             eq(storeProductDescription.type, 0),
           ),
         )
-        .where(eq(storeProduct.id, id))
+        .where(and(...conditions))
         .limit(1)
     )[0];
     if (!row) throw new NotFoundException("商品未查到");

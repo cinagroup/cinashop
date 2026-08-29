@@ -20,12 +20,16 @@ import { StoreOperationsService } from "@/services/store/StoreOperationsService"
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
 import {
+  listCrmebOnePassWaybillTemplates,
+  WaybillConfigurationError,
+} from "@/services/waybill/CrmebOnePassWaybillProvider";
+import {
   normalizeSupplierSplitCartInput,
   SupplierFulfillmentService,
   type FulfillmentAuthorizationScope,
   type SupplierDeliveryInput,
 } from "@/services/supplier/SupplierFulfillmentService";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { ApiException, NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_ORDER_ID_LENGTH = 50;
 
@@ -56,6 +60,11 @@ function boundedString(
 
 export interface KefuDeliveryInput extends SupplierDeliveryInput {
   expressRecordType: 1;
+}
+
+interface KefuFulfillmentEnv extends SystemConfigEnv {
+  CRMEB_ONEPASS_ACCESS_KEY?: string;
+  CRMEB_ONEPASS_SECRET_KEY?: string;
 }
 
 export function normalizeKefuDeliveryInput(body: Record<string, unknown>): KefuDeliveryInput {
@@ -169,7 +178,7 @@ function parseWriteoffItems(body: Record<string, unknown>): WriteoffLineInput[] 
 export class KefuFulfillmentService {
   constructor(
     private readonly container: Container,
-    private readonly env: SystemConfigEnv,
+    private readonly env: KefuFulfillmentEnv,
   ) {}
 
   private actor(
@@ -290,6 +299,26 @@ export class KefuFulfillmentService {
       to_tel: values.config_export_to_tel ?? "",
       to_add: values.config_export_to_address ?? "",
     };
+  }
+
+  async waybillTemplates(query: Record<string, string>) {
+    const carrierCode = boundedString(query.com, "快递公司编码", 50, true);
+    const cloudPrinterId = await new SystemConfigService(this.container, this.env)
+      .get("config_export_siid");
+    try {
+      return await listCrmebOnePassWaybillTemplates({
+        accessKey: this.env.CRMEB_ONEPASS_ACCESS_KEY,
+        secretKey: this.env.CRMEB_ONEPASS_SECRET_KEY,
+      }, {
+        carrierCode,
+        cloudPrinterConfigured: Boolean(cloudPrinterId.trim()),
+      });
+    } catch (error) {
+      if (error instanceof WaybillConfigurationError) {
+        throw new ValidateException(error.message);
+      }
+      throw new ApiException("电子面单模板服务暂不可用", 502);
+    }
   }
 
   async deliver(

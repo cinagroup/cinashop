@@ -28,6 +28,19 @@
       "replacement": "PUT /kefuapi/refund/agree/:id"
     },
     {
+      "surface": "kefu",
+      "method": "ANY",
+      "path": "/kefuapi/ticket/[:appid]",
+      "status": "retired",
+      "reason": "The PHP route points to Login/ticket, but the 111-line Login controller defines only login, wechatAuth, getAppid, getLoginKey, and scanLogin; no ticket method or first-party caller exists.",
+      "evidence": [
+        "cinashop-php/route/kefu.php:25",
+        "cinashop-php/app/controller/kefu/Login.php:30",
+        "cinashop-php/app/controller/kefu/Login.php:111"
+      ],
+      "replacement": "Authenticated users use GET /api/user/service/record plus GET /api/ws/kefu; anonymous chat requires a separately specified signed visitor-session contract"
+    },
+    {
       "surface": "api",
       "method": "GET",
       "path": "/api/order/nopay",

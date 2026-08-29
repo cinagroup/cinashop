@@ -1,6 +1,6 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
-审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002～004、API-001～005、API-006-ACTIVITY、API-006-MARKETING-NEWCOMER、API-006-MARKETING-SHORT-VIDEO 与 API-006-CHECKOUT 进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；四类写入回放/归属账本 DDL、API-006 两个部分索引、短视频兼容扩展表及系统配置查询索引已直接应用并验证幂等；其余合成业务场景只在随机 schema 执行。主 Worker 和正式前端没有因本次审计被发布。
+审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002～004、API-001～005、API-006 各子批，以及客服扫码/OAuth、游客安全内容和面单模板进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；四类写入回放/归属账本 DDL、API-006 两个部分索引、短视频兼容扩展表及系统配置查询索引已直接应用并验证幂等；其余合成业务场景只在随机 schema 执行。主 Worker 和正式前端没有因本次审计被发布。
 
 ## 审计结论
 
@@ -11,9 +11,9 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 223 表；Worker 内嵌 223 表；表/列/主键漂移 0 | 完成 |
 | 生产目标结构 | 223/223 表；缺失 0、额外 0；系统配置查询索引已补齐 | 完成 |
-| PHP HTTP 合同 | 精确匹配 688/1,904；其中 18 条明确不可用；3 条有证据退役 | 精确注册 36.1%，静态可执行上限 35.2%，退役后有效上限 35.2% |
+| PHP HTTP 合同 | 精确匹配 693/1,904；其中 18 条明确不可用；4 条有证据退役 | 精确注册 36.4%，静态可执行上限 35.5%，退役后有效上限 35.5% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 132 文件、771 项通过 | 本地业务回归通过 |
+| Worker 单元测试 | 133 文件、778 项通过 | 本地业务回归通过 |
 | Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
 | CI | 仓库没有 `.github/workflows` | 未建立 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
@@ -28,12 +28,12 @@
 | `/api` | 457 | 705 | 315 | 3 | 142 | 1 | 141 | 68.3% / 68.4% |
 | `/adminapi` | 1,153 | 470 | 202 | 15 | 951 | 0 | 951 | 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% |
-| `/kefuapi` | 63 | 55 | 51 | 0 | 12 | 2 | 10 | 81.0% / 83.6% |
+| `/kefuapi` | 63 | 60 | 56 | 0 | 7 | 3 | 4 | 88.9% / 93.3% |
 | `/outapi` | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% |
-| 合计 | 1,904 | 1,383 | 688 | 18 | 1,216 | 3 | 1,213 | 35.2% / 35.2% |
+| 合计 | 1,904 | 1,388 | 693 | 18 | 1,211 | 4 | 1,207 | 35.5% / 35.5% |
 
-API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 签发端点是安全扩展，不进入 PHP 匹配分子。当前下一层缺口包括 `/kefuapi/ticket/[:appid]` 访客令牌，以及 `/api` 的内嵌 admin、store 与 work；逐路由清单以 `audit:routes` JSON 为准。
+API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 签发端点是安全扩展，不进入 PHP 匹配分子。客服本批又恢复游客广告、反馈配置/提交、公开商品和只读面单模板 5 条合同；`ticket/[:appid]` 因 PHP 控制器根本没有目标方法且无第一方调用而带证据退役。当前客服只剩 4 条需要签名访客会话的身份型合同；逐路由清单以 `audit:routes` JSON 为准。
 
 ### 生产数据库事实
 
@@ -52,6 +52,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - API-004-HOME 只读复核确认可见根分类 6、可见二级分类 18，孤儿父级和自指均为 0；71 个可售商品的旧 `is_hot/is_benefit/is_best/is_new` 标记全为 0，权威 `type=3/relation_id=1..4` 首页推荐关系也全为 0。六个首页配置只有 `site_name` 存在，微信身份仍为 0；真实匿名/登录首页返回精确六字段空商品结构，匿名首页关注为 true、登录关注为 false。随机 schema 的精确根/子形状、二级分类、四类推荐、品牌/标签、预售四态、v1/v2 匿名差异与公众号身份选择共 12/12 通过，`public_state_unchanged=true`、临时 schema `0→0`；同时恢复旧 UniApp 实际调用的 v1 `subscribe`。
 - API-005-PC 只读复核确认 71 个可售商品、6 个可见根分类，但 active 分类关系、PC banner 和城市均为 0；17 个 PC 候选配置只存在 `record_No/site_name/site_url` 3 个。生产还有开放购物车 2、可见订单 28、可见售后 3、商品收藏 1，但余额流水 0。真实公开合同返回商品 `count=71/page=5`，其余内容空集与当前数据一致。随机 schema 对三级 `cid/sid/tid`、分类首页、banner/公司/城市、有效/失效购物车、余额、订单/收藏/售后 UID 作用域、推荐/优品及付费会员二维码共 15/15 通过，`public_state_unchanged=true`、临时 schema `0→0`，审计 Worker 已删除且 URL 返回 404。
 - CORE-004-PC-KEFU 生产只读复核确认用户 3/活跃 3，`wechat_user=0`、`store_service=0`，旧 `user.uniqid/store_service.uniqid` 扫码键均为 0；所有孤儿、多用户 unionid、多客服绑定指标也为 0，但空表不能作为真实登录 E2E 证据。`wechat_open_app_id`、`wechat_open_app_secret` 均无配置行，故开放平台 OAuth 当前必然安全失败。为精确配置读取新增 `system_config_lookup(is_store,menu_name,sort DESC,id DESC)`，生产短事务连续执行两次均保持 48 行及结构指纹 `796fd6f63ee478c5c919afc9140b235a`，无 DML、无配置值返回；临时 Worker 删除后 404，主 Worker版本未变。
+- KEFU-TOURIST 只读复核确认公开商品 71/71、客服账号/会话/反馈/游客记录均为 0，客服日志 3 条但游客日志 0；`kf_adv`、`service_feedback`、`tourist_avatar` 和全部 `config_export_*` 均为 0 行。审计只返回计数、布尔存在性、索引和结构指纹，不返回配置值或 PII，不执行 DML/DDL。临时 Worker `e7e190c3-4454-4371-8cd0-d632fdcc23b2` 已删除且 URL 404，主 Worker仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef`。
 - API-006-ACTIVITY 只读复核确认秒杀/时段 `1/3`、拼团/团记录 `1/2`、砍价/参与/帮砍 `1/4/0`，活动订单 7、已支付 3。`routine_lovely`、`combination_banner` 内容和小程序 AppID/Secret、秒杀 banner、砍价订阅配置均缺失。短视频的 `video/video_comment` 两表生产完全不存在，`store_newcomer=0`；因此 marketing 13 条不能只补路由。随机 schema 的配置/banner、H5/小程序码、拼团/砍价海报、归属拒绝、分享原子计数、旧列表字段、`bargainId` 取消及两个部分索引共 14/14 通过，`public_state_unchanged=true`、临时 schema `0→0`。两个生产索引执行两遍幂等，11 组业务指纹不变；临时 Worker 已删除且 URL 返回 404。
 - API-006-MARKETING-NEWCOMER 只读复核确认 `store_newcomer=0`，13 个前台新人配置全部缺失；生产真实 service 的列表/info/gift 均返回与当前关闭配置一致的安全空结构。随机 schema 对倒序/可见性、资格过期/已使用、`productValue[suk]`、基础 SKU 实时库存、可选属性、详情元数据/评价/配置、PHP 顶级订单已购数及 info/gift 差异共 10/10 通过；16 张 `public` 表指纹不变、临时 schema `0→0`，临时 Worker 删除且 URL 返回 404。生产已有三个 `store_newcomer` 索引，无需 DDL。
 - API-006-MARKETING-SHORT-VIDEO 精确补齐 9 条合同；生产新增 Worker 自有兼容扩展 `video` 18 列、`video_comment` 17 列及 5 个查询索引，两表当前均 0 行。随机 schema 真实 service 对可见性/排序、推荐专属过滤、私有媒体签名、商品过滤、审核推荐、评论投影、跨视频回复拒绝、嵌套回复、删除归属、并发关系切换、评论关系和计数 12/12 通过；五张 `public` 既有业务表逐行摘要不变、临时 schema `0→0`，临时 Worker 删除且 URL 返回 404。PHP v3.1.1 安装 SQL和同版官方数据字典都没有这两张表，故不把它们伪列为 201 张源表或加入共享数据 manifest；生产没有视频行，媒体和运营内容仍未迁移。
@@ -143,9 +144,9 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## P1：Kefu `/kefuapi`
 
-- [ ] **KEFU-001 扫码/微信登录 4 条**：`ticket/[:appid]`、`key`、`scan/:key`、`wechat`；需要一次性挑战、回调验签、重放保护和账号绑定。
-- [ ] **KEFU-002 游客链路 8 条**：`tourist/user|adv|feedback|order|product|chat|upload`；必须签发短期游客会话，限制订单/商品作用域，上传走隔离 R2，不能恢复弱公共令牌。
-- [ ] **KEFU-003 面单模板与旧退款入口（部分完成）**：PHP `POST /order/refund` 指向不存在的 `Order::refund()`，已带控制器证据正式退役并指向表单 GET + 售后资金 PUT；剩余 `GET /order/temp` 仍需把只读模板目录与可重试签发任务分离，生产 OnePass Secret/平台与供应商模板配置均缺失。
+- [ ] **KEFU-001 扫码/微信登录（核心代码完成，外部验收未完成）**：`key`、`scan/:key`、`wechat` 已改为一次性挑战、OAuth state/code 重放保护和唯一账号绑定；`ticket/[:appid]` 的 PHP 目标方法不存在且无第一方调用，已带证据退役。仍缺开放平台凭据、非空客服/微信身份、前端接入和真实 E2E。
+- [ ] **KEFU-002 游客链路 8 条（4 条安全内容合同完成）**：已恢复 `adv`、反馈 GET/POST、公开 `product`；匿名反馈以 HMAC 来源做每 IP 5/小时和全局 300/小时强一致限流，公开商品强制未删/上架/审核。`tourist/user|order|chat|upload` 仍须先签发短期访客会话、限制订单/消息/对象作用域并让上传走隔离 R2，不能恢复 PHP 的可猜 9 位 ID 或任意客户端 UID/token。
+- [ ] **KEFU-003 面单模板与旧退款入口（核心代码完成，生产配置未完成）**：PHP `POST /order/refund` 指向不存在的 `Order::refund()`，已带控制器证据退役并指向表单 GET + 售后资金 PUT；认证 `GET /order/temp` 已恢复固定 HTTPS 一号通只读目录，带 10 秒超时、32 KiB 上限、固定路径和输入约束，与可重试签发账本分离。生产全部 `config_export_*` 和 `CRMEB_ONEPASS_*` Secret 名均缺失，所以当前明确未启用。
 - [x] **KEFU-004 退款同意与资金退款**：PHP `GET /refund/agree/:order_id` 同时存在 GET 写副作用、忽略 path 改读 query、状态日志 `oid` 错用退款 ID，已带证据退役；替代为认证幂等 `PUT /refund/agree/:id`，在客服归属锁后原子更新售后/原订单并只写一条正确订单日志。资金退款按 CORE-002 完成生产 PostgreSQL 隔离验收。
 - [ ] **KEFU-005 真实账号浏览器 E2E**：迁移至少一个有效客服账号后验证密码登录限流、WS hibernation、断线重连、上传/重签、转接三端通知、日限额、多会话、商品/订单/售后权限。
 
@@ -186,4 +187,4 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## 当前下一步
 
-`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；`API-002`、`API-003`、API-004-AUTH/CART/DIY/COUPON/USER/PROMO/HOME、API-005-PC、API-006-ACTIVITY、API-006-MARKETING-NEWCOMER、API-006-MARKETING-SHORT-VIDEO、API-006-CHECKOUT 与 CHECKOUT-DATA 的核心代码及生产审计/隔离验证已收口。当前仓库/生产结构清单为 223/223；短视频两表是 Worker 兼容扩展，不冒充 PHP 安装 SQL 的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,383、精确匹配 688、可执行匹配 670、明确不可用 18、证据化退役 3、可执行缺口 1,213；`/api` 为精确 315/457、可执行 312、不可用 3、可执行缺口 141，`/kefuapi` 为精确/可执行 51/63、可执行缺口 10，Out 为 41/41；`/api/v2` 与 `/api/pc` 精确缺口均为 0。CHECKOUT-DATA 仍等待活动 SKU/限购来源和 4 个未支付历史单处置批准；AUTH/PC/客服仍等待微信/短信/Turnstile 凭据、非空身份/客服数据、旧端升级和真实 E2E。在这些外部输入缺失时，下一个可独立执行的客服认证缺口是 `/kefuapi/ticket/[:appid]` 访客令牌合同；不能用它绕过新建的客服账号认证边界。短视频真实内容与 R2 媒体、真实用户 E2E、预发和正式发布仍未完成，正式发布仍需用户明确批准。
+`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；`API-002`、`API-003`、API-004-AUTH/CART/DIY/COUPON/USER/PROMO/HOME、API-005-PC、API-006 各子批、KEFU-001 核心、KEFU-002 四条安全内容合同与 KEFU-003 核心代码及生产审计/隔离验证已收口。当前仓库/生产结构清单为 223/223；短视频两表是 Worker 兼容扩展，不冒充 PHP 安装 SQL 的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,388、精确匹配 693、可执行匹配 675、明确不可用 18、证据化退役 4、可执行缺口 1,207；`/api` 为精确 315/457、可执行 312、不可用 3、可执行缺口 141，`/kefuapi` 为精确/可执行 56/63、可执行缺口 4、退役后有效上限 93.3%，Out 为 41/41；`/api/v2` 与 `/api/pc` 精确缺口均为 0。客服剩余四条都依赖先定义并接入签名访客会话，不允许用可猜 UID、API 用户 token 或公开上传绕过身份边界；生产又没有客服账号、游客内容配置、面单配置或一号通 Secret，故真实客服浏览器/访客/面单 E2E 仍被阻断。CHECKOUT-DATA 仍等待活动 SKU/限购来源和 4 个未支付历史单处置批准；短视频真实内容与 R2 媒体、真实用户 E2E、预发和正式发布仍未完成，正式发布仍需用户明确批准。

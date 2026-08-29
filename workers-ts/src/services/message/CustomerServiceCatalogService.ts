@@ -71,8 +71,8 @@ export function escapeCustomerServiceFeedback(value: string): string {
 export class CustomerServiceCatalogService {
   constructor(private readonly container: Container) {}
 
-  async submitFeedback(uid: number, input: unknown) {
-    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("用户ID错误");
+  private async insertFeedback(uid: number, input: unknown) {
+    if (!Number.isSafeInteger(uid) || uid < 0) throw new ValidateException("用户ID错误");
     const body = inputRecord(input);
     const relaName = inputText(body.rela_name, "真实姓名", 255);
     const phone = inputText(body.phone, "手机号", 30);
@@ -92,6 +92,16 @@ export class CustomerServiceCatalogService {
       })
       .returning({ id: storeServiceFeedback.id });
     return { id: rows[0].id };
+  }
+
+  async submitFeedback(uid: number, input: unknown) {
+    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("用户ID错误");
+    return this.insertFeedback(uid, input);
+  }
+
+  /** PHP allows pre-login feedback; uid=0 is isolated from authenticated ownership. */
+  async submitAnonymousFeedback(input: unknown) {
+    return this.insertFeedback(0, input);
   }
 
   async feedbackList(query: Record<string, string>) {

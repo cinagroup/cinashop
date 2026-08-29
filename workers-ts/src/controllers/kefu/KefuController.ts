@@ -12,6 +12,7 @@ import { KefuOrderService } from "@/services/kefu/KefuOrderService";
 import { KefuProductService } from "@/services/kefu/KefuProductService";
 import { chatPrincipalName, upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
 import { KefuTransferService } from "@/services/kefu/KefuTransferService";
+import { KefuTouristService } from "@/services/kefu/KefuTouristService";
 import { CustomerServiceCatalogService } from "@/services/message/CustomerServiceCatalogService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
@@ -31,6 +32,11 @@ function catalog(c: C) {
 
 function products(c: C) {
   return new KefuProductService(c.get("container"));
+}
+
+function tourist(c: C) {
+  c.header("Cache-Control", "no-store, max-age=0");
+  return new KefuTouristService(c.get("container"), c.env);
 }
 
 function orders(c: C) {
@@ -110,6 +116,23 @@ export async function wechatLogin(c: C) {
   const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
     .login("kefu_agent", c.req.query("code"), c.req.query("state"), clientIp(c));
   return jsonOk(c, result, "登录成功");
+}
+
+export async function touristAdvertisement(c: C) {
+  return jsonOk(c, { content: await tourist(c).advertisement() });
+}
+
+export async function touristFeedbackInfo(c: C) {
+  return jsonOk(c, { feedback: await tourist(c).feedbackInfo() });
+}
+
+export async function touristSubmitFeedback(c: C) {
+  await tourist(c).submitFeedback(await body(c), clientIp(c));
+  return jsonOk(c, null, "保存成功");
+}
+
+export async function touristProduct(c: C) {
+  return jsonOk(c, await tourist(c).productInfo(c.req.param("id")));
 }
 
 export async function config(c: C) {
@@ -357,6 +380,10 @@ export async function deliveryAgents(c: C) {
 
 export async function deliveryConfig(c: C) {
   return jsonOk(c, await fulfillment(c).deliveryConfig());
+}
+
+export async function waybillTemplates(c: C) {
+  return jsonOk(c, await fulfillment(c).waybillTemplates(c.req.query()));
 }
 
 export async function deliverOrder(c: C) {

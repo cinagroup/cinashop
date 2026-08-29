@@ -1,5 +1,6 @@
 const API_ROOT = "https://sms.crmeb.net/api/";
 const LOGIN_PATH = "v2/user/login";
+const TEMPLATE_PATH = "v2/expr_dump/temp";
 const ISSUE_PATH = "v2/expr/dump";
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_RESPONSE_BYTES = 32 * 1_024;
@@ -46,6 +47,11 @@ export interface WaybillIssueResult {
   labelUrl: string;
   providerReference: string;
   responseCode: string;
+}
+
+export interface WaybillTemplateQuery {
+  carrierCode: string;
+  cloudPrinterConfigured: boolean;
 }
 
 export class WaybillConfigurationError extends Error {}
@@ -141,6 +147,29 @@ async function postForm(
   }
 }
 
+async function getProviderJson(
+  path: string,
+  query: URLSearchParams,
+  headers: HeadersInit,
+  fetcher: typeof fetch,
+): Promise<{ response: Response; text: string }> {
+  const url = new URL(path, API_ROOT);
+  url.search = query.toString();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetcher(url, {
+      method: "GET",
+      headers,
+      signal: controller.signal,
+      redirect: "error",
+    });
+    return { response, text: await boundedResponseText(response) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function parseEnvelope(text: string): Record<string, unknown> {
   let parsed: unknown;
   try {
@@ -217,6 +246,40 @@ function issueForm(input: WaybillIssueInput): FormData {
   if (input.carrier.partnerName) field(form, "partnerName", input.carrier.customerName);
   if (input.carrier.isCode) field(form, "code", input.carrier.codeName);
   return form;
+}
+
+/** Read the provider's carrier-specific template catalog without allocating a waybill. */
+export async function listCrmebOnePassWaybillTemplates(
+  credentials: CrmebOnePassCredentials,
+  input: WaybillTemplateQuery,
+  fetcher: typeof fetch = fetch,
+): Promise<unknown> {
+  const carrierCode = safeText(input.carrierCode, 50);
+  if (!carrierCode || !/^[a-zA-Z0-9_-]+$/.test(carrierCode)) {
+    throw new WaybillConfigurationError("快递公司编码无效");
+  }
+  const token = await accessToken(credentials, fetcher);
+  const headers: Record<string, string> = { Authorization: `Bearer-${token}` };
+  if (!input.cloudPrinterConfigured) headers.version = "v1.1";
+  const query = new URLSearchParams({ com: carrierCode });
+  let response: Response;
+  let text: string;
+  try {
+    ({ response, text } = await getProviderJson(TEMPLATE_PATH, query, headers, fetcher));
+  } catch (error) {
+    throw new WaybillPreflightError(
+      `一号通模板查询失败: ${error instanceof Error ? error.message : String(error)}`.slice(0, 1_000),
+    );
+  }
+  if (!response.ok) throw new WaybillPreflightError(`一号通模板查询 HTTP ${response.status}`);
+  const envelope = parseEnvelope(text);
+  if (Number(envelope.status) !== 200) {
+    throw new WaybillRejectedError(
+      safeText(envelope.msg, 500) || "一号通拒绝电子面单模板查询",
+      String(envelope.status),
+    );
+  }
+  return envelope.data ?? [];
 }
 
 /**

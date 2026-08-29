@@ -145,7 +145,7 @@ describe("dedicated customer-service migration", () => {
     const app = readFileSync("src/app.ts", "utf8");
     const middleware = readFileSync("src/middleware/kefu-auth.ts", "utf8");
     const registrations = routes.match(/kefuapiRoutes\.(?:get|post|put|delete)\(/g) ?? [];
-    expect(registrations).toHaveLength(55);
+    expect(registrations).toHaveLength(60);
     expect(routes.indexOf('post("/login"')).toBeLessThan(
       routes.indexOf('use("*", kefuAuthMiddleware)'),
     );
@@ -182,6 +182,7 @@ describe("dedicated customer-service migration", () => {
     expect(routes).not.toContain('get("/refund/agree/:');
     expect(routes).not.toContain('post("/order/refund"');
     expect(routes).toContain('post("/order/delivery/:id", KefuController.deliverOrder)');
+    expect(routes).toContain('get("/order/temp", KefuController.waybillTemplates)');
     expect(routes).toContain('put("/order/split_delivery/:id", KefuController.splitDelivery)');
     expect(routes).toContain('put("/order/write_update/:order_id", KefuController.writeoffByPublicId)');
     expect(app).toContain('app.route("/kefuapi", kefuapiRoutes)');

@@ -18,6 +18,10 @@ kefuapiRoutes.post("/oauth_state", KefuController.oauthState);
 kefuapiRoutes.get("/wechat", KefuController.wechatLogin);
 kefuapiRoutes.get("/config", KefuController.config);
 kefuapiRoutes.get("/copyright", KefuController.copyright);
+kefuapiRoutes.get("/tourist/adv", KefuController.touristAdvertisement);
+kefuapiRoutes.get("/tourist/feedback", KefuController.touristFeedbackInfo);
+kefuapiRoutes.post("/tourist/feedback", KefuController.touristSubmitFeedback);
+kefuapiRoutes.get("/tourist/product/:id", KefuController.touristProduct);
 // Signed URLs cannot attach an Authorization header; signature verification is the access grant.
 kefuapiRoutes.get("/assets/:id", AttachmentController.asset);
 
@@ -51,6 +55,7 @@ kefuapiRoutes.get("/order/refund_form/:id", KefuController.orderRefundForm);
 kefuapiRoutes.get("/order/export", KefuController.expressList);
 kefuapiRoutes.get("/order/delivery_all", KefuController.deliveryAgents);
 kefuapiRoutes.get("/order/delivery_info", KefuController.deliveryConfig);
+kefuapiRoutes.get("/order/temp", KefuController.waybillTemplates);
 kefuapiRoutes.get("/order/verific/:id", KefuController.verifyOrder);
 kefuapiRoutes.get("/order/writeOff/cartInfo", KefuController.writeoffCartInfo);
 kefuapiRoutes.put("/order/write_update/:order_id", KefuController.writeoffByPublicId);

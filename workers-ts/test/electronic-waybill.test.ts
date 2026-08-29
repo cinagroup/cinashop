@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { OrderMessage } from "@/env";
 import {
   issueCrmebOnePassWaybill,
+  listCrmebOnePassWaybillTemplates,
   WaybillConfigurationError,
   WaybillPreflightError,
   WaybillRejectedError,
@@ -144,6 +145,48 @@ describe("电子面单持久签发账本", () => {
     const issue = calls[1];
     expect(new Headers(issue.headers).get("version")).toBe("v1.1");
     expect((issue.body as FormData).get("print_type")).toBe("IMAGE");
+  });
+
+  it("客服模板查询只读固定 HTTPS 端点，并兼容有无云打印机协议", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      calls.push({ url: String(input), init });
+      if (String(input).endsWith("/v2/user/login")) {
+        return Response.json({ status: 200, data: { access_token: "token-template" } });
+      }
+      return Response.json({
+        status: 200,
+        data: { data: [{ title: "顺丰模板", temp_id: "SF-1", pic: "https://img.example/sf.png" }] },
+      });
+    });
+    await expect(listCrmebOnePassWaybillTemplates(
+      { accessKey: "access-template", secretKey: "secret-template" },
+      { carrierCode: "SF_01", cloudPrinterConfigured: false },
+      fetchMock as unknown as typeof fetch,
+    )).resolves.toEqual({
+      data: [{ title: "顺丰模板", temp_id: "SF-1", pic: "https://img.example/sf.png" }],
+    });
+    expect(calls.map((call) => call.url)).toEqual([
+      "https://sms.crmeb.net/api/v2/user/login",
+      "https://sms.crmeb.net/api/v2/expr_dump/temp?com=SF_01",
+    ]);
+    expect(calls[1]?.init?.method).toBe("GET");
+    expect(new Headers(calls[1]?.init?.headers).get("Authorization")).toBe("Bearer-token-template");
+    expect(new Headers(calls[1]?.init?.headers).get("version")).toBe("v1.1");
+    expect(calls[1]?.init?.body).toBeUndefined();
+
+    await listCrmebOnePassWaybillTemplates(
+      { accessKey: "access-template", secretKey: "secret-template" },
+      { carrierCode: "SF_01", cloudPrinterConfigured: true },
+      fetchMock as unknown as typeof fetch,
+    );
+    expect(new Headers(calls[2]?.init?.headers).get("version")).toBeNull();
+
+    await expect(listCrmebOnePassWaybillTemplates(
+      { accessKey: "access-template-invalid", secretKey: "secret-template-invalid" },
+      { carrierCode: "https://evil.invalid", cloudPrinterConfigured: true },
+      fetchMock as unknown as typeof fetch,
+    )).rejects.toBeInstanceOf(WaybillConfigurationError);
   });
 
   it("签发前认证失败可安全重试，明确拒绝与缺少 Secret 可区分", async () => {
