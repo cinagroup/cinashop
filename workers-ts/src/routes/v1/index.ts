@@ -28,6 +28,7 @@ import * as AdminLegacyRuntimeController from "@/controllers/api/v1/AdminLegacyR
 import * as WechatLiveController from "@/controllers/api/v1/WechatLiveController";
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
 import * as WechatController from "@/controllers/api/v1/WechatController";
+import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWechatController";
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
@@ -1134,6 +1135,9 @@ v1Routes.post("/wechat/oauth_state", WechatController.wechatOauthState);
 v1Routes.get("/wechat/auth", WechatController.wechatAuth);
 // JS-SDK 配置 (无需 auth)
 v1Routes.get("/wechat/config", WechatController.wechatConfig);
+// Enterprise WeChat JS-SDK signatures (public compatibility routes, strict URL allowlist).
+v1Routes.get("/work/config", EnterpriseWechatController.config);
+v1Routes.get("/work/agentConfig", EnterpriseWechatController.agentConfig);
 // Source-compatible mini-program live list and replay lookup.
 v1Routes.get("/wechat/live", WechatLiveController.publicRooms);
 v1Routes.get("/wechat/livePlaybacks/:id", WechatLiveController.publicPlaybacks);

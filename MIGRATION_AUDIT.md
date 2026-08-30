@@ -2097,6 +2097,51 @@ PHP `route/api.php:807-814` 的 STORE-B 权威范围固定为六条：`GET /api/
 - [ ] 生产缺门店店员、订单、移动客服、配送身份和配置正向样本；需可信源数据与受限真实 token 才能补 PHP golden response、旧端/新端 HTTP E2E。
 - [ ] WORK 10、内嵌 Admin 51、主 Worker/Pages 发布、预发、影子流量、明确发布批准和发布后观察仍未完成。
 
+## API-008 企业微信 JS-SDK 详细迁移审计（WORK-A 子批次，2026-08-30）
+
+### PHP 权威合同与旧端风险
+
+WORK-A 权威范围固定为 `route/api.php:821-824` 的两条公开 GET：`/api/work/config` 与 `/api/work/agentConfig`。PHP 控制器直接信任 query `url`，两路都调用 `WorkConfig::TYPE_USER_APP`；企业级 `config` 与应用级 `agentConfig` 实际共用数据库 `wechat_work_build_secret`，异常分别被吞成空数组或部分抛出。原 `buildJsSdkConfig/buildJsSdkAgentConfig` 返回 `url/nonceStr/timestamp/signature` 与 `appId` 或 `corpid/agentid`，并附 `jsApiList/openTagList/debug/beta`；本批保持这些可观察字段，生产 `debug` 改为 false。
+
+旧 UniApp `api/work.js` 直接拼接 `work/config?url=` 和 `work/agentConfig?url=`，没有 `encodeURIComponent`，URL 自身的 `&` 会被拆成额外 query。`libs/work.js` 的 iOS 分支去掉 fragment，非 iOS 分支却可能把 `location.href`（含 `#`）传给 `agentConfig`；模块加载时还创建两个全局 Promise，可能把首个页面 URL/失败结果跨 SPA 页面复用。服务端 PHP 声明四个 JS API，而客户端实际传六个，额外使用 `sendChatMessage/shareAppMessage`。这些旧端问题没有通过放宽服务端签名规则掩盖；新服务统一签名去 fragment 的规范 URL，并返回六项实际使用列表。前端修复和企业微信真机验证继续作为发布门禁。
+
+### 官方协议与 Cloudflare 边界
+
+协议以企业微信官方[获取 access_token](https://developer.work.weixin.qq.com/document/path/91039)及[JS-SDK 签名算法](https://developer.work.weixin.qq.com/document/path/90506)为准。企业与应用凭据分开调用 `GET /cgi-bin/gettoken`；企业 ticket 使用 `/cgi-bin/get_jsapi_ticket`，应用 ticket 使用 `/cgi-bin/ticket/get?type=agent_config`。两类 ticket 正常有效期均为 7,200 秒且有严格频率限制；签名原文固定为 `jsapi_ticket&noncestr&timestamp&url` 顺序，不做 URL encode，页面 URL 不含 `#`。access token和 ticket最长 512 字节，均只留在服务端。
+
+Cloudflare 的最新 [Workers best practices](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/) 与 [Secrets](https://developers.cloudflare.com/workers/configuration/secrets/) 文档直接约束本批：远端 PostgreSQL 仍只经 Hyperdrive；Secret 不写源代码、`wrangler.toml` 或数据库；provider fetch 只发生在请求上下文；响应采用流式有界读取；没有请求级全局可变状态或悬空 Promise；每个请求新建服务实例，临时签名响应禁止缓存。审计时最新可用 `@cloudflare/workers-types` 为 `5.20260830.1`、Wrangler `4.127.1`、Workers Vitest pool `0.22.0`；仓库仍分别为 `5.20260828.1`、`4.122.0`、`0.21.2`，本批核对最新声明但没有把依赖升级与两路迁移耦合，后续应在独立工具链升级批次处理。
+
+### Worker 实现与有意安全差异
+
+Hono 新增精确公开路由 `GET /api/work/config|agentConfig`，保持 PHP 无登录合同，但入口首先规范化 URL：最大 2,048 UTF-8 字节、必须 HTTPS、禁止 userinfo、移除 fragment，并要求 `URL.origin` 精确命中最多 32 项的 `WORK_WECHAT_ALLOWED_ORIGINS`。allowlist 未配置/格式错误返回真实 HTTP 503，非 HTTPS或未授权 Origin 返回 403；签名响应设置 `Cache-Control: private, no-store, max-age=0` 和 `Pragma: no-cache`。正式 Origin还必须同步加入全局 `ALLOWED_ORIGINS`，否则浏览器会在 CORS 层先拒绝。
+
+CorpID 和 AgentID仅从 `system_config` 的非秘密键读取并验证；企业级 `WECHAT_WORK_CORP_SECRET` 与应用级 `WECHAT_WORK_AGENT_SECRET` 只接受 Worker Secret。两路 access token 和 ticket使用包含 Secret SHA-256 指纹的分域 key，缓存值只含 provider credential与到期时间，不含原始 Secret；TTL最多 6,900 秒，提前留 300 秒刷新窗口。provider 请求固定 5 秒超时，响应流最多 16 KiB；`Content-Length`、JSON object、`errcode`、凭据长度和 `expires_in` 全部验证。票据端遇到 `40001/40014/42001` 只删除该域 token/ticket并重取一次，其他 HTTP/协议/传输/缓存错误统一记录无 Secret 的结构化字段并返回 503。每次签名使用 Web Crypto随机 nonce 和既有固定顺序 SHA-1 工具，不复用 nonce或签名响应。
+
+这与 PHP 有三项有意差异：不再从数据库读取三类旧 Secret；不再为任意 HTTP/HTTPS URL签名；provider/配置失败不再伪装成 `200 + []`。两枚 Secret可由同一已核验的自建应用 Secret分别注入，但运行时仍保持不同绑定和 cache scope，便于后续最小权限与独立轮换。
+
+### 生产 Hyperdrive 与随机 schema 证据
+
+临时 `cinashop-enterprise-wechat-jssdk-audit` Worker只绑定生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。POST-only `/audit|isolated-scenario` 使用两枚互异 Bearer 的 SHA-256 摘要与 timing-safe 比较；第一次 `npm exec` 把 `--config` 误解析到主 Worker，但 Wrangler在任何 Secret写入前失败，主 Worker Secret清单及版本复核无变化。随后改用本地 Wrangler 可执行文件；一次请求在 Secret版本传播前按设计返回 `audit unavailable`，加入仅对 503 门禁的短重试后取得最终证据。所有临时 Worker版本和门禁 Secret均已删除。
+
+生产只读事务固定 `REPEATABLE READ, READ ONLY`、`search_path=public,pg_temp`、30 秒 statement timeout和2 秒 lock timeout。PostgreSQL为 16.14，`public.system_config` 存在16列，五个依赖列齐全并由未限定表名解析到 public；临时 schema审计前为0。五个目标键 `wechat_work_corpid/wechat_work_build_agent_id/wechat_work_build_secret/wechat_work_user_secret/wechat_work_address_secret` 的 matching row、distinct key、重复组、空值行、有效 CorpID/AgentID及旧 Secret存在/非空计数全部为0。审计只返回存在性、计数与格式布尔，不返回配置值、CorpID、AgentID、Secret、行 ID或指纹。Wrangler另行只读列出的生产 `cinashop-api` Secret仍只有 `APP_KEY/DEBUG/INTERNAL_CHAT_TOKEN/OPERATIONS_TOKEN/UPSTASH_REDIS_TOKEN/UPSTASH_REDIS_URL`，两枚企业微信 Secret不存在；`wrangler.toml` 也有意不设置专用 allowlist，因此生产正向调用当前必然在 provider I/O前失败关闭。
+
+隔离写入仅发生在随机 `codex_enterprise_wechat_jssdk_*` schema：克隆 `system_config` 后插入合成非秘密 CorpID/AgentID，顶层事务把随机 schema显式置于 `pg_temp` 前，真实 `EnterpriseWechatJsSdkService` 配合内存 KV和本地 provider模拟执行。最终13/13：search path隔离、企业配置字段、规范 URL、企业签名、新 nonce、应用身份、应用签名、新 nonce、两域 token/ticket缓存复用、缓存无 Worker Secret、非 allowlist Origin拒绝、缺 Secret 503和 public全行指纹不变；两次企业加两次应用的 provider总调用恰为4。返回成功前 `finally` 已验证临时 schema `0→0`；`public.system_config` 未变。
+
+### 量化、验证与剩余门禁
+
+两条 exact route加入后，注释感知静态审计为 PHP 1,904、Workers 1,436、精确匹配738、可执行匹配720、明确不可用18、原始缺失1,166、证据化退役4、可执行缺口1,162，覆盖为 `38.8%/37.8%/37.9%`。`/api` 为 PHP457、TS747、精确356、可执行353、不可用3、原始缺失101、退役1、可执行缺口100，对应 `77.9%/77.2%/77.4%`；相对 STORE-B，全局和 `/api` 可执行缺口均减少2。
+
+WORK-A 代码与生产数据库/隔离协议证据可以勾选，但生产能力尚未启用：缺 CorpID、AgentID、两枚 Worker Secret和正式 H5 Origin；旧 UniApp URL编码、SPA URL选择与全局 Promise仍未修；没有企业微信真实租户/provider正向调用、真机、旧端/新端 golden response、预发、影子流量或发布后观察。主生产 Worker在本批前后始终为100%版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，未部署应用 Worker或 Pages。WORK-B本地读7条、WORK-C回调1条及内嵌 Admin 51条继续保持未完成。
+
+仓库最终门禁为双 TypeScript配置通过，150/150个单元测试文件与906/906项通过，WORK-A两个定向文件14/14；审计 Worker dry-run为711.78 KiB/gzip 132.54 KiB，主 Worker dry-run为4,821.35 KiB/gzip 912.64 KiB。Windows Workers runtime仍在0条断言前因既有 `workerd 0xc0000005` 启动失败，不能记为 runtime通过；本批由生产 Cloudflare Worker + Hyperdrive随机 schema的13/13真实 service场景提供运行时证据。临时 Worker最终查询返回 Cloudflare code 10007（不存在），生产 Secret名称清单无新增，主 Worker版本未变。
+
+- [x] 两条 PHP 精确合同、响应主要字段、企业/应用 ticket 分离、签名算法与六项实际 JS API列表已实现。
+- [x] HTTPS Origin allowlist、URL规范化、两枚 Worker Secret、限时缓存、超时/限长、提前失效单次刷新和真实 HTTP失败关闭已实现。
+- [x] 生产五键只读审计与随机 schema真实 service 13/13完成；public不变，临时 schema/Worker/Secret清零。
+- [ ] 录入并复核 CorpID/AgentID，以 Worker Secret注入两枚凭据，批准专用 H5 Origin并同步全局 CORS；取得真实租户后补 provider和真机 E2E。
+- [ ] 修复旧 UniApp query编码、iOS/Android SPA签名 URL及模块级 Promise复用；新 UniApp尚无类型化 WORK-A client。
+- [ ] WORK-B/WORK-C、主 Worker/Pages发布、预发、影子流量、明确发布批准和发布后观察仍未完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

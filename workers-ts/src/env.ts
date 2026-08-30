@@ -66,6 +66,12 @@ export interface Env extends WorkerBindings {
   KEFU_AUTH_ALLOWED_ORIGINS?: string;
   /** WeChat Open Platform AppSecret. Never store this in system_config. */
   WECHAT_OPEN_APP_SECRET?: string;
+  /** Enterprise-level JS-SDK credential. Inject only with `wrangler secret put`. */
+  WECHAT_WORK_CORP_SECRET?: string;
+  /** Self-built application JS-SDK credential. Inject only with `wrangler secret put`. */
+  WECHAT_WORK_AGENT_SECRET?: string;
+  /** Exact HTTPS origins whose page URLs may be signed for Enterprise WeChat JS-SDK. */
+  WORK_WECHAT_ALLOWED_ORIGINS?: string;
   /** 开发运维接口专用 token; 通过 wrangler secret put 设置 */
   OPERATIONS_TOKEN?: string;
   /** 首次迁移时创建管理员所用账号；默认 admin，仅在账号不存在时创建 */
