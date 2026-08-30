@@ -59,16 +59,16 @@
           <text class="reply-more" v-if="replyStats.total > 0" @tap="goAllComments">全部 ›</text>
         </view>
         <view v-if="replies.length" class="reply-list">
-          <view v-for="r in replies" :key="(r as any).id" class="reply-item">
+          <view v-for="r in replies" :key="r.id" class="reply-item" @tap="goCommentDetail(r.id)">
             <view class="reply-user">
-              <text class="reply-avatar">{{ ((r as any).nickname || "用")[0] }}</text>
-              <text class="reply-name">{{ (r as any).nickname || "用户" }}</text>
-              <text class="reply-stars">{{ starText((r as any).productScore) }}</text>
+              <text class="reply-avatar">{{ (r.nickname || "用")[0] }}</text>
+              <text class="reply-name">{{ r.nickname || "用户" }}</text>
+              <text class="reply-stars">{{ starText(r.product_score) }}</text>
             </view>
-            <view class="reply-comment">{{ (r as any).comment }}</view>
-            <view v-if="(r as any).pics && (r as any).pics.length" class="reply-pics">
+            <view class="reply-comment">{{ r.comment }}</view>
+            <view v-if="r.pics.length" class="reply-pics">
               <image
-                v-for="(p, i) in (r as any).pics"
+                v-for="(p, i) in r.pics"
                 :key="i"
                 class="reply-pic"
                 :src="p"
@@ -76,8 +76,8 @@
               />
             </view>
             <view class="reply-meta">
-              <text class="reply-sku">{{ (r as any).sku || "默认规格" }}</text>
-              <text class="reply-time">{{ formatTime((r as any).addTime) }}</text>
+              <text class="reply-sku">{{ r.sku || "默认规格" }}</text>
+              <text class="reply-time">{{ r.add_time }}</text>
             </view>
           </view>
         </view>
@@ -195,7 +195,8 @@ import {
   apiDiscountCartAdd,
   apiDiscountPackages,
 } from "@/api/order";
-import { apiReplyConfig, apiReplyList } from "@/api/order";
+import { apiReplyConfig, apiReplyList } from "@/api/reply";
+import type { ProductReviewListItem } from "@/api/reply";
 import { useAuthStore } from "@/stores/auth";
 import type { GoodsDetail } from "@/types/product";
 import type { DiscountPackage, DiscountPackageProduct } from "@/types/order";
@@ -212,7 +213,7 @@ interface SkuItem {
 
 const detail = ref<GoodsDetail | null>(null);
 const authStore = useAuthStore();
-const replies = ref<unknown[]>([]);
+const replies = ref<ProductReviewListItem[]>([]);
 const replyStats = ref({ total: 0, avgScore: "0.0", goodRate: 100 });
 const discountPackages = ref<DiscountPackage[]>([]);
 const selectedPackage = ref<DiscountPackage | null>(null);
@@ -337,13 +338,6 @@ async function buyPackage() {
   }
 }
 
-function formatTime(ts: number): string {
-  if (!ts) return "";
-  const d = new Date(ts * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
 function starText(score: number): string {
   const n = Math.min(5, Math.max(1, Number(score) || 5));
   return "★".repeat(n);
@@ -369,6 +363,10 @@ function goCart() {
 function goAllComments() {
   if (!detail.value) return;
   uni.navigateTo({ url: `/pages/goods/commentList?productId=${detail.value.id}` });
+}
+
+function goCommentDetail(id: number) {
+  uni.navigateTo({ url: `/pages/goods/commentDetail?id=${id}` });
 }
 
 onLoad(async (options) => {

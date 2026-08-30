@@ -9,17 +9,20 @@ import {
   storeOrder,
   storeOrderCartInfo,
   storeOrderStatus,
+  storeProduct,
   storeProductReply,
   storeProductReplyComment,
+  systemUserLevel,
   user,
   userRelation,
 } from "@/models/schema";
-import type { Container, DbClient } from "@/lib/di";
+import { withTx, type Container, type DbClient } from "@/lib/di";
 import { ValidateException } from "@/utils/errors";
 import { grantLotteryEntitlement } from "@/services/activity/LotteryService";
 
 const REVIEW_LOCK_NAMESPACE = 46_301;
 const MAX_COMMENT_LENGTH = 512;
+const MAX_REPLY_COMMENT_LENGTH = 1_000;
 const MAX_PICTURES = 9;
 const MAX_PICTURE_URL_LENGTH = 2_048;
 
@@ -308,6 +311,15 @@ export class ReplyService {
   async commentList(replyId: number, page = 1, limit = 10, uid = 0) {
     const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
     const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(Math.trunc(limit), 100)) : 10;
+    const visible = await this.container.db.select({ id: storeProductReply.id })
+      .from(storeProductReply)
+      .where(and(
+        eq(storeProductReply.id, replyId),
+        eq(storeProductReply.status, 1),
+        eq(storeProductReply.isDel, 0),
+      ))
+      .limit(1);
+    if (!visible[0]) return [];
     const roots = await this.container.db.select().from(storeProductReplyComment).where(and(
       eq(storeProductReplyComment.replyId, replyId),
       eq(storeProductReplyComment.pid, 0),
@@ -321,19 +333,45 @@ export class ReplyService {
     )).orderBy(desc(storeProductReplyComment.praise), desc(storeProductReplyComment.addTime));
     const commentIds = [...roots, ...children].map((item) => item.id);
     const userIds = [...new Set([...roots, ...children].map((item) => item.uid).filter(Boolean))];
-    const [users, relations] = await Promise.all([
+    const [users, relations, config] = await Promise.all([
       userIds.length ? this.container.db.select({
-        uid: user.uid, nickname: user.nickname, avatar: user.avatar,
-      }).from(user).where(inArray(user.uid, userIds)) : [],
+        uid: user.uid,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        level: user.level,
+        isMoneyLevel: user.isMoneyLevel,
+        isEverLevel: user.isEverLevel,
+        overdueTime: user.overdueTime,
+      }).from(user).where(and(
+        inArray(user.uid, userIds),
+        eq(user.status, 1),
+        eq(user.isDel, 0),
+      )) : [],
       uid ? this.container.db.select({ id: userRelation.relationId }).from(userRelation).where(and(
         eq(userRelation.uid, uid), eq(userRelation.type, "like"),
         eq(userRelation.category, "comment"), inArray(userRelation.relationId, commentIds),
       )) : [],
+      this.container.systemConfigDao.getValues([
+        "site_name",
+        "site_logo_square",
+        "member_func_status",
+        "member_card_status",
+      ]),
     ]);
+    const levelIds = [...new Set(users.map((item) => item.level).filter((id) => id > 0))];
+    const levels = levelIds.length ? await this.container.db
+      .select({ id: systemUserLevel.id, name: systemUserLevel.name })
+      .from(systemUserLevel)
+      .where(and(inArray(systemUserLevel.id, levelIds), eq(systemUserLevel.isDel, 0))) : [];
+    const levelMap = new Map(levels.map((item) => [item.id, item.name]));
     const userMap = new Map(users.map((item) => [item.uid, item]));
     const praised = new Set(relations.map((item) => item.id));
+    const now = Math.floor(Date.now() / 1_000);
+    const memberLevelsEnabled = String(config.member_func_status ?? "1") === "1";
+    const paidMembershipEnabled = String(config.member_card_status ?? "1") === "1";
     const serialize = (item: typeof storeProductReplyComment.$inferSelect) => {
       const current = userMap.get(item.uid);
+      const isPlatform = item.uid === 0;
       return {
         id: item.id, reply_id: item.replyId, pid: item.pid, uid: item.uid,
         content: item.content, praise: item.praise,
@@ -342,10 +380,14 @@ export class ReplyService {
         is_praise: praised.has(item.id),
         user: {
           uid: item.uid,
-          nickname: anonymizeNickname(current?.nickname || item.nickname || "用户"),
-          avatar: current?.avatar || item.avatar || "",
-          level_name: "",
-          vip_status: "",
+          nickname: anonymizeNickname(current?.nickname || item.nickname
+            || (isPlatform ? String(config.site_name || "CinaShop") : "用户")),
+          avatar: current?.avatar || item.avatar
+            || (isPlatform ? String(config.site_logo_square || "") : ""),
+          level_name: current && memberLevelsEnabled ? levelMap.get(current.level) ?? "" : "",
+          vip_status: current && paidMembershipEnabled
+            && (current.isEverLevel === 1
+              || (current.isMoneyLevel === 1 && current.overdueTime > now)) ? 1 : 0,
         },
       };
     };
@@ -353,6 +395,217 @@ export class ReplyService {
       ...serialize(root),
       children: children.filter((item) => item.pid === root.id).map(serialize)[0] ?? null,
     }));
+  }
+
+  /** Authenticated legacy review detail. The returned view count matches PHP's pre-increment value. */
+  async replyInfo(replyId: number, uid: number) {
+    const reply = await withTx(this.container, async (tx) => {
+      const rows = await tx.select().from(storeProductReply).where(and(
+        eq(storeProductReply.id, replyId),
+        eq(storeProductReply.status, 1),
+        eq(storeProductReply.isDel, 0),
+      )).limit(1).for("update");
+      if (!rows[0]) throw new ValidateException("查看的评论不存在");
+      await tx.update(storeProductReply)
+        .set({
+          viewsNum: sql`LEAST(${storeProductReply.viewsNum}::bigint + 1, 2147483647)::integer`,
+        })
+        .where(eq(storeProductReply.id, replyId));
+      return rows[0];
+    });
+
+    const [products, users, praiseRows, commentRows, config] = await Promise.all([
+      this.container.db.select({
+        id: storeProduct.id,
+        storeName: storeProduct.storeName,
+        image: storeProduct.image,
+        isPresaleProduct: storeProduct.isPresaleProduct,
+      }).from(storeProduct).where(eq(storeProduct.id, reply.productId)).limit(1),
+      this.container.db.select({
+        uid: user.uid,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        level: user.level,
+        isMoneyLevel: user.isMoneyLevel,
+        isEverLevel: user.isEverLevel,
+        overdueTime: user.overdueTime,
+      }).from(user).where(and(
+        eq(user.uid, reply.uid),
+        eq(user.status, 1),
+        eq(user.isDel, 0),
+      )).limit(1),
+      this.container.db.select({ id: userRelation.id }).from(userRelation).where(and(
+        eq(userRelation.uid, uid),
+        eq(userRelation.relationId, replyId),
+        eq(userRelation.type, "like"),
+        eq(userRelation.category, "reply"),
+      )).limit(1),
+      this.container.db.select({ count: sql<number>`COUNT(*)::int` })
+        .from(storeProductReplyComment).where(and(
+          eq(storeProductReplyComment.replyId, replyId),
+          eq(storeProductReplyComment.pid, 0),
+          eq(storeProductReplyComment.isDel, 0),
+        )),
+      this.container.systemConfigDao.getValues(["member_func_status", "member_card_status"]),
+    ]);
+    const current = users[0];
+    let levelName = "";
+    if (current && current.level > 0 && String(config.member_func_status ?? "1") === "1") {
+      const levels = await this.container.db.select({ name: systemUserLevel.name })
+        .from(systemUserLevel)
+        .where(and(eq(systemUserLevel.id, current.level), eq(systemUserLevel.isDel, 0)))
+        .limit(1);
+      levelName = levels[0]?.name ?? "";
+    }
+    const now = Math.floor(Date.now() / 1_000);
+    const vipStatus = current && String(config.member_card_status ?? "1") === "1"
+      && (current.isEverLevel === 1
+        || (current.isMoneyLevel === 1 && current.overdueTime > now)) ? 1 : 0;
+
+    return {
+      reply: {
+        id: reply.id,
+        product_id: reply.productId,
+        oid: reply.oid,
+        order_cart_info_id: reply.orderCartInfoId,
+        unique: reply.unique,
+        uid: reply.uid,
+        nickname: anonymizeNickname(reply.nickname),
+        avatar: reply.avatar,
+        comment: reply.comment,
+        sku: reply.sku,
+        sku_unique: reply.skuUnique,
+        type: reply.type,
+        relation_id: reply.relationId,
+        reply_type: reply.replyType,
+        reply_score: reply.replyScore,
+        product_score: reply.productScore,
+        service_score: reply.serviceScore,
+        logistics_score: reply.logisticsScore,
+        delivery_score: reply.deliveryScore,
+        pics: this.parsePics(reply.pics),
+        is_reply: reply.isReply,
+        merchant_reply: reply.merchantReply,
+        merchant_reply_content: reply.merchantReplyContent,
+        merchant_reply_time: reply.merchantReplyTime,
+        praise: reply.praise,
+        views_num: reply.viewsNum,
+        status: reply.status,
+        top: reply.top,
+        is_del: reply.isDel,
+        add_time: this.formatTime(reply.addTime, true),
+        suk: reply.sku,
+        comment_sum: commentRows[0]?.count ?? 0,
+      },
+      product: products[0] ? {
+        id: products[0].id,
+        store_name: products[0].storeName,
+        image: products[0].image,
+        is_presale_product: products[0].isPresaleProduct,
+      } : {},
+      user: current ? {
+        nickname: anonymizeNickname(current.nickname),
+        uid: current.uid,
+        avatar: current.avatar,
+        is_money_level: current.isMoneyLevel,
+        level_name: levelName,
+        vip_status: vipStatus,
+      } : { nickname: "", level_name: "", vip_status: 0 },
+      star: String(Math.trunc((reply.productScore + reply.serviceScore) / 2)),
+      is_praise: praiseRows.length > 0,
+    };
+  }
+
+  async replyComment(uid: number, replyId: number, rawContent: unknown): Promise<{ id: number }> {
+    if (typeof rawContent !== "string") throw new ValidateException("缺少回复内容");
+    const content = rawContent.trim();
+    if (!content) throw new ValidateException("缺少回复内容");
+    if (Array.from(content).length > MAX_REPLY_COMMENT_LENGTH) {
+      throw new ValidateException(`回复内容不能超过${MAX_REPLY_COMMENT_LENGTH}个字符`);
+    }
+    if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(content)) {
+      throw new ValidateException("回复内容包含非法字符");
+    }
+    return withTx(this.container, async (tx) => {
+      const parents = await tx.select({ id: storeProductReply.id }).from(storeProductReply)
+        .where(and(
+          eq(storeProductReply.id, replyId),
+          eq(storeProductReply.status, 1),
+          eq(storeProductReply.isDel, 0),
+        )).limit(1).for("update");
+      if (!parents[0]) throw new ValidateException("查看的评论不存在");
+      const accounts = await tx.select({ nickname: user.nickname, avatar: user.avatar }).from(user)
+        .where(and(eq(user.uid, uid), eq(user.status, 1), eq(user.isDel, 0)))
+        .limit(1);
+      if (!accounts[0]) throw new ValidateException("用户不存在");
+      const inserted = await tx.insert(storeProductReplyComment).values({
+        uid,
+        replyId,
+        pid: 0,
+        nickname: accounts[0].nickname,
+        avatar: accounts[0].avatar,
+        content,
+        addTime: Math.floor(Date.now() / 1_000),
+      }).returning({ id: storeProductReplyComment.id });
+      if (!inserted[0]) throw new ValidateException("回复失败");
+      return inserted[0];
+    });
+  }
+
+  async praiseComment(uid: number, commentId: number): Promise<{ praise: number; isPraise: boolean }> {
+    return this.setCommentPraise(uid, commentId, true);
+  }
+
+  async unpraiseComment(uid: number, commentId: number): Promise<{ praise: number; isPraise: boolean }> {
+    return this.setCommentPraise(uid, commentId, false);
+  }
+
+  private async setCommentPraise(uid: number, commentId: number, praised: boolean) {
+    return withTx(this.container, async (tx) => {
+      const comments = await tx.select({
+        id: storeProductReplyComment.id,
+        replyId: storeProductReplyComment.replyId,
+      }).from(storeProductReplyComment).innerJoin(
+        storeProductReply,
+        eq(storeProductReply.id, storeProductReplyComment.replyId),
+      ).where(and(
+        eq(storeProductReplyComment.id, commentId),
+        eq(storeProductReplyComment.isDel, 0),
+        eq(storeProductReply.status, 1),
+        eq(storeProductReply.isDel, 0),
+      )).limit(1).for("update");
+      if (!comments[0]) throw new ValidateException("回复不存在");
+      const relationWhere = and(
+        eq(userRelation.uid, uid),
+        eq(userRelation.relationId, commentId),
+        eq(userRelation.type, "like"),
+        eq(userRelation.category, "comment"),
+      );
+      if (praised) {
+        await tx.insert(userRelation).values({
+          uid,
+          relationId: commentId,
+          type: "like",
+          category: "comment",
+          addTime: Math.floor(Date.now() / 1_000),
+        }).onConflictDoNothing({
+          target: [userRelation.uid, userRelation.relationId, userRelation.type, userRelation.category],
+          where: sql`${userRelation.type} <> 'play'`,
+        });
+      } else {
+        await tx.delete(userRelation).where(relationWhere);
+      }
+      const counts = await tx.select({ value: sql<number>`COUNT(*)::int` })
+        .from(userRelation).where(and(
+          eq(userRelation.relationId, commentId),
+          eq(userRelation.type, "like"),
+          eq(userRelation.category, "comment"),
+        ));
+      const praise = counts[0]?.value ?? 0;
+      await tx.update(storeProductReplyComment).set({ praise })
+        .where(eq(storeProductReplyComment.id, commentId));
+      return { praise, isPraise: praised };
+    });
   }
 
   async submitReply(
@@ -538,7 +791,8 @@ export class ReplyService {
 
   private formatTime(value: number, seconds = false): string {
     if (!value) return "";
-    const date = new Date(value * 1_000);
+    // PHP production formats these epoch values in Asia/Shanghai. Workers Date is UTC.
+    const date = new Date((value + 28_800) * 1_000);
     const iso = date.toISOString().replace("T", " ");
     return seconds ? iso.slice(0, 19) : iso.slice(0, 16);
   }

@@ -19,26 +19,26 @@
 
     <!-- 评价列表 -->
     <view class="comment-list">
-      <view class="comment-item" v-for="r in filteredList" :key="(r as any).id">
+      <view class="comment-item" v-for="r in filteredList" :key="r.id" @tap="openDetail(r.id)">
         <view class="comment-head">
-          <text class="avatar">{{ ((r as any).nickname || "用")[0] }}</text>
-          <text class="nickname">{{ (r as any).nickname || "匿名用户" }}</text>
-          <text class="stars">{{ starText((r as any).productScore) }}</text>
+          <text class="avatar">{{ (r.nickname || "用")[0] }}</text>
+          <text class="nickname">{{ r.nickname || "匿名用户" }}</text>
+          <text class="stars">{{ starText(r.product_score) }}</text>
         </view>
-        <view class="comment-text">{{ (r as any).comment }}</view>
-        <view class="comment-pics" v-if="(r as any).pics && (r as any).pics.length">
+        <view class="comment-text">{{ r.comment }}</view>
+        <view class="comment-pics" v-if="r.pics.length">
           <image
-            v-for="(p, i) in (r as any).pics"
+            v-for="(p, i) in r.pics"
             :key="i"
             class="comment-pic"
             :src="p"
             mode="aspectFill"
-            @tap="previewImage((r as any).pics, i)"
+            @tap.stop="previewImage(r.pics, i)"
           />
         </view>
         <view class="comment-foot">
-          <text class="sku">{{ (r as any).sku || "默认规格" }}</text>
-          <text class="time">{{ formatTime((r as any).addTime) }}</text>
+          <text class="sku">{{ r.sku || "默认规格" }}</text>
+          <text class="time">{{ r.add_time }}</text>
         </view>
       </view>
     </view>
@@ -51,11 +51,12 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
-import { http } from "@/utils/request";
+import { apiReplyConfig, apiReplyList } from "@/api/reply";
+import type { ProductReviewListItem, ReplyStats } from "@/api/reply";
 
 const productId = ref(0);
-const list = ref<any[]>([]);
-const stats = ref<{ total: number; avgScore: string; goodRate: number } | null>(null);
+const list = ref<ProductReviewListItem[]>([]);
+const stats = ref<ReplyStats | null>(null);
 const page = ref(1);
 const loading = ref(true);
 const hasMore = ref(true);
@@ -65,7 +66,7 @@ const picCount = computed(() => list.value.filter((r) => r.pics && r.pics.length
 
 const filteredList = computed(() => {
   if (filter.value === "pic") return list.value.filter((r) => r.pics && r.pics.length);
-  if (filter.value === "good") return list.value.filter((r) => Number(r.productScore) >= 4);
+  if (filter.value === "good") return list.value.filter((r) => Number(r.product_score) >= 4);
   return list.value;
 });
 
@@ -74,20 +75,13 @@ function starText(score: number): string {
   return "★".repeat(n) + "☆".repeat(5 - n);
 }
 
-function formatTime(ts: number): string {
-  if (!ts) return "";
-  const d = new Date(ts * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
 function previewImage(pics: string[], current: number) {
   uni.previewImage({ urls: pics, current: pics[current] });
 }
 
 async function loadStats() {
   try {
-    stats.value = await http.get(`/reply/config/${productId.value}`);
+    stats.value = await apiReplyConfig(productId.value);
   } catch {
     stats.value = null;
   }
@@ -101,7 +95,7 @@ async function load(p = 1) {
   loading.value = true;
   page.value = p;
   try {
-    const data = await http.get<any[]>(`/reply/list/${productId.value}`, { page: p, limit: 20 });
+    const data = await apiReplyList(productId.value, p, 20);
     list.value = list.value.concat(data || []);
     hasMore.value = (data || []).length >= 20;
   } catch {
@@ -109,6 +103,10 @@ async function load(p = 1) {
   } finally {
     loading.value = false;
   }
+}
+
+function openDetail(id: number) {
+  uni.navigateTo({ url: `/pages/goods/commentDetail?id=${id}` });
 }
 
 function loadMore() {

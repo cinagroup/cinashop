@@ -1965,6 +1965,54 @@ Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签
 
 DIY-HOME-WIDGETS 八条服务端合同和 PUBLIC-ARTICLE 七条精确合同/本地 UniApp 接线现已收口；下一代码批次为 reply 4 条与仍被 UniApp 调用的社区合同。PUBLIC-ARTICLE 因生产内容与媒体均为空、切流/热点写策略和真实端 E2E 未完成而保持父项未勾选；USER-CENTER-COMPAT 同样继续等待源数据、默认地址/收藏跨栈门禁、签到提醒投递、真实 token 流程和发布证据。签到唯一性门禁已关闭，但仍建议单运行时/统一锁序。主 Worker 仍是旧版本，未发布本批代码。
 
+## PRODUCT-REPLY-DETAIL 迁移审计（2026-08-30）
+
+### 四条 PHP 权威合同与静态审计盲区
+
+本批以 `cinashop-php/route/api.php`、`StoreProductReply` controller、`StoreProductReplyServices::getReplyInfo()`、`StoreProductReplyCommentServices`、DAO/model，以及旧 UniApp `goods_comment_con/comment_con.vue` 和 `api/store.js` 为权威，范围固定为四条强制登录合同：`POST /api/reply/comment/:id` 发布评价回复、`GET /api/reply/info/:id` 读取评价详情、`POST /api/reply/praise/:id` 点赞评价回复、`POST /api/reply/un_praise/:id` 取消评价回复点赞。公开可选登录的 `GET /api/reply/comment/:id` 已在此前批次存在，属于详情页依赖但不计入四条新增范围。
+
+审计起点并不是简单的 4/4 缺失：其中三条 exact missing，`POST reply/praise/:id` 已被路由统计计为匹配，却错误连接 `ReplyController.praiseReply()`，实际按 `category=reply` 给评价主体点赞；旧端传入的却是 `store_product_reply_comment.id`，PHP 权威语义为 `category=comment`。因此旧静态统计会把一条不可互换的实现误判为已迁移。评价主体点赞的真实路径一直是 `reply/reply_praise/:id` 与 `reply/un_reply_praise/:id`；本批保留这两条，纠正 `reply/praise` 并补齐 `un_praise`，避免用路径存在代替行为等价。
+
+PHP 详情返回 `reply/product/user/star/is_praise`：评价字段为 snake_case，`add_time` 按 Asia/Shanghai 格式化到秒，`suk` 复制 `sku`，`comment_sum` 只统计根回复，`star` 只取商品分与服务分平均值并向下取整；详情最后用读改写增加 `views_num`。PHP 发布回复只检查非空，直接插入 UID、评价 ID、内容和时间；回复点赞先在事务外读/改计数，再分开写关系，重复取消还可能把计数减为负数。公开回复列表会带一层 `children`、用户、等级、SVIP 与 `is_praise`，平台 UID 0 使用站点名称和方形 Logo。新实现保留客户端可观察字段和一层子回复合同，不复制并发丢更新、负计数或隐藏内容泄露。
+
+### Worker 权限、事务和响应实现
+
+四条精确路径现全部经过 `authMiddleware({force:true})`；公开列表继续 optional auth，但读取前先确认父评价 `status=1 AND is_del=0`，隐藏、未审核或已删评价不再泄露回复。详情以 `withTx` 锁定可见评价，使用原子 `views_num + 1`，返回值仍保留 PHP 的“增加前浏览量”观察时点；商品只投影旧四字段，用户只投影昵称、头像、等级和会员判断所需字段。图片 JSON、匿名昵称、等级开关、付费会员有效期、根回复计数、评价点赞关系、Asia/Shanghai 时间和 PHP 的两分平均星级均有显式映射；详情、回复列表和三条回复写响应均显式 `private, no-store`。
+
+发布回复在读 body 前限制为 4 KiB，内容先 trim，再以 Unicode code point 而非 UTF-16 code unit 限 1,000 字符，并拒绝 NUL 和不安全 C0/DEL 控制字符；同一事务锁定可见父评价、确认用户仍启用后插入根回复及用户快照。回复点赞/取消点赞锁定回复并同时验证父评价可见，关系固定为 `type=like/category=comment`；添加使用现有 `type <> 'play'` 四列部分唯一索引幂等冲突目标，取消不存在关系也稳定成功，随后从关系表 `COUNT(*)` 重算回复 `praise`，计数不会为负。评价主体原 `category=reply` 状态机和兼容路径不变。
+
+这改善了单 Worker 并发与重试，但不能神化成 PHP/Worker双写完全线性一致：旧 PHP没有相同行锁顺序和计数重算，在混合写流量下仍可能覆盖计数。正式切流前应选择回复/点赞单写运行时，或给旧 PHP补同一事务/锁序并建立持续对账；这一项继续作为发布门禁。
+
+### 新 UniApp 详情闭环与既有字段漂移修复
+
+`view/uniapp-ts` 新增类型化 `api/reply.ts` 和可到达的 `pages/goods/commentDetail`，覆盖详情、列表、回复发布、回复点赞/取消和评价点赞/取消。页面登录后并行加载详情与回复，显示商品、评价用户、等级/SVIP、星级、规格、图片、浏览/点赞/回复数，一层商家子回复，支持发布和两层点赞。写请求失败前不改变本地计数；评价级点赞在成功后更新，回复级点赞在成功后重新读取服务器权威列表。
+
+同时修复此前新客户端的静默字段错误：商品详情与评价列表一直把服务端 `product_score/add_time` 当作 `productScore/addTime` 读取，导致星级回退默认值、时间格式无效。本批移除相关 `any/unknown` 读取，统一使用类型化 snake_case，并让两个评价入口都能进入详情页。UniApp `vue-tsc`、H5 和微信小程序生产构建均通过；尚未用真实 token、真机或旧 PHP golden response完成远端 E2E。
+
+### 生产 Hyperdrive 只读数据事实
+
+用户授权直接使用生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 后，一次性审计 Worker 采用两枚不同 Bearer 的 SHA-256 摘要、timing-safe 比较和 POST-only 端点。只读阶段固定 `REPEATABLE READ, READ ONLY`、`search_path=public,pg_temp`、短锁/语句超时，并验证未限定 `store_product_reply` 实际解析到 `public`。响应只返回聚合、缺表和索引状态，不返回评价内容、昵称、URL、UID、业务 ID、配置值或表指纹。
+
+生产 PostgreSQL 为 16.14，`store_product/store_product_reply/store_product_reply_comment/user/user_relation/system_user_level/system_config` 7/7 表存在，审计前临时 schema 为 0。评价只有 2 条且均为 `status=1,is_del=0`；负点赞、负浏览、商品孤儿和评价点赞计数漂移均为 0，但两条评价的用户 owner 全部不存在。回复表为 0 行，评价点赞与回复点赞关系也均为 0，所以生产没有任何可用于回复发布/点赞的正向交互样本。四个显示配置键只存在 3 个；结合此前已经列出的生产配置可确定缺的是 `site_logo_square`。`user_relation` 非 play 部分唯一索引有效，回复评论表有 3 个索引；本批没有在 `public` 执行任何 DDL 或数据修复。
+
+两条 owner 孤儿意味着详情仍能使用评价快照展示昵称/头像，但 `user.level_name/vip_status` 没有真实用户来源，也无法用现有生产 token访问这两条历史评价。不能凭空把评价 UID映射到当前 3 个用户，更不能为了构造 E2E向生产写合成回复或点赞；必须取得源 MySQL身份/回复/关系证据后受控映射。
+
+### 随机 schema 真实 service、并发和清理证据
+
+写验证仅发生在同一生产 PostgreSQL 的随机 `codex_product_reply_*` schema。场景取得单飞 advisory lock，失败关闭地确认七张表各自唯一 serial 主键列，克隆 `LIKE public ... INCLUDING ALL` 后为全部序列重绑定随机 schema；每个顶层事务把随机 schema 放在 `pg_temp` 前，并以 `current_schema()` 和 `to_regclass('store_product_reply')` 证明未逃回 public。场景直接调用真实 `ReplyService`，不是 SQL 替身。
+
+最终 12/12 断言通过：旧详情形状、原子浏览量、隐藏父评价失败关闭、根/子回复列表与会员/平台装饰、回复发布、空白/控制字符/1,001 个 Unicode 字符拒绝、回复点赞重复添加幂等、双连接并发点赞收敛、重复取消非负、关系触发器故障全回滚、search path 隔离，以及 public 全行/序列前后指纹相同。七张 public 表在只读快照中以行数、最大键和全部列聚合摘要取指纹，相关 public 序列另取状态；随机 schema 在 `finally` 删除，临时 schema `0→0`。
+
+第一轮两个独立 `secret put` 经 PowerShell管道写入了不可用哈希格式，双令牌门禁在数据库访问前返回 `audit unavailable`；改为一次 `secret bulk` 后只读审计成功。隔离场景首次把两个预期失败的 nested transaction 并发复用同一连接，导致 harness 的 `rollback_atomic` 假失败；schema 已先删除，日志明确 public 未变，改为串行验证两个失败目标后最终 12/12。一次性 `cinashop-product-reply-detail-audit` Worker、路由和 Secret随后删除；主生产 Worker仍为 100% `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有部署应用 Worker或 Pages。
+
+### 路由量化、仓库验证和剩余门禁
+
+三条新增 exact route注册后，全域静态审计为 PHP 1,904、TS 1,422、精确匹配 724、可执行匹配 706、明确不可用 18、原始缺失 1,180、证据化退役 4、可执行缺口 1,176，精确/可执行/退役后有效覆盖为 `38.0%/37.1%/37.2%`。`/api` 为 PHP 457、TS 733、精确 342、可执行 339、不可用 3、原始缺失 115、退役 1、可执行缺口 114，覆盖为 `74.8%/74.2%/74.3%`。分子只增加 3 而不是 4，正是因为错误语义的 praise 路径此前已被静态统计计为匹配。
+
+最终仓库门禁为 Worker 双 TypeScript 配置通过、145/145 单元测试文件与 875/875 项通过，PRODUCT-REPLY-DETAIL 两个定向文件 14/14；主 Worker dry-run 为 4,754.29 KiB/gzip 899.17 KiB；UniApp 类型检查、H5 和微信小程序构建通过。Windows Workers runtime仍在 0 条断言前以 `workerd 0xc0000005` 启动失败，不能记为 runtime 通过，需在 Linux/兼容 CI补跑。
+
+本批代码、生产只读审计、随机 schema 和本地前端已收口，但父项不能完成：生产仅有 2 条 owner 孤儿评价，回复与两类点赞关系均为空，且缺方形站点 Logo；源用户、回复和关系数据尚未复制，PHP golden response、真实 token、旧端/新端、H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布及发布后观察全部未完成。下一代码批按 checklist 进入 API-008 门店/企业微信/内嵌 Admin，数据修复与发布门禁继续独立跟踪。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

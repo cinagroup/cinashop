@@ -11,9 +11,9 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 224 表；Worker 内嵌 224 表；表/列/主键漂移 0 | 完成 |
 | 生产目标结构 | 224/224 表；缺失 0、额外 0；系统配置查询索引、游客会话表和用户中心六索引已补齐/复验 | 完成 |
-| PHP HTTP 合同 | 精确匹配 721/1,904；可执行 703；其中 18 条明确不可用、4 条有证据退役 | 精确注册 37.9%，静态可执行上限 36.9%，退役后有效上限 37.0% |
+| PHP HTTP 合同 | 精确匹配 724/1,904；可执行 706；其中 18 条明确不可用、4 条有证据退役 | 精确注册 38.0%，静态可执行上限 37.1%，退役后有效上限 37.2% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 143/143 文件、861/861 项通过；PUBLIC-ARTICLE 定向 4 文件 22/22 | 本地业务回归与生产随机 schema 真实 service 场景通过 |
+| Worker 单元测试 | 145/145 文件、875/875 项通过；PRODUCT-REPLY-DETAIL 定向 2 文件 14/14 | 本地业务回归与生产随机 schema 真实 service 场景通过 |
 | Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
 | CI | 仓库没有 `.github/workflows` | 未建立 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
@@ -25,13 +25,13 @@
 
 | 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 精确/可执行/退役后有效覆盖 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 730 | 339 | 336 | 3 | 118 | 1 | 117 | 74.2% / 73.5% / 73.7% |
+| `/api` | 457 | 733 | 342 | 339 | 3 | 115 | 1 | 114 | 74.8% / 74.2% / 74.3% |
 | `/adminapi` | 1,153 | 470 | 202 | 187 | 15 | 951 | 0 | 951 | 17.5% / 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% / 43.4% |
 | `/kefuapi` | 63 | 66 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,419 | 721 | 703 | 18 | 1,183 | 4 | 1,179 | 37.9% / 36.9% / 37.0% |
+| 合计 | 1,904 | 1,422 | 724 | 706 | 18 | 1,180 | 4 | 1,176 | 38.0% / 37.1% / 37.2% |
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
@@ -62,6 +62,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - USER-CENTER-COMPAT 生产随机 schema 直接运行真实 service，地址 3/3、收藏 5/5、签到 5/5，共 13/13 通过；新增同一上海自然日不同秒的数据库唯一性断言，Worker 捕获 SQLSTATE `23505` 并稳定转换为“今日已签到”。每个顶层事务显式执行 `SET LOCAL search_path`，13 张 `public` 表的全行指纹前后不变，临时 schema 计数不变且最终删除，临时 Worker 已确认不存在。首轮因 Hyperdrive 未可靠保留 startup `search_path` 而失败，但安全清理且 `public` 无变化；修正 harness 后完整通过。
 - API-007-DIY-HOME-WIDGETS 生产只读复核确认 24 张主依赖表与 2 张装饰链支持表全部存在，临时 schema 为 0；`system_dise=0`，因此默认 DIY、悬浮窗和版本均没有真实内容。21 个配置键只存在 6 个：`site_url/site_name/member_card_status/sign_give_point/member_func_status/sign_status`，其中 `site_url/sign_give_point/sign_status` 有重复历史；审计没有返回任何配置值。用户 3/活跃 3、等级 3；用户券 4、当前可用 0、运行时已过期但状态仍未更新 2、券 owner 孤儿 3；用户关系 1 且 owner 孤儿 1，商品收藏计数漂移 1；签到 1 且 owner 孤儿 1，连续奖励规则 0；视频 0、新人商品 0、促销 0、有效 VIP 价格权益 0，71 个商品仍可返回三类各 3 条排行。真实 service 的八类响应结构全部通过，但空内容是 DATA 缺口，不是迁移完成。
 - 同一临时 Worker 使用前向外部 `0106`（原 `0105` 保持不变）将 `ur_uid_rel_type_cat_idx` 从旧全局四列唯一安全升级为 `type <> 'play'` 的部分唯一，非播放关系继续幂等、播放保持 append-only；USER-CENTER 六索引迁移在同一事务执行两遍，地址/关系/签到行数为 `5/1/1`，精确定义回读成功、DML=false、三张输入表全部列指纹不变。随后随机 schema 直接运行 8 个真实兼容方法，DIY/用户/视频/新人/排行/签到/悬浮窗共 28 项断言全部通过；24+2 张表和 25 条 public 序列前后指纹一致、25 个 identity/serial 绑定已隔离重建、外部序列依赖 0、临时 schema 删除。一次断言把显式 ID 回退误当无 ID请求、一次 fixture 受数据库会话时区影响，均在 public 指纹不变且 schema 清理后修正 harness；最终把 `pg_temp` 显式置后并固定 `SET LOCAL TIME ZONE 'UTC'` 后通过。临时 Worker及 Secret 已删除，URL 返回 404，主 Worker版本没有改变。
+- API-007-PRODUCT-REPLY-DETAIL 生产只读复核确认 7/7 依赖表存在、临时 schema 为 0。评价 2 条且均可见，负点赞/负浏览、商品孤儿和评价点赞计数漂移均为 0；但两条评价的 owner 均不存在。评价回复和评价/回复点赞关系均为 0，没有生产非空交互样本；4 个详情展示配置键只存在 3 个，结合既有配置审计可知缺 `site_logo_square`。随机 schema 直接运行真实 `ReplyService`，详情形状、浏览量、可见性、列表、发布、内容边界、点赞幂等/并发、取消幂等、触发器回滚、search path 与 public 指纹共 12/12 通过，临时 schema `0→0`；临时 Worker/Secret 已删除，主 Worker仍为旧版本。
 - 数据迁移控制表存在但运行记录为 0；源 MySQL 连接变量缺失，`npm run data:plan` 明确失败为 `SOURCE_MYSQL_URL is required`。
 - `system_config` 有 6 个重复键、20 条额外历史行；其中 `site_url` 曾同时出现示例值和实际 Pages 值，不能自动删除。
 
@@ -127,7 +128,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
     - [ ] **API-006-MARKETING-SHORT-VIDEO 9 条（核心代码、生产 DDL 与隔离验证已收口）**：精确补齐列表/详情/商品、评论发布/回复/删除、评论关系和视频点赞/收藏/分享，认证边界与 PHP 一致，所有响应 `private, no-store`。列表恢复审核可见性、三类排序、推荐模式专属过滤、商品数、站点/直播/用户关系字段和异步播放计数；封面、视频和头像支持 `/api/assets/:id` 私有签名，旧 HTTPS 引用原样兼容。评论限制 500 Unicode 字符、拒绝控制字符，不再为了兼容额外采集 IP/城市；回复必须属于同一视频并扁平到根评论，删除只允许本人。关系切换使用事务级 advisory lock、既有唯一键和非负计数，修复 PHP 检查后写入的并发漂移；推荐详情额外强制 `is_verify=1`，不复制 PHP 的未审核泄漏。PHP v3.1.1 运行时代码虽读写两表，但本地安装 SQL与同版官方数据字典均无 DDL，因此新增 `video/video_comment` 明确标为 Worker 兼容扩展，不加入 201 表共享数据 manifest。生产 DDL 两遍幂等后为 223 表/3,088 列/721 索引，新增两表 `18/17` 列、7 个含主键索引且均 0 行；随机 schema 12/12，五张业务表摘要不变，临时 schema `0→0`。仍不勾选：没有权威源表或源数据可复制，生产视频/评论均空，封面/视频尚无对象进入私有 R2，未以真实 token 跑旧 UniApp/真机/预发，主 Worker未发布。
   - [ ] **API-006-CHECKOUT 活动订单状态机（核心代码与生产隔离验证已收口，数据/发布门禁未过）**：旧加购别名和活动 SKU `unique` 现可映射到同 `suk` 的基础 SKU；秒杀/拼团使用活动 SKU 价格并校验 `once_num`、累计 `num`，事务内以 UID+活动 advisory lock 阻断不同 key 并发绕过；砍价同时接受活动 ID/参与记录 ID、兼容到最低价的 status 1/3，并按购买件数扣减。建单会同时守卫活动主表、活动 SKU、基础 SKU、基础商品四层库存，活动名称/图片/成本/赠送积分/运费/模板进入权威计算和快照；未支付取消及未发货退款对四层库存/销量/配额原子回补。所有营销订单静默忽略普通用户券，确认/计算接口也把券 ID 传给同源报价，确保普通订单预览与建单一致、营销订单券优惠稳定为 0；非 PC `offline` 在订单写入前失败，支付入口和事务内线下支付再做同一门禁。普通商品积分、实付返积分和分佣只结算 `type=0`，商品关联赠券仍覆盖营销订单，抽奖次数只排除线下及 `type=8`，均与 PHP 事件链一致。现有拼团未支付预留、支付激活、成团、超时失败、自动退款、发货门禁和退款重组选主状态机复核无回退。生产隔离场景证明活动 SKU 权威价格/快照、营销券未核销、H5 线下建单零副作用、三类取消恢复、同用户不同 key 累计限购、四层退款、支付取消竞态、回调幂等和补偿均通过；三个随机 schema 均删除且 `public` 全行/序列指纹不变。仍不勾选：生产只有 2 个 `type=0` SKU、没有 `type=1/2/3` SKU；秒杀 ID 7 为 `once_num=0,num=2`，拼团 ID 27 为 `once_num=0,num=0`；4 个未支付及 2 个已支付活动订单商品快照缺 `activitySku`。CHECKOUT-DATA 已证明这些旧单引用的活动主记录均已删除，并补齐严格拒付及只恢复现存层的取消/退款兼容；上线前仍须取得可信活动 SKU/限购配置、批准并实际取消 4 个未支付单，再做真实旧端、支付渠道、预发与发布验收。
   - [ ] **API-006-CHECKOUT-DATA（源可用性/恢复性审计与历史兼容已收口，运营数据和实际处置未完成）**：当前进程和两个仓库根目录均无源 MySQL连接，三个 SQL 文件不是业务整库备份。生产只读逐行确认六个旧快照只有 `{product,sku}`，`suk/unique` 均唯一指向基础 SKU，但没有活动 SKU ID/成本；4 个未支付单引用已删除秒杀 3、拼团 19、砍价参与记录 3→已删除活动 19，2 个已支付单引用已删除秒杀 6、砍价参与记录 4→已删除活动 26。历史购物车 `activity_id=0`，限购下界只属于已删除活动，不能推导当前 7/27 的配置。代码现阻止缺快照旧单进入任何支付资金路径；取消可恢复基础商品/SKU、购物车与砍价参与状态而不伪造已删除活动；已支付未发货退款同样只恢复现存基础层，正常新订单仍强制四层回补。生产 Hyperdrive 隔离验证拒付零资金副作用、取消状态证据、退款幂等和正常四层退款全部通过，schema 删除且公共指纹不变。仍不勾选：现存三项活动 SKU及限购需源数据或运营明确配置，4 单实际取消会改客户订单/库存且尚未获明确批准，2 个已支付单未自动发起退款，真实渠道/E2E/预发/发布均未完成。
-- [ ] **API-007 社区/内容/DIY**：article 7 精确合同/本地前端及 diy 8 服务端已收口但数据、媒体、真实端与发布未完成；继续补齐 reply 4 和仍被 UniApp 调用的社区合同，媒体统一走私有 R2。
+- [ ] **API-007 社区/内容/DIY**：article 7、product reply detail 4 精确合同/本地前端及 diy 8 服务端已收口，但数据、媒体、真实端与发布未完成；社区旧端长尾合同已在既有批次完成，媒体统一走私有 R2。
   - [ ] **API-007-PUBLIC-ARTICLE 7 条公开文章合同**：权威范围固定为 `category/list`、`list/:cid`、`like/:id`、`details/:id`、`hot/list`、`new/list`、`banner/list`；七条均为 `GET + StationOpen + optional auth`。分类和四种列表是只读，详情会增加浏览量，点赞是旧 GET 写合同。本批门禁如下：
     - [x] PHP route/controller/service/DAO/model、ThinkORM 分页、旧 UniApp、原 Worker/schema/manifest/Admin/公众号图文和五套 TS 前端均已逐条只读审计；审计起点确认 7/7 为 actionable exact missing，现已全部精确注册。现有 Admin 文章列表和 WeChat news bundle 不能冒充公开合同；旧第一方客户端实际使用 6 条，`new/list` 没有 wrapper，但仍是公开兼容面。
     - [x] 七条精确路径、`image_input` 逗号拆分（空串为 `[""]`）、上海时间、`cid=0`、公众号文章排除、四种列表不同字段集合、分类“热门”首项、正文 fallback、分类名、商品摘要、`is_like` 与 PHP 点赞成功/异常信封均已恢复；`page=0` 用 1,001 行哨兵保留不分页语义并拒绝超过 1,000 行，分页 limit/offset 在查询前限界。
@@ -136,6 +137,13 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
     - [x] 新 UniApp 已恢复类型化七接口 client、新闻列表/详情、首页入口和登录后点赞；正文不用 `v-html`，采用识别引号的保守 tag/attribute allowlist 后交给受限 `rich-text`，并为图片/表格生成跨端固定安全宽度。类型检查、H5/微信小程序构建和 390×844 mock API 验证通过；安全链接的跨端点击策略仍属于下项真实端门禁。
     - [ ] 旧正文 HTML 与 `image_input` 仍可能含历史外链；私有 R2 短时签名 URL不能持久化进正文或微信分享图。稳定媒体代理、服务端发布清洗、源附件迁移、PHP/Worker双写切流、历史 UID 0/孤儿关系清理，以及详情 visit 热点的限流/异步聚合决策尚未完成。
     - [ ] 生产文章/分类/正文/关系样本与媒体迁移、PHP golden response、真实 token、H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布及发布后观察尚需单独门禁；代码或隔离场景通过不能把本父项解释为线上完成。
+  - [ ] **API-007-PRODUCT-REPLY-DETAIL 4 条登录态评价详情/回复合同**：权威范围固定为 `POST reply/comment/:id`、`GET reply/info/:id`、`POST reply/praise/:id`、`POST reply/un_praise/:id`；四条均为强制登录。公开可选登录的 `GET reply/comment/:id` 已存在，不计入本批四条，但必须继续保持父评价可见性和回复隐私边界。本批门禁如下：
+    - [x] PHP route/controller/service/DAO/model、旧 UniApp 详情页、新 Worker/schema/路由和新 UniApp 逐条审计；确认 3 条 exact missing，另 1 条为更隐蔽的语义假匹配：现有 `POST reply/praise/:id` 错误调用评价级点赞，旧端实际传入 `store_product_reply_comment.id`。评价级 `reply_praise/un_reply_praise` 两条保持不变。
+    - [x] 已恢复旧详情 `reply/product/user/star/is_praise`、根回复列表字段、回复发布和回复点赞/取消点赞；详情和所有写操作拒绝已删除或未审核父评价，回复点赞拒绝已删除回复。请求体先限制为 4 KiB，回复按 Unicode code point 限 1,000 并拒绝危险控制字符。
+    - [x] 回复点赞关系固定为 `type=like/category=comment`，事务内锁定回复行并按部分唯一关系幂等写入/删除，再从关系表重算非负计数；不复制 PHP 检查后写入、取消不存在关系仍递减及 counter drift。详情浏览量使用原子 SQL，不复制 PHP 读改写丢更新。
+    - [x] 新 UniApp 已提供类型化 client 和可到达的评价详情页；商品详情/评价列表统一读取服务端 snake_case，评价级与回复级点赞调用各自兼容路径，只在请求成功后更新或重新加载计数。类型检查及 H5/微信小程序构建通过。
+    - [x] Worker 145/145 文件、875/875 项，PRODUCT-REPLY-DETAIL 定向 2 文件 14/14、双 TypeScript 配置、主 Worker dry-run（4,753.98 KiB/gzip 899.10 KiB）通过；生产 Hyperdrive 只读聚合和随机 schema 真实 service 12/12 通过，7 张 `public` 表及关联序列指纹不变，临时 schema/Worker/Secret 已清理。
+    - [ ] 生产仅有 2 条评价且 owner 孤儿 2、回复 0、两类点赞关系 0，无法形成 PHP golden response 或真实正向交互；需取得源用户/回复/关系数据并映射 owner，补 `site_logo_square`，再以真实 token 完成旧端/新端、H5/小程序/APP、预发和影子流量。主 Worker/Pages 发布仍需单独批准，因此本父项保持未勾选。
   - [ ] **API-007-DIY-HOME-WIDGETS 8 条首页组件合同（服务端与生产隔离闭环已收口，数据/前端/E2E/发布未完成）**：权威范围固定为公开 `get_diy/:id?`、`diy_version/:id?` 与可选登录 `user_info/video_list/newcomer_list/product_rank/sign/get_suspended`，整组必须先经过 `station_open` 门禁；缺失配置默认开放；已存在值按 PHP `json_decode` 真值判断，所有 PHP 假值及损坏 JSON 返回业务码 `410010`。公开分页在数据库查询前拒绝超过 10,000 的 OFFSET。本批发布门禁如下：
     - [x] PHP 控制器、service、旧 UniApp、当前 Worker 与五套 TS 前端逐条只读审计；确认 8/8 精确路由缺失，现有 v2 DIY、签到、短视频、新人和商品推荐只能复用底层能力，不能冒充旧首页包装合同。
     - [x] 发现并修复 Admin “DIY 装修”把 `content/value` 合并、更新时把 `type=1/3` 降为 `0`、不递增版本且可删除默认/启用页的生产数据破坏风险；强类型 DTO、不可变合同字段、独立内容列、事务行锁、版本/时钟及删除保护必须持续通过测试。
@@ -210,4 +218,4 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## 当前下一步
 
-`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；CORE-004 的扫码/OAuth 本地安全闭环、API-005 三端登录接入、KEFU-001 核心/前端、KEFU-002 安全游客协议、USER-CENTER-COMPAT 九条、DIY-HOME-WIDGETS 八条及 PUBLIC-ARTICLE 七条精确合同/本地 UniApp 接线已在代码侧收口，但相关父项继续等待数据、真实流程和发布。当前仓库/生产结构清单为 224/224；短视频两表和游客会话等 23 张表是 Worker 扩展，不冒充 PHP 安装 SQL 的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,419、精确匹配 721、可执行匹配 703、明确不可用 18、原始缺失 1,183、证据化退役 4、可执行缺口 1,179，覆盖为 37.9%/36.9%/37.0%；`/api` 为 PHP 457、TS 730、精确 339、可执行 336、不可用 3、原始缺失 118、退役 1、可执行缺口 117，覆盖为 74.2%/73.5%/73.7%。`/kefuapi` 仍为精确/可执行 60/63、3 条退役、`actionableMissing=0`，Out 为 41/41；`/api/v2` 与 `/api/pc` 精确缺口均为 0。生产 USER-CENTER-COMPAT 六索引已幂等复验，DIY 随机 schema 28 项 service 断言通过；PUBLIC-ARTICLE 生产只读审计与随机 schema 10/10 场景通过，但文章、分类、正文、公众号引用和点赞关系均为 0。城市目录为空、DIY/视频/新人/促销/文章内容为空、首页配置缺 15/21、5 个 distinct 孤儿 owner 和商品收藏计数/日志漂移仍需源 MySQL 映射与受控修复，主 Worker/Pages 未发布当前代码。下一实现批为 reply 4 条与仍被 UniApp 调用的社区合同。发布前还需完成城市/DIY/文章媒体数据、孤儿映射、计数/日志修复、防止 PHP 并行写再次漂移的切流/对账方案、文章详情 visit 热点限流或异步聚合决策、默认地址单运行时或先修 PHP 裸 ID 越权/非事务与统一“先清旧、再设新”锁序后再评估 partial unique、收藏跨栈计数竞态，以及 `sign_remind_time` 对应的定时扫描、消费与 `notice` 通知投递；签到仍建议单运行时/统一锁序。真实 token 与生产正向 E2E、活动装饰/水印细节、CHECKOUT-DATA、真实支付/微信、Linux runtime、预发、影子流量和正式发布仍受现有门禁约束，正式发布必须另行获得明确批准。
+`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；CORE-004 的扫码/OAuth 本地安全闭环、API-005 三端登录接入、KEFU-001 核心/前端、KEFU-002 安全游客协议、USER-CENTER-COMPAT 九条、DIY-HOME-WIDGETS 八条、PUBLIC-ARTICLE 七条及 PRODUCT-REPLY-DETAIL 四条精确合同/本地前端已在代码侧收口，但相关父项继续等待数据、真实流程和发布。当前仓库/生产结构清单为 224/224；短视频两表和游客会话等 23 张表是 Worker 扩展，不冒充 PHP 安装 SQL 的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,422、精确匹配 724、可执行匹配 706、明确不可用 18、原始缺失 1,180、证据化退役 4、可执行缺口 1,176，覆盖为 38.0%/37.1%/37.2%；`/api` 为 PHP 457、TS 733、精确 342、可执行 339、不可用 3、原始缺失 115、退役 1、可执行缺口 114，覆盖为 74.8%/74.2%/74.3%。`/kefuapi` 仍为精确/可执行 60/63、3 条退役、`actionableMissing=0`，Out 为 41/41；`/api/v2` 与 `/api/pc` 精确缺口均为 0。生产 USER-CENTER-COMPAT 六索引已幂等复验；DIY 28/28、PUBLIC-ARTICLE 10/10、PRODUCT-REPLY-DETAIL 12/12 随机 schema service 场景均通过。生产文章/分类/正文/公众号引用/文章点赞均为 0；PRODUCT-REPLY-DETAIL 只有评价 2 条且 owner 孤儿 2，回复及两类点赞均为 0。城市目录、DIY/视频/新人/促销/文章内容、首页配置、孤儿 owner 和商品收藏计数/日志仍需源 MySQL 映射与受控修复，主 Worker/Pages 未发布当前代码。下一实现批按 checklist 进入 API-008 门店/企业微信/内嵌 Admin；发布前仍需完成上述数据/媒体/孤儿修复、防止 PHP 并行写再次漂移的切流/对账、文章 visit 热点策略、默认地址单运行时或修 PHP 后再评估唯一约束、收藏跨栈竞态，以及签到提醒定时投递。真实 token、正向 E2E、活动装饰/水印、CHECKOUT-DATA、真实支付/微信、Linux runtime、预发、影子流量和正式发布仍受现有门禁约束，正式发布必须另行获得明确批准。

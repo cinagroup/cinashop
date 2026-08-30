@@ -4,14 +4,17 @@
  * 对应原版端点:
  *   - GET  /reply/config/:productId  评价统计
  *   - GET  /reply/list/:productId    评价列表
+ *   - GET  /reply/info/:id           评价详情
+ *   - POST /reply/comment/:id        回复评价
  *   - POST /reply/submit             提交评价
- *   - POST /reply/praise/:id         评价点赞
+ *   - POST /reply/praise/:id         回复点赞
  */
 import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { ReplyService } from "@/services/product/ReplyService";
 import type { AppVariables, Env } from "@/env";
+import { readBoundedJsonObject } from "@/utils/request-body";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -43,6 +46,7 @@ export async function replyList(c: C) {
 
 /** GET /reply/comment/:id — public nested replies for a product review. */
 export async function commentList(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const replyId = Number(c.req.param("id") ?? "0");
   if (!Number.isSafeInteger(replyId) || replyId <= 0) return jsonFail(c, "缺少参数");
   const q = c.req.query();
@@ -52,6 +56,28 @@ export async function commentList(c: C) {
     Number(q.limit ?? 10),
     c.get("uid") ?? 0,
   ));
+}
+
+/** GET /reply/info/:id — authenticated product-review detail. */
+export async function replyInfo(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const id = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少参数");
+  return jsonOk(c, await new ReplyService(c.get("container")).replyInfo(id, uid));
+}
+
+/** POST /reply/comment/:id — add a root reply to a visible product review. */
+export async function replyComment(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const id = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少参数");
+  const body = await readBoundedJsonObject(c.req.raw, 4 * 1024);
+  await new ReplyService(c.get("container")).replyComment(uid, id, body.content);
+  return jsonOk(c, null, "回复成功");
 }
 
 /** POST /reply/submit — 提交评价 (订单完成后) */
@@ -91,7 +117,7 @@ export async function submitReply(c: C) {
   }
 }
 
-/** POST /reply/praise/:id — 评价点赞 */
+/** POST /reply/reply_praise/:id — 评价点赞 */
 export async function praiseReply(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
@@ -99,6 +125,28 @@ export async function praiseReply(c: C) {
   if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "参数错误");
   const svc = new ReplyService(c.get("container"));
   return jsonOk(c, await svc.praise(uid, id));
+}
+
+/** POST /reply/praise/:id — 回复评论点赞 (PHP category=comment). */
+export async function praiseComment(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const id = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少参数");
+  await new ReplyService(c.get("container")).praiseComment(uid, id);
+  return jsonOk(c, null, "点赞成功");
+}
+
+/** POST /reply/un_praise/:id — 取消回复评论点赞. */
+export async function unpraiseComment(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  const id = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "缺少参数");
+  await new ReplyService(c.get("container")).unpraiseComment(uid, id);
+  return jsonOk(c, null, "取消点赞成功");
 }
 
 /** POST /reply/un_reply_praise/:id — 取消评价点赞 */

@@ -273,6 +273,12 @@
       }
     },
     {
+      "path": "pages/goods/commentDetail",
+      "style": {
+        "navigationBarTitleText": "评价详情"
+      }
+    },
+    {
       "path": "pages/activity/index",
       "style": {
         "navigationBarTitleText": "营销活动"

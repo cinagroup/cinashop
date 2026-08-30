@@ -668,8 +668,11 @@ v1Routes.post("/store_integral/order/del", authMiddleware({ force: true }), Orde
 v1Routes.get("/reply/config/:productId", authMiddleware({ force: false }), ReplyController.replyConfig);
 v1Routes.get("/reply/list/:productId", authMiddleware({ force: false }), ReplyController.replyList);
 v1Routes.get("/reply/comment/:id", authMiddleware({ force: false }), ReplyController.commentList);
+v1Routes.get("/reply/info/:id", authMiddleware({ force: true }), ReplyController.replyInfo);
+v1Routes.post("/reply/comment/:id", authMiddleware({ force: true }), ReplyController.replyComment);
 v1Routes.post("/reply/submit", authMiddleware({ force: true }), ReplyController.submitReply);
-v1Routes.post("/reply/praise/:id", authMiddleware({ force: true }), ReplyController.praiseReply);
+v1Routes.post("/reply/praise/:id", authMiddleware({ force: true }), ReplyController.praiseComment);
+v1Routes.post("/reply/un_praise/:id", authMiddleware({ force: true }), ReplyController.unpraiseComment);
 v1Routes.post("/reply/unpraise/:id", authMiddleware({ force: true }), ReplyController.unpraiseReply);
 // PHP 兼容端点：旧商城提交评价与点赞路由可无感切换。
 v1Routes.post("/order/comment", authMiddleware({ force: true }), ReplyController.submitReply);
