@@ -136,11 +136,17 @@ function extractIdentifiers(input: string): string[] {
 
 export function parseCreateTables(sql: string, dialect: SqlDialect): Map<string, ParsedTable> {
   const tables = new Map<string, ParsedTable>();
-  const createPattern = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([`"])([^`"]+)\1\s*\(/gi;
+  // Most repository DDL uses quoted table names. Hardened migrations may bind
+  // the captured current schema through PostgreSQL format('%I', ...), leaving
+  // the table name itself as a static unquoted identifier in the format body.
+  // Recognize that narrow dynamic form as well without treating arbitrary
+  // unquoted prose or runtime-built identifiers as auditable schema.
+  const createPattern =
+    /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([`"])([^`"]+)\1|%I\.([a-z_][a-z0-9_]*))\s*\(/gi;
   let match: RegExpExecArray | null;
 
   while ((match = createPattern.exec(sql)) !== null) {
-    const rawName = match[2];
+    const rawName = match[2] ?? match[3];
     const name = dialect === "mysql" ? rawName : rawName.toLowerCase();
     const openIndex = createPattern.lastIndex - 1;
     const closeIndex = findClosingParen(sql, openIndex);
@@ -149,17 +155,7 @@ export function parseCreateTables(sql: string, dialect: SqlDialect): Map<string,
     let tablePrimaryKey: string[] = [];
 
     for (const segment of splitTopLevel(body)) {
-      const columnMatch = segment.match(/^\s*[`"]([^`"]+)[`"]\s+([\s\S]+)$/);
-      if (columnMatch) {
-        const columnName = columnMatch[1].toLowerCase();
-        const definition = columnMatch[2].trim();
-        const primaryKey = /\bPRIMARY\s+KEY\b/i.test(definition);
-        columns.set(columnName, { name: columnName, definition, primaryKey });
-        if (primaryKey) tablePrimaryKey.push(columnName);
-        continue;
-      }
-
-      if (/^\s*(?:CONSTRAINT\s+[`"][^`"]+[`"]\s+)?PRIMARY\s+KEY\b/i.test(segment)) {
+      if (/^\s*(?:CONSTRAINT\s+[`"]?[^\s`"]+[`"]?\s+)?PRIMARY\s+KEY\b/i.test(segment)) {
         const opening = segment.indexOf("(");
         const closing = segment.lastIndexOf(")");
         if (opening >= 0 && closing > opening) {
@@ -167,6 +163,27 @@ export function parseCreateTables(sql: string, dialect: SqlDialect): Map<string,
             value.toLowerCase(),
           );
         }
+        continue;
+      }
+
+      const quotedColumnMatch = segment.match(/^\s*[`"]([^`"]+)[`"]\s+([\s\S]+)$/);
+      const barePostgresColumnMatch = dialect === "postgres"
+        ? segment.match(/^\s*([a-z_][a-z0-9_]*)\s+([\s\S]+)$/i)
+        : null;
+      const columnName = (quotedColumnMatch?.[1] ?? barePostgresColumnMatch?.[1])?.toLowerCase();
+      const definition = quotedColumnMatch?.[2] ?? barePostgresColumnMatch?.[2];
+      if (columnName && definition) {
+        if (
+          barePostgresColumnMatch &&
+          ["check", "constraint", "exclude", "foreign", "like", "unique"].includes(columnName)
+        ) {
+          continue;
+        }
+        const normalizedDefinition = definition.trim();
+        const primaryKey = /\bPRIMARY\s+KEY\b/i.test(normalizedDefinition);
+        columns.set(columnName, { name: columnName, definition: normalizedDefinition, primaryKey });
+        if (primaryKey) tablePrimaryKey.push(columnName);
+        continue;
       }
     }
 

@@ -119,6 +119,28 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect([...tables.get("orders")!.columns.keys()]).toEqual(["id", "status", "memo"]);
   });
 
+  it("parses current-schema format DDL with static PostgreSQL table and column identifiers", () => {
+    const tables = parseCreateTables(
+      `
+      EXECUTE format($ddl$
+        CREATE TABLE IF NOT EXISTS %I.work_department_current (
+          corp_id varchar(18) NOT NULL,
+          department_id integer NOT NULL,
+          profile_complete boolean NOT NULL DEFAULT false
+        )
+      $ddl$, target_schema);
+      `,
+      "postgres",
+    );
+
+    expect([...tables.keys()]).toEqual(["work_department_current"]);
+    expect([...tables.get("work_department_current")!.columns.keys()]).toEqual([
+      "corp_id",
+      "department_id",
+      "profile_complete",
+    ]);
+  });
+
   it("keeps the first duplicate CREATE definition because IF NOT EXISTS does not add columns", () => {
     const tables = parseCreateTables(
       `
@@ -163,12 +185,23 @@ describe("MySQL to PostgreSQL schema audit", () => {
       sql: readFileSync(resolve(migrationsDirectory, name), "utf8"),
     }));
     const externalTargetSql = migrationSources.map(({ sql }) => sql).join("\n");
-    const embeddedTargetSql = readFileSync("src/services/MigrationService.ts", "utf8");
+    const embeddedMigrationsDirectory = resolve(import.meta.dirname, "../src/migrations");
+    const embeddedMigrationSources = readdirSync(embeddedMigrationsDirectory)
+      .filter((name) => name.endsWith(".ts"))
+      .sort()
+      .map((name) => ({
+        name,
+        sql: readFileSync(resolve(embeddedMigrationsDirectory, name), "utf8"),
+      }));
+    const embeddedTargetSql = [
+      readFileSync("src/services/MigrationService.ts", "utf8"),
+      ...embeddedMigrationSources.map(({ sql }) => sql),
+    ].join("\n");
     const report = buildSchemaAudit(sourceSql, externalTargetSql);
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
 
     expect(report.sourceTableCount).toBe(201);
-    expect(report.targetTableCount).toBe(231);
+    expect(report.targetTableCount).toBe(234);
     expect(report.sharedTableCount).toBe(201);
     expect(report.sourceColumnCompleteTableCount).toBe(201);
     expect(report.sourceColumnGapTableCount).toBe(0);
@@ -200,6 +233,9 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "work_callback_event",
       "work_callback_outbox",
       "work_callback_watermark",
+      "work_department_current",
+      "work_department_leader_current",
+      "work_department_projection_fence",
       "work_member_current",
       "work_member_identity_alias",
       "work_member_other_current",
@@ -209,8 +245,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
       report.sharedTables.map((table) => table.table).sort(),
     );
     expect(definitionDrift).toEqual({
-      externalTableCount: 231,
-      workerTableCount: 231,
+      externalTableCount: 234,
+      workerTableCount: 234,
       externalOnlyTables: [],
       workerOnlyTables: [],
       columnDrift: [],
@@ -312,9 +348,10 @@ describe("MySQL to PostgreSQL schema audit", () => {
     ).toEqual(["is_del", "status"]);
 
     expect(findAlterBeforeCreate(migrationSources)).toEqual([]);
-    expect(findAlterBeforeCreate([{ name: "MigrationService.ts", sql: embeddedTargetSql }])).toEqual(
-      [],
-    );
+    expect(findAlterBeforeCreate([
+      { name: "MigrationService.ts", sql: readFileSync("src/services/MigrationService.ts", "utf8") },
+      ...embeddedMigrationSources,
+    ])).toEqual([]);
   });
 });
 

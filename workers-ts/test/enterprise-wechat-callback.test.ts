@@ -268,7 +268,35 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     expect(service).toContain("workCallbackProjectionStateMigrationSqlForVerification");
     expect(service).toContain("workMemberCurrentProjectionMigrationSqlForVerification");
     expect(service).toContain("workMemberResolvedRenameFenceMigrationSqlForVerification");
+    expect(service).toContain("workDepartmentCurrentProjectionMigrationSqlForVerification");
+    expect(service).toContain("this.migration_0120()");
     expect(service).toContain('if (i < 115 && msg.includes("already exists"))');
+
+    const departmentProjectionMigration = readFileSync(
+      "migrations/0114_work_department_current_projection.sql",
+      "utf8",
+    );
+    expect(new MigrationService({} as never)
+      .workDepartmentCurrentProjectionMigrationSqlForVerification())
+      .toBe(departmentProjectionMigration);
+    expect((departmentProjectionMigration.match(/^\s*CREATE TABLE IF NOT EXISTS/gm) ?? []))
+      .toHaveLength(3);
+    expect(departmentProjectionMigration).toContain("wce_department_ref_uq");
+    expect(departmentProjectionMigration).toContain("wdc_last_event_fk");
+    expect(departmentProjectionMigration).toContain("wdpf_last_event_fk");
+    expect(departmentProjectionMigration).toContain("ON DELETE RESTRICT");
+    expect(departmentProjectionMigration).toContain("sort_order DESC");
+    expect(departmentProjectionMigration).toContain(
+      "x.indoption::text=expected_record.key_options",
+    );
+    expect(departmentProjectionMigration).toContain(
+      "ARRAY['corp_id','parent_department_id','sort_order','department_id']::text[],'0 0 3 0'",
+    );
+    expect(departmentProjectionMigration).toContain("indnullsnotdistinct");
+    expect(departmentProjectionMigration).toContain("unexpected constraint set");
+    expect(departmentProjectionMigration).not.toMatch(
+      /\b(?:INSERT\s+INTO|UPDATE\s+work_department|DELETE\s+FROM|DROP\s+TABLE)\b/i,
+    );
 
     const projectionMigration = readFileSync(
       "migrations/0111_work_callback_projection_state.sql",
@@ -481,11 +509,17 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     expect(configMethod).toContain('EnterpriseWechatCallbackError("callback_corp_id_unconfigured", "configuration")');
     expect(service).toContain('WECHAT_WORK_DIRECTORY_FULL_VISIBILITY !== "verified"');
     expect(service).toContain("WECHAT_WORK_MEMBER_CURRENT_AUTHORITY");
+    expect(service).toContain("WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY");
     expect(service).toContain('event.changeType === "delete_user"');
+    expect(service).toContain('event.changeType === "delete_party"');
     expect(service).toContain('const MEMBER_PROJECTION_DISABLED = "member_projection_disabled"');
+    expect(service).toContain('const DEPARTMENT_PROJECTION_DISABLED = "department_projection_disabled"');
     expect(service).toContain("recordParkedMemberProjectionSeen(tx, row, now)");
+    expect(service).toContain("recordDepartmentProjectionSeen(tx, row, now)");
     expect(service).toContain("ne(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)");
     expect(service).toContain("eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)");
+    expect(service).toContain("ne(workCallbackOutbox.lastErrorCode, DEPARTMENT_PROJECTION_DISABLED)");
+    expect(service).toContain("eq(workCallbackOutbox.lastErrorCode, DEPARTMENT_PROJECTION_DISABLED)");
     const disabledMemberClaim = service.indexOf(
       "if (isMemberProjectionEvent(row) && !this.memberCurrentProjectionEnabled(row))",
     );
@@ -494,6 +528,11 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     );
     expect(disabledMemberClaim).toBeGreaterThan(-1);
     expect(failedBackoff).toBeGreaterThan(disabledMemberClaim);
+    const disabledDepartmentClaim = service.indexOf(
+      "if (isDepartmentProjectionEvent(row) && !this.departmentCurrentProjectionEnabled(row))",
+    );
+    expect(disabledDepartmentClaim).toBeGreaterThan(disabledMemberClaim);
+    expect(failedBackoff).toBeGreaterThan(disabledDepartmentClaim);
     expect(service).not.toContain("cron dispatch will enqueue it again without exhausting");
     expect(service).toContain('return { kind: "parked" as const }');
     expect(service).toContain('"configuration", "directory_visibility_gate"');

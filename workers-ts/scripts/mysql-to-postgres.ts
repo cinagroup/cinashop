@@ -107,7 +107,26 @@ async function readSchemaFiles(): Promise<{
   const embeddedSourcePath =
     process.env.TARGET_EMBEDDED_MIGRATION_SOURCE ??
     resolve(import.meta.dirname, "../src/services/MigrationService.ts");
-  const embeddedTargetSql = await readFile(embeddedSourcePath, "utf8");
+  const embeddedSources = [await readFile(embeddedSourcePath, "utf8")];
+  // MigrationService may import exact SQL constants from src/migrations to
+  // keep very large verified statements out of the service body. Include all
+  // local migration modules in the default repository audit so those imports
+  // cannot silently disappear from external/Worker parity accounting. An
+  // explicit override remains a self-contained source supplied by the caller.
+  if (!process.env.TARGET_EMBEDDED_MIGRATION_SOURCE) {
+    const embeddedMigrationsDirectory = resolve(import.meta.dirname, "../src/migrations");
+    const embeddedMigrationFiles = (await readdir(embeddedMigrationsDirectory))
+      .filter((name) => name.endsWith(".ts"))
+      .sort();
+    embeddedSources.push(
+      ...(await Promise.all(
+        embeddedMigrationFiles.map((name) =>
+          readFile(resolve(embeddedMigrationsDirectory, name), "utf8"),
+        ),
+      )),
+    );
+  }
+  const embeddedTargetSql = embeddedSources.join("\n");
   return {
     sourceSql: await readFile(sourcePath, "utf8"),
     externalTargetSql,

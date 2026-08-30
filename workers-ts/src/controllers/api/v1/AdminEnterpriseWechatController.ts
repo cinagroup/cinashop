@@ -6,7 +6,7 @@ import { jsonOk, jsonRaw } from "@/utils/json";
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
 function service(c: C) {
-  return new EnterpriseWechatCatalogService(c.get("container"));
+  return new EnterpriseWechatCatalogService(c.get("container"), c.env);
 }
 
 export async function summary(c: C) { return jsonOk(c, await service(c).summary()); }

@@ -1,0 +1,30 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "cinashop-enterprise-wechat-department-current-audit",
+  "main": "EnterpriseWechatDepartmentCurrentAuditWorker.ts",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false
+  },
+  "limits": {
+    "cpu_ms": 300000
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "9748c294e21c49a99579c9cef70102e0"
+    }
+  ]
+
+  // Set all three hashes as Wrangler secrets before a temporary deployment;
+  // never add their values to this file:
+  //   npx wrangler secret put AUDIT_READ_TOKEN_SHA256 --config <this-file>
+  //   npx wrangler secret put AUDIT_MIGRATE_TOKEN_SHA256 --config <this-file>
+  //   npx wrangler secret put AUDIT_ISOLATED_TOKEN_SHA256 --config <this-file>
+}

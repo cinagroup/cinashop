@@ -12,6 +12,7 @@ import {
   jsonb,
   pgTable,
   serial,
+  unique,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -45,6 +46,14 @@ export const workCallbackEvent = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    unique("wce_department_ref_uq").on(
+      table.id,
+      table.corpId,
+      table.eventKey,
+      table.subjectKeyHash,
+      table.eventTime,
+      table.sequenceRank,
+    ),
     uniqueIndex("wce_event_key_uq").on(table.eventKey),
     index("wce_subject_order").on(
       table.subjectKeyHash,

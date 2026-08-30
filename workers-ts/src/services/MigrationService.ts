@@ -12,6 +12,7 @@ import {
   STORE_MOBILE_DELIVERY_INDEX_SQL,
   STORE_MOBILE_ORDER_REFUND_INDEX_SQL,
 } from "@/migrations/storeMobileCompatibility";
+import { WORK_DEPARTMENT_CURRENT_PROJECTION_SQL } from "@/migrations/workDepartmentCurrentProjection";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -129,6 +130,11 @@ export class MigrationService {
   /** Exact immutable resolved-rename edge fence DDL. */
   workMemberResolvedRenameFenceMigrationSqlForVerification(): string {
     return this.migration_0119();
+  }
+
+  /** Exact canonical Enterprise WeChat department projection DDL. */
+  workDepartmentCurrentProjectionMigrationSqlForVerification(): string {
+    return this.migration_0120();
   }
 
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
@@ -258,6 +264,7 @@ export class MigrationService {
       this.migration_0117(),
       this.migration_0118(),
       this.migration_0119(),
+      this.migration_0120(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8165,5 +8172,9 @@ $function$
 END
 $work_member_resolved_rename_fence$;
 `;
+  }
+
+  private migration_0120(): string {
+    return WORK_DEPARTMENT_CURRENT_PROJECTION_SQL;
   }
 }

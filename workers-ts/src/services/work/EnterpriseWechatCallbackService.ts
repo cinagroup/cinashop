@@ -52,12 +52,24 @@ import {
   recordParkedMemberProjectionSeen,
   recordMemberProjectionSeen,
 } from "@/services/work/EnterpriseWechatMemberCurrentService";
+import {
+  EnterpriseWechatDepartmentProjectionError,
+  isDepartmentProjectionEvent,
+  prepareDepartmentProjection,
+  type PreparedDepartmentProjection,
+} from "@/services/work/EnterpriseWechatDepartmentProjection";
+import {
+  applyDepartmentCurrentProjection,
+  lockDepartmentProjectionCorp,
+  recordDepartmentProjectionSeen,
+} from "@/services/work/EnterpriseWechatDepartmentCurrentService";
 
 const DISPATCH_LEASE_SECONDS = 120;
 const DELIVERY_LEASE_SECONDS = 600;
 const PROCESS_LEASE_SECONDS = 120;
 const MAX_ATTEMPTS = 8;
 const MEMBER_PROJECTION_DISABLED = "member_projection_disabled";
+const DEPARTMENT_PROJECTION_DISABLED = "department_projection_disabled";
 const MAX_DISPATCH_DRAIN_ITEMS = 100;
 
 export class EnterpriseWechatCallbackError extends Error {
@@ -113,12 +125,16 @@ export interface WorkCallbackEnvironment {
   WECHAT_WORK_DIRECTORY_SECRET?: string;
   WECHAT_WORK_DIRECTORY_FULL_VISIBILITY?: string;
   WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?: string;
   WECHAT_WORK_EXTERNAL_CONTACT_SECRET?: string;
   ORDER_QUEUE: Queue<OrderMessage>;
 }
 
-type DirectoryMemberProvider = Pick<EnterpriseWechatProviderClient, "directoryMember">;
-export type DirectoryMemberProviderFactory = (corpId: string) => DirectoryMemberProvider;
+type DirectoryProjectionProvider = Partial<Pick<
+  EnterpriseWechatProviderClient,
+  "directoryMember" | "directoryDepartment"
+>>;
+export type DirectoryMemberProviderFactory = (corpId: string) => DirectoryProjectionProvider;
 
 function isRecognizedEvent(event: Pick<ClaimedCallback, "msgType" | "eventType" | "changeType">): boolean {
   if (event.msgType !== "event") return false;
@@ -163,6 +179,7 @@ function retryDelay(attempt: number): number {
 function errorCode(error: unknown): string {
   if (error instanceof EnterpriseWechatCallbackError) return error.errorCode.slice(0, 64);
   if (error instanceof EnterpriseWechatMemberProjectionError) return error.errorCode.slice(0, 64);
+  if (error instanceof EnterpriseWechatDepartmentProjectionError) return error.errorCode.slice(0, 64);
   const candidate = error instanceof Error ? error.message : String(error);
   return /^[a-z0-9_:-]{1,64}$/i.test(candidate) ? candidate : "callback_processing_failed";
 }
@@ -328,15 +345,19 @@ export class EnterpriseWechatCallbackService {
     const bounded = Math.max(1, Math.min(Math.trunc(limit), 100));
     const now = Math.floor(Date.now() / 1000);
     const leaseToken = crypto.randomUUID();
-    const failedEligibility = this.memberCurrentAuthorityEnabled()
-      ? or(
-        lte(workCallbackOutbox.availableTime, now),
-        eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED),
-      )
-      : and(
+    const failedEligibility = or(
+      and(
         lte(workCallbackOutbox.availableTime, now),
         ne(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED),
-      );
+        ne(workCallbackOutbox.lastErrorCode, DEPARTMENT_PROJECTION_DISABLED),
+      ),
+      this.memberCurrentAuthorityEnabled()
+        ? eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)
+        : sql`false`,
+      this.departmentCurrentAuthorityEnabled()
+        ? eq(workCallbackOutbox.lastErrorCode, DEPARTMENT_PROJECTION_DISABLED)
+        : sql`false`,
+    );
     const eligible = or(
       and(
         eq(workCallbackOutbox.status, "PENDING"),
@@ -412,9 +433,9 @@ export class EnterpriseWechatCallbackService {
 
   /**
    * Drain a bounded number of durable outbox pages from one scheduled root job.
-   * Parked member rows are selected automatically only after the authority gate
-   * opens; the global item cap prevents one replay backlog from monopolizing a
-   * Worker invocation.
+   * Parked member/department rows are selected automatically only after their
+   * authority gate opens; the global item cap prevents one replay backlog from
+   * monopolizing a Worker invocation.
    */
   async dispatchPendingPages(
     pageSize = 20,
@@ -451,7 +472,10 @@ export class EnterpriseWechatCallbackService {
       claim = await this.claim(message);
     } catch (error) {
       if (
-        error instanceof EnterpriseWechatMemberProjectionError
+        (
+          error instanceof EnterpriseWechatMemberProjectionError
+          || error instanceof EnterpriseWechatDepartmentProjectionError
+        )
         && error.terminal
         && await this.recordClaimTerminalFailure(message, error)
       ) return "dead";
@@ -461,6 +485,7 @@ export class EnterpriseWechatCallbackService {
     try {
       let memberProjection: PreparedMemberProjection | undefined;
       let memberTargetSubjectKeyHash: string | undefined;
+      let departmentProjection: PreparedDepartmentProjection | undefined;
       if (isMemberProjectionEvent(claim)) {
         const identity = memberProjectionIdentity(claim);
         memberTargetSubjectKeyHash = await shaHex(
@@ -473,10 +498,24 @@ export class EnterpriseWechatCallbackService {
           claim,
           claim.changeType === "delete_user"
             ? undefined
-            : this.directoryProviderFactory(claim.corpId),
+            : this.directoryMemberProvider(claim.corpId),
+        );
+      } else if (isDepartmentProjectionEvent(claim)) {
+        // delete_party is callback-authoritative and remains independent from
+        // every provider credential and visibility gate.
+        departmentProjection = await prepareDepartmentProjection(
+          claim,
+          claim.changeType === "delete_party"
+            ? undefined
+            : this.directoryDepartmentProvider(claim.corpId),
         );
       }
-      return await this.applyOrdering(claim, memberProjection, memberTargetSubjectKeyHash);
+      return await this.applyOrdering(
+        claim,
+        memberProjection,
+        memberTargetSubjectKeyHash,
+        departmentProjection,
+      );
     } catch (error) {
       if (await this.recordFailure(claim, error)) return "dead";
       throw error;
@@ -584,6 +623,52 @@ export class EnterpriseWechatCallbackService {
         }
         return { kind: "parked" as const };
       }
+      if (isDepartmentProjectionEvent(row) && !this.departmentCurrentProjectionEnabled(row)) {
+        const seen = await recordDepartmentProjectionSeen(tx, row, now);
+        if (seen === "superseded") {
+          const completedEvents = await tx.update(workCallbackEvent).set({
+            status: "ORDERED",
+            projectionStatus: "SUPERSEDED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+          const completedOutboxes = await tx.update(workCallbackOutbox).set({
+            status: "COMPLETED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+          if (completedEvents.length !== 1 || completedOutboxes.length !== 1) {
+            throw new Error("callback_department_superseded_finalize_lost");
+          }
+          return "superseded";
+        }
+        const parkedOutboxes = await tx.update(workCallbackOutbox).set({
+          status: "FAILED",
+          leaseUntil: 0,
+          leaseToken: "",
+          availableTime: now + 900,
+          lastErrorCode: DEPARTMENT_PROJECTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+        const parkedEvents = await tx.update(workCallbackEvent).set({
+          status: "FAILED",
+          projectionStatus: "REFRESH_REQUIRED",
+          leaseUntil: 0,
+          leaseToken: "",
+          lastErrorCode: DEPARTMENT_PROJECTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+        if (parkedOutboxes.length !== 1 || parkedEvents.length !== 1) {
+          throw new Error("callback_department_park_lost");
+        }
+        return { kind: "parked" as const };
+      }
       if (row.outboxStatus === "FAILED" && row.outboxAvailableTime > now) {
         return {
           kind: "deferred" as const,
@@ -660,6 +745,31 @@ export class EnterpriseWechatCallbackService {
           }
           return "superseded";
         }
+      } else if (isDepartmentProjectionEvent(row)) {
+        const seen = await recordDepartmentProjectionSeen(tx, row, now);
+        if (seen === "superseded") {
+          const completedEvents = await tx.update(workCallbackEvent).set({
+            status: "ORDERED",
+            projectionStatus: "SUPERSEDED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+          const completedOutboxes = await tx.update(workCallbackOutbox).set({
+            status: "COMPLETED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+          if (completedEvents.length !== 1 || completedOutboxes.length !== 1) {
+            throw new Error("callback_department_superseded_finalize_lost");
+          }
+          return "superseded";
+        }
       }
 
       const processingOutboxes = await tx.update(workCallbackOutbox).set({
@@ -688,6 +798,7 @@ export class EnterpriseWechatCallbackService {
     claim: ClaimedCallback,
     memberProjection?: PreparedMemberProjection,
     memberTargetSubjectKeyHash?: string,
+    departmentProjection?: PreparedDepartmentProjection,
   ): Promise<"applied" | "applied-noop" | "refresh-required" | "ignored" | "superseded"> {
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
@@ -707,6 +818,7 @@ export class EnterpriseWechatCallbackService {
       }
 
       const memberEvent = isMemberProjectionEvent(claim);
+      const departmentEvent = isDepartmentProjectionEvent(claim);
       if (memberEvent && this.memberCurrentProjectionEnabled(claim)) {
         if (!memberProjection || !memberTargetSubjectKeyHash) {
           throw new Error("callback_member_projection_missing");
@@ -714,7 +826,14 @@ export class EnterpriseWechatCallbackService {
         // Lock identities before any subject watermark. Cross-subject rename
         // transactions therefore share one deterministic lock order.
         await lockMemberProjectionIdentities(tx, claim);
-      } else if (!memberEvent) {
+      } else if (departmentEvent && this.departmentCurrentProjectionEnabled(claim)) {
+        if (!departmentProjection) {
+          throw new Error("callback_department_projection_missing");
+        }
+        // Department hierarchy/root invariants are tenant-wide. Acquire this
+        // before generic watermarks so every C4 transaction has one lock order.
+        await lockDepartmentProjectionCorp(tx, claim.corpId);
+      } else if (!memberEvent && !departmentEvent) {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
       }
       const targetSubjectHash = memberEvent ? memberTargetSubjectKeyHash as string : undefined;
@@ -831,6 +950,20 @@ export class EnterpriseWechatCallbackService {
                 });
               }
             }
+          } else if (departmentEvent && departmentProjection) {
+            result = await applyDepartmentCurrentProjection(
+              tx,
+              claim,
+              departmentProjection,
+              now,
+            );
+            projectionStatus = result === "applied"
+              ? "APPLIED"
+              : result === "applied-noop"
+                ? "APPLIED_NOOP"
+                : result === "superseded"
+                  ? "SUPERSEDED"
+                  : "REFRESH_REQUIRED";
           }
         }
       }
@@ -905,6 +1038,51 @@ export class EnterpriseWechatCallbackService {
     return this.env.WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?.trim() === "verified";
   }
 
+  private departmentCurrentProjectionEnabled(
+    event: Pick<ClaimedCallback, "changeType">,
+  ): boolean {
+    return event.changeType === "delete_party"
+      || this.departmentCurrentAuthorityEnabled();
+  }
+
+  private departmentCurrentAuthorityEnabled(): boolean {
+    return this.env.WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?.trim() === "verified";
+  }
+
+  private directoryMemberProvider(
+    corpId: string,
+  ): Pick<EnterpriseWechatProviderClient, "directoryMember"> {
+    const provider = this.directoryProviderFactory(corpId);
+    if (typeof provider.directoryMember !== "function") {
+      throw new EnterpriseWechatProviderError(
+        "configuration",
+        "directory_provider_config",
+        -1,
+        0,
+      );
+    }
+    return {
+      directoryMember: provider.directoryMember.bind(provider),
+    };
+  }
+
+  private directoryDepartmentProvider(
+    corpId: string,
+  ): Pick<EnterpriseWechatProviderClient, "directoryDepartment"> {
+    const provider = this.directoryProviderFactory(corpId);
+    if (typeof provider.directoryDepartment !== "function") {
+      throw new EnterpriseWechatProviderError(
+        "configuration",
+        "directory_provider_config",
+        -1,
+        0,
+      );
+    }
+    return {
+      directoryDepartment: provider.directoryDepartment.bind(provider),
+    };
+  }
+
   /**
    * Claim/phase-1 failures must roll their transaction back completely before
    * a poison message is marked DEAD. This fresh transaction is fenced by the
@@ -912,7 +1090,7 @@ export class EnterpriseWechatCallbackService {
    */
   private async recordClaimTerminalFailure(
     message: WorkCallbackOutboxMessage,
-    error: EnterpriseWechatMemberProjectionError,
+    error: EnterpriseWechatMemberProjectionError | EnterpriseWechatDepartmentProjectionError,
   ): Promise<boolean> {
     const now = Math.floor(Date.now() / 1000);
     const code = errorCode(error);
@@ -994,6 +1172,8 @@ export class EnterpriseWechatCallbackService {
     const now = Math.floor(Date.now() / 1000);
     const terminal = error instanceof EnterpriseWechatMemberProjectionError
       ? error.terminal
+      : error instanceof EnterpriseWechatDepartmentProjectionError
+        ? error.terminal
       : error instanceof EnterpriseWechatProviderError && error.kind === "terminal";
     const dead = terminal || claim.attemptCount >= MAX_ATTEMPTS;
     const code = errorCode(error);

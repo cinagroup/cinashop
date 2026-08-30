@@ -7,13 +7,13 @@ import {
   ilike,
   isNull,
   or,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import type { Container } from "@/lib/di";
 import {
   workChannelCode,
   workClient,
-  workDepartment,
   workGroupChat,
   workGroupChatAuth,
   workGroupChatMember,
@@ -25,6 +25,7 @@ import {
   workMomentSendResult,
   workWelcome,
 } from "@/models/schema";
+import { MAX_DEPARTMENT_ANCESTOR_DEPTH } from "@/services/work/EnterpriseWechatDepartmentProjection";
 import { ValidateException } from "@/utils/errors";
 
 const MAX_LIMIT = 100;
@@ -119,8 +120,49 @@ function runtimeMeta() {
   };
 }
 
+interface DepartmentCatalogEnvironment {
+  WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?: string;
+}
+
+interface CurrentDepartmentCatalogRow {
+  corp_id: string;
+  department_id: number;
+  name: string;
+  name_en: string;
+  parent_department_id: number | null;
+  sort_order: number;
+  leader_count: number;
+  create_time: number;
+  update_time: number;
+}
+
+interface LegacyDepartmentCatalogRow {
+  blocked_current_rows: number;
+  id: number | null;
+  corp_id: string | null;
+  department_id: number | null;
+  name: string | null;
+  name_en: string | null;
+  department_leader: string | null;
+  parentid: number | null;
+  srot: number | null;
+  create_time: number | null;
+  update_time: number | null;
+}
+
+function currentDepartmentRuntimeMeta(authority: string) {
+  return {
+    catalog_authority: authority,
+    remote_write_authority: "not_migrated_requires_idempotent_outbox" as const,
+    pii_display: "masked" as const,
+  };
+}
+
 export class EnterpriseWechatCatalogService {
-  constructor(private readonly container: Container) {}
+  constructor(
+    private readonly container: Container,
+    private readonly env: DepartmentCatalogEnvironment = {},
+  ) {}
 
   async summary() {
     const [members, activeMembers, clients, groups, channels, templates, moments, pendingGroup, pendingMoment] =
@@ -150,26 +192,147 @@ export class EnterpriseWechatCatalogService {
 
   async departments(query: Record<string, string>) {
     const corpId = keyword(query.corp_id);
-    const conditions: SQL[] = [];
-    if (corpId) conditions.push(eq(workDepartment.corpId, corpId));
-    const rows = await this.container.db
-      .select()
-      .from(workDepartment)
-      .where(conditions.length ? and(...conditions) : undefined)
-      .orderBy(asc(workDepartment.parentid), asc(workDepartment.srot), asc(workDepartment.id))
-      .limit(MAX_TREE_ROWS);
+    const currentAuthority = this.env.WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?.trim()
+      === "verified";
+
+    if (currentAuthority) {
+      const corpScope = corpId
+        ? sql`AND current_row.corp_id = ${corpId}`
+        : sql``;
+      const raw = await this.container.db.execute(sql`
+        WITH RECURSIVE eligible AS (
+          SELECT current_row.*
+          FROM work_department_current AS current_row
+          INNER JOIN work_department_projection_fence AS fence
+            ON fence.corp_id = current_row.corp_id
+           AND fence.department_id = current_row.department_id
+           AND fence.last_event_id = current_row.last_event_id
+           AND fence.last_event_key = current_row.last_event_key
+           AND fence.last_event_subject_key_hash = current_row.last_event_subject_key_hash
+           AND fence.last_event_time = current_row.last_event_time
+           AND fence.last_sequence_rank = current_row.last_sequence_rank
+          INNER JOIN work_callback_event AS callback_event
+            ON callback_event.id = current_row.last_event_id
+           AND callback_event.corp_id = current_row.corp_id
+           AND callback_event.event_key = current_row.last_event_key
+           AND callback_event.subject_key_hash = current_row.last_event_subject_key_hash
+           AND callback_event.event_time = current_row.last_event_time
+           AND callback_event.sequence_rank = current_row.last_sequence_rank
+          WHERE current_row.lifecycle_state = 'ACTIVE'
+            AND current_row.profile_complete = true
+            ${corpScope}
+        ), visible AS (
+          SELECT root.*, ARRAY[root.department_id]::integer[] AS ancestor_path
+          FROM eligible AS root
+          WHERE root.parent_department_id IS NULL
+          UNION ALL
+          SELECT child.*, parent.ancestor_path || child.department_id
+          FROM visible AS parent
+          INNER JOIN eligible AS child
+            ON child.corp_id = parent.corp_id
+           AND child.parent_department_id = parent.department_id
+          WHERE NOT child.department_id = ANY(parent.ancestor_path)
+            AND cardinality(parent.ancestor_path) <= ${MAX_DEPARTMENT_ANCESTOR_DEPTH}
+        )
+        SELECT
+          visible.corp_id,
+          visible.department_id::integer,
+          visible.name,
+          visible.name_en,
+          visible.parent_department_id::integer,
+          visible.sort_order::double precision AS sort_order,
+          (
+            SELECT count(*)::integer
+            FROM work_department_leader_current AS leader
+            WHERE leader.corp_id = visible.corp_id
+              AND leader.department_id = visible.department_id
+          ) AS leader_count,
+          visible.create_time::integer,
+          visible.update_time::integer
+        FROM visible
+        ORDER BY
+          visible.corp_id,
+          visible.parent_department_id NULLS FIRST,
+          visible.sort_order DESC,
+          visible.department_id
+        LIMIT ${MAX_TREE_ROWS}
+      `);
+      const rows = Array.from(raw) as unknown as CurrentDepartmentCatalogRow[];
+      return {
+        list: rows.map((row) => ({
+          id: Number(row.department_id),
+          corp_id: maskIdentifier(row.corp_id),
+          department_id: Number(row.department_id),
+          name: row.name,
+          name_en: row.name_en,
+          parentid: row.parent_department_id ?? 0,
+          srot: Number(row.sort_order),
+          department_leader_count: Number(row.leader_count),
+          create_time: Number(row.create_time),
+          update_time: Number(row.update_time),
+        })),
+        count: rows.length,
+        truncated: rows.length === MAX_TREE_ROWS,
+        ...currentDepartmentRuntimeMeta("enterprise_wechat_department_current"),
+      };
+    }
+
+    // The authority-off decision and legacy rows must share one PostgreSQL
+    // statement snapshot. A separate COUNT followed by a legacy SELECT could
+    // leak stale legacy rows if the first current/tombstone commits between
+    // those statements.
+    const currentScope = corpId
+      ? sql`WHERE current_row.corp_id = ${corpId}`
+      : sql``;
+    const legacyScope = corpId
+      ? sql`AND legacy_row.corp_id = ${corpId}`
+      : sql``;
+    const rawFallback = await this.container.db.execute(sql`
+      WITH current_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS blocked_current_rows
+        FROM work_department_current AS current_row
+        ${currentScope}
+      ), legacy_rows AS MATERIALIZED (
+        SELECT legacy_row.*
+        FROM work_department AS legacy_row
+        CROSS JOIN current_state
+        WHERE current_state.blocked_current_rows = 0
+          ${legacyScope}
+        ORDER BY legacy_row.parentid, legacy_row.srot, legacy_row.id
+        LIMIT ${MAX_TREE_ROWS}
+      )
+      SELECT current_state.blocked_current_rows, legacy_rows.*
+      FROM current_state
+      LEFT JOIN legacy_rows ON true
+      ORDER BY legacy_rows.parentid NULLS FIRST, legacy_rows.srot, legacy_rows.id
+    `);
+    const fallbackRows = Array.from(rawFallback) as unknown as LegacyDepartmentCatalogRow[];
+    const blockedCurrentRows = Number(fallbackRows[0]?.blocked_current_rows ?? 0);
+    if (blockedCurrentRows > 0) {
+      return {
+        list: [],
+        count: 0,
+        truncated: false,
+        blocked_current_rows: blockedCurrentRows,
+        ...currentDepartmentRuntimeMeta("department_current_authority_disabled"),
+      };
+    }
+
+    const rows = fallbackRows.filter(
+      (row): row is LegacyDepartmentCatalogRow & { id: number } => row.id !== null,
+    );
     return {
       list: rows.map((row) => ({
         id: row.id,
-        corp_id: maskIdentifier(row.corpId),
-        department_id: row.departmentId,
-        name: row.name,
-        name_en: row.nameEn,
-        parentid: row.parentid,
-        srot: row.srot,
-        department_leader_count: parseStringList(row.departmentLeader).length,
-        create_time: row.createTime,
-        update_time: row.updateTime,
+        corp_id: maskIdentifier(row.corp_id ?? ""),
+        department_id: Number(row.department_id),
+        name: row.name ?? "",
+        name_en: row.name_en ?? "",
+        parentid: Number(row.parentid),
+        srot: Number(row.srot),
+        department_leader_count: parseStringList(row.department_leader).length,
+        create_time: Number(row.create_time),
+        update_time: Number(row.update_time),
       })),
       count: rows.length,
       truncated: rows.length === MAX_TREE_ROWS,
