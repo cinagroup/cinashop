@@ -2013,6 +2013,43 @@ PHP 详情返回 `reply/product/user/star/is_praise`：评价字段为 snake_cas
 
 本批代码、生产只读审计、随机 schema 和本地前端已收口，但父项不能完成：生产仅有 2 条 owner 孤儿评价，回复与两类点赞关系均为空，且缺方形站点 Logo；源用户、回复和关系数据尚未复制，PHP golden response、真实 token、旧端/新端、H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布及发布后观察全部未完成。下一代码批按 checklist 进入 API-008 门店/企业微信/内嵌 Admin，数据修复与发布门禁继续独立跟踪。
 
+## API-008 门店/企业微信/内嵌 Admin 详细迁移审计（STORE-A 子批次，2026-08-30）
+
+### PHP 权威合同、旧页面形状与本批边界
+
+API-008 静态起点已精确拆成 73 条可执行缺口：store 12、work 10、`/api/admin` 51。已有 `GET /api/store/list` 和 `POST /api/store/order/writeoff` 不计缺口。本批只关闭 STORE-A 六条：公开 `GET /api/store/category`，以及强制登录的 `GET /api/store/delivery/info|statistics|data|order|list`；剩余门店订单 6、企业微信 10、内嵌 Admin 51 继续保持未完成。
+
+审计以 `route/api.php`、`StoreDelivery`/`StoreOrder` controller、`DeliveryServiceServices`/`BranchOrderServices` 以及旧 UniApp `api/admin.js` 和 `pages/admin/distribution/index.vue` 为权威。旧配送首页需要 `info.avatar/nickname/phone/store_info`、统计 `unsend/send/send_price`、按日 `time/count/price` 和订单 `{data:{unsend,send},list}`；订单行继续提供订单号、收货信息、金额、数量、`cart_id` 以及 `_info[].cart_info.productInfo`。PHP 的按 UID 读取会任取一条活跃配送/店员身份，不能证明门店归属唯一；本批保留可观察响应形状，但不复制这种重复身份下的任意授权。
+
+### Worker 实现、安全边界与性能索引
+
+公开分类复用已有商品分类树并恢复 PHP 外层 `stationOpenMiddleware()`；审计同时发现既有 `store/list` 缺少同一营业开关，已一并修正。五条配送响应先经过站点开关和强制用户认证，并显式设置 `Cache-Control: private, no-store` 与 `Pragma: no-cache`。配送员读取只接受当前启用、未删除用户的活跃身份；请求指定门店时要求唯一 `type=1/relation_id=store_id` 关系且门店营业。配送员列表反向要求当前用户恰有一个活跃店员身份，再按该营业门店列活跃配送员；重复门店配送身份或重复店员身份均失败关闭。
+
+PHP 时间 token 由 Worker 明确按 Asia/Shanghai 解释，覆盖今日、昨日、近 7/30 天、本周/上周、本月/上月、本年/上年、季度和两个显式日期；显式跨度最多 366 天。分页每页最多 100、offset 最多 10,000。配送订单固定当前 `delivery_uid`、已支付、未删除且退款状态 0/3，类型 1/2 分别映射状态 2/9；商品快照一次批量读取，单快照最多 256 KiB，畸形或超限 JSON 只降级为安全投影，不返回原始 JSON，也没有 N+1 或第三方 `fetch`。
+
+原生产订单索引没有以 `delivery_uid` 为首列的路径，本批新增前向 `0107_store_mobile_delivery_index.sql` 与 schema 定义：`store_order(delivery_uid,status,add_time DESC,id DESC)`，局部谓词固定 `delivery_uid>0, paid=1, is_del=0, is_system_del=0, refund_status IN (0,3)`。迁移在 catalog 中校验表、btree、唯一/主键/约束/表达式/INCLUDE/有效性状态、四个键列和 `indoption=[0,0,3,3]`，并校验规范化谓词；同名异定义会失败关闭。生产首次建索引后的旧校验错误地期待 `pg_get_indexdef(index_oid,position,true)`返回 `DESC`，而 PostgreSQL 16 把方向编码在 `indoption`；实际索引一直有效，校验改为列名与 indoption 双证据后严格回读为 true。
+
+### 生产 Hyperdrive、随机 schema 与临时资源证据
+
+临时审计 Worker 仅绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。提交保留的审计入口使用三枚互异 Bearer 的 SHA-256 摘要、timing-safe 比较和 POST-only `/audit|apply-index|isolated-scenario`；生产只读事务固定 `REPEATABLE READ, READ ONLY`、`search_path=public,pg_temp` 和有界超时，只返回表/索引与聚合计数，不返回姓名、电话、地址、商品快照、用户/业务 ID、指纹或 Secret。
+
+生产 PostgreSQL 为 16.14，`user/system_store/system_store_staff/delivery_service/store_order/store_order_cart_info` 六表齐全。配送身份、活跃配送身份、店员、可授权店员、已分配订单、状态 2/9 配送订单及所有重复/孤儿聚合当前全部为 0；因此生产不存在真实配送员 token 或旧页面正向样本。`delivery_service` 与 `system_store_staff` 各有 4 个索引，订单索引应用后为 15 个；历史购物车 `oid` 首列索引有效。最终 `so_delivery_mobile_active` 精确证据为键列 `delivery_uid,status,add_time,id`、`indoption=[0,0,3,3]`、局部谓词匹配、valid/ready/live=true，且非 unique/primary/exclusion/clustered/replica identity、无表达式/INCLUDE/自定义 options/附着约束。
+
+写验证只发生在随机 `codex_store_mobile_delivery_*` schema：六表 `LIKE public ... INCLUDING ALL`，六个 serial 序列逐一重建并重绑定；每个顶层事务显式设置随机 schema 在 `pg_temp` 前，并用 `current_schema()`/`to_regclass('delivery_service')` 证明没有逃回 public。真实 `StoreMobileDeliveryService` 最终 12/12：资料形状、门店越权拒绝、上海日统计、按日聚合、待送/已送订单与计数、安全/畸形/超限快照、同店配送员列表、重复配送身份失败关闭、重复店员失败关闭、search path 隔离和 public 不变。六张 public 表全行指纹及相关序列前后完全相同，临时 schema `0→0`。因本机网络阻断 `workers.dev` TLS 且 Windows `workerd` 有既有 `0xc0000005`，最终一次性审计由临时 Cron 在 Cloudflare 内部触发并从结构化 tail 日志取证；Worker、Cron、路由和 Secret 随后删除，部署状态返回“不存在”。主 Worker没有发布。
+
+### 路由量化、验证与剩余门禁
+
+六条新增精确路由后，全域为 PHP 1,904、TS 1,428、精确匹配 730、可执行匹配 712、明确不可用 18、原始缺失 1,174、证据化退役 4、可执行缺口 1,170，精确/可执行/退役后有效覆盖为 `38.3%/37.4%/37.5%`。`/api` 为 PHP 457、TS 739、精确 348、可执行 345、不可用 3、原始缺失 109、退役 1、可执行缺口 108，对应 `76.1%/75.5%/75.7%`。相对 PRODUCT-REPLY-DETAIL，本批全局和 `/api` 可执行缺口均减少 6。
+
+最终仓库门禁为 Worker 双 TypeScript 配置通过、147/147 单元测试文件与 887/887 项通过，STORE-A 两个定向文件 12/12；审计 Worker dry-run通过，主 Worker dry-run 为 4,772.98 KiB/gzip 903.00 KiB。Windows Workers runtime仍在进入断言前受既有 `workerd 0xc0000005` 阻断，不能记为 runtime 通过；提交推送结果另见本批交付记录。Cloudflare Workers 最佳实践直接影响本批实现：站点状态显式中间件、Hyperdrive、有界读取、无悬空 promise/全局可变状态、读取服务不调用第三方、个性化响应禁止缓存。
+
+- [x] STORE-A 六条精确合同、旧页面主要响应形状、站点开关、强制认证和门店/身份唯一授权边界已实现。
+- [x] `0107` 已在生产应用并通过列名、排序选项、谓词与完整 catalog 状态严格复验；购物车历史 `oid` 索引也可用。
+- [x] 生产六表只读聚合与随机 schema 真实 service 12/12 完成，public 六表/六序列不变，临时 Worker/Cron/Secret/schema 全部清理。
+- [ ] 生产门店、店员、配送身份和分配订单全为空；取得可信源数据并迁移后，以受限真实配送员/店员 token 补旧端 golden response 和 HTTP E2E。
+- [ ] STORE-B 6、WORK 10、内嵌 Admin 51 仍未实现；其中外部写必须 Queue/outbox 化，Admin 必须有显式 ACL，不能因 STORE-A 完成而扩大授权。
+- [ ] 主 Worker、UniApp/旧端切流、预发、影子流量、明确发布批准和发布后观察均未完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

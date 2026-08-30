@@ -151,7 +151,17 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
     - [x] 8 条响应的 PHP 字段、匿名/登录分支、上海日/周边界、DIY 组件变换、新人资格、三榜装饰、短视频 `product_info` 与 GET 播放副作用全部通过单元及随机 schema 真实 service 场景；同时修复新人券 raw/tidy 类型、默认开关 presence、UTF-8 2MB 边界、排行 `sort/presale_day` 与 VIP 权益门禁。PHP 删除非末尾 `pageFoot` 后可能把稀疏数组编码成 object，本实现有意返回稳定紧凑数组。
     - [x] 生产 Hyperdrive 只读审计只返回聚合/结构/存在性，没有配置值、PII、业务 ID 或媒体；前向 `0106` 六索引升级两遍幂等、严格定义回读、三张输入表全部列指纹不变，`search_path` 均把 `pg_temp` 显式置后并验证未限定表解析，写场景仅在随机 schema。最终 28 项 service 断言、24+2 表及 25 序列双指纹全部通过，临时 schema/Worker/Secret 均已清理。
     - [ ] 新 UniApp 的类型化 client、组件 allowlist renderer、版本缓存、微页面、首页组件与全局悬浮导航尚未恢复；PC 是否消费同一 DIY 需产品决策。生产 `system_dise/video/store_newcomer/store_promotions` 均为空，21 个配置键缺 15 个，缩略图开启后的 PHP `get_thumb_water('mid')` 还缺 Cloudflare/R2 等价策略。主 Worker/Pages 发布及真实旧端 E2E 仍需单独批准，因此父项保持未勾选。
-- [ ] **API-008 门店/企业微信/内嵌 Admin**：处理 store 12、work 10、`/api/admin` 51；外部写操作必须 Queue 化，不能同步调用第三方。
+- [ ] **API-008 门店/企业微信/内嵌 Admin（73 条起始缺口，已精确拆分）**：静态起点为 store 12、work 10、`/api/admin` 51；其中已有公开门店列表和核销写入不计缺口。外部写操作必须 Queue 化，不能同步调用第三方。
+  - [x] **STORE-A 分类与配送员只读 6 条（代码、生产结构与隔离服务场景完成）**：注册公开 `GET store/category`，以及强制登录的 `delivery/info|statistics|data|order|list`；既有公开 `store/list` 也补回 PHP 外层站点营业门禁。配送身份绑定当前活跃用户，指定门店必须存在唯一有效 `type=1/relation_id=store_id` 关系；门店配送员列表绑定当前唯一活跃店员及其营业门店。统计按 Asia/Shanghai 解释 PHP 时间 token，显式日期最多 366 天、分页最多 100 条且 offset 最多 10,000；订单列表批量读取安全商品快照，不做 N+1、不返回原始 JSON。五条个性化响应均 `private, no-store`，服务内无第三方调用。生产已应用并严格回读 `so_delivery_mobile_active` 局部复合索引；六张依赖表齐全、历史 `oid` 索引可用，随机 schema 真实 service 12/12、六表/六序列 public 指纹不变且临时资源清零。生产门店、店员、配送身份和分配订单当前均为 0，故旧页面 golden response、真实配送员 token HTTP E2E、主 Worker 发布与观察仍是父项发布门禁，不能由合成场景代替。
+  - [ ] **STORE-B 门店订单 6 条**：`refund/detail/:id`、`order/detail/:id`、`order/writeoff_info/:type`、`order/cart_info`、`order/delivery_info/:orderId`、`order/split_delivery/:id`。先统一唯一店员/配送员身份和门店归属，再复用售后、核销、发货/拆单状态机；详情不得按全局自增 ID 越权，拆单必须与面单任务账本、开放售后和通知 outbox 同事务协调。
+  - [ ] **WORK-A 企业微信 JS-SDK 2 条**：`config`、`agentConfig` 只接受经过规范化且命中 HTTPS Origin allowlist 的 URL；corp/agent Secret 只从 Worker Secret 读取，签名票据限时缓存，provider 响应限时限长。没有真实企业微信凭据时明确失败关闭。
+  - [ ] **WORK-B 群/客户本地读 7 条**：`groupInfo`、`groupMember/:id`、`client/info`、`order/list|info/:id`、`product/cart_list|visit_list`。`ClientMiddleware` 不能照搬为信任 query 中的 external_userid；必须由已验签企业微信上下文换取短期 audience token，再按本地 work 表、客户 UID 和员工可见范围授权。
+  - [ ] **WORK-C 企业微信回调 1 条**：`ANY work/serve` 先完成 GET URL 验证、POST 消息验签/解密、重放事件账本和乱序处理；远端写入只落事务 outbox 后投递 Queue，禁止请求内同步调用企业微信。
+  - [ ] **ADMIN-A 内嵌订单/代客下单 32 条**：覆盖统计/暂存、配送/拆单/面单、改价/备注/线下支付/退款/核销，以及代客购物车、确认、优惠券、创建、支付和状态。必须把普通用户 token 升级为显式受限 Admin session，逐动作 ACL，资金/退款复用现有账本，不允许仅因路径位于 `/api/admin` 自动授权。
+  - [ ] **ADMIN-B 内嵌商品 7 条**：分类、商品列表/标签/属性、批量上下架与批量处理；复用正式商品状态机和库存锁，禁止绕开 Admin ACL 或直接信任客户端 SKU/价格。
+  - [ ] **ADMIN-C 内嵌售后 3 条**：列表、详情、备注全部绑定 Admin ACL；详情按售后与订单权威关系读取，备注有界且写审计，退款资金动作继续走 CORE-002。
+  - [ ] **ADMIN-D 内嵌用户 8 条**：地址、标签、分组、等级、优惠券与资料修改；按最小字段投影，地址和资料不能跨 UID 越权，余额/积分变化必须走不可变流水与幂等键。
+  - [ ] **ADMIN-E ERP 配置 1 条**：`admin/erp/config` 只返回非秘密启用状态与能力，不回传 token/secret；实际 ERP 认证和同步仍归 ERP-001/002，未取得协议与沙箱前失败关闭。
 
 ## P1：Admin `/adminapi` 路由批次
 

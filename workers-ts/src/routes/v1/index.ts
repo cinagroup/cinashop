@@ -12,6 +12,7 @@ import * as PublicController from "@/controllers/api/v1/PublicController";
 import * as ProductController from "@/controllers/api/v1/ProductController";
 import * as OrderController from "@/controllers/api/v1/OrderController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
+import * as StoreMobileDelivery from "@/controllers/api/v1/StoreMobileDeliveryController";
 import * as PayController from "@/controllers/api/v1/PayController";
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
@@ -350,7 +351,38 @@ v1Routes.post(
   authMiddleware({ force: true }),
   OrderController.orderFirstOrderQuote,
 );
-v1Routes.get("/store/list", StoreOrderWriteoff.publicPickupStores);
+v1Routes.get("/store/list", stationOpenMiddleware(), StoreOrderWriteoff.publicPickupStores);
+v1Routes.get("/store/category", stationOpenMiddleware(), ProductController.category);
+v1Routes.get(
+  "/store/delivery/info",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileDelivery.info,
+);
+v1Routes.get(
+  "/store/delivery/statistics",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileDelivery.statistics,
+);
+v1Routes.get(
+  "/store/delivery/data",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileDelivery.data,
+);
+v1Routes.get(
+  "/store/delivery/order",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileDelivery.orderList,
+);
+v1Routes.get(
+  "/store/delivery/list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileDelivery.deliveryList,
+);
 v1Routes.get(
   "/store/operator/profile",
   authMiddleware({ force: true }),

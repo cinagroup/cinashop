@@ -174,6 +174,9 @@ export const storeOrder = pgTable(
     index("so_verify_code").on(t.verifyCode),
     index("so_paid").on(t.paid),
     index("so_status").on(t.status),
+    index("so_delivery_mobile_active")
+      .on(t.deliveryUid, t.status, t.addTime.desc(), t.id.desc())
+      .where(sql`${t.deliveryUid} > 0 AND ${t.paid} = 1 AND ${t.isDel} = 0 AND ${t.isSystemDel} = 0 AND ${t.refundStatus} IN (0, 3)`),
     index("so_split_pending").on(t.pid, t.supplierId, t.status, t.isSystemDel, t.id),
     index("so_supplier_allocation_pending")
       .on(t.paid, t.supplierAllocationStatus, t.id)
