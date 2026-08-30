@@ -72,6 +72,10 @@ export interface Env extends WorkerBindings {
   WECHAT_WORK_AGENT_SECRET?: string;
   /** Least-privilege Enterprise WeChat directory credential for member/department reads. */
   WECHAT_WORK_DIRECTORY_SECRET?: string;
+  /** Set to `verified` only after a real full-directory visibility acceptance test. */
+  WECHAT_WORK_DIRECTORY_FULL_VISIBILITY?: string;
+  /** Set to `verified` only after migration, reconciliation, and rollback acceptance gates pass. */
+  WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?: string;
   /** Least-privilege Enterprise WeChat customer-contact credential for client/group/tag reads. */
   WECHAT_WORK_EXTERNAL_CONTACT_SECRET?: string;
   /** Enterprise WeChat callback token. Never store it in system_config. */

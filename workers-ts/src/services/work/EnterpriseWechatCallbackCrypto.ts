@@ -275,7 +275,7 @@ function normalizedSubject(payload: WorkCallbackPayload): {
   }
   if (event === "change_contact") {
     if (change.endsWith("_user")) {
-      const userId = stringField(payload, "UserID");
+      const userId = identifierField(payload, "UserID").toLowerCase();
       return { subject: userId ? `member:${userId}` : "", recognized: true, sequenceRank };
     }
     if (change.endsWith("_party")) {
@@ -288,7 +288,7 @@ function normalizedSubject(payload: WorkCallbackPayload): {
   }
   if (event === "change_external_contact") {
     const externalUserId = identifierField(payload, "ExternalUserID");
-    const userid = identifierField(payload, "UserID");
+    const userid = identifierField(payload, "UserID").toLowerCase();
     const recognized = [
       "add_external_contact",
       "edit_external_contact",

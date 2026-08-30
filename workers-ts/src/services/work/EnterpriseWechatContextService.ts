@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
+import { withTx } from "@/lib/di";
 import {
   storeOrder,
   storeOrderCartInfo,
@@ -30,6 +31,8 @@ import {
   workGroupChat,
   workGroupChatMember,
   workMember,
+  workMemberCurrent,
+  workMemberIdentityAlias,
 } from "@/models/schema";
 import { parseKefuPageLimit } from "@/services/kefu/KefuCoreService";
 import {
@@ -711,14 +714,95 @@ export class EnterpriseWechatContextService {
   }
 
   private async requireActor(corpId: string, actorUserid: string) {
-    const rows = await this.container.db.select({ id: workMember.id }).from(workMember).where(and(
-      eq(workMember.corpId, corpId),
-      eq(workMember.userid, actorUserid),
-      eq(workMember.enable, 1),
-      eq(workMember.status, 1),
-    )).limit(2);
-    if (!rows.length) throw new ForbiddenException("当前企业成员已停用或尚未同步");
-    if (rows.length !== 1) throw new ServiceUnavailableException("企业成员身份存在重复，请先清理数据");
+    const normalizedUserid = actorUserid.trim().toLowerCase();
+    if (!normalizedUserid) throw new ForbiddenException("当前企业成员已停用或尚未同步");
+    const currentAuthorityEnabled = this.env.WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?.trim()
+      === "verified";
+
+    return withTx(this.container, async (tx) => {
+      // Use the same identity lock as callback claim/finalize. This prevents a
+      // new unresolved/deleted current identity from racing a stale legacy
+      // fallback between separate READ COMMITTED statements.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(
+        hashtextextended(${`work-member:${corpId}:${normalizedUserid}`}, 0)
+      )`);
+      const aliases = await tx.select({
+        aliasUserid: workMemberIdentityAlias.userid,
+        aliasMemberId: workMemberIdentityAlias.memberId,
+        aliasCanonicalUserid: workMemberIdentityAlias.canonicalUserid,
+        aliasLifecycleState: workMemberIdentityAlias.lifecycleState,
+        aliasLastEventId: workMemberIdentityAlias.lastEventId,
+        aliasLastEventKey: workMemberIdentityAlias.lastEventKey,
+        aliasLastEventSubjectKeyHash: workMemberIdentityAlias.lastEventSubjectKeyHash,
+        aliasLastEventTime: workMemberIdentityAlias.lastEventTime,
+        aliasLastSequenceRank: workMemberIdentityAlias.lastSequenceRank,
+        currentId: workMemberCurrent.id,
+        currentUserid: workMemberCurrent.userid,
+        currentCanonicalUserid: workMemberCurrent.canonicalUserid,
+        currentLifecycleState: workMemberCurrent.lifecycleState,
+        currentStatus: workMemberCurrent.status,
+        currentEnable: workMemberCurrent.enable,
+        currentLastEventId: workMemberCurrent.lastEventId,
+        currentLastEventKey: workMemberCurrent.lastEventKey,
+        currentLastEventSubjectKeyHash: workMemberCurrent.lastEventSubjectKeyHash,
+        currentLastEventTime: workMemberCurrent.lastEventTime,
+        currentLastSequenceRank: workMemberCurrent.lastSequenceRank,
+      }).from(workMemberIdentityAlias).leftJoin(workMemberCurrent, and(
+        eq(workMemberCurrent.corpId, workMemberIdentityAlias.corpId),
+        eq(workMemberCurrent.id, workMemberIdentityAlias.memberId),
+      )).where(and(
+        eq(workMemberIdentityAlias.corpId, corpId),
+        eq(workMemberIdentityAlias.userid, normalizedUserid),
+      )).limit(2);
+      const currentMembers = await tx.select({ id: workMemberCurrent.id }).from(workMemberCurrent).where(and(
+        eq(workMemberCurrent.corpId, corpId),
+        eq(workMemberCurrent.userid, normalizedUserid),
+      )).limit(2);
+      if (aliases.length > 1 || currentMembers.length > 1) {
+        throw new ServiceUnavailableException("企业成员当前身份存在重复，请先清理数据");
+      }
+      if (aliases.length || currentMembers.length) {
+        if (!currentAuthorityEnabled) {
+          throw new ForbiddenException("企业成员当前投影尚未通过启用验收");
+        }
+        const alias = aliases[0];
+        const current = currentMembers[0];
+        if (
+          !alias
+          || !current
+          || alias.aliasUserid !== normalizedUserid
+          || alias.aliasCanonicalUserid !== normalizedUserid
+          || alias.aliasLifecycleState !== "ACTIVE"
+          || alias.aliasMemberId === null
+          || alias.aliasMemberId !== current.id
+          || alias.currentId !== current.id
+          || alias.currentUserid !== normalizedUserid
+          || alias.currentCanonicalUserid !== normalizedUserid
+          || alias.currentLifecycleState !== "ACTIVE"
+          || alias.currentStatus !== 1
+          || alias.currentEnable !== 1
+          || alias.aliasLastEventId !== alias.currentLastEventId
+          || alias.aliasLastEventKey !== alias.currentLastEventKey
+          || alias.aliasLastEventSubjectKeyHash !== alias.currentLastEventSubjectKeyHash
+          || alias.aliasLastEventTime !== alias.currentLastEventTime
+          || alias.aliasLastSequenceRank !== alias.currentLastSequenceRank
+        ) {
+          throw new ForbiddenException("当前企业成员已停用或尚未同步");
+        }
+        return;
+      }
+
+      const rows = await tx.select({ id: workMember.id }).from(workMember).where(and(
+        eq(workMember.corpId, corpId),
+        sql`lower(${workMember.userid}) = ${normalizedUserid}`,
+        eq(workMember.enable, 1),
+        eq(workMember.status, 1),
+      )).limit(2);
+      if (!rows.length) throw new ForbiddenException("当前企业成员已停用或尚未同步");
+      if (rows.length !== 1) {
+        throw new ServiceUnavailableException("企业成员身份存在重复，请先清理数据");
+      }
+    });
   }
 
   private async requireClientScope(

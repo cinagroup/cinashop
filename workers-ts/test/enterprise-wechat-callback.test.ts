@@ -9,9 +9,11 @@ import {
 } from "../src/services/work/EnterpriseWechatCallbackCrypto";
 import {
   consumeWorkCallbackQueueMessage,
+  EnterpriseWechatCallbackService,
   isWorkCallbackDispatchMessage,
   isWorkCallbackOutboxMessage,
 } from "../src/services/work/EnterpriseWechatCallbackService";
+import { MigrationService } from "../src/services/MigrationService";
 import { exactStatusConstraint } from "./integration/EnterpriseWechatCallbackAuditWorker";
 
 const key = Buffer.from(Array.from({ length: 32 }, (_, index) => index + 1));
@@ -96,6 +98,14 @@ describe("Enterprise WeChat callback protocol", () => {
       .toThrow("callback_field_invalid");
   });
 
+  it("case-folds Enterprise WeChat member identities before ordering", () => {
+    const callback = (userid: string) => `<xml><ToUserName>${corpId}</ToUserName><CreateTime>1788048000</CreateTime><MsgType>event</MsgType><Event>change_contact</Event><ChangeType>update_user</ChangeType><UserID>${userid}</UserID></xml>`;
+    expect(normalizeDecryptedCallback(callback("Member-A"), corpId).subjectKey)
+      .toBe("member:member-a");
+    expect(normalizeDecryptedCallback(callback("member-a"), corpId).subjectKey)
+      .toBe("member:member-a");
+  });
+
   it("rejects XML entities/DOCTYPE and malformed wrappers", () => {
     expect(() => encryptedXmlValue("<!DOCTYPE xml><xml><Encrypt>x</Encrypt></xml>"))
       .toThrow("callback_xml_invalid");
@@ -160,6 +170,24 @@ describe("Enterprise WeChat callback durable pipeline", () => {
 
       retry.mockClear();
       await consumeWorkCallbackQueueMessage(
+        { body, attempts: 1, ack, retry },
+        { processMessage: vi.fn().mockResolvedValue({ kind: "deferred", delaySeconds: 137 }) },
+      );
+      expect(ack).not.toHaveBeenCalled();
+      expect(retry).toHaveBeenLastCalledWith({ delaySeconds: 137 });
+
+      ack.mockClear();
+      retry.mockClear();
+      await consumeWorkCallbackQueueMessage(
+        { body, attempts: 8, ack, retry },
+        { processMessage: vi.fn().mockResolvedValue({ kind: "parked" }) },
+      );
+      expect(ack).toHaveBeenCalledOnce();
+      expect(retry).not.toHaveBeenCalled();
+
+      ack.mockClear();
+      retry.mockClear();
+      await consumeWorkCallbackQueueMessage(
         { body, attempts: 2, ack, retry },
         { processMessage: vi.fn().mockRejectedValue(new Error("projection_failed")) },
       );
@@ -169,6 +197,41 @@ describe("Enterprise WeChat callback durable pipeline", () => {
       info.mockRestore();
       error.mockRestore();
     }
+  });
+
+  it("drains callback replay in bounded pages and stops after a short page", async () => {
+    const service = new EnterpriseWechatCallbackService(
+      {} as never,
+      { ORDER_QUEUE: {} } as never,
+    );
+    const dispatch = vi.spyOn(service, "dispatchPending")
+      .mockResolvedValueOnce({ claimed: 20, enqueued: 20 })
+      .mockResolvedValueOnce({ claimed: 20, enqueued: 20 })
+      .mockResolvedValueOnce({ claimed: 7, enqueued: 7 });
+
+    await expect(service.dispatchPendingPages(20, 5)).resolves.toEqual({
+      claimed: 47,
+      enqueued: 47,
+      batches: 3,
+    });
+    expect(dispatch).toHaveBeenCalledTimes(3);
+    expect(dispatch.mock.calls.map(([limit]) => limit)).toEqual([20, 20, 20]);
+  });
+
+  it("caps one scheduled callback drain at one hundred rows", async () => {
+    const service = new EnterpriseWechatCallbackService(
+      {} as never,
+      { ORDER_QUEUE: {} } as never,
+    );
+    const dispatch = vi.spyOn(service, "dispatchPending")
+      .mockImplementation(async (limit = 20) => ({ claimed: limit, enqueued: limit }));
+
+    await expect(service.dispatchPendingPages(30, 10)).resolves.toEqual({
+      claimed: 100,
+      enqueued: 100,
+      batches: 4,
+    });
+    expect(dispatch.mock.calls.map(([limit]) => limit)).toEqual([30, 30, 30, 10]);
   });
 
   it("does not classify legacy empty-handler event variants as restored", () => {
@@ -191,6 +254,8 @@ describe("Enterprise WeChat callback durable pipeline", () => {
       ["migrations/0109_work_callback_pipeline.sql", "0115"],
       ["migrations/0110_work_callback_follow_projection.sql", "0116"],
       ["migrations/0111_work_callback_projection_state.sql", "0117"],
+      ["migrations/0112_work_member_current_projection.sql", "0118"],
+      ["migrations/0113_work_member_resolved_rename_fence.sql", "0119"],
     ] as const) {
       const external = readFileSync(externalPath, "utf8");
       const embedded = service.match(
@@ -201,6 +266,9 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     }
     expect(service).toContain("workCallbackFollowProjectionMigrationSqlForVerification");
     expect(service).toContain("workCallbackProjectionStateMigrationSqlForVerification");
+    expect(service).toContain("workMemberCurrentProjectionMigrationSqlForVerification");
+    expect(service).toContain("workMemberResolvedRenameFenceMigrationSqlForVerification");
+    expect(service).toContain('if (i < 115 && msg.includes("already exists"))');
 
     const projectionMigration = readFileSync(
       "migrations/0111_work_callback_projection_state.sql",
@@ -214,6 +282,123 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     );
     expect(projectionMigration).toContain("status_normalized <> 'checkstatus=anyarray[");
 
+    const memberProjectionMigration = readFileSync(
+      "migrations/0112_work_member_current_projection.sql",
+      "utf8",
+    );
+    expect((memberProjectionMigration.match(/^CREATE TABLE IF NOT EXISTS/gm) ?? [])).toHaveLength(4);
+    expect(memberProjectionMigration).toContain('CREATE TABLE IF NOT EXISTS "work_member_current"');
+    expect(memberProjectionMigration).toContain('CREATE TABLE IF NOT EXISTS "work_member_identity_alias"');
+    expect(memberProjectionMigration).toContain('CREATE TABLE IF NOT EXISTS "work_member_other_current"');
+    expect(memberProjectionMigration).toContain('CREATE TABLE IF NOT EXISTS "work_member_relation_current"');
+    expect(memberProjectionMigration).not.toMatch(
+      /ALTER TABLE "(?:work_member|work_member_other|work_member_relation)"/,
+    );
+    expect(memberProjectionMigration).not.toMatch(/\bDROP (?:TABLE|INDEX|CONSTRAINT)\b/i);
+    expect(memberProjectionMigration).toContain('"name" varchar(128)');
+    expect(memberProjectionMigration).toContain('"email" varchar(254)');
+    expect(memberProjectionMigration).toContain('"qr_code" varchar(1024)');
+    expect(memberProjectionMigration).toContain('"main_department" integer');
+    expect(memberProjectionMigration).toContain('"direct_leader" text');
+    expect(memberProjectionMigration).toContain('"profile_complete" boolean NOT NULL DEFAULT false');
+    expect(memberProjectionMigration).toContain('"relations_complete" boolean NOT NULL DEFAULT false');
+    expect(memberProjectionMigration).toContain('"userid" = lower("userid")');
+    expect(memberProjectionMigration).toContain(
+      'CHECK ("lifecycle_state" IN (\'ACTIVE\', \'DELETED\'))',
+    );
+    expect(memberProjectionMigration).toContain(
+      'CHECK ("lifecycle_state" IN (\'UNRESOLVED\', \'ACTIVE\', \'RENAMED\', \'DELETED\'))',
+    );
+    const currentTable = memberProjectionMigration.slice(
+      memberProjectionMigration.indexOf('CREATE TABLE IF NOT EXISTS "work_member_current"'),
+      memberProjectionMigration.indexOf('CREATE TABLE IF NOT EXISTS "work_member_identity_alias"'),
+    );
+    const aliasTable = memberProjectionMigration.slice(
+      memberProjectionMigration.indexOf('CREATE TABLE IF NOT EXISTS "work_member_identity_alias"'),
+      memberProjectionMigration.indexOf('CREATE TABLE IF NOT EXISTS "work_member_other_current"'),
+    );
+    expect(currentTable).not.toContain('"link_event_id"');
+    expect(currentTable).not.toContain('"link_event_time"');
+    expect(currentTable).not.toContain('"link_sequence_rank"');
+    expect(aliasTable).toContain('"member_id" integer,');
+    expect(aliasTable).not.toContain('"member_id" integer NOT NULL');
+    expect(aliasTable).toContain('"link_event_id" integer,');
+    expect(aliasTable).toContain('"link_event_time" integer NOT NULL DEFAULT 0');
+    expect(aliasTable).toContain('"link_sequence_rank" integer NOT NULL DEFAULT 0');
+    expect(memberProjectionMigration).toContain(
+      'FOREIGN KEY ("corp_id", "member_id")\n      REFERENCES "work_member_current" ("corp_id", "id")',
+    );
+    expect(memberProjectionMigration).toContain(
+      '("userid" <> "canonical_userid" AND "link_event_id" IS NOT NULL)',
+    );
+    expect(memberProjectionMigration).toContain(
+      '"lifecycle_state" = \'DELETED\'\n          AND "userid" = "canonical_userid"',
+    );
+    expect(memberProjectionMigration).toContain('"sort_order" bigint NOT NULL DEFAULT 0');
+    expect(memberProjectionMigration).toContain(
+      '"sort_order" BETWEEN 0 AND 4294967295',
+    );
+    expect(memberProjectionMigration).toContain("Last-applied callback fence");
+    expect(memberProjectionMigration).toContain("Latest-seen callback fence");
+    for (const exactObject of [
+      "wmc_values_ck",
+      "wmia_link_event_fk",
+      "wmia_link_fence_ck",
+      "wmia_pending_source_idx",
+      "wmia_link_event_idx",
+      "wmoc_values_ck",
+    ]) {
+      expect(memberProjectionMigration).toContain(exactObject);
+    }
+    expect(memberProjectionMigration).not.toContain("wmoc_time_ck");
+    expect(memberProjectionMigration).toContain("actual_shape IS DISTINCT FROM expected_shape");
+    expect(memberProjectionMigration).toContain(
+      "attribute.attgenerated <> ''",
+    );
+    expect(memberProjectionMigration).toContain(
+      "attribute.attcollation <> attribute_type.typcollation",
+    );
+    expect(memberProjectionMigration).toContain("DO $work_current_identity$");
+    expect(memberProjectionMigration).toContain("FROM pg_sequence AS sequence_catalog");
+    expect(memberProjectionMigration).toContain(
+      "next_sequence_value <= maximum_member_id",
+    );
+    expect(memberProjectionMigration).toContain(
+      "actual_definition IS DISTINCT FROM reference_definition",
+    );
+    expect(memberProjectionMigration).toContain(
+      "pg_get_expr(index_metadata.indpred, index_metadata.indrelid)",
+    );
+    expect(memberProjectionMigration).not.toContain(
+      "lower(regexp_replace(\n        pg_get_constraintdef",
+    );
+    expect(memberProjectionMigration).toContain("IF NOT index_compatible THEN");
+
+    const resolvedRenameFenceMigration = readFileSync(
+      "migrations/0113_work_member_resolved_rename_fence.sql",
+      "utf8",
+    );
+    expect(resolvedRenameFenceMigration).toContain(
+      "0113 cannot infer immutable edge fences",
+    );
+    expect(resolvedRenameFenceMigration).toContain(
+      "wmia_resolved_link_required_ck",
+    );
+    expect(resolvedRenameFenceMigration).toContain(
+      "wmia_guard_renamed_link_0113",
+    );
+    expect(resolvedRenameFenceMigration).toContain(
+      "OLD.lifecycle_state = 'RENAMED'",
+    );
+
+    const routes = readFileSync("src/routes/v1/index.ts", "utf8");
+    expect(routes).toContain(
+      "return c.json({ ok: false, dropped, migrated: result.executed, errors: result.errors }, 500)",
+    );
+    expect(routes).toContain(
+      "return c.json({ ok: false, migrated: result.executed, errors: result.errors }, 500)",
+    );
+
     const auditWorker = readFileSync(
       "test/integration/EnterpriseWechatCallbackAuditWorker.ts",
       "utf8",
@@ -221,6 +406,23 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     expect(auditWorker).toContain("ctid::text AS tuple_identity");
     expect(auditWorker).toContain("xmin::text AS tuple_xmin");
     expect(auditWorker).toContain("projection_migration_tuple_identity_stable");
+  });
+
+  it("stops immediately when a modern migration fails", async () => {
+    const execute = vi.fn().mockResolvedValue([]);
+    let transactionNumber = 0;
+    const transaction = vi.fn(async (work: (tx: { execute: typeof execute }) => Promise<void>) => {
+      const current = transactionNumber++;
+      if (current === 115) throw new Error("modern_exact_verifier_failed");
+      await work({ execute });
+    });
+    const service = new MigrationService({ db: { transaction } } as never);
+
+    const result = await service.runAll();
+
+    expect(transaction).toHaveBeenCalledTimes(116);
+    expect(result.executed).toHaveLength(115);
+    expect(result.errors).toEqual(["0115: modern_exact_verifier_failed"]);
   });
 
   it("requires the complete validated status CHECK shape", () => {
@@ -277,5 +479,23 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     );
     expect(configMethod).toContain('EnterpriseWechatCallbackError(errorCode(error), "storage")');
     expect(configMethod).toContain('EnterpriseWechatCallbackError("callback_corp_id_unconfigured", "configuration")');
+    expect(service).toContain('WECHAT_WORK_DIRECTORY_FULL_VISIBILITY !== "verified"');
+    expect(service).toContain("WECHAT_WORK_MEMBER_CURRENT_AUTHORITY");
+    expect(service).toContain('event.changeType === "delete_user"');
+    expect(service).toContain('const MEMBER_PROJECTION_DISABLED = "member_projection_disabled"');
+    expect(service).toContain("recordParkedMemberProjectionSeen(tx, row, now)");
+    expect(service).toContain("ne(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)");
+    expect(service).toContain("eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)");
+    const disabledMemberClaim = service.indexOf(
+      "if (isMemberProjectionEvent(row) && !this.memberCurrentProjectionEnabled(row))",
+    );
+    const failedBackoff = service.indexOf(
+      'if (row.outboxStatus === "FAILED" && row.outboxAvailableTime > now)',
+    );
+    expect(disabledMemberClaim).toBeGreaterThan(-1);
+    expect(failedBackoff).toBeGreaterThan(disabledMemberClaim);
+    expect(service).not.toContain("cron dispatch will enqueue it again without exhausting");
+    expect(service).toContain('return { kind: "parked" as const }');
+    expect(service).toContain('"configuration", "directory_visibility_gate"');
   });
 });

@@ -111,7 +111,7 @@ export default {
     for (const msg of batch.messages) {
       if (isWorkCallbackDispatchMessage(msg.body)) {
         try {
-          const result = await workCallbacks.dispatchPending(20);
+          const result = await workCallbacks.dispatchPendingPages(20, 5);
           console.log(JSON.stringify({
             event: "work_callback_outbox_dispatched",
             ...result,

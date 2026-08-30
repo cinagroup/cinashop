@@ -802,18 +802,25 @@ v1Routes.post("/_migrate", operationsAuthMiddleware, async (c) => {
     "user_invoice", "user_money", "user_recharge", "user_brokerage", "user_extract",
     ];
     const dropped: string[] = [];
+    const dropErrors: string[] = [];
     for (const t of dropTables) {
       try {
         await container.db.execute(sql.raw(`DROP TABLE IF EXISTS "${t}" CASCADE`));
         dropped.push(t);
       } catch (e) {
-        dropped.push(`${t}: ${e instanceof Error ? e.message.slice(0, 40) : e}`);
+        dropErrors.push(`${t}: ${e instanceof Error ? e.message.slice(0, 200) : String(e)}`);
       }
+    }
+    if (dropErrors.length > 0) {
+      return c.json({ ok: false, dropped, errors: dropErrors }, 500);
     }
     // 同一请求内重建 (确保用当前代码建表)
     const { MigrationService } = await import("@/services/MigrationService");
     const svc = new MigrationService(container);
     const result = await svc.runAll();
+    if (result.errors.length > 0) {
+      return c.json({ ok: false, dropped, migrated: result.executed, errors: result.errors }, 500);
+    }
     const adminProvisioned = await provisionInitialAdmin(container, c.env);
     return c.json({ ok: true, dropped, migrated: result.executed, adminProvisioned });
   }
@@ -821,6 +828,9 @@ v1Routes.post("/_migrate", operationsAuthMiddleware, async (c) => {
   const { MigrationService } = await import("@/services/MigrationService");
   const svc = new MigrationService(c.get("container"));
   const result = await svc.runAll();
+  if (result.errors.length > 0) {
+    return c.json({ ok: false, migrated: result.executed, errors: result.errors }, 500);
+  }
   const adminProvisioned = await provisionInitialAdmin(c.get("container"), c.env);
 
   // 诊断: 检查关键表是否存在
@@ -852,7 +862,7 @@ v1Routes.post("/_migrate", operationsAuthMiddleware, async (c) => {
       tables.push(`${t}: ERR ${e instanceof Error ? e.message.slice(0, 50) : e}`);
     }
   }
-  return c.json({ ...result, adminProvisioned, dbInfo, tables });
+  return c.json({ ok: true, ...result, adminProvisioned, dbInfo, tables });
 });
 
 v1Routes.post("/_seed", operationsAuthMiddleware, async (c) => {

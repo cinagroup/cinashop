@@ -5,6 +5,7 @@ import {
   inArray,
   isNull,
   lte,
+  ne,
   or,
   sql,
 } from "drizzle-orm";
@@ -32,12 +33,32 @@ import {
   verifyCallbackSignature,
   type CallbackQuery,
 } from "@/services/work/EnterpriseWechatCallbackCrypto";
-import { isEnterpriseWechatCorpId } from "@/services/work/EnterpriseWechatProviderClient";
+import {
+  EnterpriseWechatProviderClient,
+  EnterpriseWechatProviderError,
+  isEnterpriseWechatCorpId,
+} from "@/services/work/EnterpriseWechatProviderClient";
+import {
+  EnterpriseWechatMemberProjectionError,
+  isMemberProjectionEvent,
+  memberProjectionIdentity,
+  prepareMemberProjection,
+  type PreparedMemberProjection,
+} from "@/services/work/EnterpriseWechatMemberProjection";
+import {
+  applyMemberCurrentProjection,
+  compareMemberProjectionFence,
+  lockMemberProjectionIdentities,
+  recordParkedMemberProjectionSeen,
+  recordMemberProjectionSeen,
+} from "@/services/work/EnterpriseWechatMemberCurrentService";
 
 const DISPATCH_LEASE_SECONDS = 120;
 const DELIVERY_LEASE_SECONDS = 600;
 const PROCESS_LEASE_SECONDS = 120;
 const MAX_ATTEMPTS = 8;
+const MEMBER_PROJECTION_DISABLED = "member_projection_disabled";
+const MAX_DISPATCH_DRAIN_ITEMS = 100;
 
 export class EnterpriseWechatCallbackError extends Error {
   constructor(
@@ -79,13 +100,25 @@ type CallbackProcessResult =
   | "superseded"
   | "already-completed"
   | "busy"
-  | "dead";
+  | "dead"
+  | { kind: "deferred"; delaySeconds: number }
+  | { kind: "parked" };
 
 export interface WorkCallbackEnvironment {
   WECHAT_WORK_CALLBACK_TOKEN?: string;
   WECHAT_WORK_CALLBACK_AES_KEY?: string;
+  CONFIG_KV?: KVNamespace;
+  WECHAT_WORK_CORP_SECRET?: string;
+  WECHAT_WORK_AGENT_SECRET?: string;
+  WECHAT_WORK_DIRECTORY_SECRET?: string;
+  WECHAT_WORK_DIRECTORY_FULL_VISIBILITY?: string;
+  WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_EXTERNAL_CONTACT_SECRET?: string;
   ORDER_QUEUE: Queue<OrderMessage>;
 }
+
+type DirectoryMemberProvider = Pick<EnterpriseWechatProviderClient, "directoryMember">;
+export type DirectoryMemberProviderFactory = (corpId: string) => DirectoryMemberProvider;
 
 function isRecognizedEvent(event: Pick<ClaimedCallback, "msgType" | "eventType" | "changeType">): boolean {
   if (event.msgType !== "event") return false;
@@ -129,6 +162,7 @@ function retryDelay(attempt: number): number {
 
 function errorCode(error: unknown): string {
   if (error instanceof EnterpriseWechatCallbackError) return error.errorCode.slice(0, 64);
+  if (error instanceof EnterpriseWechatMemberProjectionError) return error.errorCode.slice(0, 64);
   const candidate = error instanceof Error ? error.message : String(error);
   return /^[a-z0-9_:-]{1,64}$/i.test(candidate) ? candidate : "callback_processing_failed";
 }
@@ -168,6 +202,21 @@ export class EnterpriseWechatCallbackService {
   constructor(
     private readonly container: Container,
     private readonly env: WorkCallbackEnvironment,
+    private readonly directoryProviderFactory: DirectoryMemberProviderFactory = (corpId) => {
+      if (env.WECHAT_WORK_DIRECTORY_FULL_VISIBILITY !== "verified") {
+        throw new EnterpriseWechatProviderError("configuration", "directory_visibility_gate", -1, 0);
+      }
+      if (!env.CONFIG_KV) {
+        throw new EnterpriseWechatProviderError("configuration", "directory_provider_config", -1, 0);
+      }
+      return new EnterpriseWechatProviderClient({
+        CONFIG_KV: env.CONFIG_KV,
+        WECHAT_WORK_CORP_SECRET: env.WECHAT_WORK_CORP_SECRET,
+        WECHAT_WORK_AGENT_SECRET: env.WECHAT_WORK_AGENT_SECRET,
+        WECHAT_WORK_DIRECTORY_SECRET: env.WECHAT_WORK_DIRECTORY_SECRET,
+        WECHAT_WORK_EXTERNAL_CONTACT_SECRET: env.WECHAT_WORK_EXTERNAL_CONTACT_SECRET,
+      }, { corpId });
+    },
   ) {}
 
   async verifyUrl(query: CallbackQuery, encryptedEcho: string): Promise<string> {
@@ -279,10 +328,23 @@ export class EnterpriseWechatCallbackService {
     const bounded = Math.max(1, Math.min(Math.trunc(limit), 100));
     const now = Math.floor(Date.now() / 1000);
     const leaseToken = crypto.randomUUID();
+    const failedEligibility = this.memberCurrentAuthorityEnabled()
+      ? or(
+        lte(workCallbackOutbox.availableTime, now),
+        eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED),
+      )
+      : and(
+        lte(workCallbackOutbox.availableTime, now),
+        ne(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED),
+      );
     const eligible = or(
       and(
-        inArray(workCallbackOutbox.status, ["PENDING", "FAILED"]),
+        eq(workCallbackOutbox.status, "PENDING"),
         lte(workCallbackOutbox.availableTime, now),
+      ),
+      and(
+        eq(workCallbackOutbox.status, "FAILED"),
+        failedEligibility,
       ),
       and(
         inArray(workCallbackOutbox.status, ["ENQUEUING", "ENQUEUED", "PROCESSING"]),
@@ -348,17 +410,75 @@ export class EnterpriseWechatCallbackService {
     }
   }
 
+  /**
+   * Drain a bounded number of durable outbox pages from one scheduled root job.
+   * Parked member rows are selected automatically only after the authority gate
+   * opens; the global item cap prevents one replay backlog from monopolizing a
+   * Worker invocation.
+   */
+  async dispatchPendingPages(
+    pageSize = 20,
+    maxPages = 5,
+  ): Promise<{ claimed: number; enqueued: number; batches: number }> {
+    const boundedPageSize = Math.max(1, Math.min(Math.trunc(pageSize), 100));
+    const boundedPageCount = Math.max(1, Math.min(
+      Math.trunc(maxPages),
+      Math.ceil(MAX_DISPATCH_DRAIN_ITEMS / boundedPageSize),
+    ));
+    let claimed = 0;
+    let enqueued = 0;
+    let batches = 0;
+    for (let page = 0; page < boundedPageCount; page += 1) {
+      const remaining = MAX_DISPATCH_DRAIN_ITEMS - claimed;
+      if (remaining <= 0) break;
+      const batchSize = Math.min(boundedPageSize, remaining);
+      const result = await this.dispatchPending(batchSize);
+      claimed += result.claimed;
+      enqueued += result.enqueued;
+      if (result.claimed > 0) batches += 1;
+      if (result.claimed < batchSize) break;
+    }
+    return { claimed, enqueued, batches };
+  }
+
   async dispatchById(outboxId: number): Promise<{ claimed: number; enqueued: number }> {
     return this.dispatchPending(1, outboxId);
   }
 
   async processMessage(message: WorkCallbackOutboxMessage): Promise<CallbackProcessResult> {
-    const claim = await this.claim(message);
-    if (typeof claim === "string") return claim;
+    let claim: Awaited<ReturnType<EnterpriseWechatCallbackService["claim"]>>;
     try {
-      return await this.applyOrdering(claim);
+      claim = await this.claim(message);
     } catch (error) {
-      await this.recordFailure(claim, error);
+      if (
+        error instanceof EnterpriseWechatMemberProjectionError
+        && error.terminal
+        && await this.recordClaimTerminalFailure(message, error)
+      ) return "dead";
+      throw error;
+    }
+    if (typeof claim === "string" || "kind" in claim) return claim;
+    try {
+      let memberProjection: PreparedMemberProjection | undefined;
+      let memberTargetSubjectKeyHash: string | undefined;
+      if (isMemberProjectionEvent(claim)) {
+        const identity = memberProjectionIdentity(claim);
+        memberTargetSubjectKeyHash = await shaHex(
+          "SHA-256",
+          `${claim.corpId}\0member:${identity.targetUserid}`,
+        );
+        // delete_user is callback-authoritative and must not even construct a
+        // provider client: this keeps deletion independent from provider config.
+        memberProjection = await prepareMemberProjection(
+          claim,
+          claim.changeType === "delete_user"
+            ? undefined
+            : this.directoryProviderFactory(claim.corpId),
+        );
+      }
+      return await this.applyOrdering(claim, memberProjection, memberTargetSubjectKeyHash);
+    } catch (error) {
+      if (await this.recordFailure(claim, error)) return "dead";
       throw error;
     }
   }
@@ -393,17 +513,34 @@ export class EnterpriseWechatCallbackService {
     return new EnterpriseWechatCallbackError(code, authentication ? "authentication" : "input");
   }
 
-  private async claim(message: WorkCallbackOutboxMessage): Promise<ClaimedCallback | "already-completed" | "busy" | "dead"> {
+  private async claim(message: WorkCallbackOutboxMessage): Promise<
+    ClaimedCallback | "already-completed" | "busy" | "dead" | "superseded"
+      | { kind: "deferred"; delaySeconds: number } | { kind: "parked" }
+  > {
     const now = Math.floor(Date.now() / 1000);
     const leaseToken = crypto.randomUUID();
     return withTx(this.container, async (tx) => {
-      const rows = await tx.select({
+      const outboxRows = await tx.select({
         outboxId: workCallbackOutbox.id,
         eventId: workCallbackOutbox.eventId,
         eventKey: workCallbackOutbox.eventKey,
         outboxStatus: workCallbackOutbox.status,
         outboxLeaseUntil: workCallbackOutbox.leaseUntil,
+        outboxAvailableTime: workCallbackOutbox.availableTime,
         attemptCount: workCallbackOutbox.attemptCount,
+      }).from(workCallbackOutbox)
+        .where(eq(workCallbackOutbox.id, message.outboxId))
+        .limit(1)
+        .for("update");
+      const outbox = outboxRows[0];
+      if (
+        !outbox
+        || outbox.eventId !== message.eventId
+        || outbox.eventKey !== message.eventKey
+      ) throw new Error("callback_queue_message_mismatch");
+
+      const eventRows = await tx.select({
+        eventKey: workCallbackEvent.eventKey,
         subjectKeyHash: workCallbackEvent.subjectKeyHash,
         eventTime: workCallbackEvent.eventTime,
         sequenceRank: workCallbackEvent.sequenceRank,
@@ -412,55 +549,148 @@ export class EnterpriseWechatCallbackService {
         changeType: workCallbackEvent.changeType,
         corpId: workCallbackEvent.corpId,
         payload: workCallbackEvent.payload,
-      }).from(workCallbackOutbox)
-        .innerJoin(workCallbackEvent, eq(workCallbackEvent.id, workCallbackOutbox.eventId))
-        .where(eq(workCallbackOutbox.id, message.outboxId))
+      }).from(workCallbackEvent)
+        .where(eq(workCallbackEvent.id, outbox.eventId))
         .limit(1)
-        .for("update", { of: workCallbackOutbox });
-      const row = rows[0];
-      if (!row || row.eventId !== message.eventId || row.eventKey !== message.eventKey) {
+        .for("update");
+      const event = eventRows[0];
+      if (!event || event.eventKey !== outbox.eventKey) {
         throw new Error("callback_queue_message_mismatch");
       }
+      const row = { ...outbox, ...event };
       if (row.outboxStatus === "COMPLETED") return "already-completed";
       if (row.outboxStatus === "DEAD") return "dead";
       if (row.outboxStatus === "PROCESSING" && row.outboxLeaseUntil > now) return "busy";
+      if (isMemberProjectionEvent(row) && !this.memberCurrentProjectionEnabled(row)) {
+        await recordParkedMemberProjectionSeen(tx, row, now);
+        const parkedOutboxes = await tx.update(workCallbackOutbox).set({
+          status: "FAILED",
+          leaseUntil: 0,
+          leaseToken: "",
+          availableTime: now + 900,
+          lastErrorCode: MEMBER_PROJECTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+        const parkedEvents = await tx.update(workCallbackEvent).set({
+          status: "FAILED",
+          projectionStatus: "REFRESH_REQUIRED",
+          leaseUntil: 0,
+          leaseToken: "",
+          lastErrorCode: MEMBER_PROJECTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+        if (parkedOutboxes.length !== 1 || parkedEvents.length !== 1) {
+          throw new Error("callback_member_park_lost");
+        }
+        return { kind: "parked" as const };
+      }
+      if (row.outboxStatus === "FAILED" && row.outboxAvailableTime > now) {
+        return {
+          kind: "deferred" as const,
+          delaySeconds: Math.min(Math.max(row.outboxAvailableTime - now, 1), 900),
+        };
+      }
       const attemptCount = row.attemptCount + 1;
       if (attemptCount > MAX_ATTEMPTS) {
-        await tx.update(workCallbackOutbox).set({
+        const deadOutboxes = await tx.update(workCallbackOutbox).set({
           status: "DEAD", leaseUntil: 0, leaseToken: "",
           lastErrorCode: "attempt_limit_exceeded", updateTime: now,
-        }).where(eq(workCallbackOutbox.id, row.outboxId));
-        await tx.update(workCallbackEvent).set({
+        }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+        const deadEvents = await tx.update(workCallbackEvent).set({
           status: "DEAD", projectionStatus: "DEAD",
           lastErrorCode: "attempt_limit_exceeded", updateTime: now,
-        }).where(eq(workCallbackEvent.id, row.eventId));
+        }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+        if (deadOutboxes.length !== 1 || deadEvents.length !== 1) {
+          throw new Error("callback_attempt_limit_finalize_lost");
+        }
         return "dead";
       }
-      await tx.update(workCallbackOutbox).set({
+
+      if (isMemberProjectionEvent(row)) {
+        try {
+          memberProjectionIdentity(row);
+        } catch (error) {
+          if (!(error instanceof EnterpriseWechatMemberProjectionError) || !error.terminal) {
+            throw error;
+          }
+          const code = errorCode(error);
+          const deadEvents = await tx.update(workCallbackEvent).set({
+            status: "DEAD",
+            projectionStatus: "DEAD",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: code,
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+          const deadOutboxes = await tx.update(workCallbackOutbox).set({
+            status: "DEAD",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: code,
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+          if (deadEvents.length !== 1 || deadOutboxes.length !== 1) {
+            throw new Error("callback_member_claim_dead_finalize_lost");
+          }
+          return "dead";
+        }
+        const seen = await recordMemberProjectionSeen(tx, row, now);
+        if (seen === "superseded") {
+          const completedEvents = await tx.update(workCallbackEvent).set({
+            status: "ORDERED",
+            projectionStatus: "SUPERSEDED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+          const completedOutboxes = await tx.update(workCallbackOutbox).set({
+            status: "COMPLETED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+          if (completedEvents.length !== 1 || completedOutboxes.length !== 1) {
+            throw new Error("callback_superseded_finalize_lost");
+          }
+          return "superseded";
+        }
+      }
+
+      const processingOutboxes = await tx.update(workCallbackOutbox).set({
         status: "PROCESSING",
         attemptCount,
         leaseUntil: now + PROCESS_LEASE_SECONDS,
         leaseToken,
         updateTime: now,
-      }).where(eq(workCallbackOutbox.id, row.outboxId));
-      await tx.update(workCallbackEvent).set({
+      }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+      const processingEvents = await tx.update(workCallbackEvent).set({
         status: "PROCESSING",
         projectionStatus: "PROCESSING",
         attemptCount,
         leaseUntil: now + PROCESS_LEASE_SECONDS,
         leaseToken,
         updateTime: now,
-      }).where(eq(workCallbackEvent.id, row.eventId));
+      }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+      if (processingOutboxes.length !== 1 || processingEvents.length !== 1) {
+        throw new Error("callback_processing_claim_lost");
+      }
       return { ...row, leaseToken, attemptCount };
     });
   }
 
   private async applyOrdering(
     claim: ClaimedCallback,
+    memberProjection?: PreparedMemberProjection,
+    memberTargetSubjectKeyHash?: string,
   ): Promise<"applied" | "applied-noop" | "refresh-required" | "ignored" | "superseded"> {
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
       const outboxRows = await tx.select({
         status: workCallbackOutbox.status,
         leaseToken: workCallbackOutbox.leaseToken,
@@ -468,6 +698,26 @@ export class EnterpriseWechatCallbackService {
       if (outboxRows[0]?.status !== "PROCESSING" || outboxRows[0].leaseToken !== claim.leaseToken) {
         throw new Error("callback_processing_lease_lost");
       }
+      const eventRows = await tx.select({
+        status: workCallbackEvent.status,
+        leaseToken: workCallbackEvent.leaseToken,
+      }).from(workCallbackEvent).where(eq(workCallbackEvent.id, claim.eventId)).limit(1).for("update");
+      if (eventRows[0]?.status !== "PROCESSING" || eventRows[0].leaseToken !== claim.leaseToken) {
+        throw new Error("callback_processing_lease_lost");
+      }
+
+      const memberEvent = isMemberProjectionEvent(claim);
+      if (memberEvent && this.memberCurrentProjectionEnabled(claim)) {
+        if (!memberProjection || !memberTargetSubjectKeyHash) {
+          throw new Error("callback_member_projection_missing");
+        }
+        // Lock identities before any subject watermark. Cross-subject rename
+        // transactions therefore share one deterministic lock order.
+        await lockMemberProjectionIdentities(tx, claim);
+      } else if (!memberEvent) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
+      }
+      const targetSubjectHash = memberEvent ? memberTargetSubjectKeyHash as string : undefined;
 
       let result: "applied" | "applied-noop" | "refresh-required" | "ignored" | "superseded"
         = "refresh-required";
@@ -476,30 +726,45 @@ export class EnterpriseWechatCallbackService {
         result = "ignored";
         projectionStatus = "IGNORED";
       } else {
+        const watermarkHashes = [...new Set([
+          claim.subjectKeyHash,
+          ...(targetSubjectHash && targetSubjectHash !== claim.subjectKeyHash
+            ? [targetSubjectHash]
+            : []),
+        ])].sort();
         const watermarkRows = await tx.select().from(workCallbackWatermark)
-          .where(eq(workCallbackWatermark.subjectKeyHash, claim.subjectKeyHash))
-          .limit(1)
+          .where(inArray(workCallbackWatermark.subjectKeyHash, watermarkHashes))
+          .orderBy(asc(workCallbackWatermark.subjectKeyHash))
           .for("update");
-        const watermark = watermarkRows[0];
-        const older = watermark && (
-          watermark.eventTime > claim.eventTime
-          || (watermark.eventTime === claim.eventTime && watermark.sequenceRank > claim.sequenceRank)
-          || (watermark.eventTime === claim.eventTime
-            && watermark.sequenceRank === claim.sequenceRank
-            && watermark.eventId > claim.eventId)
-        );
+        const incomingFence = {
+          eventTime: claim.eventTime,
+          sequenceRank: claim.sequenceRank,
+          eventId: claim.eventId,
+        };
+        const older = watermarkRows.some((watermark) => compareMemberProjectionFence({
+          eventTime: watermark.eventTime,
+          sequenceRank: watermark.sequenceRank,
+          eventId: watermark.eventId,
+        }, incomingFence) > 0);
         if (older) {
+          if (memberEvent && memberProjection) {
+            // A newer target watermark suppresses stale provider business data,
+            // but must not suppress an older authoritative rename edge. The
+            // member service may still collapse a target-first provisional row
+            // into the stable source identity and propagate its tombstone.
+            await applyMemberCurrentProjection(tx, claim, memberProjection, now, true);
+          }
           result = "superseded";
           projectionStatus = "SUPERSEDED";
         } else {
-          if (
-            !watermark
-            || watermark.eventTime < claim.eventTime
-            || watermark.sequenceRank < claim.sequenceRank
-            || (watermark.eventTime === claim.eventTime
-              && watermark.sequenceRank === claim.sequenceRank
-              && watermark.eventId < claim.eventId)
-          ) {
+          const subjectWatermark = watermarkRows.find(
+            (watermark) => watermark.subjectKeyHash === claim.subjectKeyHash,
+          );
+          if (!subjectWatermark || compareMemberProjectionFence(incomingFence, {
+            eventTime: subjectWatermark.eventTime,
+            sequenceRank: subjectWatermark.sequenceRank,
+            eventId: subjectWatermark.eventId,
+          }) > 0) {
             await tx.insert(workCallbackWatermark).values({
               subjectKeyHash: claim.subjectKeyHash,
               eventTime: claim.eventTime,
@@ -522,11 +787,55 @@ export class EnterpriseWechatCallbackService {
             const changed = await this.applyFollowRemoval(tx, claim, now);
             result = changed ? "applied" : "applied-noop";
             projectionStatus = changed ? "APPLIED" : "APPLIED_NOOP";
+          } else if (memberEvent && memberProjection) {
+            result = await applyMemberCurrentProjection(tx, claim, memberProjection, now);
+            projectionStatus = result === "applied"
+              ? "APPLIED"
+              : result === "applied-noop"
+                ? "APPLIED_NOOP"
+                : result === "superseded"
+                  ? "SUPERSEDED"
+                  : "REFRESH_REQUIRED";
+
+            if (
+              memberProjection.kind === "snapshot"
+              && memberProjection.renamed
+              && (result === "applied" || result === "applied-noop")
+              && targetSubjectHash
+              && targetSubjectHash !== claim.subjectKeyHash
+            ) {
+              const targetWatermark = watermarkRows.find(
+                (watermark) => watermark.subjectKeyHash === targetSubjectHash,
+              );
+              if (!targetWatermark || compareMemberProjectionFence(incomingFence, {
+                eventTime: targetWatermark.eventTime,
+                sequenceRank: targetWatermark.sequenceRank,
+                eventId: targetWatermark.eventId,
+              }) > 0) {
+                await tx.insert(workCallbackWatermark).values({
+                  subjectKeyHash: targetSubjectHash,
+                  eventTime: claim.eventTime,
+                  sequenceRank: claim.sequenceRank,
+                  eventId: claim.eventId,
+                  eventKey: claim.eventKey,
+                  updateTime: now,
+                }).onConflictDoUpdate({
+                  target: workCallbackWatermark.subjectKeyHash,
+                  set: {
+                    eventTime: claim.eventTime,
+                    sequenceRank: claim.sequenceRank,
+                    eventId: claim.eventId,
+                    eventKey: claim.eventKey,
+                    updateTime: now,
+                  },
+                });
+              }
+            }
           }
         }
       }
 
-      await tx.update(workCallbackEvent).set({
+      const finalizedEvents = await tx.update(workCallbackEvent).set({
         status: "ORDERED",
         projectionStatus,
         leaseUntil: 0,
@@ -536,9 +845,10 @@ export class EnterpriseWechatCallbackService {
         updateTime: now,
       }).where(and(
         eq(workCallbackEvent.id, claim.eventId),
+        eq(workCallbackEvent.status, "PROCESSING"),
         eq(workCallbackEvent.leaseToken, claim.leaseToken),
-      ));
-      await tx.update(workCallbackOutbox).set({
+      )).returning({ id: workCallbackEvent.id });
+      const finalizedOutboxes = await tx.update(workCallbackOutbox).set({
         status: "COMPLETED",
         leaseUntil: 0,
         leaseToken: "",
@@ -547,8 +857,12 @@ export class EnterpriseWechatCallbackService {
         updateTime: now,
       }).where(and(
         eq(workCallbackOutbox.id, claim.outboxId),
+        eq(workCallbackOutbox.status, "PROCESSING"),
         eq(workCallbackOutbox.leaseToken, claim.leaseToken),
-      ));
+      )).returning({ id: workCallbackOutbox.id });
+      if (finalizedEvents.length !== 1 || finalizedOutboxes.length !== 1) {
+        throw new Error("callback_processing_lease_lost");
+      }
       return result;
     });
   }
@@ -580,23 +894,127 @@ export class EnterpriseWechatCallbackService {
     return updated.length === 1;
   }
 
-  private async recordFailure(claim: ClaimedCallback, error: unknown): Promise<void> {
+  private memberCurrentProjectionEnabled(
+    event: Pick<ClaimedCallback, "changeType">,
+  ): boolean {
+    return event.changeType === "delete_user"
+      || this.memberCurrentAuthorityEnabled();
+  }
+
+  private memberCurrentAuthorityEnabled(): boolean {
+    return this.env.WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?.trim() === "verified";
+  }
+
+  /**
+   * Claim/phase-1 failures must roll their transaction back completely before
+   * a poison message is marked DEAD. This fresh transaction is fenced by the
+   * original queue identity and never overwrites a completed or live lease.
+   */
+  private async recordClaimTerminalFailure(
+    message: WorkCallbackOutboxMessage,
+    error: EnterpriseWechatMemberProjectionError,
+  ): Promise<boolean> {
     const now = Math.floor(Date.now() / 1000);
-    const dead = claim.attemptCount >= MAX_ATTEMPTS;
     const code = errorCode(error);
-    await withTx(this.container, async (tx) => {
-      await tx.update(workCallbackOutbox).set({
+    return withTx(this.container, async (tx) => {
+      const outboxes = await tx.select().from(workCallbackOutbox).where(
+        eq(workCallbackOutbox.id, message.outboxId),
+      ).limit(1).for("update");
+      const outbox = outboxes[0];
+      if (
+        !outbox
+        || outbox.eventId !== message.eventId
+        || outbox.eventKey !== message.eventKey
+      ) throw new Error("callback_queue_message_mismatch");
+      if (outbox.status === "DEAD") return true;
+      if (
+        outbox.status === "COMPLETED"
+        || (outbox.status === "PROCESSING" && outbox.leaseUntil > now)
+      ) return false;
+
+      const events = await tx.select().from(workCallbackEvent).where(
+        eq(workCallbackEvent.id, message.eventId),
+      ).limit(1).for("update");
+      const event = events[0];
+      if (!event || event.eventKey !== message.eventKey) {
+        throw new Error("callback_queue_message_mismatch");
+      }
+      if (
+        event.status === "ORDERED"
+        || (event.status === "PROCESSING" && event.leaseUntil > now)
+      ) return false;
+      const outboxFence = outbox.status === "PROCESSING"
+        ? and(
+            eq(workCallbackOutbox.status, "PROCESSING"),
+            eq(workCallbackOutbox.leaseToken, outbox.leaseToken),
+            eq(workCallbackOutbox.leaseUntil, outbox.leaseUntil),
+          )
+        : eq(workCallbackOutbox.status, outbox.status);
+      const eventFence = event.status === "PROCESSING"
+        ? and(
+            eq(workCallbackEvent.status, "PROCESSING"),
+            eq(workCallbackEvent.leaseToken, event.leaseToken),
+            eq(workCallbackEvent.leaseUntil, event.leaseUntil),
+          )
+        : eq(workCallbackEvent.status, event.status);
+      const deadOutboxes = await tx.update(workCallbackOutbox).set({
+        status: "DEAD",
+        attemptCount: outbox.attemptCount + 1,
+        leaseUntil: 0,
+        leaseToken: "",
+        availableTime: 0,
+        lastErrorCode: code,
+        processedTime: now,
+        updateTime: now,
+      }).where(and(
+        eq(workCallbackOutbox.id, message.outboxId),
+        outboxFence,
+      )).returning({ id: workCallbackOutbox.id });
+      const deadEvents = await tx.update(workCallbackEvent).set({
+        status: "DEAD",
+        projectionStatus: "DEAD",
+        attemptCount: event.attemptCount + 1,
+        leaseUntil: 0,
+        leaseToken: "",
+        lastErrorCode: code,
+        processedTime: now,
+        updateTime: now,
+      }).where(and(
+        eq(workCallbackEvent.id, message.eventId),
+        eventFence,
+      )).returning({ id: workCallbackEvent.id });
+      if (deadOutboxes.length !== 1 || deadEvents.length !== 1) {
+        throw new Error("callback_member_claim_dead_finalize_lost");
+      }
+      return true;
+    });
+  }
+
+  private async recordFailure(claim: ClaimedCallback, error: unknown): Promise<boolean> {
+    const now = Math.floor(Date.now() / 1000);
+    const terminal = error instanceof EnterpriseWechatMemberProjectionError
+      ? error.terminal
+      : error instanceof EnterpriseWechatProviderError && error.kind === "terminal";
+    const dead = terminal || claim.attemptCount >= MAX_ATTEMPTS;
+    const code = errorCode(error);
+    const providerDelay = error instanceof EnterpriseWechatProviderError
+      ? error.retryAfterSeconds ?? 0
+      : 0;
+    const availableTime = now + Math.max(retryDelay(claim.attemptCount), providerDelay);
+    return withTx(this.container, async (tx) => {
+      const failedOutboxes = await tx.update(workCallbackOutbox).set({
         status: dead ? "DEAD" : "FAILED",
         leaseUntil: 0,
         leaseToken: "",
         lastErrorCode: code,
-        availableTime: dead ? 0 : now + retryDelay(claim.attemptCount),
+        availableTime: dead ? 0 : availableTime,
         updateTime: now,
       }).where(and(
         eq(workCallbackOutbox.id, claim.outboxId),
+        eq(workCallbackOutbox.status, "PROCESSING"),
         eq(workCallbackOutbox.leaseToken, claim.leaseToken),
-      ));
-      await tx.update(workCallbackEvent).set({
+      )).returning({ id: workCallbackOutbox.id });
+      const failedEvents = await tx.update(workCallbackEvent).set({
         status: dead ? "DEAD" : "FAILED",
         projectionStatus: dead ? "DEAD" : "FAILED",
         leaseUntil: 0,
@@ -605,8 +1023,14 @@ export class EnterpriseWechatCallbackService {
         updateTime: now,
       }).where(and(
         eq(workCallbackEvent.id, claim.eventId),
+        eq(workCallbackEvent.status, "PROCESSING"),
         eq(workCallbackEvent.leaseToken, claim.leaseToken),
-      ));
+      )).returning({ id: workCallbackEvent.id });
+      if (failedOutboxes.length === 0 && failedEvents.length === 0) return false;
+      if (failedOutboxes.length !== 1 || failedEvents.length !== 1) {
+        throw new Error("callback_processing_failure_fence_lost");
+      }
+      return dead;
     });
   }
 }
@@ -629,6 +1053,23 @@ export async function consumeWorkCallbackQueueMessage(
       message.retry({ delaySeconds: 30 });
       return;
     }
+    if (typeof result === "object" && result.kind === "deferred") {
+      message.retry({ delaySeconds: result.delaySeconds });
+      return;
+    }
+    if (typeof result === "object" && result.kind === "parked") {
+      console.log(JSON.stringify({
+        event: "work_callback_pipeline_parked",
+        eventId: message.body.eventId,
+        outboxId: message.body.outboxId,
+        queueAttempt: message.attempts,
+      }));
+      // The durable outbox is FAILED with a future available_time. Ack this
+      // delivery; dispatch excludes the parked error while authority is off,
+      // then bounded cron pages replay the same event after the gate opens.
+      message.ack();
+      return;
+    }
     console.log(JSON.stringify({
       event: "work_callback_pipeline_consumed",
       eventId: message.body.eventId,
@@ -638,7 +1079,13 @@ export async function consumeWorkCallbackQueueMessage(
     }));
     message.ack();
   } catch (error) {
-    const delaySeconds = Math.min(30 * 2 ** Math.max(message.attempts - 1, 0), 900);
+    const providerDelay = error instanceof EnterpriseWechatProviderError
+      ? error.retryAfterSeconds ?? 0
+      : 0;
+    const delaySeconds = Math.min(Math.max(
+      30 * 2 ** Math.max(message.attempts - 1, 0),
+      providerDelay,
+    ), 900);
     console.error(JSON.stringify({
       event: "work_callback_pipeline_failed",
       eventId: message.body.eventId,

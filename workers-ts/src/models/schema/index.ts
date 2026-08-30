@@ -66,5 +66,6 @@ export * from "./live";
 export * from "./out";
 export * from "./work";
 export * from "./work_callback";
+export * from "./work_current";
 export * from "./wechat_member_card";
 export * from "./short_video";
