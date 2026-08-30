@@ -70,6 +70,10 @@ export interface Env extends WorkerBindings {
   WECHAT_WORK_CORP_SECRET?: string;
   /** Self-built application JS-SDK credential. Inject only with `wrangler secret put`. */
   WECHAT_WORK_AGENT_SECRET?: string;
+  /** Enterprise WeChat callback token. Never store it in system_config. */
+  WECHAT_WORK_CALLBACK_TOKEN?: string;
+  /** Enterprise WeChat 43-character callback EncodingAESKey. */
+  WECHAT_WORK_CALLBACK_AES_KEY?: string;
   /** Exact HTTPS origins whose page URLs may be signed for Enterprise WeChat JS-SDK. */
   WORK_WECHAT_ALLOWED_ORIGINS?: string;
   /** 开发运维接口专用 token; 通过 wrangler secret put 设置 */
@@ -209,6 +213,20 @@ export interface OfficialAccountQrcodeMessage {
   thirdId: number;
 }
 
+/** Decrypted callback data stays in PostgreSQL; Queue receives only opaque identifiers. */
+export interface WorkCallbackOutboxMessage {
+  action: "processWorkCallbackOutbox";
+  outboxId: number;
+  eventId: number;
+  eventKey: string;
+}
+
+/** Cron emits a root message; PostgreSQL scanning happens only in Queue consumption. */
+export interface WorkCallbackDispatchMessage {
+  action: "dispatchWorkCallbackOutbox";
+  scheduledAt: number;
+}
+
 export type OrderMessage =
   | OrderPaidOutboxMessage
   | OrderNotificationOutboxMessage
@@ -221,6 +239,8 @@ export type OrderMessage =
   | SmsVerificationMessage
   | AttachmentObjectCleanupMessage
   | OfficialAccountQrcodeMessage
+  | WorkCallbackOutboxMessage
+  | WorkCallbackDispatchMessage
   | LegacyOrderMessage;
 
 /**

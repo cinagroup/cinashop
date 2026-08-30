@@ -109,7 +109,7 @@ describe("Enterprise WeChat migration boundary", () => {
     expect(migration).not.toMatch(/\bINSERT\s+INTO\b/i);
   });
 
-  it("exposes the fail-closed public Work reads while limiting writes to context bootstrap", () => {
+  it("exposes fail-closed Work reads while limiting writes to callback ingress and context bootstrap", () => {
     const routes = readFileSync("src/routes/adminapi.ts", "utf8");
     const publicRoutes = readFileSync("src/routes/v1/index.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/AdminEnterpriseWechatController.ts", "utf8");
@@ -130,6 +130,7 @@ describe("Enterprise WeChat migration boundary", () => {
       /v1Routes\.(post|put|patch|delete|all)\("(\/work[^"?]*)"/g,
     )].map((match) => `${match[1]} ${match[2]}`);
     expect(workMutations).toEqual([
+      "all /work/serve",
       "post /work/context/challenge",
       "post /work/context/exchange",
     ]);

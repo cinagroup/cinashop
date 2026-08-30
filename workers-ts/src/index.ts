@@ -52,6 +52,11 @@ export default {
       "./services/order/OrderOutboxService"
     );
     const {
+      EnterpriseWechatCallbackService,
+      isWorkCallbackDispatchMessage,
+      isWorkCallbackOutboxMessage,
+    } = await import("./services/work/EnterpriseWechatCallbackService");
+    const {
       consumeOrderNotificationOutboxQueueMessage,
       consumeOrderPaidOutboxQueueMessage,
     } = await import(
@@ -93,6 +98,7 @@ export default {
       isOrderWaybillJobMessage,
     } = await import("./services/waybill/OrderWaybillJobService");
     const outbox = new OrderOutboxService(container, env);
+    const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const maintenance = new ScheduledMaintenanceService(container, env);
     const sms = new SmsVerificationService(container, env);
     const attachments = new AttachmentService(container, env);
@@ -102,6 +108,64 @@ export default {
     const waybillJobs = new OrderWaybillJobService(container, env);
 
     for (const msg of batch.messages) {
+      if (isWorkCallbackDispatchMessage(msg.body)) {
+        try {
+          const result = await workCallbacks.dispatchPending(20);
+          console.log(JSON.stringify({
+            event: "work_callback_outbox_dispatched",
+            ...result,
+            scheduledAt: msg.body.scheduledAt,
+            queueAttempt: msg.attempts,
+          }));
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          console.error(JSON.stringify({
+            event: "work_callback_outbox_dispatch_failed",
+            scheduledAt: msg.body.scheduledAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
+              ? error.message
+              : "callback_dispatch_failed",
+          }));
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
+      if (isWorkCallbackOutboxMessage(msg.body)) {
+        try {
+          const result = await workCallbacks.processMessage(msg.body);
+          if (result === "busy") {
+            msg.retry({ delaySeconds: 30 });
+          } else {
+            console.log(JSON.stringify({
+              event: "work_callback_pipeline_consumed",
+              eventId: msg.body.eventId,
+              outboxId: msg.body.outboxId,
+              result,
+              queueAttempt: msg.attempts,
+            }));
+            msg.ack();
+          }
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          console.error(JSON.stringify({
+            event: "work_callback_pipeline_failed",
+            eventId: msg.body.eventId,
+            outboxId: msg.body.outboxId,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
+              ? error.message
+              : "callback_processing_failed",
+          }));
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
       if (isOrderPaidOutboxMessage(msg.body)) {
         await consumeOrderPaidOutboxQueueMessage(msg, outbox);
         continue;
@@ -296,7 +360,13 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
   const { enqueueScheduledRun } = await import(
     "./services/order/ScheduledMaintenanceService"
   );
-  await enqueueScheduledRun(env, scheduledAt);
+  await Promise.all([
+    env.ORDER_QUEUE.send({
+      action: "dispatchWorkCallbackOutbox",
+      scheduledAt,
+    }),
+    enqueueScheduledRun(env, scheduledAt),
+  ]);
 }
 
 // ─── Durable Object 导出 (wrangler.toml class_name 指向这些) ─

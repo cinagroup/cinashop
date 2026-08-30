@@ -2192,7 +2192,52 @@ WORK-B的代码、生产结构与隔离契约可以勾选，但生产能力仍�
 - [x] 新UniApp类型化API client、Worker/UniApp类型检查、H5/微信小程序构建、911项单元测试与两份dry-run完成。
 - [ ] 录入并复核CorpID/AgentID、两枚Secret、正式Origin和真实Work数据，完成真实员工/客户/群/订单最小样本迁移与PHP golden response。
 - [ ] 恢复五个Work页面与OAuth回跳，完成真机、预发、影子流量、明确发布批准、主Worker/Pages发布及发布后观察。
-- [ ] WORK-C `ANY /api/work/serve` 的验签/解密/重放账本/outbox/Queue仍未开始；不得用本批只读token替代回调安全设计。
+- [x] WORK-C 的可信接收子批次已在后续章节实现 `ANY /api/work/serve`、验签/解密、事件账本、事务outbox、Queue和乱序水位；业务投影、真实租户回调与发布仍未完成。
+
+## API-008 企业微信回调详细迁移审计（WORK-C 可信接收子批次，2026-08-30）
+
+### PHP 权威链路与失效模式
+
+精确权威路由是 `ANY /api/work/serve`：`route/api.php → Wechat::work() → WechatServices::workServe() → Work::serve() → EasyWeChat Work Server → WorkListener`。GET由旧SDK完成 URL验证，POST由SDK验签/解密后直接调用 listener。listener同步处理 `change_contact`、`change_external_chat`、`change_external_contact`、`change_external_tag` 和 `batch_job_result`；成员、部门、客户、群和标签的新增/更新会在回调HTTP请求内继续调用企业微信provider，再写本地多张表。添加客户还会同步触发欢迎语、自动标签和商城用户关联。
+
+旧路径没有持久事件唯一键、事件账本、主体水位或事务outbox。同一个回调被企业微信重试时会再次执行；较旧的更新可以覆盖较新的删除/解散。更严重的是，通讯录、客户和群处理器普遍 `catch Throwable` 后把完整解密payload连同文件/行号写日志，随后仍由SDK返回成功；这既泄露成员/客户标识，也让暂时的provider或数据库失败变成不可恢复的静默丢事件。PHP客户删除会软删整个客户而不先复核其他跟进人，群更新按事件提示增减数量而不是以权威快照收敛，这些业务投影风险不能照搬。
+
+### 协议边界与密钥管理
+
+实现对齐企业微信官方[接收消息与事件](https://developer.work.weixin.qq.com/document/path/90238)和[回调配置](https://developer.work.weixin.qq.com/document/path/90968)协议：GET读取URL-decode后的`msg_signature/timestamp/nonce/echostr`，先计算`SHA-1(sort(token,timestamp,nonce,ciphertext))`，再解密并原样返回明文；POST只接受同一签名协议的XML包。43字符EncodingAESKey补`=`后必须精确解码为32字节，AES-256-CBC的IV取Key前16字节；由于企微协议的PKCS#7块大小是32而不是AES原生16，本实现关闭Node自动padding并手工验证1～32的每一个填充字节。明文必须满足`random16 + uint32BE(msg_len) + msg + receive-id`，尾部receive-id、明文`ToUserName`和数据库CorpID三者必须一致。
+
+回调Token与EncodingAESKey不再从`system_config`读取，只接受`WECHAT_WORK_CALLBACK_TOKEN`和`WECHAT_WORK_CALLBACK_AES_KEY`两枚Worker Secret；CorpID继续是非秘密配置。主生产Worker当前没有这两枚Secret，`wechat_work_corpid`、旧`wechat_work_token`和旧`wechat_work_aes_key`非空计数也全部为0，所以即使未来误部署当前代码，入口也会在验签前503失败关闭，不能被当成已启用。
+
+POST按流读取并在超过64 KiB时立刻cancel，不先把大包完整缓冲；拒绝DOCTYPE、ENTITY、stylesheet、未知XML实体、NUL和无效UTF-8。解密XML只投影22个协议白名单字段，`Content`等消息正文、外层签名、nonce、密文和完整XML都不落库。`ANY`注册用于精确覆盖PHP路由，运行时只允许GET/POST，其他方法带`Allow: GET, POST`返回405。验签/格式失败分别返回真实403/400，配置或持久化失败返回503，使企业微信继续重试；只有事件与outbox已同事务提交后，Queue投递失败才返回200并交给定时补偿。
+
+### 事件账本、outbox与乱序水位
+
+新增三张Worker扩展表：`work_callback_event`保存不可变的规范payload及状态，`work_callback_outbox`保存Queue投递租约和失败处置，`work_callback_watermark`保存每个脱敏主体的最高事件水位。`event_key = SHA-256(corpId || payloadHash)`；payload、subject也分别哈希，数据库唯一索引在并发重试下只保留同一事件/同一outbox。Queue body严格只有`action/outboxId/eventId/eventKey`四键，不携带CorpID、成员、客户、群、state或welcome code。
+
+HTTP提交后立即尝试Queue；发送结果未知可重复投递，消费者以outbox行锁、租约和event唯一键收敛。五分钟Cron只投递不含业务数据的根消息，由Queue消费者扫描`PENDING/FAILED`和过期租约；Queue失败记录固定错误码而不记录payload。消费端按`subject_key_hash`取得PostgreSQL advisory transaction lock，以`event_time`为主序、`sequence_rank`为同秒消歧：删除/解散100，更新/编辑50，创建10；较旧或同秒低优先级事件标记`SUPERSEDED`。不认识的新消息/事件以及旧PHP空处理分支留痕为`IGNORED`，不会冒充业务投影已执行。
+
+这个子批次刻意把最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`：当前Queue消费者只证明可信事件已经持久化、排序和可重放，尚未调用provider刷新成员/部门/客户/群/标签，也未执行欢迎语或自动标签等远端写。WORK-C父项因此保持未勾选；下一子批必须把每类事件的provider读取、本地快照状态机和所有远端副作用拆成独立事务action outbox，并为部分成功、provider 404、限流、乱序删除与人工重放定义终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单payload。
+
+### 生产数据库与隔离场景证据
+
+所有生产操作都通过Hyperdrive配置`9748c294e21c49a99579c9cef70102e0`执行。第一次只读审计在任何DDL前因审计SQL把静态表名数组错误渲染为列标识而500；诊断轮只返回脱敏错误`column work_callback_event does not exist`，两轮都未进入`/migrate`且临时Worker在`finally`删除。修正为静态`VALUES`后，从头完成`REPEATABLE READ, READ ONLY`审计：PostgreSQL 16，三张目标表/索引确实不存在，CorpID/旧Token/旧AES配置、成员、客户、跟进、群和群成员均为0。
+
+随后应用外部`0109_work_callback_pipeline.sql`（Worker内嵌`migration_0115`）两遍；每遍都在短事务中固定`search_path=public,pg_temp`、5秒锁超时和45秒语句超时。结果为三表39列、10个含主键索引全部严格回读且三表均0行；`system_config/work_member/work_client/work_client_follow/work_group_chat/work_group_chat_member`逐行JSON哈希组成的全行指纹前后相同，没有既有业务DML。
+
+随机schema在同一生产PostgreSQL/Hyperdrive引擎执行11/11：GET明文回显、重复事件/唯一outbox、Queue四键脱敏、首次处理/重复消费、较旧事件被压制、同秒解散优先创建、未知事件审计、Queue失败保留、伪造签名零写入和水位数量全部通过；最终状态为`ORDERED=3/SUPERSEDED=2/IGNORED=1/RECEIVED=1`，outbox为`COMPLETED=6/FAILED=1`，FAILED正是故意注入的Queue失败且证明未丢。随机schema与一次性Worker均删除，Cloudflare查询返回10007；主Worker仍为100%版本`9f1fd655-e60f-41c1-8280-738bc85d73ef`，正式Secret清单未新增，未发布应用Worker或Pages。
+
+### 量化、验证与剩余门禁
+
+`ANY /api/work/serve`加入后，注释感知路由审计为PHP1,904、Workers1,446、精确匹配746、可执行匹配728、明确不可用18、原始缺失1,158、证据化退役4、可执行缺口1,154，覆盖为`39.2%/38.2%/38.3%`。`/api`为PHP457、TS757、精确364、可执行361、不可用3、原始缺失93、退役1、可执行缺口92，对应`79.6%/79.0%/79.2%`。目标结构由224增至227，新增三张均是明确的Worker扩展；共享源表仍为201，不能用扩展表夸大源迁移。
+
+仓库门禁为Worker双TypeScript配置通过，152/152个单元测试文件与921/921项通过，WORK-C定向文件10/10、连同迁移/定时任务/既有Work边界共4文件56/56；主Worker dry-run为4,914.35 KiB/gzip931.30 KiB，审计Worker为1,002.32 KiB/gzip177.95 KiB。Windows Workers runtime仍在0条断言前因既有`workerd 0xc0000005`启动失败，不能记为runtime通过；本批由真实Cloudflare Worker、生产Hyperdrive DDL和随机schema 11/11提供运行时证据。
+
+- [x] GET验证、POST有界读取/验签/解密、receive-id/CorpID绑定、白名单持久化与真实HTTP失败语义已实现。
+- [x] 事件唯一账本、事务outbox、Queue脱敏、过期租约/Cron补偿、至少一次幂等和主体乱序水位已实现。
+- [x] 生产三表DDL两遍幂等、既有业务全行指纹不变、随机schema 11/11及临时资源清零已完成。
+- [ ] 企业微信provider读取与成员/部门/客户/群/标签本地投影尚未接入；`ORDERED`不等于业务表已更新。
+- [ ] 欢迎语、自动标签等远端写必须进入单独action outbox/Queue，禁止回到HTTP请求内同步调用。
+- [ ] CorpID、两枚回调Secret、真实租户事件、旧PHP golden response、预发/影子流量、主Worker发布与发布后观察均未完成。
 
 ## 完成定义
 

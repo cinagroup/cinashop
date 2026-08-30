@@ -1138,6 +1138,7 @@ v1Routes.get("/wechat/config", WechatController.wechatConfig);
 // Enterprise WeChat JS-SDK signatures (public compatibility routes, strict URL allowlist).
 v1Routes.get("/work/config", EnterpriseWechatController.config);
 v1Routes.get("/work/agentConfig", EnterpriseWechatController.agentConfig);
+v1Routes.all("/work/serve", EnterpriseWechatController.callbackServe);
 v1Routes.post("/work/context/challenge", EnterpriseWechatController.contextChallenge);
 v1Routes.post("/work/context/exchange", EnterpriseWechatController.contextExchange);
 v1Routes.get("/work/groupInfo", EnterpriseWechatController.groupInfo);

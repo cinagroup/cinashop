@@ -4,6 +4,12 @@ import type { AppVariables, Env } from "@/env";
 import { EnterpriseWechatContextService } from "@/services/work/EnterpriseWechatContextService";
 import { EnterpriseWechatJsSdkService } from "@/services/work/EnterpriseWechatJsSdkService";
 import {
+  EnterpriseWechatCallbackError,
+  EnterpriseWechatCallbackService,
+} from "@/services/work/EnterpriseWechatCallbackService";
+import {
+  BadRequestException,
+  ForbiddenException,
   RateLimitException,
   ServiceUnavailableException,
   ValidateException,
@@ -13,6 +19,7 @@ import { jsonOk } from "@/utils/json";
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 export const WORK_CONTEXT_COOKIE = "__Host-cinashop-work-context-state";
 const MAX_CONTEXT_BODY_BYTES = 4 * 1024;
+const MAX_CALLBACK_BODY_BYTES = 64 * 1024;
 
 function signedUrl(c: C): string {
   const url = c.req.query("url");
@@ -132,6 +139,120 @@ async function rateLimit(c: C, operation: "challenge" | "exchange", limit: numbe
 
 function contextService(c: C) {
   return new EnterpriseWechatContextService(c.get("container"), c.env);
+}
+
+function callbackService(c: C) {
+  return new EnterpriseWechatCallbackService(c.get("container"), c.env);
+}
+
+function callbackQuery(c: C) {
+  return {
+    signature: c.req.query("msg_signature") ?? "",
+    timestamp: c.req.query("timestamp") ?? "",
+    nonce: c.req.query("nonce") ?? "",
+  };
+}
+
+function callbackError(error: unknown): never {
+  if (!(error instanceof EnterpriseWechatCallbackError)) throw error;
+  if (error.kind === "configuration" || error.kind === "storage") {
+    throw new ServiceUnavailableException("企业微信回调暂时不可用");
+  }
+  if (error.kind === "authentication") {
+    throw new ForbiddenException("企业微信回调认证失败");
+  }
+  throw new BadRequestException("企业微信回调格式无效");
+}
+
+async function callbackXmlBody(c: C): Promise<string> {
+  const contentType = (c.req.header("Content-Type") ?? "").toLowerCase();
+  if (contentType && !contentType.startsWith("application/xml") && !contentType.startsWith("text/xml")) {
+    throw new BadRequestException("企业微信回调 Content-Type 无效");
+  }
+  const declaredHeader = c.req.header("Content-Length");
+  if (declaredHeader) {
+    const declared = Number(declaredHeader);
+    if (!Number.isSafeInteger(declared) || declared < 0 || declared > MAX_CALLBACK_BODY_BYTES) {
+      throw new BadRequestException("企业微信回调请求体过大");
+    }
+  }
+  const reader = c.req.raw.body?.getReader();
+  if (!reader) throw new BadRequestException("企业微信回调请求体为空");
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > MAX_CALLBACK_BODY_BYTES) {
+        await reader.cancel();
+        throw new BadRequestException("企业微信回调请求体过大");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  if (total === 0) throw new BadRequestException("企业微信回调请求体为空");
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(bytes);
+  } catch {
+    throw new BadRequestException("企业微信回调请求体编码无效");
+  }
+}
+
+/** GET /api/work/serve — Enterprise WeChat URL ownership verification. */
+export async function callbackVerify(c: C) {
+  noStore(c);
+  const echo = c.req.query("echostr") ?? "";
+  try {
+    const plaintext = await callbackService(c).verifyUrl(callbackQuery(c), echo);
+    c.header("Content-Type", "text/plain; charset=utf-8");
+    return c.body(plaintext, 200);
+  } catch (error) {
+    callbackError(error);
+  }
+}
+
+/** POST /api/work/serve — authenticate, decrypt and durably enqueue only. */
+export async function callbackReceive(c: C) {
+  noStore(c);
+  let received: Awaited<ReturnType<EnterpriseWechatCallbackService["receive"]>>;
+  try {
+    received = await callbackService(c).receive(callbackQuery(c), await callbackXmlBody(c));
+  } catch (error) {
+    callbackError(error);
+  }
+  try {
+    await callbackService(c).dispatchById(received.outboxId);
+  } catch {
+    // PostgreSQL already owns the event and outbox row. Cron will retry Queue
+    // delivery; never log decrypted payload or Enterprise WeChat identifiers.
+    console.error(JSON.stringify({
+      event: "work_callback_queue_dispatch_deferred",
+      eventId: received.eventId,
+      outboxId: received.outboxId,
+    }));
+  }
+  c.header("Content-Type", "text/plain; charset=utf-8");
+  return c.body("success", 200);
+}
+
+/** ANY compatibility registration; the provider protocol itself only permits GET/POST. */
+export async function callbackServe(c: C) {
+  if (c.req.method === "GET") return callbackVerify(c);
+  if (c.req.method === "POST") return callbackReceive(c);
+  c.header("Allow", "GET, POST");
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  return c.body("method not allowed", 405);
 }
 
 /** GET /api/work/config — enterprise-level JS-SDK signature. */

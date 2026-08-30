@@ -40,8 +40,8 @@ OUT_API_WRITE_LIMIT_PER_MINUTE = "30"
 ALLOWED_ORIGINS = "https://cinashop-pc.pages.dev,https://cinashop-h5.pages.dev"
 PC_AUTH_ALLOWED_ORIGINS = "https://cinashop-pc.pages.dev"
 # KEFU_AUTH_ALLOWED_ORIGINS intentionally omitted until the formal Kefu origin is approved.
-# WORK_WECHAT_ALLOWED_ORIGINS and both WECHAT_WORK_*_SECRET values intentionally remain
-# absent until the formal Enterprise WeChat H5 origin and credentials are approved.
+# WORK_WECHAT_ALLOWED_ORIGINS and all WECHAT_WORK_* credentials intentionally remain
+# absent until the formal Enterprise WeChat H5 origin, callback and credentials are approved.
 
 # ─── Queues ───────────────────────────────────────────────
 [[queues.producers]]

@@ -87,6 +87,13 @@ export class ForbiddenException extends HttpApiException {
   }
 }
 
+export class BadRequestException extends HttpApiException {
+  constructor(message = "请求格式无效") {
+    super(message, 400, 400);
+    this.name = "BadRequestException";
+  }
+}
+
 export class ServiceUnavailableException extends HttpApiException {
   constructor(message = "登录服务暂时不可用，请稍后重试") {
     super(message, 503, 503);
