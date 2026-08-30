@@ -52,6 +52,7 @@ export default {
       "./services/order/OrderOutboxService"
     );
     const {
+      consumeWorkCallbackQueueMessage,
       EnterpriseWechatCallbackService,
       isWorkCallbackDispatchMessage,
       isWorkCallbackOutboxMessage,
@@ -135,34 +136,12 @@ export default {
       }
 
       if (isWorkCallbackOutboxMessage(msg.body)) {
-        try {
-          const result = await workCallbacks.processMessage(msg.body);
-          if (result === "busy") {
-            msg.retry({ delaySeconds: 30 });
-          } else {
-            console.log(JSON.stringify({
-              event: "work_callback_pipeline_consumed",
-              eventId: msg.body.eventId,
-              outboxId: msg.body.outboxId,
-              result,
-              queueAttempt: msg.attempts,
-            }));
-            msg.ack();
-          }
-        } catch (error) {
-          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
-          console.error(JSON.stringify({
-            event: "work_callback_pipeline_failed",
-            eventId: msg.body.eventId,
-            outboxId: msg.body.outboxId,
-            queueAttempt: msg.attempts,
-            retryDelaySeconds: delaySeconds,
-            error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
-              ? error.message
-              : "callback_processing_failed",
-          }));
-          msg.retry({ delaySeconds });
-        }
+        await consumeWorkCallbackQueueMessage({
+          body: msg.body,
+          attempts: msg.attempts,
+          ack: () => msg.ack(),
+          retry: (options) => msg.retry(options),
+        }, workCallbacks);
         continue;
       }
 

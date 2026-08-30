@@ -34,6 +34,28 @@ const BUSINESS_TABLES = [
   "work_group_chat",
   "work_group_chat_member",
 ] as const;
+const ISOLATION_SAFETY_TABLES = [...BUSINESS_TABLES, ...PIPELINE_TABLES] as const;
+const PROJECTION_TABLES = ["work_client", "work_client_follow"] as const;
+const PROJECTION_INDEXES = [
+  "work_client_active_identity_uq",
+  "work_client_follow_active_identity_uq",
+] as const;
+const CALLBACK_EVENT_STATUSES = [
+  "RECEIVED",
+  "PROCESSING",
+  "ORDERED",
+  "APPLIED",
+  "APPLIED_NOOP",
+  "SUPERSEDED",
+  "IGNORED",
+  "FAILED",
+  "DEAD",
+] as const;
+
+interface SafetySnapshot {
+  tables: Array<{ table: string; rows: string; digest: string }>;
+  sequences: Array<{ sequence: string; lastValue: string; isCalled: boolean }>;
+}
 
 function bytesFromHex(value: string): Uint8Array | null {
   if (!/^[0-9a-f]{64}$/i.test(value)) return null;
@@ -90,8 +112,16 @@ async function productionAudit(connectionString: string) {
       const indexes = await tx<Array<{ tablename: string; indexname: string; indexdef: string }>>`
         SELECT tablename, indexname, indexdef
         FROM pg_indexes
-        WHERE schemaname = 'public' AND tablename IN ${tx([...PIPELINE_TABLES])}
+        WHERE schemaname = 'public'
+          AND (tablename IN ${tx([...PIPELINE_TABLES])}
+            OR indexname IN ${tx([...PROJECTION_INDEXES])})
         ORDER BY tablename, indexname
+      `;
+      const statusConstraint = await tx<Array<{ definition: string }>>`
+        SELECT pg_get_constraintdef(constraint_row.oid) AS definition
+        FROM pg_constraint AS constraint_row
+        WHERE constraint_row.conname = 'wce_status_ck'
+          AND constraint_row.conrelid = 'public.work_callback_event'::regclass
       `;
       const config = await tx<Array<Record<string, number>>>`
         SELECT
@@ -108,6 +138,7 @@ async function productionAudit(connectionString: string) {
           (SELECT count(*)::integer FROM work_group_chat) AS groups,
           (SELECT count(*)::integer FROM work_group_chat_member) AS group_members
       `;
+      const duplicates = await activeProjectionDuplicates(tx as unknown as postgres.Sql);
       return {
         complete: true,
         read_only: true,
@@ -118,8 +149,10 @@ async function productionAudit(connectionString: string) {
           row_count: rowCounts[table_name] ?? null,
         })),
         indexes,
+        event_status_constraint: statusConstraint[0]?.definition ?? null,
         config: config[0],
         domain: domain[0],
+        active_identity_duplicates: duplicates,
       };
     });
   } finally {
@@ -127,22 +160,133 @@ async function productionAudit(connectionString: string) {
   }
 }
 
-async function businessFingerprint(client: postgres.Sql): Promise<string> {
-  const parts: string[] = [];
-  for (const table of BUSINESS_TABLES) {
-    const exists = await client<Array<{ exists: boolean }>>`
-      SELECT to_regclass(${'public.' + table}) IS NOT NULL AS exists
-    `;
-    if (!exists[0]?.exists) {
-      parts.push(`${table}:missing`);
-      continue;
+async function safetySnapshot(
+  client: postgres.Sql,
+  tableNames: readonly string[] = BUSINESS_TABLES,
+): Promise<SafetySnapshot> {
+  return client.begin(async (tx) => {
+    await tx`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`;
+    await tx`SET LOCAL search_path TO public, pg_temp`;
+    await tx`SET LOCAL statement_timeout = '45s'`;
+    await tx`SET LOCAL lock_timeout = '2s'`;
+    const tables: SafetySnapshot["tables"] = [];
+    for (const table of tableNames) {
+      const exists = await tx<Array<{ exists: boolean }>>`
+        SELECT to_regclass(${'public.' + table}) IS NOT NULL AS exists
+      `;
+      if (!exists[0]?.exists) {
+        tables.push({ table, rows: "missing", digest: "missing" });
+        continue;
+      }
+      const rows = await tx.unsafe<Array<{ row_count: string; digest: string }>>(
+        `SELECT count(*)::text AS row_count,
+          md5(COALESCE(string_agg(row_digest, '|' ORDER BY row_digest), '')) AS digest
+         FROM (
+           SELECT md5(to_jsonb(source_row)::text) AS row_digest
+           FROM "public"."${table}" AS source_row
+         ) AS row_digests`,
+      );
+      tables.push({
+        table,
+        rows: rows[0]?.row_count ?? "-1",
+        digest: rows[0]?.digest ?? "",
+      });
     }
-    const rows = await client.unsafe<Array<{ fingerprint: string }>>(
-      `SELECT md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY md5(row_to_json(t)::text)), '')) AS fingerprint FROM "public"."${table}" AS t`,
-    );
-    parts.push(`${table}:${rows[0]?.fingerprint ?? ""}`);
-  }
-  return createHash("sha256").update(parts.join("\n")).digest("hex");
+    const sequenceRows = await tx<Array<{ sequence_name: string }>>`
+      SELECT DISTINCT sequence_class.relname AS sequence_name
+      FROM pg_class AS table_class
+      JOIN pg_namespace AS table_namespace ON table_namespace.oid = table_class.relnamespace
+      JOIN pg_depend AS dependency
+        ON dependency.refobjid = table_class.oid
+       AND dependency.refobjsubid > 0
+       AND dependency.deptype IN ('a', 'i')
+      JOIN pg_class AS sequence_class
+        ON sequence_class.oid = dependency.objid
+       AND sequence_class.relkind = 'S'
+      JOIN pg_namespace AS sequence_namespace ON sequence_namespace.oid = sequence_class.relnamespace
+      WHERE table_namespace.nspname = 'public'
+        AND sequence_namespace.nspname = 'public'
+        AND table_class.relname IN ${tx([...tableNames])}
+      ORDER BY sequence_class.relname
+    `;
+    const sequences: SafetySnapshot["sequences"] = [];
+    for (const row of sequenceRows) {
+      if (!/^[a-z_][a-z0-9_]{0,62}$/.test(row.sequence_name)) {
+        throw new Error("unsafe public sequence identifier");
+      }
+      const values = await tx.unsafe<Array<{ last_value: string; is_called: boolean }>>(
+        `SELECT last_value::text AS last_value, is_called FROM "public"."${row.sequence_name}"`,
+      );
+      if (!values[0]) throw new Error("public sequence fingerprint failed");
+      sequences.push({
+        sequence: row.sequence_name,
+        lastValue: values[0].last_value,
+        isCalled: values[0].is_called,
+      });
+    }
+    return { tables, sequences };
+  });
+}
+
+function sameSafetySnapshot(left: SafetySnapshot, right: SafetySnapshot): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function projectionIndexesReady(
+  indexes: ReadonlyArray<{
+    indexname: string;
+    indexdef: string;
+    indisvalid?: boolean;
+    indisready?: boolean;
+  }>,
+): boolean {
+  const rows = new Map(indexes.map((row) => [row.indexname, row]));
+  const clientRow = rows.get("work_client_active_identity_uq");
+  const followRow = rows.get("work_client_follow_active_identity_uq");
+  const client = clientRow?.indexdef.toLowerCase().replaceAll('"', "").replace(/\s+/g, " ") ?? "";
+  const follow = followRow?.indexdef.toLowerCase().replaceAll('"', "").replace(/\s+/g, " ") ?? "";
+  return clientRow?.indisvalid === true
+    && clientRow.indisready === true
+    && followRow?.indisvalid === true
+    && followRow.indisready === true
+    && client.startsWith("create unique index work_client_active_identity_uq ")
+    && client.includes(".work_client using btree (corp_id, external_userid)")
+    && client.includes("delete_time is null")
+    && client.includes("external_userid")
+    && client.includes("<> ''::text")
+    && follow.startsWith("create unique index work_client_follow_active_identity_uq ")
+    && follow.includes(".work_client_follow using btree (client_id, userid)")
+    && follow.includes("is_del_user = 0")
+    && follow.includes("client_id > 0")
+    && follow.includes("userid")
+    && follow.includes("<> ''::text");
+}
+
+function callbackEventStatusConstraintReady(definition: string | undefined): boolean {
+  if (!definition?.startsWith("CHECK ")) return false;
+  const statuses = [...definition.matchAll(/'([A-Z_]+)'/g)].map((match) => match[1]);
+  return statuses.length === CALLBACK_EVENT_STATUSES.length
+    && new Set(statuses).size === CALLBACK_EVENT_STATUSES.length
+    && CALLBACK_EVENT_STATUSES.every((status) => statuses.includes(status));
+}
+
+async function activeProjectionDuplicates(client: postgres.Sql) {
+  const rows = await client<Array<{ client_duplicates: number; follow_duplicates: number }>>`
+    SELECT
+      (SELECT count(*)::integer FROM (
+        SELECT corp_id, external_userid
+        FROM public.work_client
+        WHERE delete_time IS NULL AND external_userid <> ''
+        GROUP BY corp_id, external_userid HAVING count(*) > 1
+      ) AS duplicate_clients) AS client_duplicates,
+      (SELECT count(*)::integer FROM (
+        SELECT client_id, userid
+        FROM public.work_client_follow
+        WHERE is_del_user = 0 AND client_id > 0 AND userid <> ''
+        GROUP BY client_id, userid HAVING count(*) > 1
+      ) AS duplicate_follows) AS follow_duplicates
+  `;
+  return rows[0] ?? { client_duplicates: -1, follow_duplicates: -1 };
 }
 
 async function pipelineState(client: postgres.Sql) {
@@ -170,31 +314,66 @@ async function migrateProduction(connectionString: string) {
   });
   const admin = postgres(connectionString, { max: 1, prepare: false });
   try {
-    const beforeFingerprint = await businessFingerprint(admin);
+    const beforeSnapshot = await safetySnapshot(admin, ISOLATION_SAFETY_TABLES);
     const before = await pipelineState(admin);
-    const migration = new MigrationService(createContainerFromDb(db))
-      .workCallbackPipelineMigrationSqlForVerification();
+    const duplicateState = await activeProjectionDuplicates(admin);
+    if (duplicateState.client_duplicates !== 0 || duplicateState.follow_duplicates !== 0) {
+      throw new Error("active projection identities are not unique");
+    }
+    const migrations = [
+      new MigrationService(createContainerFromDb(db)).workCallbackPipelineMigrationSqlForVerification(),
+      new MigrationService(createContainerFromDb(db)).workCallbackFollowProjectionMigrationSqlForVerification(),
+    ];
     for (let pass = 0; pass < 2; pass += 1) {
       await withTx(createContainerFromDb(db), async (tx) => {
         await tx.execute(drizzleSql.raw("SET LOCAL lock_timeout = '5s'"));
         await tx.execute(drizzleSql.raw("SET LOCAL statement_timeout = '45s'"));
-        await tx.execute(drizzleSql.raw(migration));
+        for (const migration of migrations) await tx.execute(drizzleSql.raw(migration));
       });
     }
     const after = await pipelineState(admin);
-    const afterFingerprint = await businessFingerprint(admin);
-    const indexes = await admin<Array<{ indexname: string; indexdef: string }>>`
-      SELECT indexname, indexdef FROM pg_indexes
-      WHERE schemaname = 'public' AND tablename IN ${admin([...PIPELINE_TABLES])}
-      ORDER BY indexname
+    const afterSnapshot = await safetySnapshot(admin, ISOLATION_SAFETY_TABLES);
+    const indexes = await admin<Array<{
+      indexname: string;
+      indexdef: string;
+      indisvalid: boolean;
+      indisready: boolean;
+    }>>`
+      SELECT catalog_indexes.indexname, catalog_indexes.indexdef,
+        index_metadata.indisvalid, index_metadata.indisready
+      FROM pg_indexes AS catalog_indexes
+      JOIN pg_class AS index_class ON index_class.relname = catalog_indexes.indexname
+      JOIN pg_namespace AS index_namespace
+        ON index_namespace.oid = index_class.relnamespace
+       AND index_namespace.nspname = catalog_indexes.schemaname
+      JOIN pg_index AS index_metadata ON index_metadata.indexrelid = index_class.oid
+      WHERE catalog_indexes.schemaname = 'public'
+        AND (catalog_indexes.tablename IN ${admin([...PIPELINE_TABLES])}
+          OR catalog_indexes.indexname IN ${admin([...PROJECTION_INDEXES])})
+      ORDER BY catalog_indexes.indexname
     `;
+    const constraints = await admin<Array<{ definition: string }>>`
+      SELECT pg_get_constraintdef(constraint_row.oid) AS definition
+      FROM pg_constraint AS constraint_row
+      WHERE constraint_row.conname = 'wce_status_ck'
+        AND constraint_row.conrelid = 'public.work_callback_event'::regclass
+    `;
+    const pipelineStateUnchanged = JSON.stringify(before) === JSON.stringify(after);
+    const publicStateUnchanged = sameSafetySnapshot(beforeSnapshot, afterSnapshot);
+    const projectionReady = projectionIndexesReady(indexes)
+      && callbackEventStatusConstraintReady(constraints[0]?.definition);
     return {
-      complete: Object.values(after).every((item) => item.exists && item.count === 0),
+      complete: Object.values(after).every((item) => item.exists)
+        && pipelineStateUnchanged && publicStateUnchanged && projectionReady,
       passes: 2,
       before,
       after,
+      active_identity_duplicates: duplicateState,
       indexes,
-      business_fingerprint_unchanged: beforeFingerprint === afterFingerprint,
+      event_status_constraint: constraints[0]?.definition ?? null,
+      pipeline_state_unchanged: pipelineStateUnchanged,
+      business_rows_and_sequences_unchanged: publicStateUnchanged,
+      public_rows_and_sequences_unchanged: publicStateUnchanged,
     };
   } finally {
     await db.$client.end({ timeout: 1 });
@@ -246,8 +425,11 @@ async function isolatedScenario(connectionString: string) {
   const beforeSchemas = await admin<Array<{ count: number }>>`
     SELECT count(*)::integer AS count FROM pg_namespace WHERE nspname LIKE ${PREFIX + "%"}
   `;
-  const beforeFingerprint = await businessFingerprint(admin);
+  const beforeSnapshot = await safetySnapshot(admin, ISOLATION_SAFETY_TABLES);
   let db: ReturnType<typeof createDbFromConnectionString> | undefined;
+  let result: Record<string, unknown> | undefined;
+  let cleanupVerified = false;
+  let publicStateUnchanged = false;
   try {
     await admin.unsafe(`CREATE SCHEMA "${schema}"`);
     db = createDbFromConnectionString(connectionString, 3, {
@@ -263,18 +445,56 @@ async function isolatedScenario(connectionString: string) {
         is_store smallint NOT NULL DEFAULT 0,
         sort integer NOT NULL DEFAULT 0
       )`));
+      for (const table of PROJECTION_TABLES) {
+        await tx.execute(drizzleSql.raw(
+          `CREATE TABLE "${table}" (LIKE public."${table}" INCLUDING ALL)`,
+        ));
+        await tx.execute(drizzleSql.raw(
+          `ALTER TABLE "${table}" ALTER COLUMN "id" DROP IDENTITY IF EXISTS`,
+        ));
+        await tx.execute(drizzleSql.raw(
+          `ALTER TABLE "${table}" ALTER COLUMN "id" DROP DEFAULT`,
+        ));
+        await tx.execute(drizzleSql.raw(
+          `ALTER TABLE "${table}" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY`,
+        ));
+      }
+      const migrationService = new MigrationService(container);
       await tx.execute(drizzleSql.raw(
-        new MigrationService(container).workCallbackPipelineMigrationSqlForVerification(),
+        migrationService.workCallbackPipelineMigrationSqlForVerification(),
+      ));
+      await tx.execute(drizzleSql.raw(
+        migrationService.workCallbackFollowProjectionMigrationSqlForVerification(),
       ));
       await tx.execute(drizzleSql`
         INSERT INTO system_config (menu_name, value, is_store, sort)
         VALUES ('wechat_work_corpid', ${callbackCorpId}, 0, 0)
       `);
+      await tx.execute(drizzleSql`
+        INSERT INTO work_client (id, corp_id, external_userid, name, create_time, update_time)
+        VALUES
+          (101, ${callbackCorpId}, 'wo-client-1', 'shared-client', 1788047000, 1788047000),
+          (102, ${callbackCorpId}, 'wo-client-failure', 'rollback-client', 1788047000, 1788047000)
+      `);
+      await tx.execute(drizzleSql`
+        INSERT INTO work_client_follow
+          (id, client_id, userid, is_del_user, create_time, update_time)
+        VALUES
+          (201, 101, 'employee-a', 0, 1788047000, 1788047000),
+          (202, 101, 'employee-b', 0, 1788047000, 1788047000),
+          (203, 102, 'employee-failure', 0, 1788047000, 1788047000)
+      `);
     });
     // Exact DDL is idempotent in the same isolated production engine.
-    await withTx(container, (tx) => tx.execute(drizzleSql.raw(
-      new MigrationService(container).workCallbackPipelineMigrationSqlForVerification(),
-    )));
+    await withTx(container, async (tx) => {
+      const migrationService = new MigrationService(container);
+      await tx.execute(drizzleSql.raw(
+        migrationService.workCallbackPipelineMigrationSqlForVerification(),
+      ));
+      await tx.execute(drizzleSql.raw(
+        migrationService.workCallbackFollowProjectionMigrationSqlForVerification(),
+      ));
+    });
 
     const messages: WorkCallbackOutboxMessage[] = [];
     let failQueue = false;
@@ -383,6 +603,94 @@ async function isolatedScenario(connectionString: string) {
     }
     failQueue = false;
 
+    const followARequest = callbackRequest(eventXml({
+      time: 1788049000,
+      event: "change_external_contact",
+      change: "del_external_contact",
+      subjectTag: "ExternalUserID",
+      subjectValue: "wo-client-1",
+      extra: "<UserID><![CDATA[employee-a]]></UserID>",
+    }), "follow-a");
+    const followA = await service.receive(followARequest.query, followARequest.wrapper);
+    const followADuplicate = await service.receive(followARequest.query, followARequest.wrapper);
+    await service.dispatchById(followA.outboxId);
+    const followAMessage = messages.find((item) => item.eventId === followA.eventId)!;
+    const followAResult = await service.processMessage(followAMessage);
+    const afterFollowA = await withTx(container, async (tx) => tx.execute(drizzleSql`
+      SELECT client.delete_time, follow.userid, follow.is_del_user
+      FROM work_client AS client
+      JOIN work_client_follow AS follow ON follow.client_id = client.id
+      WHERE client.id = 101 ORDER BY follow.userid
+    `));
+
+    // This event is older than employee A's event, but is a different relationship subject.
+    const followBRequest = callbackRequest(eventXml({
+      time: 1788048800,
+      event: "change_external_contact",
+      change: "del_follow_user",
+      subjectTag: "ExternalUserID",
+      subjectValue: "wo-client-1",
+      extra: "<UserID><![CDATA[employee-b]]></UserID>",
+    }), "follow-b");
+    const followB = await service.receive(followBRequest.query, followBRequest.wrapper);
+    await service.dispatchById(followB.outboxId);
+    const followBResult = await service.processMessage(
+      messages.find((item) => item.eventId === followB.eventId)!,
+    );
+
+    const missingFollowRequest = callbackRequest(eventXml({
+      time: 1788048900,
+      event: "change_external_contact",
+      change: "del_follow_user",
+      subjectTag: "ExternalUserID",
+      subjectValue: "wo-missing-client",
+      extra: "<UserID><![CDATA[employee-missing]]></UserID>",
+    }), "follow-missing");
+    const missingFollow = await service.receive(missingFollowRequest.query, missingFollowRequest.wrapper);
+    await service.dispatchById(missingFollow.outboxId);
+    const missingFollowResult = await service.processMessage(
+      messages.find((item) => item.eventId === missingFollow.eventId)!,
+    );
+
+    const rollbackRequest = callbackRequest(eventXml({
+      time: 1788049100,
+      event: "change_external_contact",
+      change: "del_follow_user",
+      subjectTag: "ExternalUserID",
+      subjectValue: "wo-client-failure",
+      extra: "<UserID><![CDATA[employee-failure]]></UserID>",
+    }), "follow-rollback");
+    const rollbackEvent = await service.receive(rollbackRequest.query, rollbackRequest.wrapper);
+    await service.dispatchById(rollbackEvent.outboxId);
+    const rollbackMessage = messages.find((item) => item.eventId === rollbackEvent.eventId)!;
+    await withTx(container, (tx) => tx.execute(drizzleSql`
+      ALTER TABLE work_client_follow
+      ADD CONSTRAINT audit_keep_follow_active_ck CHECK (id <> 203 OR is_del_user = 0)
+    `));
+    let projectionFailureCaptured = false;
+    try {
+      await service.processMessage(rollbackMessage);
+    } catch {
+      projectionFailureCaptured = true;
+    }
+    const failureState = await withTx(container, async (tx) => {
+      const rows = await tx.execute(drizzleSql`
+        SELECT follow.is_del_user, event.status AS event_status,
+          outbox.status AS outbox_status,
+          (SELECT count(*)::integer FROM work_callback_watermark
+            WHERE event_id = ${rollbackEvent.eventId}) AS watermark_count
+        FROM work_client_follow AS follow
+        CROSS JOIN work_callback_event AS event
+        JOIN work_callback_outbox AS outbox ON outbox.event_id = event.id
+        WHERE follow.id = 203 AND event.id = ${rollbackEvent.eventId}
+      `);
+      return (rows as unknown as Array<Record<string, unknown>>)[0];
+    });
+    await withTx(container, (tx) => tx.execute(drizzleSql`
+      ALTER TABLE work_client_follow DROP CONSTRAINT audit_keep_follow_active_ck
+    `));
+    const rollbackRetryResult = await service.processMessage(rollbackMessage);
+
     const beforeForgery = await withTx(container, async (tx) => {
       const rows = await tx.execute(drizzleSql`SELECT count(*)::integer AS count FROM work_callback_event`);
       return Number((rows as unknown as Array<{ count: number }>)[0]?.count ?? -1);
@@ -410,9 +718,59 @@ async function isolatedScenario(connectionString: string) {
       const afterForgery = await tx.execute(drizzleSql`
         SELECT count(*)::integer AS count FROM work_callback_event
       `);
-      return { events, outbox, watermarks, afterForgery };
+      const follows = await tx.execute(drizzleSql`
+        SELECT client.id AS client_id, client.delete_time, follow.userid, follow.is_del_user
+        FROM work_client AS client
+        JOIN work_client_follow AS follow ON follow.client_id = client.id
+        ORDER BY client.id, follow.userid
+      `);
+      const indexes = await tx.execute(drizzleSql`
+        SELECT catalog_indexes.indexname, catalog_indexes.indexdef,
+          index_metadata.indisvalid, index_metadata.indisready
+        FROM pg_indexes AS catalog_indexes
+        JOIN pg_class AS index_class ON index_class.relname = catalog_indexes.indexname
+        JOIN pg_namespace AS index_namespace
+          ON index_namespace.oid = index_class.relnamespace
+         AND index_namespace.nspname = catalog_indexes.schemaname
+        JOIN pg_index AS index_metadata ON index_metadata.indexrelid = index_class.oid
+        WHERE catalog_indexes.schemaname = current_schema()
+          AND catalog_indexes.indexname IN (
+            'work_client_active_identity_uq',
+            'work_client_follow_active_identity_uq'
+          )
+        ORDER BY catalog_indexes.indexname
+      `);
+      const constraint = await tx.execute(drizzleSql`
+        SELECT pg_get_constraintdef(constraint_row.oid) AS definition
+        FROM pg_constraint AS constraint_row
+        WHERE constraint_row.conname = 'wce_status_ck'
+          AND constraint_row.conrelid = 'work_callback_event'::regclass
+      `);
+      return { events, outbox, watermarks, afterForgery, follows, indexes, constraint };
     });
     const afterForgery = Number((state.afterForgery as unknown as Array<{ count: number }>)[0]?.count ?? -1);
+    const afterFollowARows = afterFollowA as unknown as Array<{
+      delete_time: number | null;
+      userid: string;
+      is_del_user: number;
+    }>;
+    const finalFollows = state.follows as unknown as Array<{
+      client_id: number;
+      delete_time: number | null;
+      userid: string;
+      is_del_user: number;
+    }>;
+    const eventStatuses = new Map(
+      (state.events as unknown as Array<{ status: string; count: number }>)
+        .map((row) => [row.status, Number(row.count)]),
+    );
+    const localIndexes = state.indexes as unknown as Array<{
+      indexname: string;
+      indexdef: string;
+      indisvalid: boolean;
+      indisready: boolean;
+    }>;
+    const constraintDefinition = (state.constraint as unknown as Array<{ definition: string }>)[0]?.definition ?? "";
     const assertions = {
       get_verification_plaintext: echo === "callback-echo",
       duplicate_event_single_identity: first.eventId === duplicate.eventId
@@ -425,21 +783,48 @@ async function isolatedScenario(connectionString: string) {
       unknown_event_audited_ignored: unknownResult === "ignored",
       queue_failure_durable: queueFailureCaptured,
       forged_signature_no_write: forgeryRejected && beforeForgery === afterForgery,
+      projection_duplicate_single_identity: followA.eventId === followADuplicate.eventId
+        && followA.outboxId === followADuplicate.outboxId && followADuplicate.duplicate,
+      relation_scoped_tombstone: followAResult === "applied"
+        && afterFollowARows.length === 2
+        && afterFollowARows.every((row) => row.delete_time === null)
+        && afterFollowARows.find((row) => row.userid === "employee-a")?.is_del_user === 1
+        && afterFollowARows.find((row) => row.userid === "employee-b")?.is_del_user === 0,
+      older_other_employee_not_superseded: followBResult === "applied"
+        && finalFollows.find((row) => row.userid === "employee-b")?.is_del_user === 1,
+      shared_client_never_soft_deleted: finalFollows.every((row) => row.delete_time === null),
+      missing_relationship_is_applied_noop: missingFollowResult === "applied-noop",
+      projection_failure_rolls_back_atomically: projectionFailureCaptured
+        && Number(failureState?.is_del_user ?? -1) === 0
+        && failureState?.event_status === "FAILED"
+        && failureState?.outbox_status === "FAILED"
+        && Number(failureState?.watermark_count ?? -1) === 0
+        && rollbackRetryResult === "applied"
+        && finalFollows.find((row) => row.userid === "employee-failure")?.is_del_user === 1,
+      projection_statuses_distinguish_outcomes:
+        eventStatuses.get("APPLIED") === 3 && eventStatuses.get("APPLIED_NOOP") === 1,
+      projection_identity_guards_present: projectionIndexesReady(localIndexes),
+      projection_status_constraint_present: callbackEventStatusConstraintReady(constraintDefinition),
       watermark_count_expected:
-        Number((state.watermarks as unknown as Array<{ count: number }>)[0]?.count ?? -1) === 3,
+        Number((state.watermarks as unknown as Array<{ count: number }>)[0]?.count ?? -1) === 7,
       status_evidence_present:
         Array.isArray(state.events) && Array.isArray(state.outbox),
     };
     if (!Object.values(assertions).every(Boolean)) {
       throw new Error(`isolated assertions failed: ${JSON.stringify(assertions)}`);
     }
-    return {
+    const interimSnapshot = await safetySnapshot(admin, ISOLATION_SAFETY_TABLES);
+    if (!sameSafetySnapshot(beforeSnapshot, interimSnapshot)) {
+      throw new Error("public business rows or sequences changed during isolated scenario");
+    }
+    result = {
       complete: true,
       assertions,
       checks_passed: Object.keys(assertions).length,
-      expected_checks: 11,
+      expected_checks: Object.keys(assertions).length,
       status: { events: state.events, outbox: state.outbox },
-      public_state_unchanged: true,
+      projection_indexes: localIndexes,
+      event_status_constraint: constraintDefinition,
     };
   } finally {
     if (db) await db.$client.end({ timeout: 1 });
@@ -447,11 +832,23 @@ async function isolatedScenario(connectionString: string) {
     const afterSchemas = await admin<Array<{ count: number }>>`
       SELECT count(*)::integer AS count FROM pg_namespace WHERE nspname LIKE ${PREFIX + "%"}
     `;
-    const afterFingerprint = await businessFingerprint(admin);
+    const schemaRemoved = await admin<Array<{ removed: boolean }>>`
+      SELECT to_regnamespace(${schema}) IS NULL AS removed
+    `;
+    const afterSnapshot = await safetySnapshot(admin, ISOLATION_SAFETY_TABLES);
     if (afterSchemas[0]?.count !== beforeSchemas[0]?.count) throw new Error("temporary schema leaked");
-    if (afterFingerprint !== beforeFingerprint) throw new Error("public business state changed");
+    if (!schemaRemoved[0]?.removed) throw new Error("temporary schema still resolves");
+    publicStateUnchanged = sameSafetySnapshot(beforeSnapshot, afterSnapshot);
+    if (!publicStateUnchanged) throw new Error("public business rows or sequences changed");
+    cleanupVerified = true;
     await admin.end({ timeout: 1 });
   }
+  if (!result) throw new Error("isolated scenario produced no result");
+  return {
+    ...result,
+    temporary_schema_removed: cleanupVerified,
+    public_rows_and_sequences_unchanged: publicStateUnchanged,
+  };
 }
 
 export default {

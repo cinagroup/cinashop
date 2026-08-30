@@ -22,6 +22,10 @@ import {
 } from "@/services/order/ScheduledMaintenanceService";
 import { isAttachmentObjectCleanupMessage } from "@/services/system/AttachmentService";
 import { isOfficialAccountQrcodeMessage } from "@/services/wechat/OfficialAccountQrcodeService";
+import {
+  isWorkCallbackDispatchMessage,
+  isWorkCallbackOutboxMessage,
+} from "@/services/work/EnterpriseWechatCallbackService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 type JsonPrimitive = string | number | boolean | null;
@@ -206,6 +210,14 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
     };
   }
   if (isOfficialAccountQrcodeMessage(value)) {
+    return {
+      messageType: value.action,
+      replayPolicy: "ALLOW",
+      body: sanitizeUnknownQueueBody(value),
+      replayMessage: value,
+    };
+  }
+  if (isWorkCallbackOutboxMessage(value) || isWorkCallbackDispatchMessage(value)) {
     return {
       messageType: value.action,
       replayPolicy: "ALLOW",

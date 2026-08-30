@@ -32,7 +32,7 @@ export const workCallbackEvent = pgTable(
     eventTime: integer("event_time").default(0).notNull(),
     sequenceRank: integer("sequence_rank").default(0).notNull(),
     payload: jsonb("payload").$type<WorkCallbackPayload>().notNull(),
-    /** RECEIVED/PROCESSING/ORDERED/SUPERSEDED/IGNORED/FAILED/DEAD */
+    /** RECEIVED/PROCESSING/ORDERED/APPLIED/APPLIED_NOOP/SUPERSEDED/IGNORED/FAILED/DEAD */
     status: varchar("status", { length: 16 }).default("RECEIVED").notNull(),
     attemptCount: integer("attempt_count").default(0).notNull(),
     leaseUntil: integer("lease_until").default(0).notNull(),

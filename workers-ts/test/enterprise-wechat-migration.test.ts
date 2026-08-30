@@ -65,7 +65,7 @@ describe("Enterprise WeChat migration boundary", () => {
     ]);
   });
 
-  it("preserves only the two source unique-index contracts", () => {
+  it("preserves keyless source multisets while guarding canonical active callback identities", () => {
     const noStableKey = [
       workChannelCycle, workChannelLimit, workClientFollowTags, workGroupMsgRelation,
       workMemberRelation, workWelcomeRelation,
@@ -78,6 +78,10 @@ describe("Enterprise WeChat migration boundary", () => {
     }
     expect(getTableConfig(workMember).indexes.filter((index) => index.config.unique)).toHaveLength(1);
     expect(getTableConfig(workMemberOther).indexes.filter((index) => index.config.unique)).toHaveLength(1);
+    expect(getTableConfig(workClient).indexes.filter((index) => index.config.unique)
+      .map((index) => index.config.name)).toEqual(["work_client_active_identity_uq"]);
+    expect(getTableConfig(workClientFollow).indexes.filter((index) => index.config.unique)
+      .map((index) => index.config.name)).toEqual(["work_client_follow_active_identity_uq"]);
   });
 
   it("uses safe cursors and duplicate-preserving strategies for the six keyless relations", () => {

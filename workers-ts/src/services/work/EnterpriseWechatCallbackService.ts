@@ -3,6 +3,7 @@ import {
   asc,
   eq,
   inArray,
+  isNull,
   lte,
   or,
   sql,
@@ -12,12 +13,15 @@ import type {
   WorkCallbackDispatchMessage,
   WorkCallbackOutboxMessage,
 } from "@/env";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { createContainerFromDb, withTx } from "@/lib/di";
 import {
+  workClient,
+  workClientFollow,
   workCallbackEvent,
   workCallbackOutbox,
   workCallbackWatermark,
+  type WorkCallbackPayload,
 } from "@/models/schema";
 import {
   decryptCallbackCipher,
@@ -60,9 +64,21 @@ interface ClaimedCallback {
   msgType: string;
   eventType: string;
   changeType: string;
+  corpId: string;
+  payload: WorkCallbackPayload;
   leaseToken: string;
   attemptCount: number;
 }
+
+type CallbackProcessResult =
+  | "applied"
+  | "applied-noop"
+  | "ordered"
+  | "ignored"
+  | "superseded"
+  | "already-completed"
+  | "busy"
+  | "dead";
 
 export interface WorkCallbackEnvironment {
   WECHAT_WORK_CALLBACK_TOKEN?: string;
@@ -86,6 +102,24 @@ function isRecognizedEvent(event: Pick<ClaimedCallback, "msgType" | "eventType" 
   };
   const allowed = changes[event.eventType];
   return Boolean(allowed?.has(event.changeType));
+}
+
+function isFollowRemovalEvent(
+  event: Pick<ClaimedCallback, "msgType" | "eventType" | "changeType">,
+): boolean {
+  return event.msgType === "event"
+    && event.eventType === "change_external_contact"
+    && (event.changeType === "del_external_contact" || event.changeType === "del_follow_user");
+}
+
+function projectionIdentifier(payload: WorkCallbackPayload, field: string): string {
+  const value = typeof payload[field] === "string" ? payload[field] as string : "";
+  if (
+    !value
+    || new TextEncoder().encode(value).byteLength > 64
+    || /[\u0000-\u001f\u007f]/.test(value)
+  ) throw new Error("callback_projection_field_invalid");
+  return value;
 }
 
 function retryDelay(attempt: number): number {
@@ -317,7 +351,7 @@ export class EnterpriseWechatCallbackService {
     return this.dispatchPending(1, outboxId);
   }
 
-  async processMessage(message: WorkCallbackOutboxMessage): Promise<"ordered" | "ignored" | "superseded" | "already-completed" | "busy" | "dead"> {
+  async processMessage(message: WorkCallbackOutboxMessage): Promise<CallbackProcessResult> {
     const claim = await this.claim(message);
     if (typeof claim === "string") return claim;
     try {
@@ -339,7 +373,7 @@ export class EnterpriseWechatCallbackService {
     const corpId = typeof rawCorpId === "string" ? rawCorpId.trim() : "";
     const token = this.env.WECHAT_WORK_CALLBACK_TOKEN?.trim() ?? "";
     const aesKey = this.env.WECHAT_WORK_CALLBACK_AES_KEY?.trim() ?? "";
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(corpId)) {
+    if (!/^[A-Za-z0-9_-]{1,18}$/.test(corpId)) {
       throw new EnterpriseWechatCallbackError("callback_corp_id_unconfigured", "configuration");
     }
     try {
@@ -375,6 +409,8 @@ export class EnterpriseWechatCallbackService {
         msgType: workCallbackEvent.msgType,
         eventType: workCallbackEvent.eventType,
         changeType: workCallbackEvent.changeType,
+        corpId: workCallbackEvent.corpId,
+        payload: workCallbackEvent.payload,
       }).from(workCallbackOutbox)
         .innerJoin(workCallbackEvent, eq(workCallbackEvent.id, workCallbackOutbox.eventId))
         .where(eq(workCallbackOutbox.id, message.outboxId))
@@ -416,7 +452,9 @@ export class EnterpriseWechatCallbackService {
     });
   }
 
-  private async applyOrdering(claim: ClaimedCallback): Promise<"ordered" | "ignored" | "superseded"> {
+  private async applyOrdering(
+    claim: ClaimedCallback,
+  ): Promise<"applied" | "applied-noop" | "ordered" | "ignored" | "superseded"> {
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
@@ -428,7 +466,7 @@ export class EnterpriseWechatCallbackService {
         throw new Error("callback_processing_lease_lost");
       }
 
-      let result: "ordered" | "ignored" | "superseded" = "ordered";
+      let result: "applied" | "applied-noop" | "ordered" | "ignored" | "superseded" = "ordered";
       let eventStatus = "ORDERED";
       if (!isRecognizedEvent(claim)) {
         result = "ignored";
@@ -449,31 +487,38 @@ export class EnterpriseWechatCallbackService {
         if (older) {
           result = "superseded";
           eventStatus = "SUPERSEDED";
-        } else if (
-          !watermark
-          || watermark.eventTime < claim.eventTime
-          || watermark.sequenceRank < claim.sequenceRank
-          || (watermark.eventTime === claim.eventTime
-            && watermark.sequenceRank === claim.sequenceRank
-            && watermark.eventId < claim.eventId)
-        ) {
-          await tx.insert(workCallbackWatermark).values({
-            subjectKeyHash: claim.subjectKeyHash,
-            eventTime: claim.eventTime,
-            sequenceRank: claim.sequenceRank,
-            eventId: claim.eventId,
-            eventKey: claim.eventKey,
-            updateTime: now,
-          }).onConflictDoUpdate({
-            target: workCallbackWatermark.subjectKeyHash,
-            set: {
+        } else {
+          if (
+            !watermark
+            || watermark.eventTime < claim.eventTime
+            || watermark.sequenceRank < claim.sequenceRank
+            || (watermark.eventTime === claim.eventTime
+              && watermark.sequenceRank === claim.sequenceRank
+              && watermark.eventId < claim.eventId)
+          ) {
+            await tx.insert(workCallbackWatermark).values({
+              subjectKeyHash: claim.subjectKeyHash,
               eventTime: claim.eventTime,
               sequenceRank: claim.sequenceRank,
               eventId: claim.eventId,
               eventKey: claim.eventKey,
               updateTime: now,
-            },
-          });
+            }).onConflictDoUpdate({
+              target: workCallbackWatermark.subjectKeyHash,
+              set: {
+                eventTime: claim.eventTime,
+                sequenceRank: claim.sequenceRank,
+                eventId: claim.eventId,
+                eventKey: claim.eventKey,
+                updateTime: now,
+              },
+            });
+          }
+          if (isFollowRemovalEvent(claim)) {
+            const changed = await this.applyFollowRemoval(tx, claim, now);
+            result = changed ? "applied" : "applied-noop";
+            eventStatus = changed ? "APPLIED" : "APPLIED_NOOP";
+          }
         }
       }
 
@@ -503,6 +548,33 @@ export class EnterpriseWechatCallbackService {
     });
   }
 
+  private async applyFollowRemoval(
+    tx: DbClient,
+    claim: ClaimedCallback,
+    now: number,
+  ): Promise<boolean> {
+    const externalUserid = projectionIdentifier(claim.payload, "ExternalUserID");
+    const userid = projectionIdentifier(claim.payload, "UserID");
+    const clients = await tx.select({ id: workClient.id }).from(workClient).where(and(
+      eq(workClient.corpId, claim.corpId),
+      eq(workClient.externalUserid, externalUserid),
+      isNull(workClient.deleteTime),
+    )).limit(2).for("update");
+    if (clients.length > 1) throw new Error("callback_client_identity_ambiguous");
+    if (!clients[0]) return false;
+
+    const updated = await tx.update(workClientFollow).set({
+      isDelUser: 1,
+      updateTime: now,
+    }).where(and(
+      eq(workClientFollow.clientId, clients[0].id),
+      eq(workClientFollow.userid, userid),
+      eq(workClientFollow.isDelUser, 0),
+    )).returning({ id: workClientFollow.id });
+    if (updated.length > 1) throw new Error("callback_follow_identity_ambiguous");
+    return updated.length === 1;
+  }
+
   private async recordFailure(claim: ClaimedCallback, error: unknown): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
     const dead = claim.attemptCount >= MAX_ATTEMPTS;
@@ -530,5 +602,47 @@ export class EnterpriseWechatCallbackService {
         eq(workCallbackEvent.leaseToken, claim.leaseToken),
       ));
     });
+  }
+}
+
+interface WorkCallbackQueueMessageControl {
+  body: WorkCallbackOutboxMessage;
+  attempts: number;
+  ack(): void;
+  retry(options: { delaySeconds: number }): void;
+}
+
+/** Keep Queue acknowledgement coupled to the durable callback process result. */
+export async function consumeWorkCallbackQueueMessage(
+  message: WorkCallbackQueueMessageControl,
+  service: Pick<EnterpriseWechatCallbackService, "processMessage">,
+): Promise<void> {
+  try {
+    const result = await service.processMessage(message.body);
+    if (result === "busy") {
+      message.retry({ delaySeconds: 30 });
+      return;
+    }
+    console.log(JSON.stringify({
+      event: "work_callback_pipeline_consumed",
+      eventId: message.body.eventId,
+      outboxId: message.body.outboxId,
+      result,
+      queueAttempt: message.attempts,
+    }));
+    message.ack();
+  } catch (error) {
+    const delaySeconds = Math.min(30 * 2 ** Math.max(message.attempts - 1, 0), 900);
+    console.error(JSON.stringify({
+      event: "work_callback_pipeline_failed",
+      eventId: message.body.eventId,
+      outboxId: message.body.outboxId,
+      queueAttempt: message.attempts,
+      retryDelaySeconds: delaySeconds,
+      error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
+        ? error.message
+        : "callback_processing_failed",
+    }));
+    message.retry({ delaySeconds });
   }
 }

@@ -251,6 +251,15 @@ function numberField(payload: WorkCallbackPayload, field: string): number {
   return typeof payload[field] === "number" ? payload[field] as number : 0;
 }
 
+function identifierField(payload: WorkCallbackPayload, field: string, maximumBytes = 64): string {
+  const value = stringField(payload, field);
+  return value
+    && byteLength(value) <= maximumBytes
+    && !/[\u0000-\u001f\u007f]/.test(value)
+    ? value
+    : "";
+}
+
 function normalizedSubject(payload: WorkCallbackPayload): {
   subject: string;
   recognized: boolean;
@@ -278,10 +287,23 @@ function normalizedSubject(payload: WorkCallbackPayload): {
     }
   }
   if (event === "change_external_contact") {
-    const externalUserId = stringField(payload, "ExternalUserID");
+    const externalUserId = identifierField(payload, "ExternalUserID");
+    const userid = identifierField(payload, "UserID");
+    const recognized = [
+      "add_external_contact",
+      "edit_external_contact",
+      "del_external_contact",
+      "del_follow_user",
+    ].includes(change);
+    let subject = "";
+    if (recognized && externalUserId && userid) {
+      subject = `external-contact:${externalUserId}:follow:${userid}`;
+    } else if (!recognized && externalUserId) {
+      subject = `external-contact:${externalUserId}`;
+    }
     return {
-      subject: externalUserId ? `external-contact:${externalUserId}` : "",
-      recognized: ["add_external_contact", "edit_external_contact", "del_external_contact", "del_follow_user"].includes(change),
+      subject,
+      recognized,
       sequenceRank,
     };
   }

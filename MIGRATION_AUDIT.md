@@ -2192,7 +2192,7 @@ WORK-B的代码、生产结构与隔离契约可以勾选，但生产能力仍�
 - [x] 新UniApp类型化API client、Worker/UniApp类型检查、H5/微信小程序构建、911项单元测试与两份dry-run完成。
 - [ ] 录入并复核CorpID/AgentID、两枚Secret、正式Origin和真实Work数据，完成真实员工/客户/群/订单最小样本迁移与PHP golden response。
 - [ ] 恢复五个Work页面与OAuth回跳，完成真机、预发、影子流量、明确发布批准、主Worker/Pages发布及发布后观察。
-- [x] WORK-C 的可信接收子批次已在后续章节实现 `ANY /api/work/serve`、验签/解密、事件账本、事务outbox、Queue和乱序水位；业务投影、真实租户回调与发布仍未完成。
+- [x] WORK-C0 的可信接收，以及 WORK-C1 的 `del_external_contact/del_follow_user` 关系 tombstone 代码与生产 Hyperdrive 隔离已在后续章节完成；C1 未启用/未发布，其他业务投影、真实租户回调、真实 Queue 平台重投与发布仍未完成。
 
 ## API-008 企业微信回调详细迁移审计（WORK-C 可信接收子批次，2026-08-30）
 
@@ -2216,7 +2216,7 @@ POST按流读取并在超过64 KiB时立刻cancel，不先把大包完整缓冲�
 
 HTTP提交后立即尝试Queue；发送结果未知可重复投递，消费者以outbox行锁、租约和event唯一键收敛。五分钟Cron只投递不含业务数据的根消息，由Queue消费者扫描`PENDING/FAILED`和过期租约；Queue失败记录固定错误码而不记录payload。消费端按`subject_key_hash`取得PostgreSQL advisory transaction lock，以`event_time`为主序、`sequence_rank`为同秒消歧：删除/解散100，更新/编辑50，创建10；较旧或同秒低优先级事件标记`SUPERSEDED`。不认识的新消息/事件以及旧PHP空处理分支留痕为`IGNORED`，不会冒充业务投影已执行。
 
-这个子批次刻意把最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`：当前Queue消费者只证明可信事件已经持久化、排序和可重放，尚未调用provider刷新成员/部门/客户/群/标签，也未执行欢迎语或自动标签等远端写。WORK-C父项因此保持未勾选；下一子批必须把每类事件的provider读取、本地快照状态机和所有远端副作用拆成独立事务action outbox，并为部分成功、provider 404、限流、乱序删除与人工重放定义终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单payload。
+WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 现在只对 `del_external_contact/del_follow_user` 增加 `APPLIED/APPLIED_NOOP` 关系 tombstone；add/edit、成员、部门、客户快照、群和标签仍只证明可信事件已经持久化与排序，尚未调用provider刷新业务表，也未执行欢迎语或自动标签等远端写。WORK-C父项因此保持未勾选；C2～C8仍必须把provider读取、本地快照状态机和所有远端副作用拆成独立事务action outbox，并为部分成功、provider 404、限流、乱序删除与人工重放定义终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单payload。
 
 ### 生产数据库与隔离场景证据
 
@@ -2230,14 +2230,98 @@ HTTP提交后立即尝试Queue；发送结果未知可重复投递，消费者�
 
 `ANY /api/work/serve`加入后，注释感知路由审计为PHP1,904、Workers1,446、精确匹配746、可执行匹配728、明确不可用18、原始缺失1,158、证据化退役4、可执行缺口1,154，覆盖为`39.2%/38.2%/38.3%`。`/api`为PHP457、TS757、精确364、可执行361、不可用3、原始缺失93、退役1、可执行缺口92，对应`79.6%/79.0%/79.2%`。目标结构由224增至227，新增三张均是明确的Worker扩展；共享源表仍为201，不能用扩展表夸大源迁移。
 
-仓库门禁为Worker双TypeScript配置通过，152/152个单元测试文件与921/921项通过，WORK-C定向文件10/10、连同迁移/定时任务/既有Work边界共4文件56/56；主Worker dry-run为4,914.35 KiB/gzip931.30 KiB，审计Worker为1,002.32 KiB/gzip177.95 KiB。Windows Workers runtime仍在0条断言前因既有`workerd 0xc0000005`启动失败，不能记为runtime通过；本批由真实Cloudflare Worker、生产Hyperdrive DDL和随机schema 11/11提供运行时证据。
+WORK-C0 当时的仓库门禁为Worker双TypeScript配置通过，152/152个单元测试文件与921/921项通过，WORK-C定向文件10/10、连同迁移/定时任务/既有Work边界共4文件56/56；主Worker dry-run为4,914.35 KiB/gzip931.30 KiB，审计Worker为1,002.32 KiB/gzip177.95 KiB。Windows Workers runtime仍在0条断言前因既有`workerd 0xc0000005`启动失败，不能记为runtime通过；C0由真实Cloudflare Worker、生产Hyperdrive DDL和随机schema 11/11提供运行时证据，C1 的后续证据单列如下，不能混写成同一轮全量回归。
 
 - [x] GET验证、POST有界读取/验签/解密、receive-id/CorpID绑定、白名单持久化与真实HTTP失败语义已实现。
 - [x] 事件唯一账本、事务outbox、Queue脱敏、过期租约/Cron补偿、至少一次幂等和主体乱序水位已实现。
 - [x] 生产三表DDL两遍幂等、既有业务全行指纹不变、随机schema 11/11及临时资源清零已完成。
-- [ ] 企业微信provider读取与成员/部门/客户/群/标签本地投影尚未接入；`ORDERED`不等于业务表已更新。
+- [x] C1 两类关系 tombstone 的代码、生产 `0110`/内嵌 `0116` 两遍、随机 schema 20/20、全行/owned sequence 指纹与资源清理已完成；仍未启用/未发布。
+- [ ] 除 C1 关系 tombstone 外，企业微信provider读取与成员/部门/客户/群/标签本地投影尚未接入；add/edit 的`ORDERED`不等于 tombstone 已恢复或业务快照已更新。
 - [ ] 欢迎语、自动标签等远端写必须进入单独action outbox/Queue，禁止回到HTTP请求内同步调用。
 - [ ] CorpID、两枚回调Secret、真实租户事件、旧PHP golden response、预发/影子流量、主Worker发布与发布后观察均未完成。
+
+## WORK-C0～C8 子批次、PHP→TS 事件能力矩阵与首批投影边界（2026-08-30）
+
+上一节记录的可信接收管道现在明确命名为 **WORK-C0**；其代码、生产 DDL、随机 schema 11/11 与资源清理证据原样保留，不回写成更大的完成声明。随后 **WORK-C1** 的关系 tombstone 代码和生产 Hyperdrive 隔离也已完成，但未启用、未发布。WORK-C 父项继续未完成：C1 只新增两类关系删除的 `APPLIED/APPLIED_NOOP`，其他事件的 `ORDERED` 仍不表示 Work 业务快照已经更新。
+
+后续工作拆成 C1～C8。**C1 现已达到“代码/生产 Hyperdrive 隔离完成，未启用/未发布”**，其 20/20、公共全行/owned sequence 指纹和资源清理证据见下；C2～C8 仍待完成。真实企微回调、真实 Cloudflare Queue 平台重投、源 MySQL 导入、主 Worker 切流和发布均不在 C1 完成声明内。
+
+### PHP→TS 事件能力矩阵
+
+PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListener.php:29-67`。它在 callback HTTP 请求中同步分发五类 event；多数 create/update 分支会继续调用企业微信 provider，再写多张本地表。当前 TypeScript 的识别集合位于 `workers-ts/src/services/work/EnterpriseWechatCallbackService.ts:89-105`；消费端 `applyOrdering()` 位于同文件 `:455-548`，其中只有两类 C1 删除调用 `applyFollowRemoval()`（`:551-575`）并写 `APPLIED/APPLIED_NOOP`，其他已识别事件仍停在 `ORDERED`。
+
+| 企业微信事件 | PHP 权威能力 | 当前 TS/C0～C1 | 目标子批次与未完成门禁 |
+|---|---|---|---|
+| `change_external_contact / del_external_contact` | `WorkListener.php:160-164` 调 `WorkClientServices::deleteClient()`；旧实现先销毁共享 client，再 tombstone 指定员工 follow | C1 已按 `(CorpID, ExternalUserID, UserID)` 关系排序，只 tombstone 指定活跃 follow，并记 `APPLIED/APPLIED_NOOP`；不删除共享 client | 代码/生产 Hyperdrive 隔离完成；真实回调、启用和发布未完成 |
+| `change_external_contact / del_follow_user` | `WorkListener.php:167-170` 调 `deleteFollowClient()`，只把匹配 follow 的 `is_del_user` 置 1 | 与上行共用 C1 关系终止状态机和原子终态 | 代码/生产 Hyperdrive 隔离完成；真实回调、启用和发布未完成 |
+| `change_external_contact / add_external_contact` | `WorkListener.php:150-154` 调 provider 拉完整客户/follow；随后同步触发欢迎语、自动标签和商城用户关联 | 只排序；回调白名单不足以构造完整客户/follow/tags | C5 做 provider 权威本地快照；C8 才做独立 action outbox 的远端副作用 |
+| `change_external_contact / edit_external_contact` | `WorkListener.php:155-159` 调 provider 刷新客户、全部 follow/tags，并尝试商城用户关联 | 只排序 | C5；provider 404、429、旧快照晚到和多员工关系必须定义终态 |
+| `change_contact / create_user, update_user, delete_user` | `WorkListener.php:95-109` 调成员 service；create/update 需要完整成员资料和部门关系 | 只排序；claim 已能读取 payload/corpId，但白名单仍缺完整成员字段 | C3 成员 current-state 投影 |
+| `change_contact / create_party, update_party, delete_party` | `WorkListener.php:110-124` 调部门 service；更新需 provider 权威详情 | 只排序；现表没有 `(corp_id,department_id)` 唯一或明确 tombstone | C4 部门 current-state 投影 |
+| `change_contact / update_tag` | PHP 分支为空，`WorkListener.php:125-127` | C0 未把空分支冒充恢复 | 继续 IGNORED，除非后续有独立权威同步设计 |
+| `change_external_chat / create, update, dismiss` | `WorkListener.php:190-208` 拉群详情或按事件更新/解散；旧更新存在按提示增减计数风险 | 只排序 | C6 以 provider 全量群/成员快照收敛，禁止盲增减 |
+| `change_external_tag / create, update, delete` | `WorkListener.php:225-242` 调用户标签 service；`shuffle` 为空 | 只排序；callback 保存字符串远端 ID，但旧 `work_label.id/group_id` 是整数本地身份 | C7 先建立远端字符串 tag/group current-state 身份，再投影 |
+| `batch_job_result / sync_user, replace_user, invite_user, replace_party` | PHP 四个分支全部为空，`WorkListener.php:71-82` | 记 IGNORED，不冒充同步成功 | C7 明确维持 IGNORED，或升级为有游标/对账证据的独立全量同步任务 |
+| `text/image/voice/video/news/update_*` | PHP 仅列出空分支，`WorkListener.php:52-65` | 非本批业务投影事件 | 保持显式未迁移/IGNORED；不能用路由存在推导能力完成 |
+
+### C0～C8 的精确边界
+
+- **WORK-C0（已完成）可信接收、事务 inbox/outbox、Queue 与乱序水位**：只保留上一节已有证据，不宣称任何成员、部门、客户、follow、群、成员或标签已经刷新。
+- **WORK-C1（代码/生产 Hyperdrive 隔离完成，未启用/未发布）外部联系人跟进关系 tombstone**：只实现 `del_external_contact` 和 `del_follow_user`；不调用 provider，不执行远端写，不创建客户或 follow。事件主体已改为关系级 `(CorpID, ExternalUserID, UserID)`，缺任一 ID 即失败关闭；同一事务唯一解析 client/follow、更新 `is_del_user=1`、推进关系水位并写 `APPLIED/APPLIED_NOOP`。不存在目标为幂等 no-op，重复活跃 client/follow 由生产 partial UNIQUE 和服务失败关闭共同拒绝。
+- **WORK-C2（待完成）投影运行时与 provider 读取基础**：提取独立 `EnterpriseWechatProviderClient`，按 credential scope 隔离 token/cache；统一超时、有界 JSON、失效 token 单次刷新、404 终止、429/5xx/网络失败可重试和脱敏日志。Work DLQ 已通过严格 validator 允许 callback outbox/dispatch 消息重放并有单元测试；C2 仍须完成真实 Cloudflare Queue 平台的失败投递、重投、DLQ 归档与人工重放验证。
+- **WORK-C3（待完成）成员 current-state**：覆盖成员 create/update/delete、UserID 变更、扩展资料和部门关系全量替换；provider 在事务外读取，应用快照与水位在短事务内原子提交。
+- **WORK-C4（待完成）部门 current-state**：覆盖部门 create/update/delete、父子关系、负责人和排序；先建立 `(CorpID, DepartmentID)` 唯一身份与明确 tombstone，禁止无证据硬删历史或级联成员关系。
+- **WORK-C5（待完成；主 Worker 启用前硬门禁）客户、follow 与 follow tags 权威快照**：覆盖 add/edit，完整保留其他员工的跟进关系；当前 add/edit 仍只记 `ORDERED`，不会恢复 C1 tombstone，因此 C5 完成前不得启用主 Worker。客户失活只能由所有关系均终止或 provider 权威状态判定，不能由一条员工关系删除推导。
+- **WORK-C6（待完成）客户群和群成员**：按 `(CorpID, ChatID)` 唯一身份全量刷新群主/成员，dismiss 为终止态；旧 provider 响应、同秒 create/update 不得复活已解散群。
+- **WORK-C7（待完成）企业客户标签与批量同步结果**：补远端字符串 tag/group 身份；对 PHP 空处理的 shuffle/batch 明确保留 IGNORED，或另建可重放、可对账的同步任务。
+- **WORK-C8（待完成）欢迎语、自动标签、商城用户关联与真实发布闭环**：远端写一律进入独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工重放和审计终态；随后才进入真实租户回调、预发、影子流量和发布批准。
+
+### 为什么首批只选 `del_external_contact` / `del_follow_user`
+
+这两类事件是当前唯一可以不依赖 provider、又能安全落到既有明确 tombstone 字段的业务投影：现有 callback 白名单已经保存 `ToUserName`、`ExternalUserID` 和 `UserID`，而 `work_client_follow.is_del_user` 正是关系级终止标记。写入是单向的 `0→1`，天然适合重复投递、乱序和 Queue 重试；目标不存在也可以作为可审计 no-op，而不是补造一行默认值客户或 follow。
+
+PHP 的两条删除分支不能原样复制。`C:\cinagroup\cinashop-php\app\services\work\WorkClientServices.php:335-349` 的 `deleteClient()` 在同一事务先销毁 `work_client`，再更新当前员工的 follow；`deleteFollowClient()` 则只更新关系，见同文件 `:360-370`。一个 `ExternalUserID` 可以同时被多名员工跟进，因此 `del_external_contact` 只证明特定 `(ExternalUserID, UserID)` 关系终止，不能证明共享客户已经从整个企业消失。C1 明确采用以下迁移决策：
+
+1. 已以 `(CorpID, ExternalUserID, UserID)` 构造关系 subject/watermark；`EnterpriseWechatCallbackCrypto.ts:289-307` 现在要求 ExternalUserID 与 UserID 同时存在，定向单元测试证明不同员工不再互相压制。
+2. 已以 `(corp_id, external_userid)` 唯一解析活跃 `work_client`；0 行为 no-op，歧义失败关闭，并由精确定义的 partial UNIQUE 阻止新的活跃重复。
+3. 已以 `(client_id, userid)` 唯一解析活跃 follow；0 行为 no-op，歧义失败关闭；命中时只写 `is_del_user=1`，同样由 partial UNIQUE 阻止新的活跃重复。
+4. **不得修改 `work_client.delete_time`，不得调用共享 client 的软删/硬删，也不得影响其他员工 follow。**
+5. follow tombstone、`APPLIED/APPLIED_NOOP`、event/outbox 与关系水位已在同一事务提交；故障注入证明任何异常整体回滚，不会先推进 watermark。
+
+### 已收口模型与剩余运行时缺口
+
+- C1 已把外部联系人 subject 改为关系级，并让 claim 同时读取 `corpId/payload`（`EnterpriseWechatCallbackService.ts:395-418`）；这两项不再是 C1 缺口。
+- callback 白名单 `EnterpriseWechatCallbackCrypto.ts:9-40` 足够 C1 的三元身份，但缺成员、部门、客户、群和标签 create/update 所需的完整字段；C3～C7 必须 provider 回源，不能用数据库默认值伪造快照。
+- 外部 `0110`/内嵌 `0116` 已建立两个活跃自然键 partial UNIQUE，当前生产活跃 client/follow 重复组均为 0。源 MySQL 当前不可用，无法证明未来导入数据也无重复；导入前必须先预检并 canonicalize/处置重复，否则唯一索引会显式拒绝，而不是静默任选一行。
+- `work_member_relation`、`work_client_follow_tags` 是无稳定源键的历史 multiset；不能为了方便投影直接把既有导入证据改写成唯一 current-state。需要新 current 表或先做正式 canonicalization。
+- `work_label` 没有远端字符串 tag/group ID；C7 不能把回调字符串 ID 强塞进本地 serial ID。
+- callback 表的 CorpID 列容量为 64 字符，但运行时 `EnterpriseWechatCallbackService.ts:365-384` 当前把已配置 CorpID 限制为 1～18 个安全字符，既有 Work 业务表也使用 18 字符。64 是存储容量，不代表运行时已允许更长 CorpID；放宽前必须统一验证和业务表边界。
+- Work callback 与订单消息共用 Queue。`OrderQueueDeadLetterService.ts:220-227` 已用 callback 严格 validator 把 outbox/dispatch 归为可重放，`order-queue-dead-letter.test.ts:26-51` 有单元测试；真实 Cloudflare Queue 平台的失败投递、重投、DLQ 归档与人工重放仍未执行，继续属于 C2/发布门禁。
+- `add_external_contact/edit_external_contact` 当前虽按关系级 subject 接收，但消费结果仍只到 `ORDERED`，不会恢复 C1 写下的 tombstone。主 Worker 必须等待 C5 用 provider 权威客户/follow/tags 快照定义恢复语义后才能启用。
+
+### C1 生产 Hyperdrive 隔离结果与执行记录
+
+C1 现可标记为“代码/生产 Hyperdrive 隔离完成”，但仍是**未启用、未发布**。完成证据严格限定如下：
+
+1. 生产 PostgreSQL 16 通过既定 Hyperdrive 将外部 `0110_work_callback_follow_projection.sql`（Worker 内嵌 `migration_0116`）连续应用两遍。`wce_status_ck` 已精确允许 `APPLIED/APPLIED_NOOP`；两个精确定义的 partial UNIQUE 分别为 `work_client(corp_id,external_userid) WHERE delete_time IS NULL AND external_userid<>''`，以及 `work_client_follow(client_id,userid) WHERE is_del_user=0 AND client_id>0 AND userid<>''`，目录回读同时确认两者 `indisvalid=true/indisready=true`。DDL 前活跃 client/follow 自然键重复组均为 0，应用后 `work_callback_event/outbox/watermark` 仍均为 0 行。
+2. 随机 schema 在同一生产 PostgreSQL/Hyperdrive 引擎完成 20/20：既保留 C0 的明文验证、事件/Queue 幂等、乱序、同秒删除、未知事件、持久 Queue 失败和伪造签名零写，也覆盖关系级重复、只 tombstone 指定员工、另一员工旧事件不被压制、共享 client 不软删、不存在关系 `APPLIED_NOOP`、故障注入全事务回滚后可重试，以及状态约束/两个 partial UNIQUE 精确存在。
+3. 所有相关 `public` 业务表与三张 callback 表前后全行多重集指纹一致，每条 owned sequence 的 `last_value + is_called` 一致；成功与故障路径的合成业务 DML 只发生在随机 schema，最终 schema 已删除。
+4. 执行过程没有删去失败证据：首轮只读活跃重复预检 SQL 少一个右括号，在任何 DDL 前失败；次轮生产 DDL 已成功且表/索引回读正确，但随机 schema 的故障注入约束范围过宽，导致隔离断言失败；第三轮只修正测试 harness 后 20/20 全通过。随后把 callback 三表加入隔离阶段 public 指纹：首次临时 Worker 因 Secret 新版本传播延迟在 `/migrate` 前返回 403；等待八秒后的下一轮再次完成迁移两遍和 20/20。提交前独立复核又发现迁移阶段的完整指纹仍默认只覆盖业务表，`pipeline_state_unchanged` 对 callback 只比较存在性/行数；修正为迁移前后均覆盖业务表、callback 三表及其 owned sequence，并补索引 `indisvalid/indisready` 与状态集合精确检查后，最终生产重跑再次得到 `migration_passes=2`、`pipeline_state_unchanged=true`、`public_rows_and_sequences_unchanged=true`、`isolated_checks=20/20`。所有失败轮均完成随机 schema 与临时 Worker 清理，且均没有 `public` 业务 DML。
+5. 最终临时 Worker 删除后 Cloudflare API 返回 code 10007、workers.dev URL 返回 404；主 Worker 前后仍为 100% 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，正式 Secret 名称集合未变化，没有部署或切流。
+6. 最终代码门禁为 Worker 双 TypeScript 配置通过、152/152 个测试文件与 923/923 项通过；注释感知路由审计仍保持上文 PHP 1,904、Workers 1,446、精确/可执行 746/728 等数值不变，主 Worker与审计 Worker dry-run 均通过。Windows Workers runtime 仍在 0 条断言前以既有 `workerd 0xc0000005` 退出，因此不能记为本地 runtime 通过。
+
+### 尚未解除的凭据、Queue 与启用边界
+
+Work DLQ 的严格 validator 已允许 `processWorkCallbackOutbox` 与 `dispatchWorkCallbackOutbox` 重放，并有单元测试；本轮随机 schema/mocked Queue 证明本地状态机可重试，但**没有执行真实 Cloudflare Queue 平台的失败投递、自动重投、DLQ 归档或人工重放**。这部分继续留在 C2/发布门禁；未来验证必须使用专用临时 Queue，禁止把故障场景注入共享 `cinashop-order`。
+
+C1 的随机 schema 和 mock Queue 场景不需要真实企微凭据；合成 Token/AES Key 只验证协议和本地状态机。要证明真实租户把 `del_external_contact/del_follow_user` 回调送到 Worker，仍需要正确 CorpID、`WECHAT_WORK_CALLBACK_TOKEN`、`WECHAT_WORK_CALLBACK_AES_KEY`、可访问的预发回调 URL 和真实测试租户。C2～C7 的 provider 正向/真实不存在主体语义还需要最小权限的通讯录/客户联系 Secret；当前 `WECHAT_WORK_CORP_SECRET` 不能在未确认权限范围前默认复用。429、5xx和网络中断必须用确定性 mock 验证，不应为测试故意打满真实租户配额。C8 的欢迎语/自动标签正向验收还需要相应应用权限、测试客户和明确的外部副作用批准。
+
+生产 `public` 只允许 C1 前后的只读审计和上述受控 DDL；合成业务 DML 仍严格限定随机 schema。C1 隔离完成不等于真实企微、真实 Queue、源数据迁移、主 Worker 发布或 C2～C8 完成。
+
+### 主 Worker 启用前的两个硬阻塞
+
+1. **源数据自然键阻塞**：源 MySQL 当前不可用，无法预检未来导入批次。导入任何 `work_client/work_client_follow` 数据前必须检查并处理活跃 `(corp_id,external_userid)` 与 `(client_id,userid)` 重复；否则生产 partial UNIQUE 会按设计显式阻断导入，不能临时删除约束或任选重复行。
+2. **恢复语义阻塞**：较新的 `add_external_contact/edit_external_contact` 当前仍只到 `ORDERED`，不会把 C1 已 tombstone 的关系恢复为活跃。必须先完成 C5 的 provider 权威客户、全部 follow 与 tags 快照及旧响应防复活规则，随后才能考虑启用主 Worker。
 
 ## 完成定义
 

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createCipheriv, createHash } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   decryptCallbackCipher,
   encryptedXmlValue,
@@ -8,6 +8,7 @@ import {
   verifyCallbackSignature,
 } from "../src/services/work/EnterpriseWechatCallbackCrypto";
 import {
+  consumeWorkCallbackQueueMessage,
   isWorkCallbackDispatchMessage,
   isWorkCallbackOutboxMessage,
 } from "../src/services/work/EnterpriseWechatCallbackService";
@@ -78,6 +79,22 @@ describe("Enterprise WeChat callback protocol", () => {
     expect(normalized.payload).not.toHaveProperty("Content");
   });
 
+  it("scopes external-contact ordering to one employee follow relationship", () => {
+    const callback = (userid: string) => `<xml><ToUserName>${corpId}</ToUserName><CreateTime>1788048000</CreateTime><MsgType>event</MsgType><Event>change_external_contact</Event><ChangeType>del_follow_user</ChangeType><ExternalUserID>wo-client-1</ExternalUserID><UserID>${userid}</UserID></xml>`;
+    const first = normalizeDecryptedCallback(callback("employee-a"), corpId);
+    const second = normalizeDecryptedCallback(callback("employee-b"), corpId);
+    expect(first.subjectKey).toBe("external-contact:wo-client-1:follow:employee-a");
+    expect(second.subjectKey).toBe("external-contact:wo-client-1:follow:employee-b");
+    expect(first.subjectKey).not.toBe(second.subjectKey);
+    expect(first.recognized).toBe(true);
+    expect(() => normalizeDecryptedCallback(
+      callback("").replace("<UserID></UserID>", ""),
+      corpId,
+    )).toThrow("callback_field_invalid");
+    expect(() => normalizeDecryptedCallback(callback("employee&#10;a"), corpId))
+      .toThrow("callback_field_invalid");
+  });
+
   it("rejects XML entities/DOCTYPE and malformed wrappers", () => {
     expect(() => encryptedXmlValue("<!DOCTYPE xml><xml><Encrypt>x</Encrypt></xml>"))
       .toThrow("callback_xml_invalid");
@@ -113,6 +130,46 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     expect(isWorkCallbackDispatchMessage({ action: "processWorkCallbackOutbox", scheduledAt: 1788048000 })).toBe(false);
   });
 
+  it("acks durable terminal outcomes and retries busy or failed Queue deliveries", async () => {
+    const body = {
+      action: "processWorkCallbackOutbox" as const,
+      outboxId: 7,
+      eventId: 11,
+      eventKey: "a".repeat(64),
+    };
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const info = vi.spyOn(console, "log").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await consumeWorkCallbackQueueMessage(
+        { body, attempts: 1, ack, retry },
+        { processMessage: vi.fn().mockResolvedValue("applied") },
+      );
+      expect(ack).toHaveBeenCalledOnce();
+      expect(retry).not.toHaveBeenCalled();
+
+      ack.mockClear();
+      await consumeWorkCallbackQueueMessage(
+        { body, attempts: 1, ack, retry },
+        { processMessage: vi.fn().mockResolvedValue("busy") },
+      );
+      expect(ack).not.toHaveBeenCalled();
+      expect(retry).toHaveBeenLastCalledWith({ delaySeconds: 30 });
+
+      retry.mockClear();
+      await consumeWorkCallbackQueueMessage(
+        { body, attempts: 2, ack, retry },
+        { processMessage: vi.fn().mockRejectedValue(new Error("projection_failed")) },
+      );
+      expect(ack).not.toHaveBeenCalled();
+      expect(retry).toHaveBeenCalledWith({ delaySeconds: 60 });
+    } finally {
+      info.mockRestore();
+      error.mockRestore();
+    }
+  });
+
   it("does not classify legacy empty-handler event variants as restored", () => {
     const variants = [
       ["change_contact", "update_tag", "<Id>1</Id>"],
@@ -128,13 +185,19 @@ describe("Enterprise WeChat callback durable pipeline", () => {
   });
 
   it("keeps external and embedded migration SQL identical", () => {
-    const external = readFileSync("migrations/0109_work_callback_pipeline.sql", "utf8").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
-    const embedded = service.match(
-      /private migration_0115\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
-    )?.[1]?.trim();
-    expect(embedded).toBe(external);
-    expect(service).toContain("this.migration_0115()");
+    for (const [externalPath, migration] of [
+      ["migrations/0109_work_callback_pipeline.sql", "0115"],
+      ["migrations/0110_work_callback_follow_projection.sql", "0116"],
+    ] as const) {
+      const external = readFileSync(externalPath, "utf8").trim();
+      const embedded = service.match(
+        new RegExp("private migration_" + migration + "\\(\\): string \\{\\s*return `([\\s\\S]*?)`;\\s*\\}"),
+      )?.[1]?.trim();
+      expect(embedded).toBe(external);
+      expect(service).toContain(`this.migration_${migration}()`);
+    }
+    expect(service).toContain("workCallbackFollowProjectionMigrationSqlForVerification");
   });
 
   it("does not make provider calls in the HTTP callback controller", () => {

@@ -5,6 +5,7 @@
  * relation tables do not have a stable source key; do not invent one here.
  * Remote Enterprise WeChat writes are not enabled by these table definitions.
  */
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -90,6 +91,9 @@ export const workClient = pgTable(
     deleteTime: integer("delete_time"),
   },
   (table) => [
+    uniqueIndex("work_client_active_identity_uq")
+      .on(table.corpId, table.externalUserid)
+      .where(sql`${table.deleteTime} IS NULL AND ${table.externalUserid} <> ''`),
     index("work_client_external_userid").on(table.externalUserid),
     index("work_client_corp_external").on(table.corpId, table.externalUserid),
     index("work_client_uid").on(table.uid),
@@ -117,6 +121,9 @@ export const workClientFollow = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    uniqueIndex("work_client_follow_active_identity_uq")
+      .on(table.clientId, table.userid)
+      .where(sql`${table.isDelUser} = 0 AND ${table.clientId} > 0 AND ${table.userid} <> ''`),
     index("work_client_follow_state").on(table.state),
     index("work_client_follow_client_id").on(table.clientId),
     index("work_client_follow_user_client").on(table.userid, table.clientId, table.id),

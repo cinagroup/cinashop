@@ -23,6 +23,33 @@ describe("order Queue dead-letter operations", () => {
       eventKey: "order.paid:42",
     });
 
+    const workCallback = prepareOrderQueueDeadLetter({
+      action: "processWorkCallbackOutbox",
+      outboxId: 17,
+      eventId: 19,
+      eventKey: "a".repeat(64),
+    });
+    expect(workCallback).toMatchObject({
+      messageType: "processWorkCallbackOutbox",
+      replayPolicy: "ALLOW",
+      body: {
+        action: "processWorkCallbackOutbox",
+        outboxId: 17,
+        eventId: 19,
+        eventKey: "a".repeat(64),
+      },
+      replayMessage: {
+        action: "processWorkCallbackOutbox",
+        outboxId: 17,
+        eventId: 19,
+        eventKey: "a".repeat(64),
+      },
+    });
+    expect(prepareOrderQueueDeadLetter({
+      action: "dispatchWorkCallbackOutbox",
+      scheduledAt: 1_788_048_000_000,
+    }).replayPolicy).toBe("ALLOW");
+
     const legacy = prepareOrderQueueDeadLetter({
       action: "compute",
       orderId: "wx-42",
