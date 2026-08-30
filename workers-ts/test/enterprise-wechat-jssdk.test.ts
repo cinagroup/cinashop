@@ -198,6 +198,39 @@ describe("Enterprise WeChat JS-SDK migration", () => {
     expect(calls[1].url.searchParams.get("access_token")).toBe("agent-access");
   });
 
+  it("exchanges OAuth code only for an internal employee and binds the configured CorpID", async () => {
+    const { container, env } = fixture();
+    const { calls, fetcher } = queuedFetcher([
+      jsonResponse({ errcode: 0, access_token: "agent-access", expires_in: 7200 }),
+      jsonResponse({
+        errcode: 0,
+        CorpId: "ww0123456789abcdef",
+        UserId: "employee-7",
+      }),
+    ]);
+    await expect(new EnterpriseWechatJsSdkService(container, env, fetcher)
+      .employeeIdentity("oauth_code_7")).resolves.toEqual({
+        corpId: "ww0123456789abcdef",
+        agentId: 1000002,
+        userid: "employee-7",
+      });
+    expect(calls).toHaveLength(2);
+    expect(calls[1].url.pathname).toBe("/cgi-bin/auth/getuserinfo");
+    expect(calls[1].url.searchParams.get("access_token")).toBe("agent-access");
+    expect(calls[1].url.searchParams.get("code")).toBe("oauth_code_7");
+
+    const external = fixture();
+    const externalFetcher = queuedFetcher([
+      jsonResponse({ errcode: 0, access_token: "agent-access", expires_in: 7200 }),
+      jsonResponse({ errcode: 0, OpenId: "external-open-id" }),
+    ]).fetcher;
+    await expect(new EnterpriseWechatJsSdkService(
+      external.container,
+      external.env,
+      externalFetcher,
+    ).employeeIdentity("external_code")).rejects.toThrow(ForbiddenException);
+  });
+
   it("refreshes an access token once when the ticket endpoint reports early expiry", async () => {
     const { container, env } = fixture();
     const { calls, fetcher } = queuedFetcher([

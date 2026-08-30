@@ -1138,6 +1138,15 @@ v1Routes.get("/wechat/config", WechatController.wechatConfig);
 // Enterprise WeChat JS-SDK signatures (public compatibility routes, strict URL allowlist).
 v1Routes.get("/work/config", EnterpriseWechatController.config);
 v1Routes.get("/work/agentConfig", EnterpriseWechatController.agentConfig);
+v1Routes.post("/work/context/challenge", EnterpriseWechatController.contextChallenge);
+v1Routes.post("/work/context/exchange", EnterpriseWechatController.contextExchange);
+v1Routes.get("/work/groupInfo", EnterpriseWechatController.groupInfo);
+v1Routes.get("/work/groupMember/:id", EnterpriseWechatController.groupMember);
+v1Routes.get("/work/client/info", EnterpriseWechatController.clientInfo);
+v1Routes.get("/work/order/list", EnterpriseWechatController.orderList);
+v1Routes.get("/work/order/info/:id", EnterpriseWechatController.orderInfo);
+v1Routes.get("/work/product/cart_list", EnterpriseWechatController.productCartList);
+v1Routes.get("/work/product/visit_list", EnterpriseWechatController.productVisitList);
 // Source-compatible mini-program live list and replay lookup.
 v1Routes.get("/wechat/live", WechatLiveController.publicRooms);
 v1Routes.get("/wechat/livePlaybacks/:id", WechatLiveController.publicPlaybacks);

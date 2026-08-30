@@ -7,6 +7,7 @@ import { generateNonceStr, jsSdkSignature } from "@/utils/wechat-crypto";
 const ACCESS_TOKEN_URL = "https://qyapi.weixin.qq.com/cgi-bin/gettoken";
 const COMPANY_TICKET_URL = "https://qyapi.weixin.qq.com/cgi-bin/get_jsapi_ticket";
 const AGENT_TICKET_URL = "https://qyapi.weixin.qq.com/cgi-bin/ticket/get";
+const EMPLOYEE_IDENTITY_URL = "https://qyapi.weixin.qq.com/cgi-bin/auth/getuserinfo";
 const FETCH_TIMEOUT_MS = 5_000;
 const MAX_PROVIDER_JSON_BYTES = 16 * 1024;
 const MAX_SIGNED_URL_BYTES = 2_048;
@@ -251,6 +252,63 @@ export class EnterpriseWechatJsSdkService {
     });
   }
 
+  /**
+   * Exchange a one-time Enterprise WeChat OAuth code for an internal employee.
+   * External-contact OpenId responses are deliberately rejected: client-side
+   * JS-SDK context identifies the target, never the acting employee.
+   */
+  async employeeIdentity(rawCode: string): Promise<{
+    corpId: string;
+    agentId: number;
+    userid: string;
+  }> {
+    const code = rawCode.trim();
+    if (!/^[A-Za-z0-9_-]{1,512}$/.test(code)) {
+      throw new ValidateException("企业微信 OAuth code 无效");
+    }
+    return this.withProviderBoundary("employee_identity", async () => {
+      const { corpId, agentId } = await this.nonSecretConfig(true);
+      const secret = this.requiredSecret(this.env.WECHAT_WORK_AGENT_SECRET, "agent");
+      const fingerprint = await sha256Hex(`agent\0${corpId}\0${agentId}\0${secret}`);
+      const tokenKey = `work_jssdk:access:agent:${fingerprint}`;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const accessToken = await this.accessToken(
+          "agent",
+          corpId,
+          secret,
+          tokenKey,
+          attempt > 0,
+        );
+        const url = new URL(EMPLOYEE_IDENTITY_URL);
+        url.searchParams.set("access_token", accessToken);
+        url.searchParams.set("code", code);
+        const { response, data } = await this.providerJson(url, "employee_identity");
+        const providerCode = Number(data.errcode ?? 0);
+        if (attempt === 0 && INVALID_ACCESS_TOKEN_CODES.has(providerCode)) {
+          await this.env.CONFIG_KV.delete(tokenKey);
+          continue;
+        }
+        if (!response.ok || providerCode !== 0) {
+          throw new EnterpriseWechatProviderError(
+            "employee_identity",
+            Number.isSafeInteger(providerCode) ? providerCode : -1,
+            response.status,
+          );
+        }
+        const userid = String(data.userid ?? data.UserId ?? "").trim();
+        const returnedCorpId = String(data.CorpId ?? data.corpid ?? "").trim();
+        if (!/^[A-Za-z0-9_@.-]{1,128}$/.test(userid)) {
+          throw new ForbiddenException("仅企业内部员工可以访问客户工作台");
+        }
+        if (returnedCorpId && returnedCorpId !== corpId) {
+          throw new ForbiddenException("企业微信身份不属于当前企业");
+        }
+        return { corpId, agentId, userid };
+      }
+      throw new EnterpriseWechatProviderError("employee_identity", -1, 502);
+    });
+  }
+
   private async nonSecretConfig(requireAgentId: boolean): Promise<{
     corpId: string;
     agentId: number;
@@ -418,10 +476,17 @@ export class EnterpriseWechatJsSdkService {
   }
 
   private async withProviderBoundary<T>(operation: string, fn: () => Promise<T>): Promise<T> {
+    const unavailableMessage = operation.endsWith("_config")
+      ? "企业微信签名服务暂时不可用，请稍后重试"
+      : "企业微信服务暂时不可用，请稍后重试";
     try {
       return await fn();
     } catch (error) {
-      if (error instanceof ServiceUnavailableException) throw error;
+      if (
+        error instanceof ServiceUnavailableException
+        || error instanceof ForbiddenException
+        || error instanceof ValidateException
+      ) throw error;
       if (error instanceof EnterpriseWechatProviderError) {
         console.error(JSON.stringify({
           event: "enterprise_wechat_provider_failed",
@@ -430,14 +495,14 @@ export class EnterpriseWechatJsSdkService {
           providerCode: error.providerCode,
           httpStatus: error.httpStatus,
         }));
-        throw new ServiceUnavailableException("企业微信签名服务暂时不可用，请稍后重试");
+        throw new ServiceUnavailableException(unavailableMessage);
       }
       console.error(JSON.stringify({
         event: "enterprise_wechat_jssdk_failed",
         operation,
         error: error instanceof Error ? error.name : "unknown",
       }));
-      throw new ServiceUnavailableException("企业微信签名服务暂时不可用，请稍后重试");
+      throw new ServiceUnavailableException(unavailableMessage);
     }
   }
 }

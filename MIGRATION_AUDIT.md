@@ -2113,7 +2113,7 @@ Cloudflare 的最新 [Workers best practices](https://developers.cloudflare.com/
 
 ### Worker 实现与有意安全差异
 
-Hono 新增精确公开路由 `GET /api/work/config|agentConfig`，保持 PHP 无登录合同，但入口首先规范化 URL：最大 2,048 UTF-8 字节、必须 HTTPS、禁止 userinfo、移除 fragment，并要求 `URL.origin` 精确命中最多 32 项的 `WORK_WECHAT_ALLOWED_ORIGINS`。allowlist 未配置/格式错误返回真实 HTTP 503，非 HTTPS或未授权 Origin 返回 403；签名响应设置 `Cache-Control: private, no-store, max-age=0` 和 `Pragma: no-cache`。正式 Origin还必须同步加入全局 `ALLOWED_ORIGINS`，否则浏览器会在 CORS 层先拒绝。
+Hono 新增精确公开路由 `GET /api/work/config|agentConfig`，保持 PHP 无登录合同，但入口首先规范化 URL：最大 2,048 UTF-8 字节、必须 HTTPS、禁止 userinfo、移除 fragment，并要求 `URL.origin` 精确命中最多 32 项的 `WORK_WECHAT_ALLOWED_ORIGINS`。allowlist 未配置/格式错误返回真实 HTTP 503，非 HTTPS或未授权 Origin 返回 403；签名响应设置 `Cache-Control: private, no-store, max-age=0` 和 `Pragma: no-cache`。WORK-B 后续把该专用 Origin 接入 CORS，但只允许访问 `/api/work`，不会扩展到其他 API surface。
 
 CorpID 和 AgentID仅从 `system_config` 的非秘密键读取并验证；企业级 `WECHAT_WORK_CORP_SECRET` 与应用级 `WECHAT_WORK_AGENT_SECRET` 只接受 Worker Secret。两路 access token 和 ticket使用包含 Secret SHA-256 指纹的分域 key，缓存值只含 provider credential与到期时间，不含原始 Secret；TTL最多 6,900 秒，提前留 300 秒刷新窗口。provider 请求固定 5 秒超时，响应流最多 16 KiB；`Content-Length`、JSON object、`errcode`、凭据长度和 `expires_in` 全部验证。票据端遇到 `40001/40014/42001` 只删除该域 token/ticket并重取一次，其他 HTTP/协议/传输/缓存错误统一记录无 Secret 的结构化字段并返回 503。每次签名使用 Web Crypto随机 nonce 和既有固定顺序 SHA-1 工具，不复用 nonce或签名响应。
 
@@ -2138,9 +2138,61 @@ WORK-A 代码与生产数据库/隔离协议证据可以勾选，但生产能力
 - [x] 两条 PHP 精确合同、响应主要字段、企业/应用 ticket 分离、签名算法与六项实际 JS API列表已实现。
 - [x] HTTPS Origin allowlist、URL规范化、两枚 Worker Secret、限时缓存、超时/限长、提前失效单次刷新和真实 HTTP失败关闭已实现。
 - [x] 生产五键只读审计与随机 schema真实 service 13/13完成；public不变，临时 schema/Worker/Secret清零。
-- [ ] 录入并复核 CorpID/AgentID，以 Worker Secret注入两枚凭据，批准专用 H5 Origin并同步全局 CORS；取得真实租户后补 provider和真机 E2E。
-- [ ] 修复旧 UniApp query编码、iOS/Android SPA签名 URL及模块级 Promise复用；新 UniApp尚无类型化 WORK-A client。
-- [ ] WORK-B/WORK-C、主 Worker/Pages发布、预发、影子流量、明确发布批准和发布后观察仍未完成。
+- [ ] 录入并复核 CorpID/AgentID，以 Worker Secret注入两枚凭据，批准专用 H5 Origin；取得真实租户后补 provider和真机 E2E。
+- [ ] 修复旧 UniApp query编码、iOS/Android SPA签名 URL及模块级 Promise复用；新 UniApp已有WORK-B上下文/读取client，但两条JS-SDK配置client仍未恢复。
+- [ ] WORK-B 的生产数据/页面/E2E仍未完成；WORK-C、主 Worker/Pages发布、预发、影子流量、明确发布批准和发布后观察仍未完成。
+
+## API-008 企业微信群/客户本地读详细迁移审计（WORK-B 子批次，2026-08-30）
+
+### 权威合同与旧实现安全审计
+
+WORK-B 权威范围固定为七条 PHP GET：`/api/work/groupInfo`、`groupMember/:id`、`client/info`、`order/list`、`order/info/:id`、`product/cart_list` 与 `product/visit_list`。前两条位于旧 `ClientMiddleware` 外，但 `BaseWork` 仍假定中间件注入的请求宏存在；其余五条由 `ClientMiddleware` 直接相信 query `userid`，再按 CorpID + external user ID取客户，没有任何企业员工身份证明。旧订单详情按全局自增 ID读取，未追加客户 UID，构成直接 IDOR；群成员的其他群数量逐行查询且只按 `userid`，既有 N+1，也可能跨 CorpID计数；客户标签读取也没有绑定当前跟进员工。
+
+旧 `ProductServices::getProductCartList()` 有一个需保留的特殊语义：无 `store_name` 时返回该客户购买过的商品，带搜索词时注释明确写着“搜索不局限加入购物车｜浏览”，会检索公开商品目录。本批保留这个兼容行为，因为只返回公开商品摘要；订单、客户资料、跟进标签和无搜索购买记录仍全部受客户 UID/员工关系约束。
+
+### 可信员工上下文与最小权限边界
+
+实现遵循企业微信官方[构造网页授权链接](https://developer.work.weixin.qq.com/document/path/91022)和[获取访问用户身份](https://developer.work.weixin.qq.com/document/path/91023)协议：`POST /api/work/context/challenge` 只接受精确 HTTPS `WORK_WECHAT_ALLOWED_ORIGINS`，回调地址必须同 Origin；服务端生成 256-bit state 与 verifier，只把 verifier摘要、Origin和五分钟到期时间写入 Upstash Redis，原 verifier进入 `__Host-cinashop-work-context-state` 的 `HttpOnly + Secure + SameSite=Lax + Path=/` Cookie。`POST /context/exchange` 原子 GETDEL state、校验 Cookie verifier、再以 code摘要执行五分钟 NX重放门禁；provider只接受返回内部 `userid` 的身份，OpenId-only外部联系人响应和 CorpID不一致均拒绝。challenge/exchange分别按 HMAC脱敏 IP限制为20/10次每分钟，请求体必须是最多4 KiB的 JSON。
+
+换取的 HS256 JWT固定五分钟，issuer为 `cinashop-work-context`，`work-client` 与 `work-group` 使用不同 audience，claims只含 CorpID、员工 userid、本地目标 ID和客户 UID。签发时必须存在唯一活跃 `work_member`，客户上下文要求唯一未删除客户及当前员工唯一有效跟进关系，群上下文要求唯一活跃群且员工是群主或活跃内部群成员；每一次读取都会重新验证上述本地关系，因此员工停用、跟进撤销、客户删除或群权限变化会即时失败关闭。入口只接受标准 `Authorization: Bearer`，不接受 query token、external_userid、chat_id或客户端 UID作为读取授权。
+
+专用 Work Origin 已接入全局 CORS中间件，但路径判定把“仅在 `WORK_WECHAT_ALLOWED_ORIGINS` 的来源”限制为 `/api/work`；同一来源不能因此跨域访问 `/adminapi`、订单或其他商城 API。这个边界符合 Cloudflare [Workers best practices](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/) 中的最小权限与失败关闭要求。所有七条个性化响应均为 `private, no-store`，图片引用通过既有附件签名层返回。
+
+### 七条读取的实现差异
+
+`groupInfo` 和 `groupMember/:id` 先把 token目标与 path ID绑定；群统计单次聚合，成员分页最多100条，员工/客户、跟进标签及其他群计数批量加载，不再 N+1。其他群计数 JOIN `work_group_chat` 并绑定当前 CorpID和活跃群；客户标签只读取当前员工的跟进关系。`client/info` 只投影可用商城账户、组、用户标签、推广人和当前跟进标签；重复员工、客户、跟进或群成员关系全部返回服务不可用，避免任意选中一条。
+
+订单列表、退款列表和订单详情均由上下文中的客户 UID派生；详情追加 `store_order.uid = client.uid`，关闭 PHP IDOR，且排除系统删除、用户删除、非平台顶级订单和不兼容退款类型。商品足迹按同一 UID聚合最新访问时间；购买记录无搜索时 INNER JOIN当前 UID的订单快照并去重，带搜索时保留 PHP公开目录检索语义。订单/退款商品快照批量读取并重签图片，没有逐订单查询。
+
+新 UniApp 增加类型化 challenge/exchange和七条读取 client；请求工具支持显式 header与 `withCredentials`，Work Bearer只保存在调用方内存，不复用普通商城登录 token。当前仓库仍没有旧 `work/group`、`work/user`、`work/userInfo`、`work/order`、`work/orderDetail` 五个页面及 OAuth回跳编排，因此只能把 API client计为完成，不能把前端流程计为完成。
+
+### 直接生产 PostgreSQL/Hyperdrive 审计
+
+经用户明确授权，本批直接连接生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产审计运行于 `REPEATABLE READ, READ ONLY` 事务，固定 `search_path=public,pg_temp`、45秒 statement timeout、2秒 lock timeout、单连接；只返回表/列/索引及聚合计数，不返回 userid、external_userid、chat_id、UID、订单号、配置值、业务 ID、头像、电话或其他 PII，也不执行 DML/DDL。PostgreSQL为16.14，13张依赖表及所需列全部存在。
+
+生产企业微信业务域当前为空：成员/活跃成员0，客户/活跃客户0，跟进/有效跟进0，群/活跃群0，群成员/活跃群成员0，群统计0；非空 `wechat_work_corpid` 与 `wechat_work_build_agent_id` 配置均为0。重复身份、孤儿关系和可见性异常聚合也全为0，但这是空表结果，不是正向数据质量证明。查询所需索引已有：成员 `(corp_id,userid)`、客户 `(corp_id,external_userid)`、跟进 `(userid,client_id,id)`、群 `(corp_id,chat_id)`、群成员 `(group_id,status,join_time,id)`、订单局部索引 `so_kefu_customer_orders` 和访问索引 `sv_kefu_recent`；没有证据支持新增生产索引，所以本批未执行生产 DDL。
+
+### 生产 Hyperdrive 隔离服务证据
+
+合成写入只发生在随机 `codex_work_context_*` schema。所有克隆、夹具和真实 service调用在 transaction-local `search_path` 下完成；这也验证了 Hyperdrive连接池不能依赖 session级 `search_path`。场景覆盖客户授权、客户订单列表/详情、他人订单拒绝、购买/访问商品、一次性 OAuth state、群授权与分页、今日新增/退群的 `join_time + status` 语义、错误群路径、跨 audience拒绝、撤销跟进即时失效，以及同一 external_userid 位于另一 CorpID时群数量不可见，共14/14通过。最终 `public` 11张指纹表未变化，临时 schema `0→0`，`schema_cleanup=dropped`；最终临时审计构件及两枚摘要 Secret随独立 Worker删除。
+
+隔离调试曾暴露并修复四处只在权威对照或真实 PostgreSQL/Hyperdrive路径出现的问题：session级 `search_path` 不保证落到同一池连接，改为事务内 `SET LOCAL`；PostgreSQL要求 `SELECT DISTINCT` 排序列同时出现在投影中，商品查询增加内部 sort后再剔除；群数量需要显式绑定 CorpID；今日新增/退群必须像PHP一样都按 `join_time` 并分别限定状态。此前一次边缘请求返回 Cloudflare 1042，带 `global_fetch_strictly_public` 的同一构件重试通过；最终统计修正后的第一次调用又因两次独立 Secret部署尚未传播而在数据库访问前返回403，`finally`清理后改为一次 `secret bulk`，最终14项无重试错误完成。1042和403两次都不能记为通过。
+
+### 量化、验证与剩余门禁
+
+七条 PHP exact route与两条安全扩展加入后，注释感知路由审计为 PHP1,904、Workers1,445、精确匹配745、可执行匹配727、明确不可用18、原始缺失1,159、证据化退役4、可执行缺口1,155，覆盖为 `39.1%/38.2%/38.3%`。`/api` 为 PHP457、TS756、精确363、可执行360、不可用3、原始缺失94、退役1、可执行缺口93，对应 `79.4%/78.8%/78.9%`；相对 WORK-A，全局及 `/api` 的精确/可执行匹配各增加7，可执行缺口减少7，两条 context扩展不增加 PHP匹配分子。
+
+仓库门禁为 Worker双 TypeScript配置、UniApp TypeScript、H5和微信小程序构建通过；企业微信/认证定向4文件23/23，全量151/151单元测试文件、911/911项通过。主 Worker dry-run为4,868.15 KiB/gzip922.36 KiB，审计 Worker为1,023.37 KiB/gzip184.22 KiB。Windows Workers runtime仍在0条断言前因既有 `workerd 0xc0000005` 启动失败，不能记为 runtime通过；真实Cloudflare Worker + 生产Hyperdrive随机 schema的14/14提供了本批运行时数据库证据。
+
+WORK-B的代码、生产结构与隔离契约可以勾选，但生产能力仍不可用：业务表与CorpID/AgentID为空，`WORK_WECHAT_ALLOWED_ORIGINS` 和企业微信 Secret尚未配置，没有可换取 userid的真实租户/provider证据；五个旧Work页面、OAuth回跳、旧/新端 golden response、H5/小程序/APP真机、预发、影子流量、主 Worker/Pages发布及发布后观察均未完成。主生产Worker仍应保持100%版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`；本批没有正式部署或切流。
+
+- [x] 七条 PHP精确读取和两条一次性上下文扩展已实现，query身份、订单IDOR和跨CorpID群计数均失败关闭。
+- [x] 内部员工OAuth、一次性state/code、双audience五分钟token、关系逐请求复核、Work-only路径CORS和有界限流已实现。
+- [x] 生产13表/索引只读审计和随机schema真实service 14/14完成；没有生产业务DML/DDL，public不变，临时资源清零。
+- [x] 新UniApp类型化API client、Worker/UniApp类型检查、H5/微信小程序构建、911项单元测试与两份dry-run完成。
+- [ ] 录入并复核CorpID/AgentID、两枚Secret、正式Origin和真实Work数据，完成真实员工/客户/群/订单最小样本迁移与PHP golden response。
+- [ ] 恢复五个Work页面与OAuth回跳，完成真机、预发、影子流量、明确发布批准、主Worker/Pages发布及发布后观察。
+- [ ] WORK-C `ANY /api/work/serve` 的验签/解密/重放账本/outbox/Queue仍未开始；不得用本批只读token替代回调安全设计。
 
 ## 完成定义
 

@@ -1,6 +1,6 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
-审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002～004、API-001～007、USER-CENTER-COMPAT，以及客服扫码/OAuth、游客安全内容和面单模板进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；四类写入回放/归属账本 DDL、API-006 两个部分索引、短视频兼容扩展表、系统配置查询索引及 USER-CENTER-COMPAT 六个目标索引已直接应用并验证幂等；其余合成业务场景只在随机 schema 执行。主 Worker 和正式前端没有因本次审计被发布。
+审计起点：`main@55f2652`（2026-08-28，OUT-001 已推送并确认与 `origin/main` 一致）；本文件继续记录其后的 OUT-002～004、API-001～008、USER-CENTER-COMPAT，以及客服扫码/OAuth、游客安全内容和面单模板进展。PHP 权威源为 `C:\cinagroup\cinashop-php`，Cloudflare 目标为本仓库 `workers-ts` 与五个 TypeScript 前端。生产数据库通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 核验；四类写入回放/归属账本 DDL、API-006 两个部分索引、短视频兼容扩展表、系统配置查询索引及 USER-CENTER-COMPAT 六个目标索引已直接应用并验证幂等；其余合成业务场景只在随机 schema 执行。主 Worker 和正式前端没有因本次审计被发布。
 
 ## 审计结论
 
@@ -11,9 +11,9 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 224 表；Worker 内嵌 224 表；表/列/主键漂移 0 | 完成 |
 | 生产目标结构 | 224/224 表；缺失 0、额外 0；系统配置查询索引、游客会话表和用户中心六索引已补齐/复验 | 完成 |
-| PHP HTTP 合同 | 精确匹配 724/1,904；可执行 706；其中 18 条明确不可用、4 条有证据退役 | 精确注册 38.0%，静态可执行上限 37.1%，退役后有效上限 37.2% |
+| PHP HTTP 合同 | 精确匹配 745/1,904；可执行 727；其中 18 条明确不可用、4 条有证据退役 | 精确注册 39.1%，静态可执行上限 38.2%，退役后有效上限 38.3% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 145/145 文件、875/875 项通过；PRODUCT-REPLY-DETAIL 定向 2 文件 14/14 | 本地业务回归与生产随机 schema 真实 service 场景通过 |
+| Worker 单元测试 | 151/151 文件、911/911 项通过；WORK-B 企业微信/认证定向 4 文件 23/23 | 本地业务回归与生产随机 schema 真实 service 场景通过 |
 | Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
 | CI | 仓库没有 `.github/workflows` | 未建立 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
@@ -25,13 +25,13 @@
 
 | 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 精确/可执行/退役后有效覆盖 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 733 | 342 | 339 | 3 | 115 | 1 | 114 | 74.8% / 74.2% / 74.3% |
+| `/api` | 457 | 756 | 363 | 360 | 3 | 94 | 1 | 93 | 79.4% / 78.8% / 78.9% |
 | `/adminapi` | 1,153 | 470 | 202 | 187 | 15 | 951 | 0 | 951 | 17.5% / 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% / 43.4% |
 | `/kefuapi` | 63 | 66 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,422 | 724 | 706 | 18 | 1,180 | 4 | 1,176 | 38.0% / 37.1% / 37.2% |
+| 合计 | 1,904 | 1,445 | 745 | 727 | 18 | 1,159 | 4 | 1,155 | 39.1% / 38.2% / 38.3% |
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
@@ -154,8 +154,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **API-008 门店/企业微信/内嵌 Admin（73 条起始缺口，已精确拆分）**：静态起点为 store 12、work 10、`/api/admin` 51；其中已有公开门店列表和核销写入不计缺口。外部写操作必须 Queue 化，不能同步调用第三方。
   - [x] **STORE-A 分类与配送员只读 6 条（代码、生产结构与隔离服务场景完成）**：注册公开 `GET store/category`，以及强制登录的 `delivery/info|statistics|data|order|list`；既有公开 `store/list` 也补回 PHP 外层站点营业门禁。配送身份绑定当前活跃用户，指定门店必须存在唯一有效 `type=1/relation_id=store_id` 关系；门店配送员列表绑定当前唯一活跃店员及其营业门店。统计按 Asia/Shanghai 解释 PHP 时间 token，显式日期最多 366 天、分页最多 100 条且 offset 最多 10,000；订单列表批量读取安全商品快照，不做 N+1、不返回原始 JSON。五条个性化响应均 `private, no-store`，服务内无第三方调用。生产已应用并严格回读 `so_delivery_mobile_active` 局部复合索引；六张依赖表齐全、历史 `oid` 索引可用，随机 schema 真实 service 12/12、六表/六序列 public 指纹不变且临时资源清零。生产门店、店员、配送身份和分配订单当前均为 0，故旧页面 golden response、真实配送员 token HTTP E2E、主 Worker 发布与观察仍是父项发布门禁，不能由合成场景代替。
   - [x] **STORE-B 门店订单 6 条（代码、生产结构与隔离服务场景完成）**：六条 PHP 精确合同已全部注册并统一经过营业门禁、强制用户认证和 `private, no-store`。活跃且已审核的唯一店员及营业门店是所有详情/拆单入口的根授权；订单、售后和发货信息均追加 `store_id` 归属，关闭 PHP 按全局自增 ID 读取的 IDOR。核销只接受 `type=1/2`，客服还必须拥有该订单会话，配送员必须匹配订单配送身份；客户端 `auth=0` 平台旁路和重复身份均失败关闭。拆单复用已加订单结算锁的履约状态机，在同一事务复核店员、门店、配送员、开放售后和商品数量，并写状态审计与通知 outbox；手工快递、门店配送、虚拟发货可同步执行，电子面单/商家寄件和第三方同城必须进入可重试任务而不会在请求内调用第三方。生产 18 张依赖表齐全，退款 3 条均无订单孤儿/归属错配；新建并严格回读 `store_order_refund(store_order_id)` B-tree 索引，业务行和序列不变。随机 schema 真实 service 12/12、public 不变、临时 schema/Worker/Cron 全清理。生产店员、门店订单、客服/配送身份及门店配置当前均为 0，故真实店员/配送员 token、旧端 golden response、主 Worker 发布与观察仍归父项门禁。
-  - [x] **WORK-A 企业微信 JS-SDK 2 条（代码、生产配置审计与隔离协议场景完成，生产启用/前端/E2E/发布未完成）**：已注册公开 `GET work/config|agentConfig`，只签名规范化后命中专用 HTTPS Origin allowlist 的 URL，统一去除 fragment；企业级和应用级 access token/ticket 使用两枚独立 Worker Secret、分域哈希 cache key 和限时 KV 缓存，provider 5 秒超时、16 KiB 流式限长、512 字节凭据上限，提前失效仅重取一次，响应 `private, no-store`。生产 PostgreSQL 五个旧企业微信配置键全部缺失，生产 Worker也没有两枚新 Secret且未设置专用 allowlist，所以当前两路按设计 503 关闭；随机 schema 真实 service 13/13、`public.system_config` 不变、临时 schema/Worker/Secret 全清理。正式启用仍需录入 CorpID/AgentID、以 Worker Secret 注入两枚凭据、批准并同时加入全局 CORS/专用签名 allowlist 的 H5 Origin、修复旧端 URL 编码/SPA 签名并完成企业微信真机 E2E，主 Worker发布仍需单独批准。
-  - [ ] **WORK-B 群/客户本地读 7 条**：`groupInfo`、`groupMember/:id`、`client/info`、`order/list|info/:id`、`product/cart_list|visit_list`。`ClientMiddleware` 不能照搬为信任 query 中的 external_userid；必须由已验签企业微信上下文换取短期 audience token，再按本地 work 表、客户 UID 和员工可见范围授权。
+  - [x] **WORK-A 企业微信 JS-SDK 2 条（代码、生产配置审计与隔离协议场景完成，生产启用/前端/E2E/发布未完成）**：已注册公开 `GET work/config|agentConfig`，只签名规范化后命中专用 HTTPS Origin allowlist 的 URL，统一去除 fragment；企业级和应用级 access token/ticket 使用两枚独立 Worker Secret、分域哈希 cache key 和限时 KV 缓存，provider 5 秒超时、16 KiB 流式限长、512 字节凭据上限，提前失效仅重取一次，响应 `private, no-store`。生产 PostgreSQL 五个旧企业微信配置键全部缺失，生产 Worker也没有两枚新 Secret且未设置专用 allowlist，所以当前两路按设计 503 关闭；随机 schema 真实 service 13/13、`public.system_config` 不变、临时 schema/Worker/Secret 全清理。正式启用仍需录入 CorpID/AgentID、以 Worker Secret 注入两枚凭据、批准 `WORK_WECHAT_ALLOWED_ORIGINS`；该来源的 CORS 已收紧为仅 `/api/work`，不再扩展到其他 API。旧端 URL 编码/SPA 签名、企业微信真机 E2E及主 Worker发布仍需单独完成。
+  - [x] **WORK-B 群/客户本地读 7 条（代码、生产结构与隔离服务场景完成，生产数据/页面/E2E/发布未完成）**：精确恢复 `groupInfo`、`groupMember/:id`、`client/info`、`order/list|info/:id`、`product/cart_list|visit_list`，另提供一次性 `context/challenge|exchange` 安全扩展。PHP `ClientMiddleware` 信任 query `userid`、群路由缺少有效中间件及订单详情未按 UID 约束的越权路径均未照搬；现在仅接受企业微信 OAuth 换得的内部员工身份、一次性 state/verifier Cookie和 5 分钟分 audience Bearer，签发时及每次读取均复核本地活跃成员、客户跟进或群主/群成员关系。订单和退款绑定客户 UID，群路径 ID绑定 token，客户标签只读当前员工跟进关系，其他群计数绑定 CorpID；Work-only Origin 的 CORS 仅开放 `/api/work`。生产 Hyperdrive 13 表/索引只读审计完成，work 成员/客户/跟进/群/群成员及两个非秘密配置均为 0；现有索引足够，未执行生产 DDL或业务 DML。随机 schema 真实 service 14/14、public 指纹不变、临时 schema/Worker/Secret全清理。新 UniApp已有类型化 7 读+2上下文 client，但旧五个 Work 页面、回调编排、真实租户/provider、正式数据、H5/小程序/APP E2E、主 Worker/Pages发布仍是独立门禁。
   - [ ] **WORK-C 企业微信回调 1 条**：`ANY work/serve` 先完成 GET URL 验证、POST 消息验签/解密、重放事件账本和乱序处理；远端写入只落事务 outbox 后投递 Queue，禁止请求内同步调用企业微信。
   - [ ] **ADMIN-A 内嵌订单/代客下单 32 条**：覆盖统计/暂存、配送/拆单/面单、改价/备注/线下支付/退款/核销，以及代客购物车、确认、优惠券、创建、支付和状态。必须把普通用户 token 升级为显式受限 Admin session，逐动作 ACL，资金/退款复用现有账本，不允许仅因路径位于 `/api/admin` 自动授权。
   - [ ] **ADMIN-B 内嵌商品 7 条**：分类、商品列表/标签/属性、批量上下架与批量处理；复用正式商品状态机和库存锁，禁止绕开 Admin ACL 或直接信任客户端 SKU/价格。
@@ -228,4 +228,4 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## 当前下一步
 
-`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；CORE-004 的扫码/OAuth 本地安全闭环、API-005 三端登录接入、KEFU-001 核心/前端、KEFU-002 安全游客协议、USER-CENTER-COMPAT 九条、DIY-HOME-WIDGETS 八条、PUBLIC-ARTICLE 七条、PRODUCT-REPLY-DETAIL 四条、API-008 STORE-A/STORE-B 各六条以及 WORK-A 两条精确合同已在代码侧收口，但相关父项继续等待数据、真实流程和发布。当前仓库/生产结构清单为 224/224；短视频两表和游客会话等 23 张表是 Worker 扩展，不冒充 PHP 安装 SQL 的 201 张共享源表。最新静态路由审计为 PHP 1,904、TS 1,436、精确匹配 738、可执行匹配 720、明确不可用 18、原始缺失 1,166、证据化退役 4、可执行缺口 1,162，覆盖为 38.8%/37.8%/37.9%；`/api` 为 PHP 457、TS 747、精确 356、可执行 353、不可用 3、原始缺失 101、退役 1、可执行缺口 100，覆盖为 77.9%/77.2%/77.4%。`/kefuapi` 仍为精确/可执行 60/63、3 条退役、`actionableMissing=0`，Out 为 41/41；`/api/v2` 与 `/api/pc` 精确缺口均为 0。生产 STORE-B 18 表只读审计、退款查找索引及随机 schema 12/12 均通过；生产店员、门店订单、客服/配送身份和门店配置均为 0，退款 3 条无孤儿/归属错配。WORK-A 生产五个数据库配置键、两枚 Worker Secret与专用 Origin allowlist均缺失，随机 schema真实 service 13/13通过，因此当前两路明确失败关闭。城市目录、DIY/视频/新人/促销/文章内容、首页配置、孤儿 owner 和商品收藏计数/日志仍需源 MySQL 映射与受控修复，主 Worker/Pages 未发布当前代码。下一实现批按 checklist 进入 API-008 WORK-B 企业微信群/客户本地读；其身份不能信任 query中的 `external_userid`，必须先完成验签上下文与短期 audience token。发布前还需完成上述数据/媒体/孤儿修复、防止 PHP 并行写再次漂移的切流/对账、文章 visit 热点策略、默认地址单运行时或修 PHP 后再评估唯一约束、收藏跨栈竞态，以及签到提醒定时投递。真实 token、正向 E2E、活动装饰/水印、CHECKOUT-DATA、真实支付/微信、Linux runtime、预发、影子流量和正式发布仍受现有门禁约束，正式发布必须另行获得明确批准。
+`DB-001`、`DB-002`、`DB-004`、`CORE-002`、`CORE-003`、`KEFU-004`、`OUT-001`～`OUT-004`、`API-001` 已完成；CORE-004 的扫码/OAuth 本地安全闭环、API-005 三端登录接入、KEFU-001 核心/前端、KEFU-002 安全游客协议、USER-CENTER-COMPAT 九条、DIY-HOME-WIDGETS 八条、PUBLIC-ARTICLE 七条、PRODUCT-REPLY-DETAIL 四条、API-008 STORE-A/STORE-B 各六条、WORK-A 两条及WORK-B七条精确合同已在代码侧收口，但相关父项继续等待数据、真实流程和发布。当前仓库/生产结构清单为224/224；短视频两表和游客会话等23张表是Worker扩展，不冒充PHP安装SQL的201张共享源表。最新静态路由审计为PHP1,904、TS1,445、精确匹配745、可执行匹配727、明确不可用18、原始缺失1,159、证据化退役4、可执行缺口1,155，覆盖为39.1%/38.2%/38.3%；`/api`为PHP457、TS756、精确363、可执行360、不可用3、原始缺失94、退役1、可执行缺口93，覆盖为79.4%/78.8%/78.9%。`/kefuapi`仍为精确/可执行60/63、3条退役、`actionableMissing=0`，Out为41/41；`/api/v2`与`/api/pc`精确缺口均为0。生产WORK域成员、客户、跟进、群、群成员及CorpID/AgentID配置均为空；WORK-B生产13表/索引只读审计和随机schema真实service 14/14通过，但真实租户、数据、五个页面、真机E2E和发布未完成。城市目录、DIY/视频/新人/促销/文章内容、首页配置、孤儿owner和商品收藏计数/日志仍需源MySQL映射与受控修复，主Worker/Pages未发布当前代码。下一实现批按checklist进入API-008 WORK-C企业微信回调；必须先完成GET验证、POST验签/解密、事件重放账本、乱序处理和事务outbox/Queue，禁止请求内同步远端写入。发布前还需完成上述数据/媒体/孤儿修复、防止PHP并行写再次漂移的切流/对账、文章visit热点策略、默认地址单运行时或修PHP后再评估唯一约束、收藏跨栈竞态，以及签到提醒定时投递。真实token、正向E2E、活动装饰/水印、CHECKOUT-DATA、真实支付/微信、Linux runtime、预发、影子流量和正式发布仍受现有门禁约束，正式发布必须另行获得明确批准。

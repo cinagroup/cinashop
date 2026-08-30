@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isAllowedAuthOrigin,
   isAllowedCorsOrigin,
+  isAllowedCorsOriginForPath,
   allowlistedAuthRequest,
 } from "../src/services/auth/TrustedAuthClient";
 import { createToken } from "../src/utils/jwt";
@@ -22,6 +23,34 @@ describe("scan/OAuth browser boundary hardening", () => {
     expect(isAllowedAuthOrigin("https://cinashop-pc.pages.dev", productionOrigins, "pc_user")).toBe(true);
     expect(isAllowedAuthOrigin("https://cinashop-h5.pages.dev", productionOrigins, "pc_user")).toBe(false);
     expect(isAllowedAuthOrigin("https://cinashop-pc.pages.dev", productionOrigins, "kefu_agent")).toBe(false);
+  });
+
+  it("limits Work-only browser origins to the Enterprise WeChat API surface", () => {
+    const env = {
+      ...productionOrigins,
+      WORK_WECHAT_ALLOWED_ORIGINS: "https://work.example.com",
+    };
+    expect(isAllowedCorsOrigin("https://work.example.com", env)).toBe(false);
+    expect(isAllowedCorsOriginForPath(
+      "https://work.example.com",
+      "/api/work/client/info",
+      env,
+    )).toBe(true);
+    expect(isAllowedCorsOriginForPath(
+      "https://work.example.com",
+      "/adminapi/work/client",
+      env,
+    )).toBe(false);
+    expect(isAllowedCorsOriginForPath(
+      "https://work.example.com",
+      "/api/order/list",
+      env,
+    )).toBe(false);
+    expect(isAllowedCorsOriginForPath(
+      "https://cinashop-h5.pages.dev",
+      "/api/order/list",
+      env,
+    )).toBe(true);
   });
 
   it("requires an allowlisted browser source and projects only coarse request metadata", () => {

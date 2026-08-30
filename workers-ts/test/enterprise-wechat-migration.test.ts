@@ -109,7 +109,7 @@ describe("Enterprise WeChat migration boundary", () => {
     expect(migration).not.toMatch(/\bINSERT\s+INTO\b/i);
   });
 
-  it("exposes the two fail-closed public JS-SDK reads and keeps remote writes unavailable", () => {
+  it("exposes the fail-closed public Work reads while limiting writes to context bootstrap", () => {
     const routes = readFileSync("src/routes/adminapi.ts", "utf8");
     const publicRoutes = readFileSync("src/routes/v1/index.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/AdminEnterpriseWechatController.ts", "utf8");
@@ -126,7 +126,13 @@ describe("Enterprise WeChat migration boundary", () => {
     expect(service).not.toMatch(/\bfetch\s*\(/);
     expect(publicRoutes).toContain('v1Routes.get("/work/config", EnterpriseWechatController.config)');
     expect(publicRoutes).toContain('v1Routes.get("/work/agentConfig", EnterpriseWechatController.agentConfig)');
-    expect(publicRoutes).not.toMatch(/v1Routes\.(?:post|put|patch|delete|all)\(["']\/work/);
+    const workMutations = [...publicRoutes.matchAll(
+      /v1Routes\.(post|put|patch|delete|all)\("(\/work[^"?]*)"/g,
+    )].map((match) => `${match[1]} ${match[2]}`);
+    expect(workMutations).toEqual([
+      "post /work/context/challenge",
+      "post /work/context/exchange",
+    ]);
   });
 
   it("protects reads and remote-write placeholders with dedicated permissions", () => {

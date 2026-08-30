@@ -39,6 +39,10 @@ export function getFormType(): string {
 export interface RequestOptions {
   noAuth?: boolean;
   loading?: boolean;
+  /** Additional request headers for isolated authorization domains. */
+  headers?: Record<string, string>;
+  /** H5 cookies are opt-in for one-time OAuth state verification. */
+  withCredentials?: boolean;
 }
 
 /** 跳转登录 */
@@ -66,6 +70,7 @@ export function baseRequest<T>(
   if (!options.noAuth && authStore.token) {
     header["Authori-zation"] = `Bearer ${authStore.token}`;
   }
+  Object.assign(header, options.headers ?? {});
 
   // 规范化 URL: 避免双斜杠 (API_BASE 为空时 /api/products)
   const cleanUrl = url.replace(/^\/+/, "");
@@ -75,6 +80,7 @@ export function baseRequest<T>(
       method,
       header,
       data,
+      withCredentials: options.withCredentials,
       success: (res) => {
         const body = res.data as { status: number; msg: string; data: T };
         if (body && body.status === 200) {

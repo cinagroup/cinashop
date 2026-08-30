@@ -52,12 +52,29 @@ function isLocalDevelopmentOrigin(origin: string, env: Pick<Env, "NODE_ENV">): b
 
 export function isAllowedCorsOrigin(
   value: string,
-  env: Pick<Env, "ALLOWED_ORIGINS" | "NODE_ENV">,
+  env: Pick<Env, "ALLOWED_ORIGINS" | "WORK_WECHAT_ALLOWED_ORIGINS" | "NODE_ENV">,
 ): boolean {
   const origin = normalizedOrigin(value);
   if (!origin) return false;
   return configuredOrigins(env.ALLOWED_ORIGINS).has(origin)
     || isLocalDevelopmentOrigin(origin, env);
+}
+
+/**
+ * Enterprise WeChat browser origins are deliberately narrower than the
+ * storefront CORS allowlist: unless an origin is also a general storefront
+ * origin, it may call only the public Work compatibility surface.
+ */
+export function isAllowedCorsOriginForPath(
+  value: string,
+  path: string,
+  env: Pick<Env, "ALLOWED_ORIGINS" | "WORK_WECHAT_ALLOWED_ORIGINS" | "NODE_ENV">,
+): boolean {
+  const origin = normalizedOrigin(value);
+  if (!origin) return false;
+  if (isAllowedCorsOrigin(origin, env)) return true;
+  return configuredOrigins(env.WORK_WECHAT_ALLOWED_ORIGINS).has(origin)
+    && (path === "/api/work" || path.startsWith("/api/work/"));
 }
 
 export function isAllowedAuthOrigin(

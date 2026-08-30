@@ -4,14 +4,16 @@
  */
 import { cors } from "hono/cors";
 import type { Env } from "@/env";
-import { isAllowedCorsOrigin } from "@/services/auth/TrustedAuthClient";
+import { isAllowedCorsOriginForPath } from "@/services/auth/TrustedAuthClient";
 
 /**
  * 只反射精确允许的来源；生产环境没有 ALLOWED_ORIGINS 时不返回 ACAO。
  * 非生产环境额外接受 localhost/127.0.0.1/[::1] 的 HTTP Origin。
  */
 export const corsMiddleware = cors({
-  origin: (origin, c) => isAllowedCorsOrigin(origin, c.env as Env) ? origin : null,
+  origin: (origin, c) => isAllowedCorsOriginForPath(origin, c.req.path, c.env as Env)
+    ? origin
+    : null,
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: [
     "Content-Type",
