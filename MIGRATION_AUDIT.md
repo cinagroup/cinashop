@@ -2050,6 +2050,53 @@ PHP 时间 token 由 Worker 明确按 Asia/Shanghai 解释，覆盖今日、昨�
 - [ ] STORE-B 6、WORK 10、内嵌 Admin 51 仍未实现；其中外部写必须 Queue/outbox 化，Admin 必须有显式 ACL，不能因 STORE-A 完成而扩大授权。
 - [ ] 主 Worker、UniApp/旧端切流、预发、影子流量、明确发布批准和发布后观察均未完成。
 
+## API-008 门店订单详细迁移审计（STORE-B 子批次，2026-08-30）
+
+### 六条权威合同与 PHP 风险复核
+
+PHP `route/api.php:807-814` 的 STORE-B 权威范围固定为六条：`GET /api/store/refund/detail/:id`、`GET /api/store/order/detail/:id`、`GET /api/store/order/writeoff_info/:type`、`POST /api/store/order/cart_info`、`GET /api/store/order/delivery_info/:orderId`、`PUT /api/store/order/split_delivery/:id`。本批在 Hono 中逐条精确注册，全部显式经过 `stationOpenMiddleware()` 与强制用户认证；六个响应都设置 `Cache-Control: private, no-store` 和 `Pragma: no-cache`。现有新 UniApp 核销路径使用原生新合同，没有直接消费这六条旧门店包装接口；它们仍是 PHP 门店端兼容面，不能用“新端暂无调用”删去分母。
+
+逐行复核 PHP `app/controller/api/store/StoreOrder.php` 后确认三类高风险行为，不能原样搬运。第一，`detail()` 只按全局订单自增 ID 读取，`refundDetail()` 先按全局退款 ID 换取单号，`deliveryInfo()` 只按全局订单号读取并返回姓名、电话和地址，三者都没有调用 `getStaffInfo()` 或追加当前门店；任一有效门店用户都可能跨店读取。`split_delivery()` 同样没有先绑定当前店员/门店，底层首次 `get(id)` 也不带 `store_id`。第二，`orderCartInfo()` 接受客户端 `auth` 且默认 `0`，而 PHP `WriteOffOrderServices::checkAuth/checkUserAuth` 对 `auth=0` 无条件授权；登录普通用户可借平台身份读取任意核销订单商品。第三，`auth=1` 只要求调用者是任意移动客服，没有校验该客服是否拥有目标订单会话；配送身份查找也允许先以 `store_id=0` 解析。上述问题在 Worker 中全部按实际后果关闭，而不是为了字段兼容保留旧越权面。
+
+### 唯一店员、核销身份和详情投影
+
+所有门店详情和拆单入口先解析当前用户唯一的活跃、已审核、未删除店员记录，再确认 owner 用户有效、所属门店营业且未删除；重复有效店员、重复作用域配置或孤儿关系全部失败关闭。订单详情、发货信息按 `order.id/order_id + staff.store_id` 联合限定，退款详情同时要求 `refund.store_id` 和其权威订单的门店/用户关系一致。PHP 原响应所需的订单、退款、状态、优惠和商品字段复用现有 Kefu/订单投影，但只解析有界 JSON 快照、不回传原始快照；读取服务没有第三方 `fetch`。
+
+核销搜索只接受 `type=1` 客服或 `type=2` 配送员，`auth=0` 和其他类型直接拒绝。客服必须是唯一有效的 `customer=1` 移动客服，并由既有客服会话记录证明对该订单的可见性；“任意客服查看全站订单”的 PHP 行为被移除。配送员必须是有效配送身份并与订单 `delivery_uid/delivery_type` 匹配。12 位输入按核销码查单，其他输入按当前有效用户条码查找，结果最多 100 条；订单商品、核销次数、首图和次卡字段批量安全投影。
+
+### 拆单履约状态机与安全差异
+
+`PUT split_delivery/:id` 没有复制 PHP 的控制器事务薄壳，而是复用现有 `SupplierFulfillmentService.splitDelivery`。事务以 `expectedStoreId` 二次限定目标订单并锁定当前店员身份，随后取得订单结算锁和订单/商品行锁；所选商品、数量、已发/核销状态、拼团/预售条件、开放售后和配送员门店关系都在同一事务复核。成功时与拆单/发货数据一起写 `store_order_status(change_type=store_staff_split_delivery)` 和 `store_order_outbox(order.delivery.notice)`，避免数据库提交后通知丢失。
+
+同步路径只接受手工快递、门店自配送和虚拟发货。PHP 默认 `express_record_type=2` 可能在请求内走电子面单/商家寄件，本实现要求这些能力进入已有可重试面单任务；第三方同城配送尚未接入时也明确拒绝，不能在请求内同步调用外部服务。这个差异是有意的安全/可靠性收紧，不是遗漏。重复提交继续由履约状态机、锁和现有任务账本收敛。
+
+### 生产 Hyperdrive 审计与退款索引修复
+
+用户明确授权直接使用生产数据库后，临时审计 Worker 只绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。提交保留的入口为 POST-only `/audit|isolated-scenario`，使用两枚互异 Bearer 的 SHA-256 摘要和 timing-safe 比较；生产读取固定 `REPEATABLE READ, READ ONLY`、`search_path=public,pg_temp`、短 lock/statement timeout，只返回表/索引和有界聚合，不返回姓名、电话、地址、条码、核销码、快照、业务 ID、指纹或 Secret。
+
+生产 PostgreSQL 16.14 的 18 张依赖表全部存在，审计前后临时 schema 都为 0。`system_store_staff` 总行数、活跃已审核店员和可授权店员均为 0；门店订单、可发货订单和可核销订单均为 0，订单号/核销码重复组为 0。退款共 3 条且 3 条有效，订单孤儿和门店/用户归属错配均为 0。移动客服、门店配送身份、门店配置均为 0；重复客服、配送作用域、用户条码和配置组也均为 0。该结果证明现有少量退款结构一致，但不能替代真实店员、客服或配送员正向验收。
+
+只读审计发现 `store_order_refund` 仅有 2 个索引，没有以 `store_order_id` 为首键的有效路径，而核销、开放售后门禁和拆单履约都会按该列读取。本批新增 `0108_store_order_refund_lookup_index.sql`，创建 `sor_store_order_id` 普通 B-tree，并严格验证 public 表/索引 schema、relkind、btree、非 unique/primary/exclusion、valid/ready/live、非 clustered/replica identity、无表达式/谓词/INCLUDE/自定义 options/附着约束，以及唯一键列 `store_order_id`、`indoption=[0]`；同名异定义会失败关闭。
+
+迁移执行链复核还发现 STORE-A `0107` 和本批 `0108` 只有外部 SQL 文件，而生产 Worker 的 `_migrate` 运行时不能读取文件系统，原内嵌 `MigrationService` 只执行到旧内部 `0112`。本批新增共享的 STORE-A/STORE-B DDL 常量并纳入内部 `0113/0114`，外部文件与内嵌 SQL 先去注释/空白后必须逐字符一致；新环境运行 Worker 迁移不会再漏掉这两个索引。
+
+首次生产创建事务只执行该索引 DDL；其紧随其后的跨事务状态检查没有立即放行，因此审计 Worker按设计报错而没有误报成功。独立完整 catalog 诊断随后证明目标定义从一开始就是精确有效的 `CREATE INDEX ... USING btree (store_order_id)`；再运行幂等升级时 before/after 均为 `exists=true, valid=true, indexCount=3`，退款表全行摘要和 serial 序列一致，`business DML=false`。最终只读审计的 `refund_order_index_ready=true`，其余店员、订单、购物车、客服、配送和配置索引也全部 ready。
+
+### 随机 schema、量化和交付门禁
+
+隔离写验证只发生在单次随机 `codex_store_mobile_order_*` schema，并使用 advisory lock 防止审计重入；18 张测试表/序列与真实服务运行后 schema 已删除，`temporary_schemas 0→0`，public 状态前后不变。真实服务场景 12/12：订单详情、退款详情、发货信息、跨门店 IDOR 拒绝、配送核销、客服会话绑定、`auth=0` 拒绝、拆单提交、状态审计/outbox、重复店员失败关闭、search path 隔离和 public 不变全部通过。临时 Worker、Cron、路由和 Secret 已删除，部署状态返回 Worker 不存在；主生产 Worker仍为 100% 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批没有发布主 Worker或 Pages。
+
+最新注释感知路由审计为 PHP 1,904、Workers 1,434、精确匹配 736、可执行匹配 718、明确不可用 18、原始缺失 1,168、证据化退役 4、可执行缺口 1,164，覆盖为 `38.7%/37.7%/37.8%`。`/api` 为 PHP 457、TS 745、精确 354、可执行 351、不可用 3、原始缺失 103、退役 1、可执行缺口 102，对应 `77.5%/76.8%/77.0%`；相对 STORE-A，本批全局和 `/api` 可执行缺口均再减少 6。
+
+仓库门禁为 Worker 双 TypeScript 配置通过、149/149 单元测试文件与 899/899 项通过，STORE-B 定向为 20/20；审计 Worker dry-run 为 845.16 KiB/gzip 159.55 KiB，主 Worker dry-run 为 4,806.26 KiB/gzip 909.20 KiB。Windows Workers runtime仍在 0 条断言前因既有 `workerd 0xc0000005` 启动失败，不能记为 runtime 通过。
+
+- [x] STORE-B 六条 PHP 精确合同、旧响应主要形状、营业门禁、强制认证和门店归属已实现。
+- [x] PHP 的跨店详情/发货/退款 IDOR、客户端 `auth=0` 平台旁路和任意客服全站核销可见性均已失败关闭。
+- [x] 拆单复用结算锁、售后门禁、状态审计和通知 outbox；同步第三方/电子面单路径明确转入任务或拒绝。
+- [x] 生产 18 表聚合、退款索引严格回读和随机 schema 12/12 完成，业务行/序列/public 不变，临时资源全清理。
+- [ ] 生产缺门店店员、订单、移动客服、配送身份和配置正向样本；需可信源数据与受限真实 token 才能补 PHP golden response、旧端/新端 HTTP E2E。
+- [ ] WORK 10、内嵌 Admin 51、主 Worker/Pages 发布、预发、影子流量、明确发布批准和发布后观察仍未完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

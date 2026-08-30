@@ -13,6 +13,7 @@ import * as ProductController from "@/controllers/api/v1/ProductController";
 import * as OrderController from "@/controllers/api/v1/OrderController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
 import * as StoreMobileDelivery from "@/controllers/api/v1/StoreMobileDeliveryController";
+import * as StoreMobileOrder from "@/controllers/api/v1/StoreMobileOrderController";
 import * as PayController from "@/controllers/api/v1/PayController";
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
@@ -382,6 +383,42 @@ v1Routes.get(
   stationOpenMiddleware(),
   authMiddleware({ force: true }),
   StoreMobileDelivery.deliveryList,
+);
+v1Routes.get(
+  "/store/refund/detail/:id",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileOrder.refundDetail,
+);
+v1Routes.get(
+  "/store/order/detail/:id",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileOrder.orderDetail,
+);
+v1Routes.get(
+  "/store/order/writeoff_info/:type",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileOrder.writeoffInfo,
+);
+v1Routes.post(
+  "/store/order/cart_info",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileOrder.cartInfo,
+);
+v1Routes.get(
+  "/store/order/delivery_info/:orderId",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileOrder.deliveryInfo,
+);
+v1Routes.put(
+  "/store/order/split_delivery/:id",
+  stationOpenMiddleware(),
+  authMiddleware({ force: true }),
+  StoreMobileOrder.splitDelivery,
 );
 v1Routes.get(
   "/store/operator/profile",

@@ -137,7 +137,7 @@ function money(value: unknown): string {
   return Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00";
 }
 
-function cartProjection(row: CartRow) {
+export function cartProjection(row: CartRow) {
   const snapshot = record(parseSnapshot(row.cartInfo));
   const product = record(snapshot?.product);
   const productInfo = record(snapshot?.productInfo) ?? product;
@@ -203,7 +203,7 @@ function orderTypeName(row: OrderRow): string {
   return ({ 1: "秒杀", 2: "砍价", 3: "拼团", 4: "积分", 5: "套餐", 6: "预售", 7: "新人", 8: "抽奖" } as Record<number, string>)[row.type] ?? "";
 }
 
-function orderStatus(row: OrderRow) {
+export function orderStatus(row: OrderRow) {
   let type = 0;
   let title = "待付款";
   let message = "等待客户完成支付";
@@ -297,7 +297,7 @@ function refundSelectedCartIds(value: string | null): Set<string> {
   return selected;
 }
 
-function refundProjection(row: RefundRow, carts: CartRow[], listMode = false) {
+export function refundProjection(row: RefundRow, carts: CartRow[], listMode = false) {
   const selected = refundSelectedCartIds(row.cartInfo);
   const eligible = selected.size
     ? carts.filter((cart) => selected.has(String(cart.id)) || selected.has(cart.cartId))
@@ -342,7 +342,7 @@ function refundProjection(row: RefundRow, carts: CartRow[], listMode = false) {
   };
 }
 
-function orderProjection(row: OrderRow, carts: CartRow[], refunds: RefundRow[]) {
+export function orderProjection(row: OrderRow, carts: CartRow[], refunds: RefundRow[]) {
   const cartInfo = carts.map(cartProjection);
   const refund = refunds.map((item) => ({
     id: item.id,

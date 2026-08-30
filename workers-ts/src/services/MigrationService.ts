@@ -8,6 +8,10 @@
 import type { Container } from "@/lib/di";
 import { sql } from "drizzle-orm";
 import { USER_CENTER_COMPATIBILITY_INDEX_SQL } from "@/migrations/userCenterCompatibility";
+import {
+  STORE_MOBILE_DELIVERY_INDEX_SQL,
+  STORE_MOBILE_ORDER_REFUND_INDEX_SQL,
+} from "@/migrations/storeMobileCompatibility";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -90,6 +94,16 @@ export class MigrationService {
   /** Exact user-center compatibility index DDL used by production verification. */
   userCenterCompatibilityIndexMigrationSqlForVerification(): string {
     return this.migration_0112();
+  }
+
+  /** Exact STORE-A delivery-list index DDL used by production verification. */
+  storeMobileDeliveryIndexMigrationSqlForVerification(): string {
+    return this.migration_0113();
+  }
+
+  /** Exact STORE-B refund lookup index DDL used by production verification. */
+  storeMobileOrderRefundIndexMigrationSqlForVerification(): string {
+    return this.migration_0114();
   }
 
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
@@ -212,6 +226,8 @@ export class MigrationService {
       this.migration_0110(),
       this.migration_0111(),
       this.migration_0112(),
+      this.migration_0113(),
+      this.migration_0114(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -6100,5 +6116,13 @@ CREATE INDEX IF NOT EXISTS "sst_customer_scope_time"
 
   private migration_0112(): string {
     return USER_CENTER_COMPATIBILITY_INDEX_SQL;
+  }
+
+  private migration_0113(): string {
+    return STORE_MOBILE_DELIVERY_INDEX_SQL;
+  }
+
+  private migration_0114(): string {
+    return STORE_MOBILE_ORDER_REFUND_INDEX_SQL;
   }
 }

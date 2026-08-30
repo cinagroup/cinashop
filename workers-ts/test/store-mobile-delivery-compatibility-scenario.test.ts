@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { STORE_MOBILE_DELIVERY_INDEX_SQL } from "../src/migrations/storeMobileCompatibility";
+import { MigrationService } from "../src/services/MigrationService";
 
 const root = resolve(import.meta.dirname, "..");
 const audit = readFileSync(resolve(root, "test/integration/StoreMobileDeliveryAuditWorker.ts"), "utf8");
@@ -13,6 +15,10 @@ const config = readFileSync(
   resolve(root, "test/integration/store-mobile-delivery-audit.wrangler.jsonc"),
   "utf8",
 );
+
+function canonicalSql(value: string): string {
+  return value.replace(/--.*$/gm, "").replace(/\s+/g, " ").trim();
+}
 
 describe("API-008 STORE-A production audit gates", () => {
   it("binds only the temporary audit Worker to the authorized Hyperdrive", () => {
@@ -58,6 +64,9 @@ describe("API-008 STORE-A production audit gates", () => {
     expect(migration).toContain("actual.key_columns IS DISTINCT FROM");
     expect(migration).toContain("actual.key_options IS DISTINCT FROM");
     expect(migration).toContain("actual.predicate_sql IS DISTINCT FROM");
+    expect(new MigrationService({} as never).storeMobileDeliveryIndexMigrationSqlForVerification())
+      .toBe(STORE_MOBILE_DELIVERY_INDEX_SQL);
+    expect(canonicalSql(migration)).toBe(canonicalSql(STORE_MOBILE_DELIVERY_INDEX_SQL));
     expect(audit).toContain("business_rows_and_sequence_unchanged");
   });
 

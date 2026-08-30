@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
@@ -28,6 +28,10 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const VERIFY_CODE_LOCK_NAMESPACE = 63_843;
 const OPEN_REFUND_TYPES = [0, 1, 2, 4, 5];
+const MAX_LEGACY_BARCODE_LENGTH = 32;
+const MAX_LEGACY_SEARCH_RESULTS = 100;
+const MAX_JSON_SNAPSHOT_BYTES = 256 * 1024;
+const MAX_ORDER_CART_ROWS = 500;
 
 export type WriteoffActor =
   | { kind: "staff"; uid: number }
@@ -107,12 +111,30 @@ function maskPhone(phone: string): string {
 }
 
 function parseSnapshot(value: string | null): unknown {
-  if (!value) return null;
+  if (!value || value.length > MAX_JSON_SNAPSHOT_BYTES) return null;
   try {
     return JSON.parse(value) as unknown;
   } catch {
     return null;
   }
+}
+
+function positiveOrderId(value: unknown): number {
+  const id = Number(value);
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) {
+    throw new ValidateException("订单ID错误");
+  }
+  return id;
+}
+
+function legacyLookupValue(value: unknown): string {
+  if (typeof value !== "string" && typeof value !== "number") {
+    throw new ValidateException("缺少核销码");
+  }
+  const normalized = String(value).trim();
+  if (!normalized || normalized === "undefined") throw new ValidateException("缺少核销码");
+  if (normalized.length > MAX_LEGACY_BARCODE_LENGTH) throw new ValidateException("核销码格式错误");
+  return normalized;
 }
 
 export function calculateWriteoffLinePrice(value: string | null, quantity: number): string {
@@ -248,50 +270,54 @@ export class StoreOrderWriteoffService {
   async info(actor: WriteoffActor, rawCode: unknown) {
     const code = normalizePickupVerifyCode(rawCode);
     return withTx(this.container, async (tx) => {
+      return this.infoUsing(tx, actor, { code });
+    });
+  }
+
+  /** Legacy mobile route compatibility without trusting a caller-provided auth=0 bypass. */
+  async infoByOrderId(actor: WriteoffActor, rawOrderId: unknown) {
+    const orderId = positiveOrderId(rawOrderId);
+    return withTx(this.container, (tx) => this.infoUsing(tx, actor, { orderId }));
+  }
+
+  /** PHP accepted either a 12-digit order code or a user's barcode. */
+  async legacySearch(actor: WriteoffActor, rawLookup: unknown) {
+    const lookup = legacyLookupValue(rawLookup);
+    if (/^\d{12}$/.test(lookup)) return [await this.info(actor, lookup)];
+    return withTx(this.container, async (tx) => {
+      const users = await tx
+        .select({ uid: user.uid })
+        .from(user)
+        .where(and(
+          eq(user.barCode, lookup),
+          eq(user.status, 1),
+          eq(user.isDel, 0),
+        ))
+        .orderBy(asc(user.uid))
+        .limit(2);
+      if (users.length !== 1) throw new NotFoundException("用户不存在或用户码不唯一");
       const orders = await tx
-        .select()
+        .select({ id: storeOrder.id })
         .from(storeOrder)
         .where(and(
-          eq(storeOrder.verifyCode, code),
+          eq(storeOrder.uid, users[0].uid),
           this.actorLookupCondition(actor),
+          eq(storeOrder.paid, 1),
+          inArray(storeOrder.status, [0, 1, 5]),
+          inArray(storeOrder.refundStatus, [0, 3]),
           eq(storeOrder.isDel, 0),
           eq(storeOrder.isSystemDel, 0),
         ))
-        .limit(2);
-      if (orders.length !== 1) throw new NotFoundException("核销订单不存在或核销码不唯一");
-      const order = orders[0];
-      const mode = this.writeoffMode(order);
-      await this.requireOperator(tx, actor, order, mode);
-      await this.assertOrderState(tx, order, mode);
-      const carts = await tx
-        .select()
-        .from(storeOrderCartInfo)
-        .where(eq(storeOrderCartInfo.oid, order.id))
-        .orderBy(asc(storeOrderCartInfo.id));
-      return {
-        id: order.id,
-        order_id: order.orderId,
-        store_id: order.storeId,
-        shipping_type: order.shippingType,
-        delivery_type: order.deliveryType,
-        actor_kind: actor.kind,
-        real_name: order.realName,
-        user_phone: maskPhone(order.userPhone),
-        status: order.status,
-        total_num: order.totalNum,
-        cart_info: carts.map((cart) => ({
-          id: cart.id,
-          cart_id: cart.cartId,
-          product_id: cart.productId,
-          product_type: cart.productType,
-          write_times: cart.writeTimes,
-          write_surplus_times: cart.writeSurplusTimes,
-          is_writeoff: cart.isWriteoff,
-          write_start: cart.writeStart,
-          write_end: cart.writeEnd,
-          cart_info: parseSnapshot(cart.cartInfo),
-        })),
-      };
+        .orderBy(desc(storeOrder.payTime), desc(storeOrder.id))
+        .limit(MAX_LEGACY_SEARCH_RESULTS + 1);
+      if (orders.length > MAX_LEGACY_SEARCH_RESULTS) {
+        throw new ValidateException("待核销订单过多，请使用12位核销码查询");
+      }
+      const result = [];
+      for (const order of orders) {
+        result.push(await this.infoUsing(tx, actor, { orderId: order.id }));
+      }
+      return result;
     });
   }
 
@@ -440,6 +466,93 @@ export class StoreOrderWriteoffService {
       }
       return { order_id: order.orderId, completed: true, status: 2 };
     });
+  }
+
+  private async infoUsing(
+    tx: DbClient,
+    actor: WriteoffActor,
+    lookup: { code: string } | { orderId: number },
+  ) {
+    const orders = await tx
+      .select()
+      .from(storeOrder)
+      .where(and(
+        "code" in lookup
+          ? eq(storeOrder.verifyCode, lookup.code)
+          : eq(storeOrder.id, lookup.orderId),
+        this.actorLookupCondition(actor),
+        eq(storeOrder.isDel, 0),
+        eq(storeOrder.isSystemDel, 0),
+      ))
+      .limit(2);
+    if (orders.length !== 1) {
+      throw new NotFoundException(
+        "code" in lookup ? "核销订单不存在或核销码不唯一" : "核销订单不存在",
+      );
+    }
+    const order = orders[0];
+    const mode = this.writeoffMode(order);
+    await this.requireOperator(tx, actor, order, mode);
+    await this.assertOrderState(tx, order, mode);
+    const carts = await tx
+      .select()
+      .from(storeOrderCartInfo)
+      .where(eq(storeOrderCartInfo.oid, order.id))
+      .orderBy(asc(storeOrderCartInfo.id))
+      .limit(MAX_ORDER_CART_ROWS + 1);
+    if (carts.length > MAX_ORDER_CART_ROWS) {
+      throw new ValidateException("订单商品行数异常，请先完成数据核对");
+    }
+    const writeoffCount = carts.reduce(
+      (total, cart) => total + Math.max(cart.writeTimes - cart.writeSurplusTimes, 0),
+      0,
+    );
+    const first = carts[0];
+    const writeDay = !first || (!first.writeStart && !first.writeEnd)
+      ? "不限时"
+      : `${first.writeStart ? new Date((first.writeStart + 8 * 60 * 60) * 1_000).toISOString().slice(0, 10) : ""}/${first.writeEnd ? new Date((first.writeEnd + 8 * 60 * 60) * 1_000).toISOString().slice(0, 10) : ""}`;
+    const projected = carts.map((cart) => ({
+      id: cart.id,
+      cart_id: cart.cartId,
+      cart_num: cart.cartNum,
+      product_id: cart.productId,
+      product_type: cart.productType,
+      write_times: cart.writeTimes,
+      write_surplus_times: cart.writeSurplusTimes,
+      surplus_num: cart.writeSurplusTimes,
+      is_writeoff: cart.isWriteoff,
+      write_start: cart.writeStart,
+      write_end: cart.writeEnd,
+      cart_info: parseSnapshot(cart.cartInfo),
+    }));
+    const firstSnapshot = projected[0]?.cart_info;
+    const firstRecord = firstSnapshot && typeof firstSnapshot === "object" && !Array.isArray(firstSnapshot)
+      ? firstSnapshot as Record<string, unknown>
+      : undefined;
+    const firstProduct = firstRecord?.productInfo && typeof firstRecord.productInfo === "object" && !Array.isArray(firstRecord.productInfo)
+      ? firstRecord.productInfo as Record<string, unknown>
+      : undefined;
+    return {
+      id: order.id,
+      order_id: order.orderId,
+      store_id: order.storeId,
+      uid: order.uid,
+      shipping_type: order.shippingType,
+      delivery_type: order.deliveryType,
+      actor_kind: actor.kind,
+      real_name: order.realName,
+      user_phone: maskPhone(order.userPhone),
+      status: order.status,
+      total_num: order.totalNum,
+      product_type: order.productType,
+      write_off: writeoffCount,
+      write_times: first?.writeTimes ?? 0,
+      write_day: writeDay,
+      cart_count: projected.length,
+      writeoff_count: writeoffCount,
+      image: typeof firstProduct?.image === "string" ? firstProduct.image : "",
+      cart_info: projected,
+    };
   }
 
   private actorLookupCondition(actor: WriteoffActor) {
