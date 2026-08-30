@@ -23,7 +23,7 @@ export function errorHandler(err: Error, c: Context) {
   }
   // 已知的业务异常: 用其携带的 code/msg
   if (err instanceof ApiException) {
-    return jsonRaw(c, err.code, err.message, null);
+    return jsonRaw(c, err.code, err.message, err.data);
   }
 
   // 未知异常: 隐藏详情, 记录到日志

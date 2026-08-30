@@ -50,6 +50,19 @@
       }
     },
     {
+      "path": "pages/article/list",
+      "style": {
+        "navigationBarTitleText": "品牌资讯",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/article/detail",
+      "style": {
+        "navigationBarTitleText": "资讯详情"
+      }
+    },
+    {
       "path": "pages/auth/login",
       "style": {
         "navigationBarTitleText": "登录"

@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 describe("payment outbox Queue PostgreSQL integration evidence", () => {
   it("applies a validated schema at the start of every scoped business transaction", () => {
     const source = readFileSync("src/lib/di.ts", "utf8");
-    expect(source).toContain("const transactionSearchPaths = new WeakMap<DbClient, string>();");
+    expect(source).toContain(
+      "const transactionSearchPaths = new WeakMap<DbClient, readonly string[]>();",
+    );
     expect(source).toContain("SET LOCAL search_path TO");
     expect(source).toContain("transactionSearchPaths.get(container.db)");
   });

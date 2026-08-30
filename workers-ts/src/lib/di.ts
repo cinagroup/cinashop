@@ -58,7 +58,7 @@ export type DbClient = PostgresJsDatabase<Record<string, never>> & {
 };
 
 export interface DbConnectionOptions {
-  /** Restrict every connection to one validated PostgreSQL schema. */
+  /** Restrict every connection to one schema, or the exact public,pg_temp runtime path. */
   searchPath?: string;
   /** Visible in pg_stat_activity and PostgreSQL logs. */
   applicationName?: string;
@@ -66,7 +66,22 @@ export interface DbConnectionOptions {
 
 const POSTGRES_IDENTIFIER = /^[a-z_][a-z0-9_]{0,62}$/;
 const POSTGRES_APPLICATION_NAME = /^[A-Za-z0-9._-]{1,63}$/;
-const transactionSearchPaths = new WeakMap<DbClient, string>();
+const transactionSearchPaths = new WeakMap<DbClient, readonly string[]>();
+
+function validatedSearchPath(value: string | undefined): readonly string[] | undefined {
+  if (!value) return undefined;
+  if (POSTGRES_IDENTIFIER.test(value)) return [value];
+  // Production explicitly keeps pg_temp last. Arbitrary fallback paths such as
+  // audit_schema,public remain forbidden so isolated test clients fail closed.
+  if (value === "public,pg_temp") return ["public", "pg_temp"];
+  throw new Error("PostgreSQL search path must be one safe schema identifier or public,pg_temp");
+}
+
+function searchPathSql(searchPath: readonly string[]): string {
+  return searchPath
+    .map((schemaName) => schemaName === "pg_temp" ? "pg_temp" : `"${schemaName}"`)
+    .join(", ");
+}
 
 /**
  * 从 Hyperdrive 建立 postgres.js 客户端。
@@ -84,9 +99,7 @@ export function createDbFromConnectionString(
   if (!Number.isSafeInteger(maxConnections) || maxConnections < 1 || maxConnections > 10) {
     throw new Error("PostgreSQL client connection limit must be between 1 and 10");
   }
-  if (options.searchPath && !POSTGRES_IDENTIFIER.test(options.searchPath)) {
-    throw new Error("PostgreSQL search path must be one safe schema identifier");
-  }
+  const searchPath = validatedSearchPath(options.searchPath);
   if (options.applicationName && !POSTGRES_APPLICATION_NAME.test(options.applicationName)) {
     throw new Error("PostgreSQL application name contains unsupported characters");
   }
@@ -94,7 +107,7 @@ export function createDbFromConnectionString(
   const connection: Record<string, string> = {};
   // Hyperdrive forwards PostgreSQL's standard startup `options` parameter,
   // but may not preserve a custom `search_path` startup key.
-  if (options.searchPath) connection.options = `-c search_path=${options.searchPath}`;
+  if (searchPath) connection.options = `-c search_path=${searchPath.join(",")}`;
   if (options.applicationName) connection.application_name = options.applicationName;
 
   const client = postgres(connectionString, {
@@ -103,12 +116,15 @@ export function createDbFromConnectionString(
     connection,
   });
   const db = drizzle(client, { schema }) as unknown as DbClient;
-  if (options.searchPath) transactionSearchPaths.set(db, options.searchPath);
+  if (searchPath) transactionSearchPaths.set(db, searchPath);
   return db;
 }
 
 export function createDb(env: Env): DbClient {
-  return createDbFromConnectionString(env.HYPERDRIVE.connectionString);
+  return createDbFromConnectionString(env.HYPERDRIVE.connectionString, 5, {
+    searchPath: "public,pg_temp",
+    applicationName: "cinashop_api",
+  });
 }
 
 export interface Container {
@@ -220,7 +236,7 @@ export async function withTx<T>(
   const searchPath = transactionSearchPaths.get(container.db);
   return container.db.transaction(async (tx) => {
     if (searchPath) {
-      await tx.execute(sql.raw(`SET LOCAL search_path TO "${searchPath}"`));
+      await tx.execute(sql.raw(`SET LOCAL search_path TO ${searchPathSql(searchPath)}`));
     }
     return fn(tx as unknown as DbClient);
   });

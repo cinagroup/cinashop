@@ -57,6 +57,10 @@
         <text class="quick-icon">🏆</text>
         <text class="quick-text">积分商城</text>
       </view>
+      <view class="quick-item" @tap="goArticles">
+        <text class="quick-icon">📰</text>
+        <text class="quick-text">品牌资讯</text>
+      </view>
     </view>
 
     <!-- 分类入口 -->
@@ -189,6 +193,10 @@ function goCouponCenter() {
 
 function goIntegral() {
   uni.navigateTo({ url: "/pages/user/integral" });
+}
+
+function goArticles() {
+  uni.navigateTo({ url: "/pages/article/list" });
 }
 
 function goBanner(banner: { link: string }) {

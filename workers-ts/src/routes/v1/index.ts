@@ -45,6 +45,7 @@ import * as UserBehaviorController from "@/controllers/api/v1/UserBehaviorContro
 import * as NewcomerController from "@/controllers/api/v1/NewcomerController";
 import * as ShortVideoController from "@/controllers/api/v1/ShortVideoController";
 import * as DiyHomeController from "@/controllers/api/v1/DiyHomeController";
+import * as PublicArticleController from "@/controllers/api/v1/PublicArticleController";
 import * as MemberCardController from "@/controllers/api/v1/MemberCardController";
 import * as PcCompatibilityController from "@/controllers/api/v1/PcCompatibilityController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
@@ -143,6 +144,51 @@ v1Routes.get(
   stationOpenMiddleware(),
   authMiddleware({ force: false }),
   DiyHomeController.suspended,
+);
+
+// ─── 旧 UniApp 公共文章 ─────────────────────────────────────
+// All seven PHP routes live in the same StationOpen + optional-auth group.
+v1Routes.get(
+  "/article/category/list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicArticleController.categoryList,
+);
+v1Routes.get(
+  "/article/list/:cid",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicArticleController.articleList,
+);
+v1Routes.get(
+  "/article/like/:id",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicArticleController.articleLike,
+);
+v1Routes.get(
+  "/article/details/:id",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicArticleController.articleDetails,
+);
+v1Routes.get(
+  "/article/hot/list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicArticleController.hotList,
+);
+v1Routes.get(
+  "/article/new/list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicArticleController.newList,
+);
+v1Routes.get(
+  "/article/banner/list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicArticleController.bannerList,
 );
 
 // ─── 旧 PC 商城公共/可选登录面 ────────────────────────────────

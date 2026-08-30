@@ -146,6 +146,46 @@ PHP 支付后赠券按券模板 ID 去重，即同一订单购买多个关联同
 
 DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和目标 PostgreSQL 隔离场景已收口，但父项仍不能完成：生产 DIY、视频、新人和促销内容为空，15/21 配置缺失且 3 键重复；新 UniApp 还没有类型化 client、allowlist renderer、版本缓存、微页面、首页组件和全局悬浮导航；R2 缩略图策略、旧端真实 token E2E、预发、影子流量、主 Worker/Pages 发布均未完成。下一代码批进入 PUBLIC-ARTICLE 7 条，数据与发布门禁继续独立跟踪。
 
+## PUBLIC-ARTICLE 迁移审计（2026-08-30）
+
+### 权威范围与 PHP 实际合同
+
+本批以 `cinashop-php/route/api.php`、公开 `Article`/`ArticleCategory` controller、`ArticleServices`、`ArticleDao`、相关 model 及旧 UniApp 新闻页为权威，逐层核对 7 条 GET：`/api/article/category/list`、`list/:cid`、`like/:id`、`details/:id`、`hot/list`、`new/list`、`banner/list`。七条都位于 `StationOpenMiddleware` 之后并使用 `AuthTokenMiddleware(false)`；匿名读取时 UID 为 0。旧第一方客户端实际消费其余 6 条，`new/list` 没有 wrapper 或调用，但它仍是已发布公开合同，不能据此退役。
+
+分类只取 `hidden=0,is_del=0,status=1`，按 `sort DESC`，并在首项插入 `{id:0,title:"热门"}`；PHP 内部缓存约 360 秒。分类文章列表返回 `id/title/image_input/visit/likes/add_time/synopsis/url`，hot/new/banner 不返回 `likes`；`image_input` 是不修剪的逗号拆分，空字符串精确为 `[""]`。列表 `add_time` 是上海时间到分钟，详情到日期；PHP 的 `page=0` 表示完全不加 LIMIT，`page>0,limit=0` 落到 ThinkORM 默认 20，显式 limit 最大 100。`list/:cid` 还排除 `wechat_news_category.new_id`，而 PHP 把可能含逗号的原串传给 `NOT IN`，没有可靠展开。
+
+详情先增加 `visit`，返回文章全字段、正文、分类名、五个商品摘要字段和 `is_like`。ThinkORM 的 `bind` 只把正文与分类名展开为顶层 `content/catename`，不暴露 `contents/cateName` 关系容器；缺正文时 `content=null`，旧 varchar 分类 ID 保持字符串。文章不可用时 PHP 仍以 HTTP 200 返回 `{status:400,msg:"文章不存在或已删除",data:[]}`。点赞使用 `GET /like/:id?status=...`，正数添加、其他值取消；成功响应精确为 `{status:200,msg:"1"}`，没有 `data`。旧 PHP 允许匿名 UID 0 写关系、把计数更新与关系写入拆成两个非事务步骤，重复添加、取消不存在关系及并发都会使 `likes` 漂移；详情的读改写也会丢并发浏览量。
+
+### 审计发现的泄露缺陷与迁移决策
+
+PHP `ArticleDao::cidByArticleList()` 虽传入 `status=1,hide=0`，但 `ArticleDao::search()` 实际调用 `parent::search($where,false)`；Article model 又没有 status/hide searcher，因此 list/hot/new/banner 会泄露停用或隐藏文章，details/like 也直接按 ID 读取而不检查可见性。目标 `system_article` 还有 PHP 旧表没有的 `is_del` 软删列。新 Worker 明确不复刻这项信息泄露：所有公开列表、详情和点赞目标统一固定 `status=1 AND hide=0 AND is_del=0`；匿名详情继续可读，匿名点赞失败关闭。
+
+公众号排除按每个逗号 token 展开，只接受数字并以去除前导零后的十进制文本比较，避免 PostgreSQL 整数转换溢出；这也是相对 PHP 偶然原串语义的有意修复。排序在 PHP 的 `add_time DESC` 后增加 `id DESC` 稳定次序。`page=0` 仍表达不分页，但 Worker 只取 1,001 行哨兵并在超过 1,000 时明确拒绝，绝不静默截断；分页 OFFSET 在执行查询前限制为 10,000。分类和列表当前也使用 `no-store`，详情及点赞使用 `private,no-store`，避免在正文媒体、发布失效和个性化状态尚未收口前形成错误 CDN 缓存。
+
+详情浏览量改为同一事务中的原子 `LEAST(visit::bigint+1,2147483647)`；点赞先锁文章行，使用排除 `play` 的四列部分唯一关系，添加/取消后以关系表重算文章计数，整组事务失败则全部回滚。生产目录按 `0106_user_relation_semantics.sql` 的完整 catalog 条件精确核验该索引，唯一、有效、ready/live、非延迟、无表达式、四个键列和谓词均符合，`article_like_partial_unique_ready=true`。正式 `createDb` 启动参数及 `withTx` 都固定 `public,pg_temp` 且显式把 `pg_temp` 置后，不再依赖数据库角色的默认 search path。这样保留客户端可观察的路径、字段和成功信封，同时修复匿名写、重复请求、取消失败、并发漂移、未发布内容泄露和整数溢出风险。
+
+### 生产 Hyperdrive 只读证据
+
+一次性审计 Worker 绑定用户指定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，只读审计与隔离写场景使用两枚不同的一次性 Bearer；Worker 只保存各自 SHA-256 摘要、做 timing-safe 比较并拒绝相同摘要，两个端点不能互相越权。生产查询固定 `REPEATABLE READ, READ ONLY`、`search_path=public,pg_temp`、短锁/语句超时，并验证未限定 `system_article` 实际解析到 `public`。响应只包含聚合、表/索引存在性和布尔门禁，不返回标题、正文、完整 URL、UID、业务 ID、配置值或表指纹。
+
+目标为 PostgreSQL 16.14，所需文章、分类、正文、商品、公众号分组、用户关系和用户表均存在；临时 `codex_public_article_*` schema 为 0。生产 `system_article=0`、`article_category=0`、`article_content=0`、`wechat_news_category=0`、文章点赞关系=0，因而可见/停用/隐藏/软删、缺正文/孤儿、公众号 token、计数漂移、危险 HTML 和媒体类型聚合都为 0。最终审计还按每个逗号封面 token 区分空值、HTTP(S)、根路径、资产代理和其他值，并检查危险标签、事件属性、`srcdoc`、内联 style、明文/实体编码主动协议及正文媒体；SQL 已在生产执行，但零文章意味着所有结果仍是 0，不能替代真实样本验收。商品目录本身存在，但当前没有文章可形成商品关联。索引聚合为 `system_article=2`、`article_category=2`、`article_content=1`、`user_relation=5`；文章表没有 add_time/hot/banner 专用索引。由于公开文章为 0，本次没有数据量或执行计划证据支持新增文章排序索引，`forward_latest_indexes_recommended=false`，没有对 `public` 业务 schema 执行索引 DDL；后续写场景仅创建并删除下述隔离 schema。
+
+### 随机 schema、并发与清理证据
+
+写场景只在同一生产 PostgreSQL 的随机 schema 中执行：取得专用 advisory lock 后，先从生产目录失败关闭地核对全部 sequence-backed/identity 列，再克隆 `system_article/article_category/article_content/store_product/wechat_news_category/user_relation`，为全部 serial 重绑 schema 内序列并回读确认默认值没有指向 public；每个顶层事务固定随机 schema 在前、`pg_temp` 在后，并以 `current_schema()` 和 `to_regclass('system_article')` 双重证明未逃回 public。场景直接调用真实 `PublicArticleCompatibilityService`，不是 SQL 替身。
+
+最终版本再次 10/10 断言通过：分类热门首项与排序、四种列表字段/公众号排除、草稿/隐藏/软删失败关闭、正文 fallback/商品/分类装饰、详情并发原子 visit、点赞幂等、点赞并发、匿名点赞拒绝、触发器故障全回滚及 search path 隔离。六张 public 表使用限时只读快照中的行数、最大键和全部列聚合摘要，相关 public 序列使用状态快照；即使场景或清理失败也会继续执行 after fingerprint/schema-count 并聚合报告错误。最终前后完全相同，随机 schema 在 `finally` 删除，临时 schema `0→0`。一次性 Worker、路由与 Secret 随后删除，复核其 deployment 已不存在；主 `cinashop-api` 仍为 100% 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本批未部署主 Worker。若审计期间恰有合法 public 写入，前后指纹会保守地报失败而不是误报安全。
+
+### 静态覆盖、前端与剩余门禁
+
+七条路由注册后，全域静态审计更新为 PHP 1,904、TS 1,419、精确匹配 721、可执行匹配 703、明确不可用 18、原始缺失 1,183、证据化退役 4、可执行缺口 1,179，覆盖率为 `37.9%/36.9%/37.0%`；`/api` 为 PHP 457、TS 730、精确/可执行 `339/336`、不可用 3、缺失 118、退役 1、可执行缺口 117，覆盖率为 `74.2%/73.5%/73.7%`。
+
+新 UniApp 已本地恢复类型化七接口 client、分类/Banner/分页列表、详情/关联商品、首页“品牌资讯”入口和登录后点赞；正文不用 `v-html`，先由识别引号的 tokenizer 重建 tag/attribute allowlist，并为图片/表格生成跨端固定安全宽度，再交给 UniApp 受限 `rich-text`。类型检查、H5/微信小程序构建及 390×844 mock API 浏览器验证通过，危险属性没有进入渲染结果；安全链接的跨端点击策略和微信真机媒体效果仍需真实内容决策/验收，这只证明本地实现和模拟合同，不是生产内容 E2E。
+
+最终仓库门禁为 Worker 单元/runtime 类型检查通过、143/143 文件与 861/861 单元测试通过、PUBLIC-ARTICLE 定向 4 文件 22/22；主 Worker `wrangler deploy --dry-run --minify` 成功，未实际发布。UniApp 类型检查及 H5、微信小程序、App 构建均成功。Workers runtime 套件在本 Windows 主机仍因 `workerd` 启动阶段 `0xc0000005` access violation 退出，0 个断言执行，不能计为通过；Linux/兼容主机 runtime 与 CI 门禁保持未完成。
+
+服务端合同、生产只读审计、随机 schema 与本地前端接线已经收口，但 PUBLIC-ARTICLE 父项不能完成：生产没有任何文章、分类、正文、公众号文章引用或文章点赞样本，无法形成 PHP golden response，也没有历史正文/封面可验证发布时 HTML 清洗和媒体迁移。私有 R2 的短时签名 URL 不能持久化到正文或微信分享图，仍需稳定媒体代理、旧附件映射和服务端发布清洗。旧 PHP 若与 Worker 并行写点赞且不采用相同行锁，关系计数仍会跨栈竞态；历史 UID 0、孤儿或重复关系必须在切流前清理/映射。匿名详情每次更新 visit，热门文章还会形成数据库热点写放大，需在发布前确定边缘/WAF 限流、是否改为异步聚合或接受该兼容成本。真实 token、H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察继续作为独立门禁。
+
 审计更新：2026-08-30
 
 ## 结论
@@ -1923,7 +1963,7 @@ Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签
 - [ ] 继续补活动详情中秒杀/拼团/砍价装饰与水印兼容；这些跨域展示细节不能因本批收藏字段稳定而视为完成。
 - [ ] 在 Linux/兼容主机运行 Workers runtime，完成预发、影子流量、明确发布批准和发布后观察；主 Worker与 PC/UniApp当前均未发布。
 
-DIY-HOME-WIDGETS 八条服务端合同现已收口；下一代码批次为 PUBLIC-ARTICLE 7 条，其后处理 reply 4 条与仍被 UniApp 调用的社区合同。USER-CENTER-COMPAT 总项保持未勾选，直到源数据、默认地址/收藏跨栈门禁、签到提醒投递、真实 token流程和发布门禁全部获得证据；签到唯一性门禁已关闭，但仍建议单运行时/统一锁序。主 Worker仍是旧版本，未发布本批代码。
+DIY-HOME-WIDGETS 八条服务端合同和 PUBLIC-ARTICLE 七条精确合同/本地 UniApp 接线现已收口；下一代码批次为 reply 4 条与仍被 UniApp 调用的社区合同。PUBLIC-ARTICLE 因生产内容与媒体均为空、切流/热点写策略和真实端 E2E 未完成而保持父项未勾选；USER-CENTER-COMPAT 同样继续等待源数据、默认地址/收藏跨栈门禁、签到提醒投递、真实 token 流程和发布证据。签到唯一性门禁已关闭，但仍建议单运行时/统一锁序。主 Worker 仍是旧版本，未发布本批代码。
 
 ## 完成定义
 

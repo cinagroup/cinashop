@@ -21,6 +21,8 @@ export class ApiException extends Error {
     message: string,
     /** 业务状态码, 放进 body.status (不是 HTTP code) */
     public readonly code: number = 400,
+    /** PHP compatibility payload for exceptional envelopes. */
+    public readonly data: unknown = null,
   ) {
     super(message);
     this.name = "ApiException";
