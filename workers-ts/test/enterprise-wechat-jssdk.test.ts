@@ -160,7 +160,7 @@ describe("Enterprise WeChat JS-SDK migration", () => {
     expect(calls[1].url.pathname).toBe("/cgi-bin/get_jsapi_ticket");
     expect(calls[1].url.searchParams.get("access_token")).toBe("company-access");
     expect(calls.every((call) => call.init?.signal instanceof AbortSignal)).toBe(true);
-    expect(kv.writes.filter((write) => write.key.startsWith("work_jssdk:")))
+    expect(kv.writes.filter((write) => write.key.startsWith("work_provider:")))
       .toEqual(expect.arrayContaining([
         expect.objectContaining({ expirationTtl: 6900 }),
         expect.objectContaining({ expirationTtl: 6900 }),
@@ -356,6 +356,7 @@ describe("Enterprise WeChat JS-SDK migration", () => {
     expect(controller).toContain('c.header("Pragma", "no-cache")');
     expect(service).toContain("WECHAT_WORK_CORP_SECRET");
     expect(service).toContain("WECHAT_WORK_AGENT_SECRET");
+    expect(service).toContain("EnterpriseWechatProviderClient");
     expect(service).not.toContain('getMany([\n      "wechat_work_corpid",\n      "wechat_work_build_agent_id",\n      "wechat_work_build_secret"');
     expect(wrangler).not.toMatch(/^WECHAT_WORK_(?:CORP|AGENT)_SECRET\s*=/m);
     expect(auditWorker).toContain("REPEATABLE READ, READ ONLY");

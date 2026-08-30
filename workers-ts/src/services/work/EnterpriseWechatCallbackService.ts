@@ -32,6 +32,7 @@ import {
   verifyCallbackSignature,
   type CallbackQuery,
 } from "@/services/work/EnterpriseWechatCallbackCrypto";
+import { isEnterpriseWechatCorpId } from "@/services/work/EnterpriseWechatProviderClient";
 
 const DISPATCH_LEASE_SECONDS = 120;
 const DELIVERY_LEASE_SECONDS = 600;
@@ -73,7 +74,7 @@ interface ClaimedCallback {
 type CallbackProcessResult =
   | "applied"
   | "applied-noop"
-  | "ordered"
+  | "refresh-required"
   | "ignored"
   | "superseded"
   | "already-completed"
@@ -373,7 +374,7 @@ export class EnterpriseWechatCallbackService {
     const corpId = typeof rawCorpId === "string" ? rawCorpId.trim() : "";
     const token = this.env.WECHAT_WORK_CALLBACK_TOKEN?.trim() ?? "";
     const aesKey = this.env.WECHAT_WORK_CALLBACK_AES_KEY?.trim() ?? "";
-    if (!/^[A-Za-z0-9_-]{1,18}$/.test(corpId)) {
+    if (!isEnterpriseWechatCorpId(corpId)) {
       throw new EnterpriseWechatCallbackError("callback_corp_id_unconfigured", "configuration");
     }
     try {
@@ -430,7 +431,8 @@ export class EnterpriseWechatCallbackService {
           lastErrorCode: "attempt_limit_exceeded", updateTime: now,
         }).where(eq(workCallbackOutbox.id, row.outboxId));
         await tx.update(workCallbackEvent).set({
-          status: "DEAD", lastErrorCode: "attempt_limit_exceeded", updateTime: now,
+          status: "DEAD", projectionStatus: "DEAD",
+          lastErrorCode: "attempt_limit_exceeded", updateTime: now,
         }).where(eq(workCallbackEvent.id, row.eventId));
         return "dead";
       }
@@ -443,6 +445,7 @@ export class EnterpriseWechatCallbackService {
       }).where(eq(workCallbackOutbox.id, row.outboxId));
       await tx.update(workCallbackEvent).set({
         status: "PROCESSING",
+        projectionStatus: "PROCESSING",
         attemptCount,
         leaseUntil: now + PROCESS_LEASE_SECONDS,
         leaseToken,
@@ -454,7 +457,7 @@ export class EnterpriseWechatCallbackService {
 
   private async applyOrdering(
     claim: ClaimedCallback,
-  ): Promise<"applied" | "applied-noop" | "ordered" | "ignored" | "superseded"> {
+  ): Promise<"applied" | "applied-noop" | "refresh-required" | "ignored" | "superseded"> {
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
@@ -466,11 +469,12 @@ export class EnterpriseWechatCallbackService {
         throw new Error("callback_processing_lease_lost");
       }
 
-      let result: "applied" | "applied-noop" | "ordered" | "ignored" | "superseded" = "ordered";
-      let eventStatus = "ORDERED";
+      let result: "applied" | "applied-noop" | "refresh-required" | "ignored" | "superseded"
+        = "refresh-required";
+      let projectionStatus = "REFRESH_REQUIRED";
       if (!isRecognizedEvent(claim)) {
         result = "ignored";
-        eventStatus = "IGNORED";
+        projectionStatus = "IGNORED";
       } else {
         const watermarkRows = await tx.select().from(workCallbackWatermark)
           .where(eq(workCallbackWatermark.subjectKeyHash, claim.subjectKeyHash))
@@ -486,7 +490,7 @@ export class EnterpriseWechatCallbackService {
         );
         if (older) {
           result = "superseded";
-          eventStatus = "SUPERSEDED";
+          projectionStatus = "SUPERSEDED";
         } else {
           if (
             !watermark
@@ -517,13 +521,14 @@ export class EnterpriseWechatCallbackService {
           if (isFollowRemovalEvent(claim)) {
             const changed = await this.applyFollowRemoval(tx, claim, now);
             result = changed ? "applied" : "applied-noop";
-            eventStatus = changed ? "APPLIED" : "APPLIED_NOOP";
+            projectionStatus = changed ? "APPLIED" : "APPLIED_NOOP";
           }
         }
       }
 
       await tx.update(workCallbackEvent).set({
-        status: eventStatus,
+        status: "ORDERED",
+        projectionStatus,
         leaseUntil: 0,
         leaseToken: "",
         lastErrorCode: "",
@@ -593,6 +598,7 @@ export class EnterpriseWechatCallbackService {
       ));
       await tx.update(workCallbackEvent).set({
         status: dead ? "DEAD" : "FAILED",
+        projectionStatus: dead ? "DEAD" : "FAILED",
         leaseUntil: 0,
         leaseToken: "",
         lastErrorCode: code,

@@ -2216,7 +2216,7 @@ POST按流读取并在超过64 KiB时立刻cancel，不先把大包完整缓冲�
 
 HTTP提交后立即尝试Queue；发送结果未知可重复投递，消费者以outbox行锁、租约和event唯一键收敛。五分钟Cron只投递不含业务数据的根消息，由Queue消费者扫描`PENDING/FAILED`和过期租约；Queue失败记录固定错误码而不记录payload。消费端按`subject_key_hash`取得PostgreSQL advisory transaction lock，以`event_time`为主序、`sequence_rank`为同秒消歧：删除/解散100，更新/编辑50，创建10；较旧或同秒低优先级事件标记`SUPERSEDED`。不认识的新消息/事件以及旧PHP空处理分支留痕为`IGNORED`，不会冒充业务投影已执行。
 
-WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 现在只对 `del_external_contact/del_follow_user` 增加 `APPLIED/APPLIED_NOOP` 关系 tombstone；add/edit、成员、部门、客户快照、群和标签仍只证明可信事件已经持久化与排序，尚未调用provider刷新业务表，也未执行欢迎语或自动标签等远端写。WORK-C父项因此保持未勾选；C2～C8仍必须把provider读取、本地快照状态机和所有远端副作用拆成独立事务action outbox，并为部分成功、provider 404、限流、乱序删除与人工重放定义终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单payload。
+WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 只对 `del_external_contact/del_follow_user` 增加关系 tombstone；C2 又把管道 `status` 与业务 `projection_status` 物理分列，C1 结果迁为 `APPLIED/APPLIED_NOOP`，其余已识别但尚未实现的投影明确为 `REFRESH_REQUIRED`。成员、部门、客户快照、群和标签仍未调用provider刷新业务表，也未执行欢迎语或自动标签等远端写。WORK-C父项因此保持未勾选；C3～C8仍必须完成各实体 current-state 与所有远端副作用的独立事务action outbox，并为部分成功、provider operation-specific `not_found`、限流、乱序删除与人工重放定义实体终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单payload。
 
 ### 生产数据库与隔离场景证据
 
@@ -2244,7 +2244,7 @@ WORK-C0 当时的仓库门禁为Worker双TypeScript配置通过，152/152个单�
 
 上一节记录的可信接收管道现在明确命名为 **WORK-C0**；其代码、生产 DDL、随机 schema 11/11 与资源清理证据原样保留，不回写成更大的完成声明。随后 **WORK-C1** 的关系 tombstone 代码和生产 Hyperdrive 隔离也已完成，但未启用、未发布。WORK-C 父项继续未完成：C1 只新增两类关系删除的 `APPLIED/APPLIED_NOOP`，其他事件的 `ORDERED` 仍不表示 Work 业务快照已经更新。
 
-后续工作拆成 C1～C8。**C1 现已达到“代码/生产 Hyperdrive 隔离完成，未启用/未发布”**，其 20/20、公共全行/owned sequence 指纹和资源清理证据见下；C2～C8 仍待完成。真实企微回调、真实 Cloudflare Queue 平台重投、源 MySQL 导入、主 Worker 切流和发布均不在 C1 完成声明内。
+后续工作拆成 C1～C8。**C1、C2 现已达到“代码/生产隔离完成，未启用/未发布”**：C1 的 20/20 与 C2 的 27/27、公共全行/owned sequence 指纹、真实专用 Queue/DLQ 重放和资源清理证据见下；C3～C8 仍待完成。真实企微租户回调/provider 正向、源 MySQL 导入、主 Worker 切流和发布均不在 C1/C2 完成声明内。
 
 ### PHP→TS 事件能力矩阵
 
@@ -2255,7 +2255,7 @@ PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListen
 | `change_external_contact / del_external_contact` | `WorkListener.php:160-164` 调 `WorkClientServices::deleteClient()`；旧实现先销毁共享 client，再 tombstone 指定员工 follow | C1 已按 `(CorpID, ExternalUserID, UserID)` 关系排序，只 tombstone 指定活跃 follow，并记 `APPLIED/APPLIED_NOOP`；不删除共享 client | 代码/生产 Hyperdrive 隔离完成；真实回调、启用和发布未完成 |
 | `change_external_contact / del_follow_user` | `WorkListener.php:167-170` 调 `deleteFollowClient()`，只把匹配 follow 的 `is_del_user` 置 1 | 与上行共用 C1 关系终止状态机和原子终态 | 代码/生产 Hyperdrive 隔离完成；真实回调、启用和发布未完成 |
 | `change_external_contact / add_external_contact` | `WorkListener.php:150-154` 调 provider 拉完整客户/follow；随后同步触发欢迎语、自动标签和商城用户关联 | 只排序；回调白名单不足以构造完整客户/follow/tags | C5 做 provider 权威本地快照；C8 才做独立 action outbox 的远端副作用 |
-| `change_external_contact / edit_external_contact` | `WorkListener.php:155-159` 调 provider 刷新客户、全部 follow/tags，并尝试商城用户关联 | 只排序 | C5；provider 404、429、旧快照晚到和多员工关系必须定义终态 |
+| `change_external_contact / edit_external_contact` | `WorkListener.php:155-159` 调 provider 刷新客户、全部 follow/tags，并尝试商城用户关联 | 只排序 | C5；provider operation-specific `not_found`、429、旧快照晚到和多员工关系必须定义终态 |
 | `change_contact / create_user, update_user, delete_user` | `WorkListener.php:95-109` 调成员 service；create/update 需要完整成员资料和部门关系 | 只排序；claim 已能读取 payload/corpId，但白名单仍缺完整成员字段 | C3 成员 current-state 投影 |
 | `change_contact / create_party, update_party, delete_party` | `WorkListener.php:110-124` 调部门 service；更新需 provider 权威详情 | 只排序；现表没有 `(corp_id,department_id)` 唯一或明确 tombstone | C4 部门 current-state 投影 |
 | `change_contact / update_tag` | PHP 分支为空，`WorkListener.php:125-127` | C0 未把空分支冒充恢复 | 继续 IGNORED，除非后续有独立权威同步设计 |
@@ -2268,7 +2268,7 @@ PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListen
 
 - **WORK-C0（已完成）可信接收、事务 inbox/outbox、Queue 与乱序水位**：只保留上一节已有证据，不宣称任何成员、部门、客户、follow、群、成员或标签已经刷新。
 - **WORK-C1（代码/生产 Hyperdrive 隔离完成，未启用/未发布）外部联系人跟进关系 tombstone**：只实现 `del_external_contact` 和 `del_follow_user`；不调用 provider，不执行远端写，不创建客户或 follow。事件主体已改为关系级 `(CorpID, ExternalUserID, UserID)`，缺任一 ID 即失败关闭；同一事务唯一解析 client/follow、更新 `is_del_user=1`、推进关系水位并写 `APPLIED/APPLIED_NOOP`。不存在目标为幂等 no-op，重复活跃 client/follow 由生产 partial UNIQUE 和服务失败关闭共同拒绝。
-- **WORK-C2（待完成）投影运行时与 provider 读取基础**：提取独立 `EnterpriseWechatProviderClient`，按 credential scope 隔离 token/cache；统一超时、有界 JSON、失效 token 单次刷新、404 终止、429/5xx/网络失败可重试和脱敏日志。Work DLQ 已通过严格 validator 允许 callback outbox/dispatch 消息重放并有单元测试；C2 仍须完成真实 Cloudflare Queue 平台的失败投递、重投、DLQ 归档与人工重放验证。
+- **WORK-C2（代码、生产 Hyperdrive 与真实 Cloudflare Queue 隔离完成，未启用/未发布）投影运行时与 provider 读取基础**：独立 `EnterpriseWechatProviderClient` 已按 `company-jssdk/agent/directory/external-contact` credential scope 隔离 token/cache，JS-SDK 已真正委托该 client；统一 5 秒超时、GET/POST、禁止重定向、有界请求/JSON、fatal UTF-8、同 isolate 跨 client 的失效 token 单次刷新、2xx operation-specific `not_found`、429/5xx/网络 `retryable`、裸 404/未知业务码默认 `terminal` 和 metadata-only 错误。`event.status` 与 `projection_status` 已分列；Work 严格四键/两键消息也已完成真实平台失败、自动重投、DLQ 归档、去重和真实 callback consumer 人工重放。
 - **WORK-C3（待完成）成员 current-state**：覆盖成员 create/update/delete、UserID 变更、扩展资料和部门关系全量替换；provider 在事务外读取，应用快照与水位在短事务内原子提交。
 - **WORK-C4（待完成）部门 current-state**：覆盖部门 create/update/delete、父子关系、负责人和排序；先建立 `(CorpID, DepartmentID)` 唯一身份与明确 tombstone，禁止无证据硬删历史或级联成员关系。
 - **WORK-C5（待完成；主 Worker 启用前硬门禁）客户、follow 与 follow tags 权威快照**：覆盖 add/edit，完整保留其他员工的跟进关系；当前 add/edit 仍只记 `ORDERED`，不会恢复 C1 tombstone，因此 C5 完成前不得启用主 Worker。客户失活只能由所有关系均终止或 provider 权威状态判定，不能由一条员工关系删除推导。
@@ -2296,32 +2296,51 @@ PHP 的两条删除分支不能原样复制。`C:\cinagroup\cinashop-php\app\ser
 - `work_member_relation`、`work_client_follow_tags` 是无稳定源键的历史 multiset；不能为了方便投影直接把既有导入证据改写成唯一 current-state。需要新 current 表或先做正式 canonicalization。
 - `work_label` 没有远端字符串 tag/group ID；C7 不能把回调字符串 ID 强塞进本地 serial ID。
 - callback 表的 CorpID 列容量为 64 字符，但运行时 `EnterpriseWechatCallbackService.ts:365-384` 当前把已配置 CorpID 限制为 1～18 个安全字符，既有 Work 业务表也使用 18 字符。64 是存储容量，不代表运行时已允许更长 CorpID；放宽前必须统一验证和业务表边界。
-- Work callback 与订单消息共用 Queue。`OrderQueueDeadLetterService.ts:220-227` 已用 callback 严格 validator 把 outbox/dispatch 归为可重放，`order-queue-dead-letter.test.ts:26-51` 有单元测试；真实 Cloudflare Queue 平台的失败投递、重投、DLQ 归档与人工重放仍未执行，继续属于 C2/发布门禁。
-- `add_external_contact/edit_external_contact` 当前虽按关系级 subject 接收，但消费结果仍只到 `ORDERED`，不会恢复 C1 写下的 tombstone。主 Worker 必须等待 C5 用 provider 权威客户/follow/tags 快照定义恢复语义后才能启用。
+- Work callback 与订单消息共用正式 Queue 的架构未变，但 C2 已用独立临时 source/DLQ/unarchived Queue 验证当前严格 validator、平台自动重投、持久归档和由真实 callback consumer 执行的人工 replay；故障从未注入共享 `cinashop-order`。正式主 Worker仍未发布，线上消费路径是否启用继续属于发布门禁，而不再是 C2 代码/平台语义缺口。
+- `add_external_contact/edit_external_contact` 当前虽按关系级 subject 接收，但消费后只是管道 `ORDERED`、投影 `REFRESH_REQUIRED`，不会恢复 C1 写下的 tombstone。主 Worker必须等待 C5 用 provider 权威客户/follow/tags 快照定义恢复语义后才能启用。
 
 ### C1 生产 Hyperdrive 隔离结果与执行记录
 
 C1 现可标记为“代码/生产 Hyperdrive 隔离完成”，但仍是**未启用、未发布**。完成证据严格限定如下：
 
-1. 生产 PostgreSQL 16 通过既定 Hyperdrive 将外部 `0110_work_callback_follow_projection.sql`（Worker 内嵌 `migration_0116`）连续应用两遍。`wce_status_ck` 已精确允许 `APPLIED/APPLIED_NOOP`；两个精确定义的 partial UNIQUE 分别为 `work_client(corp_id,external_userid) WHERE delete_time IS NULL AND external_userid<>''`，以及 `work_client_follow(client_id,userid) WHERE is_del_user=0 AND client_id>0 AND userid<>''`，目录回读同时确认两者 `indisvalid=true/indisready=true`。DDL 前活跃 client/follow 自然键重复组均为 0，应用后 `work_callback_event/outbox/watermark` 仍均为 0 行。
+1. 生产 PostgreSQL 16 通过既定 Hyperdrive 将外部 `0110_work_callback_follow_projection.sql`（Worker 内嵌 `migration_0116`）连续应用两遍。C1 当时的 `wce_status_ck` 精确允许 `APPLIED/APPLIED_NOOP`；C2 随后把这些业务结果迁到独立 `projection_status`。新代码不再向 event 管道状态写入投影终态，但 expand 阶段的 event CHECK 仍精确兼容旧 writer 使用的 9 个状态，收窄需等新 Worker 100% 切换且旧 writer 退出后再执行。两个精确定义的 partial UNIQUE 分别为 `work_client(corp_id,external_userid) WHERE delete_time IS NULL AND external_userid<>''`，以及 `work_client_follow(client_id,userid) WHERE is_del_user=0 AND client_id>0 AND userid<>''`，目录回读同时确认两者 `indisvalid=true/indisready=true`。DDL 前活跃 client/follow 自然键重复组均为 0，应用后 `work_callback_event/outbox/watermark` 仍均为 0 行。
 2. 随机 schema 在同一生产 PostgreSQL/Hyperdrive 引擎完成 20/20：既保留 C0 的明文验证、事件/Queue 幂等、乱序、同秒删除、未知事件、持久 Queue 失败和伪造签名零写，也覆盖关系级重复、只 tombstone 指定员工、另一员工旧事件不被压制、共享 client 不软删、不存在关系 `APPLIED_NOOP`、故障注入全事务回滚后可重试，以及状态约束/两个 partial UNIQUE 精确存在。
 3. 所有相关 `public` 业务表与三张 callback 表前后全行多重集指纹一致，每条 owned sequence 的 `last_value + is_called` 一致；成功与故障路径的合成业务 DML 只发生在随机 schema，最终 schema 已删除。
 4. 执行过程没有删去失败证据：首轮只读活跃重复预检 SQL 少一个右括号，在任何 DDL 前失败；次轮生产 DDL 已成功且表/索引回读正确，但随机 schema 的故障注入约束范围过宽，导致隔离断言失败；第三轮只修正测试 harness 后 20/20 全通过。随后把 callback 三表加入隔离阶段 public 指纹：首次临时 Worker 因 Secret 新版本传播延迟在 `/migrate` 前返回 403；等待八秒后的下一轮再次完成迁移两遍和 20/20。提交前独立复核又发现迁移阶段的完整指纹仍默认只覆盖业务表，`pipeline_state_unchanged` 对 callback 只比较存在性/行数；修正为迁移前后均覆盖业务表、callback 三表及其 owned sequence，并补索引 `indisvalid/indisready` 与状态集合精确检查后，最终生产重跑再次得到 `migration_passes=2`、`pipeline_state_unchanged=true`、`public_rows_and_sequences_unchanged=true`、`isolated_checks=20/20`。所有失败轮均完成随机 schema 与临时 Worker 清理，且均没有 `public` 业务 DML。
 5. 最终临时 Worker 删除后 Cloudflare API 返回 code 10007、workers.dev URL 返回 404；主 Worker 前后仍为 100% 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，正式 Secret 名称集合未变化，没有部署或切流。
 6. 最终代码门禁为 Worker 双 TypeScript 配置通过、152/152 个测试文件与 923/923 项通过；注释感知路由审计仍保持上文 PHP 1,904、Workers 1,446、精确/可执行 746/728 等数值不变，主 Worker与审计 Worker dry-run 均通过。Windows Workers runtime 仍在 0 条断言前以既有 `workerd 0xc0000005` 退出，因此不能记为本地 runtime 通过。
 
+### C2 provider 基础、双状态机与真实 Queue/DLQ 结果
+
+C2 现可标记为“代码、生产 Hyperdrive 与真实 Cloudflare Queue 隔离完成”，但仍是**未启用、未发布**。边界与证据如下。
+
+1. **PHP 权威行为复核**。旧配置确有 `user/address/build` 三类 Secret，但成员、部门、客户、群和标签读取几乎都默认走 `TYPE_USER_APP(build)`；Work token cache key 包含原始 Secret、TTL 没有提前刷新，也没有 `40001/40014/42001` 单次重取。callback 线程同步执行 provider、数据库写和欢迎语/远端标签，HTTP 404/429/5xx、网络错误及非零 `errcode` 没有稳定分类；多数异常被记录/压成空数组后仍确认回调。删除/不存在语义也彼此矛盾，因此这些失败行为不作为迁移规范。权威读端点则保留：成员/部门为 GET `user/get`、`department/get|list`，客户为 GET `externalcontact/get`，群和企业标签为有界 POST `groupchat/get`、`get_corp_tag_list`。
+2. **四域 provider client**。`EnterpriseWechatProviderClient` 固定 provider origin和只读 endpoint，不接受调用方 URL；credential scope 为 `company-jssdk`、`agent`、`directory`、`external-contact`。现有两枚 Secret 只供 JS-SDK/应用身份，新增 directory/external-contact Secret 必须按最小权限注入且当前生产仍为空，不允许静默复用应用 Secret。token KV key 使用 `scope + CorpID + AgentID + Secret` 的 SHA-256 指纹，值只含 token/过期时间，TTL 最多 6,900 秒并提前 300 秒；同一 isolate 的模块级 singleflight 让不同 client 实例先共用只广播纯 token/错误元数据的 deferred，leader 在登记后仍于自己的请求栈做 KV generation 复核、必要时删除和刷新，follower 不接管 leader 的 I/O Promise。同步 barrier 的确定性回归把修复前两个 client 的 `tokenRequests/deletes/refreshGets=2/2/2` 收敛为 `1/1/1`，两调用得到同一新 token；失败广播也只请求 token 一次，follower 重建独立 metadata-only Error。它只是 same-isolate best-effort，跨 isolate/POP 仍可能重复，不能宣称 exactly-once。JS-SDK 已实际委托该 client，不是保留两套实现。
+3. **HTTP 与失败契约**。所有请求均禁止重定向，并由 5 秒 AbortController 覆盖 fetch 和流式 body；POST 请求最多 64 KiB，响应按端点 16～512 KiB、绝对最多 1 MiB，`Content-Length` 和实际流同时限制，UTF-8 fatal 解码且 JSON 必须是 object。`errcode` 只接受 JSON number safe integer；缺失、`null`、字符串码和成功 envelope 缺 credential/TTL 都按 provider envelope 不可用的 `-2/retryable` 处理。仅 2xx 的 operation-specific code 可为 `not_found`：成员 `60111`，部门 `60003/60123`，客户 `40096/84061`，群 `40050/86003`，以及仅带 tag/group 过滤条件时的标签 `40068`；裸 HTTP 404、无过滤标签 `40068` 和普通未知业务码为 `terminal`。408/425/429/5xx、网络/超时、provider `-1/45009/45011` 为 `retryable`，HTTP 状态优先，因此 `429/500 + not-found body code` 仍保留 Retry-After/重试。`40001/40014/42001` 只在 2xx 时删除当前 scope cache并重取一次；已知凭据/权限问题为 `configuration`。`Retry-After` 最多记录 900 秒。异常不保存 URL/query/body、provider 文本、token、Secret 或业务标识，client 也不在内存循环业务重试。
+4. **CorpID 边界**。callback、JS-SDK、Work context 和 provider 现共用 1～18 个 `[A-Za-z0-9_-]` 字符的验证器，与既有业务表一致；`work_callback_event.corp_id varchar(64)` 仍只是存储容量，C2 没有宣称运行时已放宽。
+5. **双状态迁移**。外部 `0111_work_callback_projection_state.sql` 与内嵌 `migration_0117` 新增 `projection_status` 并回填旧状态。新运行时代码只写 `RECEIVED/PROCESSING/ORDERED/FAILED/DEAD` 五种管道状态；数据库处于 expand 阶段，`event.status` CHECK 暂时精确允许这五态加旧 writer 的 `APPLIED/APPLIED_NOOP/SUPERSEDED/IGNORED` 共九态，待新 Worker 100% 发布且旧 writer 全退出后另做 contract。`projection_status` 精确允许 `PENDING/PROCESSING/REFRESH_REQUIRED/APPLIED/APPLIED_NOOP/SUPERSEDED/IGNORED/FAILED/DEAD`。C1 的业务结果迁入 projection 列，非 C1 的已识别事件明确变为 `ORDERED + REFRESH_REQUIRED`，未知事件为 `ORDERED + IGNORED`。C1 迁移也增加前向 guard：发现 projection 列后不再短暂恢复旧混合约束。
+6. **生产 Hyperdrive DDL**。PostgreSQL 16 经生产 Hyperdrive 连续执行 C0/C1/C2 DDL 两遍后，callback event 为 20 列；两个 CHECK 的目录证据均为 `convalidated=true`、`connoinherit=false`、`conkey` 精确目标列且完整规范表达式相等，`wce_projection_status_time` 也精确验证同 schema/table、btree、三列顺序、有效/ready/live、非唯一且无 predicate/expression。第二遍两个 constraint OID 和 index OID/relfilenode 均保持不变。三张 callback 表前后仍为 0 行，活跃 client/follow 重复组均为 0，`pipeline_state_unchanged=true`、完整业务行与 owned sequence 指纹不变。
+7. **随机 schema 27/27**。同一生产 Hyperdrive 引擎先种入九种 legacy event 状态，精确验证 `RECEIVED→RECEIVED/PENDING`、`PROCESSING→PROCESSING/PROCESSING`、`ORDERED→ORDERED/REFRESH_REQUIRED`、四种旧业务终态归一到 `ORDERED + 同名 projection`，以及 `FAILED/DEAD` 双列同名；第二遍所有九行 `ctid/xmin`、两个 constraint OID 与 index OID/relfilenode 均不变，证明 DDL 是物理 no-op。场景同时保留 C0/C1 的明文验证、重复、乱序、同秒终止、伪造签名零写、Queue 失败、关系级 tombstone/no-op和故障全事务回滚。最终 event/projection 精确组合为 `ORDERED/APPLIED=3`、`ORDERED/APPLIED_NOOP=1`、`ORDERED/REFRESH_REQUIRED=3`、`ORDERED/SUPERSEDED=2`、`ORDERED/IGNORED=1`、`RECEIVED/PENDING=1`；outbox 为 `COMPLETED=10/FAILED=1`。随机 schema 删除且 public 指纹不变。
+8. **真实 Queue/DLQ**。只创建专用 `cinashop-work-c2-audit-source`、`cinashop-work-c2-audit-dlq`、`cinashop-work-c2-audit-unarchived` 和临时 Worker，未向共享 `cinashop-order` 注入故障。source 设置 `max_retries=1`：严格四键 `processWorkCallbackOutbox` 在同一 source message ID、同一 canonical body SHA 下精确记录失败 attempts `1,2` 后转入 DLQ；严格两键 `dispatchWorkCallbackOutbox` 直接投 DLQ。两条消息均被现有 classifier 归档为 `ALLOW`；outbox 重复归档收敛至 `occurrence_count=2`。人工 replay 是新投递/attempts 1，body SHA 不变，并实际调用 `consumeWorkCallbackQueueMessage → EnterpriseWechatCallbackService`；只处理一次后得到 event `ORDERED`、projection `REFRESH_REQUIRED`、outbox `COMPLETED`、`attempt_count=1`、watermark 1，归档收敛 `REPLAYED/replay_count=1`；dispatch 人工收敛 `RESOLVED`。生产 227 张表中 13 张关键表的行指纹和 12 条相关序列前后完全一致。
+9. **审计器自身修正记录**。早期 Queue 校验曾把 PostgreSQL `jsonb` 对象键重排误判为 public 变化，比较器已改为字段规范化排序。独立复核随后发现初版 C2 曾把生产 event CHECK 过早收窄为五态，会与仍在线的 C1 writer 冲突；立即恢复 expand 九态并重新部署审计 Worker。最终复核又拒绝了“只抽取状态字面量”的伪精确约束判断和第二遍对 `RECEIVED/PENDING` 的无效同值 UPDATE：现在完整校验 `convalidated/connoinherit/conkey/表达式`，并以 `ctid/xmin` 证明零重写。最终生产 DDL 两遍、27/27 随机 schema、只读终态和真实 Queue 全部在最新代码上重新执行，没有沿用旧证据，也没有任何未审计的 public 业务 DML。
+10. **资源与线上保持不变**。两个随机 schema 均删除；两个临时 Worker及一次性 Secret 已删除，两个 workers.dev URL均返回 404；三条临时 Queue已从账户列表删除。正式 `cinashop-order` 仍为 1 producer/1 consumer，正式 `cinashop-order-dlq` 与 `cinashop-order-dlq-unarchived` 仍为 0/0。主 `cinashop-api` 未部署本批代码，正式 Secret名称仍只有 `APP_KEY/DEBUG/INTERNAL_CHAT_TOKEN/OPERATIONS_TOKEN/UPSTASH_REDIS_TOKEN/UPSTASH_REDIS_URL`，没有切流。
+11. **最终代码门禁与明确限制**。Worker 双 TypeScript 配置通过，153/153 个测试文件与 939/939 项单元测试通过；注释感知路由审计仍为 PHP 1,904、TS 1,446、精确/可执行 746/728、可执行缺口 1,154。主 Worker、callback audit 与 Queue audit 的 minify dry-run 分别为 2,762.25/686.92、695.81/138.76、711.56/144.04 KiB（upload/gzip），并精确回显生产 Hyperdrive ID；没有部署主 Worker。`git diff --check` 无错误，工作区没有一次性 bearer/token 文件。Windows runtime 套件仍在加载任何测试前因 `workerd 0xc0000005` access violation 退出，输出为 `Test Files no tests / Tests no tests`，不能算 runtime 通过；需在 Linux 或受支持主机补上 workerd 双真实请求、Queue ack/retry 与流式超限证据。
+
 ### 尚未解除的凭据、Queue 与启用边界
 
-Work DLQ 的严格 validator 已允许 `processWorkCallbackOutbox` 与 `dispatchWorkCallbackOutbox` 重放，并有单元测试；本轮随机 schema/mocked Queue 证明本地状态机可重试，但**没有执行真实 Cloudflare Queue 平台的失败投递、自动重投、DLQ 归档或人工重放**。这部分继续留在 C2/发布门禁；未来验证必须使用专用临时 Queue，禁止把故障场景注入共享 `cinashop-order`。
+Work DLQ 的严格 validator 已允许 `processWorkCallbackOutbox` 与 `dispatchWorkCallbackOutbox` 重放，并有单元测试和真实专用 Cloudflare Queue 证据。C2 故意让四键 outbox 在 source Queue attempts `1→2` 失败后转 DLQ，同时把两键 dispatch 直接送入 DLQ；两者均归档为 `ALLOW`，outbox 重复归档去重后人工 replay 为新 attempts 1，并由真实 callback consumer 只处理一次。临时资源已全部删除；任何后续故障验证仍必须使用专用临时 Queue，禁止注入共享 `cinashop-order`。
+
+企业微信 credential 出现在固定 provider URL 的 query string。仓库现显式设置 `[observability.traces] enabled=false`；在注入任一 `WECHAT_WORK_*` provider Secret 或启用任何投影前，发布流程必须回读 exact Script Settings 并确认 traces 仍关闭。未来若要开启 traces，必须先通过 Script Settings API 设置并回读 `observability.redact_query_string=true`；字段缺失或为 false 都是部署阻断，不能只相信本地 Wrangler 配置或 dry-run。
 
 C1 的随机 schema 和 mock Queue 场景不需要真实企微凭据；合成 Token/AES Key 只验证协议和本地状态机。要证明真实租户把 `del_external_contact/del_follow_user` 回调送到 Worker，仍需要正确 CorpID、`WECHAT_WORK_CALLBACK_TOKEN`、`WECHAT_WORK_CALLBACK_AES_KEY`、可访问的预发回调 URL 和真实测试租户。C2～C7 的 provider 正向/真实不存在主体语义还需要最小权限的通讯录/客户联系 Secret；当前 `WECHAT_WORK_CORP_SECRET` 不能在未确认权限范围前默认复用。429、5xx和网络中断必须用确定性 mock 验证，不应为测试故意打满真实租户配额。C8 的欢迎语/自动标签正向验收还需要相应应用权限、测试客户和明确的外部副作用批准。
 
-生产 `public` 只允许 C1 前后的只读审计和上述受控 DDL；合成业务 DML 仍严格限定随机 schema。C1 隔离完成不等于真实企微、真实 Queue、源数据迁移、主 Worker 发布或 C2～C8 完成。
+生产 `public` 只允许 C1/C2 前后的只读审计和上述受控 DDL；合成业务 DML 仍严格限定随机 schema。C1/C2 隔离完成不等于真实企微租户/provider 正向、源数据迁移、主 Worker 发布或 C3～C8 完成。
 
-### 主 Worker 启用前的两个硬阻塞
+### 主 Worker 启用前的三个硬阻塞
 
 1. **源数据自然键阻塞**：源 MySQL 当前不可用，无法预检未来导入批次。导入任何 `work_client/work_client_follow` 数据前必须检查并处理活跃 `(corp_id,external_userid)` 与 `(client_id,userid)` 重复；否则生产 partial UNIQUE 会按设计显式阻断导入，不能临时删除约束或任选重复行。
-2. **恢复语义阻塞**：较新的 `add_external_contact/edit_external_contact` 当前仍只到 `ORDERED`，不会把 C1 已 tombstone 的关系恢复为活跃。必须先完成 C5 的 provider 权威客户、全部 follow 与 tags 快照及旧响应防复活规则，随后才能考虑启用主 Worker。
+2. **恢复语义阻塞**：较新的 `add_external_contact/edit_external_contact` 当前是管道 `ORDERED`、投影 `REFRESH_REQUIRED`，不会把 C1 已 tombstone 的关系恢复为活跃。必须先完成 C5 的 provider 权威客户、全部 follow 与 tags 快照及旧响应防复活规则，随后才能考虑启用主 Worker。
+3. **query-string 可观测性阻塞**：当前必须保持 traces 关闭并回读 exact Script Settings；未来只有在 Script Settings API 已设置且回读 `observability.redact_query_string=true` 后才允许开启 traces。任何缺失、false 或无法回读都阻断 provider Secret 注入和投影启用。
 
 ## 完成定义
 

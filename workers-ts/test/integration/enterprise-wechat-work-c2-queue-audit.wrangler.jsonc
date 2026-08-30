@@ -1,0 +1,50 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "cinashop-work-c2-queue-audit",
+  "main": "OrderQueueDeadLetterAuditWorker.ts",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "vars": {
+    "AUDIT_SCHEMA": "codex_order_dlq_work_c2_20260830",
+    "AUDIT_KEY": "work-c2-queue-20260830",
+    "SOURCE_QUEUE_NAME": "cinashop-work-c2-audit-source",
+    "ORDER_DLQ_NAME": "cinashop-work-c2-audit-dlq"
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "9748c294e21c49a99579c9cef70102e0",
+      "localConnectionString": "postgresql://crmeb:crmeb@localhost:5432/crmeb"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "ORDER_QUEUE",
+        "queue": "cinashop-work-c2-audit-source"
+      },
+      {
+        "binding": "DLQ_PRODUCER",
+        "queue": "cinashop-work-c2-audit-dlq"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "cinashop-work-c2-audit-source",
+        "max_batch_size": 1,
+        "max_batch_timeout": 1,
+        "max_retries": 1,
+        "dead_letter_queue": "cinashop-work-c2-audit-dlq"
+      },
+      {
+        "queue": "cinashop-work-c2-audit-dlq",
+        "max_batch_size": 1,
+        "max_batch_timeout": 1,
+        "max_retries": 1,
+        "dead_letter_queue": "cinashop-work-c2-audit-unarchived"
+      }
+    ]
+  }
+}

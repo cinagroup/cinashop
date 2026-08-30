@@ -8,8 +8,26 @@ import {
   consumeOrderQueueDeadLetterMessage,
   deadLetterArchiveRetryDelaySeconds,
 } from "../src/services/order/OrderQueueDeadLetterConsumer";
+import { sameDeadLetterAuditPublicSnapshot } from "./integration/OrderQueueDeadLetterPostgresScenario";
 
 describe("order Queue dead-letter operations", () => {
+  it("compares production safety snapshots independent of JSONB object key order", () => {
+    const left = {
+      table_count: 227,
+      outbox_count: 0,
+      outbox_sequence: "1",
+      dead_letter_table: "system_queue_dead_letter",
+      safety: {
+        tables: [{ table: "work_client", rows: "0", digest: "abc" }],
+        sequences: [{ sequence: "work_client_id_seq", last_value: "1", is_called: false }],
+      },
+    };
+    const right = JSON.parse(
+      '{"safety":{"sequences":[{"is_called":false,"last_value":"1","sequence":"work_client_id_seq"}],"tables":[{"rows":"0","table":"work_client","digest":"abc"}]},"dead_letter_table":"system_queue_dead_letter","outbox_sequence":"1","outbox_count":0,"table_count":227}',
+    );
+    expect(sameDeadLetterAuditPublicSnapshot(left, right)).toBe(true);
+  });
+
   it("only allows replay for messages accepted by a current idempotent consumer", () => {
     const payment = prepareOrderQueueDeadLetter({
       action: "processOrderPaidOutbox",
@@ -170,10 +188,25 @@ describe("order Queue dead-letter operations", () => {
       "test/integration/OrderQueueDeadLetterAuditWorker.ts",
       "utf8",
     );
+    const workAuditConfig = readFileSync(
+      "test/integration/enterprise-wechat-work-c2-queue-audit.wrangler.jsonc",
+      "utf8",
+    );
     expect(scenario).toContain("public_state_unchanged");
     expect(scenario).toContain("SMS code was persisted in clear text");
     expect(scenario).toContain("replay business processing was duplicated");
     expect(auditWorker).toContain("consumeOrderQueueDeadLetterMessage");
     expect(auditWorker).toContain("production Hyperdrive isolated controlled replay audit");
+    expect(auditWorker).toContain("verifyWorkCallbackDeadLetterAudit");
+    expect(auditWorker).toContain("consumeWorkCallbackQueueMessage");
+    expect(auditWorker).toContain("EnterpriseWechatCallbackService");
+    expect(scenario).toContain("body_sha256");
+    expect(scenario).toContain("callback event did not reach ORDERED");
+    expect(scenario).toContain('DROP SCHEMA IF EXISTS "${schemaName}" CASCADE');
+    expect(auditWorker).toContain('path === "/send/work-failing"');
+    expect(workAuditConfig).toContain('"id": "9748c294e21c49a99579c9cef70102e0"');
+    expect(workAuditConfig).toContain('"max_retries": 1');
+    expect(workAuditConfig).toContain('"dead_letter_queue": "cinashop-work-c2-audit-dlq"');
+    expect(workAuditConfig).toContain('"dead_letter_queue": "cinashop-work-c2-audit-unarchived"');
   });
 });

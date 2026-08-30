@@ -10,16 +10,23 @@ BEGIN
   WHERE conname = 'wce_status_ck'
     AND conrelid = 'work_callback_event'::regclass;
 
-  IF status_definition IS NULL
-     OR position('''RECEIVED''' in status_definition) = 0
-     OR position('''PROCESSING''' in status_definition) = 0
-     OR position('''ORDERED''' in status_definition) = 0
-     OR position('''APPLIED''' in status_definition) = 0
-     OR position('''APPLIED_NOOP''' in status_definition) = 0
-     OR position('''SUPERSEDED''' in status_definition) = 0
-     OR position('''IGNORED''' in status_definition) = 0
-     OR position('''FAILED''' in status_definition) = 0
-     OR position('''DEAD''' in status_definition) = 0 THEN
+  IF NOT EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_schema = current_schema()
+         AND table_name = 'work_callback_event'
+         AND column_name = 'projection_status'
+     ) AND (
+       status_definition IS NULL
+       OR position('''RECEIVED''' in status_definition) = 0
+       OR position('''PROCESSING''' in status_definition) = 0
+       OR position('''ORDERED''' in status_definition) = 0
+       OR position('''APPLIED''' in status_definition) = 0
+       OR position('''APPLIED_NOOP''' in status_definition) = 0
+       OR position('''SUPERSEDED''' in status_definition) = 0
+       OR position('''IGNORED''' in status_definition) = 0
+       OR position('''FAILED''' in status_definition) = 0
+       OR position('''DEAD''' in status_definition) = 0
+     ) THEN
     IF status_definition IS NOT NULL THEN
       ALTER TABLE "work_callback_event" DROP CONSTRAINT "wce_status_ck";
     END IF;

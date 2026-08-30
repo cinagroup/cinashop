@@ -70,6 +70,10 @@ export interface Env extends WorkerBindings {
   WECHAT_WORK_CORP_SECRET?: string;
   /** Self-built application JS-SDK credential. Inject only with `wrangler secret put`. */
   WECHAT_WORK_AGENT_SECRET?: string;
+  /** Least-privilege Enterprise WeChat directory credential for member/department reads. */
+  WECHAT_WORK_DIRECTORY_SECRET?: string;
+  /** Least-privilege Enterprise WeChat customer-contact credential for client/group/tag reads. */
+  WECHAT_WORK_EXTERNAL_CONTACT_SECRET?: string;
   /** Enterprise WeChat callback token. Never store it in system_config. */
   WECHAT_WORK_CALLBACK_TOKEN?: string;
   /** Enterprise WeChat 43-character callback EncodingAESKey. */

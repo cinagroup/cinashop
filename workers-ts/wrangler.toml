@@ -8,6 +8,11 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
+# Enterprise WeChat requires credentials in provider query strings. Keep fetch
+# tracing off until deployment can set and verify query-string redaction.
+[observability.traces]
+enabled = false
+
 # ─── Hyperdrive (连接外部 PostgreSQL) ─────────────────────
 # 新: 腾讯云 PG (Workers VPC → Tunnel → 私有 PG, 2026-08-08 切换)
 [[hyperdrive]]

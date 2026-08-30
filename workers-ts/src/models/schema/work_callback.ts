@@ -32,8 +32,10 @@ export const workCallbackEvent = pgTable(
     eventTime: integer("event_time").default(0).notNull(),
     sequenceRank: integer("sequence_rank").default(0).notNull(),
     payload: jsonb("payload").$type<WorkCallbackPayload>().notNull(),
-    /** RECEIVED/PROCESSING/ORDERED/APPLIED/APPLIED_NOOP/SUPERSEDED/IGNORED/FAILED/DEAD */
+    /** Durable callback pipeline: RECEIVED/PROCESSING/ORDERED/FAILED/DEAD. */
     status: varchar("status", { length: 16 }).default("RECEIVED").notNull(),
+    /** PENDING/PROCESSING/REFRESH_REQUIRED/APPLIED/APPLIED_NOOP/SUPERSEDED/IGNORED/FAILED/DEAD */
+    projectionStatus: varchar("projection_status", { length: 16 }).default("PENDING").notNull(),
     attemptCount: integer("attempt_count").default(0).notNull(),
     leaseUntil: integer("lease_until").default(0).notNull(),
     leaseToken: varchar("lease_token", { length: 36 }).default("").notNull(),
@@ -51,6 +53,11 @@ export const workCallbackEvent = pgTable(
       table.id,
     ),
     index("wce_status_time").on(table.status, table.updateTime, table.id),
+    index("wce_projection_status_time").on(
+      table.projectionStatus,
+      table.updateTime,
+      table.id,
+    ),
   ],
 );
 

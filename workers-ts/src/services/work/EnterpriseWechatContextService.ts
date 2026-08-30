@@ -44,6 +44,7 @@ import {
   EnterpriseWechatJsSdkService,
   normalizeEnterpriseWechatSignedUrl,
 } from "@/services/work/EnterpriseWechatJsSdkService";
+import { isEnterpriseWechatCorpId } from "@/services/work/EnterpriseWechatProviderClient";
 import { cacheSetIfAbsent, cacheTake } from "@/utils/cache";
 import {
   ForbiddenException,
@@ -695,10 +696,15 @@ export class EnterpriseWechatContextService {
     const corpId = values.wechat_work_corpid?.trim() ?? "";
     const rawAgentId = values.wechat_work_build_agent_id?.trim() ?? "";
     const agentId = Number(rawAgentId);
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(corpId)) {
+    if (!isEnterpriseWechatCorpId(corpId)) {
       throw new ServiceUnavailableException("企业微信 CorpID 尚未配置");
     }
-    if (!/^\d{1,10}$/.test(rawAgentId) || !Number.isSafeInteger(agentId) || agentId <= 0) {
+    if (
+      !/^\d{1,10}$/.test(rawAgentId)
+      || !Number.isSafeInteger(agentId)
+      || agentId <= 0
+      || agentId > 2_147_483_647
+    ) {
       throw new ServiceUnavailableException("企业微信 AgentID 尚未配置");
     }
     return { corpId, agentId };

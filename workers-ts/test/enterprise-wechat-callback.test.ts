@@ -12,6 +12,7 @@ import {
   isWorkCallbackDispatchMessage,
   isWorkCallbackOutboxMessage,
 } from "../src/services/work/EnterpriseWechatCallbackService";
+import { exactStatusConstraint } from "./integration/EnterpriseWechatCallbackAuditWorker";
 
 const key = Buffer.from(Array.from({ length: 32 }, (_, index) => index + 1));
 const encodingAesKey = key.toString("base64").slice(0, -1);
@@ -189,15 +190,72 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     for (const [externalPath, migration] of [
       ["migrations/0109_work_callback_pipeline.sql", "0115"],
       ["migrations/0110_work_callback_follow_projection.sql", "0116"],
+      ["migrations/0111_work_callback_projection_state.sql", "0117"],
     ] as const) {
-      const external = readFileSync(externalPath, "utf8").trim();
+      const external = readFileSync(externalPath, "utf8");
       const embedded = service.match(
         new RegExp("private migration_" + migration + "\\(\\): string \\{\\s*return `([\\s\\S]*?)`;\\s*\\}"),
-      )?.[1]?.trim();
+      )?.[1];
       expect(embedded).toBe(external);
       expect(service).toContain(`this.migration_${migration}()`);
     }
     expect(service).toContain("workCallbackFollowProjectionMigrationSqlForVerification");
+    expect(service).toContain("workCallbackProjectionStateMigrationSqlForVerification");
+
+    const projectionMigration = readFileSync(
+      "migrations/0111_work_callback_projection_state.sql",
+      "utf8",
+    );
+    expect(projectionMigration).toContain('"projection_status" IS DISTINCT FROM CASE "status"');
+    expect(projectionMigration).toContain("constraint_row.convalidated");
+    expect(projectionMigration).toContain("NOT constraint_row.connoinherit");
+    expect(projectionMigration).toContain(
+      "constraint_row.conkey = ARRAY[column_row.attnum]::smallint[]",
+    );
+    expect(projectionMigration).toContain("status_normalized <> 'checkstatus=anyarray[");
+
+    const auditWorker = readFileSync(
+      "test/integration/EnterpriseWechatCallbackAuditWorker.ts",
+      "utf8",
+    );
+    expect(auditWorker).toContain("ctid::text AS tuple_identity");
+    expect(auditWorker).toContain("xmin::text AS tuple_xmin");
+    expect(auditWorker).toContain("projection_migration_tuple_identity_stable");
+  });
+
+  it("requires the complete validated status CHECK shape", () => {
+    const statuses = [
+      "RECEIVED",
+      "PROCESSING",
+      "ORDERED",
+      "APPLIED",
+      "APPLIED_NOOP",
+      "SUPERSEDED",
+      "IGNORED",
+      "FAILED",
+      "DEAD",
+    ] as const;
+    const values = statuses.map((status) => `'${status}'::character varying`).join(", ");
+    const definition = `CHECK (((status)::text = ANY ((ARRAY[${values}])::text[])))`;
+    const exact = {
+      name: "wce_status_ck",
+      definition,
+      convalidated: true,
+      connoinherit: false,
+      conkey_exact: true,
+    };
+    expect(exactStatusConstraint(exact, "status", statuses)).toBe(true);
+    expect(exactStatusConstraint({
+      ...exact,
+      definition: `CHECK (((status)::text <> ALL ((ARRAY[${values}])::text[])))`,
+    }, "status", statuses)).toBe(false);
+    expect(exactStatusConstraint({
+      ...exact,
+      definition: `CHECK ((((status)::text = ANY ((ARRAY[${values}])::text[])) OR true))`,
+    }, "status", statuses)).toBe(false);
+    expect(exactStatusConstraint({ ...exact, convalidated: false }, "status", statuses)).toBe(false);
+    expect(exactStatusConstraint({ ...exact, connoinherit: true }, "status", statuses)).toBe(false);
+    expect(exactStatusConstraint({ ...exact, conkey_exact: false }, "status", statuses)).toBe(false);
   });
 
   it("does not make provider calls in the HTTP callback controller", () => {

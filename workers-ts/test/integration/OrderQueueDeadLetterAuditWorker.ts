@@ -3,8 +3,15 @@ import { createContainerFromDb } from "../../src/lib/di";
 import { consumeOrderQueueDeadLetterMessage } from "../../src/services/order/OrderQueueDeadLetterConsumer";
 import { OrderQueueDeadLetterService } from "../../src/services/order/OrderQueueDeadLetterService";
 import {
+  consumeWorkCallbackQueueMessage,
+  EnterpriseWechatCallbackService,
+  isWorkCallbackOutboxMessage,
+} from "../../src/services/work/EnterpriseWechatCallbackService";
+import {
+  auditMessageBodySha256,
   cleanupDeadLetterAudit,
   createDeadLetterAuditContainer,
+  deadLetterAuditShouldFail,
   deadLetterAuditRowByType,
   enableDeadLetterAuditReplay,
   probeDeadLetterAuditTransactionScope,
@@ -12,6 +19,9 @@ import {
   recordDeadLetterAuditDelivery,
   setupDeadLetterAudit,
   verifyDeadLetterAudit,
+  verifyWorkCallbackDeadLetterAudit,
+  WORK_C2_CALLBACK_DISPATCH_MESSAGE,
+  WORK_C2_CALLBACK_OUTBOX_MESSAGE,
 } from "./OrderQueueDeadLetterPostgresScenario";
 
 type AuditMessage = OrderMessage & { auditKey?: string };
@@ -86,6 +96,14 @@ export default {
         });
         return json({ sent: true });
       }
+      if (request.method === "POST" && path === "/send/work-failing") {
+        await env.ORDER_QUEUE.send(WORK_C2_CALLBACK_OUTBOX_MESSAGE);
+        return json({ sent: true, contract: "work-callback-four-key" });
+      }
+      if (request.method === "POST" && path === "/send/work-dispatch") {
+        await env.DLQ_PRODUCER.send(WORK_C2_CALLBACK_DISPATCH_MESSAGE);
+        return json({ sent: true, contract: "work-dispatch-two-key" });
+      }
       if (request.method === "POST" && path === "/duplicate") {
         return json(await withContainer(env, async (container) => {
           const row = await deadLetterAuditRowByType(container, "processOrderPaidOutbox");
@@ -108,6 +126,41 @@ export default {
             row.id,
             1,
             "production Hyperdrive isolated controlled replay audit",
+          );
+        }));
+      }
+      if (request.method === "POST" && path === "/duplicate/work") {
+        return json(await withContainer(env, async (container) => {
+          const row = await deadLetterAuditRowByType(container, "processWorkCallbackOutbox");
+          return new OrderQueueDeadLetterService(container, env.ORDER_QUEUE).archive(
+            env.ORDER_DLQ_NAME,
+            {
+              id: row.messageId,
+              timestamp: new Date(row.messageTimestampMs),
+              body: row.body,
+              attempts: row.dlqAttempts,
+            },
+          );
+        }));
+      }
+      if (request.method === "POST" && path === "/replay/work") {
+        return json(await withContainer(env, async (container) => {
+          await enableDeadLetterAuditReplay(container, env.AUDIT_KEY);
+          const row = await deadLetterAuditRowByType(container, "processWorkCallbackOutbox");
+          return new OrderQueueDeadLetterService(container, env.ORDER_QUEUE).replay(
+            row.id,
+            1,
+            "WORK-C2 production Hyperdrive isolated manual replay audit",
+          );
+        }));
+      }
+      if (request.method === "POST" && path === "/resolve/work") {
+        return json(await withContainer(env, async (container) => {
+          const row = await deadLetterAuditRowByType(container, "dispatchWorkCallbackOutbox");
+          return new OrderQueueDeadLetterService(container, env.ORDER_QUEUE).resolve(
+            row.id,
+            1,
+            "WORK-C2 dispatch replay was verified by strict archive and resolved for cleanup",
           );
         }));
       }
@@ -137,6 +190,15 @@ export default {
           env.AUDIT_KEY,
         ));
       }
+      if (request.method === "GET" && path === "/verify/work") {
+        return json(await verifyWorkCallbackDeadLetterAudit(
+          env.HYPERDRIVE.connectionString,
+          env.AUDIT_SCHEMA,
+          env.AUDIT_KEY,
+          env.SOURCE_QUEUE_NAME,
+          env.ORDER_DLQ_NAME,
+        ));
+      }
       if (request.method === "POST" && path === "/cleanup") {
         return json(await cleanupDeadLetterAudit(env.HYPERDRIVE.connectionString, env.AUDIT_SCHEMA));
       }
@@ -162,15 +224,49 @@ export default {
     }
     await withContainer(env, async (container) => {
       for (const message of batch.messages) {
-        const auditKey = typeof message.body.auditKey === "string" ? message.body.auditKey : "";
+        const auditKey = message.body.action === "processWorkCallbackOutbox"
+          ? env.AUDIT_KEY
+          : typeof message.body.auditKey === "string" ? message.body.auditKey : "";
         try {
-          const control = await recordDeadLetterAuditDelivery(container, {
+          const bodySha256 = await auditMessageBodySha256(message.body);
+          const commonDelivery = {
             auditKey,
+            queueName: batch.queue,
             messageId: message.id,
+            messageType: message.body.action,
+            bodySha256,
             queueAttempt: message.attempts,
+          } as const;
+          if (await deadLetterAuditShouldFail(container, auditKey)) {
+            await recordDeadLetterAuditDelivery(container, {
+              ...commonDelivery,
+              outcome: "failed",
+            });
+            message.retry({ delaySeconds: 0 });
+            continue;
+          }
+          if (isWorkCallbackOutboxMessage(message.body)) {
+            let acknowledged = false;
+            let retryOptions: { delaySeconds: number } | undefined;
+            await consumeWorkCallbackQueueMessage({
+              body: message.body,
+              attempts: message.attempts,
+              ack: () => { acknowledged = true; },
+              retry: (options) => { retryOptions = options; },
+            }, new EnterpriseWechatCallbackService(container, { ORDER_QUEUE: env.ORDER_QUEUE }));
+            await recordDeadLetterAuditDelivery(container, {
+              ...commonDelivery,
+              outcome: acknowledged ? "processed" : "consumer_retry",
+            });
+            if (acknowledged) message.ack();
+            else message.retry(retryOptions ?? { delaySeconds: 1 });
+            continue;
+          }
+          await recordDeadLetterAuditDelivery(container, {
+            ...commonDelivery,
+            outcome: "processed",
           });
-          if (control.fail) message.retry({ delaySeconds: 0 });
-          else message.ack();
+          message.ack();
         } catch {
           message.retry({ delaySeconds: 1 });
         }
