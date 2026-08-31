@@ -2795,6 +2795,8 @@ Workers Logs 官方明确区分对象日志与字符串：`console.log({field: v
 
 用户已授权直接使用生产数据库，但当前唯一安全路径需要部署一个受随机令牌保护的临时Workers endpoint。沙箱明确拒绝了创建公开端点的副作用；普通沙箱请求在任何上传前因文件/网络权限失败，提权部署未执行。随后只读查询Cloudflare返回`cinashop-production-observability-audit`不存在（code10007），证明没有残留Worker或version。因此本轮没有读取生产PostgreSQL `pg_stat_database/pg_stat_activity/pg_stat_user_tables/pg_stat_statements`，也没有取得四类任务状态的新基线。仓库保留的audit harness强制`SET TRANSACTION READ ONLY`、`search_path=public,pg_temp`、5秒statement/500ms lock timeout，只返回聚合统计且不返回SQL/参数/业务值；它仍需用户在知情后明确批准临时公开端点，或改用既有私有service/operations入口。
 
+提交后又核对Cloudflare 2026-08官方文档并尝试不部署正式Worker的替代路径：Hyperdrive目前明确不支持本地`remote=true` binding，只能用`wrangler dev --remote`把代码送入临时preview环境。该命令在任何preview上传或数据库请求前，仍因Windows workerd既有`0xc0000005`启动失败退出；本机没有WSL发行版也没有Docker，仓库Actions Secret名称列表为空，故无法把同一临时会话安全转移到Linux runner。没有安装系统组件、没有创建GitHub Secret、没有改用直连origin凭据，也没有扩大公开端点；该失败轮不计生产基线，只作为TEST-003B执行环境阻塞证据。
+
 ### 待完成 checklist 与完成标准
 
 - [x] TEST-003A：统一对象日志、HTTP关键域/慢请求、关键状态机事件、14信号策略、运行手册、全源码旁路扫描、CI命令和本地测试。
