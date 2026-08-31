@@ -7,11 +7,13 @@
  */
 import { sql, type SQL } from "drizzle-orm";
 import type { Container } from "@/lib/di";
+import { parseConfigInteger } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
 
 const BUSINESS_OFFSET_SECONDS = 8 * 60 * 60;
 const DAY_SECONDS = 24 * 60 * 60;
 const MAX_RANGE_DAYS = 3_660;
+const MAX_EPOCH_SECONDS = 4_102_444_800;
 
 export type StatisticGranularity = "hour" | "day" | "three_day" | "month";
 
@@ -150,6 +152,77 @@ interface LegacyOverviewRow {
   refund_count: string | number;
 }
 
+interface MobileOrderOverviewRow {
+  [key: string]: unknown;
+  order_count: string | number;
+  sum_price: string | number;
+  unpaid_count: string | number;
+  unshipped_count: string | number;
+  received_count: string | number;
+  evaluated_count: string | number;
+  unwritoff_count: string | number;
+  complete_count: string | number;
+  today_price: string | number;
+  today_count: string | number;
+  previous_price: string | number;
+  previous_count: string | number;
+  month_price: string | number;
+  month_count: string | number;
+}
+
+interface MobileRefundCountRow {
+  [key: string]: unknown;
+  refunding_count: string | number;
+  refunded_count: string | number;
+}
+
+interface MobileOrderStagingRow extends MobileRefundCountRow {
+  unshipped_count: string | number;
+  outofstock: string | number;
+  policeforce: string | number;
+}
+
+interface MobileOrderDataRow {
+  [key: string]: unknown;
+  price: string | number;
+  count: string | number;
+  add_time: string | number;
+  time: string;
+  visit: string | number;
+}
+
+interface MobileOrderTimeRow {
+  [key: string]: unknown;
+  after_price: string | number;
+  front_price: string | number;
+  after_number: string | number;
+  after_pay_number: string | number;
+  today_visits: string | number;
+}
+
+interface MobileOrderChartRow {
+  [key: string]: unknown;
+  bucket: string;
+  num: string | number;
+  price: string | number;
+}
+
+export interface MobileOrderDataQuery {
+  start: number;
+  endExclusive: number;
+  page: number;
+  limit: number;
+  offset: number;
+}
+
+export interface MobileOrderPeriod {
+  type: 1 | 7 | 30;
+  currentStart: number;
+  currentEndExclusive: number;
+  previousStart: number;
+  chartStart: number;
+}
+
 export function numberValue(value: unknown): number {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -175,6 +248,11 @@ export function businessMidnight(year: number, month: number, day: number): numb
 export function startOfBusinessDay(epochSeconds: number): number {
   const date = shiftedDate(epochSeconds);
   return businessMidnight(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
+function startOfBusinessMonth(epochSeconds: number): number {
+  const date = shiftedDate(epochSeconds);
+  return businessMidnight(date.getUTCFullYear(), date.getUTCMonth(), 1);
 }
 
 function pad2(value: number): string {
@@ -295,6 +373,70 @@ export function parseCategoryIds(values: string[]): number[] {
   return [...result].slice(0, 100);
 }
 
+function queryInteger(
+  raw: string | undefined,
+  fallback: number,
+  name: string,
+  minimum: number,
+  maximum = Number.MAX_SAFE_INTEGER,
+): number {
+  if (raw === undefined || raw.trim() === "") return fallback;
+  const normalized = raw.trim();
+  if (!/^\d+$/.test(normalized)) throw new ValidateException(`${name}参数错误`);
+  const parsed = Number(normalized);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new ValidateException(`${name}参数错误`);
+  }
+  return parsed;
+}
+
+/** Parse the legacy mobile-admin daily-order query with explicit resource bounds. */
+export function parseMobileOrderDataQuery(
+  query: Record<string, string | undefined>,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): MobileOrderDataQuery {
+  const start = queryInteger(
+    query.start,
+    startOfBusinessMonth(nowSeconds),
+    "开始时间",
+    0,
+    MAX_EPOCH_SECONDS,
+  );
+  const stop = queryInteger(query.stop, nowSeconds, "结束时间", 0, MAX_EPOCH_SECONDS);
+  if (stop < start) throw new ValidateException("结束时间不能早于开始时间");
+  const endExclusive = stop + 1;
+  if (endExclusive - start > MAX_RANGE_DAYS * DAY_SECONDS) {
+    throw new ValidateException(`统计跨度不能超过 ${MAX_RANGE_DAYS} 天`);
+  }
+  const page = queryInteger(query.page, 1, "页码", 1, 100_000);
+  const limit = queryInteger(query.limit, 15, "每页数量", 1, 100);
+  return { start, endExclusive, page, limit, offset: (page - 1) * limit };
+}
+
+/** The embedded admin supports today, trailing seven days, and trailing thirty days only. */
+export function parseMobileOrderPeriod(
+  rawType?: string,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): MobileOrderPeriod {
+  const normalized = rawType?.trim() || "1";
+  if (normalized !== "1" && normalized !== "7" && normalized !== "30") {
+    throw new ValidateException("统计周期仅支持 1、7 或 30 天");
+  }
+  const type = Number(normalized) as 1 | 7 | 30;
+  const todayStart = startOfBusinessDay(nowSeconds);
+  const currentStart = todayStart - (type - 1) * DAY_SECONDS;
+  const currentEndExclusive = nowSeconds + 1;
+  const previousStart = currentStart - (currentEndExclusive - currentStart);
+  return {
+    type,
+    currentStart,
+    currentEndExclusive,
+    previousStart,
+    // PHP's type=1 chart intentionally includes both yesterday and today.
+    chartStart: type === 1 ? todayStart - DAY_SECONDS : currentStart,
+  };
+}
+
 function aggregateBucket(range: AdminStatisticRange, rawKey: string): string | null {
   const key = rawKey.trim();
   if (range.granularity !== "three_day") return range.bucketKeys.includes(key) ? key : null;
@@ -341,6 +483,252 @@ export function trendKey(column: SQL, range: AdminStatisticRange): SQL {
 
 export class AdminStatisticService {
   constructor(private readonly container: Container) {}
+
+  /** GET /api/admin/order/statistics — embedded admin order cards. */
+  async mobileOrderStatistics(nowSeconds = Math.floor(Date.now() / 1000)) {
+    const todayStart = startOfBusinessDay(nowSeconds);
+    const previousStart = todayStart - DAY_SECONDS;
+    const monthStart = startOfBusinessMonth(nowSeconds);
+    const endExclusive = nowSeconds + 1;
+    const [orderRows, refundRows, configs] = await Promise.all([
+      this.container.db.execute<MobileOrderOverviewRow>(sql`
+        SELECT
+          COUNT(*)::int AS order_count,
+          COALESCE(SUM(pay_price) FILTER (WHERE paid = 1), 0)::text AS sum_price,
+          COUNT(*) FILTER (
+            WHERE paid = 0 AND status = 0 AND refund_status = 0
+          )::int AS unpaid_count,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND status IN (0, 4) AND refund_status IN (0, 3)
+              AND shipping_type IN (1, 3)
+          )::int AS unshipped_count,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND refund_status IN (0, 3) AND (
+              (status IN (1, 5) AND shipping_type = 1) OR
+              (status IN (0, 5) AND shipping_type = 2)
+            )
+          )::int AS received_count,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND status = 2 AND refund_status IN (0, 3)
+          )::int AS evaluated_count,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND status IN (0, 1, 5) AND refund_status IN (0, 3)
+              AND shipping_type = 2
+          )::int AS unwritoff_count,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND status = 3 AND refund_status IN (0, 3)
+          )::int AS complete_count,
+          COALESCE(SUM(pay_price) FILTER (
+            WHERE paid = 1 AND refund_status IN (0, 3)
+              AND add_time >= ${todayStart} AND add_time < ${endExclusive}
+          ), 0)::text AS today_price,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND refund_status IN (0, 3)
+              AND add_time >= ${todayStart} AND add_time < ${endExclusive}
+          )::int AS today_count,
+          COALESCE(SUM(pay_price) FILTER (
+            WHERE paid = 1 AND refund_status IN (0, 3)
+              AND add_time >= ${previousStart} AND add_time < ${todayStart}
+          ), 0)::text AS previous_price,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND refund_status IN (0, 3)
+              AND add_time >= ${previousStart} AND add_time < ${todayStart}
+          )::int AS previous_count,
+          COALESCE(SUM(pay_price) FILTER (
+            WHERE paid = 1 AND refund_status IN (0, 3)
+              AND add_time >= ${monthStart} AND add_time < ${endExclusive}
+          ), 0)::text AS month_price,
+          COUNT(*) FILTER (
+            WHERE paid = 1 AND refund_status IN (0, 3)
+              AND add_time >= ${monthStart} AND add_time < ${endExclusive}
+          )::int AS month_count
+        FROM store_order
+        WHERE pid = 0 AND is_del = 0 AND is_system_del = 0
+      `),
+      this.container.db.execute<MobileRefundCountRow>(sql`
+        SELECT
+          COUNT(*) FILTER (WHERE refund_type IN (0, 1, 2, 4, 5))::int AS refunding_count,
+          COUNT(*) FILTER (WHERE refund_type IN (3, 6))::int AS refunded_count
+        FROM store_order_refund
+        WHERE is_cancel = 0 AND is_del = 0
+      `),
+      this.container.systemConfigDao.getValues([
+        "balance_func_status", "yue_pay_status", "pay_weixin_open", "ali_pay_status",
+      ]),
+    ]);
+    const order = orderRows[0];
+    const refund = refundRows[0];
+    if (!order || !refund) throw new Error("移动管理端订单统计未返回数据");
+    const refunding = numberValue(refund.refunding_count);
+    const refunded = numberValue(refund.refunded_count);
+    return {
+      order_count: String(numberValue(order.order_count)),
+      sum_price: money(order.sum_price),
+      unpaid_count: String(numberValue(order.unpaid_count)),
+      unshipped_count: String(numberValue(order.unshipped_count)),
+      received_count: String(numberValue(order.received_count)),
+      evaluated_count: String(numberValue(order.evaluated_count)),
+      unwritoff_count: String(numberValue(order.unwritoff_count)),
+      complete_count: String(numberValue(order.complete_count)),
+      refunding_count: String(refunding),
+      refunded_count: String(refunded),
+      refund_count: String(refunding + refunded),
+      yue_pay_status: parseConfigInteger(configs.balance_func_status, 0) === 1 &&
+        parseConfigInteger(configs.yue_pay_status, 0) === 1 ? 1 : 2,
+      pay_weixin_open: parseConfigInteger(configs.pay_weixin_open, 0) === 1 ? 1 : 0,
+      ali_pay_status: parseConfigInteger(configs.ali_pay_status, 0) === 1,
+      todayPrice: round(numberValue(order.today_price)),
+      todayCount: numberValue(order.today_count),
+      proPrice: round(numberValue(order.previous_price)),
+      proCount: numberValue(order.previous_count),
+      monthPrice: round(numberValue(order.month_price)),
+      monthCount: numberValue(order.month_count),
+    };
+  }
+
+  /** GET /api/admin/order/staging — embedded admin workbench badges. */
+  async mobileOrderStaging() {
+    const rows = await this.container.db.execute<MobileOrderStagingRow>(sql`
+      SELECT
+        (SELECT COUNT(*) FROM store_order
+          WHERE pid = 0 AND paid = 1 AND status IN (0, 4)
+            AND refund_status IN (0, 3) AND shipping_type IN (1, 3)
+            AND store_id = 0 AND supplier_id = 0
+            AND is_del = 0 AND is_system_del = 0)::int AS unshipped_count,
+        (SELECT COUNT(*) FROM store_order_refund
+          WHERE is_cancel = 0 AND is_del = 0
+            AND refund_type IN (0, 1, 2, 4, 5))::int AS refunding_count,
+        (SELECT COUNT(*) FROM store_order_refund
+          WHERE is_cancel = 0 AND is_del = 0
+            AND refund_type IN (3, 6))::int AS refunded_count,
+        (SELECT COUNT(*) FROM store_product
+          WHERE pid = 0 AND is_del = 0 AND is_verify = 1
+            AND (is_sold = 1 OR stock = 0))::int AS outofstock,
+        (SELECT COUNT(*) FROM store_product
+          WHERE pid = 0 AND is_show = 1 AND is_del = 0 AND is_verify = 1
+            AND is_police = 1 AND stock > 0)::int AS policeforce
+    `);
+    const row = rows[0];
+    if (!row) throw new Error("移动管理端工作台统计未返回数据");
+    const refunding = numberValue(row.refunding_count);
+    const refunded = numberValue(row.refunded_count);
+    return {
+      unshipped_count: String(numberValue(row.unshipped_count)),
+      refunding_count: String(refunding),
+      refunded_count: String(refunded),
+      refund_count: String(refunding + refunded),
+      outofstock: numberValue(row.outofstock),
+      policeforce: numberValue(row.policeforce),
+    };
+  }
+
+  /** GET /api/admin/order/data — paged daily amount/count/visit rows. */
+  async mobileOrderData(query: MobileOrderDataQuery) {
+    const rows = await this.container.db.execute<MobileOrderDataRow>(sql`
+      WITH daily AS (
+        SELECT
+          (to_timestamp(add_time) AT TIME ZONE 'Asia/Shanghai')::date AS day_key,
+          COALESCE(SUM(pay_price), 0)::text AS price,
+          COUNT(*)::int AS count,
+          MAX(add_time)::int AS add_time
+        FROM store_order
+        WHERE pid = 0 AND paid = 1 AND refund_status IN (0, 3)
+          AND is_del = 0 AND is_system_del = 0
+          AND add_time >= ${query.start} AND add_time < ${query.endExclusive}
+        GROUP BY 1
+        ORDER BY day_key DESC
+        LIMIT ${query.limit} OFFSET ${query.offset}
+      )
+      SELECT
+        daily.price,
+        daily.count,
+        daily.add_time,
+        to_char(daily.day_key, 'MM-DD') AS time,
+        (SELECT COUNT(*) FROM store_product_log product_log
+          WHERE product_log.type = 'visit' AND product_log.delete_time IS NULL
+            AND product_log.add_time >= EXTRACT(EPOCH FROM daily.day_key::timestamp AT TIME ZONE 'Asia/Shanghai')
+            AND product_log.add_time < EXTRACT(EPOCH FROM (daily.day_key + 1)::timestamp AT TIME ZONE 'Asia/Shanghai'))::int AS visit
+      FROM daily
+      ORDER BY daily.day_key DESC
+    `);
+    return rows.map((row) => ({
+      price: money(row.price),
+      count: numberValue(row.count),
+      add_time: numberValue(row.add_time),
+      time: String(row.time),
+      visit: numberValue(row.visit),
+    }));
+  }
+
+  /** GET /api/admin/order/time — current period versus an equal-duration prior period. */
+  async mobileOrderTime(period: MobileOrderPeriod) {
+    const rows = await this.container.db.execute<MobileOrderTimeRow>(sql`
+      SELECT
+        COALESCE(SUM(pay_price) FILTER (
+          WHERE add_time >= ${period.currentStart} AND add_time < ${period.currentEndExclusive}
+        ), 0)::text AS after_price,
+        COALESCE(SUM(pay_price) FILTER (
+          WHERE add_time >= ${period.previousStart} AND add_time < ${period.currentStart}
+        ), 0)::text AS front_price,
+        COUNT(*) FILTER (
+          WHERE add_time >= ${period.currentStart} AND add_time < ${period.currentEndExclusive}
+        )::int AS after_number,
+        COUNT(DISTINCT uid) FILTER (
+          WHERE add_time >= ${period.currentStart} AND add_time < ${period.currentEndExclusive}
+        )::int AS after_pay_number,
+        (SELECT COUNT(*) FROM store_product_log
+          WHERE type = 'visit' AND delete_time IS NULL
+            AND add_time >= ${period.currentStart} AND add_time < ${period.currentEndExclusive})::int AS today_visits
+      FROM store_order
+      WHERE pid = 0 AND paid = 1 AND refund_status IN (0, 3)
+        AND is_del = 0 AND is_system_del = 0
+        AND add_time >= ${period.previousStart} AND add_time < ${period.currentEndExclusive}
+    `);
+    const row = rows[0];
+    if (!row) throw new Error("移动管理端订单周期统计未返回数据");
+    const current = round(numberValue(row.after_price));
+    const previous = round(numberValue(row.front_price));
+    const increase = round(current - previous);
+    const absoluteIncrease = Math.abs(increase);
+    return {
+      after_price: current,
+      growth_rate: absoluteIncrease === 0
+        ? 0
+        : Math.trunc((absoluteIncrease / (previous === 0 ? 1 : previous)) * 100),
+      increase_time: absoluteIncrease,
+      increase_time_status: increase >= 0 ? 1 : 2,
+      after_number: numberValue(row.after_number),
+      after_pay_number: numberValue(row.after_pay_number),
+      today_visits: numberValue(row.today_visits),
+    };
+  }
+
+  /** GET /api/admin/order/time/chart — chronological daily order amount/count rows. */
+  async mobileOrderTimeChart(period: MobileOrderPeriod) {
+    const rows = await this.container.db.execute<MobileOrderChartRow>(sql`
+      SELECT
+        to_char(to_timestamp(add_time) AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD') AS bucket,
+        COUNT(*)::int AS num,
+        COALESCE(SUM(pay_price), 0)::text AS price
+      FROM store_order
+      WHERE pid = 0 AND paid = 1 AND refund_status IN (0, 3)
+        AND is_del = 0 AND is_system_del = 0
+        AND add_time >= ${period.chartStart} AND add_time < ${period.currentEndExclusive}
+      GROUP BY 1
+      ORDER BY 1 ASC
+    `);
+    const values = new Map<string, { num: number; price: number }>();
+    for (const row of rows) {
+      values.set(row.bucket, { num: numberValue(row.num), price: round(numberValue(row.price)) });
+    }
+    const result: Array<{ time: string; num: number; price: number }> = [];
+    for (let epoch = startOfBusinessDay(period.chartStart); epoch < period.currentEndExclusive; epoch += DAY_SECONDS) {
+      const key = dateKey(epoch);
+      const value = values.get(key) ?? { num: 0, price: 0 };
+      result.push({ time: key.slice(5), ...value });
+    }
+    return result;
+  }
 
   async orderBasic(range: AdminStatisticRange): Promise<AdminOrderBasic> {
     const rows = await this.container.db.execute<OrderBasicRow>(sql`

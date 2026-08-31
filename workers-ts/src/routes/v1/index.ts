@@ -1291,6 +1291,11 @@ v1Routes.delete("/admin/specs/:id", adminAuth, AdminCrud.adminProductSpecsDelete
 // 订单管理
 v1Routes.get("/admin/order/list", adminAuth, AdminCrud.adminOrderList);
 v1Routes.get("/admin/order/detail/:orderId", adminAuth, AdminCrud.adminOrderDetail);
+v1Routes.get("/admin/order/statistics", adminAuth, AdminController.adminMobileOrderStatistics);
+v1Routes.get("/admin/order/staging", adminAuth, AdminController.adminMobileOrderStaging);
+v1Routes.get("/admin/order/data", adminAuth, AdminController.adminMobileOrderData);
+v1Routes.get("/admin/order/time", adminAuth, AdminController.adminMobileOrderTime);
+v1Routes.get("/admin/order/time/chart", adminAuth, AdminController.adminMobileOrderTimeChart);
 v1Routes.post("/admin/order/remark/:orderId", adminAuth, AdminCrud.adminOrderRemark);
 v1Routes.post("/admin/order/print/:id", adminAuth, PrintJobController.adminManual);
 v1Routes.post("/admin/order/waybill/:id", adminAuth, WaybillJobController.adminCreate);

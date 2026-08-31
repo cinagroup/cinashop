@@ -18,6 +18,8 @@ import {
   AdminStatisticService,
   parseAdminStatisticRange,
   parseCategoryIds,
+  parseMobileOrderDataQuery,
+  parseMobileOrderPeriod,
   parseProductRankingSort,
 } from "@/services/admin/AdminStatisticService";
 import {
@@ -78,6 +80,43 @@ function statisticService(c: C): AdminStatisticService {
 
 function extendedStatisticService(c: C): AdminExtendedStatisticService {
   return new AdminExtendedStatisticService(c.get("container"));
+}
+
+function privateAdminResponse(c: C): void {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+}
+
+/** GET /api/admin/order/statistics — embedded admin order counters/cards. */
+export async function adminMobileOrderStatistics(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await statisticService(c).mobileOrderStatistics());
+}
+
+/** GET /api/admin/order/staging — embedded admin workbench badges. */
+export async function adminMobileOrderStaging(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await statisticService(c).mobileOrderStaging());
+}
+
+/** GET /api/admin/order/data — embedded admin daily order/visit rows. */
+export async function adminMobileOrderData(c: C) {
+  privateAdminResponse(c);
+  const query = parseMobileOrderDataQuery(c.req.query());
+  return jsonOk(c, await statisticService(c).mobileOrderData(query));
+}
+
+/** GET /api/admin/order/time — embedded admin period comparison. */
+export async function adminMobileOrderTime(c: C) {
+  privateAdminResponse(c);
+  const period = parseMobileOrderPeriod(c.req.query("type"));
+  return jsonOk(c, await statisticService(c).mobileOrderTime(period));
+}
+
+/** GET /api/admin/order/time/chart — embedded admin chronological daily chart. */
+export async function adminMobileOrderTimeChart(c: C) {
+  privateAdminResponse(c);
+  const period = parseMobileOrderPeriod(c.req.query("type"));
+  return jsonOk(c, await statisticService(c).mobileOrderTimeChart(period));
 }
 
 /** GET /adminapi/statistic/order/get_basic — PHP 订单统计基础卡片。 */
