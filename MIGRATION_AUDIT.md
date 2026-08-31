@@ -2885,6 +2885,42 @@ PHP 权威是 `route/api.php:709,713-718` 的七条移动管理合同：`GET /ap
 
 用户已要求直接使用生产数据库；当前实现没有引入影子库，未来获批发布后七条服务将直接通过上述生产 Hyperdrive 读写 PostgreSQL。本批没有 schema 变化，且安全的本地远端执行路径仍被 Windows workerd 崩溃阻断；永久临时公开探针不在既有授权范围，因此没有用测试写入触碰生产商品、SKU、购物车或关系数据，也没有把 dry-run 描述成生产 E2E。ADMIN-B 目前只能标为“代码、静态合同与服务回归完成，未发布”；发布前仍需真实 Admin 账号的最小权限拒绝/允许、列表字段、上下架、规格幂等与并发、分类/标签替换、旧 UniApp 流程和回滚演练，且主 Worker/Pages 发布继续受 REL-001/002 的单独明确批准门禁约束。
 
+## ADMIN-D 内嵌用户详细审计（2026-08-31）
+
+### PHP 权威、旧端用法与原实现风险
+
+PHP 权威是 `route/api.php:724-734` 的八条移动管理合同：`GET /api/admin/user/label/:uid`、`GET /api/admin/user/coupon/grant`、`GET /api/admin/user/group/list`、`GET /api/admin/user/level/list`、`POST /api/admin/user/update_other/:uid`、`POST /api/admin/user/update`、`GET /api/admin/user/address/list/:uid` 与 `GET /api/admin/user/address/default/:uid`。标签接口返回平台 `type=0/relation_id=0/group=0` 的标签组，当前用户已选标签以 `disabled=true` 标识；UID 0 用于列出全部未选标签。优惠券接口在 UID 0 时列出可后台赠送的 `receive_type=3` 模板，在指定 UID 时列出该用户 `status=0` 的券。分组返回原始数组，等级返回可见、未删除等级的 `{list,count}`，地址严格按 UID 返回有效地址或默认地址的 `ok/empty` 合同。
+
+两个 POST 入口包含真正的资金和库存副作用。`update_other` 的注释写 1=余额、2=积分，但旧 UniApp 实际发送 1=余额、0=积分，PHP 又把所有非 1 值都当积分；因此候选明确兼容 0/2 两种积分标识。PHP 的余额减少会钳制到 0，积分减少却可写成负数，而且两者没有请求幂等键、事务回放或管理员级不可变审计。`user/update` 的旧移动页实际使用五类：等级、付费会员天数、赠券、分组、标签；批量选择意图限制 100 人，但旧端调用 `ids.slice(0,100)` 后没有接回结果，服务端也没有可靠硬上限。批量赠券通过队列处理，库存不足时静默截断用户数组，调用端仍可能收到“赠送成功”，会形成不可解释的部分成功。
+
+实现前 Worker 只有相似但不同路径的用户列表/详情/资料修改、直接余额覆盖、分组/标签管理和等级目录。`POST /api/admin/user/money/:id` 直接读后写余额，没有用户行锁、流水或幂等证据，不能复用为 ADMIN-D 的资金合同；现有 `/label/:id`、`/user_group/list`、`/admin/level/list` 也不满足八条精确 URL、旧移动投影或 UID 地址语义。因此本批按 PHP 源码和旧端实际调用重建合同，而不是把相似路由计为完成。
+
+### 读取合同、权限与最小数据范围
+
+- 八条路由全部经过现有 `adminAuthMiddleware`，继续校验 admin token bucket、Admin JWT、有效管理员、密码摘要 auth claim 和服务端角色规则。`user/` 权限域令四类目录/地址读取及标签/券读取要求 `user.view`，两个 POST 要求 `user.manage`；普通用户 token 不能因路径位于 `/api/admin` 获得权限。全部响应设置 `Cache-Control: private, no-store, max-age=0`。
+- 标签只查询平台有效分类和有效标签，UID 大于 0 时先验证活动用户，再从同一 `type=0/relation_id=0` 范围计算 `disabled`；UID 0 保留 PHP 的全量选择器语义。分组投影固定为 `{id,group_name}`；等级只返回 `{id,name,grade,image,icon}` 与 count，不透传等级成本、说明或其他无关字段。
+- 可赠券必须同时满足 `receive_type=3/status=1/is_del=0`、有库存或永久发行、领取窗口有效，以及滚动有效期或尚未结束的固定使用期；标题搜索、页码和每页 100 条上限均有界。指定用户的券列表只读取该 UID 的未使用券并附加当前模板快照。地址列表只按路径 UID 和 `is_del=0` 查询，默认地址在同一结果内选择；不会接受请求体 UID，也不会跨 UID 猜测地址。
+
+### 写入状态机、账本与失败关闭
+
+- 余额/积分调整只接受一个活动 UID、1=增加或2=减少、严格正数和有界数值；余额按整数分计算，积分按安全整数计算。事务先取得回放锁再锁用户行，增加后检查数据库上限，减少统一取 `min(请求值,当前值)`，所以不会复制 PHP 的负积分缺陷。余额实际变化写 PHP 兼容的 `user_money(system_add/system_sub)`，积分写 `user_bill(category=integral,type=system_add|system_sub,event_key=admin_*)`；主余额/积分、流水、回放证据和 Admin 日志在同一个 2 秒锁/8 秒语句上限事务中提交。
+- `user/update` 只接受旧移动端真实使用的五类载荷，用户 ID 去重排序且硬限制 100；等级和会员时长只允许单用户。等级替换锁定用户和可见等级，废止旧 `user_level`、恢复或创建目标记录，并同步 `user.level/exp/level_status`。分组和平台标签在用户行锁下验证权威对象后原子替换；标签空数组表示显式清空，不会把未识别字段静默丢弃。
+- 会员天数增加以当前有效到期时间或当前时刻中较晚者为基线，减少不会早于当前时刻，永久会员失败关闭；用户状态变化与 `other_order(type=4,pay_type=admin,paid=1,is_free=1)`、`other_order_status(admin_adjust)` 和回放账本在同一事务提交。订单号从管理员/操作/请求键摘要确定性派生，不依赖外部序列或请求内网络调用。
+- 赠券只接受有效赠送券模板，按用户 UID 固定顺序锁定最多 100 个活动用户，再锁模板；标题和有效期必须可写，非永久券库存少于目标人数时整批拒绝，不复制 PHP 的静默截断。成功时一次性写 `store_coupon_user(receive_source=send)`、`store_coupon_issue_user` 并原子扣减库存；没有 Queue、异步尾部或第三方副作用。
+- 三类不可逆操作——余额/积分、会员时长、赠券——都强制 UUID-v4 `Idempotency-Key`。新增 `admin_user_write_replay` 只保存管理员 ID、操作、请求键、canonical SHA-256、单用户/目标数量和资金流水/会员订单/券模板等有界证据 ID，不保存姓名、地址、券标题/金额、余额、积分、请求体或响应体；`UNIQUE(admin_id,operation,request_key)` 是数据库级并发围栏，同键同载荷返回幂等结果，同键异载荷拒绝。`system_log` 另存操作、目标数量/摘要、请求摘要、Admin 和时间，仍不复制业务正文。
+
+### DDL、路由、测试与生产边界
+
+外部 `migrations/0119_admin_mobile_user_replay.sql` 与 Worker 内嵌 `migration_0125()` 完全同义并可重复执行，定义一表、三个索引、三个 CHECK；仓库外部/内嵌结构审计均从 247 增至 248 表且差集、列/主键漂移仍为 0。生产目前仍是 WORK-C8 后已经复验的 247 表，尚未应用该 DDL，因此相对当前候选明确缺 `admin_user_write_replay`，新 POST 路由发布前必须先完成这项前向 DDL；不能把仓库定义完成写成生产 248/248。
+
+ADMIN-B 后基线为 PHP 1,904、TS 1,459、精确 757、可执行 739、原始缺失 1,147、可执行缺口 1,143；`/api` 为 PHP 457、TS 768、精确 375、可执行 372、原始缺失 82、可执行缺口 81。ADMIN-D 净增八条精确可执行合同后，总计为 TS 1,467、精确 765、可执行 747、原始缺失 1,139、可执行缺口 1,135，精确/可执行/退役后有效覆盖为 40.2%/39.2%/39.3%；`/api` 为 TS 776、精确 383、可执行 380、原始缺失 74、可执行缺口 73，三项覆盖为 83.8%/83.2%/83.3%。其他路由面未改变。
+
+定向三文件 15/15 覆盖券列表边界、余额/积分 0/2 兼容、五类更新、100 用户硬上限、八个 envelope/no-store、精确路由、view/manage ACL、回放 DDL 同义/唯一围栏、锁、资金流水、非负扣减、赠券整批拒绝和会员订单状态。完整本地门禁为双 TypeScript、169 文件/1,058 项单元测试、observability 14 信号/10 域/27 必需事件/371 个生产源文件/6 个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、官方 npm 生产依赖审计 0 和 `git diff --check`。Windows 本机 workerd 仍在断言前以 `0xc0000005` 启动失败；主 Worker minify dry-run 成功为 3,283.84 KiB/gzip 780.02 KiB并精确回显 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有部署。
+
+实现提交 `996e0dcc0ec1695e08d0abeeaeee283d8018dec6` 已推送至 `main`。用户要求直接使用生产数据库后，本轮对现网 `https://cinashop-api.cinagroup.workers.dev/api/site_config` 做了只读连通性检查并获得业务状态 200，证明当前已部署 Worker 能通过既有 Hyperdrive读取生产配置；它不证明候选 DDL 已应用，也不证明尚未部署的八条路由可运行。没有对生产用户、余额、积分、会员、券、地址或回放表执行 DML。首轮 [GitHub Actions 33407890505](https://github.com/cinagroup/cinashop/actions/runs/33407890505) 有 7/8 jobs 成功，唯一失败是 Gitleaks 将固定 UUID-v4 幂等测试夹具误报为通用 API key；该轮不计通过。随后以“规则名 + 精确测试文件 + 精确 UUID 行”的最窄 allowlist 修正误报，并补齐 `.gitleaks.toml` 的工作流路径触发。提交 `486a82de70993917e8f8fbe572bf7880d47c0dc2` 的 [Actions 33408799814](https://github.com/cinagroup/cinashop/actions/runs/33408799814) 最终 8/8 jobs 成功：全历史 secret scan、Worker 生产依赖审计 0、双 TypeScript、169 文件/1,058 项单测、observability、201/248/201/零缺口/零定义漂移、1,904/1,467/765/747 路由门禁、真实 workerd 运行时，以及 Admin、PC、Supplier、Kefu、UniApp 五端构建均通过。CI 不持有生产 Secret、不会访问 Hyperdrive或部署 Worker/Pages。Cloudflare Workers 最佳实践审查促成了显式 Admin ACL、无秘密响应、请求内短事务、数据库唯一幂等围栏、无请求外副作用和结构化回归门禁。
+
+ADMIN-D 现只能标记“代码、DDL、静态合同与服务回归完成，DDL 未应用、未发布”。发布前还需受控应用/复验 `0119`、真实最小权限 Admin 的读允许/读拒绝和 POST 拒绝、同键重放/异载荷冲突、双连接并发、余额/积分/券/会员前后账证、旧移动端补充幂等头或替代前端、预发与回滚演练，并单独取得 REL-001/002 的明确发布批准。下一实现项是 ADMIN-A，但应拆为统计只读、履约写、退款/资金和代客身份四批，而不是一次性开放 32 条路由。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
