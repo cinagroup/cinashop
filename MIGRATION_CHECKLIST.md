@@ -11,11 +11,11 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 248 表；Worker 内嵌 248 表；共享源表 201、Worker 扩展 47；表/列/主键漂移 0 | 候选定义完成 |
 | 生产目标结构 | 生产仍为 247 表；候选新增 `admin_user_write_replay` 尚未应用，故相对候选缺 1 表；既有 WORK-C1～C8 结构仍已精确复验 | 当前生产结构完成，候选 DDL 待发布前应用 |
-| PHP HTTP 合同 | 精确匹配 765/1,904；可执行 747；其中 18 条明确不可用、4 条有证据退役 | 精确注册 40.2%，静态可执行上限 39.2%，退役后有效上限 39.3% |
+| PHP HTTP 合同 | 精确匹配 770/1,904；可执行 752；其中 18 条明确不可用、4 条有证据退役 | 精确注册 40.4%，静态可执行上限 39.5%，退役后有效上限 39.6% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 169/169 文件、1,058/1,058 项通过；ADMIN-D/权限/路由定向 3 文件 15/15、可观测性审计 371 个生产源文件 | 本地业务回归与日志安全门禁通过 |
+| Worker 单元测试 | 170/170 文件、1,064/1,064 项通过；ADMIN-A-STAT 定向 1 文件 6/6、可观测性审计 371 个生产源文件 | 本地业务回归与日志安全门禁通过 |
 | Workers runtime | Linux workerd 13/13；Windows 启动即 `0xc0000005` | 受支持 Linux 门禁完成，Windows 仅为本机缺陷 |
-| CI | Actions `33408799814` 的 Worker/五端/runtime/secret scan 8/8 | 当前 ADMIN-D 候选与 TEST-001/002/003A 门禁均已在 Linux 复验 |
+| CI | Actions `33412892978` 的 Worker/五端/runtime/secret scan 8/8 | 当前 ADMIN-A-STAT 候选与 TEST-001/002/003A 门禁均已在 Linux 复验 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -25,13 +25,13 @@
 
 | 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 精确/可执行/退役后有效覆盖 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 776 | 383 | 380 | 3 | 74 | 1 | 73 | 83.8% / 83.2% / 83.3% |
+| `/api` | 457 | 781 | 388 | 385 | 3 | 69 | 1 | 68 | 84.9% / 84.2% / 84.4% |
 | `/adminapi` | 1,153 | 472 | 202 | 187 | 15 | 951 | 0 | 951 | 17.5% / 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% / 43.4% |
 | `/kefuapi` | 63 | 66 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,467 | 765 | 747 | 18 | 1,139 | 4 | 1,135 | 40.2% / 39.2% / 39.3% |
+| 合计 | 1,904 | 1,472 | 770 | 752 | 18 | 1,134 | 4 | 1,130 | 40.4% / 39.5% / 39.6% |
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
@@ -206,7 +206,11 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
       - [ ] **C7 启用/运维阻塞**：生产 legacy/current 标签为 0 行，尚无源 MySQL 标签、真实租户、最小权限 provider Secret/full-visibility、全量 reconciliation 与 provider 正向/不存在主体证据；tag authority 保持关闭，主 Worker未部署。
     - [x] **WORK-C8 欢迎语、自动标签与商城用户关联（代码、生产结构、随机 schema 与 Admin 脱敏处置面完成，未启用/未发布）**：三类远端/本地动作已拆为独立事务 action outbox/Queue，具备幂等键、部分成功、429、结果未知、人工重放、回调 payload 有界保留/脱敏和审计终态，不在 callback HTTP 请求内同步执行。
       - [ ] **C8 真实租户发布闭环**：取得 CorpID、最小权限 provider Secret、两枚回调 Secret、旧媒体/源数据映射和真实测试租户后，完成真实回调、provider 正向/不存在主体、预发、影子流量、明确发布批准、主 Worker/Pages 发布及发布后观察。
-  - [ ] **ADMIN-A 内嵌订单/代客下单 32 条**：覆盖统计/暂存、配送/拆单/面单、改价/备注/线下支付/退款/核销，以及代客购物车、确认、优惠券、创建、支付和状态。必须把普通用户 token 升级为显式受限 Admin session，逐动作 ACL，资金/退款复用现有账本，不允许仅因路径位于 `/api/admin` 自动授权。
+  - [ ] **ADMIN-A 内嵌订单/代客下单 32 条（5/32 已收口，27 条待完成）**：覆盖统计/暂存、配送/拆单/面单、改价/备注/线下支付/退款/核销，以及代客购物车、确认、优惠券、创建、支付和状态。必须把普通用户 token 升级为显式受限 Admin session，逐动作 ACL，资金/退款复用现有账本，不允许仅因路径位于 `/api/admin` 自动授权。
+    - [x] **ADMIN-A-STAT 统计只读 5 条（代码、静态合同与服务回归完成，未发布）**：精确恢复 `GET order/statistics|staging|data|time|time/chart`，统一使用受限 Admin session、`order.view` 和 `private, no-store, max-age=0`。统计只读取生产 Hyperdrive 指向的 PostgreSQL，按 Asia/Shanghai、根订单 `pid=0`、双软删除和有效退款状态聚合；每日明细最多 100 条、跨度最多 3,660 天，周期只接受 1/7/30。实现不复制 PHP 把 `uid=0` 错当真实用户过滤以及可能重复计入拆分子单的偏差，也补齐退款/商品日志软删除过滤。本批无 DDL、DML、Queue、第三方调用或部署；候选发布仍需单独批准。
+    - [ ] **ADMIN-A-FULFILLMENT 订单运营/履约 12 条**：`delivery/gain`、`delivery/keep`、`price`、`remark`、`delivery`、`delivery_info`、`export_temp`、`export_all`、`split_cart_info`、`split_delivery`、`order_verific`、`wirteoff/records`；逐条复用现有履约/核销状态机、任务/outbox 和 Admin 审计，不在请求内同步调用面单或配送第三方。
+    - [ ] **ADMIN-A-REFUND 退款/资金 4 条**：`offline`、`refund`、`refund_agree/:id`、`open/refund/:id`；必须复用 CORE-002 退款支付账本、幂等围栏、行锁及明确的 `order.manage/refund.manage` 权限，禁止复制 PHP 无回放保护的资金写入。
+    - [ ] **ADMIN-A-ASSISTED 代客下单 11 条**：`cart/:uid`、`cart/add/:uid`、`cart/del/:uid`、`cart/num/:uid`、`place/list`、`confirm/:uid`、`computed/:key/:uid`、`coupons/:uid`、`create/:key/:uid`、`pay/:uid`、`pay/status`；Admin 必须具有显式代客权限，目标 UID、报价、优惠券、库存、支付主体和审计证据全链路绑定，不能借用普通用户 token 或客户端声明身份。
   - [x] **ADMIN-B 内嵌商品 7 条（代码、静态合同与服务回归完成，未发布）**：精确恢复分类树、管理列表、上下架、标签树、规格读取、规格价格/库存更新和分类/标签批处理。全部经过现有 Admin session；GET 要求 `product.view`，POST 要求 `product.manage`，响应均为 `private, no-store`。上下架与分类/标签替换在 2 秒锁/5 秒语句超时的事务和商品行锁中执行，并同步有效未支付购物车与分类关系；回收站商品失败关闭，上架还要求已审核。规格更新只接受当前商品已有 `type=0` SKU、必填唯一标识及有界非负价格/整数库存，锁定商品和 SKU 后重算权威总库存与最高价并写库存差额记录；不能用客户端 `unique` 跨商品改价。批处理只开放旧移动端实际使用的分类/商品标签两类，验证平台有效关系后原子替换主表 CSV 与关系表；PHP 后台隐藏的 3～9 类批处理不冒充本项完成。当前实现未来发布后会直接使用 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，本批没有 DDL、Queue、第三方调用、生产 DML 或部署。
   - [x] **ADMIN-C 内嵌售后 3 条（代码、静态合同与服务回归完成，未发布）**：精确恢复 `GET refund_order/list`、`GET refund_order/detail/:uni` 与 `POST refund_order/remark`；三条均使用受限 Admin session，读要求 `refund.view`、备注要求 `refund.manage`。列表保留 PHP 的分页、售后单/快递/用户/商品/原订单模糊搜索、`refundTypes` 组合状态、`apply_type` 与时间筛选；详情只按有效售后关联的原订单及同一 UID 读取，并兼容退款主键或公开退款单号。备注只接受公开退款单号和 255 字有界文本，在 2 秒锁/5 秒语句超时、退款行锁和单事务下更新，并写不含备注正文的 `admin_refund_remark` 不可变状态日志；重复同值为幂等 no-op。已取消/已删除售后从读写面失败关闭，这是对 PHP 宽松行为的安全收紧。退款同意/拒绝及资金动作仍走既有 CORE-002 状态机；生产只有未来明确发布后才会经 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 使用这些接口，本批没有生产 DML、探针或部署。
   - [x] **ADMIN-D 内嵌用户 8 条（代码、DDL、静态合同与服务回归完成，DDL 未应用、未发布）**：精确恢复用户标签、可赠/用户券、分组、等级、余额/积分调整、五类用户更新及地址列表/默认地址。全部使用受限 Admin session；GET 要求 `user.view`、POST 要求 `user.manage`，响应均为 `private, no-store`。读取固定平台标签范围与可见等级，地址只按路径 UID 和 `is_del=0` 查询；送券只接受有效 `receive_type=3` 模板和最多 100 个活动用户，用户→券模板固定锁序、库存不足整批回滚，不复制 PHP 静默截断。余额/积分扣减钳制到 0，余额写 `user_money`、积分写 `user_bill`，不复制 PHP 积分可变负；余额/积分、会员天数、送券强制 UUID-v4 `Idempotency-Key`，专用 `admin_user_write_replay` 只保存管理员/操作/请求摘要和有界证据 ID，数据库唯一键阻断并发重复，`system_log` 另存内容脱敏审计。会员时长同时写 `other_order`/状态记录；等级、分组、标签采用行锁下原子替换，标签可显式清空。仓库已带外部 `0119` 与 Worker 内嵌 `0125` 的同义幂等 DDL，但生产仍少该表；未应用 DDL和发布前不得调用新写路由。
@@ -279,9 +283,9 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **REL-003 Pages 发布（BLOCKED：需明确批准）**：为 Admin、H5、PC、Supplier、Kefu 建立明确项目映射，逐项目核对同源 proxy、`WORKERS_API`、正式 Origin 与 `ALLOWED_ORIGINS`/PC/Kefu 专用 allowlist，先预览后正式；记录每个 deployment ID 与 Git SHA。
 - [ ] **REL-004 发布后观察与旧 PHP 下线**：至少观察登录/写入/支付/退款/Queue/Hyperdrive/R2/DO；完成流量切换、回滚演练、旧回调撤销和旧数据库只读封存后才能下线 PHP。
 
-## 当前下一步（2026-08-31 更新）
+## 当前下一步（2026-09-01 更新）
 
-候选仓库结构现为 248 表，生产仍为 247 表；201 张 PHP 共享源表零列缺口，47 张 Worker 扩展表不冒充源数据，新增 `admin_user_write_replay` 是 ADMIN-D 发布前必须先应用的唯一当前结构差。WORK-C1～C8 的代码、既有生产结构和随机 schema 隔离已收口但所有真实租户 authority/发布门禁保持关闭。ADMIN-D 已把内嵌移动用户管理 8 条恢复为受 Admin ACL、最小读取投影、用户/模板行锁、不可变资金流水、数据库唯一回放账本和原子送券/会员证据保护的合同；路由总计更新为 PHP 1,904、TS 1,467、精确 765、可执行 747、可执行缺口 1,135。下一实现项可继续 ADMIN-A 的 32 条内嵌订单/代客下单合同，但需按统计只读、履约写、退款/资金和代客身份四类再拆小批，不能一次性放宽 Admin 权限。`sign_remind_time`、TEST-001/002 以及 TEST-003A 的机器可读指标/对象日志/阈值门禁已收口；生产仍是旧版本 `9f1fd655…`，DLQ消费者为0且缺R2/DLQ变量绑定，所以 TEST-003B～D 和 REL-001/002 都不能完成。其余主要阻塞仍是候选 DDL、源数据/孤儿修复、真实微信/短信/支付/企微凭据与样本、旧端/五端浏览器E2E、预发、影子流量、明确发布批准和发布后观察。主 Worker与 Pages 未部署本轮代码。
+候选仓库结构现为 248 表，生产仍为 247 表；201 张 PHP 共享源表零列缺口，47 张 Worker 扩展表不冒充源数据，新增 `admin_user_write_replay` 是 ADMIN-D 发布前必须先应用的唯一当前结构差。WORK-C1～C8 的代码、既有生产结构和随机 schema 隔离已收口但所有真实租户 authority/发布门禁保持关闭。ADMIN-A-STAT 已恢复内嵌订单的 5 条纯读取统计合同，统一受 `order.view`、根订单/软删除/Asia/Shanghai 和有界查询约束；路由总计更新为 PHP 1,904、TS 1,472、精确 770、可执行 752、可执行缺口 1,130。ADMIN-A 还剩订单运营/履约 12 条、退款/资金 4 条和代客下单 11 条，下一批应从无第三方副作用的履约读取与本地状态操作继续，不能一次性开放资金或代客身份。`sign_remind_time`、TEST-001/002 以及 TEST-003A 的机器可读指标/对象日志/阈值门禁已收口；生产仍是旧版本 `9f1fd655…`，DLQ消费者为0且缺R2/DLQ变量绑定，所以 TEST-003B～D 和 REL-001/002 都不能完成。其余主要阻塞仍是候选 DDL、源数据/孤儿修复、真实微信/短信/支付/企微凭据与样本、旧端/五端浏览器E2E、预发、影子流量、明确发布批准和发布后观察。主 Worker与 Pages 未部署本轮代码。
 
 ### 迁移清单生成时的历史快照（保留审计）
 

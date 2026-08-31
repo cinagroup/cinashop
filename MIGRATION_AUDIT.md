@@ -2921,6 +2921,43 @@ ADMIN-B 后基线为 PHP 1,904、TS 1,459、精确 757、可执行 739、原始�
 
 ADMIN-D 现只能标记“代码、DDL、静态合同与服务回归完成，DDL 未应用、未发布”。发布前还需受控应用/复验 `0119`、真实最小权限 Admin 的读允许/读拒绝和 POST 拒绝、同键重放/异载荷冲突、双连接并发、余额/积分/券/会员前后账证、旧移动端补充幂等头或替代前端、预发与回滚演练，并单独取得 REL-001/002 的明确发布批准。下一实现项是 ADMIN-A，但应拆为统计只读、履约写、退款/资金和代客身份四批，而不是一次性开放 32 条路由。
 
+## ADMIN-A-STAT 内嵌订单统计详细审计（2026-09-01）
+
+### PHP 权威、旧端调用与五条真实缺口
+
+PHP 权威是 `route/api.php:739-777` 和 `app/controller/api/admin/order/StoreOrder.php` 的五条 GET 合同：`/api/admin/order/statistics`、`staging`、`data`、`time` 与 `time/chart`。旧 UniApp 的 `pages/admin/work/index.vue` 使用 `staging + time` 展示待发货、售后、缺货、库存警戒、成交额和访问量，`pages/admin/order/index.vue` 使用 `time + time/chart` 展示 1/7/30 日成交额、订单数、支付人数、增长率和日期图；订单统计/每日明细包装器仍属于旧移动管理端兼容面。实现前 Worker 已有 `/adminapi/statistic/*` 桌面后台统计和 `/api/admin/home/*` 首页统计，但 URL、字段、时间窗口及状态口径都不同，不能冒充这五条精确合同。
+
+逐控制器/service/DAO/searcher 审计确认旧合同如下：
+
+| 路由 | PHP 返回与口径 | 候选实现 |
+|---|---|---|
+| `GET order/statistics` | 总订单/总实付、待付款/发货/收货/评价/核销/完成、处理中/已结束售后、支付开关，以及今日/昨日/本月金额与单量 | 单次根订单聚合 + 单次售后聚合 + 批量配置读取；保留旧字段名和字符串计数 |
+| `GET order/staging` | 平台待发货、两类售后计数、售罄和库存警戒商品 | 单条 PostgreSQL 查询内的有界标量聚合；平台单明确为 `store_id=0/supplier_id=0` |
+| `GET order/data` | 月内每日金额/订单数/访问记录数，默认第 1 页 15 条 | Asia/Shanghai 日分组，稳定 `MAX(add_time)`，每页最多 100、跨度最多 3,660 天，访问记录排除软删除 |
+| `GET order/time` | 今天/近 7/近 30 天与等时长上期比较，返回金额、增长率、订单、支付人数和访问量 | 周期只接受 1/7/30；当前与上期均为左闭右开秒级窗口，增长方向继续由 `increase_time_status` 表示 |
+| `GET order/time/chart` | 日期升序金额/单量；type=1 特意包含昨日和今日 | 连续补零的日期序列；type=1 保留两日图，其余为 7/30 个上海日 |
+
+PHP `getOrderData(0, ...)` 会把 `uid=0` 写入总订单筛选，可能把真实总数错误收窄到游客 UID；部分搜索器对 `pid=0` 使用大于等于语义，还可能把拆分子单重复计入。候选明确统计所有 `pid=0` 根订单，不复制这两个偏差。订单状态仍按 PHP 业务语义映射：待付款要求未付/status0/refund0；待发货要求已付、status 0/4、refund 0/3、配送类型 1/3；待收货区分快递 status 1/5 与自提 status 0/5；待评价 status2；待核销为自提 status 0/1/5；完成为 status3。所有订单聚合追加 `is_del=0 AND is_system_del=0`，售后追加 `is_cancel=0 AND is_del=0`，不让逻辑删除数据重新进入统计。
+
+### Worker 实现、权限和数据库边界
+
+- 五条精确路由注册在 `/api/admin/order/*`，全部经过现有 `adminAuthMiddleware`。`AdminPermissionService` 的 `order/` GET 映射要求 `order.view`；普通用户 token、失效管理员、密码摘要已变化或缺少角色规则均不能仅凭 URL 获权。五个响应都设置 `Cache-Control: private, no-store, max-age=0`。
+- `AdminStatisticService` 复用现有 PostgreSQL/Hyperdrive 容器；所有条件值由 Drizzle 参数绑定，没有字符串拼接 SQL。金额使用 PostgreSQL numeric 聚合后在服务边界归一化，日界统一为 Asia/Shanghai；请求时间戳限制到 2100 年、页码最多 100,000、每页最多 100，非法小数、指数写法、倒置区间、超长跨度及未知周期均失败关闭。
+- `statistics` 的订单、售后和配置三类独立读取并行执行；`data` 在一条 SQL 中完成每日聚合与访问记录计数，没有逐日数据库往返。图表 SQL 按日期表达式的第 1 列分组/排序；代码复核曾发现候选误写 `GROUP BY 2`，在提交前已改为 `GROUP BY 1` 并增加源合同断言。
+- 本批只发出 `SELECT` 和配置 DAO 读取；没有 DDL、业务 DML、事务写锁、Queue、Durable Object、R2、支付/退款/面单/配送第三方调用，也没有请求返回 SQL、配置正文、用户标识或其他秘密。仓库结构继续是 248 表，生产相对候选仍缺 ADMIN-D 的 `admin_user_write_replay` 一表，本批没有改变或应用该前置 DDL。
+
+用户已明确要求直接使用生产数据库，候选运行时因此继续只绑定生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有引入 SQLite、影子 PostgreSQL 或第二套业务库。dry-run 精确回显该绑定；此前已部署 Worker 的 `/api/site_config` 只读 200 仍是当前生产 Hyperdrive 连通证据。但这五条候选尚未部署，Windows `workerd` 仍在发出请求前以 `0xc0000005` 崩溃；不应把配置绑定、旧接口连通或 mock 单测写成新路由已直接查询生产。部署主 Worker、临时远端审计 Worker或暴露探针都会改变外部状态，仍受 REL-001/002 的单独明确批准门禁，本批没有擅自执行。
+
+### 路由进度、验证、提交与剩余清单
+
+ADMIN-D 后基线为 PHP 1,904、TS 1,467、精确 765、可执行 747、原始缺失 1,139、可执行缺口 1,135；`/api` 为 PHP 457、TS 776、精确 383、可执行 380、原始缺失 74、可执行缺口 73。本批净增五条精确可执行合同后，总计为 TS 1,472、精确 770、可执行 752、原始缺失 1,134、可执行缺口 1,130，精确/可执行/退役后有效覆盖为 40.4%/39.5%/39.6%；`/api` 为 TS 781、精确 388、可执行 385、原始缺失 69、可执行缺口 68，三项覆盖为 84.9%/84.2%/84.4%。其他路由面未改变。
+
+新增定向测试 1 文件 6/6，覆盖上海时区默认月、闭区间到半开区间转换、1/7/30 周期、指数/越界/倒置输入拒绝、PHP 字段映射、支付开关、工作台字符串计数、增长率方向、五个真实 envelope/no-store、五条精确路由、`order.view` ACL、根订单/软删除/只读 SQL 约束。完整本地门禁为双 TypeScript、170 文件/1,064 项单元测试、observability 14 信号/10 域/27 必需事件/371 个生产源文件/6 个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、官方 npm 生产依赖漏洞 0 和 `git diff --check`。本机 runtime 仍是既有 Windows workerd 启动故障；minify dry-run 成功为 3,294.65 KiB/gzip 782.03 KiB，未部署。
+
+实现提交 `f9a55e5fbbed4b539059cf3f76556cc4b1b94fb8` 已推送至 `main`。[GitHub Actions 33412892978](https://github.com/cinagroup/cinashop/actions/runs/33412892978) 最终 8/8 jobs 成功：Linux Worker job 通过生产依赖审计、双 TypeScript、170 文件/1,064 项单测、observability、201/248/201/零定义漂移和 1,904/1,472/770/752 路由门禁；真实 workerd 运行时、Admin、PC、Supplier、Kefu、UniApp 及 checksum-pinned Gitleaks 全部成功。CI 不持有生产 Secret、不访问 Hyperdrive，也不部署 Worker/Pages。Cloudflare Workers 最佳实践审查促成了显式 Admin ACL、私有不缓存响应、参数化有界查询、无请求外副作用和生产绑定/部署证据分离。
+
+ADMIN-A 父项保持未完成，剩余 27 条已拆成可执行 checklist：订单运营/履约 12 条，退款/资金 4 条，代客下单 11 条。下一批应先处理履约读取与无第三方副作用的本地状态操作；退款/资金必须复用 CORE-002 账本和幂等围栏，代客下单必须建立显式 Admin 代客权限和目标 UID 全链路绑定，不能把普通用户 token 兼容逻辑直接搬到生产。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
