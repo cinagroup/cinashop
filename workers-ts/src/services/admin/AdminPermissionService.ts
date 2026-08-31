@@ -71,7 +71,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
     manage: true,
   },
   { key: "order", label: "订单管理", path: "/order", matches: ["order/", "integral/order"], manage: true },
-  { key: "refund", label: "退款审核", path: "/refund", matches: ["refund/"], manage: true },
+  { key: "refund", label: "退款审核", path: "/refund", matches: ["refund/", "refund_order/"], manage: true },
   {
     key: "user",
     label: "用户管理",

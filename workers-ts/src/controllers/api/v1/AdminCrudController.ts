@@ -36,6 +36,7 @@ import {
 import { StoreOperationsService } from "@/services/store/StoreOperationsService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -808,6 +809,38 @@ export async function adminAgentLevelTaskStatus(c: C) {
 // ═══════════════════════════════════════════════════════════
 // 退款审核
 // ═══════════════════════════════════════════════════════════
+
+function mobileRefunds(c: C): AdminMobileRefundService {
+  return new AdminMobileRefundService(c.get("container"));
+}
+
+function privateNoStore(c: C): void {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+}
+
+/** GET /api/admin/refund_order/list — PHP 移动管理端售后列表兼容接口。 */
+export async function adminRefundOrderList(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileRefunds(c).list(c.req.query()));
+}
+
+/** GET /api/admin/refund_order/detail/:uni — 按退款 ID 或退款单号查询。 */
+export async function adminRefundOrderDetail(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileRefunds(c).detail(c.req.param("uni")));
+}
+
+/** POST /api/admin/refund_order/remark — 事务化更新售后备注并写入审计状态。 */
+export async function adminRefundOrderRemark(c: C) {
+  privateNoStore(c);
+  const body: unknown = await c.req.json().catch(() => null);
+  const adminId = c.get("adminId");
+  return jsonOk(
+    c,
+    await mobileRefunds(c).updateRemark(adminId ?? 0, body),
+    "备注成功",
+  );
+}
 
 /** GET /api/admin/refund/list — 退款申请列表 */
 export async function adminRefundList(c: C) {

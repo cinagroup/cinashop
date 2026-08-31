@@ -1359,6 +1359,9 @@ v1Routes.put("/admin/save_set_label", adminAuth, AdminCrud.adminUsersSetLabel);
 // 退款审核
 v1Routes.get("/admin/refund/list", adminAuth, AdminCrud.adminRefundList);
 v1Routes.get("/admin/refund/detail/:id", adminAuth, AdminCrud.adminRefundDetail);
+v1Routes.get("/admin/refund_order/list", adminAuth, AdminCrud.adminRefundOrderList);
+v1Routes.get("/admin/refund_order/detail/:uni", adminAuth, AdminCrud.adminRefundOrderDetail);
+v1Routes.post("/admin/refund_order/remark", adminAuth, AdminCrud.adminRefundOrderRemark);
 v1Routes.post("/admin/refund/agree/:id", adminAuth, AdminCrud.adminRefundAgree);
 v1Routes.post("/admin/refund/refuse/:id", adminAuth, AdminCrud.adminRefundRefuse);
 
