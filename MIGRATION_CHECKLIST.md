@@ -264,7 +264,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **FE-004 Supplier 对账**：旧 41、新 13 个页面组件；浏览器 API 已改为同源 `/supplierapi`，新增 Pages Function 和 Vite proxy，不再默认直连 Worker，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署尚未验收。继续完成订单/商品/售后/财务/打印/面单/附件真实流程与移动布局。
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
 - [ ] **TEST-001 Linux CI**：建立 GitHub Actions，锁定 Node/npm，运行 Worker 单元/类型/runtime、五端构建、Kefu 测试、schema drift、route audit 和 secret scan。
-- [ ] **TEST-002 Workers runtime**：在 Linux 或受支持主机让 `test:runtime` 真正进入断言；覆盖 Cron、Queue ack/retry/DLQ、KV、DO、WebSocket hibernation 和 R2。
+- [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
 - [ ] **TEST-003 性能与可观测性**：为 Hyperdrive 慢查询、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单设置指标、结构化日志和告警阈值。
 - [ ] **REL-001 发布候选门禁**：所有 P0 完成，相关 P1 域完成；生成变更清单、DB 前置、Secret/资源检查、回滚版本和 smoke tests。
 - [ ] **REL-002 主 Worker 发布（BLOCKED：需明确批准）**：发布当前候选，确认版本流量 100%，执行健康/安全负向/关键只读和受控写 smoke test。
@@ -273,7 +273,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## 当前下一步（2026-08-31 更新）
 
-仓库与生产结构现为 247/247，201 张 PHP 共享源表零列缺口、46 张 Worker 扩展表不冒充源数据；WORK-C1～C8 的代码、生产结构和随机 schema 隔离已收口但所有真实租户 authority/发布门禁保持关闭。`sign_remind_time` 的上海 10:25 扫描、可重试 Queue 与幂等站内信也已收口；下一代码批继续选择不依赖源 MySQL或第三方凭据的明确缺口。当前主要阻塞仍是源数据/孤儿修复、真实微信/短信/支付/企微凭据与样本、旧端/五端 E2E、预发、影子流量、明确发布批准和发布后观察；主 Worker与 Pages 未部署本轮代码。
+仓库与生产结构现为 247/247，201 张 PHP 共享源表零列缺口、46 张 Worker 扩展表不冒充源数据；WORK-C1～C8 的代码、生产结构和随机 schema 隔离已收口但所有真实租户 authority/发布门禁保持关闭。`sign_remind_time` 的上海 10:25 扫描、可重试 Queue 与幂等站内信，以及 TEST-002 的 Cron/Queue/KV/R2/DO/WebSocket 真实 workerd 门禁也已收口；下一代码批继续选择不依赖源 MySQL或第三方凭据的明确缺口。当前主要阻塞仍是 TEST-001 全仓 Linux CI、源数据/孤儿修复、真实微信/短信/支付/企微凭据与样本、旧端/五端 E2E、预发、影子流量、明确发布批准和发布后观察；主 Worker与 Pages 未部署本轮代码。
 
 ### 迁移清单生成时的历史快照（保留审计）
 

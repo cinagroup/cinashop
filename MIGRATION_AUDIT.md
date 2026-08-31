@@ -2696,7 +2696,7 @@ callback 白名单 payload 新增 `payload_retained_until/payload_redacted_time`
 - [ ] 把 URL-only 欢迎语附件通过受控下载、类型/大小校验和最小权限素材上传预先物化为可发送 media ID；禁止 Worker 在 callback 热路径抓取任意 URL。
 - [ ] 配置测试租户 CorpID、AgentID、external-contact Secret、callback Token/AES Key、full-visibility 权限和正式 Origin；回读 Cloudflare Script Settings 确认 traces 关闭或 query-string 已可靠脱敏。
 - [ ] 用真实测试客户验证 add/edit callback、20 秒欢迎语、标签、唯一/歧义 unionid、真实 429/41051/权限错误与 Admin 对账，不使用生产客户制造故障。
-- [x] Linux/受支持主机 Workers runtime：Ubuntu 24.04、Node 24.14.1、workerd 1 文件/10 项已由 Actions `33373018752` 通过，含 ChatRoomDO 真实握手/hibernation/token 撤销；Windows `0xc0000005` 只保留为本机环境缺陷。
+- [x] Linux/受支持主机 Workers runtime：Ubuntu 24.04、Node 24.14.1、workerd 1 文件/13 项已由 Actions `33380831249` 通过，含 R2 写读列删、Queue ack/retry/DLQ，以及 ChatRoomDO 真实握手/hibernation/token 撤销；Windows `0xc0000005` 只保留为本机环境缺陷。
 - [ ] 经明确批准部署主 Worker/Admin，按 C0→C8 依赖顺序启用 client/tag/full-visibility/contact-action gates，先预发和小流量，再观察 Queue 延迟、UNKNOWN/DEAD、欢迎码过期、标签 429、UID 歧义和 callback 保留积压；准备关闭 gate 的回滚方案。
 - [ ] 完成旧端/新端 golden response、真机、影子流量、业务/安全批准和发布后观察后，才能勾选 WORK-C 父项。
 
@@ -2725,6 +2725,24 @@ Cron 仍每 5 分钟触发，但只有名义时间换算为 Asia/Shanghai 10:25 
 实现提交为 `59dafb5d4e3f671f48b90a16fd0acae0d62d1142`。本地全量单元测试 163 文件/1,014 项、双 TypeScript、schema audit source 201/target 247/shared 201/零缺口/247↔247 零漂移、生产依赖官方 npm 审计0和 `git diff --check` 通过；主 Worker minify dry-run为3,230.70 KiB/gzip765.97 KiB并精确绑定目标 Hyperdrive，但没有部署。Ubuntu 24.04.4、Node 24.14.1/npm11.11 的 [GitHub Actions 33379089255](https://github.com/cinagroup/cinashop/actions/runs/33379089255) 已通过 locked install、生产依赖审计0和真实 workerd 1文件/11项，其中新增断言证明只有上海10:25才多出签到根任务。Windows本机仍在进入断言前因既有 workerd `0xc0000005` 崩溃，不计为代码失败。
 
 严格剩余边界：生产缺提醒用户、timer和通知模板，无法做真实 token/真实用户正向站内信验收；SMS与小程序订阅消息尚未实现 provider 账本；源 MySQL、旧 PHP并行写切流、默认地址/收藏跨栈问题、五端 E2E、预发、影子流量、明确发布批准及发布后观察仍未完成。因此本批只勾选签到提醒“扫描+Queue+站内信”子项，USER-CENTER-COMPAT父项和正式发布继续保持未完成。
+
+## TEST-002 Workers 真实运行时覆盖审计（2026-08-31）
+
+### 覆盖边界与隔离性
+
+TEST-002 现可严格标记为完成：`@cloudflare/vitest-pool-workers` 启动真实 workerd，并在单一隔离运行时中覆盖 Cron、Queue ack/retry/DLQ、KV、R2、Durable Object 持久化/并发和 WebSocket hibernation。`wrangler.test.toml` 的 Hyperdrive 指向不可连接的 `127.0.0.1:1`，KV 使用全零本地 ID，Queue 使用 `cinashop-order-runtime-test`，新增 R2 bucket 名为 `cinashop-assets-runtime-test`；配置不包含生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、生产 KV ID、生产 Queue 或生产 R2 bucket，因此这些断言不能读写生产资源。
+
+R2 断言在本地 binding 中写入小型文本对象及 HTTP/custom metadata，随后验证正文、metadata、前缀 list、delete 和删除后 get=null。DLQ 断言使用 Cloudflare 测试运行时创建真实 `MessageBatch`：归档成功后出现精确 explicit ack 且无 retry；模拟 PostgreSQL 归档失败后不 ack、只出现 retry marker。每条 retry 的精确 60 秒延迟仍由普通单元测试校验，因为 Cloudflare 当前测试 helper 只暴露 retry marker；生产 DLQ 的 PostgreSQL 持久化、不可变记录和人工重放另有生产引擎/随机 schema 审计，TEST-002 不重复连接生产数据库。
+
+其余运行时断言覆盖：非提醒 Cron 生成13个可重放根任务、上海10:25额外生成签到根任务；legacy Queue 消息明确 ack、支付 outbox 数据库失败不 ack并 retry；KV 写读隔离；SequenceDO 在 isolate eviction 后恢复 SQLite 序列并发分配64个无重复ID；ChatRoomDO 拒绝非法升级、完成真实101握手、恢复 tagged WebSocket attachment并按 token 撤销；扫码登录 DO 覆盖拒绝、受众隔离、签发租约和固定 token 重投。它证明运行时 binding 与关键交付语义在受支持 Linux 主机可执行，不等于生产发布、真实 Hyperdrive/R2 数据链或全仓 TEST-001 已完成。
+
+### 验证证据与未完成项
+
+实现提交 `1e9c0ea86c60e3d5837a6c1be1f001bb0b5c3342` 在本地通过双 TypeScript 检查、`git diff --check` 和全量单元测试163文件/1,014项。Windows 本机仍在0个测试/0条断言前因 workerd `0xc0000005` access violation 启动失败，并伴随沙箱对 Wrangler日志目录的 EPERM；该结果只记录为主机环境缺陷，不计为测试通过或代码回归。
+
+[GitHub Actions 33380831249](https://github.com/cinagroup/cinashop/actions/runs/33380831249) 在 Ubuntu 24.04.4、Node 24.14.1/npm 11.11 上从锁文件安装125个包，生产依赖审计为0漏洞，真实 workerd 最终为1文件/13项全部通过；日志同时出现归档成功事件和第2次尝试归档失败时 `retryDelaySeconds=60`，证实 DLQ 两条分支均实际进入。主 Worker、Pages和任何生产资源均未部署或修改。
+
+TEST-001 继续保持未完成：现有 workflow 只负责 locked install、生产依赖审计与 Workers runtime，没有同时执行 Worker全量单测/类型、五端构建、Kefu专项、schema drift、PHP→TS route audit和 secret scan。尤其 route audit 依赖本机的旧 `cinashop-php` 源树，GitHub仓库中没有等价受控输入；在来源、固定 revision和CI获取方式确定前，不把 TEST-002 的成功扩大解释为全仓 Linux CI 完成。
 
 ## 完成定义
 
