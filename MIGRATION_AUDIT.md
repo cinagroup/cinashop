@@ -2858,6 +2858,33 @@ PHP 权威是 `route/api.php:702-704` 与 `app/controller/api/admin/order/StoreO
 
 用户已要求直接使用生产数据库；仓库实现未来发布后确实只通过现有生产 Hyperdrive 读取/更新目标 PostgreSQL，没有引入影子数据库或 SQLite。但本批是零 schema 变更的未部署 HTTP/service 合同，Windows `wrangler dev --remote` 仍在任何 preview 上传/数据库请求前因 workerd `0xc0000005` 退出，且临时公开探针此前未获安全执行许可，因此没有伪造新的生产查询或写入证据。既有只读审计已确认生产有 3 条售后且售后孤儿/UID错配为 0；这不能代替候选发布后的真实 Admin 账号列表、详情、备注幂等、权限拒绝和发布观察。ADMIN-C 现只标记“代码、静态合同与服务回归完成，未发布”；REL-001/002、TEST-003B～D、真实前端 E2E 和明确生产发布批准仍是独立门禁。
 
+## ADMIN-B 内嵌商品详细审计（2026-08-31）
+
+### PHP 权威、旧端真实用法与缺口判定
+
+PHP 权威是 `route/api.php:709,713-718` 的七条移动管理合同：`GET /api/admin/product/category`、`GET /api/admin/product/admin_list`、`POST /api/admin/product/set_show`、`GET /api/admin/product/product_label`、`GET /api/admin/product/get_attr/:id`、`POST /api/admin/product/update_attrs/:id` 与 `POST /api/admin/product/batch_process`。控制器分别落到 `admin/product/StoreProductCategory::category()` 和 `admin/product/StoreProduct`；服务层的管理列表把 `type` 映射为商品状态，默认状态为 1，返回 `{list,count}` 并为单规格商品附加一个 `attr_value`。分类返回可见树，标签返回标签组/标签 children 树；规格读取限定 `product_id + type=0`，规格写入按 `unique` 更新 price/stock/cost/ot_price、把 `sum_stock` 重置为当前库存、重算商品总库存及最高售价/成本/划线价，并写库存记录。上下架还同步购物车和分类关系；批处理服务实际支持 1～9 多类后台动作，但旧 UniApp `pages/admin/goods` 只从该路径调用类型 1 分类和类型 2 商品标签，checklist 原始范围也明确为“修改分类标签”。
+
+实现前 Worker 只有不同路径/不同投影的商品列表、详情和单 ID 状态修改：没有七条精确合同，列表缺 `is_show/attr_value/plate_name` 等旧页面字段，既有状态修改也没有恢复移动端批量载荷、购物车/关系同步或规格价格库存合同，因此不能用相似路由计算为迁移完成。PHP 这组路由历史上依赖普通用户 token/Customer middleware，规格更新信任客户端 `unique`，批处理把关系更新分发到异步 Job，缺少跨主表/关系表的单事务原子性；这些宽边界没有照搬。
+
+### 实现、状态机与安全收紧
+
+- `AdminMobileProductService` 恢复七条旧路径和 PHP envelope，所有响应设置 `Cache-Control: private, no-store, max-age=0`。路由统一经过现有 `adminAuthMiddleware`；`product/` 权限域令 GET 需要 `product.view`、POST 需要 `product.manage`，没有因为路径位于 `/api/admin` 就允许普通用户 token。
+- 管理列表保留 `store_name/type/page/limit` 与默认状态 1，复用既有 DAO 的 PHP 搜索/状态语义并把单页限制为 100；只读取 `is_del=0` 商品，再补齐权威 `is_show/cate_id/store_label_id`、单规格 SKU、库存/销量和平台/有效门店/有效供应商名称。旧 CSV/JSON 标签字段以容错只读方式解析，损坏值收敛为空数组而不是让整页失败。分类只返回平台可见树；父链环或孤儿不会形成无法 JSON 序列化的循环对象。标签只返回平台有效标签组和可见有效标签，停用关系失败关闭。
+- 上下架载荷允许一个或最多 100 个去重商品 ID，`is_show` 必须精确为 0/1。事务设置 2 秒 `lock_timeout` 与 5 秒 `statement_timeout`，锁定全部商品行并要求精确存在；删除商品拒绝修改，上架额外要求 `is_verify=1`，成功后清空定时下架、同步有效未支付购物车及 `type=1` 分类关系。历史已支付/已删购物车不会被追溯改写。
+- 规格更新最多 500 条，只接受必填且不重复的 8 字符内 `unique`、两位小数内非负 price/cost/ot_price 和 32 位非负整数 stock。服务先锁定有效商品与其全部基础 SKU，客户端 `unique` 必须属于当前商品；未提交 SKU 保持原值，提交 SKU 按数据库主键和 product/type 双重条件更新。总库存做安全整数上限检查，商品聚合字段从锁内最终 SKU 重算；只有真实库存差额才写 `store_product_stock_record`，从而阻止跨商品 SKU 改价、负库存、溢出和无变化审计噪声。
+- 批处理只接受旧移动端实际使用的类型 1 分类与类型 2 商品标签，最多 100 个商品、50 个关系；标签空数组表示显式清空。商品行先锁定，分类/标签行以共享锁验证为平台有效对象，再在同一事务内替换商品 CSV 字段和 `store_product_relation`。这比 PHP 的主表更新后异步 Job 更强地保证原子性，但不声称恢复后台隐藏的配送方式、用户标签、虚拟商品、商品保障、品牌等类型 3～9；这些如有真实调用必须分别审计。
+- 本批没有 DDL、Queue 消息、第三方网络调用、资金动作、生产业务 DML 或新运行日志。Cloudflare Workers 最佳实践审查直接约束了显式 Admin ACL、请求内事务、短锁/语句超时、无秘密响应、无请求外副作用和结构化回归门禁。
+
+### 路由、测试、CI 与生产边界
+
+实现前 ADMIN-C 后的总路由为 PHP 1,904、TS 1,452、精确 750、可执行 732、原始缺失 1,154、可执行缺口 1,150；`/api` 为 PHP 457、TS 761、精确 368、可执行 365、原始缺失 89、可执行缺口 88。ADMIN-B 净增七条精确可执行合同后，总计为 TS 1,459、精确 757、可执行 739、原始缺失 1,147、可执行缺口 1,143，精确/可执行/退役后有效覆盖为 39.8%/38.8%/38.9%；`/api` 为 TS 768、精确 375、可执行 372、原始缺失 82、可执行缺口 81，三项覆盖为 82.1%/81.4%/81.6%。其他路由面未改变；静态覆盖仍不等于真实前端、权限拒绝、并发状态机或生产发布已完成。
+
+定向三文件 21/21 覆盖列表/状态/SKU/批处理解析边界、分类树与环防护、七个控制器 envelope/no-store、精确路由、view/manage ACL、商品/SKU 锁、权威成员校验、库存审计和关系同步。完整本地门禁为双 TypeScript、168 文件/1,051 项单元测试、observability 14 信号/10 域/27 必需事件/369 个生产源文件/6 个发布阻塞、schema source201/target247/shared201/sourceGaps0/externalOnly0/workerOnly0/columnDrift0、官方 npm 生产依赖审计 0 和 `git diff --check`。Windows 本机 workerd 仍在执行断言前以 `0xc0000005` 启动失败；主 Worker minify dry-run 成功为 3,260.91 KiB/gzip 774.00 KiB，精确回显生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有执行部署。
+
+实现提交 `dcf1666ef17507697c167d61a33fe214733640a5` 已推送至 `main`。[GitHub Actions 33402759265](https://github.com/cinagroup/cinashop/actions/runs/33402759265) 最终 8/8 jobs 成功：Worker job 在 Linux 通过生产依赖审计 0、双 TypeScript、168 文件/1,051 项单测、observability、201/247/201/零缺口/零定义漂移和 1,904/1,459/757/739 路由门禁；真实 workerd 1 文件/13 项通过；Admin、PC、Supplier、Kefu和UniApp矩阵全部成功；checksum-pinned Gitleaks 扫描 77 个提交且 `no leaks found`。CI 没有生产 Secret，不访问 Hyperdrive，也不部署 Worker/Pages。
+
+用户已要求直接使用生产数据库；当前实现没有引入影子库，未来获批发布后七条服务将直接通过上述生产 Hyperdrive 读写 PostgreSQL。本批没有 schema 变化，且安全的本地远端执行路径仍被 Windows workerd 崩溃阻断；永久临时公开探针不在既有授权范围，因此没有用测试写入触碰生产商品、SKU、购物车或关系数据，也没有把 dry-run 描述成生产 E2E。ADMIN-B 目前只能标为“代码、静态合同与服务回归完成，未发布”；发布前仍需真实 Admin 账号的最小权限拒绝/允许、列表字段、上下架、规格幂等与并发、分类/标签替换、旧 UniApp 流程和回滚演练，且主 Worker/Pages 发布继续受 REL-001/002 的单独明确批准门禁约束。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
