@@ -177,7 +177,6 @@ describe("Kefu ChatRoomDO WebSocket hibernation", () => {
       // context. Keep the peer strongly referenced until revocation completes.
       const pair = new WebSocketPair();
       const [client, server] = Object.values(pair);
-      client.accept();
       keepAlive.push(client);
       state.acceptWebSocket(server, ["role:2"]);
       server.serializeAttachment(session);
