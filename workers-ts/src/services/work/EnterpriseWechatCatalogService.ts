@@ -16,9 +16,7 @@ import {
   workCallbackEvent,
   workClientCurrent,
   workClientProjectionFence,
-  workGroupChat,
   workGroupChatAuth,
-  workGroupChatMember,
   workGroupMsgSendResult,
   workGroupTemplate,
   workLabel,
@@ -125,6 +123,7 @@ function runtimeMeta() {
 interface WorkCatalogEnvironment {
   WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?: string;
   WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?: string;
 }
 
 interface CurrentDepartmentCatalogRow {
@@ -254,6 +253,14 @@ function clientCatalogRuntimeMeta(authority: string) {
   };
 }
 
+function groupCatalogRuntimeMeta(authority: string) {
+  return {
+    group_catalog_authority: authority,
+    remote_write_authority: "not_migrated_requires_idempotent_outbox" as const,
+    pii_display: "masked" as const,
+  };
+}
+
 export class EnterpriseWechatCatalogService {
   constructor(
     private readonly container: Container,
@@ -334,13 +341,80 @@ export class EnterpriseWechatCatalogService {
     };
   }
 
+  private async groupSummary(): Promise<{
+    count: number;
+    blockedCurrentRows: number;
+    authority: string;
+  }> {
+    const currentAuthority = this.env.WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?.trim()
+      === "verified";
+    if (currentAuthority) {
+      const raw = await this.container.db.execute(sql`
+        SELECT count(*)::double precision AS group_count
+        FROM work_group_chat_current AS current_row
+        INNER JOIN work_group_chat_projection_fence AS fence
+          ON fence.corp_id = current_row.corp_id
+         AND fence.chat_id = current_row.chat_id
+         AND fence.last_event_id = current_row.last_event_id
+         AND fence.last_event_key = current_row.last_event_key
+         AND fence.last_event_subject_key_hash = current_row.last_event_subject_key_hash
+         AND fence.last_event_time = current_row.last_event_time
+         AND fence.last_sequence_rank = current_row.last_sequence_rank
+        INNER JOIN work_callback_event AS callback_event
+          ON callback_event.id = current_row.last_event_id
+         AND callback_event.corp_id = current_row.corp_id
+         AND callback_event.event_key = current_row.last_event_key
+         AND callback_event.subject_key_hash = current_row.last_event_subject_key_hash
+         AND callback_event.event_time = current_row.last_event_time
+         AND callback_event.sequence_rank = current_row.last_sequence_rank
+        WHERE callback_event.status = 'ORDERED'
+          AND callback_event.projection_status IN ('APPLIED','APPLIED_NOOP')
+          AND callback_event.msg_type = 'event'
+          AND callback_event.event_type = 'change_external_chat'
+          AND (
+            (current_row.lifecycle_state = 'ACTIVE'
+              AND current_row.profile_complete AND current_row.members_complete
+              AND callback_event.change_type IN ('create','update'))
+            OR (current_row.lifecycle_state = 'DISMISSED'
+              AND callback_event.change_type = 'dismiss')
+          )
+      `);
+      return {
+        count: Number(raw[0]?.group_count ?? 0),
+        blockedCurrentRows: 0,
+        authority: "enterprise_wechat_group_chat_current",
+      };
+    }
+    const raw = await this.container.db.execute(sql`
+      WITH current_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS blocked_current_rows
+        FROM work_group_chat_current
+      ), legacy_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS group_count
+        FROM work_group_chat AS legacy_row
+        CROSS JOIN current_state
+        WHERE current_state.blocked_current_rows = 0
+      )
+      SELECT current_state.blocked_current_rows, legacy_state.group_count
+      FROM current_state CROSS JOIN legacy_state
+    `);
+    const blockedCurrentRows = Number(raw[0]?.blocked_current_rows ?? 0);
+    return {
+      count: Number(raw[0]?.group_count ?? 0),
+      blockedCurrentRows,
+      authority: blockedCurrentRows > 0
+        ? "group_chat_current_authority_disabled"
+        : "postgresql_imported_history",
+    };
+  }
+
   async summary() {
     const [members, activeMembers, clients, groups, channels, templates, moments, pendingGroup, pendingMoment] =
       await Promise.all([
         this.container.db.select({ value: count() }).from(workMember),
         this.container.db.select({ value: count() }).from(workMember).where(and(eq(workMember.enable, 1), eq(workMember.status, 1))),
         this.clientSummary(),
-        this.container.db.select({ value: count() }).from(workGroupChat),
+        this.groupSummary(),
         this.container.db.select({ value: count() }).from(workChannelCode).where(isNull(workChannelCode.deleteTime)),
         this.container.db.select({ value: count() }).from(workGroupTemplate),
         this.container.db.select({ value: count() }).from(workMoment),
@@ -351,7 +425,7 @@ export class EnterpriseWechatCatalogService {
       members: Number(members[0]?.value ?? 0),
       active_members: Number(activeMembers[0]?.value ?? 0),
       clients: clients.count,
-      groups: Number(groups[0]?.value ?? 0),
+      groups: groups.count,
       channels: Number(channels[0]?.value ?? 0),
       templates: Number(templates[0]?.value ?? 0),
       moments: Number(moments[0]?.value ?? 0),
@@ -359,6 +433,8 @@ export class EnterpriseWechatCatalogService {
       ...runtimeMeta(),
       ...clientCatalogRuntimeMeta(clients.authority),
       blocked_client_current_rows: clients.blockedCurrentRows,
+      ...groupCatalogRuntimeMeta(groups.authority),
+      blocked_group_current_rows: groups.blockedCurrentRows,
     };
   }
 
@@ -721,34 +797,135 @@ export class EnterpriseWechatCatalogService {
     const { page, limit } = pageQuery(query);
     const search = keyword(query.keyword ?? query.name);
     const status = optionalStatus(query.status);
-    const conditions: SQL[] = [];
-    if (status !== undefined) conditions.push(eq(workGroupChat.status, status));
-    if (search) {
-      const pattern = like(search);
-      conditions.push(or(ilike(workGroupChat.name, pattern), ilike(workGroupChat.chatId, pattern), ilike(workGroupChat.owner, pattern))!);
+    const pattern = like(search);
+    const currentAuthority = this.env.WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?.trim()
+      === "verified";
+    if (currentAuthority) {
+      const raw = await this.container.db.execute(sql`
+        WITH eligible AS MATERIALIZED (
+          SELECT current_row.*
+          FROM work_group_chat_current AS current_row
+          INNER JOIN work_group_chat_projection_fence AS fence
+            ON fence.corp_id = current_row.corp_id
+           AND fence.chat_id = current_row.chat_id
+           AND fence.last_event_id = current_row.last_event_id
+           AND fence.last_event_key = current_row.last_event_key
+           AND fence.last_event_subject_key_hash = current_row.last_event_subject_key_hash
+           AND fence.last_event_time = current_row.last_event_time
+           AND fence.last_sequence_rank = current_row.last_sequence_rank
+          INNER JOIN work_callback_event AS callback_event
+            ON callback_event.id = current_row.last_event_id
+           AND callback_event.corp_id = current_row.corp_id
+           AND callback_event.event_key = current_row.last_event_key
+           AND callback_event.subject_key_hash = current_row.last_event_subject_key_hash
+           AND callback_event.event_time = current_row.last_event_time
+           AND callback_event.sequence_rank = current_row.last_sequence_rank
+          WHERE callback_event.status = 'ORDERED'
+            AND callback_event.projection_status IN ('APPLIED','APPLIED_NOOP')
+            AND callback_event.msg_type = 'event'
+            AND callback_event.event_type = 'change_external_chat'
+            AND (
+              (current_row.lifecycle_state = 'ACTIVE'
+                AND current_row.profile_complete AND current_row.members_complete
+                AND callback_event.change_type IN ('create','update'))
+              OR (current_row.lifecycle_state = 'DISMISSED'
+                AND callback_event.change_type = 'dismiss')
+            )
+            ${status === undefined ? sql`` : sql`AND current_row.provider_status = ${status}`}
+            ${search ? sql`AND (
+              current_row.name ILIKE ${pattern} ESCAPE '\\'
+              OR current_row.chat_id ILIKE ${pattern} ESCAPE '\\'
+              OR current_row.owner ILIKE ${pattern} ESCAPE '\\'
+            )` : sql``}
+        ), totals AS (
+          SELECT count(*)::double precision AS total_count FROM eligible
+        ), paged AS (
+          SELECT * FROM eligible
+          ORDER BY update_time DESC, id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        )
+        SELECT paged.*, totals.total_count
+        FROM totals LEFT JOIN LATERAL (SELECT * FROM paged) AS paged ON true
+        ORDER BY paged.update_time DESC NULLS LAST, paged.id DESC NULLS LAST
+      `);
+      const rows = raw.filter((row) => row.id !== null && row.id !== undefined);
+      return {
+        list: rows.map((row) => {
+          const lifecycle = String(row.lifecycle_state ?? "");
+          const admins = Array.isArray(row.admin_list) ? row.admin_list : [];
+          return {
+            id: Number(row.id),
+            chat_id: maskIdentifier(String(row.chat_id ?? "")),
+            name: String(row.name ?? ""),
+            owner: maskIdentifier(String(row.owner ?? "")),
+            group_create_time: Number(row.group_created_time ?? 0),
+            notice: previewText(row.notice == null ? "" : String(row.notice), 120),
+            admin_count: admins.length,
+            member_num: Number(row.member_count ?? 0),
+            retreat_group_num: Number(row.departed_member_count ?? 0),
+            status: row.provider_status == null ? 0 : Number(row.provider_status),
+            lifecycle_state: lifecycle,
+            update_time: Number(row.update_time ?? 0),
+          };
+        }),
+        count: Number(raw[0]?.total_count ?? 0),
+        ...groupCatalogRuntimeMeta("enterprise_wechat_group_chat_current"),
+      };
     }
-    const where = conditions.length ? and(...conditions) : undefined;
-    const [rows, totals] = await Promise.all([
-      this.container.db.select().from(workGroupChat).where(where)
-        .orderBy(desc(workGroupChat.updateTime), desc(workGroupChat.id)).limit(limit).offset((page - 1) * limit),
-      this.container.db.select({ value: count() }).from(workGroupChat).where(where),
-    ]);
+
+    const raw = await this.container.db.execute(sql`
+      WITH current_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS blocked_current_rows
+        FROM work_group_chat_current
+      ), eligible_legacy AS MATERIALIZED (
+        SELECT legacy_row.*
+        FROM work_group_chat AS legacy_row
+        CROSS JOIN current_state
+        WHERE current_state.blocked_current_rows = 0
+          ${status === undefined ? sql`` : sql`AND legacy_row.status = ${status}`}
+          ${search ? sql`AND (
+            legacy_row.name ILIKE ${pattern} ESCAPE '\\'
+            OR legacy_row.chat_id ILIKE ${pattern} ESCAPE '\\'
+            OR legacy_row.owner ILIKE ${pattern} ESCAPE '\\'
+          )` : sql``}
+      ), totals AS (
+        SELECT count(*)::double precision AS total_count FROM eligible_legacy
+      ), paged AS (
+        SELECT * FROM eligible_legacy
+        ORDER BY update_time DESC, id DESC
+        LIMIT ${limit} OFFSET ${(page - 1) * limit}
+      )
+      SELECT current_state.blocked_current_rows, paged.*, totals.total_count
+      FROM current_state CROSS JOIN totals
+      LEFT JOIN LATERAL (SELECT * FROM paged) AS paged ON true
+      ORDER BY paged.update_time DESC NULLS LAST, paged.id DESC NULLS LAST
+    `);
+    const blockedCurrentRows = Number(raw[0]?.blocked_current_rows ?? 0);
+    if (blockedCurrentRows > 0) {
+      return {
+        list: [],
+        count: 0,
+        blocked_current_rows: blockedCurrentRows,
+        ...groupCatalogRuntimeMeta("group_chat_current_authority_disabled"),
+      };
+    }
+    const rows = raw.filter((row) => row.id !== null && row.id !== undefined);
     return {
       list: rows.map((row) => ({
-        id: row.id,
-        chat_id: maskIdentifier(row.chatId),
-        name: row.name,
-        owner: maskIdentifier(row.owner),
-        group_create_time: row.groupCreateTime,
-        notice: previewText(row.notice, 120),
-        admin_count: parseStringList(row.adminList).length,
-        member_num: row.memberNum,
-        retreat_group_num: row.retreatGroupNum,
-        status: row.status,
-        update_time: row.updateTime,
+        id: Number(row.id),
+        chat_id: maskIdentifier(String(row.chat_id ?? "")),
+        name: String(row.name ?? ""),
+        owner: maskIdentifier(String(row.owner ?? "")),
+        group_create_time: Number(row.group_create_time ?? 0),
+        notice: previewText(row.notice == null ? "" : String(row.notice), 120),
+        admin_count: parseStringList(row.admin_list == null ? "" : String(row.admin_list)).length,
+        member_num: Number(row.member_num ?? 0),
+        retreat_group_num: Number(row.retreat_group_num ?? 0),
+        status: Number(row.status ?? 0),
+        update_time: Number(row.update_time ?? 0),
       })),
-      count: Number(totals[0]?.value ?? 0),
-      ...runtimeMeta(),
+      count: Number(raw[0]?.total_count ?? 0),
+      ...groupCatalogRuntimeMeta("postgresql_imported_history"),
     };
   }
 
@@ -756,30 +933,155 @@ export class EnterpriseWechatCatalogService {
     const groupId = integer(groupValue, "客户群ID", { fallback: 0, min: 1 });
     const { page, limit } = pageQuery(query);
     const status = optionalStatus(query.status);
-    const conditions: SQL[] = [eq(workGroupChatMember.groupId, groupId)];
-    if (status !== undefined) conditions.push(eq(workGroupChatMember.status, status));
-    const where = and(...conditions);
-    const [rows, totals] = await Promise.all([
-      this.container.db.select().from(workGroupChatMember).where(where)
-        .orderBy(desc(workGroupChatMember.joinTime), desc(workGroupChatMember.id)).limit(limit).offset((page - 1) * limit),
-      this.container.db.select({ value: count() }).from(workGroupChatMember).where(where),
-    ]);
+    const currentAuthority = this.env.WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?.trim()
+      === "verified";
+    if (currentAuthority) {
+      const lifecycle = status === undefined
+        ? undefined
+        : status === 1
+          ? "ACTIVE"
+          : status === 0
+            ? "LEFT"
+            : status === 2
+              ? "DISMISSED"
+              : "__NONE__";
+      const raw = await this.container.db.execute(sql`
+        WITH eligible_group AS MATERIALIZED (
+          SELECT current_row.id, current_row.corp_id
+          FROM work_group_chat_current AS current_row
+          INNER JOIN work_group_chat_projection_fence AS fence
+            ON fence.corp_id = current_row.corp_id
+           AND fence.chat_id = current_row.chat_id
+           AND fence.last_event_id = current_row.last_event_id
+           AND fence.last_event_key = current_row.last_event_key
+           AND fence.last_event_subject_key_hash = current_row.last_event_subject_key_hash
+           AND fence.last_event_time = current_row.last_event_time
+           AND fence.last_sequence_rank = current_row.last_sequence_rank
+          INNER JOIN work_callback_event AS group_event
+            ON group_event.id = current_row.last_event_id
+           AND group_event.corp_id = current_row.corp_id
+           AND group_event.event_key = current_row.last_event_key
+           AND group_event.subject_key_hash = current_row.last_event_subject_key_hash
+           AND group_event.event_time = current_row.last_event_time
+           AND group_event.sequence_rank = current_row.last_sequence_rank
+          WHERE current_row.id = ${groupId}
+            AND (SELECT count(*) FROM work_group_chat_current
+              WHERE id = ${groupId}) = 1
+            AND group_event.status = 'ORDERED'
+            AND group_event.projection_status IN ('APPLIED','APPLIED_NOOP')
+            AND group_event.msg_type = 'event'
+            AND group_event.event_type = 'change_external_chat'
+            AND (
+              (current_row.lifecycle_state = 'ACTIVE'
+                AND current_row.profile_complete AND current_row.members_complete
+                AND group_event.change_type IN ('create','update'))
+              OR (current_row.lifecycle_state = 'DISMISSED'
+                AND group_event.change_type = 'dismiss')
+            )
+        ), eligible AS MATERIALIZED (
+          SELECT member_row.*
+          FROM work_group_chat_member_current AS member_row
+          INNER JOIN eligible_group AS group_row
+            ON group_row.corp_id = member_row.corp_id
+           AND group_row.id = member_row.group_id
+          INNER JOIN work_callback_event AS member_event
+            ON member_event.id = member_row.last_event_id
+           AND member_event.corp_id = member_row.corp_id
+           AND member_event.event_key = member_row.last_event_key
+           AND member_event.subject_key_hash = member_row.last_event_subject_key_hash
+           AND member_event.event_time = member_row.last_event_time
+           AND member_event.sequence_rank = member_row.last_sequence_rank
+          WHERE member_event.status = 'ORDERED'
+            AND member_event.projection_status IN ('APPLIED','APPLIED_NOOP')
+            AND member_event.msg_type = 'event'
+            AND member_event.event_type = 'change_external_chat'
+            AND member_event.change_type IN ('create','update','dismiss')
+            ${lifecycle === undefined ? sql`` : sql`AND member_row.lifecycle_state = ${lifecycle}`}
+        ), totals AS (
+          SELECT count(*)::double precision AS total_count FROM eligible
+        ), paged AS (
+          SELECT * FROM eligible
+          ORDER BY join_time DESC, id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        )
+        SELECT paged.*, totals.total_count
+        FROM totals LEFT JOIN LATERAL (SELECT * FROM paged) AS paged ON true
+        ORDER BY paged.join_time DESC NULLS LAST, paged.id DESC NULLS LAST
+      `);
+      const rows = raw.filter((row) => row.id !== null && row.id !== undefined);
+      return {
+        list: rows.map((row) => {
+          const memberLifecycle = String(row.lifecycle_state ?? "");
+          return {
+            id: Number(row.id),
+            group_id: Number(row.group_id),
+            userid: maskIdentifier(String(row.userid ?? "")),
+            type: Number(row.type ?? 0),
+            unionid: maskIdentifier(String(row.unionid ?? "")),
+            join_time: Number(row.join_time ?? 0),
+            join_scene: Number(row.join_scene ?? 0),
+            group_nickname: String(row.group_nickname ?? ""),
+            name: String(row.name ?? ""),
+            status: memberLifecycle === "ACTIVE" ? 1 : memberLifecycle === "LEFT" ? 0 : 2,
+            lifecycle_state: memberLifecycle,
+            state: String(row.state ?? ""),
+            left_time: row.left_time == null ? null : Number(row.left_time),
+          };
+        }),
+        count: Number(raw[0]?.total_count ?? 0),
+        ...groupCatalogRuntimeMeta("enterprise_wechat_group_chat_current"),
+      };
+    }
+
+    const raw = await this.container.db.execute(sql`
+      WITH current_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS blocked_current_rows
+        FROM work_group_chat_current
+      ), eligible_legacy AS MATERIALIZED (
+        SELECT member_row.*
+        FROM work_group_chat_member AS member_row
+        CROSS JOIN current_state
+        WHERE current_state.blocked_current_rows = 0
+          AND member_row.group_id = ${groupId}
+          ${status === undefined ? sql`` : sql`AND member_row.status = ${status}`}
+      ), totals AS (
+        SELECT count(*)::double precision AS total_count FROM eligible_legacy
+      ), paged AS (
+        SELECT * FROM eligible_legacy
+        ORDER BY join_time DESC, id DESC
+        LIMIT ${limit} OFFSET ${(page - 1) * limit}
+      )
+      SELECT current_state.blocked_current_rows, paged.*, totals.total_count
+      FROM current_state CROSS JOIN totals
+      LEFT JOIN LATERAL (SELECT * FROM paged) AS paged ON true
+      ORDER BY paged.join_time DESC NULLS LAST, paged.id DESC NULLS LAST
+    `);
+    const blockedCurrentRows = Number(raw[0]?.blocked_current_rows ?? 0);
+    if (blockedCurrentRows > 0) {
+      return {
+        list: [],
+        count: 0,
+        blocked_current_rows: blockedCurrentRows,
+        ...groupCatalogRuntimeMeta("group_chat_current_authority_disabled"),
+      };
+    }
+    const rows = raw.filter((row) => row.id !== null && row.id !== undefined);
     return {
       list: rows.map((row) => ({
-        id: row.id,
-        group_id: row.groupId,
-        userid: maskIdentifier(row.userid),
-        type: row.type,
-        unionid: maskIdentifier(row.unionid),
-        join_time: row.joinTime,
-        join_scene: row.joinScene,
-        group_nickname: row.groupNickname,
-        name: row.name,
-        status: row.status,
-        state: row.state,
+        id: Number(row.id),
+        group_id: Number(row.group_id),
+        userid: maskIdentifier(String(row.userid ?? "")),
+        type: Number(row.type ?? 0),
+        unionid: maskIdentifier(String(row.unionid ?? "")),
+        join_time: Number(row.join_time ?? 0),
+        join_scene: Number(row.join_scene ?? 0),
+        group_nickname: String(row.group_nickname ?? ""),
+        name: String(row.name ?? ""),
+        status: Number(row.status ?? 0),
+        state: String(row.state ?? ""),
       })),
-      count: Number(totals[0]?.value ?? 0),
-      ...runtimeMeta(),
+      count: Number(raw[0]?.total_count ?? 0),
+      ...groupCatalogRuntimeMeta("postgresql_imported_history"),
     };
   }
 

@@ -319,6 +319,27 @@ describe("Enterprise WeChat callback durable pipeline", () => {
       /\b(?:INSERT\s+INTO|UPDATE\s+work_client|DELETE\s+FROM|DROP\s+TABLE)\b/i,
     );
 
+    const groupProjectionMigration = readFileSync(
+      "migrations/0116_work_group_chat_current_projection.sql",
+      "utf8",
+    );
+    expect(new MigrationService({} as never)
+      .workGroupChatCurrentProjectionMigrationSqlForVerification())
+      .toBe(groupProjectionMigration);
+    expect(service).toContain("workGroupChatCurrentProjectionMigrationSqlForVerification");
+    expect(service).toContain("this.migration_0122()");
+    expect((groupProjectionMigration.match(/^\s*CREATE TABLE IF NOT EXISTS/gm) ?? []))
+      .toHaveLength(3);
+    expect(groupProjectionMigration).toContain("work_group_chat_projection_fence");
+    expect(groupProjectionMigration).toContain("departed_member_count");
+    expect(groupProjectionMigration).toContain("GENERATED ALWAYS AS IDENTITY");
+    expect(groupProjectionMigration).toContain("wce_department_ref_uq");
+    expect(groupProjectionMigration).toContain("ON DELETE RESTRICT");
+    expect(groupProjectionMigration).toContain("0116 projection constraint count drift");
+    expect(groupProjectionMigration).not.toMatch(
+      /\b(?:INSERT\s+INTO|UPDATE\s+work_group_chat|DELETE\s+FROM|DROP\s+TABLE)\b/i,
+    );
+
     const projectionMigration = readFileSync(
       "migrations/0111_work_callback_projection_state.sql",
       "utf8",

@@ -35,7 +35,10 @@ import {
   workClientProjectionFence,
   workCallbackEvent,
   workGroupChat,
+  workGroupChatCurrent,
   workGroupChatMember,
+  workGroupChatMemberCurrent,
+  workGroupChatProjectionFence,
   workMember,
   workMemberCurrent,
   workMemberIdentityAlias,
@@ -98,6 +101,7 @@ export interface WorkContextDependencies {
 }
 
 type ClientProjectionSource = "legacy" | "current";
+type GroupProjectionSource = "legacy" | "current";
 
 interface ScopedClient {
   id: number;
@@ -136,7 +140,17 @@ interface GroupClientProjection {
 interface GroupScope {
   actorUserid: string;
   corpId: string;
-  group: typeof workGroupChat.$inferSelect;
+  source: GroupProjectionSource;
+  group: {
+    id: number;
+    chatId: string;
+    name: string;
+    owner: string;
+    groupCreateTime: number;
+    notice: string;
+    memberNum: number;
+    retreatGroupNum: number;
+  };
 }
 
 interface WorkContextClaims {
@@ -146,6 +160,7 @@ interface WorkContextClaims {
   targetId: number;
   uid: number;
   clientProjectionSource?: ClientProjectionSource;
+  groupProjectionSource?: GroupProjectionSource;
 }
 
 function randomHex(bytes: number): string {
@@ -358,6 +373,7 @@ export class EnterpriseWechatContextService {
         actorUserid: scope.actorUserid,
         targetId: scope.group.id,
         uid: 0,
+        groupProjectionSource: scope.source,
       };
     }
     return {
@@ -444,77 +460,216 @@ export class EnterpriseWechatContextService {
   }
 
   async groupInfo(token: string) {
-    const scope = await this.groupScopeFromToken(token);
-    const today = Math.floor((this.now() + 8 * 60 * 60) / 86_400) * 86_400 - 8 * 60 * 60;
-    const stats = await this.container.db.select({
-      today_sum: count(sql`CASE WHEN ${workGroupChatMember.joinTime} >= ${today} AND ${workGroupChatMember.status} = 1 THEN 1 END`),
-      today_return_sum: count(sql`CASE WHEN ${workGroupChatMember.joinTime} >= ${today} AND ${workGroupChatMember.status} = 0 THEN 1 END`),
-      current_members: count(sql`CASE WHEN ${workGroupChatMember.status} = 1 THEN 1 END`),
-    }).from(workGroupChatMember).where(eq(workGroupChatMember.groupId, scope.group.id));
-    return {
-      id: scope.group.id,
-      chat_id: scope.group.chatId,
-      name: scope.group.name,
-      owner: scope.group.owner,
-      group_create_time: epoch(scope.group.groupCreateTime),
-      notice: scope.group.notice,
-      member_num: Number(stats[0]?.current_members ?? scope.group.memberNum),
-      retreat_group_num: scope.group.retreatGroupNum,
-      todaySum: Number(stats[0]?.today_sum ?? 0),
-      todayReturnSum: Number(stats[0]?.today_return_sum ?? 0),
-    };
+    const claims = await this.verifyClaims(token, "work-group");
+    return withTx(this.container, async (tx) => {
+      const scope = await this.requireGroupScopeByIdInTx(tx, claims);
+      const today = Math.floor((this.now() + 8 * 60 * 60) / 86_400) * 86_400
+        - 8 * 60 * 60;
+      if (scope.source === "current") {
+        const stats = await tx.select({
+          today_sum: count(sql`CASE WHEN ${workGroupChatMemberCurrent.joinTime} >= ${today} AND ${workGroupChatMemberCurrent.lifecycleState} = 'ACTIVE' THEN 1 END`),
+          today_return_sum: count(sql`CASE WHEN ${workGroupChatMemberCurrent.leftTime} >= ${today} AND ${workGroupChatMemberCurrent.lifecycleState} = 'LEFT' THEN 1 END`),
+          current_members: count(sql`CASE WHEN ${workGroupChatMemberCurrent.lifecycleState} = 'ACTIVE' THEN 1 END`),
+        }).from(workGroupChatMemberCurrent).where(and(
+          eq(workGroupChatMemberCurrent.corpId, scope.corpId),
+          eq(workGroupChatMemberCurrent.groupId, scope.group.id),
+        ));
+        return {
+          id: scope.group.id,
+          chat_id: scope.group.chatId,
+          name: scope.group.name,
+          owner: scope.group.owner,
+          group_create_time: epoch(scope.group.groupCreateTime),
+          notice: scope.group.notice,
+          member_num: Number(stats[0]?.current_members ?? scope.group.memberNum),
+          retreat_group_num: scope.group.retreatGroupNum,
+          todaySum: Number(stats[0]?.today_sum ?? 0),
+          todayReturnSum: Number(stats[0]?.today_return_sum ?? 0),
+        };
+      }
+      const stats = await tx.select({
+        today_sum: count(sql`CASE WHEN ${workGroupChatMember.joinTime} >= ${today} AND ${workGroupChatMember.status} = 1 THEN 1 END`),
+        today_return_sum: count(sql`CASE WHEN ${workGroupChatMember.joinTime} >= ${today} AND ${workGroupChatMember.status} = 0 THEN 1 END`),
+        current_members: count(sql`CASE WHEN ${workGroupChatMember.status} = 1 THEN 1 END`),
+      }).from(workGroupChatMember).where(eq(workGroupChatMember.groupId, scope.group.id));
+      return {
+        id: scope.group.id,
+        chat_id: scope.group.chatId,
+        name: scope.group.name,
+        owner: scope.group.owner,
+        group_create_time: epoch(scope.group.groupCreateTime),
+        notice: scope.group.notice,
+        member_num: Number(stats[0]?.current_members ?? scope.group.memberNum),
+        retreat_group_num: scope.group.retreatGroupNum,
+        todaySum: Number(stats[0]?.today_sum ?? 0),
+        todayReturnSum: Number(stats[0]?.today_return_sum ?? 0),
+      };
+    });
   }
 
   async groupMembers(token: string, rawGroupId: unknown, query: Record<string, string>) {
-    const scope = await this.groupScopeFromToken(token);
+    const claims = await this.verifyClaims(token, "work-group");
+    return withTx(this.container, (tx) =>
+      this.groupMembersInTx(tx, claims, rawGroupId, query));
+  }
+
+  private async groupMembersInTx(
+    tx: DbClient,
+    claims: WorkContextClaims,
+    rawGroupId: unknown,
+    query: Record<string, string>,
+  ) {
+    const scope = await this.requireGroupScopeByIdInTx(tx, claims);
     const groupId = positiveInteger(rawGroupId, "群聊ID");
     if (groupId !== scope.group.id) throw new ForbiddenException("群聊上下文与路径不匹配");
     const currentPage = page(query.page);
     const limit = parseKefuPageLimit(query.limit);
     const name = queryText(query.name, "客户名称");
-    const filters: SQL[] = [eq(workGroupChatMember.groupId, groupId), eq(workGroupChatMember.status, 1)];
-    if (name) {
-      const pattern = `%${name}%`;
-      filters.push(or(
-        ilike(workGroupChatMember.name, pattern),
-        ilike(workGroupChatMember.groupNickname, pattern),
-      )!);
-    }
-    const where = and(...filters);
-    const [relations, totals] = await Promise.all([
-      this.container.db.select().from(workGroupChatMember).where(where)
-        .orderBy(desc(workGroupChatMember.joinTime), desc(workGroupChatMember.id))
-        .limit(limit).offset((currentPage - 1) * limit),
-      this.container.db.select({ count: count() }).from(workGroupChatMember).where(where),
-    ]);
+    const pattern = `%${name}%`;
+    const [relations, totalCount] = scope.source === "current"
+      ? await Promise.all([
+          tx.select().from(workGroupChatMemberCurrent).where(and(
+            eq(workGroupChatMemberCurrent.corpId, scope.corpId),
+            eq(workGroupChatMemberCurrent.groupId, groupId),
+            eq(workGroupChatMemberCurrent.lifecycleState, "ACTIVE"),
+            name
+              ? or(
+                  ilike(workGroupChatMemberCurrent.name, pattern),
+                  ilike(workGroupChatMemberCurrent.groupNickname, pattern),
+                )
+              : undefined,
+          )).orderBy(
+            desc(workGroupChatMemberCurrent.joinTime),
+            desc(workGroupChatMemberCurrent.id),
+          ).limit(limit).offset((currentPage - 1) * limit),
+          tx.select({ count: count() }).from(workGroupChatMemberCurrent).where(and(
+            eq(workGroupChatMemberCurrent.corpId, scope.corpId),
+            eq(workGroupChatMemberCurrent.groupId, groupId),
+            eq(workGroupChatMemberCurrent.lifecycleState, "ACTIVE"),
+            name
+              ? or(
+                  ilike(workGroupChatMemberCurrent.name, pattern),
+                  ilike(workGroupChatMemberCurrent.groupNickname, pattern),
+                )
+              : undefined,
+          )).then((rows) => Number(rows[0]?.count ?? 0)),
+        ])
+      : await Promise.all([
+          tx.select().from(workGroupChatMember).where(and(
+            eq(workGroupChatMember.groupId, groupId),
+            eq(workGroupChatMember.status, 1),
+            name
+              ? or(
+                  ilike(workGroupChatMember.name, pattern),
+                  ilike(workGroupChatMember.groupNickname, pattern),
+                )
+              : undefined,
+          )).orderBy(desc(workGroupChatMember.joinTime), desc(workGroupChatMember.id))
+            .limit(limit).offset((currentPage - 1) * limit),
+          tx.select({ count: count() }).from(workGroupChatMember).where(and(
+            eq(workGroupChatMember.groupId, groupId),
+            eq(workGroupChatMember.status, 1),
+            name
+              ? or(
+                  ilike(workGroupChatMember.name, pattern),
+                  ilike(workGroupChatMember.groupNickname, pattern),
+                )
+              : undefined,
+          )).then((rows) => Number(rows[0]?.count ?? 0)),
+        ]);
     const employeeIds = [...new Set(relations.filter((item) => item.type === 1).map((item) => item.userid))];
     const externalIds = [...new Set(relations.filter((item) => item.type === 2).map((item) => item.userid))];
     const [employees, clientProjections, groupCounts] = await Promise.all([
       employeeIds.length
-        ? this.container.db.select({
-            userid: workMember.userid,
-            name: workMember.name,
-            avatar: workMember.avatar,
-            gender: workMember.gender,
-          }).from(workMember).where(and(
-            eq(workMember.corpId, scope.corpId),
-            inArray(workMember.userid, employeeIds),
-          ))
+        ? scope.source === "current"
+          ? this.env.WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?.trim() === "verified"
+            ? tx.select({
+                userid: workMemberCurrent.userid,
+                name: workMemberCurrent.name,
+                avatar: workMemberCurrent.avatar,
+                gender: workMemberCurrent.gender,
+              }).from(workMemberCurrent).where(and(
+                eq(workMemberCurrent.corpId, scope.corpId),
+                inArray(workMemberCurrent.userid, employeeIds),
+                eq(workMemberCurrent.lifecycleState, "ACTIVE"),
+                eq(workMemberCurrent.profileComplete, true),
+                eq(workMemberCurrent.status, 1),
+                eq(workMemberCurrent.enable, 1),
+              ))
+            : Promise.resolve([])
+          : tx.select({
+              userid: workMember.userid,
+              name: workMember.name,
+              avatar: workMember.avatar,
+              gender: workMember.gender,
+            }).from(workMember).where(and(
+              eq(workMember.corpId, scope.corpId),
+              inArray(workMember.userid, employeeIds),
+            ))
         : Promise.resolve([]),
-      this.loadGroupClientProjections(scope.corpId, scope.actorUserid, externalIds),
+      this.loadGroupClientProjections(scope.corpId, scope.actorUserid, externalIds, tx),
       externalIds.length
-        ? this.container.db.select({
-            userid: workGroupChatMember.userid,
-            count: countDistinct(workGroupChatMember.groupId),
-          }).from(workGroupChatMember)
-          .innerJoin(workGroupChat, eq(workGroupChat.id, workGroupChatMember.groupId))
-          .where(and(
-            inArray(workGroupChatMember.userid, externalIds),
-            eq(workGroupChatMember.type, 2),
-            eq(workGroupChatMember.status, 1),
-            eq(workGroupChat.corpId, scope.corpId),
-            eq(workGroupChat.status, 1),
-          )).groupBy(workGroupChatMember.userid)
+        ? scope.source === "current"
+          ? tx.select({
+              userid: workGroupChatMemberCurrent.userid,
+              count: countDistinct(workGroupChatMemberCurrent.groupId),
+            }).from(workGroupChatMemberCurrent)
+            .innerJoin(workGroupChatCurrent, and(
+              eq(workGroupChatCurrent.corpId, workGroupChatMemberCurrent.corpId),
+              eq(workGroupChatCurrent.id, workGroupChatMemberCurrent.groupId),
+            ))
+            .innerJoin(workGroupChatProjectionFence, and(
+              eq(workGroupChatProjectionFence.corpId, workGroupChatCurrent.corpId),
+              eq(workGroupChatProjectionFence.chatId, workGroupChatCurrent.chatId),
+              eq(workGroupChatProjectionFence.lastEventId, workGroupChatCurrent.lastEventId),
+              eq(workGroupChatProjectionFence.lastEventKey, workGroupChatCurrent.lastEventKey),
+              eq(
+                workGroupChatProjectionFence.lastEventSubjectKeyHash,
+                workGroupChatCurrent.lastEventSubjectKeyHash,
+              ),
+              eq(workGroupChatProjectionFence.lastEventTime, workGroupChatCurrent.lastEventTime),
+              eq(
+                workGroupChatProjectionFence.lastSequenceRank,
+                workGroupChatCurrent.lastSequenceRank,
+              ),
+            ))
+            .innerJoin(workCallbackEvent, and(
+              eq(workCallbackEvent.id, workGroupChatCurrent.lastEventId),
+              eq(workCallbackEvent.corpId, workGroupChatCurrent.corpId),
+              eq(workCallbackEvent.eventKey, workGroupChatCurrent.lastEventKey),
+              eq(
+                workCallbackEvent.subjectKeyHash,
+                workGroupChatCurrent.lastEventSubjectKeyHash,
+              ),
+              eq(workCallbackEvent.eventTime, workGroupChatCurrent.lastEventTime),
+              eq(workCallbackEvent.sequenceRank, workGroupChatCurrent.lastSequenceRank),
+            ))
+            .where(and(
+              eq(workGroupChatMemberCurrent.corpId, scope.corpId),
+              inArray(workGroupChatMemberCurrent.userid, externalIds),
+              eq(workGroupChatMemberCurrent.type, 2),
+              eq(workGroupChatMemberCurrent.lifecycleState, "ACTIVE"),
+              eq(workGroupChatCurrent.lifecycleState, "ACTIVE"),
+              eq(workGroupChatCurrent.profileComplete, true),
+              eq(workGroupChatCurrent.membersComplete, true),
+              eq(workCallbackEvent.status, "ORDERED"),
+              inArray(workCallbackEvent.projectionStatus, ["APPLIED", "APPLIED_NOOP"]),
+              eq(workCallbackEvent.msgType, "event"),
+              eq(workCallbackEvent.eventType, "change_external_chat"),
+              inArray(workCallbackEvent.changeType, ["create", "update"]),
+            )).groupBy(workGroupChatMemberCurrent.userid)
+          : tx.select({
+              userid: workGroupChatMember.userid,
+              count: countDistinct(workGroupChatMember.groupId),
+            }).from(workGroupChatMember)
+            .innerJoin(workGroupChat, eq(workGroupChat.id, workGroupChatMember.groupId))
+            .where(and(
+              inArray(workGroupChatMember.userid, externalIds),
+              eq(workGroupChatMember.type, 2),
+              eq(workGroupChatMember.status, 1),
+              eq(workGroupChat.corpId, scope.corpId),
+              eq(workGroupChat.status, 1),
+            )).groupBy(workGroupChatMember.userid)
         : Promise.resolve([]),
     ]);
     const employeeMap = new Map(employees.map((item) => [item.userid, item]));
@@ -550,7 +705,7 @@ export class EnterpriseWechatContextService {
           tags: clientProjection?.tags ?? [],
         };
       }),
-      count: Number(totals[0]?.count ?? 0),
+      count: totalCount,
     };
   }
 
@@ -1143,10 +1298,11 @@ export class EnterpriseWechatContextService {
     corpId: string,
     actorUserid: string,
     externalUserids: string[],
+    transaction?: DbClient,
   ): Promise<Map<string, GroupClientProjection>> {
     if (!externalUserids.length) return new Map();
     const identities = [...new Set(externalUserids)].sort();
-    return withTx(this.container, async (tx) => {
+    const load = async (tx: DbClient) => {
       // Callback projection writers take the same locks. Sorting makes this
       // bounded multi-client read compatible with concurrent callback batches.
       for (const externalUserid of identities) {
@@ -1355,7 +1511,8 @@ export class EnterpriseWechatContextService {
         });
       }
       return output;
-    });
+    };
+    return transaction ? load(transaction) : withTx(this.container, load);
   }
 
   private async requireGroupScope(
@@ -1363,41 +1520,237 @@ export class EnterpriseWechatContextService {
     actorUserid: string,
     chatId: string,
   ): Promise<GroupScope> {
-    await this.requireActor(corpId, actorUserid);
-    const groups = await this.container.db.select().from(workGroupChat).where(and(
+    const normalizedActor = actorUserid.trim().toLowerCase();
+    return withTx(this.container, async (tx) => {
+      await this.requireActor(corpId, normalizedActor, tx);
+      await this.lockGroupScope(tx, corpId, chatId);
+      const current = (await tx.select().from(workGroupChatCurrent).where(and(
+        eq(workGroupChatCurrent.corpId, corpId),
+        eq(workGroupChatCurrent.chatId, chatId),
+      )).limit(2).for("update"));
+      if (current.length > 1) {
+        throw new ServiceUnavailableException("群聊当前身份存在重复，请先清理数据");
+      }
+      if (current[0]) return this.requireCurrentGroupScope(tx, current[0], normalizedActor);
+      return this.requireLegacyGroupScopeByChat(tx, corpId, normalizedActor, chatId);
+    });
+  }
+
+  private async requireGroupScopeByIdInTx(
+    tx: DbClient,
+    claims: WorkContextClaims,
+  ): Promise<GroupScope> {
+    const normalizedActor = claims.actorUserid.trim().toLowerCase();
+    if (!claims.groupProjectionSource) {
+      throw new ForbiddenException("群聊投影来源已升级，请重新授权");
+    }
+    if (claims.groupProjectionSource === "current") {
+      await this.requireActor(claims.corpId, normalizedActor, tx);
+      const seed = (await tx.select({ chatId: workGroupChatCurrent.chatId })
+        .from(workGroupChatCurrent).where(and(
+          eq(workGroupChatCurrent.corpId, claims.corpId),
+          eq(workGroupChatCurrent.id, claims.targetId),
+        )).limit(1))[0];
+      if (!seed) throw new ForbiddenException("群聊上下文已发生变化，请重新授权");
+      await this.lockGroupScope(tx, claims.corpId, seed.chatId);
+      const current = (await tx.select().from(workGroupChatCurrent).where(and(
+        eq(workGroupChatCurrent.corpId, claims.corpId),
+        eq(workGroupChatCurrent.id, claims.targetId),
+        eq(workGroupChatCurrent.chatId, seed.chatId),
+      )).limit(1).for("update"))[0];
+      if (!current) throw new ForbiddenException("群聊上下文已发生变化，请重新授权");
+      return this.requireCurrentGroupScope(tx, current, normalizedActor);
+    }
+
+    await this.requireActor(claims.corpId, normalizedActor, tx);
+    const seed = (await tx.select({ chatId: workGroupChat.chatId })
+      .from(workGroupChat).where(and(
+        eq(workGroupChat.corpId, claims.corpId),
+        eq(workGroupChat.id, claims.targetId),
+      )).limit(1))[0];
+    if (!seed) throw new ForbiddenException("群聊上下文已发生变化，请重新授权");
+    await this.lockGroupScope(tx, claims.corpId, seed.chatId);
+    const currentSentinel = await tx.select({ id: workGroupChatCurrent.id })
+      .from(workGroupChatCurrent).where(and(
+        eq(workGroupChatCurrent.corpId, claims.corpId),
+        eq(workGroupChatCurrent.chatId, seed.chatId),
+      )).limit(1);
+    if (currentSentinel.length) {
+      throw new ForbiddenException("群聊投影来源已发生变化，请重新授权");
+    }
+    return this.requireLegacyGroupScopeById(
+      tx,
+      claims.corpId,
+      normalizedActor,
+      claims.targetId,
+    );
+  }
+
+  private async lockGroupScope(
+    tx: DbClient,
+    corpId: string,
+    chatId: string,
+  ): Promise<void> {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(
+      hashtextextended(${`work-group-chat:${corpId}:${chatId}`}, 0)
+    )`);
+  }
+
+  private groupCurrentAuthorityEnabled(): boolean {
+    return this.env.WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?.trim() === "verified";
+  }
+
+  private async requireCurrentGroupScope(
+    tx: DbClient,
+    current: typeof workGroupChatCurrent.$inferSelect,
+    actorUserid: string,
+  ): Promise<GroupScope> {
+    if (!this.groupCurrentAuthorityEnabled()) {
+      throw new ForbiddenException("群聊当前投影尚未通过启用验收");
+    }
+    if (
+      current.lifecycleState !== "ACTIVE"
+      || !current.profileComplete
+      || !current.membersComplete
+      || current.lastEventId === null
+    ) throw new ForbiddenException("群聊当前投影尚未完整同步");
+    const fence = (await tx.select().from(workGroupChatProjectionFence).where(and(
+      eq(workGroupChatProjectionFence.corpId, current.corpId),
+      eq(workGroupChatProjectionFence.chatId, current.chatId),
+    )).limit(1))[0];
+    if (!fence || !this.sameProjectionTuple(current, fence)) {
+      throw new ForbiddenException("群聊当前资料与最新事件不一致");
+    }
+    const event = (await tx.select().from(workCallbackEvent).where(and(
+      eq(workCallbackEvent.id, current.lastEventId),
+      eq(workCallbackEvent.corpId, current.corpId),
+      eq(workCallbackEvent.eventKey, current.lastEventKey!),
+      eq(workCallbackEvent.subjectKeyHash, current.lastEventSubjectKeyHash!),
+      eq(workCallbackEvent.eventTime, current.lastEventTime),
+      eq(workCallbackEvent.sequenceRank, current.lastSequenceRank),
+    )).limit(1))[0];
+    if (!this.appliedGroupChatSnapshotEvent(event)) {
+      throw new ForbiddenException("群聊当前资料尚未完成事件确认");
+    }
+    if (current.owner !== actorUserid) {
+      const membership = (await tx.select({
+        member: workGroupChatMemberCurrent,
+        event: workCallbackEvent,
+      }).from(workGroupChatMemberCurrent).innerJoin(workCallbackEvent, and(
+        eq(workCallbackEvent.id, workGroupChatMemberCurrent.lastEventId),
+        eq(workCallbackEvent.corpId, workGroupChatMemberCurrent.corpId),
+        eq(workCallbackEvent.eventKey, workGroupChatMemberCurrent.lastEventKey),
+        eq(
+          workCallbackEvent.subjectKeyHash,
+          workGroupChatMemberCurrent.lastEventSubjectKeyHash,
+        ),
+        eq(workCallbackEvent.eventTime, workGroupChatMemberCurrent.lastEventTime),
+        eq(workCallbackEvent.sequenceRank, workGroupChatMemberCurrent.lastSequenceRank),
+      )).where(and(
+        eq(workGroupChatMemberCurrent.corpId, current.corpId),
+        eq(workGroupChatMemberCurrent.groupId, current.id),
+        eq(workGroupChatMemberCurrent.userid, actorUserid),
+        eq(workGroupChatMemberCurrent.type, 1),
+        eq(workGroupChatMemberCurrent.lifecycleState, "ACTIVE"),
+      )).limit(1))[0];
+      if (!membership || !this.appliedGroupChatSnapshotEvent(membership.event)) {
+        throw new ForbiddenException("当前成员无权查看该群聊");
+      }
+    }
+    return {
+      actorUserid,
+      corpId: current.corpId,
+      source: "current",
+      group: {
+        id: current.id,
+        chatId: current.chatId,
+        name: current.name ?? "",
+        owner: current.owner ?? "",
+        groupCreateTime: current.groupCreatedTime ?? 0,
+        notice: current.notice ?? "",
+        memberNum: current.memberCount ?? 0,
+        retreatGroupNum: current.departedMemberCount,
+      },
+    };
+  }
+
+  private appliedGroupChatSnapshotEvent(
+    event: typeof workCallbackEvent.$inferSelect | undefined,
+  ): boolean {
+    return !!event
+      && event.status === "ORDERED"
+      && (event.projectionStatus === "APPLIED" || event.projectionStatus === "APPLIED_NOOP")
+      && event.msgType === "event"
+      && event.eventType === "change_external_chat"
+      && (event.changeType === "create" || event.changeType === "update");
+  }
+
+  private async requireLegacyGroupScopeByChat(
+    tx: DbClient,
+    corpId: string,
+    actorUserid: string,
+    chatId: string,
+  ): Promise<GroupScope> {
+    const groups = await tx.select().from(workGroupChat).where(and(
       eq(workGroupChat.corpId, corpId),
       eq(workGroupChat.chatId, chatId),
       eq(workGroupChat.status, 1),
-    )).limit(2);
+    )).limit(2).for("update");
     if (!groups.length) throw new NotFoundException("群聊尚未同步到本地");
-    if (groups.length !== 1) throw new ServiceUnavailableException("群聊身份存在重复，请先清理数据");
-    await this.requireGroupVisibility(groups[0], actorUserid);
-    return { actorUserid, corpId, group: groups[0] };
+    if (groups.length !== 1) {
+      throw new ServiceUnavailableException("群聊身份存在重复，请先清理数据");
+    }
+    return this.requireLegacyGroupVisibility(tx, groups[0], actorUserid);
   }
 
-  private async requireGroupScopeById(claims: WorkContextClaims): Promise<GroupScope> {
-    await this.requireActor(claims.corpId, claims.actorUserid);
-    const groups = await this.container.db.select().from(workGroupChat).where(and(
-      eq(workGroupChat.id, claims.targetId),
-      eq(workGroupChat.corpId, claims.corpId),
+  private async requireLegacyGroupScopeById(
+    tx: DbClient,
+    corpId: string,
+    actorUserid: string,
+    groupId: number,
+  ): Promise<GroupScope> {
+    const group = (await tx.select().from(workGroupChat).where(and(
+      eq(workGroupChat.id, groupId),
+      eq(workGroupChat.corpId, corpId),
       eq(workGroupChat.status, 1),
-    )).limit(1);
-    if (!groups[0]) throw new ForbiddenException("群聊上下文已发生变化，请重新授权");
-    await this.requireGroupVisibility(groups[0], claims.actorUserid);
-    return { actorUserid: claims.actorUserid, corpId: claims.corpId, group: groups[0] };
+    )).limit(1).for("update"))[0];
+    if (!group) throw new ForbiddenException("群聊上下文已发生变化，请重新授权");
+    return this.requireLegacyGroupVisibility(tx, group, actorUserid);
   }
 
-  private async requireGroupVisibility(group: typeof workGroupChat.$inferSelect, actorUserid: string) {
-    if (group.owner === actorUserid) return;
-    const memberships = await this.container.db.select({ id: workGroupChatMember.id })
-      .from(workGroupChatMember).where(and(
-        eq(workGroupChatMember.groupId, group.id),
-        eq(workGroupChatMember.userid, actorUserid),
-        eq(workGroupChatMember.type, 1),
-        eq(workGroupChatMember.status, 1),
-      )).limit(2);
-    if (!memberships.length) throw new ForbiddenException("当前成员无权查看该群聊");
-    if (memberships.length !== 1) throw new ServiceUnavailableException("群成员关系存在重复，请先清理数据");
+  private async requireLegacyGroupVisibility(
+    tx: DbClient,
+    group: typeof workGroupChat.$inferSelect,
+    actorUserid: string,
+  ): Promise<GroupScope> {
+    if (group.owner.toLowerCase() !== actorUserid) {
+      const memberships = await tx.select({ id: workGroupChatMember.id })
+        .from(workGroupChatMember).where(and(
+          eq(workGroupChatMember.groupId, group.id),
+          sql`lower(${workGroupChatMember.userid}) = ${actorUserid}`,
+          eq(workGroupChatMember.type, 1),
+          eq(workGroupChatMember.status, 1),
+        )).limit(2);
+      if (!memberships.length) throw new ForbiddenException("当前成员无权查看该群聊");
+      if (memberships.length !== 1) {
+        throw new ServiceUnavailableException("群成员关系存在重复，请先清理数据");
+      }
+    }
+    return {
+      actorUserid,
+      corpId: group.corpId,
+      source: "legacy",
+      group: {
+        id: group.id,
+        chatId: group.chatId,
+        name: group.name,
+        owner: group.owner.toLowerCase(),
+        groupCreateTime: group.groupCreateTime,
+        notice: group.notice,
+        memberNum: group.memberNum,
+        retreatGroupNum: group.retreatGroupNum,
+      },
+    };
   }
 
   private secret(): Uint8Array {
@@ -1416,6 +1769,7 @@ export class EnterpriseWechatContextService {
       target_id: claims.targetId,
       uid: claims.uid,
       client_projection_source: claims.clientProjectionSource,
+      group_projection_source: claims.groupProjectionSource,
     }).setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setIssuer(TOKEN_ISSUER)
       .setAudience(audience)
@@ -1441,6 +1795,7 @@ export class EnterpriseWechatContextService {
       const targetId = Number(payload.target_id);
       const uid = Number(payload.uid ?? 0);
       const clientProjectionSource = payload.client_projection_source;
+      const groupProjectionSource = payload.group_projection_source;
       const expectedKind: "client" | "group" = audience === "work-client" ? "client" : "group";
       if (
         kind !== expectedKind
@@ -1453,6 +1808,9 @@ export class EnterpriseWechatContextService {
         || (expectedKind === "client"
           && clientProjectionSource !== "legacy"
           && clientProjectionSource !== "current")
+        || (expectedKind === "group"
+          && groupProjectionSource !== "legacy"
+          && groupProjectionSource !== "current")
       ) throw new Error("invalid claims");
       return {
         kind: expectedKind,
@@ -1463,6 +1821,9 @@ export class EnterpriseWechatContextService {
         clientProjectionSource: expectedKind === "client"
           ? clientProjectionSource as ClientProjectionSource
           : undefined,
+        groupProjectionSource: expectedKind === "group"
+          ? groupProjectionSource as GroupProjectionSource
+          : undefined,
       };
     } catch (error) {
       if (error instanceof ServiceUnavailableException) throw error;
@@ -1472,10 +1833,6 @@ export class EnterpriseWechatContextService {
 
   private async clientScopeFromToken(token: string) {
     return this.requireClientScopeById(await this.verifyClaims(token, "work-client"));
-  }
-
-  private async groupScopeFromToken(token: string) {
-    return this.requireGroupScopeById(await this.verifyClaims(token, "work-group"));
   }
 
   private async projectOrders(rows: Array<typeof storeOrder.$inferSelect>) {

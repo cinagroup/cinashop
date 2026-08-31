@@ -74,6 +74,17 @@ import {
   lockClientProjectionIdentity,
   recordClientProjectionSeen,
 } from "@/services/work/EnterpriseWechatClientCurrentService";
+import {
+  EnterpriseWechatGroupChatProjectionError,
+  isGroupChatProjectionEvent,
+  prepareGroupChatProjection,
+  type PreparedGroupChatProjection,
+} from "@/services/work/EnterpriseWechatGroupChatProjection";
+import {
+  applyGroupChatCurrentProjection,
+  lockGroupChatProjectionIdentity,
+  recordGroupChatProjectionSeen,
+} from "@/services/work/EnterpriseWechatGroupChatCurrentService";
 
 const DISPATCH_LEASE_SECONDS = 120;
 const DELIVERY_LEASE_SECONDS = 600;
@@ -82,6 +93,7 @@ const MAX_ATTEMPTS = 8;
 const MEMBER_PROJECTION_DISABLED = "member_projection_disabled";
 const DEPARTMENT_PROJECTION_DISABLED = "department_projection_disabled";
 const CLIENT_PROJECTION_DISABLED = "client_projection_disabled";
+const GROUP_CHAT_PROJECTION_DISABLED = "group_chat_projection_disabled";
 const MAX_DISPATCH_DRAIN_ITEMS = 100;
 
 export class EnterpriseWechatCallbackError extends Error {
@@ -142,12 +154,13 @@ export interface WorkCallbackEnvironment {
   WECHAT_WORK_EXTERNAL_CONTACT_SECRET?: string;
   WECHAT_WORK_EXTERNAL_CONTACT_FULL_VISIBILITY?: string;
   WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?: string;
   ORDER_QUEUE: Queue<OrderMessage>;
 }
 
 type DirectoryProjectionProvider = Partial<Pick<
   EnterpriseWechatProviderClient,
-  "directoryMember" | "directoryDepartment" | "externalContact"
+  "directoryMember" | "directoryDepartment" | "externalContact" | "externalGroupChat"
 >>;
 export type DirectoryMemberProviderFactory = (corpId: string) => DirectoryProjectionProvider;
 
@@ -196,6 +209,7 @@ function errorCode(error: unknown): string {
   if (error instanceof EnterpriseWechatMemberProjectionError) return error.errorCode.slice(0, 64);
   if (error instanceof EnterpriseWechatDepartmentProjectionError) return error.errorCode.slice(0, 64);
   if (error instanceof EnterpriseWechatClientProjectionError) return error.errorCode.slice(0, 64);
+  if (error instanceof EnterpriseWechatGroupChatProjectionError) return error.errorCode.slice(0, 64);
   const candidate = error instanceof Error ? error.message : String(error);
   return /^[a-z0-9_:-]{1,64}$/i.test(candidate) ? candidate : "callback_processing_failed";
 }
@@ -364,6 +378,7 @@ export class EnterpriseWechatCallbackService {
         ne(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED),
         ne(workCallbackOutbox.lastErrorCode, DEPARTMENT_PROJECTION_DISABLED),
         ne(workCallbackOutbox.lastErrorCode, CLIENT_PROJECTION_DISABLED),
+        ne(workCallbackOutbox.lastErrorCode, GROUP_CHAT_PROJECTION_DISABLED),
       ),
       this.memberCurrentAuthorityEnabled()
         ? eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)
@@ -374,6 +389,10 @@ export class EnterpriseWechatCallbackService {
       this.clientCurrentAuthorityEnabled()
         && this.externalContactFullVisibilityEnabled()
         ? eq(workCallbackOutbox.lastErrorCode, CLIENT_PROJECTION_DISABLED)
+        : sql`false`,
+      this.groupChatCurrentAuthorityEnabled()
+        && this.externalContactFullVisibilityEnabled()
+        ? eq(workCallbackOutbox.lastErrorCode, GROUP_CHAT_PROJECTION_DISABLED)
         : sql`false`,
     );
     const eligible = or(
@@ -494,6 +513,7 @@ export class EnterpriseWechatCallbackService {
           error instanceof EnterpriseWechatMemberProjectionError
           || error instanceof EnterpriseWechatDepartmentProjectionError
           || error instanceof EnterpriseWechatClientProjectionError
+          || error instanceof EnterpriseWechatGroupChatProjectionError
         )
         && error.terminal
         && await this.recordClaimTerminalFailure(message, error)
@@ -506,6 +526,7 @@ export class EnterpriseWechatCallbackService {
       let memberTargetSubjectKeyHash: string | undefined;
       let departmentProjection: PreparedDepartmentProjection | undefined;
       let clientProjection: PreparedClientProjection | undefined;
+      let groupChatProjection: PreparedGroupChatProjection | undefined;
       if (isMemberProjectionEvent(claim)) {
         const identity = memberProjectionIdentity(claim);
         memberTargetSubjectKeyHash = await shaHex(
@@ -539,6 +560,14 @@ export class EnterpriseWechatCallbackService {
             ? undefined
             : this.externalContactProvider(claim.corpId),
         );
+      } else if (isGroupChatProjectionEvent(claim)) {
+        // dismiss is callback-authoritative and must not construct a provider.
+        groupChatProjection = await prepareGroupChatProjection(
+          claim,
+          claim.changeType === "dismiss"
+            ? undefined
+            : this.externalGroupChatProvider(claim.corpId),
+        );
       }
       return await this.applyOrdering(
         claim,
@@ -546,6 +575,7 @@ export class EnterpriseWechatCallbackService {
         memberTargetSubjectKeyHash,
         departmentProjection,
         clientProjection,
+        groupChatProjection,
       );
     } catch (error) {
       if (await this.recordFailure(claim, error)) return "dead";
@@ -746,6 +776,52 @@ export class EnterpriseWechatCallbackService {
         }
         return { kind: "parked" as const };
       }
+      if (isGroupChatProjectionEvent(row) && !this.groupChatCurrentProjectionEnabled(row)) {
+        const seen = await recordGroupChatProjectionSeen(tx, row, now);
+        if (seen === "superseded") {
+          const completedEvents = await tx.update(workCallbackEvent).set({
+            status: "ORDERED",
+            projectionStatus: "SUPERSEDED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+          const completedOutboxes = await tx.update(workCallbackOutbox).set({
+            status: "COMPLETED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+          if (completedEvents.length !== 1 || completedOutboxes.length !== 1) {
+            throw new Error("callback_group_chat_superseded_finalize_lost");
+          }
+          return "superseded";
+        }
+        const parkedOutboxes = await tx.update(workCallbackOutbox).set({
+          status: "FAILED",
+          leaseUntil: 0,
+          leaseToken: "",
+          availableTime: now + 900,
+          lastErrorCode: GROUP_CHAT_PROJECTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+        const parkedEvents = await tx.update(workCallbackEvent).set({
+          status: "FAILED",
+          projectionStatus: "REFRESH_REQUIRED",
+          leaseUntil: 0,
+          leaseToken: "",
+          lastErrorCode: GROUP_CHAT_PROJECTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+        if (parkedOutboxes.length !== 1 || parkedEvents.length !== 1) {
+          throw new Error("callback_group_chat_park_lost");
+        }
+        return { kind: "parked" as const };
+      }
       if (row.outboxStatus === "FAILED" && row.outboxAvailableTime > now) {
         return {
           kind: "deferred" as const,
@@ -872,6 +948,31 @@ export class EnterpriseWechatCallbackService {
           }
           return "superseded";
         }
+      } else if (isGroupChatProjectionEvent(row)) {
+        const seen = await recordGroupChatProjectionSeen(tx, row, now);
+        if (seen === "superseded") {
+          const completedEvents = await tx.update(workCallbackEvent).set({
+            status: "ORDERED",
+            projectionStatus: "SUPERSEDED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+          const completedOutboxes = await tx.update(workCallbackOutbox).set({
+            status: "COMPLETED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+          if (completedEvents.length !== 1 || completedOutboxes.length !== 1) {
+            throw new Error("callback_group_chat_superseded_finalize_lost");
+          }
+          return "superseded";
+        }
       }
 
       const processingOutboxes = await tx.update(workCallbackOutbox).set({
@@ -902,6 +1003,7 @@ export class EnterpriseWechatCallbackService {
     memberTargetSubjectKeyHash?: string,
     departmentProjection?: PreparedDepartmentProjection,
     clientProjection?: PreparedClientProjection,
+    groupChatProjection?: PreparedGroupChatProjection,
   ): Promise<"applied" | "applied-noop" | "refresh-required" | "ignored" | "superseded"> {
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
@@ -923,6 +1025,7 @@ export class EnterpriseWechatCallbackService {
       const memberEvent = isMemberProjectionEvent(claim);
       const departmentEvent = isDepartmentProjectionEvent(claim);
       const clientEvent = isClientProjectionEvent(claim);
+      const groupChatEvent = isGroupChatProjectionEvent(claim);
       if (memberEvent && this.memberCurrentProjectionEnabled(claim)) {
         if (!memberProjection || !memberTargetSubjectKeyHash) {
           throw new Error("callback_member_projection_missing");
@@ -949,7 +1052,13 @@ export class EnterpriseWechatCallbackService {
           clientProjection.externalUserid,
         );
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
-      } else if (!memberEvent && !departmentEvent && !clientEvent) {
+      } else if (groupChatEvent && this.groupChatCurrentProjectionEnabled(claim)) {
+        if (!groupChatProjection) {
+          throw new Error("callback_group_chat_projection_missing");
+        }
+        await lockGroupChatProjectionIdentity(tx, claim.corpId, groupChatProjection.chatId);
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
+      } else if (!memberEvent && !departmentEvent && !clientEvent && !groupChatEvent) {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${claim.subjectKeyHash}, 0))`);
       }
       const targetSubjectHash = memberEvent ? memberTargetSubjectKeyHash as string : undefined;
@@ -982,15 +1091,57 @@ export class EnterpriseWechatCallbackService {
           eventId: watermark.eventId,
         }, incomingFence) > 0);
         if (older) {
-          if (memberEvent && memberProjection) {
+          if (
+            groupChatEvent
+            && groupChatProjection?.kind === "absent"
+            && claim.changeType === "dismiss"
+          ) {
+            // Group dismissal is terminal. It must still reach the dedicated
+            // group fence when an impossible later-timestamp create/update has
+            // already advanced the generic subject watermark.
+            result = await applyGroupChatCurrentProjection(
+              tx,
+              claim,
+              groupChatProjection,
+              now,
+            );
+            projectionStatus = result === "applied"
+              ? "APPLIED"
+              : result === "applied-noop"
+                ? "APPLIED_NOOP"
+                : result === "superseded"
+                  ? "SUPERSEDED"
+                  : "REFRESH_REQUIRED";
+            if (result === "applied" || result === "applied-noop") {
+              await tx.insert(workCallbackWatermark).values({
+                subjectKeyHash: claim.subjectKeyHash,
+                eventTime: claim.eventTime,
+                sequenceRank: claim.sequenceRank,
+                eventId: claim.eventId,
+                eventKey: claim.eventKey,
+                updateTime: now,
+              }).onConflictDoUpdate({
+                target: workCallbackWatermark.subjectKeyHash,
+                set: {
+                  eventTime: claim.eventTime,
+                  sequenceRank: claim.sequenceRank,
+                  eventId: claim.eventId,
+                  eventKey: claim.eventKey,
+                  updateTime: now,
+                },
+              });
+            }
+          } else {
+            if (memberEvent && memberProjection) {
             // A newer target watermark suppresses stale provider business data,
             // but must not suppress an older authoritative rename edge. The
             // member service may still collapse a target-first provisional row
             // into the stable source identity and propagate its tombstone.
-            await applyMemberCurrentProjection(tx, claim, memberProjection, now, true);
+              await applyMemberCurrentProjection(tx, claim, memberProjection, now, true);
+            }
+            result = "superseded";
+            projectionStatus = "SUPERSEDED";
           }
-          result = "superseded";
-          projectionStatus = "SUPERSEDED";
         } else {
           const subjectWatermark = watermarkRows.find(
             (watermark) => watermark.subjectKeyHash === claim.subjectKeyHash,
@@ -1031,6 +1182,20 @@ export class EnterpriseWechatCallbackService {
               const legacyChanged = await this.applyFollowRemoval(tx, claim, now);
               if (legacyChanged && result === "applied-noop") result = "applied";
             }
+            projectionStatus = result === "applied"
+              ? "APPLIED"
+              : result === "applied-noop"
+                ? "APPLIED_NOOP"
+                : result === "superseded"
+                  ? "SUPERSEDED"
+                  : "REFRESH_REQUIRED";
+          } else if (groupChatEvent && groupChatProjection) {
+            result = await applyGroupChatCurrentProjection(
+              tx,
+              claim,
+              groupChatProjection,
+              now,
+            );
             projectionStatus = result === "applied"
               ? "APPLIED"
               : result === "applied-noop"
@@ -1200,6 +1365,20 @@ export class EnterpriseWechatCallbackService {
     return this.env.WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?.trim() === "verified";
   }
 
+  private groupChatCurrentProjectionEnabled(
+    event: Pick<ClaimedCallback, "changeType">,
+  ): boolean {
+    return event.changeType === "dismiss"
+      || (
+        this.groupChatCurrentAuthorityEnabled()
+        && this.externalContactFullVisibilityEnabled()
+      );
+  }
+
+  private groupChatCurrentAuthorityEnabled(): boolean {
+    return this.env.WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?.trim() === "verified";
+  }
+
   private externalContactFullVisibilityEnabled(): boolean {
     return this.env.WECHAT_WORK_EXTERNAL_CONTACT_FULL_VISIBILITY?.trim() === "verified";
   }
@@ -1269,6 +1448,31 @@ export class EnterpriseWechatCallbackService {
     };
   }
 
+  private externalGroupChatProvider(
+    corpId: string,
+  ): Pick<EnterpriseWechatProviderClient, "externalGroupChat"> {
+    if (!this.externalContactFullVisibilityEnabled()) {
+      throw new EnterpriseWechatProviderError(
+        "configuration",
+        "external_group_chat_visibility_gate",
+        -1,
+        0,
+      );
+    }
+    const provider = this.directoryProviderFactory(corpId);
+    if (typeof provider.externalGroupChat !== "function") {
+      throw new EnterpriseWechatProviderError(
+        "configuration",
+        "external_group_chat_provider_config",
+        -1,
+        0,
+      );
+    }
+    return {
+      externalGroupChat: provider.externalGroupChat.bind(provider),
+    };
+  }
+
   /**
    * Claim/phase-1 failures must roll their transaction back completely before
    * a poison message is marked DEAD. This fresh transaction is fenced by the
@@ -1279,7 +1483,8 @@ export class EnterpriseWechatCallbackService {
     error:
       | EnterpriseWechatMemberProjectionError
       | EnterpriseWechatDepartmentProjectionError
-      | EnterpriseWechatClientProjectionError,
+      | EnterpriseWechatClientProjectionError
+      | EnterpriseWechatGroupChatProjectionError,
   ): Promise<boolean> {
     const now = Math.floor(Date.now() / 1000);
     const code = errorCode(error);
@@ -1365,7 +1570,9 @@ export class EnterpriseWechatCallbackService {
         ? error.terminal
         : error instanceof EnterpriseWechatClientProjectionError
           ? error.terminal
-          : error instanceof EnterpriseWechatProviderError && error.kind === "terminal";
+          : error instanceof EnterpriseWechatGroupChatProjectionError
+            ? error.terminal
+            : error instanceof EnterpriseWechatProviderError && error.kind === "terminal";
     const dead = terminal || claim.attemptCount >= MAX_ATTEMPTS;
     const code = errorCode(error);
     const providerDelay = error instanceof EnterpriseWechatProviderError
