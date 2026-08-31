@@ -9,6 +9,8 @@
  *   - eb_store_service_record 会话摘要 (最后消息 + 未读数)
  */
 import {
+  bigserial,
+  check,
   pgTable,
   serial,
   varchar,
@@ -16,6 +18,7 @@ import {
   smallint,
   text,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -122,6 +125,47 @@ export const systemLog = pgTable(
   (t) => [
     index("syslog_admin_time").on(t.adminId, t.addTime),
     index("syslog_type_time").on(t.type, t.addTime),
+  ],
+);
+
+/**
+ * Content-free replay ledger for irreversible writes from the embedded mobile
+ * Admin user screen. User profile data, amounts, coupon values and request or
+ * response bodies are intentionally not retained here.
+ */
+export const adminUserWriteReplay = pgTable(
+  "admin_user_write_replay",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    adminId: integer("admin_id").notNull(),
+    operation: varchar("operation", { length: 32 }).notNull(),
+    requestKey: varchar("request_key", { length: 36 }).notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).notNull(),
+    userId: integer("user_id").default(0).notNull(),
+    targetCount: integer("target_count").default(0).notNull(),
+    moneyLedgerId: integer("money_ledger_id").default(0).notNull(),
+    integralLedgerId: integer("integral_ledger_id").default(0).notNull(),
+    otherOrderId: integer("other_order_id").default(0).notNull(),
+    couponIssueId: integer("coupon_issue_id").default(0).notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (table) => [
+    uniqueIndex("auwr_admin_operation_key_uq")
+      .on(table.adminId, table.operation, table.requestKey),
+    index("auwr_user_history").on(table.userId, table.id),
+    index("auwr_coupon_history").on(table.couponIssueId, table.id),
+    check(
+      "auwr_operation_ck",
+      sql`${table.operation} IN ('finance', 'membership', 'coupon_grant')`,
+    ),
+    check(
+      "auwr_identity_ck",
+      sql`${table.adminId} > 0 AND ${table.userId} >= 0 AND ${table.targetCount} > 0
+        AND ${table.moneyLedgerId} >= 0 AND ${table.integralLedgerId} >= 0
+        AND ${table.otherOrderId} >= 0 AND ${table.couponIssueId} >= 0
+        AND ${table.addTime} >= 0`,
+    ),
+    check("auwr_request_hash_ck", sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 

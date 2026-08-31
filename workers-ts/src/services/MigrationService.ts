@@ -17,6 +17,7 @@ import { WORK_CLIENT_CURRENT_PROJECTION_SQL } from "@/migrations/workClientCurre
 import { WORK_GROUP_CHAT_CURRENT_PROJECTION_SQL } from "@/migrations/workGroupChatCurrentProjection";
 import { WORK_EXTERNAL_TAG_CURRENT_PROJECTION_SQL } from "@/migrations/workExternalTagCurrentProjection";
 import { WORK_CONTACT_ACTION_OUTBOX_SQL } from "@/migrations/workContactActionOutbox";
+import { ADMIN_MOBILE_USER_REPLAY_SQL } from "@/migrations/adminMobileUserReplay";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -161,6 +162,11 @@ export class MigrationService {
     return this.migration_0124();
   }
 
+  /** Exact embedded Admin mobile-user replay DDL used by production verification. */
+  adminMobileUserReplayMigrationSqlForVerification(): string {
+    return this.migration_0125();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -293,6 +299,7 @@ export class MigrationService {
       this.migration_0122(),
       this.migration_0123(),
       this.migration_0124(),
+      this.migration_0125(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8220,5 +8227,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0124(): string {
     return WORK_CONTACT_ACTION_OUTBOX_SQL;
+  }
+
+  private migration_0125(): string {
+    return ADMIN_MOBILE_USER_REPLAY_SQL;
   }
 }

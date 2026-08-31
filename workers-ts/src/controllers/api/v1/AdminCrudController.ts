@@ -38,6 +38,10 @@ import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffSer
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
+import {
+  AdminMobileUserService,
+  type AdminMobileUserActor,
+} from "@/services/admin/AdminMobileUserService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -567,6 +571,80 @@ export async function adminOrderDelivery(c: C) {
 
 function userSegmentation(c: C) {
   return new UserSegmentationService(c.get("container"));
+}
+
+function mobileUsers(c: C): AdminMobileUserService {
+  return new AdminMobileUserService(c.get("container"));
+}
+
+function mobileUserActor(c: C): AdminMobileUserActor {
+  const actor = c.get("adminInfo");
+  if (!actor) throw new ValidateException("管理员身份不存在");
+  return {
+    id: actor.id,
+    name: (actor.realName || actor.account).slice(0, 64),
+    ip: (c.req.header("CF-Connecting-IP") ?? "").slice(0, 45),
+  };
+}
+
+/** GET /api/admin/user/label/:uid — PHP 移动管理端用户标签选择器。 */
+export async function adminMobileUserLabels(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileUsers(c).labels(c.req.param("uid")));
+}
+
+/** GET /api/admin/user/coupon/grant — 可赠券或用户未使用券列表。 */
+export async function adminMobileUserCouponGrant(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileUsers(c).couponGrant(c.req.query()));
+}
+
+/** GET /api/admin/user/group/list — PHP 移动管理端用户分组。 */
+export async function adminMobileUserGroups(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileUsers(c).groups());
+}
+
+/** GET /api/admin/user/level/list — PHP 移动管理端可用会员等级。 */
+export async function adminMobileUserLevels(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileUsers(c).levels());
+}
+
+/** POST /api/admin/user/update_other/:uid — 有流水和幂等保护的余额/积分调整。 */
+export async function adminMobileUserUpdateOther(c: C) {
+  privateNoStore(c);
+  const body: unknown = await c.req.json().catch(() => null);
+  return jsonOk(c, await mobileUsers(c).adjustFinance(
+    mobileUserActor(c),
+    c.req.param("uid"),
+    body,
+    c.req.header("Idempotency-Key"),
+  ), "修改成功");
+}
+
+/** POST /api/admin/user/update — 等级、会员、赠券、分组和标签兼容入口。 */
+export async function adminMobileUserUpdate(c: C) {
+  privateNoStore(c);
+  const body: unknown = await c.req.json().catch(() => null);
+  return jsonOk(c, await mobileUsers(c).update(
+    mobileUserActor(c),
+    body,
+    c.req.header("Idempotency-Key"),
+  ), "修改成功");
+}
+
+/** GET /api/admin/user/address/list/:uid — 精确用户的有效地址。 */
+export async function adminMobileUserAddresses(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileUsers(c).addresses(c.req.param("uid")));
+}
+
+/** GET /api/admin/user/address/default/:uid — 精确用户的默认地址。 */
+export async function adminMobileUserDefaultAddress(c: C) {
+  privateNoStore(c);
+  const address = await mobileUsers(c).defaultAddress(c.req.param("uid"));
+  return jsonOk(c, address ?? [], address ? "ok" : "empty");
 }
 
 export async function adminUserGroupList(c: C) {
