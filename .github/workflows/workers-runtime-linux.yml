@@ -41,5 +41,8 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Audit production dependencies
+        run: npm run audit:prod
+
       - name: Run Workers runtime tests
         run: npm run test:runtime

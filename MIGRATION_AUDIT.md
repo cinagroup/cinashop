@@ -2676,7 +2676,9 @@ callback 白名单 payload 新增 `payload_retained_until/payload_redacted_time`
 
 失败轮次没有计入通过，也没有触发生产迁移：首轮复合随机 `search_path` 被安全校验拒绝；次轮用早于 callback 接收时间的保留截止值时，`wce_payload_retention_ck` 正确阻止非法测试数据；一次边缘返回非 JSON 错误页、一次迁移前只读请求瞬时失败，脚本都在 `/migrate` 前停止。每轮 finally 都删除临时 Worker，最终 workers.dev 回探均为 404；临时随机 schema 最终均为 0。
 
-最终仓库 `data:schema-audit` 为 source 201、target 247、shared/complete 201、source-only/缺源列 0、target-only 46；外部迁移与 Worker 内嵌迁移均为 247 表，表/列/主键漂移 0。双 TypeScript 配置通过，C8 定向 3 文件 46/46、全量单元测试 162 文件/1,007 项通过，Admin 生产构建 2,425 modules 通过；企业微信页面 chunk 为 JS 18.02 KiB/gzip 6.59 KiB、CSS 4.19 KiB/gzip 1.16 KiB。主 Worker minify dry-run 为 3,216.15 KiB/gzip 762.29 KiB，C8 审计 Worker为 982.68 KiB/gzip 179.29 KiB，两者均精确绑定指定 Hyperdrive且只 dry-run。Windows runtime 再次在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败，不能记为通过；主 Worker/Admin 仍未部署。
+最终仓库 `data:schema-audit` 为 source 201、target 247、shared/complete 201、source-only/缺源列 0、target-only 46；外部迁移与 Worker 内嵌迁移均为 247 表，表/列/主键漂移 0。双 TypeScript 配置通过，C8 定向 3 文件 46/46、全量单元测试 162 文件/1,007 项通过，Admin 生产构建 2,425 modules 通过；企业微信页面 chunk 为 JS 18.02 KiB/gzip 6.59 KiB、CSS 4.19 KiB/gzip 1.16 KiB。主 Worker minify dry-run 为 3,216.15 KiB/gzip 762.29 KiB，C8 审计 Worker为 982.68 KiB/gzip 179.29 KiB，两者均精确绑定指定 Hyperdrive且只 dry-run。Windows runtime 再次在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败；随后新增无生产 Secret、`contents:read` 且固定 Actions SHA 的 Ubuntu 24.04 门禁，提交 `8c4280f95e31521d50b24657645fb330299c7921` 的 [GitHub Actions 33368811307](https://github.com/cinagroup/cinashop/actions/runs/33368811307) 在 Node 24.14.1 下真实运行 workerd，1 文件/8 项全部通过。前两轮分别暴露旧 Cron `4→13` 合同与非法 outbox fixture、以及 test helper 不回显 retry delay/悬挂测试 PG 客户端；均修正后才计通过。主 Worker/Admin 仍未部署。
+
+该 Linux 安装还暴露出 `drizzle-orm <0.45.2` 的 [CVE-2026-39356](https://github.com/advisories/GHSA-gpj5-g38j-94v9) 高危标识符转义漏洞。仓库生产代码没有调用 `sql.identifier()`，现有 `sql.raw()` 标识符来自静态常量或已校验的 `search_path`，未发现攻击者输入到动态标识符的可利用路径；仍将生产 ORM 精确升级到 `0.45.2`，开发 CLI 升到 `0.31.10`，并为 Drizzle/Vitest 分别解析兼容的 esbuild 版本。新版收紧的泛型 `from()` 类型在 `BaseDao` 以 PostgreSQL 表安全上转处理，未放宽 DAO 的公开读写类型。升级后 `npm ls` 为有效树，双 TypeScript 配置、schema audit 与全量 162 文件/1,007 项单测通过，主 Worker minify dry-run 为 3,224.31 KiB/gzip 764.19 KiB 且仍精确绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`；`npm audit --omit=dev` 为 0，并已加入 Linux 硬门禁。完整开发依赖审计仍有 4 个 moderate，全部局限于已弃用的 `drizzle-kit → @esbuild-kit → esbuild 0.18` 本地开发服务器链；最新稳定 CLI 尚未移除它，npm 建议的自动修复会倒退到 `drizzle-kit 0.18.1`，因此不冒充已清零，也不把该链打入生产 Worker。
 
 ### 工程门禁、待完成 checklist 与发布顺序
 
@@ -2686,11 +2688,12 @@ callback 白名单 payload 新增 `payload_retained_until/payload_redacted_time`
 - [x] unionid 唯一 UID 关联、歧义/冲突失败关闭、30 天 callback 脱敏与 UNKNOWN/DEAD 对账证据保留。
 - [x] Admin PII-free 台账、服务端 view/manage 权限、确认成功/风险重试/关闭 API 与响应式处置页面。
 - [x] 生产 PostgreSQL 16 expand-only 双跑、迁移前后只读审计，以及最新随机 schema 18/18 服务断言；生产业务行和动作行未被测试污染。
+- [x] 修复 Drizzle ORM 高危 CVE，生产依赖官方 npm 审计为 0，并把生产依赖审计加入 Linux CI；4 个开发期 moderate 已隔离并显式记录。
 - [ ] 取得只读源 MySQL/正式备份后迁移并抽样真实 `work_channel_code/work_welcome/work_welcome_relation/work_media/wechat_user`；当前生产均为 0 行。
 - [ ] 把 URL-only 欢迎语附件通过受控下载、类型/大小校验和最小权限素材上传预先物化为可发送 media ID；禁止 Worker 在 callback 热路径抓取任意 URL。
 - [ ] 配置测试租户 CorpID、AgentID、external-contact Secret、callback Token/AES Key、full-visibility 权限和正式 Origin；回读 Cloudflare Script Settings 确认 traces 关闭或 query-string 已可靠脱敏。
 - [ ] 用真实测试客户验证 add/edit callback、20 秒欢迎语、标签、唯一/歧义 unionid、真实 429/41051/权限错误与 Admin 对账，不使用生产客户制造故障。
-- [ ] 在 Linux/受支持主机补 Workers runtime；当前 Windows `workerd` 在 0 测试/0 断言前仍以 `0xc0000005` 启动失败，不能记为 runtime 通过。
+- [x] Linux/受支持主机 Workers runtime：Ubuntu 24.04、Node 24.14.1、workerd 1 文件/8 项已由 Actions `33368811307` 通过；Windows `0xc0000005` 只保留为本机环境缺陷，不再阻断 C8。
 - [ ] 经明确批准部署主 Worker/Admin，按 C0→C8 依赖顺序启用 client/tag/full-visibility/contact-action gates，先预发和小流量，再观察 Queue 延迟、UNKNOWN/DEAD、欢迎码过期、标签 429、UID 歧义和 callback 保留积压；准备关闭 gate 的回滚方案。
 - [ ] 完成旧端/新端 golden response、真机、影子流量、业务/安全批准和发布后观察后，才能勾选 WORK-C 父项。
 

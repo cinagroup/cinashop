@@ -34,6 +34,16 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
     return getTableColumns(this.table) as unknown as Record<string, PgColumn>;
   }
 
+  /**
+   * Drizzle 0.45's `from()` rejects a still-generic table because its
+   * empty-subquery conditional cannot be reduced for `TTable`.  BaseDao only
+   * accepts PostgreSQL tables, so widening at this builder boundary is safe;
+   * the DAO's public select/insert types remain tied to the concrete TTable.
+   */
+  protected get fromTable(): AnyPgTable {
+    return this.table;
+  }
+
   /** 主键列 (约定所有表都用 id 或 uid 作主键, 子类可重写) */
   protected get pk(): PgColumn {
     return this.cols.id ?? this.cols.uid ?? Object.values(this.cols)[0]!;
@@ -90,7 +100,7 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
 
     const rows = await this.db
       .select()
-      .from(this.table)
+      .from(this.fromTable)
       .where(where)
       .limit(1);
     return (rows[0] as TTable["$inferSelect"] | undefined) ?? null;
@@ -107,7 +117,7 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
     if (!cond) return false;
     const rows = await this.db
       .select({ c: sql<number>`1` })
-      .from(this.table)
+      .from(this.fromTable)
       .where(cond)
       .limit(1);
     return rows.length > 0;
@@ -127,7 +137,7 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
     const cond = this.buildWhere(where);
     const rows = await this.db
       .select({ c: sql<number>`count(*)::int` })
-      .from(this.table)
+      .from(this.fromTable)
       .where(cond ?? sql`true`);
     return rows[0]?.c ?? 0;
   }
@@ -145,7 +155,7 @@ export abstract class BaseDao<TTable extends AnyPgTable> {
     const cond = opts.where ? this.buildWhere(opts.where) : undefined;
     let q = this.db
       .select()
-      .from(this.table)
+      .from(this.fromTable)
       .where(cond ?? sql`true`)
       .$dynamic();
 
