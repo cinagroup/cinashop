@@ -30,20 +30,37 @@ describe("Worker runtime bindings", () => {
     await expect(testEnv.CONFIG_KV.get("runtime:key")).resolves.toBe("local-value");
   });
 
-  it("turns one Cron event into four replayable root Queue jobs without touching PostgreSQL", async () => {
+  it("turns one Cron event into thirteen replayable root Queue jobs without touching PostgreSQL", async () => {
     const scheduledTime = new Date("2026-08-09T12:00:00.000Z");
     const controller = createScheduledController({
       scheduledTime,
       cron: "*/5 * * * *",
     });
     const ctx = createExecutionContext();
+    const messages: OrderMessage[] = [];
+    const runtimeEnv = {
+      ...testEnv,
+      ORDER_QUEUE: {
+        async send(body: OrderMessage) { messages.push(body); },
+        async sendBatch(batch: MessageSendRequest<OrderMessage>[]) {
+          messages.push(...batch.map((message) => message.body));
+        },
+      },
+    } as unknown as Env;
 
-    await worker.scheduled(controller, testEnv, ctx);
+    await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    const metrics = await testEnv.ORDER_QUEUE.metrics();
-    expect(metrics.backlogCount).toBe(4);
-    expect(metrics.backlogBytes).toBeGreaterThan(0);
+    expect(messages).toHaveLength(13);
+    expect(messages.filter((message) => message.action === "runScheduledMaintenance"))
+      .toHaveLength(11);
+    expect(messages.map((message) => message.action).sort()).toEqual([
+      "dispatchWorkCallbackOutbox",
+      "dispatchWorkContactActions",
+      ...Array.from({ length: 11 }, () => "runScheduledMaintenance"),
+    ].sort());
+    expect(messages.every((message) => "scheduledAt" in message
+      && message.scheduledAt === scheduledTime.getTime())).toBe(true);
   });
 });
 
@@ -76,7 +93,7 @@ describe("Queue acknowledgement and retry semantics", () => {
         body: {
           action: "processOrderPaidOutbox",
           outboxId: 42,
-          eventKey: "runtime-test:42",
+          eventKey: "order.paid:42",
         },
       },
     ]);
