@@ -1,6 +1,9 @@
 const BUSINESS_TIMEZONE_OFFSET_SECONDS = 8 * 60 * 60;
 const DAY_SECONDS = 24 * 60 * 60;
 
+/** Shared by sign writes and reminder delivery so Worker-side decisions serialize per user. */
+export const SIGN_LOCK_NAMESPACE = 731_623;
+
 export interface SignDayWindow {
   yesterdayStart: number;
   todayStart: number;

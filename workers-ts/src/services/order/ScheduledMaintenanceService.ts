@@ -32,6 +32,10 @@ import { ReplyService } from "@/services/product/ReplyService";
 import { WechatLiveService } from "@/services/wechat/WechatLiveService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { PinkTimeoutService } from "@/services/activity/PinkTimeoutService";
+import {
+  isSignReminderDispatchTime,
+  SignReminderService,
+} from "@/services/message/SignReminderService";
 
 export const SCHEDULED_ORDER_PAGE_SIZE = 80;
 export const SCHEDULED_OUTBOX_PAGE_SIZE = 20;
@@ -50,6 +54,7 @@ const ROOT_JOBS: readonly ScheduledMaintenanceJob[] = [
   "live_room_sync",
   "live_goods_sync",
   "refund_reconciliation",
+  "sign_remind_time",
 ];
 
 const ORDER_JOBS = ["auto_receipt", "auto_comment", "unpaid_order_cancel"] as const;
@@ -96,7 +101,10 @@ export function scheduledRunId(scheduledAt: number): string {
 
 export function createScheduledRunMessages(scheduledAt: number): ScheduledMaintenanceMessage[] {
   const runId = scheduledRunId(scheduledAt);
-  return ROOT_JOBS.map((job) => ({
+  const jobs = isSignReminderDispatchTime(scheduledAt)
+    ? ROOT_JOBS
+    : ROOT_JOBS.filter((job) => job !== "sign_remind_time");
+  return jobs.map((job) => ({
     action: "runScheduledMaintenance",
     job,
     runId,
@@ -194,6 +202,8 @@ export class ScheduledMaintenanceService {
         return new WechatLiveService(this.container, this.env).syncGoods(message);
       case "refund_reconciliation":
         return this.reconcileRefunds(message);
+      case "sign_remind_time":
+        return new SignReminderService(this.container, this.env).scan(message);
     }
   }
 

@@ -76,6 +76,11 @@ export default {
       isPinkTimeoutMessage,
       scheduledRetryDelaySeconds,
     } = await import("./services/order/ScheduledMaintenanceService");
+    const {
+      consumeSignReminderQueueMessage,
+      isSignReminderMessage,
+      SignReminderService,
+    } = await import("./services/message/SignReminderService");
     const { SmsVerificationService, isSmsVerificationMessage } = await import(
       "./services/message/SmsVerificationService"
     );
@@ -108,6 +113,7 @@ export default {
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
     const maintenance = new ScheduledMaintenanceService(container, env);
+    const signReminders = new SignReminderService(container, env);
     const sms = new SmsVerificationService(container, env);
     const attachments = new AttachmentService(container, env);
     const officialQrcodes = new OfficialAccountQrcodeService(container, env);
@@ -273,6 +279,11 @@ export default {
           }));
           msg.retry({ delaySeconds });
         }
+        continue;
+      }
+
+      if (isSignReminderMessage(msg.body)) {
+        await consumeSignReminderQueueMessage(msg, signReminders);
         continue;
       }
 

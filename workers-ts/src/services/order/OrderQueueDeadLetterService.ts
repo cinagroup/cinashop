@@ -11,6 +11,7 @@ import {
   type SystemQueueDeadLetter,
 } from "@/models/schema";
 import { isSmsVerificationMessage } from "@/services/message/SmsVerificationService";
+import { isSignReminderMessage } from "@/services/message/SignReminderService";
 import {
   isOrderNotificationOutboxMessage,
   isOrderPaidOutboxMessage,
@@ -194,6 +195,14 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
     };
   }
   if (isPinkTimeoutMessage(value)) {
+    return {
+      messageType: value.action,
+      replayPolicy: "ALLOW",
+      body: sanitizeUnknownQueueBody(value),
+      replayMessage: value,
+    };
+  }
+  if (isSignReminderMessage(value)) {
     return {
       messageType: value.action,
       replayPolicy: "ALLOW",

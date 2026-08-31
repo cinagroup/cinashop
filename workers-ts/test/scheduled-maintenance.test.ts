@@ -12,9 +12,9 @@ import {
 } from "@/services/order/ScheduledMaintenanceService";
 
 describe("可分页定时维护工作流", () => {
-  const scheduledAt = 1_786_252_800_000;
+  const scheduledAt = Date.parse("2026-08-09T02:25:00.000Z");
 
-  it("Cron 一次投递十一个可重放根任务", async () => {
+  it("Cron 一次投递十二个可重放根任务", async () => {
     const messages = createScheduledRunMessages(scheduledAt);
     expect(messages.map((message) => message.job)).toEqual([
       "payment_outbox_dispatch",
@@ -28,8 +28,9 @@ describe("可分页定时维护工作流", () => {
       "live_room_sync",
       "live_goods_sync",
       "refund_reconciliation",
+      "sign_remind_time",
     ]);
-    expect(messages).toHaveLength(11);
+    expect(messages).toHaveLength(12);
     expect(messages.every((message) => message.runId === `scheduled:${scheduledAt}`)).toBe(true);
     expect(messages.every((message) => message.cursor === 0 && message.threshold === null)).toBe(
       true,
@@ -43,6 +44,12 @@ describe("可分页定时维护工作流", () => {
     expect(sendBatch.mock.calls[0]?.[0]).toEqual(
       messages.map((body) => ({ body, contentType: "json" })),
     );
+  });
+
+  it("非上海 10:25 不产生签到扫描根任务", () => {
+    const outside = createScheduledRunMessages(Date.parse("2026-08-09T02:20:00.000Z"));
+    expect(outside).toHaveLength(11);
+    expect(outside.some((message) => message.job === "sign_remind_time")).toBe(false);
   });
 
   it("严格拒绝损坏的游标、阈值和 runId", () => {

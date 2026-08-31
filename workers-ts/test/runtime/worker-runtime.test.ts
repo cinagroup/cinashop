@@ -36,7 +36,7 @@ describe("Worker runtime bindings", () => {
     await expect(testEnv.CONFIG_KV.get("runtime:key")).resolves.toBe("local-value");
   });
 
-  it("turns one Cron event into thirteen replayable root Queue jobs without touching PostgreSQL", async () => {
+  it("turns a non-reminder Cron event into thirteen replayable root Queue jobs without touching PostgreSQL", async () => {
     const scheduledTime = new Date("2026-08-09T12:00:00.000Z");
     const controller = createScheduledController({
       scheduledTime,
@@ -67,6 +67,30 @@ describe("Worker runtime bindings", () => {
     ].sort());
     expect(messages.every((message) => "scheduledAt" in message
       && message.scheduledAt === scheduledTime.getTime())).toBe(true);
+  });
+
+  it("adds one sign-reminder root only at 10:25 Asia/Shanghai", async () => {
+    const scheduledTime = new Date("2026-08-09T02:25:00.000Z");
+    const controller = createScheduledController({ scheduledTime, cron: "*/5 * * * *" });
+    const ctx = createExecutionContext();
+    const messages: OrderMessage[] = [];
+    const runtimeEnv = {
+      ...testEnv,
+      ORDER_QUEUE: {
+        async send(body: OrderMessage) { messages.push(body); },
+        async sendBatch(batch: MessageSendRequest<OrderMessage>[]) {
+          messages.push(...batch.map((message) => message.body));
+        },
+      },
+    } as unknown as Env;
+
+    await worker.scheduled(controller, runtimeEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(messages).toHaveLength(14);
+    expect(messages.filter((message) =>
+      message.action === "runScheduledMaintenance" && message.job === "sign_remind_time"
+    )).toHaveLength(1);
   });
 });
 

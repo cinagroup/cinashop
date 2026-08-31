@@ -31,9 +31,13 @@ import {
 } from "@/services/system/SystemSignRewardService";
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { ValidateException, NotFoundException } from "@/utils/errors";
-import { nextContinuousSignDays, signDayWindow, type SignDayWindow } from "@/utils/sign";
+import {
+  nextContinuousSignDays,
+  SIGN_LOCK_NAMESPACE,
+  signDayWindow,
+  type SignDayWindow,
+} from "@/utils/sign";
 
-const SIGN_LOCK_NAMESPACE = 731_623;
 const ADDRESS_LOCK_NAMESPACE = 731_624;
 const MAX_COLLECT_IDS = 100;
 const POSTGRES_INT_MAX = 2_147_483_647;

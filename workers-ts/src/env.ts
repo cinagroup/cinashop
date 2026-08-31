@@ -158,7 +158,8 @@ export type ScheduledMaintenanceJob =
   | "auto_comment"
   | "live_room_sync"
   | "live_goods_sync"
-  | "refund_reconciliation";
+  | "refund_reconciliation"
+  | "sign_remind_time";
 
 /** Cron only writes root jobs; cursor and threshold make every page replayable. */
 export interface ScheduledMaintenanceMessage {
@@ -187,6 +188,17 @@ export interface PinkTimeoutMessage {
   runId: string;
   scheduledAt: number;
   pinkId: number;
+}
+
+/** One user/day reminder candidate; phone numbers and rendered content stay in PostgreSQL. */
+export interface SignReminderMessage {
+  action: "processSignReminder";
+  job: "sign_remind_time";
+  runId: string;
+  scheduledAt: number;
+  userId: number;
+  /** Integer Asia/Shanghai calendar day, used in the durable idempotency key. */
+  shanghaiDay: number;
 }
 
 /** 尚未迁移消费者的 PHP 历史消息，仅用于识别并显式告警。 */
@@ -269,6 +281,7 @@ export type OrderMessage =
   | ScheduledMaintenanceMessage
   | ScheduledOrderMessage
   | PinkTimeoutMessage
+  | SignReminderMessage
   | SmsVerificationMessage
   | AttachmentObjectCleanupMessage
   | OfficialAccountQrcodeMessage

@@ -75,6 +75,11 @@ const TIMER_RUNTIME: Readonly<
     status: "partially_implemented",
     note: "Worker 已恢复用户直播列表、回放读取和可重放的微信状态同步；创建直播间、商品提审/删除及导入商品仍因外部接口缺少幂等键而保持关闭。",
   },
+  sign_remind_time: {
+    workerJob: "sign_remind_time",
+    status: "partially_implemented",
+    note: "Worker 已恢复上海 10:25 的分页扫描、可重试 Queue 消费和每日幂等站内信；短信与小程序订阅消息仍等待通用 provider 投递账本、凭据和真实模板验收。",
+  },
 };
 
 const QUEUE_STATUS_NAMES: Readonly<Record<number, string>> = {
