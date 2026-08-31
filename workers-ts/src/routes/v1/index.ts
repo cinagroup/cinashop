@@ -1242,6 +1242,13 @@ v1Routes.get("/admin/wechat_qrcode/statistic/:qid", adminAuth, AdminWechatQrcode
 
 // 商品管理
 v1Routes.get("/admin/product/list", adminAuth, AdminCrud.adminProductList);
+v1Routes.get("/admin/product/category", adminAuth, AdminCrud.adminMobileProductCategories);
+v1Routes.get("/admin/product/admin_list", adminAuth, AdminCrud.adminMobileProductList);
+v1Routes.post("/admin/product/set_show", adminAuth, AdminCrud.adminMobileProductSetShow);
+v1Routes.get("/admin/product/product_label", adminAuth, AdminCrud.adminMobileProductLabels);
+v1Routes.get("/admin/product/get_attr/:id", adminAuth, AdminCrud.adminMobileProductAttrs);
+v1Routes.post("/admin/product/update_attrs/:id", adminAuth, AdminCrud.adminMobileProductUpdateAttrs);
+v1Routes.post("/admin/product/batch_process", adminAuth, AdminCrud.adminMobileProductBatchProcess);
 v1Routes.get("/admin/product/detail/:id", adminAuth, AdminCrud.adminProductDetail);
 v1Routes.get("/admin/product/coupons/:id", adminAuth, AdminCrud.adminProductCoupons);
 v1Routes.put("/admin/product/coupons/:id", adminAuth, AdminCrud.adminProductCouponsReplace);

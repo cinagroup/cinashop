@@ -37,6 +37,7 @@ import { StoreOperationsService } from "@/services/store/StoreOperationsService"
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
+import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -205,6 +206,59 @@ export async function adminProductList(c: C) {
   });
 
   return jsonOk(c, { list, page, limit });
+}
+
+function mobileProducts(c: C): AdminMobileProductService {
+  return new AdminMobileProductService(c.get("container"));
+}
+
+/** GET /api/admin/product/category — PHP 移动管理端可选分类树。 */
+export async function adminMobileProductCategories(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileProducts(c).categories());
+}
+
+/** GET /api/admin/product/admin_list — PHP 移动管理商品列表。 */
+export async function adminMobileProductList(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileProducts(c).list(c.req.query()));
+}
+
+/** POST /api/admin/product/set_show — 事务化批量上下架。 */
+export async function adminMobileProductSetShow(c: C) {
+  privateNoStore(c);
+  const body: unknown = await c.req.json().catch(() => null);
+  const parsed = body && typeof body === "object" && !Array.isArray(body)
+    ? body as Record<string, unknown>
+    : null;
+  const result = await mobileProducts(c).setShow(body);
+  return jsonOk(c, result, Number(parsed?.is_show) === 1 ? "上架成功" : "下架成功");
+}
+
+/** GET /api/admin/product/product_label — 平台可用商品标签树。 */
+export async function adminMobileProductLabels(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileProducts(c).labels());
+}
+
+/** GET /api/admin/product/get_attr/:id — 当前商品基础 SKU。 */
+export async function adminMobileProductAttrs(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await mobileProducts(c).getAttrs(c.req.param("id")));
+}
+
+/** POST /api/admin/product/update_attrs/:id — 行锁下更新库存价格。 */
+export async function adminMobileProductUpdateAttrs(c: C) {
+  privateNoStore(c);
+  const body: unknown = await c.req.json().catch(() => null);
+  return jsonOk(c, await mobileProducts(c).updateAttrs(c.req.param("id"), body), "修改成功");
+}
+
+/** POST /api/admin/product/batch_process — 原子替换商品分类或标签。 */
+export async function adminMobileProductBatchProcess(c: C) {
+  privateNoStore(c);
+  const body: unknown = await c.req.json().catch(() => null);
+  return jsonOk(c, await mobileProducts(c).batchProcess(body), "修改成功");
 }
 
 /** GET /api/admin/product/detail/:id — 商品详情 */
