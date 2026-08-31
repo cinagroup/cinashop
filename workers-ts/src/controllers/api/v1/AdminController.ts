@@ -27,6 +27,7 @@ import {
 } from "@/services/admin/AdminExtendedStatisticService";
 import type { AppVariables, Env } from "@/env";
 import { upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
+import { ErpCapabilityService } from "@/services/system/ErpCapabilityService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -245,6 +246,13 @@ export async function adminNewPush(c: C) {
  */
 export async function chatHistory(c: C) {
   return jsonRaw(c, 501, "管理员不能充当客服身份，请使用独立客服工作台");
+}
+
+/** GET /api/admin/erp/config — 只返回 ERP 能力开关，不暴露任何 ERP 凭据。 */
+export async function adminErpConfig(c: C) {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  const capability = await new ErpCapabilityService(c.get("container"), c.env).getCapability();
+  return jsonOk(c, capability);
 }
 
 /** GET /api/admin/service/sessions — 客服会话列表 (按用户聚合最近消息) */

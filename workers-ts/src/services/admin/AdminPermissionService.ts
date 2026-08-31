@@ -113,7 +113,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
     matches: ["file/file", "file/upload", "file/upload_type", "file/category", "config/storage", "assets", "asset-categories"],
     manage: true,
   },
-  { key: "config", label: "系统配置", path: "/config", matches: ["config/", "config_class", "config_class/", "form/", "setting/", "sms/"], manage: true },
+  { key: "config", label: "系统配置", path: "/config", matches: ["config/", "config_class", "config_class/", "form/", "setting/", "sms/", "erp/config"], manage: true },
   { key: "print", label: "小票打印", path: "/setting/print", matches: ["print/"], manage: true },
   { key: "waybill", label: "电子面单", path: "/setting/waybill", matches: ["waybill/"], manage: true },
   { key: "supplier_application", label: "供应商入驻", path: "/supplier/applications", matches: ["supplier/apply/", "supplier/applications"], manage: true },

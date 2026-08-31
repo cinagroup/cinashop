@@ -1177,6 +1177,7 @@ v1Routes.get("/admin/home/order", adminAuth, AdminController.adminOrderChart);
 v1Routes.get("/admin/home/user", adminAuth, AdminController.adminUserChart);
 v1Routes.get("/admin/home/rank", adminAuth, AdminController.adminPurchaseRanking);
 v1Routes.get("/admin/new_push", adminAuth, AdminController.adminNewPush);
+v1Routes.get("/admin/erp/config", adminAuth, AdminController.adminErpConfig);
 v1Routes.get("/admin/system/timer/task", adminAuth, AdminLegacyRuntimeController.timerTasks);
 v1Routes.get("/admin/system/timer/index", adminAuth, AdminLegacyRuntimeController.timerList);
 v1Routes.get("/admin/system/timer/one/:id", adminAuth, AdminLegacyRuntimeController.timerDetail);

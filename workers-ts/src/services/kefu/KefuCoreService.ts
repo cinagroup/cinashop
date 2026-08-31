@@ -20,6 +20,7 @@ import {
   userGroup,
 } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { ErpCapabilityService } from "@/services/system/ErpCapabilityService";
 import {
   parseCanonicalAttachmentId,
   signAttachmentReferences,
@@ -160,8 +161,8 @@ export class KefuCoreService {
   }
 
   async erpConfig() {
-    const value = await this.configService().get("erp_open");
-    return { open_erp: value === "1" || value.toLowerCase() === "true" };
+    if (!this.env) throw new Error("Customer-service configuration binding is required");
+    return new ErpCapabilityService(this.container, this.env).getCapability();
   }
 
   async availableServices(kefuUid: number, query: Record<string, string>) {

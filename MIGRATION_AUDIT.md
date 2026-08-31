@@ -2806,6 +2806,30 @@ Workers Logs 官方明确区分对象日志与字符串：`console.log({field: v
 
 只有A～D全部有生产证据后才能勾选TEST-003父项。策略文件、绿色单测或“资源已经创建”都不能替代实际部署、通知送达和观察窗口。
 
+## WORK-C 清单状态纠偏与 ADMIN-E ERP 能力端点详细审计（2026-08-31）
+
+### 审计结论
+
+本轮先发现并修正了一个清单状态漂移：`MIGRATION_AUDIT.md` 的既有生产证据已经证明 WORK-C7 与 C8 达到“代码、生产结构、随机 schema/隔离服务验收完成，未启用/未发布”，但 `MIGRATION_CHECKLIST.md` 仍把 C7/C8 整项写成待实现。清单现将两项代码边界勾选，同时分别保留真实源数据、真实企业微信租户/provider、全量 reconciliation、旧媒体/商城 UID 映射、预发、影子流量、明确发布批准和发布后观察等未完成子项；WORK-C 父项继续保持未勾选，未把结构完成冒充生产能力完成。
+
+随后选择不依赖 ERP 协议、外部账号或远端副作用的 ADMIN-E 作为下一精确缺口。PHP 权威为 `route/api.php:699-701` 的 `GET /api/admin/erp/config` 与 `app/controller/api/admin/order/StoreOrder.php:54-60` 的 `getErpConfig()`：成功响应只含 `open_erp = !!sys_config('erp_open')`。实现前静态路由审计明确把该路由列在 `/api` 缺口中；实现后它从缺口移入精确且可执行匹配。该子项现在可标为“代码与静态合同完成，未发布”，不能据此勾选 ERP-001/002 或 API-008 父项。
+
+### 实现与安全边界
+
+- `src/routes/v1/index.ts` 精确注册 `GET /admin/erp/config`，继续挂在应用既有 `/api` 前缀下；路由必须经过 `adminAuthMiddleware`，后者校验 admin token bucket、JWT `type=admin`、有效管理员、密码摘要 auth claim，并对非超级管理员执行服务端 ACL。
+- `AdminPermissionService` 把 `erp/config` 显式登记到 `config` 权限域；只读方法要求 `config.view`。这遵循迁移清单对内嵌 Admin 的收紧决策，不复制 PHP 移动管理面仅凭普通用户 token 与 Customer middleware 进入的宽权限模型。
+- 新 `ErpCapabilityService` 只读取 `system_config.erp_open`，只接受规范的 `1/true` 为开启；缺失、`0/false` 和损坏/非规范值均失败关闭。响应 DTO 精确只有 `{open_erp:boolean}`，没有 ERP 类型、账号、token、secret、password、provider URL 或原始配置值。
+- 控制器设置 `Cache-Control: private, no-store, max-age=0`。客服侧既有 `/kefuapi/erp/config` 改为复用同一能力服务，保持既有响应字段与严格开关语义，避免两处能力判断继续漂移。
+- 本项没有第三方网络调用、数据库写入、DDL、Queue 消息或日志新增。生产主 Worker仍是旧版本；仓库代码未来发布后才会通过既有生产 Hyperdrive读取该开关。本轮没有借“直接使用生产数据库”的授权绕过既有安全阻塞去创建临时公开探针，也没有把未部署代码写成生产已生效。
+
+### 验证证据与剩余边界
+
+实现前路由基线为 PHP 1,904、TS 1,448、精确 746、可执行 728、原始缺失 1,158、可执行缺口 1,154；`/api` 为 PHP 457、TS 757、精确 364、可执行 361、原始缺失 93、可执行缺口 92。实现后审计为 PHP 1,904、TS 1,449、精确 747、可执行 729、原始缺失 1,157、可执行缺口 1,153；`/api` 为 TS 758、精确 365、可执行 362、原始缺失 92、可执行缺口 91，且缺口列表不再包含 `/api/admin/erp/config`。精确/可执行/退役后有效覆盖分别为 39.2%/38.3%/38.4%，只是一个真实合同的净增，不改变整体迁移仍大幅未完成的结论。
+
+定向门禁为三文件 19/19：覆盖开关规范值、缺失配置回源并缓存空标量、真实控制器响应 envelope/cache header、响应精确字段/无秘密名称、路由注册、Admin 中间件和 `config.view` 权限映射。双 TypeScript 配置、166 文件/1,036 项全量单测、observability 14 信号/10 域/27 事件/367 个生产源文件、schema source 201/target 247/shared 201/零缺口/247↔247 零漂移、生产依赖官方 npm 审计 0 和 `git diff --check` 均通过；主 Worker minify dry-run 为 3,239.67 KiB/gzip 768.33 KiB并精确回显目标 Hyperdrive，但没有部署。Wrangler 在沙箱外日志目录出现既有 EPERM 提示，不影响 dry-run 以退出码 0 完成；受支持 Linux runtime、五端构建和全仓 CI 证据在本批提交后继续补录，未通过前不作为本批完成证据。
+
+ERP 主面仍有 `/erpapi` 8/8 条缺口：授权、回调、access token、商品同步、库存、发货、取消和售后收货都需要明确协议、沙箱、凭据、签名/重放保护与幂等事件账本。ADMIN-E 只暴露关闭/开启能力，不会触发这些流程；生产发布仍受 REL-001/002 的单独明确批准门禁约束。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
