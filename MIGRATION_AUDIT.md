@@ -2826,7 +2826,9 @@ Workers Logs 官方明确区分对象日志与字符串：`console.log({field: v
 
 实现前路由基线为 PHP 1,904、TS 1,448、精确 746、可执行 728、原始缺失 1,158、可执行缺口 1,154；`/api` 为 PHP 457、TS 757、精确 364、可执行 361、原始缺失 93、可执行缺口 92。实现后审计为 PHP 1,904、TS 1,449、精确 747、可执行 729、原始缺失 1,157、可执行缺口 1,153；`/api` 为 TS 758、精确 365、可执行 362、原始缺失 92、可执行缺口 91，且缺口列表不再包含 `/api/admin/erp/config`。精确/可执行/退役后有效覆盖分别为 39.2%/38.3%/38.4%，只是一个真实合同的净增，不改变整体迁移仍大幅未完成的结论。
 
-定向门禁为三文件 19/19：覆盖开关规范值、缺失配置回源并缓存空标量、真实控制器响应 envelope/cache header、响应精确字段/无秘密名称、路由注册、Admin 中间件和 `config.view` 权限映射。双 TypeScript 配置、166 文件/1,036 项全量单测、observability 14 信号/10 域/27 事件/367 个生产源文件、schema source 201/target 247/shared 201/零缺口/247↔247 零漂移、生产依赖官方 npm 审计 0 和 `git diff --check` 均通过；主 Worker minify dry-run 为 3,239.67 KiB/gzip 768.33 KiB并精确回显目标 Hyperdrive，但没有部署。Wrangler 在沙箱外日志目录出现既有 EPERM 提示，不影响 dry-run 以退出码 0 完成；受支持 Linux runtime、五端构建和全仓 CI 证据在本批提交后继续补录，未通过前不作为本批完成证据。
+定向门禁为三文件 19/19：覆盖开关规范值、缺失配置回源并缓存空标量、真实控制器响应 envelope/cache header、响应精确字段/无秘密名称、路由注册、Admin 中间件和 `config.view` 权限映射。双 TypeScript 配置、166 文件/1,036 项全量单测、observability 14 信号/10 域/27 事件/367 个生产源文件、schema source 201/target 247/shared 201/零缺口/247↔247 零漂移、生产依赖官方 npm 审计 0 和 `git diff --check` 均通过；主 Worker minify dry-run 为 3,239.67 KiB/gzip 768.33 KiB并精确回显目标 Hyperdrive，但没有部署。Wrangler 在沙箱外日志目录出现既有 EPERM 提示，不影响 dry-run 以退出码 0 完成。
+
+实现提交 `7d30a244ed0653c1d9c6428fa9e70c349df14cee` 已推送至 `main`。[GitHub Actions 33396920497](https://github.com/cinagroup/cinashop/actions/runs/33396920497) 最终 8/8 jobs 成功：Worker job 在 Ubuntu 24.04/Node 24.14.1 上通过双 TypeScript、生产依赖审计 0、166 文件/1,036 项单测、上述 observability/schema/route 汇总；真实 workerd 为 1 文件/13 项；Admin、PC、Supplier、Kefu、UniApp 全部通过各自类型/测试/生产构建门禁；checksum-pinned Gitleaks 扫描 73 个提交且 `no leaks found`。该 CI 没有生产 Secret，不访问生产 Hyperdrive，也不部署 Worker/Pages。
 
 ERP 主面仍有 `/erpapi` 8/8 条缺口：授权、回调、access token、商品同步、库存、发货、取消和售后收货都需要明确协议、沙箱、凭据、签名/重放保护与幂等事件账本。ADMIN-E 只暴露关闭/开启能力，不会触发这些流程；生产发布仍受 REL-001/002 的单独明确批准门禁约束。
 

@@ -15,7 +15,7 @@
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
 | Worker 单元测试 | 166/166 文件、1,036/1,036 项通过；ADMIN-E 定向 3 文件 19/19、可观测性审计 367 个生产源文件 | 本地业务回归与日志安全门禁通过 |
 | Workers runtime | Linux workerd 13/13；Windows 启动即 `0xc0000005` | 受支持 Linux 门禁完成，Windows 仅为本机缺陷 |
-| CI | Actions `33393069797` 的 Worker/五端/runtime/secret scan 8/8 | TEST-001/002 及 TEST-003A 新门禁均已在 Linux 复验 |
+| CI | Actions `33396920497` 的 Worker/五端/runtime/secret scan 8/8 | 当前 ADMIN-E 候选与 TEST-001/002/003A 门禁均已在 Linux 复验 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
