@@ -2785,6 +2785,8 @@ Workers Logs 官方明确区分对象日志与字符串：`console.log({field: v
 
 `npm run audit:observability` 不只是JSON语法检查：它精确验证Hyperdrive/三条Queue ID、release配置100%日志采样、trace关闭、27个必需关键事件、10个策略域、对象console实现、366个生产源文件无旁路日志、每个调用点无标识字段/对象展开，以及生产基线中6个明确阻塞。该命令已加入Linux `worker-static` job，和双TypeScript、全量单测、schema/route audit一起阻断提交。日志单测覆盖九类关键路径分类、对象字段可索引、敏感/标识/保留schema/嵌套/NaN/原始异常消息拒绝、最终HTTP成功状态和通用5xx；定向测试14/14通过。完整运行手册在 `workers-ts/OBSERVABILITY.md`，策略阈值以JSON为权威，文档不得自行漂移。
 
+实现提交 `beb2071b397eb316ee8cb5592656b3dceb7ed1a3` 已推送至main。[GitHub Actions 33393069797](https://github.com/cinagroup/cinashop/actions/runs/33393069797) 最终8/8 jobs成功：Worker生产依赖审计0、双TypeScript、165文件/1,031项单测；observability输出14信号/10域/27必需事件/366生产源文件/6发布阻塞；schema输出source201/target247/shared201/sourceGaps0/externalOnly0/workerOnly0/columnDrift0；route输出PHP1,904/TS1,448/精确746/可执行728；真实workerd 1文件/13项；Admin、PC、Supplier、Kefu和UniApp构建矩阵通过，Kefu 7/7；固定checksum的Gitleaks对70个提交完成非空全历史扫描且no leaks found。Windows本机workerd仍在0条断言前以`0xc0000005`启动失败，不计为代码回归；主Worker、Pages和临时审计Worker均未因该CI发布。
+
 ### 生产只读事实与新发现的发布阻塞
 
 本轮没有创建、修改或删除生产资源，只通过Wrangler读接口核验现状，并把结果固化到 `audit/production-observability-baseline.json`。Hyperdrive `9748c294e21c49a99579c9cef70102e0` 确认为 `cinashop-pg`，origin connection limit 60、query cache开启。三条Queue ID分别为主队列 `7c5d03145eb541cbbb3695fad3925d70`、DLQ `886e026a32c74359b2b40407f4def8d6`、归档失败终端队列 `ec0ef96ffcd3429da48500cdf90ca532`。主队列实际消费者是`cinashop-api`，batch10、max wait2秒、max retries3、失败进入DLQ，配置与仓库第一段consumer一致。

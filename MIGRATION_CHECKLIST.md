@@ -15,7 +15,7 @@
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
 | Worker 单元测试 | 165/165 文件、1,031/1,031 项通过；可观测性定向 14/14 | 本地业务回归与日志安全门禁通过 |
 | Workers runtime | Linux workerd 13/13；Windows 启动即 `0xc0000005` | 受支持 Linux 门禁完成，Windows 仅为本机缺陷 |
-| CI | Actions `33385492677` 的 Worker/五端/runtime/secret scan 8/8 | 已建立，TEST-003 新门禁待本批 CI 复验 |
+| CI | Actions `33393069797` 的 Worker/五端/runtime/secret scan 8/8 | TEST-001/002 及 TEST-003A 新门禁均已在 Linux 复验 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -267,8 +267,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
 - [x] **TEST-001 Linux CI**：GitHub Actions `33385492677` 在 Ubuntu 24.04 上以显式 Node 24.14.1/npm 11.11.0 断言和锁文件安装完成 8/8 jobs：Worker 双 TypeScript、164 文件/1,017 项单测、真实 workerd 13/13、生产依赖审计0、schema 201→247/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建、Kefu 7/7，以及 checksum-pinned Gitleaks 对68个提交的非空全历史扫描。详见审计文档的 TEST-001 节；这只完成可重复工程门禁，不代替浏览器E2E、真实第三方、预发或发布。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
-- [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
-  - [x] **TEST-003A 仓库可观测性合同**：`audit/observability-policy.json` 定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；对象字段白名单拒绝正文、payload、token、查询、URL、凭据、异常消息、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过。
+- [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立并由 Actions `33393069797` 复验，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
+  - [x] **TEST-003A 仓库可观测性合同**：提交 `beb2071b397eb316ee8cb5592656b3dceb7ed1a3` 新增 `audit/observability-policy.json`，定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；运行时及 AST 门禁拒绝正文、payload、token、查询、URL、凭据、异常消息、任何 ID/UID、schema 覆盖、对象展开、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过；Actions 同时通过 Worker 165文件/1,031项、workerd13/13、schema201→247零漂移、route1,904→1,448/746/728、五端构建与70提交Gitleaks无泄漏。
   - [ ] **TEST-003B 生产指标与数据库基线（BLOCKED：需批准只读探针端点或提供现有私有观测入口）**：读取 Hyperdrive query/error/latency/pool waiter、Queue实时 backlog/oldest/retry/DLQ、DO invocation/error/memory、R2 operation status，以及 PostgreSQL `pg_stat_*` 聚合和四类任务 `UNKNOWN/DEAD`；不得返回 SQL、参数、业务值或 PII。受控临时 Worker部署请求被拒绝且账号确认该 Worker不存在，因此本轮没有访问生产库。
   - [ ] **TEST-003C 生产通知与告警（BLOCKED：需通知目标/值班 owner）**：在 Cloudflare Notifications或获批 OTLP/Logs平台物化14条策略，记录 policy ID、接收人、升级链，并用无真实支付/退款/打印/面单副作用的合成信号验证 warning/critical 投递。
   - [ ] **TEST-003D 发布后基线与调优**：候选发布后观察关键域，验证对象字段可检索且无敏感数据；以真实低流量基线校准阈值。fetch traces在企微 query-string 凭据脱敏被证明前继续关闭。
