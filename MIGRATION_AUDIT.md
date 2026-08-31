@@ -2832,6 +2832,32 @@ Workers Logs 官方明确区分对象日志与字符串：`console.log({field: v
 
 ERP 主面仍有 `/erpapi` 8/8 条缺口：授权、回调、access token、商品同步、库存、发货、取消和售后收货都需要明确协议、沙箱、凭据、签名/重放保护与幂等事件账本。ADMIN-E 只暴露关闭/开启能力，不会触发这些流程；生产发布仍受 REL-001/002 的单独明确批准门禁约束。
 
+## ADMIN-C 内嵌售后详细审计（2026-08-31）
+
+### PHP 权威、既有实现与缺口判定
+
+PHP 权威是 `route/api.php:702-704` 与 `app/controller/api/admin/order/StoreOrder.php:836-882` 的三条移动管理合同：`GET /api/admin/refund_order/list`、`GET /api/admin/refund_order/detail/:uni`、`POST /api/admin/refund_order/remark`。列表把 `order_id/time/refundTypes/apply_type` 交给 `StoreOrderRefundServices::refundList()` 后只返回其中的 `list`；DAO 的 `refundTypes` 不是单值退款状态，而是 0→`[0]`、1→`[1,2]`、2→`[4,5]`、3→`[5]`、4→`[6]`、5→`[0,1,2,4,5]`、6→`[3,6]` 的七组语义。搜索覆盖退款单号、退货快递号、用户昵称/UID/手机号、商品名/关键词以及原订单号/UID/手机号。详情的 `:uni` 同时接受退款表主键与公开退款单号，再以 `store_order_id` 读取原订单并投影商品快照；备注按公开退款单号更新 `store_order_refund.remark`。
+
+实现前 Worker 只有 `/api/admin/refund/list` 与 `/api/admin/refund/detail/:id`：前者没有 PHP 四类筛选或分页，后者只接收数字主键、直接返回退款行，均不能作为三条精确路径的等价实现。PHP 移动管理组历史上使用普通用户 token/Customer middleware，备注没有长度上限、事务行锁或审计状态，详情也没有明确排除已取消/已删除记录；这些宽边界没有复制。ADMIN-C 的目标是保留客户端合同与业务筛选，同时升级为服务端受限 Admin ACL 和失败关闭的数据边界。
+
+### 实现、数据范围与安全边界
+
+- `AdminMobileRefundService` 对 page/limit、100 字搜索词、0～6 组合状态、0～4 售后类型、时间范围和 50 字退款选择器做确定性校验；每页最多 100 条。列表仍覆盖全平台的门店/供应商售后，因为 PHP 权威没有隐式 `store_id=0`，但统一要求 `is_cancel=0 AND is_del=0`。商品快照复用既有有界 JSON 投影，不把原始快照字符串直接透传。
+- 详情对数字参数执行“退款主键或公开退款单号”匹配，对文本只做公开退款单号精确匹配；命中后必须存在 `store_order.id = refund.store_order_id` 且 `store_order.uid = refund.uid` 的权威关系，否则拒绝。响应恢复旧页面使用的退款图片、退货说明、商品快照、原订单号、收货/配送字段、支付/退款时间、支付方式、备注与状态字段；不返回密码摘要、token、数据库连接或配置秘密。
+- 三条路由都经过 `adminAuthMiddleware`。`AdminPermissionService` 新增 `refund_order/` 到退款权限域；GET 只能由 `refund.view` 读取，POST 必须有 `refund.manage`。敏感响应均设置 `Cache-Control: private, no-store, max-age=0`。
+- 备注只接收已验证 Admin 上下文中的 `adminId`，不接受客户端 actor；去除首尾空白后必须为 1～255 字。事务设置 2 秒 lock timeout 与 5 秒 statement timeout，对有效退款行 `FOR UPDATE`，同值直接返回 `changed=false`，变化时才更新并在同一事务写 `store_order_status(change_type=admin_refund_remark)`。日志消息只记录执行管理员 ID和动作，不复制备注正文，避免把业务备注扩散到不可变状态日志。
+- 本批没有新增退款同意/拒绝、付款渠道调用或资金写入；这些动作继续由 CORE-002 的退款状态机和账本承担。没有 DDL、Queue 消息、第三方网络调用、生产业务 DML 或新运行日志。使用的 Cloudflare Workers 审查准则促成了显式 ACL、无秘密响应、请求外无副作用、事务超时和可重复测试这些边界。
+
+### 路由、测试、CI 与生产边界
+
+实现前 ADMIN-E 后的路由基线为 PHP 1,904、TS 1,449、精确 747、可执行 729、原始缺失 1,157、可执行缺口 1,153；`/api` 为 TS 758、精确 365、可执行 362、原始缺失 92、可执行缺口 91。ADMIN-C 净增三条精确可执行合同后，总计为 TS 1,452、精确 750、可执行 732、原始缺失 1,154、可执行缺口 1,150，精确/可执行/退役后有效覆盖 39.4%/38.4%/38.5%；`/api` 为 TS 761、精确 368、可执行 365、原始缺失 89、可执行缺口 88，三项覆盖为 80.5%/79.9%/80.0%。`/erpapi` 仍是 0/8，其他面未因本批改变。
+
+定向三文件 18/18 覆盖列表边界、七组 `refundTypes`、时间解析、主键/公开单号选择器、备注空值/长度、控制器 envelope/no-store、actor 来源、精确路由、view/manage ACL、有效记录过滤、行锁和审计类型。完整本地门禁为双 TypeScript 配置、167 文件/1,043 项单元测试、observability 14 信号/10 域/27 必需事件/368 个生产源文件/6 个发布阻塞、schema source201/target247/shared201/sourceGaps0/externalOnly0/workerOnly0/columnDrift0、官方 npm 生产依赖审计 0 与 `git diff --check` 全部通过。主 Worker minify dry-run 为 3,247.93 KiB/gzip 770.74 KiB，精确回显生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`；Wrangler 仍因沙箱外日志目录报既有 EPERM，但 dry-run 退出码为 0，且没有部署。
+
+实现提交 `57f08565ea01a0caa07b7adde61827d3ecbc7f5f` 已推送至 `main`。[GitHub Actions 33399262375](https://github.com/cinagroup/cinashop/actions/runs/33399262375) 最终 8/8 jobs 成功：Worker job 在 Linux 通过生产依赖审计 0、双 TypeScript、167 文件/1,043 项单测、上述 observability/schema/route 门禁；workerd 1 文件/13 项通过；Admin、PC、Supplier、Kefu和UniApp矩阵全部成功；checksum-pinned Gitleaks 对 75 个提交完成非空全历史扫描且 `no leaks found`。CI 不含生产 Secret，不访问 Hyperdrive，也不部署 Worker/Pages。
+
+用户已要求直接使用生产数据库；仓库实现未来发布后确实只通过现有生产 Hyperdrive 读取/更新目标 PostgreSQL，没有引入影子数据库或 SQLite。但本批是零 schema 变更的未部署 HTTP/service 合同，Windows `wrangler dev --remote` 仍在任何 preview 上传/数据库请求前因 workerd `0xc0000005` 退出，且临时公开探针此前未获安全执行许可，因此没有伪造新的生产查询或写入证据。既有只读审计已确认生产有 3 条售后且售后孤儿/UID错配为 0；这不能代替候选发布后的真实 Admin 账号列表、详情、备注幂等、权限拒绝和发布观察。ADMIN-C 现只标记“代码、静态合同与服务回归完成，未发布”；REL-001/002、TEST-003B～D、真实前端 E2E 和明确生产发布批准仍是独立门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
