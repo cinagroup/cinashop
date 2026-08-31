@@ -19,3 +19,11 @@ condition = "AND"
 regexTarget = "line"
 paths = ['''^workers-ts/src/utils/wechat-crypto\.ts$''']
 regexes = ['''\.replace\(/-----BEGIN (RSA )?PRIVATE KEY-----/g, ""\)''']
+
+[[allowlists]]
+description = "Fixed non-secret UUID-v4 idempotency test fixture"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/test/admin-mobile-user-migration\.test\.ts$''']
+regexes = ['''idempotencyKey: "6ba7b810-9dad-41d1-80b4-00c04fd430c8",''']
