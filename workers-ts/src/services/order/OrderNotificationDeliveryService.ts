@@ -20,6 +20,7 @@ import {
   WechatProviderRejectedError,
 } from "@/services/wechat/WechatNotificationProvider";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
@@ -427,28 +428,43 @@ export async function consumeOrderNotificationDeliveryMessage(
     throw new Error("Queue message is not an external notification delivery");
   }
   const body = message.body;
+  const startedAt = Date.now();
   try {
     const result = await service.processMessage(body);
     if (result === "busy") {
+      emitOperationalEvent("warn", {
+        event: "order_notification_delivery_retried",
+        component: "queue",
+        operation: "notification_delivery",
+        outcome: "retry",
+        durationMs: Date.now() - startedAt,
+        queueAttempt: message.attempts,
+      });
       message.retry({ delaySeconds: Math.min(30 * 2 ** Math.max(message.attempts - 1, 0), 300) });
       return;
     }
-    console.log(JSON.stringify({
+    emitOperationalEvent(result === "unknown" || result === "dead" ? "error" : "info", {
       event: "order_notification_delivery_consumed",
-      deliveryId: body.deliveryId,
+      component: "queue",
+      operation: "notification_delivery",
+      outcome: result === "unknown" ? "unknown" : result === "dead" ? "failure" : "success",
       channel: body.channel,
       result,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-    }));
+    });
     message.ack();
   } catch (error) {
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "order_notification_delivery_failed",
-      deliveryId: body.deliveryId,
+      component: "queue",
+      operation: "notification_delivery",
+      outcome: "retry",
       channel: body.channel,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-      error: errorText(error),
-    }));
+      errorCode: operationalErrorCode(error),
+    });
     message.retry({ delaySeconds: Math.min(30 * 2 ** Math.max(message.attempts - 1, 0), 300) });
   }
 }

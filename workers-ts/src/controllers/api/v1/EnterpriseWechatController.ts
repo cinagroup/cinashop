@@ -15,6 +15,7 @@ import {
   ValidateException,
 } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
+import { emitOperationalEvent } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 export const WORK_CONTEXT_COOKIE = "__Host-cinashop-work-context-state";
@@ -236,11 +237,12 @@ export async function callbackReceive(c: C) {
   } catch {
     // PostgreSQL already owns the event and outbox row. Cron will retry Queue
     // delivery; never log decrypted payload or Enterprise WeChat identifiers.
-    console.error(JSON.stringify({
+    emitOperationalEvent("warn", {
       event: "work_callback_queue_dispatch_deferred",
-      eventId: received.eventId,
-      outboxId: received.outboxId,
-    }));
+      component: "queue",
+      operation: "work_callback_dispatch",
+      outcome: "retry",
+    });
   }
   c.header("Content-Type", "text/plain; charset=utf-8");
   return c.body("success", 200);

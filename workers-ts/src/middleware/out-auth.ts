@@ -11,6 +11,7 @@ import {
   AuthException,
   RateLimitException,
 } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type OutContext = Context<{ Bindings: Env; Variables: AppVariables }>;
 type RateOperation = "login" | "refresh" | "read" | "write";
@@ -224,10 +225,12 @@ export function outAuthMiddleware(
             durationMs: Date.now() - startedAt,
           });
         } catch (auditError) {
-          console.error("[out-api-audit] write failed", {
-            routeTemplate,
-            method,
-            error: auditError instanceof Error ? auditError.name : "unknown",
+          emitOperationalEvent("error", {
+            event: "login_audit_write_failed",
+            component: "login",
+            operation: "out_api_audit",
+            outcome: "failure",
+            errorCode: operationalErrorCode(auditError),
           });
         }
       }

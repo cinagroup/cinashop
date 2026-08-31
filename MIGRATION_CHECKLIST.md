@@ -9,13 +9,13 @@
 | 维度 | 当前证据 | 判定 |
 |---|---:|---|
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
-| 仓库目标结构 | 外部 SQL 242 表；Worker 内嵌 242 表；共享源表 201、Worker 扩展 41；表/列/主键漂移 0 | 完成 |
-| 生产目标结构 | 仓库/生产 242/242 表；缺失 0、额外 0；WORK-C6 三张 group/member current/fence 表已补齐并二次精确复验 | 完成 |
+| 仓库目标结构 | 外部 SQL 247 表；Worker 内嵌 247 表；共享源表 201、Worker 扩展 46；表/列/主键漂移 0 | 完成 |
+| 生产目标结构 | 仓库/生产 247/247 表；缺失 0、额外 0；WORK-C1～C8 结构均已精确复验 | 完成 |
 | PHP HTTP 合同 | 精确匹配 746/1,904；可执行 728；其中 18 条明确不可用、4 条有证据退役 | 精确注册 39.2%，静态可执行上限 38.2%，退役后有效上限 38.3% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 160/160 文件、991/991 项通过；WORK-C6 定向 3 文件 57/57、真实 PostgreSQL 迁移 6/6、投影 13/13、current-first 上下文 5/5 | 本地业务回归与生产随机 schema 真实 service 场景通过 |
-| Workers runtime | Windows `workerd` 启动即 `0xc0000005` | 未执行断言，不能算通过 |
-| CI | 仓库没有 `.github/workflows` | 未建立 |
+| Worker 单元测试 | 165/165 文件、1,031/1,031 项通过；可观测性定向 14/14 | 本地业务回归与日志安全门禁通过 |
+| Workers runtime | Linux workerd 13/13；Windows 启动即 `0xc0000005` | 受支持 Linux 门禁完成，Windows 仅为本机缺陷 |
+| CI | Actions `33385492677` 的 Worker/五端/runtime/secret scan 8/8 | 已建立，TEST-003 新门禁待本批 CI 复验 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -26,18 +26,18 @@
 | 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 精确/可执行/退役后有效覆盖 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `/api` | 457 | 757 | 364 | 361 | 3 | 93 | 1 | 92 | 79.6% / 79.0% / 79.2% |
-| `/adminapi` | 1,153 | 470 | 202 | 187 | 15 | 951 | 0 | 951 | 17.5% / 16.2% / 16.2% |
+| `/adminapi` | 1,153 | 472 | 202 | 187 | 15 | 951 | 0 | 951 | 17.5% / 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% / 43.4% |
 | `/kefuapi` | 63 | 66 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,446 | 746 | 728 | 18 | 1,158 | 4 | 1,154 | 39.2% / 38.2% / 38.3% |
+| 合计 | 1,904 | 1,448 | 746 | 728 | 18 | 1,158 | 4 | 1,154 | 39.2% / 38.2% / 38.3% |
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
 ### 生产数据库事实
 
-- PostgreSQL 16.14；生产 `public` 当前 242 表、3,365 列、800 索引、229 主键、212 条序列。WORK-C6 新增三张表、53 列、3 个主键、11 个总索引和 2 条 identity sequence；26 个约束、3 个 relation 与 11 个索引组成 40 个精确复验对象，三表业务行均为 0。最终表集合与仓库 242/242 精确一致。
+- PostgreSQL 16.14；生产 `public` 已在 WORK-C8 后精确复验为仓库/生产 247/247 表，当前缺失与额外均为 0。较早 WORK-C6 的 242 表、3,365 列、800 索引、229 主键、212 条序列只是当批历史快照；C6 当时新增三张表、53 列、3 个主键、11 个总索引和 2 条 identity sequence，26 个约束、3 个 relation 与 11 个索引组成 40 个精确复验对象，三表业务行均为 0，不能再把 242 写作当前总数。
 - `order_print_job`、`order_print_job_action`、`order_waybill_job`、`order_waybill_job_action` 已创建且行数为 0。
 - `out_product_write_replay`、`out_coupon_write_replay` 均为 8 列，`out_user_write_replay` 为 9 列；三表都是 4 约束、3 索引且当前 0 行。新增 `store_order_product_coupon_reward` 为 7 列、4 索引、2 约束、0 行；有效手机号、Out 余额流水、Out 积分流水三个唯一索引均有效；该批当时仓库 223 表清单与生产集合差均为空，后续批次后的当前总览已更新为 242/242。
 - 商品 71、订单 29、订单明细 28、售后 3；客服账号 0、会话 0，但客服消息历史 3。
@@ -69,6 +69,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 ### Cloudflare 资源与配置事实
 
 - 已存在并匹配仓库配置：Hyperdrive、`cinashop-api-CONFIG_KV`、`cinashop-assets` R2、`cinashop-order`、`cinashop-order-dlq`、`cinashop-order-dlq-unarchived`。
+- 2026-08-31 只读复核确认 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 名为 `cinashop-pg`、origin connection limit 60、缓存开启；主队列 ID `7c5d03145eb541cbbb3695fad3925d70`，实际消费者仍是 `cinashop-api`、batch 10、2 秒、3 次重试并转入 `cinashop-order-dlq`。
+- 严重上线缺口：`cinashop-order-dlq`（ID `886e026a32c74359b2b40407f4def8d6`）当前消费者为 0；100% 生产流量仍是 2026-08-09 版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，其实际 bindings 没有 `ASSETS_BUCKET`，也没有 `ORDER_DLQ_NAME`。仓库里的 DLQ 归档/R2 代码尚未发布，不能按“生产已启用”计算。
 - 主 Worker 当前只有 6 个 Secret 名：`APP_KEY`、`DEBUG`、`INTERNAL_CHAT_TOKEN`、`OPERATIONS_TOKEN`、`UPSTASH_REDIS_URL`、`UPSTASH_REDIS_TOKEN`。
 - 支付、短信、Turnstile、电子面单和 `WECHAT_OPEN_APP_SECRET` 当前未配置；即使代码存在也不能投入生产。
 
@@ -265,7 +267,11 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
 - [x] **TEST-001 Linux CI**：GitHub Actions `33385492677` 在 Ubuntu 24.04 上以显式 Node 24.14.1/npm 11.11.0 断言和锁文件安装完成 8/8 jobs：Worker 双 TypeScript、164 文件/1,017 项单测、真实 workerd 13/13、生产依赖审计0、schema 201→247/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建、Kefu 7/7，以及 checksum-pinned Gitleaks 对68个提交的非空全历史扫描。详见审计文档的 TEST-001 节；这只完成可重复工程门禁，不代替浏览器E2E、真实第三方、预发或发布。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
-- [ ] **TEST-003 性能与可观测性**：为 Hyperdrive 慢查询、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单设置指标、结构化日志和告警阈值。
+- [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
+  - [x] **TEST-003A 仓库可观测性合同**：`audit/observability-policy.json` 定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；对象字段白名单拒绝正文、payload、token、查询、URL、凭据、异常消息、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过。
+  - [ ] **TEST-003B 生产指标与数据库基线（BLOCKED：需批准只读探针端点或提供现有私有观测入口）**：读取 Hyperdrive query/error/latency/pool waiter、Queue实时 backlog/oldest/retry/DLQ、DO invocation/error/memory、R2 operation status，以及 PostgreSQL `pg_stat_*` 聚合和四类任务 `UNKNOWN/DEAD`；不得返回 SQL、参数、业务值或 PII。受控临时 Worker部署请求被拒绝且账号确认该 Worker不存在，因此本轮没有访问生产库。
+  - [ ] **TEST-003C 生产通知与告警（BLOCKED：需通知目标/值班 owner）**：在 Cloudflare Notifications或获批 OTLP/Logs平台物化14条策略，记录 policy ID、接收人、升级链，并用无真实支付/退款/打印/面单副作用的合成信号验证 warning/critical 投递。
+  - [ ] **TEST-003D 发布后基线与调优**：候选发布后观察关键域，验证对象字段可检索且无敏感数据；以真实低流量基线校准阈值。fetch traces在企微 query-string 凭据脱敏被证明前继续关闭。
 - [ ] **REL-001 发布候选门禁**：所有 P0 完成，相关 P1 域完成；生成变更清单、DB 前置、Secret/资源检查、回滚版本和 smoke tests。
 - [ ] **REL-002 主 Worker 发布（BLOCKED：需明确批准）**：发布当前候选，确认版本流量 100%，执行健康/安全负向/关键只读和受控写 smoke test。
 - [ ] **REL-003 Pages 发布（BLOCKED：需明确批准）**：为 Admin、H5、PC、Supplier、Kefu 建立明确项目映射，逐项目核对同源 proxy、`WORKERS_API`、正式 Origin 与 `ALLOWED_ORIGINS`/PC/Kefu 专用 allowlist，先预览后正式；记录每个 deployment ID 与 Git SHA。
@@ -273,7 +279,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## 当前下一步（2026-08-31 更新）
 
-仓库与生产结构现为 247/247，201 张 PHP 共享源表零列缺口、46 张 Worker 扩展表不冒充源数据；WORK-C1～C8 的代码、生产结构和随机 schema 隔离已收口但所有真实租户 authority/发布门禁保持关闭。`sign_remind_time` 的上海 10:25 扫描、可重试 Queue 与幂等站内信，以及 TEST-001/002 的全仓 Linux CI 和 Cron/Queue/KV/R2/DO/WebSocket 真实 workerd 门禁也已收口；下一代码批继续选择不依赖源 MySQL或第三方凭据的明确缺口。当前主要阻塞仍是源数据/孤儿修复、真实微信/短信/支付/企微凭据与样本、旧端/五端浏览器E2E、性能/可观测性、预发、影子流量、明确发布批准和发布后观察；主 Worker与 Pages 未部署本轮代码。
+仓库与生产结构现为 247/247，201 张 PHP 共享源表零列缺口、46 张 Worker 扩展表不冒充源数据；WORK-C1～C8 的代码、生产结构和随机 schema 隔离已收口但所有真实租户 authority/发布门禁保持关闭。`sign_remind_time`、TEST-001/002 以及 TEST-003A 的机器可读指标/对象日志/阈值门禁已收口；生产仍是旧版本 `9f1fd655…`，DLQ消费者为0且缺R2/DLQ变量绑定，所以 TEST-003B～D 和 REL-001/002 都不能完成。下一批优先取得私有生产观测入口或明确批准受控只读探针，建立原生指标/`pg_stat_*`基线并配置真实通知；其余主要阻塞仍是源数据/孤儿修复、真实微信/短信/支付/企微凭据与样本、旧端/五端浏览器E2E、预发、影子流量、明确发布批准和发布后观察。主 Worker与 Pages 未部署本轮代码。
 
 ### 迁移清单生成时的历史快照（保留审计）
 

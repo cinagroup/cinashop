@@ -21,6 +21,7 @@ import { chatPrincipalName } from "@/services/kefu/KefuSocketGateway";
 import type { AppVariables, Env } from "@/env";
 import { systemMessage } from "@/models/schema";
 import { readBoundedJsonObject } from "@/utils/request-body";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_CHAT_BODY_BYTES = 8 * 1024;
@@ -240,12 +241,13 @@ export async function serviceSend(c: C) {
       persisted.recored.mssage_num = 0;
     }
   } catch (error) {
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "chat_rest_delivery_failed",
-      messageId: persisted.id,
-      recipientUid: persisted.to_uid,
-      error: error instanceof Error ? error.name : "unknown",
-    }));
+      component: "durable_object",
+      operation: "chat_delivery",
+      outcome: "failure",
+      errorCode: operationalErrorCode(error),
+    });
   }
   return jsonOk(c, persisted);
 }

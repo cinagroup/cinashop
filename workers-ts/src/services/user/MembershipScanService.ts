@@ -4,6 +4,7 @@ import type { Container } from "@/lib/di";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
 import { ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -59,10 +60,13 @@ export class MembershipScanService {
       ).createMembershipActivationDataUrl() ?? "";
       routineStatus = routine ? "ready" : "not_configured";
     } catch (error) {
-      console.error(JSON.stringify({
+      emitOperationalEvent("error", {
         event: "membership_activation_code_failed",
-        error: error instanceof Error ? error.message : String(error),
-      }));
+        component: "http",
+        operation: "membership_code",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
       routineStatus = "unavailable";
     }
 

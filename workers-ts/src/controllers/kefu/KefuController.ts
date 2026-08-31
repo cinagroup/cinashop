@@ -27,6 +27,7 @@ import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { md5 } from "@/utils/jwt";
+import { emitOperationalEvent } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_KEFU_BODY_BYTES = 8 * 1024;
@@ -301,11 +302,13 @@ export async function transfer(c: C) {
     ]);
     const failed = deliveries.filter((item) => item.status === "rejected").length;
     if (failed) {
-      console.error(JSON.stringify({
+      emitOperationalEvent("error", {
         event: "kefu_transfer_delivery_failed",
-        requestKey: result.request_key,
-        failed,
-      }));
+        component: "durable_object",
+        operation: "chat_transfer",
+        outcome: "failure",
+        resourceCount: failed,
+      });
     }
   }
   return jsonOk(c, result, "转接成功");

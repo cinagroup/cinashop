@@ -25,6 +25,7 @@ import {
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { signAlipayParams, type AlipayParams } from "@/utils/alipay";
 import {
   enqueueOrderPaidEvent,
@@ -514,13 +515,13 @@ export class StoreOrderPayService {
     try {
       await this.outbox.dispatchById(outboxId);
     } catch (error) {
-      console.error(
-        JSON.stringify({
-          event: "payment_outbox_dispatch_failed",
-          outboxId,
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      emitOperationalEvent("error", {
+        event: "payment_outbox_dispatch_failed",
+        component: "payment",
+        operation: "outbox_dispatch",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
     }
   }
 

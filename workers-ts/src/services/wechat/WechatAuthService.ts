@@ -27,6 +27,7 @@ import {
 } from "@/services/activity/StoreNewcomerService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { V2UserCompatibilityService } from "@/services/user/V2UserCompatibilityService";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const SOCIAL_PENDING_TTL_SECONDS = 15 * 60;
 const SOCIAL_PENDING_PREFIX = "social_pending:";
@@ -494,11 +495,13 @@ export class WechatAuthService {
     await new UserBehaviorService(this.container)
       .recordLoginVisit(uid, params.ip)
       .catch((error: unknown) => {
-        console.error(JSON.stringify({
+        emitOperationalEvent("error", {
           event: "user_visit_record_failed",
-          uid,
-          message: error instanceof Error ? error.message : String(error),
-        }));
+          component: "login",
+          operation: "analytics_write",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error),
+        });
       });
 
     return { token, expiresTime: exp, uid };
@@ -1158,11 +1161,13 @@ export class WechatAuthService {
     await new UserBehaviorService(this.container)
       .recordLoginVisit(uid, ip)
       .catch((error: unknown) => {
-        console.error(JSON.stringify({
+        emitOperationalEvent("error", {
           event: "user_visit_record_failed",
-          uid,
-          message: error instanceof Error ? error.message : String(error),
-        }));
+          component: "login",
+          operation: "analytics_write",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error),
+        });
       });
     return {
       token,

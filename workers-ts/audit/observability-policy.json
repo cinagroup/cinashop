@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "worker": "cinashop-api",
+  "hyperdriveConfigId": "9748c294e21c49a99579c9cef70102e0",
+  "r2Bucket": "cinashop-assets",
+  "queues": [
+    "cinashop-order",
+    "cinashop-order-dlq",
+    "cinashop-order-dlq-unarchived"
+  ],
+  "queueIds": {
+    "cinashop-order": "7c5d03145eb541cbbb3695fad3925d70",
+    "cinashop-order-dlq": "886e026a32c74359b2b40407f4def8d6",
+    "cinashop-order-dlq-unarchived": "ec0ef96ffcd3429da48500cdf90ca532"
+  },
+  "alertProvisioning": {
+    "state": "pending",
+    "reason": "notification_destination_and_production_deployment_are_not_approved"
+  },
+  "signals": [
+    {
+      "id": "hyperdrive_query_errors",
+      "component": "hyperdrive",
+      "source": "hyperdriveQueriesAdaptiveGroups.eventStatus",
+      "warning": "error_ratio >= 0.01 and queries >= 100 over 5m",
+      "critical": "error_ratio >= 0.05 and queries >= 20 over 5m",
+      "response": "check SQLSTATE, Hyperdrive incidents, pool contention, and PostgreSQL availability"
+    },
+    {
+      "id": "hyperdrive_query_latency",
+      "component": "hyperdrive",
+      "source": "hyperdriveQueriesAdaptiveGroups.avg.queryLatency",
+      "warning": "average >= 250ms over 15m",
+      "critical": "average >= 1000ms over 5m",
+      "response": "correlate request domain, inspect PostgreSQL slow statements, then EXPLAIN without ANALYZE on production"
+    },
+    {
+      "id": "hyperdrive_pool_waiters",
+      "component": "hyperdrive",
+      "source": "hyperdrivePoolSizesAdaptiveGroups.max.waitingClients",
+      "warning": "max >= 1 over 5m",
+      "critical": "max >= 5 over 5m",
+      "response": "check connection leaks, transaction duration, pool size and origin connection capacity"
+    },
+    {
+      "id": "queue_backlog",
+      "component": "queue",
+      "source": "Queues REST metrics backlog_count and oldest_message_timestamp_ms",
+      "warning": "backlog >= 100 or oldest >= 60s for 5m",
+      "critical": "backlog >= 1000 or oldest >= 300s for 5m",
+      "response": "inspect consumer failures, provider latency, concurrency and retry amplification"
+    },
+    {
+      "id": "queue_dlq_transition",
+      "component": "dlq",
+      "source": "queueMessageOperationsAdaptiveGroups.outcome",
+      "warning": "not_applicable",
+      "critical": "any outcome=dlq over 5m",
+      "response": "open the persistent PostgreSQL dead-letter record before replay or resolution"
+    },
+    {
+      "id": "queue_unarchived_dead_letters",
+      "component": "dlq",
+      "source": "cinashop-order-dlq-unarchived realtime backlog",
+      "warning": "not_applicable",
+      "critical": "backlog >= 1",
+      "response": "restore PostgreSQL archival first; never acknowledge or replay an unarchived body blindly"
+    },
+    {
+      "id": "durable_object_errors",
+      "component": "durable_object",
+      "source": "durableObjectsInvocationsAdaptiveGroups",
+      "warning": "error_ratio >= 0.01 and invocations >= 100 over 5m",
+      "critical": "error_ratio >= 0.05 and invocations >= 20 over 5m",
+      "response": "split by namespace and object; correlate cinashop_operational_v1 chat_room events"
+    },
+    {
+      "id": "durable_object_memory",
+      "component": "durable_object",
+      "source": "durableObjectsPeriodicGroups.memoryUsageBytes",
+      "warning": "p99 >= 100663296 bytes over 15m",
+      "critical": "p99 >= 125829120 bytes over 5m",
+      "response": "inspect per-principal socket fan-out and retained in-memory state before the 128 MiB limit"
+    },
+    {
+      "id": "r2_internal_errors",
+      "component": "r2",
+      "source": "r2OperationsAdaptiveGroups.actionStatus",
+      "warning": "not_applicable",
+      "critical": "any internalError over 5m",
+      "response": "correlate r2_object_* events and preserve PostgreSQL-to-object compensation semantics"
+    },
+    {
+      "id": "login_failures",
+      "component": "login",
+      "source": "Workers Logs event=http_request_completed component=login",
+      "warning": "rejected >= 10 over 5m by deployment",
+      "critical": "statusCode >= 500 count >= 3 over 5m",
+      "response": "separate abuse/rate limits from credential store, Redis, database or provider failure"
+    },
+    {
+      "id": "payment_callbacks",
+      "component": "payment",
+      "source": "Workers Logs component=payment",
+      "warning": "payment_callback_rejected >= 5 over 5m",
+      "critical": "payment_callback_failed >= 1 or HTTP 5xx >= 3 over 5m",
+      "response": "verify callback signature/configuration and inspect the durable payment outbox before replay"
+    },
+    {
+      "id": "refund_workflow",
+      "component": "refund",
+      "source": "Workers Logs component=refund plus store_order_refund_payment status",
+      "warning": "callback rejects >= 5 or reconciliation failures >= 3 over 15m",
+      "critical": "any unresolved UNKNOWN older than 15m or DEAD row",
+      "response": "query provider state with the immutable refund identity; never issue a blind second refund"
+    },
+    {
+      "id": "print_workflow",
+      "component": "print",
+      "source": "Workers Logs component=print plus order_print_job status",
+      "warning": "retry >= 3 or p95 duration >= 5000ms over 15m",
+      "critical": "any UNKNOWN or DEAD row",
+      "response": "confirm provider result manually before replaying an UNKNOWN print job"
+    },
+    {
+      "id": "waybill_workflow",
+      "component": "waybill",
+      "source": "Workers Logs component=waybill plus order_waybill_job status",
+      "warning": "retry >= 3 or p95 duration >= 5000ms over 15m",
+      "critical": "any UNKNOWN or DEAD row",
+      "response": "confirm allocation with the provider before replay; do not allocate a second tracking number blindly"
+    }
+  ]
+}

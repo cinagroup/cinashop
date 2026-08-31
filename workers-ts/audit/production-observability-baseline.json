@@ -1,0 +1,63 @@
+{
+  "observedAt": "2026-08-31T12:09:05Z",
+  "readOnlySources": [
+    "wrangler hyperdrive get",
+    "wrangler queues list/info/consumer worker list",
+    "wrangler deployments list",
+    "wrangler versions view/list"
+  ],
+  "hyperdrive": {
+    "id": "9748c294e21c49a99579c9cef70102e0",
+    "name": "cinashop-pg",
+    "originConnectionLimit": 60,
+    "cachingDisabled": false
+  },
+  "queues": {
+    "cinashop-order": {
+      "id": "7c5d03145eb541cbbb3695fad3925d70",
+      "producers": 1,
+      "consumers": 1,
+      "consumer": {
+        "id": "8cf40f5caac94ff58e767f00c4b1ece1",
+        "script": "cinashop-api",
+        "deadLetterQueue": "cinashop-order-dlq",
+        "batchSize": 10,
+        "maxRetries": 3,
+        "maxWaitTimeMs": 2000
+      }
+    },
+    "cinashop-order-dlq": {
+      "id": "886e026a32c74359b2b40407f4def8d6",
+      "producers": 0,
+      "consumers": 0
+    },
+    "cinashop-order-dlq-unarchived": {
+      "id": "ec0ef96ffcd3429da48500cdf90ca532",
+      "producers": 0,
+      "consumers": 0
+    }
+  },
+  "deployment": {
+    "worker": "cinashop-api",
+    "version": "9f1fd655-e60f-41c1-8280-738bc85d73ef",
+    "trafficPercent": 100,
+    "createdOn": "2026-08-09T04:47:11.254971Z",
+    "hasHyperdriveBinding": true,
+    "hasOrderQueueBinding": true,
+    "hasAssetsBucketBinding": false,
+    "hasOrderDlqNameVariable": false
+  },
+  "productionDatabaseProbe": {
+    "state": "not_run",
+    "reason": "temporary_public_audit_endpoint_not_approved",
+    "workerExistsAfterRejectedAttempt": false
+  },
+  "releaseBlockers": [
+    "deployed_dlq_consumer_missing",
+    "deployed_r2_binding_missing",
+    "deployed_order_dlq_name_missing",
+    "production_metrics_baseline_missing",
+    "notification_destination_missing",
+    "production_alert_policies_unverified"
+  ]
+}

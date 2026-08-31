@@ -25,6 +25,7 @@ import {
   LegacyOrderCompatibilityService,
   parseLegacyRefundSelections,
 } from "@/services/order/LegacyOrderCompatibilityService";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -75,7 +76,13 @@ export async function alipayNotify(c: C) {
   const publicKey = c.env.ALIPAY_PUBLIC_KEY;
   const appId = c.env.ALIPAY_APP_ID;
   if (!publicKey || !appId) {
-    console.error("[alipayNotify] missing ALIPAY_PUBLIC_KEY or ALIPAY_APP_ID");
+    emitOperationalEvent("error", {
+      event: "payment_callback_failed",
+      component: "payment",
+      operation: "alipay_callback",
+      outcome: "failure",
+      errorCode: "provider_configuration_missing",
+    });
     return c.text("failure", 500);
   }
   try {
@@ -86,15 +93,33 @@ export async function alipayNotify(c: C) {
     }
 
     if (!(await verifyAlipayNotification(params, publicKey))) {
-      console.warn("[alipayNotify] signature verification failed");
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "signature_verification_failed",
+      });
       return c.text("failure", 400);
     }
     if (params.app_id !== appId) {
-      console.warn("[alipayNotify] app_id mismatch");
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "application_mismatch",
+      });
       return c.text("failure", 400);
     }
     if (c.env.ALIPAY_SELLER_ID && params.seller_id !== c.env.ALIPAY_SELLER_ID) {
-      console.warn("[alipayNotify] seller_id mismatch");
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "seller_mismatch",
+      });
       return c.text("failure", 400);
     }
 
@@ -114,7 +139,13 @@ export async function alipayNotify(c: C) {
         ])
       : [null, null, null];
     if ([order, membershipOrder, rechargeOrder].filter(Boolean).length !== 1 || !tradeNo) {
-      console.warn("[alipayNotify] order or trade number missing");
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "order_identity_invalid",
+      });
       return c.text("failure", 400);
     }
 
@@ -123,7 +154,13 @@ export async function alipayNotify(c: C) {
       order?.payPrice ?? membershipOrder?.payPrice ?? rechargeOrder?.price,
     );
     if (notifiedCents === null || expectedCents === null || notifiedCents !== expectedCents) {
-      console.warn("[alipayNotify] amount mismatch");
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "amount_mismatch",
+      });
       return c.text("failure", 400);
     }
 
@@ -147,11 +184,30 @@ export async function alipayNotify(c: C) {
           tradeNo,
         );
     if (!settled) {
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "order_not_payable",
+      });
       return c.text("failure", 400);
     }
+    emitOperationalEvent("info", {
+      event: "payment_callback_completed",
+      component: "payment",
+      operation: "alipay_callback",
+      outcome: "success",
+    });
     return c.text("success", 200);
   } catch (e) {
-    console.error("[alipayNotify] processing failed:", e);
+    emitOperationalEvent("error", {
+      event: "payment_callback_failed",
+      component: "payment",
+      operation: "alipay_callback",
+      outcome: "failure",
+      errorCode: operationalErrorCode(e),
+    });
     return c.text("failure", 500);
   }
 }

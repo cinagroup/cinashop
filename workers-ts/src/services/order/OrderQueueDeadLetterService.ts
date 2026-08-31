@@ -28,6 +28,7 @@ import {
   isWorkCallbackOutboxMessage,
 } from "@/services/work/EnterpriseWechatCallbackService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type JsonPrimitive = string | number | boolean | null;
 export type SafeJsonValue = JsonPrimitive | SafeJsonValue[] | { [key: string]: SafeJsonValue };
@@ -515,11 +516,13 @@ export class OrderQueueDeadLetterService {
             ));
         });
       } catch (recordError) {
-        console.error(JSON.stringify({
+        emitOperationalEvent("error", {
           event: "order_queue_dead_letter_replay_failure_record_failed",
-          deadLetterId: id,
-          error: recordError instanceof Error ? recordError.message : String(recordError),
-        }));
+          component: "dlq",
+          operation: "replay_failure_record",
+          outcome: "failure",
+          errorCode: operationalErrorCode(recordError),
+        });
       }
       throw error;
     }

@@ -16,6 +16,7 @@
     "audit:prod": "npm audit --omit=dev --audit-level=low --registry=https://registry.npmjs.org",
     "data:schema-audit": "tsx scripts/mysql-to-postgres.ts schema-audit",
     "audit:routes": "tsx scripts/route-parity-audit.ts",
+    "audit:observability": "tsx scripts/observability-audit.ts",
     "audit:legacy-schema:update": "tsx scripts/generate-legacy-schema-authority.ts",
     "data:plan": "tsx scripts/mysql-to-postgres.ts plan",
     "data:copy": "tsx scripts/mysql-to-postgres.ts copy",

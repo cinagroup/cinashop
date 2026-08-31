@@ -28,6 +28,7 @@ import {
   WechatMiniProgramCodeService,
   type LegacyActivityCodeType,
 } from "@/services/wechat/WechatMiniProgramCodeService";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
 
@@ -78,12 +79,13 @@ export class ActivityJoinService {
         this.runtimeEnv(),
       ).createActivityDataUrl(type, id, uid) ?? "";
     } catch (error) {
-      console.error(JSON.stringify({
+      emitOperationalEvent("error", {
         event: "legacy_activity_code_failed",
-        type,
-        id,
-        error: error instanceof Error ? error.message : String(error),
-      }));
+        component: "http",
+        operation: "activity_code",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
       return "";
     }
   }

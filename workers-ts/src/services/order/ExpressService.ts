@@ -11,6 +11,7 @@ import type { Container } from "@/lib/di";
 import { storeOrder, storeOrderRefund } from "@/models/schema";
 import { normalizeConfigScalar } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const ALIYUN_EXPRESS_ENDPOINT = "https://wuliu.market.alicloudapi.com/kdi";
 const ACTIVE_CACHE_TTL_SECONDS = 30 * 60;
@@ -473,13 +474,13 @@ export class ExpressService {
         return this.fromCarrier(shipment, cached.result, "cache", cached.fetchedAt);
       }
     } catch (error) {
-      console.error(
-        JSON.stringify({
-          event: "logistics_cache_read_failed",
-          orderId: shipment.orderId,
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      emitOperationalEvent("error", {
+        event: "logistics_cache_read_failed",
+        component: "http",
+        operation: "logistics_cache",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
     }
 
     try {
@@ -494,13 +495,13 @@ export class ExpressService {
         try {
           await this.env.CONFIG_KV.put(key, JSON.stringify(entry), { expirationTtl: 5 * 60 });
         } catch (error) {
-          console.error(
-            JSON.stringify({
-              event: "logistics_cache_write_failed",
-              orderId: shipment.orderId,
-              error: error instanceof Error ? error.message : String(error),
-            }),
-          );
+          emitOperationalEvent("error", {
+            event: "logistics_cache_write_failed",
+            component: "http",
+            operation: "logistics_cache",
+            outcome: "failure",
+            errorCode: operationalErrorCode(error),
+          });
         }
         return fallbackPackage(shipment, "temporarily_unavailable", "物流服务暂不可用，请稍后重试");
       }
@@ -510,24 +511,23 @@ export class ExpressService {
         const entry: TrackingCacheEntry = { version: 1, fetchedAt, result };
         await this.env.CONFIG_KV.put(key, JSON.stringify(entry), { expirationTtl: ttl });
       } catch (error) {
-        console.error(
-          JSON.stringify({
-            event: "logistics_cache_write_failed",
-            orderId: shipment.orderId,
-            error: error instanceof Error ? error.message : String(error),
-          }),
-        );
+        emitOperationalEvent("error", {
+          event: "logistics_cache_write_failed",
+          component: "http",
+          operation: "logistics_cache",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error),
+        });
       }
       return this.fromCarrier(shipment, result, "carrier", fetchedAt);
     } catch (error) {
-      console.error(
-        JSON.stringify({
-          event: "logistics_provider_failed",
-          orderId: shipment.orderId,
-          provider: "aliyun_market",
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      emitOperationalEvent("error", {
+        event: "logistics_provider_failed",
+        component: "http",
+        operation: "logistics_provider",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
       return fallbackPackage(
         shipment,
         "temporarily_unavailable",

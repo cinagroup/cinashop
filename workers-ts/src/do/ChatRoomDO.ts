@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import type { Env } from "@/env";
 import { createContainer } from "@/lib/di";
 import {
@@ -142,12 +143,14 @@ function errorMessage(error: unknown): string {
 }
 
 function structuredError(event: string, error: unknown, session?: ChatSocketSession | null): void {
-  console.error(JSON.stringify({
+  emitOperationalEvent("error", {
     event,
-    principalUid: session?.principalUid ?? 0,
+    component: "durable_object",
+    operation: "chat_room",
+    outcome: "failure",
     role: session?.role ?? 0,
-    error: error instanceof Error ? error.name : "unknown",
-  }));
+    errorCode: operationalErrorCode(error),
+  });
 }
 
 /** One Durable Object instance coordinates all sockets for one authenticated principal. */

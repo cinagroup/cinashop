@@ -38,6 +38,7 @@ import {
 } from "@/services/work/EnterpriseWechatProviderClient";
 import { shaHex } from "@/services/work/EnterpriseWechatCallbackCrypto";
 import { ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const ACTION_AUTHORITY = "verified";
 const DISPATCH_LEASE_SECONDS = 60;
@@ -1256,36 +1257,68 @@ export async function consumeWorkContactActionMessage(
   message: WorkContactActionQueueMessageControl,
   service: Pick<EnterpriseWechatContactActionService, "processMessage">,
 ): Promise<void> {
+  const startedAt = Date.now();
   try {
     const result = await service.processMessage(message.body);
     if (result === "busy") {
+      emitOperationalEvent("warn", {
+        event: "work_contact_action_retried",
+        component: "queue",
+        operation: "work_contact_action",
+        outcome: "retry",
+        durationMs: Date.now() - startedAt,
+        queueAttempt: message.attempts,
+      });
       message.retry({ delaySeconds: 15 });
       return;
     }
     if (typeof result === "object" && result.kind === "deferred") {
+      emitOperationalEvent("warn", {
+        event: "work_contact_action_retried",
+        component: "queue",
+        operation: "work_contact_action",
+        outcome: "retry",
+        durationMs: Date.now() - startedAt,
+        queueAttempt: message.attempts,
+        retryDelaySeconds: result.delaySeconds,
+      });
       message.retry({ delaySeconds: result.delaySeconds });
       return;
     }
     if (typeof result === "object" && result.kind === "parked") {
+      emitOperationalEvent("warn", {
+        event: "work_contact_action_parked",
+        component: "queue",
+        operation: "work_contact_action",
+        outcome: "unknown",
+        durationMs: Date.now() - startedAt,
+        queueAttempt: message.attempts,
+      });
       message.ack();
       return;
     }
-    console.log(JSON.stringify({
+    emitOperationalEvent("info", {
       event: "work_contact_action_consumed",
-      actionId: message.body.actionId,
-      result,
+      component: "queue",
+      operation: "work_contact_action",
+      outcome: "success",
+      result: typeof result === "string" ? result : "completed",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-    }));
+    });
     message.ack();
   } catch (error) {
     const delaySeconds = Math.min(30 * 2 ** Math.max(message.attempts - 1, 0), 900);
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "work_contact_action_failed",
-      actionId: message.body.actionId,
+      component: "queue",
+      operation: "work_contact_action",
+      outcome: "retry",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
       retryDelaySeconds: delaySeconds,
-      error: safeErrorCode(error),
-    }));
+      errorCode: operationalErrorCode(error, safeErrorCode(error)),
+    });
     message.retry({ delaySeconds });
   }
 }

@@ -26,6 +26,7 @@ import {
 } from "@/models/schema";
 import { normalizeConfigScalar } from "@/utils/config";
 import { SIGN_LOCK_NAMESPACE, signDayWindow } from "@/utils/sign";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 export const SIGN_REMINDER_MARK = "sign_remind_time";
 export const SIGN_REMINDER_PAGE_SIZE = 80;
@@ -113,26 +114,33 @@ export async function consumeSignReminderQueueMessage(
   if (!isSignReminderMessage(message.body)) {
     throw new Error("Queue message is not a sign reminder event");
   }
+  const startedAt = Date.now();
   try {
     const result = await processor.processMessage(message.body);
-    console.log(JSON.stringify({
+    emitOperationalEvent("info", {
       event: "sign_reminder_consumed",
+      component: "queue",
+      operation: "sign_reminder",
+      outcome: "success",
       result,
       shanghaiDay: message.body.shanghaiDay,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-    }));
+    });
     message.ack();
   } catch (error) {
     const delaySeconds = signReminderRetryDelaySeconds(message.attempts);
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "sign_reminder_failed",
+      component: "queue",
+      operation: "sign_reminder",
+      outcome: "retry",
       shanghaiDay: message.body.shanghaiDay,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
       retryDelaySeconds: delaySeconds,
-      error: error instanceof Error && /^[A-Za-z0-9_.:-]{1,96}$/.test(error.message)
-        ? error.message
-        : "sign_reminder_delivery_failed",
-    }));
+      errorCode: operationalErrorCode(error, "sign_reminder_delivery_failed"),
+    });
     message.retry({ delaySeconds });
   }
 }

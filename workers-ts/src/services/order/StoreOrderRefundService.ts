@@ -36,6 +36,7 @@ import {
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { recordSupplierRefund } from "@/services/supplier/SupplierFinanceService";
 import {
   centsToDecimal,
@@ -1371,7 +1372,13 @@ export class StoreOrderRefundService {
           { status: "UNKNOWN", message: `自动对账失败: ${errorMessage(error)}` },
           true,
         ).catch(() => undefined);
-        console.error("[refund-reconcile]", payment.refundId, errorMessage(error));
+        emitOperationalEvent("error", {
+          event: "refund_reconciliation_failed",
+          component: "refund",
+          operation: "reconciliation",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error),
+        });
       }
     }
     return {

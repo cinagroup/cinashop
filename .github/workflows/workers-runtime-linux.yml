@@ -65,6 +65,9 @@ jobs:
       - name: Run Worker unit tests
         run: npm run test:unit
 
+      - name: Audit production observability contract
+        run: npm run audit:observability
+
       - name: Audit legacy-to-PostgreSQL schema drift
         run: |
           npx --no-install tsx scripts/mysql-to-postgres.ts schema-audit --json |

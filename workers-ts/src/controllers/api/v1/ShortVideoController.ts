@@ -3,6 +3,7 @@ import type { AppVariables, Env } from "@/env";
 import { ShortVideoService } from "@/services/activity/ShortVideoService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -30,7 +31,13 @@ export async function list(c: C) {
   if (result.playIds.length) {
     c.executionCtx.waitUntil(
       service(c).recordPlays(result.playIds, c.get("uid") ?? 0)
-        .catch((error) => console.error(JSON.stringify({ event: "short_video_play_record_failed", error: String(error) }))),
+        .catch((error) => emitOperationalEvent("error", {
+          event: "short_video_play_record_failed",
+          component: "http",
+          operation: "analytics_write",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error),
+        })),
     );
   }
   return jsonOk(c, result.list);

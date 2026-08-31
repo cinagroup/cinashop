@@ -7,6 +7,7 @@ import {
   systemStorage,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 export const R2_IMAGE_TYPE = 8;
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -245,20 +246,42 @@ export class AttachmentService {
       `${crypto.randomUUID()}.${detected.extension}`,
     ].join("/");
     const originalName = sanitizeOriginalName(file.name);
-    const stored = await this.env.ASSETS_BUCKET.put(key, file.stream(), {
-      httpMetadata: {
-        contentType: detected.mime,
-        contentDisposition: "inline",
-        cacheControl: "private, no-store",
-      },
-      customMetadata: {
-        ownerType: String(scope.type),
-        ownerId: String(scope.relationId),
-        originalName,
-      },
-    });
+    const r2StartedAt = Date.now();
+    let stored: R2Object;
+    try {
+      stored = await this.env.ASSETS_BUCKET.put(key, file.stream(), {
+        httpMetadata: {
+          contentType: detected.mime,
+          contentDisposition: "inline",
+          cacheControl: "private, no-store",
+        },
+        customMetadata: {
+          ownerType: String(scope.type),
+          ownerId: String(scope.relationId),
+          originalName,
+        },
+      });
+    } catch (error) {
+      emitOperationalEvent("error", {
+        event: "r2_object_write_failed",
+        component: "r2",
+        operation: "put",
+        outcome: "failure",
+        durationMs: Date.now() - r2StartedAt,
+        errorCode: operationalErrorCode(error),
+      });
+      throw error;
+    }
     if (stored.size !== file.size) {
       await this.env.ASSETS_BUCKET.delete(key);
+      emitOperationalEvent("error", {
+        event: "r2_object_write_failed",
+        component: "r2",
+        operation: "put",
+        outcome: "failure",
+        durationMs: Date.now() - r2StartedAt,
+        errorCode: "size_mismatch",
+      });
       throw new ValidateException("图片上传不完整，请重试");
     }
 
@@ -288,10 +311,26 @@ export class AttachmentService {
       });
     } catch (error) {
       await this.env.ASSETS_BUCKET.delete(key);
+      emitOperationalEvent("error", {
+        event: "r2_metadata_commit_failed",
+        component: "r2",
+        operation: "metadata_commit",
+        outcome: "failure",
+        durationMs: Date.now() - r2StartedAt,
+        errorCode: operationalErrorCode(error),
+      });
       throw error;
     }
     const url = canonicalAttachmentPath(id);
     const [src] = await this.signReferences([url]);
+    emitOperationalEvent("info", {
+      event: "r2_object_written",
+      component: "r2",
+      operation: "put",
+      outcome: "success",
+      durationMs: Date.now() - r2StartedAt,
+      resourceCount: 1,
+    });
     return { att_id: id, name: originalName, size: stored.size, type: detected.mime, url, src };
   }
 
@@ -404,12 +443,14 @@ export class AttachmentService {
         try {
           await this.env.ASSETS_BUCKET.delete(keys);
         } catch (r2Error) {
-          console.error(JSON.stringify({
+          emitOperationalEvent("error", {
             event: "attachment_cleanup_enqueue_and_fallback_failed",
-            objectCount: keys.length,
-            queueError: queueError instanceof Error ? queueError.message : String(queueError),
-            r2Error: r2Error instanceof Error ? r2Error.message : String(r2Error),
-          }));
+            component: "r2",
+            operation: "cleanup",
+            outcome: "failure",
+            resourceCount: keys.length,
+            errorCode: `${operationalErrorCode(queueError)}_${operationalErrorCode(r2Error)}`.slice(0, 64),
+          });
         }
       }
     }
@@ -571,8 +612,42 @@ export class AttachmentService {
         eq(systemAttachment.imageType, R2_IMAGE_TYPE),
       )).limit(1);
     if (!rows[0] || !rows[0].key.startsWith("attachments/")) throw new NotFoundException("附件不存在");
-    const object = await this.env.ASSETS_BUCKET.get(rows[0].key);
-    if (!object) throw new NotFoundException("附件不存在");
+    const r2StartedAt = Date.now();
+    let object: R2ObjectBody | null;
+    try {
+      object = await this.env.ASSETS_BUCKET.get(rows[0].key);
+    } catch (error) {
+      emitOperationalEvent("error", {
+        event: "r2_object_read_failed",
+        component: "r2",
+        operation: "get",
+        outcome: "failure",
+        durationMs: Date.now() - r2StartedAt,
+        errorCode: operationalErrorCode(error),
+      });
+      throw error;
+    }
+    const durationMs = Date.now() - r2StartedAt;
+    if (!object) {
+      emitOperationalEvent("warn", {
+        event: "r2_object_missing",
+        component: "r2",
+        operation: "get",
+        outcome: "rejected",
+        durationMs,
+      });
+      throw new NotFoundException("附件不存在");
+    }
+    if (durationMs >= 500) {
+      emitOperationalEvent("warn", {
+        event: "r2_object_slow",
+        component: "r2",
+        operation: "get",
+        outcome: "success",
+        durationMs,
+        thresholdMs: 500,
+      });
+    }
     return object;
   }
 

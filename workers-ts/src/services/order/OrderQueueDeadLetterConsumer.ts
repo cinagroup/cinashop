@@ -1,4 +1,5 @@
 import type { OrderQueueDeadLetterService } from "@/services/order/OrderQueueDeadLetterService";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type DeadLetterArchiver = Pick<OrderQueueDeadLetterService, "archive">;
 type DeadLetterMessage = Pick<Message<unknown>, "id" | "timestamp" | "body" | "attempts" | "ack" | "retry">;
@@ -13,26 +14,33 @@ export async function consumeOrderQueueDeadLetterMessage(
   message: DeadLetterMessage,
   archiver: DeadLetterArchiver,
 ): Promise<void> {
+  const startedAt = Date.now();
   try {
     const archived = await archiver.archive(queueName, message);
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "order_queue_dead_letter_archived",
-      queue: queueName,
-      messageId: message.id,
+      component: "dlq",
+      operation: "archive",
+      outcome: "failure",
+      result: archived.status.toLowerCase(),
+      duplicate: archived.duplicate,
+      messageType: archived.messageType,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-      ...archived,
-    }));
+    });
     message.ack();
   } catch (error) {
     const delaySeconds = deadLetterArchiveRetryDelaySeconds(message.attempts);
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "order_queue_dead_letter_archive_failed",
-      queue: queueName,
-      messageId: message.id,
+      component: "dlq",
+      operation: "archive",
+      outcome: "retry",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
       retryDelaySeconds: delaySeconds,
-      error: error instanceof Error ? error.message : String(error),
-    }));
+      errorCode: operationalErrorCode(error),
+    });
     message.retry({ delaySeconds });
   }
 }

@@ -4,6 +4,7 @@ import {
   isOrderPaidOutboxMessage,
   type OrderOutboxService,
 } from "@/services/order/OrderOutboxService";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type OrderPaidOutboxProcessor = Pick<OrderOutboxService, "processMessage">;
 type OrderPaidOutboxQueueMessage = Pick<
@@ -23,35 +24,45 @@ export async function consumeOrderPaidOutboxQueueMessage(
   if (!isOrderPaidOutboxMessage(message.body)) {
     throw new Error("Queue message is not a payment outbox event");
   }
+  const startedAt = Date.now();
   try {
     const result = await processor.processMessage(message.body);
     if (result === "busy") {
       const delaySeconds = paymentOutboxQueueRetryDelaySeconds(message.attempts);
-      console.log(JSON.stringify({
+      emitOperationalEvent("warn", {
         event: "payment_outbox_busy",
-        outboxId: message.body.outboxId,
+        component: "payment",
+        operation: "outbox_consume",
+        outcome: "retry",
+        durationMs: Date.now() - startedAt,
         queueAttempt: message.attempts,
         retryDelaySeconds: delaySeconds,
-      }));
+      });
       message.retry({ delaySeconds });
       return;
     }
-    console.log(JSON.stringify({
+    emitOperationalEvent("info", {
       event: "payment_outbox_consumed",
-      outboxId: message.body.outboxId,
+      component: "payment",
+      operation: "outbox_consume",
+      outcome: "success",
       result,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-    }));
+    });
     message.ack();
   } catch (error) {
     const delaySeconds = paymentOutboxQueueRetryDelaySeconds(message.attempts);
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "payment_outbox_consume_failed",
-      outboxId: message.body.outboxId,
+      component: "payment",
+      operation: "outbox_consume",
+      outcome: "retry",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
       retryDelaySeconds: delaySeconds,
-      error: error instanceof Error ? error.message : String(error),
-    }));
+      errorCode: operationalErrorCode(error),
+    });
     message.retry({ delaySeconds });
   }
 }
@@ -64,35 +75,45 @@ export async function consumeOrderNotificationOutboxQueueMessage(
   if (!isOrderNotificationOutboxMessage(message.body)) {
     throw new Error("Queue message is not an order notification outbox event");
   }
+  const startedAt = Date.now();
   try {
     const result = await processor.processMessage(message.body);
     if (result === "busy") {
       const delaySeconds = paymentOutboxQueueRetryDelaySeconds(message.attempts);
-      console.log(JSON.stringify({
+      emitOperationalEvent("warn", {
         event: "order_notification_outbox_busy",
-        outboxId: message.body.outboxId,
+        component: "queue",
+        operation: "notification_outbox",
+        outcome: "retry",
+        durationMs: Date.now() - startedAt,
         queueAttempt: message.attempts,
         retryDelaySeconds: delaySeconds,
-      }));
+      });
       message.retry({ delaySeconds });
       return;
     }
-    console.log(JSON.stringify({
+    emitOperationalEvent("info", {
       event: "order_notification_outbox_consumed",
-      outboxId: message.body.outboxId,
+      component: "queue",
+      operation: "notification_outbox",
+      outcome: "success",
       result,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-    }));
+    });
     message.ack();
   } catch (error) {
     const delaySeconds = paymentOutboxQueueRetryDelaySeconds(message.attempts);
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "order_notification_outbox_consume_failed",
-      outboxId: message.body.outboxId,
+      component: "queue",
+      operation: "notification_outbox",
+      outcome: "retry",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
       retryDelaySeconds: delaySeconds,
-      error: error instanceof Error ? error.message : String(error),
-    }));
+      errorCode: operationalErrorCode(error),
+    });
     message.retry({ delaySeconds });
   }
 }

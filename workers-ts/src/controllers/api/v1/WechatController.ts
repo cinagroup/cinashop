@@ -26,6 +26,7 @@ import {
 } from "@/services/payment/RechargePaymentService";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
 import { readBoundedJsonObject } from "@/utils/request-body";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -191,9 +192,21 @@ export async function wechatPayNotify(c: C) {
         throw new ValidateException("微信支付回调与已入账交易不匹配");
       }
     }
+    emitOperationalEvent("info", {
+      event: "payment_callback_completed",
+      component: "payment",
+      operation: "wechat_callback",
+      outcome: "success",
+    });
     return c.json({ code: "SUCCESS", message: "成功" });
   } catch (e) {
-    console.error("[wechatPayNotify]", e instanceof Error ? e.message : e);
+    emitOperationalEvent("warn", {
+      event: "payment_callback_rejected",
+      component: "payment",
+      operation: "wechat_callback",
+      outcome: "rejected",
+      errorCode: operationalErrorCode(e),
+    });
     return c.json({ code: "FAIL", message: e instanceof Error ? e.message : "验签失败" }, 400);
   }
 }
@@ -210,9 +223,21 @@ export async function wechatRefundNotify(c: C) {
     const notification = await payService.verifyAndParseRefundNotify(headers, rawBody);
     const refundService = new StoreOrderRefundService(c.get("container"), c.env);
     await refundService.handleWechatRefundNotification(notification);
+    emitOperationalEvent("info", {
+      event: "refund_callback_completed",
+      component: "refund",
+      operation: "wechat_callback",
+      outcome: "success",
+    });
     return new Response(null, { status: 204 });
   } catch (error) {
-    console.error("[wechatRefundNotify]", error instanceof Error ? error.message : error);
+    emitOperationalEvent("warn", {
+      event: "refund_callback_rejected",
+      component: "refund",
+      operation: "wechat_callback",
+      outcome: "rejected",
+      errorCode: operationalErrorCode(error),
+    });
     return c.json(
       { code: "FAIL", message: error instanceof Error ? error.message : "验签失败" },
       400,

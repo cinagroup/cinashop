@@ -3,6 +3,7 @@ import type { AppVariables, Env } from "@/env";
 import { ShortVideoService } from "@/services/activity/ShortVideoService";
 import { DiyHomeCompatibilityService } from "@/services/content/DiyHomeCompatibilityService";
 import { jsonOk } from "@/utils/json";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -37,10 +38,13 @@ export async function videoList(c: C) {
     c.executionCtx.waitUntil(
       new ShortVideoService(c.get("container"), c.env)
         .recordPlays(result.playIds, uid)
-        .catch((error) => console.error(JSON.stringify({
+        .catch((error) => emitOperationalEvent("error", {
           event: "diy_home_video_play_record_failed",
-          error: String(error),
-        }))),
+          component: "http",
+          operation: "analytics_write",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error),
+        })),
     );
   }
   return jsonOk(c, result.list);

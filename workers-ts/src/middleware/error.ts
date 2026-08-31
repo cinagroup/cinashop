@@ -7,6 +7,7 @@
 import type { Context } from "hono";
 import { ApiException, HttpApiException, RateLimitException } from "@/utils/errors";
 import { jsonRaw } from "@/utils/json";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 export function errorHandler(err: Error, c: Context) {
   if (err instanceof RateLimitException) {
@@ -27,6 +28,12 @@ export function errorHandler(err: Error, c: Context) {
   }
 
   // 未知异常: 隐藏详情, 记录到日志
-  console.error("[unhandled]", err.name, err.message, err.stack);
+  emitOperationalEvent("error", {
+    event: "http_unhandled_exception",
+    component: "http",
+    operation: "request",
+    outcome: "failure",
+    errorCode: operationalErrorCode(err),
+  });
   return jsonRaw(c, 500, "系统繁忙,请稍后再试", null);
 }

@@ -13,6 +13,7 @@ import { PublicCatalogService, normalizeCatalogPage } from "@/services/product/P
 import { jsonFail } from "@/utils/json";
 import { NotFoundException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -66,12 +67,13 @@ export async function detail(c: C) {
       // and newly written aggregates remain comparable.
       .recordVisit(uid, id, id)
       .catch((error: unknown) => {
-        console.error(JSON.stringify({
+        emitOperationalEvent("error", {
           event: "product_visit_record_failed",
-          productId: id,
-          uid,
-          message: error instanceof Error ? error.message : String(error),
-        }));
+          component: "http",
+          operation: "analytics_write",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error),
+        });
       }),
   );
   const flat = {

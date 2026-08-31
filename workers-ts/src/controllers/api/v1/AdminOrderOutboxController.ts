@@ -4,6 +4,7 @@ import { OrderOutboxService } from "@/services/order/OrderOutboxService";
 import { OrderQueueDeadLetterService } from "@/services/order/OrderQueueDeadLetterService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -43,13 +44,13 @@ export async function orderOutboxReplay(c: C) {
     const dispatched = await outbox.dispatchById(id);
     return jsonOk(c, dispatched, "事件已重放");
   } catch (error) {
-    console.error(
-      JSON.stringify({
-        event: "admin_payment_outbox_replay_dispatch_failed",
-        outboxId: id,
-        error: error instanceof Error ? error.message : String(error),
-      }),
-    );
+    emitOperationalEvent("error", {
+      event: "admin_payment_outbox_replay_dispatch_failed",
+      component: "payment",
+      operation: "outbox_replay",
+      outcome: "failure",
+      errorCode: operationalErrorCode(error),
+    });
     return jsonOk(c, { claimed: 0, enqueued: 0 }, "事件已进入补偿队列");
   }
 }

@@ -2769,6 +2769,39 @@ CI 原先无法运行 schema/route audit，因为旧 `cinashop-php` 只存在于
 
 TEST-001 的完成只表示每次相关代码推送都能在受支持Linux主机重复执行这些工程门禁。它不证明旧/新端浏览器golden response、真机、真实账号、支付/微信/短信/企微回调、生产数据迁移、性能告警、预发、影子流量或发布后观察；TEST-003、REL-001～004及各业务父项继续保持未完成。当前路由可执行覆盖仍只有38.2%，CI通过绝不能解释为整体迁移完成。
 
+## TEST-003 性能与可观测性详细审计（2026-08-31）
+
+### 审计结论与 Cloudflare 能力边界
+
+TEST-003 不能整体勾选。仓库侧的可重复合同已经完成，但生产侧仍缺三个不同层次的证据：原生指标与 PostgreSQL 统计基线、可送达且有 owner 的真实告警、候选发布后的观察窗口。Cloudflare 当前官方能力可以直接提供这些原生数据：Hyperdrive 的 `hyperdriveQueriesAdaptiveGroups` 有 query/connection latency、event status、bytes/cache status，`hyperdrivePoolSizesAdaptiveGroups` 有 open/available/waiting/max pool；Queues 有 backlog、oldest message、lag/retry和 `outcome=dlq`；Durable Objects 有 invocation/subrequest/storage和 p99 memory；R2 有 operation action/status。应用日志只补业务域和安全状态机结果，不能取代这些平台指标。
+
+Workers Logs 官方明确区分对象日志与字符串：`console.log({field: value})` 才会把字段独立索引，旧代码大量 `console.log(JSON.stringify({...}))` 只得到 message文本。本批新增统一 `cinashop_operational_v1` 对象日志器并清除生产源码中的所有直接 `console.log/warn/error`；`audit:observability` 递归扫描366个 `src/**/*.ts`，只允许日志器本身调用 console。日志器只接受标量、有限数值和低基数事件/操作名，禁止 `authorization/body/content/cookie/credential/email/error/message/password/payload/phone/query/secret/token/url`、任何 `id/*Id/*Uid` 标识字段及覆盖固定 `schema`；异常只映射为类名代码，绝不记录原始 message/stack，因为数据库驱动和provider异常可能夹带连接串、SQL参数、PII或远端响应正文。CI还用TypeScript AST检查每个日志调用，拒绝标识字段、computed/spread对象，防止未被单测执行的分支绕过合同。
+
+`wrangler.toml` 现在显式固定 `[observability] enabled=true/head_sampling_rate=1` 和 `[observability.logs] enabled=true/invocation_logs=true`。fetch traces仍为false：企微provider当前把凭据放在query string，在已部署候选上证明redaction前不得为了trace覆盖扩大泄露面。HTTP中间件不记录raw path/query/headers/body/UID，只把路径归入login/payment/refund/print/waybill/R2六个低基数关键域；关键域每次请求、所有5xx和超过1秒的其他请求产生final status+duration事件。全局未知异常不再输出message/stack。支付/退款callback、payment outbox、Queue/DLQ、Work callback/action、签到、短信、R2、DO聊天、打印、面单、物流和异步访问记录全部改为同一对象合同；打印/面单UNKNOWN或DEAD、DLQ落盘、R2补偿失败使用error等级，busy/deferred/retry使用warn，provider body和任务payload不进入日志。
+
+### 机器可读指标、阈值与 CI 门禁
+
+`workers-ts/audit/observability-policy.json` 固定Worker、Hyperdrive、R2和三条Queue的生产身份，并定义14个信号、10个域和首响规则：Hyperdrive错误率/平均延迟/pool waiter；Queue backlog/oldest和DLQ transition/unarchived backlog；DO错误率/p99内存；R2 internal error；登录拒绝/5xx；支付callback；退款UNKNOWN/DEAD；打印和面单UNKNOWN/DEAD。主要阈值为：Hyperdrive平均查询250ms/15m warning、1s/5m critical，任一waiter warning/5个critical；主Queue backlog 100或oldest60秒warning、1,000或300秒critical；任何DLQ transition或unarchived backlog即critical；DO p99内存96MiB warning、120MiB critical；R2任一internalError critical；支付处理失败、退款UNKNOWN超过15分钟、打印/面单任一UNKNOWN/DEAD均critical。低流量域同时要求绝对计数，避免只用比例制造噪声。
+
+`npm run audit:observability` 不只是JSON语法检查：它精确验证Hyperdrive/三条Queue ID、release配置100%日志采样、trace关闭、27个必需关键事件、10个策略域、对象console实现、366个生产源文件无旁路日志、每个调用点无标识字段/对象展开，以及生产基线中6个明确阻塞。该命令已加入Linux `worker-static` job，和双TypeScript、全量单测、schema/route audit一起阻断提交。日志单测覆盖九类关键路径分类、对象字段可索引、敏感/标识/保留schema/嵌套/NaN/原始异常消息拒绝、最终HTTP成功状态和通用5xx；定向测试14/14通过。完整运行手册在 `workers-ts/OBSERVABILITY.md`，策略阈值以JSON为权威，文档不得自行漂移。
+
+### 生产只读事实与新发现的发布阻塞
+
+本轮没有创建、修改或删除生产资源，只通过Wrangler读接口核验现状，并把结果固化到 `audit/production-observability-baseline.json`。Hyperdrive `9748c294e21c49a99579c9cef70102e0` 确认为 `cinashop-pg`，origin connection limit 60、query cache开启。三条Queue ID分别为主队列 `7c5d03145eb541cbbb3695fad3925d70`、DLQ `886e026a32c74359b2b40407f4def8d6`、归档失败终端队列 `ec0ef96ffcd3429da48500cdf90ca532`。主队列实际消费者是`cinashop-api`，batch10、max wait2秒、max retries3、失败进入DLQ，配置与仓库第一段consumer一致。
+
+但生产没有仓库配置中的第二段consumer：`cinashop-order-dlq`当前消费者数为0。生产100%流量仍指向2026-08-09版本 `9f1fd655-e60f-41c1-8280-738bc85d73ef`；版本详情有Hyperdrive、CONFIG_KV、ORDER_QUEUE和四个DO namespace，却没有`ASSETS_BUCKET`，也没有`ORDER_DLQ_NAME` plain variable。也就是说，仓库中的DLQ→PostgreSQL归档、归档失败再入`cinashop-order-dlq-unarchived`和私有R2附件代码尚未上线；只看bucket/queue“资源存在”会错误高估生产迁移进度。该事实现在列为REL-001前置P0，主Worker未经明确发布批准仍不会被本审计改动。
+
+用户已授权直接使用生产数据库，但当前唯一安全路径需要部署一个受随机令牌保护的临时Workers endpoint。沙箱明确拒绝了创建公开端点的副作用；普通沙箱请求在任何上传前因文件/网络权限失败，提权部署未执行。随后只读查询Cloudflare返回`cinashop-production-observability-audit`不存在（code10007），证明没有残留Worker或version。因此本轮没有读取生产PostgreSQL `pg_stat_database/pg_stat_activity/pg_stat_user_tables/pg_stat_statements`，也没有取得四类任务状态的新基线。仓库保留的audit harness强制`SET TRANSACTION READ ONLY`、`search_path=public,pg_temp`、5秒statement/500ms lock timeout，只返回聚合统计且不返回SQL/参数/业务值；它仍需用户在知情后明确批准临时公开端点，或改用既有私有service/operations入口。
+
+### 待完成 checklist 与完成标准
+
+- [x] TEST-003A：统一对象日志、HTTP关键域/慢请求、关键状态机事件、14信号策略、运行手册、全源码旁路扫描、CI命令和本地测试。
+- [ ] TEST-003B：通过获批私有观测入口或明确批准的临时审计端点，取得Hyperdrive/Queue/DO/R2原生指标、Queue实时backlog/oldest以及PostgreSQL聚合统计；记录低流量基线和四类任务UNKNOWN/DEAD，不返回SQL、参数或PII。
+- [ ] TEST-003C：选择Cloudflare Notifications或获批OTLP/Logs平台，配置真实通知destination、policy ID、owner和升级链；逐条用无真实资金/物流副作用的信号验证warning/critical送达与ack。
+- [ ] TEST-003D：发布精确候选后确认DLQ consumer、R2/DLQ bindings和对象字段实际生效，观察Hyperdrive/Queue/DO/R2/登录/支付/退款/打印/面单窗口并基于真实基线调优；企微query string redaction未证明前继续关闭traces。
+
+只有A～D全部有生产证据后才能勾选TEST-003父项。策略文件、绿色单测或“资源已经创建”都不能替代实际部署、通知送达和观察窗口。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

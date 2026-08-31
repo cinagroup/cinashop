@@ -13,6 +13,7 @@
 import { Hono } from "hono";
 import { corsMiddleware } from "@/middleware/cors";
 import { containerMiddleware } from "@/middleware/container";
+import { observabilityMiddleware } from "@/middleware/observability";
 import { errorHandler } from "@/middleware/error";
 import { apiRoutes } from "@/routes";
 import { adminapiRoutes } from "@/routes/adminapi";
@@ -27,34 +28,37 @@ export function createApp() {
     Variables: AppVariables;
   }>();
 
-  // 1. CORS
+  // 1. Critical-flow latency and failures, including container/auth failures.
+  app.use("*", observabilityMiddleware);
+
+  // 2. CORS
   app.use("*", corsMiddleware);
 
-  // 2. DI 容器 (每请求注入)
+  // 3. DI 容器 (每请求注入)
   app.use("*", containerMiddleware);
 
-  // 3. 健康检查 (无 auth, 无 DB)
+  // 4. 健康检查 (无 auth, 无 DB)
   app.get("/health", (c) => c.json({ ok: true, ts: Date.now() }));
 
-  // 4. 业务路由
+  // 5. 业务路由
   app.route("/api", apiRoutes);
 
-  // 5. Admin 前端兼容路由 (/adminapi/*)
+  // 6. Admin 前端兼容路由 (/adminapi/*)
   app.route("/adminapi", adminapiRoutes);
 
-  // 6. Supplier 独立后台兼容路由 (/supplierapi/*)
+  // 7. Supplier 独立后台兼容路由 (/supplierapi/*)
   app.route("/supplierapi", supplierapiRoutes);
 
-  // 7. PHP-compatible third-party API routes use a separate token/ACL domain.
+  // 8. PHP-compatible third-party API routes use a separate token/ACL domain.
   app.route("/outapi", outapiRoutes);
 
-  // 8. Dedicated customer-service token and data scope (/kefuapi/*).
+  // 9. Dedicated customer-service token and data scope (/kefuapi/*).
   app.route("/kefuapi", kefuapiRoutes);
 
-  // 9. 404 (对应 PHP Route::miss)
+  // 10. 404 (对应 PHP Route::miss)
   app.notFound((c) => c.json({ status: 404, msg: "not found", data: null }));
 
-  // 10. 错误兜底
+  // 11. 错误兜底
   app.onError(errorHandler);
 
   return app;

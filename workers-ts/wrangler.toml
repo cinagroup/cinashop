@@ -7,6 +7,11 @@ compatibility_flags = ["nodejs_compat"]
 # ─── 观察性 ───────────────────────────────────────────────
 [observability]
 enabled = true
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+invocation_logs = true
 
 # Enterprise WeChat requires credentials in provider query strings. Keep fetch
 # tracing off until deployment can set and verify query-string redaction.

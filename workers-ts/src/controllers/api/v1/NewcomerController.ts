@@ -4,6 +4,7 @@ import { StoreNewcomerService } from "@/services/activity/StoreNewcomerService";
 import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonFail, jsonOk } from "@/utils/json";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -28,7 +29,13 @@ export async function productDetail(c: C) {
       c.executionCtx.waitUntil(
         new ProductExperienceService(c.get("container"))
           .recordVisit(c.get("uid") ?? 0, productId, id)
-          .catch((error) => console.error(JSON.stringify({ event: "newcomer_visit_record_failed", error: String(error) }))),
+          .catch((error) => emitOperationalEvent("error", {
+            event: "newcomer_visit_record_failed",
+            component: "http",
+            operation: "analytics_write",
+            outcome: "failure",
+            errorCode: operationalErrorCode(error),
+          })),
       );
     }
     return jsonOk(c, data);

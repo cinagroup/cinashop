@@ -13,8 +13,20 @@ import { OrderLockDO } from "./do/OrderLockDO";
 import { SequenceDO } from "./do/SequenceDO";
 import { ChatRoomDO } from "./do/ChatRoomDO";
 import type { Env, OrderMessage } from "./env";
+import {
+  emitOperationalEvent,
+  operationalErrorCode,
+  type OperationalComponent,
+} from "./utils/observability";
 
 const app = createApp();
+
+function scheduledComponent(job: string): OperationalComponent {
+  if (job === "refund_reconciliation") return "refund";
+  if (job === "print_job_dispatch") return "print";
+  if (job === "waybill_job_dispatch") return "waybill";
+  return "queue";
+}
 
 // ─── HTTP ────────────────────────────────────────────────────
 export default {
@@ -122,31 +134,35 @@ export default {
     const waybillJobs = new OrderWaybillJobService(container, env);
 
     for (const msg of batch.messages) {
+      const messageStartedAt = Date.now();
       if (isWorkContactActionDispatchMessage(msg.body)) {
         try {
           const [dispatched, redacted] = await Promise.all([
             workContactActions.dispatchPending(50),
             workContactActions.redactCompletedCallbackPayloads(100),
           ]);
-          console.log(JSON.stringify({
+          emitOperationalEvent("info", {
             event: "work_contact_actions_dispatched",
-            ...dispatched,
-            redacted,
-            scheduledAt: msg.body.scheduledAt,
+            component: "queue",
+            operation: "work_contact_actions",
+            outcome: "success",
+            resourceCount: Number(dispatched.claimed ?? 0) + Number(redacted ?? 0),
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
-          }));
+          });
           msg.ack();
         } catch (error) {
           const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
-          console.error(JSON.stringify({
+          emitOperationalEvent("error", {
             event: "work_contact_action_dispatch_failed",
-            scheduledAt: msg.body.scheduledAt,
+            component: "queue",
+            operation: "work_contact_actions",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
             retryDelaySeconds: delaySeconds,
-            error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
-              ? error.message
-              : "contact_action_dispatch_failed",
-          }));
+            errorCode: operationalErrorCode(error, "contact_action_dispatch_failed"),
+          });
           msg.retry({ delaySeconds });
         }
         continue;
@@ -165,24 +181,28 @@ export default {
       if (isWorkCallbackDispatchMessage(msg.body)) {
         try {
           const result = await workCallbacks.dispatchPendingPages(20, 5);
-          console.log(JSON.stringify({
+          emitOperationalEvent("info", {
             event: "work_callback_outbox_dispatched",
-            ...result,
-            scheduledAt: msg.body.scheduledAt,
+            component: "queue",
+            operation: "work_callback_outbox",
+            outcome: "success",
+            resourceCount: Number(result.enqueued ?? 0),
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
-          }));
+          });
           msg.ack();
         } catch (error) {
           const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
-          console.error(JSON.stringify({
+          emitOperationalEvent("error", {
             event: "work_callback_outbox_dispatch_failed",
-            scheduledAt: msg.body.scheduledAt,
+            component: "queue",
+            operation: "work_callback_outbox",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
             retryDelaySeconds: delaySeconds,
-            error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
-              ? error.message
-              : "callback_dispatch_failed",
-          }));
+            errorCode: operationalErrorCode(error, "callback_dispatch_failed"),
+          });
           msg.retry({ delaySeconds });
         }
         continue;
@@ -208,11 +228,14 @@ export default {
         try {
           await notificationDeliveries.dispatchPending(10, msg.body.eventKey);
         } catch (error) {
-          console.error(JSON.stringify({
+          emitOperationalEvent("error", {
             event: "order_notification_delivery_dispatch_failed",
-            outboxId: msg.body.outboxId,
-            error: error instanceof Error ? error.message : String(error),
-          }));
+            component: "queue",
+            operation: "notification_delivery",
+            outcome: "failure",
+            durationMs: Date.now() - messageStartedAt,
+            errorCode: operationalErrorCode(error),
+          });
         }
         continue;
       }
@@ -237,26 +260,30 @@ export default {
           const result = isScheduledMaintenanceMessage(msg.body)
             ? await maintenance.processMaintenance(msg.body)
             : await maintenance.processOrder(msg.body);
-          console.log(
-            JSON.stringify({
-              ...result,
-              queueAttempt: msg.attempts,
-            }),
-          );
+          const event = typeof result.event === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(result.event)
+            ? result.event
+            : "scheduled_maintenance_completed";
+          emitOperationalEvent("info", {
+            event,
+            component: scheduledComponent(msg.body.job),
+            operation: "scheduled_maintenance",
+            outcome: "success",
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+          });
           msg.ack();
         } catch (error) {
           const delaySeconds = scheduledRetryDelaySeconds(msg.attempts);
-          console.error(
-            JSON.stringify({
-              event: "scheduled_maintenance_failed",
-              action: msg.body.action,
-              job: msg.body.job,
-              runId: msg.body.runId,
-              queueAttempt: msg.attempts,
-              retryDelaySeconds: delaySeconds,
-              error: error instanceof Error ? error.message : String(error),
-            }),
-          );
+          emitOperationalEvent("error", {
+            event: "scheduled_maintenance_failed",
+            component: scheduledComponent(msg.body.job),
+            operation: "scheduled_maintenance",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            errorCode: operationalErrorCode(error),
+          });
           msg.retry({ delaySeconds });
         }
         continue;
@@ -265,18 +292,28 @@ export default {
       if (isPinkTimeoutMessage(msg.body)) {
         try {
           const result = await maintenance.processPinkTimeout(msg.body);
-          console.log(JSON.stringify({ ...result, queueAttempt: msg.attempts }));
+          emitOperationalEvent("info", {
+            event: "scheduled_pink_timeout_processed",
+            component: "queue",
+            operation: "pink_timeout",
+            outcome: "success",
+            result: String(result.result ?? "completed"),
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+          });
           msg.ack();
         } catch (error) {
           const delaySeconds = scheduledRetryDelaySeconds(msg.attempts);
-          console.error(JSON.stringify({
+          emitOperationalEvent("error", {
             event: "scheduled_pink_timeout_failed",
-            pinkId: msg.body.pinkId,
-            runId: msg.body.runId,
+            component: "queue",
+            operation: "pink_timeout",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
             retryDelaySeconds: delaySeconds,
-            error: error instanceof Error ? error.message : String(error),
-          }));
+            errorCode: operationalErrorCode(error),
+          });
           msg.retry({ delaySeconds });
         }
         continue;
@@ -290,32 +327,41 @@ export default {
       if (isSmsVerificationMessage(msg.body)) {
         try {
           const result = await sms.processMessage(msg.body);
-          console.log(JSON.stringify({
+          emitOperationalEvent("info", {
             event: "sms_verification_consumed",
-            recordId: msg.body.recordId,
+            component: "queue",
+            operation: "sms_verification",
+            outcome: "success",
             result,
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
-          }));
+          });
           msg.ack();
         } catch (error) {
           if (hasExhaustedOrderQueueRetries(msg.attempts)) {
             await sms.abandon(msg.body);
-            console.error(JSON.stringify({
+            emitOperationalEvent("error", {
               event: "sms_verification_abandoned",
-              recordId: msg.body.recordId,
+              component: "queue",
+              operation: "sms_verification",
+              outcome: "failure",
+              durationMs: Date.now() - messageStartedAt,
               queueAttempt: msg.attempts,
-              error: error instanceof Error ? error.message : String(error),
-            }));
+              errorCode: operationalErrorCode(error),
+            });
             msg.ack();
           } else {
             const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
-            console.error(JSON.stringify({
+            emitOperationalEvent("error", {
               event: "sms_verification_failed",
-              recordId: msg.body.recordId,
+              component: "queue",
+              operation: "sms_verification",
+              outcome: "retry",
+              durationMs: Date.now() - messageStartedAt,
               queueAttempt: msg.attempts,
               retryDelaySeconds: delaySeconds,
-              error: error instanceof Error ? error.message : String(error),
-            }));
+              errorCode: operationalErrorCode(error),
+            });
             msg.retry({ delaySeconds });
           }
         }
@@ -325,21 +371,29 @@ export default {
       if (isAttachmentObjectCleanupMessage(msg.body)) {
         try {
           const result = await attachments.processObjectCleanup(msg.body);
-          console.log(JSON.stringify({
+          emitOperationalEvent("info", {
             event: "attachment_objects_deleted",
-            objectCount: result.deleted,
+            component: "r2",
+            operation: "delete",
+            outcome: "success",
+            resourceCount: result.deleted,
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
-          }));
+          });
           msg.ack();
         } catch (error) {
           const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
-          console.error(JSON.stringify({
+          emitOperationalEvent("error", {
             event: "attachment_object_cleanup_failed",
-            objectCount: msg.body.keys.length,
+            component: "r2",
+            operation: "delete",
+            outcome: "retry",
+            resourceCount: msg.body.keys.length,
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
             retryDelaySeconds: delaySeconds,
-            error: error instanceof Error ? error.message : String(error),
-          }));
+            errorCode: operationalErrorCode(error),
+          });
           msg.retry({ delaySeconds });
         }
         continue;
@@ -347,37 +401,43 @@ export default {
 
       if (isOfficialAccountQrcodeMessage(msg.body)) {
         try {
-          const result = await officialQrcodes.processProvision(msg.body);
-          console.log(JSON.stringify({
+          await officialQrcodes.processProvision(msg.body);
+          emitOperationalEvent("info", {
             event: "official_qrcode_provisioned",
+            component: "queue",
+            operation: "official_qrcode",
+            outcome: "success",
             thirdType: msg.body.thirdType,
-            thirdId: msg.body.thirdId,
-            result,
+            resourceCount: 1,
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
-          }));
+          });
           msg.ack();
         } catch (error) {
           const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
-          console.error(JSON.stringify({
+          emitOperationalEvent("error", {
             event: "official_qrcode_provision_failed",
+            component: "queue",
+            operation: "official_qrcode",
+            outcome: "retry",
             thirdType: msg.body.thirdType,
-            thirdId: msg.body.thirdId,
+            durationMs: Date.now() - messageStartedAt,
             queueAttempt: msg.attempts,
             retryDelaySeconds: delaySeconds,
-            error: error instanceof Error ? error.message : String(error),
-          }));
+            errorCode: operationalErrorCode(error),
+          });
           msg.retry({ delaySeconds });
         }
         continue;
       }
 
-      console.warn(
-        JSON.stringify({
-          event: "unsupported_order_queue_message",
-          action: msg.body.action,
-          orderId: msg.body.orderId,
-        }),
-      );
+      emitOperationalEvent("warn", {
+        event: "unsupported_order_queue_message",
+        component: "queue",
+        operation: "unsupported_message",
+        outcome: "rejected",
+        action: msg.body.action,
+      });
       msg.ack();
     }
   },

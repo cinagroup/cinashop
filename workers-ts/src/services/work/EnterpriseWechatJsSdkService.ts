@@ -8,6 +8,7 @@ import {
 } from "@/services/work/EnterpriseWechatProviderClient";
 import { ForbiddenException, ServiceUnavailableException, ValidateException } from "@/utils/errors";
 import { generateNonceStr, jsSdkSignature } from "@/utils/wechat-crypto";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const MAX_SIGNED_URL_BYTES = 2_048;
 const MAX_PROVIDER_CREDENTIAL_BYTES = 512;
@@ -223,22 +224,24 @@ export class EnterpriseWechatJsSdkService {
         || error instanceof ValidateException
       ) throw error;
       if (error instanceof EnterpriseWechatProviderError) {
-        console.error(JSON.stringify({
+        emitOperationalEvent("error", {
           event: "enterprise_wechat_provider_failed",
+          component: "http",
           operation,
-          providerOperation: error.operation,
-          failureKind: error.kind,
-          providerCode: error.providerCode,
-          httpStatus: error.httpStatus,
-          retryAfterSeconds: error.retryAfterSeconds ?? 0,
-        }));
+          outcome: "failure",
+          statusCode: error.httpStatus,
+          retryDelaySeconds: error.retryAfterSeconds ?? 0,
+          errorCode: operationalErrorCode(error),
+        });
         throw new ServiceUnavailableException(unavailableMessage);
       }
-      console.error(JSON.stringify({
+      emitOperationalEvent("error", {
         event: "enterprise_wechat_jssdk_failed",
+        component: "http",
         operation,
-        error: error instanceof Error ? error.name : "unknown",
-      }));
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
       throw new ServiceUnavailableException(unavailableMessage);
     }
   }

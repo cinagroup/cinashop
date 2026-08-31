@@ -6,6 +6,7 @@ import { qrcode, wechatQrcode } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
 import { ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const MAX_API_JSON_BYTES = 64 * 1024;
 const ALLOWED_TYPES = new Set(["reply", "wechatqrcode"]);
@@ -121,12 +122,14 @@ export class OfficialAccountQrcodeService {
       await this.env.ORDER_QUEUE.send(message);
       return { status: "pending" as const, queued: true, url: "" };
     } catch (error) {
-      console.error(JSON.stringify({
+      emitOperationalEvent("error", {
         event: "official_qrcode_enqueue_failed",
+        component: "queue",
+        operation: "official_qrcode",
+        outcome: "failure",
         thirdType,
-        thirdId,
-        error: error instanceof Error ? error.message : String(error),
-      }));
+        errorCode: operationalErrorCode(error),
+      });
       return { status: "pending" as const, queued: false, url: "" };
     }
   }

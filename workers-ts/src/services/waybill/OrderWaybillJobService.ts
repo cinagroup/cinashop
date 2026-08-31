@@ -40,6 +40,7 @@ import {
 } from "@/services/waybill/CrmebOnePassWaybillProvider";
 import { normalizeConfigScalar } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
@@ -1219,26 +1220,42 @@ export async function consumeOrderWaybillJobMessage(
 ): Promise<void> {
   if (!isOrderWaybillJobMessage(message.body)) throw new Error("Queue message is not a waybill job");
   const body = message.body;
+  const startedAt = Date.now();
   try {
     const result = await service.processMessage(body);
     if (result === "busy") {
+      emitOperationalEvent("warn", {
+        event: "order_waybill_job_retried",
+        component: "waybill",
+        operation: "queue_consume",
+        outcome: "retry",
+        result,
+        durationMs: Date.now() - startedAt,
+        queueAttempt: message.attempts,
+      });
       message.retry({ delaySeconds: Math.min(30 * 2 ** Math.max(message.attempts - 1, 0), 300) });
       return;
     }
-    console.log(JSON.stringify({
+    emitOperationalEvent(result === "unknown" || result === "dead" ? "error" : "info", {
       event: "order_waybill_job_consumed",
-      waybillJobId: body.waybillJobId,
+      component: "waybill",
+      operation: "queue_consume",
+      outcome: result === "unknown" ? "unknown" : result === "dead" ? "failure" : "success",
       result,
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-    }));
+    });
     message.ack();
   } catch (error) {
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "order_waybill_job_failed",
-      waybillJobId: body.waybillJobId,
+      component: "waybill",
+      operation: "queue_consume",
+      outcome: "failure",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-      error: errorText(error),
-    }));
+      errorCode: operationalErrorCode(error),
+    });
     message.retry({ delaySeconds: Math.min(30 * 2 ** Math.max(message.attempts - 1, 0), 300) });
   }
 }

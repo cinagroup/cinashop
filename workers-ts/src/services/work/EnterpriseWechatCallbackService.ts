@@ -38,6 +38,7 @@ import {
   EnterpriseWechatProviderError,
   isEnterpriseWechatCorpId,
 } from "@/services/work/EnterpriseWechatProviderClient";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import {
   EnterpriseWechatMemberProjectionError,
   isMemberProjectionEvent,
@@ -1896,36 +1897,58 @@ export async function consumeWorkCallbackQueueMessage(
   message: WorkCallbackQueueMessageControl,
   service: Pick<EnterpriseWechatCallbackService, "processMessage">,
 ): Promise<void> {
+  const startedAt = Date.now();
   try {
     const result = await service.processMessage(message.body);
     if (result === "busy") {
+      emitOperationalEvent("warn", {
+        event: "work_callback_pipeline_retried",
+        component: "queue",
+        operation: "work_callback",
+        outcome: "retry",
+        durationMs: Date.now() - startedAt,
+        queueAttempt: message.attempts,
+      });
       message.retry({ delaySeconds: 30 });
       return;
     }
     if (typeof result === "object" && result.kind === "deferred") {
+      emitOperationalEvent("warn", {
+        event: "work_callback_pipeline_retried",
+        component: "queue",
+        operation: "work_callback",
+        outcome: "retry",
+        durationMs: Date.now() - startedAt,
+        queueAttempt: message.attempts,
+        retryDelaySeconds: result.delaySeconds,
+      });
       message.retry({ delaySeconds: result.delaySeconds });
       return;
     }
     if (typeof result === "object" && result.kind === "parked") {
-      console.log(JSON.stringify({
+      emitOperationalEvent("warn", {
         event: "work_callback_pipeline_parked",
-        eventId: message.body.eventId,
-        outboxId: message.body.outboxId,
+        component: "queue",
+        operation: "work_callback",
+        outcome: "unknown",
+        durationMs: Date.now() - startedAt,
         queueAttempt: message.attempts,
-      }));
+      });
       // The durable outbox is FAILED with a future available_time. Ack this
       // delivery; dispatch excludes the parked error while authority is off,
       // then bounded cron pages replay the same event after the gate opens.
       message.ack();
       return;
     }
-    console.log(JSON.stringify({
+    emitOperationalEvent("info", {
       event: "work_callback_pipeline_consumed",
-      eventId: message.body.eventId,
-      outboxId: message.body.outboxId,
-      result,
+      component: "queue",
+      operation: "work_callback",
+      outcome: "success",
+      result: typeof result === "string" ? result : "completed",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
-    }));
+    });
     message.ack();
   } catch (error) {
     const providerDelay = error instanceof EnterpriseWechatProviderError
@@ -1935,16 +1958,16 @@ export async function consumeWorkCallbackQueueMessage(
       30 * 2 ** Math.max(message.attempts - 1, 0),
       providerDelay,
     ), 900);
-    console.error(JSON.stringify({
+    emitOperationalEvent("error", {
       event: "work_callback_pipeline_failed",
-      eventId: message.body.eventId,
-      outboxId: message.body.outboxId,
+      component: "queue",
+      operation: "work_callback",
+      outcome: "retry",
+      durationMs: Date.now() - startedAt,
       queueAttempt: message.attempts,
       retryDelaySeconds: delaySeconds,
-      error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
-        ? error.message
-        : "callback_processing_failed",
-    }));
+      errorCode: operationalErrorCode(error, "callback_processing_failed"),
+    });
     message.retry({ delaySeconds });
   }
 }
