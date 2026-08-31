@@ -9,10 +9,13 @@ import {
   runInDurableObject,
   waitOnExecutionContext,
 } from "cloudflare:test";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import worker from "../../src/index";
 import type { Env, OrderMessage } from "../../src/env";
-import type { ChatSocketSession } from "../../src/services/kefu/KefuRealtimeService";
+import {
+  type ChatSocketSession,
+  KefuRealtimeService,
+} from "../../src/services/kefu/KefuRealtimeService";
 import { consumeOrderPaidOutboxQueueMessage } from "../../src/services/order/OrderPaidOutboxQueueConsumer";
 
 const testEnv = env as unknown as Env;
@@ -23,6 +26,7 @@ const SNOWFLAKE_TIMESTAMP_SHIFT = 22n;
 
 afterEach(async () => {
   await reset();
+  vi.restoreAllMocks();
 });
 
 describe("Worker runtime bindings", () => {
@@ -160,39 +164,58 @@ describe("Kefu ChatRoomDO WebSocket hibernation", () => {
 
   it("restores a tagged session attachment and revokes its token after eviction", async () => {
     const stub = testEnv.CHAT_ROOM.getByName("kefu:runtime-hibernation");
-    const session: ChatSocketSession = {
+    const tokenKey = "a".repeat(32);
+    const expiresAt = Math.floor(Date.now() / 1_000) + 3_600;
+    const setOnline = vi.spyOn(KefuRealtimeService.prototype, "setOnline")
+      .mockResolvedValue(undefined);
+    vi.spyOn(KefuRealtimeService.prototype, "setDisconnected")
+      .mockResolvedValue(undefined);
+
+    const upgrade = await stub.fetch(new Request("https://chat.internal/connect", {
+      headers: {
+        Upgrade: "websocket",
+        "Sec-WebSocket-Protocol": "cinashop",
+        "X-Chat-Principal-Uid": "71",
+        "X-Chat-Role": "2",
+        "X-Chat-To-Uid": "29",
+        "X-Chat-Is-Tourist": "0",
+        "X-Chat-Auth-Id": "11",
+        "X-Chat-Token-Key": tokenKey,
+        "X-Chat-Token-Exp": String(expiresAt),
+        "X-Chat-Auth-Version": "runtime-v1",
+      },
+    }));
+    expect(upgrade.status).toBe(101);
+    expect(upgrade.headers.get("Sec-WebSocket-Protocol")).toBe("cinashop");
+    const client = upgrade.webSocket;
+    if (!client) throw new Error("runtime WebSocket upgrade missing client");
+    const closed = new Promise<CloseEvent>((resolve) => {
+      client.addEventListener("close", resolve, { once: true });
+    });
+    client.accept();
+    expect(setOnline).toHaveBeenCalledWith(expect.objectContaining({
       principalUid: 71,
       role: 2,
-      isTourist: 0,
       toUid: 29,
-      authId: 11,
-      tokenKey: "a".repeat(32),
-      expiresAt: Math.floor(Date.now() / 1_000) + 3_600,
-      authVersion: "runtime-v1",
-      connectedAt: Math.floor(Date.now() / 1_000),
-    };
-    const keepAlive: WebSocket[] = [];
-    await runInDurableObject(stub, (_instance, state) => {
-      // Both endpoints must be created and accepted inside the target DO's I/O
-      // context. Keep the peer strongly referenced until revocation completes.
-      const pair = new WebSocketPair();
-      const [client, server] = Object.values(pair);
-      keepAlive.push(client);
-      state.acceptWebSocket(server, ["role:2"]);
-      server.serializeAttachment(session);
-      expect(state.getWebSockets("role:2")).toHaveLength(1);
+      tokenKey,
+    }), true);
+
+    const attached = await runInDurableObject(stub, (_instance, state) => {
+      const sockets = state.getWebSockets("role:2");
+      expect(sockets).toHaveLength(1);
+      return sockets[0]?.deserializeAttachment() as ChatSocketSession;
     });
-    expect(keepAlive).toHaveLength(1);
 
     await evictDurableObject(stub);
 
     await runInDurableObject(stub, (_instance, state) => {
       const restored = state.getWebSockets("role:2");
       expect(restored).toHaveLength(1);
-      expect(restored[0]?.deserializeAttachment()).toEqual(session);
+      expect(restored[0]?.deserializeAttachment()).toEqual(attached);
     });
     await expect(stub.disconnectToken("b".repeat(32))).resolves.toBe(0);
-    await expect(stub.disconnectToken(session.tokenKey)).resolves.toBe(1);
+    await expect(stub.disconnectToken(tokenKey)).resolves.toBe(1);
+    await expect(closed).resolves.toMatchObject({ code: 4001, reason: "Session revoked" });
   });
 });
 
