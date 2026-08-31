@@ -88,6 +88,8 @@ export interface Env extends WorkerBindings {
   WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?: string;
   /** Set to `verified` only after external-tag catalog reconciliation and replay gates pass. */
   WECHAT_WORK_TAG_CURRENT_AUTHORITY?: string;
+  /** Final C8 gate for welcome, automatic-tag and commerce-identity actions. */
+  WECHAT_WORK_CONTACT_ACTION_AUTHORITY?: string;
   /** Enterprise WeChat callback token. Never store it in system_config. */
   WECHAT_WORK_CALLBACK_TOKEN?: string;
   /** Enterprise WeChat 43-character callback EncodingAESKey. */
@@ -245,6 +247,19 @@ export interface WorkCallbackDispatchMessage {
   scheduledAt: number;
 }
 
+/** One durable post-projection contact action; targets and payload remain in PostgreSQL. */
+export interface WorkContactActionMessage {
+  action: "processWorkContactAction";
+  actionId: number;
+  actionKey: string;
+}
+
+/** Cron root message for action delivery recovery and callback-payload redaction. */
+export interface WorkContactActionDispatchMessage {
+  action: "dispatchWorkContactActions";
+  scheduledAt: number;
+}
+
 export type OrderMessage =
   | OrderPaidOutboxMessage
   | OrderNotificationOutboxMessage
@@ -259,6 +274,8 @@ export type OrderMessage =
   | OfficialAccountQrcodeMessage
   | WorkCallbackOutboxMessage
   | WorkCallbackDispatchMessage
+  | WorkContactActionMessage
+  | WorkContactActionDispatchMessage
   | LegacyOrderMessage;
 
 /**

@@ -2274,7 +2274,7 @@ PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListen
 - **WORK-C5（代码/生产结构/隔离验收已完成，未启用/未发布）客户、follow 与 follow tags 权威快照**：add/edit 已穷尽 provider cursor并保留其他员工关系；关系级 direct fence、防跨 profile fence 迟到响应、目标 tombstone 恢复和 omission 不删除均已验证。client authority、真实租户/数据和发布仍关闭，详细证据见 C5 专章。
 - **WORK-C6（代码/生产结构/隔离验收已完成，未启用/未发布）客户群和群成员**：按 `(CorpID, ChatID)` 稳定身份全量刷新群主/成员，dismiss 为终止态；旧 provider 响应、同秒或不可能更晚的 create/update 均不得复活已解散群，详细证据见 C6 专章。
 - **WORK-C7（代码/生产结构/隔离验收已完成，未启用/未发布）企业客户标签与批量结果边界**：以 `(CorpID,StrategyID,remote string ID)` 保存 tag/group current-state；create/update/shuffle 在事务外读取标准或 strategy 权威目录，delete 由 callback 终止，组/全目录遗漏写 tombstone且保留历史。`batch_job_result` 只记有界元数据并维持 `IGNORED`，不把完成通知解释为同步收敛。详细证据见 C7 专章。
-- **WORK-C8（待完成）欢迎语、自动标签、商城用户关联与真实发布闭环**：远端写一律进入独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工重放和审计终态；随后才进入真实租户回调、预发、影子流量和发布批准。
+- **WORK-C8（代码/生产结构/隔离服务/Admin 处置面已完成，未启用/未发布）欢迎语、自动标签与商城用户关联**：三类动作已拆成独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工处置、回调保留与脱敏；真实源数据、旧媒体素材、企业微信租户、Linux runtime、预发、影子流量和发布批准仍未完成。
 
 ### 为什么首批只选 `del_external_contact` / `del_follow_user`
 
@@ -2635,7 +2635,64 @@ Admin 标签目录采用 current-first、整库 sentinel fail-closed。只有 ta
 - [x] 对 `batch_job_result` 保持显式 `IGNORED`，只保存有界 `JobType/JobId/ErrCode`，不保存 `ErrMsg` 或假报目录同步成功。
 - [ ] 取得只读源 MySQL 后复制/映射真实 legacy 标签并由运营抽样；生产 legacy/current 标签均为 0 行，不能宣称历史标签已迁移。
 - [ ] 使用最小权限 external-contact Secret 和测试租户验证标准/strategy 正向、真实 `40068`、组删除、shuffle 及权限范围；启用前回读 Script Settings，确认 traces 关闭或 query-string 已可靠脱敏。
-- [ ] WORK-C8：把欢迎语、自动标签、商城用户关联等远端/跨域副作用放入独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工重放与审计终态；再完成 Linux runtime、预发、影子流量、明确发布批准和发布后观察。
+- [x] WORK-C8 代码与结构：欢迎语、自动标签、商城用户关联已进入独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工处置与审计终态；生产 expand-only DDL、随机 schema 和 Admin 脱敏处置面已完成。
+- [ ] WORK-C8 发布闭环：完成真实源数据/旧媒体迁移、企业微信测试租户、Linux runtime、预发、影子流量、明确发布批准和发布后观察。
+
+## WORK-C8 欢迎语、自动标签与商城用户关联 action outbox 详细审计（2026-08-31）
+
+### 审计结论与严格完成边界
+
+WORK-C8 现可标记为**代码、生产 Hyperdrive 结构、随机 schema 真实服务场景和 Admin 脱敏人工处置面完成**，但不能标记为企业微信远端能力已启用、真实业务数据已迁移、主 Worker/Admin 已发布或 WORK-C 整体完成。本批只关闭 PHP `WorkClientServices::createClient()/updateClient()` 后置的三类副作用：新增客户欢迎语、渠道码自动标签和按 unionid 关联商城 UID。每个动作独立收敛，任一动作失败不回滚已完成动作，也不把回调管道的 `ORDERED/APPLIED` 冒充远端已经成功。
+
+所有生产数据库操作只通过用户指定的 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 执行。生产 `public` 只接受 expand-only `0118_work_contact_action_outbox.sql` 及第二遍幂等复验；没有插入合成 CorpID、客户、回调、欢迎码、标签、unionid 或人工处置行。合成 DML 只在随机 `codex_work_action_*` schema 中执行并最终级联删除。`WECHAT_WORK_CONTACT_ACTION_AUTHORITY` 与 C0～C7 authority/full-visibility gates 均保持关闭，主 `cinashop-api` 和 Admin Pages 均未部署。
+
+### PHP 权威行为与迁移风险
+
+旧 `WorkClientServices::createClient()` 先同步保存客户，再依次触发 `work.welcome`、`work.label` 和 `work.user`；三段异常各自捕获后只写日志，因此天然是部分成功。`updateClient()` 只再次尝试商城用户绑定。`WelcomeSendListener` 从 `State=channelCode-<id>` 解析渠道码，自定义欢迎语优先，否则按员工关系/默认欢迎语回退，递增 `client_num`、替换 `##客户名称##`、解析媒体后调用 `send_welcome_msg`；注释和协议都要求 WelcomeCode 约 20 秒内单次使用。`ClientLabelListener` 解析渠道 `label_id` 后调用 `mark_tag`。`ClientBindUserListener` 按 unionid 取第一条微信用户 UID，没有歧义或现有 UID 冲突保护。
+
+旧实现没有事务投递记录、动作级幂等键、租约、确定性重试、结果未知状态或人工对账。欢迎语媒体解析还会读取本地路径/URL并即时上传，迁移到 Worker 后若照搬会扩大 SSRF、任意下载、超时和临时素材过期风险；因此新实现不抓取旧 URL，只接受已经物化的 `media_id/pic_media_id`。URL-only 旧素材明确进入 `DEAD/welcome_media_not_materialized`，等待受控素材迁移和人工关闭，不静默丢附件或发送残缺消息。
+
+### 动作模型、Queue 与结果未知语义
+
+`work_contact_action_outbox` 为每个 `(event_id, action_type)` 保存一条不可变意图，动作键与原 payload SHA-256 固定，Queue 正文严格只有 `{action, actionId, actionKey}`。三个动作分别是 `WELCOME_SEND`、`AUTO_TAG`、`CLIENT_UID_LINK`；状态集合为 `PENDING/ENQUEUING/ENQUEUED/PROCESSING/RETRYABLE/SUCCEEDED/SKIPPED/EXPIRED/UNKNOWN/DEAD/CLOSED`。动作在 C5 客户投影的同一短事务中创建，渠道 `client_num` 只在欢迎动作首次插入时递增一次；外部 provider I/O 全部在数据库事务之外执行。
+
+欢迎语 deadline 固定为 callback `received_time + 20` 秒，入队已经超时则直接 `EXPIRED`。网络中断、响应无法解析、HTTP 408/425/5xx、企业微信 `41051`，以及远端调用后本地成功状态无法确定，均进入 `UNKNOWN`，不自动重发单次欢迎码。标签的明确 429/忙码使用有界退避；网络/响应结果未知同样进入 `UNKNOWN`，只有管理员对账并明确承担重复副作用风险后才能重试。代码复审进一步修复了两个关键窗口：远端调用成功后的本地落库异常不再被 provider catch 误判为已知失败；任何过期的欢迎语/标签 `PROCESSING` 租约，即使 Queue 先于 Cron 重投，也会直接转为 `UNKNOWN` 而不是再次调用 provider。
+
+商城 UID 关联不调用企业微信：动作保存 unionid 摘要，处理时重新锁定当前客户并比较摘要，只连接 `wechat_user.is_del=0` 且商城用户有效的唯一 UID。零匹配在 7 天窗口内最多 12 次有界重试，最终 `SKIPPED`；多个不同 UID 或既有 UID 冲突进入 `DEAD`，绝不取数据库“第一条”。客户已失效、unionid 缺失或已被更新时幂等跳过。
+
+### 审计、保留与人工处置
+
+`work_contact_action_audit` 保存管理员 ID、UUID request key、请求摘要、from/to 状态、理由、风险确认和可选 provider 参考号摘要，不自动复制客户标识、欢迎码、标签或动作 payload；人工理由仍是运营输入，页面明确要求不得填写个人信息或凭据。数据库触发器禁止更新/删除人工记录，并禁止修改动作身份、原 payload 摘要和 deadline。Admin 新增 `GET /adminapi/work/contact_action` 与 `POST /adminapi/work/contact_action/:id/decision`，继续受 `enterprise_wechat.view/manage` 服务端权限强制约束；列表不返回 PII，处置只允许 UNKNOWN 确认成功、非欢迎语 UNKNOWN/DEAD 明示风险后重试，或 UNKNOWN/DEAD 关闭。现有 `/operations/work` 页面已接入状态/类型筛选、脱敏台账和三类不可变处置表单。
+
+callback 白名单 payload 新增 `payload_retained_until/payload_redacted_time`。默认保留 30 天；只有 callback inbox 为 `ORDERED`、callback outbox 为 `COMPLETED`，且所有动作均为 `SUCCEEDED/SKIPPED/EXPIRED/CLOSED` 时才删除 WelcomeCode、UserID、ExternalUserID 等原 payload，只保留消息/事件/变更类型与时间。`UNKNOWN/DEAD` 会阻止脱敏，直到人工对账关闭，避免先删掉唯一对账证据；已收敛动作本身立即把 payload 清成空对象，但保留原摘要。
+
+### 生产 Hyperdrive、随机 schema 与失败记录
+
+最终迁移前只读基线请求 `32edde36-acc4-4152-ad45-87b18e2a092a` 确认 PostgreSQL 16、245 表/212 序列、两个 C8 目标表不存在、临时 schema 为 0。渠道码、欢迎语、欢迎语关系、媒体、微信 unionid、current 客户、add/edit callback、WelcomeCode、callback outbox 全部为 0；这只证明 expand-only DDL 和空库默认安全，不是历史业务已迁移或正向数据质量证明。
+
+生产迁移请求 `2be55bfe-9519-46e7-8218-0e26945b3fa1` 将同一 `0118` 连续执行两遍：245→247 表、212→214 序列，两个动作表均 0 行；第二遍动作/保留元数据与 tuple 不变，既有九张相关业务表 MVCC 指纹不变，表/序列增量精确 `+2/+2`。闭合对象精确为 18 个约束、10 个索引、2 个用户触发器、2 个 `search_path=pg_catalog` 保护函数和 4 项 callback 保留元数据；动作/保留 metadata digest 分别为 `3eaf3d949c6ad6454f133a165ef33d5ace3af7ad163d410a5e6624303456425b` 与 `da2ba253ff0d98bcd1347827bc9f9c3d40658ae00bce9b7abe03a474c6973382`。迁移后只读请求 `194bf6a2-5ea7-473b-99cd-1f2da88d6a47` 确认两表存在且仍为 0 行、临时 schema 为 0。
+
+最新代码隔离请求 `c2b83e22-16a6-47b4-8762-aecffd25d2f9` 在迁移后的生产引擎中把 exact DDL 再执行两遍并构造 4 个 add-contact 事件、12 个独立动作。18/18 断言覆盖：引用型 Queue、同一欢迎动作并发单 provider 调用、部分成功、终态重放无 provider 调用、标签 UNKNOWN 风险重试、过期 provider 租约 UNKNOWN 且不重发欢迎语、unionid 歧义、欢迎码过期、URL-only 旧媒体关闭、人工审计精确/不可变、回调脱敏/阻断、渠道计数一次和商城 UID 唯一关联。最终状态为 `SUCCEEDED 4/SKIPPED 5/EXPIRED 1/CLOSED 1/DEAD 1`，provider mock 调用为欢迎语 1、标签 2，人工处置 3、脱敏 callback 3；随机 schema 删除后 `public_catalog_unchanged/public_business_rows_mvcc_unchanged/public_action_metadata_unchanged=true`，临时 schema 回到 0。最终只读请求 `cc2a1fcc-071f-4acc-a83a-543e5a1ab34d` 再次确认生产动作表 0 行。
+
+失败轮次没有计入通过，也没有触发生产迁移：首轮复合随机 `search_path` 被安全校验拒绝；次轮用早于 callback 接收时间的保留截止值时，`wce_payload_retention_ck` 正确阻止非法测试数据；一次边缘返回非 JSON 错误页、一次迁移前只读请求瞬时失败，脚本都在 `/migrate` 前停止。每轮 finally 都删除临时 Worker，最终 workers.dev 回探均为 404；临时随机 schema 最终均为 0。
+
+最终仓库 `data:schema-audit` 为 source 201、target 247、shared/complete 201、source-only/缺源列 0、target-only 46；外部迁移与 Worker 内嵌迁移均为 247 表，表/列/主键漂移 0。双 TypeScript 配置通过，C8 定向 3 文件 46/46、全量单元测试 162 文件/1,007 项通过，Admin 生产构建 2,425 modules 通过；企业微信页面 chunk 为 JS 18.02 KiB/gzip 6.59 KiB、CSS 4.19 KiB/gzip 1.16 KiB。主 Worker minify dry-run 为 3,216.15 KiB/gzip 762.29 KiB，C8 审计 Worker为 982.68 KiB/gzip 179.29 KiB，两者均精确绑定指定 Hyperdrive且只 dry-run。Windows runtime 再次在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败，不能记为通过；主 Worker/Admin 仍未部署。
+
+### 工程门禁、待完成 checklist 与发布顺序
+
+- [x] 审计 PHP 三个 listener 的输入、部分成功语义、20 秒欢迎码、标签和 unionid 关联风险。
+- [x] 完成 exact 外部 `0118`/内嵌 `migration_0124`、动作/审计表、不可变触发器、callback 保留与生产双跑。
+- [x] 三类动作独立建账、引用型 Queue、短事务租约、429 退避、UNKNOWN 不盲重发和动作 payload 收敛后清除。
+- [x] unionid 唯一 UID 关联、歧义/冲突失败关闭、30 天 callback 脱敏与 UNKNOWN/DEAD 对账证据保留。
+- [x] Admin PII-free 台账、服务端 view/manage 权限、确认成功/风险重试/关闭 API 与响应式处置页面。
+- [x] 生产 PostgreSQL 16 expand-only 双跑、迁移前后只读审计，以及最新随机 schema 18/18 服务断言；生产业务行和动作行未被测试污染。
+- [ ] 取得只读源 MySQL/正式备份后迁移并抽样真实 `work_channel_code/work_welcome/work_welcome_relation/work_media/wechat_user`；当前生产均为 0 行。
+- [ ] 把 URL-only 欢迎语附件通过受控下载、类型/大小校验和最小权限素材上传预先物化为可发送 media ID；禁止 Worker 在 callback 热路径抓取任意 URL。
+- [ ] 配置测试租户 CorpID、AgentID、external-contact Secret、callback Token/AES Key、full-visibility 权限和正式 Origin；回读 Cloudflare Script Settings 确认 traces 关闭或 query-string 已可靠脱敏。
+- [ ] 用真实测试客户验证 add/edit callback、20 秒欢迎语、标签、唯一/歧义 unionid、真实 429/41051/权限错误与 Admin 对账，不使用生产客户制造故障。
+- [ ] 在 Linux/受支持主机补 Workers runtime；当前 Windows `workerd` 在 0 测试/0 断言前仍以 `0xc0000005` 启动失败，不能记为 runtime 通过。
+- [ ] 经明确批准部署主 Worker/Admin，按 C0→C8 依赖顺序启用 client/tag/full-visibility/contact-action gates，先预发和小流量，再观察 Queue 延迟、UNKNOWN/DEAD、欢迎码过期、标签 429、UID 歧义和 callback 保留积压；准备关闭 gate 的回滚方案。
+- [ ] 完成旧端/新端 golden response、真机、影子流量、业务/安全批准和发布后观察后，才能勾选 WORK-C 父项。
 
 ## 完成定义
 

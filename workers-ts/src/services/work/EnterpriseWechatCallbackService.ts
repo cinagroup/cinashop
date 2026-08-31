@@ -96,6 +96,7 @@ import {
   lockExternalTagProjectionCatalog,
   recordExternalTagProjectionSeen,
 } from "@/services/work/EnterpriseWechatExternalTagCurrentService";
+import { EnterpriseWechatContactActionService } from "@/services/work/EnterpriseWechatContactActionService";
 
 const DISPATCH_LEASE_SECONDS = 120;
 const DELIVERY_LEASE_SECONDS = 600;
@@ -106,6 +107,7 @@ const DEPARTMENT_PROJECTION_DISABLED = "department_projection_disabled";
 const CLIENT_PROJECTION_DISABLED = "client_projection_disabled";
 const GROUP_CHAT_PROJECTION_DISABLED = "group_chat_projection_disabled";
 const EXTERNAL_TAG_PROJECTION_DISABLED = "external_tag_projection_disabled";
+const CONTACT_ACTION_DISABLED = "contact_action_disabled";
 const MAX_DISPATCH_DRAIN_ITEMS = 100;
 
 export class EnterpriseWechatCallbackError extends Error {
@@ -135,6 +137,7 @@ interface ClaimedCallback {
   eventType: string;
   changeType: string;
   corpId: string;
+  receivedTime: number;
   payload: WorkCallbackPayload;
   leaseToken: string;
   attemptCount: number;
@@ -168,6 +171,7 @@ export interface WorkCallbackEnvironment {
   WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?: string;
   WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?: string;
   WECHAT_WORK_TAG_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_CONTACT_ACTION_AUTHORITY?: string;
   ORDER_QUEUE: Queue<OrderMessage>;
 }
 
@@ -265,6 +269,8 @@ export function isWorkCallbackDispatchMessage(value: unknown): value is WorkCall
 }
 
 export class EnterpriseWechatCallbackService {
+  private readonly contactActions: EnterpriseWechatContactActionService;
+
   constructor(
     private readonly container: Container,
     private readonly env: WorkCallbackEnvironment,
@@ -280,7 +286,9 @@ export class EnterpriseWechatCallbackService {
         WECHAT_WORK_EXTERNAL_CONTACT_SECRET: env.WECHAT_WORK_EXTERNAL_CONTACT_SECRET,
       }, { corpId });
     },
-  ) {}
+  ) {
+    this.contactActions = new EnterpriseWechatContactActionService(container, env);
+  }
 
   async verifyUrl(query: CallbackQuery, encryptedEcho: string): Promise<string> {
     const config = await this.config();
@@ -335,6 +343,7 @@ export class EnterpriseWechatCallbackService {
           payload: normalized.payload,
           status: "RECEIVED",
           receivedTime: now,
+          payloadRetainedUntil: now + 30 * 24 * 60 * 60,
           updateTime: now,
         }).onConflictDoNothing({ target: workCallbackEvent.eventKey }).returning({
           id: workCallbackEvent.id,
@@ -399,6 +408,7 @@ export class EnterpriseWechatCallbackService {
         ne(workCallbackOutbox.lastErrorCode, CLIENT_PROJECTION_DISABLED),
         ne(workCallbackOutbox.lastErrorCode, GROUP_CHAT_PROJECTION_DISABLED),
         ne(workCallbackOutbox.lastErrorCode, EXTERNAL_TAG_PROJECTION_DISABLED),
+        ne(workCallbackOutbox.lastErrorCode, CONTACT_ACTION_DISABLED),
       ),
       this.memberCurrentAuthorityEnabled()
         ? eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)
@@ -417,6 +427,9 @@ export class EnterpriseWechatCallbackService {
       this.externalTagCurrentAuthorityEnabled()
         && this.externalContactFullVisibilityEnabled()
         ? eq(workCallbackOutbox.lastErrorCode, EXTERNAL_TAG_PROJECTION_DISABLED)
+        : sql`false`,
+      this.contactActions.enabled()
+        ? eq(workCallbackOutbox.lastErrorCode, CONTACT_ACTION_DISABLED)
         : sql`false`,
     );
     const eligible = or(
@@ -545,7 +558,12 @@ export class EnterpriseWechatCallbackService {
       ) return "dead";
       throw error;
     }
-    if (typeof claim === "string" || "kind" in claim) return claim;
+    if (typeof claim === "string" || "kind" in claim) {
+      if (claim === "already-completed") {
+        await this.contactActions.dispatchForEvent(message.eventId);
+      }
+      return claim;
+    }
     try {
       let memberProjection: PreparedMemberProjection | undefined;
       let memberTargetSubjectKeyHash: string | undefined;
@@ -604,7 +622,7 @@ export class EnterpriseWechatCallbackService {
             : this.externalTagProvider(claim.corpId),
         );
       }
-      return await this.applyOrdering(
+      const result = await this.applyOrdering(
         claim,
         memberProjection,
         memberTargetSubjectKeyHash,
@@ -613,6 +631,8 @@ export class EnterpriseWechatCallbackService {
         groupChatProjection,
         externalTagProjection,
       );
+      await this.contactActions.dispatchForEvent(claim.eventId);
+      return result;
     } catch (error) {
       if (await this.recordFailure(claim, error)) return "dead";
       throw error;
@@ -684,6 +704,7 @@ export class EnterpriseWechatCallbackService {
         eventType: workCallbackEvent.eventType,
         changeType: workCallbackEvent.changeType,
         corpId: workCallbackEvent.corpId,
+        receivedTime: workCallbackEvent.receivedTime,
         payload: workCallbackEvent.payload,
       }).from(workCallbackEvent)
         .where(eq(workCallbackEvent.id, outbox.eventId))
@@ -809,6 +830,56 @@ export class EnterpriseWechatCallbackService {
         }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
         if (parkedOutboxes.length !== 1 || parkedEvents.length !== 1) {
           throw new Error("callback_client_park_lost");
+        }
+        return { kind: "parked" as const };
+      }
+      if (
+        isClientProjectionEvent(row)
+        && (row.changeType === "add_external_contact" || row.changeType === "edit_external_contact")
+        && !this.contactActions.enabled()
+      ) {
+        const seen = await recordClientProjectionSeen(tx, row, now);
+        if (seen === "superseded") {
+          const completedEvents = await tx.update(workCallbackEvent).set({
+            status: "ORDERED",
+            projectionStatus: "SUPERSEDED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+          const completedOutboxes = await tx.update(workCallbackOutbox).set({
+            status: "COMPLETED",
+            leaseUntil: 0,
+            leaseToken: "",
+            lastErrorCode: "",
+            processedTime: now,
+            updateTime: now,
+          }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+          if (completedEvents.length !== 1 || completedOutboxes.length !== 1) {
+            throw new Error("callback_contact_action_superseded_finalize_lost");
+          }
+          return "superseded";
+        }
+        const parkedOutboxes = await tx.update(workCallbackOutbox).set({
+          status: "FAILED",
+          leaseUntil: 0,
+          leaseToken: "",
+          availableTime: now + 900,
+          lastErrorCode: CONTACT_ACTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackOutbox.id, row.outboxId)).returning({ id: workCallbackOutbox.id });
+        const parkedEvents = await tx.update(workCallbackEvent).set({
+          status: "FAILED",
+          projectionStatus: "REFRESH_REQUIRED",
+          leaseUntil: 0,
+          leaseToken: "",
+          lastErrorCode: CONTACT_ACTION_DISABLED,
+          updateTime: now,
+        }).where(eq(workCallbackEvent.id, row.eventId)).returning({ id: workCallbackEvent.id });
+        if (parkedOutboxes.length !== 1 || parkedEvents.length !== 1) {
+          throw new Error("callback_contact_action_park_lost");
         }
         return { kind: "parked" as const };
       }
@@ -1413,6 +1484,15 @@ export class EnterpriseWechatCallbackService {
                   : "REFRESH_REQUIRED";
           }
         }
+      }
+
+      if (clientEvent) {
+        await this.contactActions.enqueueProjectedClientActions(
+          tx,
+          claim,
+          result,
+          now,
+        );
       }
 
       const finalizedEvents = await tx.update(workCallbackEvent).set({

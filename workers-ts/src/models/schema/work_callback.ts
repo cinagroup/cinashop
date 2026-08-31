@@ -43,6 +43,9 @@ export const workCallbackEvent = pgTable(
     lastErrorCode: varchar("last_error_code", { length: 64 }).default("").notNull(),
     receivedTime: integer("received_time").default(0).notNull(),
     processedTime: integer("processed_time").default(0).notNull(),
+    /** Raw callback allowlist is redacted after every dependent action reaches a terminal state. */
+    payloadRetainedUntil: integer("payload_retained_until").default(0).notNull(),
+    payloadRedactedTime: integer("payload_redacted_time").default(0).notNull(),
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [

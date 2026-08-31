@@ -11,7 +11,7 @@ CRMEB PRO → Cloudflare Workers 渐进式迁移。
 - Hono 入口、认证、配置、商品、购物车、订单、部分支付/售后
 - 部分用户中心、营销活动、微信生态和后台管理接口
 - Admin、PC、UniApp 三个 TypeScript 前端骨架及核心页面
-- 企业微信 callback 的 C0～C7 本地 current-state 已完成可信 inbox/outbox、provider 读取、成员、部门、客户/follow/tags、群/群成员及企业客户标签投影；生产 PostgreSQL 已扩展到 245 表/212 序列，标签随机 schema 6/6+13/13 通过。所有 authority gate 仍关闭，主 Worker未发布；真实租户/provider、源标签导入以及 C8 欢迎语/自动标签/商城用户关联 action outbox 仍未完成
+- 企业微信 callback 的 C0～C8 代码、生产结构与随机 schema 服务验收已完成：可信 inbox/outbox、provider 读取、成员、部门、客户/follow/tags、群/群成员、企业客户标签，以及欢迎语/自动标签/商城用户关联的独立 action outbox、UNKNOWN 人工处置和回调脱敏。生产 PostgreSQL 已扩展到 247 表/214 序列；C8 最新隔离场景 18/18 通过且 Admin 已接入脱敏处置台账。所有 authority gate 仍关闭，主 Worker/Admin 未发布；真实源数据、旧媒体素材、企业微信租户/provider、Linux runtime、预发、影子流量和发布批准仍未完成
 - Admin 首页四条 PHP 合同已拆分恢复：四项卡片、30 天/周/月/年订单趋势、30 天新增用户与消费分层、兼容空排行；统计统一按 `Asia/Shanghai` 非重叠区间并排除删除数据。生产 Hyperdrive 随机 schema 的 8 项 PostgreSQL 断言全部通过，`public` 三表行数前后不变（本地完成，主 Worker/Admin 尚未发布；真实 Admin 与旧 PHP 同时刻对账仍待执行）
 - Admin 统计页已恢复 21 条 PHP 主合同：订单 4、商品 4（含导出）、用户 7、交易 2、余额 4；旧 TypeScript 的 `overview/trend/rank` 仅保留为兼容别名。统一使用 `Asia/Shanghai`、`[start,end)`、根订单和软删除/有效流水过滤，并修正旧 PHP 的 3 日采样漏日、25 小时轴、余额支付环比、性别首项短路、微信累计恒零及多类重复/删除数据污染。生产 Hyperdrive 两轮随机 schema 共 29 项 PostgreSQL 断言全部通过，最新一轮 `public` 12 表行数前后不变（本地完成，主 Worker/Admin 尚未发布；源 MySQL 历史复制和真实 Admin 对账仍待执行）
 - 社区资料、关注/粉丝/推广好友、推荐作者、关注动态与持久浏览已按 PHP 语义恢复；Admin 补齐内容审核、话题目录、平台回复/虚拟评论和级联删除等 30 条方法级兼容合同；客户端进一步补齐配置、完整帖子筛选、作者待审预览、用户编辑重审、商品来源、话题计数、点赞/精选列表、分享、嵌套评论、评论点赞和所有者删除。生产 PostgreSQL 16.14 已应用社交 `0087`/内嵌 `0094`、运营 `0088`/内嵌 `0095` 及客户端 `0089`/内嵌 `0096` 八条查询索引，三个随机 schema 场景验证重放、并发、回滚、计数、越权拒绝和公共表/序列不变；真实 Hyperdrive 还发现并修复作者待审详情误计浏览与数字话题数组绑定问题（生产社区帖子/评论/话题/资料/关系为 `2/2/0/0/0`；主 Worker/前端尚未发布，源数据复制、真实账号与所有旧客户端长尾页面验收仍缺失）

@@ -58,6 +58,12 @@ export default {
       isWorkCallbackOutboxMessage,
     } = await import("./services/work/EnterpriseWechatCallbackService");
     const {
+      consumeWorkContactActionMessage,
+      EnterpriseWechatContactActionService,
+      isWorkContactActionDispatchMessage,
+      isWorkContactActionMessage,
+    } = await import("./services/work/EnterpriseWechatContactActionService");
+    const {
       consumeOrderNotificationOutboxQueueMessage,
       consumeOrderPaidOutboxQueueMessage,
     } = await import(
@@ -100,6 +106,7 @@ export default {
     } = await import("./services/waybill/OrderWaybillJobService");
     const outbox = new OrderOutboxService(container, env);
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
+    const workContactActions = new EnterpriseWechatContactActionService(container, env);
     const maintenance = new ScheduledMaintenanceService(container, env);
     const sms = new SmsVerificationService(container, env);
     const attachments = new AttachmentService(container, env);
@@ -109,6 +116,46 @@ export default {
     const waybillJobs = new OrderWaybillJobService(container, env);
 
     for (const msg of batch.messages) {
+      if (isWorkContactActionDispatchMessage(msg.body)) {
+        try {
+          const [dispatched, redacted] = await Promise.all([
+            workContactActions.dispatchPending(50),
+            workContactActions.redactCompletedCallbackPayloads(100),
+          ]);
+          console.log(JSON.stringify({
+            event: "work_contact_actions_dispatched",
+            ...dispatched,
+            redacted,
+            scheduledAt: msg.body.scheduledAt,
+            queueAttempt: msg.attempts,
+          }));
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          console.error(JSON.stringify({
+            event: "work_contact_action_dispatch_failed",
+            scheduledAt: msg.body.scheduledAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            error: error instanceof Error && /^[a-z0-9_:-]{1,64}$/i.test(error.message)
+              ? error.message
+              : "contact_action_dispatch_failed",
+          }));
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
+      if (isWorkContactActionMessage(msg.body)) {
+        await consumeWorkContactActionMessage({
+          body: msg.body,
+          attempts: msg.attempts,
+          ack: () => msg.ack(),
+          retry: (options) => msg.retry(options),
+        }, workContactActions);
+        continue;
+      }
+
       if (isWorkCallbackDispatchMessage(msg.body)) {
         try {
           const result = await workCallbacks.dispatchPendingPages(20, 5);
@@ -342,6 +389,10 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
   await Promise.all([
     env.ORDER_QUEUE.send({
       action: "dispatchWorkCallbackOutbox",
+      scheduledAt,
+    }),
+    env.ORDER_QUEUE.send({
+      action: "dispatchWorkContactActions",
       scheduledAt,
     }),
     enqueueScheduledRun(env, scheduledAt),

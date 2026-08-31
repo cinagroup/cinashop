@@ -150,6 +150,8 @@ adminapiRoutes.get("/work/label", adminAuth, AdminEnterpriseWechat.labels);
 adminapiRoutes.get("/work/group_template", adminAuth, AdminEnterpriseWechat.templates);
 adminapiRoutes.get("/work/moment", adminAuth, AdminEnterpriseWechat.moments);
 adminapiRoutes.get("/work/welcome", adminAuth, AdminEnterpriseWechat.welcomes);
+adminapiRoutes.get("/work/contact_action", adminAuth, AdminEnterpriseWechat.contactActions);
+adminapiRoutes.post("/work/contact_action/:id/decision", adminAuth, AdminEnterpriseWechat.decideContactAction);
 
 adminapiRoutes.get("/work/client/synch", adminAuth, AdminEnterpriseWechat.remoteWriteUnavailable);
 adminapiRoutes.post("/work/synchMember", adminAuth, AdminEnterpriseWechat.remoteWriteUnavailable);

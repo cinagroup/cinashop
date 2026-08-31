@@ -24,6 +24,41 @@ export interface EnterpriseWechatPage<T extends Record<string, unknown>> {
 
 export type EnterpriseWechatRow = Record<string, string | number | boolean | null>;
 
+export type ContactActionStatus =
+  | "PENDING" | "ENQUEUING" | "ENQUEUED" | "PROCESSING" | "RETRYABLE"
+  | "SUCCEEDED" | "SKIPPED" | "EXPIRED" | "UNKNOWN" | "DEAD" | "CLOSED";
+
+export type ContactActionType = "WELCOME_SEND" | "AUTO_TAG" | "CLIENT_UID_LINK";
+
+export interface ContactActionRow {
+  id: number;
+  action_type: ContactActionType;
+  status: ContactActionStatus;
+  attempt_count: number;
+  dispatch_count: number;
+  deadline_time: number;
+  last_error_code: string;
+  provider_code: number | null;
+  processed_time: number;
+  update_time: number;
+}
+
+export interface ContactActionPage {
+  list: ContactActionRow[];
+  count: number;
+  pii_display: "none";
+  queue_payload: "references_only";
+  remote_write_authority: "verified" | "disabled";
+}
+
+export interface ContactActionDecision {
+  request_key: string;
+  operation: "CONFIRM_SUCCEEDED" | "RETRY_WITH_RISK" | "CLOSE";
+  reason: string;
+  risk_accepted?: boolean;
+  provider_reference?: string;
+}
+
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
 
@@ -105,4 +140,41 @@ export function apiEnterpriseWechatCatalog(
     welcome: "/work/welcome",
   } as const;
   return getData(request.get(paths[section], { params }));
+}
+
+export function apiEnterpriseWechatContactActions(
+  params: Record<string, unknown> = {},
+): Promise<ContactActionPage> {
+  if (previewMode) {
+    const all: ContactActionRow[] = [
+      { id: 301, action_type: "WELCOME_SEND", status: "UNKNOWN", attempt_count: 1, dispatch_count: 1, deadline_time: 1786254220, last_error_code: "external_contact_send_welcome_unknown", provider_code: 41051, processed_time: 1786254211, update_time: 1786254211 },
+      { id: 298, action_type: "AUTO_TAG", status: "DEAD", attempt_count: 5, dispatch_count: 5, deadline_time: 0, last_error_code: "external_contact_mark_tag_terminal", provider_code: 40068, processed_time: 1786253100, update_time: 1786253100 },
+      { id: 292, action_type: "CLIENT_UID_LINK", status: "SUCCEEDED", attempt_count: 2, dispatch_count: 2, deadline_time: 1786850000, last_error_code: "", provider_code: null, processed_time: 1786249300, update_time: 1786249300 },
+    ];
+    const status = String(params.status ?? "").toUpperCase();
+    const actionType = String(params.action_type ?? "").toUpperCase();
+    const list = all.filter((row) => (!status || row.status === status)
+      && (!actionType || row.action_type === actionType));
+    return Promise.resolve({
+      list,
+      count: list.length,
+      pii_display: "none",
+      queue_payload: "references_only",
+      remote_write_authority: "disabled",
+    });
+  }
+  return getData(request.get("/work/contact_action", { params }));
+}
+
+export function apiDecideEnterpriseWechatContactAction(
+  id: number,
+  decision: ContactActionDecision,
+): Promise<{ status: ContactActionStatus; replayed: boolean }> {
+  if (previewMode) return Promise.resolve({
+    status: decision.operation === "CONFIRM_SUCCEEDED"
+      ? "SUCCEEDED"
+      : decision.operation === "RETRY_WITH_RISK" ? "RETRYABLE" : "CLOSED",
+    replayed: false,
+  });
+  return getData(request.post(`/work/contact_action/${id}/decision`, decision));
 }

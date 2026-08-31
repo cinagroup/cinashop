@@ -140,13 +140,15 @@ describe("Enterprise WeChat migration boundary", () => {
     ]);
   });
 
-  it("protects reads and remote-write placeholders with dedicated permissions", () => {
+  it("protects reads, action decisions, and remote-write placeholders with dedicated permissions", () => {
     expect(requiredAdminPermission("GET", "/adminapi/work/summary")).toBe("enterprise_wechat.view");
+    expect(requiredAdminPermission("GET", "/adminapi/work/contact_action")).toBe("enterprise_wechat.view");
+    expect(requiredAdminPermission("POST", "/adminapi/work/contact_action/123/decision")).toBe("enterprise_wechat.manage");
     expect(requiredAdminPermission("GET", "/adminapi/work/client/synch")).toBe("enterprise_wechat.manage");
     expect(requiredAdminPermission("POST", "/adminapi/work/welcome")).toBe("enterprise_wechat.manage");
   });
 
-  it("wires a responsive previewable Admin catalog without write controls", () => {
+  it("wires a responsive Admin catalog with only the audited action decision control", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
     const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const api = readFileSync("../view/admin-ts/src/api/enterpriseWechat.ts", "utf8");
@@ -154,9 +156,16 @@ describe("Enterprise WeChat migration boundary", () => {
     expect(router).toContain('path: "operations/work"');
     expect(layout).toContain('index="/operations/work"');
     expect(api).toContain('get("/work/summary")');
-    expect(page).toContain("外部同步与发送保持关闭");
+    expect(api).toContain('get("/work/contact_action"');
+    expect(api).toContain('post(`/work/contact_action/${id}/decision`');
+    expect(page).toContain("目录同步与主动发送保持关闭");
+    expect(page).toContain("目录只读 · 动作受控处置");
     expect(page).toContain("mobile-list");
-    expect(page).toContain("24 张 work_* 表已进入迁移链");
+    expect(page).toContain("客户后置动作台账");
+    expect(page).toContain("C8 动作结构已进入生产数据库");
+    expect(page).toContain("欢迎码是 20 秒内单次使用凭据");
+    expect(page).toContain("decision.requestKey = crypto.randomUUID()");
+    expect(page).toContain("request_key: decision.requestKey");
     expect(page).not.toMatch(/(?:新增|编辑|删除|同步|发送)[^<]{0,20}<\/el-button>/);
   });
 });

@@ -10,6 +10,7 @@ const MAX_CREDENTIAL_BYTES = 512;
 const MAX_RETRY_AFTER_SECONDS = 900;
 const INVALID_ACCESS_TOKEN_CODES = new Set([40_001, 40_014, 42_001]);
 const RETRYABLE_PROVIDER_CODES = new Set([-1, 45_009, 45_011]);
+const AMBIGUOUS_WELCOME_CODES = new Set([41_051]);
 const CONFIGURATION_PROVIDER_CODES = new Set([40_013, 48_002, 60_020]);
 const UNAVAILABLE_PROVIDER_CODE = -2;
 const NOT_FOUND_PROVIDER_CODES: Readonly<Record<string, ReadonlySet<number>>> = {
@@ -31,6 +32,7 @@ export type EnterpriseWechatCredentialScope =
 export type EnterpriseWechatProviderFailureKind =
   | "not_found"
   | "retryable"
+  | "unknown"
   | "terminal"
   | "configuration";
 
@@ -450,6 +452,66 @@ export class EnterpriseWechatProviderClient {
     });
   }
 
+  /**
+   * welcome_code is single-use. Any transport or response-decoding failure is
+   * classified UNKNOWN so Queue redelivery never sends it blindly a second time.
+   */
+  async sendWelcome(
+    welcomeCode: string,
+    message: { text?: { content: string }; attachments?: unknown[] },
+  ): Promise<void> {
+    await this.authorizedWrite(
+      "external_contact_send_welcome",
+      "/cgi-bin/externalcontact/send_welcome_msg",
+      {
+        welcome_code: requiredIdentifier(
+          welcomeCode,
+          "external_contact_send_welcome",
+          512,
+        ),
+        ...message,
+      },
+      true,
+    );
+  }
+
+  /** One desired tag-set delta. UNKNOWN is left for reconciliation/manual replay. */
+  async markExternalContactTags(
+    userid: string,
+    externalUserid: string,
+    addTags: string[],
+    removeTags: string[] = [],
+  ): Promise<void> {
+    if (
+      addTags.length > 100
+      || removeTags.length > 100
+      || (addTags.length === 0 && removeTags.length === 0)
+    ) {
+      throw new EnterpriseWechatProviderError(
+        "terminal",
+        "external_contact_mark_tag",
+        -1,
+        0,
+      );
+    }
+    await this.authorizedWrite(
+      "external_contact_mark_tag",
+      "/cgi-bin/externalcontact/mark_tag",
+      {
+        userid: requiredIdentifier(userid, "external_contact_mark_tag"),
+        external_userid: requiredIdentifier(
+          externalUserid,
+          "external_contact_mark_tag",
+        ),
+        add_tag: addTags.map((tag) =>
+          requiredIdentifier(tag, "external_contact_mark_tag")),
+        remove_tag: removeTags.map((tag) =>
+          requiredIdentifier(tag, "external_contact_mark_tag")),
+      },
+      false,
+    );
+  }
+
   private secret(scope: EnterpriseWechatCredentialScope, operation: string): string {
     const value = scope === "company-jssdk"
       ? this.env.WECHAT_WORK_CORP_SECRET
@@ -620,6 +682,118 @@ export class EnterpriseWechatProviderClient {
       return data;
     }
     throw new EnterpriseWechatProviderError("configuration", operation.name, -1, 0);
+  }
+
+  private async authorizedWrite(
+    operation: string,
+    path: string,
+    payload: JsonRecord,
+    welcomeCodeSingleUse: boolean,
+  ): Promise<void> {
+    let body: string;
+    try {
+      body = JSON.stringify(payload);
+    } catch {
+      throw new EnterpriseWechatProviderError("terminal", operation, -1, 0);
+    }
+    if (utf8Bytes(body) > MAX_REQUEST_BYTES) {
+      throw new EnterpriseWechatProviderError("terminal", operation, -1, 0);
+    }
+
+    let staleToken: string | undefined;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const credential = await this.accessToken(
+        "external-contact",
+        operation,
+        attempt > 0,
+        staleToken,
+      );
+      const url = new URL(path, PROVIDER_ORIGIN);
+      url.searchParams.set("access_token", credential.token);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      let response: Response;
+      let data: JsonRecord;
+      try {
+        response = await this.fetcher(url, {
+          method: "POST",
+          redirect: "error",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body,
+          signal: controller.signal,
+        });
+        try {
+          data = await readBoundedJson(response, operation, DEFAULT_RESPONSE_BYTES);
+        } catch {
+          throw new EnterpriseWechatProviderError(
+            "unknown",
+            operation,
+            UNAVAILABLE_PROVIDER_CODE,
+            response.status,
+          );
+        }
+      } catch (error) {
+        if (error instanceof EnterpriseWechatProviderError) throw error;
+        throw new EnterpriseWechatProviderError(
+          "unknown",
+          operation,
+          UNAVAILABLE_PROVIDER_CODE,
+          0,
+        );
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      const code = providerCode(data);
+      if (response.ok && code === 0) return;
+      if (attempt === 0 && response.ok && INVALID_ACCESS_TOKEN_CODES.has(code)) {
+        staleToken = credential.token;
+        continue;
+      }
+      if (welcomeCodeSingleUse && AMBIGUOUS_WELCOME_CODES.has(code)) {
+        throw new EnterpriseWechatProviderError(
+          "unknown",
+          operation,
+          code,
+          response.status,
+        );
+      }
+      if (response.status === 408 || response.status === 425 || response.status >= 500) {
+        throw new EnterpriseWechatProviderError(
+          "unknown",
+          operation,
+          code,
+          response.status,
+        );
+      }
+      if (
+        response.status === 429
+        || RETRYABLE_PROVIDER_CODES.has(code)
+      ) {
+        throw new EnterpriseWechatProviderError(
+          "retryable",
+          operation,
+          code,
+          response.status,
+          retryAfterSeconds(response),
+        );
+      }
+      if (INVALID_ACCESS_TOKEN_CODES.has(code) || CONFIGURATION_PROVIDER_CODES.has(code)) {
+        throw new EnterpriseWechatProviderError(
+          "configuration",
+          operation,
+          code,
+          response.status,
+        );
+      }
+      throw new EnterpriseWechatProviderError(
+        "terminal",
+        operation,
+        code,
+        response.status,
+      );
+    }
+    throw new EnterpriseWechatProviderError("configuration", operation, -1, 0);
   }
 
   private async fetchJson(
