@@ -2742,7 +2742,32 @@ R2 断言在本地 binding 中写入小型文本对象及 HTTP/custom metadata�
 
 [GitHub Actions 33380831249](https://github.com/cinagroup/cinashop/actions/runs/33380831249) 在 Ubuntu 24.04.4、Node 24.14.1/npm 11.11 上从锁文件安装125个包，生产依赖审计为0漏洞，真实 workerd 最终为1文件/13项全部通过；日志同时出现归档成功事件和第2次尝试归档失败时 `retryDelaySeconds=60`，证实 DLQ 两条分支均实际进入。主 Worker、Pages和任何生产资源均未部署或修改。
 
-TEST-001 继续保持未完成：现有 workflow 只负责 locked install、生产依赖审计与 Workers runtime，没有同时执行 Worker全量单测/类型、五端构建、Kefu专项、schema drift、PHP→TS route audit和 secret scan。尤其 route audit 依赖本机的旧 `cinashop-php` 源树，GitHub仓库中没有等价受控输入；在来源、固定 revision和CI获取方式确定前，不把 TEST-002 的成功扩大解释为全仓 Linux CI 完成。
+在 TEST-002 收口时，TEST-001 仍保持未完成：当时的 workflow 只负责 locked install、生产依赖审计与 Workers runtime，没有同时执行 Worker全量单测/类型、五端构建、Kefu专项、schema drift、PHP→TS route audit和 secret scan；route audit 还依赖本机旧 `cinashop-php` 源树。下一节记录后来如何固定权威输入并独立关闭 TEST-001；不能把较早的 TEST-002 成功追溯解释为当时已经完成全仓 Linux CI。
+
+## TEST-001 全仓 Linux CI 与旧 PHP 权威快照详细审计（2026-08-31）
+
+### 审计结论与权威输入
+
+TEST-001 现可严格标记为完成：`.github/workflows/workers-runtime-linux.yml` 已从单一 runtime job 扩展为 8 个并行 job，覆盖 Worker静态/单测、真实 workerd、Admin、PC、Supplier、Kefu、UniApp和全历史 secret scan。所有 Node job 都固定 Ubuntu 24.04、Node `24.14.1`，并在安装前显式断言 bundled npm 精确为 `11.11.0`；依赖一律使用各项目 `package-lock.json + npm ci`。checkout/setup-node 都固定完整 Action commit SHA，workflow权限只有 `contents: read`，不注入生产 Secret、不连接生产 Hyperdrive/R2/Queue，也不执行部署。
+
+CI 原先无法运行 schema/route audit，因为旧 `cinashop-php` 只存在于本机相邻目录，远端仓库没有可取得的受控 revision。本批没有伪造 clone URL，也没有把7.3 MiB原始安装 SQL或PHP业务源码复制进新仓库；而是生成两份最小权威快照。`legacy-schema-authority.sql` 只保存201张源表的列名和主键形状，头部固定原 `crmeb.sql` SHA-256 `0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a`。`legacy-route-authority.json` 保存六个路由面的1,904条解析后注册、行号/控制器目标，以及6个路由文件和5个退役证据文件的行数与SHA-256；不保存数据库行、配置值或凭据。
+
+本机存在PHP源树时，route audit 会重新解析全部路由并对整个快照做确定性相等比较，任一源文件/路由/行号/目标/SHA变化都会要求显式审计后再生成；单测也逐个复算11个文件和原安装SQL摘要。CI无源树时才使用已版本化快照，退役决策仍必须命中带SHA和行数的证据文件。真实源与快照模式最终都得到PHP 1,904、TS 1,448、精确匹配746、可执行728、不可用18、原始缺失1,158、退役4、可执行缺口1,154，精确/可执行/有效可执行覆盖为39.2%/38.2%/38.3%；快照只让门禁可重复，不提高迁移覆盖率。
+
+### 最终 Linux 门禁证据
+
+实现由提交 `48a9d396aa7ca825a94096398532be685b659ce4`、无源单测修复 `853634b709b0e4257464b068b82421a92b93ee07` 和非空secret扫描修复 `c8363f7af8c9a8f7bc57c8607983ff0b5b931dbd` 收敛。[GitHub Actions 33385492677](https://github.com/cinagroup/cinashop/actions/runs/33385492677) 最终8/8 jobs通过：
+
+- Worker静态门禁：locked install、生产依赖官方npm审计0、双TypeScript配置、164文件/1,017项单测全部通过；schema audit为source201/target247/shared201/sourceGaps0，外部专用迁移与Worker内嵌迁移的externalOnly/workerOnly/columnDrift均0；route audit从仓库内权威快照运行并输出上述1,904/1,448/746/728结果。
+- Worker真实运行时：生产依赖审计0，workerd 1文件/13项通过，继续覆盖Cron、Queue ack/retry/DLQ、KV、R2、DO和WebSocket hibernation。
+- 五端矩阵：Admin、PC、Supplier生产构建通过；Kefu 1文件/7项测试及生产构建通过；UniApp类型检查、H5和微信小程序两种构建均通过。矩阵为`fail-fast:false`，一个端失败不会遮蔽其他端证据。
+- Secret scan：Gitleaks精确固定为8.29.0，Linux x64发布资产下载后校验官方SHA-256 `39e07ad810336fd0ae80d0bd61c60d0521f628173e7583583b5df4a38738522c`，再在`fetch-depth:0`的runner主机工作树执行；最终日志明确为68 commits scanned、no leaks found。两个全局allowlist都同时要求精确rule、精确path和精确整行，只放行测试中的固定32字节十六进制会话夹具，以及PEM header删除正则；没有按目录、扩展名或宽泛secret关键词放行。
+
+### 失败轮次与严格边界
+
+首轮 [Actions 33384233967](https://github.com/cinagroup/cinashop/actions/runs/33384233967) 的7个job成功，但Worker单测有2项仍直接打开仓库外PHP文件，结果为162文件/1,015项通过、2项ENOENT失败，schema/route步骤随即跳过；该轮不计通过。修复后 [Actions 33384971116](https://github.com/cinagroup/cinashop/actions/runs/33384971116) 表面8/8成功，但Docker action内的Gitleaks日志显示`0 commits scanned`，因此仍被拒绝为完成证据。第三轮改为runner主机上安装checksum-pinned二进制后才得到68提交的非空扫描。两轮失败/无效证据都没有访问生产数据库、部署Worker/Pages或改动Cloudflare资源。
+
+TEST-001 的完成只表示每次相关代码推送都能在受支持Linux主机重复执行这些工程门禁。它不证明旧/新端浏览器golden response、真机、真实账号、支付/微信/短信/企微回调、生产数据迁移、性能告警、预发、影子流量或发布后观察；TEST-003、REL-001～004及各业务父项继续保持未完成。当前路由可执行覆盖仍只有38.2%，CI通过绝不能解释为整体迁移完成。
 
 ## 完成定义
 
