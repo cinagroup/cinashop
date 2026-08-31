@@ -1,6 +1,5 @@
 import {
   and,
-  asc,
   count,
   desc,
   eq,
@@ -19,7 +18,6 @@ import {
   workGroupChatAuth,
   workGroupMsgSendResult,
   workGroupTemplate,
-  workLabel,
   workMember,
   workMoment,
   workMomentSendResult,
@@ -124,6 +122,8 @@ interface WorkCatalogEnvironment {
   WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?: string;
   WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?: string;
   WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_TAG_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_EXTERNAL_CONTACT_FULL_VISIBILITY?: string;
 }
 
 interface CurrentDepartmentCatalogRow {
@@ -1150,14 +1150,128 @@ export class EnterpriseWechatCatalogService {
 
   async labels(query: Record<string, string>) {
     const search = keyword(query.keyword ?? query.name);
-    const rows = await this.container.db.select().from(workLabel)
-      .where(search ? or(ilike(workLabel.name, like(search)), ilike(workLabel.groupName, like(search))) : undefined)
-      .orderBy(asc(workLabel.groupId), asc(workLabel.sort), asc(workLabel.id)).limit(MAX_TREE_ROWS);
+    const pattern = like(search);
+    const currentAuthority = this.env.WECHAT_WORK_TAG_CURRENT_AUTHORITY?.trim()
+      === "verified"
+      && this.env.WECHAT_WORK_EXTERNAL_CONTACT_FULL_VISIBILITY?.trim() === "verified";
+    if (currentAuthority) {
+      const raw = await this.container.db.execute(sql`
+        SELECT
+          tag_row.strategy_id,
+          tag_row.tag_id,
+          tag_row.group_id,
+          group_row.group_name,
+          tag_row.name,
+          tag_row.sort_order,
+          tag_row.provider_create_time
+        FROM work_external_tag_current AS tag_row
+        INNER JOIN work_external_tag_group_current AS group_row
+          ON group_row.corp_id = tag_row.corp_id
+         AND group_row.strategy_id = tag_row.strategy_id
+         AND group_row.group_id = tag_row.group_id
+        INNER JOIN work_callback_event AS tag_event
+          ON tag_event.id = tag_row.last_event_id
+         AND tag_event.corp_id = tag_row.corp_id
+         AND tag_event.event_key = tag_row.last_event_key
+         AND tag_event.subject_key_hash = tag_row.last_event_subject_key_hash
+         AND tag_event.event_time = tag_row.last_event_time
+         AND tag_event.sequence_rank = tag_row.last_sequence_rank
+        INNER JOIN work_callback_event AS group_event
+          ON group_event.id = group_row.last_event_id
+         AND group_event.corp_id = group_row.corp_id
+         AND group_event.event_key = group_row.last_event_key
+         AND group_event.subject_key_hash = group_row.last_event_subject_key_hash
+         AND group_event.event_time = group_row.last_event_time
+         AND group_event.sequence_rank = group_row.last_sequence_rank
+        WHERE tag_row.lifecycle_state = 'ACTIVE'
+          AND tag_row.snapshot_complete
+          AND group_row.lifecycle_state = 'ACTIVE'
+          AND group_row.snapshot_complete
+          AND tag_event.status = 'ORDERED'
+          AND tag_event.projection_status IN ('APPLIED','APPLIED_NOOP')
+          AND tag_event.msg_type = 'event'
+          AND tag_event.event_type = 'change_external_tag'
+          AND tag_event.change_type IN ('create','update','delete','shuffle')
+          AND group_event.status = 'ORDERED'
+          AND group_event.projection_status IN ('APPLIED','APPLIED_NOOP')
+          AND group_event.msg_type = 'event'
+          AND group_event.event_type = 'change_external_tag'
+          AND group_event.change_type IN ('create','update','delete','shuffle')
+          ${search ? sql`AND (
+            tag_row.name ILIKE ${pattern} ESCAPE '\\'
+            OR group_row.group_name ILIKE ${pattern} ESCAPE '\\'
+          )` : sql``}
+        ORDER BY tag_row.strategy_id, group_row.sort_order, group_row.group_id,
+          tag_row.sort_order, tag_row.tag_id
+        LIMIT ${MAX_TREE_ROWS}
+      `);
+      return {
+        list: raw.map((row) => ({
+          id: String(row.tag_id ?? ""),
+          tag_id: String(row.tag_id ?? ""),
+          group_id: String(row.group_id ?? ""),
+          group_name: String(row.group_name ?? ""),
+          name: String(row.name ?? ""),
+          sort: Number(row.sort_order ?? 0),
+          strategy_id: Number(row.strategy_id ?? 0),
+          create_time: Number(row.provider_create_time ?? 0),
+        })),
+        count: raw.length,
+        truncated: raw.length === MAX_TREE_ROWS,
+        ...runtimeMeta(),
+        label_catalog_authority: "enterprise_wechat_external_tag_current",
+      };
+    }
+    const raw = await this.container.db.execute(sql`
+      WITH current_state AS MATERIALIZED (
+        SELECT (
+          (SELECT count(*) FROM work_external_tag_group_current)
+          + (SELECT count(*) FROM work_external_tag_current)
+          + (SELECT count(*) FROM work_external_tag_projection_fence)
+        )::double precision AS blocked_current_rows
+      ), eligible_legacy AS MATERIALIZED (
+        SELECT legacy_row.*
+        FROM work_label AS legacy_row
+        CROSS JOIN current_state
+        WHERE current_state.blocked_current_rows = 0
+          ${search ? sql`AND (
+            legacy_row.name ILIKE ${pattern} ESCAPE '\\'
+            OR legacy_row.group_name ILIKE ${pattern} ESCAPE '\\'
+          )` : sql``}
+        ORDER BY legacy_row.group_id, legacy_row.sort, legacy_row.id
+        LIMIT ${MAX_TREE_ROWS}
+      )
+      SELECT current_state.blocked_current_rows, eligible_legacy.*
+      FROM current_state LEFT JOIN LATERAL (
+        SELECT * FROM eligible_legacy
+      ) AS eligible_legacy ON true
+      ORDER BY eligible_legacy.group_id NULLS LAST,
+        eligible_legacy.sort NULLS LAST, eligible_legacy.id NULLS LAST
+    `);
+    const blockedCurrentRows = Number(raw[0]?.blocked_current_rows ?? 0);
+    if (blockedCurrentRows > 0) {
+      return {
+        list: [],
+        count: 0,
+        blocked_current_rows: blockedCurrentRows,
+        truncated: false,
+        ...runtimeMeta(),
+        label_catalog_authority: "external_tag_current_authority_disabled",
+      };
+    }
+    const rows = raw.filter((row) => row.id !== null && row.id !== undefined);
     return {
-      list: rows.map((row) => ({ id: row.id, group_id: row.groupId, group_name: row.groupName, name: row.name, sort: row.sort })),
+      list: rows.map((row) => ({
+        id: Number(row.id),
+        group_id: Number(row.group_id ?? 0),
+        group_name: String(row.group_name ?? ""),
+        name: String(row.name ?? ""),
+        sort: Number(row.sort ?? 0),
+      })),
       count: rows.length,
       truncated: rows.length === MAX_TREE_ROWS,
       ...runtimeMeta(),
+      label_catalog_authority: "postgresql_imported_history",
     };
   }
 

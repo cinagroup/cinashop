@@ -86,6 +86,8 @@ export interface Env extends WorkerBindings {
   WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?: string;
   /** Set to `verified` only after group/member current projection cutover gates pass. */
   WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY?: string;
+  /** Set to `verified` only after external-tag catalog reconciliation and replay gates pass. */
+  WECHAT_WORK_TAG_CURRENT_AUTHORITY?: string;
   /** Enterprise WeChat callback token. Never store it in system_config. */
   WECHAT_WORK_CALLBACK_TOKEN?: string;
   /** Enterprise WeChat 43-character callback EncodingAESKey. */

@@ -2216,7 +2216,7 @@ POST按流读取并在超过64 KiB时立刻cancel，不先把大包完整缓冲�
 
 HTTP提交后立即尝试Queue；发送结果未知可重复投递，消费者以outbox行锁、租约和event唯一键收敛。五分钟Cron只投递不含业务数据的根消息，由Queue消费者扫描`PENDING/FAILED`和过期租约；Queue失败记录固定错误码而不记录payload。消费端按`subject_key_hash`取得PostgreSQL advisory transaction lock，以`event_time`为主序、`sequence_rank`为同秒消歧：删除/解散100，更新/编辑50，创建10；较旧或同秒低优先级事件标记`SUPERSEDED`。不认识的新消息/事件以及旧PHP空处理分支留痕为`IGNORED`，不会冒充业务投影已执行。
 
-WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 只对 `del_external_contact/del_follow_user` 增加关系 tombstone；C2 又把管道 `status` 与业务 `projection_status` 物理分列，C1 结果迁为 `APPLIED/APPLIED_NOOP`，其余已识别但当时尚未实现的投影明确为 `REFRESH_REQUIRED`。C3～C6 后续已分别完成成员、部门、客户/follow/tags 和群/群成员 current 投影的代码、生产结构与隔离服务验收，详见本文件后续专章；标签目录/批量同步仍未完成，也未执行欢迎语或自动标签等远端写。WORK-C父项因此保持未勾选；C7～C8仍必须完成其余实体 current-state 与所有远端副作用的独立事务 action outbox，并为部分成功、provider operation-specific `not_found`、限流、乱序删除与人工重放定义实体终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单 payload。
+WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 只对 `del_external_contact/del_follow_user` 增加关系 tombstone；C2 又把管道 `status` 与业务 `projection_status` 物理分列，C1 结果迁为 `APPLIED/APPLIED_NOOP`，其余已识别但当时尚未实现的投影明确为 `REFRESH_REQUIRED`。C3～C7 后续已分别完成成员、部门、客户/follow/tags、群/群成员和企业客户标签 current 投影的代码、生产结构与隔离服务验收，详见本文件后续专章；`batch_job_result` 明确只审计为 `IGNORED`，不冒充目录对账。WORK-C父项仍保持未勾选：C8 还必须把欢迎语、自动标签和商城用户关联等远端副作用放入独立事务 action outbox，并为部分成功、provider operation-specific `not_found`、限流、结果未知与人工重放定义终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单 payload。
 
 ### 生产数据库与隔离场景证据
 
@@ -2236,7 +2236,7 @@ WORK-C0 当时的仓库门禁为Worker双TypeScript配置通过，152/152个单�
 - [x] 事件唯一账本、事务outbox、Queue脱敏、过期租约/Cron补偿、至少一次幂等和主体乱序水位已实现。
 - [x] 生产三表DDL两遍幂等、既有业务全行指纹不变、随机schema 11/11及临时资源清零已完成。
 - [x] C1 两类关系 tombstone 的代码、生产 `0110`/内嵌 `0116` 两遍、随机 schema 20/20、全行/owned sequence 指纹与资源清理已完成；仍未启用/未发布。
-- [ ] C1 关系 tombstone、C2 provider 基础、C3 成员和 C4 部门本地投影已接入但未启用；客户/follow/tags、群与标签仍未完成，add/edit 的`ORDERED`不等于 tombstone 已恢复或业务快照已更新。
+- [x] C1～C7 的关系 tombstone、provider 基础、成员、部门、客户/follow/tags、群/群成员和企业客户标签 current-state 均已完成代码、生产结构与随机 schema 验收；authority gate 全部关闭，主 Worker 未发布，真实租户/provider/源数据仍未验收。
 - [ ] 欢迎语、自动标签等远端写必须进入单独action outbox/Queue，禁止回到HTTP请求内同步调用。
 - [ ] CorpID、两枚回调Secret、真实租户事件、旧PHP golden response、预发/影子流量、主Worker发布与发布后观察均未完成。
 
@@ -2244,13 +2244,13 @@ WORK-C0 当时的仓库门禁为Worker双TypeScript配置通过，152/152个单�
 
 上一节记录的可信接收管道现在明确命名为 **WORK-C0**；其代码、生产 DDL、随机 schema 11/11 与资源清理证据原样保留，不回写成更大的完成声明。随后 **WORK-C1** 的关系 tombstone、**WORK-C2** 的投影运行时/provider 基础、**WORK-C3** 的成员 current 投影和 **WORK-C4** 的部门 current 投影也依次完成代码与生产 Hyperdrive 隔离，但均未启用、未发布。WORK-C 父项继续未完成：C1 只新增两类关系删除，C3/C4 只覆盖成员/部门，其他事件的 `ORDERED` 仍不表示客户、群、标签或远端副作用已经收敛。
 
-后续工作拆成 C1～C8。**C1～C6 现已达到“代码/生产隔离完成，未启用/未发布”**：C1 的 20/20、C2 的 27/27、C3 最新隔离轮的 direct 11/11 与 service 33/33、C4 的 migration 4/4 与 direct-service 20/20、C5 的 migration 4/4、direct-service 12/12、current-context 6/6，以及 C6 的 migration 6/6、projection 13/13、current-context 5/5 和公共目录/资源清理证据见下；C7～C8 仍待完成。真实企微租户回调/provider 正向、源 MySQL 导入、主 Worker 切流和发布均不在 C1～C6 完成声明内。
+后续工作拆成 C1～C8。**C1～C7 现已达到“代码/生产结构/随机 schema 验收完成，未启用/未发布”**：C1 的 20/20、C2 的 27/27、C3 最新隔离轮的 direct 11/11 与 service 33/33、C4 的 migration 4/4 与 direct-service 20/20、C5 的 migration 4/4、direct-service 12/12、current-context 6/6、C6 的 migration 6/6、projection 13/13、current-context 5/5，以及 C7 的 migration 6/6、direct-service 13/13 和公共目录/资源清理证据见下；C8 仍待完成。真实企微租户回调/provider 正向、源 MySQL 导入、主 Worker 切流和发布均不在 C1～C7 完成声明内。
 
 ### PHP→TS 事件能力矩阵
 
-PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListener.php:29-67`。它在 callback HTTP 请求中同步分发五类 event；多数 create/update 分支会继续调用企业微信 provider，再写多张本地表。当前 TypeScript 消费器先统一排序，再将 C1 两类关系删除送入 tombstone 投影、C3 成员事件送入 member current 三相投影、C4 部门事件送入 department current 三相投影、C5 客户 add/edit 送入 client/follow/tags 三相投影；群、标签目录/批量同步和远端副作用仍只保留可审计状态或等待后续子批，不能把 `ORDERED/REFRESH_REQUIRED` 当成业务已应用。
+PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListener.php:29-67`。它在 callback HTTP 请求中同步分发五类 event；多数 create/update 分支会继续调用企业微信 provider，再写多张本地表。当前 TypeScript 消费器先统一排序，再将 C1 两类关系删除送入 tombstone 投影，C3～C7 分别把成员、部门、客户/follow/tags、群/群成员和企业客户标签送入各自三相/终止态 current 投影；`batch_job_result` 继续显式 `IGNORED`。欢迎语、自动标签、商城用户关联等远端副作用仍等待 C8，不能把 `ORDERED/REFRESH_REQUIRED` 当成副作用已完成。
 
-| 企业微信事件 | PHP 权威能力 | 当前 TS/C0～C5 | 目标子批次与未完成门禁 |
+| 企业微信事件 | PHP 权威能力 | 当前 TS/C0～C7 | 目标子批次与未完成门禁 |
 |---|---|---|---|
 | `change_external_contact / del_external_contact` | `WorkListener.php:160-164` 调 `WorkClientServices::deleteClient()`；旧实现先销毁共享 client，再 tombstone 指定员工 follow | C1 已按 `(CorpID, ExternalUserID, UserID)` 关系排序，只 tombstone 指定活跃 follow，并记 `APPLIED/APPLIED_NOOP`；不删除共享 client | 代码/生产 Hyperdrive 隔离完成；真实回调、启用和发布未完成 |
 | `change_external_contact / del_follow_user` | `WorkListener.php:167-170` 调 `deleteFollowClient()`，只把匹配 follow 的 `is_del_user` 置 1 | 与上行共用 C1 关系终止状态机和原子终态 | 代码/生产 Hyperdrive 隔离完成；真实回调、启用和发布未完成 |
@@ -2259,9 +2259,9 @@ PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListen
 | `change_contact / create_user, update_user, delete_user` | `WorkListener.php:95-109` 调成员 service；create/update 需要完整成员资料和部门关系 | C3 已按三相事务外 provider、稳定 member identity、不可变 direct rename edge、成员/扩展/关系 current 表和 callback-authoritative delete 收敛；authority 仍关闭 | 代码/生产 Hyperdrive 隔离完成；真实租户、全量对账、启用和发布未完成 |
 | `change_contact / create_party, update_party, delete_party` | `WorkListener.php:110-124` 调部门 service；更新需 provider 权威详情 | C4 已按三相事务外 provider、`(CorpID,DepartmentID)` 身份、父链/单根约束、负责人 current 与 callback-authoritative delete 收敛；authority 仍关闭 | 代码/生产 Hyperdrive 隔离完成；真实租户、全量对账、启用和发布未完成 |
 | `change_contact / update_tag` | PHP 分支为空，`WorkListener.php:125-127` | C0 未把空分支冒充恢复 | 继续 IGNORED，除非后续有独立权威同步设计 |
-| `change_external_chat / create, update, dismiss` | `WorkListener.php:190-208` 拉群详情或按事件更新/解散；旧更新存在按提示增减计数风险 | 只排序 | C6 以 provider 全量群/成员快照收敛，禁止盲增减 |
-| `change_external_tag / create, update, delete` | `WorkListener.php:225-242` 调用户标签 service；`shuffle` 为空 | 只排序；callback 保存字符串远端 ID，但旧 `work_label.id/group_id` 是整数本地身份 | C7 先建立远端字符串 tag/group current-state 身份，再投影 |
-| `batch_job_result / sync_user, replace_user, invite_user, replace_party` | PHP 四个分支全部为空，`WorkListener.php:71-82` | 记 IGNORED，不冒充同步成功 | C7 明确维持 IGNORED，或升级为有游标/对账证据的独立全量同步任务 |
+| `change_external_chat / create, update, dismiss` | `WorkListener.php:190-208` 拉群详情或按事件更新/解散；旧更新存在按提示增减计数风险 | C6 已以 provider 完整群/成员快照和 callback-authoritative dismiss 收敛，禁止盲增减和硬删历史 | 代码/生产结构/隔离验收完成；真实租户、启用和发布未完成 |
+| `change_external_tag / create, update, delete, shuffle` | `WorkListener.php:225-242` 调用户标签 service；`shuffle` 为空 | C7 已以远端字符串 tag/group、strategy scope、目录/组快照、omission tombstone 和 callback-authoritative delete 收敛；authority 仍关闭 | 代码/生产结构/隔离验收完成；真实租户、源标签导入、启用和发布未完成 |
+| `batch_job_result / sync_user, replace_user, invite_user, replace_party` | PHP 四个分支全部为空，`WorkListener.php:71-82` | 保留 `JobType/JobId/ErrCode` 审计元数据并明确 `IGNORED`，不保存 `ErrMsg`，不冒充目录已同步 | 若未来需要全量对账，必须另建有游标、结果回读和可重放证据的 reconciliation 任务；不并入 callback completion |
 | `text/image/voice/video/news/update_*` | PHP 仅列出空分支，`WorkListener.php:52-65` | 非本批业务投影事件 | 保持显式未迁移/IGNORED；不能用路由存在推导能力完成 |
 
 ### C0～C8 的精确边界
@@ -2273,7 +2273,7 @@ PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListen
 - **WORK-C4（代码、生产 Hyperdrive 结构与隔离服务完成，未启用/未发布）部门 current-state**：覆盖部门 create/update/delete、父子关系、负责人和排序；以 `(CorpID, DepartmentID)` 唯一身份与明确 tombstone 收敛，禁止无证据硬删历史或级联成员关系。完整证据见后续 C4 专章。
 - **WORK-C5（代码/生产结构/隔离验收已完成，未启用/未发布）客户、follow 与 follow tags 权威快照**：add/edit 已穷尽 provider cursor并保留其他员工关系；关系级 direct fence、防跨 profile fence 迟到响应、目标 tombstone 恢复和 omission 不删除均已验证。client authority、真实租户/数据和发布仍关闭，详细证据见 C5 专章。
 - **WORK-C6（代码/生产结构/隔离验收已完成，未启用/未发布）客户群和群成员**：按 `(CorpID, ChatID)` 稳定身份全量刷新群主/成员，dismiss 为终止态；旧 provider 响应、同秒或不可能更晚的 create/update 均不得复活已解散群，详细证据见 C6 专章。
-- **WORK-C7（待完成）企业客户标签与批量同步结果**：补远端字符串 tag/group 身份；对 PHP 空处理的 shuffle/batch 明确保留 IGNORED，或另建可重放、可对账的同步任务。
+- **WORK-C7（代码/生产结构/隔离验收已完成，未启用/未发布）企业客户标签与批量结果边界**：以 `(CorpID,StrategyID,remote string ID)` 保存 tag/group current-state；create/update/shuffle 在事务外读取标准或 strategy 权威目录，delete 由 callback 终止，组/全目录遗漏写 tombstone且保留历史。`batch_job_result` 只记有界元数据并维持 `IGNORED`，不把完成通知解释为同步收敛。详细证据见 C7 专章。
 - **WORK-C8（待完成）欢迎语、自动标签、商城用户关联与真实发布闭环**：远端写一律进入独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工重放和审计终态；随后才进入真实租户回调、预发、影子流量和发布批准。
 
 ### 为什么首批只选 `del_external_contact` / `del_follow_user`
@@ -2291,7 +2291,7 @@ PHP 的两条删除分支不能原样复制。`C:\cinagroup\cinashop-php\app\ser
 ### 已收口模型与剩余运行时缺口
 
 - C1 已把外部联系人 subject 改为关系级，并让 `EnterpriseWechatCallbackService.claim()` 同时读取 `corpId/payload`；这两项不再是 C1 缺口。
-- callback 白名单 `EnterpriseWechatCallbackCrypto.ts:9-40` 足够事件身份但不含 create/update 所需的完整业务快照；C3～C5 已分别通过事务外成员/部门/客户 provider 回源完成，C6～C7 仍必须按各自 provider 权威快照实现，不能用数据库默认值伪造。
+- callback 白名单 `EnterpriseWechatCallbackCrypto.ts:9-45` 足够事件身份但不含 create/update 所需的完整业务快照；C3～C7 已分别通过事务外成员/部门/客户/群/标签 provider 回源完成，不能用数据库默认值伪造。
 - 外部 `0110`/内嵌 `0116` 已建立两个活跃自然键 partial UNIQUE，当前生产活跃 client/follow 重复组均为 0。源 MySQL 当前不可用，无法证明未来导入数据也无重复；导入前必须先预检并 canonicalize/处置重复，否则唯一索引会显式拒绝，而不是静默任选一行。
 - `work_member_relation`、`work_client_follow_tags` 是无稳定源键的历史 multiset；不能为了方便投影直接把既有导入证据改写成唯一 current-state。需要新 current 表或先做正式 canonicalization。
 - `work_label` 没有远端字符串 tag/group ID；C7 不能把回调字符串 ID 强塞进本地 serial ID。
@@ -2334,12 +2334,12 @@ Work DLQ 的严格 validator 已允许 `processWorkCallbackOutbox` 与 `dispatch
 
 C1 的随机 schema 和 mock Queue 场景不需要真实企微凭据；合成 Token/AES Key 只验证协议和本地状态机。要证明真实租户把 `del_external_contact/del_follow_user` 回调送到 Worker，仍需要正确 CorpID、`WECHAT_WORK_CALLBACK_TOKEN`、`WECHAT_WORK_CALLBACK_AES_KEY`、可访问的预发回调 URL 和真实测试租户。C2～C7 的 provider 正向/真实不存在主体语义还需要最小权限的通讯录/客户联系 Secret；当前 `WECHAT_WORK_CORP_SECRET` 不能在未确认权限范围前默认复用。429、5xx和网络中断必须用确定性 mock 验证，不应为测试故意打满真实租户配额。C8 的欢迎语/自动标签正向验收还需要相应应用权限、测试客户和明确的外部副作用批准。
 
-生产 `public` 只允许 C1～C6 前后的只读审计和上述受控 DDL；合成业务 DML 仍严格限定随机 schema。C1～C6 隔离完成不等于真实企微租户/provider 正向、源数据迁移、主 Worker 发布或 C7～C8 完成。
+生产 `public` 只允许 C1～C7 前后的只读审计和上述受控 DDL；合成业务 DML 仍严格限定随机 schema。C1～C7 验收完成不等于真实企微租户/provider 正向、源数据迁移、主 Worker 发布或 C8 完成。
 
 ### 主 Worker 启用前的三个硬阻塞
 
 1. **源数据自然键阻塞**：源 MySQL 当前不可用，无法预检未来导入批次。导入任何 `work_client/work_client_follow` 数据前必须检查并处理活跃 `(corp_id,external_userid)` 与 `(client_id,userid)` 重复；否则生产 partial UNIQUE 会按设计显式阻断导入，不能临时删除约束或任选重复行。
-2. **剩余实体与副作用阻塞**：C6 已完成群/群成员本地恢复语义，但 C7 标签目录/批量同步、C8 欢迎语/自动标签/商城用户关联 action outbox 和真实发布闭环仍缺；主 Worker不能只启用半套回调投影。
+2. **副作用与发布阻塞**：C7 已完成标签目录 current-state 并明确 batch completion 只审计不冒充对账；C8 欢迎语/自动标签/商城用户关联 action outbox、真实租户验证和发布闭环仍缺，主 Worker不能只启用本地投影而遗漏外部副作用终态。
 3. **query-string 可观测性阻塞**：当前必须保持 traces 关闭并回读 exact Script Settings；未来只有在 Script Settings API 已设置且回读 `observability.redact_query_string=true` 后才允许开启 traces。任何缺失、false 或无法回读都阻断 provider Secret 注入和投影启用。
 
 ## WORK-C3 成员 current-state 迁移详细审计（2026-08-30）
@@ -2394,7 +2394,7 @@ direct 场景覆盖稳定 ID、create/update/delete、显式 optional clear、�
 
 - 生产没有真实企业微信成员数据、可用 CorpID/AgentID、directory Secret、callback Token/AES Key或已确认 full-visibility 的应用权限；全部 provider 场景使用确定性 mock，企业微信网络调用为 0。真实正向成员、真实 `60111`、权限范围和 Script Settings/traces 仍需专门验收。
 - 没有完整通讯录周期性全量扫描/对账、持久 reconciliation 游标、积压容量测算、延迟告警或大批量人工回放演练；C3 current 增量状态机完成不能替代这些运维闭环。
-- C4 部门、C5 客户/follow/tags 与 C6 群/群成员随后均已完成代码、生产结构与隔离验收；C7～C8 仍未完成。WORK-C父项和整体 PHP→Cloudflare迁移必须继续保持未完成。
+- C4 部门、C5 客户/follow/tags、C6 群/群成员与 C7 企业客户标签随后均已完成代码、生产结构与隔离验收；C8 仍未完成。WORK-C父项和整体 PHP→Cloudflare迁移必须继续保持未完成。
 - Windows Workers runtime 仍在执行任何断言前因 `workerd 0xc0000005` 崩溃，不能写成 runtime通过；必须在 Linux 或受支持主机补 Queue ack/retry、Cron、Hyperdrive和真实 Workers runtime证据。
 - 本批没有部署或切流主 Worker/Pages。真实租户回调、provider网络验收、预发、影子流量、明确发布批准与发布后观察全部仍待完成。
 
@@ -2449,7 +2449,7 @@ direct-service 20/20 覆盖 child-first placeholder、父节点补齐、uint32 �
 - 生产 legacy/current 部门均为 0 行；没有源 MySQL、真实历史树或正式导入批次，不能宣称真实部门数据已迁移。未来导入前还需以同一约束预检 Corp/identity/重复/root/orphan/cycle/leader JSON。
 - department authority 继续关闭。生产没有可用 CorpID/AgentID、directory Secret、callback Token/AES Key或已确认 full-visibility 的应用权限；真实 provider 正向、`60003/60123` 的租户语义、真实 callback 和 Script Settings/traces 均待验收。
 - `work_member_relation_current` 目前没有指向 department current 的 FK，这是明确延期；完整通讯录周期性扫描、reconciliation 游标、积压容量、延迟指标、告警和人工批量回放也未完成。
-- C5 客户、全部 follow 与 tags 权威快照及 C6 群/群成员随后已完成代码、生产结构与隔离验收；C7 标签/批量同步和 C8 远端副作用/发布仍未完成。WORK-C 父项与整体 PHP→Cloudflare 迁移保持未完成。
+- C5 客户、全部 follow 与 tags 权威快照、C6 群/群成员及 C7 企业客户标签随后已完成代码、生产结构与隔离验收；C8 远端副作用/发布仍未完成。WORK-C 父项与整体 PHP→Cloudflare 迁移保持未完成。
 - Windows runtime、真实租户/旧端 E2E、预发、影子流量、明确发布批准和发布后观察全部仍待完成；本批没有部署或切流主 Worker/Pages。
 
 ## WORK-C5 客户、跟进人与跟进标签 current-state 详细审计（2026-08-31）
@@ -2521,7 +2521,7 @@ DDL 前只读请求 `ba0c8e72-d5f9-4541-9410-8d14ba0cd180` 确认生产为 234 �
 - 生产 legacy/current 客户、follow、tags 均为 0 行；没有只读源 MySQL、正式导入批次或运营抽样，不能宣称真实历史客户已经迁移。导入前仍需预检 Corp/ExternalUserID/UserID、自然键重复、孤儿、字段长度、remark mobiles JSON、tag 类型/位置和 legacy/current 映射。
 - 生产没有可用 CorpID/AgentID、external-contact Secret、callback Token/AES Key或已确认 full-visibility 的应用权限；所有 provider 场景均为确定性 mock，企业微信网络调用为 0。client authority 保持关闭，启用前必须回读 Script Settings 证明 traces 关闭或 query-string redaction 已明确开启。
 - C5 没有建立商城 UID 自动关联，也没有完整客户 reconciliation 游标、全量扫描、积压容量、延迟/漂移告警和人工批量重放；这些不能由 callback 增量状态机替代。
-- C6 客户群/群成员随后已完成代码、生产结构与隔离验收；C7 标签目录/批量同步、C8 欢迎语/自动标签/用户关联 action outbox 与真实租户发布仍未完成；WORK-C 父项保持未勾选。
+- C6 客户群/群成员和 C7 企业客户标签随后已完成代码、生产结构与隔离验收；C8 欢迎语/自动标签/用户关联 action outbox 与真实租户发布仍未完成；WORK-C 父项保持未勾选。
 - 真实 callback/provider 正向与 operation-specific not-found、旧端 E2E、Linux runtime、预发、影子流量、明确发布批准和发布后观察全部待完成。本批没有部署或切流主 Worker/Pages。
 
 ## WORK-C6 客户群与群成员 current-state 详细审计（2026-08-31）
@@ -2585,8 +2585,57 @@ DDL 前只读请求 `58d9c8f8-8365-4ff9-87b2-4cd3b8edeac1` 确认生产为 239 �
 - 生产 legacy/current 群和群成员全部为 0 行；没有源 MySQL、正式导入批次或运营抽样，不能宣称真实历史群已迁移。导入前仍需预检 CorpID/ChatID/UserID、自然键重复、孤儿、成员类型、群主/admin 成员关系、字段长度和 legacy/current 映射。
 - 生产没有可用 CorpID/AgentID、external-contact Secret、callback Token/AES Key或已确认 full-visibility 的应用权限；provider 场景是确定性 mock/direct service，企业微信网络调用为 0。group authority 保持关闭，启用前必须回读 Script Settings 证明 traces 关闭或 query-string redaction 已明确开启。
 - 仍缺完整群 reconciliation 游标、全量扫描、积压容量、延迟/漂移告警、人工批量重放以及 operation-specific provider not-found 的真实租户语义。
-- C7 标签目录/批量同步、C8 欢迎语/自动标签/商城用户关联 action outbox 与真实发布闭环尚未完成；WORK-C 父项保持未勾选。
+- C7 企业客户标签 current-state 已完成代码、生产结构与隔离验收；C8 欢迎语/自动标签/商城用户关联 action outbox 与真实发布闭环尚未完成，WORK-C 父项保持未勾选。
 - 真实 callback/provider 正向、旧端 E2E、Linux runtime、预发、影子流量、明确发布批准和发布后观察全部待完成。本批没有部署或切流主 Worker/Pages。
+
+## WORK-C7 企业客户标签 current-state 与批量结果边界详细审计（2026-08-31）
+
+### 审计结论与严格完成边界
+
+WORK-C7 可标记为**代码、生产 Hyperdrive 结构与随机 schema 真实服务验收完成**，但不能标记为 authority 已启用、真实企业标签数据已迁移、批量同步已对账或 WORK-C 整体完成。本批覆盖 `change_external_tag/create|update|delete|shuffle`：create/update/shuffle 在 PostgreSQL 事务外读取企业微信标准企业标签或 strategy 标签权威目录；delete 完全由已验签 callback 授权且零 provider 调用。`batch_job_result/sync_user|replace_user|invite_user|replace_party` 继续明确 `IGNORED`，只保留有界 `JobType/JobId/ErrCode` 审计元数据，不保存 provider `ErrMsg`，也不把“批任务完成通知”解释为本地目录已经收敛。
+
+所有生产数据库操作只通过用户指定的 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 执行。生产 `public` 只接受 expand-only `0117_work_external_tag_current_projection.sql` 和第二遍幂等复验；没有插入合成 CorpID、StrategyID、GroupID、TagID、名称或 callback 行。合成 DML 严格位于随机 `codex_wtag_audit_*` schema，最终删除后比较完整 public catalog。`WECHAT_WORK_TAG_CURRENT_AUTHORITY` 和 external-contact full-visibility gate 均保持关闭，主 Worker/Pages 未发布。
+
+### PHP 行为、协议复核与迁移决策
+
+旧 `WorkListener.php:225-242` 的 create/update 会进入 `UserLabelServices::authWorkLabel()` 回源，delete 直接删除本地 `user_label/work_label` 证据，shuffle 分支为空。旧写路径未把所有更新绑定 CorpID，update 只回写 `tag_id` 而没有可靠更新名称/排序；旧表以整数 serial `work_label.id/group_id` 作为本地身份，不能承载 provider 的字符串 tag/group ID。组删除还会连带删子标签，但 provider 不保证为每个子标签另发 callback；硬删会使历史和重放证据永久丢失。
+
+新实现不复制这些缺陷。remote ID 全程保持 1～128 字节字符串并与 legacy serial 隔离；标准企业标签使用 `get_corp_tag_list`，`StrategyId>0` 使用 `get_strategy_tag_list`。create/update callback 只提供稀疏身份，因此必须读取权威快照；带 tag ID 只收一个 tag，带 group ID（包括有 `Id` 的 shuffle）只收一个组，无 `Id` 的 shuffle 收完整 strategy/catalog。响应最多 1,000 组、3,000 标签，严格拒绝重复 ID、缺字段、控制字符、越界整数、跨 scope 响应和错误 JSON。operation-specific provider `not_found` 与不完整响应只返回 `REFRESH_REQUIRED`，不推导删除；只有已验签 delete callback 可以生成终止 tombstone。
+
+### 三表模型、封闭 DDL 与 current-first 目录
+
+`0117` 新建三张无 sequence 的 Worker-owned 表：16 列 `work_external_tag_group_current`、17 列 `work_external_tag_current` 和 11 列 `work_external_tag_projection_fence`。自然键分别为 `(corp_id,strategy_id,group_id)`、`(corp_id,strategy_id,tag_id)` 与 `(corp_id,strategy_id,subject_type,remote_id)`；组/标签保存 `ACTIVE/DELETED`、完整性、provider 名称/排序/创建时间、delete time 和 callback 六元组。标签到组、三表到 `work_callback_event` 均为精确 FK 且 `ON DELETE RESTRICT`。
+
+三表合计 44 列、25 个约束、8 个总索引（含 3 个主键索引）、0 条 sequence、36 个 relation/constraint/index 闭合对象。迁移验证精确列类型/长度/default/nullability/collation、主键/FK key 顺序与动作、CHECK 集、索引定义/唯一性/access method/valid-ready-live 状态，并拒绝额外 constraint/index、RLS、policy、rule 或用户 trigger。外部 SQL 与 Worker 内嵌副本逐字一致，由 `MigrationService.migration_0123` 纳入全量迁移。
+
+Admin 标签目录采用 current-first、整库 sentinel fail-closed。只有 tag authority 与 external-contact full-visibility 同时为 `verified` 时，才返回 tag/group 都是 ACTIVE、snapshot complete、各自 exact callback 六元组闭合，且 callback 为 `ORDERED + APPLIED/APPLIED_NOOP + event/change_external_tag/create|update|delete|shuffle` 的行；输出保留字符串 tag/group ID 和 `strategy_id`。任一 gate 关闭时，current 三表任一有 footprint 就在同一 PostgreSQL statement snapshot 返回空和 `external_tag_current_authority_disabled`，绝不回退 legacy `work_label`；只有三表及 fence 完全为空时才允许旧目录读取。
+
+### 三相状态机、shuffle 与终止态
+
+所有事件按 `(CorpID,StrategyID)` 取得 catalog-wide advisory lock。phase 1 在短事务内写 direct fence；phase 2 在事务外调用 provider；phase 3 重取同一锁并要求 direct fence 完全一致，再原子应用快照。provider 响应穿越较新 direct callback 时必须 `SUPERSEDED`。相同业务快照可推进 event provenance 但返回 `APPLIED_NOOP`；较旧事件不得覆盖当前值。
+
+组快照中遗漏的既有 ACTIVE 子标签写为 DELETED；完整 catalog shuffle 中遗漏的组和标签均写 tombstone。组 delete 会 tombstone 仍 ACTIVE 的全部已知子标签，因为 provider 的组删除不为每个子标签补 callback；所有行保留，不做硬删。delete 使用终止 sequence rank，优先级高于普通 create/update 的 wall-clock，因此异常更晚 update 也不能复活已删除 tag/group。标准目录和 strategy 目录以独立 `strategy_id` 隔离，同名 remote ID 不串写。
+
+### 生产 Hyperdrive、随机 schema 与失败记录
+
+最终完整流程的只读基线请求 `130f95bc-da42-460c-bc6e-6a5acc8300d1` 确认生产为 242 表/212 序列、三个 C7 表不存在、legacy `work_label/user_label` 均 0 行、临时审计 schema 为 0，完整目录 digest 为 `3644b23ffd1d71c241bfe72e048c82c01ac526a4e7c6048e56ded63e7f508117`。空 legacy 表只能证明当前无可抽样标签，不是源标签已迁移。
+
+迁移前最终流程的隔离请求 `b00145af-4859-4be7-9271-686d1b174b44` 把 exact `0117` 连续执行两遍：migration 6/6 验证三表创建、对象 OID/relfilenode/定义和空 tuple 第二遍稳定、约束/索引/对象总数精确；direct-service 13/13 覆盖初始组/标签、组快照 omission tombstone、业务 no-op、旧 direct 事件、provider response crossing newer fence、not-found refresh-only、tag 终止、组删除级联且保留历史、全 catalog shuffle、strategy 身份隔离、current 目录闭包、authority-off sentinel 和历史行保留。随机 schema 删除，`public_catalog_unchanged=true`，目录 digest 仍为 `3644b23f…`。提交前门禁复核又补齐 external-tag disabled outbox 的停放/恢复条件、投影终止错误的 DEAD 分类以及“tag authority + full visibility”双读 gate；最新代码隔离请求 `77880ce2-f0d2-4f32-98fb-2eb33c9c963c` 重新取得相同 6/6+13/13、临时 schema 删除和 `public_catalog_unchanged=true`，此时生产目录 digest 为迁移后的 `fc652c6d…`。
+
+生产迁移请求 `33694887-eaec-4f96-bc2c-43ed4307510d` 将 `0117` 连续执行两遍：`242→245` 表、序列保持 212，三个投影表均 0 行；第二遍对象与 tuple 不变，legacy 行/MVCC 指纹不变，表增量精确 `+3`、sequence 增量 `0`，25 个约束、8 个索引、36 个闭合对象全部匹配，target metadata digest 为 `900f0fa96a3f1ed2ba953e1d7438a46a62fba1830743a39bd24ee9171769b98f`。最终只读请求 `24a0de31-42fc-4a24-8203-b59ef7b3c9b9` 确认 245 表/212 序列、三个新表全 0 行、临时 schema 0，完整目录 digest 为 `fc652c6dc5100e89c8acad31682a27ec05f4b82784312fc37f45854fab2aff13`。
+
+失败轮次没有计入通过。首轮隔离因随机 schema 名 64 字节超过 PostgreSQL 63 字节限制而在任何生产 DDL 前中止；次轮暴露目录读取没有复用 `SET LOCAL search_path`；第三轮又证明 raw 审计连接经 Hyperdrive multiplex 后可能读到旧 checkpoint，而应用事务内 current 目录已看到新状态。最终把 schema 名缩短、目录读取放入同一 request transaction、checkpoint 改为显式顺序短事务后重新取得上述 6/6+13/13。每次失败都由条件门禁阻止 `/migrate`，finally 删除 Worker/schema并回探 404；生产直到最终全绿流程才执行 DDL。
+
+### 工程门禁、checklist 与剩余阻塞
+
+最终 `data:schema-audit` 为 source 201、target 245、shared 201、target-only 44、源列缺口 0、外部/Worker 245/245、表/列/主键漂移 0。两套 TypeScript 配置通过；C7 定向 3 文件 41/41，全量单元测试 161 文件/1001 项通过；`git diff --check` 无错误。C7 审计 Worker dry-run 为 1,356.35 KiB/gzip 221.40 KiB；主 Worker minify dry-run 为 3,171.73 KiB/gzip 751.94 KiB并精确回显指定 Hyperdrive，均未部署主 Worker。临时 Worker、随机 schema 和一次性 token 已删除，workers.dev 回探 404。Windows runtime 仍在 0 条断言前因 `workerd 0xc0000005` 失败，不能记为 runtime 通过。
+
+- [x] 建立远端字符串 tag/group 与 strategy 隔离身份，完成标准/strategy provider 快照、create/update/delete/shuffle 投影、omission tombstone 和终止态。
+- [x] 完成 exact `0117` 外部/内嵌迁移、生产双跑、随机 schema 6/6+13/13、current-first 目录和 authority-off fail-closed。
+- [x] 对 `batch_job_result` 保持显式 `IGNORED`，只保存有界 `JobType/JobId/ErrCode`，不保存 `ErrMsg` 或假报目录同步成功。
+- [ ] 取得只读源 MySQL 后复制/映射真实 legacy 标签并由运营抽样；生产 legacy/current 标签均为 0 行，不能宣称历史标签已迁移。
+- [ ] 使用最小权限 external-contact Secret 和测试租户验证标准/strategy 正向、真实 `40068`、组删除、shuffle 及权限范围；启用前回读 Script Settings，确认 traces 关闭或 query-string 已可靠脱敏。
+- [ ] WORK-C8：把欢迎语、自动标签、商城用户关联等远端/跨域副作用放入独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工重放与审计终态；再完成 Linux runtime、预发、影子流量、明确发布批准和发布后观察。
 
 ## 完成定义
 

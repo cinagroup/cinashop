@@ -76,7 +76,7 @@ describe("Enterprise WeChat callback protocol", () => {
   it("stores only allowlisted fields and keeps external tag ids as strings", () => {
     const xml = `<xml><ToUserName>${corpId}</ToUserName><FromUserName>sys</FromUserName><CreateTime>1788048000</CreateTime><MsgType>event</MsgType><Event>change_external_tag</Event><ChangeType>delete</ChangeType><Id><![CDATA[etXXXXXXXXXXXX]]></Id><TagType>tag</TagType><Content>must-not-persist</Content></xml>`;
     const normalized = normalizeDecryptedCallback(xml, corpId);
-    expect(normalized.subjectKey).toBe("external-tag:tag:etXXXXXXXXXXXX");
+    expect(normalized.subjectKey).toBe("external-tag:0:tag:etXXXXXXXXXXXX");
     expect(normalized.sequenceRank).toBe(100);
     expect(normalized.payload.Id).toBe("etXXXXXXXXXXXX");
     expect(normalized.payload).not.toHaveProperty("Content");
@@ -239,13 +239,37 @@ describe("Enterprise WeChat callback durable pipeline", () => {
       ["change_contact", "update_tag", "<Id>1</Id>"],
       ["change_external_contact", "add_half_external_contact", "<ExternalUserID>wo-half</ExternalUserID>"],
       ["change_external_contact", "transfer_fail", "<ExternalUserID>wo-transfer</ExternalUserID>"],
-      ["change_external_tag", "shuffle", "<TagType>tag</TagType><Id>et-tag</Id>"],
-      ["batch_job_result", "", "<JobType>sync_user</JobType><JobId>job-1</JobId>"],
+      ["batch_job_result", "", "<BatchJob><JobType>sync_user</JobType><JobId>job-1</JobId><ErrCode>0</ErrCode></BatchJob>"],
     ];
     for (const [event, change, fields] of variants) {
       const xml = `<xml><ToUserName>${corpId}</ToUserName><CreateTime>1788048000</CreateTime><MsgType>event</MsgType><Event>${event}</Event><ChangeType>${change}</ChangeType>${fields}</xml>`;
       expect(normalizeDecryptedCallback(xml, corpId).recognized).toBe(false);
     }
+  });
+
+  it("recognizes scoped/full external-tag shuffle but keeps batch results audited and ignored", () => {
+    const scoped = normalizeDecryptedCallback(
+      `<xml><ToUserName>${corpId}</ToUserName><CreateTime>1788048000</CreateTime><MsgType>event</MsgType><Event>change_external_tag</Event><ChangeType>shuffle</ChangeType><StrategyId>17</StrategyId><Id>et-group</Id></xml>`,
+      corpId,
+    );
+    expect(scoped).toMatchObject({
+      subjectKey: "external-tag:17:catalog:et-group",
+      recognized: true,
+      sequenceRank: 50,
+    });
+    const full = normalizeDecryptedCallback(
+      `<xml><ToUserName>${corpId}</ToUserName><CreateTime>1788048001</CreateTime><MsgType>event</MsgType><Event>change_external_tag</Event><ChangeType>shuffle</ChangeType></xml>`,
+      corpId,
+    );
+    expect(full.subjectKey).toBe("external-tag:0:catalog:*");
+
+    const batch = normalizeDecryptedCallback(
+      `<xml><ToUserName>${corpId}</ToUserName><CreateTime>1788048002</CreateTime><MsgType>event</MsgType><Event>batch_job_result</Event><BatchJob><JobType>replace_user</JobType><JobId>job-2</JobId><ErrCode>-1</ErrCode><ErrMsg>must-not-persist</ErrMsg></BatchJob></xml>`,
+      corpId,
+    );
+    expect(batch.recognized).toBe(false);
+    expect(batch.payload.ErrCode).toBe(-1);
+    expect(batch.payload).not.toHaveProperty("ErrMsg");
   });
 
   it("keeps external and embedded migration SQL identical", () => {
@@ -336,6 +360,22 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     expect(groupProjectionMigration).toContain("wce_department_ref_uq");
     expect(groupProjectionMigration).toContain("ON DELETE RESTRICT");
     expect(groupProjectionMigration).toContain("0116 projection constraint count drift");
+
+    const externalTagProjectionMigration = readFileSync(
+      "migrations/0117_work_external_tag_current_projection.sql",
+      "utf8",
+    );
+    expect(new MigrationService({} as never)
+      .workExternalTagCurrentProjectionMigrationSqlForVerification())
+      .toBe(externalTagProjectionMigration);
+    expect(service).toContain("workExternalTagCurrentProjectionMigrationSqlForVerification");
+    expect(service).toContain("this.migration_0123()");
+    expect((externalTagProjectionMigration.match(/^\s*CREATE TABLE IF NOT EXISTS/gm) ?? []))
+      .toHaveLength(3);
+    expect(externalTagProjectionMigration).toContain("work_external_tag_projection_fence");
+    expect(externalTagProjectionMigration).toContain("wetc_group_fk");
+    expect(externalTagProjectionMigration).toContain("0117 projection constraint count drift");
+    expect(externalTagProjectionMigration).toContain("work_external_tag_index_verification");
     expect(groupProjectionMigration).not.toMatch(
       /\b(?:INSERT\s+INTO|UPDATE\s+work_group_chat|DELETE\s+FROM|DROP\s+TABLE)\b/i,
     );
@@ -556,12 +596,15 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     expect(service).toContain('event.changeType === "delete_party"');
     expect(service).toContain('const MEMBER_PROJECTION_DISABLED = "member_projection_disabled"');
     expect(service).toContain('const DEPARTMENT_PROJECTION_DISABLED = "department_projection_disabled"');
+    expect(service).toContain('const EXTERNAL_TAG_PROJECTION_DISABLED = "external_tag_projection_disabled"');
     expect(service).toContain("recordParkedMemberProjectionSeen(tx, row, now)");
     expect(service).toContain("recordDepartmentProjectionSeen(tx, row, now)");
     expect(service).toContain("ne(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)");
     expect(service).toContain("eq(workCallbackOutbox.lastErrorCode, MEMBER_PROJECTION_DISABLED)");
     expect(service).toContain("ne(workCallbackOutbox.lastErrorCode, DEPARTMENT_PROJECTION_DISABLED)");
     expect(service).toContain("eq(workCallbackOutbox.lastErrorCode, DEPARTMENT_PROJECTION_DISABLED)");
+    expect(service).toContain("ne(workCallbackOutbox.lastErrorCode, EXTERNAL_TAG_PROJECTION_DISABLED)");
+    expect(service).toContain("eq(workCallbackOutbox.lastErrorCode, EXTERNAL_TAG_PROJECTION_DISABLED)");
     const disabledMemberClaim = service.indexOf(
       "if (isMemberProjectionEvent(row) && !this.memberCurrentProjectionEnabled(row))",
     );
@@ -575,6 +618,17 @@ describe("Enterprise WeChat callback durable pipeline", () => {
     );
     expect(disabledDepartmentClaim).toBeGreaterThan(disabledMemberClaim);
     expect(failedBackoff).toBeGreaterThan(disabledDepartmentClaim);
+    const disabledExternalTagClaim = service.indexOf(
+      "if (isExternalTagProjectionEvent(row) && !this.externalTagCurrentProjectionEnabled(row))",
+    );
+    expect(disabledExternalTagClaim).toBeGreaterThan(disabledDepartmentClaim);
+    expect(failedBackoff).toBeGreaterThan(disabledExternalTagClaim);
+    const failureRecorder = service.slice(
+      service.indexOf("private async recordFailure"),
+      service.indexOf("interface WorkCallbackQueueMessageControl"),
+    );
+    expect(failureRecorder).toContain("error instanceof EnterpriseWechatExternalTagProjectionError");
+    expect(failureRecorder).toContain("? error.terminal");
     expect(service).not.toContain("cron dispatch will enqueue it again without exhausting");
     expect(service).toContain('return { kind: "parked" as const }');
     expect(service).toContain('"configuration", "directory_visibility_gate"');

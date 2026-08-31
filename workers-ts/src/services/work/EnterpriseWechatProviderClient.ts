@@ -415,6 +415,41 @@ export class EnterpriseWechatProviderClient {
     });
   }
 
+  async strategyTagList(
+    strategyId: number,
+    tagIds: string[] = [],
+    groupIds: string[] = [],
+  ): Promise<JsonRecord> {
+    if (
+      !Number.isSafeInteger(strategyId)
+      || strategyId <= 0
+      || strategyId > 2_147_483_647
+      || tagIds.length > 100
+      || groupIds.length > 100
+    ) {
+      throw new EnterpriseWechatProviderError(
+        "terminal",
+        "external_strategy_tag_list",
+        -1,
+        0,
+      );
+    }
+    return this.authorized({
+      name: "external_strategy_tag_list",
+      path: "/cgi-bin/externalcontact/get_strategy_tag_list",
+      method: "POST",
+      scope: "external-contact",
+      maxResponseBytes: 512 * 1024,
+      notFoundCodes: tagIds.length > 0 || groupIds.length > 0 ? new Set([40_068]) : undefined,
+    }, {
+      body: {
+        strategy_id: strategyId,
+        tag_id: tagIds.map((id) => requiredIdentifier(id, "external_strategy_tag_list")),
+        group_id: groupIds.map((id) => requiredIdentifier(id, "external_strategy_tag_list")),
+      },
+    });
+  }
+
   private secret(scope: EnterpriseWechatCredentialScope, operation: string): string {
     const value = scope === "company-jssdk"
       ? this.env.WECHAT_WORK_CORP_SECRET

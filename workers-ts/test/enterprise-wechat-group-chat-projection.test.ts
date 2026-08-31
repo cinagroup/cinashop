@@ -205,7 +205,7 @@ describe("Enterprise WeChat group-chat projection", () => {
     expect(current).not.toContain("delete(workGroupChatMemberCurrent)");
     expect(callback).toContain("WECHAT_WORK_GROUP_CHAT_CURRENT_AUTHORITY");
     expect(callback).toContain("externalGroupChatProvider");
-    expect(callback).toContain("Group dismissal is terminal");
+    expect(callback).toContain("Terminal group/tag deletion must still reach its dedicated fence");
     expect(context).toContain("requireGroupScopeByIdInTx(tx, claims)");
     expect(context).toContain("this.loadGroupClientProjections(scope.corpId, scope.actorUserid, externalIds, tx)");
     expect(context).toContain("userid: workMemberCurrent.userid");

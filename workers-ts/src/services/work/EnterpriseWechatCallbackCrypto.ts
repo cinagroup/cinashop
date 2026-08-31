@@ -21,6 +21,7 @@ const STORED_FIELDS = [
   "ChatId",
   "Id",
   "TagType",
+  "StrategyId",
   "UpdateDetail",
   "JoinScene",
   "QuitScene",
@@ -29,6 +30,7 @@ const STORED_FIELDS = [
   "WelcomeCode",
   "JobType",
   "JobId",
+  "ErrCode",
 ] as const;
 
 const INTEGER_FIELDS = new Set<string>([
@@ -37,7 +39,10 @@ const INTEGER_FIELDS = new Set<string>([
   "JoinScene",
   "QuitScene",
   "MemChangeCnt",
+  "StrategyId",
 ]);
+
+const SIGNED_INTEGER_FIELDS = new Set<string>(["ErrCode"]);
 
 export interface CallbackQuery {
   signature: string;
@@ -229,10 +234,11 @@ function storedPayload(xml: string): WorkCallbackPayload {
   for (const field of STORED_FIELDS) {
     const value = xmlText(xml, field);
     if (value === null || value === "") continue;
-    if (INTEGER_FIELDS.has(field)) {
-      if (!/^\d{1,10}$/.test(value)) throw new Error("callback_field_invalid");
+    if (INTEGER_FIELDS.has(field) || SIGNED_INTEGER_FIELDS.has(field)) {
+      const pattern = SIGNED_INTEGER_FIELDS.has(field) ? /^-?\d{1,10}$/ : /^\d{1,10}$/;
+      if (!pattern.test(value)) throw new Error("callback_field_invalid");
       const parsed = Number(value);
-      if (!Number.isSafeInteger(parsed) || parsed > 2_147_483_647) {
+      if (!Number.isSafeInteger(parsed) || parsed < -2_147_483_648 || parsed > 2_147_483_647) {
         throw new Error("callback_field_invalid");
       }
       payload[field] = parsed;
@@ -269,7 +275,11 @@ function normalizedSubject(payload: WorkCallbackPayload): {
   const event = stringField(payload, "Event").toLowerCase();
   const change = stringField(payload, "ChangeType").toLowerCase();
   const destructive = new Set(["delete_user", "delete_party", "delete", "dismiss", "del_external_contact", "del_follow_user"]);
-  const sequenceRank = destructive.has(change) ? 100 : change.includes("update") || change.includes("edit") ? 50 : 10;
+  const sequenceRank = destructive.has(change)
+    ? 100
+    : change.includes("update") || change.includes("edit") || change === "shuffle"
+      ? 50
+      : 10;
   if (msgType !== "event") {
     return { subject: `message:${msgType}:${stringField(payload, "MsgId") || numberField(payload, "CreateTime")}`, recognized: false, sequenceRank: 0 };
   }
@@ -317,9 +327,19 @@ function normalizedSubject(payload: WorkCallbackPayload): {
   }
   if (event === "change_external_tag") {
     const tagType = stringField(payload, "TagType");
-    const id = stringField(payload, "Id");
+    const id = identifierField(payload, "Id", 128);
+    const strategyId = numberField(payload, "StrategyId");
+    if (change === "shuffle") {
+      return {
+        subject: `external-tag:${strategyId}:catalog:${id || "*"}`,
+        recognized: true,
+        sequenceRank,
+      };
+    }
     return {
-      subject: tagType && id ? `external-tag:${tagType}:${id}` : "",
+      subject: (tagType === "tag" || tagType === "tag_group") && id
+        ? `external-tag:${strategyId}:${tagType}:${id}`
+        : "",
       recognized: ["create", "update", "delete"].includes(change),
       sequenceRank,
     };

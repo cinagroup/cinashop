@@ -15,6 +15,7 @@ import {
 import { WORK_DEPARTMENT_CURRENT_PROJECTION_SQL } from "@/migrations/workDepartmentCurrentProjection";
 import { WORK_CLIENT_CURRENT_PROJECTION_SQL } from "@/migrations/workClientCurrentProjection";
 import { WORK_GROUP_CHAT_CURRENT_PROJECTION_SQL } from "@/migrations/workGroupChatCurrentProjection";
+import { WORK_EXTERNAL_TAG_CURRENT_PROJECTION_SQL } from "@/migrations/workExternalTagCurrentProjection";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -149,6 +150,11 @@ export class MigrationService {
     return this.migration_0122();
   }
 
+  /** Exact canonical Enterprise WeChat external-tag catalog projection DDL. */
+  workExternalTagCurrentProjectionMigrationSqlForVerification(): string {
+    return this.migration_0123();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -279,6 +285,7 @@ export class MigrationService {
       this.migration_0120(),
       this.migration_0121(),
       this.migration_0122(),
+      this.migration_0123(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8198,5 +8205,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0122(): string {
     return WORK_GROUP_CHAT_CURRENT_PROJECTION_SQL;
+  }
+
+  private migration_0123(): string {
+    return WORK_EXTERNAL_TAG_CURRENT_PROJECTION_SQL;
   }
 }

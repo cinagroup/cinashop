@@ -374,6 +374,7 @@ describe("Enterprise WeChat provider client", () => {
       { code: 40_050, call: (provider) => provider.externalGroupChat("wr-chat-7") },
       { code: 86_003, call: (provider) => provider.externalGroupChat("wr-chat-8") },
       { code: 40_068, call: (provider) => provider.corpTagList(["et-tag-7"]) },
+      { code: 40_068, call: (provider) => provider.strategyTagList(17, ["et-tag-8"]) },
     ];
     for (const current of cases) {
       const { env } = fixture();
@@ -405,6 +406,29 @@ describe("Enterprise WeChat provider client", () => {
     expect((await providerFailure(
       client(unfilteredFixture.env, unfilteredFetch).corpTagList(),
     )).kind).toBe("terminal");
+  });
+
+  it("calls the strategy-tag endpoint with an exact bounded request", async () => {
+    const { env } = fixture();
+    const { calls, fetcher } = queuedFetcher([
+      jsonResponse({ errcode: 0, access_token: "token", expires_in: 7200 }),
+      jsonResponse({ errcode: 0, tag_group: [] }),
+    ]);
+    await expect(client(env, fetcher).strategyTagList(
+      17,
+      ["et-tag-1"],
+      ["et-group-1"],
+    )).resolves.toMatchObject({ tag_group: [] });
+    expect(calls[1].url.pathname).toBe("/cgi-bin/externalcontact/get_strategy_tag_list");
+    expect(JSON.parse(String(calls[1].init?.body))).toEqual({
+      strategy_id: 17,
+      tag_id: ["et-tag-1"],
+      group_id: ["et-group-1"],
+    });
+    await expect(client(env, fetcher).strategyTagList(0)).rejects.toMatchObject({
+      kind: "terminal",
+      operation: "external_strategy_tag_list",
+    });
   });
 
   it("does not refresh a token when an HTTP failure body contains an invalid-token code", async () => {
