@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { maskPhpComments } from "./php-source";
@@ -38,6 +39,17 @@ interface LegacyRouteDecision {
   replacement: string;
 }
 
+interface LegacyAuthorityFile {
+  lineCount: number;
+  sha256: string;
+}
+
+interface LegacyRouteAuthoritySnapshot {
+  version: 1;
+  files: Record<string, LegacyAuthorityFile>;
+  surfaces: Record<string, RouteRecord[]>;
+}
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workerRoot = resolve(scriptDir, "..");
 const repositoryRoot = resolve(workerRoot, "..");
@@ -45,6 +57,7 @@ const phpRoot = resolve(
   process.env.CINASHOP_PHP_ROOT ?? join(repositoryRoot, "..", "cinashop-php"),
 );
 const decisionFile = join(workerRoot, "audit", "legacy-route-decisions.json");
+const authoritySnapshotFile = join(workerRoot, "audit", "legacy-route-authority.json");
 
 const surfaces: SurfaceDefinition[] = [
   {
@@ -188,7 +201,7 @@ function parsePhpRoutes(file: string): RouteRecord[] {
       .map((group) => group.prefix);
     const fullPath = displayPath(...prefixes, path);
     const common = {
-      source: relative(repositoryRoot, absolute).replace(/\\/g, "/"),
+      source: `cinashop-php/${file.replace(/\\/g, "/")}`,
       line: lineAt(source, offset),
       target,
     };
@@ -307,7 +320,7 @@ function decisionKey(decision: LegacyRouteDecision): string {
   return `${decision.method} ${normalizePath(decision.path)}`;
 }
 
-function loadRouteDecisions(): LegacyRouteDecision[] {
+function readRouteDecisions(): LegacyRouteDecision[] {
   const parsed = JSON.parse(readFileSync(decisionFile, "utf8")) as {
     version?: unknown;
     decisions?: unknown;
@@ -315,15 +328,89 @@ function loadRouteDecisions(): LegacyRouteDecision[] {
   if (parsed.version !== 1 || !Array.isArray(parsed.decisions)) {
     throw new Error(`Invalid legacy route decision manifest: ${decisionFile}`);
   }
-  const decisions = parsed.decisions as LegacyRouteDecision[];
+  return parsed.decisions as LegacyRouteDecision[];
+}
+
+function readAuthoritySnapshot(): LegacyRouteAuthoritySnapshot {
+  if (!existsSync(authoritySnapshotFile)) {
+    throw new Error(`Legacy route authority snapshot not found at ${authoritySnapshotFile}`);
+  }
+  const snapshot = JSON.parse(readFileSync(authoritySnapshotFile, "utf8")) as LegacyRouteAuthoritySnapshot;
+  if (
+    snapshot.version !== 1 ||
+    !snapshot.files ||
+    typeof snapshot.files !== "object" ||
+    !snapshot.surfaces ||
+    typeof snapshot.surfaces !== "object" ||
+    surfaces.some((surface) => !Array.isArray(snapshot.surfaces[surface.name]))
+  ) {
+    throw new Error(`Invalid legacy route authority snapshot: ${authoritySnapshotFile}`);
+  }
+  return snapshot;
+}
+
+function canonicalEvidencePath(reference: string): string | undefined {
+  return /^(cinashop-php\/[A-Za-z0-9_./-]+):(\d+)$/.exec(reference)?.[1];
+}
+
+function sourceFileFromCanonical(reference: string): string {
+  if (!reference.startsWith("cinashop-php/")) {
+    throw new Error(`Invalid legacy source reference: ${reference}`);
+  }
+  return resolve(phpRoot, reference.slice("cinashop-php/".length));
+}
+
+function sourceFileAuthority(reference: string): LegacyAuthorityFile {
+  const source = readFileSync(sourceFileFromCanonical(reference), "utf8");
+  return {
+    lineCount: source.split("\n").length,
+    sha256: createHash("sha256").update(source).digest("hex"),
+  };
+}
+
+function buildAuthoritySnapshot(decisions: LegacyRouteDecision[]): LegacyRouteAuthoritySnapshot {
+  if (!existsSync(join(phpRoot, "route", "api.php"))) {
+    throw new Error(`PHP source not found at ${phpRoot}; cannot build authority snapshot`);
+  }
+  const fileNames = new Set(
+    surfaces.map((surface) => `cinashop-php/${surface.phpFile}`),
+  );
+  for (const decision of decisions) {
+    for (const evidence of decision.evidence ?? []) {
+      const reference = canonicalEvidencePath(evidence);
+      if (reference) fileNames.add(reference);
+    }
+  }
+  return {
+    version: 1,
+    files: Object.fromEntries(
+      [...fileNames].sort().map((reference) => [reference, sourceFileAuthority(reference)]),
+    ),
+    surfaces: Object.fromEntries(
+      surfaces.map((surface) => [surface.name, unique(parsePhpRoutes(surface.phpFile))]),
+    ),
+  };
+}
+
+function writeAuthoritySnapshot(decisions: LegacyRouteDecision[]): LegacyRouteAuthoritySnapshot {
+  const snapshot = buildAuthoritySnapshot(decisions);
+  writeFileSync(authoritySnapshotFile, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
+  return snapshot;
+}
+
+function loadRouteDecisions(
+  decisions: LegacyRouteDecision[],
+  snapshot: LegacyRouteAuthoritySnapshot | undefined,
+): LegacyRouteDecision[] {
   const seen = new Set<string>();
   const evidenceExists = (reference: string): boolean => {
     const match = /^(cinashop-php\/[A-Za-z0-9_./-]+):(\d+)$/.exec(reference);
     if (!match) return false;
-    const absolute = resolve(repositoryRoot, "..", match[1]);
-    if (!existsSync(absolute)) return false;
     const line = Number(match[2]);
-    return Number.isSafeInteger(line) && line > 0 && line <= readFileSync(absolute, "utf8").split("\n").length;
+    if (!Number.isSafeInteger(line) || line <= 0) return false;
+    const absolute = sourceFileFromCanonical(match[1]);
+    if (existsSync(absolute)) return line <= readFileSync(absolute, "utf8").split("\n").length;
+    return line <= (snapshot?.files[match[1]]?.lineCount ?? 0);
   };
   for (const decision of decisions) {
     if (
@@ -346,14 +433,26 @@ function loadRouteDecisions(): LegacyRouteDecision[] {
   return decisions;
 }
 
-if (!existsSync(join(phpRoot, "route", "api.php"))) {
-  throw new Error(`PHP source not found at ${phpRoot}; set CINASHOP_PHP_ROOT`);
+const rawRouteDecisions = readRouteDecisions();
+const sourceAvailable = existsSync(join(phpRoot, "route", "api.php"));
+const updateAuthoritySnapshot = process.argv.includes("--write-authority-snapshot");
+const authoritySnapshot = updateAuthoritySnapshot
+  ? writeAuthoritySnapshot(rawRouteDecisions)
+  : readAuthoritySnapshot();
+if (sourceAvailable && !updateAuthoritySnapshot) {
+  const liveAuthority = buildAuthoritySnapshot(rawRouteDecisions);
+  if (JSON.stringify(liveAuthority) !== JSON.stringify(authoritySnapshot)) {
+    throw new Error(
+      "Legacy route authority snapshot differs from the reviewed PHP source; audit and regenerate it explicitly",
+    );
+  }
 }
-
-const routeDecisions = loadRouteDecisions();
+const routeDecisions = loadRouteDecisions(rawRouteDecisions, authoritySnapshot);
 
 const reports = surfaces.map((surface) => {
-  const php = unique(parsePhpRoutes(surface.phpFile));
+  const php = sourceAvailable
+    ? unique(parsePhpRoutes(surface.phpFile))
+    : unique(authoritySnapshot?.surfaces[surface.name] ?? []);
   const ts = unique(surface.tsFiles.flatMap(({ file, prefix }) => parseTsRoutes(file, prefix)));
   const tsByKey = new Map(ts.filter((route) => !route.path.includes("*")).map((route) => [key(route), route]));
   const matched = php.filter((route) => tsByKey.has(key(route)));
@@ -432,7 +531,7 @@ process.stdout.write(
   `${JSON.stringify(
     {
       generatedAt: new Date().toISOString(),
-      phpRoot,
+      phpRoot: sourceAvailable ? phpRoot : `snapshot:${relative(repositoryRoot, authoritySnapshotFile).replace(/\\/g, "/")}`,
       workerRoot,
       totals: {
         ...totals,

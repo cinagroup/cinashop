@@ -1,4 +1,4 @@
-name: Workers runtime (Linux)
+name: Migration gates (Linux)
 
 on:
   workflow_dispatch:
@@ -6,10 +6,20 @@ on:
     branches: [main]
     paths:
       - "workers-ts/**"
+      - "view/admin-ts/**"
+      - "view/pc-ts/**"
+      - "view/supplier-ts/**"
+      - "view/kefu-ts/**"
+      - "view/uniapp-ts/**"
       - ".github/workflows/workers-runtime-linux.yml"
   pull_request:
     paths:
       - "workers-ts/**"
+      - "view/admin-ts/**"
+      - "view/pc-ts/**"
+      - "view/supplier-ts/**"
+      - "view/kefu-ts/**"
+      - "view/uniapp-ts/**"
       - ".github/workflows/workers-runtime-linux.yml"
 
 permissions:
@@ -20,6 +30,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  worker-static:
+    name: Worker type, unit, schema and route gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: workers-ts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24.14.1"
+          cache: npm
+          cache-dependency-path: workers-ts/package-lock.json
+
+      - name: Verify pinned Node and npm
+        run: |
+          test "$(node --version)" = "v24.14.1"
+          test "$(npm --version)" = "11.11.0"
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm run audit:prod
+
+      - name: Run both TypeScript configurations
+        run: npm run typecheck
+
+      - name: Run Worker unit tests
+        run: npm run test:unit
+
+      - name: Audit legacy-to-PostgreSQL schema drift
+        run: |
+          npx --no-install tsx scripts/mysql-to-postgres.ts schema-audit --json |
+            node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);console.log(JSON.stringify({source:r.coverage.sourceTableCount,target:r.coverage.targetTableCount,shared:r.coverage.sharedTableCount,sourceGaps:r.coverage.sourceColumnGapTableCount,externalOnly:r.definitionDrift.externalOnlyTables.length,workerOnly:r.definitionDrift.workerOnlyTables.length,columnDrift:r.definitionDrift.columnDrift.length}));})'
+
+      - name: Audit legacy-to-Worker route parity
+        run: |
+          npx --no-install tsx scripts/route-parity-audit.ts |
+            node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);console.log(JSON.stringify({authority:r.phpRoot,...r.totals}));})'
+
   runtime:
     name: workerd runtime tests
     runs-on: ubuntu-24.04
@@ -38,6 +93,11 @@ jobs:
           cache: npm
           cache-dependency-path: workers-ts/package-lock.json
 
+      - name: Verify pinned Node and npm
+        run: |
+          test "$(node --version)" = "v24.14.1"
+          test "$(npm --version)" = "11.11.0"
+
       - name: Install locked dependencies
         run: npm ci
 
@@ -46,3 +106,66 @@ jobs:
 
       - name: Run Workers runtime tests
         run: npm run test:runtime
+
+  frontends:
+    name: ${{ matrix.name }} build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Admin
+            directory: admin-ts
+            command: npm run build
+          - name: PC
+            directory: pc-ts
+            command: npm run build
+          - name: Supplier
+            directory: supplier-ts
+            command: npm run build
+          - name: Kefu
+            directory: kefu-ts
+            command: npm test && npm run build
+          - name: UniApp
+            directory: uniapp-ts
+            command: npm run typecheck && npm run build:h5 && npm run build:mp-weixin
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24.14.1"
+          cache: npm
+          cache-dependency-path: view/${{ matrix.directory }}/package-lock.json
+
+      - name: Verify pinned Node and npm
+        working-directory: view/${{ matrix.directory }}
+        run: |
+          test "$(node --version)" = "v24.14.1"
+          test "$(npm --version)" = "11.11.0"
+
+      - name: Install locked dependencies
+        working-directory: view/${{ matrix.directory }}
+        run: npm ci
+
+      - name: Run type, test and build contract
+        working-directory: view/${{ matrix.directory }}
+        run: ${{ matrix.command }}
+
+  secret-scan:
+    name: Repository secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out full repository history
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Scan current and historical commits with pinned Gitleaks
+        uses: docker://ghcr.io/gitleaks/gitleaks:v8.29.0@sha256:507de9682470025fb3e7f57fe4c4ca8263d81369e027b6538b8a252a9c0371d4
+        with:
+          args: git --redact --verbose --no-banner

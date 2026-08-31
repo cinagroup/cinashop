@@ -1,0 +1,21 @@
+title = "CinaShop repository secret scanning"
+minVersion = "8.29.0"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fixed non-secret WebSocket protocol fixture"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/test/kefu-realtime-migration\.test\.ts$''']
+regexes = ['''"X-Chat-Token-Key": "0123456789abcdef0123456789abcdef"''']
+
+[[allowlists]]
+description = "PEM header removal code does not contain private-key material"
+targetRules = ["private-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/src/utils/wechat-crypto\.ts$''']
+regexes = ['''\.replace\(/-----BEGIN (RSA )?PRIVATE KEY-----/g, ""\)''']

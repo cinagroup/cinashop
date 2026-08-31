@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -91,9 +92,10 @@ async function readSchemaFiles(): Promise<{
   externalTargetSql: string;
   embeddedTargetSql: string;
 }> {
-  const sourcePath =
-    process.env.SOURCE_SCHEMA_SQL ??
-    resolve(import.meta.dirname, "../../../cinashop-php/public/install/crmeb.sql");
+  const localSourcePath = resolve(import.meta.dirname, "../../../cinashop-php/public/install/crmeb.sql");
+  const snapshotSourcePath = resolve(import.meta.dirname, "../audit/legacy-schema-authority.sql");
+  const sourcePath = process.env.SOURCE_SCHEMA_SQL ??
+    (existsSync(localSourcePath) ? localSourcePath : snapshotSourcePath);
   const migrationsDirectory =
     process.env.TARGET_MIGRATIONS_DIR ?? resolve(import.meta.dirname, "../migrations");
   const migrationFiles = (await readdir(migrationsDirectory))
