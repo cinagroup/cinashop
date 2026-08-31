@@ -11,6 +11,7 @@ on:
       - "view/supplier-ts/**"
       - "view/kefu-ts/**"
       - "view/uniapp-ts/**"
+      - ".gitleaks.toml"
       - ".github/workflows/workers-runtime-linux.yml"
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - "view/supplier-ts/**"
       - "view/kefu-ts/**"
       - "view/uniapp-ts/**"
+      - ".gitleaks.toml"
       - ".github/workflows/workers-runtime-linux.yml"
 
 permissions:
