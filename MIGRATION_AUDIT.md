@@ -2216,7 +2216,7 @@ POST按流读取并在超过64 KiB时立刻cancel，不先把大包完整缓冲�
 
 HTTP提交后立即尝试Queue；发送结果未知可重复投递，消费者以outbox行锁、租约和event唯一键收敛。五分钟Cron只投递不含业务数据的根消息，由Queue消费者扫描`PENDING/FAILED`和过期租约；Queue失败记录固定错误码而不记录payload。消费端按`subject_key_hash`取得PostgreSQL advisory transaction lock，以`event_time`为主序、`sequence_rank`为同秒消歧：删除/解散100，更新/编辑50，创建10；较旧或同秒低优先级事件标记`SUPERSEDED`。不认识的新消息/事件以及旧PHP空处理分支留痕为`IGNORED`，不会冒充业务投影已执行。
 
-WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 只对 `del_external_contact/del_follow_user` 增加关系 tombstone；C2 又把管道 `status` 与业务 `projection_status` 物理分列，C1 结果迁为 `APPLIED/APPLIED_NOOP`，其余已识别但当时尚未实现的投影明确为 `REFRESH_REQUIRED`。C3～C7 后续已分别完成成员、部门、客户/follow/tags、群/群成员和企业客户标签 current 投影的代码、生产结构与隔离服务验收，详见本文件后续专章；`batch_job_result` 明确只审计为 `IGNORED`，不冒充目录对账。WORK-C父项仍保持未勾选：C8 还必须把欢迎语、自动标签和商城用户关联等远端副作用放入独立事务 action outbox，并为部分成功、provider operation-specific `not_found`、限流、结果未知与人工重放定义终态。还需补事件保留/归档策略，不能无限保留带业务标识的白名单 payload。
+WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 只对 `del_external_contact/del_follow_user` 增加关系 tombstone；C2 又把管道 `status` 与业务 `projection_status` 物理分列，C1 结果迁为 `APPLIED/APPLIED_NOOP`，其余已识别但当时尚未实现的投影明确为 `REFRESH_REQUIRED`。C3～C7 后续已分别完成成员、部门、客户/follow/tags、群/群成员和企业客户标签 current 投影的代码、生产结构与隔离服务验收，详见本文件后续专章；`batch_job_result` 明确只审计为 `IGNORED`，不冒充目录对账。本段审计时尚缺的 C8 action outbox 与 payload 保留/脱敏策略已在 2026-08-31 后续专章完成代码、生产结构和隔离验收；WORK-C 父项仍因真实数据/租户、Linux runtime、预发和发布闭环未完成而保持未勾选。
 
 ### 生产数据库与隔离场景证据
 
@@ -2237,7 +2237,7 @@ WORK-C0 当时的仓库门禁为Worker双TypeScript配置通过，152/152个单�
 - [x] 生产三表DDL两遍幂等、既有业务全行指纹不变、随机schema 11/11及临时资源清零已完成。
 - [x] C1 两类关系 tombstone 的代码、生产 `0110`/内嵌 `0116` 两遍、随机 schema 20/20、全行/owned sequence 指纹与资源清理已完成；仍未启用/未发布。
 - [x] C1～C7 的关系 tombstone、provider 基础、成员、部门、客户/follow/tags、群/群成员和企业客户标签 current-state 均已完成代码、生产结构与随机 schema 验收；authority gate 全部关闭，主 Worker 未发布，真实租户/provider/源数据仍未验收。
-- [ ] 欢迎语、自动标签等远端写必须进入单独action outbox/Queue，禁止回到HTTP请求内同步调用。
+- [x] 欢迎语、自动标签等远端写已进入独立 action outbox/Queue，并覆盖部分成功、UNKNOWN 不盲重发、人工审计与 payload 脱敏；禁止回到 HTTP 请求内同步调用。
 - [ ] CorpID、两枚回调Secret、真实租户事件、旧PHP golden response、预发/影子流量、主Worker发布与发布后观察均未完成。
 
 ## WORK-C0～C8 子批次、PHP→TS 事件能力矩阵与首批投影边界（2026-08-30）
