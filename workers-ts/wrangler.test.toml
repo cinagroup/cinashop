@@ -28,6 +28,10 @@ localConnectionString = "postgresql://runtime:runtime@127.0.0.1:1/runtime?connec
 binding = "CONFIG_KV"
 id = "00000000000000000000000000000000"
 
+[[r2_buckets]]
+binding = "ASSETS_BUCKET"
+bucket_name = "cinashop-assets-runtime-test"
+
 [[queues.producers]]
 binding = "ORDER_QUEUE"
 queue = "cinashop-order-runtime-test"

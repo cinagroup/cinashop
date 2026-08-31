@@ -16,6 +16,7 @@ import {
   type ChatSocketSession,
   KefuRealtimeService,
 } from "../../src/services/kefu/KefuRealtimeService";
+import { consumeOrderQueueDeadLetterMessage } from "../../src/services/order/OrderQueueDeadLetterConsumer";
 import { consumeOrderPaidOutboxQueueMessage } from "../../src/services/order/OrderPaidOutboxQueueConsumer";
 
 const testEnv = env as unknown as Env;
@@ -34,6 +35,26 @@ describe("Worker runtime bindings", () => {
     await testEnv.CONFIG_KV.put("runtime:key", "local-value");
 
     await expect(testEnv.CONFIG_KV.get("runtime:key")).resolves.toBe("local-value");
+  });
+
+  it("round-trips object data and metadata inside the isolated R2 binding", async () => {
+    const key = "runtime/assets/object.txt";
+    await testEnv.ASSETS_BUCKET.put(key, "runtime-r2-value", {
+      httpMetadata: { contentType: "text/plain; charset=utf-8" },
+      customMetadata: { scope: "runtime-test" },
+    });
+
+    const object = await testEnv.ASSETS_BUCKET.get(key);
+    expect(object).not.toBeNull();
+    await expect(object?.text()).resolves.toBe("runtime-r2-value");
+    expect(object?.httpMetadata?.contentType).toBe("text/plain; charset=utf-8");
+    expect(object?.customMetadata).toEqual({ scope: "runtime-test" });
+
+    const listed = await testEnv.ASSETS_BUCKET.list({ prefix: "runtime/assets/" });
+    expect(listed.objects.map((item) => item.key)).toContain(key);
+
+    await testEnv.ASSETS_BUCKET.delete(key);
+    await expect(testEnv.ASSETS_BUCKET.get(key)).resolves.toBeNull();
   });
 
   it("turns a non-reminder Cron event into thirteen replayable root Queue jobs without touching PostgreSQL", async () => {
@@ -138,6 +159,54 @@ describe("Queue acknowledgement and retry semantics", () => {
     // per-message delay. The exact bounded delay contract is covered by the
     // OrderPaidOutboxQueueConsumer unit tests.
     expect(result.retryMessages).toEqual([{ msgId: "outbox-message" }]);
+  });
+
+  it("acknowledges a DLQ message only after archival and retries archival failure", async () => {
+    const ctx = createExecutionContext();
+    const batch = createMessageBatch<OrderMessage>("cinashop-order-runtime-test-dlq", [
+      {
+        id: "dead-letter-message",
+        timestamp: new Date("2026-08-09T12:00:00.000Z"),
+        attempts: 2,
+        body: {
+          action: "processOrderPaidOutbox",
+          outboxId: 42,
+          eventKey: "order.paid:42",
+        },
+      },
+    ]);
+    const archive = vi.fn().mockResolvedValue({
+      id: 1,
+      duplicate: false,
+      status: "OPEN",
+      messageType: "processOrderPaidOutbox",
+      replayPolicy: "ALLOW",
+      occurrenceCount: 1,
+    });
+
+    await consumeOrderQueueDeadLetterMessage(batch.queue, batch.messages[0], { archive });
+    let result = await getQueueResult(batch, ctx);
+    expect(result.explicitAcks).toEqual(["dead-letter-message"]);
+    expect(result.retryMessages).toEqual([]);
+
+    const retryBatch = createMessageBatch<OrderMessage>("cinashop-order-runtime-test-dlq", [
+      {
+        id: "dead-letter-retry",
+        timestamp: new Date("2026-08-09T12:00:00.000Z"),
+        attempts: 2,
+        body: {
+          action: "processOrderPaidOutbox",
+          outboxId: 43,
+          eventKey: "order.paid:43",
+        },
+      },
+    ]);
+    archive.mockRejectedValueOnce(new Error("runtime_postgres_unavailable"));
+
+    await consumeOrderQueueDeadLetterMessage(retryBatch.queue, retryBatch.messages[0], { archive });
+    result = await getQueueResult(retryBatch, ctx);
+    expect(result.explicitAcks).toEqual([]);
+    expect(result.retryMessages).toEqual([{ msgId: "dead-letter-retry" }]);
   });
 });
 
