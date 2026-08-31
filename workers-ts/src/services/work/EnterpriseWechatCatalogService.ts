@@ -13,7 +13,9 @@ import {
 import type { Container } from "@/lib/di";
 import {
   workChannelCode,
-  workClient,
+  workCallbackEvent,
+  workClientCurrent,
+  workClientProjectionFence,
   workGroupChat,
   workGroupChatAuth,
   workGroupChatMember,
@@ -120,8 +122,9 @@ function runtimeMeta() {
   };
 }
 
-interface DepartmentCatalogEnvironment {
+interface WorkCatalogEnvironment {
   WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?: string;
+  WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?: string;
 }
 
 interface CurrentDepartmentCatalogRow {
@@ -150,6 +153,91 @@ interface LegacyDepartmentCatalogRow {
   update_time: number | null;
 }
 
+interface CurrentClientCatalogRow {
+  id: number;
+  external_userid: string;
+  uid: number | null;
+  name: string;
+  avatar: string | null;
+  type: number;
+  gender: number;
+  unionid: string | null;
+  position: string | null;
+  corp_name: string | null;
+  corp_full_name: string | null;
+  create_time: number;
+  update_time: number;
+}
+
+interface LegacyClientCatalogRow {
+  blocked_current_rows: number;
+  id: number | null;
+  external_userid: string | null;
+  uid: number | null;
+  name: string | null;
+  avatar: string | null;
+  type: number | null;
+  gender: number | null;
+  unionid: string | null;
+  position: string | null;
+  corp_name: string | null;
+  corp_full_name: string | null;
+  remark: string | null;
+  create_time: number | null;
+  update_time: number | null;
+  total_count: number;
+}
+
+function currentClientCatalogRow(row: Record<string, unknown>): CurrentClientCatalogRow & {
+  total_count: number;
+} {
+  return {
+    id: Number(row.id),
+    external_userid: String(row.external_userid ?? ""),
+    uid: row.uid === null || row.uid === undefined ? null : Number(row.uid),
+    name: String(row.name ?? ""),
+    avatar: row.avatar === null || row.avatar === undefined ? null : String(row.avatar),
+    type: Number(row.type),
+    gender: Number(row.gender),
+    unionid: row.unionid === null || row.unionid === undefined ? null : String(row.unionid),
+    position: row.position === null || row.position === undefined ? null : String(row.position),
+    corp_name: row.corp_name === null || row.corp_name === undefined ? null : String(row.corp_name),
+    corp_full_name: row.corp_full_name === null || row.corp_full_name === undefined
+      ? null
+      : String(row.corp_full_name),
+    create_time: Number(row.create_time),
+    update_time: Number(row.update_time),
+    total_count: Number(row.total_count ?? 0),
+  };
+}
+
+function legacyClientCatalogRow(row: Record<string, unknown>): LegacyClientCatalogRow {
+  const nullableNumber = (value: unknown) => value === null || value === undefined
+    ? null
+    : Number(value);
+  const nullableString = (value: unknown) => value === null || value === undefined
+    ? null
+    : String(value);
+  return {
+    blocked_current_rows: Number(row.blocked_current_rows ?? 0),
+    id: nullableNumber(row.id),
+    external_userid: nullableString(row.external_userid),
+    uid: nullableNumber(row.uid),
+    name: nullableString(row.name),
+    avatar: nullableString(row.avatar),
+    type: nullableNumber(row.type),
+    gender: nullableNumber(row.gender),
+    unionid: nullableString(row.unionid),
+    position: nullableString(row.position),
+    corp_name: nullableString(row.corp_name),
+    corp_full_name: nullableString(row.corp_full_name),
+    remark: nullableString(row.remark),
+    create_time: nullableNumber(row.create_time),
+    update_time: nullableNumber(row.update_time),
+    total_count: Number(row.total_count ?? 0),
+  };
+}
+
 function currentDepartmentRuntimeMeta(authority: string) {
   return {
     catalog_authority: authority,
@@ -158,18 +246,100 @@ function currentDepartmentRuntimeMeta(authority: string) {
   };
 }
 
+function clientCatalogRuntimeMeta(authority: string) {
+  return {
+    client_catalog_authority: authority,
+    remote_write_authority: "not_migrated_requires_idempotent_outbox" as const,
+    pii_display: "masked" as const,
+  };
+}
+
 export class EnterpriseWechatCatalogService {
   constructor(
     private readonly container: Container,
-    private readonly env: DepartmentCatalogEnvironment = {},
+    private readonly env: WorkCatalogEnvironment = {},
   ) {}
+
+  private async clientSummary(): Promise<{
+    count: number;
+    blockedCurrentRows: number;
+    authority: string;
+  }> {
+    const currentAuthority = this.env.WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?.trim()
+      === "verified";
+    if (currentAuthority) {
+      const rows = await this.container.db.select({ value: count() })
+        .from(workClientCurrent)
+        .innerJoin(workClientProjectionFence, and(
+          eq(workClientProjectionFence.corpId, workClientCurrent.corpId),
+          eq(workClientProjectionFence.externalUserid, workClientCurrent.externalUserid),
+          eq(workClientProjectionFence.lastEventId, workClientCurrent.lastEventId),
+          eq(workClientProjectionFence.lastEventKey, workClientCurrent.lastEventKey),
+          eq(
+            workClientProjectionFence.lastEventSubjectKeyHash,
+            workClientCurrent.lastEventSubjectKeyHash,
+          ),
+          eq(workClientProjectionFence.lastEventTime, workClientCurrent.lastEventTime),
+          eq(workClientProjectionFence.lastSequenceRank, workClientCurrent.lastSequenceRank),
+        ))
+        .innerJoin(workCallbackEvent, and(
+          eq(workCallbackEvent.id, workClientCurrent.lastEventId),
+          eq(workCallbackEvent.corpId, workClientCurrent.corpId),
+          eq(workCallbackEvent.eventKey, workClientCurrent.lastEventKey),
+          eq(workCallbackEvent.subjectKeyHash, workClientCurrent.lastEventSubjectKeyHash),
+          eq(workCallbackEvent.eventTime, workClientCurrent.lastEventTime),
+          eq(workCallbackEvent.sequenceRank, workClientCurrent.lastSequenceRank),
+        )).where(and(
+          eq(workClientCurrent.lifecycleState, "ACTIVE"),
+          eq(workClientCurrent.profileComplete, true),
+          eq(workClientCurrent.providerSnapshotComplete, true),
+          eq(workCallbackEvent.status, "ORDERED"),
+          or(
+            eq(workCallbackEvent.projectionStatus, "APPLIED"),
+            eq(workCallbackEvent.projectionStatus, "APPLIED_NOOP"),
+          ),
+          or(
+            eq(workCallbackEvent.changeType, "add_external_contact"),
+            eq(workCallbackEvent.changeType, "edit_external_contact"),
+          ),
+        ));
+      return {
+        count: Number(rows[0]?.value ?? 0),
+        blockedCurrentRows: 0,
+        authority: "enterprise_wechat_client_current",
+      };
+    }
+    const raw = await this.container.db.execute(sql`
+      WITH current_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS blocked_current_rows
+        FROM work_client_current
+      ), legacy_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS client_count
+        FROM work_client AS legacy_row
+        CROSS JOIN current_state
+        WHERE current_state.blocked_current_rows = 0
+          AND legacy_row.delete_time IS NULL
+      )
+      SELECT current_state.blocked_current_rows, legacy_state.client_count
+      FROM current_state CROSS JOIN legacy_state
+    `);
+    const row = raw[0];
+    const blockedCurrentRows = Number(row?.blocked_current_rows ?? 0);
+    return {
+      count: Number(row?.client_count ?? 0),
+      blockedCurrentRows,
+      authority: blockedCurrentRows > 0
+        ? "client_current_authority_disabled"
+        : "postgresql_imported_history",
+    };
+  }
 
   async summary() {
     const [members, activeMembers, clients, groups, channels, templates, moments, pendingGroup, pendingMoment] =
       await Promise.all([
         this.container.db.select({ value: count() }).from(workMember),
         this.container.db.select({ value: count() }).from(workMember).where(and(eq(workMember.enable, 1), eq(workMember.status, 1))),
-        this.container.db.select({ value: count() }).from(workClient).where(isNull(workClient.deleteTime)),
+        this.clientSummary(),
         this.container.db.select({ value: count() }).from(workGroupChat),
         this.container.db.select({ value: count() }).from(workChannelCode).where(isNull(workChannelCode.deleteTime)),
         this.container.db.select({ value: count() }).from(workGroupTemplate),
@@ -180,13 +350,15 @@ export class EnterpriseWechatCatalogService {
     return {
       members: Number(members[0]?.value ?? 0),
       active_members: Number(activeMembers[0]?.value ?? 0),
-      clients: Number(clients[0]?.value ?? 0),
+      clients: clients.count,
       groups: Number(groups[0]?.value ?? 0),
       channels: Number(channels[0]?.value ?? 0),
       templates: Number(templates[0]?.value ?? 0),
       moments: Number(moments[0]?.value ?? 0),
       pending_delivery_results: Number(pendingGroup[0]?.value ?? 0) + Number(pendingMoment[0]?.value ?? 0),
       ...runtimeMeta(),
+      ...clientCatalogRuntimeMeta(clients.authority),
+      blocked_client_current_rows: clients.blockedCurrentRows,
     };
   }
 
@@ -382,41 +554,166 @@ export class EnterpriseWechatCatalogService {
   async clients(query: Record<string, string>) {
     const { page, limit } = pageQuery(query);
     const search = keyword(query.keyword ?? query.name);
-    const conditions: SQL[] = [isNull(workClient.deleteTime)];
-    if (search) {
-      const pattern = like(search);
-      conditions.push(or(
-        ilike(workClient.name, pattern),
-        ilike(workClient.corpName, pattern),
-        ilike(workClient.remark, pattern),
-        ilike(workClient.externalUserid, pattern),
-      )!);
+    const pattern = like(search);
+    const searchCurrent = search
+      ? sql`AND (
+          current_row.name ILIKE ${pattern} ESCAPE '\\'
+          OR current_row.corp_name ILIKE ${pattern} ESCAPE '\\'
+          OR current_row.external_userid ILIKE ${pattern} ESCAPE '\\'
+        )`
+      : sql``;
+    const searchLegacy = search
+      ? sql`AND (
+          legacy_row.name ILIKE ${pattern} ESCAPE '\\'
+          OR legacy_row.corp_name ILIKE ${pattern} ESCAPE '\\'
+          OR legacy_row.remark ILIKE ${pattern} ESCAPE '\\'
+          OR legacy_row.external_userid ILIKE ${pattern} ESCAPE '\\'
+        )`
+      : sql``;
+    const currentAuthority = this.env.WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?.trim()
+      === "verified";
+    if (currentAuthority) {
+      const raw = await this.container.db.execute(sql`
+        WITH eligible AS MATERIALIZED (
+          SELECT current_row.*
+          FROM work_client_current AS current_row
+          INNER JOIN work_client_projection_fence AS fence
+            ON fence.corp_id = current_row.corp_id
+           AND fence.external_userid = current_row.external_userid
+           AND fence.last_event_id = current_row.last_event_id
+           AND fence.last_event_key = current_row.last_event_key
+           AND fence.last_event_subject_key_hash = current_row.last_event_subject_key_hash
+           AND fence.last_event_time = current_row.last_event_time
+           AND fence.last_sequence_rank = current_row.last_sequence_rank
+          INNER JOIN work_callback_event AS callback_event
+            ON callback_event.id = current_row.last_event_id
+           AND callback_event.corp_id = current_row.corp_id
+           AND callback_event.event_key = current_row.last_event_key
+           AND callback_event.subject_key_hash = current_row.last_event_subject_key_hash
+           AND callback_event.event_time = current_row.last_event_time
+           AND callback_event.sequence_rank = current_row.last_sequence_rank
+          WHERE current_row.lifecycle_state = 'ACTIVE'
+            AND current_row.profile_complete = true
+            AND current_row.provider_snapshot_complete = true
+            AND callback_event.status = 'ORDERED'
+            AND callback_event.projection_status IN ('APPLIED', 'APPLIED_NOOP')
+            AND callback_event.change_type IN ('add_external_contact', 'edit_external_contact')
+            ${searchCurrent}
+        ), totals AS MATERIALIZED (
+          SELECT count(*)::double precision AS total_count FROM eligible
+        ), paged AS MATERIALIZED (
+          SELECT eligible.*
+          FROM eligible
+          ORDER BY eligible.update_time DESC, eligible.id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        )
+        SELECT
+          paged.id::integer,
+          paged.external_userid,
+          paged.uid::integer,
+          paged.name,
+          paged.avatar,
+          paged.type::integer,
+          paged.gender::integer,
+          paged.unionid,
+          paged.position,
+          paged.corp_name,
+          paged.corp_full_name,
+          paged.create_time::integer,
+          paged.update_time::integer,
+          totals.total_count
+        FROM totals
+        LEFT JOIN paged ON true
+        ORDER BY paged.update_time DESC NULLS LAST, paged.id DESC NULLS LAST
+      `);
+      const rows: Array<CurrentClientCatalogRow & { total_count: number }> = [];
+      for (const rawRow of raw) {
+        if (rawRow.id === null || rawRow.id === undefined) continue;
+        rows.push(currentClientCatalogRow(rawRow));
+      }
+      return {
+        list: rows.map((row) => ({
+          id: Number(row.id),
+          external_userid: maskIdentifier(row.external_userid),
+          uid: Number(row.uid ?? 0),
+          name: row.name,
+          avatar: row.avatar ?? "",
+          type: Number(row.type),
+          gender: Number(row.gender),
+          unionid: maskIdentifier(row.unionid ?? ""),
+          position: row.position ?? "",
+          corp_name: row.corp_name ?? "",
+          corp_full_name: row.corp_full_name ?? "",
+          remark: "",
+          create_time: Number(row.create_time),
+          update_time: Number(row.update_time),
+        })),
+        count: Number(raw[0]?.total_count ?? 0),
+        ...clientCatalogRuntimeMeta("enterprise_wechat_client_current"),
+      };
     }
-    const where = and(...conditions);
-    const [rows, totals] = await Promise.all([
-      this.container.db.select().from(workClient).where(where)
-        .orderBy(desc(workClient.updateTime), desc(workClient.id)).limit(limit).offset((page - 1) * limit),
-      this.container.db.select({ value: count() }).from(workClient).where(where),
-    ]);
+
+    // Authority-off fallback and its current-row sentinel share one statement
+    // snapshot, so a first current row cannot race a stale legacy page.
+    const raw = await this.container.db.execute(sql`
+      WITH current_state AS MATERIALIZED (
+        SELECT count(*)::double precision AS blocked_current_rows
+        FROM work_client_current
+      ), eligible_legacy AS MATERIALIZED (
+        SELECT legacy_row.*
+        FROM work_client AS legacy_row
+        CROSS JOIN current_state
+        WHERE current_state.blocked_current_rows = 0
+          AND legacy_row.delete_time IS NULL
+          ${searchLegacy}
+      ), totals AS MATERIALIZED (
+        SELECT count(*)::double precision AS total_count FROM eligible_legacy
+      ), paged AS MATERIALIZED (
+        SELECT eligible_legacy.*
+        FROM eligible_legacy
+        ORDER BY eligible_legacy.update_time DESC, eligible_legacy.id DESC
+        LIMIT ${limit} OFFSET ${(page - 1) * limit}
+      )
+      SELECT current_state.blocked_current_rows, totals.total_count, paged.*
+      FROM current_state
+      CROSS JOIN totals
+      LEFT JOIN paged ON true
+      ORDER BY paged.update_time DESC NULLS LAST, paged.id DESC NULLS LAST
+    `);
+    const rows: LegacyClientCatalogRow[] = [];
+    for (const rawRow of raw) rows.push(legacyClientCatalogRow(rawRow));
+    const blockedCurrentRows = Number(rows[0]?.blocked_current_rows ?? 0);
+    if (blockedCurrentRows > 0) {
+      return {
+        list: [],
+        count: 0,
+        blocked_current_rows: blockedCurrentRows,
+        ...clientCatalogRuntimeMeta("client_current_authority_disabled"),
+      };
+    }
+    const legacyRows = rows.filter(
+      (row): row is LegacyClientCatalogRow & { id: number } => row.id !== null,
+    );
     return {
-      list: rows.map((row) => ({
+      list: legacyRows.map((row) => ({
         id: row.id,
-        external_userid: maskIdentifier(row.externalUserid),
-        uid: row.uid,
-        name: row.name,
-        avatar: row.avatar,
-        type: row.type,
-        gender: row.gender,
-        unionid: maskIdentifier(row.unionid),
-        position: row.position,
-        corp_name: row.corpName,
-        corp_full_name: row.corpFullName,
-        remark: row.remark,
-        create_time: row.createTime,
-        update_time: row.updateTime,
+        external_userid: maskIdentifier(row.external_userid ?? ""),
+        uid: Number(row.uid ?? 0),
+        name: row.name ?? "",
+        avatar: row.avatar ?? "",
+        type: Number(row.type ?? 0),
+        gender: Number(row.gender ?? 0),
+        unionid: maskIdentifier(row.unionid ?? ""),
+        position: row.position ?? "",
+        corp_name: row.corp_name ?? "",
+        corp_full_name: row.corp_full_name ?? "",
+        remark: row.remark ?? "",
+        create_time: Number(row.create_time ?? 0),
+        update_time: Number(row.update_time ?? 0),
       })),
-      count: Number(totals[0]?.value ?? 0),
+      count: Number(rows[0]?.total_count ?? 0),
       ...runtimeMeta(),
+      ...clientCatalogRuntimeMeta("postgresql_imported_history"),
     };
   }
 

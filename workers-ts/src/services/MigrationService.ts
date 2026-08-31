@@ -13,6 +13,7 @@ import {
   STORE_MOBILE_ORDER_REFUND_INDEX_SQL,
 } from "@/migrations/storeMobileCompatibility";
 import { WORK_DEPARTMENT_CURRENT_PROJECTION_SQL } from "@/migrations/workDepartmentCurrentProjection";
+import { WORK_CLIENT_CURRENT_PROJECTION_SQL } from "@/migrations/workClientCurrentProjection";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -135,6 +136,11 @@ export class MigrationService {
   /** Exact canonical Enterprise WeChat department projection DDL. */
   workDepartmentCurrentProjectionMigrationSqlForVerification(): string {
     return this.migration_0120();
+  }
+
+  /** Exact canonical Enterprise WeChat external-contact projection DDL. */
+  workClientCurrentProjectionMigrationSqlForVerification(): string {
+    return this.migration_0121();
   }
 
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
@@ -265,6 +271,7 @@ export class MigrationService {
       this.migration_0118(),
       this.migration_0119(),
       this.migration_0120(),
+      this.migration_0121(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8176,5 +8183,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0120(): string {
     return WORK_DEPARTMENT_CURRENT_PROJECTION_SQL;
+  }
+
+  private migration_0121(): string {
+    return WORK_CLIENT_CURRENT_PROJECTION_SQL;
   }
 }

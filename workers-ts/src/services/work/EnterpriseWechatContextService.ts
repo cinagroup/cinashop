@@ -13,7 +13,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import type { Env } from "@/env";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
   storeOrder,
@@ -26,8 +26,14 @@ import {
   userLabel,
   userLabelRelation,
   workClient,
+  workClientCurrent,
   workClientFollow,
+  workClientFollowCurrent,
+  workClientFollowProjectionFence,
+  workClientFollowTagCurrent,
   workClientFollowTags,
+  workClientProjectionFence,
+  workCallbackEvent,
   workGroupChat,
   workGroupChatMember,
   workMember,
@@ -61,6 +67,7 @@ const TOKEN_TTL_SECONDS = 5 * 60;
 const TOKEN_ISSUER = "cinashop-work-context";
 const MAX_QUERY_TEXT = 100;
 const MAX_PAGE = 1_000_000;
+const MAX_CURRENT_FOLLOW_TAGS = 256;
 const CUSTOMER_ORDER_REFUND_TYPES = [0, 1, 3, 6] as const;
 const ACTIVE_REFUND_TYPES = [0, 1, 2, 4, 5] as const;
 
@@ -90,11 +97,40 @@ export interface WorkContextDependencies {
   now?: () => number;
 }
 
+type ClientProjectionSource = "legacy" | "current";
+
+interface ScopedClient {
+  id: number;
+  externalUserid: string;
+  uid: number;
+  name: string;
+  avatar: string;
+  type: number;
+  gender: number;
+  position: string;
+  corpName: string;
+  remark: string;
+}
+
+interface ScopedFollow {
+  id: number | null;
+  clientId: number;
+  userid: string;
+  remark: string;
+}
+
 interface ClientScope {
   actorUserid: string;
   corpId: string;
-  client: typeof workClient.$inferSelect;
-  follow: typeof workClientFollow.$inferSelect;
+  source: ClientProjectionSource;
+  client: ScopedClient;
+  follow: ScopedFollow;
+  tags: Array<{ group_name: string | null; tag_name: string }>;
+}
+
+interface GroupClientProjection {
+  client: ScopedClient;
+  tags: string[];
 }
 
 interface GroupScope {
@@ -109,6 +145,7 @@ interface WorkContextClaims {
   actorUserid: string;
   targetId: number;
   uid: number;
+  clientProjectionSource?: ClientProjectionSource;
 }
 
 function randomHex(bytes: number): string {
@@ -310,6 +347,7 @@ export class EnterpriseWechatContextService {
         actorUserid: scope.actorUserid,
         targetId: scope.client.id,
         uid: scope.client.uid,
+        clientProjectionSource: scope.source,
       };
     } else {
       const chatId = validOpaqueIdentifier(input.target.chatId, "群聊身份");
@@ -380,9 +418,7 @@ export class EnterpriseWechatContextService {
         ? this.container.db.select({ nickname: user.nickname }).from(user)
             .where(eq(user.uid, account.spread_uid)).limit(1)
         : Promise.resolve([]),
-      this.container.db.select({ group_name: workClientFollowTags.groupName, tag_name: workClientFollowTags.tagName })
-        .from(workClientFollowTags).where(eq(workClientFollowTags.followId, scope.follow.id))
-        .orderBy(workClientFollowTags.createTime).limit(100),
+      Promise.resolve(scope.tags),
       signAttachmentReferences(this.env.APP_KEY, [client.avatar, account?.avatar ?? ""]),
     ]);
     return {
@@ -453,7 +489,7 @@ export class EnterpriseWechatContextService {
     ]);
     const employeeIds = [...new Set(relations.filter((item) => item.type === 1).map((item) => item.userid))];
     const externalIds = [...new Set(relations.filter((item) => item.type === 2).map((item) => item.userid))];
-    const [employees, clients, groupCounts] = await Promise.all([
+    const [employees, clientProjections, groupCounts] = await Promise.all([
       employeeIds.length
         ? this.container.db.select({
             userid: workMember.userid,
@@ -465,13 +501,7 @@ export class EnterpriseWechatContextService {
             inArray(workMember.userid, employeeIds),
           ))
         : Promise.resolve([]),
-      externalIds.length
-        ? this.container.db.select().from(workClient).where(and(
-            eq(workClient.corpId, scope.corpId),
-            inArray(workClient.externalUserid, externalIds),
-            isNull(workClient.deleteTime),
-          ))
-        : Promise.resolve([]),
+      this.loadGroupClientProjections(scope.corpId, scope.actorUserid, externalIds),
       externalIds.length
         ? this.container.db.select({
             userid: workGroupChatMember.userid,
@@ -488,42 +518,21 @@ export class EnterpriseWechatContextService {
         : Promise.resolve([]),
     ]);
     const employeeMap = new Map(employees.map((item) => [item.userid, item]));
-    const clientMap = new Map(clients.map((item) => [item.externalUserid, item]));
-    if (employeeMap.size !== employees.length || clientMap.size !== clients.length) {
+    if (employeeMap.size !== employees.length) {
       throw new ServiceUnavailableException("群成员关联身份存在重复，请先清理数据");
-    }
-    const followRows = clients.length
-      ? await this.container.db.select().from(workClientFollow).where(and(
-          inArray(workClientFollow.clientId, clients.map((item) => item.id)),
-          eq(workClientFollow.userid, scope.actorUserid),
-          eq(workClientFollow.isDelUser, 0),
-        ))
-      : [];
-    const followByClient = new Map(followRows.map((item) => [item.clientId, item]));
-    if (followByClient.size !== followRows.length) {
-      throw new ServiceUnavailableException("群客户跟进关系存在重复，请先清理数据");
-    }
-    const tagRows = followRows.length
-      ? await this.container.db.select().from(workClientFollowTags)
-          .where(inArray(workClientFollowTags.followId, followRows.map((item) => item.id)))
-          .orderBy(workClientFollowTags.createTime)
-      : [];
-    const tagsByFollow = new Map<number, string[]>();
-    for (const item of tagRows) {
-      tagsByFollow.set(item.followId, [...(tagsByFollow.get(item.followId) ?? []), item.tagName]);
     }
     const signed = await signAttachmentReferences(
       this.env.APP_KEY,
       relations.map((item) => item.type === 1
         ? employeeMap.get(item.userid)?.avatar ?? ""
-        : clientMap.get(item.userid)?.avatar ?? ""),
+        : clientProjections.get(item.userid)?.client.avatar ?? ""),
     );
     const counts = new Map(groupCounts.map((item) => [item.userid, Number(item.count)]));
     return {
       list: relations.map((item, index) => {
         const employee = employeeMap.get(item.userid);
-        const client = clientMap.get(item.userid);
-        const follow = client ? followByClient.get(client.id) : undefined;
+        const clientProjection = clientProjections.get(item.userid);
+        const client = clientProjection?.client;
         return {
           id: item.id,
           userid: item.userid,
@@ -538,7 +547,7 @@ export class EnterpriseWechatContextService {
             gender: client.gender,
           } : null,
           group_chat_num: Math.max(0, (counts.get(item.userid) ?? 1) - 1),
-          tags: follow ? tagsByFollow.get(follow.id) ?? [] : [],
+          tags: clientProjection?.tags ?? [],
         };
       }),
       count: Number(totals[0]?.count ?? 0),
@@ -713,13 +722,17 @@ export class EnterpriseWechatContextService {
     return { corpId, agentId };
   }
 
-  private async requireActor(corpId: string, actorUserid: string) {
+  private async requireActor(
+    corpId: string,
+    actorUserid: string,
+    transaction?: DbClient,
+  ) {
     const normalizedUserid = actorUserid.trim().toLowerCase();
     if (!normalizedUserid) throw new ForbiddenException("当前企业成员已停用或尚未同步");
     const currentAuthorityEnabled = this.env.WECHAT_WORK_MEMBER_CURRENT_AUTHORITY?.trim()
       === "verified";
 
-    return withTx(this.container, async (tx) => {
+    const validate = async (tx: DbClient) => {
       // Use the same identity lock as callback claim/finalize. This prevents a
       // new unresolved/deleted current identity from racing a stale legacy
       // fallback between separate READ COMMITTED statements.
@@ -802,7 +815,9 @@ export class EnterpriseWechatContextService {
       if (rows.length !== 1) {
         throw new ServiceUnavailableException("企业成员身份存在重复，请先清理数据");
       }
-    });
+    };
+    if (transaction) return validate(transaction);
+    await withTx(this.container, validate);
   }
 
   private async requireClientScope(
@@ -810,41 +825,537 @@ export class EnterpriseWechatContextService {
     actorUserid: string,
     externalUserid: string,
   ): Promise<ClientScope> {
-    await this.requireActor(corpId, actorUserid);
-    const clients = await this.container.db.select().from(workClient).where(and(
+    const normalizedActor = actorUserid.trim().toLowerCase();
+    return withTx(this.container, async (tx) => {
+      // Keep the member identity lock until the client authorization snapshot
+      // is complete, so a member tombstone cannot race token issuance.
+      await this.requireActor(corpId, normalizedActor, tx);
+      await this.lockClientScope(tx, corpId, externalUserid);
+      const currentRows = await tx.select().from(workClientCurrent).where(and(
+        eq(workClientCurrent.corpId, corpId),
+        eq(workClientCurrent.externalUserid, externalUserid),
+      )).limit(2);
+      if (currentRows.length > 1) {
+        throw new ServiceUnavailableException("客户当前身份存在重复，请先清理数据");
+      }
+      if (currentRows[0]) {
+        return this.requireCurrentClientScope(tx, currentRows[0], normalizedActor);
+      }
+      return this.requireLegacyClientScopeByExternal(
+        tx,
+        corpId,
+        normalizedActor,
+        externalUserid,
+      );
+    });
+  }
+
+  private async requireClientScopeById(claims: WorkContextClaims): Promise<ClientScope> {
+    const normalizedActor = claims.actorUserid.trim().toLowerCase();
+    if (!claims.clientProjectionSource) {
+      throw new ForbiddenException("客户投影来源已升级，请重新授权");
+    }
+    if (claims.clientProjectionSource === "current") {
+      return withTx(this.container, async (tx) => {
+        await this.requireActor(claims.corpId, normalizedActor, tx);
+        const seed = (await tx.select({
+          externalUserid: workClientCurrent.externalUserid,
+        }).from(workClientCurrent).where(and(
+          eq(workClientCurrent.corpId, claims.corpId),
+          eq(workClientCurrent.id, claims.targetId),
+        )).limit(1))[0];
+        if (!seed) throw new ForbiddenException("客户上下文已发生变化，请重新授权");
+        await this.lockClientScope(tx, claims.corpId, seed.externalUserid);
+        const current = (await tx.select().from(workClientCurrent).where(and(
+          eq(workClientCurrent.corpId, claims.corpId),
+          eq(workClientCurrent.id, claims.targetId),
+          eq(workClientCurrent.externalUserid, seed.externalUserid),
+        )).limit(1))[0];
+        if (!current || Number(current.uid ?? 0) !== claims.uid) {
+          throw new ForbiddenException("客户上下文已发生变化，请重新授权");
+        }
+        return this.requireCurrentClientScope(tx, current, normalizedActor);
+      });
+    }
+
+    return withTx(this.container, async (tx) => {
+      await this.requireActor(claims.corpId, normalizedActor, tx);
+      const seed = (await tx.select({
+        externalUserid: workClient.externalUserid,
+      }).from(workClient).where(and(
+        eq(workClient.corpId, claims.corpId),
+        eq(workClient.id, claims.targetId),
+      )).limit(1))[0];
+      if (!seed) throw new ForbiddenException("客户上下文已发生变化，请重新授权");
+      await this.lockClientScope(tx, claims.corpId, seed.externalUserid);
+      const currentSentinel = await tx.select({ id: workClientCurrent.id })
+        .from(workClientCurrent).where(and(
+          eq(workClientCurrent.corpId, claims.corpId),
+          eq(workClientCurrent.externalUserid, seed.externalUserid),
+        )).limit(1);
+      if (currentSentinel.length) {
+        throw new ForbiddenException("客户投影来源已发生变化，请重新授权");
+      }
+      const scope = await this.requireLegacyClientScopeById(
+        tx,
+        claims.corpId,
+        normalizedActor,
+        claims.targetId,
+      );
+      if (scope.client.uid !== claims.uid) {
+        throw new ForbiddenException("客户上下文已发生变化，请重新授权");
+      }
+      return scope;
+    });
+  }
+
+  private async lockClientScope(
+    tx: DbClient,
+    corpId: string,
+    externalUserid: string,
+  ): Promise<void> {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(
+      hashtextextended(${`work-client:${corpId}:${externalUserid}`}, 0)
+    )`);
+  }
+
+  private currentAuthorityEnabled(): boolean {
+    return this.env.WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?.trim() === "verified";
+  }
+
+  private async requireCurrentClientScope(
+    tx: DbClient,
+    current: typeof workClientCurrent.$inferSelect,
+    actorUserid: string,
+  ): Promise<ClientScope> {
+    if (!this.currentAuthorityEnabled()) {
+      throw new ForbiddenException("客户当前投影尚未通过启用验收");
+    }
+    if (
+      current.lifecycleState !== "ACTIVE"
+      || !current.profileComplete
+      || !current.providerSnapshotComplete
+      || current.lastEventId === null
+    ) {
+      throw new ForbiddenException("客户当前投影尚未完整同步");
+    }
+    const profile = (await tx.select().from(workClientProjectionFence).where(and(
+      eq(workClientProjectionFence.corpId, current.corpId),
+      eq(workClientProjectionFence.externalUserid, current.externalUserid),
+    )).limit(1))[0];
+    if (!profile || !this.sameProjectionTuple(current, profile)) {
+      throw new ForbiddenException("客户当前资料与最新事件不一致");
+    }
+    const profileEvent = (await tx.select().from(workCallbackEvent).where(and(
+      eq(workCallbackEvent.id, current.lastEventId),
+      eq(workCallbackEvent.corpId, current.corpId),
+      eq(workCallbackEvent.eventKey, current.lastEventKey!),
+      eq(workCallbackEvent.subjectKeyHash, current.lastEventSubjectKeyHash!),
+      eq(workCallbackEvent.eventTime, current.lastEventTime),
+      eq(workCallbackEvent.sequenceRank, current.lastSequenceRank),
+    )).limit(1))[0];
+    if (!this.appliedClientSnapshotEvent(profileEvent)) {
+      throw new ForbiddenException("客户当前资料尚未完成事件确认");
+    }
+
+    const follow = (await tx.select().from(workClientFollowCurrent).where(and(
+      eq(workClientFollowCurrent.corpId, current.corpId),
+      eq(workClientFollowCurrent.clientId, current.id),
+      eq(workClientFollowCurrent.userid, actorUserid),
+    )).limit(1))[0];
+    if (
+      !follow
+      || follow.lifecycleState !== "ACTIVE"
+      || !follow.profileComplete
+      || !follow.tagsComplete
+    ) {
+      throw new ForbiddenException("当前成员无权查看该客户");
+    }
+    const followEvent = (await tx.select().from(workCallbackEvent).where(and(
+      eq(workCallbackEvent.id, follow.lastEventId),
+      eq(workCallbackEvent.corpId, current.corpId),
+      eq(workCallbackEvent.eventKey, follow.lastEventKey),
+      eq(workCallbackEvent.subjectKeyHash, follow.lastEventSubjectKeyHash),
+      eq(workCallbackEvent.eventTime, follow.lastEventTime),
+      eq(workCallbackEvent.sequenceRank, follow.lastSequenceRank),
+    )).limit(1))[0];
+    if (!this.appliedClientSnapshotEvent(followEvent)) {
+      throw new ForbiddenException("客户跟进关系尚未完成事件确认");
+    }
+    const direct = (await tx.select().from(workClientFollowProjectionFence).where(and(
+      eq(workClientFollowProjectionFence.corpId, current.corpId),
+      eq(workClientFollowProjectionFence.clientId, current.id),
+      eq(workClientFollowProjectionFence.userid, actorUserid),
+    )).limit(1))[0];
+    if (follow.sourceKind === "DIRECT") {
+      if (!direct || !this.sameProjectionTuple(follow, direct)) {
+        throw new ForbiddenException("客户跟进关系与最新事件不一致");
+      }
+    } else if (follow.sourceKind === "SNAPSHOT") {
+      if (direct) throw new ForbiddenException("客户跟进关系正在等待直接事件确认");
+    } else {
+      throw new ForbiddenException("客户跟进关系来源无效");
+    }
+    const tags = await tx.select({
+      group_name: workClientFollowTagCurrent.groupName,
+      tag_name: workClientFollowTagCurrent.tagName,
+    }).from(workClientFollowTagCurrent).where(and(
+      eq(workClientFollowTagCurrent.corpId, current.corpId),
+      eq(workClientFollowTagCurrent.clientId, current.id),
+      eq(workClientFollowTagCurrent.userid, actorUserid),
+    )).orderBy(workClientFollowTagCurrent.sortOrder).limit(MAX_CURRENT_FOLLOW_TAGS);
+    return {
+      actorUserid,
+      corpId: current.corpId,
+      source: "current",
+      client: {
+        id: current.id,
+        externalUserid: current.externalUserid,
+        uid: Number(current.uid ?? 0),
+        name: current.name ?? "",
+        avatar: current.avatar ?? "",
+        type: Number(current.type ?? 0),
+        gender: Number(current.gender ?? 0),
+        position: current.position ?? "",
+        corpName: current.corpName ?? "",
+        remark: "",
+      },
+      follow: {
+        id: null,
+        clientId: current.id,
+        userid: actorUserid,
+        remark: follow.remark ?? "",
+      },
+      tags,
+    };
+  }
+
+  private sameProjectionTuple(
+    left: {
+      lastEventId: number | null;
+      lastEventKey: string | null;
+      lastEventSubjectKeyHash: string | null;
+      lastEventTime: number;
+      lastSequenceRank: number;
+    },
+    right: {
+      lastEventId: number | null;
+      lastEventKey: string | null;
+      lastEventSubjectKeyHash: string | null;
+      lastEventTime: number;
+      lastSequenceRank: number;
+    },
+  ): boolean {
+    return left.lastEventId === right.lastEventId
+      && left.lastEventKey === right.lastEventKey
+      && left.lastEventSubjectKeyHash === right.lastEventSubjectKeyHash
+      && left.lastEventTime === right.lastEventTime
+      && left.lastSequenceRank === right.lastSequenceRank;
+  }
+
+  private appliedClientSnapshotEvent(
+    event: typeof workCallbackEvent.$inferSelect | undefined,
+  ): boolean {
+    return !!event
+      && event.status === "ORDERED"
+      && (event.projectionStatus === "APPLIED" || event.projectionStatus === "APPLIED_NOOP")
+      && (event.changeType === "add_external_contact" || event.changeType === "edit_external_contact");
+  }
+
+  private async requireLegacyClientScopeByExternal(
+    tx: DbClient,
+    corpId: string,
+    actorUserid: string,
+    externalUserid: string,
+  ): Promise<ClientScope> {
+    const clients = await tx.select().from(workClient).where(and(
       eq(workClient.corpId, corpId),
       eq(workClient.externalUserid, externalUserid),
       isNull(workClient.deleteTime),
     )).limit(2);
     if (!clients.length) throw new NotFoundException("客户尚未同步到本地");
     if (clients.length !== 1) throw new ServiceUnavailableException("客户身份存在重复，请先清理数据");
-    const follows = await this.container.db.select().from(workClientFollow).where(and(
-      eq(workClientFollow.clientId, clients[0].id),
-      eq(workClientFollow.userid, actorUserid),
+    return this.requireLegacyClientFollow(tx, corpId, actorUserid, clients[0]);
+  }
+
+  private async requireLegacyClientScopeById(
+    tx: DbClient,
+    corpId: string,
+    actorUserid: string,
+    clientId: number,
+  ): Promise<ClientScope> {
+    const client = (await tx.select().from(workClient).where(and(
+      eq(workClient.id, clientId),
+      eq(workClient.corpId, corpId),
+      isNull(workClient.deleteTime),
+    )).limit(1))[0];
+    if (!client) throw new ForbiddenException("客户上下文已发生变化，请重新授权");
+    return this.requireLegacyClientFollow(tx, corpId, actorUserid, client);
+  }
+
+  private async requireLegacyClientFollow(
+    tx: DbClient,
+    corpId: string,
+    actorUserid: string,
+    client: typeof workClient.$inferSelect,
+  ): Promise<ClientScope> {
+    const follows = await tx.select().from(workClientFollow).where(and(
+      eq(workClientFollow.clientId, client.id),
+      sql`lower(${workClientFollow.userid}) = ${actorUserid}`,
       eq(workClientFollow.isDelUser, 0),
     )).limit(2);
     if (!follows.length) throw new ForbiddenException("当前成员无权查看该客户");
     if (follows.length !== 1) throw new ServiceUnavailableException("客户跟进关系存在重复，请先清理数据");
-    return { actorUserid, corpId, client: clients[0], follow: follows[0] };
+    const tags = await tx.select({
+      group_name: workClientFollowTags.groupName,
+      tag_name: workClientFollowTags.tagName,
+    }).from(workClientFollowTags).where(eq(
+      workClientFollowTags.followId,
+      follows[0].id,
+    )).orderBy(workClientFollowTags.createTime).limit(100);
+    return {
+      actorUserid,
+      corpId,
+      source: "legacy",
+      client: {
+        id: client.id,
+        externalUserid: client.externalUserid,
+        uid: client.uid,
+        name: client.name,
+        avatar: client.avatar,
+        type: client.type,
+        gender: client.gender,
+        position: client.position,
+        corpName: client.corpName,
+        remark: client.remark,
+      },
+      follow: {
+        id: follows[0].id,
+        clientId: client.id,
+        userid: actorUserid,
+        remark: follows[0].remark,
+      },
+      tags,
+    };
   }
 
-  private async requireClientScopeById(claims: WorkContextClaims): Promise<ClientScope> {
-    await this.requireActor(claims.corpId, claims.actorUserid);
-    const clients = await this.container.db.select().from(workClient).where(and(
-      eq(workClient.id, claims.targetId),
-      eq(workClient.corpId, claims.corpId),
-      isNull(workClient.deleteTime),
-    )).limit(1);
-    if (!clients[0] || clients[0].uid !== claims.uid) {
-      throw new ForbiddenException("客户上下文已发生变化，请重新授权");
-    }
-    const follows = await this.container.db.select().from(workClientFollow).where(and(
-      eq(workClientFollow.clientId, clients[0].id),
-      eq(workClientFollow.userid, claims.actorUserid),
-      eq(workClientFollow.isDelUser, 0),
-    )).limit(2);
-    if (follows.length !== 1) throw new ForbiddenException("客户跟进权限已发生变化，请重新授权");
-    return { actorUserid: claims.actorUserid, corpId: claims.corpId, client: clients[0], follow: follows[0] };
+  private async loadGroupClientProjections(
+    corpId: string,
+    actorUserid: string,
+    externalUserids: string[],
+  ): Promise<Map<string, GroupClientProjection>> {
+    if (!externalUserids.length) return new Map();
+    const identities = [...new Set(externalUserids)].sort();
+    return withTx(this.container, async (tx) => {
+      // Callback projection writers take the same locks. Sorting makes this
+      // bounded multi-client read compatible with concurrent callback batches.
+      for (const externalUserid of identities) {
+        await this.lockClientScope(tx, corpId, externalUserid);
+      }
+      const currentRows = await tx.select().from(workClientCurrent).where(and(
+        eq(workClientCurrent.corpId, corpId),
+        inArray(workClientCurrent.externalUserid, identities),
+      ));
+      const currentIdentitySet = new Set(currentRows.map((row) => row.externalUserid));
+      if (currentIdentitySet.size !== currentRows.length) {
+        throw new ServiceUnavailableException("群客户当前身份存在重复，请先清理数据");
+      }
+      const output = new Map<string, GroupClientProjection>();
+      if (currentRows.length && this.currentAuthorityEnabled()) {
+        const eligible = await tx.select({ client: workClientCurrent })
+          .from(workClientCurrent)
+          .innerJoin(workClientProjectionFence, and(
+            eq(workClientProjectionFence.corpId, workClientCurrent.corpId),
+            eq(workClientProjectionFence.externalUserid, workClientCurrent.externalUserid),
+            eq(workClientProjectionFence.lastEventId, workClientCurrent.lastEventId),
+            eq(workClientProjectionFence.lastEventKey, workClientCurrent.lastEventKey),
+            eq(
+              workClientProjectionFence.lastEventSubjectKeyHash,
+              workClientCurrent.lastEventSubjectKeyHash,
+            ),
+            eq(workClientProjectionFence.lastEventTime, workClientCurrent.lastEventTime),
+            eq(workClientProjectionFence.lastSequenceRank, workClientCurrent.lastSequenceRank),
+          ))
+          .innerJoin(workCallbackEvent, and(
+            eq(workCallbackEvent.id, workClientCurrent.lastEventId),
+            eq(workCallbackEvent.corpId, workClientCurrent.corpId),
+            eq(workCallbackEvent.eventKey, workClientCurrent.lastEventKey),
+            eq(workCallbackEvent.subjectKeyHash, workClientCurrent.lastEventSubjectKeyHash),
+            eq(workCallbackEvent.eventTime, workClientCurrent.lastEventTime),
+            eq(workCallbackEvent.sequenceRank, workClientCurrent.lastSequenceRank),
+          ))
+          .where(and(
+            eq(workClientCurrent.corpId, corpId),
+            inArray(workClientCurrent.externalUserid, identities),
+            eq(workClientCurrent.lifecycleState, "ACTIVE"),
+            eq(workClientCurrent.profileComplete, true),
+            eq(workClientCurrent.providerSnapshotComplete, true),
+            eq(workCallbackEvent.status, "ORDERED"),
+            inArray(workCallbackEvent.projectionStatus, ["APPLIED", "APPLIED_NOOP"]),
+            inArray(workCallbackEvent.changeType, ["add_external_contact", "edit_external_contact"]),
+          ));
+        const eligibleIds = eligible.map(({ client }) => client.id);
+        const follows = eligibleIds.length
+          ? await tx.select({
+              follow: workClientFollowCurrent,
+              direct: workClientFollowProjectionFence,
+            }).from(workClientFollowCurrent)
+              .innerJoin(workCallbackEvent, and(
+                eq(workCallbackEvent.id, workClientFollowCurrent.lastEventId),
+                eq(workCallbackEvent.corpId, workClientFollowCurrent.corpId),
+                eq(workCallbackEvent.eventKey, workClientFollowCurrent.lastEventKey),
+                eq(
+                  workCallbackEvent.subjectKeyHash,
+                  workClientFollowCurrent.lastEventSubjectKeyHash,
+                ),
+                eq(workCallbackEvent.eventTime, workClientFollowCurrent.lastEventTime),
+                eq(workCallbackEvent.sequenceRank, workClientFollowCurrent.lastSequenceRank),
+              ))
+              .leftJoin(workClientFollowProjectionFence, and(
+                eq(
+                  workClientFollowProjectionFence.corpId,
+                  workClientFollowCurrent.corpId,
+                ),
+                eq(
+                  workClientFollowProjectionFence.clientId,
+                  workClientFollowCurrent.clientId,
+                ),
+                eq(workClientFollowProjectionFence.userid, workClientFollowCurrent.userid),
+              ))
+              .where(and(
+                eq(workClientFollowCurrent.corpId, corpId),
+                inArray(workClientFollowCurrent.clientId, eligibleIds),
+                eq(workClientFollowCurrent.userid, actorUserid),
+                eq(workClientFollowCurrent.lifecycleState, "ACTIVE"),
+                eq(workClientFollowCurrent.profileComplete, true),
+                eq(workClientFollowCurrent.tagsComplete, true),
+                eq(workCallbackEvent.status, "ORDERED"),
+                inArray(workCallbackEvent.projectionStatus, ["APPLIED", "APPLIED_NOOP"]),
+                inArray(workCallbackEvent.changeType, ["add_external_contact", "edit_external_contact"]),
+                or(
+                  and(
+                    eq(workClientFollowCurrent.sourceKind, "DIRECT"),
+                    eq(
+                      workClientFollowProjectionFence.lastEventId,
+                      workClientFollowCurrent.lastEventId,
+                    ),
+                    eq(
+                      workClientFollowProjectionFence.lastEventKey,
+                      workClientFollowCurrent.lastEventKey,
+                    ),
+                    eq(
+                      workClientFollowProjectionFence.lastEventSubjectKeyHash,
+                      workClientFollowCurrent.lastEventSubjectKeyHash,
+                    ),
+                    eq(
+                      workClientFollowProjectionFence.lastEventTime,
+                      workClientFollowCurrent.lastEventTime,
+                    ),
+                    eq(
+                      workClientFollowProjectionFence.lastSequenceRank,
+                      workClientFollowCurrent.lastSequenceRank,
+                    ),
+                  ),
+                  and(
+                    eq(workClientFollowCurrent.sourceKind, "SNAPSHOT"),
+                    isNull(workClientFollowProjectionFence.clientId),
+                  ),
+                ),
+              ))
+          : [];
+        const followClientIds = follows.map(({ follow }) => follow.clientId);
+        const tags = followClientIds.length
+          ? await tx.select().from(workClientFollowTagCurrent).where(and(
+              eq(workClientFollowTagCurrent.corpId, corpId),
+              inArray(workClientFollowTagCurrent.clientId, followClientIds),
+              eq(workClientFollowTagCurrent.userid, actorUserid),
+            )).orderBy(
+              workClientFollowTagCurrent.clientId,
+              workClientFollowTagCurrent.sortOrder,
+            )
+          : [];
+        const tagsByClient = new Map<number, string[]>();
+        for (const tag of tags) {
+          tagsByClient.set(tag.clientId, [
+            ...(tagsByClient.get(tag.clientId) ?? []),
+            tag.tagName,
+          ]);
+        }
+        const followIds = new Set(followClientIds);
+        for (const { client } of eligible) {
+          output.set(client.externalUserid, {
+            client: {
+              id: client.id,
+              externalUserid: client.externalUserid,
+              uid: Number(client.uid ?? 0),
+              name: client.name ?? "",
+              avatar: client.avatar ?? "",
+              type: Number(client.type ?? 0),
+              gender: Number(client.gender ?? 0),
+              position: client.position ?? "",
+              corpName: client.corpName ?? "",
+              remark: "",
+            },
+            tags: followIds.has(client.id) ? tagsByClient.get(client.id) ?? [] : [],
+          });
+        }
+      }
+
+      const legacyIdentities = identities.filter((identity) => !currentIdentitySet.has(identity));
+      if (!legacyIdentities.length) return output;
+      const legacyClients = await tx.select().from(workClient).where(and(
+        eq(workClient.corpId, corpId),
+        inArray(workClient.externalUserid, legacyIdentities),
+        isNull(workClient.deleteTime),
+      ));
+      const legacyByIdentity = new Map(legacyClients.map((client) => [client.externalUserid, client]));
+      if (legacyByIdentity.size !== legacyClients.length) {
+        throw new ServiceUnavailableException("群客户身份存在重复，请先清理数据");
+      }
+      const legacyFollows = legacyClients.length
+        ? await tx.select().from(workClientFollow).where(and(
+            inArray(workClientFollow.clientId, legacyClients.map((client) => client.id)),
+            sql`lower(${workClientFollow.userid}) = ${actorUserid}`,
+            eq(workClientFollow.isDelUser, 0),
+          ))
+        : [];
+      const followByClient = new Map(legacyFollows.map((follow) => [follow.clientId, follow]));
+      if (followByClient.size !== legacyFollows.length) {
+        throw new ServiceUnavailableException("群客户跟进关系存在重复，请先清理数据");
+      }
+      const legacyTags = legacyFollows.length
+        ? await tx.select().from(workClientFollowTags).where(inArray(
+            workClientFollowTags.followId,
+            legacyFollows.map((follow) => follow.id),
+          )).orderBy(workClientFollowTags.createTime)
+        : [];
+      const tagsByFollow = new Map<number, string[]>();
+      for (const tag of legacyTags) {
+        tagsByFollow.set(tag.followId, [
+          ...(tagsByFollow.get(tag.followId) ?? []),
+          tag.tagName,
+        ]);
+      }
+      for (const client of legacyClients) {
+        const follow = followByClient.get(client.id);
+        output.set(client.externalUserid, {
+          client: {
+            id: client.id,
+            externalUserid: client.externalUserid,
+            uid: client.uid,
+            name: client.name,
+            avatar: client.avatar,
+            type: client.type,
+            gender: client.gender,
+            position: client.position,
+            corpName: client.corpName,
+            remark: client.remark,
+          },
+          tags: follow ? tagsByFollow.get(follow.id) ?? [] : [],
+        });
+      }
+      return output;
+    });
   }
 
   private async requireGroupScope(
@@ -904,6 +1415,7 @@ export class EnterpriseWechatContextService {
       actor_userid: claims.actorUserid,
       target_id: claims.targetId,
       uid: claims.uid,
+      client_projection_source: claims.clientProjectionSource,
     }).setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setIssuer(TOKEN_ISSUER)
       .setAudience(audience)
@@ -928,6 +1440,7 @@ export class EnterpriseWechatContextService {
       const actorUserid = payload.actor_userid;
       const targetId = Number(payload.target_id);
       const uid = Number(payload.uid ?? 0);
+      const clientProjectionSource = payload.client_projection_source;
       const expectedKind: "client" | "group" = audience === "work-client" ? "client" : "group";
       if (
         kind !== expectedKind
@@ -937,8 +1450,20 @@ export class EnterpriseWechatContextService {
         || targetId <= 0
         || !Number.isSafeInteger(uid)
         || uid < 0
+        || (expectedKind === "client"
+          && clientProjectionSource !== "legacy"
+          && clientProjectionSource !== "current")
       ) throw new Error("invalid claims");
-      return { kind: expectedKind, corpId, actorUserid, targetId, uid };
+      return {
+        kind: expectedKind,
+        corpId,
+        actorUserid,
+        targetId,
+        uid,
+        clientProjectionSource: expectedKind === "client"
+          ? clientProjectionSource as ClientProjectionSource
+          : undefined,
+      };
     } catch (error) {
       if (error instanceof ServiceUnavailableException) throw error;
       throw new ForbiddenException("企业微信上下文令牌无效或已过期");

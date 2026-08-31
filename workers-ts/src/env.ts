@@ -80,6 +80,10 @@ export interface Env extends WorkerBindings {
   WECHAT_WORK_DEPARTMENT_CURRENT_AUTHORITY?: string;
   /** Least-privilege Enterprise WeChat customer-contact credential for client/group/tag reads. */
   WECHAT_WORK_EXTERNAL_CONTACT_SECRET?: string;
+  /** Set to `verified` only after a full external-contact visibility acceptance test. */
+  WECHAT_WORK_EXTERNAL_CONTACT_FULL_VISIBILITY?: string;
+  /** Set to `verified` only after client/follow current projection cutover gates pass. */
+  WECHAT_WORK_CLIENT_CURRENT_AUTHORITY?: string;
   /** Enterprise WeChat callback token. Never store it in system_config. */
   WECHAT_WORK_CALLBACK_TOKEN?: string;
   /** Enterprise WeChat 43-character callback EncodingAESKey. */
