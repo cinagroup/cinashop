@@ -1820,7 +1820,7 @@ HTTP 使用 `X-Visitor-Token`，WebSocket 使用 `cinashop-visitor.<token>`；�
 
 路由审计现在为 PHP 1,904、Workers 1,393、精确匹配 697、可执行匹配 679、明确不可用 18、原始缺失 1,207、证据化退役 4、可执行缺口 1,203；精确/可执行/退役后有效覆盖为 36.6%/35.7%/35.7%。`/kefuapi` 为 PHP 63、Workers 65、精确/可执行 60、原始缺失 3、退役 3、`actionableMissing=0`，退役后有效可执行覆盖为 100%。这表示有实现决策的客服路由缺口已清零，不表示客服业务数据或生产运行完成。
 
-全量 134 个 Worker 单元测试文件/781 项、双 TypeScript 配置、Kefu 7 项 reducer/作用域测试与生产构建、UniApp 类型检查和主 Worker minify dry-run均通过；主包为 2,562.30 KiB/gzip 634.18 KiB。Windows Workers runtime仍受既有 `workerd 0xc0000005` 阻断，不能把 Node/Vite/类型结果记为真实 runtime 通过。
+全量 134 个 Worker 单元测试文件/781 项、双 TypeScript 配置、Kefu 7 项 reducer/作用域测试与生产构建、UniApp 类型检查和主 Worker minify dry-run均通过；主包为 2,562.30 KiB/gzip 634.18 KiB。历史 Windows Workers runtime仍受 `workerd 0xc0000005` 阻断；现由提交 `b09c2c9bb823219f68f76ac40b4f25d2d46f15b3` 的 [GitHub Actions 33373018752](https://github.com/cinagroup/cinashop/actions/runs/33373018752) 在 Ubuntu 24.04/Node 24.14.1 真实 workerd 运行 1 文件/10 项并全部通过，其中两项覆盖 ChatRoomDO 非法握手拒绝、101 子协议、tagged attachment、驱逐/恢复、错误 token 不撤销和精确 token `4001` 撤销。`setOnline/setDisconnected` 在同 isolate 中替身以禁止测试访问 PostgreSQL，因此该证据关闭 WebSocket/DO runtime 缺口，不替代 Hyperdrive 消息持久化正向 E2E。
 
 - [x] 完成剩余四条 PHP 精确合同的安全权限拆分、签名游客会话、客服分配、实时/未读/转接作用域和独立 R2 owner。
 - [x] 在生产 PostgreSQL 16.14 随机 schema 验证 UID 序列、约束、重放和回滚，并对生产完整 DDL执行至少两次幂等复核；业务指纹不变，临时 Worker/schema 已删除。
@@ -1829,7 +1829,8 @@ HTTP 使用 `X-Visitor-Token`，WebSocket 使用 `cinashop-visitor.<token>`；�
 - [ ] 以受限测试客服和匿名浏览器/真机验证创建限流、token 过期/撤销、WebSocket hibernation、图片 R2、未读、并发发送与游客转接；当前空客服数据无法提供正向生产 E2E。
 - [x] 以 PC `/service` 替换旧 Admin 项目中面向顾客的 `appChat`，移除 URL bearer 与客户端自报 `tourist_uid`，接入签名游客会话并完成本地桌面/移动浏览器合同验收。
 - [ ] 完成旧 `appChat` 生产退流与真实账号/游客兼容验收；补齐开放平台与面单配置/Secrets 后再验证扫码/OAuth和模板目录。
-- [ ] 解决或绕开本机 `workerd 0xc0000005`，在 Linux CI/兼容主机运行 runtime WebSocket/DO 测试；随后完成预发、影子流量、明确发布批准和发布后观察。主 Worker与前端当前均未发布。
+- [x] Linux runtime WebSocket/DO：真实 101 握手、hibernation attachment 驱逐/恢复与 token 撤销已由 Actions `33373018752` 通过；Windows `0xc0000005` 降为本机环境缺陷。
+- [ ] 完成预发、影子流量、明确发布批准和发布后观察；主 Worker与前端当前均未发布。
 
 ## KEFU-PC 旧 appChat 安全替换审计（2026-08-29）
 
@@ -1849,7 +1850,7 @@ Vite 的 `/api`、`/kefuapi` 都启用 WebSocket 代理；Cloudflare Pages Funct
 
 本批重新核查迁移工具所需连接条件：`SOURCE_MYSQL_URL=false`、`TARGET_POSTGRES_URL=false`，旧 PHP 根目录没有 `.env`，本机没有 3306 监听或 MySQL/MariaDB 服务。生产 PostgreSQL/Hyperdrive 已在上一批直接完成 `0104` 幂等 DDL与业务指纹复核，但源库不可达时无法可信复制客服账号、密码、UID 绑定、会话/消息、话术/分类和游客内容；本批未写生产业务数据、未部署主 Worker或前端。
 
-路由量化保持 PHP 1,904、Workers 1,393、精确匹配 697、可执行匹配 679、明确不可用 18、原始缺失 1,207、退役 4、可执行缺口 1,203，覆盖为 36.6%/35.7%/35.7%；客服域 60/63 可执行，余下 3 条均有源证据退役，`actionableMissing=0`、有效覆盖 100%。Worker 双 TypeScript 配置、134 个单元测试文件/782 项、PC 生产构建和 Pages Functions 编译通过；新增客服 chunk 为 CSS 4.40 KiB/gzip 1.46 KiB、JS 10.83 KiB/gzip 4.78 KiB。PC 主入口仍为 1,099.76 KiB/gzip 365.76 KiB，是全局性能待办而非本批回归。Windows runtime 的既有 `workerd 0xc0000005` 仍未解决。
+路由量化保持 PHP 1,904、Workers 1,393、精确匹配 697、可执行匹配 679、明确不可用 18、原始缺失 1,207、退役 4、可执行缺口 1,203，覆盖为 36.6%/35.7%/35.7%；客服域 60/63 可执行，余下 3 条均有源证据退役，`actionableMissing=0`、有效覆盖 100%。Worker 双 TypeScript 配置、134 个单元测试文件/782 项、PC 生产构建和 Pages Functions 编译通过；新增客服 chunk 为 CSS 4.40 KiB/gzip 1.46 KiB、JS 10.83 KiB/gzip 4.78 KiB。PC 主入口仍为 1,099.76 KiB/gzip 365.76 KiB，是全局性能待办而非本批回归。Windows runtime 的 `workerd 0xc0000005` 仍未解决，但已由 Ubuntu Actions `33373018752` 的 ChatRoomDO 真实握手/hibernation/token 撤销覆盖替代为受支持主机门禁；生产客服数据、R2 与 Hyperdrive 正向流程仍未完成。
 
 - [x] 完成旧 `appChat` 身份/传输/渲染审计，并在新 PC 同时接入注册用户和签名游客协议。
 - [x] 保留 Pages/Vite WebSocket 升级，验证 URL 无 bearer/随机游客 UID，游客断线失败关闭且发送不双写。
@@ -1946,7 +1947,7 @@ UniApp 新增认证扫码确认页：未登录先进入登录并返回，批准�
 
 最新注释感知审计为 PHP 1,904、Workers 1,404、精确匹配 706、可执行匹配 688、明确不可用 18、原始缺失 1,198、证据化退役 4、可执行缺口 1,194；精确/可执行/退役后有效覆盖为 37.1%/36.1%/36.2%。`/api` 为 PHP 457、Workers 715、精确匹配 324、可执行匹配 321、明确不可用 3、原始缺失 133、退役 1、可执行缺口 132，对应覆盖 70.9%/70.2%/70.4%。本批九条合同全部精确且可执行，相对前一批把全局和 `/api` 可执行缺口各减少 9。
 
-Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签到奖励边界共 27/27；双 TypeScript 配置、PC 生产 build、UniApp typecheck/H5 build 均通过。主 Worker minify dry-run 为 2,607.61 KiB/gzip 647.22 KiB。Windows runtime仍在进入断言前受既有 `workerd 0xc0000005` 阻断，不能记为 runtime 通过。生产随机 schema 真实 service 13/13 已补齐，但没有使用真实生产 token 执行地址、收藏和签到的正向 HTTP E2E。
+Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签到奖励边界共 27/27；双 TypeScript 配置、PC 生产 build、UniApp typecheck/H5 build 均通过。主 Worker minify dry-run 为 2,607.61 KiB/gzip 647.22 KiB。Windows runtime仍在进入断言前受 `workerd 0xc0000005` 阻断，但受支持的 Ubuntu workerd 已由 Actions `33373018752` 运行 1 文件/10 项通过；这只关闭通用绑定/Queue/DO/WebSocket runtime 门禁。生产随机 schema 真实 service 13/13 已补齐，但没有使用真实生产 token 执行地址、收藏和签到的正向 HTTP E2E。
 
 - [x] 九条地址/收藏/签到 PHP 精确路由及强制认证边界已注册；18 个个性化 handler 均为 `private, no-store`，BaseDao 空条件读写已失败关闭。
 - [x] PC 收藏、UniApp 地址/收藏/签到已接入新合同，并通过类型检查和生产构建。
@@ -1961,7 +1962,8 @@ Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签
 - [ ] 恢复 `sign_remind_time` 定时扫描、可重试消费和 `notice` 通知投递，验证关闭偏好、不重复发送、失败重试及按上海日界线选择用户；当前只有提醒偏好端点。
 - [x] 可选登录 `GET /api/diy/sign`（PHP `homeDiysignData`）已由 DIY-HOME-WIDGETS 服务端批次补齐；真实旧客户端 token/E2E 仍属于发布门禁。
 - [ ] 继续补活动详情中秒杀/拼团/砍价装饰与水印兼容；这些跨域展示细节不能因本批收藏字段稳定而视为完成。
-- [ ] 在 Linux/兼容主机运行 Workers runtime，完成预发、影子流量、明确发布批准和发布后观察；主 Worker与 PC/UniApp当前均未发布。
+- [x] Linux/兼容主机 Workers runtime 已由 Ubuntu Actions `33373018752` 的 1 文件/10 项通过；Windows崩溃不再阻断该门禁。
+- [ ] 完成预发、影子流量、明确发布批准和发布后观察；主 Worker与 PC/UniApp当前均未发布。
 
 DIY-HOME-WIDGETS 八条服务端合同和 PUBLIC-ARTICLE 七条精确合同/本地 UniApp 接线现已收口；下一代码批次为 reply 4 条与仍被 UniApp 调用的社区合同。PUBLIC-ARTICLE 因生产内容与媒体均为空、切流/热点写策略和真实端 E2E 未完成而保持父项未勾选；USER-CENTER-COMPAT 同样继续等待源数据、默认地址/收藏跨栈门禁、签到提醒投递、真实 token 流程和发布证据。签到唯一性门禁已关闭，但仍建议单运行时/统一锁序。主 Worker 仍是旧版本，未发布本批代码。
 
@@ -2216,7 +2218,7 @@ POST按流读取并在超过64 KiB时立刻cancel，不先把大包完整缓冲�
 
 HTTP提交后立即尝试Queue；发送结果未知可重复投递，消费者以outbox行锁、租约和event唯一键收敛。五分钟Cron只投递不含业务数据的根消息，由Queue消费者扫描`PENDING/FAILED`和过期租约；Queue失败记录固定错误码而不记录payload。消费端按`subject_key_hash`取得PostgreSQL advisory transaction lock，以`event_time`为主序、`sequence_rank`为同秒消歧：删除/解散100，更新/编辑50，创建10；较旧或同秒低优先级事件标记`SUPERSEDED`。不认识的新消息/事件以及旧PHP空处理分支留痕为`IGNORED`，不会冒充业务投影已执行。
 
-WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 只对 `del_external_contact/del_follow_user` 增加关系 tombstone；C2 又把管道 `status` 与业务 `projection_status` 物理分列，C1 结果迁为 `APPLIED/APPLIED_NOOP`，其余已识别但当时尚未实现的投影明确为 `REFRESH_REQUIRED`。C3～C7 后续已分别完成成员、部门、客户/follow/tags、群/群成员和企业客户标签 current 投影的代码、生产结构与隔离服务验收，详见本文件后续专章；`batch_job_result` 明确只审计为 `IGNORED`，不冒充目录对账。本段审计时尚缺的 C8 action outbox 与 payload 保留/脱敏策略已在 2026-08-31 后续专章完成代码、生产结构和隔离验收；WORK-C 父项仍因真实数据/租户、Linux runtime、预发和发布闭环未完成而保持未勾选。
+WORK-C0 刻意把当时的最终成功状态命名为`ORDERED`，而不是`PROCESSED/APPLIED`。后续 C1 只对 `del_external_contact/del_follow_user` 增加关系 tombstone；C2 又把管道 `status` 与业务 `projection_status` 物理分列，C1 结果迁为 `APPLIED/APPLIED_NOOP`，其余已识别但当时尚未实现的投影明确为 `REFRESH_REQUIRED`。C3～C7 后续已分别完成成员、部门、客户/follow/tags、群/群成员和企业客户标签 current 投影的代码、生产结构与隔离服务验收，详见本文件后续专章；`batch_job_result` 明确只审计为 `IGNORED`，不冒充目录对账。本段审计时尚缺的 C8 action outbox 与 payload 保留/脱敏策略已在 2026-08-31 后续专章完成代码、生产结构和隔离验收；Linux workerd 门禁也已由 Actions `33373018752` 关闭。WORK-C 父项仍因真实数据/租户、预发和发布闭环未完成而保持未勾选。
 
 ### 生产数据库与隔离场景证据
 
@@ -2244,7 +2246,7 @@ WORK-C0 当时的仓库门禁为Worker双TypeScript配置通过，152/152个单�
 
 上一节记录的可信接收管道现在明确命名为 **WORK-C0**；其代码、生产 DDL、随机 schema 11/11 与资源清理证据原样保留，不回写成更大的完成声明。随后 **WORK-C1** 的关系 tombstone、**WORK-C2** 的投影运行时/provider 基础、**WORK-C3** 的成员 current 投影和 **WORK-C4** 的部门 current 投影也依次完成代码与生产 Hyperdrive 隔离，但均未启用、未发布。WORK-C 父项继续未完成：C1 只新增两类关系删除，C3/C4 只覆盖成员/部门，其他事件的 `ORDERED` 仍不表示客户、群、标签或远端副作用已经收敛。
 
-后续工作拆成 C1～C8。**C1～C7 现已达到“代码/生产结构/随机 schema 验收完成，未启用/未发布”**：C1 的 20/20、C2 的 27/27、C3 最新隔离轮的 direct 11/11 与 service 33/33、C4 的 migration 4/4 与 direct-service 20/20、C5 的 migration 4/4、direct-service 12/12、current-context 6/6、C6 的 migration 6/6、projection 13/13、current-context 5/5，以及 C7 的 migration 6/6、direct-service 13/13 和公共目录/资源清理证据见下；C8 仍待完成。真实企微租户回调/provider 正向、源 MySQL 导入、主 Worker 切流和发布均不在 C1～C7 完成声明内。
+后续工作拆成 C1～C8。**C1～C8 现已达到“代码/生产结构/随机 schema 验收完成，未启用/未发布”**：C1 的 20/20、C2 的 27/27、C3 最新隔离轮的 direct 11/11 与 service 33/33、C4 的 migration 4/4 与 direct-service 20/20、C5 的 migration 4/4、direct-service 12/12、current-context 6/6、C6 的 migration 6/6、projection 13/13、current-context 5/5、C7 的 migration 6/6、direct-service 13/13，以及 C8 的 18/18 动作/保留/人工处置证据见下。真实企微租户回调/provider 正向、源 MySQL 导入、主 Worker 切流和发布均不在子批次代码完成声明内。
 
 ### PHP→TS 事件能力矩阵
 
@@ -2274,7 +2276,7 @@ PHP 权威分发位于 `C:\cinagroup\cinashop-php\app\listener\wechat\WorkListen
 - **WORK-C5（代码/生产结构/隔离验收已完成，未启用/未发布）客户、follow 与 follow tags 权威快照**：add/edit 已穷尽 provider cursor并保留其他员工关系；关系级 direct fence、防跨 profile fence 迟到响应、目标 tombstone 恢复和 omission 不删除均已验证。client authority、真实租户/数据和发布仍关闭，详细证据见 C5 专章。
 - **WORK-C6（代码/生产结构/隔离验收已完成，未启用/未发布）客户群和群成员**：按 `(CorpID, ChatID)` 稳定身份全量刷新群主/成员，dismiss 为终止态；旧 provider 响应、同秒或不可能更晚的 create/update 均不得复活已解散群，详细证据见 C6 专章。
 - **WORK-C7（代码/生产结构/隔离验收已完成，未启用/未发布）企业客户标签与批量结果边界**：以 `(CorpID,StrategyID,remote string ID)` 保存 tag/group current-state；create/update/shuffle 在事务外读取标准或 strategy 权威目录，delete 由 callback 终止，组/全目录遗漏写 tombstone且保留历史。`batch_job_result` 只记有界元数据并维持 `IGNORED`，不把完成通知解释为同步收敛。详细证据见 C7 专章。
-- **WORK-C8（代码/生产结构/隔离服务/Admin 处置面已完成，未启用/未发布）欢迎语、自动标签与商城用户关联**：三类动作已拆成独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工处置、回调保留与脱敏；真实源数据、旧媒体素材、企业微信租户、Linux runtime、预发、影子流量和发布批准仍未完成。
+- **WORK-C8（代码/生产结构/隔离服务/Admin 处置面已完成，未启用/未发布）欢迎语、自动标签与商城用户关联**：三类动作已拆成独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工处置、回调保留与脱敏；Linux runtime 已关闭，真实源数据、旧媒体素材、企业微信租户、预发、影子流量和发布批准仍未完成。
 
 ### 为什么首批只选 `del_external_contact` / `del_follow_user`
 
@@ -2394,8 +2396,8 @@ direct 场景覆盖稳定 ID、create/update/delete、显式 optional clear、�
 
 - 生产没有真实企业微信成员数据、可用 CorpID/AgentID、directory Secret、callback Token/AES Key或已确认 full-visibility 的应用权限；全部 provider 场景使用确定性 mock，企业微信网络调用为 0。真实正向成员、真实 `60111`、权限范围和 Script Settings/traces 仍需专门验收。
 - 没有完整通讯录周期性全量扫描/对账、持久 reconciliation 游标、积压容量测算、延迟告警或大批量人工回放演练；C3 current 增量状态机完成不能替代这些运维闭环。
-- C4 部门、C5 客户/follow/tags、C6 群/群成员与 C7 企业客户标签随后均已完成代码、生产结构与隔离验收；C8 仍未完成。WORK-C父项和整体 PHP→Cloudflare迁移必须继续保持未完成。
-- Windows Workers runtime 仍在执行任何断言前因 `workerd 0xc0000005` 崩溃，不能写成 runtime通过；必须在 Linux 或受支持主机补 Queue ack/retry、Cron、Hyperdrive和真实 Workers runtime证据。
+- C4 部门、C5 客户/follow/tags、C6 群/群成员、C7 企业客户标签与 C8 action outbox 随后均已完成代码、生产结构与隔离验收。WORK-C父项和整体 PHP→Cloudflare迁移仍因真实数据/租户与发布闭环保持未完成。
+- Windows Workers runtime 仍在执行任何断言前因 `workerd 0xc0000005` 崩溃；受支持主机门禁已由 Ubuntu Actions `33373018752` 的 Queue/Cron/DO/WebSocket 1 文件/10 项关闭，Hyperdrive 业务服务证据仍以各子批随机 schema 为准。
 - 本批没有部署或切流主 Worker/Pages。真实租户回调、provider网络验收、预发、影子流量、明确发布批准与发布后观察全部仍待完成。
 
 ## WORK-C4 部门 current-state 迁移详细审计（2026-08-31）
@@ -2514,15 +2516,15 @@ DDL 前只读请求 `ba0c8e72-d5f9-4541-9410-8d14ba0cd180` 确认生产为 234 �
 
 ### 工程门禁、资源清理与剩余阻塞
 
-最终 `data:schema-audit` 为 source 201、target 239、shared 201、target-only 38、源列缺口 0、外部/Worker 239/239、表/列/主键漂移 0。两套 TypeScript 配置通过；C5 相关 4 文件 33/33、全量单元测试 159 文件/984 项通过。主 Worker minify dry-run 为 3,036.19 KiB/gzip 733.43 KiB，精确绑定指定 Hyperdrive且只 dry-run；最终 C5 审计 Worker实际隔离包为 1,017.38/200.77 KiB。临时 Worker、一次性 Secret 与随机 schema 均已删除，workers.dev 探针返回 404，主 Worker从未部署本批代码。Windows runtime 仍在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败，只能记环境失败，必须在 Linux/受支持主机补证。
+最终 `data:schema-audit` 为 source 201、target 239、shared 201、target-only 38、源列缺口 0、外部/Worker 239/239、表/列/主键漂移 0。两套 TypeScript 配置通过；C5 相关 4 文件 33/33、全量单元测试 159 文件/984 项通过。主 Worker minify dry-run 为 3,036.19 KiB/gzip 733.43 KiB，精确绑定指定 Hyperdrive且只 dry-run；最终 C5 审计 Worker实际隔离包为 1,017.38/200.77 KiB。临时 Worker、一次性 Secret 与随机 schema 均已删除，workers.dev 探针返回 404，主 Worker从未部署本批代码。Windows runtime 仍在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败，只能记环境失败；后续 Ubuntu Actions `33373018752` 已关闭受支持主机门禁。
 
 剩余门禁如下：
 
 - 生产 legacy/current 客户、follow、tags 均为 0 行；没有只读源 MySQL、正式导入批次或运营抽样，不能宣称真实历史客户已经迁移。导入前仍需预检 Corp/ExternalUserID/UserID、自然键重复、孤儿、字段长度、remark mobiles JSON、tag 类型/位置和 legacy/current 映射。
 - 生产没有可用 CorpID/AgentID、external-contact Secret、callback Token/AES Key或已确认 full-visibility 的应用权限；所有 provider 场景均为确定性 mock，企业微信网络调用为 0。client authority 保持关闭，启用前必须回读 Script Settings 证明 traces 关闭或 query-string redaction 已明确开启。
 - C5 没有建立商城 UID 自动关联，也没有完整客户 reconciliation 游标、全量扫描、积压容量、延迟/漂移告警和人工批量重放；这些不能由 callback 增量状态机替代。
-- C6 客户群/群成员和 C7 企业客户标签随后已完成代码、生产结构与隔离验收；C8 欢迎语/自动标签/用户关联 action outbox 与真实租户发布仍未完成；WORK-C 父项保持未勾选。
-- 真实 callback/provider 正向与 operation-specific not-found、旧端 E2E、Linux runtime、预发、影子流量、明确发布批准和发布后观察全部待完成。本批没有部署或切流主 Worker/Pages。
+- C6 客户群/群成员、C7 企业客户标签和 C8 欢迎语/自动标签/用户关联 action outbox 随后已完成代码、生产结构与隔离验收；真实租户发布仍未完成，WORK-C 父项保持未勾选。
+- 真实 callback/provider 正向与 operation-specific not-found、旧端 E2E、预发、影子流量、明确发布批准和发布后观察全部待完成；Linux runtime 已独立关闭。本批没有部署或切流主 Worker/Pages。
 
 ## WORK-C6 客户群与群成员 current-state 详细审计（2026-08-31）
 
@@ -2578,15 +2580,15 @@ DDL 前只读请求 `58d9c8f8-8365-4ff9-87b2-4cd3b8edeac1` 确认生产为 239 �
 
 ### 工程门禁、资源清理与剩余阻塞
 
-最终 schema audit 为 source 201、target 242、shared 201、target-only 41、源列缺口 0、外部/Worker 242/242、表/列/主键漂移 0。两套 TypeScript 配置通过；C6 定向 3 文件 57/57，全量单元测试 160 文件/991 项通过。最终审计 Worker dry-run 为 1,630.44 KiB/gzip 273.38 KiB；临时 Worker、一次性 Secret 与随机 schema 均已删除，workers.dev 探针返回 404。主 Worker从未部署本批代码。Windows runtime 仍在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败，必须在 Linux/受支持主机补证。
+最终 schema audit 为 source 201、target 242、shared 201、target-only 41、源列缺口 0、外部/Worker 242/242、表/列/主键漂移 0。两套 TypeScript 配置通过；C6 定向 3 文件 57/57，全量单元测试 160 文件/991 项通过。最终审计 Worker dry-run 为 1,630.44 KiB/gzip 273.38 KiB；临时 Worker、一次性 Secret 与随机 schema 均已删除，workers.dev 探针返回 404。主 Worker从未部署本批代码。Windows runtime 仍在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败；后续 Ubuntu Actions `33373018752` 已关闭受支持主机门禁。
 
 剩余门禁如下：
 
 - 生产 legacy/current 群和群成员全部为 0 行；没有源 MySQL、正式导入批次或运营抽样，不能宣称真实历史群已迁移。导入前仍需预检 CorpID/ChatID/UserID、自然键重复、孤儿、成员类型、群主/admin 成员关系、字段长度和 legacy/current 映射。
 - 生产没有可用 CorpID/AgentID、external-contact Secret、callback Token/AES Key或已确认 full-visibility 的应用权限；provider 场景是确定性 mock/direct service，企业微信网络调用为 0。group authority 保持关闭，启用前必须回读 Script Settings 证明 traces 关闭或 query-string redaction 已明确开启。
 - 仍缺完整群 reconciliation 游标、全量扫描、积压容量、延迟/漂移告警、人工批量重放以及 operation-specific provider not-found 的真实租户语义。
-- C7 企业客户标签 current-state 已完成代码、生产结构与隔离验收；C8 欢迎语/自动标签/商城用户关联 action outbox 与真实发布闭环尚未完成，WORK-C 父项保持未勾选。
-- 真实 callback/provider 正向、旧端 E2E、Linux runtime、预发、影子流量、明确发布批准和发布后观察全部待完成。本批没有部署或切流主 Worker/Pages。
+- C7 企业客户标签 current-state 与 C8 欢迎语/自动标签/商城用户关联 action outbox 已完成代码、生产结构与隔离验收；真实发布闭环尚未完成，WORK-C 父项保持未勾选。
+- 真实 callback/provider 正向、旧端 E2E、预发、影子流量、明确发布批准和发布后观察全部待完成；Linux runtime 已独立关闭。本批没有部署或切流主 Worker/Pages。
 
 ## WORK-C7 企业客户标签 current-state 与批量结果边界详细审计（2026-08-31）
 
@@ -2628,7 +2630,7 @@ Admin 标签目录采用 current-first、整库 sentinel fail-closed。只有 ta
 
 ### 工程门禁、checklist 与剩余阻塞
 
-最终 `data:schema-audit` 为 source 201、target 245、shared 201、target-only 44、源列缺口 0、外部/Worker 245/245、表/列/主键漂移 0。两套 TypeScript 配置通过；C7 定向 3 文件 41/41，全量单元测试 161 文件/1001 项通过；`git diff --check` 无错误。C7 审计 Worker dry-run 为 1,356.35 KiB/gzip 221.40 KiB；主 Worker minify dry-run 为 3,171.73 KiB/gzip 751.94 KiB并精确回显指定 Hyperdrive，均未部署主 Worker。临时 Worker、随机 schema 和一次性 token 已删除，workers.dev 回探 404。Windows runtime 仍在 0 条断言前因 `workerd 0xc0000005` 失败，不能记为 runtime 通过。
+最终 `data:schema-audit` 为 source 201、target 245、shared 201、target-only 44、源列缺口 0、外部/Worker 245/245、表/列/主键漂移 0。两套 TypeScript 配置通过；C7 定向 3 文件 41/41，全量单元测试 161 文件/1001 项通过；`git diff --check` 无错误。C7 审计 Worker dry-run 为 1,356.35 KiB/gzip 221.40 KiB；主 Worker minify dry-run 为 3,171.73 KiB/gzip 751.94 KiB并精确回显指定 Hyperdrive，均未部署主 Worker。临时 Worker、随机 schema 和一次性 token 已删除，workers.dev 回探 404。Windows runtime 仍在 0 条断言前因 `workerd 0xc0000005` 失败；后续受支持的 Ubuntu workerd 门禁已由 Actions `33373018752` 的 1 文件/10 项关闭。
 
 - [x] 建立远端字符串 tag/group 与 strategy 隔离身份，完成标准/strategy provider 快照、create/update/delete/shuffle 投影、omission tombstone 和终止态。
 - [x] 完成 exact `0117` 外部/内嵌迁移、生产双跑、随机 schema 6/6+13/13、current-first 目录和 authority-off fail-closed。
@@ -2636,7 +2638,7 @@ Admin 标签目录采用 current-first、整库 sentinel fail-closed。只有 ta
 - [ ] 取得只读源 MySQL 后复制/映射真实 legacy 标签并由运营抽样；生产 legacy/current 标签均为 0 行，不能宣称历史标签已迁移。
 - [ ] 使用最小权限 external-contact Secret 和测试租户验证标准/strategy 正向、真实 `40068`、组删除、shuffle 及权限范围；启用前回读 Script Settings，确认 traces 关闭或 query-string 已可靠脱敏。
 - [x] WORK-C8 代码与结构：欢迎语、自动标签、商城用户关联已进入独立 action outbox/Queue，覆盖部分成功、429、结果未知、人工处置与审计终态；生产 expand-only DDL、随机 schema 和 Admin 脱敏处置面已完成。
-- [ ] WORK-C8 发布闭环：完成真实源数据/旧媒体迁移、企业微信测试租户、Linux runtime、预发、影子流量、明确发布批准和发布后观察。
+- [ ] WORK-C8 发布闭环：完成真实源数据/旧媒体迁移、企业微信测试租户、预发、影子流量、明确发布批准和发布后观察；Linux runtime 已独立关闭。
 
 ## WORK-C8 欢迎语、自动标签与商城用户关联 action outbox 详细审计（2026-08-31）
 
@@ -2676,7 +2678,7 @@ callback 白名单 payload 新增 `payload_retained_until/payload_redacted_time`
 
 失败轮次没有计入通过，也没有触发生产迁移：首轮复合随机 `search_path` 被安全校验拒绝；次轮用早于 callback 接收时间的保留截止值时，`wce_payload_retention_ck` 正确阻止非法测试数据；一次边缘返回非 JSON 错误页、一次迁移前只读请求瞬时失败，脚本都在 `/migrate` 前停止。每轮 finally 都删除临时 Worker，最终 workers.dev 回探均为 404；临时随机 schema 最终均为 0。
 
-最终仓库 `data:schema-audit` 为 source 201、target 247、shared/complete 201、source-only/缺源列 0、target-only 46；外部迁移与 Worker 内嵌迁移均为 247 表，表/列/主键漂移 0。双 TypeScript 配置通过，C8 定向 3 文件 46/46、全量单元测试 162 文件/1,007 项通过，Admin 生产构建 2,425 modules 通过；企业微信页面 chunk 为 JS 18.02 KiB/gzip 6.59 KiB、CSS 4.19 KiB/gzip 1.16 KiB。主 Worker minify dry-run 为 3,216.15 KiB/gzip 762.29 KiB，C8 审计 Worker为 982.68 KiB/gzip 179.29 KiB，两者均精确绑定指定 Hyperdrive且只 dry-run。Windows runtime 再次在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败；随后新增无生产 Secret、`contents:read` 且固定 Actions SHA 的 Ubuntu 24.04 门禁，提交 `8c4280f95e31521d50b24657645fb330299c7921` 的 [GitHub Actions 33368811307](https://github.com/cinagroup/cinashop/actions/runs/33368811307) 在 Node 24.14.1 下真实运行 workerd，1 文件/8 项全部通过。前两轮分别暴露旧 Cron `4→13` 合同与非法 outbox fixture、以及 test helper 不回显 retry delay/悬挂测试 PG 客户端；均修正后才计通过。主 Worker/Admin 仍未部署。
+最终仓库 `data:schema-audit` 为 source 201、target 247、shared/complete 201、source-only/缺源列 0、target-only 46；外部迁移与 Worker 内嵌迁移均为 247 表，表/列/主键漂移 0。双 TypeScript 配置通过，C8 定向 3 文件 46/46、全量单元测试 162 文件/1,007 项通过，Admin 生产构建 2,425 modules 通过；企业微信页面 chunk 为 JS 18.02 KiB/gzip 6.59 KiB、CSS 4.19 KiB/gzip 1.16 KiB。主 Worker minify dry-run 为 3,216.15 KiB/gzip 762.29 KiB，C8 审计 Worker为 982.68 KiB/gzip 179.29 KiB，两者均精确绑定指定 Hyperdrive且只 dry-run。Windows runtime 再次在 0 个测试/0 条断言前因 `workerd 0xc0000005` 启动失败；随后新增无生产 Secret、`contents:read` 且固定 Actions SHA 的 Ubuntu 24.04 门禁，提交 `8c4280f95e31521d50b24657645fb330299c7921` 的 [GitHub Actions 33368811307](https://github.com/cinagroup/cinashop/actions/runs/33368811307) 在 Node 24.14.1 下真实运行 workerd，1 文件/8 项全部通过。前两轮分别暴露旧 Cron `4→13` 合同与非法 outbox fixture、以及 test helper 不回显 retry delay/悬挂测试 PG 客户端；均修正后才计通过。随后提交 `b09c2c9bb823219f68f76ac40b4f25d2d46f15b3` 的 [Actions 33373018752](https://github.com/cinagroup/cinashop/actions/runs/33373018752) 把门禁扩展到 1 文件/10 项并通过，新增 Kefu ChatRoomDO 非法握手和真实 101/hibernation/token 撤销覆盖。扩展过程四个失败 run `33371796477/33372190812/33372516131/33372696791` 分别暴露跨 DO I/O 对象、辅助器非 upgrade 请求、pair 双重接受和无真实 peer 被驱逐四类测试夹具错误；没有计为通过、没有访问生产 PostgreSQL，也没有部署主 Worker/Admin。
 
 该 Linux 安装还暴露出 `drizzle-orm <0.45.2` 的 [CVE-2026-39356](https://github.com/advisories/GHSA-gpj5-g38j-94v9) 高危标识符转义漏洞。仓库生产代码没有调用 `sql.identifier()`，现有 `sql.raw()` 标识符来自静态常量或已校验的 `search_path`，未发现攻击者输入到动态标识符的可利用路径；仍将生产 ORM 精确升级到 `0.45.2`，开发 CLI 升到 `0.31.10`，并为 Drizzle/Vitest 分别解析兼容的 esbuild 版本。新版收紧的泛型 `from()` 类型在 `BaseDao` 以 PostgreSQL 表安全上转处理，未放宽 DAO 的公开读写类型。升级后 `npm ls` 为有效树，双 TypeScript 配置、schema audit 与全量 162 文件/1,007 项单测通过，主 Worker minify dry-run 为 3,224.31 KiB/gzip 764.19 KiB 且仍精确绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`；`npm audit --omit=dev` 为 0，并已加入 Linux 硬门禁。提交 `deeb62efa49c1e00ff25ae4e90322b54bca0c713` 的 [GitHub Actions 33371016049](https://github.com/cinagroup/cinashop/actions/runs/33371016049) 一次通过 locked install、生产依赖审计与真实 workerd 1 文件/8 项。完整开发依赖审计仍有 4 个 moderate，全部局限于已弃用的 `drizzle-kit → @esbuild-kit → esbuild 0.18` 本地开发服务器链；最新稳定 CLI 尚未移除它，npm 建议的自动修复会倒退到 `drizzle-kit 0.18.1`，因此不冒充已清零，也不把该链打入生产 Worker。
 
@@ -2693,7 +2695,7 @@ callback 白名单 payload 新增 `payload_retained_until/payload_redacted_time`
 - [ ] 把 URL-only 欢迎语附件通过受控下载、类型/大小校验和最小权限素材上传预先物化为可发送 media ID；禁止 Worker 在 callback 热路径抓取任意 URL。
 - [ ] 配置测试租户 CorpID、AgentID、external-contact Secret、callback Token/AES Key、full-visibility 权限和正式 Origin；回读 Cloudflare Script Settings 确认 traces 关闭或 query-string 已可靠脱敏。
 - [ ] 用真实测试客户验证 add/edit callback、20 秒欢迎语、标签、唯一/歧义 unionid、真实 429/41051/权限错误与 Admin 对账，不使用生产客户制造故障。
-- [x] Linux/受支持主机 Workers runtime：Ubuntu 24.04、Node 24.14.1、workerd 1 文件/8 项已由 Actions `33368811307` 通过；Windows `0xc0000005` 只保留为本机环境缺陷，不再阻断 C8。
+- [x] Linux/受支持主机 Workers runtime：Ubuntu 24.04、Node 24.14.1、workerd 1 文件/10 项已由 Actions `33373018752` 通过，含 ChatRoomDO 真实握手/hibernation/token 撤销；Windows `0xc0000005` 只保留为本机环境缺陷。
 - [ ] 经明确批准部署主 Worker/Admin，按 C0→C8 依赖顺序启用 client/tag/full-visibility/contact-action gates，先预发和小流量，再观察 Queue 延迟、UNKNOWN/DEAD、欢迎码过期、标签 429、UID 歧义和 callback 保留积压；准备关闭 gate 的回滚方案。
 - [ ] 完成旧端/新端 golden response、真机、影子流量、业务/安全批准和发布后观察后，才能勾选 WORK-C 父项。
 
