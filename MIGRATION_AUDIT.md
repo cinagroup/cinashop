@@ -1959,7 +1959,8 @@ Worker 全量 137 个文件/808 项、USER-CENTER 两个文件 21/21，连同签
 - [x] 上海自然日签到数据库唯一性已通过生产索引、二次幂等迁移和随机 schema 同日不同秒断言关闭；仍建议签到单运行时或统一锁序。
 - [ ] Worker 已改为普通字段更新后由 helper 清旧→设新；仍需修旧 PHP 裸地址 ID越权、非事务和先设新→清旧顺序，或切到地址单运行时，再评估默认地址 partial unique；当前未添加该约束。
 - [ ] 解决收藏在 PHP/Worker跨栈并行写下的计数竞态，并完成切流或持续对账验证。
-- [ ] 恢复 `sign_remind_time` 定时扫描、可重试消费和 `notice` 通知投递，验证关闭偏好、不重复发送、失败重试及按上海日界线选择用户；当前只有提醒偏好端点。
+- [x] 已恢复 `sign_remind_time` 上海 10:25 定时扫描、可重试 Queue 消费和每日幂等站内信，生产随机 schema 已验证关闭偏好、不重复发送、扫描后签到、失败重试/恢复及上海日界线选择。
+- [ ] 旧 PHP 同时尝试的短信与小程序订阅消息仍需通用 provider 投递账本、UNKNOWN/重试策略、真实凭据/模板和测试账户验收；生产当前对应模板、候选用户与 timer 均为 0。
 - [x] 可选登录 `GET /api/diy/sign`（PHP `homeDiysignData`）已由 DIY-HOME-WIDGETS 服务端批次补齐；真实旧客户端 token/E2E 仍属于发布门禁。
 - [ ] 继续补活动详情中秒杀/拼团/砍价装饰与水印兼容；这些跨域展示细节不能因本批收藏字段稳定而视为完成。
 - [x] Linux/兼容主机 Workers runtime 已由 Ubuntu Actions `33373018752` 的 1 文件/10 项通过；Windows崩溃不再阻断该门禁。
@@ -2698,6 +2699,32 @@ callback 白名单 payload 新增 `payload_retained_until/payload_redacted_time`
 - [x] Linux/受支持主机 Workers runtime：Ubuntu 24.04、Node 24.14.1、workerd 1 文件/10 项已由 Actions `33373018752` 通过，含 ChatRoomDO 真实握手/hibernation/token 撤销；Windows `0xc0000005` 只保留为本机环境缺陷。
 - [ ] 经明确批准部署主 Worker/Admin，按 C0→C8 依赖顺序启用 client/tag/full-visibility/contact-action gates，先预发和小流量，再观察 Queue 延迟、UNKNOWN/DEAD、欢迎码过期、标签 429、UID 歧义和 callback 保留积压；准备关闭 gate 的回滚方案。
 - [ ] 完成旧端/新端 golden response、真机、影子流量、业务/安全批准和发布后观察后，才能勾选 WORK-C 父项。
+
+## SIGN-REMIND-TIME 定时扫描与站内信闭环详细审计（2026-08-31）
+
+### PHP 权威语义与迁移边界
+
+旧 PHP 的真实调用链已逐文件复核：`SystemTimer` 的 `sign_remind_time` 分支调用 `UserSignServices::userSignRemind()`；安装数据把它定义为 type 4、cycle `10/25`，即每天上海时间 10:25。服务选择 `is_del=0/status=1/sign_remind=1` 的用户，再排除当天已签到者，并触发 `notice.notice`。`NoticeService::signRemindTime()` 会依次尝试短信 `SIGN_REMIND_TIME`、`SystemMsgJob` 站内信和小程序订阅消息；旧 listener/job 会捕获并吞掉异常，既没有每日幂等键，也无法证明部分成功后的重放结果。
+
+本批完成的是可在现有生产资源上安全关闭的站内信闭环，不把缺凭据的外部副作用冒充完成。短信和小程序订阅消息被保留为单独 checklist：后续必须建立 provider 级持久账本、请求身份、明确成功/可重试/UNKNOWN/DEAD 状态及人工对账，再接入真实凭据和模板。主 Worker没有部署，因此生产用户没有收到本批合成或真实提醒。
+
+### Worker 调度、Queue 与幂等设计
+
+Cron 仍每 5 分钟触发，但只有名义时间换算为 Asia/Shanghai 10:25 时才新增 `sign_remind_time` 根任务，其余 287 个时点不写这一根消息。扫描在短事务中按 `user.uid` 主键游标分页，每页 80，只选择正常、未软删、已开启偏好且目标上海自然日没有 `user_sign` 的用户；Queue 消息只含 `userId`、`scheduledAt/runId` 与整数上海日编号，不含手机号、模板正文或其他 PII。满页 continuation 与候选合计不超过 Cloudflare Queue 单批上限。
+
+消费端先拒绝损坏的 run/day/user 合同和跨日迟到消息，再与签到写路径共用 namespace `731623` 的用户级 transaction advisory lock；锁内重新检查用户状态、删除状态、提醒偏好和当天签到，关闭“扫描后用户关闭偏好或完成签到仍被提醒”的窗口。站内信事件键固定为 `sign_remind_time:<shanghaiDay>:<uid>`，复用既有 `system_message.event_key` 与 `smsg_event_key_uq`，`INSERT ... ON CONFLICT DO NOTHING` 后复核赢家的 mark/UID；因此 Queue 至少一次投递、发送结果未知后的重试和 DLQ 人工重放都不会新增第二条。模板从 `system_notification.mark=sign_remind_time` 读取；缺失、系统通道关闭或用户不再符合条件均显式跳过，重复模板和事件键冲突则失败并进入 30/60/120 秒、最高 900 秒的有界重试。provider/Queue I/O 均在数据库事务外，DLQ 只归档可重放的引用消息。
+
+### 生产 Hyperdrive 事实与随机 schema 验收
+
+临时审计 Worker版本 `821b4d66-f159-47a9-9128-ffc91831e273` 精确绑定用户指定的 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。`public` 审计使用 `REPEATABLE READ, READ ONLY`、`search_path=public`、20 秒 statement timeout和2秒 lock timeout，仅返回聚合计数/布尔结构：PostgreSQL 16.14；提醒开启的正常用户 0、当天未签到候选 0、`sign_remind_time` 模板 0（站内信/SMS/routine 启用均0）、旧 timer 行0、历史签到站内信0；`system_message.event_key` 列和 `smsg_event_key_uq` 唯一索引均存在。零样本证明目标库尚未导入/配置该能力，不是生产正向验收通过。
+
+同一生产 PostgreSQL 引擎的随机 `codex_sign_reminder_*` schema 使用真实 `SignReminderService` 通过 10/10：非 10:25 不扫描；8 个合成用户中精确选出 `[1,6,7,8]`；首投递创建；重复投递返回 `already-created`；扫描后关闭偏好返回 `preference-disabled`；扫描后签到返回 `already-signed`；制造重复模板使真实消费失败且第2次 Queue attempt 请求60秒重试、没有 ack；修复模板后重试创建；最终只有 UID 1/8 两条消息、两个不同事件键且模板正确渲染。随机 schema 删除后同前缀 schema 为0，`public` 历史提醒仍为0，临时 Worker随后删除。第一次审计请求因只读 SQL 把保留字 `window` 用作别名而在任何随机 schema DDL前失败；修正为 `bounds` 后完整重跑，失败轮不计入通过。
+
+### 工程门禁与剩余阻塞
+
+实现提交为 `59dafb5d4e3f671f48b90a16fd0acae0d62d1142`。本地全量单元测试 163 文件/1,014 项、双 TypeScript、schema audit source 201/target 247/shared 201/零缺口/247↔247 零漂移、生产依赖官方 npm 审计0和 `git diff --check` 通过；主 Worker minify dry-run为3,230.70 KiB/gzip765.97 KiB并精确绑定目标 Hyperdrive，但没有部署。Ubuntu 24.04.4、Node 24.14.1/npm11.11 的 [GitHub Actions 33379089255](https://github.com/cinagroup/cinashop/actions/runs/33379089255) 已通过 locked install、生产依赖审计0和真实 workerd 1文件/11项，其中新增断言证明只有上海10:25才多出签到根任务。Windows本机仍在进入断言前因既有 workerd `0xc0000005` 崩溃，不计为代码失败。
+
+严格剩余边界：生产缺提醒用户、timer和通知模板，无法做真实 token/真实用户正向站内信验收；SMS与小程序订阅消息尚未实现 provider 账本；源 MySQL、旧 PHP并行写切流、默认地址/收藏跨栈问题、五端 E2E、预发、影子流量、明确发布批准及发布后观察仍未完成。因此本批只勾选签到提醒“扫描+Queue+站内信”子项，USER-CENTER-COMPAT父项和正式发布继续保持未完成。
 
 ## 完成定义
 
