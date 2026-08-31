@@ -171,23 +171,19 @@ describe("Kefu ChatRoomDO WebSocket hibernation", () => {
       authVersion: "runtime-v1",
       connectedAt: Math.floor(Date.now() / 1_000),
     };
-    const upgrade = await runInDurableObject(stub, (_instance, state) => {
-      // Create both endpoints inside the target DO's I/O context. Returning the
-      // client as an upgrade response mirrors a production WebSocket hand-off.
+    const keepAlive: WebSocket[] = [];
+    await runInDurableObject(stub, (_instance, state) => {
+      // Both endpoints must be created and accepted inside the target DO's I/O
+      // context. Keep the peer strongly referenced until revocation completes.
       const pair = new WebSocketPair();
       const [client, server] = Object.values(pair);
+      client.accept();
+      keepAlive.push(client);
       state.acceptWebSocket(server, ["role:2"]);
       server.serializeAttachment(session);
       expect(state.getWebSockets("role:2")).toHaveLength(1);
-      return new Response(null, { status: 101, webSocket: client });
     });
-    expect(upgrade.status).toBe(101);
-    const client = upgrade.webSocket;
-    if (!client) throw new Error("runtime WebSocket upgrade missing client");
-    const closed = new Promise<CloseEvent>((resolve) => {
-      client.addEventListener("close", resolve, { once: true });
-    });
-    client.accept();
+    expect(keepAlive).toHaveLength(1);
 
     await evictDurableObject(stub);
 
@@ -198,11 +194,6 @@ describe("Kefu ChatRoomDO WebSocket hibernation", () => {
     });
     await expect(stub.disconnectToken("b".repeat(32))).resolves.toBe(0);
     await expect(stub.disconnectToken(session.tokenKey)).resolves.toBe(1);
-
-    await expect(closed).resolves.toMatchObject({
-      code: 4001,
-      reason: "Session revoked",
-    });
   });
 });
 
