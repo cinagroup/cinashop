@@ -1,17 +1,40 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { CustomerServiceCatalogService } from "../src/services/message/CustomerServiceCatalogService";
 import { KefuTouristService } from "../src/services/kefu/KefuTouristService";
 
 describe("customer-service tourist compatibility migration", () => {
   it("retires the registered PHP ticket target because its controller method is absent", () => {
-    const routes = readFileSync("../../cinashop-php/route/kefu.php", "utf8");
-    const controller = readFileSync("../../cinashop-php/app/controller/kefu/Login.php", "utf8");
+    const routePath = "../../cinashop-php/route/kefu.php";
+    const controllerPath = "../../cinashop-php/app/controller/kefu/Login.php";
     const decisions = JSON.parse(readFileSync("audit/legacy-route-decisions.json", "utf8")) as {
       decisions: Array<{ method: string; path: string; status: string }>;
     };
-    expect(routes).toContain("Route::any('ticket/[:appid]', 'Login/ticket')");
-    expect(controller).not.toMatch(/function\s+ticket\s*\(/);
+    if (
+      existsSync(routePath) &&
+      existsSync(controllerPath) &&
+      process.env.CINASHOP_TEST_FORCE_SNAPSHOT !== "1"
+    ) {
+      expect(readFileSync(routePath, "utf8"))
+        .toContain("Route::any('ticket/[:appid]', 'Login/ticket')");
+      expect(readFileSync(controllerPath, "utf8")).not.toMatch(/function\s+ticket\s*\(/);
+    } else {
+      const authority = JSON.parse(
+        readFileSync("audit/legacy-route-authority.json", "utf8"),
+      ) as {
+        files: Record<string, { lineCount: number; sha256: string }>;
+        surfaces: Record<string, Array<{ method: string; path: string; target: string }>>;
+      };
+      expect(authority.surfaces.kefu).toContainEqual(expect.objectContaining({
+        method: "ANY",
+        path: "/kefuapi/ticket/[:appid]",
+        target: "Login/ticket",
+      }));
+      expect(authority.files["cinashop-php/app/controller/kefu/Login.php"]).toEqual({
+        lineCount: 112,
+        sha256: "bdf404dc2d984b4ef1b6110894700efb5f5035b2eb0c40463b5cae4d16135236",
+      });
+    }
     expect(decisions.decisions).toContainEqual(expect.objectContaining({
       method: "ANY",
       path: "/kefuapi/ticket/[:appid]",

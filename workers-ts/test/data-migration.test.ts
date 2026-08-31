@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MIGRATION_TABLES } from "../scripts/data-migration/manifest";
@@ -172,8 +172,14 @@ describe("MySQL to PostgreSQL schema audit", () => {
   });
 
   it("keeps the explicit manifest aligned with all currently shared repository tables", () => {
+    const localSourcePath = resolve(
+      import.meta.dirname,
+      "../../../cinashop-php/public/install/crmeb.sql",
+    );
     const sourceSql = readFileSync(
-      resolve(import.meta.dirname, "../../../cinashop-php/public/install/crmeb.sql"),
+      existsSync(localSourcePath) && process.env.CINASHOP_TEST_FORCE_SNAPSHOT !== "1"
+        ? localSourcePath
+        : resolve(import.meta.dirname, "../audit/legacy-schema-authority.sql"),
       "utf8",
     );
     const migrationsDirectory = resolve(import.meta.dirname, "../migrations");
