@@ -191,6 +191,11 @@
         </scroll-view>
       </view>
 
+      <DiyEditorialWidget
+        v-else-if="isEditorialWidget(block)"
+        :block="block"
+      />
+
       <view v-else-if="block.name === 'customerService'" class="diy-service" @tap="open('/pages/user/kefu')">
         <text>在线客服</text>
         <text class="diy-more">咨询 ›</text>
@@ -242,6 +247,7 @@ import {
   safeDiyImageUrl,
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
+import DiyEditorialWidget from "./DiyEditorialWidget.vue";
 
 interface MenuItem {
   image: string;
@@ -268,6 +274,11 @@ const sign = ref<DiySignData | null>(null);
 const userInfo = ref<DiyUserInfo | null>(null);
 const videos = ref<DiyVideoItem[]>([]);
 let hydration = 0;
+const EDITORIAL_WIDGET_NAMES = new Set(["news", "hotspot", "follow", "activeParty"]);
+
+function isEditorialWidget(block: DiyComponent): boolean {
+  return EDITORIAL_WIDGET_NAMES.has(block.name);
+}
 
 function blockKey(block: DiyComponent, index: number): string {
   return `${block.name}-${String(block.timestamp ?? index)}-${index}`;

@@ -148,7 +148,11 @@ DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和
 
 本子批以隔离 mock API 做了浏览器渲染验收：桌面首页和 390×844 微页面均显示搜索、菜单、轮播、商品、文章、三榜、新人、签到、匿名用户、视频和客服等组合；页面宽度为 390px、无横向溢出；无效微页面 ID 显示受控失败态；点击搜索后到达现有搜索页。干净页面没有应用级 console error，只有 UniApp 打包依赖的 Vue Router 弃用警告。定向 DIY 前端/服务端合同测试、UniApp 类型检查及 H5/微信小程序生产构建通过。该验收使用确定性 mock 数据，因为主 Worker 尚未发布候选路由且生产 `system_dise/video/store_newcomer/store_promotions` 为空，不能冒充真实线上数据或登录态 E2E。
 
-父项仍不能完成：`bargain/combination/coupon/liveBroadcast/news/promotionList/seckill/presale/pointsMall/hotspot/follow/activeParty` 12 类高耦合组件尚未接入；悬浮导航只覆盖首页和微页面，尚非所有旧目的页面的全局挂载；PC 是否消费同一 DIY 未决。生产仍有 15/21 配置缺失及 3 键重复，R2 缩略图等价策略、真实 token、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察均未完成。后续代码批可以逐个关闭 12 类组件，但数据与发布门禁继续独立跟踪。
+随后第二前端子批逐文件对照旧 `news.vue`、`hotspot.vue`、`follow.vue` 及 Admin `home_hot.vue`：新闻公告保留列表/轮播两种结构和可选标题图；图片热区将编辑器的 750rpx 坐标映射到相对容器，最多接受 30 区且只保留归一后的内部/HTTPS 链接；公众号卡片只展示安全头像和二维码，以弹层支持长按识别，不复刻 H5 DOM 下载、跨端相册权限和未使用的订阅查询；活动魔方最多四格并限制标题、简介、图片和链接。`activeParty` 在 Admin 可编辑、PHP 会裁剪后返回，但旧 UniApp 首页/微页面没有组件 import 或模板挂载，属于源端可配置却不可见的确定缺陷；新端把它作为显式 allowlist 静态组件恢复，并在审计中记录这一有意修复。
+
+本子批继续不使用动态组件、`v-html`、数据库脚本或外部下载，所有集合、文本、边距、圆角、颜色、图片和热区坐标均有界且失败关闭。定向 DIY 测试更新为 2 文件/23 项并通过；隔离 mock 页面在桌面端显示新闻、热区、活动魔方和公众号卡片，关注按钮打开/关闭二维码弹层，热区点击切换到现有分类页。390×844 精确设备尺寸下 `innerWidth/bodyWidth/rendererWidth=390/390/390`、活动卡 369.2px，无横向溢出；控制台只有 UniApp 打包依赖的 Vue Router 弃用警告，没有应用级 error。
+
+父项仍不能完成：`bargain/combination/coupon/liveBroadcast/promotionList/seckill/presale/pointsMall` 8 类业务数据组件尚未接入；悬浮导航只覆盖首页和微页面，尚非所有旧目的页面的全局挂载；PC 是否消费同一 DIY 未决。生产仍有 15/21 配置缺失及 3 键重复，R2 缩略图等价策略、真实 token、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察均未完成。后续代码批按业务 API 依赖逐组关闭 8 类组件，数据与发布门禁继续独立跟踪。
 
 ## PUBLIC-ARTICLE 迁移审计（2026-08-30）
 

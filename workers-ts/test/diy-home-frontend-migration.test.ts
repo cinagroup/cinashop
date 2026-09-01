@@ -13,6 +13,10 @@ const suspended = readFileSync(
   resolve(root, "../view/uniapp-ts/src/components/diy/DiySuspendedNavigation.vue"),
   "utf8",
 );
+const editorial = readFileSync(
+  resolve(root, "../view/uniapp-ts/src/components/diy/DiyEditorialWidget.vue"),
+  "utf8",
+);
 const homepage = readFileSync(resolve(root, "../view/uniapp-ts/src/pages/index/index.vue"), "utf8");
 const microPage = readFileSync(resolve(root, "../view/uniapp-ts/src/pages/diy/detail.vue"), "utf8");
 const pages = readFileSync(resolve(root, "../view/uniapp-ts/src/pages.json"), "utf8");
@@ -78,5 +82,28 @@ describe("DIY-home frontend migration", () => {
     expect(pages).toContain('"path": "pages/diy/detail"');
     expect(suspended).toContain("apiDiySuspended()");
     expect(suspended).toContain("normalizeDiyLink");
+  });
+
+  it("renders the four editor-owned widgets without adding dynamic code paths", () => {
+    for (const name of ["news", "hotspot", "follow", "activeParty"]) {
+      expect(renderer).toContain(`\"${name}\"`);
+      expect(editorial).toContain(`block.name === '${name}'`);
+    }
+    expect(editorial).toContain("normalizeDiyLink");
+    expect(editorial).toContain("safeDiyImageUrl");
+    expect(editorial).toContain("safeDiyColor");
+    expect(editorial).not.toContain("v-html");
+    expect(editorial).not.toContain("<component");
+    expect(editorial).not.toContain("downloadFile");
+  });
+
+  it("bounds editorial collection sizes, text, spacing, radii, and hotspot geometry", () => {
+    expect(editorial).toContain("slice(0, 10)");
+    expect(editorial).toContain("slice(0, 30)");
+    expect(editorial).toContain("slice(0, 4)");
+    expect(editorial).toContain("bounded(item.starX, 0, 0, 750)");
+    expect(editorial).toContain("bounded(item.starY, 0, 0, 2_000)");
+    expect(editorial).toContain("bounded(diyNumber(props.block, \"prConfig\"), 0, 0, 80)");
+    expect(editorial).toContain("String(titleValue).trim().slice(0, 100)");
   });
 });
