@@ -37,7 +37,11 @@ export interface SupplierSplitCartInput {
 export interface FulfillmentReplayOptions {
   accountId: number;
   requestHash: string;
-  changeType: "out_order_delivery" | "out_order_split_delivery" | "waybill_delivery";
+  changeType:
+    | "out_order_delivery"
+    | "out_order_split_delivery"
+    | "waybill_delivery"
+    | "merchant_shipment_delivery";
 }
 
 export interface FulfillmentWaybillMetadata {

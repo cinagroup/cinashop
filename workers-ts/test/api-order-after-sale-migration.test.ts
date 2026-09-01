@@ -19,7 +19,7 @@ const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 
 describe("API-002 order and after-sale migration", () => {
-  it("registers every executable legacy order contract except the separate callback boundary", () => {
+  it("registers every executable legacy order contract and delegates the callback boundary", () => {
     const routes = source("src/routes/v1/index.ts");
     for (const contract of [
       '"/ali_pay"',
@@ -41,7 +41,8 @@ describe("API-002 order and after-sale migration", () => {
     ]) {
       expect(routes).toContain(contract);
     }
-    expect(routes).not.toContain('"/order_call_back"');
+    expect(routes).toContain('v1Routes.all("/order_call_back", merchantShipmentCallback)');
+    expect(routes).toContain('from "@/controllers/api/v1/MerchantShipmentCallbackController"');
   });
 
   it("normalizes legacy cart identifiers without accepting duplicates or invalid values", () => {

@@ -88,6 +88,12 @@ export default {
       WechatCallbackService,
     } = await import("./services/wechat/WechatCallbackService");
     const {
+      consumeMerchantShipmentCallbackMessage,
+      isMerchantShipmentCallbackDispatchMessage,
+      isMerchantShipmentCallbackOutboxMessage,
+      MerchantShipmentCallbackService,
+    } = await import("./services/shipping/MerchantShipmentCallbackService");
+    const {
       consumePaymentReconciliationMessage,
       isPaymentReconciliationDispatchMessage,
       isPaymentReconciliationMessage,
@@ -142,6 +148,7 @@ export default {
     const outbox = new OrderOutboxService(container, env);
     const paymentCallbacks = new PaymentCallbackEventService(container, env);
     const wechatCallbacks = new WechatCallbackService(container, env);
+    const merchantShipmentCallbacks = new MerchantShipmentCallbackService(container, env);
     const paymentReconciliation = new PaymentReconciliationService(container, env);
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
@@ -156,6 +163,46 @@ export default {
 
     for (const msg of batch.messages) {
       const messageStartedAt = Date.now();
+      if (isMerchantShipmentCallbackDispatchMessage(msg.body)) {
+        try {
+          const dispatched = await merchantShipmentCallbacks.dispatchPending(100);
+          emitOperationalEvent("info", {
+            event: "merchant_shipment_callback_outbox_dispatched",
+            component: "queue",
+            operation: "merchant_shipment_callback_dispatch",
+            outcome: "success",
+            resourceCount: dispatched.enqueued,
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+          });
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          emitOperationalEvent("error", {
+            event: "merchant_shipment_callback_dispatch_failed",
+            component: "queue",
+            operation: "merchant_shipment_callback_dispatch",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            errorCode: operationalErrorCode(error, "merchant_shipment_callback_dispatch_failed"),
+          });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
+      if (isMerchantShipmentCallbackOutboxMessage(msg.body)) {
+        await consumeMerchantShipmentCallbackMessage({
+          body: msg.body,
+          attempts: msg.attempts,
+          ack: () => msg.ack(),
+          retry: (options) => msg.retry(options),
+        }, merchantShipmentCallbacks);
+        continue;
+      }
+
       if (isWechatCallbackDispatchMessage(msg.body)) {
         try {
           const dispatched = await wechatCallbacks.dispatchPending(100);
@@ -617,6 +664,10 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
     }),
     env.ORDER_QUEUE.send({
       action: "dispatchWechatCallbackOutbox",
+      scheduledAt,
+    }),
+    env.ORDER_QUEUE.send({
+      action: "dispatchMerchantShipmentCallbackOutbox",
       scheduledAt,
     }),
     env.ORDER_QUEUE.send({

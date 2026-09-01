@@ -56,6 +56,7 @@ const criticalSources = [
   "src/middleware/error.ts",
   "src/controllers/api/v1/PayController.ts",
   "src/controllers/api/v1/WechatController.ts",
+  "src/controllers/api/v1/MerchantShipmentCallbackController.ts",
   "src/services/order/StoreOrderRefundService.ts",
   "src/services/order/OrderQueueDeadLetterConsumer.ts",
   "src/services/order/OrderQueueDeadLetterService.ts",
@@ -65,6 +66,7 @@ const criticalSources = [
   "src/services/payment/PaymentCallbackEventService.ts",
   "src/services/payment/PaymentReconciliationService.ts",
   "src/services/wechat/WechatCallbackService.ts",
+  "src/services/shipping/MerchantShipmentCallbackService.ts",
   "src/services/work/EnterpriseWechatCallbackService.ts",
   "src/services/work/EnterpriseWechatContactActionService.ts",
   "src/services/printing/ReceiptPrintJobService.ts",
@@ -191,6 +193,14 @@ const requiredEvents = [
   "wechat_callback_rejected",
   "wechat_callback_outbox_dispatched",
   "wechat_callback_projection_failed",
+  "merchant_shipment_callback_rejected",
+  "merchant_shipment_callback_persist_failed",
+  "merchant_shipment_callback_outbox_dispatched",
+  "merchant_shipment_callback_dispatch_failed",
+  "merchant_shipment_callback_consumed",
+  "merchant_shipment_callback_conflict",
+  "merchant_shipment_callback_dead",
+  "merchant_shipment_callback_failed",
   "payment_reconciliation_dispatched",
   "payment_reconciliation_attention",
   "payment_reconciliation_completed",
@@ -218,8 +228,17 @@ const requiredEvents = [
   "r2_object_write_failed",
   "r2_object_read_failed",
 ];
+const explicitlySelectedEvents = new Set([
+  "merchant_shipment_callback_consumed",
+  "merchant_shipment_callback_conflict",
+  "merchant_shipment_callback_dead",
+]);
 for (const event of requiredEvents) {
-  assert(combined.includes(`event: "${event}"`), `required operational event is missing: ${event}`);
+  assert(
+    combined.includes(`event: "${event}"`)
+      || (explicitlySelectedEvents.has(event) && combined.includes(`"${event}"`)),
+    `required operational event is missing: ${event}`,
+  );
 }
 
 const requiredComponents = [

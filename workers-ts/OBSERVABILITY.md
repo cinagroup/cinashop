@@ -37,6 +37,7 @@ the bindings, critical events, or deployment state.
 | R2 | operation status plus `r2_object_*` | slow GET >=500 ms is diagnostic | any native `internalError`; any application write/read failure | Preserve object/metadata compensation ordering and check object existence before repair. |
 | Login | critical-flow HTTP objects | 10 rejects/5m | 3 server errors/5m | Separate abuse/rate limiting from Redis, database or identity-provider outage. |
 | Payment | callback events and durable outbox | 5 rejects/5m | any processing failure or 3 HTTP 5xx/5m | Verify signature/configuration and inspect the payment outbox; never synthesize success. |
+| Merchant shipment | signed callback event/outbox/watermark | 5 rejects/5m or attempt count ≥3 | any CONFLICT/DEAD, 3 persist failures/5m, or oldest actionable event ≥15m | Verify the independent callback salt and immutable task evidence; inspect the monotonic watermark before guarded replay or provider reconciliation. |
 | Refund | callback/reconciliation events and payment status | 5 rejects or 3 reconciliation failures/15m | `UNKNOWN` older than 15m or any `DEAD` | Query the provider using the immutable refund identity; never issue a blind second refund. |
 | Print | queue duration and job status | 3 retries or p95 >=5 s/15m | any `UNKNOWN` or `DEAD` | Confirm the provider result manually before retrying. |
 | Waybill | queue duration and job status | 3 retries or p95 >=5 s/15m | any `UNKNOWN` or `DEAD` | Confirm allocation before retrying; prevent a second tracking number. |

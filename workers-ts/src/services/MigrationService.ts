@@ -21,6 +21,7 @@ import { ADMIN_MOBILE_USER_REPLAY_SQL } from "@/migrations/adminMobileUserReplay
 import { PAYMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/paymentCallbackPipeline";
 import { PAYMENT_RECONCILIATION_SQL } from "@/migrations/paymentReconciliation";
 import { WECHAT_CALLBACK_PIPELINE_SQL } from "@/migrations/wechatCallbackPipeline";
+import { MERCHANT_SHIPMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/merchantShipmentCallbackPipeline";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -185,6 +186,11 @@ export class MigrationService {
     return this.migration_0128();
   }
 
+  /** Exact Kuaidi100 merchant-shipment callback inbox/outbox DDL. */
+  merchantShipmentCallbackPipelineMigrationSqlForVerification(): string {
+    return this.migration_0129();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -321,6 +327,7 @@ export class MigrationService {
       this.migration_0126(),
       this.migration_0127(),
       this.migration_0128(),
+      this.migration_0129(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8264,5 +8271,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0128(): string {
     return WECHAT_CALLBACK_PIPELINE_SQL;
+  }
+
+  private migration_0129(): string {
+    return MERCHANT_SHIPMENT_CALLBACK_PIPELINE_SQL;
   }
 }

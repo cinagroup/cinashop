@@ -368,7 +368,14 @@ describe("third-party API migration boundary", () => {
     expect(outSource).toContain('delivery_type: "express"');
     expect(fulfillment).toContain("findFulfillmentReplay");
     expect(fulfillment).toContain("recordFulfillmentReplay");
-    expect(fulfillment).toContain('"out_order_delivery" | "out_order_split_delivery"');
+    for (const replayType of [
+      '"out_order_delivery"',
+      '"out_order_split_delivery"',
+      '"waybill_delivery"',
+      '"merchant_shipment_delivery"',
+    ]) {
+      expect(fulfillment).toContain(replayType);
+    }
     expect(fulfillment).toContain("lockOrderSettlement(tx, rootId)");
     expect(fulfillment).toContain("withTx(this.container");
     expect(fulfillment).not.toMatch(/changeMessage:\s*(?:input\.deliveryId|input\.fictitiousContent)/);

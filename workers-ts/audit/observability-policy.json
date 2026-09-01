@@ -123,6 +123,14 @@
       "response": "verify the source-specific token, AES key and AppID, then inspect immutable callback evidence before guarded replay"
     },
     {
+      "id": "merchant_shipment_callbacks",
+      "component": "waybill",
+      "source": "Workers Logs merchant_shipment_callback_* plus merchant_shipment_callback_event/outbox/watermark status",
+      "warning": "rejected >= 5 over 5m or attempt_count >= 3",
+      "critical": "any CONFLICT or DEAD row, persist failures >= 3 over 5m, or oldest actionable event >= 15m",
+      "response": "verify the callback salt and immutable task evidence; inspect the monotonic watermark before guarded replay or provider reconciliation"
+    },
+    {
       "id": "refund_workflow",
       "component": "refund",
       "source": "Workers Logs component=refund plus store_order_refund_payment status",

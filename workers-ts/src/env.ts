@@ -50,6 +50,8 @@ export interface Env extends WorkerBindings {
   /** CRMEB 一号通电子面单凭据；只允许通过 Worker Secret 注入。 */
   CRMEB_ONEPASS_ACCESS_KEY?: string;
   CRMEB_ONEPASS_SECRET_KEY?: string;
+  /** Kuaidi100 callback salt passed on every direct merchant-shipment order. */
+  KUAIDI100_CALLBACK_SALT?: string;
   /** Public Turnstile widget site key. */
   TURNSTILE_SITE_KEY?: string;
   /** Comma-separated hostnames accepted from Siteverify (no schemes or paths). */
@@ -307,6 +309,20 @@ export interface WechatCallbackDispatchMessage {
   scheduledAt: number;
 }
 
+/** Verified Kuaidi100 data remains in PostgreSQL; Queue receives opaque keys only. */
+export interface MerchantShipmentCallbackOutboxMessage {
+  action: "processMerchantShipmentCallbackOutbox";
+  outboxId: number;
+  eventId: number;
+  replayKey: string;
+}
+
+/** Cron root for recovering merchant-shipment callback outbox dispatch. */
+export interface MerchantShipmentCallbackDispatchMessage {
+  action: "dispatchMerchantShipmentCallbackOutbox";
+  scheduledAt: number;
+}
+
 /** One active provider query; provider evidence and order data stay in PostgreSQL. */
 export interface PaymentReconciliationMessage {
   action: "processPaymentReconciliation";
@@ -342,6 +358,8 @@ export type OrderMessage =
   | PaymentCallbackDispatchMessage
   | WechatCallbackOutboxMessage
   | WechatCallbackDispatchMessage
+  | MerchantShipmentCallbackOutboxMessage
+  | MerchantShipmentCallbackDispatchMessage
   | PaymentReconciliationMessage
   | PaymentReconciliationDispatchMessage
   | LegacyOrderMessage;

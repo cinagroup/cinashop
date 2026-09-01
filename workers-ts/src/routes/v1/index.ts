@@ -29,6 +29,7 @@ import * as AdminLegacyRuntimeController from "@/controllers/api/v1/AdminLegacyR
 import * as WechatLiveController from "@/controllers/api/v1/WechatLiveController";
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
 import * as WechatController from "@/controllers/api/v1/WechatController";
+import { merchantShipmentCallback } from "@/controllers/api/v1/MerchantShipmentCallbackController";
 import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWechatController";
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
@@ -1155,6 +1156,8 @@ v1Routes.get("/wechat/config", WechatController.wechatConfig);
 // Official-account and Mini Program callbacks require WeChat signatures, not user auth.
 v1Routes.all("/wechat/serve", WechatController.callbackServeOfficial);
 v1Routes.all("/wechat/miniServe", WechatController.callbackServeMini);
+// Kuaidi100 merchant-shipment order callback: signed provider form, no user auth.
+v1Routes.all("/order_call_back", merchantShipmentCallback);
 // Enterprise WeChat JS-SDK signatures (public compatibility routes, strict URL allowlist).
 v1Routes.get("/work/config", EnterpriseWechatController.config);
 v1Routes.get("/work/agentConfig", EnterpriseWechatController.agentConfig);
