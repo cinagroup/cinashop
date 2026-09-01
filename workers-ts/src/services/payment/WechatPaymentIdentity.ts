@@ -5,12 +5,22 @@ import { ValidateException } from "@/utils/errors";
 
 export type WechatPaymentChannel = "weixin" | "routine" | "h5" | "pc" | "app";
 export type WechatTransactionType = "jsapi" | "native" | "h5" | "app";
+export type WechatPaymentProfile = "wechat" | "routine" | "app";
 
 export interface WechatPaymentIdentity {
   channel: WechatPaymentChannel;
+  profile: WechatPaymentProfile;
   type: WechatTransactionType;
   openid?: string;
   payerClientIp?: string;
+}
+
+export function wechatPayProfileForChannel(
+  channel: WechatPaymentChannel,
+): WechatPaymentProfile {
+  if (channel === "routine") return "routine";
+  if (channel === "app") return "app";
+  return "wechat";
 }
 
 export function normalizeWechatPaymentChannel(value: unknown): WechatPaymentChannel {
@@ -41,11 +51,12 @@ export async function resolveWechatPaymentIdentity(
   payerClientIp?: string,
 ): Promise<WechatPaymentIdentity> {
   const channel = normalizeWechatPaymentChannel(from);
+  const profile = wechatPayProfileForChannel(channel);
   if (channel === "h5") {
-    return { channel, type: "h5", ...(payerClientIp ? { payerClientIp } : {}) };
+    return { channel, profile, type: "h5", ...(payerClientIp ? { payerClientIp } : {}) };
   }
-  if (channel === "pc") return { channel, type: "native" };
-  if (channel === "app") return { channel, type: "app" };
+  if (channel === "pc") return { channel, profile, type: "native" };
+  if (channel === "app") return { channel, profile, type: "app" };
 
   const userType = channel === "routine" ? "routine" : "wechat";
   const rows = await container.db
@@ -60,5 +71,5 @@ export async function resolveWechatPaymentIdentity(
   if (rows.length !== 1 || !rows[0].openid) {
     throw new ValidateException("当前账号缺少唯一的微信身份绑定");
   }
-  return { channel, type: "jsapi", openid: rows[0].openid };
+  return { channel, profile, type: "jsapi", openid: rows[0].openid };
 }

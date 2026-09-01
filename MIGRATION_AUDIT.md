@@ -3157,6 +3157,55 @@ PHP 原实现的身份传播不构成可靠授权。旧中间件把移动端 Adm
 
 本批使 ADMIN-A 候选代码从 21/32 提升到 32/32，但完整业务域仍受真实旧端两处载荷修补、最小权限 Admin allow/deny、注册/游客/多游客/多门店场景、真实支付二维码与回调、预发、生产发布和发布后观察门禁约束。下一实现批应根据全局未完成 checklist 重新排序，不能因为 ADMIN-A 路由代码收口而越过 DATA、TEST 或 REL 门禁。
 
+## CORE-001 支付与业务回调详细迁移审计（首个支付入口子批次，2026-09-01）
+
+### 权威范围与静态迁移状态
+
+本轮从 PHP 路由、控制器、provider 包装、listener、订单/充值/会员支付状态机、现有 Worker route/controller/service、Queue/Cron 和 PostgreSQL schema 逐层反查，不以相似路由名代替协议等价。PHP `/api` 顶层有六个公开回调合同：`order_call_back`、`wechat/serve`、`wechat/miniServe`、`work/serve`、`pay/notify/:type` 和 `city_delivery/notify`。其中企业微信 `work/serve` 已由 WORK-C0～C8 建成可信接收、事件账本、主体水位、Queue 和投影链；支付此前只有静态 `/pay/notify/wechat|alipay`，其余四个仍是精确缺口。
+
+| PHP 合同 | PHP 实际行为 | 审计前 Worker | 本轮/后续判定 |
+|---|---|---|---|
+| `ANY pay/notify/:type` | `alipay/routine/wechat/app` 四路；支付宝 RSA2，微信 V2/V3 SDK后同步入账 | 静态微信/支付宝；微信始终读公众号 AppID | 本轮恢复动态路由和三种微信 AppID profile；事件账本/快速应答/主动对账仍缺 |
+| `ANY wechat/serve` | SDK 验签后同步处理关注、扫码、卡券、支付和交易结算等消息 | 未注册 | 需独立公众号事件账本、消息回复与支付事件桥 |
+| `ANY wechat/miniServe` | SDK 验签后同步处理资金支付和交易结算/收货事件 | 未注册 | 需独立小程序事件账本并复用支付/订单状态机 |
+| `ANY work/serve` | SDK 解密后同步写多表并调用企业微信 | WORK-C0～C8 候选完整 | 代码边界完成；真实租户/数据/启用/发布仍缺 |
+| `ANY order_call_back` | 用 `sms_token` 截断为 AES-256-CBC key，解密后直接处理寄件成功/取件/取消 | 未注册 | 旧协议不具备消息认证，禁止原样迁移；待当前快递100协议和真实样本 |
+| `ANY city_delivery/notify` | 达达/UU参数直接进入状态更新，无回调验签 | 未注册 | 必须按两家 provider 分开验签、单调状态和对账 |
+
+路由审计的首轮结果由 PHP 1,904、TS 1,499、精确 797、可执行 779、缺失 1,107，变为 PHP 1,904、TS 1,498、精确 798、可执行 780、缺失 1,106；TS 总数减少是两个静态支付路由收敛成一个权威动态路由，不是能力减少。`/api` 从 TS 808、精确 415、可执行 412、缺失 42，变为 TS 807、精确 416、可执行 413、缺失 41；精确/可执行/退役后有效覆盖为 `91.0%/90.4%/90.6%`。静态新增的一条精确匹配只关闭路由合同，不能证明账本、数据、provider 或发布完成。
+
+### 支付回调：已有安全边界、发现的偏差与本轮修正
+
+现有微信 V3 实现已具备 `Wechatpay-Timestamp/Nonce/Signature/Serial` 验签串、五分钟时间窗、签名探测拒绝、平台公钥 ID 固定、RSA 验签、APIv3 AES-GCM 解密、MchID/AppID、订单域唯一性、金额和相同 `pay_type + trade_no` 重放校验。支付宝已有 RSA2、AppID、可选 SellerID、订单域唯一性、金额和交易号校验。商品订单的 `paid=0→1`、活动积分、发票、拼团和 `order.paid` outbox在同一 PostgreSQL 事务；充值和会员也以行锁、金额及交易号保证单次入账。外部 provider I/O 不在这些最终支付事务内。
+
+协议比对发现此前微信所有渠道都通过 `WechatPayService.getConfig()` 固定读取 `wechat_appid`，即使 `WechatPaymentIdentity` 已区分 `routine/app`。PHP 权威配置却明确使用 `routine_appId` 和 `wechat_app_appid`，并把回调地址分别设置为 `/routine` 与 `/app`。这会导致小程序或 App 下单使用错误 AppID，或合法回调在 AppID 校验处失败。本轮给支付身份增加不可变 profile：公众号/H5/PC=`wechat`、小程序=`routine`、App=`app`；商品、充值、会员三条发起链都显式传 profile，下单 `notify_url` 和回调解密后的 AppID从同一 profile解析。
+
+旧 PHP 使用 `ANY` 只是框架声明，微信支付和支付宝实际均以 POST 回调。新动态路由保留路径级 `ANY` 以通过精确兼容审计，但非 POST 返回 `405 + Allow: POST`，未知、大小写变体或编码后多段 type 返回 404；不会让 GET 触发资金状态。微信支付/退款分别用流式 64 KiB上限，支付宝用32 KiB上限和 fatal UTF-8；支付宝还要求 `application/x-www-form-urlencoded`、最多64个唯一字段、字段名/值边界，并把 SellerID从“配置了才校验”改为支付能力必需项和每次强制匹配。微信补通知唯一 ID、订单/交易号格式、正整数金额和 `CNY`校验；签名后的业务字段仍不进入日志。
+
+这些行为与微信支付官方当前合同一致：普通支付成功后以 POST 发送通知，商户需使用时间戳、nonce、原始 body、serial和平台公钥验签，再以 APIv3 key解密，并在5秒内完成验签应答；重复通知要求业务重入。[微信支付成功通知](https://pay.wechatpay.cn/doc/v3/merchant/4012791861)、[APIv3签名/验签总述](https://pay.wechatpay.cn/doc/v3/merchant/4012365342)。本轮只使用官方协议文档和仓库中的实际 provider配置，没有根据第三方博客猜测签名规则。
+
+### 尚未关闭的可靠性与安全缺口
+
+支付订单行自身的幂等只能阻止重复资金入账，不能回答“哪个 provider事件何时到达、验签后是否持久化、为何失败、是否仍待处理、是否已经应答、Queue是否丢失”。当前微信/支付宝 handler仍在 HTTP请求内查询三个订单域并完成最终事务后才应答；即使代码路径正确，数据库抖动也可能超过微信5秒时限并产生重试风暴。仓库没有通用 payment callback event表，现有 `store_order_outbox` 是支付完成后的业务副作用 outbox，不是入站事件账本；scheduled任务只有退款 reconciliation，没有支付交易主动查询。因此 CORE-001-B/C 必须新增签名后快速持久化、opaque Queue、租约/死信和主动渠道对账，父项不能因本轮路由匹配而勾选。
+
+公众号和小程序旧 listener也不能直接复制。`OffcialAccountListener` 与 `RoutineListener` 在 callback请求内同步处理关注/取消关注、扫码、位置、关键词/媒体、卡券、资金支付和交易结算；异常会被宽泛捕获、记录完整 payload，然后继续走默认响应，临时数据库/provider失败可能被永久确认。两个入口没有事件唯一键、重放账本、主体水位或乱序规则；其中 `funds_order_pay` 又是第二条支付入账来源，必须桥接统一支付账本，不能另写一套只看订单号的状态更新。
+
+`order_call_back` 的旧 AES-CBC只提供机密性且 key复用短信 `sms_token`，没有MAC/独立签名、时间戳、nonce、事件ID或重放保护；控制器会记录完整请求并直接改 `label/delivery_id/status/kuaidi_*`。CBC密文可篡改而不被可靠检测，这条路由必须在取得快递100当前回调签名、字段和真实样本后重新设计。达达/UU旧入口风险更直接：控制器把任意 query/form/JSON参数交给 `StoreDeliveryOrderServices::notify()`，未调用两家已有的出站签名函数；状态处理只判断目标状态“不等于当前状态”，没有单调图，延迟的待取件/配送中/取消可能覆盖完成态。两家 provider必须分别验签、去重、按订单主体排序，并用主动查单解决UNKNOWN，而不是共享一个无鉴权分支。
+
+企业微信是唯一已有完整候选账本和乱序模型的非支付回调，但生产为空租户且未启用；它可以提供表/租约/Queue/水位模式，不能共享具体事件表或假设公众号、支付和配送具有相同排序键。通用部分应抽象为接收状态与租约规则，每个provider保留自己的可信事件ID、主体键、状态图、敏感字段白名单和应答格式。
+
+### PostgreSQL/Hyperdrive设计顺序与生产边界
+
+后续首要实现应是 `payment_callback_event`：以 `(provider,event_id)` 数据库唯一约束阻断重放，另存 request摘要、渠道profile、主体摘要/订单号的最小白名单、provider事件时间、`RECEIVED/PROCESSING/COMPLETED/IGNORED/UNKNOWN/DEAD`、租约token/截止时间、尝试计数、低基数错误码和保留期；不保存签名头、密钥、完整原始/解密 body或支付人信息。签名验证和provider解密在事务外，账本插入与可投递 outbox在短事务内用 `INSERT ... ON CONFLICT` 收敛；Queue只携带 event主键和不可猜 replay key。消费者以固定 advisory/行锁顺序认领，复用现有商品/充值/会员支付状态机；任何外部查单都在事务外。待处理/UNKNOWN使用与查询相符的部分索引和有界主键游标，不按当前29单小样本投机建宽索引。
+
+生产目标仍精确绑定用户给定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有引入SQLite、影子PostgreSQL或第二套业务库。既有直接只读证据是 PostgreSQL 16.14、订单29（已付20）、充值6（已付1且历史交易号缺失）、支付开关全关闭，且没有可用微信 AppID/商户号/证书序列号或微信/支付宝 Worker Secret；`routine_appId`等微信配置也缺失。上一批为新只读聚合编写的Worker在两版Wrangler下均于SQL发送前遭Windows `workerd 0xc0000005`，本批没有把该失败重复解释为生产数据通过，也没有为取得结果部署临时Worker、执行生产DML/DDL或调用真实provider。本轮代码没有新增schema，因此未对生产数据库做无意义写入。
+
+### 首批验证结果与下一实现点
+
+新增 `payment-callback-route.test.ts` 并扩展收银台测试，定向3文件16项通过；完整双TypeScript、176文件/1,100项单元测试、observability 14信号/10域/27必需事件/377个生产源文件/6个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、路由审计和 `git diff --check` 均通过。Windows真实workerd仍在0条测试/0条断言前以`0xc0000005`失败，必须由Linux CI复验，不能记成本地runtime通过。
+
+下一批固定为 CORE-001-B：先完成支付入站事件表、短事务接收/outbox与opaque Queue，再把微信/支付宝 handler从“同步完整入账后应答”改为“验签→持久化→快速应答→幂等消费”。只有账本的外部/内嵌DDL逐字一致、PostgreSQL并发/崩溃/重放场景和Linux runtime门禁通过后，才进入主动支付对账 CORE-001-C；不会跳过账本先恢复高风险寄件或同城写状态路由。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

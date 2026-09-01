@@ -1,5 +1,51 @@
 import { ValidateException } from "@/utils/errors";
 
+/** Read a UTF-8 request body without buffering beyond the declared limit. */
+export async function readBoundedUtf8Text(
+  request: Request,
+  maxBytes: number,
+): Promise<string> {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) {
+    throw new Error("maxBytes must be a positive safe integer");
+  }
+  const limitLabel = maxBytes % 1024 === 0 ? `${maxBytes / 1024} KiB` : `${maxBytes} bytes`;
+  const declaredRaw = request.headers.get("content-length");
+  if (declaredRaw !== null) {
+    const declared = Number(declaredRaw);
+    if (!Number.isSafeInteger(declared) || declared < 0) {
+      throw new ValidateException("Content-Length 无效");
+    }
+    if (declared > maxBytes) {
+      throw new ValidateException(`请求数据不能超过${limitLabel}`);
+    }
+  }
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new ValidateException(`请求数据不能超过${limitLabel}`);
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(bytes);
+  } catch {
+    throw new ValidateException("请求数据不是有效 UTF-8");
+  }
+}
+
 /** Parse any JSON value without allowing an unbounded request body into memory. */
 export async function readBoundedJsonValue(
   request: Request,

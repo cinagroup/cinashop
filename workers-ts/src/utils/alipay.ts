@@ -8,6 +8,28 @@
 
 export type AlipayParams = Record<string, string>;
 
+const MAX_NOTIFICATION_FIELDS = 64;
+const MAX_NOTIFICATION_VALUE_CHARS = 16 * 1024;
+const NOTIFICATION_KEY = /^[A-Za-z0-9_.-]{1,64}$/;
+const FORBIDDEN_FORM_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+
+/** Parse a bounded raw form after the caller has enforced the byte limit. */
+export function parseAlipayNotificationForm(raw: string): AlipayParams {
+  const params: AlipayParams = {};
+  let count = 0;
+  for (const [key, value] of new URLSearchParams(raw)) {
+    count += 1;
+    if (count > MAX_NOTIFICATION_FIELDS) throw new Error("支付宝回调字段过多");
+    if (!NOTIFICATION_KEY.test(key)) throw new Error("支付宝回调字段名无效");
+    if (Object.hasOwn(params, key)) throw new Error("支付宝回调字段重复");
+    if (value.length > MAX_NOTIFICATION_VALUE_CHARS || FORBIDDEN_FORM_CONTROL.test(value)) {
+      throw new Error("支付宝回调字段值无效");
+    }
+    params[key] = value;
+  }
+  return params;
+}
+
 function pemToArrayBuffer(pem: string, label: "PUBLIC KEY" | "PRIVATE KEY"): ArrayBuffer {
   const begin = `-----BEGIN ${label}-----`;
   const end = `-----END ${label}-----`;

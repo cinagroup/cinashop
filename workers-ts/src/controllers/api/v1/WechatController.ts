@@ -13,7 +13,10 @@ import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { WechatAuthService } from "@/services/wechat/WechatAuthService";
-import { WechatPayService } from "@/services/wechat/WechatPayService";
+import {
+  WechatPayService,
+  type WechatPayProfile,
+} from "@/services/wechat/WechatPayService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
 import {
@@ -25,12 +28,13 @@ import {
   RechargePaymentService,
 } from "@/services/payment/RechargePaymentService";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
-import { readBoundedJsonObject } from "@/utils/request-body";
+import { readBoundedJsonObject, readBoundedUtf8Text } from "@/utils/request-body";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_SOCIAL_AUTH_BODY_BYTES = 8 * 1024;
+const MAX_PAYMENT_CALLBACK_BODY_BYTES = 64 * 1024;
 
 /** POST /api/wechat/mp_auth — 小程序登录 */
 export async function mpAuth(c: C) {
@@ -136,16 +140,15 @@ export async function wechatConfig(c: C) {
  *   3. 调 paySuccess 标记订单已支付
  *   4. 返回 {"code":"SUCCESS"} (V3 规范)
  */
-export async function wechatPayNotify(c: C) {
-  const rawBody = await c.req.text();
-  const headers: Record<string, string> = {};
-  c.req.raw.headers.forEach((v, k) => {
-    headers[k.toLowerCase()] = v;
-  });
-
-  const paySvc = new WechatPayService(c.get("container"), c.env);
+export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat") {
   try {
-    const notify = await paySvc.verifyAndParseNotify(headers, rawBody);
+    const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_PAYMENT_CALLBACK_BODY_BYTES);
+    const headers: Record<string, string> = {};
+    c.req.raw.headers.forEach((v, k) => {
+      headers[k.toLowerCase()] = v;
+    });
+    const paySvc = new WechatPayService(c.get("container"), c.env);
+    const notify = await paySvc.verifyAndParseNotify(headers, rawBody, profile);
     if (notify.tradeState === "SUCCESS") {
       // 查订单 → paySuccess
       const container = c.get("container");
@@ -213,12 +216,12 @@ export async function wechatPayNotify(c: C) {
 
 /** POST /api/pay/notify/wechat/refund — 微信退款结果回调。 */
 export async function wechatRefundNotify(c: C) {
-  const rawBody = await c.req.text();
-  const headers: Record<string, string> = {};
-  c.req.raw.headers.forEach((value, key) => {
-    headers[key.toLowerCase()] = value;
-  });
   try {
+    const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_PAYMENT_CALLBACK_BODY_BYTES);
+    const headers: Record<string, string> = {};
+    c.req.raw.headers.forEach((value, key) => {
+      headers[key.toLowerCase()] = value;
+    });
     const payService = new WechatPayService(c.get("container"), c.env);
     const notification = await payService.verifyAndParseRefundNotify(headers, rawBody);
     const refundService = new StoreOrderRefundService(c.get("container"), c.env);

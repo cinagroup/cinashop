@@ -537,6 +537,7 @@ export class PaidMembershipService {
         input.payerClientIp,
       );
       const config = await new WechatPayService(this.container, this.env).createOrder({
+        profile: identity.profile,
         type: identity.type,
         outTradeNo: orderId,
         description: `CinaShop 会员 ${order.memberType}`,

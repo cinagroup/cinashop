@@ -157,6 +157,7 @@ export class RechargePaymentService {
       payerClientIp,
     );
     const jsConfig = await new WechatPayService(this.container, this.env).createOrder({
+      profile: identity.profile,
       type: identity.type,
       outTradeNo: order.orderId,
       description: "CinaShop 用户充值",

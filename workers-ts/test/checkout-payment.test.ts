@@ -4,7 +4,10 @@ import {
   assertMarketingOfflinePaymentAllowed,
   orderCancelHours,
 } from "../src/services/payment/OrderPaymentPolicy";
-import { normalizeWechatPaymentChannel } from "../src/services/payment/WechatPaymentIdentity";
+import {
+  normalizeWechatPaymentChannel,
+  wechatPayProfileForChannel,
+} from "../src/services/payment/WechatPaymentIdentity";
 import { parseRechargeQuota } from "../src/services/user/UserFinanceService";
 
 describe("checkout payment migration", () => {
@@ -15,6 +18,14 @@ describe("checkout payment migration", () => {
     expect(normalizeWechatPaymentChannel("pc")).toBe("pc");
     expect(normalizeWechatPaymentChannel("app")).toBe("app");
     expect(() => normalizeWechatPaymentChannel("unknown")).toThrow("不支持当前微信支付渠道");
+  });
+
+  it("binds each client channel to the callback AppID profile", () => {
+    expect(wechatPayProfileForChannel("weixin")).toBe("wechat");
+    expect(wechatPayProfileForChannel("h5")).toBe("wechat");
+    expect(wechatPayProfileForChannel("pc")).toBe("wechat");
+    expect(wechatPayProfileForChannel("routine")).toBe("routine");
+    expect(wechatPayProfileForChannel("app")).toBe("app");
   });
 
   it("uses activity-specific cancellation windows with PHP-compatible fallbacks", () => {

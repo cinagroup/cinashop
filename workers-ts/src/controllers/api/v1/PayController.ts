@@ -20,14 +20,19 @@ import {
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
 import type { AppVariables, Env } from "@/env";
-import { verifyAlipayNotification, type AlipayParams } from "@/utils/alipay";
+import {
+  parseAlipayNotificationForm,
+  verifyAlipayNotification,
+} from "@/utils/alipay";
 import {
   LegacyOrderCompatibilityService,
   parseLegacyRefundSelections,
 } from "@/services/order/LegacyOrderCompatibilityService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { readBoundedUtf8Text } from "@/utils/request-body";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
+const MAX_PAYMENT_CALLBACK_BODY_BYTES = 32 * 1024;
 
 /**
  * POST /api/order/pay
@@ -75,7 +80,8 @@ export async function orderPay(c: C) {
 export async function alipayNotify(c: C) {
   const publicKey = c.env.ALIPAY_PUBLIC_KEY;
   const appId = c.env.ALIPAY_APP_ID;
-  if (!publicKey || !appId) {
+  const sellerId = c.env.ALIPAY_SELLER_ID;
+  if (!publicKey || !appId || !sellerId) {
     emitOperationalEvent("error", {
       event: "payment_callback_failed",
       component: "payment",
@@ -86,11 +92,19 @@ export async function alipayNotify(c: C) {
     return c.text("failure", 500);
   }
   try {
-    const body = await c.req.parseBody({ all: false });
-    const params: AlipayParams = {};
-    for (const [key, value] of Object.entries(body)) {
-      if (typeof value === "string") params[key] = value;
+    const contentType = c.req.header("content-type")?.split(";", 1)[0]?.trim().toLowerCase();
+    if (contentType !== "application/x-www-form-urlencoded") {
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "content_type_invalid",
+      });
+      return c.text("failure", 400);
     }
+    const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_PAYMENT_CALLBACK_BODY_BYTES);
+    const params = parseAlipayNotificationForm(rawBody);
 
     if (!(await verifyAlipayNotification(params, publicKey))) {
       emitOperationalEvent("warn", {
@@ -112,7 +126,7 @@ export async function alipayNotify(c: C) {
       });
       return c.text("failure", 400);
     }
-    if (c.env.ALIPAY_SELLER_ID && params.seller_id !== c.env.ALIPAY_SELLER_ID) {
+    if (params.seller_id !== sellerId) {
       emitOperationalEvent("warn", {
         event: "payment_callback_rejected",
         component: "payment",
@@ -130,6 +144,19 @@ export async function alipayNotify(c: C) {
 
     const outTradeNo = params.out_trade_no ?? "";
     const tradeNo = params.trade_no ?? "";
+    if (
+      !/^[A-Za-z0-9_-]{2,64}$/.test(outTradeNo)
+      || !/^[A-Za-z0-9_-]{1,100}$/.test(tradeNo)
+    ) {
+      emitOperationalEvent("warn", {
+        event: "payment_callback_rejected",
+        component: "payment",
+        operation: "alipay_callback",
+        outcome: "rejected",
+        errorCode: "provider_identity_invalid",
+      });
+      return c.text("failure", 400);
+    }
     const container = c.get("container");
     const [order, membershipOrder, rechargeOrder] = outTradeNo
       ? await Promise.all([

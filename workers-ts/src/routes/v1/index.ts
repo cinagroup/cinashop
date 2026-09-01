@@ -15,6 +15,7 @@ import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffCont
 import * as StoreMobileDelivery from "@/controllers/api/v1/StoreMobileDeliveryController";
 import * as StoreMobileOrder from "@/controllers/api/v1/StoreMobileOrderController";
 import * as PayController from "@/controllers/api/v1/PayController";
+import * as PaymentCallbackController from "@/controllers/api/v1/PaymentCallbackController";
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
 import * as UserLevelController from "@/controllers/api/v1/UserLevelController";
@@ -485,10 +486,15 @@ v1Routes.get("/payment/readiness", authMiddleware({ force: true }), PayControlle
 v1Routes.post("/order/pay", authMiddleware({ force: true }), PayController.orderPay);
 v1Routes.post("/recharge/pay", authMiddleware({ force: true }), PayController.rechargePay);
 // 支付回调 (无需 auth, 第三方调用)
-// M6: 微信回调直连验签; 其他类型仍走 PHP 转发
-v1Routes.all("/pay/notify/wechat", WechatController.wechatPayNotify);
+// PHP 暴露 ANY 兼容入口；控制器仅接受 provider 规范的 POST，并按渠道 AppID 验签。
+v1Routes.all(
+  "/pay/notify/:type",
+  (c) => PaymentCallbackController.paymentNotify(c, {
+    alipayNotify: PayController.alipayNotify,
+    wechatPayNotify: WechatController.wechatPayNotify,
+  }),
+);
 v1Routes.post("/pay/notify/wechat/refund", WechatController.wechatRefundNotify);
-v1Routes.post("/pay/notify/alipay", PayController.alipayNotify);
 v1Routes.get("/ali_pay", PayController.aliPay);
 // 微信 JSAPI 下单
 v1Routes.post("/order/wechat_pay", authMiddleware({ force: true }), WechatController.wechatPayOrder);

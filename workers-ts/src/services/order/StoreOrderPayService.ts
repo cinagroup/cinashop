@@ -473,6 +473,7 @@ export class StoreOrderPayService {
       payerClientIp,
     );
     const jsConfig = await new WechatPayService(this.container, this.env).createOrder({
+      profile: identity.profile,
       type: identity.type,
       outTradeNo: order.orderId,
       description: order.mark || `CinaShop 订单 ${order.orderId}`,

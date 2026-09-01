@@ -15,6 +15,18 @@ import type {
 
 const BASE_URL = "https://api.mch.weixin.qq.com";
 
+export type WechatPayProfile = "wechat" | "routine" | "app";
+
+const PROFILE_APP_ID_KEYS = {
+  wechat: "wechat_appid",
+  routine: "routine_appId",
+  app: "wechat_app_appid",
+} as const satisfies Record<WechatPayProfile, string>;
+
+export function wechatPayAppIdKey(profile: WechatPayProfile): string {
+  return PROFILE_APP_ID_KEYS[profile];
+}
+
 interface WechatPayConfig {
   appId: string;
   mchId: string;
@@ -46,6 +58,7 @@ export class WechatPayService {
   ) {}
 
   async createOrder(params: {
+    profile: WechatPayProfile;
     type: "jsapi" | "native" | "h5" | "app";
     outTradeNo: string;
     description: string;
@@ -54,7 +67,7 @@ export class WechatPayService {
     attach?: string;
     payerClientIp?: string;
   }): Promise<Record<string, unknown>> {
-    const cfg = await this.getConfig();
+    const cfg = await this.getConfig(params.profile);
     const path = `/v3/pay/transactions/${params.type}`;
     const total = Math.round(params.amount * 100);
     if (!Number.isSafeInteger(total) || total <= 0) throw new ValidateException("微信支付金额无效");
@@ -87,27 +100,39 @@ export class WechatPayService {
   async verifyAndParseNotify(
     headers: Record<string, string>,
     rawBody: string,
+    profile: WechatPayProfile,
   ): Promise<{
+    eventId: string;
     outTradeNo: string;
     transactionId: string;
     tradeState: string;
     amountTotal: number;
   }> {
-    const { data, cfg } = await this.verifyAndDecryptNotify<{
+    const { data, cfg, eventId } = await this.verifyAndDecryptNotify<{
       appid?: string;
       mchid?: string;
       out_trade_no?: string;
       transaction_id?: string;
       trade_state?: string;
-      amount?: { total?: number };
-    }>(headers, rawBody, "transaction");
+      amount?: { total?: number; currency?: string };
+    }>(headers, rawBody, "transaction", profile);
     if (data.mchid !== cfg.mchId || data.appid !== cfg.appId) {
       throw new ValidateException("微信支付回调商户信息不匹配");
     }
-    if (!data.out_trade_no || !data.transaction_id || !data.trade_state) {
+    if (
+      !data.out_trade_no
+      || !data.transaction_id
+      || !data.trade_state
+      || !/^[A-Za-z0-9_-]{2,64}$/.test(data.out_trade_no)
+      || !/^[A-Za-z0-9_-]{1,100}$/.test(data.transaction_id)
+      || !Number.isSafeInteger(data.amount?.total)
+      || Number(data.amount?.total) <= 0
+      || data.amount?.currency !== "CNY"
+    ) {
       throw new ValidateException("微信支付回调业务字段不完整");
     }
     return {
+      eventId,
       outTradeNo: data.out_trade_no,
       transactionId: data.transaction_id,
       tradeState: data.trade_state,
@@ -117,7 +142,7 @@ export class WechatPayService {
 
   async requestRefund(request: RefundProviderRequest): Promise<RefundProviderResult> {
     validateRefundRequest(request);
-    const cfg = await this.getConfig();
+    const cfg = await this.getConfig("wechat");
     const path = "/v3/refund/domestic/refunds";
     const body: Record<string, unknown> = {
       out_refund_no: request.outRefundNo,
@@ -138,7 +163,7 @@ export class WechatPayService {
 
   async queryRefund(request: RefundProviderRequest): Promise<RefundProviderResult> {
     validateRefundRequest(request);
-    const cfg = await this.getConfig();
+    const cfg = await this.getConfig("wechat");
     const path = `/v3/refund/domestic/refunds/${encodeURIComponent(request.outRefundNo)}`;
     try {
       const response = await this.callApi<WechatRefundResponse>("GET", path, undefined, cfg);
@@ -155,6 +180,7 @@ export class WechatPayService {
     headers: Record<string, string>,
     rawBody: string,
   ): Promise<{
+    eventId: string;
     outTradeNo: string;
     transactionId: string;
     outRefundNo: string;
@@ -164,7 +190,7 @@ export class WechatPayService {
     totalAmount: number;
     successTime?: number;
   }> {
-    const { data, cfg } = await this.verifyAndDecryptNotify<{
+    const { data, cfg, eventId } = await this.verifyAndDecryptNotify<{
       mchid?: string;
       out_trade_no?: string;
       transaction_id?: string;
@@ -173,7 +199,7 @@ export class WechatPayService {
       refund_status?: string;
       success_time?: string;
       amount?: { refund?: number; total?: number };
-    }>(headers, rawBody, "refund");
+    }>(headers, rawBody, "refund", "wechat");
     if (data.mchid !== cfg.mchId) throw new ValidateException("微信退款回调商户号不匹配");
     if (
       !data.out_trade_no ||
@@ -185,6 +211,7 @@ export class WechatPayService {
       throw new ValidateException("微信退款回调业务字段不完整");
     }
     return {
+      eventId,
       outTradeNo: data.out_trade_no,
       transactionId: data.transaction_id,
       outRefundNo: data.out_refund_no,
@@ -200,7 +227,8 @@ export class WechatPayService {
     headers: Record<string, string>,
     rawBody: string,
     expectedOriginalType: "transaction" | "refund",
-  ): Promise<{ data: T; cfg: WechatPayConfig }> {
+    profile: WechatPayProfile,
+  ): Promise<{ data: T; cfg: WechatPayConfig; eventId: string }> {
     const timestamp = headers["wechatpay-timestamp"] ?? "";
     const nonce = headers["wechatpay-nonce"] ?? "";
     const signature = headers["wechatpay-signature"] ?? "";
@@ -214,7 +242,7 @@ export class WechatPayService {
       throw new ValidateException("微信回调已过期");
     }
 
-    const cfg = await this.getConfig();
+    const cfg = await this.getConfig(profile);
     this.assertPlatformSerial(serial, cfg);
     if (signature.startsWith("WECHATPAY/SIGNTEST/")) {
       throw new ValidateException("微信签名探测请求已拒绝");
@@ -227,6 +255,7 @@ export class WechatPayService {
     if (!valid) throw new ValidateException("微信回调验签失败");
 
     const notifyBody = JSON.parse(rawBody) as {
+      id?: string;
       resource_type?: string;
       resource?: {
         algorithm?: string;
@@ -236,6 +265,10 @@ export class WechatPayService {
         associated_data?: string;
       };
     };
+    const eventId = notifyBody.id ?? "";
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(eventId)) {
+      throw new ValidateException("微信回调通知 ID 无效");
+    }
     const resource = notifyBody.resource;
     if (
       notifyBody.resource_type !== "encrypt-resource" ||
@@ -252,7 +285,7 @@ export class WechatPayService {
       resource.nonce,
       resource.associated_data ?? "",
     );
-    return { data: JSON.parse(decrypted) as T, cfg };
+    return { data: JSON.parse(decrypted) as T, cfg, eventId };
   }
 
   private async callApi<T extends object>(
@@ -332,13 +365,15 @@ export class WechatPayService {
     }
   }
 
-  private async getConfig(): Promise<WechatPayConfig> {
+  private async getConfig(profile: WechatPayProfile): Promise<WechatPayConfig> {
     const svc = new (await import("@/services/system/SystemConfigService")).SystemConfigService(
       this.container,
       this.env,
     );
     const values = await svc.getMany([
       "wechat_appid",
+      "routine_appId",
+      "wechat_app_appid",
       "pay_weixin_mchid",
       "pay_weixin_serial_no",
       "site_url",
@@ -350,7 +385,7 @@ export class WechatPayService {
     if (!platformPublicKey?.includes("BEGIN PUBLIC KEY")) {
       throw new ValidateException("微信支付平台公钥未配置为 SPKI PEM");
     }
-    const appId = values.wechat_appid ?? "";
+    const appId = values[wechatPayAppIdKey(profile)] ?? "";
     const mchId = values.pay_weixin_mchid ?? "";
     const serialNo = values.pay_weixin_serial_no ?? "";
     const apiV3Key = this.env.WECHAT_API_V3_KEY ?? "";
@@ -359,7 +394,7 @@ export class WechatPayService {
       throw new ValidateException("微信支付 APIv3 密钥必须为 32 字节");
     }
     const siteUrl = (values.site_url ?? "").replace(/\/$/, "");
-    const notifyUrl = `${siteUrl}/api/pay/notify/wechat`;
+    const notifyUrl = `${siteUrl}/api/pay/notify/${profile}`;
     const refundNotifyUrl =
       this.env.WECHAT_REFUND_NOTIFY_URL ?? `${siteUrl}/api/pay/notify/wechat/refund`;
     assertCallbackUrl(notifyUrl, "微信支付回调");

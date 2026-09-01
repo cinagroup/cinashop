@@ -81,6 +81,7 @@ export async function getPaymentReadiness(
       env.ALIPAY_APP_ID
       && env.ALIPAY_PRIVATE_KEY
       && env.ALIPAY_PUBLIC_KEY
+      && env.ALIPAY_SELLER_ID
       && isHttpsUrl(env.ALIPAY_NOTIFY_URL)
       && isHttpsUrl(env.ALIPAY_RETURN_URL),
     );
