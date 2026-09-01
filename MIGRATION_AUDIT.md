@@ -3424,6 +3424,34 @@ Dada 状态图显式覆盖当前 `1/8/2/100/3/9/4/10/6/5/1000` 和 UNKNOWN；UU 
 
 这只关闭 checklist 中“稳定引用、响应签名、服务端写入/历史读取清洗”的候选代码门禁。生产没有任何文章或附件样本，源 MySQL/附件目录也不可用，尚不能做源附件→`system_attachment`/R2 对象映射、hash/mime/size 对账、PHP golden response 或真实 H5/小程序/App 媒体验收；PHP/Worker 双写或停写切流、历史 UID 0/孤儿关系清理、visit 热点限流/异步聚合决策、预发/影子流量、主 Worker/Pages 发布和观察仍保持未完成。当前本地 main 还包含未推送的 Dada 与 UU 两个候选提交；没有新的明确推送授权前不变更远端。
 
+## SUP-003 Supplier 文件域详细审计（候选路由收敛，生产验证待额外授权，2026-09-01）
+
+### 22 条权威合同与原 11 条缺口
+
+重新运行可重复路由审计后，PHP `route/supplier.php` 的文件域精确展开为 22 条合同。批次开始时 11 条已匹配、11 条缺失；现有 Worker 实际已经覆盖租户内附件列表、删除、移动、重命名、图片上传及别名、上传类型、分类列表/新建/编辑/更新/删除，旧 checklist 的“分类、移动、重命名、删除、上传别名全部未迁移”描述已经过时。本批新增 4 条可执行合同：`POST /file/video_upload`、`POST /file/video_attachment`、`GET /file/get/way_data` 和无 path 参数的 `GET /file/category/create`。文件域终态为 15 条可执行匹配、7 条有证据退役、`actionableMissing=0`；整个 Supplier 面从 TS 112/精确 79/原始缺失 103 提升到 116/83/99，7 条退役后可执行缺口 92、有效覆盖 47.4%。这只关闭文件子域的静态可执行缺口，不代表 Supplier 整面完成。
+
+7 条没有用占位响应伪装迁移。`GET /file/file/move` 指向不存在的 `SystemAttachment::move()`，第一方源码只调用 `PUT file/do_move`；ThinkPHP resource 自动展开的 `GET /file/category/:id` 同样没有 controller `read()`，第一方只有列表与 edit form。扫码链把供应商 ID 和 `md5(time())` 放入 68,400 秒 URL，图片轮询 DAO 又只按 `scan_token` 查询，没有 `type/relation_id` 租户条件，因此 `scan/qrcode`、`remove/qrcode`、`scan/image/list/:scan_token` 三条不能原样恢复。`online/upload` 让服务器下载任意用户 URL，没有 origin allowlist，是 SSRF/不受控出站面；替代合同为客户端取得图片后走已有的有界认证 multipart 上传。`GET set/way_data/:is_way` 既以 GET 写状态，又拿 `supplierId` 更新管理员主键，而 Workers 只有固定私有 R2 authority，故由只读 `get/way_data` 替代。7 项均写入版本化 `legacy-route-decisions.json`，保留 PHP 原始分母、源码行证据、原因与现行替代合同。
+
+逐行审计还确认旧 PHP 的删除、移动和重命名都只按附件 ID 操作；`SystemAttachmentDao::move()` 没有供应商条件，删除和更新 service 也没有把 controller 已知的 `supplierId` 下传。候选 Worker 不是照搬这个漏洞：附件读写、分类读写、目标分类验证和 DB 更新全部同时限定 `type=4`、认证 `relation_id` 与 `module_type=1`；移动现在先读取附件的真实 `file_type`，拒绝图片/视频混合移动，再验证同租户同类型目标分类。
+
+### R2 视频、私有读取与外链边界
+
+旧本地视频协议由 Supplier 前端以 3 MiB 顺序分片调用，PHP 把每片写入 webroot，再用字符串拼接完整文件；这在无持久本地盘的 Workers 上不可复用。候选保持旧字段和 `code=1/2` 等待/完成信封，但每片先进入 `attachments/tmp/supplier/{supplierId}/{sha256-session}/N.part`，会话同时绑定 Supplier、旧客户端 MD5、文件名、片数、片大小与服务端生成的最终 UUID key。MD5 只作为旧客户端会话关联值，不被冒充成完整性证明；首片必须通过 MP4 `ftyp` 魔数，声明类型限 MP4/octet-stream，单片最多 5 MiB、总片数最多 100、总视频最多 100 MiB。
+
+末片到达后，R2 强一致列表必须精确得到同一会话全部对象和一致 custom metadata；`FixedLengthStream` 以已知总长度逐片读取并写入私有最终对象，不在内存合并百兆视频。每个临时片还向现有 Queue 登记 12 小时延迟幂等删除，完成后立即批量删除；最终 R2 写失败、大小不符或数据库元数据事务失败都会删除最终对象。数据库只保存 `attachments/supplier/...uuid.mp4` 与稳定 `/api/assets/:id`，返回同时包含 canonical URL 和短时签名预览。签名资产读取新增严格单 Range、`Accept-Ranges`、`Content-Range` 和 206，图片变体继续忽略 Range 并走既有 Cloudflare Images/cache 路径。
+
+外链视频登记只接受不含凭据、非私网字面地址、标准 443、路径以 `.mp4` 结尾且长度适配旧表列宽的 HTTPS URL；封面只接受同边界 HTTPS 图片扩展名。实现不对外链执行 `fetch`、HEAD 或大小探测，从根源上避免恢复旧 `getFileHeaders()`/远程下载 SSRF。`upload_type` 重新表达旧前端的“走本服务上传”策略为 `1`，另以 `storage_type=8/binding=ASSETS_BUCKET` 暴露真实存储 authority，避免旧 Supplier UI 因看到未知类型 8 而误走已退役的 OSS 临时凭据流程。
+
+实现依据当前 [Cloudflare Workers Best Practices](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)、[R2 Workers API](https://developers.cloudflare.com/r2/api/workers/workers-api-reference/) 与 [R2 上传对象指南](https://developers.cloudflare.com/r2/objects/upload-objects/) 复核；官方 npm registry 的最新 `@cloudflare/workers-types` 为 `5.20260901.1`，项目当前 `5.20260828.1` 与本批使用的 R2 list/head/get/put、Queue delay、`FixedLengthStream` 类型一致，无需仅为四天差异强制改锁文件。
+
+### 工程证据、生产门禁与未完成项
+
+定向附件测试现为 1 文件/12 项、完整单元为 183 文件/1,179 项，全部通过；覆盖 MP4 魔数、HTTPS/私网外链拒绝、视频与临时对象 cleanup key、4 条新增路由、7 条退役清单、multipart 上限、Range 接线和生产审计只读静态门禁，双 TypeScript 也已通过。主 Worker minify dry-run 为 3,625.02 KiB/gzip 851.02 KiB，精确解析 Hyperdrive、Queue、KV、R2、Images 与四个 Durable Object 后 0 退出；专用审计 Worker dry-run 为 737.33/125.09 KiB，只有指定 Hyperdrive 与 `cinashop-assets` 两个只读 binding。Wrangler 仍因沙箱不能写用户级日志目录打印 EPERM，但 dry-run 进程均成功。Windows runtime 与历史一致，在加载任何断言前以 `0xc0000005` 失败，不能把新增 R2 拼接/Range 测试记作本地 runtime 通过；必须由推送后的 Linux Actions 执行。
+
+生产审计夹具已固定 `SET TRANSACTION READ ONLY`、`search_path=public` 和 15 秒超时，只输出 Supplier 附件/分类数量、租户/分类孤儿、canonical/R2 键格式与重复计数；R2 只使用 list/head，最多扫描 10,000 对象且不返回对象键、文件名、URL、Supplier ID 或其他 PII。临时 Worker使用随机 256-bit token 的 SHA-256 verifier，runner 在响应后删除并复探 404。实际执行仍被安全审查拒绝：尽管用户已授权直接读生产数据库，随机令牌保护的临时 `workers.dev` 地址仍会承载脱敏生产聚合，系统要求对这一外部临时端点及其载荷再次明确授权。本轮没有绕过门禁、没有读取该批生产结果、没有部署主 Worker、没有写 PostgreSQL 或 R2。
+
+所以 SUP-003 当前只能判定为“候选路由、R2 视频实现、退役决策和本地静态/单元门禁完成”。父项保持未完成，剩余顺序为：用户明确批准临时外部审计端点后执行生产 PostgreSQL/R2 只读核验并确认删除；Linux CI 运行真实 workerd 拼接/Range；迁移 Supplier TypeScript 前端并用真实账号验证图片/视频上传、暂停/失败/过期、分类与跨租户拒绝；取得源 MySQL 和附件目录后对账行数、对象 size/mime/hash 与 legacy URL；最后单独批准主 Worker/Supplier 发布并观察 Hyperdrive、R2、Queue cleanup、签名 404/206 和上传失败率。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

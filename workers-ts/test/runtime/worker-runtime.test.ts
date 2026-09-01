@@ -18,6 +18,7 @@ import {
 } from "../../src/services/kefu/KefuRealtimeService";
 import { consumeOrderQueueDeadLetterMessage } from "../../src/services/order/OrderQueueDeadLetterConsumer";
 import { consumeOrderPaidOutboxQueueMessage } from "../../src/services/order/OrderPaidOutboxQueueConsumer";
+import { putConcatenatedR2Objects } from "../../src/services/system/AttachmentService";
 
 const testEnv = env as unknown as Env;
 const QUEUE_NAME = "cinashop-order-runtime-test";
@@ -55,6 +56,32 @@ describe("Worker runtime bindings", () => {
 
     await testEnv.ASSETS_BUCKET.delete(key);
     await expect(testEnv.ASSETS_BUCKET.get(key)).resolves.toBeNull();
+  });
+
+  it("streams ordered temporary video chunks into one fixed-length R2 object", async () => {
+    const first = "runtime/video/session/1.part";
+    const second = "runtime/video/session/2.part";
+    const destination = "runtime/video/final.mp4";
+    await testEnv.ASSETS_BUCKET.put(first, "hello ");
+    await testEnv.ASSETS_BUCKET.put(second, "world");
+
+    const stored = await putConcatenatedR2Objects(
+      testEnv.ASSETS_BUCKET,
+      [first, second],
+      destination,
+      11,
+      { httpMetadata: { contentType: "video/mp4" } },
+    );
+
+    expect(stored.size).toBe(11);
+    const object = await testEnv.ASSETS_BUCKET.get(destination);
+    await expect(object?.text()).resolves.toBe("hello world");
+    expect(object?.httpMetadata?.contentType).toBe("video/mp4");
+    const ranged = await testEnv.ASSETS_BUCKET.get(destination, { range: { offset: 6, length: 5 } });
+    await expect(ranged?.text()).resolves.toBe("world");
+    expect(ranged?.size).toBe(11);
+    expect(ranged?.range).toEqual({ offset: 6, length: 5 });
+    await testEnv.ASSETS_BUCKET.delete([first, second, destination]);
   });
 
   it("transforms private R2 image bytes through the isolated Images binding", async () => {

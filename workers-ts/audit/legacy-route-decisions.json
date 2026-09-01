@@ -2,6 +2,98 @@
   "version": 1,
   "decisions": [
     {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/file/file/move",
+      "status": "retired",
+      "reason": "The PHP route targets SystemAttachment/move, but that controller has no move method; the Supplier source calls only the state-changing do_move endpoint and the legacy DAO mutation was not tenant-scoped.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:270",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:231",
+        "cinashop-php/app/dao/system/attachment/SystemAttachmentDao.php:69",
+        "cinashop-php/view/supplier/src/api/uploadPictures.js:73"
+      ],
+      "replacement": "GET /supplierapi/file/category for the tenant-scoped category choices and PUT /supplierapi/file/file/do_move for the tenant-scoped move"
+    },
+    {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/file/scan/qrcode",
+      "status": "retired",
+      "reason": "The legacy scan-upload URL embeds the supplier id and an md5(time()) token, then keeps that bearer token valid for 68,400 seconds; this is not an acceptable cross-device upload authorization contract.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:285",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:164",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:167"
+      ],
+      "replacement": "Authenticated Supplier clients upload directly with POST /supplierapi/file/upload; a future cross-device flow must use a short-lived random one-time challenge bound to supplier, category and content limits"
+    },
+    {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/file/remove/qrcode",
+      "status": "retired",
+      "reason": "This GET endpoint mutates shared cache state and exists only to revoke the retired weak scan-upload token flow.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:287",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:174",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:176"
+      ],
+      "replacement": "Authenticated Supplier clients upload directly with POST /supplierapi/file/upload; no server-side QR token is created"
+    },
+    {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/file/scan/image/list/:scan_token",
+      "status": "retired",
+      "reason": "The legacy lookup filters attachments only by scan_token and does not bind the query to type=4 or the authenticated supplier relation_id, so a guessed or leaked token can cross tenant boundaries.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:289",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:184",
+        "cinashop-php/app/dao/system/attachment/SystemAttachmentDao.php:60"
+      ],
+      "replacement": "GET /supplierapi/file/file returns only attachments in the authenticated supplier scope after direct POST /supplierapi/file/upload"
+    },
+    {
+      "surface": "supplier",
+      "method": "POST",
+      "path": "/supplierapi/file/online/upload",
+      "status": "retired",
+      "reason": "The legacy endpoint asks the server to download arbitrary user-supplied image URLs without an origin allowlist, creating an SSRF and unbounded egress surface that must not be reproduced in Workers.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:291",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:192",
+        "cinashop-php/app/services/system/attachment/SystemAttachmentServices.php:408"
+      ],
+      "replacement": "The client obtains the image itself and sends bounded authenticated multipart data to POST /supplierapi/file/upload"
+    },
+    {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/file/set/way_data/:is_way",
+      "status": "retired",
+      "reason": "The legacy GET mutates an admin row using supplierId as the admin primary key, while the Workers runtime has one fixed private R2 authority and no per-supplier storage-provider choice.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:296",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:221",
+        "cinashop-php/app/controller/supplier/file/SystemAttachment.php:226"
+      ],
+      "replacement": "GET /supplierapi/file/get/way_data reports the immutable authenticated R2 upload strategy without performing a write"
+    },
+    {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/file/category/:id",
+      "status": "retired",
+      "reason": "ThinkPHP expands a resource read route, but SystemAttachmentCategory ends without defining a read method and the Supplier source uses only list, create and edit-form calls.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:299",
+        "cinashop-php/app/controller/supplier/file/SystemAttachmentCategory.php:135",
+        "cinashop-php/view/supplier/src/api/uploadPictures.js:39"
+      ],
+      "replacement": "GET /supplierapi/file/category lists tenant-scoped categories and GET /supplierapi/file/category/:id/edit returns the scoped edit form"
+    },
+    {
       "surface": "kefu",
       "method": "POST",
       "path": "/kefuapi/order/refund",

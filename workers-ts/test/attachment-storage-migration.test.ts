@@ -15,8 +15,10 @@ import {
   canonicalAttachmentPath,
   createAttachmentImageVariant,
   detectImageType,
+  detectMp4Type,
   isAttachmentObjectCleanupMessage,
   kefuAttachmentScope,
+  normalizeExternalVideoUrl,
   parseCanonicalAttachmentId,
   signAttachmentReferences,
   signAttachmentVariantReferences,
@@ -91,6 +93,21 @@ describe("attachment and R2 storage migration boundary", () => {
     expect(detectImageType(new TextEncoder().encode("<svg><script>"))).toBeNull();
   });
 
+  it("validates MP4 content and external video URLs without server-side fetching", () => {
+    expect(detectMp4Type(Uint8Array.from([
+      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d,
+    ]))).toBe(true);
+    expect(detectMp4Type(new TextEncoder().encode("not-an-mp4"))).toBe(false);
+    expect(normalizeExternalVideoUrl("https://media.example.test/demo.mp4#ignored"))
+      .toBe("https://media.example.test/demo.mp4");
+    expect(() => normalizeExternalVideoUrl("http://media.example.test/demo.mp4"))
+      .toThrow("视频地址格式错误");
+    expect(() => normalizeExternalVideoUrl("https://127.0.0.1/demo.mp4"))
+      .toThrow("视频地址格式错误");
+    expect(() => normalizeExternalVideoUrl("https://media.example.test/demo.svg"))
+      .toThrow("视频地址格式错误");
+  });
+
   it("signs only canonical asset paths with a bounded expiry", async () => {
     const attachments = new AttachmentService({} as Container, { APP_KEY: "test-only-key" } as Env);
     const [signed, external] = await attachments.signReferences([
@@ -154,6 +171,14 @@ describe("attachment and R2 storage migration boundary", () => {
       ...message,
       keys: ["attachments/kefu/17/2026/08/123e4567-e89b-12d3-a456-426614174000.webp"],
     })).toBe(true);
+    expect(isAttachmentObjectCleanupMessage({
+      ...message,
+      keys: ["attachments/supplier/17/2026/09/123e4567-e89b-12d3-a456-426614174000.mp4"],
+    })).toBe(true);
+    expect(isAttachmentObjectCleanupMessage({
+      ...message,
+      keys: [`attachments/tmp/supplier/17/${"a".repeat(64)}/3.part`],
+    })).toBe(true);
     expect(isAttachmentObjectCleanupMessage({ ...message, keys: ["../secret"] })).toBe(false);
     expect(isAttachmentObjectCleanupMessage({ ...message, keys: [] })).toBe(false);
   });
@@ -170,6 +195,28 @@ describe("attachment and R2 storage migration boundary", () => {
     for (const route of ["/file/file", "/file/upload", "/file/category"]) {
       expect(supplierRoutes).toContain(route);
     }
+    for (const route of [
+      "/file/video_upload",
+      "/file/video_attachment",
+      "/file/get/way_data",
+      "/file/category/create",
+    ]) expect(supplierRoutes).toContain(route);
+    expect(adminRoutes).toContain('"/file/upload_type", adminAuth, AttachmentController.uploadType');
+    expect(supplierRoutes).toContain('"/file/upload_type", AttachmentController.supplierUploadType');
+    const decisions = JSON.parse(readFileSync("audit/legacy-route-decisions.json", "utf8")) as {
+      decisions: Array<{ surface: string; method: string; path: string; status: string }>;
+    };
+    expect(decisions.decisions.filter((decision) => decision.surface === "supplier").map((decision) =>
+      `${decision.method} ${decision.path}`
+    ).sort()).toEqual([
+      "GET /supplierapi/file/category/:id",
+      "GET /supplierapi/file/file/move",
+      "GET /supplierapi/file/remove/qrcode",
+      "GET /supplierapi/file/scan/image/list/:scan_token",
+      "GET /supplierapi/file/scan/qrcode",
+      "GET /supplierapi/file/set/way_data/:is_way",
+      "POST /supplierapi/file/online/upload",
+    ].sort());
     expect(requiredAdminPermission("GET", "/adminapi/file/file")).toBe("attachment.view");
     expect(requiredAdminPermission("POST", "/adminapi/file/upload")).toBe("attachment.manage");
     expect(requiredAdminPermission("GET", "/adminapi/config/storage")).toBe("attachment.view");
@@ -179,11 +226,27 @@ describe("attachment and R2 storage migration boundary", () => {
     const controller = readFileSync("src/controllers/system/AttachmentController.ts", "utf8");
     const application = readFileSync("src/services/supplier/SupplierApplicationService.ts", "utf8");
     expect(controller).toContain("total > MAX_MULTIPART_IMAGE_BYTES");
+    expect(controller).toContain("total > MAX_MULTIPART_VIDEO_CHUNK_BYTES");
     expect(controller).toContain("await reader.cancel()");
+    expect(controller).toContain('c.req.header("range")');
     expect(controller).toContain('headers.set("X-Content-Type-Options", "nosniff")');
+    const attachment = readFileSync("src/services/system/AttachmentService.ts", "utf8");
+    expect(attachment).toContain('headers.set("Content-Range"');
+    expect(attachment).toContain("status: 206");
     expect(application).toContain("eq(systemAttachment.relationId, uid)");
     expect(application).toContain("eq(systemAttachment.moduleType, 3)");
     expect(application).toContain("eq(systemAttachment.imageType, R2_IMAGE_TYPE)");
     expect(application).toContain("历史 HTTPS 图片只能原样保留");
+  });
+
+  it("keeps the production Supplier attachment audit read-only and aggregate-only", () => {
+    const audit = readFileSync("test/integration/SupplierAttachmentAuditWorker.ts", "utf8");
+    const config = readFileSync("test/integration/supplier-attachment-audit.wrangler.toml", "utf8");
+    expect(audit).toContain("SET TRANSACTION READ ONLY");
+    expect(audit).toContain('env.ASSETS_BUCKET, databaseKeys, "attachments/supplier/"');
+    expect(audit).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b/i);
+    expect(audit).not.toMatch(/ASSETS_BUCKET\.(?:put|delete|createMultipartUpload)/);
+    expect(config).toContain('id = "9748c294e21c49a99579c9cef70102e0"');
+    expect(config).toContain('bucket_name = "cinashop-assets"');
   });
 });

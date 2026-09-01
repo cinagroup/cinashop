@@ -5,6 +5,7 @@ import {
   AttachmentService,
   kefuAttachmentScope,
   MAX_MULTIPART_IMAGE_BYTES,
+  MAX_MULTIPART_VIDEO_CHUNK_BYTES,
   R2_IMAGE_TYPE,
   supplierAttachmentScope,
   userAttachmentScope,
@@ -104,6 +105,57 @@ async function boundedMultipartImage(c: C): Promise<{ file: File; pid: string | 
   return { file: files[0], pid: form.get("pid") };
 }
 
+async function boundedMultipartVideoChunk(c: C) {
+  const contentType = c.req.header("content-type") ?? "";
+  if (!/^multipart\/form-data\s*;/i.test(contentType)) {
+    throw new ValidateException("请使用multipart/form-data上传视频分片");
+  }
+  const declaredLength = Number(c.req.header("content-length") ?? "0");
+  if (
+    !Number.isFinite(declaredLength) || declaredLength <= 0 ||
+    declaredLength > MAX_MULTIPART_VIDEO_CHUNK_BYTES
+  ) throw new ValidateException("视频分片请求不能超过5.25 MiB");
+  const stream = c.req.raw.body;
+  if (!stream) throw new ValidateException("请选择视频文件");
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_MULTIPART_VIDEO_CHUNK_BYTES) {
+      await reader.cancel();
+      throw new ValidateException("视频分片请求不能超过5.25 MiB");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  let form: FormData;
+  try {
+    form = await new Response(bytes, { headers: { "content-type": contentType } }).formData();
+  } catch {
+    throw new ValidateException("视频上传表单格式错误");
+  }
+  const file = form.get("file");
+  if (!(file instanceof File) || file.size <= 0) throw new ValidateException("请选择视频文件");
+  return {
+    file,
+    chunkNumber: form.get("chunkNumber"),
+    currentChunkSize: form.get("currentChunkSize"),
+    chunkSize: form.get("chunkSize"),
+    totalChunks: form.get("totalChunks"),
+    md5: form.get("md5"),
+    filename: form.get("filename"),
+    pid: form.get("pid"),
+  };
+}
+
 async function upload(c: C, owner: "admin" | "supplier" | "user") {
   const { file, pid } = await boundedMultipartImage(c);
   const scope = owner === "admin"
@@ -157,7 +209,7 @@ async function categoryForm(c: C, owner: "admin" | "supplier", id?: string) {
   const scope = owner === "admin"
     ? adminAttachmentScope()
     : supplierAttachmentScope(c.get("supplierId") ?? 0);
-  const pid = Number(c.req.param("parentId") ?? 0) || 0;
+  const pid = Number(c.req.param("parentId") ?? c.req.query("id") ?? 0) || 0;
   const fileType = Number(c.req.query("file_type") ?? 1) || 1;
   const info = id ? await service(c).categoryDetail(scope, id) : { pid, name: "", fileType };
   const prefix = owner === "admin" ? "/adminapi" : "/supplierapi";
@@ -183,6 +235,7 @@ export async function asset(c: C) {
       c.req.query("variant"),
       c.req.query("width"),
       c.req.query("height"),
+      c.req.header("range"),
     );
     if (asset.cacheWrite) c.executionCtx.waitUntil(asset.cacheWrite());
     const headers = new Headers(asset.response.headers);
@@ -201,6 +254,20 @@ export async function asset(c: C) {
 export const userUploadImage = (c: C) => upload(c, "user");
 export const adminUploadImage = (c: C) => upload(c, "admin");
 export const supplierUploadImage = (c: C) => upload(c, "supplier");
+
+export async function supplierUploadVideo(c: C) {
+  const scope = supplierAttachmentScope(c.get("supplierId") ?? 0);
+  return jsonOk(c, await service(c).uploadVideoChunk(scope, await boundedMultipartVideoChunk(c)));
+}
+
+export async function supplierSaveVideoAttachment(c: C) {
+  const scope = supplierAttachmentScope(c.get("supplierId") ?? 0);
+  return jsonOk(
+    c,
+    await service(c).saveExternalVideoAttachment(scope, await boundedJson(c)),
+    "视频素材保存成功",
+  );
+}
 
 /** Dedicated Kefu upload keeps the canonical path for chat persistence and a signed preview URL. */
 export async function kefuUploadImage(c: C) {
@@ -263,6 +330,25 @@ export const supplierCategoryDelete = (c: C) => deleteCategory(c, "supplier");
 
 export function uploadType(c: C) {
   return jsonOk(c, { upload_type: String(R2_IMAGE_TYPE), binding: "ASSETS_BUCKET" });
+}
+
+export function supplierUploadType(c: C) {
+  return jsonOk(c, {
+    upload_type: "1",
+    storage_type: String(R2_IMAGE_TYPE),
+    binding: "ASSETS_BUCKET",
+    direct_upload: true,
+  });
+}
+
+export function supplierUploadWayData(c: C) {
+  return jsonOk(c, {
+    is_way: 0,
+    upload_file_size_max: 10 * 1024,
+    upload_type: "1",
+    storage_type: String(R2_IMAGE_TYPE),
+    binding: "ASSETS_BUCKET",
+  });
 }
 
 export async function adminStorage(c: C) {

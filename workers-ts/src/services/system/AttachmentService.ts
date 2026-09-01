@@ -12,10 +12,15 @@ import { emitOperationalEvent, operationalErrorCode } from "@/utils/observabilit
 export const R2_IMAGE_TYPE = 8;
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export const MAX_MULTIPART_IMAGE_BYTES = MAX_IMAGE_BYTES + 256 * 1024;
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+export const MAX_VIDEO_CHUNK_BYTES = 5 * 1024 * 1024;
+export const MAX_MULTIPART_VIDEO_CHUNK_BYTES = MAX_VIDEO_CHUNK_BYTES + 256 * 1024;
 const SIGNED_ASSET_TTL_SECONDS = 15 * 60;
 const MAX_SIGNED_ASSET_TTL_SECONDS = 60 * 60;
 const MAX_ATTACHMENT_VARIANT_DIMENSION = 2_048;
 const CATEGORY_LOCK_NAMESPACE = 505_609;
+const MAX_VIDEO_CHUNKS = 100;
+const TEMP_VIDEO_CHUNK_TTL_SECONDS = 12 * 60 * 60;
 
 export interface AttachmentImageVariant {
   name: "mid";
@@ -37,6 +42,17 @@ export interface AttachmentScope {
 export interface DetectedImage {
   mime: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
   extension: "jpg" | "png" | "webp" | "gif";
+}
+
+export interface VideoChunkUploadInput {
+  file: File;
+  chunkNumber: unknown;
+  currentChunkSize: unknown;
+  chunkSize: unknown;
+  totalChunks: unknown;
+  md5: unknown;
+  filename: unknown;
+  pid: unknown;
 }
 
 export function adminAttachmentScope(): AttachmentScope {
@@ -151,6 +167,61 @@ export function detectImageType(bytes: Uint8Array): DetectedImage | null {
   return null;
 }
 
+export function detectMp4Type(bytes: Uint8Array): boolean {
+  return bytes.length >= 12 &&
+    bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70;
+}
+
+function isPrivateNetworkHostname(hostname: string): boolean {
+  const value = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (value === "localhost" || value.endsWith(".localhost") || value === "::1") return true;
+  const parts = value.split(".");
+  if (parts.length !== 4 || parts.some((part) => !/^\d{1,3}$/.test(part))) return false;
+  const octets = parts.map(Number);
+  if (octets.some((part) => part > 255)) return true;
+  return octets[0] === 0 || octets[0] === 10 || octets[0] === 127 ||
+    (octets[0] === 100 && octets[1] >= 64 && octets[1] <= 127) ||
+    (octets[0] === 169 && octets[1] === 254) ||
+    (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+    (octets[0] === 192 && octets[1] === 168) ||
+    (octets[0] === 198 && (octets[1] === 18 || octets[1] === 19)) || octets[0] >= 224;
+}
+
+function normalizeHttpsMediaUrl(
+  value: unknown,
+  label: string,
+  extensions: readonly string[],
+): string {
+  if (typeof value !== "string" || !value.trim() || value.length > 200) {
+    throw new ValidateException(`${label}格式错误`);
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    throw new ValidateException(`${label}格式错误`);
+  }
+  const extension = parsed.pathname.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? "";
+  if (
+    parsed.protocol !== "https:" || parsed.username || parsed.password ||
+    (parsed.port && parsed.port !== "443") || !parsed.hostname ||
+    isPrivateNetworkHostname(parsed.hostname) || !extensions.includes(extension)
+  ) {
+    throw new ValidateException(`${label}格式错误`);
+  }
+  parsed.hash = "";
+  return parsed.toString();
+}
+
+export function normalizeExternalVideoUrl(value: unknown): string {
+  return normalizeHttpsMediaUrl(value, "视频地址", ["mp4"]);
+}
+
+function normalizeExternalVideoCoverUrl(value: unknown): string {
+  if (value === undefined || value === null || value === "") return "";
+  return normalizeHttpsMediaUrl(value, "视频封面地址", ["jpg", "jpeg", "png", "webp", "gif"]);
+}
+
 export function isAttachmentObjectCleanupMessage(
   value: unknown,
 ): value is AttachmentObjectCleanupMessage {
@@ -161,7 +232,10 @@ export function isAttachmentObjectCleanupMessage(
     candidate.keys.every((key) =>
       typeof key === "string" &&
       key.length <= 180 &&
-      /^attachments\/(?:admin|supplier|user|kefu|visitor)\/[1-9]\d*\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:jpg|png|webp|gif)$/.test(key)
+      (
+        /^attachments\/(?:admin|supplier|user|kefu|visitor)\/[1-9]\d*\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:jpg|png|webp|gif|mp4)$/.test(key) ||
+        /^attachments\/tmp\/supplier\/[1-9]\d*\/[0-9a-f]{64}\/(?:[1-9]\d{0,2})\.part$/.test(key)
+      )
     );
 }
 
@@ -201,6 +275,14 @@ function textValue(value: unknown, label: string, maximum: number): string {
   return result;
 }
 
+function boundedPositiveInteger(value: unknown, label: string, maximum: number): number {
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0 || parsed > maximum) {
+    throw new ValidateException(`${label}无效`);
+  }
+  return parsed;
+}
+
 function sanitizeOriginalName(value: string): string {
   const cleaned = value.replace(/[\\/\u0000-\u001f\u007f]/g, "_").trim();
   return [...(cleaned || "image")].slice(0, 255).join("");
@@ -209,6 +291,11 @@ function sanitizeOriginalName(value: string): string {
 function normalizeDeclaredMime(value: string): string {
   const mime = value.trim().toLowerCase();
   return mime === "image/jpg" ? "image/jpeg" : mime;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function encodeBase64Url(bytes: Uint8Array): string {
@@ -276,12 +363,36 @@ function imageOutputFormat(contentType: string | undefined): ImageOutputOptions[
   return null;
 }
 
+function requestedR2Range(value: unknown): Headers | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value !== "string" || value.length > 80 || !/^bytes=(?:\d+-\d*|-\d+)$/.test(value)) {
+    throw new NotFoundException("附件范围无效");
+  }
+  return new Headers({ Range: value });
+}
+
 function r2ObjectResponse(object: R2ObjectBody): Response {
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set("ETag", object.httpEtag);
-  headers.set("Content-Length", String(object.size));
-  return new Response(object.body, { status: 200, headers });
+  headers.set("Accept-Ranges", "bytes");
+  const range = object.range;
+  if (!range) {
+    headers.set("Content-Length", String(object.size));
+    return new Response(object.body, { status: 200, headers });
+  }
+  let offset: number;
+  let length: number;
+  if ("suffix" in range) {
+    length = Math.min(range.suffix, object.size);
+    offset = object.size - length;
+  } else {
+    offset = range.offset ?? 0;
+    length = range.length ?? object.size - offset;
+  }
+  headers.set("Content-Length", String(length));
+  headers.set("Content-Range", `bytes ${offset}-${offset + length - 1}/${object.size}`);
+  return new Response(object.body, { status: 206, headers });
 }
 
 function variantCacheRequest(
@@ -298,6 +409,46 @@ function variantCacheRequest(
     encodeURIComponent(format),
   ].join("/");
   return new Request(`https://cinashop-asset-variant-cache.invalid/${key}`, { method: "GET" });
+}
+
+export async function putConcatenatedR2Objects(
+  bucket: R2Bucket,
+  sourceKeys: string[],
+  destinationKey: string,
+  totalSize: number,
+  options: R2PutOptions,
+): Promise<R2Object> {
+  if (
+    sourceKeys.length < 1 || sourceKeys.length > MAX_VIDEO_CHUNKS ||
+    !Number.isSafeInteger(totalSize) || totalSize <= 0 || totalSize > MAX_VIDEO_BYTES
+  ) throw new ValidateException("视频分片信息无效");
+  const fixed = new FixedLengthStream(totalSize);
+  const writer = fixed.writable.getWriter();
+  const putPromise = bucket.put(destinationKey, fixed.readable, options);
+  try {
+    for (const key of sourceKeys) {
+      const object = await bucket.get(key);
+      if (!object) throw new ValidateException("视频分片不完整，请重新上传");
+      const reader = object.body.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          await writer.write(value);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    }
+    await writer.close();
+    const stored = await putPromise;
+    if (stored.size !== totalSize) throw new ValidateException("视频上传不完整，请重试");
+    return stored;
+  } catch (error) {
+    await writer.abort(error).catch(() => undefined);
+    await putPromise.catch(() => undefined);
+    throw error;
+  }
 }
 
 function formatEpoch(epoch: number): string {
@@ -436,6 +587,280 @@ export class AttachmentService {
     return { att_id: id, name: originalName, size: stored.size, type: detected.mime, url, src };
   }
 
+  async uploadVideoChunk(scope: AttachmentScope, input: VideoChunkUploadInput) {
+    if (scope.type !== 4 || scope.moduleType !== 1) throw new ValidateException("视频上传作用域无效");
+    const { file } = input;
+    if (!(file instanceof File) || file.size <= 0) throw new ValidateException("请选择视频文件");
+    const chunkNumber = boundedPositiveInteger(input.chunkNumber, "视频分片序号", MAX_VIDEO_CHUNKS);
+    const totalChunks = boundedPositiveInteger(input.totalChunks, "视频分片总数", MAX_VIDEO_CHUNKS);
+    const chunkSize = boundedPositiveInteger(input.chunkSize, "视频分片大小", MAX_VIDEO_CHUNK_BYTES);
+    const currentChunkSize = boundedPositiveInteger(
+      input.currentChunkSize,
+      "当前视频分片大小",
+      MAX_VIDEO_CHUNK_BYTES,
+    );
+    if (chunkNumber > totalChunks || file.size !== currentChunkSize || currentChunkSize > chunkSize) {
+      throw new ValidateException("视频分片信息无效");
+    }
+    if (chunkNumber < totalChunks && currentChunkSize !== chunkSize) {
+      throw new ValidateException("非末尾视频分片大小不一致");
+    }
+    if ((totalChunks - 1) * chunkSize + 1 > MAX_VIDEO_BYTES) {
+      throw new ValidateException("视频不能超过100 MiB");
+    }
+    const declaredMime = normalizeDeclaredMime(file.type);
+    if (declaredMime && declaredMime !== "video/mp4" && declaredMime !== "application/octet-stream") {
+      throw new ValidateException("只支持 MP4 视频");
+    }
+    const originalName = sanitizeOriginalName(textValue(input.filename, "视频文件名", 255));
+    if (!/\.mp4$/i.test(originalName)) throw new ValidateException("只支持 MP4 视频");
+    const sessionMd5 = typeof input.md5 === "string" ? input.md5.trim().toLowerCase() : "";
+    if (!/^[0-9a-f]{32}$/.test(sessionMd5)) throw new ValidateException("视频上传会话无效");
+    if (chunkNumber === 1) {
+      const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+      if (!detectMp4Type(header)) throw new ValidateException("视频内容不是有效的 MP4");
+    }
+    const pid = nonNegativeId(input.pid, "分类ID");
+    if (pid > 0) await this.assertCategory(scope, pid, 2);
+
+    const sessionDigest = await sha256Hex(`${scope.relationId}\n${sessionMd5}\n${originalName}`);
+    const temporaryPrefix = `attachments/tmp/supplier/${scope.relationId}/${sessionDigest}/`;
+    const firstKey = `${temporaryPrefix}1.part`;
+    let finalKey: string;
+    if (chunkNumber === 1) {
+      const now = new Date();
+      finalKey = [
+        "attachments",
+        "supplier",
+        String(scope.relationId),
+        String(now.getUTCFullYear()),
+        String(now.getUTCMonth() + 1).padStart(2, "0"),
+        `${crypto.randomUUID()}.mp4`,
+      ].join("/");
+    } else {
+      const first = await this.env.ASSETS_BUCKET.head(firstKey);
+      const metadata = first?.customMetadata;
+      if (
+        !first || !metadata || metadata.sessionMd5 !== sessionMd5 ||
+        metadata.filename !== originalName || metadata.totalChunks !== String(totalChunks) ||
+        metadata.chunkSize !== String(chunkSize) || metadata.mp4Validated !== "1"
+      ) throw new ValidateException("视频上传会话已失效，请重新上传");
+      finalKey = metadata.finalKey ?? "";
+      const expectedPrefix = `attachments/supplier/${scope.relationId}/`;
+      if (!finalKey.startsWith(expectedPrefix) || !/\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.mp4$/.test(finalKey)) {
+        throw new ValidateException("视频上传会话无效");
+      }
+    }
+    const temporaryKey = `${temporaryPrefix}${chunkNumber}.part`;
+    const chunkMetadata = {
+      ownerType: String(scope.type),
+      ownerId: String(scope.relationId),
+      sessionMd5,
+      filename: originalName,
+      totalChunks: String(totalChunks),
+      chunkSize: String(chunkSize),
+      finalKey,
+      mp4Validated: "1",
+    };
+    const storedChunk = await this.env.ASSETS_BUCKET.put(temporaryKey, file.stream(), {
+      httpMetadata: { contentType: "application/octet-stream", cacheControl: "private, no-store" },
+      customMetadata: chunkMetadata,
+    });
+    if (storedChunk.size !== currentChunkSize) {
+      await this.env.ASSETS_BUCKET.delete(temporaryKey);
+      throw new ValidateException("视频分片上传不完整，请重试");
+    }
+    const cleanupMessage: AttachmentObjectCleanupMessage = {
+      action: "deleteAttachmentObjects",
+      keys: [temporaryKey],
+    };
+    try {
+      await this.env.ORDER_QUEUE.send(cleanupMessage, { delaySeconds: TEMP_VIDEO_CHUNK_TTL_SECONDS });
+    } catch (error) {
+      emitOperationalEvent("warn", {
+        event: "attachment_temporary_cleanup_enqueue_failed",
+        component: "r2",
+        operation: "cleanup_enqueue",
+        outcome: "failure",
+        resourceCount: 1,
+        errorCode: operationalErrorCode(error),
+      });
+    }
+    if (chunkNumber < totalChunks) {
+      return {
+        code: 1,
+        msg: "waiting",
+        file_path: "",
+        name: "",
+        dir: "",
+        chunk: chunkNumber,
+        total_chunks: totalChunks,
+      };
+    }
+
+    const listed = await this.env.ASSETS_BUCKET.list({
+      prefix: temporaryPrefix,
+      limit: totalChunks + 1,
+      include: ["customMetadata"],
+    });
+    if (listed.truncated || listed.objects.length !== totalChunks) {
+      throw new ValidateException("视频分片不完整，请重新上传");
+    }
+    const byKey = new Map(listed.objects.map((object) => [object.key, object]));
+    const sourceKeys: string[] = [];
+    let totalSize = 0;
+    for (let index = 1; index <= totalChunks; index += 1) {
+      const key = `${temporaryPrefix}${index}.part`;
+      const object = byKey.get(key);
+      const metadata = object?.customMetadata;
+      const expectedSize = index < totalChunks ? chunkSize : currentChunkSize;
+      if (
+        !object || object.size !== expectedSize || !metadata ||
+        metadata.ownerId !== String(scope.relationId) || metadata.sessionMd5 !== sessionMd5 ||
+        metadata.filename !== originalName || metadata.totalChunks !== String(totalChunks) ||
+        metadata.chunkSize !== String(chunkSize) || metadata.finalKey !== finalKey ||
+        metadata.mp4Validated !== "1"
+      ) throw new ValidateException("视频分片信息不一致，请重新上传");
+      sourceKeys.push(key);
+      totalSize += object.size;
+    }
+    if (totalSize > MAX_VIDEO_BYTES) throw new ValidateException("视频不能超过100 MiB");
+
+    let storedVideo: R2Object;
+    try {
+      storedVideo = await putConcatenatedR2Objects(
+        this.env.ASSETS_BUCKET,
+        sourceKeys,
+        finalKey,
+        totalSize,
+        {
+          httpMetadata: {
+            contentType: "video/mp4",
+            contentDisposition: "inline",
+            cacheControl: "private, no-store",
+          },
+          customMetadata: {
+            ownerType: String(scope.type),
+            ownerId: String(scope.relationId),
+            originalName,
+          },
+        },
+      );
+    } catch (error) {
+      await this.env.ASSETS_BUCKET.delete(finalKey).catch(() => undefined);
+      emitOperationalEvent("error", {
+        event: "r2_video_compose_failed",
+        component: "r2",
+        operation: "compose",
+        outcome: "failure",
+        resourceCount: sourceKeys.length,
+        errorCode: operationalErrorCode(error),
+      });
+      throw error;
+    }
+
+    let id: number;
+    try {
+      id = await withTx(this.container, async (tx) => {
+        const inserted = await tx.insert(systemAttachment).values({
+          type: scope.type,
+          fileType: 2,
+          relationId: scope.relationId,
+          name: finalKey,
+          attDir: "",
+          sattDir: "",
+          attSize: String(storedVideo.size),
+          attType: "video/mp4",
+          pid,
+          time: Math.floor(Date.now() / 1000),
+          imageType: R2_IMAGE_TYPE,
+          moduleType: scope.moduleType,
+          realName: originalName,
+        }).returning({ id: systemAttachment.attId });
+        const attachmentId = inserted[0].id;
+        const canonical = canonicalAttachmentPath(attachmentId);
+        await tx.update(systemAttachment).set({ attDir: canonical })
+          .where(eq(systemAttachment.attId, attachmentId));
+        return attachmentId;
+      });
+    } catch (error) {
+      await this.env.ASSETS_BUCKET.delete(finalKey);
+      throw error;
+    }
+    try {
+      await this.env.ASSETS_BUCKET.delete(sourceKeys);
+    } catch (error) {
+      emitOperationalEvent("warn", {
+        event: "attachment_temporary_cleanup_failed",
+        component: "r2",
+        operation: "cleanup",
+        outcome: "failure",
+        resourceCount: sourceKeys.length,
+        errorCode: operationalErrorCode(error),
+      });
+    }
+    const url = canonicalAttachmentPath(id);
+    const [src] = await this.signReferences([url]);
+    emitOperationalEvent("info", {
+      event: "r2_video_written",
+      component: "r2",
+      operation: "put",
+      outcome: "success",
+      resourceCount: 1,
+    });
+    return {
+      code: 2,
+      msg: "success",
+      att_id: id,
+      name: url,
+      dir: url,
+      file_path: url,
+      src,
+      size: storedVideo.size,
+      type: "video/mp4",
+    };
+  }
+
+  async saveExternalVideoAttachment(
+    scope: AttachmentScope,
+    input: Record<string, unknown>,
+  ) {
+    const path = normalizeExternalVideoUrl(input.path);
+    const cover = normalizeExternalVideoCoverUrl(input.cover_image);
+    const pid = nonNegativeId(input.pid, "分类ID");
+    if (pid > 0) await this.assertCategory(scope, pid, 2);
+    let decodedName: string;
+    try {
+      decodedName = decodeURIComponent(new URL(path).pathname.split("/").pop() ?? "video.mp4");
+    } catch {
+      decodedName = "video.mp4";
+    }
+    const realName = sanitizeOriginalName(decodedName);
+    const inserted = await this.container.db.insert(systemAttachment).values({
+      type: scope.type,
+      fileType: 2,
+      relationId: scope.relationId,
+      name: path,
+      attDir: path,
+      sattDir: cover,
+      attSize: "0",
+      attType: "video/mp4",
+      pid,
+      time: Math.floor(Date.now() / 1000),
+      imageType: 0,
+      moduleType: scope.moduleType,
+      realName,
+    }).returning({ id: systemAttachment.attId });
+    return {
+      att_id: inserted[0].id,
+      name: realName,
+      url: path,
+      src: path,
+      cover_image: cover,
+      type: "video/mp4",
+    };
+  }
+
   async list(scope: AttachmentScope, query: Record<string, string>) {
     const page = pageValue(query.page, 1);
     const limit = Math.min(100, pageValue(query.limit, 20));
@@ -497,8 +922,10 @@ export class AttachmentService {
   async move(scope: AttachmentScope, idsValue: unknown, pidValue: unknown) {
     const ids = this.attachmentIds(idsValue);
     const pid = nonNegativeId(pidValue, "分类ID");
-    if (pid > 0) await this.assertCategory(scope, pid, 1);
-    const rows = await this.container.db.select({ id: systemAttachment.attId })
+    const rows = await this.container.db.select({
+      id: systemAttachment.attId,
+      fileType: systemAttachment.fileType,
+    })
       .from(systemAttachment).where(and(
         inArray(systemAttachment.attId, ids),
         eq(systemAttachment.type, scope.type),
@@ -506,6 +933,11 @@ export class AttachmentService {
         eq(systemAttachment.moduleType, scope.moduleType),
       ));
     if (rows.length !== ids.length) throw new NotFoundException("一个或多个附件不存在");
+    const fileTypes = new Set(rows.map((row) => row.fileType));
+    if (fileTypes.size !== 1) throw new ValidateException("图片与视频不能同时移动");
+    const fileType = rows[0].fileType;
+    if (fileType !== 1 && fileType !== 2) throw new ValidateException("文件类型无效");
+    if (pid > 0) await this.assertCategory(scope, pid, fileType);
     await this.container.db.update(systemAttachment).set({ pid }).where(and(
       inArray(systemAttachment.attId, ids),
       eq(systemAttachment.type, scope.type),
@@ -699,11 +1131,13 @@ export class AttachmentService {
     variantValue?: unknown,
     widthValue?: unknown,
     heightValue?: unknown,
+    rangeValue?: unknown,
   ): Promise<SignedAssetRead> {
     const id = positiveId(idValue, "附件ID");
     const expires = Number(expiresValue);
     const signature = typeof signatureValue === "string" ? decodeBase64Url(signatureValue) : null;
     const variant = requestedAttachmentVariant(variantValue, widthValue, heightValue);
+    const range = variant ? undefined : requestedR2Range(rangeValue);
     const now = Math.floor(Date.now() / 1000);
     if (!Number.isSafeInteger(expires) || expires < now || expires > now + MAX_SIGNED_ASSET_TTL_SECONDS || !signature) {
       throw new NotFoundException("附件链接无效或已过期");
@@ -725,7 +1159,7 @@ export class AttachmentService {
     const r2StartedAt = Date.now();
     let object: R2ObjectBody | null;
     try {
-      object = await this.env.ASSETS_BUCKET.get(rows[0].key);
+      object = await this.env.ASSETS_BUCKET.get(rows[0].key, range ? { range } : undefined);
     } catch (error) {
       emitOperationalEvent("error", {
         event: "r2_object_read_failed",

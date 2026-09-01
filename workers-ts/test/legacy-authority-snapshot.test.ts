@@ -28,7 +28,7 @@ describe("versioned legacy authority snapshots", () => {
     ]);
     expect(Object.values(routeSnapshot.surfaces).reduce((sum, routes) => sum + routes.length, 0))
       .toBe(1_904);
-    expect(Object.keys(routeSnapshot.files)).toHaveLength(11);
+    expect(Object.keys(routeSnapshot.files)).toHaveLength(16);
     for (const file of Object.values(routeSnapshot.files)) {
       expect(file.lineCount).toBeGreaterThan(0);
       expect(file.sha256).toMatch(/^[a-f0-9]{64}$/);
