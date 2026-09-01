@@ -3103,6 +3103,60 @@ PHP `refund` 的“同一售后行多次增量退款”与其马上把该行置�
 
 ADMIN-A 现在为 21/32，统计、履约和退款/资金子组均已收口；父项继续未完成，剩余 11 条全部属于 ADMIN-A-ASSISTED 代客下单。下一批必须先审计旧端 cart/place/confirm/computed/coupons/create/pay/status 的 key 生命周期和身份传播，再设计显式代客权限；Admin ID、目标 UID、购物车、服务端报价、库存、优惠券、订单归属、支付主体和重放证据必须从确认到支付全链路绑定，不能借用普通用户 token 或信任路径 UID/客户端 key。
 
+## ADMIN-A-ASSISTED 代客下单详细审计（2026-09-01）
+
+### PHP 权威、旧 UniApp 调用与迁移范围
+
+本批逐行核对 PHP `route/api.php:762-776`、`app/controller/api/admin/order/CreateOrder.php`、`CashierOrderServices`、`StoreCartServices`、支付 service，以及旧 UniApp `view/uniapp/api/admin.js` 和 `pages/behalf` 的商品、确认单、收银台、记录页面。11 条路由全部有真实调用，不能退役。旧端的流程是 Admin 先为注册用户或 `uid=0` 游客建立购物车，`confirm` 返回短期 key，`computed`/`coupons` 反复报价，`create` 用同一 key 建单，随后 `pay` 发起现金或二维码支付，`pay/status` 每两秒轮询，最后由 `place/list` 展示代客记录。
+
+| 路由 | 旧端依赖的响应/行为 | 当前候选的权威边界 |
+|---|---|---|
+| `GET cart/:uid` | 直接数组，商品/SKU 使用旧 snake_case 字段 | 只返回当前 Admin、目标 UID、游客 label、普通商品和未支付/未删除状态的购物车；无游客 label 不跨会话猜测 |
+| `POST cart/add/:uid` | `{cartId}`；同规格可合并 | Admin/UID/游客 advisory lock 下锁商品与 SKU，校验上架、规格、库存后原子合并或插入 |
+| `DELETE cart/del/:uid` | `ids` 可为逗号字符串 | 最多 200 个去重正整数；先锁定完整 actor scope，任何一项不归属即整批失败，再软删除 |
+| `POST cart/num/:uid` | `{id,number}` | 锁定精确购物车行后重读商品/SKU 库存，禁止改动其他 Admin、UID 或游客会话 |
+| `POST confirm/:uid` | 返回 `orderKey/cartInfo/userInfo/priceGroup` | 从精确 cart ID 集合解析 actor scope，服务端报价后把 Admin、UID、游客 label、cart 集合和 `isNew` 写入 30 分钟 KV 快照 |
+| `POST computed/:key/:uid` | `res.data.result`；已建单返回扩展状态 | key 只能读取 `admin:assisted:checkout:{adminId}:{uid}:{key}`；每次重新验证购物车与实时报价，不接受客户端价格 |
+| `GET coupons/:uid` | 直接返回当前购物车可用券数组 | 游客固定无用户券；注册用户的有效券、商品/分类/品牌范围和折扣全部由数据库批量计算，不信任客户端券额 |
+| `POST create/:key/:uid` | `res.data.result.order_id` | 同一 actor-bound 快照内原子认领购物车、扣四层库存、写订单/商品快照/优惠券占用及 `admin_assisted_create` 状态审计；同 key 精确重放 |
+| `POST pay/:uid` | `SUCCESS` 或微信/支付宝二维码配置 | 订单必须同时匹配 UID、当前 Admin、`is_channel=2` 和双软删除；现金/零元复用 paid/outbox 原子入口，provider I/O 在事务外 |
+| `GET pay/status` | 直接 `{status,time}` | 轮询只按当前 Admin 的代客订单读取；仅兼容旧三位数字支付前缀，不能用任意前缀探测其他订单 |
+| `GET place/list` | 直接分页数组，页面实际使用 `page/limit/keyword` | 固定当前 Admin 和 `is_channel=2`，兼容 PHP 状态、类型和数字支付方式筛选；订单、商品快照和退款分三批读取，不做 N+1 |
+
+PHP 原实现的身份传播不构成可靠授权。旧中间件把移动端 Admin 认证结果放入普通 `$request->uid()`；游客页面生成的 `touristId` 只是五位随机数；确认 key 的 cache 仅含 UID 与 key；支付状态查询不含 Admin/UID；在线支付还会给公开订单号加随机三位前缀。若原样迁移，知道路径 UID、key 或订单号的另一个 Admin 可能重用购物车、报价或轮询支付结果。因此本批保留旧 URL 与页面读取的响应形状，但不保留这些越权条件。
+
+旧端还有两个必须显式记录的兼容缺口。三级分类模板的游客购物车列表没有发送它已经持有的 `touristId`；在同一 Admin 同时服务多个游客时，服务端无法安全推断目标会话，所以候选拒绝缺 label 的游客列表。自提页会选中 `storeList[0]`，但确认和创建载荷没有发送 `store_id`；候选只在生产恰有一个有效门店时做确定性回退，多门店时要求客户端明确提交。这两点是旧端需要修补和真实 E2E 覆盖的前端合同，不通过后端跨会话猜测或任意选店掩盖。
+
+### 权限、actor scope、报价与订单创建
+
+新增权限 `order.assisted` 独立于 `order.view` 和 `order.manage`。11 条路径在通用 order matcher 之前精确识别，root Admin 自动具备，非 root 角色必须显式授权或通过既有菜单规则解析；仅能查看订单或执行普通运营动作的角色不会自动获得代客能力。所有 handler 仍位于 `adminAuthMiddleware` 后，actor 只读取已验证的 `adminInfo.id`，响应统一 `Cache-Control: private, no-store, max-age=0`。JSON body 上限为 8/16/32 KiB；UID、cart ID/数量、key、文本、支付方式、手机号、地址、门店、分页和筛选均严格有界，客户端 IP 在写订单和支付前截断为 IPv6 列上限 45 字符。
+
+购物车表的 `staff_id` 是 actor authority，注册用户 scope 为 `{staffId, uid, touristUid=''}`，游客 scope 为 `{staffId, uid=0, touristUid}`。游客 label 只能限定范围，永远不能替代 Admin session。`cart/num` 与 `cart/del` 在旧端漏传 label 时，只能从请求明确给出的 cart ID 集合反查；必须每行属于当前 Admin 且只出现一个非空 label，才能继续。列表没有明确 cart 集合，故不做这种推断。所有代客购物车只允许 `type=0/activity_id=0/store_id=0`，不让游客或特权入口绕开秒杀、拼团、砍价、新人、积分商品等既有资格状态机。
+
+确认快照采用 128-bit UUID key 和 30 分钟 TTL，payload 版本固定为 v1，包含 Admin、UID、游客 label、排序无关的精确 cart ID 集合、`isNew` 与创建时间。`computed`、`coupons`、`create` 每次读取后都重新校验 payload 和数据库购物车 scope；客户端无法替换 cart 集合、把注册用户 key 改成游客 key，或用另一个 Admin 的 key。报价复用 `StoreOrderCreateService.quoteOrder`，会员价、首单价、运费、积分、优惠券、库存和商品有效性仍由服务端决定。游客没有真实用户账户，因此会员、首单、积分、用户券和分佣统一关闭，不伪造 `uid=0` 用户行。
+
+创建订单继续使用现有 `StoreOrderCreateService` 的 PostgreSQL 事务、幂等 advisory lock、购物车 `FOR UPDATE`、库存条件更新和不可变商品快照。普通用户下单现在明确拒绝 `staff_id>0` 或非空游客 label 的代客购物车；代客路径则要求每一行精确匹配当前 Admin。订单 `staff_id` 从已校验且同质的购物车集合推导，`is_channel=2` 明确标记来源，并与 `admin_assisted_create` 状态行同事务提交。相同 UID/key 已存在时只有同一 Admin 且同为 channel 2 才可重放；普通订单或其他 Admin 占用同 key 时失败关闭。这样库存、优惠券、订单归属与重放证据不会在确认和创建之间失去绑定。
+
+### 支付、查询、批量读取与 PostgreSQL 性能边界
+
+现金或零元订单通过 `applyStoreOrderPayment` 锁定真实订单行，并在同一事务再次执行 `{uid, staffId, isChannel, isDel, isSystemDel}` 授权。首次支付与积分处理、发票状态、拼团激活、`order.paid` outbox 和 `admin_assisted_pay` 状态审计原子提交；同一 actor 的已支付重放返回成功，其他状态不能被覆盖。微信和支付宝先做同一 actor 的只读授权，再调用现有支付 service；PC 微信使用 native 二维码，支付宝返回已签名支付 URL 的二维码兼容结构。provider HTTP/签名调用不包在 PostgreSQL 事务内，回调仍进入现有唯一 paid transition。代码没有新增 provider `fetch`，也不把支付主体改成客户端声明的 UID。
+
+`place/list` 兼容 PHP 的未付、待发货、部分发货、待收货/核销、待评价、已完成、退款中/已退款等状态组合，以及普通/活动/核销/收银台/配送类型和数字支付方式映射。PHP 对 `status=-4` 与默认 `is_del=0` 会生成互相冲突条件，候选让明确的删除状态生效，不复制这个空结果 bug。列表先取最多 100 个 actor-scoped 订单，再用两个 `IN` 查询批量获取商品快照与有效退款；全退判断恢复为退款件数等于非赠品件数，不再用金额近似。优惠券范围同样是一条候选 join 加商品、券商品、分类和品牌的有界批量查询。Supabase PostgreSQL 最佳实践审查直接影响了短事务、统一锁序、条件更新、避免 N+1、bounded `IN` 集合和不为当前 29 单小样本投机加索引的决定。
+
+本批没有新增 DDL。生产只读审计 Worker会在一个 `REPEATABLE READ, READ ONLY` 事务内固定 `search_path=public, pg_temp`、15 秒语句超时和 1 秒锁超时，只返回 staff-scoped 购物车、游客/注册 scope 异常、重复活动范围、代客订单、幂等 key、创建/现金审计、订单快照归属和支持索引的聚合结果；不返回订单号、UID、游客 label、金额、地址、联系方式或任何业务行。它精确绑定用户提供的生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。
+
+按用户“直接使用生产数据库”的授权，先后使用仓库 Wrangler 4.122.0 和临时 Wrangler 4.127.1 运行远程 Hyperdrive 只读入口。两个版本都正确识别生产绑定，但 Windows `workerd` 在 Worker 启动、事务开始和任何 SQL 发送之前以 `0xc0000005` 崩溃；本机 WSL2 已启用但没有 Linux distribution，也没有独立生产 PostgreSQL URL。因此本批没有新的生产聚合结果，也没有生产 DML/DDL、临时 Worker 部署、provider 调用或主 Worker/Pages 发布。失败探针只证明 Windows 执行环境不可用，不能证明生产数据通过，也不能把既有 29 单历史事实当成本批 actor-scope 结果。
+
+### 验证结果、路由进度与剩余门禁
+
+新增定向测试 1 文件 4/4，覆盖 UID/游客/cart ID 严格解析、11 条精确路由、独立 `order.assisted` ACL、actor-bound KV、购物车 PostgreSQL 锁、订单 staff/channel 绑定、现金支付授权与审计、provider I/O 事务外、优惠券批量范围、PHP 状态/支付筛选、退款件数语义、有界 body/no-store 和生产审计 Worker 的只读结构。完整本地门禁为双 TypeScript、175 文件/1,094 项单元测试、observability 14 信号/10 域/27 必需事件/376 个生产源文件/6 个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、路由审计和 `git diff --check`。最终 minify dry-run 为 `3,359.85 KiB / gzip 799.78 KiB`，精确回显生产 Hyperdrive、Queue、KV、R2 与 Durable Object，并以 `--dry-run: exiting now` 结束。Windows runtime 仍在 0 个测试/0 条断言前崩溃，需由 Linux CI 复验。
+
+路由基线在 ADMIN-A-REFUND 后为 PHP 1,904、TS 1,488、精确 786、可执行 768。本批净增 11 条精确可执行合同后为 TS 1,499、精确 797、可执行 779、明确不可用 18、原始缺失 1,107、证据化退役 4、可执行缺口 1,103，精确/可执行/退役后有效覆盖为 `41.9%/40.9%/41.0%`。`/api` 为 PHP 457、TS 808、精确 415、可执行 412、明确不可用 3、原始缺失 42、退役 1、可执行缺口 41，对应 `90.8%/90.2%/90.4%`；其他路由面未改变。静态匹配仍不证明生产权限、数据、支付或旧端 E2E 等价。
+
+实现提交 `026ca7564311d28a4c2bbec55de39c2ddbf866fc` 已推送至 `main`。[GitHub Actions 33464973049](https://github.com/cinagroup/cinashop/actions/runs/33464973049) 最终 8/8 jobs 成功：Linux Worker 综合任务通过官方生产依赖审计、双 TypeScript、175 文件/1,094 项单测、observability、201/248/201/零定义漂移和 1,904/1,499/797/779 路由门禁；受支持的真实 workerd runtime、Admin、PC、Supplier、Kefu、UniApp 和 checksum-pinned 全历史 Gitleaks 全部成功。CI 不持有生产 Secret、不访问 Hyperdrive，也不部署 Worker/Pages。Cloudflare Workers 与 PostgreSQL 最佳实践审查直接影响了 Hyperdrive 单一绑定、短事务、provider I/O 隔离、actor-scoped KV、条件更新、批量查询、独立 ACL、私有不缓存和生产配置/数据/部署证据分层。
+
+本批使 ADMIN-A 候选代码从 21/32 提升到 32/32，但完整业务域仍受真实旧端两处载荷修补、最小权限 Admin allow/deny、注册/游客/多游客/多门店场景、真实支付二维码与回调、预发、生产发布和发布后观察门禁约束。下一实现批应根据全局未完成 checklist 重新排序，不能因为 ADMIN-A 路由代码收口而越过 DATA、TEST 或 REL 门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
