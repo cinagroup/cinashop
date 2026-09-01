@@ -139,6 +139,12 @@ export interface CreateOrderParams {
   couponId?: number;
   /** 系统自定义表单组件和值；表单 ID 始终由商品/活动记录决定。 */
   customForm?: unknown;
+  /** Privileged assisted checkout. Cart ownership remains bound to this actor. */
+  assisted?: {
+    adminId: number;
+    /** Required only for uid=0; this is a scope label, never an auth credential. */
+    touristUid: string;
+  };
 }
 
 /** Infrastructure needed by the real order-creation core. */
@@ -909,11 +915,39 @@ export class StoreOrderCreateService {
     options?: { preview?: boolean },
   ): Promise<{ orderId: string; key: string } | OrderPricingQuote> {
     const { uid, key, cartIds } = params;
+    const assisted = params.assisted;
+    if (!Number.isSafeInteger(uid) || uid < 0) throw new ValidateException("用户参数无效");
+    if (assisted) {
+      if (!Number.isSafeInteger(assisted.adminId) || assisted.adminId <= 0) {
+        throw new ValidateException("管理员身份无效");
+      }
+      if (uid > 0 && assisted.touristUid !== "") {
+        throw new ValidateException("实名用户不能携带游客标识");
+      }
+      if (
+        uid === 0 && (
+          !assisted.touristUid || assisted.touristUid.length > 50 ||
+          !/^[A-Za-z0-9_-]+$/.test(assisted.touristUid)
+        )
+      ) throw new ValidateException("游客标识无效");
+    } else if (uid === 0) {
+      throw new ValidateException("游客订单必须通过代客下单创建");
+    }
+
+    const assertExistingScope = (order: typeof storeOrder.$inferSelect) => {
+      if (!assisted) return;
+      if (order.staffId !== assisted.adminId || order.isChannel !== 2) {
+        throw new ValidateException("订单确认标识已被其他代客会话使用");
+      }
+    };
 
     // 幂等检查 (对应 PHP StoreOrder::create 第 188 行)
     if (!options?.preview) {
       const existing = await c.storeOrderDao.findByUnique(uid, key);
-      if (existing) return { orderId: existing.orderId, key };
+      if (existing) {
+        assertExistingScope(existing);
+        return { orderId: existing.orderId, key };
+      }
     }
 
     if (!cartIds.length) throw new ValidateException("请选择要购买的商品");
@@ -935,6 +969,14 @@ export class StoreOrderCreateService {
     if (carts.length !== cartIds.length) throw new NotFoundException("购物车商品不存在");
     for (const cart of carts) {
       if (cart.uid !== uid) throw new ValidateException("购物车商品不属于当前用户");
+      if (assisted) {
+        if (
+          cart.staffId !== assisted.adminId ||
+          cart.touristUid !== (uid === 0 ? assisted.touristUid : "")
+        ) throw new ValidateException("购物车商品不属于当前代客会话");
+      } else if (cart.staffId !== 0 || cart.touristUid !== "") {
+        throw new ValidateException("代客购物车不能通过用户下单接口创建订单");
+      }
       if (cart.isPay || cart.isDel || cart.status !== 1 || cart.cartNum <= 0) {
         throw new ValidateException("购物车商品已失效或已下单");
       }
@@ -943,6 +985,7 @@ export class StoreOrderCreateService {
     // 2. 预加载商品 + SKU + 计算总价 (整数分, 避免浮点误差)
     //    活动单 (秒杀/砍价/拼团) 用活动价替换 SKU 价
     const type = params.type ?? 0;
+    if (uid === 0 && type !== 0) throw new ValidateException("游客仅支持普通商品代客下单");
     if (carts.some((cart) => cart.type !== type)) {
       throw new ValidateException("购物车活动类型与订单类型不匹配");
     }
@@ -1013,19 +1056,20 @@ export class StoreOrderCreateService {
       }
     }
     const [user, pricingConfig] = await Promise.all([
-      c.userDao.findForAuth(uid),
+      uid > 0 ? c.userDao.findForAuth(uid) : Promise.resolve(null),
       loadOrderPricingConfig(c, runtime),
     ]);
-    if (!user) throw new NotFoundException("用户不存在");
-    const level = pricingConfig.memberFunctionEnabled && user.level > 0
+    if (uid > 0 && !user) throw new NotFoundException("用户不存在");
+    const level = user && pricingConfig.memberFunctionEnabled && user.level > 0
       ? await c.systemUserLevelDao.getById(user.level)
       : null;
     const levelDiscountPercent = level && level.isShow === 1 && level.isDel === 0
       ? (Number(level.discount) || 100)
       : 100;
     const pricingNow = Math.floor(Date.now() / 1000);
-    const activePaidMember = pricingConfig.paidMemberEnabled
-      && isPaidMembershipActive(user, pricingNow);
+    const activePaidMember = user
+      ? pricingConfig.paidMemberEnabled && isPaidMembershipActive(user, pricingNow)
+      : false;
     let totalNum = 0;
     let totalCents = 0;
     let rawTotalCents = 0;
@@ -1440,27 +1484,26 @@ export class StoreOrderCreateService {
     );
     const orderMerId = merIds.size === 1 ? [...merIds][0] : 0;
 
-    const firstOrderConfig: FirstOrderDiscountConfig = type === 0
+    const firstOrderConfig: FirstOrderDiscountConfig = type === 0 && user
       ? await loadFirstOrderDiscountConfig(c, runtime)
       : { enabled: false, limitEnabled: true, limitDays: 0, payPercent: 100, limitCents: 0 };
     const preliminaryNow = Math.floor(Date.now() / 1000);
-    const preliminaryUsableIntegral = await usableIntegralPoints(
-      c.db,
-      uid,
-      user.integral,
-      preliminaryNow,
-    );
-    const preliminaryFirstOrderEligible = firstOrderAccountEligible(
-      user,
-      firstOrderConfig,
-      preliminaryNow,
-    ) && !(await hasPaidNonNewcomerOrder(c.db, uid));
+    const preliminaryUsableIntegral = user
+      ? await usableIntegralPoints(c.db, uid, user.integral, preliminaryNow)
+      : 0;
+    const preliminaryFirstOrderEligible = user
+      ? firstOrderAccountEligible(user, firstOrderConfig, preliminaryNow) &&
+        !(await hasPaidNonNewcomerOrder(c.db, uid))
+      : false;
     let firstOrderPriceCents = preliminaryFirstOrderEligible
       ? calculateFirstOrderDiscountCents(totalCents, firstOrderConfig)
       : 0;
 
     // PHP 的首单优惠优先于且排斥优惠券/营销活动；营销订单会静默忽略普通优惠券。
-    let couponResolution = preliminaryFirstOrderEligible || type !== 0
+    if (!user && Number(params.couponId ?? 0) > 0) {
+      throw new ValidateException("游客订单不能使用用户优惠券");
+    }
+    let couponResolution = !user || preliminaryFirstOrderEligible || type !== 0
       ? { priceCents: 0, row: null }
       : await resolveOrderCoupon(c, uid, params.couponId, orderItems);
     let couponPriceCents = couponResolution.priceCents;
@@ -1481,7 +1524,7 @@ export class StoreOrderCreateService {
     if (type === 4 && wantsIntegral) {
       throw new ValidateException("积分商品不能叠加普通订单积分抵扣");
     }
-    if (type === 4 && user.integral < requiredIntegral) {
+    if (type === 4 && (!user || user.integral < requiredIntegral)) {
       throw new ValidateException(`积分不足, 需要 ${requiredIntegral} 积分`);
     }
     let integralQuote = calculateIntegralDeduction({
@@ -1663,19 +1706,32 @@ export class StoreOrderCreateService {
     // 5. 订单号只在真实创建时生成；只读报价不会消耗 Sequence DO 编号。
     const orderId = (await runtime.nextOrderId()).trim();
     if (!orderId) throw new Error("订单号生成失败");
-    let brokerage = await buildOrderBrokerageSnapshot(c, runtime, {
-      orderType: type,
-      buyer: user,
-      actualProductCents,
-      items: orderItems.map(({ cart, product, sku, unitPriceCents }) => ({
-        grossCents: unitPriceCents * cart.cartNum,
-        costCents: decimalToCents(sku.cost) * cart.cartNum,
-        quantity: cart.cartNum,
-        specified: product.isSub === 1,
-        specifiedOneCents: decimalToCents(sku.brokerage),
-        specifiedTwoCents: decimalToCents(sku.brokerageTwo),
-      })),
-    });
+    let brokerage = user
+      ? await buildOrderBrokerageSnapshot(c, runtime, {
+          orderType: type,
+          buyer: user,
+          actualProductCents,
+          items: orderItems.map(({ cart, product, sku, unitPriceCents }) => ({
+            grossCents: unitPriceCents * cart.cartNum,
+            costCents: decimalToCents(sku.cost) * cart.cartNum,
+            quantity: cart.cartNum,
+            specified: product.isSub === 1,
+            specifiedOneCents: decimalToCents(sku.brokerage),
+            specifiedTwoCents: decimalToCents(sku.brokerageTwo),
+          })),
+        })
+      : {
+          spreadUid: 0,
+          spreadTwoUid: 0,
+          oneBrokerageCents: 0,
+          twoBrokerageCents: 0,
+          divisionId: 0,
+          divisionBrokerageCents: 0,
+          divisionAgentId: 0,
+          divisionAgentBrokerageCents: 0,
+          divisionStaffId: 0,
+          divisionStaffBrokerageCents: 0,
+        };
 
     // 4b. 拼团: 开团/参团团信息 (事务内处理人数, 这里预取组合 ID)
     if (type === 3) {
@@ -1696,10 +1752,11 @@ export class StoreOrderCreateService {
         .from(storeOrder)
         .where(and(eq(storeOrder.uid, uid), eq(storeOrder.unique, key)))
         .limit(1);
+      if (concurrentExistingRows[0]) assertExistingScope(concurrentExistingRows[0]);
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
 
       const now = Math.floor(Date.now() / 1000);
-      if (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && type === 0)) {
+      if (user && (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && type === 0))) {
         // 不同幂等键也必须按用户串行化首单资格。资格、订单和消费标记同事务提交，
         // 因此库存/快照等后续步骤失败时不会永久吃掉首单优惠。
         const lockedUsers = await tx
@@ -1934,6 +1991,8 @@ export class StoreOrderCreateService {
           and(
             inArray(storeCart.id, cartIds),
             eq(storeCart.uid, uid),
+            eq(storeCart.staffId, assisted?.adminId ?? 0),
+            eq(storeCart.touristUid, assisted && uid === 0 ? assisted.touristUid : ""),
             eq(storeCart.isPay, 0),
             eq(storeCart.isDel, 0),
             eq(storeCart.status, 1),
@@ -2211,7 +2270,10 @@ export class StoreOrderCreateService {
           gainIntegral: String(gainIntegral),
           cost: (totalCostCents / 100).toFixed(2),
           productType: orderProductType,
+          // Assisted carts were already exact-set validated against assisted.adminId;
+          // deriving from the immutable cart set keeps the ordinary order path unchanged.
           staffId: orderStaffId,
+          isChannel: assisted ? 2 : 0,
           merId: orderMerId,
           spreadUid: brokerage.spreadUid,
           spreadTwoUid: brokerage.spreadTwoUid,
@@ -2251,6 +2313,14 @@ export class StoreOrderCreateService {
         .returning();
       const order = orderInsert[0];
       if (!order) throw new Error("订单插入失败");
+      if (assisted) {
+        await tx.insert(storeOrderStatus).values({
+          oid: order.id,
+          changeType: "admin_assisted_create",
+          changeMessage: `管理员 ${assisted.adminId} 为用户 ${uid} 创建代客订单`,
+          changeTime: now,
+        });
+      }
       await collectOrderSystemForm(tx, preparedSystemForm, uid, order.id, now);
 
       const itemGrossCents = orderItems.map(({ cart, unitPriceCents }) =>

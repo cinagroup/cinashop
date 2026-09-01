@@ -198,6 +198,7 @@ const permissionKeys = new Set(
     ...(group.manage ? [`${group.key}.manage`] : []),
   ]),
 );
+permissionKeys.add("order.assisted");
 
 function isNumericToken(token: string): boolean {
   return /^[1-9]\d*$/.test(token);
@@ -225,8 +226,14 @@ function matchesRoute(route: string, matcher: string): boolean {
     : route === normalized || route.startsWith(`${normalized}/`);
 }
 
+function isAssistedOrderRoute(route: string): boolean {
+  return route === "order/place/list" || route === "order/pay/status" ||
+    /^order\/(?:cart\/[^/]+|cart\/(?:add|del|num)\/[^/]+|confirm\/[^/]+|computed\/[^/]+\/[^/]+|coupons\/[^/]+|create\/[^/]+\/[^/]+|pay\/[^/]+)$/.test(route);
+}
+
 export function requiredAdminPermission(method: string, routePath: string): string | null {
   const route = normalizeAdminRoute(routePath);
+  if (isAssistedOrderRoute(route)) return "order.assisted";
   const group = ADMIN_PERMISSION_GROUPS.find((candidate) =>
     candidate.matches.some((matcher) => matchesRoute(route, matcher)),
   );
@@ -343,6 +350,7 @@ export class AdminPermissionService {
       children: [
         { key: `${group.key}.view`, label: "查看" },
         ...(group.manage ? [{ key: `${group.key}.manage`, label: "管理" }] : []),
+        ...(group.key === "order" ? [{ key: "order.assisted", label: "代客下单" }] : []),
       ],
     }));
   }

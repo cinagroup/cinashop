@@ -1291,6 +1291,17 @@ v1Routes.delete("/admin/specs/:id", adminAuth, AdminCrud.adminProductSpecsDelete
 // 订单管理
 v1Routes.get("/admin/order/list", adminAuth, AdminCrud.adminOrderList);
 v1Routes.get("/admin/order/detail/:orderId", adminAuth, AdminCrud.adminOrderDetail);
+v1Routes.get("/admin/order/cart/:uid", adminAuth, AdminController.adminAssistedCartList);
+v1Routes.post("/admin/order/cart/add/:uid", adminAuth, AdminController.adminAssistedCartAdd);
+v1Routes.delete("/admin/order/cart/del/:uid", adminAuth, AdminController.adminAssistedCartDel);
+v1Routes.post("/admin/order/cart/num/:uid", adminAuth, AdminController.adminAssistedCartNum);
+v1Routes.get("/admin/order/place/list", adminAuth, AdminController.adminAssistedPlaceList);
+v1Routes.post("/admin/order/confirm/:uid", adminAuth, AdminController.adminAssistedConfirm);
+v1Routes.post("/admin/order/computed/:key/:uid", adminAuth, AdminController.adminAssistedComputed);
+v1Routes.get("/admin/order/coupons/:uid", adminAuth, AdminController.adminAssistedCoupons);
+v1Routes.post("/admin/order/create/:key/:uid", adminAuth, AdminController.adminAssistedCreate);
+v1Routes.post("/admin/order/pay/:uid", adminAuth, AdminController.adminAssistedPay);
+v1Routes.get("/admin/order/pay/status", adminAuth, AdminController.adminAssistedPayStatus);
 v1Routes.get("/admin/order/statistics", adminAuth, AdminController.adminMobileOrderStatistics);
 v1Routes.get("/admin/order/staging", adminAuth, AdminController.adminMobileOrderStaging);
 v1Routes.get("/admin/order/data", adminAuth, AdminController.adminMobileOrderData);

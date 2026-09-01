@@ -27,6 +27,10 @@ import { AdminMobileOrderOperationService } from "@/services/admin/AdminMobileOr
 import { AdminMobileFulfillmentService } from "@/services/admin/AdminMobileFulfillmentService";
 import { AdminMobileRefundOperationService } from "@/services/admin/AdminMobileRefundOperationService";
 import {
+  AdminAssistedOrderService,
+  parseAssistedUid,
+} from "@/services/admin/AdminAssistedOrderService";
+import {
   AdminExtendedStatisticService,
   parseAdminStatisticChannel,
   parseUserRegionSort,
@@ -35,6 +39,7 @@ import type { AppVariables, Env } from "@/env";
 import { upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
 import { ErpCapabilityService } from "@/services/system/ErpCapabilityService";
 import { readBoundedJsonObject } from "@/utils/request-body";
+import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -107,12 +112,136 @@ function mobileRefundOperationService(c: C): AdminMobileRefundOperationService {
   return new AdminMobileRefundOperationService(c.get("container"), c.env);
 }
 
+function assistedOrderService(c: C): AdminAssistedOrderService {
+  return new AdminAssistedOrderService(c.get("container"), c.env);
+}
+
 function verifiedAdminId(c: C): number {
   const actor = c.get("adminInfo");
   if (!actor || !Number.isSafeInteger(actor.id) || actor.id <= 0) {
     throw new ValidateException("管理员身份不存在");
   }
   return actor.id;
+}
+
+function boundedClientIp(c: C): string {
+  return clientIp(c).trim().slice(0, 45);
+}
+
+/** GET /api/admin/order/cart/:uid — actor-scoped assisted cart rows. */
+export async function adminAssistedCartList(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).cartList(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    c.req.query(),
+  ));
+}
+
+/** POST /api/admin/order/cart/add/:uid — add one normal product to an assisted cart. */
+export async function adminAssistedCartAdd(c: C) {
+  privateAdminResponse(c);
+  const result = await assistedOrderService(c).cartAdd(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024),
+  );
+  return jsonOk(c, result);
+}
+
+/** DELETE /api/admin/order/cart/del/:uid — exact-set assisted cart deletion. */
+export async function adminAssistedCartDel(c: C) {
+  privateAdminResponse(c);
+  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
+  for (const [key, value] of Object.entries(c.req.query())) {
+    if (!(key in body)) body[key] = value;
+  }
+  await assistedOrderService(c).cartDel(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    body,
+  );
+  return jsonOk(c, "删除成功");
+}
+
+/** POST /api/admin/order/cart/num/:uid — locked assisted cart quantity update. */
+export async function adminAssistedCartNum(c: C) {
+  privateAdminResponse(c);
+  await assistedOrderService(c).cartNum(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024),
+  );
+  return jsonOk(c, "修改成功");
+}
+
+/** GET /api/admin/order/place/list — only orders created by the current administrator. */
+export async function adminAssistedPlaceList(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).placeList(verifiedAdminId(c), c.req.query()));
+}
+
+/** POST /api/admin/order/confirm/:uid — create an actor-bound checkout snapshot. */
+export async function adminAssistedConfirm(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).confirm(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    await readBoundedJsonObject(c.req.raw, 16 * 1024),
+  ));
+}
+
+/** POST /api/admin/order/computed/:key/:uid — recompute exclusively from the stored cart set. */
+export async function adminAssistedComputed(c: C) {
+  privateAdminResponse(c);
+  const result = await assistedOrderService(c).computed(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    c.req.param("key") ?? "",
+    await readBoundedJsonObject(c.req.raw, 16 * 1024),
+  );
+  if (result.extended) return jsonOk(c, { result: { orderId: result.orderId, key: result.key } }, "订单已生成");
+  return jsonOk(c, { result: result.result });
+}
+
+/** GET /api/admin/order/coupons/:uid — server-authoritative applicable coupon list. */
+export async function adminAssistedCoupons(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).coupons(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    c.req.query(),
+  ));
+}
+
+/** POST /api/admin/order/create/:key/:uid — atomically claim inventory and create an audited order. */
+export async function adminAssistedCreate(c: C) {
+  privateAdminResponse(c);
+  const result = await assistedOrderService(c).create(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    c.req.param("key") ?? "",
+    await readBoundedJsonObject(c.req.raw, 32 * 1024),
+    boundedClientIp(c),
+  );
+  return jsonOk(c, { result }, result.extended ? "订单已创建，请点击查看完成支付" : "订单创建成功");
+}
+
+/** POST /api/admin/order/pay/:uid — provider initiation or audited cash settlement. */
+export async function adminAssistedPay(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).pay(
+    verifiedAdminId(c),
+    parseAssistedUid(c.req.param("uid")),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024),
+    boundedClientIp(c),
+  ));
+}
+
+/** GET /api/admin/order/pay/status — actor-scoped payment polling. */
+export async function adminAssistedPayStatus(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).payStatus(verifiedAdminId(c), c.req.query()));
 }
 
 /** GET /api/admin/order/statistics — embedded admin order counters/cards. */

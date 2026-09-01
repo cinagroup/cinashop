@@ -660,6 +660,15 @@ export class StoreCartService {
         options.includeInvalid ? undefined : eq(storeCart.status, 1),
       ))
       .orderBy(desc(storeCart.addTime), desc(storeCart.id));
+    return this.projectLegacyV2Rows(uid, carts, options);
+  }
+
+  /** Project a pre-authorized cart set without widening its database scope. */
+  async projectLegacyV2Rows(
+    uid: number,
+    carts: Array<typeof storeCart.$inferSelect>,
+    options: { includeInvalid?: boolean } = {},
+  ): Promise<Record<string, unknown>[]> {
     if (carts.length === 0) return [];
 
     const productIds = [...new Set(carts.map((cart) => cart.productId))];
@@ -770,6 +779,209 @@ export class StoreCartService {
       });
     }
     return result;
+  }
+
+  /** Admin-assisted normal cart list, bound to the authenticated staff actor. */
+  async listAssistedLegacyV2(params: {
+    adminId: number;
+    uid: number;
+    touristUid: string;
+    isNew?: number;
+    ids?: number[];
+  }): Promise<Record<string, unknown>[]> {
+    this.assertAssistedScope(params.adminId, params.uid, params.touristUid);
+    const isNew = params.isNew ?? 0;
+    if (![0, 1].includes(isNew)) throw new ValidateException("购物车类型无效");
+    const ids = params.ids ?? [];
+    if (ids.length > 200 || new Set(ids).size !== ids.length) {
+      throw new ValidateException("购物车参数无效");
+    }
+    const conditions = [
+      eq(storeCart.uid, params.uid),
+      eq(storeCart.staffId, params.adminId),
+      eq(storeCart.touristUid, params.uid === 0 ? params.touristUid : ""),
+      eq(storeCart.type, 0),
+      eq(storeCart.activityId, 0),
+      eq(storeCart.storeId, 0),
+      eq(storeCart.isDel, 0),
+      eq(storeCart.isPay, 0),
+      eq(storeCart.isNew, isNew),
+      eq(storeCart.status, 1),
+    ];
+    if (ids.length) conditions.push(inArray(storeCart.id, ids));
+    const carts = await this.container.db
+      .select()
+      .from(storeCart)
+      .where(and(...conditions))
+      .orderBy(desc(storeCart.addTime), desc(storeCart.id));
+    if (ids.length && carts.length !== ids.length) {
+      throw new ValidateException("购物车商品已失效或不属于当前代客会话");
+    }
+    const projected = await this.projectLegacyV2Rows(params.uid, carts);
+    if (projected.length !== carts.length) {
+      throw new ValidateException("购物车商品已失效，请重新选择");
+    }
+    if (!ids.length) return projected;
+    const byId = new Map(projected.map((row) => [Number(row.id), row]));
+    return ids.map((id) => byId.get(id)!);
+  }
+
+  /** Add or merge one normal assisted cart row under an actor/target lock. */
+  async addAssisted(params: {
+    adminId: number;
+    uid: number;
+    touristUid: string;
+    productId: number;
+    unique: string;
+    cartNum: number;
+    isNew: number;
+  }): Promise<{ cartId: number; cartNum: number }> {
+    this.assertAssistedScope(params.adminId, params.uid, params.touristUid);
+    if (!Number.isSafeInteger(params.productId) || params.productId <= 0) {
+      throw new ValidateException("商品参数错误");
+    }
+    if (!Number.isSafeInteger(params.cartNum) || params.cartNum <= 0 || params.cartNum > 32767) {
+      throw new ValidateException("购买数量必须是大于 0 的整数");
+    }
+    if (![0, 1].includes(params.isNew)) throw new ValidateException("购物车类型无效");
+    const unique = params.unique.trim();
+    if (!unique || unique.length > 16) throw new ValidateException("请选择有效的商品属性");
+    if (params.uid > 0 && !(await this.container.userDao.findForAuth(params.uid))) {
+      throw new NotFoundException("用户不存在");
+    }
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql`
+        SELECT pg_advisory_xact_lock(
+          hashtextextended(${`cinashop:assisted-cart:${params.adminId}:${params.uid}:${params.touristUid}`}, 0::bigint)
+        )
+      `);
+      const { product, sku } = await normalProductAndSku(tx, params.productId, unique);
+      const existingRows = await tx
+        .select()
+        .from(storeCart)
+        .where(and(
+          eq(storeCart.uid, params.uid),
+          eq(storeCart.staffId, params.adminId),
+          eq(storeCart.touristUid, params.uid === 0 ? params.touristUid : ""),
+          eq(storeCart.productId, params.productId),
+          eq(storeCart.productAttrUnique, sku.unique),
+          eq(storeCart.type, 0),
+          eq(storeCart.activityId, 0),
+          eq(storeCart.storeId, 0),
+          eq(storeCart.isPay, 0),
+          eq(storeCart.isDel, 0),
+          eq(storeCart.isNew, params.isNew),
+          eq(storeCart.status, 1),
+        ))
+        .orderBy(asc(storeCart.id))
+        .limit(1)
+        .for("update");
+      const existing = existingRows[0];
+      const nextNum = (existing?.cartNum ?? 0) + params.cartNum;
+      if (nextNum > sku.stock || nextNum > product.stock || nextNum > 32767) {
+        throw new ValidateException("加入购物车数量超过库存");
+      }
+      const now = Math.floor(Date.now() / 1000);
+      if (existing) {
+        await tx.update(storeCart).set({ cartNum: nextNum, addTime: now })
+          .where(eq(storeCart.id, existing.id));
+        return { cartId: existing.id, cartNum: nextNum };
+      }
+      const inserted = await tx.insert(storeCart).values({
+        uid: params.uid,
+        touristUid: params.uid === 0 ? params.touristUid : "",
+        type: 0,
+        productId: product.id,
+        productType: product.productType,
+        activityId: 0,
+        storeId: 0,
+        staffId: params.adminId,
+        productAttrUnique: sku.unique,
+        cartNum: params.cartNum,
+        addTime: now,
+        isPay: 0,
+        isDel: 0,
+        isNew: params.isNew,
+        status: 1,
+      }).returning({ id: storeCart.id });
+      if (!inserted[0]) throw new Error("购物车写入失败");
+      return { cartId: inserted[0].id, cartNum: params.cartNum };
+    });
+  }
+
+  /** Change quantity only after locking the exact assisted row. */
+  async setAssistedNum(params: {
+    adminId: number;
+    uid: number;
+    touristUid: string;
+    id: number;
+    cartNum: number;
+  }): Promise<void> {
+    this.assertAssistedScope(params.adminId, params.uid, params.touristUid);
+    if (
+      !Number.isSafeInteger(params.id) || params.id <= 0 ||
+      !Number.isSafeInteger(params.cartNum) || params.cartNum <= 0 || params.cartNum > 32767
+    ) throw new ValidateException("购物车参数错误");
+    await withTx(this.container, async (tx) => {
+      const rows = await tx.select().from(storeCart).where(and(
+        eq(storeCart.id, params.id),
+        eq(storeCart.uid, params.uid),
+        eq(storeCart.staffId, params.adminId),
+        eq(storeCart.touristUid, params.uid === 0 ? params.touristUid : ""),
+        eq(storeCart.type, 0),
+        eq(storeCart.isPay, 0),
+        eq(storeCart.isDel, 0),
+        eq(storeCart.status, 1),
+      )).limit(1).for("update");
+      const cart = rows[0];
+      if (!cart) throw new NotFoundException("购物车项不存在");
+      const { product, sku } = await normalProductAndSku(tx, cart.productId, cart.productAttrUnique);
+      if (params.cartNum > sku.stock || params.cartNum > product.stock) {
+        throw new ValidateException("修改数量超过库存");
+      }
+      await tx.update(storeCart).set({ cartNum: params.cartNum }).where(eq(storeCart.id, cart.id));
+    });
+  }
+
+  /** Soft-delete an exact assisted cart set; partial ownership never succeeds. */
+  async delAssisted(params: {
+    adminId: number;
+    uid: number;
+    touristUid: string;
+    ids: number[];
+  }): Promise<void> {
+    this.assertAssistedScope(params.adminId, params.uid, params.touristUid);
+    if (
+      !params.ids.length || params.ids.length > 200 ||
+      new Set(params.ids).size !== params.ids.length ||
+      params.ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
+    ) throw new ValidateException("购物车参数错误");
+    await withTx(this.container, async (tx) => {
+      const rows = await tx.select({ id: storeCart.id }).from(storeCart).where(and(
+        inArray(storeCart.id, params.ids),
+        eq(storeCart.uid, params.uid),
+        eq(storeCart.staffId, params.adminId),
+        eq(storeCart.touristUid, params.uid === 0 ? params.touristUid : ""),
+        eq(storeCart.isPay, 0),
+        eq(storeCart.isDel, 0),
+      )).orderBy(asc(storeCart.id)).for("update");
+      if (rows.length !== params.ids.length) {
+        throw new ValidateException("购物车商品不存在或不属于当前代客会话");
+      }
+      await tx.update(storeCart).set({ isDel: 1 }).where(inArray(storeCart.id, params.ids));
+    });
+  }
+
+  private assertAssistedScope(adminId: number, uid: number, touristUid: string): void {
+    if (!Number.isSafeInteger(adminId) || adminId <= 0) throw new ValidateException("管理员身份无效");
+    if (!Number.isSafeInteger(uid) || uid < 0) throw new ValidateException("用户参数无效");
+    if (uid > 0 && touristUid !== "") throw new ValidateException("实名用户不能携带游客标识");
+    if (
+      uid === 0 && (
+        !touristUid || touristUid.length > 50 ||
+        !/^[A-Za-z0-9_-]+$/.test(touristUid)
+      )
+    ) throw new ValidateException("游客标识无效");
   }
 
   /** PHP PC `/get_cart_list`: preserve both usable and expired cart rows. */
