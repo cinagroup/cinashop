@@ -17,6 +17,14 @@ const editorial = readFileSync(
   resolve(root, "../view/uniapp-ts/src/components/diy/DiyEditorialWidget.vue"),
   "utf8",
 );
+const commerce = readFileSync(
+  resolve(root, "../view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue"),
+  "utf8",
+);
+const activityClient = readFileSync(
+  resolve(root, "../view/uniapp-ts/src/api/activity.ts"),
+  "utf8",
+);
 const homepage = readFileSync(resolve(root, "../view/uniapp-ts/src/pages/index/index.vue"), "utf8");
 const microPage = readFileSync(resolve(root, "../view/uniapp-ts/src/pages/diy/detail.vue"), "utf8");
 const pages = readFileSync(resolve(root, "../view/uniapp-ts/src/pages.json"), "utf8");
@@ -105,5 +113,48 @@ describe("DIY-home frontend migration", () => {
     expect(editorial).toContain("bounded(item.starY, 0, 0, 2_000)");
     expect(editorial).toContain("bounded(diyNumber(props.block, \"prConfig\"), 0, 0, 80)");
     expect(editorial).toContain("String(titleValue).trim().slice(0, 100)");
+  });
+
+  it("statically mounts all eight business-data widgets through typed clients", () => {
+    for (const name of [
+      "bargain",
+      "combination",
+      "coupon",
+      "liveBroadcast",
+      "promotionList",
+      "seckill",
+      "presale",
+      "pointsMall",
+    ]) {
+      expect(renderer).toContain(`"${name}"`);
+    }
+    for (const route of [
+      "/seckill/index",
+      "/seckill/list/",
+      "/combination/list",
+      "/bargain/list",
+      "/store_integral/list",
+      "/presale/list",
+      "/v2/coupons",
+      "/wechat/live",
+    ]) {
+      expect(activityClient).toContain(route);
+    }
+    expect(commerce).toContain("type CouponListItem");
+    expect(commerce).toContain("type LiveRoomListItem");
+    expect(commerce).not.toContain(" as any");
+    expect(commerce).not.toContain("<component");
+    expect(commerce).not.toContain("v-html");
+  });
+
+  it("bounds commerce configuration and fails closed on empty scoped product selections", () => {
+    expect(commerce).toContain("slice(0, 12)");
+    expect(commerce).toContain("slice(0, 50)");
+    expect(commerce).toContain("bounded(diyNumber(props.block, \"numberConfig\", 6), 6, 1, 20)");
+    expect(commerce).toContain("type === 4 && !labels.length");
+    expect(commerce).toContain("safeDiyImageUrl");
+    expect(commerce).toContain("Number.isSafeInteger(roomId)");
+    expect(renderer).toContain("type === 4 && !labels.length");
+    expect(renderer).toContain("store_label_id: labels.join");
   });
 });

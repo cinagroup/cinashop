@@ -13,6 +13,8 @@ export interface GoodsListParams {
   /** Legacy DIY multi-category selection. */
   cate_id?: string;
   brand_id?: string;
+  /** Legacy DIY product-label selection. */
+  store_label_id?: string;
   priceOrder?: "asc" | "desc";
   salesOrder?: "asc" | "desc";
   news?: number;

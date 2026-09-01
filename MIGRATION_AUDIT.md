@@ -152,7 +152,13 @@ DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和
 
 本子批继续不使用动态组件、`v-html`、数据库脚本或外部下载，所有集合、文本、边距、圆角、颜色、图片和热区坐标均有界且失败关闭。定向 DIY 测试更新为 2 文件/23 项并通过；隔离 mock 页面在桌面端显示新闻、热区、活动魔方和公众号卡片，关注按钮打开/关闭二维码弹层，热区点击切换到现有分类页。390×844 精确设备尺寸下 `innerWidth/bodyWidth/rendererWidth=390/390/390`、活动卡 369.2px，无横向溢出；控制台只有 UniApp 打包依赖的 Vue Router 弃用警告，没有应用级 error。
 
-父项仍不能完成：`bargain/combination/coupon/liveBroadcast/promotionList/seckill/presale/pointsMall` 8 类业务数据组件尚未接入；悬浮导航只覆盖首页和微页面，尚非所有旧目的页面的全局挂载；PC 是否消费同一 DIY 未决。生产仍有 15/21 配置缺失及 3 键重复，R2 缩略图等价策略、真实 token、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察均未完成。后续代码批按业务 API 依赖逐组关闭 8 类组件，数据与发布门禁继续独立跟踪。
+第三前端子批完成 `bargain/combination/coupon/liveBroadcast/promotionList/seckill/presale/pointsMall` 八类业务数据组件的静态挂载。组件使用类型化活动 client，列表、文本、ID、颜色、图片、分页和选择范围全部有界；固定商品、品牌、分类及商品标签为空时失败关闭，不会退化为全目录曝光；直播只在 `MP-WEIXIN` 编译分支读取并只跳转正整数 `room_id`，H5 不调用小程序私有页；领券先检查登录态。`promotionList` 支持最多 12 个标签、每组最多 20 个商品及最多 50 个范围 ID。为避免匿名大 OFFSET，秒杀/拼团/砍价列表在 DAO 前将 limit 限为 50、OFFSET 限为 10,000。
+
+这次对 PHP 列表消费者和生产公开 API 的交叉审计发现了一个此前被“路由存在”掩盖的合同缺口：已部署 Worker 的秒杀首页返回 camelCase 数组，旧 UniApp 实际要求 `{lovely,seckillTime,seckillTimeIndex}`，并且边缘 `Date#getHours()` 使用 UTC，导致上海活动时段错位；秒杀、拼团、砍价和积分列表也直接泄露 Drizzle camelCase，而旧端消费 snake_case/`title/ot_price` 等字段。候选 Worker 已改为 Asia/Shanghai 时钟、PHP 信封和旧字段投影，并补齐有界分页；20:30 上海时区夹具验证选中第三时段且 `stop` 为 `+08:00` Unix 秒。生产公开探针还确认 `/api/presale/list`、`/api/wechat/live`、`/api/v2/coupons` 在当前主 Worker 均为 404，而秒杀/拼团/砍价/积分仍是旧响应，证明线上版本落后于本地候选；本批没有发布主 Worker或 Pages。
+
+隔离 mock 的 390×844 H5 验收实际渲染 7 个可见组件且每类一次，`liveBroadcast` 按条件编译在 H5 隐藏；促销标签由“本周精选”切换到“新品推荐”后商品集合同步变化，未登录“领取”进入登录页，商品卡进入精确详情路由。组件页无应用级 console error，只有 UniApp 依赖的 Vue Router 弃用警告；详情路由探针随后因 mock 未覆盖详情 API 产生预期 404，不计作组件页错误。Worker 单元测试为 183 文件/1,174 项全部通过，Worker 双 TypeScript、UniApp TypeScript、H5/微信小程序生产构建和主 Worker `wrangler deploy --dry-run --minify` 均通过；Windows 本机 runtime 仍在执行断言前以 `workerd 0xc0000005` 崩溃，Linux 历史门禁继续作为有效 runtime 证据。
+
+父项仍不能完成：生产 `system_dise=0`，没有真实 DIY 页面或悬浮配置；视频、新人商品、促销均为 0，可领取券为 0，已部署主 Worker又缺三条本批依赖路由，无法做真实内容、真实 token、真实领券或微信直播正向 E2E。生产还存在 15/21 配置缺失、`site_url/sign_give_point/sign_status` 重复、2 张过期但状态仍可用的用户券、3 个用户券 owner 孤儿、关系 owner 孤儿 1、签到 owner 孤儿 1、商品收藏计数漂移 1。所有异常仅被只读记录，没有自动删除、归属或改状态。悬浮导航的全局覆盖、PC 是否消费同一 DIY、R2 缩略图等价策略、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察也仍未完成。
 
 ## PUBLIC-ARTICLE 迁移审计（2026-08-30）
 

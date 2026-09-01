@@ -17,7 +17,7 @@
           mode="aspectFill"
         />
         <view class="goods-info">
-          <view class="goods-name">{{ g.storeName }}</view>
+          <view class="goods-name">{{ g.title }}</view>
           <view class="goods-bottom">
             <view class="integral-price">
               <text class="int-val">{{ g.integral }}</text>
@@ -68,16 +68,7 @@
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
 import { apiCartAdd } from "@/api/order";
-
-interface IntegralItem {
-  id: number;
-  image: string;
-  storeName: string;
-  integral: number;
-  price: string;
-  stock: number;
-  systemFormId: number;
-}
+import { apiIntegralList, type IntegralListItem } from "@/api/activity";
 
 interface IntegralSku {
   id: number;
@@ -90,11 +81,16 @@ interface IntegralSku {
 }
 
 interface IntegralDetail {
-  storeInfo: IntegralItem & { productId: number; onceNum: number };
+  storeInfo: {
+    id: number;
+    productId: number;
+    storeName: string;
+    onceNum: number;
+  };
   skus: IntegralSku[];
 }
 
-const list = ref<IntegralItem[]>([]);
+const list = ref<IntegralListItem[]>([]);
 const points = ref("0");
 const skuVisible = ref(false);
 const pendingDetail = ref<IntegralDetail | null>(null);
@@ -105,7 +101,7 @@ const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
 
 async function load() {
   try {
-    list.value = await http.get<IntegralItem[]>("/store_integral/list", { page: 1, limit: 20 });
+    list.value = await apiIntegralList({ page: 1, limit: 20 });
   } catch {
     list.value = [];
   }
@@ -117,7 +113,7 @@ async function load() {
   }
 }
 
-async function exchange(item: IntegralItem) {
+async function exchange(item: IntegralListItem) {
   if (submitting.value || item.stock <= 0) return;
   submitting.value = true;
   try {

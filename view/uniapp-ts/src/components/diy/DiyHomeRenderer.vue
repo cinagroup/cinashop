@@ -196,6 +196,11 @@
         :block="block"
       />
 
+      <DiyCommerceWidget
+        v-else-if="isCommerceWidget(block)"
+        :block="block"
+      />
+
       <view v-else-if="block.name === 'customerService'" class="diy-service" @tap="open('/pages/user/kefu')">
         <text>在线客服</text>
         <text class="diy-more">咨询 ›</text>
@@ -248,6 +253,7 @@ import {
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
+import DiyCommerceWidget from "./DiyCommerceWidget.vue";
 
 interface MenuItem {
   image: string;
@@ -275,9 +281,23 @@ const userInfo = ref<DiyUserInfo | null>(null);
 const videos = ref<DiyVideoItem[]>([]);
 let hydration = 0;
 const EDITORIAL_WIDGET_NAMES = new Set(["news", "hotspot", "follow", "activeParty"]);
+const COMMERCE_WIDGET_NAMES = new Set([
+  "bargain",
+  "combination",
+  "coupon",
+  "liveBroadcast",
+  "promotionList",
+  "seckill",
+  "presale",
+  "pointsMall",
+]);
 
 function isEditorialWidget(block: DiyComponent): boolean {
   return EDITORIAL_WIDGET_NAMES.has(block.name);
+}
+
+function isCommerceWidget(block: DiyComponent): boolean {
+  return COMMERCE_WIDGET_NAMES.has(block.name);
 }
 
 function blockKey(block: DiyComponent, index: number): string {
@@ -286,7 +306,7 @@ function blockKey(block: DiyComponent, index: number): string {
 
 function tabValue(source: unknown, key: string, fallback = 0): number {
   const record = asDiyRecord(asDiyRecord(source)?.[key]);
-  const value = Number(record?.tabVal ?? record?.value ?? fallback);
+  const value = Number(record?.tabVal ?? record?.activeValue ?? record?.value ?? fallback);
   return Number.isFinite(value) ? value : fallback;
 }
 
@@ -403,12 +423,24 @@ async function loadProducts(block: DiyComponent): Promise<GoodsItem[]> {
     .map(Number)
     .filter((id) => Number.isSafeInteger(id) && id > 0)
     .slice(0, 50);
+  const brands = diyList(block, "brandList", "brandVal")
+    .map(Number)
+    .filter((id) => Number.isSafeInteger(id) && id > 0)
+    .slice(0, 50);
+  const labels = diyList(block, "goodsLabel", "activeValue")
+    .map(Number)
+    .filter((id) => Number.isSafeInteger(id) && id > 0)
+    .slice(0, 50);
+  if ((type === 1 && !ids.length) || (type === 2 && !brands.length)
+    || (type === 3 && !categories.length) || (type === 4 && !labels.length)) return [];
   const sort = tabValue(block, "goodsSort");
   const result = await apiGoodsList({
     page: 1,
     limit: boundedLimit(diyNumber(block, "numberConfig", 8), 8, 20),
     ...(type === 1 && ids.length ? { ids: ids.join(",") } : {}),
+    ...(type === 2 && brands.length ? { brand_id: brands.join(",") } : {}),
     ...(type === 3 && categories.length ? { cate_id: categories.join(",") } : {}),
+    ...(type === 4 && labels.length ? { store_label_id: labels.join(",") } : {}),
     ...(sort === 1 ? { salesOrder: "desc" as const } : {}),
     ...(sort === 2 ? { priceOrder: "desc" as const } : {}),
   });

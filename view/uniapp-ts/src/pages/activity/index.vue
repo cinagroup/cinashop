@@ -18,22 +18,22 @@
       <view class="time-slots">
         <view
           v-for="s in slots"
-          :key="(s as any).id"
+          :key="s.id"
           class="slot"
-          :class="{ active: (s as any).is_active }"
-          @tap="loadSeckill((s as any).start_time)"
+          :class="{ active: s.status === 1 }"
+          @tap="loadSeckill(s.id)"
         >
-          <text class="slot-time">{{ (s as any).start_time }}</text>
-          <text class="slot-status">{{ (s as any).is_active ? "抢购中" : "未开始" }}</text>
+          <text class="slot-time">{{ s.start_time }}</text>
+          <text class="slot-status">{{ s.state }}</text>
         </view>
       </view>
       <view v-if="seckillList.length" class="goods-list">
-        <view v-for="g in seckillList" :key="(g as any).id" class="goods-item" @tap="goSeckill((g as any).id)">
+        <view v-for="g in seckillList" :key="g.id" class="goods-item" @tap="goSeckill(g.id)">
           <view class="goods-info">
-            <view class="goods-name">{{ (g as any).storeName }}</view>
+            <view class="goods-name">{{ g.title }}</view>
             <view class="goods-price">
-              <text class="price">¥{{ (g as any).price }}</text>
-              <text class="ot-price">¥{{ (g as any).otPrice }}</text>
+              <text class="price">¥{{ g.price }}</text>
+              <text class="ot-price">¥{{ g.ot_price }}</text>
             </view>
           </view>
         </view>
@@ -44,15 +44,15 @@
     <!-- 砍价 -->
     <view v-if="active === 'bargain'" class="body">
       <view v-if="bargainList.length" class="goods-list">
-        <view v-for="g in bargainList" :key="(g as any).id" class="goods-item" @tap="goBargain((g as any).id)">
+        <view v-for="g in bargainList" :key="g.id" class="goods-item" @tap="goBargain(g.id)">
           <view class="goods-info">
-            <view class="goods-name">{{ (g as any).storeName }}</view>
+            <view class="goods-name">{{ g.title }}</view>
             <view class="goods-price">
-              <text class="price">¥{{ (g as any).price }}</text>
-              <text class="ot-price">可砍至 ¥{{ (g as any).minPrice }}</text>
+              <text class="price">¥{{ g.price }}</text>
+              <text class="ot-price">可砍至 ¥{{ g.min_price }}</text>
             </view>
           </view>
-          <view class="go-btn" @tap.stop="goBargain((g as any).id)">去砍价</view>
+          <view class="go-btn" @tap.stop="goBargain(g.id)">去砍价</view>
         </view>
       </view>
       <view v-else class="empty">暂无砍价商品</view>
@@ -62,12 +62,12 @@
     <!-- 拼团 -->
     <view v-if="active === 'combination'" class="body">
       <view v-if="combinationList.length" class="goods-list">
-        <view v-for="g in combinationList" :key="(g as any).id" class="goods-item" @tap="goCombination((g as any).id)">
+        <view v-for="g in combinationList" :key="g.id" class="goods-item" @tap="goCombination(g.id)">
           <view class="goods-info">
-            <view class="goods-name">{{ (g as any).storeName }}</view>
+            <view class="goods-name">{{ g.title }}</view>
             <view class="goods-price">
-              <text class="price">¥{{ (g as any).price }}</text>
-              <text class="ot-price">{{ (g as any).people }}人团</text>
+              <text class="price">¥{{ g.price }}</text>
+              <text class="ot-price">{{ g.people }}人团</text>
             </view>
           </view>
           <view class="go-btn">去拼团</view>
@@ -92,8 +92,11 @@ import {
   apiSeckillIndex,
   apiSeckillList,
   apiBargainList,
-  apiBargainStart,
   apiCombinationList,
+  type BargainListItem,
+  type CombinationListItem,
+  type SeckillListItem,
+  type SeckillTimeItem,
 } from "@/api/activity";
 
 const tabs = [
@@ -103,20 +106,20 @@ const tabs = [
   { key: "lottery", name: "抽奖" },
 ];
 const active = ref("seckill");
-const slots = ref<unknown[]>([]);
-const seckillList = ref<unknown[]>([]);
-const bargainList = ref<unknown[]>([]);
-const combinationList = ref<unknown[]>([]);
+const slots = ref<SeckillTimeItem[]>([]);
+const seckillList = ref<SeckillListItem[]>([]);
+const bargainList = ref<BargainListItem[]>([]);
+const combinationList = ref<CombinationListItem[]>([]);
 
-async function loadSeckill(time?: string) {
+async function loadSeckill(time?: string | number) {
   try {
     if (time) {
       seckillList.value = await apiSeckillList(time);
     } else {
       const idx = await apiSeckillIndex();
-      slots.value = idx;
-      const act = idx.find((s) => (s as any).is_active);
-      if (act) seckillList.value = await apiSeckillList((act as any).start_time);
+      slots.value = idx.seckillTime;
+      const act = idx.seckillTime[idx.seckillTimeIndex];
+      if (act) seckillList.value = await apiSeckillList(act.id);
     }
   } catch {
     seckillList.value = [];
@@ -144,19 +147,6 @@ function switchTab(key: string) {
   if (key === "seckill") loadSeckill();
   if (key === "bargain") loadBargain();
   if (key === "combination") loadCombination();
-}
-
-async function startBargain(item: unknown) {
-  try {
-    const res = await apiBargainStart((item as any).id);
-    uni.showToast({ title: `砍价已开启 #${res.id}`, icon: "success" });
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || "发起失败", icon: "none" });
-  }
-}
-
-function goDetail(id: number) {
-  uni.navigateTo({ url: `/pages/goods/detail?id=${id}` });
 }
 
 function goSeckill(id: number) {

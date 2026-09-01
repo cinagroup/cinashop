@@ -33,6 +33,55 @@ import {
 } from "@/services/order/OrderSystemFormService";
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
 
+const SHANGHAI_CLOCK = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+function shanghaiClock(now: Date): { date: string; hhmm: string } {
+  const parts = Object.fromEntries(
+    SHANGHAI_CLOCK.formatToParts(now)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    hhmm: `${parts.hour}:${parts.minute}`,
+  };
+}
+
+function legacyStopSeconds(date: string, value: string): number {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return 0;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return 0;
+  return Math.floor(Date.parse(
+    `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+08:00`,
+  ) / 1_000);
+}
+
+function normalizeListPage(pageValue: unknown, limitValue: unknown): { page: number; limit: number } {
+  const parsedPage = Number(pageValue);
+  const parsedLimit = Number(limitValue);
+  const limit = Number.isSafeInteger(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 50) : 10;
+  const maximumPage = Math.floor(10_000 / limit) + 1;
+  return {
+    page: Number.isSafeInteger(parsedPage) && parsedPage > 0 ? Math.min(parsedPage, maximumPage) : 1,
+    limit,
+  };
+}
+
+function progress(quota: number, quotaShow: number): number {
+  if (quota <= 0 || quotaShow <= 0) return 100;
+  return Math.min(100, Math.max(0, Math.round(((quotaShow - quota) / quotaShow) * 1_000) / 10));
+}
+
 export class ActivityService {
   constructor(private readonly container: Container) {}
 
@@ -143,19 +192,65 @@ export class ActivityService {
   // ─── 秒杀 ─────────────────────────────────────────────────
 
   /** 秒杀时间段列表 */
-  async seckillTimes() {
-    const times = await this.container.storeSeckillTimeDao.getAll();
-    const now = new Date();
-    const nowHHmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    return times.map((t) => {
-      const active = nowHHmm >= t.startTime && nowHHmm <= t.endTime;
-      return { ...t, is_active: active };
+  async seckillTimes(now = new Date()) {
+    const [times, configs] = await Promise.all([
+      this.container.storeSeckillTimeDao.getAll(),
+      this.container.systemConfigDao.getValues(["seckill_header_banner", "site_url"]),
+    ]);
+    const clock = shanghaiClock(now);
+    let activeIndex = -1;
+    const seckillTime = times.map((item, index) => {
+      const active = clock.hhmm >= item.startTime && clock.hhmm <= item.endTime;
+      const upcoming = clock.hhmm < item.startTime;
+      if (active && activeIndex === -1) activeIndex = index;
+      return {
+        id: item.id,
+        title: item.title,
+        pic: item.pic,
+        describe: item.describe,
+        start_time: item.startTime,
+        end_time: item.endTime,
+        status: active ? 1 : upcoming ? 2 : 0,
+        state: active ? "疯抢中" : upcoming ? "即将开始" : "已结束",
+        time: item.startTime,
+        stop: legacyStopSeconds(clock.date, item.endTime),
+        add_time: item.addTime,
+      };
     });
+    if (activeIndex === -1) activeIndex = seckillTime.findIndex((item) => item.status === 2);
+    const banner = String(configs.seckill_header_banner ?? "").trim().replaceAll("\\", "/");
+    const siteUrl = String(configs.site_url ?? "").trim().replace(/\/$/, "");
+    const lovely = banner && !/^https?:\/\//i.test(banner) && siteUrl
+      ? `${siteUrl}/${banner.replace(/^\/+/, "")}`
+      : banner;
+    return { lovely, seckillTime, seckillTimeIndex: activeIndex };
   }
 
   /** 按时间段取秒杀商品 */
-  async seckillList(timeId: string) {
-    return this.container.storeSeckillDao.getByTimeId(timeId);
+  async seckillList(timeId: string, pageValue?: unknown, limitValue?: unknown) {
+    const { page, limit } = normalizeListPage(pageValue, limitValue);
+    const rows = await this.container.storeSeckillDao.getByTimeId(timeId, page, limit);
+    return rows.map((item) => ({
+      id: item.id,
+      product_id: item.productId,
+      activity_id: item.activityId,
+      title: item.storeName,
+      image: item.image,
+      price: Number(item.price),
+      ot_price: Number(item.otPrice),
+      quota: item.quota,
+      quota_show: item.quotaShow,
+      freight: item.freight,
+      stock: Math.max(0, item.quota),
+      store_label_id: item.storeLabelId ?? "",
+      store_label: [],
+      brand_name: "",
+      percent: progress(item.quota, item.quotaShow),
+      discount_num: Number(item.otPrice) > 0
+        ? Math.round((Number(item.price) / Number(item.otPrice)) * 100) / 10
+        : 10,
+      activity_image: "",
+    }));
   }
 
   /** 秒杀详情 */
@@ -180,8 +275,24 @@ export class ActivityService {
 
   // ─── 拼团 ─────────────────────────────────────────────────
 
-  async combinationList() {
-    return this.container.storeCombinationDao.list();
+  async combinationList(pageValue?: unknown, limitValue?: unknown) {
+    const { page, limit } = normalizeListPage(pageValue, limitValue);
+    const rows = await this.container.storeCombinationDao.list(page, limit);
+    return rows.map((item) => ({
+      id: item.id,
+      title: item.storeName,
+      image: item.image,
+      price: Number(item.price),
+      product_id: item.productId,
+      people: item.people,
+      quota: item.quota,
+      quota_show: item.quotaShow,
+      stock: item.stock,
+      product_price: Number(item.otPrice),
+      ot_price: Number(item.otPrice),
+      pink_count: Math.max(0, item.quotaShow - item.quota),
+      brand_name: "",
+    }));
   }
 
   async combinationDetail(id: number) {
@@ -192,8 +303,26 @@ export class ActivityService {
 
   // ─── 砍价 ─────────────────────────────────────────────────
 
-  async bargainList() {
-    return this.container.storeBargainDao.list();
+  async bargainList(pageValue?: unknown, limitValue?: unknown) {
+    const { page, limit } = normalizeListPage(pageValue, limitValue);
+    const rows = await this.container.storeBargainDao.list(page, limit);
+    return rows.map((item) => ({
+      id: item.id,
+      type: item.type,
+      relation_id: item.relationId,
+      product_id: item.productId,
+      product_type: item.productType,
+      price: Number(item.price),
+      min_price: Number(item.minPrice),
+      ot_price: Number(item.price),
+      image: item.image,
+      title: item.title || item.storeName,
+      info: item.info,
+      sales: item.sales,
+      stock: item.stock,
+      people: item.people,
+      brand_name: "",
+    }));
   }
 
   async bargainDetail(id: number) {
@@ -204,8 +333,20 @@ export class ActivityService {
 
   // ─── 积分商城 ─────────────────────────────────────────────
 
-  async integralList(page = 1, limit = 10) {
-    return this.container.storeIntegralDao.list(page, limit);
+  async integralList(pageValue: unknown = 1, limitValue: unknown = 10) {
+    const { page, limit } = normalizeListPage(pageValue, limitValue);
+    const rows = await this.container.storeIntegralDao.list(page, limit);
+    return rows.map((item) => ({
+      id: item.id,
+      product_id: item.productId,
+      image: item.image,
+      title: item.storeName,
+      integral: item.integral,
+      price: Number(item.price),
+      sales: item.sales,
+      stock: item.stock,
+      brand_name: "",
+    }));
   }
 
   async integralDetail(id: number) {

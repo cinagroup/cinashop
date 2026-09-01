@@ -444,7 +444,7 @@ export async function seckillList(c: C) {
   const svc = new ActivityService(c.get("container"));
   // 路由 /seckill/list/:time 是路径参数
   const timeId = c.req.param("time") ?? "";
-  return jsonOk(c, await svc.seckillList(timeId));
+  return jsonOk(c, await svc.seckillList(timeId, c.req.query("page"), c.req.query("limit")));
 }
 
 export async function seckillDetail(c: C) {
@@ -454,7 +454,7 @@ export async function seckillDetail(c: C) {
 
 export async function combinationList(c: C) {
   const svc = new ActivityService(c.get("container"));
-  return jsonOk(c, await svc.combinationList());
+  return jsonOk(c, await svc.combinationList(c.req.query("page"), c.req.query("limit")));
 }
 
 export async function combinationDetail(c: C) {
@@ -464,7 +464,7 @@ export async function combinationDetail(c: C) {
 
 export async function bargainList(c: C) {
   const svc = new ActivityService(c.get("container"));
-  return jsonOk(c, await svc.bargainList());
+  return jsonOk(c, await svc.bargainList(c.req.query("page"), c.req.query("limit")));
 }
 
 export async function bargainDetail(c: C) {

@@ -36,6 +36,7 @@ export interface GoodsListParams {
   cate_id?: string; // 多分类逗号串
   selectId?: number;
   brand_id?: string;
+  store_label_id?: string;
   priceOrder?: "" | "asc" | "desc";
   salesOrder?: "" | "asc" | "desc";
   news?: number; // → is_new
@@ -193,6 +194,12 @@ export class StoreProductService {
     if (params.type !== undefined && params.type !== "") where.status = Number(params.type);
     if (params.product_types?.length) where.productType = params.product_types;
     if (params.brand_id) where.brandId = String(params.brand_id).split(",").map(Number);
+    if (params.store_label_id) {
+      where.storeLabelIds = String(params.store_label_id)
+        .split(",")
+        .map(Number)
+        .filter((id) => Number.isSafeInteger(id) && id > 0);
+    }
     if (params.priceOrder) where.priceOrder = params.priceOrder;
     if (params.salesOrder) where.salesOrder = params.salesOrder;
     if (params.defaultOrder !== undefined) where.defaultOrder = params.defaultOrder;

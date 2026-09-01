@@ -79,7 +79,7 @@ export class StoreSeckillDao extends BaseDao<typeof storeSeckill> {
   }
 
   /** 按时间段取秒杀商品 (time_id 逗号分隔 → PG string_to_array 匹配) */
-  async getByTimeId(timeId: string) {
+  async getByTimeId(timeId: string, page = 1, limit = 10) {
     const now = new Date().toISOString();
     return this.db
       .select()
@@ -92,7 +92,9 @@ export class StoreSeckillDao extends BaseDao<typeof storeSeckill> {
           AND (${storeSeckill.startTime} IS NULL OR ${storeSeckill.startTime} <= ${now})
           AND (${storeSeckill.stopTime} IS NULL OR ${storeSeckill.stopTime} >= ${now})`,
       )
-      .orderBy(sql`${storeSeckill.sort} DESC`);
+      .orderBy(sql`${storeSeckill.sort} DESC`)
+      .limit(limit)
+      .offset((page - 1) * limit);
   }
 
   /** 取单个秒杀活动 */
@@ -128,7 +130,7 @@ export class StoreCombinationDao extends BaseDao<typeof storeCombination> {
     super(db, storeCombination, { status: (v) => eq(storeCombination.status, Number(v)) });
   }
 
-  async list() {
+  async list(page = 1, limit = 10) {
     const now = new Date().toISOString();
     return this.db
       .select()
@@ -140,7 +142,9 @@ export class StoreCombinationDao extends BaseDao<typeof storeCombination> {
           AND (${storeCombination.startTime} IS NULL OR ${storeCombination.startTime} <= ${now})
           AND (${storeCombination.stopTime} IS NULL OR ${storeCombination.stopTime} >= ${now})`,
       )
-      .orderBy(sql`${storeCombination.sort} DESC`);
+      .orderBy(sql`${storeCombination.sort} DESC`)
+      .limit(limit)
+      .offset((page - 1) * limit);
   }
 
   async getById(id: number) {
@@ -159,7 +163,7 @@ export class StoreBargainDao extends BaseDao<typeof storeBargain> {
     super(db, storeBargain, { status: (v) => eq(storeBargain.status, Number(v)) });
   }
 
-  async list() {
+  async list(page = 1, limit = 10) {
     const now = new Date().toISOString();
     return this.db
       .select()
@@ -170,7 +174,9 @@ export class StoreBargainDao extends BaseDao<typeof storeBargain> {
           AND (${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= ${now})
           AND (${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= ${now})`,
       )
-      .orderBy(sql`${storeBargain.sort} DESC`);
+      .orderBy(sql`${storeBargain.sort} DESC`)
+      .limit(limit)
+      .offset((page - 1) * limit);
   }
 
   async getById(id: number) {

@@ -189,6 +189,15 @@ export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
 
   // ─── 标签ID / 保障ID (find_in_set) ───────────────────────
   labelId: (value) => sql`find_in_set(${value}, ${storeProduct.labelId})`,
+  storeLabelIds: (value) => {
+    const ids = (Array.isArray(value) ? value : [value])
+      .map(Number)
+      .filter((id) => Number.isSafeInteger(id) && id > 0);
+    if (!ids.length) return sql`false`;
+    return or(...ids.map((id) => sql`
+      ${String(id)} = ANY(string_to_array(replace(COALESCE(${storeProduct.storeLabelId}, ''), ' ', ''), ','))
+    `))!;
+  },
   ensureId: (value) => sql`find_in_set(${value}, ${storeProduct.ensureId})`,
 
   // ─── 条形码 (product 表 + attr_value 子查询) ─────────────

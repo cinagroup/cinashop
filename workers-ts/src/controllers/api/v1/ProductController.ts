@@ -144,6 +144,7 @@ function catalogParams(c: C): GoodsListParams & { productId?: string } {
     cate_id: q.cate_id,
     selectId: q.selectId ? Number(q.selectId) : undefined,
     brand_id: q.brand_id,
+    store_label_id: q.store_label_id,
     news: q.news ? Number(q.news) : undefined,
     type: q.type,
     ids: q.ids,
