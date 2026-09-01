@@ -14,8 +14,8 @@
 | PHP HTTP 合同 | 精确匹配 802/1,904；可执行 784；其中 18 条明确不可用、4 条有证据退役 | 精确注册 42.1%，静态可执行上限 41.2% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
 | Worker 单元测试 | 183/183 文件、1,177/1,177 项通过；可观测性审计 17 信号、53 必需事件、405 个生产源文件 | 本地业务回归与日志安全门禁通过 |
-| Workers runtime | 最近已推送 Linux workerd 13/13；本批新增 Images/R2 第 14 项，Windows 启动即 `0xc0000005` | 旧 Linux 门禁完成；新增运行时断言待本批推送后由 Linux CI 复验 |
-| CI | [Actions `33514546403`](https://github.com/cinagroup/cinashop/actions/runs/33514546403) 对 `2766d6c` 的 Worker/五端/runtime/secret scan 8/8；本批 R2/Images 中图候选尚未推送 | 悬浮导航覆盖子批 8/8；当前图片变体子批 Linux 门禁待推送后运行 |
+| Workers runtime | Linux workerd 14/14；Windows 启动即 `0xc0000005` | Images/R2 新断言已在受支持 Linux 运行时通过，Windows 仅为本机缺陷 |
+| CI | [Actions `33519138758`](https://github.com/cinagroup/cinashop/actions/runs/33519138758) 对 `d82a327` 的 Worker/五端/runtime/secret scan 8/8 | R2/Images 中图候选已推送并通过全部门禁 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
