@@ -54,6 +54,7 @@ export * from "./user_behavior";
 export * from "./newcomer";
 export * from "./legacy_cache";
 export * from "./paid_membership";
+export * from "./payment_callback";
 export * from "./store_operations";
 export * from "./store_legacy";
 export * from "./printing";

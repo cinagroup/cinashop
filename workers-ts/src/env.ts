@@ -272,6 +272,19 @@ export interface WorkContactActionDispatchMessage {
   scheduledAt: number;
 }
 
+/** Provider-verified payment data stays in PostgreSQL; Queue receives only opaque identifiers. */
+export interface PaymentCallbackMessage {
+  action: "processPaymentCallback";
+  eventId: number;
+  replayKey: string;
+}
+
+/** Cron root message for recovering callback outbox dispatch after Queue failures. */
+export interface PaymentCallbackDispatchMessage {
+  action: "dispatchPaymentCallbackOutbox";
+  scheduledAt: number;
+}
+
 export type OrderMessage =
   | OrderPaidOutboxMessage
   | OrderNotificationOutboxMessage
@@ -289,6 +302,8 @@ export type OrderMessage =
   | WorkCallbackDispatchMessage
   | WorkContactActionMessage
   | WorkContactActionDispatchMessage
+  | PaymentCallbackMessage
+  | PaymentCallbackDispatchMessage
   | LegacyOrderMessage;
 
 /**

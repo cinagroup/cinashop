@@ -76,6 +76,12 @@ export default {
       isWorkContactActionMessage,
     } = await import("./services/work/EnterpriseWechatContactActionService");
     const {
+      consumePaymentCallbackMessage,
+      isPaymentCallbackDispatchMessage,
+      isPaymentCallbackMessage,
+      PaymentCallbackEventService,
+    } = await import("./services/payment/PaymentCallbackEventService");
+    const {
       consumeOrderNotificationOutboxQueueMessage,
       consumeOrderPaidOutboxQueueMessage,
     } = await import(
@@ -122,6 +128,7 @@ export default {
       isOrderWaybillJobMessage,
     } = await import("./services/waybill/OrderWaybillJobService");
     const outbox = new OrderOutboxService(container, env);
+    const paymentCallbacks = new PaymentCallbackEventService(container, env);
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
     const maintenance = new ScheduledMaintenanceService(container, env);
@@ -135,6 +142,46 @@ export default {
 
     for (const msg of batch.messages) {
       const messageStartedAt = Date.now();
+      if (isPaymentCallbackDispatchMessage(msg.body)) {
+        try {
+          const dispatched = await paymentCallbacks.dispatchPending(100);
+          emitOperationalEvent("info", {
+            event: "payment_callback_outbox_dispatched",
+            component: "queue",
+            operation: "payment_callback",
+            outcome: "success",
+            resourceCount: dispatched.enqueued,
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+          });
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          emitOperationalEvent("error", {
+            event: "payment_callback_failed",
+            component: "queue",
+            operation: "payment_callback_dispatch",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            errorCode: operationalErrorCode(error, "callback_dispatch_failed"),
+          });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
+      if (isPaymentCallbackMessage(msg.body)) {
+        await consumePaymentCallbackMessage({
+          body: msg.body,
+          attempts: msg.attempts,
+          ack: () => msg.ack(),
+          retry: (options) => msg.retry(options),
+        }, paymentCallbacks);
+        continue;
+      }
+
       if (isWorkContactActionDispatchMessage(msg.body)) {
         try {
           const [dispatched, redacted] = await Promise.all([
@@ -458,6 +505,10 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
     "./services/order/ScheduledMaintenanceService"
   );
   await Promise.all([
+    env.ORDER_QUEUE.send({
+      action: "dispatchPaymentCallbackOutbox",
+      scheduledAt,
+    }),
     env.ORDER_QUEUE.send({
       action: "dispatchWorkCallbackOutbox",
       scheduledAt,

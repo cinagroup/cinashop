@@ -107,6 +107,7 @@ export class WechatPayService {
     transactionId: string;
     tradeState: string;
     amountTotal: number;
+    providerEventTime: number;
   }> {
     const { data, cfg, eventId } = await this.verifyAndDecryptNotify<{
       appid?: string;
@@ -114,6 +115,7 @@ export class WechatPayService {
       out_trade_no?: string;
       transaction_id?: string;
       trade_state?: string;
+      success_time?: string;
       amount?: { total?: number; currency?: string };
     }>(headers, rawBody, "transaction", profile);
     if (data.mchid !== cfg.mchId || data.appid !== cfg.appId) {
@@ -131,12 +133,17 @@ export class WechatPayService {
     ) {
       throw new ValidateException("微信支付回调业务字段不完整");
     }
+    const providerEventTime = parseProviderTime(data.success_time);
+    if (data.trade_state === "SUCCESS" && providerEventTime === undefined) {
+      throw new ValidateException("微信支付回调成功时间无效");
+    }
     return {
       eventId,
       outTradeNo: data.out_trade_no,
       transactionId: data.transaction_id,
       tradeState: data.trade_state,
       amountTotal: data.amount?.total ?? 0,
+      providerEventTime: providerEventTime ?? 0,
     };
   }
 

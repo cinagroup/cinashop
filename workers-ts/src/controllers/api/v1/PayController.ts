@@ -8,15 +8,9 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
-import {
-  findMembershipOrderByOrderId,
-  PaidMembershipService,
-} from "@/services/user/PaidMembershipService";
 import { CheckoutCashierService } from "@/services/payment/CheckoutCashierService";
-import {
-  findRechargeOrderByOrderId,
-  RechargePaymentService,
-} from "@/services/payment/RechargePaymentService";
+import { RechargePaymentService } from "@/services/payment/RechargePaymentService";
+import { PaymentCallbackEventService } from "@/services/payment/PaymentCallbackEventService";
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
 import type { AppVariables, Env } from "@/env";
@@ -157,74 +151,71 @@ export async function alipayNotify(c: C) {
       });
       return c.text("failure", 400);
     }
-    const container = c.get("container");
-    const [order, membershipOrder, rechargeOrder] = outTradeNo
-      ? await Promise.all([
-          container.storeOrderDao.findByOrderId(outTradeNo),
-          findMembershipOrderByOrderId(container, outTradeNo),
-          findRechargeOrderByOrderId(container, outTradeNo),
-        ])
-      : [null, null, null];
-    if ([order, membershipOrder, rechargeOrder].filter(Boolean).length !== 1 || !tradeNo) {
+    const providerEventId = params.notify_id ?? "";
+    if (!/^[A-Za-z0-9._:-]{1,128}$/.test(providerEventId)) {
       emitOperationalEvent("warn", {
         event: "payment_callback_rejected",
         component: "payment",
         operation: "alipay_callback",
         outcome: "rejected",
-        errorCode: "order_identity_invalid",
+        errorCode: "provider_event_id_invalid",
       });
       return c.text("failure", 400);
     }
 
     const notifiedCents = moneyToCents(params.total_amount);
-    const expectedCents = moneyToCents(
-      order?.payPrice ?? membershipOrder?.payPrice ?? rechargeOrder?.price,
-    );
-    if (notifiedCents === null || expectedCents === null || notifiedCents !== expectedCents) {
+    if (notifiedCents === null || notifiedCents <= 0) {
       emitOperationalEvent("warn", {
         event: "payment_callback_rejected",
         component: "payment",
         operation: "alipay_callback",
         outcome: "rejected",
-        errorCode: "amount_mismatch",
+        errorCode: "amount_invalid",
       });
       return c.text("failure", 400);
     }
 
-    const settled = rechargeOrder
-      ? await new RechargePaymentService(container, c.env).settleExternalPayment(
-          outTradeNo,
-          "alipay",
-          tradeNo,
-          notifiedCents,
-        )
-      : membershipOrder
-      ? await new PaidMembershipService(container, c.env).settleExternalPayment(
-          outTradeNo,
-          "alipay",
-          tradeNo,
-          notifiedCents,
-        )
-      : await new StoreOrderPayService(container, c.env).paySuccessByOrderId(
-          outTradeNo,
-          "alipay",
-          tradeNo,
-        );
-    if (!settled) {
+    const providerEventTime = alipayProviderTime(params.gmt_payment ?? params.notify_time);
+    if (providerEventTime <= 0) {
       emitOperationalEvent("warn", {
         event: "payment_callback_rejected",
         component: "payment",
         operation: "alipay_callback",
         outcome: "rejected",
-        errorCode: "order_not_payable",
+        errorCode: "provider_event_time_invalid",
       });
       return c.text("failure", 400);
     }
+
+    const callbackService = new PaymentCallbackEventService(c.get("container"), c.env);
+    const received = await callbackService.receive({
+      provider: "alipay",
+      profile: "alipay",
+      providerEventId,
+      orderNo: outTradeNo,
+      transactionId: tradeNo,
+      tradeState: tradeStatus,
+      amountCents: notifiedCents,
+      currency: "CNY",
+      providerEventTime,
+    });
+    if (!received.terminalConflict) {
+      c.executionCtx.waitUntil(callbackService.dispatchById(received.outboxId).catch((error) => {
+        emitOperationalEvent("error", {
+          event: "payment_callback_failed",
+          component: "queue",
+          operation: "alipay_callback_dispatch",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error, "callback_dispatch_failed"),
+        });
+      }));
+    }
     emitOperationalEvent("info", {
-      event: "payment_callback_completed",
+      event: "payment_callback_persisted",
       component: "payment",
       operation: "alipay_callback",
       outcome: "success",
+      result: received.duplicate ? "duplicate-persisted" : "persisted",
     });
     return c.text("success", 200);
   } catch (e) {
@@ -315,6 +306,14 @@ function moneyToCents(value: unknown): number | null {
     return null;
   }
   return Math.round(amount * 100);
+}
+
+function alipayProviderTime(value: unknown): number {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
+    return 0;
+  }
+  const milliseconds = Date.parse(`${value.replace(" ", "T")}+08:00`);
+  return Number.isFinite(milliseconds) ? Math.floor(milliseconds / 1000) : 0;
 }
 
 // ─── 售后退款 ────────────────────────────────────────────────

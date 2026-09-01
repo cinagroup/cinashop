@@ -62,6 +62,7 @@ const criticalSources = [
   "src/services/order/OrderPaidOutboxQueueConsumer.ts",
   "src/services/order/OrderNotificationDeliveryService.ts",
   "src/services/message/SignReminderService.ts",
+  "src/services/payment/PaymentCallbackEventService.ts",
   "src/services/work/EnterpriseWechatCallbackService.ts",
   "src/services/work/EnterpriseWechatContactActionService.ts",
   "src/services/printing/ReceiptPrintJobService.ts",

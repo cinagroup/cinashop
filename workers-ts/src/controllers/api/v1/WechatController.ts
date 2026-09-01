@@ -19,14 +19,7 @@ import {
 } from "@/services/wechat/WechatPayService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
-import {
-  findMembershipOrderByOrderId,
-  PaidMembershipService,
-} from "@/services/user/PaidMembershipService";
-import {
-  findRechargeOrderByOrderId,
-  RechargePaymentService,
-} from "@/services/payment/RechargePaymentService";
+import { PaymentCallbackEventService } from "@/services/payment/PaymentCallbackEventService";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
 import { readBoundedJsonObject, readBoundedUtf8Text } from "@/utils/request-body";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
@@ -137,8 +130,8 @@ export async function wechatConfig(c: C) {
  * 流程:
  *   1. 读取原始 body + Wechatpay-* 头
  *   2. V3 验签 + AES-GCM 解密
- *   3. 调 paySuccess 标记订单已支付
- *   4. 返回 {"code":"SUCCESS"} (V3 规范)
+ *   3. 短事务写入事件账本 + Queue outbox
+ *   4. 立即返回 {"code":"SUCCESS"}；幂等入账由 Queue 消费者完成
  */
 export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat") {
   try {
@@ -149,57 +142,35 @@ export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat"
     });
     const paySvc = new WechatPayService(c.get("container"), c.env);
     const notify = await paySvc.verifyAndParseNotify(headers, rawBody, profile);
-    if (notify.tradeState === "SUCCESS") {
-      // 查订单 → paySuccess
-      const container = c.get("container");
-      const [order, membershipOrder, rechargeOrder] = await Promise.all([
-        container.storeOrderDao.findByOrderId(notify.outTradeNo),
-        findMembershipOrderByOrderId(container, notify.outTradeNo),
-        findRechargeOrderByOrderId(container, notify.outTradeNo),
-      ]);
-      if ([order, membershipOrder, rechargeOrder].filter(Boolean).length !== 1) {
-        throw new ValidateException("支付订单不存在或订单号存在跨域冲突");
-      }
-      const expectedTotal = Math.round(
-        Number(order?.payPrice ?? membershipOrder?.payPrice ?? rechargeOrder?.price) * 100,
-      );
-      if (!Number.isSafeInteger(expectedTotal) || notify.amountTotal !== expectedTotal) {
-        throw new ValidateException("微信支付回调金额不匹配");
-      }
-      if (rechargeOrder) {
-        const rechargePaySvc = new RechargePaymentService(container, c.env);
-        if (!(await rechargePaySvc.settleExternalPayment(
-          notify.outTradeNo,
-          "weixin",
-          notify.transactionId,
-          notify.amountTotal,
-        ))) {
-          throw new ValidateException("充值订单状态不允许支付入账");
-        }
-      } else if (membershipOrder) {
-        const membershipPaySvc = new PaidMembershipService(container, c.env);
-        if (!(await membershipPaySvc.settleExternalPayment(
-          notify.outTradeNo,
-          "weixin",
-          notify.transactionId,
-          notify.amountTotal,
-        ))) {
-          throw new ValidateException("会员订单状态不允许支付入账");
-        }
-      } else if (order && !order.paid) {
-        const orderPaySvc = new StoreOrderPayService(container, c.env);
-        if (!(await orderPaySvc.paySuccess(order.id, "weixin", notify.transactionId))) {
-          throw new ValidateException("订单状态不允许支付入账");
-        }
-      } else if (order && (order.payType !== "weixin" || order.tradeNo !== notify.transactionId)) {
-        throw new ValidateException("微信支付回调与已入账交易不匹配");
-      }
+    const callbackService = new PaymentCallbackEventService(c.get("container"), c.env);
+    const received = await callbackService.receive({
+      provider: "wechat",
+      profile,
+      providerEventId: notify.eventId,
+      orderNo: notify.outTradeNo,
+      transactionId: notify.transactionId,
+      tradeState: notify.tradeState,
+      amountCents: notify.amountTotal,
+      currency: "CNY",
+      providerEventTime: notify.providerEventTime,
+    });
+    if (!received.terminalConflict) {
+      c.executionCtx.waitUntil(callbackService.dispatchById(received.outboxId).catch((error) => {
+        emitOperationalEvent("error", {
+          event: "payment_callback_failed",
+          component: "queue",
+          operation: "wechat_callback_dispatch",
+          outcome: "failure",
+          errorCode: operationalErrorCode(error, "callback_dispatch_failed"),
+        });
+      }));
     }
     emitOperationalEvent("info", {
-      event: "payment_callback_completed",
+      event: "payment_callback_persisted",
       component: "payment",
       operation: "wechat_callback",
       outcome: "success",
+      result: received.duplicate ? "duplicate-persisted" : "persisted",
     });
     return c.json({ code: "SUCCESS", message: "成功" });
   } catch (e) {
@@ -210,7 +181,7 @@ export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat"
       outcome: "rejected",
       errorCode: operationalErrorCode(e),
     });
-    return c.json({ code: "FAIL", message: e instanceof Error ? e.message : "验签失败" }, 400);
+    return c.json({ code: "FAIL", message: "验签或持久化失败" }, 400);
   }
 }
 

@@ -18,6 +18,7 @@ import { WORK_GROUP_CHAT_CURRENT_PROJECTION_SQL } from "@/migrations/workGroupCh
 import { WORK_EXTERNAL_TAG_CURRENT_PROJECTION_SQL } from "@/migrations/workExternalTagCurrentProjection";
 import { WORK_CONTACT_ACTION_OUTBOX_SQL } from "@/migrations/workContactActionOutbox";
 import { ADMIN_MOBILE_USER_REPLAY_SQL } from "@/migrations/adminMobileUserReplay";
+import { PAYMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/paymentCallbackPipeline";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -167,6 +168,11 @@ export class MigrationService {
     return this.migration_0125();
   }
 
+  /** Exact durable payment callback event/outbox DDL. */
+  paymentCallbackPipelineMigrationSqlForVerification(): string {
+    return this.migration_0126();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -300,6 +306,7 @@ export class MigrationService {
       this.migration_0123(),
       this.migration_0124(),
       this.migration_0125(),
+      this.migration_0126(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8231,5 +8238,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0125(): string {
     return ADMIN_MOBILE_USER_REPLAY_SQL;
+  }
+
+  private migration_0126(): string {
+    return PAYMENT_CALLBACK_PIPELINE_SQL;
   }
 }
