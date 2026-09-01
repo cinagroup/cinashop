@@ -49,6 +49,7 @@
       <view v-else class="empty">未找到相关商品</view>
     </view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

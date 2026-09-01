@@ -71,6 +71,7 @@
     </view>
     <view v-else class="empty">退款单不存在</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

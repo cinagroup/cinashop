@@ -156,9 +156,13 @@ DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和
 
 这次对 PHP 列表消费者和生产公开 API 的交叉审计发现了一个此前被“路由存在”掩盖的合同缺口：已部署 Worker 的秒杀首页返回 camelCase 数组，旧 UniApp 实际要求 `{lovely,seckillTime,seckillTimeIndex}`，并且边缘 `Date#getHours()` 使用 UTC，导致上海活动时段错位；秒杀、拼团、砍价和积分列表也直接泄露 Drizzle camelCase，而旧端消费 snake_case/`title/ot_price` 等字段。候选 Worker 已改为 Asia/Shanghai 时钟、PHP 信封和旧字段投影，并补齐有界分页；20:30 上海时区夹具验证选中第三时段且 `stop` 为 `+08:00` Unix 秒。生产公开探针还确认 `/api/presale/list`、`/api/wechat/live`、`/api/v2/coupons` 在当前主 Worker 均为 404，而秒杀/拼团/砍价/积分仍是旧响应，证明线上版本落后于本地候选；本批没有发布主 Worker或 Pages。
 
-隔离 mock 的 390×844 H5 验收实际渲染 7 个可见组件且每类一次，`liveBroadcast` 按条件编译在 H5 隐藏；促销标签由“本周精选”切换到“新品推荐”后商品集合同步变化，未登录“领取”进入登录页，商品卡进入精确详情路由。组件页无应用级 console error，只有 UniApp 依赖的 Vue Router 弃用警告；详情路由探针随后因 mock 未覆盖详情 API 产生预期 404，不计作组件页错误。Worker 单元测试为 183 文件/1,174 项全部通过，Worker 双 TypeScript、UniApp TypeScript、H5/微信小程序生产构建和主 Worker `wrangler deploy --dry-run --minify` 均通过；Windows 本机 runtime 仍在执行断言前以 `workerd 0xc0000005` 崩溃，Linux 历史门禁继续作为有效 runtime 证据。
+隔离 mock 的 390×844 H5 验收实际渲染 7 个可见组件且每类一次，`liveBroadcast` 按条件编译在 H5 隐藏；促销标签由“本周精选”切换到“新品推荐”后商品集合同步变化，未登录“领取”进入登录页，商品卡进入精确详情路由。组件页无应用级 console error，只有 UniApp 依赖的 Vue Router 弃用警告；详情路由探针随后因 mock 未覆盖详情 API 产生预期 404，不计作组件页错误。Worker 单元测试为 183 文件/1,175 项全部通过，Worker 双 TypeScript、UniApp TypeScript、H5/微信小程序生产构建和主 Worker `wrangler deploy --dry-run --minify` 均通过；Windows 本机 runtime 仍在执行断言前以 `workerd 0xc0000005` 崩溃，Linux 历史门禁继续作为有效 runtime 证据。
 
-父项仍不能完成：生产 `system_dise=0`，没有真实 DIY 页面或悬浮配置；视频、新人商品、促销均为 0，可领取券为 0，已部署主 Worker又缺三条本批依赖路由，无法做真实内容、真实 token、真实领券或微信直播正向 E2E。生产还存在 15/21 配置缺失、`site_url/sign_give_point/sign_status` 重复、2 张过期但状态仍可用的用户券、3 个用户券 owner 孤儿、关系 owner 孤儿 1、签到 owner 孤儿 1、商品收藏计数漂移 1。所有异常仅被只读记录，没有自动删除、归属或改状态。悬浮导航的全局覆盖、PC 是否消费同一 DIY、R2 缩略图等价策略、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察也仍未完成。
+第四前端子批逐文件统计旧 UniApp：`main.js` 虽把 `components/home/index.vue` 注册为全局组件，但没有自动渲染；实际由 68 个页面手工写入 `<home>`。这些旧页面在新端合并为 38 个现存等价页面，本批逐页静态挂载 `DiySuspendedNavigation`，加上已覆盖的首页与专题页共 40 个页面文件。组件继续过滤不安全图片/链接和最多 6 个按钮，并通过 5 分钟共享 promise/config 缓存避免页面切换时重复打到公开配置接口；认证、安全设置和未迁移旧页面没有被擅自扩大为新的悬浮入口。静态测试固定 38 页映射并逐文件断言，避免后续路由重构静默丢失入口。
+
+390×844 应用内浏览器从商品列表打开两项悬浮菜单，点击首项进入品牌资讯；目标页仍显示同一悬浮入口，切换到“迁移资讯”后文章卡、日期和阅读数正常渲染。页面身份、非空内容、无框架 overlay、菜单展开、跨页 URL 和目标内容均通过；控制台只有 UniApp 依赖的 Vue Router 弃用警告。H5/微信小程序生产构建、UniApp 类型检查和 Worker 183 文件/1,175 项单测通过。隔离 mock 初始未提供 `article/hot/list`，所以默认“热门”曾显示受控 `not found`；切换到本次有数据的目标分类后错误态消失，这不是生产接口结论，临时 mock 与本地服务均已删除/停止。
+
+父项仍不能完成：生产 `system_dise=0`，没有真实 DIY 页面或悬浮配置；视频、新人商品、促销均为 0，可领取券为 0，已部署主 Worker又缺三条本批依赖路由，无法做真实内容、真实 token、真实领券或微信直播正向 E2E。生产还存在 15/21 配置缺失、`site_url/sign_give_point/sign_status` 重复、2 张过期但状态仍可用的用户券、3 个用户券 owner 孤儿、关系 owner 孤儿 1、签到 owner 孤儿 1、商品收藏计数漂移 1。所有异常仅被只读记录，没有自动删除、归属或改状态。PC 是否消费同一 DIY、R2 缩略图等价策略、未迁移旧页面本身、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察也仍未完成。
 
 ## PUBLIC-ARTICLE 迁移审计（2026-08-30）
 

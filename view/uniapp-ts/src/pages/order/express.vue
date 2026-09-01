@@ -62,6 +62,7 @@
     </view>
     <view v-else class="empty">{{ loading ? '查询中...' : '未找到物流信息' }}</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

@@ -19,6 +19,7 @@
 
     <view class="go-shop" @tap="goIntegral">去积分商城逛逛 ›</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

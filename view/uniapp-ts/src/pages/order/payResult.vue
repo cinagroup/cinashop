@@ -20,6 +20,7 @@
       <view class="btn" @tap="goHome">继续购物</view>
     </view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

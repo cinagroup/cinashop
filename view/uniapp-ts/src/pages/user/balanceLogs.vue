@@ -35,6 +35,7 @@
 
     <view v-if="hasMore" class="load-more" @tap="loadMore">加载更多</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

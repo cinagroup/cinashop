@@ -10,6 +10,7 @@
     </view>
     <view v-else class="empty">消息不存在</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

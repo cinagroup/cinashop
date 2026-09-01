@@ -170,6 +170,7 @@
     </view>
   </view>
   <view v-else class="empty">订单不存在</view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

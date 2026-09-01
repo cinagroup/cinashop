@@ -60,6 +60,7 @@
     </view>
     <view v-else class="empty">砍价活动不存在或已结束</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

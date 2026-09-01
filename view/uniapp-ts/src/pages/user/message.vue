@@ -11,6 +11,7 @@
     </view>
     <view v-else class="empty">暂无消息</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

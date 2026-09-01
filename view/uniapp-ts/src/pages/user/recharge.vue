@@ -68,6 +68,7 @@
       <text class="commission-warning">转入后只能用于商城消费，不能再转回佣金或提现。</text>
     </view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

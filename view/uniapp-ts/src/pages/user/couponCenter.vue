@@ -18,6 +18,7 @@
     </view>
     <view v-else class="empty">暂无可用优惠券</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

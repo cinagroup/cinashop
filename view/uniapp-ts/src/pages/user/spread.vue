@@ -54,6 +54,7 @@
     <!-- 提现入口 -->
     <view class="extract-btn" @tap="goExtract">申请提现 ›</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

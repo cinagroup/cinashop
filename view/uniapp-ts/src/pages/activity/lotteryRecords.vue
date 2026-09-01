@@ -15,6 +15,7 @@
       <view class="claim-card"><text class="claim-title">填写收货信息</text><input v-model="claim.name" class="input" placeholder="收货人姓名" /><input v-model="claim.phone" class="input" type="number" maxlength="11" placeholder="手机号" /><textarea v-model="claim.address" class="textarea" placeholder="详细收货地址" /><view class="submit" @tap="submit">确认领取</view></view>
     </view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

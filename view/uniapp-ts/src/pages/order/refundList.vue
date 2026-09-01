@@ -20,6 +20,7 @@
     </view>
     <view v-else class="empty">暂无退款记录</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

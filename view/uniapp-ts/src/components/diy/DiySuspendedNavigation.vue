@@ -19,8 +19,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { apiDiySuspended, type DiySuspendedButton, type DiySuspendedConfig } from "@/api/diy";
+import type { DiySuspendedButton, DiySuspendedConfig } from "@/api/diy";
 import { isDiyEnabled, normalizeDiyLink, openDiyLink, safeDiyImageUrl } from "@/utils/diy";
+import { loadDiySuspendedConfig } from "@/utils/diySuspended";
 
 const config = ref<DiySuspendedConfig | null>(null);
 const opened = ref(false);
@@ -63,7 +64,7 @@ function follow(url: string): void {
 
 onMounted(async () => {
   try {
-    config.value = await apiDiySuspended();
+    config.value = await loadDiySuspendedConfig();
   } catch {
     // A missing optional navigation config must not affect the page.
   }

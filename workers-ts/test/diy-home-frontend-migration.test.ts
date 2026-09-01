@@ -28,6 +28,51 @@ const activityClient = readFileSync(
 const homepage = readFileSync(resolve(root, "../view/uniapp-ts/src/pages/index/index.vue"), "utf8");
 const microPage = readFileSync(resolve(root, "../view/uniapp-ts/src/pages/diy/detail.vue"), "utf8");
 const pages = readFileSync(resolve(root, "../view/uniapp-ts/src/pages.json"), "utf8");
+const main = readFileSync(resolve(root, "../view/uniapp-ts/src/main.ts"), "utf8");
+const suspendedCache = readFileSync(
+  resolve(root, "../view/uniapp-ts/src/utils/diySuspended.ts"),
+  "utf8",
+);
+const suspendedPagePaths = [
+  "pages/activity/bargainDetail",
+  "pages/activity/detail",
+  "pages/activity/index",
+  "pages/activity/lottery",
+  "pages/activity/lotteryRecords",
+  "pages/annex/vip_active/index",
+  "pages/article/detail",
+  "pages/article/list",
+  "pages/discover/index",
+  "pages/discover/people",
+  "pages/goods/commentDetail",
+  "pages/goods/commentList",
+  "pages/goods/list",
+  "pages/goods/search",
+  "pages/order/confirm",
+  "pages/order/detail",
+  "pages/order/express",
+  "pages/order/payResult",
+  "pages/order/refundApply",
+  "pages/order/refundDetail",
+  "pages/order/refundList",
+  "pages/user/address",
+  "pages/user/balanceLogs",
+  "pages/user/collect",
+  "pages/user/coupon",
+  "pages/user/couponCenter",
+  "pages/user/finance",
+  "pages/user/integral",
+  "pages/user/integralLogs",
+  "pages/user/invoice",
+  "pages/user/level",
+  "pages/user/message",
+  "pages/user/messageDetail",
+  "pages/user/profile",
+  "pages/user/recharge",
+  "pages/user/sign",
+  "pages/user/spread",
+  "pages/user/vipOpen",
+] as const;
 
 describe("DIY-home frontend migration", () => {
   it("provides typed clients for the eight legacy contracts", () => {
@@ -88,8 +133,20 @@ describe("DIY-home frontend migration", () => {
     expect(microPage).toContain("loadDiyPage(pageId.value");
     expect(microPage).toContain("micro-page");
     expect(pages).toContain('"path": "pages/diy/detail"');
-    expect(suspended).toContain("apiDiySuspended()");
+    expect(suspended).toContain("loadDiySuspendedConfig()");
     expect(suspended).toContain("normalizeDiyLink");
+  });
+
+  it("mounts suspended navigation on all 38 migrated legacy destination pages", () => {
+    expect(main).toContain('app.component("DiySuspendedNavigation"');
+    expect(suspendedCache).toContain("apiDiySuspended()");
+    expect(suspendedCache).toContain("SUSPENDED_CACHE_TTL_MS");
+    expect(suspendedPagePaths).toHaveLength(38);
+    for (const path of suspendedPagePaths) {
+      expect(pages).toContain(`"path": "${path}"`);
+      const source = readFileSync(resolve(root, `../view/uniapp-ts/src/${path}.vue`), "utf8");
+      expect(source).toContain("<DiySuspendedNavigation");
+    }
   });
 
   it("renders the four editor-owned widgets without adding dynamic code paths", () => {

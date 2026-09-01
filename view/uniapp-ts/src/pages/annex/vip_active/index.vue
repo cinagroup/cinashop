@@ -10,6 +10,7 @@
       <view class="purchase" @tap="goPurchase">没有卡密？选择会员套餐</view>
     </view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

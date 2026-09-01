@@ -95,6 +95,7 @@
       </view>
     </template>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

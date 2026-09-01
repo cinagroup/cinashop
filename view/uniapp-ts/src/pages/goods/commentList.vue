@@ -46,6 +46,7 @@
     <view v-if="list.length && hasMore" class="load-more" @tap="loadMore">加载更多</view>
     <view v-if="list.length && !hasMore" class="load-more">没有更多了</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

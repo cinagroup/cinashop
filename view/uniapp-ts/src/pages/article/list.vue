@@ -58,6 +58,7 @@
       {{ loading ? "加载中..." : hasMore ? "加载更多" : "没有更多了" }}
     </view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

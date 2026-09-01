@@ -37,6 +37,7 @@
     <view v-if="loading" class="loading">加载中...</view>
     <view v-else-if="finished && users.length" class="finished">没有更多了</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">

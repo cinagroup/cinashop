@@ -17,6 +17,7 @@
     </view>
     <view v-else class="empty">暂无收藏</view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">
