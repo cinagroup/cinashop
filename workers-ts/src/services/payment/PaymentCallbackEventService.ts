@@ -32,6 +32,10 @@ import {
   findRechargeOrderByOrderId,
 } from "@/services/payment/RechargePaymentService";
 import {
+  registerPaymentReconciliationTx,
+  resolvePaymentReconciliationFromCallbackTx,
+} from "@/services/payment/PaymentReconciliationRegistry";
+import {
   applyMembershipPayment,
   findMembershipOrderByOrderId,
 } from "@/services/user/PaidMembershipService";
@@ -313,6 +317,19 @@ export class PaymentCallbackEventService {
       if (!outbox || outbox.replayKey !== event.replayKey) {
         throw new Error("payment_callback_outbox_immutable_conflict");
       }
+      await registerPaymentReconciliationTx(tx, {
+        provider: callback.provider,
+        profile: callback.profile,
+        orderDomain: "",
+        orderNo: callback.orderNo,
+        expectedAmountCents: callback.amountCents,
+        transactionId: callback.transactionId,
+        providerEventTime: callback.providerEventTime,
+        providerStatus: providerPaymentSucceeded(callback) ? "SUCCESS" : "PENDING",
+        callbackEventId: event.id,
+        terminalConflict,
+        now,
+      });
       return {
         eventId: event.id,
         outboxId: outbox.id,
@@ -608,6 +625,16 @@ export class PaymentCallbackEventService {
       if (outboxes.length !== 1 || events.length !== 1) {
         throw new Error("payment_callback_processing_fence_lost");
       }
+      await resolvePaymentReconciliationFromCallbackTx(tx, {
+        provider: claim.provider,
+        orderNo: claim.orderNo,
+        transactionId: claim.transactionId,
+        providerEventTime: claim.providerEventTime,
+        orderDomain: domain,
+        callbackStatus: status,
+        errorCode,
+        now,
+      });
     });
   }
 

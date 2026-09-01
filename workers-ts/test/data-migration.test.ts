@@ -207,7 +207,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
 
     expect(report.sourceTableCount).toBe(201);
-    expect(report.targetTableCount).toBe(250);
+    expect(report.targetTableCount).toBe(252);
     expect(report.sharedTableCount).toBe(201);
     expect(report.sourceColumnCompleteTableCount).toBe(201);
     expect(report.sourceColumnGapTableCount).toBe(0);
@@ -230,6 +230,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "out_user_write_replay",
       "payment_callback_event",
       "payment_callback_outbox",
+      "payment_reconciliation_action",
+      "payment_reconciliation_case",
       "store_order_outbox",
       "store_order_product_coupon_reward",
       "store_order_refund_payment",
@@ -267,8 +269,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
       report.sharedTables.map((table) => table.table).sort(),
     );
     expect(definitionDrift).toEqual({
-      externalTableCount: 250,
-      workerTableCount: 250,
+      externalTableCount: 252,
+      workerTableCount: 252,
       externalOnlyTables: [],
       workerOnlyTables: [],
       columnDrift: [],

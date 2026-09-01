@@ -285,6 +285,20 @@ export interface PaymentCallbackDispatchMessage {
   scheduledAt: number;
 }
 
+/** One active provider query; provider evidence and order data stay in PostgreSQL. */
+export interface PaymentReconciliationMessage {
+  action: "processPaymentReconciliation";
+  caseId: number;
+  replayKey: string;
+}
+
+/** Cron root message for recovering payment attempts that did not receive a callback. */
+export interface PaymentReconciliationDispatchMessage {
+  action: "dispatchPaymentReconciliation";
+  scheduledAt: number;
+  cursor: number;
+}
+
 export type OrderMessage =
   | OrderPaidOutboxMessage
   | OrderNotificationOutboxMessage
@@ -304,6 +318,8 @@ export type OrderMessage =
   | WorkContactActionDispatchMessage
   | PaymentCallbackMessage
   | PaymentCallbackDispatchMessage
+  | PaymentReconciliationMessage
+  | PaymentReconciliationDispatchMessage
   | LegacyOrderMessage;
 
 /**

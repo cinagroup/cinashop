@@ -36,6 +36,7 @@ import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
 import * as AdminOrderOutbox from "@/controllers/api/v1/AdminOrderOutboxController";
+import * as AdminPaymentReconciliation from "@/controllers/api/v1/AdminPaymentReconciliationController";
 import * as AdminNotification from "@/controllers/api/v1/AdminNotificationController";
 import * as AdminDivision from "@/controllers/api/v1/AdminDivisionController";
 import * as AdminCapitalFlow from "@/controllers/api/v1/AdminCapitalFlowController";
@@ -1349,6 +1350,16 @@ v1Routes.post("/admin/order/writeoff_info", adminAuth, StoreOrderWriteoff.adminI
 v1Routes.post("/admin/order/writeoff", adminAuth, StoreOrderWriteoff.adminExecute);
 v1Routes.get("/admin/order/outbox", adminAuth, AdminOrderOutbox.orderOutboxList);
 v1Routes.post("/admin/order/outbox/:id/replay", adminAuth, AdminOrderOutbox.orderOutboxReplay);
+v1Routes.get(
+  "/admin/order/payment-reconciliation",
+  adminAuth,
+  AdminPaymentReconciliation.list,
+);
+v1Routes.post(
+  "/admin/order/payment-reconciliation/:id/decision",
+  adminAuth,
+  AdminPaymentReconciliation.decide,
+);
 v1Routes.get(
   "/admin/order/outbox/dead-letter",
   adminAuth,

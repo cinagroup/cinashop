@@ -20,6 +20,7 @@ import { PayType } from "@/services/order/StoreOrderPayService";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { assertPaymentMethodAvailable } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
+import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
 import { signAlipayParams, type AlipayParams } from "@/utils/alipay";
 import { parseConfigInteger } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -536,6 +537,14 @@ export class PaidMembershipService {
         channel,
         input.payerClientIp,
       );
+      await registerPaymentReconciliationIntent(this.container, {
+        provider: "wechat",
+        profile: identity.profile,
+        orderDomain: "membership",
+        orderNo: order.orderId,
+        expectedAmountCents: payCents,
+        initiated: true,
+      });
       const config = await new WechatPayService(this.container, this.env).createOrder({
         profile: identity.profile,
         type: identity.type,
@@ -549,6 +558,14 @@ export class PaidMembershipService {
       return { order_id: orderId, paid: false, pay_type: PayType.WEIXIN, jsConfig: config };
     }
     await assertPaymentMethodAvailable(this.container, this.env, PayType.ALIPAY);
+    await registerPaymentReconciliationIntent(this.container, {
+      provider: "alipay",
+      profile: "alipay",
+      orderDomain: "membership",
+      orderNo: order.orderId,
+      expectedAmountCents: payCents,
+      initiated: true,
+    });
     return {
       order_id: orderId,
       paid: false,

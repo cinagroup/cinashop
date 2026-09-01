@@ -256,7 +256,9 @@ BEGIN
     SELECT count(*)
     FROM pg_index AS index_row
     JOIN pg_class AS index_relation ON index_relation.oid = index_row.indexrelid
-    WHERE index_relation.relname IN (
+    JOIN pg_namespace AS index_namespace ON index_namespace.oid = index_relation.relnamespace
+    WHERE index_namespace.nspname = current_schema()
+      AND index_relation.relname IN (
       'payment_callback_event_pkey',
       'payment_callback_outbox_pkey',
       'pce_provider_event_uq',
@@ -271,7 +273,9 @@ BEGIN
     SELECT count(*)
     FROM pg_index AS index_row
     JOIN pg_class AS index_relation ON index_relation.oid = index_row.indexrelid
-    WHERE index_relation.relname IN (
+    JOIN pg_namespace AS index_namespace ON index_namespace.oid = index_relation.relnamespace
+    WHERE index_namespace.nspname = current_schema()
+      AND index_relation.relname IN (
       'pce_actionable_status',
       'pce_retention_due',
       'pco_dispatch_ready',

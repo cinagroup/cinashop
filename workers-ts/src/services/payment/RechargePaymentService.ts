@@ -5,6 +5,7 @@ import { user as userTable, userBill, userRecharge } from "@/models/schema";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { assertPaymentMethodAvailable } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
+import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -156,6 +157,14 @@ export class RechargePaymentService {
       from,
       payerClientIp,
     );
+    await registerPaymentReconciliationIntent(this.container, {
+      provider: "wechat",
+      profile: identity.profile,
+      orderDomain: "recharge",
+      orderNo: order.orderId,
+      expectedAmountCents: priceCents,
+      initiated: true,
+    });
     const jsConfig = await new WechatPayService(this.container, this.env).createOrder({
       profile: identity.profile,
       type: identity.type,

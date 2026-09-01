@@ -31,6 +31,10 @@ import {
   isPaymentCallbackDispatchMessage,
   isPaymentCallbackMessage,
 } from "@/services/payment/PaymentCallbackEventService";
+import {
+  isPaymentReconciliationDispatchMessage,
+  isPaymentReconciliationMessage,
+} from "@/services/payment/PaymentReconciliationService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
@@ -240,6 +244,14 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
     };
   }
   if (isPaymentCallbackMessage(value) || isPaymentCallbackDispatchMessage(value)) {
+    return {
+      messageType: value.action,
+      replayPolicy: "ALLOW",
+      body: sanitizeUnknownQueueBody(value),
+      replayMessage: value,
+    };
+  }
+  if (isPaymentReconciliationMessage(value) || isPaymentReconciliationDispatchMessage(value)) {
     return {
       messageType: value.action,
       replayPolicy: "ALLOW",

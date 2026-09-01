@@ -315,6 +315,9 @@ async function isolatedScenario(connectionString: string) {
     const migration = new MigrationService(container)
       .paymentCallbackPipelineMigrationSqlForVerification();
     await withTx(container, (tx) => tx.execute(sql.raw(migration)));
+    await withTx(container, (tx) => tx.execute(sql.raw(
+      new MigrationService(container).paymentReconciliationMigrationSqlForVerification(),
+    )));
     const firstEvidence = await schemaEvidence(admin, schema);
     await withTx(container, (tx) => tx.execute(sql.raw(migration)));
     const secondEvidence = await schemaEvidence(admin, schema);

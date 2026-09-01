@@ -19,6 +19,7 @@ import { WORK_EXTERNAL_TAG_CURRENT_PROJECTION_SQL } from "@/migrations/workExter
 import { WORK_CONTACT_ACTION_OUTBOX_SQL } from "@/migrations/workContactActionOutbox";
 import { ADMIN_MOBILE_USER_REPLAY_SQL } from "@/migrations/adminMobileUserReplay";
 import { PAYMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/paymentCallbackPipeline";
+import { PAYMENT_RECONCILIATION_SQL } from "@/migrations/paymentReconciliation";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -173,6 +174,11 @@ export class MigrationService {
     return this.migration_0126();
   }
 
+  /** Exact active payment-query reconciliation and operator-action DDL. */
+  paymentReconciliationMigrationSqlForVerification(): string {
+    return this.migration_0127();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -307,6 +313,7 @@ export class MigrationService {
       this.migration_0124(),
       this.migration_0125(),
       this.migration_0126(),
+      this.migration_0127(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8242,5 +8249,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0126(): string {
     return PAYMENT_CALLBACK_PIPELINE_SQL;
+  }
+
+  private migration_0127(): string {
+    return PAYMENT_RECONCILIATION_SQL;
   }
 }

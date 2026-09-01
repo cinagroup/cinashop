@@ -40,6 +40,7 @@ import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
+import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
 import {
   assertMarketingOfflinePaymentAllowed,
   getOrderInvalidTime,
@@ -472,6 +473,14 @@ export class StoreOrderPayService {
       from,
       payerClientIp,
     );
+    await registerPaymentReconciliationIntent(this.container, {
+      provider: "wechat",
+      profile: identity.profile,
+      orderDomain: "store_order",
+      orderNo: order.orderId,
+      expectedAmountCents: decimalToCents(order.payPrice),
+      initiated: true,
+    });
     const jsConfig = await new WechatPayService(this.container, this.env).createOrder({
       profile: identity.profile,
       type: identity.type,
@@ -594,6 +603,15 @@ export class StoreOrderPayService {
     if (!appId || !privateKey || !notifyUrl || !returnUrl) {
       throw new ValidateException("支付宝支付尚未完成商户配置");
     }
+
+    await registerPaymentReconciliationIntent(this.container, {
+      provider: "alipay",
+      profile: "alipay",
+      orderDomain: "store_order",
+      orderNo: order.orderId,
+      expectedAmountCents: decimalToCents(order.payPrice),
+      initiated: true,
+    });
 
     const gateway = "https://openapi.alipay.com/gateway.do";
     const params: AlipayParams = {

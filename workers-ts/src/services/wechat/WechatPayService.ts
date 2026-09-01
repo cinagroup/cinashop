@@ -12,6 +12,10 @@ import type {
   RefundProviderResult,
   RefundProviderStatus,
 } from "@/services/payment/RefundGateway";
+import type {
+  PaymentProviderQueryRequest,
+  PaymentProviderQueryResult,
+} from "@/services/payment/PaymentProviderQuery";
 
 const BASE_URL = "https://api.mch.weixin.qq.com";
 
@@ -49,6 +53,16 @@ interface WechatRefundResponse {
   amount?: { refund?: number; total?: number };
   code?: string;
   message?: string;
+}
+
+interface WechatTradeQueryResponse {
+  appid?: string;
+  mchid?: string;
+  out_trade_no?: string;
+  transaction_id?: string;
+  trade_state?: string;
+  success_time?: string;
+  amount?: { total?: number; currency?: string };
 }
 
 export class WechatPayService {
@@ -181,6 +195,76 @@ export class WechatPayService {
       }
       throw error;
     }
+  }
+
+  async queryOrder(request: PaymentProviderQueryRequest): Promise<PaymentProviderQueryResult> {
+    if (request.provider !== "wechat" || !["wechat", "routine", "app"].includes(request.profile)) {
+      throw new ValidateException("微信支付查单渠道无效");
+    }
+    const cfg = await this.getConfig(request.profile as WechatPayProfile);
+    const path = `/v3/pay/transactions/out-trade-no/${encodeURIComponent(request.orderNo)}`
+      + `?mchid=${encodeURIComponent(cfg.mchId)}`;
+    let response: WechatTradeQueryResponse;
+    try {
+      response = await this.callApi<WechatTradeQueryResponse>("GET", path, undefined, cfg);
+    } catch (error) {
+      if (
+        error instanceof WechatApiError
+        && ["ORDER_NOT_EXIST", "RESOURCE_NOT_EXISTS"].includes(error.code)
+      ) {
+        return emptyTradeQueryResult(request, "NOT_FOUND", "NOTPAY", "provider_trade_not_found");
+      }
+      throw error;
+    }
+    if (
+      response.appid !== cfg.appId
+      || response.mchid !== cfg.mchId
+      || response.out_trade_no !== request.orderNo
+    ) {
+      return emptyTradeQueryResult(request, "UNKNOWN", "UNKNOWN", "provider_identity_mismatch");
+    }
+    const providerTradeState = response.trade_state ?? "UNKNOWN";
+    if (["NOTPAY", "USERPAYING"].includes(providerTradeState)) {
+      return emptyTradeQueryResult(request, "PENDING", providerTradeState, "");
+    }
+    if (["CLOSED", "REVOKED", "PAYERROR", "REFUND"].includes(providerTradeState)) {
+      return emptyTradeQueryResult(request, "CLOSED", providerTradeState, "");
+    }
+    if (providerTradeState !== "SUCCESS") {
+      return emptyTradeQueryResult(request, "UNKNOWN", providerTradeState, "provider_status_unknown");
+    }
+    const transactionId = response.transaction_id ?? "";
+    const amountCents = Number(response.amount?.total ?? -1);
+    const providerEventTime = parseProviderTime(response.success_time) ?? 0;
+    if (
+      !/^[A-Za-z0-9_-]{1,100}$/.test(transactionId)
+      || !Number.isSafeInteger(amountCents)
+      || amountCents !== request.expectedAmountCents
+      || response.amount?.currency !== "CNY"
+      || providerEventTime <= 0
+    ) {
+      return {
+        ...emptyTradeQueryResult(
+          request,
+          "UNKNOWN",
+          providerTradeState,
+          "provider_evidence_mismatch",
+        ),
+        transactionId,
+        amountCents,
+        providerEventTime,
+      };
+    }
+    return {
+      status: "SUCCESS",
+      providerTradeState,
+      orderNo: request.orderNo,
+      transactionId,
+      amountCents,
+      currency: "CNY",
+      providerEventTime,
+      errorCode: "",
+    };
   }
 
   async verifyAndParseRefundNotify(
@@ -323,6 +407,7 @@ export class WechatPayService {
         method,
         headers,
         body: bodyValue ? body : undefined,
+        signal: AbortSignal.timeout(8_000),
       });
     } catch (error) {
       throw new Error(`微信支付请求网络状态未知: ${errorMessage(error)}`);
@@ -478,6 +563,26 @@ function parseProviderTime(value: string | undefined): number | undefined {
   if (!value) return undefined;
   const milliseconds = Date.parse(value);
   return Number.isFinite(milliseconds) ? Math.floor(milliseconds / 1000) : undefined;
+}
+
+function emptyTradeQueryResult(
+  request: PaymentProviderQueryRequest,
+  status: PaymentProviderQueryResult["status"],
+  providerTradeState: string,
+  errorCode: string,
+): PaymentProviderQueryResult {
+  return {
+    status,
+    providerTradeState: /^[A-Z0-9_.:-]{1,32}$/.test(providerTradeState)
+      ? providerTradeState
+      : "UNKNOWN",
+    orderNo: request.orderNo,
+    transactionId: "",
+    amountCents: 0,
+    currency: "CNY",
+    providerEventTime: 0,
+    errorCode,
+  };
 }
 
 function assertCallbackUrl(value: string, label: string): void {

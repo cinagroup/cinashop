@@ -107,6 +107,14 @@
       "response": "verify callback signature/configuration and inspect the durable payment outbox before replay"
     },
     {
+      "id": "payment_reconciliation",
+      "component": "payment",
+      "source": "Workers Logs payment_reconciliation_* plus payment_reconciliation_case status",
+      "warning": "any UNKNOWN or CONFLICT, or retry attempt_count >= 3",
+      "critical": "any DEAD row or unresolved CONFLICT older than 15m",
+      "response": "compare immutable local and provider evidence; use the guarded admin decision endpoint instead of blind settlement"
+    },
+    {
       "id": "refund_workflow",
       "component": "refund",
       "source": "Workers Logs component=refund plus store_order_refund_payment status",

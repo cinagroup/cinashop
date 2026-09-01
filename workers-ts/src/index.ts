@@ -82,6 +82,12 @@ export default {
       PaymentCallbackEventService,
     } = await import("./services/payment/PaymentCallbackEventService");
     const {
+      consumePaymentReconciliationMessage,
+      isPaymentReconciliationDispatchMessage,
+      isPaymentReconciliationMessage,
+      PaymentReconciliationService,
+    } = await import("./services/payment/PaymentReconciliationService");
+    const {
       consumeOrderNotificationOutboxQueueMessage,
       consumeOrderPaidOutboxQueueMessage,
     } = await import(
@@ -129,6 +135,7 @@ export default {
     } = await import("./services/waybill/OrderWaybillJobService");
     const outbox = new OrderOutboxService(container, env);
     const paymentCallbacks = new PaymentCallbackEventService(container, env);
+    const paymentReconciliation = new PaymentReconciliationService(container, env);
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
     const maintenance = new ScheduledMaintenanceService(container, env);
@@ -142,6 +149,58 @@ export default {
 
     for (const msg of batch.messages) {
       const messageStartedAt = Date.now();
+      if (isPaymentReconciliationDispatchMessage(msg.body)) {
+        try {
+          const dispatched = await paymentReconciliation.dispatchPage(msg.body);
+          emitOperationalEvent("info", {
+            event: "payment_reconciliation_dispatched",
+            component: "payment",
+            operation: "payment_reconciliation_dispatch",
+            outcome: "success",
+            resourceCount: dispatched.enqueued,
+            attentionCount: dispatched.attention,
+            hasMore: dispatched.hasMore,
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+          });
+          if (dispatched.attention > 0) {
+            emitOperationalEvent("warn", {
+              event: "payment_reconciliation_attention",
+              component: "payment",
+              operation: "payment_reconciliation_dispatch",
+              outcome: "failure",
+              attentionCount: dispatched.attention,
+              queueAttempt: msg.attempts,
+            });
+          }
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          emitOperationalEvent("error", {
+            event: "payment_reconciliation_failed",
+            component: "payment",
+            operation: "payment_reconciliation_dispatch",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            errorCode: operationalErrorCode(error, "payment_reconciliation_dispatch_failed"),
+          });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
+      if (isPaymentReconciliationMessage(msg.body)) {
+        await consumePaymentReconciliationMessage({
+          body: msg.body,
+          attempts: msg.attempts,
+          ack: () => msg.ack(),
+          retry: (options) => msg.retry(options),
+        }, paymentReconciliation);
+        continue;
+      }
+
       if (isPaymentCallbackDispatchMessage(msg.body)) {
         try {
           const dispatched = await paymentCallbacks.dispatchPending(100);
@@ -508,6 +567,11 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
     env.ORDER_QUEUE.send({
       action: "dispatchPaymentCallbackOutbox",
       scheduledAt,
+    }),
+    env.ORDER_QUEUE.send({
+      action: "dispatchPaymentReconciliation",
+      scheduledAt,
+      cursor: 0,
     }),
     env.ORDER_QUEUE.send({
       action: "dispatchWorkCallbackOutbox",
