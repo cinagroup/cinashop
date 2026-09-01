@@ -3204,6 +3204,8 @@ PHP 原实现的身份传播不构成可靠授权。旧中间件把移动端 Adm
 
 新增 `payment-callback-route.test.ts` 并扩展收银台测试，定向3文件16项通过；完整双TypeScript、176文件/1,100项单元测试、observability 14信号/10域/27必需事件/377个生产源文件/6个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、路由审计和 `git diff --check` 均通过。Windows真实workerd仍在0条测试/0条断言前以`0xc0000005`失败，必须由Linux CI复验，不能记成本地runtime通过。
 
+候选实现提交 `b57fceae65d8753e5f14a8bc045d088a387a5916` 已推送 `main`；[Linux Migration gates 运行 33466922478](https://github.com/cinagroup/cinashop/actions/runs/33466922478) 的8个job全部成功，包含 workerd runtime、完整Worker单测、双TypeScript、schema/route/observability、PC/Kefu/Admin/Supplier/UniApp构建和历史密钥扫描，补齐了Windows本机缺失的runtime证据。本地生产依赖审计返回`0 vulnerabilities`；Wrangler `--dry-run`解析到 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，构建产物约5.9 MiB/gzip 1.08 MiB后退出，未执行部署或生产数据库写入。
+
 下一批固定为 CORE-001-B：先完成支付入站事件表、短事务接收/outbox与opaque Queue，再把微信/支付宝 handler从“同步完整入账后应答”改为“验签→持久化→快速应答→幂等消费”。只有账本的外部/内嵌DDL逐字一致、PostgreSQL并发/崩溃/重放场景和Linux runtime门禁通过后，才进入主动支付对账 CORE-001-C；不会跳过账本先恢复高风险寄件或同城写状态路由。
 
 ## 完成定义
