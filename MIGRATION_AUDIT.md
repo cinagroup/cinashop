@@ -2999,6 +2999,28 @@ ADMIN-A 现在是 10/32，父项继续未完成，剩余 22 条形成当前可�
 
 下一批优先审计并接入能够复用现有本地履约状态机的发货/拆单和低风险备注动作；电子面单模板保留 provider 失败分类/限时限长，退款/线下支付继续依赖 CORE-002 账本和回放围栏，代客下单必须新增显式代客权限并把 Admin、目标 UID、报价、库存、优惠券和支付主体全链路绑定。
 
+## ADMIN-A-FULFILLMENT-LOCAL 本地订单操作详细审计（2026-09-01）
+
+本轮先对 ADMIN-A-FULFILLMENT-READ 后剩余 7 条合同逐一回查 PHP 路由、控制器、service 和旧 UniApp 调用方。七条均有真实调用，不具备退役证据：`delivery/keep/:id` 涉及三种本地发货方式及电子面单分支，`export_temp` 读取 provider 模板，`split_delivery/:id` 修改拆单与履约状态，`order_verific` 进入核销/结算状态机；`price`、`remark` 与 `wirteoff/records/:id` 则不依赖第三方。为避免把 provider、结算和普通字段更新一次性开放，本批只收口后三条纯 PostgreSQL 合同，其余四条继续明确留在 checklist。
+
+PHP `price` 接收公开订单号和绝对实付金额，只允许未支付订单，并由 `StoreOrderServices::updateOrder` 用 `原实付 + 历史 change_price - 新实付` 重新计算累计改价差额；PHP `remark` 按公开订单号写备注；PHP 原路由把核销记录拼成 `wirteoff`，以 POST body 的 `product_type` 返回分页记录。新实现保留路径、请求和成功 envelope，但收紧了三个不安全或不确定边界：公开订单号必须唯一命中双软删除均为 0 的有效订单；金额只接受非负十进制定点、最多两位小数并同时受 `numeric(12,2)` 和 `change_price numeric(8,2)` 上限约束；备注去除首尾空白且最多 512 个字符，核销查询只接受商品类型 0/4、页码最多 10,000、每页最多 100。
+
+改价事务先以唯一公开单号解析目标，再锁根订单结算域和目标订单行，设置 2 秒锁超时、5 秒语句超时，支付状态在锁后复核；条件更新再次约束未支付和双软删除，竞争失败关闭。连续改价以当前 `pay_price + change_price` 恢复原价，避免第二次改价把第一次结果当原价；相同金额幂等 no-op。改价审计只记录 Admin ID 和动作，不记录金额。备注同样在短事务内最多锁两行以阻断歧义订单号，相同正文 no-op，状态日志不复制备注正文，修复旧 TS `/remark/:orderId` 会把完整备注写入审计消息且接受空正文的问题。两个写接口均从已验证的 `adminInfo` 取 actor，不能由 body 伪造。
+
+`wirteoff/records/:id` 虽沿用 PHP 的 POST 方法，但它没有写副作用，权限因此显式降为 `order.view`，而 `price/remark` 继续要求 `order.manage`。记录查询先验证有效订单，按时间和主键倒序；购物车快照 join 同时绑定 `order_cart_id` 与目标 `oid`，单条 JSON 最多从 PostgreSQL传输 256 KiB。服务只投影页面使用的记录 ID、订单商品 ID、商品 ID/类型、数量、金额、分钟时间和商品名/图片/价格/规格图片；商品名按 Unicode code point 截到 10，损坏快照安全降级。PHP 的 `writeoff_code`、UID、staff/admin/operator、relation 等内部字段不再返回，避免后台只读权限获得核销凭据或人员身份。
+
+三条 handler 都使用 8 KiB 有界 JSON body 和 `private, no-store, max-age=0`，没有请求外浮动 Promise、全局可变状态、Queue 消息、provider/fetch 或同步外部调用。Cloudflare Workers 最佳实践审查促成了请求体和数据库结果双边界、Hyperdrive 请求内短事务、无外部 I/O 的锁区间、显式最小权限与敏感字段 allowlist。实现不需要新表或索引；仓库仍为外部/内嵌 248/248、共享 PHP 源表 201/201 且定义漂移 0。
+
+用户要求直接使用生产数据库，因此候选继续精确绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有引入影子业务库或 SQLite。minify dry-run 为 3,307.75 KiB/gzip 785.66 KiB并回显该生产绑定，但没有部署。三条候选路由尚未出现在当前生产 Worker，且其中两条会修改真实客户订单；本轮没有用合成订单对生产 `public` 执行 DML，也没有擅自部署临时公开探针。既有只读生产证据仍只证明当前旧 Worker/Hyperdrive 连通以及生产核销记录为 0，不能冒充新改价、备注或核销查询的生产 E2E。生产候选结构差仍只有未应用的 `admin_user_write_replay`，与本批零 DDL 合同无关。
+
+新增定向测试 1 文件 7/7；与上一批履约读取合计 2 文件 13/13。覆盖价格格式/精度/范围和连续改价、备注空白/长度、核销类型/分页、Unicode 截断/损坏快照/字段白名单、三个真实 handler envelope/no-store/actor/path override、三条精确路由、`order.manage/order.view` ACL、事务超时、结算锁、行锁、软删除、订单绑定、快照字节上限以及无凭据/外部副作用。完整本地门禁为双 TypeScript、172 文件/1,077 项单元测试、observability 14 信号/10 域/27 必需事件/373 个生产源文件/6 个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、官方 npm 生产依赖漏洞 0 和 `git diff --check`。Windows workerd 仍在执行断言前以既有 `0xc0000005` 启动失败；Linux CI 的真实 workerd 已通过。
+
+路由基线在履约读取后为 PHP 1,904、TS 1,477、精确 775、可执行 757。本批净增三条精确可执行合同后为 TS 1,480、精确 778、可执行 760、明确不可用 18、原始缺失 1,126、证据化退役 4、可执行缺口 1,122，精确/可执行/退役后有效覆盖为 `40.9%/39.9%/40.0%`。`/api` 为 PHP 457、TS 789、精确 396、可执行 393、明确不可用 3、原始缺失 61、退役 1、可执行缺口 60，对应 `86.7%/86.0%/86.2%`；其他路由面未改变。
+
+实现提交 `796569cc5b77d210d2df9381b86cab9a967ad9d3` 已推送至 `main`。[GitHub Actions 33457613526](https://github.com/cinagroup/cinashop/actions/runs/33457613526) 最终 8/8 jobs 成功：Linux Worker 综合任务通过生产依赖审计、双 TypeScript、172 文件/1,077 项单测、observability、201/248/201/零定义漂移和 1,904/1,480/778/760 路由门禁；受支持的 workerd runtime、Admin、PC、Supplier、Kefu、UniApp 和 checksum-pinned 全历史 Gitleaks 全部成功。CI 不持有生产 Secret、不访问 Hyperdrive，也不部署 Worker/Pages。
+
+ADMIN-A 现在为 13/32，父项继续未完成，剩余 19 条：履约写/provider 4 条（`POST delivery/keep/:id`、`GET export_temp`、`PUT split_delivery/:id`、`POST order_verific`），退款/资金 4 条，代客下单 11 条。下一批应先把 `delivery/keep` 与 `split_delivery` 精确接到现有 `SupplierFulfillmentService` 的结算锁、售后/预售/拼团门禁、面单冲突和通知 outbox；`order_verific` 必须复用 `StoreOrderWriteoffService` 的部分核销、旋码、并发与最终结算；`export_temp` 必须保留 provider 限时、限长、失败分类和凭据不回显。四条不能仅复用旧 `AdminCrud` 的宽松更新路径。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
