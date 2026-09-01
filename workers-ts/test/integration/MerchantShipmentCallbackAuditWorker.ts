@@ -148,19 +148,20 @@ async function schemaEvidence(client: postgres.Sql, schema: string) {
       rowCounts.push({ table, rows: rows[0]?.count ?? -1 });
     }
   }
-  const complete = relations.length === 3
+  const baseComplete = relations.length === 3
     && relations.every((row) => row.relkind === "r" && row.relpersistence === "p")
     && columns.every((row) => JSON.stringify(row.columns) === JSON.stringify(
       EXPECTED_COLUMNS[row.table_name as keyof typeof EXPECTED_COLUMNS],
     ))
     && JSON.stringify(constraints.map((row) => row.name)) === JSON.stringify([...EXPECTED_CONSTRAINTS].sort())
     && constraints.every((row) => row.validated && (row.type !== "c" || !row.no_inherit))
-    && constraints.some((row) => row.name === "mscwm_state_ck" && row.current_state_set)
     && JSON.stringify(indexes.map((row) => row.name)) === JSON.stringify([...EXPECTED_INDEXES].sort())
     && indexes.every((row) => row.valid && row.ready)
     && indexes.filter((row) => row.partial).length === 4
     && indexes.filter((row) => row.unique).length === 7;
-  return { complete, relations, columns, constraints, indexes, rowCounts };
+  const complete = baseComplete
+    && constraints.some((row) => row.name === "mscwm_state_ck" && row.current_state_set);
+  return { complete, baseComplete, relations, columns, constraints, indexes, rowCounts };
 }
 
 async function productionAudit(connectionString: string) {
@@ -242,7 +243,7 @@ async function migrateProduction(connectionString: string) {
     if (before.relations.length !== 0 && before.relations.length !== 3) {
       throw new Error("partial_merchant_shipment_callback_schema_exists");
     }
-    if (before.relations.length === 3 && !before.complete) {
+    if (before.relations.length === 3 && !before.baseComplete) {
       throw new Error("merchant_shipment_callback_schema_collision");
     }
     const migration = new MigrationService(createContainerFromDb(db))

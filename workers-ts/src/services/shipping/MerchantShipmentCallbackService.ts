@@ -140,6 +140,7 @@ export function merchantShipmentTransition(
   }
 
   if (next.state === "RESURRECTED") return "superseded";
+  if (next.state === "SETTLED") return "apply";
   if (next.terminal) return current.lastRank >= 40 ? "superseded" : "apply";
   if (next.rank < current.lastRank) return "superseded";
   if (next.rank === current.lastRank) return "apply";

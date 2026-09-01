@@ -142,6 +142,15 @@ describe("merchant-shipment monotonic transition graph", () => {
     expect(merchantShipmentTransition(current("SETTLED", 75, 1), merchantShipmentState("1")))
       .toBe("conflict");
   });
+
+  it("allows settlement to close an already fulfilled active shipment", () => {
+    expect(merchantShipmentTransition(current("PICKED_UP", 40), merchantShipmentState("15")))
+      .toBe("apply");
+    expect(merchantShipmentTransition(current("SIGNED", 70), merchantShipmentState("15")))
+      .toBe("apply");
+    expect(merchantShipmentTransition(current("CANCELLED", 90, 1), merchantShipmentState("15")))
+      .toBe("superseded");
+  });
 });
 
 describe("merchant-shipment callback DDL and route wiring", () => {
