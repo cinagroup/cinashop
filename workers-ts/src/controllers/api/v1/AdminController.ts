@@ -23,6 +23,7 @@ import {
   parseProductRankingSort,
 } from "@/services/admin/AdminStatisticService";
 import { AdminMobileOrderReadService } from "@/services/admin/AdminMobileOrderReadService";
+import { AdminMobileOrderOperationService } from "@/services/admin/AdminMobileOrderOperationService";
 import {
   AdminExtendedStatisticService,
   parseAdminStatisticChannel,
@@ -31,6 +32,7 @@ import {
 import type { AppVariables, Env } from "@/env";
 import { upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
 import { ErpCapabilityService } from "@/services/system/ErpCapabilityService";
+import { readBoundedJsonObject } from "@/utils/request-body";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -89,6 +91,18 @@ function privateAdminResponse(c: C): void {
 
 function mobileOrderReadService(c: C): AdminMobileOrderReadService {
   return new AdminMobileOrderReadService(c.get("container"));
+}
+
+function mobileOrderOperationService(c: C): AdminMobileOrderOperationService {
+  return new AdminMobileOrderOperationService(c.get("container"));
+}
+
+function verifiedAdminId(c: C): number {
+  const actor = c.get("adminInfo");
+  if (!actor || !Number.isSafeInteger(actor.id) || actor.id <= 0) {
+    throw new ValidateException("管理员身份不存在");
+  }
+  return actor.id;
 }
 
 /** GET /api/admin/order/statistics — embedded admin order counters/cards. */
@@ -152,6 +166,35 @@ export async function adminMobileOrderExpressList(c: C) {
 export async function adminMobileOrderSplitCartInfo(c: C) {
   privateAdminResponse(c);
   return jsonOk(c, await mobileOrderReadService(c).splitCartInfo(c.req.param("id")));
+}
+
+/** POST /api/admin/order/price — absolute unpaid-order price update. */
+export async function adminMobileOrderPrice(c: C) {
+  privateAdminResponse(c);
+  await mobileOrderOperationService(c).changePrice(
+    verifiedAdminId(c),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024),
+  );
+  return jsonOk(c, null, "改价成功");
+}
+
+/** POST /api/admin/order/remark[/:orderId] — bounded, audited order remark. */
+export async function adminMobileOrderRemark(c: C) {
+  privateAdminResponse(c);
+  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
+  const pathOrderId = c.req.param("orderId");
+  if (pathOrderId) body.order_id = pathOrderId;
+  await mobileOrderOperationService(c).updateRemark(verifiedAdminId(c), body);
+  return jsonOk(c, null, "备注成功");
+}
+
+/** POST /api/admin/order/wirteoff/records/:id — legacy read-only writeoff history. */
+export async function adminMobileOrderWriteoffRecords(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileOrderOperationService(c).writeoffRecords(
+    c.req.param("id"),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024),
+  ));
 }
 
 /** GET /adminapi/statistic/order/get_basic — PHP 订单统计基础卡片。 */

@@ -1301,7 +1301,10 @@ v1Routes.get("/admin/order/delivery", adminAuth, AdminController.adminMobileOrde
 v1Routes.get("/admin/order/delivery_info", adminAuth, AdminController.adminMobileOrderDeliveryInfo);
 v1Routes.get("/admin/order/export_all", adminAuth, AdminController.adminMobileOrderExpressList);
 v1Routes.get("/admin/order/split_cart_info/:id", adminAuth, AdminController.adminMobileOrderSplitCartInfo);
-v1Routes.post("/admin/order/remark/:orderId", adminAuth, AdminCrud.adminOrderRemark);
+v1Routes.post("/admin/order/price", adminAuth, AdminController.adminMobileOrderPrice);
+v1Routes.post("/admin/order/remark", adminAuth, AdminController.adminMobileOrderRemark);
+v1Routes.post("/admin/order/remark/:orderId", adminAuth, AdminController.adminMobileOrderRemark);
+v1Routes.post("/admin/order/wirteoff/records/:id", adminAuth, AdminController.adminMobileOrderWriteoffRecords);
 v1Routes.post("/admin/order/print/:id", adminAuth, PrintJobController.adminManual);
 v1Routes.post("/admin/order/waybill/:id", adminAuth, WaybillJobController.adminCreate);
 v1Routes.get("/admin/order/delivery/index", adminAuth, AdminStore.deliveryList);
