@@ -3058,6 +3058,51 @@ ADMIN-A 现在为 13/32，父项继续未完成，剩余 19 条：履约写/prov
 
 ADMIN-A 现在为 17/32，履约子组 12/12 已收口；父项继续未完成，剩余 15 条只有退款/资金 4 条和代客下单 11 条。下一批应优先处理 ADMIN-A-REFUND：线下支付与退款动作必须复用 CORE-002 资金账本、支付 provider 状态、幂等围栏、根结算锁和明确 `order.manage/refund.manage` 权限；仍不得用生产订单做破坏性试验，也不得因代码通过 CI 自动发布。
 
+## ADMIN-A-REFUND 退款、退货审批与线下收款详细审计（2026-09-01）
+
+### PHP 权威、旧客户端调用与四条合同的真实含义
+
+本批逐行核对 PHP `route/api.php:750-760`、`app/controller/api/admin/order/StoreOrder.php:486-657,898-1014`、`OrderOfflineServices`、`StoreOrderRefundServices`、退款支付 service，以及旧 UniApp `api/admin.js`、退款列表/详情和移动端主动退款页面。四条均有真实旧端调用，不能退役，但旧控制器名称容易造成两个危险误读：`offline` 不是顾客选择线下付款，而是管理员把未支付订单确认为已收款；`refund_agree/:id` 不是执行资金退款，而是商家同意用户退货、把售后推进到等待寄回。
+
+| 路由 | PHP/旧端真实合同 | 迁移后的权威语义 |
+|---|---|---|
+| `POST /api/admin/order/offline` | body 传公开 `order_id`，PHP 调 `paySuccess(..., OFFLINE_PAY)` 并返回“修改成功!” | 只允许唯一、有效、未拆分/未分配的订单进入共享 paid transition；重复线下已支付为幂等，已经由微信/支付宝/余额等其他渠道入账则冲突失败 |
+| `POST /api/admin/order/refund` | body 为售后单号或原订单号、`price/type/refuse_reason`；PHP 对现有售后允许同一行累计部分退款，对原订单可现场造退款行 | 售后同意只接受本售后单的权威全额；拒绝必须有有界原因；未找到售后而命中原订单时转入与主动退款相同的服务端报价/建单流程，不直接改订单累计金额 |
+| `POST /api/admin/order/refund_agree/:id` | PHP `agreeRefundProdcut` 仅把 `refund_type` 改为 4 | 只对退货类售后执行 `0/1/2 → 4`，同步订单为等待寄回并写 Admin 审计；绝不创建渠道退款或改变余额 |
+| `POST /api/admin/order/open/refund/:id` | 管理端按订单主键主动整单或按 `{cart_id,cart_num}` 拆单退款；PHP 只有 1 秒 UID cache，且活动售后检查把 `is_del` 写反 | 锁内按不可变购物车快照、历史已退数量和实付金额重新报价；提交金额必须逐分相等，选品/数量严格绑定当前订单；安全处理 active 售后，不复制错误软删除条件和 1 秒内存防重 |
+
+PHP `refund` 的“同一售后行多次增量退款”与其马上把该行置为终态 6 的行为互相矛盾：第一次成功后第二次理论路径不可稳定到达，且缺少稳定 provider 退款号和未知结果查询围栏。PHP 主动退款还先写或改业务状态、再调用外部渠道，失败时依赖补偿更新；`open_order_refund` 的 active-refund count 错查 `is_del=1`，并用进程 cache 做一秒防抖。这些都不是应复制的兼容语义。新合同保留 URL、请求字段和成功 envelope，但把真正业务权威固定为“一张售后单对应一个不可变退款金额；部分退款使用不同售后单”。
+
+### 支付与退款状态机、锁序和回放保护
+
+线下收款复用 `applyStoreOrderPayment` 唯一 paid 写入口。管理员授权回调在锁定订单行后复核公开单号、双软删除、`pid=0`、未处于供应商分配，以及拼团可支付状态；首次 `paid=0 → 1` 与积分扣减、发票支付状态、拼团激活、`order.paid` outbox 和 `admin_order_offline` 审计同事务提交。outbox dispatch 在提交后 best-effort 执行，失败保留持久行供调度恢复。已支付重放只有同为 `offline` 才返回幂等；其他渠道、交易证据或订单状态不能被管理员请求覆盖。
+
+现有售后资金同意先在短事务内按 refund advisory lock → refund row → order settlement advisory lock → order row 的固定顺序捕获不可变 scope，绑定 supplier、UID、退款单号、原订单主键、权威退款分值、已支付与双软删除。余额/零元退款在同一事务完成用户余额、账单、累计退款、库存/积分/奖励/佣金/供应商结算和状态日志；微信/支付宝继续使用 `store_order_refund_payment` 的稳定 `CNSR{refundId}`、金额/总额不可变检查、`CREATED/REQUESTING/PROCESSING/UNKNOWN/SUCCESS/...` 状态、请求租约、查询后重试、回调与主动对账。provider HTTP 始终在数据库事务外；第三方未确认成功前不会把业务售后置为已退款。线下、现金或未知原支付方式没有可靠自动原路退能力，因此明确失败关闭，不能伪造退款完成。
+
+主动整单/拆单退款先在订单 settlement lock 和订单行锁下读取全部购物车快照与历史已完成售后。服务接受旧 cart 主键或 legacy `cart_id`，先收敛到唯一 canonical ID；逐商品复核是否支持退款、核销次数、已退数量和本次件数，再用整数分按实付金额做确定性比例分配，最后一分也由稳定顺序分配。客户端 `refund_price/price` 只作为预期值，必须与服务端计算结果完全一致后才插入售后。管理员申请使用 `apply_type=4`，普通用户调用不能声明该特权类型。
+
+主动退款的回放键不是 PHP 的一秒 cache，也不依赖尚未应用生产的 `admin_user_write_replay`。服务对 `{adminId, orderPk, amountCents, sorted cart selections}` 做 SHA-256，生成不超过 50 字符的稳定内部退款单号 `A{orderId}-{digestPrefix}`；同一订单 settlement lock 下如果该退款单已存在，只在 UID、类型、原因、说明和金额全部一致时复用，否则拒绝幂等参数冲突。首次插入与 `apply_refund`、`admin_refund_apply` 审计同事务；后续资金执行还以售后 ID/请求摘要写一次性 `admin_refund_execute` 证据。这样请求在“售后已创建但 provider 响应丢失”后重试会回到同一退款台账，而不会创建第二笔资金请求。
+
+拒绝售后也改为同一锁序内重新读取 refund/order 和 provider ledger；`REQUESTING/PROCESSING/UNKNOWN/SUCCESS` 等已发起或待确认状态不能再被拒绝覆盖。相同拒绝原因重放为 no-op，不同原因不能覆写原决策；首次拒绝、订单状态、通知 outbox 和不含原因正文的 Admin 审计同事务。退货审批同样锁定 refund/order 并检查 provider 尚未进入不可逆状态，只允许退货类申请和合法前态。实际退货物流仍由用户已有接口从 4 推进到 5，最终资金退还仍走上面的核心账本。
+
+### 权限、输入边界和生产数据库证据
+
+四条路由均位于现有 `adminAuthMiddleware` 后，actor 只从已验证 `adminInfo.id` 获取，body 中任何 UID/管理员声明都被忽略。`offline` 是订单收款动作，要求 `order.manage`；`refund`、`refund_agree/:id` 和 `open/refund/:id` 虽历史 URL 位于 `/order`，权限解析器显式重映射为 `refund.manage`，避免只有订单运营权限的角色移动资金或决定售后。所有响应使用 `Cache-Control: private, no-store, max-age=0`；`offline` body 上限 8 KiB，`refund/open/refund` 上限 32 KiB，购物车选择最多 100 条，`refund_agree` 不读取 body。订单/售后标识、动作枚举、拆分标志、金额、小数位、拒绝原因和商品件数全部严格解析，重复 cart ID、非正件数、控制字符、歧义公开单号和多条 active 售后均失败关闭。
+
+用户要求直接使用生产数据库，因此主候选仍精确绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有引入 SQLite、影子 PostgreSQL 或第二套业务库。Wrangler 4.122.0 对该生产资源的只读 `hyperdrive get` 返回名称 `cinashop-pg`、PostgreSQL origin、连接上限 60、缓存开启；没有返回密码。为本批编写的生产审计 Worker 把所有聚合放在单一 `REPEATABLE READ, READ ONLY` 事务，固定 `search_path=public, pg_temp`，只返回订单/售后/渠道 ledger/审计状态的计数和一致性布尔，不返回订单号、用户、金额、地址或其他业务值，也不含任何 DDL/DML。但本机 `wrangler dev --remote` 在事务开始前被既有 Windows workerd `0xc0000005` 启动崩溃阻断，环境中也没有直接生产 PostgreSQL URL；因此本轮只有 Hyperdrive 配置只读核验，没有新的生产数据聚合结果。没有把失败探针冒充通过，也没有改成部署临时 Worker。
+
+本批没有对生产 `public` 执行 DML/DDL，没有创建随机或影子 schema，没有调用真实微信/支付宝 provider，也没有部署主 Worker、临时 Worker或 Pages。现有生产 29 单/3 售后的数据事实来自前批只读证据，不能替代本批候选路由的生产 E2E。生产支付 Secret/商户配置仍不完整，代码完成不等于退款渠道已经可用；真实 Admin、真实退款和发布后回归仍属于 REL-001/002 的独立批准门禁。
+
+### 验证结果、路由进度和下一批
+
+新增定向测试 1 文件 5/5，覆盖拆单 cart/数量规范化、四个 handler 的认证 actor/envelope/no-store、四条精确路由、`order.manage/refund.manage` 权限拆分、共享支付/退款状态机、服务端预期金额、确定性退款单号、Admin 审计以及生产审计 Worker 的结构性只读约束。完整本地门禁为双 TypeScript、174 文件/1,090 项单元测试、observability 14 信号/10 域/27 必需事件/375 个生产源文件/6 个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、官方 npm 生产依赖漏洞 0、路由审计和 `git diff --check`。最终 minify dry-run 为 `3,330.07 KiB / gzip 791.61 KiB`，精确回显生产 Hyperdrive、Queue、KV、R2 和 Durable Object，随后以 `--dry-run: exiting now` 结束，没有上传发布。Windows runtime 测试仍在 0 个测试/0 条断言前崩溃；受支持的 Linux workerd 门禁成功。
+
+路由基线在 ADMIN-A-FULFILLMENT 后为 PHP 1,904、TS 1,484、精确 782、可执行 764。本批净增四条精确可执行合同后为 TS 1,488、精确 786、可执行 768、明确不可用 18、原始缺失 1,118、证据化退役 4、可执行缺口 1,114，精确/可执行/退役后有效覆盖为 `41.3%/40.3%/40.4%`。`/api` 为 PHP 457、TS 797、精确 404、可执行 401、明确不可用 3、原始缺失 53、退役 1、可执行缺口 52，对应 `88.4%/87.7%/87.9%`；其他路由面未改变。静态匹配仍不证明生产权限、数据、provider 或状态机等价。
+
+实现提交 `5a7604fa142678947b11ba24c4ee7408ef209cc8` 已推送至 `main`。[GitHub Actions 33461641860](https://github.com/cinagroup/cinashop/actions/runs/33461641860) 最终 8/8 jobs 成功：Linux Worker 综合任务通过生产依赖审计、双 TypeScript、174 文件/1,090 项单测、observability、201/248/201/零定义漂移和 1,904/1,488/786/768 路由门禁；真实 workerd runtime、Admin、PC、Supplier、Kefu、UniApp 和 checksum-pinned 全历史 Gitleaks 全部成功。CI 不持有生产 Secret、不访问 Hyperdrive，也不部署 Worker/Pages。Cloudflare Workers/Wrangler 最佳实践审查直接影响了 provider I/O 与事务隔离、paid/outbox 原子性、确定性回放、最小 ACL、私有不缓存、有界输入输出以及生产配置/数据/部署证据分层。
+
+ADMIN-A 现在为 21/32，统计、履约和退款/资金子组均已收口；父项继续未完成，剩余 11 条全部属于 ADMIN-A-ASSISTED 代客下单。下一批必须先审计旧端 cart/place/confirm/computed/coupons/create/pay/status 的 key 生命周期和身份传播，再设计显式代客权限；Admin ID、目标 UID、购物车、服务端报价、库存、优惠券、订单归属、支付主体和重放证据必须从确认到支付全链路绑定，不能借用普通用户 token 或信任路径 UID/客户端 key。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
