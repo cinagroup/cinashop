@@ -2958,6 +2958,47 @@ ADMIN-D 后基线为 PHP 1,904、TS 1,467、精确 765、可执行 747、原始�
 
 ADMIN-A 父项保持未完成，剩余 27 条已拆成可执行 checklist：订单运营/履约 12 条，退款/资金 4 条，代客下单 11 条。下一批应先处理履约读取与无第三方副作用的本地状态操作；退款/资金必须复用 CORE-002 账本和幂等围栏，代客下单必须建立显式 Admin 代客权限和目标 UID 全链路绑定，不能把普通用户 token 兼容逻辑直接搬到生产。
 
+## ADMIN-A-FULFILLMENT-READ 履约只读详细审计（2026-09-01）
+
+### PHP 权威、旧端调用与五条已关闭缺口
+
+PHP 权威位于 `route/api.php:744-758`、`app/controller/api/admin/order/StoreOrder.php:214-225,782-825` 和 `StoreOrderCartInfoServices.php:307-335`。旧 UniApp `view/uniapp/api/admin.js` 明确包装并在移动管理订单流程中使用订单发货摘要、配送员、发件配置和拆单商品；`export_all` 仍是已发布 PHP 兼容合同，即使当前 UniApp 发货页主要调用公开物流目录，也不能从 PHP 分母中删除。本批只选择五条不会写订单、调用面单 provider 或改变外部状态的 GET：
+
+| 路由 | PHP 行为 | Worker 候选行为与审计结论 |
+|---|---|---|
+| `GET /api/admin/order/delivery/gain/:orderId` | 按公开订单号读取收件人、电话、地址、昵称和电子面单开关，仅已支付订单成功 | 严格订单号字符/32 字节边界；只读双软删除均为 0 的唯一订单，重复订单号失败关闭、未支付拒绝；批量配置 DAO 直接读取 `config_export_open` |
+| `GET /api/admin/order/delivery` | 返回平台配送员列表中的 `list` | 复用 `StoreOperationsService.deliveryList(..., true)`；强制平台 `type=0/relation_id=0`、未删除且启用，页码最多 10,000、每页最多 100，只返回既有安全投影 |
+| `GET /api/admin/order/delivery_info` | 读取五个 `config_export_*` 发件默认值并改名 | 直接从生产 PostgreSQL 配置 DAO 一次批量读取并规范化，不以 KV/客户端值作为配置权威，返回字段保持 `express_temp_id/to_name/id/to_tel/to_add` |
+| `GET /api/admin/order/export_all` | `ExpressServices::expressList()` 返回 `id,name,code,partner_id,partner_key,net,account,key,net_name` | 明确不复制凭据泄漏，只返回启用且可见物流公司的 `id/name/code`，按 `sort/id` 稳定排序 |
+| `GET /api/admin/order/split_cart_info/:id` | 普通订单读取 `split_status IN(0,1)`；`pid=-1` 主单转向一个待发货平台子单；旧 `cart_num=0` 回退商品快照 | 正整数 ID 最大 32 位 PostgreSQL integer；订单和子单均追加双软删除过滤，主单存在多个待发货子单时拒绝猜测；只读 `split_surplus_num>0` 的可拆行，保留旧数量回退，畸形 JSON 返回 `cart_info:null` |
+
+旧 PHP 的 `export_all` 把合作方 ID、key、网点和账号直接放进移动 Admin 响应；这不是前端渲染所需字段，因此候选使用显式 allowlist，是有证据的安全收紧而非漏迁。PHP 对全拆主单只取任意第一个符合条件的子单，且订单/子单读取不统一排除双软删除；候选要求唯一待发货平台子单并过滤删除行，避免在脏数据上把后续发货指向错误子单。候选仍保留 PHP 对旧商品快照的 `cart_num` 回退，但 JSON 损坏只影响该条快照投影，不扩大为 500 或返回未解析正文。
+
+### Admin 权限、数据库与副作用边界
+
+- 五条精确路由全部挂在既有 `adminAuthMiddleware` 后，`AdminPermissionService` 对 `GET /api/admin/order/*` 要求 `order.view`；普通用户 token、失效/删除管理员、密码摘要变化和无角色权限均不能因为路径含 `/admin` 自动获得访问。控制器统一设置 `Cache-Control: private, no-store, max-age=0`。
+- 所有 SQL 由 Drizzle 参数绑定；订单号、整数 ID、页码和每页数量先做严格语法、范围校验，目录与拆单排序稳定。服务源码没有 `insert/update/delete`，没有事务写锁、DDL、Queue、Durable Object、R2、支付/退款/面单或配送 provider 调用。
+- 发件人姓名、电话、地址和收件信息只在已认证且具有 `order.view` 的私有响应中出现；物流目录不再返回 `partner_key/key/account`。配置读取直接经过容器内 PostgreSQL DAO，符合用户“直接使用生产数据库”的运行时方向，但新代码尚未部署，不能把绑定声明写成接口已在生产执行。
+- 剩余 `GET export_temp` 会同步调用电子面单模板 provider，故刻意未混入本批；`delivery/keep`、`split_delivery`、改价、备注和核销也会写业务状态，必须先绑定既有行锁状态机、任务/outbox、动作级 ACL、审计和幂等，不能由这批只读证明覆盖。
+
+### 生产证据、验证、提交与更新后缺口
+
+用户已要求直接使用生产数据库，`wrangler.toml` 和 minify dry-run 都精确绑定生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有新增 SQLite、影子 PostgreSQL 或第二套业务库。已部署 Worker 的 `/api/site_config` 只读探针继续返回业务状态 200，证明现网版本仍能经既有绑定读取生产配置；探针没有打印配置值。现网 `/api/logistics` 返回 HTTP 200 内业务状态 404，进一步说明候选路由没有随本批提交自动发布。五条新路由需要真实受限 Admin 身份且尚未部署，因此本批没有伪造生产正向 E2E，也没有对生产执行 DML、DDL、provider 调用或发布。仓库候选仍为 248 表，生产仍为 247 表，唯一已知候选差异仍是 ADMIN-D 的 `admin_user_write_replay`，与本批无关。
+
+路由基线在 ADMIN-A-STAT 后为 PHP 1,904、TS 1,472、精确 770、可执行 752。本批净增五条精确可执行合同后为 TS 1,477、精确 775、可执行 757、明确不可用 18、原始缺失 1,129、证据化退役 4、可执行缺口 1,125，精确/可执行/退役后有效覆盖为 `40.7%/39.8%/39.8%`。`/api` 为 PHP 457、TS 786、精确 393、可执行 390、明确不可用 3、原始缺失 64、退役 1、可执行缺口 63，对应 `86.0%/85.3%/85.5%`；其他路由面未改变。静态匹配仍不证明运行时数据、权限或状态机等价。
+
+新增定向测试 1 文件 6/6；与 ADMIN-A-STAT 合并定向 2 文件 12/12。覆盖严格订单号/整数/分页、旧快照回退与损坏 JSON、已支付订单映射、直接数据库配置规范化、五个真实响应 envelope/no-store、五条精确路由、`order.view` ACL、双软删除/启用过滤、物流凭据排除和服务无写操作。完整本地门禁为双 TypeScript、171 文件/1,070 项单元测试、observability 14 信号/10 域/27 必需事件/372 个生产源文件/6 个发布阻塞、schema source201/target248/shared201/sourceGaps0/external248/embedded248/零定义漂移、官方 npm 生产依赖漏洞 0 和 `git diff --check`。Windows workerd 仍有既有 `0xc0000005` 启动缺陷；minify dry-run 成功为 3,299.37 KiB/gzip 783.23 KiB并回显精确生产 Hyperdrive，未部署。
+
+实现提交 `759664f07a11482e83a56762cc395e063de3d868` 已推送至 `main`。[GitHub Actions 33455883848](https://github.com/cinagroup/cinashop/actions/runs/33455883848) 最终 8/8 jobs 成功：Linux Worker 综合任务通过生产依赖审计、双 TypeScript、171 文件/1,070 项单测、observability、201/248/201/零定义漂移和 1,904/1,477/775/757 路由门禁；受支持的 workerd runtime、Admin、PC、Supplier、Kefu、UniApp 和 checksum-pinned 全历史 Gitleaks 全部成功。CI 不持有生产 Secret、不访问 Hyperdrive，也不部署 Worker/Pages。Cloudflare Workers 最佳实践审查直接影响了显式 ACL、私有不缓存、参数化有界读取、敏感字段 allowlist、无请求外副作用和“绑定/构建/部署/生产 E2E”证据分层。
+
+ADMIN-A 现在是 10/32，父项继续未完成，剩余 22 条形成当前可执行 checklist：
+
+- 履约写/provider 7 条：`POST delivery/keep/:id`、`POST price`、`POST remark`、`GET export_temp`、`PUT split_delivery/:id`、`POST order_verific`、`POST wirteoff/records/:id`。
+- 退款/资金 4 条：`POST offline`、`POST refund`、`POST refund_agree/:id`、`POST open/refund/:id`。
+- 代客下单 11 条：`GET cart/:uid`、`POST cart/add/:uid`、`DELETE cart/del/:uid`、`POST cart/num/:uid`、`GET place/list`、`GET confirm/:uid`、`POST computed/:key/:uid`、`GET coupons/:uid`、`POST create/:key/:uid`、`POST pay/:uid`、`GET pay/status`。
+
+下一批优先审计并接入能够复用现有本地履约状态机的发货/拆单和低风险备注动作；电子面单模板保留 provider 失败分类/限时限长，退款/线下支付继续依赖 CORE-002 账本和回放围栏，代客下单必须新增显式代客权限并把 Admin、目标 UID、报价、库存、优惠券和支付主体全链路绑定。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
