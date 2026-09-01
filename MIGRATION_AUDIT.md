@@ -3446,11 +3446,11 @@ Dada 状态图显式覆盖当前 `1/8/2/100/3/9/4/10/6/5/1000` 和 UNKNOWN；UU 
 
 ### 工程证据、生产门禁与未完成项
 
-定向附件测试现为 1 文件/12 项、完整单元为 183 文件/1,179 项，全部通过；覆盖 MP4 魔数、HTTPS/私网外链拒绝、视频与临时对象 cleanup key、4 条新增路由、7 条退役清单、multipart 上限、Range 接线和生产审计只读静态门禁，双 TypeScript 也已通过。主 Worker minify dry-run 为 3,625.02 KiB/gzip 851.02 KiB，精确解析 Hyperdrive、Queue、KV、R2、Images 与四个 Durable Object 后 0 退出；专用审计 Worker dry-run 为 737.33/125.09 KiB，只有指定 Hyperdrive 与 `cinashop-assets` 两个只读 binding。Wrangler 仍因沙箱不能写用户级日志目录打印 EPERM，但 dry-run 进程均成功。Windows runtime 与历史一致，在加载任何断言前以 `0xc0000005` 失败，不能把新增 R2 拼接/Range 测试记作本地 runtime 通过；必须由推送后的 Linux Actions 执行。
+定向附件测试现为 1 文件/12 项、完整单元为 183 文件/1,179 项，全部通过；覆盖 MP4 魔数、HTTPS/私网外链拒绝、视频与临时对象 cleanup key、4 条新增路由、7 条退役清单、multipart 上限、Range 接线和生产审计只读静态门禁，双 TypeScript 也已通过。主 Worker minify dry-run 为 3,625.02 KiB/gzip 851.02 KiB，精确解析 Hyperdrive、Queue、KV、R2、Images 与四个 Durable Object 后 0 退出；专用审计 Worker dry-run 为 737.33/125.09 KiB，只有指定 Hyperdrive 与 `cinashop-assets` 两个只读 binding。Wrangler 仍因沙箱不能写用户级日志目录打印 EPERM，但 dry-run 进程均成功。Windows runtime 与历史一致，在加载任何断言前以 `0xc0000005` 失败；候选提交 `1121c52` 推送后，首轮 Actions `33524207599` 的 Worker、五端和 Linux workerd 均成功，唯一失败是 Gitleaks 把非秘密 R2 前缀字面量误报为 generic API key。门禁提交 `d8afeaf` 用“规则名 + 精确历史文件 + 精确历史行”最窄 allowlist 修正并把当前前缀改为分段构造；最终 [Actions `33524822780`](https://github.com/cinagroup/cinashop/actions/runs/33524822780) 8/8 成功，Linux workerd 1 文件/15 项（含新增固定长度 R2 拼接和 Range）全部通过，全历史 Gitleaks、生产依赖 0 漏洞、183/1,179 单元、17 信号/10 组件/53 必需事件、201/262/201/零结构漂移及 1,904/1,510/806/788/11/1,087 路由门禁均通过。
 
 生产审计夹具已固定 `SET TRANSACTION READ ONLY`、`search_path=public` 和 15 秒超时，只输出 Supplier 附件/分类数量、租户/分类孤儿、canonical/R2 键格式与重复计数；R2 只使用 list/head，最多扫描 10,000 对象且不返回对象键、文件名、URL、Supplier ID 或其他 PII。临时 Worker使用随机 256-bit token 的 SHA-256 verifier，runner 在响应后删除并复探 404。实际执行仍被安全审查拒绝：尽管用户已授权直接读生产数据库，随机令牌保护的临时 `workers.dev` 地址仍会承载脱敏生产聚合，系统要求对这一外部临时端点及其载荷再次明确授权。本轮没有绕过门禁、没有读取该批生产结果、没有部署主 Worker、没有写 PostgreSQL 或 R2。
 
-所以 SUP-003 当前只能判定为“候选路由、R2 视频实现、退役决策和本地静态/单元门禁完成”。父项保持未完成，剩余顺序为：用户明确批准临时外部审计端点后执行生产 PostgreSQL/R2 只读核验并确认删除；Linux CI 运行真实 workerd 拼接/Range；迁移 Supplier TypeScript 前端并用真实账号验证图片/视频上传、暂停/失败/过期、分类与跨租户拒绝；取得源 MySQL 和附件目录后对账行数、对象 size/mime/hash 与 legacy URL；最后单独批准主 Worker/Supplier 发布并观察 Hyperdrive、R2、Queue cleanup、签名 404/206 和上传失败率。
+所以 SUP-003 当前只能判定为“候选路由、R2 视频实现、退役决策以及静态、单元和 Linux runtime 门禁完成”。父项保持未完成，剩余顺序为：用户明确批准临时外部审计端点后执行生产 PostgreSQL/R2 只读核验并确认删除；迁移 Supplier TypeScript 前端并用真实账号验证图片/视频上传、暂停/失败/过期、分类与跨租户拒绝；取得源 MySQL 和附件目录后对账行数、对象 size/mime/hash 与 legacy URL；最后单独批准主 Worker/Supplier 发布并观察 Hyperdrive、R2、Queue cleanup、签名 404/206 和上传失败率。
 
 ## 完成定义
 
