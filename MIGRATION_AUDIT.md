@@ -3336,6 +3336,42 @@ PHP 的 `ANY /api/wechat/serve` 和 `ANY /api/wechat/miniServe` 会把公众号/
 
 生产没有 `KUAIDI100_CALLBACK_SALT`、可用快递100企业版调试凭据、真实 provider task/callback 样本或已部署的候选入口；官方调试页的浏览器自动化又在本机浏览器运行时初始化前失败。本轮只有官方文档样例、真实 PostgreSQL 隔离证据和正式空结构，不能声称真实快递100回调已通过。CORE-001-F 可按“候选代码、生产空结构、隔离状态机和 Linux 门禁”闭合，但主 `cinashop-api` 未部署，三张空表不会自行接收事件。真实下单时设置相同 salt/callback URL、provider 正向/重复/乱序/改派、旧端 E2E、发布批准和发布后观察继续属于 CORE-001-H；按 checklist 顺序的下一未完成项是 CORE-001-G 同城配送回调。
 
+## CORE-001-G 同城配送回调详细审计（达达候选与生产空结构完成，UU 待合同，2026-09-01）
+
+### PHP 权威行为、真实缺口与迁移边界
+
+PHP 在 `route/api.php:25` 把 `ANY /api/city_delivery/notify` 直接交给 `v1.CityDelivery/notify`。控制器读取全部 request 参数，没有方法、content type、provider 身份、token、签名、时间窗或重放校验；service 还把完整 callback（含骑手姓名、电话、取消原因）写入日志。最外层捕获任何异常后只返回布尔值，既没有稳定 provider ACK 合同，也无法区分验签失败、持久化失败和业务冲突。
+
+旧 service 靠字段形状猜 provider：有 `order_status` 就当达达，有 `state` 就当 UU。达达状态只处理 `1/2/3/4/5/9/10/100`，其中 1 单独补 finish code，5 映射为 -1；UU 把 `3/4/5/10/-1` 映射为 `2/100/3/4/-1`。两者最后都只用主订单 `status != callback status` 判断是否执行，但主订单状态和配送状态并非同一状态空间；没有 provider event key、事件账本、乱序时间水位、并发串行或主动查单。因而重复事件可能重复写轨迹，旧事件可能覆盖较新配送状态，取件后迟到取消仍能把主订单退回，完成与取消竞争也没有明确胜负规则。完成分支异步派发收货任务，取消分支会重置主订单并清空配送字段，这些副作用更不能继续放在零验签 HTTP 链内。
+
+[京东秒送（达达）当前开放平台](https://newopen.imdada.cn/) 的 callback 校验值是把 `client_id/order_id/update_time` 三个值按字典序拼接后计算小写 MD5。该算法没有共享密钥，最多发现传输/拼装错误，不能证明请求来自 provider。候选实现因此不把 `signature` 伪装成认证：兼容路由仍注册为 ANY，但运行时只接受 `POST application/json`、32 KiB 以内 UTF-8 body，以及精确且唯一的 `provider=dada&token=<高熵随机值>`；再执行 callback token 常量时间比较、预期 `DADA_CLIENT_ID` 常量时间比较和官方 checksum 校验。token、signature、原始 body 和完整 provider 扩展字段均不落库。
+
+[UU 跑腿开放平台](https://open.uupt.com/) 及其[回调与上线说明](https://open.uupt.com/development/guide/callbackLive)公开了 JSON POST 和成功响应形状，但没有公开当前 callback 验签算法、签名字段、时间窗或重试策略。没有商户测试账号和当前后台合同前，无法证明旧 PHP 的 `state/origin_id/order_code` 形状仍是权威输入。候选入口因此对 `provider=uu` 明确返回 503 并记录低基数 unavailable 事件；不猜测算法、不复用 Dada token，也不允许 UU 数据进入 Dada 账本。CORE-001-G 父项必须保持未完成，直到独立 UU adapter 有真实合同和测试证据。
+
+### 达达接收账本、单调投影与主动对账
+
+`city_delivery_callback_event/outbox/watermark/reconciliation_case` 分别保存验签后的最小事件证据、Queue 投递状态、provider subject 单调水位和主动查单计划。event/replay、provider+subject 和 delivery order 都有唯一围栏；接收事务按 event key 使用 advisory transaction lock，事件与 outbox 同一短事务提交后才返回成功。Queue 只携带 `{action,outboxId,eventId,replayKey}`，投递与处理都使用租约、`SKIP LOCKED`、有界退避和最多 8 次 DEAD，Cron 根任务同时恢复 outbox 并播种/处理对账案件；DLQ 只重放原 opaque 引用。真实 Dada HTTP 查单固定为 HTTPS 官方地址、8 秒超时和 32 KiB 响应上限，使用独立 app key/secret/source/client 配置；所有 provider I/O 都在 PostgreSQL 事务之外。
+
+状态图显式覆盖当前 `1/8/2/100/3/9/4/10/6/5/1000` 和 UNKNOWN，以 provider update time、rank、terminal 和 source 决定 apply/noop/superseded/conflict/ignored。重复 event 原子收敛；旧 callback 不回退；同时间不同状态冲突；配送中后取消冲突；已完成订单重复送达为幂等 no-op；完成复用共享 `completeOrderReceipt`，而取件前取消才允许把主订单恢复为待发货。UNKNOWN 不投影业务表，但保留 subject 时间水位并进入主动查询。订单必须按 `station_type=1 + provider order_id` 唯一匹配、已支付且未删除，歧义、未支付或不兼容订单状态全部失败关闭。
+
+持久 JSON 只含 protocol、repeat reason type 和 cancel source；provider order/status/time 等是有界结构列。骑手姓名、电话、finish code 和取消文本仅作为待处理桥接列存在，终态（成功、忽略、冲突或 DEAD）全部清空；日志、Queue、reconciliation case 和 operational event 不携带这些 PII。可观测性新增拒绝、持久化、投递、投影、对账、冲突和 DEAD 等低基数事件；UU unavailable 与 Dada 验证失败可被区分，但任何密钥、签名、order id、手机号或 body 都不会进入事件字段。
+
+实现过程中真实 PostgreSQL 还暴露了两个静态夹具不易发现的边界。第一，postgres.js `begin()` 的事务参数必须包含标准 `ISOLATION LEVEL`，否则只读基线在解析时失败；现已使用 `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY`。第二，Hyperdrive 不能只靠连接启动参数保证随机 schema 的 `search_path`；`seedReconciliation` 与对账前配送单读取原本直接使用连接，隔离测试可能解析到 public。候选现把候选扫描、幂等插入和 provider I/O 前的配送单读取分别收进短 `withTx`，由事务级 `SET LOCAL search_path` 明确限定 schema；真正的 provider 网络调用仍在事务之外。队列故障夹具也按真实 30 秒退避推进到到期后再重试，没有把“立即重试”误当实现合同。
+
+### 生产 Hyperdrive 门禁与正式 DDL
+
+按用户“直接使用生产数据库”的明确授权，一次性随机 bearer 保护的临时 Worker 只绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有主站 route、Queue、KV、R2 或 Durable Object。首次只读基线确认 PostgreSQL `16.14 (Ubuntu 16.14-0ubuntu0.24.04.1)`；`store_delivery_order` 总数、Dada、UU、活跃 Dada/UU、provider order 重复组和订单孤儿全部为 0，六个 Dada/UU 旧配置键的非空/重复计数均为 0；四张目标表不存在，`codex_city_delivery_*` 临时 schema 为 0。审计只返回聚合和结构计数，没有返回连接串、配置值、订单号、用户或地址。
+
+生产 DDL 前，随机 `codex_city_delivery_*` schema 复刻真实 `store_order/store_delivery_order/store_order_status` 结构并运行真实 service。生产建表后又按当前代码重跑，最终 16/16 断言覆盖：DDL 二次幂等、重复 event 收敛、活动状态单调推进、旧回调 superseded、取件后普通取消 conflict、取件前取消重置、官方 `9→10` 妥投异常返还完成、已完成订单幂等、未知状态隔离、主动查询同状态不重复写轨迹、Queue 首次失败后持久恢复、PII 终态清除、subject watermark 唯一和活跃配送对账播种。结构证据连续两次均为 4 表、64 列、25 个已验证约束、19 个 valid/ready 索引、6 个部分索引、10 个唯一索引、4 个 `ON DELETE RESTRICT` 外键；场景结束后随机 schema 删除，生产业务表逐行 JSON 指纹完全不变。迁移后重跑还发现 DDL 自校验曾只按外键名统计，public 与随机 schema 同时存在时会把 4 个外键数成 8；现已把计数限定到当前 schema 的四张目标表，并再次在随机 schema 与 public 各连续执行两次通过。
+
+首轮 15/15 门禁通过后，才把同一内嵌 DDL 应用到生产 public，并立即二次执行验证幂等；随后官方状态复核与迁移后隔离重跑扩展为当前 16/16，再用修正后的 DDL 对 public 连续执行两次自校验。正式结果为从 0 创建 4 张空表，结构计数与隔离证据精确一致，目标总行数 0，`sdo_dada_reconcile_scan` valid/ready；`businessDml=false`，迁移前后 `store_order/store_delivery_order/store_order_status/system_config` 全量行指纹一致。终态只读复验仍为同城配送/Dada/UU 业务行 0、重复/孤儿 0、临时 schema 0。临时 Worker 已删除，workers.dev URL 复探为 404；主 `cinashop-api` 没有部署。
+
+### 当前工程证据与剩余 checklist
+
+当前本地完整单元测试为 181 文件/1,155 项全部通过，新增同城配送定向测试精确覆盖官方 `9→10`；双 TypeScript、observability 17 信号/10 域/53 必需事件/402 个生产源文件、schema source201/target262/shared201/sourceGaps0/external262/embedded262/零定义漂移、路由 PHP1,904/TS1,506/精确802/可执行784/缺失1,102/可执行缺口1,098、官方 npm registry 生产依赖 0 漏洞和 `git diff --check` 已通过。主 Worker dry-run 为 6,220.78 KiB/gzip 1,137.19 KiB，精确解析 Hyperdrive、Queue、KV、R2 和四个 Durable Object 后退出，没有部署。Windows 本机 workerd 仍在 0 条测试前以环境级 `0xc0000005` 启动失败，不能把它记成运行时通过；应由下一次 Linux Actions 补齐真实 workerd 和全量构建证据。候选尚未提交或推送，主 Worker也没有本批所需 `DADA_CALLBACK_TOKEN/DADA_CLIENT_ID/DADA_APP_KEY/DADA_APP_SECRET/DADA_SOURCE_ID`。
+
+因此 CORE-001-G1 可按“达达候选代码、生产空结构和真实 PostgreSQL 隔离状态机完成”勾选；CORE-001-G2 与父项保持未完成。下一步外部门禁是取得 UU 当前商户合同/样例及测试租户，并在 CORE-001-H 配置真实 Dada/UU Secret 和 callback URL，完成正向、重复、乱序、取消/完成竞争、主动查单、旧端 E2E、预发、明确发布批准和发布后观察。四张空表本身不会接收回调，也不代表任何同城配送渠道已启用。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

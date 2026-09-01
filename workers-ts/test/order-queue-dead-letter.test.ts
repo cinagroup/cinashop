@@ -68,6 +68,32 @@ describe("order Queue dead-letter operations", () => {
       scheduledAt: 1_788_048_000_000,
     }).replayPolicy).toBe("ALLOW");
 
+    const replayKey = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
+    expect(prepareOrderQueueDeadLetter({
+      action: "processMerchantShipmentCallbackOutbox",
+      outboxId: 23,
+      eventId: 29,
+      replayKey,
+    })).toMatchObject({
+      messageType: "processMerchantShipmentCallbackOutbox",
+      replayPolicy: "ALLOW",
+      replayMessage: { action: "processMerchantShipmentCallbackOutbox", replayKey },
+    });
+    expect(prepareOrderQueueDeadLetter({
+      action: "processCityDeliveryCallbackOutbox",
+      outboxId: 31,
+      eventId: 37,
+      replayKey,
+    })).toMatchObject({
+      messageType: "processCityDeliveryCallbackOutbox",
+      replayPolicy: "ALLOW",
+      replayMessage: { action: "processCityDeliveryCallbackOutbox", replayKey },
+    });
+    expect(prepareOrderQueueDeadLetter({
+      action: "dispatchCityDeliveryCallbacks",
+      scheduledAt: 1_788_048_000_000,
+    }).replayPolicy).toBe("ALLOW");
+
     const legacy = prepareOrderQueueDeadLetter({
       action: "compute",
       orderId: "wx-42",

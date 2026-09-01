@@ -22,6 +22,7 @@ import { PAYMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/paymentCallbackPipel
 import { PAYMENT_RECONCILIATION_SQL } from "@/migrations/paymentReconciliation";
 import { WECHAT_CALLBACK_PIPELINE_SQL } from "@/migrations/wechatCallbackPipeline";
 import { MERCHANT_SHIPMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/merchantShipmentCallbackPipeline";
+import { CITY_DELIVERY_CALLBACK_PIPELINE_SQL } from "@/migrations/cityDeliveryCallbackPipeline";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -191,6 +192,11 @@ export class MigrationService {
     return this.migration_0129();
   }
 
+  /** Exact Dada callback inbox/outbox/watermark and active-query DDL. */
+  cityDeliveryCallbackPipelineMigrationSqlForVerification(): string {
+    return this.migration_0130();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -328,6 +334,7 @@ export class MigrationService {
       this.migration_0127(),
       this.migration_0128(),
       this.migration_0129(),
+      this.migration_0130(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8275,5 +8282,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0129(): string {
     return MERCHANT_SHIPMENT_CALLBACK_PIPELINE_SQL;
+  }
+
+  private migration_0130(): string {
+    return CITY_DELIVERY_CALLBACK_PIPELINE_SQL;
   }
 }

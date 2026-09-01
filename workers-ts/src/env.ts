@@ -52,6 +52,14 @@ export interface Env extends WorkerBindings {
   CRMEB_ONEPASS_SECRET_KEY?: string;
   /** Kuaidi100 callback salt passed on every direct merchant-shipment order. */
   KUAIDI100_CALLBACK_SALT?: string;
+  /** Unguessable Dada callback URL token; required because Dada's checksum is unkeyed. */
+  DADA_CALLBACK_TOKEN?: string;
+  /** Exact Dada callback client_id assigned to this production integration. */
+  DADA_CLIENT_ID?: string;
+  /** Dada active-query credentials; inject as Worker secrets, never Queue payloads. */
+  DADA_APP_KEY?: string;
+  DADA_APP_SECRET?: string;
+  DADA_SOURCE_ID?: string;
   /** Public Turnstile widget site key. */
   TURNSTILE_SITE_KEY?: string;
   /** Comma-separated hostnames accepted from Siteverify (no schemes or paths). */
@@ -323,6 +331,20 @@ export interface MerchantShipmentCallbackDispatchMessage {
   scheduledAt: number;
 }
 
+/** Verified same-city delivery data remains in PostgreSQL; Queue receives opaque keys only. */
+export interface CityDeliveryCallbackOutboxMessage {
+  action: "processCityDeliveryCallbackOutbox";
+  outboxId: number;
+  eventId: number;
+  replayKey: string;
+}
+
+/** Cron root for callback outbox recovery and Dada active-query reconciliation. */
+export interface CityDeliveryCallbackDispatchMessage {
+  action: "dispatchCityDeliveryCallbacks";
+  scheduledAt: number;
+}
+
 /** One active provider query; provider evidence and order data stay in PostgreSQL. */
 export interface PaymentReconciliationMessage {
   action: "processPaymentReconciliation";
@@ -360,6 +382,8 @@ export type OrderMessage =
   | WechatCallbackDispatchMessage
   | MerchantShipmentCallbackOutboxMessage
   | MerchantShipmentCallbackDispatchMessage
+  | CityDeliveryCallbackOutboxMessage
+  | CityDeliveryCallbackDispatchMessage
   | PaymentReconciliationMessage
   | PaymentReconciliationDispatchMessage
   | LegacyOrderMessage;

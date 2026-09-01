@@ -57,7 +57,7 @@ describe("Worker runtime bindings", () => {
     await expect(testEnv.ASSETS_BUCKET.get(key)).resolves.toBeNull();
   });
 
-  it("turns a non-reminder Cron event into seventeen replayable root Queue jobs without touching PostgreSQL", async () => {
+  it("turns a non-reminder Cron event into eighteen replayable root Queue jobs without touching PostgreSQL", async () => {
     const scheduledTime = new Date("2026-08-09T12:00:00.000Z");
     const controller = createScheduledController({
       scheduledTime,
@@ -78,13 +78,14 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(17);
+    expect(messages).toHaveLength(18);
     expect(messages.filter((message) => message.action === "runScheduledMaintenance"))
       .toHaveLength(11);
     expect(messages.map((message) => message.action).sort()).toEqual([
       "dispatchPaymentCallbackOutbox",
       "dispatchPaymentReconciliation",
       "dispatchMerchantShipmentCallbackOutbox",
+      "dispatchCityDeliveryCallbacks",
       "dispatchWechatCallbackOutbox",
       "dispatchWorkCallbackOutbox",
       "dispatchWorkContactActions",
@@ -112,7 +113,7 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(18);
+    expect(messages).toHaveLength(19);
     expect(messages.filter((message) =>
       message.action === "runScheduledMaintenance" && message.job === "sign_remind_time"
     )).toHaveLength(1);

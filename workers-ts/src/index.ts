@@ -94,6 +94,12 @@ export default {
       MerchantShipmentCallbackService,
     } = await import("./services/shipping/MerchantShipmentCallbackService");
     const {
+      CityDeliveryCallbackService,
+      consumeCityDeliveryCallbackMessage,
+      isCityDeliveryCallbackDispatchMessage,
+      isCityDeliveryCallbackOutboxMessage,
+    } = await import("./services/delivery/CityDeliveryCallbackService");
+    const {
       consumePaymentReconciliationMessage,
       isPaymentReconciliationDispatchMessage,
       isPaymentReconciliationMessage,
@@ -149,6 +155,7 @@ export default {
     const paymentCallbacks = new PaymentCallbackEventService(container, env);
     const wechatCallbacks = new WechatCallbackService(container, env);
     const merchantShipmentCallbacks = new MerchantShipmentCallbackService(container, env);
+    const cityDeliveryCallbacks = new CityDeliveryCallbackService(container, env);
     const paymentReconciliation = new PaymentReconciliationService(container, env);
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
@@ -163,6 +170,60 @@ export default {
 
     for (const msg of batch.messages) {
       const messageStartedAt = Date.now();
+      if (isCityDeliveryCallbackDispatchMessage(msg.body)) {
+        try {
+          const [dispatched, seeded, reconciled] = await Promise.all([
+            cityDeliveryCallbacks.dispatchPending(100),
+            cityDeliveryCallbacks.seedReconciliation(100),
+            cityDeliveryCallbacks.reconcileDue(3),
+          ]);
+          emitOperationalEvent("info", {
+            event: "city_delivery_callback_outbox_dispatched",
+            component: "queue",
+            operation: "city_delivery_callback_dispatch",
+            outcome: "success",
+            resourceCount: dispatched.enqueued + seeded + reconciled.queried + reconciled.resolved,
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+          });
+          if (reconciled.dead > 0) {
+            emitOperationalEvent("error", {
+              event: "city_delivery_reconciliation_attention",
+              component: "waybill",
+              operation: "city_delivery_reconciliation",
+              outcome: "failure",
+              result: "dead",
+              resourceCount: reconciled.dead,
+            });
+          }
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          emitOperationalEvent("error", {
+            event: "city_delivery_callback_dispatch_failed",
+            component: "queue",
+            operation: "city_delivery_callback_dispatch",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            errorCode: operationalErrorCode(error, "city_delivery_callback_dispatch_failed"),
+          });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
+      if (isCityDeliveryCallbackOutboxMessage(msg.body)) {
+        await consumeCityDeliveryCallbackMessage({
+          body: msg.body,
+          attempts: msg.attempts,
+          ack: () => msg.ack(),
+          retry: (options) => msg.retry(options),
+        }, cityDeliveryCallbacks);
+        continue;
+      }
+
       if (isMerchantShipmentCallbackDispatchMessage(msg.body)) {
         try {
           const dispatched = await merchantShipmentCallbacks.dispatchPending(100);
@@ -668,6 +729,10 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
     }),
     env.ORDER_QUEUE.send({
       action: "dispatchMerchantShipmentCallbackOutbox",
+      scheduledAt,
+    }),
+    env.ORDER_QUEUE.send({
+      action: "dispatchCityDeliveryCallbacks",
       scheduledAt,
     }),
     env.ORDER_QUEUE.send({

@@ -77,4 +77,5 @@ export * from "./work_contact_action";
 export * from "./wechat_member_card";
 export * from "./wechat_callback";
 export * from "./merchant_shipment_callback";
+export * from "./city_delivery_callback";
 export * from "./short_video";

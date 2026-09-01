@@ -39,6 +39,14 @@ import {
   isPaymentReconciliationDispatchMessage,
   isPaymentReconciliationMessage,
 } from "@/services/payment/PaymentReconciliationService";
+import {
+  isMerchantShipmentCallbackDispatchMessage,
+  isMerchantShipmentCallbackOutboxMessage,
+} from "@/services/shipping/MerchantShipmentCallbackService";
+import {
+  isCityDeliveryCallbackDispatchMessage,
+  isCityDeliveryCallbackOutboxMessage,
+} from "@/services/delivery/CityDeliveryCallbackService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
@@ -264,6 +272,22 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
     };
   }
   if (isPaymentReconciliationMessage(value) || isPaymentReconciliationDispatchMessage(value)) {
+    return {
+      messageType: value.action,
+      replayPolicy: "ALLOW",
+      body: sanitizeUnknownQueueBody(value),
+      replayMessage: value,
+    };
+  }
+  if (isMerchantShipmentCallbackOutboxMessage(value) || isMerchantShipmentCallbackDispatchMessage(value)) {
+    return {
+      messageType: value.action,
+      replayPolicy: "ALLOW",
+      body: sanitizeUnknownQueueBody(value),
+      replayMessage: value,
+    };
+  }
+  if (isCityDeliveryCallbackOutboxMessage(value) || isCityDeliveryCallbackDispatchMessage(value)) {
     return {
       messageType: value.action,
       replayPolicy: "ALLOW",
