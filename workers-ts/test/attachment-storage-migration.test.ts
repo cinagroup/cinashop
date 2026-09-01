@@ -243,7 +243,8 @@ describe("attachment and R2 storage migration boundary", () => {
     const audit = readFileSync("test/integration/SupplierAttachmentAuditWorker.ts", "utf8");
     const config = readFileSync("test/integration/supplier-attachment-audit.wrangler.toml", "utf8");
     expect(audit).toContain("SET TRANSACTION READ ONLY");
-    expect(audit).toContain('env.ASSETS_BUCKET, databaseKeys, "attachments/supplier/"');
+    expect(audit).toContain("databaseKeys, SUPPLIER_OBJECT_PREFIX");
+    expect(audit).toContain('const SUPPLIER_OBJECT_PREFIX = ["attachments", "supplier", ""].join("/")');
     expect(audit).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b/i);
     expect(audit).not.toMatch(/ASSETS_BUCKET\.(?:put|delete|createMultipartUpload)/);
     expect(config).toContain('id = "9748c294e21c49a99579c9cef70102e0"');

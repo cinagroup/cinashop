@@ -35,3 +35,19 @@ condition = "AND"
 regexTarget = "line"
 paths = ['''^workers-ts/test/payment-callback-event\.test\.ts$''']
 regexes = ['''const replayKey = "018f47a2-763b-4b73-8d6a-615f80b79595";''']
+
+[[allowlists]]
+description = "Historical non-secret Supplier R2 object-prefix call"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/test/integration/SupplierAttachmentAuditWorker\.ts$''']
+regexes = ['''const supplierObjects = await r2Inventory\(env\.ASSETS_BUCKET, databaseKeys, "attachments/supplier/"\);''']
+
+[[allowlists]]
+description = "Historical non-secret Supplier R2 object-prefix assertion"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/test/attachment-storage-migration\.test\.ts$''']
+regexes = ['''expect\(audit\)\.toContain\('env\.ASSETS_BUCKET, databaseKeys, "attachments/supplier/"'\);''']

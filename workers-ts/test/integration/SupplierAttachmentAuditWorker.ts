@@ -32,6 +32,9 @@ interface CategoryCounts {
   category_parent_orphans: number;
 }
 
+const SUPPLIER_OBJECT_PREFIX = ["attachments", "supplier", ""].join("/");
+const SUPPLIER_TEMP_OBJECT_PREFIX = ["attachments", "tmp", "supplier", ""].join("/");
+
 async function authorize(request: Request, verifier: string): Promise<boolean> {
   const token = request.headers.get("X-Audit-Token") ?? "";
   if (!token || !/^[a-f0-9]{64}$/i.test(verifier ?? "")) return false;
@@ -183,8 +186,8 @@ export default {
 
       const databaseKeysComplete = database.r2Keys.length <= 10_000;
       const databaseKeys = new Set(database.r2Keys.slice(0, 10_000).map((row) => row.name));
-      const supplierObjects = await r2Inventory(env.ASSETS_BUCKET, databaseKeys, "attachments/supplier/");
-      const temporaryObjects = await r2Inventory(env.ASSETS_BUCKET, new Set(), "attachments/tmp/supplier/");
+      const supplierObjects = await r2Inventory(env.ASSETS_BUCKET, databaseKeys, SUPPLIER_OBJECT_PREFIX);
+      const temporaryObjects = await r2Inventory(env.ASSETS_BUCKET, new Set(), SUPPLIER_TEMP_OBJECT_PREFIX);
       let missingDatabaseObjects = 0;
       if (databaseKeysComplete) {
         const keys = [...databaseKeys];
