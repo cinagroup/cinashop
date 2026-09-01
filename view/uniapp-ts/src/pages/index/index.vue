@@ -22,6 +22,13 @@
       </view>
     </view>
 
+    <view v-if="diyLoading && !diyPage" class="diy-state">正在加载首页…</view>
+    <view v-else-if="diyPage" class="diy-home" :style="diyStyle">
+      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" />
+      <view v-else class="diy-state">首页暂未开放</view>
+    </view>
+
+    <view v-else class="fallback-home">
     <!-- Logo -->
     <view class="logo-wrap">
       <image src="/static/logo.png" class="logo-img" mode="aspectFit" />
@@ -92,6 +99,9 @@
     </view>
 
     <view v-if="!goods.length && !loading" class="empty">暂无商品</view>
+    </view>
+
+    <DiySuspendedNavigation />
   </view>
 </template>
 
@@ -101,10 +111,17 @@ import { onPullDownRefresh } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
 import { apiOpenAdv, type OpenAdvConfig } from "@/api/legacyContent";
+import type { DiyPage } from "@/api/diy";
+import DiyHomeRenderer from "@/components/diy/DiyHomeRenderer.vue";
+import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
+import { diyPageStyle, isDiyEnabled, loadDiyPage } from "@/utils/diy";
 
 const goods = ref<GoodsItem[]>([]);
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
+const diyLoading = ref(true);
+const diyPage = ref<DiyPage | null>(null);
+const diyStyle = computed(() => diyPageStyle(diyPage.value));
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 const showOpenAdv = ref(false);
 const openAdv = ref<OpenAdvConfig>({
@@ -138,6 +155,19 @@ async function load() {
     console.error("首页加载失败", e);
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadDiy(force = false) {
+  diyLoading.value = true;
+  try {
+    diyPage.value = await loadDiyPage(0, force);
+    if (diyPage.value?.title) uni.setNavigationBarTitle({ title: diyPage.value.title });
+  } catch (error) {
+    console.error("DIY 首页加载失败", error);
+    diyPage.value = null;
+  } finally {
+    diyLoading.value = false;
   }
 }
 
@@ -214,12 +244,13 @@ function goDetail(id: number) {
 }
 
 onPullDownRefresh(async () => {
-  await load();
+  await Promise.all([load(), loadDiy(true)]);
   uni.stopPullDownRefresh();
 });
 
 onMounted(() => {
   void load();
+  void loadDiy();
   void loadOpenAdv();
 });
 
@@ -228,7 +259,23 @@ onBeforeUnmount(closeOpenAdv);
 
 <style scoped>
 .home {
+  min-height: 100vh;
+}
+
+.fallback-home {
   padding: 20rpx;
+}
+
+.diy-home {
+  min-height: 100vh;
+  padding: 1rpx 0 40rpx;
+  box-sizing: border-box;
+}
+
+.diy-state {
+  padding: 160rpx 24rpx;
+  color: #999;
+  text-align: center;
 }
 
 .open-adv-mask {

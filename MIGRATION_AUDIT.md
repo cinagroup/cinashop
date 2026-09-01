@@ -144,7 +144,11 @@ PHP 支付后赠券按券模板 ID 去重，即同一订单购买多个关联同
 
 ### 当前判定
 
-DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和目标 PostgreSQL 隔离场景已收口，但父项仍不能完成：生产 DIY、视频、新人和促销内容为空，15/21 配置缺失且 3 键重复；新 UniApp 还没有类型化 client、allowlist renderer、版本缓存、微页面、首页组件和全局悬浮导航；R2 缩略图策略、旧端真实 token E2E、预发、影子流量、主 Worker/Pages 发布均未完成。下一代码批进入 PUBLIC-ARTICLE 7 条，数据与发布门禁继续独立跟踪。
+DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和目标 PostgreSQL 隔离场景已收口。新 UniApp 第一前端子批也已恢复 8 条类型化 client、版本缓存、严格 allowlist renderer、首页回退、正整数 ID 微页面、21 类低/中耦合组件，以及首页和微页面的悬浮导航；正文复用既有 HTML sanitizer，不使用 `v-html`，数据库颜色、图片和链接均先归一并失败关闭。首页在生产无默认 DIY 或 API 未发布时保留原静态首页，不会把空内容渲染成白屏。
+
+本子批以隔离 mock API 做了浏览器渲染验收：桌面首页和 390×844 微页面均显示搜索、菜单、轮播、商品、文章、三榜、新人、签到、匿名用户、视频和客服等组合；页面宽度为 390px、无横向溢出；无效微页面 ID 显示受控失败态；点击搜索后到达现有搜索页。干净页面没有应用级 console error，只有 UniApp 打包依赖的 Vue Router 弃用警告。定向 DIY 前端/服务端合同测试、UniApp 类型检查及 H5/微信小程序生产构建通过。该验收使用确定性 mock 数据，因为主 Worker 尚未发布候选路由且生产 `system_dise/video/store_newcomer/store_promotions` 为空，不能冒充真实线上数据或登录态 E2E。
+
+父项仍不能完成：`bargain/combination/coupon/liveBroadcast/news/promotionList/seckill/presale/pointsMall/hotspot/follow/activeParty` 12 类高耦合组件尚未接入；悬浮导航只覆盖首页和微页面，尚非所有旧目的页面的全局挂载；PC 是否消费同一 DIY 未决。生产仍有 15/21 配置缺失及 3 键重复，R2 缩略图等价策略、真实 token、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察均未完成。后续代码批可以逐个关闭 12 类组件，但数据与发布门禁继续独立跟踪。
 
 ## PUBLIC-ARTICLE 迁移审计（2026-08-30）
 

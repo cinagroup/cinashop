@@ -8,9 +8,14 @@ import type { PageResult } from "@/types/api";
 export interface GoodsListParams {
   keyword?: string;
   cid?: number;
+  /** Legacy DIY fixed-product selection. */
+  ids?: string;
+  /** Legacy DIY multi-category selection. */
+  cate_id?: string;
   brand_id?: string;
   priceOrder?: "asc" | "desc";
   salesOrder?: "asc" | "desc";
+  news?: number;
   page?: number;
   limit?: number;
 }

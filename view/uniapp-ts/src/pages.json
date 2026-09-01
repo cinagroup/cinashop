@@ -63,6 +63,13 @@
       }
     },
     {
+      "path": "pages/diy/detail",
+      "style": {
+        "navigationBarTitleText": "专题页",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
       "path": "pages/auth/login",
       "style": {
         "navigationBarTitleText": "登录"
