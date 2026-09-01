@@ -22,6 +22,7 @@ import {
   parseMobileOrderPeriod,
   parseProductRankingSort,
 } from "@/services/admin/AdminStatisticService";
+import { AdminMobileOrderReadService } from "@/services/admin/AdminMobileOrderReadService";
 import {
   AdminExtendedStatisticService,
   parseAdminStatisticChannel,
@@ -86,6 +87,10 @@ function privateAdminResponse(c: C): void {
   c.header("Cache-Control", "private, no-store, max-age=0");
 }
 
+function mobileOrderReadService(c: C): AdminMobileOrderReadService {
+  return new AdminMobileOrderReadService(c.get("container"));
+}
+
 /** GET /api/admin/order/statistics — embedded admin order counters/cards. */
 export async function adminMobileOrderStatistics(c: C) {
   privateAdminResponse(c);
@@ -117,6 +122,36 @@ export async function adminMobileOrderTimeChart(c: C) {
   privateAdminResponse(c);
   const period = parseMobileOrderPeriod(c.req.query("type"));
   return jsonOk(c, await statisticService(c).mobileOrderTimeChart(period));
+}
+
+/** GET /api/admin/order/delivery/gain/:orderId — paid-order shipping summary. */
+export async function adminMobileOrderDeliveryGain(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileOrderReadService(c).deliveryGain(c.req.param("orderId")));
+}
+
+/** GET /api/admin/order/delivery — active platform delivery agents. */
+export async function adminMobileOrderDeliveryAgents(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileOrderReadService(c).deliveryAgents(c.req.query()));
+}
+
+/** GET /api/admin/order/delivery_info — direct database-backed sender defaults. */
+export async function adminMobileOrderDeliveryInfo(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileOrderReadService(c).deliveryConfig());
+}
+
+/** GET /api/admin/order/export_all — safe carrier catalog without credentials. */
+export async function adminMobileOrderExpressList(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileOrderReadService(c).expressList());
+}
+
+/** GET /api/admin/order/split_cart_info/:id — remaining splittable cart snapshots. */
+export async function adminMobileOrderSplitCartInfo(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileOrderReadService(c).splitCartInfo(c.req.param("id")));
 }
 
 /** GET /adminapi/statistic/order/get_basic — PHP 订单统计基础卡片。 */
