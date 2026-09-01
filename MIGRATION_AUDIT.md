@@ -3300,6 +3300,40 @@ PHP 的 `ANY /api/wechat/serve` 和 `ANY /api/wechat/miniServe` 会把公众号/
 
 主 Worker 当前 Secret 名单仍只有 `APP_KEY/DEBUG/INTERNAL_CHAT_TOKEN/OPERATIONS_TOKEN/UPSTASH_REDIS_TOKEN/UPSTASH_REDIS_URL`，没有 `WECHAT_OFFICIAL_CALLBACK_TOKEN/WECHAT_OFFICIAL_CALLBACK_AES_KEY/WECHAT_MINI_CALLBACK_TOKEN/WECHAT_MINI_CALLBACK_AES_KEY`；数据库也没有对应 AppID 或可供真实验收的微信身份/二维码/卡券/消息数据。因此 CORE-001-D 可以按“候选代码、生产空结构、随机 schema 状态机、Linux 门禁完成”勾选，但不能解释为真实微信渠道已配置、回调已验证或线上已更新。真实凭据、测试租户、微信后台 URL 配置、正向/乱序/重放、旧端 E2E、发布批准和发布后观察继续归 CORE-001-H；按 checklist 顺序的下一未完成项是 CORE-001-F 商家寄件回调，必须先取得快递100当前签名/加密合同和真实样本。
 
+## CORE-001-F 商家寄件回调详细审计（进行中，2026-09-01）
+
+### 旧权威实现与当前 provider 合同
+
+旧 PHP 并不是直接调用快递100：`AccessTokenServeService` 统一访问 `http://sms.crmeb.net/api/`，用 `sms_account/sms_token` 调 `v2/shipment/create_order` 等 CRMEB 一号通接口；`ANY /api/order_call_back` 收到 `{type,data}` 后，以同一短信 `sms_token` 截断为 AES-256-CBC key 解密并直接处理 `order_success/order_take/order_cancel`。该包络没有 MAC、独立回调密钥、可信事件 ID、重放账本或乱序水位，控制器还会记录完整输入，因此不能原样迁移。
+
+快递100当前官方上门取件合同是 `POST application/x-www-form-urlencoded`，body 精确包含 `taskId/sign/param`，签名为大写 `MD5(param + salt)`；正确应答为 `{"result":true,"returnCode":"200","message":"成功"}`，失败会在 30 分钟后重试、最多 3 次。`param.status` 是通讯状态，本实现只接受 `200`；订单状态来自 `param.data.status`。当前文档列出的 `0/1/2/9/10/11/13/14/15/99/101/155/166/200/201/302/400/610` 均已显式分类，未知状态只进入隔离账本而不改订单。provider 文档允许下单时传入 salt；候选实现进一步强制 16～100 UTF-8 bytes 的独立 `KUAIDI100_CALLBACK_SALT`，不再复用短信、OnePass 或应用 Secret。
+
+### 候选接收、事件账本与单调投影
+
+兼容路由继续注册为 `ANY`，但非 POST、非 form content type、超过 32 KiB、重复/未知 form 字段、空 salt、无效 UTF-8/JSON、非 `200` 通讯状态、错误签名、非法 task/carrier/status 或需要实物履约却缺少运单号均失败关闭。验签使用常量时间比较；原始 form、签名、完整 `param`、courier name/mobile、费用、重量、图片和任意 provider 扩展字段在接收事务前即丢弃。事件表只保存不可变 SHA-256、task/provider order/carrier/tracking/status 白名单和最小协议/改派引用；Queue 只携带 `{action,outboxId,eventId,replayKey}`。
+
+`merchant_shipment_callback_event/outbox/watermark` 提供事件/replay 唯一围栏、投递与处理租约、`SKIP LOCKED`、Cron 恢复、有界指数退避、8 次 DEAD 和 400 天终态保留。接收只做验签后的事件+outbox短事务并立即返回 provider 成功；Queue 消费按 task advisory transaction lock 串行，订单必须唯一匹配 `store_order.kuaidi_task_id`、未删除且已支付。取件/运输/派送/签收/结算复用 `SupplierFulfillmentService.deliver` 和 `merchant_shipment_delivery` 哈希回放，不复制发货状态机；Queue 或水位事务失败后重放仍只发货一次。
+
+状态水位拒绝活动状态倒退；取件后迟到取消转 `SUPERSEDED`，取消/失败后普通活动事件转 `CONFLICT`，只有明确 `166` 可复活。`155/200/201` 进入独立 metadata 水位；未知状态进入 ignored 水位。官方 `302` 改派只持久化新 task/carrier/tracking allowlist，在同一事务锁定新 task、拒绝与其他订单歧义、更新订单 task，并把 `REASSIGNED` 水位同时桥接到旧/新 task；因此新 task 迟到的 `1=已接单` 不会覆盖改派，而 `10=已取件` 可以继续推进。`15=已结算` 在已发货订单上写入终态水位，后续活动状态被拒绝。
+
+### 生产 Hyperdrive 证据、事故与当前阻塞
+
+按用户直接使用生产数据库的授权，一次性随机 bearer 保护、无自定义 route/Queue 的临时 Worker 绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。最早的只读基线确认 PostgreSQL 16.14、有效订单 28，`kuaidi_task_id/kuaidi_order_id/delivery_id/is_stock_up` 均为 0，目标三表不存在，`order_waybill_job` 为 0；`sms_account/sms_token/config_shippment_open/config_export_siid` 没有匹配配置，只有 `site_url` 有 5 条非空重复记录。审计没有返回配置值、订单号、task、用户或地址。
+
+随机 schema 首个可执行版本最终通过 13/13：外部/内嵌 DDL 精确且二次执行幂等、官方 form/签名与 PII allowlist、重复接收原子收敛、活动推进/迟到状态、取消冲突与显式复活、并发取件/回放只发货一次、取件后取消不回退、未知状态隔离、opaque Queue、Queue 失败持久恢复、无法匹配 task 第 8 次 DEAD，以及状态/metadata 水位。事件结果为 APPLIED 6、SUPERSEDED 2、CONFLICT 1、IGNORED 1、RECEIVED 1、DEAD 1；随机 schema 已由 `finally` 删除，`public` 指纹在成功轮不变。
+
+首个失败轮同时暴露了严重的审计夹具缺陷：虽然业务服务全部使用 `withTx` 并执行事务级 `SET LOCAL search_path`，夹具最初的种子写入直接使用 `container.db`。Hyperdrive 不保证连接启动级自定义 `search_path`，所以该失败轮把 4 条固定审计订单和 1 条审计快递公司写入 `public`；生产聚合因此暂时变为订单 32、task/stock-up 标记各 4。候选夹具已改为所有读写都通过 `withTx`，但生产清理属于不可逆 DML，安全审批要求用户在知情后单独明确授权。清理方案只允许固定主键与完整审计字段指纹全部匹配、五类关联行为 0 时，在 SERIALIZABLE 短事务中删除 4+1 行；任何差异整笔回滚。当前尚未取得该删除授权，不得绕过，因此 CORE-001-F 不能勾选。
+
+正式首版 DDL 已在 `public` 连续执行两次并返回 `complete=true/idempotent_second_pass=true`：event/outbox/watermark 分别 22/14/9 列，合计 45 列，18 个已验证约束、13 个 valid/ready 索引（4 个部分索引、7 个唯一索引），两个外键 `ON DELETE RESTRICT`，无 RLS/rule/policy/用户 trigger，三表均为 0 行。审计后补齐官方 `15/302`，候选迁移现会有条件升级 `mscwm_state_ck` 并验证 `SETTLED/REASSIGNED`；该修订尚未重新应用到生产。下一次获批生产轮必须按顺序完成：精确清理审计夹具、应用状态约束升级、运行扩展后的改派/结算随机 schema、只读复核 28 条原业务订单/零寄件标记/三张空表/零临时 schema，并删除临时 Worker。
+
+### 当前工程证据与不能外推的结论
+
+当前双 TypeScript、180 文件/1,145 项完整单测、observability 17 信号/10 域/43 必需事件/396 个生产源文件、schema source201/target258/shared201/sourceGaps0/external258/embedded258/零定义漂移、路由 PHP1,904/TS1,505/精确801/可执行783/缺失1,103、官方 npm registry 生产依赖 0 漏洞和 `git diff --check` 已通过。新增寄件回调告警在 5 分钟 5 次拒绝或尝试数达到 3 时 warning，任一 CONFLICT/DEAD、5 分钟 3 次持久化失败或最老可处理事件达到 15 分钟时 critical。主 Worker minify dry-run 为 3,535.95 KiB/gzip 833.39 KiB并精确解析 Hyperdrive、Queue、KV、R2和四个 Durable Object 后退出，没有部署。Windows workerd 仍在 0 条测试前以既有 `0xc0000005` 启动失败，不能算运行时通过。
+
+实现提交 `e0ca6d665b98043ceb3fa6ad94944becdcd309f4` 与 runtime 契约修正 `a5326ab2f79ec341aceb0983d72153ece80744b0` 已推送 `main`。首轮 Linux CI 准确发现新增 Cron 根任务后两处消息总数断言仍停留在 16/17；补成 17/18 并显式断言 `dispatchMerchantShipmentCallbackOutbox` 后，[Linux Migration gates 33486809063](https://github.com/cinagroup/cinashop/actions/runs/33486809063) 最终 8/8 jobs 成功，包括 workerd 1 文件/13 项、完整 Worker 单测、双 TypeScript、schema/route/observability、Admin/PC/Supplier/Kefu/UniApp 构建和 checksum-pinned 全历史 Gitleaks。该门禁证明候选代码在受支持 Linux runtime 通过，但不替代尚未获批的生产清理、状态约束升级或真实 provider 验收。
+
+生产没有 `KUAIDI100_CALLBACK_SALT`、可用快递100企业版调试凭据、真实 provider task/callback 样本或已部署的候选入口；官方调试页的浏览器自动化又在本机浏览器运行时初始化前失败。本轮只有官方文档样例和真实 PostgreSQL 隔离证据，不能声称真实快递100回调已通过。主 `cinashop-api` 未部署，三张空表不会自行接收事件；真实下单时设置相同 salt/callback URL、provider 正向/重复/乱序/改派、旧端 E2E、发布批准和发布后观察继续属于 CORE-001-H。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
