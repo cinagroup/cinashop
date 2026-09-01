@@ -21,6 +21,7 @@ import {
   storeSeckill,
   storeBargain,
   storeCombination,
+  storeOrderStatus,
 } from "@/models/schema";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
@@ -58,6 +59,18 @@ export interface ApplyStoreOrderPaymentInput {
   payType: string;
   tradeNo?: string;
   now?: number;
+  /** Privileged callers can bind authorization to the locked order row. */
+  authorizeBeforePayment?: (
+    tx: DbClient,
+    order: typeof storeOrder.$inferSelect,
+  ) => Promise<void>;
+  /** Narrow replay policy for trusted non-provider payment transitions. */
+  allowAlreadyPaid?: (order: typeof storeOrder.$inferSelect) => boolean;
+  /** Optional immutable actor audit committed with the paid transition. */
+  audit?: {
+    changeType: string;
+    changeMessage: string;
+  };
 }
 
 export type StoreOrderPaymentOutcome =
@@ -184,6 +197,12 @@ export async function applyStoreOrderPayment(
   }
   const now = params.now ?? Math.floor(Date.now() / 1000);
   if (!Number.isSafeInteger(now) || now < 0) throw new Error("支付时间无效");
+  if (params.audit && (
+    !params.audit.changeType.trim() || params.audit.changeType.length > 32 ||
+    !params.audit.changeMessage.trim() || params.audit.changeMessage.length > 256
+  )) {
+    throw new ValidateException("支付审计信息无效");
+  }
 
   return withTx(container, async (tx) => {
     const orderRows = await tx
@@ -194,7 +213,11 @@ export async function applyStoreOrderPayment(
       .for("update");
     const order = orderRows[0];
     if (!order) return { outcome: "missing", outbox: null };
+    await params.authorizeBeforePayment?.(tx, order);
     if (order.paid === 1) {
+      if (params.allowAlreadyPaid?.(order)) {
+        return { outcome: "already-paid", outbox: null };
+      }
       const sameProviderEvidence = order.payType === params.payType
         && order.tradeNo === (params.tradeNo ?? "");
       if (!sameProviderEvidence) {
@@ -236,6 +259,14 @@ export async function applyStoreOrderPayment(
       .set({ isPay: 1 })
       .where(and(eq(storeOrderInvoice.orderId, order.id), eq(storeOrderInvoice.isDel, 0)));
     const outbox = await enqueueOrderPaidEvent(tx, paidOrder, now);
+    if (params.audit) {
+      await tx.insert(storeOrderStatus).values({
+        oid: paidOrder.id,
+        changeType: params.audit.changeType,
+        changeMessage: params.audit.changeMessage,
+        changeTime: now,
+      });
+    }
     return { outcome: "paid", outbox };
   });
 }
@@ -496,19 +527,31 @@ export class StoreOrderPayService {
    *
    * 幂等: paid=0 条件更新确保并发回调只有一个调用者执行支付后置逻辑。
    */
-  async paySuccess(orderId: number, payType: string, tradeNo?: string): Promise<boolean> {
-    const paymentResult = await applyStoreOrderPayment(this.container, {
+  async paySuccess(
+    orderId: number,
+    payType: string,
+    tradeNo?: string,
+    options?: Pick<ApplyStoreOrderPaymentInput, "authorizeBeforePayment" | "audit">,
+  ): Promise<boolean> {
+    const paymentResult = await this.applyPayment({
       orderId,
       payType,
       tradeNo,
+      ...options,
     });
     if (paymentResult.outcome === "not-payable") return false;
+    // Missing callbacks are acknowledged to stop provider retries, matching PHP.
+    return true;
+  }
+
+  /** Execute the paid transition and expose the exact outcome to trusted callers. */
+  async applyPayment(params: ApplyStoreOrderPaymentInput): Promise<ApplyStoreOrderPaymentResult> {
+    const paymentResult = await applyStoreOrderPayment(this.container, params);
     if (paymentResult.outcome === "paid") {
       if (!paymentResult.outbox) throw new Error("支付 outbox 未创建");
       await this.dispatchOutboxBestEffort(paymentResult.outbox.id);
     }
-    // Missing callbacks are acknowledged to stop provider retries, matching PHP.
-    return true;
+    return paymentResult;
   }
 
   private async dispatchOutboxBestEffort(outboxId: number): Promise<void> {

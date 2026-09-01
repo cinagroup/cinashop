@@ -1,0 +1,14 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "cinashop-admin-mobile-refund-read-only-audit",
+  "main": "AdminMobileRefundReadOnlyAuditWorker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "9748c294e21c49a99579c9cef70102e0"
+    }
+  ]
+}

@@ -25,6 +25,7 @@ import {
 import { AdminMobileOrderReadService } from "@/services/admin/AdminMobileOrderReadService";
 import { AdminMobileOrderOperationService } from "@/services/admin/AdminMobileOrderOperationService";
 import { AdminMobileFulfillmentService } from "@/services/admin/AdminMobileFulfillmentService";
+import { AdminMobileRefundOperationService } from "@/services/admin/AdminMobileRefundOperationService";
 import {
   AdminExtendedStatisticService,
   parseAdminStatisticChannel,
@@ -100,6 +101,10 @@ function mobileOrderOperationService(c: C): AdminMobileOrderOperationService {
 
 function mobileFulfillmentService(c: C): AdminMobileFulfillmentService {
   return new AdminMobileFulfillmentService(c.get("container"), c.env);
+}
+
+function mobileRefundOperationService(c: C): AdminMobileRefundOperationService {
+  return new AdminMobileRefundOperationService(c.get("container"), c.env);
 }
 
 function verifiedAdminId(c: C): number {
@@ -246,6 +251,52 @@ export async function adminMobileOrderVerificationLookup(c: C) {
     verifiedAdminId(c),
     await readBoundedJsonObject(c.req.raw, 8 * 1024),
   ));
+}
+
+/** POST /api/admin/order/offline — administrator confirmation of offline funds received. */
+export async function adminMobileOrderOffline(c: C) {
+  privateAdminResponse(c);
+  await mobileRefundOperationService(c).offline(
+    verifiedAdminId(c),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024),
+  );
+  return jsonOk(c, null, "修改成功!");
+}
+
+/** POST /api/admin/order/refund — exact refund decision by public refund/order number. */
+export async function adminMobileOrderRefund(c: C) {
+  privateAdminResponse(c);
+  const result = await mobileRefundOperationService(c).refund(
+    verifiedAdminId(c),
+    await readBoundedJsonObject(c.req.raw, 32 * 1024),
+  );
+  return jsonOk(
+    c,
+    result,
+    "status" in result && result.status === "PROCESSING" ? "退款已受理，等待渠道确认" : "审核成功",
+  );
+}
+
+/** POST /api/admin/order/refund_agree/:id — approve return shipment, without moving funds. */
+export async function adminMobileOrderRefundAgree(c: C) {
+  privateAdminResponse(c);
+  await mobileRefundOperationService(c).agreeReturn(verifiedAdminId(c), c.req.param("id"));
+  return jsonOk(c, null, "操作成功");
+}
+
+/** POST /api/admin/order/open/refund/:id — proactive whole/split administrator refund. */
+export async function adminMobileOrderOpenRefund(c: C) {
+  privateAdminResponse(c);
+  const result = await mobileRefundOperationService(c).openRefund(
+    verifiedAdminId(c),
+    c.req.param("id"),
+    await readBoundedJsonObject(c.req.raw, 32 * 1024),
+  );
+  return jsonOk(
+    c,
+    result,
+    "status" in result && result.status === "PROCESSING" ? "退款已受理，等待渠道确认" : "操作成功",
+  );
 }
 
 /** GET /adminapi/statistic/order/get_basic — PHP 订单统计基础卡片。 */

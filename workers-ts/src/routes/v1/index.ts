@@ -1305,6 +1305,10 @@ v1Routes.post("/admin/order/delivery/keep/:id", adminAuth, AdminController.admin
 v1Routes.get("/admin/order/export_temp", adminAuth, AdminController.adminMobileOrderExportTemp);
 v1Routes.put("/admin/order/split_delivery/:id", adminAuth, AdminController.adminMobileOrderSplitDelivery);
 v1Routes.post("/admin/order/order_verific", adminAuth, AdminController.adminMobileOrderVerificationLookup);
+v1Routes.post("/admin/order/offline", adminAuth, AdminController.adminMobileOrderOffline);
+v1Routes.post("/admin/order/refund", adminAuth, AdminController.adminMobileOrderRefund);
+v1Routes.post("/admin/order/refund_agree/:id", adminAuth, AdminController.adminMobileOrderRefundAgree);
+v1Routes.post("/admin/order/open/refund/:id", adminAuth, AdminController.adminMobileOrderOpenRefund);
 v1Routes.post("/admin/order/price", adminAuth, AdminController.adminMobileOrderPrice);
 v1Routes.post("/admin/order/remark", adminAuth, AdminController.adminMobileOrderRemark);
 v1Routes.post("/admin/order/remark/:orderId", adminAuth, AdminController.adminMobileOrderRemark);

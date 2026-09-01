@@ -268,6 +268,18 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     return "order.view";
   }
   if (
+    group.key === "order" &&
+    (
+      route === "order/refund" ||
+      route.startsWith("order/refund_agree/") ||
+      route.startsWith("order/open/refund/")
+    )
+  ) {
+    // These legacy URLs live under /order, but they decide after-sale state
+    // or move funds and therefore require the dedicated refund capability.
+    return "refund.manage";
+  }
+  if (
     group.key === "community"
     && (
       route.startsWith("community/topic/set_status/")
