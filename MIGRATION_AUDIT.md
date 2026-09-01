@@ -3234,6 +3234,40 @@ PHP 原实现的身份传播不构成可靠授权。旧中间件把移动端 Adm
 
 CORE-001-B 只代表候选代码、生产表结构和隔离状态机收口。生产微信/支付宝开关与凭据仍不可用，未执行真实 provider 回调，主 Worker 未发布，也未完成支付主动查询、分页对账、告警、人工处置或发布后观察；这些继续由 CORE-001-C/H 约束。下一实现点固定为 CORE-001-C，不能把已创建空账本解释为渠道已启用或父项 CORE-001 完成。
 
+## CORE-001-C 支付主动对账与告警收口（2026-09-01）
+
+### 审计结论与迁移边界
+
+本批开始前，系统已经有 CORE-001-B 的可信支付回调事件/outbox，也有商品、充值和会员三类幂等支付状态机，但 scheduled 只有退款对账。一个真实支付请求如果在 provider 已受理后丢失响应、回调未到或回调消费失败，系统没有独立案件记录可主动查询；同样也无法持续区分 provider 仍待支付、明确关闭、查无交易、已经成功但本地未入账，以及本地已付但交易证据冲突。历史订单自身的 `paid/pay_type/trade_no` 不能替代发起时的 provider/profile/金额意图，尤其 `paid=0` 行通常没有渠道标记，因此禁止根据订单号前缀或空 `pay_type` 猜测渠道后批量查单。
+
+现已新增 `payment_reconciliation_case` 与 `payment_reconciliation_action`。案件唯一键为 `(provider, order_no)`，另有随机 replay key；不可变证据包括 provider/profile、订单域、订单号、预期整数分、CNY、可信交易号、provider 时间和可选 callback event 外键。状态覆盖 `OPEN/QUEUED/QUERYING/WAITING/SETTLED/CONFIRMED/NO_PAYMENT/UNKNOWN/CONFLICT/DEAD/CLOSED`，并保存尝试次数、下次检查时间、处理租约、低基数错误码、解决时间和保留期。人工处置表用唯一 action key 保存管理员、`RETRY/ACCEPT_LOCAL/CLOSE`、低基数 reason code 与前后状态；两个外键均为 `ON DELETE RESTRICT`。数据库明确拒绝非法 provider/profile、订单号、交易号、金额、币种、状态、UUID、负时间或负计数，代码不保存 provider 原始响应、签名、付款人 OpenID、手机号、邮箱、地址或凭据。
+
+### 主动查询、恢复和人工处置
+
+商品订单微信/支付宝、充值微信、会员微信/支付宝现在都在首次 provider HTTP 或支付宝 URL 签名前用短事务登记恢复意图；登记成功但外部请求状态未知时，案件仍可恢复。可信支付回调在事件+outbox 接收事务内登记同一案件，并在异步入账终态事务内将案件收敛为 `CONFIRMED/WAITING/CONFLICT`。重复意图只有 provider、profile、订单域、金额、币种及已有交易号一致才幂等；不一致直接进入 `CONFLICT`，不会覆盖先到证据。
+
+Cron 只投递 `{action:"dispatchPaymentReconciliation",scheduledAt,cursor:0}` 根消息；扫描在短事务内以主键游标、部分索引、租约和 `FOR UPDATE SKIP LOCKED` 认领，业务 Queue 只携带 `{action:"processPaymentReconciliation",caseId,replayKey}`。provider I/O 明确发生在认领事务提交之后；所有本地证据读取、状态更新和人工处置仍使用短事务。查询错误或未知状态指数退避，从 60 秒封顶 6 小时，最多 12 次转 `DEAD`；`PENDING` 保持 `WAITING`；`NOT_FOUND/CLOSED` 只有至少查询 3 次且发起已满 30 分钟才转 `NO_PAYMENT`。`SUCCESS` 必须同时满足订单号、CNY、整数分、交易号和 provider 时间证据，再复用既有商品/充值/会员支付状态机；金额或身份不一致、本地已付但 provider 非成功、订单域不唯一、既有交易号不一致均转 `CONFLICT`。`CONFLICT` 重放不会再次请求 provider，只允许受保护管理端以 4 KiB 请求上限、显式确认串、UUID 幂等键和低基数 reason code 执行 `RETRY/ACCEPT_LOCAL/CLOSE`。
+
+微信查单使用官方 `GET /v3/pay/transactions/out-trade-no/{out_trade_no}?mchid=...`，沿用商户 RSA 请求签名、平台签名验签、AppID/MchID/订单号/金额/币种/交易号/成功时间校验，并归一化 `SUCCESS/NOTPAY/USERPAYING/CLOSED/REVOKED/PAYERROR/REFUND`；支付宝使用签名的 `alipay.trade.query`，验签后归一化 `WAIT_BUYER_PAY/TRADE_CLOSED/TRADE_SUCCESS/TRADE_FINISHED`。两条查询均有 8 秒网络上限，非白名单响应只产生低基数错误码。协议依据只采用当前官方文档：[微信支付商户订单号查询订单](https://pay.wechatpay.cn/doc/v3/merchant/4012791900)、[支付宝 alipay.trade.query](https://developer.alibaba.com/docs/api.htm?apiId=757&docType=4)。
+
+Queue 消费会输出 `payment_reconciliation_dispatched/completed/attention/failed` 四类结构化低基数事件，不记录订单号、案件 ID、交易号或 provider 正文；可观测性策略新增 payment reconciliation 信号：任一 `UNKNOWN/CONFLICT` 或尝试次数达到 3 为 warning，任一 `DEAD` 或超过 15 分钟未解决的 `CONFLICT` 为 critical。生产告警目的地仍是 `pending`，因此本项完成的是稳定事件与策略合同，不把未获授权的真实通知渠道伪记为已配置。
+
+### 生产 PostgreSQL 直接证据
+
+按用户明确授权，临时令牌门控审计 Worker 精确绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。迁移前在 PostgreSQL 16.14 的 `REPEATABLE READ, READ ONLY` 事务中确认：两张对账表不存在，`payment_callback_event` 共 0 行；生产商城订单为未付 8/已付 20，充值为未付 5/已付 1，会员订单 0，其中 8 个商城和 5 个充值未支付订单均超过 30 分钟，但 `pay_type/recharge_type` 没有可信微信或支付宝标记。审计没有返回订单号或用户数据，也没有把这 13 行猜测性写入新账本；主动对账从今后的真实发起和可信回调开始。
+
+随机 `codex_payment_reconciliation_*` schema 先应用 CORE-001-B 与 C 的逐字同源 DDL，再用真实 PostgreSQL/Hyperdrive 跑最终 16/16 场景：结构精确且二次执行幂等、重复意图单案件、不可变冲突终止、provider 成功只结算一次、PENDING 退避、老化 NOT_FOUND 转 NO_PAYMENT、金额证据冲突、CONFLICT 重放不再查 provider、瞬态错误第 12 次 DEAD、过期租约单次恢复、Queue 仅 opaque 引用、Queue 失败持久化、三类人工处置不可变且幂等、回调联动同一案件、无原始 provider/付款人列，以及 provider I/O 位于结算事务之外。每次失败和最终成功路径都由 `finally` 删除随机 schema，最终 `temporary_schema_removed=true`。
+
+隔离审计实际发现并修复了三类不能靠静态测试证明的问题。第一，CORE-001-B 旧 DDL 的唯一/部分索引完整性计数只按全数据库同名索引查询；当 `public` 已存在同名索引时，随机 schema 二次验证会重复计数。B/C 验证器现都限定 `index_namespace.nspname=current_schema()`。第二，告警计数与本地支付证据曾绕过统一事务，在 Hyperdrive 不保留自定义启动级 search path 时可能读到 `public`；这些读取现全部使用显式短事务和 `SET LOCAL search_path`。第三，`CONFLICT` 的旧 Queue 重放最初仍可能重新查 provider；它现在是自动处理终态，必须由管理动作解锁。
+
+随后把外部 `0121_payment_reconciliation.sql`（Worker 内嵌 `migration_0127`）直接应用到生产 `public`，创建 `payment_reconciliation_case` 24 列、`payment_reconciliation_action` 9 列，合计 13 个约束、10 个索引。目录验证精确核对 relation kind/persistence、列顺序/类型/null/default、完整约束/索引集合、CHECK validated/non-NO-INHERIT、callback/case 两个 FK 目标与 `ON DELETE RESTRICT`、5 个唯一/主键索引和 4 个部分索引的 valid/ready/predicate；结果为 `created=true, complete=true, idempotent_second_pass=true`。最终只读复验结构仍完整、两表均为空，所有随机 schema 已删除，临时审计 Worker 已删除；主 `cinashop-api` 没有部署。
+
+### 本地门禁、Linux CI 与剩余阻塞
+
+本地完整单元测试为 178 文件/1,127 项全部通过；双 TypeScript、observability 15 信号/10 域/31 必需事件/387 个生产源文件/6 个既有发布阻塞、schema source201/target252/shared201/sourceGaps0/external252/embedded252/零定义漂移、路由 PHP1,904/TS1,502/精确798/可执行780/缺失1,106，以及 `git diff --check` 均通过。主 Worker minify dry-run 为 `3,436.88 KiB / gzip 814.87 KiB`，精确解析 Hyperdrive、Queue、KV、R2 与四个 Durable Object 后退出。Windows 本地 workerd 仍在 0 条测试前以既有 `0xc0000005` 失败，没有将其记成代码通过；推送提交 `276e9d0a1e8259a892012ebb5e7d4edeaa8b2c14` 后，[Linux Migration gates 33474315306](https://github.com/cinagroup/cinashop/actions/runs/33474315306) 8/8 jobs 成功，包含真实 workerd、完整 Worker 门禁、Admin/PC/Supplier/Kefu/UniApp 构建和 checksum-pinned 全历史 Gitleaks。
+
+CORE-001-C 因候选代码、生产空结构、真实 PostgreSQL 隔离状态机和 Linux 门禁齐全而勾选，但不等于支付已在生产启用。生产微信/支付宝开关和真实凭据仍不可用，没有真实 provider 正向/回调样本；告警目的地仍 pending，主 Worker、前端、预发、正式发布和发布后观察均未执行。历史 13 个无可信渠道证据的未支付订单保持原样。这些边界继续由 CORE-001-H 约束，父项 CORE-001 保持未完成；下一清单项仍是 CORE-001-D 公众号/小程序消息回调。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
