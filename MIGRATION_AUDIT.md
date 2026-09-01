@@ -3208,6 +3208,32 @@ PHP 原实现的身份传播不构成可靠授权。旧中间件把移动端 Adm
 
 下一批固定为 CORE-001-B：先完成支付入站事件表、短事务接收/outbox与opaque Queue，再把微信/支付宝 handler从“同步完整入账后应答”改为“验签→持久化→快速应答→幂等消费”。只有账本的外部/内嵌DDL逐字一致、PostgreSQL并发/崩溃/重放场景和Linux runtime门禁通过后，才进入主动支付对账 CORE-001-C；不会跳过账本先恢复高风险寄件或同城写状态路由。
 
+## CORE-001-B 支付回调事件账本与快速应答收口（2026-09-01）
+
+### 实现结果与状态机边界
+
+本批已把微信/支付宝支付回调从“HTTP 请求内查询订单并同步完成入账”改为“provider 验签/解密 → PostgreSQL 短事务原子写入事件与 outbox → provider 成功应答 → opaque Queue 异步消费”。新表 `payment_callback_event` 保存 provider、可信事件 ID、replay key、渠道 profile、订单域、订单号/交易号、金额/币种、provider 时间、规范化白名单摘要、处理状态、租约、尝试、低基数错误码和保留期；`payment_callback_outbox` 保存投递状态、租约、尝试和下次投递时间。代码不保存原始 body、签名头、解密全文或付款人 PII，Queue 消息精确限制为 `{action,eventId,replayKey}`。
+
+接收事务使用 provider event 唯一约束同时创建事件和 outbox，任一写入失败即整体回滚。消费端以 provider+transaction advisory transaction lock、事件/订单行锁和现有 `applyStoreOrderPayment/applyRechargePayment/applyMembershipPayment` 状态机完成单次入账；同一 provider 交易号指向不同订单、金额或币种时终止为 `UNKNOWN`，不会覆盖既有交易证据。outbox dispatch、delivery 和 processing 均有独立租约；Cron 只发送 `dispatchPaymentCallbackOutbox` 根任务，批量认领使用 `FOR UPDATE SKIP LOCKED`，失败按有界退避恢复，最多 8 次进入 `DEAD`，DLQ 只归档并重放同一不透明事件引用。支付完成 outbox 的即时发送可以失败，但 scheduled dispatch 仍能从 PostgreSQL 恢复。
+
+支付宝在既有 RSA2/AppID/SellerID 防线之外强制有效 `notify_id`、精确正整数分值和已签名的 `gmt_payment/notify_time`；微信把 `success_time` 转换为可信 provider event time，并在 `SUCCESS` 时强制有效。HTTP 错误响应不再泄漏内部异常；新增低基数 `payment_callback_persisted/completed/failed` 观测合同。Cloudflare Workers 与 PostgreSQL 最佳实践直接影响了这里的最小 Queue body、短事务、provider I/O 事务外、租约、`SKIP LOCKED`、与查询条件一致的部分索引以及 fail-closed catalog 校验。
+
+### 生产 PostgreSQL 直接执行与隔离场景
+
+按用户“直接使用生产数据库”的明确授权，本批精确绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。Windows 本地远程 `wrangler dev` 仍在 SQL 前因 `workerd 0xc0000005` 失败，因此改用一次性、随机 bearer 保护且无自定义 route 的审计 Worker 作为 Hyperdrive 桥；未部署或修改主 `cinashop-api` Worker。初始只读结果确认生产为 PostgreSQL 16.14 且两张目标表不存在。
+
+先在生产引擎随机 schema 中执行外部/内嵌逐字一致 DDL 和真实 PostgreSQL 状态机场景，11/11 通过：DDL 结构/二次执行幂等、重复接收只生成一组 event+outbox、Queue body 不透明、并发消费者只结算一次、交易证据冲突终止为 UNKNOWN、Queue 失败持久化并可恢复、outbox 插入失败回滚整个接收事务、结算后崩溃重放仍只入账一次、8 次耗尽进入 DEAD、DLQ 从同一 opaque 事件恢复、非成功通知进入 IGNORED。随机 schema 最终删除。
+
+随后把 `0120_payment_callback_pipeline.sql` 直接应用于生产 `public`：`payment_callback_event` 22 列、`payment_callback_outbox` 14 列，合计 12 个约束、11 个索引，创建后均为 0 行。DDL 内的 fail-closed `pg_catalog` 验证会核对 relation kind/persistence、列顺序/类型/null/default、精确约束/索引名、约束验证状态、CHECK 继承属性、FK 目标与 `ON DELETE RESTRICT`、唯一及部分索引 valid/ready 状态；在已有空表上最终返回 `created=false, complete=true, idempotent_second_pass=true`。临时审计 Worker 已删除，随机 schema 已删除，生产只保留本批授权创建的两张空业务表。
+
+### 验证、提交与剩余门禁
+
+本地完整单元测试为 177 文件/1,111 项全部通过；双 TypeScript、observability 14 信号/10 域/27 必需事件/380 个生产源文件/6 个发布阻塞、schema source201/target250/shared201/sourceGaps0/external250/embedded250/零定义漂移、路由 PHP1,904/TS1,498/精确798/可执行780/缺失1,106/可执行缺口1,102、`npm audit --omit=dev` 0 漏洞均通过。主 Worker minify dry-run 为 `3,392.52 KiB / gzip 806.29 KiB`，精确解析 Hyperdrive、Queue、KV、R2 和 Durable Object 后以 dry-run 退出。
+
+实现提交 `bd501cf6e27a5fca979663c0c43418427fbb275a` 及 CI 契约修正 `e654cc59745af6ee4b8879b0924cc5bbb3e72cc7` 已推送 `main`。[Linux Migration gates 33470912902](https://github.com/cinagroup/cinashop/actions/runs/33470912902) 最终 8/8 jobs 成功：workerd runtime 13/13、完整 Worker 单测、双 TypeScript、schema/route/observability、Admin/PC/Supplier/Kefu/UniApp 构建与 checksum-pinned 全历史 Gitleaks 全部通过。首轮 CI 精确暴露新增 Cron 根任务造成的 13→14、14→15 测试基线偏差，以及一个固定测试 UUID 的 Gitleaks 误报；修正后用文件+规则+精确旧行三重限制的历史白名单恢复门禁，没有放宽通用密钥扫描。
+
+CORE-001-B 只代表候选代码、生产表结构和隔离状态机收口。生产微信/支付宝开关与凭据仍不可用，未执行真实 provider 回调，主 Worker 未发布，也未完成支付主动查询、分页对账、告警、人工处置或发布后观察；这些继续由 CORE-001-C/H 约束。下一实现点固定为 CORE-001-C，不能把已创建空账本解释为渠道已启用或父项 CORE-001 完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
