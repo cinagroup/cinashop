@@ -2,6 +2,7 @@
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "cinashop-diy-home-widgets-audit",
   "main": "DiyHomeWidgetsAuditWorker.ts",
+  "workers_dev": true,
   "compatibility_date": "2026-08-29",
   "compatibility_flags": [
     "nodejs_compat",

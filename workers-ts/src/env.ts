@@ -4,7 +4,7 @@
  * 对应 wrangler.toml 中的 binding, 运行时由 Cloudflare 注入。
  * 这是整个应用唯一的"外部依赖入口", 所有 service 通过此类型访问基础设施。
  */
-export interface Env extends WorkerBindings {
+export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS"> {
   // ─── 密钥 (wrangler secret) ───────────────────────────
   /** JWT 签名密钥, 对应 PHP 的 app.app_key (默认 'crmeb_app_key') */
   APP_KEY: string;

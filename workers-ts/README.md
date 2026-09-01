@@ -110,6 +110,22 @@ HS256、`APP_KEY`、对象型 `jti` 和普通用户 auth claim 已与 PHP 对齐
 - 收货奖励: 下单冻结商品赠送积分快照；确认收货按固定精度计算实付积分、付费会员倍率和经验，幂等写账并同步等级历史；部分/全额退款按累计目标冲正积分，经验按 PHP 语义不回退
 - `OrderLockDO` 仅保留为历史兼容绑定，当前订单写链路不依赖它
 
+### 4. 私有 R2 图片变体
+
+附件数据库只保存 canonical `/api/assets/:id`，R2 bucket 保持私有。普通读取生成
+15 分钟 HMAC URL；DIY 商品排行在 `image_thumb_status` 存在且启用、
+`thumb_mid_width/thumb_mid_height` 都为 `1..2048` 时，生成签名同时绑定
+`variant=mid` 与宽高的 URL。变体参数被篡改会在读取数据库前失败；外部历史 URL、
+配置缺失/关闭、非图片和 Images 转换异常都返回原引用或原 R2 对象。
+
+`wrangler.toml` 的 `IMAGES` binding 直接读取 R2 字节并以 `scale-down` 保持比例。
+变换结果按附件 ID、源 ETag、固定变体、尺寸和格式写入内部 Workers Cache；客户端
+响应仍为 `private, no-store`。生产只读审计确认 PHP `getImageConfig()` 的 20 个图片
+配置键当前全部缺失，所以现网语义仍是原图且不加水印。正式启用缩略图或水印前，
+必须迁移并人工确认配置、完成源附件对象对账，并评估
+[Images binding](https://developers.cloudflare.com/images/optimization/binding/) 与
+[Images 计费](https://developers.cloudflare.com/images/pricing/)；当前实现没有恢复水印。
+
 ---
 
 ## 本地开发

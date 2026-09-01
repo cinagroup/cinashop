@@ -43,6 +43,12 @@ import {
 } from "@/services/activity/StoreNewcomerService";
 import { V2PromotionCompatibilityService } from "@/services/activity/V2PromotionCompatibilityService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
+import {
+  createAttachmentImageVariant,
+  signAttachmentReferences,
+  signAttachmentVariantReferences,
+  type AttachmentImageVariant,
+} from "@/services/system/AttachmentService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibilityService";
 import { parseConfigInteger } from "@/utils/config";
@@ -66,6 +72,18 @@ const SUSPENDED_DEFAULT = {
 };
 
 type DiyComponent = Record<string, unknown>;
+
+export function legacyMidThumbnailVariant(configs: Record<
+  string,
+  { exists: boolean; value: string } | undefined
+>): AttachmentImageVariant | null {
+  if (!legacyConfigEnabledWithPresence(configs.image_thumb_status, false)) return null;
+  return createAttachmentImageVariant(
+    "mid",
+    parseConfigInteger(configs.thumb_mid_width?.value, 0),
+    parseConfigInteger(configs.thumb_mid_height?.value, 0),
+  );
+}
 
 function legacyInteger(value: unknown, fallback = 0): number {
   if (value === undefined || value === null || value === "") return fallback;
@@ -682,6 +700,9 @@ export class DiyHomeCompatibilityService {
       this.container.systemConfigDao.getValuesWithPresence([
         "member_card_status",
         "svip_price_status",
+        "image_thumb_status",
+        "thumb_mid_width",
+        "thumb_mid_height",
       ]),
       this.container.db.select({ status: memberRight.status }).from(memberRight)
         .where(eq(memberRight.rightType, "vip_price"))
@@ -719,7 +740,7 @@ export class DiyHomeCompatibilityService {
     const vipEnabled = legacyConfigEnabledWithPresence(configs.member_card_status)
       && legacyConfigEnabledWithPresence(configs.svip_price_status)
       && vipRights[0]?.status === 1;
-    return promoted.map((item) => {
+    const decorated = promoted.map((item) => {
       const checkCoupon = coupons.some((coupon) => couponMatchesProduct(
         coupon,
         item,
@@ -736,6 +757,15 @@ export class DiyHomeCompatibilityService {
         ...(!vipEnabled ? { vip_price: 0 } : {}),
       };
     });
+    const images = decorated.map((item) => {
+      const image = (item as Record<string, unknown>).image;
+      return typeof image === "string" ? image : "";
+    });
+    const thumbnail = legacyMidThumbnailVariant(configs);
+    const signedImages = thumbnail
+      ? await signAttachmentVariantReferences(this.env.APP_KEY, images, thumbnail)
+      : await signAttachmentReferences(this.env.APP_KEY, images);
+    return decorated.map((item, index) => ({ ...item, image: signedImages[index] }));
   }
 
   async productRank(uid: number, limitValue: unknown) {

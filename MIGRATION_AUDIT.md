@@ -162,7 +162,17 @@ DIY-HOME-WIDGETS 的服务端、生产只读审计、部分唯一索引升级和
 
 390×844 应用内浏览器从商品列表打开两项悬浮菜单，点击首项进入品牌资讯；目标页仍显示同一悬浮入口，切换到“迁移资讯”后文章卡、日期和阅读数正常渲染。页面身份、非空内容、无框架 overlay、菜单展开、跨页 URL 和目标内容均通过；控制台只有 UniApp 依赖的 Vue Router 弃用警告。H5/微信小程序生产构建、UniApp 类型检查和 Worker 183 文件/1,175 项单测通过。隔离 mock 初始未提供 `article/hot/list`，所以默认“热门”曾显示受控 `not found`；切换到本次有数据的目标分类后错误态消失，这不是生产接口结论，临时 mock 与本地服务均已删除/停止。
 
-父项仍不能完成：生产 `system_dise=0`，没有真实 DIY 页面或悬浮配置；视频、新人商品、促销均为 0，可领取券为 0，已部署主 Worker又缺三条本批依赖路由，无法做真实内容、真实 token、真实领券或微信直播正向 E2E。生产还存在 15/21 配置缺失、`site_url/sign_give_point/sign_status` 重复、2 张过期但状态仍可用的用户券、3 个用户券 owner 孤儿、关系 owner 孤儿 1、签到 owner 孤儿 1、商品收藏计数漂移 1。所有异常仅被只读记录，没有自动删除、归属或改状态。PC 是否消费同一 DIY、R2 缩略图等价策略、未迁移旧页面本身、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察也仍未完成。
+第五个基础设施子批关闭 PHP `get_thumb_water('mid')` 的私有 R2 中图策略。调用链只出现在 `GET /api/diy/product_rank`：`StoreProductRankServices::getProductRankList()` 调用 `StoreProductServices::getRecommendProduct(...,'mid')`，随后才进入 `get_thumb_water`。PHP 在 `image_thumb_status` 缺失/关闭、路径无效、URL 已含查询参数或上传驱动异常时返回原图；本地上传驱动以保持比例的 `THUMB_SCALING` 生成中图，并在启用水印时先处理水印。`BaseUpload` 的代码默认值虽为 400×400，安装 SQL 又曾给出 360×360，运行时 `UploadService::init()` 会用 `system_config` 覆盖，所以不能靠任一静态默认猜生产尺寸。
+
+候选 Worker 只变换 canonical `/api/assets/:id`，外部 HTTPS/历史 URL 原样兼容。响应时生成 `variant=mid&width=...&height=...` 的 15 分钟 HMAC URL，签名消息绑定附件 ID、到期时间、变体名和宽高；任一参数被篡改都会在数据库读取前以 404 失败。变体名固定为 `mid`，宽高必须是 `1..2048` 的安全整数。只有 `image_thumb_status` 行真实存在且为 PHP 真值、`thumb_mid_width/height` 同时合法时，排行图片才请求中图；否则仍签名原图。附件读取再次验证签名与 R2 元数据，只对 JPEG/PNG/WebP/GIF 调用 Cloudflare Images `scale-down`，GIF 保留动画，非图片或转换异常回退重新读取的原 R2 对象。
+
+[Cloudflare Images binding 官方文档](https://developers.cloudflare.com/images/optimization/binding/)确认 binding 可直接接收 R2 原始字节、输出时必须指定格式，且变换结果不会自动获得应用所需缓存策略。因此实现使用 Workers Cache API，内部 key 绑定附件 ID、源 ETag、固定变体、尺寸和输出格式；源对象变化会自然换 key。缓存对象可保留 7 天，但对客户端的签名读取仍强制 `private,no-store`，不会把私有对象公开缓存。Cache 写入只通过 `executionCtx.waitUntil` 调度，失败和 Images 失败仅发送不含附件 ID/对象 key 的低基数 `r2_object_variant_cache_failed` / `r2_object_transform_failed`。按当前[Images 计费文档](https://developers.cloudflare.com/images/pricing/)，正式启用前仍需由运营确认变换量和费用；代码完成不等于生产已开通或无需观察。
+
+按用户授权再次通过 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 执行 `REPEATABLE READ, READ ONLY` 审计。配置 allowlist 从原 21 个首页键扩展为 PHP `getImageConfig()` 的完整 20 个图片键，响应只返回行数、非空/数值/JSON计数、启用计数和 `1..2048` 尺寸计数，不返回配置值或媒体引用。结果是 `image_thumb_status/image_watermark_status`、大/中/小图尺寸、图片/文字水印全部字段和 `upload_type` 均为 0 行；所以生产当前 PHP 语义明确是不开缩略图、不加水印，候选上线后也只会返回签名原图。首轮因临时配置未显式打开 workers.dev 得到 1042，数据库没有被访问，`finally` 删除后 API 返回 Worker 不存在；补上 `workers_dev=true` 后完整审计成功，结束时再次 `wrangler delete`，部署列表以 10007 确认临时 Worker 不存在。两轮均未部署主 Worker、未执行生产 DML/DDL。
+
+工程门禁为目标 3 文件/34 项、完整单元 183 文件/1,177 项、双 TypeScript、observability 17 信号/10 域/53 必需事件/405 个生产源文件和 `git diff --check` 通过；Wrangler 4.122.0 minify dry-run 为 `3,613.83 KiB / gzip 847.77 KiB`，精确识别 Hyperdrive、R2、Images、Cache、Queue、KV 与 Durable Objects 后退出。新增 workerd 用 1×1 PNG 实际执行 `env.IMAGES.input(...).transform(...).output(...)`，使 Linux runtime 预期由 13 增至 14；Windows 本机仍在 0 条断言前以既有 `0xc0000005` 启动失败，故必须由本批推送后的 Linux CI 给出正式运行时证据。
+
+父项仍不能完成：生产 `system_dise=0`，没有真实 DIY 页面或悬浮配置；视频、新人商品、促销均为 0，可领取券为 0，已部署主 Worker又缺三条本批依赖路由，无法做真实内容、真实 token、真实领券或微信直播正向 E2E。生产还存在原 21 个配置 15 个缺失、20 个图片配置全缺、`site_url/sign_give_point/sign_status` 重复、2 张过期但状态仍可用的用户券、3 个用户券 owner 孤儿、关系 owner 孤儿 1、签到 owner 孤儿 1、商品收藏计数漂移 1。所有异常仅被只读记录，没有自动删除、归属或改状态。PC 是否消费同一 DIY、源附件到 `system_attachment`/R2 的逐对象映射与 hash/mime/size 对账、未来启用水印时的等价实现、Images 费用和缓存命中观察、未迁移旧页面本身、旧端与 H5/小程序/APP、预发、影子流量、主 Worker/Pages 发布和发布后观察仍未完成。
 
 ## PUBLIC-ARTICLE 迁移审计（2026-08-30）
 

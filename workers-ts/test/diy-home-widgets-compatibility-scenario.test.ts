@@ -53,6 +53,25 @@ const configKeys = [
   "station_open",
   "routine_contact_type",
   "image_thumb_status",
+  "image_watermark_status",
+  "thumb_big_width",
+  "thumb_big_height",
+  "thumb_mid_width",
+  "thumb_mid_height",
+  "thumb_small_width",
+  "thumb_small_height",
+  "watermark_type",
+  "watermark_text",
+  "watermark_text_angle",
+  "watermark_text_color",
+  "watermark_text_size",
+  "watermark_position",
+  "watermark_image",
+  "watermark_opacity",
+  "watermark_rotate",
+  "watermark_x",
+  "watermark_y",
+  "upload_type",
   "site_url",
   "video_func_status",
   "site_name",
@@ -78,7 +97,7 @@ const supportTables = ["store_product_relation", "store_seckill_time"] as const;
 describe("DIY-HOME-WIDGETS production audit and isolated scenario", () => {
   it("pins the exact non-secret public dependency and configuration allowlists", () => {
     expect(publicTables).toHaveLength(24);
-    expect(configKeys).toHaveLength(21);
+    expect(configKeys).toHaveLength(40);
     for (const table of publicTables) {
       expect(scenarioSource).toContain(`"${table}"`);
     }
@@ -105,6 +124,7 @@ describe("DIY-HOME-WIDGETS production audit and isolated scenario", () => {
     expect(wranglerConfig).toMatchObject({
       name: "cinashop-diy-home-widgets-audit",
       main: "DiyHomeWidgetsAuditWorker.ts",
+      workers_dev: true,
       compatibility_date: "2026-08-29",
     });
     expect(wranglerConfig.compatibility_flags).toEqual(expect.arrayContaining([
@@ -154,6 +174,8 @@ describe("DIY-HOME-WIDGETS production audit and isolated scenario", () => {
     expect(production).not.toContain("jsonb_agg(value");
     expect(production).not.toContain("array_agg(value");
     expect(production).toContain("configurationValuesReturned: false");
+    expect(production).toContain("enabledRows");
+    expect(production).toContain("boundedDimensionRows");
     expect(production).toContain("piiReturned: false");
     expect(production).toContain("businessIdsReturned: false");
     expect(production).toContain("mediaReferencesReturned: false");

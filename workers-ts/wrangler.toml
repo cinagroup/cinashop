@@ -38,6 +38,15 @@ id = "f79a153ac6ee408891f6118c06d4f9a8"
 binding = "ASSETS_BUCKET"
 bucket_name = "cinashop-assets"
 
+# Private R2 objects are resized only through a signed, fixed-variant URL.
+[images]
+binding = "IMAGES"
+
+# Images binding output is cached under an internal key containing source ETag
+# and bounded transform parameters; client responses remain private/no-store.
+[cache]
+enabled = true
+
 # Upstash Redis 通过 secret 设置 (UPSTASH_REDIS_URL / UPSTASH_REDIS_TOKEN)
 [vars]
 NODE_ENV = "production"

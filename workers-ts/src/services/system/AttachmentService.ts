@@ -14,7 +14,19 @@ export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export const MAX_MULTIPART_IMAGE_BYTES = MAX_IMAGE_BYTES + 256 * 1024;
 const SIGNED_ASSET_TTL_SECONDS = 15 * 60;
 const MAX_SIGNED_ASSET_TTL_SECONDS = 60 * 60;
+const MAX_ATTACHMENT_VARIANT_DIMENSION = 2_048;
 const CATEGORY_LOCK_NAMESPACE = 505_609;
+
+export interface AttachmentImageVariant {
+  name: "mid";
+  width: number;
+  height: number;
+}
+
+export interface SignedAssetRead {
+  response: Response;
+  cacheWrite?: () => Promise<void>;
+}
 
 export interface AttachmentScope {
   type: 1 | 3 | 4;
@@ -65,6 +77,26 @@ export async function signAttachmentReferences(
   references: string[],
   ttlSeconds = SIGNED_ASSET_TTL_SECONDS,
 ): Promise<string[]> {
+  return signAttachmentReferencesWithVariant(appKey, references, null, ttlSeconds);
+}
+
+export async function signAttachmentVariantReferences(
+  appKey: string | undefined,
+  references: string[],
+  variant: AttachmentImageVariant,
+  ttlSeconds = SIGNED_ASSET_TTL_SECONDS,
+): Promise<string[]> {
+  const normalized = createAttachmentImageVariant(variant.name, variant.width, variant.height);
+  if (!normalized) throw new ValidateException("附件变体无效");
+  return signAttachmentReferencesWithVariant(appKey, references, normalized, ttlSeconds);
+}
+
+async function signAttachmentReferencesWithVariant(
+  appKey: string | undefined,
+  references: string[],
+  variant: AttachmentImageVariant | null,
+  ttlSeconds: number,
+): Promise<string[]> {
   if (!Number.isSafeInteger(ttlSeconds) || ttlSeconds <= 0 || ttlSeconds > MAX_SIGNED_ASSET_TTL_SECONDS) {
     throw new ValidateException("附件链接有效期无效");
   }
@@ -83,9 +115,12 @@ export async function signAttachmentReferences(
     const signature = await crypto.subtle.sign(
       "HMAC",
       key,
-      new TextEncoder().encode(signatureMessage(id, expires)),
+      new TextEncoder().encode(signatureMessage(id, expires, variant)),
     );
-    return `${reference}?expires=${expires}&signature=${encodeBase64Url(new Uint8Array(signature))}`;
+    const transform = variant
+      ? `variant=${variant.name}&width=${variant.width}&height=${variant.height}&`
+      : "";
+    return `${reference}?${transform}expires=${expires}&signature=${encodeBase64Url(new Uint8Array(signature))}`;
   }));
 }
 
@@ -194,8 +229,75 @@ function decodeBase64Url(value: string): Uint8Array | null {
   }
 }
 
-function signatureMessage(id: number, expires: number): string {
-  return `GET\n${canonicalAttachmentPath(id)}\n${expires}`;
+export function createAttachmentImageVariant(
+  nameValue: unknown,
+  widthValue: unknown,
+  heightValue: unknown,
+): AttachmentImageVariant | null {
+  const name = nameValue;
+  const width = Number(widthValue);
+  const height = Number(heightValue);
+  if (
+    name !== "mid" ||
+    !Number.isSafeInteger(width) || width <= 0 || width > MAX_ATTACHMENT_VARIANT_DIMENSION ||
+    !Number.isSafeInteger(height) || height <= 0 || height > MAX_ATTACHMENT_VARIANT_DIMENSION
+  ) return null;
+  return { name, width, height };
+}
+
+function requestedAttachmentVariant(
+  nameValue: unknown,
+  widthValue: unknown,
+  heightValue: unknown,
+): AttachmentImageVariant | null {
+  if (nameValue === undefined && widthValue === undefined && heightValue === undefined) return null;
+  const variant = createAttachmentImageVariant(nameValue, widthValue, heightValue);
+  if (!variant) throw new NotFoundException("附件链接无效或已过期");
+  return variant;
+}
+
+function signatureMessage(
+  id: number,
+  expires: number,
+  variant: AttachmentImageVariant | null,
+): string {
+  const transform = variant
+    ? `\nvariant=${variant.name}&width=${variant.width}&height=${variant.height}`
+    : "";
+  return `GET\n${canonicalAttachmentPath(id)}${transform}\n${expires}`;
+}
+
+function imageOutputFormat(contentType: string | undefined): ImageOutputOptions["format"] | null {
+  const normalized = contentType?.split(";", 1)[0]?.trim().toLowerCase();
+  if (
+    normalized === "image/jpeg" || normalized === "image/png" || normalized === "image/gif" ||
+    normalized === "image/webp"
+  ) return normalized;
+  return null;
+}
+
+function r2ObjectResponse(object: R2ObjectBody): Response {
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set("ETag", object.httpEtag);
+  headers.set("Content-Length", String(object.size));
+  return new Response(object.body, { status: 200, headers });
+}
+
+function variantCacheRequest(
+  id: number,
+  sourceEtag: string,
+  variant: AttachmentImageVariant,
+  format: ImageOutputOptions["format"],
+): Request {
+  const key = [
+    String(id),
+    encodeURIComponent(sourceEtag),
+    variant.name,
+    `${variant.width}x${variant.height}`,
+    encodeURIComponent(format),
+  ].join("/");
+  return new Request(`https://cinashop-asset-variant-cache.invalid/${key}`, { method: "GET" });
 }
 
 function formatEpoch(epoch: number): string {
@@ -590,10 +692,18 @@ export class AttachmentService {
     return signAttachmentReferences(this.env.APP_KEY, references, ttlSeconds);
   }
 
-  async getSignedAsset(idValue: unknown, expiresValue: unknown, signatureValue: unknown) {
+  async getSignedAsset(
+    idValue: unknown,
+    expiresValue: unknown,
+    signatureValue: unknown,
+    variantValue?: unknown,
+    widthValue?: unknown,
+    heightValue?: unknown,
+  ): Promise<SignedAssetRead> {
     const id = positiveId(idValue, "附件ID");
     const expires = Number(expiresValue);
     const signature = typeof signatureValue === "string" ? decodeBase64Url(signatureValue) : null;
+    const variant = requestedAttachmentVariant(variantValue, widthValue, heightValue);
     const now = Math.floor(Date.now() / 1000);
     if (!Number.isSafeInteger(expires) || expires < now || expires > now + MAX_SIGNED_ASSET_TTL_SECONDS || !signature) {
       throw new NotFoundException("附件链接无效或已过期");
@@ -603,7 +713,7 @@ export class AttachmentService {
       "HMAC",
       key,
       signature,
-      new TextEncoder().encode(signatureMessage(id, expires)),
+      new TextEncoder().encode(signatureMessage(id, expires, variant)),
     );
     if (!valid) throw new NotFoundException("附件链接无效或已过期");
     const rows = await this.container.db.select({ key: systemAttachment.name })
@@ -648,7 +758,63 @@ export class AttachmentService {
         thresholdMs: 500,
       });
     }
-    return object;
+    if (!variant) return { response: r2ObjectResponse(object) };
+
+    const format = imageOutputFormat(object.httpMetadata?.contentType);
+    if (!format) return { response: r2ObjectResponse(object) };
+    const cacheRequest = variantCacheRequest(id, object.etag, variant, format);
+    let cached: Response | undefined;
+    try {
+      cached = await caches.default.match(cacheRequest);
+    } catch (error) {
+      emitOperationalEvent("warn", {
+        event: "r2_object_variant_cache_failed",
+        component: "r2",
+        operation: "cache_match",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
+    }
+    if (cached) return { response: cached };
+
+    try {
+      const transformed = await this.env.IMAGES.input(object.body)
+        .transform({ width: variant.width, height: variant.height, fit: "scale-down" })
+        .output({ format, ...(format === "image/gif" ? { anim: true } : {}) });
+      const transformedResponse = transformed.response({
+        headers: {
+          "Cache-Control": "public, max-age=604800",
+          "ETag": `W/\"${object.etag}-${variant.name}-${variant.width}x${variant.height}\"`,
+        },
+      });
+      return {
+        response: transformedResponse.clone(),
+        cacheWrite: async () => {
+          try {
+            await caches.default.put(cacheRequest, transformedResponse);
+          } catch (error) {
+            emitOperationalEvent("warn", {
+              event: "r2_object_variant_cache_failed",
+              component: "r2",
+              operation: "cache_put",
+              outcome: "failure",
+              errorCode: operationalErrorCode(error),
+            });
+          }
+        },
+      };
+    } catch (error) {
+      emitOperationalEvent("warn", {
+        event: "r2_object_transform_failed",
+        component: "r2",
+        operation: "transform",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error),
+      });
+      const fallback = await this.env.ASSETS_BUCKET.get(rows[0].key);
+      if (!fallback) throw new NotFoundException("附件不存在");
+      return { response: r2ObjectResponse(fallback) };
+    }
   }
 
   async legacyStorageList(query: Record<string, string>) {

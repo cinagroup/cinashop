@@ -13,11 +13,13 @@ import { requiredAdminPermission } from "@/services/admin/AdminPermissionService
 import {
   AttachmentService,
   canonicalAttachmentPath,
+  createAttachmentImageVariant,
   detectImageType,
   isAttachmentObjectCleanupMessage,
   kefuAttachmentScope,
   parseCanonicalAttachmentId,
   signAttachmentReferences,
+  signAttachmentVariantReferences,
 } from "@/services/system/AttachmentService";
 import { MIGRATION_MANIFEST_VERSION, MIGRATION_TABLES } from "../scripts/data-migration/manifest";
 
@@ -68,8 +70,13 @@ describe("attachment and R2 storage migration boundary", () => {
     const source = readFileSync("src/services/system/AttachmentService.ts", "utf8");
     expect(config).toContain('binding = "ASSETS_BUCKET"');
     expect(config).toContain('bucket_name = "cinashop-assets"');
+    expect(config).toContain('[images]\nbinding = "IMAGES"');
+    expect(config).toContain('[cache]\nenabled = true');
     expect(generated).toContain("ASSETS_BUCKET: R2Bucket;");
+    expect(generated).toContain("IMAGES: ImagesBinding;");
     expect(source).toContain("this.env.ASSETS_BUCKET.put(key, file.stream()");
+    expect(source).toContain("this.env.IMAGES.input(object.body)");
+    expect(source).toContain("caches.default.put(cacheRequest");
     expect(source).toContain("runtime_authority: false");
     expect(source).not.toMatch(/access_key:\s*row\.accessKey|env\.(?:QINIU|OSS|COS)_/);
   });
@@ -96,6 +103,40 @@ describe("attachment and R2 storage migration boundary", () => {
     expect(external).toBe("https://legacy.example.test/qualification.jpg");
     await expect(signAttachmentReferences("test-only-key", [canonicalAttachmentPath(9)], 3_601))
       .rejects.toThrow("附件链接有效期无效");
+  });
+
+  it("binds a bounded fixed image variant into the signed private asset URL", async () => {
+    const variant = createAttachmentImageVariant("mid", 400, 400);
+    expect(variant).toEqual({ name: "mid", width: 400, height: 400 });
+    expect(createAttachmentImageVariant("mid", 2_049, 400)).toBeNull();
+    expect(createAttachmentImageVariant("arbitrary", 400, 400)).toBeNull();
+    const [signed, external] = await signAttachmentVariantReferences(
+      "test-only-key",
+      [canonicalAttachmentPath(42), "https://legacy.example.test/product.jpg"],
+      variant!,
+      60,
+    );
+    expect(signed).toMatch(
+      /^\/api\/assets\/42\?variant=mid&width=400&height=400&expires=\d+&signature=[A-Za-z0-9_-]{43}$/,
+    );
+    expect(external).toBe("https://legacy.example.test/product.jpg");
+
+    const query = new URL(`https://asset.invalid${signed}`).searchParams;
+    const dbMustNotRun = new Proxy({}, {
+      get() { throw new Error("database must not be reached for a bad signature"); },
+    });
+    const verifier = new AttachmentService(
+      { db: dbMustNotRun } as Container,
+      { APP_KEY: "test-only-key" } as Env,
+    );
+    await expect(verifier.getSignedAsset(
+      42,
+      query.get("expires"),
+      query.get("signature"),
+      "mid",
+      401,
+      400,
+    )).rejects.toThrow("附件链接无效或已过期");
   });
 
   it("isolates customer-service uploads by agent and the PHP module domain", () => {

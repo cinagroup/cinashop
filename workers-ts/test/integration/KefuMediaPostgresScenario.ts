@@ -237,7 +237,7 @@ export async function runKefuMediaPostgresScenario(
       signedUrl.searchParams.get("expires"),
       signedUrl.searchParams.get("signature"),
     ));
-    const signedBytes = new Uint8Array(await signedObject.arrayBuffer());
+    const signedBytes = new Uint8Array(await signedObject.response.arrayBuffer());
 
     const kefuSession: ChatSocketSession = {
       isTourist: 0,

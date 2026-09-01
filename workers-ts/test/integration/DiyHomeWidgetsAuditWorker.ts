@@ -24,6 +24,25 @@ export const DIY_HOME_CONFIG_KEYS = [
   "station_open",
   "routine_contact_type",
   "image_thumb_status",
+  "image_watermark_status",
+  "thumb_big_width",
+  "thumb_big_height",
+  "thumb_mid_width",
+  "thumb_mid_height",
+  "thumb_small_width",
+  "thumb_small_height",
+  "watermark_type",
+  "watermark_text",
+  "watermark_text_angle",
+  "watermark_text_color",
+  "watermark_text_size",
+  "watermark_position",
+  "watermark_image",
+  "watermark_opacity",
+  "watermark_rotate",
+  "watermark_x",
+  "watermark_y",
+  "upload_type",
   "site_url",
   "video_func_status",
   "site_name",
@@ -219,6 +238,8 @@ async function productionAggregates(connectionString: string): Promise<Productio
           nonempty_rows: number;
           numeric_like_rows: number;
           json_rows: number;
+          enabled_rows: number;
+          bounded_dimension_rows: number;
         }>>`
           SELECT menu_name,
                  count(*)::integer AS rows,
@@ -227,7 +248,17 @@ async function productionAggregates(connectionString: string): Promise<Productio
                  count(*) FILTER (
                    WHERE btrim(value) ~ '^"?-?[0-9]+([.][0-9]+)?"?$'
                  )::integer AS numeric_like_rows,
-                 count(*) FILTER (WHERE value IS JSON)::integer AS json_rows
+                 count(*) FILTER (WHERE value IS JSON)::integer AS json_rows,
+                 count(*) FILTER (
+                   WHERE lower(btrim(value)) IN ('1', '"1"', 'true', '"true"')
+                 )::integer AS enabled_rows,
+                 count(*) FILTER (
+                   WHERE CASE
+                     WHEN btrim(value) ~ '^"?[0-9]+"?$'
+                       THEN btrim(value, '"')::numeric BETWEEN 1 AND 2048
+                     ELSE false
+                   END
+                 )::integer AS bounded_dimension_rows
           FROM system_config
           WHERE is_store = 0 AND menu_name IN ${tx(DIY_HOME_CONFIG_KEYS)}
           GROUP BY menu_name
@@ -546,6 +577,8 @@ async function productionAggregates(connectionString: string): Promise<Productio
           nonemptyRows: Number(row?.nonempty_rows ?? 0),
           numericLikeRows: Number(row?.numeric_like_rows ?? 0),
           jsonRows: Number(row?.json_rows ?? 0),
+          enabledRows: Number(row?.enabled_rows ?? 0),
+          boundedDimensionRows: Number(row?.bounded_dimension_rows ?? 0),
         };
       });
       return {

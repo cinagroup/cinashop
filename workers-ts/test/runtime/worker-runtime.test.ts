@@ -57,6 +57,22 @@ describe("Worker runtime bindings", () => {
     await expect(testEnv.ASSETS_BUCKET.get(key)).resolves.toBeNull();
   });
 
+  it("transforms private R2 image bytes through the isolated Images binding", async () => {
+    const key = "runtime/assets/source.png";
+    const encoded = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+    const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+    await testEnv.ASSETS_BUCKET.put(key, bytes, { httpMetadata: { contentType: "image/png" } });
+    const object = await testEnv.ASSETS_BUCKET.get(key);
+    expect(object).not.toBeNull();
+    const result = await testEnv.IMAGES.input(object!.body)
+      .transform({ width: 1, height: 1 })
+      .output({ format: "image/png" });
+    const response = result.response();
+    expect(response.headers.get("content-type")).toBe("image/png");
+    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
+    await testEnv.ASSETS_BUCKET.delete(key);
+  });
+
   it("turns a non-reminder Cron event into eighteen replayable root Queue jobs without touching PostgreSQL", async () => {
     const scheduledTime = new Date("2026-08-09T12:00:00.000Z");
     const controller = createScheduledController({

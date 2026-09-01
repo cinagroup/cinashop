@@ -176,19 +176,20 @@ async function categoryForm(c: C, owner: "admin" | "supplier", id?: string) {
 
 export async function asset(c: C) {
   try {
-    const object = await service(c).getSignedAsset(
+    const asset = await service(c).getSignedAsset(
       c.req.param("id"),
       c.req.query("expires"),
       c.req.query("signature"),
+      c.req.query("variant"),
+      c.req.query("width"),
+      c.req.query("height"),
     );
-    const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set("ETag", object.httpEtag);
-    headers.set("Content-Length", String(object.size));
+    if (asset.cacheWrite) c.executionCtx.waitUntil(asset.cacheWrite());
+    const headers = new Headers(asset.response.headers);
     headers.set("Cache-Control", "private, no-store");
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Content-Security-Policy", "default-src 'none'; sandbox");
-    return new Response(object.body, { status: 200, headers });
+    return new Response(asset.response.body, { status: 200, headers });
   } catch (error) {
     if (error instanceof NotFoundException) {
       return new Response(null, { status: 404, headers: { "Cache-Control": "no-store" } });

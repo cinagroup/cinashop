@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  legacyMidThumbnailVariant,
   newcomerCouponIssueProjection,
   newcomerCouponUserProjection,
   transformLegacyHomeComponents,
@@ -237,6 +238,31 @@ describe("DIY-HOME-WIDGETS migration gates", () => {
   });
 
   describe("legacy DIY component projection", () => {
+    it("enables only a bounded, fully configured PHP mid thumbnail variant", () => {
+      expect(legacyMidThumbnailVariant({})).toBeNull();
+      expect(legacyMidThumbnailVariant({
+        thumb_mid_width: { exists: true, value: "400" },
+        thumb_mid_height: { exists: true, value: "400" },
+      })).toBeNull();
+      expect(legacyMidThumbnailVariant({
+        image_thumb_status: { exists: true, value: "0" },
+        thumb_mid_width: { exists: true, value: "400" },
+        thumb_mid_height: { exists: true, value: "400" },
+      })).toBeNull();
+      expect(legacyMidThumbnailVariant({
+        image_thumb_status: { exists: true, value: "1" },
+        thumb_mid_width: { exists: true, value: "400" },
+        thumb_mid_height: { exists: true, value: "300" },
+      })).toEqual({ name: "mid", width: 400, height: 300 });
+      expect(legacyMidThumbnailVariant({
+        image_thumb_status: { exists: true, value: "1" },
+        thumb_mid_width: { exists: true, value: "2049" },
+        thumb_mid_height: { exists: true, value: "400" },
+      })).toBeNull();
+      expect(serviceSource).toContain("signAttachmentVariantReferences(this.env.APP_KEY, images, thumbnail)");
+      expect(serviceSource).toContain("signAttachmentReferences(this.env.APP_KEY, images)");
+    });
+
     it("omits default-home pageFoot and removes editor-only nested keys", () => {
       const result = transformLegacyHomeComponents(freshComponents(), false) as Array<Record<string, unknown>>;
       expect(result.map((item) => item.name)).toEqual([
