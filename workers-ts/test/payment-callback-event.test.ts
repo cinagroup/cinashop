@@ -8,7 +8,7 @@ import {
 } from "@/services/payment/PaymentCallbackEventService";
 import { prepareOrderQueueDeadLetter } from "@/services/order/OrderQueueDeadLetterService";
 
-const replayKey = "018f47a2-763b-4b73-8d6a-615f80b79595";
+const replayKey = "00000000-0000-4000-8000-000000000001";
 const body = {
   action: "processPaymentCallback" as const,
   eventId: 41,

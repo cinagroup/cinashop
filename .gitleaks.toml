@@ -27,3 +27,11 @@ condition = "AND"
 regexTarget = "line"
 paths = ['''^workers-ts/test/admin-mobile-user-migration\.test\.ts$''']
 regexes = ['''idempotencyKey: "6ba7b810-9dad-41d1-80b4-00c04fd430c8",''']
+
+[[allowlists]]
+description = "Historical non-secret payment callback replay UUID test fixture"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/test/payment-callback-event\.test\.ts$''']
+regexes = ['''const replayKey = "018f47a2-763b-4b73-8d6a-615f80b79595";''']
