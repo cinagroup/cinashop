@@ -3001,7 +3001,7 @@ ADMIN-A 现在是 10/32，父项继续未完成，剩余 22 条形成当前可�
 
 ## ADMIN-A-FULFILLMENT-LOCAL 本地订单操作详细审计（2026-09-01）
 
-本轮先对 ADMIN-A-FULFILLMENT-READ 后剩余 7 条合同逐一回查 PHP 路由、控制器、service 和旧 UniApp 调用方。七条均有真实调用，不具备退役证据：`delivery/keep/:id` 涉及三种本地发货方式及电子面单分支，`export_temp` 读取 provider 模板，`split_delivery/:id` 修改拆单与履约状态，`order_verific` 进入核销/结算状态机；`price`、`remark` 与 `wirteoff/records/:id` 则不依赖第三方。为避免把 provider、结算和普通字段更新一次性开放，本批只收口后三条纯 PostgreSQL 合同，其余四条继续明确留在 checklist。
+本轮先对 ADMIN-A-FULFILLMENT-READ 后剩余 7 条合同逐一回查 PHP 路由、控制器、service 和旧 UniApp 调用方。七条均有真实调用，不具备退役证据：`delivery/keep/:id` 涉及三种本地发货方式及电子面单分支，`export_temp` 读取 provider 模板，`split_delivery/:id` 修改拆单与履约状态，`order_verific` 查询核销候选并衔接后续核销流程；`price`、`remark` 与 `wirteoff/records/:id` 则不依赖第三方。为避免把 provider、履约状态和普通字段更新一次性开放，本批只收口后三条纯 PostgreSQL 合同，其余四条继续明确留在 checklist。
 
 PHP `price` 接收公开订单号和绝对实付金额，只允许未支付订单，并由 `StoreOrderServices::updateOrder` 用 `原实付 + 历史 change_price - 新实付` 重新计算累计改价差额；PHP `remark` 按公开订单号写备注；PHP 原路由把核销记录拼成 `wirteoff`，以 POST body 的 `product_type` 返回分页记录。新实现保留路径、请求和成功 envelope，但收紧了三个不安全或不确定边界：公开订单号必须唯一命中双软删除均为 0 的有效订单；金额只接受非负十进制定点、最多两位小数并同时受 `numeric(12,2)` 和 `change_price numeric(8,2)` 上限约束；备注去除首尾空白且最多 512 个字符，核销查询只接受商品类型 0/4、页码最多 10,000、每页最多 100。
 
@@ -3019,7 +3019,44 @@ PHP `price` 接收公开订单号和绝对实付金额，只允许未支付订�
 
 实现提交 `796569cc5b77d210d2df9381b86cab9a967ad9d3` 已推送至 `main`。[GitHub Actions 33457613526](https://github.com/cinagroup/cinashop/actions/runs/33457613526) 最终 8/8 jobs 成功：Linux Worker 综合任务通过生产依赖审计、双 TypeScript、172 文件/1,077 项单测、observability、201/248/201/零定义漂移和 1,904/1,480/778/760 路由门禁；受支持的 workerd runtime、Admin、PC、Supplier、Kefu、UniApp 和 checksum-pinned 全历史 Gitleaks 全部成功。CI 不持有生产 Secret、不访问 Hyperdrive，也不部署 Worker/Pages。
 
-ADMIN-A 现在为 13/32，父项继续未完成，剩余 19 条：履约写/provider 4 条（`POST delivery/keep/:id`、`GET export_temp`、`PUT split_delivery/:id`、`POST order_verific`），退款/资金 4 条，代客下单 11 条。下一批应先把 `delivery/keep` 与 `split_delivery` 精确接到现有 `SupplierFulfillmentService` 的结算锁、售后/预售/拼团门禁、面单冲突和通知 outbox；`order_verific` 必须复用 `StoreOrderWriteoffService` 的部分核销、旋码、并发与最终结算；`export_temp` 必须保留 provider 限时、限长、失败分类和凭据不回显。四条不能仅复用旧 `AdminCrud` 的宽松更新路径。
+ADMIN-A 现在为 13/32，父项继续未完成，剩余 19 条：履约写/provider 4 条（`POST delivery/keep/:id`、`GET export_temp`、`PUT split_delivery/:id`、`POST order_verific`），退款/资金 4 条，代客下单 11 条。下一批应先把 `delivery/keep` 与 `split_delivery` 精确接到现有 `SupplierFulfillmentService` 的结算锁、售后/预售/拼团门禁、面单冲突和通知 outbox；`order_verific` 必须复用 `StoreOrderWriteoffService` 的 actor/订单状态校验，但保持只读并把真正核销留给完整的部分核销、旋码、并发与最终结算写状态机；`export_temp` 必须保留 provider 限时、限长、失败分类和凭据不回显。四条不能仅复用旧 `AdminCrud` 的宽松更新路径。
+
+## ADMIN-A-FULFILLMENT-WRITE/PROVIDER 履约写入、面单模板与扫码查询详细审计（2026-09-01）
+
+### PHP 权威、旧端调用与语义纠偏
+
+本批逐行核对 PHP `route/api.php:744-758`、`app/controller/api/admin/order/StoreOrder.php:237-299,665-755,804-815`、相关 delivery/writeoff service，以及旧 UniApp `view/uniapp/api/admin.js` 和发货、核销扫描页面。四条合同均有真实旧端调用，不能退役。上一批审计把 `POST order_verific` 写成“进入核销/结算状态机”并要求它直接旋码，这是语义误判：PHP 控制器实际只根据用户条码或订单核销码查询可核销订单；真正修改核销次数、旋转核销码并完成订单结算的是后续核销写接口。当前实现和 checklist 已按源码证据纠正，不让一个只读扫码动作意外获得写副作用。
+
+| 路由 | PHP/旧端合同 | Worker 候选与审计结论 |
+|---|---|---|
+| `POST /api/admin/order/delivery/keep/:id` | 支持手工快递、电子面单、平台配送和虚拟发货，成功提示 `发货成功!` | 手工路径复用 `SupplierFulfillmentService.deliver`；电子面单路径只创建持久 `order_waybill_job` 并投递 Queue，不在 HTTP 请求中签发面单；Admin actor 只来自已验证会话 |
+| `PUT /api/admin/order/split_delivery/:id` | 同一组发货字段外加 `cart_ids`，只发选中数量 | 先用共享严格解析器规范化 cart ID/数量，再复用 `splitDelivery` 的根结算锁、商品行锁和剩余数量状态机；电子面单拆单同样只建 durable job |
+| `GET /api/admin/order/export_temp?com=...` | 一号通模板查询，旧 UniApp 读取 `res.data.data` 中的 `title/pic/temp_id` | 复用现有固定 HTTPS provider 客户端和系统数据库配置，保留 10 秒超时/32 KiB 响应上限/错误分类；二次限制最多 100 项，只返回三字段，预览图仅接受 HTTPS，凭据与未知 provider 字段不回显 |
+| `POST /api/admin/order/order_verific` | 先按用户条码查询，未命中再按核销码；一单时直接进入详情，多单时显示列表 | 保留用户条码优先级和 `data/is_order_code/product_type/auth` 形状，但忽略客户端 `auth`，始终以认证 Admin actor 查询；最多返回 20 单，非唯一主体失败关闭；该路由只读，映射 `order.view` |
+
+### 履约状态机、权限与失败边界
+
+手工快递、平台配送和虚拟发货不复制 PHP 的宽松更新：统一进入既有供应商履约事务，设置 2 秒锁超时和 10 秒语句超时，锁根订单结算域与目标/商品行；锁后重新验证已支付、有效订单、退款、拼团、预售、拆分数量和冲突电子面单任务，再写订单、状态审计和通知 outbox。平台配送员必须是唯一启用的平台 `delivery_service(type=0, relation_id=0)` 且关联有效用户；客户端提交的姓名和电话被数据库锁定值覆盖，不能伪造配送身份。Admin ID 进入同事务审计，但消息不包含收件地址、电话、运单号或虚拟交付正文。
+
+电子面单的不可逆 provider 签发继续隔离在 `OrderWaybillJobService` 的 Queue 消费端。HTTP 只保存请求摘要、载体/模板/寄件配置和 actor，旧 UniApp 没有 `request_key` 时服务端生成 UUID-v4；同根订单的 active/UNKNOWN/DEAD 任务围栏继续阻止并发重复签发，Queue 发送失败时 durable row 仍由定时调度恢复。Admin 兼容层不直接 `fetch` provider、不直接 `.send()` Queue，也不接收 provider access key/secret。模板查询是只读 provider 例外，使用现有固定域名、HTTPS、认证、超时、响应字节限界和失败分类；返回再经过本批 allowlist，不把上游 envelope 或凭据透传给移动端。
+
+扫码查询在一条短事务中设置 2 秒锁和 5 秒语句超时，先查唯一有效用户条码，再查唯一 12 位订单核销码；用户条码最多展开 20 个已支付、未完成、无退款阻断的候选订单。每单继续经过 `StoreOrderWriteoffService` 的 Admin operator、配送/自提模式、门店、退款、拼团和订单状态校验，但不锁订单作写入、不修改核销码或结算。列表只投影旧页面需要的订单 ID/号、状态、数量、实付、时间、商品类型和首图；单个购物车 JSON 从 PostgreSQL 传输最多 32 KiB，图片最多 1,024 字符。真正核销仍是既有 `POST /admin/order/writeoff`，其部分核销、商品行锁、旋码、最终结算和同事务审计未被绕过。
+
+四条路由均挂在 `adminAuthMiddleware` 后并设置 `Cache-Control: private, no-store, max-age=0`。发货/拆单要求 `order.manage`；模板查询与扫码查询要求 `order.view`。请求体分别限制为 32 KiB/8 KiB，发货类型、记录类型、订单主键、物流编码、模板、寄件字段、购物车选择和扫码值均有语法与长度边界。查询中的 body `auth`、配送姓名/电话、provider 未知字段及 caller credentials 均不是权威输入。
+
+### 生产数据库边界、验证与进度
+
+用户明确要求直接使用生产数据库，因此候选运行时继续只绑定生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有引入 SQLite、影子 PostgreSQL 或第二套业务库。最终 minify dry-run 为 `3,316.17 KiB / gzip 788.16 KiB` 并精确回显该 Hyperdrive、Queue、KV、R2 与 Durable Object 绑定；dry-run 没有上传或部署。仓库 schema 审计仍为 source 201、target 248、shared 201、缺源列 0、外部/内嵌 248/248、定义漂移 0。本批没有 DDL，生产相对候选仍只缺 ADMIN-D 尚未应用的 `admin_user_write_replay`。
+
+这四条候选尚未部署到生产 Worker。为避免对真实订单发货、拆单或核销造成不可逆影响，本批没有对生产 `public` 执行 DML/DDL，没有调用真实面单 provider，也没有用真实管理员做新接口 E2E；测试中的 provider、事务和身份均为 mock。这里的“直接使用生产数据库”证据是唯一运行时绑定和既有生产事实，不冒充尚未部署的新代码已经在生产执行。生产 Worker/Pages 发布、远端真实 Admin 回归和 provider 正向仍属于 REL-001/002 的独立批准门禁。
+
+新增定向测试 1 文件 8/8，覆盖手工/电子分支、durable job 字段映射、平台配送身份覆盖、拆单数量规范化、模板字段白名单/数量/HTTPS、认证 Admin 扫码 actor、四个真实 handler envelope/no-store、四条精确路由、`order.manage/order.view` ACL，以及共享履约锁、超时、快照限界和请求路径无直接 provider/Queue 副作用。完整本地门禁为双 TypeScript、173 文件/1,085 项单元测试、observability 14 信号/10 域/27 必需事件/374 个生产源文件/6 个发布阻塞、schema 201/248/201/零定义漂移、官方 npm 生产依赖漏洞 0、路由审计和 `git diff --check`。Windows workerd 仍在断言前以既有 `0xc0000005` 启动失败；Linux CI 的真实 workerd 正常。
+
+路由基线在 ADMIN-A-FULFILLMENT-LOCAL 后为 PHP 1,904、TS 1,480、精确 778、可执行 760。本批净增四条精确可执行合同后为 TS 1,484、精确 782、可执行 764、明确不可用 18、原始缺失 1,122、证据化退役 4、可执行缺口 1,118，精确/可执行/退役后有效覆盖为 `41.1%/40.1%/40.2%`。`/api` 为 PHP 457、TS 793、精确 400、可执行 397、明确不可用 3、原始缺失 57、退役 1、可执行缺口 56，对应 `87.5%/86.9%/87.1%`；其他路由面未改变。
+
+实现提交 `1ffbeb405b41a39afb8ae96b594a653b89dac8cb` 已推送至 `main`。[GitHub Actions 33459485969](https://github.com/cinagroup/cinashop/actions/runs/33459485969) 最终 8/8 jobs 成功：Linux Worker 综合任务通过生产依赖审计、双 TypeScript、173 文件/1,085 项单测、observability、201/248/201/零定义漂移和 1,904/1,484/782/764 路由门禁；受支持的真实 workerd runtime、Admin、PC、Supplier、Kefu、UniApp 和 checksum-pinned 全历史 Gitleaks 全部成功。CI 不持有生产 Secret、不访问 Hyperdrive，也不部署 Worker/Pages。Cloudflare Workers 最佳实践审查直接影响了请求内短事务、外部调用隔离、durable job、最小 ACL、私有不缓存、双向输入/输出边界和生产绑定/部署证据分层。
+
+ADMIN-A 现在为 17/32，履约子组 12/12 已收口；父项继续未完成，剩余 15 条只有退款/资金 4 条和代客下单 11 条。下一批应优先处理 ADMIN-A-REFUND：线下支付与退款动作必须复用 CORE-002 资金账本、支付 provider 状态、幂等围栏、根结算锁和明确 `order.manage/refund.manage` 权限；仍不得用生产订单做破坏性试验，也不得因代码通过 CI 自动发布。
 
 ## 完成定义
 
