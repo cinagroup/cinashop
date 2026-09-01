@@ -30,7 +30,9 @@ const VERIFY_CODE_LOCK_NAMESPACE = 63_843;
 const OPEN_REFUND_TYPES = [0, 1, 2, 4, 5];
 const MAX_LEGACY_BARCODE_LENGTH = 32;
 const MAX_LEGACY_SEARCH_RESULTS = 100;
+const MAX_ADMIN_LEGACY_SEARCH_RESULTS = 20;
 const MAX_JSON_SNAPSHOT_BYTES = 256 * 1024;
+const MAX_ADMIN_SUMMARY_SNAPSHOT_BYTES = 32 * 1024;
 const MAX_ORDER_CART_ROWS = 500;
 
 export type WriteoffActor =
@@ -108,6 +110,18 @@ function maskPhone(phone: string): string {
   const normalized = phone.trim();
   if (normalized.length < 7) return normalized ? "****" : "";
   return `${normalized.slice(0, 3)}****${normalized.slice(-4)}`;
+}
+
+function legacyShanghaiTime(seconds: number): string {
+  if (!Number.isSafeInteger(seconds) || seconds <= 0) return "";
+  return new Date((seconds + 8 * 60 * 60) * 1_000).toISOString().slice(0, 19).replace("T", " ");
+}
+
+function legacySummaryImage(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const normalized = value.trim();
+  if (!normalized || normalized.length > 1_024 || /[\u0000-\u001f\u007f]/.test(normalized)) return "";
+  return normalized;
 }
 
 function parseSnapshot(value: string | null): unknown {
@@ -318,6 +332,70 @@ export class StoreOrderWriteoffService {
         result.push(await this.infoUsing(tx, actor, { orderId: order.id }));
       }
       return result;
+    });
+  }
+
+  /** Bounded list projection for the inherited mobile administrator scan screen. */
+  async legacySummarySearch(actor: WriteoffActor, rawLookup: unknown) {
+    const lookup = legacyLookupValue(rawLookup);
+    return withTx(this.container, async (tx) => {
+      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
+      await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+      let orderIds: number[];
+      let directOrder = false;
+      const users = await tx
+        .select({ uid: user.uid })
+        .from(user)
+        .where(and(
+          eq(user.barCode, lookup),
+          eq(user.status, 1),
+          eq(user.isDel, 0),
+        ))
+        .orderBy(asc(user.uid))
+        .limit(2);
+      if (users.length > 1) throw new NotFoundException("用户码对应多个有效用户");
+      if (users.length === 1) {
+        const rows = await tx
+          .select({ id: storeOrder.id })
+          .from(storeOrder)
+          .where(and(
+            eq(storeOrder.uid, users[0].uid),
+            this.actorLookupCondition(actor),
+            eq(storeOrder.paid, 1),
+            inArray(storeOrder.status, [0, 1, 5]),
+            inArray(storeOrder.refundStatus, [0, 3]),
+            eq(storeOrder.isDel, 0),
+            eq(storeOrder.isSystemDel, 0),
+          ))
+          .orderBy(desc(storeOrder.payTime), desc(storeOrder.id))
+          .limit(MAX_ADMIN_LEGACY_SEARCH_RESULTS + 1);
+        if (rows.length > MAX_ADMIN_LEGACY_SEARCH_RESULTS) {
+          throw new ValidateException("待核销订单过多，请使用12位核销码查询");
+        }
+        orderIds = rows.map((row) => row.id);
+      } else if (/^\d{12}$/.test(lookup)) {
+        const rows = await tx
+          .select({ id: storeOrder.id })
+          .from(storeOrder)
+          .where(and(
+            eq(storeOrder.verifyCode, lookup),
+            this.actorLookupCondition(actor),
+            eq(storeOrder.isDel, 0),
+            eq(storeOrder.isSystemDel, 0),
+          ))
+          .orderBy(asc(storeOrder.id))
+          .limit(2);
+        if (rows.length !== 1) throw new NotFoundException("核销订单不存在或核销码不唯一");
+        orderIds = [rows[0].id];
+        directOrder = true;
+      } else {
+        throw new NotFoundException("核销码或用户码不存在");
+      }
+      const data = [];
+      for (const orderId of orderIds) {
+        data.push(await this.summaryUsing(tx, actor, orderId));
+      }
+      return { data, directOrder };
     });
   }
 
@@ -552,6 +630,55 @@ export class StoreOrderWriteoffService {
       writeoff_count: writeoffCount,
       image: typeof firstProduct?.image === "string" ? firstProduct.image : "",
       cart_info: projected,
+    };
+  }
+
+  private async summaryUsing(tx: DbClient, actor: WriteoffActor, orderId: number) {
+    const rows = await tx
+      .select()
+      .from(storeOrder)
+      .where(and(
+        eq(storeOrder.id, orderId),
+        this.actorLookupCondition(actor),
+        eq(storeOrder.isDel, 0),
+        eq(storeOrder.isSystemDel, 0),
+      ))
+      .limit(1);
+    const order = rows[0];
+    if (!order) throw new NotFoundException("核销订单不存在");
+    const mode = this.writeoffMode(order);
+    await this.requireOperator(tx, actor, order, mode);
+    await this.assertOrderState(tx, order, mode);
+    const carts = await tx
+      .select({
+        cartInfo: sql<string | null>`CASE
+          WHEN ${storeOrderCartInfo.cartInfo} IS NOT NULL
+            AND octet_length(${storeOrderCartInfo.cartInfo}) <= ${MAX_ADMIN_SUMMARY_SNAPSHOT_BYTES}
+          THEN ${storeOrderCartInfo.cartInfo}
+          ELSE NULL END`,
+      })
+      .from(storeOrderCartInfo)
+      .where(eq(storeOrderCartInfo.oid, order.id))
+      .orderBy(asc(storeOrderCartInfo.id))
+      .limit(1);
+    const snapshot = parseSnapshot(carts[0]?.cartInfo ?? null);
+    const root = snapshot && typeof snapshot === "object" && !Array.isArray(snapshot)
+      ? snapshot as Record<string, unknown>
+      : null;
+    const product = root?.productInfo && typeof root.productInfo === "object" && !Array.isArray(root.productInfo)
+      ? root.productInfo as Record<string, unknown>
+      : null;
+    const legacyStatus = order.status === 5 ? 12 : mode === "pickup" ? 11 : 4;
+    return {
+      id: order.id,
+      order_id: order.orderId,
+      status: order.status,
+      _status: legacyStatus,
+      total_num: order.totalNum,
+      pay_price: order.payPrice,
+      add_time: legacyShanghaiTime(order.addTime),
+      product_type: order.productType,
+      image: legacySummaryImage(product?.image),
     };
   }
 

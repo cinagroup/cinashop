@@ -260,8 +260,11 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     // to change package availability through that compatibility route.
     return "activity.manage";
   }
-  if (group.key === "order" && route.startsWith("order/wirteoff/records/")) {
-    // The inherited endpoint is POST, but it only reads writeoff history.
+  if (
+    group.key === "order"
+    && (route.startsWith("order/wirteoff/records/") || route === "order/order_verific")
+  ) {
+    // These inherited endpoints are POST, but they only read writeoff state.
     return "order.view";
   }
   if (

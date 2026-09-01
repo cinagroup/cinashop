@@ -24,6 +24,7 @@ import {
 } from "@/services/admin/AdminStatisticService";
 import { AdminMobileOrderReadService } from "@/services/admin/AdminMobileOrderReadService";
 import { AdminMobileOrderOperationService } from "@/services/admin/AdminMobileOrderOperationService";
+import { AdminMobileFulfillmentService } from "@/services/admin/AdminMobileFulfillmentService";
 import {
   AdminExtendedStatisticService,
   parseAdminStatisticChannel,
@@ -95,6 +96,10 @@ function mobileOrderReadService(c: C): AdminMobileOrderReadService {
 
 function mobileOrderOperationService(c: C): AdminMobileOrderOperationService {
   return new AdminMobileOrderOperationService(c.get("container"));
+}
+
+function mobileFulfillmentService(c: C): AdminMobileFulfillmentService {
+  return new AdminMobileFulfillmentService(c.get("container"), c.env);
 }
 
 function verifiedAdminId(c: C): number {
@@ -193,6 +198,52 @@ export async function adminMobileOrderWriteoffRecords(c: C) {
   privateAdminResponse(c);
   return jsonOk(c, await mobileOrderOperationService(c).writeoffRecords(
     c.req.param("id"),
+    await readBoundedJsonObject(c.req.raw, 8 * 1024),
+  ));
+}
+
+/** POST /api/admin/order/delivery/keep/:id — manual fulfillment or durable waybill job. */
+export async function adminMobileOrderDeliveryKeep(c: C) {
+  privateAdminResponse(c);
+  const result = await mobileFulfillmentService(c).deliver(
+    verifiedAdminId(c),
+    c.req.param("id"),
+    await readBoundedJsonObject(c.req.raw, 32 * 1024),
+  );
+  return jsonOk(
+    c,
+    result.queued ? result : null,
+    result.queued ? "电子面单任务已受理" : "发货成功!",
+  );
+}
+
+/** PUT /api/admin/order/split_delivery/:id — split fulfillment over the shared state machine. */
+export async function adminMobileOrderSplitDelivery(c: C) {
+  privateAdminResponse(c);
+  const result = await mobileFulfillmentService(c).deliver(
+    verifiedAdminId(c),
+    c.req.param("id"),
+    await readBoundedJsonObject(c.req.raw, 32 * 1024),
+    true,
+  );
+  return jsonOk(
+    c,
+    result.queued ? result : "SUCCESS",
+    result.queued ? "电子面单任务已受理" : "SUCCESS",
+  );
+}
+
+/** GET /api/admin/order/export_temp — bounded electronic-waybill provider catalog. */
+export async function adminMobileOrderExportTemp(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileFulfillmentService(c).waybillTemplates(c.req.query()));
+}
+
+/** POST /api/admin/order/order_verific — read-only legacy scan lookup under Admin authority. */
+export async function adminMobileOrderVerificationLookup(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await mobileFulfillmentService(c).writeoffLookup(
+    verifiedAdminId(c),
     await readBoundedJsonObject(c.req.raw, 8 * 1024),
   ));
 }
