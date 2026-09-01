@@ -10,6 +10,13 @@ import {
 } from "@/services/content/PublicArticleCompatibilityService";
 import { errorHandler } from "@/middleware/error";
 import { sanitizeArticleRichText } from "../../view/uniapp-ts/src/utils/articleRichText";
+import {
+  canonicalizePublishedAttachmentReference,
+  normalizePublishedArticleImageInput,
+  renderPublishedArticleHtml,
+  renderPublishedArticleMediaReferences,
+  sanitizePublishedArticleHtml,
+} from "@/services/content/ArticleContentPolicy";
 
 const root = resolve(import.meta.dirname, "..");
 const routesSource = readFileSync(resolve(root, "src/routes/v1/index.ts"), "utf8");
@@ -166,5 +173,64 @@ describe("PUBLIC-ARTICLE migration contract", () => {
     expect(result).toContain('<img alt="rejected" width="100%">');
     expect(result).toContain('<table width="100%">');
     expect(result).not.toContain('0">');
+  });
+
+  it("stores only canonical R2 references and sanitizes every publishing path", () => {
+    const copied = "/api/assets/42?expires=1800000000&signature=copied-short-lived-value";
+    expect(canonicalizePublishedAttachmentReference(copied)).toBe("/api/assets/42");
+    expect(normalizePublishedArticleImageInput([copied, "https://cdn.example.com/cover.png"]))
+      .toBe("/api/assets/42,https://cdn.example.com/cover.png");
+    expect(() => normalizePublishedArticleImageInput("http://legacy.example/cover.png"))
+      .toThrow("必须使用HTTPS或站内路径");
+
+    const sanitized = sanitizePublishedArticleHtml(`
+      <script>alert(1)</script>
+      <p style="position:fixed" onclick="alert(1)">
+        <a href="jav&#x61;script:alert(1)">bad</a>
+        <img src="${copied}" onerror="alert(1)">
+        <img src="http://legacy.example/cover.png">
+      </p>
+    `);
+    expect(sanitized).not.toMatch(/<(?:script|iframe|object|form)\b/i);
+    expect(sanitized).not.toMatch(/\b(?:style|onclick|onerror)\s*=/i);
+    expect(sanitized).not.toMatch(/(?:javascript|http:)/i);
+    expect(sanitized).toContain('<img src="/api/assets/42" width="100%">');
+
+    const admin = readFileSync(
+      resolve(root, "src/controllers/api/v1/AdminCrudController.ts"),
+      "utf8",
+    );
+    const wechat = readFileSync(resolve(root, "src/services/wechat/WechatContentService.ts"), "utf8");
+    expect(admin).toContain("readBoundedJsonObject(c.req.raw, ADMIN_ARTICLE_MAX_BODY_BYTES)");
+    expect(admin).toContain("sanitizePublishedArticleHtml");
+    expect(admin).toContain("normalizePublishedArticleImageInput");
+    expect(wechat).toContain("sanitizePublishedArticleHtml");
+    expect(wechat).toContain("normalizePublishedArticleMediaReference");
+  });
+
+  it("signs canonical private-R2 references only at response time", async () => {
+    const appKey = "public-article-test-key";
+    const [signed, external, rejected] = await renderPublishedArticleMediaReferences(appKey, [
+      "/api/assets/7",
+      "https://cdn.example.com/cover.png",
+      "javascript:alert(1)",
+    ]);
+    expect(signed).toMatch(/^\/api\/assets\/7\?expires=\d+&signature=[A-Za-z0-9_-]{43}$/);
+    expect(external).toBe("https://cdn.example.com/cover.png");
+    expect(rejected).toBe("");
+
+    const html = await renderPublishedArticleHtml(
+      appKey,
+      '<p><img src="/api/assets/8?expires=1&amp;signature=stale"></p>',
+    );
+    expect(html).toMatch(
+      /^<p><img src="\/api\/assets\/8\?expires=\d+&amp;signature=[A-Za-z0-9_-]{43}" width="100%"><\/p>$/,
+    );
+    expect(html).not.toContain("signature=stale");
+    await expect(renderPublishedArticleMediaReferences(undefined, ["/api/assets/9"]))
+      .rejects.toThrow("APP_KEY未配置");
+    await expect(renderPublishedArticleMediaReferences(undefined, ["https://cdn.example.com/a.png"]))
+      .resolves.toEqual(["https://cdn.example.com/a.png"]);
+    expect(controllerSource).toContain('c.env.APP_KEY');
   });
 });

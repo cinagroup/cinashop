@@ -80,6 +80,20 @@ describe("official-account content migration", () => {
     const normalized = normalizeNewsInput({ id: 0, sort: 2, status: 1, list: [article()] });
     expect(normalized.articles).toHaveLength(1);
     expect(normalized.articles[0].imageInput).toBe("/cover.png");
+    const safePublished = normalizeNewsInput({
+      id: 0,
+      list: [{
+        ...article(),
+        content: '<p onclick="alert(1)"><img src="/api/assets/7?expires=1&signature=stale"></p>',
+        image_input: "/api/assets/8?expires=1&signature=stale",
+      }],
+    }).articles[0];
+    expect(safePublished.content).toBe('<p><img src="/api/assets/7" width="100%"></p>');
+    expect(safePublished.imageInput).toBe("/api/assets/8");
+    expect(() => normalizeNewsInput({
+      id: 0,
+      list: [{ ...article(), image_input: "javascript:alert(1)" }],
+    })).toThrow("必须使用HTTPS或站内路径");
     expect(() => normalizeNewsInput({ list: [] })).toThrow("1至8篇");
     expect(() => normalizeNewsInput({ list: Array.from({ length: 9 }, (_, index) => article(index)) })).toThrow("1至8篇");
     expect(() => normalizeNewsInput({ list: [{ ...article(), author: "" }] })).toThrow("作者");

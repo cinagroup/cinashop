@@ -20,6 +20,11 @@ import {
   AuthException,
   ValidateException,
 } from "@/utils/errors";
+import {
+  normalizePublishedArticleLink,
+  renderPublishedArticleHtml,
+  renderPublishedArticleMediaReferences,
+} from "@/services/content/ArticleContentPolicy";
 
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_PAGED_SIZE = 20;
@@ -154,10 +159,18 @@ function articleListProjection(row: ArticleListRow, includeLikes: boolean): Lega
     visit: String(row.visit),
     add_time: formatArticleShanghaiUnix(row.addTime, "minute"),
     synopsis: row.synopsis,
-    url: row.url,
+    url: safePublicArticleLink(row.url),
   };
   if (includeLikes) result.likes = row.likes;
   return result;
+}
+
+function safePublicArticleLink(value: string): string {
+  try {
+    return normalizePublishedArticleLink(value);
+  } catch {
+    return "";
+  }
 }
 
 async function relationCount(tx: DbClient, id: number): Promise<number> {
@@ -173,7 +186,10 @@ async function relationCount(tx: DbClient, id: number): Promise<number> {
 }
 
 export class PublicArticleCompatibilityService {
-  constructor(private readonly container: Container) {}
+  constructor(
+    private readonly container: Container,
+    private readonly appKey?: string,
+  ) {}
 
   async categories(): Promise<Array<{ id: number; title: string }>> {
     const rows = await this.container.db
@@ -214,7 +230,7 @@ export class PublicArticleCompatibilityService {
     const id = articleId(idValue);
     const safeUid = Number.isSafeInteger(uid) && uid > 0 ? uid : 0;
 
-    return withTx(this.container, async (tx) => {
+    const detail = await withTx(this.container, async (tx) => {
       const updated = await tx
         .update(systemArticle)
         .set({
@@ -277,7 +293,7 @@ export class PublicArticleCompatibilityService {
         visit: article.visit,
         likes: article.likes,
         sort: article.sort,
-        url: article.url,
+        url: safePublicArticleLink(article.url),
         hide: article.hide,
         admin_id: article.adminId,
         mer_id: article.merId,
@@ -290,6 +306,25 @@ export class PublicArticleCompatibilityService {
         is_like: Boolean(related?.isLike),
       };
     });
+    const product = detail.store_info;
+    const imageInput = detail.image_input;
+    const mediaReferences = [
+      ...imageInput,
+      product?.image ?? "",
+    ];
+    const signed = await renderPublishedArticleMediaReferences(this.appKey, mediaReferences);
+    const renderedProduct = product
+      ? { ...product, image: signed[imageInput.length] ?? "" }
+      : null;
+    return {
+      ...detail,
+      content: detail.content === null
+        ? null
+        : await renderPublishedArticleHtml(this.appKey, detail.content),
+      image_input: signed.slice(0, imageInput.length),
+      storeInfo: renderedProduct,
+      store_info: renderedProduct,
+    };
   }
 
   async like(uid: number, idValue: unknown, statusValue: unknown): Promise<true> {
@@ -389,6 +424,13 @@ export class PublicArticleCompatibilityService {
       throw new ValidateException("文章数量超过安全上限，请传入分页参数");
     }
     const includeLikes = kind === "category";
-    return rows.map((row) => articleListProjection(row, includeLikes));
+    const items = rows.map((row) => articleListProjection(row, includeLikes));
+    const references = items.flatMap((item) => item.image_input);
+    const signed = await renderPublishedArticleMediaReferences(this.appKey, references);
+    let cursor = 0;
+    return items.map((item) => ({
+      ...item,
+      image_input: signed.slice(cursor, cursor += item.image_input.length),
+    }));
   }
 }

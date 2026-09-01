@@ -6,7 +6,7 @@ import { jsonOk } from "@/utils/json";
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
 function service(c: C): PublicArticleCompatibilityService {
-  return new PublicArticleCompatibilityService(c.get("container"));
+  return new PublicArticleCompatibilityService(c.get("container"), c.env.APP_KEY);
 }
 
 function noStore(c: C, personalized = false): void {

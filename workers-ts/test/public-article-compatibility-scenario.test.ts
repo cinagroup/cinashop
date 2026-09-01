@@ -23,6 +23,7 @@ describe("PUBLIC-ARTICLE production audit gates", () => {
     expect(configSource).toContain('"id": "9748c294e21c49a99579c9cef70102e0"');
     expect(configSource).toContain('"nodejs_compat"');
     expect(configSource).toContain('"global_fetch_strictly_public"');
+    expect(configSource).toContain('"cpu_ms": 120000');
   });
 
   it("uses a timing-safe hashed Bearer gate and POST-only endpoints", () => {

@@ -22,6 +22,11 @@ import {
   wechatReply,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import {
+  normalizePublishedArticleLink,
+  normalizePublishedArticleMediaReference,
+  sanitizePublishedArticleHtml,
+} from "@/services/content/ArticleContentPolicy";
 
 const REPLY_TYPES = new Set(["text", "image", "news", "voice"]);
 const RESERVED_KEYS = new Set(["subscribe", "default"]);
@@ -149,16 +154,17 @@ export function normalizeReplyInput(input: Record<string, unknown>): NormalizedR
     const synopsis = boundedString(pick(rawData, "synopsis", "description"), "图文摘要", 500);
     const rawImages = pick(rawData, "image_input", "imageInput");
     const imageInput = Array.isArray(rawImages)
-      ? rawImages.map(String).map((item) => item.trim()).filter(Boolean).slice(0, 8)
+      ? rawImages.slice(0, 8).map((item, index) =>
+        normalizePublishedArticleMediaReference(item, `第${index + 1}张图文图片`)
+      ).filter(Boolean)
       : boundedString(rawImages, "图文图片", 255)
-        ? [boundedString(rawImages, "图文图片", 255)]
+        ? [normalizePublishedArticleMediaReference(rawImages, "图文图片")]
         : [];
-    if (imageInput.some((item) => item.length > 255)) {
-      throw new ValidateException("图文图片不能超过255个字符");
-    }
-    const image = boundedString(pick(rawData, "image"), "图文图片", 255) || imageInput[0] || "";
-    const url = boundedString(pick(rawData, "url"), "图文链接", 2_000)
+    const rawImage = boundedString(pick(rawData, "image"), "图文图片", 255) || imageInput[0] || "";
+    const image = normalizePublishedArticleMediaReference(rawImage, "图文图片");
+    const rawUrl = boundedString(pick(rawData, "url"), "图文链接", 2_000)
       || (id ? `/pages/extension/news_details/index?id=${id}` : "");
+    const url = normalizePublishedArticleLink(rawUrl, "图文链接");
     if (!url) throw new ValidateException("请填写图文链接或选择已有文章");
     data = { id, title, synopsis, image, image_input: imageInput, url };
   }
@@ -211,13 +217,21 @@ export function normalizeNewsInput(input: Record<string, unknown>): NormalizedNe
       id: articleId,
       title: boundedString(pick(article, "title"), `第${index + 1}篇文章标题`, 255, { required: true }),
       author: boundedString(pick(article, "author"), `第${index + 1}篇文章作者`, 255, { required: true }),
-      content: boundedString(pick(article, "content"), `第${index + 1}篇文章正文`, 200_000, {
-        required: true,
-        trim: false,
-      }),
+      content: sanitizePublishedArticleHtml(boundedString(
+        pick(article, "content"),
+        `第${index + 1}篇文章正文`,
+        200_000,
+        { required: true, trim: false },
+      )),
       synopsis: boundedString(pick(article, "synopsis"), `第${index + 1}篇文章摘要`, 500, { required: true }),
-      imageInput,
-      url: boundedString(pick(article, "url"), `第${index + 1}篇文章链接`, 255),
+      imageInput: normalizePublishedArticleMediaReference(
+        imageInput,
+        `第${index + 1}篇文章封面`,
+      ),
+      url: normalizePublishedArticleLink(
+        boundedString(pick(article, "url"), `第${index + 1}篇文章链接`, 255),
+        `第${index + 1}篇文章链接`,
+      ),
       sort: integer(pick(article, "sort"), `第${index + 1}篇文章排序`, { min: 0, fallback: index }),
     };
   });

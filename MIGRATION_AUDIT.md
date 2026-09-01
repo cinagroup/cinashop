@@ -3374,6 +3374,28 @@ Dada 状态图显式覆盖当前 `1/8/2/100/3/9/4/10/6/5/1000` 和 UNKNOWN；UU 
 
 因此 CORE-001-G1 可按“达达候选代码、生产空结构和真实 PostgreSQL 隔离状态机完成”勾选；CORE-001-G2 与父项保持未完成。下一步外部门禁是取得 UU 当前商户合同/样例及测试租户，并在 CORE-001-H 配置真实 Dada/UU Secret 和 callback URL，完成正向、重复、乱序、取消/完成竞争、主动查单、旧端 E2E、预发、明确发布批准和发布后观察。四张空表本身不会接收回调，也不代表任何同城配送渠道已启用。
 
+## PUBLIC-ARTICLE 媒体边界补充审计（候选完成，2026-09-01）
+
+### 缺口复核与实现边界
+
+继续逐项复核未完成 checklist 后，排在前面的源 MySQL、真实第三方凭据和发布项都需要外部输入；本轮选择 PUBLIC-ARTICLE 中可在本地与已授权生产 Hyperdrive 内独立关闭的“稳定媒体代理 + 服务端发布清洗”。审计确认私有 R2 链路本身已经使用 `ASSETS_BUCKET` binding，上传以 `file.stream()` 写入，下载直接返回 `R2ObjectBody.body`，对象元数据与数据库只保存 canonical `/api/assets/:id`；现有缺口实际位于文章边界：公开服务原样返回 `content/image_input`，Admin 文章保存与公众号图文保存也会把输入 HTML 或从附件选择器复制出的 15 分钟签名 URL 直接持久化。这样即使客户端已有第二层 allowlist，其他消费者仍可能收到旧库主动 HTML，签名 URL 也会在过期后永久失效。
+
+新增的发布策略现在同时覆盖全部两条 `system_article` 业务写入口。Admin 请求先以 1 MiB 流式上限读取 JSON，再校验 ID、分类、标题、作者、状态、正文、封面和 URL；公众号图文原有 512 KiB 请求边界继续生效。两路正文都由识别引号的 tokenizer 重建 tag/attribute allowlist：仅保留排版标签和逐标签属性，移除 script/iframe/object/form/svg/math/style 等标签、事件/style/srcdoc/target/id/class 等属性，URL 实体解码后只允许 HTTPS、安全站内路径以及链接专用的 mailto/tel；明文 HTTP、协议相对地址、data/blob/file/vbscript/javascript 和控制/空白混淆失败关闭。图片和表格生成固定安全宽度。任何 `/api/assets/:id` 后的 query/fragment 都在存储前剥离，所以数据库、公众号图文数据和分享图只保留稳定 canonical ref。
+
+公开文章服务对直接由迁移脚本导入、未经过新发布入口的历史行也执行同一服务端清洗。列表封面、详情封面、正文内 canonical `src/href` 与关联商品图在数据库事务提交后统一处理：危险历史媒体变为空，HTTPS/安全相对引用保持兼容，canonical ref 才使用 `APP_KEY` HMAC 生成新的短时查询签名；HTML 中的 `&` 重新属性转义。详情的 visit/关联读取事务内没有 R2、crypto 或外部 I/O，签名严格发生在事务外，响应继续 `no-store/private,no-store`。因此该批实现的是“稳定存储引用 + 响应时授权”，没有把 R2 改成公开 bucket，也没有在源码保存 Secret、全局可变状态或悬空 Promise。当前 Cloudflare Workers 类型定义再次确认 `R2Bucket.put` 接受 `ReadableStream`、`get` 返回 `R2ObjectBody|null` 且 `body` 是 `ReadableStream`；实现保持 binding 与流式边界。
+
+### 当前生产证据与隔离场景
+
+按用户已明确授权直接使用生产数据库，一次性 Worker 只绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。最新 PostgreSQL `16.14 (Ubuntu 16.14-0ubuntu0.24.04.1)` 只读事务固定 `REPEATABLE READ, READ ONLY`、`search_path=public,pg_temp` 和短超时，只返回聚合：7/7 依赖表存在，`system_article/article_category/article_content/wechat_news_category` 与文章点赞关系仍全部为 0；可见/隐藏/软删、正文缺失、孤儿、计数漂移、封面 token、危险 HTML、正文媒体也均为 0。文章/分类/正文/关系索引仍为 `2/2/1/5`，文章点赞部分唯一索引精确候选 1 且 valid/ready；零可见文章不支持新增排序索引，未执行生产 DML 或 DDL。
+
+更新后真实服务写验证仅发生在随机 `codex_public_article_*` schema。首次使用默认 30 秒 CPU 上限的审计请求被 Cloudflare 以 1042 中止；紧随其后的独立只读复核确认临时 schema 已是 0、文章仍是 0，临时 Worker也不存在，不能把该次中止记为断言结果。依据当前 Cloudflare 官方 Wrangler/Workers 限制文档，审计配置显式设置 `limits.cpu_ms=120000` 后重跑，最终 10/10 全部通过：分类/四列表、可见性失败关闭、正文/商品/分类装饰、并发 visit、点赞幂等与并发、匿名拒绝、故障回滚和 search path 隔离；`schema_created=true/schema_removed=true`、临时 schema `0→0`、六张 public 表与序列指纹不变。临时 Worker在响应后删除，主 `cinashop-api` 没有部署。
+
+### 工程门禁与仍未完成事项
+
+本轮定向 5 文件/38 项、完整单元 181 文件/1,162 项、双 TypeScript 均通过；observability 为 17 信号/10 域/53 必需事件/405 个生产源文件，schema 为 source201/target262/shared201/sourceGaps0/external262/embedded262/零定义漂移，路由保持 PHP1,904/TS1,506/精确802/可执行784/缺失1,102/可执行缺口1,098，官方 npm registry 生产依赖审计为 0 漏洞。主 Worker minify dry-run 为 `3,607.52 KiB / gzip 845.61 KiB`，文章审计 Worker为 `870.71/154.32 KiB`，均精确解析既有 binding 后退出；Wrangler 沙箱日志 EPERM 不影响两个 0 退出 dry-run。Windows workerd 仍在 0 条断言前以既有 `0xc0000005` 失败，故当前候选仍需推送后的 Linux CI 复验。
+
+这只关闭 checklist 中“稳定引用、响应签名、服务端写入/历史读取清洗”的候选代码门禁。生产没有任何文章或附件样本，源 MySQL/附件目录也不可用，尚不能做源附件→`system_attachment`/R2 对象映射、hash/mime/size 对账、PHP golden response 或真实 H5/小程序/App 媒体验收；PHP/Worker 双写或停写切流、历史 UID 0/孤儿关系清理、visit 热点限流/异步聚合决策、预发/影子流量、主 Worker/Pages 发布和观察仍保持未完成。当前本地 main 还包含未推送的 Dada 与 UU 两个候选提交；没有新的明确推送授权前不变更远端。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
