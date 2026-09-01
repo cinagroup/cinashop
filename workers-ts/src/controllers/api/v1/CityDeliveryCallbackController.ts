@@ -1,19 +1,31 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { CityDeliveryCallbackService } from "@/services/delivery/CityDeliveryCallbackService";
+import type { VerifiedCityDeliveryEvent } from "@/services/delivery/DadaCityDeliveryCallback";
 import { readBoundedUtf8Text } from "@/utils/request-body";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_CALLBACK_BODY_BYTES = 32 * 1024;
 
-function reply(c: C, status: 200 | 400 | 405 | 500 | 503, success: boolean) {
+function reply(
+  c: C,
+  status: 200 | 400 | 405 | 500 | 503,
+  success: boolean,
+  provider?: "dada" | "uu",
+) {
   c.header("Cache-Control", "no-store, private");
   c.header("Pragma", "no-cache");
+  if (provider === "uu") {
+    // UU only publishes code=1 as the success acknowledgement. Its failure
+    // code/retry contract is intentionally left for integration testing, so
+    // never emit the documented success code on a failed local operation.
+    return c.json({ code: success ? 1 : 0, msg: success ? "success" : "fail" }, status);
+  }
   return c.json(success ? { status: "ok" } : { status: "fail" }, status);
 }
 
-function callbackRoute(url: string): { provider: "dada"; token: string } {
+function callbackRoute(url: string): { provider: "dada" | "uu"; token: string } {
   const query = new URL(url).searchParams;
   const keys = [...query.keys()];
   if (keys.length !== 2 || keys.filter((key) => key === "provider").length !== 1
@@ -21,12 +33,11 @@ function callbackRoute(url: string): { provider: "dada"; token: string } {
     throw new Error("city_delivery_callback_query_invalid");
   }
   const provider = query.get("provider");
-  if (provider === "uu") throw new Error("city_delivery_uu_contract_unavailable");
-  if (provider !== "dada") throw new Error("city_delivery_provider_invalid");
+  if (provider !== "dada" && provider !== "uu") throw new Error("city_delivery_provider_invalid");
   return { provider, token: query.get("token") ?? "" };
 }
 
-/** ANY route parity; only authenticated Dada POST/JSON is currently executable. */
+/** ANY route parity; each provider has an independent authenticated POST/JSON boundary. */
 export async function cityDeliveryCallback(c: C) {
   if (c.req.method !== "POST") {
     c.header("Allow", "POST");
@@ -36,23 +47,24 @@ export async function cityDeliveryCallback(c: C) {
   if (contentType !== "application/json") return reply(c, 400, false);
 
   const service = new CityDeliveryCallbackService(c.get("container"), c.env);
-  let route: ReturnType<typeof callbackRoute>;
-  let verified: ReturnType<CityDeliveryCallbackService["verifyDada"]>;
+  let route: ReturnType<typeof callbackRoute> | undefined;
+  let verified: VerifiedCityDeliveryEvent;
   try {
     route = callbackRoute(c.req.url);
     const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_CALLBACK_BODY_BYTES);
-    verified = service.verifyDada(rawBody, route.token);
+    verified = route.provider === "dada"
+      ? service.verifyDada(rawBody, route.token)
+      : service.verifyUu(rawBody, route.token);
   } catch (error) {
-    const unavailable = error instanceof Error && error.message === "city_delivery_uu_contract_unavailable";
-    emitOperationalEvent(unavailable ? "error" : "warn", {
+    emitOperationalEvent("warn", {
       event: "city_delivery_callback_rejected",
       component: "waybill",
       operation: "city_delivery_callback_receive",
-      outcome: unavailable ? "failure" : "rejected",
-      result: unavailable ? "unavailable" : "rejected",
+      outcome: "rejected",
+      result: "rejected",
       errorCode: operationalErrorCode(error, "city_delivery_callback_rejected"),
     });
-    return reply(c, unavailable ? 503 : 400, false);
+    return reply(c, 400, false, route?.provider);
   }
 
   try {
@@ -73,7 +85,7 @@ export async function cityDeliveryCallback(c: C) {
       outcome: "success",
       result: received.duplicate ? "duplicate" : "accepted",
     });
-    return reply(c, 200, true);
+    return reply(c, 200, true, verified.provider);
   } catch (error) {
     emitOperationalEvent("error", {
       event: "city_delivery_callback_persist_failed",
@@ -82,6 +94,6 @@ export async function cityDeliveryCallback(c: C) {
       outcome: "failure",
       errorCode: operationalErrorCode(error, "city_delivery_callback_persist_failed"),
     });
-    return reply(c, 500, false);
+    return reply(c, 500, false, verified.provider);
   }
 }

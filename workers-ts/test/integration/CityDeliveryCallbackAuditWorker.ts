@@ -18,6 +18,7 @@ import {
   normalizeDadaCityDeliveryQuery,
   verifyDadaCityDeliveryCallback,
 } from "@/services/delivery/DadaCityDeliveryCallback";
+import { verifyUuCityDeliveryCallback } from "@/services/delivery/UuCityDeliveryCallback";
 
 interface AuditEnv {
   HYPERDRIVE: Hyperdrive;
@@ -29,6 +30,8 @@ interface AuditEnv {
 const PREFIX = "codex_city_delivery_";
 const CALLBACK_TOKEN = "isolated-dada-callback-token-32";
 const CLIENT_ID = "isolated-dada-client";
+const UU_CALLBACK_TOKEN = "isolated-uu-callback-token-32";
+const UU_OPEN_ID = "isolated-uu-open-id";
 const TARGET_TABLES = [
   "city_delivery_callback_event",
   "city_delivery_callback_outbox",
@@ -43,6 +46,8 @@ const IDS = {
   unknown: 1_961_010_004,
   queue: 1_961_010_005,
   returned: 1_961_010_006,
+  uuActive: 1_961_010_007,
+  uuCancel: 1_961_010_008,
 } as const;
 
 function bytesFromHex(value: string): Uint8Array | null {
@@ -276,6 +281,30 @@ function dadaBody(orderId: string, status: number, updateTime: number, overrides
   });
 }
 
+function uuBody(
+  originId: string,
+  orderCode: string,
+  status: number,
+  updateTime: number,
+  overrides: Record<string, unknown> = {},
+) {
+  return JSON.stringify({
+    openId: UU_OPEN_ID,
+    timestamp: updateTime * 1_000,
+    biz: JSON.stringify({
+      orderCode,
+      originId,
+      state: status,
+      stateText: status < 0 ? "隔离取消" : `隔离状态${status}`,
+      changeTime: updateTime * 1_000,
+      driverName: "隔离UU跑男",
+      driverMobile: "000-0000-2961",
+      ...overrides,
+    }),
+    sign: "A".repeat(32),
+  });
+}
+
 async function isolatedScenario(connectionString: string) {
   const admin = postgres(connectionString, {
     max: 5, prepare: false, connect_timeout: 10, idle_timeout: 5,
@@ -307,12 +336,14 @@ async function isolatedScenario(connectionString: string) {
 
     const now = Math.floor(Date.now() / 1_000);
     const seeds = [
-      [IDS.active, "dd-isolated-active", 1],
-      [IDS.cancel, "dd-isolated-cancel", 1],
-      [IDS.completed, "dd-isolated-complete", 2],
-      [IDS.unknown, "dd-isolated-unknown", 1],
-      [IDS.queue, "dd-isolated-queue", 1],
-      [IDS.returned, "dd-isolated-returned", 1],
+      [IDS.active, "dd-isolated-active", 1, 1, "DADA-1"],
+      [IDS.cancel, "dd-isolated-cancel", 1, 1, "DADA-2"],
+      [IDS.completed, "dd-isolated-complete", 2, 1, "DADA-3"],
+      [IDS.unknown, "dd-isolated-unknown", 1, 1, "DADA-4"],
+      [IDS.queue, "dd-isolated-queue", 1, 1, "DADA-5"],
+      [IDS.returned, "dd-isolated-returned", 1, 1, "DADA-6"],
+      [IDS.uuActive, "uu-isolated-active", 1, 2, "UU-ISOLATED-1"],
+      [IDS.uuCancel, "uu-isolated-cancel", 1, 2, "UU-ISOLATED-2"],
     ] as const;
     await withTx(container, async (tx) => {
       await tx.insert(storeOrder).values(seeds.map(([id, _providerOrderId, status], index) => ({
@@ -334,13 +365,15 @@ async function isolatedScenario(connectionString: string) {
         addTime: now - 60,
         payTime: now - 30,
       })));
-      await tx.insert(storeDeliveryOrder).values(seeds.map(([id, providerOrderId, status], index) => ({
+      await tx.insert(storeDeliveryOrder).values(seeds.map(([
+        id, providerOrderId, status, stationType, deliveryNo,
+      ], index) => ({
         id,
         oid: id,
         uid: 1_961_100_001 + index,
-        stationType: 1,
+        stationType,
         orderId: providerOrderId,
-        deliveryNo: `DADA-${index + 1}`,
+        deliveryNo,
         userName: "隔离收件人",
         receiverPhone: "00000001961",
         status: status === 2 ? 3 : 0,
@@ -360,6 +393,8 @@ async function isolatedScenario(connectionString: string) {
       ORDER_QUEUE: queue,
       DADA_CALLBACK_TOKEN: CALLBACK_TOKEN,
       DADA_CLIENT_ID: CLIENT_ID,
+      UU_CALLBACK_TOKEN,
+      UU_OPEN_ID,
     } as unknown as Env;
     const service = new CityDeliveryCallbackService(container, env);
     const receive = async (orderId: string, status: number, updateTime: number, overrides = {}) => {
@@ -368,6 +403,23 @@ async function isolatedScenario(connectionString: string) {
         callbackToken: CALLBACK_TOKEN,
         expectedClientId: CLIENT_ID,
       });
+      return service.receive(verified, now);
+    };
+    const receiveUu = async (
+      originId: string,
+      orderCode: string,
+      status: number,
+      updateTime: number,
+      overrides = {},
+    ) => {
+      const verified = verifyUuCityDeliveryCallback(
+        uuBody(originId, orderCode, status, updateTime, overrides),
+        {
+          requestToken: UU_CALLBACK_TOKEN,
+          callbackToken: UU_CALLBACK_TOKEN,
+          expectedOpenId: UU_OPEN_ID,
+        },
+      );
       return service.receive(verified, now);
     };
     const consumeLast = async (stage: string) => {
@@ -411,6 +463,37 @@ async function isolatedScenario(connectionString: string) {
     const returned = await receive("dd-isolated-returned", 10, now - 20);
     await service.dispatchById(returned.outboxId);
     await consumeLast("returned");
+
+    const uuAccepted = await receiveUu("uu-isolated-active", "UU-ISOLATED-1", 3, now - 50);
+    await service.dispatchById(uuAccepted.outboxId);
+    await consumeLast("uu_accept");
+    const uuRiderCancelled = await receiveUu("uu-isolated-active", "UU-ISOLATED-1", 2, now - 40);
+    await service.dispatchById(uuRiderCancelled.outboxId);
+    await consumeLast("uu_rider_cancel");
+    const uuClearedRows = await withTx(container, (tx) => tx.select({
+      deliveryName: storeOrder.deliveryName,
+      deliveryId: storeOrder.deliveryId,
+    }).from(storeOrder).where(eq(storeOrder.id, IDS.uuActive)).limit(1));
+    const uuRiderCleared = uuClearedRows[0]?.deliveryName === "" && uuClearedRows[0]?.deliveryId === "";
+    const uuReassigned = await receiveUu(
+      "uu-isolated-active",
+      "UU-ISOLATED-1",
+      3,
+      now - 30,
+      { driverName: "隔离二次跑男", driverMobile: "000-0000-3961" },
+    );
+    await service.dispatchById(uuReassigned.outboxId);
+    await consumeLast("uu_reassign");
+    const uuPickedUp = await receiveUu("uu-isolated-active", "UU-ISOLATED-1", 5, now - 20);
+    await service.dispatchById(uuPickedUp.outboxId);
+    await consumeLast("uu_pickup");
+
+    const uuCancelAccepted = await receiveUu("uu-isolated-cancel", "UU-ISOLATED-2", 3, now - 40);
+    await service.dispatchById(uuCancelAccepted.outboxId);
+    await consumeLast("uu_cancel_accept");
+    const uuCancelled = await receiveUu("uu-isolated-cancel", "UU-ISOLATED-2", -3, now - 30);
+    await service.dispatchById(uuCancelled.outboxId);
+    await consumeLast("uu_cancelled");
 
     const query = normalizeDadaCityDeliveryQuery({
       order_status: 3,
@@ -459,8 +542,8 @@ async function isolatedScenario(connectionString: string) {
     const statusTypes = statusRows.map((row) => `${row.oid}:${row.changeType}`);
     const assertions = {
       duplicate_event_deduped: duplicate.duplicate && duplicate.eventId === activeAccepted.eventId,
-      event_count_expected: events.length === 12,
-      every_outbox_terminal: outboxes.length === 12 && outboxes.every((row) => ["COMPLETED", "DEAD"].includes(row.status)),
+      event_count_expected: events.length === 18,
+      every_outbox_terminal: outboxes.length === 18 && outboxes.every((row) => ["COMPLETED", "DEAD"].includes(row.status)),
       pii_redacted: events.every((row) => !row.riderName && !row.riderMobile && !row.reasonText && !row.finishCode),
       active_monotonic: byOrder.get(IDS.active)?.status === 1 && byDelivery.get(IDS.active)?.status === 3,
       stale_superseded: events.some((row) => row.providerOrderId === "dd-isolated-active"
@@ -473,10 +556,15 @@ async function isolatedScenario(connectionString: string) {
       unknown_ignored: events.some((row) => row.providerOrderId === "dd-isolated-unknown" && row.status === "IGNORED"),
       abnormal_return_completed: byOrder.get(IDS.returned)?.status === 0
         && byOrder.get(IDS.returned)?.deliveryType === "" && byDelivery.get(IDS.returned)?.status === 10,
+      uu_rider_cancel_cleared: uuRiderCleared,
+      uu_active_monotonic: byOrder.get(IDS.uuActive)?.status === 1
+        && byDelivery.get(IDS.uuActive)?.status === 3,
+      uu_cancel_before_pickup_reset: byOrder.get(IDS.uuCancel)?.status === 0
+        && byOrder.get(IDS.uuCancel)?.deliveryType === "" && byDelivery.get(IDS.uuCancel)?.status === -1,
       same_state_query_no_duplicate_log: statusTypes.filter((value) => value === `${IDS.active}:city_delivery_3`).length === 1,
       queue_failure_recovered: queueFailed && outboxes.some((row) => row.id === queueEvent.outboxId
         && row.dispatchCount >= 2 && row.status === "COMPLETED"),
-      watermark_subjects_unique: watermarks.length === 6
+      watermark_subjects_unique: watermarks.length === 8
         && new Set(watermarks.map((row) => row.subjectKeyHash)).size === watermarks.length,
       reconciliation_seeded: seededCases >= 1 && cases.length === seededCases,
       migration_idempotent: JSON.stringify(firstEvidence) === JSON.stringify(secondEvidence),

@@ -9,13 +9,13 @@
 | 维度 | 当前证据 | 判定 |
 |---|---:|---|
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
-| 仓库目标结构 | 外部 SQL 258 表；Worker 内嵌 258 表；共享源表 201、Worker 扩展 57；表/列/主键漂移 0 | 候选定义完成 |
-| 生产目标结构 | 生产现为 257 表；商家寄件三表及升级后的水位状态约束已与候选一致，仅候选新增 `admin_user_write_replay` 尚未应用 | 商家寄件结构完成；全库仍差 1 张候选表 |
-| PHP HTTP 合同 | 精确匹配 801/1,904；可执行 783；其中 18 条明确不可用、4 条有证据退役 | 精确注册 42.1%，静态可执行上限 41.1% |
+| 仓库目标结构 | 外部 SQL 262 表；Worker 内嵌 262 表；共享源表 201、Worker 扩展 61；表/列/主键漂移 0 | 候选定义完成 |
+| 生产目标结构 | 生产现为 261 表；商家寄件三表、同城配送四表及其双 provider 约束已与候选一致，仅候选新增 `admin_user_write_replay` 尚未应用 | 寄件/同城配送结构完成；全库仍差 1 张候选表 |
+| PHP HTTP 合同 | 精确匹配 802/1,904；可执行 784；其中 18 条明确不可用、4 条有证据退役 | 精确注册 42.1%，静态可执行上限 41.2% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 180/180 文件、1,146/1,146 项通过；可观测性审计 17 信号、43 必需事件、396 个生产源文件 | 本地业务回归与日志安全门禁通过 |
+| Worker 单元测试 | 181/181 文件、1,160/1,160 项通过；可观测性审计 17 信号、53 必需事件、404 个生产源文件 | 本地业务回归与日志安全门禁通过 |
 | Workers runtime | Linux workerd 13/13；Windows 启动即 `0xc0000005` | 受支持 Linux 门禁完成，Windows 仅为本机缺陷 |
-| CI | [Actions `33486809063`](https://github.com/cinagroup/cinashop/actions/runs/33486809063) 的 Worker/五端/runtime/secret scan 8/8 | 商家寄件候选及既有迁移门禁均已在 Linux 复验 |
+| CI | [Actions `33491495530`](https://github.com/cinagroup/cinashop/actions/runs/33491495530) 的 Worker/五端/runtime/secret scan 8/8；本轮同城配送候选尚未推送 | 已推送基线 8/8；本轮 Linux 门禁待推送后运行 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -25,13 +25,13 @@
 
 | 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 精确/可执行/退役后有效覆盖 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 812 | 419 | 416 | 3 | 38 | 1 | 37 | 91.7% / 91.0% / 91.2% |
+| `/api` | 457 | 813 | 420 | 417 | 3 | 37 | 1 | 36 | 91.9% / 91.2% / 91.4% |
 | `/adminapi` | 1,153 | 474 | 202 | 187 | 15 | 951 | 0 | 951 | 17.5% / 16.2% / 16.2% |
 | `/supplierapi` | 182 | 112 | 79 | 79 | 0 | 103 | 0 | 103 | 43.4% / 43.4% / 43.4% |
 | `/kefuapi` | 63 | 66 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,505 | 801 | 783 | 18 | 1,103 | 4 | 1,099 | 42.1% / 41.1% / 41.2% |
+| 合计 | 1,904 | 1,506 | 802 | 784 | 18 | 1,102 | 4 | 1,098 | 42.1% / 41.2% / 41.3% |
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
@@ -107,9 +107,14 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [x] **CORE-001-D 公众号/小程序消息回调（候选代码与生产结构完成，主 Worker 未发布）**：已恢复 `ANY /api/wechat/serve` 与 `ANY /api/wechat/miniServe`；GET 支持明文/AES URL 验证，POST 只接受安全模式 XML，执行 SHA-1 验签、AES-256-CBC/32-byte PKCS#7 解密和尾部 AppID 常量时间匹配。签名、原始/解密 XML 和用户正文均不落库，正文只存 SHA-256；同步回复先解析最小白名单并固化快照。新增 `wechat_callback_event/outbox/watermark`、事件/replay 唯一键、主体 advisory lock、乱序水位、`SKIP LOCKED`、投递/处理租约、Cron 补偿、opaque Queue、8 次 DEAD 与 DLQ 重放；关注单调、扫码加法且重放安全、卡券删除抵御迟到领卡、消息精确一次，社交支付桥接 CORE-001-B 同一账本，结算/收货复用既有幂等状态机，任何验签/持久化/消费失败均不确认成功。按授权通过生产 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 在 PostgreSQL 16.14 创建三张空表，精确读回 45 列、16 个已验证约束、13 个有效索引（4 个部分索引），DDL 二次执行幂等；随机 schema 14/14 场景通过并删除，临时审计 Worker 已删除。候选提交 `a5e02d0` 已推送，[Linux Actions `33480134867`](https://github.com/cinagroup/cinashop/actions/runs/33480134867) 8/8 成功。生产配置表没有公众号/小程序 AppID/旧 token/AES key，主 Worker 也没有新 4 个 callback Secret；本项不代表真实微信回调、主 Worker 发布或渠道启用，这些继续由 CORE-001-H 约束。
   - [x] **CORE-001-E 企业微信可信回调代码边界**：`ANY /api/work/serve` 的 WORK-C0～C8 已完成签名解密、事件/水位/outbox、Queue、乱序投影和副作用处置代码；真实 Corp、Secret、源数据、全量 reconciliation、预发、发布及观察仍按 WORK-C 父项保持未完成。
   - [x] **CORE-001-F 商家寄件回调（候选代码与生产空结构完成，主 Worker 未发布）**：已按快递100当前直连合同恢复 `ANY /api/order_call_back`，运行时只接受 `POST application/x-www-form-urlencoded`，严格校验唯一 `taskId/sign/param`、独立 `KUAIDI100_CALLBACK_SALT` 与大写 `MD5(param+salt)`，顶层通讯状态必须为 `200`；旧短信 `sms_token` AES-CBC 包络被明确拒绝。新增 `merchant_shipment_callback_event/outbox/watermark`、签名后短事务、opaque Queue、Cron 补偿、租约/8 次 DEAD、task advisory lock、单调状态图和履约回放；原始表单、签名、快递员 PII、费用和图片不落库。官方 `0/1/2/9/10/11/13/14/15/99/101/155/166/200/201/302/400/610` 均显式建模，`302` 围住旧/新 task 水位，取件后迟到取消不回退，取消后只有 `166` 可复活，`15` 在取件或签收后可靠关闭状态。首轮失败夹具曾因绕过事务级 `search_path` 在 `public` 留下 4 条固定审计订单和 1 条审计快递公司；用户明确授权后，清理事务以完整行指纹和 17 类关联均为 0 为前置条件，精确删除 4+1 行。生产 PostgreSQL 16.14 的三张目标表最终均为 0 行，45 列、18 个约束、13 个 valid/ready 索引及含 `SETTLED/REASSIGNED` 的水位约束精确读回，DDL 二次执行幂等；最终原业务订单 28、所有寄件 task/provider order/tracking/stock-up 标记 0、临时 schema 0。扩展随机 schema 15/15 通过并删除，过程中发现并修复取件/签收后 `SETTLED` 被误判为 `SUPERSEDED` 的状态机缺陷；临时 Worker 已删除且 URL 返回 404，主 Worker 未部署。先前实现提交 `e0ca6d6`、runtime 修正 `a5326ab` 与 [Linux Actions `33486809063`](https://github.com/cinagroup/cinashop/actions/runs/33486809063) 已通过；结算修正提交 `5568ff1` 及 [Linux Actions `33491495530`](https://github.com/cinagroup/cinashop/actions/runs/33491495530) 8/8 通过。生产仍没有 callback salt、快递100企业版调试凭据或真实 provider 样本；真实凭据、后台 callback URL、真实重放/乱序、发布及观察继续由 CORE-001-H 约束。
-  - [ ] **CORE-001-G 同城配送回调（达达候选与生产空结构完成；UU 合同待确认）**：父项继续未完成，不能把达达证据外推到 UU。
+  - [ ] **CORE-001-G 同城配送回调（达达/UU 候选与生产空结构完成；真实渠道验收待完成）**：父项继续未完成；独立 provider 边界和空结构完成不代表任一渠道已启用。
     - [x] **CORE-001-G1 达达**：已恢复 `ANY /api/city_delivery/notify` 的兼容注册，运行时仅接受 `POST application/json` 和精确 `provider=dada&token=...`；官方 callback `signature` 只是 `client_id/order_id/update_time` 排序值的无密钥 MD5，不能证明 provider 身份，因此额外强制高熵 `DADA_CALLBACK_TOKEN` 与预期 `DADA_CLIENT_ID`，错误 token/client/checksum/body 均失败关闭。新增 event/outbox/watermark/reconciliation case 四表、签名后短事务、opaque Queue、Cron 补偿、租约/8 次 DEAD、subject advisory lock、单调状态图、取消/完成冲突、PII 终态清除和固定 HTTPS 主动查单；未知状态隔离，迟到状态/取件后普通取消不回退，官方 `9→10` 妥投异常返还可完成，完成复用共享收货原语。生产 PostgreSQL 16.14 基线同城配送/Dada/UU 均为 0，目标表从 0 创建为 4 张空表；精确读回 64 列、25 个已验证约束、19 个 valid/ready 索引（6 个部分索引、10 个唯一索引）、4 个 `ON DELETE RESTRICT` 外键，DDL 二次执行幂等且业务表指纹不变。迁移后再次执行的随机 schema 16/16 通过并删除，临时 Worker 删除后 URL 返回 404；主 Worker未部署。生产没有 Dada 配置或真实 provider 样本，真实 callback URL/Secret、回放/乱序、预发、发布及观察归 CORE-001-H。
-    - [ ] **CORE-001-G2 UU 跑腿（BLOCKED：缺官方可验证合同）**：当前公开文档只说明回调为 JSON POST 及成功响应格式，没有公开回调验签算法、签名字段、时间窗或重试策略；候选入口对 `provider=uu` 明确返回 503，不猜测密钥算法、不复用 Dada token、不接受旧 PHP 的零验签写状态逻辑。待取得 UU 商户测试账号、后台当前回调合同/样例和签名验证证据后，按独立 provider adapter、事件身份、状态图、主动查单与故障恢复补齐。
+    - [ ] **CORE-001-G2 UU 跑腿（候选代码与生产约束完成；真实联调待完成）**：[UU 当前开放平台](https://open.uupt.com/)已公开 V3 callback 的 `openId/timestamp/biz/sign` 外层、`orderCode/originId/state/stateText/changeTime/driver*` 业务字段、`1/2/3/4/5/6/10/-1/-2/-3` 状态及 `{"code":1,"msg":"success"}` ACK；同一官方“回调与上线”页仍明确说明 callback 验签算法和失败重试策略未公开。候选因此用独立高熵 `UU_CALLBACK_TOKEN` + 精确 `UU_OPEN_ID` 建立认证边界，只做 `sign` 形状检查，不猜测其算法、不复用 Dada token；32 KiB 原始 body、token、sign 和骑手 PII 均不持久化。状态 2 只允许取件前回到待接单并清空旧骑手，状态 6 不提前收货，取件后取消冲突，状态 10 复用共享收货原语；V3 `orderDetail` 主动查单固定 HTTPS/8 秒/32 KiB，但因官网“秒”文字与 13 位示例矛盾，必须在联调后显式配置 `UU_API_TIMESTAMP_UNIT=seconds|milliseconds` 才能发请求。生产四表约束已从 Dada-only 原位升级为 Dada/UU、允许负数取消状态及 UU 水位状态，连续两次执行保持 4 表/64 列/25 约束/19 索引/0 行且业务指纹不变；随机 schema 的 Dada+UU 19/19 场景通过并删除，临时 Worker 删除后 URL 为 404，主 Worker未部署。本项保持未勾选，剩余门禁为：
+      - [ ] 取得 UU 测试应用与 `appId/appKey/openId`，由 Secret 注入独立 callback token，禁止写入 `system_config` 或仓库。
+      - [ ] 由 UU 官方或联调实测确认 callback `sign` 验证算法、时间窗/时间戳单位、来源约束、ACK 判定及失败重试次数/间隔；确认前不把 V3 出站签名算法外推为入站认证。
+      - [ ] 在发单链路提交带独立 token 的精确 callback URL，并核对 `originId`、`orderCode` 与 `store_delivery_order.order_id/delivery_no` 双向一致。
+      - [ ] 用真实回调覆盖 `2→3` 重派、`5→6→10`、`-1/-2/-3`、重复、延迟、乱序、持久化失败、Queue 恢复和主动查单；保留脱敏证据。
+      - [ ] 完成旧端 E2E、预发、明确发布批准与发布后观察后，才能勾选 G2 与父项 G。
   - [ ] **CORE-001-H 生产启用闭环**：直接绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0` 做只读结构/配置/历史交易审计和随机 schema 状态机场景；补真实微信/支付宝/公众号/小程序/企微/快递100/达达/UU凭据与沙箱或测试租户，完成 provider 回调、重放、延迟/乱序、故障恢复、旧端 E2E、预发、明确发布批准和发布后观察。生产支付开关/凭据当前仍不可用，候选代码不得解释为渠道已启用。
 - [x] **CORE-002 客服资金退款**：已补齐认证 `PUT /kefuapi/refund/refund/:id`，只接受同意动作；提交金额必须等于售后权威金额，历史部分退款失败关闭，完成重放收敛。核心退款 scope 绑定 store/supplier/customer/refund/order/金额/已退金额，并在退款锁前通过授权回调锁定客服会话，转接立即撤权。正式 Hyperdrive 随机 schema 重跑完整退款状态机，金额错配、余额/积分/渠道账本、累计并发、补偿、回调/主动对账既有门禁继续通过；客服专项的金额篡改、单次入账、重复提交、部分历史和转接撤权全部通过，`public_state_unchanged=true`。生产支付 Secret 仍未配置，代码完成不代表渠道已启用。
 - [x] **CORE-003 对外 API 资金与用户写入**：退款、分类、实物商品、优惠券和用户三条写入均已在逐路由 ACL、HMAC 脱敏访问审计和幂等状态机下恢复；余额/积分写入与不可变流水同事务，用户新增/资料/等级/标签/推广关系也不再部分提交。每条接口仍必须绑定独立权限 ID，不得因导入目录而自动开放；生产当前没有 Out 账户/接口目录，代码完成不代表真实客户已启用。

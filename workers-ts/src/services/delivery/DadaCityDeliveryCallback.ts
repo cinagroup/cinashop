@@ -2,10 +2,12 @@ import { createHash, timingSafeEqual } from "node:crypto";
 
 export type CityDeliveryState =
   | "WAITING_ACCEPT"
+  | "RIDER_CANCELLED"
   | "APPENDED_WAITING"
   | "WAITING_PICKUP"
   | "RIDER_AT_STORE"
   | "DELIVERING"
+  | "ARRIVED_DESTINATION"
   | "DELIVERED"
   | "CANCELLED"
   | "RETURNING"
@@ -21,10 +23,13 @@ export interface CityDeliveryStateSpec {
   terminal: boolean;
   completesOrder: boolean;
   cancelsDelivery: boolean;
+  clearsRider?: boolean;
 }
 
-export interface VerifiedDadaCityDeliveryEvent {
-  provider: "dada";
+export type CityDeliveryProvider = "dada" | "uu";
+
+export interface VerifiedCityDeliveryEvent<P extends CityDeliveryProvider = CityDeliveryProvider> {
+  provider: P;
   source: "callback" | "query";
   eventKey: string;
   payloadHash: string;
@@ -42,6 +47,8 @@ export interface VerifiedDadaCityDeliveryEvent {
   payload: Record<string, unknown>;
   state: CityDeliveryStateSpec;
 }
+
+export type VerifiedDadaCityDeliveryEvent = VerifiedCityDeliveryEvent<"dada">;
 
 export interface CityDeliveryWatermarkSnapshot {
   lastEventKey: string;
@@ -175,7 +182,11 @@ function eventFromFields(input: {
 }
 
 export function dadaCityDeliverySubjectHash(providerOrderId: string): string {
-  return sha256(`dada\u0000${providerOrderId}`);
+  return cityDeliverySubjectHash("dada", providerOrderId);
+}
+
+export function cityDeliverySubjectHash(provider: CityDeliveryProvider, providerOrderId: string): string {
+  return sha256(`${provider}\u0000${providerOrderId}`);
 }
 
 /** Current Dada callback checksum: lowercase MD5 of the three sorted values. */
@@ -307,7 +318,7 @@ export function normalizeDadaCityDeliveryQuery(
 
 export function cityDeliveryTransition(
   current: CityDeliveryWatermarkSnapshot | undefined,
-  next: Pick<VerifiedDadaCityDeliveryEvent,
+  next: Pick<VerifiedCityDeliveryEvent,
     "eventKey" | "source" | "providerUpdateTime" | "repeatReasonType" | "state">,
 ): CityDeliveryTransitionDecision {
   if (next.state.state === "UNKNOWN") return "ignored";
@@ -321,6 +332,12 @@ export function cityDeliveryTransition(
   }
   if (current.terminal === 1) {
     return next.state.state === current.lastState ? "apply" : "conflict";
+  }
+  // UU documents state 2 as a rider cancellation that returns the order to
+  // the waiting pool. It is the only allowed active-state regression and is
+  // rejected once pickup has happened.
+  if (next.state.state === "RIDER_CANCELLED") {
+    return current.lastRank < 40 ? "apply" : "conflict";
   }
   // A returned parcel is a legitimate post-pickup outcome (3/9 -> 10), not a
   // late cancellation. Ordinary cancellation/failure still cannot roll back

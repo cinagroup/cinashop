@@ -32,13 +32,19 @@ import { completeOrderReceipt } from "@/services/order/OrderBrokerageService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import {
   cityDeliveryTransition,
+  cityDeliverySubjectHash,
   dadaCityDeliveryState,
-  dadaCityDeliverySubjectHash,
   verifyDadaCityDeliveryCallback,
   type CityDeliveryStateSpec,
-  type VerifiedDadaCityDeliveryEvent,
+  type CityDeliveryProvider,
+  type VerifiedCityDeliveryEvent,
 } from "./DadaCityDeliveryCallback";
 import { DadaCityDeliveryProvider } from "./DadaCityDeliveryProvider";
+import {
+  uuCityDeliveryState,
+  verifyUuCityDeliveryCallback,
+} from "./UuCityDeliveryCallback";
+import { UuCityDeliveryProvider } from "./UuCityDeliveryProvider";
 
 const DISPATCH_LEASE_SECONDS = 120;
 const PROCESS_LEASE_SECONDS = 180;
@@ -121,7 +127,9 @@ export function isCityDeliveryCallbackDispatchMessage(
 }
 
 function stateSpec(event: CityDeliveryCallbackEvent): CityDeliveryStateSpec {
-  return dadaCityDeliveryState(event.providerStatus);
+  if (event.provider === "dada") return dadaCityDeliveryState(event.providerStatus);
+  if (event.provider === "uu") return uuCityDeliveryState(event.providerStatus);
+  throw new Error("city_delivery_provider_invalid");
 }
 
 async function upsertWatermark(
@@ -219,16 +227,18 @@ async function finishClaim(
 }
 
 export class CityDeliveryCallbackService {
-  private readonly provider: DadaCityDeliveryProvider;
+  private readonly dadaProvider: DadaCityDeliveryProvider;
+  private readonly uuProvider: UuCityDeliveryProvider;
 
   constructor(
     private readonly container: Container,
     private readonly env: Env,
   ) {
-    this.provider = new DadaCityDeliveryProvider(env);
+    this.dadaProvider = new DadaCityDeliveryProvider(env);
+    this.uuProvider = new UuCityDeliveryProvider(env);
   }
 
-  verifyDada(rawBody: string, requestToken: string | undefined): VerifiedDadaCityDeliveryEvent {
+  verifyDada(rawBody: string, requestToken: string | undefined): VerifiedCityDeliveryEvent<"dada"> {
     return verifyDadaCityDeliveryCallback(rawBody, {
       requestToken,
       callbackToken: this.env.DADA_CALLBACK_TOKEN,
@@ -236,8 +246,16 @@ export class CityDeliveryCallbackService {
     });
   }
 
+  verifyUu(rawBody: string, requestToken: string | undefined): VerifiedCityDeliveryEvent<"uu"> {
+    return verifyUuCityDeliveryCallback(rawBody, {
+      requestToken,
+      callbackToken: this.env.UU_CALLBACK_TOKEN,
+      expectedOpenId: this.env.UU_OPEN_ID,
+    });
+  }
+
   async receive(
-    callback: VerifiedDadaCityDeliveryEvent,
+    callback: VerifiedCityDeliveryEvent,
     now = Math.floor(Date.now() / 1_000),
   ): Promise<ReceiveResult> {
     const replayKey = crypto.randomUUID();
@@ -469,15 +487,29 @@ export class CityDeliveryCallbackService {
       if (decision === "superseded") return { terminalStatus: "SUPERSEDED" as const };
       if (decision === "conflict") throw new CityDeliveryProjectionConflict("city_delivery_state_conflict");
 
+      const stationType = claim.event.provider === "dada" ? 1
+        : claim.event.provider === "uu" ? 2
+          : 0;
+      if (!stationType) throw new CityDeliveryProjectionConflict("city_delivery_provider_invalid");
       const deliveries = await tx.select().from(storeDeliveryOrder).where(and(
-        eq(storeDeliveryOrder.stationType, 1),
+        eq(storeDeliveryOrder.stationType, stationType),
         eq(storeDeliveryOrder.orderId, claim.event.providerOrderId),
       )).orderBy(asc(storeDeliveryOrder.id)).limit(2).for("update");
       if (deliveries.length === 0) throw new Error("city_delivery_order_unmatched");
       if (deliveries.length > 1) throw new CityDeliveryProjectionConflict("city_delivery_order_ambiguous");
       const delivery = deliveries[0];
-      if (dadaCityDeliverySubjectHash(delivery.orderId) !== claim.event.subjectKeyHash) {
+      if (cityDeliverySubjectHash(claim.event.provider as CityDeliveryProvider, delivery.orderId)
+        !== claim.event.subjectKeyHash) {
         throw new CityDeliveryProjectionConflict("city_delivery_subject_mismatch");
+      }
+      if (claim.event.provider === "uu") {
+        const payload = isRecord(claim.event.payload) ? claim.event.payload : undefined;
+        const orderCode = typeof payload?.providerOrderCode === "string"
+          ? payload.providerOrderCode
+          : "";
+        if (!orderCode || !delivery.deliveryNo || delivery.deliveryNo !== orderCode) {
+          throw new CityDeliveryProjectionConflict("city_delivery_provider_order_mismatch");
+        }
       }
       const orders = await tx.select().from(storeOrder).where(and(
         eq(storeOrder.id, delivery.oid),
@@ -543,7 +575,10 @@ export class CityDeliveryCallbackService {
       if (Object.keys(deliveryUpdate).length > 0) {
         await tx.update(storeDeliveryOrder).set(deliveryUpdate).where(eq(storeDeliveryOrder.id, delivery.id));
       }
-      if (claim.event.riderName || claim.event.riderMobile) {
+      if (spec.clearsRider) {
+        await tx.update(storeOrder).set({ deliveryName: "", deliveryId: "" })
+          .where(eq(storeOrder.id, order.id));
+      } else if (claim.event.riderName || claim.event.riderMobile) {
         await tx.update(storeOrder).set({
           ...(claim.event.riderName ? { deliveryName: claim.event.riderName.slice(0, 64) } : {}),
           ...(claim.event.riderMobile ? { deliveryId: claim.event.riderMobile.slice(0, 64) } : {}),
@@ -565,7 +600,7 @@ export class CityDeliveryCallbackService {
     const completed = await completeOrderReceipt(this.container, this.env, {
       orderId: prepared.orderId,
       actor: "scheduled",
-      message: "达达同城配送已送达",
+      message: `${claim.event.provider === "uu" ? "UU跑腿" : "达达"}同城配送已送达`,
     });
     const finalStatus = completed ? "APPLIED" : await withTx(this.container, async (tx) => {
       const rows = await tx.select({ status: storeOrder.status }).from(storeOrder)
@@ -640,9 +675,12 @@ export class CityDeliveryCallbackService {
     }
   }
 
-  /** Add bounded active Dada delivery rows to the durable query schedule. */
-  async seedReconciliation(limit = 100): Promise<number> {
-    const bounded = Math.max(1, Math.min(Math.trunc(limit), 500));
+  private async seedProviderReconciliation(
+    provider: CityDeliveryProvider,
+    stationType: 1 | 2,
+    limit: number,
+  ): Promise<number> {
+    if (limit <= 0) return 0;
     const now = Math.floor(Date.now() / 1_000);
     return withTx(this.container, async (tx) => {
       const candidates = await tx.select({
@@ -651,11 +689,11 @@ export class CityDeliveryCallbackService {
       }).from(storeDeliveryOrder)
         .innerJoin(storeOrder, eq(storeOrder.id, storeDeliveryOrder.oid))
         .leftJoin(cityDeliveryReconciliationCase, and(
-          eq(cityDeliveryReconciliationCase.provider, "dada"),
+          eq(cityDeliveryReconciliationCase.provider, provider),
           eq(cityDeliveryReconciliationCase.deliveryOrderId, storeDeliveryOrder.id),
         ))
         .where(and(
-          eq(storeDeliveryOrder.stationType, 1),
+          eq(storeDeliveryOrder.stationType, stationType),
           notInArray(storeDeliveryOrder.status, [-1, 4, 6, 10, 1000]),
           eq(storeOrder.paid, 1),
           eq(storeOrder.status, 1),
@@ -665,12 +703,12 @@ export class CityDeliveryCallbackService {
           isNull(cityDeliveryReconciliationCase.id),
         ))
         .orderBy(asc(storeDeliveryOrder.id))
-        .limit(bounded);
+        .limit(limit);
       if (!candidates.length) return 0;
       const inserted = await tx.insert(cityDeliveryReconciliationCase).values(
         candidates.map((candidate) => ({
-          provider: "dada" as const,
-          subjectKeyHash: dadaCityDeliverySubjectHash(candidate.providerOrderId),
+          provider,
+          subjectKeyHash: cityDeliverySubjectHash(provider, candidate.providerOrderId),
           deliveryOrderId: candidate.deliveryOrderId,
           status: "PENDING" as const,
           nextAttemptTime: now,
@@ -680,6 +718,17 @@ export class CityDeliveryCallbackService {
       ).onConflictDoNothing().returning({ id: cityDeliveryReconciliationCase.id });
       return inserted.length;
     });
+  }
+
+  /** Add bounded active Dada and UU delivery rows to the durable query schedule. */
+  async seedReconciliation(limit = 100): Promise<number> {
+    const bounded = Math.max(1, Math.min(Math.trunc(limit), 500));
+    let inserted = await this.seedProviderReconciliation("dada", 1, Math.ceil(bounded / 2));
+    inserted += await this.seedProviderReconciliation("uu", 2, bounded - inserted);
+    if (inserted < bounded) {
+      inserted += await this.seedProviderReconciliation("dada", 1, bounded - inserted);
+    }
+    return inserted;
   }
 
   private async claimReconciliation(limit: number): Promise<Array<{
@@ -727,7 +776,12 @@ export class CityDeliveryCallbackService {
         }).from(storeDeliveryOrder)
           .where(eq(storeDeliveryOrder.id, claim.row.deliveryOrderId)).limit(1));
       const delivery = deliveries[0];
-      if (!delivery || delivery.stationType !== 1) throw new Error("dada_reconciliation_order_missing");
+      const expectedStationType = claim.row.provider === "dada" ? 1
+        : claim.row.provider === "uu" ? 2
+          : 0;
+      if (!delivery || !expectedStationType || delivery.stationType !== expectedStationType) {
+        throw new Error("city_delivery_reconciliation_order_missing");
+      }
       if ([-1, 4, 6, 10, 1000].includes(delivery.status)) {
         await withTx(this.container, (tx) => tx.update(cityDeliveryReconciliationCase).set({
           status: "RESOLVED", leaseUntil: 0, leaseToken: "", lastErrorCode: "",
@@ -739,7 +793,9 @@ export class CityDeliveryCallbackService {
         )));
         return "resolved" as const;
       }
-      const verified = await this.provider.query(delivery.providerOrderId, now);
+      const verified = claim.row.provider === "dada"
+        ? await this.dadaProvider.query(delivery.providerOrderId, now)
+        : await this.uuProvider.query(delivery.providerOrderId, now);
       const received = await this.receive(verified, now);
       await withTx(this.container, (tx) => tx.update(cityDeliveryReconciliationCase).set({
         status: "PENDING",

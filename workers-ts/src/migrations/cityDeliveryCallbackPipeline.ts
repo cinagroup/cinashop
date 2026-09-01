@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS "city_delivery_callback_event" (
   "processed_time" INTEGER DEFAULT 0 NOT NULL,
   "retain_until" INTEGER DEFAULT 0 NOT NULL,
   "update_time" INTEGER DEFAULT 0 NOT NULL,
-  CONSTRAINT "cdcevt_provider_ck" CHECK ("provider" = 'dada'),
+  CONSTRAINT "cdcevt_provider_ck" CHECK ("provider" IN ('dada', 'uu')),
   CONSTRAINT "cdcevt_source_ck" CHECK ("source" IN ('callback', 'query')),
   CONSTRAINT "cdcevt_hash_key_ck" CHECK (
     "event_key" ~ '^[0-9a-f]{64}$' AND "payload_hash" ~ '^[0-9a-f]{64}$'
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS "city_delivery_callback_event" (
   CONSTRAINT "cdcevt_identifier_ck" CHECK (
     btrim("client_id") <> '' AND btrim("provider_order_id") <> ''
     AND "provider_order_id" ~ '^[A-Za-z0-9._:-]{1,32}$'
-    AND "provider_status" ~ '^[0-9]{1,4}$'
+    AND "provider_status" ~ '^-?[0-9]{1,4}$'
   ),
   CONSTRAINT "cdcevt_provider_values_ck" CHECK (
     "provider_update_time" > 0 AND "repeat_reason_type" BETWEEN 0 AND 2
@@ -120,11 +120,12 @@ CREATE TABLE IF NOT EXISTS "city_delivery_callback_watermark" (
   CONSTRAINT "cdcwm_pkey" PRIMARY KEY ("provider", "subject_key_hash"),
   CONSTRAINT "cdcwm_event_fk" FOREIGN KEY ("last_event_id")
     REFERENCES "city_delivery_callback_event" ("id") ON DELETE RESTRICT,
-  CONSTRAINT "cdcwm_provider_ck" CHECK ("provider" = 'dada'),
+  CONSTRAINT "cdcwm_provider_ck" CHECK ("provider" IN ('dada', 'uu')),
   CONSTRAINT "cdcwm_state_ck" CHECK (
     "last_state" IN (
-      'WAITING_ACCEPT', 'APPENDED_WAITING', 'WAITING_PICKUP', 'RIDER_AT_STORE',
-      'DELIVERING', 'DELIVERED', 'CANCELLED', 'RETURNING', 'RETURNED',
+      'WAITING_ACCEPT', 'RIDER_CANCELLED', 'APPENDED_WAITING', 'WAITING_PICKUP',
+      'RIDER_AT_STORE', 'DELIVERING', 'ARRIVED_DESTINATION', 'DELIVERED',
+      'CANCELLED', 'RETURNING', 'RETURNED',
       'AFTERSALE_RETURNED', 'ORDER_FAILED', 'UNKNOWN'
     )
   ),
@@ -157,7 +158,7 @@ CREATE TABLE IF NOT EXISTS "city_delivery_reconciliation_case" (
     REFERENCES "store_delivery_order" ("id") ON DELETE RESTRICT,
   CONSTRAINT "cdcrc_event_fk" FOREIGN KEY ("last_event_id")
     REFERENCES "city_delivery_callback_event" ("id") ON DELETE RESTRICT,
-  CONSTRAINT "cdcrc_provider_ck" CHECK ("provider" = 'dada'),
+  CONSTRAINT "cdcrc_provider_ck" CHECK ("provider" IN ('dada', 'uu')),
   CONSTRAINT "cdcrc_status_ck" CHECK ("status" IN ('PENDING', 'QUERYING', 'RESOLVED', 'DEAD')),
   CONSTRAINT "cdcrc_hash_time_ck" CHECK (
     "subject_key_hash" ~ '^[0-9a-f]{64}$' AND "attempt_count" >= 0
@@ -181,6 +182,34 @@ CREATE INDEX IF NOT EXISTS "cdcrc_last_event"
 
 CREATE INDEX IF NOT EXISTS "sdo_dada_reconcile_scan"
   ON "store_delivery_order" ("station_type", "status", "id");
+
+-- Upgrade an already-created Dada-only pipeline without changing its shape.
+ALTER TABLE "city_delivery_callback_event" DROP CONSTRAINT IF EXISTS "cdcevt_provider_ck";
+ALTER TABLE "city_delivery_callback_event"
+  ADD CONSTRAINT "cdcevt_provider_ck" CHECK ("provider" IN ('dada', 'uu'));
+ALTER TABLE "city_delivery_callback_event" DROP CONSTRAINT IF EXISTS "cdcevt_identifier_ck";
+ALTER TABLE "city_delivery_callback_event"
+  ADD CONSTRAINT "cdcevt_identifier_ck" CHECK (
+    btrim("client_id") <> '' AND btrim("provider_order_id") <> ''
+    AND "provider_order_id" ~ '^[A-Za-z0-9._:-]{1,32}$'
+    AND "provider_status" ~ '^-?[0-9]{1,4}$'
+  );
+ALTER TABLE "city_delivery_callback_watermark" DROP CONSTRAINT IF EXISTS "cdcwm_provider_ck";
+ALTER TABLE "city_delivery_callback_watermark"
+  ADD CONSTRAINT "cdcwm_provider_ck" CHECK ("provider" IN ('dada', 'uu'));
+ALTER TABLE "city_delivery_callback_watermark" DROP CONSTRAINT IF EXISTS "cdcwm_state_ck";
+ALTER TABLE "city_delivery_callback_watermark"
+  ADD CONSTRAINT "cdcwm_state_ck" CHECK (
+    "last_state" IN (
+      'WAITING_ACCEPT', 'RIDER_CANCELLED', 'APPENDED_WAITING', 'WAITING_PICKUP',
+      'RIDER_AT_STORE', 'DELIVERING', 'ARRIVED_DESTINATION', 'DELIVERED',
+      'CANCELLED', 'RETURNING', 'RETURNED',
+      'AFTERSALE_RETURNED', 'ORDER_FAILED', 'UNKNOWN'
+    )
+  );
+ALTER TABLE "city_delivery_reconciliation_case" DROP CONSTRAINT IF EXISTS "cdcrc_provider_ck";
+ALTER TABLE "city_delivery_reconciliation_case"
+  ADD CONSTRAINT "cdcrc_provider_ck" CHECK ("provider" IN ('dada', 'uu'));
 
 DO $city_delivery_callback_verify$
 DECLARE
@@ -250,6 +279,29 @@ BEGIN
     ) AND contype = 'f' AND confdeltype = 'r'
   ) <> 4 THEN
     RAISE EXCEPTION '0130 city delivery callback constraint integrity verification failed';
+  END IF;
+
+  IF (
+    SELECT count(*) FROM pg_constraint
+    WHERE conrelid IN (
+      'city_delivery_callback_event'::regclass,
+      'city_delivery_callback_watermark'::regclass,
+      'city_delivery_reconciliation_case'::regclass
+    ) AND conname IN ('cdcevt_provider_ck', 'cdcwm_provider_ck', 'cdcrc_provider_ck')
+      AND position('''uu''' IN pg_get_constraintdef(oid)) > 0
+  ) <> 3 OR NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'city_delivery_callback_event'::regclass
+      AND conname = 'cdcevt_identifier_ck'
+      AND position('-?' IN pg_get_constraintdef(oid)) > 0
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'city_delivery_callback_watermark'::regclass
+      AND conname = 'cdcwm_state_ck'
+      AND position('RIDER_CANCELLED' IN pg_get_constraintdef(oid)) > 0
+      AND position('ARRIVED_DESTINATION' IN pg_get_constraintdef(oid)) > 0
+  ) THEN
+    RAISE EXCEPTION '0130 city delivery callback provider constraint verification failed';
   END IF;
 
   SELECT array_agg(index_relation.relname::text ORDER BY index_relation.relname) INTO index_names

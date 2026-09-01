@@ -60,6 +60,14 @@ export interface Env extends WorkerBindings {
   DADA_APP_KEY?: string;
   DADA_APP_SECRET?: string;
   DADA_SOURCE_ID?: string;
+  /** Independent unguessable UU callback URL token; callback sign rules are not public. */
+  UU_CALLBACK_TOKEN?: string;
+  /** UU V3 production credentials; inject as Worker secrets, never Queue payloads. */
+  UU_APP_ID?: string;
+  UU_APP_KEY?: string;
+  UU_OPEN_ID?: string;
+  /** Must be verified in UU sandbox because current official prose/examples conflict. */
+  UU_API_TIMESTAMP_UNIT?: "seconds" | "milliseconds";
   /** Public Turnstile widget site key. */
   TURNSTILE_SITE_KEY?: string;
   /** Comma-separated hostnames accepted from Siteverify (no schemes or paths). */

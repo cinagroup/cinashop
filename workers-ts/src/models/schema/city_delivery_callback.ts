@@ -35,7 +35,7 @@ export type CityDeliveryCallbackOutboxStatus =
   | "DEAD";
 
 /**
- * Authenticated Dada callback/query evidence. Rider fields and cancellation
+ * Authenticated Dada/UU callback/query evidence. Rider fields and cancellation
  * text exist only to bridge the durable consumer and are blanked at terminal
  * processing; raw bodies, URL tokens and signatures are never stored.
  */
@@ -43,7 +43,7 @@ export const cityDeliveryCallbackEvent = pgTable(
   "city_delivery_callback_event",
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
-    provider: varchar("provider", { length: 16 }).default("dada").notNull(),
+    provider: varchar("provider", { length: 16 }).$type<"dada" | "uu">().default("dada").notNull(),
     source: varchar("source", { length: 12 }).$type<"callback" | "query">().notNull(),
     eventKey: varchar("event_key", { length: 64 }).notNull(),
     replayKey: varchar("replay_key", { length: 36 }).notNull(),
@@ -83,7 +83,7 @@ export const cityDeliveryCallbackEvent = pgTable(
     index("cdcevt_retention_due")
       .on(table.retainUntil, table.id)
       .where(sql`${table.status} IN ('APPLIED', 'APPLIED_NOOP', 'SUPERSEDED', 'IGNORED', 'CONFLICT', 'DEAD')`),
-    check("cdcevt_provider_ck", sql`${table.provider} = 'dada'`),
+    check("cdcevt_provider_ck", sql`${table.provider} IN ('dada', 'uu')`),
     check("cdcevt_source_ck", sql`${table.source} IN ('callback', 'query')`),
     check(
       "cdcevt_hash_key_ck",
@@ -96,7 +96,7 @@ export const cityDeliveryCallbackEvent = pgTable(
       "cdcevt_identifier_ck",
       sql`btrim(${table.clientId}) <> '' AND btrim(${table.providerOrderId}) <> ''
         AND ${table.providerOrderId} ~ '^[A-Za-z0-9._:-]{1,32}$'
-        AND ${table.providerStatus} ~ '^[0-9]{1,4}$'`,
+        AND ${table.providerStatus} ~ '^-?[0-9]{1,4}$'`,
     ),
     check(
       "cdcevt_provider_values_ck",
@@ -171,7 +171,7 @@ export const cityDeliveryCallbackOutbox = pgTable(
 export const cityDeliveryCallbackWatermark = pgTable(
   "city_delivery_callback_watermark",
   {
-    provider: varchar("provider", { length: 16 }).default("dada").notNull(),
+    provider: varchar("provider", { length: 16 }).$type<"dada" | "uu">().default("dada").notNull(),
     subjectKeyHash: varchar("subject_key_hash", { length: 64 }).notNull(),
     lastEventId: bigint("last_event_id", { mode: "number" })
       .notNull()
@@ -186,12 +186,13 @@ export const cityDeliveryCallbackWatermark = pgTable(
   (table) => [
     primaryKey({ name: "cdcwm_pkey", columns: [table.provider, table.subjectKeyHash] }),
     index("cdcwm_last_event").on(table.lastEventId),
-    check("cdcwm_provider_ck", sql`${table.provider} = 'dada'`),
+    check("cdcwm_provider_ck", sql`${table.provider} IN ('dada', 'uu')`),
     check(
       "cdcwm_state_ck",
       sql`${table.lastState} IN (
-        'WAITING_ACCEPT', 'APPENDED_WAITING', 'WAITING_PICKUP', 'RIDER_AT_STORE',
-        'DELIVERING', 'DELIVERED', 'CANCELLED', 'RETURNING', 'RETURNED',
+        'WAITING_ACCEPT', 'RIDER_CANCELLED', 'APPENDED_WAITING', 'WAITING_PICKUP',
+        'RIDER_AT_STORE', 'DELIVERING', 'ARRIVED_DESTINATION', 'DELIVERED',
+        'CANCELLED', 'RETURNING', 'RETURNED',
         'AFTERSALE_RETURNED', 'ORDER_FAILED', 'UNKNOWN'
       )`,
     ),
@@ -212,7 +213,7 @@ export const cityDeliveryReconciliationCase = pgTable(
   "city_delivery_reconciliation_case",
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
-    provider: varchar("provider", { length: 16 }).default("dada").notNull(),
+    provider: varchar("provider", { length: 16 }).$type<"dada" | "uu">().default("dada").notNull(),
     subjectKeyHash: varchar("subject_key_hash", { length: 64 }).notNull(),
     deliveryOrderId: integer("delivery_order_id")
       .notNull()
@@ -242,7 +243,7 @@ export const cityDeliveryReconciliationCase = pgTable(
       .on(table.leaseUntil, table.id)
       .where(sql`${table.status} = 'QUERYING'`),
     index("cdcrc_last_event").on(table.lastEventId),
-    check("cdcrc_provider_ck", sql`${table.provider} = 'dada'`),
+    check("cdcrc_provider_ck", sql`${table.provider} IN ('dada', 'uu')`),
     check(
       "cdcrc_status_ck",
       sql`${table.status} IN ('PENDING', 'QUERYING', 'RESOLVED', 'DEAD')`,
