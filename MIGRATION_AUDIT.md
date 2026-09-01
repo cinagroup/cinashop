@@ -3268,6 +3268,38 @@ Queue 消费会输出 `payment_reconciliation_dispatched/completed/attention/fai
 
 CORE-001-C 因候选代码、生产空结构、真实 PostgreSQL 隔离状态机和 Linux 门禁齐全而勾选，但不等于支付已在生产启用。生产微信/支付宝开关和真实凭据仍不可用，没有真实 provider 正向/回调样本；告警目的地仍 pending，主 Worker、前端、预发、正式发布和发布后观察均未执行。历史 13 个无可信渠道证据的未支付订单保持原样。这些边界继续由 CORE-001-H 约束，父项 CORE-001 保持未完成；下一清单项仍是 CORE-001-D 公众号/小程序消息回调。
 
+## CORE-001-D 公众号/小程序消息回调收口（2026-09-01）
+
+### PHP 权威行为与迁移风险
+
+PHP 的 `ANY /api/wechat/serve` 和 `ANY /api/wechat/miniServe` 会把公众号/小程序消息直接交给两个 listener。关注、取消关注、扫码、卡券领取/激活/删除、`funds_order_pay`、交易结算/收货及公众号被动回复都在 HTTP 回调链内执行；listener 最外层捕获所有异常后仍继续返回下一个响应，支付分支还把解析后的数据和完整 `$payload` 写入错误日志。旧实现没有独立事件唯一键、持久化 outbox、处理租约、乱序水位或 DEAD 终态，所以“订单行最终已付”不能证明扫码计数、关注状态、会员卡或回复消息只执行一次，也不能阻止迟到关注/领卡覆盖较新的取消/删除。
+
+现已恢复两条精确兼容路由，但收紧为 GET/POST 两种方法。GET 同时支持明文 `signature` 和安全模式 `msg_signature` URL 验证；POST 只接受 `application/xml`/`text/xml` 安全模式，body 上限 64 KiB，执行严格查询字段边界、SHA-1 签名、AES-256-CBC、微信 32-byte PKCS#7、致命 UTF-8 解码和解密尾部 AppID 常量时间匹配。XML 拒绝 DOCTYPE、ENTITY、stylesheet、超大字段和未知实体。callback token 与 EncodingAESKey 只从四个独立 Worker Secret 读取，不再把旧 `system_config` 当密钥权威；AppID 仍从对应的公众号/小程序配置读取并参与解密身份校验。
+
+### 最小证据、Queue 与各事件幂等语义
+
+签名头、原始 XML、解密全文、任意 provider 字段和用户消息正文均不持久化；只保存规范化白名单、不可变 SHA-256 摘要和低基数状态/错误码，文本正文只在内存中匹配回复关键字后丢弃。被动回复先从有效二维码/关键字/默认规则解析为 text/image/voice/news/transfer 的最小快照，再与首次事件原子固化，因而重复回调不会因运营配置变化返回另一条回复。HTTP 只有在验签、解密、事件和 outbox 同一短事务提交后才返回成功；失败返回 400 促使微信重试，Queue 即时发送失败则由 PostgreSQL 与 Cron 恢复，不再复制 PHP“异常也确认”的行为。
+
+`wechat_callback_event` 保存 source、event/replay key、payload/subject hash、最小事件字段、回复快照、处理状态、尝试、租约、保留期；`wechat_callback_outbox` 保存投递状态、租约和恢复时间；`wechat_callback_watermark` 按 source+projection+subject 保存 `(event_time, sequence_rank, event_id)`。事件/outbox 原子插入并由数据库唯一约束收敛，Queue 只携带 `{action,outboxId,eventId,replayKey}`，认领使用主体 advisory transaction lock、行锁、`FOR UPDATE SKIP LOCKED`、有界指数退避和最多 8 次 DEAD，DLQ 只重放同一 opaque 引用。Cloudflare Workers 与 PostgreSQL 技能的生产约束直接形成了这些短事务、provider I/O 事务外、opaque Queue、租约、部分索引和 fail-closed DDL 选择。
+
+关注/取消关注按 openid 使用单调水位，同秒时取消关注排序更高；带 Ticket 的关注同时保留一次加法扫码语义。普通扫码不因乱序丢弃，但由事件唯一键保证同一事件只累计一次。会员卡按 openid+cardId 排序为领取 < 激活 < 删除，删除后迟到领取转 `SUPERSEDED`；首次插入显式初始化全部生命周期字段，不依赖遗留表可能不一致的默认值。公众号消息每个唯一事件只写一条不含正文的 `wechat_message` 摘要。`funds_order_pay` 不直接改订单，而是从商品/充值/会员三个域中取得唯一权威订单与金额，再作为可信微信事件进入 CORE-001-B 的 `payment_callback_event/outbox`；交易结算/确认收货复用既有 `completeOrderReceipt`，外部或跨事务失败后重放仍收敛。
+
+### 生产 Hyperdrive 隔离审计与正式 DDL
+
+按用户“直接使用生产数据库”的明确授权，一次性令牌保护、无自定义 route/Queue 的临时 Worker 精确绑定 Hyperdrive `9748c294e21c49a99579c9cef70102e0`。迁移前只读审计确认 PostgreSQL 16.14，三张目标表不存在；`wechat_appid/routine_appId/wechat_token/wechat_encodingaeskey/wechat_encode/wechat_appsecret/routine_appsecret/create_wechat_user` 均没有匹配配置，微信身份聚合为空，二维码/渠道/卡券/领卡/消息均为 0，支付回调账本为空。订单只返回聚合状态：未付取消 1、未付待支付 8、已付待处理 15、已付处理中 1、已付完成态 4；没有返回配置值、订单号或用户标识。
+
+随机 `codex_wechat_callback_*` schema 使用真实 PostgreSQL/Hyperdrive 和真实服务代码跑最终 14/14 场景：外部/内嵌 DDL 精确且二次执行幂等、安全模式验签解密与回复快照、重复接收原子收敛、同事件不同载荷拒绝、Queue 仅 opaque 引用、Queue 失败持久恢复、消息投影/重放、正文不落库、关注乱序、扫码加法、卡券删除抵御迟到领取、支付进入共享账本、已完成收货幂等 no-op，以及 listener 失败不确认并在第 8 次进入 DEAD。最终事件状态为 APPLIED 7、SUPERSEDED 2、APPLIED_NOOP 1、DEAD 1，随机 schema 由 `finally` 删除。
+
+真实引擎审计先后暴露并修正四个静态测试不易发现的问题：约束证据曾错误把 PK/FK 的 `connoinherit=true` 当异常；Hyperdrive 不保留自定义会话 `search_path`，服务内所有数据库读取必须进入显式短事务；PostgreSQL 不允许锁定 LEFT JOIN 的可空侧，二维码查询现只锁 `qrcode`；遗留 `user_card` 隔离副本没有可靠默认值，首次领卡现显式写全生命周期字段。修正后才把外部 `0122_wechat_callback_pipeline.sql`（Worker 内嵌 `migration_0128`）应用到生产 `public`。
+
+正式结果为 `wechat_callback_event` 23 列、`wechat_callback_outbox` 14 列、`wechat_callback_watermark` 8 列，合计 45 列、16 个已验证约束、13 个 valid/ready 索引，其中 4 个部分索引；两个外键均为 `ON DELETE RESTRICT`，没有 RLS、rule、policy 或用户 trigger。DDL 连续两次执行保持 `complete=true, idempotent_second_pass=true`，最终三表均为 0 行。临时 Worker 与一次性 Secret 已删除，所有随机 schema 已删除；生产只保留本批获授权创建的三张空表，主 `cinashop-api` 未部署。
+
+### 工程门禁、上线边界与下一项
+
+本地完整单元测试为 179 文件/1,136 项全部通过，双 TypeScript、observability 16 信号/10 域/35 必需事件/391 个生产源文件/6 个既有发布阻塞、schema source201/target255/shared201/sourceGaps0/external255/embedded255/零定义漂移、路由 PHP1,904/TS1,504/精确800/可执行782/缺失1,104/可执行缺口1,100、生产依赖 0 漏洞和 `git diff --check` 均通过。主 Worker与审计 Worker dry-run 分别约 `6,069.75/1,115.63 KiB`、`2,020.68/351.53 KiB`（upload/gzip），都解析到指定 Hyperdrive 后退出。Windows 本机 runtime 仍在 0 个测试前因既有 `workerd 0xc0000005` 失败，没有记成代码失败或通过；候选提交 `a5e02d067a16c8b06af5b681561a4a34e630e8c8` 推送后，[Linux Migration gates 33480134867](https://github.com/cinagroup/cinashop/actions/runs/33480134867) 8/8 jobs 成功，补齐真实 workerd、全量 Worker 门禁、五个前端构建和 checksum-pinned 全历史 Gitleaks 证据。
+
+主 Worker 当前 Secret 名单仍只有 `APP_KEY/DEBUG/INTERNAL_CHAT_TOKEN/OPERATIONS_TOKEN/UPSTASH_REDIS_TOKEN/UPSTASH_REDIS_URL`，没有 `WECHAT_OFFICIAL_CALLBACK_TOKEN/WECHAT_OFFICIAL_CALLBACK_AES_KEY/WECHAT_MINI_CALLBACK_TOKEN/WECHAT_MINI_CALLBACK_AES_KEY`；数据库也没有对应 AppID 或可供真实验收的微信身份/二维码/卡券/消息数据。因此 CORE-001-D 可以按“候选代码、生产空结构、随机 schema 状态机、Linux 门禁完成”勾选，但不能解释为真实微信渠道已配置、回调已验证或线上已更新。真实凭据、测试租户、微信后台 URL 配置、正向/乱序/重放、旧端 E2E、发布批准和发布后观察继续归 CORE-001-H；按 checklist 顺序的下一未完成项是 CORE-001-F 商家寄件回调，必须先取得快递100当前签名/加密合同和真实样本。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
