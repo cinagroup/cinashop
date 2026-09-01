@@ -24,6 +24,10 @@ import {
 import { isAttachmentObjectCleanupMessage } from "@/services/system/AttachmentService";
 import { isOfficialAccountQrcodeMessage } from "@/services/wechat/OfficialAccountQrcodeService";
 import {
+  isWechatCallbackDispatchMessage,
+  isWechatCallbackOutboxMessage,
+} from "@/services/wechat/WechatCallbackService";
+import {
   isWorkCallbackDispatchMessage,
   isWorkCallbackOutboxMessage,
 } from "@/services/work/EnterpriseWechatCallbackService";
@@ -236,6 +240,14 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
     };
   }
   if (isWorkCallbackOutboxMessage(value) || isWorkCallbackDispatchMessage(value)) {
+    return {
+      messageType: value.action,
+      replayPolicy: "ALLOW",
+      body: sanitizeUnknownQueueBody(value),
+      replayMessage: value,
+    };
+  }
+  if (isWechatCallbackOutboxMessage(value) || isWechatCallbackDispatchMessage(value)) {
     return {
       messageType: value.action,
       replayPolicy: "ALLOW",

@@ -115,6 +115,14 @@
       "response": "compare immutable local and provider evidence; use the guarded admin decision endpoint instead of blind settlement"
     },
     {
+      "id": "wechat_callback_pipeline",
+      "component": "queue",
+      "source": "Workers Logs wechat_callback_* plus wechat_callback_event/outbox status",
+      "warning": "rejected >= 5 over 5m or attempt_count >= 3",
+      "critical": "any DEAD row or oldest actionable event >= 15m",
+      "response": "verify the source-specific token, AES key and AppID, then inspect immutable callback evidence before guarded replay"
+    },
+    {
       "id": "refund_workflow",
       "component": "refund",
       "source": "Workers Logs component=refund plus store_order_refund_payment status",

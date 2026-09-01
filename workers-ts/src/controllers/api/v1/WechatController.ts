@@ -8,6 +8,8 @@
  *   POST /api/wechat/auth_binding_phone  小程序手机号解密绑定
  *   GET  /api/wechat/auth           公众号 OAuth 授权
  *   GET  /api/wechat/config         JS-SDK 配置签名
+ *   ANY  /api/wechat/serve          公众号安全模式消息回调
+ *   ANY  /api/wechat/miniServe      小程序安全模式消息回调
  */
 import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
@@ -20,6 +22,8 @@ import {
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
 import { PaymentCallbackEventService } from "@/services/payment/PaymentCallbackEventService";
+import { WechatCallbackService } from "@/services/wechat/WechatCallbackService";
+import type { WechatCallbackQuery, WechatCallbackSource } from "@/services/wechat/WechatCallbackCrypto";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
 import { readBoundedJsonObject, readBoundedUtf8Text } from "@/utils/request-body";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
@@ -28,6 +32,80 @@ import type { AppVariables, Env } from "@/env";
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_SOCIAL_AUTH_BODY_BYTES = 8 * 1024;
 const MAX_PAYMENT_CALLBACK_BODY_BYTES = 64 * 1024;
+const MAX_WECHAT_CALLBACK_BODY_BYTES = 64 * 1024;
+
+function callbackQuery(c: C): WechatCallbackQuery {
+  return {
+    signature: c.req.query("signature") ?? "",
+    msgSignature: c.req.query("msg_signature") ?? "",
+    timestamp: c.req.query("timestamp") ?? "",
+    nonce: c.req.query("nonce") ?? "",
+  };
+}
+
+async function callbackServe(c: C, source: WechatCallbackSource): Promise<Response> {
+  c.header("Cache-Control", "no-store, max-age=0");
+  const service = new WechatCallbackService(c.get("container"), c.env);
+  try {
+    if (c.req.method === "GET") {
+      const echo = c.req.query("echostr") ?? "";
+      const verified = await service.verifyChallenge(source, callbackQuery(c), echo);
+      return c.text(verified, 200, { "Content-Type": "text/plain; charset=utf-8" });
+    }
+    if (c.req.method !== "POST") {
+      c.header("Allow", "GET, POST");
+      return c.text("method not allowed", 405);
+    }
+    const contentType = (c.req.header("content-type") ?? "").split(";", 1)[0].trim().toLowerCase();
+    if (contentType !== "application/xml" && contentType !== "text/xml") {
+      return c.text("unsupported media type", 415);
+    }
+    const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_WECHAT_CALLBACK_BODY_BYTES);
+    const received = await service.receiveEncrypted(source, callbackQuery(c), rawBody);
+    c.executionCtx.waitUntil(service.dispatchById(received.outboxId).catch((error) => {
+      emitOperationalEvent("error", {
+        event: "wechat_callback_outbox_dispatch_failed",
+        component: "queue",
+        operation: "wechat_callback_dispatch",
+        outcome: "failure",
+        errorCode: operationalErrorCode(error, "callback_dispatch_failed"),
+      });
+    }));
+    emitOperationalEvent("info", {
+      event: "wechat_callback_persisted",
+      component: "queue",
+      operation: "wechat_callback_receive",
+      outcome: "success",
+      result: received.duplicate ? "duplicate-persisted" : "persisted",
+      source,
+    });
+    return c.text(received.responseBody, 200, {
+      "Content-Type": received.responseBody.startsWith("<xml>")
+        ? "application/xml; charset=utf-8"
+        : "text/plain; charset=utf-8",
+    });
+  } catch (error) {
+    emitOperationalEvent("warn", {
+      event: "wechat_callback_rejected",
+      component: "queue",
+      operation: "wechat_callback_receive",
+      outcome: "rejected",
+      source,
+      errorCode: operationalErrorCode(error),
+    });
+    // Never acknowledge a callback whose authentication, decryption or durable
+    // persistence failed. WeChat can safely retry the same immutable event.
+    return c.text("callback rejected", 400);
+  }
+}
+
+export function callbackServeOfficial(c: C): Promise<Response> {
+  return callbackServe(c, "official");
+}
+
+export function callbackServeMini(c: C): Promise<Response> {
+  return callbackServe(c, "mini");
+}
 
 /** POST /api/wechat/mp_auth — 小程序登录 */
 export async function mpAuth(c: C) {

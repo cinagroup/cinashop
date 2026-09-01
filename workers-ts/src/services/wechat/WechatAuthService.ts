@@ -52,6 +52,20 @@ export interface VerifiedSocialIdentity {
   spreadUid?: number;
 }
 
+export interface OfficialSubscriberProfile {
+  openid: string;
+  unionid: string;
+  nickname: string;
+  avatar: string;
+  sex: number;
+  language: string;
+  city: string;
+  province: string;
+  country: string;
+  subscribe: number;
+  subscribeTime: number;
+}
+
 interface PendingSocialIdentity extends VerifiedSocialIdentity {
   version: 1;
   issuedAt: number;
@@ -952,6 +966,85 @@ export class WechatAuthService {
     };
   }
 
+  /**
+   * Resolve a callback openid through the provider before creating or linking a
+   * local account. Provider I/O completes before reconcileVerifiedIdentity opens
+   * its short PostgreSQL transaction.
+   */
+  async reconcileOfficialSubscriber(openidValue: string): Promise<{
+    uid: number;
+    profile: OfficialSubscriberProfile;
+  }> {
+    const openid = String(openidValue ?? "").trim();
+    if (!openid || openid.length > 100) throw new ValidateException("公众号身份无效");
+    const data = await this.officialUserInfo(openid);
+    const profile: OfficialSubscriberProfile = {
+      openid,
+      unionid: String(data.unionid ?? "").trim().slice(0, 30),
+      nickname: String(data.nickname ?? "").trim().slice(0, 64),
+      avatar: String(data.headimgurl ?? "").trim().slice(0, 256),
+      sex: [1, 2].includes(Number(data.sex)) ? Number(data.sex) : 0,
+      language: String(data.language ?? "").trim().slice(0, 64),
+      city: String(data.city ?? "").trim().slice(0, 64),
+      province: String(data.province ?? "").trim().slice(0, 64),
+      country: String(data.country ?? "").trim().slice(0, 64),
+      subscribe: Number(data.subscribe) === 1 ? 1 : 0,
+      subscribeTime: Number.isSafeInteger(Number(data.subscribe_time))
+        && Number(data.subscribe_time) > 0
+        ? Number(data.subscribe_time)
+        : Math.floor(Date.now() / 1000),
+    };
+    if (profile.subscribe !== 1) throw new ValidateException("公众号用户未关注");
+    const uid = await this.reconcileVerifiedIdentity({
+      openid,
+      unionid: profile.unionid,
+      userType: "wechat",
+      nickname: profile.nickname,
+      avatar: profile.avatar,
+      sex: profile.sex,
+    });
+    return { uid, profile };
+  }
+
+  /** Resolve a member-card phone through WeChat, then reuse identity reconciliation. */
+  async reconcileOfficialMemberCard(
+    openidValue: string,
+    cardIdValue: string,
+    codeValue: string,
+  ): Promise<number> {
+    const openid = String(openidValue ?? "").trim();
+    const cardId = String(cardIdValue ?? "").trim();
+    const code = String(codeValue ?? "").trim();
+    if (!openid || openid.length > 100 || !cardId || cardId.length > 50 || !code || code.length > 50) {
+      throw new ValidateException("会员卡凭据无效");
+    }
+    const accessToken = await this.getAccessToken();
+    const url = new URL("https://api.weixin.qq.com/card/membercard/userinfo/get");
+    url.searchParams.set("access_token", accessToken);
+    const data = await this.fetchWechatJson(url.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ card_id: cardId, code }),
+    }) as {
+      errcode?: number;
+      errmsg?: string;
+      user_info?: {
+        common_field_list?: Array<{ name?: string; value?: string }>;
+      };
+    };
+    if (Number(data.errcode ?? 0) !== 0) {
+      throw new ValidateException(`会员卡资料验证失败: ${String(data.errmsg ?? "微信接口错误")}`);
+    }
+    const fields = Array.isArray(data.user_info?.common_field_list)
+      ? data.user_info.common_field_list
+      : [];
+    const phone = String(fields.find((field) => (
+      String(field?.name ?? "").toUpperCase() === "USER_FORM_INFO_FLAG_MOBILE"
+    ))?.value ?? "").trim();
+    if (!/^1\d{10}$/.test(phone)) throw new ValidateException("会员卡手机号凭据无效");
+    return this.reconcileVerifiedIdentity({ openid, userType: "wechat", phone });
+  }
+
   /** Official-account subscriber profile (the second provider read used by PHP). */
   private async officialUserInfo(openid: string): Promise<{
     nickname?: string;
@@ -961,6 +1054,9 @@ export class WechatAuthService {
     city?: string;
     province?: string;
     country?: string;
+    unionid?: string;
+    subscribe?: number;
+    subscribe_time?: number;
   }> {
     const accessToken = await this.getAccessToken();
     const url = new URL("https://api.weixin.qq.com/cgi-bin/user/info");
@@ -975,6 +1071,9 @@ export class WechatAuthService {
       city?: string;
       province?: string;
       country?: string;
+      unionid?: string;
+      subscribe?: number;
+      subscribe_time?: number;
       errcode?: number;
       errmsg?: string;
     };

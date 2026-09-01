@@ -75,4 +75,5 @@ export * from "./work_group_chat_current";
 export * from "./work_external_tag_current";
 export * from "./work_contact_action";
 export * from "./wechat_member_card";
+export * from "./wechat_callback";
 export * from "./short_video";

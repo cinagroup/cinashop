@@ -20,6 +20,7 @@ import { WORK_CONTACT_ACTION_OUTBOX_SQL } from "@/migrations/workContactActionOu
 import { ADMIN_MOBILE_USER_REPLAY_SQL } from "@/migrations/adminMobileUserReplay";
 import { PAYMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/paymentCallbackPipeline";
 import { PAYMENT_RECONCILIATION_SQL } from "@/migrations/paymentReconciliation";
+import { WECHAT_CALLBACK_PIPELINE_SQL } from "@/migrations/wechatCallbackPipeline";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -179,6 +180,11 @@ export class MigrationService {
     return this.migration_0127();
   }
 
+  /** Exact official-account/Mini Program callback inbox/outbox DDL. */
+  wechatCallbackPipelineMigrationSqlForVerification(): string {
+    return this.migration_0128();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -314,6 +320,7 @@ export class MigrationService {
       this.migration_0125(),
       this.migration_0126(),
       this.migration_0127(),
+      this.migration_0128(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8253,5 +8260,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0127(): string {
     return PAYMENT_RECONCILIATION_SQL;
+  }
+
+  private migration_0128(): string {
+    return WECHAT_CALLBACK_PIPELINE_SQL;
   }
 }

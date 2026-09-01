@@ -1152,6 +1152,9 @@ v1Routes.post("/wechat/oauth_state", WechatController.wechatOauthState);
 v1Routes.get("/wechat/auth", WechatController.wechatAuth);
 // JS-SDK 配置 (无需 auth)
 v1Routes.get("/wechat/config", WechatController.wechatConfig);
+// Official-account and Mini Program callbacks require WeChat signatures, not user auth.
+v1Routes.all("/wechat/serve", WechatController.callbackServeOfficial);
+v1Routes.all("/wechat/miniServe", WechatController.callbackServeMini);
 // Enterprise WeChat JS-SDK signatures (public compatibility routes, strict URL allowlist).
 v1Routes.get("/work/config", EnterpriseWechatController.config);
 v1Routes.get("/work/agentConfig", EnterpriseWechatController.agentConfig);

@@ -94,6 +94,14 @@ export interface Env extends WorkerBindings {
   WECHAT_WORK_CALLBACK_TOKEN?: string;
   /** Enterprise WeChat 43-character callback EncodingAESKey. */
   WECHAT_WORK_CALLBACK_AES_KEY?: string;
+  /** Official-account callback token; never read from system_config. */
+  WECHAT_OFFICIAL_CALLBACK_TOKEN?: string;
+  /** Official-account 43-character callback EncodingAESKey. */
+  WECHAT_OFFICIAL_CALLBACK_AES_KEY?: string;
+  /** Mini Program callback token; intentionally separate from the official account. */
+  WECHAT_MINI_CALLBACK_TOKEN?: string;
+  /** Mini Program 43-character callback EncodingAESKey. */
+  WECHAT_MINI_CALLBACK_AES_KEY?: string;
   /** Exact HTTPS origins whose page URLs may be signed for Enterprise WeChat JS-SDK. */
   WORK_WECHAT_ALLOWED_ORIGINS?: string;
   /** 开发运维接口专用 token; 通过 wrangler secret put 设置 */
@@ -285,6 +293,20 @@ export interface PaymentCallbackDispatchMessage {
   scheduledAt: number;
 }
 
+/** Verified social callback data stays in PostgreSQL; Queue receives opaque keys only. */
+export interface WechatCallbackOutboxMessage {
+  action: "processWechatCallbackOutbox";
+  outboxId: number;
+  eventId: number;
+  replayKey: string;
+}
+
+/** Cron root for recovering social callback outbox dispatch. */
+export interface WechatCallbackDispatchMessage {
+  action: "dispatchWechatCallbackOutbox";
+  scheduledAt: number;
+}
+
 /** One active provider query; provider evidence and order data stay in PostgreSQL. */
 export interface PaymentReconciliationMessage {
   action: "processPaymentReconciliation";
@@ -318,6 +340,8 @@ export type OrderMessage =
   | WorkContactActionDispatchMessage
   | PaymentCallbackMessage
   | PaymentCallbackDispatchMessage
+  | WechatCallbackOutboxMessage
+  | WechatCallbackDispatchMessage
   | PaymentReconciliationMessage
   | PaymentReconciliationDispatchMessage
   | LegacyOrderMessage;

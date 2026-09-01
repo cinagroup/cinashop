@@ -82,6 +82,12 @@ export default {
       PaymentCallbackEventService,
     } = await import("./services/payment/PaymentCallbackEventService");
     const {
+      consumeWechatCallbackMessage,
+      isWechatCallbackDispatchMessage,
+      isWechatCallbackOutboxMessage,
+      WechatCallbackService,
+    } = await import("./services/wechat/WechatCallbackService");
+    const {
       consumePaymentReconciliationMessage,
       isPaymentReconciliationDispatchMessage,
       isPaymentReconciliationMessage,
@@ -135,6 +141,7 @@ export default {
     } = await import("./services/waybill/OrderWaybillJobService");
     const outbox = new OrderOutboxService(container, env);
     const paymentCallbacks = new PaymentCallbackEventService(container, env);
+    const wechatCallbacks = new WechatCallbackService(container, env);
     const paymentReconciliation = new PaymentReconciliationService(container, env);
     const workCallbacks = new EnterpriseWechatCallbackService(container, env);
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
@@ -149,6 +156,46 @@ export default {
 
     for (const msg of batch.messages) {
       const messageStartedAt = Date.now();
+      if (isWechatCallbackDispatchMessage(msg.body)) {
+        try {
+          const dispatched = await wechatCallbacks.dispatchPending(100);
+          emitOperationalEvent("info", {
+            event: "wechat_callback_outbox_dispatched",
+            component: "queue",
+            operation: "wechat_callback_dispatch",
+            outcome: "success",
+            resourceCount: dispatched.enqueued,
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+          });
+          msg.ack();
+        } catch (error) {
+          const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+          emitOperationalEvent("error", {
+            event: "wechat_callback_outbox_dispatch_failed",
+            component: "queue",
+            operation: "wechat_callback_dispatch",
+            outcome: "retry",
+            durationMs: Date.now() - messageStartedAt,
+            queueAttempt: msg.attempts,
+            retryDelaySeconds: delaySeconds,
+            errorCode: operationalErrorCode(error, "callback_dispatch_failed"),
+          });
+          msg.retry({ delaySeconds });
+        }
+        continue;
+      }
+
+      if (isWechatCallbackOutboxMessage(msg.body)) {
+        await consumeWechatCallbackMessage({
+          body: msg.body,
+          attempts: msg.attempts,
+          ack: () => msg.ack(),
+          retry: (options) => msg.retry(options),
+        }, wechatCallbacks);
+        continue;
+      }
+
       if (isPaymentReconciliationDispatchMessage(msg.body)) {
         try {
           const dispatched = await paymentReconciliation.dispatchPage(msg.body);
@@ -566,6 +613,10 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
   await Promise.all([
     env.ORDER_QUEUE.send({
       action: "dispatchPaymentCallbackOutbox",
+      scheduledAt,
+    }),
+    env.ORDER_QUEUE.send({
+      action: "dispatchWechatCallbackOutbox",
       scheduledAt,
     }),
     env.ORDER_QUEUE.send({
