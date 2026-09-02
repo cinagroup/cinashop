@@ -226,6 +226,22 @@ export interface ProductDimension {
   detail: string[];
 }
 
+export interface ProductRuleTemplate {
+  id: number;
+  type: number;
+  relation_id: number;
+  rule_name: string;
+  rule_value: string | null;
+  attr_name: string;
+  attr_value: string[];
+  spec: ProductDimension[];
+}
+
+export interface ProductRulePayload {
+  rule_name: string;
+  spec: ProductDimension[];
+}
+
 export interface ProductSku {
   unique?: string;
   suk: string;

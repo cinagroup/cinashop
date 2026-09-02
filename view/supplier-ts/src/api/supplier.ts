@@ -17,6 +17,8 @@ import type {
   ProductBatchResult,
   ProductCategory,
   ProductDetail,
+  ProductRulePayload,
+  ProductRuleTemplate,
   ProductSaveResult,
   VirtualInventoryImportResult,
   VirtualInventoryExportResult,
@@ -58,6 +60,44 @@ const previewProducts: ProductRow[] = [
   { id: 73, product_type: 0, image: "", store_name: "智能手环 6 代", price: "269.00", stock: 15, sales: 97, is_show: 0, is_verify: 1, add_time: 1786180000 },
   { id: 74, product_type: 0, image: "", store_name: "快充移动电源 10000mAh", price: "159.00", stock: 35, sales: 302, is_show: 1, is_verify: 0, add_time: 1786170000 },
 ];
+
+let previewProductRuleSequence = 903;
+const previewProductRules: ProductRuleTemplate[] = [
+  {
+    id: 901,
+    type: 2,
+    relation_id: 1001,
+    rule_name: "服装颜色尺码",
+    rule_value: null,
+    attr_name: "颜色,尺码",
+    attr_value: ["黑色,白色", "S,M,L"],
+    spec: [
+      { value: "颜色", detail: ["黑色", "白色"] },
+      { value: "尺码", detail: ["S", "M", "L"] },
+    ],
+  },
+  {
+    id: 902,
+    type: 2,
+    relation_id: 1001,
+    rule_name: "杯壶容量",
+    rule_value: null,
+    attr_name: "颜色,容量",
+    attr_value: ["曜石黑,象牙白", "350ml,500ml"],
+    spec: [
+      { value: "颜色", detail: ["曜石黑", "象牙白"] },
+      { value: "容量", detail: ["350ml", "500ml"] },
+    ],
+  },
+];
+
+function cloneProductRule(row: ProductRuleTemplate): ProductRuleTemplate {
+  return {
+    ...row,
+    attr_value: [...row.attr_value],
+    spec: row.spec.map((dimension) => ({ value: dimension.value, detail: [...dimension.detail] })),
+  };
+}
 
 const previewCategories: ProductCategory[] = [
   {
@@ -388,6 +428,80 @@ export async function getDashboard(): Promise<DashboardStats> {
 export async function getProducts(params: Record<string, string | number>): Promise<PageResult<ProductRow>> {
   if (previewMode) return { list: previewProducts, count: previewProducts.length, page: 1, limit: 20 };
   return apiRequest<PageResult<ProductRow>>({ method: "GET", url: "/product/product/list", params });
+}
+
+export async function getProductRuleTemplates(): Promise<ProductRuleTemplate[]> {
+  if (previewMode) return previewProductRules.map(cloneProductRule);
+  return apiRequest<ProductRuleTemplate[]>({ method: "GET", url: "/product/product/get_rule" });
+}
+
+export async function getProductRules(
+  params: Record<string, string | number> = {},
+): Promise<PageResult<ProductRuleTemplate>> {
+  if (previewMode) {
+    const keyword = String(params.rule_name ?? "").trim().toLowerCase();
+    const page = Math.max(1, Number(params.page ?? 1));
+    const limit = Math.max(1, Math.min(100, Number(params.limit ?? 20)));
+    const filtered = previewProductRules.filter((row) => !keyword || row.rule_name.toLowerCase().includes(keyword));
+    return {
+      list: filtered.slice((page - 1) * limit, page * limit).map(cloneProductRule),
+      count: filtered.length,
+      page,
+      limit,
+    };
+  }
+  return apiRequest<PageResult<ProductRuleTemplate>>({
+    method: "GET",
+    url: "/product/product/rule",
+    params,
+  });
+}
+
+export async function getProductRule(id: number): Promise<ProductRuleTemplate> {
+  if (previewMode) {
+    const row = previewProductRules.find((item) => item.id === id);
+    if (!row) throw new Error("规格模板不存在");
+    return cloneProductRule(row);
+  }
+  const result = await apiRequest<{ info: ProductRuleTemplate }>({
+    method: "GET",
+    url: `/product/product/rule/${id}`,
+  });
+  return result.info;
+}
+
+export async function saveProductRule(id: number, payload: ProductRulePayload) {
+  if (previewMode) {
+    const savedId = id || previewProductRuleSequence++;
+    const row: ProductRuleTemplate = {
+      id: savedId,
+      type: 2,
+      relation_id: 1001,
+      rule_name: payload.rule_name,
+      rule_value: JSON.stringify(payload.spec),
+      attr_name: payload.spec.map((item) => item.value).join(","),
+      attr_value: payload.spec.map((item) => item.detail.join(",")),
+      spec: payload.spec.map((item) => ({ value: item.value, detail: [...item.detail] })),
+    };
+    const index = previewProductRules.findIndex((item) => item.id === savedId);
+    if (index >= 0) previewProductRules[index] = row;
+    else previewProductRules.unshift(row);
+    return { id: savedId };
+  }
+  return apiRequest<{ id: number }>({
+    method: "POST",
+    url: `/product/product/rule/${id}`,
+    data: payload,
+  });
+}
+
+export async function deleteProductRule(id: number) {
+  if (previewMode) {
+    const index = previewProductRules.findIndex((item) => item.id === id);
+    if (index >= 0) previewProductRules.splice(index, 1);
+    return null;
+  }
+  return apiRequest<null>({ method: "DELETE", url: `/product/product/rule/delete/${id}` });
 }
 
 export async function getShippingTemplates(

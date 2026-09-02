@@ -302,13 +302,13 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **FE-001 Admin 页面补齐**：旧 Admin 378 个 Vue 页面组件，新 Admin TS 55；组件数不可直接当覆盖率，需按 ADM checklist 建页面/路由/API/E2E 映射并消灭当前业务入口的 501。
 - [ ] **FE-002 PC 对账**：旧 PC 30、新 PC TS 29 个页面组件；22 条 `/api/pc` 合同和扫码/OAuth 本地 UI闭环已完成。token/UID 已改为 per-tab `sessionStorage`，刷新保留、新标签页不共享且启动清除旧持久值；关闭标签页不等于服务端 logout。仍需支付回跳、手机号安全验证、旧 Nuxt退流和全订单生命周期真实 E2E。
 - [ ] **FE-003 UniApp 对账**：旧 250、新 55 个页面组件；扫码登录确认页已完成目标/Origin/设备核对和本地登录返回闭环，仍需按 `pages.json` 核对活动、社区、会员、分销、客服、门店、核销及各小程序平台条件编译。
-- [ ] **FE-004 Supplier 对账**：旧端共 41 个 `pages/**/*.vue` 文件，但只有 19 个不同的可导航业务屏幕（20 条 route record，其中账单页重复注册）；其余为 16 个内嵌组件和 7 个未路由/错误脚手架。新端当前为 16 个页面组件、17 条屏幕 route record，不再使用“41→13”失真页数衡量覆盖。19 个旧屏幕中 15 个已有候选覆盖、4 个为部分替代、0 个整屏可执行缺口；逐屏证据和 12 项 granular checklist 固化在 `workers-ts/audit/supplier-frontend-parity.json`。浏览器 API 已同源 `/supplierapi`，Pages Function/Vite proxy 已接入，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署仍未验收。
-  - [x] **FE-004A 页面/能力盘点**：逐项映射 19 个旧业务屏幕、16 个旧内嵌组件、16 个新页面和 17 条新屏幕路由；区分候选覆盖、整合替代、缺失与外部门禁。
+- [ ] **FE-004 Supplier 对账**：旧端共 41 个 `pages/**/*.vue` 文件，但只有 19 个不同的可导航业务屏幕（20 条 route record，其中账单页重复注册）；其余为 16 个内嵌组件和 7 个未路由/错误脚手架。新端当前为 17 个页面组件、18 条屏幕 route record，不再使用“41→13”失真页数衡量覆盖。19 个旧屏幕中 16 个已有候选覆盖、3 个为部分替代、0 个整屏可执行缺口；逐屏证据和 12 项 granular checklist 固化在 `workers-ts/audit/supplier-frontend-parity.json`。浏览器 API 已同源 `/supplierapi`，Pages Function/Vite proxy 已接入，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署仍未验收。
+  - [x] **FE-004A 页面/能力盘点**：逐项映射 19 个旧业务屏幕、16 个旧内嵌组件、17 个新页面和 18 条新屏幕路由；区分候选覆盖、整合替代、缺失与外部门禁。
   - [x] **FE-004B 订单/财务导出与 Queue 历史入口**：新端已接四个有界 manifest 和两条租户内只读历史合同；订单/发货单、批任务与财务只导出显式勾选行，物流目录保持只读下载，浏览器 CSV 二次中和公式/NUL并清理文件名。旧全局 Queue 重跑、停止、删除入口未恢复。
   - [x] **FE-004C 前端动作级 RBAC**：订单发货/收货/备注/敏感导出要求 `supplier.order.manage`，小票打印要求 `supplier.print.manage`，电子面单入口要求 `supplier.waybill.manage`，提现、收款设置写入和财务导出要求 `supplier.finance.manage`；服务端继续作为最终 authority。
   - [x] **FE-004D 本地桌面/移动浏览器 QA**：预览数据下订单、Queue 历史/明细、财务勾选导出、桌面与 390×844 移动导航均通过；标题/URL/DOM正常、页面级无横向溢出、控制台 0 warning/error。该项只证明本地候选，不是生产 E2E。
   - [x] **FE-004E 商品评价回复（候选完成，未发布）**：新增 Supplier 双重归属校验的评价列表与 500 字有界回复写合同、`product.view/manage` 权限、行锁事务、批量回复读取、页面/导航和桌面/移动预览；旧 DELETE 只按全局评价 ID软删且第一方页面没有入口，已证据化退役，不恢复跨租户删除能力。仍需 FE-004I 的真实主管理员/受限账号 E2E。
-  - [ ] **FE-004F 可复用规格模板**：新 ProductForm 有行内 SKU 编辑，但旧 `product_attr` 的共享规格模板库尚无目标页/合同；需实现或用真实使用证据正式退役。
+  - [x] **FE-004F 可复用规格模板（候选完成，未发布）**：确认旧 `product_attr` 是活跃菜单且被商品编辑页复用；现有 Worker 五条模板合同已按 `(type=2, relation_id=当前 Supplier)` 修复旧详情/删除裸 ID风险，新端新增规格模板列表/筛选/新增/编辑/删除、`product.view/manage`动作级 RBAC，并在 ProductForm 以二次确认显式套用结构后重新生成 SKU。仍需 FE-004I 的真实账号 CRUD与商品套用 E2E。
   - [ ] **FE-004G 配货单预览决策**：新打印任务/账本部分替代旧浏览器配货单，但旧收件信息、商品分页和二维码预览没有等价页面；需实现安全预览或正式确认退役。
   - [ ] **FE-004H 附件/富媒体**：等待 SUP-003 生产只读聚合与附件票据专项授权后补商品媒体选择器和真实流程；不得绕过该门禁直连生产对象。
   - [ ] **FE-004I 真实账号 E2E**：用主管理员和只读/仓库/财务受限子账号逐屏验证正反权限、订单、商品、售后、财务、打印、面单和移动布局。

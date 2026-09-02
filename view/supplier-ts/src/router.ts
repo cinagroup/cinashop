@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell.vue";
 const protectedDestinations = [
   { path: "/dashboard", permission: "supplier.dashboard.view" },
   { path: "/products", permission: "supplier.product.view" },
+  { path: "/product-specifications", permission: "supplier.product.view" },
   { path: "/product-reviews", permission: "supplier.product.view" },
   { path: "/shipping-templates", permission: "supplier.shipping.view" },
   { path: "/orders", permission: "supplier.order.view" },
@@ -30,6 +31,7 @@ const router = createRouter({
         { path: "", redirect: "/dashboard" },
         { path: "dashboard", component: () => import("@/pages/Dashboard.vue"), meta: { permission: "supplier.dashboard.view" } },
         { path: "products", component: () => import("@/pages/Products.vue"), meta: { permission: "supplier.product.view" } },
+        { path: "product-specifications", component: () => import("@/pages/ProductSpecifications.vue"), meta: { permission: "supplier.product.view" } },
         { path: "product-reviews", component: () => import("@/pages/ProductReviews.vue"), meta: { permission: "supplier.product.view" } },
         { path: "products/new", component: () => import("@/pages/ProductForm.vue"), meta: { permission: "supplier.product.manage" } },
         { path: "products/:id/edit", component: () => import("@/pages/ProductForm.vue"), meta: { permission: "supplier.product.manage" } },

@@ -3686,6 +3686,36 @@ Supplier生产 build通过，新增定向单元为3文件/17项，完整 Worker�
 
 本批没有连接、读取或写入生产 PostgreSQL业务行，没有 DDL/DML，没有创建临时 Worker，没有部署主 Worker或 Supplier Pages，也没有调用第三方。FE-004父项仍未完成：下一可执行本地缺口是 FE-004F共享规格模板和 FE-004G配货单预览的实现/退役决策；附件、真实主管理员/受限账号、真实第三方、正式 Pages映射、发布批准和发布后观察继续按 FE-004H～L 保持门禁。
 
+## FE-004-F Supplier 可复用规格模板迁移（2026-09-02）
+
+### 旧页面仍是活跃能力，不满足退役条件
+
+旧 Supplier 菜单把 `/supplier/product/product_attr` 指向 `pages/product/productAttr/index.vue`，页面实际调用 `GET /supplierapi/product/product/rule`、`GET /supplierapi/product/product/rule/:id`、`POST /supplierapi/product/product/rule/:id` 和 `DELETE /supplierapi/product/product/rule/delete/:id` 完成模板列表、详情、保存和删除；旧商品新增/编辑组件还调用 `GET /supplierapi/product/product/get_rule`，选择模板后把 `rule_value` 展开为规格维度并生成 SKU。因此这不是孤立脚手架或不可达旧路由，不能仅以新 ProductForm 已有行内规格编辑为由退役；前端必须恢复“模板库管理 + 商品编辑显式套用”完整闭环。
+
+旧实现同时存在裸 ID 多租户风险。列表和新建会写入 `type=2, relation_id=当前 Supplier`，但详情直接按全局规则 ID读取；删除先全局 `getInfo(id)` 再按裸 ID删除；更新路径虽然会用当前 Supplier 范围检查模板名重复，最终却按请求 ID直接 `update(id, data)`，并把目标行改写成当前 Supplier 的 type/relation。结果是知道其他租户规则 ID 的 Supplier 可能读取、删除或劫持其模板。迁移不能只复制这些 controller/service 调用，也不能把前端隐藏按钮当作服务端授权。
+
+### 复用现有安全 Worker authority
+
+审计确认 Worker 已完整注册上述5条合同，且 `ProductMetadataService` 统一使用 `(type=2, relation_id=签名 Supplier)` owner scope：列表和商品编辑候选只返回当前租户模板；详情、更新和删除都把 ID与 owner predicate 合并，更新还在事务内取得商品规则 advisory lock并执行租户内重名检查，不存在先全局取行再信任客户端 owner 的窗口。模板输入统一规范为1至3个维度、每维1至50个值，模板名和维度名最多32字符、规格值最多64字符，并拒绝空值和重复。GET由 `supplier.product.view` 保护，POST/DELETE由 `supplier.product.manage` 保护，Worker仍是最终 authority。
+
+本批因此没有重复修改后端或新增路由，而是把已存在但没有新端操作面的安全合同接回 Supplier TS。新增 `/product-specifications`、`ProductSpecifications.vue` 和“规格模板”导航，支持搜索、分页、新增、详情后编辑和带后果说明的删除确认；只有具备 `supplier.product.manage` 的账号才渲染新增、编辑、删除和弹窗，只有 view权限的账号仍可只读查看。表单在客户端复验与服务端一致的维度、长度、空值和重复边界，但不把客户端校验当授权。
+
+### 商品套用语义与逐屏账本
+
+ProductForm 的多规格编辑器新增当前 Supplier模板选择器和“管理模板”入口。套用前必须二次确认“替换当前规格结构并重新生成 SKU”，确认后只深拷贝模板的规格名/规格值，主动清空旧 SKU数组再调用既有笛卡尔积生成器；价格、库存、图片、SKU编码等业务值不会从模板继承，页面明确要求逐项复核。模板是一次性结构快照：后续编辑或删除模板不会暗中改写已经套用的商品。
+
+机器逐屏账本由16个页面/17条 screen route更新为17个页面/18条 route；19个旧业务屏幕现为16个候选覆盖、3个部分替代、0个整屏可执行缺口，FE-004F标为候选完成。该状态只说明新端有可验证候选，不表示真实生产账号 CRUD、真实商品保存或发布已完成。
+
+### 浏览器、工程门禁与生产边界
+
+真实浏览器在桌面 `/product-specifications?preview=1` 核对 URL、标题、非空 DOM和两条模板，打开模板901、修改名称并保存后列表立即回显“规格模板已更新”；进入 `/products/new?preview=1` 切换多规格，选择“服装颜色尺码”，确认替换后得到颜色2×尺码3共6个 SKU，并显示明确成功提示。390×844 下移动导航包含规格模板入口，文档与 body 的 `clientWidth/scrollWidth` 均为390；编辑弹窗宽366.6、右边界378.3，完整落在390px视口内。桌面、商品套用和移动全过程 console warning/error均为0；长商品页 DOM只有1个“商品详情”标题，全页截图的拼接显示没有形成重复节点。
+
+新增规格模板前端契约测试1文件/5项；与逐屏账本、既有商品元数据迁移测试合跑为3文件/15项。完整 Worker单元为192文件/1,235项；双 TypeScript、Supplier生产 build、生产依赖0漏洞、observability 17信号/10组件/53必需事件/416个生产源文件，以及 schema source201/target262/shared201/sourceGaps0/外部与内嵌262/零定义漂移全部通过。Wrangler 4.122.0只打包 dry-run为3,707.34 KiB/gzip 873.26 KiB，精确识别 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images和4个 Durable Object后以 `--dry-run` 退出，没有创建发布版本。
+
+本批没有改变静态路由注册，因此全局仍为 PHP1,904/TS1,550/精确841/可执行823/不可用18/缺失1,063/退役16/可执行缺口1,047，覆盖 `44.2%/43.2%/43.6%`；Supplier仍为 PHP182/TS156/精确与可执行118/缺失64/退役12/可执行缺口52，覆盖 `64.8%/64.8%/69.4%`。这次关闭的是“安全合同已有、前端不可操作”的逐屏缺口，不能通过重复注册相同路由虚增静态覆盖。
+
+本批没有连接、读取或写入生产 PostgreSQL业务行，没有 DDL/DML，没有创建临时 Worker，没有部署主 Worker或 Supplier Pages，也没有调用第三方。FE-004父项仍未完成：下一可执行本地缺口是 FE-004G配货单预览的实现/退役决策；附件、真实主管理员/受限账号、真实第三方、正式 Pages映射、发布批准和发布后观察继续按 FE-004H～L 保持门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

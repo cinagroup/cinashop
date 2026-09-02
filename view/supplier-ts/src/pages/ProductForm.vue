@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { ArrowLeft, Delete, Plus } from "@element-plus/icons-vue";
-import { getProductCategories, getProductDetail, getShippingTemplates, saveProduct } from "@/api/supplier";
-import type { ProductCategory, ProductDetail, ProductDimension, ProductSku, ShippingTemplateRow } from "@/types";
+import { getProductCategories, getProductDetail, getProductRuleTemplates, getShippingTemplates, saveProduct } from "@/api/supplier";
+import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku, ShippingTemplateRow } from "@/types";
 
 const route = useRoute();
 const router = useRouter();
@@ -14,6 +14,8 @@ const loading = ref(false);
 const saving = ref(false);
 const categories = ref<ProductCategory[]>([]);
 const shippingTemplates = ref<ShippingTemplateRow[]>([]);
+const ruleTemplates = ref<ProductRuleTemplate[]>([]);
+const selectedRuleId = ref<number | null>(null);
 
 function blankSku(detail: Record<string, string>, previous?: ProductSku): ProductSku {
   const suk = Object.values(detail).join(",");
@@ -125,6 +127,27 @@ function removeDimension(index: number) {
   form.attrs = [];
 }
 
+async function applyProductRule() {
+  const template = ruleTemplates.value.find((item) => item.id === selectedRuleId.value);
+  if (!template) return ElMessage.warning("请选择规格模板");
+  try {
+    await ElMessageBox.confirm(
+      `套用“${template.rule_name}”会替换当前规格结构并重新生成 SKU；价格、库存和图片仍需逐项核对。`,
+      "套用规格模板",
+      { type: "warning", confirmButtonText: "确认套用", cancelButtonText: "取消" },
+    );
+    form.spec_type = 1;
+    form.items = template.spec.map((dimension) => ({ value: dimension.value, detail: [...dimension.detail] }));
+    form.attrs = [];
+    regenerateSkus(false);
+    ElMessage.success(`已套用“${template.rule_name}”，生成 ${form.attrs.length} 个 SKU`);
+  } catch (error) {
+    if (error !== "cancel" && error !== "close") {
+      ElMessage.error(error instanceof Error ? error.message : "规格模板套用失败");
+    }
+  }
+}
+
 function addSlider() {
   if (form.slider_image.length >= 20) return ElMessage.warning("轮播图不能超过20张");
   form.slider_image.push("");
@@ -169,12 +192,14 @@ async function submit() {
 async function load() {
   loading.value = true;
   try {
-    const [categoryRows, templateResult] = await Promise.all([
+    const [categoryRows, templateResult, productRuleRows] = await Promise.all([
       getProductCategories(),
       getShippingTemplates({ page: 1, limit: 100 }),
+      getProductRuleTemplates(),
     ]);
     categories.value = categoryRows;
     shippingTemplates.value = templateResult.data;
+    ruleTemplates.value = productRuleRows;
     if (editing.value) Object.assign(form, await getProductDetail(productId.value));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "商品资料加载失败");
@@ -231,6 +256,13 @@ onMounted(load);
           <header><h2>规格与 SKU</h2><p>价格、结算价和库存均以 SKU 为准</p></header>
           <el-radio-group v-model="form.spec_type" class="spec-type-group"><el-radio-button :value="0">单规格</el-radio-button><el-radio-button :value="1">多规格</el-radio-button></el-radio-group>
           <div v-if="form.spec_type === 1" class="dimension-editor">
+            <div class="rule-template-bar">
+              <el-select v-model="selectedRuleId" clearable filterable placeholder="选择当前供应商的规格模板">
+                <el-option v-for="template in ruleTemplates" :key="template.id" :label="template.rule_name" :value="template.id" />
+              </el-select>
+              <el-button type="primary" plain :disabled="!selectedRuleId" @click="applyProductRule">套用模板</el-button>
+              <el-button link type="primary" @click="router.push('/product-specifications')">管理模板</el-button>
+            </div>
             <div v-for="(dimension, index) in form.items" :key="index" class="dimension-row">
               <el-input v-model="dimension.value" class="dimension-name" maxlength="32" placeholder="规格名称，如颜色" />
               <el-select v-model="dimension.detail" multiple filterable allow-create default-first-option placeholder="输入规格值后回车" class="dimension-values" />
