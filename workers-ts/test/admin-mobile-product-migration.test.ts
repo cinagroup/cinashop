@@ -27,15 +27,26 @@ function context(options: {
   body?: unknown;
 } = {}) {
   const header = vi.fn();
+  const raw = new Request("http://localhost/api/admin/product/test", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(options.body ?? {}),
+  });
   return {
     header,
     value: {
       req: {
         query: () => options.query ?? {},
         param: () => options.param ?? "",
+        header: vi.fn().mockReturnValue(undefined),
         json: vi.fn().mockResolvedValue(options.body),
+        raw,
       },
-      get: (key: string) => key === "container" ? {} : undefined,
+      get: (key: string) => key === "container"
+        ? {}
+        : key === "adminInfo"
+          ? { id: 1, account: "admin", realName: "管理员" }
+          : undefined,
       header,
       json: (body: unknown) => Response.json(body),
     } as never,
@@ -62,7 +73,7 @@ describe("embedded admin mobile product migration", () => {
 
   it("accepts only an explicit bounded show state and product set", () => {
     expect(parseAdminProductShowBody({ id: 8, is_show: 1 })).toEqual({ ids: [8], isShow: 1 });
-    expect(parseAdminProductShowBody({ id: [8, "9", 8], is_show: 0 })).toEqual({
+    expect(parseAdminProductShowBody({ ids: [9, "8", 9], is_show: 0 })).toEqual({
       ids: [8, 9],
       isShow: 0,
     });
@@ -150,11 +161,12 @@ describe("embedded admin mobile product migration", () => {
   it("returns private PHP envelopes from all seven handlers", async () => {
     vi.spyOn(AdminMobileProductService.prototype, "categories").mockResolvedValue([]);
     vi.spyOn(AdminMobileProductService.prototype, "list").mockResolvedValue({ list: [], count: 0 });
-    vi.spyOn(AdminMobileProductService.prototype, "setShow").mockResolvedValue({ changed: 1 });
+    vi.spyOn(AdminMobileProductService.prototype, "setShow").mockResolvedValue({ changed: 1, verified: true });
     vi.spyOn(AdminMobileProductService.prototype, "labels").mockResolvedValue([]);
     vi.spyOn(AdminMobileProductService.prototype, "getAttrs").mockResolvedValue([]);
     vi.spyOn(AdminMobileProductService.prototype, "updateAttrs").mockResolvedValue({ changed: 1 });
-    vi.spyOn(AdminMobileProductService.prototype, "batchProcess").mockResolvedValue({ changed: 1, relations: 1 });
+    vi.spyOn(AdminMobileProductService.prototype, "batchProcess")
+      .mockResolvedValue({ changed: 1, relations: 1, verified: true });
     const calls = [
       [adminMobileProductCategories, context()],
       [adminMobileProductList, context({ query: {} })],
@@ -173,6 +185,7 @@ describe("embedded admin mobile product migration", () => {
 
   it("mounts all exact routes behind product view/manage ACL", () => {
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
+    const adminRoutes = readFileSync("src/routes/adminapi.ts", "utf8");
     const expected = [
       'get("/admin/product/category", adminAuth, AdminCrud.adminMobileProductCategories)',
       'get("/admin/product/admin_list", adminAuth, AdminCrud.adminMobileProductList)',
@@ -183,11 +196,15 @@ describe("embedded admin mobile product migration", () => {
       'post("/admin/product/batch_process", adminAuth, AdminCrud.adminMobileProductBatchProcess)',
     ];
     for (const route of expected) expect(routes).toContain(route);
+    expect(adminRoutes).toContain('post("/product/set_show", adminAuth, AdminCrud.adminMobileProductSetShow)');
+    expect(adminRoutes).toContain('post("/product/batch_process", adminAuth, AdminCrud.adminMobileProductBatchProcess)');
     expect(requiredAdminPermission("GET", "/api/admin/product/admin_list")).toBe("product.view");
     expect(requiredAdminPermission("GET", "/api/admin/product/get_attr/:id")).toBe("product.view");
     expect(requiredAdminPermission("POST", "/api/admin/product/set_show")).toBe("product.manage");
     expect(requiredAdminPermission("POST", "/api/admin/product/update_attrs/:id")).toBe("product.manage");
     expect(requiredAdminPermission("POST", "/api/admin/product/batch_process")).toBe("product.manage");
+    expect(requiredAdminPermission("POST", "/adminapi/product/set_show")).toBe("product.manage");
+    expect(requiredAdminPermission("POST", "/adminapi/product/batch_process")).toBe("product.manage");
   });
 
   it("uses product and SKU locks, authoritative membership, and stock audit", () => {
@@ -199,5 +216,23 @@ describe("embedded admin mobile product migration", () => {
     expect(service).toContain('await tx.update(storeCart).set({ status: input.isShow })');
     expect(service).toContain('eq(storeProductRelation.type, PRODUCT_CATEGORY_RELATION)');
     expect(service).toContain('eq(storeProduct.isDel, 0)');
+    expect(service).toContain("商品批量上下架数据库回读校验失败");
+    expect(service).toContain("商品批量关系数据库回读校验失败");
+    expect(service).toContain("await writeBatchAudit(");
+    expect(service).toContain("await tx.insert(systemLog).values");
+  });
+
+  it("wires bounded, readback-verified batch operations into the Admin product list", () => {
+    const api = readFileSync("../view/admin-ts/src/api/product.ts", "utf8");
+    const page = readFileSync("../view/admin-ts/src/pages/product/ProductList.vue", "utf8");
+    const controller = readFileSync("src/controllers/api/v1/AdminCrudController.ts", "utf8");
+    expect(api).toContain('request.post("/product/set_show", { ids, is_show: isShow })');
+    expect(api).toContain('request.post("/product/batch_process"');
+    expect(page).toContain('type="selection"');
+    expect(page).toContain("apiAdminProductBatchSetShow");
+    expect(page).toContain("apiAdminProductBatchRelations");
+    expect(page).toContain("if (!result.verified)");
+    expect(page).toContain("单次最多100项");
+    expect(controller).toContain("readBoundedJsonObject(c.req.raw, 8 * 1024)");
   });
 });

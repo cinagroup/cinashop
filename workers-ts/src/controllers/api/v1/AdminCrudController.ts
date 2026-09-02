@@ -263,11 +263,11 @@ export async function adminMobileProductList(c: C) {
 /** POST /api/admin/product/set_show — 事务化批量上下架。 */
 export async function adminMobileProductSetShow(c: C) {
   privateNoStore(c);
-  const body: unknown = await c.req.json().catch(() => null);
+  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
   const parsed = body && typeof body === "object" && !Array.isArray(body)
     ? body as Record<string, unknown>
     : null;
-  const result = await mobileProducts(c).setShow(body);
+  const result = await mobileProducts(c).setShow(body, productEditorActor(c));
   return jsonOk(c, result, Number(parsed?.is_show) === 1 ? "上架成功" : "下架成功");
 }
 
@@ -293,8 +293,8 @@ export async function adminMobileProductUpdateAttrs(c: C) {
 /** POST /api/admin/product/batch_process — 原子替换商品分类或标签。 */
 export async function adminMobileProductBatchProcess(c: C) {
   privateNoStore(c);
-  const body: unknown = await c.req.json().catch(() => null);
-  return jsonOk(c, await mobileProducts(c).batchProcess(body), "修改成功");
+  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
+  return jsonOk(c, await mobileProducts(c).batchProcess(body, productEditorActor(c)), "修改成功");
 }
 
 /** GET /api/admin/product/detail/:id — 商品详情 */

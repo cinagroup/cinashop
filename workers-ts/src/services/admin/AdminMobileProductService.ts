@@ -6,7 +6,7 @@ import {
   inArray,
   sql,
 } from "drizzle-orm";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
   legacyCategory,
@@ -17,9 +17,11 @@ import {
   storeProductLabel,
   storeProductRelation,
   storeProductStockRecord,
+  systemLog,
   systemStore,
   systemSupplier,
 } from "@/models/schema";
+import type { ProductEditorActor } from "@/services/product/ProductAssociationService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_PAGE = 1_000_000;
@@ -108,7 +110,7 @@ function integerIds(
   ))) {
     throw new ValidateException(label);
   }
-  return ids;
+  return ids.sort((left, right) => left - right);
 }
 
 function money(value: unknown, label: string): string {
@@ -168,7 +170,7 @@ export function parseAdminProductShowBody(body: unknown): { ids: number[]; isSho
     throw new ValidateException("请求数据格式错误");
   }
   const input = body as Record<string, unknown>;
-  const ids = integerIds(input.id, "请选择商品", MAX_BATCH_PRODUCTS);
+  const ids = integerIds(input.ids ?? input.id, "请选择商品", MAX_BATCH_PRODUCTS);
   const isShow = Number(input.is_show);
   if (!Number.isSafeInteger(isShow) || ![0, 1].includes(isShow)) {
     throw new ValidateException("商品状态错误");
@@ -231,6 +233,41 @@ export function parseAdminProductBatchBody(body: unknown): {
     type === 2,
   );
   return { type, ids, relationIds };
+}
+
+function relationFingerprint(ids: number[]): string {
+  let hash = 2_166_136_261;
+  for (const code of ids.join(",")) {
+    hash ^= code.charCodeAt(0);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+async function writeBatchAudit(
+  tx: DbClient,
+  actor: ProductEditorActor,
+  operation: "show" | "hide" | "category" | "label",
+  productIds: number[],
+  relationIds: number[],
+  now: number,
+): Promise<void> {
+  const relationEvidence = relationIds.length
+    ? `;relations=${relationIds.length}:${relationFingerprint(relationIds)}`
+    : ";relations=0";
+  await tx.insert(systemLog).values(productIds.map((productId) => ({
+    adminId: actor.id,
+    adminName: actor.name.slice(0, 64),
+    path: operation === "show" || operation === "hide"
+      ? "/adminapi/product/set_show"
+      : "/adminapi/product/batch_process",
+    page: "/product",
+    method: "POST",
+    action: `product.batch_${operation};id=${productId}${relationEvidence}`,
+    ip: actor.ip.slice(0, 45),
+    type: "product",
+    addTime: now,
+  })));
 }
 
 function skuProjection(row: SkuRow) {
@@ -373,7 +410,7 @@ export class AdminMobileProductService {
     };
   }
 
-  async setShow(body: unknown): Promise<{ changed: number }> {
+  async setShow(body: unknown, actor: ProductEditorActor): Promise<{ changed: number; verified: true }> {
     const input = parseAdminProductShowBody(body);
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
@@ -402,7 +439,42 @@ export class AdminMobileProductService {
         inArray(storeProductRelation.productId, input.ids),
         eq(storeProductRelation.type, PRODUCT_CATEGORY_RELATION),
       ));
-      return { changed: input.ids.length };
+      const [savedProducts, badCarts, badRelations] = await Promise.all([
+        tx.select({
+          id: storeProduct.id,
+          isShow: storeProduct.isShow,
+          autoOffTime: storeProduct.autoOffTime,
+        }).from(storeProduct).where(inArray(storeProduct.id, input.ids)),
+        tx.select({ id: storeCart.id }).from(storeCart).where(and(
+          inArray(storeCart.productId, input.ids),
+          eq(storeCart.isPay, 0),
+          eq(storeCart.isDel, 0),
+          sql`${storeCart.status} <> ${input.isShow}`,
+        )).limit(1),
+        tx.select({ id: storeProductRelation.id }).from(storeProductRelation).where(and(
+          inArray(storeProductRelation.productId, input.ids),
+          eq(storeProductRelation.type, PRODUCT_CATEGORY_RELATION),
+          sql`${storeProductRelation.status} <> ${input.isShow}`,
+        )).limit(1),
+      ]);
+      if (
+        savedProducts.length !== input.ids.length
+        || savedProducts.some((product) => (
+          product.isShow !== input.isShow
+          || (input.isShow === 1 && product.autoOffTime !== 0)
+        ))
+        || badCarts[0]
+        || badRelations[0]
+      ) throw new Error("商品批量上下架数据库回读校验失败");
+      await writeBatchAudit(
+        tx,
+        actor,
+        input.isShow === 1 ? "show" : "hide",
+        input.ids,
+        [],
+        Math.floor(Date.now() / 1000),
+      );
+      return { changed: input.ids.length, verified: true };
     });
   }
 
@@ -529,7 +601,10 @@ export class AdminMobileProductService {
     });
   }
 
-  async batchProcess(body: unknown): Promise<{ changed: number; relations: number }> {
+  async batchProcess(
+    body: unknown,
+    actor: ProductEditorActor,
+  ): Promise<{ changed: number; relations: number; verified: true }> {
     const input = parseAdminProductBatchBody(body);
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
@@ -542,7 +617,9 @@ export class AdminMobileProductService {
         eq(storeProduct.isDel, 0),
       )).for("update");
       if (products.length !== input.ids.length) throw new NotFoundException("商品不存在或已删除");
+      const productById = new Map(products.map((product) => [product.id, product]));
       const now = Math.floor(Date.now() / 1000);
+      const categoryById = new Map<number, { id: number; pid: number }>();
       if (input.type === 1) {
         const categories = await tx.select({
           id: storeProductCategory.id,
@@ -554,7 +631,7 @@ export class AdminMobileProductService {
           eq(storeProductCategory.isShow, 1),
         )).for("share");
         if (categories.length !== input.relationIds.length) throw new ValidateException("分类不存在或不可用");
-        const categoryById = new Map(categories.map((item) => [item.id, item]));
+        for (const category of categories) categoryById.set(category.id, category);
         await tx.update(storeProduct).set({ cateId: input.relationIds.join(",") })
           .where(inArray(storeProduct.id, input.ids));
         await tx.delete(storeProductRelation).where(and(
@@ -567,7 +644,7 @@ export class AdminMobileProductService {
             productId,
             relationId,
             relationPid: categoryById.get(relationId)?.pid ?? 0,
-            status: products.find((product) => product.id === productId)?.isShow ?? 0,
+            status: productById.get(productId)?.isShow ?? 0,
             addTime: now,
           }))
         )));
@@ -601,7 +678,49 @@ export class AdminMobileProductService {
           )));
         }
       }
-      return { changed: input.ids.length, relations: input.relationIds.length };
+      const relationType = input.type === 1 ? PRODUCT_CATEGORY_RELATION : PRODUCT_LABEL_RELATION;
+      const [savedProducts, savedRelations] = await Promise.all([
+        tx.select({
+          id: storeProduct.id,
+          cateId: storeProduct.cateId,
+          storeLabelId: storeProduct.storeLabelId,
+        }).from(storeProduct).where(inArray(storeProduct.id, input.ids)),
+        tx.select({
+          productId: storeProductRelation.productId,
+          relationId: storeProductRelation.relationId,
+          relationPid: storeProductRelation.relationPid,
+          status: storeProductRelation.status,
+        }).from(storeProductRelation).where(and(
+          inArray(storeProductRelation.productId, input.ids),
+          eq(storeProductRelation.type, relationType),
+        )),
+      ]);
+      const expectedCsv = input.relationIds.join(",");
+      if (
+        savedProducts.length !== input.ids.length
+        || savedProducts.some((product) => (
+          input.type === 1 ? product.cateId !== expectedCsv : product.storeLabelId !== expectedCsv
+        ))
+        || savedRelations.length !== input.ids.length * input.relationIds.length
+        || input.ids.some((productId) => {
+          const rows = savedRelations.filter((row) => row.productId === productId);
+          return rows.length !== input.relationIds.length || input.relationIds.some((relationId) => {
+            const row = rows.find((item) => item.relationId === relationId);
+            return !row
+              || row.relationPid !== (input.type === 1 ? categoryById.get(relationId)?.pid ?? 0 : 0)
+              || row.status !== (input.type === 1 ? productById.get(productId)?.isShow ?? 0 : 1);
+          });
+        })
+      ) throw new Error("商品批量关系数据库回读校验失败");
+      await writeBatchAudit(
+        tx,
+        actor,
+        input.type === 1 ? "category" : "label",
+        input.ids,
+        input.relationIds,
+        now,
+      );
+      return { changed: input.ids.length, relations: input.relationIds.length, verified: true };
     });
   }
 }

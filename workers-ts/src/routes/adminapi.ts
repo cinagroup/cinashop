@@ -217,7 +217,9 @@ adminapiRoutes.get("/product/coupons/:id", adminAuth, AdminCrud.adminProductCoup
 adminapiRoutes.put("/product/coupons/:id", adminAuth, AdminCrud.adminProductCouponsReplace);
 adminapiRoutes.post("/product/add", adminAuth, AdminCrud.adminProductCreate);
 adminapiRoutes.post("/product/edit/:id", adminAuth, AdminCrud.adminProductUpdate);
+adminapiRoutes.post("/product/set_show", adminAuth, AdminCrud.adminMobileProductSetShow);
 adminapiRoutes.post("/product/set_show/:id", adminAuth, AdminCrud.adminProductSetShow);
+adminapiRoutes.post("/product/batch_process", adminAuth, AdminCrud.adminMobileProductBatchProcess);
 adminapiRoutes.delete("/product/del/:id", adminAuth, AdminCrud.adminProductDel);
 adminapiRoutes.get("/product/cache", adminAuth, AdminLegacyContent.getProductDraft);
 adminapiRoutes.post("/product/cache", adminAuth, AdminLegacyContent.saveProductDraft);

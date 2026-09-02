@@ -109,6 +109,12 @@ const previewEditorOptions: ProductEditorOptions = {
   }],
 };
 
+const previewProducts: AdminProduct[] = [
+  { id: 8, product_type: 0, type: 0, relation_id: 0, store_name: "轻盈通勤衬衫", store_info: "舒适基础款", image: "https://placehold.co/120x120/png?text=Shirt", price: "199.00", ot_price: "239.00", stock: 120, sales: 36, is_show: 1, is_verify: 1, is_del: 0, cate_id: [12], keyword: "通勤,衬衫", unit_name: "件" },
+  { id: 7, product_type: 0, type: 0, relation_id: 0, store_name: "亚麻收纳篮", store_info: "家居收纳", image: "https://placehold.co/120x120/png?text=Basket", price: "89.00", ot_price: "109.00", stock: 48, sales: 21, is_show: 1, is_verify: 1, is_del: 0, cate_id: [11], keyword: "收纳", unit_name: "个" },
+  { id: 6, product_type: 0, type: 0, relation_id: 0, store_name: "轻量保温杯", store_info: "随行饮水", image: "https://placehold.co/120x120/png?text=Cup", price: "129.00", ot_price: "159.00", stock: 75, sales: 18, is_show: 0, is_verify: 1, is_del: 0, cate_id: [11], keyword: "水杯", unit_name: "只" },
+];
+
 export interface VirtualInventorySku {
   unique: string;
   suk: string;
@@ -208,6 +214,17 @@ export function apiAdminProductList(params: {
   store_name?: string;
   status?: number;
 }): Promise<{ list: AdminProduct[]; page: number; limit: number }> {
+  if (previewMode) {
+    const page = Number(params.page ?? 1);
+    const limit = Number(params.limit ?? 10);
+    const keyword = String(params.store_name ?? "").trim().toLowerCase();
+    const rows = previewProducts.filter((row) => (
+      row.is_del === 0
+      && (!keyword || row.store_name.toLowerCase().includes(keyword))
+      && (params.status === undefined || row.is_show === Number(params.status))
+    ));
+    return Promise.resolve({ list: rows.slice((page - 1) * limit, page * limit), page, limit });
+  }
   return getData(request.get("/product/list", { params }));
 }
 
@@ -294,11 +311,55 @@ export function apiAdminProductUpdate(
 
 /** 上下架 (POST /adminapi/product/set_show/:id) */
 export function apiAdminProductSetShow(id: number, isShow: number): Promise<null> {
+  if (previewMode) {
+    const row = previewProducts.find((item) => item.id === id);
+    if (row) row.is_show = isShow;
+    return Promise.resolve(null);
+  }
   return getData(request.post(`/product/set_show/${id}`, { is_show: isShow }));
+}
+
+export interface ProductBatchResult {
+  changed: number;
+  relations?: number;
+  verified: boolean;
+}
+
+/** 批量上下架，最多100个商品，同一事务回读。 */
+export function apiAdminProductBatchSetShow(ids: number[], isShow: 0 | 1): Promise<ProductBatchResult> {
+  if (previewMode) {
+    for (const row of previewProducts) if (ids.includes(row.id)) row.is_show = isShow;
+    return Promise.resolve({ changed: ids.length, verified: true });
+  }
+  return getData(request.post("/product/set_show", { ids, is_show: isShow }));
+}
+
+/** 批量替换分类或商品标签，type=1分类、type=2商品标签。 */
+export function apiAdminProductBatchRelations(
+  type: 1 | 2,
+  ids: number[],
+  relationIds: number[],
+): Promise<ProductBatchResult> {
+  if (previewMode) {
+    if (type === 1) {
+      for (const row of previewProducts) if (ids.includes(row.id)) row.cate_id = [...relationIds];
+    }
+    return Promise.resolve({ changed: ids.length, relations: relationIds.length, verified: true });
+  }
+  return getData(request.post("/product/batch_process", {
+    type,
+    ids,
+    data: type === 1 ? { cate_id: relationIds } : { store_label_id: relationIds },
+  }));
 }
 
 /** 删除商品 (DELETE /adminapi/product/del/:id) */
 export function apiAdminProductDel(id: number): Promise<null> {
+  if (previewMode) {
+    const row = previewProducts.find((item) => item.id === id);
+    if (row) row.is_del = 1;
+    return Promise.resolve(null);
+  }
   return getData(request.delete(`/product/del/${id}`));
 }
 
