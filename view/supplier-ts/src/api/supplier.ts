@@ -9,6 +9,7 @@ import type {
   LoginResult,
   OrderRow,
   OrderStatusLog,
+  PickingSheetResult,
   SplitCartItem,
   SplitDeliveryResult,
   SplitOrder,
@@ -996,6 +997,53 @@ export async function getOrderDetail(id: number): Promise<OrderRow & { cart_info
     return { ...order, cart_info: previewOrderCarts.get(order.id) ?? [] };
   }
   return apiRequest<OrderRow & { cart_info: unknown[] }>({ method: "GET", url: `/order/info/${id}` });
+}
+
+export async function getPickingSheets(ids: number[]): Promise<PickingSheetResult> {
+  if (previewMode) {
+    const list = ids.map((id) => {
+      const order = previewOrders.find((item) => item.id === id);
+      if (!order) throw new Error("部分订单不存在或不属于当前供应商");
+      const items = (previewOrderCarts.get(id) ?? []).map((item, index) => {
+        const unitPrice = index === 0 ? 89 : 159;
+        return {
+          index: index + 1,
+          product_name: item.product_name,
+          sku: item.sku,
+          unit_price: unitPrice.toFixed(2),
+          quantity: item.cart_num,
+          subtotal: (unitPrice * item.cart_num).toFixed(2),
+        };
+      });
+      return {
+        id: order.id,
+        order_id: order.order_id,
+        real_name: order.real_name,
+        user_phone: order.user_phone,
+        user_address: "浙江省杭州市滨江区示例路 88 号",
+        pay_time: order.pay_time,
+        pay_type: order.pay_type,
+        freight_price: "0.00",
+        coupon_price: "20.00",
+        vip_true_price: "5.00",
+        deduction_price: "0.00",
+        use_integral: "0.00",
+        pay_price: order.pay_price,
+        mark: order.remark,
+        supplier_remark: "",
+        items,
+      };
+    });
+    return {
+      supplier: { name: "优选贸易有限公司", phone: "0571-88888888", address: "浙江省杭州市滨江区供应商园区" },
+      list,
+    };
+  }
+  return apiRequest<PickingSheetResult>({
+    method: "GET",
+    url: "/order/distribution_info",
+    params: { ids: ids.join(",") },
+  });
 }
 
 export async function getSplitCartInfo(id: number): Promise<SplitCartItem[]> {

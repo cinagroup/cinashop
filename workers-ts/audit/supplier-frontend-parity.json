@@ -15,9 +15,9 @@
       ]
     },
     "target": {
-      "pageVueFiles": 17,
-      "screenRouteRecords": 18,
-      "distinctPageComponents": 17,
+      "pageVueFiles": 18,
+      "screenRouteRecords": 19,
+      "distinctPageComponents": 18,
       "note": "ProductForm.vue serves both create and edit routes"
     },
     "method": "Compare navigable business screens and embedded capabilities; never treat raw Vue file count as coverage."
@@ -54,9 +54,9 @@
     {
       "legacyPath": "/supplier/order/distribution",
       "legacyPage": "pages/order/distribution/index.vue",
-      "target": ["Orders.vue manual print jobs", "Printers.vue job ledger"],
-      "status": "partial_replacement",
-      "remaining": ["decide whether a browser-printable picking-sheet preview is still required"]
+      "target": ["/orders/picking-sheet", "PickingSheets.vue", "Orders.vue single and selected-order entry points"],
+      "status": "candidate_covered",
+      "remaining": ["real Supplier account and physical-printer preview E2E"]
     },
     {
       "legacyPath": "/supplier/capital/index",
@@ -184,7 +184,7 @@
     { "id": "FE-004D", "done": true, "item": "Desktop and 390x844 preview QA for orders, queue history/detail, finance export and mobile navigation" },
     { "id": "FE-004E", "done": true, "item": "Implement supplier-scoped product review list/reply backend and frontend; retire the unscoped legacy delete" },
     { "id": "FE-004F", "done": true, "item": "Connect the tenant-scoped reusable product specification-template library and explicit ProductForm application" },
-    { "id": "FE-004G", "done": false, "item": "Decide and implement or retire the browser-printable distribution/picking-sheet preview" },
+    { "id": "FE-004G", "done": true, "item": "Restore the tenant-scoped single/batch browser-printable picking-sheet preview and retire the meaningless site-root QR" },
     { "id": "FE-004H", "done": false, "item": "Close product attachment/media picker after SUP-003 production evidence" },
     { "id": "FE-004I", "done": false, "item": "Run real primary and restricted Supplier account E2E for all candidate screens" },
     { "id": "FE-004J", "done": false, "item": "Run real payment, printer, waybill and attachment provider flows" },

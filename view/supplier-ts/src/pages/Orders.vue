@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search } from "@element-plus/icons-vue";
 import {
@@ -18,6 +19,7 @@ import {
   getSplitOrders,
   getSupplierQueueDeliveryLog,
   getSupplierQueueHistory,
+  previewMode,
   splitDeliverOrder,
   updateOrderRemark,
 } from "@/api/supplier";
@@ -37,6 +39,7 @@ import { downloadLegacyExport } from "@/utils/legacy-export";
 type DeliveryType = "express" | "waybill" | "send" | "fictitious";
 
 const auth = useAuthStore();
+const router = useRouter();
 const loading = ref(false);
 const rows = ref<OrderRow[]>([]);
 const total = ref(0);
@@ -105,6 +108,17 @@ function canConfirmTake(row: OrderRow) {
 
 function selectOrders(selection: OrderRow[]) {
   selectedOrders.value = selection;
+}
+
+function openPickingSheets(orders: OrderRow[]) {
+  const ids = [...new Set(orders.map((row) => row.id))];
+  if (!ids.length) return ElMessage.warning("请先选择本页订单");
+  if (ids.length > 10) return ElMessage.warning("每次最多预览10个订单");
+  const target = router.resolve({
+    path: "/orders/picking-sheet",
+    query: { ids: ids.join(","), ...(previewMode ? { preview: "1" } : {}) },
+  });
+  window.open(target.href, "_blank", "noopener,noreferrer");
 }
 
 async function downloadSelectedOrders(type: 0 | 1) {
@@ -437,20 +451,21 @@ onMounted(load);
         </el-select>
         <el-button type="primary" @click="search">查询</el-button>
       </div>
-      <div v-if="canManageOrders" class="export-toolbar">
+      <div class="export-toolbar">
         <span>已选 {{ selectedOrders.length }} 个本页订单</span>
-        <el-button :disabled="!selectedOrders.length" :loading="exportLoading" @click="downloadSelectedOrders(0)">导出订单清单</el-button>
-        <el-button :disabled="!selectedOrders.length" :loading="exportLoading" @click="downloadSelectedOrders(1)">导出发货单</el-button>
+        <el-button :disabled="!selectedOrders.length" @click="openPickingSheets(selectedOrders)">配货单预览</el-button>
+        <el-button v-if="canManageOrders" :disabled="!selectedOrders.length" :loading="exportLoading" @click="downloadSelectedOrders(0)">导出订单清单</el-button>
+        <el-button v-if="canManageOrders" :disabled="!selectedOrders.length" :loading="exportLoading" @click="downloadSelectedOrders(1)">导出发货单</el-button>
       </div>
       <el-table v-loading="loading" :data="rows" row-key="id" @selection-change="selectOrders" @row-click="openOrder">
-        <el-table-column v-if="canManageOrders" type="selection" width="48" reserve-selection />
+        <el-table-column type="selection" width="48" reserve-selection />
         <el-table-column prop="order_id" label="订单号" min-width="190" />
         <el-table-column label="客户" min-width="170"><template #default="scope"><div class="customer-cell"><strong>{{ scope.row.real_name }}</strong><span>{{ scope.row.user_phone }}</span></div></template></el-table-column>
         <el-table-column label="金额" width="120"><template #default="scope">{{ formatMoney(scope.row.pay_price) }}</template></el-table-column>
         <el-table-column label="支付方式" width="120"><template #default="scope">{{ payType(scope.row.pay_type) }}</template></el-table-column>
         <el-table-column label="状态" width="110"><template #default="scope"><span class="status-text" :class="orderStatus(scope.row).tone">{{ orderStatus(scope.row).label }}</span></template></el-table-column>
         <el-table-column label="下单时间" width="180"><template #default="scope">{{ formatTime(scope.row.add_time) }}</template></el-table-column>
-        <el-table-column label="操作" width="240"><template #default="scope"><el-button link type="primary" @click.stop="openOrder(scope.row)">详情</el-button><el-button v-if="canManagePrint" link type="primary" @click.stop="printOrder(scope.row)">打印</el-button><el-button v-if="canDeliver(scope.row)" link type="primary" @click.stop="openDelivery(scope.row)">发货</el-button><el-button v-if="canConfirmTake(scope.row)" link type="success" @click.stop="confirmTake(scope.row)">确认收货</el-button></template></el-table-column>
+        <el-table-column label="操作" width="290"><template #default="scope"><el-button link type="primary" @click.stop="openOrder(scope.row)">详情</el-button><el-button link type="primary" @click.stop="openPickingSheets([scope.row])">配货单</el-button><el-button v-if="canManagePrint" link type="primary" @click.stop="printOrder(scope.row)">打印</el-button><el-button v-if="canDeliver(scope.row)" link type="primary" @click.stop="openDelivery(scope.row)">发货</el-button><el-button v-if="canConfirmTake(scope.row)" link type="success" @click.stop="confirmTake(scope.row)">确认收货</el-button></template></el-table-column>
       </el-table>
       <div class="pagination-row"><span>共 {{ total }} 个订单</span><el-pagination v-model:current-page="filters.page" :page-size="filters.limit" :total="total" layout="prev, pager, next" @current-change="load" /></div>
     </div>

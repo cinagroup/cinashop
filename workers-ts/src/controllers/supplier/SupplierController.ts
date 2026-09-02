@@ -6,6 +6,7 @@ import { jsonOk } from "@/utils/json";
 import { md5 } from "@/utils/jwt";
 import { extractToken } from "@/middleware/auth";
 import {
+  normalizeSupplierPickingSheetIds,
   normalizeSupplierProfileInput,
   normalizeSupplierPasswordInput,
   SupplierService,
@@ -704,6 +705,12 @@ export async function generateProductAttrs(c: SupplierContext) {
 export async function orderList(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   return jsonOk(c, await service(c).orderList(supplierId, c.req.query()));
+}
+
+export async function pickingSheets(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const ids = normalizeSupplierPickingSheetIds(c.req.query("ids"));
+  return jsonOk(c, await service(c).pickingSheets(supplierId, ids));
 }
 
 export async function orderDetail(c: SupplierContext) {

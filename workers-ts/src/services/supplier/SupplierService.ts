@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { and, desc, eq, ilike, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
 import {
@@ -22,6 +22,86 @@ export interface PageInput {
   page: number;
   limit: number;
   offset: number;
+}
+
+const MAX_PICKING_SHEET_ORDERS = 10;
+const MAX_PICKING_SNAPSHOT_BYTES = 256 * 1024;
+
+type JsonObject = Record<string, unknown>;
+
+function jsonObject(value: unknown): JsonObject {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as JsonObject
+    : {};
+}
+
+function boundedPickingSnapshot(value: string | null): JsonObject {
+  if (!value || new TextEncoder().encode(value).byteLength > MAX_PICKING_SNAPSHOT_BYTES) return {};
+  try {
+    return jsonObject(JSON.parse(value));
+  } catch {
+    return {};
+  }
+}
+
+function pickingText(value: unknown, fallback: string, maximum: number): string {
+  const normalized = String(value ?? "")
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, " ")
+    .trim();
+  return (normalized || fallback).slice(0, maximum);
+}
+
+function moneyNumber(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1_000_000_000 ? parsed : 0;
+}
+
+export interface PickingSheetCartSource {
+  cartNum: number;
+  skuUnique: string;
+  settlePrice: string;
+  cartInfo: string | null;
+}
+
+function projectPickingSheetCart(row: PickingSheetCartSource, index: number) {
+  const snapshot = boundedPickingSnapshot(row.cartInfo);
+  const product = jsonObject(snapshot.product);
+  const productInfo = jsonObject(snapshot.productInfo);
+  const sku = jsonObject(snapshot.sku);
+  const attrInfo = jsonObject(productInfo.attrInfo);
+  const quantity = Number.isInteger(row.cartNum) && row.cartNum > 0 ? row.cartNum : 0;
+  const unitPrice = moneyNumber(
+    snapshot.sum_price ?? sku.price ?? snapshot.truePrice ?? snapshot.true_price ?? row.settlePrice,
+  );
+  return {
+    item: {
+      index,
+      product_name: pickingText(product.storeName ?? productInfo.store_name, "商品快照", 256),
+      sku: pickingText(sku.suk ?? attrInfo.suk ?? row.skuUnique, "默认", 255),
+      unit_price: unitPrice.toFixed(2),
+      quantity,
+      subtotal: (unitPrice * quantity).toFixed(2),
+    },
+    vipDiscount: moneyNumber(snapshot.vip_truePrice ?? snapshot.vip_true_price) * Math.max(quantity, 1),
+  };
+}
+
+export function projectPickingSheetCartItem(row: PickingSheetCartSource, index: number) {
+  return projectPickingSheetCart(row, index).item;
+}
+
+export function normalizeSupplierPickingSheetIds(value: string | undefined): number[] {
+  const parts = String(value ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+  if (!parts.length) throw new ValidateException("请选择需要预览的订单");
+  if (parts.length > MAX_PICKING_SHEET_ORDERS) {
+    throw new ValidateException(`每次最多预览${MAX_PICKING_SHEET_ORDERS}个订单`);
+  }
+  const ids = parts.map((item) => Number(item));
+  if (ids.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new ValidateException("订单ID格式错误");
+  }
+  if (new Set(ids).size !== ids.length) throw new ValidateException("订单ID不能重复");
+  return ids;
 }
 
 export function parsePagination(pageValue: string | undefined, limitValue: string | undefined): PageInput {
@@ -603,6 +683,111 @@ export class SupplierService {
         .where(where),
     ]);
     return { list, count: totalRows[0]?.count ?? 0, page: page.page, limit: page.limit };
+  }
+
+  async pickingSheets(supplierId: number, ids: number[]) {
+    if (
+      !ids.length
+      || ids.length > MAX_PICKING_SHEET_ORDERS
+      || new Set(ids).size !== ids.length
+      || ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
+    ) {
+      throw new ValidateException("配货单订单范围错误");
+    }
+    const orders = await this.container.db
+      .select({
+        id: storeOrder.id,
+        orderId: storeOrder.orderId,
+        realName: storeOrder.realName,
+        userPhone: storeOrder.userPhone,
+        userAddress: storeOrder.userAddress,
+        payTime: storeOrder.payTime,
+        payType: storeOrder.payType,
+        payPostage: storeOrder.payPostage,
+        couponPrice: storeOrder.couponPrice,
+        deductionPrice: storeOrder.deductionPrice,
+        useIntegral: storeOrder.useIntegral,
+        payPrice: storeOrder.payPrice,
+        mark: storeOrder.mark,
+        remark: storeOrder.remark,
+      })
+      .from(storeOrder)
+      .where(and(
+        inArray(storeOrder.id, ids),
+        eq(storeOrder.supplierId, supplierId),
+        eq(storeOrder.isSystemDel, 0),
+      ));
+    if (orders.length !== ids.length) {
+      throw new NotFoundException("部分订单不存在或不属于当前供应商");
+    }
+    const carts = await this.container.db
+      .select({
+        oid: storeOrderCartInfo.oid,
+        cartNum: storeOrderCartInfo.cartNum,
+        skuUnique: storeOrderCartInfo.skuUnique,
+        settlePrice: storeOrderCartInfo.settlePrice,
+        cartInfo: sql<string | null>`case
+          when octet_length(${storeOrderCartInfo.cartInfo}) <= ${MAX_PICKING_SNAPSHOT_BYTES}
+          then ${storeOrderCartInfo.cartInfo}
+          else null
+        end`,
+      })
+      .from(storeOrderCartInfo)
+      .where(inArray(storeOrderCartInfo.oid, ids))
+      .orderBy(storeOrderCartInfo.id);
+    const cartsByOrder = new Map<number, typeof carts>();
+    for (const cart of carts) {
+      const current = cartsByOrder.get(cart.oid) ?? [];
+      current.push(cart);
+      cartsByOrder.set(cart.oid, current);
+    }
+    const supplierRows = await this.container.db
+      .select({
+        supplierName: systemSupplier.supplierName,
+        phone: systemSupplier.phone,
+        address: systemSupplier.address,
+        detailedAddress: systemSupplier.detailedAddress,
+      })
+      .from(systemSupplier)
+      .where(and(eq(systemSupplier.id, supplierId), eq(systemSupplier.isDel, 0)))
+      .limit(1);
+    const supplier = supplierRows[0];
+    if (!supplier) throw new NotFoundException("供应商不存在");
+    const orderById = new Map(orders.map((order) => [order.id, order]));
+    return {
+      supplier: {
+        name: pickingText(supplier.supplierName, "供应商", 50),
+        phone: pickingText(supplier.phone, "", 15),
+        address: [...new Set([supplier.address, supplier.detailedAddress].map((item) => item.trim()).filter(Boolean))]
+          .join(" ")
+          .slice(0, 510),
+      },
+      list: ids.map((id) => {
+        const order = orderById.get(id)!;
+        const orderCarts = cartsByOrder.get(id) ?? [];
+        const projectedCarts = orderCarts.map((cart, index) => projectPickingSheetCart(cart, index + 1));
+        return {
+          id: order.id,
+          order_id: order.orderId,
+          real_name: order.realName,
+          user_phone: order.userPhone,
+          user_address: order.userAddress,
+          pay_time: order.payTime,
+          pay_type: order.payType,
+          freight_price: order.payPostage,
+          coupon_price: order.couponPrice,
+          vip_true_price: projectedCarts
+            .reduce((total, cart) => total + cart.vipDiscount, 0)
+            .toFixed(2),
+          deduction_price: order.deductionPrice,
+          use_integral: order.useIntegral,
+          pay_price: order.payPrice,
+          mark: order.mark,
+          supplier_remark: order.remark,
+          items: projectedCarts.map((cart) => cart.item),
+        };
+      }),
+    };
   }
 
   async orderDetail(supplierId: number, orderId: number) {

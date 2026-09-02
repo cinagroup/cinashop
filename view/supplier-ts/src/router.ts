@@ -24,6 +24,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/login", component: Login, meta: { public: true } },
+    { path: "/orders/picking-sheet", component: () => import("@/pages/PickingSheets.vue"), meta: { permission: "supplier.order.view" } },
     {
       path: "/",
       component: AppShell,

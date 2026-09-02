@@ -198,6 +198,7 @@ supplierapiRoutes.put("/product/product/set_show/:id/:is_show", SupplierControll
 supplierapiRoutes.get("/product/product/:id", SupplierController.productDetail);
 
 supplierapiRoutes.get("/order/list", SupplierController.orderList);
+supplierapiRoutes.get("/order/distribution_info", SupplierController.pickingSheets);
 supplierapiRoutes.get("/order/split_cart_info/:id", SupplierController.splitCartInfo);
 supplierapiRoutes.put("/order/split_delivery/:id", SupplierController.splitDelivery);
 supplierapiRoutes.get("/order/split_order/:id", SupplierController.splitOrders);

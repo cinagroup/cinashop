@@ -422,6 +422,39 @@ export interface OrderRow {
   pay_time: number;
 }
 
+export interface PickingSheetItem {
+  index: number;
+  product_name: string;
+  sku: string;
+  unit_price: string;
+  quantity: number;
+  subtotal: string;
+}
+
+export interface PickingSheetOrder {
+  id: number;
+  order_id: string;
+  real_name: string;
+  user_phone: string;
+  user_address: string;
+  pay_time: number;
+  pay_type: string;
+  freight_price: string;
+  coupon_price: string;
+  vip_true_price: string;
+  deduction_price: string;
+  use_integral: string;
+  pay_price: string;
+  mark: string;
+  supplier_remark: string;
+  items: PickingSheetItem[];
+}
+
+export interface PickingSheetResult {
+  supplier: { name: string; phone: string; address: string };
+  list: PickingSheetOrder[];
+}
+
 export interface SplitCartItem {
   id: number;
   cart_id: string;
