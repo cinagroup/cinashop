@@ -42,6 +42,10 @@ import type {
   SupplierRole,
   SupplierRoleListResult,
   SupplierRolePayload,
+  LegacyExportManifest,
+  SupplierQueueDeliveryLogRow,
+  SupplierQueueHistoryResult,
+  SupplierQueueHistoryRow,
 } from "@/types";
 
 export const previewMode =
@@ -638,6 +642,160 @@ export async function consumeVirtualInventoryExportTicket(
 export async function getOrders(params: Record<string, string | number>): Promise<PageResult<OrderRow>> {
   if (previewMode) return { list: previewOrders.map((item) => ({ ...item })), count: previewOrders.length, page: 1, limit: 20 };
   return apiRequest<PageResult<OrderRow>>({ method: "GET", url: "/order/list", params });
+}
+
+function previewManifest(
+  filename: string,
+  header: string[],
+  filekey: string[],
+  rows: LegacyExportManifest["export"],
+): LegacyExportManifest {
+  return { header, filekey, export: rows, filename, bounded: true, has_more: false, page: 1, limit: 250 };
+}
+
+export async function exportSupplierOrders(
+  params: Record<string, string | number>,
+): Promise<LegacyExportManifest> {
+  if (previewMode) {
+    const selected = String(params.ids ?? "")
+      .split(",")
+      .map(Number)
+      .filter((id) => Number.isSafeInteger(id));
+    const list = previewOrders.filter((row) => !selected.length || selected.includes(row.id));
+    return previewManifest(
+      Number(params.type ?? 0) === 1 ? "供应商发货单_预览" : "供应商订单_预览",
+      ["订单号", "客户", "手机号", "订单金额", "状态"],
+      ["order_id", "real_name", "user_phone", "pay_price", "status"],
+      list.map((row) => ({
+        order_id: row.order_id,
+        real_name: row.real_name,
+        user_phone: row.user_phone,
+        pay_price: row.pay_price,
+        status: row.status,
+      })),
+    );
+  }
+  return apiRequest<LegacyExportManifest>({ method: "GET", url: "/export/storeOrder", params });
+}
+
+export async function exportSupplierExpressList(): Promise<LegacyExportManifest> {
+  if (previewMode) {
+    return previewManifest(
+      "物流公司对照表_预览",
+      ["物流公司", "编码"],
+      ["name", "code"],
+      [{ name: "顺丰速运", code: "SF" }, { name: "中通快递", code: "ZTO" }],
+    );
+  }
+  return apiRequest<LegacyExportManifest>({ method: "GET", url: "/export/expressList" });
+}
+
+export async function exportSupplierBatchDelivery(
+  id: number,
+  queueType: number,
+  cacheType: number,
+): Promise<LegacyExportManifest> {
+  if (previewMode) {
+    return previewManifest(
+      `批量发货记录_${id}`,
+      ["订单号", "物流公司", "物流单号", "状态"],
+      ["order_id", "delivery_name", "delivery_id", "status"],
+      [{ order_id: "SUP202608080001", delivery_name: "顺丰速运", delivery_id: "SF000001", status: "成功" }],
+    );
+  }
+  return apiRequest<LegacyExportManifest>({
+    method: "GET",
+    url: `/export/batchOrderDelivery/${id}/${queueType}/${cacheType}`,
+  });
+}
+
+export async function exportSupplierFinance(ids: number[]): Promise<LegacyExportManifest> {
+  if (previewMode) {
+    const list = previewFinanceFlows.filter((row) => ids.includes(row.id));
+    return previewManifest(
+      "供应商资金流水_预览",
+      ["交易单号", "关联订单", "金额", "备注"],
+      ["order_id", "link_id", "number", "mark"],
+      list.map((row) => ({ order_id: row.orderId, link_id: row.linkId, number: row.number, mark: row.mark })),
+    );
+  }
+  return apiRequest<LegacyExportManifest>({
+    method: "GET",
+    url: "/export/financeRecord",
+    params: { ids: ids.join(",") },
+  });
+}
+
+export async function getSupplierQueueHistory(
+  params: Record<string, string | number>,
+): Promise<SupplierQueueHistoryResult<SupplierQueueHistoryRow>> {
+  if (previewMode) {
+    return {
+      list: [{
+        id: 8801,
+        type: 7,
+        title: "批量手动发货",
+        status: 2,
+        status_cn: "完成",
+        first_time: "2026-08-08 10:00:00",
+        again_time: "",
+        finish_time: "2026-08-08 10:01:12",
+        add_time: "2026-08-08 10:00:00",
+        total_num: 12,
+        success_num: 11,
+        surplus_num: 1,
+        cache_type: 3,
+        is_show_log: true,
+        actions_available: [],
+      }],
+      count: 1,
+      history_authority: "legacy_history_only",
+      runtime_authority: "supplier_scoped_job_ledgers",
+      read_only: true,
+      mutation_routes_retired: true,
+    };
+  }
+  return apiRequest<SupplierQueueHistoryResult<SupplierQueueHistoryRow>>({
+    method: "GET",
+    url: "/queue/index",
+    params,
+  });
+}
+
+export async function getSupplierQueueDeliveryLog(
+  id: number,
+  cacheType: number,
+  params: Record<string, string | number>,
+): Promise<SupplierQueueHistoryResult<SupplierQueueDeliveryLogRow>> {
+  if (previewMode) {
+    return {
+      list: [{
+        id: 9901,
+        binding_id: id,
+        relation_id: 801,
+        type: cacheType as 3 | 4 | 5 | 6,
+        order_id: "SUP202608080001",
+        delivery_name: "顺丰速运",
+        delivery_id: "SF000001",
+        fictitious_content: "",
+        status: 1,
+        status_cn: "成功",
+        error: "无",
+        update_time: "2026-08-08 10:01:12",
+        add_time: "2026-08-08 10:00:02",
+      }],
+      count: 1,
+      history_authority: "legacy_history_only",
+      runtime_authority: "supplier_scoped_job_ledgers",
+      read_only: true,
+      mutation_routes_retired: true,
+    };
+  }
+  return apiRequest<SupplierQueueHistoryResult<SupplierQueueDeliveryLogRow>>({
+    method: "GET",
+    url: `/queue/delivery/log/${id}/${cacheType}`,
+    params,
+  });
 }
 
 export async function getOrderDetail(id: number): Promise<OrderRow & { cart_info: unknown[] }> {

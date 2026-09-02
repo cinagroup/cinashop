@@ -3622,6 +3622,38 @@ Supplier TS 售后页新增原因目录与精确筛选；确认弹窗显示的 `
 
 本批没有生产 DDL/DML，没有查询订单、地址、电话、财务流水或队列业务行，没有部署临时/主 Worker，也没有发布 Supplier Pages。若要补生产数据分布与跨租户负例，仍需一个只返回计数/布尔门禁的 `REPEATABLE READ, READ ONLY`桥；Windows本地 workerd不能启动远程请求，而临时随机 `workers.dev` 会承载脱敏生产聚合，按既有安全门禁必须对其精确端点和载荷另行授权。当前证据足以把 SUP-005 的 12 条候选合同标为完成，但不等于真实 Supplier 账号下载、生产浏览器 E2E或发布后观察完成。
 
+## FE-004-A Supplier 前端逐屏迁移审计与首批缺口实现（2026-09-02）
+
+### 原“41→13”为什么不能表示迁移覆盖率
+
+本批重新读取旧 Supplier 的全部 `pages/**/*.vue`、六个 router module、第一方 API 调用和新 Supplier TS router/page/API。旧端确有 41 个 page 目录 Vue 文件，但实际只有 20 条业务 screen route record；其中 `/supplier/bill/index` 与 `/supplier/bill/index/:type?` 使用同一个 route name和同一个组件，故只有 19 个不同的可导航业务屏幕。其余 22 个文件由 16 个订单/商品/财务内嵌组件和 7 个未路由或框架脚手架组成，两类有一项重叠消歧后精确闭合为41：18个被 route 直接导入的 page 文件、16个内嵌组件和7个未路由/错误/注册脚手架。旧 `pages/setting/ticket/index.vue` 并非实际 ticket route，route 使用的是全局 `components/fromSubmit/commonForm.vue`；register/result没有 Supplier route；403/404/500/other也不属于业务迁移分母。
+
+新端当前不是文档旧快照中的13页，而是15个 page组件和16条 screen route record：`ProductForm.vue` 同时服务新增与编辑两条路由。逐屏结果为14个候选覆盖、4个部分替代、1个确定缺失。候选覆盖只表示仓库内页面、路由和API已经形成可测试闭环，不代表生产账号、第三方或发布验收。机器可读的19行映射、计数方法、每屏剩余条件和12项 granular checklist现固定在 `workers-ts/audit/supplier-frontend-parity.json`，对应单元测试拒绝以后再次用原始 Vue 文件数冒充覆盖率。
+
+### 19个旧业务屏幕的结论
+
+认证和概览分别由 `Login.vue`、`Dashboard.vue`承接。订单列表的主流程由 `Orders.vue`承接，小票与面单拆入 `Printers.vue`、`Waybills.vue`；售后由 `Refunds.vue`承接。旧浏览器 `distribution` 配货单只被新幂等打印任务和任务账本部分替代：打印执行更安全，但旧页面的收件信息、每六件分页、商品清单和二维码浏览器预览没有等价页面，因此保留为待决，不把它伪装成完成。
+
+财务四屏被整合进 `Finance.vue`和 Dashboard：资金概览、提现、收款设置已有候选；旧 bill 的周期聚合与佣金明细仍需业务等价决策，故 bill记为部分替代。商品列表、新增/编辑、运费模板、虚拟库存已有目标页；旧共享 `product_attr` 规格模板库只有 ProductForm行内 SKU 编辑，不等价，记为部分替代。旧 `product_reply` 有活跃导航和第一方 `GET product/reply`、`PUT product/reply/set_reply/:id` 调用，但当前 Worker Supplier surface和新端都没有对应 authority；公共/用户/Admin reply不能冒充 Supplier租户范围，所以这是唯一确定的整屏可执行缺口。
+
+商户资料、子账号、小票第三方配置、打印机文档和打印内容分别被 `Profile.vue`、`Administrators.vue`、`Settings.vue`与 `Printers.vue`整合。旧 ticket route实际使用通用表单而非同目录页面，这一事实也写入映射，避免后续重复迁移无人路由文件。商品附件/富媒体不是一个独立旧屏幕，但横跨商品列表和编辑能力；它继续受SUP-003生产附件聚合/票据审计门禁阻塞，不能因页面数量重算而消失。
+
+### 首批可执行缺口：导出、Queue历史和动作级前端权限
+
+SUP-005 后端完成后，新端仍没有任何调用入口。本批新增四个 manifest客户端和两个历史客户端：订单/发货单只提交当前页显式勾选的订单 ID，资金流水只提交显式勾选的流水 ID；批任务下载来自当前租户可见任务行，物流目录只含公开名称/编码。浏览器把后端已经公式中和的 manifest生成为带 BOM的 CSV，同时再次移除NUL、中和可选空白后的 `= + - @`、转义双引号并清理 Windows非法文件名字符。没有自动遍历全部页，也没有把大批量 PII/财务下载藏在普通“查看”操作里。
+
+旧 `queueList.vue` 的读取能力恢复为 Orders内的“批量任务历史（只读）”和明细弹窗，显示任务类型、当前 Supplier子集的总数/成功/未成功和安全投影的订单履约字段。页面明确提示旧 mutation已经退役；没有迁入 `queueAgain`、`queueDel`或 `stopWrongQueue`，写恢复继续走电子面单专属任务账本或订单显式履约合同。任务/订单/发货单下载要求 `supplier.order.manage`，物流目录保持 `supplier.order.view`；财务下载要求 `supplier.finance.manage`。
+
+本批同时发现并修复服务端虽会拒绝、前端却仍显示敏感动作的RBAC偏差：订单发货、确认收货、备注和敏感导出只对 order.manage显示；打印只对 print.manage显示；电子面单选项只对 waybill.manage显示；提现、收款信息写入和财务导出只对 finance.manage显示。只读账号仍能查看租户内页面与只读历史，但不再被展示注定失败或可能误导的写按钮。服务端权限中间件继续是最终 authority，前端隐藏不作为安全边界。
+
+### 本地验证、浏览器QA与仍未完成的生产边界
+
+Supplier生产 build通过，新增定向单元为3文件/17项，完整 Worker单元为190文件/1,224项。定向测试固定六条前端 URL、显式勾选ID、四类manage权限、退役Queue mutation缺席、CSV公式/NUL/文件名防护，以及19屏/14候选/4部分/1缺失和12项checklist计数。第一次把定向文件参数误传给包含 runtime阶段的总脚本时，完整 unit 已通过，但 runtime因过滤的是非runtime文件而报“no test files”；随后以正确的 `test:unit`定向命令3/17成功，该命令错误不属于产品失败。
+
+按前端测试技能用本地预览数据进行了真实浏览器检查。桌面 `/orders?preview=1` 和 `/finance?preview=1` 的 URL、标题、主DOM、表格和弹窗均非空且无遮罩异常，控制台 warning/error为0；勾选一条订单后导出按钮从disabled变为enabled并出现“订单清单已下载”，Queue历史与任务8801明细弹窗正常；勾选一条财务流水后出现“资金流水已下载”。390×844视口下 body/document宽度均不超过 viewport，没有页面级横向溢出，桌面侧栏隐藏、移动抽屉出现，抽屉点击“财务结算”后进入 `/finance`并自动关闭。宽表保持组件内部横向滚动而不撑破页面。
+
+上述验证没有连接、读取或写入生产PostgreSQL业务行，没有生产DML/DDL，没有创建临时Worker，没有部署主Worker或Supplier Pages，也没有调用支付、打印、面单或附件提供商。FE-004父项因此继续未完成：下一可执行缺口是Supplier范围商品评价回复；之后是共享规格模板和配货单预览的实现/退役决策。附件仍等SUP-003专项生产授权；主管理员/受限子账号真实E2E、第三方正反流程、正式Pages项目/Origin/`WORKERS_API`、发布批准和发布后观察都保留在checklist中。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

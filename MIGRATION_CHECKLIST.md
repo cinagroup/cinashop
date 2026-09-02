@@ -302,7 +302,19 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **FE-001 Admin 页面补齐**：旧 Admin 378 个 Vue 页面组件，新 Admin TS 55；组件数不可直接当覆盖率，需按 ADM checklist 建页面/路由/API/E2E 映射并消灭当前业务入口的 501。
 - [ ] **FE-002 PC 对账**：旧 PC 30、新 PC TS 29 个页面组件；22 条 `/api/pc` 合同和扫码/OAuth 本地 UI闭环已完成。token/UID 已改为 per-tab `sessionStorage`，刷新保留、新标签页不共享且启动清除旧持久值；关闭标签页不等于服务端 logout。仍需支付回跳、手机号安全验证、旧 Nuxt退流和全订单生命周期真实 E2E。
 - [ ] **FE-003 UniApp 对账**：旧 250、新 55 个页面组件；扫码登录确认页已完成目标/Origin/设备核对和本地登录返回闭环，仍需按 `pages.json` 核对活动、社区、会员、分销、客服、门店、核销及各小程序平台条件编译。
-- [ ] **FE-004 Supplier 对账**：旧 41、新 13 个页面组件；浏览器 API 已改为同源 `/supplierapi`，新增 Pages Function 和 Vite proxy，不再默认直连 Worker，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署尚未验收。继续完成订单/商品/售后/财务/打印/面单/附件真实流程与移动布局。
+- [ ] **FE-004 Supplier 对账**：旧端共 41 个 `pages/**/*.vue` 文件，但只有 19 个不同的可导航业务屏幕（20 条 route record，其中账单页重复注册）；其余为 16 个内嵌组件和 7 个未路由/错误脚手架。新端当前为 15 个页面组件、16 条屏幕 route record，不再使用“41→13”失真页数衡量覆盖。19 个旧屏幕中 14 个已有候选覆盖、4 个为部分替代、1 个（商品评价回复）确定缺失；逐屏证据和 12 项 granular checklist 固化在 `workers-ts/audit/supplier-frontend-parity.json`。浏览器 API 已同源 `/supplierapi`，Pages Function/Vite proxy 已接入，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署仍未验收。
+  - [x] **FE-004A 页面/能力盘点**：逐项映射 19 个旧业务屏幕、16 个旧内嵌组件、15 个新页面和 16 条新屏幕路由；区分候选覆盖、整合替代、缺失与外部门禁。
+  - [x] **FE-004B 订单/财务导出与 Queue 历史入口**：新端已接四个有界 manifest 和两条租户内只读历史合同；订单/发货单、批任务与财务只导出显式勾选行，物流目录保持只读下载，浏览器 CSV 二次中和公式/NUL并清理文件名。旧全局 Queue 重跑、停止、删除入口未恢复。
+  - [x] **FE-004C 前端动作级 RBAC**：订单发货/收货/备注/敏感导出要求 `supplier.order.manage`，小票打印要求 `supplier.print.manage`，电子面单入口要求 `supplier.waybill.manage`，提现、收款设置写入和财务导出要求 `supplier.finance.manage`；服务端继续作为最终 authority。
+  - [x] **FE-004D 本地桌面/移动浏览器 QA**：预览数据下订单、Queue 历史/明细、财务勾选导出、桌面与 390×844 移动导航均通过；标题/URL/DOM正常、页面级无横向溢出、控制台 0 warning/error。该项只证明本地候选，不是生产 E2E。
+  - [ ] **FE-004E 商品评价回复**：补 Supplier 范围的评价列表/回复写合同、权限、审计、页面与导航；当前 Worker 只有公共/用户/Admin reply，没有 Supplier authority。
+  - [ ] **FE-004F 可复用规格模板**：新 ProductForm 有行内 SKU 编辑，但旧 `product_attr` 的共享规格模板库尚无目标页/合同；需实现或用真实使用证据正式退役。
+  - [ ] **FE-004G 配货单预览决策**：新打印任务/账本部分替代旧浏览器配货单，但旧收件信息、商品分页和二维码预览没有等价页面；需实现安全预览或正式确认退役。
+  - [ ] **FE-004H 附件/富媒体**：等待 SUP-003 生产只读聚合与附件票据专项授权后补商品媒体选择器和真实流程；不得绕过该门禁直连生产对象。
+  - [ ] **FE-004I 真实账号 E2E**：用主管理员和只读/仓库/财务受限子账号逐屏验证正反权限、订单、商品、售后、财务、打印、面单和移动布局。
+  - [ ] **FE-004J 第三方真实流**：支付退款、打印机、电子面单和附件提供商仍需真实配置、失败/UNKNOWN/重试对账。
+  - [ ] **FE-004K Supplier Pages 预发**：创建/确认正式项目，核对 `WORKERS_API`、正式 Origin、同源代理与 Secret/资源映射。
+  - [ ] **FE-004L 发布后观察**：另行获得发布批准后才可部署，记录 deployment/Git SHA并做日志、错误率和业务对账。
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
 - [x] **TEST-001 Linux CI**：GitHub Actions `33385492677` 在 Ubuntu 24.04 上以显式 Node 24.14.1/npm 11.11.0 断言和锁文件安装完成 8/8 jobs：Worker 双 TypeScript、164 文件/1,017 项单测、真实 workerd 13/13、生产依赖审计0、schema 201→247/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建、Kefu 7/7，以及 checksum-pinned Gitleaks 对68个提交的非空全历史扫描。详见审计文档的 TEST-001 节；这只完成可重复工程门禁，不代替浏览器E2E、真实第三方、预发或发布。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。

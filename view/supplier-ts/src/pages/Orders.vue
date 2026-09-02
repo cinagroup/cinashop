@@ -7,24 +7,53 @@ import {
   createWaybillJob,
   createManualPrintJobs,
   deliverOrder,
+  exportSupplierBatchDelivery,
+  exportSupplierExpressList,
+  exportSupplierOrders,
   getExpressList,
   getOrderDetail,
   getOrders,
   getOrderStatus,
   getSplitCartInfo,
   getSplitOrders,
+  getSupplierQueueDeliveryLog,
+  getSupplierQueueHistory,
   splitDeliverOrder,
   updateOrderRemark,
 } from "@/api/supplier";
-import type { ExpressCompany, OrderRow, OrderStatusLog, SplitCartItem, SplitOrder } from "@/types";
+import type {
+  ExpressCompany,
+  OrderRow,
+  OrderStatusLog,
+  SplitCartItem,
+  SplitOrder,
+  SupplierQueueDeliveryLogRow,
+  SupplierQueueHistoryRow,
+} from "@/types";
+import { useAuthStore } from "@/stores/auth";
 import { formatMoney, formatTime, orderStatus, payType } from "@/utils/format";
+import { downloadLegacyExport } from "@/utils/legacy-export";
 
 type DeliveryType = "express" | "waybill" | "send" | "fictitious";
 
+const auth = useAuthStore();
 const loading = ref(false);
 const rows = ref<OrderRow[]>([]);
 const total = ref(0);
 const filters = reactive({ page: 1, limit: 20, order: "", paid: "", status: "" });
+const selectedOrders = ref<OrderRow[]>([]);
+const exportLoading = ref(false);
+const queueDialogOpen = ref(false);
+const queueLoading = ref(false);
+const queueRows = ref<SupplierQueueHistoryRow[]>([]);
+const queueTotal = ref(0);
+const queueFilters = reactive({ page: 1, limit: 20, type: "", status: "" });
+const queueDetailOpen = ref(false);
+const queueDetailLoading = ref(false);
+const queueDetailRows = ref<SupplierQueueDeliveryLogRow[]>([]);
+const queueDetailTotal = ref(0);
+const queueDetailPage = ref(1);
+const queueDetailCurrent = ref<SupplierQueueHistoryRow | null>(null);
 const drawerOpen = ref(false);
 const detailLoading = ref(false);
 const current = ref<(OrderRow & { cart_info: unknown[] }) | null>(null);
@@ -46,6 +75,10 @@ const deliveryForm = reactive({
   fictitious_content: "",
 });
 
+const canManageOrders = computed(() => auth.can("supplier.order.manage"));
+const canManagePrint = computed(() => auth.can("supplier.print.manage"));
+const canManageWaybills = computed(() => auth.can("supplier.waybill.manage"));
+
 const deliveryTitle = computed(() => {
   const prefix = deliveryMode.value === "partial" ? "分批" : "整单";
   if (deliveryForm.delivery_type === "send") return `${prefix}同城配送`;
@@ -63,11 +96,110 @@ const selectedQuantity = computed(() =>
 );
 
 function canDeliver(row: OrderRow) {
-  return row.paid === 1 && row.status === 0 && row.refund_status === 0;
+  return canManageOrders.value && row.paid === 1 && row.status === 0 && row.refund_status === 0;
 }
 
 function canConfirmTake(row: OrderRow) {
-  return row.paid === 1 && row.status === 1;
+  return canManageOrders.value && row.paid === 1 && row.status === 1;
+}
+
+function selectOrders(selection: OrderRow[]) {
+  selectedOrders.value = selection;
+}
+
+async function downloadSelectedOrders(type: 0 | 1) {
+  if (!canManageOrders.value) return;
+  if (!selectedOrders.value.length) {
+    ElMessage.warning("请先选择本页订单");
+    return;
+  }
+  exportLoading.value = true;
+  try {
+    const manifest = await exportSupplierOrders({
+      ids: selectedOrders.value.map((row) => row.id).join(","),
+      type,
+      page: 1,
+    });
+    downloadLegacyExport(manifest);
+    ElMessage.success(type === 1 ? "发货单已下载" : "订单清单已下载");
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "订单导出失败");
+  } finally {
+    exportLoading.value = false;
+  }
+}
+
+async function downloadExpressDirectory() {
+  exportLoading.value = true;
+  try {
+    downloadLegacyExport(await exportSupplierExpressList());
+    ElMessage.success("物流公司对照表已下载");
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "物流公司导出失败");
+  } finally {
+    exportLoading.value = false;
+  }
+}
+
+async function loadQueueHistory() {
+  queueLoading.value = true;
+  try {
+    const result = await getSupplierQueueHistory(queueFilters);
+    queueRows.value = result.list;
+    queueTotal.value = result.count;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "批量任务历史加载失败");
+  } finally {
+    queueLoading.value = false;
+  }
+}
+
+async function openQueueHistory() {
+  queueDialogOpen.value = true;
+  await loadQueueHistory();
+}
+
+function searchQueueHistory() {
+  queueFilters.page = 1;
+  void loadQueueHistory();
+}
+
+async function loadQueueDetail() {
+  if (!queueDetailCurrent.value) return;
+  queueDetailLoading.value = true;
+  try {
+    const result = await getSupplierQueueDeliveryLog(
+      queueDetailCurrent.value.id,
+      queueDetailCurrent.value.cache_type,
+      { page: queueDetailPage.value, limit: 20 },
+    );
+    queueDetailRows.value = result.list;
+    queueDetailTotal.value = result.count;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "任务明细加载失败");
+  } finally {
+    queueDetailLoading.value = false;
+  }
+}
+
+async function openQueueDetail(row: SupplierQueueHistoryRow) {
+  queueDetailCurrent.value = row;
+  queueDetailPage.value = 1;
+  queueDetailOpen.value = true;
+  await loadQueueDetail();
+}
+
+async function downloadQueueHistory(row: SupplierQueueHistoryRow) {
+  if (!canManageOrders.value) return;
+  exportLoading.value = true;
+  try {
+    downloadLegacyExport(await exportSupplierBatchDelivery(row.id, row.type, row.cache_type));
+    ElMessage.success("批量任务记录已下载");
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "任务记录导出失败");
+  } finally {
+    exportLoading.value = false;
+  }
 }
 
 async function load() {
@@ -113,7 +245,7 @@ async function openOrder(row: OrderRow) {
 }
 
 async function saveRemark() {
-  if (!current.value) return;
+  if (!current.value || !canManageOrders.value) return;
   try {
     await updateOrderRemark(current.value.id, remark.value);
     current.value.remark = remark.value;
@@ -168,7 +300,9 @@ function validateDelivery() {
     return "";
   }
   if (!deliveryForm.delivery_name.trim()) return "请选择快递公司";
-  if (deliveryForm.delivery_type === "waybill") return "";
+  if (deliveryForm.delivery_type === "waybill") {
+    return canManageWaybills.value ? "" : "当前账号没有电子面单签发权限";
+  }
   if (!deliveryForm.delivery_id.trim()) return "请填写快递单号";
   return "";
 }
@@ -257,6 +391,7 @@ async function confirmTake(row: OrderRow) {
 }
 
 async function printOrder(row: OrderRow) {
+  if (!canManagePrint.value) return;
   try {
     await ElMessageBox.confirm(
       "将向当前供应商所有已启用且配置完整的打印机创建幂等打印任务。",
@@ -282,7 +417,13 @@ onMounted(load);
 
 <template>
   <section class="page-section">
-    <header class="page-heading"><div><h1>订单管理</h1><p>订单、发货和收货操作均严格限定当前供应商</p></div></header>
+    <header class="page-heading">
+      <div><h1>订单管理</h1><p>订单、发货和收货操作均严格限定当前供应商</p></div>
+      <div class="heading-actions">
+        <el-button :loading="exportLoading" @click="downloadExpressDirectory">物流公司对照表</el-button>
+        <el-button @click="openQueueHistory">批量任务历史</el-button>
+      </div>
+    </header>
     <div class="surface list-surface">
       <div class="filter-row">
         <el-input v-model="filters.order" class="search-input" clearable placeholder="订单号、客户或手机号" @keyup.enter="search">
@@ -296,14 +437,20 @@ onMounted(load);
         </el-select>
         <el-button type="primary" @click="search">查询</el-button>
       </div>
-      <el-table v-loading="loading" :data="rows" row-key="id" @row-click="openOrder">
+      <div v-if="canManageOrders" class="export-toolbar">
+        <span>已选 {{ selectedOrders.length }} 个本页订单</span>
+        <el-button :disabled="!selectedOrders.length" :loading="exportLoading" @click="downloadSelectedOrders(0)">导出订单清单</el-button>
+        <el-button :disabled="!selectedOrders.length" :loading="exportLoading" @click="downloadSelectedOrders(1)">导出发货单</el-button>
+      </div>
+      <el-table v-loading="loading" :data="rows" row-key="id" @selection-change="selectOrders" @row-click="openOrder">
+        <el-table-column v-if="canManageOrders" type="selection" width="48" reserve-selection />
         <el-table-column prop="order_id" label="订单号" min-width="190" />
         <el-table-column label="客户" min-width="170"><template #default="scope"><div class="customer-cell"><strong>{{ scope.row.real_name }}</strong><span>{{ scope.row.user_phone }}</span></div></template></el-table-column>
         <el-table-column label="金额" width="120"><template #default="scope">{{ formatMoney(scope.row.pay_price) }}</template></el-table-column>
         <el-table-column label="支付方式" width="120"><template #default="scope">{{ payType(scope.row.pay_type) }}</template></el-table-column>
         <el-table-column label="状态" width="110"><template #default="scope"><span class="status-text" :class="orderStatus(scope.row).tone">{{ orderStatus(scope.row).label }}</span></template></el-table-column>
         <el-table-column label="下单时间" width="180"><template #default="scope">{{ formatTime(scope.row.add_time) }}</template></el-table-column>
-        <el-table-column label="操作" width="240"><template #default="scope"><el-button link type="primary" @click.stop="openOrder(scope.row)">详情</el-button><el-button link type="primary" @click.stop="printOrder(scope.row)">打印</el-button><el-button v-if="canDeliver(scope.row)" link type="primary" @click.stop="openDelivery(scope.row)">发货</el-button><el-button v-if="canConfirmTake(scope.row)" link type="success" @click.stop="confirmTake(scope.row)">确认收货</el-button></template></el-table-column>
+        <el-table-column label="操作" width="240"><template #default="scope"><el-button link type="primary" @click.stop="openOrder(scope.row)">详情</el-button><el-button v-if="canManagePrint" link type="primary" @click.stop="printOrder(scope.row)">打印</el-button><el-button v-if="canDeliver(scope.row)" link type="primary" @click.stop="openDelivery(scope.row)">发货</el-button><el-button v-if="canConfirmTake(scope.row)" link type="success" @click.stop="confirmTake(scope.row)">确认收货</el-button></template></el-table-column>
       </el-table>
       <div class="pagination-row"><span>共 {{ total }} 个订单</span><el-pagination v-model:current-page="filters.page" :page-size="filters.limit" :total="total" layout="prev, pager, next" @current-change="load" /></div>
     </div>
@@ -323,7 +470,7 @@ onMounted(load);
             <div v-if="current.delivery_type"><dt>物流 / 交付信息</dt><dd>{{ current.delivery_type === "fictitious" ? current.fictitious_content : `${current.delivery_name} ${current.delivery_id}` }}</dd></div>
           </dl>
           <div class="drawer-actions delivery-actions">
-            <el-button plain :loading="actionLoading" @click="printOrder(current)">打印小票</el-button>
+            <el-button v-if="canManagePrint" plain :loading="actionLoading" @click="printOrder(current)">打印小票</el-button>
             <el-button v-if="canDeliver(current)" type="primary" @click="openDelivery(current)">订单发货</el-button>
             <el-button v-if="canConfirmTake(current)" type="success" plain :loading="actionLoading" @click="confirmTake(current)">确认收货</el-button>
           </div>
@@ -348,8 +495,8 @@ onMounted(load);
               <el-timeline-item v-for="log in statusLogs" :key="log.id" :timestamp="formatTime(log.changeTime)">{{ log.changeMessage }}</el-timeline-item>
             </el-timeline>
           </div>
-          <div class="remark-editor"><label for="order-remark">供应商备注</label><el-input id="order-remark" v-model="remark" type="textarea" :rows="4" maxlength="512" show-word-limit /></div>
-          <el-button type="primary" @click="saveRemark">保存备注</el-button>
+          <div class="remark-editor"><label for="order-remark">供应商备注</label><el-input id="order-remark" v-model="remark" type="textarea" :rows="4" maxlength="512" show-word-limit :disabled="!canManageOrders" /></div>
+          <el-button v-if="canManageOrders" type="primary" @click="saveRemark">保存备注</el-button>
         </template>
       </div>
     </el-drawer>
@@ -380,7 +527,7 @@ onMounted(load);
             <span v-else class="split-picker__available">可发 {{ item.surplus_num }} 件</span>
           </div>
         </div>
-        <el-form-item label="发货方式"><el-radio-group v-model="deliveryForm.delivery_type"><el-radio-button value="waybill">电子面单</el-radio-button><el-radio-button value="express">手填快递</el-radio-button><el-radio-button value="fictitious">虚拟交付</el-radio-button></el-radio-group></el-form-item>
+        <el-form-item label="发货方式"><el-radio-group v-model="deliveryForm.delivery_type"><el-radio-button v-if="canManageWaybills" value="waybill">电子面单</el-radio-button><el-radio-button value="express">手填快递</el-radio-button><el-radio-button value="fictitious">虚拟交付</el-radio-button></el-radio-group></el-form-item>
         <template v-if="deliveryForm.delivery_type === 'express' || deliveryForm.delivery_type === 'waybill'">
           <el-form-item label="快递公司"><el-select v-model="deliveryForm.company_id" filterable placeholder="请选择" style="width:100%" @change="selectExpress"><el-option v-for="company in expressCompanies" :key="company.id" :label="company.name" :value="company.id" /></el-select></el-form-item>
           <el-form-item v-if="deliveryForm.delivery_type === 'express'" label="快递单号"><el-input v-model="deliveryForm.delivery_id" maxlength="64" placeholder="请输入快递单号" /></el-form-item>
@@ -392,5 +539,75 @@ onMounted(load);
       <p class="security-note">{{ deliveryMode === 'partial' ? '系统将生成已发货子单并保留一个待发货子单，订单金额按商品价值分摊且总额保持不变。' : '发货后订单进入“已发货”；存在进行中售后的订单不能发货。' }}</p>
       <template #footer><el-button @click="deliveryDialogOpen = false">取消</el-button><el-button type="primary" :loading="actionLoading" @click="submitDelivery">{{ deliveryForm.delivery_type === 'waybill' ? '创建签发任务' : '确认发货' }}</el-button></template>
     </el-dialog>
+
+    <el-dialog v-model="queueDialogOpen" title="批量任务历史（只读）" width="min(1040px, 96vw)">
+      <el-alert title="这里仅展示旧系统履约任务的租户内历史；重新执行、停止和删除旧队列的入口已安全退役。" type="info" :closable="false" show-icon />
+      <div class="filter-row queue-filter-row">
+        <el-select v-model="queueFilters.type" clearable placeholder="任务类型" @change="searchQueueHistory">
+          <el-option label="批量手动发货" value="7" />
+          <el-option label="批量打印电子面单" value="8" />
+          <el-option label="批量配送" value="9" />
+          <el-option label="批量虚拟发货" value="10" />
+        </el-select>
+        <el-select v-model="queueFilters.status" clearable placeholder="任务状态" @change="searchQueueHistory">
+          <el-option label="未处理" value="0" /><el-option label="正在处理" value="1" /><el-option label="完成" value="2" /><el-option label="失败" value="3" />
+        </el-select>
+        <el-button type="primary" @click="searchQueueHistory">查询</el-button>
+      </div>
+      <el-table v-loading="queueLoading" :data="queueRows" row-key="id">
+        <el-table-column prop="id" label="任务 ID" width="100" />
+        <el-table-column prop="add_time" label="操作时间" width="180" />
+        <el-table-column prop="title" label="任务类型" min-width="170" />
+        <el-table-column prop="total_num" label="总数" width="90" />
+        <el-table-column prop="success_num" label="成功" width="90" />
+        <el-table-column prop="surplus_num" label="未成功" width="90" />
+        <el-table-column prop="status_cn" label="状态" width="100" />
+        <el-table-column label="操作" width="150"><template #default="scope"><el-button link type="primary" @click="openQueueDetail(scope.row)">查看</el-button><el-button v-if="canManageOrders" link type="primary" :loading="exportLoading" @click="downloadQueueHistory(scope.row)">下载</el-button></template></el-table-column>
+      </el-table>
+      <div class="pagination-row"><span>共 {{ queueTotal }} 个任务</span><el-pagination v-model:current-page="queueFilters.page" :page-size="queueFilters.limit" :total="queueTotal" layout="prev, pager, next" @current-change="loadQueueHistory" /></div>
+    </el-dialog>
+
+    <el-dialog v-model="queueDetailOpen" :title="`任务 ${queueDetailCurrent?.id ?? ''} 明细`" width="min(920px, 96vw)">
+      <el-table v-loading="queueDetailLoading" :data="queueDetailRows" row-key="id">
+        <el-table-column prop="order_id" label="订单号" min-width="190" />
+        <el-table-column prop="delivery_name" label="物流 / 类型" min-width="140" />
+        <el-table-column prop="delivery_id" label="物流单号" min-width="160" />
+        <el-table-column prop="fictitious_content" label="虚拟交付" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="status_cn" label="状态" width="100" />
+        <el-table-column prop="update_time" label="更新时间" width="180" />
+      </el-table>
+      <div class="pagination-row"><span>共 {{ queueDetailTotal }} 条明细</span><el-pagination v-model:current-page="queueDetailPage" :page-size="20" :total="queueDetailTotal" layout="prev, pager, next" @current-change="loadQueueDetail" /></div>
+    </el-dialog>
   </section>
 </template>
+
+<style scoped>
+.heading-actions,
+.export-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.export-toolbar {
+  justify-content: flex-end;
+  margin: 0 0 14px;
+  color: var(--el-text-color-secondary);
+}
+
+.queue-filter-row {
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .heading-actions {
+    width: 100%;
+  }
+
+  .heading-actions :deep(.el-button),
+  .export-toolbar :deep(.el-button) {
+    margin-left: 0;
+  }
+}
+</style>

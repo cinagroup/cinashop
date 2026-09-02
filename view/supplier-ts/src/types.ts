@@ -431,6 +431,62 @@ export interface OrderStatusLog {
   changeTime: number;
 }
 
+export type LegacyExportCell = string | number;
+
+export interface LegacyExportManifest {
+  header: string[];
+  filekey: string[];
+  export: Array<Record<string, LegacyExportCell | undefined>>;
+  filename: string;
+  page?: number;
+  limit?: number;
+  has_more?: boolean;
+  bounded: true;
+}
+
+export interface SupplierQueueHistoryRow {
+  id: number;
+  type: 7 | 8 | 9 | 10;
+  title: string;
+  status: 0 | 1 | 2 | 3;
+  status_cn: string;
+  first_time: string;
+  again_time: string;
+  finish_time: string;
+  add_time: string;
+  total_num: number;
+  success_num: number;
+  surplus_num: number;
+  cache_type: 3 | 4 | 5 | 6;
+  is_show_log: boolean;
+  actions_available: string[];
+}
+
+export interface SupplierQueueDeliveryLogRow {
+  id: number;
+  binding_id: number;
+  relation_id: number;
+  type: 3 | 4 | 5 | 6;
+  order_id: string;
+  delivery_name: string;
+  delivery_id: string;
+  fictitious_content: string;
+  status: 0 | 1 | 2 | 3;
+  status_cn: string;
+  error: string;
+  update_time: string;
+  add_time: string;
+}
+
+export interface SupplierQueueHistoryResult<T> {
+  list: T[];
+  count: number;
+  history_authority: "legacy_history_only";
+  runtime_authority: "supplier_scoped_job_ledgers";
+  read_only: true;
+  mutation_routes_retired: true;
+}
+
 export interface RefundRow {
   id: number;
   refund_order_id: string;

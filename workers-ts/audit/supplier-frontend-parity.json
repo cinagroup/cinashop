@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "snapshotDate": "2026-09-02",
+  "scope": "supplier frontend migration from cinashop-php to view/supplier-ts",
+  "counting": {
+    "legacy": {
+      "pageVueFiles": 41,
+      "activeRouteRecords": 20,
+      "distinctNavigableBusinessScreens": 19,
+      "activePageFiles": 18,
+      "embeddedPageComponents": 16,
+      "unroutedOrFrameworkScaffoldPages": 7,
+      "duplicateRouteRecords": [
+        "/supplier/bill/index and /supplier/bill/index/:type? use the same page and route name"
+      ]
+    },
+    "target": {
+      "pageVueFiles": 15,
+      "screenRouteRecords": 16,
+      "distinctPageComponents": 15,
+      "note": "ProductForm.vue serves both create and edit routes"
+    },
+    "method": "Compare navigable business screens and embedded capabilities; never treat raw Vue file count as coverage."
+  },
+  "screens": [
+    {
+      "legacyPath": "/supplier/login",
+      "legacyPage": "pages/account/login/index.vue",
+      "target": ["/login", "Login.vue"],
+      "status": "candidate_covered",
+      "remaining": ["production account E2E"]
+    },
+    {
+      "legacyPath": "/supplier/home/index",
+      "legacyPage": "pages/index/index.vue",
+      "target": ["/dashboard", "Dashboard.vue"],
+      "status": "candidate_covered",
+      "remaining": ["production metric reconciliation"]
+    },
+    {
+      "legacyPath": "/supplier/order/list",
+      "legacyPage": "pages/order/orderList/index.vue plus 7 embedded components",
+      "target": ["/orders", "Orders.vue", "/printers", "/waybills"],
+      "status": "candidate_covered",
+      "remaining": ["production account E2E", "provider-backed print and waybill E2E"]
+    },
+    {
+      "legacyPath": "/supplier/order/refund",
+      "legacyPage": "pages/order/refund/index.vue",
+      "target": ["/refunds", "Refunds.vue"],
+      "status": "candidate_covered",
+      "remaining": ["real payment-provider refund E2E"]
+    },
+    {
+      "legacyPath": "/supplier/order/distribution",
+      "legacyPage": "pages/order/distribution/index.vue",
+      "target": ["Orders.vue manual print jobs", "Printers.vue job ledger"],
+      "status": "partial_replacement",
+      "remaining": ["decide whether a browser-printable picking-sheet preview is still required"]
+    },
+    {
+      "legacyPath": "/supplier/capital/index",
+      "legacyPage": "pages/capital/index.vue",
+      "target": ["/finance", "Finance.vue", "/dashboard"],
+      "status": "candidate_covered",
+      "remaining": ["production totals reconciliation"]
+    },
+    {
+      "legacyPath": "/supplier/bill/index/:type?",
+      "legacyPage": "pages/capital/bill/index.vue plus commissionDetails.vue",
+      "target": ["/finance", "Finance.vue"],
+      "status": "partial_replacement",
+      "remaining": ["legacy period aggregation and commission-detail parity decision"]
+    },
+    {
+      "legacyPath": "/supplier/cash/index",
+      "legacyPage": "pages/capital/cash/index.vue",
+      "target": ["/finance", "Finance.vue withdrawal tab and dialog"],
+      "status": "candidate_covered",
+      "remaining": ["production withdrawal E2E"]
+    },
+    {
+      "legacyPath": "/supplier/finance/set",
+      "legacyPage": "pages/capital/setting/index.vue",
+      "target": ["/finance", "Finance.vue settings tab"],
+      "status": "candidate_covered",
+      "remaining": ["production save and masked-secret E2E"]
+    },
+    {
+      "legacyPath": "/supplier/product/index",
+      "legacyPage": "pages/product/productList/index.vue plus 8 embedded components",
+      "target": ["/products", "Products.vue", "VirtualInventoryAlerts.vue", "VirtualInventory.vue"],
+      "status": "candidate_covered",
+      "remaining": ["production product lifecycle E2E", "attachment integration"]
+    },
+    {
+      "legacyPath": "/supplier/product/product_attr",
+      "legacyPage": "pages/product/productAttr/index.vue",
+      "target": ["ProductForm.vue inline SKU editor"],
+      "status": "partial_replacement",
+      "remaining": ["shared reusable specification-template library"]
+    },
+    {
+      "legacyPath": "/supplier/product/product_reply",
+      "legacyPage": "pages/product/productReply/index.vue",
+      "target": [],
+      "status": "missing_actionable",
+      "remaining": ["supplier-scoped reply list contract", "reply write contract", "ProductReviews page and navigation"]
+    },
+    {
+      "legacyPath": "/supplier/product/shipping_template",
+      "legacyPage": "pages/product/shippingTemplates/index.vue",
+      "target": ["/shipping-templates", "ShippingTemplates.vue"],
+      "status": "candidate_covered",
+      "remaining": ["production template E2E"]
+    },
+    {
+      "legacyPath": "/supplier/product/edit_product/:id?",
+      "legacyPage": "pages/product/productEdit/index.vue",
+      "target": ["/products/new", "/products/:id/edit", "ProductForm.vue"],
+      "status": "partial_replacement",
+      "remaining": ["production create/edit E2E", "attachment/media picker", "rich-content compatibility"]
+    },
+    {
+      "legacyPath": "/supplier/setting/merchant",
+      "legacyPage": "pages/setting/merchant/index.vue",
+      "target": ["/profile", "Profile.vue"],
+      "status": "candidate_covered",
+      "remaining": ["production profile E2E"]
+    },
+    {
+      "legacyPath": "/supplier/setting/managers",
+      "legacyPage": "pages/setting/managers/index.vue",
+      "target": ["/administrators", "Administrators.vue"],
+      "status": "candidate_covered",
+      "remaining": ["primary and restricted sub-account E2E"]
+    },
+    {
+      "legacyPath": "/supplier/setting/ticket",
+      "legacyPage": "components/fromSubmit/commonForm.vue; pages/setting/ticket/index.vue is not routed",
+      "target": ["/settings", "Settings.vue", "/printers", "Printers.vue"],
+      "status": "candidate_covered",
+      "remaining": ["real provider credentials and print E2E"]
+    },
+    {
+      "legacyPath": "/supplier/setting/document",
+      "legacyPage": "pages/setting/document/index.vue",
+      "target": ["/printers", "Printers.vue"],
+      "status": "candidate_covered",
+      "remaining": ["real printer E2E"]
+    },
+    {
+      "legacyPath": "/supplier/setting/document/content",
+      "legacyPage": "pages/setting/document/content.vue",
+      "target": ["/printers", "Printers.vue content editor"],
+      "status": "candidate_covered",
+      "remaining": ["print-layout visual comparison on real hardware"]
+    }
+  ],
+  "embeddedCapabilities": [
+    {
+      "legacy": "order queueList.vue read history",
+      "target": "Orders.vue batch task history and detail dialogs",
+      "status": "completed_local_candidate",
+      "security": "read-only supplier-scoped history; retired global queue mutations remain absent"
+    },
+    {
+      "legacy": "order, shipping, batch-task and finance spreadsheet exports",
+      "target": "selected-row bounded CSV downloads",
+      "status": "completed_local_candidate",
+      "security": "manage permission for tenant PII/finance, view permission only for public express directory"
+    },
+    {
+      "legacy": "attachment and rich media picker",
+      "target": "no production-verified Supplier attachment UI",
+      "status": "blocked_external_authorization",
+      "security": "depends on SUP-003 production attachment aggregate and ticket audit"
+    }
+  ],
+  "checklist": [
+    { "id": "FE-004A", "done": true, "item": "Recount and map all 19 legacy navigable business screens" },
+    { "id": "FE-004B", "done": true, "item": "Connect order, shipping, queue-history and finance export manifests with selected-row downloads" },
+    { "id": "FE-004C", "done": true, "item": "Hide order, print, waybill and finance mutations/downloads from accounts lacking manage permissions" },
+    { "id": "FE-004D", "done": true, "item": "Desktop and 390x844 preview QA for orders, queue history/detail, finance export and mobile navigation" },
+    { "id": "FE-004E", "done": false, "item": "Implement supplier-scoped product review list/reply backend and frontend" },
+    { "id": "FE-004F", "done": false, "item": "Implement or formally retire the reusable product specification-template library" },
+    { "id": "FE-004G", "done": false, "item": "Decide and implement or retire the browser-printable distribution/picking-sheet preview" },
+    { "id": "FE-004H", "done": false, "item": "Close product attachment/media picker after SUP-003 production evidence" },
+    { "id": "FE-004I", "done": false, "item": "Run real primary and restricted Supplier account E2E for all candidate screens" },
+    { "id": "FE-004J", "done": false, "item": "Run real payment, printer, waybill and attachment provider flows" },
+    { "id": "FE-004K", "done": false, "item": "Create and validate formal Supplier Pages project, WORKERS_API mapping and production origin" },
+    { "id": "FE-004L", "done": false, "item": "Publish only after separate approval, then observe and reconcile production behavior" }
+  ]
+}
