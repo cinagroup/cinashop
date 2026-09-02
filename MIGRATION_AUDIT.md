@@ -3805,7 +3805,9 @@ Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项
 
 ### 跨平台门禁、浏览器终态与边界
 
-上一提交 `b3dca1d340fc845a84185b823d2805e7df947354` 的 Actions `33596350398` 有7个任务成功，Worker任务在1,245项中的唯一失败是 Admin导航快照把工作区原始换行纳入哈希：Windows生成的 CRLF摘要在 Ubuntu LF检出后误报路由漂移，功能测试没有其他失败。本批把导航和新 API审计哈希都改为规范化文本摘要；本地完整 Worker单元现为196文件/1,249项全部通过，双 TypeScript、Admin生产构建、严格 API审计和定向4文件/16项均通过。该跨平台修复仍需新提交对应的 Ubuntu Actions成功后才能形成远端证据。
+上一提交 `b3dca1d340fc845a84185b823d2805e7df947354` 的 Actions `33596350398` 有7个任务成功，Worker任务在1,245项中的唯一失败是 Admin导航快照把工作区原始换行纳入哈希：Windows生成的 CRLF摘要在 Ubuntu LF检出后误报路由漂移，功能测试没有其他失败。本批把导航和新 API审计哈希都改为规范化文本摘要；本地完整 Worker单元现为196文件/1,249项全部通过，双 TypeScript、Admin生产构建、严格 API审计和定向4文件/16项均通过。
+
+实现与审计提交 `49762a79638b21c81d804c3a77085f67bcf95c6e` 已推送；[Actions `33598766840`](https://github.com/cinagroup/cinashop/actions/runs/33598766840) 对该精确 head 的 Worker、Admin、PC、Supplier、Kefu、UniApp、Linux workerd和全历史 Gitleaks 8/8成功。Ubuntu Worker job精确通过生产依赖审计、双 TypeScript、196文件/1,249项单元、observability、schema与全局route parity；这同时证明规范化文本哈希在 Linux检出下不再误报。该 CI只验证仓库候选，不代表主 Worker或 Admin Pages已经发布。
 
 真实应用内浏览器在桌面打开 `/config?preview=1`，确认安全停用说明和两个入口；“新人运营”进入 `/config/newcomer`，“客户端内容”进入 `/config/runtime-content`，页面标题、主内容和错误遮罩均正常。390×844 下 `innerWidth/document/body scrollWidth` 均为390，两张卡片各306px且纵向排列，无页面级横向溢出。视口、标签页和本地服务均已恢复/关闭。浏览器只使用本地预览数据，没有读取或写入生产配置。
 
