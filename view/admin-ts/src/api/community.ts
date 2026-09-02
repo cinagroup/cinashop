@@ -65,7 +65,31 @@ export interface PageResult<T> {
   count: number;
 }
 
+export interface CommunitySettings {
+  community_status: 0 | 1;
+  community_verify: 0 | 1;
+  community_video_verify: 0 | 1;
+  community_comment_status: 0 | 1;
+  community_comment_add: 0 | 1;
+  community_comment_verify: 0 | 1;
+}
+
+export interface CommunitySettingsResult {
+  settings: CommunitySettings;
+  missing_keys: Array<keyof CommunitySettings>;
+  duplicate_keys: Array<keyof CommunitySettings>;
+  verified?: true;
+}
+
 const now = Math.floor(Date.now() / 1000);
+const previewSettings: CommunitySettings = {
+  community_status: 1,
+  community_verify: 1,
+  community_video_verify: 1,
+  community_comment_status: 1,
+  community_comment_add: 1,
+  community_comment_verify: 0,
+};
 const previewPosts: CommunityPost[] = [
   {
     id: 2103,
@@ -404,4 +428,17 @@ export async function apiCommunityFictitiousComment(body: Record<string, unknown
     return { id };
   }
   return getData<{ id: number }>(request.post("/community/comment/save_fictitious", body));
+}
+
+export async function apiCommunitySettings() {
+  if (previewMode) return { settings: clone(previewSettings), missing_keys: [], duplicate_keys: [] } satisfies CommunitySettingsResult;
+  return getData<CommunitySettingsResult>(request.get("/community/settings"));
+}
+
+export async function apiCommunitySettingsSave(settings: CommunitySettings) {
+  if (previewMode) {
+    Object.assign(previewSettings, settings);
+    return { settings: clone(previewSettings), missing_keys: [], duplicate_keys: [], verified: true } satisfies CommunitySettingsResult;
+  }
+  return getData<CommunitySettingsResult>(request.post("/community/settings", { settings }));
 }

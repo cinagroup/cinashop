@@ -754,6 +754,8 @@ adminapiRoutes.get("/sms/config", adminAuth, AdminNotification.smsConfig);
 adminapiRoutes.post("/sms/config", adminAuth, AdminNotification.smsConfigSave);
 
 // ─── 社区内容、话题与评论运营 ───────────────────────────────
+adminapiRoutes.get("/community/settings", adminAuth, AdminCommunity.communitySettings);
+adminapiRoutes.post("/community/settings", adminAuth, AdminCommunity.saveCommunitySettings);
 adminapiRoutes.get("/community/all_topic", adminAuth, AdminCommunity.allTopics);
 adminapiRoutes.get("/community/topic/list", adminAuth, AdminCommunity.topicList);
 adminapiRoutes.get("/community/topic/save_form/:id", adminAuth, AdminCommunity.topicForm);

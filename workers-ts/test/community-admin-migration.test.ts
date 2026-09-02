@@ -5,6 +5,7 @@ import {
   normalizeAdminCommunityPostInput,
   normalizeCommunityTopicInput,
 } from "@/services/community/AdminCommunityService";
+import { normalizeCommunitySettingsInput } from "@/services/community/AdminCommunitySettingsService";
 
 describe("community admin migration", () => {
   it("keeps the external and embedded moderation indexes byte-equivalent", () => {
@@ -55,6 +56,7 @@ describe("community admin migration", () => {
   it("restores every PHP admin community route before the 501 fallback", () => {
     const routes = readFileSync("src/routes/adminapi.ts", "utf8");
     const expected = [
+      '"/community/settings"',
       '"/community/all_topic"',
       '"/community/topic/list"',
       '"/community/topic/save_form/:id"',
@@ -86,7 +88,7 @@ describe("community admin migration", () => {
       '"/community/comment/save_fictitious"',
     ];
     for (const fragment of expected) expect(routes).toContain(fragment);
-    expect(routes.indexOf('"/community/all_topic"')).toBeLessThan(routes.indexOf('adminapiRoutes.all("/*"'));
+    expect(routes.indexOf('"/community/settings"')).toBeLessThan(routes.indexOf('adminapiRoutes.all("/*"'));
   });
 
   it("bounds JSON bodies, preserves ownership on edit, and serializes lifecycle writes", () => {
@@ -113,6 +115,46 @@ describe("community admin migration", () => {
     expect(requiredAdminPermission("GET", "/adminapi/community/topic/set_status/4/0")).toBe("community.manage");
     expect(requiredAdminPermission("GET", "/adminapi/community/topic/set_hot/4/1")).toBe("community.manage");
     expect(requiredAdminPermission("DELETE", "/adminapi/community/comment/del/9")).toBe("community.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/community/settings")).toBe("community.view");
+    expect(requiredAdminPermission("POST", "/adminapi/community/settings")).toBe("community.manage");
+  });
+
+  it("strictly validates and transactionally verifies all six community settings", () => {
+    const input = {
+      community_status: true,
+      community_verify: "1",
+      community_video_verify: 0,
+      community_comment_status: 1,
+      community_comment_add: "0",
+      community_comment_verify: false,
+    };
+    expect(normalizeCommunitySettingsInput({ settings: input })).toEqual({
+      community_status: 1,
+      community_verify: 1,
+      community_video_verify: 0,
+      community_comment_status: 1,
+      community_comment_add: 0,
+      community_comment_verify: 0,
+    });
+    expect(() => normalizeCommunitySettingsInput({ settings: { ...input, extra: 1 } })).toThrow("未知社区配置");
+    expect(() => normalizeCommunitySettingsInput({ settings: { ...input, community_verify: 2 } })).toThrow("只能为 0 或 1");
+    const { community_comment_verify: _omitted, ...missing } = input;
+    expect(() => normalizeCommunitySettingsInput(missing)).toThrow("缺少社区配置");
+
+    const service = readFileSync("src/services/community/AdminCommunitySettingsService.ts", "utf8");
+    const controller = readFileSync("src/controllers/api/v1/AdminCommunityController.ts", "utf8");
+    const routes = readFileSync("src/routes/adminapi.ts", "utf8");
+    expect(service).toContain("SET LOCAL lock_timeout = '2s'");
+    expect(service).toContain("SET LOCAL statement_timeout = '5s'");
+    expect(service).toContain("pg_advisory_xact_lock(hashtext('admin-community-settings'))");
+    expect(service).toContain('.for("update")');
+    expect(service).toContain("存在重复历史记录，请先清理");
+    expect(service).toContain("community_settings_readback_mismatch");
+    expect(service).toContain("this.env.CONFIG_KV.delete(`cfg_${key}`)");
+    expect(service).toContain("tx.insert(systemLog)");
+    expect(controller).toContain("await boundedBody(c)");
+    expect(routes).toContain('get("/community/settings"');
+    expect(routes).toContain('post("/community/settings"');
   });
 
   it("wires a complete permission-aware Admin UI without production preview fallbacks", () => {
@@ -126,6 +168,19 @@ describe("community admin migration", () => {
     expect(page).toContain('authStore.uniqueAuth.includes("community.manage")');
     expect(page).toContain('name="topics"');
     expect(page).toContain('name="comments"');
+    expect(page).toContain('name="settings"');
+    expect(page).toContain("settingsDuplicateKeys.length > 0");
+    expect(page).toContain("result.verified");
+    expect(api).toContain('get("/community/settings"');
+    expect(api).toContain('post("/community/settings"');
+    for (const key of [
+      "community_status",
+      "community_verify",
+      "community_video_verify",
+      "community_comment_status",
+      "community_comment_add",
+      "community_comment_verify",
+    ]) expect(page).toContain(key);
     expect(page).toContain("apiCommunityFictitiousComment");
     expect(router).toContain('path: "community"');
     expect(router).toContain('import("@/pages/community/CommunityOperations.vue")');

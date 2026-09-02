@@ -210,6 +210,52 @@
           />
         </el-card>
       </el-tab-pane>
+
+      <el-tab-pane label="社区设置" name="settings">
+        <el-card v-loading="settingsLoading" shadow="never" class="panel-card settings-panel">
+          <div class="settings-heading">
+            <div>
+              <h2>社区开关与审核策略</h2>
+              <p>保存后会核验数据库写入并清除用户端配置缓存。</p>
+            </div>
+            <el-button
+              v-if="canManage"
+              type="primary"
+              :loading="settingsSaving"
+              :disabled="settingsDuplicateKeys.length > 0"
+              @click="saveSettings"
+            >保存设置</el-button>
+          </div>
+          <el-alert
+            v-if="settingsDuplicateKeys.length"
+            type="error"
+            :closable="false"
+            show-icon
+            :title="`检测到重复历史配置：${settingsDuplicateKeys.join('、')}。为防止改错记录，保存已停用。`"
+          />
+          <el-alert
+            v-else-if="settingsMissingKeys.length"
+            type="warning"
+            :closable="false"
+            show-icon
+            :title="`缺少 ${settingsMissingKeys.length} 项历史配置；首次保存时会安全创建。`"
+          />
+          <div class="settings-grid">
+            <article v-for="item in settingDefinitions" :key="item.key" class="setting-card">
+              <div>
+                <strong>{{ item.label }}</strong>
+                <p>{{ item.description }}</p>
+              </div>
+              <el-switch
+                v-model="settings[item.key]"
+                :active-value="1"
+                :inactive-value="0"
+                :disabled="!canManage || settingsDuplicateKeys.length > 0"
+              />
+            </article>
+          </div>
+        </el-card>
+      </el-tab-pane>
     </el-tabs>
 
     <el-dialog v-model="postDialog" :title="postForm.id ? '编辑社区内容' : '发布平台内容'" width="min(760px, 94vw)">
@@ -300,6 +346,8 @@ import {
   apiCommunityPostStar,
   apiCommunityPostStatus,
   apiCommunityPostVerify,
+  apiCommunitySettings,
+  apiCommunitySettingsSave,
   apiCommunityTopicDelete,
   apiCommunityTopicRecommend,
   apiCommunityTopics,
@@ -307,6 +355,7 @@ import {
   apiCommunityTopicStatus,
   type CommunityComment,
   type CommunityPost,
+  type CommunitySettings,
   type CommunityTopic,
 } from "@/api/community";
 
@@ -346,6 +395,27 @@ const topicForm = reactive({ id: 0, name: "", sort: 0, is_recommend: 0, status: 
 const moderationForm = reactive({ id: 0, title: "", status: 1, refusal: "" });
 const replyForm = reactive({ id: 0, author: "", quote: "", content: "" });
 const virtualForm = reactive({ community_id: 0, type: 3, nickname: "", avatar: "", content: "" });
+const settingsLoading = ref(false);
+const settingsSaving = ref(false);
+const settingsLoaded = ref(false);
+const settingsMissingKeys = ref<Array<keyof CommunitySettings>>([]);
+const settingsDuplicateKeys = ref<Array<keyof CommunitySettings>>([]);
+const settings = reactive<CommunitySettings>({
+  community_status: 1,
+  community_verify: 1,
+  community_video_verify: 1,
+  community_comment_status: 1,
+  community_comment_add: 1,
+  community_comment_verify: 0,
+});
+const settingDefinitions: Array<{ key: keyof CommunitySettings; label: string; description: string }> = [
+  { key: "community_status", label: "启用社区", description: "控制用户端社区入口与社区内容访问。" },
+  { key: "community_verify", label: "图文内容审核", description: "用户发布的图文内容先进入后台审核。" },
+  { key: "community_video_verify", label: "视频内容审核", description: "用户发布的视频内容先进入后台审核。" },
+  { key: "community_comment_status", label: "启用评论", description: "允许用户查看社区内容下的评论。" },
+  { key: "community_comment_add", label: "允许发表评论", description: "允许用户提交新的社区评论。" },
+  { key: "community_comment_verify", label: "评论审核", description: "新评论审核通过后才对外显示。" },
+];
 
 function verifyText(value: number) { return value === 1 ? "已通过" : value === 0 ? "待审核" : value === -1 ? "已拒绝" : "已下架"; }
 function verifyTag(value: number): "success" | "info" | "warning" | "danger" { return value === 1 ? "success" : value === 0 ? "info" : value === -1 ? "warning" : "danger"; }
@@ -373,9 +443,37 @@ async function loadComments() {
   finally { commentLoading.value = false; }
 }
 
+async function loadSettings() {
+  settingsLoading.value = true;
+  try {
+    const result = await apiCommunitySettings();
+    Object.assign(settings, result.settings);
+    settingsMissingKeys.value = result.missing_keys;
+    settingsDuplicateKeys.value = result.duplicate_keys;
+    settingsLoaded.value = true;
+  } finally { settingsLoading.value = false; }
+}
+
+async function saveSettings() {
+  if (!canManage.value || settingsDuplicateKeys.value.length) return;
+  settingsSaving.value = true;
+  try {
+    const result = await apiCommunitySettingsSave({ ...settings });
+    if (!result.verified) {
+      ElMessage.error("保存结果未通过回读核验，请重试");
+      return;
+    }
+    Object.assign(settings, result.settings);
+    settingsMissingKeys.value = result.missing_keys;
+    settingsDuplicateKeys.value = result.duplicate_keys;
+    ElMessage.success("社区设置已保存并生效");
+  } finally { settingsSaving.value = false; }
+}
+
 function handleTabChange(name: string | number) {
   if (name === "topics" && !topics.value.length) void loadTopics();
   if (name === "comments" && !comments.value.length) void loadComments();
+  if (name === "settings" && !settingsLoaded.value) void loadSettings();
 }
 
 function selectVerify(value: number) { postFilters.is_verify = postFilters.is_verify === value ? undefined : value; postFilters.page = 1; void loadPosts(); }
@@ -495,10 +593,19 @@ onMounted(() => { void loadPosts(); });
 .switch-row { display: flex; gap: 32px; padding: 8px 0; }
 .switch-row span { display: flex; align-items: center; gap: 12px; }
 .dialog-hint { margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; color: #475467; background: #f2f4f7; }
+.settings-panel :deep(.el-alert) { margin: 0 0 16px; }
+.settings-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.settings-heading h2 { margin: 0; color: #101828; font-size: 20px; }
+.settings-heading p { margin: 7px 0 0; color: #667085; }
+.settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.setting-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-width: 0; padding: 18px; border: 1px solid #e4e7ec; border-radius: 13px; background: #fdfefe; }
+.setting-card strong { color: #101828; }
+.setting-card p { margin: 6px 0 0; color: #667085; font-size: 13px; line-height: 1.55; }
 
 @media (max-width: 900px) {
   .hero-card { align-items: flex-start; flex-direction: column; padding: 24px; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-grid { grid-template-columns: 1fr; }
   .form-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -533,5 +640,8 @@ onMounted(() => { void loadPosts(); });
   .panel-toolbar > div { display: flex; width: 100%; }
   .panel-toolbar > div :deep(.el-button) { flex: 1; }
   .pagination { justify-content: center; }
+  .settings-heading { align-items: stretch; flex-direction: column; }
+  .settings-heading :deep(.el-button) { width: 100%; margin-left: 0; }
+  .setting-card { padding: 14px; }
 }
 </style>

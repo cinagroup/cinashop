@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-02",
+  "scope": "The 13 active legacy Admin content screens imported by the legacy content router: community, CMS articles, and mini-program live operations. Status measures screen semantics, not route-name similarity.",
+  "statusDefinitions": {
+    "candidate": "The routed screen's primary operations have a new Admin screen and executable authenticated API contracts; production E2E is still required.",
+    "partial": "A replacement screen exists, but one or more active legacy operations or relationships are absent or materially simplified.",
+    "missing": "No new Admin screen currently implements the active legacy operation."
+  },
+  "summary": {
+    "legacyRoutes": 13,
+    "candidate": 5,
+    "partial": 5,
+    "missing": 3,
+    "retired": 0
+  },
+  "routes": [
+    {
+      "legacyPath": "/admin/content/community/topic",
+      "legacyComponent": "pages/content/community/topic/index.vue",
+      "title": "社区话题",
+      "status": "candidate",
+      "newScreens": ["/community#topics"],
+      "newApiContracts": ["GET /adminapi/community/topic/list", "POST /adminapi/community/topic/save/:id", "GET /adminapi/community/topic/set_status/:id/:status", "GET /adminapi/community/topic/set_hot/:id/:hot", "DELETE /adminapi/community/topic/del/:id"],
+      "permission": "community.view / community.manage",
+      "covered": "Search, paginated catalog, create, edit, visibility, recommendation, reference-protected delete, and relationship-count maintenance are executable from the consolidated screen.",
+      "remaining": "Production historical-data validation and real-role browser E2E remain required before cutover acceptance."
+    },
+    {
+      "legacyPath": "/admin/content/community/content",
+      "legacyComponent": "pages/content/community/content/index.vue",
+      "title": "社区内容",
+      "status": "candidate",
+      "newScreens": ["/community#posts"],
+      "newApiContracts": ["GET /adminapi/community/community/header", "GET /adminapi/community/community/list", "GET /adminapi/community/community/info/:id", "POST /adminapi/community/community/set_status/:id/:status", "POST /adminapi/community/community/set_recommend/:id/:recommend", "POST /adminapi/community/community/star/:id", "POST /adminapi/community/community/set_verify/:id", "DELETE /adminapi/community/community/del/:id"],
+      "permission": "community.view / community.manage",
+      "covered": "Moderation counters, filters, detail, edit entry, visibility, recommendation, star level, approve, reject, forced take-down, and delete are available with transactional aggregate correction.",
+      "remaining": "Production historical-data validation, real-role E2E, and operational acceptance of consolidated navigation remain required."
+    },
+    {
+      "legacyPath": "/admin/content/community/addContent/:id?",
+      "legacyComponent": "pages/content/community/addContent/index.vue",
+      "title": "添加内容",
+      "status": "candidate",
+      "newScreens": ["/community#posts"],
+      "newApiContracts": ["GET /adminapi/community/community/info/:id", "GET /adminapi/community/all_topic", "POST /adminapi/community/community/save/:id"],
+      "permission": "community.view / community.manage",
+      "covered": "Platform content create and edit cover title, body, image or video, gallery, topic and product relations, recommendation, visibility, star, sorting, bounded inputs, and database serialization.",
+      "remaining": "Production media URL validation, historical-data validation, and real-role create/edit E2E remain required."
+    },
+    {
+      "legacyPath": "/admin/content/community/comment",
+      "legacyComponent": "pages/content/community/comment/index.vue",
+      "title": "社区评论",
+      "status": "candidate",
+      "newScreens": ["/community#comments"],
+      "newApiContracts": ["GET /adminapi/community/comment/list", "GET /adminapi/community/comment/reply/:id", "POST /adminapi/community/comment/reply/:id", "PUT /adminapi/community/comment/set_status/:id/:status", "POST /adminapi/community/comment/set_verify/:id", "POST /adminapi/community/comment/save_fictitious", "DELETE /adminapi/community/comment/del/:id"],
+      "permission": "community.view / community.manage",
+      "covered": "Comment search, moderation, visibility, reply tree inspection, platform reply, fictitious comment creation, and cascading delete are exposed with aggregate correction.",
+      "remaining": "Production tree-shape validation and real-role browser E2E remain required before cutover acceptance."
+    },
+    {
+      "legacyPath": "/admin/content/community/setting",
+      "legacyComponent": "pages/content/community/setting/index.vue",
+      "title": "社区设置",
+      "status": "candidate",
+      "newScreens": ["/community#settings"],
+      "newApiContracts": ["GET /adminapi/community/settings", "POST /adminapi/community/settings"],
+      "permission": "community.view / community.manage",
+      "covered": "All six legacy community, content moderation, video moderation, comment visibility, comment publishing, and comment moderation flags have a dedicated screen, strict input contract, serialized upsert, database readback, audit log, and CONFIG_KV invalidation.",
+      "remaining": "Duplicate production rows must be cleared through DB-003 before writes, and a real-role production read/write/readback E2E is still required."
+    },
+    {
+      "legacyPath": "/admin/content/article/index/:id?",
+      "legacyComponent": "pages/content/cms/article/index.vue",
+      "title": "文章管理",
+      "status": "partial",
+      "newScreens": ["/content/article"],
+      "newApiContracts": ["GET /adminapi/article/list", "POST /adminapi/article/save", "DELETE /adminapi/article/del/:id"],
+      "permission": "article.view / article.manage",
+      "covered": "The replacement screen lists articles and supports a basic create, edit, visibility value, and delete workflow.",
+      "remaining": "Category filtering and relations, cover image, synopsis, richer status operations, sorting, pagination, and legacy list actions remain absent or simplified."
+    },
+    {
+      "legacyPath": "/admin/content/article_category/index",
+      "legacyComponent": "pages/content/cms/articleCategory/index.vue",
+      "title": "文章分类",
+      "status": "missing",
+      "newScreens": [],
+      "newApiContracts": [],
+      "permission": "article.view / article.manage",
+      "covered": "The current article table retains a category identifier in storage, but there is no replacement Admin category workflow.",
+      "remaining": "Implement category list, hierarchy, create, edit, visibility, sorting, reference-aware delete, permissions, and browser coverage."
+    },
+    {
+      "legacyPath": "/admin/content/article/add_article/:id?",
+      "legacyComponent": "pages/content/cms/addArticle/index.vue",
+      "title": "文章添加",
+      "status": "partial",
+      "newScreens": ["/content/article"],
+      "newApiContracts": ["POST /adminapi/article/save"],
+      "permission": "article.view / article.manage",
+      "covered": "A compact dialog supports title, author, plain content, visibility, create, and edit in the consolidated article screen.",
+      "remaining": "Category selection, cover image, synopsis, rich-text editing and sanitization UI, source URL, sorting, related products, and dedicated edit-route semantics remain absent."
+    },
+    {
+      "legacyPath": "/admin/content/live/live_room",
+      "legacyComponent": "pages/content/live/index.vue",
+      "title": "直播间管理",
+      "status": "partial",
+      "newScreens": ["/marketing/live#rooms"],
+      "newApiContracts": ["GET /adminapi/live/room/list", "POST /adminapi/live/sync"],
+      "permission": "live_broadcast.view / live_broadcast.manage",
+      "covered": "The replacement provides paginated local room inventory, status grouping, masked operator data, freshness indicators, and Queue-dispatched read-only status synchronization.",
+      "remaining": "Create, edit, delete, local visibility mutation, replay operations, goods assignment, and other remote WeChat writes are intentionally not migrated."
+    },
+    {
+      "legacyPath": "/admin/content/live/add_live_room",
+      "legacyComponent": "pages/content/live/creat_live.vue",
+      "title": "直播间管理",
+      "status": "missing",
+      "newScreens": [],
+      "newApiContracts": [],
+      "permission": "live_broadcast.manage",
+      "covered": "The new catalog can display and synchronize rooms after they exist, but it deliberately exposes no remote room-write form.",
+      "remaining": "Provider contract validation, idempotency, durable remote-write orchestration, create/edit UI, reconciliation, rollback policy, and production acceptance are required."
+    },
+    {
+      "legacyPath": "/admin/content/live/live_goods",
+      "legacyComponent": "pages/content/live/live_goods.vue",
+      "title": "直播间商品管理",
+      "status": "partial",
+      "newScreens": ["/marketing/live#goods"],
+      "newApiContracts": ["GET /adminapi/live/goods/list", "POST /adminapi/live/sync"],
+      "permission": "live_broadcast.view / live_broadcast.manage",
+      "covered": "The replacement provides paginated local goods inventory, audit-state grouping, price display, freshness indicators, and Queue-dispatched read-only status synchronization.",
+      "remaining": "Create, edit, delete, resubmit, local visibility mutation, room assignment, and other remote WeChat goods writes are intentionally not migrated."
+    },
+    {
+      "legacyPath": "/admin/content/live/add_live_goods",
+      "legacyComponent": "pages/content/live/add_goods.vue",
+      "title": "直播间商品管理",
+      "status": "missing",
+      "newScreens": [],
+      "newApiContracts": [],
+      "permission": "live_broadcast.manage",
+      "covered": "The new catalog can display and synchronize goods after they exist, but it deliberately exposes no remote goods-write form.",
+      "remaining": "Provider contract validation, idempotency, durable remote-write orchestration, create/edit UI, reconciliation, rollback policy, and production acceptance are required."
+    },
+    {
+      "legacyPath": "/admin/content/live/anchor",
+      "legacyComponent": "pages/content/live/anchor.vue",
+      "title": "主播管理",
+      "status": "partial",
+      "newScreens": ["/marketing/live#anchors"],
+      "newApiContracts": ["GET /adminapi/live/anchor/list"],
+      "permission": "live_broadcast.view",
+      "covered": "The replacement provides a paginated, searchable local anchor catalog with masked contact details and freshness information.",
+      "remaining": "Create, edit, delete, role synchronization, local visibility mutation, and remote WeChat anchor operations remain intentionally absent."
+    }
+  ]
+}

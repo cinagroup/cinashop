@@ -1,6 +1,10 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { AdminCommunityService } from "@/services/community/AdminCommunityService";
+import {
+  AdminCommunitySettingsService,
+  type CommunitySettingsActor,
+} from "@/services/community/AdminCommunitySettingsService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
 
@@ -50,14 +54,39 @@ function service(c: C): AdminCommunityService {
   return new AdminCommunityService(c.get("container"));
 }
 
+function settingsService(c: C): AdminCommunitySettingsService {
+  return new AdminCommunitySettingsService(c.get("container"), c.env);
+}
+
 function clientIp(c: C): string {
   return (c.req.header("CF-Connecting-IP") ?? c.req.header("X-Forwarded-For")?.split(",")[0] ?? "")
     .trim()
     .slice(0, 32);
 }
 
+function settingsActor(c: C): CommunitySettingsActor {
+  const admin = c.get("adminInfo");
+  if (!admin) throw new ValidateException("管理员身份不存在");
+  return { id: admin.id, name: admin.realName || admin.account, ip: clientIp(c) };
+}
+
+function noStore(c: C): void {
+  c.header("Cache-Control", "private, no-store");
+}
+
 function form(title: string, action: string, fields: Array<Record<string, unknown>>, method = "POST") {
   return { title, action, method, fields };
+}
+
+export async function communitySettings(c: C) {
+  noStore(c);
+  return jsonOk(c, await settingsService(c).read());
+}
+
+export async function saveCommunitySettings(c: C) {
+  noStore(c);
+  const result = await settingsService(c).save(await boundedBody(c), settingsActor(c));
+  return jsonOk(c, result, "社区设置已保存并核验");
 }
 
 export async function allTopics(c: C) {
