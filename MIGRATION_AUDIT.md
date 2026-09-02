@@ -4010,6 +4010,48 @@ Admin `productMetadata.ts` 新接八个现有合同：规格模板的列表、�
 
 本批没有连接Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或改写生产PostgreSQL，没有执行DDL/DML、Queue、R2或第三方调用，也没有部署Worker/Admin Pages。FE-001E5B3与E5B父项只标记“候选完成，未发布”；非平台SKU生命周期、真实主管理员与受限角色、生产历史商品、生产DDL/回滚演练、预发发布和观察仍归E6及发布门禁。
 
+## FE-001-D1 内容域13屏逐项审计与社区设置（2026-09-02）
+
+### 逐屏分母与结论
+
+旧 Admin 实际导入的 `router/modules/content.js` 只有13条活跃业务路由：社区5条、CMS文章3条、小程序直播5条。新 Admin 则将它们聚合到 `/community`、`/content/article` 和 `/marketing/live` 三个页面。聚合页存在不等于其中每个旧操作都存在，因此本轮新增 `audit/admin-legacy-content-route-parity.json`，逐条记录旧路径、旧组件、candidate/partial/missing、新页面、新API、权限、已覆盖和剩余缺口；测试固定13条分母及5/5/3统计，禁止以后仅按标题抬高覆盖率。
+
+| 旧屏幕 | 状态 | 新操作面 | 主要未完成项 |
+|---|---|---|---|
+| 社区话题 | candidate | `/community#topics` | 生产历史数据与真实角色E2E |
+| 社区内容 | candidate | `/community#posts` | 生产历史数据与真实角色E2E |
+| 添加/编辑社区内容 | candidate | `/community#posts` | 生产媒体URL及创建/编辑E2E |
+| 社区评论 | candidate | `/community#comments` | 生产评论树与真实角色E2E |
+| 社区设置 | candidate | `/community#settings` | 生产重复行清理及读写回读E2E |
+| 文章管理 | partial | `/content/article` | 分类、封面、摘要、分页、排序与完整动作 |
+| 文章分类 | missing | 无 | 分类层级、CRUD、引用保护与权限 |
+| 文章添加/编辑 | partial | `/content/article` | 分类、封面、摘要、富文本UI、URL、关联商品 |
+| 直播间管理 | partial | `/marketing/live#rooms` | 远端创建/编辑/删除、显隐、回放与商品关联 |
+| 新增直播间 | missing | 无 | 提供商写合同、幂等、持久编排、对账与回滚 |
+| 直播商品管理 | partial | `/marketing/live#goods` | 远端创建/编辑/删除、重审、显隐与房间关联 |
+| 新增直播商品 | missing | 无 | 提供商写合同、幂等、持久编排、对账与回滚 |
+| 主播管理 | partial | `/marketing/live#anchors` | 创建/编辑/删除、角色同步与显隐写入 |
+
+统计为candidate 5、partial 5、missing 3、retired 0。直播目录只计入可执行的本地只读目录与Queue分发的远端状态读取；页面自身明确提示微信外部写操作尚未迁移，所以新增直播间、直播商品两屏保持missing，目录和主播保持partial。文章页目前只有标题、作者、正文和状态的紧凑CRUD，不能冒充旧分类、富文本、封面、摘要及关系能力。
+
+### 社区设置缺口与安全保存合同
+
+旧社区设置实际管理六个 `system_config` 键：`community_status`、`community_verify`、`community_video_verify`、`community_comment_status`、`community_comment_add`、`community_comment_verify`。迁移前公开Worker已读取这些键，新Admin却没有设置操作面，形成“运行时依赖已迁、运营入口丢失”的真实缺口。
+
+新专用服务只接受完整六键对象及布尔/0/1值，未知、缺失或其他数值一律拒绝；控制器继续使用16 KiB流式有界JSON，不接回可任意整表改写配置的通用接口。GET要求 `community.view`，POST要求 `community.manage`，响应使用 `private, no-store`。读操作按现有 `SystemConfigDao` 的高sort/新id优先级返回有效值，同时显式报告缺失键与重复键。
+
+保存事务设置2秒锁等待、5秒语句上限，取得社区设置advisory lock后锁住全部现有配置行。缺失键按白名单元数据创建；任何键出现重复历史行则失败关闭并要求先执行DB-003清理，不静默选择或批量覆盖。写入后在同一事务重新读取六键，缺行、多行或任一值不一致都会整体回滚；同事务写入一条不含请求正文的管理员日志，只有完整回读后返回 `verified=true`。提交成功后等待删除六个 `cfg_*` KV缓存键，避免数据库已更新而用户端继续读取30分钟旧值；缓存失效失败会让请求明确失败，管理员可安全重试同一收敛写入。
+
+### Admin操作面、浏览器证据与门禁
+
+`/community` 新增“社区设置”页签，逐项展示社区总开关、图文审核、视频审核、评论展示、评论发布和评论审核。缺失历史键会提示首次保存时创建；发现重复键时开关与保存按钮停用并显示清理原因。只有 `community.manage` 或超级管理员可操作，保存响应没有 `verified=true` 时页面不提示成功。
+
+应用内浏览器在 `http://127.0.0.1:4175/community?preview=1` 验证页面标题“社区运营 - CinaShop 管理后台”、非空DOM、无Vite遮罩和0条warning/error；桌面页签显示完整两列六开关。实际把“启用社区”由开切为关并点击保存，页面出现“社区设置已保存并生效”。390×844下六个设置项转为单列，正文、body和视口宽度均为390，没有页面级横向溢出；首屏保存按钮和前三项完整可操作，其余三项在正常纵向滚动内。临时视口、标签页和本地服务均已恢复/关闭。前端测试调试规范直接要求了生产构建、页面身份、非空DOM、遮罩、日志、截图、真实交互与双视口证据，因此本项没有用“构建成功”替代渲染验收。
+
+本地完整Worker单元202文件/1,284项、单元与运行时TypeScript、Admin 2,427模块生产构建全部通过。Admin静态请求推进为316个调用点、336个路径变体，336条全部注册且可执行，未注册、未解析和受控不可用均为0；全局路由为PHP 1,904 / TS 1,573 / 精确匹配849 / 可执行831 / 受控不可用18 / 缺失1,055 / 退役16 / 可执行缺口1,039。schema仍为源201、目标263、共享201、源字段缺口0，外部/Worker迁移表均263且定义漂移0；observability为17类信号、10个组件、53个必需事件、425个生产源码文件。精确实现提交 `9ad50534f10cc1bb21f5fe68e0d7b9a50ec99a96` 推送后，[Actions `33628399986`](https://github.com/cinagroup/cinashop/actions/runs/33628399986) 的Linux workerd、Worker双TypeScript/1,284项单元/schema/route/observability、Admin/PC/Supplier/Kefu/UniApp五端、生产依赖与全历史Gitleaks共8/8成功。
+
+本批没有连接Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或改写生产PostgreSQL，没有执行DDL/DML、Queue、R2或第三方调用，也没有部署Worker/Admin Pages。FE-001D1与社区设置只标记“候选完成，未发布”；生产重复配置审计/清理、主管理员与只读/编辑受限角色、真实历史社区数据和发布观察仍归DB-003、FE-001G/H。FE-001D父项继续被其余261条旧业务路由逐屏映射阻塞。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
