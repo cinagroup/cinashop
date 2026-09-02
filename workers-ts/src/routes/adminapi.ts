@@ -39,6 +39,7 @@ import * as AdminCapitalFlow from "@/controllers/api/v1/AdminCapitalFlowControll
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
 import * as ProductExperienceController from "@/controllers/api/v1/ProductExperienceController";
+import * as AdminProductWords from "@/controllers/api/v1/AdminProductWordsController";
 import * as CustomerServiceCatalogController from "@/controllers/api/v1/CustomerServiceCatalogController";
 import * as PromoterApplicationController from "@/controllers/api/v1/PromoterApplicationController";
 import * as SupplierApplicationController from "@/controllers/api/v1/SupplierApplicationController";
@@ -268,6 +269,16 @@ adminapiRoutes.get("/specs", adminAuth, AdminCrud.adminProductSpecsList);
 adminapiRoutes.get("/specs/:id", adminAuth, AdminCrud.adminProductSpecsDetail);
 adminapiRoutes.post("/specs/:id", adminAuth, AdminCrud.adminProductSpecsSave);
 adminapiRoutes.delete("/specs/:id", adminAuth, AdminCrud.adminProductSpecsDelete);
+adminapiRoutes.get("/product/words", adminAuth, AdminProductWords.list);
+adminapiRoutes.get("/product/words/get_all", adminAuth, AdminProductWords.all);
+adminapiRoutes.get("/product/words/:id", adminAuth, AdminProductWords.detail);
+adminapiRoutes.post("/product/words/:id", adminAuth, AdminProductWords.save);
+adminapiRoutes.put(
+  "/product/words/set_show/:id/:is_show",
+  adminAuth,
+  AdminProductWords.setShow,
+);
+adminapiRoutes.delete("/product/words/:id", adminAuth, AdminProductWords.remove);
 
 // ─── 订单管理 ───────────────────────────────────────────────
 adminapiRoutes.get("/order/list", adminAuth, AdminCrud.adminOrderList);

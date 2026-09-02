@@ -3,7 +3,7 @@
     <div class="page-head">
       <div>
         <h2>商品基础资料</h2>
-        <p>分别维护计量单位、保障服务、SKU 规格模板与商品参数模板，避免混用旧字段语义。</p>
+        <p>统一维护计量单位、保障服务、两类商品模板与平台搜索热词，避免混用旧字段语义。</p>
       </div>
       <el-button @click="$router.push('/product')">返回商品</el-button>
     </div>
@@ -125,6 +125,37 @@
           <el-empty v-if="!parameterLoading && !parameterTemplates.length" description="暂无商品参数模板" />
           <el-pagination v-model:current-page="parameterQuery.page" :page-size="parameterQuery.limit" :total="parameterTotal" layout="total, prev, pager, next" @current-change="loadParameterTemplates" />
         </el-tab-pane>
+
+        <el-tab-pane label="搜索热词" name="words">
+          <div class="semantic-note">这里只管理平台热词；供应商热词不会被读取或改写。隐藏或删除后，商城搜索页会立即停止展示。</div>
+          <div class="toolbar">
+            <el-input v-model="wordQuery.name" clearable maxlength="15" placeholder="搜索热词" @keyup.enter="searchWords" />
+            <el-button type="primary" @click="openWord()">新增热词</el-button>
+          </div>
+          <div class="table-scroll">
+            <el-table :data="words" v-loading="wordLoading" min-width="820">
+              <el-table-column label="展示效果" min-width="170">
+                <template #default="{ row }">
+                  <span class="word-preview" :style="wordPreviewStyle(row)">
+                    <img v-if="row.icon" :src="row.icon" alt="" />{{ row.name }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="name" label="热词名称" min-width="150" />
+              <el-table-column label="大家都在搜" width="120"><template #default="{ row }"><el-tag :type="row.is_search ? 'success' : 'info'">{{ row.is_search ? "是" : "否" }}</el-tag></template></el-table-column>
+              <el-table-column prop="sort" label="排序" width="80" />
+              <el-table-column label="显示" width="90"><template #default="{ row }"><el-switch :model-value="row.is_show" :active-value="1" :inactive-value="0" @change="setWordStatus(row, Number($event))" /></template></el-table-column>
+              <el-table-column label="操作" width="150" fixed="right">
+                <template #default="{ row }">
+                  <el-button link type="primary" @click="openWord(row)">编辑</el-button>
+                  <el-button link type="danger" @click="deleteWord(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <el-empty v-if="!wordLoading && !words.length" description="暂无搜索热词" />
+          <el-pagination v-model:current-page="wordQuery.page" :page-size="wordQuery.limit" :total="wordTotal" layout="total, prev, pager, next" @current-change="loadWords" />
+        </el-tab-pane>
       </el-tabs>
     </el-card>
 
@@ -181,6 +212,23 @@
       </el-form>
       <template #footer><el-button @click="parameterDialog = false">取消</el-button><el-button type="primary" :loading="saving" @click="saveParameterTemplate">保存模板</el-button></template>
     </el-dialog>
+
+    <el-dialog v-model="wordDialog" :title="wordForm.id ? '编辑搜索热词' : '新增搜索热词'" width="min(600px, 94vw)">
+      <el-form label-width="104px">
+        <el-form-item label="热词名称" required><el-input v-model="wordForm.name" maxlength="15" show-word-limit placeholder="例如：新品上市" /></el-form-item>
+        <div class="color-grid">
+          <el-form-item label="文字颜色"><el-color-picker v-model="wordForm.color" show-alpha /></el-form-item>
+          <el-form-item label="背景颜色"><el-color-picker v-model="wordForm.bg_color" show-alpha /></el-form-item>
+          <el-form-item label="边框颜色"><el-color-picker v-model="wordForm.border_color" show-alpha /></el-form-item>
+        </div>
+        <el-form-item label="图标地址"><el-input v-model="wordForm.icon" maxlength="128" placeholder="可留空；HTTPS 或站内绝对路径" /></el-form-item>
+        <el-form-item label="排序"><el-input-number v-model="wordForm.sort" :min="0" :max="999" /></el-form-item>
+        <el-form-item label="大家都在搜"><el-switch v-model="wordForm.is_search" :active-value="1" :inactive-value="0" /></el-form-item>
+        <el-form-item label="商城显示"><el-switch v-model="wordForm.is_show" :active-value="1" :inactive-value="0" /></el-form-item>
+      </el-form>
+      <div class="dialog-preview"><span>预览</span><span class="word-preview" :style="wordPreviewStyle(wordForm)"><img v-if="wordForm.icon" :src="wordForm.icon" alt="" />{{ wordForm.name || "搜索热词" }}</span></div>
+      <template #footer><el-button @click="wordDialog = false">取消</el-button><el-button type="primary" :loading="saving" @click="saveWord">保存热词</el-button></template>
+    </el-dialog>
   </div>
 </template>
 
@@ -192,8 +240,9 @@ import {
   apiProductParameterTemplateDelete, apiProductParameterTemplateDetail, apiProductParameterTemplateList, apiProductParameterTemplateSave,
   apiProductRuleDelete, apiProductRuleDetail, apiProductRuleList, apiProductRuleSave,
   apiProductUnitDelete, apiProductUnitList, apiProductUnitSave,
+  apiProductWordDelete, apiProductWordList, apiProductWordSave, apiProductWordStatus,
   type ProductEnsure, type ProductParameter, type ProductParameterTemplate,
-  type ProductRuleDimension, type ProductRuleTemplate, type ProductUnit,
+  type ProductRuleDimension, type ProductRuleTemplate, type ProductUnit, type ProductWord,
 } from "@/api/productMetadata";
 
 const activeTab = ref("units");
@@ -201,29 +250,36 @@ const units = ref<ProductUnit[]>([]);
 const ensures = ref<ProductEnsure[]>([]);
 const rules = ref<ProductRuleTemplate[]>([]);
 const parameterTemplates = ref<ProductParameterTemplate[]>([]);
+const words = ref<ProductWord[]>([]);
 const unitLoading = ref(false);
 const ensureLoading = ref(false);
 const ruleLoading = ref(false);
 const parameterLoading = ref(false);
+const wordLoading = ref(false);
 const saving = ref(false);
 const unitTotal = ref(0);
 const ensureTotal = ref(0);
 const ruleTotal = ref(0);
 const parameterTotal = ref(0);
+const wordTotal = ref(0);
 const unitQuery = reactive({ page: 1, limit: 20, name: "" });
 const ensureQuery = reactive({ page: 1, limit: 20, name: "" });
 const ruleQuery = reactive({ page: 1, limit: 20, rule_name: "" });
 const parameterQuery = reactive({ page: 1, limit: 20, name: "" });
+const wordQuery = reactive({ page: 1, limit: 20, name: "" });
 const unitDialog = ref(false);
 const ensureDialog = ref(false);
 const ruleDialog = ref(false);
 const parameterDialog = ref(false);
+const wordDialog = ref(false);
 const unitForm = reactive({ id: 0, name: "", sort: 0 });
 const ensureForm = reactive({ id: 0, name: "", image: "", desc: "", sort: 0, status: 1 });
 const blankDimension = (): ProductRuleDimension => ({ value: "", detail: [] });
 const ruleForm = reactive<{ id: number; rule_name: string; spec: ProductRuleDimension[] }>({ id: 0, rule_name: "", spec: [blankDimension()] });
 const blankParameter = (): ProductParameter => ({ name: "", value: "", sort: 0, status: 1 });
 const parameterForm = reactive<{ id: number; name: string; sort: number; specs: ProductParameter[] }>({ id: 0, name: "", sort: 0, specs: [blankParameter()] });
+const emptyWord = () => ({ id: 0, name: "", color: "#303133", bg_color: "#ffffff", border_color: "#dcdfe6", icon: "", sort: 0, is_search: 1, is_show: 1 });
+const wordForm = reactive(emptyWord());
 
 async function loadUnits() {
   unitLoading.value = true;
@@ -249,10 +305,17 @@ async function loadParameterTemplates() {
   catch (error) { ElMessage.error(error instanceof Error ? error.message : "参数模板加载失败"); }
   finally { parameterLoading.value = false; }
 }
+async function loadWords() {
+  wordLoading.value = true;
+  try { const result = await apiProductWordList(wordQuery); words.value = result.list; wordTotal.value = result.count; }
+  catch (error) { ElMessage.error(error instanceof Error ? error.message : "搜索热词加载失败"); }
+  finally { wordLoading.value = false; }
+}
 function searchUnits() { unitQuery.page = 1; void loadUnits(); }
 function searchEnsures() { ensureQuery.page = 1; void loadEnsures(); }
 function searchRules() { ruleQuery.page = 1; void loadRules(); }
 function searchParameterTemplates() { parameterQuery.page = 1; void loadParameterTemplates(); }
+function searchWords() { wordQuery.page = 1; void loadWords(); }
 
 function openUnit(row?: ProductUnit) {
   Object.assign(unitForm, row ? { id: row.id, name: row.name, sort: row.sort } : { id: 0, name: "", sort: 0 });
@@ -379,7 +442,67 @@ async function deleteParameterTemplate(row: ProductParameterTemplate) {
   catch (error) { ElMessage.error(error instanceof Error ? error.message : "参数模板删除失败"); }
 }
 
-onMounted(() => void Promise.all([loadUnits(), loadEnsures(), loadRules(), loadParameterTemplates()]));
+function wordPreviewStyle(row: Pick<ProductWord, "color" | "bg_color" | "border_color"> | typeof wordForm) {
+  return {
+    color: row.color || undefined,
+    backgroundColor: row.bg_color || undefined,
+    borderColor: row.border_color || undefined,
+  };
+}
+function openWord(row?: ProductWord) {
+  Object.assign(wordForm, row ? {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    bg_color: row.bg_color,
+    border_color: row.border_color,
+    icon: row.icon,
+    sort: row.sort,
+    is_search: row.is_search,
+    is_show: row.is_show,
+  } : emptyWord());
+  wordDialog.value = true;
+}
+async function saveWord() {
+  const name = wordForm.name.trim();
+  if (!name) return ElMessage.warning("请填写热词名称");
+  saving.value = true;
+  try {
+    await apiProductWordSave(wordForm.id, {
+      name,
+      color: wordForm.color || "",
+      bg_color: wordForm.bg_color || "",
+      border_color: wordForm.border_color || "",
+      icon: wordForm.icon.trim(),
+      sort: wordForm.sort,
+      is_search: wordForm.is_search,
+      is_show: wordForm.is_show,
+    });
+    wordDialog.value = false;
+    ElMessage.success(wordForm.id ? "搜索热词已更新" : "搜索热词已创建");
+    await loadWords();
+  } catch (error) { ElMessage.error(error instanceof Error ? error.message : "搜索热词保存失败"); }
+  finally { saving.value = false; }
+}
+async function setWordStatus(row: ProductWord, isShow: number) {
+  try {
+    await apiProductWordStatus(row.id, isShow);
+    row.is_show = isShow;
+    ElMessage.success(isShow ? "热词已显示" : "热词已隐藏");
+  } catch (error) { ElMessage.error(error instanceof Error ? error.message : "热词状态更新失败"); }
+}
+async function deleteWord(row: ProductWord) {
+  try { await ElMessageBox.confirm(`确认删除搜索热词「${row.name}」？删除后不会在商城展示。`, "删除搜索热词", { type: "warning" }); }
+  catch { return; }
+  try {
+    await apiProductWordDelete(row.id);
+    ElMessage.success("搜索热词已删除");
+    if (words.value.length === 1 && wordQuery.page > 1) wordQuery.page -= 1;
+    await loadWords();
+  } catch (error) { ElMessage.error(error instanceof Error ? error.message : "搜索热词删除失败"); }
+}
+
+onMounted(() => void Promise.all([loadUnits(), loadEnsures(), loadRules(), loadParameterTemplates(), loadWords()]));
 </script>
 
 <style scoped>
@@ -403,6 +526,11 @@ onMounted(() => void Promise.all([loadUnits(), loadEnsures(), loadRules(), loadP
 .dimension-row .el-select { width: 100%; }
 .parameter-basics { display: grid; grid-template-columns: 1fr 150px; gap: 16px; }
 .parameter-row { display: grid; grid-template-columns: 1fr 1.4fr 120px 48px 64px; align-items: center; gap: 10px; margin-bottom: 10px; }
+.word-preview { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 5px 10px; border: 1px solid #dcdfe6; border-radius: 999px; overflow: hidden; }
+.word-preview img { width: 16px; height: 16px; object-fit: contain; }
+.color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.color-grid .el-form-item { margin-right: 0; }
+.dialog-preview { display: flex; align-items: center; gap: 12px; margin: 4px 0 0 104px; color: #667085; }
 @media (max-width: 720px) {
   .page-head { align-items: flex-start; }
   .page-head p { font-size: 13px; }
@@ -416,5 +544,7 @@ onMounted(() => void Promise.all([loadUnits(), loadEnsures(), loadRules(), loadP
   .parameter-row > :nth-child(2), .parameter-row > :nth-child(3) { grid-column: 1 / -1; }
   .parameter-row > :nth-child(4) { grid-column: 1; }
   .parameter-row > :nth-child(5) { grid-column: 2; grid-row: 1; }
+  .color-grid { grid-template-columns: 1fr; }
+  .dialog-preview { margin-left: 0; }
 }
 </style>

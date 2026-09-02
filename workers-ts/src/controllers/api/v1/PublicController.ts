@@ -12,6 +12,7 @@ import { V2PublicCompatibilityService } from "@/services/content/V2PublicCompati
 import { jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
+import { ProductWordsService } from "@/services/product/ProductWordsService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
 
@@ -43,32 +44,7 @@ export async function getCopyright(c: C) {
 
 /** GET /api/search/hot_keyword — 热门搜索词 */
 export async function hotKeywords(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { storeProductWords } = await import("@/models/schema");
-  try {
-    const rows = await container.db
-      .select()
-      .from(storeProductWords)
-      .where(
-        sql`${storeProductWords.isShow} = 1 AND ${storeProductWords.isHot} = 1`,
-      )
-      .orderBy(sql`${storeProductWords.sort} DESC, ${storeProductWords.addTime} DESC`)
-      .limit(20);
-    return jsonOk(
-      c,
-      rows.map((r) => ({
-        keyword: r.name,
-        color: r.color,
-        bg_color: r.bgColor,
-        border_color: r.borderColor,
-        icon: r.icon,
-      })),
-    );
-  } catch {
-    // 表不存在时返回空
-    return jsonOk(c, []);
-  }
+  return jsonOk(c, await new ProductWordsService(c.get("container")).publicKeywords());
 }
 
 /** GET /api/search/keyword — 关键词联想 (商品名模糊匹配) */

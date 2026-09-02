@@ -48,6 +48,19 @@ export interface ProductParameterTemplate {
   specs: ProductParameter[];
 }
 
+export interface ProductWord {
+  id: number;
+  name: string;
+  color: string;
+  bg_color: string;
+  border_color: string;
+  icon: string;
+  is_show: number;
+  sort: number;
+  is_search: number;
+  add_time: number;
+}
+
 export interface PagedResult<T> {
   list: T[];
   count: number;
@@ -116,6 +129,32 @@ let previewParameterTemplates: ProductParameterTemplate[] = [
       { id: 1, name: "材质", value: "棉", sort: 30, status: 1 },
       { id: 2, name: "适用季节", value: "四季", sort: 20, status: 1 },
     ],
+  },
+];
+let previewWords: ProductWord[] = [
+  {
+    id: 1,
+    name: "新品上市",
+    color: "#ffffff",
+    bg_color: "#409eff",
+    border_color: "#337ecc",
+    icon: "",
+    is_show: 1,
+    sort: 30,
+    is_search: 1,
+    add_time: 1_788_210_500,
+  },
+  {
+    id: 2,
+    name: "限时优惠",
+    color: "#f56c6c",
+    bg_color: "#fef0f0",
+    border_color: "#fab6b6",
+    icon: "",
+    is_show: 0,
+    sort: 20,
+    is_search: 1,
+    add_time: 1_788_210_600,
   },
 ];
 
@@ -320,4 +359,49 @@ export function apiProductParameterTemplateDelete(id: number): Promise<null> {
     return Promise.resolve(null);
   }
   return getData(request.delete(`/specs/${id}`));
+}
+
+export function apiProductWordList(params: {
+  page?: number;
+  limit?: number;
+  name?: string;
+}): Promise<PagedResult<ProductWord>> {
+  if (previewMode) return Promise.resolve(previewPage(previewWords, params));
+  return getData(request.get("/product/words", { params }));
+}
+
+export function apiProductWordSave(
+  id: number,
+  data: Omit<ProductWord, "id" | "add_time">,
+): Promise<{ id: number }> {
+  if (previewMode) {
+    const nextId = id || Math.max(0, ...previewWords.map((item) => item.id)) + 1;
+    const row: ProductWord = {
+      id: nextId,
+      ...data,
+      add_time: previewWords.find((item) => item.id === id)?.add_time
+        ?? Math.floor(Date.now() / 1000),
+    };
+    previewWords = id
+      ? previewWords.map((item) => item.id === id ? row : item)
+      : [row, ...previewWords];
+    return Promise.resolve({ id: nextId });
+  }
+  return getData(request.post(`/product/words/${id}`, data));
+}
+
+export function apiProductWordStatus(id: number, isShow: number): Promise<null> {
+  if (previewMode) {
+    previewWords = previewWords.map((item) => item.id === id ? { ...item, is_show: isShow } : item);
+    return Promise.resolve(null);
+  }
+  return getData(request.put(`/product/words/set_show/${id}/${isShow}`));
+}
+
+export function apiProductWordDelete(id: number): Promise<null> {
+  if (previewMode) {
+    previewWords = previewWords.filter((item) => item.id !== id);
+    return Promise.resolve(null);
+  }
+  return getData(request.delete(`/product/words/${id}`));
 }

@@ -36,9 +36,9 @@ describe("legacy Admin product screen parity", () => {
     ]);
     expect(audit.summary).toEqual({
       legacyRoutes: 12,
-      candidate: 5,
+      candidate: 6,
       partial: 6,
-      missing: 1,
+      missing: 0,
       retired: 0,
     });
     for (const status of ["candidate", "partial", "missing", "retired"] as const) {
@@ -98,12 +98,17 @@ describe("legacy Admin product screen parity", () => {
     expect(service).toContain("await tx.insert(storeProductSpecs)");
   });
 
-  it("leaves search words explicitly missing instead of counting schema preservation as UI parity", () => {
+  it("counts search words only after owner-scoped API and responsive UI parity exist", () => {
     const hotWords = audit.routes.find((row) => row.legacyPath === "/admin/product/hotWords");
     const page = readFileSync("../view/admin-ts/src/pages/product/ProductMetadata.vue", "utf8");
     const schema = readFileSync("src/models/schema/words.ts", "utf8");
-    expect(hotWords?.status).toBe("missing");
+    const routes = readFileSync("src/routes/adminapi.ts", "utf8");
+    const service = readFileSync("src/services/product/ProductWordsService.ts", "utf8");
+    expect(hotWords?.status).toBe("candidate");
     expect(schema).toContain('"store_product_words"');
-    expect(page).not.toContain("搜索热词管理");
+    expect(page).toContain('label="搜索热词"');
+    expect(routes).toContain('get("/product/words"');
+    expect(service).toContain("platformScope()");
+    expect(service).toContain("isDel: 1, isShow: 0, isHot: 0");
   });
 });

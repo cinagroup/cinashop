@@ -23,6 +23,7 @@ import { PAYMENT_RECONCILIATION_SQL } from "@/migrations/paymentReconciliation";
 import { WECHAT_CALLBACK_PIPELINE_SQL } from "@/migrations/wechatCallbackPipeline";
 import { MERCHANT_SHIPMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/merchantShipmentCallbackPipeline";
 import { CITY_DELIVERY_CALLBACK_PIPELINE_SQL } from "@/migrations/cityDeliveryCallbackPipeline";
+import { PRODUCT_WORDS_INDEX_SQL } from "@/migrations/productWordsIndexes";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -197,6 +198,11 @@ export class MigrationService {
     return this.migration_0130();
   }
 
+  /** Exact platform search-word lookup indexes used by production verification. */
+  productWordsIndexMigrationSqlForVerification(): string {
+    return this.migration_0131();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -335,6 +341,7 @@ export class MigrationService {
       this.migration_0128(),
       this.migration_0129(),
       this.migration_0130(),
+      this.migration_0131(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8286,5 +8293,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0130(): string {
     return CITY_DELIVERY_CALLBACK_PIPELINE_SQL;
+  }
+
+  private migration_0131(): string {
+    return PRODUCT_WORDS_INDEX_SQL;
   }
 }

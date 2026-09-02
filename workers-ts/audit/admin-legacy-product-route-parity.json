@@ -9,9 +9,9 @@
   },
   "summary": {
     "legacyRoutes": 12,
-    "candidate": 5,
+    "candidate": 6,
     "partial": 6,
-    "missing": 1,
+    "missing": 0,
     "retired": 0
   },
   "routes": [
@@ -140,12 +140,12 @@
       "legacyPath": "/admin/product/hotWords",
       "legacyComponent": "pages/product/hotWords/index.vue",
       "title": "搜索热词",
-      "status": "missing",
-      "newScreens": [],
-      "newApiContracts": [],
-      "permission": "product.view / product.manage (target)",
-      "covered": "The store_product_words table is preserved by migration, but preservation is not an Admin operation surface.",
-      "remaining": "Build owner-scoped list/detail/save/delete/status services and a responsive Admin screen without reusing raw legacy controllers."
+      "status": "candidate",
+      "newScreens": ["/product/metadata#words"],
+      "newApiContracts": ["GET /adminapi/product/words", "GET /adminapi/product/words/:id", "POST /adminapi/product/words/:id", "PUT /adminapi/product/words/set_show/:id/:is_show", "DELETE /adminapi/product/words/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Platform-owner-scoped search, list, create, edit, visibility, soft delete, validated presentation fields, responsive preview, public storefront filtering, and transactional audit logs.",
+      "remaining": "Real production data CRUD, restricted-role E2E, and confirmation of historical color/icon compatibility remain open."
     }
   ]
 }

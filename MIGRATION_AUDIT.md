@@ -3817,7 +3817,7 @@ Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项
 
 ### 先固定分母，再判断语义覆盖
 
-旧 Admin 实际导入的商品路由文件只启用12条业务屏，不是按 `pages/product` 下所有文件估算。新增 `audit/admin-legacy-product-route-parity.json`，为每条旧路由固定旧组件、标题、candidate/partial/missing 状态、新页面、新 API、权限、已覆盖能力和剩余缺口。`admin-product-frontend-parity.test.ts` 固定这12条路径与5条候选、6条部分覆盖、1条缺失的状态汇总，并要求每条非缺失项都有具体页面和 API；因此以后不能因为新端存在一个“商品管理”或“商品基础资料”标题就把整域记为完成。
+旧 Admin 实际导入的商品路由文件只启用12条业务屏，不是按 `pages/product` 下所有文件估算。新增 `audit/admin-legacy-product-route-parity.json`，为每条旧路由固定旧组件、标题、candidate/partial/missing 状态、新页面、新 API、权限、已覆盖能力和剩余缺口。`admin-product-frontend-parity.test.ts` 固定这12条路径；首轮为5条候选、6条部分覆盖、1条缺失，搜索热词操作面落地后按证据推进为6/6/0。每条非缺失项都必须有具体页面和 API，因此不能因为新端存在一个“商品管理”或“商品基础资料”标题就把整域记为完成。
 
 | 旧路由/屏幕 | 当前状态 | 新端替代 | 仍缺的决定性能力 |
 | --- | --- | --- | --- |
@@ -3832,7 +3832,7 @@ Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项
 | `specs` 商品参数 | candidate | `/product/metadata` 的参数模板页签 | 商品表单套用与历史数据 E2E |
 | `ensure` 保障服务 | candidate | `/product/metadata` 的保障页签 | 商品保障选择与关系持久化 E2E |
 | `ensure/create/:id?` 参数模板编辑 | candidate | 合并到参数模板弹窗 | 生产历史模板编辑保存 E2E |
-| `hotWords` 搜索热词 | missing | 无 | 平台作用域安全服务、CRUD/显隐/删除和响应式页面 |
+| `hotWords` 搜索热词 | candidate | `/product/metadata` 的搜索热词页签 | 生产历史数据、受限角色与颜色/图标兼容 E2E |
 
 其中最重要的语义纠偏是旧 `/admin/product/ensure/create/:id?` 虽然路径写着 `ensure`，实际组件是 `specsAdd/index.vue`，提交的是 `product/specs/:id`；它是商品参数模板编辑，不是保障模板。旧 `productAttr` 才维护 `store_product_rule.rule_value` 中的颜色、尺码等 SKU 组合维度。新页面把两者分别命名为“SKU规格模板”和“商品参数模板”，顶部说明前者参与 SKU 结构、后者只描述材质/产地等属性，避免继续复制旧路由命名错误。
 
@@ -3846,7 +3846,25 @@ Admin `productMetadata.ts` 新接八个现有合同：规格模板的列表、�
 
 应用内浏览器在本地 `preview=1` 下验证四页签可达。桌面端 SKU模板正确展示“服装颜色尺码”的颜色/尺码和值，编辑弹窗回填两个维度；参数模板正确展示材质/季节摘要，编辑弹窗从2项动态增加到3项。390×844下 `innerWidth/document/body scrollWidth` 都是390，内容卡片306px，表格只在卡片内滚动，没有页面级横向溢出或 Vite错误遮罩；完成后视口、标签页和本地服务均已恢复/关闭。
 
-本批没有连接 Hyperdrive、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、Worker或 Pages部署。FE-001E只关闭12屏审计和两类模板目录两个子项；保障/品牌/标签/参数的商品保存关系、搜索热词、规格套用和SKU全流程、批量运营、真实角色/数据 E2E 继续保留在 checklist，父项不标完成。
+本批没有连接 Hyperdrive、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、Worker或 Pages部署。FE-001E先关闭12屏审计和两类模板目录；随后搜索热词操作面另批收口。保障/品牌/标签/参数的商品保存关系、规格套用和SKU全流程、批量运营、真实角色/数据 E2E 继续保留在 checklist，父项不标完成。
+
+## FE-001-E4 平台搜索热词安全操作面（2026-09-02）
+
+### 迁移审计先纠正旧端与现端的双重边界问题
+
+旧 Admin 的列表会补 `type=0/relation_id=0/is_del=0`，但“获取全部”、详情、更新、显隐和删除均按裸 ID 或只按 `is_show/is_del` 查询：Supplier 热词可能被平台读到或改写，删除还是物理删除；重名检查也漏掉 `relation_id`，列表更把每条真实 `add_time` 伪装为请求当下时间。旧校验调用 `scene('get')`，而校验器定义的是 `save` scene，名称长度规则并不可靠执行。当前 Worker 公开 `/search/hot_keyword` 又只按 `is_show=1/is_hot=1` 过滤，既遗漏旧接口实际展示的普通可见热词，也没有限制平台 owner 与 `is_del=0`，因此不能通过简单恢复旧控制器完成迁移。
+
+新 `ProductWordsService` 把管理端与公开端统一到平台 `(type=0, relation_id=0)` 权威边界。管理列表、全部、详情和每个写操作均要求有效未删除记录；删除改为 `is_del=1/is_show=0/is_hot=0` 的可审计软删除。热词名称按 Unicode 字符限制1～15，颜色只接受安全的十六进制、RGB/RGBA或透明值，图标只接受 HTTPS 或站内绝对路径且最长128字符，排序限制0～999，所有开关只能为0/1。请求体最多8 KiB，Admin 响应为 `private, no-store`。
+
+新增、编辑、显隐、删除在同一平台作用域 advisory lock 下执行短事务；重名判断包含 owner、有效状态和大小写归一，更新必须回读受影响 ID。每次成功写入与 `system_log` 审计位于同一事务，日志只记录动作和目标 ID，不复制用户输入正文。公开商城读取只返回最多20条平台可见、未删除记录，并保留现有前端需要的 `keyword` 字段；数据库增加平台 owner/有效排序与公开可见的两个精确索引，外部 SQL `0125` 与 Worker 内嵌 `migration_0131` 保持逐字一致。
+
+### 页面、合同与验证边界
+
+`/product/metadata` 增加第五个“搜索热词”页签：支持搜索、分页、样式预览、新增、编辑、显隐与删除确认；文字/背景/边框颜色支持透明度，图标可留空。历史库中不符合新安全格式的颜色或图标只在响应时降级为空，不改写原行，也不继续输出到商城或 Admin 图片地址。前端新增4个静态请求调用点，Admin API 权威报告从305/325推进到309个调用点、329个路径变体，329条全部已注册且可执行，未注册、无法解析和受控不可用命中均为0。旧商品12屏审计由5条候选/6条部分/1条缺失推进为6/6/0，但 candidate仍只表示候选操作面存在，不能替代生产 E2E。全局静态路由审计同步推进为 PHP 1,904 / TS 1,565 / 精确匹配848 / 可执行匹配830 / 受控不可用18 / 缺失1,056 / 退役16 / 可执行缺口1,040。
+
+本地商品专项4文件/19项、跨迁移/API门禁4文件/44项和完整 Worker 单元198文件/1,258项均通过，Worker 单元与运行时 TypeScript通过，Admin生产构建通过2,427个模块。本地预览在桌面完成新增“秋季精选”并回读列表；390×844 下 `innerWidth/document/body scrollWidth=390/390/390`、卡片306px、搜索热词页签保持激活、无 Vite遮罩和浏览器 warning/error，视口、标签页和服务均已恢复/关闭。Windows `workerd` 在业务测试启动前连续两次宿主访问冲突，运行时0项执行；该结果与1,258项业务单元分开记录，Linux真实运行时仍必须由本提交 CI门禁确认。
+
+此次没有连接 Hyperdrive，没有读取或改写生产业务行，没有执行 `0125` DDL，没有部署 Worker/Pages，也没有调用第三方服务。生产历史热词的颜色/图标兼容、主管理员与只读/编辑受限角色流程、真实商城展示和迁移索引执行仍归 FE-001E6/发布门禁；FE-001E父项保持未完成。
 
 ## 完成定义
 
