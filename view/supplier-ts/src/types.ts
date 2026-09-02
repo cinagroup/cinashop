@@ -394,8 +394,6 @@ export interface SupplierProfile {
   is_show: number;
   mark: string;
   account: string;
-  pwd: string;
-  conf_pwd?: string;
 }
 
 export interface SupplierConfigField {

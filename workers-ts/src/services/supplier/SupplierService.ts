@@ -83,15 +83,13 @@ export interface SupplierProfileInput {
   street?: number;
   detailedAddress?: string;
   account?: string;
-  password?: string;
 }
 
 export function normalizeSupplierProfileInput(input: Record<string, unknown>): SupplierProfileInput {
   const password = optionalString(input, "pwd", 72);
   const confirmPassword = optionalString(input, "conf_pwd", 72);
-  if (password !== undefined && password.length > 0) {
-    if (password.length < 12) throw new ValidateException("密码至少需要 12 位");
-    if (password !== confirmPassword) throw new ValidateException("两次输入的密码不一致");
+  if ((password?.length ?? 0) > 0 || (confirmPassword?.length ?? 0) > 0) {
+    throw new ValidateException("请通过修改密码功能更改登录密码");
   }
 
   const email = optionalString(input, "email", 50);
@@ -116,8 +114,31 @@ export function normalizeSupplierProfileInput(input: Record<string, unknown>): S
     street: optionalInteger(input, "street"),
     detailedAddress: optionalString(input, "detailed_address", 255),
     account: optionalString(input, "account", 32),
-    password: password || undefined,
   };
+}
+
+export interface SupplierPasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export function normalizeSupplierPasswordInput(input: Record<string, unknown>): SupplierPasswordInput {
+  const passwordValue = (key: string): string => {
+    const value = input[key];
+    if (value === undefined || value === null) return "";
+    if (typeof value !== "string") throw new ValidateException(`${key} 格式错误`);
+    if (value.length > 72) throw new ValidateException(`${key} 长度不能超过 72`);
+    return value;
+  };
+  const currentPassword = passwordValue("pwd");
+  const newPassword = passwordValue("new_pwd");
+  const confirmPassword = passwordValue("conf_pwd");
+  if (!currentPassword) throw new ValidateException("请输入原密码");
+  if (!newPassword) throw new ValidateException("请输入新密码");
+  if (newPassword.length < 12) throw new ValidateException("新密码至少需要 12 位");
+  if (newPassword !== confirmPassword) throw new ValidateException("两次输入的密码不一致");
+  if (newPassword === currentPassword) throw new ValidateException("新密码不能与原密码相同");
+  return { currentPassword, newPassword };
 }
 
 export class SupplierService {
@@ -282,11 +303,46 @@ export class SupplierService {
       if (input.account !== undefined) adminUpdate.account = input.account;
       if (input.name !== undefined) adminUpdate.realName = input.name;
       if (input.phone !== undefined) adminUpdate.phone = input.phone;
-      if (input.password) adminUpdate.pwd = await bcrypt.hash(input.password, 12);
       if (Object.keys(adminUpdate).length > 0) {
         await tx.update(systemAdmin).set(adminUpdate).where(eq(systemAdmin.id, adminId));
       }
     });
+  }
+
+  async changePassword(
+    supplierId: number,
+    adminId: number,
+    input: SupplierPasswordInput,
+  ): Promise<void> {
+    const rows = await this.container.db
+      .select({ id: systemAdmin.id, pwd: systemAdmin.pwd })
+      .from(systemAdmin)
+      .where(and(
+        eq(systemAdmin.id, adminId),
+        eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
+        eq(systemAdmin.relationId, supplierId),
+        eq(systemAdmin.status, 1),
+        eq(systemAdmin.isDel, 0),
+      ))
+      .limit(1);
+    const admin = rows[0];
+    if (!admin) throw new NotFoundException("供应商管理员不存在");
+    const valid = await bcrypt.compare(input.currentPassword, normalizeBcryptHash(admin.pwd));
+    if (!valid) throw new ValidateException("原密码错误");
+    const nextHash = await bcrypt.hash(input.newPassword, 12);
+    const updated = await this.container.db
+      .update(systemAdmin)
+      .set({ pwd: nextHash })
+      .where(and(
+        eq(systemAdmin.id, admin.id),
+        eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
+        eq(systemAdmin.relationId, supplierId),
+        eq(systemAdmin.status, 1),
+        eq(systemAdmin.isDel, 0),
+        eq(systemAdmin.pwd, admin.pwd),
+      ))
+      .returning({ id: systemAdmin.id });
+    if (!updated[0]) throw new ValidateException("密码已被其他会话修改，请重试");
   }
 
   async dashboard(supplierId: number) {

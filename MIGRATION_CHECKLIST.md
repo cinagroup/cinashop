@@ -11,9 +11,9 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 262 表；Worker 内嵌 262 表；共享源表 201、Worker 扩展 61；表/列/主键漂移 0 | 候选定义完成 |
 | 生产目标结构 | 生产现为 261 表；商家寄件三表、同城配送四表及其双 provider 约束已与候选一致，仅候选新增 `admin_user_write_replay` 尚未应用 | 寄件/同城配送结构完成；全库仍差 1 张候选表 |
-| PHP HTTP 合同 | 精确匹配 806/1,904；可执行 788；其中 18 条明确不可用、11 条有证据退役 | 精确注册 42.3%，静态可执行上限 41.4%，退役后有效覆盖 41.6% |
+| PHP HTTP 合同 | 精确匹配 818/1,904；可执行 800；其中 18 条明确不可用、11 条有证据退役 | 精确注册 43.0%，静态可执行上限 42.0%，退役后有效覆盖 42.3% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 183/183 文件、1,179/1,179 项通过；SUP-003 定向 1 文件/12 项 | 本地业务回归通过，新增 runtime 断言仍待 Linux CI |
+| Worker 单元测试 | 184/184 文件、1,183/1,183 项通过；SUP-004 定向/既有相关 3 文件、15 项 | 本地业务回归通过，当前候选 runtime 仍待 Linux CI |
 | Workers runtime | Linux workerd 15/15；Windows 启动即 `0xc0000005` | R2 视频固定长度拼接、Range 及既有 Images/R2 断言已在受支持 Linux 运行时通过，Windows 仅为本机缺陷 |
 | CI | [Actions `33524822780`](https://github.com/cinagroup/cinashop/actions/runs/33524822780) 对 `d8afeaf` 的 Worker/五端/runtime/secret scan 8/8 | SUP-003 候选与窄化 Gitleaks 误报规则已推送并通过全部门禁 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
@@ -260,7 +260,10 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [ ] **SUP-001 订单 30 条缺口**：列表筛选、导出、详情、备注、发货、拆单、核销、打印/面单、退款协同；验证供应商只能访问自身订单/明细/账本。
 - [ ] **SUP-002 商品 16 条缺口**：分类、规格、批量上下架、库存、虚拟库存与商品类型；解除“仅实物商品”限制前必须完成对应履约链。
 - [ ] **SUP-003 文件 11 条缺口（候选路由已收敛，生产只读/R2 验证与发布未完成）**：PHP 文件域 22 条权威合同中，原有 11 条已匹配；本批再实现 R2 视频分片、HTTPS 外链视频登记、固定 R2 上传能力信息和无 path 参数的分类创建表单 4 条，并对不存在的移动表单/分类 read、弱扫码令牌三路、任意 URL 图片抓取及 GET 写上传偏好 7 条建立源证据退役，当前为 15 条可执行 + 7 条退役、`actionableMissing=0`。现有列表/移动/重命名/删除/分类继续强制 `type=4 + relation_id=supplierId + module_type=1`；MP4 使用最多 100 MiB、单片 5 MiB、租户临时前缀、12 小时 Queue 清理、固定长度流式合并、canonical 签名 URL 与单 Range 206。定向 12/12、双 TypeScript、主/审计 Worker dry-run及 Linux workerd 15/15 已通过；候选提交 `1121c52`、门禁修复 `d8afeaf` 已推送，[Actions `33524822780`](https://github.com/cinagroup/cinashop/actions/runs/33524822780) 8/8 成功。生产 PostgreSQL/R2 聚合审计夹具已强制只读且不输出对象键，但因临时 `workers.dev` 会承载脱敏生产聚合而被安全门禁拒绝，须用户对该外部临时端点再次明确授权后执行；之后还需真实 Supplier 前端 MP4/分类/租户越权 E2E、主 Worker/Supplier 发布批准和发布后观察，故父项暂不勾选。
-- [ ] **SUP-004 账号/设置/首页**：admin 8、setting 5、system 4、home 2 以及密码、城市、菜单、通知；补齐供应商角色权限矩阵。
+- [ ] **SUP-004 账号/设置/首页（第一批 12 条候选完成，剩余 13 条）**：详细复核发现原清单还漏列了仍有第一方页面调用的旧 `printing` GET/PUT，因此本域初始相关可执行缺口是 25 条。当前已精确恢复密码、城市、菜单、通知 4 条、旧打印 2 条、订单来源/类型 2 条、system form/config 4 条，并纠正原已匹配 `home/header|order` 两条返回同一 dashboard 对象的语义偏差；Supplier 精确匹配由 83 提升到 95、静态覆盖 45.6%→52.2%。父项仍不完成：管理员 8 条必须先建立真实 RBAC，运费模板 5 条必须逐条强制 `type=2 + relation_id=supplierId`，之后还需生产只读、旧端 E2E、发布批准和观察。
+  - [x] **SUP-004-A 公共设置/首页兼容候选**：12 条精确路由、64 KiB 请求上限、最长 366 天聚合、Supplier 租户派生、打印 Secret 只写不回显、原密码校验/令牌失效及 Supplier TS 前端改密流程已完成；184/1,183 单元、双 TypeScript、Supplier build、路由/schema/observability、主 Worker dry-run 通过，未部署。
+  - [ ] **SUP-004-B Supplier 管理员 8 条 + RBAC**：PHP 权限服务在 `verifiAuth()` 开头直接 `return true`，且 detail/edit/update/delete/status 未逐项绑定 `admin_type=4 + relation_id`；当前 Worker 又只允许主管理员登录。须先实现角色规则解析、动作级权限、子账号登录与所有 Supplier handler 的统一授权，再恢复 CRUD，不能直接照搬旧控制器。
+  - [ ] **SUP-004-C 运费模板 5 条**：旧 PHP 只有列表明确限定 `type=2 + relation_id`，edit/delete 直接按 ID，update 也没有先锁定当前租户所有权。须新增租户化模板/区域事务服务、并发锁和跨租户负例；生产不得调用旧宽松路径。
 - [ ] **SUP-005 导出/队列/售后**：export 4、queue 5、refund 3；导出使用一次性票据，队列只传引用，售后状态机与平台一致。
 
 ## P1：Kefu `/kefuapi`

@@ -69,5 +69,7 @@ export const supplierAuthMiddleware: MiddlewareHandler<{
     name: supplier.name,
     isShow: supplier.isShow,
   });
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Pragma", "no-cache");
   await next();
 };

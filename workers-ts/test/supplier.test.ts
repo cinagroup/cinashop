@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dayRangeUtc8,
+  normalizeSupplierPasswordInput,
   normalizeSupplierProfileInput,
   parsePagination,
 } from "@/services/supplier/SupplierService";
@@ -25,33 +26,45 @@ describe("supplier migration helpers", () => {
     expect(new Date(end * 1000).toISOString()).toBe("2026-08-09T15:59:59.000Z");
   });
 
-  it("normalizes profile fields and enforces a confirmed strong password", () => {
+  it("normalizes profile fields and keeps password changes on the verified endpoint", () => {
     expect(
       normalizeSupplierProfileInput({
         supplier_name: "  测试供应商  ",
         phone: "+86 13800138000",
         email: "owner@example.com",
         province: "11",
-        pwd: "correct-horse-battery",
-        conf_pwd: "correct-horse-battery",
       }),
     ).toMatchObject({
       supplierName: "测试供应商",
       phone: "+86 13800138000",
       email: "owner@example.com",
       province: 11,
-      password: "correct-horse-battery",
     });
 
     expect(() =>
-      normalizeSupplierProfileInput({ pwd: "short", conf_pwd: "short" }),
-    ).toThrow("密码至少需要 12 位");
-    expect(() =>
       normalizeSupplierProfileInput({
         pwd: "correct-horse-battery",
-        conf_pwd: "different-password",
+        conf_pwd: "correct-horse-battery",
       }),
-    ).toThrow("两次输入的密码不一致");
+    ).toThrow("请通过修改密码功能");
+    expect(normalizeSupplierPasswordInput({
+      pwd: "current-correct-password",
+      new_pwd: "next-correct-password",
+      conf_pwd: "next-correct-password",
+    })).toEqual({
+      currentPassword: "current-correct-password",
+      newPassword: "next-correct-password",
+    });
+    expect(() => normalizeSupplierPasswordInput({
+      pwd: "current-correct-password",
+      new_pwd: "short",
+      conf_pwd: "short",
+    })).toThrow("新密码至少需要 12 位");
+    expect(() => normalizeSupplierPasswordInput({
+      pwd: "current-correct-password",
+      new_pwd: "next-correct-password",
+      conf_pwd: "different-password",
+    })).toThrow("两次输入的密码不一致");
   });
 
   it("validates fulfillment modes without accepting incomplete shipment data", () => {

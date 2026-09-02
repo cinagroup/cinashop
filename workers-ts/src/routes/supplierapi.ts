@@ -25,9 +25,15 @@ supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.get("/logout", SupplierController.logout);
 supplierapiRoutes.get("/logo", SupplierController.logo);
 supplierapiRoutes.get("/config", SupplierController.config);
+supplierapiRoutes.get("/jnotice", SupplierController.notices);
+supplierapiRoutes.get("/city", SupplierController.city);
+supplierapiRoutes.get("/menusList", SupplierController.menusList);
+supplierapiRoutes.put("/updatePwd", SupplierController.updatePassword);
 supplierapiRoutes.get("/config/edit_new_build/:type", SupplierController.storeConfigForm);
 supplierapiRoutes.get("/config/store/:type", SupplierController.storeConfigForm);
 supplierapiRoutes.post("/config", SupplierController.saveStoreConfig);
+supplierapiRoutes.get("/system/config/edit_new_build/:type", SupplierController.storeConfigForm);
+supplierapiRoutes.post("/system/config", SupplierController.saveStoreConfig);
 supplierapiRoutes.get("/supplier", SupplierController.profile);
 supplierapiRoutes.put("/supplier", SupplierController.updateProfile);
 
@@ -49,11 +55,20 @@ supplierapiRoutes.get("/file/category/:id/edit", AttachmentController.supplierCa
 supplierapiRoutes.put("/file/category/:id", AttachmentController.supplierCategoryUpdate);
 supplierapiRoutes.delete("/file/category/:id", AttachmentController.supplierCategoryDelete);
 
-supplierapiRoutes.get("/home/header", SupplierController.dashboard);
-supplierapiRoutes.get("/home/order", SupplierController.dashboard);
+supplierapiRoutes.get("/home/dashboard", SupplierController.dashboard);
+supplierapiRoutes.get("/home/header", SupplierController.homeSummary);
+supplierapiRoutes.get("/home/order", SupplierController.homeOrderChart);
+supplierapiRoutes.get("/home/order_channel", SupplierController.homeOrderChannel);
+supplierapiRoutes.get("/home/order_type", SupplierController.homeOrderType);
+
+supplierapiRoutes.get("/system/form/info/:id", SupplierController.systemFormInfo);
+supplierapiRoutes.get("/system/form/all_system_form", SupplierController.systemFormAll);
+
+supplierapiRoutes.get("/printing", SupplierController.legacyPrinting);
+supplierapiRoutes.put("/printing", SupplierController.updateLegacyPrinting);
 
 // Active receipt-printer definitions. The old /printing single-row table is
-// retained for migration only and is intentionally not a runtime authority.
+// represented through the scoped config service; it is not a second runtime authority.
 supplierapiRoutes.get("/print/list", PrintDocumentController.supplierList);
 supplierapiRoutes.get("/print/form/:id", PrintDocumentController.supplierDetail);
 supplierapiRoutes.post("/print/save/:id", PrintDocumentController.supplierSave);

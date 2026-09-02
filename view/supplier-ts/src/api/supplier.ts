@@ -295,7 +295,7 @@ export async function getDashboard(): Promise<DashboardStats> {
       ],
     };
   }
-  return apiRequest<DashboardStats>({ method: "GET", url: "/home/header" });
+  return apiRequest<DashboardStats>({ method: "GET", url: "/home/dashboard" });
 }
 
 export async function getProducts(params: Record<string, string | number>): Promise<PageResult<ProductRow>> {
@@ -697,8 +697,6 @@ export async function getProfile(): Promise<SupplierProfile> {
       is_show: 1,
       mark: "",
       account: "supplier-demo",
-      pwd: "",
-      conf_pwd: "",
     };
   }
   return apiRequest<SupplierProfile>({ method: "GET", url: "/supplier" });
@@ -707,6 +705,11 @@ export async function getProfile(): Promise<SupplierProfile> {
 export async function updateProfile(profile: SupplierProfile) {
   if (previewMode) return null;
   return apiRequest<null>({ method: "PUT", url: "/supplier", data: profile });
+}
+
+export async function updatePassword(input: { pwd: string; new_pwd: string; conf_pwd: string }) {
+  if (previewMode) return null;
+  return apiRequest<null>({ method: "PUT", url: "/updatePwd", data: input });
 }
 
 export async function getStoreConfig(type = "third"): Promise<SupplierConfigView> {

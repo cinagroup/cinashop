@@ -198,6 +198,60 @@ export function buildSupplierConfigView(group: string, rows: readonly StoredConf
   };
 }
 
+const LEGACY_PRINTER_INPUT_KEYS = new Set([
+  "id",
+  "supplier_id",
+  "status",
+  "develop_id",
+  "api_key",
+  "client_id",
+  "terminal_number",
+]);
+
+export function normalizeLegacyPrinterConfigInput(input: unknown): Record<string, unknown> {
+  const body = objectValue(input);
+  const unexpected = Object.keys(body).find((key) => !LEGACY_PRINTER_INPUT_KEYS.has(key));
+  if (unexpected) throw new ValidateException(`不支持的小票打印配置项：${unexpected}`);
+  return {
+    ...(Object.prototype.hasOwnProperty.call(body, "status")
+      ? { store_pay_success_printing_switch: body.status }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(body, "develop_id")
+      ? { store_develop_id: body.develop_id }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(body, "api_key")
+      ? { store_printing_api_key: body.api_key }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(body, "client_id")
+      ? { store_printing_client_id: body.client_id }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(body, "terminal_number")
+      ? { store_terminal_number: body.terminal_number }
+      : {}),
+  };
+}
+
+export function buildLegacyPrinterConfigView(
+  supplierId: number,
+  view: ReturnType<typeof buildSupplierConfigView>,
+) {
+  const fields = new Map(
+    view.groups.flatMap((group) => group.fields).map((field) => [field.key, field]),
+  );
+  const value = (key: string): string | number => fields.get(key)?.value ?? "";
+  return {
+    id: 0,
+    supplier_id: supplierId,
+    status: Number(value("store_pay_success_printing_switch")) === 1 ? 1 : 0,
+    develop_id: value("store_develop_id"),
+    // Stored printer secrets are intentionally write-only. An empty submission
+    // is interpreted as "preserve" by saveSupplierConfig.
+    api_key: "",
+    client_id: value("store_printing_client_id"),
+    terminal_number: value("store_terminal_number"),
+  };
+}
+
 export class StoreScopedConfigService {
   constructor(private readonly container: Container) {}
 
@@ -271,5 +325,16 @@ export class StoreScopedConfigService {
       if (inserts.length) await tx.insert(storeConfig).values(inserts);
       return { updated: changed };
     });
+  }
+
+  async legacyPrinterConfig(supplierId: number) {
+    const view = await this.listSupplierConfig(supplierId, "store_printing_deploy");
+    return buildLegacyPrinterConfigView(supplierId, view);
+  }
+
+  async saveLegacyPrinterConfig(supplierId: number, input: unknown) {
+    const mapped = normalizeLegacyPrinterConfigInput(input);
+    if (Object.keys(mapped).length === 0) throw new ValidateException("请至少提交一项配置");
+    return this.saveSupplierConfig(supplierId, mapped, "store_printing_deploy");
   }
 }

@@ -3452,6 +3452,34 @@ Dada 状态图显式覆盖当前 `1/8/2/100/3/9/4/10/6/5/1000` 和 UNKNOWN；UU 
 
 所以 SUP-003 当前只能判定为“候选路由、R2 视频实现、退役决策以及静态、单元和 Linux runtime 门禁完成”。父项保持未完成，剩余顺序为：用户明确批准临时外部审计端点后执行生产 PostgreSQL/R2 只读核验并确认删除；迁移 Supplier TypeScript 前端并用真实账号验证图片/视频上传、暂停/失败/过期、分类与跨租户拒绝；取得源 MySQL 和附件目录后对账行数、对象 size/mime/hash 与 legacy URL；最后单独批准主 Worker/Supplier 发布并观察 Hyperdrive、R2、Queue cleanup、签名 404/206 和上传失败率。
 
+## SUP-004 Supplier 账号、设置与首页详细审计（第一批候选完成，2026-09-02）
+
+### 权威合同、真实基线与范围纠偏
+
+本轮重新以 `cinashop-php/route/supplier.php`、PHP controller/service、旧 Supplier Vue 调用和当前 Worker 注册四方交叉审计，不沿用旧 checklist 的粗略分类。与 SUP-004 直接相关的初始可执行缺口实际为 25 条：Supplier 管理员 resource 展开 7 条加状态 1 条、运费模板 5 条、system form/config 4 条、home 来源/类型 2 条、密码/城市/菜单/通知 4 条，以及旧清单漏掉的 `GET/PUT /printing` 2 条。后两条不能按“已有新 `/print/*`”自动视为退役：旧 `pages/setting/ticket/index.vue` 仍在加载和保存该单行配置。另有两个静态已匹配但语义错误的合同：`/home/header` 与 `/home/order` 都指向同一个新 dashboard handler，而 PHP 分别要求四项金额/数量汇总和 `xAxis/series` 趋势图。
+
+第一批现精确增加 12 条 PHP 合同，并把新 TS dashboard 移到专用 `GET /home/dashboard`，再恢复旧 `home/header|order` 的真实响应。可重复路由审计从全局 TS1,510/精确806/可执行788/缺失1,098/可执行缺口1,087 变为 TS1,523/精确818/可执行800/缺失1,086/可执行缺口1,075；Supplier 面从 TS116/精确83/缺失99/退役7/可执行缺口92 变为 TS129/精确95/缺失87/退役7/可执行缺口80，精确覆盖 45.6%→52.2%、退役后有效覆盖 47.4%→54.3%。增加的第 13 条 TS 路由是新前端专用 dashboard，不会虚增 PHP 匹配数。
+
+### 已恢复的 12 条合同与安全边界
+
+公共只读合同现在全部从 `supplierAuthMiddleware` 注入的 `supplierId` 派生范围。`jnotice` 仅统计当前 Supplier 的根订单待发货和有效售后；`city` 每次最多返回 1,000 个直接子节点并保留旧懒加载字段；`menusList` 只读 `type=3/is_show=1/auth_type=1/is_del=0/is_show_path=0` 的可搜索菜单，使用有环保护的父先子后顺序。订单来源与类型保留旧 `bing_xdata/bing_data/list/percent/itemStyle` 结构，首页汇总和趋势恢复旧字段；任意报表选择器都按 Asia/Shanghai 解析，默认 31 天、最多 366 天，拒绝错误日期、倒序和无界跨度。所有订单/售后 SQL 同时限定认证 Supplier 和软删除/有效状态，不接受 body/query 中的租户覆盖值。
+
+`/system/form/info/:id`、`/system/form/all_system_form`、`/system/config/edit_new_build/:type`、`POST /system/config` 复用现有已迁移元数据与 `StoreScopedConfigService`，但补齐精确的旧路径；原有短路径继续兼容。旧 `/printing` 不再读取 `supplier_ticket_print` 形成第二套运行时权威，而是映射到 `store_config(type=2, relation_id=supplierId)` 的五个 allowlist key。GET 永远把 API key 返回为空，PUT 空密钥保持既有值，客户端提交的 `id/supplier_id` 被忽略，未知字段失败关闭；因此旧 Vue 页面仍能保存，但生产 Secret 不会像 PHP 一样回显。
+
+PHP 的 `updatePwd` 路由实际指向不存在的 Supplier `staff.StoreStaff` controller，仓库里能找到的同名实现属于门店店员，不能作为完成证据。替代合同直接作用于当前认证 `system_admin(admin_type=4, relation_id=supplierId)`：要求原密码、新密码和确认密码，新密码 12～72 位且不得与原密码相同；bcrypt 校验后以旧 hash 作 compare-and-swap 更新，竞争修改失败关闭。成功后清除 token bucket，而 JWT 自带的旧密码摘要也会让无 Redis 环境的旧 token 在下一请求失效。原 `/supplier` 资料保存中无需原密码即可改密的能力已删除；Supplier TS 页面拆成资料保存和独立改密表单，成功后清理本地身份并返回登录页。登录响应和全部认证 Supplier 响应统一设置 `private, no-store, max-age=0`；普通 JSON 请求使用共享 64 KiB 流式上限，商品大表单仍保留既有独立 1 MiB 上限。
+
+### 尚未恢复的 13 条：为什么不能照抄 PHP
+
+Supplier 管理员 8 条是本批最重要的阻断。旧登录服务按 `system_admin.relation_id` 找 Supplier，设计上允许 `level=1` 子管理员；但是 `LoginServices::verifiAuth()` 在任何规则解析前直接 `return true`。旧 `SupplierAdmin` 只有列表和创建显式写入/筛选 `admin_type=4 + relation_id=$supplierId`，detail/edit/update/delete/set_status 都以客户端 ID 直接访问，形成跨 Supplier IDOR 面。当前 Worker 反向采取了主账号专用策略：登录和 middleware 都要求 `system_supplier.admin_id == system_admin.id`，所以没有把旧全权限子账号漏洞带进来，但也意味着子账号功能尚未迁移。正确完成条件不是先挂 8 条 CRUD，而是先把 `system_role(type/relation_id/rules/status)`、`system_menus` 动作和每个 Supplier handler 建成统一、默认拒绝的权限判定，再允许同 relation 的有效子账号登录；所有管理员读写还必须同时限定目标 `admin_type=4/relation_id`，禁止停用/删除主账号和越权赋予角色。
+
+运费模板 5 条同样保留未完成。PHP 列表会限定 `type=2 + relation_id=$supplierId`，但 edit 直接 `getShipping(id)`，delete 直接按请求 ID，save 更新路径也没有先证明旧行属于当前 Supplier；照搬会再次引入对象级越权。下一批需在 Worker 建立独立服务：模板行、包邮区域、按件/重/体积区域和不配送区域须在同一事务内锁定；每次读、改、删都要求 owner type 2、认证 relation、未删除，城市集合和计价模式有界验证，跨租户 ID 必须与不存在返回同一失败面。完成后再迁移新 Supplier 前端运费模板页面，而不是仅为路由数字补空 handler。
+
+### 工程证据、生产边界与下一顺序
+
+当前候选定向/相关 3 文件 15 项、完整单元 184 文件/1,183 项、双 TypeScript 和 Supplier Vue 生产 build 均通过；observability 为 17 信号/10 组件/53 必需事件/406 个生产源文件，schema 为 source201/target262/shared201/sourceGaps0/外部与内嵌 262/零定义漂移。主 Worker minify dry-run 为 3,638.10 KiB/gzip 854.85 KiB，精确解析 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 与四个 Durable Object 后退出，没有部署。Windows workerd 在读取任何测试前仍以既有环境级 `0xc0000005` 启动失败；不能记作 runtime 通过，必须由本次推送后的 Linux Actions 复验现有 15 条运行时断言、五端构建、依赖与全历史 Secret 扫描。
+
+本批没有生产 PostgreSQL/R2 DML、DDL、临时探针或主 Worker/Pages 发布。SUP-003 的只读生产夹具仍因会创建承载脱敏聚合的临时 `workers.dev` 端点而缺少对“该端点 + 精确载荷”的专项授权，通用数据库授权不能被扩张解释为公开端点授权。后续执行顺序是：先完成 SUP-004-C 五条运费模板并做跨租户负例；再设计、实现并全域接入 SUP-004-B RBAC 后恢复八条管理员路由；取得专项授权时执行 SUP-003 PostgreSQL/R2 只读审计；最后以真实 Supplier 主/子账号做旧端和 TS 端 E2E，另行请求主 Worker/Supplier Pages 发布批准并观察鉴权拒绝、Hyperdrive 延迟、统计跨度错误与配置保存失败率。父项在这些证据齐备前保持未完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

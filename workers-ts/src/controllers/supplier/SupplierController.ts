@@ -7,8 +7,10 @@ import { md5 } from "@/utils/jwt";
 import { extractToken } from "@/middleware/auth";
 import {
   normalizeSupplierProfileInput,
+  normalizeSupplierPasswordInput,
   SupplierService,
 } from "@/services/supplier/SupplierService";
+import { SupplierCompatibilityService } from "@/services/supplier/SupplierCompatibilityService";
 import {
   normalizeSupplierDeliveryInput,
   normalizeSupplierSplitCartInput,
@@ -34,6 +36,7 @@ import {
   requestedConfigGroup,
   StoreScopedConfigService,
 } from "@/services/store/StoreScopedConfigService";
+import { readBoundedJsonObject as readRequestJsonObject } from "@/utils/request-body";
 
 type SupplierContext = Context<{
   Bindings: Env;
@@ -76,12 +79,14 @@ function storeScopedConfigService(c: SupplierContext) {
   return new StoreScopedConfigService(c.get("container"));
 }
 
+function compatibilityService(c: SupplierContext) {
+  return new SupplierCompatibilityService(c.get("container"));
+}
+
+const MAX_SIMPLE_BODY_BYTES = 64 * 1024;
+
 async function readJsonObject(c: SupplierContext): Promise<Record<string, unknown>> {
-  const value: unknown = await c.req.json().catch(() => null);
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new ValidateException("请求数据格式错误");
-  }
-  return Object.fromEntries(Object.entries(value));
+  return readRequestJsonObject(c.req.raw, MAX_SIMPLE_BODY_BYTES);
 }
 
 const MAX_PRODUCT_BODY_BYTES = 1024 * 1024;
@@ -138,6 +143,8 @@ function supplierIdentity(c: SupplierContext) {
 }
 
 export async function login(c: SupplierContext) {
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Pragma", "no-cache");
   const body = await readJsonObject(c);
   const account = typeof body.account === "string" ? body.account : "";
   const password = typeof body.pwd === "string" ? body.pwd : "";
@@ -205,9 +212,67 @@ export async function updateProfile(c: SupplierContext) {
   return jsonOk(c, null, "保存成功");
 }
 
+export async function updatePassword(c: SupplierContext) {
+  const { supplierId, adminId } = supplierIdentity(c);
+  const body = await readJsonObject(c);
+  await service(c).changePassword(supplierId, adminId, normalizeSupplierPasswordInput(body));
+  const token = extractToken(c);
+  if (token) await clearToken(md5(token), c.env).catch(() => undefined);
+  return jsonOk(c, null, "密码修改成功，请重新登录");
+}
+
+export async function legacyPrinting(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await storeScopedConfigService(c).legacyPrinterConfig(supplierId));
+}
+
+export async function updateLegacyPrinting(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const body = await readJsonObject(c);
+  await storeScopedConfigService(c).saveLegacyPrinterConfig(supplierId, body);
+  return jsonOk(c, null, "保存成功");
+}
+
+export async function notices(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await compatibilityService(c).notices(supplierId));
+}
+
+export async function city(c: SupplierContext) {
+  supplierIdentity(c);
+  const raw = c.req.query("pid") ?? "0";
+  const parentId = Number(raw);
+  return jsonOk(c, await compatibilityService(c).cityChildren(parentId));
+}
+
+export async function menusList(c: SupplierContext) {
+  supplierIdentity(c);
+  return jsonOk(c, await compatibilityService(c).menuSearch());
+}
+
 export async function dashboard(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   return jsonOk(c, await service(c).dashboard(supplierId));
+}
+
+export async function homeSummary(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await compatibilityService(c).homeSummary(supplierId, c.req.query("data")));
+}
+
+export async function homeOrderChart(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await compatibilityService(c).orderChart(supplierId, c.req.query("data")));
+}
+
+export async function homeOrderChannel(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await compatibilityService(c).orderChannel(supplierId, c.req.query("data")));
+}
+
+export async function homeOrderType(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await compatibilityService(c).orderType(supplierId, c.req.query("data")));
 }
 
 export async function productList(c: SupplierContext) {
@@ -288,10 +353,12 @@ export async function productSpecsAll(c: SupplierContext) {
 }
 
 export async function systemFormAll(c: SupplierContext) {
+  supplierIdentity(c);
   return jsonOk(c, await systemMetadataService(c).allSystemForms(true));
 }
 
 export async function systemFormInfo(c: SupplierContext) {
+  supplierIdentity(c);
   const id = positiveId(c.req.param("id"), "系统表单ID");
   const info = await systemMetadataService(c).formInfo(id, c.req.query("type") === "1", true);
   return jsonOk(c, { info });
