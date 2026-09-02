@@ -29,6 +29,10 @@
       "lineCount": 136,
       "sha256": "519a78e7949448efb926ff60e4a257ccc6b9ab248c9f23eaa9213db84fedb77c"
     },
+    "cinashop-php/app/controller/supplier/queue/Queue.php": {
+      "lineCount": 115,
+      "sha256": "fd0b8f60be57118be1b6d3f068b3180f89b57001b0e63cdcdc05d2387b3dcdcb"
+    },
     "cinashop-php/app/dao/system/attachment/SystemAttachmentDao.php": {
       "lineCount": 114,
       "sha256": "1f01b24205e9f33c99e66d7c2b08a4dc1f9b6fbcc6ffb9ae39ab0fc75f71a23a"
@@ -36,6 +40,10 @@
     "cinashop-php/app/services/order/StoreOrderRefundServices.php": {
       "lineCount": 1405,
       "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89"
+    },
+    "cinashop-php/app/services/other/queue/QueueServices.php": {
+      "lineCount": 891,
+      "sha256": "c86318ecfc2a5f6dad2dc13979428d233769b57c8ad204ad1b14e3cb42464b36"
     },
     "cinashop-php/app/services/system/attachment/SystemAttachmentServices.php": {
       "lineCount": 465,
@@ -64,6 +72,10 @@
     "cinashop-php/route/supplier.php": {
       "lineCount": 522,
       "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+    },
+    "cinashop-php/view/supplier/src/api/order.js": {
+      "lineCount": 421,
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3"
     },
     "cinashop-php/view/supplier/src/api/uploadPictures.js": {
       "lineCount": 104,

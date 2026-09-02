@@ -108,6 +108,7 @@ export function requiredSupplierPermissions(method: string, routePath: string): 
   if (authenticatedSelfServiceRoutes.has(route)) return [];
   if (route.startsWith("order/print/")) return ["supplier.order.view", "supplier.print.manage"];
   if (route.startsWith("order/waybill/")) return ["supplier.order.view", "supplier.waybill.manage"];
+  if (route.startsWith("queue/")) return ["supplier.order.view"];
   const group = SUPPLIER_PERMISSION_GROUPS.find((candidate) =>
     candidate.matches.some((matcher) => routeMatches(route, matcher)),
   );

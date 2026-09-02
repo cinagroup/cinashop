@@ -3,6 +3,7 @@ import type { AppVariables, Env } from "@/env";
 import { supplierAuthMiddleware } from "@/middleware/supplier-auth";
 import { supplierPermissionMiddleware } from "@/middleware/supplier-permission";
 import * as SupplierController from "@/controllers/supplier/SupplierController";
+import * as SupplierQueueController from "@/controllers/supplier/SupplierQueueController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
@@ -78,6 +79,12 @@ supplierapiRoutes.get("/home/order_type", SupplierController.homeOrderType);
 
 supplierapiRoutes.get("/system/form/info/:id", SupplierController.systemFormInfo);
 supplierapiRoutes.get("/system/form/all_system_form", SupplierController.systemFormAll);
+
+// Legacy queue rows are historical evidence only. Both reads join auxiliary
+// relation_id to an order owned by the authenticated Supplier; opaque payloads
+// and the old GET mutation contracts are intentionally not exposed.
+supplierapiRoutes.get("/queue/index", SupplierQueueController.queueList);
+supplierapiRoutes.get("/queue/delivery/log/:id/:type", SupplierQueueController.deliveryLog);
 
 supplierapiRoutes.get("/printing", SupplierController.legacyPrinting);
 supplierapiRoutes.put("/printing", SupplierController.updateLegacyPrinting);

@@ -107,6 +107,48 @@
       "replacement": "PUT /supplierapi/refund/agree/:id performs a tenant-scoped return approval; PUT /supplierapi/refund/refund/:id performs an exact-amount tenant-scoped money refund"
     },
     {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/queue/again/do_queue/:id/:type",
+      "status": "retired",
+      "reason": "The PHP GET mutates a global queue by raw id and type without checking supplier ownership, then replays the opaque queue_in_value through the admin fulfillment service; a Supplier could therefore replay another tenant's batch task.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:472",
+        "cinashop-php/app/controller/supplier/queue/Queue.php:68",
+        "cinashop-php/app/services/other/queue/QueueServices.php:712",
+        "cinashop-php/view/supplier/src/api/order.js:312"
+      ],
+      "replacement": "Electronic-waybill recovery uses POST /supplierapi/waybill/jobs/:id/confirm-retry with a tenant-scoped durable job, request key and audit reason; manual, local and virtual fulfillment are resubmitted explicitly for an owned order through PUT /supplierapi/order/delivery/:id instead of replaying an opaque legacy payload"
+    },
+    {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/queue/del/wrong_queue/:id/:type",
+      "status": "retired",
+      "reason": "The PHP GET deletes or rewrites global queue and auxiliary state by raw id and type without supplier ownership checks, and can mark every order row attached to another tenant's batch as deleted.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:474",
+        "cinashop-php/app/controller/supplier/queue/Queue.php:84",
+        "cinashop-php/app/services/other/queue/QueueServices.php:856",
+        "cinashop-php/view/supplier/src/api/order.js:323"
+      ],
+      "replacement": "Legacy queue evidence is immutable and tenant-filtered through GET /supplierapi/queue/index; an owned electronic-waybill job can be closed with POST /supplierapi/waybill/jobs/:id/close, which retains an immutable action record"
+    },
+    {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/queue/stop/wrong_queue/:id",
+      "status": "retired",
+      "reason": "The PHP GET first resolves a global queue by raw id and then changes its status without a supplier predicate; queue_list has no supplier_id, so ownership cannot be established from this contract.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:476",
+        "cinashop-php/app/controller/supplier/queue/Queue.php:101",
+        "cinashop-php/app/services/other/queue/QueueServices.php:856",
+        "cinashop-php/view/supplier/src/api/order.js:345"
+      ],
+      "replacement": "Legacy queue history is read-only; an owned electronic-waybill job can be closed explicitly with POST /supplierapi/waybill/jobs/:id/close, while synchronous owned-order fulfillment has no background task to stop"
+    },
+    {
       "surface": "kefu",
       "method": "POST",
       "path": "/kefuapi/order/refund",
