@@ -423,7 +423,11 @@ export class StoreProductService {
       this.container.db
         .select()
         .from(storeProductAttrValue)
-        .where(and(eq(storeProductAttrValue.productId, id), eq(storeProductAttrValue.type, 0)))
+        .where(and(
+          eq(storeProductAttrValue.productId, id),
+          eq(storeProductAttrValue.type, 0),
+          eq(storeProductAttrValue.isRetired, 0),
+        ))
         .orderBy(asc(storeProductAttrValue.id)),
       product.systemFormId > 0
         ? this.container.db

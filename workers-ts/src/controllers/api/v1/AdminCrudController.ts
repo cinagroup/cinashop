@@ -37,6 +37,7 @@ import {
   ProductAssociationService,
   type ProductEditorActor,
 } from "@/services/product/ProductAssociationService";
+import { ProductSkuRetirementService } from "@/services/product/ProductSkuRetirementService";
 import { StoreOperationsService } from "@/services/store/StoreOperationsService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
@@ -230,6 +231,10 @@ function productAssociations(c: C): ProductAssociationService {
   return new ProductAssociationService(c.get("container"));
 }
 
+function productSkuRetirement(c: C): ProductSkuRetirementService {
+  return new ProductSkuRetirementService(c.get("container"));
+}
+
 function productEditorActor(c: C): ProductEditorActor {
   const admin = c.get("adminInfo");
   if (!admin) throw new ValidateException("管理员身份不存在");
@@ -362,6 +367,22 @@ export async function adminProductSetShow(c: C) {
   const isShow = Number(body.is_show ?? 1);
   await productAssociations(c).setShow(id, isShow, productEditorActor(c));
   return jsonOk(c, null, isShow === 1 ? "已上架" : "已下架");
+}
+
+/** POST /adminapi/product/sku/retire — 保留身份的可恢复退役。 */
+export async function adminProductSkuRetire(c: C) {
+  privateNoStore(c);
+  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
+  const result = await productSkuRetirement(c).change("retire", body, productEditorActor(c));
+  return jsonOk(c, result, "SKU已退役");
+}
+
+/** POST /adminapi/product/sku/restore — 恢复已退役SKU。 */
+export async function adminProductSkuRestore(c: C) {
+  privateNoStore(c);
+  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
+  const result = await productSkuRetirement(c).change("restore", body, productEditorActor(c));
+  return jsonOk(c, result, "SKU已恢复");
 }
 
 /** DELETE /api/admin/product/del/:id — 删除商品 (软删除) */

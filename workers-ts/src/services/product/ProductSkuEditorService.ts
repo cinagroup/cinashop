@@ -29,9 +29,11 @@ export interface ProductSkuEditorPayload {
 }
 
 export interface ProductSkuEditorRow extends SupplierProductSku {
+  id?: number;
   unique: string;
   sales: number;
   sumStock: number;
+  is_retired?: 0 | 1;
 }
 
 export interface ProductSkuSummary {
@@ -144,6 +146,7 @@ function skuProjection(
 ): ProductSkuEditorRow {
   const parts = row.suk.split(",");
   return {
+    id: row.id,
     unique: row.unique,
     suk: row.suk,
     detail: Object.fromEntries(dimensions.map((dimension, index) => [
@@ -165,6 +168,7 @@ function skuProjection(
     code: row.code,
     sales: row.sales,
     sumStock: row.sumStock,
+    is_retired: row.isRetired === 1 ? 1 : 0,
   };
 }
 
@@ -187,23 +191,168 @@ export async function loadProductSkuEditor(
     )).orderBy(asc(storeProductAttrValue.id)),
   ]);
   const dimensions = dimensionsFromRows(dimensionRows, specType);
+  const activeRows = skuRows.filter((row) => row.isRetired === 0);
+  const retiredRows = skuRows.filter((row) => row.isRetired === 1);
+  const serialize = (row: typeof storeProductAttrValue.$inferSelect) => ({
+    ...skuProjection(row, dimensions),
+    settle_price: row.settlePrice,
+    ot_price: row.otPrice,
+    vip_price: row.vipPrice,
+    bar_code: row.barCode,
+    brokerage_two: row.brokerageTwo,
+    settlePrice: undefined,
+    otPrice: undefined,
+    vipPrice: undefined,
+    barCode: undefined,
+    brokerageTwo: undefined,
+  });
   return {
     spec_type: specType === 1 ? 1 : 0,
     items: dimensions,
-    attrs: skuRows.map((row) => ({
-      ...skuProjection(row, dimensions),
-      settle_price: row.settlePrice,
-      ot_price: row.otPrice,
-      vip_price: row.vipPrice,
-      bar_code: row.barCode,
-      brokerage_two: row.brokerageTwo,
-      settlePrice: undefined,
-      otPrice: undefined,
-      vipPrice: undefined,
-      barCode: undefined,
-      brokerageTwo: undefined,
-    })),
+    attrs: activeRows.map(serialize),
+    retired_attrs: retiredRows.map(serialize),
   };
+}
+
+export function completeCartesianDimensions(
+  rows: Array<{ suk: string }>,
+  dimensionRows: Array<{ attrName: string; attrValues: string }>,
+  specType: number,
+): SupplierProductDimension[] {
+  if (!rows.length) throw new ValidateException("商品必须保留至少一个可售SKU");
+  const names = specType === 0
+    ? ["规格"]
+    : dimensionRows.map((row) => row.attrName);
+  if (!names.length || names.length > 3) throw new ValidateException("历史商品规格维度无法安全重建");
+  const parts = rows.map((row) => row.suk.split(","));
+  if (parts.some((item) => item.length !== names.length || item.some((value) => !value.trim()))) {
+    throw new ValidateException("历史商品SKU组合与规格维度不一致");
+  }
+  const dimensions = names.map((name, index) => {
+    const used = new Set(parts.map((item) => item[index]));
+    const previous = (dimensionRows[index]?.attrValues ?? "").split(",").filter((value) => used.has(value));
+    const values = [...previous, ...[...used].filter((value) => !previous.includes(value))];
+    return { value: name, detail: values };
+  });
+  const expected = dimensions.reduce((total, dimension) => total * dimension.detail.length, 1);
+  if (expected !== rows.length || new Set(rows.map((row) => row.suk)).size !== rows.length) {
+    throw new ValidateException("退役或恢复后的SKU必须保持完整笛卡尔组合，请成组选择规格");
+  }
+  let combinations = [""];
+  for (const dimension of dimensions) {
+    combinations = combinations.flatMap((prefix) => dimension.detail.map((value) => (
+      prefix ? `${prefix},${value}` : value
+    )));
+  }
+  const actual = new Set(rows.map((row) => row.suk));
+  if (combinations.some((combination) => !actual.has(combination))) {
+    throw new ValidateException("退役或恢复后的SKU组合存在缺口，请成组选择规格");
+  }
+  return dimensions;
+}
+
+/** 退役/恢复后重建仅包含活跃SKU的规格投影、快照和商品汇总，并强制数据库回读。 */
+export async function rebuildActiveProductSkuState(
+  tx: DbClient,
+  product: {
+    id: number;
+    specType: number;
+  },
+  now: number,
+): Promise<ProductSkuEditorRow[]> {
+  const [dimensionRows, activeRows] = await Promise.all([
+    tx.select({
+      attrName: storeProductAttr.attrName,
+      attrValues: storeProductAttr.attrValues,
+    }).from(storeProductAttr).where(and(
+      eq(storeProductAttr.productId, product.id),
+      eq(storeProductAttr.type, PRODUCT_ATTR_TYPE),
+    )).orderBy(asc(storeProductAttr.id)),
+    tx.select().from(storeProductAttrValue).where(and(
+      eq(storeProductAttrValue.productId, product.id),
+      eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+      eq(storeProductAttrValue.isRetired, 0),
+    )).orderBy(asc(storeProductAttrValue.id)),
+  ]);
+  const dimensions = completeCartesianDimensions(activeRows, dimensionRows, product.specType);
+  const assigned = activeRows.map((row) => skuProjection(row, dimensions));
+  const payload: ProductSkuEditorPayload = {
+    specType: product.specType === 1 ? 1 : 0,
+    dimensions,
+    skus: assigned,
+  };
+  await tx.delete(storeProductAttr).where(and(
+    eq(storeProductAttr.productId, product.id),
+    eq(storeProductAttr.type, PRODUCT_ATTR_TYPE),
+  ));
+  await tx.insert(storeProductAttr).values(dimensions.map((dimension) => ({
+    productId: product.id,
+    attrName: dimension.value,
+    attrValues: dimension.detail.join(","),
+    type: PRODUCT_ATTR_TYPE,
+  })));
+  await tx.delete(storeProductAttrResult).where(and(
+    eq(storeProductAttrResult.productId, product.id),
+    eq(storeProductAttrResult.type, PRODUCT_ATTR_TYPE),
+  ));
+  await tx.insert(storeProductAttrResult).values({
+    productId: product.id,
+    result: JSON.stringify({ attr: dimensions, value: assigned }),
+    changeTime: now,
+    type: PRODUCT_ATTR_TYPE,
+  });
+  const summary = productSkuSummary(payload);
+  await tx.update(storeProduct).set({
+    stock: summary.stock,
+    price: summary.price,
+    settlePrice: summary.settlePrice,
+    cost: summary.cost,
+    otPrice: summary.otPrice,
+    vipPrice: summary.vipPrice,
+    isSold: summary.isSold,
+  }).where(eq(storeProduct.id, product.id));
+  const [products, savedDimensions, savedRows, results] = await Promise.all([
+    tx.select({
+      specType: storeProduct.specType,
+      stock: storeProduct.stock,
+      price: storeProduct.price,
+      settlePrice: storeProduct.settlePrice,
+      cost: storeProduct.cost,
+      otPrice: storeProduct.otPrice,
+      vipPrice: storeProduct.vipPrice,
+      isSold: storeProduct.isSold,
+    }).from(storeProduct).where(eq(storeProduct.id, product.id)).limit(1),
+    tx.select({ attrName: storeProductAttr.attrName, attrValues: storeProductAttr.attrValues })
+      .from(storeProductAttr).where(and(
+        eq(storeProductAttr.productId, product.id), eq(storeProductAttr.type, PRODUCT_ATTR_TYPE),
+      )).orderBy(asc(storeProductAttr.id)),
+    tx.select({
+      suk: storeProductAttrValue.suk,
+      unique: storeProductAttrValue.unique,
+      stock: storeProductAttrValue.stock,
+      price: storeProductAttrValue.price,
+      settlePrice: storeProductAttrValue.settlePrice,
+      cost: storeProductAttrValue.cost,
+      otPrice: storeProductAttrValue.otPrice,
+      vipPrice: storeProductAttrValue.vipPrice,
+    }).from(storeProductAttrValue).where(and(
+      eq(storeProductAttrValue.productId, product.id),
+      eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+      eq(storeProductAttrValue.isRetired, 0),
+    )).orderBy(asc(storeProductAttrValue.id)),
+    tx.select({ result: storeProductAttrResult.result }).from(storeProductAttrResult).where(and(
+      eq(storeProductAttrResult.productId, product.id), eq(storeProductAttrResult.type, PRODUCT_ATTR_TYPE),
+    )).limit(1),
+  ]);
+  if (!productSkuReadbackMatches(
+    products[0],
+    dimensionsFromRows(savedDimensions, payload.specType),
+    savedRows,
+    results[0]?.result,
+    payload,
+    assigned,
+  )) throw new Error("商品SKU退役状态数据库回读校验失败");
+  return assigned;
 }
 
 function equalDimensions(
@@ -294,14 +443,20 @@ export async function replaceProductSkuEditor(
     ${PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE},
     ${PRODUCT_SKU_IDENTITY_LOCK_KEY}
   )`);
-  const currentRows = await tx.select().from(storeProductAttrValue).where(and(
+  const allCurrentRows = await tx.select().from(storeProductAttrValue).where(and(
     eq(storeProductAttrValue.productId, product.id),
     eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
   )).orderBy(asc(storeProductAttrValue.id)).for("update");
   if (
-    new Set(currentRows.map((row) => row.suk)).size !== currentRows.length
-    || new Set(currentRows.map((row) => row.unique)).size !== currentRows.length
+    new Set(allCurrentRows.map((row) => row.suk)).size !== allCurrentRows.length
+    || new Set(allCurrentRows.map((row) => row.unique)).size !== allCurrentRows.length
   ) throw new ValidateException("历史商品存在重复SKU或唯一标识，请先专项清理");
+
+  const currentRows = allCurrentRows.filter((row) => row.isRetired === 0);
+  const retiredSuks = new Set(allCurrentRows.filter((row) => row.isRetired === 1).map((row) => row.suk));
+  if (payload.skus.some((row) => retiredSuks.has(row.suk))) {
+    throw new ValidateException("退役SKU不能通过普通保存恢复，请使用受控恢复操作");
+  }
 
   const desiredSuks = new Set(payload.skus.map((sku) => sku.suk));
   const removed = currentRows.filter((row) => !desiredSuks.has(row.suk));
@@ -309,7 +464,7 @@ export async function replaceProductSkuEditor(
     throw new ValidateException("为保护购物车、订单、退款和活动引用，当前阶段不能删除或重命名已有SKU");
   }
   const currentBySuk = new Map(currentRows.map((row) => [row.suk, row]));
-  const used = new Set(currentRows.map((row) => row.unique));
+  const used = new Set(allCurrentRows.map((row) => row.unique));
   const assigned: ProductSkuEditorRow[] = [];
   const stockRecords: Array<typeof storeProductStockRecord.$inferInsert> = [];
 
@@ -458,7 +613,9 @@ export async function replaceProductSkuEditor(
       otPrice: storeProductAttrValue.otPrice,
       vipPrice: storeProductAttrValue.vipPrice,
     }).from(storeProductAttrValue).where(and(
-      eq(storeProductAttrValue.productId, product.id), eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+      eq(storeProductAttrValue.productId, product.id),
+      eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+      eq(storeProductAttrValue.isRetired, 0),
     )).orderBy(asc(storeProductAttrValue.id)),
     tx.select({ result: storeProductAttrResult.result }).from(storeProductAttrResult).where(and(
       eq(storeProductAttrResult.productId, product.id), eq(storeProductAttrResult.type, PRODUCT_ATTR_TYPE),

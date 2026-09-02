@@ -531,6 +531,7 @@ export class AdminMobileProductService {
     const rows = await this.container.db.select().from(storeProductAttrValue).where(and(
       eq(storeProductAttrValue.productId, productId),
       eq(storeProductAttrValue.type, 0),
+      eq(storeProductAttrValue.isRetired, 0),
     )).orderBy(storeProductAttrValue.id);
     return rows.map(skuProjection);
   }
@@ -549,6 +550,7 @@ export class AdminMobileProductService {
       const current = await tx.select().from(storeProductAttrValue).where(and(
         eq(storeProductAttrValue.productId, productId),
         eq(storeProductAttrValue.type, 0),
+        eq(storeProductAttrValue.isRetired, 0),
       )).orderBy(storeProductAttrValue.id).for("update");
       if (!current.length) throw new NotFoundException("商品规格不存在");
       const currentByUnique = new Map(current.map((item) => [item.unique, item]));
@@ -578,6 +580,7 @@ export class AdminMobileProductService {
           eq(storeProductAttrValue.id, previous.id),
           eq(storeProductAttrValue.productId, productId),
           eq(storeProductAttrValue.type, 0),
+          eq(storeProductAttrValue.isRetired, 0),
         ));
         const difference = update.stock - previous.stock;
         if (difference !== 0) stockRecords.push({

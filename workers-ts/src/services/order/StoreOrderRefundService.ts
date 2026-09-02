@@ -1995,6 +1995,7 @@ async function restoreRefundStock(
       if (baseRows.length !== 1) throw new ValidateException("退款商品规格无法唯一定位");
       baseSkuId = baseRows[0].id;
     }
+    let baseSkuRetired = false;
     if (baseSkuId > 0) {
       const baseSkuRows = await tx
         .update(storeProductAttrValue)
@@ -2007,12 +2008,18 @@ async function restoreRefundStock(
           eq(storeProductAttrValue.productId, ci.productId),
           eq(storeProductAttrValue.type, 0),
         ))
-        .returning({ id: storeProductAttrValue.id });
+        .returning({
+          id: storeProductAttrValue.id,
+          isRetired: storeProductAttrValue.isRetired,
+        });
       if (!baseSkuRows[0]) throw new ValidateException("退款商品规格库存无法回退");
+      baseSkuRetired = baseSkuRows[0].isRetired === 1;
     }
     const productRows = await tx
       .update(storeProduct)
-      .set({
+      .set(baseSkuRetired ? {
+        sales: sql`GREATEST(sales - ${num}, 0)`,
+      } : {
         stock: sql`stock + ${num}`,
         sales: sql`GREATEST(sales - ${num}, 0)`,
       })

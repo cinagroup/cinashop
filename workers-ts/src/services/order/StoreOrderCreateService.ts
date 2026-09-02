@@ -526,10 +526,16 @@ export async function cancelStoreOrder(
           eq(storeProductAttrValue.productId, item.productId),
           eq(storeProductAttrValue.type, 0),
         ))
-        .returning({ id: storeProductAttrValue.id });
+        .returning({
+          id: storeProductAttrValue.id,
+          isRetired: storeProductAttrValue.isRetired,
+        });
+      const baseSkuRetired = skuRestored[0]?.isRetired === 1;
       const productRestored = await tx
         .update(storeProduct)
-        .set({
+        .set(baseSkuRetired ? {
+          sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
+        } : {
           stock: sql`stock + ${item.cartNum}`,
           sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
         })
@@ -1372,6 +1378,7 @@ export class StoreOrderCreateService {
               eq(storeProductAttrValue.productId, newcomerActivityId),
               eq(storeProductAttrValue.type, 7),
               eq(storeProductAttrValue.suk, sku.suk),
+              eq(storeProductAttrValue.isRetired, 0),
             ),
           )
           .limit(1);
@@ -1908,6 +1915,7 @@ export class StoreOrderCreateService {
               eq(storeProductAttrValue.productId, newcomerActivityId),
               eq(storeProductAttrValue.type, 7),
               eq(storeProductAttrValue.suk, orderItems[0]?.sku.suk ?? ""),
+              eq(storeProductAttrValue.isRetired, 0),
             ),
           )
           .limit(1)

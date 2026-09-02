@@ -142,7 +142,7 @@
         </el-form-item>
         <el-divider content-position="left">SKU规格与库存</el-divider>
         <el-alert
-          title="SKU与商品主表、规格维度、库存流水在同一事务保存并回读。历史SKU可改价改库存和扩展组合，但不能删除、重命名或改唯一标识。"
+          title="SKU与商品主表、规格维度、库存流水在同一事务保存并回读。历史身份不能删除、重命名或改唯一标识；停用请使用可恢复退役。"
           type="warning"
           :closable="false"
           show-icon
@@ -178,7 +178,8 @@
         </el-form-item>
         <el-form-item label="SKU明细" required>
           <div class="sku-table-shell">
-            <el-table :data="form.attrs" border size="small" class="sku-table">
+            <el-table :data="form.attrs" border size="small" class="sku-table" @selection-change="selectActiveSkus">
+              <el-table-column v-if="isEdit" type="selection" width="48" :selectable="selectableHistoricalSku" />
               <el-table-column prop="suk" label="组合" fixed min-width="130" />
               <el-table-column label="图片URL" min-width="150">
                 <template #default="{ row }"><el-input v-model="row.image" /></template>
@@ -209,6 +210,37 @@
             <el-text type="info">
               单规格的售价、原价、库存和会员价使用上方主字段；多规格的商品汇总值由SKU自动计算。
             </el-text>
+            <div v-if="isEdit" class="sku-lifecycle-actions">
+              <el-button
+                type="danger"
+                plain
+                :disabled="!selectedActiveSkuIds.length"
+                :loading="skuActionLoading"
+                @click="changeSkuLifecycle('retire')"
+              >退役选中历史SKU</el-button>
+              <el-text type="info">有未结购物车、未支付订单、活动、促销、抽奖或门店引用时会拒绝；剩余组合必须保持完整。</el-text>
+            </div>
+          </div>
+        </el-form-item>
+        <el-form-item v-if="isEdit && retiredAttrs.length" label="已退役SKU">
+          <div class="sku-table-shell">
+            <el-table :data="retiredAttrs" border size="small" class="sku-table" @selection-change="selectRetiredSkus">
+              <el-table-column type="selection" width="48" />
+              <el-table-column prop="suk" label="历史组合" min-width="150" />
+              <el-table-column prop="unique" label="唯一标识" min-width="110" />
+              <el-table-column prop="stock" label="保留库存" min-width="100" />
+              <el-table-column prop="sales" label="历史销量" min-width="100" />
+            </el-table>
+            <div class="sku-lifecycle-actions">
+              <el-button
+                type="success"
+                plain
+                :disabled="!selectedRetiredSkuIds.length"
+                :loading="skuActionLoading"
+                @click="changeSkuLifecycle('restore')"
+              >恢复选中SKU</el-button>
+              <el-text type="info">恢复也必须形成完整规格组合，操作原因和数据库回读结果会留档。</el-text>
+            </div>
           </div>
         </el-form-item>
         <el-form-item label="排序">
@@ -237,7 +269,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   apiAdminProductCreate,
   apiAdminProductUpdate,
@@ -246,6 +278,8 @@ import {
   apiAdminProductDraft,
   apiAdminProductDraftDelete,
   apiAdminProductDraftSave,
+  apiAdminProductSkuRestore,
+  apiAdminProductSkuRetire,
   type ProductEditorOptions,
   type ProductEditorParameter,
   type ProductSkuDimension,
@@ -270,6 +304,10 @@ const editorOptions = reactive<ProductEditorOptions>({
 });
 const categories = computed(() => editorOptions.categories);
 const units = ref<ProductUnit[]>([]);
+const retiredAttrs = ref<ProductSkuRow[]>([]);
+const selectedActiveSkuIds = ref<number[]>([]);
+const selectedRetiredSkuIds = ref<number[]>([]);
+const skuActionLoading = ref(false);
 
 const isEdit = computed(() => !!route.params.id);
 const form = reactive({
@@ -321,6 +359,65 @@ async function submit() {
     ElMessage.error(e instanceof Error ? e.message : "保存失败");
   } finally {
     submitting.value = false;
+  }
+}
+
+function selectableHistoricalSku(row: ProductSkuRow) {
+  return Number.isSafeInteger(row.id) && Number(row.id) > 0;
+}
+
+function selectActiveSkus(rows: ProductSkuRow[]) {
+  selectedActiveSkuIds.value = rows.flatMap((row) => row.id ? [row.id] : []);
+}
+
+function selectRetiredSkus(rows: ProductSkuRow[]) {
+  selectedRetiredSkuIds.value = rows.flatMap((row) => row.id ? [row.id] : []);
+}
+
+async function reloadSkuState() {
+  const detail = await apiAdminProductDetail(Number(route.params.id));
+  form.items = detail.items.map((item) => ({ ...item, detail: [...item.detail] }));
+  form.attrs = restoreSkuRows(detail.attrs);
+  retiredAttrs.value = restoreSkuRows(detail.retired_attrs ?? []);
+  form.stock = detail.stock;
+  form.price = Number(detail.price);
+  form.ot_price = Number(detail.ot_price);
+  form.vip_price = Number(detail.vip_price ?? 0);
+  selectedActiveSkuIds.value = [];
+  selectedRetiredSkuIds.value = [];
+}
+
+async function changeSkuLifecycle(action: "retire" | "restore") {
+  const skuIds = action === "retire" ? selectedActiveSkuIds.value : selectedRetiredSkuIds.value;
+  if (!skuIds.length) return ElMessage.warning("请选择历史SKU");
+  try {
+    const { value } = await ElMessageBox.prompt(
+      action === "retire"
+        ? "退役不会删除历史记录，但会停止新交易。请填写原因。"
+        : "恢复会重新加入可售规格组合。请填写原因。",
+      action === "retire" ? "确认退役SKU" : "确认恢复SKU",
+      {
+        confirmButtonText: "确认执行",
+        cancelButtonText: "取消",
+        inputPlaceholder: "2至255字",
+        inputValidator: (input) => {
+          const length = input.trim().length;
+          return length >= 2 && length <= 255 ? true : "请填写2至255字的操作原因";
+        },
+      },
+    );
+    skuActionLoading.value = true;
+    const result = action === "retire"
+      ? await apiAdminProductSkuRetire(Number(route.params.id), skuIds, value.trim())
+      : await apiAdminProductSkuRestore(Number(route.params.id), skuIds, value.trim());
+    if (!result.verified) throw new Error("SKU退役状态数据库回读未通过");
+    await reloadSkuState();
+    ElMessage.success(action === "retire" ? `已退役 ${result.changed} 个SKU` : `已恢复 ${result.changed} 个SKU`);
+  } catch (error) {
+    if (error === "cancel" || error === "close") return;
+    ElMessage.error(error instanceof Error ? error.message : "SKU状态操作失败");
+  } finally {
+    skuActionLoading.value = false;
   }
 }
 
@@ -476,6 +573,7 @@ function restoreSkuRows(value: unknown[]): ProductSkuRow[] {
       ? Object.fromEntries(Object.entries(row.detail).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
       : {};
     return [{
+      id: Number.isSafeInteger(Number(row.id)) && Number(row.id) > 0 ? Number(row.id) : undefined,
       unique: typeof row.unique === "string" ? row.unique : undefined,
       suk: row.suk,
       detail,
@@ -494,6 +592,7 @@ function restoreSkuRows(value: unknown[]): ProductSkuRow[] {
       brokerage: Number(row.brokerage ?? 0),
       brokerage_two: Number(row.brokerage_two ?? 0),
       code: typeof row.code === "string" ? row.code : "",
+      is_retired: Number(row.is_retired) === 1 ? 1 : 0,
     }];
   });
 }
@@ -557,6 +656,7 @@ onMounted(async () => {
       form.spec_type = detail.spec_type;
       form.items = detail.items.map((item) => ({ ...item, detail: [...item.detail] }));
       form.attrs = restoreSkuRows(detail.attrs);
+      retiredAttrs.value = restoreSkuRows(detail.retired_attrs ?? []);
       if (!form.attrs.length && form.spec_type === 0) {
         form.attrs = [newSkuRow({ 规格: "默认" })];
       }
@@ -648,6 +748,13 @@ onBeforeUnmount(() => {
 }
 .sku-table :deep(.el-input-number) {
   width: 100%;
+}
+.sku-lifecycle-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
 @media (max-width: 640px) {
   .product-form {

@@ -634,6 +634,7 @@ export class StoreNewcomerService {
             and(
               eq(storeProductAttrValue.productId, newcomer.id),
               eq(storeProductAttrValue.type, 7),
+              eq(storeProductAttrValue.isRetired, 0),
             ),
           )
           .orderBy(asc(storeProductAttrValue.id)),

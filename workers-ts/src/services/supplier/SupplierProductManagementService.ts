@@ -775,6 +775,9 @@ export class SupplierProductManagementService {
               ),
             )
         : [];
+      if (currentSkus.some((sku) => sku.isRetired === 1)) {
+        throw new ValidateException("商品存在受控退役SKU，请先在对应运营后台恢复后再编辑");
+      }
       const existingBySuk = new Map(currentSkus.map((sku) => [sku.suk, sku]));
       const usedUniques = new Set(currentSkus.map((sku) => sku.unique));
       const skuRows: Array<typeof storeProductAttrValue.$inferInsert> = [];

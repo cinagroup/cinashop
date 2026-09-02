@@ -627,6 +627,7 @@ export class AdminDiscountPackageService {
           .from(storeProductAttrValue)
           .where(and(
             eq(storeProductAttrValue.type, BASE_SKU_TYPE),
+            eq(storeProductAttrValue.isRetired, 0),
             inArray(storeProductAttrValue.productId, ids),
             gt(storeProductAttrValue.stock, 0),
           ))
@@ -720,6 +721,7 @@ export class AdminDiscountPackageService {
         .from(storeProductAttrValue)
         .where(and(
           eq(storeProductAttrValue.type, BASE_SKU_TYPE),
+          eq(storeProductAttrValue.isRetired, 0),
           inArray(storeProductAttrValue.productId, productIds),
         ))
         .orderBy(asc(storeProductAttrValue.productId), asc(storeProductAttrValue.id))
@@ -797,6 +799,7 @@ export class AdminDiscountPackageService {
             .from(storeProductAttrValue)
             .where(and(
               eq(storeProductAttrValue.type, PACKAGE_SKU_TYPE),
+              eq(storeProductAttrValue.isRetired, 0),
               inArray(storeProductAttrValue.productId, existingEntryIds),
             ))
             .orderBy(asc(storeProductAttrValue.id))
@@ -944,10 +947,12 @@ export class AdminDiscountPackageService {
           tx.select().from(storeProduct).where(inArray(storeProduct.id, productIds)),
           tx.select().from(storeProductAttrValue).where(and(
             eq(storeProductAttrValue.type, PACKAGE_SKU_TYPE),
+            eq(storeProductAttrValue.isRetired, 0),
             inArray(storeProductAttrValue.productId, entryIds),
           )),
           tx.select().from(storeProductAttrValue).where(and(
             eq(storeProductAttrValue.type, BASE_SKU_TYPE),
+            eq(storeProductAttrValue.isRetired, 0),
             inArray(storeProductAttrValue.productId, productIds),
           )),
         ]);
@@ -1003,6 +1008,7 @@ export class AdminDiscountPackageService {
             .from(storeProductAttrValue)
             .where(and(
               eq(storeProductAttrValue.type, PACKAGE_SKU_TYPE),
+              eq(storeProductAttrValue.isRetired, 0),
               inArray(storeProductAttrValue.productId, entryIds),
             ))
             .orderBy(asc(storeProductAttrValue.productId), asc(storeProductAttrValue.id))
@@ -1013,6 +1019,7 @@ export class AdminDiscountPackageService {
             .from(storeProductAttrValue)
             .where(and(
               eq(storeProductAttrValue.type, BASE_SKU_TYPE),
+              eq(storeProductAttrValue.isRetired, 0),
               inArray(storeProductAttrValue.productId, productIds),
             ))
             .orderBy(asc(storeProductAttrValue.productId), asc(storeProductAttrValue.id))

@@ -68,6 +68,7 @@ async function normalProductAndSku(tx: DbClient, productId: number, unique: stri
   const predicates = [
     eq(storeProductAttrValue.productId, productId),
     eq(storeProductAttrValue.type, 0),
+    eq(storeProductAttrValue.isRetired, 0),
   ];
   if (unique) predicates.push(eq(storeProductAttrValue.unique, unique));
   const skuRows = await tx
@@ -681,6 +682,7 @@ export class StoreCartService {
           .from(storeProductAttrValue)
           .where(and(
             eq(storeProductAttrValue.type, 0),
+            eq(storeProductAttrValue.isRetired, 0),
             inArray(storeProductAttrValue.productId, productIds),
             inArray(storeProductAttrValue.unique, uniqueValues),
           ))

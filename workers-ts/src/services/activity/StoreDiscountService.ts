@@ -188,6 +188,7 @@ export async function resolveDiscountPackageSelection(
       and(
         inArray(storeProductAttrValue.productId, entryIds),
         eq(storeProductAttrValue.type, 5),
+        eq(storeProductAttrValue.isRetired, 0),
       ),
     )
     .$dynamic();
@@ -198,6 +199,7 @@ export async function resolveDiscountPackageSelection(
       and(
         inArray(storeProductAttrValue.productId, productIds),
         eq(storeProductAttrValue.type, 0),
+        eq(storeProductAttrValue.isRetired, 0),
       ),
     )
     .$dynamic();
@@ -458,6 +460,7 @@ export class StoreDiscountService {
               and(
                 inArray(storeProductAttrValue.productId, entryIds),
                 eq(storeProductAttrValue.type, 5),
+                eq(storeProductAttrValue.isRetired, 0),
               ),
             )
             .orderBy(storeProductAttrValue.productId, storeProductAttrValue.id)
@@ -470,6 +473,7 @@ export class StoreDiscountService {
               and(
                 inArray(storeProductAttrValue.productId, productIds),
                 eq(storeProductAttrValue.type, 0),
+                eq(storeProductAttrValue.isRetired, 0),
               ),
             )
             .orderBy(storeProductAttrValue.productId, storeProductAttrValue.id)

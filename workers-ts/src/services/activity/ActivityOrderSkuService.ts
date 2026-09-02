@@ -42,6 +42,7 @@ export async function resolveLegacyActivitySkuPair(
           eq(storeProductAttrValue.productId, params.activityId),
           eq(storeProductAttrValue.type, params.type),
           eq(storeProductAttrValue.unique, unique),
+          eq(storeProductAttrValue.isRetired, 0),
         ))
         .limit(2),
       db
@@ -51,6 +52,7 @@ export async function resolveLegacyActivitySkuPair(
           eq(storeProductAttrValue.productId, params.productId),
           eq(storeProductAttrValue.type, 0),
           eq(storeProductAttrValue.unique, unique),
+          eq(storeProductAttrValue.isRetired, 0),
         ))
         .limit(2),
     ]);
@@ -70,6 +72,7 @@ export async function resolveLegacyActivitySkuPair(
       .where(and(
         eq(storeProductAttrValue.productId, params.activityId),
         eq(storeProductAttrValue.type, params.type),
+        eq(storeProductAttrValue.isRetired, 0),
         ...(suk ? [eq(storeProductAttrValue.suk, suk)] : []),
       ))
       .orderBy(asc(storeProductAttrValue.id))
@@ -88,6 +91,7 @@ export async function resolveLegacyActivitySkuPair(
         eq(storeProductAttrValue.productId, params.productId),
         eq(storeProductAttrValue.type, 0),
         eq(storeProductAttrValue.suk, activitySku.suk),
+        eq(storeProductAttrValue.isRetired, 0),
       ))
       .orderBy(asc(storeProductAttrValue.id))
       .limit(2);

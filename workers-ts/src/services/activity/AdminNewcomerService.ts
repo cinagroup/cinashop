@@ -368,12 +368,20 @@ export class AdminNewcomerService {
       this.container.db
         .select()
         .from(storeProductAttrValue)
-        .where(and(eq(storeProductAttrValue.type, 0), inArray(storeProductAttrValue.productId, productIds)))
+        .where(and(
+          eq(storeProductAttrValue.type, 0),
+          eq(storeProductAttrValue.isRetired, 0),
+          inArray(storeProductAttrValue.productId, productIds),
+        ))
         .orderBy(asc(storeProductAttrValue.id)),
       this.container.db
         .select()
         .from(storeProductAttrValue)
-        .where(and(eq(storeProductAttrValue.type, 7), inArray(storeProductAttrValue.productId, newcomerIds)))
+        .where(and(
+          eq(storeProductAttrValue.type, 7),
+          eq(storeProductAttrValue.isRetired, 0),
+          inArray(storeProductAttrValue.productId, newcomerIds),
+        ))
         .orderBy(asc(storeProductAttrValue.id)),
     ]);
     return newcomers.map(({ newcomer, product }) => {
@@ -497,7 +505,11 @@ export class AdminNewcomerService {
       ? await this.container.db
           .select()
           .from(storeProductAttrValue)
-          .where(and(eq(storeProductAttrValue.type, 0), inArray(storeProductAttrValue.productId, ids)))
+          .where(and(
+            eq(storeProductAttrValue.type, 0),
+            eq(storeProductAttrValue.isRetired, 0),
+            inArray(storeProductAttrValue.productId, ids),
+          ))
           .orderBy(asc(storeProductAttrValue.id))
       : [];
     return {
@@ -638,7 +650,11 @@ export class AdminNewcomerService {
       ? await tx
           .select()
           .from(storeProductAttrValue)
-          .where(and(eq(storeProductAttrValue.type, 0), inArray(storeProductAttrValue.productId, productIds)))
+          .where(and(
+            eq(storeProductAttrValue.type, 0),
+            eq(storeProductAttrValue.isRetired, 0),
+            inArray(storeProductAttrValue.productId, productIds),
+          ))
           .orderBy(asc(storeProductAttrValue.id))
           .for("update")
       : [];
@@ -706,7 +722,11 @@ export class AdminNewcomerService {
       const oldActivitySkus = await tx
         .select()
         .from(storeProductAttrValue)
-        .where(and(eq(storeProductAttrValue.type, 7), eq(storeProductAttrValue.productId, newcomer.id)))
+        .where(and(
+          eq(storeProductAttrValue.type, 7),
+          eq(storeProductAttrValue.productId, newcomer.id),
+          eq(storeProductAttrValue.isRetired, 0),
+        ))
         .orderBy(asc(storeProductAttrValue.id))
         .for("update");
       const oldUniqueBySuk = new Map(oldActivitySkus.map((sku) => [sku.suk, sku.unique]));

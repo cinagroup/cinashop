@@ -53,6 +53,11 @@ export interface ProductParameterSnapshot {
   status: 0 | 1;
 }
 
+/** 所有商品主表、关系、SKU拓扑写入共用同一事务锁域。 */
+export async function lockProductWrite(tx: DbClient, productId: number): Promise<void> {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_WRITE_LOCK_NAMESPACE}, ${productId})`);
+}
+
 export interface ProductAssociations {
   categoryIds: number[];
   brandIds: number[];
@@ -407,7 +412,7 @@ export class ProductAssociationService {
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
       if (productId > 0) {
-        await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_WRITE_LOCK_NAMESPACE}, ${productId})`);
+        await lockProductWrite(tx, productId);
       }
       const existingRows = productId > 0
         ? await tx.select().from(storeProduct).where(eq(storeProduct.id, productId)).limit(1).for("update")
@@ -529,7 +534,7 @@ export class ProductAssociationService {
         }).returning({ id: storeProduct.id });
         if (!inserted[0]) throw new Error("商品创建后未返回ID");
         savedProductId = inserted[0].id;
-        await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_WRITE_LOCK_NAMESPACE}, ${savedProductId})`);
+        await lockProductWrite(tx, savedProductId);
       }
 
       if (associations) {
@@ -581,7 +586,7 @@ export class ProductAssociationService {
     if (!Number.isSafeInteger(productId) || productId <= 0) throw new ValidateException("商品ID错误");
     if (isShow !== 0 && isShow !== 1) throw new ValidateException("上架状态只能是0或1");
     await withTx(this.container, async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_WRITE_LOCK_NAMESPACE}, ${productId})`);
+      await lockProductWrite(tx, productId);
       const updated = await tx.update(storeProduct).set({ isShow }).where(and(
         eq(storeProduct.id, productId),
         eq(storeProduct.isDel, 0),

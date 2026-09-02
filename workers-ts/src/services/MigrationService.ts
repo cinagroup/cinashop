@@ -24,6 +24,7 @@ import { WECHAT_CALLBACK_PIPELINE_SQL } from "@/migrations/wechatCallbackPipelin
 import { MERCHANT_SHIPMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/merchantShipmentCallbackPipeline";
 import { CITY_DELIVERY_CALLBACK_PIPELINE_SQL } from "@/migrations/cityDeliveryCallbackPipeline";
 import { PRODUCT_WORDS_INDEX_SQL } from "@/migrations/productWordsIndexes";
+import { PRODUCT_SKU_RETIREMENT_SQL } from "@/migrations/productSkuRetirement";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -171,6 +172,11 @@ export class MigrationService {
   /** Exact embedded Admin mobile-user replay DDL used by production verification. */
   adminMobileUserReplayMigrationSqlForVerification(): string {
     return this.migration_0125();
+  }
+
+  /** Exact recoverable product-SKU retirement DDL used by production verification. */
+  productSkuRetirementMigrationSqlForVerification(): string {
+    return this.migration_0132();
   }
 
   /** Exact durable payment callback event/outbox DDL. */
@@ -342,6 +348,7 @@ export class MigrationService {
       this.migration_0129(),
       this.migration_0130(),
       this.migration_0131(),
+      this.migration_0132(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8297,5 +8304,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0131(): string {
     return PRODUCT_WORDS_INDEX_SQL;
+  }
+
+  private migration_0132(): string {
+    return PRODUCT_SKU_RETIREMENT_SQL;
   }
 }

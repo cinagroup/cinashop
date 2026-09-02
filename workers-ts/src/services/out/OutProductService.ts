@@ -391,6 +391,9 @@ export class OutProductService {
         if (existing.productType !== PHYSICAL_PRODUCT_TYPE) {
           throw new ValidateException("非实物商品尚未迁移，不能通过 Out API 编辑");
         }
+        if (currentSkus.some((sku) => sku.isRetired === 1)) {
+          throw new ValidateException("商品存在受控退役SKU，Out API不能修改其SKU拓扑");
+        }
         const requestedSuks = input.skus.map((sku) => sku.suk).sort();
         const currentSuks = currentSkus.map((sku) => sku.suk).sort();
         if (JSON.stringify(requestedSuks) !== JSON.stringify(currentSuks)) {
@@ -702,6 +705,7 @@ export class OutProductService {
         .innerJoin(storeProduct, eq(storeProduct.id, storeProductAttrValue.productId))
         .where(and(
           eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+          eq(storeProductAttrValue.isRetired, 0),
           inArray(storeProductAttrValue.barCode, barCodes),
           eq(storeProduct.type, PLATFORM_TYPE),
           eq(storeProduct.relationId, PLATFORM_RELATION_ID),

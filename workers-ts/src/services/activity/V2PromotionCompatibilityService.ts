@@ -462,6 +462,7 @@ export class V2PromotionCompatibilityService {
       uniques.length ? this.container.db.select().from(storeProductAttrValue).where(and(
         inArray(storeProductAttrValue.unique, uniques),
         eq(storeProductAttrValue.type, 0),
+        eq(storeProductAttrValue.isRetired, 0),
       )) : Promise.resolve([]),
     ]);
     const couponById = new Map(coupons.map((row) => [row.id, row]));

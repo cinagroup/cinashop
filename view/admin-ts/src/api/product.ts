@@ -33,6 +33,7 @@ export interface ProductSkuRuleTemplate extends ProductEditorOption {
 }
 
 export interface ProductSkuRow {
+  id?: number;
   unique?: string;
   suk: string;
   detail: Record<string, string>;
@@ -51,6 +52,7 @@ export interface ProductSkuRow {
   brokerage: string | number;
   brokerage_two: string | number;
   code: string;
+  is_retired?: 0 | 1;
 }
 
 export interface ProductEditorOptions {
@@ -72,6 +74,7 @@ export interface AdminProductEditor extends AdminProduct {
   spec_type: 0 | 1;
   items: ProductSkuDimension[];
   attrs: ProductSkuRow[];
+  retired_attrs: ProductSkuRow[];
 }
 
 const previewEditorOptions: ProductEditorOptions = {
@@ -262,6 +265,7 @@ export function apiAdminProductDetail(id: number): Promise<AdminProductEditor> {
       attrs: [
         ["米白", "S"], ["米白", "M"], ["藏青", "S"], ["藏青", "M"],
       ].map((parts, index) => ({
+        id: 801 + index,
         unique: `pvsku00${index + 1}`,
         suk: parts.join(","),
         detail: { 颜色: parts[0], 尺码: parts[1] },
@@ -280,6 +284,29 @@ export function apiAdminProductDetail(id: number): Promise<AdminProductEditor> {
         brokerage: 0,
         brokerage_two: 0,
         code: `SHIRT-${index + 1}`,
+        is_retired: 0,
+      })),
+      retired_attrs: ["S", "M"].map((size, index) => ({
+        id: 901 + index,
+        unique: `pvret00${index + 1}`,
+        suk: `沙色,${size}`,
+        detail: { 颜色: "沙色", 尺码: size },
+        image: "",
+        price: 199,
+        settle_price: 0,
+        cost: 80,
+        ot_price: 239,
+        vip_price: 179,
+        stock: 0,
+        sales: 8 + index,
+        sumStock: 0,
+        bar_code: `CINA-RET-${index + 1}`,
+        weight: 0.3,
+        volume: 0,
+        brokerage: 0,
+        brokerage_two: 0,
+        code: `SHIRT-RET-${index + 1}`,
+        is_retired: 1,
       })),
     });
   }
@@ -307,6 +334,38 @@ export function apiAdminProductUpdate(
 ): Promise<{ id: number; associations_verified: boolean; sku_verified: boolean }> {
   if (previewMode) return Promise.resolve({ id, associations_verified: true, sku_verified: true });
   return getData(request.post(`/product/edit/${id}`, data));
+}
+
+export interface ProductSkuRetirementResult {
+  changed: number;
+  verified: boolean;
+  dependencies: Record<string, number>;
+}
+
+export function apiAdminProductSkuRetire(
+  productId: number,
+  skuIds: number[],
+  reason: string,
+): Promise<ProductSkuRetirementResult> {
+  if (previewMode) return Promise.resolve({ changed: skuIds.length, verified: true, dependencies: {} });
+  return getData(request.post("/product/sku/retire", {
+    product_id: productId,
+    sku_ids: skuIds,
+    reason,
+  }));
+}
+
+export function apiAdminProductSkuRestore(
+  productId: number,
+  skuIds: number[],
+  reason: string,
+): Promise<ProductSkuRetirementResult> {
+  if (previewMode) return Promise.resolve({ changed: skuIds.length, verified: true, dependencies: {} });
+  return getData(request.post("/product/sku/restore", {
+    product_id: productId,
+    sku_ids: skuIds,
+    reason,
+  }));
 }
 
 /** 上下架 (POST /adminapi/product/set_show/:id) */

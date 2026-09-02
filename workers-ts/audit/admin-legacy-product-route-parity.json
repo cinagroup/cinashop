@@ -24,7 +24,7 @@
       "newApiContracts": ["GET /adminapi/product/list", "POST /adminapi/product/set_show/:id", "POST /adminapi/product/set_show", "POST /adminapi/product/batch_process", "DELETE /adminapi/product/del/:id"],
       "permission": "product.view / product.manage",
       "covered": "List, search, create/edit entry, single and bounded batch show/hide, bounded atomic category and product-label replacement, transaction-scoped database readback, per-product audit records, delete, and isolated virtual-card inventory operations.",
-      "remaining": "Legacy batch types for delivery, gifts/coupons, user labels, recommendations, forms, freight templates, and brands; richer filters, verification actions, exports, and controlled retirement of referenced historical SKU topology remain open."
+      "remaining": "Legacy batch types for delivery, gifts/coupons, user labels, recommendations, forms, freight templates, and brands; richer filters, verification actions, exports, production historical-data validation, and non-platform SKU lifecycle handling remain open."
     },
     {
       "legacyPath": "/admin/product/product_classify",
@@ -43,10 +43,10 @@
       "title": "商品添加/编辑",
       "status": "partial",
       "newScreens": ["/product/create", "/product/edit/:id"],
-      "newApiContracts": ["GET /adminapi/product/editor/options", "POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id"],
+      "newApiContracts": ["GET /adminapi/product/editor/options", "POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id", "POST /adminapi/product/sku/retire", "POST /adminapi/product/sku/restore"],
       "permission": "product.view / product.manage",
-      "covered": "Core scalar fields, category, unit, membership price, sorting, visibility, server draft restore/save/delete, brand and product-label assignment, guarantee multi-selection, parameter-template application, editable historical parameter snapshots, SKU specification-template application, complete Cartesian SKU generation, price/stock/image/barcode/code editing, stable historical SKU identity, atomic relation/SKU persistence, stock-ledger writes, and database readback rollback on mismatch.",
-      "remaining": "Controlled retirement or rename of historical SKU topology, gallery/rich-media selection, and several legacy product types remain."
+      "covered": "Core scalar fields, category, unit, membership price, sorting, visibility, server draft restore/save/delete, brand and product-label assignment, guarantee multi-selection, parameter-template application, editable historical parameter snapshots, SKU specification-template application, complete Cartesian SKU generation, price/stock/image/barcode/code editing, stable historical SKU identity, recoverable reference-aware retirement/restoration with append-only evidence, atomic relation/SKU persistence, stock-ledger writes, and database readback rollback on mismatch.",
+      "remaining": "Physical identity rename stays prohibited and is replaced by add-new-plus-retire-old; gallery/rich-media selection, several legacy product types, production historical-data validation, and real-role E2E remain."
     },
     {
       "legacyPath": "/admin/product/product_reply/:id?",
@@ -65,10 +65,10 @@
       "title": "商品规格",
       "status": "candidate",
       "newScreens": ["/product/metadata#rules", "/product/create", "/product/edit/:id"],
-      "newApiContracts": ["GET /adminapi/product/rule", "GET /adminapi/product/rule/:id", "POST /adminapi/product/rule/:id", "DELETE /adminapi/product/rule/delete/:id", "GET /adminapi/product/editor/options", "POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id"],
+      "newApiContracts": ["GET /adminapi/product/rule", "GET /adminapi/product/rule/:id", "POST /adminapi/product/rule/:id", "DELETE /adminapi/product/rule/delete/:id", "GET /adminapi/product/editor/options", "POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id", "POST /adminapi/product/sku/retire", "POST /adminapi/product/sku/restore"],
       "permission": "product.view / product.manage",
-      "covered": "Search, list, create, edit, delete, one-to-three SKU dimensions, up to fifty unique values per dimension, duplicate validation, explicit SKU semantics, product-form application, complete Cartesian generation, identity-preserving row editing, and transaction-scoped database readback.",
-      "remaining": "Production historical-data validation and controlled retirement of referenced historical SKU topology remain open."
+      "covered": "Search, list, create, edit, delete, one-to-three SKU dimensions, up to fifty unique values per dimension, duplicate validation, explicit SKU semantics, product-form application, complete Cartesian generation, identity-preserving row editing, reference-aware recoverable retirement/restoration, and transaction-scoped database readback.",
+      "remaining": "Production historical-data validation, non-platform lifecycle handling, and real-role E2E remain open."
     },
     {
       "legacyPath": "/admin/product/product_brand",

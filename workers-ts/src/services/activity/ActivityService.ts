@@ -455,6 +455,7 @@ export class ActivityService {
     const attrConditions = [
       eq(storeProductAttrValue.productId, integralId),
       eq(storeProductAttrValue.type, 4),
+      eq(storeProductAttrValue.isRetired, 0),
     ];
     if (skuUnique) attrConditions.push(eq(storeProductAttrValue.unique, skuUnique));
 
@@ -491,6 +492,7 @@ export class ActivityService {
       const fallbackConditions = [
         eq(storeProductAttrValue.productId, item.productId),
         eq(storeProductAttrValue.type, 0),
+        eq(storeProductAttrValue.isRetired, 0),
       ];
       if (skuUnique) fallbackConditions.push(eq(storeProductAttrValue.unique, skuUnique));
       attrRows = await c.db

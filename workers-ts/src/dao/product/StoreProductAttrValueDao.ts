@@ -23,13 +23,18 @@ export class StoreProductAttrValueDao extends BaseDao<typeof storeProductAttrVal
       .select()
       .from(storeProductAttrValue)
       .where(
-        sql`${storeProductAttrValue.productId} = ${productId} AND ${storeProductAttrValue.type} = ${type}`,
+        sql`${storeProductAttrValue.productId} = ${productId}
+          AND ${storeProductAttrValue.type} = ${type}
+          AND ${storeProductAttrValue.isRetired} = 0`,
       );
   }
 
   /** 按 unique 取单行；活动链路必须同时传 type/productId，避免跨活动碰撞。 */
   async getByUnique(unique: string, type?: number, productId?: number) {
-    const predicates = [eq(storeProductAttrValue.unique, unique)];
+    const predicates = [
+      eq(storeProductAttrValue.unique, unique),
+      eq(storeProductAttrValue.isRetired, 0),
+    ];
     if (type !== undefined) predicates.push(eq(storeProductAttrValue.type, type));
     if (productId !== undefined) predicates.push(eq(storeProductAttrValue.productId, productId));
     const rows = await this.db
@@ -50,6 +55,7 @@ export class StoreProductAttrValueDao extends BaseDao<typeof storeProductAttrVal
           eq(storeProductAttrValue.productId, productId),
           eq(storeProductAttrValue.type, type),
           eq(storeProductAttrValue.suk, suk),
+          eq(storeProductAttrValue.isRetired, 0),
         ),
       )
       .limit(1);
@@ -68,7 +74,9 @@ export class StoreProductAttrValueDao extends BaseDao<typeof storeProductAttrVal
       })
       .from(storeProductAttrValue)
       .where(
-        sql`${storeProductAttrValue.productId} = ${productId} AND ${storeProductAttrValue.type} = ${type}`,
+        sql`${storeProductAttrValue.productId} = ${productId}
+          AND ${storeProductAttrValue.type} = ${type}
+          AND ${storeProductAttrValue.isRetired} = 0`,
       );
     return {
       min: Number(rows[0]?.min ?? 0),
@@ -92,7 +100,7 @@ export class StoreProductAttrValueDao extends BaseDao<typeof storeProductAttrVal
         sql`${storeProductAttrValue.productId} IN (${sql.join(
           ids.map((id) => sql`${id}`),
           sql`,`,
-        )}) AND ${storeProductAttrValue.type} = 0`,
+        )}) AND ${storeProductAttrValue.type} = 0 AND ${storeProductAttrValue.isRetired} = 0`,
       )
       .groupBy(storeProductAttrValue.productId);
     return new Map(rows.map((r) => [r.id, r.stock]));

@@ -158,10 +158,39 @@ export const storeProductAttrValue = pgTable(
     writeDays: integer("write_days").default(0).notNull(),
     writeStart: integer("write_start").default(0).notNull(),
     writeEnd: integer("write_end").default(0).notNull(),
+    /** 目标库扩展：历史身份永久保留，1 表示停止新交易但允许退款/履约读取。 */
+    isRetired: smallint("is_retired").default(0).notNull(),
+    retiredAt: integer("retired_at").default(0).notNull(),
+    retiredBy: integer("retired_by").default(0).notNull(),
+    retireReason: varchar("retire_reason", { length: 255 }).default("").notNull(),
   },
   (t) => [
     index("unique_suk").on(t.unique, t.suk),
     index("store_id_value").on(t.productId, t.suk),
+    index("spav_product_active").on(t.productId, t.type, t.isRetired, t.id),
+  ],
+);
+
+/** 追加式 SKU 退役/恢复证据；不复用 system_log 代替业务迁移历史。 */
+export const storeProductSkuRetirementLog = pgTable(
+  "store_product_sku_retirement_log",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id").notNull(),
+    skuId: integer("sku_id").notNull(),
+    uniqueSnapshot: char("unique_snapshot", { length: 8 }).default("").notNull(),
+    sukSnapshot: varchar("suk_snapshot", { length: 512 }).default("").notNull(),
+    action: varchar("action", { length: 16 }).notNull(),
+    reason: varchar("reason", { length: 255 }).default("").notNull(),
+    actorId: integer("actor_id").default(0).notNull(),
+    actorName: varchar("actor_name", { length: 64 }).default("").notNull(),
+    actorIp: varchar("actor_ip", { length: 45 }).default("").notNull(),
+    dependencySnapshot: text("dependency_snapshot").default("{}").notNull(),
+    addTime: integer("add_time").default(0).notNull(),
+  },
+  (t) => [
+    index("spsrl_product_time").on(t.productId, t.addTime, t.id),
+    index("spsrl_sku_time").on(t.skuId, t.addTime, t.id),
   ],
 );
 
