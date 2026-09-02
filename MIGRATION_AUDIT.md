@@ -3476,7 +3476,7 @@ Supplier 管理员 8 条是本批最重要的阻断。旧登录服务按 `system
 
 ### 工程证据、生产边界与下一顺序
 
-当前候选定向/相关 3 文件 15 项、完整单元 184 文件/1,183 项、双 TypeScript 和 Supplier Vue 生产 build 均通过；observability 为 17 信号/10 组件/53 必需事件/406 个生产源文件，schema 为 source201/target262/shared201/sourceGaps0/外部与内嵌 262/零定义漂移。主 Worker minify dry-run 为 3,638.10 KiB/gzip 854.85 KiB，精确解析 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 与四个 Durable Object 后退出，没有部署。Windows workerd 在读取任何测试前仍以既有环境级 `0xc0000005` 启动失败；不能记作 runtime 通过，必须由本次推送后的 Linux Actions 复验现有 15 条运行时断言、五端构建、依赖与全历史 Secret 扫描。
+当前候选定向/相关 3 文件 15 项、完整单元 184 文件/1,183 项、双 TypeScript 和 Supplier Vue 生产 build 均通过；observability 为 17 信号/10 组件/53 必需事件/406 个生产源文件，schema 为 source201/target262/shared201/sourceGaps0/外部与内嵌 262/零定义漂移。主 Worker minify dry-run 为 3,638.10 KiB/gzip 854.85 KiB，精确解析 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 与四个 Durable Object 后退出，没有部署。Windows workerd 在读取任何测试前仍以既有环境级 `0xc0000005` 启动失败，未被冒充成通过；提交 `5ec7775` 推送后，[Actions `33577342683`](https://github.com/cinagroup/cinashop/actions/runs/33577342683) 对精确 head 的 Worker 静态、Linux workerd 1 文件/15 项、Admin/PC/Supplier/Kefu/UniApp 五端、生产依赖与全历史 Gitleaks 共 8/8 成功，并输出同一组 1,904/1,523/818/800/11/1,075 路由及 201/262/201/零结构漂移证据。
 
 本批没有生产 PostgreSQL/R2 DML、DDL、临时探针或主 Worker/Pages 发布。SUP-003 的只读生产夹具仍因会创建承载脱敏聚合的临时 `workers.dev` 端点而缺少对“该端点 + 精确载荷”的专项授权，通用数据库授权不能被扩张解释为公开端点授权。后续执行顺序是：先完成 SUP-004-C 五条运费模板并做跨租户负例；再设计、实现并全域接入 SUP-004-B RBAC 后恢复八条管理员路由；取得专项授权时执行 SUP-003 PostgreSQL/R2 只读审计；最后以真实 Supplier 主/子账号做旧端和 TS 端 E2E，另行请求主 Worker/Supplier Pages 发布批准并观察鉴权拒绝、Hyperdrive 延迟、统计跨度错误与配置保存失败率。父项在这些证据齐备前保持未完成。
 
