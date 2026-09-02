@@ -109,6 +109,11 @@ export function requiredSupplierPermissions(method: string, routePath: string): 
   if (route.startsWith("order/print/")) return ["supplier.order.view", "supplier.print.manage"];
   if (route.startsWith("order/waybill/")) return ["supplier.order.view", "supplier.waybill.manage"];
   if (route.startsWith("queue/")) return ["supplier.order.view"];
+  if (route === "export/expresslist") return ["supplier.order.view"];
+  if (route === "export/storeorder" || route.startsWith("export/batchorderdelivery/")) {
+    return ["supplier.order.manage"];
+  }
+  if (route === "export/financerecord") return ["supplier.finance.manage"];
   const group = SUPPLIER_PERMISSION_GROUPS.find((candidate) =>
     candidate.matches.some((matcher) => routeMatches(route, matcher)),
   );

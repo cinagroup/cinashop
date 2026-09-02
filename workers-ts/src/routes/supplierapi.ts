@@ -4,6 +4,7 @@ import { supplierAuthMiddleware } from "@/middleware/supplier-auth";
 import { supplierPermissionMiddleware } from "@/middleware/supplier-permission";
 import * as SupplierController from "@/controllers/supplier/SupplierController";
 import * as SupplierQueueController from "@/controllers/supplier/SupplierQueueController";
+import * as SupplierExportController from "@/controllers/supplier/SupplierExportController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
@@ -85,6 +86,13 @@ supplierapiRoutes.get("/system/form/all_system_form", SupplierController.systemF
 // and the old GET mutation contracts are intentionally not exposed.
 supplierapiRoutes.get("/queue/index", SupplierQueueController.queueList);
 supplierapiRoutes.get("/queue/delivery/log/:id/:type", SupplierQueueController.deliveryLog);
+
+// Legacy browser-side spreadsheet manifests. Every query is bounded, tenant
+// scoped and formula-neutralized; no historical queue payload is exported.
+supplierapiRoutes.get("/export/storeOrder", SupplierExportController.storeOrder);
+supplierapiRoutes.get("/export/expressList", SupplierExportController.expressList);
+supplierapiRoutes.get("/export/batchOrderDelivery/:id/:queueType/:cacheType", SupplierExportController.batchOrderDelivery);
+supplierapiRoutes.get("/export/financeRecord", SupplierExportController.financeRecord);
 
 supplierapiRoutes.get("/printing", SupplierController.legacyPrinting);
 supplierapiRoutes.put("/printing", SupplierController.updateLegacyPrinting);
