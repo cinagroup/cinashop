@@ -3594,6 +3594,34 @@ Supplier TS 售后页新增原因目录与精确筛选；确认弹窗显示的 `
 
 本批没有读取或写入生产 PostgreSQL 业务行，没有 DDL/DML，没有读取或管理 Cloudflare Queue 消息，没有创建临时 Worker，也没有发布主 Worker或 Supplier Pages。生产 Hyperdrive 只读验收仍需要统计 7～10 类历史任务、辅助行到订单的归属完整性、跨 Supplier 混合 binding、孤儿 relation 和辅助类型映射；如果通过临时 `workers.dev` 聚合端点执行，仍须对该端点和精确脱敏载荷取得专项授权。SUP-005 父项继续未完成，下一子批是 export 四条，特别要复用本批的租户联表，不能沿用旧 `batchOrderDelivery` 的裸队列 ID导出。
 
+## SUP-005-C Supplier Export 四条合同详细审计与候选实现（2026-09-02）
+
+### 旧合同、真实调用方与为何不引入服务端文件
+
+四条 PHP 权威合同均为 GET：订单/发货单、物流公司对照表、批量任务发货记录和供应商账单。逐行核对 `ExportExcel` controller、`ExportServices`、旧 Supplier `order.js/capital.js` 以及订单、Queue、账单 Vue 后，确认它们并不生成服务器文件、R2 对象或下载 URL，而是返回 `{header,filekey,export,filename}`，由浏览器累积页并生成表格。因此本批没有为小结果集虚构异步文件、长期对象或一次性票据；真正需要一次性票据的是卡密等秘密内容，已经由独立受控导出合同承担。这里保留旧 manifest，风险控制落在查询上限、租户权限、最小投影和单元格输出层。
+
+旧订单页会把当前筛选、选择 ID、页码和 `type=0/1` 传入订单/发货单导出；只要当页非空就继续请求下一页。旧 Queue 页按 `id/queueType/cacheType` 一次请求，旧账单页把聚合周期中的流水 ID列表一次提交，物流表也是一次请求。四个调用方都是活跃第一方入口，不能以“无人使用”退役。旧 controller 的安全质量却不同：订单与账单已有 Supplier 条件，批任务只按全局 queue ID读取 `queue_in_value` 和辅助行，完全没有 Supplier 范围；物流 service 可能携带账号、密钥等内部列，旧导出器最后虽然只取 name/code，但新实现不能先读取秘密再依赖序列化时忽略。
+
+### 有界 manifest、旧状态语义与表格注入防护
+
+订单/发货单统一按当前 Supplier、根订单 `pid=0`、平台店铺 `store_id=0` 和 `is_system_del=0` 查询，每页固定最多 250 行并多取 1 行计算 `has_more`。ID筛选只接受去重后的正整数，最多 1,000 个；页码、搜索词和 Asia/Shanghai 时间范围都有长度/数值边界。普通订单完整保留 PHP DAO 的业务状态映射，而不是把旧 UI 的“1=未发货、2=待收货、3=待评价、4=完成”错误当作 `store_order.status` 原值。发货单继续要求已付、快递、待收货状态、未软删，拼团必须成功，并以相关售后 `NOT EXISTS` 排除有效退款。订单商品快照一次批量读取，不做 N+1；每个 JSON快照限制 256 KiB，商品聚合字段和整个响应又分别受 16,000 字符与 4 MiB上限控制。
+
+批任务导出只接受 `7→3/8→4/9→5/10→6` 的固定类型组合，先验证对应 `queue_list` 历史行存在，再通过 `queue_auxiliary.relation_id = store_order.id AND store_order.supplier_id = 当前 Supplier` 建立 authority；最多返回 1,000 行。它只投影订单号、当前订单物流/配送或虚拟字段及通用状态，不读取 `queue_in_value`、`execute_key` 或 `queue_auxiliary.other`，因此不会把别家任务、可重放 payload 或历史自由文本带入下载。财务导出要求非空 ID列表，限定当前 Supplier 与 `is_del=0`，最多 1,000 行；物流目录只查询启用可见行的 `name/code`，从 SQL 投影阶段就排除 account/key/partner 等内部字段。
+
+所有字符串在进入 manifest 前移除 NUL、按字段上限截断，并检测可选空白后的 `= + - @`；命中时前置单引号，避免 Excel/WPS 把订单号、备注、姓名、地址、商品、物流编码、昵称或历史内容作为公式执行。整个 JSON UTF-8 字节数超过 4 MiB会明确拒绝并要求缩小范围，不依赖 Worker 内存极限。旧 `header/filekey/export/filename` 保持不变，新增 `bounded/page/limit/has_more` 只作向前兼容元数据，旧前端会忽略。
+
+### 权限、验证、生产边界与结果
+
+虽然四条都是 GET，大批量订单、履约和财务下载属于数据导出，不应自动等同普通查看权。候选将订单/发货单和批任务导出映射到 `supplier.order.manage`，账单映射到 `supplier.finance.manage`；只有不含租户秘密的物流名称/编码表保留 `supplier.order.view`。主管理员仍拥有全部稳定 capability，受限子账号不能凭只读列表权限批量外带 PII或财务记录。中间件继续对未知路径默认拒绝。
+
+定向 1 文件/6 项覆盖严格 ID上限、必填账单 ID、公式注入、NUL 清理、旧状态标签与筛选差异、四条精确路由、view/manage 权限、SQL租户范围及禁止投影秘密/队列 payload。完整本地门禁为 189 文件/1,218 项单元、双 TypeScript、Supplier 生产 build、生产依赖 0 漏洞、schema source201/target262/shared201/sourceGaps0/外部与内嵌262/零定义漂移、observability 17 信号/10 组件/53 必需事件/414 个生产源文件；主 Worker minify dry-run 为 3,699.57 KiB/gzip 871.68 KiB，精确解析 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 和四个 Durable Object后退出，没有部署。
+
+路由审计由全局 TS1,544/精确835/可执行817/缺失1,069/退役15/可执行缺口1,054 提升为 TS1,548/精确839/可执行821/缺失1,065/退役15/可执行缺口1,050，覆盖 `44.1%/43.1%/43.5%`；Supplier 面由 TS150/精确112/缺失70/退役11/可执行缺口59 提升为 TS154/精确116/缺失66/退役11/可执行缺口55，覆盖 `63.7%/63.7%/67.8%`。四条都是活跃、精确、可执行合同，没有通过新增非 PHP 路由虚增匹配分子。
+
+提交 `546e6b7857ed05f5a432df5d1e60758561c2a94c` 已推送；[Actions `33586697589`](https://github.com/cinagroup/cinashop/actions/runs/33586697589) 对精确 head 的 Worker、Admin、PC、Supplier、Kefu、UniApp、Linux workerd 和全历史 Gitleaks 8/8 成功。CI 精确为 Worker 189/1,218、workerd 1 文件/15 项，双 TypeScript、生产依赖、schema、route和observability全部成功。Cloudflare只读 `hyperdrive get` 同时确认指定 ID仍为 `cinashop-pg`、PostgreSQL origin、连接上限60且缓存开启，不返回密码。
+
+本批没有生产 DDL/DML，没有查询订单、地址、电话、财务流水或队列业务行，没有部署临时/主 Worker，也没有发布 Supplier Pages。若要补生产数据分布与跨租户负例，仍需一个只返回计数/布尔门禁的 `REPEATABLE READ, READ ONLY`桥；Windows本地 workerd不能启动远程请求，而临时随机 `workers.dev` 会承载脱敏生产聚合，按既有安全门禁必须对其精确端点和载荷另行授权。当前证据足以把 SUP-005 的 12 条候选合同标为完成，但不等于真实 Supplier 账号下载、生产浏览器 E2E或发布后观察完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
