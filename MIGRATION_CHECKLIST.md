@@ -11,11 +11,11 @@
 | MySQL 表结构映射 | PHP 201/201 表、缺源列 0 | 源结构定义完成 |
 | 仓库目标结构 | 外部 SQL 262 表；Worker 内嵌 262 表；共享源表 201、Worker 扩展 61；表/列/主键漂移 0 | 候选定义完成 |
 | 生产目标结构 | 生产现为 261 表；商家寄件三表、同城配送四表及其双 provider 约束已与候选一致，仅候选新增 `admin_user_write_replay` 尚未应用 | 寄件/同城配送结构完成；全库仍差 1 张候选表 |
-| PHP HTTP 合同 | 精确匹配 833/1,904；可执行 815；其中 18 条明确不可用、12 条有证据退役 | 精确注册 43.8%，静态可执行上限 42.8%，退役后有效覆盖 43.1% |
+| PHP HTTP 合同 | 精确匹配 835/1,904；可执行 817；其中 18 条明确不可用、15 条有证据退役 | 精确注册 43.9%，静态可执行上限 42.9%，退役后有效覆盖 43.3% |
 | 真实数据复制 | `data_migration_run=0`，本机无 `SOURCE_MYSQL_URL` | 未开始 |
-| Worker 单元测试 | 187/187 文件、1,207/1,207 项通过；SUP-005-A 定向 1 文件、5 项 | Supplier 退款原因、精确金额、租户权限、退役证据和客户端提交合同回归通过 |
-| Workers runtime | 当前 `edef647` 的 Linux workerd 1 文件/15 项；Windows 启动即 `0xc0000005` | 当前 Supplier 退款候选及既有 Queue/Images/R2 断言已在受支持 Linux 运行时通过，Windows 仅为本机缺陷 |
-| CI | [Actions `33583699196`](https://github.com/cinagroup/cinashop/actions/runs/33583699196) 对 `edef647` 的 Worker/五端/runtime/secret scan 8/8 | SUP-005 退款子批候选已推送并通过全部门禁 |
+| Worker 单元测试 | 188/188 文件、1,212/1,212 项通过；SUP-005-B Queue 定向 1 文件、5 项 | Supplier 历史队列租户联表、输入边界、只读路由、退役证据和权限合同回归通过 |
+| Workers runtime | 当前 `bd51824` 的 Linux workerd 1 文件/15 项；Windows 启动即 `0xc0000005` | 当前 Supplier 退款/Queue 候选及既有 Queue/Images/R2 断言已在受支持 Linux 运行时通过，Windows 仅为本机缺陷 |
+| CI | [Actions `33584993388`](https://github.com/cinagroup/cinashop/actions/runs/33584993388) 对 `bd51824` 的 Worker/五端/runtime/secret scan 8/8 | SUP-005 Queue 子批候选已推送并通过全部门禁 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -27,11 +27,11 @@
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `/api` | 457 | 813 | 420 | 417 | 3 | 37 | 1 | 36 | 91.9% / 91.2% / 91.4% |
 | `/adminapi` | 1,153 | 474 | 202 | 187 | 15 | 951 | 0 | 951 | 17.5% / 16.2% / 16.2% |
-| `/supplierapi` | 182 | 148 | 110 | 110 | 0 | 72 | 8 | 64 | 60.4% / 60.4% / 63.2% |
+| `/supplierapi` | 182 | 150 | 112 | 112 | 0 | 70 | 11 | 59 | 61.5% / 61.5% / 65.5% |
 | `/kefuapi` | 63 | 66 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,542 | 833 | 815 | 18 | 1,071 | 12 | 1,059 | 43.8% / 42.8% / 43.1% |
+| 合计 | 1,904 | 1,544 | 835 | 817 | 18 | 1,069 | 15 | 1,054 | 43.9% / 42.9% / 43.3% |
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
@@ -264,8 +264,9 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [x] **SUP-004-A 公共设置/首页兼容候选**：12 条精确路由、64 KiB 请求上限、最长 366 天聚合、Supplier 租户派生、打印 Secret 只写不回显、原密码校验/令牌失效及 Supplier TS 前端改密流程已完成；提交 `5ec7775` 已推送，[Actions `33577342683`](https://github.com/cinagroup/cinashop/actions/runs/33577342683) 的 184/1,183 单元、双 TypeScript、Linux workerd 15/15、五端 build、路由/schema/observability 与全历史 Gitleaks 8/8 通过，主 Worker dry-run 通过，未部署。
   - [x] **SUP-004-B Supplier 管理员 8 条 + RBAC 候选**：PHP 权限服务在 `verifiAuth()` 开头直接 `return true`，且 detail/edit/update/delete/status 未逐项绑定租户；现改为 12 组稳定 `view/manage` 权限覆盖全部认证 Supplier 路由，未知路由默认拒绝，主管理员身份只认 `system_supplier.admin_id`。子账号只接受当前 Supplier 的启用 `type=4` 角色，旧菜单数字规则先批量解析成稳定权限；创建/更新角色及给他人分配角色都不能超出操作者权限。八条旧管理员合同与四条租户角色扩展已接通，目标统一限定 `admin_type=4 + relation_id + level=1 + is_del=0`，事务内重验操作者、加 advisory/行锁，禁止操作主管理员或当前账号，密码 bcrypt cost 12、敏感字段不进审计。Supplier TS 增加权限过滤导航、路由守卫、子账号与角色编辑器；提交 `065c522ee0ed6bc3de2471ed744f9edf3efb48b4` 已推送，[Actions `33582012080`](https://github.com/cinagroup/cinashop/actions/runs/33582012080) 8/8，通过 186/1,202 单元、定向 10/10、Linux workerd 15/15、五端 build、路由/schema/observability 与全历史 Gitleaks。未读取生产业务行、未写生产库、未发布。
   - [x] **SUP-004-C 运费模板 5 条候选**：列表、详情、保存、软删除和城市目录均从认证 Supplier 派生租户，所有模板读写统一限定 `type=2 + relation_id=supplierId + is_del=0`，跨租户与不存在返回同一失败面。主模板与计价/指定包邮/不配送子规则在同一事务中按 Supplier advisory lock 和模板行锁原子替换；城市路径、默认全国规则、计费模式、小数精度、重复终点、规则组/路径数量均有界。删除会拒绝仍被本 Supplier 有效商品引用的模板，并与商品保存共享模板锁；商品三种运费模式恢复为 `1=包邮/2=固定/3=模板` 且验证模板归属。新 Supplier TS 页面已恢复模板编辑和商品选择，子规则删除只在本地修改，不再误调整模板删除接口。提交 `9066cb9` 已推送，[Actions `33579118412`](https://github.com/cinagroup/cinashop/actions/runs/33579118412) 的 185/1,192 单元、定向 3 文件/27 项、Linux workerd 15/15、五端 build、路由/schema/observability 与全历史 Gitleaks 8/8 通过；未读写生产数据、未部署。
-- [ ] **SUP-005 导出/队列/售后（退款 3/3 已收敛，export/queue 待完成）**：初始缺口为 export 4、queue 5、refund 3。退款子域现恢复表单 GET 与原因 GET，并将危险的 GET 写退款同意入口作有证据退役；导出仍需一次性票据，队列仍须只传引用并补齐五条管理合同，所以父项保持未完成。
+- [ ] **SUP-005 导出/队列/售后（退款 3/3、queue 5/5 已收敛，export 4 条待完成）**：初始缺口为 export 4、queue 5、refund 3。退款子域恢复两条只读合同并退役危险 GET 写退款；Queue 子域恢复两条按订单归属过滤的历史只读合同，将三条无租户范围的全局 GET 写操作退役并指向 Supplier 专属履约/面单账本。导出仍需逐条完成租户范围、敏感字段、一次性票据/对象权限与大结果集边界，所以父项保持未完成。
   - [x] **SUP-005-A Supplier 售后退款 3 条候选**：`GET /refund/refund/:id` 只返回当前 Supplier 的已支付、可处理售后表单；旧 PHP 同一售后单的“部分退款后立即完成整单”矛盾语义收敛为精确全额合同，PUT 必须提交与售后单权威金额完全一致的两位小数。执行前在短事务中加 2 秒锁/5 秒语句超时和行锁，随后把 Supplier、用户、退款单、原订单、金额、历史已退款值及支付/可见性再次绑定到共享退款状态机；历史部分退款失败关闭，完成重放幂等，状态日志使用正确订单 ID。`GET /refund/reason` 从 `stor_reason` 读取并限制 100 项/每项 255 字，列表增加租户内精确原因过滤，Supplier TS 同步接入筛选并提交确认金额。旧 `GET /refund/agree/:order_id` 因 GET 写状态、忽略 path 改读 query、无租户范围和错误日志 oid 已退役，安全替代为两个 PUT。提交 `edef647d27c5f7d90586bf329a75513ab3baa26d` 已推送，[Actions `33583699196`](https://github.com/cinagroup/cinashop/actions/runs/33583699196) 8/8；187/1,207 单元、定向 5/5、双 TypeScript、Linux workerd 15/15、Supplier build、路由/schema/observability、依赖审计和全历史 Gitleaks 均通过。未读写生产业务数据、未部署。
+  - [x] **SUP-005-B Supplier Queue 5 条候选（2 条执行 + 3 条退役）**：PHP `queue_list/queue_auxiliary` 是 Admin/Supplier 共用全局表且没有 `supplier_id`，旧 Supplier controller 的列表、明细、重试、清除和停止都不绑定租户；重试还会把不透明 `queue_in_value` 交给 Admin 履约服务重放。现仅恢复 `GET /queue/index` 和 `GET /queue/delivery/log/:id/:type`，只接受履约类型 7～10/辅助类型 3～6，并强制 `queue_auxiliary.relation_id = store_order.id AND store_order.supplier_id = 当前 Supplier`；列表数量也按当前租户辅助行重算，不返回 `queue_in_value/execute_key/other`，响应明确标记 legacy history/read-only。三条 GET 写操作以 PHP controller/service/旧 Vue 调用四层证据退役：面单重试/关闭改走带 request key、原因和不可变动作记录的 Supplier waybill job API，普通/同城/虚拟发货按归属订单显式重新提交，不提供通用全局队列删除或停止。提交 `bd51824043d6a3a4d217a1107088e9efb632adb9` 已推送，[Actions `33584993388`](https://github.com/cinagroup/cinashop/actions/runs/33584993388) 8/8；188/1,212 单元、Queue 定向 5/5、双 TypeScript、Linux workerd 15/15、Supplier build、路由/schema/observability 和全历史 Gitleaks 均通过。未读取或写入生产业务数据，未查询 Cloudflare Queue 内部消息，未部署。
 
 ## P1：Kefu `/kefuapi`
 

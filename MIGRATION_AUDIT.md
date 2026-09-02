@@ -3564,7 +3564,35 @@ Supplier TS 售后页新增原因目录与精确筛选；确认弹窗显示的 `
 
 路由审计由全局 TS1,540/精确831/可执行813/缺失1,073/退役11/可执行缺口1,062 提升为 TS1,542/精确833/可执行815/缺失1,071/退役12/可执行缺口1,059，覆盖 `43.8%/42.8%/43.1%`；Supplier 面由 TS146/精确108/缺失74/退役7/可执行缺口67 提升为 TS148/精确110/缺失72/退役8/可执行缺口64，覆盖 `60.4%/60.4%/63.2%`。两条新增 TS 路由都是真实 PHP 精确合同，退役 GET 不进入匹配分子。
 
-本批没有读取或写入生产业务数据，没有生产 PostgreSQL/R2 DML/DDL，没有创建临时 Worker，也没有发布主 Worker或 Supplier Pages。SUP-005 父项仍不完成：export 4 条要先设计一次性票据、对象权限和过期清理；queue 5 条需要把旧 ThinkPHP 队列管理语义映射为只传引用的 Cloudflare Queue/账本/重试/死信合同。退款还需生产只读核验售后状态、金额、Supplier/订单归属和历史部分退款分布，并以真实 Supplier 账号做表单、原因筛选、余额/微信/支付宝、拒绝、重放和跨租户负例 E2E。生产只读探针若通过临时 `workers.dev` 承载聚合，仍须对端点和精确脱敏载荷取得专项授权；通用生产数据库授权不自动包含这一外部端点。
+本批没有读取或写入生产业务数据，没有生产 PostgreSQL/R2 DML/DDL，没有创建临时 Worker，也没有发布主 Worker或 Supplier Pages。退款子批完成时 SUP-005 父项仍不完成：export 4 条还要设计一次性票据、对象权限和过期清理；当时 queue 5 条仍待逐项映射。退款还需生产只读核验售后状态、金额、Supplier/订单归属和历史部分退款分布，并以真实 Supplier 账号做表单、原因筛选、余额/微信/支付宝、拒绝、重放和跨租户负例 E2E。生产只读探针若通过临时 `workers.dev` 承载聚合，仍须对端点和精确脱敏载荷取得专项授权；通用生产数据库授权不自动包含这一外部端点。Queue 子批的后续结论见下一节。
+
+## SUP-005-B Supplier Queue 五条合同详细审计与候选实现（2026-09-02）
+
+### 旧实现不是 Supplier 队列，而是无租户边界的全局 Admin 队列
+
+五条 PHP 权威合同是任务列表、发货明细、再次执行、清除异常和停止任务。旧 Supplier `Queue` controller 没有把认证得到的 Supplier ID传给任何服务：列表直接读取全局 `queue_list`；明细只按 `binding_id + type` 读取 `queue_auxiliary`；三个动作则按客户端提供的裸队列 ID/type 重试、批量改写辅助行或改变队列状态。`queue_list` 的 15 列和 `queue_auxiliary` 的 8 列均没有 `supplier_id`，任务创建时 `source` 还被固定写成 `admin`。因此不能用“补一个 where source=supplier”修复，也不能从队列 ID本身推导租户。
+
+风险不只是一张跨租户列表。再次执行会读取全局 `queue_in_value`，经 `StoreOrderServices::adminQueueOrderDo()` 重放批量履约；清除会把该 `binding_id` 下所有辅助行设为删除，停止则先按全局 ID找出任务类型再改状态。三条动作全是 GET，旧 Supplier Vue 确实直接调用它们。若在 Worker 中照搬，将同时形成 GET 写副作用、跨 Supplier IDOR、另一商家任务重放和历史证据破坏。Cloudflare Queues 也不提供业务端“列出或编辑队列中消息”的管理模型；把 `system_queue_dead_letter` 或平台内部 Queue 消息伪装成旧列表会创造第二套不真实 authority。
+
+### 两条历史读取如何建立可证明的租户范围
+
+候选只恢复两条确有安全只读语义的精确合同。`GET /supplierapi/queue/index` 只接受旧履约任务 7～10，并按固定映射关联辅助类型 3～6；`GET /supplierapi/queue/delivery/log/:id/:type` 只接受这四种辅助类型。两条查询都必须沿 `queue_auxiliary.relation_id = store_order.id` 关联到订单，并在数据库条件中强制 `store_order.supplier_id =` 认证 Supplier。列表总数、成功数和剩余数按当前 Supplier 可见辅助行重新聚合，不信任全局 `queue_list.total_num/surplus_num`；如果一个历史任务异常混入多商家订单，每个商家也只能看到自己的子集。
+
+投影保留旧页面需要的任务类型、状态、业务时间、订单号、物流/配送或虚拟发货字段，但不返回 `queue_in_value`、`execute_key` 或原始 `queue_auxiliary.other`。分页最多 100，任务/明细状态、任务类型和 Asia/Shanghai 时间范围都有严格边界；不支持的 Admin 批任务类型返回空历史而不暴露全局行。响应附带 `legacy_history_only/read_only/mutation_routes_retired`，明确这些表只作迁移证据，当前执行 authority 是 Supplier 专属任务账本和显式订单履约合同。路由统一要求 `supplier.order.view`，不新增可误解为全局队列管理权的 capability。
+
+### 三条写合同的退役与安全替代
+
+`GET queue/again/do_queue/:id/:type`、`GET queue/del/wrong_queue/:id/:type` 和 `GET queue/stop/wrong_queue/:id` 均写入带 PHP 路由、Supplier controller、全局 Queue service 和第一方 Vue 调用行号的退役清单，且权威快照新增三份源码 SHA-256/行数证据。电子面单的异常恢复已经由 `order_waybill_job` 租户列、显式状态机和不可变 action ledger 承担：人工重签使用 `POST /supplierapi/waybill/jobs/:id/confirm-retry`，关闭使用 `POST /supplierapi/waybill/jobs/:id/close`，都要求随机 request key 和至少 8 字审计原因。普通快递、同城配送和虚拟发货不重放不透明旧 payload；操作者必须对当前归属订单重新提交显式 `PUT /supplierapi/order/delivery/:id` 请求。历史日志不可删除，已完成的同步履约也没有虚构的“后台任务停止”操作。
+
+这不是把三个缺口藏起来：退役路由仍留在 PHP 原始 1,904 分母和 missing 数中，只从 `actionableMissing` 扣除；替代合同各自接受租户、幂等和状态机测试。Supplier 新 TS 前端本来就使用 Waybills 账本和 Orders 显式履约，没有迁入旧全局队列的三个危险按钮；旧 Vue 若仍指向新 Worker，只能读取历史，写入口会落到 501 fallback，不会静默恢复副作用。
+
+### 验证、覆盖率与生产边界
+
+提交 `bd51824043d6a3a4d217a1107088e9efb632adb9` 推送后，[Actions `33584993388`](https://github.com/cinagroup/cinashop/actions/runs/33584993388) 对精确 head 的 Worker、Admin/PC/Supplier/Kefu/UniApp、Linux workerd 和全历史 Gitleaks 8/8 成功。完整单元为 188 文件/1,212 项，Queue 定向 1 文件/5 项，Linux workerd 1 文件/15 项；双 TypeScript、Supplier 生产 build、生产依赖审计、schema source201/target262/shared201/sourceGaps0/外部与内嵌 262/零漂移通过。observability 为 17 信号/10 组件/53 必需事件/412 个生产源文件。主 Worker minify dry-run 为 3,685.98 KiB/gzip 867.71 KiB，精确识别 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 和四个 Durable Object 后退出，没有部署。
+
+路由审计由全局 TS1,542/精确833/可执行815/缺失1,071/退役12/可执行缺口1,059 提升为 TS1,544/精确835/可执行817/缺失1,069/退役15/可执行缺口1,054，覆盖 `43.9%/42.9%/43.3%`；Supplier 面由 TS148/精确110/缺失72/退役8/可执行缺口64 提升为 TS150/精确112/缺失70/退役11/可执行缺口59，覆盖 `61.5%/61.5%/65.5%`。两条读取是精确可执行合同，三条退役不进入匹配分子。
+
+本批没有读取或写入生产 PostgreSQL 业务行，没有 DDL/DML，没有读取或管理 Cloudflare Queue 消息，没有创建临时 Worker，也没有发布主 Worker或 Supplier Pages。生产 Hyperdrive 只读验收仍需要统计 7～10 类历史任务、辅助行到订单的归属完整性、跨 Supplier 混合 binding、孤儿 relation 和辅助类型映射；如果通过临时 `workers.dev` 聚合端点执行，仍须对该端点和精确脱敏载荷取得专项授权。SUP-005 父项继续未完成，下一子批是 export 四条，特别要复用本批的租户联表，不能沿用旧 `batchOrderDelivery` 的裸队列 ID导出。
 
 ## 完成定义
 
