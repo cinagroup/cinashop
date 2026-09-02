@@ -5,6 +5,7 @@ import { Search } from "@element-plus/icons-vue";
 import {
   agreeRefundReturn,
   getRefundDetail,
+  getRefundReasons,
   getRefunds,
   refundOrder,
   refuseRefund,
@@ -16,7 +17,15 @@ import { formatMoney, formatTime, payType } from "@/utils/format";
 const loading = ref(false);
 const rows = ref<RefundRow[]>([]);
 const total = ref(0);
-const filters = reactive({ page: 1, limit: 20, keyword: "", refund_type: "", apply_type: "" });
+const filters = reactive({
+  page: 1,
+  limit: 20,
+  keyword: "",
+  refund_type: "",
+  apply_type: "",
+  refund_reason: "",
+});
+const refundReasons = ref<string[]>([]);
 const drawerOpen = ref(false);
 const detailLoading = ref(false);
 const current = ref<RefundDetail | null>(null);
@@ -63,7 +72,10 @@ const canAgreeReturn = computed(
   () => canProcess.value && current.value && [2, 3].includes(current.value.apply_type) && current.value.refund_type < 4,
 );
 const canRefund = computed(
-  () => canProcess.value && current.value && ["yue", "weixin", "alipay"].includes(current.value.pay_type),
+  () => canProcess.value && current.value &&
+    ([0, 1, 2, 5].includes(current.value.refund_type) ||
+      (current.value.refund_type === 4 && current.value.apply_type === 3)) &&
+    ["yue", "weixin", "alipay"].includes(current.value.pay_type),
 );
 const canRefuse = computed(() => {
   if (!canProcess.value || !current.value) return false;
@@ -80,6 +92,14 @@ async function load() {
     ElMessage.error(error instanceof Error ? error.message : "售后列表加载失败");
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadRefundReasons() {
+  try {
+    refundReasons.value = await getRefundReasons();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "退款原因加载失败");
   }
 }
 
@@ -172,7 +192,7 @@ async function refundAction() {
   }
   actionLoading.value = true;
   try {
-    const result = await refundOrder(current.value.id);
+    const result = await refundOrder(current.value.id, current.value.refund_price);
     await refreshCurrent();
     ElMessage.success(result.completed ? "退款完成" : "退款已受理，正在等待渠道确认");
   } catch (error) {
@@ -182,7 +202,9 @@ async function refundAction() {
   }
 }
 
-onMounted(load);
+onMounted(() => {
+  void Promise.all([load(), loadRefundReasons()]);
+});
 </script>
 
 <template>
@@ -198,6 +220,9 @@ onMounted(load);
         </el-select>
         <el-select v-model="filters.refund_type" class="state-select" placeholder="处理状态" clearable @change="search">
           <el-option label="待处理" value="0" /><el-option label="已拒绝" value="3" /><el-option label="等待退货" value="4" /><el-option label="用户已退货" value="5" /><el-option label="已退款" value="6" />
+        </el-select>
+        <el-select v-model="filters.refund_reason" class="state-select" placeholder="退款原因" clearable filterable @change="search">
+          <el-option v-for="reason in refundReasons" :key="reason" :label="reason" :value="reason" />
         </el-select>
         <el-button type="primary" @click="search">查询</el-button>
       </div>

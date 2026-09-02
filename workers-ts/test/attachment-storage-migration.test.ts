@@ -206,9 +206,9 @@ describe("attachment and R2 storage migration boundary", () => {
     const decisions = JSON.parse(readFileSync("audit/legacy-route-decisions.json", "utf8")) as {
       decisions: Array<{ surface: string; method: string; path: string; status: string }>;
     };
-    expect(decisions.decisions.filter((decision) => decision.surface === "supplier").map((decision) =>
-      `${decision.method} ${decision.path}`
-    ).sort()).toEqual([
+    expect(decisions.decisions.filter((decision) =>
+      decision.surface === "supplier" && decision.path.startsWith("/supplierapi/file/")
+    ).map((decision) => `${decision.method} ${decision.path}`).sort()).toEqual([
       "GET /supplierapi/file/category/:id",
       "GET /supplierapi/file/file/move",
       "GET /supplierapi/file/remove/qrcode",

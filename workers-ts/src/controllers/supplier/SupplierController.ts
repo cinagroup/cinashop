@@ -23,7 +23,10 @@ import {
   normalizeSupplierSplitCartInput,
   SupplierFulfillmentService,
 } from "@/services/supplier/SupplierFulfillmentService";
-import { SupplierAfterSaleService } from "@/services/supplier/SupplierAfterSaleService";
+import {
+  normalizeSupplierRefundDecisionInput,
+  SupplierAfterSaleService,
+} from "@/services/supplier/SupplierAfterSaleService";
 import { SupplierFinanceService } from "@/services/supplier/SupplierFinanceService";
 import {
   buildSkuCombinations,
@@ -784,6 +787,16 @@ export async function refundDetail(c: SupplierContext) {
   return jsonOk(c, await afterSaleService(c).detail(supplierId, refundId));
 }
 
+export async function refundForm(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const refundId = positiveId(c.req.param("id"), "售后ID");
+  return jsonOk(c, await afterSaleService(c).refundForm(supplierId, refundId));
+}
+
+export async function refundReasons(c: SupplierContext) {
+  return jsonOk(c, await afterSaleService(c).reasons());
+}
+
 export async function updateRefundRemark(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const refundId = positiveId(c.req.param("id"), "售后ID");
@@ -812,7 +825,8 @@ export async function refuseRefund(c: SupplierContext) {
 export async function refundOrder(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const refundId = positiveId(c.req.param("id"), "售后ID");
-  const result = await afterSaleService(c).refund(supplierId, refundId);
+  const input = normalizeSupplierRefundDecisionInput(await readJsonObject(c));
+  const result = await afterSaleService(c).refund(supplierId, refundId, input);
   return jsonOk(c, result, result.completed ? "退款成功" : "退款已受理，等待渠道确认");
 }
 

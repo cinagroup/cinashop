@@ -94,6 +94,19 @@
       "replacement": "GET /supplierapi/file/category lists tenant-scoped categories and GET /supplierapi/file/category/:id/edit returns the scoped edit form"
     },
     {
+      "surface": "supplier",
+      "method": "GET",
+      "path": "/supplierapi/refund/agree/:order_id",
+      "status": "retired",
+      "reason": "The PHP GET mutates refund state, ignores the path parameter, reads order_id from the query string, performs no supplier ownership check, and records the refund id as the order-status oid.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:490",
+        "cinashop-php/app/controller/supplier/Refund.php:185",
+        "cinashop-php/app/services/order/StoreOrderRefundServices.php:562"
+      ],
+      "replacement": "PUT /supplierapi/refund/agree/:id performs a tenant-scoped return approval; PUT /supplierapi/refund/refund/:id performs an exact-amount tenant-scoped money refund"
+    },
+    {
       "surface": "kefu",
       "method": "POST",
       "path": "/kefuapi/order/refund",

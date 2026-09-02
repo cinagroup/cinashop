@@ -191,6 +191,8 @@ supplierapiRoutes.put("/order/take/:id", SupplierController.confirmOrderTake);
 
 supplierapiRoutes.get("/refund/list", SupplierController.refundList);
 supplierapiRoutes.get("/refund/detail/:id", SupplierController.refundDetail);
+supplierapiRoutes.get("/refund/refund/:id", SupplierController.refundForm);
+supplierapiRoutes.get("/refund/reason", SupplierController.refundReasons);
 supplierapiRoutes.put("/refund/remark/:id", SupplierController.updateRefundRemark);
 supplierapiRoutes.put("/refund/agree/:id", SupplierController.agreeRefundReturn);
 supplierapiRoutes.put("/refund/refuse/:id", SupplierController.refuseRefund);

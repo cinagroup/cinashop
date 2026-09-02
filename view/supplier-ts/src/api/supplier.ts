@@ -747,6 +747,13 @@ export async function getRefunds(params: Record<string, string | number>): Promi
   return apiRequest<PageResult<RefundRow>>({ method: "GET", url: "/refund/list", params });
 }
 
+export async function getRefundReasons(): Promise<string[]> {
+  if (previewMode) {
+    return [...new Set(previewRefunds.map((item) => item.refund_reason).filter(Boolean))];
+  }
+  return apiRequest<string[]>({ method: "GET", url: "/refund/reason" });
+}
+
 export async function getRefundDetail(id: number): Promise<RefundDetail> {
   if (previewMode) {
     const refund = previewRefunds.find((item) => item.id === id) ?? previewRefunds[0];
@@ -783,7 +790,7 @@ export async function refuseRefund(id: number, refuseReason: string) {
   return apiRequest<null>({ method: "PUT", url: `/refund/refuse/${id}`, data: { refuse_reason: refuseReason } });
 }
 
-export async function refundOrder(id: number) {
+export async function refundOrder(id: number, refundPrice: string) {
   if (previewMode) {
     const row = previewRefunds.find((item) => item.id === id);
     if (row?.pay_type === "yue") {
@@ -799,7 +806,11 @@ export async function refundOrder(id: number) {
     }
     return { completed: false, status: "PROCESSING" } satisfies RefundExecutionResult;
   }
-  return apiRequest<RefundExecutionResult>({ method: "PUT", url: `/refund/refund/${id}` });
+  return apiRequest<RefundExecutionResult>({
+    method: "PUT",
+    url: `/refund/refund/${id}`,
+    data: { type: 1, refund_price: refundPrice },
+  });
 }
 
 export async function getFinanceInfo(): Promise<FinanceInfo> {

@@ -17,6 +17,10 @@
       "lineCount": 176,
       "sha256": "f1da7b0ef1c3c01425d8aea387c20c73f89e9dfaddf8b1cceb272669fe5230a7"
     },
+    "cinashop-php/app/controller/supplier/Refund.php": {
+      "lineCount": 232,
+      "sha256": "dc38660390da59f812bae8c991b09c54a5143311e498fc1a1bc079d71eb38125"
+    },
     "cinashop-php/app/controller/supplier/file/SystemAttachment.php": {
       "lineCount": 232,
       "sha256": "0533e1b496070a5073a69f3d4eb84bb910aa724646df21b7ebc00e94e19e8dd5"
