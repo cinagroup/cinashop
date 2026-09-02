@@ -10,18 +10,27 @@ import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
   legacyCategory,
+  shippingTemplates,
   storeCart,
+  storeBrand,
+  storeCouponIssue,
   storeProduct,
   storeProductAttrValue,
   storeProductCategory,
+  storeProductCoupon,
   storeProductLabel,
   storeProductRelation,
   storeProductStockRecord,
+  systemForm,
   systemLog,
   systemStore,
   systemSupplier,
+  userLabel,
 } from "@/models/schema";
-import type { ProductEditorActor } from "@/services/product/ProductAssociationService";
+import {
+  lockProductWrite,
+  type ProductEditorActor,
+} from "@/services/product/ProductAssociationService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_PAGE = 1_000_000;
@@ -29,10 +38,26 @@ const MAX_LIMIT = 100;
 const MAX_TEXT = 100;
 const MAX_BATCH_PRODUCTS = 100;
 const MAX_BATCH_RELATIONS = 50;
+const MAX_BATCH_COUPONS = 20;
 const MAX_SKUS = 500;
 const MAX_MONEY = 9_999_999_999.99;
 const PRODUCT_CATEGORY_RELATION = 1;
+const PRODUCT_BRAND_RELATION = 2;
 const PRODUCT_LABEL_RELATION = 3;
+const PRODUCT_USER_LABEL_RELATION = 4;
+const RECOMMENDATION_KEYS = ["is_hot", "is_benefit", "is_best", "is_new", "is_good"] as const;
+
+type RecommendationKey = typeof RECOMMENDATION_KEYS[number];
+
+export type AdminProductBatchInput =
+  | { type: 1 | 2; ids: number[]; relationIds: number[] }
+  | { type: 3; ids: number[]; deliveryTypes: number[] }
+  | { type: 4; ids: number[]; giveIntegral: string; couponIds: number[] }
+  | { type: 5; ids: number[]; relationIds: number[] }
+  | { type: 6; ids: number[]; recommendations: RecommendationKey[] }
+  | { type: 7; ids: number[]; systemFormId: number }
+  | { type: 8; ids: number[]; freight: 1 | 2 | 3; postage: string; templateId: number }
+  | { type: 9; ids: number[]; relationIds: number[] };
 
 type SkuRow = typeof storeProductAttrValue.$inferSelect;
 type CategoryRow = typeof storeProductCategory.$inferSelect;
@@ -96,6 +121,7 @@ function integerIds(
   label: string,
   maximum: number,
   allowEmpty = false,
+  sortResult = true,
 ): number[] {
   const source = Array.isArray(value)
     ? value
@@ -110,7 +136,7 @@ function integerIds(
   ))) {
     throw new ValidateException(label);
   }
-  return ids.sort((left, right) => left - right);
+  return sortResult ? ids.sort((left, right) => left - right) : ids;
 }
 
 function money(value: unknown, label: string): string {
@@ -129,6 +155,26 @@ function stock(value: unknown): number {
     throw new ValidateException("库存错误");
   }
   return parsed;
+}
+
+function nonNegativeInteger(value: unknown, label: string): number {
+  const parsed = Number(value ?? 0);
+  if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 2_147_483_647) {
+    throw new ValidateException(`${label}错误`);
+  }
+  return parsed;
+}
+
+function recommendationKeys(value: unknown): RecommendationKey[] {
+  if (value === undefined || value === null || value === "") return [];
+  if (!Array.isArray(value) || value.length > RECOMMENDATION_KEYS.length) {
+    throw new ValidateException("活动推荐错误");
+  }
+  const selected = new Set(value);
+  if ([...selected].some((item) => typeof item !== "string" || !RECOMMENDATION_KEYS.includes(item as RecommendationKey))) {
+    throw new ValidateException("活动推荐错误");
+  }
+  return RECOMMENDATION_KEYS.filter((key) => selected.has(key));
 }
 
 function parseStoredIds(value: unknown): number[] {
@@ -210,34 +256,82 @@ export function parseAdminProductSkuUpdates(body: unknown): AdminProductSkuUpdat
   });
 }
 
-export function parseAdminProductBatchBody(body: unknown): {
-  type: 1 | 2;
-  ids: number[];
-  relationIds: number[];
-} {
+export function parseAdminProductBatchBody(body: unknown): AdminProductBatchInput {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     throw new ValidateException("请求数据格式错误");
   }
   const input = body as Record<string, unknown>;
   const type = Number(input.type);
-  if (type !== 1 && type !== 2) throw new ValidateException("请选择处理类型");
+  if (!Number.isSafeInteger(type) || type < 1 || type > 9) {
+    throw new ValidateException("请选择处理类型");
+  }
   const ids = integerIds(input.ids, "请选择处理商品", MAX_BATCH_PRODUCTS);
   if (!input.data || typeof input.data !== "object" || Array.isArray(input.data)) {
     throw new ValidateException("请选择处理数据");
   }
   const data = input.data as Record<string, unknown>;
-  const relationIds = integerIds(
-    type === 1 ? data.cate_id : data.store_label_id,
-    type === 1 ? "请选择分类" : "商品标签错误",
-    MAX_BATCH_RELATIONS,
-    type === 2,
-  );
-  return { type, ids, relationIds };
+  if (type === 1 || type === 2 || type === 5 || type === 9) {
+    const rawIds = type === 1
+      ? data.cate_id
+      : type === 2
+        ? data.store_label_id
+        : type === 5
+          ? data.label_id
+          : data.brand_id;
+    const label = type === 1
+      ? "请选择分类"
+      : type === 2
+        ? "商品标签错误"
+        : type === 5
+          ? "用户标签错误"
+          : "商品品牌错误";
+    return {
+      type,
+      ids,
+      relationIds: integerIds(rawIds, label, MAX_BATCH_RELATIONS, type !== 1, type !== 9),
+    };
+  }
+  if (type === 3) {
+    const deliveryTypes = integerIds(data.delivery_type, "请选择商品配送方式", 3);
+    if (deliveryTypes.some((item) => item < 1 || item > 3)) {
+      throw new ValidateException("商品配送方式错误");
+    }
+    return { type, ids, deliveryTypes };
+  }
+  if (type === 4) {
+    return {
+      type,
+      ids,
+      giveIntegral: money(data.give_integral ?? 0, "赠送积分"),
+      couponIds: integerIds(data.coupon_ids, "赠送优惠券错误", MAX_BATCH_COUPONS, true),
+    };
+  }
+  if (type === 6) {
+    return { type, ids, recommendations: recommendationKeys(data.recommend) };
+  }
+  if (type === 7) {
+    return { type, ids, systemFormId: nonNegativeInteger(data.system_form_id, "系统表单") };
+  }
+  const freight = Number(data.freight);
+  if (!Number.isSafeInteger(freight) || ![1, 2, 3].includes(freight)) {
+    throw new ValidateException("运费设置错误");
+  }
+  const postage = money(data.postage ?? 0, "固定运费");
+  const templateId = nonNegativeInteger(data.temp_id, "运费模板");
+  if (freight === 2 && Number(postage) <= 0) throw new ValidateException("固定运费必须大于0");
+  if (freight === 3 && templateId <= 0) throw new ValidateException("请选择运费模板");
+  return {
+    type: 8,
+    ids,
+    freight: freight as 1 | 2 | 3,
+    postage: freight === 2 ? postage : "0.00",
+    templateId: freight === 3 ? templateId : 0,
+  };
 }
 
-function relationFingerprint(ids: number[]): string {
+function evidenceFingerprint(values: readonly (number | string)[]): string {
   let hash = 2_166_136_261;
-  for (const code of ids.join(",")) {
+  for (const code of values.join("\u0000")) {
     hash ^= code.charCodeAt(0);
     hash = Math.imul(hash, 16_777_619);
   }
@@ -247,14 +341,25 @@ function relationFingerprint(ids: number[]): string {
 async function writeBatchAudit(
   tx: DbClient,
   actor: ProductEditorActor,
-  operation: "show" | "hide" | "category" | "label",
+  operation:
+    | "show"
+    | "hide"
+    | "category"
+    | "label"
+    | "delivery"
+    | "reward"
+    | "user_label"
+    | "recommend"
+    | "form"
+    | "freight"
+    | "brand",
   productIds: number[],
-  relationIds: number[],
+  evidenceValues: readonly (number | string)[],
   now: number,
 ): Promise<void> {
-  const relationEvidence = relationIds.length
-    ? `;relations=${relationIds.length}:${relationFingerprint(relationIds)}`
-    : ";relations=0";
+  const relationEvidence = evidenceValues.length
+    ? `;evidence=${evidenceValues.length}:${evidenceFingerprint(evidenceValues)}`
+    : ";evidence=0";
   await tx.insert(systemLog).values(productIds.map((productId) => ({
     adminId: actor.id,
     adminName: actor.name.slice(0, 64),
@@ -415,11 +520,12 @@ export class AdminMobileProductService {
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+      for (const productId of input.ids) await lockProductWrite(tx, productId);
       const products = await tx.select({
         id: storeProduct.id,
         isDel: storeProduct.isDel,
         isVerify: storeProduct.isVerify,
-      }).from(storeProduct).where(inArray(storeProduct.id, input.ids)).for("update");
+      }).from(storeProduct).where(inArray(storeProduct.id, input.ids)).orderBy(asc(storeProduct.id)).for("update");
       if (products.length !== input.ids.length) throw new NotFoundException("商品不存在");
       if (products.some((product) => product.isDel === 1)) {
         throw new ValidateException("回收站商品不能修改上下架状态");
@@ -612,18 +718,31 @@ export class AdminMobileProductService {
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+      for (const productId of input.ids) await lockProductWrite(tx, productId);
       const products = await tx.select({
         id: storeProduct.id,
         isShow: storeProduct.isShow,
+        type: storeProduct.type,
+        relationId: storeProduct.relationId,
       }).from(storeProduct).where(and(
         inArray(storeProduct.id, input.ids),
         eq(storeProduct.isDel, 0),
-      )).for("update");
+      )).orderBy(asc(storeProduct.id)).for("update");
       if (products.length !== input.ids.length) throw new NotFoundException("商品不存在或已删除");
       const productById = new Map(products.map((product) => [product.id, product]));
       const now = Math.floor(Date.now() / 1000);
       const categoryById = new Map<number, { id: number; pid: number }>();
+      let relationType = 0;
+      let relationIds: number[] = [];
+      let couponIds: number[] = [];
+      let evidenceValues: Array<number | string> = [];
+      let operation: Parameters<typeof writeBatchAudit>[2];
+
       if (input.type === 1) {
+        operation = "category";
+        relationType = PRODUCT_CATEGORY_RELATION;
+        relationIds = input.relationIds;
+        evidenceValues = relationIds;
         const categories = await tx.select({
           id: storeProductCategory.id,
           pid: storeProductCategory.pid,
@@ -637,21 +756,11 @@ export class AdminMobileProductService {
         for (const category of categories) categoryById.set(category.id, category);
         await tx.update(storeProduct).set({ cateId: input.relationIds.join(",") })
           .where(inArray(storeProduct.id, input.ids));
-        await tx.delete(storeProductRelation).where(and(
-          inArray(storeProductRelation.productId, input.ids),
-          eq(storeProductRelation.type, PRODUCT_CATEGORY_RELATION),
-        ));
-        await tx.insert(storeProductRelation).values(input.ids.flatMap((productId) => (
-          input.relationIds.map((relationId) => ({
-            type: PRODUCT_CATEGORY_RELATION,
-            productId,
-            relationId,
-            relationPid: categoryById.get(relationId)?.pid ?? 0,
-            status: productById.get(productId)?.isShow ?? 0,
-            addTime: now,
-          }))
-        )));
-      } else {
+      } else if (input.type === 2) {
+        operation = "label";
+        relationType = PRODUCT_LABEL_RELATION;
+        relationIds = input.relationIds;
+        evidenceValues = relationIds;
         if (input.relationIds.length) {
           const labels = await tx.select({ id: storeProductLabel.id }).from(storeProductLabel).where(and(
             inArray(storeProductLabel.id, input.relationIds),
@@ -664,66 +773,254 @@ export class AdminMobileProductService {
         }
         await tx.update(storeProduct).set({ storeLabelId: input.relationIds.join(",") })
           .where(inArray(storeProduct.id, input.ids));
+      } else if (input.type === 3) {
+        operation = "delivery";
+        evidenceValues = input.deliveryTypes;
+        await tx.update(storeProduct).set({ deliveryType: input.deliveryTypes.join(",") })
+          .where(inArray(storeProduct.id, input.ids));
+      } else if (input.type === 4) {
+        operation = "reward";
+        couponIds = input.couponIds;
+        evidenceValues = [input.giveIntegral, ...couponIds];
+        const issues = couponIds.length
+          ? await tx.select({
+              id: storeCouponIssue.id,
+              title: storeCouponIssue.title,
+              couponTitle: storeCouponIssue.couponTitle,
+            }).from(storeCouponIssue).where(and(
+              inArray(storeCouponIssue.id, couponIds),
+              eq(storeCouponIssue.isDel, 0),
+              eq(storeCouponIssue.status, 1),
+            )).orderBy(asc(storeCouponIssue.id)).for("share")
+          : [];
+        if (issues.length !== couponIds.length) throw new ValidateException("赠送优惠券不存在或不可用");
+        await tx.update(storeProduct).set({ giveIntegral: input.giveIntegral })
+          .where(inArray(storeProduct.id, input.ids));
+        await tx.delete(storeProductCoupon).where(inArray(storeProductCoupon.productId, input.ids));
+        if (issues.length) {
+          const issueById = new Map(issues.map((issue) => [issue.id, issue]));
+          await tx.insert(storeProductCoupon).values(input.ids.flatMap((productId) => couponIds.map((couponId) => {
+            const issue = issueById.get(couponId)!;
+            return {
+              productId,
+              issueCouponId: couponId,
+              title: issue.couponTitle || issue.title,
+              addTime: now,
+            };
+          })));
+        }
+      } else if (input.type === 5) {
+        operation = "user_label";
+        relationType = PRODUCT_USER_LABEL_RELATION;
+        relationIds = input.relationIds;
+        evidenceValues = relationIds;
+        const labels = relationIds.length
+          ? await tx.select({
+              id: userLabel.id,
+              type: userLabel.type,
+              relationId: userLabel.relationId,
+            }).from(userLabel).where(and(
+              inArray(userLabel.id, relationIds),
+              eq(userLabel.status, 1),
+            )).orderBy(asc(userLabel.id)).for("share")
+          : [];
+        if (labels.length !== relationIds.length || labels.some((label) => products.some((product) => !(
+          (label.type === 0 && label.relationId === 0)
+          || (label.type === product.type && label.relationId === product.relationId)
+        )))) throw new ValidateException("用户标签不存在或不属于所选商品");
+        await tx.update(storeProduct).set({ labelId: relationIds.join(",") })
+          .where(inArray(storeProduct.id, input.ids));
+      } else if (input.type === 6) {
+        operation = "recommend";
+        evidenceValues = input.recommendations;
+        const selected = new Set(input.recommendations);
+        await tx.update(storeProduct).set({
+          isHot: selected.has("is_hot") ? 1 : 0,
+          isBenefit: selected.has("is_benefit") ? 1 : 0,
+          isBest: selected.has("is_best") ? 1 : 0,
+          isNew: selected.has("is_new") ? 1 : 0,
+          isGood: selected.has("is_good") ? 1 : 0,
+        }).where(inArray(storeProduct.id, input.ids));
+      } else if (input.type === 7) {
+        operation = "form";
+        evidenceValues = [input.systemFormId];
+        if (input.systemFormId > 0) {
+          const forms = await tx.select({ id: systemForm.id }).from(systemForm).where(and(
+            eq(systemForm.id, input.systemFormId),
+            eq(systemForm.isDel, 0),
+            eq(systemForm.status, 1),
+          )).limit(1).for("share");
+          if (!forms[0]) throw new ValidateException("系统表单不存在或不可用");
+        }
+        await tx.update(storeProduct).set({ systemFormId: input.systemFormId })
+          .where(inArray(storeProduct.id, input.ids));
+      } else if (input.type === 8) {
+        operation = "freight";
+        evidenceValues = [input.freight, input.postage, input.templateId];
+        if (input.templateId > 0) {
+          const templates = await tx.select({
+            id: shippingTemplates.id,
+            ownerType: shippingTemplates.ownerType,
+            relationId: shippingTemplates.relationId,
+          }).from(shippingTemplates).where(and(
+            eq(shippingTemplates.id, input.templateId),
+            eq(shippingTemplates.status, 1),
+            eq(shippingTemplates.isDel, 0),
+          )).limit(1).for("share");
+          const template = templates[0];
+          if (!template || products.some((product) => !(
+            (template.ownerType === 0 && template.relationId === 0)
+            || (template.ownerType === product.type && template.relationId === product.relationId)
+          ))) throw new ValidateException("运费模板不存在或不属于所选商品");
+        }
+        await tx.update(storeProduct).set({
+          freight: input.freight,
+          postage: input.postage,
+          tempId: input.templateId,
+        }).where(inArray(storeProduct.id, input.ids));
+      } else {
+        operation = "brand";
+        relationType = PRODUCT_BRAND_RELATION;
+        relationIds = input.relationIds;
+        evidenceValues = relationIds;
+        const brands = relationIds.length
+          ? await tx.select({ id: storeBrand.id, pid: storeBrand.pid }).from(storeBrand).where(and(
+              inArray(storeBrand.id, relationIds),
+              eq(storeBrand.isDel, 0),
+              eq(storeBrand.isShow, 1),
+            )).orderBy(asc(storeBrand.id)).for("share")
+          : [];
+        if (brands.length !== relationIds.length) throw new ValidateException("商品品牌不存在或不可用");
+        const brandById = new Map(brands.map((brand) => [brand.id, brand]));
+        if (relationIds.slice(1).some((brandId, index) => brandById.get(brandId)?.pid !== relationIds[index])) {
+          throw new ValidateException("商品品牌必须是连续的层级路径");
+        }
+        await tx.update(storeProduct).set({
+          brandId: relationIds.at(-1) ?? 0,
+          brandCom: relationIds.join(","),
+        }).where(inArray(storeProduct.id, input.ids));
+      }
+
+      if (relationType > 0) {
         await tx.delete(storeProductRelation).where(and(
           inArray(storeProductRelation.productId, input.ids),
-          eq(storeProductRelation.type, PRODUCT_LABEL_RELATION),
+          eq(storeProductRelation.type, relationType),
         ));
-        if (input.relationIds.length) {
-          await tx.insert(storeProductRelation).values(input.ids.flatMap((productId) => (
-            input.relationIds.map((relationId) => ({
-              type: PRODUCT_LABEL_RELATION,
-              productId,
-              relationId,
-              relationPid: 0,
-              status: 1,
-              addTime: now,
-            }))
-          )));
+        if (relationIds.length) {
+          await tx.insert(storeProductRelation).values(input.ids.flatMap((productId) => relationIds.map((relationId) => ({
+            type: relationType,
+            productId,
+            relationId,
+            relationPid: relationType === PRODUCT_CATEGORY_RELATION ? categoryById.get(relationId)?.pid ?? 0 : 0,
+            status: relationType === PRODUCT_CATEGORY_RELATION ? productById.get(productId)?.isShow ?? 0 : 1,
+            addTime: now,
+          }))));
         }
       }
-      const relationType = input.type === 1 ? PRODUCT_CATEGORY_RELATION : PRODUCT_LABEL_RELATION;
-      const [savedProducts, savedRelations] = await Promise.all([
+
+      const [savedProducts, savedRelations, savedCoupons] = await Promise.all([
         tx.select({
           id: storeProduct.id,
           cateId: storeProduct.cateId,
           storeLabelId: storeProduct.storeLabelId,
+          deliveryType: storeProduct.deliveryType,
+          giveIntegral: storeProduct.giveIntegral,
+          labelId: storeProduct.labelId,
+          isHot: storeProduct.isHot,
+          isBenefit: storeProduct.isBenefit,
+          isBest: storeProduct.isBest,
+          isNew: storeProduct.isNew,
+          isGood: storeProduct.isGood,
+          systemFormId: storeProduct.systemFormId,
+          freight: storeProduct.freight,
+          postage: storeProduct.postage,
+          tempId: storeProduct.tempId,
+          brandId: storeProduct.brandId,
+          brandCom: storeProduct.brandCom,
         }).from(storeProduct).where(inArray(storeProduct.id, input.ids)),
-        tx.select({
-          productId: storeProductRelation.productId,
-          relationId: storeProductRelation.relationId,
-          relationPid: storeProductRelation.relationPid,
-          status: storeProductRelation.status,
-        }).from(storeProductRelation).where(and(
-          inArray(storeProductRelation.productId, input.ids),
-          eq(storeProductRelation.type, relationType),
-        )),
+        relationType > 0
+          ? tx.select({
+              productId: storeProductRelation.productId,
+              relationId: storeProductRelation.relationId,
+              relationPid: storeProductRelation.relationPid,
+              status: storeProductRelation.status,
+            }).from(storeProductRelation).where(and(
+              inArray(storeProductRelation.productId, input.ids),
+              eq(storeProductRelation.type, relationType),
+            ))
+          : Promise.resolve([]),
+        input.type === 4
+          ? tx.select({
+              productId: storeProductCoupon.productId,
+              issueCouponId: storeProductCoupon.issueCouponId,
+            }).from(storeProductCoupon).where(inArray(storeProductCoupon.productId, input.ids))
+          : Promise.resolve([]),
       ]);
-      const expectedCsv = input.relationIds.join(",");
-      if (
-        savedProducts.length !== input.ids.length
-        || savedProducts.some((product) => (
-          input.type === 1 ? product.cateId !== expectedCsv : product.storeLabelId !== expectedCsv
-        ))
-        || savedRelations.length !== input.ids.length * input.relationIds.length
+      const expectedCsv = relationIds.join(",");
+      const selectedRecommendations = input.type === 6 ? new Set(input.recommendations) : null;
+      const productReadbackFailed = savedProducts.length !== input.ids.length || savedProducts.some((product) => {
+        switch (input.type) {
+          case 1: return product.cateId !== expectedCsv;
+          case 2: return product.storeLabelId !== expectedCsv;
+          case 3: return product.deliveryType !== input.deliveryTypes.join(",");
+          case 4: return String(product.giveIntegral) !== input.giveIntegral;
+          case 5: return product.labelId !== expectedCsv;
+          case 6: return product.isHot !== (selectedRecommendations!.has("is_hot") ? 1 : 0)
+            || product.isBenefit !== (selectedRecommendations!.has("is_benefit") ? 1 : 0)
+            || product.isBest !== (selectedRecommendations!.has("is_best") ? 1 : 0)
+            || product.isNew !== (selectedRecommendations!.has("is_new") ? 1 : 0)
+            || product.isGood !== (selectedRecommendations!.has("is_good") ? 1 : 0);
+          case 7: return product.systemFormId !== input.systemFormId;
+          case 8: return product.freight !== input.freight
+            || String(product.postage) !== input.postage
+            || product.tempId !== input.templateId;
+          case 9: return product.brandId !== (relationIds.at(-1) ?? 0) || product.brandCom !== expectedCsv;
+        }
+      });
+      const relationReadbackFailed = relationType > 0 && (
+        savedRelations.length !== input.ids.length * relationIds.length
         || input.ids.some((productId) => {
           const rows = savedRelations.filter((row) => row.productId === productId);
-          return rows.length !== input.relationIds.length || input.relationIds.some((relationId) => {
+          return rows.length !== relationIds.length || relationIds.some((relationId) => {
             const row = rows.find((item) => item.relationId === relationId);
             return !row
-              || row.relationPid !== (input.type === 1 ? categoryById.get(relationId)?.pid ?? 0 : 0)
-              || row.status !== (input.type === 1 ? productById.get(productId)?.isShow ?? 0 : 1);
+              || row.relationPid !== (relationType === PRODUCT_CATEGORY_RELATION
+                ? categoryById.get(relationId)?.pid ?? 0
+                : 0)
+              || row.status !== (relationType === PRODUCT_CATEGORY_RELATION
+                ? productById.get(productId)?.isShow ?? 0
+                : 1);
           });
         })
-      ) throw new Error("商品批量关系数据库回读校验失败");
+      );
+      const couponReadbackFailed = input.type === 4 && (
+        savedCoupons.length !== input.ids.length * couponIds.length
+        || input.ids.some((productId) => {
+          const savedIds = savedCoupons
+            .filter((row) => row.productId === productId)
+            .map((row) => row.issueCouponId)
+            .sort((left, right) => left - right);
+          return savedIds.join(",") !== couponIds.join(",");
+        })
+      );
+      if (
+        productReadbackFailed
+        || relationReadbackFailed
+        || couponReadbackFailed
+      ) throw new Error("商品批量运营数据库回读校验失败");
       await writeBatchAudit(
         tx,
         actor,
-        input.type === 1 ? "category" : "label",
+        operation,
         input.ids,
-        input.relationIds,
+        evidenceValues,
         now,
       );
-      return { changed: input.ids.length, relations: input.relationIds.length, verified: true };
+      return {
+        changed: input.ids.length,
+        relations: relationIds.length || couponIds.length,
+        verified: true,
+      };
     });
   }
 }

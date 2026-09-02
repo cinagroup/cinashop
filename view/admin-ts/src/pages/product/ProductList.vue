@@ -105,7 +105,7 @@
 
     <el-dialog v-model="batchDialogVisible" title="批量操作商品" width="min(520px, 94vw)">
       <el-alert
-        title="所选商品会在一个短事务内完成；任一商品或关系校验失败时整批回滚。"
+        title="最多100个显式商品会在一个短事务内完成；任一商品、候选资料或数据库回读失败时整批回滚。"
         type="warning"
         :closable="false"
         show-icon
@@ -113,11 +113,18 @@
       />
       <el-form label-position="top">
         <el-form-item label="操作类型">
-          <el-select v-model="batchOperation" class="full-width" @change="batchRelationIds = []">
+          <el-select v-model="batchOperation" class="full-width" @change="resetBatchInputs">
             <el-option label="批量上架" value="show" />
             <el-option label="批量下架" value="hide" />
             <el-option label="替换商品分类" value="category" />
             <el-option label="替换商品标签" value="label" />
+            <el-option label="替换配送方式" value="delivery" />
+            <el-option label="替换下单赠送" value="reward" />
+            <el-option label="替换关联用户标签" value="user-label" />
+            <el-option label="替换活动推荐" value="recommend" />
+            <el-option label="替换系统表单" value="form" />
+            <el-option label="替换运费设置" value="freight" />
+            <el-option label="替换商品品牌" value="brand" />
           </el-select>
         </el-form-item>
         <el-form-item v-if="batchOperation === 'category'" label="商品分类">
@@ -128,6 +135,65 @@
         <el-form-item v-if="batchOperation === 'label'" label="商品标签">
           <el-select v-model="batchRelationIds" multiple filterable clearable class="full-width" placeholder="留空会清除现有商品标签">
             <el-option v-for="item in batchOptions.product_labels" :key="item.id" :label="item.name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="batchOperation === 'delivery'" label="配送方式">
+          <el-checkbox-group v-model="batchDeliveryTypes">
+            <el-checkbox :value="1">快递</el-checkbox>
+            <el-checkbox :value="2">门店自提</el-checkbox>
+            <el-checkbox :value="3">门店配送</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <template v-if="batchOperation === 'reward'">
+          <el-form-item label="下单赠送积分">
+            <el-input-number v-model="batchGiveIntegral" :min="0" :max="999999999" :precision="2" class="full-width" />
+          </el-form-item>
+          <el-form-item label="下单赠送优惠券（最多20张）">
+            <el-select v-model="batchCouponIds" multiple filterable clearable class="full-width" placeholder="留空会清除现有赠券">
+              <el-option v-for="item in batchOptions.gift_coupons" :key="item.id" :label="item.name" :value="item.id" />
+            </el-select>
+          </el-form-item>
+        </template>
+        <el-form-item v-if="batchOperation === 'user-label'" label="关联用户标签">
+          <el-select v-model="batchUserLabelIds" multiple filterable clearable class="full-width" placeholder="留空会清除关联用户标签">
+            <el-option v-for="item in batchOptions.user_labels" :key="item.id" :label="item.name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="batchOperation === 'recommend'" label="活动推荐">
+          <el-checkbox-group v-model="batchRecommendations" class="recommend-grid">
+            <el-checkbox value="is_hot">热卖</el-checkbox>
+            <el-checkbox value="is_benefit">促销</el-checkbox>
+            <el-checkbox value="is_best">精品</el-checkbox>
+            <el-checkbox value="is_new">新品</el-checkbox>
+            <el-checkbox value="is_good">优品</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item v-if="batchOperation === 'form'" label="系统表单">
+          <el-select v-model="batchSystemFormId" filterable class="full-width">
+            <el-option label="不使用系统表单" :value="0" />
+            <el-option v-for="item in batchOptions.system_forms" :key="item.id" :label="item.name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <template v-if="batchOperation === 'freight'">
+          <el-form-item label="运费方式">
+            <el-radio-group v-model="batchFreight">
+              <el-radio-button :value="1">包邮</el-radio-button>
+              <el-radio-button :value="2">固定运费</el-radio-button>
+              <el-radio-button :value="3">运费模板</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item v-if="batchFreight === 2" label="固定运费">
+            <el-input-number v-model="batchPostage" :min="0.01" :max="999999999" :precision="2" class="full-width" />
+          </el-form-item>
+          <el-form-item v-if="batchFreight === 3" label="运费模板">
+            <el-select v-model="batchShippingTemplateId" filterable class="full-width" placeholder="请选择可用模板">
+              <el-option v-for="item in batchOptions.shipping_templates" :key="item.id" :label="item.name" :value="item.id" />
+            </el-select>
+          </el-form-item>
+        </template>
+        <el-form-item v-if="batchOperation === 'brand'" label="商品品牌">
+          <el-select v-model="batchBrandId" filterable clearable class="full-width" placeholder="留空会清除品牌">
+            <el-option v-for="item in batchOptions.brands" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -146,9 +212,11 @@ import {
   apiAdminProductList,
   apiAdminProductSetShow,
   apiAdminProductDel,
+  apiAdminProductBatchOperation,
   apiAdminProductBatchRelations,
   apiAdminProductBatchSetShow,
   apiAdminProductEditorOptions,
+  type ProductBatchResult,
   type ProductEditorOption,
 } from "@/api/product";
 import type { AdminProduct } from "@/types/admin";
@@ -160,12 +228,48 @@ const query = reactive({ page: 1, limit: 10, store_name: "" });
 const selectedRows = ref<AdminProduct[]>([]);
 const batchDialogVisible = ref(false);
 const batchSubmitting = ref(false);
-const batchOperation = ref<"show" | "hide" | "category" | "label">("show");
+type BatchOperation =
+  | "show"
+  | "hide"
+  | "category"
+  | "label"
+  | "delivery"
+  | "reward"
+  | "user-label"
+  | "recommend"
+  | "form"
+  | "freight"
+  | "brand";
+const batchOperation = ref<BatchOperation>("show");
 const batchRelationIds = ref<number[]>([]);
+const batchDeliveryTypes = ref<number[]>([]);
+const batchGiveIntegral = ref(0);
+const batchCouponIds = ref<number[]>([]);
+const batchUserLabelIds = ref<number[]>([]);
+const batchRecommendations = ref<string[]>([]);
+const batchSystemFormId = ref(0);
+const batchFreight = ref<1 | 2 | 3>(1);
+const batchPostage = ref(0.01);
+const batchShippingTemplateId = ref<number>();
+const batchBrandId = ref<number>();
+const batchOptionsLoaded = ref(false);
 const batchOptions = reactive<{
   categories: ProductEditorOption[];
   product_labels: ProductEditorOption[];
-}>({ categories: [], product_labels: [] });
+  brands: ProductEditorOption[];
+  user_labels: ProductEditorOption[];
+  gift_coupons: ProductEditorOption[];
+  system_forms: ProductEditorOption[];
+  shipping_templates: ProductEditorOption[];
+}>({
+  categories: [],
+  product_labels: [],
+  brands: [],
+  user_labels: [],
+  gift_coupons: [],
+  system_forms: [],
+  shipping_templates: [],
+});
 
 async function fetch() {
   loading.value = true;
@@ -191,18 +295,38 @@ function handleSelectionChange(rows: AdminProduct[]) {
 
 async function openBatch() {
   if (!selectedRows.value.length) return ElMessage.warning("请先选择商品");
-  if (!batchOptions.categories.length && !batchOptions.product_labels.length) {
+  if (!batchOptionsLoaded.value) {
     try {
       const options = await apiAdminProductEditorOptions();
       batchOptions.categories = options.categories;
       batchOptions.product_labels = options.product_labels;
+      batchOptions.brands = options.brands;
+      batchOptions.user_labels = options.user_labels;
+      batchOptions.gift_coupons = options.gift_coupons;
+      batchOptions.system_forms = options.system_forms;
+      batchOptions.shipping_templates = options.shipping_templates;
+      batchOptionsLoaded.value = true;
     } catch (e) {
       return ElMessage.error(e instanceof Error ? e.message : "加载批量候选失败");
     }
   }
   batchOperation.value = "show";
-  batchRelationIds.value = [];
+  resetBatchInputs();
   batchDialogVisible.value = true;
+}
+
+function resetBatchInputs() {
+  batchRelationIds.value = [];
+  batchDeliveryTypes.value = [];
+  batchGiveIntegral.value = 0;
+  batchCouponIds.value = [];
+  batchUserLabelIds.value = [];
+  batchRecommendations.value = [];
+  batchSystemFormId.value = 0;
+  batchFreight.value = 1;
+  batchPostage.value = 0.01;
+  batchShippingTemplateId.value = undefined;
+  batchBrandId.value = undefined;
 }
 
 async function applyBatch() {
@@ -211,15 +335,59 @@ async function applyBatch() {
   if (batchOperation.value === "category" && !batchRelationIds.value.length) {
     return ElMessage.warning("请至少选择一个商品分类");
   }
+  if (batchOperation.value === "delivery" && !batchDeliveryTypes.value.length) {
+    return ElMessage.warning("请至少选择一种配送方式");
+  }
+  if (batchOperation.value === "freight" && batchFreight.value === 3 && !batchShippingTemplateId.value) {
+    return ElMessage.warning("请选择运费模板");
+  }
   batchSubmitting.value = true;
   try {
-    const result = batchOperation.value === "show" || batchOperation.value === "hide"
-      ? await apiAdminProductBatchSetShow(ids, batchOperation.value === "show" ? 1 : 0)
-      : await apiAdminProductBatchRelations(
-        batchOperation.value === "category" ? 1 : 2,
-        ids,
-        batchRelationIds.value,
-      );
+    let result: ProductBatchResult;
+    switch (batchOperation.value) {
+      case "show":
+      case "hide":
+        result = await apiAdminProductBatchSetShow(ids, batchOperation.value === "show" ? 1 : 0);
+        break;
+      case "category":
+      case "label":
+        result = await apiAdminProductBatchRelations(
+          batchOperation.value === "category" ? 1 : 2,
+          ids,
+          batchRelationIds.value,
+        );
+        break;
+      case "delivery":
+        result = await apiAdminProductBatchOperation(3, ids, { delivery_type: batchDeliveryTypes.value });
+        break;
+      case "reward":
+        result = await apiAdminProductBatchOperation(4, ids, {
+          give_integral: batchGiveIntegral.value,
+          coupon_ids: batchCouponIds.value,
+        });
+        break;
+      case "user-label":
+        result = await apiAdminProductBatchOperation(5, ids, { label_id: batchUserLabelIds.value });
+        break;
+      case "recommend":
+        result = await apiAdminProductBatchOperation(6, ids, { recommend: batchRecommendations.value });
+        break;
+      case "form":
+        result = await apiAdminProductBatchOperation(7, ids, { system_form_id: batchSystemFormId.value });
+        break;
+      case "freight":
+        result = await apiAdminProductBatchOperation(8, ids, {
+          freight: batchFreight.value,
+          postage: batchFreight.value === 2 ? batchPostage.value : 0,
+          temp_id: batchFreight.value === 3 ? batchShippingTemplateId.value ?? 0 : 0,
+        });
+        break;
+      case "brand":
+        result = await apiAdminProductBatchOperation(9, ids, {
+          brand_id: batchBrandId.value ? [batchBrandId.value] : [],
+        });
+        break;
+    }
     if (!result.verified) throw new Error("批量操作数据库回读未通过");
     ElMessage.success(`已处理 ${result.changed} 个商品`);
     batchDialogVisible.value = false;
@@ -292,6 +460,11 @@ onMounted(fetch);
   margin-bottom: 16px;
 }
 .full-width {
+  width: 100%;
+}
+.recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
   width: 100%;
 }
 

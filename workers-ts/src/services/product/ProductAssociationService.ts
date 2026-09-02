@@ -3,7 +3,9 @@ import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
   legacyCategory,
+  shippingTemplates,
   storeBrand,
+  storeCouponIssue,
   storeProduct,
   storeProductCategory,
   storeProductEnsure,
@@ -11,7 +13,9 @@ import {
   storeProductRelation,
   storeProductRule,
   storeProductSpecs,
+  systemForm,
   systemLog,
+  userLabel,
 } from "@/models/schema";
 import {
   hasProductSkuEditorPayload,
@@ -250,7 +254,18 @@ export class ProductAssociationService {
   constructor(private readonly container: Container) {}
 
   async editorOptions() {
-    const [brands, labels, ensures, templates, categories, skuRules] = await Promise.all([
+    const [
+      brands,
+      labels,
+      ensures,
+      templates,
+      categories,
+      skuRules,
+      userLabels,
+      giftCoupons,
+      systemForms,
+      freightTemplates,
+    ] = await Promise.all([
       this.container.db.select({ id: storeBrand.id, name: storeBrand.brandName })
         .from(storeBrand)
         .where(and(eq(storeBrand.isDel, 0), eq(storeBrand.isShow, 1)))
@@ -302,6 +317,38 @@ export class ProductAssociationService {
         eq(storeProductRule.type, 0),
         eq(storeProductRule.relationId, 0),
       )).orderBy(desc(storeProductRule.id)).limit(500),
+      this.container.db.select({ id: userLabel.id, name: userLabel.name })
+        .from(userLabel)
+        .where(and(
+          eq(userLabel.type, 0),
+          eq(userLabel.relationId, 0),
+          eq(userLabel.status, 1),
+        ))
+        .orderBy(desc(userLabel.sort), asc(userLabel.id))
+        .limit(500),
+      this.container.db.select({
+        id: storeCouponIssue.id,
+        couponTitle: storeCouponIssue.couponTitle,
+        title: storeCouponIssue.title,
+      }).from(storeCouponIssue).where(and(
+        eq(storeCouponIssue.isDel, 0),
+        eq(storeCouponIssue.status, 1),
+      )).orderBy(desc(storeCouponIssue.sort), asc(storeCouponIssue.id)).limit(500),
+      this.container.db.select({ id: systemForm.id, name: systemForm.name })
+        .from(systemForm)
+        .where(and(eq(systemForm.isDel, 0), eq(systemForm.status, 1)))
+        .orderBy(desc(systemForm.id))
+        .limit(500),
+      this.container.db.select({ id: shippingTemplates.id, name: shippingTemplates.name })
+        .from(shippingTemplates)
+        .where(and(
+          eq(shippingTemplates.ownerType, 0),
+          eq(shippingTemplates.relationId, 0),
+          eq(shippingTemplates.isDel, 0),
+          eq(shippingTemplates.status, 1),
+        ))
+        .orderBy(desc(shippingTemplates.sort), asc(shippingTemplates.id))
+        .limit(500),
     ]);
     const templateSpecs = templates.length
       ? await this.container.db.select({
@@ -320,6 +367,13 @@ export class ProductAssociationService {
       categories,
       brands,
       product_labels: labels,
+      user_labels: userLabels,
+      gift_coupons: giftCoupons.map((coupon) => ({
+        id: coupon.id,
+        name: coupon.couponTitle || coupon.title || `优惠券 ${coupon.id}`,
+      })),
+      system_forms: systemForms,
+      shipping_templates: freightTemplates,
       ensures,
       parameter_templates: templates.map((template) => ({
         ...template,

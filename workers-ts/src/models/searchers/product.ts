@@ -8,7 +8,7 @@
  *   - status 是状态机 (8 种值映射到不同 where 组合)
  *   - keyword 多字段 LIKE (id|keyword|store_name|store_info|bar_code), 支持数组(分词)
  *   - cate_id/brand_id/标签 走 store_product_relation 子查询
- *   - 标签 (热卖/促销/精品/新品/优品) 也走 relation type=3
+ *   - 商品标签走 relation type=3；热卖/促销/精品/新品/优品使用独立字段
  */
 import {
   and,
@@ -179,13 +179,15 @@ export const storeProductSearchers: SearcherMap<typeof storeProduct> = {
     return eq(storeProduct.brandId, Number(value));
   },
 
-  // ─── 标签 (热卖/促销/精品/新品/优品) 走 relation type=3 ─
-  // 注意 PHP 把 is_hot/is_benefit 等字段也映射到 relation type=3
-  isHot: (value) => (value ? relationIn(3, [1]) : undefined),
-  isBenefit: (value) => (value ? relationIn(3, [2]) : undefined),
-  isBest: (value) => (value ? relationIn(3, [3]) : undefined),
-  isNew: (value) => (value ? relationIn(3, [4]) : undefined),
-  isGood: (value) => (value ? relationIn(3, [5]) : undefined),
+  // ─── 推荐标记（热卖/促销/精品/新品/优品）使用独立字段 ─────
+  // PHP 曾把这些标记映射到 relation type=3；该关系实际属于商品标签。
+  // Recommendation flags are authoritative columns. Legacy type=3 relations
+  // are real product-label links and must never be overwritten by flag IDs.
+  isHot: (value) => (value ? eq(storeProduct.isHot, 1) : undefined),
+  isBenefit: (value) => (value ? eq(storeProduct.isBenefit, 1) : undefined),
+  isBest: (value) => (value ? eq(storeProduct.isBest, 1) : undefined),
+  isNew: (value) => (value ? eq(storeProduct.isNew, 1) : undefined),
+  isGood: (value) => (value ? eq(storeProduct.isGood, 1) : undefined),
 
   // ─── 标签ID / 保障ID (find_in_set) ───────────────────────
   labelId: (value) => sql`find_in_set(${value}, ${storeProduct.labelId})`,

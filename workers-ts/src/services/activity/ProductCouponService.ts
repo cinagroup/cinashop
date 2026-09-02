@@ -11,6 +11,7 @@ import {
   storeProductCoupon,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { lockProductWrite } from "@/services/product/ProductAssociationService";
 
 const PRODUCT_COUPON_LOCK_NAMESPACE = 731_626;
 const MAX_COUPONS_PER_PRODUCT = 100;
@@ -288,6 +289,7 @@ export class ProductCouponService {
     }
     const couponIds = normalizeCouponIds(couponIdsValue);
     return withTx(this.container, async (tx) => {
+      await lockProductWrite(tx, productId);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_COUPON_LOCK_NAMESPACE}, ${productId})`);
       const products = await tx
         .select({ id: storeProduct.id })

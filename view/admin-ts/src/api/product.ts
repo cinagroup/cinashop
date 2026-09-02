@@ -59,6 +59,10 @@ export interface ProductEditorOptions {
   categories: ProductEditorOption[];
   brands: ProductEditorOption[];
   product_labels: ProductEditorOption[];
+  user_labels: ProductEditorOption[];
+  gift_coupons: ProductEditorOption[];
+  system_forms: ProductEditorOption[];
+  shipping_templates: ProductEditorOption[];
   ensures: ProductEditorOption[];
   parameter_templates: ProductEditorParameterTemplate[];
   sku_rule_templates: ProductSkuRuleTemplate[];
@@ -89,6 +93,22 @@ const previewEditorOptions: ProductEditorOptions = {
   product_labels: [
     { id: 31, name: "新品" },
     { id: 32, name: "平台推荐" },
+  ],
+  user_labels: [
+    { id: 71, name: "高复购客户" },
+    { id: 72, name: "家居偏好" },
+  ],
+  gift_coupons: [
+    { id: 81, name: "下单赠送 10 元券" },
+    { id: 82, name: "会员 95 折券" },
+  ],
+  system_forms: [
+    { id: 91, name: "服装尺码信息" },
+    { id: 92, name: "礼品寄语" },
+  ],
+  shipping_templates: [
+    { id: 101, name: "全国按件模板" },
+    { id: 102, name: "偏远地区模板" },
   ],
   ensures: [
     { id: 41, name: "七天无理由" },
@@ -384,6 +404,8 @@ export interface ProductBatchResult {
   verified: boolean;
 }
 
+export type ProductBatchOperationType = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
 /** 批量上下架，最多100个商品，同一事务回读。 */
 export function apiAdminProductBatchSetShow(ids: number[], isShow: 0 | 1): Promise<ProductBatchResult> {
   if (previewMode) {
@@ -391,6 +413,16 @@ export function apiAdminProductBatchSetShow(ids: number[], isShow: 0 | 1): Promi
     return Promise.resolve({ changed: ids.length, verified: true });
   }
   return getData(request.post("/product/set_show", { ids, is_show: isShow }));
+}
+
+/** 受控批量运营：显式商品集合、确定性替换、整批事务回读。 */
+export function apiAdminProductBatchOperation(
+  type: ProductBatchOperationType,
+  ids: number[],
+  data: Record<string, unknown>,
+): Promise<ProductBatchResult> {
+  if (previewMode) return Promise.resolve({ changed: ids.length, verified: true });
+  return getData(request.post("/product/batch_process", { type, ids, data }));
 }
 
 /** 批量替换分类或商品标签，type=1分类、type=2商品标签。 */
@@ -405,11 +437,11 @@ export function apiAdminProductBatchRelations(
     }
     return Promise.resolve({ changed: ids.length, relations: relationIds.length, verified: true });
   }
-  return getData(request.post("/product/batch_process", {
+  return apiAdminProductBatchOperation(
     type,
     ids,
-    data: type === 1 ? { cate_id: relationIds } : { store_label_id: relationIds },
-  }));
+    type === 1 ? { cate_id: relationIds } : { store_label_id: relationIds },
+  );
 }
 
 /** 删除商品 (DELETE /adminapi/product/del/:id) */

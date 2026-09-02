@@ -104,7 +104,7 @@ describe("embedded admin mobile product migration", () => {
       .toThrow("请重新修改规格库存");
   });
 
-  it("limits the mobile batch contract to categories and product labels", () => {
+  it("parses every bounded legacy product batch type into a deterministic replacement", () => {
     expect(parseAdminProductBatchBody({
       type: 1,
       ids: [1, 2],
@@ -115,7 +115,46 @@ describe("embedded admin mobile product migration", () => {
       ids: 1,
       data: { store_label_id: [] },
     })).toEqual({ type: 2, ids: [1], relationIds: [] });
+    expect(parseAdminProductBatchBody({
+      type: 3,
+      ids: [1],
+      data: { delivery_type: [3, 1, 1] },
+    })).toEqual({ type: 3, ids: [1], deliveryTypes: [1, 3] });
+    expect(parseAdminProductBatchBody({
+      type: 4,
+      ids: [1],
+      data: { give_integral: "12.5", coupon_ids: [8, 7] },
+    })).toEqual({ type: 4, ids: [1], giveIntegral: "12.50", couponIds: [7, 8] });
+    expect(parseAdminProductBatchBody({
+      type: 5,
+      ids: [1],
+      data: { label_id: [] },
+    })).toEqual({ type: 5, ids: [1], relationIds: [] });
+    expect(parseAdminProductBatchBody({
+      type: 6,
+      ids: [1],
+      data: { recommend: ["is_good", "is_hot"] },
+    })).toEqual({ type: 6, ids: [1], recommendations: ["is_hot", "is_good"] });
+    expect(parseAdminProductBatchBody({
+      type: 7,
+      ids: [1],
+      data: { system_form_id: 9 },
+    })).toEqual({ type: 7, ids: [1], systemFormId: 9 });
+    expect(parseAdminProductBatchBody({
+      type: 8,
+      ids: [1],
+      data: { freight: 2, postage: 3.5, temp_id: 99 },
+    })).toEqual({ type: 8, ids: [1], freight: 2, postage: "3.50", templateId: 0 });
+    expect(parseAdminProductBatchBody({
+      type: 9,
+      ids: [1],
+      data: { brand_id: [5, 4] },
+    })).toEqual({ type: 9, ids: [1], relationIds: [5, 4] });
     expect(() => parseAdminProductBatchBody({ type: 3, ids: [1], data: {} }))
+      .toThrow("请选择商品配送方式");
+    expect(() => parseAdminProductBatchBody({ type: 8, ids: [1], data: { freight: 3 } }))
+      .toThrow("请选择运费模板");
+    expect(() => parseAdminProductBatchBody({ type: 10, ids: [1], data: {} }))
       .toThrow("请选择处理类型");
     expect(() => parseAdminProductBatchBody({ type: 1, ids: [1], data: { cate_id: [] } }))
       .toThrow("请选择分类");
@@ -209,7 +248,8 @@ describe("embedded admin mobile product migration", () => {
 
   it("uses product and SKU locks, authoritative membership, and stock audit", () => {
     const service = readFileSync("src/services/admin/AdminMobileProductService.ts", "utf8");
-    expect(service).toContain('.from(storeProduct).where(inArray(storeProduct.id, input.ids)).for("update")');
+    expect(service).toContain("for (const productId of input.ids) await lockProductWrite(tx, productId)");
+    expect(service).toContain('.orderBy(asc(storeProduct.id)).for("update")');
     expect(service).toContain('eq(storeProductAttrValue.productId, productId)');
     expect(service).toContain('if (updates.some((item) => !currentByUnique.has(item.unique)))');
     expect(service).toContain('await tx.insert(storeProductStockRecord).values(stockRecords)');
@@ -217,22 +257,41 @@ describe("embedded admin mobile product migration", () => {
     expect(service).toContain('eq(storeProductRelation.type, PRODUCT_CATEGORY_RELATION)');
     expect(service).toContain('eq(storeProduct.isDel, 0)');
     expect(service).toContain("商品批量上下架数据库回读校验失败");
-    expect(service).toContain("商品批量关系数据库回读校验失败");
+    expect(service).toContain("商品批量运营数据库回读校验失败");
+    expect(service).toContain("await tx.delete(storeProductCoupon)");
+    expect(service).toContain("eq(systemForm.status, 1)");
+    expect(service).toContain("eq(shippingTemplates.status, 1)");
     expect(service).toContain("await writeBatchAudit(");
     expect(service).toContain("await tx.insert(systemLog).values");
+    const searchers = readFileSync("src/models/searchers/product.ts", "utf8");
+    expect(searchers).toContain("isHot: (value) => (value ? eq(storeProduct.isHot, 1) : undefined)");
+    expect(searchers).not.toContain("isHot: (value) => (value ? relationIn(3, [1])");
   });
 
   it("wires bounded, readback-verified batch operations into the Admin product list", () => {
     const api = readFileSync("../view/admin-ts/src/api/product.ts", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/product/ProductList.vue", "utf8");
     const controller = readFileSync("src/controllers/api/v1/AdminCrudController.ts", "utf8");
+    const associations = readFileSync("src/services/product/ProductAssociationService.ts", "utf8");
     expect(api).toContain('request.post("/product/set_show", { ids, is_show: isShow })');
     expect(api).toContain('request.post("/product/batch_process"');
     expect(page).toContain('type="selection"');
     expect(page).toContain("apiAdminProductBatchSetShow");
     expect(page).toContain("apiAdminProductBatchRelations");
+    expect(page).toContain("apiAdminProductBatchOperation");
+    expect(page).toContain('value="delivery"');
+    expect(page).toContain('value="reward"');
+    expect(page).toContain('value="user-label"');
+    expect(page).toContain('value="recommend"');
+    expect(page).toContain('value="form"');
+    expect(page).toContain('value="freight"');
+    expect(page).toContain('value="brand"');
     expect(page).toContain("if (!result.verified)");
     expect(page).toContain("单次最多100项");
+    expect(associations).toContain("gift_coupons: giftCoupons.map");
+    expect(associations).toContain("user_labels: userLabels");
+    expect(associations).toContain("system_forms: systemForms");
+    expect(associations).toContain("shipping_templates: freightTemplates");
     expect(controller).toContain("readBoundedJsonObject(c.req.raw, 8 * 1024)");
   });
 });
