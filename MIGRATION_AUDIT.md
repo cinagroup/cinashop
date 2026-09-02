@@ -3480,6 +3480,36 @@ Supplier 管理员 8 条是本批最重要的阻断。旧登录服务按 `system
 
 本批没有生产 PostgreSQL/R2 DML、DDL、临时探针或主 Worker/Pages 发布。SUP-003 的只读生产夹具仍因会创建承载脱敏聚合的临时 `workers.dev` 端点而缺少对“该端点 + 精确载荷”的专项授权，通用数据库授权不能被扩张解释为公开端点授权。后续执行顺序是：先完成 SUP-004-C 五条运费模板并做跨租户负例；再设计、实现并全域接入 SUP-004-B RBAC 后恢复八条管理员路由；取得专项授权时执行 SUP-003 PostgreSQL/R2 只读审计；最后以真实 Supplier 主/子账号做旧端和 TS 端 E2E，另行请求主 Worker/Supplier Pages 发布批准并观察鉴权拒绝、Hyperdrive 延迟、统计跨度错误与配置保存失败率。父项在这些证据齐备前保持未完成。
 
+## SUP-004-C Supplier 运费模板详细审计与候选实现（2026-09-02）
+
+### PHP 权威行为与五类迁移风险
+
+本批逐行对照 `route/supplier.php` 的列表、编辑、保存、删除和城市目录五条合同，以及 ShippingTemplates controller/service/DAO、四张 PostgreSQL 目标表、旧 Supplier 运费模板页、商品编辑页和当前结算读取。旧列表确实限定 `type=2 + relation_id=$supplierId`，但其余对象路径并没有继承同一边界：edit 直接按裸 ID 调 `getShipping()`，update 在证明所有权前按裸 ID 保存，delete 又从 query 读取 ID 而不是可靠使用 path 参数，服务最终也是不带 Supplier 条件删除。这三处会把可枚举模板 ID 扩大成跨租户读、改、删面，不能因列表安全就判定整个资源安全。
+
+旧删除流程先在事务外删除主 DAO 行，随后才开启事务清理区域规则和商品引用；任何中途失败都可能留下半删除模板或悬挂子规则。旧保存仅在 `appoint/free/notSend` 开关为真时替换对应子表，关闭开关不会删除旧数据，日后重新开启会让陈旧范围复活。规则输入也没有服务端限制组数、城市路径总数和层级，金额精度、重复终点、唯一全国默认规则及 `system_city` 父子路径都缺少一致验证。
+
+旧页面还有一个独立于后端 IDOR 的危险交互：删除某个区域计价子项时调用了整模板 `setting/shipping_templates/del/${row.id}`，子行 ID既可能误删当前 Supplier 的另一整张模板，也可能命中旧后端的跨租户删除。当前 Worker 商品保存则暴露了迁移期语义偏差：只要 `temp_id>0` 就把 `freight` 写成 1，等价于包邮；PHP 权威值应为 `freight=3`。它同时没有证明模板归当前 Supplier，导致即便五条模板路由独立收紧，商品仍可保存外国模板引用。以上问题都已作为本批实现和测试的明确负向基线，而不是照搬旧缺陷。
+
+### 租户、事务、验证与并发边界
+
+五条精确合同现在统一从 `supplierAuthMiddleware` 的认证上下文取得 `supplierId`，不接受 body/query 提供租户。模板列表、详情、更新和删除均要求 `shipping_templates.type=2 AND relation_id=supplierId AND is_del=0`；跨租户 ID与不存在 ID返回相同“运费模板不存在或不属于当前供应商”，不泄漏对象存在性。新建/更新/删除使用 `withTx`，先取得 Supplier 级 advisory lock；更新再锁定模板行，主模板与 `shipping_templates_region`、`shipping_templates_free`、`shipping_templates_no_delivery` 三类子规则在同一事务中完整替换。关闭可选规则会删除旧子行，不再保留会复活的陈旧数据。
+
+服务端只接受计费方式 1～3，首件/首重/首体积和续件值必须为正，金额最多两位小数并受数据库 `NUMERIC` 精度约束；规则终点不能重复，必须且只能有一个全国默认计价规则。城市路径最多 100 组、合计 1,000 条、深度最多 4，所有 ID、父子路径和终点都须存在于 `system_city`；城市目录响应限 64 个根节点和 1,000 个直接子节点，仍保持 PHP `with('children')` 的一层合同。普通 JSON 继续采用共享 64 KiB 流式 body 上限，避免把有界规则数量变成无界请求内存。
+
+删除采用软删除主模板、硬删除子规则，并在同一事务拒绝仍被当前 Supplier 有效商品引用的模板。商品保存恢复 `1=包邮、2=固定运费、3=运费模板`：固定运费必须大于 0，模板模式必须给出当前 Supplier 下 `status=1/is_del=0` 的 `type=2` 模板，包邮模式清空固定运费与模板 ID。商品验证以 `FOR KEY SHARE` 读取模板；模板删除与商品写入使用相同的 Supplier/模板锁顺序，关闭“校验后被删”和“检查无引用后被新引用”两个竞态窗口。历史商品、活动或订单中已经存在的 `temp_id` 不会被本批猜测改写，仍需生产只读审计和源 MySQL 对账。
+
+### Supplier TS 前端与客户端可观察语义
+
+新 Supplier 前端增加可到达的“运费模板”页面，覆盖列表、搜索、新建、编辑、删除，以及按件/重量/体积计价、全国默认、指定包邮和不配送区域。删除子规则现在只更新当前表单的本地数组，只有用户明确删除整张模板时才调用 DELETE 合同，关闭旧页面的误删入口。商品表单恢复三种运费模式、固定金额和当前 Supplier 模板选择，并提供模板管理入口；接口类型和 preview fixtures 都使用五条精确旧路径。页面和 API只展示当前租户数据，服务端边界仍为权威，前端选择器不被当作访问控制。
+
+### 量化证据、CI 与剩余门禁
+
+本批增加 5 条 PHP 精确且可执行合同，并有 13 条 TS 支持/页面接口，所以全局从 TS1,523/精确818/可执行800/缺失1,086/可执行缺口1,075 变为 TS1,528/精确823/可执行805/缺失1,081/可执行缺口1,070；Supplier 面从 TS129/精确95/缺失87/退役7/可执行缺口80 变为 TS134/精确100/缺失82/退役7/可执行缺口75。Supplier 精确/可执行覆盖均为 54.9%，退役后有效覆盖 57.1%。静态路由存在仍不代表权限、数据或结算等价，所以上述百分比仅作为注册上限。
+
+定向 3 文件/27 项覆盖租户过滤、跨租户同面失败、四表原子替换、关闭规则清理、重复/默认/路径/精度拒绝、删除引用阻断、三种商品运费模式、模板归属和前端子项删除；完整 Worker 单元为 185 文件/1,192 项。双 TypeScript、Supplier 生产 build 和主 Worker dry-run均通过；dry-run 包为 3,651.74 KiB/gzip 858.56 KiB，精确解析 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 与四个 Durable Object，没有部署。提交 `9066cb9819aa3874af518971acebabdf78ea2a4c` 推送后，[Actions `33579118412`](https://github.com/cinagroup/cinashop/actions/runs/33579118412) 对精确 head 的 Worker、Admin/PC/Supplier/Kefu/UniApp、Linux workerd 与全历史 Gitleaks 8/8 成功：Linux workerd 1 文件/15 项，单元 185/1,192，observability 17 信号/10 组件/53 必需事件/407 个生产源文件，schema source201/target262/shared201/sourceGaps0、外部/内嵌 262 且定义漂移为 0。
+
+本批没有读取或写入生产 PostgreSQL/R2，没有创建临时探针，也没有发布主 Worker或 Supplier Pages。代码级候选已关闭旧五条合同的租户/事务/输入和商品运费语义缺口，但 SUP-004 父项仍需先完成 Supplier 子管理员 8 条与默认拒绝 RBAC，再用真实主/子账号完成旧端和 TS 端跨租户/E2E，并另行取得发布批准。SUP-003 的生产 PostgreSQL/R2 只读夹具还需要对临时 `workers.dev` 端点及其精确脱敏载荷作专项授权；通用“授权”或生产库只读许可不自动包含公开该聚合端点。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
