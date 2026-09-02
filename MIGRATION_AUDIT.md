@@ -3508,7 +3508,37 @@ Supplier 管理员 8 条是本批最重要的阻断。旧登录服务按 `system
 
 定向 3 文件/27 项覆盖租户过滤、跨租户同面失败、四表原子替换、关闭规则清理、重复/默认/路径/精度拒绝、删除引用阻断、三种商品运费模式、模板归属和前端子项删除；完整 Worker 单元为 185 文件/1,192 项。双 TypeScript、Supplier 生产 build 和主 Worker dry-run均通过；dry-run 包为 3,651.74 KiB/gzip 858.56 KiB，精确解析 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 与四个 Durable Object，没有部署。提交 `9066cb9819aa3874af518971acebabdf78ea2a4c` 推送后，[Actions `33579118412`](https://github.com/cinagroup/cinashop/actions/runs/33579118412) 对精确 head 的 Worker、Admin/PC/Supplier/Kefu/UniApp、Linux workerd 与全历史 Gitleaks 8/8 成功：Linux workerd 1 文件/15 项，单元 185/1,192，observability 17 信号/10 组件/53 必需事件/407 个生产源文件，schema source201/target262/shared201/sourceGaps0、外部/内嵌 262 且定义漂移为 0。
 
-本批没有读取或写入生产 PostgreSQL/R2，没有创建临时探针，也没有发布主 Worker或 Supplier Pages。代码级候选已关闭旧五条合同的租户/事务/输入和商品运费语义缺口，但 SUP-004 父项仍需先完成 Supplier 子管理员 8 条与默认拒绝 RBAC，再用真实主/子账号完成旧端和 TS 端跨租户/E2E，并另行取得发布批准。SUP-003 的生产 PostgreSQL/R2 只读夹具还需要对临时 `workers.dev` 端点及其精确脱敏载荷作专项授权；通用“授权”或生产库只读许可不自动包含公开该聚合端点。
+本批没有读取或写入生产 PostgreSQL/R2，没有创建临时探针，也没有发布主 Worker或 Supplier Pages。代码级候选已关闭旧五条合同的租户/事务/输入和商品运费语义缺口；随后的 SUP-004-B 又完成 Supplier 子管理员 8 条与默认拒绝 RBAC。SUP-004 父项仍需用真实主/子账号完成旧端和 TS 端跨租户/E2E，并另行取得发布批准。SUP-003 的生产 PostgreSQL/R2 只读夹具还需要对临时 `workers.dev` 端点及其精确脱敏载荷作专项授权；通用“授权”或生产库只读许可不自动包含公开该聚合端点。
+
+## SUP-004-B Supplier 子管理员与全域 RBAC 详细审计（2026-09-02）
+
+### PHP 权限基线与不能照搬的漏洞
+
+PHP 登录服务会按 `system_admin.admin_type=4 + relation_id` 找到 Supplier，说明 `level=1` 子管理员是旧系统设计的一部分；但 `LoginServices::verifiAuth()` 在解析任何角色或菜单前直接 `return true`，所有有效子账号实际上获得完整 Supplier 后台权限。管理员 resource 的列表和创建虽写入/筛选当前 `relation_id`，detail、edit、update、delete 和 set_status 却把客户端 ID直接交给平台级 `SystemAdminServices`，没有再次限定 `admin_type=4 + relation_id=$supplierId + level=1`，形成跨 Supplier 读取、改写、停用和删除面。旧创建表单又以 `level=0` 请求平台表单，角色选择并没有形成可用的 Supplier 权限闭环。
+
+此前 Worker 为避免继承该漏洞，登录和 middleware 都要求 `system_supplier.admin_id == system_admin.id`，结果是主管理员安全可用、子账号完全不可用。正确迁移不能只把八条路由挂回去：必须先把主管理员身份、租户角色、动作权限和每个 Supplier handler 的拒绝策略统一，再开放同 relation 的子账号。
+
+### 稳定权限模型、默认拒绝与旧规则兼容
+
+候选现定义 12 个稳定域：经营概览、商品、运费、订单、售后、财务、小票、面单、履约配置、供应商资料、子账号和素材；除只读概览外均拆成 `supplier.<domain>.view/manage`。`supplierPermissionMiddleware` 位于身份认证之后、所有受保护 Supplier 路由之前，显式登记每条已注册路径；未知路径即使主管理员请求也默认拒绝。手工打单和电子面单分别要求 `order.view + print.manage`、`order.view + waybill.manage`，避免仅有订单查看权时触发外部副作用。登录菜单、搜索菜单、前端导航和路由 meta 都从同一稳定权限集合过滤，服务端仍是最终 authority。
+
+主管理员只由 `system_supplier.admin_id === currentAdmin.id` 判定，不信任旧 `level=0`。子账号必须同时满足有效 `system_admin(admin_type=4, relation_id=supplierId, status=1, is_del=0)` 和当前 Supplier 下有效 `system_role(type=4, relation_id=supplierId, status=1)`；没有可执行权限时登录失败关闭。角色可继续读取旧 `system_menus` 数字规则，但只接受 `type=4/auth_type=2/access=1/is_del=0` 的菜单，并把 method/path 批量解析为稳定权限，避免逐角色 N+1。直接稳定规则和旧数字规则都会补齐 `manage ⇒ view`；创建/更新角色及给子账号分配角色前，再以事务内当前权限重新解析并拒绝任何越权委派，数字规则不能绕过该上限。
+
+### 管理员、角色与资料页的租户/事务边界
+
+八条 PHP 精确合同现完整注册：管理员列表、创建表单、创建、详情、编辑表单、更新、删除和状态切换；另加四条不计入 PHP 匹配分子的 Worker 安全扩展，用于当前 Supplier 的角色列表、创建、更新和删除。所有管理员目标都统一限定 `admin_type=4 + relation_id=supplierId + level=1 + is_del=0`；跨租户 ID、主管理员 ID 和不存在 ID不能成为可操作对象，当前账号也不能通过管理员 CRUD 自删、自停或绕过个人改密。角色同样限定 `type=4 + relation_id=supplierId`，仍被有效子账号引用时禁止删除。
+
+写操作采用事务、2 秒 lock timeout、5 秒 statement timeout、Supplier 管理员类型 advisory lock 和目标行锁；事务内重新读取有效操作者与主管理员绑定，关闭“请求鉴权后角色/账号已被撤销”的竞态。账号和电话在同一全局锁下按 Supplier 管理员登录域查重；新密码要求 12～72 位并使用 bcrypt cost 12。`system_log` 只记录操作者、Supplier ID、目标 ID和动作，不记录账号、电话、密码或角色内容。管理员列表的角色名称批量加载，角色列表中的旧菜单规则也一次批量解析。资料页另修复了子账号会看到主管理员登录账号的问题：现在只返回当前登录账号，子账号不能在供应商资料表单中改账号；只有真正的主管理员才会把资料名、电话和账号镜像到主管理员记录。
+
+### Supplier TS 与可验证行为
+
+Supplier TS 新增“子账号管理”页面，覆盖分页、添加、编辑、停用和删除，并提供当前租户角色与权限编辑器。主导航按 `view` 权限过滤，商品新建/编辑和虚拟库存等动作页要求 `manage`；无权直达会跳到第一个可见页面。旧会话没有本地权限快照时 UI 暂时不空白，但服务端仍按数据库实时默认拒绝；新登录会持久化精确权限集合。主管理员和当前账号不可操作的限制也在 UI 显示，但不依赖前端作为安全边界。
+
+定向 RBAC 测试为 1 文件/10 项，覆盖全部认证 Supplier 路由必须有权限登记、未知路由失败关闭、打单/面单组合权限、稳定/旧规则规范化、越权委派拒绝、八条旧合同、四条角色扩展、租户过滤/锁/审计静态合同和前端守卫。完整单元为 186 文件/1,202 项；双 TypeScript 与 Supplier 生产 build 通过，管理员页面产物为 11.49 KiB/gzip 4.12 KiB。路由审计由全局 TS1,528/精确823/可执行805/缺失1,081/可执行缺口1,070 提升到 TS1,540/精确831/可执行813/缺失1,073/可执行缺口1,062；Supplier 面由 TS134/精确100/缺失82/退役7/可执行缺口75 提升到 TS146/精确108/缺失74/退役7/可执行缺口67，精确/可执行覆盖 59.3%，退役后有效覆盖 61.7%。四条角色扩展增加 TS 分母但不虚增 PHP 匹配。
+
+主 Worker minify dry-run 为 3,674.17 KiB/gzip 864.28 KiB，精确解析 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 与四个 Durable Object，没有部署。只读 `wrangler hyperdrive get` 另确认该 ID仍为 `cinashop-pg`，数据库名 `postgres`、VPC service `019fe223-e5a1-7ed1-945a-8993a6f32508`、origin connection limit 60 且缓存开启；这只是 Cloudflare 配置元数据，不是生产业务行审计。schema 仍为 source201/target262/shared201/sourceGaps0、外部/内嵌 262 且定义漂移 0；observability 为 17 信号/10 组件/53 必需事件/410 个生产源文件。
+
+提交 `065c522ee0ed6bc3de2471ed744f9edf3efb48b4` 推送后，[Actions `33582012080`](https://github.com/cinagroup/cinashop/actions/runs/33582012080) 对精确 head 的 Worker、Admin/PC/Supplier/Kefu/UniApp、Linux workerd 和全历史 Gitleaks 8/8 成功；Linux workerd 1 文件/15 项。该批没有生产 PostgreSQL DML/DDL、没有读取管理员/角色业务行、没有临时探针，也没有发布主 Worker或 Supplier Pages。SUP-004 只能标为 25/25 条“代码候选完成”；父项仍需生产只读核验角色/子账号现实分布、用真实主管理员和受限子账号做旧端/TS 端正反 E2E，并另行批准发布与观察。SUP-003 附件生产审计仍需对临时随机名称 `workers.dev` Worker、仅 token 保护的 `GET /supplier-attachments` 及其精确脱敏聚合载荷作专项授权。
 
 ## 完成定义
 
