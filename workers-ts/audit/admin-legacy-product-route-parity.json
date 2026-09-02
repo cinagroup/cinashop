@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-02",
+  "scope": "The 12 active legacy Admin product screens imported by the legacy product router. Status measures screen semantics, not whether a similarly named route exists.",
+  "statusDefinitions": {
+    "candidate": "The routed screen's primary operations have a new Admin screen and executable authenticated API contracts; production E2E is still required.",
+    "partial": "A replacement screen exists, but one or more active legacy operations or relationships are absent or materially simplified.",
+    "missing": "No new Admin screen currently implements the active legacy operation."
+  },
+  "summary": {
+    "legacyRoutes": 12,
+    "candidate": 5,
+    "partial": 6,
+    "missing": 1,
+    "retired": 0
+  },
+  "routes": [
+    {
+      "legacyPath": "/admin/product/product_list",
+      "legacyComponent": "pages/product/productList/index.vue",
+      "title": "商品管理",
+      "status": "partial",
+      "newScreens": ["/product", "/product/virtual-alerts", "/product/virtual/:id"],
+      "newApiContracts": ["GET /adminapi/product/list", "POST /adminapi/product/set_show/:id", "DELETE /adminapi/product/del/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "List, search, create/edit entry, show/hide, delete, and isolated virtual-card inventory operations.",
+      "remaining": "Legacy batch operations, richer filters, verification actions, exports, relation editing, and complete SKU operations are not all available from this screen."
+    },
+    {
+      "legacyPath": "/admin/product/product_classify",
+      "legacyComponent": "pages/product/productClassify/index.vue",
+      "title": "商品分类",
+      "status": "partial",
+      "newScreens": ["/category"],
+      "newApiContracts": ["GET /adminapi/category/list", "POST /adminapi/category/save", "DELETE /adminapi/category/del/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Flat category list plus create, edit, visibility value, and guarded delete.",
+      "remaining": "The new screen does not expose the full legacy hierarchy, parent move, icon/image, product relation, and dedicated visibility workflows."
+    },
+    {
+      "legacyPath": "/admin/product/add_product/:id?",
+      "legacyComponent": "pages/product/productAdd/index.vue",
+      "title": "商品添加/编辑",
+      "status": "partial",
+      "newScreens": ["/product/create", "/product/edit/:id"],
+      "newApiContracts": ["POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Core scalar fields, category, unit, membership price, sorting, visibility, and server draft restore/save/delete.",
+      "remaining": "Guarantee selection, parameter-template application, specification-template application, SKU combination editing, gallery/rich-media selection, labels/brand and several legacy product types remain."
+    },
+    {
+      "legacyPath": "/admin/product/product_reply/:id?",
+      "legacyComponent": "pages/product/productReply/index.vue",
+      "title": "商品评论",
+      "status": "partial",
+      "newScreens": ["/reply"],
+      "newApiContracts": ["GET /adminapi/reply/list", "POST /adminapi/reply/status/:id", "DELETE /adminapi/reply/del/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Review list, image preview, visibility change, and delete.",
+      "remaining": "Product-scoped navigation, administrator replies, fictitious-review creation, pagination/filtering, and reply history are absent."
+    },
+    {
+      "legacyPath": "/admin/product/product_attr",
+      "legacyComponent": "pages/product/productAttr/index.vue",
+      "title": "商品规格",
+      "status": "candidate",
+      "newScreens": ["/product/metadata#rules"],
+      "newApiContracts": ["GET /adminapi/product/rule", "GET /adminapi/product/rule/:id", "POST /adminapi/product/rule/:id", "DELETE /adminapi/product/rule/delete/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Search, list, create, edit, delete, one-to-three SKU dimensions, up to fifty unique values per dimension, duplicate validation, and explicit SKU semantics.",
+      "remaining": "Applying the reusable structure inside the Admin product form and validating generated SKU rows belongs to the product-edit flow and remains open."
+    },
+    {
+      "legacyPath": "/admin/product/product_brand",
+      "legacyComponent": "pages/product/productBrand/index.vue",
+      "title": "品牌管理",
+      "status": "partial",
+      "newScreens": ["/brand"],
+      "newApiContracts": ["GET /adminapi/brand/list", "POST /adminapi/brand/save", "DELETE /adminapi/brand/del/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Brand list, name, logo URL, sort, visibility value, create, edit, and delete.",
+      "remaining": "The new UI does not expose full legacy category relationships, dedicated status operations, attachment selection, and in-product selection."
+    },
+    {
+      "legacyPath": "/admin/product/unitList",
+      "legacyComponent": "pages/product/unitList/index.vue",
+      "title": "商品单位",
+      "status": "candidate",
+      "newScreens": ["/product/metadata#units"],
+      "newApiContracts": ["GET /adminapi/unit", "POST /adminapi/unit", "PUT /adminapi/unit/:id", "DELETE /adminapi/unit/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Search, page, create, edit, duplicate prevention, product-reference protection, and product-form unit selection.",
+      "remaining": "Real production data CRUD and restricted-role E2E are still required."
+    },
+    {
+      "legacyPath": "/admin/product/label",
+      "legacyComponent": "pages/product/label/index.vue",
+      "title": "商品标签",
+      "status": "partial",
+      "newScreens": ["/label"],
+      "newApiContracts": ["GET /adminapi/product_label/list", "POST /adminapi/product_label/save", "DELETE /adminapi/product_label/del/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Simple product-label list, visual colors, create, edit, and delete; user labels are separately grouped on the same screen.",
+      "remaining": "Legacy label groups, show/status distinction, icon/badge settings, batch operations, and product-form assignment are not fully reproduced."
+    },
+    {
+      "legacyPath": "/admin/product/specs",
+      "legacyComponent": "pages/product/specs/index.vue",
+      "title": "商品参数",
+      "status": "candidate",
+      "newScreens": ["/product/metadata#parameters"],
+      "newApiContracts": ["GET /adminapi/specs", "GET /adminapi/specs/:id", "POST /adminapi/specs/:id", "DELETE /adminapi/specs/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Search, page, preview, create, edit, delete, sort, per-parameter status, and explicit separation from SKU specifications.",
+      "remaining": "Applying the template inside the Admin product form and validating historical template data in production remain open."
+    },
+    {
+      "legacyPath": "/admin/product/ensure",
+      "legacyComponent": "pages/product/ensure/index.vue",
+      "title": "保障服务",
+      "status": "candidate",
+      "newScreens": ["/product/metadata#ensures"],
+      "newApiContracts": ["GET /adminapi/product/ensure", "POST /adminapi/product/ensure", "PUT /adminapi/product/ensure/:id", "DELETE /adminapi/product/ensure/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "Search, page, create, edit, enable/disable, sort, and reference-protected delete.",
+      "remaining": "Selecting guarantees in the product form and proving relation persistence remain open."
+    },
+    {
+      "legacyPath": "/admin/product/ensure/create/:id?",
+      "legacyComponent": "pages/product/specsAdd/index.vue",
+      "title": "添加商品参数模板",
+      "status": "candidate",
+      "newScreens": ["/product/metadata#parameters"],
+      "newApiContracts": ["GET /adminapi/specs/:id", "POST /adminapi/specs/:id"],
+      "permission": "product.view / product.manage",
+      "covered": "The misleading legacy guarantee path is intentionally merged into the parameter-template dialog with template name, sort, and editable parameter rows.",
+      "remaining": "Production historical-data edit and save E2E remain open."
+    },
+    {
+      "legacyPath": "/admin/product/hotWords",
+      "legacyComponent": "pages/product/hotWords/index.vue",
+      "title": "搜索热词",
+      "status": "missing",
+      "newScreens": [],
+      "newApiContracts": [],
+      "permission": "product.view / product.manage (target)",
+      "covered": "The store_product_words table is preserved by migration, but preservation is not an Admin operation surface.",
+      "remaining": "Build owner-scoped list/detail/save/delete/status services and a responsive Admin screen without reusing raw legacy controllers."
+    }
+  ]
+}

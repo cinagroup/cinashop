@@ -3793,7 +3793,7 @@ Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项
 
 新增 `scripts/admin-frontend-api-audit.ts`，使用 TypeScript AST 扫描新 Admin 的 `src/api/*.ts` 与 `src/pages/**/*.vue` 脚本中所有 `request.get/post/put/delete/patch` 调用。审计器会展开条件表达式、局部 URL 对象映射和函数参数的字符串联合类型；运行时 ID只按路径段归一为 `:param`，动态调用段不能被同位置的固定字面量路由误匹配。后端从 `src/routes/adminapi.ts` 读取同方法路由及最终处理器，并把输入文件的换行统一为 LF 后计算 SHA-256，避免 Windows CRLF 与 Linux LF造成虚假漂移。
 
-最终权威结果为297个请求调用点、317个路径变体；同方法已注册317、可执行317、未注册0、无法解析0、命中命名为受控不可用的处理器0。报告固化在 `audit/admin-frontend-api-contracts.json`，测试会在同一进程从当前源码重新生成完整报告并与提交快照逐字段比较；任何新增、删除、改方法、改路径、处理器变化或输入哈希漂移都必须显式更新审计。此口径只证明当前新 Admin发出的静态请求不会因缺注册而落入末尾通配501，不证明每个处理器在真实业务数据下成功，也不把 Worker中存在但当前前端未调用的企业微信远端写路由误算为已完成。
+当前权威结果为305个请求调用点、325个路径变体；同方法已注册325、可执行325、未注册0、无法解析0、命中命名为受控不可用的处理器0。报告固化在 `audit/admin-frontend-api-contracts.json`，测试会在同一进程从当前源码重新生成完整报告并与提交快照逐字段比较；任何新增、删除、改方法、改路径、处理器变化或输入哈希漂移都必须显式更新审计。此口径只证明当前新 Admin发出的静态请求不会因缺注册而落入末尾通配501，不证明每个处理器在真实业务数据下成功，也不把 Worker中存在但当前前端未调用的企业微信远端写路由误算为已完成。最初建立门禁时为297/317；新增商品规格和参数模板8个调用点后，快照随源码显式推进到305/325。
 
 ### 四类真实断链与一处高风险伪修复
 
@@ -3812,6 +3812,39 @@ Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项
 真实应用内浏览器在桌面打开 `/config?preview=1`，确认安全停用说明和两个入口；“新人运营”进入 `/config/newcomer`，“客户端内容”进入 `/config/runtime-content`，页面标题、主内容和错误遮罩均正常。390×844 下 `innerWidth/document/body scrollWidth` 均为390，两张卡片各306px且纵向排列，无页面级横向溢出。视口、标签页和本地服务均已恢复/关闭。浏览器只使用本地预览数据，没有读取或写入生产配置。
 
 本批没有连接 Hyperdrive、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、主 Worker或 Admin Pages发布。FE-001F标记为静态候选完成；FE-001父项仍被274条旧路由逐屏语义映射、商品剩余操作面、真实主管理员/受限角色生产数据 E2E，以及 Pages预发、发布和观察阻塞。
+
+## FE-001-E 商品域12屏逐项审计与两类模板操作面（2026-09-02）
+
+### 先固定分母，再判断语义覆盖
+
+旧 Admin 实际导入的商品路由文件只启用12条业务屏，不是按 `pages/product` 下所有文件估算。新增 `audit/admin-legacy-product-route-parity.json`，为每条旧路由固定旧组件、标题、candidate/partial/missing 状态、新页面、新 API、权限、已覆盖能力和剩余缺口。`admin-product-frontend-parity.test.ts` 固定这12条路径与5条候选、6条部分覆盖、1条缺失的状态汇总，并要求每条非缺失项都有具体页面和 API；因此以后不能因为新端存在一个“商品管理”或“商品基础资料”标题就把整域记为完成。
+
+| 旧路由/屏幕 | 当前状态 | 新端替代 | 仍缺的决定性能力 |
+| --- | --- | --- | --- |
+| `product_list` 商品管理 | partial | `/product`、卡密库存/预警 | 批量运营、完整筛选/审核/导出、关系和 SKU 操作 |
+| `product_classify` 商品分类 | partial | `/category` | 完整层级、父级移动、图标、显隐专用流和关系编辑 |
+| `add_product/:id?` 添加/编辑 | partial | `/product/create|edit/:id` | 保障/品牌/标签/参数关联、模板套用、SKU、图库与多类商品 |
+| `product_reply/:id?` 商品评论 | partial | `/reply` | 商品定向、管理员回复、虚拟评论、分页筛选和回复历史 |
+| `product_attr` 商品规格 | candidate | `/product/metadata` 的 SKU规格页签 | 商品表单套用、SKU生成与保存回读 |
+| `product_brand` 品牌 | partial | `/brand` | 分类关系、专用状态、素材选择和商品表单关联 |
+| `unitList` 商品单位 | candidate | `/product/metadata` 的单位页签 | 生产真实数据与受限角色 E2E |
+| `label` 商品标签 | partial | `/label` | 标签组、显隐/启停区分、图标、批量流和商品关联 |
+| `specs` 商品参数 | candidate | `/product/metadata` 的参数模板页签 | 商品表单套用与历史数据 E2E |
+| `ensure` 保障服务 | candidate | `/product/metadata` 的保障页签 | 商品保障选择与关系持久化 E2E |
+| `ensure/create/:id?` 参数模板编辑 | candidate | 合并到参数模板弹窗 | 生产历史模板编辑保存 E2E |
+| `hotWords` 搜索热词 | missing | 无 | 平台作用域安全服务、CRUD/显隐/删除和响应式页面 |
+
+其中最重要的语义纠偏是旧 `/admin/product/ensure/create/:id?` 虽然路径写着 `ensure`，实际组件是 `specsAdd/index.vue`，提交的是 `product/specs/:id`；它是商品参数模板编辑，不是保障模板。旧 `productAttr` 才维护 `store_product_rule.rule_value` 中的颜色、尺码等 SKU 组合维度。新页面把两者分别命名为“SKU规格模板”和“商品参数模板”，顶部说明前者参与 SKU 结构、后者只描述材质/产地等属性，避免继续复制旧路由命名错误。
+
+### 复用已有安全服务，不增加新的生产写入口
+
+Admin `productMetadata.ts` 新接八个现有合同：规格模板的列表、详情、保存、删除，以及参数模板的列表、详情、保存、删除。规格写入继续由 `ProductMetadataService` 固定平台 `(type=0, relation_id=0)`，以事务级 advisory lock 串行同一作用域的重名检查；新写严格限制1～3个维度、每维1～50个非空唯一值，旧坏 JSON 只在读取时容错为空。参数模板明确固定 `category.group=3`，名称和排序与最多100条参数在同一事务内保存；更新先锁定平台自有模板，再删除并重建 `store_product_specs` 行，不会留下半套参数或越权修改 Supplier模板。权限仍由 Admin 路由统一执行只读 `product.view`、写入 `product.manage`。
+
+`/product/metadata` 现在有单位、保障、SKU规格模板、商品参数模板四个页签。SKU页支持搜索、分页、维度/规格值预览、新增、编辑、删除以及前后端一致的重复/数量校验；参数页支持搜索、分页、参数摘要、名称/值/排序/逐项启停编辑和删除确认。预览层只在 Vite开发且显式 `preview=1` 时使用内存数据，生产构建始终走 `/adminapi`。Admin生产构建通过2,427个模块；完整 Worker单元为197文件/1,253项全部通过，双 TypeScript通过，定向4文件/15项通过。API静态合同随新增8个调用点更新为305个调用点、325个路径变体，325条全部已注册且可执行，未注册/未解析/受控不可用命中均为0。
+
+应用内浏览器在本地 `preview=1` 下验证四页签可达。桌面端 SKU模板正确展示“服装颜色尺码”的颜色/尺码和值，编辑弹窗回填两个维度；参数模板正确展示材质/季节摘要，编辑弹窗从2项动态增加到3项。390×844下 `innerWidth/document/body scrollWidth` 都是390，内容卡片306px，表格只在卡片内滚动，没有页面级横向溢出或 Vite错误遮罩；完成后视口、标签页和本地服务均已恢复/关闭。
+
+本批没有连接 Hyperdrive、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、Worker或 Pages部署。FE-001E只关闭12屏审计和两类模板目录两个子项；保障/品牌/标签/参数的商品保存关系、搜索热词、规格套用和SKU全流程、批量运营、真实角色/数据 E2E 继续保留在 checklist，父项不标完成。
 
 ## 完成定义
 
