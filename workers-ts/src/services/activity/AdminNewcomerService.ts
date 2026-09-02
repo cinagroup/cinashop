@@ -19,6 +19,10 @@ import {
   storeProductAttrValue,
   systemConfig,
 } from "@/models/schema";
+import {
+  PRODUCT_SKU_IDENTITY_LOCK_KEY,
+  PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE,
+} from "@/services/product/ProductSkuIdentity";
 import { normalizeConfigScalar } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
 
@@ -265,6 +269,10 @@ function randomUnique(): string {
 }
 
 async function freshSkuUnique(tx: DbClient, reserved: Set<string>): Promise<string> {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(
+    ${PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE},
+    ${PRODUCT_SKU_IDENTITY_LOCK_KEY}
+  )`);
   for (let attempt = 0; attempt < 20; attempt++) {
     const candidate = randomUnique();
     if (reserved.has(candidate)) continue;

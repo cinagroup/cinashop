@@ -9,9 +9,18 @@ import {
   storeProductEnsure,
   storeProductLabel,
   storeProductRelation,
+  storeProductRule,
   storeProductSpecs,
   systemLog,
 } from "@/models/schema";
+import {
+  hasProductSkuEditorPayload,
+  loadProductSkuEditor,
+  normalizeProductSkuEditorPayload,
+  parseProductSkuRuleValue,
+  productSkuSummary,
+  replaceProductSkuEditor,
+} from "@/services/product/ProductSkuEditorService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const PRODUCT_WRITE_LOCK_NAMESPACE = 731_617;
@@ -236,7 +245,7 @@ export class ProductAssociationService {
   constructor(private readonly container: Container) {}
 
   async editorOptions() {
-    const [brands, labels, ensures, templates, categories] = await Promise.all([
+    const [brands, labels, ensures, templates, categories, skuRules] = await Promise.all([
       this.container.db.select({ id: storeBrand.id, name: storeBrand.brandName })
         .from(storeBrand)
         .where(and(eq(storeBrand.isDel, 0), eq(storeBrand.isShow, 1)))
@@ -280,6 +289,14 @@ export class ProductAssociationService {
         ))
         .orderBy(desc(storeProductCategory.sort), asc(storeProductCategory.id))
         .limit(500),
+      this.container.db.select({
+        id: storeProductRule.id,
+        name: storeProductRule.ruleName,
+        value: storeProductRule.ruleValue,
+      }).from(storeProductRule).where(and(
+        eq(storeProductRule.type, 0),
+        eq(storeProductRule.relationId, 0),
+      )).orderBy(desc(storeProductRule.id)).limit(500),
     ]);
     const templateSpecs = templates.length
       ? await this.container.db.select({
@@ -303,6 +320,10 @@ export class ProductAssociationService {
         ...template,
         specs: templateSpecs.filter((item) => item.temp_id === template.id),
       })),
+      sku_rule_templates: skuRules.flatMap((rule) => {
+        const dimensions = parseProductSkuRuleValue(rule.value);
+        return dimensions ? [{ id: rule.id, name: rule.name, dimensions }] : [];
+      }),
     };
   }
 
@@ -311,14 +332,17 @@ export class ProductAssociationService {
     const product = await this.container.db.select().from(storeProduct)
       .where(and(eq(storeProduct.id, productId), eq(storeProduct.isDel, 0))).limit(1);
     if (!product[0]) throw new NotFoundException("商品不存在");
-    const relations = await this.container.db.select({
-      type: storeProductRelation.type,
-      relationId: storeProductRelation.relationId,
-    }).from(storeProductRelation).where(and(
-      eq(storeProductRelation.productId, productId),
-      inArray(storeProductRelation.type, [...MANAGED_RELATIONS]),
-    ));
     const item = product[0];
+    const [relations, skuEditor] = await Promise.all([
+      this.container.db.select({
+        type: storeProductRelation.type,
+        relationId: storeProductRelation.relationId,
+      }).from(storeProductRelation).where(and(
+        eq(storeProductRelation.productId, productId),
+        inArray(storeProductRelation.type, [...MANAGED_RELATIONS]),
+      )),
+      loadProductSkuEditor(this.container.db, productId, item.specType),
+    ]);
     const categoryIds = normalizeProductAssociationIds([
       ...normalizeProductAssociationIds(item.cateId, "商品分类"),
       ...relationIds(relations, CATEGORY_RELATION),
@@ -370,6 +394,7 @@ export class ProductAssociationService {
       ensure_id: ensureIds,
       specs_id: parameterTemplateId,
       specs,
+      ...skuEditor,
     };
   }
 
@@ -377,7 +402,7 @@ export class ProductAssociationService {
     productId: number,
     body: Record<string, unknown>,
     actor: ProductEditorActor,
-  ): Promise<{ id: number; associations_verified: boolean }> {
+  ): Promise<{ id: number; associations_verified: boolean; sku_verified: boolean }> {
     if (!Number.isSafeInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
     const now = Math.floor(Date.now() / 1000);
     return withTx(this.container, async (tx) => {
@@ -390,12 +415,19 @@ export class ProductAssociationService {
       const existing = existingRows[0];
       if (productId > 0 && (!existing || existing.isDel === 1)) throw new NotFoundException("商品不存在");
 
+      const skuPayload = hasProductSkuEditorPayload(body)
+        ? normalizeProductSkuEditorPayload(body)
+        : null;
+      const skuSummary = skuPayload ? productSkuSummary(skuPayload) : null;
       const storeName = textValue(body.store_name ?? existing?.storeName, "商品名称", 256);
       if (!storeName) throw new ValidateException("商品名称不能为空");
-      const price = decimalValue(body.price, "价格", existing?.price ?? "0", true);
-      const otPrice = decimalValue(body.ot_price, "原价", existing?.otPrice ?? price);
-      const vipPrice = decimalValue(body.vip_price, "会员价", existing?.vipPrice ?? "0");
-      const stock = integerValue(body.stock, "库存", existing?.stock ?? 0);
+      const price = skuSummary?.price
+        ?? decimalValue(body.price, "价格", existing?.price ?? "0", true);
+      const otPrice = skuSummary?.otPrice
+        ?? decimalValue(body.ot_price, "原价", existing?.otPrice ?? price);
+      const vipPrice = skuSummary?.vipPrice
+        ?? decimalValue(body.vip_price, "会员价", existing?.vipPrice ?? "0");
+      const stock = skuSummary?.stock ?? integerValue(body.stock, "库存", existing?.stock ?? 0);
       const sort = integerValue(body.sort, "排序", existing?.sort ?? 0, 0, 999);
       const isShow = integerValue(body.is_show, "上架状态", existing?.isShow ?? 1, 0, 1);
       const isVip = integerValue(body.is_vip, "会员状态", existing?.isVip ?? 0, 0, 1);
@@ -460,6 +492,12 @@ export class ProductAssociationService {
         sort,
         isShow,
         isVip,
+        ...(skuPayload ? {
+          specType: skuPayload.specType,
+          settlePrice: skuSummary!.settlePrice,
+          cost: skuSummary!.cost,
+          isSold: skuSummary!.isSold,
+        } : {}),
         ...(associations ? {
           cateId: csv(associations.categoryIds),
           brandId: associations.brandIds.at(-1) ?? 0,
@@ -498,8 +536,21 @@ export class ProductAssociationService {
         await this.replaceRelations(tx, savedProductId, isShow, associations, now);
         await this.assertAssociationReadback(tx, savedProductId, associations);
       }
+      if (skuPayload) {
+        await replaceProductSkuEditor(tx, {
+          id: savedProductId,
+          productType: existing?.productType ?? 0,
+          image: values.image,
+          type: existing?.type ?? 0,
+          relationId: existing?.relationId ?? 0,
+        }, skuPayload, now);
+      }
       await writeAudit(tx, actor, existing ? "update" : "create", savedProductId, now);
-      return { id: savedProductId, associations_verified: associations !== null };
+      return {
+        id: savedProductId,
+        associations_verified: associations !== null,
+        sku_verified: skuPayload !== null,
+      };
     });
   }
 

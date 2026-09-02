@@ -18,6 +18,7 @@ import {
   type SupplierPhysicalProductInput,
   type SupplierProductSku,
 } from "@/services/supplier/SupplierProductManagementService";
+import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
 
@@ -30,7 +31,7 @@ const PHYSICAL_PRODUCT_TYPE = 0;
 const PRODUCT_ATTR_TYPE = 0;
 const CATEGORY_RELATION_TYPE = 1;
 const REPLAY_LOCK_NAMESPACE = 744_220_001;
-const PRODUCT_SAVE_LOCK_NAMESPACE = 744_220_002;
+const PRODUCT_SAVE_LOCK_NAMESPACE = PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE;
 const MAX_STOCK_UPLOAD_ITEMS = 100;
 
 interface OutAccountIdentity {

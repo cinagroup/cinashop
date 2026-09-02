@@ -20,13 +20,14 @@ import {
   storeProductStockRecord,
   shippingTemplates,
 } from "@/models/schema";
+import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const SUPPLIER_TYPE = 2;
 const PHYSICAL_PRODUCT_TYPE = 0;
 const PRODUCT_ATTR_TYPE = 0;
 const CATEGORY_RELATION_TYPE = 1;
-const PRODUCT_LOCK_NAMESPACE = 731_602;
+const PRODUCT_LOCK_NAMESPACE = PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE;
 const MAX_DIMENSIONS = 3;
 const MAX_SKUS = 200;
 

@@ -23,12 +23,43 @@ export interface ProductEditorParameterTemplate extends ProductEditorOption {
   specs: ProductEditorParameter[];
 }
 
+export interface ProductSkuDimension {
+  value: string;
+  detail: string[];
+}
+
+export interface ProductSkuRuleTemplate extends ProductEditorOption {
+  dimensions: ProductSkuDimension[];
+}
+
+export interface ProductSkuRow {
+  unique?: string;
+  suk: string;
+  detail: Record<string, string>;
+  image: string;
+  price: string | number;
+  settle_price: string | number;
+  cost: string | number;
+  ot_price: string | number;
+  vip_price: string | number;
+  stock: number;
+  sales?: number;
+  sumStock?: number;
+  bar_code: string;
+  weight: string | number;
+  volume: string | number;
+  brokerage: string | number;
+  brokerage_two: string | number;
+  code: string;
+}
+
 export interface ProductEditorOptions {
   categories: ProductEditorOption[];
   brands: ProductEditorOption[];
   product_labels: ProductEditorOption[];
   ensures: ProductEditorOption[];
   parameter_templates: ProductEditorParameterTemplate[];
+  sku_rule_templates: ProductSkuRuleTemplate[];
 }
 
 export interface AdminProductEditor extends AdminProduct {
@@ -38,6 +69,9 @@ export interface AdminProductEditor extends AdminProduct {
   ensure_id: number[];
   specs_id: number;
   specs: ProductEditorParameter[];
+  spec_type: 0 | 1;
+  items: ProductSkuDimension[];
+  attrs: ProductSkuRow[];
 }
 
 const previewEditorOptions: ProductEditorOptions = {
@@ -63,6 +97,14 @@ const previewEditorOptions: ProductEditorOptions = {
     specs: [
       { id: 511, name: "材质", value: "棉", sort: 30, status: 1 },
       { id: 512, name: "适用季节", value: "四季", sort: 20, status: 1 },
+    ],
+  }],
+  sku_rule_templates: [{
+    id: 61,
+    name: "服装颜色尺码",
+    dimensions: [
+      { value: "颜色", detail: ["米白", "藏青"] },
+      { value: "尺码", detail: ["S", "M"] },
     ],
   }],
 };
@@ -198,6 +240,30 @@ export function apiAdminProductDetail(id: number): Promise<AdminProductEditor> {
       ensure_id: [41, 42],
       specs_id: 51,
       specs: structuredClone(previewEditorOptions.parameter_templates[0].specs),
+      spec_type: 1,
+      items: structuredClone(previewEditorOptions.sku_rule_templates[0].dimensions),
+      attrs: [
+        ["米白", "S"], ["米白", "M"], ["藏青", "S"], ["藏青", "M"],
+      ].map((parts, index) => ({
+        unique: `pvsku00${index + 1}`,
+        suk: parts.join(","),
+        detail: { 颜色: parts[0], 尺码: parts[1] },
+        image: "",
+        price: 199 + index * 10,
+        settle_price: 0,
+        cost: 80,
+        ot_price: 239,
+        vip_price: 179,
+        stock: 30,
+        sales: index * 3,
+        sumStock: 30 + index * 3,
+        bar_code: `CINA-${index + 1}`,
+        weight: 0.3,
+        volume: 0,
+        brokerage: 0,
+        brokerage_two: 0,
+        code: `SHIRT-${index + 1}`,
+      })),
     });
   }
   return getData(request.get(`/product/detail/${id}`));
@@ -212,8 +278,8 @@ export function apiAdminProductEditorOptions(): Promise<ProductEditorOptions> {
 /** 创建商品 (POST /adminapi/product/add) */
 export function apiAdminProductCreate(
   data: Record<string, unknown>,
-): Promise<{ id: number; associations_verified: boolean }> {
-  if (previewMode) return Promise.resolve({ id: 901, associations_verified: true });
+): Promise<{ id: number; associations_verified: boolean; sku_verified: boolean }> {
+  if (previewMode) return Promise.resolve({ id: 901, associations_verified: true, sku_verified: true });
   return getData(request.post("/product/add", data));
 }
 
@@ -221,8 +287,8 @@ export function apiAdminProductCreate(
 export function apiAdminProductUpdate(
   id: number,
   data: Record<string, unknown>,
-): Promise<{ id: number; associations_verified: boolean }> {
-  if (previewMode) return Promise.resolve({ id, associations_verified: true });
+): Promise<{ id: number; associations_verified: boolean; sku_verified: boolean }> {
+  if (previewMode) return Promise.resolve({ id, associations_verified: true, sku_verified: true });
   return getData(request.post(`/product/edit/${id}`, data));
 }
 

@@ -140,6 +140,77 @@
             </el-text>
           </div>
         </el-form-item>
+        <el-divider content-position="left">SKU规格与库存</el-divider>
+        <el-alert
+          title="SKU与商品主表、规格维度、库存流水在同一事务保存并回读。历史SKU可改价改库存和扩展组合，但不能删除、重命名或改唯一标识。"
+          type="warning"
+          :closable="false"
+          show-icon
+          class="association-alert"
+        />
+        <el-form-item label="规格类型">
+          <el-radio-group v-model="form.spec_type" @change="changeSpecType">
+            <el-radio-button :value="0">单规格</el-radio-button>
+            <el-radio-button :value="1">多规格</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="form.spec_type === 1" label="规格模板">
+          <div class="field-row">
+            <el-select v-model="form.sku_rule_id" filterable clearable placeholder="选择SKU规格模板">
+              <el-option
+                v-for="item in editorOptions.sku_rule_templates"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+            <el-button type="primary" plain @click="applySkuRuleTemplate">套用并生成</el-button>
+            <el-button @click="$router.push('/product/metadata')">管理规格</el-button>
+          </div>
+        </el-form-item>
+        <el-form-item v-if="form.items.length" label="规格维度">
+          <div class="sku-dimensions">
+            <div v-for="dimension in form.items" :key="dimension.value" class="sku-dimension">
+              <strong>{{ dimension.value }}</strong>
+              <el-tag v-for="value in dimension.detail" :key="value" size="small">{{ value }}</el-tag>
+            </div>
+          </div>
+        </el-form-item>
+        <el-form-item label="SKU明细" required>
+          <div class="sku-table-shell">
+            <el-table :data="form.attrs" border size="small" class="sku-table">
+              <el-table-column prop="suk" label="组合" fixed min-width="130" />
+              <el-table-column label="图片URL" min-width="150">
+                <template #default="{ row }"><el-input v-model="row.image" /></template>
+              </el-table-column>
+              <el-table-column v-if="form.spec_type === 1" label="售价" min-width="120">
+                <template #default="{ row }"><el-input-number v-model="row.price" :min="0" :precision="2" controls-position="right" /></template>
+              </el-table-column>
+              <el-table-column v-if="form.spec_type === 1" label="原价" min-width="120">
+                <template #default="{ row }"><el-input-number v-model="row.ot_price" :min="0" :precision="2" controls-position="right" /></template>
+              </el-table-column>
+              <el-table-column label="成本价" min-width="120">
+                <template #default="{ row }"><el-input-number v-model="row.cost" :min="0" :precision="2" controls-position="right" /></template>
+              </el-table-column>
+              <el-table-column v-if="form.spec_type === 1" label="会员价" min-width="120">
+                <template #default="{ row }"><el-input-number v-model="row.vip_price" :min="0" :precision="2" controls-position="right" /></template>
+              </el-table-column>
+              <el-table-column v-if="form.spec_type === 1" label="库存" min-width="110">
+                <template #default="{ row }"><el-input-number v-model="row.stock" :min="0" controls-position="right" /></template>
+              </el-table-column>
+              <el-table-column label="条码" min-width="130">
+                <template #default="{ row }"><el-input v-model="row.bar_code" maxlength="50" /></template>
+              </el-table-column>
+              <el-table-column label="编码" min-width="130">
+                <template #default="{ row }"><el-input v-model="row.code" maxlength="50" /></template>
+              </el-table-column>
+              <el-table-column v-if="isEdit" prop="unique" label="唯一标识" min-width="100" />
+            </el-table>
+            <el-text type="info">
+              单规格的售价、原价、库存和会员价使用上方主字段；多规格的商品汇总值由SKU自动计算。
+            </el-text>
+          </div>
+        </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort" :min="0" :max="999" />
         </el-form-item>
@@ -177,6 +248,8 @@ import {
   apiAdminProductDraftSave,
   type ProductEditorOptions,
   type ProductEditorParameter,
+  type ProductSkuDimension,
+  type ProductSkuRow,
 } from "@/api/product";
 import { apiProductUnitList, type ProductUnit } from "@/api/productMetadata";
 
@@ -193,6 +266,7 @@ const editorOptions = reactive<ProductEditorOptions>({
   product_labels: [],
   ensures: [],
   parameter_templates: [],
+  sku_rule_templates: [],
 });
 const categories = computed(() => editorOptions.categories);
 const units = ref<ProductUnit[]>([]);
@@ -213,6 +287,10 @@ const form = reactive({
   ensure_id: [] as number[],
   specs_id: undefined as number | undefined,
   specs: [] as ProductEditorParameter[],
+  spec_type: 0 as 0 | 1,
+  sku_rule_id: undefined as number | undefined,
+  items: [{ value: "规格", detail: ["默认"] }] as ProductSkuDimension[],
+  attrs: [] as ProductSkuRow[],
   sort: 0,
   is_vip: 0,
   vip_price: 0,
@@ -221,7 +299,11 @@ const form = reactive({
 
 async function submit() {
   if (!form.store_name) return ElMessage.error("请输入商品名称");
-  if (form.price <= 0) return ElMessage.error("请输入价格");
+  if (!form.items.length || !form.attrs.length) return ElMessage.error("请先生成商品SKU");
+  prepareSkuPayload();
+  if (form.price <= 0 || form.attrs.some((row) => Number(row.price) <= 0)) {
+    return ElMessage.error("请填写每个SKU的有效售价");
+  }
 
   submitting.value = true;
   try {
@@ -240,6 +322,89 @@ async function submit() {
   } finally {
     submitting.value = false;
   }
+}
+
+function newSkuRow(detail: Record<string, string>): ProductSkuRow {
+  return {
+    suk: Object.values(detail).join(","),
+    detail,
+    image: "",
+    price: form.price,
+    settle_price: 0,
+    cost: 0,
+    ot_price: form.ot_price,
+    vip_price: form.vip_price,
+    stock: form.stock,
+    bar_code: "",
+    weight: 0,
+    volume: 0,
+    brokerage: 0,
+    brokerage_two: 0,
+    code: "",
+  };
+}
+
+function skuCombinations(dimensions: ProductSkuDimension[]): Array<Record<string, string>> {
+  let rows: Array<Record<string, string>> = [{}];
+  for (const dimension of dimensions) {
+    rows = rows.flatMap((row) => dimension.detail.map((value) => ({ ...row, [dimension.value]: value })));
+    if (rows.length > 200) return [];
+  }
+  return rows;
+}
+
+function regenerateSkuRows(dimensions: ProductSkuDimension[]) {
+  const current = new Map(form.attrs.map((row) => [row.suk, row]));
+  const combinations = skuCombinations(dimensions);
+  if (!combinations.length) {
+    ElMessage.error("SKU组合不能为空且不能超过200项");
+    return;
+  }
+  form.items = dimensions.map((dimension) => ({ ...dimension, detail: [...dimension.detail] }));
+  form.attrs = combinations.map((detail) => {
+    const suk = form.items.map((dimension) => detail[dimension.value]).join(",");
+    const existing = current.get(suk);
+    return existing ? { ...existing, detail: { ...detail }, suk } : newSkuRow(detail);
+  });
+}
+
+function changeSpecType(value: unknown) {
+  form.spec_type = Number(value) === 1 ? 1 : 0;
+  form.sku_rule_id = undefined;
+  if (form.spec_type === 0) {
+    regenerateSkuRows([{ value: "规格", detail: ["默认"] }]);
+  } else {
+    form.items = [];
+    form.attrs = [];
+  }
+}
+
+function applySkuRuleTemplate() {
+  const template = editorOptions.sku_rule_templates.find((item) => item.id === form.sku_rule_id);
+  if (!template) return ElMessage.error("请选择SKU规格模板");
+  form.spec_type = 1;
+  regenerateSkuRows(template.dimensions);
+}
+
+function prepareSkuPayload() {
+  if (form.spec_type === 0) {
+    const row = form.attrs[0] ?? newSkuRow({ 规格: "默认" });
+    form.items = [{ value: "规格", detail: ["默认"] }];
+    form.attrs = [{
+      ...row,
+      suk: "默认",
+      detail: { 规格: "默认" },
+      price: form.price,
+      ot_price: form.ot_price,
+      vip_price: form.vip_price,
+      stock: form.stock,
+    }];
+    return;
+  }
+  form.stock = form.attrs.reduce((sum, row) => sum + Number(row.stock || 0), 0);
+  form.price = Math.min(...form.attrs.map((row) => Number(row.price || 0)));
+  form.ot_price = Math.min(...form.attrs.map((row) => Number(row.ot_price || 0)));
+  form.vip_price = Math.min(...form.attrs.map((row) => Number(row.vip_price || 0)));
 }
 
 function applyParameterTemplate(value: unknown) {
@@ -261,6 +426,8 @@ function restoreDraft(value: Record<string, unknown>) {
     const parsed = Number(value[key]);
     if (Number.isFinite(parsed)) form[key] = parsed;
   }
+  const specType = Number(value.spec_type);
+  if (specType === 0 || specType === 1) form.spec_type = specType;
   for (const key of ["store_label_id", "ensure_id"] as const) {
     if (Array.isArray(value[key])) {
       form[key] = value[key]
@@ -286,6 +453,49 @@ function restoreDraft(value: Record<string, unknown>) {
       }];
     });
   }
+  const skuRuleId = Number(value.sku_rule_id);
+  if (Number.isSafeInteger(skuRuleId) && skuRuleId > 0) form.sku_rule_id = skuRuleId;
+  if (Array.isArray(value.items)) {
+    form.items = value.items.flatMap((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+      const row = item as Record<string, unknown>;
+      if (typeof row.value !== "string" || !Array.isArray(row.detail)) return [];
+      const detail = row.detail.filter((entry): entry is string => typeof entry === "string");
+      return detail.length ? [{ value: row.value, detail }] : [];
+    });
+  }
+  if (Array.isArray(value.attrs)) form.attrs = restoreSkuRows(value.attrs);
+}
+
+function restoreSkuRows(value: unknown[]): ProductSkuRow[] {
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const row = item as Record<string, unknown>;
+    if (typeof row.suk !== "string") return [];
+    const detail = row.detail && typeof row.detail === "object" && !Array.isArray(row.detail)
+      ? Object.fromEntries(Object.entries(row.detail).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
+      : {};
+    return [{
+      unique: typeof row.unique === "string" ? row.unique : undefined,
+      suk: row.suk,
+      detail,
+      image: typeof row.image === "string" ? row.image : "",
+      price: Number(row.price ?? 0),
+      settle_price: Number(row.settle_price ?? 0),
+      cost: Number(row.cost ?? 0),
+      ot_price: Number(row.ot_price ?? 0),
+      vip_price: Number(row.vip_price ?? 0),
+      stock: Number(row.stock ?? 0),
+      sales: Number(row.sales ?? 0),
+      sumStock: Number(row.sumStock ?? row.sum_stock ?? 0),
+      bar_code: typeof row.bar_code === "string" ? row.bar_code : "",
+      weight: Number(row.weight ?? 0),
+      volume: Number(row.volume ?? 0),
+      brokerage: Number(row.brokerage ?? 0),
+      brokerage_two: Number(row.brokerage_two ?? 0),
+      code: typeof row.code === "string" ? row.code : "",
+    }];
+  });
 }
 
 async function saveDraft() {
@@ -344,6 +554,12 @@ onMounted(async () => {
       form.ensure_id = [...detail.ensure_id];
       form.specs_id = detail.specs_id || undefined;
       form.specs = detail.specs.map((item) => ({ ...item }));
+      form.spec_type = detail.spec_type;
+      form.items = detail.items.map((item) => ({ ...item, detail: [...item.detail] }));
+      form.attrs = restoreSkuRows(detail.attrs);
+      if (!form.attrs.length && form.spec_type === 0) {
+        form.attrs = [newSkuRow({ 规格: "默认" })];
+      }
       form.sort = detail.sort ?? 0;
       form.is_vip = detail.is_vip ?? 0;
       form.vip_price = Number(detail.vip_price ?? 0);
@@ -352,6 +568,7 @@ onMounted(async () => {
       ElMessage.error(e instanceof Error ? e.message : "加载失败");
     }
   } else {
+    form.attrs = [newSkuRow({ 规格: "默认" })];
     try {
       const cached = await apiAdminProductDraft();
       if (!Array.isArray(cached.info) && Object.keys(cached.info).length) {
@@ -405,6 +622,32 @@ onBeforeUnmount(() => {
   color: var(--el-text-color-regular);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.sku-dimensions {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+}
+.sku-dimension {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.sku-dimension strong {
+  min-width: 72px;
+}
+.sku-table-shell {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.sku-table {
+  width: 100%;
+  margin-bottom: 8px;
+}
+.sku-table :deep(.el-input-number) {
+  width: 100%;
 }
 @media (max-width: 640px) {
   .product-form {

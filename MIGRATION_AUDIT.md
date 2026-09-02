@@ -3821,11 +3821,11 @@ Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项
 
 | 旧路由/屏幕 | 当前状态 | 新端替代 | 仍缺的决定性能力 |
 | --- | --- | --- | --- |
-| `product_list` 商品管理 | partial | `/product`、卡密库存/预警 | 批量运营、完整筛选/审核/导出、关系和 SKU 操作 |
+| `product_list` 商品管理 | partial | `/product`、卡密库存/预警 | 批量运营、完整筛选/审核/导出及受控 SKU 退役 |
 | `product_classify` 商品分类 | partial | `/category` | 完整层级、父级移动、图标、显隐专用流和关系编辑 |
-| `add_product/:id?` 添加/编辑 | partial | `/product/create|edit/:id` | SKU规格模板套用、SKU组合、图库/富媒体与多类商品 |
+| `add_product/:id?` 添加/编辑 | partial | `/product/create|edit/:id` | 受控 SKU 退役、图库/富媒体与多类商品；模板套用与安全组合编辑已补齐 |
 | `product_reply/:id?` 商品评论 | partial | `/reply` | 商品定向、管理员回复、虚拟评论、分页筛选和回复历史 |
-| `product_attr` 商品规格 | candidate | `/product/metadata` 的 SKU规格页签 | 商品表单套用、SKU生成与保存回读 |
+| `product_attr` 商品规格 | candidate | `/product/metadata` 的 SKU规格页签及商品表单 | 生产历史数据与受控 SKU 退役；套用、生成和事务回读已补齐 |
 | `product_brand` 品牌 | partial | `/brand` | 分类关系、专用状态和素材选择；商品表单关联及引用删除保护已补齐 |
 | `unitList` 商品单位 | candidate | `/product/metadata` 的单位页签 | 生产真实数据与受限角色 E2E |
 | `label` 商品标签 | partial | `/label` | 标签组、显隐/启停区分、图标和批量流；商品表单关联及引用删除保护已补齐 |
@@ -3891,6 +3891,34 @@ Admin `productMetadata.ts` 新接八个现有合同：规格模板的列表、�
 定向商品关联/元数据/体验/前端语义4文件21项通过；完整 Worker 单元199文件1,265项通过，单元与运行时 TypeScript通过，Admin生产构建通过2,427个模块。Admin静态请求报告推进为310个调用点、330个路径变体，330条全部已注册且可执行，未注册、未解析、受控不可用命中均为0；全局路由为 PHP 1,904 / TS 1,567 / 精确匹配848 / 可执行830 / 受控不可用18 / 缺失1,056 / 退役16 / 可执行缺口1,040。schema仍为源201、目标262、共享201、源字段缺口0、定义漂移0；observability为17类信号、10个组件、53个必需事件、420个生产源码文件。Windows本地 `workerd` 在项目测试加载前发生宿主访问冲突，运行时0项执行，不能计作通过；实现与审计提交 `0e0fe3967623ae491323effa102e481930c3e147` 推送后，[Actions `33609577709`](https://github.com/cinagroup/cinashop/actions/runs/33609577709) 对该精确 head 的 Linux workerd、Worker类型/1,265项单元/schema/route/observability、Admin/PC/Supplier/Kefu/UniApp五端、生产依赖与全历史Gitleaks共8/8成功，因而本机失败归类为Windows宿主环境限制。
 
 此次没有连接 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或写入生产 PostgreSQL，没有执行 DDL/DML、Queue、R2或第三方调用，也没有部署 Worker/Admin Pages。FE-001E3只标记“候选完成，未发布”；历史单规格、多规格、虚拟商品，主管理员与受限角色，失败重试、取消与移动端真实流程仍归 FE-001E6。FE-001E父项继续被SKU规格套用/组合保存、批量运营和生产E2E阻塞。
+
+## FE-001-E5A SKU模板套用与安全编辑（2026-09-02）
+
+### 旧端保存语义与实际风险
+
+旧 Admin 通过 `POST product/generate_attr/:id/:type` 取得规格模板，`StoreProduct::is_format_attr`/`getAttr` 生成规格值的笛卡尔组合；保存请求同时提交 `items` 维度和 `attrs` SKU 行。`StoreProductServices::saveData` 会校验完整组合，并把商品主表、描述与属性放入事务，但商品关系事件在事务完成后触发。更关键的是，旧 `saveProductAttr` 虽然试图按 `suk` 复用 `unique`，实际更新/删除却按数据库行位置处理，并在更新载荷中移除 `unique`：管理员重排、改名或缩减组合时，既可能把旧唯一标识绑定到错误组合，也可能删除仍被购物车、订单、退款或活动引用的 SKU。
+
+旧批处理另有分类、商品标签、配送、赠品/优惠券、用户标签、推荐、表单、运费和品牌等类型，控制器主要把任务投递到 `ProductBatchJob`。主商品更新与关系行异步执行，不具备统一的失败回滚语义。当前 Worker 已有分类、商品标签和显隐的部分内部批处理能力，但新主管理端没有完整入口，其他类型也未统一权限、数量上限、逐项结果和重试合同；因此本批只关闭可安全证明的 SKU 编辑子项，批量运营保留为 E5B。
+
+### 失败关闭的迁移边界
+
+新 `ProductSkuEditorService` 复用 Supplier 侧已验证的规格/SKU标准化：单规格归一为“规格=默认”，多规格限制1～3维、最多200行，服务端重新计算并要求完整笛卡尔覆盖；规格名称和值禁止英文逗号及控制字符，避免旧表用逗号序列化时产生歧义。商品汇总库存取所有 SKU 之和，售价、结算价、成本、原价和会员价取对应最小值，缺货状态由总库存派生，不能由前端提交互相矛盾的主表值。
+
+历史 SKU 以 `suk` 作为本批稳定映射键，保留原 `unique`、销量和累计入库量；允许改价格、库存、图片、成本、会员价、条码、编码等字段，也允许新增完整组合。任何现有 `suk` 从请求中消失、被重命名或尝试修改 `unique` 都明确拒绝，历史畸形数据中重复 `suk/unique` 也失败关闭，不能用“保存成功”掩盖引用破坏。真正的删除/重命名必须在 E5B 先审计购物车、订单、退款及活动引用并设计可恢复退役状态。
+
+保存与商品主表、规格维度、SKU行、属性快照和库存流水处于 `ProductAssociationService` 已有短事务中。写入前锁定商品和现有 SKU 行；写入后在同一事务重新读取主表汇总、维度顺序、每条 `suk/unique` 及金额库存、JSON快照，任一不一致抛错使整笔回滚。库存变化写 `store_product_stock_record`；累计入库量只随正向增量增加，减库存不会倒减历史累计值。
+
+复核还发现五条会分配 `store_product_attr_value.unique` 的路径原先使用不同 advisory lock 域，虽然每条都会全表查碰撞，极端并发仍存在“同时查无、随后同值插入”的窗口。新增共享 `ProductSkuIdentity` 锁域，并让 Admin 商品、Supplier 商品、Out 商品、新人专享和优惠套餐五条分配路径统一使用；活动自身的配置锁继续保留。当前旧 schema 对 `unique` 只有索引而非唯一约束，生产增加唯一约束仍必须先做重复值只读审计，本批没有冒险执行 DDL。
+
+### Admin 操作面与本地证据
+
+商品表单新增单/多规格选择、规格模板套用、维度摘要和 SKU 明细表，可编辑图片、售价、原价、成本、会员价、库存、条码和编码；历史唯一标识只读展示。模板重新生成时按精确 `suk` 保留已有行数据，新增组合才创建新行。页面明确提示历史 SKU 不能删除、重命名或改标识；单规格继续使用主表售价/原价/库存/会员价，多规格在提交前从 SKU 行派生汇总。
+
+应用内浏览器在本地 `preview=1` 编辑历史多规格商品：选择“服装颜色尺码”并重新生成后，米白/藏青 × S/M 四行仍分别保留 `pvsku001..004`；使用真实控件把首行售价改为209、库存改为35，失焦和后续输入后值仍保持。390×844下文档与正文 `scrollWidth=390`，SKU表格内容宽1230px但由249px的内部 `overflow-x:auto` 容器承载，没有页面级横向溢出；实际截图确认固定组合列与可滚动价格列可见，浏览器 warning/error 为0。临时视口、标签页和本地服务均已恢复/关闭。
+
+本地定向4文件/22项通过；完整 Worker 单元200文件/1,272项、单元与运行时 TypeScript、Admin 2,427模块生产构建全部通过。Admin静态请求仍为310个调用点、330个路径变体，330条全部注册且可执行；schema为源201、目标262、共享201、源字段缺口0、定义漂移0；全局路由保持 PHP 1,904 / TS 1,567 / 精确匹配848 / 可执行830；observability为17类信号、10个组件、53个必需事件、422个生产源码文件。Windows本地真实 Worker运行时沿用已记录的宿主访问冲突限制，Linux workerd以本批精确提交的 CI 为发布候选门禁。
+
+本批没有连接 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或写入生产 PostgreSQL，没有执行 DDL/DML、Queue、R2、第三方调用，也没有部署 Worker/Admin Pages。FE-001E5A仅标记“候选完成，未发布”；E5父项仍被受控 SKU 退役、批量运营和 E6真实角色/历史数据 E2E 阻塞。
 
 ## 完成定义
 
