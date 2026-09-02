@@ -3842,6 +3842,8 @@ Admin `productMetadata.ts` 新接八个现有合同：规格模板的列表、�
 
 `/product/metadata` 现在有单位、保障、SKU规格模板、商品参数模板四个页签。SKU页支持搜索、分页、维度/规格值预览、新增、编辑、删除以及前后端一致的重复/数量校验；参数页支持搜索、分页、参数摘要、名称/值/排序/逐项启停编辑和删除确认。预览层只在 Vite开发且显式 `preview=1` 时使用内存数据，生产构建始终走 `/adminapi`。Admin生产构建通过2,427个模块；完整 Worker单元为197文件/1,253项全部通过，双 TypeScript通过，定向4文件/15项通过。API静态合同随新增8个调用点更新为305个调用点、325个路径变体，325条全部已注册且可执行，未注册/未解析/受控不可用命中均为0。
 
+实现与审计提交 `ab24479642bb361dfe14855c49eabd1d5313252a` 已推送；[GitHub Actions `33601245292`](https://github.com/cinagroup/cinashop/actions/runs/33601245292) 对该精确 head 的 Worker、Admin、PC、Supplier、Kefu、UniApp、真实 workerd 和全历史 Gitleaks 8/8成功。Ubuntu Worker job 精确通过生产依赖审计、双 TypeScript、197文件/1,253项单元、observability、schema `201→262/shared 201/source gap 0/definition drift 0` 和全局路由 `1,904→1,553/matched 842/executable 824` 门禁。CI 不持有生产数据库授权，不连接 Hyperdrive，也不部署 Worker或 Pages。
+
 应用内浏览器在本地 `preview=1` 下验证四页签可达。桌面端 SKU模板正确展示“服装颜色尺码”的颜色/尺码和值，编辑弹窗回填两个维度；参数模板正确展示材质/季节摘要，编辑弹窗从2项动态增加到3项。390×844下 `innerWidth/document/body scrollWidth` 都是390，内容卡片306px，表格只在卡片内滚动，没有页面级横向溢出或 Vite错误遮罩；完成后视口、标签页和本地服务均已恢复/关闭。
 
 本批没有连接 Hyperdrive、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、Worker或 Pages部署。FE-001E只关闭12屏审计和两类模板目录两个子项；保障/品牌/标签/参数的商品保存关系、搜索热词、规格套用和SKU全流程、批量运营、真实角色/数据 E2E 继续保留在 checklist，父项不标完成。
