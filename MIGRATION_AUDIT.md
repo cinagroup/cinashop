@@ -3540,6 +3540,32 @@ Supplier TS 新增“子账号管理”页面，覆盖分页、添加、编辑�
 
 提交 `065c522ee0ed6bc3de2471ed744f9edf3efb48b4` 推送后，[Actions `33582012080`](https://github.com/cinagroup/cinashop/actions/runs/33582012080) 对精确 head 的 Worker、Admin/PC/Supplier/Kefu/UniApp、Linux workerd 和全历史 Gitleaks 8/8 成功；Linux workerd 1 文件/15 项。该批没有生产 PostgreSQL DML/DDL、没有读取管理员/角色业务行、没有临时探针，也没有发布主 Worker或 Supplier Pages。SUP-004 只能标为 25/25 条“代码候选完成”；父项仍需生产只读核验角色/子账号现实分布、用真实主管理员和受限子账号做旧端/TS 端正反 E2E，并另行批准发布与观察。SUP-003 附件生产审计仍需对临时随机名称 `workers.dev` Worker、仅 token 保护的 `GET /supplier-attachments` 及其精确脱敏聚合载荷作专项授权。
 
+## SUP-005-A Supplier 售后退款详细审计与候选实现（2026-09-02）
+
+### 三条旧合同与两类确定风险
+
+本批逐行对照 `cinashop-php/route/supplier.php`、Supplier `Refund` controller、`StoreOrderRefundServices`、旧 Vue `pages/order/refund/index.vue` 与当前 Worker/新 Supplier TS。初始退款缺口精确为三条：`GET /supplierapi/refund/refund/:id` 表单、`GET /supplierapi/refund/reason` 原因目录和 `GET /supplierapi/refund/agree/:order_id` 退款同意。现有 Worker 已有列表、详情、备注及安全扩展 `PUT agree/refuse/refund`，但原 `PUT refund` 不读取 body；旧表单可以让操作者输入任意金额，因此如果只补 GET 表单，客户端显示的部分金额会被 Worker 静默当成整张售后单金额执行，属于高风险语义错配。
+
+PHP 的“部分退款”本身也不能直接视为正确权威：controller 允许把本次金额累加到 `refunded_price`，随后却立即把同一售后行设成 `refund_type=6`，并执行库存、订单、积分等完成副作用；下一笔部分退款在正常状态机中已不可达。迁移后明确采用与现有 Out API、客服退款相同的安全收敛：一张售后单只执行其权威 `refund_price`，请求金额必须精确相等；真正的部分退款应拆成独立售后单和独立退款身份，不能在一个已完成身份上累计。
+
+旧 `GET refund/agree/:order_id` 更不能恢复。controller 无视 path 参数，改从 query 读取同名 `order_id`，service 又按裸退款 ID 更新，不验证当前 Supplier；写状态日志时还把退款 ID 当成订单 `oid`。旧 Supplier 退款页和订单页都曾调用这一 GET 写接口，所以它不是“无人使用”路由，而是必须主动迁移客户端的危险合同。本批把原因、源码行与安全替代写入 `legacy-route-decisions.json`，并将新增的 Supplier Refund controller 加入带 SHA-256 的版本化 PHP authority；退役项仍留在 PHP 原始分母和缺失数中。
+
+### 精确金额、租户与并发边界
+
+新增表单 GET 同时限定 `store_order_refund.id/supplier_id/is_cancel/is_del` 和关联 `store_order.supplier_id/is_system_del/is_del`，未支付、已完成、拒绝态及不适用的退货态失败关闭。表单保持旧 `title/action/method/fields` 外形，退款金额取服务端权威值并标记 `full_refund_only`；历史 `refunded_price` 非零的进行中旧行不再猜测补退，而是要求人工核对。新增原因 GET 读取旧 `stor_reason`，统一 CRLF/CR、去空白，并限制最多 100 项、每项 255 字；列表的 `refund_reason` 采用参数化精确匹配且继续叠加 Supplier/软删除范围，避免原因筛选绕过租户条件。
+
+资金 PUT 现在必须提交 `type=1 + refund_price`，金额只接受非负两位小数并设安全上限；旧混合接口的 `type=2` 明确拒绝，拒绝退款继续走独立 `PUT /refund/refuse/:id` 和必填原因。执行前先在 Hyperdrive 事务中设置 2 秒 lock timeout、5 秒 statement timeout，对当前 Supplier 的售后和订单联表 `FOR UPDATE` 取得新鲜快照；不在事务内调用第三方支付。随后把 `store/supplier/uid/refund order/store order/refund amount/refunded amount/system visibility/paid` 全部作为 `RefundExecutionScope` 传入共享 `StoreOrderRefundService`，核心在自己的短事务和支付请求构造/提交边界再次验证。这样客户端金额、租户和支付时刻的权威状态任一变化都会失败关闭，已完成且金额一致的重放幂等返回，异常历史部分退款或完成金额不一致则阻断人工核对。执行审计只记录 Supplier ID和动作，状态日志仍由共享核心以真实原订单 ID写入。
+
+Supplier TS 售后页新增原因目录与精确筛选；确认弹窗显示的 `refund_price` 现在也原样随 PUT 发送，服务端不再默默忽略。按钮状态与服务端对齐为退款态 `0/1/2/5`，或仅 `apply_type=3` 的退货态 4；旧 GET 写入口没有在新端注册。新测试覆盖原因规范化和上限、金额精度/拒绝类型、两条 GET 的权限、GET 写入口不存在、事务锁/精确 scope、前端金额提交及证据退役。
+
+### 工程证据、生产边界与剩余顺序
+
+提交 `edef647d27c5f7d90586bf329a75513ab3baa26d` 已推送；[Actions `33583699196`](https://github.com/cinagroup/cinashop/actions/runs/33583699196) 对精确 head 的 Worker、Admin/PC/Supplier/Kefu/UniApp、Linux workerd 和全历史 Gitleaks 8/8 成功。完整单元为 187 文件/1,207 项，退款定向 1 文件/5 项，Linux workerd 1 文件/15 项；双 TypeScript、Supplier 生产 build、生产依赖 0 漏洞、schema source201/target262/shared201/sourceGaps0/外部与内嵌 262/零漂移、observability 17 信号/10 组件/53 必需事件均通过。主 Worker minify dry-run 为 3,679.40 KiB/gzip 865.48 KiB，精确识别 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images 和四个 Durable Object 后退出。Windows 本机 workerd 仍在任何断言前以环境级 `0xc0000005` 崩溃，未冒充本地 runtime 通过；同一代码已由 Linux runtime 门禁补证。
+
+路由审计由全局 TS1,540/精确831/可执行813/缺失1,073/退役11/可执行缺口1,062 提升为 TS1,542/精确833/可执行815/缺失1,071/退役12/可执行缺口1,059，覆盖 `43.8%/42.8%/43.1%`；Supplier 面由 TS146/精确108/缺失74/退役7/可执行缺口67 提升为 TS148/精确110/缺失72/退役8/可执行缺口64，覆盖 `60.4%/60.4%/63.2%`。两条新增 TS 路由都是真实 PHP 精确合同，退役 GET 不进入匹配分子。
+
+本批没有读取或写入生产业务数据，没有生产 PostgreSQL/R2 DML/DDL，没有创建临时 Worker，也没有发布主 Worker或 Supplier Pages。SUP-005 父项仍不完成：export 4 条要先设计一次性票据、对象权限和过期清理；queue 5 条需要把旧 ThinkPHP 队列管理语义映射为只传引用的 Cloudflare Queue/账本/重试/死信合同。退款还需生产只读核验售后状态、金额、Supplier/订单归属和历史部分退款分布，并以真实 Supplier 账号做表单、原因筛选、余额/微信/支付宝、拒绝、重放和跨租户负例 E2E。生产只读探针若通过临时 `workers.dev` 承载聚合，仍须对端点和精确脱敏载荷取得专项授权；通用生产数据库授权不自动包含这一外部端点。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
