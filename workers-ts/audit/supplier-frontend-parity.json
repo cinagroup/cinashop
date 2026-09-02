@@ -15,9 +15,9 @@
       ]
     },
     "target": {
-      "pageVueFiles": 15,
-      "screenRouteRecords": 16,
-      "distinctPageComponents": 15,
+      "pageVueFiles": 16,
+      "screenRouteRecords": 17,
+      "distinctPageComponents": 16,
       "note": "ProductForm.vue serves both create and edit routes"
     },
     "method": "Compare navigable business screens and embedded capabilities; never treat raw Vue file count as coverage."
@@ -103,9 +103,9 @@
     {
       "legacyPath": "/supplier/product/product_reply",
       "legacyPage": "pages/product/productReply/index.vue",
-      "target": [],
-      "status": "missing_actionable",
-      "remaining": ["supplier-scoped reply list contract", "reply write contract", "ProductReviews page and navigation"]
+      "target": ["/product-reviews", "ProductReviews.vue"],
+      "status": "candidate_covered",
+      "remaining": ["production primary and restricted account E2E"]
     },
     {
       "legacyPath": "/supplier/product/shipping_template",
@@ -182,7 +182,7 @@
     { "id": "FE-004B", "done": true, "item": "Connect order, shipping, queue-history and finance export manifests with selected-row downloads" },
     { "id": "FE-004C", "done": true, "item": "Hide order, print, waybill and finance mutations/downloads from accounts lacking manage permissions" },
     { "id": "FE-004D", "done": true, "item": "Desktop and 390x844 preview QA for orders, queue history/detail, finance export and mobile navigation" },
-    { "id": "FE-004E", "done": false, "item": "Implement supplier-scoped product review list/reply backend and frontend" },
+    { "id": "FE-004E", "done": true, "item": "Implement supplier-scoped product review list/reply backend and frontend; retire the unscoped legacy delete" },
     { "id": "FE-004F", "done": false, "item": "Implement or formally retire the reusable product specification-template library" },
     { "id": "FE-004G", "done": false, "item": "Decide and implement or retire the browser-printable distribution/picking-sheet preview" },
     { "id": "FE-004H", "done": false, "item": "Close product attachment/media picker after SUP-003 production evidence" },

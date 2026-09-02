@@ -5,6 +5,7 @@ import { supplierPermissionMiddleware } from "@/middleware/supplier-permission";
 import * as SupplierController from "@/controllers/supplier/SupplierController";
 import * as SupplierQueueController from "@/controllers/supplier/SupplierQueueController";
 import * as SupplierExportController from "@/controllers/supplier/SupplierExportController";
+import * as SupplierProductReplyController from "@/controllers/supplier/SupplierProductReplyController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
@@ -77,6 +78,11 @@ supplierapiRoutes.get("/home/header", SupplierController.homeSummary);
 supplierapiRoutes.get("/home/order", SupplierController.homeOrderChart);
 supplierapiRoutes.get("/home/order_channel", SupplierController.homeOrderChannel);
 supplierapiRoutes.get("/home/order_type", SupplierController.homeOrderType);
+
+// Supplier review authority is established by both the reply owner tuple and
+// the joined Supplier-owned product. The legacy unscoped DELETE is retired.
+supplierapiRoutes.get("/product/reply", SupplierProductReplyController.list);
+supplierapiRoutes.put("/product/reply/set_reply/:id", SupplierProductReplyController.setReply);
 
 supplierapiRoutes.get("/system/form/info/:id", SupplierController.systemFormInfo);
 supplierapiRoutes.get("/system/form/all_system_form", SupplierController.systemFormAll);

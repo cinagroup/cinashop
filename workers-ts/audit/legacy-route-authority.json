@@ -29,6 +29,10 @@
       "lineCount": 136,
       "sha256": "519a78e7949448efb926ff60e4a257ccc6b9ab248c9f23eaa9213db84fedb77c"
     },
+    "cinashop-php/app/controller/supplier/product/StoreProductReply.php": {
+      "lineCount": 79,
+      "sha256": "0828586f6caca4e5509e38da379fc33686e29a962f8c5d7902de1e03361f13bb"
+    },
     "cinashop-php/app/controller/supplier/queue/Queue.php": {
       "lineCount": 115,
       "sha256": "fd0b8f60be57118be1b6d3f068b3180f89b57001b0e63cdcdc05d2387b3dcdcb"
@@ -44,6 +48,10 @@
     "cinashop-php/app/services/other/queue/QueueServices.php": {
       "lineCount": 891,
       "sha256": "c86318ecfc2a5f6dad2dc13979428d233769b57c8ad204ad1b14e3cb42464b36"
+    },
+    "cinashop-php/app/services/product/product/StoreProductReplyServices.php": {
+      "lineCount": 597,
+      "sha256": "d30fdb90467940e5127188cce957a97792fcc7f0b33eb57f840172ce6e455aa5"
     },
     "cinashop-php/app/services/system/attachment/SystemAttachmentServices.php": {
       "lineCount": 465,
@@ -80,6 +88,10 @@
     "cinashop-php/view/supplier/src/api/uploadPictures.js": {
       "lineCount": 104,
       "sha256": "339b4f765a3b52e21d428cf20a2c3ffbd656615743c1465257569edd7b6ff6ad"
+    },
+    "cinashop-php/view/supplier/src/pages/product/productReply/index.vue": {
+      "lineCount": 324,
+      "sha256": "1b0c53630a8fac625caa8cdfed803e918a440a5190e19171493ca973b9b8417b"
     }
   },
   "surfaces": {

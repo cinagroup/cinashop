@@ -122,6 +122,20 @@
     },
     {
       "surface": "supplier",
+      "method": "DELETE",
+      "path": "/supplierapi/product/reply/:id",
+      "status": "retired",
+      "reason": "The PHP Supplier controller soft-deletes a review by raw id through StoreProductReplyServices.del without checking type=2 or relation_id=current Supplier. The shipped Supplier page defines a dead del method but exposes no delete action, so restoring the route would add a cross-tenant review-deletion capability with no first-party workflow.",
+      "evidence": [
+        "cinashop-php/route/supplier.php:244",
+        "cinashop-php/app/controller/supplier/product/StoreProductReply.php:58",
+        "cinashop-php/app/services/product/product/StoreProductReplyServices.php:176",
+        "cinashop-php/view/supplier/src/pages/product/productReply/index.vue:221"
+      ],
+      "replacement": "Supplier reviews remain immutable customer evidence; GET /supplierapi/product/reply lists only reviews bound to the authenticated Supplier and PUT /supplierapi/product/reply/set_reply/:id writes only that Supplier's scoped merchant response. Platform moderation remains an Admin responsibility."
+    },
+    {
+      "surface": "supplier",
       "method": "GET",
       "path": "/supplierapi/queue/del/wrong_queue/:id/:type",
       "status": "retired",

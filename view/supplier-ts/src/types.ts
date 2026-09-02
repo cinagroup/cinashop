@@ -357,6 +357,32 @@ export interface ProductBatchResult {
   skipped_count: number;
 }
 
+export interface SupplierProductReviewReply {
+  id: number;
+  content: string;
+  add_time: string;
+  update_time: string;
+}
+
+export interface SupplierProductReview {
+  id: number;
+  product_id: number;
+  store_name: string;
+  image: string;
+  nickname: string;
+  account: string;
+  comment: string;
+  sku: string;
+  product_score: number;
+  service_score: number;
+  delivery_score: number;
+  score: number;
+  pics: string[];
+  is_reply: 0 | 1;
+  add_time: string;
+  replyComment: SupplierProductReviewReply | null;
+}
+
 export interface OrderRow {
   id: number;
   pid?: number;

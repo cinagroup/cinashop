@@ -42,6 +42,7 @@ import type {
   SupplierRole,
   SupplierRoleListResult,
   SupplierRolePayload,
+  SupplierProductReview,
   LegacyExportManifest,
   SupplierQueueDeliveryLogRow,
   SupplierQueueHistoryResult,
@@ -642,6 +643,83 @@ export async function consumeVirtualInventoryExportTicket(
 export async function getOrders(params: Record<string, string | number>): Promise<PageResult<OrderRow>> {
   if (previewMode) return { list: previewOrders.map((item) => ({ ...item })), count: previewOrders.length, page: 1, limit: 20 };
   return apiRequest<PageResult<OrderRow>>({ method: "GET", url: "/order/list", params });
+}
+
+const previewProductReviews: SupplierProductReview[] = [
+  {
+    id: 601,
+    product_id: 71,
+    store_name: "简约便携保温杯 500ml",
+    image: "",
+    nickname: "企业采购用户",
+    account: "企业采购用户",
+    comment: "保温效果不错，批量包装也很整齐。",
+    sku: "曜石黑 / 500ml",
+    product_score: 5,
+    service_score: 5,
+    delivery_score: 4,
+    score: 4,
+    pics: [],
+    is_reply: 0,
+    add_time: "2026-08-09 13:18:00",
+    replyComment: null,
+  },
+  {
+    id: 602,
+    product_id: 72,
+    store_name: "无线蓝牙耳机 Pro",
+    image: "",
+    nickname: "华东渠道客户",
+    account: "华东渠道客户",
+    comment: "到货及时，连接稳定。",
+    sku: "银色",
+    product_score: 5,
+    service_score: 5,
+    delivery_score: 5,
+    score: 5,
+    pics: [],
+    is_reply: 1,
+    add_time: "2026-08-08 16:20:00",
+    replyComment: { id: 701, content: "感谢认可，我们会继续做好履约。", add_time: "2026-08-08 17:00:00", update_time: "2026-08-08 17:00:00" },
+  },
+];
+
+export async function getProductReviews(
+  params: Record<string, string | number>,
+): Promise<PageResult<SupplierProductReview>> {
+  if (previewMode) {
+    const isReply = String(params.is_reply ?? "");
+    const productKeyword = String(params.store_name ?? "").trim().toLowerCase();
+    const account = String(params.account ?? "").trim().toLowerCase();
+    const list = previewProductReviews
+      .filter((row) => !isReply || row.is_reply === Number(isReply))
+      .filter((row) => !productKeyword || row.store_name.toLowerCase().includes(productKeyword) || String(row.product_id).includes(productKeyword))
+      .filter((row) => !account || row.nickname.toLowerCase().includes(account))
+      .map((row) => ({ ...row, pics: [...row.pics], replyComment: row.replyComment ? { ...row.replyComment } : null }));
+    return { list, count: list.length, page: 1, limit: 15 };
+  }
+  return apiRequest<PageResult<SupplierProductReview>>({ method: "GET", url: "/product/reply", params });
+}
+
+export async function replyProductReview(id: number, content: string) {
+  if (previewMode) {
+    const row = previewProductReviews.find((item) => item.id === id);
+    if (row) {
+      row.is_reply = 1;
+      row.replyComment = {
+        id: row.replyComment?.id ?? 700 + id,
+        content,
+        add_time: row.replyComment?.add_time ?? "2026-08-09 14:00:00",
+        update_time: "2026-08-09 14:00:00",
+      };
+    }
+    return { id, comment_id: row?.replyComment?.id ?? 0, is_reply: 1 as const };
+  }
+  return apiRequest<{ id: number; comment_id: number; is_reply: 1 }>({
+    method: "PUT",
+    url: `/product/reply/set_reply/${id}`,
+    data: { content },
+  });
 }
 
 function previewManifest(

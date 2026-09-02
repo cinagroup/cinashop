@@ -3656,6 +3656,34 @@ Supplier生产 build通过，新增定向单元为3文件/17项，完整 Worker�
 
 上述验证没有连接、读取或写入生产PostgreSQL业务行，没有生产DML/DDL，没有创建临时Worker，没有部署主Worker或Supplier Pages，也没有调用支付、打印、面单或附件提供商。FE-004父项因此继续未完成：下一可执行缺口是Supplier范围商品评价回复；之后是共享规格模板和配货单预览的实现/退役决策。附件仍等SUP-003专项生产授权；主管理员/受限子账号真实E2E、第三方正反流程、正式Pages项目/Origin/`WORKERS_API`、发布批准和发布后观察都保留在checklist中。
 
+## FE-004-E Supplier 商品评价回复迁移与旧删除退役（2026-09-02）
+
+### 旧合同真实使用情况与跨租户风险
+
+旧 Supplier 路由注册了 `GET /supplierapi/product/reply`、`PUT /supplierapi/product/reply/set_reply/:id` 和 `DELETE /supplierapi/product/reply/:id`。逐行核对旧 controller、`StoreProductReplyServices` 和 `productReply/index.vue` 后，确认列表与回复是活跃第一方能力；列表会固定 `type=2`、`relation_id=当前 Supplier`，旧页面也会读取列表并提交回复。DELETE 虽在 API 和页面方法中存在，但模板没有任何删除按钮，是不可达的死方法。
+
+旧写路径不能直接照搬。`set_reply` 在建立 Supplier 回复前先按全局评价 ID读取主评价，未验证主评价的 `relation_id`；供应商因此可以把自己的评论挂到别家的评价上，并在目标同为 type=2 时把其 `is_reply` 改为1。DELETE 更直接把裸 ID交给全局 `del(id)`，没有 `type=2` 或当前 Supplier 条件，构成跨租户评价软删除能力。新端因此只迁移活跃 GET/PUT；旧 DELETE 以 route、controller、service和页面四份源码证据记入 `legacy-route-decisions.json` 退役。客户原评价作为不可变业务证据，平台级删除继续属于 Admin 审核域，不能因为“旧路由存在”就在 Supplier 端恢复危险能力。
+
+### 新 Worker authority、事务与最小数据合同
+
+新增列表同时要求评价行 `(type=2, relation_id=当前 Supplier, is_del=0)` 和联表商品 `(type=2, relation_id=当前 Supplier)` 成立，避免只信任历史评价上的单一 owner 字段。分页最大100、页码/商品 ID/回复状态严格校验，商品与账号关键词限128字符，时间范围限100字符并按 Asia/Shanghai 日历解释；纯数字或解析后的 epoch必须落在 PostgreSQL 整数时间戳范围内。列表只返回商品、昵称、评分、评价、最多8张有界图片、供应商回复和格式化时间，不返回用户 UID、订单号、唯一键或内部队列信息。供应商回复一次批量读取并按同一 Supplier/type/根评论/未删除条件过滤，没有 N+1，也不会显示旧漏洞可能挂入的其他租户评论。
+
+回复正文移除 NUL、trim 后必须非空且最多500字符。写入在事务内先以评价 ID、评价 owner和联表商品 owner双重确认归属，并对目标评价 `FOR UPDATE`；随后只更新当前 Supplier 的 type=2根回复，或插入同 scope的新回复，最后在重复租户谓词下设置 `is_reply=1`。这保持 PHP 的 `store_product_reply_comment` 存储语义，不把 Supplier 回复错误塞入主评价的 Admin `merchantReply` 字段。GET由 `supplier.product.view` 保护，PUT由 `supplier.product.manage` 保护；只读子账号能看评价但前后端都不能写。
+
+### 前端、逐屏账本与本地浏览器 QA
+
+新端增加 `/product-reviews`、`ProductReviews.vue` 和“商品评价”导航，支持回复状态、商品和用户筛选，显示评分、评价图片、供应商回复及时间；只有 `supplier.product.manage` 才渲染回复/修改回复按钮和弹窗，页面没有删除动作。预览数据也走相同客户端合同，便于在不连接生产的情况下验证筛选与写后刷新。机器逐屏账本由15个页面/16条 screen route更新为16个页面/17条 route；19个旧业务屏幕现为15个候选覆盖、4个部分替代、0个整屏可执行缺口，FE-004E标为候选完成。候选覆盖仍不等于真实账号或已发布。
+
+真实浏览器在桌面 `/product-reviews?preview=1` 核对 URL、标题、非空 DOM和表格，待回复筛选能收敛结果；打开评价601，输入回复并保存后，同一行立即回显新文本并从“回复”变为“修改回复”。390×844 下移动导航可打开并回到商品评价，回复弹窗可操作；`innerWidth/body.scrollWidth/document.scrollWidth` 均为390，宽表在组件内部处理，没有页面级横向溢出。桌面和移动全过程 console warning/error均为0。
+
+### 工程门禁、路由结果与生产边界
+
+评价迁移定向测试为1文件/6项，连同逐屏账本为2文件/12项；完整 Worker单元为191文件/1,230项。双 TypeScript、Supplier生产 build、生产依赖0漏洞、observability 17信号/10组件/53必需事件/416个生产源文件，以及 schema source201/target262/shared201/sourceGaps0/外部与内嵌262/零定义漂移全部通过。新增三份旧源码证据后，权威快照文件数从20变为23；第一次完整单元据此正确失败，更新精确计数后快照3/3与完整1,230/1,230复验成功。Wrangler只打包 dry-run为6,440.15 KiB/gzip 1,180.69 KiB，精确识别 Hyperdrive `9748c294e21c49a99579c9cef70102e0`、Queue、KV、R2、Images和四个 Durable Object后以 `--dry-run` 退出，没有创建发布版本。
+
+静态路由审计由全局 TS1,548/精确839/可执行821/缺失1,065/退役15/可执行缺口1,050 提升为 TS1,550/精确841/可执行823/缺失1,063/退役16/可执行缺口1,047，覆盖为 `44.2%/43.2%/43.6%`。Supplier面由 TS154/精确116/缺失66/退役11/可执行缺口55 提升为 TS156/精确118/缺失64/退役12/可执行缺口52，覆盖为 `64.8%/64.8%/69.4%`。两条活跃合同进入可执行匹配分子；不安全 DELETE只进入证据化退役，仍保留在原始 PHP缺失分母，未虚增覆盖。
+
+本批没有连接、读取或写入生产 PostgreSQL业务行，没有 DDL/DML，没有创建临时 Worker，没有部署主 Worker或 Supplier Pages，也没有调用第三方。FE-004父项仍未完成：下一可执行本地缺口是 FE-004F共享规格模板和 FE-004G配货单预览的实现/退役决策；附件、真实主管理员/受限账号、真实第三方、正式 Pages映射、发布批准和发布后观察继续按 FE-004H～L 保持门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

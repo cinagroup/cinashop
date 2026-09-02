@@ -17,16 +17,15 @@ describe("supplier frontend export and queue-history migration", () => {
     expect(parity.counting.legacy.distinctNavigableBusinessScreens).toBe(19);
     expect(parity.counting.legacy.embeddedPageComponents).toBe(16);
     expect(parity.counting.legacy.unroutedOrFrameworkScaffoldPages).toBe(7);
-    expect(parity.counting.target.pageVueFiles).toBe(15);
+    expect(parity.counting.target.pageVueFiles).toBe(16);
+    expect(parity.counting.target.screenRouteRecords).toBe(17);
     expect(parity.screens).toHaveLength(19);
-    expect(parity.screens.filter((screen) => screen.status === "candidate_covered")).toHaveLength(14);
+    expect(parity.screens.filter((screen) => screen.status === "candidate_covered")).toHaveLength(15);
     expect(parity.screens.filter((screen) => screen.status === "partial_replacement")).toHaveLength(4);
-    expect(parity.screens.filter((screen) => screen.status === "missing_actionable")).toEqual([
-      expect.objectContaining({ legacyPath: "/supplier/product/product_reply" }),
-    ]);
+    expect(parity.screens.filter((screen) => screen.status === "missing_actionable")).toEqual([]);
     expect(parity.checklist).toHaveLength(12);
     expect(parity.checklist.filter((item) => item.done).map((item) => item.id)).toEqual([
-      "FE-004A", "FE-004B", "FE-004C", "FE-004D",
+      "FE-004A", "FE-004B", "FE-004C", "FE-004D", "FE-004E",
     ]);
   });
 
