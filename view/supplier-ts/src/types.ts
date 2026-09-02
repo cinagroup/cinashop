@@ -5,12 +5,89 @@ export interface SupplierUser {
   real_name: string;
   supplier_id: number;
   supplier_name: string;
+  is_primary: boolean;
+}
+
+export interface SupplierNavigationItem {
+  path: string;
+  name: string;
+  icon: string;
+  permission: string;
 }
 
 export interface LoginResult {
   token: string;
   expires_time: number;
   user_info: SupplierUser;
+  unique_auth: string[];
+  menus: SupplierNavigationItem[];
+}
+
+export interface SupplierRoleOption {
+  value: number;
+  label: string;
+}
+
+export interface SupplierRole {
+  id: number;
+  role_name: string;
+  rules: string[];
+  level: number;
+  status: number;
+}
+
+export interface SupplierPermissionTreeNode {
+  key: string;
+  label: string;
+  children: Array<{ key: string; label: string }>;
+}
+
+export interface SupplierRoleListResult {
+  list: SupplierRole[];
+  permission_tree: SupplierPermissionTreeNode[];
+}
+
+export interface SupplierRolePayload {
+  role_name: string;
+  rules: string[];
+  status: 0 | 1;
+}
+
+export interface SupplierAdministrator {
+  id: number;
+  account: string;
+  real_name: string;
+  phone: string;
+  head_pic: string;
+  roles: number[];
+  role_names: string[];
+  status: number;
+  level: number;
+  add_time: number;
+  last_time: number;
+  login_count: number;
+  _add_time: string;
+  _last_time: string;
+}
+
+export interface SupplierAdminFormDefinition {
+  title: string;
+  action: string;
+  method: "POST" | "PUT";
+  rules: Array<Record<string, unknown>>;
+  role_options: SupplierRoleOption[];
+  info: SupplierAdministrator | null;
+}
+
+export interface SupplierAdminPayload {
+  account: string;
+  real_name: string;
+  phone: string;
+  head_pic: string;
+  roles: number[];
+  status: 0 | 1;
+  pwd: string;
+  conf_pwd: string;
 }
 
 export interface DashboardStats {

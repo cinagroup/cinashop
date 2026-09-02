@@ -13,6 +13,12 @@ import {
 import { SupplierCompatibilityService } from "@/services/supplier/SupplierCompatibilityService";
 import { SupplierShippingTemplateService } from "@/services/supplier/SupplierShippingTemplateService";
 import {
+  normalizeSupplierAdminInput,
+  normalizeSupplierRoleInput,
+  SupplierAdminService,
+} from "@/services/supplier/SupplierAdminService";
+import { SupplierPermissionService } from "@/services/supplier/SupplierPermissionService";
+import {
   normalizeSupplierDeliveryInput,
   normalizeSupplierSplitCartInput,
   SupplierFulfillmentService,
@@ -88,6 +94,10 @@ function shippingTemplateService(c: SupplierContext) {
   return new SupplierShippingTemplateService(c.get("container"));
 }
 
+function supplierAdminService(c: SupplierContext) {
+  return new SupplierAdminService(c.get("container"));
+}
+
 const MAX_SIMPLE_BODY_BYTES = 64 * 1024;
 
 async function readJsonObject(c: SupplierContext): Promise<Record<string, unknown>> {
@@ -145,6 +155,18 @@ function supplierIdentity(c: SupplierContext) {
   const adminId = c.get("supplierAdminId");
   if (!supplierId || !adminId) throw new Error("supplier auth context missing");
   return { supplierId, adminId };
+}
+
+function supplierAdminActor(c: SupplierContext) {
+  const principal = c.get("supplierAdminInfo");
+  if (!principal) throw new Error("supplier admin context missing");
+  return {
+    id: principal.id,
+    name: principal.realName || principal.account,
+    ip: (c.req.header("CF-Connecting-IP") ?? c.req.header("X-Forwarded-For")?.split(",")[0] ?? "")
+      .trim()
+      .slice(0, 45),
+  };
 }
 
 export async function login(c: SupplierContext) {
@@ -206,8 +228,8 @@ export async function saveStoreConfig(c: SupplierContext) {
 }
 
 export async function profile(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  return jsonOk(c, await service(c).profile(supplierId));
+  const { supplierId, adminId } = supplierIdentity(c);
+  return jsonOk(c, await service(c).profile(supplierId, adminId));
 }
 
 export async function updateProfile(c: SupplierContext) {
@@ -296,7 +318,122 @@ export async function city(c: SupplierContext) {
 
 export async function menusList(c: SupplierContext) {
   supplierIdentity(c);
-  return jsonOk(c, await compatibilityService(c).menuSearch());
+  const keys = new Set(c.get("supplierPermissions") ?? []);
+  return jsonOk(c, new SupplierPermissionService(c.get("container").db).buildSearchMenus(keys));
+}
+
+export async function supplierAdminList(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await supplierAdminService(c).list(supplierId, c.req.query()));
+}
+
+export async function supplierAdminCreateForm(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await supplierAdminService(c).createForm(supplierId));
+}
+
+export async function supplierRoleList(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await supplierAdminService(c).roles(supplierId));
+}
+
+export async function createSupplierRole(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const input = normalizeSupplierRoleInput(await readJsonObject(c));
+  return jsonOk(
+    c,
+    await supplierAdminService(c).saveRole(supplierId, supplierAdminActor(c), 0, input),
+    "角色添加成功",
+  );
+}
+
+export async function updateSupplierRole(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const input = normalizeSupplierRoleInput(await readJsonObject(c));
+  return jsonOk(
+    c,
+    await supplierAdminService(c).saveRole(
+      supplierId,
+      supplierAdminActor(c),
+      positiveId(c.req.param("id"), "角色ID"),
+      input,
+    ),
+    "角色修改成功",
+  );
+}
+
+export async function deleteSupplierRole(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  await supplierAdminService(c).deleteRole(
+    supplierId,
+    supplierAdminActor(c),
+    positiveId(c.req.param("id"), "角色ID"),
+  );
+  return jsonOk(c, null, "角色删除成功");
+}
+
+export async function createSupplierAdmin(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const input = normalizeSupplierAdminInput(await readJsonObject(c), true);
+  return jsonOk(
+    c,
+    await supplierAdminService(c).create(supplierId, supplierAdminActor(c), input),
+    "添加成功",
+  );
+}
+
+export async function supplierAdminDetail(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(
+    c,
+    await supplierAdminService(c).detail(
+      supplierId,
+      positiveId(c.req.param("id"), "管理员ID"),
+    ),
+  );
+}
+
+export async function supplierAdminEditForm(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(
+    c,
+    await supplierAdminService(c).editForm(
+      supplierId,
+      positiveId(c.req.param("id"), "管理员ID"),
+    ),
+  );
+}
+
+export async function updateSupplierAdmin(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const id = positiveId(c.req.param("id"), "管理员ID");
+  const input = normalizeSupplierAdminInput(await readJsonObject(c), false);
+  return jsonOk(
+    c,
+    await supplierAdminService(c).update(supplierId, supplierAdminActor(c), id, input),
+    "修改成功",
+  );
+}
+
+export async function deleteSupplierAdmin(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  await supplierAdminService(c).delete(
+    supplierId,
+    supplierAdminActor(c),
+    positiveId(c.req.param("id"), "管理员ID"),
+  );
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function setSupplierAdminStatus(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  await supplierAdminService(c).setStatus(
+    supplierId,
+    supplierAdminActor(c),
+    positiveId(c.req.param("id"), "管理员ID"),
+    Number(c.req.param("status")),
+  );
+  return jsonOk(c, null, Number(c.req.param("status")) === 1 ? "开启成功" : "关闭成功");
 }
 
 export async function dashboard(c: SupplierContext) {

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { supplierAuthMiddleware } from "@/middleware/supplier-auth";
+import { supplierPermissionMiddleware } from "@/middleware/supplier-permission";
 import * as SupplierController from "@/controllers/supplier/SupplierController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
@@ -21,6 +22,7 @@ supplierapiRoutes.post("/is_captcha", (c) =>
 );
 
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
+supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
 supplierapiRoutes.get("/logout", SupplierController.logout);
 supplierapiRoutes.get("/logo", SupplierController.logo);
@@ -36,6 +38,19 @@ supplierapiRoutes.get("/system/config/edit_new_build/:type", SupplierController.
 supplierapiRoutes.post("/system/config", SupplierController.saveStoreConfig);
 supplierapiRoutes.get("/supplier", SupplierController.profile);
 supplierapiRoutes.put("/supplier", SupplierController.updateProfile);
+
+supplierapiRoutes.get("/admin", SupplierController.supplierAdminList);
+supplierapiRoutes.get("/admin/create", SupplierController.supplierAdminCreateForm);
+supplierapiRoutes.get("/admin/roles", SupplierController.supplierRoleList);
+supplierapiRoutes.post("/admin/roles", SupplierController.createSupplierRole);
+supplierapiRoutes.put("/admin/roles/:id", SupplierController.updateSupplierRole);
+supplierapiRoutes.delete("/admin/roles/:id", SupplierController.deleteSupplierRole);
+supplierapiRoutes.post("/admin", SupplierController.createSupplierAdmin);
+supplierapiRoutes.get("/admin/:id/edit", SupplierController.supplierAdminEditForm);
+supplierapiRoutes.get("/admin/:id", SupplierController.supplierAdminDetail);
+supplierapiRoutes.put("/admin/:id", SupplierController.updateSupplierAdmin);
+supplierapiRoutes.delete("/admin/:id", SupplierController.deleteSupplierAdmin);
+supplierapiRoutes.put("/admin/set_status/:id/:status", SupplierController.setSupplierAdminStatus);
 
 supplierapiRoutes.get("/file/file", AttachmentController.supplierList);
 supplierapiRoutes.post("/file/file/delete", AttachmentController.supplierDelete);

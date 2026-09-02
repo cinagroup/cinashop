@@ -26,4 +26,20 @@ export class SystemSupplierDao extends BaseDao<typeof systemSupplier> {
       .limit(1);
     return rows[0] ?? null;
   }
+
+  /** 子账号通过 system_admin.relation_id 进入同一 Supplier，主绑定另行校验。 */
+  async findActiveById(supplierId: number) {
+    const rows = await this.db
+      .select()
+      .from(systemSupplier)
+      .where(
+        and(
+          eq(systemSupplier.id, supplierId),
+          eq(systemSupplier.isShow, 1),
+          eq(systemSupplier.isDel, 0),
+        ),
+      )
+      .limit(1);
+    return rows[0] ?? null;
+  }
 }

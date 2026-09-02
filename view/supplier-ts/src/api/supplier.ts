@@ -36,6 +36,12 @@ import type {
   ShippingTemplateDetail,
   ShippingTemplateListResult,
   ShippingTemplatePayload,
+  SupplierAdministrator,
+  SupplierAdminFormDefinition,
+  SupplierAdminPayload,
+  SupplierRole,
+  SupplierRoleListResult,
+  SupplierRolePayload,
 } from "@/types";
 
 export const previewMode =
@@ -293,6 +299,51 @@ const previewFinanceFlows: FinanceFlow[] = [
   { id: 901, orderId: "PCS2026080900123", linkId: "CS2026080900123", pm: 1, number: "3250.00", type: 1, payType: "alipay", status: 1, mark: "", tradeTime: 1786250610, addTime: 1786250610 },
   { id: 902, orderId: "R801-CS2026080900123", linkId: "CS2026080900123", pm: 0, number: "601.50", type: 2, payType: "yue", status: 1, mark: "售后退款", tradeTime: 1786251600, addTime: 1786251600 },
 ];
+
+const previewSupplierAdmins: SupplierAdministrator[] = [
+  {
+    id: 21,
+    account: "warehouse.demo",
+    real_name: "仓库主管",
+    phone: "138****2021",
+    head_pic: "",
+    roles: [301],
+    role_names: ["仓库履约"],
+    status: 1,
+    level: 1,
+    add_time: 1786200000,
+    last_time: 1786250000,
+    login_count: 18,
+    _add_time: "2026-08-08 12:00:00",
+    _last_time: "2026-08-09 01:13:20",
+  },
+];
+
+const previewSupplierRoles: SupplierRole[] = [
+  { id: 301, role_name: "仓库履约", rules: ["supplier.order.view", "supplier.order.manage", "supplier.print.view", "supplier.print.manage", "supplier.waybill.view", "supplier.waybill.manage"], level: 1, status: 1 },
+  { id: 302, role_name: "商品运营", rules: ["supplier.product.view", "supplier.product.manage", "supplier.shipping.view"], level: 1, status: 1 },
+  { id: 303, role_name: "财务查看", rules: ["supplier.finance.view"], level: 1, status: 1 },
+];
+
+const previewSupplierPermissionTree = [
+  ["dashboard", "经营概览", false], ["product", "商品管理", true], ["shipping", "运费模板", true],
+  ["order", "订单管理", true], ["refund", "售后管理", true], ["finance", "财务结算", true],
+  ["print", "小票打印", true], ["waybill", "电子面单", true], ["config", "履约配置", true],
+  ["profile", "供应商资料", true], ["admin", "子账号管理", true], ["attachment", "素材中心", true],
+].map(([key, label, manage]) => ({
+  key: String(key),
+  label: String(label),
+  children: [
+    { key: `supplier.${key}.view`, label: "查看" },
+    ...(manage ? [{ key: `supplier.${key}.manage`, label: "管理" }] : []),
+  ],
+}));
+
+function previewSupplierRoleOptions() {
+  return previewSupplierRoles
+    .filter((role) => role.status === 1)
+    .map((role) => ({ value: role.id, label: role.role_name }));
+}
 
 export async function login(account: string, pwd: string) {
   return apiRequest<LoginResult>({ method: "POST", url: "/login", data: { account, pwd } });
@@ -815,6 +866,128 @@ export async function updateProfile(profile: SupplierProfile) {
 export async function updatePassword(input: { pwd: string; new_pwd: string; conf_pwd: string }) {
   if (previewMode) return null;
   return apiRequest<null>({ method: "PUT", url: "/updatePwd", data: input });
+}
+
+export async function getSupplierAdministrators(
+  params: Record<string, string | number> = {},
+): Promise<PageResult<SupplierAdministrator>> {
+  if (previewMode) {
+    return { list: previewSupplierAdmins.map((item) => ({ ...item })), count: previewSupplierAdmins.length, page: 1, limit: 20 };
+  }
+  return apiRequest<PageResult<SupplierAdministrator>>({ method: "GET", url: "/admin", params });
+}
+
+export async function getSupplierAdministratorForm(id?: number): Promise<SupplierAdminFormDefinition> {
+  if (previewMode) {
+    const info = id ? previewSupplierAdmins.find((item) => item.id === id) ?? null : null;
+    return {
+      title: info ? "管理员修改" : "管理员添加",
+      action: `/supplierapi/admin${info ? `/${info.id}` : ""}`,
+      method: info ? "PUT" : "POST",
+      rules: [],
+      role_options: previewSupplierRoleOptions(),
+      info: info ? { ...info } : null,
+    };
+  }
+  return apiRequest<SupplierAdminFormDefinition>({
+    method: "GET",
+    url: id ? `/admin/${id}/edit` : "/admin/create",
+  });
+}
+
+export async function saveSupplierAdministrator(id: number, data: SupplierAdminPayload) {
+  if (previewMode) {
+    const existing = previewSupplierAdmins.find((item) => item.id === id);
+    const roleNames = previewSupplierRoles.filter((role) => data.roles.includes(role.id)).map((role) => role.role_name);
+    if (existing) {
+      Object.assign(existing, { ...data, role_names: roleNames });
+      return { id: existing.id };
+    }
+    const created: SupplierAdministrator = {
+      id: Math.max(20, ...previewSupplierAdmins.map((item) => item.id)) + 1,
+      account: data.account,
+      real_name: data.real_name,
+      phone: data.phone,
+      head_pic: data.head_pic,
+      roles: data.roles,
+      role_names: roleNames,
+      status: data.status,
+      level: 1,
+      add_time: Math.floor(Date.now() / 1000),
+      last_time: 0,
+      login_count: 0,
+      _add_time: "刚刚",
+      _last_time: "",
+    };
+    previewSupplierAdmins.unshift(created);
+    return { id: created.id };
+  }
+  return apiRequest<{ id: number }>({
+    method: id ? "PUT" : "POST",
+    url: id ? `/admin/${id}` : "/admin",
+    data,
+  });
+}
+
+export async function setSupplierAdministratorStatus(id: number, status: 0 | 1) {
+  if (previewMode) {
+    const row = previewSupplierAdmins.find((item) => item.id === id);
+    if (row) row.status = status;
+    return null;
+  }
+  return apiRequest<null>({ method: "PUT", url: `/admin/set_status/${id}/${status}` });
+}
+
+export async function deleteSupplierAdministrator(id: number) {
+  if (previewMode) {
+    const index = previewSupplierAdmins.findIndex((item) => item.id === id);
+    if (index >= 0) previewSupplierAdmins.splice(index, 1);
+    return null;
+  }
+  return apiRequest<null>({ method: "DELETE", url: `/admin/${id}` });
+}
+
+export async function getSupplierRoles(): Promise<SupplierRoleListResult> {
+  if (previewMode) {
+    return {
+      list: previewSupplierRoles.map((role) => ({ ...role, rules: [...role.rules] })),
+      permission_tree: previewSupplierPermissionTree,
+    };
+  }
+  return apiRequest<SupplierRoleListResult>({ method: "GET", url: "/admin/roles" });
+}
+
+export async function saveSupplierRole(id: number, data: SupplierRolePayload) {
+  if (previewMode) {
+    const existing = previewSupplierRoles.find((role) => role.id === id);
+    if (existing) {
+      Object.assign(existing, { ...data, rules: [...data.rules] });
+      return { id: existing.id };
+    }
+    const created: SupplierRole = {
+      id: Math.max(300, ...previewSupplierRoles.map((role) => role.id)) + 1,
+      role_name: data.role_name,
+      rules: [...data.rules],
+      level: 1,
+      status: data.status,
+    };
+    previewSupplierRoles.push(created);
+    return { id: created.id };
+  }
+  return apiRequest<{ id: number }>({
+    method: id ? "PUT" : "POST",
+    url: id ? `/admin/roles/${id}` : "/admin/roles",
+    data,
+  });
+}
+
+export async function deleteSupplierRole(id: number) {
+  if (previewMode) {
+    const index = previewSupplierRoles.findIndex((role) => role.id === id);
+    if (index >= 0) previewSupplierRoles.splice(index, 1);
+    return null;
+  }
+  return apiRequest<null>({ method: "DELETE", url: `/admin/roles/${id}` });
 }
 
 export async function getStoreConfig(type = "third"): Promise<SupplierConfigView> {

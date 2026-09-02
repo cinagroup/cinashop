@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Box, DataAnalysis, Goods, List, Menu, Printer, RefreshLeft, Setting, SwitchButton, Tickets, Tools, Wallet } from "@element-plus/icons-vue";
+import { Box, DataAnalysis, Goods, List, Menu, Printer, RefreshLeft, Setting, SwitchButton, Tickets, Tools, User, Wallet } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import { previewMode } from "@/api/supplier";
@@ -15,18 +15,22 @@ const supplierName = computed(
   () => auth.user?.supplier_name || (previewMode ? "优选贸易有限公司" : "供应商中心"),
 );
 
-const navigation = [
-  { path: "/dashboard", label: "经营概览", icon: DataAnalysis },
-  { path: "/products", label: "商品管理", icon: Goods },
-  { path: "/shipping-templates", label: "运费模板", icon: Box },
-  { path: "/orders", label: "订单管理", icon: List },
-  { path: "/refunds", label: "售后管理", icon: RefreshLeft },
-  { path: "/finance", label: "财务结算", icon: Wallet },
-  { path: "/printers", label: "小票打印机", icon: Printer },
-  { path: "/waybills", label: "电子面单", icon: Tickets },
-  { path: "/settings", label: "履约配置", icon: Tools },
-  { path: "/profile", label: "供应商资料", icon: Setting },
+const navigationCatalog = [
+  { path: "/dashboard", label: "经营概览", icon: DataAnalysis, permission: "supplier.dashboard.view" },
+  { path: "/products", label: "商品管理", icon: Goods, permission: "supplier.product.view" },
+  { path: "/shipping-templates", label: "运费模板", icon: Box, permission: "supplier.shipping.view" },
+  { path: "/orders", label: "订单管理", icon: List, permission: "supplier.order.view" },
+  { path: "/refunds", label: "售后管理", icon: RefreshLeft, permission: "supplier.refund.view" },
+  { path: "/finance", label: "财务结算", icon: Wallet, permission: "supplier.finance.view" },
+  { path: "/printers", label: "小票打印机", icon: Printer, permission: "supplier.print.view" },
+  { path: "/waybills", label: "电子面单", icon: Tickets, permission: "supplier.waybill.view" },
+  { path: "/settings", label: "履约配置", icon: Tools, permission: "supplier.config.view" },
+  { path: "/profile", label: "供应商资料", icon: Setting, permission: "supplier.profile.view" },
+  { path: "/administrators", label: "子账号管理", icon: User, permission: "supplier.admin.view" },
 ];
+const navigation = computed(() =>
+  navigationCatalog.filter((item) => previewMode || auth.can(item.permission)),
+);
 
 async function navigate(path: string) {
   mobileOpen.value = false;

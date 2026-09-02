@@ -13,6 +13,7 @@ import {
 import { createToken, md5 } from "@/utils/jwt";
 import { setTokenBucket } from "@/utils/cache";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { SupplierPermissionService } from "@/services/supplier/SupplierPermissionService";
 
 const SUPPLIER_ADMIN_TYPE = 4;
 const UTC8_OFFSET_MS = 8 * 60 * 60 * 1000;
@@ -158,14 +159,19 @@ export class SupplierService {
     if (!admin || admin.isDel || !admin.status) throw new ValidateException("账号或密码错误");
     if (admin.relationId <= 0) throw new ValidateException("供应商账号未绑定");
 
-    const supplier = await this.container.systemSupplierDao.findActiveByRelation(
-      admin.relationId,
-      admin.id,
-    );
+    const supplier = await this.container.systemSupplierDao.findActiveById(admin.relationId);
     if (!supplier) throw new ValidateException("供应商已停用或绑定关系无效");
 
     const valid = await bcrypt.compare(password, normalizeBcryptHash(admin.pwd));
     if (!valid) throw new ValidateException("账号或密码错误");
+    const isPrimary = supplier.adminId === admin.id;
+    const permissions = await new SupplierPermissionService(this.container.db).permissionsFor(
+      { id: admin.id, roles: admin.roles, isPrimary },
+      supplier.id,
+    );
+    if (!isPrimary && permissions.size === 0) {
+      throw new ValidateException("子账号尚未配置有效权限");
+    }
 
     const { token, exp } = await createToken(
       admin.id,
@@ -198,25 +204,27 @@ export class SupplierService {
         real_name: admin.realName || supplier.name,
         supplier_id: supplier.id,
         supplier_name: supplier.supplierName,
+        is_primary: isPrimary,
       },
-      unique_auth: [
-        "supplier:dashboard",
-        "supplier:product",
-        "supplier:order",
-        "supplier:refund",
-        "supplier:finance",
-        "supplier:profile",
-      ],
-      menus: this.menus(),
+      unique_auth: [...permissions],
+      menus: new SupplierPermissionService(this.container.db).buildNavigation(permissions),
       logo: "",
       logo_square: "",
       version: "CinaShop Supplier TS",
     };
   }
 
-  async profile(supplierId: number) {
+  async profile(supplierId: number, adminId: number) {
     const supplier = await this.container.systemSupplierDao.getOrThrow(supplierId, "供应商不存在");
-    const admin = await this.container.systemAdminDao.getOrThrow(supplier.adminId, "管理员不存在");
+    const admin = await this.container.systemAdminDao.getOrThrow(adminId, "管理员不存在");
+    if (
+      admin.adminType !== SUPPLIER_ADMIN_TYPE
+      || admin.relationId !== supplier.id
+      || admin.isDel
+      || !admin.status
+    ) {
+      throw new NotFoundException("管理员不存在");
+    }
     return {
       id: supplier.id,
       supplier_name: supplier.supplierName,
@@ -246,7 +254,6 @@ export class SupplierService {
         .where(
           and(
             eq(systemSupplier.id, supplierId),
-            eq(systemSupplier.adminId, adminId),
             eq(systemSupplier.isDel, 0),
           ),
         )
@@ -254,21 +261,39 @@ export class SupplierService {
       const supplier = supplierRows[0];
       if (!supplier) throw new NotFoundException("供应商不存在");
 
-      const adminRows = await tx
+      const actorRows = await tx
         .select()
         .from(systemAdmin)
         .where(
           and(
             eq(systemAdmin.id, adminId),
             eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
+            eq(systemAdmin.relationId, supplierId),
+            eq(systemAdmin.status, 1),
             eq(systemAdmin.isDel, 0),
           ),
         )
         .limit(1);
-      const admin = adminRows[0];
-      if (!admin) throw new NotFoundException("管理员不存在");
+      const actor = actorRows[0];
+      if (!actor) throw new NotFoundException("管理员不存在");
+      const primaryRows = await tx
+        .select()
+        .from(systemAdmin)
+        .where(and(
+          eq(systemAdmin.id, supplier.adminId),
+          eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
+          eq(systemAdmin.relationId, supplierId),
+          eq(systemAdmin.isDel, 0),
+        ))
+        .limit(1);
+      const primary = primaryRows[0];
+      if (!primary) throw new NotFoundException("主管理员不存在");
+      const isPrimary = actor.id === primary.id;
 
-      if (input.account && input.account !== admin.account) {
+      if (!isPrimary && input.account && input.account !== actor.account) {
+        throw new ValidateException("子管理员不能在供应商资料中修改账号");
+      }
+      if (isPrimary && input.account && input.account !== primary.account) {
         const duplicate = await tx
           .select({ id: systemAdmin.id })
           .from(systemAdmin)
@@ -276,7 +301,7 @@ export class SupplierService {
             and(
               eq(systemAdmin.account, input.account),
               eq(systemAdmin.adminType, SUPPLIER_ADMIN_TYPE),
-              ne(systemAdmin.id, adminId),
+              ne(systemAdmin.id, primary.id),
               eq(systemAdmin.isDel, 0),
             ),
           )
@@ -299,12 +324,14 @@ export class SupplierService {
         await tx.update(systemSupplier).set(supplierUpdate).where(eq(systemSupplier.id, supplierId));
       }
 
-      const adminUpdate: Partial<typeof systemAdmin.$inferInsert> = {};
-      if (input.account !== undefined) adminUpdate.account = input.account;
-      if (input.name !== undefined) adminUpdate.realName = input.name;
-      if (input.phone !== undefined) adminUpdate.phone = input.phone;
-      if (Object.keys(adminUpdate).length > 0) {
-        await tx.update(systemAdmin).set(adminUpdate).where(eq(systemAdmin.id, adminId));
+      if (isPrimary) {
+        const adminUpdate: Partial<typeof systemAdmin.$inferInsert> = {};
+        if (input.account !== undefined) adminUpdate.account = input.account;
+        if (input.name !== undefined) adminUpdate.realName = input.name;
+        if (input.phone !== undefined) adminUpdate.phone = input.phone;
+        if (Object.keys(adminUpdate).length > 0) {
+          await tx.update(systemAdmin).set(adminUpdate).where(eq(systemAdmin.id, primary.id));
+        }
       }
     });
   }
@@ -639,14 +666,4 @@ export class SupplierService {
     if (!rows[0]) throw new NotFoundException("订单不存在或不属于当前供应商");
   }
 
-  private menus() {
-    return [
-      { path: "/dashboard", name: "经营概览", icon: "DataAnalysis" },
-      { path: "/products", name: "商品管理", icon: "Goods" },
-      { path: "/orders", name: "订单管理", icon: "List" },
-      { path: "/refunds", name: "售后管理", icon: "RefreshLeft" },
-      { path: "/finance", name: "财务结算", icon: "Wallet" },
-      { path: "/profile", name: "供应商资料", icon: "Setting" },
-    ];
-  }
 }

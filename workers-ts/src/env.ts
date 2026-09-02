@@ -431,10 +431,22 @@ export interface AppVariables {
   };
   /** 当前供应商后台管理员 ID。 */
   supplierAdminId?: number;
+  /** 当前供应商后台管理员；主管理员身份只由 system_supplier.admin_id 派生。 */
+  supplierAdminInfo?: {
+    id: number;
+    account: string;
+    realName: string;
+    level: number;
+    roles: string;
+    isPrimary: boolean;
+  };
+  /** 当前请求已解析的稳定 Supplier 权限键。 */
+  supplierPermissions?: string[];
   /** 当前供应商 ID，只能由 supplierAuthMiddleware 从 token 关系中注入。 */
   supplierId?: number;
   supplierInfo?: {
     id: number;
+    /** system_supplier.admin_id 指向的主管理员，不是当前子账号。 */
     adminId: number;
     supplierName: string;
     name: string;

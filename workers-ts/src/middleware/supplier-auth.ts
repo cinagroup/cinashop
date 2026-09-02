@@ -54,17 +54,25 @@ export const supplierAuthMiddleware: MiddlewareHandler<{
     throw new AuthException("登录已过期", ApiErrorCode.ERR_EXPIRED);
   }
 
-  const supplier = await container.systemSupplierDao.findActiveByRelation(admin.relationId, admin.id);
+  const supplier = await container.systemSupplierDao.findActiveById(admin.relationId);
   if (!supplier) {
     await clearToken(key, c.env).catch(() => undefined);
     throw new AuthException("供应商已停用或绑定关系无效", ApiErrorCode.ERR_BANNED);
   }
 
   c.set("supplierAdminId", admin.id);
+  c.set("supplierAdminInfo", {
+    id: admin.id,
+    account: admin.account,
+    realName: admin.realName,
+    level: admin.level,
+    roles: admin.roles,
+    isPrimary: supplier.adminId === admin.id,
+  });
   c.set("supplierId", supplier.id);
   c.set("supplierInfo", {
     id: supplier.id,
-    adminId: admin.id,
+    adminId: supplier.adminId,
     supplierName: supplier.supplierName,
     name: supplier.name,
     isShow: supplier.isShow,
