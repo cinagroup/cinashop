@@ -198,6 +198,7 @@ adminapiRoutes.post("/waybill/jobs/:id/close", adminAuth, WaybillJobController.a
 
 // ─── 商品管理 ───────────────────────────────────────────────
 adminapiRoutes.get("/product/list", adminAuth, AdminCrud.adminProductList);
+adminapiRoutes.get("/product/editor/options", adminAuth, AdminCrud.adminProductEditorOptions);
 adminapiRoutes.get("/product/detail/:id", adminAuth, AdminCrud.adminProductDetail);
 adminapiRoutes.get("/product/virtual-alerts", adminAuth, VirtualProductInventory.adminAlerts);
 adminapiRoutes.get("/product/virtual/:id", adminAuth, VirtualProductInventory.adminInventory);

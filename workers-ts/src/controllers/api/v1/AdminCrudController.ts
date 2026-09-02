@@ -33,6 +33,10 @@ import {
   parseCouponScopeIds,
   ProductCouponService,
 } from "@/services/activity/ProductCouponService";
+import {
+  ProductAssociationService,
+  type ProductEditorActor,
+} from "@/services/product/ProductAssociationService";
 import { StoreOperationsService } from "@/services/store/StoreOperationsService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
@@ -222,6 +226,28 @@ function mobileProducts(c: C): AdminMobileProductService {
   return new AdminMobileProductService(c.get("container"));
 }
 
+function productAssociations(c: C): ProductAssociationService {
+  return new ProductAssociationService(c.get("container"));
+}
+
+function productEditorActor(c: C): ProductEditorActor {
+  const admin = c.get("adminInfo");
+  if (!admin) throw new ValidateException("管理员身份不存在");
+  return {
+    id: admin.id,
+    name: admin.realName || admin.account,
+    ip: c.req.header("CF-Connecting-IP")
+      ?? c.req.header("X-Forwarded-For")?.split(",")[0]?.trim()
+      ?? "",
+  };
+}
+
+/** GET /api/admin/product/editor/options — 商品关联资料的有界候选集。 */
+export async function adminProductEditorOptions(c: C) {
+  privateNoStore(c);
+  return jsonOk(c, await productAssociations(c).editorOptions());
+}
+
 /** GET /api/admin/product/category — PHP 移动管理端可选分类树。 */
 export async function adminMobileProductCategories(c: C) {
   privateNoStore(c);
@@ -274,31 +300,9 @@ export async function adminMobileProductBatchProcess(c: C) {
 /** GET /api/admin/product/detail/:id — 商品详情 */
 export async function adminProductDetail(c: C) {
   const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  const product = await c.get("container").storeProductDao.getById(id);
-  if (!product) return jsonFail(c, "商品不存在");
-  return jsonOk(c, {
-    id: product.id,
-    product_type: product.productType,
-    type: product.type,
-    relation_id: product.relationId,
-    store_name: product.storeName,
-    store_info: product.storeInfo,
-    image: product.image,
-    price: product.price,
-    ot_price: product.otPrice,
-    stock: product.stock,
-    sales: product.sales,
-    is_show: product.isShow,
-    is_verify: product.isVerify,
-    is_del: product.isDel,
-    cate_id: product.cateId,
-    keyword: product.keyword,
-    unit_name: product.unitName,
-    sort: product.sort,
-    is_vip: product.isVip,
-    vip_price: product.vipPrice,
-  });
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "参数错误");
+  privateNoStore(c);
+  return jsonOk(c, await productAssociations(c).detail(id));
 }
 
 /** GET /api/admin/product/coupons/:id — 支付后赠券关系 */
@@ -327,80 +331,37 @@ export async function adminProductCouponsReplace(c: C) {
 
 /** POST /adminapi/product/add — 创建商品 */
 export async function adminProductCreate(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!body.store_name) return jsonFail(c, "商品名称不能为空");
-  if (!body.price) return jsonFail(c, "价格不能为空");
-
-  const container = c.get("container");
-  const row = await container.storeProductDao.save({
-    storeName: String(body.store_name),
-    storeInfo: String(body.store_info ?? ""),
-    image: String(body.image ?? ""),
-    price: String(body.price),
-    otPrice: String(body.ot_price ?? body.price),
-    stock: Number(body.stock ?? 0),
-    cateId: String(body.cate_id ?? ""),
-    keyword: String(body.keyword ?? ""),
-    isShow: Number(body.is_show ?? 1),
-    isVerify: 1,
-    isDel: 0,
-    specType: Number(body.spec_type ?? 0),
-    addTime: Math.floor(Date.now() / 1000),
-    unitName: String(body.unit_name ?? "件"),
-    ficti: Number(body.ficti ?? 0),
-    sort: Number(body.sort ?? 0),
-    isVip: Number(body.is_vip ?? 0),
-    vipPrice: String(body.vip_price ?? "0"),
-  });
-  return jsonOk(c, { id: row.id }, "创建成功");
+  privateNoStore(c);
+  const result = await productAssociations(c).save(
+    0,
+    await readBoundedJsonObject(c.req.raw, 64 * 1024),
+    productEditorActor(c),
+  );
+  return jsonOk(c, result, "创建成功");
 }
 
 /** POST /adminapi/product/edit/:id — 编辑商品 */
 export async function adminProductUpdate(c: C) {
   const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
-  const container = c.get("container");
-
-  const product = await container.storeProductDao.getById(id);
-  if (!product) return jsonFail(c, "商品不存在");
-
-  const updateData: Record<string, unknown> = {};
-  const fields: Array<[string, string, string?]> = [
-    ["store_name", "storeName", "storeName"],
-    ["store_info", "storeInfo", "storeInfo"],
-    ["image", "image"],
-    ["price", "price"],
-    ["ot_price", "otPrice", "otPrice"],
-    ["stock", "stock"],
-    ["cate_id", "cateId", "cateId"],
-    ["keyword", "keyword"],
-    ["is_show", "isShow", "isShow"],
-    ["unit_name", "unitName", "unitName"],
-    ["ficti", "ficti"],
-    ["sort", "sort"],
-    ["is_vip", "isVip", "isVip"],
-    ["vip_price", "vipPrice", "vipPrice"],
-  ];
-  for (const [requestField, modelField, camelAlias] of fields) {
-    const value = body[requestField] ?? (camelAlias ? body[camelAlias] : undefined);
-    if (value !== undefined) updateData[modelField] = value;
-  }
-  if (Object.keys(updateData).length > 0) {
-    await container.storeProductDao.update(id, updateData);
-  }
-  return jsonOk(c, null, "修改成功");
+  if (!Number.isSafeInteger(id) || id <= 0) return jsonFail(c, "参数错误");
+  privateNoStore(c);
+  const result = await productAssociations(c).save(
+    id,
+    await readBoundedJsonObject(c.req.raw, 64 * 1024),
+    productEditorActor(c),
+  );
+  return jsonOk(c, result, "修改成功");
 }
 
 /** POST /api/admin/product/set_show/:id — 上架/下架 */
 export async function adminProductSetShow(c: C) {
+  privateNoStore(c);
   const id = Number(c.req.param("id") ?? "0");
-  const body = (await c.req.json().catch(() => ({}))) as { is_show?: number };
+  const body = await readBoundedJsonObject(c.req.raw, 1024);
   if (!id) return jsonFail(c, "参数错误");
-  await c.get("container").storeProductDao.update(id, {
-    isShow: body.is_show ?? 1,
-  });
-  return jsonOk(c, null, body.is_show ? "已上架" : "已下架");
+  const isShow = Number(body.is_show ?? 1);
+  await productAssociations(c).setShow(id, isShow, productEditorActor(c));
+  return jsonOk(c, null, isShow === 1 ? "已上架" : "已下架");
 }
 
 /** DELETE /api/admin/product/del/:id — 删除商品 (软删除) */
@@ -1519,10 +1480,7 @@ export async function adminBrandSave(c: C) {
 /** DELETE /api/admin/brand/del/:id — 删除品牌 */
 export async function adminBrandDel(c: C) {
   const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { storeBrand } = await import("@/models/schema");
-  await container.db.update(storeBrand).set({ isDel: 1 }).where(eq(storeBrand.id, id));
+  await productAssociations(c).deleteBrand(id);
   return jsonOk(c, null, "删除成功");
 }
 
@@ -2345,10 +2303,7 @@ export async function adminProductLabelSave(c: C) {
 /** DELETE /api/admin/product_label/del/:id */
 export async function adminProductLabelDel(c: C) {
   const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { storeProductLabel } = await import("@/models/schema");
-  await container.db.delete(storeProductLabel).where(eq(storeProductLabel.id, id));
+  await productAssociations(c).deleteProductLabel(id);
   return jsonOk(c, null, "删除成功");
 }
 

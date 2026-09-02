@@ -14,6 +14,7 @@ import { withTx } from "@/lib/di";
 import {
   legacyCategory,
   storeProduct,
+  storeProductRelation,
   storeProductRule,
   storeProductSpecs,
   storeProductUnit,
@@ -610,8 +611,9 @@ export class ProductMetadataService {
 
   async deleteSpecTemplate(owner: MetadataOwner, id: number) {
     return withTx(this.container, async (tx) => {
-      const deleted = await tx
-        .delete(legacyCategory)
+      const template = await tx
+        .select({ id: legacyCategory.id })
+        .from(legacyCategory)
         .where(
           and(
             eq(legacyCategory.id, id),
@@ -619,8 +621,23 @@ export class ProductMetadataService {
             ownedTemplateScope(owner),
           ),
         )
-        .returning({ id: legacyCategory.id });
-      if (!deleted[0]) throw new NotFoundException("参数模板不存在");
+        .limit(1)
+        .for("update");
+      if (!template[0]) throw new NotFoundException("参数模板不存在");
+      const [direct, relation] = await Promise.all([
+        tx.select({ id: storeProduct.id }).from(storeProduct).where(and(
+          eq(storeProduct.specsId, id),
+          eq(storeProduct.isDel, 0),
+        )).limit(1),
+        tx.select({ id: storeProductRelation.id }).from(storeProductRelation).where(and(
+          eq(storeProductRelation.type, 6),
+          eq(storeProductRelation.relationId, id),
+        )).limit(1),
+      ]);
+      if (direct[0] || relation[0]) {
+        throw new ValidateException("该参数模板仍被商品使用，不能删除");
+      }
+      await tx.delete(legacyCategory).where(eq(legacyCategory.id, id));
       await tx.delete(storeProductSpecs).where(eq(storeProductSpecs.tempId, id));
     });
   }

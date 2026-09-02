@@ -1258,6 +1258,7 @@ v1Routes.get("/admin/wechat_qrcode/statistic/:qid", adminAuth, AdminWechatQrcode
 
 // 商品管理
 v1Routes.get("/admin/product/list", adminAuth, AdminCrud.adminProductList);
+v1Routes.get("/admin/product/editor/options", adminAuth, AdminCrud.adminProductEditorOptions);
 v1Routes.get("/admin/product/category", adminAuth, AdminCrud.adminMobileProductCategories);
 v1Routes.get("/admin/product/admin_list", adminAuth, AdminCrud.adminMobileProductList);
 v1Routes.post("/admin/product/set_show", adminAuth, AdminCrud.adminMobileProductSetShow);

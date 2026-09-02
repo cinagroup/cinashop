@@ -3,7 +3,7 @@
     <el-card shadow="never">
       <template #header>{{ isEdit ? "编辑商品" : "添加商品" }}</template>
 
-      <el-form :model="form" label-width="100px" style="max-width: 640px">
+      <el-form :model="form" label-width="108px" class="editor-form">
         <el-form-item label="商品名称" required>
           <el-input v-model="form.store_name" placeholder="请输入商品名称" />
         </el-form-item>
@@ -44,10 +44,101 @@
             <el-option
               v-for="cat in categories"
               :key="cat.id"
-              :label="cat.cateName"
+              :label="cat.name"
               :value="String(cat.id)"
             />
           </el-select>
+        </el-form-item>
+        <el-divider content-position="left">商品关联资料</el-divider>
+        <el-alert
+          title="保障、品牌、标签和参数会与商品在同一事务保存；数据库回读不一致时不会产生半成品。"
+          type="info"
+          :closable="false"
+          show-icon
+          class="association-alert"
+        />
+        <el-form-item label="品牌">
+          <div class="field-row">
+            <el-select v-model="form.brand_id" filterable clearable placeholder="选择商品品牌">
+              <el-option
+                v-for="item in editorOptions.brands"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+            <el-button @click="$router.push('/brand')">管理品牌</el-button>
+          </div>
+        </el-form-item>
+        <el-form-item label="商品标签">
+          <div class="field-row">
+            <el-select
+              v-model="form.store_label_id"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              placeholder="可多选商品标签"
+            >
+              <el-option
+                v-for="item in editorOptions.product_labels"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+            <el-button @click="$router.push('/label')">管理标签</el-button>
+          </div>
+        </el-form-item>
+        <el-form-item label="保障服务">
+          <div class="field-row">
+            <el-select
+              v-model="form.ensure_id"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              placeholder="可多选保障条款"
+            >
+              <el-option
+                v-for="item in editorOptions.ensures"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+            <el-button @click="$router.push('/product/metadata')">管理保障</el-button>
+          </div>
+        </el-form-item>
+        <el-form-item label="参数模板">
+          <div class="field-row">
+            <el-select
+              v-model="form.specs_id"
+              clearable
+              filterable
+              placeholder="选择参数模板"
+              @change="applyParameterTemplate"
+            >
+              <el-option
+                v-for="item in editorOptions.parameter_templates"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+            <el-button @click="$router.push('/product/metadata')">管理模板</el-button>
+          </div>
+        </el-form-item>
+        <el-form-item v-if="form.specs.length" label="参数快照">
+          <div class="parameter-snapshot">
+            <div v-for="(item, index) in form.specs" :key="`${item.name}-${index}`" class="parameter-row">
+              <span class="parameter-name">{{ item.name }}</span>
+              <el-input v-model="item.value" maxlength="255" placeholder="请输入参数值" />
+            </div>
+            <el-text type="info">
+              保存后保留当前参数值快照；以后修改模板不会静默改写历史商品。
+            </el-text>
+          </div>
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort" :min="0" :max="999" />
@@ -80,11 +171,13 @@ import {
   apiAdminProductCreate,
   apiAdminProductUpdate,
   apiAdminProductDetail,
+  apiAdminProductEditorOptions,
   apiAdminProductDraft,
   apiAdminProductDraftDelete,
   apiAdminProductDraftSave,
+  type ProductEditorOptions,
+  type ProductEditorParameter,
 } from "@/api/product";
-import { apiAdminCategoryList, type CategoryItem } from "@/api/category";
 import { apiProductUnitList, type ProductUnit } from "@/api/productMetadata";
 
 const route = useRoute();
@@ -94,7 +187,14 @@ const draftSaving = ref(false);
 const draftStatus = ref("");
 const draftReady = ref(false);
 let draftTimer: ReturnType<typeof setTimeout> | null = null;
-const categories = ref<CategoryItem[]>([]);
+const editorOptions = reactive<ProductEditorOptions>({
+  categories: [],
+  brands: [],
+  product_labels: [],
+  ensures: [],
+  parameter_templates: [],
+});
+const categories = computed(() => editorOptions.categories);
 const units = ref<ProductUnit[]>([]);
 
 const isEdit = computed(() => !!route.params.id);
@@ -108,6 +208,11 @@ const form = reactive({
   unit_name: "件",
   keyword: "",
   cate_id: "",
+  brand_id: undefined as number | undefined,
+  store_label_id: [] as number[],
+  ensure_id: [] as number[],
+  specs_id: undefined as number | undefined,
+  specs: [] as ProductEditorParameter[],
   sort: 0,
   is_vip: 0,
   vip_price: 0,
@@ -137,6 +242,15 @@ async function submit() {
   }
 }
 
+function applyParameterTemplate(value: unknown) {
+  const id = Number(value ?? 0);
+  form.specs_id = Number.isSafeInteger(id) && id > 0 ? id : undefined;
+  const template = editorOptions.parameter_templates.find((item) => item.id === form.specs_id);
+  form.specs = template
+    ? template.specs.filter((item) => item.status === 1).map((item) => ({ ...item }))
+    : [];
+}
+
 function restoreDraft(value: Record<string, unknown>) {
   const stringFields = ["store_name", "store_info", "image", "unit_name", "keyword", "cate_id"] as const;
   const numberFields = ["price", "ot_price", "stock", "sort", "is_vip", "vip_price", "is_show"] as const;
@@ -146,6 +260,31 @@ function restoreDraft(value: Record<string, unknown>) {
   for (const key of numberFields) {
     const parsed = Number(value[key]);
     if (Number.isFinite(parsed)) form[key] = parsed;
+  }
+  for (const key of ["store_label_id", "ensure_id"] as const) {
+    if (Array.isArray(value[key])) {
+      form[key] = value[key]
+        .map(Number)
+        .filter((id) => Number.isSafeInteger(id) && id > 0);
+    }
+  }
+  const brandId = Number(value.brand_id);
+  if (Number.isSafeInteger(brandId) && brandId > 0) form.brand_id = brandId;
+  const specsId = Number(value.specs_id);
+  if (Number.isSafeInteger(specsId) && specsId > 0) form.specs_id = specsId;
+  if (Array.isArray(value.specs)) {
+    form.specs = value.specs.flatMap((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+      const row = item as Record<string, unknown>;
+      if (typeof row.name !== "string" || typeof row.value !== "string") return [];
+      return [{
+        id: Number(row.id) || 0,
+        name: row.name,
+        value: row.value,
+        sort: Number(row.sort) || 0,
+        status: Number(row.status) === 0 ? 0 : 1,
+      }];
+    });
   }
 }
 
@@ -182,11 +321,11 @@ watch(form, () => {
 }, { deep: true });
 
 onMounted(async () => {
-  const [categoryResult, unitResult] = await Promise.allSettled([
-    apiAdminCategoryList(),
+  const [optionsResult, unitResult] = await Promise.allSettled([
+    apiAdminProductEditorOptions(),
     apiProductUnitList({ page: 1, limit: 100 }),
   ]);
-  if (categoryResult.status === "fulfilled") categories.value = categoryResult.value;
+  if (optionsResult.status === "fulfilled") Object.assign(editorOptions, optionsResult.value);
   if (unitResult.status === "fulfilled") units.value = unitResult.value.list;
   if (isEdit.value) {
     try {
@@ -199,7 +338,12 @@ onMounted(async () => {
       form.stock = detail.stock;
       form.unit_name = detail.unit_name;
       form.keyword = detail.keyword;
-      form.cate_id = String(detail.cate_id ?? "");
+      form.cate_id = String(detail.cate_id[0] ?? "");
+      form.brand_id = detail.brand_id.at(-1);
+      form.store_label_id = [...detail.store_label_id];
+      form.ensure_id = [...detail.ensure_id];
+      form.specs_id = detail.specs_id || undefined;
+      form.specs = detail.specs.map((item) => ({ ...item }));
       form.sort = detail.sort ?? 0;
       form.is_vip = detail.is_vip ?? 0;
       form.vip_price = Number(detail.vip_price ?? 0);
@@ -229,7 +373,10 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .product-form {
-  max-width: 800px;
+  max-width: 980px;
+}
+.editor-form {
+  max-width: 820px;
 }
 .field-row {
   display: flex;
@@ -238,5 +385,50 @@ onBeforeUnmount(() => {
 }
 .field-row .el-select {
   flex: 1;
+}
+.association-alert {
+  margin-bottom: 18px;
+}
+.parameter-snapshot {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+}
+.parameter-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 180px) minmax(180px, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+.parameter-name {
+  overflow: hidden;
+  color: var(--el-text-color-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .product-form {
+    max-width: 100%;
+  }
+  .editor-form :deep(.el-form-item) {
+    display: block;
+  }
+  .editor-form :deep(.el-form-item__label) {
+    width: auto !important;
+    height: auto;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .editor-form :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+  }
+  .field-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .parameter-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }
 </style>

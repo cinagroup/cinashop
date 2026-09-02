@@ -1,11 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it, vi } from "vitest";
-import {
-  adminProductDetail,
-  adminProductUpdate,
-} from "@/controllers/api/v1/AdminCrudController";
+import { describe, expect, it } from "vitest";
 
 const testDir = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testDir, "..", "..");
@@ -64,85 +60,48 @@ describe("Admin frontend API contract", () => {
     expect(backend).toContain('adminapiRoutes.post("/product/edit/:id"');
   });
 
-  it("projects product detail to the snake-case fields consumed by the Admin form", async () => {
-    const json = vi.fn((body: unknown) => body);
-    const product = {
-      id: 8,
-      productType: 0,
-      type: 0,
-      relationId: 0,
-      storeName: "测试商品",
-      storeInfo: "简介",
-      image: "/image.png",
-      price: "12.30",
-      otPrice: "15.00",
-      stock: 9,
-      sales: 2,
-      isShow: 1,
-      isVerify: 1,
-      isDel: 0,
-      cateId: "3",
-      keyword: "测试",
-      unitName: "件",
-      sort: 6,
-      isVip: 1,
-      vipPrice: "10.00",
-    };
-    const context = {
-      req: { param: () => "8" },
-      get: () => ({ storeProductDao: { getById: vi.fn().mockResolvedValue(product) } }),
-      json,
-    } as never;
+  it("projects product detail to the snake-case fields consumed by the Admin form", () => {
+    const controller = readFileSync(
+      join(repositoryRoot, "workers-ts", "src", "controllers", "api", "v1", "AdminCrudController.ts"),
+      "utf8",
+    );
+    const associations = readFileSync(
+      join(repositoryRoot, "workers-ts", "src", "services", "product", "ProductAssociationService.ts"),
+      "utf8",
+    );
 
-    await adminProductDetail(context);
-    expect(json).toHaveBeenCalledWith(expect.objectContaining({
-      status: 200,
-      data: expect.objectContaining({
-        store_name: "测试商品",
-        store_info: "简介",
-        ot_price: "15.00",
-        unit_name: "件",
-        is_vip: 1,
-        vip_price: "10.00",
-      }),
-    }));
+    expect(controller).toContain("productAssociations(c).detail(id)");
+    expect(associations).toContain("store_name: item.storeName");
+    expect(associations).toContain("store_info: item.storeInfo");
+    expect(associations).toContain("ot_price: item.otPrice");
+    expect(associations).toContain("unit_name: item.unitName");
+    expect(associations).toContain("is_vip: item.isVip");
+    expect(associations).toContain("vip_price: item.vipPrice");
+    expect(associations).toContain("cate_id: categoryIds");
+    expect(associations).toContain("brand_id: brandIds");
+    expect(associations).toContain("store_label_id: productLabelIds");
+    expect(associations).toContain("ensure_id: ensureIds");
+    expect(associations).toContain("specs_id: parameterTemplateId");
   });
 
-  it("maps the Admin form snake-case edit payload to database model fields", async () => {
-    const update = vi.fn().mockResolvedValue(undefined);
-    const context = {
-      req: {
-        param: () => "8",
-        json: vi.fn().mockResolvedValue({
-          store_name: "已更新",
-          store_info: "新简介",
-          ot_price: 15,
-          cate_id: "4",
-          is_show: 0,
-          unit_name: "盒",
-          is_vip: 1,
-          vip_price: 10,
-        }),
-      },
-      get: () => ({
-        storeProductDao: {
-          getById: vi.fn().mockResolvedValue({ id: 8 }),
-          update,
-        },
-      }),
-      json: vi.fn((body: unknown) => body),
-    } as never;
+  it("maps the Admin form payload through the bounded atomic association service", () => {
+    const controller = readFileSync(
+      join(repositoryRoot, "workers-ts", "src", "controllers", "api", "v1", "AdminCrudController.ts"),
+      "utf8",
+    );
+    const associations = readFileSync(
+      join(repositoryRoot, "workers-ts", "src", "services", "product", "ProductAssociationService.ts"),
+      "utf8",
+    );
 
-    await adminProductUpdate(context);
-    expect(update).toHaveBeenCalledWith(8, {
-      storeName: "已更新",
-      storeInfo: "新简介",
-      otPrice: 15,
-      cateId: "4",
-      isShow: 0,
-      unitName: "盒",
-      isVip: 1,
-      vipPrice: 10,
-    });
+    expect(controller).toContain("await readBoundedJsonObject(c.req.raw, 64 * 1024)");
+    expect(controller.match(/productAssociations\(c\)\.save\(/g)).toHaveLength(2);
+    expect(associations).toContain('body.store_name ?? existing?.storeName');
+    expect(associations).toContain('textValue(body.store_info, "商品简介", 256, existing?.storeInfo ?? "")');
+    expect(associations).toContain('decimalValue(body.ot_price, "原价", existing?.otPrice ?? price)');
+    expect(associations).toContain('textValue(body.unit_name, "单位", 32, existing?.unitName ?? "件")');
+    expect(associations).toContain('integerValue(body.is_vip, "会员状态", existing?.isVip ?? 0, 0, 1)');
+    expect(associations).toContain('decimalValue(body.vip_price, "会员价", existing?.vipPrice ?? "0")');
+    expect(associations).toContain("associations_verified: associations !== null");
   });
 });

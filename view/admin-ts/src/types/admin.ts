@@ -107,7 +107,7 @@ export interface AdminProduct {
   is_show: number;
   is_verify: number;
   is_del: number;
-  cate_id: string;
+  cate_id: string | number[];
   keyword: string;
   unit_name: string;
   sort?: number;

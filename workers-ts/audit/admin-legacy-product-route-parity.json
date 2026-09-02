@@ -43,10 +43,10 @@
       "title": "商品添加/编辑",
       "status": "partial",
       "newScreens": ["/product/create", "/product/edit/:id"],
-      "newApiContracts": ["POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id"],
+      "newApiContracts": ["GET /adminapi/product/editor/options", "POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id"],
       "permission": "product.view / product.manage",
-      "covered": "Core scalar fields, category, unit, membership price, sorting, visibility, and server draft restore/save/delete.",
-      "remaining": "Guarantee selection, parameter-template application, specification-template application, SKU combination editing, gallery/rich-media selection, labels/brand and several legacy product types remain."
+      "covered": "Core scalar fields, category, unit, membership price, sorting, visibility, server draft restore/save/delete, brand and product-label assignment, guarantee multi-selection, parameter-template application, editable historical parameter snapshots, atomic relation persistence, and database readback rollback on mismatch.",
+      "remaining": "Specification-template application, SKU combination editing, gallery/rich-media selection, and several legacy product types remain."
     },
     {
       "legacyPath": "/admin/product/product_reply/:id?",
@@ -78,8 +78,8 @@
       "newScreens": ["/brand"],
       "newApiContracts": ["GET /adminapi/brand/list", "POST /adminapi/brand/save", "DELETE /adminapi/brand/del/:id"],
       "permission": "product.view / product.manage",
-      "covered": "Brand list, name, logo URL, sort, visibility value, create, edit, and delete.",
-      "remaining": "The new UI does not expose full legacy category relationships, dedicated status operations, attachment selection, and in-product selection."
+      "covered": "Brand list, name, logo URL, sort, visibility value, create, edit, reference-protected delete, and product-form selection.",
+      "remaining": "The new UI does not expose full legacy category relationships, dedicated status operations, and attachment selection."
     },
     {
       "legacyPath": "/admin/product/unitList",
@@ -100,8 +100,8 @@
       "newScreens": ["/label"],
       "newApiContracts": ["GET /adminapi/product_label/list", "POST /adminapi/product_label/save", "DELETE /adminapi/product_label/del/:id"],
       "permission": "product.view / product.manage",
-      "covered": "Simple product-label list, visual colors, create, edit, and delete; user labels are separately grouped on the same screen.",
-      "remaining": "Legacy label groups, show/status distinction, icon/badge settings, batch operations, and product-form assignment are not fully reproduced."
+      "covered": "Simple product-label list, visual colors, create, edit, reference-protected delete, and product-form assignment; user labels are separately grouped on the same screen.",
+      "remaining": "Legacy label groups, show/status distinction, icon/badge settings, and batch operations are not fully reproduced."
     },
     {
       "legacyPath": "/admin/product/specs",
@@ -111,8 +111,8 @@
       "newScreens": ["/product/metadata#parameters"],
       "newApiContracts": ["GET /adminapi/specs", "GET /adminapi/specs/:id", "POST /adminapi/specs/:id", "DELETE /adminapi/specs/:id"],
       "permission": "product.view / product.manage",
-      "covered": "Search, page, preview, create, edit, delete, sort, per-parameter status, and explicit separation from SKU specifications.",
-      "remaining": "Applying the template inside the Admin product form and validating historical template data in production remain open."
+      "covered": "Search, page, preview, create, edit, reference-protected delete, sort, per-parameter status, explicit separation from SKU specifications, product-form application, and per-product value snapshots.",
+      "remaining": "Validating historical template and snapshot data in production remains open."
     },
     {
       "legacyPath": "/admin/product/ensure",
@@ -122,8 +122,8 @@
       "newScreens": ["/product/metadata#ensures"],
       "newApiContracts": ["GET /adminapi/product/ensure", "POST /adminapi/product/ensure", "PUT /adminapi/product/ensure/:id", "DELETE /adminapi/product/ensure/:id"],
       "permission": "product.view / product.manage",
-      "covered": "Search, page, create, edit, enable/disable, sort, and reference-protected delete.",
-      "remaining": "Selecting guarantees in the product form and proving relation persistence remain open."
+      "covered": "Search, page, create, edit, enable/disable, sort, product-form multi-selection, atomic legacy-column plus relation-row persistence, and reference-protected delete.",
+      "remaining": "Real production data and restricted-role relation E2E remain open."
     },
     {
       "legacyPath": "/admin/product/ensure/create/:id?",

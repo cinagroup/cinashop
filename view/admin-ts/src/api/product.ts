@@ -5,6 +5,68 @@
 import request, { getData } from "@/utils/request";
 import type { AdminProduct } from "@/types/admin";
 
+const previewMode =
+  import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
+
+export interface ProductEditorOption {
+  id: number;
+  name: string;
+}
+
+export interface ProductEditorParameter extends ProductEditorOption {
+  value: string;
+  sort: number;
+  status: number;
+}
+
+export interface ProductEditorParameterTemplate extends ProductEditorOption {
+  specs: ProductEditorParameter[];
+}
+
+export interface ProductEditorOptions {
+  categories: ProductEditorOption[];
+  brands: ProductEditorOption[];
+  product_labels: ProductEditorOption[];
+  ensures: ProductEditorOption[];
+  parameter_templates: ProductEditorParameterTemplate[];
+}
+
+export interface AdminProductEditor extends AdminProduct {
+  cate_id: number[];
+  brand_id: number[];
+  store_label_id: number[];
+  ensure_id: number[];
+  specs_id: number;
+  specs: ProductEditorParameter[];
+}
+
+const previewEditorOptions: ProductEditorOptions = {
+  categories: [
+    { id: 11, name: "家居生活" },
+    { id: 12, name: "服饰配件" },
+  ],
+  brands: [
+    { id: 21, name: "CINA SELECT" },
+    { id: 22, name: "清风制造" },
+  ],
+  product_labels: [
+    { id: 31, name: "新品" },
+    { id: 32, name: "平台推荐" },
+  ],
+  ensures: [
+    { id: 41, name: "七天无理由" },
+    { id: 42, name: "正品保障" },
+  ],
+  parameter_templates: [{
+    id: 51,
+    name: "服装基础参数",
+    specs: [
+      { id: 511, name: "材质", value: "棉", sort: 30, status: 1 },
+      { id: 512, name: "适用季节", value: "四季", sort: 20, status: 1 },
+    ],
+  }],
+};
+
 export interface VirtualInventorySku {
   unique: string;
   suk: string;
@@ -108,12 +170,50 @@ export function apiAdminProductList(params: {
 }
 
 /** 商品详情 (GET /adminapi/product/detail/:id) */
-export function apiAdminProductDetail(id: number): Promise<AdminProduct> {
+export function apiAdminProductDetail(id: number): Promise<AdminProductEditor> {
+  if (previewMode) {
+    return Promise.resolve({
+      id,
+      product_type: 0,
+      type: 0,
+      relation_id: 0,
+      store_name: "轻盈通勤衬衫",
+      store_info: "适合日常通勤的舒适基础款",
+      image: "https://placehold.co/600x600/png?text=Product",
+      price: "199.00",
+      ot_price: "239.00",
+      stock: 120,
+      sales: 36,
+      is_show: 1,
+      is_verify: 1,
+      is_del: 0,
+      cate_id: [12],
+      keyword: "通勤,衬衫",
+      unit_name: "件",
+      sort: 20,
+      is_vip: 1,
+      vip_price: "179.00",
+      brand_id: [21],
+      store_label_id: [31, 32],
+      ensure_id: [41, 42],
+      specs_id: 51,
+      specs: structuredClone(previewEditorOptions.parameter_templates[0].specs),
+    });
+  }
   return getData(request.get(`/product/detail/${id}`));
 }
 
+/** 商品表单需要的品牌、标签、保障和参数模板候选。 */
+export function apiAdminProductEditorOptions(): Promise<ProductEditorOptions> {
+  if (previewMode) return Promise.resolve(structuredClone(previewEditorOptions));
+  return getData(request.get("/product/editor/options"));
+}
+
 /** 创建商品 (POST /adminapi/product/add) */
-export function apiAdminProductCreate(data: Record<string, unknown>): Promise<{ id: number }> {
+export function apiAdminProductCreate(
+  data: Record<string, unknown>,
+): Promise<{ id: number; associations_verified: boolean }> {
+  if (previewMode) return Promise.resolve({ id: 901, associations_verified: true });
   return getData(request.post("/product/add", data));
 }
 
@@ -121,7 +221,8 @@ export function apiAdminProductCreate(data: Record<string, unknown>): Promise<{ 
 export function apiAdminProductUpdate(
   id: number,
   data: Record<string, unknown>,
-): Promise<null> {
+): Promise<{ id: number; associations_verified: boolean }> {
+  if (previewMode) return Promise.resolve({ id, associations_verified: true });
   return getData(request.post(`/product/edit/${id}`, data));
 }
 
