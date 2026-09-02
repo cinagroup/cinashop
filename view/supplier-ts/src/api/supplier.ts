@@ -32,6 +32,10 @@ import type {
   PrintDocumentView,
   PrintJobListResult,
   WaybillJobListResult,
+  ShippingCityOption,
+  ShippingTemplateDetail,
+  ShippingTemplateListResult,
+  ShippingTemplatePayload,
 } from "@/types";
 
 export const previewMode =
@@ -82,6 +86,7 @@ const previewProductDetails = new Map<number, ProductDetail>([
         { unique: "PV71GRN1", suk: "青绿", detail: { 颜色: "青绿" }, image: "", price: "89.00", settle_price: "62.00", cost: "48.00", ot_price: "109.00", vip_price: "85.00", stock: 18, sales: 126, bar_code: "", weight: "0.35", volume: "0.00", brokerage: "2.00", brokerage_two: "1.00", code: "CUP-GREEN" },
         { unique: "PV71WHT1", suk: "云白", detail: { 颜色: "云白" }, image: "", price: "89.00", settle_price: "62.00", cost: "48.00", ot_price: "109.00", vip_price: "85.00", stock: 10, sales: 90, bar_code: "", weight: "0.35", volume: "0.00", brokerage: "2.00", brokerage_two: "1.00", code: "CUP-WHITE" },
       ],
+      freight: 1,
       postage: "0.00",
       temp_id: 0,
       is_postage: 1,
@@ -119,6 +124,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
     spec_type: 0,
     items: [{ value: "规格", detail: ["默认"] }],
     attrs: [{ unique: `PV${id}SKU`, suk: "默认", detail: { 规格: "默认" }, image: "", price: row.price, settle_price: row.price, cost: "0.00", ot_price: row.price, vip_price: row.price, stock: row.stock, sales: row.sales, bar_code: "", weight: "0.00", volume: "0.00", brokerage: "0.00", brokerage_two: "0.00", code: "" }],
+    freight: 1,
     postage: "0.00",
     temp_id: 0,
     is_postage: 1,
@@ -175,6 +181,31 @@ const previewFinanceSummary: FinanceSummary = {
   pending_extract: "10000.00",
   paid_extract: "375520.30",
 };
+
+const previewShippingTemplates: ShippingTemplateDetail[] = [
+  {
+    formData: { name: "全国标准运费", type: 1, appoint_check: 1, no_delivery_check: 0, sort: 100 },
+    templateList: [{ id: 101, city_ids: [[0]], first: "1.00", first_price: "8.00", continue: "1.00", continue_price: "2.00" }],
+    appointList: [{ id: 102, city_ids: [[44, 4401]], number: "3.00", price: "99.00" }],
+    noDeliveryList: [],
+  },
+  {
+    formData: { name: "大件按重量", type: 2, appoint_check: 0, no_delivery_check: 1, sort: 80 },
+    templateList: [{ id: 201, city_ids: [[0]], first: "1.00", first_price: "12.00", continue: "1.00", continue_price: "4.00" }],
+    appointList: [],
+    noDeliveryList: [{ id: 202, city_ids: [[65, 6501]] }],
+  },
+];
+
+const previewShippingCities: ShippingCityOption[] = [
+  { id: 1, city_id: 44, level: 1, parent_id: 0, name: "广东省", is_show: 1, children: [
+    { id: 2, city_id: 4401, level: 2, parent_id: 44, name: "广州市", is_show: 1 },
+    { id: 3, city_id: 4403, level: 2, parent_id: 44, name: "深圳市", is_show: 1 },
+  ] },
+  { id: 4, city_id: 65, level: 1, parent_id: 0, name: "新疆维吾尔自治区", is_show: 1, children: [
+    { id: 5, city_id: 6501, level: 2, parent_id: 65, name: "乌鲁木齐市", is_show: 1 },
+  ] },
+];
 
 const previewSupplierConfig: SupplierConfigView = {
   type: "third",
@@ -301,6 +332,80 @@ export async function getDashboard(): Promise<DashboardStats> {
 export async function getProducts(params: Record<string, string | number>): Promise<PageResult<ProductRow>> {
   if (previewMode) return { list: previewProducts, count: previewProducts.length, page: 1, limit: 20 };
   return apiRequest<PageResult<ProductRow>>({ method: "GET", url: "/product/product/list", params });
+}
+
+export async function getShippingTemplates(
+  params: Record<string, string | number> = {},
+): Promise<ShippingTemplateListResult> {
+  if (previewMode) {
+    const data = previewShippingTemplates.map((item, index) => ({
+      id: index + 1,
+      name: item.formData.name,
+      type: item.formData.type === 1 ? "按件数" : item.formData.type === 2 ? "按重量" : "按体积",
+      appoint: item.formData.appoint_check ? "开启" : "关闭",
+      sort: item.formData.sort,
+      add_time: "2026-09-02 09:00:00",
+    }));
+    return { data, count: data.length };
+  }
+  return apiRequest<ShippingTemplateListResult>({
+    method: "GET",
+    url: "/setting/shipping_templates/list",
+    params,
+  });
+}
+
+export async function getShippingTemplate(id: number): Promise<ShippingTemplateDetail> {
+  if (previewMode) {
+    const detail = previewShippingTemplates[id - 1];
+    if (!detail) throw new Error("运费模板不存在");
+    return JSON.parse(JSON.stringify(detail)) as ShippingTemplateDetail;
+  }
+  return apiRequest<ShippingTemplateDetail>({
+    method: "GET",
+    url: `/setting/shipping_templates/${id}/edit`,
+  });
+}
+
+export async function saveShippingTemplate(id: number, data: ShippingTemplatePayload) {
+  if (previewMode) {
+    const detail: ShippingTemplateDetail = {
+      formData: {
+        name: data.name,
+        type: data.type,
+        appoint_check: data.appoint,
+        no_delivery_check: data.no_delivery,
+        sort: data.sort,
+      },
+      templateList: data.region_info,
+      appointList: data.appoint_info,
+      noDeliveryList: data.no_delivery_info,
+    };
+    const savedId = id || previewShippingTemplates.length + 1;
+    previewShippingTemplates[savedId - 1] = detail;
+    return { id: savedId };
+  }
+  return apiRequest<{ id: number }>({
+    method: "POST",
+    url: `/setting/shipping_templates/save/${id}`,
+    data,
+  });
+}
+
+export async function deleteShippingTemplate(id: number) {
+  if (previewMode) {
+    previewShippingTemplates.splice(id - 1, 1);
+    return null;
+  }
+  return apiRequest<null>({ method: "DELETE", url: `/setting/shipping_templates/del/${id}` });
+}
+
+export async function getShippingCities(): Promise<ShippingCityOption[]> {
+  if (previewMode) return JSON.parse(JSON.stringify(previewShippingCities)) as ShippingCityOption[];
+  return apiRequest<ShippingCityOption[]>({
+    method: "GET",
+    url: "/setting/shipping_templates/city_list",
+  });
 }
 
 export async function setProductShow(id: number, isShow: number) {

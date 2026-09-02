@@ -18,6 +18,7 @@ import {
   storeProductDescription,
   storeProductRelation,
   storeProductStockRecord,
+  shippingTemplates,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -67,6 +68,7 @@ export interface SupplierPhysicalProductInput {
   specType: 0 | 1;
   dimensions: SupplierProductDimension[];
   skus: SupplierProductSku[];
+  freight: 1 | 2 | 3;
   postage: string;
   tempId: number;
   isPostage: number;
@@ -341,6 +343,23 @@ export function normalizeSupplierPhysicalProductInput(
   if (isLimit && ![1, 2].includes(limitType)) throw new ValidateException("限购类型错误");
   if (isLimit && limitNum <= 0) throw new ValidateException("限购数量必须大于0");
 
+  let postage = decimalString(input.postage, "运费");
+  let tempId = integerValue(firstValue(input, "temp_id", "tempId"), "运费模板");
+  const freightValue = firstValue(input, "freight");
+  const inferredFreight = tempId > 0 ? 3 : moneyCents(postage) > 0n ? 2 : 1;
+  const freight = integerValue(freightValue, "运费设置", inferredFreight, 3);
+  if (![1, 2, 3].includes(freight)) throw new ValidateException("运费设置格式错误");
+  if (freight === 1) {
+    postage = "0.00";
+    tempId = 0;
+  } else if (freight === 2) {
+    if (moneyCents(postage) <= 0n) throw new ValidateException("固定邮费必须大于0");
+    tempId = 0;
+  } else {
+    if (tempId <= 0) throw new ValidateException("请选择运费模板");
+    postage = "0.00";
+  }
+
   return {
     storeName: requiredString(firstValue(input, "store_name", "storeName"), "商品名称", 256),
     storeInfo: optionalString(firstValue(input, "store_info", "storeInfo"), "商品简介", 256),
@@ -353,8 +372,9 @@ export function normalizeSupplierPhysicalProductInput(
     specType,
     dimensions,
     skus: normalizeSupplierProductSkus(input.attrs, dimensions, specType, options),
-    postage: decimalString(input.postage, "运费"),
-    tempId: integerValue(firstValue(input, "temp_id", "tempId"), "运费模板"),
+    freight: freight as 1 | 2 | 3,
+    postage,
+    tempId,
     isPostage: flagValue(firstValue(input, "is_postage", "isPostage"), "包邮状态", 0),
     isSupportRefund: flagValue(
       firstValue(input, "is_support_refund", "isSupportRefund"),
@@ -649,6 +669,23 @@ export class SupplierProductManagementService {
     return rows;
   }
 
+  private async assertShippingTemplate(tx: DbClient, supplierId: number, input: SupplierPhysicalProductInput) {
+    if (input.freight !== 3) return;
+    const rows = await tx
+      .select({ id: shippingTemplates.id })
+      .from(shippingTemplates)
+      .where(and(
+        eq(shippingTemplates.id, input.tempId),
+        eq(shippingTemplates.ownerType, SUPPLIER_TYPE),
+        eq(shippingTemplates.relationId, supplierId),
+        eq(shippingTemplates.status, 1),
+        eq(shippingTemplates.isDel, 0),
+      ))
+      .limit(1)
+      .for("key share");
+    if (!rows[0]) throw new ValidateException("运费模板不存在或不属于当前供应商");
+  }
+
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord) {
     const input = normalizeSupplierPhysicalProductInput(rawInput);
     return withTx(this.container, async (tx) => {
@@ -670,6 +707,7 @@ export class SupplierProductManagementService {
         throw new ValidateException("当前迁移阶段不能编辑非实物商品");
       }
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
+      await this.assertShippingTemplate(tx, supplierId, input);
       const stock = input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
       const price = minMoney(input.skus.map((sku) => sku.price));
@@ -694,7 +732,7 @@ export class SupplierProductManagementService {
         vipPrice,
         otPrice,
         deliveryType: "1",
-        freight: input.tempId > 0 ? 1 : 2,
+        freight: input.freight,
         postage: input.postage,
         tempId: input.tempId,
         unitName: input.unitName,
@@ -925,6 +963,7 @@ export class SupplierProductManagementService {
         brokerage_two: sku.brokerageTwo,
         code: sku.code,
       })),
+      freight: product.freight,
       postage: product.postage,
       temp_id: product.tempId,
       is_postage: product.isPostage,

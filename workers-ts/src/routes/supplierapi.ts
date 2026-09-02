@@ -67,6 +67,27 @@ supplierapiRoutes.get("/system/form/all_system_form", SupplierController.systemF
 supplierapiRoutes.get("/printing", SupplierController.legacyPrinting);
 supplierapiRoutes.put("/printing", SupplierController.updateLegacyPrinting);
 
+supplierapiRoutes.get(
+  "/setting/shipping_templates/list",
+  SupplierController.shippingTemplateList,
+);
+supplierapiRoutes.get(
+  "/setting/shipping_templates/:id/edit",
+  SupplierController.shippingTemplateDetail,
+);
+supplierapiRoutes.post(
+  "/setting/shipping_templates/save/:id",
+  SupplierController.saveShippingTemplate,
+);
+supplierapiRoutes.delete(
+  "/setting/shipping_templates/del/:id",
+  SupplierController.deleteShippingTemplate,
+);
+supplierapiRoutes.get(
+  "/setting/shipping_templates/city_list",
+  SupplierController.shippingTemplateCityList,
+);
+
 // Active receipt-printer definitions. The old /printing single-row table is
 // represented through the scoped config service; it is not a second runtime authority.
 supplierapiRoutes.get("/print/list", PrintDocumentController.supplierList);

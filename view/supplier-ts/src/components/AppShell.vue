@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { DataAnalysis, Goods, List, Menu, Printer, RefreshLeft, Setting, SwitchButton, Tickets, Tools, Wallet } from "@element-plus/icons-vue";
+import { Box, DataAnalysis, Goods, List, Menu, Printer, RefreshLeft, Setting, SwitchButton, Tickets, Tools, Wallet } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import { previewMode } from "@/api/supplier";
@@ -18,6 +18,7 @@ const supplierName = computed(
 const navigation = [
   { path: "/dashboard", label: "经营概览", icon: DataAnalysis },
   { path: "/products", label: "商品管理", icon: Goods },
+  { path: "/shipping-templates", label: "运费模板", icon: Box },
   { path: "/orders", label: "订单管理", icon: List },
   { path: "/refunds", label: "售后管理", icon: RefreshLeft },
   { path: "/finance", label: "财务结算", icon: Wallet },

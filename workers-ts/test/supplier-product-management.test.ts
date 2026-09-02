@@ -50,6 +50,32 @@ describe("supplier physical product normalization", () => {
       brokerageTwo: "1.25",
       stock: 18,
     });
+    expect(product).toMatchObject({ freight: 1, postage: "0.00", tempId: 0 });
+  });
+
+  it("preserves PHP freight modes and refuses incomplete template/fixed-postage settings", () => {
+    expect(normalizeSupplierPhysicalProductInput({
+      ...baseProduct(),
+      freight: 2,
+      postage: "6.50",
+      temp_id: 91,
+    })).toMatchObject({ freight: 2, postage: "6.50", tempId: 0 });
+    expect(normalizeSupplierPhysicalProductInput({
+      ...baseProduct(),
+      freight: 3,
+      postage: "8.00",
+      temp_id: 91,
+    })).toMatchObject({ freight: 3, postage: "0.00", tempId: 91 });
+    expect(() => normalizeSupplierPhysicalProductInput({
+      ...baseProduct(),
+      freight: 3,
+      temp_id: 0,
+    })).toThrow("请选择运费模板");
+    expect(() => normalizeSupplierPhysicalProductInput({
+      ...baseProduct(),
+      freight: 2,
+      postage: 0,
+    })).toThrow("固定邮费必须大于0");
   });
 
   it("rejects specialized product types until their fulfillment semantics are migrated", () => {
@@ -160,6 +186,14 @@ describe("supplier product migration contracts", () => {
     expect(source.indexOf('"/product/product/saveStocks/:id"')).toBeLessThan(
       source.lastIndexOf('"/product/product/:id"'),
     );
+  });
+
+  it("authorizes selected shipping templates against the current supplier", () => {
+    const source = readFileSync("src/services/supplier/SupplierProductManagementService.ts", "utf8");
+    expect(source).toContain("assertShippingTemplate(tx, supplierId, input)");
+    expect(source).toContain("eq(shippingTemplates.ownerType, SUPPLIER_TYPE)");
+    expect(source).toContain("eq(shippingTemplates.relationId, supplierId)");
+    expect(source).toContain("eq(shippingTemplates.status, 1)");
   });
 
   it("keeps the file migration and embedded production migration byte-equivalent after trimming", () => {

@@ -3,8 +3,8 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { ArrowLeft, Delete, Plus } from "@element-plus/icons-vue";
-import { getProductCategories, getProductDetail, saveProduct } from "@/api/supplier";
-import type { ProductCategory, ProductDetail, ProductDimension, ProductSku } from "@/types";
+import { getProductCategories, getProductDetail, getShippingTemplates, saveProduct } from "@/api/supplier";
+import type { ProductCategory, ProductDetail, ProductDimension, ProductSku, ShippingTemplateRow } from "@/types";
 
 const route = useRoute();
 const router = useRouter();
@@ -13,6 +13,7 @@ const editing = computed(() => Number.isInteger(productId.value) && productId.va
 const loading = ref(false);
 const saving = ref(false);
 const categories = ref<ProductCategory[]>([]);
+const shippingTemplates = ref<ShippingTemplateRow[]>([]);
 
 function blankSku(detail: Record<string, string>, previous?: ProductSku): ProductSku {
   const suk = Object.values(detail).join(",");
@@ -52,6 +53,7 @@ function initialForm(): ProductDetail {
     spec_type: 0,
     items: [{ value: "规格", detail: ["默认"] }],
     attrs: [blankSku({ 规格: "默认" })],
+    freight: 1,
     postage: "0.00",
     temp_id: 0,
     is_postage: 1,
@@ -143,6 +145,8 @@ function validateForm() {
     if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(sku.settle_price) || Number(sku.settle_price) <= 0) return `SKU ${sku.suk} 的结算价格式错误`;
     if (Number(sku.brokerage || 0) + Number(sku.brokerage_two || 0) > Number(sku.price)) return `SKU ${sku.suk} 的佣金之和不能超过销售价`;
   }
+  if (form.freight === 2 && (!/^\d{1,10}(?:\.\d{1,2})?$/.test(form.postage) || Number(form.postage) <= 0)) return "固定邮费必须大于0且最多两位小数";
+  if (form.freight === 3 && !form.temp_id) return "请选择当前供应商的运费模板";
   return "";
 }
 
@@ -165,7 +169,12 @@ async function submit() {
 async function load() {
   loading.value = true;
   try {
-    categories.value = await getProductCategories();
+    const [categoryRows, templateResult] = await Promise.all([
+      getProductCategories(),
+      getShippingTemplates({ page: 1, limit: 100 }),
+    ]);
+    categories.value = categoryRows;
+    shippingTemplates.value = templateResult.data;
     if (editing.value) Object.assign(form, await getProductDetail(productId.value));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "商品资料加载失败");
@@ -257,8 +266,20 @@ onMounted(load);
           <header><h2>配送与售后</h2></header>
           <el-form label-position="top">
             <el-form-item label="配送方式"><el-input model-value="快递配送" disabled /></el-form-item>
-            <el-form-item label="运费"><el-input v-model="form.postage" :disabled="Boolean(form.is_postage)" /></el-form-item>
-            <el-form-item><el-checkbox v-model="form.is_postage" :true-value="1" :false-value="0">包邮</el-checkbox></el-form-item>
+            <el-form-item label="运费设置">
+              <el-radio-group v-model="form.freight">
+                <el-radio :value="1">包邮</el-radio>
+                <el-radio :value="2">固定邮费</el-radio>
+                <el-radio :value="3">运费模板</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="form.freight === 2" label="固定邮费（元）"><el-input v-model="form.postage" /></el-form-item>
+            <el-form-item v-if="form.freight === 3" label="运费模板">
+              <el-select v-model="form.temp_id" clearable filterable placeholder="选择当前供应商模板" style="width: 100%">
+                <el-option v-for="item in shippingTemplates" :key="item.id" :label="`${item.name}（${item.type}）`" :value="item.id" />
+              </el-select>
+              <el-button link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
+            </el-form-item>
             <el-form-item><el-checkbox v-model="form.is_support_refund" :true-value="1" :false-value="0">支持退款退货</el-checkbox></el-form-item>
           </el-form>
         </article>

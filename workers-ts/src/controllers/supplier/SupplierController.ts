@@ -11,6 +11,7 @@ import {
   SupplierService,
 } from "@/services/supplier/SupplierService";
 import { SupplierCompatibilityService } from "@/services/supplier/SupplierCompatibilityService";
+import { SupplierShippingTemplateService } from "@/services/supplier/SupplierShippingTemplateService";
 import {
   normalizeSupplierDeliveryInput,
   normalizeSupplierSplitCartInput,
@@ -81,6 +82,10 @@ function storeScopedConfigService(c: SupplierContext) {
 
 function compatibilityService(c: SupplierContext) {
   return new SupplierCompatibilityService(c.get("container"));
+}
+
+function shippingTemplateService(c: SupplierContext) {
+  return new SupplierShippingTemplateService(c.get("container"));
 }
 
 const MAX_SIMPLE_BODY_BYTES = 64 * 1024;
@@ -231,6 +236,50 @@ export async function updateLegacyPrinting(c: SupplierContext) {
   const body = await readJsonObject(c);
   await storeScopedConfigService(c).saveLegacyPrinterConfig(supplierId, body);
   return jsonOk(c, null, "保存成功");
+}
+
+export async function shippingTemplateList(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await shippingTemplateService(c).list(supplierId, c.req.query()));
+}
+
+export async function shippingTemplateDetail(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(
+    c,
+    await shippingTemplateService(c).detail(
+      supplierId,
+      positiveId(c.req.param("id"), "运费模板ID"),
+    ),
+  );
+}
+
+export async function saveShippingTemplate(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const templateId = Number(c.req.param("id") ?? "0");
+  if (!Number.isSafeInteger(templateId) || templateId < 0) {
+    throw new ValidateException("运费模板ID错误");
+  }
+  const savedId = await shippingTemplateService(c).save(
+    supplierId,
+    templateId,
+    await readJsonObject(c),
+  );
+  return jsonOk(c, { id: savedId }, templateId > 0 ? "修改成功！" : "添加成功!");
+}
+
+export async function deleteShippingTemplate(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  await shippingTemplateService(c).delete(
+    supplierId,
+    positiveId(c.req.param("id"), "运费模板ID"),
+  );
+  return jsonOk(c, null, "删除成功");
+}
+
+export async function shippingTemplateCityList(c: SupplierContext) {
+  supplierIdentity(c);
+  return jsonOk(c, await shippingTemplateService(c).cityList());
 }
 
 export async function notices(c: SupplierContext) {

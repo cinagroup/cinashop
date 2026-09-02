@@ -19,6 +19,7 @@ const router = createRouter({
         { path: "products/:id/edit", component: () => import("@/pages/ProductForm.vue") },
         { path: "products/virtual-alerts", component: () => import("@/pages/VirtualInventoryAlerts.vue") },
         { path: "products/:id/virtual-inventory", component: () => import("@/pages/VirtualInventory.vue") },
+        { path: "shipping-templates", component: () => import("@/pages/ShippingTemplates.vue") },
         { path: "orders", component: () => import("@/pages/Orders.vue") },
         { path: "refunds", component: () => import("@/pages/Refunds.vue") },
         { path: "finance", component: () => import("@/pages/Finance.vue") },

@@ -183,6 +183,7 @@ export interface ProductDetail {
   spec_type: 0 | 1;
   items: ProductDimension[];
   attrs: ProductSku[];
+  freight: 1 | 2 | 3;
   postage: string;
   temp_id: number;
   is_postage: number;
@@ -196,6 +197,75 @@ export interface ProductDetail {
   is_show?: number;
   is_verify?: number;
   refusal?: string;
+}
+
+export interface ShippingTemplateRow {
+  id: number;
+  name: string;
+  type: string;
+  appoint: string;
+  sort: number;
+  add_time: string;
+}
+
+export interface ShippingTemplateListResult {
+  data: ShippingTemplateRow[];
+  count: number;
+}
+
+export interface ShippingCityOption {
+  id: number;
+  city_id: number;
+  level: number;
+  parent_id: number;
+  name: string;
+  is_show: number;
+  children?: ShippingCityOption[];
+}
+
+export interface ShippingRegionRule {
+  id?: number;
+  city_ids: number[][];
+  first: string;
+  first_price: string;
+  continue: string;
+  continue_price: string;
+}
+
+export interface ShippingFreeRule {
+  id?: number;
+  city_ids: number[][];
+  number: string;
+  price: string;
+}
+
+export interface ShippingNoDeliveryRule {
+  id?: number;
+  city_ids: number[][];
+}
+
+export interface ShippingTemplateDetail {
+  formData: {
+    name: string;
+    type: 1 | 2 | 3;
+    appoint_check: 0 | 1;
+    no_delivery_check: 0 | 1;
+    sort: number;
+  };
+  templateList: ShippingRegionRule[];
+  appointList: ShippingFreeRule[];
+  noDeliveryList: ShippingNoDeliveryRule[];
+}
+
+export interface ShippingTemplatePayload {
+  name: string;
+  type: 1 | 2 | 3;
+  appoint: 0 | 1;
+  no_delivery: 0 | 1;
+  sort: number;
+  region_info: ShippingRegionRule[];
+  appoint_info: ShippingFreeRule[];
+  no_delivery_info: ShippingNoDeliveryRule[];
 }
 
 export interface ProductSaveResult {
