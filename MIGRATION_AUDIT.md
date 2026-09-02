@@ -3916,7 +3916,7 @@ Admin `productMetadata.ts` 新接八个现有合同：规格模板的列表、�
 
 应用内浏览器在本地 `preview=1` 编辑历史多规格商品：选择“服装颜色尺码”并重新生成后，米白/藏青 × S/M 四行仍分别保留 `pvsku001..004`；使用真实控件把首行售价改为209、库存改为35，失焦和后续输入后值仍保持。390×844下文档与正文 `scrollWidth=390`，SKU表格内容宽1230px但由249px的内部 `overflow-x:auto` 容器承载，没有页面级横向溢出；实际截图确认固定组合列与可滚动价格列可见，浏览器 warning/error 为0。临时视口、标签页和本地服务均已恢复/关闭。
 
-本地定向4文件/22项通过；完整 Worker 单元200文件/1,272项、单元与运行时 TypeScript、Admin 2,427模块生产构建全部通过。Admin静态请求仍为310个调用点、330个路径变体，330条全部注册且可执行；schema为源201、目标262、共享201、源字段缺口0、定义漂移0；全局路由保持 PHP 1,904 / TS 1,567 / 精确匹配848 / 可执行830；observability为17类信号、10个组件、53个必需事件、422个生产源码文件。Windows本地真实 Worker运行时沿用已记录的宿主访问冲突限制，Linux workerd以本批精确提交的 CI 为发布候选门禁。
+本地定向4文件/22项通过；完整 Worker 单元200文件/1,272项、单元与运行时 TypeScript、Admin 2,427模块生产构建全部通过。Admin静态请求仍为310个调用点、330个路径变体，330条全部注册且可执行；schema为源201、目标262、共享201、源字段缺口0、定义漂移0；全局路由保持 PHP 1,904 / TS 1,567 / 精确匹配848 / 可执行830；observability为17类信号、10个组件、53个必需事件、422个生产源码文件。Windows本地真实 Worker运行时沿用已记录的宿主访问冲突限制；精确实现提交 `6bef6de8a67bd8d2c4df3d683684ad36198a471e` 推送后，[Actions `33613355706`](https://github.com/cinagroup/cinashop/actions/runs/33613355706) 的 Linux workerd、Worker类型/单元/schema/route/observability、Admin/PC/Supplier/Kefu/UniApp、生产依赖审计与全历史Gitleaks共8/8成功。
 
 本批没有连接 Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或写入生产 PostgreSQL，没有执行 DDL/DML、Queue、R2、第三方调用，也没有部署 Worker/Admin Pages。FE-001E5A仅标记“候选完成，未发布”；E5父项仍被受控 SKU 退役、批量运营和 E6真实角色/历史数据 E2E 阻塞。
 
