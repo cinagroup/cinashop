@@ -295,7 +295,7 @@ export async function adminMobileProductUpdateAttrs(c: C) {
   return jsonOk(c, await mobileProducts(c).updateAttrs(c.req.param("id"), body), "修改成功");
 }
 
-/** POST /api/admin/product/batch_process — 原子替换商品分类或标签。 */
+/** POST /api/admin/product/batch_process — 有界、原子、回读校验的商品批量运营。 */
 export async function adminMobileProductBatchProcess(c: C) {
   privateNoStore(c);
   const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
