@@ -11,6 +11,41 @@ const testDir = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testDir, "..", "..");
 
 describe("Admin frontend API contract", () => {
+  it("registers dashboard notification and aligns destructive action methods", () => {
+    const backend = readFileSync(
+      join(repositoryRoot, "workers-ts", "src", "routes", "adminapi.ts"),
+      "utf8",
+    );
+    const product = readFileSync(join(repositoryRoot, "view", "admin-ts", "src", "api", "product.ts"), "utf8");
+    const refund = readFileSync(join(repositoryRoot, "view", "admin-ts", "src", "api", "refund.ts"), "utf8");
+
+    expect(backend).toContain('adminapiRoutes.get("/new_push", adminAuth, AdminController.adminNewPush)');
+    expect(backend).toContain('adminapiRoutes.delete("/product/del/:id"');
+    expect(product).toContain("request.delete(`/product/del/${id}`)");
+    expect(refund).toContain("request.post(`/refund/refund/${id}`)");
+    expect(refund).not.toContain("request.post(`/refund/agree/${id}`)");
+  });
+
+  it("uses the transactional idempotent user balance contract and quarantines generic config", () => {
+    const backend = readFileSync(
+      join(repositoryRoot, "workers-ts", "src", "routes", "adminapi.ts"),
+      "utf8",
+    );
+    const users = readFileSync(join(repositoryRoot, "view", "admin-ts", "src", "api", "order.ts"), "utf8");
+    const configApi = readFileSync(join(repositoryRoot, "view", "admin-ts", "src", "api", "config.ts"), "utf8");
+    const configPage = readFileSync(join(repositoryRoot, "view", "admin-ts", "src", "pages", "ConfigList.vue"), "utf8");
+
+    expect(backend).toContain('adminapiRoutes.post("/user/update_other/:uid", adminAuth, AdminCrud.adminMobileUserUpdateOther)');
+    expect(backend).toContain('adminapiRoutes.post("/user/set_other/:uid", adminAuth, AdminCrud.adminMobileUserUpdateOther)');
+    expect(users).toContain("request.post(`/user/update_other/${id}`");
+    expect(users).toContain('"Idempotency-Key": crypto.randomUUID()');
+    expect(users).not.toContain("request.post(`/user/money/${id}`");
+    expect(configApi).not.toContain("request.");
+    expect(configPage).toContain("通用键值编辑器已安全停用");
+    expect(configPage).toContain('to="/config/newcomer"');
+    expect(configPage).toContain('to="/config/runtime-content"');
+  });
+
   it("uses the registered product create and edit routes instead of the 501 fallback", () => {
     const frontend = readFileSync(
       join(repositoryRoot, "view", "admin-ts", "src", "api", "product.ts"),

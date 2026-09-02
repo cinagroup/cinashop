@@ -62,7 +62,7 @@
       },
       {
         "file": "src/router/modules/statistic.js",
-        "sha256": "00130f28b13a331b2de53f9b94c3127c8480be73b702d0c86f7b7e0136d99333"
+        "sha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f"
       },
       {
         "file": "src/router/modules/supplier.js",
@@ -3594,7 +3594,7 @@
     "routeFiles": [
       {
         "file": "src/router/index.ts",
-        "sha256": "5deab456ced29e29e815cafc3e1c2ea8201623455b3c1885b56eb274748b11ba"
+        "sha256": "403595f55d243f4f1419679c58565f3fd32086830e22aad79ac6a99d2e083cb2"
       }
     ],
     "pageVueFiles": [

@@ -60,7 +60,8 @@ function listVueFiles(root: string): string[] {
 }
 
 function sha256(file: string): string {
-  return createHash("sha256").update(readFileSync(file)).digest("hex");
+  const canonicalText = readFileSync(file, "utf8").replace(/\r\n?/g, "\n");
+  return createHash("sha256").update(canonicalText).digest("hex");
 }
 
 function assertInternallyConsistent(side: InventorySide) {

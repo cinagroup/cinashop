@@ -3787,6 +3787,30 @@ Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项
 
 本批没有连接、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、主 Worker/Pages部署或删除生产数据。用户的简短“授权”仍未满足外部安全审查对临时 workers.dev目的地和返回载荷的明确授权要求，因此 FE-004H的生产附件聚合没有执行：没有创建临时 Worker、没有读取 Hyperdrive/R2、也没有执行清理删除。FE-001A～C的本地进展不解除 FE-004H、真实 Admin账号、预发和发布门禁。
 
+## FE-001-F Admin 请求路径全量静态审计与危险配置面隔离（2026-09-02）
+
+### 从抽样排查升级为可重复的请求—路由合同
+
+新增 `scripts/admin-frontend-api-audit.ts`，使用 TypeScript AST 扫描新 Admin 的 `src/api/*.ts` 与 `src/pages/**/*.vue` 脚本中所有 `request.get/post/put/delete/patch` 调用。审计器会展开条件表达式、局部 URL 对象映射和函数参数的字符串联合类型；运行时 ID只按路径段归一为 `:param`，动态调用段不能被同位置的固定字面量路由误匹配。后端从 `src/routes/adminapi.ts` 读取同方法路由及最终处理器，并把输入文件的换行统一为 LF 后计算 SHA-256，避免 Windows CRLF 与 Linux LF造成虚假漂移。
+
+最终权威结果为297个请求调用点、317个路径变体；同方法已注册317、可执行317、未注册0、无法解析0、命中命名为受控不可用的处理器0。报告固化在 `audit/admin-frontend-api-contracts.json`，测试会在同一进程从当前源码重新生成完整报告并与提交快照逐字段比较；任何新增、删除、改方法、改路径、处理器变化或输入哈希漂移都必须显式更新审计。此口径只证明当前新 Admin发出的静态请求不会因缺注册而落入末尾通配501，不证明每个处理器在真实业务数据下成功，也不把 Worker中存在但当前前端未调用的企业微信远端写路由误算为已完成。
+
+### 四类真实断链与一处高风险伪修复
+
+审计首先确认 Dashboard的 `GET /adminapi/new_push` 确实没有兼容路由，尽管控制器和 `/api/admin/new_push` 已存在；现已注册同一只读处理器。商品删除前端使用 DELETE、兼容路由却注册 POST，现统一为控制器和主 Admin路由已有的 DELETE语义。退款审核前端调用 `/refund/agree/:id`，Worker真实兼容合同为 `/refund/refund/:id`，现按现有退款服务入口校正。三处都增加静态防回归断言。
+
+用户余额页面原本调用不存在的 `/user/money/:id`；直接把它改指旧 `/user/set_other/:id` 虽能消除501，却会继续使用无事务、无幂等、无资金流水和无管理员审计的旧控制器，因此被否决。页面改接 `POST /user/update_other/:uid`，请求体转换为旧移动管理合同的 `status/number/type` 并每次携带 UUID v4 `Idempotency-Key`；兼容路由指向已经通过行锁、事务级 advisory lock、重放账本、`user_money`流水和 `system_log`审计验证的 `adminMobileUserUpdateOther`。旧 `set_other` 别名也改指同一安全处理器，旧 `{money,type}` 或缺幂等键请求会明确失败，不再静默改余额。
+
+通用系统配置页是更危险的“补路由即可用”假修复：既有未注册控制器会读取全部 `is_store=0`键值，其中可能包含支付、微信和第三方凭据；保存端又接受任意键、逐条非事务写入并允许创建新键。此次没有注册 `/config/list|save`，而是删除新 Admin对这两个危险合同的调用，把页面改为明确的安全停用说明，并只提供已经有字段白名单、权限和业务校验的“新人运营”“客户端内容”入口。通用配置迁移仍须按业务域建设专用服务，不能恢复整表键值编辑器。
+
+### 跨平台门禁、浏览器终态与边界
+
+上一提交 `b3dca1d340fc845a84185b823d2805e7df947354` 的 Actions `33596350398` 有7个任务成功，Worker任务在1,245项中的唯一失败是 Admin导航快照把工作区原始换行纳入哈希：Windows生成的 CRLF摘要在 Ubuntu LF检出后误报路由漂移，功能测试没有其他失败。本批把导航和新 API审计哈希都改为规范化文本摘要；本地完整 Worker单元现为196文件/1,249项全部通过，双 TypeScript、Admin生产构建、严格 API审计和定向4文件/16项均通过。该跨平台修复仍需新提交对应的 Ubuntu Actions成功后才能形成远端证据。
+
+真实应用内浏览器在桌面打开 `/config?preview=1`，确认安全停用说明和两个入口；“新人运营”进入 `/config/newcomer`，“客户端内容”进入 `/config/runtime-content`，页面标题、主内容和错误遮罩均正常。390×844 下 `innerWidth/document/body scrollWidth` 均为390，两张卡片各306px且纵向排列，无页面级横向溢出。视口、标签页和本地服务均已恢复/关闭。浏览器只使用本地预览数据，没有读取或写入生产配置。
+
+本批没有连接 Hyperdrive、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、主 Worker或 Admin Pages发布。FE-001F标记为静态候选完成；FE-001父项仍被274条旧路由逐屏语义映射、商品剩余操作面、真实主管理员/受限角色生产数据 E2E，以及 Pages预发、发布和观察阻塞。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

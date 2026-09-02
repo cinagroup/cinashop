@@ -17,6 +17,7 @@
     "data:schema-audit": "tsx scripts/mysql-to-postgres.ts schema-audit",
     "audit:routes": "tsx scripts/route-parity-audit.ts",
     "audit:admin-frontend": "tsx scripts/admin-frontend-parity-audit.ts",
+    "audit:admin-api": "tsx scripts/admin-frontend-api-audit.ts",
     "audit:observability": "tsx scripts/observability-audit.ts",
     "audit:legacy-schema:update": "tsx scripts/generate-legacy-schema-authority.ts",
     "data:plan": "tsx scripts/mysql-to-postgres.ts plan",

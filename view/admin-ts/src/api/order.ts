@@ -163,17 +163,16 @@ export function apiAdminUserInfo(id: number): Promise<AdminUser> {
   return getData(request.get(`/user/info/${id}`));
 }
 
-export function apiAdminUserUpdate(
-  id: number,
-  data: Record<string, unknown>,
-): Promise<null> {
-  return getData(request.post(`/user/update/${id}`, data));
-}
-
 export function apiAdminUserMoney(
   id: number,
   money: string,
   type: "add" | "sub",
 ): Promise<{ balance: string }> {
-  return getData(request.post(`/user/money/${id}`, { money, type }));
+  return getData(request.post(`/user/update_other/${id}`, {
+    status: type === "add" ? 1 : 2,
+    number: money,
+    type: 1,
+  }, {
+    headers: { "Idempotency-Key": crypto.randomUUID() },
+  }));
 }

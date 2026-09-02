@@ -31,9 +31,9 @@ export function apiAdminRefundDetail(id: number): Promise<AdminRefund> {
   return getData(request.get(`/refund/detail/${id}`));
 }
 
-/** 同意退款 (POST /adminapi/refund/agree/:id) */
+/** 同意退款 (POST /adminapi/refund/refund/:id) */
 export function apiAdminRefundAgree(id: number): Promise<null> {
-  return getData(request.post(`/refund/agree/${id}`));
+  return getData(request.post(`/refund/refund/${id}`));
 }
 
 /** 拒绝退款 (POST /adminapi/refund/refuse/:id) */

@@ -82,6 +82,7 @@ adminapiRoutes.get("/home/header", adminAuth, AdminController.adminHomeHeader);
 adminapiRoutes.get("/home/order", adminAuth, AdminController.adminOrderChart);
 adminapiRoutes.get("/home/user", adminAuth, AdminController.adminUserChart);
 adminapiRoutes.get("/home/rank", adminAuth, AdminController.adminPurchaseRanking);
+adminapiRoutes.get("/new_push", adminAuth, AdminController.adminNewPush);
 
 // Legacy queue/timer tables are intentionally read-only. Their PHP executors
 // depended on Redis/ThinkPHP Jobs and are not Cloudflare runtime authorities.
@@ -215,7 +216,7 @@ adminapiRoutes.put("/product/coupons/:id", adminAuth, AdminCrud.adminProductCoup
 adminapiRoutes.post("/product/add", adminAuth, AdminCrud.adminProductCreate);
 adminapiRoutes.post("/product/edit/:id", adminAuth, AdminCrud.adminProductUpdate);
 adminapiRoutes.post("/product/set_show/:id", adminAuth, AdminCrud.adminProductSetShow);
-adminapiRoutes.post("/product/del/:id", adminAuth, AdminCrud.adminProductDel);
+adminapiRoutes.delete("/product/del/:id", adminAuth, AdminCrud.adminProductDel);
 adminapiRoutes.get("/product/cache", adminAuth, AdminLegacyContent.getProductDraft);
 adminapiRoutes.post("/product/cache", adminAuth, AdminLegacyContent.saveProductDraft);
 adminapiRoutes.delete("/product/cache", adminAuth, AdminLegacyContent.deleteProductDraft);
@@ -344,7 +345,8 @@ adminapiRoutes.delete("/merchant/store_staff/del/:id", adminAuth, AdminStore.sta
 adminapiRoutes.get("/user/list", adminAuth, AdminCrud.adminUserList);
 adminapiRoutes.get("/user/info/:id", adminAuth, AdminCrud.adminUserInfo);
 adminapiRoutes.post("/user/set_user_grade/:id", adminAuth, AdminCrud.adminUserUpdate);
-adminapiRoutes.post("/user/set_other/:id", adminAuth, AdminCrud.adminUserMoney);
+adminapiRoutes.post("/user/set_other/:uid", adminAuth, AdminCrud.adminMobileUserUpdateOther);
+adminapiRoutes.post("/user/update_other/:uid", adminAuth, AdminCrud.adminMobileUserUpdateOther);
 
 // ─── 付费会员运营 ───────────────────────────────────────────
 // 新批次的卡密只在 save 响应中返回一次；后续列表不回显密码。
