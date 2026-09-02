@@ -3652,6 +3652,8 @@ Supplier生产 build通过，新增定向单元为3文件/17项，完整 Worker�
 
 按前端测试技能用本地预览数据进行了真实浏览器检查。桌面 `/orders?preview=1` 和 `/finance?preview=1` 的 URL、标题、主DOM、表格和弹窗均非空且无遮罩异常，控制台 warning/error为0；勾选一条订单后导出按钮从disabled变为enabled并出现“订单清单已下载”，Queue历史与任务8801明细弹窗正常；勾选一条财务流水后出现“资金流水已下载”。390×844视口下 body/document宽度均不超过 viewport，没有页面级横向溢出，桌面侧栏隐藏、移动抽屉出现，抽屉点击“财务结算”后进入 `/finance`并自动关闭。宽表保持组件内部横向滚动而不撑破页面。
 
+实现与审计提交 `e4a0a356fe5232718168f446886a06b35804240d` 已推送；[Actions `33588358237`](https://github.com/cinagroup/cinashop/actions/runs/33588358237) 对该精确 head 的 Worker、Admin、PC、Supplier、Kefu、UniApp、Linux workerd和全历史Gitleaks 8/8成功。Worker job精确通过双 TypeScript、190文件/1,224项单元、生产依赖审计、observability、schema和route parity；workerd、五端build和secret scan也全部成功。该CI只验证仓库候选，不代表生产 Pages或Worker已发布。
+
 上述验证没有连接、读取或写入生产PostgreSQL业务行，没有生产DML/DDL，没有创建临时Worker，没有部署主Worker或Supplier Pages，也没有调用支付、打印、面单或附件提供商。FE-004父项因此继续未完成：下一可执行缺口是Supplier范围商品评价回复；之后是共享规格模板和配货单预览的实现/退役决策。附件仍等SUP-003专项生产授权；主管理员/受限子账号真实E2E、第三方正反流程、正式Pages项目/Origin/`WORKERS_API`、发布批准和发布后观察都保留在checklist中。
 
 ## 完成定义
