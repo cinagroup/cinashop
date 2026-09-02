@@ -21,6 +21,9 @@
     <!-- 工具栏 -->
     <el-card shadow="never">
       <div class="toolbar">
+        <el-button plain @click="$router.push('/product/metadata')">
+          商品基础资料
+        </el-button>
         <el-button type="warning" plain @click="$router.push('/product/virtual-alerts')">
           卡密预警
         </el-button>

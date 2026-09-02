@@ -23,7 +23,18 @@
           <el-input-number v-model="form.stock" :min="0" />
         </el-form-item>
         <el-form-item label="单位">
-          <el-input v-model="form.unit_name" placeholder="如: 件" />
+          <div class="field-row">
+            <el-select
+              v-model="form.unit_name"
+              filterable
+              allow-create
+              default-first-option
+              placeholder="选择或输入单位"
+            >
+              <el-option v-for="unit in units" :key="unit.id" :label="unit.name" :value="unit.name" />
+            </el-select>
+            <el-button @click="$router.push('/product/metadata')">管理单位</el-button>
+          </div>
         </el-form-item>
         <el-form-item label="关键词">
           <el-input v-model="form.keyword" placeholder="搜索关键词" />
@@ -74,6 +85,7 @@ import {
   apiAdminProductDraftSave,
 } from "@/api/product";
 import { apiAdminCategoryList, type CategoryItem } from "@/api/category";
+import { apiProductUnitList, type ProductUnit } from "@/api/productMetadata";
 
 const route = useRoute();
 const router = useRouter();
@@ -83,6 +95,7 @@ const draftStatus = ref("");
 const draftReady = ref(false);
 let draftTimer: ReturnType<typeof setTimeout> | null = null;
 const categories = ref<CategoryItem[]>([]);
+const units = ref<ProductUnit[]>([]);
 
 const isEdit = computed(() => !!route.params.id);
 const form = reactive({
@@ -169,11 +182,12 @@ watch(form, () => {
 }, { deep: true });
 
 onMounted(async () => {
-  try {
-    categories.value = await apiAdminCategoryList();
-  } catch {
-    // ignore
-  }
+  const [categoryResult, unitResult] = await Promise.allSettled([
+    apiAdminCategoryList(),
+    apiProductUnitList({ page: 1, limit: 100 }),
+  ]);
+  if (categoryResult.status === "fulfilled") categories.value = categoryResult.value;
+  if (unitResult.status === "fulfilled") units.value = unitResult.value.list;
   if (isEdit.value) {
     try {
       const detail = await apiAdminProductDetail(Number(route.params.id));
@@ -216,5 +230,13 @@ onBeforeUnmount(() => {
 <style scoped>
 .product-form {
   max-width: 800px;
+}
+.field-row {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+.field-row .el-select {
+  flex: 1;
 }
 </style>

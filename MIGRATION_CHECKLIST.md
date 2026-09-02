@@ -299,7 +299,15 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## P2：前端、测试与发布
 
-- [ ] **FE-001 Admin 页面补齐**：旧 Admin 378 个 Vue 页面组件，新 Admin TS 55；组件数不可直接当覆盖率，需按 ADM checklist 建页面/路由/API/E2E 映射并消灭当前业务入口的 501。
+- [ ] **FE-001 Admin 页面补齐**：机器审计已把“旧378→新56个 Vue文件”的粗略口径收紧为旧端274条启用业务路由/245个独立已路由页面组件，对比新端52条业务路由/51个独立已路由页面组件；文件数和路由数均不等于语义覆盖率，父项继续未完成。
+  - [x] **FE-001A 可重复导航盘点**：`audit/admin-frontend-inventory.json` 固化旧端18个实际导入路由文件及 SHA-256、274条业务页面路由、18条辅助页面路由、133个未路由页面文件；新端路由、页面、未路由文件和组件可解析性由测试防漂移。注释路由、未导入模块和错误页不进入业务分母。
+  - [x] **FE-001B 商品创建/编辑 501 与字段合同修复**：新 Admin 已从不存在的 `/product/create|update/:id` 改为 Worker 已注册的 `/product/add|edit/:id`；详情由数据库 camelCase 明确投影为页面 snake_case，编辑提交再映射回模型字段，会员价/排序不再在新建时静默丢失。定向测试覆盖路由、详情和更新字段。
+  - [x] **FE-001C 商品单位与保障服务首批操作面（候选完成，未发布）**：新增 `/product/metadata`，接回旧 `unitList` 与 `ensure` 活跃能力；单位支持查、新增、编辑、引用保护删除并进入商品编辑下拉，保障支持查、新增、编辑、停启和引用保护删除。服务端继续执行 `product.view/manage`，本地桌面/390px预览交互通过。
+  - [ ] **FE-001D 274条旧业务路由逐屏语义映射**：按 ADM-001～009 为每条旧路由标记 candidate/partial/missing/retired，并绑定新页面、新 API、权限和 E2E 证据；优先处理 setting 76、marketing 48、work 20、app 20、system 17、content/kefu 各13等高缺口域，不能用一个聚合页标题推定整域已覆盖。
+  - [ ] **FE-001E 商品运营剩余操作面**：补齐保障选择并验证商品保存关系、商品参数/保障模板语义纠偏、搜索热词、批量操作、规格/SKU全流程和旧商品编辑真实数据 E2E；当前“单位/保障目录页面存在”不代表 ADM-003 完成。
+  - [ ] **FE-001F 业务入口 501 清零**：逐页抓取实际请求并与 `/adminapi` 注册路由核对；企业微信19条远端同步/发送写入口在真实租户、provider、Queue/回调安全合同就绪前保持受控不可用，其余活跃本地业务入口不得落入通配 501。
+  - [ ] **FE-001G 真实权限与生产数据 E2E**：用主管理员和受限角色验证菜单可见性、`*.view/*.manage` 正反权限、真实历史数据、移动端和失败恢复；本地 `preview=1` 只算候选 UI 证据。
+  - [ ] **FE-001H Admin Pages 预发、发布与观察**：确认正式 Pages 项目、同源 proxy、Worker Origin和 Secret/资源映射；另行取得发布批准后记录 deployment/Git SHA并观察 501、4xx/5xx、Hyperdrive和关键写入对账。
 - [ ] **FE-002 PC 对账**：旧 PC 30、新 PC TS 29 个页面组件；22 条 `/api/pc` 合同和扫码/OAuth 本地 UI闭环已完成。token/UID 已改为 per-tab `sessionStorage`，刷新保留、新标签页不共享且启动清除旧持久值；关闭标签页不等于服务端 logout。仍需支付回跳、手机号安全验证、旧 Nuxt退流和全订单生命周期真实 E2E。
 - [ ] **FE-003 UniApp 对账**：旧 250、新 55 个页面组件；扫码登录确认页已完成目标/Origin/设备核对和本地登录返回闭环，仍需按 `pages.json` 核对活动、社区、会员、分销、客服、门店、核销及各小程序平台条件编译。
 - [ ] **FE-004 Supplier 对账**：旧端共 41 个 `pages/**/*.vue` 文件，但只有 19 个不同的可导航业务屏幕（20 条 route record，其中账单页重复注册）；其余为 16 个内嵌组件和 7 个未路由/错误脚手架。新端当前为 18 个页面组件、19 条屏幕 route record，不再使用“41→13”失真页数衡量覆盖。19 个旧屏幕中 17 个已有候选覆盖、2 个为部分替代、0 个整屏可执行缺口；逐屏证据和 12 项 granular checklist 固化在 `workers-ts/audit/supplier-frontend-parity.json`。浏览器 API 已同源 `/supplierapi`，Pages Function/Vite proxy 已接入，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署仍未验收。

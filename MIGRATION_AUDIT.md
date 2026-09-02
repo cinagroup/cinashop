@@ -3748,6 +3748,45 @@ Supplier TS新增独立 `/orders/picking-sheet`，由 `supplier.order.view` 保�
 
 本批没有连接、读取或写入生产 PostgreSQL业务行，没有 DDL/DML，没有创建临时 Worker，没有部署主 Worker或 Supplier Pages，也没有调用打印、面单、支付或附件提供商。FE-004父项继续未完成：FE-004H仍等待 SUP-003生产只读聚合与附件票据专项授权；FE-004I～L仍需真实主管理员/受限账号、第三方正反流程、正式 Pages项目和映射、独立发布批准及发布后观察。
 
+## FE-001-A～C Admin 导航权威盘点、商品断链修复与基础资料操作面（2026-09-02）
+
+### 从“文件数”收紧到启用导航分母
+
+此前 FE-001 只有“旧 Admin 378个 Vue页面、新 Admin 55个页面”的目录计数。逐文件复核旧 `routes.js` 后确认，真正被主路由导入的是17个业务模块加 `frameOut`；已注释的 cms/community 模块、错误页和未导入脚手架不能计作当前业务入口。新增 `scripts/admin-frontend-parity-audit.ts` 使用 TypeScript AST读取实际 import、默认导出、`frameIn`、嵌套 children和动态页面 import，不以正则统计注释文本；组件别名必须解析到真实 `.vue` 或目录 `index.vue`。结果固化在 `audit/admin-frontend-inventory.json`，同时记录18个旧路由文件 SHA-256，避免旧权威输入变化后继续沿用过期结论。
+
+权威导航统计如下：
+
+| 口径 | 旧 Admin | 本批前新 Admin | 本批后新 Admin |
+|---|---:|---:|---:|
+| `pages/**/*.vue` 文件 | 378 | 55 | 56 |
+| 启用的业务页面 route record | 274 | 51 | 52 |
+| 不同的已路由业务页面组件 | 245 | 50 | 51 |
+| 辅助组件 route record | 18 | 0 | 0 |
+| 未路由页面文件 | 133 | 5 | 5 |
+| 无法解析组件 | 0 | 0 | 0 |
+
+旧业务路由的真实热点是 setting 76、marketing 48、app/work各20、system 17、content/kefu各13、product 12、supplier 11、agent 8、vipuser 7、order/statistic各6、user 5、finance 4、echarts/pages各2，以及 login/out/out_interface/root各1。新端把不少能力整合到单页或标签页，因此不能用 `52/274=19.0%` 宣称功能覆盖率，也不能因新端存在“企业微信”“系统配置”等聚合页就推定旧域全部完成。后续 FE-001D 必须给274条旧路由逐条绑定新页面、API、权限和 E2E状态。
+
+提交的审计测试一方面验证旧快照内部计数、组件去重和不可解析项，另一方面把新端实际页面清单、路由文件摘要和每个组件的存在性与快照绑定；以后增加、删除或改路由却不更新审计会直接失败。新端5个未路由文件中，4个是统计/运维页面的内嵌 panel，`DiscountPackageManager.vue`是否应成为独立入口仍需在营销逐屏映射中判定，当前不把它臆断为缺失或完成。
+
+### 审计抓出的商品真实断链
+
+逐页把 Admin API调用与 Worker注册路径交叉核对时发现，商品新建调用 `/adminapi/product/create`，编辑调用 `/adminapi/product/update/:id`；Worker实际注册的是旧兼容合同 `/adminapi/product/add` 和 `/adminapi/product/edit/:id`。前两条不存在，会直接进入末尾通配501。现已把前端改为真实注册路径，并增加防回归测试，不能再用“页面可构建”掩盖运行时501。
+
+同一路径还有两层静默失效：商品详情直接返回 Drizzle camelCase行，而页面读取 `store_name/store_info/ot_price/unit_name/is_vip/vip_price`；编辑页面提交 snake_case，控制器却只挑 camelCase字段，所以即使修正 URL，编辑详情仍为空且保存大部分字段不会写入。最终控制器对详情做明确白名单 snake_case投影，编辑以显式字段表转换回模型列；新建补写此前页面已提交但服务端丢弃的 `sort/is_vip/vip_price`。测试以真实控制器调用验证响应和 DAO update载荷，不只搜索字符串。
+
+### 首批旧入口恢复：商品单位与保障服务
+
+旧 `/admin/product/unitList` 和 `/admin/product/ensure` 都是启用菜单；Worker此前已经有平台 owner下的单位查询/增改/引用保护删除，以及保障查询/增改/停启/引用保护删除，GET与写入分别受 `product.view`/`product.manage`控制，但新 Admin没有入口。新增 `/product/metadata`“商品基础资料”把两者整合为两个标签：单位支持搜索、新增、编辑、删除，保障支持搜索、新增、编辑、停启和删除；删除被商品引用的记录仍由服务端失败关闭。商品列表提供直接入口，商品新建/编辑页从单位目录读取最多100个启用单位，同时保留可创建输入以兼容历史自由文本。
+
+这只是第一批候选操作面，不代表 ADM-003完成。当前商品表单尚未把保障条款选择与商品关系的权威校验/原子保存闭合；旧产品规格、参数、搜索热词、批量处理和完整SKU编辑仍需逐项审计。保障图标目前接受服务端既有255字符地址合同，Admin素材选择器与稳定私有资产引用还需要单独对账。
+
+### 浏览器与工程证据、生产边界
+
+Admin生产构建和 Worker TypeScript通过；两份定向测试共2文件/5项，覆盖导航快照、商品路由、详情投影、编辑字段映射和组件解析。真实应用内浏览器在1440×900从商品列表进入基础资料页，新增“瓶”、编辑为“瓶装”，切换保障页把“正品保障”从停用改为启用并修改说明；再进入商品新增页确认单位下拉读取“件/盒”。390×844 下单位与保障标签均可操作，`innerWidth/document.scrollWidth/body.scrollWidth=390/390/390`，无 Vite错误遮罩，控制台 warning/error为0；宽表只在卡片内部滚动。浏览器视口已恢复、标签页和本地服务已关闭。测试使用 `preview=1`内存数据，没有向生产或第三方发送商品内容。
+
+本批没有连接、读取或写入生产 PostgreSQL，没有 DDL、Queue、R2、第三方调用、主 Worker/Pages部署或删除生产数据。用户的简短“授权”仍未满足外部安全审查对临时 workers.dev目的地和返回载荷的明确授权要求，因此 FE-004H的生产附件聚合没有执行：没有创建临时 Worker、没有读取 Hyperdrive/R2、也没有执行清理删除。FE-001A～C的本地进展不解除 FE-004H、真实 Admin账号、预发和发布门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

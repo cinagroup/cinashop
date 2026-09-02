@@ -112,17 +112,17 @@ export function apiAdminProductDetail(id: number): Promise<AdminProduct> {
   return getData(request.get(`/product/detail/${id}`));
 }
 
-/** 创建商品 (POST /adminapi/product/create) */
+/** 创建商品 (POST /adminapi/product/add) */
 export function apiAdminProductCreate(data: Record<string, unknown>): Promise<{ id: number }> {
-  return getData(request.post("/product/create", data));
+  return getData(request.post("/product/add", data));
 }
 
-/** 编辑商品 (POST /adminapi/product/update/:id) */
+/** 编辑商品 (POST /adminapi/product/edit/:id) */
 export function apiAdminProductUpdate(
   id: number,
   data: Record<string, unknown>,
 ): Promise<null> {
-  return getData(request.post(`/product/update/${id}`, data));
+  return getData(request.post(`/product/edit/${id}`, data));
 }
 
 /** 上下架 (POST /adminapi/product/set_show/:id) */

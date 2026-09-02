@@ -42,6 +42,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "商品管理" },
       },
       {
+        path: "product/metadata",
+        name: "product-metadata",
+        component: () => import("@/pages/product/ProductMetadata.vue"),
+        meta: { title: "商品基础资料" },
+      },
+      {
         path: "product/create",
         name: "product-create",
         component: () => import("@/pages/product/ProductForm.vue"),

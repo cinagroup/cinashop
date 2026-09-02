@@ -277,7 +277,28 @@ export async function adminProductDetail(c: C) {
   if (!id) return jsonFail(c, "参数错误");
   const product = await c.get("container").storeProductDao.getById(id);
   if (!product) return jsonFail(c, "商品不存在");
-  return jsonOk(c, product);
+  return jsonOk(c, {
+    id: product.id,
+    product_type: product.productType,
+    type: product.type,
+    relation_id: product.relationId,
+    store_name: product.storeName,
+    store_info: product.storeInfo,
+    image: product.image,
+    price: product.price,
+    ot_price: product.otPrice,
+    stock: product.stock,
+    sales: product.sales,
+    is_show: product.isShow,
+    is_verify: product.isVerify,
+    is_del: product.isDel,
+    cate_id: product.cateId,
+    keyword: product.keyword,
+    unit_name: product.unitName,
+    sort: product.sort,
+    is_vip: product.isVip,
+    vip_price: product.vipPrice,
+  });
 }
 
 /** GET /api/admin/product/coupons/:id — 支付后赠券关系 */
@@ -304,7 +325,7 @@ export async function adminProductCouponsReplace(c: C) {
   return jsonOk(c, result, "保存成功");
 }
 
-/** POST /api/admin/product/create — 创建商品 */
+/** POST /adminapi/product/add — 创建商品 */
 export async function adminProductCreate(c: C) {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   if (!body.store_name) return jsonFail(c, "商品名称不能为空");
@@ -327,11 +348,14 @@ export async function adminProductCreate(c: C) {
     addTime: Math.floor(Date.now() / 1000),
     unitName: String(body.unit_name ?? "件"),
     ficti: Number(body.ficti ?? 0),
+    sort: Number(body.sort ?? 0),
+    isVip: Number(body.is_vip ?? 0),
+    vipPrice: String(body.vip_price ?? "0"),
   });
   return jsonOk(c, { id: row.id }, "创建成功");
 }
 
-/** POST /api/admin/product/update/:id — 编辑商品 */
+/** POST /adminapi/product/edit/:id — 编辑商品 */
 export async function adminProductUpdate(c: C) {
   const id = Number(c.req.param("id") ?? "0");
   if (!id) return jsonFail(c, "参数错误");
@@ -342,12 +366,25 @@ export async function adminProductUpdate(c: C) {
   if (!product) return jsonFail(c, "商品不存在");
 
   const updateData: Record<string, unknown> = {};
-  const fields = [
-    "storeName", "storeInfo", "image", "price", "otPrice", "stock",
-    "cateId", "keyword", "isShow", "unitName", "ficti", "sort",
+  const fields: Array<[string, string, string?]> = [
+    ["store_name", "storeName", "storeName"],
+    ["store_info", "storeInfo", "storeInfo"],
+    ["image", "image"],
+    ["price", "price"],
+    ["ot_price", "otPrice", "otPrice"],
+    ["stock", "stock"],
+    ["cate_id", "cateId", "cateId"],
+    ["keyword", "keyword"],
+    ["is_show", "isShow", "isShow"],
+    ["unit_name", "unitName", "unitName"],
+    ["ficti", "ficti"],
+    ["sort", "sort"],
+    ["is_vip", "isVip", "isVip"],
+    ["vip_price", "vipPrice", "vipPrice"],
   ];
-  for (const f of fields) {
-    if (body[f] !== undefined) updateData[f] = body[f];
+  for (const [requestField, modelField, camelAlias] of fields) {
+    const value = body[requestField] ?? (camelAlias ? body[camelAlias] : undefined);
+    if (value !== undefined) updateData[modelField] = value;
   }
   if (Object.keys(updateData).length > 0) {
     await container.storeProductDao.update(id, updateData);
