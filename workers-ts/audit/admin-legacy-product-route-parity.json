@@ -21,10 +21,10 @@
       "title": "商品管理",
       "status": "partial",
       "newScreens": ["/product", "/product/virtual-alerts", "/product/virtual/:id"],
-      "newApiContracts": ["GET /adminapi/product/list", "POST /adminapi/product/set_show/:id", "DELETE /adminapi/product/del/:id"],
+      "newApiContracts": ["GET /adminapi/product/list", "POST /adminapi/product/set_show/:id", "POST /adminapi/product/set_show", "POST /adminapi/product/batch_process", "DELETE /adminapi/product/del/:id"],
       "permission": "product.view / product.manage",
-      "covered": "List, search, create/edit entry, show/hide, delete, and isolated virtual-card inventory operations.",
-      "remaining": "Legacy batch operations, richer filters, verification actions, exports, relation editing, and complete SKU operations are not all available from this screen."
+      "covered": "List, search, create/edit entry, single and bounded batch show/hide, bounded atomic category and product-label replacement, transaction-scoped database readback, per-product audit records, delete, and isolated virtual-card inventory operations.",
+      "remaining": "Legacy batch types for delivery, gifts/coupons, user labels, recommendations, forms, freight templates, and brands; richer filters, verification actions, exports, and controlled retirement of referenced historical SKU topology remain open."
     },
     {
       "legacyPath": "/admin/product/product_classify",
