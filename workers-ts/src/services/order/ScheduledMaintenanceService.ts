@@ -53,6 +53,7 @@ const ROOT_JOBS: readonly ScheduledMaintenanceJob[] = [
   "auto_comment",
   "live_room_sync",
   "live_goods_sync",
+  "live_anchor_sync",
   "refund_reconciliation",
   "sign_remind_time",
 ];
@@ -200,6 +201,8 @@ export class ScheduledMaintenanceService {
         return new WechatLiveService(this.container, this.env).syncRooms(message);
       case "live_goods_sync":
         return new WechatLiveService(this.container, this.env).syncGoods(message);
+      case "live_anchor_sync":
+        return new WechatLiveService(this.container, this.env).syncAnchors(message);
       case "refund_reconciliation":
         return this.reconcileRefunds(message);
       case "sign_remind_time":

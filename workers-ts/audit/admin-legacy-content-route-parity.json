@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-02",
+  "generatedAt": "2026-09-03",
   "scope": "The 13 active legacy Admin content screens imported by the legacy content router: community, CMS articles, and mini-program live operations. Status measures screen semantics, not route-name similarity.",
   "statusDefinitions": {
     "candidate": "The routed screen's primary operations have a new Admin screen and executable authenticated API contracts; production E2E is still required.",
@@ -9,8 +9,8 @@
   },
   "summary": {
     "legacyRoutes": 13,
-    "candidate": 8,
-    "partial": 3,
+    "candidate": 9,
+    "partial": 2,
     "missing": 2,
     "retired": 0
   },
@@ -109,10 +109,10 @@
       "title": "直播间管理",
       "status": "partial",
       "newScreens": ["/marketing/live#rooms"],
-      "newApiContracts": ["GET /adminapi/live/room/list", "POST /adminapi/live/sync"],
+      "newApiContracts": ["GET /adminapi/live/room/list", "GET /adminapi/live/room/detail/:id", "GET /adminapi/live/room/set_show/:id/:is_show", "DELETE /adminapi/live/room/del/:id", "POST /adminapi/live/sync"],
       "permission": "live_broadcast.view / live_broadcast.manage",
-      "covered": "The replacement provides paginated local room inventory, status grouping, masked operator data, freshness indicators, and Queue-dispatched read-only status synchronization.",
-      "remaining": "Create, edit, delete, local visibility mutation, replay operations, goods assignment, and other remote WeChat writes are intentionally not migrated."
+      "covered": "The replacement provides paginated local room inventory, status grouping, detail, local visibility mutation, ambiguity-safe recoverable delete with relation cleanup, audit logging, and Queue-dispatched read-only status synchronization.",
+      "remaining": "Remote create and edit, room goods assignment, replay administration, durable provider-write orchestration, reconciliation, and production E2E remain required."
     },
     {
       "legacyPath": "/admin/content/live/add_live_room",
@@ -131,10 +131,10 @@
       "title": "直播间商品管理",
       "status": "partial",
       "newScreens": ["/marketing/live#goods"],
-      "newApiContracts": ["GET /adminapi/live/goods/list", "POST /adminapi/live/sync"],
+      "newApiContracts": ["GET /adminapi/live/goods/list", "GET /adminapi/live/goods/detail/:id", "GET /adminapi/live/goods/set_show/:id/:is_show", "POST /adminapi/live/sync"],
       "permission": "live_broadcast.view / live_broadcast.manage",
-      "covered": "The replacement provides paginated local goods inventory, audit-state grouping, price display, freshness indicators, and Queue-dispatched read-only status synchronization.",
-      "remaining": "Create, edit, delete, resubmit, local visibility mutation, room assignment, and other remote WeChat goods writes are intentionally not migrated."
+      "covered": "The replacement provides paginated local goods inventory, audit-state grouping, detail, price display, audit-gated local visibility mutation, audit logging, and Queue-dispatched read-only status synchronization.",
+      "remaining": "Remote create, edit, delete, audit and resubmit, room assignment, durable provider-write orchestration, reconciliation, and production E2E remain required."
     },
     {
       "legacyPath": "/admin/content/live/add_live_goods",
@@ -151,12 +151,12 @@
       "legacyPath": "/admin/content/live/anchor",
       "legacyComponent": "pages/content/live/anchor.vue",
       "title": "主播管理",
-      "status": "partial",
+      "status": "candidate",
       "newScreens": ["/marketing/live#anchors"],
-      "newApiContracts": ["GET /adminapi/live/anchor/list"],
-      "permission": "live_broadcast.view",
-      "covered": "The replacement provides a paginated, searchable local anchor catalog with masked contact details and freshness information.",
-      "remaining": "Create, edit, delete, role synchronization, local visibility mutation, and remote WeChat anchor operations remain intentionally absent."
+      "newApiContracts": ["GET /adminapi/live/anchor/list", "GET /adminapi/live/anchor/add/:id", "POST /adminapi/live/anchor/save", "GET /adminapi/live/anchor/set_show/:id/:is_show", "DELETE /adminapi/live/anchor/del/:id", "GET /adminapi/live/anchor/syncAnchor"],
+      "permission": "live_broadcast.view / live_broadcast.manage",
+      "covered": "The replacement provides paginated search, add, edit, role-verified save, local visibility mutation, reference-protected recoverable delete, audit logging, and Queue-dispatched read-only role synchronization.",
+      "remaining": "Production historical-data validation, real-role browser E2E, and operational acceptance of the stricter reference-protection policy remain required."
     }
   ]
 }

@@ -184,6 +184,7 @@ export type ScheduledMaintenanceJob =
   | "auto_comment"
   | "live_room_sync"
   | "live_goods_sync"
+  | "live_anchor_sync"
   | "refund_reconciliation"
   | "sign_remind_time";
 

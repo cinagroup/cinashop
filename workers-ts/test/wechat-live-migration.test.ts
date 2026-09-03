@@ -4,6 +4,7 @@ import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { liveAnchor, liveGoods, liveRoom, liveRoomGoods } from "@/models/schema";
 import { requiredAdminPermission } from "@/services/admin/AdminPermissionService";
+import { normalizeAdminLiveAnchorInput } from "@/services/wechat/WechatLiveService";
 import { MIGRATION_MANIFEST_VERSION, MIGRATION_TABLES } from "../scripts/data-migration/manifest";
 
 describe("WeChat mini-program live catalog migration", () => {
@@ -55,7 +56,32 @@ describe("WeChat mini-program live catalog migration", () => {
     expect(migration).not.toMatch(/\bINSERT\s+INTO\b/i);
   });
 
-  it("exposes public reads, protected admin catalogs, and only read-oriented remote sync", () => {
+  it("validates the exact local anchor write envelope", () => {
+    expect(normalizeAdminLiveAnchorInput({
+      id: "7",
+      name: " 小雅 ",
+      wechat: "xiaoya_live",
+      phone: "13800006601",
+      cover_img: "/uploads/live/xiaoya.jpg",
+    })).toEqual({
+      id: 7,
+      name: "小雅",
+      wechat: "xiaoya_live",
+      phone: "13800006601",
+      coverImg: "/uploads/live/xiaoya.jpg",
+    });
+    expect(() => normalizeAdminLiveAnchorInput({
+      name: "测试", wechat: "test", phone: "123", cover_img: "/a.jpg",
+    })).toThrow("请输入正确手机号");
+    expect(() => normalizeAdminLiveAnchorInput({
+      name: "测试", wechat: "test", phone: "13800006601", cover_img: "/a.jpg", role: 2,
+    })).toThrow("未知字段");
+    expect(() => normalizeAdminLiveAnchorInput({
+      name: "测试", wechat: "test", phone: "13800006601", cover_img: "/a.jpg", coverImg: "/b.jpg",
+    })).toThrow("主播图像字段重复");
+  });
+
+  it("exposes protected local management and only read-oriented remote sync", () => {
     const adminRoutes = readFileSync("src/routes/adminapi.ts", "utf8");
     const publicRoutes = readFileSync("src/routes/v1/index.ts", "utf8");
     const service = readFileSync("src/services/wechat/WechatLiveService.ts", "utf8");
@@ -63,35 +89,75 @@ describe("WeChat mini-program live catalog migration", () => {
 
     expect(publicRoutes).toContain('v1Routes.get("/wechat/live"');
     expect(publicRoutes).toContain('v1Routes.get("/wechat/livePlaybacks/:id"');
-    for (const path of ["/live/room/list", "/live/goods/list", "/live/anchor/list", "/live/sync"]) {
+    for (const path of [
+      "/live/room/list", "/live/room/detail/:id", "/live/room/set_show/:id/:is_show",
+      "/live/room/del/:id", "/live/goods/list", "/live/goods/detail/:id",
+      "/live/goods/set_show/:id/:is_show", "/live/anchor/list", "/live/anchor/add/:id",
+      "/live/anchor/save", "/live/anchor/del/:id", "/live/anchor/set_show/:id/:is_show",
+      "/live/anchor/syncAnchor", "/live/sync",
+    ]) {
       expect(adminRoutes).toContain(path);
+    }
+    for (const path of [
+      "/admin/live/room/detail/:id",
+      "/admin/live/room/set_show/:id/:is_show",
+      "/admin/live/room/del/:id",
+      "/admin/live/goods/detail/:id",
+      "/admin/live/goods/set_show/:id/:is_show",
+      "/admin/live/anchor/add/:id",
+      "/admin/live/anchor/save",
+      "/admin/live/anchor/del/:id",
+      "/admin/live/anchor/set_show/:id/:is_show",
+      "/admin/live/anchor/syncAnchor",
+    ]) {
+      expect(publicRoutes).toContain(path);
     }
     expect(requiredAdminPermission("GET", "/adminapi/live/room/list")).toBe("live_broadcast.view");
     expect(requiredAdminPermission("POST", "/adminapi/live/sync")).toBe("live_broadcast.manage");
     expect(requiredAdminPermission("GET", "/adminapi/live/room/syncRoom")).toBe("live_broadcast.manage");
     expect(requiredAdminPermission("GET", "/adminapi/live/goods/syncGoods")).toBe("live_broadcast.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/live/anchor/syncAnchor")).toBe("live_broadcast.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/live/room/set_show/9/0")).toBe("live_broadcast.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/live/goods/set_show/21/0")).toBe("live_broadcast.manage");
+    expect(requiredAdminPermission("GET", "/adminapi/live/anchor/set_show/5/0")).toBe("live_broadcast.manage");
+    expect(requiredAdminPermission("DELETE", "/adminapi/live/room/del/9")).toBe("live_broadcast.manage");
+    expect(requiredAdminPermission("POST", "/adminapi/live/anchor/save")).toBe("live_broadcast.manage");
 
     expect(service).toContain('this.request("wxa/business/getliveinfo"');
     expect(service).toContain('this.request("wxa/business/getgoodswarehouse"');
+    expect(service).toContain('this.request("wxaapi/broadcast/role/getrolelist"');
     expect(service).not.toMatch(/room\/create|room\/deleteroom|goods\/add|goods\/resetaudit|goods\/delete/i);
-    expect(service).toContain('["live_room_sync", "live_goods_sync"]');
+    expect(service).toContain('["live_room_sync", "live_goods_sync", "live_anchor_sync"]');
     expect(service).toContain("AbortSignal.timeout(WECHAT_FETCH_TIMEOUT_MS)");
     expect(service).toContain("message.cursor + remotePage.rawCount");
+    expect(service).toContain("SET LOCAL lock_timeout = '2s'");
+    expect(service).toContain("wechat_live_room_delete_readback_mismatch");
+    expect(service).toContain("wechat_live_goods_visibility_readback_mismatch");
+    expect(service).toContain("wechat_live_anchor_save_readback_mismatch");
+    expect(service).toContain("该主播仍有关联直播间");
+    expect(service).toContain("auditAdminLive(");
     expect(scheduler).toContain('case "live_room_sync"');
     expect(scheduler).toContain('case "live_goods_sync"');
+    expect(scheduler).toContain('case "live_anchor_sync"');
   });
 
-  it("wires a responsive Admin catalog without remote mutation controls", () => {
+  it("wires responsive local controls without remote WeChat mutation controls", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
     const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/marketing/WechatLiveCatalog.vue", "utf8");
     expect(router).toContain('path: "marketing/live"');
     expect(layout).toContain('index="/marketing/live"');
-    expect(page).toContain("微信外部写操作暂未迁移");
+    const api = readFileSync("../view/admin-ts/src/api/wechatLive.ts", "utf8");
+    expect(page).toContain("微信远程写操作仍受保护");
+    expect(page).toContain("本地管理 + 只读同步");
     expect(page).toContain("apiWechatLiveSync");
+    expect(page).toContain("apiWechatLiveRoomDelete");
+    expect(page).toContain("apiWechatLiveGoodsShow");
+    expect(page).toContain("apiWechatLiveAnchorSave");
     expect(page).toContain("mobile-list");
-    expect(page).not.toContain("apiWechatLiveCreate");
-    expect(page).not.toContain("apiWechatLiveDelete");
-    expect(page).not.toContain("apiWechatLiveAudit");
+    expect(api).not.toMatch(/request\.(?:post|put|delete)\("\/live\/(?:room|goods)\/(?:create|add|audit|reset|delete)/i);
+    expect(api).not.toContain("apiWechatLiveCreateRoom");
+    expect(api).not.toContain("apiWechatLiveGoodsAudit");
+    expect(api).not.toContain("apiWechatLiveGoodsResetAudit");
   });
 });

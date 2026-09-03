@@ -81,8 +81,8 @@ const previewTimers: LegacyTimerItem[] = [
     id: 4, name: "更新直播状态", mark: "auto_live", type: 1, title: "", is_open: 1,
     cycle: "1", execution_cycle: "每隔 1 分钟", last_execution_time: 0,
     update_execution_time: 1_669_968_223, add_time: 1_669_968_223,
-    runtime_status: "partially_implemented", worker_job: "live_room_sync + live_goods_sync",
-    runtime_note: "Worker 已迁移微信直播间与商品状态读取；创建、删除、审核提交等非幂等微信写操作仍未迁移。",
+    runtime_status: "partially_implemented", worker_job: "live_room_sync + live_goods_sync + live_anchor_sync",
+    runtime_note: "Worker 已迁移直播间、商品状态与主播角色读取；微信直播间创建、商品提审/删除等非幂等远程写操作仍未迁移。",
   },
 ];
 

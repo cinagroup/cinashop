@@ -1205,9 +1205,21 @@ v1Routes.get(
   AdminLegacyRuntimeController.queueDeliveryLog,
 );
 v1Routes.get("/admin/live/room/list", adminAuth, WechatLiveController.adminRooms);
+v1Routes.get("/admin/live/room/detail/:id", adminAuth, WechatLiveController.adminRoomDetail);
+v1Routes.get("/admin/live/room/set_show/:id/:is_show", adminAuth, WechatLiveController.adminRoomShow);
+v1Routes.delete("/admin/live/room/del/:id", adminAuth, WechatLiveController.adminRoomDelete);
 v1Routes.get("/admin/live/goods/list", adminAuth, WechatLiveController.adminGoods);
+v1Routes.get("/admin/live/goods/detail/:id", adminAuth, WechatLiveController.adminGoodsDetail);
+v1Routes.get("/admin/live/goods/set_show/:id/:is_show", adminAuth, WechatLiveController.adminGoodsShow);
 v1Routes.get("/admin/live/anchor/list", adminAuth, WechatLiveController.adminAnchors);
+v1Routes.get("/admin/live/anchor/add/:id", adminAuth, WechatLiveController.adminAnchorForm);
+v1Routes.post("/admin/live/anchor/save", adminAuth, WechatLiveController.adminAnchorSave);
+v1Routes.delete("/admin/live/anchor/del/:id", adminAuth, WechatLiveController.adminAnchorDelete);
+v1Routes.get("/admin/live/anchor/set_show/:id/:is_show", adminAuth, WechatLiveController.adminAnchorShow);
 v1Routes.post("/admin/live/sync", adminAuth, WechatLiveController.adminSync);
+v1Routes.get("/admin/live/room/syncRoom", adminAuth, WechatLiveController.adminSync);
+v1Routes.get("/admin/live/goods/syncGoods", adminAuth, WechatLiveController.adminSync);
+v1Routes.get("/admin/live/anchor/syncAnchor", adminAuth, WechatLiveController.adminSync);
 // 客服聊天记录 (需 admin token)
 v1Routes.get("/admin/service/chat", adminAuth, AdminController.chatHistory);
 v1Routes.post("/admin/service/send", adminAuth, AdminController.serviceReply);

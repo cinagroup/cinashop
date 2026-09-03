@@ -101,11 +101,21 @@ adminapiRoutes.get(
 // Mini-program live catalogs are readable; remote status synchronization only
 // performs WeChat GET/status reads and is dispatched through Cloudflare Queue.
 adminapiRoutes.get("/live/room/list", adminAuth, WechatLiveController.adminRooms);
+adminapiRoutes.get("/live/room/detail/:id", adminAuth, WechatLiveController.adminRoomDetail);
+adminapiRoutes.get("/live/room/set_show/:id/:is_show", adminAuth, WechatLiveController.adminRoomShow);
+adminapiRoutes.delete("/live/room/del/:id", adminAuth, WechatLiveController.adminRoomDelete);
 adminapiRoutes.get("/live/goods/list", adminAuth, WechatLiveController.adminGoods);
+adminapiRoutes.get("/live/goods/detail/:id", adminAuth, WechatLiveController.adminGoodsDetail);
+adminapiRoutes.get("/live/goods/set_show/:id/:is_show", adminAuth, WechatLiveController.adminGoodsShow);
 adminapiRoutes.get("/live/anchor/list", adminAuth, WechatLiveController.adminAnchors);
+adminapiRoutes.get("/live/anchor/add/:id", adminAuth, WechatLiveController.adminAnchorForm);
+adminapiRoutes.post("/live/anchor/save", adminAuth, WechatLiveController.adminAnchorSave);
+adminapiRoutes.delete("/live/anchor/del/:id", adminAuth, WechatLiveController.adminAnchorDelete);
+adminapiRoutes.get("/live/anchor/set_show/:id/:is_show", adminAuth, WechatLiveController.adminAnchorShow);
 adminapiRoutes.post("/live/sync", adminAuth, WechatLiveController.adminSync);
 adminapiRoutes.get("/live/room/syncRoom", adminAuth, WechatLiveController.adminSync);
 adminapiRoutes.get("/live/goods/syncGoods", adminAuth, WechatLiveController.adminSync);
+adminapiRoutes.get("/live/anchor/syncAnchor", adminAuth, WechatLiveController.adminSync);
 
 // Third-party API accounts use hashed secrets only. The legacy interface
 // documentation remains read-only and arbitrary outbound push tests stay disabled.

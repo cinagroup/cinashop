@@ -240,7 +240,14 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   if (!group) return null;
   if (
     group.key === "live_broadcast"
-    && new Set(["live/room/syncroom", "live/goods/syncgoods"]).has(route)
+    && (
+      new Set([
+        "live/room/syncroom",
+        "live/goods/syncgoods",
+        "live/anchor/syncanchor",
+      ]).has(route)
+      || /^live\/(?:room|goods|anchor)\/set_show\/[^/]+\/[^/]+$/.test(route)
+    )
   ) {
     return "live_broadcast.manage";
   }

@@ -12,7 +12,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import type { Env, OrderMessage, ScheduledMaintenanceMessage } from "@/env";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
   liveAnchor,
@@ -20,6 +20,8 @@ import {
   liveRoom,
   liveRoomGoods,
 } from "@/models/schema";
+import { systemLog } from "@/models/schema/admin";
+import { normalizePublishedArticleMediaReference } from "@/services/content/ArticleContentPolicy";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
 import { ValidateException } from "@/utils/errors";
@@ -28,12 +30,28 @@ const INVALID_TOKEN_CODES = new Set([40001, 40014, 42001]);
 const MAX_WECHAT_JSON_BYTES = 512 * 1024;
 const ROOM_SYNC_PAGE_SIZE = 50;
 const GOODS_SYNC_PAGE_SIZE = 50;
+const ANCHOR_SYNC_PAGE_SIZE = 30;
 const LIVE_SYNC_LOCK = 7_404_001;
+const LIVE_ADMIN_LOCK = 7_404_002;
 const WECHAT_FETCH_TIMEOUT_MS = 8_000;
 
 type JsonRecord = Record<string, unknown>;
 
-export type WechatLiveSyncJob = "live_room_sync" | "live_goods_sync";
+export type WechatLiveSyncJob = "live_room_sync" | "live_goods_sync" | "live_anchor_sync";
+
+export interface AdminLiveActor {
+  id: number;
+  name: string;
+  ip: string;
+}
+
+export interface AdminLiveAnchorInput {
+  id: number;
+  name: string;
+  wechat: string;
+  phone: string;
+  coverImg: string;
+}
 
 export interface RemoteLiveRoom {
   roomId: number;
@@ -50,6 +68,18 @@ interface RemoteLiveRoomPage {
   rooms: RemoteLiveRoom[];
   rawCount: number;
   total: number | null;
+}
+
+interface RemoteLiveAnchor {
+  username: string;
+  nickname: string;
+  headingImg: string;
+  updatedAt: number;
+}
+
+interface RemoteLiveAnchorPage {
+  anchors: RemoteLiveAnchor[];
+  rawCount: number;
 }
 
 export interface RemoteLiveGoodsStatus {
@@ -78,6 +108,80 @@ function safeInteger(value: unknown, fallback = 0): number {
 
 function boundedString(value: unknown, max: number): string {
   return typeof value === "string" ? value.slice(0, max) : "";
+}
+
+function strictText(value: unknown, label: string, maximum: number): string {
+  if (typeof value !== "string") throw new ValidateException(`${label}格式错误`);
+  const normalized = value.trim();
+  if (!normalized) throw new ValidateException(`${label}不能为空`);
+  if ([...normalized].length > maximum) throw new ValidateException(`${label}不能超过${maximum}个字符`);
+  return normalized;
+}
+
+function positiveId(value: unknown, label: string): number {
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0 || parsed > 2_147_483_647) {
+    throw new ValidateException(`${label}无效`);
+  }
+  return parsed;
+}
+
+function binaryValue(value: unknown, label: string): 0 | 1 {
+  const parsed = Number(value);
+  if (parsed !== 0 && parsed !== 1) throw new ValidateException(`${label}只能为0或1`);
+  return parsed;
+}
+
+function rejectUnknown(input: Record<string, unknown>, allowed: readonly string[], label: string): void {
+  const permitted = new Set(allowed);
+  const unknown = Object.keys(input).filter((key) => !permitted.has(key));
+  if (unknown.length) throw new ValidateException(`${label}包含未知字段: ${unknown.join(", ")}`);
+}
+
+export function normalizeAdminLiveAnchorInput(input: Record<string, unknown>): AdminLiveAnchorInput {
+  rejectUnknown(input, ["id", "name", "wechat", "phone", "cover_img", "coverImg"], "主播请求");
+  if (Object.hasOwn(input, "cover_img") && Object.hasOwn(input, "coverImg")) {
+    throw new ValidateException("主播图像字段重复");
+  }
+  const phone = strictText(input.phone, "手机号", 20);
+  if (!/^1[3-9]\d{9}$/.test(phone)) throw new ValidateException("请输入正确手机号");
+  const coverImg = normalizePublishedArticleMediaReference(
+    Object.hasOwn(input, "cover_img") ? input.cover_img : input.coverImg,
+    "主播图像",
+  );
+  if (!coverImg) throw new ValidateException("请选择主播图像");
+  return {
+    id: input.id === undefined || input.id === null || input.id === "" ? 0 : positiveId(input.id, "主播ID"),
+    name: strictText(input.name, "主播名称", 20),
+    wechat: strictText(input.wechat, "主播微信号", 32),
+    phone,
+    coverImg,
+  };
+}
+
+async function configureAdminWriteTx(tx: DbClient): Promise<void> {
+  await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
+  await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+}
+
+async function auditAdminLive(
+  tx: DbClient,
+  actor: AdminLiveActor,
+  path: string,
+  method: string,
+  action: string,
+): Promise<void> {
+  await tx.insert(systemLog).values({
+    adminId: actor.id,
+    adminName: actor.name.slice(0, 64),
+    path: path.slice(0, 128),
+    page: "/marketing/live",
+    method,
+    action: action.slice(0, 255),
+    ip: actor.ip.slice(0, 45),
+    type: "wechat_live",
+    addTime: Math.floor(Date.now() / 1_000),
+  });
 }
 
 function intParam(
@@ -112,6 +216,53 @@ function publicLiveStatus(status: number): number {
   if (status === 105 || status === 106) return 101;
   if (status === 104 || status === 107) return 103;
   return status;
+}
+
+function adminRoomRow(row: typeof liveRoom.$inferSelect) {
+  return {
+    ...row,
+    room_id: row.roomId,
+    cover_img: row.coverImg,
+    share_img: row.shareImg,
+    start_time: row.startTime,
+    end_time: row.endTime,
+    anchor_name: row.anchorName,
+    anchor_wechat: row.anchorWechat,
+    screen_type: row.screenType,
+    live_status: row.liveStatus,
+    replay_status: row.replayStatus,
+    is_show: row.isShow,
+    is_del: row.isDel,
+    add_time: row.addTime,
+  };
+}
+
+function adminGoodsRow(row: typeof liveGoods.$inferSelect) {
+  return {
+    ...row,
+    goods_id: row.goodsId,
+    audit_id: row.auditId,
+    product_id: row.productId,
+    cover_img: row.coverImg,
+    price_type: row.priceType,
+    cost_price: row.costPrice,
+    price2: row.price2,
+    audit_status: row.auditStatus,
+    third_part_tag: row.thirdPartTag,
+    is_show: row.isShow,
+    is_del: row.isDel,
+    add_time: row.addTime,
+  };
+}
+
+function adminAnchorRow(row: typeof liveAnchor.$inferSelect) {
+  return {
+    ...row,
+    cover_img: row.coverImg,
+    is_show: row.isShow,
+    is_del: row.isDel,
+    add_time: row.addTime,
+  };
 }
 
 async function readBoundedJson(response: Response): Promise<JsonRecord> {
@@ -220,6 +371,37 @@ class WechatLiveApiClient {
       if (goodsId <= 0 || auditStatus < 0) return [];
       return [{ goodsId, auditStatus }];
     });
+  }
+
+  async anchors(offset: number, limit: number, keyword = ""): Promise<RemoteLiveAnchorPage> {
+    const query = new URLSearchParams({
+      role: "2",
+      offset: String(Math.max(0, Math.trunc(offset))),
+      limit: String(Math.min(ANCHOR_SYNC_PAGE_SIZE, Math.max(1, Math.trunc(limit)))),
+    });
+    if (keyword) query.set("keyword", keyword.slice(0, 32));
+    const data = await this.request("wxaapi/broadcast/role/getrolelist", {
+      method: "GET",
+      query,
+    });
+    const raw = Array.isArray(data.list) ? data.list : [];
+    const anchors = raw.flatMap((value): RemoteLiveAnchor[] => {
+      if (!isRecord(value)) return [];
+      const username = boundedString(value.username, 32).trim();
+      if (!username) return [];
+      return [{
+        username,
+        nickname: boundedString(value.nickname, 50).trim(),
+        headingImg: boundedString(value.headingimg, 255).trim(),
+        updatedAt: Math.max(0, safeInteger(value.updateTimestamp)),
+      }];
+    });
+    return { anchors, rawCount: raw.length };
+  }
+
+  async hasAnchorRole(wechat: string): Promise<boolean> {
+    const page = await this.anchors(0, ANCHOR_SYNC_PAGE_SIZE, wechat);
+    return page.anchors.some((anchor) => anchor.username === wechat);
   }
 
   private async config(): Promise<{ appId: string; appSecret: string }> {
@@ -458,25 +640,83 @@ export class WechatLiveService {
       this.container.db.select({ value: count() }).from(liveRoom).where(where),
     ]);
     return {
-      list: rows.map((row) => ({
-        ...row,
-        room_id: row.roomId,
-        cover_img: row.coverImg,
-        share_img: row.shareImg,
-        start_time: row.startTime,
-        end_time: row.endTime,
-        anchor_name: row.anchorName,
-        anchor_wechat: row.anchorWechat,
-        screen_type: row.screenType,
-        live_status: row.liveStatus,
-        replay_status: row.replayStatus,
-        is_show: row.isShow,
-        is_del: row.isDel,
-        add_time: row.addTime,
-      })),
+      list: rows.map(adminRoomRow),
       count: Number(totals[0]?.value ?? 0),
       remote_writes: "not_migrated_non_idempotent",
     };
+  }
+
+  async adminRoomDetail(idValue: unknown) {
+    const id = positiveId(idValue, "直播间ID");
+    const rows = await this.container.db.select().from(liveRoom).where(and(
+      eq(liveRoom.id, id),
+      eq(liveRoom.isDel, 0),
+    )).orderBy(asc(liveRoom.phone)).limit(2);
+    if (!rows[0]) throw new ValidateException("直播间不存在或已删除");
+    if (rows.length > 1) throw new ValidateException("直播间 ID 在源复合主键下不唯一");
+    return { ...adminRoomRow(rows[0]), remote_writes: "not_migrated_non_idempotent" as const };
+  }
+
+  async setRoomVisibility(idValue: unknown, showValue: unknown, actor: AdminLiveActor) {
+    const id = positiveId(idValue, "直播间ID");
+    const isShow = binaryValue(showValue, "显示状态");
+    return withTx(this.container, async (tx) => {
+      await configureAdminWriteTx(tx);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 2)`);
+      const rows = await tx.select().from(liveRoom).where(and(
+        eq(liveRoom.id, id),
+        eq(liveRoom.isDel, 0),
+      )).orderBy(asc(liveRoom.phone)).limit(2).for("update");
+      if (!rows[0]) throw new ValidateException("直播间不存在或已删除");
+      if (rows.length > 1) throw new ValidateException("直播间 ID 在源复合主键下不唯一");
+      const updated = await tx.update(liveRoom).set({ isShow }).where(and(
+        eq(liveRoom.id, id),
+        eq(liveRoom.phone, rows[0].phone),
+        eq(liveRoom.isDel, 0),
+      )).returning();
+      if (!updated[0] || updated[0].isShow !== isShow) {
+        throw new Error("wechat_live_room_visibility_readback_mismatch");
+      }
+      await auditAdminLive(
+        tx,
+        actor,
+        `/adminapi/live/room/set_show/${id}/${isShow}`,
+        "GET",
+        `live.room.visibility;id=${id};show=${isShow}`,
+      );
+      return { room: adminRoomRow(updated[0]), verified: true as const };
+    });
+  }
+
+  async removeRoom(idValue: unknown, actor: AdminLiveActor) {
+    const id = positiveId(idValue, "直播间ID");
+    return withTx(this.container, async (tx) => {
+      await configureAdminWriteTx(tx);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 2)`);
+      const rows = await tx.select().from(liveRoom).where(and(
+        eq(liveRoom.id, id),
+        eq(liveRoom.isDel, 0),
+      )).orderBy(asc(liveRoom.phone)).limit(2).for("update");
+      if (!rows[0]) throw new ValidateException("直播间不存在或已删除");
+      if (rows.length > 1) throw new ValidateException("直播间 ID 在源复合主键下不唯一");
+      await tx.delete(liveRoomGoods).where(eq(liveRoomGoods.liveRoomId, id));
+      const updated = await tx.update(liveRoom).set({ isDel: 1, isShow: 0 }).where(and(
+        eq(liveRoom.id, id),
+        eq(liveRoom.phone, rows[0].phone),
+        eq(liveRoom.isDel, 0),
+      )).returning({ id: liveRoom.id, isDel: liveRoom.isDel, isShow: liveRoom.isShow });
+      if (!updated[0] || updated[0].isDel !== 1 || updated[0].isShow !== 0) {
+        throw new Error("wechat_live_room_delete_readback_mismatch");
+      }
+      await auditAdminLive(
+        tx,
+        actor,
+        `/adminapi/live/room/del/${id}`,
+        "DELETE",
+        `live.room.delete;id=${id};relations=removed`,
+      );
+      return { id, deleted: true as const, relations_removed: true as const, verified: true as const };
+    });
   }
 
   async adminGoods(query: Record<string, string>) {
@@ -506,24 +746,51 @@ export class WechatLiveService {
       this.container.db.select({ value: count() }).from(liveGoods).where(where),
     ]);
     return {
-      list: rows.map((row) => ({
-        ...row,
-        goods_id: row.goodsId,
-        audit_id: row.auditId,
-        product_id: row.productId,
-        cover_img: row.coverImg,
-        price_type: row.priceType,
-        cost_price: row.costPrice,
-        price2: row.price2,
-        audit_status: row.auditStatus,
-        third_part_tag: row.thirdPartTag,
-        is_show: row.isShow,
-        is_del: row.isDel,
-        add_time: row.addTime,
-      })),
+      list: rows.map(adminGoodsRow),
       count: Number(totals[0]?.value ?? 0),
       remote_writes: "not_migrated_non_idempotent",
     };
+  }
+
+  async adminGoodsDetail(idValue: unknown) {
+    const id = positiveId(idValue, "直播商品ID");
+    const row = (await this.container.db.select().from(liveGoods).where(and(
+      eq(liveGoods.id, id),
+      eq(liveGoods.isDel, 0),
+    )).limit(1))[0];
+    if (!row) throw new ValidateException("直播商品不存在或已删除");
+    return { ...adminGoodsRow(row), remote_writes: "not_migrated_non_idempotent" as const };
+  }
+
+  async setGoodsVisibility(idValue: unknown, showValue: unknown, actor: AdminLiveActor) {
+    const id = positiveId(idValue, "直播商品ID");
+    const isShow = binaryValue(showValue, "显示状态");
+    return withTx(this.container, async (tx) => {
+      await configureAdminWriteTx(tx);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 3)`);
+      const existing = (await tx.select().from(liveGoods).where(and(
+        eq(liveGoods.id, id),
+        eq(liveGoods.isDel, 0),
+      )).limit(1).for("update"))[0];
+      if (!existing) throw new ValidateException("直播商品不存在或已删除");
+      if (existing.auditStatus !== 2) throw new ValidateException("仅审核通过的直播商品可以切换显示状态");
+      const updated = await tx.update(liveGoods).set({ isShow }).where(and(
+        eq(liveGoods.id, id),
+        eq(liveGoods.isDel, 0),
+        eq(liveGoods.auditStatus, 2),
+      )).returning();
+      if (!updated[0] || updated[0].isShow !== isShow || updated[0].auditStatus !== 2) {
+        throw new Error("wechat_live_goods_visibility_readback_mismatch");
+      }
+      await auditAdminLive(
+        tx,
+        actor,
+        `/adminapi/live/goods/set_show/${id}/${isShow}`,
+        "GET",
+        `live.goods.visibility;id=${id};show=${isShow}`,
+      );
+      return { goods: adminGoodsRow(updated[0]), verified: true as const };
+    });
   }
 
   async adminAnchors(query: Record<string, string>) {
@@ -549,23 +816,164 @@ export class WechatLiveService {
       this.container.db.select({ value: count() }).from(liveAnchor).where(where),
     ]);
     return {
-      list: rows.map((row) => ({
-        ...row,
-        cover_img: row.coverImg,
-        is_show: row.isShow,
-        is_del: row.isDel,
-        add_time: row.addTime,
-      })),
+      list: rows.map(adminAnchorRow),
       count: Number(totals[0]?.value ?? 0),
-      remote_role_sync: "not_migrated",
+      remote_role_sync: "read_only_queue",
     };
+  }
+
+  async adminAnchorForm(idValue: unknown) {
+    const numeric = Number(idValue);
+    if (numeric === 0) {
+      return { id: 0, name: "", wechat: "", phone: "", cover_img: "", is_show: 1 };
+    }
+    const id = positiveId(idValue, "主播ID");
+    const row = (await this.container.db.select().from(liveAnchor).where(and(
+      eq(liveAnchor.id, id),
+      eq(liveAnchor.isDel, 0),
+    )).limit(1))[0];
+    if (!row) throw new ValidateException("主播不存在或已删除");
+    return adminAnchorRow(row);
+  }
+
+  async saveAnchor(rawInput: Record<string, unknown>, actor: AdminLiveActor) {
+    const input = normalizeAdminLiveAnchorInput(rawInput);
+    if (!(await this.remote.hasAnchorRole(input.wechat))) {
+      throw new ValidateException("该微信号尚未通过小程序主播身份认证");
+    }
+    return withTx(this.container, async (tx) => {
+      await configureAdminWriteTx(tx);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 1)`);
+      let id = input.id;
+      let existing: typeof liveAnchor.$inferSelect | undefined;
+      if (id > 0) {
+        existing = (await tx.select().from(liveAnchor).where(and(
+          eq(liveAnchor.id, id),
+          eq(liveAnchor.isDel, 0),
+        )).limit(1).for("update"))[0];
+        if (!existing) throw new ValidateException("主播不存在或已删除");
+      }
+      const duplicates = await tx.select({ id: liveAnchor.id }).from(liveAnchor).where(and(
+        eq(liveAnchor.wechat, input.wechat),
+        eq(liveAnchor.isDel, 0),
+      )).limit(2).for("update");
+      if (duplicates.some((row) => row.id !== id)) throw new ValidateException("该主播已经存在");
+      if (existing && existing.wechat !== input.wechat) {
+        const referenced = await tx.select({ value: count() }).from(liveRoom).where(and(
+          eq(liveRoom.anchorWechat, existing.wechat),
+          eq(liveRoom.isDel, 0),
+        ));
+        if (Number(referenced[0]?.value ?? 0) > 0) {
+          throw new ValidateException("该主播仍有关联直播间，不能修改微信号");
+        }
+      }
+      const values = {
+        name: input.name,
+        wechat: input.wechat,
+        phone: input.phone,
+        coverImg: input.coverImg,
+      };
+      if (id > 0) {
+        await tx.update(liveAnchor).set(values).where(and(
+          eq(liveAnchor.id, id),
+          eq(liveAnchor.isDel, 0),
+        ));
+      } else {
+        const inserted = await tx.insert(liveAnchor).values({
+          ...values,
+          isShow: 1,
+          isDel: 0,
+          addTime: Math.floor(Date.now() / 1_000),
+        }).returning({ id: liveAnchor.id });
+        id = inserted[0]?.id ?? 0;
+        if (!id) throw new Error("wechat_live_anchor_insert_failed");
+      }
+      const verified = (await tx.select().from(liveAnchor).where(eq(liveAnchor.id, id)).limit(1))[0];
+      if (!verified || verified.isDel !== 0 || verified.name !== input.name
+        || verified.wechat !== input.wechat || verified.phone !== input.phone
+        || verified.coverImg !== input.coverImg) {
+        throw new Error("wechat_live_anchor_save_readback_mismatch");
+      }
+      await auditAdminLive(
+        tx,
+        actor,
+        "/adminapi/live/anchor/save",
+        "POST",
+        `live.anchor.${input.id ? "update" : "create"};id=${id};role=verified`,
+      );
+      return { anchor: adminAnchorRow(verified), role_verified: true as const, verified: true as const };
+    });
+  }
+
+  async setAnchorVisibility(idValue: unknown, showValue: unknown, actor: AdminLiveActor) {
+    const id = positiveId(idValue, "主播ID");
+    const isShow = binaryValue(showValue, "显示状态");
+    return withTx(this.container, async (tx) => {
+      await configureAdminWriteTx(tx);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 1)`);
+      const existing = (await tx.select({ id: liveAnchor.id }).from(liveAnchor).where(and(
+        eq(liveAnchor.id, id),
+        eq(liveAnchor.isDel, 0),
+      )).limit(1).for("update"))[0];
+      if (!existing) throw new ValidateException("主播不存在或已删除");
+      const updated = await tx.update(liveAnchor).set({ isShow }).where(and(
+        eq(liveAnchor.id, id),
+        eq(liveAnchor.isDel, 0),
+      )).returning();
+      if (!updated[0] || updated[0].isShow !== isShow) {
+        throw new Error("wechat_live_anchor_visibility_readback_mismatch");
+      }
+      await auditAdminLive(
+        tx,
+        actor,
+        `/adminapi/live/anchor/set_show/${id}/${isShow}`,
+        "GET",
+        `live.anchor.visibility;id=${id};show=${isShow}`,
+      );
+      return { anchor: adminAnchorRow(updated[0]), verified: true as const };
+    });
+  }
+
+  async removeAnchor(idValue: unknown, actor: AdminLiveActor) {
+    const id = positiveId(idValue, "主播ID");
+    return withTx(this.container, async (tx) => {
+      await configureAdminWriteTx(tx);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 1)`);
+      const existing = (await tx.select().from(liveAnchor).where(and(
+        eq(liveAnchor.id, id),
+        eq(liveAnchor.isDel, 0),
+      )).limit(1).for("update"))[0];
+      if (!existing) throw new ValidateException("主播不存在或已删除");
+      const referenced = await tx.select({ value: count() }).from(liveRoom).where(and(
+        eq(liveRoom.anchorWechat, existing.wechat),
+        eq(liveRoom.isDel, 0),
+      ));
+      if (Number(referenced[0]?.value ?? 0) > 0) {
+        throw new ValidateException("该主播仍有关联直播间，请先处理直播间");
+      }
+      const updated = await tx.update(liveAnchor).set({ isDel: 1, isShow: 0 }).where(and(
+        eq(liveAnchor.id, id),
+        eq(liveAnchor.isDel, 0),
+      )).returning({ id: liveAnchor.id, isDel: liveAnchor.isDel, isShow: liveAnchor.isShow });
+      if (!updated[0] || updated[0].isDel !== 1 || updated[0].isShow !== 0) {
+        throw new Error("wechat_live_anchor_delete_readback_mismatch");
+      }
+      await auditAdminLive(
+        tx,
+        actor,
+        `/adminapi/live/anchor/del/${id}`,
+        "DELETE",
+        `live.anchor.delete;id=${id};references=0`,
+      );
+      return { id, deleted: true as const, verified: true as const };
+    });
   }
 
   async enqueueSync(scheduledAt = Date.now()): Promise<{ run_id: string; jobs: WechatLiveSyncJob[] }> {
     if (!(await this.remote.configured())) throw new ValidateException("小程序 AppID 或 AppSecret 未配置");
     const normalized = Math.max(1, Math.trunc(scheduledAt));
     const runId = `scheduled:${normalized}`;
-    const jobs: WechatLiveSyncJob[] = ["live_room_sync", "live_goods_sync"];
+    const jobs: WechatLiveSyncJob[] = ["live_room_sync", "live_goods_sync", "live_anchor_sync"];
     const messages: OrderMessage[] = jobs.map((job) => ({
       action: "runScheduledMaintenance",
       job,
@@ -679,6 +1087,56 @@ export class WechatLiveService {
       nextCursor,
       candidates: candidates.length,
       remoteStatuses: statuses.length,
+      updated,
+      hasMore,
+    };
+  }
+
+  async syncAnchors(message: ScheduledMaintenanceMessage): Promise<Record<string, unknown>> {
+    if (!(await this.remote.configured())) {
+      return { event: "wechat_live_anchor_sync_disabled", job: message.job, runId: message.runId };
+    }
+    const remotePage = await this.remote.anchors(message.cursor, ANCHOR_SYNC_PAGE_SIZE);
+    let inserted = 0;
+    let updated = 0;
+    await withTx(this.container, async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_SYNC_LOCK}, 3)`);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 1)`);
+      for (const anchor of remotePage.anchors) {
+        const changed = await tx.update(liveAnchor).set({
+          name: anchor.nickname || anchor.username,
+          coverImg: anchor.headingImg,
+        }).where(and(
+          eq(liveAnchor.wechat, anchor.username),
+          eq(liveAnchor.isDel, 0),
+        )).returning({ id: liveAnchor.id });
+        if (changed.length) {
+          updated += changed.length;
+          continue;
+        }
+        await tx.insert(liveAnchor).values({
+          name: anchor.nickname || anchor.username,
+          wechat: anchor.username,
+          coverImg: anchor.headingImg,
+          addTime: anchor.updatedAt || Math.floor(message.scheduledAt / 1_000),
+          isShow: 1,
+          isDel: 0,
+        });
+        inserted += 1;
+      }
+    });
+    const nextCursor = message.cursor + remotePage.rawCount;
+    const hasMore = remotePage.rawCount === ANCHOR_SYNC_PAGE_SIZE;
+    if (hasMore && remotePage.rawCount > 0) await this.sendContinuation(message, nextCursor);
+    return {
+      event: "wechat_live_anchor_sync",
+      job: message.job,
+      runId: message.runId,
+      cursor: message.cursor,
+      nextCursor,
+      fetched: remotePage.anchors.length,
+      rawCount: remotePage.rawCount,
+      inserted,
       updated,
       hasMore,
     };

@@ -46,7 +46,15 @@ interface PageResult<T> {
   list: T[];
   count: number;
   remote_writes?: "not_migrated_non_idempotent";
-  remote_role_sync?: "not_migrated";
+  remote_role_sync?: "read_only_queue";
+}
+
+export interface WechatLiveAnchorInput {
+  id: number;
+  name: string;
+  wechat: string;
+  phone: string;
+  cover_img: string;
 }
 
 const previewMode =
@@ -65,9 +73,9 @@ const previewGoods: WechatLiveGood[] = [
 ];
 
 const previewAnchors: WechatLiveAnchor[] = [
-  { id: 5, name: "小雅", cover_img: "", wechat: "xiaoya_live", phone: "138****6601", is_show: 1, add_time: 1_786_100_000 },
-  { id: 4, name: "阿辰", cover_img: "", wechat: "achen_store", phone: "138****6602", is_show: 1, add_time: 1_786_090_000 },
-  { id: 3, name: "林琳", cover_img: "", wechat: "linlin_shop", phone: "138****6604", is_show: 0, add_time: 1_786_080_000 },
+  { id: 5, name: "小雅", cover_img: "/uploads/live/xiaoya.jpg", wechat: "xiaoya_live", phone: "13800006601", is_show: 1, add_time: 1_786_100_000 },
+  { id: 4, name: "阿辰", cover_img: "/uploads/live/achen.jpg", wechat: "achen_store", phone: "13800006602", is_show: 1, add_time: 1_786_090_000 },
+  { id: 3, name: "林琳", cover_img: "/uploads/live/linlin.jpg", wechat: "linlin_shop", phone: "13800006604", is_show: 0, add_time: 1_786_080_000 },
 ];
 
 function previewPage<T>(rows: T[], params: Record<string, unknown>, text: (row: T) => string): PageResult<T> {
@@ -88,6 +96,35 @@ export function apiWechatLiveRooms(params: Record<string, unknown> = {}): Promis
   return getData(request.get("/live/room/list", { params }));
 }
 
+export function apiWechatLiveRoomDetail(id: number): Promise<WechatLiveRoom> {
+  if (previewMode) {
+    const row = previewRooms.find((item) => item.id === id);
+    if (!row) return Promise.reject(new Error("直播间不存在或已删除"));
+    return Promise.resolve(structuredClone(row));
+  }
+  return getData(request.get(`/live/room/detail/${id}`));
+}
+
+export function apiWechatLiveRoomShow(id: number, isShow: 0 | 1): Promise<{ room: WechatLiveRoom }> {
+  if (previewMode) {
+    const row = previewRooms.find((item) => item.id === id);
+    if (!row) return Promise.reject(new Error("直播间不存在或已删除"));
+    row.is_show = isShow;
+    return Promise.resolve({ room: structuredClone(row) });
+  }
+  return getData(request.get(`/live/room/set_show/${id}/${isShow}`));
+}
+
+export function apiWechatLiveRoomDelete(id: number): Promise<{ id: number; deleted: true }> {
+  if (previewMode) {
+    const index = previewRooms.findIndex((item) => item.id === id);
+    if (index < 0) return Promise.reject(new Error("直播间不存在或已删除"));
+    previewRooms.splice(index, 1);
+    return Promise.resolve({ id, deleted: true });
+  }
+  return getData(request.delete(`/live/room/del/${id}`));
+}
+
 export function apiWechatLiveGoods(params: Record<string, unknown> = {}): Promise<PageResult<WechatLiveGood>> {
   if (previewMode) {
     const status = params.status === undefined || params.status === "" ? 99 : Number(params.status);
@@ -100,6 +137,26 @@ export function apiWechatLiveGoods(params: Record<string, unknown> = {}): Promis
   return getData(request.get("/live/goods/list", { params }));
 }
 
+export function apiWechatLiveGoodsDetail(id: number): Promise<WechatLiveGood> {
+  if (previewMode) {
+    const row = previewGoods.find((item) => item.id === id);
+    if (!row) return Promise.reject(new Error("直播商品不存在或已删除"));
+    return Promise.resolve(structuredClone(row));
+  }
+  return getData(request.get(`/live/goods/detail/${id}`));
+}
+
+export function apiWechatLiveGoodsShow(id: number, isShow: 0 | 1): Promise<{ goods: WechatLiveGood }> {
+  if (previewMode) {
+    const row = previewGoods.find((item) => item.id === id);
+    if (!row) return Promise.reject(new Error("直播商品不存在或已删除"));
+    if (row.audit_status !== 2) return Promise.reject(new Error("仅审核通过的直播商品可以切换显示状态"));
+    row.is_show = isShow;
+    return Promise.resolve({ goods: structuredClone(row) });
+  }
+  return getData(request.get(`/live/goods/set_show/${id}/${isShow}`));
+}
+
 export function apiWechatLiveAnchors(params: Record<string, unknown> = {}): Promise<PageResult<WechatLiveAnchor>> {
   if (previewMode) {
     return Promise.resolve(previewPage(previewAnchors, params, (row) => `${row.name}${row.wechat}${row.phone}`));
@@ -107,9 +164,64 @@ export function apiWechatLiveAnchors(params: Record<string, unknown> = {}): Prom
   return getData(request.get("/live/anchor/list", { params }));
 }
 
+export function apiWechatLiveAnchorForm(id: number): Promise<WechatLiveAnchor> {
+  if (previewMode) {
+    if (id === 0) return Promise.resolve({ id: 0, name: "", cover_img: "", wechat: "", phone: "", is_show: 1, add_time: 0 });
+    const row = previewAnchors.find((item) => item.id === id);
+    if (!row) return Promise.reject(new Error("主播不存在或已删除"));
+    return Promise.resolve(structuredClone(row));
+  }
+  return getData(request.get(`/live/anchor/add/${id}`));
+}
+
+export function apiWechatLiveAnchorSave(input: WechatLiveAnchorInput): Promise<{ anchor: WechatLiveAnchor }> {
+  if (previewMode) {
+    const duplicate = previewAnchors.find((item) => item.wechat === input.wechat && item.id !== input.id);
+    if (duplicate) return Promise.reject(new Error("该主播已经存在"));
+    if (input.id) {
+      const row = previewAnchors.find((item) => item.id === input.id);
+      if (!row) return Promise.reject(new Error("主播不存在或已删除"));
+      Object.assign(row, input);
+      return Promise.resolve({ anchor: structuredClone(row) });
+    }
+    const anchor: WechatLiveAnchor = {
+      ...input,
+      id: Math.max(0, ...previewAnchors.map((item) => item.id)) + 1,
+      is_show: 1,
+      add_time: Math.floor(Date.now() / 1000),
+    };
+    previewAnchors.unshift(anchor);
+    return Promise.resolve({ anchor: structuredClone(anchor) });
+  }
+  return getData(request.post("/live/anchor/save", input));
+}
+
+export function apiWechatLiveAnchorShow(id: number, isShow: 0 | 1): Promise<{ anchor: WechatLiveAnchor }> {
+  if (previewMode) {
+    const row = previewAnchors.find((item) => item.id === id);
+    if (!row) return Promise.reject(new Error("主播不存在或已删除"));
+    row.is_show = isShow;
+    return Promise.resolve({ anchor: structuredClone(row) });
+  }
+  return getData(request.get(`/live/anchor/set_show/${id}/${isShow}`));
+}
+
+export function apiWechatLiveAnchorDelete(id: number): Promise<{ id: number; deleted: true }> {
+  if (previewMode) {
+    const index = previewAnchors.findIndex((item) => item.id === id);
+    if (index < 0) return Promise.reject(new Error("主播不存在或已删除"));
+    if (previewRooms.some((room) => room.anchor_wechat === previewAnchors[index].wechat)) {
+      return Promise.reject(new Error("该主播仍有关联直播间，请先处理直播间"));
+    }
+    previewAnchors.splice(index, 1);
+    return Promise.resolve({ id, deleted: true });
+  }
+  return getData(request.delete(`/live/anchor/del/${id}`));
+}
+
 export function apiWechatLiveSync(): Promise<{ run_id: string; jobs: string[] }> {
   if (previewMode) {
-    return Promise.resolve({ run_id: `preview:${Date.now()}`, jobs: ["live_room_sync", "live_goods_sync"] });
+    return Promise.resolve({ run_id: `preview:${Date.now()}`, jobs: ["live_room_sync", "live_goods_sync", "live_anchor_sync"] });
   }
   return getData(request.post("/live/sync"));
 }

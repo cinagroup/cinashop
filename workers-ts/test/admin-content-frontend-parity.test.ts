@@ -37,8 +37,8 @@ describe("legacy Admin content screen parity", () => {
     ]);
     expect(audit.summary).toEqual({
       legacyRoutes: 13,
-      candidate: 8,
-      partial: 3,
+      candidate: 9,
+      partial: 2,
       missing: 2,
       retired: 0,
     });
@@ -81,10 +81,16 @@ describe("legacy Admin content screen parity", () => {
     const api = readFileSync("../view/admin-ts/src/api/wechatLive.ts", "utf8");
     expect(missing).toContain("/admin/content/live/add_live_room");
     expect(missing).toContain("/admin/content/live/add_live_goods");
-    expect(page).toContain("微信外部写操作暂未迁移");
+    const anchor = audit.routes.find((row) => row.legacyPath === "/admin/content/live/anchor");
+    expect(anchor?.status).toBe("candidate");
+    expect(page).toContain("微信远程写操作仍受保护");
+    expect(page).toContain("apiWechatLiveAnchorSave");
     expect(api).toContain('request.get("/live/room/list"');
+    expect(api).toContain('request.get(`/live/room/detail/${id}`');
     expect(api).toContain('request.get("/live/goods/list"');
+    expect(api).toContain('request.get(`/live/goods/detail/${id}`');
     expect(api).toContain('request.get("/live/anchor/list"');
-    expect(api).not.toMatch(/request\.(post|put|delete)\("\/live\/(room|goods|anchor)\//);
+    expect(api).toContain('request.post("/live/anchor/save"');
+    expect(api).not.toMatch(/request\.(?:post|put|delete)\("\/live\/(?:room|goods)\/(?:create|add|audit|reset|delete)/i);
   });
 });

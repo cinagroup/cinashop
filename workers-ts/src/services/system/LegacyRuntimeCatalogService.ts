@@ -71,9 +71,9 @@ const TIMER_RUNTIME: Readonly<
     note: "Worker 已通过可重放 scheduled 根任务和 Queue 消费者实现；执行阈值来自商城配置。",
   },
   auto_live: {
-    workerJob: "live_room_sync + live_goods_sync",
+    workerJob: "live_room_sync + live_goods_sync + live_anchor_sync",
     status: "partially_implemented",
-    note: "Worker 已恢复用户直播列表、回放读取和可重放的微信状态同步；创建直播间、商品提审/删除及导入商品仍因外部接口缺少幂等键而保持关闭。",
+    note: "Worker 已恢复用户直播列表、回放读取和直播间、商品、主播三类可重放只读同步；创建直播间、商品提审/删除及导入商品仍因外部接口缺少幂等键而保持关闭。",
   },
   sign_remind_time: {
     workerJob: "sign_remind_time",
