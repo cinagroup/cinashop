@@ -4253,6 +4253,34 @@ Cloudflare Workers最佳实践审查直接形成无跨请求可变状态、流�
 
 根据用户授权，本批使用Wrangler 4.122.0执行只读身份与Hyperdrive配置查询：Cloudflare账号为CinaGroup，生产绑定ID `9748c294e21c49a99579c9cef70102e0` 的配置名为 `cinashop-pg`，源为PostgreSQL数据库 `postgres`、用户 `postgres`、VPC Service `019fe223-e5a1-7ed1-945a-8993a6f32508`，连接上限60且缓存开启。这也确认 `wrangler.toml` 的 `crmeb@localhost/crmeb` 只是 `localConnectionString`，不能作为生产库名或凭据。查询没有回显密码，也没有读取任何业务表。由于本批DDL尚未部署、生产模板异常形状与测试记录回收方案仍未确定，没有调用会运行整套迁移并初始化管理员的 `POST /api/_migrate`，没有执行生产DDL/DML、Worker/Admin Pages部署、Queue或第三方调用。生产模板/引用/提交数据只读核验、真实主管理员及只读/编辑受限角色E2E继续归FE-001G/H；D4B2～B4和61条未审设置屏继续阻塞FE-001D4。
 
+## FE-001-D4B2 商城品牌、分享与Worker原生安全闭环（2026-09-03）
+
+### 旧实现证据与逐屏状态
+
+本轮沿用76条设置业务页权威分母，重新对照旧 `SystemConfigServices::shopBaseFormBuild`、`SystemAdminServices::getLoginInfo`、旧Admin商城基础页以及 `PublicController::share` 和 `/api/share` 路由。旧基础表单除站点名称、Logo和备案外，确实保存后台登录轮播、favicon、微信分享图/标题/简介；旧登录接口实际读取轮播和登录Logo，公开分享接口也有客户端消费者合同。旧页面同时暴露密码规则、登录失败、IP白名单和参数过滤等可编辑开关，但这些开关依赖PHP进程、全局请求过滤和旧认证实现，不能直接迁成Cloudflare Worker中的任意配置执行面。
+
+本轮将 `/admin/setting/shop/base` 从partial推进为candidate：设置白名单由35增至40个非敏感键，新增 `admin_login_slide`、`ico_path`、`wechat_share_img`、`wechat_share_title`、`wechat_share_synopsis`。76屏总数和reviewed 15不变，状态由candidate 8 / partial 6 / retired 1推进为candidate 9 / partial 5 / retired 1，余下61屏继续unreviewed。动态系统配置、交易和支付仍保持partial；本轮没有因恢复公共读取端点而抬高其他旧屏状态。
+
+### 素材持久引用、公共品牌与真实消费者
+
+Admin商城运行页为站点Logo、方形Logo、登录Logo、后台Logo、favicon、分享图片和最多5张登录轮播提供同一R2素材搜索、选择和上传流程。附件列表现在同时返回用于即时预览的短期签名URL和稳定 `canonical_url=/api/assets/:id`；页面只保存稳定引用，服务端继续接受HTTPS或单斜杠站内路径并拒绝 `javascript:`、协议相对地址和重复轮播图。这样避免把15分钟后失效的私有R2签名查询串写入长期 `system_config`。配置读取时才对私有R2引用重新签名，旧JSON数组轮播仍能解析；写入仍沿用32 KiB流式上限、短事务、固定锁、精确回读、无配置值日志及白名单KV失效。
+
+新增严格白名单的 `PublicBrandingService`。`GET /api/site_config` 只返回备案、站点名、四类品牌图、favicon和登录轮播，并设置浏览器60秒/共享缓存300秒；恢复兼容 `GET /api/share`，只返回分享图、标题和简介。站内 `/api/assets/:id` 以API源补全，其他相对站点资源以店铺源补全，私有R2对象按请求签名，非法资源引用返回空值而不是向客户端传播。三类真实消费者已落地：Admin登录页读取轮播、登录Logo、站名和favicon；PC布局读取站点Logo/备案/favicon并把分享字段投影到OG与description元数据；UniApp首页通过 `onShareAppMessage`、`onShareTimeline` 返回分享标题、图片和路径。
+
+### Worker原生认证与响应安全
+
+旧PHP的任意参数过滤、可编辑密码规则和登录防护开关没有恢复。Worker对所有响应添加固定CSP、`X-Content-Type-Options`、`X-Frame-Options: DENY`、`Referrer-Policy: no-referrer`、Permissions Policy和HSTS；这些是代码审查、测试和发布控制下的不可降级策略。Admin登录正文流式限制4 KiB，账号最多64字符、密码最多256字符；来源在60秒内最多10次、账号在15分钟内最多30次，两个窗口分别由强一致Durable Object计数。账号和来源进入对象名之前以APP_KEY做HMAC，不保存原始身份或地址。
+
+认证服务对不存在、停用、删除和密码错误统一返回同一消息；不存在账号仍执行固定cost-12 bcrypt假哈希，以缩小账号枚举与明显时序差异。成功或失败登录响应均禁止缓存。上述措施形成可执行的Worker安全合同，但不等同于生产渗透测试、真实角色验收或分布式攻击演练。
+
+### 浏览器验收、自动门禁与生产边界
+
+应用内浏览器在本地preview完成桌面实际操作：打开轮播素材选择器，选择 `cinashop-brand.png` 使轮播从2张变为3张；重复选择被“该轮播图已添加”阻止；第三张可向前排序；分享标题和简介保存成功，重新加载后值与顺序保持。390×844视口下页面与body宽度均为390，无横向溢出，favicon生效；同尺寸Admin登录隐藏桌面视觉轮播但保留Logo、标题和登录字段，恢复桌面视口后两张轮播及登录表单同时可见。全过程console warning/error为0。
+
+最终本地Worker完整单元207文件/1,307项全部通过，单元与运行时TypeScript通过，Admin生产构建2,437模块、PC生产构建1,828模块及UniApp H5构建通过。Admin静态请求仍为342个调用点、362个路径变体，362条全部注册且可执行。全局路由审计为PHP 1,904 / TS 1,621 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026，覆盖率45.3%。实现与机器审计提交 `9c7429a98690af252966ae702a5b4907f7f9ca9e` 推送后，[Actions `33717730974`](https://github.com/cinagroup/cinashop/actions/runs/33717730974) 的Repository secret scan、Worker双TypeScript/1,307项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。
+
+根据用户授权，本轮沿用同一Wrangler只读控制面证据：Hyperdrive `9748c294e21c49a99579c9cef70102e0` 为 `cinashop-pg`，源是PostgreSQL数据库 `postgres`、VPC Service `019fe223-e5a1-7ed1-945a-8993a6f32508`，连接上限60且缓存开启。Wrangler控制面没有提供数据库密码，本批也不需要DDL：五个新配置键在首次Admin保存时由现有安全事务补齐。因此本轮没有查询生产业务表、执行DDL/DML、尝试生产登录、调用生产写接口或部署Worker/Admin/PC/UniApp；不能把控制面读取写成“生产数据已验收”。生产配置形状、私有R2历史引用、真实角色及已发布站点流程继续归FE-001G/H。下一步是B3的次卡临期提醒Worker任务与订单售后平台退货地址展示；B4支付公开商户配置仍保持未完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
