@@ -20,10 +20,11 @@ describe("article migration compatibility", () => {
   });
 
   it("falls back to imported bodies and mirrors new-system edits atomically", () => {
-    const controller = readFileSync("src/controllers/api/v1/AdminCrudController.ts", "utf8");
-    expect(controller).toContain('LEFT JOIN "article_content" ac ON ac.nid = sa.id');
-    expect(controller).toContain("COALESCE(NULLIF(sa.content, ''), ac.content, '') AS content");
-    expect(controller).toContain('INSERT INTO "article_content" ("nid", "content")');
-    expect(controller).toContain('ON CONFLICT ("nid") DO UPDATE SET "content" = EXCLUDED."content"');
+    const service = readFileSync("src/services/content/AdminArticleService.ts", "utf8");
+    expect(service).toContain("leftJoin(articleContent, eq(articleContent.nid, systemArticle.id))");
+    expect(service).toContain("COALESCE(NULLIF(${systemArticle.content}, ''), ${articleContent.content}, '')");
+    expect(service).toContain("tx.insert(articleContent).values({ nid: id, content: input.content })");
+    expect(service).toContain(".onConflictDoUpdate({ target: articleContent.nid, set: { content: input.content } })");
+    expect(service).toContain("verified.mirrored_content !== input.content");
   });
 });

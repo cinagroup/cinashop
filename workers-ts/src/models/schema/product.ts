@@ -130,6 +130,7 @@ export const storeProduct = pgTable(
     index("sales").on(t.sales),
     index("add_time").on(t.addTime),
     index("is_postage").on(t.isPostage),
+    index("sp_platform_article_options").on(t.type, t.relationId, t.isDel, t.id.desc()),
   ],
 );
 

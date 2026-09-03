@@ -48,11 +48,6 @@ import {
   type AdminMobileUserActor,
 } from "@/services/admin/AdminMobileUserService";
 import { readBoundedJsonObject } from "@/utils/request-body";
-import {
-  normalizePublishedArticleImageInput,
-  normalizePublishedArticleLink,
-  sanitizePublishedArticleHtml,
-} from "@/services/content/ArticleContentPolicy";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -2704,126 +2699,7 @@ export async function adminDiseDel(c: C) {
   return jsonOk(c, null, "删除成功");
 }
 
-// ═══════════════════════════════════════════════════════════
-// CMS 内容管理 (M22: 文章 + 分类)
-// ═══════════════════════════════════════════════════════════
-
-const ADMIN_ARTICLE_MAX_BODY_BYTES = 1024 * 1024;
-
-function adminArticleText(
-  value: unknown,
-  label: string,
-  maximum: number,
-  required = false,
-): string {
-  if (value === undefined || value === null) value = "";
-  if (typeof value !== "string") throw new ValidateException(`${label}格式错误`);
-  if ([...value].length > maximum) throw new ValidateException(`${label}不能超过${maximum}个字符`);
-  if (required && !value.trim()) throw new ValidateException(`请输入${label}`);
-  return value;
-}
-
-function adminArticleInteger(
-  value: unknown,
-  label: string,
-  minimum: number,
-  maximum = 2_147_483_647,
-): number {
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
-    throw new ValidateException(`${label}格式错误`);
-  }
-  return parsed;
-}
-
-/** GET /api/admin/article/list — 文章列表 */
-export async function adminArticleList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const rows = await container.db.execute(sql`
-    SELECT sa.id, sa.cid, sa.title, sa.author, sa.status, sa.add_time,
-      sa.image_input, sa.url,
-      COALESCE(NULLIF(sa.content, ''), ac.content, '') AS content
-    FROM "system_article" sa
-    LEFT JOIN "article_content" ac ON ac.nid = sa.id
-    WHERE sa.is_del = 0
-    ORDER BY sa.id DESC
-    LIMIT 100
-  `);
-  const arr = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
-  return jsonOk(c, arr);
-}
-
-/** POST /api/admin/article/save — 文章增改 */
-export async function adminArticleSave(c: C) {
-  const raw = await readBoundedJsonObject(c.req.raw, ADMIN_ARTICLE_MAX_BODY_BYTES);
-  const id = raw.id === undefined || raw.id === null || raw.id === ""
-    ? 0
-    : adminArticleInteger(raw.id, "文章ID", 1);
-  const cid = raw.cid === undefined || raw.cid === null || raw.cid === ""
-    ? undefined
-    : adminArticleInteger(raw.cid, "文章分类ID", 0);
-  const title = adminArticleText(raw.title, "标题", 255, true);
-  const author = adminArticleText(raw.author, "作者", 255);
-  const content = sanitizePublishedArticleHtml(adminArticleText(raw.content, "文章正文", 200_000));
-  const status = raw.status === undefined || raw.status === null || raw.status === ""
-    ? 1
-    : adminArticleInteger(raw.status, "文章状态", 0, 1);
-  const imageInput = raw.image_input === undefined && raw.imageInput === undefined
-    ? undefined
-    : normalizePublishedArticleImageInput(raw.image_input ?? raw.imageInput);
-  const url = raw.url === undefined
-    ? undefined
-    : normalizePublishedArticleLink(raw.url);
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const now = Math.floor(Date.now() / 1000);
-  if (id) {
-    const rows = await container.db.execute(sql`
-      WITH updated AS (
-        UPDATE "system_article"
-        SET "cid" = COALESCE(${cid ?? null}, "cid"), "title" = ${title},
-          "author" = ${author}, "content" = ${content}, "status" = ${status},
-          "image_input" = COALESCE(${imageInput ?? null}, "image_input"),
-          "url" = COALESCE(${url ?? null}, "url")
-        WHERE "id" = ${id} AND "is_del" = 0
-        RETURNING "id", "content"
-      ), mirrored AS (
-      INSERT INTO "article_content" ("nid", "content")
-      SELECT "id", "content" FROM updated
-      ON CONFLICT ("nid") DO UPDATE SET "content" = EXCLUDED."content"
-        RETURNING "nid"
-      )
-      SELECT updated."id"
-      FROM updated
-      JOIN mirrored ON mirrored."nid" = updated."id"
-    `);
-    const result = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
-    if (!result[0]) throw new ValidateException("文章不存在或已删除");
-    return jsonOk(c, { id }, "更新成功");
-  }
-  await container.db.execute(sql`
-    WITH inserted AS (
-      INSERT INTO "system_article"
-        ("cid", "title", "author", "content", "status", "is_del", "add_time", "image_input", "url")
-      VALUES (${cid ?? 0}, ${title}, ${author}, ${content}, ${status}, 0, ${now}, ${imageInput ?? ""}, ${url ?? ""})
-      RETURNING "id", "content"
-    )
-    INSERT INTO "article_content" ("nid", "content")
-    SELECT "id", "content" FROM inserted
-    ON CONFLICT ("nid") DO UPDATE SET "content" = EXCLUDED."content"
-  `);
-  return jsonOk(c, null, "创建成功");
-}
-
-/** DELETE /api/admin/article/del/:id */
-export async function adminArticleDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  await container.db.execute(sql`UPDATE "system_article" SET "is_del" = 1 WHERE "id" = ${id}`);
-  return jsonOk(c, null, "删除成功");
-}
+// CMS 内容管理已迁移到 AdminArticleController / AdminArticleService。
 
 // ═══════════════════════════════════════════════════════════
 // 系统工具 (M22: 操作日志)

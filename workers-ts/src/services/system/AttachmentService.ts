@@ -995,6 +995,7 @@ export class AttachmentService {
     const fileType = fileTypeValue(query.file_type ?? 1);
     const pid = nonNegativeId(query.pid ?? 0, "上级分类ID");
     const name = (query.name ?? "").trim().slice(0, 50);
+    const allLevels = query.all === "1";
     const conditions = [
       eq(systemAttachmentCategory.type, scope.type),
       eq(systemAttachmentCategory.relationId, scope.relationId),
@@ -1003,7 +1004,7 @@ export class AttachmentService {
     if (name) conditions.push(ilike(systemAttachmentCategory.name, `%${name}%`));
     const all = await this.container.db.select().from(systemAttachmentCategory)
       .where(and(...conditions)).orderBy(systemAttachmentCategory.id);
-    const rows = name ? all : all.filter((row) => row.pid === pid);
+    const rows = name || allLevels ? all : all.filter((row) => row.pid === pid);
     const parents = new Set(all.map((row) => row.pid));
     return {
       list: rows.map((row) => ({

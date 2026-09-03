@@ -37,9 +37,9 @@ describe("legacy Admin content screen parity", () => {
     ]);
     expect(audit.summary).toEqual({
       legacyRoutes: 13,
-      candidate: 5,
-      partial: 5,
-      missing: 3,
+      candidate: 8,
+      partial: 3,
+      missing: 2,
       retired: 0,
     });
     for (const status of ["candidate", "partial", "missing", "retired"] as const) {
@@ -58,15 +58,21 @@ describe("legacy Admin content screen parity", () => {
     }
   });
 
-  it("does not overstate the simplified CMS article replacement", () => {
+  it("keeps the consolidated CMS article replacement contract complete and explicit", () => {
     const category = audit.routes.find((row) => row.legacyPath === "/admin/content/article_category/index");
     const editor = audit.routes.find((row) => row.legacyPath === "/admin/content/article/add_article/:id?");
     const page = readFileSync("../view/admin-ts/src/pages/content/ArticleList.vue", "utf8");
-    expect(category?.status).toBe("missing");
-    expect(editor?.status).toBe("partial");
-    expect(page).toContain('request.get("/article/list")');
-    expect(page).not.toContain("category_id");
-    expect(page).not.toContain("synopsis");
+    const api = readFileSync("../view/admin-ts/src/api/article.ts", "utf8");
+    expect(category?.status).toBe("candidate");
+    expect(editor?.status).toBe("candidate");
+    expect(api).toContain('request.get("/article/list"');
+    expect(api).toContain('request.get("/article/category"');
+    expect(api).toContain('request.get("/article/product-options"');
+    expect(api).toContain('request.get("/article/attachment-options"');
+    expect(page).toContain("articleForm.synopsis");
+    expect(page).toContain("articleForm.image_input");
+    expect(page).toContain("articleForm.product_id");
+    expect(page).not.toContain("v-html");
   });
 
   it("keeps mini-program live remote writes explicitly below parity", () => {

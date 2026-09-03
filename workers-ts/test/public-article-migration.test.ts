@@ -197,13 +197,14 @@ describe("PUBLIC-ARTICLE migration contract", () => {
     expect(sanitized).toContain('<img src="/api/assets/42" width="100%">');
 
     const admin = readFileSync(
-      resolve(root, "src/controllers/api/v1/AdminCrudController.ts"),
+      resolve(root, "src/controllers/api/v1/AdminArticleController.ts"),
       "utf8",
     );
+    const adminService = readFileSync(resolve(root, "src/services/content/AdminArticleService.ts"), "utf8");
     const wechat = readFileSync(resolve(root, "src/services/wechat/WechatContentService.ts"), "utf8");
-    expect(admin).toContain("readBoundedJsonObject(c.req.raw, ADMIN_ARTICLE_MAX_BODY_BYTES)");
-    expect(admin).toContain("sanitizePublishedArticleHtml");
-    expect(admin).toContain("normalizePublishedArticleImageInput");
+    expect(admin).toContain("readBoundedJsonObject(c.req.raw, MAX_ARTICLE_BODY_BYTES)");
+    expect(adminService).toContain("sanitizePublishedArticleHtml");
+    expect(adminService).toContain("normalizePublishedArticleImageInput");
     expect(wechat).toContain("sanitizePublishedArticleHtml");
     expect(wechat).toContain("normalizePublishedArticleMediaReference");
   });

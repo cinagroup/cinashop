@@ -9,9 +9,9 @@
   },
   "summary": {
     "legacyRoutes": 13,
-    "candidate": 5,
-    "partial": 5,
-    "missing": 3,
+    "candidate": 8,
+    "partial": 3,
+    "missing": 2,
     "retired": 0
   },
   "routes": [
@@ -74,34 +74,34 @@
       "legacyPath": "/admin/content/article/index/:id?",
       "legacyComponent": "pages/content/cms/article/index.vue",
       "title": "文章管理",
-      "status": "partial",
+      "status": "candidate",
       "newScreens": ["/content/article"],
-      "newApiContracts": ["GET /adminapi/article/list", "POST /adminapi/article/save", "DELETE /adminapi/article/del/:id"],
+      "newApiContracts": ["GET /adminapi/article/list", "GET /adminapi/article/detail/:id", "POST /adminapi/article/save", "DELETE /adminapi/article/del/:id", "GET /adminapi/article/product-options", "GET /adminapi/article/attachment-options", "GET /adminapi/article/attachment-categories"],
       "permission": "article.view / article.manage",
-      "covered": "The replacement screen lists articles and supports a basic create, edit, visibility value, and delete workflow.",
-      "remaining": "Category filtering and relations, cover image, synopsis, richer status operations, sorting, pagination, and legacy list actions remain absent or simplified."
+      "covered": "The consolidated replacement provides title, category and status filters, bounded pagination, cover and synopsis display, product relation, visibility and campaign markers, create, edit, and verified recoverable delete.",
+      "remaining": "Production historical-data validation and real-role list, filter, edit, relation, and delete E2E remain required before cutover acceptance."
     },
     {
       "legacyPath": "/admin/content/article_category/index",
       "legacyComponent": "pages/content/cms/articleCategory/index.vue",
       "title": "文章分类",
-      "status": "missing",
-      "newScreens": [],
-      "newApiContracts": [],
+      "status": "candidate",
+      "newScreens": ["/content/article#categories"],
+      "newApiContracts": ["GET /adminapi/article/category", "POST /adminapi/article/category", "PUT /adminapi/article/category/:id", "PUT /adminapi/article/category/:id/status", "DELETE /adminapi/article/category/:id"],
       "permission": "article.view / article.manage",
-      "covered": "The current article table retains a category identifier in storage, but there is no replacement Admin category workflow.",
-      "remaining": "Implement category list, hierarchy, create, edit, visibility, sorting, reference-aware delete, permissions, and browser coverage."
+      "covered": "The consolidated category tab implements the legacy flat catalog, title and status filters, image, introduction, sorting, create, edit, visibility, transaction readback, and article-reference-protected recoverable delete.",
+      "remaining": "Production historical-data validation and real-role category create, edit, status, and reference-protection E2E remain required before cutover acceptance."
     },
     {
       "legacyPath": "/admin/content/article/add_article/:id?",
       "legacyComponent": "pages/content/cms/addArticle/index.vue",
       "title": "文章添加",
-      "status": "partial",
+      "status": "candidate",
       "newScreens": ["/content/article"],
-      "newApiContracts": ["POST /adminapi/article/save"],
+      "newApiContracts": ["GET /adminapi/article/detail/:id", "POST /adminapi/article/save", "GET /adminapi/article/category", "GET /adminapi/article/product-options", "GET /adminapi/article/attachment-options", "GET /adminapi/article/attachment-categories"],
       "permission": "article.view / article.manage",
-      "covered": "A compact dialog supports title, author, plain content, visibility, create, and edit in the consolidated article screen.",
-      "remaining": "Category selection, cover image, synopsis, rich-text editing and sanitization UI, source URL, sorting, related products, and dedicated edit-route semantics remain absent."
+      "covered": "The editor covers title, author, required category and cover, existing-asset selection across nested material folders, synopsis, bounded HTML with formatting helpers and server sanitization, share fields, source URL, sorting, product relation, publish, hot and banner flags, and transactional dual-table readback.",
+      "remaining": "Production private-asset validation and real-role create/edit E2E remain required; uploads continue through the separately permissioned material center."
     },
     {
       "legacyPath": "/admin/content/live/live_room",

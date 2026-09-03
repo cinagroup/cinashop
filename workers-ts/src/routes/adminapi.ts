@@ -57,6 +57,7 @@ import * as AdminNewcomer from "@/controllers/api/v1/AdminNewcomerController";
 import * as AdminDiscountPackage from "@/controllers/api/v1/AdminDiscountPackageController";
 import * as AdminLegacyContent from "@/controllers/api/v1/AdminLegacyContentController";
 import * as AdminCommunity from "@/controllers/api/v1/AdminCommunityController";
+import * as AdminArticle from "@/controllers/api/v1/AdminArticleController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
@@ -693,9 +694,18 @@ adminapiRoutes.delete("/diy/del_link/:id", adminAuth, PageNavigationController.d
 adminapiRoutes.get("/diy/get_url", adminAuth, AdminLegacyContent.getUniAppUrls);
 adminapiRoutes.get("/diy/open_adv/info", adminAuth, AdminLegacyContent.getOpenAdv);
 adminapiRoutes.post("/diy/open_adv/add", adminAuth, AdminLegacyContent.setOpenAdv);
-adminapiRoutes.get("/article/list", adminAuth, AdminCrud.adminArticleList);
-adminapiRoutes.post("/article/save", adminAuth, AdminCrud.adminArticleSave);
-adminapiRoutes.delete("/article/del/:id", adminAuth, AdminCrud.adminArticleDel);
+adminapiRoutes.get("/article/list", adminAuth, AdminArticle.list);
+adminapiRoutes.get("/article/detail/:id", adminAuth, AdminArticle.detail);
+adminapiRoutes.post("/article/save", adminAuth, AdminArticle.save);
+adminapiRoutes.delete("/article/del/:id", adminAuth, AdminArticle.remove);
+adminapiRoutes.get("/article/category", adminAuth, AdminArticle.categoryList);
+adminapiRoutes.post("/article/category", adminAuth, AdminArticle.createCategory);
+adminapiRoutes.put("/article/category/:id", adminAuth, AdminArticle.updateCategory);
+adminapiRoutes.put("/article/category/:id/status", adminAuth, AdminArticle.categoryStatus);
+adminapiRoutes.delete("/article/category/:id", adminAuth, AdminArticle.removeCategory);
+adminapiRoutes.get("/article/product-options", adminAuth, AdminArticle.productOptions);
+adminapiRoutes.get("/article/attachment-options", adminAuth, AdminArticle.attachmentOptions);
+adminapiRoutes.get("/article/attachment-categories", adminAuth, AdminArticle.attachmentCategories);
 adminapiRoutes.get("/log/list", adminAuth, AdminCrud.adminLogList);
 
 // ─── 分销管理 + 通知模板 + 短信配置 (M24) ─────────────────

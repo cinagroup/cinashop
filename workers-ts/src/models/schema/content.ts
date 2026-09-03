@@ -26,7 +26,11 @@ export const systemArticle = pgTable(
     isHot: smallint("is_hot").default(0).notNull(),
     isBanner: smallint("is_banner").default(0).notNull(),
   },
-  (t) => [index("sa_visible_sort").on(t.status, t.isDel, t.hide, t.sort)],
+  (t) => [
+    index("sa_visible_sort").on(t.status, t.isDel, t.hide, t.sort),
+    index("sa_admin_active_sort").on(t.isDel, t.sort.desc(), t.id.desc()),
+    index("sa_admin_category_active").on(t.cid, t.isDel, t.id.desc()),
+  ],
 );
 
 export const articleCategory = pgTable(
@@ -43,7 +47,10 @@ export const articleCategory = pgTable(
     addTime: integer("add_time").default(0).notNull(),
     hidden: smallint("hidden").default(0).notNull(),
   },
-  (t) => [index("ac_visible_sort").on(t.status, t.isDel, t.hidden, t.sort)],
+  (t) => [
+    index("ac_visible_sort").on(t.status, t.isDel, t.hidden, t.sort),
+    index("ac_admin_active_sort").on(t.isDel, t.sort.desc(), t.id.desc()),
+  ],
 );
 
 /** Original PHP article body table, retained for lossless import and fallback reads. */
