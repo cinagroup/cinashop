@@ -39,14 +39,15 @@ describe("legacy Admin setting route parity audit", () => {
     expect(report.routes.map((route) => route.legacy.path)).toEqual(expectedPaths);
     expect(report.summary).toMatchObject({
       legacyRoutes: 76,
-      reviewed: 13,
-      candidate: 5,
-      partial: 7,
+      reviewed: 15,
+      candidate: 8,
+      partial: 6,
       missing: 0,
       retired: 1,
-      unreviewed: 63,
+      unreviewed: 61,
     });
-    expect(report.methodology.productionAccess).toMatch(/Not used/);
+    expect(report.methodology.productionAccess).toMatch(/Read-only Cloudflare control-plane metadata/);
+    expect(report.methodology.productionAccess).toMatch(/no production write or deployment/);
   });
 
   it("records the first reviewed print and notification routes without guessing the rest", () => {
@@ -57,7 +58,7 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/document/content": "candidate",
       "/admin/setting/notification/index": "partial",
       "/admin/setting/notification/notificationEdit": "partial",
-      "/admin/setting/system/create": "partial",
+      "/admin/setting/system/create": "candidate",
       "/admin/setting/system_config": "partial",
       "/admin/setting/shop/base": "partial",
       "/admin/setting/shop/product": "candidate",
@@ -65,6 +66,8 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/shop/pay": "partial",
       "/admin/setting/shop/agreemant": "candidate",
       "/admin/setting/shop/division": "candidate",
+      "/admin/setting/system_form": "candidate",
+      "/admin/setting/system_form/data": "candidate",
     });
     for (const route of report.routes.filter((entry) => entry.status === "unreviewed")) {
       expect(route.targetScreens).toEqual([]);
@@ -72,6 +75,21 @@ describe("legacy Admin setting route parity audit", () => {
       expect(route.covered).toEqual([]);
       expect(route.remaining.join(" ")).toContain("尚未逐屏比对");
     }
+  });
+
+  it("closes the three system-form screens with a bounded editor and data viewer", () => {
+    const byPath = new Map(report.routes.map((route) => [route.legacy.path, route]));
+    for (const path of [
+      "/admin/setting/system/create",
+      "/admin/setting/system_form",
+      "/admin/setting/system_form/data",
+    ]) {
+      expect(byPath.get(path)?.status).toBe("candidate");
+      expect(byPath.get(path)?.targetScreens.join(" ")).toContain("/config/forms");
+    }
+    expect(byPath.get("/admin/setting/system/create")?.covered.join(" ")).toContain("10类受控组件");
+    expect(byPath.get("/admin/setting/system_form")?.covered.join(" ")).toContain("停用和删除前检查");
+    expect(byPath.get("/admin/setting/system_form/data")?.covered.join(" ")).toContain("公式注入");
   });
 
   it("records the second core-settings batch with explicit safe targets and remaining gaps", () => {
@@ -85,7 +103,7 @@ describe("legacy Admin setting route parity audit", () => {
     const agreement = byPath.get("/admin/setting/shop/agreemant")!;
     const division = byPath.get("/admin/setting/shop/division")!;
 
-    expect(systemForm.remaining.join(" ")).toContain("尚无系统表单");
+    expect(systemForm.targetScreens.join(" ")).toContain("/config/forms");
     expect(generic.targetScreens).toContain("/config/commerce");
     expect(generic.remaining.join(" ")).toContain("任意键编辑器");
     expect(basic.covered.join(" ")).toContain("HTTPS");

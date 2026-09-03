@@ -14,6 +14,11 @@
 
     <div class="safe-links">
       <el-card shadow="never">
+        <h3>系统表单</h3>
+        <p>下单补充信息模板、受控组件编辑及用户提交数据。</p>
+        <router-link to="/config/forms"><el-button type="primary">进入设置</el-button></router-link>
+      </el-card>
+      <el-card shadow="never">
         <h3>商城运行设置</h3>
         <p>站点、库存、订单时限、支付开关与事业部入口等受控字段。</p>
         <router-link to="/config/commerce"><el-button type="primary">进入设置</el-button></router-link>

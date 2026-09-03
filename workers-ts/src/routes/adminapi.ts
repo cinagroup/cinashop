@@ -472,6 +472,7 @@ adminapiRoutes.post("/form/update_name/:id", adminAuth, AdminCrud.adminSystemFor
 adminapiRoutes.post("/form/save/:id", adminAuth, AdminCrud.adminSystemFormSave);
 adminapiRoutes.delete("/form/del/:id", adminAuth, AdminCrud.adminSystemFormDelete);
 adminapiRoutes.get("/form/set_show/:id/:is_show", adminAuth, AdminCrud.adminSystemFormStatus);
+adminapiRoutes.put("/form/set_show/:id/:is_show", adminAuth, AdminCrud.adminSystemFormStatus);
 adminapiRoutes.get("/form/info/:id", adminAuth, AdminCrud.adminSystemFormInfo);
 adminapiRoutes.get("/form/all_system_form", adminAuth, AdminCrud.adminSystemFormAll);
 adminapiRoutes.get("/form/data/:id", adminAuth, AdminCrud.adminSystemFormData);

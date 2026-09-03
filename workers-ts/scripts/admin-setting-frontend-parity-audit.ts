@@ -33,26 +33,73 @@ const outputFile = resolve(workerRoot, "audit", "admin-legacy-setting-route-pari
 
 const reviews: Record<string, Review> = {
   "/admin/setting/system/create": {
-    status: "partial",
-    targetScreens: [],
+    status: "candidate",
+    targetScreens: ["/config/forms（新增/编辑表单）"],
     targetApis: [
       "GET /adminapi/form/index",
       "GET /adminapi/form/info/:id",
       "POST /adminapi/form/save/:id",
       "POST /adminapi/form/update_name/:id",
-      "GET /adminapi/form/set_show/:id/:is_show",
+      "GET|PUT /adminapi/form/set_show/:id/:is_show",
       "DELETE /adminapi/form/del/:id",
       "GET /adminapi/form/data/:id",
     ],
     covered: [
       "系统表单定义、组件白名单、提交数据校验和订单不可变快照已迁移",
       "后台 CRUD、启停、数据列表及商品选择接口已迁移",
+      "新版 Admin 提供10类受控组件、拖拽/按钮排序、字段设置和用户端预览",
+      "兼容旧编辑器按时间戳键保存的对象形状，并按时间戳恢复组件顺序",
+      "保存时拒绝未知组件、重复ID、重复/越界选项及无效默认值",
     ],
-    remaining: ["新版 Admin 尚无系统表单列表、拖拽编辑器和提交数据查看页面"],
+    remaining: ["需在获批窗口对生产历史模板形状及真实商品下单做只读/端到端核验"],
     evidence: [
+      "view/admin-ts/src/pages/config/SystemForms.vue",
+      "cinashop-php/view/admin/src/store/modules/admin/modules/mobildConfig.js:26",
+      "cinashop-php/view/admin/src/pages/setting/systemForm/create.vue:667",
       "workers-ts/src/services/system/SystemMetadataService.ts",
       "workers-ts/src/services/order/OrderSystemFormService.ts",
       "workers-ts/test/system-form-migration.test.ts",
+    ],
+  },
+  "/admin/setting/system_form": {
+    status: "candidate",
+    targetScreens: ["/config/forms"],
+    targetApis: [
+      "GET /adminapi/form/index",
+      "GET /adminapi/form/info/:id",
+      "POST /adminapi/form/save/:id",
+      "GET|PUT /adminapi/form/set_show/:id/:is_show",
+      "DELETE /adminapi/form/del/:id",
+    ],
+    covered: [
+      "名称/状态筛选、15条分页、新增、编辑、启停和删除",
+      "列表不加载完整模板JSON，详情按需读取且所有响应禁止缓存",
+      "停用和删除前检查仍关联的商品、秒杀、拼团、砍价和积分商品",
+      "写入使用短事务、固定锁、精确回读和不含表单内容的管理员审计",
+    ],
+    remaining: ["需用生产历史引用关系验证停用/删除保护"],
+    evidence: [
+      "view/admin-ts/src/pages/config/SystemForms.vue",
+      "workers-ts/src/services/system/SystemMetadataService.ts",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "workers-ts/migrations/0128_system_form_reference_indexes.sql",
+    ],
+  },
+  "/admin/setting/system_form/data": {
+    status: "candidate",
+    targetScreens: ["/config/forms（提交数据抽屉）"],
+    targetApis: ["GET /adminapi/form/data/:id"],
+    covered: [
+      "按用户、来源、关联ID和提交时间筛选并20条分页",
+      "模板字段逐项安全文本展示，不执行HTML或加载外部图片",
+      "最多5000条的CSV导出并防止公式注入",
+      "含手机号的响应设置 private, no-store",
+    ],
+    remaining: ["需对生产提交量、历史异常JSON和受限角色做只读验收"],
+    evidence: [
+      "view/admin-ts/src/pages/config/SystemForms.vue",
+      "workers-ts/src/services/system/SystemMetadataService.ts",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
     ],
   },
   "/admin/setting/system_config": {
@@ -337,7 +384,7 @@ const report = {
       retired: "Reviewed legacy route is intentionally not migrated because it is broken, duplicated, or obsolete.",
       unreviewed: "Inventory only; no semantic parity conclusion has been made.",
     },
-    productionAccess: "Not used. This report is based on local source, static checks, tests, and preview QA.",
+    productionAccess: "Read-only Cloudflare control-plane metadata verified the configured Hyperdrive ID and origin descriptor; no PostgreSQL schema or business rows were queried and no production write or deployment was performed.",
   },
   summary: {
     legacyRoutes: routes.length,

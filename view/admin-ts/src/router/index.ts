@@ -144,6 +144,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "商城运行设置" },
       },
       {
+        path: "config/forms",
+        name: "config-forms",
+        component: () => import("@/pages/config/SystemForms.vue"),
+        meta: { title: "系统表单" },
+      },
+      {
         path: "config/runtime-content",
         name: "config-runtime-content",
         component: () => import("@/pages/config/RuntimeContent.vue"),

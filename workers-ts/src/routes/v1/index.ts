@@ -1485,6 +1485,7 @@ v1Routes.post("/admin/form/update_name/:id", adminAuth, AdminCrud.adminSystemFor
 v1Routes.post("/admin/form/save/:id", adminAuth, AdminCrud.adminSystemFormSave);
 v1Routes.delete("/admin/form/del/:id", adminAuth, AdminCrud.adminSystemFormDelete);
 v1Routes.get("/admin/form/set_show/:id/:is_show", adminAuth, AdminCrud.adminSystemFormStatus);
+v1Routes.put("/admin/form/set_show/:id/:is_show", adminAuth, AdminCrud.adminSystemFormStatus);
 v1Routes.get("/admin/form/info/:id", adminAuth, AdminCrud.adminSystemFormInfo);
 v1Routes.get("/admin/form/all_system_form", adminAuth, AdminCrud.adminSystemFormAll);
 v1Routes.get("/admin/form/data/:id", adminAuth, AdminCrud.adminSystemFormData);

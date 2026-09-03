@@ -25,7 +25,10 @@ import {
   ProductMetadataService,
 } from "@/services/product/ProductMetadataService";
 import { UserSegmentationService } from "@/services/user/UserSegmentationService";
-import { SystemMetadataService } from "@/services/system/SystemMetadataService";
+import {
+  SystemMetadataService,
+  type SystemFormAdminActor,
+} from "@/services/system/SystemMetadataService";
 import { SystemSignRewardService } from "@/services/system/SystemSignRewardService";
 import { AgentLevelTaskService } from "@/services/agent/AgentLevelTaskService";
 import {
@@ -818,6 +821,19 @@ function systemMetadata(c: C) {
   return new SystemMetadataService(c.get("container"));
 }
 
+function systemFormActor(c: C): SystemFormAdminActor {
+  const actor = c.get("adminInfo");
+  if (!actor) throw new ValidateException("管理员身份不存在");
+  return {
+    id: actor.id,
+    name: actor.realName || actor.account,
+    ip: c.req.header("CF-Connecting-IP")
+      ?? c.req.header("X-Forwarded-For")?.split(",")[0]?.trim()
+      ?? "",
+    method: c.req.method,
+  };
+}
+
 export async function adminConfigTabList(c: C) {
   return jsonOk(c, await systemMetadata(c).configTabList(c.req.query()));
 }
@@ -849,14 +865,17 @@ export async function adminConfigTabStatus(c: C) {
 }
 
 export async function adminSystemFormList(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await systemMetadata(c).formList(c.req.query()));
 }
 
 export async function adminSystemFormAll(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await systemMetadata(c).allSystemForms());
 }
 
 export async function adminSystemFormInfo(c: C) {
+  privateNoStore(c);
   const info = await systemMetadata(c).formInfo(
     metadataId(c),
     c.req.query("type") === "1",
@@ -865,29 +884,42 @@ export async function adminSystemFormInfo(c: C) {
 }
 
 export async function adminSystemFormSave(c: C) {
+  privateNoStore(c);
   return jsonOk(
     c,
-    await systemMetadata(c).saveForm(metadataId(c, true), await metadataBody(c)),
+    await systemMetadata(c).saveForm(
+      metadataId(c, true),
+      await readBoundedJsonObject(c.req.raw, 1_100_000),
+      systemFormActor(c),
+    ),
     "保存成功",
   );
 }
 
 export async function adminSystemFormRename(c: C) {
-  await systemMetadata(c).renameForm(metadataId(c), await metadataBody(c));
+  privateNoStore(c);
+  await systemMetadata(c).renameForm(
+    metadataId(c),
+    await readBoundedJsonObject(c.req.raw, 4_096),
+    systemFormActor(c),
+  );
   return jsonOk(c, null, "修改成功");
 }
 
 export async function adminSystemFormDelete(c: C) {
-  await systemMetadata(c).deleteForm(metadataId(c));
+  privateNoStore(c);
+  await systemMetadata(c).deleteForm(metadataId(c), systemFormActor(c));
   return jsonOk(c, null, "删除成功");
 }
 
 export async function adminSystemFormStatus(c: C) {
-  await systemMetadata(c).setFormStatus(metadataId(c), c.req.param("is_show"));
+  privateNoStore(c);
+  await systemMetadata(c).setFormStatus(metadataId(c), c.req.param("is_show"), systemFormActor(c));
   return jsonOk(c, null, "设置成功");
 }
 
 export async function adminSystemFormData(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await systemMetadata(c).formDataList(metadataId(c), c.req.query()));
 }
 
@@ -968,6 +1000,7 @@ function mobileRefunds(c: C): AdminMobileRefundService {
 
 function privateNoStore(c: C): void {
   c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Pragma", "no-cache");
 }
 
 /** GET /api/admin/refund_order/list — PHP 移动管理端售后列表兼容接口。 */
