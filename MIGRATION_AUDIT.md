@@ -4138,6 +4138,46 @@ Admin静态请求为334个调用点、354个路径变体，354条全部已注册
 
 本批没有连接Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或改写生产PostgreSQL，没有执行DDL/DML、真实Queue投递、微信调用或Worker/Admin Pages部署。D3只标记“候选完成，未发布”；如需进入生产读取或写入，仍须明确连接方式、只读/写入SQL范围、测试记录回收方案和变更窗口。生产直播目录分布、复合ID歧义、重复主播微信号、关系多重集、微信凭据、真实主管理员及只读/编辑受限角色E2E继续归FE-001G/H；FE-001D父项仍被其余旧业务域逐屏映射阻塞。
 
+## FE-001-D4A 系统设置首批打印/通知五屏审计（2026-09-03）
+
+### 分母、方法与状态纪律
+
+本轮没有按新Admin的路由数量或聚合页标题推定迁移完成，而是从既有权威 `audit/admin-frontend-inventory.json` 中精确筛出 `surface=page` 且路径以 `/admin/setting` 开头的76条旧业务页。新增可重复生成器 `scripts/admin-setting-frontend-parity-audit.ts` 和产物 `audit/admin-legacy-setting-route-parity.json`，逐条保留旧路径、标题、组件和源码行，并分别记录状态、目标页面、目标API、已覆盖语义、剩余缺口与证据。生成器要求分母必须恰为76且路径唯一；测试再把产物顺序与权威盘点逐项比对，拒绝手工遗漏、重复或无依据改变分母。
+
+本轮只审查打印机列表、误标为“单据设置”的配置页、小票配置、消息管理和消息编辑5屏。状态统计为candidate 2、partial 2、retired 1、missing 0、unreviewed 71；71条未审屏的目标页面/API/已覆盖字段必须为空，并明确写为“尚未逐屏比对”。`candidate` 只表示本地代码、静态合同、单元与预览UI形成候选闭环，不表示生产数据、真实角色、第三方设备或发布已通过。
+
+| 旧屏幕 | 状态 | 本轮结论 | 仍需完成 |
+|---|---|---|---|
+| `/admin/setting/document` 打印机设置 | candidate | `/setting/print` 覆盖名称/平台筛选、15条分页、新增/编辑/启停/删除、就绪状态和平台/供应商作用域 | 生产打印机数据形状、真实角色和设备E2E |
+| `/admin/setting/document/config` 单据设置 | retired | 旧组件实际误复制商品规格页：只导入 `productSpecsList`，却调用未定义的 `isShowApi/userLabelAddApi`，删除路径也是 `product/specs/:id`，没有单据设置语义 | 无；不复制损坏页面 |
+| `/admin/setting/document/content` 小票配置 | candidate | 标题、配送、备注、商品、运费、优惠、支付、订单、自定义内容、二维码、提示语及实时预览均有可执行操作面 | 真实打印机物理纸张版式验收 |
+| `/admin/setting/notification/index` 消息管理 | partial | 已有四类订单通知渠道矩阵、提供商模板目录、就绪状态和持久投递台账 | type=1会员/type=2平台全消息目录、企业微信渠道总览 |
+| `/admin/setting/notification/notificationEdit` 消息编辑 | partial | 可编辑四类订单通知的站内信、短信、公众号和小程序配置及模板 | 全目录逐项编辑、企业微信、远端模板同步安全流程 |
+
+### 打印服务与PostgreSQL边界加固
+
+旧打印列表以 `print_name` 和平台类型筛选，默认每页15条，并用 `POST print/set_status/:id/:status` 改状态。新服务此前已有平台 `supplier_id=0`、供应商正整数租户隔离、密钥只写不回显及活跃打印机状态约束，但状态入口只有PUT；请求只先检查声明的64 KiB长度再调用 `c.req.json()`，chunked正文仍可绕过内存上限；写事务虽然取得advisory lock，却缺显式锁等待/语句超时、操作日志和语义回读。
+
+本轮在 `/adminapi`、`/supplierapi` 和 `/api/v1/admin` 保留PUT的同时恢复旧POST状态别名，审计日志记录实际请求方法。保存和小票正文改用通用流式有界JSON读取器，真实读取量最多16 KiB；所有列表、详情和写响应设置 `private, no-store, max-age=0`。写入从认证上下文派生平台Admin或Supplier Admin actor，不接受body中的租户/操作者声明；事务先设置2秒 `lock_timeout` 和5秒 `statement_timeout`，再按supplier作用域取得固定advisory lock。保存、启停、软删除和内容保存均在提交前精确重读目标行，任何凭据、状态、删除标记或JSON内容不一致都整体回滚；同事务写 `system_log`，只记录actor、作用域、对象ID、方法和动作，不记录易联云/飞鹅云密钥或小票内容。
+
+小票合同把旧50字提示上限恢复到服务端，拒绝打印控制标记；规格编码只能在商品明细开启时启用，二维码开启必须提供站内绝对路径，底部提示开启必须提供非空文本。页码限制10,000、每页最多100，兼容旧页码式UX同时避免无界offset。既有 `print_document_supplier_id` 与活动查询索引覆盖本轮作用域、过滤和排序访问，因此没有为这批创建DDL。Cloudflare Workers最佳实践审查直接促成流式正文上限、无缓存响应和不持有跨请求状态；PostgreSQL最佳实践审查直接促成短事务、锁超时、固定锁顺序、精确回读和索引复核。
+
+### Admin操作面与浏览器证据
+
+`/setting/print` 的打印机页新增名称关键词、易联云/飞鹅云筛选、搜索/重置、15条分页和删除后页码回退。小票弹窗恢复旧字段集合并加入实时纸票预览；取消商品明细会同步移除并禁用规格编码，二维码可从商城首页、订单列表、个人中心、领券中心选择或输入受服务端复核的站内路径，提示语显示50字计数。预览数据扩为两类打印机并支持筛选、分页、创建、更新、删除和按打印机保存内容。
+
+应用内浏览器在 `http://127.0.0.1:4175/setting/print?preview=1` 完成实际控件验收。桌面端页面标题为“小票打印 - CinaShop 管理后台”，输入“易联”后只保留易联云行，重置恢复两行，平台筛选“飞鹅云”只保留平台仓库打印机；打开小票后取消商品明细，规格编码立即变为禁用且从预览消失，启用二维码并选择订单列表后预览出现 `/pages/order/list`，提示语修改为“迁移审计预览”后字数和纸票同步变化。首次保存真实暴露了Vue响应式数组不能被 `structuredClone` 克隆的preview缺陷，改为显式复制goods/pay/order三个数组后重新打开并保存，出现“打印内容已保存”。
+
+390×844视口下桌面表格隐藏并显示两张移动卡片，搜索和平台筛选占满可用宽度，文档无横向溢出；小票弹窗保持在视口内纵向滚动，底部实时预览和保存按钮可到达。桌面与移动端均无Vite错误遮罩，console warning/error为0。全部操作使用内存preview数据，没有读取PostgreSQL或调用打印提供商。
+
+### 自动门禁、提交与生产边界
+
+本地完整Worker单元204文件/1,294项全部通过，单元与运行时TypeScript通过，Admin生产构建2,428模块通过。Admin静态请求仍为334个调用点、354个路径变体，354条全部注册且可执行，未注册、未解析和受控不可用命中均为0；新增旧POST打印状态别名不会制造前端未注册调用。全局路由审计为PHP 1,904 / TS 1,616 / 精确匹配861 / 可执行843 / 受控不可用18 / 缺失1,043 / 退役16 / 可执行缺口1,027。Windows本机workerd仍在运行任何断言前因既有 `0xc0000005` 启动失败，因此本机结果没有写成通过。
+
+实现与机器审计提交 `2f03669b4e0bf1675da307099ac34a53017dd397` 推送后，[Actions `33710753409`](https://github.com/cinagroup/cinashop/actions/runs/33710753409) 的Repository secret scan、Worker双TypeScript/1,294项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。
+
+本批没有连接Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或改写生产PostgreSQL，没有执行DDL/DML、真实Queue、打印提供商调用或Worker/Admin Pages部署。生产打印机凭据与真实物理小票、历史通知目录、重复配置、主管理员和只读/编辑受限角色、预发发布与观察继续归CFG-007、DB-003、FE-001G/H；FE-001D4仍被其余71条setting业务屏逐项审计阻塞，FE-001D仍被整个274屏分母阻塞。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
