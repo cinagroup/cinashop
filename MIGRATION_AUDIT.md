@@ -4178,6 +4178,49 @@ Admin静态请求为334个调用点、354个路径变体，354条全部已注册
 
 本批没有连接Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或改写生产PostgreSQL，没有执行DDL/DML、真实Queue、打印提供商调用或Worker/Admin Pages部署。生产打印机凭据与真实物理小票、历史通知目录、重复配置、主管理员和只读/编辑受限角色、预发发布与观察继续归CFG-007、DB-003、FE-001G/H；FE-001D4仍被其余71条setting业务屏逐项审计阻塞，FE-001D仍被整个274屏分母阻塞。
 
+## FE-001-D4B 核心商城设置八屏审计（2026-09-03）
+
+### 审计分母与逐屏结论
+
+本批继续使用76条 `/admin/setting*` 权威业务页分母，没有用新版聚合页数量或已存在的后端服务推定前端完成。逐项阅读旧Admin组件、控制器、配置服务与实际消费者，并将系统表单、动态系统配置、商城基础、商品、交易、支付、协议和事业部8屏写入 `scripts/admin-setting-frontend-parity-audit.ts`；生成产物与测试要求每屏同时记录目标页面、目标API、已覆盖语义、剩余缺口和源码证据。本批后统计由reviewed 5 / candidate 2 / partial 2 / retired 1 / unreviewed 71推进为reviewed 13 / candidate 5 / partial 7 / retired 1 / unreviewed 63，未审屏继续保持空目标和明确的unreviewed状态。
+
+| 旧屏幕 | 状态 | 本批证据结论 | 明确保留的缺口 |
+|---|---|---|---|
+| `/admin/setting/system/create` 系统表单 | partial | Worker已有表单定义CRUD、受控组件校验、提交数据和订单不可变快照 | 新Admin尚无表单列表、拖拽编辑器和提交数据查看页 |
+| `/admin/setting/system_config` 动态系统配置 | partial | `/config` 已拆出商城运行、新人运营和客户端内容三类字段白名单页面 | 大量配置分类仍未逐项迁移；通用分类/任意键编辑器因越权写入与凭据泄露风险不恢复 |
+| `/admin/setting/shop/base` 商城基础 | partial | 新页覆盖站点开关、名称、HTTPS地址、电话、备案、四类品牌图、悬浮菜单、视频和海报标题 | 登录轮播图/favicon素材流程、微信分享消费者、Worker原生密码与输入安全策略 |
+| `/admin/setting/shop/product` 商品设置 | candidate | 警戒库存可读写，阈值变化时同步重算商品和普通SKU的 `is_police`、`is_sold`，原库存预警查询合同仍可执行 | 需在生产商品量上验证5秒事务上限 |
+| `/admin/setting/shop/trade` 交易设置 | partial | 7类未支付/临期小时、自动收货/评价、售后期限、退货理由及平台退货地址兼容字段已接回 | 次卡临期提醒尚无Worker消费者；订单售后界面尚未展示平台退货姓名、电话和地址 |
+| `/admin/setting/shop/pay` 支付设置 | partial | 仅开放余额、微信、支付宝和线下支付业务开关，并展示数据库开关与Worker运行时依赖合并后的实际就绪状态 | 微信公开商户参数和小程序支付分支合同尚未定稿；所有密钥继续从Admin退休 |
+| `/admin/setting/shop/agreemant` 五类协议 | candidate | 既有 `/config/runtime-content` 覆盖隐私、用户、注销、供应商和代理商五类协议，兼容公共读取且Admin不执行HTML | 需对生产 `legacy_cache` 五类键做只读形状核验 |
+| `/admin/setting/shop/division` 事业部设置 | candidate | 两个旧开关、父子依赖、客户端入口判定及独立事业部业务管理页形成候选闭环 | 需对生产开关与既有事业部角色做只读一致性核验 |
+
+### 安全的商城配置操作面
+
+新增Admin `/config/commerce` 四个页签及 `GET|POST /adminapi/config/commerce`。服务端不接受配置分类ID或任意键，只投影并保存35个明确的非敏感键：基础13、商品1、交易14、支付业务开关5、事业部2。响应不返回微信/支付宝私钥、证书内容、API Key或打印提供商密钥，页面也没有这些输入项；支付卡片调用既有 `PaymentReadinessService`，把数据库开关和Cloudflare运行时Secret是否齐全合并为“可用/不可用+原因”，避免“开关已开”等同于“支付可用”。微信商户号、证书序列号等非密钥公开参数仍需单独确定受控入口或部署期注入策略，旧 `pay_routine_open/pay_routine_mchid` 也保留为未完成合同。
+
+基础字段拒绝HTTP、带账号或片段的网站URL，只允许HTTPS；图片地址只允许HTTPS或单斜杠开头的站内路径，协议相对 `//host` 被拒绝。整数按业务单位设上界，退货理由最多100条且逐条限长，电话字符集有界；事业部关闭时不能保存开启的代理申请。站点开放时名称和HTTPS地址必填。Admin保存按钮继续以 `config.manage` 控制，GET使用 `config.view`；服务端操作者ID、名称和IP只从已验证认证上下文及Cloudflare请求头派生，不接受正文声明。
+
+### PostgreSQL、缓存与库存语义
+
+POST正文使用共享流式读取器限制为32 KiB，GET/POST响应均为 `private, no-store, max-age=0`。写事务先设置2秒 `lock_timeout` 和5秒 `statement_timeout`，再取得固定 `admin-commerce-settings` advisory transaction lock并锁定白名单配置行；存在重复旧键时更新全部重复行，缺失键在同一事务补齐。提交前按规范化后的业务值逐键回读，任一不一致整体回滚；`system_log` 只记录actor、五个设置组和键数量，不记录配置值。提交后失效全部35个 `cfg_*` KV键。
+
+只有 `store_stock` 实际变化时才重算未删除商品：商品总库存或任一未退役普通SKU库存不高于阈值即设置 `is_police=1`，存在库存为0的未退役普通SKU即设置 `is_sold=1`。该实现复刻旧PHP保存阈值后的派生状态语义，但生产商品总量未知，批量更新是否能稳定落在5秒内仍需获批窗口验证，因此商品屏只标记本地candidate而不是生产完成。本批复核现有schema与查询路径后没有新增DDL。
+
+Cloudflare Workers最佳实践审查直接形成无跨请求可变状态、流式正文上限、无缓存敏感响应和Secret边界；PostgreSQL最佳实践审查直接形成短事务、锁等待/语句超时、固定锁顺序、行锁、语义回读与批量更新风险保留项。
+
+### Admin交互、自动门禁与全局统计
+
+应用内浏览器在 `http://127.0.0.1:4175/config/commerce?preview=1` 完成桌面实际交互：四个页签和基础字段可见；警戒库存20改为21、普通订单取消1改为2并编辑退货姓名；支付宝与线下支付开关保存后，预览就绪状态分别变为“商户配置未完成”和“可用”；关闭事业部时代理申请同步归零并禁用。页面宽1280时 `scrollWidth=1280`，console warning/error为0。曾尝试创建390×844浏览器上下文，但工具仍返回1280×720，因此本批只确认响应式CSS、TypeScript和生产构建，不把移动端浏览器交互写成已通过。
+
+本地Worker完整单元205文件/1,299项全部通过，单元与运行时TypeScript通过，Admin生产构建2,432模块通过。Admin静态请求现为336个调用点、356个路径变体，356条全部已注册且可执行，未注册、未解析和受控不可用命中均为0。全局路由审计为PHP 1,904 / TS 1,618 / 精确匹配861 / 可执行843 / 受控不可用18 / 缺失1,043 / 退役16 / 可执行缺口1,027；新加两条安全聚合API没有改变旧路由匹配数，也没有伪造旧功能覆盖。实现与机器审计提交 `04520ca6c39fe0e9720c87c2d0987d8e82997d4f` 推送后，[Actions `33713047376`](https://github.com/cinagroup/cinashop/actions/runs/33713047376) 的Repository secret scan、Worker双TypeScript/1,299项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。
+
+### 生产边界与待完成checklist
+
+本批没有连接Hyperdrive `9748c294e21c49a99579c9cef70102e0`，没有读取或改写生产PostgreSQL，没有执行DDL/DML、支付请求、Queue任务、Worker/Admin Pages部署或真实角色E2E。原因不是缺少用户的总体授权，而是生产批量库存重算、测试记录回收和回滚仍未给出精确执行范围与窗口，审计工作不应隐式扩大为线上写入。
+
+缺口已落入 `MIGRATION_CHECKLIST.md` 的FE-001D4B1～B4：先补系统表单Admin操作面；再处理商城基础素材/分享/Worker原生安全尾项；随后实现次卡临期提醒和退货地址展示；最后确定支付公开商户参数与小程序支付分支的受控合同。支付密钥输入、通用任意键编辑器和旧PHP过滤开关不作为待恢复功能。FE-001D4仍被63条未审setting屏以及D4A/D4B的partial项阻塞，FE-001D仍被完整274屏分母阻塞。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
