@@ -4221,6 +4221,38 @@ Cloudflare Workers最佳实践审查直接形成无跨请求可变状态、流�
 
 缺口已落入 `MIGRATION_CHECKLIST.md` 的FE-001D4B1～B4：先补系统表单Admin操作面；再处理商城基础素材/分享/Worker原生安全尾项；随后实现次卡临期提醒和退货地址展示；最后确定支付公开商户参数与小程序支付分支的受控合同。支付密钥输入、通用任意键编辑器和旧PHP过滤开关不作为待恢复功能。FE-001D4仍被63条未审setting屏以及D4A/D4B的partial项阻塞，FE-001D仍被完整274屏分母阻塞。
 
+## FE-001-D4B1 系统表单三屏迁移闭环（2026-09-03）
+
+### 旧数据形状与逐屏结论
+
+本轮没有把既有Worker CRUD等同于Admin迁移完成，而是重新阅读旧 `/admin/setting/system/create`、`/admin/setting/system_form`、`/admin/setting/system_form/data` 三条启用路由及其Vue、Vuex、PHP service/model和导出实现。旧创建页支持10类组件、拖拽排序、字段配置、保存/发布；目录支持名称/状态筛选、15条分页、新增、编辑、启停和删除；提交数据页支持用户、来源、关联业务与时间筛选及导出。三屏此前都没有新版Admin操作面，其中创建屏在D4B只能标为partial，目录和提交数据尚未进入逐屏统计。
+
+旧Vuex `mobildConfig.defaultArray` 不是数组，而是以组件时间戳为键的对象；保存时直接把该对象提交，重新打开时再转数组并按 `timestamp` 排序。这一事实暴露了既有Worker只接受JSON数组的兼容缺口：生产历史模板即使数据完整，也可能被解析为空。本批服务同时接受旧时间戳对象和新数组，对旧对象按组件时间戳恢复顺序，再统一校验并保存为有序数组；`titleShow.val` 的布尔、0/1及字符串0/1也按真实值处理，避免字符串`"0"`被JavaScript误判为必填。
+
+| 旧屏幕 | D4B状态 | D4B1状态 | 新操作面 | 仍需远端验收 |
+|---|---|---|---|---|
+| `/admin/setting/system/create` | partial | candidate | `/config/forms` 新增/编辑弹窗：10类组件、点击添加、拖拽/按钮排序、字段设置、选项、默认值、上传数和用户端预览 | 生产历史模板形状、真实商品下单快照 |
+| `/admin/setting/system_form` | 未审 | candidate | `/config/forms`：名称/状态筛选、15条分页、新增、编辑、启停、删除 | 生产引用保护、主管理员与受限角色 |
+| `/admin/setting/system_form/data` | 未审 | candidate | `/config/forms` 提交数据抽屉：用户/来源/关联ID/时间筛选、20条分页、CSV | 生产提交量、历史异常JSON、受限角色 |
+
+因此76屏设置分母由reviewed 13 / candidate 5 / partial 7 / retired 1 / unreviewed 63推进为reviewed 15 / candidate 8 / partial 6 / retired 1 / unreviewed 61。`audit/admin-legacy-setting-route-parity.json` 由生成器重建，三屏分别记录目标页面、API、已覆盖语义、剩余风险和旧新源码证据；未审61屏继续保持空目标，不能因新增一个聚合页而抬高状态。
+
+### 服务端合同、引用保护与敏感数据边界
+
+系统表单列表只投影ID、版本、名称、封面、状态和时间，不再为每行加载完整模板JSON；详情才按需返回组件。列表/详情/提交数据及所有写响应统一设置 `private, no-store, max-age=0` 与 `Pragma: no-cache`。保存正文使用流式有界JSON读取器，实际上限1,100,000字节，改名限4,096字节；模板最多100个组件、序列化后最多1,000,000字节。组件类型固定为多选、城市、日期、日期范围、单选、下拉、文本、时间、时间范围和图片；标题、提示、选项、默认值及上传数均有上限，组件ID必须唯一，选项1～50项且去重，文本默认手机号/身份证/邮箱/正数按子类型校验。
+
+新增、更新、改名、启停和删除都从已验证Admin上下文派生actor，不接受正文操作者。事务先设置2秒 `lock_timeout` 和5秒 `statement_timeout`，再取得固定advisory transaction lock；锁定目标行后检查同名，写后在同一事务精确回读名称、模板、状态或删除标记，任一不一致整体回滚。每次变更写入同事务 `system_log`，只含管理员、对象ID、方法和动作，不记录组件定义、用户提交值或手机号。
+
+停用和软删除前检查未删除商品，以及处于启用且未删除状态的秒杀、拼团、砍价和积分商品；有引用时列出业务类型并拒绝操作。`0128_system_form_reference_indexes.sql` 为五张引用表增加以 `system_form_id` 开头的部分复合索引，匹配上述有界存在性查询。该DDL只存在于本地候选提交，尚未在生产执行。提交数据查询页码最多10,000、每页最多100，支持用户、来源、关联业务及闭区间时间条件；响应仍携带手机号等运营所需个人数据，所以保持私有且不缓存。前端只以文本渲染字段，不执行HTML或主动加载历史图片URL；CSV最多拉取5,000条，并在以 `= + - @` 开头的单元格前加单引号以阻断电子表格公式执行。
+
+### Admin交互、自动门禁与生产核对
+
+新 `/config/forms` 从系统配置目录进入。桌面表格和移动卡片提供同一操作集合，管理按钮继续受 `config.manage` 控制，读取要求 `config.view`。应用内浏览器在 `http://127.0.0.1:4176/config/forms?preview=1` 的931×792视口完成实际交互：创建“浏览器验收表单”，添加文本和单选组件，修改标题与选项，上移单选组件并保存；重新打开后顺序为“采购类型、文本框”。企业采购提交数据可见，用户ID筛选999后显示空态，重置恢复记录，CSV导出可触发。页面与body宽度均为931px，没有横向溢出；console只有Vite连接debug日志，没有warning/error。工具本轮没有建立真实390×844视口，因此只记录响应式实现与生产构建，不将移动端交互写成已通过。
+
+最终本地Worker单元206文件/1,304项全部通过，单元与运行时TypeScript通过，Admin生产构建2,436模块通过。Admin静态请求为342个调用点、362个路径变体，362条全部注册且可执行，未注册、无法解析和受控不可用均为0。全局路由审计为PHP 1,904 / TS 1,620 / 精确匹配861 / 可执行843 / 受控不可用18 / 缺失1,043 / 退役16 / 可执行缺口1,027；新增GET兼容状态入口之外的PUT别名只改善写方法语义，没有伪造新的旧路由覆盖。实现与机器审计提交 `f76e7937ed5184df689441350fd77e65d09b3304` 推送后，[Actions `33715671291`](https://github.com/cinagroup/cinashop/actions/runs/33715671291) 的Repository secret scan、Worker双TypeScript/1,304项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。
+
+根据用户授权，本批使用Wrangler 4.122.0执行只读身份与Hyperdrive配置查询：Cloudflare账号为CinaGroup，生产绑定ID `9748c294e21c49a99579c9cef70102e0` 的配置名为 `cinashop-pg`，源为PostgreSQL数据库 `postgres`、用户 `postgres`、VPC Service `019fe223-e5a1-7ed1-945a-8993a6f32508`，连接上限60且缓存开启。这也确认 `wrangler.toml` 的 `crmeb@localhost/crmeb` 只是 `localConnectionString`，不能作为生产库名或凭据。查询没有回显密码，也没有读取任何业务表。由于本批DDL尚未部署、生产模板异常形状与测试记录回收方案仍未确定，没有调用会运行整套迁移并初始化管理员的 `POST /api/_migrate`，没有执行生产DDL/DML、Worker/Admin Pages部署、Queue或第三方调用。生产模板/引用/提交数据只读核验、真实主管理员及只读/编辑受限角色E2E继续归FE-001G/H；D4B2～B4和61条未审设置屏继续阻塞FE-001D4。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
