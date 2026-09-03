@@ -14,6 +14,11 @@
 
     <div class="safe-links">
       <el-card shadow="never">
+        <h3>商城运行设置</h3>
+        <p>站点、库存、订单时限、支付开关与事业部入口等受控字段。</p>
+        <router-link to="/config/commerce"><el-button type="primary">进入设置</el-button></router-link>
+      </el-card>
+      <el-card shadow="never">
         <h3>新人运营</h3>
         <p>注册开关、赠送余额、积分与优惠券等受控字段。</p>
         <router-link to="/config/newcomer"><el-button type="primary">进入设置</el-button></router-link>

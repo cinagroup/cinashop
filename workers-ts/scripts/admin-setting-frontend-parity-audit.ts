@@ -32,6 +32,92 @@ const inventoryFile = resolve(workerRoot, "audit", "admin-frontend-inventory.jso
 const outputFile = resolve(workerRoot, "audit", "admin-legacy-setting-route-parity.json");
 
 const reviews: Record<string, Review> = {
+  "/admin/setting/system/create": {
+    status: "partial",
+    targetScreens: [],
+    targetApis: [
+      "GET /adminapi/form/index",
+      "GET /adminapi/form/info/:id",
+      "POST /adminapi/form/save/:id",
+      "POST /adminapi/form/update_name/:id",
+      "GET /adminapi/form/set_show/:id/:is_show",
+      "DELETE /adminapi/form/del/:id",
+      "GET /adminapi/form/data/:id",
+    ],
+    covered: [
+      "系统表单定义、组件白名单、提交数据校验和订单不可变快照已迁移",
+      "后台 CRUD、启停、数据列表及商品选择接口已迁移",
+    ],
+    remaining: ["新版 Admin 尚无系统表单列表、拖拽编辑器和提交数据查看页面"],
+    evidence: [
+      "workers-ts/src/services/system/SystemMetadataService.ts",
+      "workers-ts/src/services/order/OrderSystemFormService.ts",
+      "workers-ts/test/system-form-migration.test.ts",
+    ],
+  },
+  "/admin/setting/system_config": {
+    status: "partial",
+    targetScreens: [
+      "/config",
+      "/config/commerce",
+      "/config/newcomer",
+      "/config/runtime-content",
+    ],
+    targetApis: [
+      "GET|POST /adminapi/config/commerce",
+      "GET|POST /adminapi/config/user/register",
+      "GET|POST /adminapi/config/runtime_content",
+    ],
+    covered: [
+      "以字段白名单拆分商城运行、新人运营与客户端内容三类专用设置",
+      "服务端 config.view/config.manage 权限隔离",
+      "通用配置页不读取整表或返回支付、微信及第三方凭据",
+    ],
+    remaining: [
+      "旧动态配置分类仍有大量业务域未逐项迁移",
+      "通用配置分类和任意键编辑器因越权覆盖与凭据泄露风险保持停用",
+    ],
+    evidence: [
+      "view/admin-ts/src/pages/ConfigList.vue",
+      "view/admin-ts/src/pages/config/CommerceSettings.vue",
+      "view/admin-ts/src/pages/config/NewcomerSettings.vue",
+      "view/admin-ts/src/pages/config/RuntimeContent.vue",
+    ],
+  },
+  "/admin/setting/shop/base": {
+    status: "partial",
+    targetScreens: ["/config/commerce（基础设置）"],
+    targetApis: ["GET|POST /adminapi/config/commerce"],
+    covered: [
+      "站点开关、名称、HTTPS 地址、联系电话和备案号",
+      "四类品牌图片地址、悬浮菜单、短视频、商品列表视频和海报标题",
+      "HTTPS/站内素材路径校验、短事务、回读、审计与配置缓存失效",
+    ],
+    remaining: [
+      "旧后台轮播登录图和 favicon 上传流程",
+      "微信分享三字段尚无新版消费者",
+      "旧密码策略和 PHP 参数过滤器尚未由 Worker 原生安全策略替代",
+    ],
+    evidence: [
+      "view/admin-ts/src/pages/config/CommerceSettings.vue",
+      "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+    ],
+  },
+  "/admin/setting/shop/product": {
+    status: "candidate",
+    targetScreens: ["/config/commerce（商品与交易）", "/product"],
+    targetApis: ["GET|POST /adminapi/config/commerce", "GET /adminapi/product/list?status=5"],
+    covered: [
+      "警戒库存阈值读写",
+      "阈值变更时同步重算商品和普通 SKU 的 is_police，并同步 is_sold",
+      "原商品 status=5 库存预警筛选契约保持可执行",
+    ],
+    remaining: ["需在获批窗口对生产商品量验证 5 秒事务上限"],
+    evidence: [
+      "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+      "workers-ts/src/models/searchers/product.ts",
+    ],
+  },
   "/admin/setting/document": {
     status: "candidate",
     targetScreens: ["/setting/print"],
@@ -82,6 +168,86 @@ const reviews: Record<string, Review> = {
     evidence: [
       "view/admin-ts/src/pages/setting/PrintOperations.vue",
       "workers-ts/src/services/system/PrintDocumentManagementService.ts",
+    ],
+  },
+  "/admin/setting/shop/trade": {
+    status: "partial",
+    targetScreens: ["/config/commerce（商品与交易）"],
+    targetApis: ["GET|POST /adminapi/config/commerce"],
+    covered: [
+      "7 类未支付/临期小时、自动收货、自动评价和售后期限",
+      "退货理由及退货收货人、电话、地址兼容字段",
+      "订单取消策略、定时维护、售后期限和退货理由已消费对应配置",
+    ],
+    remaining: [
+      "次卡临期提醒尚无 Worker 消费者",
+      "新版订单详情尚未展示平台退货收货人、电话和地址",
+    ],
+    evidence: [
+      "view/admin-ts/src/pages/config/CommerceSettings.vue",
+      "workers-ts/src/services/payment/OrderPaymentPolicy.ts",
+      "workers-ts/src/services/order/ScheduledMaintenanceService.ts",
+      "workers-ts/src/services/order/StoreOrderRefundService.ts",
+    ],
+  },
+  "/admin/setting/shop/pay": {
+    status: "partial",
+    targetScreens: ["/config/commerce（支付设置）"],
+    targetApis: ["GET|POST /adminapi/config/commerce"],
+    covered: [
+      "余额功能、余额支付、微信、支付宝和线下支付业务开关",
+      "同时展示数据库开关与当前 Worker Secret 组合后的实际可用状态",
+      "页面、响应和操作日志均不包含支付私钥、证书或 API Key",
+    ],
+    remaining: [
+      "微信商户号和证书序列号仍需受控配置入口或部署期注入策略",
+      "旧 pay_routine_open/pay_routine_mchid 分支尚未形成新版明确契约",
+      "密钥输入从 Admin 退休，继续由 Cloudflare Secret 管理",
+    ],
+    evidence: [
+      "view/admin-ts/src/pages/config/CommerceSettings.vue",
+      "workers-ts/src/services/payment/PaymentReadinessService.ts",
+      "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+    ],
+  },
+  "/admin/setting/shop/agreemant": {
+    status: "candidate",
+    targetScreens: ["/config/runtime-content（政策与入驻协议）"],
+    targetApis: [
+      "GET /adminapi/setting/get_user_agreement/:type",
+      "POST /adminapi/setting/set_user_agreement/:type",
+      "GET|POST /adminapi/config/runtime_content",
+    ],
+    covered: [
+      "隐私、用户、注销、供应商入驻和代理商入驻五类协议",
+      "兼容旧 user_agreement/:type 公共读取契约",
+      "Admin 不执行或 v-html 预览协议 HTML",
+    ],
+    remaining: ["需在获批窗口对生产 legacy_cache 五类键做只读形状核验"],
+    evidence: [
+      "view/admin-ts/src/pages/config/RuntimeContent.vue",
+      "workers-ts/src/services/system/LegacyContentService.ts",
+    ],
+  },
+  "/admin/setting/shop/division": {
+    status: "candidate",
+    targetScreens: ["/config/commerce（事业部）", "/division"],
+    targetApis: [
+      "GET|POST /adminapi/config/commerce",
+      "GET /adminapi/agent/division/list",
+      "GET /adminapi/agent/division/apply/list",
+    ],
+    covered: [
+      "事业部团队和代理商自助申请两个旧开关",
+      "关闭团队时禁止保存开启的申请开关",
+      "客户端入口按两个开关和当前用户事业部身份共同判定",
+      "事业部成员、代理商、员工、分佣与申请审核使用独立管理页",
+    ],
+    remaining: ["需在获批窗口对生产开关与已有事业部角色做只读一致性核验"],
+    evidence: [
+      "view/admin-ts/src/pages/config/CommerceSettings.vue",
+      "view/admin-ts/src/pages/agent/DivisionManagement.vue",
+      "workers-ts/src/services/product/PublicCatalogService.ts",
     ],
   },
   "/admin/setting/notification/index": {

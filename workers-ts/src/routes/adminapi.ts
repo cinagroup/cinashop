@@ -54,6 +54,7 @@ import * as AdminEnterpriseWechat from "@/controllers/api/v1/AdminEnterpriseWech
 import * as AdminWechatMemberCard from "@/controllers/api/v1/AdminWechatMemberCardController";
 import * as AdminPaidMembership from "@/controllers/api/v1/AdminPaidMembershipController";
 import * as AdminNewcomer from "@/controllers/api/v1/AdminNewcomerController";
+import * as AdminCommerceSettings from "@/controllers/api/v1/AdminCommerceSettingsController";
 import * as AdminDiscountPackage from "@/controllers/api/v1/AdminDiscountPackageController";
 import * as AdminLegacyContent from "@/controllers/api/v1/AdminLegacyContentController";
 import * as AdminCommunity from "@/controllers/api/v1/AdminCommunityController";
@@ -447,6 +448,8 @@ adminapiRoutes.get(
 );
 adminapiRoutes.get("/config/user/register", adminAuth, AdminNewcomer.registerConfig);
 adminapiRoutes.post("/config/user/register", adminAuth, AdminNewcomer.saveRegisterConfig);
+adminapiRoutes.get("/config/commerce", adminAuth, AdminCommerceSettings.settings);
+adminapiRoutes.post("/config/commerce", adminAuth, AdminCommerceSettings.save);
 adminapiRoutes.get("/config/runtime_content", adminAuth, AdminLegacyContent.runtimeContent);
 adminapiRoutes.post("/config/runtime_content", adminAuth, AdminLegacyContent.saveRuntimeContent);
 adminapiRoutes.get("/setting/get_kf_adv", adminAuth, AdminLegacyContent.getKfAdv);

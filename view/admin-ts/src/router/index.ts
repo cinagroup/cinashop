@@ -138,6 +138,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "新人运营" },
       },
       {
+        path: "config/commerce",
+        name: "config-commerce",
+        component: () => import("@/pages/config/CommerceSettings.vue"),
+        meta: { title: "商城运行设置" },
+      },
+      {
         path: "config/runtime-content",
         name: "config-runtime-content",
         component: () => import("@/pages/config/RuntimeContent.vue"),

@@ -39,12 +39,12 @@ describe("legacy Admin setting route parity audit", () => {
     expect(report.routes.map((route) => route.legacy.path)).toEqual(expectedPaths);
     expect(report.summary).toMatchObject({
       legacyRoutes: 76,
-      reviewed: 5,
-      candidate: 2,
-      partial: 2,
+      reviewed: 13,
+      candidate: 5,
+      partial: 7,
       missing: 0,
       retired: 1,
-      unreviewed: 71,
+      unreviewed: 63,
     });
     expect(report.methodology.productionAccess).toMatch(/Not used/);
   });
@@ -57,6 +57,14 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/document/content": "candidate",
       "/admin/setting/notification/index": "partial",
       "/admin/setting/notification/notificationEdit": "partial",
+      "/admin/setting/system/create": "partial",
+      "/admin/setting/system_config": "partial",
+      "/admin/setting/shop/base": "partial",
+      "/admin/setting/shop/product": "candidate",
+      "/admin/setting/shop/trade": "partial",
+      "/admin/setting/shop/pay": "partial",
+      "/admin/setting/shop/agreemant": "candidate",
+      "/admin/setting/shop/division": "candidate",
     });
     for (const route of report.routes.filter((entry) => entry.status === "unreviewed")) {
       expect(route.targetScreens).toEqual([]);
@@ -64,6 +72,29 @@ describe("legacy Admin setting route parity audit", () => {
       expect(route.covered).toEqual([]);
       expect(route.remaining.join(" ")).toContain("尚未逐屏比对");
     }
+  });
+
+  it("records the second core-settings batch with explicit safe targets and remaining gaps", () => {
+    const byPath = new Map(report.routes.map((route) => [route.legacy.path, route]));
+    const systemForm = byPath.get("/admin/setting/system/create")!;
+    const generic = byPath.get("/admin/setting/system_config")!;
+    const basic = byPath.get("/admin/setting/shop/base")!;
+    const product = byPath.get("/admin/setting/shop/product")!;
+    const trade = byPath.get("/admin/setting/shop/trade")!;
+    const payment = byPath.get("/admin/setting/shop/pay")!;
+    const agreement = byPath.get("/admin/setting/shop/agreemant")!;
+    const division = byPath.get("/admin/setting/shop/division")!;
+
+    expect(systemForm.remaining.join(" ")).toContain("尚无系统表单");
+    expect(generic.targetScreens).toContain("/config/commerce");
+    expect(generic.remaining.join(" ")).toContain("任意键编辑器");
+    expect(basic.covered.join(" ")).toContain("HTTPS");
+    expect(product.covered.join(" ")).toContain("is_police");
+    expect(trade.remaining.join(" ")).toContain("次卡临期提醒");
+    expect(payment.covered.join(" ")).toContain("实际可用状态");
+    expect(payment.remaining.join(" ")).toContain("Cloudflare Secret");
+    expect(agreement.covered.join(" ")).toContain("五类协议");
+    expect(division.covered.join(" ")).toContain("两个旧开关");
   });
 
   it("backs the print candidate with bounded writes, audit logs, legacy aliases, and UI parity", () => {
