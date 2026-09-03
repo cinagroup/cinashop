@@ -145,6 +145,11 @@ describe("print-document migration and management boundary", () => {
       .toThrow(/站内绝对路径/);
     expect(() => normalizePrintContent({ notice_content: "<QR>inject</QR>" }))
       .toThrow(/打印控制标记/);
+    expect(() => normalizePrintContent({ goods: [1] })).toThrow(/商品明细/);
+    expect(() => normalizePrintContent({ code: 1, code_url: "" })).toThrow(/站内路径/);
+    expect(() => normalizePrintContent({ show_notice: 1, notice_content: "" }))
+      .toThrow(/提示语/);
+    expect(() => normalizePrintContent({ notice_content: "好".repeat(51) })).toThrow(/50/);
     expect(() => normalizePrintContent({ arbitrary: true })).toThrow(/arbitrary/);
   });
 
@@ -170,5 +175,11 @@ describe("print-document migration and management boundary", () => {
     expect(service.match(/eq\(printDocument\.supplierId, supplierId\)/g)?.length ?? 0)
       .toBeGreaterThanOrEqual(6);
     expect(service).toContain("pg_advisory_xact_lock");
+    expect(service).toContain("SET LOCAL lock_timeout = '2s'");
+    expect(service).toContain("SET LOCAL statement_timeout = '5s'");
+    expect(service).toContain("tx.insert(systemLog)");
+    expect(adminRoutes).toContain('post("/print/set_status/:id/:status"');
+    expect(adminRoutes).toContain('put("/print/set_status/:id/:status"');
+    expect(supplierRoutes).toContain('post("/print/set_status/:id/:status"');
   });
 });

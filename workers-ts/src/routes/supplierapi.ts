@@ -129,6 +129,7 @@ supplierapiRoutes.get(
 supplierapiRoutes.get("/print/list", PrintDocumentController.supplierList);
 supplierapiRoutes.get("/print/form/:id", PrintDocumentController.supplierDetail);
 supplierapiRoutes.post("/print/save/:id", PrintDocumentController.supplierSave);
+supplierapiRoutes.post("/print/set_status/:id/:status", PrintDocumentController.supplierSetStatus);
 supplierapiRoutes.put("/print/set_status/:id/:status", PrintDocumentController.supplierSetStatus);
 supplierapiRoutes.delete("/print/del/:id", PrintDocumentController.supplierDelete);
 supplierapiRoutes.get("/print/content/:id", PrintDocumentController.supplierContent);

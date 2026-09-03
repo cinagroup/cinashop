@@ -1587,6 +1587,11 @@ v1Routes.get("/admin/system_menus/tree", adminAuth, AdminCrud.adminSystemPermiss
 v1Routes.get("/admin/print/list", adminAuth, PrintDocumentController.adminList);
 v1Routes.get("/admin/print/form/:id", adminAuth, PrintDocumentController.adminDetail);
 v1Routes.post("/admin/print/save/:id", adminAuth, PrintDocumentController.adminSave);
+v1Routes.post(
+  "/admin/print/set_status/:id/:status",
+  adminAuth,
+  PrintDocumentController.adminSetStatus,
+);
 v1Routes.put(
   "/admin/print/set_status/:id/:status",
   adminAuth,

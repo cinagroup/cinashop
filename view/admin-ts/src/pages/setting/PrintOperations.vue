@@ -15,6 +15,21 @@
     <el-tabs v-model="tab">
       <el-tab-pane label="打印机" name="printers">
         <el-card shadow="never">
+          <div class="printer-filter">
+            <el-input
+              v-model="printerQuery.keyword"
+              clearable
+              placeholder="搜索打印机名称"
+              @keyup.enter="searchPrinters"
+            />
+            <el-select v-model="printerQuery.type" placeholder="全部平台" @change="searchPrinters">
+              <el-option label="全部平台" :value="0" />
+              <el-option label="易联云" :value="1" />
+              <el-option label="飞鹅云" :value="2" />
+            </el-select>
+            <el-button type="primary" @click="searchPrinters">搜索</el-button>
+            <el-button @click="resetPrinterFilter">重置</el-button>
+          </div>
           <el-table v-loading="printerLoading" :data="printers" class="desktop-print-table">
             <el-table-column prop="print_name" label="打印机" min-width="180" />
             <el-table-column label="平台" width="100"><template #default="{ row }">{{ row.type === 1 ? "易联云" : "飞鹅云" }}</template></el-table-column>
@@ -36,6 +51,15 @@
             </article>
             <el-empty v-if="!printerLoading && !printers.length" description="暂无打印机" :image-size="72" />
           </div>
+          <el-pagination
+            v-if="printerCount > printerQuery.limit"
+            v-model:current-page="printerQuery.page"
+            :page-size="printerQuery.limit"
+            :total="printerCount"
+            layout="prev, pager, next, total"
+            class="printer-pagination"
+            @current-change="loadPrinters"
+          />
         </el-card>
       </el-tab-pane>
 
@@ -98,21 +122,71 @@
       <template #footer><el-button @click="printerDialog = false">取消</el-button><el-button type="primary" :loading="saving" @click="savePrinter">保存</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="contentDialog" title="打印内容" width="min(680px, 94vw)">
-      <el-form label-position="top">
-        <div class="switch-grid">
-          <el-checkbox v-model="content.header" :true-value="1" :false-value="0">店铺标题</el-checkbox>
-          <el-checkbox v-model="content.delivery" :true-value="1" :false-value="0">配送信息</el-checkbox>
-          <el-checkbox v-model="content.buyer_remarks" :true-value="1" :false-value="0">买家备注</el-checkbox>
-          <el-checkbox v-model="content.freight" :true-value="1" :false-value="0">运费</el-checkbox>
-          <el-checkbox v-model="content.preferential" :true-value="1" :false-value="0">优惠</el-checkbox>
-        </div>
-        <el-form-item label="商品"><el-checkbox-group v-model="content.goods"><el-checkbox :value="0">商品明细</el-checkbox><el-checkbox :value="1">规格编码</el-checkbox></el-checkbox-group></el-form-item>
-        <el-form-item label="支付"><el-checkbox-group v-model="content.pay"><el-checkbox :value="0">支付方式</el-checkbox><el-checkbox :value="1">实付金额</el-checkbox></el-checkbox-group></el-form-item>
-        <el-form-item label="订单"><el-checkbox-group v-model="content.order"><el-checkbox :value="0">编号</el-checkbox><el-checkbox :value="1">下单时间</el-checkbox><el-checkbox :value="2">支付时间</el-checkbox><el-checkbox :value="3">打印时间</el-checkbox></el-checkbox-group></el-form-item>
-        <el-form-item label="二维码"><el-switch v-model="content.code" :active-value="1" :inactive-value="0" /><el-input v-if="content.code" v-model="content.code_url" placeholder="站内绝对路径" /></el-form-item>
-        <el-form-item label="底部提示"><el-switch v-model="content.show_notice" :active-value="1" :inactive-value="0" /><el-input v-if="content.show_notice" v-model="content.notice_content" maxlength="500" /></el-form-item>
-      </el-form>
+    <el-dialog v-model="contentDialog" title="打印内容" width="min(920px, 94vw)">
+      <div class="receipt-layout">
+        <el-form label-position="top" class="receipt-form">
+          <div class="switch-grid">
+            <el-checkbox v-model="content.header" :true-value="1" :false-value="0">店铺标题</el-checkbox>
+            <el-checkbox v-model="content.delivery" :true-value="1" :false-value="0">配送信息</el-checkbox>
+            <el-checkbox v-model="content.buyer_remarks" :true-value="1" :false-value="0">买家备注</el-checkbox>
+            <el-checkbox v-model="content.freight" :true-value="1" :false-value="0">运费</el-checkbox>
+            <el-checkbox v-model="content.preferential" :true-value="1" :false-value="0">优惠</el-checkbox>
+            <el-checkbox v-model="content.custom" :true-value="1" :false-value="0">自定义内容</el-checkbox>
+          </div>
+          <el-form-item label="商品">
+            <el-checkbox-group v-model="content.goods" @change="normalizeGoods">
+              <el-checkbox :value="0">商品明细</el-checkbox>
+              <el-checkbox :value="1" :disabled="!content.goods.includes(0)">规格编码</el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="支付"><el-checkbox-group v-model="content.pay"><el-checkbox :value="0">支付方式</el-checkbox><el-checkbox :value="1">实付金额</el-checkbox></el-checkbox-group></el-form-item>
+          <el-form-item label="订单"><el-checkbox-group v-model="content.order"><el-checkbox :value="0">编号</el-checkbox><el-checkbox :value="1">下单时间</el-checkbox><el-checkbox :value="2">支付时间</el-checkbox><el-checkbox :value="3">打印时间</el-checkbox></el-checkbox-group></el-form-item>
+          <el-form-item label="二维码">
+            <el-switch v-model="content.code" :active-value="1" :inactive-value="0" />
+            <el-select
+              v-if="content.code"
+              v-model="content.code_url"
+              filterable
+              allow-create
+              default-first-option
+              placeholder="选择或输入站内绝对路径"
+              class="content-value-input"
+            >
+              <el-option v-for="route in qrRoutes" :key="route.value" :label="route.label" :value="route.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="底部提示">
+            <el-switch v-model="content.show_notice" :active-value="1" :inactive-value="0" />
+            <el-input
+              v-if="content.show_notice"
+              v-model="content.notice_content"
+              maxlength="50"
+              show-word-limit
+              placeholder="最多 50 个字符"
+              class="content-value-input"
+            />
+          </el-form-item>
+        </el-form>
+        <aside class="receipt-preview" aria-label="小票实时预览">
+          <div v-if="content.header" class="receipt-title">CinaShop 门店</div>
+          <div v-if="content.delivery" class="receipt-section"><strong>配送信息</strong><span>张先生 · 138****8888</span><span>上海市浦东新区示例路 8 号</span></div>
+          <div v-if="content.buyer_remarks" class="receipt-section"><strong>买家备注</strong><span>请尽快配送，谢谢</span></div>
+          <div v-if="content.goods.includes(0)" class="receipt-section receipt-goods"><strong>商品</strong><span>示例商品 × 2　¥39.80</span><small v-if="content.goods.includes(1)">规格编码：SKU-001</small></div>
+          <div v-if="content.freight" class="receipt-line"><span>运费</span><span>¥0.00</span></div>
+          <div v-if="content.preferential" class="receipt-line"><span>优惠</span><span>-¥5.00</span></div>
+          <div v-if="content.pay.includes(0)" class="receipt-line"><span>支付方式</span><span>微信支付</span></div>
+          <div v-if="content.pay.includes(1)" class="receipt-line receipt-total"><span>实付</span><span>¥34.80</span></div>
+          <div v-if="content.order.length" class="receipt-section receipt-meta">
+            <span v-if="content.order.includes(0)">订单号：202608110001</span>
+            <span v-if="content.order.includes(1)">下单：2026-08-11 10:20</span>
+            <span v-if="content.order.includes(2)">支付：2026-08-11 10:21</span>
+            <span v-if="content.order.includes(3)">打印：2026-08-11 10:22</span>
+          </div>
+          <div v-if="content.custom" class="receipt-section"><span>自定义内容区域</span></div>
+          <div v-if="content.code" class="receipt-code"><span class="qr-placeholder">站内码</span><small>{{ content.code_url || "请选择路径" }}</small></div>
+          <div v-if="content.show_notice" class="receipt-notice">{{ content.notice_content || "请填写底部提示" }}</div>
+        </aside>
+      </div>
       <template #footer><el-button @click="contentDialog = false">取消</el-button><el-button type="primary" :loading="saving" @click="saveContent">保存</el-button></template>
     </el-dialog>
   </div>
@@ -142,12 +216,20 @@ const printerLoading = ref(false);
 const jobLoading = ref(false);
 const saving = ref(false);
 const printers = ref<PrintDocumentView[]>([]);
+const printerCount = ref(0);
+const printerQuery = reactive({ keyword: "", type: 0 as 0 | 1 | 2, page: 1, limit: 15 });
 const jobs = ref<PrintJobView[]>([]);
 const jobStatus = ref("");
 const summary = ref({ pending: 0, sent: 0, unknown: 0, dead: 0, closed: 0 });
 const printerDialog = ref(false);
 const contentDialog = ref(false);
 const contentPrinterId = ref(0);
+const qrRoutes = [
+  { label: "商城首页", value: "/pages/index/index" },
+  { label: "订单列表", value: "/pages/order/list" },
+  { label: "个人中心", value: "/pages/user/index" },
+  { label: "领券中心", value: "/pages/user/couponCenter" },
+];
 
 const emptyPrinter = () => ({
   id: 0, print_name: "", type: 1 as 1 | 2, print_type: 1 as 1 | 2, times: 1,
@@ -160,10 +242,16 @@ const content = reactive(emptyContent());
 
 async function loadPrinters() {
   printerLoading.value = true;
-  try { printers.value = (await apiPrintDocuments()).list; }
+  try {
+    const result = await apiPrintDocuments({ ...printerQuery });
+    printers.value = result.list;
+    printerCount.value = result.count;
+  }
   catch (error) { ElMessage.error(error instanceof Error ? error.message : "打印机加载失败"); }
   finally { printerLoading.value = false; }
 }
+function searchPrinters() { printerQuery.page = 1; void loadPrinters(); }
+function resetPrinterFilter() { printerQuery.keyword = ""; printerQuery.type = 0; searchPrinters(); }
 async function loadJobs() {
   jobLoading.value = true;
   try { const result = await apiPrintJobs({ status: jobStatus.value, limit: 100 }); jobs.value = result.list; summary.value = result.summary; }
@@ -198,14 +286,33 @@ async function changeStatus(row: PrintDocumentView, value: string | number | boo
   catch (error) { row.status = next === 1 ? 0 : 1; ElMessage.error(error instanceof Error ? error.message : "状态修改失败"); }
 }
 async function removePrinter(row: PrintDocumentView) {
-  try { await ElMessageBox.confirm(`确认删除“${row.print_name}”吗？`, "删除打印机", { type: "warning" }); await apiDeletePrintDocument(row.id); await loadPrinters(); }
+  try {
+    await ElMessageBox.confirm(`确认删除“${row.print_name}”吗？`, "删除打印机", { type: "warning" });
+    await apiDeletePrintDocument(row.id);
+    if (printers.value.length === 1 && printerQuery.page > 1) printerQuery.page -= 1;
+    await loadPrinters();
+  }
   catch (error) { if (error !== "cancel" && error !== "close") ElMessage.error(error instanceof Error ? error.message : "删除失败"); }
 }
 async function openContent(row: PrintDocumentView) {
   try { contentPrinterId.value = row.id; Object.assign(content, emptyContent(), await apiPrintContent(row.id)); contentDialog.value = true; }
   catch (error) { ElMessage.error(error instanceof Error ? error.message : "打印内容加载失败"); }
 }
+function normalizeGoods() {
+  if (!content.goods.includes(0)) content.goods = content.goods.filter((value) => value !== 1);
+}
 async function saveContent() {
+  normalizeGoods();
+  content.code_url = content.code_url.trim();
+  content.notice_content = content.notice_content.trim();
+  if (content.code && !content.code_url.startsWith("/")) {
+    ElMessage.warning("二维码必须选择或填写站内绝对路径");
+    return;
+  }
+  if (content.show_notice && !content.notice_content) {
+    ElMessage.warning("启用底部提示时必须填写提示语");
+    return;
+  }
   saving.value = true;
   try { await apiSavePrintContent(contentPrinterId.value, { ...content }); contentDialog.value = false; ElMessage.success("打印内容已保存"); await loadPrinters(); }
   catch (error) { ElMessage.error(error instanceof Error ? error.message : "保存失败"); }
@@ -236,11 +343,15 @@ onMounted(() => { void Promise.all([loadPrinters(), loadJobs()]); });
 <style scoped>
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .page-header h2 { margin: 0; }.page-header p { margin: 6px 0 0; color: #909399; }
-.rollout-alert { margin-bottom: 16px; }.job-filter { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }.job-filter span { margin-left: auto; color: #606266; }
+.rollout-alert { margin-bottom: 16px; }.job-filter, .printer-filter { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }.job-filter span { margin-left: auto; color: #606266; }
+.printer-filter .el-input { width: 260px; }.printer-filter .el-select { width: 150px; }.printer-pagination { justify-content: flex-end; margin-top: 18px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }.switch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+.receipt-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; align-items: start; }.content-value-input { display: block; width: 100%; margin-top: 10px; }
+.receipt-preview { background: #fff; color: #303133; border: 1px solid #dcdfe6; border-radius: 6px; padding: 22px 18px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / 7%); }
+.receipt-title { text-align: center; font-size: 18px; font-weight: 700; padding-bottom: 14px; border-bottom: 1px dashed #909399; }.receipt-section { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-bottom: 1px dashed #c0c4cc; }.receipt-line { display: flex; justify-content: space-between; padding-top: 8px; }.receipt-total { font-size: 15px; font-weight: 700; }.receipt-meta, .receipt-goods small, .receipt-code small { color: #606266; }.receipt-code { display: grid; justify-items: center; gap: 6px; padding: 14px 0; text-align: center; overflow-wrap: anywhere; }.qr-placeholder { display: grid; place-items: center; width: 64px; height: 64px; color: #fff; background: repeating-conic-gradient(#303133 0 25%, #fff 0 50%) 0 / 12px 12px; border: 5px solid #303133; }.receipt-notice { padding-top: 10px; text-align: center; overflow-wrap: anywhere; }
 .mobile-print-list { display: none; }
 @media (max-width: 680px) {
-  .form-grid, .switch-grid { grid-template-columns: 1fr; }.job-filter { flex-wrap: wrap; }.job-filter span { width: 100%; margin-left: 0; }
+  .form-grid, .switch-grid, .receipt-layout { grid-template-columns: 1fr; }.job-filter, .printer-filter { flex-wrap: wrap; }.job-filter span { width: 100%; margin-left: 0; }.printer-filter .el-input, .printer-filter .el-select { width: 100%; }.receipt-preview { width: auto; }.printer-pagination { justify-content: center; overflow-x: auto; }
   .desktop-print-table { display: none; }.mobile-print-list { display: block; }
   .mobile-print-card { padding: 14px 0; border-bottom: 1px solid #ebeef5; }.mobile-print-card:last-child { border-bottom: 0; }
   .mobile-print-card header, .mobile-print-card footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }.mobile-print-card header > div { min-width: 0; }

@@ -8,10 +8,11 @@ import {
 } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
-import { printDocument, type PrintDocument } from "@/models/schema";
+import { printDocument, systemLog, type PrintDocument } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_PAGE_SIZE = 100;
+const MAX_PAGE = 10_000;
 const MAX_REQUEST_KEYS = 24;
 const PRINT_DOCUMENT_WRITE_LOCK = 8_214_005;
 
@@ -32,6 +33,13 @@ const CONTENT_KEYS = new Set([
 export interface PrintDocumentOwner {
   /** 0 is the platform scope; positive values are authenticated suppliers. */
   supplierId: number;
+}
+
+export interface PrintDocumentActor extends PrintDocumentOwner {
+  actorType: "admin" | "supplier";
+  actorId: number;
+  actorName: string;
+  ip: string;
 }
 
 export interface PrintContent {
@@ -161,7 +169,7 @@ function queryInteger(value: string | undefined, label: string, fallback: number
 }
 
 function pagination(query: Record<string, string>) {
-  const page = queryInteger(query.page, "页码", 1, 1, 1_000_000);
+  const page = queryInteger(query.page, "页码", 1, 1, MAX_PAGE);
   const limit = queryInteger(query.limit, "每页数量", 20, 1, MAX_PAGE_SIZE);
   return { page, limit, offset: (page - 1) * limit };
 }
@@ -270,10 +278,10 @@ export function normalizePrintContent(input: unknown): PrintContent {
   const noticeContent = boundedText(
     sourceValue(body, "notice_content", "noticeContent"),
     "小票提示语",
-    500,
+    50,
   );
   if (/[<>&]/.test(noticeContent)) throw new ValidateException("小票提示语不能包含打印控制标记");
-  return {
+  const content = {
     header: binary(sourceValue(body, "header"), "小票标题", 0),
     delivery: binary(sourceValue(body, "delivery"), "配送信息", 0),
     buyer_remarks: binary(sourceValue(body, "buyer_remarks", "buyerRemarks"), "买家备注", 0),
@@ -288,6 +296,16 @@ export function normalizePrintContent(input: unknown): PrintContent {
     show_notice: binary(sourceValue(body, "show_notice", "showNotice"), "提示语", 0),
     notice_content: noticeContent,
   };
+  if (content.goods.includes(1) && !content.goods.includes(0)) {
+    throw new ValidateException("启用规格编码前必须启用商品明细");
+  }
+  if (content.code === 1 && !content.code_url) {
+    throw new ValidateException("启用二维码时必须选择站内路径");
+  }
+  if (content.show_notice === 1 && !content.notice_content) {
+    throw new ValidateException("启用底部提示时必须填写提示语");
+  }
+  return content;
 }
 
 function parseStoredContent(value: string | null): {
@@ -399,6 +417,66 @@ async function scopedDocument(
   return rows[0];
 }
 
+function assertWriteActor(actor: PrintDocumentActor): void {
+  scopeSupplierId(actor);
+  if (!Number.isSafeInteger(actor.actorId) || actor.actorId <= 0) {
+    throw new ValidateException("打印配置操作身份无效");
+  }
+  if (actor.actorType === "admin" && actor.supplierId !== 0) {
+    throw new ValidateException("平台打印配置作用域无效");
+  }
+  if (actor.actorType === "supplier" && actor.supplierId <= 0) {
+    throw new ValidateException("供应商打印配置作用域无效");
+  }
+}
+
+async function configureWriteTx(tx: DbClient): Promise<void> {
+  await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
+  await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
+}
+
+async function writeAudit(
+  tx: DbClient,
+  actor: PrintDocumentActor,
+  method: "POST" | "PUT" | "DELETE",
+  operation: string,
+  id: number,
+): Promise<void> {
+  await tx.insert(systemLog).values({
+    adminId: actor.actorId,
+    adminName: actor.actorName.slice(0, 64),
+    path: `${actor.actorType === "admin" ? "/adminapi" : "/supplierapi"}/print/${operation}/${id}`,
+    page: actor.actorType === "admin" ? "/setting/print" : "/print",
+    method,
+    action: `print_document.${operation};id=${id};supplier_id=${actor.supplierId}`,
+    ip: actor.ip.slice(0, 45),
+    type: actor.actorType === "admin" ? "admin_print" : "supplier_print",
+    addTime: Math.floor(Date.now() / 1_000),
+  });
+}
+
+function assertDocumentReadback(
+  row: PrintDocument,
+  expected: NormalizedPrintDocumentInput,
+): void {
+  if (
+    row.type !== expected.type ||
+    row.printName !== expected.printName ||
+    row.ylyUserId !== expected.ylyUserId ||
+    row.ylyAppId !== expected.ylyAppId ||
+    row.ylyAppSecret !== expected.ylyAppSecret ||
+    row.ylySn !== expected.ylySn ||
+    row.feyUser !== expected.feyUser ||
+    row.feyUkey !== expected.feyUkey ||
+    row.feySn !== expected.feySn ||
+    row.times !== expected.times ||
+    row.printType !== expected.printType ||
+    row.status !== expected.status
+  ) {
+    throw new Error("打印机配置回读不一致");
+  }
+}
+
 export class PrintDocumentManagementService {
   constructor(private readonly container: Container) {}
 
@@ -445,10 +523,12 @@ export class PrintDocumentManagementService {
     return buildPrintDocumentView(row);
   }
 
-  async save(owner: PrintDocumentOwner, id: number, input: unknown) {
-    const supplierId = scopeSupplierId(owner);
+  async save(actor: PrintDocumentActor, id: number, input: unknown) {
+    assertWriteActor(actor);
+    const supplierId = scopeSupplierId(actor);
     if (!Number.isSafeInteger(id) || id < 0) throw new ValidateException("打印机ID错误");
     return withTx(this.container, async (tx) => {
+      await configureWriteTx(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRINT_DOCUMENT_WRITE_LOCK}, ${supplierId})`);
       const existing = id > 0 ? await scopedDocument(tx, supplierId, id, true) : undefined;
       const normalized = normalizePrintDocumentInput(input, existing);
@@ -459,7 +539,10 @@ export class PrintDocumentManagementService {
           eq(printDocument.isDel, 0),
         )).returning();
         if (!updated[0]) throw new NotFoundException("打印机不存在");
-        return buildPrintDocumentView(updated[0]);
+        const verified = await scopedDocument(tx, supplierId, existing.id);
+        assertDocumentReadback(verified, normalized);
+        await writeAudit(tx, actor, "POST", "save", verified.id);
+        return buildPrintDocumentView(verified);
       }
       const inserted = await tx.insert(printDocument).values({
         ...normalized,
@@ -468,14 +551,24 @@ export class PrintDocumentManagementService {
         isDel: 0,
       }).returning();
       if (!inserted[0]) throw new Error("打印机保存失败");
-      return buildPrintDocumentView(inserted[0]);
+      const verified = await scopedDocument(tx, supplierId, inserted[0].id);
+      assertDocumentReadback(verified, normalized);
+      await writeAudit(tx, actor, "POST", "save", verified.id);
+      return buildPrintDocumentView(verified);
     });
   }
 
-  async setStatus(owner: PrintDocumentOwner, id: number, value: unknown) {
-    const supplierId = scopeSupplierId(owner);
+  async setStatus(
+    actor: PrintDocumentActor,
+    id: number,
+    value: unknown,
+    method: "POST" | "PUT" = "PUT",
+  ) {
+    assertWriteActor(actor);
+    const supplierId = scopeSupplierId(actor);
     const status = binary(value, "打印开关", 0);
     return withTx(this.container, async (tx) => {
+      await configureWriteTx(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRINT_DOCUMENT_WRITE_LOCK}, ${supplierId})`);
       const existing = await scopedDocument(tx, supplierId, id, true);
       if (status === 1) {
@@ -490,13 +583,18 @@ export class PrintDocumentManagementService {
         eq(printDocument.isDel, 0),
       )).returning();
       if (!updated[0]) throw new NotFoundException("打印机不存在");
-      return buildPrintDocumentView(updated[0]);
+      const verified = await scopedDocument(tx, supplierId, existing.id);
+      if (verified.status !== status) throw new Error("打印机状态回读不一致");
+      await writeAudit(tx, actor, method, "set_status", verified.id);
+      return buildPrintDocumentView(verified);
     });
   }
 
-  async delete(owner: PrintDocumentOwner, id: number): Promise<void> {
-    const supplierId = scopeSupplierId(owner);
+  async delete(actor: PrintDocumentActor, id: number): Promise<void> {
+    assertWriteActor(actor);
+    const supplierId = scopeSupplierId(actor);
     await withTx(this.container, async (tx) => {
+      await configureWriteTx(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRINT_DOCUMENT_WRITE_LOCK}, ${supplierId})`);
       const existing = await scopedDocument(tx, supplierId, id, true);
       const deleted = await tx.update(printDocument).set({ isDel: 1, status: 0 }).where(and(
@@ -505,6 +603,15 @@ export class PrintDocumentManagementService {
         eq(printDocument.isDel, 0),
       )).returning({ id: printDocument.id });
       if (!deleted[0]) throw new NotFoundException("打印机不存在");
+      const verified = await tx.select({ isDel: printDocument.isDel, status: printDocument.status })
+        .from(printDocument).where(and(
+          eq(printDocument.id, existing.id),
+          eq(printDocument.supplierId, supplierId),
+        )).limit(1);
+      if (verified[0]?.isDel !== 1 || verified[0]?.status !== 0) {
+        throw new Error("打印机删除状态回读不一致");
+      }
+      await writeAudit(tx, actor, "DELETE", "del", existing.id);
     });
   }
 
@@ -519,12 +626,14 @@ export class PrintDocumentManagementService {
     return parsed.content;
   }
 
-  async saveContent(owner: PrintDocumentOwner, id: number, input: unknown) {
-    const supplierId = scopeSupplierId(owner);
+  async saveContent(actor: PrintDocumentActor, id: number, input: unknown) {
+    assertWriteActor(actor);
+    const supplierId = scopeSupplierId(actor);
     const content = normalizePrintContent(input);
     const encoded = JSON.stringify(content);
     if (encoded.length > 8_192) throw new ValidateException("打印内容过长");
     return withTx(this.container, async (tx) => {
+      await configureWriteTx(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRINT_DOCUMENT_WRITE_LOCK}, ${supplierId})`);
       const existing = await scopedDocument(tx, supplierId, id, true);
       const updated = await tx.update(printDocument).set({ printContent: encoded }).where(and(
@@ -533,7 +642,10 @@ export class PrintDocumentManagementService {
         eq(printDocument.isDel, 0),
       )).returning();
       if (!updated[0]) throw new NotFoundException("打印机不存在");
-      return buildPrintDocumentView(updated[0]);
+      const verified = await scopedDocument(tx, supplierId, existing.id);
+      if (verified.printContent !== encoded) throw new Error("打印内容回读不一致");
+      await writeAudit(tx, actor, "POST", "save_content", verified.id);
+      return buildPrintDocumentView(verified);
     });
   }
 }

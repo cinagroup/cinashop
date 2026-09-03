@@ -191,6 +191,7 @@ adminapiRoutes.delete("/work/welcome/:id", adminAuth, AdminEnterpriseWechat.remo
 adminapiRoutes.get("/print/list", adminAuth, PrintDocumentController.adminList);
 adminapiRoutes.get("/print/form/:id", adminAuth, PrintDocumentController.adminDetail);
 adminapiRoutes.post("/print/save/:id", adminAuth, PrintDocumentController.adminSave);
+adminapiRoutes.post("/print/set_status/:id/:status", adminAuth, PrintDocumentController.adminSetStatus);
 adminapiRoutes.put("/print/set_status/:id/:status", adminAuth, PrintDocumentController.adminSetStatus);
 adminapiRoutes.delete("/print/del/:id", adminAuth, PrintDocumentController.adminDelete);
 adminapiRoutes.get("/print/content/:id", adminAuth, PrintDocumentController.adminContent);

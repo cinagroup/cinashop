@@ -1,0 +1,1299 @@
+{
+  "version": 1,
+  "generatedFrom": "audit/admin-frontend-inventory.json",
+  "methodology": {
+    "scope": "Legacy Admin business-page routes under /admin/setting.",
+    "status": {
+      "candidate": "Local code and UI evidence cover the reviewed legacy workflow; production verification may remain.",
+      "partial": "A useful subset exists, but material legacy workflow or channel coverage is absent.",
+      "missing": "Reviewed route has no viable target replacement.",
+      "retired": "Reviewed legacy route is intentionally not migrated because it is broken, duplicated, or obsolete.",
+      "unreviewed": "Inventory only; no semantic parity conclusion has been made."
+    },
+    "productionAccess": "Not used. This report is based on local source, static checks, tests, and preview QA."
+  },
+  "summary": {
+    "legacyRoutes": 76,
+    "reviewed": 5,
+    "candidate": 2,
+    "partial": 2,
+    "missing": 0,
+    "retired": 1,
+    "unreviewed": 71
+  },
+  "routes": [
+    {
+      "legacy": {
+        "path": "/admin/setting/system/create",
+        "title": "系统表单",
+        "component": "@/pages/setting/systemForm/create",
+        "source": "src/router/routes.js:89"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config",
+        "title": "系统设置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:27"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/base",
+        "title": "基础设置",
+        "component": "@/pages/setting/shop/base",
+        "source": "src/router/modules/setting.js:36"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/product",
+        "title": "商品设置",
+        "component": "@/pages/setting/shop/product",
+        "source": "src/router/modules/setting.js:45"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/document",
+        "title": "打印机设置",
+        "component": "@/pages/setting/document",
+        "source": "src/router/modules/setting.js:54"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/print"
+      ],
+      "targetApis": [
+        "GET /adminapi/print/list",
+        "GET /adminapi/print/form/:id",
+        "POST /adminapi/print/save/:id",
+        "POST|PUT /adminapi/print/set_status/:id/:status",
+        "DELETE /adminapi/print/del/:id"
+      ],
+      "covered": [
+        "名称关键词和打印平台筛选",
+        "15 条分页",
+        "新增、编辑、启停、删除和就绪状态",
+        "平台作用域 supplier_id=0 与供应商作用域隔离",
+        "提供商密钥只写不回显"
+      ],
+      "remaining": [
+        "需在获批窗口对生产 Hyperdrive 做只读数据形状核验"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/PrintOperations.vue",
+        "workers-ts/src/services/system/PrintDocumentManagementService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/document/config",
+        "title": "单据设置",
+        "component": "@/pages/setting/document/config",
+        "source": "src/router/modules/setting.js:63"
+      },
+      "status": "retired",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [
+        "确认旧页面是误复制的商品规格代码，不是可工作的单据设置"
+      ],
+      "remaining": [],
+      "evidence": [
+        "legacy component imports productSpecsList but calls undefined isShowApi/userLabelAddApi and deletes product/specs/:id"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/document/content",
+        "title": "小票配置",
+        "component": "@/pages/setting/document/content",
+        "source": "src/router/modules/setting.js:72"
+      },
+      "status": "candidate",
+      "targetScreens": [
+        "/setting/print（打印内容弹窗）"
+      ],
+      "targetApis": [
+        "GET /adminapi/print/content/:id",
+        "POST /adminapi/print/save_content/:id"
+      ],
+      "covered": [
+        "标题、配送、备注、商品、运费、优惠、支付、订单、自定义内容开关",
+        "规格编码依赖商品明细",
+        "二维码站内路径和 50 字底部提示",
+        "小票实时预览"
+      ],
+      "remaining": [
+        "需用真实打印机做物理小票版式验收"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/PrintOperations.vue",
+        "workers-ts/src/services/system/PrintDocumentManagementService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/trade",
+        "title": "交易设置",
+        "component": "@/pages/setting/shop/trade",
+        "source": "src/router/modules/setting.js:81"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/pay",
+        "title": "支付设置",
+        "component": "@/pages/setting/shop/pay",
+        "source": "src/router/modules/setting.js:90"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/agreemant",
+        "title": "政策协议",
+        "component": "@/pages/setting/shop/agreemant",
+        "source": "src/router/modules/setting.js:99"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/shop/division",
+        "title": "事业部设置",
+        "component": "@/pages/setting/shop/division",
+        "source": "src/router/modules/setting.js:108"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/third_party",
+        "title": "身份管理",
+        "component": "@/pages/setting/third_party/index",
+        "source": "src/router/modules/setting.js:117"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/distribution/deliver",
+        "title": "发货设置",
+        "component": "@/pages/setting/distribution/deliver",
+        "source": "src/router/modules/setting.js:126"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_role/index",
+        "title": "身份管理",
+        "component": "@/pages/setting/systemRole/index",
+        "source": "src/router/modules/setting.js:135"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_admin/index",
+        "title": "管理员列表",
+        "component": "@/pages/setting/systemAdmin/index",
+        "source": "src/router/modules/setting.js:144"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_menus/index",
+        "title": "权限规则",
+        "component": "@/pages/setting/systemMenus/index",
+        "source": "src/router/modules/setting.js:153"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/notification/index",
+        "title": "消息管理",
+        "component": "@/pages/setting/notification/index",
+        "source": "src/router/modules/setting.js:162"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/notification"
+      ],
+      "targetApis": [
+        "GET /adminapi/notification/order-config",
+        "GET /adminapi/notification/list",
+        "GET /adminapi/notification/deliveries"
+      ],
+      "covered": [
+        "四类订单通知渠道矩阵、提供商模板目录与持久投递台账"
+      ],
+      "remaining": [
+        "旧 system_notification type=1 会员消息目录",
+        "旧 system_notification type=2 平台消息目录",
+        "短信、公众号、模板消息和企业微信渠道总览"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/NotificationList.vue",
+        "workers-ts/src/services/order/OrderNotificationAdminService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/notification/notificationEdit",
+        "title": "消息编辑",
+        "component": "@/pages/setting/notification/notificationEdit",
+        "source": "src/router/modules/setting.js:171"
+      },
+      "status": "partial",
+      "targetScreens": [
+        "/setting/notification"
+      ],
+      "targetApis": [
+        "PUT /adminapi/notification/order-config/:mark",
+        "POST /adminapi/notification/save"
+      ],
+      "covered": [
+        "四类订单通知的站内、短信、微信开关编辑"
+      ],
+      "remaining": [
+        "按旧消息目录逐项编辑",
+        "企业微信渠道编辑",
+        "远端模板同步的安全替代流程"
+      ],
+      "evidence": [
+        "view/admin-ts/src/pages/setting/NotificationList.vue",
+        "workers-ts/src/services/order/OrderNotificationAdminService.ts"
+      ]
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config/:type?/:tab_id?",
+        "title": "应用设置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:180"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config/payment/:type?/:tab_id?",
+        "title": "支付配置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:189"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/membership_level/index",
+        "title": "分销等级",
+        "component": "@/pages/setting/membershipLevel/index",
+        "source": "src/router/modules/setting.js:211"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config_message/:type?/:tab_id?",
+        "title": "短信开关",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:220"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config_logistics/:type?/:tab_id?",
+        "title": "物流配置",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:229"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/sms/sms_config/index",
+        "title": "一号通账户",
+        "component": "@/pages/setting/smsConfig/index",
+        "source": "src/router/modules/setting.js:238"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/index/:id",
+        "title": "首页导航按钮",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:259"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/slide/:id",
+        "title": "首页幻灯片",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:268"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/sign/:id",
+        "title": "签到天数配置",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:277"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/order/:id",
+        "title": "订单详情动态图",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:286"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/user/:id",
+        "title": "个人中心菜单",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:295"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/new/:id",
+        "title": "首页滚动新闻",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:304"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/search/:id",
+        "title": "热门搜索",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:313"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/hot/:id",
+        "title": "热门榜单推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:322"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/new_product/:id",
+        "title": "首发新品推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:331"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/promotion/:id",
+        "title": "促销单品推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:340"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/poster/:id",
+        "title": "个人中心分销海报",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:349"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/best/:id",
+        "title": "精品推荐",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:358"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/activity/:id",
+        "title": "首页活动区域图片",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:367"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/system/:id",
+        "title": "首页配置",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:376"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/hot_money/:id",
+        "title": "首页超值爆款",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:385"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data",
+        "title": "数据配置",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:394"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_store/index",
+        "title": "门店设置",
+        "component": "@/pages/setting/systemStore/index",
+        "source": "src/router/modules/setting.js:403"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/freight/express/index",
+        "title": "物流公司",
+        "component": "@/pages/setting/freight/index",
+        "source": "src/router/modules/setting.js:412"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/store_service/index",
+        "title": "客服管理",
+        "component": "@/pages/setting/storeService/index",
+        "source": "src/router/modules/setting.js:421"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/store_service/speechcraft",
+        "title": "客服话术",
+        "component": "@/pages/setting/storeService/speechcraft",
+        "source": "src/router/modules/setting.js:430"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/store_service/feedback",
+        "title": "用户留言",
+        "component": "@/pages/setting/storeService/feedback",
+        "source": "src/router/modules/setting.js:439"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/freight/city/list",
+        "title": "城市数据",
+        "component": "@/pages/setting/cityDada/index",
+        "source": "src/router/modules/setting.js:448"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/freight/shipping_templates/list",
+        "title": "运费模板",
+        "component": "@/pages/setting/shippingTemplates/index",
+        "source": "src/router/modules/setting.js:457"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_store/list",
+        "title": "提货点",
+        "component": "@/pages/setting/storeList/index",
+        "source": "src/router/modules/setting.js:466"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_store_staff/index",
+        "title": "核销员",
+        "component": "@/pages/setting/clerkList/index",
+        "source": "src/router/modules/setting.js:475"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/merchant/system_verify_order/index",
+        "title": "核销订单",
+        "component": "@/pages/setting/verifyOrder/index",
+        "source": "src/router/modules/setting.js:484"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/special",
+        "title": "专题页设计",
+        "component": "@/pages/setting/special/list",
+        "source": "src/router/modules/setting.js:502"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/links",
+        "title": "页面链接",
+        "component": "@/pages/setting/devise/links",
+        "source": "src/router/modules/setting.js:520"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/template",
+        "title": "模板",
+        "component": "@/pages/setting/devise/template",
+        "source": "src/router/modules/setting.js:529"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/kf_adv",
+        "title": "客服页面广告",
+        "component": "@/pages/system/group/kfAdv",
+        "source": "src/router/modules/setting.js:538"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/userAgreement/index",
+        "title": "隐私协议",
+        "component": "@/pages/setting/userAgreement/index.vue",
+        "source": "src/router/modules/setting.js:547"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_group_data/pc/:id",
+        "title": "PC主页轮播",
+        "component": "@/pages/system/group/list",
+        "source": "src/router/modules/setting.js:556"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_config_member_right/:type?/:tab_id?",
+        "title": "会员权益",
+        "component": "@/pages/setting/setSystem/index",
+        "source": "src/router/modules/setting.js:565"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/delivery_service/index",
+        "title": "配送员列表",
+        "component": "@/pages/setting/deliveryService/index",
+        "source": "src/router/modules/setting.js:574"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/city/delivery/setting",
+        "title": "配送设置",
+        "component": "@/pages/setting/cityDelivery/setting",
+        "source": "src/router/modules/setting.js:583"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/city/delivery/record",
+        "title": "配送记录",
+        "component": "@/pages/setting/cityDelivery/record",
+        "source": "src/router/modules/setting.js:592"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/index",
+        "title": "门店",
+        "component": "@/pages/platform/index/index",
+        "source": "src/router/modules/setting.js:602"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/list/index",
+        "title": "门店列表",
+        "component": "@/pages/platform/list/index",
+        "source": "src/router/modules/setting.js:611"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/order/index",
+        "title": "门店订单",
+        "component": "@/pages/platform/order/index",
+        "source": "src/router/modules/setting.js:620"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/bill/index",
+        "title": "账单记录",
+        "component": "@/pages/platform/bill/index",
+        "source": "src/router/modules/setting.js:629"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/platform/setting/index",
+        "title": "财务设置",
+        "component": "@/pages/platform/setting/index",
+        "source": "src/router/modules/setting.js:638"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/storage",
+        "title": "存储设置",
+        "component": "@/pages/setting/storage/index",
+        "source": "src/router/modules/setting.js:647"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_form",
+        "title": "系统表单",
+        "component": "@/pages/setting/systemForm/index",
+        "source": "src/router/modules/setting.js:656"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_form/data",
+        "title": "表单详情",
+        "component": "@/pages/setting/systemForm/details",
+        "source": "src/router/modules/setting.js:665"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/devise",
+        "title": "店铺装修",
+        "component": "@/pages/setting/devise/list",
+        "source": "src/router/modules/settingPage.js:27"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/home",
+        "title": "个人中心",
+        "component": "@/pages/setting/devise/users",
+        "source": "src/router/modules/settingPage.js:36"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/product_category",
+        "title": "商品分类",
+        "component": "@/pages/setting/devise/goodClass",
+        "source": "src/router/modules/settingPage.js:45"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/product_detail",
+        "title": "商品详情",
+        "component": "@/pages/setting/devise/newGoods",
+        "source": "src/router/modules/settingPage.js:54"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/theme_style",
+        "title": "主题风格",
+        "component": "@/pages/setting/themeStyle/index",
+        "source": "src/router/modules/settingPage.js:63"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/system_visualization_data",
+        "title": "开屏广告",
+        "component": "@/pages/system/group/visualization",
+        "source": "src/router/modules/settingPage.js:72"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pc_group_data",
+        "title": "PC商城",
+        "component": "@/pages/system/group/pc",
+        "source": "src/router/modules/settingPage.js:81"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    },
+    {
+      "legacy": {
+        "path": "/admin/setting/pages/fab",
+        "title": "悬浮按钮",
+        "component": "@/pages/setting/devise/fab",
+        "source": "src/router/modules/settingPage.js:90"
+      },
+      "status": "unreviewed",
+      "targetScreens": [],
+      "targetApis": [],
+      "covered": [],
+      "remaining": [
+        "尚未逐屏比对旧页面、接口、权限、数据边界与交互"
+      ],
+      "evidence": []
+    }
+  ]
+}
