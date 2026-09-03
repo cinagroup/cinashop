@@ -40,8 +40,8 @@ describe("legacy Admin setting route parity audit", () => {
     expect(report.summary).toMatchObject({
       legacyRoutes: 76,
       reviewed: 15,
-      candidate: 8,
-      partial: 6,
+      candidate: 9,
+      partial: 5,
       missing: 0,
       retired: 1,
       unreviewed: 61,
@@ -60,7 +60,7 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/notification/notificationEdit": "partial",
       "/admin/setting/system/create": "candidate",
       "/admin/setting/system_config": "partial",
-      "/admin/setting/shop/base": "partial",
+      "/admin/setting/shop/base": "candidate",
       "/admin/setting/shop/product": "candidate",
       "/admin/setting/shop/trade": "partial",
       "/admin/setting/shop/pay": "partial",
@@ -107,6 +107,9 @@ describe("legacy Admin setting route parity audit", () => {
     expect(generic.targetScreens).toContain("/config/commerce");
     expect(generic.remaining.join(" ")).toContain("任意键编辑器");
     expect(basic.covered.join(" ")).toContain("HTTPS");
+    expect(basic.covered.join(" ")).toContain("Durable Object");
+    expect(basic.covered.join(" ")).toContain("UniApp首页分享钩子");
+    expect(basic.remaining.join(" ")).toContain("生产历史素材");
     expect(product.covered.join(" ")).toContain("is_police");
     expect(trade.remaining.join(" ")).toContain("次卡临期提醒");
     expect(payment.covered.join(" ")).toContain("实际可用状态");

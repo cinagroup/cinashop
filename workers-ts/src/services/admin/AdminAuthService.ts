@@ -18,6 +18,8 @@ import { setTokenBucket } from "@/utils/cache";
 import bcrypt from "bcryptjs";
 import { AdminPermissionService } from "@/services/admin/AdminPermissionService";
 
+const DUMMY_BCRYPT_HASH = "$2b$12$aoFQ1UDRKVgYmPxVsvZp1eGrp07dDT0KroIStvxFZyrf1b1EIylqS";
+
 export class AdminAuthService {
   constructor(
     private readonly container: Container,
@@ -47,15 +49,13 @@ export class AdminAuthService {
     // 平台后台与供应商后台是不同安全域。供应商账号(admin_type=4)
     // 只能从 /supplierapi 登录，不能换取平台 admin token。
     const admin = await this.container.systemAdminDao.findByAccountAndType(account, 1);
-    if (!admin) throw new ValidateException("账号或密码错误");
-    if (!admin.status) throw new ValidateException("账号已被禁用");
-    if (admin.isDel) throw new ValidateException("账号不存在");
-
-    // bcrypt 校验 (PHP $2y$ 格式, bcryptjs 需替换前缀)
-    // bcryptjs 兼容 $2a$; $2b$/$2y$ 需替换前缀
-    const hash = admin.pwd.replace(/^\$2[by]\$/, "$2a$");
+    // 不存在、禁用、删除和密码错误统一执行同成本 bcrypt 并返回相同错误，
+    // 避免通过响应内容或显著时间差枚举管理员账号。
+    const hash = (admin?.pwd ?? DUMMY_BCRYPT_HASH).replace(/^\$2[by]\$/, "$2a$");
     const valid = bcrypt.compareSync(password, hash);
-    if (!valid) throw new ValidateException("账号或密码错误");
+    if (!admin || !admin.status || admin.isDel || !valid) {
+      throw new ValidateException("账号或密码错误");
+    }
 
     // JWT (type='admin')
     const { token, exp } = await createToken(admin.id, "admin", md5(admin.pwd), this.env.APP_KEY);

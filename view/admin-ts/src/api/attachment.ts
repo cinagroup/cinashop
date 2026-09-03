@@ -5,6 +5,7 @@ const previewMode =
 
 export interface AttachmentItem {
   att_id: number;
+  canonical_url: string;
   att_dir: string;
   satt_dir: string;
   att_size: string;
@@ -23,8 +24,8 @@ export interface AttachmentCategoryItem {
 }
 
 const previewItems: AttachmentItem[] = [
-  { att_id: 31, att_dir: "/logo.png", satt_dir: "/logo.png", att_size: "48.2 KiB", raw_size: 49357, att_type: "image/png", pid: 0, time: "2026-08-10 10:20:00", real_name: "cinashop-brand.png" },
-  { att_id: 30, att_dir: "/favicon.ico", satt_dir: "/favicon.ico", att_size: "2.1 KiB", raw_size: 2140, att_type: "image/x-icon", pid: 0, time: "2026-08-10 09:45:00", real_name: "storefront-reference.ico" },
+  { att_id: 31, canonical_url: "/logo.png", att_dir: "/logo.png", satt_dir: "/logo.png", att_size: "48.2 KiB", raw_size: 49357, att_type: "image/png", pid: 0, time: "2026-08-10 10:20:00", real_name: "cinashop-brand.png" },
+  { att_id: 30, canonical_url: "/favicon.ico", att_dir: "/favicon.ico", satt_dir: "/favicon.ico", att_size: "2.1 KiB", raw_size: 2140, att_type: "image/x-icon", pid: 0, time: "2026-08-10 09:45:00", real_name: "storefront-reference.ico" },
 ];
 
 export async function apiAttachmentList(params: Record<string, unknown>) {
@@ -38,7 +39,7 @@ export async function apiAttachmentUpload(file: File, pid = 0) {
   if (previewMode) {
     const previewUrl = URL.createObjectURL(file);
     const item: AttachmentItem = {
-      att_id: Date.now(), att_dir: previewUrl, satt_dir: previewUrl,
+      att_id: Date.now(), canonical_url: previewUrl, att_dir: previewUrl, satt_dir: previewUrl,
       att_size: `${(file.size / 1024).toFixed(1)} KiB`, raw_size: file.size,
       att_type: file.type, pid, time: new Date().toISOString().replace("T", " ").slice(0, 19), real_name: file.name,
     };

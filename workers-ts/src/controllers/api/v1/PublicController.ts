@@ -13,6 +13,7 @@ import { jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
 import { ProductWordsService } from "@/services/product/ProductWordsService";
+import { PublicBrandingService } from "@/services/system/PublicBrandingService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
 
@@ -23,9 +24,24 @@ type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import(
  * 返回备案号等基础站点信息。
  */
 export async function getSiteConfig(c: C) {
-  const svc = new SystemConfigService(c.get("container"), c.env);
-  const recordNo = await svc.get("record_No");
-  return jsonOk(c, { record_No: recordNo });
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300");
+  return jsonOk(
+    c,
+    await new PublicBrandingService(c.get("container"), c.env).siteConfig(
+      new URL(c.req.url).origin,
+    ),
+  );
+}
+
+/** GET /api/share — legacy global WeChat share defaults with fresh signed media. */
+export async function share(c: C) {
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300");
+  return jsonOk(
+    c,
+    await new PublicBrandingService(c.get("container"), c.env).share(
+      new URL(c.req.url).origin,
+    ),
+  );
 }
 
 /**

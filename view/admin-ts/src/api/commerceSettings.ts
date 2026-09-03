@@ -9,6 +9,11 @@ export interface BasicCommerceSettings {
   site_logo_square: string;
   login_logo: string;
   wap_login_logo: string;
+  admin_login_slide: string[];
+  ico_path: string;
+  wechat_share_img: string;
+  wechat_share_title: string;
+  wechat_share_synopsis: string;
   navigation_open: number;
   video_func_status: number;
   product_video_status: number;
@@ -65,6 +70,15 @@ export interface CommerceSettings {
   division: DivisionCommerceSettings;
   payment_readiness: Record<PaymentMethod, PaymentMethodReadiness>;
   missing_config_keys: string[];
+  asset_previews: Record<string, string>;
+  security_policy: {
+    admin_login_source_limit: string;
+    admin_login_account_limit: string;
+    new_admin_password: string;
+    commerce_request_body_limit: string;
+    request_validation: string;
+    legacy_editable_filters: false;
+  };
 }
 
 export type CommerceSettingsPayload = Pick<
@@ -81,10 +95,18 @@ let previewSettings: CommerceSettings = {
     site_name: "CinaShop",
     site_url: "https://shop.example.com",
     site_phone: "400-800-8888",
-    site_logo: "/uploads/system/logo-wide.png",
-    site_logo_square: "/uploads/system/logo-square.png",
-    login_logo: "/uploads/system/login-logo.png",
-    wap_login_logo: "/uploads/system/mobile-logo.png",
+    site_logo: "/logo.png",
+    site_logo_square: "/logo.png",
+    login_logo: "/logo.png",
+    wap_login_logo: "/logo.png",
+    admin_login_slide: [
+      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=900&fit=crop",
+      "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&h=900&fit=crop",
+    ],
+    ico_path: "/favicon.ico",
+    wechat_share_img: "/logo.png",
+    wechat_share_title: "CinaShop 品质商城",
+    wechat_share_synopsis: "精选商品与可靠售后，欢迎分享给好友。",
     navigation_open: 1,
     video_func_status: 1,
     product_video_status: 1,
@@ -123,6 +145,15 @@ let previewSettings: CommerceSettings = {
     offline: { enabled: false, reason: "线下支付未开启" },
   },
   missing_config_keys: [],
+  asset_previews: {},
+  security_policy: {
+    admin_login_source_limit: "10次/60秒",
+    admin_login_account_limit: "30次/15分钟",
+    new_admin_password: "至少12位；bcrypt cost 12",
+    commerce_request_body_limit: "32 KiB",
+    request_validation: "固定字段白名单、长度/类型校验、参数化数据库操作",
+    legacy_editable_filters: false,
+  },
 };
 
 function clone<T>(value: T): T {

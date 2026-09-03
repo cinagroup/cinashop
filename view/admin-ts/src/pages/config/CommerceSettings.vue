@@ -73,10 +73,99 @@
           <el-form label-position="top">
             <div class="form-grid two">
               <el-form-item v-for="item in assetFields" :key="item.key" :label="item.label">
-                <el-input v-model="form.basic[item.key]" maxlength="2048" :placeholder="item.placeholder" />
+                <div class="asset-control">
+                  <el-input v-model="form.basic[item.key]" maxlength="2048" :placeholder="item.placeholder" />
+                  <el-button @click="openAssetPicker(item.key)">从素材中心选择</el-button>
+                </div>
+                <el-image
+                  v-if="form.basic[item.key]"
+                  :src="assetPreview(form.basic[item.key])"
+                  fit="contain"
+                  class="asset-preview"
+                />
               </el-form-item>
             </div>
           </el-form>
+        </el-card>
+
+        <el-card shadow="never" class="section-card">
+          <template #header><strong>登录轮播图与浏览器图标</strong></template>
+          <el-alert
+            type="info"
+            :closable="false"
+            title="素材中心使用私有 R2：配置保存稳定素材引用，登录页读取时由 Worker 重新签名；轮播图最多 5 张。favicon 可使用 PNG、JPEG 或 WebP。"
+            class="inline-alert"
+          />
+          <div class="slide-toolbar">
+            <strong>后台登录轮播图（{{ form.basic.admin_login_slide.length }}/5）</strong>
+            <el-button :disabled="form.basic.admin_login_slide.length >= 5" @click="openAssetPicker('admin_login_slide')">
+              添加素材
+            </el-button>
+          </div>
+          <div v-if="form.basic.admin_login_slide.length" class="slide-grid">
+            <article v-for="(slide, index) in form.basic.admin_login_slide" :key="`${slide}-${index}`" class="slide-card">
+              <el-image :src="assetPreview(slide)" fit="cover" />
+              <div>
+                <el-button link :disabled="index === 0" @click="moveSlide(index, -1)">前移</el-button>
+                <el-button link :disabled="index === form.basic.admin_login_slide.length - 1" @click="moveSlide(index, 1)">后移</el-button>
+                <el-button link type="danger" @click="removeSlide(index)">移除</el-button>
+              </div>
+            </article>
+          </div>
+          <el-empty v-else :image-size="68" description="未配置时登录页使用安全的渐变背景" />
+          <el-form label-position="top" class="favicon-form">
+            <el-form-item label="浏览器 favicon">
+              <div class="asset-control">
+                <el-input v-model="form.basic.ico_path" maxlength="2048" placeholder="/api/assets/123" />
+                <el-button @click="openAssetPicker('ico_path')">从素材中心选择</el-button>
+              </div>
+              <el-image v-if="form.basic.ico_path" :src="assetPreview(form.basic.ico_path)" fit="contain" class="favicon-preview" />
+            </el-form-item>
+          </el-form>
+        </el-card>
+
+        <el-card shadow="never" class="section-card">
+          <template #header><strong>微信默认分享</strong></template>
+          <el-alert
+            type="info"
+            :closable="false"
+            title="首页小程序分享与 H5/PC 页面元信息通过 /api/share 消费这里的默认值；商品详情仍可使用自己的商品标题和图片覆盖。"
+            class="inline-alert"
+          />
+          <el-form label-position="top">
+            <div class="form-grid two">
+              <el-form-item label="分享标题">
+                <el-input v-model="form.basic.wechat_share_title" maxlength="100" show-word-limit />
+              </el-form-item>
+              <el-form-item label="分享图片">
+                <div class="asset-control">
+                  <el-input v-model="form.basic.wechat_share_img" maxlength="2048" placeholder="/api/assets/123" />
+                  <el-button @click="openAssetPicker('wechat_share_img')">从素材中心选择</el-button>
+                </div>
+                <el-image v-if="form.basic.wechat_share_img" :src="assetPreview(form.basic.wechat_share_img)" fit="contain" class="asset-preview" />
+              </el-form-item>
+            </div>
+            <el-form-item label="分享简介">
+              <el-input v-model="form.basic.wechat_share_synopsis" type="textarea" :rows="3" maxlength="200" show-word-limit />
+            </el-form-item>
+          </el-form>
+        </el-card>
+
+        <el-card shadow="never" class="section-card">
+          <template #header><strong>Worker 固定安全策略</strong></template>
+          <el-alert
+            type="success"
+            :closable="false"
+            title="旧 PHP 的密码长度、登录锁定与参数过滤开关不再提供任意编辑；下列策略由 Worker 代码、Durable Object 与 Cloudflare Secret 强制执行。"
+            class="inline-alert"
+          />
+          <el-descriptions :column="2" border class="security-policy">
+            <el-descriptions-item label="来源登录限流">{{ form.security_policy.admin_login_source_limit }}</el-descriptions-item>
+            <el-descriptions-item label="账号登录限流">{{ form.security_policy.admin_login_account_limit }}</el-descriptions-item>
+            <el-descriptions-item label="新管理员密码">{{ form.security_policy.new_admin_password }}</el-descriptions-item>
+            <el-descriptions-item label="本页请求体上限">{{ form.security_policy.commerce_request_body_limit }}</el-descriptions-item>
+            <el-descriptions-item label="参数策略" :span="2">{{ form.security_policy.request_validation }}</el-descriptions-item>
+          </el-descriptions>
         </el-card>
       </el-tab-pane>
 
@@ -208,6 +297,37 @@
         </el-card>
       </el-tab-pane>
     </el-tabs>
+
+    <el-dialog v-model="assetDialog" title="选择私有 R2 素材" width="min(920px, calc(100vw - 24px))">
+      <div class="picker-toolbar">
+        <el-input v-model="assetQuery.name" clearable placeholder="搜索文件名" @keyup.enter="loadAssets" />
+        <el-button @click="loadAssets">查询</el-button>
+        <el-upload
+          :show-file-list="false"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          :http-request="uploadAsset"
+        >
+          <el-button type="primary" :loading="assetUploading">上传并选择</el-button>
+        </el-upload>
+      </div>
+      <p class="picker-note">仅接受经服务端魔数校验的 JPEG、PNG、WebP、GIF，单张最大 10 MiB；配置中不会保存短期签名参数。</p>
+      <div v-loading="assetLoading" class="picker-grid">
+        <button v-for="item in assetItems" :key="item.att_id" type="button" class="picker-card" @click="chooseAsset(item)">
+          <el-image :src="item.satt_dir || item.att_dir" fit="cover" />
+          <span :title="item.real_name">{{ item.real_name }}</span>
+          <small>{{ item.att_size }}</small>
+        </button>
+        <el-empty v-if="!assetLoading && !assetItems.length" description="暂无可选素材" />
+      </div>
+      <el-pagination
+        v-if="assetCount > assetQuery.limit"
+        v-model:current-page="assetQuery.page"
+        :page-size="assetQuery.limit"
+        :total="assetCount"
+        layout="prev, pager, next"
+        @current-change="loadAssets"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -223,8 +343,21 @@ import {
   type TradeCommerceSettings,
 } from "@/api/commerceSettings";
 import { useAuthStore } from "@/stores/auth";
+import type { UploadRequestOptions } from "element-plus";
+import {
+  apiAttachmentList,
+  apiAttachmentUpload,
+  type AttachmentItem,
+} from "@/api/attachment";
 
-type AssetKey = "site_logo" | "site_logo_square" | "login_logo" | "wap_login_logo";
+type AssetKey =
+  | "site_logo"
+  | "site_logo_square"
+  | "login_logo"
+  | "wap_login_logo"
+  | "ico_path"
+  | "wechat_share_img";
+type AssetTarget = AssetKey | "admin_login_slide";
 type CancelTimeKey =
   | "order_cancel_time"
   | "order_activity_time"
@@ -240,6 +373,13 @@ const canSave = computed(() => previewMode || authStore.userInfo?.level === 0 ||
 const loading = ref(false);
 const saving = ref(false);
 const activeTab = ref("basic");
+const assetDialog = ref(false);
+const assetTarget = ref<AssetTarget>("site_logo");
+const assetItems = ref<AttachmentItem[]>([]);
+const assetCount = ref(0);
+const assetLoading = ref(false);
+const assetUploading = ref(false);
+const assetQuery = ref({ page: 1, limit: 12, pid: 0, name: "" });
 
 const emptySettings = (): CommerceSettings => ({
   basic: {
@@ -251,6 +391,11 @@ const emptySettings = (): CommerceSettings => ({
     site_logo_square: "",
     login_logo: "",
     wap_login_logo: "",
+    admin_login_slide: [],
+    ico_path: "",
+    wechat_share_img: "",
+    wechat_share_title: "",
+    wechat_share_synopsis: "",
     navigation_open: 1,
     video_func_status: 1,
     product_video_status: 1,
@@ -289,6 +434,15 @@ const emptySettings = (): CommerceSettings => ({
     offline: { enabled: false, reason: "尚未读取" },
   },
   missing_config_keys: [],
+  asset_previews: {},
+  security_policy: {
+    admin_login_source_limit: "10次/60秒",
+    admin_login_account_limit: "30次/15分钟",
+    new_admin_password: "至少12位；bcrypt cost 12",
+    commerce_request_body_limit: "32 KiB",
+    request_validation: "固定字段白名单、长度/类型校验、参数化数据库操作",
+    legacy_editable_filters: false,
+  },
 });
 
 const form = ref<CommerceSettings>(emptySettings());
@@ -299,6 +453,74 @@ const assetFields: Array<{ key: AssetKey; label: string; placeholder: string }> 
   { key: "login_logo", label: "后台登录页 LOGO", placeholder: "/uploads/system/login-logo.png" },
   { key: "wap_login_logo", label: "移动端登录 LOGO", placeholder: "/uploads/system/mobile-logo.png" },
 ];
+
+function assetPreview(reference: string): string {
+  return form.value.asset_previews[reference] || reference;
+}
+
+async function loadAssets() {
+  assetLoading.value = true;
+  try {
+    const result = await apiAttachmentList(assetQuery.value);
+    assetItems.value = result.list;
+    assetCount.value = result.count;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "素材加载失败");
+  } finally {
+    assetLoading.value = false;
+  }
+}
+
+function openAssetPicker(target: AssetTarget) {
+  assetTarget.value = target;
+  assetQuery.value.page = 1;
+  assetDialog.value = true;
+  void loadAssets();
+}
+
+function chooseAsset(item: AttachmentItem) {
+  const reference = item.canonical_url || item.att_dir;
+  form.value.asset_previews[reference] = item.att_dir;
+  if (assetTarget.value === "admin_login_slide") {
+    if (form.value.basic.admin_login_slide.includes(reference)) {
+      ElMessage.warning("该轮播图已添加");
+      return;
+    }
+    if (form.value.basic.admin_login_slide.length >= 5) {
+      ElMessage.warning("登录轮播图最多 5 张");
+      return;
+    }
+    form.value.basic.admin_login_slide.push(reference);
+    ElMessage.success("已添加，可继续选择");
+    return;
+  }
+  form.value.basic[assetTarget.value] = reference;
+  assetDialog.value = false;
+}
+
+async function uploadAsset(options: UploadRequestOptions) {
+  assetUploading.value = true;
+  try {
+    await apiAttachmentUpload(options.file, 0);
+    await loadAssets();
+    ElMessage.success("上传成功，请从列表中选择");
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "上传失败");
+  } finally {
+    assetUploading.value = false;
+  }
+}
+
+function moveSlide(index: number, offset: -1 | 1) {
+  const target = index + offset;
+  if (target < 0 || target >= form.value.basic.admin_login_slide.length) return;
+  const [slide] = form.value.basic.admin_login_slide.splice(index, 1);
+  form.value.basic.admin_login_slide.splice(target, 0, slide);
+}
+
+function removeSlide(index: number) {
+  form.value.basic.admin_login_slide.splice(index, 1);
+}
 
 const cancelTimeFields: Array<{ key: CancelTimeKey; label: string }> = [
   { key: "order_cancel_time", label: "普通商品" },
@@ -392,9 +614,26 @@ small { color: var(--el-text-color-secondary); }
 .payment-switches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .division-switches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .division-note { margin-top: 16px; }
+.asset-control, .slide-toolbar, .picker-toolbar { display: flex; align-items: center; gap: 10px; width: 100%; }
+.asset-preview { width: 100%; height: 92px; margin-top: 10px; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; background: var(--el-fill-color-light); }
+.favicon-form { margin-top: 18px; }
+.favicon-preview { width: 48px; height: 48px; margin: 10px 0 0 10px; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; }
+.slide-toolbar { justify-content: space-between; }
+.slide-grid, .picker-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.slide-card, .picker-card { overflow: hidden; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; background: #fff; }
+.slide-card :deep(.el-image), .picker-card :deep(.el-image) { width: 100%; height: 124px; }
+.slide-card > div { display: flex; justify-content: center; padding: 4px; }
+.picker-toolbar .el-input { max-width: 300px; }
+.picker-note { margin: 10px 0 0; color: var(--el-text-color-secondary); font-size: 12px; }
+.picker-grid { min-height: 180px; margin-bottom: 16px; }
+.picker-card { display: grid; gap: 4px; padding: 0 0 10px; color: inherit; text-align: left; cursor: pointer; }
+.picker-card:hover { border-color: var(--el-color-primary); }
+.picker-card span, .picker-card small { overflow: hidden; padding: 0 10px; text-overflow: ellipsis; white-space: nowrap; }
+.security-policy { max-width: 980px; }
 @media (max-width: 960px) {
   .form-grid.three, .switch-grid, .payment-switches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .readiness-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .slide-grid, .picker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .page-heading { align-items: stretch; flex-direction: column; }
@@ -402,5 +641,9 @@ small { color: var(--el-text-color-secondary); }
   .form-grid.three, .form-grid.two, .switch-grid, .payment-switches, .division-switches, .readiness-grid { grid-template-columns: 1fr; }
   .single-control { align-items: flex-start; flex-direction: column; }
   .single-control :deep(.el-input-number) { width: 100%; }
+  .asset-control, .picker-toolbar { align-items: stretch; flex-direction: column; }
+  .asset-control .el-button, .picker-toolbar > * { width: 100%; max-width: none; }
+  .slide-grid { grid-template-columns: 1fr; }
+  .security-policy :deep(.el-descriptions__body) { overflow-x: auto; }
 }
 </style>

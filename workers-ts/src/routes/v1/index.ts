@@ -102,6 +102,7 @@ v1Routes.get("/pc/wechat_auth", PcCompatibilityController.wechatAuth);
 
 // ─── 无需授权接口 ─────────────────────────────────────────────
 v1Routes.get("/site_config", PublicController.getSiteConfig);
+v1Routes.get("/share", PublicController.share);
 v1Routes.get("/get_copyright", PublicController.getCopyright);
 v1Routes.get("/search/hot_keyword", PublicController.hotKeywords);
 v1Routes.get("/search/keyword", PublicController.searchWords);

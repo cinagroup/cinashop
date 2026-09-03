@@ -15,6 +15,7 @@ import { corsMiddleware } from "@/middleware/cors";
 import { containerMiddleware } from "@/middleware/container";
 import { observabilityMiddleware } from "@/middleware/observability";
 import { errorHandler } from "@/middleware/error";
+import { securityHeadersMiddleware } from "@/middleware/security-headers";
 import { apiRoutes } from "@/routes";
 import { adminapiRoutes } from "@/routes/adminapi";
 import { supplierapiRoutes } from "@/routes/supplierapi";
@@ -30,6 +31,9 @@ export function createApp() {
 
   // 1. Critical-flow latency and failures, including container/auth failures.
   app.use("*", observabilityMiddleware);
+
+  // Fixed Worker response policy; not editable through legacy system_config.
+  app.use("*", securityHeadersMiddleware);
 
   // 2. CORS
   app.use("*", corsMiddleware);

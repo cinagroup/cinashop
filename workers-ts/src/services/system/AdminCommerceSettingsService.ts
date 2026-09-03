@@ -8,6 +8,8 @@ import {
 } from "@/services/payment/PaymentReadinessService";
 import { normalizeConfigScalar } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
+import { ADMIN_LOGIN_POLICY } from "@/middleware/admin-login-security";
+import { signAttachmentReferences } from "@/services/system/AttachmentService";
 
 export const BASIC_COMMERCE_CONFIG_KEYS = [
   "station_open",
@@ -18,6 +20,11 @@ export const BASIC_COMMERCE_CONFIG_KEYS = [
   "site_logo_square",
   "login_logo",
   "wap_login_logo",
+  "admin_login_slide",
+  "ico_path",
+  "wechat_share_img",
+  "wechat_share_title",
+  "wechat_share_synopsis",
   "navigation_open",
   "video_func_status",
   "product_video_status",
@@ -75,13 +82,24 @@ export interface CommerceSettingsActor {
 }
 
 export interface CommerceSettingsSnapshot {
-  basic: Pick<CommerceConfigValues, (typeof BASIC_COMMERCE_CONFIG_KEYS)[number]>;
+  basic: Omit<Pick<CommerceConfigValues, (typeof BASIC_COMMERCE_CONFIG_KEYS)[number]>, "admin_login_slide"> & {
+    admin_login_slide: string[];
+  };
   product: Pick<CommerceConfigValues, (typeof PRODUCT_COMMERCE_CONFIG_KEYS)[number]>;
   trade: Pick<CommerceConfigValues, (typeof TRADE_COMMERCE_CONFIG_KEYS)[number]>;
   payment: Pick<CommerceConfigValues, (typeof PAYMENT_COMMERCE_CONFIG_KEYS)[number]>;
   division: Pick<CommerceConfigValues, (typeof DIVISION_COMMERCE_CONFIG_KEYS)[number]>;
   payment_readiness: PaymentReadiness;
   missing_config_keys: CommerceConfigKey[];
+  asset_previews: Record<string, string>;
+  security_policy: {
+    admin_login_source_limit: string;
+    admin_login_account_limit: string;
+    new_admin_password: string;
+    commerce_request_body_limit: string;
+    request_validation: string;
+    legacy_editable_filters: false;
+  };
 }
 
 const DEFAULTS: CommerceConfigValues = {
@@ -93,6 +111,11 @@ const DEFAULTS: CommerceConfigValues = {
   site_logo_square: "",
   login_logo: "",
   wap_login_logo: "",
+  admin_login_slide: "[]",
+  ico_path: "",
+  wechat_share_img: "",
+  wechat_share_title: "",
+  wechat_share_synopsis: "",
   navigation_open: 1,
   video_func_status: 1,
   product_video_status: 1,
@@ -131,6 +154,11 @@ const INFO: Record<CommerceConfigKey, string> = {
   site_logo_square: "后台小 LOGO",
   login_logo: "后台登录页 LOGO",
   wap_login_logo: "移动端登录 LOGO",
+  admin_login_slide: "后台登录轮播图",
+  ico_path: "浏览器图标",
+  wechat_share_img: "微信分享图片",
+  wechat_share_title: "微信分享标题",
+  wechat_share_synopsis: "微信分享简介",
   navigation_open: "悬浮菜单",
   video_func_status: "短视频启用",
   product_video_status: "商品列表视频",
@@ -239,6 +267,31 @@ function assetUrl(value: unknown, label: string): string {
   throw new ValidateException(`${label}只支持 HTTPS 或 / 开头的站内地址`);
 }
 
+function assetList(value: unknown, label: string): string {
+  if (!Array.isArray(value)) throw new ValidateException(`${label}格式错误`);
+  if (value.length > 5) throw new ValidateException(`${label}最多5张`);
+  const normalized = value.map((item) => assetUrl(item, label)).filter(Boolean);
+  if (new Set(normalized).size !== normalized.length) {
+    throw new ValidateException(`${label}不能包含重复图片`);
+  }
+  return JSON.stringify(normalized);
+}
+
+function decodeAssetList(value: string | number): string[] {
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0 && item.length <= 2_048)
+      .slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+
 function siteUrl(value: unknown, required: boolean): string {
   const text = textValue(value, "网站地址", 2_048, required);
   if (!text) return "";
@@ -288,6 +341,15 @@ export function normalizeCommerceSettings(input: Record<string, unknown>): Comme
     site_logo_square: assetUrl(basic.site_logo_square, INFO.site_logo_square),
     login_logo: assetUrl(basic.login_logo, INFO.login_logo),
     wap_login_logo: assetUrl(basic.wap_login_logo, INFO.wap_login_logo),
+    admin_login_slide: assetList(basic.admin_login_slide, INFO.admin_login_slide),
+    ico_path: assetUrl(basic.ico_path, INFO.ico_path),
+    wechat_share_img: assetUrl(basic.wechat_share_img, INFO.wechat_share_img),
+    wechat_share_title: textValue(basic.wechat_share_title, INFO.wechat_share_title, 100),
+    wechat_share_synopsis: textValue(
+      basic.wechat_share_synopsis,
+      INFO.wechat_share_synopsis,
+      200,
+    ),
     navigation_open: flag(basic.navigation_open, INFO.navigation_open),
     video_func_status: flag(basic.video_func_status, INFO.video_func_status),
     product_video_status: flag(basic.product_video_status, INFO.product_video_status),
@@ -403,14 +465,38 @@ export class AdminCommerceSettingsService {
       this.configSnapshot(),
       getPaymentReadiness(this.container, this.env),
     ]);
+    const slides = decodeAssetList(values.admin_login_slide);
+    const basic = {
+        ...pickValues(values, BASIC_COMMERCE_CONFIG_KEYS),
+        admin_login_slide: slides,
+      };
+    const references = [
+      values.site_logo,
+      values.site_logo_square,
+      values.login_logo,
+      values.wap_login_logo,
+      values.ico_path,
+      values.wechat_share_img,
+      ...slides,
+    ].filter((item): item is string => typeof item === "string" && item.length > 0);
+    const signed = await signAttachmentReferences(this.env.APP_KEY, references);
     return {
-      basic: pickValues(values, BASIC_COMMERCE_CONFIG_KEYS),
+      basic,
       product: pickValues(values, PRODUCT_COMMERCE_CONFIG_KEYS),
       trade: pickValues(values, TRADE_COMMERCE_CONFIG_KEYS),
       payment: pickValues(values, PAYMENT_COMMERCE_CONFIG_KEYS),
       division: pickValues(values, DIVISION_COMMERCE_CONFIG_KEYS),
       payment_readiness: paymentReadiness,
       missing_config_keys: missing,
+      asset_previews: Object.fromEntries(references.map((reference, index) => [reference, signed[index]])),
+      security_policy: {
+        admin_login_source_limit: `${ADMIN_LOGIN_POLICY.sourceAttempts}次/${ADMIN_LOGIN_POLICY.sourceWindowSeconds}秒`,
+        admin_login_account_limit: `${ADMIN_LOGIN_POLICY.accountAttempts}次/${ADMIN_LOGIN_POLICY.accountWindowSeconds / 60}分钟`,
+        new_admin_password: `至少${ADMIN_LOGIN_POLICY.newPasswordMinLength}位；bcrypt cost ${ADMIN_LOGIN_POLICY.bcryptCost}`,
+        commerce_request_body_limit: "32 KiB",
+        request_validation: "固定字段白名单、长度/类型校验、参数化数据库操作",
+        legacy_editable_filters: false,
+      },
     };
   }
 

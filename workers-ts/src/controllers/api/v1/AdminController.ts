@@ -40,19 +40,29 @@ import { upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
 import { ErpCapabilityService } from "@/services/system/ErpCapabilityService";
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
+import {
+  ADMIN_LOGIN_POLICY,
+  enforceAdminLoginAccountLimit,
+  enforceAdminLoginSourceLimit,
+} from "@/middleware/admin-login-security";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
 /** POST /api/admin/login — 管理员登录 */
 export async function adminLogin(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    account?: string;
-    pwd?: string;
-  };
-  if (!body.account || !body.pwd) return jsonFail(c, "请输入账号和密码");
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  c.header("Pragma", "no-cache");
+  await enforceAdminLoginSourceLimit(c);
+  const body = await readBoundedJsonObject(c.req.raw, ADMIN_LOGIN_POLICY.bodyLimitBytes);
+  const account = typeof body.account === "string" ? body.account.trim() : "";
+  const password = typeof body.pwd === "string" ? body.pwd : "";
+  if (!account || !password || account.length > 64 || password.length > 256) {
+    return jsonFail(c, "请输入有效的账号和密码");
+  }
+  await enforceAdminLoginAccountLimit(c, account);
   const svc = new AdminAuthService(c.get("container"), c.env);
   try {
-    const result = await svc.login(body.account, body.pwd);
+    const result = await svc.login(account, password);
     return jsonOk(c, result, "登录成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);

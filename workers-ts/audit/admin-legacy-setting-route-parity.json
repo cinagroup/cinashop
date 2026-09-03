@@ -15,8 +15,8 @@
   "summary": {
     "legacyRoutes": 76,
     "reviewed": 15,
-    "candidate": 8,
-    "partial": 6,
+    "candidate": 9,
+    "partial": 5,
     "missing": 0,
     "retired": 1,
     "unreviewed": 61
@@ -103,26 +103,37 @@
         "component": "@/pages/setting/shop/base",
         "source": "src/router/modules/setting.js:36"
       },
-      "status": "partial",
+      "status": "candidate",
       "targetScreens": [
         "/config/commerce（基础设置）"
       ],
       "targetApis": [
-        "GET|POST /adminapi/config/commerce"
+        "GET|POST /adminapi/config/commerce",
+        "GET /api/site_config",
+        "GET /api/share"
       ],
       "covered": [
         "站点开关、名称、HTTPS 地址、联系电话和备案号",
-        "四类品牌图片地址、悬浮菜单、短视频、商品列表视频和海报标题",
+        "四类品牌图片、登录轮播图、favicon、悬浮菜单、短视频、商品列表视频和海报标题",
+        "素材中心选择/上传后只保存稳定R2引用，公开消费时生成短期签名",
+        "Admin登录页消费轮播图与登录LOGO，Admin和PC动态应用favicon与站点品牌",
+        "微信分享三字段由新版/api/share提供，并由UniApp首页分享钩子及PC元信息消费",
+        "管理员登录使用4 KiB正文上限、来源/账号双层Durable Object限流和统一失败响应",
+        "固定12位新管理员密码/bcrypt cost 12、响应安全头及字段白名单取代旧可编辑过滤开关",
         "HTTPS/站内素材路径校验、短事务、回读、审计与配置缓存失效"
       ],
       "remaining": [
-        "旧后台轮播登录图和 favicon 上传流程",
-        "微信分享三字段尚无新版消费者",
-        "旧密码策略和 PHP 参数过滤器尚未由 Worker 原生安全策略替代"
+        "需在发布后用生产历史素材引用、真实微信分享与限流响应做只读/端到端验收"
       ],
       "evidence": [
         "view/admin-ts/src/pages/config/CommerceSettings.vue",
-        "workers-ts/src/services/system/AdminCommerceSettingsService.ts"
+        "view/admin-ts/src/pages/Login.vue",
+        "view/pc-ts/src/layouts/DefaultLayout.vue",
+        "view/uniapp-ts/src/pages/index/index.vue",
+        "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+        "workers-ts/src/services/system/PublicBrandingService.ts",
+        "workers-ts/src/middleware/admin-login-security.ts",
+        "workers-ts/src/middleware/security-headers.ts"
       ]
     },
     {

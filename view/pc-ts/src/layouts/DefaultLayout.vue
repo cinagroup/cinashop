@@ -4,7 +4,7 @@
     <header class="header">
       <div class="container header-inner">
         <div class="logo" @click="$router.push('/')">
-          <img src="/logo.png" alt="CinaShop" class="logo-img" />
+          <img :src="siteLogo" :alt="siteName" class="logo-img" />
         </div>
         <nav class="nav">
           <router-link to="/" class="nav-link">首页</router-link>
@@ -49,7 +49,7 @@
     <!-- 页脚 -->
     <footer class="footer">
       <div class="container footer-inner">
-        <span>© 2026 CinaShop</span>
+        <span>© 2026 {{ siteName }}</span>
         <span v-if="recordNo">{{ recordNo }}</span>
       </div>
     </footer>
@@ -62,13 +62,37 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import { useCartStore } from "@/stores/cart";
-import { getSiteConfig } from "@/api/public";
+import { getShareConfig, getSiteConfig } from "@/api/public";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 const searchWord = ref("");
 const recordNo = ref("");
+const siteName = ref("CinaShop");
+const siteLogo = ref("/logo.png");
+
+function setMeta(selector: string, attribute: "name" | "property", key: string, content: string) {
+  if (!content) return;
+  let element = document.head.querySelector<HTMLMetaElement>(selector);
+  if (!element) {
+    element = document.createElement("meta");
+    element.setAttribute(attribute, key);
+    document.head.append(element);
+  }
+  element.content = content;
+}
+
+function setFavicon(url: string) {
+  if (!url) return;
+  let link = document.head.querySelector<HTMLLinkElement>('link[rel~="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.append(link);
+  }
+  link.href = url;
+}
 
 function doSearch() {
   router.push({ path: "/search", query: { keyword: searchWord.value } });
@@ -86,11 +110,20 @@ onMounted(async () => {
     cartStore.fetchCount();
     cartStore.fetchList();
   }
-  try {
-    const config = await getSiteConfig();
-    recordNo.value = config.record_No;
-  } catch {
-    // ignore
+  const [site, share] = await Promise.allSettled([getSiteConfig(), getShareConfig()]);
+  if (site.status === "fulfilled") {
+    recordNo.value = site.value.record_No;
+    siteName.value = site.value.site_name || "CinaShop";
+    siteLogo.value = site.value.site_logo || "/logo.png";
+    document.title = siteName.value;
+    setFavicon(site.value.ico_path);
+  }
+  if (share.status === "fulfilled") {
+    const title = share.value.title || siteName.value;
+    setMeta('meta[property="og:title"]', "property", "og:title", title);
+    setMeta('meta[property="og:description"]', "property", "og:description", share.value.synopsis);
+    setMeta('meta[property="og:image"]', "property", "og:image", share.value.img);
+    setMeta('meta[name="description"]', "name", "description", share.value.synopsis);
   }
 });
 </script>

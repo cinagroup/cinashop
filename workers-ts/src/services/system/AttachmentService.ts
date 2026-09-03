@@ -890,6 +890,7 @@ export class AttachmentService {
         file_type: row.fileType,
         relation_id: row.relationId,
         name: row.name,
+        canonical_url: row.attDir,
         att_dir: urls[index * 2],
         satt_dir: urls[index * 2 + 1],
         att_size: formatBytes(row.attSize.trim()),

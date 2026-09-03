@@ -3606,7 +3606,7 @@
     },
     {
       "file": "view/admin-ts/src/api/attachment.ts",
-      "sha256": "e1fc727c4d2184bb9fcabafc9509b55fa366024c92e143688b402ca6aa36c848"
+      "sha256": "c40de4d250546b9b2fb19a005d769e810517b6a889b30d8b912e4807d133486f"
     },
     {
       "file": "view/admin-ts/src/api/auth.ts",
@@ -3622,7 +3622,7 @@
     },
     {
       "file": "view/admin-ts/src/api/commerceSettings.ts",
-      "sha256": "c4e145023a28f2cd6e1a0335e349e58230262418d0e61ff406c3519f56397585"
+      "sha256": "df4fdb4b992a04fb9d891120ea8715304fcbc1c552bf7295eb7340af847f4f76"
     },
     {
       "file": "view/admin-ts/src/api/community.ts",
@@ -4036,7 +4036,7 @@
       "method": "GET",
       "path": "/file/file",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 33,
+      "line": 34,
       "registered": true,
       "matchedRoute": "/file/file",
       "matchedHandler": "AttachmentController.adminList",
@@ -4046,7 +4046,7 @@
       "method": "POST",
       "path": "/file/upload",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 51,
+      "line": 52,
       "registered": true,
       "matchedRoute": "/file/upload",
       "matchedHandler": "AttachmentController.adminUploadImage",
@@ -4056,7 +4056,7 @@
       "method": "POST",
       "path": "/file/file/delete",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 66,
+      "line": 67,
       "registered": true,
       "matchedRoute": "/file/file/delete",
       "matchedHandler": "AttachmentController.adminDelete",
@@ -4066,7 +4066,7 @@
       "method": "GET",
       "path": "/file/category",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 73,
+      "line": 74,
       "registered": true,
       "matchedRoute": "/file/category",
       "matchedHandler": "AttachmentController.adminCategories",
@@ -4076,7 +4076,7 @@
       "method": "POST",
       "path": "/file/category",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 80,
+      "line": 81,
       "registered": true,
       "matchedRoute": "/file/category",
       "matchedHandler": "AttachmentController.adminCategorySave",
@@ -4086,7 +4086,7 @@
       "method": "GET",
       "path": "/config/storage",
       "source": "view/admin-ts/src/api/attachment.ts",
-      "line": 87,
+      "line": 88,
       "registered": true,
       "matchedRoute": "/config/storage",
       "matchedHandler": "AttachmentController.adminStorage",
@@ -4206,7 +4206,7 @@
       "method": "GET",
       "path": "/config/commerce",
       "source": "view/admin-ts/src/api/commerceSettings.ts",
-      "line": 155,
+      "line": 186,
       "registered": true,
       "matchedRoute": "/config/commerce",
       "matchedHandler": "AdminCommerceSettings.settings",
@@ -4216,7 +4216,7 @@
       "method": "POST",
       "path": "/config/commerce",
       "source": "view/admin-ts/src/api/commerceSettings.ts",
-      "line": 168,
+      "line": 199,
       "registered": true,
       "matchedRoute": "/config/commerce",
       "matchedHandler": "AdminCommerceSettings.save",

@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, onMounted } from "vue";
-import { onPullDownRefresh } from "@dcloudio/uni-app";
+import { onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
 import { apiOpenAdv, type OpenAdvConfig } from "@/api/legacyContent";
@@ -115,6 +115,7 @@ import type { DiyPage } from "@/api/diy";
 import DiyHomeRenderer from "@/components/diy/DiyHomeRenderer.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
 import { diyPageStyle, isDiyEnabled, loadDiyPage } from "@/utils/diy";
+import { apiShareConfig, type ShareConfig } from "@/api/public";
 
 const goods = ref<GoodsItem[]>([]);
 const categories = ref<CategoryNode[]>([]);
@@ -135,6 +136,7 @@ const openAdv = ref<OpenAdvConfig>({
 let openAdvTimer: ReturnType<typeof setTimeout> | null = null;
 const openAdvItem = computed(() => openAdv.value.value.find((item) => item.status === 1 && item.img));
 const openAdvImage = computed(() => openAdvItem.value?.img ?? "");
+const shareConfig = ref<ShareConfig>({ img: "", title: "CinaShop", synopsis: "" });
 
 const banners = [
   { image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=750&h=300&fit=crop", link: "/pages/activity/index" },
@@ -188,6 +190,25 @@ async function loadOpenAdv() {
     // 开屏内容失败不能阻断首页。
   }
 }
+
+async function loadShareConfig() {
+  try {
+    shareConfig.value = await apiShareConfig();
+  } catch {
+    // 分享默认值失败不影响首页交易流程。
+  }
+}
+
+onShareAppMessage(() => ({
+  title: shareConfig.value.title || "CinaShop",
+  path: "/pages/index/index",
+  imageUrl: shareConfig.value.img || undefined,
+}));
+
+onShareTimeline(() => ({
+  title: shareConfig.value.title || "CinaShop",
+  imageUrl: shareConfig.value.img || undefined,
+}));
 
 function closeOpenAdv() {
   showOpenAdv.value = false;
@@ -252,6 +273,7 @@ onMounted(() => {
   void load();
   void loadDiy();
   void loadOpenAdv();
+  void loadShareConfig();
 });
 
 onBeforeUnmount(closeOpenAdv);
