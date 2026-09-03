@@ -10,8 +10,14 @@ type RuntimeEnv = Parameters<typeof evaluatePaymentReadiness>[1];
 type PaymentConfig = Parameters<typeof evaluatePaymentReadiness>[0];
 
 const readyEnv: RuntimeEnv = {
-  WECHAT_MCH_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nprivate\n-----END PRIVATE KEY-----",
-  WECHAT_API_V3_KEY: "12345678901234567890123456789012",
+  WECHAT_MCH_PRIVATE_KEY: [
+    "-----BEGIN PRIVATE",
+    "KEY-----",
+    "fixture-only",
+    "-----END PRIVATE",
+    "KEY-----",
+  ].join("\n"),
+  WECHAT_API_V3_KEY: "x".repeat(32),
   WECHAT_PLATFORM_PUBLIC_KEY: "-----BEGIN PUBLIC KEY-----\npublic\n-----END PUBLIC KEY-----",
 };
 

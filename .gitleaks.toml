@@ -21,6 +21,14 @@ paths = ['''^workers-ts/src/utils/wechat-crypto\.ts$''']
 regexes = ['''\.replace\(/-----BEGIN (RSA )?PRIVATE KEY-----/g, ""\)''']
 
 [[allowlists]]
+description = "Historical non-secret WeChat private-key readiness fixture"
+targetRules = ["private-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/test/payment-readiness\.test\.ts$''']
+regexes = ['''WECHAT_MCH_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nprivate\\n-----END PRIVATE KEY-----",''']
+
+[[allowlists]]
 description = "Fixed non-secret UUID-v4 idempotency test fixture"
 targetRules = ["generic-api-key"]
 condition = "AND"
