@@ -40,14 +40,15 @@ describe("legacy Admin setting route parity audit", () => {
     expect(report.summary).toMatchObject({
       legacyRoutes: 76,
       reviewed: 15,
-      candidate: 9,
-      partial: 5,
+      candidate: 10,
+      partial: 4,
       missing: 0,
       retired: 1,
       unreviewed: 61,
     });
-    expect(report.methodology.productionAccess).toMatch(/Read-only Cloudflare control-plane metadata/);
-    expect(report.methodology.productionAccess).toMatch(/no production write or deployment/);
+    expect(report.methodology.productionAccess).toMatch(/REPEATABLE READ \/ READ ONLY/);
+    expect(report.methodology.productionAccess).toMatch(/idempotent second pass/);
+    expect(report.methodology.productionAccess).toMatch(/No main Worker or frontend was deployed/);
   });
 
   it("records the first reviewed print and notification routes without guessing the rest", () => {
@@ -62,7 +63,7 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/system_config": "partial",
       "/admin/setting/shop/base": "candidate",
       "/admin/setting/shop/product": "candidate",
-      "/admin/setting/shop/trade": "partial",
+      "/admin/setting/shop/trade": "candidate",
       "/admin/setting/shop/pay": "partial",
       "/admin/setting/shop/agreemant": "candidate",
       "/admin/setting/shop/division": "candidate",
@@ -111,7 +112,11 @@ describe("legacy Admin setting route parity audit", () => {
     expect(basic.covered.join(" ")).toContain("UniApp首页分享钩子");
     expect(basic.remaining.join(" ")).toContain("生产历史素材");
     expect(product.covered.join(" ")).toContain("is_police");
-    expect(trade.remaining.join(" ")).toContain("次卡临期提醒");
+    expect(trade.status).toBe("candidate");
+    expect(trade.covered.join(" ")).toContain("is_advent_sms");
+    expect(trade.covered.join(" ")).toContain("平台顺序");
+    expect(trade.remaining.join(" ")).toContain("生产当前无次卡行");
+    expect(trade.remaining.join(" ")).toContain("真实短信");
     expect(payment.covered.join(" ")).toContain("实际可用状态");
     expect(payment.remaining.join(" ")).toContain("Cloudflare Secret");
     expect(agreement.covered.join(" ")).toContain("五类协议");

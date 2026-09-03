@@ -252,6 +252,14 @@ export const storeOrderCartInfo = pgTable(
     uniqueIndex("soci_oid_unique_uq").on(t.oid, t.unique),
     index("soci_cart_refund").on(t.cartId, t.refundNum),
     index("soci_product").on(t.productId),
+    index("soci_second_card_advent_due")
+      .on(t.writeEnd, t.id)
+      .where(sql`${t.productType} = 4 AND ${t.isWriteoff} = 0
+        AND ${t.isAdventSms} = 0 AND ${t.writeStart} > 0 AND ${t.writeEnd} > 0`),
+    index("soci_second_card_expired_due")
+      .on(t.writeEnd, t.id)
+      .where(sql`${t.productType} = 4 AND ${t.isWriteoff} = 0
+        AND ${t.isExpireSms} = 0 AND ${t.writeStart} > 0 AND ${t.writeEnd} > 0`),
     check(
       "soci_split_state_ck",
       sql`${t.splitStatus} BETWEEN 0 AND 2 AND ${t.splitSurplusNum} >= 0`,

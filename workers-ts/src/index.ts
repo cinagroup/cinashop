@@ -123,6 +123,11 @@ export default {
       isSignReminderMessage,
       SignReminderService,
     } = await import("./services/message/SignReminderService");
+    const {
+      consumeSecondCardReminderQueueMessage,
+      isSecondCardReminderMessage,
+      SecondCardReminderService,
+    } = await import("./services/order/SecondCardReminderService");
     const { SmsVerificationService, isSmsVerificationMessage } = await import(
       "./services/message/SmsVerificationService"
     );
@@ -161,6 +166,7 @@ export default {
     const workContactActions = new EnterpriseWechatContactActionService(container, env);
     const maintenance = new ScheduledMaintenanceService(container, env);
     const signReminders = new SignReminderService(container, env);
+    const secondCardReminders = new SecondCardReminderService(container, env);
     const sms = new SmsVerificationService(container, env);
     const attachments = new AttachmentService(container, env);
     const officialQrcodes = new OfficialAccountQrcodeService(container, env);
@@ -513,6 +519,11 @@ export default {
 
       if (isOrderWaybillJobMessage(msg.body)) {
         await consumeOrderWaybillJobMessage(msg, waybillJobs);
+        continue;
+      }
+
+      if (isSecondCardReminderMessage(msg.body)) {
+        await consumeSecondCardReminderQueueMessage(msg, secondCardReminders);
         continue;
       }
 

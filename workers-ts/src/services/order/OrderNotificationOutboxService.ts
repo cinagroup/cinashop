@@ -16,15 +16,20 @@ import {
   type OrderNotificationDeliveryPayload,
   type OrderOutboxPayload,
   type OrderRefundRefusedNoticeOutboxPayload,
+  type OrderSecondCardNoticeOutboxPayload,
 } from "@/models/schema";
 import { normalizeConfigScalar } from "@/utils/config";
 
 export const ORDER_DELIVERY_NOTICE_EVENT = "order.delivery.notice";
 export const ORDER_REFUND_REFUSED_NOTICE_EVENT = "order.refund.refused.notice";
+export const ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT = "order.second_card.advent.notice";
+export const ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT = "order.second_card.expired.notice";
 
 export type OrderNotificationEventType =
   | typeof ORDER_DELIVERY_NOTICE_EVENT
-  | typeof ORDER_REFUND_REFUSED_NOTICE_EVENT;
+  | typeof ORDER_REFUND_REFUSED_NOTICE_EVENT
+  | typeof ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+  | typeof ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
 
 export interface OrderNotificationOutboxEvent {
   id: number;
@@ -52,6 +57,17 @@ export interface RefundRefusedNoticeInput {
   payPrice: string;
 }
 
+export interface SecondCardNoticeInput {
+  orderId: number;
+  orderNo: string;
+  cartInfoId: number;
+  userId: number;
+  kind: "advent" | "expired";
+  writeEnd: number;
+  payTime: number;
+  storeName: string;
+}
+
 type NotificationResult = "created" | "already-created" | "disabled";
 
 interface NoticeContext {
@@ -60,6 +76,7 @@ interface NoticeContext {
   shippingItemDescription: string;
   officialOpenid: string;
   routineOpenid: string;
+  secondCardActive: boolean;
   order: {
     id: number;
     orderId: string;
@@ -73,6 +90,11 @@ interface NoticeContext {
     isChannel: number;
     payType: string;
     status: number;
+    payTime: number;
+    paid: number;
+    isDel: number;
+    isSystemDel: number;
+    refundStatus: number;
   };
 }
 
@@ -114,6 +136,17 @@ export function orderRefundRefusedNoticeEventKey(refundId: number): string {
   return `${ORDER_REFUND_REFUSED_NOTICE_EVENT}:${positiveId(refundId, "售后 ID")}`;
 }
 
+export function orderSecondCardNoticeEventKey(
+  kind: "advent" | "expired",
+  cartInfoId: number,
+  writeEnd: number,
+): string {
+  const eventType = kind === "advent"
+    ? ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+    : ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
+  return `${eventType}:${positiveId(cartInfoId, "次卡行 ID")}:${positiveId(writeEnd, "次卡到期时间")}`;
+}
+
 function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
@@ -132,7 +165,10 @@ async function insertImmutableNotificationEvent(
     eventKey: string;
     aggregateId: number;
     eventType: OrderNotificationEventType;
-    payload: OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload;
+    payload:
+      | OrderDeliveryNoticeOutboxPayload
+      | OrderRefundRefusedNoticeOutboxPayload
+      | OrderSecondCardNoticeOutboxPayload;
     now: number;
   },
 ): Promise<{ id: number; eventKey: string }> {
@@ -230,11 +266,49 @@ export async function enqueueOrderRefundRefusedNoticeEvent(
   });
 }
 
+/** Persist one immutable second-card reminder before any provider side effect. */
+export async function enqueueSecondCardNoticeEvent(
+  db: DbClient,
+  input: SecondCardNoticeInput,
+  now = Math.floor(Date.now() / 1_000),
+): Promise<{ id: number; eventKey: string }> {
+  const orderId = positiveId(input.orderId, "订单 ID");
+  const cartInfoId = positiveId(input.cartInfoId, "次卡行 ID");
+  const userId = positiveId(input.userId, "用户 ID");
+  const writeEnd = positiveId(input.writeEnd, "次卡到期时间");
+  if (!Number.isSafeInteger(input.payTime) || input.payTime < 0) {
+    throw new Error("订单支付时间无效");
+  }
+  const payload: OrderSecondCardNoticeOutboxPayload = {
+    orderId,
+    orderNo: requiredString(input.orderNo, "订单号", 32),
+    cartInfoId,
+    userId,
+    kind: input.kind,
+    writeEnd,
+    payTime: input.payTime,
+    storeName: requiredString(input.storeName, "次卡商品名", 40),
+  };
+  const eventType = input.kind === "advent"
+    ? ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+    : ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
+  return insertImmutableNotificationEvent(db, {
+    eventKey: orderSecondCardNoticeEventKey(input.kind, cartInfoId, writeEnd),
+    aggregateId: orderId,
+    eventType,
+    payload,
+    now,
+  });
+}
+
 export function assertOrderNotificationPayload(
   value: unknown,
   eventType: string,
   aggregateId: number,
-): asserts value is OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload {
+): asserts value is
+  | OrderDeliveryNoticeOutboxPayload
+  | OrderRefundRefusedNoticeOutboxPayload
+  | OrderSecondCardNoticeOutboxPayload {
   if (!value || typeof value !== "object") throw new Error("通知 outbox payload 不是对象");
   const payload = value as Record<string, unknown>;
   positiveId(payload.orderId, "通知订单 ID");
@@ -256,14 +330,35 @@ export function assertOrderNotificationPayload(
     requiredString(payload.payPrice, "通知订单金额", 32);
     return;
   }
+  if (
+    eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+    || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT
+  ) {
+    positiveId(payload.cartInfoId, "通知次卡行 ID");
+    positiveId(payload.writeEnd, "通知次卡到期时间");
+    if (!Number.isSafeInteger(payload.payTime) || Number(payload.payTime) < 0) {
+      throw new Error("通知订单支付时间无效");
+    }
+    requiredString(payload.storeName, "通知次卡商品名", 40);
+    const expectedKind = eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+      ? "advent"
+      : "expired";
+    if (payload.kind !== expectedKind) throw new Error("通知次卡类型与事件不匹配");
+    return;
+  }
   throw new Error("通知 outbox 事件类型不受支持");
 }
 
 function noticeMark(
   eventType: string,
-  payload: OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload,
+  payload:
+    | OrderDeliveryNoticeOutboxPayload
+    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderSecondCardNoticeOutboxPayload,
 ): string {
   if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) return "send_order_refund_no_status";
+  if (eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT) return "reminder_brink_death";
+  if (eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT) return "expiration_reminder";
   const delivery = payload as OrderDeliveryNoticeOutboxPayload;
   if (delivery.deliveryType === "express") return "order_postage_success";
   if (delivery.deliveryType === "send") return "order_deliver_success";
@@ -315,15 +410,38 @@ function utf8Prefix(value: string, characters: number): string {
 async function noticeContext(
   tx: DbClient,
   eventType: string,
-  payload: OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload,
+  payload:
+    | OrderDeliveryNoticeOutboxPayload
+    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderSecondCardNoticeOutboxPayload,
 ): Promise<NoticeContext> {
+  const isSecondCard = eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+    || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
+  const secondCard = isSecondCard ? payload as OrderSecondCardNoticeOutboxPayload : undefined;
+  const cartQuery = secondCard
+    ? tx
+        .select({
+          cartInfo: storeOrderCartInfo.cartInfo,
+          isWriteoff: storeOrderCartInfo.isWriteoff,
+        })
+        .from(storeOrderCartInfo)
+        .where(and(
+          eq(storeOrderCartInfo.id, secondCard.cartInfoId),
+          eq(storeOrderCartInfo.oid, secondCard.orderId),
+          eq(storeOrderCartInfo.writeEnd, secondCard.writeEnd),
+        ))
+        .limit(1)
+    : tx
+        .select({
+          cartInfo: storeOrderCartInfo.cartInfo,
+          isWriteoff: storeOrderCartInfo.isWriteoff,
+        })
+        .from(storeOrderCartInfo)
+        .where(eq(storeOrderCartInfo.oid, payload.orderId))
+        .orderBy(asc(storeOrderCartInfo.id));
   const [buyerRows, cartRows, orderRows, identities] = await Promise.all([
     tx.select({ nickname: user.nickname }).from(user).where(eq(user.uid, payload.userId)).limit(1),
-    tx
-      .select({ cartInfo: storeOrderCartInfo.cartInfo })
-      .from(storeOrderCartInfo)
-      .where(eq(storeOrderCartInfo.oid, payload.orderId))
-      .orderBy(asc(storeOrderCartInfo.id)),
+    cartQuery,
     tx
       .select({
         id: storeOrder.id,
@@ -338,6 +456,11 @@ async function noticeContext(
         isChannel: storeOrder.isChannel,
         payType: storeOrder.payType,
         status: storeOrder.status,
+        payTime: storeOrder.payTime,
+        paid: storeOrder.paid,
+        isDel: storeOrder.isDel,
+        isSystemDel: storeOrder.isSystemDel,
+        refundStatus: storeOrder.refundStatus,
       })
       .from(storeOrder)
       .where(eq(storeOrder.id, payload.orderId))
@@ -359,7 +482,7 @@ async function noticeContext(
   if (!order || order.uid !== payload.userId || order.orderId !== payload.orderNo) {
     throw new Error("通知订单快照与当前订单不匹配");
   }
-  const storeName = utf8Prefix(
+  const storeName = secondCard?.storeName ?? utf8Prefix(
     cartRows.map((row) => productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join("|"),
     20,
   );
@@ -378,6 +501,17 @@ async function noticeContext(
       pay_price: refusal.payPrice,
       store_name: storeName,
     };
+  } else if (secondCard) {
+    values = secondCard.kind === "advent"
+      ? {
+          store_name: secondCard.storeName,
+          pay_time: chinaDateTime(secondCard.payTime).slice(0, 16),
+          end_time: chinaDateTime(secondCard.writeEnd).slice(0, 16),
+        }
+      : {
+          store_name: secondCard.storeName,
+          end_time: chinaDateTime(secondCard.writeEnd).slice(0, 16),
+        };
   } else {
     const delivery = payload as OrderDeliveryNoticeOutboxPayload;
     values = {
@@ -395,6 +529,14 @@ async function noticeContext(
     shippingItemDescription,
     officialOpenid: openid("wechat"),
     routineOpenid: openid("routine"),
+    secondCardActive: !secondCard || Boolean(
+      cartRows[0]
+      && cartRows[0].isWriteoff === 0
+      && order.paid === 1
+      && order.isDel === 0
+      && order.isSystemDel === 0
+      && [0, 3].includes(order.refundStatus)
+    ),
     order,
   };
 }
@@ -432,7 +574,10 @@ async function createImmutableDelivery(
   tx: DbClient,
   input: {
     event: OrderNotificationOutboxEvent;
-    payload: OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload;
+    payload:
+      | OrderDeliveryNoticeOutboxPayload
+      | OrderRefundRefusedNoticeOutboxPayload
+      | OrderSecondCardNoticeOutboxPayload;
     mark: string;
     channel: OrderNotificationChannel;
     target: string;
@@ -497,18 +642,27 @@ async function createImmutableDelivery(
 async function stageExternalNotifications(
   tx: DbClient,
   event: OrderNotificationOutboxEvent,
-  payload: OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload,
+  payload:
+    | OrderDeliveryNoticeOutboxPayload
+    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderSecondCardNoticeOutboxPayload,
   mark: string,
   config: NoticeConfig | undefined,
   context: NoticeContext,
   now: number,
 ): Promise<void> {
   const isRefund = event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
-  const delivery = isRefund ? undefined : payload as OrderDeliveryNoticeOutboxPayload;
+  const isSecondCard = event.eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+    || event.eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
+  const delivery = isRefund || isSecondCard
+    ? undefined
+    : payload as OrderDeliveryNoticeOutboxPayload;
   if (config?.isSms === 1) {
-    const params: Record<string, string> = isRefund
-      ? { order_id: payload.orderNo }
-      : {
+    const params: Record<string, string> = isSecondCard
+      ? context.values
+      : isRefund
+        ? { order_id: payload.orderNo }
+        : {
           order_id: payload.orderNo,
           store_name: context.storeName,
           nickname: context.values.nickname ?? "",
@@ -522,6 +676,9 @@ async function stageExternalNotifications(
       now,
     });
   }
+
+  // The PHP second-card notices only had system-message and SMS consumers.
+  if (isSecondCard) return;
 
   const officialEnabled = config?.isWechat === 1 &&
     (isRefund || delivery?.deliveryType === "express");
@@ -665,7 +822,8 @@ export async function processOrderNotificationOutboxEvent(
   assertOrderNotificationPayload(event.payload, event.eventType, event.aggregateId);
   const payload = event.payload as
     | OrderDeliveryNoticeOutboxPayload
-    | OrderRefundRefusedNoticeOutboxPayload;
+    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderSecondCardNoticeOutboxPayload;
   const mark = noticeMark(event.eventType, payload);
   const templates = await tx
     .select({
@@ -685,6 +843,13 @@ export async function processOrderNotificationOutboxEvent(
   if (templates.length > 1) throw new Error(`通知模板 ${mark} 存在重复启用来源`);
   const template = templates[0];
   const context = await noticeContext(tx, event.eventType, payload);
+  if (
+    (event.eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+      || event.eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT)
+    && !context.secondCardActive
+  ) {
+    return "disabled";
+  }
   await stageExternalNotifications(tx, event, payload, mark, template, context, now);
   if (!template || template.isSystem !== 1) return "disabled";
 

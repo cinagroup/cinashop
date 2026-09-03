@@ -33,6 +33,8 @@ import { deliverPaidVirtualOrders } from "@/services/order/VirtualProductDeliver
 import {
   ORDER_DELIVERY_NOTICE_EVENT,
   ORDER_REFUND_REFUSED_NOTICE_EVENT,
+  ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT,
+  ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT,
   processOrderNotificationOutboxEvent,
 } from "@/services/order/OrderNotificationOutboxService";
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
@@ -114,9 +116,15 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice|order\.refund\.refused\.notice):\d+$/.test(message.eventKey) &&
-    !message.eventKey.endsWith(":0")
+    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey)
   );
+}
+
+function isNotificationEventType(eventType: string): boolean {
+  return eventType === ORDER_DELIVERY_NOTICE_EVENT
+    || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
+    || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
+    || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
 }
 
 export function outboxFailureDisposition(attemptCount: number, now: number): {
@@ -146,10 +154,7 @@ function queueMessageForOutboxEvent(event: {
       eventKey: event.eventKey,
     };
   }
-  if (
-    event.eventType === ORDER_DELIVERY_NOTICE_EVENT ||
-    event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
-  ) {
+  if (isNotificationEventType(event.eventType)) {
     return {
       action: "processOrderNotificationOutbox",
       outboxId: event.id,
@@ -413,8 +418,7 @@ export class OrderOutboxService {
       if (
         (message.action === "processOrderPaidOutbox" && event.eventType !== ORDER_PAID_EVENT) ||
         (message.action === "processOrderNotificationOutbox" &&
-          event.eventType !== ORDER_DELIVERY_NOTICE_EVENT &&
-          event.eventType !== ORDER_REFUND_REFUSED_NOTICE_EVENT)
+          !isNotificationEventType(event.eventType))
       ) {
         throw new ValidateException("outbox 消息动作与事件类型不匹配");
       }
@@ -525,10 +529,7 @@ export class OrderOutboxService {
             : "订单支付成功，后置任务处理完成",
           changeTime: now,
         });
-      } else if (
-        event.eventType === ORDER_DELIVERY_NOTICE_EVENT ||
-        event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
-      ) {
+      } else if (isNotificationEventType(event.eventType)) {
         await processOrderNotificationOutboxEvent(tx, event, now);
       } else {
         throw new Error(`不支持的订单 outbox 事件类型: ${event.eventType}`);

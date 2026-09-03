@@ -36,6 +36,7 @@ import {
   isSignReminderDispatchTime,
   SignReminderService,
 } from "@/services/message/SignReminderService";
+import { SecondCardReminderService } from "@/services/order/SecondCardReminderService";
 
 export const SCHEDULED_ORDER_PAGE_SIZE = 80;
 export const SCHEDULED_OUTBOX_PAGE_SIZE = 20;
@@ -55,6 +56,7 @@ const ROOT_JOBS: readonly ScheduledMaintenanceJob[] = [
   "live_goods_sync",
   "live_anchor_sync",
   "refund_reconciliation",
+  "reminder_unverified_remind",
   "sign_remind_time",
 ];
 
@@ -205,6 +207,8 @@ export class ScheduledMaintenanceService {
         return new WechatLiveService(this.container, this.env).syncAnchors(message);
       case "refund_reconciliation":
         return this.reconcileRefunds(message);
+      case "reminder_unverified_remind":
+        return new SecondCardReminderService(this.container, this.env).scan(message);
       case "sign_remind_time":
         return new SignReminderService(this.container, this.env).scan(message);
     }

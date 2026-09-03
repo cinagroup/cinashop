@@ -14,7 +14,13 @@ const MIGRATION_STATEMENTS = [
   `CREATE UNIQUE INDEX IF NOT EXISTS smsg_event_key_uq ON public.system_message (event_key)`,
   `ALTER TABLE public.store_order_outbox DROP CONSTRAINT IF EXISTS soob_event_type_ck`,
   `ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (
-    event_type IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice')
+    event_type IN (
+      'order.paid',
+      'order.delivery.notice',
+      'order.refund.refused.notice',
+      'order.second_card.advent.notice',
+      'order.second_card.expired.notice'
+    )
   )`,
   `CREATE TABLE IF NOT EXISTS public.order_notification_delivery (
     id SERIAL PRIMARY KEY,
@@ -187,7 +193,13 @@ async function currentState(db: DbClient) {
       ) AS event_constraint,
       (
         SELECT count(*)::int FROM public.store_order_outbox
-        WHERE event_type NOT IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice')
+        WHERE event_type NOT IN (
+          'order.paid',
+          'order.delivery.notice',
+          'order.refund.refused.notice',
+          'order.second_card.advent.notice',
+          'order.second_card.expired.notice'
+        )
       ) AS unsupported_outbox_rows,
       to_regclass('public.order_notification_delivery') IS NOT NULL AS delivery_table_exists,
       (SELECT count(*)::int FROM pg_indexes
@@ -227,6 +239,8 @@ async function currentState(db: DbClient) {
     "order.paid",
     "order.delivery.notice",
     "order.refund.refused.notice",
+    "order.second_card.advent.notice",
+    "order.second_card.expired.notice",
   ].every((eventType) => constraint.includes(eventType));
   type AuditMarkers = {
     users: number;

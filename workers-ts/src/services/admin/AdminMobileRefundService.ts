@@ -25,6 +25,7 @@ import {
   refundProjection,
 } from "@/services/kefu/KefuOrderService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 
 const MAX_PAGE = 1_000_000;
 const MAX_LIMIT = 100;
@@ -307,6 +308,7 @@ export class AdminMobileRefundService {
         .where(eq(user.uid, refund.uid)).limit(1),
     ]);
     const projected = refundProjection(refund, carts);
+    const returnContact = await resolveRefundReturnContact(this.container, refund);
     return {
       ...projected,
       refund_img: imageList(refund.refundImg),
@@ -336,7 +338,11 @@ export class AdminMobileRefundService {
       _status: {
         ...projected._status,
         _payType: payTypeName(order.payType),
+        refund_name: returnContact.name,
+        refund_phone: returnContact.phone,
+        refund_address: returnContact.address,
       },
+      return_contact: returnContact,
     };
   }
 

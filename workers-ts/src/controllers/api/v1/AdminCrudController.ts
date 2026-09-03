@@ -44,6 +44,7 @@ import { ProductSkuRetirementService } from "@/services/product/ProductSkuRetire
 import { StoreOperationsService } from "@/services/store/StoreOperationsService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
 import {
@@ -1038,13 +1039,16 @@ export async function adminRefundList(c: C) {
 
 /** GET /api/admin/refund/detail/:id — 退款申请详情 */
 export async function adminRefundDetail(c: C) {
+  privateNoStore(c);
   const id = Number(c.req.param("id") ?? "0");
   if (!id) return jsonFail(c, "参数错误");
   const refund = await c.get("container").storeOrderRefundDao.get(id);
   if (!refund) return jsonFail(c, "退款记录不存在");
+  const returnContact = await resolveRefundReturnContact(c.get("container"), refund);
   return jsonOk(c, {
     ...refund,
     cartInfo: refund.cartInfo ? JSON.parse(refund.cartInfo) : null,
+    returnContact,
   });
 }
 

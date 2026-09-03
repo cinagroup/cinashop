@@ -6,6 +6,7 @@
  */
 import { sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   jsonb,
@@ -38,10 +39,22 @@ export interface OrderRefundRefusedNoticeOutboxPayload {
   payPrice: string;
 }
 
+export interface OrderSecondCardNoticeOutboxPayload {
+  orderId: number;
+  orderNo: string;
+  cartInfoId: number;
+  userId: number;
+  kind: "advent" | "expired";
+  writeEnd: number;
+  payTime: number;
+  storeName: string;
+}
+
 export type OrderOutboxPayload =
   | OrderPaidOutboxPayload
   | OrderDeliveryNoticeOutboxPayload
-  | OrderRefundRefusedNoticeOutboxPayload;
+  | OrderRefundRefusedNoticeOutboxPayload
+  | OrderSecondCardNoticeOutboxPayload;
 
 export const storeOrderOutbox = pgTable(
   "store_order_outbox",
@@ -67,6 +80,13 @@ export const storeOrderOutbox = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (t) => [
+    check("soob_event_type_ck", sql`${t.eventType} IN (
+      'order.paid',
+      'order.delivery.notice',
+      'order.refund.refused.notice',
+      'order.second_card.advent.notice',
+      'order.second_card.expired.notice'
+    )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),
     index("soob_aggregate").on(t.aggregateType, t.aggregateId),
     index("soob_dispatch_ready")

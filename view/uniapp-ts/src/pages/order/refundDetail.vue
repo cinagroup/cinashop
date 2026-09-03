@@ -35,6 +35,24 @@
         </view>
       </view>
 
+      <!-- 商家同意退货后展示可信服务端计算的收件信息 -->
+      <view v-if="needsReturn" class="return-card">
+        <view class="card-title">退货收件信息</view>
+        <view class="return-tip">请寄回下列地址，并在寄出后填写物流信息</view>
+        <view class="info-row">
+          <text class="label">收货人</text>
+          <text class="value">{{ returnContact.name || "—" }}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">联系电话</text>
+          <text class="value">{{ returnContact.phone || "—" }}</text>
+        </view>
+        <view class="info-row address-row">
+          <text class="label">退货地址</text>
+          <text class="value address-value">{{ returnContact.address || "—" }}</text>
+        </view>
+      </view>
+
       <!-- 商品 -->
       <view class="goods-card" v-if="cartInfo.length">
         <view class="card-title">退款商品</view>
@@ -88,6 +106,8 @@ const statusText = computed(() => {
   switch (d.refundType) {
     case 0: return "退款处理中";
     case 3: return "退款被拒绝";
+    case 4: return "请寄回商品";
+    case 5: return "等待商家收货";
     case 6: return "退款成功";
     default: return "处理中";
   }
@@ -98,11 +118,26 @@ const statusSub = computed(() => {
   if (!d) return "";
   if (d.refundType === 6) return "款项已原路退回";
   if (d.refundType === 3) return "如有疑问请联系客服";
+  if (d.refundType === 4) return "请按页面中的收件信息寄回商品";
+  if (d.refundType === 5) return "退货商品正在送往商家";
   if (d.isCancel === 1) return "您已取消该退款申请";
   return "商家正在审核您的申请";
 });
 
 const isDone = computed(() => detail.value?.refundType === 6);
+
+const returnContact = computed(() => detail.value?.returnContact ?? {
+  name: detail.value?._status?.refund_name ?? "",
+  phone: detail.value?._status?.refund_phone ?? "",
+  address: detail.value?._status?.refund_address ?? "",
+});
+
+const needsReturn = computed(() => {
+  const status = detail.value?.refundType;
+  const contact = returnContact.value;
+  return (status === 4 || status === 5)
+    && Boolean(contact.name || contact.phone || contact.address);
+});
 
 const cartInfo = computed(() => {
   const raw = detail.value?.cartInfo;
@@ -170,11 +205,31 @@ onLoad(async (query) => {
 }
 
 .info-card,
-.goods-card {
+.goods-card,
+.return-card {
   background: #fff;
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
+}
+
+.return-tip {
+  color: #ff7a45;
+  font-size: 24rpx;
+  line-height: 1.5;
+  margin-bottom: 10rpx;
+}
+
+.address-row {
+  align-items: flex-start;
+  gap: 24rpx;
+}
+
+.address-value {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .info-row {

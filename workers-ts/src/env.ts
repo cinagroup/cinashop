@@ -186,6 +186,7 @@ export type ScheduledMaintenanceJob =
   | "live_goods_sync"
   | "live_anchor_sync"
   | "refund_reconciliation"
+  | "reminder_unverified_remind"
   | "sign_remind_time";
 
 /** Cron only writes root jobs; cursor and threshold make every page replayable. */
@@ -215,6 +216,18 @@ export interface PinkTimeoutMessage {
   runId: string;
   scheduledAt: number;
   pinkId: number;
+}
+
+/** One unconsumed second-card row; customer data remains in PostgreSQL. */
+export interface SecondCardReminderMessage {
+  action: "processSecondCardReminder";
+  job: "reminder_unverified_remind";
+  runId: string;
+  scheduledAt: number;
+  cartInfoId: number;
+  orderId: number;
+  writeEnd: number;
+  kind: "advent" | "expired";
 }
 
 /** One user/day reminder candidate; phone numbers and rendered content stay in PostgreSQL. */
@@ -377,6 +390,7 @@ export type OrderMessage =
   | ScheduledMaintenanceMessage
   | ScheduledOrderMessage
   | PinkTimeoutMessage
+  | SecondCardReminderMessage
   | SignReminderMessage
   | SmsVerificationMessage
   | AttachmentObjectCleanupMessage

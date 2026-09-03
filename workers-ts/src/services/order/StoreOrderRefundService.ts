@@ -56,6 +56,7 @@ import {
 import { WechatApiError, WechatPayService } from "@/services/wechat/WechatPayService";
 import { reconcileRefundedPink } from "@/services/activity/PinkLifecycleService";
 import { enqueueOrderRefundRefusedNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 
 const REFUND_LOCK_NAMESPACE = 63841;
@@ -1870,9 +1871,16 @@ export class StoreOrderRefundService {
   /** 退款详情 */
   async detail(uid: number, refundId: number | string) {
     const refund = await this.resolveUserRefund(uid, String(refundId));
+    const returnContact = await resolveRefundReturnContact(this.container, refund);
     return {
       ...refund,
       cartInfo: refund.cartInfo ? JSON.parse(refund.cartInfo) : null,
+      returnContact,
+      _status: {
+        refund_name: returnContact.name,
+        refund_phone: returnContact.phone,
+        refund_address: returnContact.address,
+      },
     };
   }
 

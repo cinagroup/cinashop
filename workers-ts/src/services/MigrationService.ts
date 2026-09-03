@@ -25,6 +25,7 @@ import { MERCHANT_SHIPMENT_CALLBACK_PIPELINE_SQL } from "@/migrations/merchantSh
 import { CITY_DELIVERY_CALLBACK_PIPELINE_SQL } from "@/migrations/cityDeliveryCallbackPipeline";
 import { PRODUCT_WORDS_INDEX_SQL } from "@/migrations/productWordsIndexes";
 import { PRODUCT_SKU_RETIREMENT_SQL } from "@/migrations/productSkuRetirement";
+import { SECOND_CARD_REMINDER_MIGRATION_SQL } from "@/migrations/secondCardReminderIndexes";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -177,6 +178,11 @@ export class MigrationService {
   /** Exact recoverable product-SKU retirement DDL used by production verification. */
   productSkuRetirementMigrationSqlForVerification(): string {
     return this.migration_0132();
+  }
+
+  /** Exact bounded second-card reminder scan indexes. */
+  secondCardReminderIndexMigrationSqlForVerification(): string {
+    return this.migration_0133();
   }
 
   /** Exact durable payment callback event/outbox DDL. */
@@ -349,6 +355,7 @@ export class MigrationService {
       this.migration_0130(),
       this.migration_0131(),
       this.migration_0132(),
+      this.migration_0133(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8308,5 +8315,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0132(): string {
     return PRODUCT_SKU_RETIREMENT_SQL;
+  }
+
+  private migration_0133(): string {
+    return SECOND_CARD_REMINDER_MIGRATION_SQL;
   }
 }

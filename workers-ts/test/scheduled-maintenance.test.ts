@@ -14,7 +14,7 @@ import {
 describe("可分页定时维护工作流", () => {
   const scheduledAt = Date.parse("2026-08-09T02:25:00.000Z");
 
-  it("Cron 一次投递十三个可重放根任务", async () => {
+  it("Cron 一次投递十四个可重放根任务", async () => {
     const messages = createScheduledRunMessages(scheduledAt);
     expect(messages.map((message) => message.job)).toEqual([
       "payment_outbox_dispatch",
@@ -29,9 +29,10 @@ describe("可分页定时维护工作流", () => {
       "live_goods_sync",
       "live_anchor_sync",
       "refund_reconciliation",
+      "reminder_unverified_remind",
       "sign_remind_time",
     ]);
-    expect(messages).toHaveLength(13);
+    expect(messages).toHaveLength(14);
     expect(messages.every((message) => message.runId === `scheduled:${scheduledAt}`)).toBe(true);
     expect(messages.every((message) => message.cursor === 0 && message.threshold === null)).toBe(
       true,
@@ -49,7 +50,7 @@ describe("可分页定时维护工作流", () => {
 
   it("非上海 10:25 不产生签到扫描根任务", () => {
     const outside = createScheduledRunMessages(Date.parse("2026-08-09T02:20:00.000Z"));
-    expect(outside).toHaveLength(12);
+    expect(outside).toHaveLength(13);
     expect(outside.some((message) => message.job === "sign_remind_time")).toBe(false);
   });
 

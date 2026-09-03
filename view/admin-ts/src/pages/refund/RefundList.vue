@@ -10,7 +10,7 @@
         <el-table-column label="退款金额" width="110">
           <template #default="{ row }">¥{{ row.refundPrice }}</template>
         </el-table-column>
-        <el-table-column prop="refund_reason" label="退款原因" min-width="140" />
+        <el-table-column prop="refundReason" label="退款原因" min-width="140" />
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="statusType(row.refundType)">{{ statusText(row.refundType) }}</el-tag>
@@ -50,6 +50,13 @@
         <el-descriptions-item v-if="(detailDialog.data as any).refundedPrice && Number((detailDialog.data as any).refundedPrice) > 0" label="已退款">
           ¥{{ (detailDialog.data as any).refundedPrice }}
         </el-descriptions-item>
+        <template v-if="hasReturnContact(detailDialog.data)">
+          <el-descriptions-item label="退货收货人">{{ detailDialog.data.returnContact?.name || "-" }}</el-descriptions-item>
+          <el-descriptions-item label="退货电话">{{ detailDialog.data.returnContact?.phone || "-" }}</el-descriptions-item>
+          <el-descriptions-item label="退货地址" :span="2">
+            <span class="return-address">{{ detailDialog.data.returnContact?.address || "-" }}</span>
+          </el-descriptions-item>
+        </template>
       </el-descriptions>
     </el-dialog>
   </div>
@@ -101,6 +108,11 @@ function statusType(type: number): "warning" | "danger" | "success" | "info" {
 
 function formatTime(ts: number): string {
   return ts ? dayjs(ts * 1000).format("YYYY-MM-DD HH:mm") : "-";
+}
+
+function hasReturnContact(row: AdminRefund): boolean {
+  const contact = row.returnContact;
+  return Boolean(contact && (contact.name || contact.phone || contact.address));
 }
 
 async function fetch() {
@@ -161,5 +173,9 @@ onMounted(fetch);
 <style scoped>
 .danger-text {
   color: #e64340;
+}
+
+.return-address {
+  overflow-wrap: anywhere;
 }
 </style>
