@@ -4281,6 +4281,38 @@ Admin商城运行页为站点Logo、方形Logo、登录Logo、后台Logo、favic
 
 根据用户授权，本轮沿用同一Wrangler只读控制面证据：Hyperdrive `9748c294e21c49a99579c9cef70102e0` 为 `cinashop-pg`，源是PostgreSQL数据库 `postgres`、VPC Service `019fe223-e5a1-7ed1-945a-8993a6f32508`，连接上限60且缓存开启。Wrangler控制面没有提供数据库密码，本批也不需要DDL：五个新配置键在首次Admin保存时由现有安全事务补齐。因此本轮没有查询生产业务表、执行DDL/DML、尝试生产登录、调用生产写接口或部署Worker/Admin/PC/UniApp；不能把控制面读取写成“生产数据已验收”。生产配置形状、私有R2历史引用、真实角色及已发布站点流程继续归FE-001G/H。下一步是B3的次卡临期提醒Worker任务与订单售后平台退货地址展示；B4支付公开商户配置仍保持未完成。
 
+## FE-001-D4B3 次卡提醒与退货收件信息迁移闭环（2026-09-03）
+
+### PHP权威语义与候选设计
+
+旧PHP的`reminder_unverified_remind`每5分钟扫描已支付、未退款、未核销的次卡明细：临期分支读取`reminder_deadline_second_card_time`，到期分支按卡片`end_time`判断，分别以`is_advent_sms`、`is_expire_sms`防重，并用`reminder_brink_death`、`expiration_reminder`通知标记发送短信和站内信。新`SecondCardReminderService`保留这些业务条件和旧标志，但不在Cron里直接调用外部提供商：根任务按80条keyset分页投递不含手机号、模板内容或订单正文的opaque Queue消息；消费者再次读取卡片和订单状态，避免扫描后状态变化仍误发。
+
+每张卡在2秒`lock_timeout`、5秒`statement_timeout`、固定advisory lock和行锁下处理；事件键、旧提醒标志及不可变`store_order_outbox`行在同一事务提交。新增`order.second_card.advent.notice`与`order.second_card.expired.notice`两种事件，复用已有通知outbox消费者和`external_notification_delivery`事件/渠道唯一账本，使Queue重复投递、Worker重试和外部UNKNOWN不导致重复站内信或重复短信。临期参数保持旧PHP的`phone/product_title/pay_time/end_time`，到期参数保持`phone/product_title/end_time`，没有为兼容而把个人信息写入Queue正文或日志。失败重试有界，最终失败进入现有可观测事件链。
+
+外部`0129_second_card_reminder_indexes.sql`、Worker内嵌副本和`migration_0133`使用同一前向DDL：`soob_event_type_ck`从原三类事件扩展到五类，并增加`store_order_cart_info`上临期和到期扫描的两个partial索引。审查中发现若只加生产者而不扩展CHECK，首个真实事件会在事务中失败；该缺口在发布前即被约束迁移和测试封闭。旧通知审计Worker也同步升级，避免以后运行旧审计脚本反向收窄允许事件集合。
+
+### 退货收件人层级与前端展示
+
+新`RefundReturnContactService`按旧售后语义解析退货地址：`applyType=3`必须使用订单门店；否则优先订单供应商，缺失时回退平台配置。服务端对缺失或已删除的门店/供应商失败关闭，不按裸ID跨租户选择；响应同时提供camelCase`returnContact`和旧`_status`兼容投影。Admin退款详情始终展示已解析的收件人、电话和地址；UniApp只在应退货的状态4/5展示，同一信息块在窄屏自动换行。
+
+本地Admin preview在退款列表打开ID 802的详情，实际可见收件人“CinaShop 售后中心”、电话`400-800-8888`及地址，浏览器可访问性树同时确认三个字段。该证据来自隔离fixture，只证明候选UI及字段绑定，不冒充生产售后数据或真实角色权限。
+
+### 生产Hyperdrive只读事实与受控DDL
+
+经用户明确授权，专用双SHA-256令牌审计Worker连接Hyperdrive `9748c294e21c49a99579c9cef70102e0`。生产为PostgreSQL 16.14；`store_order_cart_info`共28行、DDL前关系总大小172,032字节，`product_type=4`次卡为0，因此当前临期、到期和孤儿均为0。`reminder_deadline_second_card_time`没有配置行，候选运行时会使用1小时安全默认值；`reminder_brink_death`和`expiration_reminder`通知模板标记均不存在。活动售后共3条，全部走平台scope，当前没有状态4/5，也没有门店/供应商scope或缺失scope记录；平台`refund_name/refund_phone/refund_address`三个配置均为0行。outbox为0行。上述空值是明确的运营配置和源数据缺口，不能解释为真实提醒/退货流程已经可运行。
+
+DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都不存在。审计入口在`store_order_cart_info<=100,000`行且关系不超过64 MiB的前提下，设置2秒锁等待、15秒语句上限并取得固定advisory lock后执行精确`0129`；同一迁移连续执行两遍，`idempotentSecondPass=true`、`businessRowsUnchanged=true`。最终CHECK允许五类事件、unsupported rows为0，两个索引均`indisvalid=true/indisready=true`，关系因新增索引增长至188,416字节。当前28行小表的`EXPLAIN`仍选择Hash Join/Seq Scan/Sort/Limit，总代价7.67、估算1行；这是小数据量下的正常计划，不能以“未使用索引”误判DDL失败。
+
+首个临时审计Worker曾把缺失配置空字符串错误转换成0小时；当次在发现审计harness错误后立即中止，未进入DDL，Worker删除。修正为缺失时1小时后重新部署并完成上述读取和迁移。最终审计Worker的无令牌POST返回403、GET返回404；完成后Worker和Secret删除，公开URL复验404。主Worker与Admin/UniApp均未部署，也没有发送Queue、短信、站内信或改写业务行。
+
+### 自动门禁、提交与剩余发布阻断
+
+本地完整门禁为Worker 208文件/1,313项单元、单元与运行时双TypeScript、Admin生产构建2,437模块、UniApp H5构建、PHP 201/201源表到外部/内嵌263表的零漂移schema审计、342个Admin调用点/362个路径变体全部可执行，以及17个可观测信号/53个必需事件/435个生产源文件合同。Windows本机workerd仍在进入断言前以`0xc0000005`退出，因此不作为运行时权威。
+
+实现提交`191d6e81d65a12d4f824dba5de01638822aeb013`的首轮[Actions `33721617844`](https://github.com/cinagroup/cinashop/actions/runs/33721617844)只暴露固定Cron计数断言仍停在19/12，而新增根任务后实际为20/13；生产实现、其余七个job和运行时行为没有失败。提交`0ad3bca42c1adc3777ed42770a833649535c8430`把断言及动作列表更新为新权威值后，[Actions `33721832795`](https://github.com/cinagroup/cinashop/actions/runs/33721832795)的Repository secret scan、Worker双TypeScript/单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。
+
+因此`/admin/setting/shop/trade`从partial推进为candidate，76屏设置统计成为reviewed 15 / candidate 10 / partial 4 / retired 1 / unreviewed 61。这里的candidate表示代码、生产结构、自动门禁和本地UI已经形成候选闭环；由于生产没有次卡、两个通知模板、提醒时限配置或平台退货三字段，且主Worker/前端未发布，真实短信、真实站内信、真实状态4/5退货流程、主管理员/受限角色和发布后观察仍是明确阻断。下一项按清单进入FE-001D4B4支付公开商户配置；私钥、证书内容和API Key继续禁止进入Admin、数据库响应或日志。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
