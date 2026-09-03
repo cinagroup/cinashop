@@ -4347,6 +4347,8 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 最终本地Worker全量209文件/1,318项单元全部通过，单元与运行时双TypeScript通过，Admin生产构建2,437模块。Admin静态合同仍为342个调用点、362个路径变体，362条全部已注册且可执行；设置逐屏审计生成器和产物同步把`/admin/setting/shop/pay`从partial推进为candidate。过程中一次全量单测只因Windows临时SSR缓存目录原子重命名返回`UNKNOWN`，没有业务断言失败；停止并行服务后串行复跑即得到209/209、1,318/1,318成功，因此不把基础设施瞬态误写成产品缺陷。
 
+实现提交`8cc086acbd555068bad319531e80f143300ea86b`推送后的首轮[Actions `33727582124`](https://github.com/cinagroup/cinashop/actions/runs/33727582124)中，业务实现相关七个作业全部通过，只有Gitleaks把`payment-readiness.test.ts`中显式写出的三行假PEM识别为`private-key`。日志确认唯一命中为该测试fixture，不是生产或开发凭据。修复提交`e406852d03eaeecd5ddcbfaf74028bb0a6a511bf`把当前fixture改为分段构造，并在`.gitleaks.toml`按`private-key`规则、精确测试路径和精确历史行三重约束放行这一已知假值，没有按目录或全规则放宽扫描。随后[Actions `33727980894`](https://github.com/cinagroup/cinashop/actions/runs/33727980894)的完整历史Secret扫描、Worker双TypeScript/1,318项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。
+
 76屏设置统计现在是reviewed 15 / candidate 11 / partial 3 / retired 1 / unreviewed 61；核心商城设置8屏中已有7屏candidate，仅动态系统配置保持partial。支付candidate只证明非密钥配置合同、失败关闭、Admin操作面、生产只读事实和本地自动门禁闭合，不表示生产支付可用。启用前仍必须由运营配置真实商户号、证书序列号、正确绑定的三个AppID和Cloudflare Secret，并在获批发布环境完成三profile正向/拒绝路径、支付与退款回调验签、幂等对账、受限角色和观察期；这些继续归FE-001G/H及正式发布门禁。
 
 ## 完成定义
