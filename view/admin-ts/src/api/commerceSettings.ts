@@ -47,6 +47,8 @@ export interface PaymentCommerceSettings {
   yue_pay_status: number;
   offline_pay_status: number;
   pay_weixin_open: number;
+  pay_weixin_mchid: string;
+  pay_weixin_serial_no: string;
   ali_pay_status: number;
 }
 
@@ -56,6 +58,7 @@ export interface DivisionCommerceSettings {
 }
 
 export type PaymentMethod = "yue" | "weixin" | "alipay" | "offline";
+export type WechatPaymentProfile = "wechat" | "routine" | "app";
 
 export interface PaymentMethodReadiness {
   enabled: boolean;
@@ -69,6 +72,7 @@ export interface CommerceSettings {
   payment: PaymentCommerceSettings;
   division: DivisionCommerceSettings;
   payment_readiness: Record<PaymentMethod, PaymentMethodReadiness>;
+  wechat_profile_readiness: Record<WechatPaymentProfile, PaymentMethodReadiness>;
   missing_config_keys: string[];
   asset_previews: Record<string, string>;
   security_policy: {
@@ -135,14 +139,21 @@ let previewSettings: CommerceSettings = {
     yue_pay_status: 1,
     offline_pay_status: 2,
     pay_weixin_open: 1,
+    pay_weixin_mchid: "1900000109",
+    pay_weixin_serial_no: "5157F09EFDC096DE15EBE81A47057A7232F1B8E1",
     ali_pay_status: 0,
   },
   division: { division_open: 1, division_apply_open: 1 },
   payment_readiness: {
     yue: { enabled: true, reason: "" },
-    weixin: { enabled: false, reason: "微信支付商户配置未完成" },
+    weixin: { enabled: false, reason: "微信支付部署凭据未完成" },
     alipay: { enabled: false, reason: "支付宝支付未开启" },
     offline: { enabled: false, reason: "线下支付未开启" },
+  },
+  wechat_profile_readiness: {
+    wechat: { enabled: false, reason: "微信支付部署凭据未完成" },
+    routine: { enabled: false, reason: "微信支付部署凭据未完成" },
+    app: { enabled: false, reason: "微信支付部署凭据未完成" },
   },
   missing_config_keys: [],
   asset_previews: {},
@@ -161,6 +172,8 @@ function clone<T>(value: T): T {
 }
 
 function previewReadiness(payment: PaymentCommerceSettings): CommerceSettings["payment_readiness"] {
+  const publicWechatReady = /^\d{1,32}$/.test(payment.pay_weixin_mchid)
+    && /^[A-F0-9]{1,64}$/i.test(payment.pay_weixin_serial_no);
   return {
     yue: {
       enabled: payment.balance_func_status === 1 && payment.yue_pay_status === 1,
@@ -168,7 +181,11 @@ function previewReadiness(payment: PaymentCommerceSettings): CommerceSettings["p
     },
     weixin: {
       enabled: false,
-      reason: payment.pay_weixin_open === 1 ? "微信支付商户配置未完成" : "微信支付未开启",
+      reason: payment.pay_weixin_open !== 1
+        ? "微信支付未开启"
+        : publicWechatReady
+          ? "微信支付部署凭据未完成"
+          : "微信支付公开商户配置未完成",
     },
     alipay: {
       enabled: false,
@@ -178,6 +195,23 @@ function previewReadiness(payment: PaymentCommerceSettings): CommerceSettings["p
       enabled: payment.offline_pay_status === 1,
       reason: payment.offline_pay_status === 1 ? "" : "线下支付未开启",
     },
+  };
+}
+
+function previewWechatProfileReadiness(
+  payment: PaymentCommerceSettings,
+): CommerceSettings["wechat_profile_readiness"] {
+  const publicWechatReady = /^\d{1,32}$/.test(payment.pay_weixin_mchid)
+    && /^[A-F0-9]{1,64}$/i.test(payment.pay_weixin_serial_no);
+  const state = payment.pay_weixin_open !== 1
+    ? { enabled: false, reason: "微信支付未开启" }
+    : publicWechatReady
+      ? { enabled: false, reason: "微信支付部署凭据未完成" }
+      : { enabled: false, reason: "微信支付公开商户配置未完成" };
+  return {
+    wechat: { ...state },
+    routine: { ...state },
+    app: { ...state },
   };
 }
 
@@ -192,6 +226,7 @@ export async function apiSaveCommerceSettings(payload: CommerceSettingsPayload):
       ...clone(previewSettings),
       ...clone(payload),
       payment_readiness: previewReadiness(payload.payment),
+      wechat_profile_readiness: previewWechatProfileReadiness(payload.payment),
       missing_config_keys: [],
     };
     return clone(previewSettings);

@@ -261,23 +261,29 @@ const reviews: Record<string, Review> = {
     ],
   },
   "/admin/setting/shop/pay": {
-    status: "partial",
+    status: "candidate",
     targetScreens: ["/config/commerce（支付设置）"],
     targetApis: ["GET|POST /adminapi/config/commerce"],
     covered: [
       "余额功能、余额支付、微信、支付宝和线下支付业务开关",
       "同时展示数据库开关与当前 Worker Secret 组合后的实际可用状态",
+      "商户号与商户API证书序列号作为受格式约束的非密钥字段进入Admin白名单",
+      "公众号/H5/PC、小程序与App按各自AppID单独就绪，并共享一套APIv3商户凭据",
+      "小程序使用标准 /v3/pay/transactions/jsapi；旧独立小程序商户号分支明确退休",
       "页面、响应和操作日志均不包含支付私钥、证书或 API Key",
     ],
     remaining: [
-      "微信商户号和证书序列号仍需受控配置入口或部署期注入策略",
-      "旧 pay_routine_open/pay_routine_mchid 分支尚未形成新版明确契约",
-      "密钥输入从 Admin 退休，继续由 Cloudflare Secret 管理",
+      "生产支付公开配置、三种AppID及全部微信部署Secret当前均未配置",
+      "生产5条site_url含2种值，仍需DB-003运营确认后统一",
+      "需配置真实商户并完成三profile下单、支付/退款回调和受限角色E2E",
     ],
     evidence: [
       "view/admin-ts/src/pages/config/CommerceSettings.vue",
       "workers-ts/src/services/payment/PaymentReadinessService.ts",
       "workers-ts/src/services/system/AdminCommerceSettingsService.ts",
+      "workers-ts/src/services/wechat/WechatPayService.ts",
+      "workers-ts/test/payment-readiness.test.ts",
+      "workers-ts/test/integration/PaymentPublicConfigAuditWorker.ts",
     ],
   },
   "/admin/setting/shop/agreemant": {
@@ -407,7 +413,7 @@ const report = {
       retired: "Reviewed legacy route is intentionally not migrated because it is broken, duplicated, or obsolete.",
       unreviewed: "Inventory only; no semantic parity conclusion has been made.",
     },
-    productionAccess: "A token-protected temporary Worker used the configured Hyperdrive for REPEATABLE READ / READ ONLY aggregate and EXPLAIN checks, then applied the bounded second-card outbox whitelist and two partial indexes after size/event preconditions; it verified an idempotent second pass and unchanged business-row aggregates, and was deleted. No main Worker or frontend was deployed.",
+    productionAccess: "Token-protected temporary Workers used the configured Hyperdrive for bounded aggregate checks. The second-card audit applied a preconditioned outbox whitelist and two partial indexes, then verified an idempotent second pass. The payment audit used a READ ONLY transaction and returned only presence, format, length, distinct-value and aggregate counts; no payment DDL/DML ran. Every temporary Worker was deleted and no main Worker or frontend was deployed.",
   },
   summary: {
     legacyRoutes: routes.length,

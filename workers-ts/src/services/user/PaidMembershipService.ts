@@ -18,7 +18,10 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { PayType } from "@/services/order/StoreOrderPayService";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
-import { assertPaymentMethodAvailable } from "@/services/payment/PaymentReadinessService";
+import {
+  assertPaymentMethodAvailable,
+  assertWechatPaymentProfileAvailable,
+} from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
 import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
 import { signAlipayParams, type AlipayParams } from "@/utils/alipay";
@@ -528,7 +531,6 @@ export class PaidMembershipService {
       };
     }
     if (payType === PayType.WEIXIN) {
-      await assertPaymentMethodAvailable(this.container, this.env, PayType.WEIXIN);
       const channel = normalizeMemberChannel(input.from ?? order.channelType);
       if (!channel) throw new ValidateException("非法渠道");
       const identity = await resolveWechatPaymentIdentity(
@@ -537,6 +539,7 @@ export class PaidMembershipService {
         channel,
         input.payerClientIp,
       );
+      await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
       await registerPaymentReconciliationIntent(this.container, {
         provider: "wechat",
         profile: identity.profile,

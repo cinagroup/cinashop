@@ -247,7 +247,7 @@
           type="warning"
           :closable="false"
           show-icon
-          title="这里仅控制业务开关。微信和支付宝的私钥、证书与 API Key 必须通过 Cloudflare Secret 注入，页面不会读取或保存这些值。"
+          title="商户号和商户API证书序列号可在本页受控保存；私钥、证书内容与 API Key 必须通过 Cloudflare Secret 注入，页面不会读取或保存这些值。"
           class="section-card"
         />
         <div class="readiness-grid">
@@ -269,6 +269,48 @@
             <label><span>微信支付</span><el-switch v-model="form.payment.pay_weixin_open" :active-value="1" :inactive-value="0" /></label>
             <label><span>支付宝支付</span><el-switch v-model="form.payment.ali_pay_status" :active-value="1" :inactive-value="0" /></label>
             <label><span>线下支付</span><el-switch v-model="form.payment.offline_pay_status" :active-value="1" :inactive-value="2" /></label>
+          </div>
+        </el-card>
+        <el-card shadow="never" class="section-card">
+          <template #header><strong>微信 APIv3 公共商户配置（非密钥）</strong></template>
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            title="公众号/H5/PC、小程序和 App 共享这一套商户号与部署凭据，各自使用已配置并绑定到该商户的 AppID。旧版独立小程序商户号开关不再参与下单。"
+            description="商户私钥、APIv3 Key、微信支付平台公钥及其内容仍只允许在部署期注入；保存与审计日志只记录配置键数量，不记录字段值。"
+            class="inline-alert"
+          />
+          <el-form label-position="top">
+            <div class="form-grid two">
+              <el-form-item label="微信支付商户号">
+                <el-input
+                  v-model="form.payment.pay_weixin_mchid"
+                  maxlength="32"
+                  placeholder="1～32 位数字"
+                  inputmode="numeric"
+                />
+              </el-form-item>
+              <el-form-item label="商户API证书序列号">
+                <el-input
+                  v-model="form.payment.pay_weixin_serial_no"
+                  maxlength="64"
+                  placeholder="1～64 位十六进制字符"
+                  @input="normalizeWechatSerial"
+                />
+              </el-form-item>
+            </div>
+          </el-form>
+          <div class="readiness-grid profile-readiness-grid">
+            <el-card v-for="item in wechatProfileCards" :key="item.key" shadow="never" class="readiness-card">
+              <div class="readiness-heading">
+                <strong>{{ item.label }}</strong>
+                <el-tag :type="item.state.enabled ? 'success' : 'warning'">
+                  {{ item.state.enabled ? "可用" : "不可用" }}
+                </el-tag>
+              </div>
+              <p>{{ item.state.enabled ? "AppID、公共商户配置与部署凭据均已满足。" : item.state.reason }}</p>
+            </el-card>
           </div>
         </el-card>
       </el-tab-pane>
@@ -341,6 +383,7 @@ import {
   type CommerceSettings,
   type PaymentMethod,
   type TradeCommerceSettings,
+  type WechatPaymentProfile,
 } from "@/api/commerceSettings";
 import { useAuthStore } from "@/stores/auth";
 import type { UploadRequestOptions } from "element-plus";
@@ -424,6 +467,8 @@ const emptySettings = (): CommerceSettings => ({
     yue_pay_status: 1,
     offline_pay_status: 1,
     pay_weixin_open: 1,
+    pay_weixin_mchid: "",
+    pay_weixin_serial_no: "",
     ali_pay_status: 1,
   },
   division: { division_open: 1, division_apply_open: 1 },
@@ -432,6 +477,11 @@ const emptySettings = (): CommerceSettings => ({
     weixin: { enabled: false, reason: "尚未读取" },
     alipay: { enabled: false, reason: "尚未读取" },
     offline: { enabled: false, reason: "尚未读取" },
+  },
+  wechat_profile_readiness: {
+    wechat: { enabled: false, reason: "尚未读取" },
+    routine: { enabled: false, reason: "尚未读取" },
+    app: { enabled: false, reason: "尚未读取" },
   },
   missing_config_keys: [],
   asset_previews: {},
@@ -546,6 +596,24 @@ const paymentCards = computed(() => (
     state: form.value.payment_readiness[key],
   }))
 ));
+
+const wechatProfileLabels: Record<WechatPaymentProfile, string> = {
+  wechat: "公众号 / H5 / PC",
+  routine: "小程序",
+  app: "App",
+};
+
+const wechatProfileCards = computed(() => (
+  (Object.keys(wechatProfileLabels) as WechatPaymentProfile[]).map((key) => ({
+    key,
+    label: wechatProfileLabels[key],
+    state: form.value.wechat_profile_readiness[key],
+  }))
+));
+
+function normalizeWechatSerial(value: string) {
+  form.value.payment.pay_weixin_serial_no = value.replace(/\s+/g, "").toUpperCase();
+}
 
 function replace(value: CommerceSettings) {
   form.value = value;

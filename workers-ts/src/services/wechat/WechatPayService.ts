@@ -16,19 +16,18 @@ import type {
   PaymentProviderQueryRequest,
   PaymentProviderQueryResult,
 } from "@/services/payment/PaymentProviderQuery";
+import {
+  isWechatMerchantCertificateSerial,
+  isWechatMerchantId,
+  WECHAT_PAYMENT_PROFILE_APP_ID_KEYS,
+} from "@/services/payment/PaymentReadinessService";
 
 const BASE_URL = "https://api.mch.weixin.qq.com";
 
 export type WechatPayProfile = "wechat" | "routine" | "app";
 
-const PROFILE_APP_ID_KEYS = {
-  wechat: "wechat_appid",
-  routine: "routine_appId",
-  app: "wechat_app_appid",
-} as const satisfies Record<WechatPayProfile, string>;
-
 export function wechatPayAppIdKey(profile: WechatPayProfile): string {
-  return PROFILE_APP_ID_KEYS[profile];
+  return WECHAT_PAYMENT_PROFILE_APP_ID_KEYS[profile];
 }
 
 interface WechatPayConfig {
@@ -481,7 +480,9 @@ export class WechatPayService {
     const mchId = values.pay_weixin_mchid ?? "";
     const serialNo = values.pay_weixin_serial_no ?? "";
     const apiV3Key = this.env.WECHAT_API_V3_KEY ?? "";
-    if (!appId || !mchId || !serialNo) throw new ValidateException("微信支付商户配置不完整");
+    if (!appId || !isWechatMerchantId(mchId) || !isWechatMerchantCertificateSerial(serialNo)) {
+      throw new ValidateException("微信支付公开商户配置不完整");
+    }
     if (new TextEncoder().encode(apiV3Key).byteLength !== 32) {
       throw new ValidateException("微信支付 APIv3 密钥必须为 32 字节");
     }

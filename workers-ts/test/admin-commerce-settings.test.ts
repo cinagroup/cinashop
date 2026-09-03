@@ -51,6 +51,8 @@ function validInput(): Record<string, unknown> {
       yue_pay_status: 1,
       offline_pay_status: 2,
       pay_weixin_open: 1,
+      pay_weixin_mchid: "1900000109",
+      pay_weixin_serial_no: "ab12cd34",
       ali_pay_status: 0,
       alipay_merchant_private_key: "must-not-be-accepted",
     },
@@ -65,6 +67,8 @@ describe("admin commerce settings", () => {
     expect(normalized.site_url).toBe("https://shop.example.com");
     expect(normalized.stor_reason).toBe("商品损坏\n与描述不符");
     expect(normalized.offline_pay_status).toBe(2);
+    expect(normalized.pay_weixin_mchid).toBe("1900000109");
+    expect(normalized.pay_weixin_serial_no).toBe("AB12CD34");
     expect(normalized.admin_login_slide).toBe('["/api/assets/31","https://cdn.example.com/login-2.webp"]');
     expect(normalized).not.toHaveProperty("pay_weixin_key");
     expect(normalized).not.toHaveProperty("alipay_merchant_private_key");
@@ -100,6 +104,27 @@ describe("admin commerce settings", () => {
     const invalidHours = validInput();
     (invalidHours.trade as Record<string, unknown>).order_cancel_time = 8_761;
     expect(() => normalizeCommerceSettings(invalidHours)).toThrow("0到8760");
+
+    const missingMerchantId = validInput();
+    (missingMerchantId.payment as Record<string, unknown>).pay_weixin_mchid = "";
+    expect(normalizeCommerceSettings(missingMerchantId).pay_weixin_mchid).toBe("");
+
+    const invalidMerchantId = validInput();
+    (invalidMerchantId.payment as Record<string, unknown>).pay_weixin_mchid = "mch-1900000109";
+    expect(() => normalizeCommerceSettings(invalidMerchantId)).toThrow("1到32位数字");
+
+    const invalidSerial = validInput();
+    (invalidSerial.payment as Record<string, unknown>).pay_weixin_serial_no = "SERIAL-Z";
+    expect(() => normalizeCommerceSettings(invalidSerial)).toThrow("十六进制字符");
+
+    const disabledWechat = validInput();
+    disabledWechat.payment = {
+      ...(disabledWechat.payment as Record<string, unknown>),
+      pay_weixin_open: 0,
+      pay_weixin_mchid: "",
+      pay_weixin_serial_no: "",
+    };
+    expect(normalizeCommerceSettings(disabledWechat).pay_weixin_mchid).toBe("");
   });
 
   it("uses bounded writes, short PostgreSQL timeouts, readback, audit, and cache invalidation", () => {
@@ -132,6 +157,10 @@ describe("admin commerce settings", () => {
     const uniHome = readFileSync("../view/uniapp-ts/src/pages/index/index.vue", "utf8");
     expect(page).toContain("Cloudflare Secret");
     expect(page).toContain("payment_readiness");
+    expect(page).toContain("wechat_profile_readiness");
+    expect(page).toContain("form.payment.pay_weixin_mchid");
+    expect(page).toContain("form.payment.pay_weixin_serial_no");
+    expect(page).toContain("旧版独立小程序商户号开关不再参与下单");
     expect(page).toContain("从素材中心选择");
     expect(page).toContain("Worker 固定安全策略");
     expect(page).toContain("admin_login_slide");
@@ -143,6 +172,7 @@ describe("admin commerce settings", () => {
     expect(uniHome).toContain("onShareTimeline");
     expect(page).not.toContain("pay_weixin_key");
     expect(page).not.toContain("merchant_private_key");
+    expect(page).not.toContain("pay_routine_mchid");
     expect(api).not.toContain("pay_weixin_key");
     expect(api).not.toContain("merchant_private_key");
   });

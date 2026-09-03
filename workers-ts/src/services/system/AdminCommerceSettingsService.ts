@@ -3,8 +3,11 @@ import type { Env } from "@/env";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import { systemConfig, systemLog } from "@/models/schema";
 import {
-  getPaymentReadiness,
+  getPaymentReadinessSnapshot,
+  isWechatMerchantCertificateSerial,
+  isWechatMerchantId,
   type PaymentReadiness,
+  type WechatProfileReadiness,
 } from "@/services/payment/PaymentReadinessService";
 import { normalizeConfigScalar } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
@@ -56,6 +59,8 @@ export const PAYMENT_COMMERCE_CONFIG_KEYS = [
   "yue_pay_status",
   "offline_pay_status",
   "pay_weixin_open",
+  "pay_weixin_mchid",
+  "pay_weixin_serial_no",
   "ali_pay_status",
 ] as const;
 
@@ -90,6 +95,7 @@ export interface CommerceSettingsSnapshot {
   payment: Pick<CommerceConfigValues, (typeof PAYMENT_COMMERCE_CONFIG_KEYS)[number]>;
   division: Pick<CommerceConfigValues, (typeof DIVISION_COMMERCE_CONFIG_KEYS)[number]>;
   payment_readiness: PaymentReadiness;
+  wechat_profile_readiness: WechatProfileReadiness;
   missing_config_keys: CommerceConfigKey[];
   asset_previews: Record<string, string>;
   security_policy: {
@@ -140,6 +146,8 @@ const DEFAULTS: CommerceConfigValues = {
   yue_pay_status: 1,
   offline_pay_status: 1,
   pay_weixin_open: 1,
+  pay_weixin_mchid: "",
+  pay_weixin_serial_no: "",
   ali_pay_status: 1,
   division_open: 1,
   division_apply_open: 1,
@@ -183,6 +191,8 @@ const INFO: Record<CommerceConfigKey, string> = {
   yue_pay_status: "余额支付状态",
   offline_pay_status: "线下支付状态",
   pay_weixin_open: "微信支付状态",
+  pay_weixin_mchid: "微信支付商户号",
+  pay_weixin_serial_no: "微信商户API证书序列号",
   ali_pay_status: "支付宝支付状态",
   division_open: "团队开关",
   division_apply_open: "代理商申请开关",
@@ -325,6 +335,22 @@ function refundReasons(value: unknown): string {
   return reasons.map((reason) => reason.trim()).filter(Boolean).join("\n");
 }
 
+function wechatMerchantId(value: unknown): string {
+  const text = textValue(value, INFO.pay_weixin_mchid, 32);
+  if (text && !isWechatMerchantId(text)) {
+    throw new ValidateException("微信支付商户号必须是1到32位数字");
+  }
+  return text;
+}
+
+function wechatMerchantCertificateSerial(value: unknown): string {
+  const text = textValue(value, INFO.pay_weixin_serial_no, 64).toUpperCase();
+  if (text && !isWechatMerchantCertificateSerial(text)) {
+    throw new ValidateException("微信商户API证书序列号必须是1到64位十六进制字符");
+  }
+  return text;
+}
+
 export function normalizeCommerceSettings(input: Record<string, unknown>): CommerceConfigValues {
   const basic = recordValue(input.basic, "基础设置");
   const product = recordValue(input.product, "商品设置");
@@ -332,6 +358,7 @@ export function normalizeCommerceSettings(input: Record<string, unknown>): Comme
   const payment = recordValue(input.payment, "支付设置");
   const division = recordValue(input.division, "事业部设置");
   const stationOpen = flag(basic.station_open, INFO.station_open);
+  const payWeixinOpen = flag(payment.pay_weixin_open, INFO.pay_weixin_open);
   const values: CommerceConfigValues = {
     station_open: stationOpen,
     site_name: textValue(basic.site_name, INFO.site_name, 100, stationOpen === 1),
@@ -377,7 +404,9 @@ export function normalizeCommerceSettings(input: Record<string, unknown>): Comme
     balance_func_status: flag(payment.balance_func_status, INFO.balance_func_status),
     yue_pay_status: legacyOneTwoFlag(payment.yue_pay_status, INFO.yue_pay_status),
     offline_pay_status: legacyOneTwoFlag(payment.offline_pay_status, INFO.offline_pay_status),
-    pay_weixin_open: flag(payment.pay_weixin_open, INFO.pay_weixin_open),
+    pay_weixin_open: payWeixinOpen,
+    pay_weixin_mchid: wechatMerchantId(payment.pay_weixin_mchid),
+    pay_weixin_serial_no: wechatMerchantCertificateSerial(payment.pay_weixin_serial_no),
     ali_pay_status: flag(payment.ali_pay_status, INFO.ali_pay_status),
     division_open: flag(division.division_open, INFO.division_open),
     division_apply_open: flag(division.division_apply_open, INFO.division_apply_open),
@@ -461,9 +490,9 @@ export class AdminCommerceSettingsService {
   }
 
   async settings(): Promise<CommerceSettingsSnapshot> {
-    const [{ values, missing }, paymentReadiness] = await Promise.all([
+    const [{ values, missing }, readiness] = await Promise.all([
       this.configSnapshot(),
-      getPaymentReadiness(this.container, this.env),
+      getPaymentReadinessSnapshot(this.container, this.env),
     ]);
     const slides = decodeAssetList(values.admin_login_slide);
     const basic = {
@@ -486,7 +515,8 @@ export class AdminCommerceSettingsService {
       trade: pickValues(values, TRADE_COMMERCE_CONFIG_KEYS),
       payment: pickValues(values, PAYMENT_COMMERCE_CONFIG_KEYS),
       division: pickValues(values, DIVISION_COMMERCE_CONFIG_KEYS),
-      payment_readiness: paymentReadiness,
+      payment_readiness: readiness.methods,
+      wechat_profile_readiness: readiness.wechatProfiles,
       missing_config_keys: missing,
       asset_previews: Object.fromEntries(references.map((reference, index) => [reference, signed[index]])),
       security_policy: {

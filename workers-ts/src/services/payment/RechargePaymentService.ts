@@ -3,7 +3,7 @@ import type { Env } from "@/env";
 import { withTx, type Container } from "@/lib/di";
 import { user as userTable, userBill, userRecharge } from "@/models/schema";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
-import { assertPaymentMethodAvailable } from "@/services/payment/PaymentReadinessService";
+import { assertWechatPaymentProfileAvailable } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
 import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
@@ -150,13 +150,13 @@ export class RechargePaymentService {
     const priceCents = decimalToCents(order.price);
     if (priceCents <= 0) throw new ValidateException("充值订单金额无效");
 
-    await assertPaymentMethodAvailable(this.container, this.env, "weixin");
     const identity = await resolveWechatPaymentIdentity(
       this.container,
       uid,
       from,
       payerClientIp,
     );
+    await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
     await registerPaymentReconciliationIntent(this.container, {
       provider: "wechat",
       profile: identity.profile,

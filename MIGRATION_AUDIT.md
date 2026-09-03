@@ -4313,6 +4313,42 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 因此`/admin/setting/shop/trade`从partial推进为candidate，76屏设置统计成为reviewed 15 / candidate 10 / partial 4 / retired 1 / unreviewed 61。这里的candidate表示代码、生产结构、自动门禁和本地UI已经形成候选闭环；由于生产没有次卡、两个通知模板、提醒时限配置或平台退货三字段，且主Worker/前端未发布，真实短信、真实站内信、真实状态4/5退货流程、主管理员/受限角色和发布后观察仍是明确阻断。下一项按清单进入FE-001D4B4支付公开商户配置；私钥、证书内容和API Key继续禁止进入Admin、数据库响应或日志。
 
+## FE-001-D4B4 微信支付公开商户配置与三Profile就绪合同（2026-09-03）
+
+### 旧PHP实证、当前官方合同与迁移决策
+
+旧`SystemConfigServices::shopPayFrom`不只编辑支付开关，还把`pay_weixin_mchid`、`pay_weixin_serial_no`、商户私钥/证书/API Key以及`pay_routine_open/pay_routine_mchid`放进同一Admin表单。把旧表单原样恢复会让部署凭据再次进入数据库、Admin响应和浏览器，违反本项目已确立的Secret边界，因此本轮先追踪实际消费者而不是按字段名机械迁移。旧`PaymentConfig`确实初始化了`routineMchId`，但仓库没有读取该属性的支付请求；旧小程序`shop/pay/createorder`仍从共享配置读取`mch_id`。旧V3配置也使用同一个`mchId`，只按场景选择公众号、小程序、App或Web AppID。由此可见，`pay_routine_mchid`是未形成有效请求合同的遗留分支，不是必须保留的独立商户能力。
+
+微信支付当前官方APIv3参数文档把`appid`和`mchid`列为下单主体字段，并要求二者具有绑定关系；小程序调起支付的商户下单仍使用JSAPI下单接口。权威参考为[JSAPI/小程序下单](https://pay.wechatpay.cn/doc/v3/merchant/4012791897)和[请求参数说明](https://pay.wechatpay.cn/doc/v3/merchant/4013070756)。本轮据此固定一套直接商户APIv3凭据、三个消费profile：`wechat`读取`wechat_appid`用于公众号/H5/PC，`routine`读取`routine_appId`用于小程序，`app`读取`wechat_app_appid`用于App；三者共享`pay_weixin_mchid`、商户API证书序列号及部署Secret。小程序与公众号场景都通过标准`/v3/pay/transactions/jsapi`，App仍走`/v3/pay/transactions/app`；`pay_routine_open/pay_routine_mchid`被明确退休，不再制造第二套未验证的商户配置轨道。
+
+### 非密钥Admin字段与部署Secret边界
+
+`AdminCommerceSettingsService`白名单由40增至42个键，只新增两个可公开、可轮换但不可任意格式的字段：`pay_weixin_mchid`必须是1～32位十进制数字，`pay_weixin_serial_no`必须是1～64位十六进制字符并规范化为大写。允许开关关闭或分阶段部署时暂存空值，但非空畸形值会被服务端拒绝。Admin响应、保存正文和页面都不存在商户私钥、证书/平台公钥内容或APIv3 Key字段；保存日志仍只记动作和键数量，不记录任何配置值。
+
+部署凭据继续由Cloudflare Worker Secret注入：商户私钥`WECHAT_MCH_PRIVATE_KEY`、精确32字节的`WECHAT_API_V3_KEY`，以及`WECHAT_PLATFORM_PUBLIC_KEY`或兼容的`WECHAT_PLATFORM_CERT`验签公钥。可选的平台公钥ID仍只属于部署配置。页面只返回聚合就绪布尔值和通用失败原因，既不返回Secret值，也不通过长度、指纹或具体缺失Secret名称形成旁路泄露。旧数据库中的`pay_weixin_key`、`v3_pay_weixin_key`、`pay_weixin_client_cert`、`pay_weixin_client_key`以及支付宝私钥/公钥键继续不进入这个Admin合同。
+
+### 精确Profile校验与支付副作用顺序
+
+原`PaymentReadinessService`把微信整体就绪错误地绑定到`wechat_appid`，导致仅配置小程序AppID且其他凭据齐全时仍被错误拒绝。本轮把纯函数评估结果拆成方法级状态和`wechat/routine/app`三份profile状态：公共商户字段、HTTPS`site_url`和部署Secret由三者共享，各profile只检查自己的AppID；聚合微信状态只要求至少一个profile完整。这既允许合法的routine-only部署，又不会让一个已配置profile替另一个未配置profile放行。
+
+商城订单、用户充值和付费会员三条真实微信发起链都先解析调用面的profile，再调用`assertWechatPaymentProfileAvailable`，并且该检查严格位于对账意图登记和provider请求之前。缺少目标AppID、公开商户字段或部署Secret时都在产生支付副作用前失败关闭。`WechatPayService`与就绪服务共用同一profile→AppID映射，防止校验和实际下单选择不同配置；测试同时禁止重新出现`pay_routine_mchid`、旧`shop/pay/createorder`或profile检查晚于对账登记的回归。
+
+### 生产Hyperdrive只读审计与失败关闭现状
+
+经用户明确授权，两轮随机命名、令牌双哈希保护的临时审计Worker通过Hyperdrive `9748c294e21c49a99579c9cef70102e0`连接生产PostgreSQL 16.14，并在显式`READ ONLY`事务中只返回存在性、行数、格式、长度、去重值数量和支付聚合计数。目标表均存在，但`pay_weixin_open`、`pay_weixin_mchid`、`pay_weixin_serial_no`、`wechat_appid`、`routine_appId`、`wechat_app_appid`、`pay_wechat_type`、`pay_routine_open`和`pay_routine_mchid`全部为0行；退休的微信/支付宝密钥键也均为0行。生产没有已支付微信订单、微信支付对账记录或退款支付记录，因此不能做真实历史流水兼容性结论。
+
+控制面`wrangler secret list --name cinashop-api --format json`只列出`APP_KEY`、`DEBUG`、`INTERNAL_CHAT_TOKEN`、`OPERATIONS_TOKEN`及Upstash两项，没有任何微信支付部署凭据。生产`site_url`有5行、2个不同HTTPS值，最新值格式有效但多值冲突继续归DB-003运营决策，不能由迁移代码擅自选定。上述事实意味着即使未来单独开启数据库开关，当前候选代码也会因公开配置、Secret和profile AppID不完整而失败关闭；本轮没有为制造“可用”状态写入占位商户号或伪Secret。
+
+审计入口的无令牌请求返回403、错误方法返回404；两轮临时Worker和Secret完成后均删除，公开URL复验404。整个B4没有执行生产DDL/DML、真实下单、退款、回调、Queue、主Worker或前端部署，也没有回显数据库连接口令或配置值。
+
+### 浏览器证据、自动门禁与剩余阻断
+
+应用内浏览器在本地`/config/commerce?preview=1`打开支付页，确认两个公开字段、三profile状态卡和Secret边界说明均可访问，保存后出现成功提示且控制台无错误。证书序列号输入` ab12 cd34 `后实际规范化为`AB12CD34`。随后用系统Chrome进行独立Playwright回归：1440×900保存成功，390×844下`scrollWidth/clientWidth=390/390`，两种视口均无控制台问题。首轮自动化误用了`viewportSize`而仍得到1280宽度，该结果已明确丢弃；修正为真实`viewport`后才采纳上述移动端证据。
+
+最终本地Worker全量209文件/1,318项单元全部通过，单元与运行时双TypeScript通过，Admin生产构建2,437模块。Admin静态合同仍为342个调用点、362个路径变体，362条全部已注册且可执行；设置逐屏审计生成器和产物同步把`/admin/setting/shop/pay`从partial推进为candidate。过程中一次全量单测只因Windows临时SSR缓存目录原子重命名返回`UNKNOWN`，没有业务断言失败；停止并行服务后串行复跑即得到209/209、1,318/1,318成功，因此不把基础设施瞬态误写成产品缺陷。
+
+76屏设置统计现在是reviewed 15 / candidate 11 / partial 3 / retired 1 / unreviewed 61；核心商城设置8屏中已有7屏candidate，仅动态系统配置保持partial。支付candidate只证明非密钥配置合同、失败关闭、Admin操作面、生产只读事实和本地自动门禁闭合，不表示生产支付可用。启用前仍必须由运营配置真实商户号、证书序列号、正确绑定的三个AppID和Cloudflare Secret，并在获批发布环境完成三profile正向/拒绝路径、支付与退款回调验签、幂等对账、受限角色和观察期；这些继续归FE-001G/H及正式发布门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

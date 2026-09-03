@@ -40,15 +40,16 @@ describe("legacy Admin setting route parity audit", () => {
     expect(report.summary).toMatchObject({
       legacyRoutes: 76,
       reviewed: 15,
-      candidate: 10,
-      partial: 4,
+      candidate: 11,
+      partial: 3,
       missing: 0,
       retired: 1,
       unreviewed: 61,
     });
-    expect(report.methodology.productionAccess).toMatch(/REPEATABLE READ \/ READ ONLY/);
+    expect(report.methodology.productionAccess).toMatch(/READ ONLY transaction/);
+    expect(report.methodology.productionAccess).toMatch(/no payment DDL\/DML ran/i);
     expect(report.methodology.productionAccess).toMatch(/idempotent second pass/);
-    expect(report.methodology.productionAccess).toMatch(/No main Worker or frontend was deployed/);
+    expect(report.methodology.productionAccess).toMatch(/no main Worker or frontend was deployed/i);
   });
 
   it("records the first reviewed print and notification routes without guessing the rest", () => {
@@ -64,7 +65,7 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/shop/base": "candidate",
       "/admin/setting/shop/product": "candidate",
       "/admin/setting/shop/trade": "candidate",
-      "/admin/setting/shop/pay": "partial",
+      "/admin/setting/shop/pay": "candidate",
       "/admin/setting/shop/agreemant": "candidate",
       "/admin/setting/shop/division": "candidate",
       "/admin/setting/system_form": "candidate",
@@ -117,8 +118,12 @@ describe("legacy Admin setting route parity audit", () => {
     expect(trade.covered.join(" ")).toContain("平台顺序");
     expect(trade.remaining.join(" ")).toContain("生产当前无次卡行");
     expect(trade.remaining.join(" ")).toContain("真实短信");
+    expect(payment.status).toBe("candidate");
     expect(payment.covered.join(" ")).toContain("实际可用状态");
-    expect(payment.remaining.join(" ")).toContain("Cloudflare Secret");
+    expect(payment.covered.join(" ")).toContain("商户API证书序列号");
+    expect(payment.covered.join(" ")).toContain("共享一套APIv3商户凭据");
+    expect(payment.covered.join(" ")).toContain("旧独立小程序商户号分支明确退休");
+    expect(payment.remaining.join(" ")).toContain("全部微信部署Secret当前均未配置");
     expect(agreement.covered.join(" ")).toContain("五类协议");
     expect(division.covered.join(" ")).toContain("两个旧开关");
   });

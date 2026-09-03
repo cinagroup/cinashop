@@ -3622,7 +3622,7 @@
     },
     {
       "file": "view/admin-ts/src/api/commerceSettings.ts",
-      "sha256": "df4fdb4b992a04fb9d891120ea8715304fcbc1c552bf7295eb7340af847f4f76"
+      "sha256": "b37a7e49132e58db55c44b9596d605674020e56a85f457074af969b40d67c530"
     },
     {
       "file": "view/admin-ts/src/api/community.ts",
@@ -4206,7 +4206,7 @@
       "method": "GET",
       "path": "/config/commerce",
       "source": "view/admin-ts/src/api/commerceSettings.ts",
-      "line": 186,
+      "line": 220,
       "registered": true,
       "matchedRoute": "/config/commerce",
       "matchedHandler": "AdminCommerceSettings.settings",
@@ -4216,7 +4216,7 @@
       "method": "POST",
       "path": "/config/commerce",
       "source": "view/admin-ts/src/api/commerceSettings.ts",
-      "line": 199,
+      "line": 234,
       "registered": true,
       "matchedRoute": "/config/commerce",
       "matchedHandler": "AdminCommerceSettings.save",

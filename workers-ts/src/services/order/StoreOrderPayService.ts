@@ -38,7 +38,10 @@ import {
 } from "@/services/activity/PinkLifecycleService";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
-import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
+import {
+  assertWechatPaymentProfileAvailable,
+  getPaymentReadiness,
+} from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
 import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
 import {
@@ -433,9 +436,11 @@ export class StoreOrderPayService {
       return { order_id: orderId, paid: true, pay_type: PayType.YUE };
     }
 
-    const readiness = await getPaymentReadiness(this.container, this.env);
-    const method = readiness[normalizedPayType as keyof typeof readiness];
-    if (!method?.enabled) throw new ValidateException(method?.reason || "支付方式不可用");
+    if (normalizedPayType !== PayType.WEIXIN) {
+      const readiness = await getPaymentReadiness(this.container, this.env);
+      const method = readiness[normalizedPayType as keyof typeof readiness];
+      if (!method?.enabled) throw new ValidateException(method?.reason || "支付方式不可用");
+    }
 
     if (normalizedPayType === PayType.YUE) {
       await this.yuePay(uid, orderId);
@@ -473,6 +478,7 @@ export class StoreOrderPayService {
       from,
       payerClientIp,
     );
+    await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
     await registerPaymentReconciliationIntent(this.container, {
       provider: "wechat",
       profile: identity.profile,
