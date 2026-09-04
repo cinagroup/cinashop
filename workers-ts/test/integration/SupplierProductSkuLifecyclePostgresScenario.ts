@@ -7,16 +7,19 @@ import {
 } from "@/lib/di";
 import {
   storeCart,
+  storeProduct,
   storeProductAttrValue,
   storeProductCategory,
   storeProductSkuRetirementLog,
   storeProductStockRecord,
   systemLog,
 } from "@/models/schema";
+import { ProductAssociationService } from "@/services/product/ProductAssociationService";
 import {
   ProductSkuRetirementService,
   supplierProductSkuScope,
 } from "@/services/product/ProductSkuRetirementService";
+import { VirtualProductInventoryService } from "@/services/product/VirtualProductInventoryService";
 import { SupplierProductManagementService } from "@/services/supplier/SupplierProductManagementService";
 
 const PREFIX = "codex_supplier_sku_";
@@ -190,6 +193,54 @@ function productPayload(
   };
 }
 
+function adminVirtualProductPayload(
+  cardStock: number,
+  cardDiskInfo: string,
+  fixedStock: number,
+  fixedDiskInfo: string,
+  uniques: Readonly<Record<string, string>> = {},
+) {
+  return {
+    product_type: 1,
+    store_name: "Isolated admin virtual product fixture",
+    store_info: "isolated PostgreSQL verification only",
+    image: "https://example.com/audit-virtual-product.png",
+    cate_id: [42],
+    brand_id: [],
+    store_label_id: [],
+    ensure_id: [],
+    specs_id: 0,
+    specs: [],
+    unit_name: "份",
+    spec_type: 1,
+    items: [{ value: "交付", detail: ["一次性卡密", "固定内容"] }],
+    attrs: [
+      {
+        unique: uniques["一次性卡密"],
+        detail: { 交付: "一次性卡密" },
+        price: "19.90",
+        cost: "9.00",
+        ot_price: "25.00",
+        vip_price: "18.00",
+        stock: cardStock,
+        disk_info: cardDiskInfo,
+        code: "AUDIT-VIRTUAL-CARD",
+      },
+      {
+        unique: uniques["固定内容"],
+        detail: { 交付: "固定内容" },
+        price: "29.90",
+        cost: "10.00",
+        ot_price: "35.00",
+        vip_price: "28.00",
+        stock: fixedStock,
+        disk_info: fixedDiskInfo,
+        code: "AUDIT-VIRTUAL-FIXED",
+      },
+    ],
+  };
+}
+
 async function rejected(promise: Promise<unknown>, message: string): Promise<boolean> {
   try {
     await promise;
@@ -219,17 +270,30 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
     });
     const container = createContainerFromDb(isolated);
     await withIsolatedContainer(isolated, async (scoped) => {
-      await scoped.db.insert(storeProductCategory).values({
-        id: 41,
-        pid: 0,
-        type: 2,
-        relationId: 101,
-        cateName: "Isolated category",
-        path: "",
-        level: 0,
-        isShow: 1,
-        addTime: Math.floor(Date.now() / 1_000),
-      });
+      await scoped.db.insert(storeProductCategory).values([
+        {
+          id: 41,
+          pid: 0,
+          type: 2,
+          relationId: 101,
+          cateName: "Isolated supplier category",
+          path: "",
+          level: 0,
+          isShow: 1,
+          addTime: Math.floor(Date.now() / 1_000),
+        },
+        {
+          id: 42,
+          pid: 0,
+          type: 0,
+          relationId: 0,
+          cateName: "Isolated admin category",
+          path: "",
+          level: 0,
+          isShow: 1,
+          addTime: Math.floor(Date.now() / 1_000),
+        },
+      ]);
     });
 
     const products = new SupplierProductManagementService(container);
@@ -348,6 +412,113 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       owner,
     );
     const finalDetail = await readProduct();
+    const adminProducts = new ProductAssociationService(container);
+    const virtualInventory = new VirtualProductInventoryService(container);
+    const virtualCreated = await adminProducts.save(
+      0,
+      adminVirtualProductPayload(0, "", 5, "https://download.example/checkout-v1"),
+      actor,
+    );
+    const readAdminVirtualProduct = () => withIsolatedContainer(isolated!, (scoped) =>
+      new ProductAssociationService(scoped).detail(virtualCreated.id)
+    );
+    const virtualFirst = await readAdminVirtualProduct();
+    const cardRow = virtualFirst.attrs.find((row) => !row.disk_info?.trim());
+    const fixedRow = virtualFirst.attrs.find((row) => row.disk_info?.trim());
+    if (!cardRow?.unique || !fixedRow?.unique) {
+      throw new Error(`isolated Admin virtual SKU modes were not persisted: ${JSON.stringify(
+        virtualFirst.attrs.map((row) => ({
+          suk: row.suk,
+          unique: row.unique,
+          disk_info: row.disk_info,
+          stock: row.stock,
+        })),
+      )}`);
+    }
+    const virtualUniques = {
+      "一次性卡密": String(cardRow.unique),
+      "固定内容": String(fixedRow.unique),
+    };
+    const cardUnique = String(cardRow.unique);
+    const fixedUnique = String(fixedRow.unique);
+    const inventoryImport = await virtualInventory.importCards(
+      { kind: "admin" },
+      virtualCreated.id,
+      {
+        attr_unique: cardUnique,
+        cards: [
+          { card_no: "ADMIN-CARD-1", card_pwd: "ADMIN-PWD-1" },
+          { card_no: "ADMIN-CARD-2", card_pwd: "ADMIN-PWD-2" },
+        ],
+      },
+    );
+    const directCardStockRejected = await rejected(
+      adminProducts.save(
+        virtualCreated.id,
+        adminVirtualProductPayload(3, "", 5, "https://download.example/checkout-v1", virtualUniques),
+        actor,
+      ),
+      "库存由未分配卡密数量维护",
+    );
+    const cardToFixedRejected = await rejected(
+      adminProducts.save(
+        virtualCreated.id,
+        adminVirtualProductPayload(
+          2,
+          "https://download.example/should-not-switch",
+          5,
+          "https://download.example/checkout-v1",
+          virtualUniques,
+        ),
+        actor,
+      ),
+      "已有关联卡密",
+    );
+    const fixedToCardRejected = await rejected(
+      adminProducts.save(
+        virtualCreated.id,
+        adminVirtualProductPayload(2, "", 5, "", virtualUniques),
+        actor,
+      ),
+      "切换为卡密库存时库存必须为0",
+    );
+    const fixedCardImportRejected = await rejected(
+      virtualInventory.importCards(
+        { kind: "admin" },
+        virtualCreated.id,
+        {
+          attr_unique: fixedUnique,
+          cards: [{ card_no: "FIXED-CARD", card_pwd: "FIXED-PWD" }],
+        },
+      ),
+      "固定虚拟内容",
+    );
+    const productTypeChangeRejected = await rejected(
+      adminProducts.save(virtualCreated.id, { product_type: 0 }, actor),
+      "商品创建后不能修改履约类型",
+    );
+    const virtualUpdated = await adminProducts.save(
+      virtualCreated.id,
+      adminVirtualProductPayload(
+        2,
+        "",
+        6,
+        "https://download.example/checkout-v2",
+        virtualUniques,
+      ),
+      actor,
+    );
+    const virtualFinal = await readAdminVirtualProduct();
+    const virtualFinalByUnique = new Map(virtualFinal.attrs.map((row) => [row.unique, row]));
+    const finalCardRow = virtualFinalByUnique.get(cardUnique);
+    const finalFixedRow = virtualFinalByUnique.get(fixedUnique);
+    const virtualStableIdentity = virtualFirst.attrs.every((row) =>
+      virtualFinalByUnique.get(row.unique)?.id === row.id,
+    );
+    const virtualMainRows = await withIsolatedContainer(isolated, async (scoped) =>
+      scoped.db.select({ stock: storeProduct.stock, productType: storeProduct.productType })
+        .from(storeProduct).where(eq(storeProduct.id, virtualCreated.id)).limit(1)
+    );
     const [logs, systemLogs, stockRows, persistedRows] = await withIsolatedContainer(
       isolated,
       async (scoped) => Promise.all([
@@ -388,6 +559,30 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
         && stockRows.every((row) => row.storeId === 101),
       persisted_skus: persistedRows.length,
       persisted_retired_skus: persistedRows.filter((row) => row.isRetired === 1).length,
+      admin_virtual_created: virtualCreated.sku_verified && virtualFirst.product_type === 1,
+      admin_virtual_modes_persisted:
+        cardRow.disk_info === ""
+        && cardRow.stock === 0
+        && fixedRow.disk_info === "https://download.example/checkout-v1"
+        && fixedRow.stock === 5,
+      card_import_authoritative:
+        inventoryImport.inserted === 2
+        && inventoryImport.sku_stock === 2
+        && inventoryImport.product_stock === 7,
+      direct_card_stock_rejected: directCardStockRejected,
+      card_to_fixed_rejected: cardToFixedRejected,
+      fixed_to_card_rejected: fixedToCardRejected,
+      fixed_card_import_rejected: fixedCardImportRejected,
+      product_type_change_rejected: productTypeChangeRejected,
+      admin_virtual_update_verified: virtualUpdated.sku_verified,
+      admin_virtual_stable_identity: virtualStableIdentity,
+      admin_virtual_final_readback:
+        finalCardRow?.stock === 2
+        && finalCardRow?.disk_info === ""
+        && finalFixedRow?.stock === 6
+        && finalFixedRow?.disk_info === "https://download.example/checkout-v2"
+        && virtualMainRows[0]?.stock === 8
+        && virtualMainRows[0]?.productType === 1,
     };
 
     const expectedTrue = [
@@ -403,6 +598,17 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       "open_cart_blocked",
       "restore_verified",
       "supplier_stock_scope_verified",
+      "admin_virtual_created",
+      "admin_virtual_modes_persisted",
+      "card_import_authoritative",
+      "direct_card_stock_rejected",
+      "card_to_fixed_rejected",
+      "fixed_to_card_rejected",
+      "fixed_card_import_rejected",
+      "product_type_change_rejected",
+      "admin_virtual_update_verified",
+      "admin_virtual_stable_identity",
+      "admin_virtual_final_readback",
     ];
     if (expectedTrue.some((key) => scenario?.[key] !== true)) {
       throw new Error("isolated Supplier SKU lifecycle assertion failed");

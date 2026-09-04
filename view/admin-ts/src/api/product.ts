@@ -52,6 +52,9 @@ export interface ProductSkuRow {
   brokerage: string | number;
   brokerage_two: string | number;
   code: string;
+  disk_info: string;
+  delivery_mode?: "cards" | "fixed";
+  original_disk_info?: string;
   is_retired?: 0 | 1;
 }
 
@@ -304,6 +307,8 @@ export function apiAdminProductDetail(id: number): Promise<AdminProductEditor> {
         brokerage: 0,
         brokerage_two: 0,
         code: `SHIRT-${index + 1}`,
+        disk_info: "",
+        delivery_mode: "cards",
         is_retired: 0,
       })),
       retired_attrs: ["S", "M"].map((size, index) => ({
@@ -326,6 +331,8 @@ export function apiAdminProductDetail(id: number): Promise<AdminProductEditor> {
         brokerage: 0,
         brokerage_two: 0,
         code: `SHIRT-RET-${index + 1}`,
+        disk_info: "",
+        delivery_mode: "cards",
         is_retired: 1,
       })),
     });

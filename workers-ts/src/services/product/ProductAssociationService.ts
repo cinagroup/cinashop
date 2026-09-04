@@ -41,6 +41,7 @@ const MANAGED_RELATIONS = [
   PARAMETER_RELATION,
 ] as const;
 const PARAMETER_TEMPLATE_GROUP = 3;
+const CARD_PRODUCT_TYPE = 1;
 const MAX_ASSOCIATION_IDS = 100;
 const MAX_PARAMETER_SPECS = 100;
 
@@ -474,9 +475,32 @@ export class ProductAssociationService {
       const existing = existingRows[0];
       if (productId > 0 && (!existing || existing.isDel === 1)) throw new NotFoundException("商品不存在");
 
+      const productType = existing?.productType ?? integerValue(
+        body.product_type,
+        "商品类型",
+        0,
+        0,
+        CARD_PRODUCT_TYPE,
+      );
+      if (existing && Object.prototype.hasOwnProperty.call(body, "product_type")) {
+        const requestedProductType = integerValue(
+          body.product_type,
+          "商品类型",
+          existing.productType,
+          0,
+          4,
+        );
+        if (requestedProductType !== existing.productType) {
+          throw new ValidateException("商品创建后不能修改履约类型");
+        }
+      }
+
       const skuPayload = hasProductSkuEditorPayload(body)
-        ? normalizeProductSkuEditorPayload(body)
+        ? normalizeProductSkuEditorPayload(body, productType)
         : null;
+      if (!existing && productType === CARD_PRODUCT_TYPE && !skuPayload) {
+        throw new ValidateException("卡密商品必须配置SKU及交付方式");
+      }
       const skuSummary = skuPayload ? productSkuSummary(skuPayload) : null;
       const storeName = textValue(body.store_name ?? existing?.storeName, "商品名称", 256);
       if (!storeName) throw new ValidateException("商品名称不能为空");
@@ -551,6 +575,7 @@ export class ProductAssociationService {
         sort,
         isShow,
         isVip,
+        productType,
         ...(skuPayload ? {
           specType: skuPayload.specType,
           settlePrice: skuSummary!.settlePrice,
@@ -598,7 +623,7 @@ export class ProductAssociationService {
       if (skuPayload) {
         await replaceProductSkuEditor(tx, {
           id: savedProductId,
-          productType: existing?.productType ?? 0,
+          productType,
           image: values.image,
           type: existing?.type ?? 0,
           relationId: existing?.relationId ?? 0,

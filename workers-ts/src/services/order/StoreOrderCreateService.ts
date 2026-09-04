@@ -2419,6 +2419,11 @@ export class StoreOrderCreateService {
             unique: sku.unique,
             suk: sku.suk,
             price: (unitPriceCents / 100).toFixed(2),
+            ...(cart.productType === 1 ? {
+              // Fulfillment must use this immutable checkout snapshot rather
+              // than mutable SKU data after the customer has ordered.
+              disk_info: sku.diskInfo ?? "",
+            } : {}),
             ...(cart.productType === 4 ? {
               write_valid: sku.writeValid,
               write_days: sku.writeDays,

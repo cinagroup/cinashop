@@ -33,6 +33,32 @@ export default {
     }
     const path = new URL(request.url).pathname;
     try {
+      if (request.method === "POST" && path === "/audit") {
+        const setup = await setupVirtualProductDeliveryAudit(
+          env.HYPERDRIVE.connectionString,
+          env.AUDIT_SCHEMA,
+          env.AUDIT_KEY,
+        );
+        try {
+          const result = await runVirtualProductDeliveryAudit(
+            env.HYPERDRIVE.connectionString,
+            env.AUDIT_SCHEMA,
+            env.AUDIT_KEY,
+          );
+          const verification = await verifyVirtualProductDeliveryAudit(
+            env.HYPERDRIVE.connectionString,
+            env.AUDIT_SCHEMA,
+            env.AUDIT_KEY,
+          );
+          return Response.json({ setup, result, verification });
+        } finally {
+          await cleanupVirtualProductDeliveryAudit(
+            env.HYPERDRIVE.connectionString,
+            env.AUDIT_SCHEMA,
+            env.AUDIT_KEY,
+          );
+        }
+      }
       if (request.method === "POST" && path === "/setup") {
         return Response.json(await setupVirtualProductDeliveryAudit(
           env.HYPERDRIVE.connectionString,

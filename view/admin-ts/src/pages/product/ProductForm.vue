@@ -4,6 +4,17 @@
       <template #header>{{ isEdit ? "编辑商品" : "添加商品" }}</template>
 
       <el-form :model="form" label-width="108px" class="editor-form">
+        <el-form-item label="履约类型" required>
+          <el-radio-group
+            v-model="form.product_type"
+            :disabled="isEdit"
+            @change="changeProductType"
+          >
+            <el-radio-button :value="0">实物商品</el-radio-button>
+            <el-radio-button :value="1">卡密/网盘</el-radio-button>
+          </el-radio-group>
+          <el-text v-if="isEdit" type="info" class="field-hint">创建后不可修改履约类型</el-text>
+        </el-form-item>
         <el-form-item label="商品名称" required>
           <el-input v-model="form.store_name" placeholder="请输入商品名称" />
         </el-form-item>
@@ -19,7 +30,7 @@
         <el-form-item label="原价">
           <el-input-number v-model="form.ot_price" :min="0" :precision="2" />
         </el-form-item>
-        <el-form-item label="库存">
+        <el-form-item v-if="form.product_type === 0" label="库存">
           <el-input-number v-model="form.stock" :min="0" />
         </el-form-item>
         <el-form-item label="单位">
@@ -196,8 +207,38 @@
               <el-table-column v-if="form.spec_type === 1" label="会员价" min-width="120">
                 <template #default="{ row }"><el-input-number v-model="row.vip_price" :min="0" :precision="2" controls-position="right" /></template>
               </el-table-column>
-              <el-table-column v-if="form.spec_type === 1" label="库存" min-width="110">
-                <template #default="{ row }"><el-input-number v-model="row.stock" :min="0" controls-position="right" /></template>
+              <el-table-column v-if="form.product_type === 1" label="交付方式" min-width="190">
+                <template #default="{ row }">
+                  <el-radio-group v-model="row.delivery_mode" @change="changeVirtualDeliveryMode(row)">
+                    <el-radio-button value="cards">一次性卡密</el-radio-button>
+                    <el-radio-button value="fixed">固定内容</el-radio-button>
+                  </el-radio-group>
+                </template>
+              </el-table-column>
+              <el-table-column v-if="form.spec_type === 1 || form.product_type === 1" label="库存" min-width="130">
+                <template #default="{ row }">
+                  <el-input-number
+                    :key="`${row.suk}-${row.delivery_mode}`"
+                    v-model="row.stock"
+                    :min="0"
+                    :disabled="form.product_type === 1 && row.delivery_mode === 'cards'"
+                    controls-position="right"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column v-if="form.product_type === 1" label="固定虚拟内容" min-width="260">
+                <template #default="{ row }">
+                  <el-input
+                    v-if="row.delivery_mode === 'fixed'"
+                    v-model="row.disk_info"
+                    type="textarea"
+                    :rows="2"
+                    maxlength="4096"
+                    show-word-limit
+                    placeholder="请输入支付后自动交付的内容"
+                  />
+                  <el-text v-else type="info">保存后进入卡密库存导入</el-text>
+                </template>
               </el-table-column>
               <el-table-column label="条码" min-width="130">
                 <template #default="{ row }"><el-input v-model="row.bar_code" maxlength="50" /></template>
@@ -207,8 +248,11 @@
               </el-table-column>
               <el-table-column v-if="isEdit" prop="unique" label="唯一标识" min-width="100" />
             </el-table>
-            <el-text type="info">
+            <el-text v-if="form.product_type === 0" type="info">
               单规格的售价、原价、库存和会员价使用上方主字段；多规格的商品汇总值由SKU自动计算。
+            </el-text>
+            <el-text v-else type="info">
+              填写固定内容时可直接维护可售库存；留空时库存只能通过“卡密库存”导入增加，支付发货严格使用下单快照。
             </el-text>
             <div v-if="isEdit" class="sku-lifecycle-actions">
               <el-button
@@ -315,6 +359,7 @@ const skuActionLoading = ref(false);
 
 const isEdit = computed(() => !!route.params.id);
 const form = reactive({
+  product_type: 0 as 0 | 1,
   store_name: "",
   store_info: "",
   image: "",
@@ -343,6 +388,11 @@ async function submit() {
   if (!form.store_name) return ElMessage.error("请输入商品名称");
   if (!form.items.length || !form.attrs.length) return ElMessage.error("请先生成商品SKU");
   prepareSkuPayload();
+  if (form.product_type === 1 && form.attrs.some((row) => (
+    row.delivery_mode === "fixed" && !row.disk_info.trim()
+  ))) {
+    return ElMessage.error("固定内容交付的SKU必须填写交付内容");
+  }
   if (form.price <= 0 || form.attrs.some((row) => Number(row.price) <= 0)) {
     return ElMessage.error("请填写每个SKU的有效售价");
   }
@@ -442,7 +492,31 @@ function newSkuRow(detail: Record<string, string>): ProductSkuRow {
     brokerage: 0,
     brokerage_two: 0,
     code: "",
+    disk_info: "",
+    delivery_mode: "cards",
   };
+}
+
+function changeProductType(value: unknown) {
+  if (isEdit.value) return;
+  form.product_type = Number(value) === 1 ? 1 : 0;
+  if (form.product_type === 1) {
+    form.stock = 0;
+    form.unit_name = "份";
+    form.attrs = form.attrs.map((row) => ({
+      ...row,
+      stock: 0,
+      disk_info: "",
+      delivery_mode: "cards",
+    }));
+  }
+}
+
+function changeVirtualDeliveryMode(row: ProductSkuRow) {
+  if (row.delivery_mode === "cards") {
+    row.disk_info = "";
+    if (!row.id || row.original_disk_info?.trim()) row.stock = 0;
+  }
 }
 
 function skuCombinations(dimensions: ProductSkuDimension[]): Array<Record<string, string>> {
@@ -488,6 +562,11 @@ function applySkuRuleTemplate() {
 }
 
 function prepareSkuPayload() {
+  if (form.product_type === 1) {
+    form.attrs.forEach((row) => {
+      row.disk_info = row.delivery_mode === "fixed" ? row.disk_info.trim() : "";
+    });
+  }
   if (form.spec_type === 0) {
     const row = form.attrs[0] ?? newSkuRow({ 规格: "默认" });
     form.items = [{ value: "规格", detail: ["默认"] }];
@@ -498,9 +577,9 @@ function prepareSkuPayload() {
       price: form.price,
       ot_price: form.ot_price,
       vip_price: form.vip_price,
-      stock: form.stock,
+      stock: form.product_type === 0 ? form.stock : row.stock,
     }];
-    return;
+    if (form.product_type === 0) return;
   }
   form.stock = form.attrs.reduce((sum, row) => sum + Number(row.stock || 0), 0);
   form.price = Math.min(...form.attrs.map((row) => Number(row.price || 0)));
@@ -527,6 +606,8 @@ function restoreDraft(value: Record<string, unknown>) {
     const parsed = Number(value[key]);
     if (Number.isFinite(parsed)) form[key] = parsed;
   }
+  const productType = Number(value.product_type);
+  if (productType === 0 || productType === 1) form.product_type = productType;
   const specType = Number(value.spec_type);
   if (specType === 0 || specType === 1) form.spec_type = specType;
   for (const key of ["store_label_id", "ensure_id"] as const) {
@@ -596,6 +677,9 @@ function restoreSkuRows(value: unknown[]): ProductSkuRow[] {
       brokerage: Number(row.brokerage ?? 0),
       brokerage_two: Number(row.brokerage_two ?? 0),
       code: typeof row.code === "string" ? row.code : "",
+      disk_info: typeof row.disk_info === "string" ? row.disk_info : "",
+      delivery_mode: typeof row.disk_info === "string" && row.disk_info.trim() ? "fixed" : "cards",
+      original_disk_info: typeof row.disk_info === "string" ? row.disk_info : "",
       is_retired: Number(row.is_retired) === 1 ? 1 : 0,
     }];
   });
@@ -643,6 +727,7 @@ onMounted(async () => {
   if (isEdit.value) {
     try {
       const detail = await apiAdminProductDetail(Number(route.params.id));
+      form.product_type = detail.product_type === 1 ? 1 : 0;
       form.store_name = detail.store_name;
       form.store_info = detail.store_info;
       form.image = detail.image;

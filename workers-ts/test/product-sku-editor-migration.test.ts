@@ -70,6 +70,25 @@ describe("FE-001E5A product SKU editor migration", () => {
     ])).toBeNull();
   });
 
+  it("normalizes card-product fixed content while rejecting it on physical products", () => {
+    const body = {
+      spec_type: 0,
+      items: [{ value: "规格", detail: ["默认"] }],
+      attrs: [{
+        suk: "默认",
+        price: 20,
+        stock: 10,
+        disk_info: " https://download.example/license ",
+      }],
+    };
+    expect(normalizeProductSkuEditorPayload(body, 1).skus[0].diskInfo)
+      .toBe("https://download.example/license");
+    expect(() => normalizeProductSkuEditorPayload(body, 0))
+      .toThrow("实物商品不能配置固定虚拟内容");
+    expect(() => normalizeProductSkuEditorPayload(body, 3))
+      .toThrow("当前阶段只支持编辑实物或卡密商品SKU");
+  });
+
   it("requires exact main, dimensions, SKU identities and snapshot readback", () => {
     const payload = normalizeProductSkuEditorPayload({
       spec_type: 0,
@@ -109,6 +128,14 @@ describe("FE-001E5A product SKU editor migration", () => {
     expect(productSkuReadbackMatches(product, dimensions, [
       { ...rows[0], unique: "wrong123" },
     ], result, payload, assigned)).toBe(false);
+    expect(productSkuReadbackMatches(
+      product,
+      dimensions,
+      rows,
+      JSON.stringify({ attr: dimensions, value: [{ ...assigned[0], diskInfo: "changed" }] }),
+      payload,
+      assigned,
+    )).toBe(false);
   });
 
   it("uses locks, stable suk identity, fail-closed retirement, stock audit and DB readback", () => {
@@ -157,10 +184,11 @@ describe("FE-001E5A product SKU editor migration", () => {
     ), "utf8");
 
     expect(source).toContain("hasProductSkuEditorPayload(body)");
-    expect(source).toContain("normalizeProductSkuEditorPayload(body)");
+    expect(source).toContain("normalizeProductSkuEditorPayload(body, productType)");
     expect(source).toContain("await replaceProductSkuEditor(tx");
     expect(source).toContain("sku_verified: skuPayload !== null");
     expect(source).toContain("sku_rule_templates:");
+    expect(source).toContain("商品创建后不能修改履约类型");
   });
 
   it("wires template application, generated rows and responsive SKU table into Admin", () => {
@@ -179,6 +207,11 @@ describe("FE-001E5A product SKU editor migration", () => {
     expect(form).toContain("prepareSkuPayload");
     expect(form).toContain('class="sku-table-shell"');
     expect(form).toContain("不能删除、重命名或改唯一标识");
+    expect(form).toContain("卡密/网盘");
+    expect(form).toContain("一次性卡密");
+    expect(form).toContain("固定内容");
+    expect(form).toContain("保存后进入卡密库存导入");
+    expect(form).toContain("支付发货严格使用下单快照");
     expect(api).toContain("sku_rule_templates");
     expect(api).toContain("sku_verified: true");
   });

@@ -26,6 +26,7 @@ export interface SupplierProductSku {
   brokerage: string;
   brokerageTwo: string;
   code: string;
+  diskInfo: string;
   unique?: string;
 }
 
@@ -223,6 +224,7 @@ export function normalizeSupplierProductSkus(
       brokerage,
       brokerageTwo,
       code: optionalString(row.code, "SKU编码", 50),
+      diskInfo: optionalString(firstValue(row, "disk_info", "diskInfo"), "固定虚拟内容", 4096),
       unique: optionalString(row.unique, "SKU唯一标识", 8) || undefined,
     };
   });

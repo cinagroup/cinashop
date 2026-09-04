@@ -4,13 +4,13 @@ import {
   storeOrder,
   storeOrderCartInfo,
   storeOrderStatus,
-  storeProductAttrValue,
   storeProductVirtual,
 } from "@/models/schema";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 
 const CARD_PRODUCT_TYPE = 1;
 const MAX_VIRTUAL_INFO_BYTES = 1024 * 1024;
+const MAX_CART_INFO_BYTES = 1024 * 1024;
 
 export interface VirtualDeliveryOrder {
   id: number;
@@ -45,6 +45,45 @@ export type VirtualDeliveryInfo =
 export interface VirtualDeliveryResult {
   deliveredOrders: number;
   deliveredCards: number;
+}
+
+export interface VirtualDeliverySnapshot {
+  diskInfo: string;
+}
+
+function recordValue(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function snapshotDiskInfo(container: unknown): VirtualDeliverySnapshot | null {
+  const row = recordValue(container);
+  if (!row || !Object.prototype.hasOwnProperty.call(row, "disk_info")) return null;
+  if (typeof row.disk_info !== "string") return null;
+  const diskInfo = row.disk_info.trim();
+  if (new TextEncoder().encode(diskInfo).byteLength > MAX_VIRTUAL_INFO_BYTES) return null;
+  return { diskInfo };
+}
+
+/**
+ * Resolve the immutable type-1 fulfillment mode/content from either the new
+ * TypeScript cart snapshot or the historical PHP productInfo snapshot.
+ * An empty diskInfo is intentional and means card-inventory delivery; null
+ * means the snapshot is absent or malformed and must never fall back to live SKU data.
+ */
+export function parseVirtualDeliverySnapshot(value: string | null): VirtualDeliverySnapshot | null {
+  if (!value || new TextEncoder().encode(value).byteLength > MAX_CART_INFO_BYTES) return null;
+  try {
+    const snapshot = recordValue(JSON.parse(value) as unknown);
+    if (!snapshot) return null;
+    const current = snapshotDiskInfo(recordValue(snapshot.sku));
+    if (current) return current;
+    const productInfo = recordValue(snapshot.productInfo);
+    return snapshotDiskInfo(recordValue(productInfo?.attrInfo));
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -114,6 +153,7 @@ export async function deliverPaidVirtualOrders(
         productType: storeOrderCartInfo.productType,
         skuUnique: storeOrderCartInfo.skuUnique,
         cartNum: storeOrderCartInfo.cartNum,
+        cartInfo: storeOrderCartInfo.cartInfo,
       })
       .from(storeOrderCartInfo)
       .where(eq(storeOrderCartInfo.oid, order.id))
@@ -163,22 +203,13 @@ export async function deliverPaidVirtualOrders(
       if (!Number.isSafeInteger(cart.cartNum) || cart.cartNum <= 0) {
         throw new Error(`卡密订单 ${order.orderId} 的商品数量无效`);
       }
-      const skuRows = await tx
-        .select({ diskInfo: storeProductAttrValue.diskInfo })
-        .from(storeProductAttrValue)
-        .where(
-          and(
-            eq(storeProductAttrValue.productId, cart.productId),
-            eq(storeProductAttrValue.type, 0),
-            eq(storeProductAttrValue.unique, cart.skuUnique),
-          ),
-        )
-        .limit(1)
-        .for("key share");
-      const diskInfo = skuRows[0]?.diskInfo?.trim() ?? "";
-      if (diskInfo) {
+      const snapshot = parseVirtualDeliverySnapshot(cart.cartInfo);
+      if (!snapshot) {
+        throw new Error(`卡密订单 ${order.orderId} 的交付快照缺失或无效`);
+      }
+      if (snapshot.diskInfo) {
         delivery.push({
-          disk_info: diskInfo,
+          disk_info: snapshot.diskInfo,
           product_id: cart.productId,
           sku_unique: cart.skuUnique,
           quantity: cart.cartNum,

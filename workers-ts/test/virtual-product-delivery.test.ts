@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseVirtualDeliveryInfo } from "../src/services/order/VirtualProductDeliveryService";
+import {
+  parseVirtualDeliveryInfo,
+  parseVirtualDeliverySnapshot,
+} from "../src/services/order/VirtualProductDeliveryService";
 
 describe("虚拟卡密商品支付后自动交付", () => {
   it("只解析 PHP 兼容的卡密数组或密钥字符串", () => {
@@ -28,6 +31,21 @@ describe("虚拟卡密商品支付后自动交付", () => {
     expect(parseVirtualDeliveryInfo("x".repeat(1024 * 1024 + 1))).toBeNull();
   });
 
+  it("兼容新旧订单快照，并把空内容明确解释为卡库交付", () => {
+    expect(parseVirtualDeliverySnapshot(JSON.stringify({
+      sku: { disk_info: " checkout-secret " },
+    }))).toEqual({ diskInfo: "checkout-secret" });
+    expect(parseVirtualDeliverySnapshot(JSON.stringify({
+      sku: { disk_info: "" },
+    }))).toEqual({ diskInfo: "" });
+    expect(parseVirtualDeliverySnapshot(JSON.stringify({
+      productInfo: { attrInfo: { disk_info: "php-secret" } },
+    }))).toEqual({ diskInfo: "php-secret" });
+    expect(parseVirtualDeliverySnapshot(JSON.stringify({ sku: {} }))).toBeNull();
+    expect(parseVirtualDeliverySnapshot(JSON.stringify({ sku: { disk_info: 1 } }))).toBeNull();
+    expect(parseVirtualDeliverySnapshot("not-json")).toBeNull();
+  });
+
   it("把原子领取接入既有可重放支付 outbox，而不是请求内浮动执行", () => {
     const outbox = readFileSync("src/services/order/OrderOutboxService.ts", "utf8");
     const delivery = readFileSync("src/services/order/VirtualProductDeliveryService.ts", "utf8");
@@ -36,6 +54,8 @@ describe("虚拟卡密商品支付后自动交付", () => {
     expect(delivery).toContain("eq(storeProductVirtual.uid, 0)");
     expect(delivery).toContain('deliveryType: "fictitious"');
     expect(delivery).toContain('changeType: "delivery_fictitious"');
+    expect(delivery).toContain("parseVirtualDeliverySnapshot(cart.cartInfo)");
+    expect(delivery).not.toContain("storeProductAttrValue.diskInfo");
     expect(delivery).not.toContain("Math.random");
   });
 
@@ -48,6 +68,7 @@ describe("虚拟卡密商品支付后自动交付", () => {
     expect(create).toContain('throw new ValidateException("卡密商品无需到店自提")');
     expect(create).toContain("![1, 2, 3].includes(orderProductType)");
     expect(create).toContain("[1, 2, 3].includes(product.productType)");
+    expect(create).toContain('disk_info: sku.diskInfo ?? ""');
   });
 
   it("列表隐藏卡密，只有通过用户归属校验的详情才解码交付内容", () => {

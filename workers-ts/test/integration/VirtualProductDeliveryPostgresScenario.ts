@@ -22,6 +22,7 @@ CREATE TABLE store_order (
   is_del SMALLINT DEFAULT 0 NOT NULL,
   is_system_del SMALLINT DEFAULT 0 NOT NULL,
   product_type SMALLINT DEFAULT 0 NOT NULL,
+  user_address VARCHAR(100) DEFAULT '' NOT NULL,
   delivery_type VARCHAR(32) DEFAULT '' NOT NULL,
   fictitious_content VARCHAR(500) DEFAULT '' NOT NULL,
   virtual_info TEXT
@@ -32,7 +33,8 @@ CREATE TABLE store_order_cart_info (
   product_id INTEGER DEFAULT 0 NOT NULL,
   product_type SMALLINT DEFAULT 0 NOT NULL,
   sku_unique VARCHAR(255) DEFAULT '' NOT NULL,
-  cart_num INTEGER DEFAULT 0 NOT NULL
+  cart_num INTEGER DEFAULT 0 NOT NULL,
+  cart_info TEXT
 );
 CREATE TABLE store_product_attr_value (
   id INTEGER PRIMARY KEY,
@@ -57,6 +59,26 @@ CREATE TABLE store_order_status (
   change_type VARCHAR(32) DEFAULT '' NOT NULL,
   change_message VARCHAR(256) DEFAULT '' NOT NULL,
   change_time INTEGER DEFAULT 0 NOT NULL
+);
+CREATE TABLE store_order_outbox (
+  id SERIAL PRIMARY KEY,
+  event_key VARCHAR(128) NOT NULL UNIQUE,
+  aggregate_type VARCHAR(32) DEFAULT 'order' NOT NULL,
+  aggregate_id INTEGER NOT NULL,
+  event_type VARCHAR(64) NOT NULL,
+  payload JSONB NOT NULL,
+  status VARCHAR(16) DEFAULT 'PENDING' NOT NULL,
+  dispatch_count INTEGER DEFAULT 0 NOT NULL,
+  attempt_count INTEGER DEFAULT 0 NOT NULL,
+  replay_count INTEGER DEFAULT 0 NOT NULL,
+  available_time INTEGER DEFAULT 0 NOT NULL,
+  lease_until INTEGER DEFAULT 0 NOT NULL,
+  lease_token VARCHAR(36) DEFAULT '' NOT NULL,
+  last_error VARCHAR(1000) DEFAULT '' NOT NULL,
+  enqueued_time INTEGER DEFAULT 0 NOT NULL,
+  processed_time INTEGER DEFAULT 0 NOT NULL,
+  add_time INTEGER DEFAULT 0 NOT NULL,
+  update_time INTEGER DEFAULT 0 NOT NULL
 );
 CREATE TABLE audit_public_snapshot (position VARCHAR(8) PRIMARY KEY, snapshot JSONB NOT NULL);
 CREATE TABLE audit_result (id SMALLINT PRIMARY KEY, audit_key VARCHAR(32) NOT NULL, result JSONB NOT NULL);
@@ -84,6 +106,7 @@ export interface VirtualProductDeliveryAuditResult {
   partial_claim_rolled_back: boolean;
   partial_claim_retry_completed: boolean;
   disk_info_delivered_without_card: boolean;
+  disk_info_uses_checkout_snapshot: boolean;
   delivery_status_evidence_exact: boolean;
   assigned_card_count: number;
 }
@@ -228,13 +251,15 @@ export async function runVirtualProductDeliveryAudit(
           (4, ${orders[3].orderId}, ${orders[3].uid}, 1, 1)
       `);
       await tx.execute(sql`
-        INSERT INTO store_order_cart_info (id, oid, product_id, product_type, sku_unique, cart_num)
+        INSERT INTO store_order_cart_info
+          (id, oid, product_id, product_type, sku_unique, cart_num, cart_info)
         VALUES
-          (1, 1, 101, 1, 'VIRT0001', 2),
-          (2, 2, 101, 1, 'VIRT0001', 2),
-          (3, 3, 102, 1, 'VIRT0002', 1),
-          (4, 3, 103, 1, 'VIRT0003', 1),
-          (5, 4, 104, 1, 'VIRT0004', 3)
+          (1, 1, 101, 1, 'VIRT0001', 2, ${JSON.stringify({ sku: { disk_info: "" } })}),
+          (2, 2, 101, 1, 'VIRT0001', 2, ${JSON.stringify({ sku: { disk_info: "" } })}),
+          (3, 3, 102, 1, 'VIRT0002', 1, ${JSON.stringify({ sku: { disk_info: "" } })}),
+          (4, 3, 103, 1, 'VIRT0003', 1, ${JSON.stringify({ sku: { disk_info: "" } })}),
+          (5, 4, 104, 1, 'VIRT0004', 3,
+            ${JSON.stringify({ sku: { disk_info: `${key}-checkout-disk-secret` } })})
       `);
       await tx.execute(sql`
         INSERT INTO store_product_attr_value (id, product_id, type, "unique", disk_info)
@@ -242,7 +267,7 @@ export async function runVirtualProductDeliveryAudit(
           (1, 101, 0, 'VIRT0001', ''),
           (2, 102, 0, 'VIRT0002', ''),
           (3, 103, 0, 'VIRT0003', ''),
-          (4, 104, 0, 'VIRT0004', ${`${key}-shared-disk-secret`})
+          (4, 104, 0, 'VIRT0004', ${`${key}-mutated-live-disk-secret`})
       `);
       await tx.execute(sql`
         INSERT INTO store_product_virtual
@@ -260,7 +285,10 @@ export async function runVirtualProductDeliveryAudit(
       deliverOne(concurrent, orders[1], now),
     ]);
     const winnerIndex = race.findIndex((entry) => entry.status === "fulfilled");
-    assert(winnerIndex >= 0, "concurrent delivery produced no winner");
+    const raceErrors = race.flatMap((entry) => entry.status === "rejected"
+      ? [entry.reason instanceof Error ? entry.reason.message : String(entry.reason)]
+      : []);
+    assert(winnerIndex >= 0, `concurrent delivery produced no winner: ${raceErrors.join(" | ")}`);
     const loserIndex = winnerIndex === 0 ? 1 : 0;
     const afterRace = await withTx(primary, async (tx) => tx.execute(sql`
       SELECT
@@ -331,7 +359,7 @@ export async function runVirtualProductDeliveryAudit(
     const diskValid = Array.isArray(diskInfo)
       && diskInfo.length === 1
       && "disk_info" in diskInfo[0]
-      && diskInfo[0].disk_info === `${key}-shared-disk-secret`
+      && diskInfo[0].disk_info === `${key}-checkout-disk-secret`
       && diskInfo[0].quantity === 3;
 
     const result: VirtualProductDeliveryAuditResult = {
@@ -355,6 +383,7 @@ export async function runVirtualProductDeliveryAudit(
       partial_claim_retry_completed: partialRetry.deliveredOrders === 1 && partialRetry.deliveredCards === 2,
       disk_info_delivered_without_card:
         diskDelivery.deliveredOrders === 1 && diskDelivery.deliveredCards === 0 && diskValid,
+      disk_info_uses_checkout_snapshot: diskValid,
       delivery_status_evidence_exact: final.delivered_orders === 4 && final.statuses === 4,
       assigned_card_count: final.assigned_cards,
     };

@@ -6,6 +6,7 @@ import {
   storeProductAttrResult,
   storeProductAttrValue,
   storeProductStockRecord,
+  storeProductVirtual,
 } from "@/models/schema";
 import {
   normalizeSupplierProductDimensions,
@@ -21,6 +22,7 @@ import { ValidateException } from "@/utils/errors";
 
 const PRODUCT_ATTR_TYPE = 0;
 const PHYSICAL_PRODUCT_TYPE = 0;
+const CARD_PRODUCT_TYPE = 1;
 
 export interface ProductSkuEditorPayload {
   specType: 0 | 1;
@@ -76,6 +78,7 @@ export function hasProductSkuEditorPayload(body: Record<string, unknown>): boole
 
 export function normalizeProductSkuEditorPayload(
   body: Record<string, unknown>,
+  productType = PHYSICAL_PRODUCT_TYPE,
 ): ProductSkuEditorPayload {
   const specTypeValue = Number(body.spec_type ?? 0);
   if (specTypeValue !== 0 && specTypeValue !== 1) throw new ValidateException("规格类型错误");
@@ -93,6 +96,12 @@ export function normalizeProductSkuEditorPayload(
     specType,
     { requireSettlePrice: false },
   );
+  if (productType === PHYSICAL_PRODUCT_TYPE && skus.some((sku) => sku.diskInfo)) {
+    throw new ValidateException("实物商品不能配置固定虚拟内容");
+  }
+  if (productType !== PHYSICAL_PRODUCT_TYPE && productType !== CARD_PRODUCT_TYPE) {
+    throw new ValidateException("当前阶段只支持编辑实物或卡密商品SKU");
+  }
   return { specType, dimensions, skus };
 }
 
@@ -166,6 +175,7 @@ function skuProjection(
     brokerage: row.brokerage,
     brokerageTwo: row.brokerageTwo,
     code: row.code,
+    diskInfo: row.diskInfo ?? "",
     sales: row.sales,
     sumStock: row.sumStock,
     is_retired: row.isRetired === 1 ? 1 : 0,
@@ -200,11 +210,13 @@ export async function loadProductSkuEditor(
     vip_price: row.vipPrice,
     bar_code: row.barCode,
     brokerage_two: row.brokerageTwo,
+    disk_info: row.diskInfo ?? "",
     settlePrice: undefined,
     otPrice: undefined,
     vipPrice: undefined,
     barCode: undefined,
     brokerageTwo: undefined,
+    diskInfo: undefined,
   });
   return {
     spec_type: specType === 1 ? 1 : 0,
@@ -335,6 +347,7 @@ export async function rebuildActiveProductSkuState(
       cost: storeProductAttrValue.cost,
       otPrice: storeProductAttrValue.otPrice,
       vipPrice: storeProductAttrValue.vipPrice,
+      diskInfo: storeProductAttrValue.diskInfo,
     }).from(storeProductAttrValue).where(and(
       eq(storeProductAttrValue.productId, product.id),
       eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
@@ -383,6 +396,7 @@ export function productSkuReadbackMatches(
     cost: string;
     otPrice: string;
     vipPrice: string;
+    diskInfo?: string | null;
   }>,
   result: string | undefined,
   expected: ProductSkuEditorPayload,
@@ -413,17 +427,25 @@ export function productSkuReadbackMatches(
       || row.cost !== wanted.cost
       || row.otPrice !== wanted.otPrice
       || row.vipPrice !== wanted.vipPrice
+      || (row.diskInfo ?? "") !== wanted.diskInfo
     ) return false;
   }
   try {
     const snapshot = JSON.parse(result) as { attr?: unknown; value?: unknown };
     if (!equalDimensions(snapshot.attr as SupplierProductDimension[], expected.dimensions)) return false;
     if (!Array.isArray(snapshot.value) || snapshot.value.length !== assigned.length) return false;
-    const snapshotRows = snapshot.value as Array<{ suk?: unknown; unique?: unknown }>;
+    const snapshotRows = snapshot.value as Array<{
+      suk?: unknown;
+      unique?: unknown;
+      diskInfo?: unknown;
+    }>;
     return snapshotRows.every((row) => (
       typeof row.suk === "string"
       && typeof row.unique === "string"
       && expectedBySuk.get(row.suk)?.unique === row.unique
+      && expectedBySuk.get(row.suk)?.diskInfo === (
+        typeof row.diskInfo === "string" ? row.diskInfo : ""
+      )
     ));
   } catch {
     return false;
@@ -436,8 +458,8 @@ export async function replaceProductSkuEditor(
   payload: ProductSkuEditorPayload,
   now: number,
 ): Promise<ProductSkuEditorRow[]> {
-  if (product.productType !== PHYSICAL_PRODUCT_TYPE) {
-    throw new ValidateException("当前阶段只支持编辑实物商品SKU");
+  if (product.productType !== PHYSICAL_PRODUCT_TYPE && product.productType !== CARD_PRODUCT_TYPE) {
+    throw new ValidateException("当前阶段只支持编辑实物或卡密商品SKU");
   }
   await tx.execute(sql`SELECT pg_advisory_xact_lock(
     ${PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE},
@@ -453,6 +475,17 @@ export async function replaceProductSkuEditor(
   ) throw new ValidateException("历史商品存在重复SKU或唯一标识，请先专项清理");
 
   const currentRows = allCurrentRows.filter((row) => row.isRetired === 0);
+  const cardCounts = product.productType === CARD_PRODUCT_TYPE
+    ? await tx
+        .select({
+          attrUnique: storeProductVirtual.attrUnique,
+          total: sql<number>`COUNT(*)::int`,
+        })
+        .from(storeProductVirtual)
+        .where(eq(storeProductVirtual.productId, product.id))
+        .groupBy(storeProductVirtual.attrUnique)
+    : [];
+  const cardCountByUnique = new Map(cardCounts.map((row) => [row.attrUnique, Number(row.total)]));
   const retiredSuks = new Set(allCurrentRows.filter((row) => row.isRetired === 1).map((row) => row.suk));
   if (payload.skus.some((row) => retiredSuks.has(row.suk))) {
     throw new ValidateException("退役SKU不能通过普通保存恢复，请使用受控恢复操作");
@@ -482,6 +515,22 @@ export async function replaceProductSkuEditor(
       if (!collision[0]) unique = candidate;
     }
     used.add(unique);
+    const diskInfo = product.productType === CARD_PRODUCT_TYPE ? sku.diskInfo : "";
+    const cardCount = current ? (cardCountByUnique.get(current.unique) ?? 0) : 0;
+    if (diskInfo && cardCount > 0) {
+      throw new ValidateException(`SKU ${sku.suk} 已有关联卡密，不能切换为固定虚拟内容`);
+    }
+    if (product.productType === CARD_PRODUCT_TYPE && !diskInfo) {
+      if (!current && sku.stock !== 0) {
+        throw new ValidateException(`SKU ${sku.suk} 使用卡密库存时初始库存必须为0，请通过卡密导入增加库存`);
+      }
+      if (current && current.diskInfo?.trim() && sku.stock !== 0) {
+        throw new ValidateException(`SKU ${sku.suk} 切换为卡密库存时库存必须为0`);
+      }
+      if (current && !current.diskInfo?.trim() && sku.stock !== current.stock) {
+        throw new ValidateException(`SKU ${sku.suk} 的库存由未分配卡密数量维护，不能直接修改`);
+      }
+    }
     const sumStock = current
       ? current.sumStock + Math.max(0, sku.stock - current.stock)
       : sku.stock;
@@ -490,11 +539,12 @@ export async function replaceProductSkuEditor(
       unique,
       sales: current?.sales ?? 0,
       sumStock,
+      diskInfo,
     };
     assigned.push(row);
     if (current) {
       await tx.update(storeProductAttrValue).set({
-        productType: PHYSICAL_PRODUCT_TYPE,
+        productType: product.productType,
         stock: sku.stock,
         sumStock,
         price: sku.price,
@@ -509,6 +559,7 @@ export async function replaceProductSkuEditor(
         brokerage: sku.brokerage,
         brokerageTwo: sku.brokerageTwo,
         code: sku.code,
+        diskInfo,
       }).where(eq(storeProductAttrValue.id, current.id));
       const difference = sku.stock - current.stock;
       if (difference !== 0) stockRecords.push({
@@ -523,7 +574,7 @@ export async function replaceProductSkuEditor(
     } else {
       await tx.insert(storeProductAttrValue).values({
         productId: product.id,
-        productType: PHYSICAL_PRODUCT_TYPE,
+        productType: product.productType,
         suk: sku.suk,
         stock: sku.stock,
         sumStock,
@@ -542,6 +593,7 @@ export async function replaceProductSkuEditor(
         brokerageTwo: sku.brokerageTwo,
         type: PRODUCT_ATTR_TYPE,
         code: sku.code,
+        diskInfo,
       });
       if (sku.stock > 0) stockRecords.push({
         storeId: product.type === 0 ? 0 : product.relationId,
@@ -612,6 +664,7 @@ export async function replaceProductSkuEditor(
       cost: storeProductAttrValue.cost,
       otPrice: storeProductAttrValue.otPrice,
       vipPrice: storeProductAttrValue.vipPrice,
+      diskInfo: storeProductAttrValue.diskInfo,
     }).from(storeProductAttrValue).where(and(
       eq(storeProductAttrValue.productId, product.id),
       eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),

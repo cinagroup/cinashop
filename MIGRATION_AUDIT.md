@@ -4431,9 +4431,9 @@ Supplier生产构建通过2,271个模块。应用内浏览器实际打开本地p
 
 此前清单把`store_branch_product`和`store_branch_product_attr_value`理解成仍待实现的“门店SKU”，这与源码不符。`StoreBranchProductServices`构造函数实际注入主`StoreProductDao`，`StoreBranchProductAttrValueServices`实际注入主`StoreProductAttrValueDao`并删除/替换主SKU；Supplier控制器虽保留一个使用Branch属性服务的`update`方法，活动`route/supplier.php`商品路由并没有映射该方法，实际保存仍是`POST product/product/:id`进入公共`saveData(..., type=2)`。生产只读又确认两张branch表均为0行。结论是两表属于历史表名和代码版本漂移，只保留201表无损迁移及历史依赖计数，不再建立与主商品SKU竞争的第二权威；门店、店员、自提、配送和核销仍由`system_store`、订单及核销链承担，这一结论不等于退休门店业务。
 
-### 现有迁移覆盖与仍然缺失的商品前半段
+### 现有迁移覆盖与商品前半段缺口
 
-TypeScript已经具备非实物履约的若干后半段：`VirtualProductInventoryService`提供卡密库存导入、遮蔽列表和单次导出，`VirtualProductDeliveryService`在支付outbox中原子认领卡密并自动交付；Admin订单页支持`fictitious`人工虚拟发货；`StoreOrderWriteoffService`和`SecondCardReminderService`处理次卡次数、有效期校验、核销与临期/到期提醒。但商品创建编辑仍明显不完整：Admin `ProductForm.vue`没有商品类型选择并复用只允许实物的`ProductSkuEditorService`，Supplier `ProductForm.vue`明确显示“当前仅开放实物商品”，服务端也拒绝非实物创建和编辑。换言之，现状不是“虚拟商品已迁移完成”，而是履约能力先于商品编排能力存在；没有类型1/3/4的可用创建编辑合同，就无法从运营端生成可被这些履约服务消费的安全商品。
+TypeScript已经具备非实物履约的若干后半段：`VirtualProductInventoryService`提供卡密库存导入、遮蔽列表和单次导出，`VirtualProductDeliveryService`在支付outbox中原子认领卡密并自动交付；Admin订单页支持`fictitious`人工虚拟发货；`StoreOrderWriteoffService`和`SecondCardReminderService`处理次卡次数、有效期校验、核销与临期/到期提醒。本轮之前商品创建编辑仍明显不完整：Admin `ProductForm.vue`没有商品类型选择并复用只允许实物的`ProductSkuEditorService`，Supplier `ProductForm.vue`明确显示“当前仅开放实物商品”，服务端也拒绝非实物创建和编辑。当前已补Admin类型1候选能力，但Supplier及类型3/4仍保持失败关闭，因此仍不能把整个虚拟商品域标为完成。
 
 审计同时发现下单边界偏离类型语义。旧PHP `StoreCartServices`只取购物车中第一个唯一`product_type`作为订单类型，是会让混单含义依赖行顺序的历史缺陷；迁移前TypeScript仅禁止类型1与其他类型混单，类型3或4仍可能与实物混合后把订单类型降为0。类型3还被地址校验和运费计算遗漏，虽然旧PHP明确把1/2/3列为无需配送。现在所有不同`product_type`组合均在下单前失败关闭，类型1继续保留“不支持到店自提”的专用提示，类型3加入地址与运费豁免。类型4单独保留配送/自提语义，不被错误归入无地址虚拟商品。
 
@@ -4452,6 +4452,22 @@ TypeScript已经具备非实物履约的若干后半段：`VirtualProductInvento
 同一临时Worker在随机`codex_second_card_validity_*` schema中只克隆`store_order_cart_info`，所有seed和真实Drizzle服务调用都显式事务级`SET LOCAL search_path`。场景包含购买后7天、固定区间、永久三条次卡以及一条实物：首次匹配3、仅模式2改变1，起点精确等于给定支付时间，固定/永久不变，实物不变；用不同处理时间重放改变0且全行快照一致；未支付订单被拒绝。`finally`删除随机schema后，公共表行数、全行摘要、公共序列值和临时schema计数与执行前一致；无令牌POST为403、错误方法为404。Worker随后删除成功并复验URL 404，主Worker没有部署。
 
 本地专项2文件/12项、Worker全量210文件/1,330项单元、单元与运行时双TypeScript全部通过；schema审计仍为201/201源表字段覆盖、外部/内嵌263表零漂移；全局路由保持PHP 1,904 / TS 1,623 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026，可观测性仍为17个信号、53个必需事件和6个发布阻断。E5E0可标审计完成，E5E1只能标“候选完成，未发布”。E5E2卡密/网盘商品编排、E5E3手工虚拟商品、E5E4次卡商品创建/编辑/真实核销、E5E5历史数据复制/真实角色/发布观察仍未完成；这些项继续阻塞FE-001E5、FE-001E6及正式发布。
+
+### E5E2A 卡密/网盘Admin编排、库存权威与交付快照
+
+继续审计旧`OrderPayHandelJob.php`发现一个比“页面尚未开放”更直接的正确性偏差：旧PHP对普通类型1订单从`cart_info.productInfo.attrInfo.disk_info`读取下单时快照，而迁移前`VirtualProductDeliveryService`在支付outbox执行时重新读取`store_product_attr_value.disk_info`。若运营人员在下单后、付款前修改固定网盘地址或密钥，TypeScript会交付新值而不是客户下单时的承诺；SKU被退役、删除或异常改写也会让已存在订单依赖实时主数据。这个偏差现已修复：下单对每个类型1 SKU把`disk_info`连同空字符串一起写入`cart_info.sku`；空字符串是“使用一次性卡库”的明确模式证据，不与“快照缺失”混为一谈。支付只解析新快照或旧PHP的`productInfo.attrInfo`，快照不存在、不是字符串、JSON畸形或超过1 MiB时整体失败并保留outbox重试，不再回退实时SKU。
+
+Admin商品服务现在只在新建时接受`product_type=0/1`，已有商品即使请求体尝试提交其他类型也会以“商品创建后不能修改履约类型”失败。类型1和实物共用稳定SKU身份编辑器：仍按`suk`保留`id/unique/sales/sum_stock`，不允许普通保存删除、改名或恢复退役SKU；固定内容限制4096字符并允许维护未来订单的库存，一次性卡库新SKU必须从0库存开始，后续只能由`VirtualProductInventoryService.importCards`按真实插入数增加SKU和商品库存。已有卡库SKU的库存不能随表单改写，任何历史或未分配卡记录存在时也不能切换为固定内容；固定内容切到卡库必须把库存归0。这些条件在商品行锁内检查，卡密导入同样锁商品行，因此并发保存和导入最多一方按先后状态成功，不会产生“固定内容+一次性卡”双权威。
+
+Admin表单新增创建时的“实物商品/卡密或网盘”选择，编辑时锁定；每个SKU再显式选择“一次性卡密/固定内容”。卡库模式只展示由导入维护的库存，固定内容模式重新创建库存控件并显示4KiB有界文本框，避免组件复用后残留禁用状态。应用内浏览器以1280×720实际打开`/product/create?preview=1`：切换类型后主库存隐藏、单位变为“份”、默认卡库库存为禁用0且提示进入卡密库存导入；切到固定内容后库存控件可编辑为5，固定内容可写入下载地址。Admin生产构建通过；preview草稿请求因沙箱代理不可达而显示“草稿自动保存失败”，这不影响表单状态验证，也没有向生产写入草稿。
+
+生产Hyperdrive随机schema演练调用真实`deliverPaidVirtualOrders`。最终场景为4个已支付订单、5个订单商品行、4个SKU和6张一次性卡：两个连接竞争3张卡时严格1成功/1缺货，成功方领取2张且无重复；补入第4张后失败方重试完成，成功方重放为0变化；两SKU部分领取后另一SKU缺货会让第一张领取、订单状态、状态证据和通知outbox全部回滚，补货后一次完成；固定内容订单的实时SKU预先改成另一密钥，最终仍精确交付checkout快照且不领取卡。全部布尔断言为true，状态证据4条、已分配卡6张；公共表和序列摘要不变、公共标记0。第一次运行因旧夹具缺少当前新增的`user_address`及通知outbox表而安全回滚，随后随机schema、临时Worker和URL均清理；修正夹具后的Worker`cinashop-virtual-delivery-audit-04efe5ab4000`运行通过，`codex_virtual_delivery_621090f05fd44b84`删除成功，Worker删除后URL为404。令牌缺失为403、错误方法为404。主Worker和Admin均未发布。
+
+同一生产Hyperdrive还用现有SKU生命周期随机schema实际执行了本轮Admin写事务，而非只靠源码断言：类型1商品同时创建卡库SKU和固定内容SKU，详情回读分别为库存0/固定内容空与库存5/固定下载地址；向卡库SKU导入2张卡后，SKU库存变2、商品总库存由5变7。随后直接把卡库库存改成3、已有卡记录后切固定内容、固定内容带库存切回卡库、向固定内容SKU导卡、把商品类型改为0均按各自合同失败；合法地把固定内容库存改为6并更新地址后，卡库库存仍为2、商品总库存为8，两个SKU的`id/unique`保持不变。最终Worker`cinashop-supplier-sku-audit-4829d8c68114`报告所有新增布尔断言为true、随机schema数量不变、相关public表及序列逐表指纹不变；临时Worker删除成功且URL为404，无令牌403、错误方法404。前两次新增演练暴露的是测试夹具边界：一次用展示文本索引SKU而传出空标识，一次让无事务详情读取落回连接池的`public` search path并读到生产id=2；两次均在业务写入前或随机schema内失败并完成schema/Worker清理。最终夹具改为按持久化交付模式识别SKU，并像既有Supplier读回一样把Admin详情包在隔离事务中，避免把生产数据误判成隔离结果。
+
+本轮最终本地门禁为Worker 210文件/1,332项单元测试、单元及runtime-test两套TypeScript、Admin 2,437模块生产构建全部通过；Admin前端342个调用点/362个路径变体均已注册且可执行，0个未注册、受控不可用或未解析。schema审计保持源201表全部覆盖、缺失源字段0、外部/Worker 263表定义零漂移；路由审计保持PHP 1,904 / TS 1,623 / 可执行844，API面可执行418/457（91.5%），全局仍有1,026个可执行缺口；可观测性仍为17个信号、53个必需事件和6个生产发布阻断。Windows本机`workerd`在沙箱内外均于测试收集前以访问冲突退出，因此本地runtime测试不能记为通过；真实Workers运行时由上述两个生产Hyperdrive隔离Worker场景覆盖，提交后的Linux CI仍须独立通过。
+
+E5E2A因此可标“候选完成，未发布”，但E5E2父项继续开放：Supplier类型1表单仍失败关闭，源MySQL卡密/固定内容没有复制，生产当前类型1商品、SKU和卡库存均为0，真实Admin/Supplier/客户角色及支付/通知/退款未验收。尤其已发放一次性卡密能否退款、退款后是否允许回收密钥必须由业务策略与泄露风险共同决定，不能仅用库存补偿代码推断。E5E3、E5E4、E5E5和正式发布门禁也不受本子项通过影响。
 
 ## 完成定义
 
