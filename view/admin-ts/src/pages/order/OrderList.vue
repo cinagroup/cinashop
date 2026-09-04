@@ -74,10 +74,14 @@
         <el-form-item label="订单号"><strong>{{ deliveryOrder?.orderId }}</strong></el-form-item>
         <el-form-item label="发货方式">
           <el-radio-group v-model="deliveryForm.delivery_type">
-            <el-radio-button value="waybill">电子面单</el-radio-button>
-            <el-radio-button value="express">手填快递</el-radio-button>
-            <el-radio-button value="send">平台配送</el-radio-button>
-            <el-radio-button value="fictitious">虚拟交付</el-radio-button>
+            <template v-if="deliveryOrder?.productType === 3">
+              <el-radio-button value="fictitious">虚拟交付</el-radio-button>
+            </template>
+            <template v-else>
+              <el-radio-button value="waybill">电子面单</el-radio-button>
+              <el-radio-button value="express">手填快递</el-radio-button>
+              <el-radio-button value="send">平台配送</el-radio-button>
+            </template>
           </el-radio-group>
         </el-form-item>
         <template v-if="deliveryForm.delivery_type === 'express' || deliveryForm.delivery_type === 'waybill'">
@@ -191,7 +195,7 @@ function reload() {
 async function deliver(row: AdminOrder) {
   deliveryOrder.value = row;
   Object.assign(deliveryForm, {
-    delivery_type: "express",
+    delivery_type: row.productType === 3 ? "fictitious" : "express",
     delivery_name: "",
     carrier_id: 0,
     delivery_id: "",
@@ -200,7 +204,9 @@ async function deliver(row: AdminOrder) {
   });
   deliveryVisible.value = true;
   try {
-    const [deliveries, carriers] = await Promise.all([apiAdminDeliveryOptions(), apiAdminExpressList()]);
+    const [deliveries, carriers] = row.productType === 3
+      ? [{ list: [] as AdminDeliveryOption[] }, [] as ExpressItem[]]
+      : await Promise.all([apiAdminDeliveryOptions(), apiAdminExpressList()]);
     deliveryOptions.value = deliveries.list;
     expressOptions.value = carriers.filter((item) => item.status === 1 && item.isShow === 1);
   } catch (error) {

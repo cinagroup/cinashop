@@ -164,7 +164,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
   const row = previewProducts.find((item) => item.id === id) ?? previewProducts[0];
   return {
     id: row.id,
-    product_type: row.product_type === 1 ? 1 : 0,
+    product_type: row.product_type === 1 || row.product_type === 3 ? row.product_type : 0,
     store_name: row.store_name,
     store_info: "",
     keyword: "",
@@ -194,11 +194,11 @@ function defaultPreviewDetail(id: number): ProductDetail {
 }
 
 const previewOrders: OrderRow[] = [
-  { id: 501, order_id: "CS2026080900123", real_name: "杭州星辰科技有限公司", user_phone: "138****1024", total_num: 4, pay_price: "3680.00", paid: 1, status: 0, pay_type: "alipay", refund_status: 0, shipping_type: 1, delivery_type: "", delivery_name: "", delivery_code: "", delivery_id: "", fictitious_content: "", remark: "", add_time: 1786250600, pay_time: 1786250610 },
-  { id: 502, order_id: "CS2026080900117", real_name: "上海锐联贸易有限公司", user_phone: "136****8821", total_num: 8, pay_price: "6250.30", paid: 1, status: 1, pay_type: "weixin", refund_status: 0, shipping_type: 1, delivery_type: "express", delivery_name: "顺丰速运", delivery_code: "SF", delivery_id: "SF1839204857", fictitious_content: "", remark: "优先发货", add_time: 1786249900, pay_time: 1786249950 },
-  { id: 503, order_id: "CS2026080900098", real_name: "广州优品商贸有限公司", user_phone: "159****3006", total_num: 2, pay_price: "1280.00", paid: 1, status: 2, pay_type: "alipay", refund_status: 0, shipping_type: 1, delivery_type: "express", delivery_name: "中通快递", delivery_code: "ZTO", delivery_id: "ZT18274630", fictitious_content: "", remark: "", add_time: 1786248200, pay_time: 1786248260 },
-  { id: 504, order_id: "CS2026080900086", real_name: "深圳创想电子有限公司", user_phone: "137****7612", total_num: 5, pay_price: "2950.50", paid: 0, status: 0, pay_type: "weixin", refund_status: 0, shipping_type: 1, delivery_type: "", delivery_name: "", delivery_code: "", delivery_id: "", fictitious_content: "", remark: "", add_time: 1786247000, pay_time: 0 },
-  { id: 505, order_id: "CS2026080900071", real_name: "北京宏图商贸有限公司", user_phone: "135****4418", total_num: 6, pay_price: "5430.00", paid: 1, status: 0, pay_type: "weixin", refund_status: 1, shipping_type: 1, delivery_type: "", delivery_name: "", delivery_code: "", delivery_id: "", fictitious_content: "", remark: "", add_time: 1786245200, pay_time: 1786245300 },
+  { id: 501, order_id: "CS2026080900123", real_name: "杭州星辰科技有限公司", user_phone: "138****1024", total_num: 4, pay_price: "3680.00", paid: 1, status: 0, pay_type: "alipay", refund_status: 0, shipping_type: 1, product_type: 3, delivery_type: "", delivery_name: "", delivery_code: "", delivery_id: "", fictitious_content: "", remark: "", add_time: 1786250600, pay_time: 1786250610 },
+  { id: 502, order_id: "CS2026080900117", real_name: "上海锐联贸易有限公司", user_phone: "136****8821", total_num: 8, pay_price: "6250.30", paid: 1, status: 1, pay_type: "weixin", refund_status: 0, shipping_type: 1, product_type: 0, delivery_type: "express", delivery_name: "顺丰速运", delivery_code: "SF", delivery_id: "SF1839204857", fictitious_content: "", remark: "优先发货", add_time: 1786249900, pay_time: 1786249950 },
+  { id: 503, order_id: "CS2026080900098", real_name: "广州优品商贸有限公司", user_phone: "159****3006", total_num: 2, pay_price: "1280.00", paid: 1, status: 2, pay_type: "alipay", refund_status: 0, shipping_type: 1, product_type: 0, delivery_type: "express", delivery_name: "中通快递", delivery_code: "ZTO", delivery_id: "ZT18274630", fictitious_content: "", remark: "", add_time: 1786248200, pay_time: 1786248260 },
+  { id: 504, order_id: "CS2026080900086", real_name: "深圳创想电子有限公司", user_phone: "137****7612", total_num: 5, pay_price: "2950.50", paid: 0, status: 0, pay_type: "weixin", refund_status: 0, shipping_type: 1, product_type: 0, delivery_type: "", delivery_name: "", delivery_code: "", delivery_id: "", fictitious_content: "", remark: "", add_time: 1786247000, pay_time: 0 },
+  { id: 505, order_id: "CS2026080900071", real_name: "北京宏图商贸有限公司", user_phone: "135****4418", total_num: 6, pay_price: "5430.00", paid: 1, status: 0, pay_type: "weixin", refund_status: 1, shipping_type: 1, product_type: 0, delivery_type: "", delivery_name: "", delivery_code: "", delivery_id: "", fictitious_content: "", remark: "", add_time: 1786245200, pay_time: 1786245300 },
 ];
 
 const previewOrderCarts = new Map<number, SplitCartItem[]>([
@@ -1120,6 +1120,7 @@ export async function getSplitOrders(id: number): Promise<SplitOrder[]> {
       paid: order.paid,
       status: order.status,
       refund_status: order.refund_status,
+      product_type: order.product_type,
       delivery_type: order.delivery_type,
       delivery_name: order.delivery_name,
       delivery_code: order.delivery_code,

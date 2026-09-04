@@ -270,7 +270,7 @@ export interface ProductSku {
 
 export interface ProductDetail {
   id: number;
-  product_type: 0 | 1;
+  product_type: 0 | 1 | 3;
   store_name: string;
   store_info: string;
   keyword: string;
@@ -419,6 +419,7 @@ export interface OrderRow {
   pay_type: string;
   refund_status: number;
   shipping_type: number;
+  product_type: number;
   delivery_type: string;
   delivery_name: string;
   delivery_code: string;
@@ -485,6 +486,7 @@ export interface SplitOrder {
   paid: number;
   status: number;
   refund_status: number;
+  product_type: number;
   delivery_type: string;
   delivery_name: string;
   delivery_code: string;

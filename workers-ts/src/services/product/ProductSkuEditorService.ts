@@ -23,6 +23,7 @@ import { ValidateException } from "@/utils/errors";
 const PRODUCT_ATTR_TYPE = 0;
 const PHYSICAL_PRODUCT_TYPE = 0;
 const CARD_PRODUCT_TYPE = 1;
+const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
 
 export interface ProductSkuEditorPayload {
   specType: 0 | 1;
@@ -96,11 +97,11 @@ export function normalizeProductSkuEditorPayload(
     specType,
     { requireSettlePrice: false },
   );
-  if (productType === PHYSICAL_PRODUCT_TYPE && skus.some((sku) => sku.diskInfo)) {
-    throw new ValidateException("实物商品不能配置固定虚拟内容");
+  if (productType !== CARD_PRODUCT_TYPE && skus.some((sku) => sku.diskInfo)) {
+    throw new ValidateException("只有卡密商品可以配置固定虚拟内容");
   }
-  if (productType !== PHYSICAL_PRODUCT_TYPE && productType !== CARD_PRODUCT_TYPE) {
-    throw new ValidateException("当前阶段只支持编辑实物或卡密商品SKU");
+  if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(productType)) {
+    throw new ValidateException("当前阶段只支持编辑实物、卡密或手工虚拟商品SKU");
   }
   return { specType, dimensions, skus };
 }
@@ -458,8 +459,8 @@ export async function replaceProductSkuEditor(
   payload: ProductSkuEditorPayload,
   now: number,
 ): Promise<ProductSkuEditorRow[]> {
-  if (product.productType !== PHYSICAL_PRODUCT_TYPE && product.productType !== CARD_PRODUCT_TYPE) {
-    throw new ValidateException("当前阶段只支持编辑实物或卡密商品SKU");
+  if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(product.productType)) {
+    throw new ValidateException("当前阶段只支持编辑实物、卡密或手工虚拟商品SKU");
   }
   await tx.execute(sql`SELECT pg_advisory_xact_lock(
     ${PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE},

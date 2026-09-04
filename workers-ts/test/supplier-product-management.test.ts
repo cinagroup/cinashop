@@ -78,7 +78,7 @@ describe("supplier product normalization", () => {
     })).toThrow("固定邮费必须大于0");
   });
 
-  it("accepts card/fixed delivery, forces no-logistics freight, and rejects unopened types", () => {
+  it("accepts card and manual-virtual products, forces no-logistics freight, and rejects unopened types", () => {
     expect(normalizeSupplierProductInput({
       ...baseProduct(),
       product_type: 1,
@@ -91,15 +91,33 @@ describe("supplier product normalization", () => {
       product_type: 1,
       attrs: [{ ...baseProduct().attrs[0], disk_info: "https://download.example/fixed" }],
     }).skus[0]).toMatchObject({ stock: 18, diskInfo: "https://download.example/fixed" });
-    for (const product_type of [2, 3, 4]) {
+    expect(normalizeSupplierProductInput({
+      ...baseProduct(),
+      product_type: 3,
+      freight: 3,
+      temp_id: 91,
+      attrs: [{ ...baseProduct().attrs[0], stock: 9 }],
+    })).toMatchObject({
+      productType: 3,
+      freight: 2,
+      postage: "0.00",
+      tempId: 0,
+      skus: [expect.objectContaining({ stock: 9, diskInfo: "" })],
+    });
+    for (const product_type of [2, 4]) {
       expect(() => normalizeSupplierProductInput({ ...baseProduct(), product_type })).toThrow(
-        "当前迁移阶段仅支持实物商品和卡密/固定内容商品",
+        "当前迁移阶段仅支持实物、卡密/固定内容和手工虚拟商品",
       );
     }
     expect(() => normalizeSupplierProductInput({
       ...baseProduct(),
       attrs: [{ ...baseProduct().attrs[0], disk_info: "not-physical" }],
-    })).toThrow("实物商品不能配置固定虚拟内容");
+    })).toThrow("只有卡密商品可以配置固定虚拟内容");
+    expect(() => normalizeSupplierProductInput({
+      ...baseProduct(),
+      product_type: 3,
+      attrs: [{ ...baseProduct().attrs[0], disk_info: "not-manual-content" }],
+    })).toThrow("只有卡密商品可以配置固定虚拟内容");
     expect(() => normalizeSupplierProductInput({ ...baseProduct(), cate_id: [] })).toThrow(
       "请选择商品分类",
     );
@@ -221,7 +239,7 @@ describe("supplier product migration contracts", () => {
     expect(source).toContain("existing.productType !== input.productType");
   });
 
-  it("exposes Supplier type-one authoring without sending card secrets through the product form", () => {
+  it("exposes Supplier type-one and type-three authoring without sending card secrets through the product form", () => {
     const form = readFileSync("../view/supplier-ts/src/pages/ProductForm.vue", "utf8");
     const products = readFileSync("../view/supplier-ts/src/pages/Products.vue", "utf8");
     expect(form).toContain("卡密 / 固定内容");
@@ -229,7 +247,9 @@ describe("supplier product migration contracts", () => {
     expect(form).toContain("保存后前往卡密库存安全导入");
     expect(form).toContain("delivery_mode === \"fixed\"");
     expect(form).toContain("scope.row.suk}-${scope.row.delivery_mode");
-    expect(products).toContain("scope.row.product_type === 0 || scope.row.product_type === 1");
+    expect(form).toContain("手工虚拟");
+    expect(form).toContain("手工虚拟商品由履约人员填写交付内容");
+    expect(products).toContain("scope.row.product_type === 0 || scope.row.product_type === 3");
     expect(products).toContain("/virtual-inventory");
     expect(form).not.toContain("card_pwd");
     expect(form).not.toContain("card_no");

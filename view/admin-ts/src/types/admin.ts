@@ -129,6 +129,7 @@ export interface AdminOrder {
   paid: number;
   status: number;
   shippingType: number;
+  productType: number;
   deliveryType: string;
   addTime: number;
   remark: string;

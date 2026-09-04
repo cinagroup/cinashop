@@ -251,6 +251,46 @@ function supplierVirtualProductPayload(
   };
 }
 
+function supplierManualVirtualProductPayload(
+  stock: Readonly<Record<string, number>>,
+  uniques: Readonly<Record<string, string>> = {},
+) {
+  const editions = ["标准版", "专业版"] as const;
+  return {
+    product_type: 3,
+    store_name: "Isolated supplier manual virtual product fixture",
+    store_info: "isolated PostgreSQL verification only",
+    cate_id: [41],
+    slider_image: ["https://example.com/audit-supplier-manual-virtual.png"],
+    unit_name: "份",
+    spec_type: 1,
+    items: [{ value: "版本", detail: [...editions] }],
+    attrs: editions.map((edition, index) => ({
+      unique: uniques[edition],
+      detail: { 版本: edition },
+      price: index === 0 ? "39.90" : "69.90",
+      settle_price: index === 0 ? "22.20" : "42.20",
+      cost: index === 0 ? "18.00" : "35.00",
+      ot_price: index === 0 ? "49.00" : "79.00",
+      vip_price: index === 0 ? "36.00" : "65.00",
+      stock: stock[edition] ?? 0,
+      disk_info: "",
+      brokerage: "1.00",
+      brokerage_two: "0.50",
+      code: `AUDIT-MANUAL-${index + 1}`,
+    })),
+    freight: 3,
+    postage: "9.90",
+    temp_id: 999,
+    is_postage: 0,
+    is_support_refund: 1,
+    is_limit: 0,
+    sort: 0,
+    ficti: 0,
+    description: "isolated supplier manual virtual fixture",
+  };
+}
+
 function adminVirtualProductPayload(
   cardStock: number,
   cardDiskInfo: string,
@@ -640,6 +680,70 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       }).from(storeProduct).where(eq(storeProduct.id, supplierVirtualCreated.id)).limit(1)
     );
 
+    const supplierManualCreated = await products.saveProduct(
+      101,
+      0,
+      supplierManualVirtualProductPayload({ 标准版: 3, 专业版: 4 }),
+    );
+    const readSupplierManualProduct = () => withIsolatedContainer(isolated!, (scoped) =>
+      new SupplierProductManagementService(scoped).productDetail(101, supplierManualCreated.id)
+    );
+    const supplierManualFirst = await readSupplierManualProduct();
+    const supplierManualUniques = Object.fromEntries(
+      supplierManualFirst.attrs.map((row) => [row.suk, String(row.unique)]),
+    );
+    const standardManualSku = supplierManualFirst.attrs.find((row) => row.suk === "标准版");
+    if (!standardManualSku?.id || !standardManualSku.unique) {
+      throw new Error("isolated Supplier manual virtual SKU was not persisted");
+    }
+    const supplierManualStock = await products.adjustStock(101, supplierManualCreated.id, {
+      attrs: [{ unique: standardManualSku.unique, pm: 1, stock: 2 }],
+    });
+    await products.saveProduct(
+      101,
+      supplierManualCreated.id,
+      supplierManualVirtualProductPayload({ 标准版: 5, 专业版: 4 }, supplierManualUniques),
+    );
+    const supplierManualTypeChangeRejected = await rejected(
+      products.saveProduct(
+        101,
+        supplierManualCreated.id,
+        productPayload(["physical"], { physical: 1 }),
+      ),
+      "商品创建后不能修改履约类型",
+    );
+    const supplierManualRetired = await retirement.change(
+      "retire",
+      {
+        product_id: supplierManualCreated.id,
+        sku_ids: [Number(standardManualSku.id)],
+        reason: "隔离测试退役手工虚拟SKU",
+      },
+      actor,
+      owner,
+    );
+    const supplierManualRestored = await retirement.change(
+      "restore",
+      {
+        product_id: supplierManualCreated.id,
+        sku_ids: [Number(standardManualSku.id)],
+        reason: "隔离测试恢复手工虚拟SKU",
+      },
+      actor,
+      owner,
+    );
+    const supplierManualFinal = await readSupplierManualProduct();
+    const supplierManualMainRows = await withIsolatedContainer(isolated, async (scoped) =>
+      scoped.db.select({
+        productType: storeProduct.productType,
+        stock: storeProduct.stock,
+        freight: storeProduct.freight,
+        postage: storeProduct.postage,
+        tempId: storeProduct.tempId,
+        isSupportRefund: storeProduct.isSupportRefund,
+      }).from(storeProduct).where(eq(storeProduct.id, supplierManualCreated.id)).limit(1)
+    );
+
     const finalDetail = await readProduct();
     const adminProducts = new ProductAssociationService(container);
     const virtualCreated = await adminProducts.save(
@@ -830,6 +934,27 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
           === "https://download.example/supplier-v2"
         && supplierVirtualMainRows[0]?.stock === 8
         && supplierVirtualMainRows[0]?.productType === 1,
+      supplier_manual_virtual_created:
+        supplierManualCreated.id > 0
+        && supplierManualFirst.product_type === 3
+        && supplierManualFirst.attrs.length === 2,
+      supplier_manual_virtual_forced_no_logistics:
+        supplierManualMainRows[0]?.freight === 2
+        && supplierManualMainRows[0]?.postage === "0.00"
+        && supplierManualMainRows[0]?.tempId === 0,
+      supplier_manual_virtual_stock_verified:
+        supplierManualStock.stock === 9
+        && supplierManualMainRows[0]?.stock === 9
+        && supplierManualFinal.attrs.find((row) => row.suk === "标准版")?.stock === 5,
+      supplier_manual_virtual_refund_policy:
+        supplierManualMainRows[0]?.isSupportRefund === 1,
+      supplier_manual_virtual_no_card_secret:
+        supplierManualFinal.attrs.every((row) => row.disk_info === ""),
+      supplier_manual_virtual_type_change_rejected: supplierManualTypeChangeRejected,
+      supplier_manual_virtual_retirement_verified:
+        supplierManualRetired.verified && supplierManualRetired.changed === 1,
+      supplier_manual_virtual_restore_verified:
+        supplierManualRestored.verified && supplierManualRestored.changed === 1,
       admin_virtual_created: virtualCreated.sku_verified && virtualFirst.product_type === 1,
       admin_virtual_modes_persisted:
         cardRow.disk_info === ""
@@ -887,6 +1012,14 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       "supplier_retired_stock_rejected",
       "supplier_virtual_restore_verified",
       "supplier_virtual_final_readback",
+      "supplier_manual_virtual_created",
+      "supplier_manual_virtual_forced_no_logistics",
+      "supplier_manual_virtual_stock_verified",
+      "supplier_manual_virtual_refund_policy",
+      "supplier_manual_virtual_no_card_secret",
+      "supplier_manual_virtual_type_change_rejected",
+      "supplier_manual_virtual_retirement_verified",
+      "supplier_manual_virtual_restore_verified",
       "admin_virtual_created",
       "admin_virtual_modes_persisted",
       "card_import_authoritative",
@@ -907,7 +1040,7 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       scenario.final_active_skus !== 3
       || scenario.final_retired_skus !== 0
       || scenario.lifecycle_logs !== 2
-      || scenario.supplier_system_logs !== 4
+      || scenario.supplier_system_logs !== 6
       || scenario.persisted_skus !== 3
       || scenario.persisted_retired_skus !== 0
     ) throw new Error("isolated Supplier SKU lifecycle readback failed");

@@ -72,6 +72,7 @@ export interface ProductEditorOptions {
 }
 
 export interface AdminProductEditor extends AdminProduct {
+  is_support_refund: number;
   cate_id: number[];
   brand_id: number[];
   store_label_id: number[];
@@ -277,6 +278,7 @@ export function apiAdminProductDetail(id: number): Promise<AdminProductEditor> {
       unit_name: "件",
       sort: 20,
       is_vip: 1,
+      is_support_refund: 1,
       vip_price: "179.00",
       brand_id: [21],
       store_label_id: [31, 32],

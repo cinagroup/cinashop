@@ -81,6 +81,7 @@ const deliveryForm = reactive({
 const canManageOrders = computed(() => auth.can("supplier.order.manage"));
 const canManagePrint = computed(() => auth.can("supplier.print.manage"));
 const canManageWaybills = computed(() => auth.can("supplier.waybill.manage"));
+const isManualVirtualOrder = computed(() => current.value?.product_type === 3);
 
 const deliveryTitle = computed(() => {
   const prefix = deliveryMode.value === "partial" ? "分批" : "整单";
@@ -273,7 +274,7 @@ async function saveRemark() {
 
 async function openDelivery(row: OrderRow) {
   current.value = current.value?.id === row.id ? current.value : { ...row, cart_info: [] };
-  deliveryForm.delivery_type = "express";
+  deliveryForm.delivery_type = row.product_type === 3 ? "fictitious" : "express";
   deliveryForm.company_id = "";
   deliveryForm.delivery_name = "";
   deliveryForm.delivery_code = "";
@@ -284,7 +285,9 @@ async function openDelivery(row: OrderRow) {
   for (const key of Object.keys(selectedQuantities)) delete selectedQuantities[key];
   try {
     const [companies, items] = await Promise.all([
-      expressCompanies.value.length === 0 ? getExpressList() : Promise.resolve(expressCompanies.value),
+      row.product_type === 3
+        ? Promise.resolve([])
+        : expressCompanies.value.length === 0 ? getExpressList() : Promise.resolve(expressCompanies.value),
       getSplitCartInfo(row.id),
     ]);
     expressCompanies.value = companies;
@@ -521,7 +524,7 @@ onMounted(load);
         <el-form-item label="发货范围">
           <el-radio-group v-model="deliveryMode">
             <el-radio-button value="whole">整单发货</el-radio-button>
-            <el-radio-button value="partial" :disabled="availableQuantity <= 1">分批发货</el-radio-button>
+            <el-radio-button value="partial" :disabled="availableQuantity <= 1 || isManualVirtualOrder">分批发货</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <div v-if="deliveryMode === 'partial'" class="split-picker">
@@ -542,7 +545,7 @@ onMounted(load);
             <span v-else class="split-picker__available">可发 {{ item.surplus_num }} 件</span>
           </div>
         </div>
-        <el-form-item label="发货方式"><el-radio-group v-model="deliveryForm.delivery_type"><el-radio-button v-if="canManageWaybills" value="waybill">电子面单</el-radio-button><el-radio-button value="express">手填快递</el-radio-button><el-radio-button value="fictitious">虚拟交付</el-radio-button></el-radio-group></el-form-item>
+        <el-form-item label="发货方式"><el-radio-group v-model="deliveryForm.delivery_type"><template v-if="isManualVirtualOrder"><el-radio-button value="fictitious">虚拟交付</el-radio-button></template><template v-else><el-radio-button v-if="canManageWaybills" value="waybill">电子面单</el-radio-button><el-radio-button value="express">手填快递</el-radio-button></template></el-radio-group></el-form-item>
         <template v-if="deliveryForm.delivery_type === 'express' || deliveryForm.delivery_type === 'waybill'">
           <el-form-item label="快递公司"><el-select v-model="deliveryForm.company_id" filterable placeholder="请选择" style="width:100%" @change="selectExpress"><el-option v-for="company in expressCompanies" :key="company.id" :label="company.name" :value="company.id" /></el-select></el-form-item>
           <el-form-item v-if="deliveryForm.delivery_type === 'express'" label="快递单号"><el-input v-model="deliveryForm.delivery_id" maxlength="64" placeholder="请输入快递单号" /></el-form-item>

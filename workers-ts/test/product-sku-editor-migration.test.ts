@@ -70,7 +70,7 @@ describe("FE-001E5A product SKU editor migration", () => {
     ])).toBeNull();
   });
 
-  it("normalizes card-product fixed content while rejecting it on physical products", () => {
+  it("normalizes card fixed content, permits type-three stock, and rejects fixed content elsewhere", () => {
     const body = {
       spec_type: 0,
       items: [{ value: "规格", detail: ["默认"] }],
@@ -84,9 +84,15 @@ describe("FE-001E5A product SKU editor migration", () => {
     expect(normalizeProductSkuEditorPayload(body, 1).skus[0].diskInfo)
       .toBe("https://download.example/license");
     expect(() => normalizeProductSkuEditorPayload(body, 0))
-      .toThrow("实物商品不能配置固定虚拟内容");
+      .toThrow("只有卡密商品可以配置固定虚拟内容");
     expect(() => normalizeProductSkuEditorPayload(body, 3))
-      .toThrow("当前阶段只支持编辑实物或卡密商品SKU");
+      .toThrow("只有卡密商品可以配置固定虚拟内容");
+    expect(normalizeProductSkuEditorPayload({
+      ...body,
+      attrs: [{ ...body.attrs[0], disk_info: "" }],
+    }, 3).skus[0]).toMatchObject({ stock: 10, diskInfo: "" });
+    expect(() => normalizeProductSkuEditorPayload(body, 4))
+      .toThrow("只有卡密商品可以配置固定虚拟内容");
   });
 
   it("requires exact main, dimensions, SKU identities and snapshot readback", () => {

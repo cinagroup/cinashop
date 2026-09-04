@@ -12,6 +12,7 @@
           >
             <el-radio-button :value="0">实物商品</el-radio-button>
             <el-radio-button :value="1">卡密/网盘</el-radio-button>
+            <el-radio-button :value="3">手工虚拟</el-radio-button>
           </el-radio-group>
           <el-text v-if="isEdit" type="info" class="field-hint">创建后不可修改履约类型</el-text>
         </el-form-item>
@@ -30,8 +31,11 @@
         <el-form-item label="原价">
           <el-input-number v-model="form.ot_price" :min="0" :precision="2" />
         </el-form-item>
-        <el-form-item v-if="form.product_type === 0" label="库存">
+        <el-form-item v-if="form.product_type !== 1" label="库存">
           <el-input-number v-model="form.stock" :min="0" />
+        </el-form-item>
+        <el-form-item v-if="form.product_type !== 0" label="售后策略">
+          <el-checkbox v-model="form.is_support_refund" :true-value="1" :false-value="0">允许客户申请退款</el-checkbox>
         </el-form-item>
         <el-form-item label="单位">
           <div class="field-row">
@@ -248,10 +252,10 @@
               </el-table-column>
               <el-table-column v-if="isEdit" prop="unique" label="唯一标识" min-width="100" />
             </el-table>
-            <el-text v-if="form.product_type === 0" type="info">
+            <el-text v-if="form.product_type === 0 || form.product_type === 3" type="info">
               单规格的售价、原价、库存和会员价使用上方主字段；多规格的商品汇总值由SKU自动计算。
             </el-text>
-            <el-text v-else type="info">
+            <el-text v-else-if="form.product_type === 1" type="info">
               填写固定内容时可直接维护可售库存；留空时库存只能通过“卡密库存”导入增加，支付发货严格使用下单快照。
             </el-text>
             <div v-if="isEdit" class="sku-lifecycle-actions">
@@ -359,7 +363,7 @@ const skuActionLoading = ref(false);
 
 const isEdit = computed(() => !!route.params.id);
 const form = reactive({
-  product_type: 0 as 0 | 1,
+  product_type: 0 as 0 | 1 | 3,
   store_name: "",
   store_info: "",
   image: "",
@@ -382,6 +386,7 @@ const form = reactive({
   is_vip: 0,
   vip_price: 0,
   is_show: 1,
+  is_support_refund: 1,
 });
 
 async function submit() {
@@ -499,7 +504,8 @@ function newSkuRow(detail: Record<string, string>): ProductSkuRow {
 
 function changeProductType(value: unknown) {
   if (isEdit.value) return;
-  form.product_type = Number(value) === 1 ? 1 : 0;
+  const requested = Number(value);
+  form.product_type = requested === 1 ? 1 : requested === 3 ? 3 : 0;
   if (form.product_type === 1) {
     form.stock = 0;
     form.unit_name = "份";
@@ -508,6 +514,14 @@ function changeProductType(value: unknown) {
       stock: 0,
       disk_info: "",
       delivery_mode: "cards",
+    }));
+  } else {
+    if (form.product_type === 3 && form.unit_name === "件") form.unit_name = "份";
+    form.attrs = form.attrs.map((row) => ({
+      ...row,
+      disk_info: "",
+      delivery_mode: "cards",
+      original_disk_info: "",
     }));
   }
 }
@@ -577,9 +591,9 @@ function prepareSkuPayload() {
       price: form.price,
       ot_price: form.ot_price,
       vip_price: form.vip_price,
-      stock: form.product_type === 0 ? form.stock : row.stock,
+      stock: form.product_type === 1 ? row.stock : form.stock,
     }];
-    if (form.product_type === 0) return;
+    if (form.product_type !== 1) return;
   }
   form.stock = form.attrs.reduce((sum, row) => sum + Number(row.stock || 0), 0);
   form.price = Math.min(...form.attrs.map((row) => Number(row.price || 0)));
@@ -598,7 +612,7 @@ function applyParameterTemplate(value: unknown) {
 
 function restoreDraft(value: Record<string, unknown>) {
   const stringFields = ["store_name", "store_info", "image", "unit_name", "keyword", "cate_id"] as const;
-  const numberFields = ["price", "ot_price", "stock", "sort", "is_vip", "vip_price", "is_show"] as const;
+  const numberFields = ["price", "ot_price", "stock", "sort", "is_vip", "vip_price", "is_show", "is_support_refund"] as const;
   for (const key of stringFields) {
     if (typeof value[key] === "string") form[key] = value[key];
   }
@@ -607,7 +621,7 @@ function restoreDraft(value: Record<string, unknown>) {
     if (Number.isFinite(parsed)) form[key] = parsed;
   }
   const productType = Number(value.product_type);
-  if (productType === 0 || productType === 1) form.product_type = productType;
+  if (productType === 0 || productType === 1 || productType === 3) form.product_type = productType;
   const specType = Number(value.spec_type);
   if (specType === 0 || specType === 1) form.spec_type = specType;
   for (const key of ["store_label_id", "ensure_id"] as const) {
@@ -727,7 +741,7 @@ onMounted(async () => {
   if (isEdit.value) {
     try {
       const detail = await apiAdminProductDetail(Number(route.params.id));
-      form.product_type = detail.product_type === 1 ? 1 : 0;
+      form.product_type = detail.product_type === 1 ? 1 : detail.product_type === 3 ? 3 : 0;
       form.store_name = detail.store_name;
       form.store_info = detail.store_info;
       form.image = detail.image;
@@ -753,6 +767,7 @@ onMounted(async () => {
       form.is_vip = detail.is_vip ?? 0;
       form.vip_price = Number(detail.vip_price ?? 0);
       form.is_show = detail.is_show;
+      form.is_support_refund = detail.is_support_refund ?? 1;
     } catch (e) {
       ElMessage.error(e instanceof Error ? e.message : "加载失败");
     }

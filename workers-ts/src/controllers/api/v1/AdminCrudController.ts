@@ -47,6 +47,7 @@ import {
 import { StoreOperationsService } from "@/services/store/StoreOperationsService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDeliveryPolicy";
 import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
@@ -483,6 +484,7 @@ export async function adminOrderDelivery(c: C) {
     if (!deliveryId) return jsonFail(c, "请输入快递单号");
   } else {
     fictitiousContent = String(body.fictitious_content ?? "").trim();
+    if (!fictitiousContent) return jsonFail(c, "请输入虚拟交付内容");
     deliveryName = "";
     deliveryId = "";
   }
@@ -509,6 +511,7 @@ export async function adminOrderDelivery(c: C) {
         pinkId: storeOrder.pinkId,
         shippingType: storeOrder.shippingType,
         supplierAllocationStatus: storeOrder.supplierAllocationStatus,
+        productType: storeOrder.productType,
       })
       .from(storeOrder)
       .where(and(eq(storeOrder.orderId, orderId), eq(storeOrder.isDel, 0)))
@@ -523,6 +526,7 @@ export async function adminOrderDelivery(c: C) {
     }
     if (order.pid === -1) throw new ValidateException("请从拆分后的履约子单发货");
     if (order.status !== 0) throw new ValidateException("订单状态不允许发货");
+    assertManualOrderDeliveryType(order.productType, deliveryType as "express" | "send" | "fictitious");
     const rootOrderId = order.pid > 0 ? order.pid : order.id;
     const activeWaybill = await tx
       .select({ id: orderWaybillJob.id })
@@ -585,7 +589,9 @@ export async function adminOrderDelivery(c: C) {
       .where(eq(storeOrder.id, order.id));
     await tx.insert(storeOrderStatus).values({
       oid: order.id,
-      changeType: "delivery_goods",
+      changeType: deliveryType === "fictitious"
+        ? "delivery_fictitious"
+        : deliveryType === "send" ? "delivery" : "delivery_goods",
       changeMessage,
       changeTime: now,
     });

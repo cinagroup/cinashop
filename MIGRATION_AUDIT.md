@@ -4489,6 +4489,28 @@ Supplier页面新增创建时的“实物商品/卡密或固定内容”选择�
 
 E5E2B只能标“候选完成，未发布”。E5E2C仍阻塞父项：当前生产此前只读审计为71个有效商品全是平台实物，Supplier商品/SKU及类型1商品/卡库存均为0；没有源MySQL连接和类型1历史行，也没有真实主管理员、Supplier管理员、受限角色或客户token。未交付与已交付卡密的退款、已暴露密钥是否允许回收、通知和失败重试策略仍需业务确认并用真实角色E2E验证，之后还要另行批准发布和观察。
 
+### E5E3 手工虚拟商品创建编辑与订单闭环
+
+旧PHP的活动商品表单把`product_type=3`定义为“虚拟商品/虚拟发货”：Admin发布0、1、3、4，Supplier发布0、1、3；`StoreProductServices::saveData`对1/2/3统一强制`freight=2/temp_id=0/postage=0`，类型在编辑页不可切换，但类型3保留普通SKU价格和库存，而不是复用类型1卡密/固定内容字段。订单侧，Admin人工虚拟发货写`delivery_type=fictitious`、`fictitious_content`及`delivery_fictitious`状态，Supplier同样存在整单虚拟发货；`Delivery`监听器用`order_fictitious_success`通知标识，`StoreCartServices`把1/2/3视为无需物流，退款是否允许则读取下单商品快照中的`is_support_refund`。这些结论来自`app/services/product/product/StoreProductServices.php`、`app/controller/supplier/product/StoreProduct.php`、`app/services/order/StoreOrderDeliveryServices.php`、`app/listener/order/Delivery.php`、`app/services/order/StoreOrderRefundServices.php`和`app/services/order/StoreCartServices.php`的活动调用链，不是按枚举名称推断。
+
+迁移前存在一组互相放大的缺口：Admin和Supplier保存服务都拒绝类型3；后台交付接口没有把配送方式绑定到不可变商品类型，因而实物可走人工交付、类型3可走快递、类型1也可被手工覆盖；Supplier拆单路径没有阻止类型3；Admin允许空人工交付正文并可能写错状态事件；结算仅对类型1禁止自提。人工交付正文虽然已写入`fictitious_content`，PC和UniApp却只读取类型1的`virtual_info`并显示卡密语义，导致客户看不到类型3交付结果。退款服务本身已有逐订单商品的快照策略，但类型3商品表单没有提供对应开关，也没有生产运行时证据。
+
+本轮把类型3恢复为独立履约类型。Admin与Supplier创建页可选择0/1/3，编辑时类型不可变；类型3强制`delivery_type=''`、`freight=2`、`postage=0`、`temp_id=0`，不出现物流、重量、体积或卡密字段，仍使用普通单/多规格SKU的稳定`id/unique/suk`、库存流水、汇总与可恢复退役合同。Admin和Supplier都显式保存并回读`is_support_refund`。结算新增统一的无物流商品校验，旧类型1/2/3不能选择到店自提；类型3继续免地址和运费。UI实际检查还发现Admin单规格类型3同时展示主库存与SKU库存的重复输入，已修正为单规格只编辑主库存、多规格才逐SKU编辑。
+
+履约边界集中到共享策略：已付款类型3只允许`delivery_type=fictitious`且必须整单交付，人工正文去除首尾空白后仍须非空并受既有请求体上限约束；类型3快递或拆单、实物人工交付、类型1人工覆盖、类型4人工交付、未付款、跨Supplier操作全部失败关闭。Admin状态事件按人工/快递/无需物流分别写`delivery_fictitious`、`delivery`、`delivery_goods`，Supplier同样从订单中的不可变`product_type`判定，不接受请求体扩大类型。客户详情只在订单属于当前客户、`paid=1`、`status>=1`、`product_type=3`且`delivery_type=fictitious`时暴露`fictitious_content`；未交付时为空，PC和UniApp分别显示“已人工交付/虚拟商品已交付”，类型1自动交付仍沿用卡密展示。为保持旧PHP运营审计语义，正文保留在受后台权限保护的`delivery_fictitious`订单状态说明中；它不会复制进`order.delivery.notice` outbox载荷，从而避免再扩大到队列和第三方通知面。
+
+退款语义没有新造一套类型3特例：下单继续把商品的`is_support_refund`写入订单商品快照，真实`applyOrderRefund`对允许退款的已交付类型3创建一条退款并让同一幂等请求回到同一退款ID；快照为0时拒绝且订单、购物车和退款表不变。这个结果证明了迁移与旧PHP逐商品退款开关的一致性，但不代表运营侧已经决定所有虚拟内容的售后政策；具体商品仍由创建时的显式开关负责，真实历史行需在E5E5逐行核对。
+
+生产运行时证据使用已授权Hyperdrive`9748c294e21c49a99579c9cef70102e0`，没有发布主Worker。扩展后的Supplier SKU隔离场景在随机schema调用真实保存、库存和退役服务：类型3以两个SKU库存3/4创建并强制无物流，普通入库2后总库存9，合法编辑保持身份和退款开关，类型不可变，退役/恢复后仍保持汇总且无任何卡密内容。最终Worker`cinashop-supplier-sku-audit-c9b4bc8995f8`的原有实物、类型1和新增类型3断言全部通过，系统日志为6，26张公共相关表和序列指纹不变；schema及Worker已删除，URL复验404，无令牌403、错误方法404。
+
+独立履约Worker`cinashop-manual-virtual-audit-44ca5c91183c`在另一个随机`codex_manual_virtual_*` schema克隆订单、订单商品、退款、状态、outbox和运单任务所需表及本地序列，直接调用真实Supplier履约和退款服务。结果验证：类型3人工交付成功、重放幂等、客户正文交付前隐藏/交付后可见、`delivery_fictitious`与`out_order_delivery`状态正确、只生成一个不可变`order.delivery.notice` outbox且载荷没有正文；空正文、拆单、类型3快递、实物人工、类型1人工、类型4人工、跨Supplier均拒绝；允许退款创建一次并安全重放，禁止退款被拒绝，所有拒绝路径没有改变被测订单。最终为8个订单商品行、1条退款、0个运单任务，19项布尔断言全部为true；公共相关表/序列前后指纹一致、临时schema数量回到基线、Worker删除后URL 404。两次夹具修正也保持安全：一次事务外DAO因连接池search path回落而读不到隔离订单，一次非数字订单商品标识不满足真实退款服务合同；两次均清理随机schema和Worker，修正为显式事务作用域与数字标识后才采纳最终报告。一次Supplier场景遇到Cloudflare瞬时1042路由错误，同一构建重试通过且失败轮也完成清理，因此只记录为瞬时审计基础设施异常，不把它算作业务成功证据。
+
+通知失败与重试沿用已迁移的事务outbox消费者、幂等键和重试/死信机制；本轮生产隔离场景证明类型3会生成正确而且不含正文的真实outbox行，但没有调用外部短信/模板消息提供方，也没有真实客户通知配置或故障注入。因此这里只能证明“通知任务可靠入队合同”，不能宣称真实用户已收到通知或外部失败重试已完成验收。
+
+本地应用内浏览器实际检查Supplier`/products/new?preview=1`：类型3显示单位“份”、普通库存和退款开关，隐藏物流、重量、体积与卡密字段；Supplier`/orders?preview=1`中的类型3订单只显示“虚拟交付”，部分发货禁用，弹窗要求交付正文；Admin`/product/create?preview=1`同样验证了类型3和退款策略。由于当前自动化文本输入能力限制，Supplier交付弹窗没有在preview提交，运行时写路径由生产隔离Worker覆盖；这些都不是生产账号/真实权限验收。Worker全量211文件/1,342项单元与单元/runtime-test双TypeScript通过；Admin前端342个调用点/362个路径变体全部可执行，未注册、受控不可用和未解析均为0。Admin 2,437、Supplier 2,271、PC 1,828模块生产构建及UniApp H5构建已通过，Windows本机`workerd`仍有既知`0xc0000005`访问冲突，Linux CI须作为独立运行时门禁。
+
+E5E3因此只能标“候选完成，未发布”。生产公共业务数据没有改写，随机schema和临时Worker均已清理，主Worker及四端前端均未发布。E5E2C卡密退款策略、E5E4次卡商品创建编辑、E5E5源PHP类型1/3/4历史数据复制与真实Admin/Supplier/受限角色/客户流程、外部通知故障、正式发布和观察仍未完成；FE-001E5、FE-001E5E与FE-001E6继续开放。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

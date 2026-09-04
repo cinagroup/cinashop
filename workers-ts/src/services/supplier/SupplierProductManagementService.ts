@@ -43,6 +43,7 @@ export type {
 const SUPPLIER_TYPE = 2;
 const PHYSICAL_PRODUCT_TYPE = 0;
 const CARD_PRODUCT_TYPE = 1;
+const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
 const PRODUCT_ATTR_TYPE = 0;
 const CATEGORY_RELATION_TYPE = 1;
 const PRODUCT_LOCK_NAMESPACE = PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE;
@@ -51,7 +52,7 @@ const MAX_SKUS = 200;
 type UnknownRecord = Record<string, unknown>;
 
 export interface SupplierProductInput {
-  productType: 0 | 1;
+  productType: 0 | 1 | 3;
   storeName: string;
   storeInfo: string;
   keyword: string;
@@ -193,10 +194,10 @@ export function normalizeSupplierProductInput(
   options: PhysicalProductNormalizationOptions = {},
 ): SupplierProductInput {
   const productTypeValue = integerValue(firstValue(input, "product_type", "productType"), "商品类型", 0, 4);
-  if (productTypeValue !== PHYSICAL_PRODUCT_TYPE && productTypeValue !== CARD_PRODUCT_TYPE) {
-    throw new ValidateException("当前迁移阶段仅支持实物商品和卡密/固定内容商品，优惠券、虚拟商品和次卡暂不可创建");
+  if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(productTypeValue)) {
+    throw new ValidateException("当前迁移阶段仅支持实物、卡密/固定内容和手工虚拟商品，优惠券和次卡暂不可创建");
   }
-  const productType = productTypeValue as 0 | 1;
+  const productType = productTypeValue as 0 | 1 | 3;
   const specTypeValue = integerValue(firstValue(input, "spec_type", "specType"), "规格类型", 0, 1);
   if (specTypeValue !== 0 && specTypeValue !== 1) throw new ValidateException("规格类型错误");
   const specType = specTypeValue as 0 | 1;
@@ -245,8 +246,8 @@ export function normalizeSupplierProductInput(
   }
 
   const skus = normalizeSupplierProductSkus(input.attrs, dimensions, specType, options);
-  if (productType === PHYSICAL_PRODUCT_TYPE && skus.some((sku) => sku.diskInfo)) {
-    throw new ValidateException("实物商品不能配置固定虚拟内容");
+  if (productType !== CARD_PRODUCT_TYPE && skus.some((sku) => sku.diskInfo)) {
+    throw new ValidateException("只有卡密商品可以配置固定虚拟内容");
   }
 
   return {
@@ -598,7 +599,11 @@ export class SupplierProductManagementService {
           )[0]
         : undefined;
       if (productId > 0 && !existing) throw new NotFoundException("商品不存在或不属于当前供应商");
-      if (existing && existing.productType !== PHYSICAL_PRODUCT_TYPE && existing.productType !== CARD_PRODUCT_TYPE) {
+      if (existing && ![
+        PHYSICAL_PRODUCT_TYPE,
+        CARD_PRODUCT_TYPE,
+        MANUAL_VIRTUAL_PRODUCT_TYPE,
+      ].includes(existing.productType)) {
         throw new ValidateException("当前迁移阶段不能编辑此履约类型的商品");
       }
       if (existing && existing.productType !== input.productType) {
@@ -837,6 +842,9 @@ export class SupplierProductManagementService {
           .limit(1)
       )[0];
       if (!product) throw new NotFoundException("商品不存在或不属于当前供应商");
+      if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(product.productType)) {
+        throw new ValidateException("当前商品履约类型不支持普通库存调整");
+      }
       const uniques = adjustments.map((item) => item.unique);
       const skus = await tx
         .select()

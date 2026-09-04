@@ -145,14 +145,16 @@ function initialForm(): ProductDetail {
 
 const form = reactive<ProductDetail>(initialForm());
 const isCardProduct = computed(() => form.product_type === 1);
+const isManualVirtualProduct = computed(() => form.product_type === 3);
+const isPhysicalProduct = computed(() => form.product_type === 0);
 
 function editableSku(sku: ProductSku): ProductSku {
   const diskInfo = sku.disk_info ?? "";
   return {
     ...sku,
-    disk_info: diskInfo,
-    delivery_mode: diskInfo.trim() ? "fixed" : "card",
-    original_disk_info: diskInfo,
+    disk_info: isCardProduct.value ? diskInfo : "",
+    delivery_mode: isCardProduct.value ? (diskInfo.trim() ? "fixed" : "card") : undefined,
+    original_disk_info: isCardProduct.value ? diskInfo : "",
   };
 }
 
@@ -233,6 +235,17 @@ watch(
         sku.delivery_mode = sku.disk_info?.trim() ? "fixed" : "card";
         if (sku.delivery_mode === "card") sku.stock = 0;
       });
+    } else if (value === 3) {
+      form.freight = 2;
+      form.postage = "0.00";
+      form.temp_id = 0;
+      form.is_postage = 0;
+      if (form.unit_name === "件") form.unit_name = "份";
+      form.attrs.forEach((sku) => {
+        sku.disk_info = "";
+        sku.delivery_mode = undefined;
+        sku.original_disk_info = "";
+      });
     } else {
       form.freight = 1;
       form.postage = "0.00";
@@ -305,8 +318,8 @@ function validateForm() {
       }
     }
   }
-  if (!isCardProduct.value && form.freight === 2 && (!/^\d{1,10}(?:\.\d{1,2})?$/.test(form.postage) || Number(form.postage) <= 0)) return "固定邮费必须大于0且最多两位小数";
-  if (!isCardProduct.value && form.freight === 3 && !form.temp_id) return "请选择当前供应商的运费模板";
+  if (isPhysicalProduct.value && form.freight === 2 && (!/^\d{1,10}(?:\.\d{1,2})?$/.test(form.postage) || Number(form.postage) <= 0)) return "固定邮费必须大于0且最多两位小数";
+  if (isPhysicalProduct.value && form.freight === 3 && !form.temp_id) return "请选择当前供应商的运费模板";
   return "";
 }
 
@@ -360,17 +373,17 @@ onMounted(load);
     <header class="page-heading product-form-heading">
       <div class="heading-with-back">
         <el-button circle plain :icon="ArrowLeft" aria-label="返回商品列表" @click="router.push('/products')" />
-        <div><h1>{{ editing ? `编辑${isCardProduct ? "卡密/固定内容" : "实物"}商品` : "新增商品" }}</h1><p>保存后商品将下架并进入平台待审核状态</p></div>
+        <div><h1>{{ editing ? `编辑${isCardProduct ? "卡密/固定内容" : isManualVirtualProduct ? "手工虚拟" : "实物"}商品` : "新增商品" }}</h1><p>保存后商品将下架并进入平台待审核状态</p></div>
       </div>
       <el-button type="primary" :loading="saving" @click="submit">保存并提交审核</el-button>
     </header>
 
     <el-alert
-      :title="isCardProduct ? '卡密库存与固定内容已分离管理' : '支持实物与卡密/固定内容商品'"
+      :title="isCardProduct ? '卡密库存与固定内容已分离管理' : isManualVirtualProduct ? '手工虚拟商品由履约人员填写交付内容' : '支持实物、卡密与手工虚拟商品'"
       type="info"
       show-icon
       :closable="false"
-      :description="isCardProduct ? '一次性卡密请先以0库存保存，再到卡密库存页导入；固定内容随订单快照交付。' : '优惠券、人工虚拟发货和次卡仍未开放创建。'"
+      :description="isCardProduct ? '一次性卡密请先以0库存保存，再到卡密库存页导入；固定内容随订单快照交付。' : isManualVirtualProduct ? '支付后只能整单虚拟交付；交付内容会安全显示在客户订单详情。' : '优惠券和次卡仍未开放创建。'"
     />
 
     <div class="product-form-layout">
@@ -383,6 +396,7 @@ onMounted(load);
                 <el-radio-group v-model="form.product_type" :disabled="editing">
                   <el-radio-button :value="0">实物商品</el-radio-button>
                   <el-radio-button :value="1">卡密 / 固定内容</el-radio-button>
+                  <el-radio-button :value="3">手工虚拟</el-radio-button>
                 </el-radio-group>
                 <p v-if="editing" class="security-note">商品创建后不能修改履约类型。</p>
               </el-form-item>
@@ -478,8 +492,8 @@ onMounted(load);
               <el-table-column label="一级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage" /></template></el-table-column>
               <el-table-column label="二级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage_two" /></template></el-table-column>
               <el-table-column label="SKU编码" width="160"><template #default="scope"><el-input v-model="scope.row.code" maxlength="50" /></template></el-table-column>
-              <el-table-column v-if="!isCardProduct" label="重量" width="120"><template #default="scope"><el-input v-model="scope.row.weight" /></template></el-table-column>
-              <el-table-column v-if="!isCardProduct" label="体积" width="120"><template #default="scope"><el-input v-model="scope.row.volume" /></template></el-table-column>
+              <el-table-column v-if="isPhysicalProduct" label="重量" width="120"><template #default="scope"><el-input v-model="scope.row.weight" /></template></el-table-column>
+              <el-table-column v-if="isPhysicalProduct" label="体积" width="120"><template #default="scope"><el-input v-model="scope.row.volume" /></template></el-table-column>
             </el-table>
           </div>
           <section v-if="editing && retiredAttrs.length" class="retired-sku-section">
@@ -517,7 +531,7 @@ onMounted(load);
         <article class="surface product-form-card compact-card">
           <header><h2>配送与售后</h2></header>
           <el-form label-position="top">
-            <template v-if="!isCardProduct">
+            <template v-if="isPhysicalProduct">
               <el-form-item label="配送方式"><el-input model-value="快递配送" disabled /></el-form-item>
               <el-form-item label="运费设置">
                 <el-radio-group v-model="form.freight">
@@ -534,7 +548,7 @@ onMounted(load);
                 <el-button link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
               </el-form-item>
             </template>
-            <el-alert v-else title="自动交付，无需物流和运费" type="success" show-icon :closable="false" />
+            <el-alert v-else :title="isCardProduct ? '自动交付，无需物流和运费' : '人工虚拟交付，无需物流和运费'" type="success" show-icon :closable="false" />
             <el-form-item><el-checkbox v-model="form.is_support_refund" :true-value="1" :false-value="0">支持退款退货</el-checkbox></el-form-item>
           </el-form>
         </article>

@@ -42,6 +42,7 @@ const MANAGED_RELATIONS = [
 ] as const;
 const PARAMETER_TEMPLATE_GROUP = 3;
 const CARD_PRODUCT_TYPE = 1;
+const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
 const MAX_ASSOCIATION_IDS = 100;
 const MAX_PARAMETER_SPECS = 100;
 
@@ -448,6 +449,7 @@ export class ProductAssociationService {
       unit_name: item.unitName,
       sort: item.sort,
       is_vip: item.isVip,
+      is_support_refund: item.isSupportRefund,
       vip_price: item.vipPrice,
       brand_id: brandIds,
       store_label_id: productLabelIds,
@@ -480,8 +482,11 @@ export class ProductAssociationService {
         "商品类型",
         0,
         0,
-        CARD_PRODUCT_TYPE,
+        MANUAL_VIRTUAL_PRODUCT_TYPE,
       );
+      if (![0, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(productType)) {
+        throw new ValidateException("当前迁移阶段仅支持实物、卡密或手工虚拟商品");
+      }
       if (existing && Object.prototype.hasOwnProperty.call(body, "product_type")) {
         const requestedProductType = integerValue(
           body.product_type,
@@ -575,7 +580,21 @@ export class ProductAssociationService {
         sort,
         isShow,
         isVip,
+        isSupportRefund: integerValue(
+          body.is_support_refund,
+          "退款支持状态",
+          existing?.isSupportRefund ?? 1,
+          0,
+          1,
+        ),
         productType,
+        ...(productType === CARD_PRODUCT_TYPE || productType === MANUAL_VIRTUAL_PRODUCT_TYPE ? {
+          deliveryType: "",
+          freight: 2,
+          postage: "0.00",
+          tempId: 0,
+          isPostage: 0,
+        } : {}),
         ...(skuPayload ? {
           specType: skuPayload.specType,
           settlePrice: skuSummary!.settlePrice,

@@ -94,6 +94,7 @@ import { AttachmentService } from "@/services/system/AttachmentService";
 import { reservePinkJoin } from "@/services/activity/PinkLifecycleService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { parseVirtualDeliveryInfo } from "@/services/order/VirtualProductDeliveryService";
+import { assertProductCheckoutShippingType } from "@/services/order/ManualVirtualDeliveryPolicy";
 import { resolveSecondCardValidityAtCheckout } from "@/services/order/SecondCardValidityService";
 import {
   resolveDiscountPackageSelection,
@@ -151,6 +152,21 @@ export interface CreateOrderParams {
 /** Infrastructure needed by the real order-creation core. */
 export interface StoreOrderCreationRuntime extends SystemConfigEnv {
   nextOrderId(): Promise<string>;
+}
+
+export function customerVisibleManualVirtualContent(order: {
+  paid: number;
+  status: number;
+  productType: number;
+  deliveryType: string;
+  fictitiousContent: string;
+}): string {
+  return order.paid === 1
+    && order.status >= 1
+    && order.productType === 3
+    && order.deliveryType === "fictitious"
+    ? order.fictitiousContent
+    : "";
 }
 
 export interface OrderPricingQuote {
@@ -1476,10 +1492,8 @@ export class StoreOrderCreateService {
     if (productTypes.size > 1) {
       throw new ValidateException("不同履约类型商品不能同单购买");
     }
-    if (productTypes.has(1) && shippingType === 2) {
-      throw new ValidateException("卡密商品无需到店自提");
-    }
     const orderProductType = productTypes.size === 1 ? [...productTypes][0] : 0;
+    assertProductCheckoutShippingType(orderProductType, shippingType);
     if (
       type === 4 && shippingType === 1 && ![1, 2, 3].includes(orderProductType) &&
       (!params.realName?.trim() || !params.userPhone?.trim() || !params.userAddress?.trim())
@@ -2840,8 +2854,9 @@ export class StoreOrderCreateService {
     );
     return {
       ...order,
+      fictitiousContent: customerVisibleManualVirtualContent(order),
       virtualInfo:
-        order.paid === 1 && order.deliveryType === "fictitious"
+        order.productType === 1 && order.paid === 1 && order.deliveryType === "fictitious"
           ? parseVirtualDeliveryInfo(order.virtualInfo)
           : null,
       customForm,
@@ -2863,8 +2878,9 @@ export class StoreOrderCreateService {
       })),
       splitOrders: splitOrders.map((child) => ({
         ...child,
+        fictitiousContent: customerVisibleManualVirtualContent(child),
         virtualInfo:
-          child.paid === 1 && child.deliveryType === "fictitious"
+          child.productType === 1 && child.paid === 1 && child.deliveryType === "fictitious"
             ? parseVirtualDeliveryInfo(child.virtualInfo)
             : null,
         cartInfo: splitCartsByOrder.get(child.id) ?? [],

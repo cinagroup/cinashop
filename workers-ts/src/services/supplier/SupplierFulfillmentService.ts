@@ -15,6 +15,7 @@ import {
   lockOrderSettlement,
 } from "@/services/order/OrderBrokerageService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDeliveryPolicy";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -687,6 +688,7 @@ async function applyDelivery(
 ) {
   const now = Math.floor(Date.now() / 1_000);
   assertDeliverable(order);
+  assertManualOrderDeliveryType(order.productType, input.deliveryType);
   await assertPinkCompleted(tx, order);
   await assertPresaleEnded(tx, order);
   await assertNoOpenRefund(tx, supplierId, order.id);
@@ -926,6 +928,7 @@ export class SupplierFulfillmentService {
       paid: order.paid,
       status: order.status,
       refund_status: order.refundStatus,
+      product_type: order.productType,
       delivery_type: order.deliveryType,
       delivery_name: order.deliveryName,
       delivery_code: order.deliveryCode,
@@ -957,6 +960,10 @@ export class SupplierFulfillmentService {
       await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId);
       if (!active) throw new ValidateException("该订单已全部发货");
       assertDeliverable(active);
+      assertManualOrderDeliveryType(active.productType, input.deliveryType);
+      if (active.productType === 3) {
+        throw new ValidateException("手工虚拟商品不支持拆分发货，请整单填写交付内容");
+      }
       await assertPinkCompleted(tx, active);
       await assertPresaleEnded(tx, active);
       await assertNoOpenRefund(tx, supplierId, active.id);

@@ -250,7 +250,7 @@ onMounted(load);
         <el-table-column label="创建时间" width="165"><template #default="scope">{{ formatTime(scope.row.add_time) }}</template></el-table-column>
         <el-table-column label="操作" width="350" fixed="right">
           <template #default="scope">
-            <el-button v-if="scope.row.product_type === 0 || scope.row.product_type === 1" link type="primary" :icon="Edit" @click="router.push(`/products/${scope.row.id}/edit`)">编辑</el-button>
+            <el-button v-if="[0, 1, 3].includes(scope.row.product_type)" link type="primary" :icon="Edit" @click="router.push(`/products/${scope.row.id}/edit`)">编辑</el-button>
             <el-button
               v-if="scope.row.product_type === 1"
               link
@@ -258,7 +258,7 @@ onMounted(load);
               :icon="Box"
               @click="router.push(`/products/${scope.row.id}/virtual-inventory`)"
             >卡密库存</el-button>
-            <el-button v-if="scope.row.product_type === 0" link type="primary" :icon="Box" @click="openStock(scope.row)">库存</el-button>
+            <el-button v-if="scope.row.product_type === 0 || scope.row.product_type === 3" link type="primary" :icon="Box" @click="openStock(scope.row)">库存</el-button>
             <el-button link type="danger" :icon="Delete" @click="removeProduct(scope.row)">回收</el-button>
           </template>
         </el-table-column>

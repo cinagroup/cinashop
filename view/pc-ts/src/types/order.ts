@@ -41,10 +41,12 @@ export interface OrderInfo {
   pay_type: string;
   paid: number;
   status: number;
+  product_type: number;
   shipping_type: number;
   store_id: number;
   verify_code: string;
   delivery_type: string;
+  fictitious_content: string;
   delivery_uid: number;
   virtual_info?: VirtualDeliveryItem[] | string | null;
   add_time: number;
@@ -90,6 +92,8 @@ export interface OrderPackage {
   pay_price: string;
   paid: number;
   status: number;
+  product_type: number;
+  fictitious_content: string;
   virtual_info?: VirtualDeliveryItem[] | string | null;
   cart_info: OrderCartInfo[];
 }

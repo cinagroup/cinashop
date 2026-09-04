@@ -47,9 +47,9 @@
       <view class="virtual-heading">
         <view>
           <text class="virtual-title">虚拟商品交付</text>
-          <text class="virtual-tip">卡密仅在当前订单详情展示，请妥善保管</text>
+          <text class="virtual-tip">{{ isManualVirtualDelivery ? "以下内容由履约人员交付，请及时保存" : "卡密仅在当前订单详情展示，请妥善保管" }}</text>
         </view>
-        <text class="virtual-status">已自动发放</text>
+        <text class="virtual-status">{{ isManualVirtualDelivery ? "已人工交付" : "已自动发放" }}</text>
       </view>
       <view v-if="virtualText" class="virtual-secret" @tap="copyVirtual(virtualText)">
         <text>{{ virtualText }}</text>
@@ -192,10 +192,17 @@ const payType = ref<CheckoutPaymentMethod>("yue");
 const paying = ref(false);
 const customForm = computed(() => order.value?.custom_form ?? []);
 const virtualItems = computed(() =>
-  Array.isArray(order.value?.virtual_info) ? order.value.virtual_info : [],
+  order.value?.product_type === 1 && Array.isArray(order.value.virtual_info) ? order.value.virtual_info : [],
 );
+const isManualVirtualDelivery = computed(() => Boolean(
+  order.value?.product_type === 3 && order.value.delivery_type === "fictitious" && order.value.status >= 1,
+));
 const virtualText = computed(() =>
-  typeof order.value?.virtual_info === "string" ? order.value.virtual_info : "",
+  isManualVirtualDelivery.value
+    ? order.value?.fictitious_content ?? ""
+    : order.value?.product_type === 1 && typeof order.value.virtual_info === "string"
+      ? order.value.virtual_info
+      : "",
 );
 const isWriteoffPending = computed(() => Boolean(
   order.value?.paid === 1 &&
@@ -242,7 +249,9 @@ const statusText = computed(() => {
   if (order.value.type === 3 && order.value.pink_status === 3) return "拼团失败，退款处理中";
   if (order.value.supplier_allocation_status === 1) return "订单分配中";
   if (order.value.pid === -1) return `已拆分为 ${order.value.split_orders?.length ?? 0} 个履约订单`;
-  if (order.value.delivery_type === "fictitious" && order.value.status >= 1) return "卡密已发放";
+  if (order.value.delivery_type === "fictitious" && order.value.status >= 1) {
+    return order.value.product_type === 3 ? "虚拟商品已交付" : "卡密已发放";
+  }
   if (order.value.shipping_type === 2 && order.value.status === 0) return "待到店核销";
   if (order.value.shipping_type === 2 && order.value.status === 5) return "部分核销";
   if (order.value.delivery_type === "send" && order.value.status === 1) return "配送中，待送达核销";
@@ -263,7 +272,9 @@ const statusSub = computed(() => {
   if (order.value.supplier_allocation_status === 1) return "正在生成各供应商履约订单，请稍后刷新";
   if (order.value.pid === -1) return "可进入下方包裹分别查看物流与售后";
   if (order.value.delivery_type === "fictitious" && order.value.status >= 1) {
-    return "卡密已发送到订单详情，请及时保存";
+    return order.value.product_type === 3
+      ? "交付内容已显示在订单详情，请及时保存"
+      : "卡密已发送到订单详情，请及时保存";
   }
   if (order.value.shipping_type === 2 && [0, 5].includes(order.value.status)) {
     return "到店后向工作人员出示核销码";
