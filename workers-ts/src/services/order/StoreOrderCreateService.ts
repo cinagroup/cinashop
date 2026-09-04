@@ -94,6 +94,7 @@ import { AttachmentService } from "@/services/system/AttachmentService";
 import { reservePinkJoin } from "@/services/activity/PinkLifecycleService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { parseVirtualDeliveryInfo } from "@/services/order/VirtualProductDeliveryService";
+import { resolveSecondCardValidityAtCheckout } from "@/services/order/SecondCardValidityService";
 import {
   resolveDiscountPackageSelection,
   type ResolvedDiscountPackage,
@@ -1472,12 +1473,15 @@ export class StoreOrderCreateService {
     if (productTypes.has(1) && productTypes.size > 1) {
       throw new ValidateException("卡密商品不能与其他类型商品同单购买");
     }
+    if (productTypes.size > 1) {
+      throw new ValidateException("不同履约类型商品不能同单购买");
+    }
     if (productTypes.has(1) && shippingType === 2) {
       throw new ValidateException("卡密商品无需到店自提");
     }
     const orderProductType = productTypes.size === 1 ? [...productTypes][0] : 0;
     if (
-      type === 4 && shippingType === 1 && ![1, 2].includes(orderProductType) &&
+      type === 4 && shippingType === 1 && ![1, 2, 3].includes(orderProductType) &&
       (!params.realName?.trim() || !params.userPhone?.trim() || !params.userAddress?.trim())
     ) {
       throw new ValidateException("请填写完整的收货人、手机号和收货地址");
@@ -1553,7 +1557,7 @@ export class StoreOrderCreateService {
     let postageCents = 0;
     let postageDiscountCents = 0;
     let isStoreFreePostage = false;
-    const postageExempt = orderItems.every(({ product }) => [1, 2].includes(product.productType));
+    const postageExempt = orderItems.every(({ product }) => [1, 2, 3].includes(product.productType));
     const hasDeliveryAddress = Boolean(
       (params.cityId ?? 0) > 0 || params.province?.trim() || params.userAddress?.trim(),
     );
@@ -2387,6 +2391,14 @@ export class StoreOrderCreateService {
           0,
           lineGrossCents - lineCouponCents - lineFirstOrderCents - lineDeductionCents,
         );
+        const secondCardValidity = cart.productType === 4
+          ? resolveSecondCardValidityAtCheckout({
+              writeValid: sku.writeValid === 2 ? 2 : sku.writeValid === 3 ? 3 : 1,
+              writeDays: sku.writeDays,
+              writeStart: sku.writeStart,
+              writeEnd: sku.writeEnd,
+            })
+          : { writeStart: sku.writeStart, writeEnd: sku.writeEnd };
         const cartInfoJson = JSON.stringify({
           coupon_price: (lineCouponCents / 100).toFixed(2),
           integral_price: (lineDeductionCents / 100).toFixed(2),
@@ -2407,6 +2419,12 @@ export class StoreOrderCreateService {
             unique: sku.unique,
             suk: sku.suk,
             price: (unitPriceCents / 100).toFixed(2),
+            ...(cart.productType === 4 ? {
+              write_valid: sku.writeValid,
+              write_days: sku.writeDays,
+              write_start: sku.writeStart,
+              write_end: sku.writeEnd,
+            } : {}),
           },
           activitySku: activitySku
             ? {
@@ -2444,8 +2462,8 @@ export class StoreOrderCreateService {
           promotionsId: null,
           writeTimes,
           writeSurplusTimes: writeTimes,
-          writeStart: sku.writeStart,
-          writeEnd: sku.writeEnd,
+          writeStart: secondCardValidity.writeStart,
+          writeEnd: secondCardValidity.writeEnd,
           cartInfo: cartInfoJson,
           unique: crypto.randomUUID().replaceAll("-", ""),
           isSupportRefund: type === 5

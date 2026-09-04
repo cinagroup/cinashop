@@ -43,8 +43,11 @@ describe("虚拟卡密商品支付后自动交付", () => {
     const create = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
     expect(create).toContain("cart.productType !== product.productType");
     expect(create).toContain('productTypes.has(1) && productTypes.size > 1');
+    expect(create).toContain('if (productTypes.size > 1)');
+    expect(create).toContain('throw new ValidateException("不同履约类型商品不能同单购买")');
     expect(create).toContain('throw new ValidateException("卡密商品无需到店自提")');
-    expect(create).toContain("const postageExempt = orderItems.every");
+    expect(create).toContain("![1, 2, 3].includes(orderProductType)");
+    expect(create).toContain("[1, 2, 3].includes(product.productType)");
   });
 
   it("列表隐藏卡密，只有通过用户归属校验的详情才解码交付内容", () => {

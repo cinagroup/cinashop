@@ -30,6 +30,7 @@ import { recordSupplierPayment } from "@/services/supplier/SupplierFinanceServic
 import { grantPaidOrderProductCoupons } from "@/services/activity/ProductCouponService";
 import { grantLotteryEntitlement } from "@/services/activity/LotteryService";
 import { deliverPaidVirtualOrders } from "@/services/order/VirtualProductDeliveryService";
+import { activatePaidSecondCardValidity } from "@/services/order/SecondCardValidityService";
 import {
   ORDER_DELIVERY_NOTICE_EVENT,
   ORDER_REFUND_REFUSED_NOTICE_EVENT,
@@ -488,6 +489,12 @@ export class OrderOutboxService {
       // PHP 的 OrderPayHandelJob 在支付后异步发卡。这里复用同一个可重放
       // outbox，并把卡密认领、订单发货状态和其余支付后置任务放进同一事务。
         await deliverPaidVirtualOrders(tx, allocation.fulfillmentOrders, now);
+
+        // PHP starts a "purchase + N days" second-card window at payment, not
+        // checkout or delayed outbox processing. Supplier allocation runs first
+        // so only fulfillment rows are activated; the split root remains an
+        // immutable payment audit record.
+        await activatePaidSecondCardValidity(tx, allocation.fulfillmentOrders, order.payTime);
 
         // The payment outbox and printer jobs commit together. Split-order roots
         // never print; each fulfillment order selects printers in its own scope.
