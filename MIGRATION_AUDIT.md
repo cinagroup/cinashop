@@ -4509,6 +4509,8 @@ E5E2B只能标“候选完成，未发布”。E5E2C仍阻塞父项：当前生�
 
 本地应用内浏览器实际检查Supplier`/products/new?preview=1`：类型3显示单位“份”、普通库存和退款开关，隐藏物流、重量、体积与卡密字段；Supplier`/orders?preview=1`中的类型3订单只显示“虚拟交付”，部分发货禁用，弹窗要求交付正文；Admin`/product/create?preview=1`同样验证了类型3和退款策略。由于当前自动化文本输入能力限制，Supplier交付弹窗没有在preview提交，运行时写路径由生产隔离Worker覆盖；这些都不是生产账号/真实权限验收。Worker全量211文件/1,342项单元与单元/runtime-test双TypeScript通过；Admin前端342个调用点/362个路径变体全部可执行，未注册、受控不可用和未解析均为0。Admin 2,437、Supplier 2,271、PC 1,828模块生产构建及UniApp H5构建已通过，Windows本机`workerd`仍有既知`0xc0000005`访问冲突，Linux CI须作为独立运行时门禁。
 
+精确实现提交`be61e36a1bda2af0e30af17484b4bf3a39587de3`推送后，[Actions `33856242181`](https://github.com/cinagroup/cinashop/actions/runs/33856242181)首次运行的两个Worker job分别因npm官方安全审计端点返回503和5分钟网络超时而在代码门禁前失败；保留成功的六个job并重跑失败项后，生产依赖审计实际返回成功，Linux workerd、Worker双TypeScript/1,342项单元/schema/route/observability、Admin、PC、Supplier、Kefu、UniApp和全历史密钥扫描最终8/8成功。该失败按外部注册表瞬时故障记录，未被当作漏洞通过或静默豁免。
+
 E5E3因此只能标“候选完成，未发布”。生产公共业务数据没有改写，随机schema和临时Worker均已清理，主Worker及四端前端均未发布。E5E2C卡密退款策略、E5E4次卡商品创建编辑、E5E5源PHP类型1/3/4历史数据复制与真实Admin/Supplier/受限角色/客户流程、外部通知故障、正式发布和观察仍未完成；FE-001E5、FE-001E5E与FE-001E6继续开放。
 
 ## 完成定义
