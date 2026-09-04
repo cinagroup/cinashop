@@ -4383,7 +4383,9 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 `admin-legacy-product-route-parity.json`过去仍把配送、赠品/优惠券、用户标签、推荐、表单、运费模板和品牌七类批处理列为`product_list`缺口，但这些操作已由E5B3实现并有CI证据。此次只纠正`covered/remaining`文本，不改变12屏中candidate 6、partial 6的统计：商品列表仍缺丰富筛选、审核动作、导出和真实角色生产写流程；商品编辑/规格仍缺历史多规格、虚拟商品和非平台生命周期。FE-001E5C可标完成，FE-001E5父项及E6继续未完成。下一阶段必须使用可恢复的专用测试记录或源库历史样本，验证主管理员、只读/编辑受限角色、单/多规格、虚拟商品、失败重试和移动端；当前两条被真实业务引用的SKU不能被借作破坏性测试。
 
-本地新增SKU专项静态门禁验证只读/写路由、双哈希令牌、短超时、锁顺序、单次外层写调用、精确迁移常量双遍执行、业务摘要回读、无商品表DML、生产Hyperdrive ID以及两个runner的`finally`删除/URL 404，共8/8通过；商品逐屏审计另有回归断言阻止把已实现批处理重新列入缺口。完整Worker单元209文件/1,320项、单元与运行时双TypeScript、Admin生产构建2,437模块、schema审计201/201共享表零源字段缺口且外部/内嵌263表零漂移、Admin 342个调用点/362个路径变体全部可执行、全局路由和17信号/53事件可观测性审计均通过。追加测试后一次默认约2 GiB堆的单元TypeScript复跑在垃圾回收阶段OOM，改用明确4 GiB堆上限即通过且没有类型诊断；本机workerd仍在进入任何断言前因Wrangler日志目录权限和Windows `0xc0000005`退出，运行时0项不能计作通过。精确提交的Linux workerd与其余Actions结果将在推送后补录，不能提前写成成功。
+本地新增SKU专项静态门禁验证只读/写路由、双哈希令牌、短超时、锁顺序、单次外层写调用、精确迁移常量双遍执行、业务摘要回读、无商品表DML、生产Hyperdrive ID以及两个runner的`finally`删除/URL 404，共8/8通过；商品逐屏审计另有回归断言阻止把已实现批处理重新列入缺口。完整Worker单元209文件/1,320项、单元与运行时双TypeScript、Admin生产构建2,437模块、schema审计201/201共享表零源字段缺口且外部/内嵌263表零漂移、Admin 342个调用点/362个路径变体全部可执行、全局路由和17信号/53事件可观测性审计均通过。追加测试后一次默认约2 GiB堆的单元TypeScript复跑在垃圾回收阶段OOM，改用明确4 GiB堆上限即通过且没有类型诊断；本机workerd仍在进入任何断言前因Wrangler日志目录权限和Windows `0xc0000005`退出，运行时0项不能计作通过。
+
+精确提交`f9060c8736b94ed58882f8aada9127da2c35d13a`推送后，[Actions `33830983585`](https://github.com/cinagroup/cinashop/actions/runs/33830983585)的Repository全历史Secret扫描、Worker双TypeScript/1,320项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。由此Linux运行时补足本机无法执行的权威证据；该流水线不等于主Worker或前端已经发布。
 
 ## 完成定义
 
