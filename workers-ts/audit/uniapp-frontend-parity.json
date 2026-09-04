@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "snapshotDate": "2026-09-04",
+  "scope": "legacy cinashop-php UniApp to view/uniapp-ts",
+  "counting": {
+    "legacy": {
+      "pagesTreeVueFiles": 250,
+      "logicalManifestRouteRecords": 151,
+      "platformActiveRouteRecords": { "H5": 151, "MP-WEIXIN": 150, "APP-PLUS": 150 },
+      "mainRoutes": 7,
+      "subPackageRoutes": 144,
+      "subPackages": 10,
+      "manifestSha256": "B3F0D0DB6F6E7E1E2C039695712797FBBB0B1146ACC85D304C24BB344E185EB7",
+      "conditionalNotes": [
+        "H5 includes pages/users/alipay_invoke/index",
+        "APP-PLUS selects pages/discover/discoverVideo/app while other builds select index; the route record count is unchanged"
+      ]
+    },
+    "target": {
+      "pagesTreeVueFiles": 59,
+      "logicalManifestRouteRecords": 59,
+      "platformActiveRouteRecords": { "H5": 59, "MP-WEIXIN": 59, "APP-PLUS": 59 },
+      "manifestSha256": "B0840BC56FE1AF51BA4CEA7D002384DEFC9EF3398AD36C8D96CD307CA00F4BB9"
+    },
+    "routeLedger": {
+      "directRegistered": 3,
+      "legacyCompatibilityRules": 97,
+      "candidateCoveredRules": 60,
+      "partialReplacementRules": 37,
+      "unmappedOrCrossSurface": 51,
+      "accountedLegacyRoutes": 151
+    },
+    "method": "Use active pages.json records as the denominator. Raw Vue files include embedded components, templates and unrouted files and are never treated as route coverage."
+  },
+  "legacyRouteFamilies": [
+    { "root": "main", "routes": 7 },
+    { "root": "pages/users", "routes": 54 },
+    { "root": "pages/activity", "routes": 11 },
+    { "root": "pages/admin", "routes": 21 },
+    { "root": "pages/columnGoods", "routes": 2 },
+    { "root": "pages/annex", "routes": 13 },
+    { "root": "pages/extension", "routes": 5 },
+    { "root": "pages/work", "routes": 5 },
+    { "root": "pages/goods", "routes": 21 },
+    { "root": "pages/behalf", "routes": 5 },
+    { "root": "pages/discover", "routes": 7 }
+  ],
+  "directRegisteredLegacyRoutes": [
+    "/pages/index/index",
+    "/pages/user/index",
+    "/pages/annex/vip_active/index"
+  ],
+  "gaps": [
+    {
+      "id": "FE-003B",
+      "title": "User governance and history screens",
+      "status": "missing_actionable",
+      "legacyRoutes": [
+        "/pages/users/privacy/index",
+        "/pages/users/user_cancellation/index",
+        "/pages/users/visit_list/index",
+        "/pages/users/user_agreement_list/index",
+        "/pages/users/user_member_code/index"
+      ],
+      "remaining": "Restore privacy/account-cancellation/agreement rendering, visit history and member QR only against explicit Worker contracts."
+    },
+    {
+      "id": "FE-003C",
+      "title": "Distributor and agent self-service",
+      "status": "missing_actionable",
+      "legacyRoutes": [
+        "/pages/users/distributor/apply",
+        "/pages/users/agent/apply",
+        "/pages/users/agent/state",
+        "/pages/users/agent/record",
+        "/pages/users/agent/staff_list"
+      ],
+      "remaining": "Do not alias these roles to Supplier onboarding; define the migrated division/agent customer workflow first."
+    },
+    {
+      "id": "FE-003D",
+      "title": "Presale, newcomer, live and ranking activities",
+      "status": "missing_actionable",
+      "legacyRoutes": [
+        "/pages/activity/presell/index",
+        "/pages/activity/new_customer/index",
+        "/pages/columnGoods/live_list/index",
+        "/pages/columnGoods/rank/index"
+      ],
+      "remaining": "The consolidated activity page currently exposes seckill, bargain, combination and lottery only."
+    },
+    {
+      "id": "FE-003E",
+      "title": "Legacy mobile admin cross-surface replacement",
+      "status": "cross_surface_candidate",
+      "legacyRoutes": [
+        "/pages/admin/user/list",
+        "/pages/admin/user/index",
+        "/pages/admin/goods/index",
+        "/pages/admin/goods/specs",
+        "/pages/admin/order/index",
+        "/pages/admin/orderList/index",
+        "/pages/admin/orderDetail/index",
+        "/pages/admin/delivery/index",
+        "/pages/admin/order_cancellation/index",
+        "/pages/admin/distribution/index",
+        "/pages/admin/distribution/orderDetail/index",
+        "/pages/admin/work/index",
+        "/pages/admin/logistics/index",
+        "/pages/admin/refundOrderList/index",
+        "/pages/admin/refund/index",
+        "/pages/admin/refundOrderDetail/index"
+      ],
+      "remaining": "These privileged operations moved to admin-ts and are intentionally not deep-linked from the customer shell; validate mobile Admin coverage and retirement redirects before closure."
+    },
+    {
+      "id": "FE-003F",
+      "title": "Payment callback, generic webview and membership/payment history",
+      "status": "blocked_external_e2e",
+      "legacyRoutes": [
+        "/pages/users/alipay_invoke/index",
+        "/pages/annex/web_view/index",
+        "/pages/annex/record_list/index",
+        "/pages/annex/offline_pay/index",
+        "/pages/annex/offline_result/index",
+        "/pages/goods/cashier/index",
+        "/pages/goods/match_pay/index"
+      ],
+      "remaining": "Payment is consolidated into checkout/order detail/membership screens, but provider callbacks and historical deep links require real H5/mini-program E2E. The unrestricted legacy webview remains retired pending an allowlist design."
+    },
+    {
+      "id": "FE-003G",
+      "title": "Feedback, enterprise work mode and behalf ordering",
+      "status": "missing_actionable",
+      "legacyRoutes": [
+        "/pages/extension/customer_list/feedback",
+        "/pages/work/userInfo/index",
+        "/pages/work/orderList/index",
+        "/pages/work/orderDetail/index",
+        "/pages/work/record/index",
+        "/pages/work/groupInfo/index",
+        "/pages/behalf/user_list/index",
+        "/pages/behalf/goods_list/index",
+        "/pages/behalf/record/index",
+        "/pages/behalf/order_confirm/index",
+        "/pages/behalf/cashier/index"
+      ],
+      "remaining": "work.ts has context APIs but no registered UI consumer; feedback and behalf ordering have neither registered routes nor complete target flows."
+    },
+    {
+      "id": "FE-003H",
+      "title": "Community topic, search and video deep links",
+      "status": "partial_replacement",
+      "legacyRoutes": [
+        "/pages/discover/discoverTopic/index",
+        "/pages/discover/discoverSearch/index",
+        "/pages/discover/discoverVideo/index"
+      ],
+      "remaining": "Feed, publish, detail modal and social relationships exist, but these three query-addressable screens do not yet have equivalent deep-link state."
+    }
+  ],
+  "platformBuildMatrix": [
+    { "platform": "H5", "command": "npm run build:h5", "status": "completed_local_candidate" },
+    { "platform": "MP-WEIXIN", "command": "npm run build:mp-weixin", "status": "completed_local_candidate" },
+    { "platform": "APP-PLUS", "command": "npm run build:app", "status": "completed_local_candidate", "note": "Build succeeds with the existing mixed static/dynamic request.ts chunk warning" }
+  ],
+  "checklist": [
+    { "id": "FE-003A", "done": true, "item": "Recount active manifests, install a registered-route allowlist, map 97 legacy routes and normalize legacy query keys" },
+    { "id": "FE-003B", "done": false, "item": "Restore user governance/history screens" },
+    { "id": "FE-003C", "done": false, "item": "Implement distributor and agent self-service without conflating Supplier roles" },
+    { "id": "FE-003D", "done": false, "item": "Restore or explicitly retire presale, newcomer, live and ranking experiences" },
+    { "id": "FE-003E", "done": false, "item": "Validate legacy mobile-admin replacements on the Admin surface and retirement redirects" },
+    { "id": "FE-003F", "done": false, "item": "Run real payment callback and historical deep-link E2E; retain generic webview retirement unless allowlisted" },
+    { "id": "FE-003G", "done": false, "item": "Restore feedback, enterprise work mode and behalf-ordering flows" },
+    { "id": "FE-003H", "done": false, "item": "Restore query-addressable community topic, search and video deep links" },
+    { "id": "FE-003I", "done": true, "item": "Run local H5, WeChat mini-program and App conditional production builds" },
+    { "id": "FE-003J", "done": false, "item": "Run real-device H5, WeChat mini-program and App smoke tests" },
+    { "id": "FE-003K", "done": false, "item": "Run real customer/operator accounts, provider callbacks and production data E2E before release" }
+  ]
+}

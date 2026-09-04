@@ -6,17 +6,11 @@ import {
   type DiyComponentName,
   type DiyPage,
 } from "@/api/diy";
+import { resolveRegisteredPageRoute, TAB_ROUTES } from "@/config/navigation";
 
 const DIY_CACHE_PREFIX = "cinashop_diy_page_v1_";
 const MAX_COMPONENTS = 200;
 const ALLOWED_COMPONENTS = new Set<string>(DIY_COMPONENT_NAMES);
-const TAB_ROUTES = new Set([
-  "/pages/index/index",
-  "/pages/goods/cate",
-  "/pages/discover/index",
-  "/pages/cart/index",
-  "/pages/user/index",
-]);
 
 interface DiyCacheEntry {
   version: string | null;
@@ -206,29 +200,14 @@ export function diyItemLink(value: unknown): string {
   return stringLink(info[1]) || stringLink(record?.link) || stringLink(record?.url);
 }
 
-const LEGACY_ROUTE_MAP: Readonly<Record<string, string>> = {
-  "/pages/goods_details/index": "/pages/goods/detail",
-  "/pages/goods/goods_list/index": "/pages/goods/list",
-  "/pages/activity/goods_seckill_details/index": "/pages/activity/seckillDetail",
-  "/pages/activity/goods_combination_details/index": "/pages/activity/detail",
-  "/pages/activity/goods_bargain_details/index": "/pages/activity/bargainDetail",
-  "/pages/extension/news_details/index": "/pages/article/detail",
-  "/pages/extension/news_list/index": "/pages/article/list",
-  "/pages/users/user_sgin/index": "/pages/user/sign",
-  "/pages/users/user_coupon/index": "/pages/user/coupon",
-  "/pages/users/user_integral/index": "/pages/user/integral",
-  "/pages/annex/special/index": "/pages/diy/detail",
-};
-
 export function normalizeDiyLink(value: unknown): string {
   const raw = stringLink(value);
   if (!raw || raw.length > 2_048 || /[\u0000-\u001f\u007f]/.test(raw)) return "";
   if (/^https:\/\//i.test(raw)) return raw;
   if (!raw.startsWith("/pages/")) return "";
   const [path, query = ""] = raw.split("?", 2);
-  const mapped = LEGACY_ROUTE_MAP[path] ?? path;
-  if (!/^\/pages\/[a-z0-9_/-]+$/i.test(mapped)) return "";
-  return query ? `${mapped}?${query}` : mapped;
+  if (!/^\/pages\/[a-z0-9_/-]+$/i.test(path)) return "";
+  return resolveRegisteredPageRoute(path, query);
 }
 
 export function openDiyLink(value: unknown): void {

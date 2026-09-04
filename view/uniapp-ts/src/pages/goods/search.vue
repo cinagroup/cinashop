@@ -53,6 +53,7 @@
 </template>
 
 <script setup lang="ts">
+import { onLoad } from "@dcloudio/uni-app";
 import { ref, onMounted } from "vue";
 import { http } from "@/utils/request";
 import { apiGoodsList } from "@/api/product";
@@ -112,6 +113,13 @@ function clearHistory() {
 function goDetail(id: number) {
   uni.navigateTo({ url: `/pages/goods/detail?id=${id}` });
 }
+
+onLoad((options) => {
+  const initial = String(options?.keyword ?? options?.searchVal ?? "").trim().slice(0, 100);
+  if (!initial) return;
+  keyword.value = initial;
+  void doSearch();
+});
 
 onMounted(() => {
   loadHot();

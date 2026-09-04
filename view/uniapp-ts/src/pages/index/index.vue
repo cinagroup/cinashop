@@ -114,7 +114,7 @@ import { apiOpenAdv, type OpenAdvConfig } from "@/api/legacyContent";
 import type { DiyPage } from "@/api/diy";
 import DiyHomeRenderer from "@/components/diy/DiyHomeRenderer.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
-import { diyPageStyle, isDiyEnabled, loadDiyPage } from "@/utils/diy";
+import { diyPageStyle, isDiyEnabled, loadDiyPage, openDiyLink } from "@/utils/diy";
 import { apiShareConfig, type ShareConfig } from "@/api/public";
 
 const goods = ref<GoodsItem[]>([]);
@@ -219,7 +219,7 @@ function closeOpenAdv() {
 function followOpenAdv() {
   const link = openAdvItem.value?.link ?? "";
   closeOpenAdv();
-  if (link.startsWith("/pages/")) uni.navigateTo({ url: link });
+  openDiyLink(link);
 }
 
 function onSearch(e: { detail: { value: string } }) {
@@ -251,7 +251,7 @@ function goArticles() {
 }
 
 function goBanner(banner: { link: string }) {
-  if (banner.link) uni.navigateTo({ url: banner.link });
+  openDiyLink(banner.link);
 }
 
 function goCate(cate: CategoryNode) {

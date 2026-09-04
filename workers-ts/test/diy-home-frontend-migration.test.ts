@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const root = resolve(import.meta.dirname, "..");
 const client = readFileSync(resolve(root, "../view/uniapp-ts/src/api/diy.ts"), "utf8");
 const loader = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diy.ts"), "utf8");
+const navigation = readFileSync(resolve(root, "../view/uniapp-ts/src/config/navigation.ts"), "utf8");
 const renderer = readFileSync(
   resolve(root, "../view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue"),
   "utf8",
@@ -105,7 +106,8 @@ describe("DIY-home frontend migration", () => {
     expect(loader).toContain("/^https:\\/\\//i.test(url)");
     expect(loader).toContain("/^\\/(?!\\/)/.test(url)");
     expect(loader).toContain("return \"\";");
-    expect(loader).toContain('"/pages/goods_details/index": "/pages/goods/detail"');
+    expect(navigation).toContain('"/pages/goods_details/index": { target: "/pages/goods/detail"');
+    expect(loader).toContain("resolveRegisteredPageRoute(path, query)");
     expect(loader).toContain("if (!raw.startsWith(\"/pages/\")) return \"\"");
   });
 
