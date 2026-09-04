@@ -5,9 +5,13 @@ import {
   storeProductAttrValue,
   storeProductSkuRetirementLog,
 } from "@/models/schema";
-import { parseProductSkuRetirementInput } from "@/services/product/ProductSkuRetirementService";
+import {
+  parseProductSkuRetirementInput,
+  supplierProductSkuScope,
+} from "@/services/product/ProductSkuRetirementService";
 import { completeCartesianDimensions } from "@/services/product/ProductSkuEditorService";
 import { requiredAdminPermission } from "@/services/admin/AdminPermissionService";
+import { requiredSupplierPermissions } from "@/services/supplier/SupplierPermissionService";
 import { PRODUCT_SKU_RETIREMENT_SQL } from "@/migrations/productSkuRetirement";
 import { MigrationService } from "@/services/MigrationService";
 
@@ -25,6 +29,16 @@ describe("controlled product SKU retirement", () => {
       sku_ids: Array.from({ length: 51 }, (_, index) => index + 1),
       reason: "批量退役",
     })).toThrow("单次最多操作50个SKU");
+  });
+
+  it("derives a bounded Supplier owner scope instead of accepting tenant identity from the body", () => {
+    expect(supplierProductSkuScope(72)).toEqual({
+      ownerType: 2,
+      relationId: 72,
+      surface: "supplier",
+    });
+    expect(() => supplierProductSkuScope(0)).toThrow("供应商身份无效");
+    expect(() => supplierProductSkuScope(Number.NaN)).toThrow("供应商身份无效");
   });
 
   it("accepts only complete remaining or restored SKU combinations", () => {
@@ -124,6 +138,44 @@ describe("controlled product SKU retirement", () => {
     expect(page).toContain("恢复选中SKU");
   });
 
+  it("extends the same stable lifecycle to the authenticated Supplier owner without delete-reinsert", () => {
+    const routes = readFileSync("src/routes/supplierapi.ts", "utf8");
+    const controller = readFileSync("src/controllers/supplier/SupplierController.ts", "utf8");
+    const retirement = readFileSync("src/services/product/ProductSkuRetirementService.ts", "utf8");
+    const supplierProducts = readFileSync(
+      "src/services/supplier/SupplierProductManagementService.ts",
+      "utf8",
+    );
+    const api = readFileSync("../view/supplier-ts/src/api/supplier.ts", "utf8");
+    const page = readFileSync("../view/supplier-ts/src/pages/ProductForm.vue", "utf8");
+
+    expect(routes).toContain('post("/product/product/sku/retire", SupplierController.retireProductSkus)');
+    expect(routes).toContain('post("/product/product/sku/restore", SupplierController.restoreProductSkus)');
+    expect(routes.indexOf('"/product/product/sku/retire"')).toBeLessThan(
+      routes.lastIndexOf('"/product/product/:id"'),
+    );
+    expect(requiredSupplierPermissions("POST", "/supplierapi/product/product/sku/retire"))
+      .toEqual(["supplier.product.manage"]);
+    expect(requiredSupplierPermissions("POST", "/supplierapi/product/product/sku/restore"))
+      .toEqual(["supplier.product.manage"]);
+    expect(controller).toContain("supplierProductSkuScope(supplierId)");
+    expect(controller.match(/readSkuLifecycleBody\(c\)/g)?.length).toBe(2);
+    expect(retirement).toContain("eq(storeProduct.type, scope.ownerType)");
+    expect(retirement).toContain("eq(storeProduct.relationId, scope.relationId)");
+    expect(retirement).toContain("商品不存在或不属于当前供应商");
+    expect(retirement).toContain("/supplierapi/product/product/sku/${action}");
+    expect(supplierProducts).toContain("await replaceProductSkuEditor(tx");
+    expect(supplierProducts).toContain("loadProductSkuEditor(this.container.db");
+    expect(supplierProducts).not.toContain("tx.delete(storeProductAttrValue)");
+    expect(supplierProducts).not.toContain("商品存在受控退役SKU");
+    expect(api).toContain('url: "/product/product/sku/retire"');
+    expect(api).toContain('url: "/product/product/sku/restore"');
+    expect(page).toContain('auth.can("supplier.product.manage")');
+    expect(page).toContain("退役选中历史SKU");
+    expect(page).toContain("恢复选中SKU");
+    expect(page).toContain("if (!result.verified)");
+  });
+
   it("keeps the production audit and migration bounded, authenticated, idempotent, and self-cleaning", () => {
     const worker = readFileSync(
       "test/integration/ProductSkuRetirementProductionAuditWorker.ts",
@@ -155,11 +207,13 @@ describe("controlled product SKU retirement", () => {
     expect(worker).toContain("SKU migration found a partial pre-existing object set");
     expect(worker).toContain("businessRowsUnchanged");
     expect(worker).toContain("idempotentSecondPass");
+    expect(worker).toContain("product_owner_distribution: productOwnerDistribution");
     expect(worker).not.toMatch(/\bINSERT\s+INTO\b/i);
     expect(worker).not.toMatch(/\bUPDATE\s+store_product_attr_value\s+SET\b/i);
     expect(worker).not.toMatch(/\bDELETE\s+FROM\b/i);
 
     expect(config).toContain('"id": "9748c294e21c49a99579c9cef70102e0"');
+    expect(config).toContain('"global_fetch_strictly_public"');
     expect(auditRunner).toContain("Invoke-RestMethod -Method Get");
     expect(migrationRunner).toContain("Invoke-RestMethod -Method Post");
     expect(migrationRunner.match(/Invoke-RestMethod -Method Post/g)).toHaveLength(1);
@@ -170,6 +224,54 @@ describe("controlled product SKU retirement", () => {
       expect(runner).toContain("wrangler delete");
       expect(runner).toContain("url_returns_404");
       expect(runner).toContain("AUDIT_TOKEN_SHA256:$taskTokenHash");
+      expect(runner).toContain("for ($taskAttempt = 1; $taskAttempt -le 5");
     }
+  });
+
+  it("runs the real Supplier lifecycle in a production isolated schema without public drift", () => {
+    const scenario = readFileSync(
+      "test/integration/SupplierProductSkuLifecyclePostgresScenario.ts",
+      "utf8",
+    );
+    const worker = readFileSync(
+      "test/integration/SupplierProductSkuLifecycleAuditWorker.ts",
+      "utf8",
+    );
+    const config = readFileSync(
+      "test/integration/supplier-product-sku-lifecycle-audit.wrangler.jsonc",
+      "utf8",
+    );
+    const runner = readFileSync(
+      "scripts/run-supplier-product-sku-lifecycle-production-audit.ps1",
+      "utf8",
+    );
+    for (const assertion of [
+      "stable_identity_after_edit",
+      "missing_active_rejected",
+      "retirement_verified",
+      "save_with_retired_row_succeeded",
+      "ordinary_restore_rejected",
+      "cross_tenant_rejected",
+      "open_cart_blocked",
+      "restore_verified",
+      "supplier_stock_scope_verified",
+      "public_state_unchanged",
+    ]) expect(scenario).toContain(assertion);
+    expect(scenario).toContain("searchPath: schema");
+    expect(scenario).toContain("withIsolatedContainer");
+    expect(scenario).not.toContain("await isolated.insert");
+    expect(scenario).toContain("DROP SCHEMA IF EXISTS");
+    expect(scenario).toContain("FINGERPRINT_TABLES = TABLES");
+    expect(worker).toContain("crypto.subtle.timingSafeEqual");
+    expect(worker).toContain("runSupplierProductSkuLifecyclePostgresScenario");
+    expect(config).toContain('"id": "9748c294e21c49a99579c9cef70102e0"');
+    expect(config).toContain('"global_fetch_strictly_public"');
+    expect(runner.match(/Invoke-RestMethod -Method Post/g)).toHaveLength(1);
+    expect(runner).toContain("} finally {");
+    expect(runner).toContain("wrangler delete");
+    expect(runner).toContain("url_returns_404");
+    expect(runner).toContain("cleanup did not converge");
+    expect(runner).not.toContain("RandomNumberGenerator]::Fill");
+    expect(runner).not.toContain("SHA256]::HashData");
   });
 });

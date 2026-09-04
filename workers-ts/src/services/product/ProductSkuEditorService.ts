@@ -12,7 +12,7 @@ import {
   normalizeSupplierProductSkus,
   type SupplierProductDimension,
   type SupplierProductSku,
-} from "@/services/supplier/SupplierProductManagementService";
+} from "@/services/product/ProductSkuInput";
 import {
   PRODUCT_SKU_IDENTITY_LOCK_KEY,
   PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE,
@@ -512,7 +512,7 @@ export async function replaceProductSkuEditor(
       }).where(eq(storeProductAttrValue.id, current.id));
       const difference = sku.stock - current.stock;
       if (difference !== 0) stockRecords.push({
-        storeId: product.type === 1 ? product.relationId : 0,
+        storeId: product.type === 0 ? 0 : product.relationId,
         productId: product.id,
         unique,
         costPrice: sku.cost,
@@ -544,7 +544,7 @@ export async function replaceProductSkuEditor(
         code: sku.code,
       });
       if (sku.stock > 0) stockRecords.push({
-        storeId: product.type === 1 ? product.relationId : 0,
+        storeId: product.type === 0 ? 0 : product.relationId,
         productId: product.id,
         unique,
         costPrice: sku.cost,

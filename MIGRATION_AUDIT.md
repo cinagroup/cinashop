@@ -4387,6 +4387,42 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 精确提交`f9060c8736b94ed58882f8aada9127da2c35d13a`推送后，[Actions `33830983585`](https://github.com/cinagroup/cinashop/actions/runs/33830983585)的Repository全历史Secret扫描、Worker双TypeScript/1,320项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。由此Linux运行时补足本机无法执行的权威证据；该流水线不等于主Worker或前端已经发布。
 
+## FE-001-E5D Supplier实物SKU稳定编辑与受控退役（2026-09-04）
+
+### 审计范围、旧实现风险与完成边界
+
+本项只关闭Supplier自有、未删除实物商品的普通SKU稳定编辑和可恢复退役候选链，不把平台E5B2/E5C证据重复计算，也不扩展到门店、虚拟商品或正式发布。旧PHP的Supplier商品保存最终复用公共`StoreProductServices->saveData(..., type=2, supplierId)`；其`StoreProductAttrServices::saveProductAttr`按前端数组位置更新已有行，只在新数组更短时删除尾部ID，并在更长时追加。因此规格顺序或组合变化会让旧ID绑定到另一组`suk`，订单、评价和库存历史可能仍指向同一ID却表达了不同商品组合。迁移前TypeScript Supplier服务风险更直接：先删除商品全部普通SKU，再生成新ID整批插入；一旦商品存在退役行又整单拒绝保存，既重建历史身份又形成无法继续编辑的死路。
+
+本轮把规格输入类型和规范化逻辑提取为共享`ProductSkuInput`，Supplier编辑复用平台稳定身份编辑器。已有活跃组合按规范化`suk`精确匹配并保留`id`、`unique`、`sales`和`sum_stock`，只更新允许变化的价格、库存、成本、图片、重量和体积；新增组合获得新身份。遗漏已有活跃组合、改变其`suk`或试图通过普通保存恢复退役行都会失败关闭，退役行也不再被删除。详情接口从同一编辑器回读并明确分成可编辑`attrs`和只读`retired_attrs`，避免前端把历史行重新混入普通保存正文。
+
+### 租户、权限、事务与生命周期合同
+
+`ProductSkuRetirementService`不再隐式假定平台owner，而是要求调用方传入可信scope。Admin端只传固定`type=0/relation_id=0`；Supplier端从已经签名验证的认证上下文派生`supplierId`和actor，再传`type=2/relation_id=supplierId`，不读取请求正文中的租户或操作者。商品查询同时约束`id/type/relation_id/is_del=0`，跨Supplier访问统一返回“不存在或不属于当前供应商”。两条Supplier写路由位于动态商品路由之前，正文有8 KiB流式上限，并都映射到既有`supplier.product.manage`权限；只读角色不能因知道商品或SKU ID绕过RBAC。生命周期日志仍在同一数据库事务追加，Supplier系统日志使用Supplier管理路径，不冒充平台Admin操作。
+
+退役/恢复继续沿用E5B2的身份锁、商品锁、依赖快照、完整笛卡尔组合、数据库触发器与写后回读合同。开放购物车、未支付订单、活动和门店等可售依赖会阻断退役；订单、评价、库存流水等历史引用只计数保留。普通保存不能把`is_retired`从1改回0，恢复只能走专用入口并要求理由。页面只在拥有管理权限时显示操作；活跃表勾选后退役、历史表勾选后恢复，理由必须2～255字符。接口返回`verified=true`后页面重新加载详情才提示成功，并明确告知未保存表单内容会被回读覆盖。
+
+### 生产只读事实与隔离真实服务演练
+
+经用户明确授权，随机命名、双SHA-256令牌保护的临时Worker通过Hyperdrive `9748c294e21c49a99579c9cef70102e0`连接生产PostgreSQL 16.14。最终只读审计确认E5C迁移对象全部ready；71个未删除实物商品全部为平台`type=0/relation_id=0`，其中2个拥有普通SKU，生产没有Supplier商品、Supplier SKU或Supplier owner。当前仍只有2条平台SKU；开放购物车2条、未支付订单8条、订单历史28条，其他活动/门店/评价/库存/虚拟库存引用聚合为0，退役行和生命周期日志均为0。因此没有可由真实Supplier token安全操作的现有生产对象，本轮没有伪造业务租户、改写现有商品或把平台商品临时转属Supplier。
+
+为验证真实服务而不污染业务表，专用演练在同一生产PostgreSQL建立随机`codex_supplier_sku_*` schema，克隆Supplier保存与退役链需要的26张表并建立本地序列；所有seed、直读和服务事务都显式执行事务级`SET LOCAL search_path`。演练调用真实`SupplierProductManagementService`和`ProductSkuRetirementService`：创建2条SKU后扩展为3条，原两条的ID/unique/销量/累计入库保持稳定，新组合取得新身份；删除已有组合被拒绝；退役后详情正确拆分活跃/历史行，保留退役行的普通保存成功但伪恢复失败；另一Supplier访问被拒绝；加入开放购物车后退役被阻断；清除隔离依赖后专用恢复成功。最终为3条活跃、0条退役，产生2条生命周期证据、2条Supplier系统日志和5条`store_id=101`的Supplier库存流水，所有断言都来自数据库回读。
+
+演练前后对全部26张公共业务表及关联公共序列做有序摘要，最终`public_state_unchanged=true`、临时schema数量不变，精确随机schema以`DROP SCHEMA ... CASCADE`清理。最终Worker `cinashop-supplier-sku-audit-b485629ca71f`的无令牌POST为403、错误方法为404；Worker和Secret删除后公开URL复验404。只读审计最终Worker同样删除并返回404。主Worker、Supplier前端、Queue和第三方服务均未部署或调用。
+
+### Harness事故、纠正与防回归
+
+首轮隔离演练在创建商品时以“分类不存在或不属于当前供应商”失败。追踪发现直接对Hyperdrive客户端调用`isolated.insert`时，连接启动参数中的自定义`search_path`没有成为该语句的可靠隔离边界，导致一条精确标记的合成分类误写入`public.store_product_cate`：`id=41/type=2/relation_id=101/cate_name='Isolated category'`。临时令牌保护的清理入口先锁定并按完整四字段复核该行，再确认商品引用为0，才删除唯一命中；清理Worker和临时代码随后全部移除。
+
+修复不是忽略该事件或只缩小断言，而是让所有直接seed/读取都经过显式事务包装，并把公共指纹从6张表扩为全部26张克隆表和关联序列。最终演练在修复后重新完整执行并证明公共状态不变；专项测试还禁止场景源码再次出现`await isolated.insert`，要求存在显式隔离容器、全表指纹、精确schema清理和URL 404回收。该事故没有触及商品、SKU、订单、购物车或用户数据，误写分类在引用为0时已被精确删除，不能恢复，但其原因、影响和纠正均保留在本审计记录中。
+
+最终重跑还暴露两个工具配置缺口。Windows PowerShell 5不支持静态`RandomNumberGenerator.Fill/SHA256.HashData`，第一次在部署前停止；runner改用可释放的`Create().GetBytes/ComputeHash`并增加源码回归。随后Worker `cinashop-supplier-sku-audit-59de470b2ea4`因遗漏`global_fetch_strictly_public`而在首次数据库访问收到1042；这与[Cloudflare官方1042定义](https://developers.cloudflare.com/workers/observability/errors/)一致，表示同zone Worker子请求被平台阻止。控制面删除日志返回HTTP 200和`Successfully deleted`，其URL随后独立复验404。审计配置补齐与仓库其他Hyperdrive审计Worker一致的兼容标志后，才运行并采纳上述`b485629ca71f`最终结果；runner也改为即使主请求失败仍输出Worker名、失败原因与清理结果，并在删除或404不收敛时整体失败。
+
+### 前端验收、自动门禁与剩余阻断
+
+Supplier生产构建通过2,271个模块。应用内浏览器实际打开本地preview商品71：勾选活跃SKU后输入“停止旧颜色销售”，活跃行由2变1，历史表显示原稳定ID和`PV71GRN1`；再输入“重新开放旧颜色”恢复后，活跃行回到2且历史区消失。390×844视口下`scrollWidth=clientWidth=375`，页面无横向溢出，生命周期按钮可见且导航切为移动端；全程console warning/error为0。这里的页面数据是隔离preview，只证明控件、状态转换和响应式布局，不是生产Supplier账号验收。
+
+专项3文件/28项测试、单元与运行时双TypeScript、Supplier生产构建2,271模块和Worker全量209文件/1,323项单元全部通过。schema审计保持201/201源表字段完整、外部/内嵌263表零漂移；Admin静态请求342个调用点/362个路径变体全部可执行；全局路由为PHP 1,904 / TS 1,623 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026；设置账本仍为76屏中reviewed 15 / candidate 11 / partial 3 / retired 1 / unreviewed 61；可观测性保持17个信号、53个必需事件和6个发布阻断。提交、远端Actions与精确提交号将在本项推送后补录。E5D当前只能标“候选完成，未发布”：生产没有真实Supplier商品或SKU，尚无真实主管理员/Supplier管理员/只读和编辑受限角色token；源PHP历史多规格数据、门店SKU、虚拟商品、正式发布、发布后失败重试和观察期仍未完成。它们继续阻塞FE-001E5父项及FE-001E6，不能因隔离schema演练通过而上调为生产完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

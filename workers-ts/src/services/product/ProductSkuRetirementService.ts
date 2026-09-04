@@ -34,6 +34,25 @@ export interface ProductSkuRetirementInput {
   reason: string;
 }
 
+export interface ProductSkuRetirementScope {
+  ownerType: 0 | 2;
+  relationId: number;
+  surface: "admin" | "supplier";
+}
+
+export const PLATFORM_PRODUCT_SKU_SCOPE: ProductSkuRetirementScope = {
+  ownerType: 0,
+  relationId: 0,
+  surface: "admin",
+};
+
+export function supplierProductSkuScope(supplierId: number): ProductSkuRetirementScope {
+  if (!Number.isSafeInteger(supplierId) || supplierId <= 0) {
+    throw new ValidateException("供应商身份无效");
+  }
+  return { ownerType: 2, relationId: supplierId, surface: "supplier" };
+}
+
 export interface ProductSkuDependencySnapshot {
   open_carts: number;
   open_orders: number;
@@ -207,6 +226,13 @@ function blockingSummary(snapshot: ProductSkuDependencySnapshot): string[] {
   ].flatMap(([label, value]) => Number(value) > 0 ? [`${label}${value}`] : []);
 }
 
+function assertTrustedScope(scope: ProductSkuRetirementScope): void {
+  const platform = scope.surface === "admin" && scope.ownerType === 0 && scope.relationId === 0;
+  const supplier = scope.surface === "supplier" && scope.ownerType === 2
+    && Number.isSafeInteger(scope.relationId) && scope.relationId > 0;
+  if (!platform && !supplier) throw new ValidateException("商品归属范围无效");
+}
+
 export class ProductSkuRetirementService {
   constructor(private readonly container: Container) {}
 
@@ -214,8 +240,10 @@ export class ProductSkuRetirementService {
     action: "retire" | "restore",
     body: unknown,
     actor: ProductEditorActor,
+    scope: ProductSkuRetirementScope,
   ): Promise<{ changed: number; verified: true; dependencies: ProductSkuDependencySnapshot }> {
     const input = parseProductSkuRetirementInput(body);
+    assertTrustedScope(scope);
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
@@ -233,11 +261,17 @@ export class ProductSkuRetirementService {
         productType: storeProduct.productType,
         specType: storeProduct.specType,
         isDel: storeProduct.isDel,
-      }).from(storeProduct).where(eq(storeProduct.id, input.productId)).limit(1).for("update");
+      }).from(storeProduct).where(and(
+        eq(storeProduct.id, input.productId),
+        eq(storeProduct.type, scope.ownerType),
+        eq(storeProduct.relationId, scope.relationId),
+        eq(storeProduct.isDel, 0),
+      )).limit(1).for("update");
       const product = products[0];
-      if (!product || product.isDel !== 0) throw new NotFoundException("商品不存在或已删除");
-      if (product.type !== 0 || product.relationId !== 0) {
-        throw new ValidateException("当前阶段仅支持平台自营商品SKU退役");
+      if (!product) {
+        throw new NotFoundException(scope.surface === "supplier"
+          ? "商品不存在或不属于当前供应商"
+          : "平台自营商品不存在或已删除");
       }
       if (product.productType !== 0) throw new ValidateException("当前阶段仅支持实物商品SKU退役");
       const expectedStatus = action === "retire" ? 0 : 1;
@@ -289,8 +323,12 @@ export class ProductSkuRetirementService {
       await tx.insert(systemLog).values(skus.map((sku) => ({
         adminId: actor.id,
         adminName: actor.name.slice(0, 64),
-        path: `/adminapi/product/sku/${action}`,
-        page: `/product/edit/${input.productId}`,
+        path: scope.surface === "supplier"
+          ? `/supplierapi/product/product/sku/${action}`
+          : `/adminapi/product/sku/${action}`,
+        page: scope.surface === "supplier"
+          ? `/products/${input.productId}/edit`
+          : `/product/edit/${input.productId}`,
         method: "POST",
         action: `product.sku_${action};product=${input.productId};sku=${sku.id}`,
         ip: actor.ip.slice(0, 45),

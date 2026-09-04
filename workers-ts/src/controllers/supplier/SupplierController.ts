@@ -44,6 +44,10 @@ import {
   supplierEnsureOwner,
 } from "@/services/product/ProductExperienceService";
 import {
+  ProductSkuRetirementService,
+  supplierProductSkuScope,
+} from "@/services/product/ProductSkuRetirementService";
+import {
   requestedConfigGroup,
   StoreScopedConfigService,
 } from "@/services/store/StoreScopedConfigService";
@@ -72,6 +76,10 @@ function financeService(c: SupplierContext) {
 
 function productManagementService(c: SupplierContext) {
   return new SupplierProductManagementService(c.get("container"));
+}
+
+function productSkuRetirementService(c: SupplierContext) {
+  return new ProductSkuRetirementService(c.get("container"));
 }
 
 function productMetadataService(c: SupplierContext) {
@@ -106,6 +114,10 @@ const MAX_SIMPLE_BODY_BYTES = 64 * 1024;
 
 async function readJsonObject(c: SupplierContext): Promise<Record<string, unknown>> {
   return readRequestJsonObject(c.req.raw, MAX_SIMPLE_BODY_BYTES);
+}
+
+async function readSkuLifecycleBody(c: SupplierContext): Promise<Record<string, unknown>> {
+  return readRequestJsonObject(c.req.raw, 8 * 1024);
 }
 
 const MAX_PRODUCT_BODY_BYTES = 1024 * 1024;
@@ -633,6 +645,28 @@ export async function createProduct(c: SupplierContext) {
     await readBoundedJsonObject(c),
   );
   return jsonOk(c, result, "商品创建成功，等待平台审核");
+}
+
+export async function retireProductSkus(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const result = await productSkuRetirementService(c).change(
+    "retire",
+    await readSkuLifecycleBody(c),
+    supplierAdminActor(c),
+    supplierProductSkuScope(supplierId),
+  );
+  return jsonOk(c, result, "SKU已退役");
+}
+
+export async function restoreProductSkus(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  const result = await productSkuRetirementService(c).change(
+    "restore",
+    await readSkuLifecycleBody(c),
+    supplierAdminActor(c),
+    supplierProductSkuScope(supplierId),
+  );
+  return jsonOk(c, result, "SKU已恢复");
 }
 
 export async function recycleProduct(c: SupplierContext) {

@@ -11,8 +11,6 @@ import { withTx } from "@/lib/di";
 import {
   storeCart,
   storeProduct,
-  storeProductAttr,
-  storeProductAttrResult,
   storeProductAttrValue,
   storeProductCategory,
   storeProductDescription,
@@ -21,41 +19,35 @@ import {
   shippingTemplates,
 } from "@/models/schema";
 import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
+import {
+  normalizeSupplierProductDimensions,
+  normalizeSupplierProductSkus,
+  type PhysicalProductNormalizationOptions,
+  type SupplierProductDimension,
+  type SupplierProductSku,
+} from "@/services/product/ProductSkuInput";
+import { loadProductSkuEditor, replaceProductSkuEditor } from "@/services/product/ProductSkuEditorService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+
+export {
+  buildSkuCombinations,
+  normalizeSupplierProductDimensions,
+  normalizeSupplierProductSkus,
+} from "@/services/product/ProductSkuInput";
+export type {
+  PhysicalProductNormalizationOptions,
+  SupplierProductDimension,
+  SupplierProductSku,
+} from "@/services/product/ProductSkuInput";
 
 const SUPPLIER_TYPE = 2;
 const PHYSICAL_PRODUCT_TYPE = 0;
 const PRODUCT_ATTR_TYPE = 0;
 const CATEGORY_RELATION_TYPE = 1;
 const PRODUCT_LOCK_NAMESPACE = PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE;
-const MAX_DIMENSIONS = 3;
 const MAX_SKUS = 200;
 
 type UnknownRecord = Record<string, unknown>;
-
-export interface SupplierProductDimension {
-  value: string;
-  detail: string[];
-}
-
-export interface SupplierProductSku {
-  suk: string;
-  detail: Record<string, string>;
-  image: string;
-  price: string;
-  settlePrice: string;
-  cost: string;
-  otPrice: string;
-  vipPrice: string;
-  stock: number;
-  barCode: string;
-  weight: string;
-  volume: string;
-  brokerage: string;
-  brokerageTwo: string;
-  code: string;
-  unique?: string;
-}
 
 export interface SupplierPhysicalProductInput {
   storeName: string;
@@ -86,10 +78,6 @@ export interface SupplierStockAdjustment {
   unique: string;
   pm: 0 | 1;
   stock: number;
-}
-
-export interface PhysicalProductNormalizationOptions {
-  requireSettlePrice?: boolean;
 }
 
 function asRecord(value: unknown, message = "参数格式错误"): UnknownRecord {
@@ -194,122 +182,6 @@ function normalizeCategoryIds(value: unknown): number[] {
   if (ids.length === 0 || ids.some((id) => id <= 0)) throw new ValidateException("请选择商品分类");
   if (ids.length > 20) throw new ValidateException("商品分类不能超过20项");
   return [...new Set(ids)];
-}
-
-export function normalizeSupplierProductDimensions(value: unknown): SupplierProductDimension[] {
-  if (!Array.isArray(value)) throw new ValidateException("商品规格格式错误");
-  if (value.length === 0 || value.length > MAX_DIMENSIONS) {
-    throw new ValidateException(`商品规格维度需为1至${MAX_DIMENSIONS}项`);
-  }
-  const dimensions = value.map((item) => {
-    const row = asRecord(item, "商品规格格式错误");
-    const name = requiredString(firstValue(row, "value", "attr_name"), "规格名称", 32);
-    const details = normalizeStringArray(firstValue(row, "detail", "attr_values"), "规格值", 50, 64);
-    if (details.length === 0) throw new ValidateException(`规格“${name}”至少需要一个规格值`);
-    return { value: name, detail: details };
-  });
-  if (new Set(dimensions.map((item) => item.value)).size !== dimensions.length) {
-    throw new ValidateException("规格名称不能重复");
-  }
-  return dimensions;
-}
-
-export function buildSkuCombinations(dimensions: SupplierProductDimension[]): Array<Record<string, string>> {
-  let combinations: Array<Record<string, string>> = [{}];
-  for (const dimension of dimensions) {
-    combinations = combinations.flatMap((combination) =>
-      dimension.detail.map((detail) => ({ ...combination, [dimension.value]: detail })),
-    );
-    if (combinations.length > MAX_SKUS) throw new ValidateException(`SKU组合不能超过${MAX_SKUS}项`);
-  }
-  return combinations;
-}
-
-function canonicalSuk(detail: Record<string, string>, dimensions: SupplierProductDimension[]): string {
-  return dimensions.map((dimension) => detail[dimension.value]).join(",");
-}
-
-function normalizeSkuDetail(row: UnknownRecord, dimensions: SupplierProductDimension[]): Record<string, string> {
-  const detailValue = row.detail;
-  if (detailValue && typeof detailValue === "object" && !Array.isArray(detailValue)) {
-    const detailRecord = detailValue as UnknownRecord;
-    return Object.fromEntries(
-      dimensions.map((dimension) => [
-        dimension.value,
-        requiredString(detailRecord[dimension.value], `规格${dimension.value}`, 64),
-      ]),
-    );
-  }
-  const suk = optionalString(row.suk, "SKU规格", 512);
-  const parts = suk.split(",").map((item) => item.trim());
-  if (parts.length !== dimensions.length) throw new ValidateException("SKU规格维度不完整");
-  return Object.fromEntries(dimensions.map((dimension, index) => [dimension.value, parts[index]]));
-}
-
-export function normalizeSupplierProductSkus(
-  value: unknown,
-  dimensions: SupplierProductDimension[],
-  specType: 0 | 1,
-  options: PhysicalProductNormalizationOptions = {},
-): SupplierProductSku[] {
-  const rows = Array.isArray(value)
-    ? value
-    : value && typeof value === "object"
-      ? Object.values(value as UnknownRecord)
-      : [];
-  if (rows.length === 0 || rows.length > MAX_SKUS) throw new ValidateException("请填写商品SKU");
-  const normalizedDimensions =
-    specType === 0 ? [{ value: "规格", detail: ["默认"] }] : dimensions;
-  if (specType === 0 && rows.length !== 1) throw new ValidateException("单规格商品只能有一个SKU");
-
-  const skus = rows.map((item) => {
-    const row = asRecord(item, "SKU格式错误");
-    const detail = specType === 0 ? { 规格: "默认" } : normalizeSkuDetail(row, normalizedDimensions);
-    for (const dimension of normalizedDimensions) {
-      if (!dimension.detail.includes(detail[dimension.value])) {
-        throw new ValidateException(`SKU包含无效的${dimension.value}规格值`);
-      }
-    }
-    const price = decimalString(row.price, "销售价", true);
-    const settlePrice = decimalString(
-      firstValue(row, "settle_price", "settlePrice"),
-      "结算价",
-      options.requireSettlePrice !== false,
-    );
-    const brokerage = decimalString(row.brokerage, "一级佣金");
-    const brokerageTwo = decimalString(firstValue(row, "brokerage_two", "brokerageTwo"), "二级佣金");
-    if (moneyCents(brokerage) + moneyCents(brokerageTwo) > moneyCents(price)) {
-      throw new ValidateException("一级佣金与二级佣金之和不能超过销售价");
-    }
-    return {
-      suk: canonicalSuk(detail, normalizedDimensions),
-      detail,
-      image: optionalString(row.image, "SKU图片", 128),
-      price,
-      settlePrice,
-      cost: decimalString(row.cost, "成本价"),
-      otPrice: decimalString(firstValue(row, "ot_price", "otPrice"), "原价"),
-      vipPrice: decimalString(firstValue(row, "vip_price", "vipPrice"), "会员价"),
-      stock: integerValue(row.stock, "库存"),
-      barCode: optionalString(firstValue(row, "bar_code", "barCode"), "SKU条码", 50),
-      weight: decimalString(row.weight, "重量"),
-      volume: decimalString(row.volume, "体积"),
-      brokerage,
-      brokerageTwo,
-      code: optionalString(row.code, "SKU编码", 50),
-      unique: optionalString(row.unique, "SKU唯一标识", 8) || undefined,
-    };
-  });
-
-  const actualKeys = skus.map((sku) => sku.suk);
-  if (new Set(actualKeys).size !== actualKeys.length) throw new ValidateException("SKU组合不能重复");
-  const expectedKeys = buildSkuCombinations(normalizedDimensions).map((detail) =>
-    canonicalSuk(detail, normalizedDimensions),
-  );
-  if (expectedKeys.length !== actualKeys.length || expectedKeys.some((key) => !actualKeys.includes(key))) {
-    throw new ValidateException("SKU组合必须完整覆盖所有规格组合");
-  }
-  return skus;
 }
 
 export function normalizeSupplierPhysicalProductInput(
@@ -417,13 +289,6 @@ export function normalizeStockAdjustments(value: unknown): SupplierStockAdjustme
     throw new ValidateException("同一个SKU不能重复调整");
   }
   return adjustments;
-}
-
-function generateSkuUnique(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function minMoney(values: string[]): string {
@@ -764,61 +629,6 @@ export class SupplierProductManagementService {
         savedProductId = rows[0].id;
       }
 
-      const currentSkus = existing
-        ? await tx
-            .select()
-            .from(storeProductAttrValue)
-            .where(
-              and(
-                eq(storeProductAttrValue.productId, savedProductId),
-                eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
-              ),
-            )
-        : [];
-      if (currentSkus.some((sku) => sku.isRetired === 1)) {
-        throw new ValidateException("商品存在受控退役SKU，请先在对应运营后台恢复后再编辑");
-      }
-      const existingBySuk = new Map(currentSkus.map((sku) => [sku.suk, sku]));
-      const usedUniques = new Set(currentSkus.map((sku) => sku.unique));
-      const skuRows: Array<typeof storeProductAttrValue.$inferInsert> = [];
-      for (const sku of input.skus) {
-        const current = existingBySuk.get(sku.suk);
-        let unique = current?.unique;
-        while (!unique) {
-          const candidate = generateSkuUnique();
-          if (usedUniques.has(candidate)) continue;
-          const collision = await tx
-            .select({ id: storeProductAttrValue.id })
-            .from(storeProductAttrValue)
-            .where(eq(storeProductAttrValue.unique, candidate))
-            .limit(1);
-          if (!collision[0]) unique = candidate;
-        }
-        usedUniques.add(unique);
-        skuRows.push({
-          productId: savedProductId,
-          productType: PHYSICAL_PRODUCT_TYPE,
-          suk: sku.suk,
-          stock: sku.stock,
-          sumStock: current ? Math.max(current.sumStock, sku.stock) : sku.stock,
-          sales: current?.sales ?? 0,
-          price: sku.price,
-          settlePrice: sku.settlePrice,
-          image: sku.image || input.sliderImages[0].slice(0, 128),
-          unique,
-          cost: sku.cost,
-          barCode: sku.barCode,
-          otPrice: sku.otPrice,
-          vipPrice: sku.vipPrice,
-          weight: sku.weight,
-          volume: sku.volume,
-          brokerage: sku.brokerage,
-          brokerageTwo: sku.brokerageTwo,
-          type: PRODUCT_ATTR_TYPE,
-          code: sku.code,
-        });
-      }
-
       await tx.delete(storeProductRelation).where(
         and(
           eq(storeProductRelation.productId, savedProductId),
@@ -842,36 +652,17 @@ export class SupplierProductManagementService {
           target: [storeProductDescription.productId, storeProductDescription.type],
           set: { description: input.description },
         });
-      await tx.delete(storeProductAttr).where(
-        and(eq(storeProductAttr.productId, savedProductId), eq(storeProductAttr.type, PRODUCT_ATTR_TYPE)),
-      );
-      await tx.insert(storeProductAttr).values(
-        input.dimensions.map((dimension) => ({
-          productId: savedProductId,
-          attrName: dimension.value,
-          attrValues: dimension.detail.join(","),
-          type: PRODUCT_ATTR_TYPE,
-        })),
-      );
-      await tx.delete(storeProductAttrResult).where(
-        and(
-          eq(storeProductAttrResult.productId, savedProductId),
-          eq(storeProductAttrResult.type, PRODUCT_ATTR_TYPE),
-        ),
-      );
-      await tx.insert(storeProductAttrResult).values({
-        productId: savedProductId,
-        result: JSON.stringify({ attr: input.dimensions, value: input.skus }),
-        changeTime: now,
-        type: PRODUCT_ATTR_TYPE,
-      });
-      await tx.delete(storeProductAttrValue).where(
-        and(
-          eq(storeProductAttrValue.productId, savedProductId),
-          eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
-        ),
-      );
-      await tx.insert(storeProductAttrValue).values(skuRows);
+      await replaceProductSkuEditor(tx, {
+        id: savedProductId,
+        productType: PHYSICAL_PRODUCT_TYPE,
+        image: input.sliderImages[0],
+        type: SUPPLIER_TYPE,
+        relationId: supplierId,
+      }, {
+        specType: input.specType,
+        dimensions: input.dimensions,
+        skus: input.skus,
+      }, now);
       await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     });
@@ -886,7 +677,7 @@ export class SupplierProductManagementService {
         .limit(1)
     )[0];
     if (!product) throw new NotFoundException("商品不存在或不属于当前供应商");
-    const [relations, descriptions, dimensions, skus] = await Promise.all([
+    const [relations, descriptions, skuEditor] = await Promise.all([
       this.container.db
         .select({ relation_id: storeProductRelation.relationId })
         .from(storeProductRelation)
@@ -906,28 +697,8 @@ export class SupplierProductManagementService {
           ),
         )
         .limit(1),
-      this.container.db
-        .select()
-        .from(storeProductAttr)
-        .where(
-          and(eq(storeProductAttr.productId, productId), eq(storeProductAttr.type, PRODUCT_ATTR_TYPE)),
-        )
-        .orderBy(asc(storeProductAttr.id)),
-      this.container.db
-        .select()
-        .from(storeProductAttrValue)
-        .where(
-          and(
-            eq(storeProductAttrValue.productId, productId),
-            eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
-          ),
-        )
-        .orderBy(asc(storeProductAttrValue.id)),
+      loadProductSkuEditor(this.container.db, productId, product.specType),
     ]);
-    const items = dimensions.map((dimension) => ({
-      value: dimension.attrName,
-      detail: dimension.attrValues.split(",").filter(Boolean),
-    }));
     return {
       id: product.id,
       product_type: product.productType,
@@ -946,27 +717,7 @@ export class SupplierProductManagementService {
         }
       })(),
       description: descriptions[0]?.description ?? "",
-      spec_type: product.specType,
-      items,
-      attrs: skus.map((sku) => ({
-        unique: sku.unique,
-        suk: sku.suk,
-        detail: Object.fromEntries(items.map((item, index) => [item.value, sku.suk.split(",")[index] ?? ""])),
-        image: sku.image,
-        price: sku.price,
-        settle_price: sku.settlePrice,
-        cost: sku.cost,
-        ot_price: sku.otPrice,
-        vip_price: sku.vipPrice,
-        stock: sku.stock,
-        sales: sku.sales,
-        bar_code: sku.barCode,
-        weight: sku.weight,
-        volume: sku.volume,
-        brokerage: sku.brokerage,
-        brokerage_two: sku.brokerageTwo,
-        code: sku.code,
-      })),
+      ...skuEditor,
       freight: product.freight,
       postage: product.postage,
       temp_id: product.tempId,

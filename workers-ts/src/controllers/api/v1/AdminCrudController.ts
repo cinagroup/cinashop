@@ -40,7 +40,10 @@ import {
   ProductAssociationService,
   type ProductEditorActor,
 } from "@/services/product/ProductAssociationService";
-import { ProductSkuRetirementService } from "@/services/product/ProductSkuRetirementService";
+import {
+  PLATFORM_PRODUCT_SKU_SCOPE,
+  ProductSkuRetirementService,
+} from "@/services/product/ProductSkuRetirementService";
 import { StoreOperationsService } from "@/services/store/StoreOperationsService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
@@ -372,7 +375,12 @@ export async function adminProductSetShow(c: C) {
 export async function adminProductSkuRetire(c: C) {
   privateNoStore(c);
   const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
-  const result = await productSkuRetirement(c).change("retire", body, productEditorActor(c));
+  const result = await productSkuRetirement(c).change(
+    "retire",
+    body,
+    productEditorActor(c),
+    PLATFORM_PRODUCT_SKU_SCOPE,
+  );
   return jsonOk(c, result, "SKU已退役");
 }
 
@@ -380,7 +388,12 @@ export async function adminProductSkuRetire(c: C) {
 export async function adminProductSkuRestore(c: C) {
   privateNoStore(c);
   const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
-  const result = await productSkuRetirement(c).change("restore", body, productEditorActor(c));
+  const result = await productSkuRetirement(c).change(
+    "restore",
+    body,
+    productEditorActor(c),
+    PLATFORM_PRODUCT_SKU_SCOPE,
+  );
   return jsonOk(c, result, "SKU已恢复");
 }
 

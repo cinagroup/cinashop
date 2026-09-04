@@ -135,8 +135,8 @@ const previewProductDetails = new Map<number, ProductDetail>([
       spec_type: 1,
       items: [{ value: "颜色", detail: ["青绿", "云白"] }],
       attrs: [
-        { unique: "PV71GRN1", suk: "青绿", detail: { 颜色: "青绿" }, image: "", price: "89.00", settle_price: "62.00", cost: "48.00", ot_price: "109.00", vip_price: "85.00", stock: 18, sales: 126, bar_code: "", weight: "0.35", volume: "0.00", brokerage: "2.00", brokerage_two: "1.00", code: "CUP-GREEN" },
-        { unique: "PV71WHT1", suk: "云白", detail: { 颜色: "云白" }, image: "", price: "89.00", settle_price: "62.00", cost: "48.00", ot_price: "109.00", vip_price: "85.00", stock: 10, sales: 90, bar_code: "", weight: "0.35", volume: "0.00", brokerage: "2.00", brokerage_two: "1.00", code: "CUP-WHITE" },
+        { id: 7101, unique: "PV71GRN1", suk: "青绿", detail: { 颜色: "青绿" }, image: "", price: "89.00", settle_price: "62.00", cost: "48.00", ot_price: "109.00", vip_price: "85.00", stock: 18, sales: 126, bar_code: "", weight: "0.35", volume: "0.00", brokerage: "2.00", brokerage_two: "1.00", code: "CUP-GREEN", is_retired: 0 },
+        { id: 7102, unique: "PV71WHT1", suk: "云白", detail: { 颜色: "云白" }, image: "", price: "89.00", settle_price: "62.00", cost: "48.00", ot_price: "109.00", vip_price: "85.00", stock: 10, sales: 90, bar_code: "", weight: "0.35", volume: "0.00", brokerage: "2.00", brokerage_two: "1.00", code: "CUP-WHITE", is_retired: 0 },
       ],
       freight: 1,
       postage: "0.00",
@@ -175,7 +175,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
     description: "预览商品详情",
     spec_type: 0,
     items: [{ value: "规格", detail: ["默认"] }],
-    attrs: [{ unique: `PV${id}SKU`, suk: "默认", detail: { 规格: "默认" }, image: "", price: row.price, settle_price: row.price, cost: "0.00", ot_price: row.price, vip_price: row.price, stock: row.stock, sales: row.sales, bar_code: "", weight: "0.00", volume: "0.00", brokerage: "0.00", brokerage_two: "0.00", code: "" }],
+    attrs: [{ id: id * 100 + 1, unique: `PV${id}SKU`, suk: "默认", detail: { 规格: "默认" }, image: "", price: row.price, settle_price: row.price, cost: "0.00", ot_price: row.price, vip_price: row.price, stock: row.stock, sales: row.sales, bar_code: "", weight: "0.00", volume: "0.00", brokerage: "0.00", brokerage_two: "0.00", code: "", is_retired: 0 }],
     freight: 1,
     postage: "0.00",
     temp_id: 0,
@@ -629,6 +629,63 @@ export async function saveProduct(id: number, data: ProductDetail): Promise<Prod
     return { id: savedId, is_show: 0, is_verify: 0 };
   }
   return apiRequest<ProductSaveResult>({ method: "POST", url: id ? `/product/product/${id}` : "/product/product", data });
+}
+
+export interface ProductSkuRetirementResult {
+  changed: number;
+  verified: boolean;
+  dependencies: Record<string, number>;
+}
+
+async function changePreviewProductSkus(
+  action: "retire" | "restore",
+  productId: number,
+  skuIds: number[],
+): Promise<ProductSkuRetirementResult> {
+  const detail = previewProductDetails.get(productId) ?? defaultPreviewDetail(productId);
+  const source = action === "retire" ? detail.attrs : detail.retired_attrs ?? [];
+  const destination = action === "retire" ? detail.retired_attrs ?? [] : detail.attrs;
+  const selected = source.filter((sku) => sku.id && skuIds.includes(sku.id));
+  if (selected.length !== skuIds.length) throw new Error("SKU状态已变化，请刷新后重试");
+  const selectedIds = new Set(skuIds);
+  const remaining = source.filter((sku) => !sku.id || !selectedIds.has(sku.id));
+  const moved = selected.map((sku) => ({ ...sku, is_retired: action === "retire" ? 1 : 0 } as const));
+  if (action === "retire") {
+    if (!remaining.length) throw new Error("商品必须保留至少一个可售SKU");
+    detail.attrs = remaining;
+    detail.retired_attrs = [...destination, ...moved];
+  } else {
+    detail.retired_attrs = remaining;
+    detail.attrs = [...destination, ...moved];
+  }
+  previewProductDetails.set(productId, detail);
+  return { changed: skuIds.length, verified: true, dependencies: {} };
+}
+
+export function retireProductSkus(
+  productId: number,
+  skuIds: number[],
+  reason: string,
+): Promise<ProductSkuRetirementResult> {
+  if (previewMode) return changePreviewProductSkus("retire", productId, skuIds);
+  return apiRequest<ProductSkuRetirementResult>({
+    method: "POST",
+    url: "/product/product/sku/retire",
+    data: { product_id: productId, sku_ids: skuIds, reason },
+  });
+}
+
+export function restoreProductSkus(
+  productId: number,
+  skuIds: number[],
+  reason: string,
+): Promise<ProductSkuRetirementResult> {
+  if (previewMode) return changePreviewProductSkus("restore", productId, skuIds);
+  return apiRequest<ProductSkuRetirementResult>({
+    method: "POST",
+    url: "/product/product/sku/restore",
+    data: { product_id: productId, sku_ids: skuIds, reason },
+  });
 }
 
 export async function recycleProduct(id: number) {

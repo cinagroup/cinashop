@@ -186,6 +186,8 @@ supplierapiRoutes.post(
   VirtualProductInventory.supplierConsumeExportTicket,
 );
 supplierapiRoutes.put("/product/product/saveStocks/:id", SupplierController.adjustProductStock);
+supplierapiRoutes.post("/product/product/sku/retire", SupplierController.retireProductSkus);
+supplierapiRoutes.post("/product/product/sku/restore", SupplierController.restoreProductSkus);
 supplierapiRoutes.put("/product/product/batch_show/:is_show", SupplierController.batchSetProductShow);
 supplierapiRoutes.put("/product/product/show", SupplierController.batchSetProductShow);
 supplierapiRoutes.put("/product/product/product_show", SupplierController.batchProductShow);

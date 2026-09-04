@@ -3,15 +3,30 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ArrowLeft, Delete, Plus } from "@element-plus/icons-vue";
-import { getProductCategories, getProductDetail, getProductRuleTemplates, getShippingTemplates, saveProduct } from "@/api/supplier";
+import {
+  getProductCategories,
+  getProductDetail,
+  getProductRuleTemplates,
+  getShippingTemplates,
+  restoreProductSkus,
+  retireProductSkus,
+  saveProduct,
+} from "@/api/supplier";
 import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku, ShippingTemplateRow } from "@/types";
+import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
 const productId = computed(() => Number(route.params.id ?? 0));
 const editing = computed(() => Number.isInteger(productId.value) && productId.value > 0);
+const canManageProducts = computed(() => auth.can("supplier.product.manage"));
 const loading = ref(false);
 const saving = ref(false);
+const skuActionLoading = ref(false);
+const retiredAttrs = ref<ProductSku[]>([]);
+const selectedActiveSkuIds = ref<number[]>([]);
+const selectedRetiredSkuIds = ref<number[]>([]);
 const categories = ref<ProductCategory[]>([]);
 const shippingTemplates = ref<ShippingTemplateRow[]>([]);
 const ruleTemplates = ref<ProductRuleTemplate[]>([]);
@@ -20,6 +35,7 @@ const selectedRuleId = ref<number | null>(null);
 function blankSku(detail: Record<string, string>, previous?: ProductSku): ProductSku {
   const suk = Object.values(detail).join(",");
   return {
+    id: previous?.id,
     unique: previous?.unique,
     suk,
     detail,
@@ -31,6 +47,8 @@ function blankSku(detail: Record<string, string>, previous?: ProductSku): Produc
     vip_price: previous?.vip_price ?? "0.00",
     stock: previous?.stock ?? 0,
     sales: previous?.sales ?? 0,
+    sumStock: previous?.sumStock,
+    is_retired: previous?.is_retired ?? 0,
     bar_code: previous?.bar_code ?? "",
     weight: previous?.weight ?? "0.00",
     volume: previous?.volume ?? "0.00",
@@ -38,6 +56,60 @@ function blankSku(detail: Record<string, string>, previous?: ProductSku): Produc
     brokerage_two: previous?.brokerage_two ?? "0.00",
     code: previous?.code ?? "",
   };
+}
+
+function selectableHistoricalSku(row: ProductSku) {
+  return editing.value && Number.isSafeInteger(row.id) && Number(row.id) > 0;
+}
+
+function selectActiveSkus(rows: ProductSku[]) {
+  selectedActiveSkuIds.value = rows.flatMap((row) => row.id ? [row.id] : []);
+}
+
+function selectRetiredSkus(rows: ProductSku[]) {
+  selectedRetiredSkuIds.value = rows.flatMap((row) => row.id ? [row.id] : []);
+}
+
+async function reloadSkuState() {
+  const detail = await getProductDetail(productId.value);
+  Object.assign(form, detail);
+  retiredAttrs.value = detail.retired_attrs ?? [];
+  selectedActiveSkuIds.value = [];
+  selectedRetiredSkuIds.value = [];
+}
+
+async function changeSkuLifecycle(action: "retire" | "restore") {
+  const skuIds = action === "retire" ? selectedActiveSkuIds.value : selectedRetiredSkuIds.value;
+  if (!skuIds.length) return ElMessage.warning("请选择历史SKU");
+  try {
+    const { value } = await ElMessageBox.prompt(
+      action === "retire"
+        ? "退役会停止该SKU的新交易并重新加载商品资料，未保存编辑会丢失。请填写原因。"
+        : "恢复会重新加入可售规格组合并重新加载商品资料。请填写原因。",
+      action === "retire" ? "确认退役SKU" : "确认恢复SKU",
+      {
+        confirmButtonText: "确认执行",
+        cancelButtonText: "取消",
+        inputPlaceholder: "2至255字",
+        inputValidator: (input) => {
+          const length = input.trim().length;
+          return length >= 2 && length <= 255 ? true : "请填写2至255字的操作原因";
+        },
+      },
+    );
+    skuActionLoading.value = true;
+    const result = action === "retire"
+      ? await retireProductSkus(productId.value, skuIds, value.trim())
+      : await restoreProductSkus(productId.value, skuIds, value.trim());
+    if (!result.verified) throw new Error("SKU状态数据库回读未通过");
+    await reloadSkuState();
+    ElMessage.success(action === "retire" ? `已退役 ${result.changed} 个SKU` : `已恢复 ${result.changed} 个SKU`);
+  } catch (error) {
+    if (error === "cancel" || error === "close") return;
+    ElMessage.error(error instanceof Error ? error.message : "SKU状态操作失败");
+  } finally {
+    skuActionLoading.value = false;
+  }
 }
 
 function initialForm(): ProductDetail {
@@ -200,7 +272,11 @@ async function load() {
     categories.value = categoryRows;
     shippingTemplates.value = templateResult.data;
     ruleTemplates.value = productRuleRows;
-    if (editing.value) Object.assign(form, await getProductDetail(productId.value));
+    if (editing.value) {
+      const detail = await getProductDetail(productId.value);
+      Object.assign(form, detail);
+      retiredAttrs.value = detail.retired_attrs ?? [];
+    }
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "商品资料加载失败");
   } finally {
@@ -253,7 +329,25 @@ onMounted(load);
         </article>
 
         <article class="surface product-form-card">
-          <header><h2>规格与 SKU</h2><p>价格、结算价和库存均以 SKU 为准</p></header>
+          <header class="card-heading-row">
+            <div><h2>规格与 SKU</h2><p>价格、结算价和库存均以 SKU 为准；历史SKU只能通过受控操作退役或恢复</p></div>
+            <el-button
+              v-if="editing && canManageProducts"
+              type="danger"
+              plain
+              :loading="skuActionLoading"
+              :disabled="!selectedActiveSkuIds.length"
+              @click="changeSkuLifecycle('retire')"
+            >退役选中历史SKU</el-button>
+          </header>
+          <el-alert
+            v-if="editing"
+            title="删除或改名已有SKU会被拒绝"
+            type="warning"
+            show-icon
+            :closable="false"
+            description="请先勾选完整规格组合执行退役；购物车、未支付订单、活动、赠品、抽奖或门店仍引用时系统会阻止操作。"
+          />
           <el-radio-group v-model="form.spec_type" class="spec-type-group"><el-radio-button :value="0">单规格</el-radio-button><el-radio-button :value="1">多规格</el-radio-button></el-radio-group>
           <div v-if="form.spec_type === 1" class="dimension-editor">
             <div class="rule-template-bar">
@@ -271,7 +365,8 @@ onMounted(load);
             <div class="dimension-actions"><el-button :icon="Plus" :disabled="form.items.length >= 3" @click="addDimension">添加规格维度</el-button><el-button type="primary" plain @click="regenerateSkus()">生成 / 刷新 SKU</el-button></div>
           </div>
           <div class="sku-table-wrap">
-            <el-table :data="form.attrs" row-key="suk" empty-text="请先生成SKU" class="sku-table">
+            <el-table :data="form.attrs" row-key="suk" empty-text="请先生成SKU" class="sku-table" @selection-change="selectActiveSkus">
+              <el-table-column v-if="editing" type="selection" width="48" :selectable="selectableHistoricalSku" />
               <el-table-column prop="suk" label="规格组合" fixed min-width="145" />
               <el-table-column label="销售价" width="130"><template #default="scope"><el-input v-model="scope.row.price" /></template></el-table-column>
               <el-table-column label="结算价" width="130"><template #default="scope"><el-input v-model="scope.row.settle_price" /></template></el-table-column>
@@ -285,6 +380,29 @@ onMounted(load);
               <el-table-column label="体积" width="120"><template #default="scope"><el-input v-model="scope.row.volume" /></template></el-table-column>
             </el-table>
           </div>
+          <section v-if="editing && retiredAttrs.length" class="retired-sku-section">
+            <header class="card-heading-row">
+              <div><h3>已退役 SKU</h3><p>保留原始身份和历史引用，不参与新交易与普通商品保存。</p></div>
+              <el-button
+                v-if="canManageProducts"
+                type="primary"
+                plain
+                :loading="skuActionLoading"
+                :disabled="!selectedRetiredSkuIds.length"
+                @click="changeSkuLifecycle('restore')"
+              >恢复选中SKU</el-button>
+            </header>
+            <div class="sku-table-wrap">
+              <el-table :data="retiredAttrs" row-key="id" class="sku-table" @selection-change="selectRetiredSkus">
+                <el-table-column type="selection" width="48" :selectable="selectableHistoricalSku" />
+                <el-table-column prop="suk" label="规格组合" min-width="145" />
+                <el-table-column prop="unique" label="稳定标识" min-width="130" />
+                <el-table-column prop="price" label="销售价" width="110" />
+                <el-table-column prop="stock" label="库存" width="90" />
+                <el-table-column prop="sales" label="销量" width="90" />
+              </el-table>
+            </div>
+          </section>
         </article>
 
         <article class="surface product-form-card">

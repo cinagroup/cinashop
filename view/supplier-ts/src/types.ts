@@ -243,6 +243,7 @@ export interface ProductRulePayload {
 }
 
 export interface ProductSku {
+  id?: number;
   unique?: string;
   suk: string;
   detail: Record<string, string>;
@@ -254,6 +255,8 @@ export interface ProductSku {
   vip_price: string;
   stock: number;
   sales?: number;
+  sumStock?: number;
+  is_retired?: 0 | 1;
   bar_code: string;
   weight: string;
   volume: string;
@@ -276,6 +279,7 @@ export interface ProductDetail {
   spec_type: 0 | 1;
   items: ProductDimension[];
   attrs: ProductSku[];
+  retired_attrs?: ProductSku[];
   freight: 1 | 2 | 3;
   postage: string;
   temp_id: number;

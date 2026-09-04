@@ -79,7 +79,11 @@ try {
             --config $taskConfigPath --force 2>&1
         $taskDeleted = $LASTEXITCODE -eq 0
         if ($taskDeleted -and $taskWorkerUrl) {
-            $taskUrlMissing = (Get-AuditStatus -Method Get -Uri "$taskWorkerUrl/audit") -eq 404
+            for ($taskAttempt = 1; $taskAttempt -le 5; $taskAttempt += 1) {
+                $taskUrlMissing = (Get-AuditStatus -Method Get -Uri "$taskWorkerUrl/audit") -eq 404
+                if ($taskUrlMissing) { break }
+                if ($taskAttempt -lt 5) { Start-Sleep -Seconds 2 }
+            }
         }
     }
 }

@@ -339,7 +339,14 @@ export default {
         const columnNames = new Set(columns.map((row) => row.column_name));
         const retirementColumnsReady = RETIREMENT_COLUMNS.every((name) => columnNames.has(name));
 
-        const [sizes, skuSummary, ownerDistribution, identityAnomalies, productShape] = await Promise.all([
+        const [
+          sizes,
+          skuSummary,
+          ownerDistribution,
+          productOwnerDistribution,
+          identityAnomalies,
+          productShape,
+        ] = await Promise.all([
           tx<{
             sku_rows: number;
             sku_relation_bytes: string;
@@ -390,6 +397,31 @@ export default {
             FROM store_product_attr_value v
             LEFT JOIN store_product p ON p.id = v.product_id
             WHERE v.type = 0
+            GROUP BY 1, 2, 3, 4
+            ORDER BY 1, 2, 3, 4
+          `,
+          tx<{
+            owner_type: number;
+            relation_zero: boolean;
+            product_type: number;
+            deleted: boolean;
+            owners: number;
+            products: number;
+            products_with_base_skus: number;
+          }[]>`
+            SELECT
+              p.type::integer AS owner_type,
+              p.relation_id = 0 AS relation_zero,
+              p.product_type::integer AS product_type,
+              p.is_del <> 0 AS deleted,
+              count(DISTINCT p.relation_id) FILTER (WHERE p.relation_id > 0)::integer AS owners,
+              count(*)::integer AS products,
+              count(*) FILTER (WHERE EXISTS (
+                SELECT 1
+                FROM store_product_attr_value v
+                WHERE v.product_id = p.id AND v.type = 0
+              ))::integer AS products_with_base_skus
+            FROM store_product p
             GROUP BY 1, 2, 3, 4
             ORDER BY 1, 2, 3, 4
           `,
@@ -589,6 +621,7 @@ export default {
           size: sizes[0] ?? null,
           sku_summary: skuSummary[0] ?? null,
           owner_distribution: ownerDistribution,
+          product_owner_distribution: productOwnerDistribution,
           identity_anomalies: identityAnomalies[0] ?? null,
           product_shape: productShape[0] ?? null,
           reference_aggregates: references,
