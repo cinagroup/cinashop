@@ -4421,7 +4421,7 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 Supplier生产构建通过2,271个模块。应用内浏览器实际打开本地preview商品71：勾选活跃SKU后输入“停止旧颜色销售”，活跃行由2变1，历史表显示原稳定ID和`PV71GRN1`；再输入“重新开放旧颜色”恢复后，活跃行回到2且历史区消失。390×844视口下`scrollWidth=clientWidth=375`，页面无横向溢出，生命周期按钮可见且导航切为移动端；全程console warning/error为0。这里的页面数据是隔离preview，只证明控件、状态转换和响应式布局，不是生产Supplier账号验收。
 
-专项3文件/28项测试、单元与运行时双TypeScript、Supplier生产构建2,271模块和Worker全量209文件/1,323项单元全部通过。schema审计保持201/201源表字段完整、外部/内嵌263表零漂移；Admin静态请求342个调用点/362个路径变体全部可执行；全局路由为PHP 1,904 / TS 1,623 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026；设置账本仍为76屏中reviewed 15 / candidate 11 / partial 3 / retired 1 / unreviewed 61；可观测性保持17个信号、53个必需事件和6个发布阻断。提交、远端Actions与精确提交号将在本项推送后补录。E5D当前只能标“候选完成，未发布”：生产没有真实Supplier商品或SKU，尚无真实主管理员/Supplier管理员/只读和编辑受限角色token；源PHP历史多规格数据、门店SKU、虚拟商品、正式发布、发布后失败重试和观察期仍未完成。它们继续阻塞FE-001E5父项及FE-001E6，不能因隔离schema演练通过而上调为生产完成。
+专项3文件/28项测试、单元与运行时双TypeScript、Supplier生产构建2,271模块和Worker全量209文件/1,323项单元全部通过。schema审计保持201/201源表字段完整、外部/内嵌263表零漂移；Admin静态请求342个调用点/362个路径变体全部可执行；全局路由为PHP 1,904 / TS 1,623 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026；设置账本仍为76屏中reviewed 15 / candidate 11 / partial 3 / retired 1 / unreviewed 61；可观测性保持17个信号、53个必需事件和6个发布阻断。精确实现提交`14880b2436cf5664d858e03ee2aba938468df1c6`推送后，[Actions `33834851835`](https://github.com/cinagroup/cinashop/actions/runs/33834851835)的Repository全历史Secret扫描、Worker双TypeScript/1,323项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。E5D当前只能标“候选完成，未发布”：生产没有真实Supplier商品或SKU，尚无真实主管理员/Supplier管理员/只读和编辑受限角色token；源PHP历史多规格数据、门店SKU、虚拟商品、正式发布、发布后失败重试和观察期仍未完成。它们继续阻塞FE-001E5父项及FE-001E6，不能因隔离schema演练通过而上调为生产完成。
 
 ## 完成定义
 
