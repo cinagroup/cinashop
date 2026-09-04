@@ -13,7 +13,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "audit:prod": "npm audit --omit=dev --audit-level=low --registry=https://registry.npmjs.org",
+    "audit:prod": "node scripts/run-production-dependency-audit.mjs",
     "data:schema-audit": "tsx scripts/mysql-to-postgres.ts schema-audit",
     "audit:routes": "tsx scripts/route-parity-audit.ts",
     "audit:admin-frontend": "tsx scripts/admin-frontend-parity-audit.ts",
