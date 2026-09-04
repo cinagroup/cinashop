@@ -52,6 +52,10 @@ export interface OrderInfo {
   province: string;
   user_address: string;
   refund_status: number;
+  refund_eligibility?: {
+    allowed: boolean;
+    reason: string;
+  };
   pink_status?: number | null;
   pink_info?: {
     id: number;
@@ -139,6 +143,8 @@ export interface OrderCartInfo {
   product_type: number;
   unique: string;
   cart_num: number;
+  refund_num: number;
+  is_support_refund: number;
   write_times: number;
   write_surplus_times: number;
   write_start: number;

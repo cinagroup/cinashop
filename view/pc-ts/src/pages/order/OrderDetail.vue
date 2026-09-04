@@ -68,6 +68,14 @@
             <el-button size="small" @click="copySecret(`${item.card_no ?? ''}\n${item.card_pwd ?? ''}`)">复制</el-button>
           </template>
         </div>
+        <el-alert
+          v-if="order.product_type === 1 && order.refund_eligibility && !order.refund_eligibility.allowed"
+          class="allocation-alert"
+          :title="order.refund_eligibility.reason"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
       </div>
 
       <div v-if="secondCardLines.length" class="detail-card second-card-panel">
@@ -177,7 +185,7 @@
         <el-button v-if="order.status === 1 && order.shipping_type !== 2 && order.delivery_type !== 'send'" type="primary" size="large" @click="take">
           确认收货
         </el-button>
-        <el-button v-if="[0, 5].includes(order.status)" size="large" @click="goRefund">
+        <el-button v-if="canApplyRefund" size="large" @click="goRefund">
           申请退款
         </el-button>
         <el-button v-if="order.status === 2" type="primary" size="large" @click="reviewVisible = true">
@@ -309,6 +317,14 @@ const secondCardRemaining = computed(() => secondCardLines.value.reduce(
   (total, item) => total + Math.max(0, item.write_surplus_times),
   0,
 ));
+const canApplyRefund = computed(() => {
+  const current = order.value;
+  if (!current || current.paid !== 1 || current.refund_status !== 0) return false;
+  if (current.product_type === 1) {
+    return Boolean(current.refund_eligibility?.allowed) && [0, 1, 5].includes(current.status);
+  }
+  return [0, 5].includes(current.status);
+});
 
 function secondCardValidityText(item: NonNullable<OrderInfo["cart_info"]>[number]): string {
   if (!item.write_start && !item.write_end) return "永久有效";

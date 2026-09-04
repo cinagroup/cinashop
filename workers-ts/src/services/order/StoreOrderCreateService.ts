@@ -94,6 +94,7 @@ import { AttachmentService } from "@/services/system/AttachmentService";
 import { reservePinkJoin } from "@/services/activity/PinkLifecycleService";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { parseVirtualDeliveryInfo } from "@/services/order/VirtualProductDeliveryService";
+import { customerRefundEligibility } from "@/services/order/VirtualProductRefundPolicy";
 import { assertProductCheckoutShippingType } from "@/services/order/ManualVirtualDeliveryPolicy";
 import { resolveSecondCardValidityAtCheckout } from "@/services/order/SecondCardValidityService";
 import {
@@ -2872,6 +2873,7 @@ export class StoreOrderCreateService {
       pinkStatus: pinkRows[0]?.status ?? null,
       pinkInfo: pinkRows[0] ?? null,
       pickupStore: pickupStoreRows[0] ?? null,
+      refundEligibility: customerRefundEligibility(order, cartInfos),
       cartInfo: cartInfos.map((ci) => ({
         ...ci,
         cartInfo: parseCartSnapshot(ci.cartInfo),

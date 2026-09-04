@@ -19,6 +19,7 @@ CREATE TABLE store_order (
   uid INTEGER DEFAULT 0 NOT NULL,
   paid SMALLINT DEFAULT 0 NOT NULL,
   status SMALLINT DEFAULT 0 NOT NULL,
+  refund_status SMALLINT DEFAULT 0 NOT NULL,
   is_del SMALLINT DEFAULT 0 NOT NULL,
   is_system_del SMALLINT DEFAULT 0 NOT NULL,
   product_type SMALLINT DEFAULT 0 NOT NULL,
@@ -34,7 +35,15 @@ CREATE TABLE store_order_cart_info (
   product_type SMALLINT DEFAULT 0 NOT NULL,
   sku_unique VARCHAR(255) DEFAULT '' NOT NULL,
   cart_num INTEGER DEFAULT 0 NOT NULL,
+  refund_num INTEGER DEFAULT 0 NOT NULL,
   cart_info TEXT
+);
+CREATE TABLE store_order_refund (
+  id SERIAL PRIMARY KEY,
+  store_order_id INTEGER DEFAULT 0 NOT NULL,
+  refund_type SMALLINT DEFAULT 0 NOT NULL,
+  is_cancel SMALLINT DEFAULT 0 NOT NULL,
+  is_del SMALLINT DEFAULT 0 NOT NULL
 );
 CREATE TABLE store_product_attr_value (
   id INTEGER PRIMARY KEY,

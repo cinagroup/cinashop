@@ -3,6 +3,7 @@ import type { DbClient } from "@/lib/di";
 import {
   storeOrder,
   storeOrderCartInfo,
+  storeOrderRefund,
   storeOrderStatus,
   storeProductVirtual,
 } from "@/models/schema";
@@ -146,6 +147,54 @@ export async function deliverPaidVirtualOrders(
   let deliveredCards = 0;
 
   for (const order of [...fulfillmentOrders].sort((left, right) => left.id - right.id)) {
+    // Refund, writeoff, receipt, and delivery all acquire the order lock first.
+    // Keeping this order stable prevents cart/order lock inversion under load.
+    const currentRows = await tx
+      .select({
+        id: storeOrder.id,
+        uid: storeOrder.uid,
+        orderId: storeOrder.orderId,
+        userAddress: storeOrder.userAddress,
+        paid: storeOrder.paid,
+        status: storeOrder.status,
+        isDel: storeOrder.isDel,
+        isSystemDel: storeOrder.isSystemDel,
+        deliveryType: storeOrder.deliveryType,
+        virtualInfo: storeOrder.virtualInfo,
+        refundStatus: storeOrder.refundStatus,
+      })
+      .from(storeOrder)
+      .where(eq(storeOrder.id, order.id))
+      .limit(1)
+      .for("update");
+    const current = currentRows[0];
+    if (!current || current.paid !== 1 || current.isDel !== 0 || current.isSystemDel !== 0) {
+      throw new Error(`卡密订单 ${order.orderId} 不处于可发货状态`);
+    }
+    if (current.refundStatus === 2) continue;
+    if (current.status === 1 && current.deliveryType === "fictitious") {
+      if (parseVirtualDeliveryInfo(current.virtualInfo) === null) {
+        throw new Error(`卡密订单 ${order.orderId} 的既有交付记录无效`);
+      }
+      continue;
+    }
+    if (current.status !== 0) throw new Error(`卡密订单 ${order.orderId} 状态不允许自动发货`);
+    const openRefunds = await tx
+      .select({ id: storeOrderRefund.id })
+      .from(storeOrderRefund)
+      .where(
+        and(
+          eq(storeOrderRefund.storeOrderId, current.id),
+          inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]),
+          eq(storeOrderRefund.isCancel, 0),
+          eq(storeOrderRefund.isDel, 0),
+        ),
+      )
+      .limit(1);
+    if (openRefunds[0]) {
+      throw new Error(`卡密订单 ${order.orderId} 存在进行中的退款申请，暂不自动发货`);
+    }
+
     const carts = await tx
       .select({
         id: storeOrderCartInfo.id,
@@ -153,6 +202,7 @@ export async function deliverPaidVirtualOrders(
         productType: storeOrderCartInfo.productType,
         skuUnique: storeOrderCartInfo.skuUnique,
         cartNum: storeOrderCartInfo.cartNum,
+        refundNum: storeOrderCartInfo.refundNum,
         cartInfo: storeOrderCartInfo.cartInfo,
       })
       .from(storeOrderCartInfo)
@@ -169,40 +219,20 @@ export async function deliverPaidVirtualOrders(
       throw new Error(`订单 ${order.orderId} 混合了卡密与其他商品，不能自动发货`);
     }
 
-    const currentRows = await tx
-      .select({
-        id: storeOrder.id,
-        uid: storeOrder.uid,
-        orderId: storeOrder.orderId,
-        userAddress: storeOrder.userAddress,
-        paid: storeOrder.paid,
-        status: storeOrder.status,
-        isDel: storeOrder.isDel,
-        isSystemDel: storeOrder.isSystemDel,
-        deliveryType: storeOrder.deliveryType,
-        virtualInfo: storeOrder.virtualInfo,
-      })
-      .from(storeOrder)
-      .where(eq(storeOrder.id, order.id))
-      .limit(1)
-      .for("update");
-    const current = currentRows[0];
-    if (!current || current.paid !== 1 || current.isDel !== 0 || current.isSystemDel !== 0) {
-      throw new Error(`卡密订单 ${order.orderId} 不处于可发货状态`);
-    }
-    if (current.status === 1 && current.deliveryType === "fictitious") {
-      if (parseVirtualDeliveryInfo(current.virtualInfo) === null) {
-        throw new Error(`卡密订单 ${order.orderId} 的既有交付记录无效`);
-      }
-      continue;
-    }
-    if (current.status !== 0) throw new Error(`卡密订单 ${order.orderId} 状态不允许自动发货`);
-
     const delivery: Array<DeliveredVirtualCard | DeliveredVirtualDiskInfo> = [];
     for (const cart of virtualCarts) {
       if (!Number.isSafeInteger(cart.cartNum) || cart.cartNum <= 0) {
         throw new Error(`卡密订单 ${order.orderId} 的商品数量无效`);
       }
+      if (
+        !Number.isSafeInteger(cart.refundNum)
+        || cart.refundNum < 0
+        || cart.refundNum > cart.cartNum
+      ) {
+        throw new Error(`卡密订单 ${order.orderId} 的退款数量无效`);
+      }
+      const deliveryQuantity = cart.cartNum - cart.refundNum;
+      if (deliveryQuantity === 0) continue;
       const snapshot = parseVirtualDeliverySnapshot(cart.cartInfo);
       if (!snapshot) {
         throw new Error(`卡密订单 ${order.orderId} 的交付快照缺失或无效`);
@@ -212,7 +242,7 @@ export async function deliverPaidVirtualOrders(
           disk_info: snapshot.diskInfo,
           product_id: cart.productId,
           sku_unique: cart.skuUnique,
-          quantity: cart.cartNum,
+          quantity: deliveryQuantity,
         });
         continue;
       }
@@ -232,9 +262,9 @@ export async function deliverPaidVirtualOrders(
           ),
         )
         .orderBy(asc(storeProductVirtual.id))
-        .limit(cart.cartNum)
+        .limit(deliveryQuantity)
         .for("update", { skipLocked: true });
-      if (cards.length !== cart.cartNum) {
+      if (cards.length !== deliveryQuantity) {
         throw new Error(`卡密订单 ${order.orderId} 库存不足，等待补充后重试`);
       }
       // The PHP editor allowed password-only inventory. A password is always
@@ -263,6 +293,10 @@ export async function deliverPaidVirtualOrders(
       })));
       deliveredCards += cards.length;
     }
+
+    // A fully-refunded order can reach this branch with refund_status=3 in
+    // historical data. Never mark it delivered with an empty secret payload.
+    if (!delivery.length) continue;
 
     const virtualInfo = JSON.stringify(delivery);
     if (new TextEncoder().encode(virtualInfo).byteLength > MAX_VIRTUAL_INFO_BYTES) {

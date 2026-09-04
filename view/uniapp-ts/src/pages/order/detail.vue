@@ -71,6 +71,12 @@
           <text class="copy-action" @tap="copyVirtual(`${item.card_no ?? ''}\n${item.card_pwd ?? ''}`)">复制</text>
         </template>
       </view>
+      <view
+        v-if="order.product_type === 1 && order.refund_eligibility && !order.refund_eligibility.allowed"
+        class="refund-policy-warning"
+      >
+        {{ order.refund_eligibility.reason }}
+      </view>
     </view>
 
     <view v-if="secondCardLines.length" class="section second-card-panel">
@@ -174,7 +180,7 @@
     </view>
 
     <!-- 退款入口 (已支付未收货) -->
-    <view v-if="canOperate && [0, 1, 5].includes(order.status)" class="express-link" @tap="goRefund">
+    <view v-if="canApplyRefund" class="express-link" @tap="goRefund">
       <text>↩️ 申请退款</text>
       <text class="arrow">›</text>
     </view>
@@ -322,6 +328,14 @@ const canOperate = computed(
     order.value.pid !== -1 &&
     order.value.supplier_allocation_status !== 1,
 );
+const canApplyRefund = computed(() => {
+  const current = order.value;
+  if (!current || !canOperate.value || current.refund_status !== 0) return false;
+  if (current.product_type === 1) {
+    return Boolean(current.refund_eligibility?.allowed) && [0, 1, 5].includes(current.status);
+  }
+  return [0, 1, 5].includes(current.status);
+});
 
 const paymentLabels: Record<CheckoutPaymentMethod, string> = {
   yue: "余额支付",
@@ -876,6 +890,16 @@ onShow(() => {
 .copy-action {
   color: #2979ff;
   font-size: 24rpx;
+}
+
+.refund-policy-warning {
+  margin-top: 18rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 12rpx;
+  background: #fff1f0;
+  color: #cf1322;
+  font-size: 24rpx;
+  line-height: 1.55;
 }
 
 .form-title {

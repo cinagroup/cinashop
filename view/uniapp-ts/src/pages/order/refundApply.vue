@@ -1,6 +1,7 @@
 <template>
   <view class="refund-page">
     <view v-if="order" class="body">
+      <view v-if="refundBlockedReason" class="policy-warning">{{ refundBlockedReason }}</view>
       <!-- 订单商品 (可勾选) -->
       <view class="goods-card">
         <view class="card-title">选择退款商品</view>
@@ -8,6 +9,7 @@
           v-for="item in orderItems"
           :key="(item as any).id"
           class="goods-line"
+          :class="{ disabled: !item.refundable || Boolean(refundBlockedReason) }"
           @tap="toggleItem(item)"
         >
           <view class="check" :class="{ checked: selectedIds.includes((item as any).id) }">
@@ -43,7 +45,7 @@
         />
       </view>
 
-      <view class="submit-btn" @tap="submit">提交退款申请</view>
+      <view class="submit-btn" :class="{ disabled: !canSubmit }" @tap="submit">提交退款申请</view>
     </view>
     <view v-else class="empty">订单不存在</view>
   </view>
@@ -60,15 +62,25 @@ const selectedIds = ref<number[]>([]);
 const reason = ref("不想要了");
 const explain = ref("");
 const reasons = ["不想要了", "商品质量问题", "发错货", "与描述不符", "其他"];
+const refundBlockedReason = computed(() => {
+  if (order.value?.product_type !== 1) return "";
+  if (order.value.refund_eligibility?.allowed) return "";
+  return order.value.refund_eligibility?.reason || "卡密商品退款状态无法确认，请返回订单详情刷新";
+});
+const canSubmit = computed(() => Boolean(order.value) && !refundBlockedReason.value);
 
 const orderItems = computed(() => {
   const ci = order.value?.cart_info;
   if (!Array.isArray(ci)) return [];
   return ci.map((item: any) => {
     let info: any = {};
-    try {
-      info = JSON.parse(item.cart_info || "{}");
-    } catch {}
+    if (item.cart_info && typeof item.cart_info === "object") {
+      info = item.cart_info;
+    } else {
+      try {
+        info = JSON.parse(item.cart_info || "{}");
+      } catch {}
+    }
     const product = info.product || info;
     return {
       id: item.id,
@@ -76,11 +88,13 @@ const orderItems = computed(() => {
       name: product.storeName || product.store_name || "商品",
       price: product.price || "0",
       sku: product.attrInfo?.suk || "",
+      refundable: item.is_support_refund === 1,
     };
   });
 });
 
 function toggleItem(item: any) {
+  if (!item.refundable || refundBlockedReason.value) return;
   const idx = selectedIds.value.indexOf(item.id);
   if (idx >= 0) {
     selectedIds.value.splice(idx, 1);
@@ -91,6 +105,9 @@ function toggleItem(item: any) {
 
 async function submit() {
   if (!order.value) return;
+  if (!canSubmit.value) {
+    return uni.showToast({ title: refundBlockedReason.value || "订单状态不允许退款", icon: "none" });
+  }
   if (!selectedIds.value.length) return uni.showToast({ title: "请选择退款商品", icon: "none" });
   try {
     await apiRefundApply(order.value.order_id, {
@@ -142,6 +159,10 @@ onLoad(async (query) => {
   gap: 16rpx;
   padding: 16rpx 0;
   border-bottom: 1rpx solid #f7f7f7;
+}
+
+.goods-line.disabled {
+  opacity: 0.48;
 }
 
 .check {
@@ -220,6 +241,20 @@ onLoad(async (query) => {
   border-radius: 40rpx;
   padding: 22rpx 0;
   font-size: 30rpx;
+}
+
+.submit-btn.disabled {
+  background: #c8c9cc;
+}
+
+.policy-warning {
+  margin-bottom: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+  background: #fff1f0;
+  color: #cf1322;
+  font-size: 24rpx;
+  line-height: 1.55;
 }
 
 .empty {

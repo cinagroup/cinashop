@@ -58,6 +58,7 @@ import { reconcileRefundedPink } from "@/services/activity/PinkLifecycleService"
 import { enqueueOrderRefundRefusedNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { assertVirtualProductRefundPolicy } from "@/services/order/VirtualProductRefundPolicy";
 
 const REFUND_LOCK_NAMESPACE = 63841;
 const REQUEST_LEASE_SECONDS = 120;
@@ -394,7 +395,39 @@ async function lockRefundExecutionSnapshot(
   const order = orders[0];
   if (!order) throw new NotFoundException("订单不存在");
   assertRefundExecutionScope(refund, order, scope);
+  if (refund.refundType !== 6) {
+    await assertPersistedVirtualProductRefundPolicy(tx, order, refund);
+  }
   return { refund, order };
+}
+
+async function assertPersistedVirtualProductRefundPolicy(
+  tx: DbClient,
+  order: typeof storeOrder.$inferSelect,
+  refund: typeof storeOrderRefund.$inferSelect,
+): Promise<void> {
+  const carts = await tx
+    .select()
+    .from(storeOrderCartInfo)
+    .where(eq(storeOrderCartInfo.oid, order.id))
+    .orderBy(asc(storeOrderCartInfo.id));
+  if (!carts.length) throw new Error("订单缺少商品快照，不能安全退款");
+  const selections = parseRefundCartSelections(refund.cartInfo);
+  const selected = selections.length
+    ? selections.map((selection) => {
+        const matches = carts.filter((cart) =>
+          cart.id === selection.cartId || Number(cart.cartId) === selection.cartId);
+        if (matches.length !== 1) throw new ValidateException("退款商品快照无法唯一定位");
+        return matches[0];
+      })
+    : carts;
+  if (new Set(selected.map((cart) => cart.id)).size !== selected.length) {
+    throw new ValidateException("退款商品快照重复");
+  }
+  await assertVirtualProductRefundPolicy(tx, order, selected, {
+    applyType: refund.applyType,
+    allowIrreversibleSecretRefund: refund.applyType === 4,
+  });
 }
 
 /**
@@ -447,6 +480,7 @@ export async function finalizeStoreOrderRefund(
     if (![0, 1, 2, 4, 5].includes(refund.refundType)) {
       throw new ValidateException("售后状态不允许完成退款");
     }
+    await assertPersistedVirtualProductRefundPolicy(tx, order, refund);
 
     const refundCents = amountToCents(refund.refundPrice);
     const paidCents = amountToCents(order.payPrice);
@@ -918,6 +952,15 @@ async function createOrderRefundApplication(
       });
       refundCartIds = refundCartSnapshot.map((item) => typeof item === "number" ? item : item.cartId);
     }
+    const refundPolicyCarts = refundCartIds.map((cartId) => {
+      const cart = cartByIdentifier.get(cartId);
+      if (!cart) throw new ValidateException("退款商品快照无法定位");
+      return cart;
+    });
+    await assertVirtualProductRefundPolicy(tx, order, refundPolicyCarts, {
+      applyType: params.applyType,
+      allowIrreversibleSecretRefund: params.privilegedActor === "admin",
+    });
     if (refundNum <= 0 || (!pureIntegralOrder && refundCents <= 0)) {
       throw new ValidateException("没有可退款的商品或金额");
     }
