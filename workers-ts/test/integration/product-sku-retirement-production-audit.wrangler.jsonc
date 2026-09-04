@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "cinashop-product-sku-retirement-audit-template",
+  "main": "ProductSkuRetirementProductionAuditWorker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "limits": { "cpu_ms": 300000 },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "9748c294e21c49a99579c9cef70102e0"
+    }
+  ]
+}

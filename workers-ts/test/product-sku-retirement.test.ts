@@ -123,4 +123,53 @@ describe("controlled product SKU retirement", () => {
     expect(page).toContain("退役选中历史SKU");
     expect(page).toContain("恢复选中SKU");
   });
+
+  it("keeps the production audit and migration bounded, authenticated, idempotent, and self-cleaning", () => {
+    const worker = readFileSync(
+      "test/integration/ProductSkuRetirementProductionAuditWorker.ts",
+      "utf8",
+    );
+    const config = readFileSync(
+      "test/integration/product-sku-retirement-production-audit.wrangler.jsonc",
+      "utf8",
+    );
+    const auditRunner = readFileSync(
+      "scripts/run-product-sku-retirement-production-audit.ps1",
+      "utf8",
+    );
+    const migrationRunner = readFileSync(
+      "scripts/run-product-sku-retirement-production-migration.ps1",
+      "utf8",
+    );
+
+    expect(worker).toContain('request.method === "GET" && path === "/audit"');
+    expect(worker).toContain('request.method === "POST" && path === "/migrate"');
+    expect(worker).toContain("crypto.subtle.timingSafeEqual");
+    expect(worker).toContain('client.begin("read only"');
+    expect(worker).toContain("SET LOCAL lock_timeout = '2s'");
+    expect(worker).toContain("SET LOCAL statement_timeout = '15s'");
+    expect(worker).toContain("pg_advisory_xact_lock(770426, 126)");
+    expect(worker).toContain('LOCK TABLE "store_product_attr_value" IN ACCESS EXCLUSIVE MODE');
+    expect(worker.indexOf("LOCK TABLE")).toBeLessThan(worker.indexOf("WITH base AS"));
+    expect(worker.match(/tx\.unsafe\(PRODUCT_SKU_RETIREMENT_SQL\)/g)).toHaveLength(2);
+    expect(worker).toContain("SKU migration found a partial pre-existing object set");
+    expect(worker).toContain("businessRowsUnchanged");
+    expect(worker).toContain("idempotentSecondPass");
+    expect(worker).not.toMatch(/\bINSERT\s+INTO\b/i);
+    expect(worker).not.toMatch(/\bUPDATE\s+store_product_attr_value\s+SET\b/i);
+    expect(worker).not.toMatch(/\bDELETE\s+FROM\b/i);
+
+    expect(config).toContain('"id": "9748c294e21c49a99579c9cef70102e0"');
+    expect(auditRunner).toContain("Invoke-RestMethod -Method Get");
+    expect(migrationRunner).toContain("Invoke-RestMethod -Method Post");
+    expect(migrationRunner.match(/Invoke-RestMethod -Method Post/g)).toHaveLength(1);
+    expect(migrationRunner.indexOf("Invoke-RestMethod -Method Get"))
+      .toBeLessThan(migrationRunner.indexOf("Invoke-RestMethod -Method Post"));
+    for (const runner of [auditRunner, migrationRunner]) {
+      expect(runner).toContain("} finally {");
+      expect(runner).toContain("wrangler delete");
+      expect(runner).toContain("url_returns_404");
+      expect(runner).toContain("AUDIT_TOKEN_SHA256:$taskTokenHash");
+    }
+  });
 });

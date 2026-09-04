@@ -111,4 +111,14 @@ describe("legacy Admin product screen parity", () => {
     expect(service).toContain("platformScope()");
     expect(service).toContain("isDel: 1, isShow: 0, isHot: 0");
   });
+
+  it("does not keep implemented product batch operations in the remaining-gap narrative", () => {
+    const productList = audit.routes.find((row) => row.legacyPath === "/admin/product/product_list");
+    expect(productList?.covered).toContain("delivery");
+    expect(productList?.covered).toContain("gift/coupon");
+    expect(productList?.covered).toContain("freight-template");
+    expect(productList?.covered).toContain("brand replacement");
+    expect(productList?.remaining).not.toContain("Legacy batch types");
+    expect(productList?.remaining).toContain("non-platform SKU lifecycle");
+  });
 });

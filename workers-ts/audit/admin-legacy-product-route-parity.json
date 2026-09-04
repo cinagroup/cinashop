@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-02",
+  "generatedAt": "2026-09-03",
   "scope": "The 12 active legacy Admin product screens imported by the legacy product router. Status measures screen semantics, not whether a similarly named route exists.",
   "statusDefinitions": {
     "candidate": "The routed screen's primary operations have a new Admin screen and executable authenticated API contracts; production E2E is still required.",
@@ -23,8 +23,8 @@
       "newScreens": ["/product", "/product/virtual-alerts", "/product/virtual/:id"],
       "newApiContracts": ["GET /adminapi/product/list", "POST /adminapi/product/set_show/:id", "POST /adminapi/product/set_show", "POST /adminapi/product/batch_process", "DELETE /adminapi/product/del/:id"],
       "permission": "product.view / product.manage",
-      "covered": "List, search, create/edit entry, single and bounded batch show/hide, bounded atomic category and product-label replacement, transaction-scoped database readback, per-product audit records, delete, and isolated virtual-card inventory operations.",
-      "remaining": "Legacy batch types for delivery, gifts/coupons, user labels, recommendations, forms, freight templates, and brands; richer filters, verification actions, exports, production historical-data validation, and non-platform SKU lifecycle handling remain open."
+      "covered": "List, search, create/edit entry, single and bounded batch show/hide, category, product-label, delivery, gift/coupon, user-label, recommendation, form, freight-template and brand replacement, transaction-scoped database readback, per-product audit records, delete, isolated virtual-card inventory operations, and production SKU-retirement schema/data audit.",
+      "remaining": "Richer filters, verification actions, exports, real-role production product mutations, historical multi-SKU and virtual-product validation, and non-platform SKU lifecycle handling remain open."
     },
     {
       "legacyPath": "/admin/product/product_classify",
@@ -46,7 +46,7 @@
       "newApiContracts": ["GET /adminapi/product/editor/options", "POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id", "POST /adminapi/product/sku/retire", "POST /adminapi/product/sku/restore"],
       "permission": "product.view / product.manage",
       "covered": "Core scalar fields, category, unit, membership price, sorting, visibility, server draft restore/save/delete, brand and product-label assignment, guarantee multi-selection, parameter-template application, editable historical parameter snapshots, SKU specification-template application, complete Cartesian SKU generation, price/stock/image/barcode/code editing, stable historical SKU identity, recoverable reference-aware retirement/restoration with append-only evidence, atomic relation/SKU persistence, stock-ledger writes, and database readback rollback on mismatch.",
-      "remaining": "Physical identity rename stays prohibited and is replaced by add-new-plus-retire-old; gallery/rich-media selection, several legacy product types, production historical-data validation, and real-role E2E remain."
+      "remaining": "Physical identity rename stays prohibited and is replaced by add-new-plus-retire-old; gallery/rich-media selection, several legacy product types, historical multi-SKU/virtual-product mutation validation, non-platform SKU lifecycle handling, and real-role E2E remain."
     },
     {
       "legacyPath": "/admin/product/product_reply/:id?",
@@ -68,7 +68,7 @@
       "newApiContracts": ["GET /adminapi/product/rule", "GET /adminapi/product/rule/:id", "POST /adminapi/product/rule/:id", "DELETE /adminapi/product/rule/delete/:id", "GET /adminapi/product/editor/options", "POST /adminapi/product/add", "GET /adminapi/product/detail/:id", "POST /adminapi/product/edit/:id", "POST /adminapi/product/sku/retire", "POST /adminapi/product/sku/restore"],
       "permission": "product.view / product.manage",
       "covered": "Search, list, create, edit, delete, one-to-three SKU dimensions, up to fifty unique values per dimension, duplicate validation, explicit SKU semantics, product-form application, complete Cartesian generation, identity-preserving row editing, reference-aware recoverable retirement/restoration, and transaction-scoped database readback.",
-      "remaining": "Production historical-data validation, non-platform lifecycle handling, and real-role E2E remain open."
+      "remaining": "The current two production single-SKU rows and retirement DDL are audited; historical multi-SKU and virtual-product mutations, non-platform lifecycle handling, and real-role E2E remain open."
     },
     {
       "legacyPath": "/admin/product/product_brand",
