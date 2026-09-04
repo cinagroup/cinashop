@@ -4513,6 +4513,30 @@ E5E2B只能标“候选完成，未发布”。E5E2C仍阻塞父项：当前生�
 
 E5E3因此只能标“候选完成，未发布”。生产公共业务数据没有改写，随机schema和临时Worker均已清理，主Worker及四端前端均未发布。E5E2C卡密退款策略、E5E4次卡商品创建编辑、E5E5源PHP类型1/3/4历史数据复制与真实Admin/Supplier/受限角色/客户流程、外部通知故障、正式发布和观察仍未完成；FE-001E5、FE-001E5E与FE-001E6继续开放。
 
+### E5E4 次卡商品创建编辑与核销闭环
+
+旧PHP的活动Admin表单把`product_type=4`定义为次卡到店核销，并明确限制为单规格单SKU；每个SKU保存`write_times`、`write_valid`、`write_days`、`write_start`、`write_end`。核销次数允许1～99,999,999；时效1为永久，2为购买后N天，3为固定起止时间且结束必须晚于开始。商品保存强制到店履约。Supplier活动表单只发布0/1/3，并未发布类型4，因此迁移不能为了“端能力对称”擅自给Supplier新增次卡入口。支付任务按持久化支付时间激活模式2，订单商品快照保存总次数、剩余次数和有效期；门店核销读取快照并递减剩余次数，临期/过期通知分别使用`reminder_brink_death`和`expiration_reminder`。这些结论来自活动`view/admin/src/pages/product/productAdd/index.vue`、`StoreProductServices.php`、`StoreProductAttrServices.php`、`OrderPayHandelJob.php`、`StoreOrderCartInfoServices.php`和`WriteOffOrderServices.php`调用链，而非仅按字段名推断。
+
+迁移前后端已经有E5E1审过的付款时激活、事务核销、提醒outbox和退款基础，但商品创建链仍拒绝类型4，Admin表单类型联合也只有0/1/3；共享SKU编辑器既不接受类型4，也没有验证、写入和回读五个核销字段。结算端没有从购物车商品类型强制到店自提，PC/UniApp订单详情也没有呈现次卡剩余次数和有效期。这意味着数据库列和下游状态机虽然存在，运营仍无法安全创建一个能进入该状态机的次卡商品，不能把E5E1的局部支付证据当作完整生命周期完成。
+
+本轮按上述权威恢复Admin类型4。`ProductSkuEditorService`新增三种时效的规范化、边界校验、数据库写入、不可变属性快照及写后精确回读；类型4拒绝多规格和多SKU，清除不属于当前时效模式的字段，购买后天数限定1～3650，时间戳还受PostgreSQL整数范围约束。`ProductAssociationService`只在类型4配置出一个合法SKU后允许保存，并统一强制`delivery_type=2`、包邮、零邮费、无运费模板；已有SKU继续按`suk`保持`id/unique/sales/sum_stock`身份，编辑核销规则后必须从数据库回读完全一致。Supplier仍拒绝类型4，其复用的共享SKU输入只补内部默认值，不扩大旧PHP租户能力。
+
+Admin商品页创建时可选择类型4，编辑时仍禁止切换履约类型；次卡区显示次数和永久/购买后N天/固定区间，强制并禁用单规格，隐藏图片、条码、编码和不适用的SKU退役控件。草稿、详情回填、提交规范化和API类型均携带五个字段；实际UI检查发现preview草稿API原先仍请求不存在的代理而弹“草稿读取失败”，现改为仅preview使用内存草稿，生产API路径不变。PC和UniApp购物车数据补充`productType`，只要订单包含次卡就把结算配送锁为门店自提并显示说明；Worker仍在服务端拒绝类型4快递，不能依赖前端。两个订单详情页新增“次卡权益”，展示总次数、已用/剩余次数、永久/未激活/起止有效期和已核销状态。
+
+生产运行时验证使用已授权Hyperdrive`9748c294e21c49a99579c9cef70102e0`和单一数据库客户端，在随机`codex_second_card_product_*` schema克隆商品、SKU、订单、订单商品、退款、核销状态、提醒outbox等所需表与本地序列。临时Worker只接受随机32字节令牌，部署变量只保存令牌SHA-256；无令牌请求必须403，错误方法必须404，响应禁用缓存。隔离事务设置本地`search_path`后调用真实`ProductAssociationService`、付款激活、`StoreOrderWriteoffService`、`StoreOrderRefundService`和`SecondCardReminderService`，并在清理前后比较公共相关表、序列及schema基线指纹。
+
+最终Worker`cinashop-second-card-product-audit-bf867156a53b`在PostgreSQL 16.14上证明：类型4创建和更新成功，单一SKU身份稳定，数据库自提策略及五个核销字段回读一致；购买后30天窗口从持久化支付时间激活；一次部分核销后旧核销码失效，再用新码完成剩余次数，最终得到2条不可变核销状态证据；过期次卡和非所属门店均拒绝且不改变订单。未核销且商品快照允许退款时真实退款服务创建退款，部分消费后即使快照允许也拒绝退款。提醒服务只暂存并投递一次，重放不新增outbox或Queue消息，Queue载荷只含opaque outbox标识，不含手机号或渲染后的消息正文。所有业务断言、`schema_created/schema_removed/public_state_unchanged`均为true；Worker删除成功且公开URL返回404。
+
+生产只读提醒审计给出了不能被隔离场景替代的现实边界：当前生产有28条订单商品、相关表大小188,416字节，但类型4商品、次卡订单商品、到期候选和孤儿均为0；提醒outbox为0，`reminder_deadline_second_card_time`没有配置行，代码运行时回退为提前1小时。`reminder_brink_death`与`expiration_reminder`两类通知模板/配置行也均为0。两条次卡扫描部分索引均存在、valid且ready，outbox CHECK已允许五类事件且没有不支持事件；当前3条活动退款全部是平台scope。由此可证明schema和调度合同就绪，却不能宣称生产已有真实次卡、模板或用户通知；模板内容、运营提前量、真实消息提供方成功/失败重试仍必须在E5E5和发布观察中验收。
+
+审计harness的失败过程均保留而未混入成功证据。首次Worker因边缘传播窗口持续返回404而没有触库；另一轮遇到Cloudflare 1042运行时路由错误；第一次真正进入数据库后，夹具给退款服务传了非数字订单商品标识并被真实校验拒绝。修正为更长就绪探测、单客户端和数字标识后，先完成商品/付款/核销/退款场景；再加入真实提醒表、内存Queue和幂等断言，才采纳上述最终报告。每一轮都执行`finally`删除Worker并复验URL 404；创建过随机schema的轮次也完成schema清理，生产公共指纹没有变化。
+
+本地Admin preview实际操作了次卡类型、购买后N天和固定区间；桌面控件齐全，390×844下页面宽度与视口均为390、无横向溢出，修复草稿后不再出现错误提示，控制台warning/error均为0。Worker专项4文件/23项和最终全量212文件/1,349项单元通过；单元及runtime-test双TypeScript在明确4 GiB Node堆下通过，PC生产构建1,828模块、UniApp类型检查及H5构建通过，Admin生产构建2,437模块。Windows本机workerd仍在执行断言前因既知`0xc0000005`/日志目录权限失败，因此没有把本机0项写成通过，Linux workerd由远端门禁补足。
+
+实现提交`a74d1b2f08294cdd7a745d5920d03b3e6b458bbb`推送后，首轮Actions只有Worker主门禁因npm官方安全审计端点HTTP 503而失败，同一提交的Linux workerd及其相同生产依赖审计、其余六个作业均通过；失败项重跑仍遇到同一外部503。提交`e6a7cd7964f792a8f038290d05391d281217bc77`把`audit:prod`改为只对5xx、超时和明确网络错误做最多三次有限重试，每次仍执行`--omit=dev --audit-level=low`，发现真实漏洞立即失败，三次服务不可用后同样失败。其本地实测前两次超时、第三次成功并报告23个生产依赖、0个各级漏洞；[Actions `33866228404`](https://github.com/cinagroup/cinashop/actions/runs/33866228404)首次仍在三次网络失败后保持红色，精确重跑成功执行生产依赖审计、Worker双TypeScript/1,349项单元/schema/route/observability，连同Linux workerd、Admin、PC、Supplier、Kefu、UniApp和全历史密钥扫描最终8/8成功。
+
+E5E4因此可标“候选完成，未发布”。本轮只在生产数据库内使用已清理的随机隔离schema，没有改写公共业务行，也没有发布主Worker或四端前端。生产当前没有类型4样本，真实历史类型4商品/SKU/订单快照尚未从源PHP复制；主管理员、只读/编辑受限角色、门店核销员和真实客户流程，真实提醒模板与通知故障，以及发布后观察均继续由E5E5、FE-001E6和正式发布门禁承接。FE-001E5与FE-001E5E继续开放。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全，数据迁移可重复且校验通过，关键并发与失败恢复有集成测试，前端真实流程通过，预发 Cloudflare 和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
