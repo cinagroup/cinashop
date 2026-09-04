@@ -263,11 +263,14 @@ export interface ProductSku {
   brokerage: string;
   brokerage_two: string;
   code: string;
+  disk_info?: string;
+  delivery_mode?: "card" | "fixed";
+  original_disk_info?: string;
 }
 
 export interface ProductDetail {
   id: number;
-  product_type: 0;
+  product_type: 0 | 1;
   store_name: string;
   store_info: string;
   keyword: string;

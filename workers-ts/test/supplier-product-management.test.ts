@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSkuCombinations,
   normalizeStockAdjustments,
-  normalizeSupplierPhysicalProductInput,
+  normalizeSupplierProductInput,
   normalizeSupplierProductDimensions,
   normalizeSupplierProductSkus,
 } from "@/services/supplier/SupplierProductManagementService";
@@ -36,9 +36,9 @@ function baseProduct() {
   };
 }
 
-describe("supplier physical product normalization", () => {
+describe("supplier product normalization", () => {
   it("normalizes a single-spec product and keeps money as exact decimal strings", () => {
-    const product = normalizeSupplierPhysicalProductInput(baseProduct());
+    const product = normalizeSupplierProductInput(baseProduct());
     expect(product.storeName).toBe("便携保温杯");
     expect(product.dimensions).toEqual([{ value: "规格", detail: ["默认"] }]);
     expect(product.skus[0]).toMatchObject({
@@ -54,38 +54,56 @@ describe("supplier physical product normalization", () => {
   });
 
   it("preserves PHP freight modes and refuses incomplete template/fixed-postage settings", () => {
-    expect(normalizeSupplierPhysicalProductInput({
+    expect(normalizeSupplierProductInput({
       ...baseProduct(),
       freight: 2,
       postage: "6.50",
       temp_id: 91,
     })).toMatchObject({ freight: 2, postage: "6.50", tempId: 0 });
-    expect(normalizeSupplierPhysicalProductInput({
+    expect(normalizeSupplierProductInput({
       ...baseProduct(),
       freight: 3,
       postage: "8.00",
       temp_id: 91,
     })).toMatchObject({ freight: 3, postage: "0.00", tempId: 91 });
-    expect(() => normalizeSupplierPhysicalProductInput({
+    expect(() => normalizeSupplierProductInput({
       ...baseProduct(),
       freight: 3,
       temp_id: 0,
     })).toThrow("请选择运费模板");
-    expect(() => normalizeSupplierPhysicalProductInput({
+    expect(() => normalizeSupplierProductInput({
       ...baseProduct(),
       freight: 2,
       postage: 0,
     })).toThrow("固定邮费必须大于0");
   });
 
-  it("rejects specialized product types until their fulfillment semantics are migrated", () => {
-    expect(() => normalizeSupplierPhysicalProductInput({ ...baseProduct(), product_type: 1 })).toThrow(
-      "当前迁移阶段仅支持实物商品",
-    );
-    expect(() => normalizeSupplierPhysicalProductInput({ ...baseProduct(), cate_id: [] })).toThrow(
+  it("accepts card/fixed delivery, forces no-logistics freight, and rejects unopened types", () => {
+    expect(normalizeSupplierProductInput({
+      ...baseProduct(),
+      product_type: 1,
+      freight: 3,
+      temp_id: 0,
+      attrs: [{ ...baseProduct().attrs[0], stock: 0, disk_info: "" }],
+    })).toMatchObject({ productType: 1, freight: 2, postage: "0.00", tempId: 0 });
+    expect(normalizeSupplierProductInput({
+      ...baseProduct(),
+      product_type: 1,
+      attrs: [{ ...baseProduct().attrs[0], disk_info: "https://download.example/fixed" }],
+    }).skus[0]).toMatchObject({ stock: 18, diskInfo: "https://download.example/fixed" });
+    for (const product_type of [2, 3, 4]) {
+      expect(() => normalizeSupplierProductInput({ ...baseProduct(), product_type })).toThrow(
+        "当前迁移阶段仅支持实物商品和卡密/固定内容商品",
+      );
+    }
+    expect(() => normalizeSupplierProductInput({
+      ...baseProduct(),
+      attrs: [{ ...baseProduct().attrs[0], disk_info: "not-physical" }],
+    })).toThrow("实物商品不能配置固定虚拟内容");
+    expect(() => normalizeSupplierProductInput({ ...baseProduct(), cate_id: [] })).toThrow(
       "请选择商品分类",
     );
-    expect(() => normalizeSupplierPhysicalProductInput({ ...baseProduct(), slider_image: [] })).toThrow(
+    expect(() => normalizeSupplierProductInput({ ...baseProduct(), slider_image: [] })).toThrow(
       "请至少上传一张商品轮播图",
     );
   });
@@ -133,18 +151,18 @@ describe("supplier physical product normalization", () => {
   it("enforces price, settlement and brokerage invariants", () => {
     const negative = baseProduct();
     negative.attrs[0].price = "0";
-    expect(() => normalizeSupplierPhysicalProductInput(negative)).toThrow("销售价必须大于0");
+    expect(() => normalizeSupplierProductInput(negative)).toThrow("销售价必须大于0");
 
     const excessive = baseProduct();
     excessive.attrs[0].brokerage = "80.00";
     excessive.attrs[0].brokerage_two = "20.00";
-    expect(() => normalizeSupplierPhysicalProductInput(excessive)).toThrow(
+    expect(() => normalizeSupplierProductInput(excessive)).toThrow(
       "一级佣金与二级佣金之和不能超过销售价",
     );
 
     const precision = baseProduct();
     precision.attrs[0].settle_price = "1.005";
-    expect(() => normalizeSupplierPhysicalProductInput(precision)).toThrow("最多两位小数");
+    expect(() => normalizeSupplierProductInput(precision)).toThrow("最多两位小数");
   });
 });
 
@@ -194,6 +212,27 @@ describe("supplier product migration contracts", () => {
     expect(source).toContain("eq(shippingTemplates.ownerType, SUPPLIER_TYPE)");
     expect(source).toContain("eq(shippingTemplates.relationId, supplierId)");
     expect(source).toContain("eq(shippingTemplates.status, 1)");
+  });
+
+  it("keeps card-backed stock authoritative to the virtual inventory ledger", () => {
+    const source = readFileSync("src/services/supplier/SupplierProductManagementService.ts", "utf8");
+    expect(source).toContain("product.productType === CARD_PRODUCT_TYPE && !sku.diskInfo?.trim()");
+    expect(source).toContain("请使用卡密库存导入");
+    expect(source).toContain("existing.productType !== input.productType");
+  });
+
+  it("exposes Supplier type-one authoring without sending card secrets through the product form", () => {
+    const form = readFileSync("../view/supplier-ts/src/pages/ProductForm.vue", "utf8");
+    const products = readFileSync("../view/supplier-ts/src/pages/Products.vue", "utf8");
+    expect(form).toContain("卡密 / 固定内容");
+    expect(form).toContain(':disabled="editing"');
+    expect(form).toContain("保存后前往卡密库存安全导入");
+    expect(form).toContain("delivery_mode === \"fixed\"");
+    expect(form).toContain("scope.row.suk}-${scope.row.delivery_mode");
+    expect(products).toContain("scope.row.product_type === 0 || scope.row.product_type === 1");
+    expect(products).toContain("/virtual-inventory");
+    expect(form).not.toContain("card_pwd");
+    expect(form).not.toContain("card_no");
   });
 
   it("keeps the file migration and embedded production migration byte-equivalent after trimming", () => {

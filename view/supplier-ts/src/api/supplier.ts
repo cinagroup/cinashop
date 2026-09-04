@@ -164,7 +164,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
   const row = previewProducts.find((item) => item.id === id) ?? previewProducts[0];
   return {
     id: row.id,
-    product_type: 0,
+    product_type: row.product_type === 1 ? 1 : 0,
     store_name: row.store_name,
     store_info: "",
     keyword: "",
@@ -175,7 +175,7 @@ function defaultPreviewDetail(id: number): ProductDetail {
     description: "预览商品详情",
     spec_type: 0,
     items: [{ value: "规格", detail: ["默认"] }],
-    attrs: [{ id: id * 100 + 1, unique: `PV${id}SKU`, suk: "默认", detail: { 规格: "默认" }, image: "", price: row.price, settle_price: row.price, cost: "0.00", ot_price: row.price, vip_price: row.price, stock: row.stock, sales: row.sales, bar_code: "", weight: "0.00", volume: "0.00", brokerage: "0.00", brokerage_two: "0.00", code: "", is_retired: 0 }],
+    attrs: [{ id: id * 100 + 1, unique: `PV${id}SKU`, suk: "默认", detail: { 规格: "默认" }, image: "", price: row.price, settle_price: row.price, cost: "0.00", ot_price: row.price, vip_price: row.price, stock: row.stock, sales: row.sales, bar_code: "", weight: "0.00", volume: "0.00", brokerage: "0.00", brokerage_two: "0.00", code: "", disk_info: "", is_retired: 0 }],
     freight: 1,
     postage: "0.00",
     temp_id: 0,
@@ -624,8 +624,8 @@ export async function saveProduct(id: number, data: ProductDetail): Promise<Prod
     const stock = data.attrs.reduce((sum, item) => sum + Number(item.stock), 0);
     const price = data.attrs.reduce((minimum, item) => Math.min(minimum, Number(item.price)), Number.POSITIVE_INFINITY).toFixed(2);
     const row = previewProducts.find((item) => item.id === savedId);
-    if (row) Object.assign(row, { store_name: data.store_name, image: data.slider_image[0], price, stock, is_show: 0, is_verify: 0 });
-    else previewProducts.unshift({ id: savedId, product_type: 0, image: data.slider_image[0], store_name: data.store_name, price, stock, sales: 0, is_show: 0, is_verify: 0, add_time: Math.floor(Date.now() / 1000) });
+    if (row) Object.assign(row, { product_type: data.product_type, store_name: data.store_name, image: data.slider_image[0], price, stock, is_show: 0, is_verify: 0 });
+    else previewProducts.unshift({ id: savedId, product_type: data.product_type, image: data.slider_image[0], store_name: data.store_name, price, stock, sales: 0, is_show: 0, is_verify: 0, add_time: Math.floor(Date.now() / 1000) });
     return { id: savedId, is_show: 0, is_verify: 0 };
   }
   return apiRequest<ProductSaveResult>({ method: "POST", url: id ? `/product/product/${id}` : "/product/product", data });

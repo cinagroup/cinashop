@@ -27,6 +27,8 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const MAX_SKUS = 50;
 const PRODUCT_SKU_TYPE = 0;
+const PHYSICAL_PRODUCT_TYPE = 0;
+const CARD_PRODUCT_TYPE = 1;
 
 export interface ProductSkuRetirementInput {
   productId: number;
@@ -273,7 +275,9 @@ export class ProductSkuRetirementService {
           ? "商品不存在或不属于当前供应商"
           : "平台自营商品不存在或已删除");
       }
-      if (product.productType !== 0) throw new ValidateException("当前阶段仅支持实物商品SKU退役");
+      if (product.productType !== PHYSICAL_PRODUCT_TYPE && product.productType !== CARD_PRODUCT_TYPE) {
+        throw new ValidateException("当前阶段仅支持实物或卡密商品SKU退役");
+      }
       const expectedStatus = action === "retire" ? 0 : 1;
       const skus = await tx.select().from(storeProductAttrValue).where(and(
         eq(storeProductAttrValue.productId, input.productId),

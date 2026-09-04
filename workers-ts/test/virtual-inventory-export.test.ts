@@ -50,6 +50,13 @@ describe("virtual-inventory controlled sensitive export", () => {
     expect(consume).toContain("MAX_EXPORT_CARDS + 1");
   });
 
+  it("excludes retired SKUs from inventory, import, alerts and sensitive export", () => {
+    const source = readFileSync("src/services/product/VirtualProductInventoryService.ts", "utf8");
+    expect(source).toContain("AND av.is_retired = 0");
+    expect(source.match(/eq\(storeProductAttrValue\.isRetired, 0\)/g)?.length ?? 0)
+      .toBeGreaterThanOrEqual(4);
+  });
+
   it("marks every ticket response as non-cacheable", () => {
     const controller = readFileSync("src/controllers/api/v1/VirtualProductInventoryController.ts", "utf8");
     expect(controller).toContain('"Cache-Control", "private, no-store, max-age=0"');

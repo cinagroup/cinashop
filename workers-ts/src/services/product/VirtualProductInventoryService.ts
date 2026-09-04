@@ -355,6 +355,7 @@ export class VirtualProductInventoryService {
             ON v.product_id = p.id AND v.attr_unique = av."unique"
           WHERE p.is_del = 0
             AND p.product_type = ${CARD_PRODUCT_TYPE}
+            AND av.is_retired = 0
             AND COALESCE(LENGTH(TRIM(av.disk_info)), 0) = 0
             ${ownerFilter}
           GROUP BY
@@ -443,6 +444,7 @@ export class VirtualProductInventoryService {
         and(
           eq(storeProductAttrValue.productId, productId),
           eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+          eq(storeProductAttrValue.isRetired, 0),
         ),
       )
       .orderBy(asc(storeProductAttrValue.id));
@@ -563,6 +565,7 @@ export class VirtualProductInventoryService {
               eq(storeProductAttrValue.productId, productId),
               eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
               eq(storeProductAttrValue.unique, skuUnique),
+              eq(storeProductAttrValue.isRetired, 0),
             ),
           )
           .limit(1)
@@ -673,6 +676,7 @@ export class VirtualProductInventoryService {
               eq(storeProductAttrValue.productId, productId),
               eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
               eq(storeProductAttrValue.unique, row.attrUnique),
+              eq(storeProductAttrValue.isRetired, 0),
             ),
           )
           .limit(1)
@@ -776,6 +780,7 @@ export class VirtualProductInventoryService {
               eq(storeProductAttrValue.productId, productId),
               eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
               eq(storeProductAttrValue.unique, skuUnique),
+              eq(storeProductAttrValue.isRetired, 0),
             ),
           )
           .limit(1)

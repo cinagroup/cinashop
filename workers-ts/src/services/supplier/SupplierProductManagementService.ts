@@ -42,6 +42,7 @@ export type {
 
 const SUPPLIER_TYPE = 2;
 const PHYSICAL_PRODUCT_TYPE = 0;
+const CARD_PRODUCT_TYPE = 1;
 const PRODUCT_ATTR_TYPE = 0;
 const CATEGORY_RELATION_TYPE = 1;
 const PRODUCT_LOCK_NAMESPACE = PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE;
@@ -49,7 +50,8 @@ const MAX_SKUS = 200;
 
 type UnknownRecord = Record<string, unknown>;
 
-export interface SupplierPhysicalProductInput {
+export interface SupplierProductInput {
+  productType: 0 | 1;
   storeName: string;
   storeInfo: string;
   keyword: string;
@@ -73,6 +75,8 @@ export interface SupplierPhysicalProductInput {
   ficti: number;
   videoLink: string;
 }
+
+export type SupplierPhysicalProductInput = SupplierProductInput;
 
 export interface SupplierStockAdjustment {
   unique: string;
@@ -184,14 +188,15 @@ function normalizeCategoryIds(value: unknown): number[] {
   return [...new Set(ids)];
 }
 
-export function normalizeSupplierPhysicalProductInput(
+export function normalizeSupplierProductInput(
   input: UnknownRecord,
   options: PhysicalProductNormalizationOptions = {},
-): SupplierPhysicalProductInput {
-  const productType = integerValue(firstValue(input, "product_type", "productType"), "商品类型", 0, 4);
-  if (productType !== PHYSICAL_PRODUCT_TYPE) {
-    throw new ValidateException("当前迁移阶段仅支持实物商品，卡密、优惠券、虚拟商品和次卡暂不可创建");
+): SupplierProductInput {
+  const productTypeValue = integerValue(firstValue(input, "product_type", "productType"), "商品类型", 0, 4);
+  if (productTypeValue !== PHYSICAL_PRODUCT_TYPE && productTypeValue !== CARD_PRODUCT_TYPE) {
+    throw new ValidateException("当前迁移阶段仅支持实物商品和卡密/固定内容商品，优惠券、虚拟商品和次卡暂不可创建");
   }
+  const productType = productTypeValue as 0 | 1;
   const specTypeValue = integerValue(firstValue(input, "spec_type", "specType"), "规格类型", 0, 1);
   if (specTypeValue !== 0 && specTypeValue !== 1) throw new ValidateException("规格类型错误");
   const specType = specTypeValue as 0 | 1;
@@ -216,24 +221,36 @@ export function normalizeSupplierPhysicalProductInput(
   if (isLimit && ![1, 2].includes(limitType)) throw new ValidateException("限购类型错误");
   if (isLimit && limitNum <= 0) throw new ValidateException("限购数量必须大于0");
 
-  let postage = decimalString(input.postage, "运费");
-  let tempId = integerValue(firstValue(input, "temp_id", "tempId"), "运费模板");
-  const freightValue = firstValue(input, "freight");
-  const inferredFreight = tempId > 0 ? 3 : moneyCents(postage) > 0n ? 2 : 1;
-  const freight = integerValue(freightValue, "运费设置", inferredFreight, 3);
-  if (![1, 2, 3].includes(freight)) throw new ValidateException("运费设置格式错误");
-  if (freight === 1) {
-    postage = "0.00";
-    tempId = 0;
-  } else if (freight === 2) {
-    if (moneyCents(postage) <= 0n) throw new ValidateException("固定邮费必须大于0");
-    tempId = 0;
-  } else {
-    if (tempId <= 0) throw new ValidateException("请选择运费模板");
-    postage = "0.00";
+  let postage = "0.00";
+  let tempId = 0;
+  let freight: 1 | 2 | 3 = 2;
+  if (productType === PHYSICAL_PRODUCT_TYPE) {
+    postage = decimalString(input.postage, "运费");
+    tempId = integerValue(firstValue(input, "temp_id", "tempId"), "运费模板");
+    const freightValue = firstValue(input, "freight");
+    const inferredFreight = tempId > 0 ? 3 : moneyCents(postage) > 0n ? 2 : 1;
+    const freightValueNormalized = integerValue(freightValue, "运费设置", inferredFreight, 3);
+    if (![1, 2, 3].includes(freightValueNormalized)) throw new ValidateException("运费设置格式错误");
+    freight = freightValueNormalized as 1 | 2 | 3;
+    if (freight === 1) {
+      postage = "0.00";
+      tempId = 0;
+    } else if (freight === 2) {
+      if (moneyCents(postage) <= 0n) throw new ValidateException("固定邮费必须大于0");
+      tempId = 0;
+    } else {
+      if (tempId <= 0) throw new ValidateException("请选择运费模板");
+      postage = "0.00";
+    }
+  }
+
+  const skus = normalizeSupplierProductSkus(input.attrs, dimensions, specType, options);
+  if (productType === PHYSICAL_PRODUCT_TYPE && skus.some((sku) => sku.diskInfo)) {
+    throw new ValidateException("实物商品不能配置固定虚拟内容");
   }
 
   return {
+    productType,
     storeName: requiredString(firstValue(input, "store_name", "storeName"), "商品名称", 256),
     storeInfo: optionalString(firstValue(input, "store_info", "storeInfo"), "商品简介", 256),
     keyword: optionalString(input.keyword, "关键词", 256),
@@ -244,8 +261,8 @@ export function normalizeSupplierPhysicalProductInput(
     description: optionalString(input.description, "商品详情", 200_000),
     specType,
     dimensions,
-    skus: normalizeSupplierProductSkus(input.attrs, dimensions, specType, options),
-    freight: freight as 1 | 2 | 3,
+    skus,
+    freight,
     postage,
     tempId,
     isPostage: flagValue(firstValue(input, "is_postage", "isPostage"), "包邮状态", 0),
@@ -261,6 +278,18 @@ export function normalizeSupplierPhysicalProductInput(
     ficti: integerValue(input.ficti, "虚拟销量", 0),
     videoLink: optionalString(firstValue(input, "video_link", "videoLink"), "视频地址", 500),
   };
+}
+
+/** Physical-only compatibility boundary used by the external Out API. */
+export function normalizeSupplierPhysicalProductInput(
+  input: UnknownRecord,
+  options: PhysicalProductNormalizationOptions = {},
+): SupplierProductInput {
+  const normalized = normalizeSupplierProductInput(input, options);
+  if (normalized.productType !== PHYSICAL_PRODUCT_TYPE) {
+    throw new ValidateException("当前迁移阶段仅支持实物商品");
+  }
+  return normalized;
 }
 
 export function normalizeStockAdjustments(value: unknown): SupplierStockAdjustment[] {
@@ -535,8 +564,8 @@ export class SupplierProductManagementService {
     return rows;
   }
 
-  private async assertShippingTemplate(tx: DbClient, supplierId: number, input: SupplierPhysicalProductInput) {
-    if (input.freight !== 3) return;
+  private async assertShippingTemplate(tx: DbClient, supplierId: number, input: SupplierProductInput) {
+    if (input.productType !== PHYSICAL_PRODUCT_TYPE || input.freight !== 3) return;
     const rows = await tx
       .select({ id: shippingTemplates.id })
       .from(shippingTemplates)
@@ -553,7 +582,7 @@ export class SupplierProductManagementService {
   }
 
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord) {
-    const input = normalizeSupplierPhysicalProductInput(rawInput);
+    const input = normalizeSupplierProductInput(rawInput);
     return withTx(this.container, async (tx) => {
       await this.lockProduct(tx, supplierId, productId);
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
@@ -569,8 +598,11 @@ export class SupplierProductManagementService {
           )[0]
         : undefined;
       if (productId > 0 && !existing) throw new NotFoundException("商品不存在或不属于当前供应商");
-      if (existing && existing.productType !== PHYSICAL_PRODUCT_TYPE) {
-        throw new ValidateException("当前迁移阶段不能编辑非实物商品");
+      if (existing && existing.productType !== PHYSICAL_PRODUCT_TYPE && existing.productType !== CARD_PRODUCT_TYPE) {
+        throw new ValidateException("当前迁移阶段不能编辑此履约类型的商品");
+      }
+      if (existing && existing.productType !== input.productType) {
+        throw new ValidateException("商品创建后不能修改履约类型");
       }
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
       await this.assertShippingTemplate(tx, supplierId, input);
@@ -583,7 +615,7 @@ export class SupplierProductManagementService {
       const vipPrice = minMoney(input.skus.map((sku) => sku.vipPrice));
       const now = Math.floor(Date.now() / 1000);
       const productValues = {
-        productType: PHYSICAL_PRODUCT_TYPE,
+        productType: input.productType,
         type: SUPPLIER_TYPE,
         relationId: supplierId,
         image: input.sliderImages[0],
@@ -597,7 +629,7 @@ export class SupplierProductManagementService {
         settlePrice,
         vipPrice,
         otPrice,
-        deliveryType: "1",
+        deliveryType: input.productType === PHYSICAL_PRODUCT_TYPE ? "1" : "",
         freight: input.freight,
         postage: input.postage,
         tempId: input.tempId,
@@ -647,14 +679,14 @@ export class SupplierProductManagementService {
       );
       await tx
         .insert(storeProductDescription)
-        .values({ productId: savedProductId, description: input.description, type: PHYSICAL_PRODUCT_TYPE })
+        .values({ productId: savedProductId, description: input.description, type: PRODUCT_ATTR_TYPE })
         .onConflictDoUpdate({
           target: [storeProductDescription.productId, storeProductDescription.type],
           set: { description: input.description },
         });
       await replaceProductSkuEditor(tx, {
         id: savedProductId,
-        productType: PHYSICAL_PRODUCT_TYPE,
+        productType: input.productType,
         image: input.sliderImages[0],
         type: SUPPLIER_TYPE,
         relationId: supplierId,
@@ -799,7 +831,7 @@ export class SupplierProductManagementService {
       await this.lockProduct(tx, supplierId, productId);
       const product = (
         await tx
-          .select({ id: storeProduct.id })
+          .select({ id: storeProduct.id, productType: storeProduct.productType })
           .from(storeProduct)
           .where(this.tenantProductWhere(supplierId, productId))
           .limit(1)
@@ -813,6 +845,7 @@ export class SupplierProductManagementService {
           and(
             eq(storeProductAttrValue.productId, productId),
             eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+            eq(storeProductAttrValue.isRetired, 0),
             inArray(storeProductAttrValue.unique, uniques),
           ),
         );
@@ -822,6 +855,9 @@ export class SupplierProductManagementService {
       for (const adjustment of adjustments) {
         const sku = byUnique.get(adjustment.unique);
         if (!sku) throw new ValidateException("SKU不存在");
+        if (product.productType === CARD_PRODUCT_TYPE && !sku.diskInfo?.trim()) {
+          throw new ValidateException(`SKU ${sku.suk} 的库存由未分配卡密数量维护，请使用卡密库存导入`);
+        }
         if (adjustment.pm === 0 && sku.stock < adjustment.stock) {
           throw new ValidateException(`SKU ${sku.suk} 库存不足，不能扣减`);
         }

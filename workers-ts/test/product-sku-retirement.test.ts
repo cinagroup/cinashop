@@ -163,6 +163,8 @@ describe("controlled product SKU retirement", () => {
     expect(retirement).toContain("eq(storeProduct.type, scope.ownerType)");
     expect(retirement).toContain("eq(storeProduct.relationId, scope.relationId)");
     expect(retirement).toContain("商品不存在或不属于当前供应商");
+    expect(retirement).toContain("product.productType !== CARD_PRODUCT_TYPE");
+    expect(retirement).toContain("当前阶段仅支持实物或卡密商品SKU退役");
     expect(retirement).toContain("/supplierapi/product/product/sku/${action}");
     expect(supplierProducts).toContain("await replaceProductSkuEditor(tx");
     expect(supplierProducts).toContain("loadProductSkuEditor(this.container.db");

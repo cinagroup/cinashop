@@ -193,6 +193,64 @@ function productPayload(
   };
 }
 
+function supplierVirtualProductPayload(
+  cardStock: number,
+  cardDiskInfo: string,
+  fixedStock: number,
+  fixedDiskInfo: string,
+  uniques: Readonly<Record<string, string>> = {},
+) {
+  return {
+    product_type: 1,
+    store_name: "Isolated supplier virtual product fixture",
+    store_info: "isolated PostgreSQL verification only",
+    cate_id: [41],
+    slider_image: ["https://example.com/audit-supplier-virtual-product.png"],
+    unit_name: "份",
+    spec_type: 1,
+    items: [{ value: "交付", detail: ["一次性卡密", "固定内容"] }],
+    attrs: [
+      {
+        unique: uniques["一次性卡密"],
+        detail: { 交付: "一次性卡密" },
+        price: "19.90",
+        settle_price: "11.20",
+        cost: "9.00",
+        ot_price: "25.00",
+        vip_price: "18.00",
+        stock: cardStock,
+        disk_info: cardDiskInfo,
+        brokerage: "1.00",
+        brokerage_two: "0.50",
+        code: "AUDIT-SUPPLIER-CARD",
+      },
+      {
+        unique: uniques["固定内容"],
+        detail: { 交付: "固定内容" },
+        price: "29.90",
+        settle_price: "17.20",
+        cost: "10.00",
+        ot_price: "35.00",
+        vip_price: "28.00",
+        stock: fixedStock,
+        disk_info: fixedDiskInfo,
+        brokerage: "1.00",
+        brokerage_two: "0.50",
+        code: "AUDIT-SUPPLIER-FIXED",
+      },
+    ],
+    freight: 3,
+    postage: "9.90",
+    temp_id: 0,
+    is_postage: 0,
+    is_support_refund: 1,
+    is_limit: 0,
+    sort: 0,
+    ficti: 0,
+    description: "isolated supplier virtual fixture",
+  };
+}
+
 function adminVirtualProductPayload(
   cardStock: number,
   cardDiskInfo: string,
@@ -411,9 +469,179 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       actor,
       owner,
     );
+    const virtualInventory = new VirtualProductInventoryService(container);
+    const supplierVirtualCreated = await products.saveProduct(
+      101,
+      0,
+      supplierVirtualProductPayload(0, "", 5, "https://download.example/supplier-v1"),
+    );
+    const readSupplierVirtualProduct = () => withIsolatedContainer(isolated!, (scoped) =>
+      new SupplierProductManagementService(scoped).productDetail(101, supplierVirtualCreated.id)
+    );
+    const supplierVirtualFirst = await readSupplierVirtualProduct();
+    const supplierCardRow = supplierVirtualFirst.attrs.find((row) => !row.disk_info?.trim());
+    const supplierFixedRow = supplierVirtualFirst.attrs.find((row) => row.disk_info?.trim());
+    if (!supplierCardRow?.id || !supplierCardRow.unique || !supplierFixedRow?.unique) {
+      throw new Error("isolated Supplier virtual SKU modes were not persisted");
+    }
+    const supplierVirtualUniques = {
+      "一次性卡密": String(supplierCardRow.unique),
+      "固定内容": String(supplierFixedRow.unique),
+    };
+    const supplierCardUnique = String(supplierCardRow.unique);
+    const supplierFixedUnique = String(supplierFixedRow.unique);
+    const supplierInventoryImport = await virtualInventory.importCards(
+      { kind: "supplier", supplierId: 101 },
+      supplierVirtualCreated.id,
+      {
+        attr_unique: supplierCardUnique,
+        cards: [
+          { card_no: "SUPPLIER-CARD-1", card_pwd: "SUPPLIER-PWD-1" },
+          { card_no: "SUPPLIER-CARD-2", card_pwd: "SUPPLIER-PWD-2" },
+        ],
+      },
+    );
+    const supplierDirectSaveRejected = await rejected(
+      products.saveProduct(
+        101,
+        supplierVirtualCreated.id,
+        supplierVirtualProductPayload(
+          3,
+          "",
+          5,
+          "https://download.example/supplier-v1",
+          supplierVirtualUniques,
+        ),
+      ),
+      "库存由未分配卡密数量维护",
+    );
+    const supplierStockBypassRejected = await rejected(
+      products.adjustStock(101, supplierVirtualCreated.id, {
+        attrs: [{ unique: supplierCardUnique, pm: 1, stock: 1 }],
+      }),
+      "请使用卡密库存导入",
+    );
+    const supplierFixedStockAdjusted = await products.adjustStock(101, supplierVirtualCreated.id, {
+      attrs: [{ unique: supplierFixedUnique, pm: 1, stock: 1 }],
+    });
+    const supplierCardToFixedRejected = await rejected(
+      products.saveProduct(
+        101,
+        supplierVirtualCreated.id,
+        supplierVirtualProductPayload(
+          2,
+          "https://download.example/should-not-switch",
+          6,
+          "https://download.example/supplier-v1",
+          supplierVirtualUniques,
+        ),
+      ),
+      "已有关联卡密",
+    );
+    const supplierFixedToCardRejected = await rejected(
+      products.saveProduct(
+        101,
+        supplierVirtualCreated.id,
+        supplierVirtualProductPayload(2, "", 6, "", supplierVirtualUniques),
+      ),
+      "切换为卡密库存时库存必须为0",
+    );
+    const supplierFixedCardImportRejected = await rejected(
+      virtualInventory.importCards(
+        { kind: "supplier", supplierId: 101 },
+        supplierVirtualCreated.id,
+        {
+          attr_unique: supplierFixedUnique,
+          cards: [{ card_no: "SUPPLIER-FIXED-CARD", card_pwd: "SUPPLIER-FIXED-PWD" }],
+        },
+      ),
+      "固定虚拟内容",
+    );
+    const supplierTypeChangeRejected = await rejected(
+      products.saveProduct(
+        101,
+        supplierVirtualCreated.id,
+        productPayload(["physical"], { physical: 1 }),
+      ),
+      "商品创建后不能修改履约类型",
+    );
+    const supplierCrossTenantRejected = await rejected(
+      virtualInventory.inventory(
+        { kind: "supplier", supplierId: 202 },
+        supplierVirtualCreated.id,
+        {},
+      ),
+      "商品不存在或不属于当前供应商",
+    );
+    await products.saveProduct(
+      101,
+      supplierVirtualCreated.id,
+      supplierVirtualProductPayload(
+        2,
+        "",
+        6,
+        "https://download.example/supplier-v2",
+        supplierVirtualUniques,
+      ),
+    );
+    const supplierVirtualRetired = await retirement.change(
+      "retire",
+      {
+        product_id: supplierVirtualCreated.id,
+        sku_ids: [Number(supplierCardRow.id)],
+        reason: "隔离测试退役卡密SKU",
+      },
+      actor,
+      owner,
+    );
+    const supplierInventoryAfterRetire = await virtualInventory.inventory(
+      { kind: "supplier", supplierId: 101 },
+      supplierVirtualCreated.id,
+      {},
+    );
+    const supplierRetiredImportRejected = await rejected(
+      virtualInventory.importCards(
+        { kind: "supplier", supplierId: 101 },
+        supplierVirtualCreated.id,
+        {
+          attr_unique: supplierCardUnique,
+          cards: [{ card_no: "RETIRED-CARD", card_pwd: "RETIRED-PWD" }],
+        },
+      ),
+      "SKU不存在或不属于当前商品",
+    );
+    const supplierRetiredStockRejected = await rejected(
+      products.adjustStock(101, supplierVirtualCreated.id, {
+        attrs: [{ unique: supplierCardUnique, pm: 1, stock: 1 }],
+      }),
+      "部分SKU不存在或不属于当前商品",
+    );
+    const supplierVirtualRestored = await retirement.change(
+      "restore",
+      {
+        product_id: supplierVirtualCreated.id,
+        sku_ids: [Number(supplierCardRow.id)],
+        reason: "隔离测试恢复卡密SKU",
+      },
+      actor,
+      owner,
+    );
+    const supplierVirtualFinal = await readSupplierVirtualProduct();
+    const supplierVirtualFinalByUnique = new Map(
+      supplierVirtualFinal.attrs.map((row) => [row.unique, row]),
+    );
+    const supplierVirtualMainRows = await withIsolatedContainer(isolated, async (scoped) =>
+      scoped.db.select({
+        stock: storeProduct.stock,
+        productType: storeProduct.productType,
+        freight: storeProduct.freight,
+        postage: storeProduct.postage,
+        tempId: storeProduct.tempId,
+      }).from(storeProduct).where(eq(storeProduct.id, supplierVirtualCreated.id)).limit(1)
+    );
+
     const finalDetail = await readProduct();
     const adminProducts = new ProductAssociationService(container);
-    const virtualInventory = new VirtualProductInventoryService(container);
     const virtualCreated = await adminProducts.save(
       0,
       adminVirtualProductPayload(0, "", 5, "https://download.example/checkout-v1"),
@@ -559,6 +787,49 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
         && stockRows.every((row) => row.storeId === 101),
       persisted_skus: persistedRows.length,
       persisted_retired_skus: persistedRows.filter((row) => row.isRetired === 1).length,
+      supplier_virtual_created:
+        supplierVirtualCreated.id > 0
+        && supplierVirtualFirst.product_type === 1,
+      supplier_virtual_modes_persisted:
+        supplierCardRow.disk_info === ""
+        && supplierCardRow.stock === 0
+        && supplierFixedRow.disk_info === "https://download.example/supplier-v1"
+        && supplierFixedRow.stock === 5,
+      supplier_virtual_forced_no_logistics:
+        supplierVirtualMainRows[0]?.freight === 2
+        && supplierVirtualMainRows[0]?.postage === "0.00"
+        && supplierVirtualMainRows[0]?.tempId === 0,
+      supplier_card_import_authoritative:
+        supplierInventoryImport.inserted === 2
+        && supplierInventoryImport.sku_stock === 2
+        && supplierInventoryImport.product_stock === 7,
+      supplier_direct_card_save_rejected: supplierDirectSaveRejected,
+      supplier_stock_bypass_rejected: supplierStockBypassRejected,
+      supplier_fixed_stock_adjusted: supplierFixedStockAdjusted.stock === 8,
+      supplier_card_to_fixed_rejected: supplierCardToFixedRejected,
+      supplier_fixed_to_card_rejected: supplierFixedToCardRejected,
+      supplier_fixed_card_import_rejected: supplierFixedCardImportRejected,
+      supplier_product_type_change_rejected: supplierTypeChangeRejected,
+      supplier_virtual_cross_tenant_rejected: supplierCrossTenantRejected,
+      supplier_virtual_retirement_verified:
+        supplierVirtualRetired.verified
+        && supplierVirtualRetired.changed === 1
+        && supplierVirtualRetired.dependencies.virtual_inventory === 2,
+      supplier_retired_inventory_hidden:
+        supplierInventoryAfterRetire.skus.length === 1
+        && supplierInventoryAfterRetire.skus[0]?.unique === supplierFixedUnique,
+      supplier_retired_import_rejected: supplierRetiredImportRejected,
+      supplier_retired_stock_rejected: supplierRetiredStockRejected,
+      supplier_virtual_restore_verified:
+        supplierVirtualRestored.verified && supplierVirtualRestored.changed === 1,
+      supplier_virtual_final_readback:
+        supplierVirtualFinalByUnique.get(supplierCardUnique)?.stock === 2
+        && supplierVirtualFinalByUnique.get(supplierCardUnique)?.disk_info === ""
+        && supplierVirtualFinalByUnique.get(supplierFixedUnique)?.stock === 6
+        && supplierVirtualFinalByUnique.get(supplierFixedUnique)?.disk_info
+          === "https://download.example/supplier-v2"
+        && supplierVirtualMainRows[0]?.stock === 8
+        && supplierVirtualMainRows[0]?.productType === 1,
       admin_virtual_created: virtualCreated.sku_verified && virtualFirst.product_type === 1,
       admin_virtual_modes_persisted:
         cardRow.disk_info === ""
@@ -598,6 +869,24 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       "open_cart_blocked",
       "restore_verified",
       "supplier_stock_scope_verified",
+      "supplier_virtual_created",
+      "supplier_virtual_modes_persisted",
+      "supplier_virtual_forced_no_logistics",
+      "supplier_card_import_authoritative",
+      "supplier_direct_card_save_rejected",
+      "supplier_stock_bypass_rejected",
+      "supplier_fixed_stock_adjusted",
+      "supplier_card_to_fixed_rejected",
+      "supplier_fixed_to_card_rejected",
+      "supplier_fixed_card_import_rejected",
+      "supplier_product_type_change_rejected",
+      "supplier_virtual_cross_tenant_rejected",
+      "supplier_virtual_retirement_verified",
+      "supplier_retired_inventory_hidden",
+      "supplier_retired_import_rejected",
+      "supplier_retired_stock_rejected",
+      "supplier_virtual_restore_verified",
+      "supplier_virtual_final_readback",
       "admin_virtual_created",
       "admin_virtual_modes_persisted",
       "card_import_authoritative",
@@ -610,14 +899,15 @@ export async function runSupplierProductSkuLifecyclePostgresScenario(connectionS
       "admin_virtual_stable_identity",
       "admin_virtual_final_readback",
     ];
-    if (expectedTrue.some((key) => scenario?.[key] !== true)) {
-      throw new Error("isolated Supplier SKU lifecycle assertion failed");
+    const failedAssertions = expectedTrue.filter((key) => scenario?.[key] !== true);
+    if (failedAssertions.length) {
+      throw new Error(`isolated Supplier SKU lifecycle assertion failed: ${failedAssertions.join(", ")}`);
     }
     if (
       scenario.final_active_skus !== 3
       || scenario.final_retired_skus !== 0
       || scenario.lifecycle_logs !== 2
-      || scenario.supplier_system_logs !== 2
+      || scenario.supplier_system_logs !== 4
       || scenario.persisted_skus !== 3
       || scenario.persisted_retired_skus !== 0
     ) throw new Error("isolated Supplier SKU lifecycle readback failed");

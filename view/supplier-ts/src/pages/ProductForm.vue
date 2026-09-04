@@ -55,6 +55,9 @@ function blankSku(detail: Record<string, string>, previous?: ProductSku): Produc
     brokerage: previous?.brokerage ?? "0.00",
     brokerage_two: previous?.brokerage_two ?? "0.00",
     code: previous?.code ?? "",
+    disk_info: previous?.disk_info ?? "",
+    delivery_mode: previous?.delivery_mode ?? (previous?.disk_info?.trim() ? "fixed" : "card"),
+    original_disk_info: previous?.original_disk_info ?? previous?.disk_info ?? "",
   };
 }
 
@@ -72,8 +75,7 @@ function selectRetiredSkus(rows: ProductSku[]) {
 
 async function reloadSkuState() {
   const detail = await getProductDetail(productId.value);
-  Object.assign(form, detail);
-  retiredAttrs.value = detail.retired_attrs ?? [];
+  applyProductDetail(detail);
   selectedActiveSkuIds.value = [];
   selectedRetiredSkuIds.value = [];
 }
@@ -142,6 +144,34 @@ function initialForm(): ProductDetail {
 }
 
 const form = reactive<ProductDetail>(initialForm());
+const isCardProduct = computed(() => form.product_type === 1);
+
+function editableSku(sku: ProductSku): ProductSku {
+  const diskInfo = sku.disk_info ?? "";
+  return {
+    ...sku,
+    disk_info: diskInfo,
+    delivery_mode: diskInfo.trim() ? "fixed" : "card",
+    original_disk_info: diskInfo,
+  };
+}
+
+function applyProductDetail(detail: ProductDetail) {
+  Object.assign(form, { ...detail, attrs: detail.attrs.map(editableSku) });
+  retiredAttrs.value = (detail.retired_attrs ?? []).map(editableSku);
+}
+
+function cardBackedSku(sku: ProductSku) {
+  return isCardProduct.value && sku.delivery_mode !== "fixed";
+}
+
+function changeSkuDeliveryMode(sku: ProductSku, mode: "card" | "fixed") {
+  sku.delivery_mode = mode;
+  if (mode === "card") {
+    sku.disk_info = "";
+    if (!sku.id || sku.original_disk_info?.trim()) sku.stock = 0;
+  }
+}
 
 const treeProps = { label: "cate_name", children: "children", value: "id" };
 
@@ -185,6 +215,35 @@ watch(
     else if (form.items.length === 1 && form.items[0].value === "规格") {
       form.items = [{ value: "颜色", detail: [] }];
       form.attrs = [];
+    }
+  },
+);
+
+watch(
+  () => form.product_type,
+  (value) => {
+    if (editing.value) return;
+    if (value === 1) {
+      form.freight = 2;
+      form.postage = "0.00";
+      form.temp_id = 0;
+      form.is_postage = 0;
+      if (form.unit_name === "件") form.unit_name = "份";
+      form.attrs.forEach((sku) => {
+        sku.delivery_mode = sku.disk_info?.trim() ? "fixed" : "card";
+        if (sku.delivery_mode === "card") sku.stock = 0;
+      });
+    } else {
+      form.freight = 1;
+      form.postage = "0.00";
+      form.temp_id = 0;
+      form.is_postage = 1;
+      if (form.unit_name === "份") form.unit_name = "件";
+      form.attrs.forEach((sku) => {
+        sku.disk_info = "";
+        sku.delivery_mode = undefined;
+        sku.original_disk_info = "";
+      });
     }
   },
 );
@@ -239,9 +298,15 @@ function validateForm() {
     if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(sku.price) || Number(sku.price) <= 0) return `SKU ${sku.suk} 的销售价格式错误`;
     if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(sku.settle_price) || Number(sku.settle_price) <= 0) return `SKU ${sku.suk} 的结算价格式错误`;
     if (Number(sku.brokerage || 0) + Number(sku.brokerage_two || 0) > Number(sku.price)) return `SKU ${sku.suk} 的佣金之和不能超过销售价`;
+    if (isCardProduct.value) {
+      if (sku.delivery_mode === "fixed" && !sku.disk_info?.trim()) return `SKU ${sku.suk} 请填写固定交付内容`;
+      if (cardBackedSku(sku) && (!sku.id || sku.original_disk_info?.trim()) && sku.stock !== 0) {
+        return `SKU ${sku.suk} 切换或新建为卡密库存时，初始库存必须为0`;
+      }
+    }
   }
-  if (form.freight === 2 && (!/^\d{1,10}(?:\.\d{1,2})?$/.test(form.postage) || Number(form.postage) <= 0)) return "固定邮费必须大于0且最多两位小数";
-  if (form.freight === 3 && !form.temp_id) return "请选择当前供应商的运费模板";
+  if (!isCardProduct.value && form.freight === 2 && (!/^\d{1,10}(?:\.\d{1,2})?$/.test(form.postage) || Number(form.postage) <= 0)) return "固定邮费必须大于0且最多两位小数";
+  if (!isCardProduct.value && form.freight === 3 && !form.temp_id) return "请选择当前供应商的运费模板";
   return "";
 }
 
@@ -251,9 +316,13 @@ async function submit() {
   saving.value = true;
   try {
     form.slider_image = form.slider_image.map((item) => item.trim()).filter(Boolean);
-    const result = await saveProduct(editing.value ? productId.value : 0, { ...form });
+    const attrs = form.attrs.map(({ delivery_mode, original_disk_info, ...sku }) => ({
+      ...sku,
+      disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
+    }));
+    const result = await saveProduct(editing.value ? productId.value : 0, { ...form, attrs });
     ElMessage.success(`商品 #${result.id} 已保存并进入待审核状态`);
-    await router.push("/products");
+    await router.push(form.product_type === 1 ? `/products/${result.id}/virtual-inventory` : "/products");
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "商品保存失败");
   } finally {
@@ -274,8 +343,7 @@ async function load() {
     ruleTemplates.value = productRuleRows;
     if (editing.value) {
       const detail = await getProductDetail(productId.value);
-      Object.assign(form, detail);
-      retiredAttrs.value = detail.retired_attrs ?? [];
+      applyProductDetail(detail);
     }
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "商品资料加载失败");
@@ -292,12 +360,18 @@ onMounted(load);
     <header class="page-heading product-form-heading">
       <div class="heading-with-back">
         <el-button circle plain :icon="ArrowLeft" aria-label="返回商品列表" @click="router.push('/products')" />
-        <div><h1>{{ editing ? "编辑实物商品" : "新增实物商品" }}</h1><p>保存后商品将下架并进入平台待审核状态</p></div>
+        <div><h1>{{ editing ? `编辑${isCardProduct ? "卡密/固定内容" : "实物"}商品` : "新增商品" }}</h1><p>保存后商品将下架并进入平台待审核状态</p></div>
       </div>
       <el-button type="primary" :loading="saving" @click="submit">保存并提交审核</el-button>
     </header>
 
-    <el-alert title="当前仅开放实物商品" type="info" show-icon :closable="false" description="卡密、优惠券、虚拟商品和次卡的履约链路尚未迁移完成，暂不允许创建。" />
+    <el-alert
+      :title="isCardProduct ? '卡密库存与固定内容已分离管理' : '支持实物与卡密/固定内容商品'"
+      type="info"
+      show-icon
+      :closable="false"
+      :description="isCardProduct ? '一次性卡密请先以0库存保存，再到卡密库存页导入；固定内容随订单快照交付。' : '优惠券、人工虚拟发货和次卡仍未开放创建。'"
+    />
 
     <div class="product-form-layout">
       <main class="product-form-main">
@@ -305,6 +379,13 @@ onMounted(load);
           <header><h2>基础信息</h2><p>名称、分类和展示素材</p></header>
           <el-form label-position="top">
             <div class="form-grid">
+              <el-form-item class="wide" label="商品类型" required>
+                <el-radio-group v-model="form.product_type" :disabled="editing">
+                  <el-radio-button :value="0">实物商品</el-radio-button>
+                  <el-radio-button :value="1">卡密 / 固定内容</el-radio-button>
+                </el-radio-group>
+                <p v-if="editing" class="security-note">商品创建后不能修改履约类型。</p>
+              </el-form-item>
               <el-form-item class="wide" label="商品名称" required><el-input v-model="form.store_name" maxlength="256" show-word-limit /></el-form-item>
               <el-form-item class="wide" label="商品简介"><el-input v-model="form.store_info" maxlength="256" show-word-limit /></el-form-item>
               <el-form-item label="商品分类" required>
@@ -330,7 +411,7 @@ onMounted(load);
 
         <article class="surface product-form-card">
           <header class="card-heading-row">
-            <div><h2>规格与 SKU</h2><p>价格、结算价和库存均以 SKU 为准；历史SKU只能通过受控操作退役或恢复</p></div>
+            <div><h2>规格与 SKU</h2><p>{{ isCardProduct ? "每个SKU独立选择一次性卡密或固定内容；卡密库存只能从库存页导入" : "价格、结算价和库存均以 SKU 为准" }}；历史SKU只能通过受控操作退役或恢复</p></div>
             <el-button
               v-if="editing && canManageProducts"
               type="danger"
@@ -368,16 +449,37 @@ onMounted(load);
             <el-table :data="form.attrs" row-key="suk" empty-text="请先生成SKU" class="sku-table" @selection-change="selectActiveSkus">
               <el-table-column v-if="editing" type="selection" width="48" :selectable="selectableHistoricalSku" />
               <el-table-column prop="suk" label="规格组合" fixed min-width="145" />
+              <el-table-column v-if="isCardProduct" label="交付方式" width="170">
+                <template #default="scope">
+                  <el-select :model-value="scope.row.delivery_mode" @change="changeSkuDeliveryMode(scope.row, $event)">
+                    <el-option label="一次性卡密" value="card" />
+                    <el-option label="固定内容" value="fixed" />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column v-if="isCardProduct" label="固定交付内容" min-width="290">
+                <template #default="scope">
+                  <el-input
+                    v-if="scope.row.delivery_mode === 'fixed'"
+                    v-model="scope.row.disk_info"
+                    type="textarea"
+                    :rows="2"
+                    maxlength="4096"
+                    placeholder="下载地址、兑换说明或其他固定交付内容"
+                  />
+                  <span v-else class="security-note">保存后前往卡密库存安全导入</span>
+                </template>
+              </el-table-column>
               <el-table-column label="销售价" width="130"><template #default="scope"><el-input v-model="scope.row.price" /></template></el-table-column>
               <el-table-column label="结算价" width="130"><template #default="scope"><el-input v-model="scope.row.settle_price" /></template></el-table-column>
               <el-table-column label="成本价" width="130"><template #default="scope"><el-input v-model="scope.row.cost" /></template></el-table-column>
               <el-table-column label="原价" width="130"><template #default="scope"><el-input v-model="scope.row.ot_price" /></template></el-table-column>
-              <el-table-column label="库存" width="145"><template #default="scope"><el-input-number v-model="scope.row.stock" :min="0" :max="2147483647" controls-position="right" /></template></el-table-column>
+              <el-table-column label="库存" width="145"><template #default="scope"><el-input-number :key="`${scope.row.suk}-${scope.row.delivery_mode ?? 'physical'}`" v-model="scope.row.stock" :disabled="isCardProduct && scope.row.delivery_mode !== 'fixed'" :min="0" :max="2147483647" controls-position="right" /></template></el-table-column>
               <el-table-column label="一级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage" /></template></el-table-column>
               <el-table-column label="二级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage_two" /></template></el-table-column>
               <el-table-column label="SKU编码" width="160"><template #default="scope"><el-input v-model="scope.row.code" maxlength="50" /></template></el-table-column>
-              <el-table-column label="重量" width="120"><template #default="scope"><el-input v-model="scope.row.weight" /></template></el-table-column>
-              <el-table-column label="体积" width="120"><template #default="scope"><el-input v-model="scope.row.volume" /></template></el-table-column>
+              <el-table-column v-if="!isCardProduct" label="重量" width="120"><template #default="scope"><el-input v-model="scope.row.weight" /></template></el-table-column>
+              <el-table-column v-if="!isCardProduct" label="体积" width="120"><template #default="scope"><el-input v-model="scope.row.volume" /></template></el-table-column>
             </el-table>
           </div>
           <section v-if="editing && retiredAttrs.length" class="retired-sku-section">
@@ -415,21 +517,24 @@ onMounted(load);
         <article class="surface product-form-card compact-card">
           <header><h2>配送与售后</h2></header>
           <el-form label-position="top">
-            <el-form-item label="配送方式"><el-input model-value="快递配送" disabled /></el-form-item>
-            <el-form-item label="运费设置">
-              <el-radio-group v-model="form.freight">
-                <el-radio :value="1">包邮</el-radio>
-                <el-radio :value="2">固定邮费</el-radio>
-                <el-radio :value="3">运费模板</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item v-if="form.freight === 2" label="固定邮费（元）"><el-input v-model="form.postage" /></el-form-item>
-            <el-form-item v-if="form.freight === 3" label="运费模板">
-              <el-select v-model="form.temp_id" clearable filterable placeholder="选择当前供应商模板" style="width: 100%">
-                <el-option v-for="item in shippingTemplates" :key="item.id" :label="`${item.name}（${item.type}）`" :value="item.id" />
-              </el-select>
-              <el-button link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
-            </el-form-item>
+            <template v-if="!isCardProduct">
+              <el-form-item label="配送方式"><el-input model-value="快递配送" disabled /></el-form-item>
+              <el-form-item label="运费设置">
+                <el-radio-group v-model="form.freight">
+                  <el-radio :value="1">包邮</el-radio>
+                  <el-radio :value="2">固定邮费</el-radio>
+                  <el-radio :value="3">运费模板</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item v-if="form.freight === 2" label="固定邮费（元）"><el-input v-model="form.postage" /></el-form-item>
+              <el-form-item v-if="form.freight === 3" label="运费模板">
+                <el-select v-model="form.temp_id" clearable filterable placeholder="选择当前供应商模板" style="width: 100%">
+                  <el-option v-for="item in shippingTemplates" :key="item.id" :label="`${item.name}（${item.type}）`" :value="item.id" />
+                </el-select>
+                <el-button link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
+              </el-form-item>
+            </template>
+            <el-alert v-else title="自动交付，无需物流和运费" type="success" show-icon :closable="false" />
             <el-form-item><el-checkbox v-model="form.is_support_refund" :true-value="1" :false-value="0">支持退款退货</el-checkbox></el-form-item>
           </el-form>
         </article>
@@ -453,6 +558,6 @@ onMounted(load);
       </aside>
     </div>
 
-    <footer class="product-form-footer"><span>保存会重置为待审核并下架，避免未审核改动直接对外销售。</span><div><el-button @click="router.push('/products')">取消</el-button><el-button type="primary" :loading="saving" @click="submit">保存并提交审核</el-button></div></footer>
+    <footer class="product-form-footer"><span>{{ isCardProduct ? "保存后将进入卡密库存页；一次性卡密不会通过此表单传输。" : "保存会重置为待审核并下架，避免未审核改动直接对外销售。" }}</span><div><el-button @click="router.push('/products')">取消</el-button><el-button type="primary" :loading="saving" @click="submit">保存并提交审核</el-button></div></footer>
   </section>
 </template>
