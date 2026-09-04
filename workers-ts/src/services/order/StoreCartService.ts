@@ -634,6 +634,7 @@ export class StoreCartService {
           otPrice: sku ? String(sku.otPrice) : String(product.otPrice),
           suk: sku?.suk ?? "",
           systemFormId,
+          productType: product.productType,
         },
         // 小计 = 单价 * 数量
         sumPrice: (price * cart.cartNum).toFixed(2),

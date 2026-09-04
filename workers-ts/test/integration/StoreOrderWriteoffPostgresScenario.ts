@@ -3,6 +3,9 @@ import {
   deliveryService,
   storeOrder,
   storeOrderCartInfo,
+  storeOrderOutbox,
+  storeProduct,
+  storeProductAttrValue,
   storeOrderRefund,
   storeOrderWriteoff,
   storePink,
@@ -10,6 +13,7 @@ import {
   systemStoreStaff,
   user,
 } from "@/models/schema";
+import type { Env } from "@/env";
 import {
   createContainerFromDb,
   createDbFromConnectionString,
@@ -23,6 +27,9 @@ import {
 } from "@/services/order/StoreOrderWriteoffService";
 import { completeOrderReceipt } from "@/services/order/OrderBrokerageService";
 import { applyOrderRefund } from "@/services/order/StoreOrderRefundService";
+import { activatePaidSecondCardValidity } from "@/services/order/SecondCardValidityService";
+import { SecondCardReminderService } from "@/services/order/SecondCardReminderService";
+import { ProductAssociationService } from "@/services/product/ProductAssociationService";
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
 
 const CLONED_TABLES = [
@@ -34,15 +41,31 @@ const CLONED_TABLES = [
   "store_order_cart_info",
   "store_order_refund",
   "store_order_writeoff",
+  "store_order_outbox",
   "store_pink",
   "store_order_status",
   "supplier_flowing_water",
+  "store_product",
+  "store_product_relation",
+  "store_product_rule",
+  "store_product_attr",
+  "store_product_attr_result",
+  "store_product_attr_value",
+  "system_log",
 ] as const;
 
 const LOCAL_SEQUENCE_TABLES = [
   "store_order_refund",
   "store_order_writeoff",
+  "store_order_outbox",
   "store_order_status",
+  "store_product",
+  "store_product_relation",
+  "store_product_rule",
+  "store_product_attr",
+  "store_product_attr_result",
+  "store_product_attr_value",
+  "system_log",
 ] as const;
 
 const CONFIG_VALUES: Record<string, string> = {
@@ -76,14 +99,24 @@ interface PublicSnapshot {
   carts: number;
   refunds: number;
   writeoffs: number;
+  outboxes: number;
   statuses: number;
   users: number;
   stores: number;
   staff: number;
   deliveries: number;
+  products: number;
+  product_skus: number;
+  product_rules: number;
+  system_logs: number;
   refund_sequence: string | null;
   writeoff_sequence: string | null;
+  outbox_sequence: string | null;
   status_sequence: string | null;
+  product_sequence: string | null;
+  product_sku_sequence: string | null;
+  product_rule_sequence: string | null;
+  system_log_sequence: string | null;
 }
 
 export interface StoreOrderWriteoffPostgresReport {
@@ -135,6 +168,32 @@ export interface StoreOrderWriteoffPostgresReport {
     refund_rows: number;
     writeoff_rows: number;
   };
+  second_card: {
+    product_created: boolean;
+    product_updated: boolean;
+    single_sku_persisted: boolean;
+    pickup_policy_persisted: boolean;
+    validity_activated_at_payment: boolean;
+    partial_writeoff_verified: boolean;
+    repeated_code_rejected: boolean;
+    completed_writeoff_verified: boolean;
+    expired_rejected: boolean;
+    unauthorized_store_rejected: boolean;
+    unused_refund_allowed: boolean;
+    consumed_refund_rejected: boolean;
+    reminder_staged: boolean;
+    reminder_replay_idempotent: boolean;
+    reminder_queue_payload_opaque: boolean;
+    immutable_writeoff_rows: number;
+  };
+}
+
+export interface SecondCardProductPostgresReport {
+  server_version: string;
+  schema_created: boolean;
+  schema_removed: boolean;
+  public_state_unchanged: boolean;
+  second_card: StoreOrderWriteoffPostgresReport["second_card"];
 }
 
 function assertCondition(condition: unknown, message: string): asserts condition {
@@ -188,17 +247,32 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
       (SELECT count(*)::integer FROM public.store_order_cart_info) AS carts,
       (SELECT count(*)::integer FROM public.store_order_refund) AS refunds,
       (SELECT count(*)::integer FROM public.store_order_writeoff) AS writeoffs,
+      (SELECT count(*)::integer FROM public.store_order_outbox) AS outboxes,
       (SELECT count(*)::integer FROM public.store_order_status) AS statuses,
       (SELECT count(*)::integer FROM public."user") AS users,
       (SELECT count(*)::integer FROM public.system_store) AS stores,
       (SELECT count(*)::integer FROM public.system_store_staff) AS staff,
       (SELECT count(*)::integer FROM public.delivery_service) AS deliveries,
+      (SELECT count(*)::integer FROM public.store_product) AS products,
+      (SELECT count(*)::integer FROM public.store_product_attr_value) AS product_skus,
+      (SELECT count(*)::integer FROM public.store_product_rule) AS product_rules,
+      (SELECT count(*)::integer FROM public.system_log) AS system_logs,
       (SELECT last_value::text FROM pg_sequences
         WHERE schemaname = 'public' AND sequencename = 'store_order_refund_id_seq') AS refund_sequence,
       (SELECT last_value::text FROM pg_sequences
         WHERE schemaname = 'public' AND sequencename = 'store_order_writeoff_id_seq') AS writeoff_sequence,
       (SELECT last_value::text FROM pg_sequences
-        WHERE schemaname = 'public' AND sequencename = 'store_order_status_id_seq') AS status_sequence
+        WHERE schemaname = 'public' AND sequencename = 'store_order_outbox_id_seq') AS outbox_sequence,
+      (SELECT last_value::text FROM pg_sequences
+        WHERE schemaname = 'public' AND sequencename = 'store_order_status_id_seq') AS status_sequence,
+      (SELECT last_value::text FROM pg_sequences
+        WHERE schemaname = 'public' AND sequencename = 'store_product_id_seq') AS product_sequence,
+      (SELECT last_value::text FROM pg_sequences
+        WHERE schemaname = 'public' AND sequencename = 'store_product_attr_value_id_seq') AS product_sku_sequence,
+      (SELECT last_value::text FROM pg_sequences
+        WHERE schemaname = 'public' AND sequencename = 'store_product_rule_id_seq') AS product_rule_sequence,
+      (SELECT last_value::text FROM pg_sequences
+        WHERE schemaname = 'public' AND sequencename = 'system_log_id_seq') AS system_log_sequence
   `;
   const row = rows[0];
   if (!row) throw new Error("unable to read public PostgreSQL snapshot");
@@ -208,12 +282,14 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
 async function seedFixtures(db: DbClient, schemaName: string, base: number): Promise<void> {
   await withSchema(db, schemaName, async (container) => {
     const tx = container.db;
+    const now = Math.floor(Date.now() / 1_000);
     const customerUid = base + 1;
     const staffUid = base + 2;
     const deliveryUid = base + 3;
     const wrongDeliveryUid = base + 4;
     const conflictStaffUid = base + 5;
     const conflictDeliveryUid = base + 6;
+    const otherStoreStaffUid = base + 7;
     const storeId = base + 10;
     const staffId = base + 20;
     const deliveryId = base + 30;
@@ -225,15 +301,26 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       { uid: wrongDeliveryUid, account: `itw${base}`, nickname: "integration wrong delivery", phone: "13800000004" },
       { uid: conflictStaffUid, account: `itcs${base}`, nickname: "integration duplicate staff", phone: "13800000006" },
       { uid: conflictDeliveryUid, account: `itcd${base}`, nickname: "integration duplicate delivery", phone: "13800000007" },
+      { uid: otherStoreStaffUid, account: `itos${base}`, nickname: "integration other-store staff", phone: "13800000008" },
     ]);
-    await tx.insert(systemStore).values({
-      id: storeId,
-      name: "integration pickup store",
-      phone: "13800000005",
-      isShow: 1,
-      isStore: 1,
-      isDel: 0,
-    });
+    await tx.insert(systemStore).values([
+      {
+        id: storeId,
+        name: "integration pickup store",
+        phone: "13800000005",
+        isShow: 1,
+        isStore: 1,
+        isDel: 0,
+      },
+      {
+        id: base + 11,
+        name: "integration other pickup store",
+        phone: "13800000009",
+        isShow: 1,
+        isStore: 1,
+        isDel: 0,
+      },
+    ]);
     await tx.insert(systemStoreStaff).values([
       {
         id: staffId,
@@ -261,6 +348,16 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         uid: conflictStaffUid,
         account: `staffb${base}`,
         phone: "13800000006",
+        verifyStatus: 1,
+        status: 1,
+        isDel: 0,
+      },
+      {
+        id: base + 23,
+        storeId: base + 11,
+        uid: otherStoreStaffUid,
+        account: `otherstaff${base}`,
+        phone: "13800000008",
         verifyStatus: 1,
         status: 1,
         isDel: 0,
@@ -405,6 +502,41 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
         status: 0,
         verifyCode: verifyCode(base + 109),
       }),
+      order(10, {
+        shippingType: 2,
+        storeId,
+        status: 0,
+        productType: 4,
+        payTime: now - 60,
+        verifyCode: verifyCode(base + 110),
+        totalNum: 3,
+        totalPrice: "30.00",
+        payPrice: "30.00",
+      }),
+      order(11, {
+        shippingType: 2,
+        storeId,
+        status: 0,
+        productType: 4,
+        payTime: now - 172_800,
+        verifyCode: verifyCode(base + 111),
+      }),
+      order(12, {
+        shippingType: 2,
+        storeId,
+        status: 0,
+        productType: 4,
+        payTime: now - 60,
+        verifyCode: verifyCode(base + 112),
+      }),
+      order(13, {
+        shippingType: 2,
+        storeId,
+        status: 0,
+        productType: 4,
+        payTime: now - 60,
+        verifyCode: verifyCode(base + 113),
+      }),
     ]);
 
     const cart = (
@@ -415,7 +547,7 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       id: base + 200 + offset,
       uid: customerUid,
       oid: base + 100 + orderOffset,
-      cartId: `ITC${base}${offset}`,
+      cartId: String(base + 400 + offset),
       unique: `it-cart-${base}-${offset}`,
       productId: base + 300 + offset,
       cartNum: quantity,
@@ -432,12 +564,140 @@ async function seedFixtures(db: DbClient, schemaName: string, base: number): Pro
       cart(7, 7, 1),
       cart(8, 8, 1),
       cart(9, 9, 1),
+      {
+        ...cart(10, 10, 3),
+        productType: 4,
+        writeStart: 0,
+        writeEnd: 0,
+        cartInfo: JSON.stringify({
+          sku: {
+            price: "10.00",
+            write_valid: 2,
+            write_days: 7,
+            write_start: 0,
+            write_end: 0,
+          },
+          productInfo: { store_name: "生产隔离次卡" },
+        }),
+      },
+      {
+        ...cart(11, 11, 1),
+        productType: 4,
+        writeStart: now - 172_800,
+        writeEnd: now - 1,
+        cartInfo: JSON.stringify({
+          sku: { price: "10.00", write_valid: 3, write_start: now - 172_800, write_end: now - 1 },
+        }),
+      },
+      {
+        ...cart(12, 12, 1),
+        productType: 4,
+        writeStart: now - 60,
+        writeEnd: now + 604_800,
+        cartInfo: JSON.stringify({ sku: { price: "10.00", write_valid: 3 } }),
+      },
+      {
+        ...cart(13, 13, 1),
+        productType: 4,
+        writeStart: now - 60,
+        writeEnd: now + 604_800,
+        cartInfo: JSON.stringify({ sku: { price: "10.00", write_valid: 3 } }),
+      },
     ]);
   });
 }
 
 function service(container: Container): StoreOrderWriteoffService {
   return new StoreOrderWriteoffService(container, TEST_CONFIG_ENV);
+}
+
+function secondCardProductPayload(
+  validity: { write_valid: 2; write_days: number } | { write_valid: 3; write_start: number; write_end: number },
+  unique?: string,
+) {
+  return {
+    product_type: 4,
+    store_name: "生产隔离次卡商品",
+    store_info: "仅用于隔离 schema 的次卡创建编辑审计",
+    cate_id: [],
+    brand_id: [],
+    store_label_id: [],
+    ensure_id: [],
+    specs_id: 0,
+    specs: [],
+    spec_type: 0,
+    items: [],
+    attrs: [{
+      unique,
+      price: "30.00",
+      settle_price: "20.00",
+      cost: "18.00",
+      ot_price: "35.00",
+      vip_price: "28.00",
+      stock: 100,
+      brokerage: "0.00",
+      brokerage_two: "0.00",
+      write_times: 3,
+      ...validity,
+    }],
+    freight: 3,
+    postage: "9.90",
+    temp_id: 999,
+    is_postage: 1,
+    is_support_refund: 1,
+  };
+}
+
+async function runSecondCardProductLifecycle(db: DbClient, schemaName: string) {
+  return withSchema(db, schemaName, async (container) => {
+    const editor = new ProductAssociationService(container);
+    const actor = { id: 901, name: "second-card-audit", ip: "127.0.0.1" };
+    const created = await editor.save(
+      0,
+      secondCardProductPayload({ write_valid: 2, write_days: 7 }),
+      actor,
+    );
+    const createdSkus = await container.db.select().from(storeProductAttrValue)
+      .where(eq(storeProductAttrValue.productId, created.id));
+    assertCondition(createdSkus.length === 1, "second-card creation must persist exactly one SKU");
+    const skuUnique = createdSkus[0].unique;
+    const now = Math.floor(Date.now() / 1_000);
+    const updated = await editor.save(
+      created.id,
+      secondCardProductPayload({ write_valid: 3, write_start: now, write_end: now + 604_800 }, skuUnique),
+      actor,
+    );
+    const [products, updatedSkus] = await Promise.all([
+      container.db.select().from(storeProduct).where(eq(storeProduct.id, created.id)).limit(1),
+      container.db.select().from(storeProductAttrValue)
+        .where(eq(storeProductAttrValue.productId, created.id)),
+    ]);
+    const product = products[0];
+    const sku = updatedSkus[0];
+    assertCondition(product?.productType === 4, "second-card product type was not persisted");
+    assertCondition(product.deliveryType === "2" && product.freight === 1 && product.postage === "0.00",
+      "second-card product must be forced to pickup fulfillment");
+    assertCondition(updatedSkus.length === 1 && sku.unique === skuUnique,
+      "second-card edit must preserve the single SKU identity");
+    assertCondition(
+      sku.writeTimes === 3
+      && sku.writeValid === 3
+      && sku.writeDays === 0
+      && sku.writeStart === now
+      && sku.writeEnd === now + 604_800,
+      "second-card validity edit did not round-trip",
+    );
+    return {
+      product_created: created.associations_verified && created.sku_verified,
+      product_updated: updated.sku_verified,
+      single_sku_persisted: updatedSkus.length === 1 && sku.unique === skuUnique,
+      pickup_policy_persisted:
+        product.deliveryType === "2"
+        && product.freight === 1
+        && product.tempId === 0
+        && product.isPostage === 0,
+    };
+  });
 }
 
 async function runPickup(db: DbClient, schemaName: string, base: number) {
@@ -740,6 +1000,268 @@ async function runRefundRace(
   });
 }
 
+async function runSecondCardLifecycle(db: DbClient, schemaName: string, base: number) {
+  const product = await runSecondCardProductLifecycle(db, schemaName);
+  const staff: WriteoffActor = { kind: "staff", uid: base + 2 };
+  const activeOrderId = base + 110;
+  const activeCartId = base + 210;
+  const activeCode = verifyCode(activeOrderId);
+  const paidAt = Math.floor(Date.now() / 1_000) - 60;
+  const activation = await withSchema(db, schemaName, async (container) => {
+    const result = await activatePaidSecondCardValidity(
+      container.db,
+      [{ id: activeOrderId, paid: 1 }],
+      paidAt,
+    );
+    const rows = await container.db.select().from(storeOrderCartInfo)
+      .where(eq(storeOrderCartInfo.id, activeCartId)).limit(1);
+    return {
+      result,
+      row: rows[0],
+    };
+  });
+  assertCondition(
+    activation.result.matched === 1
+    && activation.result.changed === 1
+    && activation.row?.writeStart === paidAt
+    && activation.row.writeEnd === paidAt + 7 * 86_400,
+    "second-card validity must activate from the payment timestamp",
+  );
+
+  const unusedRefund = await withSchema(db, schemaName, (container) =>
+    applyOrderRefund(container, {
+      uid: base + 1,
+      orderId: `IT${base}12`,
+      refundReason: "未核销次卡允许退款",
+      refundExplain: "production isolated schema",
+      applyType: 1,
+      applicationOrderId: `second-card-unused-refund-${base}`,
+    })
+  );
+  const unauthorizedMessage = await expectRejected(
+    () => withSchema(db, schemaName, (container) => service(container).execute(
+      { kind: "staff", uid: base + 7 },
+      { code: verifyCode(base + 113) },
+    )),
+    "other-store second-card writeoff",
+  );
+  const expiredMessage = await expectRejected(
+    () => withSchema(db, schemaName, (container) => service(container).execute(
+      staff,
+      { code: verifyCode(base + 111) },
+    )),
+    "expired second-card writeoff",
+  );
+
+  const reminder = await withSchema(db, schemaName, async (container) => {
+    const now = Math.floor(Date.now() / 1_000);
+    const writeEnd = now + 1_800;
+    await container.db.update(storeOrderCartInfo).set({
+      writeStart: now - 60,
+      writeEnd,
+      isAdventSms: 0,
+    }).where(eq(storeOrderCartInfo.id, base + 213));
+    const queued: unknown[] = [];
+    const env = {
+      CONFIG_KV: {
+        get: async (key: string) => key === "cfg_reminder_deadline_second_card_time" ? "1" : "",
+        put: async () => undefined,
+        delete: async () => undefined,
+      },
+      ORDER_QUEUE: {
+        sendBatch: async (messages: Array<{ body: unknown }>) => {
+          queued.push(...messages.map((item) => item.body));
+        },
+      },
+    } as unknown as Env;
+    const service = new SecondCardReminderService(container, env, () => now * 1_000);
+    const scheduledAt = now * 1_000;
+    const message = {
+      action: "processSecondCardReminder" as const,
+      job: "reminder_unverified_remind" as const,
+      runId: `scheduled:${scheduledAt}`,
+      scheduledAt,
+      cartInfoId: base + 213,
+      orderId: base + 113,
+      writeEnd,
+      kind: "advent" as const,
+    };
+    const first = await service.processMessage(message);
+    const replay = await service.processMessage(message);
+    const outboxes = await container.db.select().from(storeOrderOutbox)
+      .where(eq(storeOrderOutbox.aggregateId, base + 113));
+    return { first, replay, queued, outboxes };
+  });
+  const reminderSerialized = JSON.stringify({
+    queue: reminder.queued,
+    payloads: reminder.outboxes.map((item) => item.payload),
+  });
+  assertCondition(
+    reminder.first === "staged"
+    && reminder.replay === "already-staged"
+    && reminder.queued.length === 1
+    && reminder.outboxes.length === 1,
+    "second-card reminder must stage and dispatch exactly once",
+  );
+  assertCondition(
+    !/1380000000|尊敬的顾客|生产隔离次卡/.test(reminderSerialized),
+    "second-card reminder queue/outbox payload must remain opaque and bounded",
+  );
+
+  const partial = await withSchema(db, schemaName, async (container) => {
+    const preview = await service(container).info(staff, activeCode);
+    const result = await service(container).execute(staff, {
+      code: activeCode,
+      items: [{ orderCartId: activeCartId, quantity: 1 }],
+    });
+    const rows = await container.db.select().from(storeOrder)
+      .where(eq(storeOrder.id, activeOrderId)).limit(1);
+    return { preview, result, nextCode: rows[0]?.verifyCode ?? "" };
+  });
+  assertCondition(
+    partial.preview.product_type === 4
+    && partial.preview.shipping_type === 2
+    && partial.preview.write_times === 3
+    && partial.result.completed === false
+    && /^\d{12}$/.test(partial.nextCode)
+    && partial.nextCode !== activeCode,
+    "second-card partial pickup writeoff did not preserve its policy",
+  );
+  const repeatedMessage = await expectRejected(
+    () => withSchema(db, schemaName, (container) => service(container).info(staff, activeCode)),
+    "repeated second-card code",
+  );
+  const consumedRefundMessage = await expectRejected(
+    () => withSchema(db, schemaName, (container) => applyOrderRefund(container, {
+      uid: base + 1,
+      orderId: `IT${base}10`,
+      refundReason: "已核销次卡必须拒绝退款",
+      refundExplain: "production isolated schema",
+      applyType: 1,
+      applicationOrderId: `second-card-consumed-refund-${base}`,
+    })),
+    "consumed second-card refund",
+  );
+  const completed = await withSchema(db, schemaName, async (container) => {
+    const result = await service(container).execute(staff, {
+      code: partial.nextCode,
+      items: [{ orderCartId: activeCartId, quantity: 2 }],
+    });
+    const [orders, carts, audits] = await Promise.all([
+      container.db.select().from(storeOrder).where(eq(storeOrder.id, activeOrderId)).limit(1),
+      container.db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.id, activeCartId)).limit(1),
+      container.db.select().from(storeOrderWriteoff).where(eq(storeOrderWriteoff.oid, activeOrderId)),
+    ]);
+    return { result, order: orders[0], cart: carts[0], audits };
+  });
+  assertCondition(
+    completed.result.completed
+    && completed.order?.status === 2
+    && completed.order.verifyCode === ""
+    && completed.cart?.writeSurplusTimes === 0
+    && completed.cart.isWriteoff === 1
+    && completed.audits.length === 2,
+    "second-card completion did not persist the terminal state and immutable evidence",
+  );
+  return {
+    ...product,
+    validity_activated_at_payment: true,
+    partial_writeoff_verified: true,
+    repeated_code_rejected: repeatedMessage.length > 0,
+    completed_writeoff_verified: true,
+    expired_rejected: expiredMessage.includes("超过可核销时间"),
+    unauthorized_store_rejected: /核销员|核销订单不存在/.test(unauthorizedMessage),
+    unused_refund_allowed: unusedRefund.refundId > 0,
+    consumed_refund_rejected: consumedRefundMessage.includes("已有核销记录"),
+    reminder_staged: reminder.first === "staged",
+    reminder_replay_idempotent: reminder.replay === "already-staged",
+    reminder_queue_payload_opaque: reminder.queued.length === 1,
+    immutable_writeoff_rows: completed.audits.length,
+  };
+}
+
+/** Single-client production audit for the type-4 lifecycle; concurrency is audited separately. */
+export async function runSecondCardProductPostgresScenario(
+  connectionString: string,
+): Promise<SecondCardProductPostgresReport> {
+  const schemaName = makeSchemaName();
+  const schemaIdentifier = identifier(schemaName);
+  const db = createDbFromConnectionString(connectionString, 1, {
+    applicationName: "cinashop_second_card_product_audit",
+  });
+  let created = false;
+  let removed = false;
+  let before: PublicSnapshot | undefined;
+  let after: PublicSnapshot | undefined;
+  let secondCard: StoreOrderWriteoffPostgresReport["second_card"] | undefined;
+  let serverVersion = "unknown";
+  try {
+    const versions = await db.$client<{ server_version: string }[]>`
+      SELECT current_setting('server_version') AS server_version
+    `;
+    serverVersion = versions[0]?.server_version ?? "unknown";
+    before = await publicSnapshot(db);
+    await db.$client.begin(async (tx) => {
+      await tx`SET LOCAL lock_timeout = '3s'`;
+      await tx`SET LOCAL statement_timeout = '30s'`;
+      await tx.unsafe(`CREATE SCHEMA ${schemaIdentifier}`);
+      for (const table of CLONED_TABLES) {
+        const tableIdentifier = identifier(table);
+        await tx.unsafe(
+          `CREATE TABLE ${schemaIdentifier}.${tableIdentifier} (LIKE public.${tableIdentifier} INCLUDING ALL)`,
+        );
+      }
+      for (const table of LOCAL_SEQUENCE_TABLES) {
+        const tableIdentifier = identifier(table);
+        const sequenceIdentifier = identifier(`${table}_id_seq_it`);
+        await tx.unsafe(`CREATE SEQUENCE ${schemaIdentifier}.${sequenceIdentifier}`);
+        await tx.unsafe(
+          `ALTER SEQUENCE ${schemaIdentifier}.${sequenceIdentifier} OWNED BY ${schemaIdentifier}.${tableIdentifier}."id"`,
+        );
+        await tx.unsafe(
+          `ALTER TABLE ${schemaIdentifier}.${tableIdentifier} ALTER COLUMN "id" `
+          + `SET DEFAULT nextval('${schemaName}.${table}_id_seq_it'::regclass)`,
+        );
+      }
+    });
+    created = true;
+    const random = new Uint32Array(1);
+    crypto.getRandomValues(random);
+    const base = 1_000_000_000 + (random[0] % 50_000_000);
+    await seedFixtures(db, schemaName, base);
+    secondCard = await runSecondCardLifecycle(db, schemaName, base);
+  } finally {
+    try {
+      if (created) {
+        await db.$client.begin(async (tx) => {
+          await tx`SET LOCAL lock_timeout = '3s'`;
+          await tx`SET LOCAL statement_timeout = '30s'`;
+          await tx.unsafe(`DROP SCHEMA IF EXISTS ${schemaIdentifier} CASCADE`);
+        });
+      }
+      const rows = await db.$client<{ schema_removed: boolean }[]>`
+        SELECT to_regnamespace(${schemaName}) IS NULL AS schema_removed
+      `;
+      removed = rows[0]?.schema_removed === true;
+      after = await publicSnapshot(db);
+    } finally {
+      await db.$client.end({ timeout: 1 });
+    }
+  }
+  assertCondition(secondCard, "second-card scenario did not produce a report");
+  assertCondition(before && after, "second-card public snapshots are missing");
+  assertCondition(removed, "second-card temporary integration schema was not removed");
+  const publicStateUnchanged = JSON.stringify(before) === JSON.stringify(after);
+  assertCondition(publicStateUnchanged, "second-card audit changed public business rows or sequences");
+  return {
+    server_version: serverVersion,
+    schema_created: created,
+    schema_removed: removed,
+    public_state_unchanged: publicStateUnchanged,
+    second_card: secondCard,
+  };
+}
+
 export async function runStoreOrderWriteoffPostgresScenario(
   connectionString: string,
 ): Promise<StoreOrderWriteoffPostgresReport> {
@@ -807,6 +1329,7 @@ export async function runStoreOrderWriteoffPostgresScenario(
       schemaName,
       base,
     );
+    const secondCard = await runSecondCardLifecycle(adminDb, schemaName, base);
     report = {
       server_version: versionRows[0]?.server_version ?? "unknown",
       schema_created: true,
@@ -817,6 +1340,7 @@ export async function runStoreOrderWriteoffPostgresScenario(
       identity_guards: identityGuards,
       pink_guard: pinkGuard,
       refund_race: refundRace,
+      second_card: secondCard,
     };
   } finally {
     try {

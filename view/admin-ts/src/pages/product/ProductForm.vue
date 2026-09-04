@@ -13,6 +13,7 @@
             <el-radio-button :value="0">实物商品</el-radio-button>
             <el-radio-button :value="1">卡密/网盘</el-radio-button>
             <el-radio-button :value="3">手工虚拟</el-radio-button>
+            <el-radio-button :value="4">次卡商品</el-radio-button>
           </el-radio-group>
           <el-text v-if="isEdit" type="info" class="field-hint">创建后不可修改履约类型</el-text>
         </el-form-item>
@@ -37,6 +38,39 @@
         <el-form-item v-if="form.product_type !== 0" label="售后策略">
           <el-checkbox v-model="form.is_support_refund" :true-value="1" :false-value="0">允许客户申请退款</el-checkbox>
         </el-form-item>
+        <template v-if="form.product_type === 4">
+          <el-divider content-position="left">次卡核销规则</el-divider>
+          <el-alert
+            title="次卡仅支持单规格、门店自提；支付成功后激活有效期，到店后按次数核销。商品规则变更不会改写既有订单快照。"
+            type="warning"
+            :closable="false"
+            show-icon
+            class="association-alert"
+          />
+          <el-form-item label="可核销次数" required>
+            <el-input-number v-model="form.write_times" :min="1" :max="99999999" />
+          </el-form-item>
+          <el-form-item label="有效期" required>
+            <el-radio-group v-model="form.write_valid">
+              <el-radio :value="1">永久有效</el-radio>
+              <el-radio :value="2">购买后 N 天</el-radio>
+              <el-radio :value="3">固定时间区间</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item v-if="form.write_valid === 2" label="有效天数" required>
+            <el-input-number v-model="form.write_days" :min="1" :max="3650" />
+          </el-form-item>
+          <el-form-item v-if="form.write_valid === 3" label="有效区间" required>
+            <el-date-picker
+              v-model="form.second_card_range"
+              type="datetimerange"
+              value-format="X"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              range-separator="至"
+            />
+          </el-form-item>
+        </template>
         <el-form-item label="单位">
           <div class="field-row">
             <el-select
@@ -164,7 +198,7 @@
           class="association-alert"
         />
         <el-form-item label="规格类型">
-          <el-radio-group v-model="form.spec_type" @change="changeSpecType">
+          <el-radio-group v-model="form.spec_type" :disabled="form.product_type === 4" @change="changeSpecType">
             <el-radio-button :value="0">单规格</el-radio-button>
             <el-radio-button :value="1">多规格</el-radio-button>
           </el-radio-group>
@@ -196,7 +230,7 @@
             <el-table :data="form.attrs" border size="small" class="sku-table" @selection-change="selectActiveSkus">
               <el-table-column v-if="isEdit" type="selection" width="48" :selectable="selectableHistoricalSku" />
               <el-table-column prop="suk" label="组合" fixed min-width="130" />
-              <el-table-column label="图片URL" min-width="150">
+              <el-table-column v-if="form.product_type !== 4" label="图片URL" min-width="150">
                 <template #default="{ row }"><el-input v-model="row.image" /></template>
               </el-table-column>
               <el-table-column v-if="form.spec_type === 1" label="售价" min-width="120">
@@ -244,10 +278,10 @@
                   <el-text v-else type="info">保存后进入卡密库存导入</el-text>
                 </template>
               </el-table-column>
-              <el-table-column label="条码" min-width="130">
+              <el-table-column v-if="form.product_type !== 4" label="条码" min-width="130">
                 <template #default="{ row }"><el-input v-model="row.bar_code" maxlength="50" /></template>
               </el-table-column>
-              <el-table-column label="编码" min-width="130">
+              <el-table-column v-if="form.product_type !== 4" label="编码" min-width="130">
                 <template #default="{ row }"><el-input v-model="row.code" maxlength="50" /></template>
               </el-table-column>
               <el-table-column v-if="isEdit" prop="unique" label="唯一标识" min-width="100" />
@@ -258,7 +292,10 @@
             <el-text v-else-if="form.product_type === 1" type="info">
               填写固定内容时可直接维护可售库存；留空时库存只能通过“卡密库存”导入增加，支付发货严格使用下单快照。
             </el-text>
-            <div v-if="isEdit" class="sku-lifecycle-actions">
+            <el-text v-else-if="form.product_type === 4" type="info">
+              次卡库存表示可售份数；每份包含上方配置的核销次数，订单支付后生成独立的剩余次数和有效期。
+            </el-text>
+            <div v-if="isEdit && form.product_type !== 4" class="sku-lifecycle-actions">
               <el-button
                 type="danger"
                 plain
@@ -270,7 +307,7 @@
             </div>
           </div>
         </el-form-item>
-        <el-form-item v-if="isEdit && retiredAttrs.length" label="已退役SKU">
+        <el-form-item v-if="isEdit && form.product_type !== 4 && retiredAttrs.length" label="已退役SKU">
           <div class="sku-table-shell">
             <el-table :data="retiredAttrs" border size="small" class="sku-table" @selection-change="selectRetiredSkus">
               <el-table-column type="selection" width="48" />
@@ -363,7 +400,7 @@ const skuActionLoading = ref(false);
 
 const isEdit = computed(() => !!route.params.id);
 const form = reactive({
-  product_type: 0 as 0 | 1 | 3,
+  product_type: 0 as 0 | 1 | 3 | 4,
   store_name: "",
   store_info: "",
   image: "",
@@ -387,6 +424,10 @@ const form = reactive({
   vip_price: 0,
   is_show: 1,
   is_support_refund: 1,
+  write_times: 1,
+  write_valid: 1 as 1 | 2 | 3,
+  write_days: 1,
+  second_card_range: [] as string[],
 });
 
 async function submit() {
@@ -397,6 +438,20 @@ async function submit() {
     row.delivery_mode === "fixed" && !row.disk_info.trim()
   ))) {
     return ElMessage.error("固定内容交付的SKU必须填写交付内容");
+  }
+  if (form.product_type === 4) {
+    if (form.spec_type !== 0 || form.attrs.length !== 1) return ElMessage.error("次卡商品只支持单规格单SKU");
+    if (!Number.isSafeInteger(form.write_times) || form.write_times < 1 || form.write_times > 99999999) {
+      return ElMessage.error("次卡核销次数必须为1至99999999");
+    }
+    if (form.write_valid === 2 && (
+      !Number.isSafeInteger(form.write_days) || form.write_days < 1 || form.write_days > 3650
+    )) return ElMessage.error("次卡购买后有效天数必须为1至3650");
+    if (form.write_valid === 3 && (
+      form.second_card_range.length !== 2
+      || Number(form.second_card_range[0]) <= 0
+      || Number(form.second_card_range[1]) <= Number(form.second_card_range[0])
+    )) return ElMessage.error("请选择合法的次卡固定有效区间");
   }
   if (form.price <= 0 || form.attrs.some((row) => Number(row.price) <= 0)) {
     return ElMessage.error("请填写每个SKU的有效售价");
@@ -498,6 +553,11 @@ function newSkuRow(detail: Record<string, string>): ProductSkuRow {
     brokerage_two: 0,
     code: "",
     disk_info: "",
+    write_times: 1,
+    write_valid: 1,
+    write_days: 0,
+    write_start: 0,
+    write_end: 0,
     delivery_mode: "cards",
   };
 }
@@ -505,7 +565,7 @@ function newSkuRow(detail: Record<string, string>): ProductSkuRow {
 function changeProductType(value: unknown) {
   if (isEdit.value) return;
   const requested = Number(value);
-  form.product_type = requested === 1 ? 1 : requested === 3 ? 3 : 0;
+  form.product_type = requested === 1 ? 1 : requested === 3 ? 3 : requested === 4 ? 4 : 0;
   if (form.product_type === 1) {
     form.stock = 0;
     form.unit_name = "份";
@@ -516,13 +576,24 @@ function changeProductType(value: unknown) {
       delivery_mode: "cards",
     }));
   } else {
-    if (form.product_type === 3 && form.unit_name === "件") form.unit_name = "份";
+    if ((form.product_type === 3 || form.product_type === 4) && form.unit_name === "件") {
+      form.unit_name = form.product_type === 4 ? "次卡" : "份";
+    }
     form.attrs = form.attrs.map((row) => ({
       ...row,
       disk_info: "",
       delivery_mode: "cards",
       original_disk_info: "",
     }));
+    if (form.product_type === 4) {
+      form.spec_type = 0;
+      form.sku_rule_id = undefined;
+      form.write_times = 1;
+      form.write_valid = 1;
+      form.write_days = 1;
+      form.second_card_range = [];
+      regenerateSkuRows([{ value: "规格", detail: ["默认"] }]);
+    }
   }
 }
 
@@ -558,6 +629,11 @@ function regenerateSkuRows(dimensions: ProductSkuDimension[]) {
 }
 
 function changeSpecType(value: unknown) {
+  if (form.product_type === 4) {
+    form.spec_type = 0;
+    regenerateSkuRows([{ value: "规格", detail: ["默认"] }]);
+    return;
+  }
   form.spec_type = Number(value) === 1 ? 1 : 0;
   form.sku_rule_id = undefined;
   if (form.spec_type === 0) {
@@ -592,6 +668,11 @@ function prepareSkuPayload() {
       ot_price: form.ot_price,
       vip_price: form.vip_price,
       stock: form.product_type === 1 ? row.stock : form.stock,
+      write_times: form.product_type === 4 ? form.write_times : 1,
+      write_valid: form.product_type === 4 ? form.write_valid : 1,
+      write_days: form.product_type === 4 && form.write_valid === 2 ? form.write_days : 0,
+      write_start: form.product_type === 4 && form.write_valid === 3 ? Number(form.second_card_range[0]) : 0,
+      write_end: form.product_type === 4 && form.write_valid === 3 ? Number(form.second_card_range[1]) : 0,
     }];
     if (form.product_type !== 1) return;
   }
@@ -621,7 +702,7 @@ function restoreDraft(value: Record<string, unknown>) {
     if (Number.isFinite(parsed)) form[key] = parsed;
   }
   const productType = Number(value.product_type);
-  if (productType === 0 || productType === 1 || productType === 3) form.product_type = productType;
+  if (productType === 0 || productType === 1 || productType === 3 || productType === 4) form.product_type = productType;
   const specType = Number(value.spec_type);
   if (specType === 0 || specType === 1) form.spec_type = specType;
   for (const key of ["store_label_id", "ensure_id"] as const) {
@@ -661,6 +742,15 @@ function restoreDraft(value: Record<string, unknown>) {
     });
   }
   if (Array.isArray(value.attrs)) form.attrs = restoreSkuRows(value.attrs);
+  const writeTimes = Number(value.write_times);
+  if (Number.isSafeInteger(writeTimes) && writeTimes > 0) form.write_times = writeTimes;
+  const writeValid = Number(value.write_valid);
+  if (writeValid === 1 || writeValid === 2 || writeValid === 3) form.write_valid = writeValid;
+  const writeDays = Number(value.write_days);
+  if (Number.isSafeInteger(writeDays) && writeDays > 0) form.write_days = writeDays;
+  if (Array.isArray(value.second_card_range) && value.second_card_range.length === 2) {
+    form.second_card_range = value.second_card_range.map(String);
+  }
 }
 
 function restoreSkuRows(value: unknown[]): ProductSkuRow[] {
@@ -692,6 +782,11 @@ function restoreSkuRows(value: unknown[]): ProductSkuRow[] {
       brokerage_two: Number(row.brokerage_two ?? 0),
       code: typeof row.code === "string" ? row.code : "",
       disk_info: typeof row.disk_info === "string" ? row.disk_info : "",
+      write_times: Number(row.write_times ?? 1),
+      write_valid: Number(row.write_valid) === 2 ? 2 : Number(row.write_valid) === 3 ? 3 : 1,
+      write_days: Number(row.write_days ?? 0),
+      write_start: Number(row.write_start ?? 0),
+      write_end: Number(row.write_end ?? 0),
       delivery_mode: typeof row.disk_info === "string" && row.disk_info.trim() ? "fixed" : "cards",
       original_disk_info: typeof row.disk_info === "string" ? row.disk_info : "",
       is_retired: Number(row.is_retired) === 1 ? 1 : 0,
@@ -741,7 +836,7 @@ onMounted(async () => {
   if (isEdit.value) {
     try {
       const detail = await apiAdminProductDetail(Number(route.params.id));
-      form.product_type = detail.product_type === 1 ? 1 : detail.product_type === 3 ? 3 : 0;
+      form.product_type = detail.product_type === 1 ? 1 : detail.product_type === 3 ? 3 : detail.product_type === 4 ? 4 : 0;
       form.store_name = detail.store_name;
       form.store_info = detail.store_info;
       form.image = detail.image;
@@ -759,6 +854,15 @@ onMounted(async () => {
       form.spec_type = detail.spec_type;
       form.items = detail.items.map((item) => ({ ...item, detail: [...item.detail] }));
       form.attrs = restoreSkuRows(detail.attrs);
+      if (form.product_type === 4 && form.attrs[0]) {
+        const row = form.attrs[0];
+        form.write_times = Number(row.write_times ?? 1);
+        form.write_valid = row.write_valid ?? 1;
+        form.write_days = Math.max(1, Number(row.write_days ?? 1));
+        form.second_card_range = row.write_start && row.write_end
+          ? [String(row.write_start), String(row.write_end)]
+          : [];
+      }
       retiredAttrs.value = restoreSkuRows(detail.retired_attrs ?? []);
       if (!form.attrs.length && form.spec_type === 0) {
         form.attrs = [newSkuRow({ 规格: "默认" })];

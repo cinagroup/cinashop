@@ -9,6 +9,9 @@ const SECOND_CARD_PRODUCT_TYPE = 4;
 
 /** PHP treats product types 1/2/3 as non-logistics checkout products. */
 export function assertProductCheckoutShippingType(productType: number, shippingType: number): void {
+  if (productType === SECOND_CARD_PRODUCT_TYPE && shippingType !== 2) {
+    throw new ValidateException("次卡商品只能选择门店自提并到店核销");
+  }
   if ([CARD_PRODUCT_TYPE, 2, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(productType) && shippingType === 2) {
     throw new ValidateException("虚拟商品无需到店自提");
   }

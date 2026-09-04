@@ -17,6 +17,7 @@ export interface CartItem {
     otPrice: string;
     suk: string;
     systemFormId: number;
+    productType: number;
   } | null;
   sumPrice: string;
   checked?: boolean;
@@ -135,8 +136,14 @@ export interface OrderCartInfo {
   id: number;
   oid: number;
   product_id: number;
+  product_type: number;
   unique: string;
   cart_num: number;
+  write_times: number;
+  write_surplus_times: number;
+  write_start: number;
+  write_end: number;
+  is_writeoff: number;
   cart_info: {
     product: { id: number; storeName: string; image: string };
     sku: { unique: string; suk: string; price: string };

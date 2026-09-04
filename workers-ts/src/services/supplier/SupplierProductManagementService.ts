@@ -26,7 +26,11 @@ import {
   type SupplierProductDimension,
   type SupplierProductSku,
 } from "@/services/product/ProductSkuInput";
-import { loadProductSkuEditor, replaceProductSkuEditor } from "@/services/product/ProductSkuEditorService";
+import {
+  DEFAULT_SECOND_CARD_CONFIGURATION,
+  loadProductSkuEditor,
+  replaceProductSkuEditor,
+} from "@/services/product/ProductSkuEditorService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 export {
@@ -698,7 +702,7 @@ export class SupplierProductManagementService {
       }, {
         specType: input.specType,
         dimensions: input.dimensions,
-        skus: input.skus,
+        skus: input.skus.map((sku) => ({ ...sku, ...DEFAULT_SECOND_CARD_CONFIGURATION })),
       }, now);
       await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
       return { id: savedProductId, is_verify: 0, is_show: 0 };

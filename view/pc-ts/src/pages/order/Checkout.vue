@@ -4,7 +4,14 @@
 
     <section class="section">
       <h3 class="section-title">配送方式</h3>
-      <el-radio-group v-model="shippingType">
+      <el-alert
+        v-if="includesSecondCard"
+        title="订单包含次卡商品，仅支持门店自提；支付后按订单有效期到店核销。"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <el-radio-group v-else v-model="shippingType">
         <el-radio-button :value="1">快递配送</el-radio-button>
         <el-radio-button :value="2">门店自提</el-radio-button>
       </el-radio-group>
@@ -170,6 +177,9 @@ const checkoutItems = computed(() => {
     ? cartStore.items.filter((item) => ids.has(item.id))
     : cartStore.checkedItems;
 });
+const includesSecondCard = computed(() => checkoutItems.value.some(
+  (item) => item.productInfo?.productType === 4,
+));
 const firstOrderDiscount = computed(() => Number(firstOrderQuote.value?.firstOrderPrice ?? 0));
 const checkoutTotal = computed(() => Math.max(
   0,
@@ -315,6 +325,7 @@ async function submitOrder() {
 
 onMounted(async () => {
   await Promise.all([cartStore.fetchList(), loadAddresses(), loadPickupStores()]);
+  if (includesSecondCard.value) shippingType.value = 2;
   await Promise.all([loadSystemForm(), loadFirstOrderQuote()]);
 });
 </script>

@@ -2,7 +2,8 @@
   <view class="confirm-page">
     <view class="section">
       <view class="delivery-title">配送方式</view>
-      <view class="delivery-options">
+      <view v-if="includesSecondCard" class="second-card-delivery">订单包含次卡商品，仅支持门店自提；支付后到店按次数核销</view>
+      <view v-else class="delivery-options">
         <view class="delivery-option" :class="{ active: shippingType === 1 }" @tap="shippingType = 1">快递配送</view>
         <view class="delivery-option" :class="{ active: shippingType === 2 }" @tap="shippingType = 2">门店自提</view>
       </view>
@@ -280,6 +281,9 @@ const couponDiscount = computed(() => {
   }
   return Math.min(Number(c.couponPrice), goodsTotal.value);
 });
+const includesSecondCard = computed(() => displayItems.value.some(
+  (item) => item.productInfo?.productType === 4,
+));
 
 const firstOrderDiscount = computed(() =>
   Number(firstOrderQuote.value?.firstOrderPrice ?? 0),
@@ -521,6 +525,7 @@ onShow(async () => {
   } else if (!cartStore.items.length) {
     await cartStore.fetchList();
   }
+  if (includesSecondCard.value) shippingType.value = 2;
   await loadFirstOrderQuote();
   await Promise.all([loadAddresses(), loadCoupons(), loadSystemForm(), loadPickupStores()]);
 });
@@ -553,6 +558,14 @@ onShow(async () => {
 .delivery-options {
   display: flex;
   gap: 16rpx;
+}
+
+.second-card-delivery {
+  padding: 18rpx;
+  border: 2rpx solid #f3c08d;
+  border-radius: 12rpx;
+  color: #9a5b13;
+  background: #fff8ed;
 }
 
 .delivery-option {

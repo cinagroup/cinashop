@@ -1,3 +1,7 @@
+param(
+    [switch]$ReadOnly
+)
+
 $ErrorActionPreference = "Stop"
 
 $taskAuditName = "cinashop-second-card-audit-" + [Guid]::NewGuid().ToString("N").Substring(0, 12)
@@ -5,11 +9,15 @@ $taskConfigPath = "test/integration/second-card-reminder-audit.wrangler.jsonc"
 
 function New-AuditCredential {
     $taskTokenBytes = New-Object byte[] 32
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($taskTokenBytes)
+    $taskRandom = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $taskRandom.GetBytes($taskTokenBytes) } finally { $taskRandom.Dispose() }
     $taskToken = [BitConverter]::ToString($taskTokenBytes).Replace("-", "").ToLowerInvariant()
-    $taskHashBytes = [System.Security.Cryptography.SHA256]::HashData(
-        [Text.Encoding]::UTF8.GetBytes($taskToken)
-    )
+    $taskSha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $taskHashBytes = $taskSha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($taskToken))
+    } finally {
+        $taskSha256.Dispose()
+    }
     return [ordered]@{
         Token = $taskToken
         Hash = [BitConverter]::ToString($taskHashBytes).Replace("-", "").ToLowerInvariant()
@@ -92,22 +100,24 @@ try {
         throw "Production preconditions reject the forward DDL"
     }
 
-    $taskDecision = Read-Host "Type APPLY after reviewing the read-only report"
-    if ($taskDecision -ne "APPLY") {
-        throw "Forward DDL was not approved by the active audit session"
+    if (-not $ReadOnly) {
+        $taskDecision = Read-Host "Type APPLY after reviewing the read-only report"
+        if ($taskDecision -ne "APPLY") {
+            throw "Forward DDL was not approved by the active audit session"
+        }
+
+        $taskApplyReport = Invoke-RestMethod -Method Post -Uri "$taskWorkerUrl/apply" `
+            -Headers @{ "X-Audit-Token" = $taskWriteCredential.Token } -TimeoutSec 60
+        $taskFinalReport = Invoke-RestMethod -Method Post -Uri "$taskWorkerUrl/read" `
+            -Headers @{ "X-Audit-Token" = $taskReadCredential.Token } -TimeoutSec 45
+
+        Write-Output "APPLY_REPORT_BEGIN"
+        $taskApplyReport | ConvertTo-Json -Depth 12
+        Write-Output "APPLY_REPORT_END"
+        Write-Output "FINAL_REPORT_BEGIN"
+        $taskFinalReport | ConvertTo-Json -Depth 12
+        Write-Output "FINAL_REPORT_END"
     }
-
-    $taskApplyReport = Invoke-RestMethod -Method Post -Uri "$taskWorkerUrl/apply" `
-        -Headers @{ "X-Audit-Token" = $taskWriteCredential.Token } -TimeoutSec 60
-    $taskFinalReport = Invoke-RestMethod -Method Post -Uri "$taskWorkerUrl/read" `
-        -Headers @{ "X-Audit-Token" = $taskReadCredential.Token } -TimeoutSec 45
-
-    Write-Output "APPLY_REPORT_BEGIN"
-    $taskApplyReport | ConvertTo-Json -Depth 12
-    Write-Output "APPLY_REPORT_END"
-    Write-Output "FINAL_REPORT_BEGIN"
-    $taskFinalReport | ConvertTo-Json -Depth 12
-    Write-Output "FINAL_REPORT_END"
 } finally {
     if ($taskDeployed) {
         $taskDeleteOutput = & npx.cmd wrangler delete $taskAuditName `

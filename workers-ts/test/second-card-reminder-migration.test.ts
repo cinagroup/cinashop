@@ -140,6 +140,9 @@ describe("second-card reminder migration", () => {
     expect(worker).toContain("SET TRANSACTION READ ONLY");
     expect(worker).toContain("size.cart_rows > 100_000");
     expect(worker).toContain("businessRowsUnchanged");
+    expect(runner).toContain("[switch]$ReadOnly");
+    expect(runner).toContain("RandomNumberGenerator]::Create()");
+    expect(runner).not.toContain("RandomNumberGenerator]::Fill(");
     expect(runner).toContain("wrangler delete $taskAuditName");
     expect(runner).not.toContain("Write-Output $taskReadCredential");
     expect(runner).not.toContain("Write-Output $taskWriteCredential");

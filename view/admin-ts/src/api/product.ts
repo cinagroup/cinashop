@@ -7,6 +7,7 @@ import type { AdminProduct } from "@/types/admin";
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
+let previewProductDraft: Record<string, unknown> | null = null;
 
 export interface ProductEditorOption {
   id: number;
@@ -53,6 +54,11 @@ export interface ProductSkuRow {
   brokerage_two: string | number;
   code: string;
   disk_info: string;
+  write_times?: number;
+  write_valid?: 1 | 2 | 3;
+  write_days?: number;
+  write_start?: number;
+  write_end?: number;
   delivery_mode?: "cards" | "fixed";
   original_disk_info?: string;
   is_retired?: 0 | 1;
@@ -464,16 +470,27 @@ export function apiAdminProductDel(id: number): Promise<null> {
 }
 
 export function apiAdminProductDraft(): Promise<{ info: Record<string, unknown> | [] }> {
+  if (previewMode) {
+    return Promise.resolve({ info: previewProductDraft ? structuredClone(previewProductDraft) : [] });
+  }
   return getData(request.get("/product/cache"));
 }
 
 export function apiAdminProductDraftSave(
   data: Record<string, unknown>,
 ): Promise<{ info: Record<string, unknown> }> {
+  if (previewMode) {
+    previewProductDraft = structuredClone(data);
+    return Promise.resolve({ info: structuredClone(previewProductDraft) });
+  }
   return getData(request.post("/product/cache", data));
 }
 
 export function apiAdminProductDraftDelete(): Promise<null> {
+  if (previewMode) {
+    previewProductDraft = null;
+    return Promise.resolve(null);
+  }
   return getData(request.delete("/product/cache"));
 }
 

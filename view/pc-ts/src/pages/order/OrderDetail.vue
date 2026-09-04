@@ -70,6 +70,22 @@
         </div>
       </div>
 
+      <div v-if="secondCardLines.length" class="detail-card second-card-panel">
+        <div class="second-card-heading">
+          <h3>次卡权益</h3>
+          <el-tag :type="secondCardRemaining > 0 ? 'warning' : 'success'">
+            {{ secondCardRemaining > 0 ? `剩余 ${secondCardRemaining} 次` : "已全部核销" }}
+          </el-tag>
+        </div>
+        <div v-for="item in secondCardLines" :key="item.id" class="second-card-line">
+          <div>
+            <strong>{{ item.cart_info?.product?.storeName || "次卡商品" }}</strong>
+            <small>{{ secondCardValidityText(item) }}</small>
+          </div>
+          <span>已核销 {{ item.write_times - item.write_surplus_times }} / {{ item.write_times }} 次</span>
+        </div>
+      </div>
+
       <div v-if="order.split_orders?.length" class="detail-card">
         <div class="package-heading">
           <h3>履约包裹</h3>
@@ -286,6 +302,18 @@ const isWriteoffPending = computed(() => Boolean(
     (order.value.delivery_type === "send" && [1, 5].includes(order.value.status))
   ),
 ));
+const secondCardLines = computed(() => (order.value?.cart_info ?? []).filter(
+  (item) => item.product_type === 4,
+));
+const secondCardRemaining = computed(() => secondCardLines.value.reduce(
+  (total, item) => total + Math.max(0, item.write_surplus_times),
+  0,
+));
+
+function secondCardValidityText(item: NonNullable<OrderInfo["cart_info"]>[number]): string {
+  if (!item.write_start && !item.write_end) return "永久有效";
+  return `有效期：${formatTime(item.write_start)} 至 ${formatTime(item.write_end)}`;
+}
 
 const paymentLabels: Record<CheckoutPaymentMethod, string> = {
   yue: "余额支付",
@@ -613,6 +641,38 @@ onBeforeUnmount(() => {
 .virtual-delivery-card {
   border: 1px solid #d9ecff;
   background: linear-gradient(135deg, #f4faff, #fff);
+}
+
+.second-card-panel {
+  border: 1px solid #f3d19e;
+  background: linear-gradient(135deg, #fff8ec, #fff);
+}
+
+.second-card-heading,
+.second-card-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.second-card-heading h3 {
+  margin: 0 0 12px;
+}
+
+.second-card-line {
+  padding: 12px 0;
+  border-top: 1px solid #f7e7ce;
+}
+
+.second-card-line > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.second-card-line small {
+  color: #909399;
 }
 
 .virtual-heading {

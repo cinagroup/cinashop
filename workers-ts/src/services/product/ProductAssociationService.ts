@@ -43,6 +43,7 @@ const MANAGED_RELATIONS = [
 const PARAMETER_TEMPLATE_GROUP = 3;
 const CARD_PRODUCT_TYPE = 1;
 const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
+const SECOND_CARD_PRODUCT_TYPE = 4;
 const MAX_ASSOCIATION_IDS = 100;
 const MAX_PARAMETER_SPECS = 100;
 
@@ -482,10 +483,10 @@ export class ProductAssociationService {
         "商品类型",
         0,
         0,
-        MANUAL_VIRTUAL_PRODUCT_TYPE,
+        SECOND_CARD_PRODUCT_TYPE,
       );
-      if (![0, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(productType)) {
-        throw new ValidateException("当前迁移阶段仅支持实物、卡密或手工虚拟商品");
+      if (![0, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(productType)) {
+        throw new ValidateException("当前迁移阶段仅支持实物、卡密、手工虚拟或次卡商品");
       }
       if (existing && Object.prototype.hasOwnProperty.call(body, "product_type")) {
         const requestedProductType = integerValue(
@@ -503,8 +504,10 @@ export class ProductAssociationService {
       const skuPayload = hasProductSkuEditorPayload(body)
         ? normalizeProductSkuEditorPayload(body, productType)
         : null;
-      if (!existing && productType === CARD_PRODUCT_TYPE && !skuPayload) {
-        throw new ValidateException("卡密商品必须配置SKU及交付方式");
+      if (!existing && [CARD_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(productType) && !skuPayload) {
+        throw new ValidateException(productType === CARD_PRODUCT_TYPE
+          ? "卡密商品必须配置SKU及交付方式"
+          : "次卡商品必须配置单规格核销规则");
       }
       const skuSummary = skuPayload ? productSkuSummary(skuPayload) : null;
       const storeName = textValue(body.store_name ?? existing?.storeName, "商品名称", 256);
@@ -591,6 +594,13 @@ export class ProductAssociationService {
         ...(productType === CARD_PRODUCT_TYPE || productType === MANUAL_VIRTUAL_PRODUCT_TYPE ? {
           deliveryType: "",
           freight: 2,
+          postage: "0.00",
+          tempId: 0,
+          isPostage: 0,
+        } : {}),
+        ...(productType === SECOND_CARD_PRODUCT_TYPE ? {
+          deliveryType: "2",
+          freight: 1,
           postage: "0.00",
           tempId: 0,
           isPostage: 0,

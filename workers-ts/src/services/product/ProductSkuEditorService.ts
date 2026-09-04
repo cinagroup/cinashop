@@ -24,14 +24,28 @@ const PRODUCT_ATTR_TYPE = 0;
 const PHYSICAL_PRODUCT_TYPE = 0;
 const CARD_PRODUCT_TYPE = 1;
 const MANUAL_VIRTUAL_PRODUCT_TYPE = 3;
+const SECOND_CARD_PRODUCT_TYPE = 4;
+const MAX_SECOND_CARD_WRITE_TIMES = 99_999_999;
+const MAX_SECOND_CARD_WRITE_DAYS = 3_650;
+const MAX_POSTGRES_INTEGER = 2_147_483_647;
+
+export interface SecondCardSkuConfiguration {
+  writeTimes: number;
+  writeValid: 1 | 2 | 3;
+  writeDays: number;
+  writeStart: number;
+  writeEnd: number;
+}
+
+export type ProductSkuEditorSku = SupplierProductSku & SecondCardSkuConfiguration;
 
 export interface ProductSkuEditorPayload {
   specType: 0 | 1;
   dimensions: SupplierProductDimension[];
-  skus: SupplierProductSku[];
+  skus: ProductSkuEditorSku[];
 }
 
-export interface ProductSkuEditorRow extends SupplierProductSku {
+export interface ProductSkuEditorRow extends ProductSkuEditorSku {
   id?: number;
   unique: string;
   sales: number;
@@ -70,6 +84,70 @@ function safeDimensionText(value: string, field: string): string {
   return value;
 }
 
+function skuInputRows(value: unknown): Record<string, unknown>[] {
+  const rows = Array.isArray(value)
+    ? value
+    : value && typeof value === "object"
+      ? Object.values(value as Record<string, unknown>)
+      : [];
+  return rows.map((row) => {
+    if (!row || typeof row !== "object" || Array.isArray(row)) {
+      throw new ValidateException("SKU格式错误");
+    }
+    return row as Record<string, unknown>;
+  });
+}
+
+function integerAlias(row: Record<string, unknown>, snake: string, camel: string): number | null {
+  const raw = Object.prototype.hasOwnProperty.call(row, snake) ? row[snake] : row[camel];
+  if (raw === undefined || raw === null || raw === "") return null;
+  const parsed = Number(raw);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function normalizeSecondCardSkuConfiguration(
+  row: Record<string, unknown>,
+): SecondCardSkuConfiguration {
+  const writeTimes = integerAlias(row, "write_times", "writeTimes");
+  if (writeTimes === null || writeTimes < 1 || writeTimes > MAX_SECOND_CARD_WRITE_TIMES) {
+    throw new ValidateException(`次卡核销次数必须为1至${MAX_SECOND_CARD_WRITE_TIMES}`);
+  }
+  const writeValid = integerAlias(row, "write_valid", "writeValid");
+  if (writeValid !== 1 && writeValid !== 2 && writeValid !== 3) {
+    throw new ValidateException("请选择次卡有效期类型");
+  }
+  if (writeValid === 1) {
+    return { writeTimes, writeValid, writeDays: 0, writeStart: 0, writeEnd: 0 };
+  }
+  if (writeValid === 2) {
+    const writeDays = integerAlias(row, "write_days", "writeDays");
+    if (writeDays === null || writeDays < 1 || writeDays > MAX_SECOND_CARD_WRITE_DAYS) {
+      throw new ValidateException(`次卡购买后有效天数必须为1至${MAX_SECOND_CARD_WRITE_DAYS}`);
+    }
+    return { writeTimes, writeValid, writeDays, writeStart: 0, writeEnd: 0 };
+  }
+  const writeStart = integerAlias(row, "write_start", "writeStart");
+  const writeEnd = integerAlias(row, "write_end", "writeEnd");
+  if (
+    writeStart === null
+    || writeEnd === null
+    || writeStart <= 0
+    || writeEnd <= writeStart
+    || writeEnd > MAX_POSTGRES_INTEGER
+  ) {
+    throw new ValidateException("次卡固定有效期必须是合法且结束晚于开始的时间区间");
+  }
+  return { writeTimes, writeValid, writeDays: 0, writeStart, writeEnd };
+}
+
+export const DEFAULT_SECOND_CARD_CONFIGURATION: SecondCardSkuConfiguration = {
+  writeTimes: 1,
+  writeValid: 1,
+  writeDays: 0,
+  writeStart: 0,
+  writeEnd: 0,
+};
+
 export function hasProductSkuEditorPayload(body: Record<string, unknown>): boolean {
   const hasItems = owns(body, "items");
   const hasAttrs = owns(body, "attrs");
@@ -84,6 +162,9 @@ export function normalizeProductSkuEditorPayload(
   const specTypeValue = Number(body.spec_type ?? 0);
   if (specTypeValue !== 0 && specTypeValue !== 1) throw new ValidateException("规格类型错误");
   const specType = specTypeValue as 0 | 1;
+  if (productType === SECOND_CARD_PRODUCT_TYPE && specType !== 0) {
+    throw new ValidateException("次卡商品只支持单规格单SKU");
+  }
   const dimensions = specType === 0
     ? [{ value: "规格", detail: ["默认"] }]
     : normalizeSupplierProductDimensions(body.items);
@@ -91,18 +172,25 @@ export function normalizeProductSkuEditorPayload(
     safeDimensionText(dimension.value, "规格名称");
     for (const value of dimension.detail) safeDimensionText(value, "规格值");
   }
-  const skus = normalizeSupplierProductSkus(
+  const commonSkus = normalizeSupplierProductSkus(
     body.attrs,
     dimensions,
     specType,
     { requireSettlePrice: false },
   );
-  if (productType !== CARD_PRODUCT_TYPE && skus.some((sku) => sku.diskInfo)) {
+  if (productType !== CARD_PRODUCT_TYPE && commonSkus.some((sku) => sku.diskInfo)) {
     throw new ValidateException("只有卡密商品可以配置固定虚拟内容");
   }
-  if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(productType)) {
-    throw new ValidateException("当前阶段只支持编辑实物、卡密或手工虚拟商品SKU");
+  if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(productType)) {
+    throw new ValidateException("当前阶段只支持编辑实物、卡密、手工虚拟或次卡商品SKU");
   }
+  const inputs = skuInputRows(body.attrs);
+  const skus = commonSkus.map((sku, index): ProductSkuEditorSku => ({
+    ...sku,
+    ...(productType === SECOND_CARD_PRODUCT_TYPE
+      ? normalizeSecondCardSkuConfiguration(inputs[index])
+      : DEFAULT_SECOND_CARD_CONFIGURATION),
+  }));
   return { specType, dimensions, skus };
 }
 
@@ -177,6 +265,11 @@ function skuProjection(
     brokerageTwo: row.brokerageTwo,
     code: row.code,
     diskInfo: row.diskInfo ?? "",
+    writeTimes: row.writeTimes,
+    writeValid: row.writeValid === 2 ? 2 : row.writeValid === 3 ? 3 : 1,
+    writeDays: row.writeDays,
+    writeStart: row.writeStart,
+    writeEnd: row.writeEnd,
     sales: row.sales,
     sumStock: row.sumStock,
     is_retired: row.isRetired === 1 ? 1 : 0,
@@ -212,12 +305,22 @@ export async function loadProductSkuEditor(
     bar_code: row.barCode,
     brokerage_two: row.brokerageTwo,
     disk_info: row.diskInfo ?? "",
+    write_times: row.writeTimes,
+    write_valid: row.writeValid,
+    write_days: row.writeDays,
+    write_start: row.writeStart,
+    write_end: row.writeEnd,
     settlePrice: undefined,
     otPrice: undefined,
     vipPrice: undefined,
     barCode: undefined,
     brokerageTwo: undefined,
     diskInfo: undefined,
+    writeTimes: undefined,
+    writeValid: undefined,
+    writeDays: undefined,
+    writeStart: undefined,
+    writeEnd: undefined,
   });
   return {
     spec_type: specType === 1 ? 1 : 0,
@@ -349,6 +452,11 @@ export async function rebuildActiveProductSkuState(
       otPrice: storeProductAttrValue.otPrice,
       vipPrice: storeProductAttrValue.vipPrice,
       diskInfo: storeProductAttrValue.diskInfo,
+      writeTimes: storeProductAttrValue.writeTimes,
+      writeValid: storeProductAttrValue.writeValid,
+      writeDays: storeProductAttrValue.writeDays,
+      writeStart: storeProductAttrValue.writeStart,
+      writeEnd: storeProductAttrValue.writeEnd,
     }).from(storeProductAttrValue).where(and(
       eq(storeProductAttrValue.productId, product.id),
       eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
@@ -398,6 +506,11 @@ export function productSkuReadbackMatches(
     otPrice: string;
     vipPrice: string;
     diskInfo?: string | null;
+    writeTimes?: number;
+    writeValid?: number;
+    writeDays?: number;
+    writeStart?: number;
+    writeEnd?: number;
   }>,
   result: string | undefined,
   expected: ProductSkuEditorPayload,
@@ -429,6 +542,11 @@ export function productSkuReadbackMatches(
       || row.otPrice !== wanted.otPrice
       || row.vipPrice !== wanted.vipPrice
       || (row.diskInfo ?? "") !== wanted.diskInfo
+      || (row.writeTimes ?? 1) !== wanted.writeTimes
+      || (row.writeValid ?? 1) !== wanted.writeValid
+      || (row.writeDays ?? 0) !== wanted.writeDays
+      || (row.writeStart ?? 0) !== wanted.writeStart
+      || (row.writeEnd ?? 0) !== wanted.writeEnd
     ) return false;
   }
   try {
@@ -439,6 +557,11 @@ export function productSkuReadbackMatches(
       suk?: unknown;
       unique?: unknown;
       diskInfo?: unknown;
+      writeTimes?: unknown;
+      writeValid?: unknown;
+      writeDays?: unknown;
+      writeStart?: unknown;
+      writeEnd?: unknown;
     }>;
     return snapshotRows.every((row) => (
       typeof row.suk === "string"
@@ -447,6 +570,11 @@ export function productSkuReadbackMatches(
       && expectedBySuk.get(row.suk)?.diskInfo === (
         typeof row.diskInfo === "string" ? row.diskInfo : ""
       )
+      && expectedBySuk.get(row.suk)?.writeTimes === (typeof row.writeTimes === "number" ? row.writeTimes : 1)
+      && expectedBySuk.get(row.suk)?.writeValid === (typeof row.writeValid === "number" ? row.writeValid : 1)
+      && expectedBySuk.get(row.suk)?.writeDays === (typeof row.writeDays === "number" ? row.writeDays : 0)
+      && expectedBySuk.get(row.suk)?.writeStart === (typeof row.writeStart === "number" ? row.writeStart : 0)
+      && expectedBySuk.get(row.suk)?.writeEnd === (typeof row.writeEnd === "number" ? row.writeEnd : 0)
     ));
   } catch {
     return false;
@@ -459,8 +587,8 @@ export async function replaceProductSkuEditor(
   payload: ProductSkuEditorPayload,
   now: number,
 ): Promise<ProductSkuEditorRow[]> {
-  if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE].includes(product.productType)) {
-    throw new ValidateException("当前阶段只支持编辑实物、卡密或手工虚拟商品SKU");
+  if (![PHYSICAL_PRODUCT_TYPE, CARD_PRODUCT_TYPE, MANUAL_VIRTUAL_PRODUCT_TYPE, SECOND_CARD_PRODUCT_TYPE].includes(product.productType)) {
+    throw new ValidateException("当前阶段只支持编辑实物、卡密、手工虚拟或次卡商品SKU");
   }
   await tx.execute(sql`SELECT pg_advisory_xact_lock(
     ${PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE},
@@ -561,6 +689,11 @@ export async function replaceProductSkuEditor(
         brokerageTwo: sku.brokerageTwo,
         code: sku.code,
         diskInfo,
+        writeTimes: sku.writeTimes,
+        writeValid: sku.writeValid,
+        writeDays: sku.writeDays,
+        writeStart: sku.writeStart,
+        writeEnd: sku.writeEnd,
       }).where(eq(storeProductAttrValue.id, current.id));
       const difference = sku.stock - current.stock;
       if (difference !== 0) stockRecords.push({
@@ -595,6 +728,11 @@ export async function replaceProductSkuEditor(
         type: PRODUCT_ATTR_TYPE,
         code: sku.code,
         diskInfo,
+        writeTimes: sku.writeTimes,
+        writeValid: sku.writeValid,
+        writeDays: sku.writeDays,
+        writeStart: sku.writeStart,
+        writeEnd: sku.writeEnd,
       });
       if (sku.stock > 0) stockRecords.push({
         storeId: product.type === 0 ? 0 : product.relationId,
@@ -666,6 +804,11 @@ export async function replaceProductSkuEditor(
       otPrice: storeProductAttrValue.otPrice,
       vipPrice: storeProductAttrValue.vipPrice,
       diskInfo: storeProductAttrValue.diskInfo,
+      writeTimes: storeProductAttrValue.writeTimes,
+      writeValid: storeProductAttrValue.writeValid,
+      writeDays: storeProductAttrValue.writeDays,
+      writeStart: storeProductAttrValue.writeStart,
+      writeEnd: storeProductAttrValue.writeEnd,
     }).from(storeProductAttrValue).where(and(
       eq(storeProductAttrValue.productId, product.id),
       eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),

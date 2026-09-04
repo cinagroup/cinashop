@@ -73,6 +73,20 @@
       </view>
     </view>
 
+    <view v-if="secondCardLines.length" class="section second-card-panel">
+      <view class="second-card-heading">
+        <text class="second-card-title">次卡权益</text>
+        <text class="second-card-remaining">{{ secondCardRemaining > 0 ? `剩余 ${secondCardRemaining} 次` : "已全部核销" }}</text>
+      </view>
+      <view v-for="item in secondCardLines" :key="item.id" class="second-card-line">
+        <view>
+          <text class="second-card-name">{{ item.cart_info?.product?.storeName || "次卡商品" }}</text>
+          <text class="second-card-validity">{{ secondCardValidityText(item) }}</text>
+        </view>
+        <text>已核销 {{ item.write_times - item.write_surplus_times }} / {{ item.write_times }} 次</text>
+      </view>
+    </view>
+
     <!-- 商品 -->
     <view class="section">
       <view class="cart-line" v-for="ci in order.cart_info" :key="ci.id">
@@ -211,6 +225,18 @@ const isWriteoffPending = computed(() => Boolean(
     (order.value.delivery_type === "send" && [1, 5].includes(order.value.status))
   ),
 ));
+const secondCardLines = computed(() => (order.value?.cart_info ?? []).filter(
+  (item) => item.product_type === 4,
+));
+const secondCardRemaining = computed(() => secondCardLines.value.reduce(
+  (total, item) => total + Math.max(0, item.write_surplus_times),
+  0,
+));
+
+function secondCardValidityText(item: NonNullable<OrderInfo["cart_info"]>[number]): string {
+  if (!item.write_start && !item.write_end) return "永久有效";
+  return `有效期：${formatTime(item.write_start)} 至 ${formatTime(item.write_end)}`;
+}
 
 function formTitle(item: SystemFormComponent, index: number): string {
   return item.titleConfig?.value || `表单项 ${index + 1}`;
@@ -534,6 +560,49 @@ onShow(() => {
   border-radius: 12rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
+}
+
+.second-card-panel {
+  border: 2rpx solid #f3d19e;
+  background: linear-gradient(135deg, #fff8ec, #fff);
+}
+
+.second-card-heading,
+.second-card-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.second-card-heading {
+  margin-bottom: 12rpx;
+}
+
+.second-card-title,
+.second-card-name {
+  font-weight: 600;
+}
+
+.second-card-remaining {
+  color: #d97706;
+}
+
+.second-card-line {
+  padding: 18rpx 0;
+  border-top: 1rpx solid #f7e7ce;
+  font-size: 24rpx;
+}
+
+.second-card-line > view {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.second-card-validity {
+  color: #999;
+  font-size: 22rpx;
 }
 
 .cashier-card {
