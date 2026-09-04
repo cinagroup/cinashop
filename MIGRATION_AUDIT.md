@@ -4363,7 +4363,7 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 生产是PostgreSQL 16.14。DDL前`store_product_attr_value`只有2行、关系总大小49,152字节；71个商品中只有2个商品拥有普通SKU，两者均为平台自营、`relation_id=0`、未删除实物商品，而且都是单规格单SKU。活动SKU为0；全局`unique`重复组、商品内`suk`重复组、空`unique`、空`suk`、负库存、普通SKU孤儿和`spec_type`数量错配全部为0。生产没有非平台、虚拟、多规格或畸形SKU样本，所以这些类别不能靠本次审计宣告兼容。
 
-引用聚合显示开放购物车2条、未支付有效订单8条、订单历史28条；评价历史、库存历史、虚拟库存、门店SKU、促销辅助和抽奖引用均为0。由此得出两个不同结论：当前两条SKU都不能作为无副作用的真实退役测试对象，服务应按设计被开放购物车/未付订单阻断；但这些业务引用不阻止只增加状态列、日志表、索引和保护触发器的前向DDL。DDL前四个退役字段、日志表/序列、CHECK、三个索引、函数和触发器全部不存在，不是部分迁移状态。
+引用聚合显示开放购物车2条、未支付有效订单8条、订单历史28条；评价历史、库存历史、虚拟库存、历史分店SKU表、促销辅助和抽奖引用均为0。由此得出两个不同结论：当前两条SKU都不能作为无副作用的真实退役测试对象，服务应按设计被开放购物车/未付订单阻断；但这些业务引用不阻止只增加状态列、日志表、索引和保护触发器的前向DDL。DDL前四个退役字段、日志表/序列、CHECK、三个索引、函数和触发器全部不存在，不是部分迁移状态。
 
 ### 有界迁移、回滚条件与幂等证据
 
@@ -4391,7 +4391,7 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 ### 审计范围、旧实现风险与完成边界
 
-本项只关闭Supplier自有、未删除实物商品的普通SKU稳定编辑和可恢复退役候选链，不把平台E5B2/E5C证据重复计算，也不扩展到门店、虚拟商品或正式发布。旧PHP的Supplier商品保存最终复用公共`StoreProductServices->saveData(..., type=2, supplierId)`；其`StoreProductAttrServices::saveProductAttr`按前端数组位置更新已有行，只在新数组更短时删除尾部ID，并在更长时追加。因此规格顺序或组合变化会让旧ID绑定到另一组`suk`，订单、评价和库存历史可能仍指向同一ID却表达了不同商品组合。迁移前TypeScript Supplier服务风险更直接：先删除商品全部普通SKU，再生成新ID整批插入；一旦商品存在退役行又整单拒绝保存，既重建历史身份又形成无法继续编辑的死路。
+本项只关闭Supplier自有、未删除实物商品的普通SKU稳定编辑和可恢复退役候选链，不把平台E5B2/E5C证据重复计算，也不扩展到非实物商品或正式发布。旧PHP的Supplier商品保存最终复用公共`StoreProductServices->saveData(..., type=2, supplierId)`；其`StoreProductAttrServices::saveProductAttr`按前端数组位置更新已有行，只在新数组更短时删除尾部ID，并在更长时追加。因此规格顺序或组合变化会让旧ID绑定到另一组`suk`，订单、评价和库存历史可能仍指向同一ID却表达了不同商品组合。迁移前TypeScript Supplier服务风险更直接：先删除商品全部普通SKU，再生成新ID整批插入；一旦商品存在退役行又整单拒绝保存，既重建历史身份又形成无法继续编辑的死路。
 
 本轮把规格输入类型和规范化逻辑提取为共享`ProductSkuInput`，Supplier编辑复用平台稳定身份编辑器。已有活跃组合按规范化`suk`精确匹配并保留`id`、`unique`、`sales`和`sum_stock`，只更新允许变化的价格、库存、成本、图片、重量和体积；新增组合获得新身份。遗漏已有活跃组合、改变其`suk`或试图通过普通保存恢复退役行都会失败关闭，退役行也不再被删除。详情接口从同一编辑器回读并明确分成可编辑`attrs`和只读`retired_attrs`，避免前端把历史行重新混入普通保存正文。
 
@@ -4421,7 +4421,37 @@ DDL前目录确认outbox CHECK只允许原三类事件，两个目标索引都�
 
 Supplier生产构建通过2,271个模块。应用内浏览器实际打开本地preview商品71：勾选活跃SKU后输入“停止旧颜色销售”，活跃行由2变1，历史表显示原稳定ID和`PV71GRN1`；再输入“重新开放旧颜色”恢复后，活跃行回到2且历史区消失。390×844视口下`scrollWidth=clientWidth=375`，页面无横向溢出，生命周期按钮可见且导航切为移动端；全程console warning/error为0。这里的页面数据是隔离preview，只证明控件、状态转换和响应式布局，不是生产Supplier账号验收。
 
-专项3文件/28项测试、单元与运行时双TypeScript、Supplier生产构建2,271模块和Worker全量209文件/1,323项单元全部通过。schema审计保持201/201源表字段完整、外部/内嵌263表零漂移；Admin静态请求342个调用点/362个路径变体全部可执行；全局路由为PHP 1,904 / TS 1,623 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026；设置账本仍为76屏中reviewed 15 / candidate 11 / partial 3 / retired 1 / unreviewed 61；可观测性保持17个信号、53个必需事件和6个发布阻断。精确实现提交`14880b2436cf5664d858e03ee2aba938468df1c6`推送后，[Actions `33834851835`](https://github.com/cinagroup/cinashop/actions/runs/33834851835)的Repository全历史Secret扫描、Worker双TypeScript/1,323项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。E5D当前只能标“候选完成，未发布”：生产没有真实Supplier商品或SKU，尚无真实主管理员/Supplier管理员/只读和编辑受限角色token；源PHP历史多规格数据、门店SKU、虚拟商品、正式发布、发布后失败重试和观察期仍未完成。它们继续阻塞FE-001E5父项及FE-001E6，不能因隔离schema演练通过而上调为生产完成。
+专项3文件/28项测试、单元与运行时双TypeScript、Supplier生产构建2,271模块和Worker全量209文件/1,323项单元全部通过。schema审计保持201/201源表字段完整、外部/内嵌263表零漂移；Admin静态请求342个调用点/362个路径变体全部可执行；全局路由为PHP 1,904 / TS 1,623 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026；设置账本仍为76屏中reviewed 15 / candidate 11 / partial 3 / retired 1 / unreviewed 61；可观测性保持17个信号、53个必需事件和6个发布阻断。精确实现提交`14880b2436cf5664d858e03ee2aba938468df1c6`推送后，[Actions `33834851835`](https://github.com/cinagroup/cinashop/actions/runs/33834851835)的Repository全历史Secret扫描、Worker双TypeScript/1,323项单元/schema/route/observability、Linux workerd、Admin、PC、Supplier、Kefu和UniApp共8/8成功。E5D当前只能标“候选完成，未发布”：生产没有真实Supplier商品或SKU，尚无真实主管理员/Supplier管理员/只读和编辑受限角色token；源PHP历史多规格数据、非实物商品、正式发布、发布后失败重试和观察期仍未完成。分店商品表结论由后续E5E源码与生产证据纠偏为历史迁移表。剩余项继续阻塞FE-001E5父项及FE-001E6，不能因隔离schema演练通过而上调为生产完成。
+
+## FE-001-E5E 非实物商品权威与次卡支付有效期（2026-09-04）
+
+### 商品类型来源、版本残留与分店表结论
+
+本轮重新从活动页面、保存服务、支付Job和Supplier路由逐层确定商品类型权威，避免按安装SQL注释推断业务。旧Admin商品页`view/admin/src/pages/product/productAdd/index.vue`实际只给出四个可选类型：`0`普通商品/物流发货、`1`卡密或网盘/自动发货、`3`虚拟商品/人工虚拟发货、`4`次卡/到店核销；旧Supplier组件`view/supplier/src/pages/product/components/productDetails.vue`只开放`0/1/3`。`StoreProductServices`虽然仍有`case 2`优惠券商品和免运费处理，但两个活动商品表单均无类型2入口，`OrderPayHandelJob`也只有类型1自动交付和类型4次卡处理，没有类型2支付履约分支。因此类型2不能因残留switch和字段注释被当作待恢复的线上产品类型，本审计将其记录为未发布或已撤回的版本残留；若源MySQL以后出现真实类型2行，必须单独停放并由业务确认，不能自动套用类型1语义。
+
+此前清单把`store_branch_product`和`store_branch_product_attr_value`理解成仍待实现的“门店SKU”，这与源码不符。`StoreBranchProductServices`构造函数实际注入主`StoreProductDao`，`StoreBranchProductAttrValueServices`实际注入主`StoreProductAttrValueDao`并删除/替换主SKU；Supplier控制器虽保留一个使用Branch属性服务的`update`方法，活动`route/supplier.php`商品路由并没有映射该方法，实际保存仍是`POST product/product/:id`进入公共`saveData(..., type=2)`。生产只读又确认两张branch表均为0行。结论是两表属于历史表名和代码版本漂移，只保留201表无损迁移及历史依赖计数，不再建立与主商品SKU竞争的第二权威；门店、店员、自提、配送和核销仍由`system_store`、订单及核销链承担，这一结论不等于退休门店业务。
+
+### 现有迁移覆盖与仍然缺失的商品前半段
+
+TypeScript已经具备非实物履约的若干后半段：`VirtualProductInventoryService`提供卡密库存导入、遮蔽列表和单次导出，`VirtualProductDeliveryService`在支付outbox中原子认领卡密并自动交付；Admin订单页支持`fictitious`人工虚拟发货；`StoreOrderWriteoffService`和`SecondCardReminderService`处理次卡次数、有效期校验、核销与临期/到期提醒。但商品创建编辑仍明显不完整：Admin `ProductForm.vue`没有商品类型选择并复用只允许实物的`ProductSkuEditorService`，Supplier `ProductForm.vue`明确显示“当前仅开放实物商品”，服务端也拒绝非实物创建和编辑。换言之，现状不是“虚拟商品已迁移完成”，而是履约能力先于商品编排能力存在；没有类型1/3/4的可用创建编辑合同，就无法从运营端生成可被这些履约服务消费的安全商品。
+
+审计同时发现下单边界偏离类型语义。旧PHP `StoreCartServices`只取购物车中第一个唯一`product_type`作为订单类型，是会让混单含义依赖行顺序的历史缺陷；迁移前TypeScript仅禁止类型1与其他类型混单，类型3或4仍可能与实物混合后把订单类型降为0。类型3还被地址校验和运费计算遗漏，虽然旧PHP明确把1/2/3列为无需配送。现在所有不同`product_type`组合均在下单前失败关闭，类型1继续保留“不支持到店自提”的专用提示，类型3加入地址与运费豁免。类型4单独保留配送/自提语义，不被错误归入无地址虚拟商品。
+
+### 次卡付款有效期缺口、事务合同与重放语义
+
+旧`OrderPayHandelJob.php`在支付后读取订单商品不可变快照：模式1写`0/0`表示永久，模式2以当时支付处理时间写`write_start`并加`write_days*86400`，模式3复制固定区间。迁移前`StoreOrderCreateService`却直接把实时SKU的`write_start/write_end`写进订单行，支付outbox没有模式2激活步骤，导致“购买后N天”次卡在支付后仍可能保持`0/0`并被核销链解释为不限期。
+
+实现提交`55f29dd73657ce792915bd61543aa661212bb524`新增`SecondCardValidityService`。创建订单时，类型4把`write_valid/write_days/write_start/write_end`写入不可变`cart_info.sku`快照；模式2的持久化窗口刻意保持`0/0`等待付款，模式1保持永久，模式3先验证正向固定区间。支付outbox先完成Supplier分单，再只锁定实际履约订单的类型4商品行；激活时间使用订单事务已写入的`store_order.pay_time`，不是可能晚几秒、几分钟或多次重试的Queue消费时间。模式2首次将窗口写为`pay_time`到`pay_time + N天`，后续重放保留已激活窗口；模式1和3收敛到快照值。历史PHP快照`productInfo.attrInfo`和新Worker快照均可读取；旧行缺少足够快照时只保留现有持久化窗口，不回查已可能修改的实时SKU。半初始化窗口、无效天数、反向固定区间、PostgreSQL integer溢出和未支付订单全部失败关闭。
+
+并发上，调用发生在支付outbox原事务内，outbox行、Supplier分单订单和商品行按既有顺序锁定；次卡行按ID排序`FOR UPDATE`，写入还带`id/product_type/旧write_start/旧write_end`条件并要求`RETURNING`成功。这样并发修改不会被静默覆盖，Supplier拆单根只作为付款审计，实际子单行才被激活，整个后置任务失败时随事务回滚。当前没有修改DDL，也没有把配置密钥、卡密或用户内容写入日志。
+
+### 生产Hyperdrive证据、隔离演练与完成边界
+
+在用户授权下，令牌保护的临时Worker `cinashop-second-card-validity-audit-d8c3793a4222`通过Hyperdrive `9748c294e21c49a99579c9cef70102e0`执行只读公共审计。PostgreSQL现有71个未删除商品全部为平台owner的类型0实物商品，仅2条活跃普通SKU；`store_branch_product=0`、`store_branch_product_attr_value=0`、`store_product_virtual=0`、次卡订单行=0、已支付次卡行=0、已支付但未激活次卡行=0。因生产没有非实物业务样本，本轮没有伪造业务商品、订单、卡密、用户或角色，也不能把隔离fixture当作真实用户验收。
+
+同一临时Worker在随机`codex_second_card_validity_*` schema中只克隆`store_order_cart_info`，所有seed和真实Drizzle服务调用都显式事务级`SET LOCAL search_path`。场景包含购买后7天、固定区间、永久三条次卡以及一条实物：首次匹配3、仅模式2改变1，起点精确等于给定支付时间，固定/永久不变，实物不变；用不同处理时间重放改变0且全行快照一致；未支付订单被拒绝。`finally`删除随机schema后，公共表行数、全行摘要、公共序列值和临时schema计数与执行前一致；无令牌POST为403、错误方法为404。Worker随后删除成功并复验URL 404，主Worker没有部署。
+
+本地专项2文件/12项、Worker全量210文件/1,330项单元、单元与运行时双TypeScript全部通过；schema审计仍为201/201源表字段覆盖、外部/内嵌263表零漂移；全局路由保持PHP 1,904 / TS 1,623 / 精确匹配862 / 可执行844 / 受控不可用18 / 缺失1,042 / 退役16 / 可执行缺口1,026，可观测性仍为17个信号、53个必需事件和6个发布阻断。E5E0可标审计完成，E5E1只能标“候选完成，未发布”。E5E2卡密/网盘商品编排、E5E3手工虚拟商品、E5E4次卡商品创建/编辑/真实核销、E5E5历史数据复制/真实角色/发布观察仍未完成；这些项继续阻塞FE-001E5、FE-001E6及正式发布。
 
 ## 完成定义
 
