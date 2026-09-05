@@ -14,9 +14,9 @@
 | PHP HTTP 合同 | 精确匹配 879/1,904；可执行 861；其中 18 条明确不可用、17 条有证据退役 | 精确注册 46.2%，可执行 45.2%，退役后有效覆盖 45.6% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | 最新Linux CI Worker作业通过，新增独立实时通知场景已执行；最终数量待日志归档 | API-014G2b1单元门禁通过，运行时仍待修订复验 |
-| Workers runtime | `cb3c753`的Linux workerd 21项断言通过但3个未处理拒绝导致失败；Windows仍在收集前 `0xc0000005` | G2b1不能勾选；预期拒绝测试已按上游已知问题修订，待Linux复验 |
-| CI | [Actions `33951317435`](https://github.com/cinagroup/cinashop/actions/runs/33951317435) 对 `cb3c753` 为7/8，runtime失败；此前`6af6965`的G2a为8/8 | 不以旧提交全绿替代本批门禁，非生产验收 |
+| Worker 单元测试 | Linux CI 228文件、1,481项全部通过，含4项真实PostgreSQL16.14多连接并发场景，无跳过 | API-014G2b1服务端候选工程门禁通过 |
+| Workers runtime | `9c102a4`的Linux workerd 2文件/21项通过，无未处理拒绝；Windows仍在收集前 `0xc0000005` | 含新增6项通知传输场景；运行时授权依赖模拟，不代替生产E2E |
+| CI | [Actions `33951790692`](https://github.com/cinagroup/cinashop/actions/runs/33951790692) 对 `9c102a4` 为8/8；首次`cb3c753`的runtime失败及修订另有记录 | G2b1候选完成，G2b前端接收/浏览器/正式配置仍开放，非生产验收 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -267,7 +267,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
     - [ ] **API-014G2 持久化申请事件、客服收件箱及实时提醒**：持久事件/隔离收件箱与实时传输分开验收；不能以轮询或本地预览关闭整个G2。
       - [x] **API-014G2a 申请事件与隔离客服收件箱（候选工程完成，未发布）**：申请/余额自动审核事务内写`withdrawal.applied.notice:<id>`，复用outbox租约、Queue及定时补偿；失败整体回滚、按提现ID和客服UID去重。消费时选择有效且启用通知的平台客服、有效绑定用户，重复UID只发一条，离线仍持久化；超过1000收件人明确失败保留恢复，不静默截断。普通用户列表/详情/个人中心未读数共同排除type=2；客服独立列表/游标/详情/显式已读每次校验身份与权限。Admin新增独立站内信开关和三个模板变量；客服新增系统提醒入口及30秒可见列表刷新。[Actions `33949795952`](https://github.com/cinagroup/cinashop/actions/runs/33949795952)对`6af6965`完成8/8门禁；新增专项19/19含PostgreSQL16.14四请求/四消费者，确认一笔申请/扣款/事件和每UID一条提醒；全量227文件/1474项无跳过，客服前端10项通过。CUA客服桌面/手机验证查看不标读、显式已读1→0、未读空态；后台验证配置保存。未连接生产、未发送真实通知，G2b/G3和发布前置继续开放。
       - [ ] **API-014G2b Admin/客服实时传输与恢复**：后端传输和前端接收分开验收。现有ChatRoom只承接会话消息，不向全站聊天用户广播财务事件；G1/G2a的30秒刷新不算实时推送。
-        - [ ] **API-014G2b1 独立通知DO与持久化刷新子事件（候选实现完成，待本批CI）**：按admin ID或客服绑定UID分区，连接/发送/心跳重新检查令牌、密码版本和当前权限；管理员需extract.view、客服需有效通知资格。受控Origin、8连接上限、休眠附件、30秒空闲撤权检查与只读协议；仅发送revision刷新提示，不传财务金额/银行卡/申请人。申请收件箱事务内新增唯一`withdrawal.staff.refresh`子事件，事务外5并发RPC，失败按已有outbox恢复，DO重放保持revision。提交后waitUntil及父事件消费后即时唤起Queue，定时扫描补偿崩溃窗口。新增7项SQL/认证/重放测试本地通过；全量228文件/1477通过、4跳过，双TypeScript通过；6项workerd运行时测试等待Linux CI，本机仍启动即0xc0000005。
+        - [x] **API-014G2b1 独立通知DO与持久化刷新子事件（候选工程完成，未发布）**：按admin ID或客服绑定UID分区，连接/发送/心跳重新检查令牌、密码版本和当前权限；管理员需extract.view、客服需有效通知资格。受控Origin、8连接上限、休眠附件、30秒空闲撤权检查与只读协议；仅发送revision刷新提示，不传财务金额/银行卡/申请人。申请收件箱事务内新增唯一`withdrawal.staff.refresh`子事件，事务外5并发RPC，失败按已有outbox恢复，DO重放保持revision。提交后waitUntil及父事件消费后即时唤起Queue，定时扫描补偿崩溃窗口。[Actions `33951790692`](https://github.com/cinagroup/cinashop/actions/runs/33951790692)对`9c102a4`完成8/8：全量228文件/1481项无跳过、4项PG16多连接、双TypeScript、7项通知SQL/认证/重放和6项新增workerd场景通过。首轮3个预期RPC拒绝触发上游测试池缺陷，错误分支改为DO内部入口并补故障关闭/恢复重放断言后运行时21/21无未处理异常；没有放松生产错误处理或忽略异常。授权在runtime中模拟，真实JWT/SQL另由场景测试覆盖，非生产E2E。
         - [ ] **API-014G2b2 Admin/客服接收端与浏览器闭环**：接入独立socket；ready每次强制重新查询权威待办/收件箱，changed按revision去重，断线退避重连、401/撤权清旧数据、临时故障不误登出；提示状态与聊天连接分离，覆盖退出/换号/休眠/前后台/迟到响应和真实浏览器消息注入验收。当前前端未接入新通道，不能把后端用例当作实时UI完成。
         - [ ] **API-014G2b3 运行配置与真实角色验收**：DB-007增量还需外部0133/内嵌0137刷新事件CHECK；Workers需新增STAFF_NOTICE及v3 SQLite类迁移，原有DO不变；正式Admin/Kefu Origin须明确配置授权列表。未创建或部署真实DO、未执行生产DDL，生产Redis撤权/Hyperdrive新鲜度/真实角色和延迟验收仍开放。
     - [ ] **API-014G3 企业微信群机器人与真实接收者验收**：源`EnterpriseWechatJob`使用通知配置中的URL发送markdown，是群机器人而非已有企微通讯录/客户联系API。需限制目标、Secret管理、持久投递/UNKNOWN处置、模板转义与数据最小化，再在另行批准的真实目标完成送达/失败测试。当前无真实企业微信请求、无生产配置写入。
@@ -400,7 +400,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [ ] **FE-004K Supplier Pages 预发**：创建/确认正式项目，核对 `WORKERS_API`、正式 Origin、同源代理与 Secret/资源映射。
   - [ ] **FE-004L 发布后观察**：另行获得发布批准后才可部署，记录 deployment/Git SHA并做日志、错误率和业务对账。
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
-- [x] **TEST-001 Linux CI**：最新[GitHub Actions `33949795952`](https://github.com/cinagroup/cinashop/actions/runs/33949795952)在 Ubuntu 24.04 上以锁文件安装完成 8/8 jobs：Worker 双 TypeScript、227文件/1,474项单测全部通过（含4项真实PostgreSQL16.14多连接并发场景，无跳过）、真实 workerd、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及 checksum-pinned Gitleaks 212个提交全历史扫描无泄露。详见审计文档的 TEST-001 和 API-014 节；这只完成可重复工程门禁，不代替真实账号浏览器E2E、真实第三方、预发或发布。
+- [x] **TEST-001 Linux CI**：最新[GitHub Actions `33951790692`](https://github.com/cinagroup/cinashop/actions/runs/33951790692)对`9c102a4`在 Ubuntu 24.04 上以锁文件安装完成8/8 jobs：Worker双TypeScript、228文件/1,481项单测全部通过（含4项真实PostgreSQL16.14多连接并发场景，无跳过）、真实workerd 2文件/21项且无未处理拒绝、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及checksum-pinned Gitleaks 215个提交全历史扫描无泄露。首次G2b1提交的runtime失败与修订保留于审计文档；这只完成可重复工程门禁，不代替真实账号浏览器E2E、真实第三方、预发或发布。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
 - [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立并由 Actions `33393069797` 复验，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
   - [x] **TEST-003A 仓库可观测性合同**：提交 `beb2071b397eb316ee8cb5592656b3dceb7ed1a3` 新增 `audit/observability-policy.json`，定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；运行时及 AST 门禁拒绝正文、payload、token、查询、URL、凭据、异常消息、任何 ID/UID、schema 覆盖、对象展开、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过；Actions 同时通过 Worker 165文件/1,031项、workerd13/13、schema201→247零漂移、route1,904→1,448/746/728、五端构建与70提交Gitleaks无泄漏。

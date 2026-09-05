@@ -4792,6 +4792,8 @@ G2a候选实现已补，待本批远端CI闭环；G2b独立实时通知通道尚
 
 首次实现提交`cb3c753c24fb5bdbe4437b9369ee790d240e6c4f`的[Actions `33951317435`](https://github.com/cinagroup/cinashop/actions/runs/33951317435)为7/8成功，不能计作全绿：Worker全量和五端构建、密钥扫描通过，workerd的21项断言全部通过但另报3个未处理拒绝而退出1，恰好对应分区错误、非法事件键、数据库不可用三次预期RPC拒绝。现象与[Cloudflare上游问题14736](https://github.com/cloudflare/workers-sdk/issues/14736)相符，本地锁定0.21.2仍含同类RPC callable/thenable包装；未声称已独立证明其内部泄漏机制。改为在`runInDurableObject`中对真实实例断言这三个拒绝，保留真实workerd存储、WebSocket及所有正常RPC调用；额外验证非法输入不写signals、故障关闭1013且不发数据、持久revision在恢复后的真实RPC重试保持不变。没有忽略未处理异常、跳过用例或改变生产错误处理；这三项验证的是DO内部拒绝语义，不冒充跨RPC异常序列化验证。修订后须再次取得Linux CI通过证据。
 
+修订提交`9c102a4f6ee5e41c304f2d618dbb5839d0594c75`已推送，[Actions `33951790692`](https://github.com/cinagroup/cinashop/actions/runs/33951790692)最终8/8成功：Worker 228文件/1,481项全通过且无跳过，含4项真实PostgreSQL16.14多连接场景及新增7项通知场景；workerd为2文件/21项通过（新增6项通知传输），不再报告未处理拒绝。双TypeScript、五端类型/构建、Kefu测试、生产依赖审计、schema/route/observability通过；结构为201→263、源列缺口和外部/内嵌定义漂移均0，目标路由1,646，PHP精确879/可执行861/受控不可用18/退役17/剩余可执行缺口1,008。Gitleaks扫描215个提交未发现泄露。Windows本机未得到新的运行时通过证据，真实生产Redis/Hyperdrive/角色与发布同样未验证，不能以Linux隔离环境代替。依据该提交只勾选G2b1候选工程子项，G2b父项仍开放。
+
 本轮Workers/DO/PostgreSQL技能实际推动了独立分区、SQLite休眠状态、生成绑定类型、事务外网络与持久失败恢复；DO测试技能及上游记录帮助收窄预期拒绝的运行时测试入口。G2b2的前端接收、浏览器实时闭环，以及G2b3的部署和真实角色撤权/延迟验收仍未完成；不以仅有WebSocket端点或模拟授权的runtime测试宣称迁移完成。
 
 ## 完成定义
