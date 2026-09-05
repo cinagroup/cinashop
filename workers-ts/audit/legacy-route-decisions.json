@@ -213,6 +213,20 @@
         "cinashop-php/app/controller/api/v1/order/StoreOrder.php:1340"
       ],
       "replacement": "GET /api/order/data for unpaid_count, or GET /api/order/list?status=0 for unpaid orders"
+    },
+    {
+      "surface": "api",
+      "method": "GET",
+      "path": "/api/get_script",
+      "status": "retired",
+      "reason": "The PHP endpoint returns the operator-editable system_statistics value verbatim as executable JavaScript, and the legacy UniApp H5 injects it through a script element. Recreating this contract would restore a persistent arbitrary-script and third-party supply-chain execution surface; no current TypeScript client consumes it.",
+      "evidence": [
+        "cinashop-php/route/api.php:26",
+        "cinashop-php/app/controller/api/v1/PublicController.php:640",
+        "cinashop-php/view/uniapp/App.vue:290",
+        "cinashop-php/app/services/system/config/SystemConfigServices.php:1843"
+      ],
+      "replacement": "No dynamic script endpoint. Any future analytics provider must be implemented as an explicit reviewed integration with fixed provider identity, consent and Content-Security-Policy controls."
     }
   ]
 }
