@@ -14,9 +14,9 @@
 | PHP HTTP 合同 | 精确匹配 879/1,904；可执行 861；其中 18 条明确不可用、17 条有证据退役 | 精确注册 46.2%，可执行 45.2%，退役后有效覆盖 45.6% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | Linux CI 224文件、1,440项全部通过，含3项真实PostgreSQL16.14多连接并发场景，无跳过 | API-014资金事务及流水/通知远端门禁通过 |
+| Worker 单元测试 | Linux CI 226文件、1,455项全部通过，含3项真实PostgreSQL16.14多连接并发场景，无跳过 | API-014含权限内待办G1的远端门禁通过 |
 | Workers runtime | 最新提交 Linux workerd 作业通过；Windows 本机仍在测试收集前 `0xc0000005` | Linux CI 为运行时门禁，Windows 不冒充通过 |
-| CI | [Actions `33945761103`](https://github.com/cinagroup/cinashop/actions/runs/33945761103) 对 `a0e5e4c` 的 Worker/五端/runtime/secret scan 8/8 | API-014含F1候选代码通过全部远端工程门禁，非生产验收 |
+| CI | [Actions `33947577628`](https://github.com/cinagroup/cinashop/actions/runs/33947577628) 对 `0765f7a` 的 Worker/五端/runtime/secret scan 8/8 | API-014含F1/G1候选代码通过全部远端工程门禁，非生产验收 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -263,8 +263,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
     - [x] **API-014F1 原子流水、通知outbox与后台恢复门禁**：`WithdrawalEffectsService`在提现事务内写唯一成功流水和不可变事件；复用现有Queue/定时扫描/投递UNKNOWN人工确认机制，独立`withdrawal_id`不冒充订单ID。按PHP映射站内信、短信、成功公众号、成功/拒绝小程序通知，拒绝公众号维持源端未启用行为。[Actions `33945761103`](https://github.com/cinagroup/cinashop/actions/runs/33945761103)对`a0e5e4c`完成8/8工程门禁，新增14项SQL场景全部通过，含真实PostgreSQL16.14四连接并发审核仅记一笔流水/事件；全量224文件/1,440项无跳过。后台本地浏览器已验证桌面/手机、提现筛选、UNKNOWN→SENT模拟处置及历史记录，并修复网格内容溢出。仅关闭候选工程子项，F2真实送达和DB-007仍开放。
     - [ ] **API-014F2 模板与真实送达验收**：完成DB-007后确认生产配置开关、模板字段、短信签名、匹配appid/openid、小程序收款明细落地页与最小权限管理员；受控验证通知送达、提供商拒绝/超时及人工处置，不触发重复扣款。当前没有调用真实短信/微信、没有发布。
   - [ ] **API-014G 提现申请的管理端提醒**：PHP`user.extract→listener/user/Extract`还触发`kefu_send_extract_application`、`adminNewPush`与`WITHDRAW`；F只覆盖成功/拒绝，G的计数候选完成不代表申请提醒全部迁移。持久化事件、客服/企业微信与实时通知继续开放，不得把提醒重放当成再次提现。
-    - [ ] **API-014G1 权限内待办计数与Admin入口（候选已补，待本批CI）**：原`AdminAuthService.adminNewPush`的三个固定零计数及错误总数已替换为独立`AdminNewPushService`：同一只读快照统计待发货、库存预警、待回复评价、待审核提现，按四个业务域的查看权限逐项过滤并求和；只有控制台权限不能读财务数量，财务专属角色也无需控制台权限即可读取自己的待办。顶栏显示总数及分类入口，30秒可见页检查、聚焦/手动刷新、审核成功后重取；退出/卸载不接纳旧响应，刷新失败不保留旧业务数。提现入口默认待审核，修正数据库拒绝状态-1与UI旧值2的错配。11项SQL/认证/真实服务事务及4项前端生命周期测试通过；本地全量226文件/1,452项通过，另3项多连接场景待CI。CUA桌面1280×900、手机390×844的展开、跳转、模拟通过/拒绝及1→0/12→11计数联动已验证。不是实时事件推送或生产E2E。
-    - [ ] **API-014G2 持久化申请事件、客服收件箱及实时提醒**：申请事务内写唯一事件，按提现ID及收件主体去重；管理端仅向有提现查看权限的有效管理员推送，客服沿源`account_status=1/status=1/notify=1`筛选并投影到本人type=2站内信，核对重复UID/禁用/撤权、离线恢复与重放。现有ChatRoom只承接会话消息，不把全站财务事件广播给聊天用户。仍需接收端入口、管理端/客服实时分发和故障测试。
+    - [x] **API-014G1 权限内待办计数与Admin入口（候选工程完成，未发布）**：原`AdminAuthService.adminNewPush`的三个固定零计数及错误总数已替换为独立`AdminNewPushService`：同一只读快照统计待发货、库存预警、待回复评价、待审核提现，按四个业务域的查看权限逐项过滤并求和；只有控制台权限不能读财务数量，财务专属角色也无需控制台权限即可读取自己的待办。顶栏显示总数及分类入口，30秒可见页检查、聚焦/手动刷新、审核成功后重取；退出/卸载不接纳旧响应，刷新失败不保留旧业务数。提现入口默认待审核，修正数据库拒绝状态-1与UI旧值2的错配。[Actions `33947577628`](https://github.com/cinagroup/cinashop/actions/runs/33947577628)对`0765f7a`完成8/8门禁，11项SQL/认证/真实服务事务及4项前端生命周期通过；全量226文件/1,455项无跳过，含3项真实PostgreSQL16.14多连接场景。CUA桌面1280×900、手机390×844的展开、跳转、模拟通过/拒绝及1→0/12→11计数联动已验证。不是实时事件推送或生产E2E，G2/G3与发布门禁继续开放。
+    - [ ] **API-014G2 持久化申请事件、客服收件箱及实时提醒**：申请事务内写唯一事件，按提现ID及收件主体去重；管理端仅向有提现查看权限的有效管理员推送，客服沿源`account_status=1/status=1/notify=1`筛选并投影到本人type=2站内信，核对重复UID/禁用/撤权、离线恢复与重放。现有`visibleSystemMessageWhere`只按用户ID/状态过滤，未排除type=2；新增客服提醒前必须先隔离普通用户消息入口，再补独立客服收件箱。现有ChatRoom只承接会话消息，不把全站财务事件广播给聊天用户。仍需接收端入口、管理端/客服实时分发和故障测试。
     - [ ] **API-014G3 企业微信群机器人与真实接收者验收**：源`EnterpriseWechatJob`使用通知配置中的URL发送markdown，是群机器人而非已有企微通讯录/客户联系API。需限制目标、Secret管理、持久投递/UNKNOWN处置、模板转义与数据最小化，再在另行批准的真实目标完成送达/失败测试。当前无真实企业微信请求、无生产配置写入。
 
 ## P1：Admin `/adminapi` 路由批次
@@ -395,7 +395,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [ ] **FE-004K Supplier Pages 预发**：创建/确认正式项目，核对 `WORKERS_API`、正式 Origin、同源代理与 Secret/资源映射。
   - [ ] **FE-004L 发布后观察**：另行获得发布批准后才可部署，记录 deployment/Git SHA并做日志、错误率和业务对账。
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
-- [x] **TEST-001 Linux CI**：最新[GitHub Actions `33945761103`](https://github.com/cinagroup/cinashop/actions/runs/33945761103)在 Ubuntu 24.04 上以锁文件安装完成 8/8 jobs：Worker 双 TypeScript、224文件/1,440项单测全部通过（含3项真实PostgreSQL16.14多连接并发场景，无跳过）、真实 workerd、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及 checksum-pinned Gitleaks 208个提交全历史扫描无泄露。详见审计文档的 TEST-001 和 API-014 节；这只完成可重复工程门禁，不代替真实账号浏览器E2E、真实第三方、预发或发布。
+- [x] **TEST-001 Linux CI**：最新[GitHub Actions `33947577628`](https://github.com/cinagroup/cinashop/actions/runs/33947577628)在 Ubuntu 24.04 上以锁文件安装完成 8/8 jobs：Worker 双 TypeScript、226文件/1,455项单测全部通过（含3项真实PostgreSQL16.14多连接并发场景，无跳过）、真实 workerd、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及 checksum-pinned Gitleaks 210个提交全历史扫描无泄露。详见审计文档的 TEST-001 和 API-014 节；这只完成可重复工程门禁，不代替真实账号浏览器E2E、真实第三方、预发或发布。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
 - [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立并由 Actions `33393069797` 复验，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
   - [x] **TEST-003A 仓库可观测性合同**：提交 `beb2071b397eb316ee8cb5592656b3dceb7ed1a3` 新增 `audit/observability-policy.json`，定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；运行时及 AST 门禁拒绝正文、payload、token、查询、URL、凭据、异常消息、任何 ID/UID、schema 覆盖、对象展开、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过；Actions 同时通过 Worker 165文件/1,031项、workerd13/13、schema201→247零漂移、route1,904→1,448/746/728、五端构建与70提交Gitleaks无泄漏。
