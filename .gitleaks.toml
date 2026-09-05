@@ -67,3 +67,14 @@ condition = "AND"
 regexTarget = "secret"
 paths = ['''^workers-ts/test/user-withdrawal-scenario\.test\.ts$''']
 regexes = ['''^withdrawal-intent-0001$''']
+
+[[allowlists]]
+description = "Public drizzle-kit 0.31.10 API bundle SHA-256 checksums, verified before patching"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/scripts/patch-drizzle-pg-order\.cjs$''']
+regexes = [
+  '''^\s*"api\.js": "5c39a62e2e5fc1554b8e423b1ffe453ccc975e0ccca0090f0cf3210aeb6c49fc",$''',
+  '''^\s*"api\.mjs": "680719eabea08e3e7155c822adcaf9343b3d9b30a9baea935be8de8069bcee4e",$''',
+]

@@ -15,6 +15,45 @@ const patch = require("../scripts/patch-drizzle-pg-order.cjs") as {
 };
 
 describe("DB-008 pinned PostgreSQL generator ordering", () => {
+  it("limits the approved secret-scan exception to two complete public checksum lines", () => {
+    const blocks = readFileSync(join(root, "../.gitleaks.toml"), "utf8").split("[[allowlists]]")
+      .filter((entry) => entry.includes("Public drizzle-kit 0.31.10 API bundle SHA-256 checksums"));
+    expect(blocks).toHaveLength(1);
+    const block = blocks[0].replace(/\r\n/g, "\n").trim();
+    // Exact configuration guard, not a replacement for the real Gitleaks CI scan.
+    expect(block).toBe([
+      'description = "Public drizzle-kit 0.31.10 API bundle SHA-256 checksums, verified before patching"',
+      'targetRules = ["generic-api-key"]',
+      'condition = "AND"',
+      'regexTarget = "line"',
+      "paths = ['''^workers-ts/scripts/patch-drizzle-pg-order\\.cjs$''']",
+      "regexes = [",
+      `  '''^\\s*"api\\.js": "${patch.hashes["api.js"]}",$''',`,
+      `  '''^\\s*"api\\.mjs": "${patch.hashes["api.mjs"]}",$''',`,
+      "]",
+    ].join("\n"));
+    const [path, ...lines] = Array.from(block.matchAll(/'''([^']+)'''/g), ([, pattern]) => new RegExp(pattern));
+    const rule = JSON.parse(block.match(/^targetRules = (.+)$/m)![1]) as string[];
+    const matches = (filename: string, line: string, ruleId = "generic-api-key") =>
+      rule.includes(ruleId) && path.test(filename) && lines.some((regex) => regex.test(line));
+    const filename = "workers-ts/scripts/patch-drizzle-pg-order.cjs";
+    const sourceLines = readFileSync(join(root, "scripts/patch-drizzle-pg-order.cjs"), "utf8").split(/\r?\n/);
+    for (const name of ["api.js", "api.mjs"]) {
+      const line = sourceLines.find((entry) => entry.includes(`"${name}":`))!;
+      expect(line).toBeDefined();
+      expect(matches(filename, line)).toBe(true);
+      expect(matches(filename, line.replace(patch.hashes[name], "0".repeat(64)))).toBe(false);
+      expect(matches(filename, line.replace(name, "another-api.js"))).toBe(false);
+      expect(matches(filename, line + " unrelated content")).toBe(false);
+      expect(matches(filename, "prefix " + line)).toBe(false);
+      expect(matches(filename, line, "private-key")).toBe(false);
+      for (const otherPath of ["other/" + filename, filename + ".bak", "workers-ts/src/api.js"]) {
+        expect(matches(otherPath, line)).toBe(false);
+      }
+    }
+    expect(sourceLines.filter((line) => matches(filename, line))).toHaveLength(2);
+  });
+
   it("patches the original CLI/CJS/ESM once and rejects source/version drift before any write", () => {
     const directory = mkdtempSync(join(tmpdir(), "cinashop-drizzle-patch-"));
     try {
