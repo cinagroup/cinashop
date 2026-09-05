@@ -7,6 +7,7 @@ const router = createRouter({
     { path: "/", redirect: "/workbench" },
     { path: "/login", component: () => import("@/pages/LoginPage.vue") },
     { path: "/workbench", component: () => import("@/pages/WorkbenchPage.vue") },
+    { path: "/messages", component: () => import("@/pages/InboxPage.vue") },
     { path: "/:pathMatch(.*)*", redirect: "/workbench" },
   ],
 });

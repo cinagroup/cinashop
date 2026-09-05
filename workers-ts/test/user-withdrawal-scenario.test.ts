@@ -10,8 +10,9 @@ import { extractCash } from "@/controllers/api/v1/UserFinanceController";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { USER_WITHDRAWAL_REPLAY_SQL } from "@/migrations/userWithdrawalReplay";
 import { financePostgres } from "./helpers/financePostgres";
-import { capitalFlow, storeOrderOutbox, orderNotificationDelivery } from "@/models/schema";
+import { capitalFlow, storeOrderOutbox, orderNotificationDelivery, systemMessage } from "@/models/schema";
 import { WITHDRAWAL_EFFECTS_SQL } from "@/migrations/withdrawalEffects";
+import { WITHDRAWAL_APPLICATION_NOTICE_SQL } from "@/migrations/withdrawalApplicationNotice";
 
 let fixture: Awaited<ReturnType<typeof financePostgres>>;
 let container: Container;
@@ -19,10 +20,11 @@ let service: UserWithdrawalService;
 const bank = (overrides = {}) => ({ extractType: "bank", extractPrice: "20.00", realName: "收款人", extractNumber: "6222021234567890123", bankName: "测试银行", requestKey: "withdrawal-intent-0001", ...overrides });
 
 beforeAll(async () => {
-  fixture = await financePostgres([user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow, storeOrderOutbox, orderNotificationDelivery]);
+  fixture = await financePostgres([user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow, storeOrderOutbox, orderNotificationDelivery, systemMessage]);
   // Verify the actual deployment migration is idempotent and enables the unique intent fence.
   await fixture.exec(USER_WITHDRAWAL_REPLAY_SQL);
   await fixture.exec(WITHDRAWAL_EFFECTS_SQL);
+  await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL);
   await fixture.exec('CREATE UNIQUE INDEX "soob_event_key_uq" ON "store_order_outbox" ("event_key")');
   await fixture.exec(USER_WITHDRAWAL_REPLAY_SQL);
   container = createContainerFromDb(fixture.db);

@@ -9,7 +9,7 @@
  *   - GET  /api/user/message_system/detail/:id  消息详情
  */
 import type { Context } from "hono";
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { AuthException, ValidateException } from "@/utils/errors";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
@@ -20,6 +20,8 @@ import {
 import { chatPrincipalName } from "@/services/kefu/KefuSocketGateway";
 import type { AppVariables, Env } from "@/env";
 import { systemMessage } from "@/models/schema";
+import { visibleSystemMessageWhere } from "@/services/message/UserMessageVisibility";
+export { visibleSystemMessageWhere } from "@/services/message/UserMessageVisibility";
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
@@ -50,14 +52,6 @@ function userSocketSession(c: C, toUid: number): ChatSocketSession {
     authVersion,
     connectedAt: Math.floor(Date.now() / 1000),
   };
-}
-
-export function visibleSystemMessageWhere(uid: number) {
-  return and(
-    eq(systemMessage.status, 1),
-    eq(systemMessage.isDel, 0),
-    or(eq(systemMessage.userId, 0), eq(systemMessage.userId, uid)),
-  );
 }
 
 // ═══ 充值 ═══════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import {
   user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow,
   storeOrderOutbox, systemMessage, systemNotification, notificationTemplate, wechatUser,
@@ -16,6 +16,7 @@ import { processWithdrawalNoticeEvent } from "@/services/user/WithdrawalEffectsS
 import * as sms from "@/services/message/SmsVerificationService";
 import { USER_WITHDRAWAL_REPLAY_SQL } from "@/migrations/userWithdrawalReplay";
 import { WITHDRAWAL_EFFECTS_SQL } from "@/migrations/withdrawalEffects";
+import { WITHDRAWAL_APPLICATION_NOTICE_SQL } from "@/migrations/withdrawalApplicationNotice";
 import { financePostgres } from "./helpers/financePostgres";
 
 let fixture: Awaited<ReturnType<typeof financePostgres>>, container: Container;
@@ -34,6 +35,7 @@ beforeAll(async () => {
   await fixture.exec(USER_WITHDRAWAL_REPLAY_SQL);
   await fixture.exec(WITHDRAWAL_EFFECTS_SQL);
   await fixture.exec(WITHDRAWAL_EFFECTS_SQL);
+  await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL);
   await fixture.exec(`CREATE UNIQUE INDEX soob_event_key_uq ON store_order_outbox(event_key);
     CREATE UNIQUE INDEX sm_event_key_uq ON system_message(event_key);
     CREATE UNIQUE INDEX ond_event_channel_uq ON order_notification_delivery(event_key,channel);
@@ -75,7 +77,7 @@ async function approved() {
 }
 async function processRoot() {
   await outbox.dispatchPending();
-  const message = queue.find(isOrderNotificationOutboxMessage)!;
+  const message = queue.find((m): m is OrderNotificationOutboxMessage => isOrderNotificationOutboxMessage(m) && !m.eventKey.startsWith("withdrawal.applied."))!;
   expect(message).toBeDefined();
   await outbox.processMessage(message);
   return message;
@@ -84,7 +86,8 @@ async function moneyState() {
   return {
     account: await fixture.db.select().from(user), requests: await fixture.db.select().from(userExtract),
     ledger: await fixture.db.select().from(userBrokerage), flows: await fixture.db.select().from(capitalFlow),
-    events: await fixture.db.select().from(storeOrderOutbox),
+    // This suite audits review effects; the application fan-out has its own whole-event assertions.
+    events: await fixture.db.select().from(storeOrderOutbox).where(inArray(storeOrderOutbox.eventType, ["withdrawal.approved.notice", "withdrawal.refused.notice"])),
   };
 }
 
@@ -177,7 +180,7 @@ describe("API-014F withdrawal effects on actual SQL", () => {
     await fixture.db.insert(notificationTemplate).values({ mark: "51729", legacyType: 1, status: 1, tempid: "conflicting-legacy" });
     await approved();
     await outbox.dispatchPending();
-    const message = queue.find(isOrderNotificationOutboxMessage)!;
+    const message = queue.find((m): m is OrderNotificationOutboxMessage => isOrderNotificationOutboxMessage(m) && m.eventKey.startsWith("withdrawal.approved."))!;
     await expect(outbox.processMessage(message)).rejects.toThrow("重复");
     expect((await moneyState()).events[0].status).toBe("FAILED");
     expect(await fixture.db.select().from(systemMessage)).toHaveLength(0);
@@ -192,7 +195,7 @@ describe("API-014F withdrawal effects on actual SQL", () => {
 
   it("never sends forged owner/aggregate snapshots", async () => {
     await configure(); await approved();
-    const [event] = await fixture.db.select().from(storeOrderOutbox);
+    const [event] = (await moneyState()).events;
     await expect(withTx(container, (tx) => processWithdrawalNoticeEvent(tx, { ...event, aggregateType: "order" }, 1))).rejects.toThrow("聚合");
     await expect(withTx(container, (tx) => processWithdrawalNoticeEvent(tx, { ...event, payload: { ...event.payload, userId: 8 } }, 1))).rejects.toThrow("终态");
     expect(await fixture.db.select().from(systemMessage)).toHaveLength(0);
@@ -236,7 +239,7 @@ describe("API-014F withdrawal effects on actual SQL", () => {
     await configure(); await approved();
     sendBatch.mockRejectedValueOnce(new Error("injected queue failure"));
     await expect(outbox.dispatchPending()).rejects.toThrow();
-    const [event] = await fixture.db.select().from(storeOrderOutbox);
+    const [event] = (await moneyState()).events;
     await outbox.replay(event.id); await processRoot();
     await deliveries.dispatchPending();
     const message = queue.find(isOrderNotificationDeliveryMessage)!;

@@ -60,12 +60,21 @@ export interface WithdrawalNoticeOutboxPayload {
   occurredAt: number;
 }
 
+export interface WithdrawalApplicationOutboxPayload {
+  withdrawalId: number;
+  userId: number;
+  nickname: string;
+  grossAmount: string;
+  occurredAt: number;
+}
+
 export type OrderOutboxPayload =
   | OrderPaidOutboxPayload
   | OrderDeliveryNoticeOutboxPayload
   | OrderRefundRefusedNoticeOutboxPayload
   | OrderSecondCardNoticeOutboxPayload
-  | WithdrawalNoticeOutboxPayload;
+  | WithdrawalNoticeOutboxPayload
+  | WithdrawalApplicationOutboxPayload;
 
 export const storeOrderOutbox = pgTable(
   "store_order_outbox",
@@ -98,6 +107,7 @@ export const storeOrderOutbox = pgTable(
       'order.second_card.advent.notice',
       'order.second_card.expired.notice',
       'withdrawal.approved.notice',
+      'withdrawal.applied.notice',
       'withdrawal.refused.notice'
     )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),

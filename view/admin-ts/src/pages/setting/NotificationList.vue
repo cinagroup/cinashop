@@ -29,14 +29,15 @@
             <el-alert v-if="item.ambiguous" title="数据库中存在重复配置，保存前需先清理" type="error" :closable="false" />
             <div class="channel-tags">
               <el-tag :type="item.isSystem ? 'success' : 'info'">站内信</el-tag>
-              <el-tag :type="item.isSms ? 'success' : 'info'">短信</el-tag>
+              <el-tag v-if="item.mark !== 'kefu_send_extract_application'" :type="item.isSms ? 'success' : 'info'">短信</el-tag>
               <el-tag v-if="item.officialAllowed" :type="item.isWechat ? 'success' : 'info'">公众号</el-tag>
               <el-tag v-if="item.routineAllowed" :type="item.isRoutine ? 'success' : 'info'">小程序</el-tag>
             </div>
             <dl class="config-meta">
               <div><dt>目录状态</dt><dd>{{ item.exists ? "已创建" : "缺失" }}</dd></div>
               <div><dt>启用模板</dt><dd>{{ item.enabledTemplateCount }} / {{ item.templateCount }}</dd></div>
-              <div><dt>短信模板</dt><dd>{{ item.smsId || "未配置" }}</dd></div>
+              <div v-if="item.mark !== 'kefu_send_extract_application'"><dt>短信模板</dt><dd>{{ item.smsId || "未配置" }}</dd></div>
+              <div v-else><dt>接收范围</dt><dd>已启用通知的平台客服本人</dd></div>
             </dl>
           </el-card>
         </div>
@@ -93,8 +94,10 @@
     <el-dialog v-model="configDialog" title="编辑通知渠道" width="min(620px, 94vw)">
       <el-form label-position="top">
         <el-form-item label="通知标识"><el-input v-model="configForm.mark" disabled /></el-form-item><el-form-item label="名称"><el-input v-model="configForm.name" maxlength="255" /></el-form-item><el-form-item label="标题"><el-input v-model="configForm.title" maxlength="255" /></el-form-item>
-        <el-form-item label="启用渠道"><el-checkbox v-model="configForm.isSystem">站内信</el-checkbox><el-checkbox v-model="configForm.isSms">短信</el-checkbox><el-checkbox v-if="selectedConfig?.officialAllowed" v-model="configForm.isWechat">公众号</el-checkbox><el-checkbox v-if="selectedConfig?.routineAllowed" v-model="configForm.isRoutine">小程序</el-checkbox></el-form-item>
-        <el-form-item label="站内信标题"><el-input v-model="configForm.systemTitle" maxlength="255" /></el-form-item><el-form-item label="站内信内容"><el-input v-model="configForm.systemText" type="textarea" :rows="3" maxlength="4000" show-word-limit /></el-form-item><el-form-item label="短信模板代码"><el-input v-model="configForm.smsId" maxlength="255" placeholder="例如 SMS_ORDER_SENT" /></el-form-item><el-form-item label="短信补充文本"><el-input v-model="configForm.smsText" type="textarea" :rows="2" maxlength="4000" /></el-form-item><el-form-item label="跳转地址"><el-input v-model="configForm.url" maxlength="1000" /></el-form-item>
+        <el-alert v-if="configForm.mark === 'kefu_send_extract_application'" title="仅生成客服专属站内信。支持 {admin_name}、{nickname}、{money}（申请毛额）；不发送短信、微信或企业群机器人消息。" type="info" :closable="false" />
+        <el-form-item label="启用渠道"><el-checkbox v-model="configForm.isSystem">站内信</el-checkbox><el-checkbox v-if="configForm.mark !== 'kefu_send_extract_application'" v-model="configForm.isSms">短信</el-checkbox><el-checkbox v-if="selectedConfig?.officialAllowed" v-model="configForm.isWechat">公众号</el-checkbox><el-checkbox v-if="selectedConfig?.routineAllowed" v-model="configForm.isRoutine">小程序</el-checkbox></el-form-item>
+        <el-form-item label="站内信标题"><el-input v-model="configForm.systemTitle" maxlength="256" /></el-form-item><el-form-item label="站内信内容"><el-input v-model="configForm.systemText" type="textarea" :rows="3" maxlength="512" show-word-limit /></el-form-item>
+        <template v-if="configForm.mark !== 'kefu_send_extract_application'"><el-form-item label="短信模板代码"><el-input v-model="configForm.smsId" maxlength="50" placeholder="例如 SMS_ORDER_SENT" /></el-form-item><el-form-item label="短信补充文本"><el-input v-model="configForm.smsText" type="textarea" :rows="2" maxlength="255" /></el-form-item><el-form-item label="跳转地址"><el-input v-model="configForm.url" maxlength="512" /></el-form-item></template>
       </el-form>
       <template #footer><el-button @click="configDialog=false">取消</el-button><el-button type="primary" :loading="saving" @click="saveConfig">保存</el-button></template>
     </el-dialog>

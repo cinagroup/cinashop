@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { AppVariables, Env } from "@/env";
 import * as KefuController from "@/controllers/kefu/KefuController";
+import * as KefuInboxController from "@/controllers/kefu/KefuInboxController";
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import { kefuAuthMiddleware } from "@/middleware/kefu-auth";
 import { authMiddleware } from "@/middleware/auth";
@@ -34,6 +35,10 @@ kefuapiRoutes.post("/tourist/upload", visitorAuthMiddleware, AttachmentControlle
 kefuapiRoutes.get("/assets/:id", AttachmentController.asset);
 
 kefuapiRoutes.use("*", kefuAuthMiddleware);
+
+kefuapiRoutes.get("/messages", KefuInboxController.list);
+kefuapiRoutes.get("/messages/:id", KefuInboxController.detail);
+kefuapiRoutes.post("/messages/:id/read", KefuInboxController.markRead);
 
 kefuapiRoutes.get("/ws", KefuController.websocket);
 kefuapiRoutes.post("/upload", AttachmentController.kefuUploadImage);

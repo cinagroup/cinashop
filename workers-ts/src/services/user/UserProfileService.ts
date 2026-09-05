@@ -16,6 +16,7 @@ import { LegacyOrderCompatibilityService } from "@/services/order/LegacyOrderCom
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
+import { userUnreadMessageCount } from "@/services/message/UserMessageVisibility";
 import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
 import { parseConfigInteger } from "@/utils/config";
 import { cacheGet, cacheSetIfAbsent } from "@/utils/cache";
@@ -210,12 +211,7 @@ export class UserProfileService {
             ORDER BY id ASC LIMIT 1) AS service_id,
           (SELECT count(DISTINCT product_id)::int FROM store_product_log
             WHERE uid = ${uid} AND type = 'visit' AND delete_time IS NULL) AS visit_num,
-          (SELECT count(DISTINCT message.id)::int
-            FROM system_message AS message
-            LEFT JOIN user_message AS state
-              ON state.message_id = message.id AND state.uid = ${uid} AND state.is_read = 1
-            WHERE message.status = 1 AND message.is_del = 0
-              AND message.user_id IN (0, ${uid}) AND message.look = 0 AND state.id IS NULL) AS service_num,
+          ${userUnreadMessageCount(uid)} AS service_num,
           (SELECT count(*)::int FROM agent_level WHERE status = 1 AND is_del = 0) AS agent_level_count,
           (SELECT is_complete FROM wechat_user
             WHERE uid = ${uid} AND user_type = ${String(account.user_type ?? "")}

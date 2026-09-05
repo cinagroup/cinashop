@@ -9,7 +9,8 @@ export type NotificationMark =
   | "order_fictitious_success"
   | "send_order_refund_no_status"
   | "user_extract"
-  | "user_balance_change";
+  | "user_balance_change"
+  | "kefu_send_extract_application";
 export type ProviderTemplateType = "wechat" | "routine";
 export type NotificationDeliveryChannel =
   | "sms"
@@ -266,6 +267,12 @@ for (const mark of ["user_extract", "user_balance_change"] as const) {
     templateCount: 0, enabledTemplateCount: 0,
   });
 }
+previewConfigs.push({
+  mark: "kefu_send_extract_application", label: "提现申请通知客服", name: "提现申请通知客服", title: "提现申请通知客服",
+  exists: false, ambiguous: false, rowCount: 0, id: 0, isSystem: false, isSms: false, isWechat: false, isRoutine: false,
+  systemTitle: "{admin_name}：提现申请", systemText: "{nickname}申请提现{money}元", smsId: "", smsText: "", url: "",
+  officialAllowed: false, routineAllowed: false, templateCount: 0, enabledTemplateCount: 0,
+});
 const previewDeliveries: NotificationDeliveryItem[] = [
   { id: 9204, outboxId: 8104, eventKey: "order.delivery.notice:28104", orderId: 28104, userId: 104, noticeMark: "order_postage_success", channel: "sms", maskedTarget: "138****8000", templateCode: "SMS_ORDER_SENT", status: "UNKNOWN", dispatchCount: 1, attemptCount: 1, replayCount: 0, availableTime: 0, leaseUntil: 0, providerReference: "", providerRequestId: "", responseCode: "", lastError: "provider_result_unknown_after_network_disconnect", sentTime: 0, addTime: now - 7200, updateTime: now - 7100 },
   { id: 9203, outboxId: 8103, eventKey: "order.delivery.notice:28103", orderId: 28103, userId: 103, noticeMark: "order_postage_success", channel: "wechat_routine", maskedTarget: "oABC…P9xy", templateCode: "routine-template-audit", status: "SENT", dispatchCount: 1, attemptCount: 1, replayCount: 0, availableTime: 0, leaseUntil: 0, providerReference: "audit-msg", providerRequestId: "", responseCode: "0", lastError: "", sentTime: now - 3600, addTime: now - 3650, updateTime: now - 3600 },

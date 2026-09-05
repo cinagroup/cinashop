@@ -14,6 +14,7 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /** 站内信内容 */
 export const systemMessage = pgTable(
@@ -31,6 +32,7 @@ export const systemMessage = pgTable(
     userId: integer("user_id").default(0).notNull(),
     /** PHP 每用户消息的已读快照；新广播消息仍使用 user_message。 */
     look: smallint("look").default(0).notNull(),
+    /** 0=legacy user/broadcast, 1=user notice, 2=staff-only inbox. Never mix read domains. */
     type: smallint("type").default(0).notNull(),
     status: smallint("status").default(1).notNull(),
     addTime: integer("add_time").default(0).notNull(),
@@ -41,6 +43,8 @@ export const systemMessage = pgTable(
     index("sm_user").on(t.userId),
     index("sm_add_time").on(t.addTime),
     index("smsg_visible_user").on(t.userId, t.status, t.isDel, t.addTime),
+    index("smsg_staff_inbox").on(t.userId, t.id)
+      .where(sql`${t.type} = 2 AND ${t.status} = 1 AND ${t.isDel} = 0`),
   ],
 );
 

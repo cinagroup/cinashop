@@ -1161,6 +1161,7 @@ onBeforeUnmount(() => {
         <button class="rail-button active" title="会话"><UiIcon name="chat" /></button>
         <button class="rail-button" title="客户资料（随会话显示）"><UiIcon name="users" /></button>
         <button class="rail-button" title="快捷话术（随会话显示）"><UiIcon name="book" /></button>
+        <button class="rail-button" title="系统提醒" aria-label="系统提醒" @click="router.push(preview ? '/messages?preview=1' : '/messages')"><UiIcon name="book" /></button>
         <button class="rail-button" title="设置暂未迁移" disabled><UiIcon name="settings" /></button>
       </nav>
       <button class="rail-logout" title="退出登录" @click="logout"><UiIcon name="logout" /><span>退出</span></button>

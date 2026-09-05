@@ -9,9 +9,9 @@ describe("system metadata migration parity", () => {
     const query = new PgDialect().sqlToQuery(visibleSystemMessageWhere(7)!);
 
     expect(query.sql).toBe(
-      '("system_message"."status" = $1 and "system_message"."is_del" = $2 and ("system_message"."user_id" = $3 or "system_message"."user_id" = $4))',
+      '("system_message"."status" = $1 and "system_message"."is_del" = $2 and "system_message"."type" in ($3, $4) and ("system_message"."user_id" = $5 or "system_message"."user_id" = $6))',
     );
-    expect(query.params).toEqual([1, 0, 0, 7]);
+    expect(query.params).toEqual([1, 0, 0, 1, 0, 7]);
   });
 
   it("keeps the legacy log, message and user-label fields in the Drizzle schema", () => {

@@ -5,6 +5,7 @@ import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { ApiException, NotFoundException, ValidateException } from "@/utils/errors";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { recordWithdrawalEffects } from "@/services/user/WithdrawalEffectsService";
+import { recordWithdrawalApplication } from "@/services/user/WithdrawalApplicationNoticeService";
 
 export const WITHDRAWAL_CONFIG_KEYS = [
   "user_extract_min_price", "user_extract_max_price", "withdraw_fee", "brokerage_type", "user_extract_balance_status",
@@ -188,6 +189,10 @@ export class UserWithdrawalService {
         id: request.id, uid, extractType: input.extractType,
         extractPrice: centsToDecimal(netCents), extractFee: centsToDecimal(feeCents),
       }, account, false, "", now);
+      await recordWithdrawalApplication(tx, {
+        withdrawalId: request.id, userId: uid, nickname: account.nickname,
+        grossAmount: centsToDecimal(input.amountCents), occurredAt: now,
+      });
       return { id: request.id };
     });
   }

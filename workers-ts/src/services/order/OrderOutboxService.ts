@@ -40,6 +40,7 @@ import {
 } from "@/services/order/OrderNotificationOutboxService";
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { isWithdrawalNoticeEvent, processWithdrawalNoticeEvent } from "@/services/user/WithdrawalEffectsService";
+import { WITHDRAWAL_APPLICATION_EVENT, processWithdrawalApplication } from "@/services/user/WithdrawalApplicationNoticeService";
 
 export const ORDER_PAID_EVENT = "order.paid";
 export const OUTBOX_PROCESS_LEASE_SECONDS = 120;
@@ -118,12 +119,13 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey)
+    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey)
   );
 }
 
 function isNotificationEventType(eventType: string): boolean {
   return isWithdrawalNoticeEvent(eventType)
+    || eventType === WITHDRAWAL_APPLICATION_EVENT
     || eventType === ORDER_DELIVERY_NOTICE_EVENT
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
@@ -538,6 +540,8 @@ export class OrderOutboxService {
             : "订单支付成功，后置任务处理完成",
           changeTime: now,
         });
+      } else if (event.eventType === WITHDRAWAL_APPLICATION_EVENT) {
+        await processWithdrawalApplication(tx, event, now);
       } else if (isWithdrawalNoticeEvent(event.eventType)) {
         await processWithdrawalNoticeEvent(tx, event, now);
       } else if (isNotificationEventType(event.eventType)) {

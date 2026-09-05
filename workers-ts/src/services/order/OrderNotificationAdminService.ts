@@ -33,6 +33,7 @@ export const ORDER_NOTIFICATION_MARKS = [
   "send_order_refund_no_status",
   "user_extract",
   "user_balance_change",
+  "kefu_send_extract_application",
 ] as const;
 
 export type OrderNotificationMark = (typeof ORDER_NOTIFICATION_MARKS)[number];
@@ -69,6 +70,7 @@ const MARK_POLICY: Record<OrderNotificationMark, {
   send_order_refund_no_status: { label: "退款申请未通过", official: true, routine: true },
   user_extract: { label: "提现成功", official: true, routine: true },
   user_balance_change: { label: "提现拒绝退回", official: false, routine: true },
+  kefu_send_extract_application: { label: "提现申请通知客服", official: false, routine: false },
 };
 
 function positiveInt(value: unknown, label: string, maximum = 2_147_483_647): number {
@@ -344,6 +346,7 @@ export class OrderNotificationAdminService {
     const isSms = bit(input.isSms ?? false, "短信开关");
     const isWechat = bit(input.isWechat ?? false, "公众号开关");
     const isRoutine = bit(input.isRoutine ?? false, "小程序开关");
+    if (mark === "kefu_send_extract_application" && isSms) throw new ValidateException("客服申请提醒当前只支持站内信");
     if (isWechat && !policy.official) throw new ValidateException("该 PHP 通知事件不支持公众号通知");
     if (isRoutine && !policy.routine) throw new ValidateException("该 PHP 通知事件不支持小程序通知");
     const name = boundedString(input.name ?? policy.label, "通知名称", 50, 1);

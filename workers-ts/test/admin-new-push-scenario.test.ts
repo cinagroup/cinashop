@@ -149,7 +149,9 @@ describe("permission-scoped admin pending work", () => {
     expect((await service.snapshot(root)).reflectnum).toBe(0);
     expect(await fixture.db.select().from(userExtract)).toHaveLength(2);
     expect(await fixture.db.select().from(capitalFlow)).toHaveLength(1);
-    expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(2);
+    const events = await fixture.db.select().from(storeOrderOutbox);
+    expect(events).toHaveLength(4);
+    expect(events.filter((event) => event.eventType === "withdrawal.applied.notice")).toHaveLength(2);
   });
   it("does not expose a phantom pending request after a late ledger failure rolls back", async () => {
     const withdrawals = await funding();
