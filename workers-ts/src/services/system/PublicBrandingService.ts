@@ -125,4 +125,16 @@ export class PublicBrandingService {
       synopsis: safeText(values.wechat_share_synopsis, 200),
     };
   }
+
+  /** Legacy GET /api/wechat/get_logo with a fresh signature for canonical R2 assets. */
+  async loginLogo(requestOrigin: string) {
+    const values = await new SystemConfigService(this.container, this.env)
+      .getMany(["site_url", "wap_login_logo"]);
+    const siteOrigin = safeHttpsOrigin(values.site_url);
+    const [signed = ""] = await signAttachmentReferences(
+      this.env.APP_KEY,
+      [singleAsset(values.wap_login_logo)],
+    );
+    return { logo_url: absoluteAsset(signed, requestOrigin, siteOrigin) };
+  }
 }

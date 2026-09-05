@@ -14,6 +14,7 @@ import { ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
 import { ProductWordsService } from "@/services/product/ProductWordsService";
 import { PublicBrandingService } from "@/services/system/PublicBrandingService";
+import { PublicBootstrapCompatibilityService } from "@/services/system/PublicBootstrapCompatibilityService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
 
@@ -102,6 +103,49 @@ export async function getOpenAdv(c: C) {
 /** GET /api/user/service/get_adv — PHP-compatible customer-service content. */
 export async function getKfAdv(c: C) {
   return jsonOk(c, { content: await new LegacyContentService(c.get("container")).kfAdv() });
+}
+
+function publicBootstrapService(c: C) {
+  return new PublicBootstrapCompatibilityService(c.get("container"), c.env);
+}
+
+/** GET /api/wechat/get_logo — legacy mobile login logo. */
+export async function getLoginLogo(c: C) {
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300");
+  return jsonOk(
+    c,
+    await new PublicBrandingService(c.get("container"), c.env)
+      .loginLogo(new URL(c.req.url).origin),
+  );
+}
+
+/** GET /api/wechat/teml_ids — legacy mini-program subscription template IDs. */
+export async function subscriptionTemplateIds(c: C) {
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300");
+  return jsonOk(c, await publicBootstrapService(c).subscriptionTemplateIds());
+}
+
+/** GET /api/logistics — public carrier picker without provider credentials. */
+export async function logistics(c: C) {
+  try {
+    c.header("Cache-Control", "public, max-age=60, s-maxage=300");
+    return jsonOk(c, await publicBootstrapService(c).expressList(c.req.query("status")));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/copy_words — configured clipboard invitation copy. */
+export async function copyWords(c: C) {
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300");
+  return jsonOk(c, await publicBootstrapService(c).copyWords());
+}
+
+/** GET /api/get_customer_type — configured customer-service entry points. */
+export async function customerType(c: C) {
+  c.header("Cache-Control", "public, max-age=60, s-maxage=300");
+  return jsonOk(c, await publicBootstrapService(c).customerType());
 }
 
 /** GET /api/navigation/:template_name? — legacy DIY bottom navigation. */

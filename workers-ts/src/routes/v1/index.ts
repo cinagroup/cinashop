@@ -114,6 +114,36 @@ v1Routes.get("/navigation/:template_name", PublicController.navigation);
 v1Routes.get("/user/service/get_adv", authMiddleware({ force: false }), PublicController.getKfAdv);
 v1Routes.get("/kefu/tourist/adv", PublicController.getKfAdv);
 v1Routes.get("/assets/:id", AttachmentController.asset);
+v1Routes.get(
+  "/wechat/get_logo",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.getLoginLogo,
+);
+v1Routes.get(
+  "/wechat/teml_ids",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.subscriptionTemplateIds,
+);
+v1Routes.get(
+  "/logistics",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.logistics,
+);
+v1Routes.get(
+  "/copy_words",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.copyWords,
+);
+v1Routes.get(
+  "/get_customer_type",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.customerType,
+);
 
 // ─── 旧 UniApp DIY 首页组件 ─────────────────────────────────
 // StationOpen must run before optional auth, matching the outer PHP route group.

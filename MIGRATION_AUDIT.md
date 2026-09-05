@@ -4591,7 +4591,7 @@ E5E4因此可标“候选完成，未发布”。本轮只在生产数据库内�
 
 ### 仓库迁移进度复核
 
-结构审计为PHP参考表201、候选表263，201张共享表全部覆盖、源侧独有表0、Worker扩展表62，外部/内嵌定义均为263且列/主键漂移0。路由审计为PHP 1,904、TS 1,623、精确匹配862、可执行844、受控不可用18、缺失1,042、退役17、可执行缺口1,025；总体精确/可执行/剔除退役后的覆盖分别为45.3%/44.3%/44.7%。分面结果为：`/api`可执行418/457、可执行缺口34；`/adminapi`可执行205/1,153、可执行缺口933；Supplier 120/182、剔除12条退役后缺口50；Kefu 60/63且3条均已证据化退役、可执行缺口0；Out 41/41；ERP 0/8。
+结构审计为PHP参考表201、候选表263，201张共享表全部覆盖、源侧独有表0、Worker扩展表62，外部/内嵌定义均为263且列/主键漂移0。路由审计为PHP 1,904、TS 1,628、精确匹配867、可执行849、受控不可用18、缺失1,037、退役17、可执行缺口1,020；总体精确/可执行/剔除退役后的覆盖分别为45.5%/44.6%/45.0%。分面结果为：`/api`可执行423/457、可执行缺口29；`/adminapi`可执行205/1,153、可执行缺口933；Supplier 120/182、剔除12条退役后缺口50；Kefu 60/63且3条均已证据化退役、可执行缺口0；Out 41/41；ERP 0/8。
 
 Admin前端有342个请求调用点、362个路径变体，全部已注册且可执行；但旧Admin有245个不同路由页面，新Admin只有53个，设置页76项中reviewed 15/candidate 11/partial 3/retired 1/unreviewed 61。UniApp旧manifest有151条路由，新端59条；3条原路径直接覆盖、97条进入显式兼容规则（60候选、37部分替代），仍有51条分成7个缺口组。可观测性账本有17个信号、10个组件、53个事件，生产告警仍待物化，6个发布阻断未关闭。全新系统口径与DB-005证据提交`d1fd1b52ca1b67a965d588fc14b94436ccee9285`推送后，[Actions `33934221938`](https://github.com/cinagroup/cinashop/actions/runs/33934221938)的Linux workerd、Worker双TypeScript/1,364项单元/schema/route/observability、五端构建和全历史密钥扫描8/8成功。主Worker和正式前端没有因本次范围审计发布。
 
@@ -4616,6 +4616,14 @@ DATA-001～005已关闭为不适用；历史源端工具保留用于其他部署
 PHP `GET /api/get_script`直接返回`sys_config('system_statistics')`，不使用JSON envelope、脚本白名单、固定provider或内容签名；旧UniApp H5的`App.vue`创建`script`元素并把该URL挂到页面`head`，所以运营配置一旦被错误或恶意修改，所有访问H5的浏览器都会执行任意JavaScript。旧系统配置服务也明确把`system_statistics`作为可编辑textarea字段。这个合同不是普通的“统计配置读取”，而是持久化主动脚本执行边界。
 
 当前Worker、Admin、PC、Supplier、UniApp和Kefu源码均没有`get_script`或`system_statistics`消费者；恢复兼容路由只会重新扩大攻击面，不会服务当前第一方流程。因此在`legacy-route-decisions.json`中以路由、控制器、旧H5调用和配置表单四处源行证据将其正式退役，替代原则是未来若需要统计，必须以固定provider身份、用户同意与Content-Security-Policy约束的显式集成另行设计。`dynamic-statistics-script-retirement.test.ts`同时确认PHP权威快照仍包含该合同、退役决策完整，并递归扫描六个当前源码根阻止重新暴露或消费它。路由权威快照显式重建后，全局退役`16→17`、可执行缺口`1,026→1,025`；API面退役`1→2`、可执行缺口`35→34`、退役后有效覆盖`91.7%→91.9%`。这没有注册虚假成功路由，也没有发布任何Worker或前端。
+
+## API-010 公共启动配置5条（2026-09-05）
+
+PHP把`wechat/get_logo`、`wechat/teml_ids`、`logistics`、`copy_words`和`get_customer_type`放在同一个StationOpen加可选登录路由组中。旧UniApp确有对应包装器；移动Admin发货页读取物流首项的`code`，随后只消费承运商`name/code`。PHP物流服务却把`partner_id/partner_key/net/account/key/net_name`一并送到公开客户端，这些是承运商签约或网络配置，不是选择器合同。小程序模板接口则把`config/template.php`内14个事件的short ID逐个映射到启用的`template_message(type=0,tempkey)`提供商模板ID。
+
+候选新增独立`PublicBootstrapCompatibilityService`并精确注册五条路由。Logo只接受站内相对路径或无userinfo的HTTPS，canonical `/api/assets/:id`在响应时以APP_KEY生成15分钟签名，不把短期签名写回配置；客服入口的两个类型转换为安全整数，电话/CorpID有界且去控制字符，外链只允许HTTPS或站内相对路径。订阅模板按迁移后的`notification_template.legacy_type=0/status=1/mark=shortId`一次批量读取，以ID倒序确定重复项，14个键始终完整且缺失值为`null`。物流查询只投影`id/name/code`、保持`sort DESC,id DESC`和`is_show=1`，`status=1`时再过滤启用状态，500条上限超出后失败关闭，绝不返回承运商账户或密钥。
+
+专项测试5/5覆盖危险客服URL拒绝、配置类型和有界文本、R2签名与旧相对Logo、14个模板键/重复优先级/缺失值、物流凭据剥离及五条StationOpen+可选登录注册。双TypeScript与完整218文件/1,375项单元通过；路由审计从TS 1,623/精确862/可执行844推进为1,628/867/849，全局可执行缺口`1,025→1,020`，API面`34→29`且退役后有效覆盖`91.9%→93.0%`。本批没有生产数据库读取或写入、没有外部provider调用，也没有部署主Worker或前端；真实模板、品牌配置、承运商目录和旧端E2E仍属于DATA-006/008与发布门禁。
 
 ## 完成定义
 
