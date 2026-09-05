@@ -4814,6 +4814,10 @@ Admin待办支持强制刷新在已有HTTP请求结束后再读取一次，重�
 
 本地首轮全量Worker为229文件/1485通过、4项PG16多连接跳过；后续补充1项页面生命周期测试，新增共享客户端/刷新场景共9项，连同既有待办4项专项13/13通过。Worker单元及runtime两套TypeScript通过；客服17项测试和102模块构建通过，Admin2442模块构建通过。3项新Pages运行时用例仍以本批Linux CI结果为准；最终远端结果确认后才勾选G2b2。G2b父项与生产/发布子项继续开放。
 
+实现提交`3ba8d42e2a8316368a3838724a07b78bf157ea66`随后已推送，[Actions `33953586657`](https://github.com/cinagroup/cinashop/actions/runs/33953586657)最终8/8成功。Worker为229文件/1,490项全通过、无跳过，包含4项真实PostgreSQL16.14多连接场景和新增9项前端协议/生命周期测试；workerd为3文件/24项通过，新增3项Pages代理测试实际执行。runtime未报告未处理拒绝，另输出WebSocketPipe被销毁的非致命诊断后仍退出0，不声称日志完全无诊断。Worker双TypeScript、schema/route/observability、五端类型/构建与客服17项测试通过；Gitleaks扫描217个提交未发现泄露。Worker生产依赖审计0不代表全仓库0：安装摘要另报Worker 4 moderate、Kefu 3 moderate/1 high/1 critical、Admin 1 moderate/1 high，尚未完成逐依赖可达性和生产/开发暴露分类，已新列TEST-004，不以构建成功豁免。
+
+CI后再次以CUA复验登录页标题为“登录 - CinaShop 客服”；恢复隔离测试会话后，390px收件箱真实socket收到新提醒，未读1→2且旧详情保留，document.scrollWidth=innerWidth=390、当前相关console error/warn为空。仅将G2b2候选工程子项勾选，G2b父项、G2b3、DB-006/007和生产角色/渠道/发布继续开放。后续审计文档提交不更改受测代码，CI证据固定指向上述实现SHA，不冒称文档SHA也执行了全部工作流。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
