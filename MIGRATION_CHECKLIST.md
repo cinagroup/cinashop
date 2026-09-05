@@ -16,7 +16,7 @@
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
 | Worker 单元测试 | 当前本地219文件、1,380项通过 | 当前候选回归通过 |
 | Workers runtime | 最新提交 Linux workerd 作业通过；Windows 本机仍在测试收集前 `0xc0000005` | Linux CI 为运行时门禁，Windows 不冒充通过 |
-| CI | [Actions `33937230122`](https://github.com/cinagroup/cinashop/actions/runs/33937230122) 对 `a3610b7` 的 Worker/五端/runtime/secret scan 8/8 | API-010已通过全部远端门禁；API-011为当前本地候选，尚未推送 |
+| CI | [Actions `33938423701`](https://github.com/cinagroup/cinashop/actions/runs/33938423701) 对 `35ef232` 的 Worker/五端/runtime/secret scan 8/8 | API-011已通过全部远端门禁 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -247,7 +247,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [x] **ADMIN-E ERP 配置 1 条（代码与静态合同完成，未发布）**：精确恢复 `GET /api/admin/erp/config`，强制现有 Admin token 与 `config.view` ACL，响应设置 `private, no-store` 且只返回 `{open_erp:boolean}`。共享能力服务只读取 `erp_open`，缺失/`0`/非法值失败关闭，不读取或返回 ERP token/secret/account；定向测试覆盖开关、空配置、真实响应 envelope/cache header、路由与权限。实际 ERP 认证、同步、真实账号/沙箱和发布仍归 ERP-001/002 与 REL-001/002。
 - [x] **API-009 退役动态统计脚本入口**：旧 `GET /api/get_script` 将运营可编辑的 `system_statistics` 原样作为 JavaScript 返回，旧 UniApp H5 再用动态 `<script>` 执行；新五端和 Worker 均无调用。为避免恢复持久化任意脚本与第三方供应链执行面，已按路由、控制器、配置表单和旧调用点四项源证据正式退役；未来分析能力只能以固定 provider、用户同意和 CSP 约束的显式集成重新设计。专项测试同时阻断当前源码重新暴露或消费该合同；API 面可执行缺口 `35→34`。
 - [x] **API-010 公共启动配置5条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET wechat/get_logo`、`wechat/teml_ids`、`logistics`、`copy_words`、`get_customer_type`，全部保留 PHP 的站点开启与可选登录边界。登录Logo对稳定R2引用生成短期签名并只接受相对路径或HTTPS；14个小程序订阅事件按PHP short ID从启用的`legacy_type=0`模板确定性投影，缺失模板显式为`null`；客服类型字段按数字/有界文本返回，客服URL只接受站内相对路径或HTTPS。物流列表保持旧端实际使用的`id/name/code`，不再公开PHP曾返回的`partner_id/partner_key/account/key/net*`承运商凭据。专项5/5、全量218文件/1,375项和双TypeScript通过，API面可执行缺口`34→29`；未读取或写入生产数据库、未调用provider、未部署主Worker或前端。
-- [x] **API-011 城市与门店发现4条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET city`、`city_list`、`store_list`、`nearby_store`，保留 PHP 的 StationOpen 以及后三条可选登录边界。`city`按`city_area.parent_id`惰性返回子级和可展开标记，`city_list`从`system_city`构造完整`v/n/parent_id/children`树；门店只读取营业且未删除记录，保留坐标校验、6367km Haversine距离、提货过滤、关键词与登录用户常用门店范围。公开投影明确排除`bank_code/bank_address/alipay_account/alipay_qrcode_url/wechat/wechat_qrcode_url`，门店图片对canonical R2引用短期签名。PHP在缺坐标时会把客户端IP发送给外部定位服务，本实现不向未声明provider披露IP，改为确定性`id DESC`；分页默认10、上限100、offset上限10,000，城市全树和单层也有显式上限。专项5/5、全量219文件/1,380项、双TypeScript和路由审计通过，API面可执行缺口`29→25`、退役后有效覆盖`93.0%→93.8%`；未读写生产数据库、未调用外部定位、未部署主Worker或前端。
+- [x] **API-011 城市与门店发现4条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET city`、`city_list`、`store_list`、`nearby_store`，保留 PHP 的 StationOpen 以及后三条可选登录边界。`city`按`city_area.parent_id`惰性返回子级和可展开标记，`city_list`从`system_city`构造完整`v/n/parent_id/children`树；门店只读取营业且未删除记录，保留坐标校验、6367km Haversine距离、提货过滤、关键词与登录用户常用门店范围。公开投影明确排除`bank_code/bank_address/alipay_account/alipay_qrcode_url/wechat/wechat_qrcode_url`，门店图片对canonical R2引用短期签名。PHP在缺坐标时会把客户端IP发送给外部定位服务，本实现不向未声明provider披露IP，改为确定性`id DESC`；分页默认10、上限100、offset上限10,000，城市全树和单层也有显式上限。专项5/5、全量219文件/1,380项、双TypeScript和路由审计通过，API面可执行缺口`29→25`、退役后有效覆盖`93.0%→93.8%`；提交`35ef232`已推送，[Actions `33938423701`](https://github.com/cinagroup/cinashop/actions/runs/33938423701)八项全部成功。未读写生产数据库、未调用外部定位、未部署主Worker或前端。
 
 ## P1：Admin `/adminapi` 路由批次
 
