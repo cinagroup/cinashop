@@ -4726,7 +4726,11 @@ PHP`NoticeService::userExtract/userBalanceChange`的字段已逐条映射：成�
 
 源码续审又发现`listener/user/Extract.php`还承接申请阶段的客服通知、管理员提醒计数和WITHDRAW推送，新增API-014G继续开放；F不冒充整个提现业务域已迁移。自动打款D、真实发布E、模板送达F2和DB-006/007也继续开放。
 
+提交后再次核对G：PHP`SystemAdminServices::adminNewPush`统计status=0的待审核提现并计入msgcount；Worker`AdminAuthService.adminNewPush`虽然已有同名接口，但`reflectnum/msgcount`固定为0。PHP客服申请提醒还会调用`kefuSystemSend`与企业微信，不是给申请人发一条成功通知即可覆盖。该证据已细化到G，后续需连同接收者权限、提醒计数与实时推送闭环一起处理。
+
 最终本地门禁为224文件/1,437项通过，另3项真实PostgreSQL16多连接用例明确留给Linux CI，没有用内存单连接结果冒充并发通过；新增F专项14项中的13项本地通过。双TypeScript、Admin类型/生产构建、201→263结构零漂移、17信号/53事件可观测性和24个生产依赖零漏洞均通过。前端代码哈希/行号变化后重新生成Admin请求清单，仍342调用点/362变体全部可执行。最初暴露的现金流列快照、后台页面名称断言和生成清单漂移已经据实更新并复验。Workers最新类型5.20260905.1还确认Queue模拟需包含metrics及带metadata的发送返回值，测试已按实际接口修正，没有使用双重断言压过类型错误。Workers/数据库技能实际影响了绑定类型、事务内仅写DB、稳定事件与一致锁序；尚待本批远端CI最终证据。
+
+实现提交`a0e5e4cfc8ff471108297bbeae91768a56de0320`已推送，[Actions `33945761103`](https://github.com/cinagroup/cinashop/actions/runs/33945761103)最终8/8 jobs全部成功。Worker为224文件/1,440项全部通过、无跳过；新增提现副作用专项14/14，原提现专项19/19。容器日志确认为PostgreSQL16.14，3项真实多连接用例均执行，新增四连接并发审核只有一笔成功流水和一个审核事件；本地跳过的并发门禁已由远端实际执行关闭。双TypeScript、201→263结构/路由/可观测性、生产依赖、Linux workerd与五端构建均成功；checksum-pinned Gitleaks扫描208个提交、未发现泄露。据此关闭API-014F1并更新TEST-001；该结论不关闭DB-006/007、自动打款D、真实角色/发布E、真实模板送达F2或申请提醒G，也没有执行生产DDL/DML、发布或真实通知。
 
 ## 完成定义
 
