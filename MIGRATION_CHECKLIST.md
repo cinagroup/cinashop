@@ -11,12 +11,12 @@
 | PHP/MySQL 结构参考 | PHP 201/201 表、缺源列 0 | 结构合同完成；历史数据导入不适用 |
 | 仓库目标结构 | 外部 SQL 263 表；Worker 内嵌 263 表；共享参考表 201、Worker 扩展 62；定义漂移 0 | 候选定义完成 |
 | 生产目标结构 | PostgreSQL 16.14 为263表、3,696列、896索引、250主键；与263表候选精确同集 | 结构完成，零表差集 |
-| PHP HTTP 合同 | 精确匹配 867/1,904；可执行 849；其中 18 条明确不可用、17 条有证据退役 | 精确注册 45.5%，可执行 44.6%，退役后有效覆盖 45.0% |
+| PHP HTTP 合同 | 精确匹配 871/1,904；可执行 853；其中 18 条明确不可用、17 条有证据退役 | 精确注册 45.7%，可执行 44.8%，退役后有效覆盖 45.2% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | 当前本地218文件、1,375项通过 | 当前候选回归通过 |
+| Worker 单元测试 | 当前本地219文件、1,380项通过 | 当前候选回归通过 |
 | Workers runtime | 最新提交 Linux workerd 作业通过；Windows 本机仍在测试收集前 `0xc0000005` | Linux CI 为运行时门禁，Windows 不冒充通过 |
-| CI | [Actions `33936379581`](https://github.com/cinagroup/cinashop/actions/runs/33936379581) 对 `2415a6b` 的 Worker/五端/runtime/secret scan 最终8/8 | API-009通过全部门禁；首次Gitleaks下载遇连接重置，原提交仅重跑失败job后扫描成功 |
+| CI | [Actions `33937230122`](https://github.com/cinagroup/cinashop/actions/runs/33937230122) 对 `a3610b7` 的 Worker/五端/runtime/secret scan 8/8 | API-010已通过全部远端门禁；API-011为当前本地候选，尚未推送 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -26,13 +26,13 @@
 
 | 面 | PHP | Workers | 精确匹配 | 可执行匹配 | 明确不可用 | 原始缺失 | 已退役 | 可执行缺口 | 精确/可执行/退役后有效覆盖 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `/api` | 457 | 849 | 426 | 423 | 3 | 31 | 2 | 29 | 93.2% / 92.6% / 93.0% |
+| `/api` | 457 | 853 | 430 | 427 | 3 | 27 | 2 | 25 | 94.1% / 93.4% / 93.8% |
 | `/adminapi` | 1,153 | 512 | 220 | 205 | 15 | 933 | 0 | 933 | 19.1% / 17.8% / 17.8% |
 | `/supplierapi` | 182 | 160 | 120 | 120 | 0 | 62 | 12 | 50 | 65.9% / 65.9% / 70.6% |
 | `/kefuapi` | 63 | 66 | 60 | 60 | 0 | 3 | 3 | 0 | 95.2% / 95.2% / 100% |
 | `/outapi` | 41 | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100% / 100% / 100% |
 | `/erpapi` | 8 | 0 | 0 | 0 | 0 | 8 | 0 | 8 | 0% / 0% / 0% |
-| 合计 | 1,904 | 1,628 | 867 | 849 | 18 | 1,037 | 17 | 1,020 | 45.5% / 44.6% / 45.0% |
+| 合计 | 1,904 | 1,632 | 871 | 853 | 18 | 1,033 | 17 | 1,016 | 45.7% / 44.8% / 45.2% |
 
 API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精确注册；PC/客服登录子批又把 `/api/pc` 22 条全部恢复为可执行合同，并补齐客服 `key/scan/wechat` 三条精确合同。服务端新增的 OAuth state 与 POST key 签发端点是安全扩展，不进入 PHP 匹配分子。客服游客会话、订单、聊天、上传和 WebSocket 安全拆分也已完成；`ticket/[:appid]` 与两条不安全退款合同有源证据退役。当前 `/kefuapi` 为 60/63 可执行、3 条退役、`actionableMissing=0`；逐路由清单以 `audit:routes` JSON 为准。
 
@@ -247,6 +247,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [x] **ADMIN-E ERP 配置 1 条（代码与静态合同完成，未发布）**：精确恢复 `GET /api/admin/erp/config`，强制现有 Admin token 与 `config.view` ACL，响应设置 `private, no-store` 且只返回 `{open_erp:boolean}`。共享能力服务只读取 `erp_open`，缺失/`0`/非法值失败关闭，不读取或返回 ERP token/secret/account；定向测试覆盖开关、空配置、真实响应 envelope/cache header、路由与权限。实际 ERP 认证、同步、真实账号/沙箱和发布仍归 ERP-001/002 与 REL-001/002。
 - [x] **API-009 退役动态统计脚本入口**：旧 `GET /api/get_script` 将运营可编辑的 `system_statistics` 原样作为 JavaScript 返回，旧 UniApp H5 再用动态 `<script>` 执行；新五端和 Worker 均无调用。为避免恢复持久化任意脚本与第三方供应链执行面，已按路由、控制器、配置表单和旧调用点四项源证据正式退役；未来分析能力只能以固定 provider、用户同意和 CSP 约束的显式集成重新设计。专项测试同时阻断当前源码重新暴露或消费该合同；API 面可执行缺口 `35→34`。
 - [x] **API-010 公共启动配置5条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET wechat/get_logo`、`wechat/teml_ids`、`logistics`、`copy_words`、`get_customer_type`，全部保留 PHP 的站点开启与可选登录边界。登录Logo对稳定R2引用生成短期签名并只接受相对路径或HTTPS；14个小程序订阅事件按PHP short ID从启用的`legacy_type=0`模板确定性投影，缺失模板显式为`null`；客服类型字段按数字/有界文本返回，客服URL只接受站内相对路径或HTTPS。物流列表保持旧端实际使用的`id/name/code`，不再公开PHP曾返回的`partner_id/partner_key/account/key/net*`承运商凭据。专项5/5、全量218文件/1,375项和双TypeScript通过，API面可执行缺口`34→29`；未读取或写入生产数据库、未调用provider、未部署主Worker或前端。
+- [x] **API-011 城市与门店发现4条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET city`、`city_list`、`store_list`、`nearby_store`，保留 PHP 的 StationOpen 以及后三条可选登录边界。`city`按`city_area.parent_id`惰性返回子级和可展开标记，`city_list`从`system_city`构造完整`v/n/parent_id/children`树；门店只读取营业且未删除记录，保留坐标校验、6367km Haversine距离、提货过滤、关键词与登录用户常用门店范围。公开投影明确排除`bank_code/bank_address/alipay_account/alipay_qrcode_url/wechat/wechat_qrcode_url`，门店图片对canonical R2引用短期签名。PHP在缺坐标时会把客户端IP发送给外部定位服务，本实现不向未声明provider披露IP，改为确定性`id DESC`；分页默认10、上限100、offset上限10,000，城市全树和单层也有显式上限。专项5/5、全量219文件/1,380项、双TypeScript和路由审计通过，API面可执行缺口`29→25`、退役后有效覆盖`93.0%→93.8%`；未读写生产数据库、未调用外部定位、未部署主Worker或前端。
 
 ## P1：Admin `/adminapi` 路由批次
 

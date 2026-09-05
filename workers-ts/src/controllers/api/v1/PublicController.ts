@@ -15,6 +15,7 @@ import type { AppVariables, Env } from "@/env";
 import { ProductWordsService } from "@/services/product/ProductWordsService";
 import { PublicBrandingService } from "@/services/system/PublicBrandingService";
 import { PublicBootstrapCompatibilityService } from "@/services/system/PublicBootstrapCompatibilityService";
+import { PublicLocationStoreService } from "@/services/system/PublicLocationStoreService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables & { container: import("@/lib/di").Container } }>;
 
@@ -146,6 +147,60 @@ export async function copyWords(c: C) {
 export async function customerType(c: C) {
   c.header("Cache-Control", "public, max-age=60, s-maxage=300");
   return jsonOk(c, await publicBootstrapService(c).customerType());
+}
+
+function publicLocationStoreService(c: C) {
+  return new PublicLocationStoreService(c.get("container"), c.env);
+}
+
+/** GET /api/city — lazy city-area children used by the legacy address picker. */
+export async function city(c: C) {
+  try {
+    c.header("Cache-Control", "public, max-age=300, s-maxage=1800");
+    return jsonOk(c, await publicLocationStoreService(c).city(c.req.query("pid") ?? "0"));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/city_list — complete legacy system-city hierarchy. */
+export async function cityList(c: C) {
+  try {
+    c.header("Cache-Control", "public, max-age=300, s-maxage=1800");
+    return jsonOk(c, await publicLocationStoreService(c).cityList());
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/store_list — active pickup stores without finance/account fields. */
+export async function storeList(c: C) {
+  try {
+    c.header("Cache-Control", "private, no-store");
+    return jsonOk(
+      c,
+      await publicLocationStoreService(c).storeList(c.req.query(), new URL(c.req.url).origin),
+    );
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+}
+
+/** GET /api/nearby_store — active nearby/common stores with optional user scope. */
+export async function nearbyStore(c: C) {
+  try {
+    c.header("Cache-Control", "private, no-store");
+    return jsonOk(c, await publicLocationStoreService(c).nearbyStore(
+      c.req.query(),
+      c.get("uid") ?? 0,
+    ));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
 }
 
 /** GET /api/navigation/:template_name? — legacy DIY bottom navigation. */

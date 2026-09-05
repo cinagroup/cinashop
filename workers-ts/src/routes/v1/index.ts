@@ -144,6 +144,25 @@ v1Routes.get(
   authMiddleware({ force: false }),
   PublicController.customerType,
 );
+v1Routes.get("/city", stationOpenMiddleware(), PublicController.city);
+v1Routes.get(
+  "/store_list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.storeList,
+);
+v1Routes.get(
+  "/city_list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.cityList,
+);
+v1Routes.get(
+  "/nearby_store",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  PublicController.nearbyStore,
+);
 
 // ─── 旧 UniApp DIY 首页组件 ─────────────────────────────────
 // StationOpen must run before optional auth, matching the outer PHP route group.

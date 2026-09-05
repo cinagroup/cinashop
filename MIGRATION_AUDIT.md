@@ -218,7 +218,7 @@ PHP `ArticleDao::cidByArticleList()` 虽传入 `status=1,hide=0`，但 `ArticleD
 
 ## 结论
 
-`cinashop` 已具备一个可构建、可测试且已有核心版本部署到 Cloudflare 的商城切片，但仍不是 `cinashop-php` 的等价替代。历史 M1～M24 标签只描述实现批次，不代表旧系统业务覆盖率；上一加固版本的远端 Worker、Hyperdrive 绑定、公开数据库读取和安全门禁已经核实。
+`cinashop` 已具备一个可构建、可测试且已有核心版本部署到 Cloudflare 的商城切片，但仍不是 `cinashop-php` 的等价替代。历史 M1～M24 标签只描述实现批次，不代表旧系统业务覆盖率；上一加固版本的远端 Worker、Hyperdrive 绑定、公开数据库读取和安全门禁已经核实。当前静态路由总览为 PHP 1,904、TS 1,632、精确匹配 871、可执行 853、明确不可用 18、退役 17、可执行缺口 1,016；精确/可执行/退役后有效覆盖为 45.7%/44.8%/45.2%。
 
 ## 生产 PostgreSQL 审计与 schema 升级
 
@@ -4624,6 +4624,16 @@ PHP把`wechat/get_logo`、`wechat/teml_ids`、`logistics`、`copy_words`和`get_
 候选新增独立`PublicBootstrapCompatibilityService`并精确注册五条路由。Logo只接受站内相对路径或无userinfo的HTTPS，canonical `/api/assets/:id`在响应时以APP_KEY生成15分钟签名，不把短期签名写回配置；客服入口的两个类型转换为安全整数，电话/CorpID有界且去控制字符，外链只允许HTTPS或站内相对路径。订阅模板按迁移后的`notification_template.legacy_type=0/status=1/mark=shortId`一次批量读取，以ID倒序确定重复项，14个键始终完整且缺失值为`null`。物流查询只投影`id/name/code`、保持`sort DESC,id DESC`和`is_show=1`，`status=1`时再过滤启用状态，500条上限超出后失败关闭，绝不返回承运商账户或密钥。
 
 专项测试5/5覆盖危险客服URL拒绝、配置类型和有界文本、R2签名与旧相对Logo、14个模板键/重复优先级/缺失值、物流凭据剥离及五条StationOpen+可选登录注册。双TypeScript与完整218文件/1,375项单元通过；路由审计从TS 1,623/精确862/可执行844推进为1,628/867/849，全局可执行缺口`1,025→1,020`，API面`34→29`且退役后有效覆盖`91.9%→93.0%`。本批没有生产数据库读取或写入、没有外部provider调用，也没有部署主Worker或前端；真实模板、品牌配置、承运商目录和旧端E2E仍属于DATA-006/008与发布门禁。
+
+## API-011 城市与门店发现4条（2026-09-05）
+
+PHP公开合同为`GET /api/city`、`city_list`、`store_list`和`nearby_store`。第一条只经过StationOpen，后三条还经过可选登录。`city`以`city_area.id/parent_id`提供惰性地址树，父级默认“中国”，有子级的节点返回空`children`及两个loading标记；`city_list`则把`system_city`全部行按`city_id/parent_id`递归为`v/n/parent_id/children`完整树。旧PHP允许`page=0/limit=0`取消门店LIMIT，新公开Worker把默认页固定为1/10、每页最多100且offset最多10,000；单层`city_area`最多1,000项，完整`system_city`最多10,000项和8层，畸形超限或循环会失败关闭。
+
+`store_list`在PHP中实际只对`is_store=2`增加`is_store=1`筛选，传入的`product_id`没有参与库存或门店资格判断；迁移保留这一事实，不伪造商品库存过滤。正常范围固定`is_del=0/is_show=1`，完整坐标对按PHP的6,367,000米半径Haversine公式计算并升序排列，无完整坐标时按`id DESC`。旧UniApp代客确认页实际消费`id/name/address/detailed_address/range/site_logo`；候选同时保留电话、行政区、营业时间、经纬度和图片等公开展示字段，但SQL从源头不选择`bank_code/bank_address/alipay_account/alipay_qrcode_url/wechat/wechat_qrcode_url`。canonical `/api/assets/:id`门店图及站点Logo只在响应时生成短期签名，非相对路径或无userinfo HTTPS的图片引用被清空。
+
+`nearby_store`继续由`store_func_status`控制，支持原来的`store_type`、关键词、坐标和可选登录UID；常用门店通过当前UID的`store_user.store_id`子查询限定，匿名请求常用门店返回空。PHP在缺坐标时把请求IP交给`convertIp`定位，再用城市/省份模糊匹配门店；这个外部服务、数据接收方、保留政策和Workers凭据均未声明，因此候选不复制该隐私副作用，而采用确定性的营业门店ID倒序。坐标对会逐项验证范围和格式；数据库中畸形坐标先经CASE形状门禁后才允许转为浮点，避免公开请求触发转换异常。
+
+专项5/5覆盖坐标格式/范围、分页上限、三级城市树、两类距离格式、敏感门店字段剥离、签名图片形状和四条路由中间件；完整单元为219文件/1,380项，双TypeScript通过。路由审计从TS 1,628/精确867/可执行849推进为1,632/871/853，全局可执行缺口`1,020→1,016`，API面`29→25`且退役后有效覆盖`93.0%→93.8%`。本批沿用既有生产基线中`city_area/system_city/有效门店=0`的证据，没有再次读取或写入生产数据库，没有调用IP定位或其他provider，也没有部署主Worker或前端；真实城市、门店、营业范围、图片和前端流程仍由DATA-006/008及发布验收负责。
 
 ## 完成定义
 
