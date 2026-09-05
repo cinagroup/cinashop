@@ -7,6 +7,11 @@ const apiProxyTarget = process.env.CINASHOP_API_PROXY_TARGET
 export default defineConfig({
   plugins: [uni()],
   server: {
+    // Override DCloud's host:true/fs.strict:false defaults. Vite 5 still has
+    // unresolved advisories: keep this development server off shared networks.
+    host: "127.0.0.1",
+    cors: false,
+    fs: { strict: true },
     port: 5174,
     // 本地 H5 开发代理到 Workers
     proxy: {

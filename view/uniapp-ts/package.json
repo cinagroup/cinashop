@@ -8,6 +8,8 @@
     "build:mp-weixin": "uni build -p mp-weixin",
     "dev:app": "uni -p app",
     "build:app": "uni build -p app",
+    "test:toolchain": "node --test scripts/dev-server-security.test.cjs",
+    "test:build-artifacts": "node --test scripts/build-artifacts.test.cjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
@@ -31,7 +33,7 @@
     "@dcloudio/vite-plugin-uni": "3.0.0-4020920240930001",
     "@vue/runtime-core": "^3.4.21",
     "typescript": "^5.4.0",
-    "vite": "5.2.8",
+    "vite": "5.4.21",
     "vue-tsc": "^2.0.13"
   }
 }

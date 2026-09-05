@@ -4897,6 +4897,54 @@ Admin入口为/dashboard、/statistic；Supplier为/dashboard，SalesTrend只有
 
 ECharts边界回归提交`e991d924c709cac56e3fae10a7a75a3ebab755f5`已推送，[Actions `33957240392`](https://github.com/cinagroup/cinashop/actions/runs/33957240392)最终8/8成功。Worker双TypeScript通过，230文件/1,497项全部通过、无跳过；新增7项真实服务投影测试实际执行。workerd为3文件/24项，五端类型/构建和客服17项通过；公共依赖回归仍18项，Admin/Supplier新增tooltip测试各5项（共10）通过；Kefu/PC全树npm审计0，Gitleaks扫描220提交无泄露。源201表→目标263表、源列缺口及定义漂移均0；PHP精确879/1,904、可执行861、原始缺失1,025、退役17、可执行缺口1,008均未因本轮改变。按完整源入口矩阵、真实库sink对照、生产者回归、一次独立复核及本批CI，仅将TEST-004F的当前应用公告路径审查勾选为no_change；不宣称ECharts包已修复、真机悬浮E2E或线上部署完成。TEST-004D/E、父项及生产角色/渠道/DB/发布继续开放。后续只提交这份最终记录与checklist，受测代码证据继续固定为e991d92，不把文档提交当成新一轮CI。
 
+## TEST-004D1 UniApp兼容补丁、真实开发边界与三端资源门禁（2026-09-05）
+
+本批沿用用户对当前迁移修复提交/推送/CI的明确授权，不扩展到发布。安全修复技能要求的独立只读调查与一次候选复核已完成；主代理分别验证官方兼容元数据、当前插件配置与运行路径后选择窄补丁，并确认/修正复核提出的两项测试问题。TEST-004D父项保持开放，当前仅为D1本地候选，CI结果待补录。未访问生产数据库、Redis、Cloudflare控制面，未部署、发送短信、登录真实账号或调用支付。
+
+### 兼容决策与配置边界
+
+- 当前12个直接DCloud包/26个同版锁节点固定`3.0.0-4020920240930001`；`vite-plugin-uni` peer为`^5.2.8`，Vue compiler/shared固定3.4.21。保留整套版本，只将Vite改为精确5.4.21；`npm ls vite --depth=1`确认插件与根共用该版本，无peer冲突。锁文件版本比较只有Vite改变，新增24个节点是其嵌套esbuild0.21.5及平台包，原DCloud esbuild0.20.2保留。
+- [官方Vue3 TypeScript模板](https://raw.githubusercontent.com/dcloudio/uni-preset-vue/vite-ts/package.json)当前使用DCloud `3.0.0-5020420260813003`/Vite5.2.8。逐项查询npm官方registry确认该插件以及50204...001、vue3标签alpha50205均精确peer Vite5.2.8；`latest`标签甚至是2021年旧包，不能用`@latest`代替兼容调查。[官方升级说明](https://uniapp.dcloud.net.cn/quickstart-cli.html)也要求协调项目编译器版本；本批不执行uvm、不引入alpha、不强压Vite6 peer或降级到审计建议的DCloud0.x。
+- 旧H5插件`uni-h5-vite/dist/plugin/config.js:24–63`默认`host:true/fs.strict:false`，展开manifest devServer后把显式user host/fs写回。当前manifest没有devServer。本批`vite.config.ts`明确`host:"127.0.0.1"`、`cors:false`、`fs.strict:true`；实际解析后的allow仅为UniApp项目目录，没有扩大到整个仓库。CLI显式参数/未来manifest覆盖仍需重新审查，不是不可绕过的组织策略。
+- 生产代理默认值保持不变；所有本批HTTP/浏览器验证均设置`CINASHOP_API_PROXY_TARGET`为loopback。H5业务调用同源`/api`，但MP/App的`src/utils/request.ts`直接使用生产Workers域名，因此只编译MP/App、不运行设备业务。App的Vue外置到设备端，空AppID与原生签名没有被伪造。
+
+### 已执行的聚焦安全与兼容门禁
+
+新增`view/uniapp-ts/scripts/dev-server-security.test.cjs`，在监听前检查真实DCloud/Vite合并配置，监听随机loopback端口、使用随机本地API夹具和新建的合成文本/PEM文件，结束时只清理这些专用临时目录并关闭服务。最终8项检查通过（包含父测试及新增的厂商更新检查隔离测试），边界覆盖如下：
+
+1. 锁定版本满足当前插件peer及5.x补丁下限。
+2. 实际监听127.0.0.1、strict/allow/cors/Host检查及WS token检查有效。
+3. HTML入口、`src/main.ts`、DCloud自有static middleware的logo、同源`/api`代理正例成功。独立复核发现logo只断言200会把SPA回退当图片；确认Vite真实fallback路径后，改为`image/png`及响应Buffer与源图片逐字节相等，复跑通过。
+4. 外部HTTPS Origin与`Origin:null`的GET/OPTIONS不返回ACAO。
+5. 外部Host返回403；外部Origin/null的无token HMR握手返回400，携带真实开发token的合法HMR返回101。
+6. 外部合成文件的普通/raw/编码路径不泄露marker。首次测试把SPA回退200误判为文件读取；检查实际正文后改为同时验证无marker、200仅可为含`@vite/client`的HTML壳，403/404也可接受，不以放宽状态码掩盖内容泄露。
+7. 项目内合成PEM文件在普通、`?raw`、`?import&raw`、`?raw??`及`?import&inline=1`请求下均403且无marker。
+
+这些是真实HTTP/WS边界检查，不是只搜索配置字符串。旧5.2.8宽松默认通过已安装源码与公开公告确认，没有把旧服务暴露到网络重放；未执行命令注入、NTLM凭据发送或读取任何真实敏感文件，也未声称复现或修复所有Windows变体。
+
+独立复核另确认`configResolved → uni-cli-shared/dist/checkUpdate.js`在本地未设置CI且缓存首次/过期时可能POST厂商`uniapp.dcloud.net.cn/update/cli`，正文含设备MAC哈希、匿名ID/应用标识和平台编译计数，并写临时更新缓存。因此前述初次编译/浏览器过程仅证明业务流未连接生产，不能声称所有依赖行为绝对零外联；没有网络记录确认此前实际发送成功。本批最终测试在加载插件前设置进程内`CI=1`、结束恢复原值；以替换为失败闭合的HTTPS sink执行真实checkUpdate确认请求计数0。所有三端构建也在命令级`CI=1`下重新完成。只修改测试进程，不更改用户全局环境；开发者手动运行原uni命令仍需自行了解厂商更新检查。审计没有读取或输出真实MAC/匿名ID/缓存。
+
+`npm run typecheck`、`build:h5`、`build:mp-weixin`、`build:app`均通过。App升级前基线也成功；升级后保留相同非致命`request.ts`同时动态/静态导入警告。新增`scripts/build-artifacts.test.cjs`三项检查：H5入口引用的模块非空、微信注册页与源pages.json一致且逐页JS/WXML存在、App service/view/manifest/config-service非空并保留注册页面和name/version/AppID。不是仅依赖退出码，因为DCloud某些缺失UTS工具路径会退出0。现有NanoID三项通过；CI UniApp job加入上述安全检查、App资源构建与产物检查。普通App资源不等于APK/IPA或真机验收，详见[官方CLI说明](https://zh.uniapp.dcloud.io/worktile/CLI.html)。
+
+### H5浏览器证据
+
+遵循前端测试技能，使用已授权CUA应用内浏览器而非另装浏览器运行时。测试流为`http://127.0.0.1:5217/#/pages/auth/login`→密码/验证码模式切换→空表单提交提示“请输入正确的手机号”→刷新后再次切换。1280×720与390×844截图及DOM确认标题“登录”、非空内容、无Vite overlay/横向溢出；console error为空。DCloud深层导入`vue-router/dist/vue-router.esm-bundler.js`产生一类弃用warning，刷新会重复，因此不写零warning。未填写账号、发送验证码或提交真实登录；本地代理指向127.0.0.1:9。浏览器测试标签页已关闭、临时视口已reset。此证据不替代全站UI、真实登录、HMR编辑热更新、SSR、小程序开发者工具或设备测试。
+
+### 官方审计结果及未关闭风险
+
+第一次审计调用被自动审查拒绝，原因是不能只凭口头声明证明依赖元数据可公开。随后本地逐节点核验859个resolved全部为公开https registry（npmmirror833、npmjs26），零私有/file/link/凭据或查询参数URL；提交该具体证据后同一个npm官方审计获准。没有绕用其他出口，也未发送源码、环境或凭据。
+
+完整`npm audit --json --registry=https://registry.npmjs.org`退出1，当前为**50个受影响包条目：9 low/32 moderate/9 high/0 critical**。旧报告47，本次新列出的三项为`@vitejs/plugin-legacy/plugin-vue/plugin-vue-jsx`的Vite传递告警；不能把包条目数直接当CVE数或可利用数。Vite的直接公告15→3，另继续继承esbuild告警。当前剩余：
+
+| 范围 | 证据与后续门禁 |
+| --- | --- |
+| Vite5剩余 | [优化依赖.map穿越](https://github.com/vitejs/vite/security/advisories/GHSA-4w7w-66w2-5vf9)、[launch-editor UNC/NTLM](https://github.com/advisories/GHSA-v6wh-96g9-6wx3)、[Windows ADS/8.3路径](https://github.com/vitejs/vite/security/advisories/GHSA-fx2h-pf6j-xcff)。完整版本修复需兼容Vite6.4.3或更高方案；loopback不是库级修复。 |
+| Intlify运行时 | DCloud `uni-cli-shared/dist/resolve.js`把MP/App vue-i18n指向内置9.1.9及旧Intlify；顶层升级不足以关闭。源码无直接createI18n/useI18n证据，但尚未完成真实产物可达性与公告条件验证。 |
+| Vue版本映射 | H5裸vue改指uni-h5-vue；MP指uni-mp-vue；App外置Vue。锁中的根3.4.21/嵌套3.5.41不等于各目标实际运行版本。 |
+| 编译/自动化工具 | adm-zip用于加密uni_modules云编译下载解压；jpeg-js/Jimp/phin可由微信远程调试二维码处理进入；Express/qs及Jest/jsdom/@tootallnate/once继续开放。没有按dev标签豁免。 |
+
+默认限制与已覆盖5.x漏洞的窄边界可独立验收，但TEST-004D2/D3和父项持续开放。不得因本批构建/本地测试通过就开放共享网络、发布主Worker/Pages或宣称全迁移完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
