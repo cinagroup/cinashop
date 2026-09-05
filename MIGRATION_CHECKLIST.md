@@ -16,7 +16,7 @@
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
 | Worker 单元测试 | 当前本地221文件、1,401项通过 | 当前候选回归通过 |
 | Workers runtime | 最新提交 Linux workerd 作业通过；Windows 本机仍在测试收集前 `0xc0000005` | Linux CI 为运行时门禁，Windows 不冒充通过 |
-| CI | [Actions `33939387023`](https://github.com/cinagroup/cinashop/actions/runs/33939387023) 对 `4582e06` 的 Worker/五端/runtime/secret scan 8/8 | API-012已通过全部远端门禁 |
+| CI | [Actions `33940755327`](https://github.com/cinagroup/cinashop/actions/runs/33940755327) 对 `99440a5` 的 Worker/五端/runtime/secret scan 8/8 | API-013已通过全部远端门禁 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -250,8 +250,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [x] **API-011 城市与门店发现4条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET city`、`city_list`、`store_list`、`nearby_store`，保留 PHP 的 StationOpen 以及后三条可选登录边界。`city`按`city_area.parent_id`惰性返回子级和可展开标记，`city_list`从`system_city`构造完整`v/n/parent_id/children`树；门店只读取营业且未删除记录，保留坐标校验、6367km Haversine距离、提货过滤、关键词与登录用户常用门店范围。公开投影明确排除`bank_code/bank_address/alipay_account/alipay_qrcode_url/wechat/wechat_qrcode_url`，门店图片对canonical R2引用短期签名。PHP在缺坐标时会把客户端IP发送给外部定位服务，本实现不向未声明provider披露IP，改为确定性`id DESC`；分页默认10、上限100、offset上限10,000，城市全树和单层也有显式上限。专项5/5、全量219文件/1,380项、双TypeScript和路由审计通过，API面可执行缺口`29→25`、退役后有效覆盖`93.0%→93.8%`；提交`35ef232`已推送，[Actions `33938423701`](https://github.com/cinagroup/cinashop/actions/runs/33938423701)八项全部成功。未读写生产数据库、未调用外部定位、未部署主Worker或前端。
 - [x] **API-012 积分商城首页与分类2条（代码与静态/服务回归完成，未发布）**：精确恢复 `GET store_integral/index` 与 `category`，并复审同组既有 `list/detail`；四条浏览合同现统一保持 PHP 的 StationOpen 加可选登录边界。首页返回`banner/list/integral`，推荐商品限定`is_host=1`，登录用户只读当前积分、匿名为0；分类从可见`category.group=5`按`sort DESC,id DESC`映射`label/value`，最多1,000项。复审发现旧`list`虽已注册却忽略`store_name/priceOrder/salesOrder/range`且品牌恒空，现已恢复关键词/ID、积分加现金价排序、销量排序、积分区间、基础商品删除门禁和品牌投影；分页最多50、offset约束沿用活动列表门禁。商品与banner只接受站内相对路径或无凭据HTTPS，canonical R2引用响应时短期签名，危险banner跳转清空。专项7/7、全量220文件/1,385项、双TypeScript、结构/路由/可观测性/生产依赖审计和主Worker dry-run通过；API面可执行缺口`25→23`、退役后有效覆盖`93.8%→94.3%`。实现提交`4582e06`已推送，[Actions `33939387023`](https://github.com/cinagroup/cinashop/actions/runs/33939387023)八项全部成功；未读取或写入生产数据库、未调用provider、未部署主Worker或前端。
 
-- [x] **API-013 用户积分与分销只读合同6条（候选代码与本地SQL回归完成，未发布）**：已补齐 `integral/list`、`extract/bank`、`spread/order`、`spread/count/:type`、`brokerage_rank`、`rank`；统一 StationOpen、强制登录和私有不缓存。16项本地内存PostgreSQL场景通过：用户隔离、分页前过滤、月汇总、五层分佣、冻结时间、提现状态、全局跨页排名、金额聚合超单行精度、快照JSON与签名头像；全量221文件/1,401项、双TypeScript及结构/路由/可观测性/生产依赖门禁通过。API可执行缺口`23→17`；代码通过不能替代新系统初始化、真实账号前端验收和主Worker发布。
-- [ ] **API-014 既有财务接口行为复审**：`spread/people` 当前 POST 分页错误读取 query；`spread/commission/:type` 类型映射及分页后筛选与 PHP 不符；`extract/cash` 缺旧 `money/name/bankname/cardnum/weixin` 载荷兼容、提现方式/最小最大金额/费率配置校验。需连同新前端消费者、资金事务和幂等/并发回归完成，不能因路由已注册而关闭。
+- [x] **API-013 用户积分与分销只读合同6条（候选代码与SQL回归完成，未发布）**：已补齐 `integral/list`、`extract/bank`、`spread/order`、`spread/count/:type`、`brokerage_rank`、`rank`；统一 StationOpen、强制登录和私有不缓存。16项本地内存PostgreSQL场景通过：用户隔离、分页前过滤、月汇总、五层分佣、冻结时间、提现状态、全局跨页排名、金额聚合超单行精度、快照JSON与签名头像；全量221文件/1,401项、双TypeScript及结构/路由/可观测性/生产依赖门禁通过。实现`99440a5`已推送，[Actions `33940755327`](https://github.com/cinagroup/cinashop/actions/runs/33940755327)八项全部成功。API可执行缺口`23→17`；代码通过不能替代新系统初始化、真实账号前端验收和主Worker发布。
+- [ ] **API-014 既有财务接口行为复审**：`spread/people` 当前 POST 分页错误读取 query；`spread/commission/:type` 类型映射及分页后筛选与 PHP 不符（旧type3=佣金/type4=提现且按月分组，新UniApp却把1/2/3作为一级/二级/提现，必须协同迁移）。`extract/cash` 缺旧 `money/name/bankname/cardnum/weixin` 载荷兼容、提现方式/最小最大金额/费率配置校验；当前扣减余额后生成的佣金支出账本`status=0`会被有效佣金统计排除，PHP原合同为有效支出。还需验证余额提现即时入账/审核、净额与手续费口径、幂等及并发。需连同新前端消费者、资金事务和回归完成，不能因路由已注册而关闭。
 
 ## P1：Admin `/adminapi` 路由批次
 
@@ -381,7 +381,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [ ] **FE-004K Supplier Pages 预发**：创建/确认正式项目，核对 `WORKERS_API`、正式 Origin、同源代理与 Secret/资源映射。
   - [ ] **FE-004L 发布后观察**：另行获得发布批准后才可部署，记录 deployment/Git SHA并做日志、错误率和业务对账。
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
-- [x] **TEST-001 Linux CI**：最新 GitHub Actions `33939387023` 在 Ubuntu 24.04 上以锁文件安装完成 8/8 jobs：Worker 双 TypeScript、220 文件/1,385 项单测、真实 workerd、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及 checksum-pinned Gitleaks 非空全历史扫描。详见审计文档的 TEST-001 节；这只完成可重复工程门禁，不代替浏览器E2E、真实第三方、预发或发布。
+- [x] **TEST-001 Linux CI**：最新 GitHub Actions `33940755327` 在 Ubuntu 24.04 上以锁文件安装完成 8/8 jobs：Worker 双 TypeScript、221 文件/1,401 项单测（含16项真实内存PostgreSQL查询场景）、真实 workerd、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及 checksum-pinned Gitleaks 非空全历史扫描。详见审计文档的 TEST-001 节；这只完成可重复工程门禁，不代替浏览器E2E、真实第三方、预发或发布。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
 - [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立并由 Actions `33393069797` 复验，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
   - [x] **TEST-003A 仓库可观测性合同**：提交 `beb2071b397eb316ee8cb5592656b3dceb7ed1a3` 新增 `audit/observability-policy.json`，定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；运行时及 AST 门禁拒绝正文、payload、token、查询、URL、凭据、异常消息、任何 ID/UID、schema 覆盖、对象展开、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过；Actions 同时通过 Worker 165文件/1,031项、workerd13/13、schema201→247零漂移、route1,904→1,448/746/728、五端构建与70提交Gitleaks无泄漏。

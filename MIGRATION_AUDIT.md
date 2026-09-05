@@ -4662,9 +4662,9 @@ PHP把`GET /api/store_integral/index|category|list|detail/:id`放在同一个Sta
 
 PostgreSQL最佳实践用于约束数据库内过滤、分页及聚合，避免PHP逐订单、逐月份的N+1往返。新增精确锁定的开发依赖`@electric-sql/pglite@0.5.8`：测试从当前Drizzle列类型和默认值构建12张临时内存表，把service生成的真实参数化SQL交给PostgreSQL WASM引擎执行，不伪造数据库返回值。16项场景覆盖六合同、跨用户隔离、分页/月边界、五类分佣、无效冻结/提现状态、空页/空表、SQL注入形状、多个角色重叠、聚合精度、活动字段、快照及签名头像；还验证HTTP信封、匿名拒绝、不缓存和POST分页来源。该测试不证明生产PostgreSQL16的索引计划、Hyperdrive缓存、并发或真实账号前端流程，不能代替发布验收。
 
-当前路由审计为PHP1,904、TS1,640、精确879、可执行861、不可用18、原始缺失1,025、退役17、可执行缺口1,008；API面为PHP457、TS861、精确438、可执行435、缺口17，有效覆盖95.6%。结构审计仍为201→263、共享201、源列缺口0、外部/内嵌零漂移；可观测性仍17信号/10组件/53事件/6发布阻断。生产依赖审计0漏洞，开发工具链仍有drizzle-kit及旧esbuild链的4个moderate项，新PGlite不在漏洞项中。全量回归、双TypeScript和远端门禁的最终结果将在完成后补记。本批没有读取或写入生产PostgreSQL、调用provider、创建MySQL服务或部署Worker/Pages。
+当前路由审计为PHP1,904、TS1,640、精确879、可执行861、不可用18、原始缺失1,025、退役17、可执行缺口1,008；API面为PHP457、TS861、精确438、可执行435、缺口17，有效覆盖95.6%。结构审计仍为201→263、共享201、源列缺口0、外部/内嵌零漂移；可观测性仍17信号/10组件/53事件/6发布阻断。生产依赖审计0漏洞，开发工具链仍有drizzle-kit及旧esbuild链的4个moderate项，新PGlite不在漏洞项中。本批没有读取或写入生产PostgreSQL、调用provider、创建MySQL服务或部署Worker/Pages。
 
-本地最终门禁：221文件/1,401项全量测试通过、双TypeScript通过。Windows本机默认2GiB的Node堆首次类型检查耗尽，提升单次编译堆上限至6GiB后完成，没有跳过文件或放宽检查；Linux CI仍使用仓库标准命令。远端CI证据待提交推送后补记。
+最终门禁：221文件/1,401项全量测试通过、双TypeScript通过。Windows本机默认2GiB的Node堆首次类型检查耗尽，提升单次编译堆上限至6GiB后完成，没有跳过文件或放宽检查；Linux CI使用仓库标准命令通过。实现提交`99440a5e22016c96b8b315aed4f2c04731d2d7e2`已推送，[Actions `33940755327`](https://github.com/cinagroup/cinashop/actions/runs/33940755327)的Worker静态/全量单元、Linux workerd、Admin、PC、Supplier、Kefu、UniApp和全历史密钥扫描8/8成功。主Worker、正式前端及真实渠道仍未发布或启用。
 
 此次审计同时把现有财务写入/列表缺口记为API-014：POST spread/people忽略body分页、spread/commission类型与分页后过滤偏离PHP、extract/cash没有完整旧载荷及提现上下限/费率验证。API-013的只读完成不能关闭这些资金写入问题，也不能证明新UniApp已消费本批新增接口。
 
