@@ -9,8 +9,9 @@
  *   - StoreBargainServices (lst/detail)
  *   - StoreIntegralServices (lst/detail)
  */
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import {
+  legacyCategory,
   storeActivity,
   storeCouponIssue,
   storeCouponIssueUser,
@@ -24,6 +25,7 @@ import {
   userBill,
   user as userTable,
 } from "@/models/schema";
+import type { Env } from "@/env";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { DB } from "@/dao/BaseDao";
 import { ValidateException, NotFoundException } from "@/utils/errors";
@@ -32,6 +34,8 @@ import {
   loadOrderSystemFormSubmission,
 } from "@/services/order/OrderSystemFormService";
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
+import { signAttachmentReferences } from "@/services/system/AttachmentService";
+import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 
 const SHANGHAI_CLOCK = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Shanghai",
@@ -82,8 +86,70 @@ function progress(quota: number, quotaShow: number): number {
   return Math.min(100, Math.max(0, Math.round(((quotaShow - quota) / quotaShow) * 1_000) / 10));
 }
 
+const MAX_INTEGRAL_CATEGORY_ROWS = 1_000;
+
+export interface IntegralListQuery {
+  storeName?: unknown;
+  priceOrder?: unknown;
+  salesOrder?: unknown;
+  range?: unknown;
+}
+
+function boundedText(value: unknown, maximum: number): string {
+  return typeof value === "string"
+    ? value.replace(/[\u0000-\u001f\u007f]/gu, "").trim().slice(0, maximum)
+    : "";
+}
+
+function safePublicAsset(value: unknown): string {
+  const text = boundedText(value, 2_048);
+  if (!text) return "";
+  if (/^\/(?!\/)/u.test(text)) return text;
+  try {
+    const parsed = new URL(text);
+    return parsed.protocol === "https:" && !parsed.username && !parsed.password ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+function safeIntegralBannerLink(value: unknown): string {
+  const text = boundedText(value, 2_048);
+  if (!text) return "";
+  if (/^\/(?!\/)/u.test(text)) return text;
+  try {
+    const parsed = new URL(text);
+    return parsed.protocol === "https:" && !parsed.username && !parsed.password ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+export function parseIntegralRange(value: unknown): { minimum: number; maximum: number } | undefined {
+  const text = boundedText(value, 64);
+  const match = /^(\d+)\s*-\s*(\d+)$/u.exec(text);
+  if (!match) return undefined;
+  const minimum = Number(match[1]);
+  const maximum = Number(match[2]);
+  if (
+    !Number.isSafeInteger(minimum) || !Number.isSafeInteger(maximum) ||
+    minimum < 0 || maximum < 0 || maximum > 2_147_483_647
+  ) {
+    return undefined;
+  }
+  return { minimum, maximum };
+}
+
+function legacyOrder(value: unknown): "asc" | "desc" | undefined {
+  const normalized = boundedText(value, 16).toLowerCase();
+  return normalized === "asc" || normalized === "desc" ? normalized : undefined;
+}
+
 export class ActivityService {
-  constructor(private readonly container: Container) {}
+  constructor(
+    private readonly container: Container,
+    private readonly env?: Env,
+  ) {}
 
   // ─── 优惠券 ───────────────────────────────────────────────
 
@@ -333,19 +399,89 @@ export class ActivityService {
 
   // ─── 积分商城 ─────────────────────────────────────────────
 
-  async integralList(pageValue: unknown = 1, limitValue: unknown = 10) {
+  private async signIntegralAssets(references: string[]): Promise<string[]> {
+    const safe = references.map(safePublicAsset);
+    return this.env?.APP_KEY ? signAttachmentReferences(this.env.APP_KEY, safe) : safe;
+  }
+
+  async integralList(
+    pageValue: unknown = 1,
+    limitValue: unknown = 10,
+    query: IntegralListQuery = {},
+    isHost = false,
+  ) {
     const { page, limit } = normalizeListPage(pageValue, limitValue);
-    const rows = await this.container.storeIntegralDao.list(page, limit);
-    return rows.map((item) => ({
+    const rows = await this.container.storeIntegralDao.list(page, limit, {
+      storeName: boundedText(query.storeName, 100) || undefined,
+      priceOrder: legacyOrder(query.priceOrder),
+      salesOrder: legacyOrder(query.salesOrder),
+      range: parseIntegralRange(query.range),
+      isHost,
+    });
+    const images = await this.signIntegralAssets(rows.map((item) => item.image));
+    return rows.map((item, index) => ({
       id: item.id,
       product_id: item.productId,
-      image: item.image,
+      image: images[index] ?? "",
       title: item.storeName,
       integral: item.integral,
       price: Number(item.price),
       sales: item.sales,
       stock: item.stock,
-      brand_name: "",
+      brand_name: item.brandName ?? "",
+    }));
+  }
+
+  async integralHome(uid: number, pageValue: unknown = 1, limitValue: unknown = 10) {
+    if (!this.env) throw new Error("积分商城兼容服务缺少运行环境");
+    const catalog = new PublicCatalogService(this.container, this.env);
+    const [groups, list, users] = await Promise.all([
+      catalog.groupDataMany(["integral_shop_banner"]),
+      this.integralList(pageValue, limitValue, {}, true),
+      uid > 0
+        ? this.container.db
+            .select({ integral: userTable.integral })
+            .from(userTable)
+            .where(eq(userTable.uid, uid))
+            .limit(1)
+        : Promise.resolve([]),
+    ]);
+    const rawBanner = groups.integral_shop_banner ?? [];
+    const bannerImages = await this.signIntegralAssets(
+      rawBanner.map((item) => safePublicAsset(item.img ?? item.image)),
+    );
+    const banner = rawBanner.map((item, index) => ({
+      ...item,
+      ...(Object.hasOwn(item, "img") || !Object.hasOwn(item, "image")
+        ? { img: bannerImages[index] ?? "" }
+        : { image: bannerImages[index] ?? "" }),
+      ...(Object.hasOwn(item, "comment") ? { comment: boundedText(item.comment, 500) } : {}),
+      ...(Object.hasOwn(item, "link") ? { link: safeIntegralBannerLink(item.link) } : {}),
+    }));
+    return {
+      banner,
+      list,
+      integral: Number(users[0]?.integral ?? 0),
+    };
+  }
+
+  async integralCategories() {
+    const rows = await this.container.db
+      .select({
+        name: legacyCategory.name,
+        integralMin: legacyCategory.integralMin,
+        integralMax: legacyCategory.integralMax,
+      })
+      .from(legacyCategory)
+      .where(and(eq(legacyCategory.isShow, 1), eq(legacyCategory.group, 5)))
+      .orderBy(desc(legacyCategory.sort), desc(legacyCategory.id))
+      .limit(MAX_INTEGRAL_CATEGORY_ROWS + 1);
+    if (rows.length > MAX_INTEGRAL_CATEGORY_ROWS) {
+      throw new ValidateException("积分分类超过安全上限");
+    }
+    return rows.map((item) => ({
+      label: boundedText(item.name, 255),
+      value: `${item.integralMin}-${item.integralMax}`,
     }));
   }
 

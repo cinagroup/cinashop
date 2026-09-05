@@ -127,6 +127,12 @@ describe("legacy activity-list compatibility", () => {
     expect(combinationList).toHaveBeenNthCalledWith(1, 1, 6);
     expect(combinationList).toHaveBeenNthCalledWith(2, 201, 50);
     expect(bargainList).toHaveBeenCalledWith(1, 6);
-    expect(integralList).toHaveBeenCalledWith(1, 6);
+    expect(integralList).toHaveBeenCalledWith(1, 6, {
+      storeName: undefined,
+      priceOrder: undefined,
+      salesOrder: undefined,
+      range: undefined,
+      isHost: false,
+    });
   });
 });

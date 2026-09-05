@@ -473,10 +473,30 @@ export async function bargainDetail(c: C) {
 }
 
 export async function integralList(c: C) {
-  const svc = new ActivityService(c.get("container"));
+  const svc = new ActivityService(c.get("container"), c.env);
   const page = Number(c.req.query("page") ?? 1);
   const limit = Number(c.req.query("limit") ?? 10);
-  return jsonOk(c, await svc.integralList(page, limit));
+  return jsonOk(c, await svc.integralList(page, limit, {
+    storeName: c.req.query("store_name"),
+    priceOrder: c.req.query("priceOrder"),
+    salesOrder: c.req.query("salesOrder"),
+    range: c.req.query("range"),
+  }));
+}
+
+export async function integralHome(c: C) {
+  privateNoStore(c);
+  const svc = new ActivityService(c.get("container"), c.env);
+  return jsonOk(c, await svc.integralHome(
+    c.get("uid") ?? 0,
+    c.req.query("page"),
+    c.req.query("limit"),
+  ));
+}
+
+export async function integralCategories(c: C) {
+  const svc = new ActivityService(c.get("container"), c.env);
+  return jsonOk(c, await svc.integralCategories());
 }
 
 export async function integralDetail(c: C) {

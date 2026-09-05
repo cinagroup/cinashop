@@ -4635,6 +4635,16 @@ PHP公开合同为`GET /api/city`、`city_list`、`store_list`和`nearby_store`�
 
 专项5/5覆盖坐标格式/范围、分页上限、三级城市树、两类距离格式、敏感门店字段剥离、签名图片形状和四条路由中间件；完整单元为219文件/1,380项，双TypeScript通过。路由审计从TS 1,628/精确867/可执行849推进为1,632/871/853，全局可执行缺口`1,020→1,016`，API面`29→25`且退役后有效覆盖`93.0%→93.8%`。实现提交`35ef2323b74c7aa0fa88d256477a0790a8d59520`已推送，[Actions `33938423701`](https://github.com/cinagroup/cinashop/actions/runs/33938423701)的Worker、Linux workerd、Admin、PC、Supplier、Kefu、UniApp和全历史密钥扫描8/8成功。本批沿用既有生产基线中`city_area/system_city/有效门店=0`的证据，没有再次读取或写入生产数据库，没有调用IP定位或其他provider，也没有部署主Worker或前端；真实城市、门店、营业范围、图片和前端流程仍由DATA-006/008及发布验收负责。
 
+## API-012 积分商城首页与分类2条（2026-09-05）
+
+PHP把`GET /api/store_integral/index|category|list|detail/:id`放在同一个StationOpen加可选登录组。首页读取`integral_shop_banner`，按`is_show=1/is_host=1`取推荐积分商品，并把当前可选登录用户的积分放到顶层`integral`；匿名按0处理。分类服务只读取可见的`category.group=5`，按排序输出`label=名称/value=最低积分-最高积分`。旧UniApp首页实际消费推荐列表和积分，分类页在前端补“全部”后把`value`原样传回列表的`range`。
+
+本轮不仅新增缺失的`index/category`，还重新审计了此前已注册的`list`。原Worker只做分页并把`brand_name`硬编码为空，导致PHP支持的`store_name`、`priceOrder`、`salesOrder`、`range`四类查询全部静默失效，也没有排除已删除的基础商品；`list/detail`路由还漏了外层StationOpen。候选现在把四条浏览路由统一置于StationOpen与可选登录后，列表按PHP语义支持标题或ID关键词、积分优先且现金价升降序、销量升降序、闭区间积分筛选，随后稳定按`sort DESC,id DESC`；查询内联基础商品删除门禁并从基础商品品牌关系返回真实品牌名。反向区间保持为自然空结果而不是错误回退全量；畸形、负数或越界区间被忽略。活动分页仍限制每页最多50并把最大offset约束在约10,000范围，分类最多1,000行，超限失败关闭。
+
+首页返回精确`banner/list/integral`信封，推荐列表复用同一商品投影，登录态响应标记`private, no-store`；分类映射精确保持旧字段。商品图和banner图先限制为站内相对路径或无userinfo的HTTPS，canonical`/api/assets/:id`只在响应时用APP_KEY生成短期签名；banner描述有界，`javascript:`等危险跳转被清空。未把短期签名或用户积分写回数据库。
+
+专项7/7覆盖区间边界、四类列表参数、品牌、canonical附件签名、推荐商品、登录积分、banner解析与危险链接、分类映射和四路由中间件；全量单元220文件/1,385项、双TypeScript、生产依赖0漏洞、结构审计source201/target263/shared201/sourceGaps0且外部/内嵌263零漂移、可观测性17信号/10组件/53事件/6阻断均通过。路由审计从TS1,632/精确871/可执行853推进为1,634/873/855，全局可执行缺口`1,016→1,014`，API面从精确430/可执行427/缺口25推进为432/429/23，退役后有效覆盖`93.8%→94.3%`。主Worker minify dry-run为3,875.03KiB/gzip919.70KiB并精确解析Hyperdrive`9748c294e21c49a99579c9cef70102e0`、R2、Images、Queue、KV和Durable Objects；仅dry-run。本批不需要旧PHP真实历史行，没有读取或写入生产PostgreSQL，没有调用provider，也没有部署主Worker或任何前端；积分分类、banner、推荐商品、品牌及真实账号流程仍属于DATA-006/008与发布验收。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

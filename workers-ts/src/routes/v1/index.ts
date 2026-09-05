@@ -788,8 +788,31 @@ v1Routes.get("/bargain/user/list", authMiddleware({ force: true }), ActivityJoin
 v1Routes.post("/bargain/user/cancel", authMiddleware({ force: true }), ActivityJoinController.cancelBargain);
 
 // ─── 积分商城 (M5) ─────────────────────────────────────────────
-v1Routes.get("/store_integral/list", authMiddleware({ force: false }), UserActivityController.integralList);
-v1Routes.get("/store_integral/detail/:id", authMiddleware({ force: false }), UserActivityController.integralDetail);
+// PHP keeps all four browse routes inside StationOpen + optional-auth.
+v1Routes.get(
+  "/store_integral/index",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  UserActivityController.integralHome,
+);
+v1Routes.get(
+  "/store_integral/category",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  UserActivityController.integralCategories,
+);
+v1Routes.get(
+  "/store_integral/list",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  UserActivityController.integralList,
+);
+v1Routes.get(
+  "/store_integral/detail/:id",
+  stationOpenMiddleware(),
+  authMiddleware({ force: false }),
+  UserActivityController.integralDetail,
+);
 v1Routes.post("/store_integral/exchange/:id", authMiddleware({ force: true }), UserActivityController.integralExchange);
 v1Routes.get("/store_integral/order/list", authMiddleware({ force: true }), OrderController.integralOrderList);
 v1Routes.get("/store_integral/order/detail/:uni", authMiddleware({ force: true }), OrderController.integralOrderDetail);

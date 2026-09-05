@@ -2,7 +2,7 @@
  * 营销活动 DAO (M5)
  * 优惠券 + 秒杀 + 拼团 + 砍价 + 积分商品
  */
-import { eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
 import {
   storeCouponIssue,
@@ -11,7 +11,9 @@ import {
   storeSeckillTime,
   storeCombination,
   storeBargain,
+  storeBrand,
   storeIntegral,
+  storeProduct,
 } from "@/models/schema";
 
 // ─── 优惠券模板 ──────────────────────────────────────────────
@@ -195,18 +197,61 @@ export class StoreIntegralDao extends BaseDao<typeof storeIntegral> {
     super(db, storeIntegral, { status: (v) => eq(storeIntegral.status, Number(v)) });
   }
 
-  async list(page = 1, limit = 10) {
-    return this.db
-      .select()
+  async list(
+    page = 1,
+    limit = 10,
+    filters: {
+      storeName?: string;
+      priceOrder?: "asc" | "desc";
+      salesOrder?: "asc" | "desc";
+      range?: { minimum: number; maximum: number };
+      isHost?: boolean;
+    } = {},
+  ) {
+    const name = filters.storeName?.trim();
+    const namePattern = name ? `%${name}%` : "";
+    const conditions = [
+      eq(storeIntegral.status, 1),
+      eq(storeIntegral.isShow, 1),
+      eq(storeIntegral.isDel, 0),
+      eq(storeProduct.isDel, 0),
+      filters.isHost ? eq(storeIntegral.isHost, 1) : undefined,
+      name
+        ? or(
+            ilike(storeIntegral.storeName, namePattern),
+            sql`${storeIntegral.id}::text ILIKE ${namePattern}`,
+          )
+        : undefined,
+      filters.range ? gte(storeIntegral.integral, filters.range.minimum) : undefined,
+      filters.range ? lte(storeIntegral.integral, filters.range.maximum) : undefined,
+    ];
+    const ordering: SQL[] = [];
+    if (filters.priceOrder) {
+      ordering.push(
+        asc(storeIntegral.integral),
+        filters.priceOrder === "desc" ? desc(storeIntegral.price) : asc(storeIntegral.price),
+      );
+    }
+    if (filters.salesOrder) {
+      ordering.push(
+        filters.salesOrder === "desc" ? desc(storeIntegral.sales) : asc(storeIntegral.sales),
+      );
+    }
+    ordering.push(desc(storeIntegral.sort), desc(storeIntegral.id));
+
+    const rows = await this.db
+      .select({
+        ...getTableColumns(storeIntegral),
+        brandName: storeBrand.brandName,
+      })
       .from(storeIntegral)
-      .where(
-        sql`${storeIntegral.status} = 1
-          AND ${storeIntegral.isShow} = 1
-          AND ${storeIntegral.isDel} = 0`,
-      )
-      .orderBy(sql`${storeIntegral.sort} DESC, ${storeIntegral.addTime} DESC`)
+      .innerJoin(storeProduct, eq(storeProduct.id, storeIntegral.productId))
+      .leftJoin(storeBrand, eq(storeBrand.id, storeProduct.brandId))
+      .where(and(...conditions))
+      .orderBy(...ordering)
       .limit(limit)
       .offset((page - 1) * limit);
+    return rows.map((row) => ({ ...row, brandName: row.brandName ?? "" }));
   }
 
   async getById(id: number) {
