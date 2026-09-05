@@ -185,6 +185,11 @@ jobs:
         working-directory: view/${{ matrix.directory }}
         run: npm audit --audit-level=low --registry=https://registry.npmjs.org
 
+      - name: Verify current ECharts tooltip paths
+        if: matrix.directory == 'admin-ts' || matrix.directory == 'supplier-ts'
+        working-directory: view/${{ matrix.directory }}
+        run: node --test ../common/echarts-tooltip.test.mjs
+
   secret-scan:
     name: Repository secret scan
     runs-on: ubuntu-24.04

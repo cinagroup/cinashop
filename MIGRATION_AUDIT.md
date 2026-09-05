@@ -4859,6 +4859,42 @@ UniApp需独立完成同版套件升级与暴露评估，当前固定DCloud版�
 
 本轮再次运行客服`npm test`（Vitest3.2.6，3文件17项全通过）及`node --test ../common/toolchain-security.test.mjs`（6项全通过），未重跑Worker或其它四端全量。新证据只补充当前本地依赖候选的客服浏览器回归，不拿旧Actions运行冒充本批CI，也不关闭未完成的ECharts/UniApp/Drizzle依赖审计。
 
+## TEST-004 首批获准推送与ECharts完整边界审查（2026-09-05）
+
+用户随后明确回复“授权”，已按先前具体确认请求提交推送10个文件到main：`a00ac45c8f6f8c278928e38bc186608361b6ee9b`。[Actions `33956473619`](https://github.com/cinagroup/cinashop/actions/runs/33956473619)对该精确SHA最终8/8成功：Worker双TypeScript、229文件单元测试、schema/route/observability、3文件24项workerd、五端类型/构建、客服17项及新增18项依赖回归均执行成功；Kefu/PC全树官方npm审计各0。Gitleaks扫描219提交无泄露。workerd仍有WebSocketPipe被销毁的非致命诊断，不能称日志无异常文字。此前默认分支写入的权限暂停已解除；仅勾选已获上述证据的TEST-004B/C，不把本批尚未提交的ECharts测试或生产验收纳入该CI。
+
+ECharts使用安全修复技能进行独立只读调查、主代理独立核对及一次候选复核。依据[Apache实际修复](https://github.com/apache/echarts/pull/21608)，本项仅评估`lines`默认tooltip中数据项name未经编码进入HTML的公告路径。Admin/Supplier均锁定5.6.0；主代理临时探针实际调用LinesSeries.formatTooltip→normalizeTooltipFormatResult→HTML生成→TooltipHTMLContent.setContent，以惰性记录元素承接真实innerHTML赋值，证实普通HTML标签与实体编码两种名称会被原样交付，fromName分支则转义。探针不执行浏览器脚本、不访问外部URL；这是库级sink证明，不是线上XSS复现。
+
+完整入口矩阵如下，行号对应未改动的业务源码。合计6个ECharts导入文件、13个setOption构造器、17个实际图表实例（Admin16、Supplier1）：
+
+| 构造器（相对仓库） | 覆盖实例 | series来源与约束 |
+|---|---|---|
+| view/admin-ts/src/pages/Dashboard.vue:153 | 首页订单 | 展开API series；home/order服务固定bar/line |
+| 同文件:183 | 首页用户趋势 | 本地固定line |
+| 同文件:198 | 首页用户分层 | 本地固定pie |
+| view/admin-ts/src/pages/statistic/Dashboard.vue:286 | 订单/商品趋势2图 | 展开API series；对应服务固定line/bar |
+| 同文件:304 | 订单渠道/类型2图 | 本地固定pie及字符串模板 |
+| view/admin-ts/src/pages/statistic/components/UserStatisticsPanel.vue:146 | 用户/微信趋势2图 | 显式投影name/value，本地固定line |
+| 同文件:163 | 地域 | 本地固定bar |
+| 同文件:171 | 性别 | 本地固定pie及字符串模板 |
+| view/admin-ts/src/pages/statistic/components/TradeStatisticsPanel.vue:57 | 当日交易 | 两条本地固定line |
+| 同文件:69 | 历史交易 | 数字type=1用于业务筛选，随后本地固定line |
+| view/admin-ts/src/pages/statistic/components/BalanceStatisticsPanel.vue:46 | 余额来源/消耗2图 | 本地固定pie及字符串模板 |
+| 同文件:52 | 余额趋势 | 展开API series；余额服务固定两条line |
+| view/supplier-ts/src/components/SalesTrend.vue:19 | Supplier首页趋势 | 仅注册LineChart，两条本地固定line |
+
+Admin入口为/dashboard、/statistic；Supplier为/dashboard，SalesTrend只有该页一个消费者。未发现另外的动态ECharts导入、CDN脚本、图表选项加载/保存入口或自定义图表注册。Admin全量导入确实注册了LinesChart，三处展开也会保留type/data/tooltip/coordinateSystem等额外字段：不能把TS union或全局tooltip.trigger=axis视作安全过滤。构造一份任意API JSON可使这些字段进入setOption，但尚不构成当前攻击者能控制接口输出的证据。
+
+主代理从同源请求/Pages透传继续追踪到/adminapi与/api/admin两个别名，均进入AdminController相同方法；home/order只接受parseAdminHomeCycle，三个get_trend只接受parseAdminStatisticRange，客户端不能提交完整图表选项。AdminDashboardService.orderChart:403～426按四周期分支创建固定bar/line和白名单图例，数值由number()投影；AdminStatisticService.orderTrend:813～816固定六指标、productTrend:947～951固定四指标；AdminExtendedStatisticService.balanceTrend:621～623固定两指标。后三者用seriesValues将DB聚合value转换为有限数，忽略无效指标，数据库行不作对象展开。其余前端构造器的series类型均由本地字面量决定；DEV预览同样是本地固定数据，不接受任意选项输入。可信后端或部署来源遭替换属于不同前提，不能以此虚构一个现有请求链。
+
+候选结论为应用范围`no_change`：现有13个构造器没有可达的公告Lines默认tooltip路径，故本轮不修改业务页面、后端服务或强行升级ECharts主版本。包本身仍受公告影响，Admin/Supplier各1个moderate不变；此处没有豁免所有ECharts问题或证明生产已部署该源码。以后增加lines、可编辑图表JSON、修改数据生产者或注册方式必须重新审查。
+
+新增`workers-ts/test/admin-chart-option-boundary.test.ts`直接调用四类服务（首页覆盖四周期），7项测试验证额外type/tooltip/coords/name不从聚合行透传、正常12.50数值与计数保留、HTML/实体/JSON数值被转为0、未知metric不进入图表。该夹具替换查询返回值，不是新的SQL/HTTP/鉴权集成验证。新增`view/common/echarts-tooltip.test.mjs`在两份实际安装包分别执行4项测试：真实SSR line/bar/pie模型的单项/多项格式化结果，经真实markup及HTML赋值方法记录，标签名称、实体名称与正常中文/数值均按当前合同转义；固定饼图模板同样检查。没有将漏洞的原始HTML输出写成要求未来版本继续保留的CI断言。测试覆盖审查过的生成器与格式化调用，不冒称自动执行了全部Vue构造器或真实指针悬浮E2E。
+
+本地新增7项加既有三组迁移测试共4文件22项通过，Admin/Supplier各4项tooltip测试通过。第一次node --check路径误用了Worker工作目录，纠正为绝对路径后通过；全量Worker类型检查先在Node默认约2GiB堆上限OOM，改用单命令`node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit`后退出0，未修改系统设置或弱化类型规则。业务源码/依赖未变，不需要为本轮测试改动重做图表样式兼容迁移；仍由新提交的Linux CI执行完整既有构建及新增两个前端tooltip步骤。独立复核和该精确SHA通过前，TEST-004F保持待验收。
+
+候选独立复核未发现当前应用可达的Lines路径或生产行为回归，但指出原测试名称“item/axis”把series片段误称为完整轴提示覆盖，而且getRawValue断言并不证明金额在提示正文可见。主代理核对TooltipView._showAxisTooltip与axisPointer.getValueLabel后确认这两处覆盖表述问题：将原3项命名收窄为single/multiple-series片段并断言HTML正文包含数值7；额外1项直接调用真实_showAxisTooltip，在x/y两个分类轴使用与series及数据项不同的标签，验证轴标题在最终HTML中编码。仅替换屏幕定位/展示回调和惰性HTML记录元素；真实轴模型、标签格式化、section头与片段拼装均执行，仍不声称真实鼠标事件E2E。首轮新轴夹具遗漏valueLabelOpt导致两端失败，按实际axisTrigger载荷补齐空默认选项后，两端最终各5/5通过。更新后的候选无业务源码/依赖变更；仅新增回归测试与CI步骤，独立复核周期到此完成，等待本批精确SHA门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
