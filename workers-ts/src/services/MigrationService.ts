@@ -27,6 +27,7 @@ import { PRODUCT_WORDS_INDEX_SQL } from "@/migrations/productWordsIndexes";
 import { PRODUCT_SKU_RETIREMENT_SQL } from "@/migrations/productSkuRetirement";
 import { SECOND_CARD_REMINDER_MIGRATION_SQL } from "@/migrations/secondCardReminderIndexes";
 import { USER_WITHDRAWAL_REPLAY_SQL } from "@/migrations/userWithdrawalReplay";
+import { WITHDRAWAL_EFFECTS_SQL } from "@/migrations/withdrawalEffects";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -358,6 +359,7 @@ export class MigrationService {
       this.migration_0132(),
       this.migration_0133(),
       this.migration_0134(),
+      this.migration_0135(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8325,5 +8327,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0134(): string {
     return USER_WITHDRAWAL_REPLAY_SQL;
+  }
+
+  private migration_0135(): string {
+    return WITHDRAWAL_EFFECTS_SQL;
   }
 }

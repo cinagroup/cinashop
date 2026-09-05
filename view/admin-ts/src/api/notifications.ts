@@ -7,7 +7,9 @@ export type NotificationMark =
   | "order_postage_success"
   | "order_deliver_success"
   | "order_fictitious_success"
-  | "send_order_refund_no_status";
+  | "send_order_refund_no_status"
+  | "user_extract"
+  | "user_balance_change";
 export type ProviderTemplateType = "wechat" | "routine";
 export type NotificationDeliveryChannel =
   | "sms"
@@ -113,7 +115,8 @@ export interface NotificationDeliveryItem {
   id: number;
   outboxId: number;
   eventKey: string;
-  orderId: number;
+  orderId: number | null;
+  withdrawalId?: number | null;
   userId: number;
   noticeMark: string;
   channel: NotificationDeliveryChannel;
@@ -253,12 +256,25 @@ const previewTemplates: NotificationTemplateItem[] = [
   { id: 1, title: "快递发货公众号模板", content: "thing1/order_number2", type: "wechat", mark: "order_postage_success", status: 1, addTime: now - 9000, legacyType: 1, example: "订单已发货", tempid: "official-template-audit" },
   { id: 2, title: "快递发货小程序模板", content: "thing1/character_string2", type: "routine", mark: "order_postage_success", status: 1, addTime: now - 8800, legacyType: 0, example: "订单已发货", tempid: "routine-template-audit" },
 ];
+for (const mark of ["user_extract", "user_balance_change"] as const) {
+  const label = mark === "user_extract" ? "提现成功" : "提现拒绝退回";
+  previewConfigs.push({
+    mark, label, exists: false, ambiguous: false, rowCount: 0, id: 0, name: label, title: label,
+    isSystem: false, isSms: false, isWechat: false, isRoutine: false,
+    systemTitle: label, systemText: "{nickname}，提现金额 {extract_number}，时间 {date}。{message}",
+    smsId: "", smsText: "", url: "", officialAllowed: mark === "user_extract", routineAllowed: true,
+    templateCount: 0, enabledTemplateCount: 0,
+  });
+}
 const previewDeliveries: NotificationDeliveryItem[] = [
   { id: 9204, outboxId: 8104, eventKey: "order.delivery.notice:28104", orderId: 28104, userId: 104, noticeMark: "order_postage_success", channel: "sms", maskedTarget: "138****8000", templateCode: "SMS_ORDER_SENT", status: "UNKNOWN", dispatchCount: 1, attemptCount: 1, replayCount: 0, availableTime: 0, leaseUntil: 0, providerReference: "", providerRequestId: "", responseCode: "", lastError: "provider_result_unknown_after_network_disconnect", sentTime: 0, addTime: now - 7200, updateTime: now - 7100 },
   { id: 9203, outboxId: 8103, eventKey: "order.delivery.notice:28103", orderId: 28103, userId: 103, noticeMark: "order_postage_success", channel: "wechat_routine", maskedTarget: "oABC…P9xy", templateCode: "routine-template-audit", status: "SENT", dispatchCount: 1, attemptCount: 1, replayCount: 0, availableTime: 0, leaseUntil: 0, providerReference: "audit-msg", providerRequestId: "", responseCode: "0", lastError: "", sentTime: now - 3600, addTime: now - 3650, updateTime: now - 3600 },
   { id: 9202, outboxId: 8102, eventKey: "order.refund.refused.notice:4412", orderId: 28102, userId: 102, noticeMark: "send_order_refund_no_status", channel: "wechat_official", maskedTarget: "oDEF…R8uv", templateCode: "official-refund-audit", status: "DEAD", dispatchCount: 2, attemptCount: 2, replayCount: 1, availableTime: 0, leaseUntil: 0, providerReference: "", providerRequestId: "", responseCode: "40037", lastError: "Provider rejected request: 40037", sentTime: 0, addTime: now - 5400, updateTime: now - 5000 },
 ];
 const previewActions: NotificationDeliveryActionItem[] = [];
+previewDeliveries.unshift({ ...previewDeliveries[0], id: 9205, outboxId: 8105,
+  eventKey: "withdrawal.approved.notice:51", orderId: null, withdrawalId: 51,
+  noticeMark: "user_extract", templateCode: "SMS_WITHDRAWAL_PREVIEW" });
 
 function deliverySummary(): NotificationDeliverySummary {
   return {
@@ -373,6 +389,8 @@ export async function apiOperateNotificationDelivery(
         ? "RETRYABLE"
         : "DEAD";
     row.status = nextStatus;
+    row.lastError = action === "confirm-sent" ? "" : action === "confirm-retry" ? "admin_confirmed_retry" : "admin_closed_without_retry";
+    row.responseCode = action === "confirm-sent" ? "ADMIN_CONFIRMED_SENT" : action === "confirm-retry" ? "ADMIN_CONFIRMED_RETRY" : "ADMIN_CLOSED_NO_RETRY";
     row.updateTime = now;
     if (action === "confirm-retry") row.replayCount += 1;
     if (action === "confirm-sent") row.sentTime = now;

@@ -1,7 +1,7 @@
 <template>
   <div class="notification-page">
     <header class="page-header">
-      <div><h2>订单通知中心</h2><p>配置通知目录、检查提供商就绪状态，并处置结果不确定的投递。</p></div>
+      <div><h2>业务通知中心</h2><p>配置订单与提现通知、检查提供商就绪状态，并处置结果不确定的投递。</p></div>
       <el-button :loading="loading" @click="loadAll">刷新</el-button>
     </header>
 
@@ -72,7 +72,7 @@
         </el-form>
         <el-table :data="deliveryResult?.list ?? []" v-loading="deliveriesLoading" border class="desktop-table">
           <el-table-column prop="id" label="ID" width="78" />
-          <el-table-column label="订单 / 渠道" min-width="165"><template #default="{ row }"><strong>#{{ row.orderId }}</strong><br><span>{{ channelLabel(row.channel) }}</span></template></el-table-column>
+          <el-table-column label="业务 / 渠道" min-width="165"><template #default="{ row }"><strong>{{ subjectLabel(row) }}</strong><br><span>{{ channelLabel(row.channel) }}</span></template></el-table-column>
           <el-table-column label="目标" min-width="145"><template #default="{ row }"><code>{{ row.maskedTarget || "—" }}</code></template></el-table-column>
           <el-table-column label="状态" width="110"><template #default="{ row }"><el-tag :type="statusTone(row.status)">{{ row.status }}</el-tag></template></el-table-column>
           <el-table-column label="尝试" width="90"><template #default="{ row }">{{ row.attemptCount }} / {{ row.replayCount }}</template></el-table-column>
@@ -81,7 +81,7 @@
         </el-table>
         <div class="mobile-list">
           <el-card v-for="row in deliveryResult?.list ?? []" :key="row.id" shadow="never">
-            <div class="mobile-card-title"><strong>#{{ row.orderId }} · {{ channelLabel(row.channel) }}</strong><el-tag :type="statusTone(row.status)">{{ row.status }}</el-tag></div>
+            <div class="mobile-card-title"><strong>{{ subjectLabel(row) }} · {{ channelLabel(row.channel) }}</strong><el-tag :type="statusTone(row.status)">{{ row.status }}</el-tag></div>
             <p><code>{{ row.maskedTarget || "—" }}</code> · 尝试 {{ row.attemptCount }} / 人工重发 {{ row.replayCount }}</p><p class="truncate">{{ row.lastError || row.responseCode || "无错误" }}</p>
             <delivery-actions :row="row" @operate="openOperation" @history="openHistory" />
           </el-card>
@@ -161,6 +161,7 @@ const configurationWarnings = computed(() => { const result: string[] = []; if (
 const operationTitle = computed(() => operationAction.value === "confirm-sent" ? "确认提供商已发送" : operationAction.value === "confirm-retry" ? "确认承担重复风险并重发" : "关闭且不再重发");
 
 function errorMessage(error: unknown) { ElMessage.error(error instanceof Error ? error.message : "操作失败"); }
+function subjectLabel(row: NotificationDeliveryItem) { return row.withdrawalId ? `提现 #${row.withdrawalId}` : row.orderId ? `订单 #${row.orderId}` : "业务编号缺失"; }
 function channelLabel(channel: NotificationDeliveryChannel) { return ({ sms: "短信", wechat_official: "微信公众号", wechat_routine: "微信小程序", wechat_shipping: "微信发货上报" })[channel]; }
 function statusTone(status: NotificationDeliveryStatus) { return status === "SENT" ? "success" : status === "UNKNOWN" || status === "RETRYABLE" ? "warning" : status === "DEAD" ? "danger" : status === "SKIPPED" ? "info" : ""; }
 function actionLabel(action: NotificationDeliveryActionType) { return action === "CONFIRM_SENT" ? "人工确认已发送" : action === "CONFIRM_RETRY" ? "人工确认重发" : "关闭且不重发"; }
@@ -181,5 +182,6 @@ onMounted(loadAll);
 </script>
 
 <style scoped>
+.notification-page{grid-template-columns:minmax(0,1fr)}.page-header>div{min-width:0}
 .notification-page{display:grid;gap:18px}.page-header,.section-toolbar,.card-header,.mobile-card-title{display:flex;align-items:center;justify-content:space-between;gap:16px}.page-header h2{margin:0 0 6px;font-size:24px}.page-header p,.section-toolbar p,.readiness-card p{margin:0;color:var(--el-text-color-secondary);line-height:1.55}.readiness-grid,.config-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.readiness-card{padding:16px;border:1px solid var(--el-border-color-light);border-radius:10px;background:var(--el-bg-color)}.readiness-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}.notification-tabs{padding:0 18px 18px;border:1px solid var(--el-border-color-light);border-radius:10px;background:var(--el-bg-color)}.section-toolbar{margin:2px 0 16px;padding:12px 0}.config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card-header>div{display:grid;gap:5px}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;overflow-wrap:anywhere}.channel-tags{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.config-meta{display:grid;gap:8px;margin:0}.config-meta div{display:flex;justify-content:space-between;gap:14px}.config-meta dt{color:var(--el-text-color-secondary)}.config-meta dd{margin:0;text-align:right;overflow-wrap:anywhere}.delivery-summary{display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:14px;padding:12px 14px;border-radius:8px;background:var(--el-fill-color-light)}.delivery-summary .success{color:var(--el-color-success)}.delivery-summary .warning{color:var(--el-color-warning)}.delivery-summary .danger{color:var(--el-color-danger)}.filters{display:flex;flex-wrap:wrap}.filters :deep(.el-form-item){margin-bottom:12px}.action-row{display:flex;flex-wrap:wrap;gap:4px}.action-row :deep(.el-button + .el-button){margin-left:0}.truncate{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mobile-list{display:none;gap:10px}.mobile-list :deep(.el-card__body){display:grid;gap:10px}.mobile-list p{margin:0;color:var(--el-text-color-secondary)}.load-more{display:block;margin:16px auto 0}.operation-form{margin-top:16px}@media(max-width:1100px){.readiness-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.notification-page{gap:12px}.page-header{align-items:flex-start}.page-header h2{font-size:20px}.readiness-grid,.config-grid{grid-template-columns:1fr}.notification-tabs{padding:0 10px 12px}.section-toolbar{align-items:flex-start}.desktop-table{display:none}.mobile-list{display:grid}.filters{display:grid;grid-template-columns:1fr}.filters :deep(.el-form-item),.filters :deep(.el-form-item__content),.filters :deep(.el-select),.filters :deep(.el-input){width:100%!important}}
 </style>

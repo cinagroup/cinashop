@@ -11,10 +11,11 @@ import {
 import { formatUserCapitalRow } from "../src/services/finance/CapitalFlowService";
 
 describe("legacy finance ledger migration", () => {
-  it("preserves the active 12-column platform cash-flow contract", () => {
+  it("preserves the active platform cash-flow contract plus an optional replay event key", () => {
     const columns = getTableColumns(capitalFlow);
     expect(Object.keys(columns)).toEqual([
       "id",
+      "eventKey",
       "flowId",
       "orderId",
       "storeId",
@@ -78,6 +79,7 @@ describe("legacy finance ledger migration", () => {
       formatUserCapitalRow({
         id: 1,
         flowId: "ZJ1",
+        eventKey: null,
         orderId: "wx1",
         storeId: 0,
         uid: 8,

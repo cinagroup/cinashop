@@ -73,7 +73,8 @@ export const orderNotificationDelivery = pgTable(
     id: serial("id").primaryKey(),
     outboxId: integer("outbox_id").notNull(),
     eventKey: varchar("event_key", { length: 128 }).notNull(),
-    orderId: integer("order_id").notNull(),
+    orderId: integer("order_id"),
+    withdrawalId: integer("withdrawal_id"),
     userId: integer("user_id").notNull(),
     noticeMark: varchar("notice_mark", { length: 50 }).notNull(),
     channel: varchar("channel", { length: 32 }).$type<OrderNotificationChannel>().notNull(),
@@ -103,6 +104,9 @@ export const orderNotificationDelivery = pgTable(
     uniqueIndex("ond_event_channel_uq").on(t.eventKey, t.channel),
     index("ond_outbox").on(t.outboxId, t.id),
     index("ond_order").on(t.orderId, t.id),
+    index("ond_withdrawal").on(t.withdrawalId, t.id).where(sql`${t.withdrawalId} IS NOT NULL`),
+    check("ond_subject_ck", sql`(${t.withdrawalId} IS NULL AND ${t.orderId} IS NOT NULL)
+      OR (${t.withdrawalId} IS NOT NULL AND ${t.withdrawalId} > 0 AND ${t.orderId} IS NULL)`),
     index("ond_dispatch_ready")
       .on(t.availableTime, t.id)
       .where(sql`${t.status} IN ('PENDING', 'RETRYABLE')`),

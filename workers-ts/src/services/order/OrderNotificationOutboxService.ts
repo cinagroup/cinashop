@@ -551,7 +551,7 @@ function routineDeliveryName(value: string): string {
   return truncated.replace(/[0-9]/g, "");
 }
 
-async function configuredTemplate(
+export async function configuredTemplate(
   tx: DbClient,
   mark: string,
   legacyType: 0 | 1,
@@ -570,14 +570,11 @@ async function configuredTemplate(
   return rows[0]?.tempid.trim() ?? "";
 }
 
-async function createImmutableDelivery(
+export async function createImmutableDelivery(
   tx: DbClient,
   input: {
     event: OrderNotificationOutboxEvent;
-    payload:
-      | OrderDeliveryNoticeOutboxPayload
-      | OrderRefundRefusedNoticeOutboxPayload
-      | OrderSecondCardNoticeOutboxPayload;
+    payload: { userId: number } & ({ orderId: number; withdrawalId?: never } | { orderId?: never; withdrawalId: number });
     mark: string;
     channel: OrderNotificationChannel;
     target: string;
@@ -593,7 +590,8 @@ async function createImmutableDelivery(
     .values({
       outboxId: input.event.id,
       eventKey: input.event.eventKey,
-      orderId: input.payload.orderId,
+      orderId: input.payload.orderId ?? null,
+      withdrawalId: input.payload.withdrawalId ?? null,
       userId: input.payload.userId,
       noticeMark: input.mark,
       channel: input.channel,
@@ -616,6 +614,7 @@ async function createImmutableDelivery(
     .select({
       outboxId: orderNotificationDelivery.outboxId,
       orderId: orderNotificationDelivery.orderId,
+      withdrawalId: orderNotificationDelivery.withdrawalId,
       userId: orderNotificationDelivery.userId,
       noticeMark: orderNotificationDelivery.noticeMark,
       target: orderNotificationDelivery.target,
@@ -630,7 +629,8 @@ async function createImmutableDelivery(
     .limit(1);
   const row = existing[0];
   if (
-    !row || row.outboxId !== input.event.id || row.orderId !== input.payload.orderId ||
+    !row || row.outboxId !== input.event.id || row.orderId !== (input.payload.orderId ?? null) ||
+    row.withdrawalId !== (input.payload.withdrawalId ?? null) ||
     row.userId !== input.payload.userId || row.noticeMark !== input.mark ||
     row.target !== input.target || row.templateCode !== input.templateCode ||
     canonicalJson(row.payload) !== canonicalJson(input.deliveryPayload)

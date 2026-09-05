@@ -1,11 +1,12 @@
 /** Platform cash flow and dormant legacy store cash-flow ledgers. */
-import { decimal, index, integer, pgTable, serial, smallint, varchar } from "drizzle-orm/pg-core";
+import { decimal, index, integer, pgTable, serial, smallint, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 
 /** External cash movement; intentionally separate from user_bill balance/integral entries. */
 export const capitalFlow = pgTable(
   "capital_flow",
   {
     id: serial("id").primaryKey(),
+    eventKey: varchar("event_key", { length: 128 }),
     flowId: varchar("flow_id", { length: 32 }).default("").notNull(),
     orderId: varchar("order_id", { length: 50 }).default("").notNull(),
     storeId: integer("store_id").default(0).notNull(),
@@ -19,6 +20,7 @@ export const capitalFlow = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
+    uniqueIndex("cf_event_key_uq").on(t.eventKey),
     index("cf_flow_id").on(t.flowId),
     index("cf_order_id").on(t.orderId),
     index("cf_uid_type_time").on(t.uid, t.tradingType, t.addTime, t.id),

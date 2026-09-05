@@ -1,5 +1,5 @@
 /**
- * 订单领域事务 outbox。
+ * 订单与提现的事务 outbox；aggregateType/aggregateId 明确区分业务域。
  *
  * 支付状态与事件在同一 PostgreSQL 事务提交；Cloudflare Queue 只负责加速投递，
  * 定时扫描负责补偿“数据库已提交但 Queue 投递失败/结果未知”的窗口。
@@ -50,11 +50,22 @@ export interface OrderSecondCardNoticeOutboxPayload {
   storeName: string;
 }
 
+export interface WithdrawalNoticeOutboxPayload {
+  withdrawalId: number;
+  userId: number;
+  netAmount: string;
+  grossAmount: string;
+  nickname: string;
+  reason: string;
+  occurredAt: number;
+}
+
 export type OrderOutboxPayload =
   | OrderPaidOutboxPayload
   | OrderDeliveryNoticeOutboxPayload
   | OrderRefundRefusedNoticeOutboxPayload
-  | OrderSecondCardNoticeOutboxPayload;
+  | OrderSecondCardNoticeOutboxPayload
+  | WithdrawalNoticeOutboxPayload;
 
 export const storeOrderOutbox = pgTable(
   "store_order_outbox",
@@ -85,7 +96,9 @@ export const storeOrderOutbox = pgTable(
       'order.delivery.notice',
       'order.refund.refused.notice',
       'order.second_card.advent.notice',
-      'order.second_card.expired.notice'
+      'order.second_card.expired.notice',
+      'withdrawal.approved.notice',
+      'withdrawal.refused.notice'
     )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),
     index("soob_aggregate").on(t.aggregateType, t.aggregateId),

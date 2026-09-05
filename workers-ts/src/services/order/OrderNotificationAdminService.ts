@@ -31,6 +31,8 @@ export const ORDER_NOTIFICATION_MARKS = [
   "order_deliver_success",
   "order_fictitious_success",
   "send_order_refund_no_status",
+  "user_extract",
+  "user_balance_change",
 ] as const;
 
 export type OrderNotificationMark = (typeof ORDER_NOTIFICATION_MARKS)[number];
@@ -65,6 +67,8 @@ const MARK_POLICY: Record<OrderNotificationMark, {
   order_deliver_success: { label: "平台配送成功", official: false, routine: true },
   order_fictitious_success: { label: "虚拟交付成功", official: false, routine: false },
   send_order_refund_no_status: { label: "退款申请未通过", official: true, routine: true },
+  user_extract: { label: "提现成功", official: true, routine: true },
+  user_balance_change: { label: "提现拒绝退回", official: false, routine: true },
 };
 
 function positiveInt(value: unknown, label: string, maximum = 2_147_483_647): number {
@@ -146,6 +150,7 @@ function deliveryAdminProjection(row: typeof orderNotificationDelivery.$inferSel
     outboxId: row.outboxId,
     eventKey: row.eventKey,
     orderId: row.orderId,
+    withdrawalId: row.withdrawalId,
     userId: row.userId,
     noticeMark: row.noticeMark,
     channel: row.channel,
@@ -488,7 +493,7 @@ export class OrderNotificationAdminService {
       throw new ValidateException("投递渠道无效");
     }
     const eventKey = query.eventKey?.trim();
-    if (eventKey && !/^(?:order\.delivery\.notice|order\.refund\.refused\.notice):\d+$/.test(eventKey)) {
+    if (eventKey && !/^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(eventKey)) {
       throw new ValidateException("事件键无效");
     }
     const afterId = query.afterId ?? 0;

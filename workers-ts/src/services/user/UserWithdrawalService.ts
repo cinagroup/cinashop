@@ -4,6 +4,7 @@ import { user, userBrokerage, userExtract, userMoney, userRecharge } from "@/mod
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { ApiException, NotFoundException, ValidateException } from "@/utils/errors";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
+import { recordWithdrawalEffects } from "@/services/user/WithdrawalEffectsService";
 
 export const WITHDRAWAL_CONFIG_KEYS = [
   "user_extract_min_price", "user_extract_max_price", "withdraw_fee", "brokerage_type", "user_extract_balance_status",
@@ -183,6 +184,10 @@ export class UserWithdrawalService {
         number: centsToDecimal(input.amountCents), balance: brokeragePrice, status: 1, addTime: now,
         mark: `提现申请 #${request.id}`,
       });
+      if (isBalance) await recordWithdrawalEffects(tx, {
+        id: request.id, uid, extractType: input.extractType,
+        extractPrice: centsToDecimal(netCents), extractFee: centsToDecimal(feeCents),
+      }, account, false, "", now);
       return { id: request.id };
     });
   }
@@ -228,6 +233,7 @@ export class UserWithdrawalService {
         });
       }
       await tx.update(userExtract).set({ status: finalStatus, failMsg: rejected ? failMsg : "", failTime: rejected ? now : 0 }).where(eq(userExtract.id, id));
+      await recordWithdrawalEffects(tx, request, account, rejected, failMsg, now);
       return { id, replayed: false };
     });
   }

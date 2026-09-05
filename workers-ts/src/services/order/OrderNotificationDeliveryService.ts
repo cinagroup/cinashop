@@ -60,7 +60,7 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice|order\.refund\.refused\.notice):\d+$/.test(message.eventKey) &&
+    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
     isChannel(message.channel);
 }
 

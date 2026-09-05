@@ -155,7 +155,9 @@ describe("legacy Admin setting route parity audit", () => {
   it("keeps notification parity partial until the old catalogs and enterprise channel are covered", () => {
     const page = source("../view/admin-ts/src/pages/setting/NotificationList.vue");
     const reviewed = report.routes.filter((route) => route.legacy.path.includes("/notification/"));
-    expect(page).toContain("订单通知中心");
+    expect(page).toContain("业务通知中心");
+    expect(page).toContain("row.withdrawalId");
+    expect(page).toContain("提现 #");
     expect(page).toContain("提供商模板");
     expect(reviewed).toHaveLength(2);
     expect(reviewed.every((route) => route.status === "partial")).toBe(true);
