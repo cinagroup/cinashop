@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "decisionDate": "2026-09-04",
+  "deploymentMode": "fresh_system",
+  "legacyPhpHistoryRequired": false,
+  "legacyInstallSqlUse": "schema_and_demo_reference_only",
+  "sourceMysqlReconciliation": "not_applicable",
+  "notApplicableChecklistItems": [
+    "DATA-001",
+    "DATA-002",
+    "DATA-003",
+    "DATA-004",
+    "DATA-005"
+  ],
+  "repositoryBaseline": {
+    "legacySchemaTables": 201,
+    "legacyColumnsMissingFromCandidate": 0,
+    "candidateTables": 263,
+    "externalWorkerDefinitionDrift": 0
+  },
+  "productionBaseline": {
+    "database": "PostgreSQL 16.14",
+    "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",
+    "capturedAt": "2026-09-04T14:55:00Z",
+    "tables": 263,
+    "columns": 3696,
+    "indexes": 896,
+    "primaryKeys": 250,
+    "missingCandidateTables": [],
+    "extraTables": [],
+    "migrationRuns": 0,
+    "migrationCheckpoints": 0,
+    "businessCounts": {
+      "products": 71,
+      "orders": 29,
+      "orderItems": 28,
+      "refunds": 3,
+      "serviceAccounts": 0,
+      "serviceSessions": 0,
+      "serviceMessages": 3,
+      "productDescriptions": 0,
+      "visits": 0,
+      "categoryRelations": 0
+    },
+    "temporaryWorkerCleanupVerified": true
+  },
+  "completedSchemaWork": [
+    {
+      "id": "DB-005",
+      "kind": "candidate_schema",
+      "summary": "Applied admin_user_write_replay twice with exact shape, empty-table, idempotency and unchanged-business-count verification."
+    }
+  ],
+  "remainingDataWork": [
+    {
+      "id": "DATA-006",
+      "kind": "production_commissioning",
+      "summary": "Create authoritative initial catalog, roles, suppliers, content, notification templates and provider configuration."
+    },
+    {
+      "id": "DATA-007",
+      "kind": "production_cleanup",
+      "summary": "Resolve current orphan and stale-state anomalies against product-owner decisions, not a legacy database."
+    },
+    {
+      "id": "DATA-008",
+      "kind": "production_commissioning",
+      "summary": "Populate and approve DIY, marketing, media and storefront configuration required by enabled features."
+    }
+  ]
+}
