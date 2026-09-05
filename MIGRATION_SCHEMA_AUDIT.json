@@ -1,0 +1,744 @@
+{
+  "sourceCommit": "731e20341fcf1460681b5495107d1855d9c91e67",
+  "runId": 33966112676,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/33966112676",
+  "status": "not_equivalent",
+  "kind": "summary",
+  "scope": "Fresh isolated PostgreSQL 16 catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Canonical expression differences are review candidates, not proof of behavioral inequivalence. Does not inspect production rows, privileges, functions, triggers, policies or views.",
+  "serverVersionNum": 160014,
+  "externalInputSha256": "944e00becfb131a35e4e5f7ba3d8727ee4e9d1145fc612e88d28c8c237dc92fb",
+  "generatedSqlSha256": "d2a40d07ea26d559f76ff0e1872e47c8c64f2eb0d77aa4e24e533b7f64d745ab",
+  "paths": [
+    {
+      "path": "external",
+      "steps": 136
+    },
+    {
+      "path": "embedded",
+      "steps": 141
+    },
+    {
+      "path": "orm",
+      "steps": 1038
+    }
+  ],
+  "counts": {
+    "external": {
+      "tables": 263,
+      "columns": 3700,
+      "constraints": 570,
+      "indexes": 963,
+      "sequences": 227
+    },
+    "embedded": {
+      "tables": 263,
+      "columns": 3700,
+      "constraints": 570,
+      "indexes": 911,
+      "sequences": 227
+    },
+    "orm": {
+      "tables": 263,
+      "columns": 3700,
+      "constraints": 529,
+      "indexes": 985,
+      "sequences": 227
+    }
+  },
+  "summary": {
+    "externalVsEmbedded": {
+      "tables": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "columns": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "constraints": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "indexes": {
+        "referenceOnly": 52,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "sequences": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      }
+    },
+    "externalVsOrm": {
+      "tables": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 0,
+        "possibleRenames": 0
+      },
+      "columns": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 4,
+        "possibleRenames": 0
+      },
+      "constraints": {
+        "referenceOnly": 56,
+        "candidateOnly": 15,
+        "changed": 9,
+        "possibleRenames": 15
+      },
+      "indexes": {
+        "referenceOnly": 75,
+        "candidateOnly": 97,
+        "changed": 57,
+        "possibleRenames": 47
+      },
+      "sequences": {
+        "referenceOnly": 0,
+        "candidateOnly": 0,
+        "changed": 1,
+        "possibleRenames": 0
+      }
+    }
+  },
+  "missingIndexEvidence": {
+    "externalVsEmbedded": [
+      {
+        "reference": "store_cart.sc_product_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_cart.sc_type_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_cart.sc_uid_del_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_cart.sc_uid_pay_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_coupon_issue.sci_status_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_coupon_user.scu_uid_status_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order.so_paid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order.so_status_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order.so_uid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_cart_info.soci_oid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_cart_info.soci_uid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_refund.sor_cancel_oid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_refund.sor_store_order_id_idx",
+        "exactCandidates": [
+          "store_order_refund.sor_store_order_id"
+        ]
+      },
+      {
+        "reference": "store_order_refund.sor_uid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_status.sos_change_time_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_status.sos_oid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_pink.sp_combination_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.sp_add_time_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.sp_cate_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.sp_is_del_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.sp_is_show_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.sp_price_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.sp_sales_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.sp_sort_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_attr.spa_product_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_attr_result.spar_product_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_attr_value.spav_product_suk_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_attr_value.spav_unique_suk_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_category.spc_is_show_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_category.spc_pid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_label.spl_label_cate_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_relation.spr_product_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_relation.spr_relation_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_relation.spr_type_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_seckill.ss_time_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_service_log.ssl_uid_toUid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "system_admin.sa_account_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "system_config.system_config_is_store_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "system_config.system_config_menu_name_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user.user_account_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user.user_delete_time_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user.user_phone_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user.user_status_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user_bill.ub_cat_type_link_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user_bill.ub_uid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user_invoice.ui_uid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user_money.um_uid_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user_recharge.ur_order_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user_recharge.ur_uid_idx",
+        "exactCandidates": [
+          "user_recharge.ur_uid"
+        ]
+      },
+      {
+        "reference": "wechat_user.wu_openid_uq_idx",
+        "exactCandidates": [
+          "wechat_user.wu_openid_uq"
+        ]
+      },
+      {
+        "reference": "wechat_user.wu_uid_idx",
+        "exactCandidates": [
+          "wechat_user.wu_uid"
+        ]
+      },
+      {
+        "reference": "wechat_user.wu_unionid_idx",
+        "exactCandidates": [
+          "wechat_user.wu_unionid"
+        ]
+      }
+    ],
+    "externalVsOrm": [
+      {
+        "reference": "category.category_kefu_speechcraft",
+        "exactCandidates": []
+      },
+      {
+        "reference": "data_migration_checkpoint.data_migration_checkpoint_pkey",
+        "exactCandidates": [
+          "data_migration_checkpoint.data_migration_checkpoint_run_id_table_name_pk"
+        ]
+      },
+      {
+        "reference": "kefu_visitor_session.kefu_visitor_session_token_hash_key",
+        "exactCandidates": [
+          "kefu_visitor_session.kefu_visitor_session_token_hash_unique"
+        ]
+      },
+      {
+        "reference": "kefu_visitor_session.kefu_visitor_session_visitor_uid_key",
+        "exactCandidates": [
+          "kefu_visitor_session.kefu_visitor_session_visitor_uid_unique"
+        ]
+      },
+      {
+        "reference": "store_bargain.store_bargain_system_form_active",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_cart.sc_product_id_idx",
+        "exactCandidates": [
+          "store_cart.sc_product_id"
+        ]
+      },
+      {
+        "reference": "store_cart.sc_type_idx",
+        "exactCandidates": [
+          "store_cart.sc_type"
+        ]
+      },
+      {
+        "reference": "store_cart.sc_uid_del_idx",
+        "exactCandidates": [
+          "store_cart.sc_uid_del"
+        ]
+      },
+      {
+        "reference": "store_cart.sc_uid_pay_idx",
+        "exactCandidates": [
+          "store_cart.sc_uid_pay"
+        ]
+      },
+      {
+        "reference": "store_combination.store_combination_system_form_active",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_coupon_issue.sci_status_idx",
+        "exactCandidates": [
+          "store_coupon_issue.sci_status"
+        ]
+      },
+      {
+        "reference": "store_coupon_user.scu_uid_status_idx",
+        "exactCandidates": [
+          "store_coupon_user.scu_uid_status"
+        ]
+      },
+      {
+        "reference": "store_delivery_order.sdo_dada_reconcile_scan",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_integral.store_integral_system_form_active",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order.so_kefu_customer_orders",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order.so_paid_idx",
+        "exactCandidates": [
+          "store_order.so_paid"
+        ]
+      },
+      {
+        "reference": "store_order.so_status_idx",
+        "exactCandidates": [
+          "store_order.so_status"
+        ]
+      },
+      {
+        "reference": "store_order.so_uid_idx",
+        "exactCandidates": [
+          "store_order.so_uid"
+        ]
+      },
+      {
+        "reference": "store_order_cart_info.soci_kefu_order_product",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_cart_info.soci_oid_idx",
+        "exactCandidates": [
+          "store_order_cart_info.soci_oid"
+        ]
+      },
+      {
+        "reference": "store_order_cart_info.soci_uid_idx",
+        "exactCandidates": [
+          "store_order_cart_info.soci_uid"
+        ]
+      },
+      {
+        "reference": "store_order_refund.sor_cancel_oid_idx",
+        "exactCandidates": [
+          "store_order_refund.sor_cancel_oid"
+        ]
+      },
+      {
+        "reference": "store_order_refund.sor_kefu_customer_refunds",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_order_refund.sor_store_order_id_idx",
+        "exactCandidates": [
+          "store_order_refund.sor_store_order_id"
+        ]
+      },
+      {
+        "reference": "store_order_refund.sor_uid_idx",
+        "exactCandidates": [
+          "store_order_refund.sor_uid"
+        ]
+      },
+      {
+        "reference": "store_order_status.sos_change_time_idx",
+        "exactCandidates": [
+          "store_order_status.sos_change_time"
+        ]
+      },
+      {
+        "reference": "store_order_status.sos_oid_idx",
+        "exactCandidates": [
+          "store_order_status.sos_oid"
+        ]
+      },
+      {
+        "reference": "store_pink.sp_combination_idx",
+        "exactCandidates": [
+          "store_pink.sp_combination"
+        ]
+      },
+      {
+        "reference": "store_product.sp_cate_id_idx",
+        "exactCandidates": [
+          "store_product.cate_id"
+        ]
+      },
+      {
+        "reference": "store_product.sp_is_del_idx",
+        "exactCandidates": [
+          "store_product.is_del"
+        ]
+      },
+      {
+        "reference": "store_product.sp_price_idx",
+        "exactCandidates": [
+          "store_product.price"
+        ]
+      },
+      {
+        "reference": "store_product.sp_sales_idx",
+        "exactCandidates": [
+          "store_product.sales"
+        ]
+      },
+      {
+        "reference": "store_product.sp_supplier_list",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product.store_product_system_form_active",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_attr.spa_product_id_idx",
+        "exactCandidates": [
+          "store_product_attr.store_id_attr"
+        ]
+      },
+      {
+        "reference": "store_product_attr_result.spar_product_id_idx",
+        "exactCandidates": [
+          "store_product_attr_result.store_id_result"
+        ]
+      },
+      {
+        "reference": "store_product_attr_value.spav_product_suk_idx",
+        "exactCandidates": [
+          "store_product_attr_value.store_id_value"
+        ]
+      },
+      {
+        "reference": "store_product_attr_value.spav_product_type_suk",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_attr_value.spav_unique_suk_idx",
+        "exactCandidates": [
+          "store_product_attr_value.unique_suk"
+        ]
+      },
+      {
+        "reference": "store_product_category.spc_is_show_idx",
+        "exactCandidates": [
+          "store_product_category.is_show"
+        ]
+      },
+      {
+        "reference": "store_product_category.spc_pid_idx",
+        "exactCandidates": [
+          "store_product_category.pid"
+        ]
+      },
+      {
+        "reference": "store_product_category.spc_supplier_tree",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_label.spl_label_cate_idx",
+        "exactCandidates": [
+          "store_product_label.label_cate"
+        ]
+      },
+      {
+        "reference": "store_product_relation.spr_kefu_category_product",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_relation.spr_kefu_product_category",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_relation.spr_product_id_idx",
+        "exactCandidates": [
+          "store_product_relation.product_id"
+        ]
+      },
+      {
+        "reference": "store_product_relation.spr_product_type_relation",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_relation.spr_relation_id_idx",
+        "exactCandidates": [
+          "store_product_relation.relation_id"
+        ]
+      },
+      {
+        "reference": "store_product_relation.spr_type_idx",
+        "exactCandidates": [
+          "store_product_relation.type"
+        ]
+      },
+      {
+        "reference": "store_product_reply.spr_product_id",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_reply.spr_unique",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_product_reply_comment.sprc_reply_id",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_seckill.ss_time_idx",
+        "exactCandidates": [
+          "store_seckill.ss_time"
+        ]
+      },
+      {
+        "reference": "store_seckill.store_seckill_system_form_active",
+        "exactCandidates": []
+      },
+      {
+        "reference": "store_service_log.ssl_uid_toUid_idx",
+        "exactCandidates": [
+          "store_service_log.ssl_uid_toUid"
+        ]
+      },
+      {
+        "reference": "store_service_record.ssr_to_uid_idx",
+        "exactCandidates": [
+          "store_service_record.ssr_to_uid"
+        ]
+      },
+      {
+        "reference": "store_visit.sv_kefu_recent",
+        "exactCandidates": []
+      },
+      {
+        "reference": "system_admin.sa_account_idx",
+        "exactCandidates": [
+          "system_admin.sa_account"
+        ]
+      },
+      {
+        "reference": "system_config.system_config_is_store_idx",
+        "exactCandidates": [
+          "system_config.is_store"
+        ]
+      },
+      {
+        "reference": "system_config.system_config_menu_name_idx",
+        "exactCandidates": [
+          "system_config.menu_name"
+        ]
+      },
+      {
+        "reference": "system_supplier.supplier_admin_id_uq",
+        "exactCandidates": []
+      },
+      {
+        "reference": "system_supplier.supplier_status_idx",
+        "exactCandidates": [
+          "system_supplier.supplier_status"
+        ]
+      },
+      {
+        "reference": "user.user_account_idx",
+        "exactCandidates": [
+          "user.account"
+        ]
+      },
+      {
+        "reference": "user.user_delete_time_idx",
+        "exactCandidates": [
+          "user.index_0"
+        ]
+      },
+      {
+        "reference": "user.user_phone_idx",
+        "exactCandidates": [
+          "user.phone"
+        ]
+      },
+      {
+        "reference": "user.user_status_idx",
+        "exactCandidates": [
+          "user.status"
+        ]
+      },
+      {
+        "reference": "user_bill.ub_cat_type_link_idx",
+        "exactCandidates": [
+          "user_bill.ub_cat_type_link"
+        ]
+      },
+      {
+        "reference": "user_invoice.ui_uid_idx",
+        "exactCandidates": [
+          "user_invoice.ui_uid"
+        ]
+      },
+      {
+        "reference": "user_money.um_uid_idx",
+        "exactCandidates": [
+          "user_money.um_uid"
+        ]
+      },
+      {
+        "reference": "user_recharge.ur_order_id_idx",
+        "exactCandidates": []
+      },
+      {
+        "reference": "user_recharge.ur_uid_idx",
+        "exactCandidates": [
+          "user_recharge.ur_uid"
+        ]
+      },
+      {
+        "reference": "wechat_user.wu_openid_uq_idx",
+        "exactCandidates": [
+          "wechat_user.wu_openid_uq"
+        ]
+      },
+      {
+        "reference": "wechat_user.wu_uid_idx",
+        "exactCandidates": [
+          "wechat_user.wu_uid"
+        ]
+      },
+      {
+        "reference": "wechat_user.wu_unionid_idx",
+        "exactCandidates": [
+          "wechat_user.wu_unionid"
+        ]
+      },
+      {
+        "reference": "work_callback_event.wce_payload_redaction_ready",
+        "exactCandidates": []
+      }
+    ]
+  },
+  "cleanupConfirmed": true,
+  "mode": "inventory; differences remain open until individually reviewed"
+}
