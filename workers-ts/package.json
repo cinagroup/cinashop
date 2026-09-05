@@ -44,6 +44,7 @@
     "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@cloudflare/vitest-pool-workers": "0.21.2",
     "@cloudflare/workers-types": "^5.20260828.1",
     "@types/bcryptjs": "^2.4.6",
