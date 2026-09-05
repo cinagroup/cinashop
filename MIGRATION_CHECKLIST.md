@@ -9,14 +9,14 @@
 | 维度 | 当前证据 | 判定 |
 |---|---:|---|
 | PHP/MySQL 结构参考 | PHP 201/201 表、缺源列 0 | 结构合同完成；历史数据导入不适用 |
-| 仓库目标结构 | 最新PG16目录：三路径均263表/3,700列；外部↔内嵌列差异4→0、索引差异61→52；ORM另有4处默认及约束/索引/序列差异 | DB-009B/C/D1代码与CI完成，未应用生产；DB-009父项开放 |
+| 仓库目标结构 | 最新PG16目录：三路径均263表/3,700列；外部↔内嵌列差异0、索引差异52→5（均有同构别名）；ORM另有4处默认及约束/索引/序列差异 | DB-009B/C/D1/D2a代码与CI完成，未应用生产；DB-009父项开放 |
 | 生产目标结构 | 2026-09-04已验证基线：263表、3,696列、896索引、250主键；API-014新增提现重放、流水事件键及通知业务列/索引/约束尚未应用 | 表集基线完整；DB-006/007仍为发布前置 |
 | PHP HTTP 合同 | 精确匹配 879/1,904；可执行 861；其中 18 条明确不可用、17 条有证据退役 | 精确注册 46.2%，可执行 45.2%，退役后有效覆盖 45.6% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | `7ae3544`的Linux CI 235文件、1,520项全部通过，含4项真实PostgreSQL16.14多连接并发场景，无跳过 | 本批扫描例外范围回归及三路径PG16审计通过 |
-| Workers runtime | `7ae3544`的Linux workerd 3文件/24项通过；Windows仍有收集前 `0xc0000005` 的既往环境限制 | 隔离运行时不代替生产E2E |
-| CI | [Actions `33967084785`](https://github.com/cinagroup/cinashop/actions/runs/33967084785) 对 `7ae3544` 为8/8：Worker、runtime、五端及密钥扫描全部通过；Gitleaks扫描231个历史提交未发现泄露 | 用户明确授权的两条公开Drizzle SHA-256精确例外已提交；范围回归通过。结构差异、其它依赖风险与生产门禁仍开放 |
+| Worker 单元测试 | `4fe0530`的Linux CI 236文件、1,534项全部通过，含4项真实PostgreSQL16.14测试，无跳过 | 新增14项索引/唯一性回归及三路径PG16审计通过 |
+| Workers runtime | `4fe0530`的Linux workerd 3文件/24项通过；Windows仍有收集前 `0xc0000005` 的既往环境限制 | 隔离运行时不代替生产E2E |
+| CI | [Actions `33968639077`](https://github.com/cinagroup/cinashop/actions/runs/33968639077) 对 `4fe0530` 为8/8：Worker、runtime、五端及密钥扫描全部通过；Gitleaks扫描233个历史提交未发现泄露 | 47项索引缺口与充值唯一性代码验证通过；未增加扫描例外。ORM其余差异、依赖风险与生产门禁仍开放 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -104,8 +104,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [x] **DB-009C 四处列宽对齐（代码/PG16 CI完成，未应用生产）**：新增外部0134/内嵌0138，按现有Worker/ORM合同把user.add_ip、user.last_ip、store_order.user_ip由16扩为45，store_product_category.pic由128扩为512。只接受已知旧/目标varchar且NOT NULL的普通表列；未知、更宽、可空、缺失结构拒绝，事务回滚，不缩短或截断数据。5项回归及PG16三路径验证通过，外部↔内嵌列差异4→0；生产需按真实catalog确认是否需要执行。
   - [x] **DB-009D1 补Worker漏注册的Admin索引（代码/PG16 CI完成，未应用生产）**：外部0127的4个文章索引、0128的5个表单引用索引从未接入MigrationService；现以逐字一致的内嵌常量注册0139/0140，2项回归及真实MigrationService全链通过。内嵌索引902→911，这9项已从差异中消失。
   - [ ] **DB-009D2 其余索引差异逐项判定**：已为基线外部↔内嵌52个external-only建立逐项来源/结构/决策清单，分为46个普通索引、1个PHP/外部均要求的充值订单号唯一索引及5个已有同构别名。不能用同构candidate推定可删除；任何DROP前仍须核验pg_depend与FK conindid。本轮只新增并验证，不执行删除。
-    - [ ] **DB-009D2a 补齐47个基础索引（本地候选，PG16 CI待确认）**：外部0135/内嵌0141以真实catalog严格验证同名索引，仅缺失时创建；未知结构/已有重复充值订单号拒绝并回滚，不删改行。ORM同步恢复ur_order_id_idx，原应用重复回调对象拒绝仍保留。14项专项覆盖精确来源、47定义/旧对象/数据保留、幂等、重复号拒绝、8类同名异构、FK conindid/pg_depend不变及非public/temp隔离。52项来源/决策见audit/core-index-reconciliation.json；5个同构别名保留，不补重复索引。
-    - [ ] **DB-009D2b ORM其余索引与别名收口**：基线外部↔ORM75个reference-only中52个有同构candidate、23个未匹配，充值唯一索引包含在本轮D2a候选；其余22项和同名变化/额外索引仍需逐项审查。5个外部旧别名虽有当前同构替代，物理对象差异仍保留在审计输出，不隐式删除或豁免未来结构/依赖变化。
+    - [x] **DB-009D2a 补齐47个基础索引（代码/PG16 CI完成，未应用生产）**：外部0135/内嵌0141按真实catalog严格验证同名索引，仅缺失时创建；未知结构/已有重复充值订单号拒绝并回滚，不删改行。ORM同步恢复PHP/外部要求的ur_order_id_idx，原应用重复回调对象拒绝仍保留。14项专项覆盖精确来源、47定义/旧对象/数据保留、幂等、重复号拒绝、8类同名异构、FK conindid/pg_depend不变及非public/temp隔离。4fe0530的33968639077为8/8；PG16实际内嵌索引911→958，差异52→5且每项均有预期同构别名，ORM充值唯一索引缺口也归零。52项来源/决策见audit/core-index-reconciliation.json；5个别名不补重复索引也不DROP，生产仍须按实际catalog和写入窗口决定增量DDL。
+    - [ ] **DB-009D2b ORM其余索引与别名收口**：最新外部↔ORM74个reference-only中52个有同构candidate、22个未匹配（充值唯一索引已通过D2a关闭）；另有97个额外索引/57项同名变化仍需逐项审查。已确认外部supplier_admin_id_uq为唯一索引，ORM仅有普通supplier_admin_id，不能按名称差异略过；还包括客服、表单、供应商商品、点评及回调脱敏索引。5个外部旧别名虽有同构替代，物理对象差异仍输出，不隐式删除或豁免未来结构/依赖变化。
   - [ ] **DB-009E ORM约束/默认/序列差异**：最新ORM相对外部缺56/多15个约束、同名9变，15组仅为可能改名；9处变化含8个NOT VALID目录状态和1处事件集合顺序。仍有默认值4处（2处JSONB缺默认、2处表达式形式差异）及客服序列AS INTEGER/OWNED BY差异。需按服务合同与真实DDL逐项定责，不删校验、强压类型或直接在生产VALIDATE来消差异。详见根目录MIGRATION_SCHEMA_AUDIT.json及固定463条历史基线。
   - [ ] **DB-009F 收口后的稳定门禁**：发现模式当前会输出差异但不把命令成功当作等价；待上述差异有证据化处置后，将已收口合同设为拒绝新增差异的门禁，不用总数阈值或宽泛白名单掩盖变化。权限/函数/触发器/RLS策略/视图不在本目录比较器范围，另需对应迁移与运行时证据。
 - [x] **DATA-001 取得只读源 MySQL（不适用）**：2026-09-04 项目所有者确认旧 PHP 站无必要真实历史数据；本部署不连接、复制或对账源 MySQL。
@@ -411,7 +411,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [ ] **FE-004K Supplier Pages 预发**：创建/确认正式项目，核对 `WORKERS_API`、正式 Origin、同源代理与 Secret/资源映射。
   - [ ] **FE-004L 发布后观察**：另行获得发布批准后才可部署，记录 deployment/Git SHA并做日志、错误率和业务对账。
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
-- [x] **TEST-001 Linux CI**：最新[Actions `33967084785`](https://github.com/cinagroup/cinashop/actions/runs/33967084785)对`7ae3544`在Ubuntu24.04/Node24.14.1/npm11.11.0以锁安装完成8/8 jobs：Worker双TypeScript、235文件/1,520项全通过（含4项真实PostgreSQL16.14多连接并发，无跳过）、workerd3文件/24项、Worker生产依赖审计、SQL文本schema201→263零源列缺口/窄范围零定义漂移、真实PG16三路径目录审计、PHP权威route审计、五端构建与Kefu17项、通用依赖回归18项、ECharts10项、UniApp开发边界8项、H5/微信/App三端产物3项及Intlify实际构建审计9项。用户授权的两条公开Drizzle摘要精确例外及范围回归通过，Gitleaks231提交全历史未发现泄露；Kefu/PC全依赖审计门禁通过。真实目录仍有DB-009索引/默认/约束/序列差异，审计模式为inventory，退出0不代表等价；隔离runtime不代表生产E2E，历史失败保留审计。UniApp/Drizzle其余依赖风险仍归TEST-004，不把Worker生产依赖通过等同全仓库0漏洞。
+- [x] **TEST-001 Linux CI**：最新[Actions `33968639077`](https://github.com/cinagroup/cinashop/actions/runs/33968639077)对`4fe0530`在Ubuntu24.04/Node24.14.1/npm11.11.0以锁安装完成8/8 jobs：Worker双TypeScript、236文件/1,534项全部通过（含4项真实PostgreSQL16.14测试，无跳过）、workerd3文件/24项、Worker生产依赖审计、SQL文本201→263零源列缺口/窄范围漂移0、真实PG16三路径目录审计、PHP权威route审计、五端构建与Kefu17项、通用依赖18项、ECharts10项、UniApp工具链8项/三端产物3项/Intlify9项。Gitleaks233提交全历史未发现泄露；Kefu/PC全依赖审计门禁通过。真实目录外部↔内嵌索引52→5均有同构别名，ORM其余索引/默认/约束/序列仍属DB-009；inventory退出0不代表完全等价，隔离runtime不代表生产E2E。历史失败保留审计，UniApp/Drizzle依赖风险仍归TEST-004，不把Worker生产依赖通过等同全仓库0漏洞。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
 - [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立并由 Actions `33393069797` 复验，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
   - [x] **TEST-003A 仓库可观测性合同**：提交 `beb2071b397eb316ee8cb5592656b3dceb7ed1a3` 新增 `audit/observability-policy.json`，定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；运行时及 AST 门禁拒绝正文、payload、token、查询、URL、凭据、异常消息、任何 ID/UID、schema 覆盖、对象展开、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过；Actions 同时通过 Worker 165文件/1,031项、workerd13/13、schema201→247零漂移、route1,904→1,448/746/728、五端构建与70提交Gitleaks无泄漏。

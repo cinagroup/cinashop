@@ -1,25 +1,25 @@
 {
-  "sourceCommit": "7ae3544f97dcc17e66d26033a2d307a8b6c384a0",
-  "runId": 33967084785,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/33967084785",
+  "sourceCommit": "4fe0530ab696a5f7ea66245c3ce0c5a0c031efcc",
+  "runId": 33968639077,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/33968639077",
   "status": "not_equivalent",
   "kind": "summary",
   "scope": "Fresh isolated PostgreSQL 16 catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Canonical expression differences are review candidates, not proof of behavioral inequivalence. Does not inspect production rows, privileges, functions, triggers, policies or views.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "944e00becfb131a35e4e5f7ba3d8727ee4e9d1145fc612e88d28c8c237dc92fb",
-  "generatedSqlSha256": "d2a40d07ea26d559f76ff0e1872e47c8c64f2eb0d77aa4e24e533b7f64d745ab",
+  "externalInputSha256": "4660b957edcf4297227169384e2b60a735bfa2e1e2803287b03e39bf4d269dc1",
+  "generatedSqlSha256": "a4307d7e6d487e34edb936758c764ec3fc75eb6d5bbd0f3322ed70ba7c666d92",
   "paths": [
     {
       "path": "external",
-      "steps": 136
+      "steps": 137
     },
     {
       "path": "embedded",
-      "steps": 141
+      "steps": 142
     },
     {
       "path": "orm",
-      "steps": 1038
+      "steps": 1039
     }
   ],
   "counts": {
@@ -34,14 +34,14 @@
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
-      "indexes": 911,
+      "indexes": 958,
       "sequences": 227
     },
     "orm": {
       "tables": 263,
       "columns": 3700,
       "constraints": 529,
-      "indexes": 985,
+      "indexes": 986,
       "sequences": 227
     }
   },
@@ -66,7 +66,7 @@
         "possibleRenames": 0
       },
       "indexes": {
-        "referenceOnly": 52,
+        "referenceOnly": 5,
         "candidateOnly": 0,
         "changed": 0,
         "possibleRenames": 0
@@ -98,7 +98,7 @@
         "possibleRenames": 15
       },
       "indexes": {
-        "referenceOnly": 75,
+        "referenceOnly": 74,
         "candidateOnly": 97,
         "changed": 57,
         "possibleRenames": 47
@@ -114,198 +114,10 @@
   "missingIndexEvidence": {
     "externalVsEmbedded": [
       {
-        "reference": "store_cart.sc_product_id_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_cart.sc_type_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_cart.sc_uid_del_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_cart.sc_uid_pay_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_coupon_issue.sci_status_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_coupon_user.scu_uid_status_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order.so_paid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order.so_status_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order.so_uid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order_cart_info.soci_oid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order_cart_info.soci_uid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order_refund.sor_cancel_oid_idx",
-        "exactCandidates": []
-      },
-      {
         "reference": "store_order_refund.sor_store_order_id_idx",
         "exactCandidates": [
           "store_order_refund.sor_store_order_id"
         ]
-      },
-      {
-        "reference": "store_order_refund.sor_uid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order_status.sos_change_time_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_order_status.sos_oid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_pink.sp_combination_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product.sp_add_time_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product.sp_cate_id_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product.sp_is_del_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product.sp_is_show_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product.sp_price_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product.sp_sales_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product.sp_sort_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_attr.spa_product_id_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_attr_result.spar_product_id_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_attr_value.spav_product_suk_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_attr_value.spav_unique_suk_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_category.spc_is_show_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_category.spc_pid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_label.spl_label_cate_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_relation.spr_product_id_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_relation.spr_relation_id_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_product_relation.spr_type_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_seckill.ss_time_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "store_service_log.ssl_uid_toUid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "system_admin.sa_account_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "system_config.system_config_is_store_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "system_config.system_config_menu_name_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user.user_account_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user.user_delete_time_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user.user_phone_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user.user_status_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user_bill.ub_cat_type_link_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user_bill.ub_uid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user_invoice.ui_uid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user_money.um_uid_idx",
-        "exactCandidates": []
-      },
-      {
-        "reference": "user_recharge.ur_order_id_idx",
-        "exactCandidates": []
       },
       {
         "reference": "user_recharge.ur_uid_idx",
@@ -704,10 +516,6 @@
         "exactCandidates": [
           "user_money.um_uid"
         ]
-      },
-      {
-        "reference": "user_recharge.ur_order_id_idx",
-        "exactCandidates": []
       },
       {
         "reference": "user_recharge.ur_uid_idx",
