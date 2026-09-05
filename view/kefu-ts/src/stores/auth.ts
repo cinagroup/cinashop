@@ -32,27 +32,35 @@ export const useAuthStore = defineStore("kefu-auth", () => {
   }
 
   async function refreshIdentity(): Promise<void> {
-    identity.value = await kefuApi.info();
+    const current = token.value;
+    const result = await kefuApi.info();
+    if (!current || current !== token.value) return;
+    identity.value = result;
     sessionStorage.setItem(KEFU_INFO_KEY, JSON.stringify(identity.value));
   }
 
   async function logout(): Promise<boolean> {
+    const revocation = token.value ? kefuApi.logout() : Promise.resolve();
+    clearSession();
     let serverRevoked = true;
     try {
-      if (token.value) await kefuApi.logout();
+      await revocation;
     } catch {
       serverRevoked = false;
     }
+    return serverRevoked;
+  }
+
+  function clearSession(): void {
     token.value = "";
     identity.value = null;
     sessionStorage.removeItem(KEFU_TOKEN_KEY);
     sessionStorage.removeItem(KEFU_INFO_KEY);
-    return serverRevoked;
   }
 
   function usePreviewIdentity(value: KefuIdentity): void {
     identity.value = value;
   }
 
-  return { identity, token, authenticated, applyLogin, login, logout, refreshIdentity, usePreviewIdentity };
+  return { identity, token, authenticated, applyLogin, login, logout, clearSession, refreshIdentity, usePreviewIdentity };
 });

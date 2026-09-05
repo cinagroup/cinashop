@@ -22,4 +22,9 @@ router.beforeEach((to) => {
   return true;
 });
 
+router.afterEach((to) => {
+  const name = to.path === '/login' ? '登录' : to.path === '/messages' ? '系统提醒' : '会话';
+  document.title = `${name} - CinaShop 客服`;
+});
+
 export default router;

@@ -18,16 +18,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const headers = new Headers(context.request.headers);
   headers.delete("host");
 
-  const upstream = await fetch(targetUrl, {
+  // Preserve the upstream Response itself, including its WebSocket on a 101 upgrade.
+  return fetch(targetUrl, {
     method: context.request.method,
     headers,
     body: ["GET", "HEAD"].includes(context.request.method)
       ? undefined
-      : await context.request.arrayBuffer(),
-  });
-
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers: upstream.headers,
+      : context.request.body,
+    redirect: "manual",
   });
 };

@@ -18,6 +18,7 @@ export default defineConfig({
       "/adminapi": {
         target: apiProxyTarget,
         changeOrigin: true,
+        ws: true,
       },
       "/api": {
         target: apiProxyTarget,

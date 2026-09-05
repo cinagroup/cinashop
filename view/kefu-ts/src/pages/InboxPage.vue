@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { apiRequest, queryString } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
+import { useNoticeStore } from "@/stores/notices";
+import StaffNoticeStatus from "@/components/StaffNoticeStatus.vue";
 import { createInboxGuard, parseInboxMessage, parseInboxPage, type InboxMessage } from "@/services/inbox";
 
 const router = useRouter(), auth = useAuthStore(), guard = createInboxGuard();
+const listGuard = createInboxGuard(), notices = useNoticeStore();
 const preview = import.meta.env.DEV && new URLSearchParams(location.search).get("preview") === "1";
 const rows = ref<InboxMessage[]>([]), selected = ref<InboxMessage | null>(null);
 const unread = ref<number | null>(null), cursor = ref<number | null>(null), unreadOnly = ref(false);
-const loading = ref(false), error = ref(""), updated = ref("");
+const actionLoading = ref(false), listLoading = ref(false), error = ref(""), updated = ref("");
+const loading = computed(() => actionLoading.value || listLoading.value);
+let generation = 0, refreshPending = false, disposed = false;
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 // Component-scoped preview state. Never shared across sessions or sent to a backend.
 const samples: InboxMessage[] = [
@@ -18,42 +23,56 @@ const samples: InboxMessage[] = [
 ];
 
 function clear() { rows.value = []; selected.value = null; unread.value = null; cursor.value = null; updated.value = ""; }
-function fail() { clear(); loading.value = false; error.value = "提醒加载失败或通知权限已关闭，请重试或联系管理员。"; }
+function reset() { generation++; guard.invalidate(); listGuard.invalidate(); refreshPending = false; actionLoading.value = listLoading.value = false; clear(); }
+function fail() { clear(); actionLoading.value = listLoading.value = false; error.value = "提醒加载失败或通知权限已关闭，请重试或联系管理员。"; }
+function drain(current: number) {
+  if (!disposed && generation === current && refreshPending && !loading.value) { refreshPending = false; void load(false, true); }
+}
 function time(value: number) { return new Date(value * 1000).toLocaleString("zh-CN", { hour12: false }); }
-async function load(more = false) {
-  if (loading.value) return;
-  loading.value = true; error.value = ""; selected.value = null;
+async function load(more = false, preserveDetail = false) {
+  if (disposed || (!preview && (!auth.token || notices.state === 'denied'))) return;
+  if (loading.value) { if (!more) refreshPending = true; return; }
+  const current = generation;
+  listLoading.value = true; error.value = ""; if (!preserveDetail) selected.value = null;
   const after = more ? cursor.value : null;
-  await guard.run(async () => {
+  await listGuard.run(async () => {
     const data: unknown = preview
       ? { list: samples.filter((row) => (!unreadOnly.value || row.look === 0) && (!after || row.id < after)).map((row) => ({ ...row })), unread_count: samples.filter((row) => row.look === 0).length, next_cursor: null }
       : await apiRequest<unknown>(`/kefuapi/messages${queryString({ cursor: after ?? undefined, unread: unreadOnly.value ? 1 : 0, limit: 20 })}`);
     return parseInboxPage(data);
   }, (page) => {
     rows.value = more ? [...rows.value, ...page.list.filter((row) => !rows.value.some((old) => old.id === row.id))] : page.list;
-    unread.value = page.unread_count; cursor.value = page.next_cursor; loading.value = false;
+    unread.value = page.unread_count; cursor.value = page.next_cursor; listLoading.value = false;
     updated.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
   }, fail);
+  drain(current);
 }
 async function open(row: InboxMessage) {
   if (loading.value) return;
-  selected.value = null; loading.value = true; error.value = "";
+  const current = generation;
+  selected.value = null; actionLoading.value = true; error.value = "";
   await guard.run(async () => parseInboxMessage(preview ? { ...samples.find((item) => item.id === row.id) }
-    : await apiRequest<unknown>(`/kefuapi/messages/${row.id}`)), (message) => { selected.value = message; loading.value = false; }, fail);
+    : await apiRequest<unknown>(`/kefuapi/messages/${row.id}`)), (message) => { selected.value = message; actionLoading.value = false; }, fail);
+  drain(current);
 }
 async function markRead() {
   const id = selected.value?.id;
   if (!id || loading.value) return;
-  loading.value = true;
+  const current = generation;
+  actionLoading.value = true;
   await guard.run(async () => {
     if (preview) { const row = samples.find((item) => item.id === id); if (row) row.look = 1; }
     else await apiRequest<unknown>(`/kefuapi/messages/${id}/read`, { method: "POST" });
-  }, () => { loading.value = false; void load(); }, fail);
+  }, () => { actionLoading.value = false; void load(); notices.refresh(); }, fail);
+  drain(current);
 }
-function refreshVisible() { if (!document.hidden && !selected.value) void load(); }
-function expire() { guard.invalidate(); clear(); loading.value = false; void router.replace("/login"); }
+function refreshVisible() { if (!document.hidden) void load(false, true); }
+function expire() { reset(); void router.replace("/login"); }
 watch(unreadOnly, () => { void load(); });
-watch(() => auth.token, () => { guard.invalidate(); clear(); loading.value = false; if (!preview) void load(); });
+watch(() => auth.token, () => { reset(); if (!preview && auth.token) void load(); }, { flush: 'sync' });
+watch(() => notices.version, () => {
+  if (notices.state === 'denied') { reset(); fail(); } else refreshVisible();
+}, { immediate: true });
 onMounted(() => {
   document.title = "系统提醒 - CinaShop 客服";
   window.addEventListener("kefu-auth-expired", expire);
@@ -62,7 +81,7 @@ onMounted(() => {
   refreshTimer = setInterval(refreshVisible, 30000); void load();
 });
 onBeforeUnmount(() => {
-  guard.dispose(); clearInterval(refreshTimer);
+  disposed = true; generation++; guard.dispose(); listGuard.dispose(); clearInterval(refreshTimer);
   window.removeEventListener("kefu-auth-expired", expire); window.removeEventListener("focus", refreshVisible);
   document.removeEventListener("visibilitychange", refreshVisible);
 });
@@ -75,6 +94,7 @@ onBeforeUnmount(() => {
       <RouterLink :to="preview ? '/workbench?preview=1' : '/workbench'">返回会话</RouterLink>
     </header>
     <p v-if="preview" class="inbox-banner">本地模拟收件箱，不连接生产、不发送通知、不执行提现审核或付款。</p>
+    <StaffNoticeStatus />
     <div class="inbox-toolbar">
       <label><input v-model="unreadOnly" type="checkbox" :disabled="loading"> 仅看未读</label>
       <button :disabled="loading" @click="load()">刷新提醒</button>

@@ -36,7 +36,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw new ApiError("服务返回了无法识别的响应", response.status);
   }
   if (!response.ok || envelope.status !== 200) {
-    if (response.status === 401 || envelope.status === 401) {
+    if ((response.status === 401 || [401, 410000, 410001, 410002].includes(envelope.status))
+      && token && token === sessionStorage.getItem(KEFU_TOKEN_KEY)) {
       sessionStorage.removeItem(KEFU_TOKEN_KEY);
       sessionStorage.removeItem(KEFU_INFO_KEY);
       localStorage.removeItem(KEFU_TOKEN_KEY);

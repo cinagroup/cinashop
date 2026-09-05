@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "workers-ts/**"
+      - "view/common/**"
       - "view/admin-ts/**"
       - "view/pc-ts/**"
       - "view/supplier-ts/**"
@@ -16,6 +17,7 @@ on:
   pull_request:
     paths:
       - "workers-ts/**"
+      - "view/common/**"
       - "view/admin-ts/**"
       - "view/pc-ts/**"
       - "view/supplier-ts/**"

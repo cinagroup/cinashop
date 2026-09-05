@@ -29,23 +29,32 @@ export function parseAdminPendingCounts(value: unknown): AdminPendingCounts {
 export function createAdminTodoLoader(load: () => Promise<AdminPendingCounts>, publish: (state: AdminTodoState) => void) {
   let disposed = false;
   let pending: Promise<void> | undefined;
+  let generation = 0, repeat = false;
   let snapshot: AdminPendingCounts | null = null;
   return {
-    refresh(): Promise<void> {
+    refresh(force = false): Promise<void> {
       if (disposed) return Promise.resolve();
-      if (pending) return pending;
+      if (pending) { repeat ||= force; return pending; }
+      const current = generation;
       publish({ snapshot, loading: true, error: false });
-      pending = Promise.resolve().then(load).then((result) => {
-        if (disposed) return;
-        snapshot = parseAdminPendingCounts(result);
-        publish({ snapshot, loading: false, error: false });
-      }).catch(() => {
-        // A failed permission/session refresh must not keep showing older counts.
-        snapshot = null;
-        if (!disposed) publish({ snapshot, loading: false, error: true });
-      }).finally(() => { pending = undefined; });
+      pending = Promise.resolve().then(async () => {
+        do {
+          repeat = false;
+          if (disposed || current !== generation) return;
+          try {
+            const result = await load();
+            if (disposed || current !== generation) return;
+            snapshot = parseAdminPendingCounts(result);
+            publish({ snapshot, loading: repeat, error: false });
+          } catch {
+            if (disposed || current !== generation) return;
+            snapshot = null; publish({ snapshot, loading: repeat, error: true });
+          }
+        } while (repeat);
+      }).finally(() => { if (current === generation) pending = undefined; });
       return pending;
     },
-    dispose() { disposed = true; snapshot = null; },
+    invalidate() { generation++; repeat = false; pending = undefined; snapshot = null; publish({ snapshot, loading: false, error: false }); },
+    dispose() { disposed = true; generation++; snapshot = null; },
   };
 }

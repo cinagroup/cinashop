@@ -29,6 +29,7 @@ describe("admin pending-work UI lifecycle", () => {
   it("does not publish an old user's late response after unmount or logout", async () => {
     const gate = deferred<AdminPendingCounts>(), publish = vi.fn(), load = vi.fn(() => gate.promise);
     const loader = createAdminTodoLoader(load, publish), pending = loader.refresh();
+    await Promise.resolve(); // Exercise an actually in-flight read, not a cancelled pre-flight microtask.
     loader.dispose(); gate.resolve(counts); await pending; await loader.refresh();
     expect(publish).toHaveBeenCalledTimes(1);
     expect(load).toHaveBeenCalledTimes(1);

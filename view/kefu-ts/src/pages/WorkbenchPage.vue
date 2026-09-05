@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import UiIcon from "@/components/UiIcon.vue";
+import StaffNoticeStatus from "@/components/StaffNoticeStatus.vue";
 import { kefuApi } from "@/api/kefu";
 import { resolveKefuAssetUrl } from "@/api/client";
 import {
@@ -1175,6 +1176,7 @@ onBeforeUnmount(() => {
         </button>
       </header>
       <label class="search-box"><UiIcon name="search" /><input v-model="search" placeholder="搜索客户或手机号" /></label>
+      <StaffNoticeStatus />
       <div class="session-tabs">
         <button :class="{ active: sessionTab === 'all' }" @click="sessionTab = 'all'">全部 <span>{{ sessions.length }}</span></button>
         <button :class="{ active: sessionTab === 'unread' }" @click="sessionTab = 'unread'">未读 <span>{{ unreadTotal }}</span></button>

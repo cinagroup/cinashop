@@ -30,20 +30,14 @@ export const useAuthStore = defineStore("admin-auth", {
   actions: {
     async login(account: string, pwd: string): Promise<void> {
       const result = await apiAdminLogin(account, pwd);
-      this.token = result.token;
-      this.userInfo = result.user_info;
-      this.menus = result.menus;
-      this.uniqueAuth = result.unique_auth;
       setToken(result.token);
       setAdminSession({ userInfo: result.user_info, menus: result.menus, uniqueAuth: result.unique_auth });
+      this.$patch({ token: result.token, userInfo: result.user_info, menus: result.menus, uniqueAuth: result.unique_auth });
     },
 
     logout(): void {
-      this.token = "";
-      this.userInfo = null;
-      this.menus = [];
-      this.uniqueAuth = [];
       clearAuth();
+      this.$patch({ token: '', userInfo: null, menus: [], uniqueAuth: [] });
     },
   },
 });

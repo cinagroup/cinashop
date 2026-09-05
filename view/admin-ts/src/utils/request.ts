@@ -16,6 +16,14 @@ const request: AxiosInstance = axios.create({
   timeout: 30000,
 });
 
+function expireCurrentRequest(response: AxiosResponse | undefined) {
+  const bearer = response?.config.headers?.['Authori-zation'];
+  // A late 401 from a previous account must not log out the replacement session.
+  if (typeof bearer !== 'string' || bearer !== `Bearer ${getToken()}`) return;
+  clearAuth(); window.dispatchEvent(new Event('admin-auth-expired'));
+  if (window.location.pathname !== '/login') window.location.href = '/login';
+}
+
 request.interceptors.request.use((config) => {
   const token = getToken();
   if (token) {
@@ -31,14 +39,14 @@ request.interceptors.response.use(
       return response;
     }
     if (data && [410000, 410001, 410002].includes(data.status)) {
-      clearAuth();
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+      expireCurrentRequest(response);
     }
     return Promise.reject(new Error(data?.msg ?? "请求失败"));
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    if (axios.isAxiosError(error) && (error.response?.status === 401 || [410000, 410001, 410002].includes(error.response?.data?.status))) expireCurrentRequest(error.response);
+    return Promise.reject(error);
+  },
 );
 
 /** 解包信封 */
