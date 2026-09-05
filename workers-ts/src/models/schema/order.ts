@@ -170,6 +170,9 @@ export const storeOrder = pgTable(
     /** unique 幂等: 同 uid + 同 key 只能生成一个订单 */
     uniqueIndex("so_unique_uid_uq").on(t.unique, t.uid),
     index("so_uid").on(t.uid),
+    index("so_kefu_customer_orders").on(t.uid, t.id.desc().nullsFirst())
+      .where(sql`${t.isSystemDel} = 0 AND ${t.isDel} = 0 AND ${t.storeId} = 0
+        AND ${t.pid} = 0 AND ${t.refundType} IN (0, 1, 3, 6)`),
     index("so_order_id").on(t.orderId),
     index("so_verify_code").on(t.verifyCode),
     index("so_paid").on(t.paid),
@@ -247,6 +250,7 @@ export const storeOrderCartInfo = pgTable(
   (t) => [
     index("soci_oid").on(t.oid),
     index("soci_uid").on(t.uid),
+    index("soci_kefu_order_product").on(t.oid, t.productId),
     index("soci_split_pending").on(t.oid, t.splitStatus, t.id),
     index("soci_old_cart_id").on(t.oldCartId),
     uniqueIndex("soci_oid_unique_uq").on(t.oid, t.unique),

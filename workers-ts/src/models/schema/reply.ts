@@ -76,6 +76,8 @@ export const storeProductReply = pgTable(
   },
   (t) => [
     index("spr_product_active").on(t.productId, t.status, t.isDel, t.addTime),
+    index("spr_product_id").on(t.productId),
+    index("spr_unique").on(t.unique),
     index("spr_uid").on(t.uid),
     index("spr_order_unique").on(t.oid, t.unique, t.isDel),
     uniqueIndex("spr_active_cart_uq")
@@ -113,7 +115,10 @@ export const storeProductReplyComment = pgTable(
     addTime: integer("add_time").default(0).notNull(),
     updateTime: integer("update_time").default(0).notNull(),
   },
-  (t) => [index("sprc_reply_parent").on(t.replyId, t.pid, t.addTime)],
+  (t) => [
+    index("sprc_reply_parent").on(t.replyId, t.pid, t.addTime),
+    index("sprc_reply_id").on(t.replyId),
+  ],
 );
 
 export type StoreProductReply = typeof storeProductReply.$inferSelect;

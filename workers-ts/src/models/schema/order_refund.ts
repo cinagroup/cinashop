@@ -5,6 +5,7 @@
  *   - eb_store_order_refund  退款记录 (含 refund_type 状态机)
  *   - eb_store_order_status  订单状态变更日志
  */
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -61,6 +62,8 @@ export const storeOrderRefund = pgTable(
   (t) => [
     index("sor_store_order_id").on(t.storeOrderId),
     index("sor_uid").on(t.uid),
+    index("sor_kefu_customer_refunds").on(t.uid, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst())
+      .where(sql`${t.isCancel} = 0 AND ${t.isDel} = 0`),
     index("sor_order_id").on(t.orderId),
     index("sor_cancel_oid").on(t.isCancel, t.storeOrderId),
   ],

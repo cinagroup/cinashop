@@ -13,6 +13,7 @@
  *
  * M5 只实现只读 + 领券; 秒杀/拼团/砍价的"参与"写操作留后续。
  */
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -240,6 +241,8 @@ export const storeSeckill = pgTable(
     index("ss_time").on(t.timeId),
     index("ss_status").on(t.status),
     index("sseckill_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort),
+    index("store_seckill_system_form_active").on(t.systemFormId, t.isDel, t.status)
+      .where(sql`${t.systemFormId} > 0`),
   ],
 );
 
@@ -317,6 +320,8 @@ export const storeCombination = pgTable(
   (t) => [
     index("scomb_status").on(t.status),
     index("scomb_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort),
+    index("store_combination_system_form_active").on(t.systemFormId, t.isDel, t.status)
+      .where(sql`${t.systemFormId} > 0`),
   ],
 );
 
@@ -416,6 +421,8 @@ export const storeBargain = pgTable(
   (t) => [
     index("sbarg_status").on(t.status),
     index("sbarg_visible").on(t.status, t.isDel, t.stopTime, t.sort),
+    index("store_bargain_system_form_active").on(t.systemFormId, t.isDel, t.status)
+      .where(sql`${t.systemFormId} > 0`),
   ],
 );
 
@@ -462,5 +469,7 @@ export const storeIntegral = pgTable(
   (t) => [
     index("sint_status").on(t.status),
     index("sint_visible").on(t.status, t.isShow, t.isDel, t.sort),
+    index("store_integral_system_form_active").on(t.systemFormId, t.isDel, t.status)
+      .where(sql`${t.systemFormId} > 0`),
   ],
 );

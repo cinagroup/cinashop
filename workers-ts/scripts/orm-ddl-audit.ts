@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Container } from "../src/lib/di";
-import { catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
+import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -79,6 +79,11 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     }
     const externalVsEmbedded = compareCatalogs(catalogs.external, catalogs.embedded);
     const externalVsOrm = compareCatalogs(catalogs.external, catalogs.orm);
+    const contractManifest = JSON.parse(await readFile(resolve(root, "audit/orm-query-index-reconciliation.json"), "utf8"));
+    if (!Array.isArray(contractManifest.entries)) throw new Error("Invalid reconciled index manifest");
+    const requiredIndexKeys = contractManifest.entries.map((entry: { key: string }) => entry.key);
+    assertIndexContracts(catalogs.external, catalogs.embedded, requiredIndexKeys);
+    assertIndexContracts(catalogs.external, catalogs.orm, requiredIndexKeys);
     return {
       scope: "Fresh isolated PostgreSQL 16 catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Canonical expression differences are review candidates, not proof of behavioral inequivalence. Does not inspect production rows, privileges, functions, triggers, policies or views.",
       serverVersionNum: Number(identity.version),
@@ -87,6 +92,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
+      verifiedIndexContracts: { mode: "exact named definitions; reject any drift in either candidate path", keys: requiredIndexKeys },
       missingIndexEvidence: {
         externalVsEmbedded: classifyMissingIndexes(catalogs.external, catalogs.embedded),
         externalVsOrm: classifyMissingIndexes(catalogs.external, catalogs.orm),

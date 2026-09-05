@@ -1,0 +1,425 @@
+{
+  "sourceCommit": "4fe0530ab696a5f7ea66245c3ce0c5a0c031efcc",
+  "runId": 33968639077,
+  "scope": "All 22 external-versus-ORM reference-only indexes without an exact candidate in the verified PG16 catalog. Add the exact named declarations without dropping aliases, replacing standalone unique indexes with constraints, or modifying deployed migrations. Other name/definition/dependency differences remain open.",
+  "entries": [
+    {
+      "source": "migrations/0092_kefu_core_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"category_kefu_speechcraft\"\n  ON \"category\" (\"owner_id\", \"type\", \"group\", \"sort\" DESC, \"id\");",
+      "catalog": {
+        "key": "category.category_kefu_speechcraft",
+        "name": "category_kefu_speechcraft",
+        "table": "category",
+        "definition": "public.category USING btree (owner_id, type, \"group\", sort DESC, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 13,
+      "key": "category.category_kefu_speechcraft"
+    },
+    {
+      "source": "migrations/0128_system_form_reference_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"store_bargain_system_form_active\"\n  ON \"store_bargain\" (\"system_form_id\", \"is_del\", \"status\")\n  WHERE \"system_form_id\" > 0;",
+      "catalog": {
+        "key": "store_bargain.store_bargain_system_form_active",
+        "name": "store_bargain_system_form_active",
+        "table": "store_bargain",
+        "definition": "public.store_bargain USING btree (system_form_id, is_del, status) WHERE (system_form_id > 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 14,
+      "key": "store_bargain.store_bargain_system_form_active"
+    },
+    {
+      "source": "migrations/0128_system_form_reference_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"store_combination_system_form_active\"\n  ON \"store_combination\" (\"system_form_id\", \"is_del\", \"status\")\n  WHERE \"system_form_id\" > 0;",
+      "catalog": {
+        "key": "store_combination.store_combination_system_form_active",
+        "name": "store_combination_system_form_active",
+        "table": "store_combination",
+        "definition": "public.store_combination USING btree (system_form_id, is_del, status) WHERE (system_form_id > 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 10,
+      "key": "store_combination.store_combination_system_form_active"
+    },
+    {
+      "source": "migrations/0124_city_delivery_callback_pipeline.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sdo_dada_reconcile_scan\"\n  ON \"store_delivery_order\" (\"station_type\", \"status\", \"id\");",
+      "catalog": {
+        "key": "store_delivery_order.sdo_dada_reconcile_scan",
+        "name": "sdo_dada_reconcile_scan",
+        "table": "store_delivery_order",
+        "definition": "public.store_delivery_order USING btree (station_type, status, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 183,
+      "key": "store_delivery_order.sdo_dada_reconcile_scan"
+    },
+    {
+      "source": "migrations/0128_system_form_reference_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"store_integral_system_form_active\"\n  ON \"store_integral\" (\"system_form_id\", \"is_del\", \"status\")\n  WHERE \"system_form_id\" > 0;",
+      "catalog": {
+        "key": "store_integral.store_integral_system_form_active",
+        "name": "store_integral_system_form_active",
+        "table": "store_integral",
+        "definition": "public.store_integral USING btree (system_form_id, is_del, status) WHERE (system_form_id > 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 18,
+      "key": "store_integral.store_integral_system_form_active"
+    },
+    {
+      "source": "migrations/0096_kefu_order_context_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_kefu_customer_orders\"\n  ON \"store_order\" (\"uid\", \"id\" DESC)\n  WHERE \"is_system_del\" = 0\n    AND \"is_del\" = 0\n    AND \"store_id\" = 0\n    AND \"pid\" = 0\n    AND \"refund_type\" IN (0, 1, 3, 6);",
+      "catalog": {
+        "key": "store_order.so_kefu_customer_orders",
+        "name": "so_kefu_customer_orders",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (uid, id DESC) WHERE ((is_system_del = 0) AND (is_del = 0) AND (store_id = 0) AND (pid = 0) AND (refund_type = ANY (ARRAY[0, 1, 3, 6])))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 2,
+      "key": "store_order.so_kefu_customer_orders"
+    },
+    {
+      "source": "migrations/0095_kefu_product_context_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"soci_kefu_order_product\"\n  ON \"store_order_cart_info\" (\"oid\", \"product_id\");",
+      "catalog": {
+        "key": "store_order_cart_info.soci_kefu_order_product",
+        "name": "soci_kefu_order_product",
+        "table": "store_order_cart_info",
+        "definition": "public.store_order_cart_info USING btree (oid, product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 2,
+      "key": "store_order_cart_info.soci_kefu_order_product"
+    },
+    {
+      "source": "migrations/0096_kefu_order_context_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sor_kefu_customer_refunds\"\n  ON \"store_order_refund\" (\"uid\", \"add_time\" DESC, \"id\" DESC)\n  WHERE \"is_cancel\" = 0 AND \"is_del\" = 0;",
+      "catalog": {
+        "key": "store_order_refund.sor_kefu_customer_refunds",
+        "name": "sor_kefu_customer_refunds",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (uid, add_time DESC, id DESC) WHERE ((is_cancel = 0) AND (is_del = 0))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 10,
+      "key": "store_order_refund.sor_kefu_customer_refunds"
+    },
+    {
+      "source": "migrations/0016_supplier_product_management.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_supplier_list\"\n  ON \"store_product\" (\"type\", \"relation_id\", \"is_del\", \"is_show\", \"id\" DESC);",
+      "catalog": {
+        "key": "store_product.sp_supplier_list",
+        "name": "sp_supplier_list",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (type, relation_id, is_del, is_show, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 32,
+      "key": "store_product.sp_supplier_list"
+    },
+    {
+      "source": "migrations/0128_system_form_reference_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"store_product_system_form_active\"\n  ON \"store_product\" (\"system_form_id\", \"is_del\")\n  WHERE \"system_form_id\" > 0;",
+      "catalog": {
+        "key": "store_product.store_product_system_form_active",
+        "name": "store_product_system_form_active",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (system_form_id, is_del) WHERE (system_form_id > 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 2,
+      "key": "store_product.store_product_system_form_active"
+    },
+    {
+      "source": "migrations/0016_supplier_product_management.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spav_product_type_suk\"\n  ON \"store_product_attr_value\" (\"product_id\", \"type\", \"suk\");",
+      "catalog": {
+        "key": "store_product_attr_value.spav_product_type_suk",
+        "name": "spav_product_type_suk",
+        "table": "store_product_attr_value",
+        "definition": "public.store_product_attr_value USING btree (product_id, type, suk)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 36,
+      "key": "store_product_attr_value.spav_product_type_suk"
+    },
+    {
+      "source": "migrations/0016_supplier_product_management.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spc_supplier_tree\"\n  ON \"store_product_category\" (\"type\", \"relation_id\", \"pid\", \"is_show\", \"sort\" DESC);",
+      "catalog": {
+        "key": "store_product_category.spc_supplier_tree",
+        "name": "spc_supplier_tree",
+        "table": "store_product_category",
+        "definition": "public.store_product_category USING btree (type, relation_id, pid, is_show, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 34,
+      "key": "store_product_category.spc_supplier_tree"
+    },
+    {
+      "source": "migrations/0095_kefu_product_context_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_kefu_category_product\"\n  ON \"store_product_relation\" (\"type\", \"relation_id\", \"product_id\");",
+      "catalog": {
+        "key": "store_product_relation.spr_kefu_category_product",
+        "name": "spr_kefu_category_product",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (type, relation_id, product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 11,
+      "key": "store_product_relation.spr_kefu_category_product"
+    },
+    {
+      "source": "migrations/0095_kefu_product_context_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_kefu_product_category\"\n  ON \"store_product_relation\" (\"type\", \"product_id\", \"relation_id\");",
+      "catalog": {
+        "key": "store_product_relation.spr_kefu_product_category",
+        "name": "spr_kefu_product_category",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (type, product_id, relation_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 8,
+      "key": "store_product_relation.spr_kefu_product_category"
+    },
+    {
+      "source": "migrations/0016_supplier_product_management.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_product_type_relation\"\n  ON \"store_product_relation\" (\"product_id\", \"type\", \"relation_id\");",
+      "catalog": {
+        "key": "store_product_relation.spr_product_type_relation",
+        "name": "spr_product_type_relation",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (product_id, type, relation_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 38,
+      "key": "store_product_relation.spr_product_type_relation"
+    },
+    {
+      "source": "migrations/0006a_embedded_schema_parity.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_product_id\" ON \"store_product_reply\" (\"product_id\");",
+      "catalog": {
+        "key": "store_product_reply.spr_product_id",
+        "name": "spr_product_id",
+        "table": "store_product_reply",
+        "definition": "public.store_product_reply USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 159,
+      "key": "store_product_reply.spr_product_id"
+    },
+    {
+      "source": "migrations/0006a_embedded_schema_parity.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_unique\" ON \"store_product_reply\" (\"unique\");",
+      "catalog": {
+        "key": "store_product_reply.spr_unique",
+        "name": "spr_unique",
+        "table": "store_product_reply",
+        "definition": "public.store_product_reply USING btree (\"unique\")",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 161,
+      "key": "store_product_reply.spr_unique"
+    },
+    {
+      "source": "migrations/0006a_embedded_schema_parity.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sprc_reply_id\" ON \"store_product_reply_comment\" (\"reply_id\");",
+      "catalog": {
+        "key": "store_product_reply_comment.sprc_reply_id",
+        "name": "sprc_reply_id",
+        "table": "store_product_reply_comment",
+        "definition": "public.store_product_reply_comment USING btree (reply_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 178,
+      "key": "store_product_reply_comment.sprc_reply_id"
+    },
+    {
+      "source": "migrations/0128_system_form_reference_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"store_seckill_system_form_active\"\n  ON \"store_seckill\" (\"system_form_id\", \"is_del\", \"status\")\n  WHERE \"system_form_id\" > 0;",
+      "catalog": {
+        "key": "store_seckill.store_seckill_system_form_active",
+        "name": "store_seckill_system_form_active",
+        "table": "store_seckill",
+        "definition": "public.store_seckill USING btree (system_form_id, is_del, status) WHERE (system_form_id > 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 6,
+      "key": "store_seckill.store_seckill_system_form_active"
+    },
+    {
+      "source": "migrations/0095_kefu_product_context_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sv_kefu_recent\"\n  ON \"store_visit\" (\"uid\", \"add_time\" DESC, \"id\" DESC, \"product_id\");",
+      "catalog": {
+        "key": "store_visit.sv_kefu_recent",
+        "name": "sv_kefu_recent",
+        "table": "store_visit",
+        "definition": "public.store_visit USING btree (uid, add_time DESC, id DESC, product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 5,
+      "key": "store_visit.sv_kefu_recent"
+    },
+    {
+      "source": "migrations/0007_supplier_core.sql",
+      "sourceSql": "CREATE UNIQUE INDEX IF NOT EXISTS \"supplier_admin_id_uq\" ON \"system_supplier\" (\"admin_id\");",
+      "catalog": {
+        "key": "system_supplier.supplier_admin_id_uq",
+        "name": "supplier_admin_id_uq",
+        "table": "system_supplier",
+        "definition": "public.system_supplier USING btree (admin_id)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 33,
+      "key": "system_supplier.supplier_admin_id_uq"
+    },
+    {
+      "source": "migrations/0118_work_contact_action_outbox.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"wce_payload_redaction_ready\"\n  ON \"work_callback_event\" (\"payload_retained_until\", \"id\")\n  WHERE \"status\" = 'ORDERED' AND \"payload_redacted_time\" = 0;",
+      "catalog": {
+        "key": "work_callback_event.wce_payload_redaction_ready",
+        "name": "wce_payload_redaction_ready",
+        "table": "work_callback_event",
+        "definition": "public.work_callback_event USING btree (payload_retained_until, id) WHERE (((status)::text = 'ORDERED'::text) AND (payload_redacted_time = 0))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "sourceLine": 29,
+      "key": "work_callback_event.wce_payload_redaction_ready"
+    }
+  ]
+}

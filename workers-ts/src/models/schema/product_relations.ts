@@ -48,6 +48,7 @@ export const storeProductCategory = pgTable(
   },
   (t) => [
     index("pid").on(t.pid),
+    index("spc_supplier_tree").on(t.type, t.relationId, t.pid, t.isShow, t.sort.desc().nullsFirst()),
     index("is_show").on(t.isShow),
     index("sort").on(t.sort),
     index("add_time").on(t.addTime),
@@ -73,6 +74,9 @@ export const storeProductRelation = pgTable(
     index("type").on(t.type),
     index("relation_id").on(t.relationId),
     index("product_id").on(t.productId),
+    index("spr_product_type_relation").on(t.productId, t.type, t.relationId),
+    index("spr_kefu_product_category").on(t.type, t.productId, t.relationId),
+    index("spr_kefu_category_product").on(t.type, t.relationId, t.productId),
   ],
 );
 
@@ -168,6 +172,7 @@ export const storeProductAttrValue = pgTable(
     index("unique_suk").on(t.unique, t.suk),
     index("store_id_value").on(t.productId, t.suk),
     index("spav_product_active").on(t.productId, t.type, t.isRetired, t.id),
+    index("spav_product_type_suk").on(t.productId, t.type, t.suk),
   ],
 );
 
@@ -332,6 +337,7 @@ export const storeVisit = pgTable(
   (t) => [
     index("sv_product_id").on(t.productId),
     index("sv_user_product").on(t.uid, t.productId, t.productType, t.id),
+    index("sv_kefu_recent").on(t.uid, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst(), t.productId),
   ],
 );
 

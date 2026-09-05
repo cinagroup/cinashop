@@ -38,6 +38,7 @@ export const legacyCategory = pgTable(
     index("legacy_category_pid").on(table.pid),
     index("legacy_category_name").on(table.name),
     index("legacy_category_owner_type_id").on(table.ownerId, table.type, table.id),
+    index("category_kefu_speechcraft").on(table.ownerId, table.type, table.group, table.sort.desc().nullsFirst(), table.id),
     index("legacy_category_group").on(table.group),
     index("legacy_category_scope_group").on(
       table.type,

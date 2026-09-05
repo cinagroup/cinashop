@@ -65,6 +65,8 @@ export const workCallbackEvent = pgTable(
       table.id,
     ),
     index("wce_status_time").on(table.status, table.updateTime, table.id),
+    index("wce_payload_redaction_ready").on(table.payloadRetainedUntil, table.id)
+      .where(sql`${table.status} = 'ORDERED' AND ${table.payloadRedactedTime} = 0`),
     index("wce_projection_status_time").on(
       table.projectionStatus,
       table.updateTime,

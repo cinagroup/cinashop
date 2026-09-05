@@ -41,5 +41,6 @@ export const storeDeliveryOrder = pgTable(
     index("sdo_delivery_no").on(t.deliveryNo),
     index("sdo_owner_status").on(t.type, t.relationId, t.status, t.id),
     index("sdo_status_time").on(t.status, t.addTime, t.id),
+    index("sdo_dada_reconcile_scan").on(t.stationType, t.status, t.id),
   ],
 );

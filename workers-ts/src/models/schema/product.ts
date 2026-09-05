@@ -7,6 +7,7 @@
  * 关键: searchers 在 models/searchers/product.ts,
  *       JSON/逗号列的访问器在 services 层做 (对应 PHP model getter)。
  */
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -131,6 +132,9 @@ export const storeProduct = pgTable(
     index("sp_add_time_idx").on(t.addTime),
     index("is_postage").on(t.isPostage),
     index("sp_platform_article_options").on(t.type, t.relationId, t.isDel, t.id.desc()),
+    index("sp_supplier_list").on(t.type, t.relationId, t.isDel, t.isShow, t.id.desc().nullsFirst()),
+    index("store_product_system_form_active").on(t.systemFormId, t.isDel)
+      .where(sql`${t.systemFormId} > 0`),
   ],
 );
 

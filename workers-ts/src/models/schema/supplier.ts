@@ -4,7 +4,7 @@
  * 对应 PHP `eb_system_supplier`。供应商登录账号仍存放在 `system_admin`，
  * 通过 `system_admin.relation_id -> system_supplier.id` 关联。
  */
-import { index, integer, pgTable, serial, smallint, varchar } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, serial, smallint, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 
 export const systemSupplier = pgTable(
   "system_supplier",
@@ -38,6 +38,7 @@ export const systemSupplier = pgTable(
   },
   (t) => [
     index("supplier_admin_id").on(t.adminId),
+    uniqueIndex("supplier_admin_id_uq").on(t.adminId),
     index("supplier_status").on(t.isShow, t.isDel),
   ],
 );

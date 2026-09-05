@@ -1,5 +1,6 @@
 // Isolated real API probes; no database URL is consumed. Preload denies sockets.
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
 const { dirname, join } = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { PGlite } = require("@electric-sql/pglite");
@@ -61,6 +62,52 @@ async function main() {
     assert.equal(previous.tables[`public.${table}`].uniqueConstraints[key], undefined);
   }
   assert.deepEqual(await generateMigration(previous, generateDrizzleJson(models, previous.id)), []);
+  // DB-009D2b1: exercise actual CJS/ESM-generated initial and incremental DDL.
+  const manifest = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-query-index-reconciliation.json"), "utf8"));
+  const { readCatalog, assertIndexContracts } = require("tsx/cjs/api").require("../../scripts/data-migration/postgres-catalog-audit.ts", __filename);
+  const keys = manifest.entries.map((entry) => entry.key);
+  assert.equal(keys.length, 22);
+  const without = structuredClone(previous);
+  for (const entry of manifest.entries) {
+    assert.ok(without.tables[`public.${entry.catalog.table}`].indexes[entry.catalog.name]);
+    delete without.tables[`public.${entry.catalog.table}`].indexes[entry.catalog.name];
+  }
+  const restored = generateDrizzleJson(models, without.id);
+  const delta = await generateMigration(without, restored);
+  assert.equal(delta.length, 22);
+  assert.ok(delta.every((statement) => /^CREATE (?:UNIQUE )?INDEX /.test(statement)));
+  const db = new PGlite();
+  const read = () => readCatalog(async (query) => (await db.query(query)).rows);
+  try {
+    await db.exec((await generateMigration(generateDrizzleJson({}), without)).join("\n"));
+    const missing = await read();
+    assert.ok(keys.every((key) => !missing.indexes.some((row) => row.key === key)));
+    const inserted = await db.query("INSERT INTO system_supplier(admin_id,supplier_name) VALUES (7,'kept fixture'),(7,'duplicate fixture') RETURNING id");
+    const data = (await db.query("SELECT * FROM system_supplier ORDER BY id")).rows;
+    await db.exec("BEGIN");
+    await assert.rejects(db.exec(delta.join("\n")), { code: "23505" });
+    await db.exec("ROLLBACK");
+    assert.deepEqual((await db.query("SELECT * FROM system_supplier ORDER BY id")).rows, data);
+    assert.deepEqual((await read()).indexes, missing.indexes);
+    // Remove only our known duplicate fixture inside this disposable memory DB.
+    await db.query("DELETE FROM system_supplier WHERE id=$1", [inserted.rows[1].id]);
+    const kept = (await db.query("SELECT * FROM system_supplier ORDER BY id")).rows;
+    await db.exec(delta.join("\n"));
+    const actual = await read();
+    const reference = { ...actual, indexes: manifest.entries.map((entry) => entry.catalog) };
+    for (const entry of manifest.entries) {
+      assert.deepEqual(actual.indexes.find((row) => row.key === entry.key), entry.catalog, entry.key);
+    }
+    assertIndexContracts(reference, actual, keys);
+    assert.equal(actual.indexes.length, missing.indexes.length + 22);
+    for (const row of missing.indexes) assert.deepEqual(actual.indexes.find((entry) => entry.key === row.key), row);
+    assert.deepEqual((await db.query("SELECT * FROM system_supplier ORDER BY id")).rows, kept);
+    await assert.rejects(db.exec("INSERT INTO system_supplier(admin_id) VALUES (7)"), { code: "23505" });
+    await db.exec("INSERT INTO system_supplier(admin_id) VALUES (8)");
+    assert.equal(actual.indexes.find((row) => row.key === "system_supplier.supplier_admin_id_uq").constraintOwned, false);
+    assert.deepEqual(await generateMigration(restored, generateDrizzleJson(models, restored.id)), []);
+    console.log(`DB-009D2b1 ${format}: 22 exact catalog contracts, additive upgrade, duplicate refusal, no-op passed`);
+  } finally { await db.close(); }
   console.log(`DB-008 ${format}: initial, index/constraint upgrades, tenant FK, full-model no-op passed`);
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });

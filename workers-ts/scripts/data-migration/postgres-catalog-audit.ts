@@ -62,6 +62,23 @@ function structure({ key: _key, name: _name, ...rest }: CatalogRow): string {
   return stable(rest);
 }
 
+/** Exact named contracts already reconciled; this never waives other drift. */
+export function assertIndexContracts(reference: Catalog, candidate: Catalog, keys: readonly string[]): void {
+  if (!keys.length || keys.some((key) => typeof key !== "string" || !key) || new Set(keys).size !== keys.length) {
+    throw new Error("Invalid or duplicate required index contracts");
+  }
+  const left = new Map(reference.indexes.map((row) => [row.key, row]));
+  const right = new Map(candidate.indexes.map((row) => [row.key, row]));
+  if (left.size !== reference.indexes.length || right.size !== candidate.indexes.length) {
+    throw new Error("Duplicate indexes catalog identity");
+  }
+  for (const key of keys) {
+    if (!left.has(key)) throw new Error(`Required reference index missing: ${key}`);
+    if (!right.has(key)) throw new Error(`Required candidate index missing: ${key}`);
+    if (stable(left.get(key)) !== stable(right.get(key))) throw new Error(`Index contract drift: ${key}`);
+  }
+}
+
 /** Exact duplicate-definition evidence only; prefix coverage is not equivalence. */
 export function classifyMissingIndexes(reference: Catalog, candidate: Catalog) {
   const names = new Set(candidate.indexes.map((row) => row.key));
