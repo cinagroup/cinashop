@@ -4605,6 +4605,12 @@ DATA-001～005已关闭为不适用；历史源端工具保留用于其他部署
 
 审计器只对白名单中的`site_url/sign_give_point/sign_status`展示值，其余配置只返回长度、类别和SHA-256；没有日志输出配置值，也没有DDL/DML。两次审计Worker均强制令牌，无令牌403、错误方法404，删除后URL 404。完整精确ID与摘要已固化在`workers-ts/audit/system-config-duplicate-baseline.json`。证据足以把DB-003从“未知重复”缩小为一个业务确认：是否正式保留当前Pages地址ID 389。确认前不删除；确认后只按清单中的20个ID执行短事务，并复验保留行、所有非目标行和owned sequence不变。DB-003审计增量本地专项4/4、完整216文件/1,368项单元及双TypeScript通过。
 
+## AUD-003 新系统口径文档一致性（2026-09-05）
+
+复核发现两类陈旧状态会误导后续执行。其一，`ADMIN-D`仍写生产缺`admin_user_write_replay`，与已经完成并验证的DB-005矛盾；现已改为生产DDL就绪、仅真实角色E2E和发布未完成。其二，`workers-ts/README.md`的当前状态与开放TODO仍把旧站账号、商品、会员、促销、通知和卡密复制写成前置条件；这些已统一重分类为DATA-006/008的新系统初始化，或DATA-007的当前生产记录owner裁决。通用MySQL迁移器与历史审计段落继续保留，专节显式标注“当前部署不适用”，不篡改当时的审计事实。
+
+`data-migration-scope.test.ts`现在同时解析根清单与Worker README的开放checkbox，禁止`SOURCE_MYSQL_URL`、源MySQL复制或复制旧数据再次成为当前完成阻塞。清单新增AUD-003并更新TEST-001到提交`aff75cf`对应的[Actions `33934911543`](https://github.com/cinagroup/cinashop/actions/runs/33934911543)：8/8 jobs成功，包含Worker双TypeScript、216文件/1,368项单元、Linux workerd、201→263结构零漂移、路由/可观测性审计、五端构建与全历史密钥扫描。本项只修正权威执行口径，不将未完成的真实账号、provider、E2E或发布门禁关闭。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

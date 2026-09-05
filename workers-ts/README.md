@@ -1,8 +1,8 @@
 # cinashop-workers
 
-CRMEB PRO → Cloudflare Workers 渐进式迁移。
+CRMEB PRO → Cloudflare Workers 渐进式功能迁移。
 
-将 `cinashop-php` 的 PHP（ThinkPHP 8 + Swoole）商城渐进式迁移到 Cloudflare Workers + Hyperdrive + Upstash Redis。当前仓库只覆盖核心商城切片，尚不能替代旧系统；审计基线和后续顺序见 [MIGRATION_AUDIT.md](../MIGRATION_AUDIT.md)。
+将 `cinashop-php` 的 PHP（ThinkPHP 8 + Swoole）商城功能迁移到 Cloudflare Workers + Hyperdrive + Upstash Redis。当前部署为全新系统，不承接旧 PHP 站真实历史数据；PHP 只作为行为、权限、状态机和 201 张共享表结构参考。当前仓库仍未完成全部功能与生产启用门禁；审计基线和后续顺序见 [MIGRATION_AUDIT.md](../MIGRATION_AUDIT.md)。
 
 ## 当前状态：核心链路部分可用，业务全量迁移未完成
 
@@ -11,10 +11,10 @@ CRMEB PRO → Cloudflare Workers 渐进式迁移。
 - Hono 入口、认证、配置、商品、购物车、订单、部分支付/售后
 - 部分用户中心、营销活动、微信生态和后台管理接口
 - Admin、PC、UniApp 三个 TypeScript 前端骨架及核心页面
-- 企业微信 callback 的 C0～C8 代码、生产结构与随机 schema 服务验收已完成：可信 inbox/outbox、provider 读取、成员、部门、客户/follow/tags、群/群成员、企业客户标签，以及欢迎语/自动标签/商城用户关联的独立 action outbox、UNKNOWN 人工处置和回调脱敏。生产 PostgreSQL 已扩展到 247 表/214 序列；C8 最新隔离场景 18/18 通过且 Admin 已接入脱敏处置台账。所有 authority gate 仍关闭，主 Worker/Admin 未发布；真实源数据、旧媒体素材、企业微信租户/provider、Linux runtime、预发、影子流量和发布批准仍未完成
+- 企业微信 callback 的 C0～C8 代码、生产结构与随机 schema 服务验收已完成：可信 inbox/outbox、provider 读取、成员、部门、客户/follow/tags、群/群成员、企业客户标签，以及欢迎语/自动标签/商城用户关联的独立 action outbox、UNKNOWN 人工处置和回调脱敏。所有 authority gate 仍关闭，主 Worker/Admin 未发布；真实企业微信租户/provider、初始权威目录、预发、影子流量和发布批准仍未完成
 - Admin 首页四条 PHP 合同已拆分恢复：四项卡片、30 天/周/月/年订单趋势、30 天新增用户与消费分层、兼容空排行；统计统一按 `Asia/Shanghai` 非重叠区间并排除删除数据。生产 Hyperdrive 随机 schema 的 8 项 PostgreSQL 断言全部通过，`public` 三表行数前后不变（本地完成，主 Worker/Admin 尚未发布；真实 Admin 与旧 PHP 同时刻对账仍待执行）
-- Admin 统计页已恢复 21 条 PHP 主合同：订单 4、商品 4（含导出）、用户 7、交易 2、余额 4；旧 TypeScript 的 `overview/trend/rank` 仅保留为兼容别名。统一使用 `Asia/Shanghai`、`[start,end)`、根订单和软删除/有效流水过滤，并修正旧 PHP 的 3 日采样漏日、25 小时轴、余额支付环比、性别首项短路、微信累计恒零及多类重复/删除数据污染。生产 Hyperdrive 两轮随机 schema 共 29 项 PostgreSQL 断言全部通过，最新一轮 `public` 12 表行数前后不变（本地完成，主 Worker/Admin 尚未发布；源 MySQL 历史复制和真实 Admin 对账仍待执行）
-- 社区资料、关注/粉丝/推广好友、推荐作者、关注动态与持久浏览已按 PHP 语义恢复；Admin 补齐内容审核、话题目录、平台回复/虚拟评论和级联删除等 30 条方法级兼容合同；客户端进一步补齐配置、完整帖子筛选、作者待审预览、用户编辑重审、商品来源、话题计数、点赞/精选列表、分享、嵌套评论、评论点赞和所有者删除。生产 PostgreSQL 16.14 已应用社交 `0087`/内嵌 `0094`、运营 `0088`/内嵌 `0095` 及客户端 `0089`/内嵌 `0096` 八条查询索引，三个随机 schema 场景验证重放、并发、回滚、计数、越权拒绝和公共表/序列不变；真实 Hyperdrive 还发现并修复作者待审详情误计浏览与数字话题数组绑定问题（生产社区帖子/评论/话题/资料/关系为 `2/2/0/0/0`；主 Worker/前端尚未发布，源数据复制、真实账号与所有旧客户端长尾页面验收仍缺失）
+- Admin 统计页已恢复 21 条 PHP 主合同：订单 4、商品 4（含导出）、用户 7、交易 2、余额 4；旧 TypeScript 的 `overview/trend/rank` 仅保留为兼容别名。统一使用 `Asia/Shanghai`、`[start,end)`、根订单和软删除/有效流水过滤，并修正旧 PHP 的 3 日采样漏日、25 小时轴、余额支付环比、性别首项短路、微信累计恒零及多类重复/删除数据污染。生产 Hyperdrive 两轮随机 schema 共 29 项 PostgreSQL 断言全部通过，最新一轮 `public` 12 表行数前后不变（本地完成，主 Worker/Admin 尚未发布；仍需用当前生产数据和真实受限 Admin 验收）
+- 社区资料、关注/粉丝/推广好友、推荐作者、关注动态与持久浏览已按 PHP 语义恢复；Admin 补齐内容审核、话题目录、平台回复/虚拟评论和级联删除等 30 条方法级兼容合同；客户端进一步补齐配置、完整帖子筛选、作者待审预览、用户编辑重审、商品来源、话题计数、点赞/精选列表、分享、嵌套评论、评论点赞和所有者删除。生产 PostgreSQL 16.14 已应用社交 `0087`/内嵌 `0094`、运营 `0088`/内嵌 `0095` 及客户端 `0089`/内嵌 `0096` 八条查询索引，三个随机 schema 场景验证重放、并发、回滚、计数、越权拒绝和公共表/序列不变；真实 Hyperdrive 还发现并修复作者待审详情误计浏览与数字话题数组绑定问题（生产社区帖子/评论/话题/资料/关系为 `2/2/0/0/0`；主 Worker/前端尚未发布，仍缺新系统运营内容、真实账号与所有旧客户端长尾页面验收）
 - Supplier 独立后台、结算/提现以及微信/支付宝原路退款状态机（本地完成，尚未发布）
 - 支付成功、发货通知和拒绝退款通知共用 transactional outbox、Queue 可重试消费者与定时补偿；发货/拒绝已恢复 PHP 站内信，并以独立 PostgreSQL 投递账本暂存短信、公众号/小程序和微信发货上报。提供商调用在事务外，网络结果不确定进入 `UNKNOWN` 且不盲重发；Admin 可在脱敏台账中确认已发、明确承担重复风险后重发或关闭，并把每个决定写入不含目标/payload 的不可变动作表。生产 Hyperdrive 隔离场景为 17 条投递、`16 SENT + 1 UNKNOWN`，重放没有重复调用，三种人工状态迁移与请求键幂等均通过（生产 `0084`～`0086` schema 已应用，主 Worker 尚未发布；生产模板、openid、渠道配置和外部 secrets 均未就绪）
 - 订单/会员/充值统一服务端收银台：同时校验订单归属/状态/超时、数据库开关、HTTPS 回调和当前 Worker secrets；微信身份按登录用户服务端解析，PC/UniApp 在回调确认前不宣告支付成功。已关闭充值订单通过余额入口无凭据增加资金的高危迁移缺陷，充值档位/赠送额改由 PHP `user_recharge_quota` 配置作为服务端权威并恢复旧首页响应契约；生产当前启用档位为 0。佣金转余额恢复 PHP 四账，并增加用户行锁、冻结额门禁、事务回滚和 PC/UniApp 不可逆确认；生产 Hyperdrive 隔离场景已验证并发单赢家、故障回滚和资金守恒。充值回调同样验证并发单次入账、金额/交易号冲突拒绝和重放幂等（本地完成，尚未发布；生产支付开关与商户 secrets 当前均未就绪，佣金转余额开关/说明配置尚未复制）
@@ -23,20 +23,20 @@ CRMEB PRO → Cloudflare Workers 渐进式迁移。
 - PHP 语义的用户两级分销佣金快照、收货入账、退款退佣与冻结期提现守卫（本地完成，尚未进入生产数据库）
 - PHP 语义的商品赠送积分、实付返积分、付费会员倍率、收货经验/等级升级及累计退款积分冲正（本地完成，尚未进入生产数据库）
 - 订单/拆分包裹/退款物流查询：直接读取真实运单、阿里云物流市场查询、KV 缓存和明确降级，不再生成模拟轨迹（本地完成，尚未用真实 AppCode 验证）
-- 固定/任选优惠套餐已恢复公开资格、完整选品购物车、服务端权威活动 SKU 计价、`type=5` 统一下单、套餐限额原子占用/取消补偿、免邮和不可退款门禁；PC/UniApp 商品详情可按固定/必选规则选 SKU 后多行结算。Admin 同时恢复 PHP 五条运营路由、商品/标签选择、固定/任选创建编辑、逐 SKU 套餐价、未来定时启用、软删除和 `activity.view/activity.manage` 权限边界；编辑会保留仍存在的关系 ID 与活动 SKU 标识，移除项才精确清理。用户购买与 Admin 运营分别通过生产 Hyperdrive 随机 schema 的并发/回滚/状态/持久化验证（本地完成，尚未发布；生产套餐相关表均为空，源数据复制、`postage/system_form_id` 源结构复核和真实运营/用户支付验收仍缺失）。同城配送第三方快照和用户状态轨迹已恢复读取，配送下单/回调仍未迁移
+- 固定/任选优惠套餐已恢复公开资格、完整选品购物车、服务端权威活动 SKU 计价、`type=5` 统一下单、套餐限额原子占用/取消补偿、免邮和不可退款门禁；PC/UniApp 商品详情可按固定/必选规则选 SKU 后多行结算。Admin 同时恢复 PHP 五条运营路由、商品/标签选择、固定/任选创建编辑、逐 SKU 套餐价、未来定时启用、软删除和 `activity.view/activity.manage` 权限边界；编辑会保留仍存在的关系 ID 与活动 SKU 标识，移除项才精确清理。用户购买与 Admin 运营分别通过生产 Hyperdrive 随机 schema 的并发/回滚/状态/持久化验证（本地完成，尚未发布；生产套餐相关表均为空，仍需新建权威套餐、确认 `postage/system_form_id` 业务规则并完成真实运营/用户支付验收）。同城配送第三方快照和用户状态轨迹已恢复读取，配送下单/回调仍未迁移
 - 平台外部现金流水、用户余额/积分内部账、供应商账和休眠门店账保持独立；恢复用户 type-9 资金记录及后台平台流水查询/备注（本地完成，尚未做真实金额对账）
-- 保留多态分类、商品单位、可复用 SKU 规则、参数模板、虚拟卡密与系统组合配置；恢复 Admin/Supplier 元数据接口并修复跨 Supplier 读取；卡密/共享密钥已接入支付 outbox 原子自动交付。Admin/Supplier 脱敏库存页、1,000 行批量导入、租户隔离风险告警和 60 秒一次性受控敏感导出已实现，并通过生产 Hyperdrive 随机隔离 schema 的并发幂等、缺口/低缓冲分类、游标、租户拒绝、单次消费/重放/过期、精确库存与保密响应 E2E。生产 `system_virtual_inventory_export` 已落地且为 0 行，卡密商品/SKU/库存当前仍均为 0；剩余是源 MySQL 旧卡库存复制、真实运营账号/用户付款/通知验收与发布
+- 保留多态分类、商品单位、可复用 SKU 规则、参数模板、虚拟卡密与系统组合配置；恢复 Admin/Supplier 元数据接口并修复跨 Supplier 读取；卡密/共享密钥已接入支付 outbox 原子自动交付。Admin/Supplier 脱敏库存页、1,000 行批量导入、租户隔离风险告警和 60 秒一次性受控敏感导出已实现，并通过生产 Hyperdrive 随机隔离 schema 的并发幂等、缺口/低缓冲分类、游标、租户拒绝、单次消费/重放/过期、精确库存与保密响应 E2E。生产 `system_virtual_inventory_export` 已落地且为 0 行，卡密商品/SKU/库存当前仍均为 0；剩余是新建受控卡密库存、真实运营账号/用户付款/通知验收与发布
 - 事业部、代理商、员工的层级差额分佣、推荐关系重叠规则、收货入账与分来源累计退佣（本地完成，尚未进入生产数据库）
 - 事业部/代理商/员工层级维护、事业部管理员数据作用域、代理申请审核、员工绑定和经营统计页面/API（本地完成，尚未进入生产数据库）
 - 代理商员工邀请小程序码：短时 HMAC 图片 URL、代理状态复核、微信 token/图片缓存和扫码绑定兼容（本地完成，尚未用真实小程序验证）
 - 42 个后台权限域、全受保护 Admin 路由服务端 ACL、旧数字菜单兼容和防越权角色委派；Admin 角色权限树同步控制侧栏（本地完成，尚未发布）
 - 新人专享目录、活动 SKU 定价/基础库存、创建订单时原子消费资格、注册标记与四条前台接口，以及带过期语义的旧数据库缓存读取。普通订单首单优惠已按 PHP 规则恢复：服务端读取新人/首单/时限/折扣/封顶配置，首单与优惠券互斥，在用户行锁内复核并原子消费资格，取消不恢复；PC/UniApp 结算页通过服务端只读 quote 展示权威金额并同步优惠券互斥。Admin 已恢复 16 项注册/新人配置白名单、协议、商品和逐 SKU 活动价写入；密码/微信注册在用户创建事务中原子赠送积分、PHP 兼容整元余额和优惠券。生产 Hyperdrive 随机 schema 已验证首单计价，以及 Admin 保存/替换/回滚、注册并发 exactly-once 和赠礼故障回滚（本地完成，尚未发布；生产 16 项配置和新人目录均为空，源数据与真实微信/用户验收仍未完成）
 - 旧数据库缓存的有效消费者已继续恢复：`kf_adv`、`open_adv`、`uni_app_url` 回退、五类协议、`newcomer_agreement` 和按管理员隔离的商品草稿均使用真实 `cache` 表；Admin 客户端内容页、商品草稿自动保存、UniApp 开屏和客服展示已接通。写入采用 512 KiB 上限、原子 UPSERT 和短事务，读取不触发过期清理。生产当前这些缓存和 `uni_app_link` 均为空；随机 schema 已验证七键整体回滚、68,400 秒草稿 TTL、URL 覆盖及坏 JSON 无副作用。旧公开扫码上传因弱令牌不恢复，由认证私有 R2 替代（本地完成，尚未发布）
-- 付费会员批次、会员卡、套餐、权益、协议、订单与状态历史，以及 PHP 6 条用户会员路由和 16/16 条 Admin 路由；服务端权威定价、免费一次领取、原子余额付款、微信/支付宝下单与回调分流、H5/小程序激活码、UniApp 套餐购买/卡密激活均已实现。Admin 运营与购买支付分别通过生产 Hyperdrive 随机隔离 schema E2E，一次性发卡后不再回显密码（仍缺旧会员数据复制、真实商户/真实用户 E2E 与发布）
+- 付费会员批次、会员卡、套餐、权益、协议、订单与状态历史，以及 PHP 6 条用户会员路由和 16/16 条 Admin 路由；服务端权威定价、免费一次领取、原子余额付款、微信/支付宝下单与回调分流、H5/小程序激活码、UniApp 套餐购买/卡密激活均已实现。Admin 运营与购买支付分别通过生产 Hyperdrive 随机隔离 schema E2E，一次性发卡后不再回显密码（仍缺新系统会员套餐/卡批次初始化、真实商户/真实用户 E2E 与发布）
 - 优惠券商品适用关系与领取证据：Admin 商品券保存、普通领券和支付后赠券事务化双写，下单发现模板字段与关系表漂移时安全拒绝（本地完成；两张无主键历史表已接入重复行保真的多重集复制，仍待隔离数据库演练）
-- PHP v2 新人券、今日券和可领取列表已恢复原认证边界、迁移列交换后的 snake_case 投影、UID 已领状态、商品/分类/品牌范围、四类计数、排序和 SVIP 今日门禁，并修正旧品牌页签丢失商品派生品牌的问题；生产 Hyperdrive 随机 schema 11/11 断言通过且 `public` 指纹不变（本地完成，主 Worker未发布；生产只有 1 条不可领取模板、4 条历史用户券，范围/领取证据和有效运营模板仍待源数据复制与真实旧端验收）
-- PHP v2 用户资料、公众号资料刷新、余额/佣金/提现/资金分类流水、推广用户和分销规则收益五条合同已恢复；资料写入按当前 UID 与微信身份行锁限定，公众号 openid 只能由 OAuth code 服务端解析，资金列表只读且有界，推广已下单筛选改用路径 type，并修正旧时间格式把月份当分钟的问题。生产 Hyperdrive 随机 schema 11/11 断言通过、`public` 指纹不变（本地完成，主 Worker 未发布；生产微信身份/AppID/Secret、余额账和资金流为空，7 条佣金、5 条提现、6 条充值、3 条退款均为用户孤儿，必须先与源 MySQL 对账并完成真实微信/旧端验收）
-- PHP v2 促销商品、赠品信息和登录态凑单三条合同已恢复 active 平台父活动、五类商品范围、PHP 两段折扣截断、父子阶梯及积分/券/赠品 SKU 投影；隔离审计同时修复商品 DAO 的显式 `ids` 过去只排序不筛选、会扩散为全目录的问题。生产 Hyperdrive 随机 schema 12/12 断言通过且 `public` 指纹不变（本地完成，主 Worker 未发布；生产促销规则、范围和品牌/标签关系为空，源数据复制、订单促销叠加及真实旧端验收仍缺失）
+- PHP v2 新人券、今日券和可领取列表已恢复原认证边界、迁移列交换后的 snake_case 投影、UID 已领状态、商品/分类/品牌范围、四类计数、排序和 SVIP 今日门禁，并修正旧品牌页签丢失商品派生品牌的问题；生产 Hyperdrive 随机 schema 11/11 断言通过且 `public` 指纹不变（本地完成，主 Worker未发布；生产只有 1 条不可领取模板、4 条现存用户券，仍需 owner 裁决孤儿记录、创建有效范围/领取证据和运营模板并完成真实旧端验收）
+- PHP v2 用户资料、公众号资料刷新、余额/佣金/提现/资金分类流水、推广用户和分销规则收益五条合同已恢复；资料写入按当前 UID 与微信身份行锁限定，公众号 openid 只能由 OAuth code 服务端解析，资金列表只读且有界，推广已下单筛选改用路径 type，并修正旧时间格式把月份当分钟的问题。生产 Hyperdrive 随机 schema 11/11 断言通过、`public` 指纹不变（本地完成，主 Worker 未发布；生产微信身份/AppID/Secret、余额账和资金流为空，7 条佣金、5 条提现、6 条充值、3 条退款均为用户孤儿，必须由业务 owner 对当前记录作保留/修复/删除裁决并完成真实微信/旧端验收）
+- PHP v2 促销商品、赠品信息和登录态凑单三条合同已恢复 active 平台父活动、五类商品范围、PHP 两段折扣截断、父子阶梯及积分/券/赠品 SKU 投影；隔离审计同时修复商品 DAO 的显式 `ids` 过去只排序不筛选、会扩散为全目录的问题。生产 Hyperdrive 随机 schema 12/12 断言通过且 `public` 指纹不变（本地完成，主 Worker 未发布；生产促销规则、范围和品牌/标签关系为空，运营初始化、订单促销叠加及真实旧端验收仍缺失）
 - PHP v2 紧凑首页和公众号关注两条合同，以及旧 UniApp 实际调用的 v1 关注合同已恢复；首页严格保持六个根字段，快捷分类改回可见子分类，四类推荐使用权威关系，预售恢复四态，用户态响应禁止共享缓存。生产 Hyperdrive 随机 schema 12/12 断言通过且 `public` 指纹不变（本地完成，主 Worker 未发布；生产四个数量配置、推荐关系、微信身份和地图 key 缺失，活动标签、真实微信/媒体/旧端验收仍未完成）
 - 门店、店员、平台配送员与门店用户关系完整保留；恢复 PHP/Admin 兼容管理路由和响应式后台页面，店员响应不返回密码哈希/最后登录 IP，订单门店配送只接受服务端唯一有效配送身份（本地完成；尚未执行生产迁移或发布）
 - 保留旧 `supplier_ticket_print` 历史配置与现行 `print_document`；收据打印已恢复 Admin/Supplier 严格租户隔离的打印机/内容管理、易联云/飞鹅云异步任务、脱敏账本与 UNKNOWN 人工处置。电子面单另以 `0091` 独立任务账本恢复一号通 HTTPS 签发、整单/拆单发货、并发租约和人工重签/确认/应用已有面单/关闭；生产 Hyperdrive 随机 schema 已验证所有状态且 `public` 指纹不变（两条链路均尚未发布；生产电子面单账本表已存在且为空，配置与 secrets 仍缺失，也未调用真实提供商）
@@ -46,7 +46,7 @@ CRMEB PRO → Cloudflare Workers 渐进式迁移。
 - 客服独立 `/kefuapi` 已恢复 60/63 条 PHP 精确合同，其余 `ticket` 与两条不安全退款合同有源证据退役，退役后有效可执行覆盖 100%。游客链路使用 24 小时签名会话、10 亿起步独立 UID、数据库 token 摘要/撤销状态、权威客服分配、`is_tourist` 实时隔离和独立 R2 owner；`tourist/order` 仍只接受正常登录用户并复核订单归属。生产已幂等应用 `0104` 且新表为 0 行；Kefu、UniApp 和 PC `/service` 已接入，旧 `appChat` 的随机 UID/URL bearer 合同不再进入新客户端，但主 Worker/前端未发布；生产客服账号/会话、游客内容配置、面单配置与一号通 Secret 均为空
 - PC/Kefu 扫码与开放平台登录已完成本地安全闭环：精确 Origin/CORS 白名单、二维码公钥与私有 poll secret 分离、请求站点/设备人工核对、`pending→scanned→approved→issuing→delivered` 可重试交付、按 state 隔离的浏览器 verifier Cookie、OAuth state/code 重放保护和 Redis/token store 失败关闭；Origin/UA 不被当作客户端证明。用户 JWT `auth` 已恢复 PHP 的 `md5(user.pwd)`，旧 Worker 单层值只在精确活跃 bucket 中短期兼容；Kefu 同时复核客服与绑定用户状态，PC/Kefu bearer 改为 per-tab `sessionStorage`。心跳和三类聊天下行在发送前重验 bucket/期限/数据库身份，注销会主动断开。PC、Kefu 与 UniApp 确认页已通过桌面/390×844 受控浏览器回归（主 Worker/前端尚未发布；生产缺开放平台 AppID、`WECHAT_OPEN_APP_SECRET`、微信身份、客服账号、Kefu 正式 Origin和同源 proxy）
 
-未完成的主要范围包括 Supplier 生产数据/账号迁移、旧后台的大部分功能、客服生产数据与真实端到端、ERP 独立接口、移动端长尾页面、生产数据迁移与真实支付/Cloudflare 远端验收。不要按历史 M1～M24 标签推断迁移完成度。
+未完成的主要范围包括 Supplier/客服真实账号和初始业务数据、旧后台的大部分功能、ERP 独立接口、移动端长尾页面、当前生产完整性裁决、新系统运营初始化与真实支付/Cloudflare 远端验收。旧站历史复制不属于本部署范围；不要按历史 M1～M24 标签推断迁移完成度。
 
 ---
 
@@ -229,7 +229,9 @@ PC/Kefu/Supplier 构建、Kefu 7/7、UniApp 类型检查/H5 构建和 Supplier P
 2,575.75 KiB/gzip 638.51 KiB。Windows runtime 仍在 0 条断言前以 `0xc0000005`
 退出，不能记为通过。
 
-### 7. 旧 MySQL 数据迁移
+### 7. 旧 MySQL 数据迁移（当前部署不适用）
+
+以下工具仅为其他需要承接历史数据的部署保留。本项目已由 owner 确认是全新系统，不设置源连接、不执行历史复制或逐行对账；当前数据工作以 `MIGRATION_CHECKLIST.md` 的 DATA-006～008 为准。
 
 先执行不连接数据库的仓库 schema 对照：
 
@@ -393,7 +395,7 @@ audience、Redis、nonce 不匹配、签名/issuer/audience/期限错误均失�
 
 `INITIAL_ADMIN_PASSWORD` 仅在目标账号尚不存在时用于首次创建，不会在后续迁移中重置管理员密码。支付方式只有在数据库开关与当前 Worker 配置同时完整时才会对收银台开放：余额要求 `balance_func_status=1` 和 `yue_pay_status=1`；微信要求 `pay_weixin_open=1`、HTTPS `site_url`、`wechat_appid`、商户号、商户证书序列号、32 字节 `WECHAT_API_V3_KEY`、商户私钥及微信平台公钥/证书；支付宝要求 `ali_pay_status=1`、`ALIPAY_APP_ID`、私钥、公钥以及 HTTPS 通知/返回地址；线下支付要求 `offline_pay_status=1`。微信退款还需配置 `WECHAT_PLATFORM_PUBLIC_KEY_ID`、`WECHAT_REFUND_NOTIFY_URL`。员工邀请小程序码还要求系统配置存在 `routine_appId` 与 `routine_appsecret`。物流轨迹查询需设置 `logistics_type=2`，并优先通过 `ALIYUN_EXPRESS_APP_CODE` secret 注入 AppCode；运行时仅为兼容旧数据才回退读取 `system_express_app_code`。供应商入驻短信要求 Upstash Redis、`ALIYUN_SMS_ACCESS_KEY_ID`、`ALIYUN_SMS_ACCESS_KEY_SECRET`、`ALIYUN_SMS_SIGN_NAME`，模板优先读取 `ALIYUN_SMS_VERIFICATION_TEMPLATE_CODE`，否则读取启用的 `system_notification(mark=VERIFICATION_CODE_TIME)`；所有短信凭据只从 Worker 环境读取。客服消息由 Durable Object 协调并在发送前直接通过 Hyperdrive 持久化，不再经过公开内部 HTTP 回调；`INTERNAL_API_URL` 仅用于 Worker 对外源站配置，可放 Wrangler vars。第三方退款上线前必须先在隔离数据库执行 `0009_third_party_refund.sql`；任何新支付流量进入新版 Worker 前还必须执行 `0010_payment_outbox.sql` 和 `0082_payment_checkout_integrity.sql`，新版下单/收货流量进入前必须依次执行 `0011_order_brokerage_settlement.sql`、`0012_order_rewards.sql`、`0013_division_brokerage.sql` 与 `0014_division_management.sql`；新版 ACL 上线前必须先执行 `0015_admin_menu_acl.sql`。`0011`～`0014` 不为历史订单回填佣金或收货奖励；`0014` 仅保留每个用户最新一条未删除代理申请，其余重复申请软删除；`0015` 只建兼容表，不伪造旧菜单 ID，旧数字角色规则必须连同对应 `system_menus` 数据迁移并由超级管理员复核或转换为权限 key。随后用测试商户验证回调、主动查询、扫码绑定、物流查询、短信 Queue 重试与 Admin 重放，并对普通/事业部分佣、积分、经验、收货、退款、提现和权限矩阵做对账。
 
-发货/拒绝退款通知流量进入新版 Worker 前，必须依次执行 `0084_order_notification_outbox.sql`、`0085_external_notification_delivery.sql` 和 `0086_notification_delivery_operations.sql`，再从源 MySQL 复制并由运营复核 `order_postage_success`、`order_deliver_success`、`order_fictitious_success` 与 `send_order_refund_no_status` 四类 `system_notification` 及对应 `notification_template`。生产当前四类模板、微信身份、渠道配置和外部 secrets 均未就绪；缺配置会安全抑制或进入可审计终态，不能把 schema 就绪误写成通知已上线。阿里云 `SendSms` 的 `OutId` 不是幂等键，`UNKNOWN` 必须先按提供商记录对账，再由人工确认已发、关闭，或明确承担重复发送风险后重发；每次决定都写入动作审计表。Admin 只显示 secret 是否就绪，旧 `/sms/config` 写接口会拒绝请求，密钥不得保存到 `system_config`。
+发货/拒绝退款通知流量进入新版 Worker 前，必须依次执行 `0084_order_notification_outbox.sql`、`0085_external_notification_delivery.sql` 和 `0086_notification_delivery_operations.sql`，再由运营在新系统创建并复核 `order_postage_success`、`order_deliver_success`、`order_fictitious_success` 与 `send_order_refund_no_status` 四类 `system_notification` 及对应 `notification_template`。生产当前四类模板、微信身份、渠道配置和外部 secrets 均未就绪；缺配置会安全抑制或进入可审计终态，不能把 schema 就绪误写成通知已上线。阿里云 `SendSms` 的 `OutId` 不是幂等键，`UNKNOWN` 必须先按提供商记录对账，再由人工确认已发、关闭，或明确承担重复发送风险后重发；每次决定都写入动作审计表。Admin 只显示 secret 是否就绪，旧 `/sms/config` 写接口会拒绝请求，密钥不得保存到 `system_config`。
 
 电子面单流量进入新版 Worker 前，必须先执行 `0091_electronic_waybill_outbox.sql`，再分别以 `wrangler secret put CRMEB_ONEPASS_ACCESS_KEY` 和 `wrangler secret put CRMEB_ONEPASS_SECRET_KEY` 注入一号通凭据。平台需完整配置 `config_export_*`，供应商需在自身 `type=2 + relation_id` 作用域配置 `store_config_export_*`；其中 `*_id` 是默认快递公司 ID，`*_siid` 才是云打印机编号。凭据只允许 Worker Secret，不能回退读取旧 `sms_account/sms_token`。任何 `UNKNOWN` 都表示签发端点可能已受理：必须先在提供商后台按订单/任务引用对账，再选择应用账本中已有单号、人工确认单号、明确承担重复分配风险后重签，或关闭；禁止自动盲重试。
 
@@ -438,43 +440,43 @@ npm run deploy --env staging   # 预发
 
 - [x] 精确注册 PHP `/api/pc` 22 条兼容合同，19 条恢复 PC banner/分类/商品/城市/公司/二维码与 UID 作用域的购物车/资金/订单/收藏/售后；共享商品查询同步修复 `cid/sid/tid/selectId/news/type` 和 SVIP 可见性偏差。生产 Hyperdrive 只读与随机 schema 15/15 通过，`public` 指纹不变，临时 Worker/schema 已删除
 - [x] 以精确来源白名单、二维码公钥/私有 poll secret 分离、扫码主体/audience 绑定、按 state 隔离的浏览器 verifier Cookie、OAuth state/code 重放保护、可重试 token 交付、限流和失败关闭重建 PC/Kefu 登录；Origin/UA 只供核对而非身份证明，PC、Kefu 与 UniApp 扫码确认已完成本地接入和桌面/移动浏览器回归
-- [ ] 配置生产 `wechat_open_app_id`、`WECHAT_OPEN_APP_SECRET` 和 Kefu 精确 Origin，迁移微信身份/客服账号，并用真实微信、真实账号、浏览器/真机、预发和发布完成正向 E2E；当前主 Worker/前端未发布，PC 分类关系、banner、城市和 14 个候选配置也仍待复制/运营确认
+- [ ] 配置生产 `wechat_open_app_id`、`WECHAT_OPEN_APP_SECRET` 和 Kefu 精确 Origin，新建并验收微信身份/客服账号，再用真实微信、真实账号、浏览器/真机、预发和发布完成正向 E2E；当前主 Worker/前端未发布，PC 分类关系、banner、城市和 14 个候选配置也仍待新系统运营初始化
 - [x] 恢复 API v2 三条促销只读兼容合同：活动商品、赠品信息和登录态凑单；按 active 平台父规则执行全场/指定/排除/品牌/标签五类范围，保留 PHP 折扣截断、阶梯与券/赠品 SKU 投影，并修复商品 DAO 的显式 `ids` 过去只排序不筛选而导致范围扩散的问题。生产 Hyperdrive 只读确认促销/辅助表均为 0；随机 schema 12/12、`public_state_unchanged=true`、临时 schema `0→0`，一次性审计 Worker 已删除
-- [ ] 从源 MySQL 复制并由运营复核促销父子规则、商品/品牌/标签范围、券与赠品 SKU；补齐 API-006 订单促销叠加并完成旧 UniApp/真实账号/预发 E2E 后，才可把 PROMO 域判为完成
+- [ ] 由运营在新系统创建并复核促销父子规则、商品/品牌/标签范围、券与赠品 SKU；补齐 API-006 订单促销叠加并完成旧 UniApp/真实账号/预发 E2E 后，才可把 PROMO 域判为完成
 - [x] 恢复客服独立 token 域及 22 条核心 PHP 路由，固定账号 ID/聊天 UID 双身份、会话与聊天成员作用域、用户分群、个人话术/分类 owner；登录前以 HMAC 脱敏来源和 Durable Object 实施 10 次/分钟强一致限流。生产 `0092` 四索引已应用，随机 schema 13 项断言和业务行/序列不变验证通过
 - [x] 为 `tourist/user|order|chat|upload` 建立安全兼容层：24 小时 HS256 visitor audience、SHA-256 token 摘要与撤销/期限复核、权威客服分配、游客 UID 独立序列、`is_tourist` WebSocket/未读/转接隔离、R2 `module_type=4` owner，以及登录用户订单归属门禁；Kefu 工作台和 UniApp 已接入。生产 `0104` 经随机 schema、两次幂等应用和业务指纹验证，新游客表为 0 行
 - [x] 用 PC `/service` 替换旧 Admin 项目中面向顾客的 `appChat`：登录用户沿用 `/api`，匿名用户只使用 `X-Visitor-Token` 与 `cinashop-visitor.<token>` 子协议；URL 不含 token/`tourist_uid`，游客断线不回退到登录用户 REST 写接口。Pages/Vite 双代理保留 WebSocket 101；桌面、390×844 移动端的安全失败态及受控签名游客正向消息单次回显均已通过浏览器验收
-- [ ] 从源 MySQL 复制并复核客服账号/bcrypt 密码/用户绑定、会话/消息、话术/分类与游客内容；当前没有 `SOURCE_MYSQL_URL`、旧 `.env`、本机 3306 监听或 MySQL/MariaDB 服务，生产客服账号、会话也均为 0，无法做正向生产游客分配/WebSocket/R2/转接或真实扫码/OAuth E2E。补齐测试客服后，还需完成旧页面退流、生产限流、浏览器/真机、预发、影子流量并取得明确发布批准。不存在控制器目标的旧 `ticket` 不恢复，ERP 写入在回调验签和幂等协议完成前保持关闭
+- [ ] 在新系统创建并复核客服账号/bcrypt 密码/用户绑定、测试会话、话术/分类与游客内容；生产客服账号、会话当前均为 0，无法做正向生产游客分配/WebSocket/R2/转接或真实扫码/OAuth E2E。补齐测试客服后，还需完成旧页面退流、生产限流、浏览器/真机、预发、影子流量并取得明确发布批准。不存在控制器目标的旧 `ticket` 不恢复，ERP 写入在回调验签和幂等协议完成前保持关闭
 - [x] 将 Out API 扩展为 14 条有界 GET，以及订单/退款备注、确认收货、人工快递发货、人工快递拆单发货、既有配送信息更正、发票资料/状态、同意退货、拒绝售后和真实资金退款 11 条 PUT；逐路由 ACL、`store_id=0` 平台范围、PII 禁缓存、IP+账号强一致限流、HMAC 脱敏审计、共享订单/退款锁、请求摘要重放、拆单金额/数量守恒、配送员权威值、发票唯一关联、渠道状态互斥、权威金额绑定、余额 exactly-once、并发单写与失败回滚已通过单元及生产 Hyperdrive 随机隔离 schema 验证
-- [ ] 从源 MySQL 复制 `out_account/out_interface` 并由真实客户确认最小权限与 PII 字段；生产当前两表有效行均为 0。主 Worker 发布后验证真实 Durable Object RPC/429、真实审计写入与客户端退避，再用测试商户完成微信/支付宝退款、回调与对账，并为配送员重新分配及 PHP 发货通知/小程序上报建立幂等 Queue/outbox；任意外部推送继续禁用
+- [ ] 为真实客户在新系统创建 `out_account/out_interface`，并确认最小权限与 PII 字段；生产当前两表有效行均为 0。主 Worker 发布后验证真实 Durable Object RPC/429、真实审计写入与客户端退避，再用测试商户完成微信/支付宝退款、回调与对账，并为配送员重新分配及发货通知/小程序上报建立幂等 Queue/outbox；任意外部推送继续禁用
 - [x] 在生产 PostgreSQL/Hyperdrive 随机隔离 schema 上验证下单并发、取消补偿和支付/取消竞态；公共业务数据/序列前后不变
 - [x] 恢复固定/任选优惠套餐的完整选品、服务端权威计价、统一 `type=5` 下单、原子限额、免邮和退款门禁；生产 Hyperdrive 隔离场景覆盖固定/任选规则、并发单赢家、故障回滚、取消及部分/全额退款补偿
 - [x] 恢复优惠套餐 Admin 五条 PHP 兼容路由、商品/标签选择、逐 SKU 定价、稳定关系/SKU 更新、启停/软删、ACL 和响应式页面；生产 Hyperdrive 隔离场景覆盖固定保存、转任选、移除清理、强制失败回滚、未来定时启用和缺货拦截
-- [ ] 从源 MySQL 复制并由运营确认真实优惠套餐、关系及 `type=5` 属性/SKU；核对 PHP `postage/system_form_id` 与真实源表后，再用受限 Admin 账号、真实客户地址/支付/通知完成端到端验收和发布
+- [ ] 由运营在新系统创建并确认真实优惠套餐、关系及 `type=5` 属性/SKU；根据产品规则确认 `postage/system_form_id`，再用受限 Admin 账号、真实客户地址/支付/通知完成端到端验收和发布
 - [x] 将积分加现金、运费、地址和自定义表单接入统一购物车/订单/支付/取消/退款；直兑只保留无需配送的零现金、零运费兼容类型并写支付 outbox，生产 Hyperdrive 隔离场景已覆盖积分并发扣减、三层库存和纯积分退款
 - [x] 恢复会员套餐购买/订单创建/余额及外部支付编排、回调分流和 `member_scan` 激活二维码；Admin 运营与用户购买支付均已通过生产 Hyperdrive 隔离 E2E
 - [x] 恢复订单/会员/充值统一收银台与有效支付能力矩阵，关闭充值余额伪入账路径；生产 Hyperdrive 隔离场景已验证充值并发单次入账、重放幂等、金额/交易号冲突和重复订单拒绝，PC 收银台桌面/移动禁用态及微信 QR 未回调状态已通过浏览器验收
 - [x] 删除硬编码充值赠送档位，以 `system_group_data(user_recharge_quota)` 为服务端价格/赠送权威并恢复 PHP 充值首页响应；生产只读确认启用档位 0、畸形档位 0，不再展示虚构赠送
 - [x] 迁移 PHP `type=1` 佣金转余额：`brokerage_price → now_money`、paid balance recharge、余额流水、已通过提现记录和佣金支出同事务提交；生产 Hyperdrive 隔离场景覆盖冻结额、双连接单赢家、故障全回滚/重试和三用户资金守恒，PC/UniApp 增加不可逆确认
-- [ ] 从源 MySQL 复制并由运营确认 `user_extract_balance_status` 与 `recharge_attention`；生产当前两项均缺失，按 PHP 默认开关 1 处理，3 个有效用户的佣金/冻结/可转聚合均为 0.00
-- [ ] 对生产 1 条已支付但无 `trade_no` 的历史充值记录做源 MySQL/支付渠道/用户余额三方对账；在测试商户补齐支付开关和 secrets 后完成微信/支付宝真实验签、客户端跳转/扫码、回调重放和退款验收
-- [ ] 复制旧会员/订单/无主键 `other_order_status` 多重集数据，在测试商户和真实客户端完成微信/支付宝验签支付、退款及用户验收后再发布
+- [ ] 由运营在新系统明确配置并确认 `user_extract_balance_status` 与 `recharge_attention`；生产当前两项均缺失，按 PHP 默认开关 1 处理，3 个有效用户的佣金/冻结/可转聚合均为 0.00
+- [ ] 由业务 owner 对生产 1 条已支付但无 `trade_no` 的现存充值记录，结合支付渠道和用户余额证据裁决保留、修复或删除；在测试商户补齐支付开关和 secrets 后完成微信/支付宝真实验签、客户端跳转/扫码、回调重放和退款验收
+- [ ] 初始化新系统会员套餐、测试订单及 `other_order_status` 状态样本，在测试商户和真实客户端完成微信/支付宝验签支付、退款及用户验收后再发布
 - [x] 引入本地 Workers runtime 测试池，覆盖 Cron 根任务、Queue ack/retry、KV 隔离绑定和 SequenceDO 回收恢复
 - [ ] 在 Linux CI 或另一台 Windows x64 主机执行 runtime 套件并继续覆盖 WebSocket hibernation；本机 Windows build 26200 已安装 VC++ x64 Runtime 14.51，但最小无绑定 workerd 仍以 `0xc0000005` 退出
 - [x] 为支付后置任务建立事务 outbox / 可重放消费者（本地实现）
 - [x] 将 Admin、Supplier、拆单、虚拟卡密和 Out API 的发货，以及 Admin/Supplier/Out API 的拒绝退款决策接入同事务通知 outbox；PHP 站内信模板渲染、事件键去重、禁用抑制、消费失败/并发租约重试已通过生产 Hyperdrive 隔离场景
 - [x] 增加短信、公众号模板、小程序订阅和微信发货上报适配及独立投递账本；随机 schema 验证 17 条渠道矩阵、`16 SENT + 1 UNKNOWN`、引用型 Queue 消息和终态重放不重复调用
 - [x] 完成 Admin `mark/tempid`、渠道矩阵、凭据只读就绪状态、脱敏投递台账及 `UNKNOWN` 确认已发/承担重复风险重发/关闭流程；动作以请求键幂等并写入不含目标/payload 的不可变审计表，生产 Hyperdrive 随机 schema 已验证三种状态迁移
-- [ ] 从源 MySQL 复制并由运营复核四类订单通知开关/模板，补齐 openid 与阿里云/微信 secrets，并以受限运营账号和真实测试客户完成短信、公众号、小程序和发货上报验收后才能称通知副作用等价
+- [ ] 由运营在新系统创建并复核四类订单通知开关/模板，补齐 openid 与阿里云/微信 secrets，并以受限运营账号和真实测试客户完成短信、公众号、小程序和发货上报验收后才能称通知副作用等价
 - [x] 用 Turnstile 替换用户短信发送前的 AJCaptcha：一次性挑战绑定手机号/用途/IP，Siteverify 强制校验 hostname/action/cdata/时效，PC iframe 与 UniApp WebView 均在回传后复核服务端状态；生产 Hyperdrive 只读指纹与 Cloudflare Worker 官方测试端点验证通过
 - [ ] 创建正式 Turnstile widget，配置 `TURNSTILE_SECRET_KEY`、`TURNSTILE_SITE_KEY`、`TURNSTILE_EXPECTED_HOSTNAMES` 和小程序业务域名白名单；补齐 Aliyun SMS secrets/模板后，用真实 PC、H5、App、小程序完成发送、过期、重复、用途错配与失败恢复 E2E，再申请发布主 Worker/前端
 - [x] 在生产 Hyperdrive 随机隔离 schema 与真实 Cloudflare Queue/DLQ 上验证 outbox 提交、重复消息、消费者中断、过期租约、故障恢复、持久归档和受控重放
 - [x] 为虚拟卡密/共享密钥接入支付 outbox 原子交付，并在生产 Hyperdrive 隔离 schema 验证库存竞争、部分认领回滚、补库存重试与幂等重放
 - [x] 补 Admin/Supplier 卡密脱敏查看与批量导入，并在生产 Hyperdrive 隔离 schema 验证并发幂等、租户隔离、精确库存增量和密码不回显
 - [x] 补库存风险告警与只显示一次的受控敏感导出；生产 Hyperdrive 隔离场景已覆盖票据摘要、租户/商品/SKU 绑定、并发单次消费、重放/过期拒绝和精确审计
-- [ ] 取得可访问的源 MySQL，复制旧 `store_product_virtual` 库存，并完成真实运营账号、付款/通知/用户验收后再发布
+- [ ] 由运营通过受控批量导入在新系统创建 `store_product_virtual` 库存，并完成真实运营账号、付款/通知/用户验收后再发布
 - [x] 补齐 Admin 新人目录、16 项注册配置与协议写入，以及密码/微信注册赠积分、整元余额和优惠券的原子链路；生产 Hyperdrive 隔离场景已验证保存/替换/回滚、并发 exactly-once 和赠礼故障回滚
-- [ ] 从源 MySQL 复制并由运营确认 16 项注册/新人配置和活动目录，以真实用户完成 PC/UniApp 下单、微信注册与赠礼账本验收后再启用
+- [ ] 由运营在新系统创建并确认 16 项注册/新人配置和活动目录，以真实用户完成 PC/UniApp 下单、微信注册与赠礼账本验收后再启用
 - [ ] 在隔离 PostgreSQL 上验证收货/多次退款并发、历史普通/事业部分佣与积分/经验对账
 - [x] 迁移事业部、代理商、员工的后台维护、事业部数据作用域、申请/员工关系和经营报表（本地实现）
 - [x] 补齐旧版小程序员工二维码生成和全后台菜单级 ACL 执行（本地实现）
@@ -484,5 +486,5 @@ npm run deploy --env staging   # 预发
 - [x] 为 `print_document` 建立带幂等、租约、结果未知隔离和人工处置审计的 Queue/outbox；已恢复易联云/飞鹅云收据打印协议、下单/付款/手工触发、Admin/Supplier 台账与权限边界，并通过生产 Hyperdrive 随机 schema 的 mock-provider E2E，尚未发布主 Worker或真实出纸
 - [ ] 单独恢复电子面单第三方签发；当前只保留供应商作用域配置，不得把收据打印完成误记为电子面单完成
 - [ ] 补齐供应商、后台、UniApp、客服长尾与 ERP 的旧新契约映射
-- [ ] 建立旧 MySQL → PostgreSQL 数据迁移与影子流量比对
+- [x] 旧 MySQL → PostgreSQL 历史复制与影子数据比对不适用于当前全新系统部署；通用工具仅为其他部署保留
 - [ ] 分拆 Admin/PC 超过 1 MiB 的主包
