@@ -16,6 +16,8 @@ import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { normalizeWithdrawalBody } from "@/services/user/UserWithdrawalService";
 import { UserFinanceReadService } from "@/services/user/UserFinanceReadService";
 import { CapitalFlowService } from "@/services/finance/CapitalFlowService";
+import { OrderOutboxService } from "@/services/order/OrderOutboxService";
+import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -87,6 +89,12 @@ export async function extractCash(c: C) {
   const svc = new UserFinanceService(c.get("container"));
   try {
     const result = await svc.extractCash(uid, normalizeWithdrawalBody(body, c.req.header("Idempotency-Key")));
+    // The money transaction has already committed. Lost dispatches are recovered by the scanner.
+    c.executionCtx.waitUntil(new OrderOutboxService(c.get("container"), c.env)
+      .dispatchEventKey(`withdrawal.applied.notice:${result.id}`).catch((error: unknown) => {
+        emitOperationalEvent("error", { event: "withdrawal_application_dispatch_failed", component: "queue",
+          operation: "notification_outbox", outcome: "retry", errorCode: operationalErrorCode(error) });
+      }));
     return jsonOk(c, result, "提现申请已提交");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);

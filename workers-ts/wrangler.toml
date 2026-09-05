@@ -108,6 +108,14 @@ new_sqlite_classes = ["TokenBucketDO", "OrderLockDO", "SequenceDO"]
 tag = "v2"
 new_sqlite_classes = ["ChatRoomDO"]
 
+[[durable_objects.bindings]]
+name = "STAFF_NOTICE"
+class_name = "StaffNotificationDO"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["StaffNotificationDO"]
+
 # ─── 定时任务 ─────────────────────────────────────────────
 [triggers]
 crons = ["*/5 * * * *"]  # Queue 驱动的 outbox/未支付取消/拼团超时退款/履约/次卡提醒/直播/退款对账分页工作流

@@ -12,6 +12,7 @@ import { TokenBucketDO } from "./do/TokenBucketDO";
 import { OrderLockDO } from "./do/OrderLockDO";
 import { SequenceDO } from "./do/SequenceDO";
 import { ChatRoomDO } from "./do/ChatRoomDO";
+import { StaffNotificationDO } from "./do/StaffNotificationDO";
 import type { Env, OrderMessage } from "./env";
 import {
   emitOperationalEvent,
@@ -492,6 +493,13 @@ export default {
 
       if (isOrderNotificationOutboxMessage(msg.body)) {
         await consumeOrderNotificationOutboxQueueMessage(msg, outbox);
+        if (msg.body.eventKey.startsWith("withdrawal.applied.notice:")) {
+          try { await outbox.dispatchEventKey(msg.body.eventKey.replace("withdrawal.applied.notice:", "withdrawal.staff.refresh:")); }
+          catch (error) {
+            emitOperationalEvent("error", { event: "staff_notification_dispatch_failed", component: "queue",
+              operation: "notification_outbox", outcome: "retry", errorCode: operationalErrorCode(error) });
+          }
+        }
         try {
           await notificationDeliveries.dispatchPending(10, msg.body.eventKey);
         } catch (error) {
@@ -764,4 +772,4 @@ async function handleScheduled(env: Env, scheduledAt: number): Promise<void> {
 }
 
 // ─── Durable Object 导出 (wrangler.toml class_name 指向这些) ─
-export { TokenBucketDO, OrderLockDO, SequenceDO, ChatRoomDO };
+export { TokenBucketDO, OrderLockDO, SequenceDO, ChatRoomDO, StaffNotificationDO };

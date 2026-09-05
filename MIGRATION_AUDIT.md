@@ -4774,6 +4774,24 @@ G2a候选实现已补，待本批远端CI闭环；G2b独立实时通知通道尚
 
 随后实现提交`6af696597f19ab76ba9b8b63db9d099e7d3b5b5d`已推送；[Actions `33949795952`](https://github.com/cinagroup/cinashop/actions/runs/33949795952)最终8/8 jobs成功。Worker为227文件/1,474项全部通过、无跳过，新申请/收件箱专项19/19；实际容器版本PostgreSQL16.14，4项真实多连接测试均执行，新增四请求/四消费者场景只有一笔申请、一次扣款、一个根事件和每UID一条提醒。双TypeScript、schema/route/observability、Linux workerd、五端构建、客服前端10项通过；生产依赖审计0漏洞，不能将npm ci所报4项moderate开发依赖告警称为全依赖零漏洞。Gitleaks扫描212个提交后未发现泄露。G2a据此仅关闭候选工程子项，G2整体、实时G2b、G3与真实角色/发布前置仍开放。本轮未触碰生产或发出真实外部通知。
 
+## API-014G2b 实时通知服务端续审（2026-09-05）
+
+从已推送`4aad57f`继续，上一轮完成G2a、CI与浏览器证据，属于实际进展。本轮处理同一迁移链路的实时后端，不部署、不访问生产数据库或真实Redis，不发送短信、微信、打款，也不复制历史数据。前端尚未接入新通道，G2b父项不关闭。
+
+源码审计确认：PHP`listener/user/Extract.php:39`广播WITHDRAW并调用管理待办提醒；已有ChatRoomDO专门处理会话和转接，不能承载全站财务广播。UserFinanceController此前申请提交后没有即时outbox派发，而定时任务每5分钟扫描，持久化正确但不能据此声称实时。现在申请提交后用waitUntil加速派发申请根事件；收件箱与唯一`withdrawal.staff.refresh:<id>`子事件同事务生成，父事件消费后立即尝试派发子事件，缺失/失败仍由原定时扫描补偿。关闭客服站内信只取消客服投影，管理员刷新不受该开关抑制。
+
+新增StaffNotificationDO按`staff-notice:admin:<id>`或`staff-notice:kefu:<boundUID>`分区，持久化SQLite事件revision，连接使用Hibernation API和验证后的附件，不存原始JWT。遵循[Cloudflare WebSocket休眠合同](https://developers.cloudflare.com/durable-objects/best-practices/websockets/)恢复附件；新类经v3 SQLite迁移声明，原有DO标签与类不变，Wrangler 4.122.0实际生成了绑定类型，最新平台类型5.20260905.1已核对。新增`/adminapi/extract/notifications/socket`及`/kefuapi/messages/socket`，后者放在`:id`详情路由之前；仍使用各自真实鉴权中间件。网关只接受受控Origin并从可信上下文构造DO请求，剥离Cookie、客户端身份头、原始令牌子协议和URL参数，不能用uid或X-Staff-Session冒充管理员。
+
+连接、每次发送、ping和30秒空闲alarm均重新校验：令牌桶对应类型/认证ID/token摘要，JWT到期时间、密码版本、管理员有效账户与extract.view或客服当前通知资格/绑定用户。失权关闭4001，基础设施故障关闭1013并保留刷新重试；不因Redis不可用放宽为只验签。单分区最多8连接，WebSocket只接受ping，不接受审核、付款或任意转发命令。不在DO保存原始令牌、金额、银行卡或申请人内容；客户端只接收ready/changed与单调revision，必须另外走当前权限保护的HTTP接口取数据。每次ready都要求强制刷新，故离线和漏帧恢复依赖权威DB，不承诺逐条历史WebSocket事件回放。
+
+子事件在短只读快照中找当前有效的有权管理员，以及已经生成对应专属消息的客服UID；批量角色解析与单账户语义一致，包含manage→view和有效旧菜单映射，不把控制台权限当成财务权限。RPC全部发生在事务和行锁之外，每批5并发；部分失败将子事件留在FAILED，重试不重新写申请/扣款/客服消息，已投递DO返回同一个revision。每类最多1000收件人、角色ID合并最多10000，超限明确失败、不静默截断。DO保存约2049条去重键；超过窗口的极旧人工重放允许产生额外刷新，不影响任何资金或收件箱幂等。窗口不是财务数据保存期限。
+
+新增外部0133与内嵌0137只扩展刷新事件CHECK，无新PG表或业务DML，生产DB-007和STAFF_NOTICE/正式Origin配置仍为发布前置；不可从头执行包含旧窄白名单的历史迁移链。测试首轮重跑旧0132把夹具CHECK降回旧值，暴露该风险后，明确重新应用最新0133恢复夹具，未删除约束或放松检查。真实HTTP提现测试新增ExecutionContext与Queue夹具并验证提交后已排队，不以无上下文的单元调用冒充运行时。
+
+本地新增7项SQL/协议/真实admin+kefu JWT/Origin/Redis状态校验/批量权限等价/部分RPC失败恢复测试通过；全量228文件/1477通过、4项PG16多连接明确留给CI。Worker两套TypeScript、342调用点/362变体Admin API合同、201→263/零源列缺口、1646条目标路由、17信号/53必需事件/459生产源文件审计通过；6项生产观测阻断未关闭。Cloudflare RPC返回类型包含平台可释放/流水线形状，测试改用明确的业务发布端口并由生成绑定结构兼容，而非双重断言。新写6项workerd测试覆盖分区拒绝、休眠后重放revision、重连ready、受众隔离/连接上限、撤权、临时故障/非法命令及alarm；本机实际尝试仍在测试收集前0xc0000005，不能算通过，需下述远端CI最终证据。
+
+本轮Workers/DO/PostgreSQL技能实际推动了独立分区、SQLite休眠状态、生成绑定类型、事务外网络与持久失败恢复。G2b2的前端接收、浏览器实时闭环，以及G2b3的部署和真实角色撤权/延迟验收仍未完成；不以仅有WebSocket端点或模拟授权的runtime测试宣称迁移完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

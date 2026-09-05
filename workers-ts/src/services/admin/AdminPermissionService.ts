@@ -369,6 +369,19 @@ export class AdminPermissionService {
     return (await this.resolveRoleAssignment(admin.roles)).keys;
   }
 
+  /** Same rule semantics as single-account reads, with one role/menu query for bounded fan-out. */
+  async resolveManyAdminPermissionKeys(admins: ReadonlyArray<Pick<NonNullable<AppVariables["adminInfo"]>, "level" | "roles">>): Promise<Set<string>[]> {
+    const assignments = admins.map((admin) => admin.level === 0 ? [] : splitRuleTokens(admin.roles).filter(isNumericToken).map(Number));
+    const ids = [...new Set(assignments.flat())];
+    if (ids.length > 10000) throw new ValidateException("通知角色数量超出单批上限");
+    const roles = ids.length ? await this.container.db.select({ id: systemRole.id, rules: systemRole.rules }).from(systemRole)
+      .where(and(inArray(systemRole.id, ids), eq(systemRole.status, 1))) : [];
+    const keys = await this.resolveManyRulePermissionKeys(roles.map((role) => role.rules));
+    const byRole = new Map(roles.map((role, index) => [role.id, keys[index]]));
+    return admins.map((admin, index) => admin.level === 0 ? new Set(permissionKeys)
+      : new Set(assignments[index].flatMap((id) => byRole.get(id) ?? [])));
+  }
+
   async resolveRoleAssignment(
     value: string | readonly string[] | undefined,
   ): Promise<{

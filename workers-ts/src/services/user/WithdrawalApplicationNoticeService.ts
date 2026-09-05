@@ -4,6 +4,7 @@ import { storeOrderOutbox, storeService, systemMessage, systemNotification, user
   type WithdrawalApplicationOutboxPayload } from "@/models/schema";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { eligibleKefuInboxAccount } from "@/services/kefu/KefuInboxService";
+import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
 
 export const WITHDRAWAL_APPLICATION_EVENT = "withdrawal.applied.notice";
 export const WITHDRAWAL_APPLICATION_MARK = "kefu_send_extract_application";
@@ -47,6 +48,10 @@ export async function processWithdrawalApplication(tx: DbClient, event: {
     || centsToDecimal(decimalToCents(request.extractPrice) + decimalToCents(request.extractFee)) !== p.grossAmount) {
     throw new Error("提现申请提醒与原申请不匹配");
   }
+  // Durable child dispatch survives a crash after inbox creation or after any partial live fan-out.
+  await tx.insert(storeOrderOutbox).values({ eventKey: `${STAFF_REFRESH_EVENT}:${p.withdrawalId}`,
+    eventType: STAFF_REFRESH_EVENT, aggregateType: "withdrawal", aggregateId: p.withdrawalId,
+    payload: { withdrawalId: p.withdrawalId }, status: "PENDING", availableTime: now, addTime: now, updateTime: now });
   const configs = await tx.select().from(systemNotification).where(eq(systemNotification.mark, WITHDRAWAL_APPLICATION_MARK)).limit(2);
   if (configs.length > 1) throw new Error("客服提现通知存在重复配置来源");
   const config = configs[0];

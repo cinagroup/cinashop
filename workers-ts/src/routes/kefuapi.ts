@@ -6,6 +6,7 @@ import * as AttachmentController from "@/controllers/system/AttachmentController
 import { kefuAuthMiddleware } from "@/middleware/kefu-auth";
 import { authMiddleware } from "@/middleware/auth";
 import { visitorAuthMiddleware } from "@/middleware/visitor-auth";
+import { upgradeStaffNotification } from "@/services/notification/StaffNotificationGateway";
 
 /** PHP-compatible dedicated customer-service security domain. */
 export const kefuapiRoutes = new Hono<{
@@ -37,6 +38,7 @@ kefuapiRoutes.get("/assets/:id", AttachmentController.asset);
 kefuapiRoutes.use("*", kefuAuthMiddleware);
 
 kefuapiRoutes.get("/messages", KefuInboxController.list);
+kefuapiRoutes.get("/messages/socket", (c) => upgradeStaffNotification(c, "kefu"));
 kefuapiRoutes.get("/messages/:id", KefuInboxController.detail);
 kefuapiRoutes.post("/messages/:id/read", KefuInboxController.markRead);
 

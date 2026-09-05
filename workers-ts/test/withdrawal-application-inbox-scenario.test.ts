@@ -18,6 +18,7 @@ import { errorHandler } from "@/middleware/error";
 import { createToken, md5 } from "@/utils/jwt";
 import { WITHDRAWAL_APPLICATION_NOTICE_SQL } from "@/migrations/withdrawalApplicationNotice";
 import { WITHDRAWAL_EFFECTS_SQL } from "@/migrations/withdrawalEffects";
+import { STAFF_NOTIFICATION_REFRESH_SQL } from "@/migrations/staffNotificationRefresh";
 import { USER_WITHDRAWAL_REPLAY_SQL } from "@/migrations/userWithdrawalReplay";
 import { financePostgres } from "./helpers/financePostgres";
 
@@ -39,6 +40,7 @@ beforeAll(async () => {
     storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery, notificationTemplate]);
   await fixture.exec(USER_WITHDRAWAL_REPLAY_SQL); await fixture.exec(WITHDRAWAL_EFFECTS_SQL);
   await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL); await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL);
+  await fixture.exec(STAFF_NOTIFICATION_REFRESH_SQL);
   await fixture.exec("CREATE UNIQUE INDEX soob_event_key_uq ON store_order_outbox(event_key); CREATE UNIQUE INDEX smsg_event_key_uq ON system_message(event_key);");
   container = createContainerFromDb(fixture.db); withdrawal = new UserWithdrawalService(container);
   outbox = new OrderOutboxService(container, env); inbox = new KefuInboxService(container);
@@ -80,6 +82,7 @@ describe("withdrawal application events and isolated staff inbox", () => {
     await expect(fixture.db.insert(storeOrderOutbox).values({ ...base, eventType: "withdrawal.unknown" })).rejects.toThrow();
     await withdrawal.apply(7, input());
     await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL);
+    await fixture.exec(STAFF_NOTIFICATION_REFRESH_SQL); await fixture.exec(STAFF_NOTIFICATION_REFRESH_SQL);
     const indexes = await fixture.db.execute<{ indexname: string }>(sqlIndex());
     expect(JSON.stringify(indexes)).toContain("smsg_staff_inbox");
   });
@@ -119,7 +122,7 @@ describe("withdrawal application events and isolated staff inbox", () => {
     await withdrawal.review(request.id, -1, "资料需补充"); await consume();
     expect((await inbox.list(principal)).list[0].content).toContain("20.00元");
     expect((await fixture.db.select().from(user).where(eq(user.uid, 7)))[0].brokeragePrice).toBe("100.00");
-    expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(2);
+    expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(3);
   });
 
   it("rechecks recipients before fan-out and preserves offline delivery without requiring online status", async () => {
@@ -139,9 +142,9 @@ describe("withdrawal application events and isolated staff inbox", () => {
     expect((await fixture.db.select().from(user).where(eq(user.uid, 7)))[0].brokeragePrice).toBe("80.00");
   });
 
-  it("includes automatic balance approval while keeping two distinct events and one credit", async () => {
+  it("includes automatic balance approval with distinct business events, a refresh child and one credit", async () => {
     const params = input("balance"); await withdrawal.apply(7, params); await withdrawal.apply(7, params); await consume();
-    expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(2);
+    expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(3);
     expect(await fixture.db.select().from(capitalFlow)).toHaveLength(1);
     expect(await fixture.db.select().from(userMoney)).toHaveLength(1);
     expect((await fixture.db.select().from(user).where(eq(user.uid, 7)))[0]).toMatchObject({ brokeragePrice: "80.00", nowMoney: "25.00" });
@@ -301,7 +304,7 @@ describe("withdrawal application events and isolated staff inbox", () => {
     await outbox.dispatchPending(); const message = sent.find(isOrderNotificationOutboxMessage)!;
     await Promise.all(Array.from({ length: 4 }, () => outbox.processMessage(message)));
     expect(await outbox.processMessage(message)).toBe("already-completed");
-    expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(1);
+    expect(await fixture.db.select().from(storeOrderOutbox)).toHaveLength(2);
     expect(await fixture.db.select().from(systemMessage)).toHaveLength(2);
     expect(await fixture.db.select().from(userBrokerage)).toHaveLength(1);
   });

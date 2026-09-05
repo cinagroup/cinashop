@@ -147,7 +147,7 @@ describe("dedicated customer-service migration", () => {
     const authService = readFileSync("src/services/kefu/KefuAuthService.ts", "utf8");
     const realtime = readFileSync("src/services/kefu/KefuRealtimeService.ts", "utf8");
     const registrations = routes.match(/kefuapiRoutes\.(?:get|post|put|delete)\(/g) ?? [];
-    expect(registrations).toHaveLength(69);
+    expect(registrations).toHaveLength(70);
     for (const route of ['get("/messages",', 'get("/messages/:id",', 'post("/messages/:id/read",']) {
       expect(routes.indexOf(route)).toBeGreaterThan(routes.indexOf('use("*", kefuAuthMiddleware)'));
     }

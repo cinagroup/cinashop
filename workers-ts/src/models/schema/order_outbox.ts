@@ -74,7 +74,8 @@ export type OrderOutboxPayload =
   | OrderRefundRefusedNoticeOutboxPayload
   | OrderSecondCardNoticeOutboxPayload
   | WithdrawalNoticeOutboxPayload
-  | WithdrawalApplicationOutboxPayload;
+  | WithdrawalApplicationOutboxPayload
+  | { withdrawalId: number };
 
 export const storeOrderOutbox = pgTable(
   "store_order_outbox",
@@ -108,6 +109,7 @@ export const storeOrderOutbox = pgTable(
       'order.second_card.expired.notice',
       'withdrawal.approved.notice',
       'withdrawal.applied.notice',
+      'withdrawal.staff.refresh',
       'withdrawal.refused.notice'
     )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),

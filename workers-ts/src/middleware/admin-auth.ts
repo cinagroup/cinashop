@@ -42,7 +42,7 @@ export function adminAuthMiddleware(): MiddlewareHandler<{
     }
 
     // Layer 2: JWT
-    let payload: { id: number; type: string; auth?: string };
+    let payload: { id: number; type: string; auth?: string; exp: number };
     try {
       payload = await verifyToken(token, env.APP_KEY);
     } catch {
@@ -70,6 +70,10 @@ export function adminAuthMiddleware(): MiddlewareHandler<{
     }
 
     c.set("adminId", admin.id);
+    c.set("socketTokenKey", key);
+    c.set("socketTokenExp", payload.exp);
+    c.set("socketAuthId", admin.id);
+    c.set("socketAuthVersion", payload.auth ?? "");
     const adminInfo = {
       id: admin.id,
       account: admin.account,

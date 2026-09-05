@@ -65,3 +65,11 @@ new_sqlite_classes = ["TokenBucketDO", "OrderLockDO", "SequenceDO"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["ChatRoomDO"]
+
+[[durable_objects.bindings]]
+name = "STAFF_NOTICE"
+class_name = "StaffNotificationDO"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["StaffNotificationDO"]

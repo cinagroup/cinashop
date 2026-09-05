@@ -41,6 +41,8 @@ import {
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { isWithdrawalNoticeEvent, processWithdrawalNoticeEvent } from "@/services/user/WithdrawalEffectsService";
 import { WITHDRAWAL_APPLICATION_EVENT, processWithdrawalApplication } from "@/services/user/WithdrawalApplicationNoticeService";
+import { deliverStaffRefresh, type StaffPublisher } from "@/services/notification/StaffNotificationDeliveryService";
+import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
 
 export const ORDER_PAID_EVENT = "order.paid";
 export const OUTBOX_PROCESS_LEASE_SECONDS = 120;
@@ -61,6 +63,7 @@ export type OrderOutboxStatus = (typeof OUTBOX_STATUSES)[number];
 
 export interface OrderOutboxEnvironment {
   ORDER_QUEUE: Queue<OrderMessage>;
+  STAFF_NOTICE?: StaffPublisher;
 }
 
 interface PaymentOrder {
@@ -119,13 +122,14 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey)
+    /^(?:(?:order\.delivery\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey)
   );
 }
 
 function isNotificationEventType(eventType: string): boolean {
   return isWithdrawalNoticeEvent(eventType)
     || eventType === WITHDRAWAL_APPLICATION_EVENT
+    || eventType === STAFF_REFRESH_EVENT
     || eventType === ORDER_DELIVERY_NOTICE_EVENT
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
@@ -455,6 +459,19 @@ export class OrderOutboxService {
   }
 
   private async runClaimedEvent(claim: ClaimedEvent): Promise<void> {
+    if (claim.eventType === STAFF_REFRESH_EVENT) {
+      if (!this.env.STAFF_NOTICE) throw new Error("实时通知绑定未配置");
+      const [event] = await this.container.db.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.id, claim.id),
+        eq(storeOrderOutbox.status, "PROCESSING"), eq(storeOrderOutbox.leaseToken, claim.leaseToken))).limit(1);
+      if (!event || event.eventKey !== claim.eventKey || event.aggregateId !== claim.aggregateId) throw new Error("通知刷新租约失效");
+      await deliverStaffRefresh(this.container, this.env.STAFF_NOTICE, event);
+      const now = Math.floor(Date.now() / 1000);
+      const completed = await this.container.db.update(storeOrderOutbox).set({ status: "COMPLETED", leaseUntil: 0,
+        leaseToken: "", lastError: "", processedTime: now, updateTime: now }).where(and(eq(storeOrderOutbox.id, claim.id),
+          eq(storeOrderOutbox.status, "PROCESSING"), eq(storeOrderOutbox.leaseToken, claim.leaseToken))).returning({ id: storeOrderOutbox.id });
+      if (!completed.length) throw new Error("通知刷新完成租约失效");
+      return;
+    }
     const now = Math.floor(Date.now() / 1000);
     await withTx(this.container, async (tx) => {
       const eventRows = await tx
@@ -570,6 +587,13 @@ export class OrderOutboxService {
         .returning({ id: storeOrderOutbox.id });
       if (!completed[0]) throw new Error("outbox 完成状态写入失败");
     });
+  }
+
+  /** Queue is an accelerator only; the durable rows remain eligible for the scheduled scanner. */
+  async dispatchEventKey(eventKey: string): Promise<void> {
+    const [event] = await this.container.db.select({ id: storeOrderOutbox.id }).from(storeOrderOutbox)
+      .where(eq(storeOrderOutbox.eventKey, eventKey)).limit(1);
+    if (event) await this.dispatchPending(1, event.id);
   }
 
   private async incrementBuyerPayCount(

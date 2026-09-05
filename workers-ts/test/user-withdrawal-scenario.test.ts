@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig } from "@/models/schema";
 import { createContainerFromDb, type Container } from "@/lib/di";
-import type { AppVariables, Env } from "@/env";
+import type { AppVariables, Env, OrderMessage } from "@/env";
 import { UserWithdrawalService, normalizeWithdrawalBody, withdrawalPolicy } from "@/services/user/UserWithdrawalService";
 import { extractCash } from "@/controllers/api/v1/UserFinanceController";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
@@ -214,10 +214,18 @@ describe("API-014 withdrawal money-state and replay scenarios", () => {
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use("*", async (c, next) => { c.set("uid", 7); c.set("container", container); await next(); });
     app.post("/extract/cash", extractCash);
-    const response = await app.request("/extract/cash", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: 8, money: "20", extract_type: "bank", bankname: "测试银行", cardnum: "6222021234567890123", request_id: "http-intent-00000001" }) });
+    const tasks: Promise<unknown>[] = [], queued: OrderMessage[] = [];
+    const queue: Queue<OrderMessage> = { send: async (message) => { queued.push(message); return { metadata: { metrics: { backlogCount: 1, backlogBytes: 0 } } }; },
+      sendBatch: async (messages) => { queued.push(...Array.from(messages, (m) => m.body)); return { metadata: { metrics: { backlogCount: queued.length, backlogBytes: 0 } } }; },
+      metrics: async () => ({ backlogCount: queued.length, backlogBytes: 0 }) };
+    const bindings = { ORDER_QUEUE: queue } as Env; // Only this controller's queue binding is used.
+    const response = await app.request("/extract/cash", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: 8, money: "20", extract_type: "bank", bankname: "测试银行", cardnum: "6222021234567890123", request_id: "http-intent-00000001" }) }, bindings,
+      { waitUntil: (task) => { tasks.push(task); }, passThroughOnException() {}, props: {} });
+    await Promise.all(tasks);
     expect(await response.json()).toMatchObject({ status: 200, data: { id: expect.any(Number) } });
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     expect((await state()).requests[0].uid).toBe(7);
+    expect(queued).toMatchObject([{ action: "processOrderNotificationOutbox", eventKey: expect.stringMatching(/^withdrawal\.applied\.notice:/) }]);
   });
 
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("PostgreSQL 16: concurrent same-key retries create exactly one request and debit", async () => {

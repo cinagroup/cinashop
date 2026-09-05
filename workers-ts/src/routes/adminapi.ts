@@ -28,6 +28,7 @@
  */
 import { Hono } from "hono";
 import { adminAuthMiddleware } from "@/middleware/admin-auth";
+import { upgradeStaffNotification } from "@/services/notification/StaffNotificationGateway";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
@@ -86,6 +87,7 @@ adminapiRoutes.get("/home/order", adminAuth, AdminController.adminOrderChart);
 adminapiRoutes.get("/home/user", adminAuth, AdminController.adminUserChart);
 adminapiRoutes.get("/home/rank", adminAuth, AdminController.adminPurchaseRanking);
 adminapiRoutes.get("/new_push", adminAuth, AdminController.adminNewPush);
+adminapiRoutes.get("/extract/notifications/socket", adminAuth, (c) => upgradeStaffNotification(c, "admin"));
 
 // Legacy queue/timer tables are intentionally read-only. Their PHP executors
 // depended on Redis/ThinkPHP Jobs and are not Cloudflare runtime authorities.
