@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Container } from "../src/lib/di";
-import { catalogKinds, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
+import { catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -87,6 +87,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
+      missingIndexEvidence: {
+        externalVsEmbedded: classifyMissingIndexes(catalogs.external, catalogs.embedded),
+        externalVsOrm: classifyMissingIndexes(catalogs.external, catalogs.orm),
+      },
       externalVsEmbedded, externalVsOrm,
     };
   } finally {

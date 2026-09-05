@@ -1,6 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { catalogKinds, compareCatalogs, readCatalog, type Catalog, type CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
+import { catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, type Catalog, type CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { validateTestTarget } from "../scripts/orm-ddl-audit";
 
 const base = `
@@ -90,6 +90,11 @@ describe("DB-009 real PostgreSQL catalog comparison", () => {
     expect(diff.changed.find((row) => row.key === "probe.probe_partial")?.fields).toEqual(["definition"]);
     expect(diff.possibleRenames).toEqual([{ reference: "probe.probe_tenant_uid", candidate: "probe.renamed_tenant_uid" }]);
     expect(original.indexes.find((row) => row.key === "probe.probe_partial")?.definition).toContain("INCLUDE (tenant)");
+    const index = original.indexes.find((row) => row.key === "probe.probe_tenant_uid")!;
+    const duplicate = { ...original, indexes: [...original.indexes, { ...index, key: "probe.old_alias", name: "old_alias" }] };
+    expect(classifyMissingIndexes(duplicate, original)).toEqual([{ reference: "probe.old_alias", exactCandidates: [index.key] }]);
+    const nonUnique = { ...original, indexes: original.indexes.map((row) => row.key === index.key ? { ...row, unique: false } : row) };
+    expect(classifyMissingIndexes(duplicate, nonUnique)).toEqual([{ reference: "probe.old_alias", exactCandidates: [] }]);
   });
 
   it("detects sequence type/bounds/cache/cycle and ownership instead of checking only the next value", () => {

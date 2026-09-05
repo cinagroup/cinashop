@@ -53,7 +53,9 @@ async function main() {
   // Real declarations retain all standalone indexes across snapshot upgrades.
   const models = require("tsx/cjs/api").require("../../src/models/schema/index.ts", __filename);
   const previous = generateDrizzleJson(models);
-  assert.equal(Object.keys(previous.tables).length, 264);
+  assert.equal(Object.keys(previous.tables).length, 263);
+  assert.ok(previous.tables["public.store_pink"]);
+  assert.equal(previous.tables["public.store_pink_full"], undefined);
   for (const [table, key] of [["work_member_current", "wmc_corp_id_uq"], ["work_client_current", "wcc_corp_external_userid_uq"], ["work_group_chat_current", "wgcc_corp_chat_id_uq"]]) {
     assert.equal(previous.tables[`public.${table}`].indexes[key].isUnique, true);
     assert.equal(previous.tables[`public.${table}`].uniqueConstraints[key], undefined);

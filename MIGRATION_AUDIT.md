@@ -5064,6 +5064,28 @@ SQL↔SQL审计仍为source201/target263/shared201、sourceGaps及两套DDL表�
 
 本地`test/postgres-catalog-audit.test.ts`8/8覆盖独立内存库同构、目标地址拒绝、表列存在性、类型/非空/默认/identity/generated、租户FK动作/延迟、部分索引/INCLUDE/排序/改名、唯一索引归属、序列类型/边界/归属以及重复目录键拒绝。两套TypeScript检查通过；首次全量有33个套件因同一个`/src/services/order/VirtualProductDeliveryService`别名导入失败。将Drizzle工具链改为在已验证测试服务身份后才动态加载，避免验证器单测导入重型CLI依赖；后续完整重跑233文件、1,507通过+4项真实PG跳过，共1,511项。不能仅由重跑通过断言Windows别名偶发失败的根因已查清。PG16三路径真实目录结果仍待本次CI；当前没有生产连接或部署。
 
+### PostgreSQL16真实基线与发现
+
+实现提交`b07d01e54c384bafc7507ec2113ffd0f42fbda8c`的[Actions 33964618455](https://github.com/cinagroup/cinashop/actions/runs/33964618455)在PostgreSQL16.14完整执行三条路径，测试数据库全部确认清理；Worker审计任务、runtime、五端通过，只有仍未批准例外的Gitleaks失败，总结果7/8。135个外部文件、138步内嵌迁移及1,041条ORM生成语句均未跳过/改写。基线固定于`workers-ts/audit/orm-ddl-catalog-baseline.json`，463条记录经分段采集后逐类别核对条数，避免第一次大输出截断；此文件是该提交的历史基线，不冒充后续修复状态。
+
+| 实际初始化路径 | 表 | 列 | 非NOT-NULL约束 | 索引（含约束索引） | 序列 |
+|---|---:|---:|---:|---:|---:|
+| 外部SQL | 263 | 3,700 | 570 | 963 | 227 |
+| MigrationService | 263 | 3,700 | 570 | 902 | 227 |
+| Drizzle ORM | 264 | 3,711 | 530 | 988 | 228 |
+
+外部↔内嵌的表、约束和序列一致，但实际有4处列宽变化及61个external-only索引。四列是user.add_ip、user.last_ip、store_order.user_ip的16↔45，以及store_product_category.pic的128↔512；早期内嵌迁移含ALTER TYPE，而旧文本审计不处理该语义。当前登录服务截取45字符、订单直接保存userIp，16字符外部初始化会拒绝完整IPv6；分类长图片引用也有相同风险。61个索引中已确认9个来自外部0127/0128的真实未注册迁移；其它差异不得按数量盲补，下一版比较器提供全candidate索引集中完全同构的exactCandidates证据，连unique/partial/order/constraintOwned都相同才作为冗余线索，不把前缀覆盖或类似名称当作等价。
+
+ORM相对外部多1表/11列/1序列（store_pink_full），共有列另有8处变化：上述4列宽、store_order_outbox.payload与system_queue_dead_letter.body缺JSONB默认、store_seckill.time_id的空字符串cast和user_brokerage_frozen.price的零值cast。约束reference-only56/candidate-only16/changed9，15组仅为可能改名；同名变化中8项是NOT VALID状态，1项是同一事件集合的排列。索引reference-only75/candidate-only100/changed57、可能改名47；客服序列类型integer↔bigint与OWNED BY缺失仍开放。这些数量是完整原始差异，不等于同数量业务缺陷；已按DB-009B～F拆分待办，尚未宣称ORM与部署DDL一致。
+
+### 本轮三个修复候选
+
+1. **DB-009B phantom拼团模型**：PHP `app/model/activity/combination/StorePink.php:36`及安装SQL定义store_pink，当前ActivityJoinService/PinkLifecycleService/PinkTimeoutService也只使用storePink；全源搜索storePinkFull/store_pink_full仅命中未消费声明。删除该声明及仅用于它的导入，保留activity.ts中实际storePink与全部字段。新增生成防回归，API快照期望263表且不存在phantom；没有执行DROP TABLE，源码变更可从Git恢复。
+2. **DB-009C 列宽**：新增`0134_repository_column_width_alignment.sql`及完全相同内嵌常量，注册为0138。只把四个已知窄varchar扩到现有Worker/ORM值，目标schema捕获后使用限定标识符，校验类型/长度/非空/普通永久表，未知或更宽形态拒绝，锁等待2秒。5项回归真实复现旧宽度对IPv6/200字符图片的22001，再验证扩展后写入45/512范围、旧行/默认/索引不变、重复执行、三类未知形态拒绝及之前DDL原子回滚；未在生产执行。
+3. **DB-009D1 漏注册索引**：为外部0127与0128新增精确SQL镜像并在MigrationService注册0139/0140，分别补4个文章查询/关系校验索引与5个表单引用部分索引。2项回归从无索引夹具执行9个CREATE INDEX，验证排序、WHERE条件与重复执行无重复；没有修改外部已有索引定义或生产数据。
+
+此前生成/目录/列宽联合专项4文件20/20，新增索引与目录/列宽联合3文件15/15；列宽与phantom候选的完整单元234文件1,513通过+4跳过/共1,517、双TypeScript通过。最终包含索引补齐与分类器的两套TypeScript均通过，完整单元235文件、1,515通过+4项真实PG跳过/共1,519；本次提交对应CI尚待回填。PostgreSQL技能影响了保留唯一索引/租户外键、分清目录证据与业务等价、扩宽而不缩短列、保留未知状态并拒绝执行的边界；本轮没有生产连接、部署、真实登录或第三方副作用。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

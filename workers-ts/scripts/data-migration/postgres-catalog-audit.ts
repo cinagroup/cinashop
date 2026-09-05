@@ -58,6 +58,19 @@ function stable(value: unknown): string {
   return JSON.stringify(value);
 }
 
+function structure({ key: _key, name: _name, ...rest }: CatalogRow): string {
+  return stable(rest);
+}
+
+/** Exact duplicate-definition evidence only; prefix coverage is not equivalence. */
+export function classifyMissingIndexes(reference: Catalog, candidate: Catalog) {
+  const names = new Set(candidate.indexes.map((row) => row.key));
+  return reference.indexes.filter((row) => !names.has(row.key)).map((row) => ({
+    reference: row.key,
+    exactCandidates: candidate.indexes.filter((other) => structure(row) === structure(other)).map((other) => other.key),
+  }));
+}
+
 export function compareCatalogs(reference: Catalog, candidate: Catalog) {
   return Object.fromEntries(catalogKinds.map((kind) => {
     const map = (rows: CatalogRow[]) => {
@@ -74,12 +87,11 @@ export function compareCatalogs(reference: Catalog, candidate: Catalog) {
       const fields = [...new Set([...Object.keys(row), ...Object.keys(other)])].filter((key) => stable(row[key]) !== stable(other[key])).sort();
       return fields.length ? [{ key: row.key, fields, reference: row, candidate: other }] : [];
     });
-    const shape = ({ key: _key, name: _name, ...rest }: CatalogRow) => stable(rest);
     // Evidence for review, not an automatic rename or an equivalence waiver.
     const possibleRenames = kind === "indexes" || kind === "constraints"
       ? referenceOnly.flatMap((row) => {
-        const matches = candidateOnly.filter((other) => shape(row) === shape(other));
-        return matches.length === 1 && referenceOnly.filter((other) => shape(row) === shape(other)).length === 1
+        const matches = candidateOnly.filter((other) => structure(row) === structure(other));
+        return matches.length === 1 && referenceOnly.filter((other) => structure(row) === structure(other)).length === 1
           ? [{ reference: row.key, candidate: matches[0].key }] : [];
       }) : [];
     return [kind, { referenceOnly, candidateOnly, changed, possibleRenames }];

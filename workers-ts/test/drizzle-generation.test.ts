@@ -26,6 +26,16 @@ function outputDigest(directory: string): string {
 }
 
 describe("DB-008 real Drizzle generation", () => {
+  it("exports only the canonical group-buy table and retains its runtime fields", () => {
+    expect("storePinkFull" in modelExports).toBe(false);
+    expect(tableNames).not.toContain("store_pink_full");
+    expect(tableNames.filter((name) => name === "store_pink")).toHaveLength(1);
+    const columns = getTableConfig(schema.storePink).columns.map((column) => column.name);
+    expect(columns).toEqual(expect.arrayContaining(["uid", "order_id", "order_id_key", "combination_id", "product_id", "k_id", "people", "member_count", "status", "stop_time", "is_refund", "is_virtual"]));
+    expect(readFileSync(join(root, "migrations/0004_user_activity.sql"), "utf8"))
+      .toContain('CREATE TABLE IF NOT EXISTS "store_pink"');
+  });
+
   it("keeps schema-wide index names unique and restores existing migration names without changing keys", () => {
     const names = new Set<string>();
     for (const table of tables) {

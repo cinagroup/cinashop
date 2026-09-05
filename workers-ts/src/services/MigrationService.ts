@@ -30,6 +30,9 @@ import { USER_WITHDRAWAL_REPLAY_SQL } from "@/migrations/userWithdrawalReplay";
 import { WITHDRAWAL_EFFECTS_SQL } from "@/migrations/withdrawalEffects";
 import { WITHDRAWAL_APPLICATION_NOTICE_SQL } from "@/migrations/withdrawalApplicationNotice";
 import { STAFF_NOTIFICATION_REFRESH_SQL } from "@/migrations/staffNotificationRefresh";
+import { REPOSITORY_COLUMN_WIDTH_ALIGNMENT_SQL } from "@/migrations/repositoryColumnWidthAlignment";
+import { ADMIN_ARTICLE_INDEX_SQL } from "@/migrations/adminArticleIndexes";
+import { SYSTEM_FORM_REFERENCE_INDEX_SQL } from "@/migrations/systemFormReferenceIndexes";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -364,6 +367,9 @@ export class MigrationService {
       this.migration_0135(),
       this.migration_0136(),
       this.migration_0137(),
+      this.migration_0138(),
+      this.migration_0139(),
+      this.migration_0140(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8342,5 +8348,14 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0137(): string {
     return STAFF_NOTIFICATION_REFRESH_SQL;
+  }
+  private migration_0138(): string {
+    return REPOSITORY_COLUMN_WIDTH_ALIGNMENT_SQL;
+  }
+  private migration_0139(): string {
+    return ADMIN_ARTICLE_INDEX_SQL;
+  }
+  private migration_0140(): string {
+    return SYSTEM_FORM_REFERENCE_INDEX_SQL;
   }
 }
