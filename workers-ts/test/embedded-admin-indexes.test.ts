@@ -39,5 +39,5 @@ describe("DB-009 missing embedded Admin indexes", () => {
       await db.exec(SYSTEM_FORM_REFERENCE_INDEX_SQL);
       expect(await read()).toEqual(indexes);
     } finally { await db.close(); }
-  });
+  }, 30_000);
 });

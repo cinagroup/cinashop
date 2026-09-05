@@ -33,6 +33,7 @@ import { STAFF_NOTIFICATION_REFRESH_SQL } from "@/migrations/staffNotificationRe
 import { REPOSITORY_COLUMN_WIDTH_ALIGNMENT_SQL } from "@/migrations/repositoryColumnWidthAlignment";
 import { ADMIN_ARTICLE_INDEX_SQL } from "@/migrations/adminArticleIndexes";
 import { SYSTEM_FORM_REFERENCE_INDEX_SQL } from "@/migrations/systemFormReferenceIndexes";
+import { CORE_INDEX_ALIGNMENT_SQL } from "@/migrations/coreIndexAlignment";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -370,6 +371,7 @@ export class MigrationService {
       this.migration_0138(),
       this.migration_0139(),
       this.migration_0140(),
+      this.migration_0141(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8357,5 +8359,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0140(): string {
     return SYSTEM_FORM_REFERENCE_INDEX_SQL;
+  }
+  private migration_0141(): string {
+    return CORE_INDEX_ALIGNMENT_SQL;
   }
 }

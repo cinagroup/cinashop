@@ -5108,6 +5108,30 @@ PG16新一轮实际执行外部136个文件、内嵌141步、ORM1,038条语句�
 
 本轮未连接生产数据库、Redis、Cloudflare控制面、真实账号或provider，未执行生产DDL/DML或部署；DB-009及发布前置不会因误报例外而自动关闭。最终回填只修改根目录审计文档/JSON，不触发工作流路径；受测实现证据仍固定到`7ae3544`。
 
+## DB-009D2 基础索引缺口与充值订单唯一性（2026-09-05）
+
+上一目标轮属于实际进展：精确公开校验和例外已获明确授权并推送，`7ae3544`的完整CI为8/8。本轮从干净的`2c632e9`继续。新建`workers-ts/audit/core-index-reconciliation.json`，逐项绑定已验证的52个external-only索引、原始DDL文件/行号/完整语句及处理决定，覆盖25张表；独立从早期七份SQL和固定PG16原始基线推导同一集合，防止只挑容易对齐的索引。来源为0000的6项、0001的17项、0002的11项、0003的5项、0004的8项、0005的3项、0006的2项。
+
+其中46项是实际遗漏的非唯一基础查询索引，恢复既有外部DDL的键列、顺序及默认B-tree语义，不凭列名重新设计索引或宣称未经EXPLAIN证明的性能提升。另1项`user_recharge.ur_order_id_idx`是实质唯一性缺口：PHP安装SQL `public/install/crmeb.sql:10500`与外部0004都要求全局唯一订单号；当前ORM/Worker只保留0082的普通查询索引。当前创建流程生成专用充值订单号，支付查询/加锁结算拒绝重复结果，不能据0082的兼容注释推定新系统应取消源端唯一性。本部署不继承旧历史数据，因此保留该原始不变量：新迁移及ORM声明补回同名独立UNIQUE索引；若升级目标存在重复行，创建唯一索引会使整个事务失败，绝不删除、合并、改号或取首行。应用层重复回调对象拒绝和原0082脚本均保留，保护尚未升级或不符合结构合同的数据库。
+
+其余5项已有同构替代，本轮既不重复创建也不删除：
+
+| 外部早期名称 | 两路径后续已有名称 | 决策 |
+|---|---|---|
+| store_order_refund.sor_store_order_id_idx | sor_store_order_id | 保留现有别名，暂不DROP |
+| user_recharge.ur_uid_idx | ur_uid | 保留现有别名，暂不DROP |
+| wechat_user.wu_openid_uq_idx | wu_openid_uq | 保留已有独立唯一索引 |
+| wechat_user.wu_uid_idx | wu_uid | 保留现有别名，暂不DROP |
+| wechat_user.wu_unionid_idx | wu_unionid | 保留现有别名，暂不DROP |
+
+新增外部`0135_core_index_alignment.sql`、逐字镜像内嵌常量并注册为0141；以捕获schema和限定标识符锁定普通永久表。仅缺失时创建索引，已存在时逐项检查实际定义、唯一性/立即性、有效/就绪/存活状态、键列数、无INCLUDE/表达式/部分条件/NULLS NOT DISTINCT/replica identity、独立而非约束所属等合同。同名不同表、普通索引冒充唯一索引、反向排序、部分条件、INCLUDE、NULLS NOT DISTINCT、约束所属和同名表均拒绝，先前创建随事务回滚。没有DROP/ALTER/业务DML；已引用的正确唯一索引OID、FK conindid及其pg_depend入/出边在专项中保持不变，且孤立外键写入仍被拒绝。[PostgreSQL conindid合同](https://www.postgresql.org/docs/16/catalog-pg-constraint.html)与[pg_depend合同](https://www.postgresql.org/docs/16/catalog-pg-depend.html)说明名称/定义相同不等于依赖可替换，故不转换索引归属或盲删“冗余”。
+
+本地新增专项14项，首轮13通过、1项因测试把保留大写的`ssl_uid_toUid_idx`当未引号regclass引用而失败；改为比较数据库从真实外部DDL读回的完整定义，未修改或放宽迁移校验。测试类型检查同时发现SQL/IndexedColumn联合类型访问name需缩窄，已修正。随后索引/真实Drizzle生成/支付联合3文件26项通过，双TypeScript通过。首次全量为235文件通过、1文件失败，1,529项通过/4项真实PG跳过/1失败，共1,534；失败是既有embedded-admin-indexes的实际数据库用例耗时5.47秒超过默认5秒，新增14项全部通过。该PGlite集成用例增加与同类数据库测试一致的30秒有限上限，保留所有SQL/目录/幂等断言，不跳过或捕获失败；完整复跑与精确提交Linux PG16全链证据待回填，不能把PGlite PostgreSQL18当成生产引擎证明。
+
+随后完整复跑为236文件全部通过，1,530项通过、4项真实PostgreSQL测试因本地专用测试服务未提供而跳过，共1,534项；新增14项及原9索引用例均通过。两套TypeScript与diff检查亦通过，Linux真实PG16和完整门禁待该候选提交运行后回填。
+
+PostgreSQL技能推动了逐项源索引合同追溯、保留唯一性与现有外键依赖、区分严格同构与复合前缀覆盖、以及未知结构拒绝策略。该事务使用普通CREATE INDEX和SHARE表锁，不是CONCURRENTLY：2秒仅限制锁等待，不代表全部建索引耗时上限；未来生产必须按实际catalog、重复订单号和业务写入窗口决定增量DDL，不能直接重跑历史全链。本轮未访问生产数据库/Redis/Cloudflare、未部署、未调用真实支付或其它provider。ORM其余索引、默认值、约束/序列及生产前置继续开放。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -152,6 +152,9 @@ export const userRecharge = pgTable(
     remarks: varchar("remarks", { length: 255 }).default("").notNull(),
   },
   (t) => [
+    // PHP/external DDL require globally unique recharge order IDs. Keep the
+    // callback ambiguity guard for databases not yet upgraded to this contract.
+    uniqueIndex("ur_order_id_idx").on(t.orderId),
     index("ur_order_id_lookup").on(t.orderId),
     index("ur_uid").on(t.uid),
     index("ur_uid_paid_time").on(t.uid, t.paid, t.addTime, t.id),

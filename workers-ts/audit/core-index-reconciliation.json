@@ -1,0 +1,760 @@
+{
+  "sourceCommit": "7ae3544f97dcc17e66d26033a2d307a8b6c384a0",
+  "runId": 33967084785,
+  "scope": "The 52 external-only indexes in the verified external-versus-embedded PG16 catalog. Restore 46 nonunique lookup indexes and the PHP/external recharge order-id unique index. Keep five existing aliases without creating duplicates or dropping indexes; ORM-only/changed indexes remain a separate review.",
+  "rechargeUniquenessEvidence": {
+    "php": "cinashop-php/public/install/crmeb.sql:10500",
+    "external": "migrations/0004_user_activity.sql:83",
+    "service": "src/services/payment/RechargePaymentService.ts:34",
+    "policy": "Fresh-system contract retains unique order IDs. Existing duplicate rows must reject the upgrade atomically; no cleanup, coercion or first-row selection. Keep application ambiguous-callback rejection as defense for pre-migration databases."
+  },
+  "entries": [
+    {
+      "key": "store_cart.sc_product_id_idx",
+      "table": "store_cart",
+      "name": "sc_product_id_idx",
+      "columns": [
+        "product_id"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 23,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_product_id_idx\" ON \"store_cart\" (\"product_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_cart.sc_type_idx",
+      "table": "store_cart",
+      "name": "sc_type_idx",
+      "columns": [
+        "type"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 26,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_type_idx\" ON \"store_cart\" (\"type\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_cart.sc_uid_del_idx",
+      "table": "store_cart",
+      "name": "sc_uid_del_idx",
+      "columns": [
+        "uid",
+        "is_del"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 25,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_uid_del_idx\" ON \"store_cart\" (\"uid\", \"is_del\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_cart.sc_uid_pay_idx",
+      "table": "store_cart",
+      "name": "sc_uid_pay_idx",
+      "columns": [
+        "uid",
+        "is_pay"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 24,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_uid_pay_idx\" ON \"store_cart\" (\"uid\", \"is_pay\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_coupon_issue.sci_status_idx",
+      "table": "store_coupon_issue",
+      "name": "sci_status_idx",
+      "columns": [
+        "status"
+      ],
+      "unique": false,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 129,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sci_status_idx\" ON \"store_coupon_issue\" (\"status\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_coupon_user.scu_uid_status_idx",
+      "table": "store_coupon_user",
+      "name": "scu_uid_status_idx",
+      "columns": [
+        "uid",
+        "status"
+      ],
+      "unique": false,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 148,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"scu_uid_status_idx\" ON \"store_coupon_user\" (\"uid\", \"status\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order.so_paid_idx",
+      "table": "store_order",
+      "name": "so_paid_idx",
+      "columns": [
+        "paid"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 87,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_paid_idx\" ON \"store_order\" (\"paid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order.so_status_idx",
+      "table": "store_order",
+      "name": "so_status_idx",
+      "columns": [
+        "status"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 88,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_status_idx\" ON \"store_order\" (\"status\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order.so_uid_idx",
+      "table": "store_order",
+      "name": "so_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 86,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_uid_idx\" ON \"store_order\" (\"uid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order_cart_info.soci_oid_idx",
+      "table": "store_order_cart_info",
+      "name": "soci_oid_idx",
+      "columns": [
+        "oid"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 111,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"soci_oid_idx\" ON \"store_order_cart_info\" (\"oid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order_cart_info.soci_uid_idx",
+      "table": "store_order_cart_info",
+      "name": "soci_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 112,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"soci_uid_idx\" ON \"store_order_cart_info\" (\"uid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order_refund.sor_cancel_oid_idx",
+      "table": "store_order_refund",
+      "name": "sor_cancel_oid_idx",
+      "columns": [
+        "is_cancel",
+        "store_order_id"
+      ],
+      "unique": false,
+      "source": "migrations/0003_refund.sql",
+      "sourceLine": 36,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sor_cancel_oid_idx\" ON \"store_order_refund\" (\"is_cancel\", \"store_order_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order_refund.sor_store_order_id_idx",
+      "table": "store_order_refund",
+      "name": "sor_store_order_id_idx",
+      "columns": [
+        "store_order_id"
+      ],
+      "unique": false,
+      "source": "migrations/0003_refund.sql",
+      "sourceLine": 34,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sor_store_order_id_idx\" ON \"store_order_refund\" (\"store_order_id\");",
+      "decision": "retain-existing-alias",
+      "exactCandidates": [
+        "store_order_refund.sor_store_order_id"
+      ]
+    },
+    {
+      "key": "store_order_refund.sor_uid_idx",
+      "table": "store_order_refund",
+      "name": "sor_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0003_refund.sql",
+      "sourceLine": 35,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sor_uid_idx\" ON \"store_order_refund\" (\"uid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order_status.sos_change_time_idx",
+      "table": "store_order_status",
+      "name": "sos_change_time_idx",
+      "columns": [
+        "change_time"
+      ],
+      "unique": false,
+      "source": "migrations/0003_refund.sql",
+      "sourceLine": 47,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sos_change_time_idx\" ON \"store_order_status\" (\"change_time\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_order_status.sos_oid_idx",
+      "table": "store_order_status",
+      "name": "sos_oid_idx",
+      "columns": [
+        "oid"
+      ],
+      "unique": false,
+      "source": "migrations/0003_refund.sql",
+      "sourceLine": 46,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sos_oid_idx\" ON \"store_order_status\" (\"oid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_pink.sp_combination_idx",
+      "table": "store_pink",
+      "name": "sp_combination_idx",
+      "columns": [
+        "combination_id"
+      ],
+      "unique": false,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 217,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_combination_idx\" ON \"store_pink\" (\"combination_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product.sp_add_time_idx",
+      "table": "store_product",
+      "name": "sp_add_time_idx",
+      "columns": [
+        "add_time"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 92,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_add_time_idx\" ON \"store_product\" (\"add_time\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product.sp_cate_id_idx",
+      "table": "store_product",
+      "name": "sp_cate_id_idx",
+      "columns": [
+        "cate_id"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 87,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_cate_id_idx\" ON \"store_product\" (\"cate_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product.sp_is_del_idx",
+      "table": "store_product",
+      "name": "sp_is_del_idx",
+      "columns": [
+        "is_del"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 88,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_is_del_idx\" ON \"store_product\" (\"is_del\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product.sp_is_show_idx",
+      "table": "store_product",
+      "name": "sp_is_show_idx",
+      "columns": [
+        "is_show"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 89,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_is_show_idx\" ON \"store_product\" (\"is_show\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product.sp_price_idx",
+      "table": "store_product",
+      "name": "sp_price_idx",
+      "columns": [
+        "price"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 93,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_price_idx\" ON \"store_product\" (\"price\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product.sp_sales_idx",
+      "table": "store_product",
+      "name": "sp_sales_idx",
+      "columns": [
+        "sales"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 91,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_sales_idx\" ON \"store_product\" (\"sales\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product.sp_sort_idx",
+      "table": "store_product",
+      "name": "sp_sort_idx",
+      "columns": [
+        "sort"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 90,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_sort_idx\" ON \"store_product\" (\"sort\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_attr.spa_product_id_idx",
+      "table": "store_product_attr",
+      "name": "spa_product_id_idx",
+      "columns": [
+        "product_id"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 150,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spa_product_id_idx\" ON \"store_product_attr\" (\"product_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_attr_result.spar_product_id_idx",
+      "table": "store_product_attr_result",
+      "name": "spar_product_id_idx",
+      "columns": [
+        "product_id"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 160,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spar_product_id_idx\" ON \"store_product_attr_result\" (\"product_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_attr_value.spav_product_suk_idx",
+      "table": "store_product_attr_value",
+      "name": "spav_product_suk_idx",
+      "columns": [
+        "product_id",
+        "suk"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 196,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spav_product_suk_idx\" ON \"store_product_attr_value\" (\"product_id\", \"suk\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_attr_value.spav_unique_suk_idx",
+      "table": "store_product_attr_value",
+      "name": "spav_unique_suk_idx",
+      "columns": [
+        "unique",
+        "suk"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 195,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spav_unique_suk_idx\" ON \"store_product_attr_value\" (\"unique\", \"suk\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_category.spc_is_show_idx",
+      "table": "store_product_category",
+      "name": "spc_is_show_idx",
+      "columns": [
+        "is_show"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 113,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spc_is_show_idx\" ON \"store_product_category\" (\"is_show\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_category.spc_pid_idx",
+      "table": "store_product_category",
+      "name": "spc_pid_idx",
+      "columns": [
+        "pid"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 112,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spc_pid_idx\" ON \"store_product_category\" (\"pid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_label.spl_label_cate_idx",
+      "table": "store_product_label",
+      "name": "spl_label_cate_idx",
+      "columns": [
+        "label_cate"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 215,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spl_label_cate_idx\" ON \"store_product_label\" (\"label_cate\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_relation.spr_product_id_idx",
+      "table": "store_product_relation",
+      "name": "spr_product_id_idx",
+      "columns": [
+        "product_id"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 126,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_product_id_idx\" ON \"store_product_relation\" (\"product_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_relation.spr_relation_id_idx",
+      "table": "store_product_relation",
+      "name": "spr_relation_id_idx",
+      "columns": [
+        "relation_id"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 127,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_relation_id_idx\" ON \"store_product_relation\" (\"relation_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_product_relation.spr_type_idx",
+      "table": "store_product_relation",
+      "name": "spr_type_idx",
+      "columns": [
+        "type"
+      ],
+      "unique": false,
+      "source": "migrations/0001_product.sql",
+      "sourceLine": 125,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_type_idx\" ON \"store_product_relation\" (\"type\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_seckill.ss_time_idx",
+      "table": "store_seckill",
+      "name": "ss_time_idx",
+      "columns": [
+        "time_id"
+      ],
+      "unique": false,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 171,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ss_time_idx\" ON \"store_seckill\" (\"time_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "store_service_log.ssl_uid_toUid_idx",
+      "table": "store_service_log",
+      "name": "ssl_uid_toUid_idx",
+      "columns": [
+        "uid",
+        "to_uid"
+      ],
+      "unique": false,
+      "source": "migrations/0006_admin_kefu.sql",
+      "sourceLine": 71,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ssl_uid_toUid_idx\" ON \"store_service_log\" (\"uid\", \"to_uid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "system_admin.sa_account_idx",
+      "table": "system_admin",
+      "name": "sa_account_idx",
+      "columns": [
+        "account"
+      ],
+      "unique": false,
+      "source": "migrations/0006_admin_kefu.sql",
+      "sourceLine": 24,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sa_account_idx\" ON \"system_admin\" (\"account\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "system_config.system_config_is_store_idx",
+      "table": "system_config",
+      "name": "system_config_is_store_idx",
+      "columns": [
+        "is_store"
+      ],
+      "unique": false,
+      "source": "migrations/0000_init.sql",
+      "sourceLine": 93,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"system_config_is_store_idx\" ON \"system_config\" (\"is_store\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "system_config.system_config_menu_name_idx",
+      "table": "system_config",
+      "name": "system_config_menu_name_idx",
+      "columns": [
+        "menu_name"
+      ],
+      "unique": false,
+      "source": "migrations/0000_init.sql",
+      "sourceLine": 92,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"system_config_menu_name_idx\" ON \"system_config\" (\"menu_name\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user.user_account_idx",
+      "table": "user",
+      "name": "user_account_idx",
+      "columns": [
+        "account"
+      ],
+      "unique": false,
+      "source": "migrations/0000_init.sql",
+      "sourceLine": 68,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_account_idx\" ON \"user\" (\"account\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user.user_delete_time_idx",
+      "table": "user",
+      "name": "user_delete_time_idx",
+      "columns": [
+        "delete_time"
+      ],
+      "unique": false,
+      "source": "migrations/0000_init.sql",
+      "sourceLine": 71,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_delete_time_idx\" ON \"user\" (\"delete_time\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user.user_phone_idx",
+      "table": "user",
+      "name": "user_phone_idx",
+      "columns": [
+        "phone"
+      ],
+      "unique": false,
+      "source": "migrations/0000_init.sql",
+      "sourceLine": 70,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_phone_idx\" ON \"user\" (\"phone\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user.user_status_idx",
+      "table": "user",
+      "name": "user_status_idx",
+      "columns": [
+        "status"
+      ],
+      "unique": false,
+      "source": "migrations/0000_init.sql",
+      "sourceLine": 69,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_status_idx\" ON \"user\" (\"status\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user_bill.ub_cat_type_link_idx",
+      "table": "user_bill",
+      "name": "ub_cat_type_link_idx",
+      "columns": [
+        "category",
+        "type",
+        "link_id"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 132,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ub_cat_type_link_idx\" ON \"user_bill\" (\"category\", \"type\", \"link_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user_bill.ub_uid_idx",
+      "table": "user_bill",
+      "name": "ub_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0002_order.sql",
+      "sourceLine": 131,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ub_uid_idx\" ON \"user_bill\" (\"uid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user_invoice.ui_uid_idx",
+      "table": "user_invoice",
+      "name": "ui_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 104,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ui_uid_idx\" ON \"user_invoice\" (\"uid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user_money.um_uid_idx",
+      "table": "user_money",
+      "name": "um_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 63,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"um_uid_idx\" ON \"user_money\" (\"uid\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user_recharge.ur_order_id_idx",
+      "table": "user_recharge",
+      "name": "ur_order_id_idx",
+      "columns": [
+        "order_id"
+      ],
+      "unique": true,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 83,
+      "sourceSql": "CREATE UNIQUE INDEX IF NOT EXISTS \"ur_order_id_idx\" ON \"user_recharge\" (\"order_id\");",
+      "decision": "restore-canonical-index",
+      "exactCandidates": []
+    },
+    {
+      "key": "user_recharge.ur_uid_idx",
+      "table": "user_recharge",
+      "name": "ur_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0004_user_activity.sql",
+      "sourceLine": 84,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ur_uid_idx\" ON \"user_recharge\" (\"uid\");",
+      "decision": "retain-existing-alias",
+      "exactCandidates": [
+        "user_recharge.ur_uid"
+      ]
+    },
+    {
+      "key": "wechat_user.wu_openid_uq_idx",
+      "table": "wechat_user",
+      "name": "wu_openid_uq_idx",
+      "columns": [
+        "openid"
+      ],
+      "unique": true,
+      "source": "migrations/0005_wechat.sql",
+      "sourceLine": 27,
+      "sourceSql": "CREATE UNIQUE INDEX IF NOT EXISTS \"wu_openid_uq_idx\" ON \"wechat_user\" (\"openid\");",
+      "decision": "retain-existing-alias",
+      "exactCandidates": [
+        "wechat_user.wu_openid_uq"
+      ]
+    },
+    {
+      "key": "wechat_user.wu_uid_idx",
+      "table": "wechat_user",
+      "name": "wu_uid_idx",
+      "columns": [
+        "uid"
+      ],
+      "unique": false,
+      "source": "migrations/0005_wechat.sql",
+      "sourceLine": 29,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"wu_uid_idx\" ON \"wechat_user\" (\"uid\");",
+      "decision": "retain-existing-alias",
+      "exactCandidates": [
+        "wechat_user.wu_uid"
+      ]
+    },
+    {
+      "key": "wechat_user.wu_unionid_idx",
+      "table": "wechat_user",
+      "name": "wu_unionid_idx",
+      "columns": [
+        "unionid"
+      ],
+      "unique": false,
+      "source": "migrations/0005_wechat.sql",
+      "sourceLine": 28,
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"wu_unionid_idx\" ON \"wechat_user\" (\"unionid\");",
+      "decision": "retain-existing-alias",
+      "exactCandidates": [
+        "wechat_user.wu_unionid"
+      ]
+    }
+  ]
+}
