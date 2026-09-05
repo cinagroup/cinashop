@@ -5004,6 +5004,20 @@ chunk模块条目统计来自Rollup映射，不把它等同于全部非零代码
 
 同一run的Worker双TypeScript、230文件/1,497项单元与workerd3文件/24项全部通过，无跳过测试；CI提供PostgreSQL16.14隔离服务，4项受环境控制的多连接并发用例包含在该总数中。五端构建、Kefu17项、通用依赖18项、ECharts10项、Worker生产及Kefu/PC全树审计0通过，Gitleaks224个提交无泄露。schema为source201/target263/shared201、sourceGaps0/externalOnly0/workerOnly0/columnDrift0；routes为PHP1904/TS1646/matched879/executable861/unavailable18/missing1025/retired17/actionableMissing1008，覆盖率46.2%/45.2%/45.6%，与本批只新增审计而未迁移业务路由一致。以上为该run完成日志，不沿用上轮结果；临时构建夹具已清理，本轮未启动业务开发服务或浏览器。最终回填只改Markdown，CI证据固定到上述代码SHA。
 
+## TEST-004E Drizzle真实加载链与新发现的生成缺口（2026-09-05）
+
+从`main@4be9aabbab14c91fae5600cce55aeba3198538e5`干净工作区继续。安全修复技能要求的独立只读调查与主代理追踪一致：告警库真实存在，但当前Drizzle/Worker路径结论为有范围`no_change`，未修改依赖或跨版本override。此结论不关闭依赖淘汰，也不掩盖本轮真实生成失败。
+
+`npm ls`确认旧链为Drizzle0.31.10→esm-loader2.6.5→core-utils3.3.2→esbuild0.18.20，Drizzle直接解析esbuild0.25.12；根tsx4.23.11解析0.28.2。`bin.cjs/api.js/api.mjs/utils.js/utils.mjs/index.js/index.mjs`七个Drizzle入口均不导入旧两包；CLI `safeRegister`在`bin.cjs:15259–15276`调用内置tsx注册，配置加载在15834–15874，PG模型加载在16770–16798。程序API的`api.js:25766–25784`使用安装的`tsx/cjs/api`。旧core-utils自身只调用transform/transformSync，未见serve消费者。Studio使用自己的服务实现，不能把存在studio命令当成esbuild serve已暴露，也未实际启动Studio。
+
+[esbuild公告](https://github.com/evanw/esbuild/security/advisories/GHSA-67mh-4wv8-2f99)要求实际开发HTTP服务及浏览器跨源读取，修复从0.25.0开始。主代理对两个真实版本分别创建仅监听127.0.0.1、随机端口、仅惰性stdin生成内容、write:false的context/watch/serve：旧0.18.20对`/audit.js`200、未知文件404及`/esbuild`200事件流均返回`Access-Control-Allow-Origin:*`；Drizzle0.25.12同样正常返回内容/404/SSE，但不授权`https://audit-untrusted.invalid`跨源读取。事件流用AbortController关闭，context全部dispose；未把缺CORS头写成HTTP403，未执行浏览器攻击。首次清理额外调用旧版不存在的stop导致进程报错；已按可选stop重跑两个版本并完成以上完整结果。
+
+npm官方只读元数据查询确认stable latest仍0.31.10且保留旧loader声明，core-utils latest3.3.2的deprecated说明已合入tsx；[旧loader仓库](https://github.com/esbuild-kit/esm-loader)也已归档。根esbuild更新不会改变旧包的`~0.18.20`嵌套副本；不能用未经兼容验证的override或Drizzle降级代替修复。
+
+本轮真正揭露的新迁移缺口是完整SQL生成：主代理在新建OS临时目录执行真实`generate --dialect postgresql --schema ./src/models/schema/index.ts --out <隔离目录> --name audit`，调查代理执行不写文件的`export --config drizzle.config.ts`，均在读取完整模型后退出1并报告索引重名。配置进程中的DATABASE_URL固定为不可用loopback虚拟地址，无数据库请求。调查的实际Module._load跟踪只加载Drizzle自己的0.25.12，没有旧loader/core-utils。
+
+运行时读取全部Drizzle PgTable对象得到264张唯一表、733个显式索引；`is_show/sort/add_time`分别在store_product与store_product_category冲突，`ub_uid`在user_bill与user_brokerage冲突。进一步与外部DDL解析表集比较得到263表且唯一model-only为`store_pink_full`。因此原来的外部SQL↔内嵌SQL零漂移仍是其原有窄范围事实，**不是ORM↔DDL完整一致性的证据**。新增DB-008处理生成与索引名门禁，DB-009处理完整模型合同差异；不自动给生产增加第264张表，也不删除模型来消除数字差异。当前无业务源文件变更、无生产访问/DDL/DML/部署。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
