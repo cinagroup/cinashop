@@ -4696,6 +4696,14 @@ PostgreSQL最佳实践用于约束数据库内过滤、分页及聚合，避免P
 
 本批最终本地生产依赖审计为24个生产依赖、0漏洞；首次受沙箱网络限制失败，获准访问npm官方端点后成功，未豁免漏洞门禁。向`main`提交推送的命令被本机自动审批整体拦截，未执行暂存/提交/推送，原因是要求额外明确默认分支授权；因此尚无本批GitHub Actions运行，API-014B的两项PostgreSQL16并发与完整远端门禁继续开放，不能记为通过。
 
+### 提交后复审与首轮CI（2026-09-05）
+
+项目所有者随后明确授权向`main`提交推送，原审批阻塞已经解除。实现提交`594ebea4892bb3565774749be7cecd67fdbb9319`已推送，本地HEAD、origin/main、GitHub远端引用精确一致。[Actions `33943737780`](https://github.com/cinagroup/cinashop/actions/runs/33943737780)的Worker双TypeScript/真实PostgreSQL16.14并发/结构/路由、Linux workerd和五端构建均成功；首轮唯一失败是Gitleaks将`user-withdrawal-scenario.test.ts:17`固定幂等请求标识识别为generic-api-key。该字面量只是隔离测试输入，不具备认证能力、不会读取任何账号或生产凭据。按[Gitleaks配置合同](https://github.com/gitleaks/gitleaks/blob/v8.29.0/README.md#configuration)新增仅匹配一个测试文件、一个精确字面量、一个规则的AND例外，目标为提取值而非整行；附加测试禁止路径或值范围扩大。没有豁免整个提交、测试目录或真实凭据扫描，修正后的完整CI仍需独立确认。
+
+进一步沿PHP提现审核路径复核，发现成功后还有资金流与通知，拒绝后还有余额变动通知：`UserExtractServices.php:214`附近派发`CapitalFlowJob`的`extract`类型，随后触发`user_extract`；`changeFail`触发`user_balance_change`。Worker的提现service没有写`capital_flow`、system_message或提现通知outbox，`OrderNotificationOutboxService`的事件联合也仅覆盖发货/拒退/次卡，不能自然承接这些事件。该差距新增API-014F，包含净额流水权威、按提现ID唯一事件、事务内outbox、派发/失败恢复与渠道模板验收；API-014父项保持开放。
+
+自动打款也并非给现有支付service增加一个POST即可。PHP`Payment::merchantPay`同时支持旧v2企业付款与v3批次转账，Worker当前微信service仅有订单/退款。微信当前[商家转账接口](https://pay.wechatpay.cn/doc/v3/merchant/4012716434)要求明确的商户场景、匹配appid/openid和收款流程；HTTP200或WAIT_USER_CONFIRM不等于到账，未知结果不能换单重试。[开发指引](https://pay.wechatpay.cn/doc/v3/merchant/4012715211)还要求用户确认收款入口、查单和终态处理。因此API-014D实施前需确定本部署商户已开通的转账产品/模式与实际场景，不猜测沿用旧站v2/批次能力，也不以普通支付就绪代替转账就绪。该审计只访问官方文档和本地代码，没有发起转账或连接生产。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

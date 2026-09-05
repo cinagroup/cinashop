@@ -59,3 +59,11 @@ condition = "AND"
 regexTarget = "line"
 paths = ['''^workers-ts/test/attachment-storage-migration\.test\.ts$''']
 regexes = ['''expect\(audit\)\.toContain\('env\.ASSETS_BUCKET, databaseKeys, "attachments/supplier/"'\);''']
+
+[[allowlists]]
+description = "Fixed non-secret withdrawal idempotency fixture; not an authentication key"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = ['''^workers-ts/test/user-withdrawal-scenario\.test\.ts$''']
+regexes = ['''^withdrawal-intent-0001$''']

@@ -50,6 +50,22 @@ async function config(key: string, value: string) {
 }
 
 describe("API-014 withdrawal money-state and replay scenarios", () => {
+  it("limits the secret-scan fixture exception to one exact non-secret and one test path", () => {
+    const block = readFileSync("../.gitleaks.toml", "utf8").split("[[allowlists]]")
+      .find((entry) => entry.includes("Fixed non-secret withdrawal idempotency fixture"))!;
+    expect(block).toContain('targetRules = ["generic-api-key"]');
+    expect(block).toContain('condition = "AND"');
+    expect(block).toContain('regexTarget = "secret"');
+    const path = new RegExp(block.match(/paths = \['''([^']+)'''\]/)![1]);
+    const value = new RegExp(block.match(/regexes = \['''([^']+)'''\]/)![1]);
+    expect(path.test("workers-ts/test/user-withdrawal-scenario.test.ts")).toBe(true);
+    expect(path.test("workers-ts/src/services/user/UserWithdrawalService.ts")).toBe(false);
+    expect(path.test("workers-ts/test/user-withdrawal-scenario.other.test.ts")).toBe(false);
+    expect(value.test(bank().requestKey)).toBe(true);
+    expect(value.test(bank().requestKey + "-changed")).toBe(false);
+    expect(value.test("prefix-" + bank().requestKey)).toBe(false);
+  });
+
   it("mirrors exact external/embedded DDL", () => {
     expect(readFileSync("migrations/0130_user_withdrawal_replay.sql", "utf8").trim()).toBe(USER_WITHDRAWAL_REPLAY_SQL.trim());
   });
