@@ -4953,7 +4953,7 @@ ECharts边界回归提交`e991d924c709cac56e3fae10a7a75a3ebab755f5`已推送，[
 
 ## TEST-004D3A Intlify实际运行图、复制资源与可达性审查（2026-09-05）
 
-从已推送且干净的`aedae0185427e5978d755864e248361d616cde60`继续审查。上轮已经产生代码/审计/CI权威变化，属于实际进展；本轮不将Vite5的残留当作完成，也不以警告包数量代替数据流判断。使用安全修复技能的独立只读调查后，主代理分别追踪库函数、应用入口、DCloud别名、真实CLI构建图及App复制资源。当前业务代码结论为**有范围no_change**，新增审计测试而不替换Intlify或改变业务/Android编译合同；一次独立候选复核发现的renderjs覆盖缺口已确认并补齐，Linux CI结果待补录。未连接生产数据库/云控制面、未部署、未运行真实账号、设备、支付或通知。
+从已推送且干净的`aedae0185427e5978d755864e248361d616cde60`继续审查。上轮已经产生代码/审计/CI权威变化，属于实际进展；本轮不将Vite5的残留当作完成，也不以警告包数量代替数据流判断。使用安全修复技能的独立只读调查后，主代理分别追踪库函数、应用入口、DCloud别名、真实CLI构建图及App复制资源。当前业务代码结论为**有范围no_change**，新增审计测试而不替换Intlify或改变业务/Android编译合同；一次独立候选复核发现的renderjs覆盖缺口已确认并补齐，Linux CI完整8/8成功，精确证据见本节末。未连接生产数据库/云控制面、未部署、未运行真实账号、设备、支付或通知。
 
 ### 库级风险真实存在，但必须分开应用入口
 
@@ -4997,6 +4997,12 @@ chunk模块条目统计来自Rollup映射，不把它等同于全部非零代码
 当前9项新测试通过：模块标识、未渲染/外部消费者与asset表示、真实Rollup外部依赖阻断、两类独立编译阻断、DCloud语言控制，以及H5/微信/App各自真实CLI制品。JavaScript语法、类型、既有8项开发边界/更新隔离、3项产物检查、3项NanoID复验与diff检查通过；CI UniApp job新增完整runtime审计命令。未改页面行为，所以本轮未重复用户浏览器业务交互；上轮浏览器记录不能替代新设备验收。
 
 依赖版本及已知50个告警包条目保持不变，没有为了数字下降替换Android内置runtime。D3A只关闭当前应用的该两类Intlify公告可达性审查，不能称库已修复或整体迁移完成；引入翻译消费者、保存消息、不同构建目标、复制厂商脚本变化或设备实现都要求重审。TEST-004D2、D3其它jpeg-js/phin/adm-zip/qs/Jest链及所有生产/原生发行门禁继续开放。
+
+### TEST-004D3A 精确提交与Linux CI验收
+
+实现/测试/初始审计提交`d456d541159b5aeee42e58bf18c0225c995f3307`已推送origin/main；[Actions `33960215805`](https://github.com/cinagroup/cinashop/actions/runs/33960215805)最终`completed/success`、**8/8 jobs成功**。UniApp以锁安装后完成类型、开发边界8项、三目标普通构建/产物3项、新增runtime审计9项及NanoID3项；日志再次给出H5/微信/App-vue/App-nvue完全相同的模块数量、空Intlify/独立脚本列表、精确external，以及10个App资源相同的字节数和SHA256。Linux证据没有扩大到设备原生代码或其它小程序目标。
+
+同一run的Worker双TypeScript、230文件/1,497项单元与workerd3文件/24项全部通过，无跳过测试；CI提供PostgreSQL16.14隔离服务，4项受环境控制的多连接并发用例包含在该总数中。五端构建、Kefu17项、通用依赖18项、ECharts10项、Worker生产及Kefu/PC全树审计0通过，Gitleaks224个提交无泄露。schema为source201/target263/shared201、sourceGaps0/externalOnly0/workerOnly0/columnDrift0；routes为PHP1904/TS1646/matched879/executable861/unavailable18/missing1025/retired17/actionableMissing1008，覆盖率46.2%/45.2%/45.6%，与本批只新增审计而未迁移业务路由一致。以上为该run完成日志，不沿用上轮结果；临时构建夹具已清理，本轮未启动业务开发服务或浏览器。最终回填只改Markdown，CI证据固定到上述代码SHA。
 
 ## 完成定义
 
