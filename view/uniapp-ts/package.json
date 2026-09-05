@@ -10,6 +10,7 @@
     "build:app": "uni build -p app",
     "test:toolchain": "node --test scripts/dev-server-security.test.cjs",
     "test:build-artifacts": "node --test scripts/build-artifacts.test.cjs",
+    "test:runtime-i18n": "node --test scripts/runtime-i18n-audit.test.cjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {

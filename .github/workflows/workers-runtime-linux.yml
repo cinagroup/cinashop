@@ -150,7 +150,7 @@ jobs:
             command: npm test && npm run build
           - name: UniApp
             directory: uniapp-ts
-            command: npm run typecheck && npm run test:toolchain && npm run build:h5 && npm run build:mp-weixin && npm run build:app && npm run test:build-artifacts
+            command: npm run typecheck && npm run test:toolchain && npm run build:h5 && npm run build:mp-weixin && npm run build:app && npm run test:build-artifacts && npm run test:runtime-i18n
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

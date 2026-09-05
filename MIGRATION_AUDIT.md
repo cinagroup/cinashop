@@ -4951,6 +4951,53 @@ ECharts边界回归提交`e991d924c709cac56e3fae10a7a75a3ebab755f5`已推送，[
 
 同一提交还通过Worker230文件/1,497项、workerd3文件/24项、Kefu17项、五端通用依赖18项、两端ECharts10项、Kefu/PC全树审计0、Gitleaks222个提交无泄露。schema为source201/target263/shared201、sourceGaps0/externalOnly0/workerOnly0/columnDrift0；routes为PHP1904/TS1646/matched879/executable861/unavailable18/missing1025/retired17/actionableMissing1008。所有计数来自该run完成日志，而非沿用旧run推定。本轮安全测试夹具、浏览器标签页与自建5217开发服务均已清理，未停止用户其他服务。最终审计回填只改Markdown，CI证据固定到上述代码SHA。
 
+## TEST-004D3A Intlify实际运行图、复制资源与可达性审查（2026-09-05）
+
+从已推送且干净的`aedae0185427e5978d755864e248361d616cde60`继续审查。上轮已经产生代码/审计/CI权威变化，属于实际进展；本轮不将Vite5的残留当作完成，也不以警告包数量代替数据流判断。使用安全修复技能的独立只读调查后，主代理分别追踪库函数、应用入口、DCloud别名、真实CLI构建图及App复制资源。当前业务代码结论为**有范围no_change**，新增审计测试而不替换Intlify或改变业务/Android编译合同；一次独立候选复核发现的renderjs覆盖缺口已确认并补齐，Linux CI结果待补录。未连接生产数据库/云控制面、未部署、未运行真实账号、设备、支付或通知。
+
+### 库级风险真实存在，但必须分开应用入口
+
+权威来源：[Intlify原型污染公告](https://github.com/intlify/vue-i18n/security/advisories/GHSA-p2ph-7g93-hw3m)、[HTML属性转义公告](https://github.com/intlify/vue-i18n/security/advisories/GHSA-x8qp-wqqm-57ph)。这两个公告的修复版本和实际数据流不同，不能只更新顶层包消掉名称后声称内置runtime一并修复。
+
+- 独立Node进程执行当前`@intlify/message-resolver`9.1.9真实`handleFlatJson`：`__proto__.cinashop_i18n_probe`与`constructor.prototype.cinashop_i18n_probe`均能写入惰性全局原型标记，finally均删除；根`@intlify/core-base`重新导出的是同一函数。未执行命令或访问业务数据。
+- 顶层vue-i18n9.14.4的真实`createI18n({legacy:false,escapeParameter:true})`翻译HTML模板时，`javascript:`链接参数仍进入href；普通“Hello CinaShop”控制保持正常。这只证明危险HTML字符串保留，没有浏览器脚本执行证据。首次直接调用未注册编译器的core-base只返回键名并警告，未把这次结果计作阳性；随后使用真实vue-i18n入口确认。
+- 应用`src/main.ts`只创建Vue/Pinia及注册DIY组件；全src无vue-i18n/createI18n/useI18n/$t/$tm/$te/v-t/escapeParameter注册或调用，src/locale不存在。API错误、商品/文章标题和表单文本没有进入Intlify消息/插值API的路径。H5 Modal标题/正文为`textContent`，Toast为文本VNode；其内置取消/确认按钮来自DCloud固定翻译键，不把业务错误当翻译模板。
+
+### DCloud不是Intlify的另一个包名
+
+H5 `uni-h5/dist/uni-h5.es.js:6,65–84`的useI18n来自独立`@dcloudio/uni-i18n`，内部BaseFormatter/I18n不导入Intlify；消息来自固定字典或编译配置，语言来自存储/配置/浏览器语言。微信`uni.mp.esm.js:283`使用同库normalizeLocale。App `uni-app-plus/dist/uni.runtime.esm.js:1002,1159–1181`内联同套DCloud实现。实际DCloud控制测试保留固定文本、命名/列表参数、带点字面键、两类原型路径字面键与zh-CN→zh-Hans切换；它不是HTML净化器，测试不宣称它可以处理任意不可信HTML。
+
+MP `uni-mp-vite/dist/plugin/index.js:41`与App `uni-app-vite/dist/plugin/index.js:23–25`的vue-i18n alias确实指向DCloud内置9.1.9。该runtime从根9.1.9 core-base导入`handleFlatJson/getLocaleChain`等接口，且在241–245行用返回`ctx.normalize([source])`的messageCompiler避免Android new Function限制；顶层9.14.4 core-base缺少这些老导出。盲目override到9.14.x会破坏合同。此外内置文件自己的旧deepCopy参与messages、__i18n及mergeLocaleMessage，不会随npm覆盖而改变。未来真正接入时，必须覆盖全部消息表示和Android行为，不能仅修一个handleFlatJson。
+
+### 三个正式构建目标的实际图证据
+
+先以内存审计插件加入真实DCloud构建器调查，再将同一边界固化为`vite.runtime-audit.config.ts`（只包装原vite.config）、`scripts/runtime-i18n-audit.cjs`及测试。新脚本`npm run test:runtime-i18n`在独立进程以真实uni CLI、`CI=1`和固定loopback业务代理重建每个目标；输出和JSONL记录位于各自新建临时目录，结束清理。普通vite.config、构建命令、业务代码和锁文件均未改变。采集使用[Rollup generateBundle及模块信息接口](https://rollupjs.org/plugin-development/#generatebundle)，不是扫描压缩包里是否还有函数名。
+
+| 图阶段 | chunk数 | loaded模块数 | chunk模块条目数 | Intlify loaded/external | DCloud i18n及外部运行时 |
+| --- | ---: | ---: | ---: | --- | --- |
+| H5 | 76 | 260 | 246 | 0/0 | uni-i18n 7,576 renderedLength；external空 |
+| 微信小程序 | 92 | 301 | 299 | 0/0 | uni-i18n 982 renderedLength；external空 |
+| App Vue | 1 | 247 | 229 | 0/0 | external仅`@vue/shared`、`vue` |
+| App nvue | 2 | 4 | 3 | 0/0 | 无Intlify或其它external；不能忽略第二编译轮 |
+
+chunk模块条目统计来自Rollup映射，不把它等同于全部非零代码模块；`renderedLength`也不等于压缩后的网络字节。检查确认真实主入口、非空chunk/图、目标/阶段集合及预期外部依赖；缺报告、缺阶段或CLI伪成功均失败。标识检测覆盖包路径、Windows分隔符、vendored路径、commonjs虚拟模块和裸external；loaded但被tree-shaking移除的Intlify也要求重新审查。真实Rollup负例引入外部`@intlify/core-base`后generate明确失败，避免无论输入如何都报告“未加载”。
+
+### App复制资源不能混入业务模块图统计
+
+`uni-app-vite/dist/plugins/template.js:18–24`直接复制厂商UMD及模板，绕过Rollup模块图。测试额外校验9个模板资源（7个JS、2个PNG）与`uni-app-view.umd.js`共10个文件逐字节等于安装包来源，并记录长度/SHA256。UMD为311,516字节、SHA256 `a13563e9ea5ae232838d466af60683cdddfcc87e60f6522b6beae5f09ff7aa0f`；其中可见内联DCloud Formatter/I18n，未见Intlify标识。`__uniappview.html`经过配置/renderjs/wxs生成，单独检查非空，未错误要求它与模板相等。
+
+逐字节来源和hash只证明复制关系，不能证明任意预打包代码没有漏洞。App service将Vue/@vue/shared外部化为设备全局`Vue/uni.VueShared`，因此未知基座、APK/IPA和设备实际代码不在此次结论内。报告显式输出这些排除项；当前无nvue/uvue/uts、renderjs、hybrid或uni_modules源码。支付宝/百度/抖音虽然有依赖和manifest配置，但不是现有脚本/CI正式构建目标，本轮未编译；SSR与开发运行图也未据生产构建推定通过。
+
+### 候选门禁与剩余范围
+
+独立候选复核确认一个P2守卫缺口：DCloud `uni-app-vite/dist/vue/plugins/renderjs.js:47–63,78–86,112–122`以独立esbuild(bundle:true)编译renderjs，再将Rollup模块替换为安装stub，并emit `app-renderjs.js` asset；`vue/plugin/index.js:109–118`把该脚本接入实际页面。纯内存真实插件复现中，renderjs引入createI18n生成294,240字节脚本，但外层图的Intlify仍为0，旧检测会放行。当前源码没有此入口，所以这是未来变更守卫缺口，不是当前业务已可利用的证据。
+
+主代理复核后同时覆盖等价的wxs独立编译链：报告分别列出renderjs/wxs模块query及生成asset，任何一项出现均拒绝审计构建并明确要求重新审查独立依赖图，不依赖压缩后函数名/注释。新增两个真实DCloud插件+Rollup负例（renderjs非压缩、wxs压缩），均实际把Intlify放进独立脚本，确认外层图未见Intlify时仍被新守卫阻断；普通三目标构建则确认这两类模块和资源都为空。该门禁是有范围失败关闭，不声称解析了任意第三方预打包脚本。
+
+当前9项新测试通过：模块标识、未渲染/外部消费者与asset表示、真实Rollup外部依赖阻断、两类独立编译阻断、DCloud语言控制，以及H5/微信/App各自真实CLI制品。JavaScript语法、类型、既有8项开发边界/更新隔离、3项产物检查、3项NanoID复验与diff检查通过；CI UniApp job新增完整runtime审计命令。未改页面行为，所以本轮未重复用户浏览器业务交互；上轮浏览器记录不能替代新设备验收。
+
+依赖版本及已知50个告警包条目保持不变，没有为了数字下降替换Android内置runtime。D3A只关闭当前应用的该两类Intlify公告可达性审查，不能称库已修复或整体迁移完成；引入翻译消费者、保存消息、不同构建目标、复制厂商脚本变化或设备实现都要求重审。TEST-004D2、D3其它jpeg-js/phin/adm-zip/qs/Jest链及所有生产/原生发行门禁继续开放。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
