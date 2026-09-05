@@ -4694,15 +4694,21 @@ PostgreSQL最佳实践用于约束数据库内过滤、分页及聚合，避免P
 
 路由为PHP1,904/TS1,641/精确879/可执行861/原始缺失1,025/退役17/可执行缺口1,008，API面TS862、缺口仍17；本批修的是行为，不虚增PHP覆盖率。可观测性仍17信号/10组件/53事件/6发布阻断。PostgreSQL技能用于短事务与一致锁序；同时按[Workers官方实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)核对异步/绑定/摘要接口，检索最新`@cloudflare/workers-types@5.20260905.1`只进入临时目录，项目依赖及部署配置未因此变更。后续须完成API-014D自动微信提现未知状态/查单/回调恢复与真实渠道验收、DB-006、API-014E及其他清单开放项。
 
-本批最终本地生产依赖审计为24个生产依赖、0漏洞；首次受沙箱网络限制失败，获准访问npm官方端点后成功，未豁免漏洞门禁。向`main`提交推送的命令被本机自动审批整体拦截，未执行暂存/提交/推送，原因是要求额外明确默认分支授权；因此尚无本批GitHub Actions运行，API-014B的两项PostgreSQL16并发与完整远端门禁继续开放，不能记为通过。
+本批最终本地生产依赖审计为24个生产依赖、0漏洞；首次受沙箱网络限制失败，获准访问npm官方端点后成功，未豁免漏洞门禁。首次向`main`提交推送的命令曾被本机自动审批整体拦截，未执行暂存/提交/推送，原因是要求额外明确默认分支授权；当时尚无本批GitHub Actions运行，API-014B的两项PostgreSQL16并发与完整远端门禁因此保持开放。以下记录后续授权解除及远端验证结果，不能把本段历史阻塞解释为当前状态。
 
 ### 提交后复审与首轮CI（2026-09-05）
 
 项目所有者随后明确授权向`main`提交推送，原审批阻塞已经解除。实现提交`594ebea4892bb3565774749be7cecd67fdbb9319`已推送，本地HEAD、origin/main、GitHub远端引用精确一致。[Actions `33943737780`](https://github.com/cinagroup/cinashop/actions/runs/33943737780)的Worker双TypeScript/真实PostgreSQL16.14并发/结构/路由、Linux workerd和五端构建均成功；首轮唯一失败是Gitleaks将`user-withdrawal-scenario.test.ts:17`固定幂等请求标识识别为generic-api-key。该字面量只是隔离测试输入，不具备认证能力、不会读取任何账号或生产凭据。按[Gitleaks配置合同](https://github.com/gitleaks/gitleaks/blob/v8.29.0/README.md#configuration)新增仅匹配一个测试文件、一个精确字面量、一个规则的AND例外，目标为提取值而非整行；附加测试禁止路径或值范围扩大。没有豁免整个提交、测试目录或真实凭据扫描，修正后的完整CI仍需独立确认。
 
-进一步沿PHP提现审核路径复核，发现成功后还有资金流与通知，拒绝后还有余额变动通知：`UserExtractServices.php:214`附近派发`CapitalFlowJob`的`extract`类型，随后触发`user_extract`；`changeFail`触发`user_balance_change`。Worker的提现service没有写`capital_flow`、system_message或提现通知outbox，`OrderNotificationOutboxService`的事件联合也仅覆盖发货/拒退/次卡，不能自然承接这些事件。该差距新增API-014F，包含净额流水权威、按提现ID唯一事件、事务内outbox、派发/失败恢复与渠道模板验收；API-014父项保持开放。
+进一步沿PHP提现审核路径复核，发现成功后还有资金流与通知，拒绝后还有余额变动通知：`UserExtractServices.php:222`派发`CapitalFlowJob`的`extract`类型，225行触发`user_extract`；`changeFail`在145行触发`user_balance_change`。余额提现通过`adopt→changeSuccess`也经过成功路径。源端`CapitalFlowServices.php:63～65`明确将净额取负并使用`trading_type=6`，因此目标流水应为`price=-extract_price`并保留对应收款方式，不能把申请扣除的毛额再次当作到账流水。Worker的提现service没有写`capital_flow`、system_message或提现通知outbox，`OrderNotificationOutboxService`的事件联合也仅覆盖发货/拒退/次卡，不能自然承接这些事件。该差距新增API-014F，包含净额流水权威、按提现ID唯一事件、事务内outbox、派发/失败恢复与渠道模板验收；API-014父项保持开放。
 
 自动打款也并非给现有支付service增加一个POST即可。PHP`Payment::merchantPay`同时支持旧v2企业付款与v3批次转账，Worker当前微信service仅有订单/退款。微信当前[商家转账接口](https://pay.wechatpay.cn/doc/v3/merchant/4012716434)要求明确的商户场景、匹配appid/openid和收款流程；HTTP200或WAIT_USER_CONFIRM不等于到账，未知结果不能换单重试。[开发指引](https://pay.wechatpay.cn/doc/v3/merchant/4012715211)还要求用户确认收款入口、查单和终态处理。因此API-014D实施前需确定本部署商户已开通的转账产品/模式与实际场景，不猜测沿用旧站v2/批次能力，也不以普通支付就绪代替转账就绪。该审计只访问官方文档和本地代码，没有发起转账或连接生产。
+
+### 授权后远端门禁最终证据（2026-09-05）
+
+窄范围误报修正提交`ae26b56547963f829e04584b44d9fee44f6a6302`已推送，[Actions `33944067731`](https://github.com/cinagroup/cinashop/actions/runs/33944067731)最终8/8 jobs全部成功。Worker测试为223文件/1,426项全部通过、无跳过；提现专项19项包含18项资金场景与1项密钥扫描例外范围检查。容器日志确认PostgreSQL16.14，2项真实多连接并发用例已执行：同键四次提交只记一笔、不同键不能超提，以及并发拒绝仅返还一次。双TypeScript、schema/route/observability、生产依赖、Linux workerd与五端构建也均成功；checksum-pinned Gitleaks扫描206个历史提交后报告无泄露。以上证据关闭API-014B和更新TEST-001，但不关闭自动渠道D、发布/真实角色E、提现流水/通知F及结构前置DB-006。
+
+项目所有者告知浏览器插件已安装并授权后，CUA实际返回已连接的`Codex In-app Browser`；浏览器能力现已可用，不再以缺少插件作为后续验收阻塞。先前Playwright/Chrome证据仍属于本地模拟，本次仅确认插件连接，没有把它改称生产、真实小程序或真实账号验收。以上提交、CI与浏览器连接均未操作生产数据库、部署Worker/Pages或发起真实支付。
 
 ## 完成定义
 

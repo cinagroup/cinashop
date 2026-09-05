@@ -14,9 +14,9 @@
 | PHP HTTP 合同 | 精确匹配 879/1,904；可执行 861；其中 18 条明确不可用、17 条有证据退役 | 精确注册 46.2%，可执行 45.2%，退役后有效覆盖 45.6% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | 当前本地223文件、1,423项通过，2项多连接PostgreSQL场景交由Linux CI | 本地通过；API-014远端门禁待确认 |
+| Worker 单元测试 | Linux CI 223文件、1,426项全部通过，含2项真实PostgreSQL16.14多连接并发场景，无跳过 | API-014资金事务远端门禁通过 |
 | Workers runtime | 最新提交 Linux workerd 作业通过；Windows 本机仍在测试收集前 `0xc0000005` | Linux CI 为运行时门禁，Windows 不冒充通过 |
-| CI | [Actions `33940755327`](https://github.com/cinagroup/cinashop/actions/runs/33940755327) 对 `99440a5` 的 Worker/五端/runtime/secret scan 8/8 | API-013已通过全部远端门禁 |
+| CI | [Actions `33944067731`](https://github.com/cinagroup/cinashop/actions/runs/33944067731) 对 `ae26b56` 的 Worker/五端/runtime/secret scan 8/8 | API-014候选代码通过全部远端工程门禁，非生产验收 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -254,11 +254,11 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [x] **API-013 用户积分与分销只读合同6条（候选代码与SQL回归完成，未发布）**：已补齐 `integral/list`、`extract/bank`、`spread/order`、`spread/count/:type`、`brokerage_rank`、`rank`；统一 StationOpen、强制登录和私有不缓存。16项本地内存PostgreSQL场景通过：用户隔离、分页前过滤、月汇总、五层分佣、冻结时间、提现状态、全局跨页排名、金额聚合超单行精度、快照JSON与签名头像；全量221文件/1,401项、双TypeScript及结构/路由/可观测性/生产依赖门禁通过。实现`99440a5`已推送，[Actions `33940755327`](https://github.com/cinagroup/cinashop/actions/runs/33940755327)八项全部成功。API可执行缺口`23→17`；代码通过不能替代新系统初始化、真实账号前端验收和主Worker发布。
 - [ ] **API-014 既有财务接口行为复审（候选主体完成，渠道与发布未完成）**：不以路由注册数替代资金状态机、前端、真实角色和渠道验收。
   - [x] **API-014A 列表与统计合同**：POST推广列表恢复JSON分页、两级关系、关键词/时间/排序及PHP信封；旧`spread/commission/:type`恢复0～4的余额/佣金/提现含义与按月分页，新UniApp的1/2/3分类独立迁到`user/commission/list/:type`且先筛选再分页。财务页和两个个人中心入口共享上海自然日统计，提现拒绝返还不计作新增收益；19项真实内存PostgreSQL读取场景通过。
-  - [ ] **API-014B 提现事务与重放远端门禁**：已兼容旧/新金额与收款字段，按权威配置校验四种方式、上下限与PHP截断费率；扣除毛额、请求记录净额/手续费、支出账本立即有效。余额提现同时记充值/余额账，拒绝保留原支出并只补偿一次毛额。固定用户→申请锁顺序、事务超时、用户级持久化请求键、冲突409和晚期失败回滚已实现；本地16项写入与3项前端金额规则通过，2项多连接PostgreSQL16并发场景等待新Linux CI证据。
+  - [x] **API-014B 提现事务与重放远端门禁**：已兼容旧/新金额与收款字段，按权威配置校验四种方式、上下限与PHP截断费率；扣除毛额、请求记录净额/手续费、支出账本立即有效。余额提现同时记充值/余额账，拒绝保留原支出并只补偿一次毛额。固定用户→申请锁顺序、事务超时、用户级持久化请求键、冲突409和晚期失败回滚已实现。[Actions `33944067731`](https://github.com/cinagroup/cinashop/actions/runs/33944067731)在真实PostgreSQL16.14上通过18项提现场景（含同键四请求、不同键防超提、并发拒绝的2项多连接测试）、1项非密钥测试值例外范围检查和3项前端金额规则；全量223文件/1,426项无跳过。只关闭事务候选工程门禁，不关闭D/E/F或DB-006。
   - [x] **API-014C UniApp财务页联动与本地浏览器验收**：展示方式/限额/手续费/净额，修复推广弹窗加载和两级搜索；未确认申请保留用户级请求标识、锁定表单，刷新后先查询再重试，不生成新申请。Playwright/Chrome在1280×900及390×844下通过页面身份、非空/无错误遮罩、推广筛选、金额拦截、双击单次提交、同载荷重试、余额零手续费和已登记结果恢复；并修复输入错误提示残留与UniApp数字框旧值残留。全部接口均为本地模拟，不是生产或真实小程序E2E。
   - [ ] **API-014D 自动微信提现渠道**：尚无完整打款适配、持久化未知结果/查单/回调恢复及真实渠道凭据验收。当前人工方式可审核；自动微信请求不能直接标记成功，新前端不展示未接入的自动微信提现。需完成渠道实现和契约测试后再进行受控真实验收，不把失败关闭算作渠道迁移完成。
   - [ ] **API-014E 发布及真实角色验收**：先完成DB-006，再用真实客户和最小权限Admin验证申请/审核/拒绝/重试与权限隔离；校验生产提现配置、当前孤儿账本裁决和实际到账证据，获得发布批准后部署并观察。当前主Worker/Pages未更新。
-  - [ ] **API-014F 提现成功资金流水与审核通知**：提交后逐行复审PHP`UserExtractServices::changeSuccess/changeFail`确认成功还需`CapitalFlowJob(type=extract)`和`user_extract`通知，拒绝还需`user_balance_change`通知。当前`UserWithdrawalService`仅有资金主账与申请状态，没有写`capital_flow`或持久化这两类通知；现有订单通知引擎只覆盖发货/拒退/次卡事件，不能以其存在证明提现已通知。需新增提现成功流水的唯一事件标识，明确净额和收款方式口径，并补事务内通知outbox、提交后派发、失败恢复/幂等及真实模板验收，不可为补通知再次扣款。
+  - [ ] **API-014F 提现成功资金流水与审核通知**：提交后逐行复审PHP`UserExtractServices::changeSuccess/changeFail`确认成功还需`CapitalFlowJob(type=extract)`和`user_extract`通知，拒绝还需`user_balance_change`通知；余额提现自动审核也经过成功路径。源端`CapitalFlowServices::setFlow`的权威口径为负净额`price=-extract_price`、`trading_type=6`和对应收款方式，而非重复扣毛额。当前`UserWithdrawalService`仅有资金主账与申请状态，没有写`capital_flow`或持久化这两类通知；现有订单通知引擎只覆盖发货/拒退/次卡事件，不能以其存在证明提现已通知。需新增按提现ID唯一的成功流水事件，并补事务内通知outbox、提交后派发、失败恢复/幂等及真实模板验收，不可为补通知再次扣款。
 
 ## P1：Admin `/adminapi` 路由批次
 
@@ -388,7 +388,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [ ] **FE-004K Supplier Pages 预发**：创建/确认正式项目，核对 `WORKERS_API`、正式 Origin、同源代理与 Secret/资源映射。
   - [ ] **FE-004L 发布后观察**：另行获得发布批准后才可部署，记录 deployment/Git SHA并做日志、错误率和业务对账。
 - [ ] **FE-005 Kefu 对账**：旧 Admin 客服目录 31 个组件，新工作台 2 个整合页面；密码、扫码、微信入口和游客会话本地接入已完成，token/identity 使用 per-tab `sessionStorage`；关闭标签页不等于服务端撤销。仍必须确定正式 Pages Origin并用真实客服/微信身份和生产兼容数据验证。
-- [x] **TEST-001 Linux CI**：最新 GitHub Actions `33940755327` 在 Ubuntu 24.04 上以锁文件安装完成 8/8 jobs：Worker 双 TypeScript、221 文件/1,401 项单测（含16项真实内存PostgreSQL查询场景）、真实 workerd、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及 checksum-pinned Gitleaks 非空全历史扫描。详见审计文档的 TEST-001 节；这只完成可重复工程门禁，不代替浏览器E2E、真实第三方、预发或发布。
+- [x] **TEST-001 Linux CI**：最新[GitHub Actions `33944067731`](https://github.com/cinagroup/cinashop/actions/runs/33944067731)在 Ubuntu 24.04 上以锁文件安装完成 8/8 jobs：Worker 双 TypeScript、223文件/1,426项单测全部通过（含真实PostgreSQL16.14多连接并发场景，无跳过）、真实 workerd、生产依赖审计0、schema 201→263/零源列缺口/零外部↔内嵌漂移、PHP权威快照 route audit、Admin/PC/Supplier/Kefu/UniApp H5+微信小程序构建，以及 checksum-pinned Gitleaks 206个提交全历史扫描无泄露。详见审计文档的 TEST-001 和 API-014 节；这只完成可重复工程门禁，不代替真实账号浏览器E2E、真实第三方、预发或发布。
 - [x] **TEST-002 Workers runtime**：Ubuntu 24.04、Node 24.14.1 的 GitHub Actions `33380831249` 已让真实 workerd 进入 13/13 断言，覆盖 Cron 时间窗、Queue ack/retry/DLQ、隔离 KV/R2、DO 持久化/并发、WebSocket 101/hibernation/token 撤销；测试配置不引用生产 Hyperdrive/KV/R2 ID。Windows 本机仍有进入断言前的 workerd `0xc0000005` 环境缺陷，不影响 Linux 门禁结论。
 - [ ] **TEST-003 性能与可观测性**：父项保持未完成；仓库内指标来源、对象日志和阈值合同已建立并由 Actions `33393069797` 复验，但生产部署、指标基线、通知目标、真实告警与观察窗口尚未完成。
   - [x] **TEST-003A 仓库可观测性合同**：提交 `beb2071b397eb316ee8cb5592656b3dceb7ed1a3` 新增 `audit/observability-policy.json`，定义 Hyperdrive、Queue/DLQ、DO、R2、登录、支付、退款、打印/面单 14 个信号；`npm run audit:observability` 固定资源 ID、100% Workers Logs、27 个关键事件、10 个域和6个已观察发布阻塞。366 个生产 TS 源文件除统一日志器外禁止直接 `console.*`；运行时及 AST 门禁拒绝正文、payload、token、查询、URL、凭据、异常消息、任何 ID/UID、schema 覆盖、对象展开、嵌套对象和非有限数值。HTTP 关键流/5xx及日志约束14/14通过；Actions 同时通过 Worker 165文件/1,031项、workerd13/13、schema201→247零漂移、route1,904→1,448/746/728、五端构建与70提交Gitleaks无泄漏。
@@ -402,7 +402,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 
 ## 当前下一步（2026-09-05 更新）
 
-候选仓库为263表，201张PHP共享参考表零列缺口；生产最后已验证表集也是263表，但API-014新增提现列/索引尚未应用，DB-006继续开放。项目所有者已确认本部署是全新系统，DATA-001～005的旧站历史复制与行级对账均不适用；后续数据工作是DATA-006新系统初始化、DATA-007现存孤儿/重复状态裁决和DATA-008店面内容配置。当前路由为PHP 1,904、TS 1,641、精确匹配879、可执行861、受控不可用18、原始缺失1,025、退役17、可执行缺口1,008；API-014完成的是既有财务合同和资金行为修正，不增加PHP匹配分子，自动微信渠道及真实角色/发布尚未完成。Admin 362个前端请求变体全部可执行，UniApp仍有51条旧路由分成7组缺口，可观测性仍有6个发布阻断。继续按清单处理行为缺口、生产初始化、真实角色/provider、前端E2E和发布门禁；主Worker与Pages均未因本轮审计发布。
+候选仓库为263表，201张PHP共享参考表零列缺口；生产最后已验证表集也是263表，但API-014新增提现列/索引尚未应用，DB-006继续开放。项目所有者已确认本部署是全新系统，DATA-001～005的旧站历史复制与行级对账均不适用；后续数据工作是DATA-006新系统初始化、DATA-007现存孤儿/重复状态裁决和DATA-008店面内容配置。当前路由为PHP 1,904、TS 1,641、精确匹配879、可执行861、受控不可用18、原始缺失1,025、退役17、可执行缺口1,008；API-014完成的是既有财务合同和资金行为修正，不增加PHP匹配分子，自动微信渠道、提现成功流水/审核通知及真实角色/发布尚未完成。Admin 362个前端请求变体全部可执行，UniApp仍有51条旧路由分成7组缺口，可观测性仍有6个发布阻断。继续按清单处理行为缺口、生产初始化、真实角色/provider、前端E2E和发布门禁；主Worker与Pages均未因本轮审计发布。
 
 ### 迁移清单生成时的历史快照（保留审计）
 
