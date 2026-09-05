@@ -8,8 +8,6 @@
  *   - login: bcrypt 密码校验 → JWT token (复用 jose, type='admin')
  *   - dashboard: 今日销售额/订单/用户/访问 (4 卡片统计)
  */
-import { eq, and, sql } from "drizzle-orm";
-import { storeOrder } from "@/models/schema";
 import type { Container } from "@/lib/di";
 import type { Env } from "@/env";
 import { ValidateException } from "@/utils/errors";
@@ -100,32 +98,4 @@ export class AdminAuthService {
     };
   }
 
-  /** 管理员消息通知数 (未处理订单/评论/提现) */
-  async adminNewPush(): Promise<{
-    ordernum: number;
-    inventory: number;
-    commentnum: number;
-    reflectnum: number;
-    msgcount: number;
-  }> {
-    const c = this.container;
-    // 待发货订单
-    const orderRows = await c.db
-      .select({ c: sql<number>`COUNT(*)::int` })
-      .from(storeOrder)
-      .where(
-        and(
-          eq(storeOrder.paid, 1),
-          eq(storeOrder.status, 0),
-          eq(storeOrder.isDel, 0),
-        ),
-      );
-    return {
-      ordernum: orderRows[0]?.c ?? 0,
-      inventory: 0,
-      commentnum: 0,
-      reflectnum: 0,
-      msgcount: 0,
-    };
-  }
 }

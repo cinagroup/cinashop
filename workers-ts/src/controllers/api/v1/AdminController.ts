@@ -10,6 +10,7 @@ import type { Context } from "hono";
 import { jsonOk, jsonFail, jsonRaw } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { AdminAuthService } from "@/services/admin/AdminAuthService";
+import { AdminNewPushService } from "@/services/admin/AdminNewPushService";
 import {
   AdminDashboardService,
   parseAdminHomeCycle,
@@ -593,8 +594,8 @@ export async function adminStatisticRank(c: C) {
 
 /** GET /api/admin/new_push — 管理员消息通知数 */
 export async function adminNewPush(c: C) {
-  const svc = new AdminAuthService(c.get("container"), c.env);
-  const push = await svc.adminNewPush();
+  privateAdminResponse(c);
+  const push = await new AdminNewPushService(c.get("container")).snapshot(c.get("adminInfo"));
   return jsonOk(c, push);
 }
 

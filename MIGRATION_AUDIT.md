@@ -4732,6 +4732,22 @@ PHP`NoticeService::userExtract/userBalanceChange`的字段已逐条映射：成�
 
 实现提交`a0e5e4cfc8ff471108297bbeae91768a56de0320`已推送，[Actions `33945761103`](https://github.com/cinagroup/cinashop/actions/runs/33945761103)最终8/8 jobs全部成功。Worker为224文件/1,440项全部通过、无跳过；新增提现副作用专项14/14，原提现专项19/19。容器日志确认为PostgreSQL16.14，3项真实多连接用例均执行，新增四连接并发审核只有一笔成功流水和一个审核事件；本地跳过的并发门禁已由远端实际执行关闭。双TypeScript、201→263结构/路由/可观测性、生产依赖、Linux workerd与五端构建均成功；checksum-pinned Gitleaks扫描208个提交、未发现泄露。据此关闭API-014F1并更新TEST-001；该结论不关闭DB-006/007、自动打款D、真实角色/发布E、真实模板送达F2或申请提醒G，也没有执行生产DDL/DML、发布或真实通知。
 
+## API-014G 管理待办与申请提醒续审（2026-09-05）
+
+从`main@5bee4c8`开始；上一目标轮已推送F1并完成远端与浏览器证据，属于实际进展。本轮没有生产数据库访问、DDL/DML、部署或真实短信/微信/打款。API-014G按准确待办G1、持久申请/客服/实时提醒G2、群机器人和真实接收者G3拆分；没有以30秒刷新替代实时申请通知完成定义。
+
+旧PHP`SystemAdminServices.php:413`的ordernum经`StoreOrderDao::search`将status=1转为paid=1、status∈{0,4}、refund_status∈{0,3}，外层shipping_type=1再收窄为快递；不能只查status=0，也不能把status=1误当已发货计数。目标还排除系统删除和pid=-1的拆单父记录，避免计入不可直接履约的重复待办。待回复评价排除删除项，提现只计status=0。库存的源调用存在错误：`count(['type'=>5])`实际走`StoreProduct::searchTypeAttr`的来源类型，而库存预警定义在`searchStatusAttr(5)`；本轮明确纠正为is_show=1/is_del=0/is_verify=1/is_police=1/stock>0，不复制类型5误用，也不虚构源码已注释的固定阈值。
+
+`AdminNewPushService`将四类计数置于单一REPEATABLE READ、READ ONLY事务，设5秒statement_timeout，权限与统计使用同一快照；不执行外部I/O或业务写入。每个子计数按order/product/reply/extract查看权限决定是否查询，msgcount只求可见项之和；缺失、禁用角色或只有dashboard权限不能通过总数推断财务量。GET/HEAD new_push作为已认证管理员的公共头部读接口，不再强制dashboard权限，其他管理读写规则不放宽；仍经过管理员JWT、账户有效性与admin_type=1门禁。返回私有no-store，保留PHP五个数字键并新增实际数据库采样时间。按[Hyperdrive查询缓存文档](https://developers.cloudflare.com/hyperdrive/concepts/query-caching/)使用真实CURRENT_TIMESTAMP标识采样时间；本地连接仍prepare=false，未修改生产缓存配置，也不把本地数据库结果当作生产新鲜度/撤权延迟验收。
+
+Admin顶栏由只显示订单数、仅mounted读取一次的图标改为可键盘触发的待办面板，展示四类入口与总数；同一在途请求合并，30秒可见页检查、聚焦/重新可见/路由变化/手动刷新重取，提现审核成功后发出本页刷新信号。刷新失败清除旧计数并显示失败，卸载/退出后的迟到结果不再发布。提现入口携带status=0，页面修复拒绝状态-1却按2显示/筛选的问题，并以显式all值消除Element Plus空值单选警告；通过/拒绝按extract.manage显示且提交中锁定按钮。模拟模式给出明确提示、仅修改浏览器内测试记录，生产分支仍调用已鉴权接口，不发起客户端打款。
+
+CUA内置浏览器实际验证本地`http://127.0.0.1:5190/setting/notification?preview=1`→待办→`/finance/extract?status=0&preview=1`。1280×900下默认只见待审核#51，通过后列表清空、提现1→0、总数12→11；390×844下拒绝、原因回显、已拒绝过滤及同样计数联动通过。手机document宽390、主区client/scroll均326；面板可见且无横向溢出。修正后的刷新周期未出现console error/warn或框架错误遮罩；截图通过浏览器原生输出，不提交媒体文件。前端测试技能实际推动了交互后状态断言和两视口复验。
+
+G2/G3仍有明确源码证据：`StoreServiceDao::getStoreServiceOrderNotice`按account_status/status/notify三个1筛选，默认不限制customer类别；SystemMsgJob给这些客服UID写type=2站内信，不能写成申请人的type=1消息。企业微信Job将模板替换后发markdown到通知配置URL，实际是群机器人，不是现有客户联系/通讯录能力；不能因已有EnterpriseWechat service就声称覆盖。管理员WITHDRAW与ADMIN_NEW_PUSH广播还必须在目标实现中收紧到业务权限接收者，并补离线恢复、去重、撤权与失败/UNKNOWN路径；本轮未实现或发送这些推送。
+
+本地最终门禁为226文件/1,452项通过，3项真实PostgreSQL多连接用例仍由Linux CI执行。新增11项SQL/认证/服务场景包含真实申请/同键重放/拒绝/余额自动通过后的待办计数，晚期账本失败回滚不会出现虚假待办；另4项前端数据合同与加载生命周期测试通过。真实认证场景使用临时随机签名键和非生产、无Redis夹具，明确不冒充生产令牌撤销E2E；测试最初错误使用NODE_ENV=test字面量和不存在的user token类型，已按实际Env与api token类型修正后通过双TypeScript。全量第一次只因生成请求清单的源码哈希/行号变化失败，重生成后全部通过，Admin仍342调用点/362变体全部可执行。Admin类型/构建、201→263零源列缺口/零定义漂移、17信号/53事件/448生产源文件的可观测性和24生产依赖零漏洞均通过；6项生产观测阻断未关闭。待本批提交对应CI最终结果，不提前关闭G1。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

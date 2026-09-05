@@ -14,7 +14,7 @@ export interface ExtractItem {
   realName: string;
   extractNumber: string;
   extractPrice: string;
-  /** 0=待审核 1=已通过 2=已拒绝 */
+  /** 0=待审核 1=已通过 -1=已拒绝（旧响应也可能为2） */
   status: number;
   failMsg: string;
   addTime: number;
@@ -27,12 +27,26 @@ export interface ExtractListResult {
   total: number;
 }
 
+const previewExtracts: ExtractItem[] = [
+  { id: 51, uid: 7, extractType: "bank", bankName: "预览银行", realName: "预览用户", extractNumber: "6222 **** **** 0123", extractPrice: "19.50", status: 0, failMsg: "", addTime: 1788580000, nickname: "预览申请人" },
+  { id: 52, uid: 8, extractType: "alipay", bankName: "", realName: "历史预览用户", extractNumber: "preview@example.invalid", extractPrice: "10.00", status: 1, failMsg: "", addTime: 1788570000, nickname: "已审核预览" },
+];
+
+export function previewExtractPendingCount(): number {
+  return previewExtracts.filter((row) => row.status === 0).length;
+}
+
 /** 提现列表 (可按状态筛选) */
 export function apiAdminExtractList(params: {
   status?: number;
   page?: number;
   limit?: number;
 }): Promise<ExtractListResult> {
+  if (previewMode) {
+    const rows = previewExtracts.filter((row) => params.status === undefined || row.status === params.status);
+    const start = ((params.page ?? 1) - 1) * (params.limit ?? 20);
+    return Promise.resolve({ list: rows.slice(start, start + (params.limit ?? 20)).map((row) => ({ ...row })), total: rows.length });
+  }
   return getData(
     request.get<ExtractListResult>("/extract/list", {
       params: params as Record<string, unknown>,
@@ -41,11 +55,20 @@ export function apiAdminExtractList(params: {
 }
 
 /** 提现审核 (status=1 通过 / 2 拒绝) */
-export function apiAdminExtractStatus(
+export async function apiAdminExtractStatus(
   id: number,
   data: { status: number; fail_msg?: string },
 ): Promise<null> {
-  return getData(request.post<null>(`/extract/status/${id}`, data));
+  if (previewMode) {
+    const row = previewExtracts.find((item) => item.id === id);
+    if (!row || row.status !== 0 || ![1, 2].includes(data.status)) throw new Error("预览记录已审核或参数错误");
+    row.status = data.status === 2 ? -1 : 1;
+    row.failMsg = data.status === 2 ? data.fail_msg ?? "审核拒绝" : "";
+  } else {
+    await getData(request.post<null>(`/extract/status/${id}`, data));
+  }
+  window.dispatchEvent(new Event("cinashop:admin-todos-changed"));
+  return null;
 }
 
 export interface BillItem {

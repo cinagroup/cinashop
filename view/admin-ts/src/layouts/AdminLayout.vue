@@ -200,9 +200,7 @@
       <el-header class="header">
         <div class="header-left">{{ currentTitle }}</div>
         <div class="header-right">
-          <el-badge :value="pushCount.ordernum" :hidden="pushCount.ordernum === 0">
-            <el-icon size="20" class="bell-icon"><Bell /></el-icon>
-          </el-badge>
+          <AdminTodoBell :key="authStore.token" />
           <el-dropdown @command="handleCommand">
             <span class="user-name">
               {{ authStore.userInfo?.account ?? "管理员" }}
@@ -226,16 +224,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
-import { apiNewPush } from "@/api/auth";
+import AdminTodoBell from "./AdminTodoBell.vue";
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
-const pushCount = ref({ ordernum: 0, inventory: 0, commentnum: 0, reflectnum: 0, msgcount: 0 });
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
 const allowedMenuPaths = computed(() => new Set(authStore.menus.map((menu) => menu.path)));
@@ -304,13 +301,6 @@ function handleCommand(cmd: string) {
   }
 }
 
-onMounted(async () => {
-  try {
-    pushCount.value = await apiNewPush();
-  } catch {
-    // ignore
-  }
-});
 </script>
 
 <style scoped>
@@ -366,10 +356,6 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 20px;
-}
-
-.bell-icon {
-  cursor: pointer;
 }
 
 .user-name {

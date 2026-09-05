@@ -2,6 +2,8 @@
  * Admin 认证 + Dashboard API
  */
 import request, { getData } from "@/utils/request";
+import { parseAdminPendingCounts, type AdminPendingCounts } from "@/utils/admin-todos";
+import { previewExtractPendingCount } from "@/api/finance";
 import type {
   AdminLoginResult,
   DashboardCycle,
@@ -103,15 +105,10 @@ export function apiDashboardUser(): Promise<DashboardUserChart> {
 }
 
 /** 管理员消息通知 (GET /adminapi/new_push) */
-export function apiNewPush(): Promise<{
-  ordernum: number;
-  inventory: number;
-  commentnum: number;
-  reflectnum: number;
-  msgcount: number;
-}> {
+export async function apiNewPush(): Promise<AdminPendingCounts> {
   if (previewMode) {
-    return Promise.resolve({ ordernum: 6, inventory: 2, commentnum: 3, reflectnum: 1, msgcount: 4 });
+    const reflectnum = previewExtractPendingCount();
+    return { ordernum: 6, inventory: 2, commentnum: 3, reflectnum, msgcount: 11 + reflectnum, sampled_at: Math.floor(Date.now() / 1000) };
   }
-  return getData(request.get("/new_push"));
+  return parseAdminPendingCounts(await getData(request.get("/new_push")));
 }

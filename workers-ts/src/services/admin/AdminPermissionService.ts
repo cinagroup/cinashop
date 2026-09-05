@@ -431,6 +431,9 @@ export class AdminPermissionService {
     routePath: string,
   ): Promise<void> {
     if (admin.level === 0) return;
+    // Common header: authenticated financial/product-only roles need not hold
+    // dashboard access. The controller independently filters EVERY count by role.
+    if (["GET", "HEAD"].includes(method.toUpperCase()) && normalizeAdminRoute(routePath) === "new_push") return;
     const required = requiredAdminPermission(method, routePath);
     if (!required) {
       throw new AuthException("该管理接口尚未登记权限规则", ApiErrorCode.ERR_AUTH);
