@@ -14,9 +14,9 @@
 | PHP HTTP 合同 | 精确匹配 879/1,904；可执行 861；其中 18 条明确不可用、17 条有证据退役 | 精确注册 46.2%，可执行 45.2%，退役后有效覆盖 45.6% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | Linux CI 227文件、1,474项全部通过，含4项真实PostgreSQL16.14多连接并发场景，无跳过 | API-014含隔离客服收件箱G2a的远端门禁通过 |
-| Workers runtime | 最新提交 Linux workerd 作业通过；Windows 本机仍在测试收集前 `0xc0000005` | Linux CI 为运行时门禁，Windows 不冒充通过 |
-| CI | [Actions `33949795952`](https://github.com/cinagroup/cinashop/actions/runs/33949795952) 对 `6af6965` 的 Worker/五端/runtime/secret scan 8/8 | API-014含F1/G1/G2a候选代码通过全部远端工程门禁，非生产验收 |
+| Worker 单元测试 | 最新Linux CI Worker作业通过，新增独立实时通知场景已执行；最终数量待日志归档 | API-014G2b1单元门禁通过，运行时仍待修订复验 |
+| Workers runtime | `cb3c753`的Linux workerd 21项断言通过但3个未处理拒绝导致失败；Windows仍在收集前 `0xc0000005` | G2b1不能勾选；预期拒绝测试已按上游已知问题修订，待Linux复验 |
+| CI | [Actions `33951317435`](https://github.com/cinagroup/cinashop/actions/runs/33951317435) 对 `cb3c753` 为7/8，runtime失败；此前`6af6965`的G2a为8/8 | 不以旧提交全绿替代本批门禁，非生产验收 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -96,7 +96,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [x] **DB-004 系统配置精确查询索引**：已应用外部 `0103_system_config_lookup.sql`（Worker 内嵌 `migration_0110`），创建 `(is_store, menu_name, sort DESC, id DESC)`；生产短事务固定 `search_path=public`、5 秒锁超时和 30 秒语句超时，连续两次执行均保持 48 行和同一结构指纹，索引定义精确读回，无 DML 或配置值输出。
 - [x] **DB-005 应用 Admin 用户写入重放账本**：生产预检确认表/序列均不存在；一次性令牌Worker在2秒锁等待、15秒语句和20秒空闲事务上限内执行`0119_admin_mobile_user_replay.sql`两遍，生产目录`262/3,684/892/249→263/3,696/896/250`（表/列/索引/主键）。目标表12列、4约束（含主键）、4索引（含主键）、序列、空表及两遍定义摘要全部通过，8类相关业务表计数不变；无令牌403、错误方法404，临时Worker删除后URL 404。
 - [ ] **DB-006 提现重放结构发布前置**：外部`0130_user_withdrawal_replay.sql`与Worker内嵌`0134`已同义实现并在隔离测试执行两遍。新增`user_extract.request_key/request_hash`、`(uid,request_key) WHERE request_key<>''`唯一索引，并把`wechat`扩到64字符；无业务DML。本轮没有连接生产，必须在获准的发布窗口以短事务应用并独立复核定义、幂等和既有业务指纹，不能先部署依赖新列的Worker。263表同集不等于新列/索引已经上线。
-- [ ] **DB-007 提现流水/通知结构发布前置**：外部`0131_withdrawal_effects.sql`与内嵌`0135`同义，新增`capital_flow.event_key`唯一围栏、投递台账独立`withdrawal_id`/索引和订单/提现互斥约束；后续外部`0132_withdrawal_application_notice.sql`与内嵌`0136`增加申请事件白名单及type=2客服收件箱部分索引。旧流水事件键保持NULL，旧订单投递保持真实订单ID；无历史复制或业务DML。须在DB-006之后、当前Worker发布之前，经授权按实际catalog选择增量DDL并核对业务指纹。旧通知审计Worker及历史迁移中的较窄事件CHECK不能验证含新事件的数据；不得直接从零重放runAll。当前仅新DDL隔离重复执行通过，生产前置仍开放。
+- [ ] **DB-007 提现流水/通知结构发布前置**：外部`0131_withdrawal_effects.sql`与内嵌`0135`同义，新增`capital_flow.event_key`唯一围栏、投递台账独立`withdrawal_id`/索引和订单/提现互斥约束；后续外部`0132_withdrawal_application_notice.sql`与内嵌`0136`增加申请事件白名单及type=2客服收件箱部分索引；外部0133/内嵌0137继续增加实时刷新子事件白名单。旧流水事件键保持NULL，旧订单投递保持真实订单ID；无历史复制或业务DML。须在DB-006之后、当前Worker发布之前，经授权按实际catalog选择增量DDL并核对业务指纹。旧通知审计Worker及历史迁移中的较窄事件CHECK不能验证含新事件的数据；不得直接从零重放runAll。当前仅新DDL隔离重复执行通过，生产前置仍开放。
 - [x] **DATA-001 取得只读源 MySQL（不适用）**：2026-09-04 项目所有者确认旧 PHP 站无必要真实历史数据；本部署不连接、复制或对账源 MySQL。
 - [x] **DATA-002 全量迁移计划（不适用）**：`data:plan`保留为通用工具，但本部署不生成201表历史复制计划。
 - [x] **DATA-003 分批复制与可恢复游标（不适用）**：不执行旧账号、商品、用户、订单、资金或消息复制；`data_migration_run/checkpoint=0/0`符合新系统口径。

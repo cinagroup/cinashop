@@ -31,8 +31,13 @@ describe("isolated staff notification workerd transport", () => {
     expect((await stub.fetch("https://staff-notice.internal/connect")).status).toBe(426);
     expect((await stub.fetch(new Request("https://staff-notice.internal/connect", { headers: { Upgrade: "websocket", "X-Staff-Session": "{}" } }))).status).toBe(401);
     expect((await stub.fetch(request(session(72)))).status).toBe(401);
-    await expect(stub.publish(session(72), "withdrawal.staff.refresh:19")).rejects.toThrow("分区");
-    await expect(stub.publish(session(), "order.paid:19")).rejects.toThrow();
+    // Assert rejecting methods inside the real DO: the pool RPC wrapper leaks a second rejection.
+    // https://github.com/cloudflare/workers-sdk/issues/14736 (do not ignore unhandled errors).
+    await runInDurableObject(stub, async (instance, state) => {
+      await expect(instance.publish(session(72), "withdrawal.staff.refresh:19")).rejects.toThrow("分区");
+      await expect(instance.publish(session(), "order.paid:19")).rejects.toThrow("通知事件键无效");
+      expect(state.storage.sql.exec<{ count: number }>("SELECT count(*) AS count FROM signals").one().count).toBe(0);
+    });
   });
   it("persists revisions through eviction, redelivers a stable revision on retry and requests catch-up on reconnect", async () => {
     vi.spyOn(StaffNotificationAuthService.prototype, "assertSession").mockResolvedValue(undefined);
@@ -76,9 +81,19 @@ describe("isolated staff notification workerd transport", () => {
   it("keeps infrastructure failures retryable and rejects client financial commands", async () => {
     const auth = vi.spyOn(StaffNotificationAuthService.prototype, "assertSession").mockResolvedValue(undefined);
     const { stub, client } = await connect();
+    const frames: string[] = []; client.addEventListener("message", (event) => frames.push(String(event.data)));
+    const unavailable = new Promise<CloseEvent>((resolve) => client.addEventListener("close", resolve, { once: true }));
     auth.mockRejectedValue(new Error("database unavailable"));
-    await expect(stub.publish(session(), "withdrawal.staff.refresh:19")).rejects.toThrow("database unavailable");
+    // Same pool workaround as above; storage, sockets and method execution remain in workerd.
+    await runInDurableObject(stub, async (instance) => {
+      await expect(instance.publish(session(), "withdrawal.staff.refresh:19")).rejects.toThrow("database unavailable");
+    });
+    expect((await unavailable).code).toBe(1013); expect(frames).toEqual([]);
+    const savedRevision = await runInDurableObject(stub, (_instance, state) => state.storage.sql.exec<{ revision: number }>("SELECT revision FROM signals WHERE event_key = ?", "withdrawal.staff.refresh:19").one().revision);
     auth.mockResolvedValue(undefined); const second = await connect();
+    const received = nextFrame(second.client);
+    expect((await stub.publish(session(), "withdrawal.staff.refresh:19")).revision).toBe(savedRevision);
+    expect(await received).toEqual({ type: "staff_notification_changed", revision: savedRevision });
     const closed = new Promise<CloseEvent>((resolve) => second.client.addEventListener("close", resolve, { once: true }));
     second.client.send(JSON.stringify({ type: "withdraw", amount: 100 })); expect((await closed).code).toBe(1008); client.close();
   });
