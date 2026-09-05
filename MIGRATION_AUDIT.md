@@ -4895,6 +4895,8 @@ Admin入口为/dashboard、/statistic；Supplier为/dashboard，SalesTrend只有
 
 候选独立复核未发现当前应用可达的Lines路径或生产行为回归，但指出原测试名称“item/axis”把series片段误称为完整轴提示覆盖，而且getRawValue断言并不证明金额在提示正文可见。主代理核对TooltipView._showAxisTooltip与axisPointer.getValueLabel后确认这两处覆盖表述问题：将原3项命名收窄为single/multiple-series片段并断言HTML正文包含数值7；额外1项直接调用真实_showAxisTooltip，在x/y两个分类轴使用与series及数据项不同的标签，验证轴标题在最终HTML中编码。仅替换屏幕定位/展示回调和惰性HTML记录元素；真实轴模型、标签格式化、section头与片段拼装均执行，仍不声称真实鼠标事件E2E。首轮新轴夹具遗漏valueLabelOpt导致两端失败，按实际axisTrigger载荷补齐空默认选项后，两端最终各5/5通过。更新后的候选无业务源码/依赖变更；仅新增回归测试与CI步骤，独立复核周期到此完成，等待本批精确SHA门禁。
 
+ECharts边界回归提交`e991d924c709cac56e3fae10a7a75a3ebab755f5`已推送，[Actions `33957240392`](https://github.com/cinagroup/cinashop/actions/runs/33957240392)最终8/8成功。Worker双TypeScript通过，230文件/1,497项全部通过、无跳过；新增7项真实服务投影测试实际执行。workerd为3文件/24项，五端类型/构建和客服17项通过；公共依赖回归仍18项，Admin/Supplier新增tooltip测试各5项（共10）通过；Kefu/PC全树npm审计0，Gitleaks扫描220提交无泄露。源201表→目标263表、源列缺口及定义漂移均0；PHP精确879/1,904、可执行861、原始缺失1,025、退役17、可执行缺口1,008均未因本轮改变。按完整源入口矩阵、真实库sink对照、生产者回归、一次独立复核及本批CI，仅将TEST-004F的当前应用公告路径审查勾选为no_change；不宣称ECharts包已修复、真机悬浮E2E或线上部署完成。TEST-004D/E、父项及生产角色/渠道/DB/发布继续开放。后续只提交这份最终记录与checklist，受测代码证据继续固定为e991d92，不把文档提交当成新一轮CI。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
