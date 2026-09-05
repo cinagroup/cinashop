@@ -4643,7 +4643,7 @@ PHP把`GET /api/store_integral/index|category|list|detail/:id`放在同一个Sta
 
 首页返回精确`banner/list/integral`信封，推荐列表复用同一商品投影，登录态响应标记`private, no-store`；分类映射精确保持旧字段。商品图和banner图先限制为站内相对路径或无userinfo的HTTPS，canonical`/api/assets/:id`只在响应时用APP_KEY生成短期签名；banner描述有界，`javascript:`等危险跳转被清空。未把短期签名或用户积分写回数据库。
 
-专项7/7覆盖区间边界、四类列表参数、品牌、canonical附件签名、推荐商品、登录积分、banner解析与危险链接、分类映射和四路由中间件；全量单元220文件/1,385项、双TypeScript、生产依赖0漏洞、结构审计source201/target263/shared201/sourceGaps0且外部/内嵌263零漂移、可观测性17信号/10组件/53事件/6阻断均通过。路由审计从TS1,632/精确871/可执行853推进为1,634/873/855，全局可执行缺口`1,016→1,014`，API面从精确430/可执行427/缺口25推进为432/429/23，退役后有效覆盖`93.8%→94.3%`。主Worker minify dry-run为3,875.03KiB/gzip919.70KiB并精确解析Hyperdrive`9748c294e21c49a99579c9cef70102e0`、R2、Images、Queue、KV和Durable Objects；仅dry-run。本批不需要旧PHP真实历史行，没有读取或写入生产PostgreSQL，没有调用provider，也没有部署主Worker或任何前端；积分分类、banner、推荐商品、品牌及真实账号流程仍属于DATA-006/008与发布验收。
+专项7/7覆盖区间边界、四类列表参数、品牌、canonical附件签名、推荐商品、登录积分、banner解析与危险链接、分类映射和四路由中间件；全量单元220文件/1,385项、双TypeScript、生产依赖0漏洞、结构审计source201/target263/shared201/sourceGaps0且外部/内嵌263零漂移、可观测性17信号/10组件/53事件/6阻断均通过。路由审计从TS1,632/精确871/可执行853推进为1,634/873/855，全局可执行缺口`1,016→1,014`，API面从精确430/可执行427/缺口25推进为432/429/23，退役后有效覆盖`93.8%→94.3%`。主Worker minify dry-run为3,875.03KiB/gzip919.70KiB并精确解析Hyperdrive`9748c294e21c49a99579c9cef70102e0`、R2、Images、Queue、KV和Durable Objects；仅dry-run。实现提交`4582e06b34c4cbe7a00e305495f69d6398b8b31b`已推送，[Actions `33939387023`](https://github.com/cinagroup/cinashop/actions/runs/33939387023)的Worker静态、Linux workerd、Admin、PC、Supplier、Kefu、UniApp和全历史密钥扫描8/8成功。本批不需要旧PHP真实历史行，没有读取或写入生产PostgreSQL，没有调用provider，也没有部署主Worker或任何前端；积分分类、banner、推荐商品、品牌及真实账号流程仍属于DATA-006/008与发布验收。
 
 ## 完成定义
 
