@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "capturedAt": "2026-09-05T00:56:30.929Z",
+  "database": "PostgreSQL 16.14",
+  "runtimeSelectionRule": "is_store = 0, then sort DESC, id DESC",
+  "duplicateKeys": 6,
+  "duplicateRows": 26,
+  "extraRows": 20,
+  "referencingForeignKeys": 0,
+  "decision": {
+    "status": "pending_owner_confirmation",
+    "question": "Keep active site_url row 389 (https://cinashop-pc.pages.dev) and remove the 20 listed lower-priority duplicates?"
+  },
+  "groups": [
+    {
+      "key": "record_No",
+      "keepId": 390,
+      "removeIds": [409, 403, 397, 1],
+      "valuesIdentical": true,
+      "payloadsIdenticalExceptId": false,
+      "valueSha256": "83c560b8bd14a82a2f85dda1670d5bcacc9d4e51590a229e1590512ff3df52ee",
+      "note": "The kept row is active with sort 97; lower-priority rows are inactive and carry the same value."
+    },
+    {
+      "key": "sign_give_point",
+      "keepId": 411,
+      "removeIds": [405, 399, 3],
+      "valuesIdentical": true,
+      "payloadsIdenticalExceptId": true,
+      "displayValue": "1"
+    },
+    {
+      "key": "sign_status",
+      "keepId": 412,
+      "removeIds": [406, 400, 4],
+      "valuesIdentical": true,
+      "payloadsIdenticalExceptId": true,
+      "displayValue": "1"
+    },
+    {
+      "key": "site_url",
+      "keepId": 389,
+      "removeIds": [410, 404, 398, 2],
+      "valuesIdentical": false,
+      "payloadsIdenticalExceptId": false,
+      "keptValue": "https://cinashop-pc.pages.dev",
+      "removedValue": "https://cinashop.example.com",
+      "note": "The kept row is active with sort 98 and is selected by the runtime; all four lower-priority rows are inactive placeholders."
+    },
+    {
+      "key": "system_comment_time",
+      "keepId": 414,
+      "removeIds": [408, 402, 6],
+      "valuesIdentical": true,
+      "payloadsIdenticalExceptId": true,
+      "valueSha256": "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451"
+    },
+    {
+      "key": "system_delivery_time",
+      "keepId": 413,
+      "removeIds": [407, 401, 5],
+      "valuesIdentical": true,
+      "payloadsIdenticalExceptId": true,
+      "valueSha256": "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451"
+    }
+  ],
+  "temporaryWorker": {
+    "tokenGateStatus": 403,
+    "wrongMethodStatus": 404,
+    "deleted": true,
+    "urlReturns404": true
+  }
+}

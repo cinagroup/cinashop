@@ -14,9 +14,9 @@
 | PHP HTTP 合同 | 精确匹配 862/1,904；可执行 844；其中 18 条明确不可用、16 条有证据退役 | 精确注册 45.3%，可执行 44.3%，退役后有效覆盖 44.7% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | 当前本地215文件、1,364项通过 | 当前候选回归通过 |
+| Worker 单元测试 | 当前本地216文件、1,368项通过 | 当前候选回归通过 |
 | Workers runtime | 最新提交 Linux workerd 作业通过；Windows 本机仍在测试收集前 `0xc0000005` | Linux CI 为运行时门禁，Windows 不冒充通过 |
-| CI | [Actions `33879618172`](https://github.com/cinagroup/cinashop/actions/runs/33879618172) 对 `18404e58` 的 Worker/五端/runtime/secret scan 8/8 | 最新已推送候选通过全部门禁 |
+| CI | [Actions `33934221938`](https://github.com/cinagroup/cinashop/actions/runs/33934221938) 对 `d1fd1b5` 的 Worker/五端/runtime/secret scan 8/8 | 全新系统口径与DB-005证据通过全部门禁；当前DB-003审计增量待推送 |
 | 主 Worker 发布 | 生产仍为 `9f1fd655-e60f-41c1-8280-738bc85d73ef` | 未发布当前代码 |
 | Pages 发布 | Admin/H5 最新来源仍为 `48297d2`；PC 来源为空；无 Supplier/Kefu 项目 | 未发布当前代码 |
 
@@ -91,7 +91,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [x] **AUD-002 生产只读目录审计**：通过一次性认证 Worker 读取表名、目录计数、迁移控制和非敏感业务计数；三次临时 Worker 均已删除，生产无写入。
 - [x] **DB-001 创建小票任务账本表**：已应用外部 `0090_print_job_outbox.sql`（Worker 内嵌 `migration_0097`），创建 `order_print_job` 与 `order_print_job_action`；二次执行只返回 `already exists, skipping`，六张业务表指纹不变。生产引擎随机 schema 场景确认自动/手工幂等、租户隔离、Queue 脱敏、并发单次调用、UNKNOWN 不盲重试与三类人工处置全部通过，临时 schema/Worker 已删除。
 - [x] **DB-002 创建电子面单任务账本表**：已应用外部 `0091_electronic_waybill_outbox.sql`（Worker 内嵌 `migration_0098`），创建 `order_waybill_job` 与 `order_waybill_job_action`；二次执行幂等，六张业务表指纹不变，最终四张任务表均为空。生产引擎随机 schema 场景确认请求重放、根单活跃任务、租户隔离、Queue 脱敏、提供商未知/拒绝/本地失败、人工处置与履约精确一次全部通过。
-- [ ] **DB-003 清理重复系统配置（BLOCKED：需运营确认）**：逐键选择权威记录，特别确认正式 `site_url`；先导出 ID/值摘要和引用，再删除或停用 20 条额外行。禁止按最大 ID 或空值自动猜测。
+- [ ] **DB-003 清理重复系统配置（只剩1项owner确认）**：生产只读审计已精确导出6组/26行/20条冗余的ID、优先级、状态和值摘要，外键引用为0；5组值完全相同，`site_url`当前运行时按`sort DESC,id DESC`选中启用的ID 389=`https://cinashop-pc.pages.dev`，其余4行均为停用的`https://cinashop.example.com`占位值。机器可读证据见`workers-ts/audit/system-config-duplicate-baseline.json`；临时Worker已删除并复验404。待项目所有者确认保留ID 389后，再以精确ID短事务删除20行并复验非目标配置及序列不变。
 - [x] **DB-004 系统配置精确查询索引**：已应用外部 `0103_system_config_lookup.sql`（Worker 内嵌 `migration_0110`），创建 `(is_store, menu_name, sort DESC, id DESC)`；生产短事务固定 `search_path=public`、5 秒锁超时和 30 秒语句超时，连续两次执行均保持 48 行和同一结构指纹，索引定义精确读回，无 DML 或配置值输出。
 - [x] **DB-005 应用 Admin 用户写入重放账本**：生产预检确认表/序列均不存在；一次性令牌Worker在2秒锁等待、15秒语句和20秒空闲事务上限内执行`0119_admin_mobile_user_replay.sql`两遍，生产目录`262/3,684/892/249→263/3,696/896/250`（表/列/索引/主键）。目标表12列、4约束（含主键）、4索引（含主键）、序列、空表及两遍定义摘要全部通过，8类相关业务表计数不变；无令牌403、错误方法404，临时Worker删除后URL 404。
 - [x] **DATA-001 取得只读源 MySQL（不适用）**：2026-09-04 项目所有者确认旧 PHP 站无必要真实历史数据；本部署不连接、复制或对账源 MySQL。

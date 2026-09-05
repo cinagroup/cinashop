@@ -4593,11 +4593,17 @@ E5E4因此可标“候选完成，未发布”。本轮只在生产数据库内�
 
 结构审计为PHP参考表201、候选表263，201张共享表全部覆盖、源侧独有表0、Worker扩展表62，外部/内嵌定义均为263且列/主键漂移0。路由审计为PHP 1,904、TS 1,623、精确匹配862、可执行844、受控不可用18、缺失1,042、退役16、可执行缺口1,026；总体精确/可执行/剔除退役后的覆盖分别为45.3%/44.3%/44.7%。分面结果为：`/api`可执行418/457、可执行缺口35；`/adminapi`可执行205/1,153、可执行缺口933；Supplier 120/182、剔除12条退役后缺口50；Kefu 60/63且3条均已证据化退役、可执行缺口0；Out 41/41；ERP 0/8。
 
-Admin前端有342个请求调用点、362个路径变体，全部已注册且可执行；但旧Admin有245个不同路由页面，新Admin只有53个，设置页76项中reviewed 15/candidate 11/partial 3/retired 1/unreviewed 61。UniApp旧manifest有151条路由，新端59条；3条原路径直接覆盖、97条进入显式兼容规则（60候选、37部分替代），仍有51条分成7个缺口组。可观测性账本有17个信号、10个组件、53个事件，生产告警仍待物化，6个发布阻断未关闭。本轮本地215文件/1,364项单元、单元与runtime-test双TypeScript、schema/route/Admin/UniApp/observability审计均通过；此前提交`18404e58bb40d375381d1f1b41347b4643a1f75d`对应Actions `33879618172`为8/8成功，当前改动仍需提交后的新一轮CI。主Worker和正式前端没有因本次范围审计发布。
+Admin前端有342个请求调用点、362个路径变体，全部已注册且可执行；但旧Admin有245个不同路由页面，新Admin只有53个，设置页76项中reviewed 15/candidate 11/partial 3/retired 1/unreviewed 61。UniApp旧manifest有151条路由，新端59条；3条原路径直接覆盖、97条进入显式兼容规则（60候选、37部分替代），仍有51条分成7个缺口组。可观测性账本有17个信号、10个组件、53个事件，生产告警仍待物化，6个发布阻断未关闭。全新系统口径与DB-005证据提交`d1fd1b52ca1b67a965d588fc14b94436ccee9285`推送后，[Actions `33934221938`](https://github.com/cinagroup/cinashop/actions/runs/33934221938)的Linux workerd、Worker双TypeScript/1,364项单元/schema/route/observability、五端构建和全历史密钥扫描8/8成功。主Worker和正式前端没有因本次范围审计发布。
 
 ### 清单重分类与下一顺序
 
 DATA-001～005已关闭为不适用；历史源端工具保留用于其他部署，但不再执行。DB-005已按上述证据完成，仓库与生产均为263表且精确零表差集。后续数据工作依次是DATA-006新系统关键业务初始化、DATA-007现存孤儿/重复配置裁决、DATA-008 DIY/营销/媒体/店面配置。功能迁移仍按路由、前端、真实角色/provider、预发、发布和观察门禁逐项推进；“无需旧历史数据”不等于功能迁移或生产上线已经完成。
+
+## DB-003 重复系统配置决策证据（2026-09-05）
+
+一次性令牌Worker在生产只读事务中按实际`SystemConfigDao`优先级`is_store=0, sort DESC, id DESC`重新读取重复配置。结果为6个键、26行、20条额外行，数据库没有任何外键指向`system_config`。`record_No`五行值相同，运行时选择启用且`sort=97`的ID 390；`sign_give_point`、`sign_status`、`system_comment_time`、`system_delivery_time`各四行且各组值完全相同。唯一存在值分歧的是`site_url`：运行时选择启用且`sort=98`的ID 389=`https://cinashop-pc.pages.dev`，ID 410/404/398/2均停用、低优先级且值为`https://cinashop.example.com`。
+
+审计器只对白名单中的`site_url/sign_give_point/sign_status`展示值，其余配置只返回长度、类别和SHA-256；没有日志输出配置值，也没有DDL/DML。两次审计Worker均强制令牌，无令牌403、错误方法404，删除后URL 404。完整精确ID与摘要已固化在`workers-ts/audit/system-config-duplicate-baseline.json`。证据足以把DB-003从“未知重复”缩小为一个业务确认：是否正式保留当前Pages地址ID 389。确认前不删除；确认后只按清单中的20个ID执行短事务，并复验保留行、所有非目标行和owned sequence不变。DB-003审计增量本地专项4/4、完整216文件/1,368项单元及双TypeScript通过。
 
 ## 完成定义
 
