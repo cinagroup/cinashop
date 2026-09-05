@@ -5050,6 +5050,20 @@ DB-008证明完整声明可生成、在空库执行且所修正的索引/FK增�
 
 SQL↔SQL审计仍为source201/target263/shared201、sourceGaps及两套DDL表列漂移均0；路由仍为PHP1,904/TS1,646/匹配879/可执行861/明确不可用18/缺失1,025/退役17/可执行缺口1,008，覆盖46.2%/45.2%/45.6%。本批临时Drizzle目录已全部由测试清理；本机4项PG与Linux workerd验证等待本次提交对应CI，不借用旧提交的通过结果。
 
+首次推送`a2366d245b90c86f68cf3035f70c87ccf78d4a30`的[Actions 33963078058](https://github.com/cinagroup/cinashop/actions/runs/33963078058)密钥扫描失败：Gitleaks generic-api-key把补丁文件第10/11行的两个公开Drizzle API bundle SHA-256误识为API密钥。摘要来自实际安装的上游文件且测试逐字节验证可还原，不是凭据。按已有仓库规范拟定本地草案，仅在该精确路径、该规则和这两条完整固定校验和行的AND条件下排除，不扩大到其它hash、文件或秘密；只读正反例检查确认更换hash或路径不会命中。**提交并推送该安全例外被自动安全审核拦截，要求用户明确批准；草案未提交、未推送，没有绕过拒绝。** 当前最终结果7/8：232文件/1,503项单元（含4项真实PG、无跳过）、workerd3文件/24项、双TypeScript、五端构建及既有前端回归全部通过；全历史Gitleaks扫描227提交、报告上述2项，整个run不计全绿。授权后才可提交精确例外并重新跑CI；本地审计/checklist回填也尚未提交。
+
+## DB-009 三路径真实目录审计建设（2026-09-05）
+
+在DB-008生成修复后继续核查完整ORM↔部署DDL，不等待扫描例外授权也不夹带提交该例外。外部SQL与Worker源码文本中的201/263/零漂移只检查CREATE和部分ADD COLUMN，不执行迁移，也不覆盖实际索引、约束、序列或ALTER TYPE/DEFAULT。新审计必须使用真实数据库目录，且三条路径使用同一版本引擎。
+
+本机PGlite0.5.8实际是PostgreSQL18.3；按文件顺序执行外部SQL，116个文件成功后在0115失败。只改诊断错误消息的探针保留了失败语义，报告CHECK26/FK8/PK5合计39，另有NOT NULL52。[PostgreSQL18文档](https://www.postgresql.org/docs/18/catalog-pg-constraint.html)将NOT NULL纳入pg_constraint，而[PostgreSQL16文档](https://www.postgresql.org/docs/16/catalog-pg-constraint.html)明确其仅由pg_attribute表示。三处计数过滤试改让探针继续至0118，后续仍有同类严格集合校验；为避免扩展成非目标PG18适配，已撤回全部六处SQL/内嵌镜像改动，不弱化任何现有迁移校验。生产基线与CI均是PG16，权威全链审计改在专用CI PG16执行。
+
+新增`scripts/data-migration/postgres-catalog-audit.ts`从目录读取表、列、约束、索引与序列，不读取业务行；列包含实际类型、默认表达式、非空、identity/generated/collation，索引包含完整表达式/部分条件/INCLUDE/排序及constraintOwned，序列包含类型、起止、步长、cache、cycle和OWNED BY。名字不同但其余结构相同只列possibleRenames，仍保留缺失记录；服务器规范化表达式不同只是待审线索，不直接推定业务行为不同。范围明确不含权限、函数、触发器、策略或视图，不能据此声称全库所有对象已等价。
+
+新增`scripts/orm-ddl-audit.ts`只接受专用loopback测试URL，拒绝其它主机/角色/库/协议/查询参数，并连接后再次核验PG16身份；完全不消费生产DATABASE_URL或Hyperdrive。三座随机`orm_audit_*`数据库由审计自己创建，使用独立public避免改写DDL里的schema；分别执行全部外部SQL、真正的MigrationService.runAll和真实Drizzle生成SQL。任何初始化失败都终止，不输出伪完整目录。finally只删除自己成功创建并记录的精确名字，逐库核实消失，不使用FORCE、不删除控制库；输出逐条可解析的目录差异和源SQL摘要。CI新增审计步骤是发现模式，成功只代表三条路径完整执行且清理完成，差异仍须逐项处置。
+
+本地`test/postgres-catalog-audit.test.ts`8/8覆盖独立内存库同构、目标地址拒绝、表列存在性、类型/非空/默认/identity/generated、租户FK动作/延迟、部分索引/INCLUDE/排序/改名、唯一索引归属、序列类型/边界/归属以及重复目录键拒绝。两套TypeScript检查通过；首次全量有33个套件因同一个`/src/services/order/VirtualProductDeliveryService`别名导入失败。将Drizzle工具链改为在已验证测试服务身份后才动态加载，避免验证器单测导入重型CLI依赖；后续完整重跑233文件、1,507通过+4项真实PG跳过，共1,511项。不能仅由重跑通过断言Windows别名偶发失败的根因已查清。PG16三路径真实目录结果仍待本次CI；当前没有生产连接或部署。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

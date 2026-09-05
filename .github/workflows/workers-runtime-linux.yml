@@ -86,6 +86,9 @@ jobs:
       - name: Audit production observability contract
         run: npm run audit:observability
 
+      - name: Execute isolated PostgreSQL 16 ORM and migration catalog audit
+        run: npm run audit:orm
+
       - name: Audit legacy-to-PostgreSQL schema drift
         run: |
           npx --no-install tsx scripts/mysql-to-postgres.ts schema-audit --json |
