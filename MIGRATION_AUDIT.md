@@ -5018,6 +5018,38 @@ npm官方只读元数据查询确认stable latest仍0.31.10且保留旧loader声
 
 运行时读取全部Drizzle PgTable对象得到264张唯一表、733个显式索引；`is_show/sort/add_time`分别在store_product与store_product_category冲突，`ub_uid`在user_bill与user_brokerage冲突。进一步与外部DDL解析表集比较得到263表且唯一model-only为`store_pink_full`。因此原来的外部SQL↔内嵌SQL零漂移仍是其原有窄范围事实，**不是ORM↔DDL完整一致性的证据**。新增DB-008处理生成与索引名门禁，DB-009处理完整模型合同差异；不自动给生产增加第264张表，也不删除模型来消除数字差异。当前无业务源文件变更、无生产访问/DDL/DML/部署。
 
+## DB-008 完整Drizzle生成流程修复（2026-09-05）
+
+在独立审计检查点`6d0b362c61441b65ee562945a7bd53ba0a2ec945`之后，按新发现的DB-008继续实施生成链修复，不把它混作esbuild库修复。PostgreSQL技能指导保留索引列、唯一性与外键关系；没有删除索引/租户列以让生成器通过，也未修改手写部署迁移或生产数据。
+
+### 三个连续暴露的真实失败
+
+1. 生成器原先因四组public索引重名退出1。模型`store_product`的三索引改为已有`0001_product.sql`中的`sp_is_show_idx/sp_sort_idx/sp_add_time_idx`，`user_bill`改用`0002_order.sql`的`ub_uid_idx`；仅改名，列、排序、唯一性和查询不变。依据[PostgreSQL索引规则](https://www.postgresql.org/docs/current/sql-createindex.html)，索引名在schema关系命名空间中唯一，而非仅在单表内唯一。
+2. 首次生成成功的350,243字节SQL在全新PGlite执行时报告缺`kefu_visitor_uid_seq`。原模型只有raw nextval默认值，Drizzle不会由字符串推导独立序列；现按[Drizzle序列接口](https://orm.drizzle.team/docs/sequences)显式导出pgSequence，保留原0104迁移的起始1,000,000,000、最大2,147,483,647、步长1、cache1、不循环，供整数visitor_uid消费。
+3. 补序列后，执行继续报告work_member_current缺被引用唯一键：Drizzle把ALTER TABLE外键排在CREATE UNIQUE INDEX之前。初次候选把`wmc_corp_id_uq/wcc_corp_external_userid_uq/wgcc_corp_chat_id_uq`改为同名同列native UNIQUE，空库测试虽通过，独立候选复核却指出已有库迁移会DROP仍被外键依赖的索引。实际执行确认`2BP01`；0115/0116原始闭合结构校验也会因新增pg_constraint条目报`P0001`。**已撤回三处转换**，不能把空库能执行当成升级兼容；这些失败不计通过。
+
+最终修正在生成器边界：`scripts/patch-drizzle-pg-order.cjs`限定drizzle-kit **0.31.10**及`bin.cjs/api.js/api.mjs`三个原始文件SHA-256，只移动PG JSON语句列表中的两组新建FK，使新建/已有表的索引、主键和唯一约束先建立，然后再添加新建/已有表的FK，最后创建视图。MySQL/SQLite分支、列/索引删除规则和模型唯一索引定义均不改；没有正则改写生成SQL。npm postinstall自动应用，已补丁状态必须反向还原到同一原始摘要才接受；全部文件先校验再写入，未知版本/修改会失败退出，省略dev依赖的生产安装无Drizzle时明确跳过。锁文件仅增加root hasInstallScript，依赖版本与4项旧esbuild链告警不变。
+
+### 实际验收而非只检查退出码
+
+`test/drizzle-generation.test.ts`新增3项：全模型schema-wide索引名唯一及四个已有迁移索引合同；三组被引用的复合唯一索引保留、无新增同名constraint；真实CLI完整生成264表/733显式索引、全新内存库执行、读取全部实际表名、访客序列边界/默认UID、跨企业FK拒绝与级联删除、相同模型再次生成不改变SQL/journal/snapshot字节。生成后直接提取并执行0115/0116原始closed-surface DO校验，证明复核发现的额外constraint回归已消除。CLI读取原`drizzle.config.ts`和原schema路径，只把out改至新建临时目录；所有临时文件由finally清理，不改仓库migrations或读取生产目录。
+
+`test/drizzle-pg-order-patch.test.ts`另有3项：逐个验证三个入口原始→补丁→重复执行、篡改/版本拒绝及任一文件不符时其它文件不写入；分别通过真实CJS和ESM API，在PGlite中执行已有父表新加unique index或native UNIQUE，再给已有及新建子表添加复合FK的增量SQL。已有行保留，同企业写入成功、跨企业`23503`、删除级联，index与constraint目录语义分别保持。全量真实模型264表快照重复生成无DROP或任何delta。最终候选6/6专项通过；没有再次派发复核循环，父代理按已确认问题做回归验收。
+
+测试专用`helpers/drizzleCliAudit.cjs`记录实际CJS模块加载及esbuild版本，阻断旧loader/core-utils、TCP/UDP/监听和本地IPC。tsx总会尝试可选父进程管道，该尝试也被阻断，但单独计作IPC而非数据库/TCP；实际两轮生成无网络尝试，加载原TS配置/完整模型及esbuild0.25.12。真实`export`同样纳入测试，输出264个CREATE TABLE和1个CREATE SEQUENCE且不修改产物；API探针也在禁用socket的子进程执行。CJS加载钩子不宣称拦截任意未来ESM/native子程序，API格式本身则由真实独立进程验收。
+
+测试开发中还据实确认Windows绝对out在第二轮会被Drizzle错误拼到cwd后，而且打印ENOENT仍退出0；测试因此保留与正式配置相同的相对路径约定，并同时要求模型加载、产物完整性、数据库执行和“No schema changes”，没有只依赖exit 0。首次Windows绝对schema glob也未匹配；保留原schema相对路径后正常。两次本机默认2 GiB堆的TypeScript检查OOM；以进程级4 GiB检查后确认一个测试环境类型错误并修正，未放宽项目tsconfig。初次IPC阻断被误计成网络、调试栈触发Vitest源码映射解析异常，均已修正并由最终3/3专项无未处理错误取代，未把这些失败写成通过。
+
+### 仍然明确未完成的范围
+
+DB-008证明完整声明可生成、在空库执行且所修正的索引/FK增量合同兼容，不证明与部署DDL完全等价。264 vs 263的store_pink_full、其它字段/约束/默认值/索引漂移继续归DB-009。特别是Drizzle pgSequence接口未表达0104的`AS INTEGER/OWNED BY`；不能用生成文件替换生产升级脚本。补丁是有范围的生成顺序修复，不承诺所有未来模型重命名/删除迁移都安全；依赖升级必须重新审计源摘要和顺序。当前候选没有部署、生产连接、DDL/DML或真实业务账号行为。
+
+### 本地最终验证
+
+三个CJS新增文件的`node --check`、`git diff --check`、进程级4 GiB的单元及runtime两套`tsc --noEmit`全部通过；`npm run postinstall`重复执行报告0个入口需重写。最终`npm run test:unit`为**232文件，1,499通过+4项真实PostgreSQL测试跳过，共1,503项**。前一次全量运行有withdrawal-application-inbox-scenario导入`/src/utils/json`失败，其源文件实际存在且未改；不改业务文件的联合专项重跑为24通过+1跳过，随后完整重跑通过。尚未证明该Windows别名偶发失败的根因，保留失败记录，不把首次失败改写为通过。
+
+SQL↔SQL审计仍为source201/target263/shared201、sourceGaps及两套DDL表列漂移均0；路由仍为PHP1,904/TS1,646/匹配879/可执行861/明确不可用18/缺失1,025/退役17/可执行缺口1,008，覆盖46.2%/45.2%/45.6%。本批临时Drizzle目录已全部由测试清理；本机4项PG与Linux workerd验证等待本次提交对应CI，不借用旧提交的通过结果。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

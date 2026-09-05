@@ -4,12 +4,12 @@
 
 ## 审计结论
 
-迁移进度不能用一个百分比概括：结构定义已经完整，生产结构接近完整，但 HTTP 合同、新系统运营数据、第三方配置和发布状态明显滞后。
+迁移进度不能用一个百分比概括：外部与内嵌DDL在既有审计范围内已对齐，但新发现的ORM↔DDL差异尚未收口；HTTP 合同、新系统运营数据、第三方配置和发布状态也仍明显滞后。
 
 | 维度 | 当前证据 | 判定 |
 |---|---:|---|
 | PHP/MySQL 结构参考 | PHP 201/201 表、缺源列 0 | 结构合同完成；历史数据导入不适用 |
-| 仓库目标结构 | 外部 SQL 263 表；Worker 内嵌 263 表；共享参考表 201、Worker 扩展 62；定义漂移 0 | 候选定义完成 |
+| 仓库目标结构 | 外部 SQL 263 表；Worker 内嵌 263 表；共享参考表 201、Worker 扩展 62；两套SQL定义漂移 0。ORM实际264表，额外store_pink_full | SQL文本窄范围对齐；ORM完整一致性仍归DB-009 |
 | 生产目标结构 | 2026-09-04已验证基线：263表、3,696列、896索引、250主键；API-014新增提现重放、流水事件键及通知业务列/索引/约束尚未应用 | 表集基线完整；DB-006/007仍为发布前置 |
 | PHP HTTP 合同 | 精确匹配 879/1,904；可执行 861；其中 18 条明确不可用、17 条有证据退役 | 精确注册 46.2%，可执行 45.2%，退役后有效覆盖 45.6% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
@@ -97,7 +97,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 - [x] **DB-005 应用 Admin 用户写入重放账本**：生产预检确认表/序列均不存在；一次性令牌Worker在2秒锁等待、15秒语句和20秒空闲事务上限内执行`0119_admin_mobile_user_replay.sql`两遍，生产目录`262/3,684/892/249→263/3,696/896/250`（表/列/索引/主键）。目标表12列、4约束（含主键）、4索引（含主键）、序列、空表及两遍定义摘要全部通过，8类相关业务表计数不变；无令牌403、错误方法404，临时Worker删除后URL 404。
 - [ ] **DB-006 提现重放结构发布前置**：外部`0130_user_withdrawal_replay.sql`与Worker内嵌`0134`已同义实现并在隔离测试执行两遍。新增`user_extract.request_key/request_hash`、`(uid,request_key) WHERE request_key<>''`唯一索引，并把`wechat`扩到64字符；无业务DML。本轮没有连接生产，必须在获准的发布窗口以短事务应用并独立复核定义、幂等和既有业务指纹，不能先部署依赖新列的Worker。263表同集不等于新列/索引已经上线。
 - [ ] **DB-007 提现流水/通知结构发布前置**：外部`0131_withdrawal_effects.sql`与内嵌`0135`同义，新增`capital_flow.event_key`唯一围栏、投递台账独立`withdrawal_id`/索引和订单/提现互斥约束；后续外部`0132_withdrawal_application_notice.sql`与内嵌`0136`增加申请事件白名单及type=2客服收件箱部分索引；外部0133/内嵌0137继续增加实时刷新子事件白名单。旧流水事件键保持NULL，旧订单投递保持真实订单ID；无历史复制或业务DML。须在DB-006之后、当前Worker发布之前，经授权按实际catalog选择增量DDL并核对业务指纹。旧通知审计Worker及历史迁移中的较窄事件CHECK不能验证含新事件的数据；不得直接从零重放runAll。当前仅新DDL隔离重复执行通过，生产前置仍开放。
-- [ ] **DB-008 Drizzle完整SQL生成门禁**：2026-09-05真实`drizzle-kit generate/export`在读取当前配置及完整模型后退出1，原因是public schema的`is_show/sort/add_time/ub_uid`四组索引重名。SQL文本之间的201→263零漂移审计未覆盖ORM生成链；需按已有迁移索引名修正模型、用隔离临时输出验证真实CLI生成/重复生成，并加入跨表索引名门禁。不得直接将生成的全量初始DDL应用于已有生产库。
+- [x] **DB-008 Drizzle完整SQL生成门禁（本地候选，CI待确认）**：四组索引重名按现有迁移修正；补导出客服访客专用序列，起始1,000,000,000/上限2,147,483,647且不循环。保留733个显式索引，拒绝会破坏已有库升级的唯一索引→约束转换；由限定drizzle-kit0.31.10及三个入口SHA-256的postinstall补丁，将PG新建外键排到引用键创建之后。6项回归覆盖补丁幂等/源漂移拒绝、真实CLI配置/264表完整DDL/重复生成/导出、0115/0116原始闭合结构校验、CJS和ESM API已有表加索引或约束再加外键、跨企业拒绝/级联删除及全模型快照无差异。子进程禁止TCP/UDP/监听及可选tsx IPC；生产安装省略dev依赖时跳过补丁。没有升级依赖、改写手写迁移或部署生产；生成DDL不等于已部署263表合同，差异继续归DB-009。
 - [ ] **DB-009 ORM与部署DDL完整一致性**：实际Drizzle模型导出264表，外部/内嵌DDL及最后生产表集为263；唯一model-only为`store_pink_full`。当前“零定义漂移”只比较两套SQL文本，不包含ORM。需核对该模型真实消费者及旧PHP合同，并扩展ORM↔DDL的表/列/类型/默认值/约束/索引审查，不能删除模型或新增生产表来机械对齐数字。
 - [x] **DATA-001 取得只读源 MySQL（不适用）**：2026-09-04 项目所有者确认旧 PHP 站无必要真实历史数据；本部署不连接、复制或对账源 MySQL。
 - [x] **DATA-002 全量迁移计划（不适用）**：`data:plan`保留为通用工具，但本部署不生成201表历史复制计划。
@@ -418,7 +418,7 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
     - [ ] **TEST-004D2 Vite剩余安全升级**：5.4.21仍命中`.map`路径穿越、Windows launch-editor UNC/NTLM及NTFS ADS/8.3路径告警，另有esbuild0.20.2/0.21.5；需受支持的DCloud/Vite6.4.3或更高兼容链，或另经完整验证的补丁方案。当前只收紧默认值，不承诺显式`--host/--cors`、manifest覆盖、端口转发、SSR或所有Windows路径安全，禁止共享网络暴露。
     - [ ] **TEST-004D3 国际化与其余传递链**：MP/App把vue-i18n别名指向DCloud内置9.1.9，顶层升级不足以覆盖；H5裸vue由插件改指uni-h5-vue，MP使用uni-mp-vue，App外置Vue，不按锁中Vue3.5.41推定实际运行版本。Intlify当前业务可达性已按D3A形成有范围no_change证据；继续验证加密uni_modules的adm-zip解压、微信自动化二维码Jimp/jpeg-js与phin、Express/qs、Jest/jsdom/@tootallnate/once。App本轮只证编译资源，空AppID、HBuilderX/基座/签名/真机及真实业务E2E仍未完成；MP/App运行时直连生产域名，不能以H5代理变量推定设备测试已隔离。
       - [x] **TEST-004D3A Intlify当前应用可达性（有范围no_change，本地及Linux CI通过）**：旧message-resolver9.1.9的两类prototype路径及顶层vue-i18n9.14.4的HTML属性风险均库级复现，不能称库已修复；但应用源码未注册/调用Intlify，真实CLI构建的H5、微信、App-vue/App-nvue四轮图均未加载或外部化Intlify。H5/微信使用独立DCloud uni-i18n；App显式外部依赖仍为设备Vue/@vue/shared。新增9项模块标识/真实Rollup负例/独立renderjs及wxs编译阻断/DCloud语言控制/三目标真实CLI制品审计，记录10个App直接复制资源的逐字节来源与SHA256；未来Intlify进入业务图或新增这两类独立脚本即失败并要求重审。候选复核发现的renderjs外层图盲区已确认并补齐真实回归；提交`d456d541159b5aeee42e58bf18c0225c995f3307`的[Actions `33960215805`](https://github.com/cinagroup/cinashop/actions/runs/33960215805) 8/8成功，四轮图及复制资源证据与本机一致。仅覆盖当前源码/CLI制品，不把复制文件hash当任意预打包代码安全证明，不覆盖设备基座、APK/IPA、SSR、开发运行图或未构建的支付宝/百度/抖音目标；依赖版本/50条包告警不变，D3及父项仍开放。
-  - [ ] **TEST-004E Worker Drizzle旧esbuild链**：旧链仍为drizzle-kit0.31.10→esm-loader→core-utils→esbuild0.18.20共4 moderate；库级loopback探针确认JS/404/SSE均有通配CORS。独立调查及真实CLI加载跟踪确认当前Drizzle使用tsx：CLI解析到esbuild0.25.12、程序API通过安装的tsx解析到0.28.2，七个Drizzle入口不导入旧loader/core-utils；当前调用路径为有范围no_change，不是库已修复。官方latest仍0.31.10，core-utils3.3.2已弃用；不强压跨兼容范围override或降级。完整模型生成另因索引冲突失败，已拆为DB-008，ORM↔DDL缺口列DB-009；依赖淘汰及生成兼容验收仍开放，不运行真实`db:push/migrate/studio`消警。
+  - [ ] **TEST-004E Worker Drizzle旧esbuild链**：旧链仍为drizzle-kit0.31.10→esm-loader→core-utils→esbuild0.18.20共4 moderate；库级loopback探针确认JS/404/SSE均有通配CORS。独立调查及真实CLI加载跟踪确认当前Drizzle使用tsx：CLI解析到esbuild0.25.12、程序API通过安装的tsx解析到0.28.2，七个Drizzle入口不导入旧loader/core-utils；当前调用路径为有范围no_change，不是库已修复。官方latest仍0.31.10，core-utils3.3.2已弃用；不强压跨兼容范围override或降级。完整模型生成发现的索引/序列/引用键缺口已按DB-008修复候选；ORM↔DDL差异列DB-009，依赖淘汰仍开放，不运行真实`db:push/migrate/studio`消警。
   - [x] **TEST-004F Admin/Supplier ECharts（当前应用路径no_change，回归已通过CI）**：锁定5.6.0的`lines`默认tooltip原始HTML行为已在真实依赖sink复现，不能宣称库已修复。已逐一审查6个import文件、13个setOption构造器/17个图表实例：Supplier只注册LineChart；Admin三处series展开涉及四类API，其真实服务固定生成line/bar、白名单名称与数值数组，其余构造器固定line/bar/pie。新增7项生产者投影测试及Admin/Supplier各5项真实tooltip转义测试本地及Linux CI通过；完整源端到sink矩阵见审计。独立复核及e991d92的8/8 CI已完成，按有范围不可达结论收口，不强行跨主版本升级；包告警1+1仍存在。引入lines、任意图表JSON或改变生产者/注册方式必须重开审查，生产部署版本不由此验证。
 - [ ] **REL-001 发布候选门禁**：所有 P0 完成，相关 P1 域完成；生成变更清单、DB 前置、Secret/资源检查、回滚版本和 smoke tests。
 - [ ] **REL-002 主 Worker 发布（BLOCKED：需明确批准）**：发布当前候选，确认版本流量 100%，执行健康/安全负向/关键只读和受控写 smoke test。

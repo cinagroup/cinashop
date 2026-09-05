@@ -11,6 +11,7 @@
 import {
   bigserial,
   check,
+  pgSequence,
   pgTable,
   serial,
   varchar,
@@ -329,6 +330,17 @@ export const storeServiceTransfer = pgTable(
 // ─── 匿名客服会话 ───────────────────────────────────────────
 // The token is stored only as SHA-256. A dedicated high UID range preserves
 // the legacy integer chat columns without colliding with registered users.
+// Export the separately named sequence too: a raw nextval default alone does
+// not make drizzle-kit emit CREATE SEQUENCE. Bounds match migration 0104.
+export const kefuVisitorUidSequence = pgSequence("kefu_visitor_uid_seq", {
+  startWith: 1_000_000_000,
+  minValue: 1,
+  maxValue: 2_147_483_647,
+  increment: 1,
+  cache: 1,
+  cycle: false,
+});
+
 export const kefuVisitorSession = pgTable(
   "kefu_visitor_session",
   {

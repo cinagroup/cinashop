@@ -291,7 +291,7 @@ export const userBill = pgTable(
     frozenTime: integer("frozen_time").default(0).notNull(),
   },
   (t) => [
-    index("ub_uid").on(t.uid),
+    index("ub_uid_idx").on(t.uid),
     index("ub_status").on(t.status),
     index("ub_add_time").on(t.addTime),
     index("ub_pm").on(t.pm),
