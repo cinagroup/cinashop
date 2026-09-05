@@ -4899,7 +4899,7 @@ ECharts边界回归提交`e991d924c709cac56e3fae10a7a75a3ebab755f5`已推送，[
 
 ## TEST-004D1 UniApp兼容补丁、真实开发边界与三端资源门禁（2026-09-05）
 
-本批沿用用户对当前迁移修复提交/推送/CI的明确授权，不扩展到发布。安全修复技能要求的独立只读调查与一次候选复核已完成；主代理分别验证官方兼容元数据、当前插件配置与运行路径后选择窄补丁，并确认/修正复核提出的两项测试问题。TEST-004D父项保持开放，当前仅为D1本地候选，CI结果待补录。未访问生产数据库、Redis、Cloudflare控制面，未部署、发送短信、登录真实账号或调用支付。
+本批沿用用户对当前迁移修复提交/推送/CI的明确授权，不扩展到发布。安全修复技能要求的独立只读调查与一次候选复核已完成；主代理分别验证官方兼容元数据、当前插件配置与运行路径后选择窄补丁，并确认/修正复核提出的两项测试问题。TEST-004D父项保持开放，D1已通过本地及Linux CI候选验收，精确证据见本节末。未访问生产数据库、Redis、Cloudflare控制面，未部署、发送短信、登录真实账号或调用支付。
 
 ### 兼容决策与配置边界
 
@@ -4944,6 +4944,12 @@ ECharts边界回归提交`e991d924c709cac56e3fae10a7a75a3ebab755f5`已推送，[
 | 编译/自动化工具 | adm-zip用于加密uni_modules云编译下载解压；jpeg-js/Jimp/phin可由微信远程调试二维码处理进入；Express/qs及Jest/jsdom/@tootallnate/once继续开放。没有按dev标签豁免。 |
 
 默认限制与已覆盖5.x漏洞的窄边界可独立验收，但TEST-004D2/D3和父项持续开放。不得因本批构建/本地测试通过就开放共享网络、发布主Worker/Pages或宣称全迁移完成。
+
+### TEST-004D1 精确提交与Linux CI验收
+
+代码/测试/首份审计提交`71570c724d4cdb93e7081e7c15dd028ad5a0e9d8`已成功推送origin/main；[Actions `33958703299`](https://github.com/cinagroup/cinashop/actions/runs/33958703299)最终`completed/success`、**8/8 jobs成功**。Ubuntu24.04、Node24.14.1/npm11.11.0以npm ci安装：UniApp类型、8项真实开发服务/更新隔离检查、H5/微信小程序/App资源构建、3项产物验证及3项NanoID回归全部通过；这解决了此前CI缺App资源门禁的缺口，不代替原生运行验收。
+
+同一提交还通过Worker230文件/1,497项、workerd3文件/24项、Kefu17项、五端通用依赖18项、两端ECharts10项、Kefu/PC全树审计0、Gitleaks222个提交无泄露。schema为source201/target263/shared201、sourceGaps0/externalOnly0/workerOnly0/columnDrift0；routes为PHP1904/TS1646/matched879/executable861/unavailable18/missing1025/retired17/actionableMissing1008。所有计数来自该run完成日志，而非沿用旧run推定。本轮安全测试夹具、浏览器标签页与自建5217开发服务均已清理，未停止用户其他服务。最终审计回填只改Markdown，CI证据固定到上述代码SHA。
 
 ## 完成定义
 
