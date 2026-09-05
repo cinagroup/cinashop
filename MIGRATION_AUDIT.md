@@ -4818,6 +4818,47 @@ Admin待办支持强制刷新在已有HTTP请求结束后再读取一次，重�
 
 CI后再次以CUA复验登录页标题为“登录 - CinaShop 客服”；恢复隔离测试会话后，390px收件箱真实socket收到新提醒，未读1→2且旧详情保留，document.scrollWidth=innerWidth=390、当前相关console error/warn为空。仅将G2b2候选工程子项勾选，G2b父项、G2b3、DB-006/007和生产角色/渠道/发布继续开放。后续审计文档提交不更改受测代码，CI证据固定指向上述实现SHA，不冒称文档SHA也执行了全部工作流。
 
+## TEST-004 依赖告警全量归因与首批修复（2026-09-05）
+
+本轮从`277254b`继续，上一轮完成通知接收端/浏览器/CI及推送，属于实际进展。本轮不访问生产数据库、Redis、Cloudflare或真实渠道，不部署，也不恢复历史数据对账。安全修复技能要求先独立只读调查边界，再做一次新代理候选复核；主代理自行读取锁文件、真实消费者与依赖实现并复现关键结论。首次并行npm audit因可能披露私有元数据被审查拒绝；随后先本地验证1844个非根锁节点的resolution全部来自npm官方/公开镜像，无私有包、file/link和凭据/查询URL，再获准只向官方registry审计公开包名及版本，未上传源码或环境变量。
+
+六份官方`npm audit --json --registry=https://registry.npmjs.org`的初始/本地修复后基线如下；数字是依赖节点而非不同CVE，也不能单凭dev标记判定产物暴露：
+
+| 包 | 初始节点告警 | 本地修复后 | 边界 |
+|---|---|---|---|
+| Worker | 4 moderate | 未变 | Drizzle配置加载工具链；Worker生产请求未导入旧esbuild |
+| Admin | 1 moderate / 1 high | 1 moderate | ECharts仍待完整选项审查；PostCSS的Nano ID已升级 |
+| Kefu | 3 moderate / 1 high / 1 critical | 0 | 原Vitest及其嵌套Vite/esbuild全部是测试工具，不是Pages生产服务 |
+| PC | 1 high | 0 | PostCSS固定6位内部ID，不接收用户可控长度 |
+| Supplier | 1 moderate | 未变 | 仅注册ECharts LineChart，与公告Lines系列不同 |
+| UniApp | 9 low / 29 moderate / 10 high | 9 low / 29 moderate / 9 high | DCloud编译器经runtime包传递，omit=dev不代表H5/小程序/App实际运行闭包 |
+
+客服将Vitest从锁定2.1.9升级到精确3.2.6；npm公告范围采用`<3.2.6`，上游安全页另列3.2.5，本轮按更保守的已发布3.2.6选择。其peer允许Vite5/6/7，现复用已有6.4.3，Vue插件不跨主版本；旧两份Vite5.4.21/esbuild0.21.5及其平台包被移除。既有源码与脚本使用`vitest run`、默认api:false，未安装UI/browser包或开启网络API，因此没有“线上客服可RCE”的证据。新增测试执行真实`resolveApiServerConfig`，四种网络host默认禁write/exec，localhost/127.0.0.1保留本地交互能力；再提取锁定包真实RPC方法对象，仅替换文件/执行sink，验证四组旗标下未注册文件不可读写、已注册只读可用、写/重跑/快照按对应许可执行。没有真实文件修改、网络监听或命令执行副作用；这不是Windows UI附件路径或真实WebSocket攻击E2E。[Vitest上游公告](https://github.com/vitest-dev/vitest/security/advisories/GHSA-5xrq-8626-4rwp)的条件与验收范围据此分开。
+
+Admin/PC/UniApp的Nano ID仅做3.3.17→3.3.18补丁升级，其余依赖和DCloud版本不变。根因细查发现3.3.17已修Node和浏览器零长度，3.3.18才补齐原生异步入口，与[上游发行说明](https://github.com/ai/nanoid/releases/tag/3.3.18)一致。新增公共探针运行Node/浏览器CJS/ESM、async、non-secure及native async共11入口；native只替换Expo随机提供者与模块包装，原函数体不改，不能称真实React Native平台验收。所有探针运行于最多10秒子进程，native随机调用另有50次上限。独立临时目录下载旧3.3.17官方tarball，其integrity与变更前锁文件一致；相同探针在旧native默认零长度触发循环上限而失败，新版指定零/负值及常用正长度均通过。PostCSS实际`nanoid/non-secure`固定生成6位ID的CSS解析控制也通过。
+
+候选复核发现并由主代理确认一个上游既存残留：3.3.18的`customAlphabet('abc', 0)(6)`在Node CJS/ESM及async四入口全部超过1秒子进程上限，同入口正常`(6)(6)`均退出0返回长度6；native同样反复请求random(0)。step仍按零默认长度计算，调用时正覆盖值绕过零请求guard；浏览器/non-secure对照不受影响。没有声称此残留已修复，也没有为消警修改依赖源文件。五端业务源码无Nano ID直接调用，锁文件唯一依赖方是PostCSS且走固定非安全ID生成，不存在已证实的攻击者长度输入链。因此官方公告版本升级可以独立核验，但库整体“完全安全”不成立；新增测试命名/输出改为明确限定已覆盖案例，未来直接使用custom生成器必须重新评审该状态组合。[Nano ID公告](https://github.com/advisories/GHSA-2v37-7h3g-55p8)不能替代这种代码级复核。
+
+Worker仍有Drizzle0.31.10→旧esm-loader/core-utils→esbuild0.18.20。主代理读实际core-utils仅见transform/transformSync，无serve；[esbuild公告](https://github.com/evanw/esbuild/security/advisories/GHSA-67mh-4wv8-2f99)影响其开发HTTP服务，不等于生产Worker暴露。npm建议“修复”为Drizzle0.18.1属于不兼容降级，本轮未执行。ECharts5.6.0在Admin/Supplier实际使用line/bar/pie，而[上游修复](https://github.com/apache/echarts/pull/21608)针对Lines默认tooltip的HTML逃逸；Admin的余额图虽透传series对象，当前真实服务固定生成line/bar，仍需完整入口审查，不能仅按依赖名确认或关闭XSS。
+
+UniApp需独立完成同版套件升级与暴露评估，当前固定DCloud版本依赖Vite^5.2.8及Vue compiler3.4.21，不能强压Vite6/8。主代理和独立调查均确认当前插件`uni-h5-vite/dist/plugin/config.js`默认host:true、fs.strict:false，而仓库未覆盖，故本轮不启动该旧开发服务。除Vite跨域/文件/Windows路径告警外，后续还包括Intlify嵌套旧runtime/message-resolver、HTML属性转义、adm-zip分配、jpeg-js解码、phin重定向、qs解析与Jest/jsdom/once链；本轮只修同一Nano ID节点，47个告警不能隐藏或按dev一概豁免。具体拆分在TEST-004D/E/F，父项仍开放。
+
+本地验证：五端新增公共依赖测试分别Admin/PC/Supplier/UniApp各3项、Kefu6项，共18项通过；客服原17项业务/会话测试通过。Admin2442模块、PC1828模块、客服102模块构建及UniApp类型/H5/微信小程序构建通过；Admin/PC既有VueUse PURE注释告警保留，不视为新错误。没有修改渲染页面，未将旧浏览器截图当作本批新E2E。CI矩阵新增五端依赖回归步骤，并对已全树零告警的Kefu/PC新增完整npm audit门禁。待精确实现SHA的Linux CI通过后，再勾选B/C候选子项；不关闭TEST-004父项和任何生产发布门禁。
+
+本批提交推送请求随后被权限审查拒绝；核对当前目标、main分支、指定origin及只读CI范围后再次复核，仍要求用户对这批默认分支远端写入作明确确认。两次命令均未执行，HEAD仍为`277254b`，候选代码、锁文件、测试与审计保留为本地未提交改动。没有绕用其他通道推送、触发旧SHA工作流冒充本批CI，或将待CI子项勾选。当前暂停点是请求确认将本批10个文件提交并推送到`cinagroup/cinashop`的main；本地通过不代替该目标要求的远端证据。
+
+## TEST-004B 浏览器授权后的本批客服回归（2026-09-05）
+
+用户确认浏览器插件已安装并授权后，实际以CUA应用内浏览器连接验证，不使用外部Playwright、不安装额外浏览器依赖。本轮未执行git提交/推送：该授权上下文是浏览器使用，不能自动替代上一节被拒绝的main远端写入确认。HEAD及精确SHA的CI等待状态不变；TEST-004B/C与生产发布门禁保持开放。
+
+目标流程为本地客服密码表单登录→系统提醒→打开详情→实时新增→显式已读/未读筛选→临时断线恢复→失权/过期退出。旧5195/5197端口启动时报告已占用，因此保留原有进程，另开仅绑定127.0.0.1的5205夹具及5207客服Vite6.4.3，明确设置`CINASHOP_API_PROXY_TARGET=http://127.0.0.1:5205`。临时夹具位于系统Temp，不提交；测试账号与令牌无生产效力，没有通过浏览器注入真实会话，也没有访问生产DB、Redis、Cloudflare或真实支付/通知渠道。
+
+通过可见表单先验证空提交显示“请输入客服账号和密码”，再输入隔离身份登录，URL实际进入`/messages`、标题为“系统提醒 - CinaShop 客服”。打开提醒不改已读；经真实本机WebSocket发布新revision后未读1→2，原详情保留；点击“标为已读”后2→1，“仅看未读”只保留新提醒。1013临时断线后夹具累计连接数1→2、当前活跃连接仍1，页面恢复“通知实时连接”、详情及筛选状态保留。再注入4001，列表/详情和旧未读数清空，显示失权提示；该状态下普通刷新不重新授权，显式点击“重连通知”才触发重新鉴权，夹具HTTP401使页面跳转登录。随后主动进入`/messages`仍被路由守卫转回`/login?redirect=/messages`，未恢复旧会话。
+
+桌面1280×720及窄屏390×844均以AX/DOM、页面标题/URL和原始截图复核；窄屏`document.documentElement.scrollWidth=innerWidth=390`，无Vite错误遮罩，正常流程及1013恢复后收集到的console error/warn均为空。截图呈现原详情保留、未读筛选和手机详情操作按钮，不声称真机、所有屏宽、其他前端或生产身份端到端通过。前端测试技能推动了可见控件操作、逐次状态核验、控制台与截图采集；未发现需要修改业务页面的回归。
+
+本轮再次运行客服`npm test`（Vitest3.2.6，3文件17项全通过）及`node --test ../common/toolchain-security.test.mjs`（6项全通过），未重跑Worker或其它四端全量。新证据只补充当前本地依赖候选的客服浏览器回归，不拿旧Actions运行冒充本批CI，也不关闭未完成的ECharts/UniApp/Drizzle依赖审计。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

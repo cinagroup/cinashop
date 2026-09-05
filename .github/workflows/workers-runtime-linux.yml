@@ -176,6 +176,15 @@ jobs:
         working-directory: view/${{ matrix.directory }}
         run: ${{ matrix.command }}
 
+      - name: Verify frontend dependency security regressions
+        working-directory: view/${{ matrix.directory }}
+        run: node --test ../common/toolchain-security.test.mjs
+
+      - name: Audit complete Kefu and PC dependency trees
+        if: matrix.directory == 'kefu-ts' || matrix.directory == 'pc-ts'
+        working-directory: view/${{ matrix.directory }}
+        run: npm audit --audit-level=low --registry=https://registry.npmjs.org
+
   secret-scan:
     name: Repository secret scan
     runs-on: ubuntu-24.04
