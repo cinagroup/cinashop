@@ -1,7 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import type { Container } from "@/lib/di";
 import type { Env } from "@/env";
-import { user, userBill, userBrokerage, userExtract, userSpread, storeOrder } from "@/models/schema";
+import { user, userBill, userBrokerage, userExtract, userMoney, userSpread, storeOrder } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
@@ -10,6 +10,21 @@ import { parseLegacyUserLedgerQuery } from "./V2UserCompatibilityService";
 type JsonRecord = Record<string, unknown>;
 type ReadResult = JsonRecord & { list?: JsonRecord[]; rank?: JsonRecord[] | number };
 const SHANGHAI_OFFSET = 28_800;
+
+export interface CommissionSummary {
+  uid: number;
+  pm: number;
+  commissionSum: string;
+  commissionRefund: string;
+  commissionCount: string;
+  lastDayCount: string;
+  extractCount: string;
+  yesterdayCommission: string;
+  totalCommission: string;
+  frozenCommission: string;
+  withdrawable: string;
+  spreadCount: number;
+}
 
 /** Stable business-clock boundaries; never use the Worker/host local timezone. */
 export function financeRankPeriod(type: unknown, now: number) {
@@ -135,6 +150,125 @@ export class UserFinanceReadService {
       from ${userExtract} where uid = ${uid} and status in (0, 1)
     `);
     return { count: 0 };
+  }
+
+  async commission(uid: number, now = Math.floor(Date.now() / 1_000)) {
+    return UserFinanceReadService.commissionSummary(this.container, uid, now);
+  }
+
+  /** One shared snapshot for the finance page and both personal-center consumers. */
+  static async commissionSummary(container: Container, uid: number, now = Math.floor(Date.now() / 1_000)): Promise<CommissionSummary> {
+    const today = Math.floor((now + SHANGHAI_OFFSET) / 86_400) * 86_400 - SHANGHAI_OFFSET;
+    const rows = await container.db.execute<{ data: CommissionSummary }>(sql`
+      with entries as (select * from ${userBrokerage} where uid = ${uid} and status = 1),
+      totals as (select
+        coalesce(sum(number) filter(where pm = 1), 0) as income,
+        coalesce(sum(number) filter(where pm = 0), 0) as expense,
+        greatest(coalesce(sum(number) filter(where pm = 1 and frozen_time > ${now}), 0),0) as frozen,
+        coalesce(sum(case when pm = 1 and type not in ('extract_fail','refund') then number
+          when pm = 0 and type = 'refund' then -number else 0 end),0) as earned,
+        coalesce(sum(case when pm = 1 and type not in ('extract_fail','refund') then number
+          when pm = 0 and type = 'refund' then -number else 0 end)
+          filter(where add_time >= ${today - 86_400} and add_time < ${today}),0) as yesterday
+        from entries)
+      select jsonb_build_object('uid', u.uid, 'pm', 0,
+        'commissionSum', round(t.income,2)::text, 'commissionRefund', round(t.expense,2)::text,
+        'commissionCount', round(greatest(t.income-t.expense,0),2)::text,
+        'lastDayCount', round(t.yesterday,2)::text,
+        'extractCount', (select round(coalesce(sum(extract_price),0),2)::text from ${userExtract} where uid = ${uid} and status in (0,1)),
+        'yesterdayCommission', round(t.yesterday,2)::text, 'totalCommission', round(t.earned,2)::text,
+        'frozenCommission', round(t.frozen,2)::text, 'withdrawable', round(u.brokerage_price-t.frozen,2)::text,
+        'spreadCount', (select count(*) from ${user} where spread_uid = ${uid} and is_del = 0 and delete_time is null)
+      ) as data from ${user} u cross join totals t
+      where u.uid = ${uid} and u.status = 1 and u.is_del = 0 and u.delete_time is null
+    `);
+    if (!rows[0]) throw new NotFoundException("用户不存在或已被禁用");
+    return rows[0].data;
+  }
+
+  /** Legacy monthly envelope; new ledgers replace PHP's obsolete user_bill money storage. */
+  async legacyCommissionList(uid: number, type: number, raw: JsonRecord) {
+    const categories: Record<number, string[]> = {
+      0: ["recharge", "pay_money", "pay_product", "system_add", "pay_product_refund", "system_sub", "pay_member", "offline_scan", "lottery_use", "lottery_add"],
+      1: ["pay_money", "pay_product", "pay_member", "offline_scan", "user_recharge_refund", "recharge_refund", "lottery_use"],
+      2: ["recharge", "system_add", "lottery_add"],
+      3: ["brokerage", "brokerage_user", "self_brokerage", "one_brokerage", "two_brokerage", "staff_brokerage", "agent_brokerage", "division_brokerage", "refund"],
+      4: ["extract", "extract_money", "extract_fail"],
+    };
+    const types = categories[type];
+    if (!types) return [];
+    const { limit, offset } = parseFinanceReadQuery(raw);
+    const result = await this.result(sql`
+      with entries as (
+        select id, title, number::text, pm, add_time,
+          to_char(to_timestamp(add_time) at time zone 'Asia/Shanghai', 'YYYY-MM') as month
+        from ${type >= 3 ? userBrokerage : userMoney}
+        where uid = ${uid} and type in (${sql.join(types.map((value) => sql`${value}`), sql`, `)})
+      ), months as (select month from entries group by month order by month desc limit ${Math.min(limit, 20)} offset ${offset}),
+      page as (select e.* from entries e inner join months m on e.month = m.month order by id desc limit 10001),
+      grouped as (
+        select month as time, jsonb_agg(jsonb_build_object(
+          'title', title, 'number', number, 'pm', pm,
+          'add_time', to_char(to_timestamp(add_time) at time zone 'Asia/Shanghai', 'YYYY-MM-DD HH24:MI')
+        ) order by id desc) as list from page group by month
+      )
+      select jsonb_build_object('rows', (select count(*) from page),
+        'list', coalesce((select jsonb_agg(to_jsonb(g) order by time desc) from grouped g), '[]'::jsonb)) as data
+    `);
+    if (Number(result.rows) > 10_000) throw new ValidateException("月份明细过多，请使用分页流水接口");
+    return result.list ?? [];
+  }
+
+  async spreadPeople(uid: number, raw: JsonRecord) {
+    await this.account(uid);
+    const grade = Number(raw.grade ?? 0);
+    if (grade !== 0 && grade !== 1) throw new ValidateException("等级错误");
+    const { start, stop, keyword, limit, offset } = parseFinanceReadQuery(raw);
+    const sorts: Record<string, SQL> = {
+      "childcount asc": sql`"childCount" asc`, "childcount desc": sql`"childCount" desc`,
+      "numbercount asc": sql`"numberCount" asc`, "numbercount desc": sql`"numberCount" desc`,
+      "ordercount asc": sql`"orderCount" asc`, "ordercount desc": sql`"orderCount" desc`,
+    };
+    const sort = sorts[String(raw.sort ?? "").trim().toLowerCase()] ?? sql`add_time desc`;
+    const pattern = `%${keyword.replace(/[\\%_]/g, "\\$&")}%`;
+    const level = Number(await new SystemConfigService(this.container, this.env).get("brokerage_level") || 2);
+    const result = await this.result(sql`
+      with active as (select uid, spread_uid, nickname, avatar, phone, add_time, spread_time from ${user}
+        where is_del = 0 and delete_time is null),
+      one as (select * from active where spread_uid = ${uid}),
+      two as (select * from active where spread_uid in (select uid from one) and uid <> ${uid}),
+      candidates as (select * from ${grade === 0 ? sql`one` : sql`two`}),
+      filtered as (select * from candidates where
+        ${keyword ? sql`(nickname ilike ${pattern} or phone ilike ${pattern})` : sql`true`}
+        and ${start ? sql`spread_time >= ${start}` : sql`true`}
+        and ${stop ? sql`spread_time <= ${stop}` : sql`true`}),
+      enriched as (
+        select f.uid, f.nickname, f.avatar, f.add_time, f.spread_time,
+          (select count(*) from active a where a.spread_uid = f.uid) as "childCount",
+          (select count(*) from ${storeOrder} o where o.uid = f.uid and o.pid in (0,-1) and o.paid = 1
+            and o.is_del = 0 and o.is_system_del = 0 and o.refund_status in (0,3)) as "orderCount",
+          (select coalesce(sum(o.pay_price),0) from ${storeOrder} o where o.uid = f.uid and o.pid in (0,-1) and o.paid = 1
+            and o.is_del = 0 and o.is_system_del = 0 and o.refund_status in (0,3)) as "numberCount"
+        from filtered f
+      ), page as (select * from enriched order by ${sort}, uid desc limit ${limit} offset ${offset}),
+      projected as (
+        select uid, nickname, avatar, add_time as "addTime", spread_time, "childCount", "orderCount", "numberCount"::text,
+          case when spread_time > 0 then to_char(to_timestamp(spread_time) at time zone 'Asia/Shanghai', 'YYYY-MM-DD')
+            else to_char(to_timestamp(add_time) at time zone 'Asia/Shanghai', 'YYYY/MM/DD') end as time,
+          row_number() over (order by ${sort}, uid desc) as position
+        from page
+      )
+      select jsonb_build_object('total', (select count(*) from one), 'totalLevel', (select count(*) from two),
+        'list', coalesce((select jsonb_agg(to_jsonb(p) - 'position' order by position) from projected p), '[]'::jsonb),
+        'count', (select count(*) from page), 'brokerage_level', ${level}::int,
+        'price', case when exists(select 1 from page) then (select coalesce(sum(
+          case when (select division_type from ${user} where uid = ${uid}) = 1 then
+            case when o.division_id = ${uid} then o.division_brokerage else 0 end
+          else ${grade === 0 ? sql`case when o.spread_uid = ${uid} then o.one_brokerage else 0 end` : sql`case when o.spread_two_uid = ${uid} then o.two_brokerage else 0 end`} end),0)::text
+          from ${storeOrder} o where o.pid = 0 and o.type = 0 and o.paid = 1 and o.refund_status in (0,3) and o.is_del = 0 and o.is_system_del = 0) else '0' end
+      ) as data
+    `);
+    return this.avatars(result);
   }
 
   async brokerageRank(uid: number, raw: JsonRecord, now = Math.floor(Date.now() / 1_000)) {

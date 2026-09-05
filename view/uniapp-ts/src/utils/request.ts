@@ -20,6 +20,11 @@ apiBase = "";
 // #endif
 export const API_BASE = apiBase;
 
+/** Undefined status means transport/invalid-response uncertainty, not a business rejection. */
+export class RequestError extends Error {
+  constructor(message: string, readonly status?: number) { super(message); this.name = "RequestError"; }
+}
+
 /** 平台标识 (对应后端 Form-type) */
 export function getFormType(): string {
   // #ifdef MP-WEIXIN
@@ -92,10 +97,10 @@ export function baseRequest<T>(
           authStore.clear();
           toLogin();
         }
-        reject(new Error(body?.msg ?? "请求失败"));
+        reject(new RequestError(body?.msg ?? "请求失败", typeof body?.status === "number" ? body.status : undefined));
       },
       fail: (err) => {
-        reject(new Error(err.errMsg ?? "网络错误"));
+        reject(new RequestError(err.errMsg ?? "网络错误"));
       },
     });
   });

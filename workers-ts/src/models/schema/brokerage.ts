@@ -65,7 +65,7 @@ export const userExtract = pgTable(
   {
     id: serial("id").primaryKey(),
     uid: integer("uid").default(0).notNull(),
-    /** 提现方式: bank/alipay/weixin */
+    /** 提现方式: bank/alipay/weixin/balance */
     extractType: varchar("extract_type", { length: 32 }).default("").notNull(),
     /** 银行名称/支付宝/微信 */
     bankName: varchar("bank_name", { length: 64 }).default("").notNull(),
@@ -84,14 +84,18 @@ export const userExtract = pgTable(
     status: smallint("status").default(0).notNull(),
     failMsg: varchar("fail_msg", { length: 255 }).default("").notNull(),
     failTime: integer("fail_time").default(0).notNull(),
-    wechat: varchar("wechat", { length: 15 }).default("").notNull(),
+    wechat: varchar("wechat", { length: 64 }).default("").notNull(),
     qrcodeUrl: varchar("qrcode_url", { length: 255 }).default("").notNull(),
+    /** Optional caller intent key; absent on legacy requests. Never expose in list responses. */
+    requestKey: varchar("request_key", { length: 96 }).default("").notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).default("").notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
     index("ue_uid").on(t.uid),
     index("ue_uid_time").on(t.uid, t.addTime),
     index("ue_status_time").on(t.status, t.addTime),
+    uniqueIndex("ue_request_replay_uq").on(t.uid, t.requestKey).where(sql`${t.requestKey} <> ''`),
   ],
 );
 

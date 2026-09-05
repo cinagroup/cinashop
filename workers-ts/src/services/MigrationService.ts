@@ -26,6 +26,7 @@ import { CITY_DELIVERY_CALLBACK_PIPELINE_SQL } from "@/migrations/cityDeliveryCa
 import { PRODUCT_WORDS_INDEX_SQL } from "@/migrations/productWordsIndexes";
 import { PRODUCT_SKU_RETIREMENT_SQL } from "@/migrations/productSkuRetirement";
 import { SECOND_CARD_REMINDER_MIGRATION_SQL } from "@/migrations/secondCardReminderIndexes";
+import { USER_WITHDRAWAL_REPLAY_SQL } from "@/migrations/userWithdrawalReplay";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -356,6 +357,7 @@ export class MigrationService {
       this.migration_0131(),
       this.migration_0132(),
       this.migration_0133(),
+      this.migration_0134(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8319,5 +8321,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0133(): string {
     return SECOND_CARD_REMINDER_MIGRATION_SQL;
+  }
+
+  private migration_0134(): string {
+    return USER_WITHDRAWAL_REPLAY_SQL;
   }
 }

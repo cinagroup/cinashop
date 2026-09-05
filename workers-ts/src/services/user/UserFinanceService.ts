@@ -24,6 +24,8 @@ import { ValidateException, NotFoundException } from "@/utils/errors";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { grantReferralLotteryChance } from "@/services/activity/LotteryService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { UserWithdrawalService, type WithdrawalInput } from "./UserWithdrawalService";
+import { UserFinanceReadService } from "./UserFinanceReadService";
 
 const USER_INVOICE_LOCK_NAMESPACE = 21_406;
 
@@ -266,193 +268,46 @@ export class UserFinanceService {
   // ═══════════════════════════════════════════════════════════
 
   /** 分销中心首页数据 (commission) */
-  async commission(uid: number): Promise<{
-    yesterdayCommission: string;
-    totalCommission: string;
-    frozenCommission: string;
-    withdrawable: string;
-    spreadCount: number;
-  }> {
-    const c = this.container;
-    const user = await c.userDao.findForAuth(uid);
-    if (!user) throw new NotFoundException("用户不存在");
-
-    const total = await c.userBrokerageDao.sumBrokerage(uid);
-
-    // 昨日佣金
-    const dayStart = new Date();
-    dayStart.setDate(dayStart.getDate() - 1);
-    dayStart.setHours(0, 0, 0, 0);
-    const yesterdayStart = Math.floor(dayStart.getTime() / 1000);
-    const yesterdayEnd = yesterdayStart + 86399;
-
-    const yRows = await c.db
-      .select({ total: sql<number>`COALESCE(SUM(${userBrokerage.number}), 0)::numeric(12,2)` })
-      .from(userBrokerage)
-      .where(
-        and(
-          eq(userBrokerage.uid, uid),
-          eq(userBrokerage.pm, 1),
-          eq(userBrokerage.status, 1),
-          sql`${userBrokerage.addTime} BETWEEN ${yesterdayStart} AND ${yesterdayEnd}`,
-        ),
-      );
-    const yesterday = Number(yRows[0]?.total ?? 0);
-    const now = Math.floor(Date.now() / 1000);
-    const frozenRows = await c.db
-      .select({ total: sql<string>`COALESCE(SUM(${userBrokerage.number}), 0)::numeric(12,2)` })
-      .from(userBrokerage)
-      .where(
-        and(
-          eq(userBrokerage.uid, uid),
-          eq(userBrokerage.pm, 1),
-          eq(userBrokerage.status, 1),
-          sql`${userBrokerage.frozenTime} > ${now}`,
-        ),
-      );
-    const balanceCents = decimalToCents(user.brokeragePrice);
-    const frozenCents = Math.min(decimalToCents(frozenRows[0]?.total ?? "0"), balanceCents);
-
-    return {
-      yesterdayCommission: yesterday.toFixed(2),
-      totalCommission: total.toFixed(2),
-      frozenCommission: centsToDecimal(frozenCents),
-      withdrawable: centsToDecimal(balanceCents - frozenCents),
-      spreadCount: user.spreadCount,
-    };
+  async commission(uid: number, now = Math.floor(Date.now() / 1_000)) {
+    return UserFinanceReadService.commissionSummary(this.container, uid, now);
   }
 
-  /** 推广人列表 (spread_people) */
-  async spreadPeople(uid: number, page = 1, limit = 10) {
-    const c = this.container;
-    const rows = await c.db
-      .select({
-        uid: userTable.uid,
-        nickname: userTable.nickname,
-        avatar: userTable.avatar,
-        addTime: userTable.addTime,
-      })
-      .from(userTable)
-      .where(eq(userTable.spreadUid, uid))
-      .limit(limit)
-      .offset((page - 1) * limit);
-    return rows;
-  }
-
-  /** 佣金明细 (spread/commission/:type, type: 1=一级 2=二级 3=提现) */
+  /** New-client commission items; never reuse PHP's different 0..4 type contract. */
   async commissionList(uid: number, type: number, page = 1, limit = 10) {
     const c = this.container;
-    const typeMap: Record<number, string> = {
-      1: "one_brokerage",
-      2: "two_brokerage",
-      3: "extract",
+    const typeMap: Record<number, string[]> = {
+      1: ["one_brokerage", "self_brokerage"],
+      2: ["two_brokerage"],
+      3: ["extract", "extract_money", "extract_fail"],
     };
-    const category = typeMap[type];
-    return c.userBrokerageDao.listByUid(uid, page, limit).then((list) =>
-      category ? list.filter((i) => i.category === category) : list,
-    );
+    const types = typeMap[type];
+    if (!types) throw new ValidateException("佣金类型错误");
+    const size = positiveInteger(limit, 20, 100);
+    return c.db.select().from(userBrokerage)
+      .where(and(eq(userBrokerage.uid, uid), inArray(userBrokerage.type, types)))
+      .orderBy(desc(userBrokerage.id)).limit(size)
+      .offset(Math.min((positiveInteger(page, 1, 1000) - 1) * size, 10_000));
   }
 
   /** 提现申请 (extract/cash) */
   async extractCash(
     uid: number,
-    params: {
-      extractType: string;
-      realName: string;
-      extractNumber: string;
-      extractPrice: string;
-      bankName?: string;
-      bankCode?: string;
-      bankAddress?: string;
-      alipayCode?: string;
-      wechat?: string;
-      qrcodeUrl?: string;
-    },
+    params: WithdrawalInput,
   ): Promise<{ id: number }> {
-    const priceCents = decimalToCents(params.extractPrice);
-    if (priceCents <= 0) throw new ValidateException("提现金额必须大于 0");
-    return withTx(this.container, async (tx) => {
-      const users = await tx
-        .select()
-        .from(userTable)
-        .where(eq(userTable.uid, uid))
-        .limit(1)
-        .for("update");
-      const account = users[0];
-      if (!account) throw new NotFoundException("用户不存在");
-      const now = Math.floor(Date.now() / 1000);
-      const frozenRows = await tx
-        .select({ total: sql<string>`COALESCE(SUM(${userBrokerage.number}), 0)::numeric(12,2)` })
-        .from(userBrokerage)
-        .where(
-          and(
-            eq(userBrokerage.uid, uid),
-            eq(userBrokerage.pm, 1),
-            eq(userBrokerage.status, 1),
-            sql`${userBrokerage.frozenTime} > ${now}`,
-          ),
-        );
-      const balanceCents = decimalToCents(account.brokeragePrice);
-      const frozenCents = Math.min(decimalToCents(frozenRows[0]?.total ?? "0"), balanceCents);
-      if (priceCents > balanceCents - frozenCents) throw new ValidateException("可提现佣金不足");
-      const balance = centsToDecimal(balanceCents - priceCents);
-      const extractType = params.extractType === "wx" ? "weixin" : params.extractType;
-      const bankCode = params.bankCode ?? (extractType === "bank" ? params.extractNumber : "");
-      const bankAddress = params.bankAddress ?? (extractType === "bank" ? params.bankName ?? "" : "");
-      const alipayCode = params.alipayCode ?? (extractType === "alipay" ? params.extractNumber : "");
-      const wechat = params.wechat ?? (extractType === "weixin" ? params.extractNumber : "");
-      const rows = await tx
-        .insert(userExtract)
-        .values({
-          uid,
-          extractType,
-          bankName: params.bankName ?? "",
-          bankCode,
-          bankAddress,
-          realName: params.realName,
-          extractNumber: params.extractNumber,
-          alipayCode,
-          extractPrice: centsToDecimal(priceCents),
-          extractFee: "0.00",
-          mark: `提现方式: ${extractType}`,
-          balance: account.brokeragePrice,
-          status: 0,
-          failTime: 0,
-          wechat,
-          qrcodeUrl: params.qrcodeUrl ?? "",
-          addTime: now,
-        })
-        .returning({ id: userExtract.id });
-      const row = rows[0];
-      if (!row) throw new Error("提现记录创建失败");
-      await tx.update(userTable).set({ brokeragePrice: balance }).where(eq(userTable.uid, uid));
-      await tx.insert(userBrokerage).values({
-        uid,
-        linkId: String(row.id),
-        pm: 0,
-        title: "佣金提现",
-        category: "extract",
-        type: "extract",
-        number: centsToDecimal(priceCents),
-        balance,
-        mark: `提现申请 #${row.id}`,
-        status: 0,
-        addTime: now,
-      });
-      return { id: row.id };
-    });
+    return new UserWithdrawalService(this.container).apply(uid, params);
   }
 
   /** 我的提现记录 (M17) */
-  async extractList(uid: number): Promise<unknown[]> {
+  async extractList(uid: number, requestKey = ""): Promise<unknown[]> {
+    if (requestKey && !/^[A-Za-z0-9_-]{16,96}$/.test(requestKey)) throw new ValidateException("请求标识格式错误");
     const c = this.container;
     const rows = await c.db
       .select()
       .from(userExtract)
-      .where(eq(userExtract.uid, uid))
+      .where(and(eq(userExtract.uid, uid), requestKey ? eq(userExtract.requestKey, requestKey) : undefined))
       .orderBy(sql`${userExtract.addTime} DESC`)
       .limit(50);
-    return rows;
+    return rows.map(({ requestKey: _key, requestHash: _hash, ...row }) => row);
   }
 
   /** 绑定推广关系 (user/spread, 永久绑定并写入历史审计) */

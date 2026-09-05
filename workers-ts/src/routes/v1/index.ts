@@ -628,9 +628,10 @@ v1Routes.post("/spread/order", stationOpenMiddleware, authMiddleware({ force: tr
 v1Routes.get("/spread/count/:type", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.spreadCount);
 v1Routes.get("/brokerage_rank", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.brokerageRank);
 v1Routes.get("/rank", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.spreadRank);
-v1Routes.post("/spread/people", authMiddleware({ force: true }), UserFinanceController.spreadPeople);
-v1Routes.get("/spread/commission/:type", authMiddleware({ force: true }), UserFinanceController.commissionList);
-v1Routes.post("/extract/cash", authMiddleware({ force: true }), UserFinanceController.extractCash);
+v1Routes.post("/spread/people", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.spreadPeople);
+v1Routes.get("/spread/commission/:type", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.commissionList);
+v1Routes.get("/user/commission/list/:type", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.commissionItems);
+v1Routes.post("/extract/cash", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.extractCash);
 v1Routes.get("/user/extract/list", authMiddleware({ force: true }), UserFinanceController.extractList);
 // 事业部代理申请与代理商员工关系。删除接口改用 DELETE/POST，拒绝沿用 PHP 的状态变更 GET。
 v1Routes.get("/division/agent/apply/info", authMiddleware({ force: true }), DivisionController.applyInfo);

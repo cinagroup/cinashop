@@ -13,6 +13,8 @@ import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
+import { normalizeWithdrawalBody } from "@/services/user/UserWithdrawalService";
+import { UserFinanceReadService } from "@/services/user/UserFinanceReadService";
 import { CapitalFlowService } from "@/services/finance/CapitalFlowService";
 import type { AppVariables, Env } from "@/env";
 
@@ -32,28 +34,35 @@ export async function bindSpread(c: C) {
 
 /** GET /api/commission — 佣金中心 */
 export async function commission(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const svc = new UserFinanceService(c.get("container"));
+  const svc = new UserFinanceReadService(c.get("container"), c.env);
   return jsonOk(c, await svc.commission(uid));
 }
 
 /** POST /api/spread/people — 推广人列表 */
 export async function spreadPeople(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const q = c.req.query();
-  const svc = new UserFinanceService(c.get("container"));
-  const list = await svc.spreadPeople(
-    uid,
-    Number(q.page ?? 1),
-    Number(q.limit ?? 10),
-  );
-  return jsonOk(c, list);
+  const raw: unknown = await c.req.json().catch(() => ({}));
+  const body = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+  return jsonOk(c, await new UserFinanceReadService(c.get("container"), c.env).spreadPeople(uid, body));
 }
 
 /** GET /api/spread/commission/:type — 佣金明细 */
 export async function commissionList(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  return jsonOk(c, await new UserFinanceReadService(c.get("container"), c.env)
+    .legacyCommissionList(uid, Number(c.req.param("type")), c.req.query()));
+}
+
+/** GET /api/user/commission/list/:type — explicitly versioned new-client classification. */
+export async function commissionItems(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const type = Number(c.req.param("type") ?? "0");
@@ -70,34 +79,14 @@ export async function commissionList(c: C) {
 
 /** POST /api/extract/cash — 提现申请 */
 export async function extractCash(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as {
-    extract_type?: string;
-    real_name?: string;
-    extract_number?: string;
-    extract_price?: string;
-    bank_name?: string;
-    bank_code?: string;
-    bank_address?: string;
-    alipay_code?: string;
-    wechat?: string;
-    qrcode_url?: string;
-  };
+  const raw: unknown = await c.req.json().catch(() => ({}));
+  const body = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
   const svc = new UserFinanceService(c.get("container"));
   try {
-    const result = await svc.extractCash(uid, {
-      extractType: body.extract_type ?? "bank",
-      realName: body.real_name ?? "",
-      extractNumber: body.extract_number ?? "",
-      extractPrice: body.extract_price ?? "0",
-      bankName: body.bank_name,
-      bankCode: body.bank_code,
-      bankAddress: body.bank_address,
-      alipayCode: body.alipay_code,
-      wechat: body.wechat,
-      qrcodeUrl: body.qrcode_url,
-    });
+    const result = await svc.extractCash(uid, normalizeWithdrawalBody(body, c.req.header("Idempotency-Key")));
     return jsonOk(c, result, "提现申请已提交");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
@@ -107,10 +96,11 @@ export async function extractCash(c: C) {
 
 /** GET /api/user/extract/list — 我的提现记录 (M17) */
 export async function extractList(c: C) {
+  c.header("Cache-Control", "private, no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new UserFinanceService(c.get("container"));
-  return jsonOk(c, await svc.extractList(uid));
+  return jsonOk(c, await svc.extractList(uid, c.req.query("request_id") ?? ""));
 }
 
 // ═══ 发票 ═══════════════════════════════════════════════════

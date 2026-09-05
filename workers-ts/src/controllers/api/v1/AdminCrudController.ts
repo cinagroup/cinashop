@@ -18,6 +18,7 @@ import {
   normalizeRoleRules,
 } from "@/services/admin/AdminPermissionService";
 import { ValidateException } from "@/utils/errors";
+import { UserWithdrawalService } from "@/services/user/UserWithdrawalService";
 import { withTx } from "@/lib/di";
 import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
 import {
@@ -1862,52 +1863,11 @@ export async function adminExtractList(c: C) {
 /** POST /api/admin/extract/status/:id — 提现审核 (API status=1 通过 / 2 拒绝) */
 export async function adminExtractStatus(c: C) {
   const id = Number(c.req.param("id") ?? "0");
-  const body = (await c.req.json().catch(() => ({}))) as { status?: number; fail_msg?: string };
-  const container = c.get("container");
-  const { eq, and, sql } = await import("drizzle-orm");
-  const { userExtract, userBrokerage, user: userTable } = await import("@/models/schema");
-
-  const rejected = body.status === 2 || body.status === -1;
-  const newStatus = rejected ? -1 : 1;
-  const now = Math.floor(Date.now() / 1000);
-  const updated = await withTx(container, async (tx) => {
-    const records = await tx
-      .update(userExtract)
-      .set({
-        status: newStatus,
-        failMsg: rejected ? (body.fail_msg ?? "审核拒绝") : "",
-        failTime: rejected ? now : 0,
-      })
-      .where(and(eq(userExtract.id, id), eq(userExtract.status, 0)))
-      .returning({
-        uid: userExtract.uid,
-        extractPrice: userExtract.extractPrice,
-        extractFee: userExtract.extractFee,
-      });
-    const record = records[0];
-    if (!record) return false;
-
-    if (rejected) {
-      // PHP deducts gross amount (net extract_price + extract_fee); reject restores both.
-      await tx
-        .update(userTable)
-        .set({
-          brokeragePrice: sql`${userTable.brokeragePrice} + ${record.extractPrice} + ${record.extractFee}`,
-        })
-        .where(eq(userTable.uid, record.uid));
-      await tx
-        .update(userBrokerage)
-        .set({ status: -1 })
-        .where(and(eq(userBrokerage.linkId, String(id)), eq(userBrokerage.category, "extract")));
-    } else {
-      await tx
-        .update(userBrokerage)
-        .set({ status: 1 })
-        .where(and(eq(userBrokerage.linkId, String(id)), eq(userBrokerage.category, "extract")));
-    }
-    return true;
-  });
-  if (!updated) return jsonFail(c, "提现记录不存在或已审核");
+  const raw: unknown = await c.req.json().catch(() => ({}));
+  const body = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+  const status = Number(body.status);
+  const rejected = status === 2 || status === -1;
+  await new UserWithdrawalService(c.get("container")).review(id, status, body.fail_msg);
   return jsonOk(c, null, rejected ? "已拒绝" : "已通过");
 }
 

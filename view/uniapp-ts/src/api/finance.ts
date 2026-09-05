@@ -31,7 +31,19 @@ export interface SpreadUser {
   nickname: string;
   avatar: string;
   addTime: number;
+  time: string;
+  childCount: number;
+  orderCount: number;
+  numberCount: string;
 }
+
+export interface SpreadPeopleResult { list: SpreadUser[]; total: number; totalLevel: number; count: number; brokerage_level: number; price: string }
+export interface ExtractConfig { commissionCount: string; extractBank: string[]; minPrice: string; maxPrice: string; withdraw_fee: string; extract_wechat_type: number; user_extract_balance_status: number }
+export interface ExtractInput { extract_type: string; real_name: string; extract_number: string; extract_price: string; bank_name?: string; bank_address?: string; qrcode_url?: string; request_id?: string }
+export interface ExtractRecord { id: number; status: number; extractPrice: string; extractFee: string; failMsg: string }
+
+export const apiExtractConfig = () => http.get<ExtractConfig>("/extract/bank");
+export const apiExtractRequests = (requestId: string) => http.get<ExtractRecord[]>("/user/extract/list", { request_id: requestId });
 
 export interface Invoice {
   id: number;
@@ -50,14 +62,14 @@ export function apiCommission(): Promise<CommissionInfo> {
   return http.get<CommissionInfo>("/commission");
 }
 
-/** 佣金明细 (GET /api/spread/commission/:type 1=一级 2=二级 3=提现) */
-export function apiCommissionList(type: number): Promise<CommissionItem[]> {
-  return http.get<CommissionItem[]>(`/spread/commission/${type}`);
+/** New-client classification is separate from PHP's monthly 0..4 contract. */
+export function apiCommissionList(type: number, page = 1, limit = 20): Promise<CommissionItem[]> {
+  return http.get<CommissionItem[]>(`/user/commission/list/${type}`, { page, limit });
 }
 
 /** 推广人列表 (POST /api/spread/people) */
-export function apiSpreadPeople(page = 1, limit = 20): Promise<SpreadUser[]> {
-  return http.post<SpreadUser[]>("/spread/people", { page, limit });
+export function apiSpreadPeople(page = 1, limit = 20, filters: { grade?: number; keyword?: string; sort?: string } = {}): Promise<SpreadPeopleResult> {
+  return http.post<SpreadPeopleResult>("/spread/people", { page, limit, ...filters });
 }
 
 /** 绑定推广人 (POST /api/user/spread) */
@@ -66,14 +78,8 @@ export function apiBindSpread(spreadUid: number): Promise<null> {
 }
 
 /** 提现申请 (POST /api/extract/cash) */
-export function apiExtractCash(params: {
-  extract_type: string;
-  real_name: string;
-  extract_number: string;
-  extract_price: string;
-  bank_name?: string;
-}): Promise<{ id: number }> {
-  return http.post<{ id: number }>("/extract/cash", params);
+export function apiExtractCash(params: ExtractInput): Promise<{ id: number }> {
+  return http.post<{ id: number }>("/extract/cash", { ...params });
 }
 
 /** 发票列表 (GET /api/invoice) */

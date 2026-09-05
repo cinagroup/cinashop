@@ -8,14 +8,15 @@ import { Hono } from "hono";
 import {
   user, userBill, userBrokerage, userExtract, userSpread, storeOrder,
   storeOrderCartInfo, storeProduct, userAddress,
-  storeSeckill, storeBargain, storeCombination,
+  storeSeckill, storeBargain, storeCombination, userMoney,
 } from "@/models/schema";
 import { UserFinanceReadService, financeRankPeriod, parseFinanceReadQuery } from "@/services/user/UserFinanceReadService";
+import { UserFinanceService } from "@/services/user/UserFinanceService";
 import * as controller from "@/controllers/api/v1/UserFinanceReadController";
 import type { AppVariables, Env } from "@/env";
 import type { Container } from "@/lib/di";
 
-const tables = [user, userBill, userBrokerage, userExtract, userSpread, storeOrder, storeOrderCartInfo, storeProduct, userAddress, storeSeckill, storeBargain, storeCombination];
+const tables = [user, userBill, userBrokerage, userExtract, userSpread, storeOrder, storeOrderCartInfo, storeProduct, userAddress, storeSeckill, storeBargain, storeCombination, userMoney];
 const dialect = new PgDialect();
 const now = Date.parse("2026-09-05T04:30:00Z") / 1_000;
 const september = Date.parse("2026-08-31T16:00:00Z") / 1_000;
@@ -287,5 +288,45 @@ describe("API-013 actual PostgreSQL user-finance read contracts", () => {
     const response = await app.request("/spread/order?page=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ page: 2, limit: 1, uid: 8 }) }, env);
     expect(await response.json()).toMatchObject({ status: 200, data: { count: 5, list: [{ id: 4 }] } });
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
+  it("restores monthly legacy type meanings using the current money and brokerage ledgers", async () => {
+    await db.insert(userMoney).values([
+      { uid: 7, type: "pay_product", title: "购物", number: "2.00", pm: 0, addTime: september },
+      { uid: 7, type: "recharge", title: "充值", number: "3.00", pm: 1, addTime: august },
+      { uid: 8, type: "recharge", title: "其他用户", number: "99.00", pm: 1, addTime: september },
+    ]);
+    await db.insert(userBrokerage).values([
+      { uid: 7, type: "one_brokerage", title: "一级", number: "4.00", pm: 1, addTime: september },
+      { uid: 7, type: "extract", title: "提现", number: "1.00", pm: 0, addTime: september },
+    ]);
+    expect(await service.legacyCommissionList(7, 0, { limit: 1, page: 2 })).toMatchObject([{ time: "2026-08", list: [{ title: "充值", number: "3.00" }] }]);
+    expect(await service.legacyCommissionList(7, 1, {})).toMatchObject([{ list: [{ title: "购物", pm: 0 }] }]);
+    expect(await service.legacyCommissionList(7, 3, {})).toMatchObject([{ list: [{ title: "一级", add_time: "2026-09-01 00:00" }] }]);
+    expect(await service.legacyCommissionList(7, 4, {})).toMatchObject([{ list: [{ title: "提现", pm: 0 }] }]);
+  });
+
+  it("filters and sorts both referral levels before paging, retaining complete team totals", async () => {
+    await db.update(user).set({ spreadUid: 7, spreadTime: september }).where(sql`uid = 8`);
+    await db.update(user).set({ spreadUid: 8, spreadTime: september }).where(sql`uid = 9`);
+    await db.insert(user).values({ uid: 11, nickname: "另一位一级", spreadUid: 7, spreadTime: september });
+    await db.insert(storeOrder).values({ uid: 8, paid: 1, payPrice: "20.00", spreadUid: 7, oneBrokerage: "2.00" });
+    expect(await service.spreadPeople(7, { grade: 0, sort: "childCount DESC", limit: 1 })).toMatchObject({ total: 2, totalLevel: 1, count: 1, price: "2.00", list: [{ uid: 8, childCount: 1, orderCount: 1, numberCount: "20.00" }] });
+    expect(await service.spreadPeople(7, { grade: 1, keyword: "买家" })).toMatchObject({ list: [{ uid: 9 }], total: 2, totalLevel: 1 });
+    expect(await service.spreadPeople(7, { grade: 0, keyword: "不存在" })).toMatchObject({ list: [], count: 0, total: 2, price: "0" });
+    await expect(service.spreadPeople(7, { grade: 9 })).rejects.toThrow("等级错误");
+  });
+
+  it("keeps withdrawal restorations out of earned commission while matching legacy net funds", async () => {
+    const yesterday = now - 86_400;
+    await db.insert(userBrokerage).values([
+      { uid: 7, pm: 1, status: 1, type: "one_brokerage", number: "30.00", addTime: yesterday },
+      { uid: 7, pm: 0, status: 1, type: "extract", number: "10.00", addTime: yesterday },
+      { uid: 7, pm: 1, status: 1, type: "extract_fail", number: "10.00", addTime: yesterday },
+      { uid: 7, pm: 0, status: 1, type: "refund", number: "2.00", addTime: yesterday },
+    ]);
+    expect(await service.commission(7, now)).toMatchObject({ totalCommission: "28.00", yesterdayCommission: "28.00", commissionSum: "40.00", commissionRefund: "12.00", commissionCount: "28.00", withdrawable: "123.45" });
+    expect(await new UserFinanceService(container).commission(7, now)).toEqual(await service.commission(7, now));
+    await expect(service.commission(10, now)).rejects.toThrow("用户不存在");
   });
 });

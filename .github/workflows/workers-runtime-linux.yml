@@ -36,6 +36,20 @@ jobs:
     name: Worker type, unit, schema and route gates
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16.14-alpine
+        env:
+          POSTGRES_USER: finance_test
+          POSTGRES_PASSWORD: finance_test
+          POSTGRES_DB: cinashop_finance_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U finance_test -d cinashop_finance_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_FINANCE_POSTGRES_URL: postgresql://finance_test:finance_test@127.0.0.1:5432/cinashop_finance_test
     defaults:
       run:
         working-directory: workers-ts
