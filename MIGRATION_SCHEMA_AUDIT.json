@@ -1,7 +1,7 @@
 {
-  "sourceCommit": "731e20341fcf1460681b5495107d1855d9c91e67",
-  "runId": 33966112676,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/33966112676",
+  "sourceCommit": "7ae3544f97dcc17e66d26033a2d307a8b6c384a0",
+  "runId": 33967084785,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/33967084785",
   "status": "not_equivalent",
   "kind": "summary",
   "scope": "Fresh isolated PostgreSQL 16 catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Canonical expression differences are review candidates, not proof of behavioral inequivalence. Does not inspect production rows, privileges, functions, triggers, policies or views.",
