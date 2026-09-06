@@ -10,6 +10,7 @@ const root = resolve(import.meta.dirname, "..");
 const installed = dirname(require.resolve("drizzle-kit"));
 const patch = require("../scripts/patch-drizzle-pg-order.cjs") as {
   hashes: Record<string, string>; before: string; after: string;
+  originalSource(name: string, source: string): string;
   patchSource(name: string, source: string): string;
   patchDirectory(directory: string): { skipped: boolean; changed: string[] };
 };
@@ -60,7 +61,8 @@ describe("DB-008 pinned PostgreSQL generator ordering", () => {
       for (const name of Object.keys(patch.hashes)) {
         const source = readFileSync(join(installed, name), "utf8");
         expect(source).toContain(patch.after);
-        const original = source.replace(patch.after, patch.before);
+        const original = patch.originalSource(name, source);
+        expect(patch.patchSource(name, original.replace(patch.before, patch.after))).toBe(source);
         expect(patch.patchSource(name, original)).toBe(source);
         expect(patch.patchSource(name, source)).toBe(source);
         expect(() => patch.patchSource(name, source + "\n// unknown edit")).toThrow("checksum/order drift");

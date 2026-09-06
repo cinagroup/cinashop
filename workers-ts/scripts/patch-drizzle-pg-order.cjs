@@ -1,9 +1,10 @@
 // DB-008: drizzle-kit 0.31.10 emits PG foreign keys before their unique indexes.
-// Keep the deployed standalone indexes; change only JSON statement ordering in
-// the three upstream entry points. Remove/re-audit this patch on any upgrade.
+// DB-009E2A also preserves explicit NOT VALID CHECK/FK metadata during generation.
+// All three upstream entry points are checksum-pinned. Re-audit on any upgrade.
 const { createHash } = require("node:crypto");
 const { existsSync, readFileSync, writeFileSync } = require("node:fs");
 const { join } = require("node:path");
+const { edits, rewrite } = require("./drizzle-pg-not-valid-patch.cjs");
 
 const hashes = Object.freeze({
   "bin.cjs": "44f5420e63c88e13e750f5233878b054e262c3223bd94eabf6ac05b2ae77abd7",
@@ -25,14 +26,22 @@ const before = block(original);
 const after = block(reordered);
 const digest = (source) => createHash("sha256").update(source).digest("hex");
 
-function patchSource(filename, source) {
+function originalSource(filename, source) {
   const expected = hashes[filename];
   if (!expected) throw new Error(`Unsupported Drizzle entry point: ${filename}`);
-  if (digest(source) === expected && source.split(before).length === 2) {
-    return source.replace(before, after);
-  }
-  if (source.split(after).length === 2 && digest(source.replace(after, before)) === expected) return source;
+  if (digest(source) === expected) return source;
+  // Accept the exact previously audited ordering-only patch as an upgrade input.
+  const ordered = source.replace(after, before);
+  if (digest(ordered) === expected) return ordered;
+  try {
+    const restored = rewrite(source, edits(filename), true).replace(after, before);
+    if (digest(restored) === expected && rewrite(restored.replace(before, after), edits(filename)) === source) return restored;
+  } catch { /* Reject unknown partial edits below, before writing any bundle. */ }
   throw new Error(`Drizzle ${filename} checksum/order drift: re-audit DB-008 before installing`);
+}
+
+function patchSource(filename, source) {
+  return rewrite(originalSource(filename, source).replace(before, after), edits(filename));
 }
 
 function patchDirectory(directory) {
@@ -53,7 +62,7 @@ function patchDirectory(directory) {
   return { skipped: false, changed: changed.map((entry) => entry.name) };
 }
 
-module.exports = { hashes, before, after, patchSource, patchDirectory };
+module.exports = { hashes, before, after, originalSource, patchSource, patchDirectory };
 if (require.main === module) {
   const result = patchDirectory(join(__dirname, "../node_modules/drizzle-kit"));
   console.log(result.skipped ? "DB-008: dev-only drizzle-kit absent; skipped" : `DB-008: pinned PG ordering verified (${result.changed.length} entry points patched)`);

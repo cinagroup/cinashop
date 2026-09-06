@@ -5380,6 +5380,20 @@ PostgreSQL16.14实际执行五条路径，全部为263表、3,700列、1,006索�
 
 本批仅勾选E1并确认F的列部分；E2～E5、E/F整体、DB-009及生产/业务前置仍开放。约束仍缺53/多12/同名9变/可能改名12，序列仍1处变化，和上一轮完全一样。只读核验当前安装Drizzle声明进一步发现：CheckBuilder/check只有name/value，没有NOT VALID配置；PgSequenceOptions只有边界/步长/缓存/循环，没有AS和OWNED BY，后续须单独解决生成/升级能力，不伪称普通模型声明已经表达这些状态。窄SQL审计仍201→263、源列缺口/列漂移0；路由仍1,904/1,646/879/861/18/1,025/17/1,008及46.2%/45.2%/45.6%，默认值修复不计作业务覆盖增长。最终回填只更新根目录两份Markdown和JSON，受测实现不再修改。无生产DDL/DML或部署；PostgreSQL技能对类型保持、默认行为及短事务的要求影响了本批选择，并由实际行/依赖/失败测试证明。
 
+## DB-009E2A NOT VALID生成前置（2026-09-06）
+
+继续审查41个非别名缺失约束，发现其中7 CHECK/1 FK的NOT VALID状态无法被安装版Drizzle模型与生成器表达。因此本批先建立可验证的生成前置，不把未接入的41个业务约束提前计作完成。新增notValid局部构建器只支持PostgreSQL CHECK/FK，不修改原对象或全局原型；保留外键列类型与级联方法。既有postinstall继续校验三份原始0.31.10完整SHA256，只接受原包、上一版已审排序补丁或完整当前补丁，全部验证后才写入。未知版本/部分补丁/SQL后缀及元数据篡改均拒绝；未升级依赖、未扩大Gitleaks例外。
+
+三入口的PG快照持久化notValid:true并严格拒绝false/字符串/数字/null；仅标记约束使用JSON squash格式，避免CHECK字符串内分号被截断。未标记的上游分号缺陷不在本补丁修复范围。新建NOT VALID CHECK必须在CREATE TABLE后单独ALTER，FK保留位于唯一索引之后的既有门禁。程序接口与实际CLI的新建/增量/导出/持久化/无变化重跑均有独立测试；MySQL/SQLite普通生成亦有回归。现有五路径完整模型目录及所有索引/默认值证明保持门禁，不为此放宽旧六阶段90秒子进程边界。
+
+只读审查还确认push/pull的反向模型打印器不能保留该扩展，因此公共PG introspector对选定schema/table读取convalidated，发现未验证CHECK/FK后用固定诊断拒绝；这是显式不支持，不是假装已完成反向生成。旧alter_reference转换器对标记FK拒绝；当前受测snapshot differ使用分开的DROP/ADD。原始模型差异仍可能为修改定义/移除标记提出DROP/ADD，因此输出不得直接视为保留身份的业务升级；41项实际前向守卫和目录恢复另列E2B。
+
+专用探针在两schema内实际执行5个NOT VALID约束，验证4行旧坏数据保留、后续INSERT/UPDATE精确错误名、SQL NULL行为、组合键租户隔离、更新/删除级联、5种VALIDATE失败、验证型新增失败回滚、原表/索引/既有约束OID及物理标识保留、持久化无变化和只读反向读取拒绝。CLI/CJS/ESM子进程仅白名单环境且禁止socket，报告无旧@esbuild-kit导入。本机独立5项测试与双TypeScript已经通过，完整回归及精确提交Linux结果待回填。新增CI步骤仅在finance_test/cinashop_finance_test专用loopback PG16服务下创建两座准确随机命名测试库，连接前后核对身份，finally逐座确认清理。
+
+本批不修改任何业务模型声明、外部/内嵌迁移或生产库，E2/E4/E5及业务发布门禁全部保持开放。详见workers-ts/audit/pg-not-valid-generator.md。PostgreSQL技能要求保留约束验证语义、外键引用索引及有界锁等待，直接影响了延后CHECK生成、外键排序和旧坏行/级联/回滚测试；依据PostgreSQL16官方ALTER TABLE与CREATE TABLE语法，不自动VALIDATE或删除旧数据。
+
+本机最终maxWorkers=2全量为245文件、1,573通过/4项专用PG测试跳过，共1,577项，224.79秒；双TypeScript和差异检查通过。首轮仅新增MySQL/SQLite输出空格预期有误，已按真实输出精确修正并全量重跑。扩展的FK定义变化探针发现标记序列化漏保留上游public默认目标，已补齐显式schema并用跨schema ADD、NO ACTION拒绝和回滚复验；未放宽断言接受多个SQLSTATE。PG18的RESTRICT错误码变化不属本批缺失外键合同，探针使用与待迁移FK相关的NO ACTION/CASCADE。待精确提交CI通过前，E2A仍不勾选。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

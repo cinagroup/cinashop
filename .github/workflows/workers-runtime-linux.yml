@@ -89,6 +89,9 @@ jobs:
       - name: Execute isolated PostgreSQL 16 ORM and migration catalog audit
         run: npm run audit:orm
 
+      - name: Verify NOT VALID generator semantics on isolated PostgreSQL 16
+        run: npm run audit:orm:not-valid
+
       - name: Audit legacy-to-PostgreSQL schema drift
         run: |
           npx --no-install tsx scripts/mysql-to-postgres.ts schema-audit --json |
