@@ -5459,6 +5459,12 @@ PostgreSQL16.14六条完整建库/升级路径均为263表、3,700列、570约�
 
 本机最终maxWorkers=2全量248文件通过，1,585通过/4项专用PG测试因无本机服务跳过，共1,589项，512.67秒；最终双TypeScript及差异检查也通过。远端main只读确认仍3bc64ee，准备提交本批精确实现供Linux默认并发和七座完整PG16隔离库验证；没有调整工作流或依赖版本，不将本地PGlite证据替代PG16。
 
+### DB-009E3 首次CI与类型检查内存修正
+
+已推送的9fba575在[Actions34020071977](https://github.com/cinagroup/cinashop/actions/runs/34020071977) attempt 1中七个任务通过，但Worker类型检查触及约2GiB默认V8堆上限，明确报告JavaScript heap out of memory并退出134；尚未执行单元和PG16审计，不计作验收通过。这是有明确内存耗尽日志的编译器故障，不与TEST-005尚未定位的原生allocator崩溃混为一谈。
+
+仅将package.json两条类型检查入口改为显式调用项目已锁定的TypeScript编译器，并指定4,096MiB old-space上限；移除本机NODE_OPTIONS后，两套检查均通过。[Node官方说明](https://nodejs.org/download/release/v24.12.0/docs/api/cli.html#--max-old-space-sizesize-in-mib)中的参数只控制该Node进程的V8旧生代上限，不是Cloudflare Worker运行时内存配置。依赖/锁文件、检查范围、断言、测试并发、时限和工作流不变。待新精确提交完整CI通过后再回填E3和根JSON；不循环重跑失败旧SHA碰绿，也不提前关闭E3或TEST-005。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

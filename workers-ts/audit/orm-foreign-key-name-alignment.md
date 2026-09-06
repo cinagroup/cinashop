@@ -80,6 +80,16 @@ both final TypeScript configurations passed. Exact-commit PG16 CI is pending. Th
 new child has its own 180-second limit; existing index (90-second) and constraint
 addition probes, concurrency and workflow limits are not altered.
 
+The first committed CI run, 9fba575 / Actions34020071977 attempt 1, failed
+before unit tests or PG16: the TypeScript process exhausted its approximately
+2-GiB default V8 heap and exited 134. Seven other jobs passed. This confirmed
+compiler heap exhaustion is separate from the unresolved TEST-005 native
+allocator crash. Both typecheck scripts now invoke the pinned local TypeScript
+compiler with an explicit 4,096-MiB old-space limit; both pass locally with
+NODE_OPTIONS removed. This does not enlarge Worker runtime memory or change
+dependencies, checking scope, assertions, concurrency or time limits. A new
+committed SHA must pass the entire CI; the failed run is not acceptance evidence.
+
 The PG16 runner adds the seventh full path, orm_fk_names, using the dedicated
 loopback service and precise randomly named database cleanup guard. All paths
 retain complete column/index gates and the previous 41 constraints, and add
