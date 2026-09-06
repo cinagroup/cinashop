@@ -33,8 +33,9 @@ and ADD from the reviewed original clauses, in one atomic DO statement.
 This intentionally changes each replaced CHECK's OID and the object ID in its
 outgoing dependencies. It does not preserve target object identity as E3 did.
 Comments are captured and restored exactly, including NULL, Unicode and quotes.
-Other constraint metadata, column dependencies and eight original parsed check
-expressions must be unchanged. The outbox parsed expression changes only to the
+Other constraint metadata, column dependencies and semantic fields of the eight
+original parsed check expressions must be unchanged. Parser character offsets
+are the sole internal-tree exception, explained below. The outbox parsed expression changes only to the
 exact canonical event order, with the same allowed values.
 
 Six ordinary permanent tables are locked in sorted order with a two-second lock
@@ -96,6 +97,38 @@ checks and confirmed cleanup; the two separate NOT VALID generator databases
 remain required. Sequence differences and categories absent from the comparator
 (complete views/functions/triggers, privileges and policies) remain outside any
 schema-equivalence claim.
+
+## First PG16 failure and source-position correction
+
+Commit 8494360 / Actions34023806931 attempt 1 failed its catalog task at
+"0144 replacement postcondition failed: division_apply.da_status_ck". The prior
+index/default/constraint-add/FK-rename probes had run, but no complete ORM summary
+was produced and the separate generator audit was not reached. This failed run
+is not acceptance evidence and is not retried unchanged.
+
+The initial guard incorrectly required byte-identical conbin for the eight
+validation-only replacements. PostgreSQL 16 stores parser character locations in
+that internal tree; PostgreSQL 18's normal nodeToString path writes -1 instead.
+CREATE TABLE and ALTER TABLE source offsets differ even when every semantic
+field is identical. The corrected guard excludes only bounded integer :location
+fields in that internal serialization, retaining all operator/function OIDs,
+constants, columns, casts, tree shape and dependency checks. The raw catalog
+comparison of SQL, validation flags and event order is completely unchanged.
+
+Both engine probes exercise the exact SQL source-position comparison and seven
+semantic mutations (Boolean operation, operator, function, column, constant type,
+NULL flag and constant bytes) that must still differ. The PG16 report must show
+exactly the eight numeric checks with location-only changes; PGlite18 must show
+none. New committed PG16 execution is required to verify that this source-based
+diagnosis fully resolves the failed postcondition; no production data is used.
+The corrected local targeted suite passed all three files / 15 tests in 128.78
+seconds, including both full-schema API children and seven semantic mutations;
+both TypeScript configurations passed again.
+
+Primary implementation evidence:
+[PG16 StoreRelCheck](https://raw.githubusercontent.com/postgres/postgres/REL_16_STABLE/src/backend/catalog/heap.c),
+[PG16 location serialization](https://raw.githubusercontent.com/postgres/postgres/REL_16_STABLE/src/backend/nodes/outfuncs.c),
+[PG18 nodeToString](https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/nodes/outfuncs.c).
 
 ## CI capacity support — TEST-006
 

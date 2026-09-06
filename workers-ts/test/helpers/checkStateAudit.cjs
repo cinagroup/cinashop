@@ -16,6 +16,8 @@ const alter=(e,tail,schema="public")=>"ALTER TABLE "+q(schema)+"."+q(e.catalog.t
 const replace=(e,definition)=>alter(e,"DROP CONSTRAINT "+q(e.catalog.name))+alter(e,"ADD CONSTRAINT "+q(e.catalog.name)+" "+definition);
 const target=(e,schema="public")=>alter(e,"DROP CONSTRAINT "+q(e.catalog.name),schema)+alter(e,"ADD "+e.targetSource.sql,schema);
 const normalized=(rows)=>rows.map(row=>JSON.stringify(row)).sort();
+// This is an internal node-tree comparison, not normalization of catalog SQL.
+const withoutLocations=tree=>tree.replace(/ :location -?[0-9]+(?=[ )}])/g," :location -1");
 
 module.exports=async function auditCheckStates({api,models,format,database}) {
   const started=Date.now(),snapshot=api.generateDrizzleJson(models),old=structuredClone(snapshot);
@@ -30,6 +32,7 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
   const initial=await api.generateMigration(api.generateDrizzleJson({}),old);
   const db=database??new PGlite();
   let constraintClass;
+  const locationOnlyExpressionChanges=new Set();
   const read=()=>readCatalog(async query=>(await db.query(query)).rows);
   const capture=async()=>({
     catalog:await read(),
@@ -56,7 +59,11 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
         assert.equal(a.comment,b.comment,e.key+" comment");
         assert.equal(a.definition,e.catalog.definition);
         assert.equal(a.metadata.convalidated,e.catalog.validated);
-        if(!e.catalog.validated) assert.equal(a.metadata.conbin,b.metadata.conbin);
+        if(!e.catalog.validated) {
+          assert.equal(withoutLocations(a.metadata.conbin),withoutLocations(b.metadata.conbin),
+            e.key+" all parsed expression fields except source character offsets");
+          if(a.metadata.conbin!==b.metadata.conbin)locationOnlyExpressionChanges.add(e.key);
+        }
         replacements.push([b.oid,a.oid]);
       }
       expected.constraints[expected.constraints.findIndex(c=>String(c.oid)===String(b.oid))]=a;
@@ -84,6 +91,25 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
     constraintClass=(await db.query("SELECT 'pg_catalog.pg_constraint'::regclass::oid AS classid")).rows[0].classid;
     assert.ok(constraintClass);
     const initialState=await capture();
+    const engine=Number((await db.query("SELECT current_setting('server_version_num') AS version")).rows[0].version);
+    assert.ok([16,18].includes(Math.floor(engine/10000)));
+    // Exercise the exact SQL offset comparison even on PG18, which writes -1.
+    const tree=initialState.constraints.find(c=>c.metadata.conname==="da_status_ck").metadata.conbin;
+    assert.match(tree,/ :location -?[0-9]+(?=[ )}])/);
+    assert.ok(!tree.includes("'"));
+    const shifted=tree.replace(/ :location -?[0-9]+(?=[ )}])/g," :location 12345");
+    const engineNormalize=async value=>(await db.query("SELECT pg_catalog.regexp_replace("+l(value)+",' :location -?[0-9]+(?=[ )}])',' :location -1','g') AS tree")).rows[0].tree;
+    const normalizedTree=await engineNormalize(tree);
+    assert.equal(await engineNormalize(shifted),normalizedTree);
+    assert.equal(withoutLocations(shifted),normalizedTree);
+    for(const [pattern,value] of [[/:boolop and/,":boolop or"],[/:opno [0-9]+/,":opno 99999"],
+      [/:opfuncid [0-9]+/,":opfuncid 99999"],[/:varattno [0-9]+/,":varattno 999"],
+      [/:consttype [0-9]+/,":consttype 999"],[/:constisnull false/,":constisnull true"],
+      [/:constvalue ([0-9]+) \[ [0-9]+/,":constvalue $1 [ 99"]]) {
+      const drift=shifted.replace(pattern,value);
+      assert.notEqual(drift,shifted);
+      assert.notEqual(await engineNormalize(drift),normalizedTree,"Source-position exception cannot conceal semantic node drift");
+    }
     for(const e of entries)assert.deepEqual(initialState.catalog.constraints.find(c=>c.key===e.key),e.previousCatalog);
     if(database?.withPeer) {
       lockVerification=await database.withPeer(async peer=>{
@@ -259,10 +285,14 @@ module.exports=async function auditCheckStates({api,models,format,database}) {
     assert.equal(rejectionCases.length,55);
     assert.equal(invalidInsertContracts,58);assert.equal(invalidUpdateContracts,58);
     assert.equal(validBoundaryContracts,70);assert.equal(nullColumns,32);assert.equal(committedOldRows,8);
+    assert.deepEqual([...locationOnlyExpressionChanges].sort(),
+      engine<170000?entries.filter(e=>!e.catalog.validated).map(e=>e.key).sort():[]);
     console.log("DB-009E4 "+format+": 9 CHECKs aligned; "+rejectionCases.length+" drift refusals; "+invalidInsertContracts+" invalid insert/update pairs; "+(Date.now()-started)+"ms");
     return {initialStatements:initial.length,guardedStatements:1,generatedProposalStatements:proposal.length,
       alignedKeys:entries.map(e=>e.key),rejectionCases,rawProposalReplacements,
       changedTargetConstraintOids:9,targetDependencyObjectIdsChanged:true,commentsPreserved:true,
+      expressionComparison:{ignoredInternalFields:["location"],semanticDriftRefusals:7,
+        locationOnlyChangedKeys:[...locationOnlyExpressionChanges].sort(),rawCatalogSqlUnmodified:true},
       invalidInsertContracts,invalidUpdateContracts,validBoundaryContracts,nullColumns,
       committedInvalidRowsPreserved:committedOldRows,committedInvalidInsertUpdateAndValidationRefusals:8,
       nonTargetObjectsRowsFilesIndexesTriggersFunctionsPreserved:true,

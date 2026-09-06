@@ -380,7 +380,9 @@ BEGIN
       IF phase=2 AND NOT already_aligned THEN
         old_oid := actual.oid;
         before_metadata := pg_catalog.to_jsonb(actual)-ARRAY['oid','convalidated','conbin'];
-        before_expression := actual.conbin::text;
+        -- PG16 stores parser source offsets; PG18 nodeToString omits them.
+        -- Ignore only :location integers, not operator OIDs, constants, casts or tree shape.
+        before_expression := pg_catalog.regexp_replace(actual.conbin::text,' :location -?[0-9]+(?=[ )}])',' :location -1','g');
         before_comment := pg_catalog.obj_description(old_oid,'pg_constraint');
         SELECT pg_catalog.jsonb_agg(pg_catalog.to_jsonb(d)-'objid' ORDER BY d.refobjsubid,d.deptype)
           INTO before_dependencies FROM pg_catalog.pg_depend d WHERE d.classid='pg_catalog.pg_constraint'::regclass AND d.objid=old_oid;
@@ -392,7 +394,7 @@ BEGIN
           OR (pg_catalog.to_jsonb(actual)-ARRAY['oid','convalidated','conbin']) IS DISTINCT FROM before_metadata
           OR pg_catalog.pg_get_constraintdef(actual.oid,false) IS DISTINCT FROM target.definition
           OR actual.convalidated IS DISTINCT FROM target.validated
-          OR (NOT target.validated AND actual.conbin::text IS DISTINCT FROM before_expression)
+          OR (NOT target.validated AND pg_catalog.regexp_replace(actual.conbin::text,' :location -?[0-9]+(?=[ )}])',' :location -1','g') IS DISTINCT FROM before_expression)
           OR pg_catalog.obj_description(actual.oid,'pg_constraint') IS DISTINCT FROM before_comment
           OR (SELECT pg_catalog.jsonb_agg(pg_catalog.to_jsonb(d)-'objid' ORDER BY d.refobjsubid,d.deptype)
             FROM pg_catalog.pg_depend d WHERE d.classid='pg_catalog.pg_constraint'::regclass AND d.objid=actual.oid)
