@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 import { assertIndexContracts, type Catalog, type CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { extendOrdinaryIndexContracts } from "../scripts/data-migration/ordinary-index-contracts";
@@ -19,6 +20,19 @@ const base172 = extendIndexNameContracts(base128,prior("orm-index-name-reconcili
 const catalog: Catalog = { tables:[],columns:[],sequences:[],indexes:manifest.entries.map(e=>e.catalog),constraints:manifest.entries.map(e=>e.constraint) };
 
 describe("DB-009D2b3d owning constraint and index identity", () => {
+  it("checks both real driver error field spellings without accepting missing, wrong or conflicting names", () => {
+    const { matchesDatabaseError } = createRequire(import.meta.url)("./helpers/constraintNameAudit.cjs") as {
+      matchesDatabaseError(error: Record<string, unknown>, code: string, constraint?: string): boolean;
+    };
+    const name = "kefu_visitor_session_token_hash_key";
+    for (const fields of [{ constraint: name }, { constraint_name: name }, { constraint: name, constraint_name: name }]) {
+      expect(matchesDatabaseError({ code: "23505", ...fields }, "23505", name)).toBe(true);
+    }
+    for (const error of [{ code: "23505" }, { code: "23503", constraint: name }, { code: "23505", constraint_name: "wrong" },
+      { code: "23505", constraint: name, constraint_name: "wrong" }]) {
+      expect(() => matchesDatabaseError(error, "23505", name)).toThrow();
+    }
+  });
   it("binds all three constraint-owned aliases to immutable engine rows and exact source/model declarations", () => {
     const baseline = JSON.parse(read("audit/orm-ddl-catalog-baseline.json")) as { records: Array<{
       comparison?: string; category?: string; change?: string; value: CatalogRow & { reference: string; candidate: string } }> };

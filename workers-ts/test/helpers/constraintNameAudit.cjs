@@ -6,6 +6,17 @@ const manifest = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-constr
 const entries = manifest.entries;
 const ident = (name) => '"' + name.replaceAll('"', '""') + '"';
 
+function matchesDatabaseError(error, code, constraint) {
+  assert.equal(error.code, code);
+  if (constraint) {
+    // PGlite uses constraint; postgres.js names protocol field n constraint_name.
+    const names = [error.constraint, error.constraint_name].filter((name) => name !== undefined);
+    assert.ok(names.length > 0, "Missing database constraint error field");
+    for (const name of names) assert.equal(name, constraint);
+  }
+  return true;
+}
+
 function holdOldNames(snapshot) {
   for (const e of entries) {
     const group = snapshot.tables[`public.${e.catalog.table}`][e.snapshotField];
@@ -64,7 +75,7 @@ async function auditConstraintNames({ api, models, previous, db, read, objects, 
     assert.deepEqual(before.catalog.constraints.find((r) => r.key === e.previousKey), e.previousConstraint);
   }
   const reject = async (query, code, constraint) => { await db.exec("SAVEPOINT constraint_probe");
-    await assert.rejects(db.exec(query), constraint ? { code, constraint } : { code });
+    await assert.rejects(db.exec(query), (error) => matchesDatabaseError(error, code, constraint));
     await db.exec("ROLLBACK TO SAVEPOINT constraint_probe; RELEASE SAVEPOINT constraint_probe"); };
   await db.exec("BEGIN");
   try {
@@ -161,3 +172,4 @@ async function auditConstraintNames({ api, models, previous, db, read, objects, 
 }
 module.exports = auditConstraintNames;
 module.exports.holdOldNames = holdOldNames;
+module.exports.matchesDatabaseError = matchesDatabaseError;
