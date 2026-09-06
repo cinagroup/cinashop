@@ -93,8 +93,8 @@ export const userExtract = pgTable(
   },
   (t) => [
     index("ue_uid").on(t.uid),
-    index("ue_uid_time").on(t.uid, t.addTime),
-    index("ue_status_time").on(t.status, t.addTime),
+    index("ue_uid_time").on(t.uid, t.addTime.desc().nullsFirst()),
+    index("ue_status_time").on(t.status, t.addTime.desc().nullsFirst()),
     uniqueIndex("ue_request_replay_uq").on(t.uid, t.requestKey).where(sql`${t.requestKey} <> ''`),
   ],
 );

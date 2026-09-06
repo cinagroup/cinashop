@@ -31,8 +31,8 @@ export const storeProductWords = pgTable("store_product_words", {
   addTime: integer("add_time").default(0).notNull(),
 }, (t) => [
   index("spw_owner_active_sort")
-    .on(t.type, t.relationId, t.isDel, t.sort.desc(), t.id.desc()),
+    .on(t.type, t.relationId, t.isDel, t.sort.desc().nullsFirst(), t.id.desc().nullsFirst()),
   index("spw_public_visible_sort")
-    .on(t.sort.desc(), t.id.desc())
+    .on(t.sort.desc().nullsFirst(), t.id.desc().nullsFirst())
     .where(sql`${t.type} = 0 AND ${t.relationId} = 0 AND ${t.isDel} = 0 AND ${t.isShow} = 1`),
 ]);

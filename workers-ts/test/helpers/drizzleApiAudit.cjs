@@ -108,6 +108,7 @@ async function main() {
     assert.deepEqual(await generateMigration(restored, generateDrizzleJson(models, restored.id)), []);
     console.log(`DB-009D2b1 ${format}: 22 exact catalog contracts, additive upgrade, duplicate refusal, no-op passed`);
   } finally { await db.close(); }
+  await require("./drizzleIndexDefinitionAudit.cjs")({ api, models, snapshot: previous, format });
   console.log(`DB-008 ${format}: initial, index/constraint upgrades, tenant FK, full-model no-op passed`);
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });

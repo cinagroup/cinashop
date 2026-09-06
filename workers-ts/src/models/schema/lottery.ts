@@ -51,7 +51,7 @@ export const luckLottery = pgTable(
       table.isDel,
       table.startTime,
       table.endTime,
-      table.id,
+      table.id.desc().nullsFirst(),
     ),
   ],
 );

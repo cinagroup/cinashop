@@ -181,7 +181,7 @@ export const workGroupChatCurrent = pgTable(
     index("wgcc_catalog_idx").on(
       table.corpId,
       table.lifecycleState,
-      table.updateTime.desc(),
+      table.updateTime.desc().nullsFirst(),
       table.id,
     ),
     index("wgcc_last_event_idx")
@@ -371,7 +371,7 @@ export const workGroupChatMemberCurrent = pgTable(
       table.corpId,
       table.groupId,
       table.lifecycleState,
-      table.joinTime.desc(),
+      table.joinTime.desc().nullsFirst(),
       table.userid,
     ),
     index("wgcmc_last_event_idx").on(table.lastEventId),

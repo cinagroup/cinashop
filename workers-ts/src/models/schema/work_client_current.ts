@@ -184,7 +184,7 @@ export const workClientCurrent = pgTable(
     index("wcc_catalog_idx").on(
       table.corpId,
       table.lifecycleState,
-      table.updateTime.desc(),
+      table.updateTime.desc().nullsFirst(),
       table.id,
     ),
     index("wcc_last_event_idx")

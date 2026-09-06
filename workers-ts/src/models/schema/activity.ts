@@ -240,7 +240,7 @@ export const storeSeckill = pgTable(
   (t) => [
     index("ss_time").on(t.timeId),
     index("ss_status").on(t.status),
-    index("sseckill_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort),
+    index("sseckill_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort.desc().nullsFirst()),
     index("store_seckill_system_form_active").on(t.systemFormId, t.isDel, t.status)
       .where(sql`${t.systemFormId} > 0`),
   ],
@@ -319,7 +319,7 @@ export const storeCombination = pgTable(
   },
   (t) => [
     index("scomb_status").on(t.status),
-    index("scomb_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort),
+    index("scomb_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort.desc().nullsFirst()),
     index("store_combination_system_form_active").on(t.systemFormId, t.isDel, t.status)
       .where(sql`${t.systemFormId} > 0`),
   ],
@@ -358,7 +358,7 @@ export const storePink = pgTable(
   (t) => [
     index("sp_combination").on(t.combinationId),
     index("sp_kid").on(t.kId),
-    index("sp_leader_active").on(t.combinationId, t.kId, t.status, t.addTime),
+    index("sp_leader_active").on(t.combinationId, t.kId, t.status, t.addTime.desc().nullsFirst()),
     index("sp_group_member").on(t.kId, t.isRefund, t.status),
   ],
 );
@@ -420,7 +420,7 @@ export const storeBargain = pgTable(
   },
   (t) => [
     index("sbarg_status").on(t.status),
-    index("sbarg_visible").on(t.status, t.isDel, t.stopTime, t.sort),
+    index("sbarg_visible").on(t.status, t.isDel, t.stopTime, t.sort.desc().nullsFirst()),
     index("store_bargain_system_form_active").on(t.systemFormId, t.isDel, t.status)
       .where(sql`${t.systemFormId} > 0`),
   ],
@@ -468,7 +468,7 @@ export const storeIntegral = pgTable(
   },
   (t) => [
     index("sint_status").on(t.status),
-    index("sint_visible").on(t.status, t.isShow, t.isDel, t.sort),
+    index("sint_visible").on(t.status, t.isShow, t.isDel, t.sort.desc().nullsFirst()),
     index("store_integral_system_form_active").on(t.systemFormId, t.isDel, t.status)
       .where(sql`${t.systemFormId} > 0`),
   ],

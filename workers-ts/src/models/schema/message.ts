@@ -42,7 +42,7 @@ export const systemMessage = pgTable(
     uniqueIndex("smsg_event_key_uq").on(t.eventKey),
     index("sm_user").on(t.userId),
     index("sm_add_time").on(t.addTime),
-    index("smsg_visible_user").on(t.userId, t.status, t.isDel, t.addTime),
+    index("smsg_visible_user").on(t.userId, t.status, t.isDel, t.addTime.desc().nullsFirst()),
     index("smsg_staff_inbox").on(t.userId, t.id)
       .where(sql`${t.type} = 2 AND ${t.status} = 1 AND ${t.isDel} = 0`),
   ],

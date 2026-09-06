@@ -12,7 +12,7 @@ export const pageCategory = pgTable(
     status: smallint("status").default(1).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
-  (table) => [index("page_category_tree_lookup").on(table.pid, table.sort, table.id)],
+  (table) => [index("page_category_tree_lookup").on(table.pid, table.sort.desc().nullsFirst(), table.id)],
 );
 
 /** Static and custom navigation targets associated with a page category. */
@@ -30,7 +30,7 @@ export const pageLink = pgTable(
     sort: smallint("sort").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
-  (table) => [index("page_link_category_lookup").on(table.cateId, table.sort, table.id)],
+  (table) => [index("page_link_category_lookup").on(table.cateId, table.sort.desc().nullsFirst(), table.id)],
 );
 
 export type PageCategory = typeof pageCategory.$inferSelect;

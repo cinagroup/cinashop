@@ -1,0 +1,3711 @@
+{
+  "sourceCommit": "404baf33d03bcd4968baf732bbfafc65a8b12e24",
+  "runId": 33970859482,
+  "scope": "All 57 external-versus-ORM same-name index definition differences. Preserve canonical deployed SQL and index names; align only ORM ordering/null placement/partial predicates. Previous snapshot entries are test fixtures for actual generator upgrade checks, not a production migration plan.",
+  "entries": [
+    {
+      "key": "agreement.agreement_visible",
+      "reason": "missingDescending",
+      "source": "migrations/0038_legacy_content_notifications.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"agreement_visible\" ON \"agreement\" (\"status\", \"sort\" DESC);",
+      "sourceLine": 50,
+      "catalog": {
+        "key": "agreement.agreement_visible",
+        "name": "agreement_visible",
+        "table": "agreement",
+        "definition": "public.agreement USING btree (status, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "agreement.agreement_visible",
+        "name": "agreement_visible",
+        "table": "agreement",
+        "definition": "public.agreement USING btree (status, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/content.ts",
+      "previousDeclaration": "index(\"agreement_visible\").on(t.status, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "agreement_visible",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "article_category.ac_admin_active_sort",
+      "reason": "nullOrdering",
+      "source": "migrations/0127_admin_article_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ac_admin_active_sort\"\n  ON \"article_category\" (\"is_del\", \"sort\" DESC, \"id\" DESC);",
+      "sourceLine": 8,
+      "catalog": {
+        "key": "article_category.ac_admin_active_sort",
+        "name": "ac_admin_active_sort",
+        "table": "article_category",
+        "definition": "public.article_category USING btree (is_del, sort DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "article_category.ac_admin_active_sort",
+        "name": "ac_admin_active_sort",
+        "table": "article_category",
+        "definition": "public.article_category USING btree (is_del, sort DESC NULLS LAST, id DESC NULLS LAST)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/content.ts",
+      "previousDeclaration": "index(\"ac_admin_active_sort\").on(t.isDel, t.sort.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "ac_admin_active_sort",
+        "columns": [
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "article_category.ac_visible_sort",
+      "reason": "missingDescending",
+      "source": "migrations/0037_article_taxonomy_content.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ac_visible_sort\"\n  ON \"article_category\" (\"status\", \"is_del\", \"hidden\", \"sort\" DESC);",
+      "sourceLine": 15,
+      "catalog": {
+        "key": "article_category.ac_visible_sort",
+        "name": "ac_visible_sort",
+        "table": "article_category",
+        "definition": "public.article_category USING btree (status, is_del, hidden, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "article_category.ac_visible_sort",
+        "name": "ac_visible_sort",
+        "table": "article_category",
+        "definition": "public.article_category USING btree (status, is_del, hidden, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/content.ts",
+      "previousDeclaration": "index(\"ac_visible_sort\").on(t.status, t.isDel, t.hidden, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "ac_visible_sort",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "hidden",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "community.c_admin_moderation",
+      "reason": "nullOrdering",
+      "source": "migrations/0088_community_admin_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"c_admin_moderation\"\n  ON \"community\" (\"is_verify\", \"type\", \"content_type\", \"add_time\" DESC, \"id\" DESC)\n  WHERE \"is_del\" = 0;",
+      "sourceLine": 4,
+      "catalog": {
+        "key": "community.c_admin_moderation",
+        "name": "c_admin_moderation",
+        "table": "community",
+        "definition": "public.community USING btree (is_verify, type, content_type, add_time DESC, id DESC) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "community.c_admin_moderation",
+        "name": "c_admin_moderation",
+        "table": "community",
+        "definition": "public.community USING btree (is_verify, type, content_type, add_time DESC NULLS LAST, id DESC NULLS LAST) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/community.ts",
+      "previousDeclaration": "index(\"c_admin_moderation\")\n      .on(t.isVerify, t.type, t.contentType, t.addTime.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "c_admin_moderation",
+        "columns": [
+          {
+            "expression": "is_verify",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "content_type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"community\".\"is_del\" = 0",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "community.c_author_public_latest",
+      "reason": "nullOrdering",
+      "source": "migrations/0087_community_social_graph_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"c_author_public_latest\"\n  ON \"community\" (\"type\", \"relation_id\", \"add_time\" DESC, \"id\" DESC)\n  WHERE \"status\" = 1 AND \"is_verify\" = 1 AND \"is_del\" = 0;",
+      "sourceLine": 4,
+      "catalog": {
+        "key": "community.c_author_public_latest",
+        "name": "c_author_public_latest",
+        "table": "community",
+        "definition": "public.community USING btree (type, relation_id, add_time DESC, id DESC) WHERE ((status = 1) AND (is_verify = 1) AND (is_del = 0))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "community.c_author_public_latest",
+        "name": "c_author_public_latest",
+        "table": "community",
+        "definition": "public.community USING btree (type, relation_id, add_time DESC NULLS LAST, id DESC NULLS LAST) WHERE ((status = 1) AND (is_verify = 1) AND (is_del = 0))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/community.ts",
+      "previousDeclaration": "index(\"c_author_public_latest\")\n      .on(t.type, t.relationId, t.addTime.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "c_author_public_latest",
+        "columns": [
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "relation_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"community\".\"status\" = 1 AND \"community\".\"is_verify\" = 1 AND \"community\".\"is_del\" = 0",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "community.c_public_feed",
+      "reason": "missingDescending",
+      "source": "migrations/0024_community_seckill_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"c_public_feed\"\n  ON \"community\" (\"status\", \"is_verify\", \"is_del\", \"add_time\" DESC);",
+      "sourceLine": 23,
+      "catalog": {
+        "key": "community.c_public_feed",
+        "name": "c_public_feed",
+        "table": "community",
+        "definition": "public.community USING btree (status, is_verify, is_del, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "community.c_public_feed",
+        "name": "c_public_feed",
+        "table": "community",
+        "definition": "public.community USING btree (status, is_verify, is_del, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/community.ts",
+      "previousDeclaration": "index(\"c_public_feed\").on(t.status, t.isVerify, t.isDel, t.addTime)",
+      "previousSnapshotIndex": {
+        "name": "c_public_feed",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_verify",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "community_comment.cc_admin_moderation",
+      "reason": "nullOrdering",
+      "source": "migrations/0088_community_admin_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"cc_admin_moderation\"\n  ON \"community_comment\" (\"is_reply\", \"is_verify\", \"is_show\", \"community_id\", \"add_time\" DESC, \"id\" DESC)\n  WHERE \"is_del\" = 0;",
+      "sourceLine": 8,
+      "catalog": {
+        "key": "community_comment.cc_admin_moderation",
+        "name": "cc_admin_moderation",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (is_reply, is_verify, is_show, community_id, add_time DESC, id DESC) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "community_comment.cc_admin_moderation",
+        "name": "cc_admin_moderation",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (is_reply, is_verify, is_show, community_id, add_time DESC NULLS LAST, id DESC NULLS LAST) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/community.ts",
+      "previousDeclaration": "index(\"cc_admin_moderation\")\n      .on(t.isReply, t.isVerify, t.isShow, t.communityId, t.addTime.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "cc_admin_moderation",
+        "columns": [
+          {
+            "expression": "is_reply",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_verify",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "community_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"community_comment\".\"is_del\" = 0",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "community_comment.cc_public_thread",
+      "reason": "missingDescending",
+      "source": "migrations/0024_community_seckill_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"cc_public_thread\"\n  ON \"community_comment\" (\n    \"community_id\", \"is_del\", \"is_show\", \"is_verify\", \"add_time\" DESC\n  );",
+      "sourceLine": 26,
+      "catalog": {
+        "key": "community_comment.cc_public_thread",
+        "name": "cc_public_thread",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (community_id, is_del, is_show, is_verify, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "community_comment.cc_public_thread",
+        "name": "cc_public_thread",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (community_id, is_del, is_show, is_verify, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/community.ts",
+      "previousDeclaration": "index(\"cc_public_thread\").on(\n      t.communityId,\n      t.isDel,\n      t.isShow,\n      t.isVerify,\n      t.addTime,\n    )",
+      "previousSnapshotIndex": {
+        "name": "cc_public_thread",
+        "columns": [
+          {
+            "expression": "community_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_verify",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "community_topic.ct_admin_catalog",
+      "reason": "nullOrdering",
+      "source": "migrations/0088_community_admin_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ct_admin_catalog\"\n  ON \"community_topic\" (\"status\", \"is_recommend\", \"sort\" DESC, \"id\" DESC)\n  WHERE \"is_del\" = 0;",
+      "sourceLine": 12,
+      "catalog": {
+        "key": "community_topic.ct_admin_catalog",
+        "name": "ct_admin_catalog",
+        "table": "community_topic",
+        "definition": "public.community_topic USING btree (status, is_recommend, sort DESC, id DESC) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "community_topic.ct_admin_catalog",
+        "name": "ct_admin_catalog",
+        "table": "community_topic",
+        "definition": "public.community_topic USING btree (status, is_recommend, sort DESC NULLS LAST, id DESC NULLS LAST) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/community.ts",
+      "previousDeclaration": "index(\"ct_admin_catalog\")\n      .on(t.status, t.isRecommend, t.sort.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "ct_admin_catalog",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_recommend",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"community_topic\".\"is_del\" = 0",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "community_user.cu_recommend_rank",
+      "reason": "nullOrdering",
+      "source": "migrations/0087_community_social_graph_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"cu_recommend_rank\"\n  ON \"community_user\" (\"fans_num\" DESC, \"id\" DESC)\n  WHERE \"status\" = 1 AND \"is_del\" = 0 AND \"community_num\" > 0;",
+      "sourceLine": 8,
+      "catalog": {
+        "key": "community_user.cu_recommend_rank",
+        "name": "cu_recommend_rank",
+        "table": "community_user",
+        "definition": "public.community_user USING btree (fans_num DESC, id DESC) WHERE ((status = 1) AND (is_del = 0) AND (community_num > 0))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "community_user.cu_recommend_rank",
+        "name": "cu_recommend_rank",
+        "table": "community_user",
+        "definition": "public.community_user USING btree (fans_num DESC NULLS LAST, id DESC NULLS LAST) WHERE ((status = 1) AND (is_del = 0) AND (community_num > 0))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/community.ts",
+      "previousDeclaration": "index(\"cu_recommend_rank\")\n      .on(t.fansNum.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "cu_recommend_rank",
+        "columns": [
+          {
+            "expression": "fans_num",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"community_user\".\"status\" = 1 AND \"community_user\".\"is_del\" = 0 AND \"community_user\".\"community_num\" > 0",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "express_company.ec_visible_sort",
+      "reason": "missingDescending",
+      "source": "migrations/0035_renamed_legacy_catalog_tables.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ec_visible_sort\"\n  ON \"express_company\" (\"is_show\", \"status\", \"sort\" DESC);",
+      "sourceLine": 17,
+      "catalog": {
+        "key": "express_company.ec_visible_sort",
+        "name": "ec_visible_sort",
+        "table": "express_company",
+        "definition": "public.express_company USING btree (is_show, status, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "express_company.ec_visible_sort",
+        "name": "ec_visible_sort",
+        "table": "express_company",
+        "definition": "public.express_company USING btree (is_show, status, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/shipping.ts",
+      "previousDeclaration": "index(\"ec_visible_sort\").on(t.isShow, t.status, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "ec_visible_sort",
+        "columns": [
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "kefu_visitor_session.kvs_active_expiry",
+      "reason": "missingPartialPredicate",
+      "source": "migrations/0104_kefu_visitor_session.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"kvs_active_expiry\"\n  ON \"kefu_visitor_session\" (\"expires_at\", \"visitor_uid\")\n  WHERE \"revoked_at\" = 0;",
+      "sourceLine": 31,
+      "catalog": {
+        "key": "kefu_visitor_session.kvs_active_expiry",
+        "name": "kvs_active_expiry",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (expires_at, visitor_uid) WHERE (revoked_at = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "kefu_visitor_session.kvs_active_expiry",
+        "name": "kvs_active_expiry",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (expires_at, visitor_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/admin.ts",
+      "previousDeclaration": "index(\"kvs_active_expiry\").on(t.expiresAt, t.visitorUid)",
+      "previousSnapshotIndex": {
+        "name": "kvs_active_expiry",
+        "columns": [
+          {
+            "expression": "expires_at",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "visitor_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "kefu_visitor_session.kvs_kefu_active",
+      "reason": "missingPartialPredicate",
+      "source": "migrations/0104_kefu_visitor_session.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"kvs_kefu_active\"\n  ON \"kefu_visitor_session\" (\"kefu_uid\", \"expires_at\", \"visitor_uid\")\n  WHERE \"revoked_at\" = 0;",
+      "sourceLine": 34,
+      "catalog": {
+        "key": "kefu_visitor_session.kvs_kefu_active",
+        "name": "kvs_kefu_active",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (kefu_uid, expires_at, visitor_uid) WHERE (revoked_at = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "kefu_visitor_session.kvs_kefu_active",
+        "name": "kvs_kefu_active",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (kefu_uid, expires_at, visitor_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/admin.ts",
+      "previousDeclaration": "index(\"kvs_kefu_active\").on(t.kefuUid, t.expiresAt, t.visitorUid)",
+      "previousSnapshotIndex": {
+        "name": "kvs_kefu_active",
+        "columns": [
+          {
+            "expression": "kefu_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "expires_at",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "visitor_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "luck_lottery.luck_lottery_factor_active",
+      "reason": "missingDescending",
+      "source": "migrations/0070_lottery_domain.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"luck_lottery_factor_active\"\n  ON \"luck_lottery\" (\"factor\", \"status\", \"is_del\", \"start_time\", \"end_time\", \"id\" DESC);",
+      "sourceLine": 34,
+      "catalog": {
+        "key": "luck_lottery.luck_lottery_factor_active",
+        "name": "luck_lottery_factor_active",
+        "table": "luck_lottery",
+        "definition": "public.luck_lottery USING btree (factor, status, is_del, start_time, end_time, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "luck_lottery.luck_lottery_factor_active",
+        "name": "luck_lottery_factor_active",
+        "table": "luck_lottery",
+        "definition": "public.luck_lottery USING btree (factor, status, is_del, start_time, end_time, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/lottery.ts",
+      "previousDeclaration": "index(\"luck_lottery_factor_active\").on(\n      table.factor,\n      table.status,\n      table.isDel,\n      table.startTime,\n      table.endTime,\n      table.id,\n    )",
+      "previousSnapshotIndex": {
+        "name": "luck_lottery_factor_active",
+        "columns": [
+          {
+            "expression": "factor",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "start_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "end_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "order_print_job.opj_order_history",
+      "reason": "missingDescending",
+      "source": "migrations/0090_print_job_outbox.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"opj_order_history\"\n  ON \"order_print_job\" (\"order_id\", \"id\" DESC);",
+      "sourceLine": 59,
+      "catalog": {
+        "key": "order_print_job.opj_order_history",
+        "name": "opj_order_history",
+        "table": "order_print_job",
+        "definition": "public.order_print_job USING btree (order_id, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "order_print_job.opj_order_history",
+        "name": "opj_order_history",
+        "table": "order_print_job",
+        "definition": "public.order_print_job USING btree (order_id, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/printing_job.ts",
+      "previousDeclaration": "index(\"opj_order_history\").on(t.orderId, t.id)",
+      "previousSnapshotIndex": {
+        "name": "opj_order_history",
+        "columns": [
+          {
+            "expression": "order_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "order_print_job.opj_owner_history",
+      "reason": "missingDescending",
+      "source": "migrations/0090_print_job_outbox.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"opj_owner_history\"\n  ON \"order_print_job\" (\"supplier_id\", \"id\" DESC);",
+      "sourceLine": 57,
+      "catalog": {
+        "key": "order_print_job.opj_owner_history",
+        "name": "opj_owner_history",
+        "table": "order_print_job",
+        "definition": "public.order_print_job USING btree (supplier_id, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "order_print_job.opj_owner_history",
+        "name": "opj_owner_history",
+        "table": "order_print_job",
+        "definition": "public.order_print_job USING btree (supplier_id, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/printing_job.ts",
+      "previousDeclaration": "index(\"opj_owner_history\").on(t.supplierId, t.id)",
+      "previousSnapshotIndex": {
+        "name": "opj_owner_history",
+        "columns": [
+          {
+            "expression": "supplier_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "order_waybill_job.owj_order_history",
+      "reason": "missingDescending",
+      "source": "migrations/0091_electronic_waybill_outbox.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"owj_order_history\"\n  ON \"order_waybill_job\" (\"order_id\", \"id\" DESC);",
+      "sourceLine": 73,
+      "catalog": {
+        "key": "order_waybill_job.owj_order_history",
+        "name": "owj_order_history",
+        "table": "order_waybill_job",
+        "definition": "public.order_waybill_job USING btree (order_id, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "order_waybill_job.owj_order_history",
+        "name": "owj_order_history",
+        "table": "order_waybill_job",
+        "definition": "public.order_waybill_job USING btree (order_id, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/waybill_job.ts",
+      "previousDeclaration": "index(\"owj_order_history\").on(t.orderId, t.id)",
+      "previousSnapshotIndex": {
+        "name": "owj_order_history",
+        "columns": [
+          {
+            "expression": "order_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "order_waybill_job.owj_owner_history",
+      "reason": "missingDescending",
+      "source": "migrations/0091_electronic_waybill_outbox.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"owj_owner_history\"\n  ON \"order_waybill_job\" (\"supplier_id\", \"id\" DESC);",
+      "sourceLine": 71,
+      "catalog": {
+        "key": "order_waybill_job.owj_owner_history",
+        "name": "owj_owner_history",
+        "table": "order_waybill_job",
+        "definition": "public.order_waybill_job USING btree (supplier_id, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "order_waybill_job.owj_owner_history",
+        "name": "owj_owner_history",
+        "table": "order_waybill_job",
+        "definition": "public.order_waybill_job USING btree (supplier_id, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/waybill_job.ts",
+      "previousDeclaration": "index(\"owj_owner_history\").on(t.supplierId, t.id)",
+      "previousSnapshotIndex": {
+        "name": "owj_owner_history",
+        "columns": [
+          {
+            "expression": "supplier_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "page_category.page_category_tree_lookup",
+      "reason": "missingDescending",
+      "source": "migrations/0069_page_navigation.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"page_category_tree_lookup\"\n  ON \"page_category\" (\"pid\", \"sort\" DESC, \"id\" ASC);",
+      "sourceLine": 14,
+      "catalog": {
+        "key": "page_category.page_category_tree_lookup",
+        "name": "page_category_tree_lookup",
+        "table": "page_category",
+        "definition": "public.page_category USING btree (pid, sort DESC, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "page_category.page_category_tree_lookup",
+        "name": "page_category_tree_lookup",
+        "table": "page_category",
+        "definition": "public.page_category USING btree (pid, sort, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/page_navigation.ts",
+      "previousDeclaration": "index(\"page_category_tree_lookup\").on(table.pid, table.sort, table.id)",
+      "previousSnapshotIndex": {
+        "name": "page_category_tree_lookup",
+        "columns": [
+          {
+            "expression": "pid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "page_link.page_link_category_lookup",
+      "reason": "missingDescending",
+      "source": "migrations/0069_page_navigation.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"page_link_category_lookup\"\n  ON \"page_link\" (\"cate_id\", \"sort\" DESC, \"id\" ASC);",
+      "sourceLine": 30,
+      "catalog": {
+        "key": "page_link.page_link_category_lookup",
+        "name": "page_link_category_lookup",
+        "table": "page_link",
+        "definition": "public.page_link USING btree (cate_id, sort DESC, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "page_link.page_link_category_lookup",
+        "name": "page_link_category_lookup",
+        "table": "page_link",
+        "definition": "public.page_link USING btree (cate_id, sort, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/page_navigation.ts",
+      "previousDeclaration": "index(\"page_link_category_lookup\").on(table.cateId, table.sort, table.id)",
+      "previousSnapshotIndex": {
+        "name": "page_link_category_lookup",
+        "columns": [
+          {
+            "expression": "cate_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "shipping_templates.st_owner_active",
+      "reason": "missingDescending",
+      "source": "migrations/0027_reply_shipping_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"st_owner_active\"\n  ON \"shipping_templates\" (\"owner_type\", \"relation_id\", \"is_del\", \"sort\" DESC);",
+      "sourceLine": 20,
+      "catalog": {
+        "key": "shipping_templates.st_owner_active",
+        "name": "st_owner_active",
+        "table": "shipping_templates",
+        "definition": "public.shipping_templates USING btree (owner_type, relation_id, is_del, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "shipping_templates.st_owner_active",
+        "name": "st_owner_active",
+        "table": "shipping_templates",
+        "definition": "public.shipping_templates USING btree (owner_type, relation_id, is_del, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/shipping.ts",
+      "previousDeclaration": "index(\"st_owner_active\").on(t.ownerType, t.relationId, t.isDel, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "st_owner_active",
+        "columns": [
+          {
+            "expression": "owner_type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "relation_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_bargain.sbarg_visible",
+      "reason": "missingDescending",
+      "source": "migrations/0032_activity_catalog_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sbarg_visible\"\n  ON \"store_bargain\" (\"status\", \"is_del\", \"stop_time\", \"sort\" DESC);",
+      "sourceLine": 119,
+      "catalog": {
+        "key": "store_bargain.sbarg_visible",
+        "name": "sbarg_visible",
+        "table": "store_bargain",
+        "definition": "public.store_bargain USING btree (status, is_del, stop_time, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_bargain.sbarg_visible",
+        "name": "sbarg_visible",
+        "table": "store_bargain",
+        "definition": "public.store_bargain USING btree (status, is_del, stop_time, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/activity.ts",
+      "previousDeclaration": "index(\"sbarg_visible\").on(t.status, t.isDel, t.stopTime, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "sbarg_visible",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "stop_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_combination.scomb_visible",
+      "reason": "missingDescending",
+      "source": "migrations/0032_activity_catalog_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"scomb_visible\"\n  ON \"store_combination\" (\"status\", \"is_show\", \"is_del\", \"stop_time\", \"sort\" DESC);",
+      "sourceLine": 121,
+      "catalog": {
+        "key": "store_combination.scomb_visible",
+        "name": "scomb_visible",
+        "table": "store_combination",
+        "definition": "public.store_combination USING btree (status, is_show, is_del, stop_time, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_combination.scomb_visible",
+        "name": "scomb_visible",
+        "table": "store_combination",
+        "definition": "public.store_combination USING btree (status, is_show, is_del, stop_time, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/activity.ts",
+      "previousDeclaration": "index(\"scomb_visible\").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "scomb_visible",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "stop_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_integral.sint_visible",
+      "reason": "missingDescending",
+      "source": "migrations/0032_activity_catalog_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sint_visible\"\n  ON \"store_integral\" (\"status\", \"is_show\", \"is_del\", \"sort\" DESC);",
+      "sourceLine": 123,
+      "catalog": {
+        "key": "store_integral.sint_visible",
+        "name": "sint_visible",
+        "table": "store_integral",
+        "definition": "public.store_integral USING btree (status, is_show, is_del, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_integral.sint_visible",
+        "name": "sint_visible",
+        "table": "store_integral",
+        "definition": "public.store_integral USING btree (status, is_show, is_del, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/activity.ts",
+      "previousDeclaration": "index(\"sint_visible\").on(t.status, t.isShow, t.isDel, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "sint_visible",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_order.so_delivery_mobile_active",
+      "reason": "nullOrdering",
+      "source": "migrations/0107_store_mobile_delivery_index.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_delivery_mobile_active\"\n  ON \"store_order\" (\"delivery_uid\", \"status\", \"add_time\" DESC, \"id\" DESC)\n  WHERE \"delivery_uid\" > 0\n    AND \"paid\" = 1\n    AND \"is_del\" = 0\n    AND \"is_system_del\" = 0\n    AND \"refund_status\" IN (0, 3);",
+      "sourceLine": 6,
+      "catalog": {
+        "key": "store_order.so_delivery_mobile_active",
+        "name": "so_delivery_mobile_active",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (delivery_uid, status, add_time DESC, id DESC) WHERE ((delivery_uid > 0) AND (paid = 1) AND (is_del = 0) AND (is_system_del = 0) AND (refund_status = ANY (ARRAY[0, 3])))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order.so_delivery_mobile_active",
+        "name": "so_delivery_mobile_active",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (delivery_uid, status, add_time DESC NULLS LAST, id DESC NULLS LAST) WHERE ((delivery_uid > 0) AND (paid = 1) AND (is_del = 0) AND (is_system_del = 0) AND (refund_status = ANY (ARRAY[0, 3])))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/order.ts",
+      "previousDeclaration": "index(\"so_delivery_mobile_active\")\n      .on(t.deliveryUid, t.status, t.addTime.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "so_delivery_mobile_active",
+        "columns": [
+          {
+            "expression": "delivery_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"store_order\".\"delivery_uid\" > 0 AND \"store_order\".\"paid\" = 1 AND \"store_order\".\"is_del\" = 0 AND \"store_order\".\"is_system_del\" = 0 AND \"store_order\".\"refund_status\" IN (0, 3)",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_order_cart_info.soci_old_cart_id",
+      "reason": "missingPartialPredicate",
+      "source": "migrations/0017_supplier_split_fulfillment.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"soci_old_cart_id\"\n  ON \"store_order_cart_info\" (\"old_cart_id\")\n  WHERE \"old_cart_id\" <> '';",
+      "sourceLine": 17,
+      "catalog": {
+        "key": "store_order_cart_info.soci_old_cart_id",
+        "name": "soci_old_cart_id",
+        "table": "store_order_cart_info",
+        "definition": "public.store_order_cart_info USING btree (old_cart_id) WHERE ((old_cart_id)::text <> ''::text)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order_cart_info.soci_old_cart_id",
+        "name": "soci_old_cart_id",
+        "table": "store_order_cart_info",
+        "definition": "public.store_order_cart_info USING btree (old_cart_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/order.ts",
+      "previousDeclaration": "index(\"soci_old_cart_id\").on(t.oldCartId)",
+      "previousSnapshotIndex": {
+        "name": "soci_old_cart_id",
+        "columns": [
+          {
+            "expression": "old_cart_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_pink.sp_leader_active",
+      "reason": "missingDescending",
+      "source": "migrations/0030_order_cart_pink_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_leader_active\"\n  ON \"store_pink\" (\"combination_id\", \"k_id\", \"status\", \"add_time\" DESC);",
+      "sourceLine": 49,
+      "catalog": {
+        "key": "store_pink.sp_leader_active",
+        "name": "sp_leader_active",
+        "table": "store_pink",
+        "definition": "public.store_pink USING btree (combination_id, k_id, status, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_pink.sp_leader_active",
+        "name": "sp_leader_active",
+        "table": "store_pink",
+        "definition": "public.store_pink USING btree (combination_id, k_id, status, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/activity.ts",
+      "previousDeclaration": "index(\"sp_leader_active\").on(t.combinationId, t.kId, t.status, t.addTime)",
+      "previousSnapshotIndex": {
+        "name": "sp_leader_active",
+        "columns": [
+          {
+            "expression": "combination_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "k_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_product.sp_platform_article_options",
+      "reason": "nullOrdering",
+      "source": "migrations/0127_admin_article_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_platform_article_options\"\n  ON \"store_product\" (\"type\", \"relation_id\", \"is_del\", \"id\" DESC);",
+      "sourceLine": 11,
+      "catalog": {
+        "key": "store_product.sp_platform_article_options",
+        "name": "sp_platform_article_options",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (type, relation_id, is_del, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product.sp_platform_article_options",
+        "name": "sp_platform_article_options",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (type, relation_id, is_del, id DESC NULLS LAST)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/product.ts",
+      "previousDeclaration": "index(\"sp_platform_article_options\").on(t.type, t.relationId, t.isDel, t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "sp_platform_article_options",
+        "columns": [
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "relation_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_product_log.spl_user_source_latest",
+      "reason": "nullOrdering",
+      "source": "migrations/0089_community_client_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spl_user_source_latest\"\n  ON \"store_product_log\" (\"uid\", \"type\", \"add_time\" DESC, \"product_id\");",
+      "sourceLine": 9,
+      "catalog": {
+        "key": "store_product_log.spl_user_source_latest",
+        "name": "spl_user_source_latest",
+        "table": "store_product_log",
+        "definition": "public.store_product_log USING btree (uid, type, add_time DESC, product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_log.spl_user_source_latest",
+        "name": "spl_user_source_latest",
+        "table": "store_product_log",
+        "definition": "public.store_product_log USING btree (uid, type, add_time DESC NULLS LAST, product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/product_relations.ts",
+      "previousDeclaration": "index(\"spl_user_source_latest\").on(t.uid, t.type, t.addTime.desc(), t.productId)",
+      "previousSnapshotIndex": {
+        "name": "spl_user_source_latest",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "product_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_product_words.spw_owner_active_sort",
+      "reason": "nullOrdering",
+      "source": "migrations/0125_product_words_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spw_owner_active_sort\"\n  ON \"store_product_words\" (\"type\", \"relation_id\", \"is_del\", \"sort\" DESC, \"id\" DESC);",
+      "sourceLine": 3,
+      "catalog": {
+        "key": "store_product_words.spw_owner_active_sort",
+        "name": "spw_owner_active_sort",
+        "table": "store_product_words",
+        "definition": "public.store_product_words USING btree (type, relation_id, is_del, sort DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_words.spw_owner_active_sort",
+        "name": "spw_owner_active_sort",
+        "table": "store_product_words",
+        "definition": "public.store_product_words USING btree (type, relation_id, is_del, sort DESC NULLS LAST, id DESC NULLS LAST)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/words.ts",
+      "previousDeclaration": "index(\"spw_owner_active_sort\")\n    .on(t.type, t.relationId, t.isDel, t.sort.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "spw_owner_active_sort",
+        "columns": [
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "relation_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_product_words.spw_public_visible_sort",
+      "reason": "nullOrdering",
+      "source": "migrations/0125_product_words_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"spw_public_visible_sort\"\n  ON \"store_product_words\" (\"sort\" DESC, \"id\" DESC)\n  WHERE \"type\" = 0 AND \"relation_id\" = 0 AND \"is_del\" = 0 AND \"is_show\" = 1;",
+      "sourceLine": 5,
+      "catalog": {
+        "key": "store_product_words.spw_public_visible_sort",
+        "name": "spw_public_visible_sort",
+        "table": "store_product_words",
+        "definition": "public.store_product_words USING btree (sort DESC, id DESC) WHERE ((type = 0) AND (relation_id = 0) AND (is_del = 0) AND (is_show = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_words.spw_public_visible_sort",
+        "name": "spw_public_visible_sort",
+        "table": "store_product_words",
+        "definition": "public.store_product_words USING btree (sort DESC NULLS LAST, id DESC NULLS LAST) WHERE ((type = 0) AND (relation_id = 0) AND (is_del = 0) AND (is_show = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/words.ts",
+      "previousDeclaration": "index(\"spw_public_visible_sort\")\n    .on(t.sort.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "spw_public_visible_sort",
+        "columns": [
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"store_product_words\".\"type\" = 0 AND \"store_product_words\".\"relation_id\" = 0 AND \"store_product_words\".\"is_del\" = 0 AND \"store_product_words\".\"is_show\" = 1",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_seckill.sseckill_visible",
+      "reason": "missingDescending",
+      "source": "migrations/0032_activity_catalog_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sseckill_visible\"\n  ON \"store_seckill\" (\"status\", \"is_show\", \"is_del\", \"stop_time\", \"sort\" DESC);",
+      "sourceLine": 125,
+      "catalog": {
+        "key": "store_seckill.sseckill_visible",
+        "name": "sseckill_visible",
+        "table": "store_seckill",
+        "definition": "public.store_seckill USING btree (status, is_show, is_del, stop_time, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_seckill.sseckill_visible",
+        "name": "sseckill_visible",
+        "table": "store_seckill",
+        "definition": "public.store_seckill USING btree (status, is_show, is_del, stop_time, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/activity.ts",
+      "previousDeclaration": "index(\"sseckill_visible\").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "sseckill_visible",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "stop_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_service_record.ssr_direction",
+      "reason": "missingDescending",
+      "source": "migrations/0093_kefu_realtime_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ssr_direction\"\n  ON \"store_service_record\" (\"user_id\", \"to_uid\", \"is_tourist\", \"id\" DESC);",
+      "sourceLine": 10,
+      "catalog": {
+        "key": "store_service_record.ssr_direction",
+        "name": "ssr_direction",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (user_id, to_uid, is_tourist, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_service_record.ssr_direction",
+        "name": "ssr_direction",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (user_id, to_uid, is_tourist, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/admin.ts",
+      "previousDeclaration": "index(\"ssr_direction\").on(t.userId, t.toUid, t.isTourist, t.id)",
+      "previousSnapshotIndex": {
+        "name": "ssr_direction",
+        "columns": [
+          {
+            "expression": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "to_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_tourist",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_service_record.ssr_kefu_inbox",
+      "reason": "missingDescending",
+      "source": "migrations/0093_kefu_realtime_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ssr_kefu_inbox\"\n  ON \"store_service_record\" (\"user_id\", \"is_tourist\", \"update_time\" DESC, \"id\" DESC);",
+      "sourceLine": 7,
+      "catalog": {
+        "key": "store_service_record.ssr_kefu_inbox",
+        "name": "ssr_kefu_inbox",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (user_id, is_tourist, update_time DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_service_record.ssr_kefu_inbox",
+        "name": "ssr_kefu_inbox",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (user_id, is_tourist, update_time, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/admin.ts",
+      "previousDeclaration": "index(\"ssr_kefu_inbox\").on(t.userId, t.isTourist, t.updateTime, t.id)",
+      "previousSnapshotIndex": {
+        "name": "ssr_kefu_inbox",
+        "columns": [
+          {
+            "expression": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_tourist",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "update_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "store_service_record.ssr_kefu_recent",
+      "reason": "missingDescending",
+      "source": "migrations/0092_kefu_core_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ssr_kefu_recent\"\n  ON \"store_service_record\" (\"to_uid\", \"is_tourist\", \"update_time\" DESC, \"id\" DESC);",
+      "sourceLine": 10,
+      "catalog": {
+        "key": "store_service_record.ssr_kefu_recent",
+        "name": "ssr_kefu_recent",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (to_uid, is_tourist, update_time DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_service_record.ssr_kefu_recent",
+        "name": "ssr_kefu_recent",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (to_uid, is_tourist, update_time, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/admin.ts",
+      "previousDeclaration": "index(\"ssr_kefu_recent\").on(t.toUid, t.isTourist, t.updateTime, t.id)",
+      "previousSnapshotIndex": {
+        "name": "ssr_kefu_recent",
+        "columns": [
+          {
+            "expression": "to_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_tourist",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "update_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "system_article.sa_admin_active_sort",
+      "reason": "nullOrdering",
+      "source": "migrations/0127_admin_article_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sa_admin_active_sort\"\n  ON \"system_article\" (\"is_del\", \"sort\" DESC, \"id\" DESC);",
+      "sourceLine": 2,
+      "catalog": {
+        "key": "system_article.sa_admin_active_sort",
+        "name": "sa_admin_active_sort",
+        "table": "system_article",
+        "definition": "public.system_article USING btree (is_del, sort DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_article.sa_admin_active_sort",
+        "name": "sa_admin_active_sort",
+        "table": "system_article",
+        "definition": "public.system_article USING btree (is_del, sort DESC NULLS LAST, id DESC NULLS LAST)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/content.ts",
+      "previousDeclaration": "index(\"sa_admin_active_sort\").on(t.isDel, t.sort.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "sa_admin_active_sort",
+        "columns": [
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "system_article.sa_admin_category_active",
+      "reason": "nullOrdering",
+      "source": "migrations/0127_admin_article_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sa_admin_category_active\"\n  ON \"system_article\" (\"cid\", \"is_del\", \"id\" DESC);",
+      "sourceLine": 5,
+      "catalog": {
+        "key": "system_article.sa_admin_category_active",
+        "name": "sa_admin_category_active",
+        "table": "system_article",
+        "definition": "public.system_article USING btree (cid, is_del, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_article.sa_admin_category_active",
+        "name": "sa_admin_category_active",
+        "table": "system_article",
+        "definition": "public.system_article USING btree (cid, is_del, id DESC NULLS LAST)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/content.ts",
+      "previousDeclaration": "index(\"sa_admin_category_active\").on(t.cid, t.isDel, t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "sa_admin_category_active",
+        "columns": [
+          {
+            "expression": "cid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "system_article.sa_visible_sort",
+      "reason": "missingDescending",
+      "source": "migrations/0035_renamed_legacy_catalog_tables.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"sa_visible_sort\"\n  ON \"system_article\" (\"status\", \"is_del\", \"hide\", \"sort\" DESC);",
+      "sourceLine": 39,
+      "catalog": {
+        "key": "system_article.sa_visible_sort",
+        "name": "sa_visible_sort",
+        "table": "system_article",
+        "definition": "public.system_article USING btree (status, is_del, hide, sort DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_article.sa_visible_sort",
+        "name": "sa_visible_sort",
+        "table": "system_article",
+        "definition": "public.system_article USING btree (status, is_del, hide, sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/content.ts",
+      "previousDeclaration": "index(\"sa_visible_sort\").on(t.status, t.isDel, t.hide, t.sort)",
+      "previousSnapshotIndex": {
+        "name": "sa_visible_sort",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "hide",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "system_config.system_config_lookup",
+      "reason": "nullOrdering",
+      "source": "migrations/0103_system_config_lookup.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"system_config_lookup\"\n  ON \"system_config\" (\"is_store\", \"menu_name\", \"sort\" DESC, \"id\" DESC);",
+      "sourceLine": 3,
+      "catalog": {
+        "key": "system_config.system_config_lookup",
+        "name": "system_config_lookup",
+        "table": "system_config",
+        "definition": "public.system_config USING btree (is_store, menu_name, sort DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_config.system_config_lookup",
+        "name": "system_config_lookup",
+        "table": "system_config",
+        "definition": "public.system_config USING btree (is_store, menu_name, sort DESC NULLS LAST, id DESC NULLS LAST)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/system.ts",
+      "previousDeclaration": "index(\"system_config_lookup\").on(t.isStore, t.menuName, t.sort.desc(), t.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "system_config_lookup",
+        "columns": [
+          {
+            "expression": "is_store",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "menu_name",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "system_log.syslog_admin_time",
+      "reason": "missingDescending",
+      "source": "migrations/0026_system_metadata_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"syslog_admin_time\"\n  ON \"system_log\" (\"admin_id\", \"add_time\" DESC);",
+      "sourceLine": 25,
+      "catalog": {
+        "key": "system_log.syslog_admin_time",
+        "name": "syslog_admin_time",
+        "table": "system_log",
+        "definition": "public.system_log USING btree (admin_id, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_log.syslog_admin_time",
+        "name": "syslog_admin_time",
+        "table": "system_log",
+        "definition": "public.system_log USING btree (admin_id, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/admin.ts",
+      "previousDeclaration": "index(\"syslog_admin_time\").on(t.adminId, t.addTime)",
+      "previousSnapshotIndex": {
+        "name": "syslog_admin_time",
+        "columns": [
+          {
+            "expression": "admin_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "system_log.syslog_type_time",
+      "reason": "missingDescending",
+      "source": "migrations/0026_system_metadata_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"syslog_type_time\"\n  ON \"system_log\" (\"type\", \"add_time\" DESC);",
+      "sourceLine": 28,
+      "catalog": {
+        "key": "system_log.syslog_type_time",
+        "name": "syslog_type_time",
+        "table": "system_log",
+        "definition": "public.system_log USING btree (type, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_log.syslog_type_time",
+        "name": "syslog_type_time",
+        "table": "system_log",
+        "definition": "public.system_log USING btree (type, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/admin.ts",
+      "previousDeclaration": "index(\"syslog_type_time\").on(t.type, t.addTime)",
+      "previousSnapshotIndex": {
+        "name": "syslog_type_time",
+        "columns": [
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "system_message.smsg_visible_user",
+      "reason": "missingDescending",
+      "source": "migrations/0026_system_metadata_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"smsg_visible_user\"\n  ON \"system_message\" (\"user_id\", \"status\", \"is_del\", \"add_time\" DESC);",
+      "sourceLine": 31,
+      "catalog": {
+        "key": "system_message.smsg_visible_user",
+        "name": "smsg_visible_user",
+        "table": "system_message",
+        "definition": "public.system_message USING btree (user_id, status, is_del, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_message.smsg_visible_user",
+        "name": "smsg_visible_user",
+        "table": "system_message",
+        "definition": "public.system_message USING btree (user_id, status, is_del, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/message.ts",
+      "previousDeclaration": "index(\"smsg_visible_user\").on(t.userId, t.status, t.isDel, t.addTime)",
+      "previousSnapshotIndex": {
+        "name": "smsg_visible_user",
+        "columns": [
+          {
+            "expression": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "user_extract.ue_status_time",
+      "reason": "missingDescending",
+      "source": "migrations/0029_user_extract_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ue_status_time\"\n  ON \"user_extract\" (\"status\", \"add_time\" DESC);",
+      "sourceLine": 18,
+      "catalog": {
+        "key": "user_extract.ue_status_time",
+        "name": "ue_status_time",
+        "table": "user_extract",
+        "definition": "public.user_extract USING btree (status, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_extract.ue_status_time",
+        "name": "ue_status_time",
+        "table": "user_extract",
+        "definition": "public.user_extract USING btree (status, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/brokerage.ts",
+      "previousDeclaration": "index(\"ue_status_time\").on(t.status, t.addTime)",
+      "previousSnapshotIndex": {
+        "name": "ue_status_time",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "user_extract.ue_uid_time",
+      "reason": "missingDescending",
+      "source": "migrations/0029_user_extract_legacy_columns.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ue_uid_time\"\n  ON \"user_extract\" (\"uid\", \"add_time\" DESC);",
+      "sourceLine": 15,
+      "catalog": {
+        "key": "user_extract.ue_uid_time",
+        "name": "ue_uid_time",
+        "table": "user_extract",
+        "definition": "public.user_extract USING btree (uid, add_time DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_extract.ue_uid_time",
+        "name": "ue_uid_time",
+        "table": "user_extract",
+        "definition": "public.user_extract USING btree (uid, add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/brokerage.ts",
+      "previousDeclaration": "index(\"ue_uid_time\").on(t.uid, t.addTime)",
+      "previousSnapshotIndex": {
+        "name": "ue_uid_time",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "user_relation.ur_user_product_collect_latest",
+      "reason": "nullOrdering",
+      "source": "migrations/0089_community_client_indexes.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"ur_user_product_collect_latest\"\n  ON \"user_relation\" (\"uid\", \"add_time\" DESC, \"id\" DESC, \"relation_id\")\n  WHERE \"type\" = 'collect' AND \"category\" = 'product';",
+      "sourceLine": 12,
+      "catalog": {
+        "key": "user_relation.ur_user_product_collect_latest",
+        "name": "ur_user_product_collect_latest",
+        "table": "user_relation",
+        "definition": "public.user_relation USING btree (uid, add_time DESC, id DESC, relation_id) WHERE (((type)::text = 'collect'::text) AND ((category)::text = 'product'::text))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_relation.ur_user_product_collect_latest",
+        "name": "ur_user_product_collect_latest",
+        "table": "user_relation",
+        "definition": "public.user_relation USING btree (uid, add_time DESC NULLS LAST, id DESC NULLS LAST, relation_id) WHERE (((type)::text = 'collect'::text) AND ((category)::text = 'product'::text))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/user_center.ts",
+      "previousDeclaration": "index(\"ur_user_product_collect_latest\")\n      .on(t.uid, t.addTime.desc(), t.id.desc(), t.relationId)",
+      "previousSnapshotIndex": {
+        "name": "ur_user_product_collect_latest",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "relation_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"user_relation\".\"type\" = 'collect' AND \"user_relation\".\"category\" = 'product'",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "user_search.user_search_keyword_cache",
+      "reason": "missingDescending",
+      "source": "migrations/0058_user_search_and_visit.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_search_keyword_cache\"\n  ON \"user_search\" (\"keyword\", \"add_time\" DESC, \"id\" DESC);",
+      "sourceLine": 20,
+      "catalog": {
+        "key": "user_search.user_search_keyword_cache",
+        "name": "user_search_keyword_cache",
+        "table": "user_search",
+        "definition": "public.user_search USING btree (keyword, add_time DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_search.user_search_keyword_cache",
+        "name": "user_search_keyword_cache",
+        "table": "user_search",
+        "definition": "public.user_search USING btree (keyword, add_time, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/user_behavior.ts",
+      "previousDeclaration": "index(\"user_search_keyword_cache\").on(t.keyword, t.addTime, t.id)",
+      "previousSnapshotIndex": {
+        "name": "user_search_keyword_cache",
+        "columns": [
+          {
+            "expression": "keyword",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "user_search.user_search_uid_active_time",
+      "reason": "missingDescending",
+      "source": "migrations/0058_user_search_and_visit.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_search_uid_active_time\"\n  ON \"user_search\" (\"uid\", \"is_del\", \"add_time\" DESC, \"num\" DESC, \"id\" DESC);",
+      "sourceLine": 16,
+      "catalog": {
+        "key": "user_search.user_search_uid_active_time",
+        "name": "user_search_uid_active_time",
+        "table": "user_search",
+        "definition": "public.user_search USING btree (uid, is_del, add_time DESC, num DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_search.user_search_uid_active_time",
+        "name": "user_search_uid_active_time",
+        "table": "user_search",
+        "definition": "public.user_search USING btree (uid, is_del, add_time, num, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/user_behavior.ts",
+      "previousDeclaration": "index(\"user_search_uid_active_time\").on(t.uid, t.isDel, t.addTime, t.num, t.id)",
+      "previousSnapshotIndex": {
+        "name": "user_search_uid_active_time",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "num",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "user_search.user_search_uid_keyword_active",
+      "reason": "missingDescending",
+      "source": "migrations/0058_user_search_and_visit.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_search_uid_keyword_active\"\n  ON \"user_search\" (\"uid\", \"keyword\", \"is_del\", \"add_time\" DESC, \"id\" DESC);",
+      "sourceLine": 18,
+      "catalog": {
+        "key": "user_search.user_search_uid_keyword_active",
+        "name": "user_search_uid_keyword_active",
+        "table": "user_search",
+        "definition": "public.user_search USING btree (uid, keyword, is_del, add_time DESC, id DESC)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_search.user_search_uid_keyword_active",
+        "name": "user_search_uid_keyword_active",
+        "table": "user_search",
+        "definition": "public.user_search USING btree (uid, keyword, is_del, add_time, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/user_behavior.ts",
+      "previousDeclaration": "index(\"user_search_uid_keyword_active\").on(t.uid, t.keyword, t.isDel, t.addTime, t.id)",
+      "previousSnapshotIndex": {
+        "name": "user_search_uid_keyword_active",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "keyword",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "add_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "video.video_storefront_latest",
+      "reason": "nullOrdering",
+      "source": "migrations/0102_short_video_compatibility.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"video_storefront_latest\"\n  ON \"video\" (\"id\" DESC, \"sort\" DESC)\n  WHERE \"is_show\" = 1 AND \"is_del\" = 0 AND \"is_verify\" = 1;",
+      "sourceLine": 45,
+      "catalog": {
+        "key": "video.video_storefront_latest",
+        "name": "video_storefront_latest",
+        "table": "video",
+        "definition": "public.video USING btree (id DESC, sort DESC) WHERE ((is_show = 1) AND (is_del = 0) AND (is_verify = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "video.video_storefront_latest",
+        "name": "video_storefront_latest",
+        "table": "video",
+        "definition": "public.video USING btree (id DESC NULLS LAST, sort DESC NULLS LAST) WHERE ((is_show = 1) AND (is_del = 0) AND (is_verify = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/short_video.ts",
+      "previousDeclaration": "index(\"video_storefront_latest\")\n      .on(table.id.desc(), table.sort.desc())",
+      "previousSnapshotIndex": {
+        "name": "video_storefront_latest",
+        "columns": [
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"video\".\"is_show\" = 1 AND \"video\".\"is_del\" = 0 AND \"video\".\"is_verify\" = 1",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "video.video_storefront_recommended",
+      "reason": "nullOrdering",
+      "source": "migrations/0102_short_video_compatibility.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"video_storefront_recommended\"\n  ON \"video\" (\"is_recommend\", \"sort\" DESC, \"id\" DESC)\n  WHERE \"is_show\" = 1 AND \"is_del\" = 0 AND \"is_verify\" = 1;",
+      "sourceLine": 51,
+      "catalog": {
+        "key": "video.video_storefront_recommended",
+        "name": "video_storefront_recommended",
+        "table": "video",
+        "definition": "public.video USING btree (is_recommend, sort DESC, id DESC) WHERE ((is_show = 1) AND (is_del = 0) AND (is_verify = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "video.video_storefront_recommended",
+        "name": "video_storefront_recommended",
+        "table": "video",
+        "definition": "public.video USING btree (is_recommend, sort DESC NULLS LAST, id DESC NULLS LAST) WHERE ((is_show = 1) AND (is_del = 0) AND (is_verify = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/short_video.ts",
+      "previousDeclaration": "index(\"video_storefront_recommended\")\n      .on(table.isRecommend, table.sort.desc(), table.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "video_storefront_recommended",
+        "columns": [
+          {
+            "expression": "is_recommend",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"video\".\"is_show\" = 1 AND \"video\".\"is_del\" = 0 AND \"video\".\"is_verify\" = 1",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "video.video_storefront_sort",
+      "reason": "nullOrdering",
+      "source": "migrations/0102_short_video_compatibility.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"video_storefront_sort\"\n  ON \"video\" (\"sort\" DESC, \"id\" DESC)\n  WHERE \"is_show\" = 1 AND \"is_del\" = 0 AND \"is_verify\" = 1;",
+      "sourceLine": 48,
+      "catalog": {
+        "key": "video.video_storefront_sort",
+        "name": "video_storefront_sort",
+        "table": "video",
+        "definition": "public.video USING btree (sort DESC, id DESC) WHERE ((is_show = 1) AND (is_del = 0) AND (is_verify = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "video.video_storefront_sort",
+        "name": "video_storefront_sort",
+        "table": "video",
+        "definition": "public.video USING btree (sort DESC NULLS LAST, id DESC NULLS LAST) WHERE ((is_show = 1) AND (is_del = 0) AND (is_verify = 1))",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/short_video.ts",
+      "previousDeclaration": "index(\"video_storefront_sort\")\n      .on(table.sort.desc(), table.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "video_storefront_sort",
+        "columns": [
+          {
+            "expression": "sort",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"video\".\"is_show\" = 1 AND \"video\".\"is_del\" = 0 AND \"video\".\"is_verify\" = 1",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "video_comment.video_comment_owner",
+      "reason": "nullOrdering",
+      "source": "migrations/0102_short_video_compatibility.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"video_comment_owner\"\n  ON \"video_comment\" (\"uid\", \"id\" DESC)\n  WHERE \"is_del\" = 0;",
+      "sourceLine": 57,
+      "catalog": {
+        "key": "video_comment.video_comment_owner",
+        "name": "video_comment_owner",
+        "table": "video_comment",
+        "definition": "public.video_comment USING btree (uid, id DESC) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "video_comment.video_comment_owner",
+        "name": "video_comment_owner",
+        "table": "video_comment",
+        "definition": "public.video_comment USING btree (uid, id DESC NULLS LAST) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/short_video.ts",
+      "previousDeclaration": "index(\"video_comment_owner\")\n      .on(table.uid, table.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "video_comment_owner",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"video_comment\".\"is_del\" = 0",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "video_comment.video_comment_thread",
+      "reason": "nullOrdering",
+      "source": "migrations/0102_short_video_compatibility.sql",
+      "sourceSql": "CREATE INDEX IF NOT EXISTS \"video_comment_thread\"\n  ON \"video_comment\" (\"video_id\", \"pid\", \"id\" DESC)\n  WHERE \"is_del\" = 0;",
+      "sourceLine": 54,
+      "catalog": {
+        "key": "video_comment.video_comment_thread",
+        "name": "video_comment_thread",
+        "table": "video_comment",
+        "definition": "public.video_comment USING btree (video_id, pid, id DESC) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "video_comment.video_comment_thread",
+        "name": "video_comment_thread",
+        "table": "video_comment",
+        "definition": "public.video_comment USING btree (video_id, pid, id DESC NULLS LAST) WHERE (is_del = 0)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/short_video.ts",
+      "previousDeclaration": "index(\"video_comment_thread\")\n      .on(table.videoId, table.pid, table.id.desc())",
+      "previousSnapshotIndex": {
+        "name": "video_comment_thread",
+        "columns": [
+          {
+            "expression": "video_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "pid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"video_comment\".\"is_del\" = 0",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "work_client_current.wcc_catalog_idx",
+      "reason": "nullOrdering",
+      "source": "migrations/0115_work_client_current_projection.sql",
+      "sourceSql": "  EXECUTE format('CREATE INDEX IF NOT EXISTS wcc_catalog_idx ON %I.work_client_current (corp_id,lifecycle_state,update_time DESC,id)',target_schema);",
+      "sourceLine": 250,
+      "catalog": {
+        "key": "work_client_current.wcc_catalog_idx",
+        "name": "wcc_catalog_idx",
+        "table": "work_client_current",
+        "definition": "public.work_client_current USING btree (corp_id, lifecycle_state, update_time DESC, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "work_client_current.wcc_catalog_idx",
+        "name": "wcc_catalog_idx",
+        "table": "work_client_current",
+        "definition": "public.work_client_current USING btree (corp_id, lifecycle_state, update_time DESC NULLS LAST, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/work_client_current.ts",
+      "previousDeclaration": "index(\"wcc_catalog_idx\").on(\n      table.corpId,\n      table.lifecycleState,\n      table.updateTime.desc(),\n      table.id,\n    )",
+      "previousSnapshotIndex": {
+        "name": "wcc_catalog_idx",
+        "columns": [
+          {
+            "expression": "corp_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "lifecycle_state",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "update_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "work_department_current.wdc_active_tree_idx",
+      "reason": "nullOrdering",
+      "source": "migrations/0114_work_department_current_projection.sql",
+      "sourceSql": "  EXECUTE format('CREATE INDEX IF NOT EXISTS wdc_active_tree_idx ON %I.work_department_current (corp_id, parent_department_id, sort_order DESC, department_id) WHERE lifecycle_state = ''ACTIVE''', target_schema);",
+      "sourceLine": 167,
+      "catalog": {
+        "key": "work_department_current.wdc_active_tree_idx",
+        "name": "wdc_active_tree_idx",
+        "table": "work_department_current",
+        "definition": "public.work_department_current USING btree (corp_id, parent_department_id, sort_order DESC, department_id) WHERE ((lifecycle_state)::text = 'ACTIVE'::text)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "work_department_current.wdc_active_tree_idx",
+        "name": "wdc_active_tree_idx",
+        "table": "work_department_current",
+        "definition": "public.work_department_current USING btree (corp_id, parent_department_id, sort_order DESC NULLS LAST, department_id) WHERE ((lifecycle_state)::text = 'ACTIVE'::text)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/work_department_current.ts",
+      "previousDeclaration": "index(\"wdc_active_tree_idx\")\n      .on(table.corpId, table.parentDepartmentId, table.sortOrder.desc(), table.departmentId)",
+      "previousSnapshotIndex": {
+        "name": "wdc_active_tree_idx",
+        "columns": [
+          {
+            "expression": "corp_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "parent_department_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "sort_order",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "department_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "where": "\"work_department_current\".\"lifecycle_state\" = 'ACTIVE'",
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "work_group_chat_current.wgcc_catalog_idx",
+      "reason": "nullOrdering",
+      "source": "migrations/0116_work_group_chat_current_projection.sql",
+      "sourceSql": "  EXECUTE format('CREATE INDEX IF NOT EXISTS wgcc_catalog_idx ON %I.work_group_chat_current (corp_id,lifecycle_state,update_time DESC,id)', target_schema);",
+      "sourceLine": 182,
+      "catalog": {
+        "key": "work_group_chat_current.wgcc_catalog_idx",
+        "name": "wgcc_catalog_idx",
+        "table": "work_group_chat_current",
+        "definition": "public.work_group_chat_current USING btree (corp_id, lifecycle_state, update_time DESC, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "work_group_chat_current.wgcc_catalog_idx",
+        "name": "wgcc_catalog_idx",
+        "table": "work_group_chat_current",
+        "definition": "public.work_group_chat_current USING btree (corp_id, lifecycle_state, update_time DESC NULLS LAST, id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/work_group_chat_current.ts",
+      "previousDeclaration": "index(\"wgcc_catalog_idx\").on(\n      table.corpId,\n      table.lifecycleState,\n      table.updateTime.desc(),\n      table.id,\n    )",
+      "previousSnapshotIndex": {
+        "name": "wgcc_catalog_idx",
+        "columns": [
+          {
+            "expression": "corp_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "lifecycle_state",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "update_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    },
+    {
+      "key": "work_group_chat_member_current.wgcmc_group_state_idx",
+      "reason": "nullOrdering",
+      "source": "migrations/0116_work_group_chat_current_projection.sql",
+      "sourceSql": "  EXECUTE format('CREATE INDEX IF NOT EXISTS wgcmc_group_state_idx ON %I.work_group_chat_member_current (corp_id,group_id,lifecycle_state,join_time DESC,userid)', target_schema);",
+      "sourceLine": 187,
+      "catalog": {
+        "key": "work_group_chat_member_current.wgcmc_group_state_idx",
+        "name": "wgcmc_group_state_idx",
+        "table": "work_group_chat_member_current",
+        "definition": "public.work_group_chat_member_current USING btree (corp_id, group_id, lifecycle_state, join_time DESC, userid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "work_group_chat_member_current.wgcmc_group_state_idx",
+        "name": "wgcmc_group_state_idx",
+        "table": "work_group_chat_member_current",
+        "definition": "public.work_group_chat_member_current USING btree (corp_id, group_id, lifecycle_state, join_time DESC NULLS LAST, userid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "modelPath": "src/models/schema/work_group_chat_current.ts",
+      "previousDeclaration": "index(\"wgcmc_group_state_idx\").on(\n      table.corpId,\n      table.groupId,\n      table.lifecycleState,\n      table.joinTime.desc(),\n      table.userid,\n    )",
+      "previousSnapshotIndex": {
+        "name": "wgcmc_group_state_idx",
+        "columns": [
+          {
+            "expression": "corp_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "group_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "lifecycle_state",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "join_time",
+            "isExpression": false,
+            "asc": false,
+            "nulls": "last"
+          },
+          {
+            "expression": "userid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      }
+    }
+  ]
+}

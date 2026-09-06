@@ -131,7 +131,7 @@ export const storeProduct = pgTable(
     index("sales").on(t.sales),
     index("sp_add_time_idx").on(t.addTime),
     index("is_postage").on(t.isPostage),
-    index("sp_platform_article_options").on(t.type, t.relationId, t.isDel, t.id.desc()),
+    index("sp_platform_article_options").on(t.type, t.relationId, t.isDel, t.id.desc().nullsFirst()),
     index("sp_supplier_list").on(t.type, t.relationId, t.isDel, t.isShow, t.id.desc().nullsFirst()),
     index("store_product_system_form_active").on(t.systemFormId, t.isDel)
       .where(sql`${t.systemFormId} > 0`),

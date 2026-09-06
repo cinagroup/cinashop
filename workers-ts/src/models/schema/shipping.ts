@@ -33,7 +33,7 @@ export const shippingTemplates = pgTable(
   },
   (t) => [
     index("st_status").on(t.status),
-    index("st_owner_active").on(t.ownerType, t.relationId, t.isDel, t.sort),
+    index("st_owner_active").on(t.ownerType, t.relationId, t.isDel, t.sort.desc().nullsFirst()),
   ],
 );
 
@@ -128,6 +128,6 @@ export const expressCompany = pgTable(
   },
   (t) => [
     index("ec_status").on(t.status),
-    index("ec_visible_sort").on(t.isShow, t.status, t.sort),
+    index("ec_visible_sort").on(t.isShow, t.status, t.sort.desc().nullsFirst()),
   ],
 );

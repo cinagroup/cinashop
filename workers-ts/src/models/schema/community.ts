@@ -56,12 +56,12 @@ export const community = pgTable(
     index("c_status").on(t.status),
     index("c_type").on(t.type),
     index("c_add_time").on(t.addTime),
-    index("c_public_feed").on(t.status, t.isVerify, t.isDel, t.addTime),
+    index("c_public_feed").on(t.status, t.isVerify, t.isDel, t.addTime.desc().nullsFirst()),
     index("c_author_public_latest")
-      .on(t.type, t.relationId, t.addTime.desc(), t.id.desc())
+      .on(t.type, t.relationId, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.status} = 1 AND ${t.isVerify} = 1 AND ${t.isDel} = 0`),
     index("c_admin_moderation")
-      .on(t.isVerify, t.type, t.contentType, t.addTime.desc(), t.id.desc())
+      .on(t.isVerify, t.type, t.contentType, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.isDel} = 0`),
   ],
 );
@@ -102,10 +102,10 @@ export const communityComment = pgTable(
       t.isDel,
       t.isShow,
       t.isVerify,
-      t.addTime,
+      t.addTime.desc().nullsFirst(),
     ),
     index("cc_admin_moderation")
-      .on(t.isReply, t.isVerify, t.isShow, t.communityId, t.addTime.desc(), t.id.desc())
+      .on(t.isReply, t.isVerify, t.isShow, t.communityId, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.isDel} = 0`),
     index("cc_public_replies")
       .on(t.replyId, t.addTime, t.id)
@@ -132,7 +132,7 @@ export const communityTopic = pgTable(
     index("ct_visible_sort").on(t.status, t.isDel, t.sort, t.id),
     index("ct_recommend_sort").on(t.status, t.isDel, t.isRecommend, t.sort),
     index("ct_admin_catalog")
-      .on(t.status, t.isRecommend, t.sort.desc(), t.id.desc())
+      .on(t.status, t.isRecommend, t.sort.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.isDel} = 0`),
   ],
 );
@@ -181,7 +181,7 @@ export const communityUser = pgTable(
     index("cu_relation_type").on(t.relationId, t.type, t.isDel),
     index("cu_public_activity").on(t.status, t.isDel, t.communityNum, t.id),
     index("cu_recommend_rank")
-      .on(t.fansNum.desc(), t.id.desc())
+      .on(t.fansNum.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.status} = 1 AND ${t.isDel} = 0 AND ${t.communityNum} > 0`),
   ],
 );

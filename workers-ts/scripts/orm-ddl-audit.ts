@@ -1,6 +1,7 @@
 /** Offline test-service audit. Never consumes production DATABASE_URL/Hyperdrive. */
 import { createHash, randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import postgres from "postgres";
@@ -28,6 +29,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const created: string[] = [];
   const catalogs: Record<string, Catalog> = {};
   const paths: Array<{ path: string; steps: number }> = [];
+  let upgradeVerification;
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
     if (identity.database !== "cinashop_finance_test" || identity.role !== "finance_test" || Math.floor(Number(identity.version) / 10_000) !== 16) {
@@ -35,7 +37,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     }
     // Load Drizzle's CLI/toolchain only inside the validated audit operation,
     // never while importing the URL validator into a unit-test process.
-    const { generateDrizzleJson, generateMigration } = await import("drizzle-kit/api");
+    const api = await import("drizzle-kit/api");
+    const { generateDrizzleJson, generateMigration } = api;
     const { MigrationService } = await import("../src/services/MigrationService");
     const models = await import("../src/models/schema");
     const migrationNames = (await readdir(resolve(root, "migrations"))).filter((name) => /^\d+.*\.sql$/.test(name)).sort();
@@ -44,9 +47,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     migrationNames.forEach((name, index) => inputDigest.update(name).update(migrationSources[index]));
     const snapshot = generateDrizzleJson(models);
     const generated = await generateMigration(generateDrizzleJson({}), snapshot);
-    for (const path of ["external", "embedded", "orm"] as const) {
+    for (const path of ["external", "embedded", "orm", "orm_upgrade"] as const) {
       const name = `orm_audit_${path}_${randomUUID().replaceAll("-", "")}`;
-      if (!/^orm_audit_(external|embedded|orm)_[a-f0-9]{32}$/.test(name)) throw new Error("Invalid isolated database name");
+      if (!/^orm_audit_(external|embedded|orm|orm_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Invalid isolated database name");
       await control.unsafe(`CREATE DATABASE "${name}" TEMPLATE template0`);
       created.push(name);
       const isolated = new URL(target.href);
@@ -69,6 +72,15 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
             throw new Error(`Embedded path incomplete: ${JSON.stringify(result)}`);
           }
           steps = result.executed.length;
+        } else if (path === "orm_upgrade") {
+          // Same actual generator/rollback/row/OID/FK assertions as the local API probes,
+          // but backed by this fresh, identity-checked PostgreSQL 16 database.
+          const auditUpgrade = createRequire(import.meta.url)("../test/helpers/drizzleIndexDefinitionAudit.cjs");
+          upgradeVerification = await auditUpgrade({ api, models, snapshot, format: "pg16", database: {
+            exec: (query: string) => client.unsafe(query),
+            query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
+          } });
+          steps = upgradeVerification.initialStatements + upgradeVerification.upgradeStatements;
         } else {
           await client.unsafe(generated.join("\n"));
           steps = generated.length;
@@ -79,20 +91,29 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     }
     const externalVsEmbedded = compareCatalogs(catalogs.external, catalogs.embedded);
     const externalVsOrm = compareCatalogs(catalogs.external, catalogs.orm);
-    const contractManifest = JSON.parse(await readFile(resolve(root, "audit/orm-query-index-reconciliation.json"), "utf8"));
-    if (!Array.isArray(contractManifest.entries)) throw new Error("Invalid reconciled index manifest");
-    const requiredIndexKeys = contractManifest.entries.map((entry: { key: string }) => entry.key);
+    const contractManifests = await Promise.all([
+      "orm-query-index-reconciliation.json",
+      "orm-index-definition-reconciliation.json",
+    ].map(async (name) => JSON.parse(await readFile(resolve(root, "audit", name), "utf8"))));
+    if (contractManifests.some((manifest) => !Array.isArray(manifest.entries))) throw new Error("Invalid reconciled index manifest");
+    const requiredIndexKeys = contractManifests.flatMap((manifest) => manifest.entries.map((entry: { key: string }) => entry.key));
     assertIndexContracts(catalogs.external, catalogs.embedded, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm, requiredIndexKeys);
+    assertIndexContracts(catalogs.external, catalogs.orm_upgrade, requiredIndexKeys);
+    const ormVsUpgraded = compareCatalogs(catalogs.orm, catalogs.orm_upgrade);
+    if (!upgradeVerification || Object.values(ormVsUpgraded).some((changes) => Object.values(changes).some((values) => values.length))) {
+      throw new Error("Fresh ORM and upgraded ORM catalogs differ");
+    }
     return {
-      scope: "Fresh isolated PostgreSQL 16 catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Canonical expression differences are review candidates, not proof of behavioral inequivalence. Does not inspect production rows, privileges, functions, triggers, policies or views.",
+      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade/rollback/fixture and FK dependency checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
       serverVersionNum: Number(identity.version),
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      verifiedIndexContracts: { mode: "exact named definitions; reject any drift in either candidate path", keys: requiredIndexKeys },
+      verifiedIndexContracts: { mode: "exact named definitions; reject drift in embedded, fresh ORM and upgraded ORM paths", keys: requiredIndexKeys },
+      upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },
       missingIndexEvidence: {
         externalVsEmbedded: classifyMissingIndexes(catalogs.external, catalogs.embedded),
         externalVsOrm: classifyMissingIndexes(catalogs.external, catalogs.orm),
@@ -106,7 +127,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     try {
       for (const name of created.reverse()) {
         try {
-          if (!/^orm_audit_(external|embedded|orm)_[a-f0-9]{32}$/.test(name)) throw new Error("Unsafe cleanup target");
+          if (!/^orm_audit_(external|embedded|orm|orm_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Unsafe cleanup target");
           await control.unsafe(`DROP DATABASE "${name}"`);
           const remains = await control`SELECT datname FROM pg_database WHERE datname=${name}`;
           if (remains.length) throw new Error("Isolated database cleanup was not confirmed");

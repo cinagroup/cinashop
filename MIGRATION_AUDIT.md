@@ -5168,6 +5168,20 @@ PostgreSQL16.14实际执行外部137文件、内嵌142步、ORM1,061条SQL，三
 
 SQL文本门禁仍201→263、源列缺口和窄范围漂移0；路由仍PHP1,904/TS1,646/匹配879/可执行861/不可用18/缺失1,025/退役17/待处理1,008，覆盖率46.2%/45.2%/45.6%。只勾选D2b1，不勾选D2b、E、F或迁移总项。PostgreSQL技能促使本批按键序、空值位置、部分谓词、唯一性和目录归属逐项核对，没有把索引数量当作等价或性能收益证明。本轮没有生产连接、业务行读写、Cloudflare变更或部署；最终证据回填只改根目录Markdown/JSON，受测实现固定到404baf3。
 
+## DB-009D2b2 57项同名索引定义对齐（2026-09-06）
+
+上一轮22项缺失索引已在404baf3/Actions33970859482获得真实PG16与8/8证据，本轮从干净a06c24f继续。读取当前报告及固定原始57条同名索引变化，逐项定位29份外部SQL中的唯一来源、38张表与22个模型文件；全部是独立普通索引，没有唯一/主键/约束归属转换。24项仅空值排序、30项缺DESC、3项缺部分谓词，本批对应75处降序列显式`.desc().nullsFirst()`及两个revoked_at=0、一个old_cart_id<>''谓词，不改变名称或键列，不修改任何外部/内嵌迁移。
+
+新增`audit/orm-index-definition-reconciliation.json`固定57个key、原SQL文件/行号/完整语句、前后PG16目录、旧模型声明及修复前实际Drizzle生成的索引快照。第一次来源单测指出4个Work索引位于动态EXECUTE format内，初始提取只包含CREATE之后的片段；现改为完整原始EXECUTE语句，保持严格行号/全文校验，未改源迁移或放宽结构比较。新增3项回归以不可改写基线独立固定完整队列及24/30/3分类，并逐项验证将任一目录恢复成旧定义都会被门禁拒绝。
+
+查询核验显示，KefuVisitorSessionService:194、279与KefuRealtimeService多处查询明确排除revoked_at非零会话；PageNavigationService:112、263使用sort DESC/id ASC，KefuRealtimeService:361、817等使用update_time DESC/id DESC，CommunitySocialService:262及社区/文章服务也有相关降序合同。oldCartId在OrderSupplierAllocationService:103保持拆单来源，当前检索未见以该列过滤的直接查询，不把恢复既有0017部分索引声称为当前查询性能提升。按[PostgreSQL索引排序](https://www.postgresql.org/docs/16/indexes-ordering.html)与[部分索引条件](https://www.postgresql.org/docs/16/indexes-partial.html)，B-tree反向扫描和非空列可能使部分差异不影响某个具体查询，但这不证明混合列排序或完整目录合同等价；本批恢复部署DDL定义，不凭索引数或未经EXPLAIN的收益论证。
+
+共享真实升级探针从当前全模型只替换回57个修复前快照，先实际生成并建出旧ORM库，逐项确认旧目录，再生成并限制为57条精确DROP INDEX和57条CREATE INDEX。禁止CASCADE和非目标名字，验证每个CREATE在对应DROP之后；在生成DROP之后注入真实除零错误，事务回滚恢复所有目录、对象OID、外键conindid/pg_depend及6条自建夹具。成功升级保留这些行、所有非目标对象及外键依赖，完整目录仅57个索引definition变化，三类过滤/排序查询返回预期夹具，升级后79项合同和再次生成no-op均通过。仅在隔离测试中重建已知索引，不提供或执行生产删除方案；非目标别名、唯一索引和历史升级合同不变。
+
+本地网络禁止的CJS/ESM升级验证已通过，来源修正后的6项索引合同单元通过，现有真实CLI生成亦通过；两套TypeScript通过。PG16审计扩为external/embedded/orm/orm_upgrade四座严格限定loopback测试身份的随机数据库，第四座复用同一升级、回滚、行/OID/FK依赖证明，随后比较全新ORM与升级后ORM的全部已覆盖目录字段，任一差异失败。外部与三个候选路径均须满足79项精确索引合同；报告新增upgradeVerification，清理仍只允许本次成功CREATE记录的精确随机库名。真实PG16、全量和完整CI尚待回填，D2b2暂不勾选；其余52个别名、97个额外索引、约束/默认/序列及生产前置仍开放。
+
+本地全量以`npm run test:unit -- --maxWorkers=2`完成：238文件全部通过，1,536项通过/4项专用PG测试因未提供本地服务而跳过，共1,540项，耗时150.95秒；没有放宽测试时限或改CI并发配置。两套TypeScript与diff检查通过。接下来以精确提交SHA的Linux默认配置及四座PG16隔离库复核，暂不把本地PGlite证明当作PG16升级已完成。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

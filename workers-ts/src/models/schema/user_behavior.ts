@@ -28,9 +28,9 @@ export const userSearch = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("user_search_uid_active_time").on(t.uid, t.isDel, t.addTime, t.num, t.id),
-    index("user_search_uid_keyword_active").on(t.uid, t.keyword, t.isDel, t.addTime, t.id),
-    index("user_search_keyword_cache").on(t.keyword, t.addTime, t.id),
+    index("user_search_uid_active_time").on(t.uid, t.isDel, t.addTime.desc().nullsFirst(), t.num.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("user_search_uid_keyword_active").on(t.uid, t.keyword, t.isDel, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("user_search_keyword_cache").on(t.keyword, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst()),
   ],
 );
 

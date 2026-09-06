@@ -35,13 +35,13 @@ export const video = pgTable(
   },
   (table) => [
     index("video_storefront_latest")
-      .on(table.id.desc(), table.sort.desc())
+      .on(table.id.desc().nullsFirst(), table.sort.desc().nullsFirst())
       .where(sql`${table.isShow} = 1 AND ${table.isDel} = 0 AND ${table.isVerify} = 1`),
     index("video_storefront_sort")
-      .on(table.sort.desc(), table.id.desc())
+      .on(table.sort.desc().nullsFirst(), table.id.desc().nullsFirst())
       .where(sql`${table.isShow} = 1 AND ${table.isDel} = 0 AND ${table.isVerify} = 1`),
     index("video_storefront_recommended")
-      .on(table.isRecommend, table.sort.desc(), table.id.desc())
+      .on(table.isRecommend, table.sort.desc().nullsFirst(), table.id.desc().nullsFirst())
       .where(sql`${table.isShow} = 1 AND ${table.isDel} = 0 AND ${table.isVerify} = 1`),
   ],
 );
@@ -69,10 +69,10 @@ export const videoComment = pgTable(
   },
   (table) => [
     index("video_comment_thread")
-      .on(table.videoId, table.pid, table.id.desc())
+      .on(table.videoId, table.pid, table.id.desc().nullsFirst())
       .where(sql`${table.isDel} = 0`),
     index("video_comment_owner")
-      .on(table.uid, table.id.desc())
+      .on(table.uid, table.id.desc().nullsFirst())
       .where(sql`${table.isDel} = 0`),
   ],
 );

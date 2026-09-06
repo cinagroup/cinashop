@@ -74,7 +74,7 @@ export const userRelation = pgTable(
       .on(t.category, t.relationId)
       .where(sql`${t.type} = 'collect'`),
     index("ur_user_product_collect_latest")
-      .on(t.uid, t.addTime.desc(), t.id.desc(), t.relationId)
+      .on(t.uid, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst(), t.relationId)
       .where(sql`${t.type} = 'collect' AND ${t.category} = 'product'`),
   ],
 );

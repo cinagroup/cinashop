@@ -81,8 +81,8 @@ export const orderWaybillJob = pgTable(
       .where(sql`${t.status} IN (
         'PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'RETRYABLE', 'UNKNOWN', 'DEAD'
       )`),
-    index("owj_owner_history").on(t.supplierId, t.id),
-    index("owj_order_history").on(t.orderId, t.id),
+    index("owj_owner_history").on(t.supplierId, t.id.desc().nullsFirst()),
+    index("owj_order_history").on(t.orderId, t.id.desc().nullsFirst()),
     index("owj_dispatch_ready").on(t.availableTime, t.id)
       .where(sql`${t.status} IN ('PENDING', 'RETRYABLE')`),
     index("owj_expired_queue_lease").on(t.leaseUntil, t.id)

@@ -124,8 +124,8 @@ export const systemLog = pgTable(
     merchantId: integer("merchant_id").default(0).notNull(),
   },
   (t) => [
-    index("syslog_admin_time").on(t.adminId, t.addTime),
-    index("syslog_type_time").on(t.type, t.addTime),
+    index("syslog_admin_time").on(t.adminId, t.addTime.desc().nullsFirst()),
+    index("syslog_type_time").on(t.type, t.addTime.desc().nullsFirst()),
   ],
 );
 
@@ -296,9 +296,9 @@ export const storeServiceRecord = pgTable(
   },
   (t) => [
     index("ssr_to_uid").on(t.toUid),
-    index("ssr_kefu_recent").on(t.toUid, t.isTourist, t.updateTime, t.id),
-    index("ssr_kefu_inbox").on(t.userId, t.isTourist, t.updateTime, t.id),
-    index("ssr_direction").on(t.userId, t.toUid, t.isTourist, t.id),
+    index("ssr_kefu_recent").on(t.toUid, t.isTourist, t.updateTime.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("ssr_kefu_inbox").on(t.userId, t.isTourist, t.updateTime.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("ssr_direction").on(t.userId, t.toUid, t.isTourist, t.id.desc().nullsFirst()),
   ],
 );
 
@@ -360,7 +360,9 @@ export const kefuVisitorSession = pgTable(
     revokedAt: integer("revoked_at").default(0).notNull(),
   },
   (t) => [
-    index("kvs_active_expiry").on(t.expiresAt, t.visitorUid),
-    index("kvs_kefu_active").on(t.kefuUid, t.expiresAt, t.visitorUid),
+    index("kvs_active_expiry").on(t.expiresAt, t.visitorUid)
+      .where(sql`${t.revokedAt} = 0`),
+    index("kvs_kefu_active").on(t.kefuUid, t.expiresAt, t.visitorUid)
+      .where(sql`${t.revokedAt} = 0`),
   ],
 );

@@ -61,8 +61,8 @@ export const orderPrintJob = pgTable(
     uniqueIndex("opj_manual_request_printer_uq").on(t.requestKey, t.printerId)
       .where(sql`${t.requestKey} <> ''`),
     index("opj_manual_request").on(t.requestKey, t.id).where(sql`${t.requestKey} <> ''`),
-    index("opj_owner_history").on(t.supplierId, t.id),
-    index("opj_order_history").on(t.orderId, t.id),
+    index("opj_owner_history").on(t.supplierId, t.id.desc().nullsFirst()),
+    index("opj_order_history").on(t.orderId, t.id.desc().nullsFirst()),
     index("opj_dispatch_ready").on(t.availableTime, t.id)
       .where(sql`${t.status} IN ('PENDING', 'RETRYABLE')`),
     index("opj_expired_queue_lease").on(t.leaseUntil, t.id)

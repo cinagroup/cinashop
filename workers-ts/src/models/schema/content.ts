@@ -27,9 +27,9 @@ export const systemArticle = pgTable(
     isBanner: smallint("is_banner").default(0).notNull(),
   },
   (t) => [
-    index("sa_visible_sort").on(t.status, t.isDel, t.hide, t.sort),
-    index("sa_admin_active_sort").on(t.isDel, t.sort.desc(), t.id.desc()),
-    index("sa_admin_category_active").on(t.cid, t.isDel, t.id.desc()),
+    index("sa_visible_sort").on(t.status, t.isDel, t.hide, t.sort.desc().nullsFirst()),
+    index("sa_admin_active_sort").on(t.isDel, t.sort.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("sa_admin_category_active").on(t.cid, t.isDel, t.id.desc().nullsFirst()),
   ],
 );
 
@@ -48,8 +48,8 @@ export const articleCategory = pgTable(
     hidden: smallint("hidden").default(0).notNull(),
   },
   (t) => [
-    index("ac_visible_sort").on(t.status, t.isDel, t.hidden, t.sort),
-    index("ac_admin_active_sort").on(t.isDel, t.sort.desc(), t.id.desc()),
+    index("ac_visible_sort").on(t.status, t.isDel, t.hidden, t.sort.desc().nullsFirst()),
+    index("ac_admin_active_sort").on(t.isDel, t.sort.desc().nullsFirst(), t.id.desc().nullsFirst()),
   ],
 );
 
@@ -108,6 +108,6 @@ export const agreement = pgTable(
   },
   (t) => [
     uniqueIndex("agreement_type").on(t.type),
-    index("agreement_visible").on(t.status, t.sort),
+    index("agreement_visible").on(t.status, t.sort.desc().nullsFirst()),
   ],
 );

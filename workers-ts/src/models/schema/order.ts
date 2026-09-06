@@ -178,7 +178,7 @@ export const storeOrder = pgTable(
     index("so_paid").on(t.paid),
     index("so_status").on(t.status),
     index("so_delivery_mobile_active")
-      .on(t.deliveryUid, t.status, t.addTime.desc(), t.id.desc())
+      .on(t.deliveryUid, t.status, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.deliveryUid} > 0 AND ${t.paid} = 1 AND ${t.isDel} = 0 AND ${t.isSystemDel} = 0 AND ${t.refundStatus} IN (0, 3)`),
     index("so_split_pending").on(t.pid, t.supplierId, t.status, t.isSystemDel, t.id),
     index("so_supplier_allocation_pending")
@@ -252,7 +252,8 @@ export const storeOrderCartInfo = pgTable(
     index("soci_uid").on(t.uid),
     index("soci_kefu_order_product").on(t.oid, t.productId),
     index("soci_split_pending").on(t.oid, t.splitStatus, t.id),
-    index("soci_old_cart_id").on(t.oldCartId),
+    index("soci_old_cart_id").on(t.oldCartId)
+      .where(sql`${t.oldCartId} <> ''`),
     uniqueIndex("soci_oid_unique_uq").on(t.oid, t.unique),
     index("soci_cart_refund").on(t.cartId, t.refundNum),
     index("soci_product").on(t.productId),

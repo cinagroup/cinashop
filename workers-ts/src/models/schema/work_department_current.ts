@@ -161,7 +161,7 @@ export const workDepartmentCurrent = pgTable(
         AND (${table.deletedTime} IS NULL OR ${table.deletedTime} > 0)`,
     ),
     index("wdc_active_tree_idx")
-      .on(table.corpId, table.parentDepartmentId, table.sortOrder.desc(), table.departmentId)
+      .on(table.corpId, table.parentDepartmentId, table.sortOrder.desc().nullsFirst(), table.departmentId)
       .where(sql`${table.lifecycleState} = 'ACTIVE'`),
     uniqueIndex("wdc_active_root_uidx")
       .on(table.corpId)

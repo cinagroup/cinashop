@@ -313,7 +313,7 @@ export const storeProductLog = pgTable(
     index("spl_uid").on(t.uid),
     index("spl_add_time").on(t.addTime),
     index("spl_uid_type").on(t.uid, t.type),
-    index("spl_user_source_latest").on(t.uid, t.type, t.addTime.desc(), t.productId),
+    index("spl_user_source_latest").on(t.uid, t.type, t.addTime.desc().nullsFirst(), t.productId),
     index("spl_visit_history").on(t.uid, t.type, t.deleteTime, t.addTime, t.id),
   ],
 );
