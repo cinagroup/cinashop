@@ -1,18 +1,18 @@
 {
-  "sourceCommit": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
-  "runId": 34030550652,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34030550652",
+  "sourceCommit": "f3cf196ba9826bf3ef7207ebc190574f5c3ddc2f",
+  "runId": 34032529050,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34032529050",
   "runAttempt": 1,
-  "status": "not_equivalent",
+  "status": "catalog_equivalent_candidate",
   "kind": "summary",
-  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM, default-upgraded ORM, constraint-upgraded ORM, foreign-key-renamed ORM and CHECK-aligned ORM catalogs: tables, columns, constraints, indexes and sequences. Includes six existing index phases, five external duplicate retirements, a separate four-default upgrade, a separate 41-constraint addition preserving eight NOT VALID states, twelve identity-preserving FK renames and nine guarded CHECK replacements. CHECK replacements intentionally change only the target constraint OIDs and their outgoing dependency object IDs, retaining comments and write rules. Complete index/column/constraint categories, the 41 added constraint contracts, twelve FK names and nine CHECK states are eight-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes. Upgrade probes verify synthetic rows, OIDs/files/dependencies, drift refusal, rollback, new writes, FK/unique/cascade behavior, idempotence and schema isolation. View/function/trigger probes cover self-created fixtures, not complete schema equivalence for those categories, privileges or policies. No production rows inspected.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM, default-upgraded ORM, constraint-upgraded ORM, foreign-key-renamed ORM CHECK-aligned ORM and sequence-aligned ORM catalogs: tables, columns, constraints, indexes and sequences. Includes six existing index phases, five external duplicate retirements, a separate four-default upgrade, a separate 41-constraint addition preserving eight NOT VALID states, twelve identity-preserving FK renames nine guarded CHECK replacements and one guarded integer/ownership sequence alignment preserving the current number. CHECK replacements intentionally change only the target constraint OIDs and their outgoing dependency object IDs, retaining comments and write rules. Complete index/column/constraint/sequence categories, the 41 added constraint contracts, twelve FK names and nine CHECK states are nine-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes. Upgrade probes verify synthetic rows, OIDs/files/dependencies, drift refusal, rollback, new writes, FK/unique/cascade behavior, idempotence and schema isolation. View/function/trigger probes cover self-created fixtures, not complete schema equivalence for those categories, privileges or policies. No production rows inspected.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "cb216b3cfe71066b50fa4683da397e30cc6e70225a92d74640f646c54ca5badb",
-  "generatedSqlSha256": "00ea146c2254522ca7347a7983d424c6edaaca948d03191fac7aeb375b143e8a",
+  "externalInputSha256": "e2b035dd6c1085dc46fd77ab4670634de4a4d0e29686fa74c48241030be89b6e",
+  "generatedSqlSha256": "e5ac664c51f51b7a5298a56573a4d9b38b7c442a70fd47e99abc77763f6f2696",
   "paths": [
     {
       "path": "external",
-      "steps": 146
+      "steps": 147
     },
     {
       "path": "embedded",
@@ -20,27 +20,31 @@
     },
     {
       "path": "orm",
-      "steps": 1076
+      "steps": 1077
     },
     {
       "path": "orm_upgrade",
-      "steps": 1196
+      "steps": 1197
     },
     {
       "path": "orm_default_upgrade",
-      "steps": 1077
+      "steps": 1078
     },
     {
       "path": "orm_constraints",
-      "steps": 1068
+      "steps": 1069
     },
     {
       "path": "orm_fk_names",
-      "steps": 1077
+      "steps": 1078
     },
     {
       "path": "orm_checks",
-      "steps": 1069
+      "steps": 1070
+    },
+    {
+      "path": "orm_sequences",
+      "steps": 1077
     }
   ],
   "counts": {
@@ -94,6 +98,13 @@
       "sequences": 227
     },
     "orm_checks": {
+      "tables": 263,
+      "columns": 3700,
+      "constraints": 570,
+      "indexes": 1006,
+      "sequences": 227
+    },
+    "orm_sequences": {
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
@@ -162,7 +173,7 @@
       "sequences": {
         "referenceOnly": 0,
         "candidateOnly": 0,
-        "changed": 1,
+        "changed": 0,
         "possibleRenames": 0
       }
     }
@@ -422,7 +433,7 @@
     ]
   },
   "fullIndexCatalogContract": {
-    "mode": "all eight paths: exact complete index names and definitions; no additions, omissions or aliases waived",
+    "mode": "all nine paths: exact complete index names and definitions; no additions, omissions or aliases waived",
     "count": 1006,
     "retiredExternalKeys": [
       "store_order_refund.sor_store_order_id_idx",
@@ -433,7 +444,7 @@
     ]
   },
   "fullColumnCatalogContract": {
-    "mode": "all eight paths: exact complete columns, types, nullability, defaults, identity, generation and collation",
+    "mode": "all nine paths: exact complete columns, types, nullability, defaults, identity, generation and collation",
     "count": 3700,
     "defaultKeys": [
       "store_order_outbox.payload",
@@ -443,7 +454,7 @@
     ]
   },
   "missingConstraintContracts": {
-    "mode": "all eight paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived",
+    "mode": "all nine paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived",
     "keys": [
       "agent_level.al_brokerage_ck",
       "kefu_visitor_session.kvs_positive_ids_ck",
@@ -489,7 +500,7 @@
     ]
   },
   "foreignKeyNameContracts": {
-    "mode": "all eight paths: exact twelve FK catalog rows and no obsolete physical names or duplicate aliases",
+    "mode": "all nine paths: exact twelve FK catalog rows and no obsolete physical names or duplicate aliases",
     "keys": [
       "city_delivery_callback_outbox.cdcout_event_fk",
       "city_delivery_callback_watermark.cdcwm_event_fk",
@@ -520,7 +531,7 @@
     ]
   },
   "foreignKeyNameUpgradeVerification": {
-    "initialStatements": 1076,
+    "initialStatements": 1077,
     "guardedStatements": 1,
     "generatedProposalStatements": 24,
     "renamedKeys": [
@@ -719,7 +730,7 @@
     "freshCatalogMatched": true
   },
   "checkStateContracts": {
-    "mode": "all eight paths: nine exact CHECK definitions/states; eight NOT VALID, one validated event list; no normalized waiver",
+    "mode": "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated event list; no normalized waiver",
     "keys": [
       "division_apply.da_status_ck",
       "store_order.so_division_brokerage_ck",
@@ -733,11 +744,11 @@
     ]
   },
   "fullConstraintCatalogContract": {
-    "mode": "all eight paths: exact complete constraint catalog including names, types, expressions, validation and inheritance",
+    "mode": "all nine paths: exact complete constraint catalog including names, types, expressions, validation and inheritance",
     "count": 570
   },
   "checkStateUpgradeVerification": {
-    "initialStatements": 1068,
+    "initialStatements": 1069,
     "guardedStatements": 1,
     "generatedProposalStatements": 18,
     "alignedKeys": [
@@ -861,7 +872,7 @@
     "freshCatalogMatched": true
   },
   "missingConstraintUpgradeVerification": {
-    "initialStatements": 1067,
+    "initialStatements": 1068,
     "guardedStatements": 1,
     "generatedConstraintStatements": 41,
     "constraintsAdded": [
@@ -1073,7 +1084,7 @@
     "freshCatalogMatched": true
   },
   "columnDefaultUpgradeVerification": {
-    "initialStatements": 1076,
+    "initialStatements": 1077,
     "guardedStatements": 1,
     "generatedDefaultStatements": 4,
     "defaultsAligned": [
@@ -1202,6 +1213,16 @@
       "jsonNullPreserved": 2,
       "numericRoundingAndBoundsConfirmed": true,
       "textLengthPreserved": true
+    },
+    "orm_sequences": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
     }
   },
   "externalDuplicateIndexRetirement": {
@@ -1232,7 +1253,7 @@
     "noOpConfirmed": true
   },
   "upgradeVerification": {
-    "initialStatements": 1078,
+    "initialStatements": 1079,
     "upgradeStatements": 118,
     "definitionUpgradeStatements": 114,
     "namingUpgradeStatements": 1,
@@ -1504,6 +1525,369 @@
     "businessSequenceUpgradeAccepted": false
   },
   "rawDifferenceVerification": {
+    "baselineSourceCommit": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
+    "baselineRunId": 34030550652,
+    "baselineRunAttempt": 1,
+    "baselineRecords": 2,
+    "finalRecords": 1,
+    "removedChangedSequences": [
+      "kefu_visitor_uid_seq"
+    ],
+    "removedRawDifferenceRecords": 1,
+    "unchangedRemainingDifferenceRecords": 0,
+    "remainingRawDifferences": [],
+    "comparison": "All raw table/column/constraint/index/sequence differences are zero on nine isolated PG16 paths. No name, type, definition, validation-state or ownership normalization.",
+    "priorProofInitialStatementChanges": [
+      {
+        "proof": "foreignKeyNameUpgradeVerification",
+        "previousInitialStatements": 1076,
+        "initialStatements": 1077,
+        "otherFieldsUnchanged": true
+      },
+      {
+        "proof": "checkStateUpgradeVerification",
+        "previousInitialStatements": 1068,
+        "initialStatements": 1069,
+        "otherFieldsUnchanged": true
+      },
+      {
+        "proof": "missingConstraintUpgradeVerification",
+        "previousInitialStatements": 1067,
+        "initialStatements": 1068,
+        "otherFieldsUnchanged": true
+      },
+      {
+        "proof": "columnDefaultUpgradeVerification",
+        "previousInitialStatements": 1076,
+        "initialStatements": 1077,
+        "otherFieldsUnchanged": true
+      },
+      {
+        "proof": "upgradeVerification",
+        "previousInitialStatements": 1078,
+        "initialStatements": 1079,
+        "otherFieldsUnchanged": true
+      }
+    ],
+    "allOtherPriorIndexDefaultConstraintForeignKeyCheckProofFieldsUnchanged": true,
+    "priorEightDefaultWriteProofsUnchanged": true,
+    "ninthDefaultWriteMatchesFreshOrm": true,
+    "externalDuplicateIndexRetirementProofUnchanged": true,
+    "independentNotValidGeneratorProofUnchanged": true,
+    "independentSequenceGeneratorProofUnchanged": true
+  },
+  "ciVerification": {
+    "jobsPassed": 11,
+    "jobsTotal": 11,
+    "unitFilesPassed": 252,
+    "unitTestsPassed": 1609,
+    "unitTestsSkipped": 0,
+    "unitDurationSeconds": 550.96,
+    "runtimeFilesPassed": 3,
+    "runtimeTestsPassed": 24,
+    "kefuFilesPassed": 3,
+    "kefuTestsPassed": 17,
+    "historyCommitsScanned": 267,
+    "secretsFound": 0,
+    "typecheckOldSpaceLimitMiB": 4096,
+    "workerUnitJobDurationSeconds": 668,
+    "workerUnitJobTimeoutSeconds": 1200,
+    "workerUnitJobHeadroomSeconds": 532,
+    "catalogJobDurationSeconds": 260,
+    "catalogJobTimeoutSeconds": 1200,
+    "catalogJobHeadroomSeconds": 940,
+    "aggregateJobDurationSeconds": 2,
+    "dedicatedCatalogDatabases": 9,
+    "dedicatedGeneratorDatabases": 4,
+    "allCleanupConfirmed": true,
+    "ciCapacityReview": {
+      "task": "TEST-006B",
+      "status": "two_shard_capacity_verified_with_ninth_catalog_path; future_added_paths_require_review",
+      "previousSingleUnitSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+      "previousSingleUnitRunId": 34028634339,
+      "previousSingleUnitJobDurationSeconds": 1073,
+      "previousSingleUnitHeadroomSeconds": 127,
+      "previousSingleUnitObservations": {
+        "previousCombinedJobSeconds": 1134,
+        "previousCombinedHeadroomSeconds": 66,
+        "observedSplitUnitJobSeconds": [
+          1071,
+          750,
+          1073
+        ],
+        "observedSplitUnitHeadroomSeconds": [
+          129,
+          450,
+          127
+        ],
+        "conservativeObservedHeadroomSeconds": 127,
+        "defaultConcurrencyAndChildTimeoutsUnchanged": true,
+        "allOriginalExecutionStepBodiesPreserved": true,
+        "aggregateFailClosedObserved": true,
+        "task": "TEST-006",
+        "status": "current_batch_split_verified; future_added_paths_require_capacity_review",
+        "latestObservedSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+        "latestObservedRunId": 34028634339
+      },
+      "observedShardUnitJobSeconds": [
+        668,
+        545
+      ],
+      "observedShardUnitHeadroomSeconds": [
+        532,
+        655
+      ],
+      "conservativeObservedHeadroomSeconds": 529,
+      "observationScope": "Two complete two-shard observations, with 251 then 252 files; not a fixed performance guarantee",
+      "observedLongestJobHeadroomImprovementSeconds": 405,
+      "defaultPerJobConcurrencyIsolationAndChildTimeoutsUnchanged": true,
+      "originalAssertionsAndExecutionScopePreserved": true,
+      "nonUnitStepBodiesUnchangedAndExecutedOnce": true,
+      "unitCommandChangedOnlyForNativeShardAndJsonReporting": true,
+      "nativePartitionAndExecutedReportsVerified": true,
+      "requiredAggregateNameAndBodyUnchanged": true,
+      "previousAggregateFailureObservationPreserved": true,
+      "newMatrixFailureRunObserved": false,
+      "previousTwoShardObservation": {
+        "sourceCommit": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
+        "runId": 34030550652,
+        "jobSeconds": [
+          671,
+          447
+        ],
+        "headroomSeconds": [
+          529,
+          753
+        ]
+      }
+    },
+    "dedicatedNotValidGeneratorDatabases": 2,
+    "dedicatedSequenceGeneratorDatabases": 2,
+    "allDedicatedDatabases": 13,
+    "unitDurationMode": "longest of two parallel shard test durations; not their sum or workflow wall time",
+    "unitShardDurationSumSeconds": 1065.18,
+    "unitShardCount": 2,
+    "unitShardVerification": [
+      {
+        "shard": 1,
+        "shardCount": 2,
+        "inventoryFiles": 252,
+        "inventorySha256": "4ee612b63a212f93e3673d4f0f6423e683eff930b8620a8734f7e673c622305d",
+        "executedFiles": 126,
+        "executedFileSha256": "780272c47bb04bd9f1a7432e1c865702a1fe5a8684402ac473e2c1ed37a467b7",
+        "passedTests": 810,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      },
+      {
+        "shard": 2,
+        "shardCount": 2,
+        "inventoryFiles": 252,
+        "inventorySha256": "4ee612b63a212f93e3673d4f0f6423e683eff930b8620a8734f7e673c622305d",
+        "executedFiles": 126,
+        "executedFileSha256": "66cc01877b3c39a191e14137ce06fb7a1897c289556cadf48b462e20826aab38",
+        "passedTests": 799,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      }
+    ],
+    "workerUnitJobDurationMode": "longest of two independently hosted matrix jobs",
+    "workerUnitShardJobDurationsSeconds": [
+      668,
+      545
+    ],
+    "workerUnitShardJobHeadroomSeconds": [
+      532,
+      655
+    ]
+  },
+  "ciAttemptNotes": {
+    "preFixCodeRun": {
+      "sha": "8494360a3401cbf156fdcc47f716445935d78af0",
+      "runId": 34023806931,
+      "attempt": 1,
+      "conclusion": "failure",
+      "failedJob": "Isolated PostgreSQL 16 migration catalog execution",
+      "failedStep": "Execute isolated PostgreSQL 16 ORM and migration catalog audit",
+      "error": "0144 replacement postcondition failed: division_apply.da_status_ck",
+      "exitCode": 1,
+      "rawCatalogSummaryProduced": false,
+      "independentNotValidGeneratorAuditReached": false,
+      "successfulJobs": 8,
+      "failedJobs": 2,
+      "unitFilesPassed": 250,
+      "unitTestsPassed": 1596,
+      "unitTestsSkipped": 0,
+      "unitDurationSeconds": 952.19,
+      "unitJobDurationSeconds": 1071,
+      "unitJobHeadroomSeconds": 129,
+      "aggregateFailClosedObserved": true,
+      "diagnosis": "PG16 conbin includes parser character offsets; PG18 normal nodeToString emits -1. Original CREATE TABLE and replacement ALTER TABLE offsets differ without semantic differences. Fix permits only bounded integer :location fields in the internal tree; raw catalog SQL is not normalized."
+    },
+    "acceptedCodeRun": {
+      "sha": "194be1cb517efb4fc7db0a73d25fe460101c76a2",
+      "runId": 34024902767,
+      "attempt": 1,
+      "conclusion": "success",
+      "change": "Only the guarded CHECK internal-tree comparison and engine proof exclude parser character locations; all semantic node fields and raw catalog SQL comparisons remain strict. PostgreSQL 16 confirmed exactly eight location-only changes and seven semantic mutation refusals.",
+      "oldFailedShaRerun": false
+    },
+    "previousCompilerHeapFix": {
+      "sha": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
+      "runId": 34020575416,
+      "attempt": 1,
+      "conclusion": "success",
+      "change": "Only the two typecheck scripts set the pinned TypeScript compiler's old-space limit to 4096 MiB; no dependency, assertion, concurrency, test/workflow timeout or Worker runtime memory change",
+      "oldFailedShaRerun": false
+    },
+    "previousUnresolvedNativeAllocatorEvidence": {
+      "firstAttempt": {
+        "runId": 34017020788,
+        "sha": "70103a0291f270412e0bfa1fb51af19e06b89dec",
+        "test": "test/drizzle-pg-order-patch.test.ts > esm API",
+        "error": "corrupted size vs. prev_size",
+        "elapsedMs": 17504,
+        "resultStatus": null,
+        "passed": 1583,
+        "failed": 1,
+        "filesPassed": 246,
+        "filesFailed": 1,
+        "newConstraintCjsMs": 149225,
+        "newConstraintEsmMs": 106820,
+        "note": "Native allocator abort, not timeout or SQL assertion. Root cause not established; PG16 catalog audit not reached.",
+        "rootCauseResolved": false
+      },
+      "secondAttempt": {
+        "conclusion": "success",
+        "rerunScope": "One rerun of the failed complete Worker job at the same source commit; other seven successful jobs retained",
+        "codeConcurrencyTimeoutsAssertionsChanged": false,
+        "unitFilesPassed": 247,
+        "unitTestsPassed": 1584,
+        "unitTestsSkipped": 0
+      },
+      "openChecklistItem": "TEST-005"
+    },
+    "openChecklistItems": [
+      "TEST-005"
+    ],
+    "sequencePrerequisiteAcceptedRun": {
+      "sha": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+      "runId": 34028634339,
+      "attempt": 1,
+      "conclusion": "success",
+      "change": "Typed sequence snapshot, CLI/CJS/ESM generation and isolated PG16 fixtures; original business model, eight full catalog paths and all prior raw output preserved exactly.",
+      "oldFailedShaRerun": false
+    },
+    "unitShardCapacityAcceptedRun": {
+      "sha": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
+      "runId": 34030550652,
+      "attempt": 1,
+      "conclusion": "success",
+      "change": "Both complete native shard reports match the same configured inventory exactly; no assertion skips. Existing eight-path catalog and both independent generator proofs are deeply equal to ce5805a.",
+      "oldFailedShaRerun": false,
+      "businessSequenceModelOrMigrationChanged": false
+    },
+    "sequenceBusinessCandidateRun": {
+      "sha": "f3cf196ba9826bf3ef7207ebc190574f5c3ddc2f",
+      "runId": 34032529050,
+      "attempt": 1,
+      "conclusion": "success",
+      "oldFailedShaRerun": false,
+      "change": "Actual typed business model, guarded external SQL and ninth isolated PG16 full upgrade path. All five raw catalog categories are equal. New embedded guard registration and overall E5B acceptance remain pending."
+    }
+  },
+  "productionChanged": false,
+  "unitShardCapacityVerification": {
+    "baselineSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+    "baselineRunId": 34028634339,
+    "baselineRunAttempt": 1,
+    "completeOriginalRawCatalogRecordsDeepEqual": true,
+    "completeNotValidGeneratorReportDeepEqual": true,
+    "completeSequenceGeneratorReportDeepEqual": true,
+    "originalBusinessModelsAndMigrationsUnchanged": true,
+    "inventoryFiles": 251,
+    "filesExecutedExactlyOnce": 251,
+    "passedTests": 1604,
+    "skippedTests": 0,
+    "verificationUsesActualJsonReports": true,
+    "listFilesOnlyDoesNotApplySharding": true,
+    "productionAccessed": false,
+    "scope": "CI workload partition and acceptance evidence only. Uncommitted local E5B SQL/engine drafts are not part of this tested SHA or report."
+  },
+  "fullSequenceCatalogContract": {
+    "mode": "all nine paths: exact 227 named sequences, type, options and ownership; no omissions or aliases waived",
+    "count": 227
+  },
+  "kefuSequenceContracts": {
+    "mode": "all nine paths: exact integer type, bounds and AUTO owning column",
+    "keys": [
+      "kefu_visitor_uid_seq"
+    ]
+  },
+  "kefuSequenceUpgradeVerification": {
+    "initialStatements": 1076,
+    "guardedStatements": 1,
+    "generatedProposalStatements": 2,
+    "modelAligned": true,
+    "changedSequenceStorageFiles": 1,
+    "originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved": true,
+    "committedOldRowsPreserved": 2,
+    "originalCounterPreserved": true,
+    "driftRefusals": [
+      "increment",
+      "minimum",
+      "maximum",
+      "start",
+      "cache",
+      "cycle",
+      "integer-unowned",
+      "bigint-owned",
+      "wrong-owning-column",
+      "wrong-owning-table",
+      "owner-role",
+      "missing-default",
+      "wrong-default",
+      "nullable",
+      "column-type",
+      "missing-unique",
+      "wrong-unique-name",
+      "rls",
+      "inheritance",
+      "unlogged",
+      "extra-sequence-consumer",
+      "counter-before-range",
+      "uncalled-counter-overlaps-row",
+      "row-beyond-counter",
+      "missing-schema",
+      "missing-table",
+      "missing-sequence",
+      "unprivileged-role",
+      "ddl-event-hook",
+      "repeatable-read"
+    ],
+    "failureAfterAlterRollbackConfirmed": true,
+    "allPreflightBeforeTypeMutationConfirmed": true,
+    "noOpStorageAndCounterConfirmed": true,
+    "tempIsolationConfirmed": true,
+    "quotedNonPublicSchemaIsolationConfirmed": true,
+    "uncalledFirstValuePreserved": true,
+    "ownershipDeletionRollbackConfirmed": true,
+    "newDefaultWriteConfirmed": true,
+    "upperBoundAndExhaustionConfirmed": true,
+    "lockVerification": {
+      "waitRefused": true,
+      "waitMs": 2007,
+      "directNextvalSetvalAndTableWriterBlocked": true,
+      "peerNextvalNotRolledBack": true,
+      "ddlRollbackConfirmed": true,
+      "concurrentDistinctNumbers": 16
+    },
+    "syntheticRowsCleanupConfirmed": true,
+    "freshCatalogMatched": true
+  },
+  "historicalRawDifferenceVerification": {
     "baselineSourceCommit": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
     "baselineRunId": 34020575416,
     "baselineRunAttempt": 1,
@@ -1593,224 +1977,46 @@
     "externalDuplicateIndexRetirementProofUnchanged": true,
     "independentNotValidGeneratorProofUnchanged": true
   },
-  "ciVerification": {
-    "jobsPassed": 11,
-    "jobsTotal": 11,
-    "unitFilesPassed": 251,
-    "unitTestsPassed": 1604,
-    "unitTestsSkipped": 0,
-    "unitDurationSeconds": 549.96,
-    "runtimeFilesPassed": 3,
-    "runtimeTestsPassed": 24,
-    "kefuFilesPassed": 3,
-    "kefuTestsPassed": 17,
-    "historyCommitsScanned": 265,
-    "secretsFound": 0,
-    "typecheckOldSpaceLimitMiB": 4096,
-    "workerUnitJobDurationSeconds": 671,
-    "workerUnitJobTimeoutSeconds": 1200,
-    "workerUnitJobHeadroomSeconds": 529,
-    "catalogJobDurationSeconds": 255,
-    "catalogJobTimeoutSeconds": 1200,
-    "catalogJobHeadroomSeconds": 945,
-    "aggregateJobDurationSeconds": 3,
-    "dedicatedCatalogDatabases": 8,
-    "dedicatedGeneratorDatabases": 4,
-    "allCleanupConfirmed": true,
-    "ciCapacityReview": {
-      "task": "TEST-006B",
-      "status": "two_shard_partition_and_actual_execution_verified; future_added_paths_require_capacity_review",
-      "previousSingleUnitSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
-      "previousSingleUnitRunId": 34028634339,
-      "previousSingleUnitJobDurationSeconds": 1073,
-      "previousSingleUnitHeadroomSeconds": 127,
-      "previousSingleUnitObservations": {
-        "previousCombinedJobSeconds": 1134,
-        "previousCombinedHeadroomSeconds": 66,
-        "observedSplitUnitJobSeconds": [
-          1071,
-          750,
-          1073
-        ],
-        "observedSplitUnitHeadroomSeconds": [
-          129,
-          450,
-          127
-        ],
-        "conservativeObservedHeadroomSeconds": 127,
-        "defaultConcurrencyAndChildTimeoutsUnchanged": true,
-        "allOriginalExecutionStepBodiesPreserved": true,
-        "aggregateFailClosedObserved": true,
-        "task": "TEST-006",
-        "status": "current_batch_split_verified; future_added_paths_require_capacity_review",
-        "latestObservedSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
-        "latestObservedRunId": 34028634339
-      },
-      "observedShardUnitJobSeconds": [
-        671,
-        447
+  "sequenceBusinessCandidateVerification": {
+    "sourceCommit": "f3cf196ba9826bf3ef7207ebc190574f5c3ddc2f",
+    "runId": 34032529050,
+    "runAttempt": 1,
+    "status": "model_and_guarded_external_upgrade_verified; embedded_0151_registration_pending",
+    "fullFiveCategoryCatalogEquivalent": true,
+    "businessSequenceModelAligned": true,
+    "externalGuardedMigrationVerified": true,
+    "pureSqlMirrorVerified": true,
+    "embeddedNewGuardRegistered": false,
+    "businessSequenceUpgradeAccepted": false,
+    "releaseReady": false,
+    "scope": "Nine fresh/isolated upgrade paths and synthetic rows only. Existing embedded fresh creation is canonical, but new guarded upgrade SQL is not registered there yet. Does not prove full view/function/trigger/privilege/policy equivalence or production application.",
+    "sourceManifest": "workers-ts/audit/orm-kefu-sequence-reconciliation.json",
+    "previousAcceptedSourceCommit": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
+    "previousAcceptedRunId": 34030550652,
+    "previousAcceptedStatus": "not_equivalent",
+    "allPriorProofComparisons": {
+      "commit": "f3cf196ba9826bf3ef7207ebc190574f5c3ddc2f",
+      "runId": 34032529050,
+      "attempt": 1,
+      "catalogJobId": 101484613462,
+      "jobSeconds": 260,
+      "headroomSeconds": 940,
+      "paths": 9,
+      "createdAndCleanedDatabases": 13,
+      "rawDifferences": 0,
+      "oldProofOnlyInitialStatementsPlusOne": [
+        "foreignKeyNameUpgradeVerification.initialStatements",
+        "checkStateUpgradeVerification.initialStatements",
+        "missingConstraintUpgradeVerification.initialStatements",
+        "columnDefaultUpgradeVerification.initialStatements",
+        "upgradeVerification.initialStatements"
       ],
-      "observedShardUnitHeadroomSeconds": [
-        529,
-        753
-      ],
-      "conservativeObservedHeadroomSeconds": 529,
-      "observationScope": "one complete two-shard run; not a fixed performance guarantee",
-      "observedLongestJobHeadroomImprovementSeconds": 402,
-      "defaultPerJobConcurrencyIsolationAndChildTimeoutsUnchanged": true,
-      "originalAssertionsAndExecutionScopePreserved": true,
-      "nonUnitStepBodiesUnchangedAndExecutedOnce": true,
-      "unitCommandChangedOnlyForNativeShardAndJsonReporting": true,
-      "nativePartitionAndExecutedReportsVerified": true,
-      "requiredAggregateNameAndBodyUnchanged": true,
-      "previousAggregateFailureObservationPreserved": true,
-      "newMatrixFailureRunObserved": false
+      "generatorReportsUnchanged": true,
+      "lockWaitMs": 2007,
+      "concurrentDistinctNumbers": 16,
+      "driftRefusals": 30
     },
-    "dedicatedNotValidGeneratorDatabases": 2,
-    "dedicatedSequenceGeneratorDatabases": 2,
-    "allDedicatedDatabases": 12,
-    "unitDurationMode": "longest of two parallel shard test durations; not their sum or workflow wall time",
-    "unitShardDurationSumSeconds": 963.84,
-    "unitShardCount": 2,
-    "unitShardVerification": [
-      {
-        "shard": 1,
-        "shardCount": 2,
-        "inventoryFiles": 251,
-        "inventorySha256": "b2cd4c8a3426426ba18838bfb345295605ac71d867b7cfccd3e4e3aad04ce72d",
-        "executedFiles": 126,
-        "executedFileSha256": "780272c47bb04bd9f1a7432e1c865702a1fe5a8684402ac473e2c1ed37a467b7",
-        "passedTests": 810,
-        "skippedTests": 0,
-        "nativePartitionCompleteAndDisjoint": true,
-        "executedFilesMatchNativePartition": true
-      },
-      {
-        "shard": 2,
-        "shardCount": 2,
-        "inventoryFiles": 251,
-        "inventorySha256": "b2cd4c8a3426426ba18838bfb345295605ac71d867b7cfccd3e4e3aad04ce72d",
-        "executedFiles": 125,
-        "executedFileSha256": "00169aa067123328a94b3e913005c94ff4fab8b59bb09aa489540c8ddb45249a",
-        "passedTests": 794,
-        "skippedTests": 0,
-        "nativePartitionCompleteAndDisjoint": true,
-        "executedFilesMatchNativePartition": true
-      }
-    ],
-    "workerUnitJobDurationMode": "longest of two independently hosted matrix jobs",
-    "workerUnitShardJobDurationsSeconds": [
-      671,
-      447
-    ],
-    "workerUnitShardJobHeadroomSeconds": [
-      529,
-      753
-    ]
-  },
-  "ciAttemptNotes": {
-    "preFixCodeRun": {
-      "sha": "8494360a3401cbf156fdcc47f716445935d78af0",
-      "runId": 34023806931,
-      "attempt": 1,
-      "conclusion": "failure",
-      "failedJob": "Isolated PostgreSQL 16 migration catalog execution",
-      "failedStep": "Execute isolated PostgreSQL 16 ORM and migration catalog audit",
-      "error": "0144 replacement postcondition failed: division_apply.da_status_ck",
-      "exitCode": 1,
-      "rawCatalogSummaryProduced": false,
-      "independentNotValidGeneratorAuditReached": false,
-      "successfulJobs": 8,
-      "failedJobs": 2,
-      "unitFilesPassed": 250,
-      "unitTestsPassed": 1596,
-      "unitTestsSkipped": 0,
-      "unitDurationSeconds": 952.19,
-      "unitJobDurationSeconds": 1071,
-      "unitJobHeadroomSeconds": 129,
-      "aggregateFailClosedObserved": true,
-      "diagnosis": "PG16 conbin includes parser character offsets; PG18 normal nodeToString emits -1. Original CREATE TABLE and replacement ALTER TABLE offsets differ without semantic differences. Fix permits only bounded integer :location fields in the internal tree; raw catalog SQL is not normalized."
-    },
-    "acceptedCodeRun": {
-      "sha": "194be1cb517efb4fc7db0a73d25fe460101c76a2",
-      "runId": 34024902767,
-      "attempt": 1,
-      "conclusion": "success",
-      "change": "Only the guarded CHECK internal-tree comparison and engine proof exclude parser character locations; all semantic node fields and raw catalog SQL comparisons remain strict. PostgreSQL 16 confirmed exactly eight location-only changes and seven semantic mutation refusals.",
-      "oldFailedShaRerun": false
-    },
-    "previousCompilerHeapFix": {
-      "sha": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
-      "runId": 34020575416,
-      "attempt": 1,
-      "conclusion": "success",
-      "change": "Only the two typecheck scripts set the pinned TypeScript compiler's old-space limit to 4096 MiB; no dependency, assertion, concurrency, test/workflow timeout or Worker runtime memory change",
-      "oldFailedShaRerun": false
-    },
-    "previousUnresolvedNativeAllocatorEvidence": {
-      "firstAttempt": {
-        "runId": 34017020788,
-        "sha": "70103a0291f270412e0bfa1fb51af19e06b89dec",
-        "test": "test/drizzle-pg-order-patch.test.ts > esm API",
-        "error": "corrupted size vs. prev_size",
-        "elapsedMs": 17504,
-        "resultStatus": null,
-        "passed": 1583,
-        "failed": 1,
-        "filesPassed": 246,
-        "filesFailed": 1,
-        "newConstraintCjsMs": 149225,
-        "newConstraintEsmMs": 106820,
-        "note": "Native allocator abort, not timeout or SQL assertion. Root cause not established; PG16 catalog audit not reached.",
-        "rootCauseResolved": false
-      },
-      "secondAttempt": {
-        "conclusion": "success",
-        "rerunScope": "One rerun of the failed complete Worker job at the same source commit; other seven successful jobs retained",
-        "codeConcurrencyTimeoutsAssertionsChanged": false,
-        "unitFilesPassed": 247,
-        "unitTestsPassed": 1584,
-        "unitTestsSkipped": 0
-      },
-      "openChecklistItem": "TEST-005"
-    },
-    "openChecklistItems": [
-      "TEST-005"
-    ],
-    "sequencePrerequisiteAcceptedRun": {
-      "sha": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
-      "runId": 34028634339,
-      "attempt": 1,
-      "conclusion": "success",
-      "change": "Typed sequence snapshot, CLI/CJS/ESM generation and isolated PG16 fixtures; original business model, eight full catalog paths and all prior raw output preserved exactly.",
-      "oldFailedShaRerun": false
-    },
-    "unitShardCapacityAcceptedRun": {
-      "sha": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
-      "runId": 34030550652,
-      "attempt": 1,
-      "conclusion": "success",
-      "change": "Both complete native shard reports match the same configured inventory exactly; no assertion skips. Existing eight-path catalog and both independent generator proofs are deeply equal to ce5805a.",
-      "oldFailedShaRerun": false,
-      "businessSequenceModelOrMigrationChanged": false
-    }
-  },
-  "productionChanged": false,
-  "unitShardCapacityVerification": {
-    "baselineSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
-    "baselineRunId": 34028634339,
-    "baselineRunAttempt": 1,
-    "completeOriginalRawCatalogRecordsDeepEqual": true,
-    "completeNotValidGeneratorReportDeepEqual": true,
-    "completeSequenceGeneratorReportDeepEqual": true,
-    "originalBusinessModelsAndMigrationsUnchanged": true,
-    "inventoryFiles": 251,
-    "filesExecutedExactlyOnce": 251,
-    "passedTests": 1604,
-    "skippedTests": 0,
-    "verificationUsesActualJsonReports": true,
-    "listFilesOnlyDoesNotApplySharding": true,
     "productionAccessed": false,
-    "scope": "CI workload partition and acceptance evidence only. Uncommitted local E5B SQL/engine drafts are not part of this tested SHA or report."
+    "productionChanged": false
   }
 }
