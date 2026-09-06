@@ -16,6 +16,7 @@ import { assertMissingConstraintContracts } from "./data-migration/missing-const
 import { assertForeignKeyNamesAligned } from "./data-migration/foreign-key-name-contracts";
 import { assertAllConstraintsAligned, assertCheckStatesAligned } from "./data-migration/check-state-contracts";
 import { assertAllSequencesAligned, assertKefuSequenceAligned } from "./data-migration/kefu-sequence-contracts";
+import { assertAllTablesAligned, TABLE_CATALOG_FIELDS } from "./data-migration/table-catalog-contracts";
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -45,6 +46,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   let foreignKeyNameUpgradeVerification;
   let checkStateUpgradeVerification;
   let kefuSequenceUpgradeVerification;
+  let tableCatalogGateVerification;
   const columnWriteVerification: Record<string, unknown> = {};
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
@@ -64,9 +66,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const snapshot = generateDrizzleJson(models);
     const generated = await generateMigration(generateDrizzleJson({}), snapshot);
     const auditDefaults = createRequire(import.meta.url)("../test/helpers/columnDefaultAudit.cjs");
-    for (const path of ["external", "embedded", "orm", "orm_upgrade", "orm_default_upgrade", "orm_constraints", "orm_fk_names", "orm_checks", "orm_sequences"] as const) {
+    for (const path of ["external", "embedded", "orm", "orm_upgrade", "orm_default_upgrade", "orm_constraints", "orm_fk_names", "orm_checks", "orm_sequences", "table_gate"] as const) {
       const name = `orm_audit_${path}_${randomUUID().replaceAll("-", "")}`;
-      if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade|orm_constraints|orm_fk_names|orm_checks|orm_sequences)_[a-f0-9]{32}$/.test(name) || name.length > 63) throw new Error("Invalid isolated database name");
+      if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade|orm_constraints|orm_fk_names|orm_checks|orm_sequences|table_gate)_[a-f0-9]{32}$/.test(name) || name.length > 63) throw new Error("Invalid isolated database name");
       await control.unsafe(`CREATE DATABASE "${name}" TEMPLATE template0`);
       created.push(name);
       const isolated = new URL(target.href);
@@ -75,6 +77,15 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       try {
         const [actual] = await client`SELECT current_database() AS database, current_user AS role`;
         if (actual.database !== name || actual.role !== "finance_test") throw new Error("Isolated catalog database identity mismatch");
+        if (path === "table_gate") {
+          // An additional empty fixture DB, never a tenth complete project path.
+          const { verifyTableCatalogGate } = await import("../test/helpers/tableCatalogGateAudit");
+          tableCatalogGateVerification = await verifyTableCatalogGate({
+            exec: (query: string) => client.unsafe(query),
+            query: async (query: string) => Array.from(await client.unsafe(query)) as CatalogRow[],
+          });
+          continue;
+        }
         let steps = 0;
         if (path === "external") {
           for (let index = 0; index < migrationNames.length; index++) {
@@ -177,6 +188,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     }
     const externalVsEmbedded = compareCatalogs(catalogs.external, catalogs.embedded);
     const externalVsOrm = compareCatalogs(catalogs.external, catalogs.orm);
+    if (!tableCatalogGateVerification) throw new Error("Table catalog engine gate verification is missing");
     const contractManifests = await Promise.all([
       "orm-query-index-reconciliation.json",
       "orm-index-definition-reconciliation.json",
@@ -212,6 +224,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     for (const catalog of Object.values(catalogs)) assertConstraintNamesAligned(catalogs.external, catalog);
     for (const catalog of Object.values(catalogs)) assertAllIndexesAligned(catalogs.external, catalog);
     for (const catalog of Object.values(catalogs)) {
+      assertAllTablesAligned(catalogs.external, catalog);
       assertColumnDefaultContracts(catalog, defaultManifest);
       assertAllColumnsAligned(catalogs.external, catalog);
       assertMissingConstraintContracts(catalog, missingConstraintManifest);
@@ -255,13 +268,15 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       throw new Error("Fresh ORM and upgraded ORM catalogs differ");
     }
     return {
-      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM, default-upgraded ORM, constraint-upgraded ORM, foreign-key-renamed ORM CHECK-aligned ORM and sequence-aligned ORM catalogs: tables, columns, constraints, indexes and sequences. Includes six existing index phases, five external duplicate retirements, a separate four-default upgrade, a separate 41-constraint addition preserving eight NOT VALID states, twelve identity-preserving FK renames nine guarded CHECK replacements and one guarded integer/ownership sequence alignment preserving the current number. CHECK replacements intentionally change only the target constraint OIDs and their outgoing dependency object IDs, retaining comments and write rules. Complete index/column/constraint/sequence categories, the 41 added constraint contracts, twelve FK names and nine CHECK states are nine-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes. Upgrade probes verify synthetic rows, OIDs/files/dependencies, drift refusal, rollback, new writes, FK/unique/cascade behavior, idempotence and schema isolation. View/function/trigger probes cover self-created fixtures, not complete schema equivalence for those categories, privileges or policies. No production rows inspected.",
+      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM, default-upgraded ORM, constraint-upgraded ORM, foreign-key-renamed ORM CHECK-aligned ORM and sequence-aligned ORM catalogs: tables, columns, constraints, indexes and sequences. Includes six existing index phases, five external duplicate retirements, a separate four-default upgrade, a separate 41-constraint addition preserving eight NOT VALID states, twelve identity-preserving FK renames nine guarded CHECK replacements and one guarded integer/ownership sequence alignment preserving the current number. CHECK replacements intentionally change only the target constraint OIDs and their outgoing dependency object IDs, retaining comments and write rules. Complete table/index/column/constraint/sequence categories, the 41 added constraint contracts, twelve FK names and nine CHECK states are nine-path gates. An additional empty fixture database verifies table metadata refusals and rollback, separate from the nine project paths. All paths verify omitted/DEFAULT/explicit/NULL writes. Upgrade probes verify synthetic rows, OIDs/files/dependencies, drift refusal, rollback, new writes, FK/unique/cascade behavior, idempotence and schema isolation. View/function/trigger probes cover self-created fixtures, not complete schema equivalence for those categories, privileges or policies. No production rows inspected.",
       serverVersionNum: Number(identity.version),
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
+      fullTableCatalogContract: { mode: "all nine paths: exact 263 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
       alignedIndexNameContracts: { mode: "exact canonical names in positive contracts; reject all 44 old physical names in every path", oldKeys },
@@ -295,7 +310,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     try {
       for (const name of created.reverse()) {
         try {
-          if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade|orm_constraints|orm_fk_names|orm_checks|orm_sequences)_[a-f0-9]{32}$/.test(name) || name.length > 63) throw new Error("Unsafe cleanup target");
+          if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade|orm_constraints|orm_fk_names|orm_checks|orm_sequences|table_gate)_[a-f0-9]{32}$/.test(name) || name.length > 63) throw new Error("Unsafe cleanup target");
           await control.unsafe(`DROP DATABASE "${name}"`);
           const remains = await control`SELECT datname FROM pg_database WHERE datname=${name}`;
           if (remains.length) throw new Error("Isolated database cleanup was not confirmed");
@@ -310,7 +325,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   auditOrmDdl().then((report) => {
     // One independently parseable record per catalog difference, suitable for CI logs.
     const { externalVsEmbedded, externalVsOrm, ...metadata } = report;
-    console.log(`ORM_DDL_AUDIT ${JSON.stringify({ kind: "summary", ...metadata, cleanupConfirmed: true, mode: "inventory; differences remain open until individually reviewed" })}`);
+    console.log(`ORM_DDL_AUDIT ${JSON.stringify({ kind: "summary", ...metadata, cleanupConfirmed: true, mode: "enforced exact five-category catalog; broader runtime equivalence remains unaudited" })}`);
     for (const [comparison, diff] of Object.entries({ externalVsEmbedded, externalVsOrm })) {
       for (const category of catalogKinds) for (const [change, values] of Object.entries(diff[category])) {
         for (const value of values) console.log(`ORM_DDL_AUDIT ${JSON.stringify({ comparison, category, change, value })}`);
