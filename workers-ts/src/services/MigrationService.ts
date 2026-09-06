@@ -1,7 +1,8 @@
 /**
  * 迁移执行 Service (一次性, 部署后调用一次)
  *
- * 读取 migrations/*.sql, 逐个执行。
+ * 按代码内嵌 SQL 顺序执行全量建库/兼容步骤，不读取文件系统。
+ * 历史步骤包含数据补写；现存数据库的单项升级应明确调用独立执行器。
  * 通过受 operationsAuthMiddleware 保护的 POST /api/_migrate 触发。
  * 仅允许显式调试环境和 X-Operations-Token 双重门禁下使用。
  */
@@ -43,6 +44,8 @@ import { COLUMN_DEFAULT_ALIGNMENT_SQL } from "@/migrations/columnDefaultAlignmen
 import { MISSING_CONSTRAINT_ALIGNMENT_SQL } from "@/migrations/missingConstraintAlignment";
 import { FOREIGN_KEY_NAME_ALIGNMENT_SQL } from "@/migrations/foreignKeyNameAlignment";
 import { CHECK_STATE_ALIGNMENT_SQL } from "@/migrations/checkStateAlignment";
+import { KEFU_SEQUENCE_ALIGNMENT_SQL } from "@/migrations/kefuSequenceAlignment";
+import { runKefuSequenceAlignment } from "@/migrations/runKefuSequenceAlignment";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -232,6 +235,11 @@ export class MigrationService {
     return this.migration_0131();
   }
 
+  /** Exact registered sequence guard; obtaining SQL never executes an upgrade. */
+  kefuSequenceAlignmentMigrationSqlForVerification(): string {
+    return this.migration_0151();
+  }
+
   async runAll(): Promise<{ executed: string[]; errors: string[] }> {
     const executed: string[] = [];
     const errors: string[] = [];
@@ -390,10 +398,18 @@ export class MigrationService {
       this.migration_0148(),
       this.migration_0149(),
       this.migration_0150(),
+      this.migration_0151(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 151) {
+          // The standalone runner owns its bounded READ COMMITTED transaction.
+          // Never wrap it in the generic transaction below (that is a savepoint).
+          await runKefuSequenceAlignment(this.container.db);
+          executed.push("0151");
+          continue;
+        }
         let supersededByResolvedRenameFence = false;
         await this.container.db.transaction(async (tx) => {
           // Hyperdrive may reuse a PostgreSQL connection whose session-level
@@ -8412,5 +8428,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0150(): string {
     return CHECK_STATE_ALIGNMENT_SQL;
+  }
+
+  private migration_0151(): string {
+    return KEFU_SEQUENCE_ALIGNMENT_SQL;
   }
 }
