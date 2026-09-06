@@ -21,6 +21,7 @@ tsconfig.tsbuildinfo
 # ─── Vitest / 测试产物 ────────────────────────────────
 coverage/
 .nyc_output/
+/workers-ts/unit-shard-results.json
 
 # ─── Drizzle 迁移元数据 ───────────────────────────────
 migrations/meta/

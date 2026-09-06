@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -28,6 +29,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
   it("retains every existing gate exactly once and does not increase execution or child time limits",()=>{
     const unit=job("worker-unit"),catalog=job("worker-catalog");
     expect(names(unit)).toEqual([...setup,"Audit production dependencies","Run both TypeScript configurations","Run Worker unit tests",
+      "Verify exact executed unit shard coverage",
       "Audit production observability contract","Audit legacy-to-PostgreSQL schema drift","Audit legacy-to-Worker route parity"]);
     expect(names(catalog)).toEqual([...setup,"Execute isolated PostgreSQL 16 ORM and migration catalog audit",
       "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16"]);
@@ -38,7 +40,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       expect(block).toContain('node-version: "24.14.1"');
       expect(block).toContain('test "$(npm --version)" = "11.11.0"');
       expect(block).toContain("run: npm ci");
-      expect(block).not.toMatch(/needs:|continue-on-error|--shard|--maxWorkers|--testTimeout/);
+      expect(block).not.toMatch(/needs:|continue-on-error|--maxWorkers|--testTimeout|--no-isolate|--retry|--passWithNoTests/);
     }
     for(const command of ["npm run audit:prod","npm run typecheck","npm run test:unit","npm run audit:observability"])
       expect(unit).toContain("run: "+command);
@@ -46,6 +48,28 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(catalog).toContain("run: npm run audit:orm:not-valid\n");
     expect(catalog).toContain("run: npm run audit:orm:sequences\n");
     expect(unit).not.toContain("run: npm run audit:orm");
+    expect(unit).toContain("strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2]");
+    expect(unit.match(/--shard=/g)).toHaveLength(1);
+    expect(unit).toContain("run: npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json");
+    expect(unit).toContain("run: node scripts/audit-unit-shards.mjs ${{ matrix.shard }} unit-shard-results.json");
+    expect(unit.match(/if: matrix.shard == 1/g)).toHaveLength(5);
+    for(const name of ["Audit production dependencies", "Run both TypeScript configurations", "Audit production observability contract",
+      "Audit legacy-to-PostgreSQL schema drift", "Audit legacy-to-Worker route parity"])
+      expect(unit).toContain("- name: "+name+"\n        if: matrix.shard == 1\n");
+    expect(catalog).not.toContain("--shard");
     expect(workflow).not.toContain("secrets.");
   });
+  it("uses the real native partition and refuses omitted, duplicate, skipped or failed executed results",()=>{
+    const environment={...process.env};
+    const allowed=new Set(["PATH","Path","SystemRoot","WINDIR","COMSPEC","PATHEXT","TEMP","TMP","LOCALAPPDATA"]);
+    for(const key of Object.keys(environment))if(!allowed.has(key))delete environment[key];
+    environment.CI="1";
+    const result=spawnSync(process.execPath,[resolve(import.meta.dirname,"helpers/unitShardPartitionAudit.mjs")],{
+      cwd:resolve(import.meta.dirname,".."),env:environment,encoding:"utf8",timeout:10_000,windowsHide:true,
+    });
+    expect(result.error,result.stdout+result.stderr).toBeUndefined();
+    expect(result.status,result.stdout+result.stderr).toBe(0);
+    expect(result.stdout).toContain("nativePartitionCompleteAndDisjoint");
+    expect(result.stdout).toContain('"invalidResultRefusals":14');
+  },15_000);
 });

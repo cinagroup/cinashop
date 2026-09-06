@@ -51,7 +51,11 @@ jobs:
           test "$CATALOG_RESULT" = "success"
 
   worker-unit:
-    name: Worker type, unit, schema and route execution
+    name: Worker type, unit, schema and route execution (shard ${{ matrix.shard }}/2)
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -91,23 +95,31 @@ jobs:
         run: npm ci
 
       - name: Audit production dependencies
+        if: matrix.shard == 1
         run: npm run audit:prod
 
       - name: Run both TypeScript configurations
+        if: matrix.shard == 1
         run: npm run typecheck
 
       - name: Run Worker unit tests
-        run: npm run test:unit
+        run: npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json
+
+      - name: Verify exact executed unit shard coverage
+        run: node scripts/audit-unit-shards.mjs ${{ matrix.shard }} unit-shard-results.json
 
       - name: Audit production observability contract
+        if: matrix.shard == 1
         run: npm run audit:observability
 
       - name: Audit legacy-to-PostgreSQL schema drift
+        if: matrix.shard == 1
         run: |
           npx --no-install tsx scripts/mysql-to-postgres.ts schema-audit --json |
             node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);console.log(JSON.stringify({source:r.coverage.sourceTableCount,target:r.coverage.targetTableCount,shared:r.coverage.sharedTableCount,sourceGaps:r.coverage.sourceColumnGapTableCount,externalOnly:r.definitionDrift.externalOnlyTables.length,workerOnly:r.definitionDrift.workerOnlyTables.length,columnDrift:r.definitionDrift.columnDrift.length}));})'
 
       - name: Audit legacy-to-Worker route parity
+        if: matrix.shard == 1
         run: |
           npx --no-install tsx scripts/route-parity-audit.ts |
             node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);console.log(JSON.stringify({authority:r.phpRoot,...r.totals}));})'
