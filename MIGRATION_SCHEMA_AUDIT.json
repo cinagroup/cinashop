@@ -1,7 +1,7 @@
 {
-  "sourceCommit": "194be1cb517efb4fc7db0a73d25fe460101c76a2",
-  "runId": 34024902767,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34024902767",
+  "sourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+  "runId": 34028634339,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34028634339",
   "runAttempt": 1,
   "status": "not_equivalent",
   "kind": "summary",
@@ -1419,6 +1419,90 @@
     "databasesCreated": 2,
     "cleanupConfirmed": true
   },
+  "sequenceGeneratorVerification": {
+    "scope": "Generator prerequisites on self-created sequence fixtures; business sequence upgrade remains separate; no production access",
+    "records": [
+      {
+        "format": "cjs",
+        "serverVersionNum": 160014,
+        "initialStatements": 13,
+        "upgradeStatements": 9,
+        "sequences": [
+          "public.quoted\"sequence;",
+          "public.seq_big",
+          "public.seq_small",
+          "seq_tenant.seq_int"
+        ],
+        "malformedRefusals": 22,
+        "unsafeNumericInputsRefused": 20,
+        "snapshotRoundTrip": true,
+        "freshUpgradeCatalogMatched": true,
+        "counterPreservedByAlter": true,
+        "originalOidsCommentsRowsPreserved": true,
+        "ddlRollbackConfirmed": true,
+        "ownershipDeletionRollbackConfirmed": true,
+        "detachAndNoCycleConfirmed": true,
+        "descendingTypedDefaultsConfirmed": true,
+        "bigIntegerExact": true,
+        "nextvalNotRolledBack": true,
+        "exhaustionCode": "2200H",
+        "introspectionRefusedReadOnly": true,
+        "ordinarySerialIdentityAndUnownedBigintIntrospectionPreserved": true
+      },
+      {
+        "format": "esm",
+        "serverVersionNum": 160014,
+        "initialStatements": 13,
+        "upgradeStatements": 9,
+        "sequences": [
+          "public.quoted\"sequence;",
+          "public.seq_big",
+          "public.seq_small",
+          "seq_tenant.seq_int"
+        ],
+        "malformedRefusals": 22,
+        "unsafeNumericInputsRefused": 20,
+        "snapshotRoundTrip": true,
+        "freshUpgradeCatalogMatched": true,
+        "counterPreservedByAlter": true,
+        "originalOidsCommentsRowsPreserved": true,
+        "ddlRollbackConfirmed": true,
+        "ownershipDeletionRollbackConfirmed": true,
+        "detachAndNoCycleConfirmed": true,
+        "descendingTypedDefaultsConfirmed": true,
+        "bigIntegerExact": true,
+        "nextvalNotRolledBack": true,
+        "exhaustionCode": "2200H",
+        "introspectionRefusedReadOnly": true,
+        "ordinarySerialIdentityAndUnownedBigintIntrospectionPreserved": true
+      }
+    ],
+    "databasesCreated": 2,
+    "cleanupConfirmed": true
+  },
+  "sequencePrerequisiteVerification": {
+    "baselineSourceCommit": "194be1cb517efb4fc7db0a73d25fe460101c76a2",
+    "baselineRunId": 34024902767,
+    "baselineRunAttempt": 1,
+    "scope": "DB-009E5A generator prerequisites only. Full business sequence model and guarded old-ORM upgrade remain DB-009E5B; no production application.",
+    "baselineRawRecords": 2,
+    "finalRawRecords": 2,
+    "completeRawRecordsDeepEqual": true,
+    "allPriorCatalogSummaryFieldsDeepEqual": true,
+    "generatedSqlSha256Unchanged": true,
+    "externalInputSha256Unchanged": true,
+    "independentNotValidGeneratorProofDeepEqual": true,
+    "originalBusinessModelsAndMigrationsUnchanged": true,
+    "originalEightFullBusinessPathsUnchanged": true,
+    "remainingRawSequenceDifferenceRecords": 1,
+    "historicalRawDifferenceVerificationScope": "The preceding rawDifferenceVerification describes E4 (eebe827 to 194be1c): nine CHECK records removed. E5A removes zero raw differences and preserves that entire record.",
+    "previousAcceptanceNotesScope": "ciAttemptNotes.acceptedCodeRun remains the historical E4 acceptance; sequencePrerequisiteAcceptedRun is this E5A acceptance.",
+    "removedRawDifferenceRecords": 0,
+    "databasesCreated": 12,
+    "allCleanupConfirmed": true,
+    "productionAccessed": false,
+    "businessSequenceUpgradeAccepted": false
+  },
   "rawDifferenceVerification": {
     "baselineSourceCommit": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
     "baselineRunId": 34020575416,
@@ -1512,45 +1596,52 @@
   "ciVerification": {
     "jobsPassed": 10,
     "jobsTotal": 10,
-    "unitFilesPassed": 250,
-    "unitTestsPassed": 1596,
+    "unitFilesPassed": 251,
+    "unitTestsPassed": 1603,
     "unitTestsSkipped": 0,
-    "unitDurationSeconds": 646.96,
+    "unitDurationSeconds": 954.9,
     "runtimeFilesPassed": 3,
     "runtimeTestsPassed": 24,
     "kefuFilesPassed": 3,
     "kefuTestsPassed": 17,
-    "historyCommitsScanned": 260,
+    "historyCommitsScanned": 263,
     "secretsFound": 0,
     "typecheckOldSpaceLimitMiB": 4096,
-    "workerUnitJobDurationSeconds": 750,
+    "workerUnitJobDurationSeconds": 1073,
     "workerUnitJobTimeoutSeconds": 1200,
-    "workerUnitJobHeadroomSeconds": 450,
-    "catalogJobDurationSeconds": 245,
+    "workerUnitJobHeadroomSeconds": 127,
+    "catalogJobDurationSeconds": 238,
     "catalogJobTimeoutSeconds": 1200,
-    "catalogJobHeadroomSeconds": 955,
-    "aggregateJobDurationSeconds": 2,
+    "catalogJobHeadroomSeconds": 962,
+    "aggregateJobDurationSeconds": 3,
     "dedicatedCatalogDatabases": 8,
-    "dedicatedGeneratorDatabases": 2,
+    "dedicatedGeneratorDatabases": 4,
     "allCleanupConfirmed": true,
     "ciCapacityReview": {
       "previousCombinedJobSeconds": 1134,
       "previousCombinedHeadroomSeconds": 66,
       "observedSplitUnitJobSeconds": [
         1071,
-        750
+        750,
+        1073
       ],
       "observedSplitUnitHeadroomSeconds": [
         129,
-        450
+        450,
+        127
       ],
-      "conservativeObservedHeadroomSeconds": 129,
+      "conservativeObservedHeadroomSeconds": 127,
       "defaultConcurrencyAndChildTimeoutsUnchanged": true,
       "allOriginalExecutionStepBodiesPreserved": true,
       "aggregateFailClosedObserved": true,
       "task": "TEST-006",
-      "status": "current_batch_split_verified; future_added_paths_require_capacity_review"
-    }
+      "status": "current_batch_split_verified; future_added_paths_require_capacity_review",
+      "latestObservedSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+      "latestObservedRunId": 34028634339
+    },
+    "dedicatedNotValidGeneratorDatabases": 2,
+    "dedicatedSequenceGeneratorDatabases": 2,
+    "allDedicatedDatabases": 12
   },
   "ciAttemptNotes": {
     "preFixCodeRun": {
@@ -1620,7 +1711,15 @@
     },
     "openChecklistItems": [
       "TEST-005"
-    ]
+    ],
+    "sequencePrerequisiteAcceptedRun": {
+      "sha": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+      "runId": 34028634339,
+      "attempt": 1,
+      "conclusion": "success",
+      "change": "Typed sequence snapshot, CLI/CJS/ESM generation and isolated PG16 fixtures; original business model, eight full catalog paths and all prior raw output preserved exactly.",
+      "oldFailedShaRerun": false
+    }
   },
   "productionChanged": false
 }
