@@ -1,21 +1,21 @@
 {
-  "sourceCommit": "b0c15fca2c299a195c0f197d7bb3def11301e919",
-  "runId": 34008849823,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34008849823",
+  "sourceCommit": "cc2e5db9ac1a13975c30c713bed90f4e2c4e79d2",
+  "runId": 34010180395,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34010180395",
   "status": "not_equivalent",
   "kind": "summary",
-  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals, 44 ordinary and three owning-constraint guarded name alignments; verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique/cascade enforcement, equality index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals, 44 ordinary and three owning-constraint guarded name alignments, and five guarded external duplicate retirements. Complete index category is an exact four-path gate. Verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "703bd381a0b7d4a978e0039600f8d27779668551537f6c79db4e9962bcdb728d",
+  "externalInputSha256": "0a262ab28bb5b80aca2cf738abadbdc6b6e5ba2640f22659baa974fa54ffe770",
   "generatedSqlSha256": "d83b69556905b95a7c7afcb18fb6028662516a96f03493ab79d0f15b7bfed9a4",
   "paths": [
     {
       "path": "external",
-      "steps": 141
+      "steps": 142
     },
     {
       "path": "embedded",
-      "steps": 146
+      "steps": 147
     },
     {
       "path": "orm",
@@ -31,7 +31,7 @@
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
-      "indexes": 1011,
+      "indexes": 1006,
       "sequences": 227
     },
     "embedded": {
@@ -77,7 +77,7 @@
         "possibleRenames": 0
       },
       "indexes": {
-        "referenceOnly": 5,
+        "referenceOnly": 0,
         "candidateOnly": 0,
         "changed": 0,
         "possibleRenames": 0
@@ -109,7 +109,7 @@
         "possibleRenames": 12
       },
       "indexes": {
-        "referenceOnly": 5,
+        "referenceOnly": 0,
         "candidateOnly": 0,
         "changed": 0,
         "possibleRenames": 0
@@ -299,7 +299,12 @@
       "user_money.um_uid_idx",
       "data_migration_checkpoint.data_migration_checkpoint_pkey",
       "kefu_visitor_session.kefu_visitor_session_token_hash_key",
-      "kefu_visitor_session.kefu_visitor_session_visitor_uid_key"
+      "kefu_visitor_session.kefu_visitor_session_visitor_uid_key",
+      "store_order_refund.sor_store_order_id",
+      "user_recharge.ur_uid",
+      "wechat_user.wu_openid_uq",
+      "wechat_user.wu_uid",
+      "wechat_user.wu_unionid"
     ]
   },
   "retiredIndexContracts": {
@@ -370,6 +375,44 @@
       "kefu_visitor_session.kefu_visitor_session_token_hash_unique",
       "kefu_visitor_session.kefu_visitor_session_visitor_uid_unique"
     ]
+  },
+  "fullIndexCatalogContract": {
+    "mode": "all four paths: exact complete index names and definitions; no additions, omissions or aliases waived",
+    "count": 1006,
+    "retiredExternalKeys": [
+      "store_order_refund.sor_store_order_id_idx",
+      "user_recharge.ur_uid_idx",
+      "wechat_user.wu_openid_uq_idx",
+      "wechat_user.wu_uid_idx",
+      "wechat_user.wu_unionid_idx"
+    ]
+  },
+  "externalDuplicateIndexRetirement": {
+    "removedIndexes": [
+      "store_order_refund.sor_store_order_id_idx",
+      "user_recharge.ur_uid_idx",
+      "wechat_user.wu_openid_uq_idx",
+      "wechat_user.wu_uid_idx",
+      "wechat_user.wu_unionid_idx"
+    ],
+    "retainedIndexes": [
+      "store_order_refund.sor_store_order_id",
+      "user_recharge.ur_uid",
+      "wechat_user.wu_openid_uq",
+      "wechat_user.wu_uid",
+      "wechat_user.wu_unionid"
+    ],
+    "dependencyAndDriftRefusals": 34,
+    "dependentViewRefusals": 5,
+    "oldUniqueFkRefused": true,
+    "retainedFkOidsAndTriggersPreserved": true,
+    "failureRollbackConfirmed": true,
+    "nonTargetOidsAndFilesPreserved": true,
+    "fixtureRowsPreserved": 6,
+    "equalityLookupsConfirmed": true,
+    "uniqueAndCascadeEnforcementConfirmed": true,
+    "mixedStateAndTempIsolationConfirmed": true,
+    "noOpConfirmed": true
   },
   "upgradeVerification": {
     "initialStatements": 1061,
@@ -503,70 +546,8 @@
     "freshCatalogMatched": true
   },
   "missingIndexEvidence": {
-    "externalVsEmbedded": [
-      {
-        "reference": "store_order_refund.sor_store_order_id_idx",
-        "exactCandidates": [
-          "store_order_refund.sor_store_order_id"
-        ]
-      },
-      {
-        "reference": "user_recharge.ur_uid_idx",
-        "exactCandidates": [
-          "user_recharge.ur_uid"
-        ]
-      },
-      {
-        "reference": "wechat_user.wu_openid_uq_idx",
-        "exactCandidates": [
-          "wechat_user.wu_openid_uq"
-        ]
-      },
-      {
-        "reference": "wechat_user.wu_uid_idx",
-        "exactCandidates": [
-          "wechat_user.wu_uid"
-        ]
-      },
-      {
-        "reference": "wechat_user.wu_unionid_idx",
-        "exactCandidates": [
-          "wechat_user.wu_unionid"
-        ]
-      }
-    ],
-    "externalVsOrm": [
-      {
-        "reference": "store_order_refund.sor_store_order_id_idx",
-        "exactCandidates": [
-          "store_order_refund.sor_store_order_id"
-        ]
-      },
-      {
-        "reference": "user_recharge.ur_uid_idx",
-        "exactCandidates": [
-          "user_recharge.ur_uid"
-        ]
-      },
-      {
-        "reference": "wechat_user.wu_openid_uq_idx",
-        "exactCandidates": [
-          "wechat_user.wu_openid_uq"
-        ]
-      },
-      {
-        "reference": "wechat_user.wu_uid_idx",
-        "exactCandidates": [
-          "wechat_user.wu_uid"
-        ]
-      },
-      {
-        "reference": "wechat_user.wu_unionid_idx",
-        "exactCandidates": [
-          "wechat_user.wu_unionid"
-        ]
-      }
-    ]
+    "externalVsEmbedded": [],
+    "externalVsOrm": []
   },
   "cleanupConfirmed": true,
   "mode": "inventory; differences remain open until individually reviewed"
