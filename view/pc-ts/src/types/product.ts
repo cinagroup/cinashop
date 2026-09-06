@@ -44,7 +44,7 @@ export interface GoodsItem {
   cart_button: number;
 }
 
-/** 商品详情 */
+/** PC view model, normalized by api/productDetail.ts (not the raw wire response). */
 export interface GoodsDetail {
   id: number;
   store_name: string;

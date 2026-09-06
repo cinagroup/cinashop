@@ -3,6 +3,7 @@
  */
 import request, { getData } from "@/utils/request";
 import type { GoodsItem, GoodsDetail, CategoryNode, PageResult } from "@/types/product";
+import { normalizeGoodsDetail } from "./productDetail";
 
 /** 商品列表参数 */
 export interface GoodsListParams {
@@ -29,8 +30,8 @@ export function apiGoodsList(params: GoodsListParams): Promise<PageResult<GoodsI
 }
 
 /** 商品详情 (GET /api/product/detail/:id) */
-export function apiGoodsDetail(id: number): Promise<GoodsDetail> {
-  return getData(request.get<GoodsDetail>(`/product/detail/${id}`));
+export async function apiGoodsDetail(id: number): Promise<GoodsDetail> {
+  return normalizeGoodsDetail(await getData<unknown>(request.get(`/product/detail/${id}`)));
 }
 
 /** 分类列表 (GET /api/category) */
