@@ -1,7 +1,7 @@
 {
-  "sourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
-  "runId": 34028634339,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34028634339",
+  "sourceCommit": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
+  "runId": 34030550652,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34030550652",
   "runAttempt": 1,
   "status": "not_equivalent",
   "kind": "summary",
@@ -1594,54 +1594,119 @@
     "independentNotValidGeneratorProofUnchanged": true
   },
   "ciVerification": {
-    "jobsPassed": 10,
-    "jobsTotal": 10,
+    "jobsPassed": 11,
+    "jobsTotal": 11,
     "unitFilesPassed": 251,
-    "unitTestsPassed": 1603,
+    "unitTestsPassed": 1604,
     "unitTestsSkipped": 0,
-    "unitDurationSeconds": 954.9,
+    "unitDurationSeconds": 549.96,
     "runtimeFilesPassed": 3,
     "runtimeTestsPassed": 24,
     "kefuFilesPassed": 3,
     "kefuTestsPassed": 17,
-    "historyCommitsScanned": 263,
+    "historyCommitsScanned": 265,
     "secretsFound": 0,
     "typecheckOldSpaceLimitMiB": 4096,
-    "workerUnitJobDurationSeconds": 1073,
+    "workerUnitJobDurationSeconds": 671,
     "workerUnitJobTimeoutSeconds": 1200,
-    "workerUnitJobHeadroomSeconds": 127,
-    "catalogJobDurationSeconds": 238,
+    "workerUnitJobHeadroomSeconds": 529,
+    "catalogJobDurationSeconds": 255,
     "catalogJobTimeoutSeconds": 1200,
-    "catalogJobHeadroomSeconds": 962,
+    "catalogJobHeadroomSeconds": 945,
     "aggregateJobDurationSeconds": 3,
     "dedicatedCatalogDatabases": 8,
     "dedicatedGeneratorDatabases": 4,
     "allCleanupConfirmed": true,
     "ciCapacityReview": {
-      "previousCombinedJobSeconds": 1134,
-      "previousCombinedHeadroomSeconds": 66,
-      "observedSplitUnitJobSeconds": [
-        1071,
-        750,
-        1073
+      "task": "TEST-006B",
+      "status": "two_shard_partition_and_actual_execution_verified; future_added_paths_require_capacity_review",
+      "previousSingleUnitSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+      "previousSingleUnitRunId": 34028634339,
+      "previousSingleUnitJobDurationSeconds": 1073,
+      "previousSingleUnitHeadroomSeconds": 127,
+      "previousSingleUnitObservations": {
+        "previousCombinedJobSeconds": 1134,
+        "previousCombinedHeadroomSeconds": 66,
+        "observedSplitUnitJobSeconds": [
+          1071,
+          750,
+          1073
+        ],
+        "observedSplitUnitHeadroomSeconds": [
+          129,
+          450,
+          127
+        ],
+        "conservativeObservedHeadroomSeconds": 127,
+        "defaultConcurrencyAndChildTimeoutsUnchanged": true,
+        "allOriginalExecutionStepBodiesPreserved": true,
+        "aggregateFailClosedObserved": true,
+        "task": "TEST-006",
+        "status": "current_batch_split_verified; future_added_paths_require_capacity_review",
+        "latestObservedSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+        "latestObservedRunId": 34028634339
+      },
+      "observedShardUnitJobSeconds": [
+        671,
+        447
       ],
-      "observedSplitUnitHeadroomSeconds": [
-        129,
-        450,
-        127
+      "observedShardUnitHeadroomSeconds": [
+        529,
+        753
       ],
-      "conservativeObservedHeadroomSeconds": 127,
-      "defaultConcurrencyAndChildTimeoutsUnchanged": true,
-      "allOriginalExecutionStepBodiesPreserved": true,
-      "aggregateFailClosedObserved": true,
-      "task": "TEST-006",
-      "status": "current_batch_split_verified; future_added_paths_require_capacity_review",
-      "latestObservedSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
-      "latestObservedRunId": 34028634339
+      "conservativeObservedHeadroomSeconds": 529,
+      "observationScope": "one complete two-shard run; not a fixed performance guarantee",
+      "observedLongestJobHeadroomImprovementSeconds": 402,
+      "defaultPerJobConcurrencyIsolationAndChildTimeoutsUnchanged": true,
+      "originalAssertionsAndExecutionScopePreserved": true,
+      "nonUnitStepBodiesUnchangedAndExecutedOnce": true,
+      "unitCommandChangedOnlyForNativeShardAndJsonReporting": true,
+      "nativePartitionAndExecutedReportsVerified": true,
+      "requiredAggregateNameAndBodyUnchanged": true,
+      "previousAggregateFailureObservationPreserved": true,
+      "newMatrixFailureRunObserved": false
     },
     "dedicatedNotValidGeneratorDatabases": 2,
     "dedicatedSequenceGeneratorDatabases": 2,
-    "allDedicatedDatabases": 12
+    "allDedicatedDatabases": 12,
+    "unitDurationMode": "longest of two parallel shard test durations; not their sum or workflow wall time",
+    "unitShardDurationSumSeconds": 963.84,
+    "unitShardCount": 2,
+    "unitShardVerification": [
+      {
+        "shard": 1,
+        "shardCount": 2,
+        "inventoryFiles": 251,
+        "inventorySha256": "b2cd4c8a3426426ba18838bfb345295605ac71d867b7cfccd3e4e3aad04ce72d",
+        "executedFiles": 126,
+        "executedFileSha256": "780272c47bb04bd9f1a7432e1c865702a1fe5a8684402ac473e2c1ed37a467b7",
+        "passedTests": 810,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      },
+      {
+        "shard": 2,
+        "shardCount": 2,
+        "inventoryFiles": 251,
+        "inventorySha256": "b2cd4c8a3426426ba18838bfb345295605ac71d867b7cfccd3e4e3aad04ce72d",
+        "executedFiles": 125,
+        "executedFileSha256": "00169aa067123328a94b3e913005c94ff4fab8b59bb09aa489540c8ddb45249a",
+        "passedTests": 794,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      }
+    ],
+    "workerUnitJobDurationMode": "longest of two independently hosted matrix jobs",
+    "workerUnitShardJobDurationsSeconds": [
+      671,
+      447
+    ],
+    "workerUnitShardJobHeadroomSeconds": [
+      529,
+      753
+    ]
   },
   "ciAttemptNotes": {
     "preFixCodeRun": {
@@ -1719,7 +1784,33 @@
       "conclusion": "success",
       "change": "Typed sequence snapshot, CLI/CJS/ESM generation and isolated PG16 fixtures; original business model, eight full catalog paths and all prior raw output preserved exactly.",
       "oldFailedShaRerun": false
+    },
+    "unitShardCapacityAcceptedRun": {
+      "sha": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
+      "runId": 34030550652,
+      "attempt": 1,
+      "conclusion": "success",
+      "change": "Both complete native shard reports match the same configured inventory exactly; no assertion skips. Existing eight-path catalog and both independent generator proofs are deeply equal to ce5805a.",
+      "oldFailedShaRerun": false,
+      "businessSequenceModelOrMigrationChanged": false
     }
   },
-  "productionChanged": false
+  "productionChanged": false,
+  "unitShardCapacityVerification": {
+    "baselineSourceCommit": "ce5805aae8adfc03e3b3daf05ab789b4791f6b56",
+    "baselineRunId": 34028634339,
+    "baselineRunAttempt": 1,
+    "completeOriginalRawCatalogRecordsDeepEqual": true,
+    "completeNotValidGeneratorReportDeepEqual": true,
+    "completeSequenceGeneratorReportDeepEqual": true,
+    "originalBusinessModelsAndMigrationsUnchanged": true,
+    "inventoryFiles": 251,
+    "filesExecutedExactlyOnce": 251,
+    "passedTests": 1604,
+    "skippedTests": 0,
+    "verificationUsesActualJsonReports": true,
+    "listFilesOnlyDoesNotApplySharding": true,
+    "productionAccessed": false,
+    "scope": "CI workload partition and acceptance evidence only. Uncommitted local E5B SQL/engine drafts are not part of this tested SHA or report."
+  }
 }
