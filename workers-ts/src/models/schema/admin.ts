@@ -22,6 +22,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { notValid } from "../pgNotValid";
+import { withSequenceState } from "../pgSequenceState";
 import { sql } from "drizzle-orm";
 
 // ─── 管理员 ──────────────────────────────────────────────────
@@ -350,13 +351,16 @@ export const storeServiceTransfer = pgTable(
 // the legacy integer chat columns without colliding with registered users.
 // Export the separately named sequence too: a raw nextval default alone does
 // not make drizzle-kit emit CREATE SEQUENCE. Bounds match migration 0104.
-export const kefuVisitorUidSequence = pgSequence("kefu_visitor_uid_seq", {
+export const kefuVisitorUidSequence = withSequenceState(pgSequence("kefu_visitor_uid_seq", {
   startWith: 1_000_000_000,
   minValue: 1,
   maxValue: 2_147_483_647,
   increment: 1,
   cache: 1,
   cycle: false,
+}), {
+  dataType: "integer",
+  ownedBy: () => kefuVisitorSession.visitorUid,
 });
 
 export const kefuVisitorSession = pgTable(

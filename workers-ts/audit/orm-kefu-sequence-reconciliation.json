@@ -1,0 +1,102 @@
+{
+  "baselineCommit": "b07d01e54c384bafc7507ec2113ffd0f42fbda8c",
+  "sourceCommit": "94816da2c02c9e4d54b60528c10714ad6c3eb525",
+  "sourceRunId": 34030550652,
+  "scope": "One raw sequence difference: explicit integer type and AUTO ownership. Existing counters are preserved, never reset. No production access.",
+  "entries": [
+    {
+      "key": "kefu_visitor_uid_seq",
+      "catalog": {
+        "key": "kefu_visitor_uid_seq",
+        "name": "kefu_visitor_uid_seq",
+        "type": "integer",
+        "start": "1000000000",
+        "min": "1",
+        "max": "2147483647",
+        "increment": "1",
+        "cache": "1",
+        "cycle": false,
+        "ownedBy": "public.kefu_visitor_session.visitor_uid"
+      },
+      "previousCatalog": {
+        "key": "kefu_visitor_uid_seq",
+        "name": "kefu_visitor_uid_seq",
+        "type": "bigint",
+        "start": "1000000000",
+        "min": "1",
+        "max": "2147483647",
+        "increment": "1",
+        "cache": "1",
+        "cycle": false,
+        "ownedBy": null
+      },
+      "previousSnapshot": {
+        "name": "kefu_visitor_uid_seq",
+        "schema": "public",
+        "increment": "1",
+        "startWith": "1000000000",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": "1",
+        "cycle": false
+      },
+      "snapshot": {
+        "name": "kefu_visitor_uid_seq",
+        "schema": "public",
+        "increment": "1",
+        "startWith": "1000000000",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": "1",
+        "cycle": false,
+        "cinashopSequence": {
+          "dataType": "integer",
+          "ownedBy": {
+            "schema": "public",
+            "table": "kefu_visitor_session",
+            "column": "visitor_uid"
+          }
+        }
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "kefuVisitorUidSequence",
+        "declaration": "export const kefuVisitorUidSequence = withSequenceState(pgSequence(\"kefu_visitor_uid_seq\", {\n  startWith: 1_000_000_000,\n  minValue: 1,\n  maxValue: 2_147_483_647,\n  increment: 1,\n  cache: 1,\n  cycle: false,\n}), {\n  dataType: \"integer\",\n  ownedBy: () => kefuVisitorSession.visitorUid,\n});",
+        "previousDeclaration": "export const kefuVisitorUidSequence = pgSequence(\"kefu_visitor_uid_seq\", {\n  startWith: 1_000_000_000,\n  minValue: 1,\n  maxValue: 2_147_483_647,\n  increment: 1,\n  cache: 1,\n  cycle: false,\n});"
+      },
+      "fieldDeclaration": "visitorUid: integer(\"visitor_uid\")\n      .default(sql`nextval('\"kefu_visitor_uid_seq\"')`)\n      .notNull()\n      .unique(\"kefu_visitor_session_visitor_uid_key\")",
+      "sources": [
+        {
+          "file": "migrations/0104_kefu_visitor_session.sql",
+          "clauses": [
+            {
+              "line": 3,
+              "sql": "CREATE SEQUENCE IF NOT EXISTS \"kefu_visitor_uid_seq\"\n  AS INTEGER START WITH 1000000000 MAXVALUE 2147483647 NO CYCLE;",
+              "sha256": "a1573ced4e7fead5fab501296af7b79b83fd56c575d61f80cc9ce6078c5b2a4f"
+            },
+            {
+              "line": 29,
+              "sql": "ALTER SEQUENCE \"kefu_visitor_uid_seq\" OWNED BY \"kefu_visitor_session\".\"visitor_uid\";",
+              "sha256": "d8d845fccbf35815d3b157087d3d01430c1dcf73ca144fa554b3d285acdb8dd6"
+            }
+          ]
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "clauses": [
+            {
+              "line": 6246,
+              "sql": "CREATE SEQUENCE IF NOT EXISTS \"kefu_visitor_uid_seq\"\n  AS INTEGER START WITH 1000000000 MAXVALUE 2147483647 NO CYCLE;",
+              "sha256": "a1573ced4e7fead5fab501296af7b79b83fd56c575d61f80cc9ce6078c5b2a4f"
+            },
+            {
+              "line": 6272,
+              "sql": "ALTER SEQUENCE \"kefu_visitor_uid_seq\" OWNED BY \"kefu_visitor_session\".\"visitor_uid\";",
+              "sha256": "d8d845fccbf35815d3b157087d3d01430c1dcf73ca144fa554b3d285acdb8dd6"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
