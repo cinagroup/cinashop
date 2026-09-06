@@ -173,7 +173,6 @@ export const storeOrder = pgTable(
     index("so_kefu_customer_orders").on(t.uid, t.id.desc().nullsFirst())
       .where(sql`${t.isSystemDel} = 0 AND ${t.isDel} = 0 AND ${t.storeId} = 0
         AND ${t.pid} = 0 AND ${t.refundType} IN (0, 1, 3, 6)`),
-    index("so_order_id").on(t.orderId),
     index("so_verify_code").on(t.verifyCode),
     index("so_paid").on(t.paid),
     index("so_status").on(t.status),

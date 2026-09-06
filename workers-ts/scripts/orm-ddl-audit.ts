@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Container } from "../src/lib/di";
+import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -95,6 +96,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       "orm-query-index-reconciliation.json",
       "orm-index-definition-reconciliation.json",
       "orm-extra-index-reconciliation.json",
+      "orm-ordinary-index-reconciliation.json",
     ].map(async (name) => JSON.parse(await readFile(resolve(root, "audit", name), "utf8"))));
     if (contractManifests.some((manifest) => !Array.isArray(manifest.entries))) throw new Error("Invalid reconciled index manifest");
     const extra = contractManifests[2].entries;
@@ -104,8 +106,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     }
     const restoredLegacy = extra.filter((entry: { decision: string }) => entry.decision === "restore-missing-legacy-query-index");
     if (restoredLegacy.length !== 28) throw new Error("Expected all 28 legacy query index contracts");
-    const requiredIndexKeys = [...contractManifests[0].entries, ...contractManifests[1].entries, ...restoredLegacy]
+    const priorIndexKeys = [...contractManifests[0].entries, ...contractManifests[1].entries, ...restoredLegacy]
       .map((entry: { key: string }) => entry.key);
+    const { keys: requiredIndexKeys, retiredKeys } = extendOrdinaryIndexContracts(priorIndexKeys, contractManifests[3]);
+    for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     assertIndexContracts(catalogs.external, catalogs.embedded, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm_upgrade, requiredIndexKeys);
@@ -114,7 +118,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       throw new Error("Fresh ORM and upgraded ORM catalogs differ");
     }
     return {
-      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade and 28 legacy query index restoration, rejection/rollback/fixture/OID/FK dependency/idempotence/schema-isolation checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
+      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-definition upgrade, 28 legacy/20 Worker query index restorations and two redundant ORM index removals with dependency refusal, rollback, fixtures, OIDs, FK/unique enforcement, equality index plans, idempotence and schema isolation. Does not inspect production rows, privileges, functions, triggers, policies or views.",
       serverVersionNum: Number(identity.version),
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),
@@ -122,6 +126,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in embedded, fresh ORM and upgraded ORM paths", keys: requiredIndexKeys },
+      retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },
       missingIndexEvidence: {
         externalVsEmbedded: classifyMissingIndexes(catalogs.external, catalogs.embedded),

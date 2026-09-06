@@ -35,6 +35,7 @@ import { ADMIN_ARTICLE_INDEX_SQL } from "@/migrations/adminArticleIndexes";
 import { SYSTEM_FORM_REFERENCE_INDEX_SQL } from "@/migrations/systemFormReferenceIndexes";
 import { CORE_INDEX_ALIGNMENT_SQL } from "@/migrations/coreIndexAlignment";
 import { LEGACY_QUERY_INDEX_ALIGNMENT_SQL } from "@/migrations/legacyQueryIndexAlignment";
+import { WORKER_QUERY_INDEX_ALIGNMENT_SQL } from "@/migrations/workerQueryIndexAlignment";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -374,6 +375,7 @@ export class MigrationService {
       this.migration_0140(),
       this.migration_0141(),
       this.migration_0142(),
+      this.migration_0143(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8367,5 +8369,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0142(): string {
     return LEGACY_QUERY_INDEX_ALIGNMENT_SQL;
+  }
+  private migration_0143(): string {
+    return WORKER_QUERY_INDEX_ALIGNMENT_SQL;
   }
 }

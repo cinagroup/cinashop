@@ -37,7 +37,6 @@ export const systemSupplier = pgTable(
     cityShopId: varchar("city_shop_id", { length: 255 }).default("").notNull(),
   },
   (t) => [
-    index("supplier_admin_id").on(t.adminId),
     uniqueIndex("supplier_admin_id_uq").on(t.adminId),
     index("supplier_status").on(t.isShow, t.isDel),
   ],

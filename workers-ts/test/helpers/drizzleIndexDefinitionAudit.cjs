@@ -11,6 +11,9 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
   const priorContracts = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-query-index-reconciliation.json"), "utf8"));
   const legacyContracts = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-extra-index-reconciliation.json"), "utf8"))
     .entries.filter((entry) => entry.decision === "restore-missing-legacy-query-index");
+  const ordinaryManifest = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-ordinary-index-reconciliation.json"), "utf8"));
+  const retired = ordinaryManifest.entries.filter((entry) => entry.decision === "remove-redundant-orm-declaration");
+  const { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } = require("tsx/cjs/api").require("../../scripts/data-migration/ordinary-index-contracts.ts", __filename);
   const keys = manifest.entries.map((entry) => entry.key).sort();
   assert.equal(keys.length, 57);
   const old = structuredClone(snapshot);
@@ -18,6 +21,12 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
     old.tables[`public.${entry.catalog.table}`].indexes[entry.catalog.name] = structuredClone(entry.previousSnapshotIndex);
   }
   const target = generateDrizzleJson(models, old.id);
+  // Preserve the two old ordinary declarations through the 57-definition phase;
+  // their separate generated delta is tested with restrictive dependencies below.
+  for (const entry of retired) for (const state of [old, target]) {
+    assert.equal(state.tables[`public.${entry.catalog.table}`].indexes[entry.catalog.name], undefined);
+    state.tables[`public.${entry.catalog.table}`].indexes[entry.catalog.name] = structuredClone(entry.previousSnapshotIndex);
+  }
   const delta = await generateMigration(old, target);
   assert.equal(delta.length, 114);
   const drops = delta.filter((statement) => /^DROP INDEX /.test(statement));
@@ -70,7 +79,12 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
     await db.exec(delta.join("\n"));
     await db.exec("COMMIT");
     const after = await read();
-    const allEntries = [...priorContracts.entries, ...manifest.entries, ...legacyContracts];
+    const base = [...priorContracts.entries, ...manifest.entries, ...legacyContracts];
+    const contracts = extendOrdinaryIndexContracts(base.map((entry) => entry.key), ordinaryManifest);
+    const available = [...base.map((entry) => entry.catalog),
+      ...ordinaryManifest.entries.filter((entry) => entry.decision === "restore-worker-query-index").map((entry) => entry.catalog),
+      ...retired.map((entry) => entry.replacementCatalog)];
+    const allEntries = contracts.keys.map((key) => ({ key, catalog: available.find((row) => row.key === key) }));
     for (const entry of allEntries) assert.deepEqual(after.indexes.find((row) => row.key === entry.key), entry.catalog, entry.key);
     assertIndexContracts({ ...after, indexes: allEntries.map((entry) => entry.catalog) }, after, allEntries.map((entry) => entry.key));
     const diff = compareCatalogs(before, after);
@@ -85,10 +99,15 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
     assert.deepEqual((await db.query("SELECT title FROM agreement WHERE status=1 ORDER BY sort DESC")).rows, [{ title: "high fixture" }, { title: "low fixture" }]);
     assert.deepEqual((await db.query("SELECT session_id FROM kefu_visitor_session WHERE kefu_uid=7 AND revoked_at=0 AND expires_at>10")).rows, [{ session_id: "active-fixture" }]);
     assert.deepEqual((await db.query("SELECT old_cart_id FROM store_order_cart_info WHERE old_cart_id<>''")).rows, [{ old_cart_id: "parent-fixture" }]);
-    assert.deepEqual(await generateMigration(target, generateDrizzleJson(models, target.id)), []);
-    console.log(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, ${allEntries.length} contracts, no-op passed`);
     const legacyQueryIndexes = await require("./legacyQueryIndexAudit.cjs")({ db, read, objects, dependencies, format });
-    return { initialStatements: initial.length, upgradeStatements: delta.length, reconciledIndexes: 57,
-      verifiedContracts: allEntries.length, rollbackConfirmed: true, rowsAndDependenciesPreserved: true, legacyQueryIndexes };
+    const ordinaryQueryIndexes = await require("./legacyQueryIndexAudit.cjs")({ db, read, objects, dependencies, format, alignment: "worker" });
+    const retirement = await require("./ordinaryIndexRetirementAudit.cjs")({ api, models, previous: target, db, read, objects, dependencies, format });
+    const final = await read();
+    assertIndexContracts({ ...final, indexes: allEntries.map((entry) => entry.catalog) }, final, contracts.keys);
+    assertRetiredIndexesAbsent(final, contracts.retiredKeys);
+    console.log(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, ${allEntries.length} contracts, no-op passed`);
+    return { initialStatements: initial.length, upgradeStatements: delta.length + retirement.statements, definitionUpgradeStatements: delta.length, reconciledIndexes: 57,
+      verifiedContracts: allEntries.length, rollbackConfirmed: true, rowsAndDependenciesPreserved: true, legacyQueryIndexes,
+      ordinaryQueryIndexes: { ...ordinaryQueryIndexes, retirement } };
   } finally { if (!database) await db.close(); }
 };

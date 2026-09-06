@@ -1,0 +1,659 @@
+{
+  "sourceCommit": "2ef0d333ccf5485bb03e439685450d468872607c",
+  "runId": 34003919501,
+  "scope": "Complete 22 remaining non-alias ORM-only ordinary indexes. Bind code query consumers, restore 20 Worker query contracts to deployment SQL, and remove only two ORM declarations whose full B-tree keys are already covered by retained independent unique indexes. No production DDL. Isolated generated upgrades must prove dependency refusal, unique enforcement, rows and non-target OIDs/FKs, and no-op.",
+  "entries": [
+    {
+      "key": "community.c_add_time",
+      "catalog": {
+        "key": "community.c_add_time",
+        "name": "c_add_time",
+        "table": "community",
+        "definition": "public.community USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "queryEvidence": {
+        "source": "src/services/community/AdminCommunityService.ts",
+        "sourceLine": 1052,
+        "purpose": "Community moderation date range",
+        "sourceSql": "    if (start !== undefined) conditions.push(gte(community.addTime, start));\n    if (end !== undefined) conditions.push(lte(community.addTime, end));"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "community.c_status",
+      "catalog": {
+        "key": "community.c_status",
+        "name": "c_status",
+        "table": "community",
+        "definition": "public.community USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "queryEvidence": {
+        "source": "src/dao/community/CommunityDaos.ts",
+        "sourceLine": 24,
+        "purpose": "Visible community feed",
+        "sourceSql": "      .where(and(eq(community.status, 1), eq(community.isVerify, 1), eq(community.isDel, 0)))\n      .orderBy(sql`${community.addTime} DESC`)"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "community_comment.cc_add_time",
+      "catalog": {
+        "key": "community_comment.cc_add_time",
+        "name": "cc_add_time",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "queryEvidence": {
+        "source": "src/services/community/AdminCommunityService.ts",
+        "sourceLine": 1092,
+        "purpose": "Comment moderation date range",
+        "sourceSql": "    if (start !== undefined) conditions.push(gte(communityComment.addTime, start));\n    if (end !== undefined) conditions.push(lte(communityComment.addTime, end));"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "community_comment.cc_uid",
+      "catalog": {
+        "key": "community_comment.cc_uid",
+        "name": "cc_uid",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "queryEvidence": {
+        "source": "src/dao/community/CommunityDaos.ts",
+        "sourceLine": 69,
+        "purpose": "Comment author filter",
+        "sourceSql": "      communityId: (v) => eq(communityComment.communityId, Number(v)),\n      uid: (v) => eq(communityComment.uid, Number(v)),\n      isDel: (v) => eq(communityComment.isDel, Number(v)),"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "express_company.ec_status",
+      "catalog": {
+        "key": "express_company.ec_status",
+        "name": "ec_status",
+        "table": "express_company",
+        "definition": "public.express_company USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "queryEvidence": {
+        "source": "src/services/kefu/KefuFulfillmentService.ts",
+        "sourceLine": 272,
+        "purpose": "Express-company status filter",
+        "sourceSql": "        .from(expressCompany)\n        .where(and(\n          eq(expressCompany.isShow, 1),\n          statusRaw ? eq(expressCompany.status, Number(statusRaw)) : undefined,\n        ))\n        .orderBy(desc(expressCompany.sort), asc(expressCompany.id)));"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "shipping_templates.st_status",
+      "catalog": {
+        "key": "shipping_templates.st_status",
+        "name": "st_status",
+        "table": "shipping_templates",
+        "definition": "public.shipping_templates USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "queryEvidence": {
+        "source": "src/services/product/ProductAssociationService.ts",
+        "sourceLine": 347,
+        "purpose": "Active shipping-template filter",
+        "sourceSql": "        .where(and(\n          eq(shippingTemplates.ownerType, 0),\n          eq(shippingTemplates.relationId, 0),\n          eq(shippingTemplates.isDel, 0),\n          eq(shippingTemplates.status, 1),\n        ))\n        .orderBy(desc(shippingTemplates.sort), asc(shippingTemplates.id))"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_bargain.sbarg_status",
+      "catalog": {
+        "key": "store_bargain.sbarg_status",
+        "name": "sbarg_status",
+        "table": "store_bargain",
+        "definition": "public.store_bargain USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "queryEvidence": {
+        "source": "src/dao/activity/ActivityDaos.ts",
+        "sourceLine": 165,
+        "purpose": "Bargain status search",
+        "sourceSql": "    super(db, storeBargain, { status: (v) => eq(storeBargain.status, Number(v)) });"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_bargain_user.sbu_bargain",
+      "catalog": {
+        "key": "store_bargain_user.sbu_bargain",
+        "name": "sbu_bargain",
+        "table": "store_bargain_user",
+        "definition": "public.store_bargain_user USING btree (bargain_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "bargain_id"
+      ],
+      "queryEvidence": {
+        "source": "src/controllers/api/v1/AdminCrudController.ts",
+        "sourceLine": 1484,
+        "purpose": "Admin bargain participant query",
+        "sourceSql": "  const rows = await container.db\n    .select()\n    .from(schema.storeBargainUser)\n    .where(eq(schema.storeBargainUser.bargainId, bargainId))\n    .orderBy(desc(schema.storeBargainUser.addTime))\n    .limit(50);"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_bargain_user.sbu_uid",
+      "catalog": {
+        "key": "store_bargain_user.sbu_uid",
+        "name": "sbu_uid",
+        "table": "store_bargain_user",
+        "definition": "public.store_bargain_user USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "queryEvidence": {
+        "source": "src/services/activity/ActivityJoinService.ts",
+        "sourceLine": 780,
+        "purpose": "User bargain participation list",
+        "sourceSql": "      .from(storeBargainUser)\n      .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))\n      .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0)))\n      .orderBy(desc(storeBargainUser.addTime), desc(storeBargainUser.id))"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_combination.scomb_status",
+      "catalog": {
+        "key": "store_combination.scomb_status",
+        "name": "scomb_status",
+        "table": "store_combination",
+        "definition": "public.store_combination USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "queryEvidence": {
+        "source": "src/dao/activity/ActivityDaos.ts",
+        "sourceLine": 132,
+        "purpose": "Combination status search",
+        "sourceSql": "    super(db, storeCombination, { status: (v) => eq(storeCombination.status, Number(v)) });"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_coupon_issue.sci_type",
+      "catalog": {
+        "key": "store_coupon_issue.sci_type",
+        "name": "sci_type",
+        "table": "store_coupon_issue",
+        "definition": "public.store_coupon_issue USING btree (coupon_type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "coupon_type"
+      ],
+      "queryEvidence": {
+        "source": "src/services/activity/V2CouponCompatibilityService.ts",
+        "sourceLine": 294,
+        "purpose": "Coupon scope/type filter",
+        "sourceSql": "  }\n  if (query.type === 0) return eq(storeCouponIssue.couponType, 0);\n  if (query.type === 1) {\n    return and(\n      eq(storeCouponIssue.couponType, 1),\n      context.categoryIds.length ? categoryScopeMatches(context.categoryIds) : undefined,\n    ) ?? sql`FALSE`;"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_integral.sint_status",
+      "catalog": {
+        "key": "store_integral.sint_status",
+        "name": "sint_status",
+        "table": "store_integral",
+        "definition": "public.store_integral USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "queryEvidence": {
+        "source": "src/services/activity/ActivityService.ts",
+        "sourceLine": 756,
+        "purpose": "Active integral activity filter",
+        "sourceSql": "        })\n        .where(\n          and(\n            eq(storeIntegral.id, integralId),\n            eq(storeIntegral.status, 1),\n            eq(storeIntegral.isShow, 1),\n            eq(storeIntegral.isDel, 0),"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_order.so_order_id",
+      "catalog": {
+        "key": "store_order.so_order_id",
+        "name": "so_order_id",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (order_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "order_id"
+      ],
+      "queryEvidence": {
+        "source": "src/services/payment/PaymentReconciliationService.ts",
+        "sourceLine": 634,
+        "purpose": "Order number equality lookup",
+        "sourceSql": "      const candidates: number[] = [];\n      if (domain === \"\" || domain === \"store_order\") {\n        const rows = await tx.select({ paid: storeOrder.paid }).from(storeOrder)\n          .where(eq(storeOrder.orderId, orderNo)).limit(2);\n        candidates.push(...rows.map((row) => row.paid));"
+      },
+      "decision": "remove-redundant-orm-declaration",
+      "previousSnapshotIndex": {
+        "name": "so_order_id",
+        "columns": [
+          {
+            "expression": "order_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "replacementCatalog": {
+        "key": "store_order.so_order_id_uq",
+        "name": "so_order_id_uq",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (order_id)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "reason": "Exact same table, ordered keys, B-tree definition, default collation/opclass/null ordering, no expression/predicate/INCLUDE. Keep the existing valid standalone unique index and verify dependency refusal plus unchanged query/uniqueness behavior in isolated upgrades. This is not production drop authorization."
+    },
+    {
+      "key": "store_pink.sp_kid",
+      "catalog": {
+        "key": "store_pink.sp_kid",
+        "name": "sp_kid",
+        "table": "store_pink",
+        "definition": "public.store_pink USING btree (k_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "k_id"
+      ],
+      "queryEvidence": {
+        "source": "src/services/activity/PinkLifecycleService.ts",
+        "sourceLine": 340,
+        "purpose": "Group leader/participant lookup",
+        "sourceSql": "    })\n    .where(eq(storePink.id, leader.id));\n  if (completed) {\n    await tx\n      .update(storePink)\n      .set({ status: 2, stopTime: paidAt })\n      .where(eq(storePink.kId, leader.id));"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_service.ss_account",
+      "catalog": {
+        "key": "store_service.ss_account",
+        "name": "ss_account",
+        "table": "store_service",
+        "definition": "public.store_service USING btree (account)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "account"
+      ],
+      "queryEvidence": {
+        "source": "src/services/kefu/KefuAuthService.ts",
+        "sourceLine": 98,
+        "purpose": "Customer-service account lookup",
+        "sourceSql": "    const password = text(input.password, \"密码\", 128);\n    const rows = await this.container.db\n      .select()\n      .from(storeService)\n      .where(and(eq(storeService.account, account), eq(storeService.isDel, 0)))\n      .limit(1);"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "store_service_log.ssl_add_time",
+      "catalog": {
+        "key": "store_service_log.ssl_add_time",
+        "name": "ssl_add_time",
+        "table": "store_service_log",
+        "definition": "public.store_service_log USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "queryEvidence": {
+        "source": "src/dao/admin/AdminDaos.ts",
+        "sourceLine": 78,
+        "purpose": "Conversation time ordering",
+        "sourceSql": "    return this.db\n      .select()\n      .from(storeServiceLog)\n      .where(\n        or(\n          and(eqOp(storeServiceLog.uid, uid1), eqOp(storeServiceLog.toUid, uid2)),\n          and(eqOp(storeServiceLog.uid, uid2), eqOp(storeServiceLog.toUid, uid1)),\n        ) ?? sql`true`,\n      )\n      .orderBy(sql`${storeServiceLog.addTime} DESC`)\n      .limit(limit);"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "system_message.sm_add_time",
+      "catalog": {
+        "key": "system_message.sm_add_time",
+        "name": "sm_add_time",
+        "table": "system_message",
+        "definition": "public.system_message USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "queryEvidence": {
+        "source": "src/controllers/api/v1/UserMessageController.ts",
+        "sourceLine": 107,
+        "purpose": "Visible message time ordering",
+        "sourceSql": "    const rows = await container.db\n      .select()\n      .from(systemMessage)\n      .where(visibleSystemMessageWhere(uid))\n      .orderBy(desc(systemMessage.addTime))\n      .limit(20);"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "system_message.sm_user",
+      "catalog": {
+        "key": "system_message.sm_user",
+        "name": "sm_user",
+        "table": "system_message",
+        "definition": "public.system_message USING btree (user_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "user_id"
+      ],
+      "queryEvidence": {
+        "source": "src/services/message/UserMessageVisibility.ts",
+        "sourceLine": 8,
+        "purpose": "Message audience filter",
+        "sourceSql": "  return and(eq(systemMessage.status, 1), eq(systemMessage.isDel, 0), inArray(systemMessage.type, [0, 1]),\n    or(eq(systemMessage.userId, 0), eq(systemMessage.userId, uid)));"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "system_supplier.supplier_admin_id",
+      "catalog": {
+        "key": "system_supplier.supplier_admin_id",
+        "name": "supplier_admin_id",
+        "table": "system_supplier",
+        "definition": "public.system_supplier USING btree (admin_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "admin_id"
+      ],
+      "queryEvidence": {
+        "source": "src/dao/supplier/SupplierDaos.ts",
+        "sourceLine": 16,
+        "purpose": "Supplier admin identity lookup",
+        "sourceSql": "      .select()\n      .from(systemSupplier)\n      .where(\n        and(\n          eq(systemSupplier.id, supplierId),\n          eq(systemSupplier.adminId, adminId),\n          eq(systemSupplier.isShow, 1),\n          eq(systemSupplier.isDel, 0),\n        ),"
+      },
+      "decision": "remove-redundant-orm-declaration",
+      "previousSnapshotIndex": {
+        "name": "supplier_admin_id",
+        "columns": [
+          {
+            "expression": "admin_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "replacementCatalog": {
+        "key": "system_supplier.supplier_admin_id_uq",
+        "name": "supplier_admin_id_uq",
+        "table": "system_supplier",
+        "definition": "public.system_supplier USING btree (admin_id)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "reason": "Exact same table, ordered keys, B-tree definition, default collation/opclass/null ordering, no expression/predicate/INCLUDE. Keep the existing valid standalone unique index and verify dependency refusal plus unchanged query/uniqueness behavior in isolated upgrades. This is not production drop authorization."
+    },
+    {
+      "key": "user_brokerage.ub_cat_type",
+      "catalog": {
+        "key": "user_brokerage.ub_cat_type",
+        "name": "ub_cat_type",
+        "table": "user_brokerage",
+        "definition": "public.user_brokerage USING btree (category, type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "category",
+        "type"
+      ],
+      "queryEvidence": {
+        "source": "src/dao/user/BrokerageDaos.ts",
+        "sourceLine": 10,
+        "purpose": "Brokerage category/type search",
+        "sourceSql": "    super(db, userBrokerage, {\n      uid: (v) => eq(userBrokerage.uid, Number(v)),\n      category: (v) => eq(userBrokerage.category, String(v)),\n      type: (v) => eq(userBrokerage.type, String(v)),\n      status: (v) => eq(userBrokerage.status, Number(v)),"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "user_brokerage.ub_link",
+      "catalog": {
+        "key": "user_brokerage.ub_link",
+        "name": "ub_link",
+        "table": "user_brokerage",
+        "definition": "public.user_brokerage USING btree (link_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "link_id"
+      ],
+      "queryEvidence": {
+        "source": "src/services/order/OrderBrokerageService.ts",
+        "sourceLine": 587,
+        "purpose": "Order-linked brokerage lookup",
+        "sourceSql": "    .from(userBrokerage)\n    .where(\n      and(\n        eq(userBrokerage.linkId, linkId),\n        eq(userBrokerage.pm, 1),\n        inArray(userBrokerage.type, incomeTypes),\n        eq(userBrokerage.status, 1),\n      ),"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    },
+    {
+      "key": "user_message.um_uid_msg",
+      "catalog": {
+        "key": "user_message.um_uid_msg",
+        "name": "um_uid_msg",
+        "table": "user_message",
+        "definition": "public.user_message USING btree (uid, message_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid",
+        "message_id"
+      ],
+      "queryEvidence": {
+        "source": "src/services/message/UserMessageVisibility.ts",
+        "sourceLine": 14,
+        "purpose": "User/message read-state join",
+        "sourceSql": "  return sql<number>`(SELECT count(DISTINCT system_message.id)::int FROM system_message\n    LEFT JOIN user_message ON user_message.message_id = system_message.id\n      AND user_message.uid = ${uid} AND user_message.is_read = 1\n    WHERE ${visibleSystemMessageWhere(uid)} AND system_message.look = 0 AND user_message.id IS NULL)`;"
+      },
+      "decision": "restore-worker-query-index",
+      "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."
+    }
+  ]
+}
