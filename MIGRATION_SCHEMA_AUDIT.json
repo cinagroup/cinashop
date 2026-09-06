@@ -1,41 +1,45 @@
 {
-  "sourceCommit": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
-  "runId": 34020575416,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34020575416",
+  "sourceCommit": "194be1cb517efb4fc7db0a73d25fe460101c76a2",
+  "runId": 34024902767,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34024902767",
   "runAttempt": 1,
   "status": "not_equivalent",
   "kind": "summary",
-  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM, default-upgraded ORM, constraint-upgraded ORM and foreign-key-renamed ORM catalogs: tables, columns, constraints, indexes and sequences. Includes six existing index phases, five external duplicate retirements, a separate four-default upgrade, a separate 41-constraint addition preserving eight NOT VALID states and twelve identity-preserving FK renames. Complete index/column categories, the 41 exact constraint contracts and twelve FK names are seven-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes. Upgrade probes verify synthetic rows, OIDs/files/dependencies, drift refusal, rollback, new writes, FK/unique/cascade behavior, idempotence and schema isolation. View/function/trigger probes cover self-created fixtures, not complete schema equivalence for those categories, privileges or policies. No production rows inspected.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM, default-upgraded ORM, constraint-upgraded ORM, foreign-key-renamed ORM and CHECK-aligned ORM catalogs: tables, columns, constraints, indexes and sequences. Includes six existing index phases, five external duplicate retirements, a separate four-default upgrade, a separate 41-constraint addition preserving eight NOT VALID states, twelve identity-preserving FK renames and nine guarded CHECK replacements. CHECK replacements intentionally change only the target constraint OIDs and their outgoing dependency object IDs, retaining comments and write rules. Complete index/column/constraint categories, the 41 added constraint contracts, twelve FK names and nine CHECK states are eight-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes. Upgrade probes verify synthetic rows, OIDs/files/dependencies, drift refusal, rollback, new writes, FK/unique/cascade behavior, idempotence and schema isolation. View/function/trigger probes cover self-created fixtures, not complete schema equivalence for those categories, privileges or policies. No production rows inspected.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "5b026028c730c5d1834f4999425f86e9b5bc4043bdf0b90591dc21a8847839c0",
-  "generatedSqlSha256": "c9e02af32dd77130576e29d7bf66a6270986451edbc1ebda4313bbf27b5256b6",
+  "externalInputSha256": "cb216b3cfe71066b50fa4683da397e30cc6e70225a92d74640f646c54ca5badb",
+  "generatedSqlSha256": "00ea146c2254522ca7347a7983d424c6edaaca948d03191fac7aeb375b143e8a",
   "paths": [
     {
       "path": "external",
-      "steps": 145
+      "steps": 146
     },
     {
       "path": "embedded",
-      "steps": 150
+      "steps": 151
     },
     {
       "path": "orm",
-      "steps": 1068
+      "steps": 1076
     },
     {
       "path": "orm_upgrade",
-      "steps": 1188
+      "steps": 1196
     },
     {
       "path": "orm_default_upgrade",
-      "steps": 1069
+      "steps": 1077
     },
     {
       "path": "orm_constraints",
-      "steps": 1060
+      "steps": 1068
     },
     {
       "path": "orm_fk_names",
+      "steps": 1077
+    },
+    {
+      "path": "orm_checks",
       "steps": 1069
     }
   ],
@@ -83,6 +87,13 @@
       "sequences": 227
     },
     "orm_fk_names": {
+      "tables": 263,
+      "columns": 3700,
+      "constraints": 570,
+      "indexes": 1006,
+      "sequences": 227
+    },
+    "orm_checks": {
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
@@ -139,7 +150,7 @@
       "constraints": {
         "referenceOnly": 0,
         "candidateOnly": 0,
-        "changed": 9,
+        "changed": 0,
         "possibleRenames": 0
       },
       "indexes": {
@@ -411,7 +422,7 @@
     ]
   },
   "fullIndexCatalogContract": {
-    "mode": "all seven paths: exact complete index names and definitions; no additions, omissions or aliases waived",
+    "mode": "all eight paths: exact complete index names and definitions; no additions, omissions or aliases waived",
     "count": 1006,
     "retiredExternalKeys": [
       "store_order_refund.sor_store_order_id_idx",
@@ -422,7 +433,7 @@
     ]
   },
   "fullColumnCatalogContract": {
-    "mode": "all seven paths: exact complete columns, types, nullability, defaults, identity, generation and collation",
+    "mode": "all eight paths: exact complete columns, types, nullability, defaults, identity, generation and collation",
     "count": 3700,
     "defaultKeys": [
       "store_order_outbox.payload",
@@ -432,7 +443,7 @@
     ]
   },
   "missingConstraintContracts": {
-    "mode": "all seven paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived",
+    "mode": "all eight paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived",
     "keys": [
       "agent_level.al_brokerage_ck",
       "kefu_visitor_session.kvs_positive_ids_ck",
@@ -478,7 +489,7 @@
     ]
   },
   "foreignKeyNameContracts": {
-    "mode": "all seven paths: exact twelve FK catalog rows and no obsolete physical names or duplicate aliases",
+    "mode": "all eight paths: exact twelve FK catalog rows and no obsolete physical names or duplicate aliases",
     "keys": [
       "city_delivery_callback_outbox.cdcout_event_fk",
       "city_delivery_callback_watermark.cdcwm_event_fk",
@@ -509,7 +520,7 @@
     ]
   },
   "foreignKeyNameUpgradeVerification": {
-    "initialStatements": 1068,
+    "initialStatements": 1076,
     "guardedStatements": 1,
     "generatedProposalStatements": 24,
     "renamedKeys": [
@@ -707,8 +718,150 @@
     "nonPublicSchemaIsolationConfirmed": true,
     "freshCatalogMatched": true
   },
+  "checkStateContracts": {
+    "mode": "all eight paths: nine exact CHECK definitions/states; eight NOT VALID, one validated event list; no normalized waiver",
+    "keys": [
+      "division_apply.da_status_ck",
+      "store_order.so_division_brokerage_ck",
+      "store_order.so_supplier_allocation_status_ck",
+      "store_order_cart_info.soci_split_state_ck",
+      "store_order_outbox.soob_event_type_ck",
+      "store_product_reply.spr_scores_ck",
+      "user.user_division_percent_ck",
+      "user.user_division_status_ck",
+      "user.user_division_type_ck"
+    ]
+  },
+  "fullConstraintCatalogContract": {
+    "mode": "all eight paths: exact complete constraint catalog including names, types, expressions, validation and inheritance",
+    "count": 570
+  },
+  "checkStateUpgradeVerification": {
+    "initialStatements": 1068,
+    "guardedStatements": 1,
+    "generatedProposalStatements": 18,
+    "alignedKeys": [
+      "division_apply.da_status_ck",
+      "store_order.so_division_brokerage_ck",
+      "store_order.so_supplier_allocation_status_ck",
+      "store_order_cart_info.soci_split_state_ck",
+      "store_order_outbox.soob_event_type_ck",
+      "store_product_reply.spr_scores_ck",
+      "user.user_division_percent_ck",
+      "user.user_division_status_ck",
+      "user.user_division_type_ck"
+    ],
+    "rejectionCases": [
+      "missing:division_apply.da_status_ck",
+      "definition:division_apply.da_status_ck",
+      "duplicate:division_apply.da_status_ck",
+      "no-inherit:division_apply.da_status_ck",
+      "missing:store_order.so_division_brokerage_ck",
+      "definition:store_order.so_division_brokerage_ck",
+      "duplicate:store_order.so_division_brokerage_ck",
+      "no-inherit:store_order.so_division_brokerage_ck",
+      "missing:store_order.so_supplier_allocation_status_ck",
+      "definition:store_order.so_supplier_allocation_status_ck",
+      "duplicate:store_order.so_supplier_allocation_status_ck",
+      "no-inherit:store_order.so_supplier_allocation_status_ck",
+      "missing:store_order_cart_info.soci_split_state_ck",
+      "definition:store_order_cart_info.soci_split_state_ck",
+      "duplicate:store_order_cart_info.soci_split_state_ck",
+      "no-inherit:store_order_cart_info.soci_split_state_ck",
+      "missing:store_order_outbox.soob_event_type_ck",
+      "definition:store_order_outbox.soob_event_type_ck",
+      "duplicate:store_order_outbox.soob_event_type_ck",
+      "no-inherit:store_order_outbox.soob_event_type_ck",
+      "missing:store_product_reply.spr_scores_ck",
+      "definition:store_product_reply.spr_scores_ck",
+      "duplicate:store_product_reply.spr_scores_ck",
+      "no-inherit:store_product_reply.spr_scores_ck",
+      "missing:user.user_division_percent_ck",
+      "definition:user.user_division_percent_ck",
+      "duplicate:user.user_division_percent_ck",
+      "no-inherit:user.user_division_percent_ck",
+      "missing:user.user_division_status_ck",
+      "definition:user.user_division_status_ck",
+      "duplicate:user.user_division_status_ck",
+      "no-inherit:user.user_division_status_ck",
+      "missing:user.user_division_type_ck",
+      "definition:user.user_division_type_ck",
+      "duplicate:user.user_division_type_ck",
+      "no-inherit:user.user_division_type_ck",
+      "outbox-not-valid",
+      "wrong-unvalidated:division_apply.da_status_ck",
+      "wrong-unvalidated:store_order.so_division_brokerage_ck",
+      "wrong-unvalidated:store_order.so_supplier_allocation_status_ck",
+      "wrong-unvalidated:store_order_cart_info.soci_split_state_ck",
+      "wrong-unvalidated:store_product_reply.spr_scores_ck",
+      "wrong-unvalidated:user.user_division_percent_ck",
+      "wrong-unvalidated:user.user_division_status_ck",
+      "wrong-unvalidated:user.user_division_type_ck",
+      "nullable",
+      "type",
+      "default",
+      "collation",
+      "missing-column",
+      "missing-table",
+      "missing-schema",
+      "inherited",
+      "unlogged",
+      "function-dependency"
+    ],
+    "rawProposalReplacements": [
+      "division_apply.da_status_ck",
+      "store_order.so_division_brokerage_ck",
+      "store_order.so_supplier_allocation_status_ck",
+      "store_order_cart_info.soci_split_state_ck",
+      "store_order_outbox.soob_event_type_ck",
+      "store_product_reply.spr_scores_ck",
+      "user.user_division_percent_ck",
+      "user.user_division_status_ck",
+      "user.user_division_type_ck"
+    ],
+    "changedTargetConstraintOids": 9,
+    "targetDependencyObjectIdsChanged": true,
+    "commentsPreserved": true,
+    "expressionComparison": {
+      "ignoredInternalFields": [
+        "location"
+      ],
+      "semanticDriftRefusals": 7,
+      "locationOnlyChangedKeys": [
+        "division_apply.da_status_ck",
+        "store_order.so_division_brokerage_ck",
+        "store_order.so_supplier_allocation_status_ck",
+        "store_order_cart_info.soci_split_state_ck",
+        "store_product_reply.spr_scores_ck",
+        "user.user_division_percent_ck",
+        "user.user_division_status_ck",
+        "user.user_division_type_ck"
+      ],
+      "rawCatalogSqlUnmodified": true
+    },
+    "invalidInsertContracts": 58,
+    "invalidUpdateContracts": 58,
+    "validBoundaryContracts": 70,
+    "nullColumns": 32,
+    "committedInvalidRowsPreserved": 8,
+    "committedInvalidInsertUpdateAndValidationRefusals": 8,
+    "nonTargetObjectsRowsFilesIndexesTriggersFunctionsPreserved": true,
+    "fullCohortPreflightBeforeFirstMutationConfirmed": true,
+    "lockVerification": {
+      "lockWaitRefused": true,
+      "lockRefusalMs": 2005,
+      "concurrentWriterBlockedUntilTransactionEnd": true,
+      "rollbackConfirmed": true
+    },
+    "failureAfterDropAndAddRollbackConfirmed": true,
+    "noOpConfirmed": true,
+    "mixedStateAndTempIsolationConfirmed": true,
+    "nonPublicSchemaIsolationConfirmed": true,
+    "syntheticRowsCleanupConfirmed": true,
+    "freshCatalogMatched": true
+  },
   "missingConstraintUpgradeVerification": {
-    "initialStatements": 1059,
+    "initialStatements": 1067,
     "guardedStatements": 1,
     "generatedConstraintStatements": 41,
     "constraintsAdded": [
@@ -920,7 +1073,7 @@
     "freshCatalogMatched": true
   },
   "columnDefaultUpgradeVerification": {
-    "initialStatements": 1068,
+    "initialStatements": 1076,
     "guardedStatements": 1,
     "generatedDefaultStatements": 4,
     "defaultsAligned": [
@@ -1039,6 +1192,16 @@
       "jsonNullPreserved": 2,
       "numericRoundingAndBoundsConfirmed": true,
       "textLengthPreserved": true
+    },
+    "orm_checks": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
     }
   },
   "externalDuplicateIndexRetirement": {
@@ -1069,7 +1232,7 @@
     "noOpConfirmed": true
   },
   "upgradeVerification": {
-    "initialStatements": 1070,
+    "initialStatements": 1078,
     "upgradeStatements": 118,
     "definitionUpgradeStatements": 114,
     "namingUpgradeStatements": 1,
@@ -1257,128 +1420,170 @@
     "cleanupConfirmed": true
   },
   "rawDifferenceVerification": {
-    "baselineSourceCommit": "70103a0291f270412e0bfa1fb51af19e06b89dec",
-    "baselineRunId": 34017020788,
-    "baselineRunAttempt": 2,
-    "baselineRecords": 47,
-    "finalRecords": 11,
-    "removedReferenceOnlyConstraints": [
-      "city_delivery_callback_outbox.cdcout_event_fk",
-      "city_delivery_callback_watermark.cdcwm_event_fk",
-      "city_delivery_reconciliation_case.cdcrc_delivery_order_fk",
-      "city_delivery_reconciliation_case.cdcrc_event_fk",
-      "data_migration_checkpoint.data_migration_checkpoint_run_id_fkey",
-      "merchant_shipment_callback_outbox.mscout_event_fk",
-      "merchant_shipment_callback_watermark.mscwm_event_fk",
-      "payment_callback_outbox.pco_event_fk",
-      "payment_reconciliation_action.pra_case_fk",
-      "payment_reconciliation_case.prc_callback_event_fk",
-      "wechat_callback_outbox.wcout_event_fk",
-      "wechat_callback_watermark.wcwm_event_fk"
+    "baselineSourceCommit": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
+    "baselineRunId": 34020575416,
+    "baselineRunAttempt": 1,
+    "baselineRecords": 11,
+    "finalRecords": 2,
+    "removedChangedConstraints": [
+      "division_apply.da_status_ck",
+      "store_order.so_division_brokerage_ck",
+      "store_order.so_supplier_allocation_status_ck",
+      "store_order_cart_info.soci_split_state_ck",
+      "store_order_outbox.soob_event_type_ck",
+      "store_product_reply.spr_scores_ck",
+      "user.user_division_percent_ck",
+      "user.user_division_status_ck",
+      "user.user_division_type_ck"
     ],
-    "removedCandidateOnlyConstraints": [
-      "city_delivery_callback_outbox.city_delivery_callback_outbox_event_id_city_delivery_callback_e",
-      "city_delivery_callback_watermark.city_delivery_callback_watermark_last_event_id_city_delivery_ca",
-      "city_delivery_reconciliation_case.city_delivery_reconciliation_case_delivery_order_id_store_deliv",
-      "city_delivery_reconciliation_case.city_delivery_reconciliation_case_last_event_id_city_delivery_c",
-      "data_migration_checkpoint.data_migration_checkpoint_run_id_data_migration_run_run_id_fk",
-      "merchant_shipment_callback_outbox.merchant_shipment_callback_outbox_event_id_merchant_shipment_ca",
-      "merchant_shipment_callback_watermark.merchant_shipment_callback_watermark_last_event_id_merchant_shi",
-      "payment_callback_outbox.payment_callback_outbox_event_id_payment_callback_event_id_fk",
-      "payment_reconciliation_action.payment_reconciliation_action_case_id_payment_reconciliation_ca",
-      "payment_reconciliation_case.payment_reconciliation_case_callback_event_id_payment_callback_",
-      "wechat_callback_outbox.wechat_callback_outbox_event_id_wechat_callback_event_id_fk",
-      "wechat_callback_watermark.wechat_callback_watermark_last_event_id_wechat_callback_event_i"
-    ],
-    "removedPossibleRenames": [
+    "removedRawDifferenceRecords": 9,
+    "unchangedRemainingDifferenceRecords": 1,
+    "remainingRawDifferences": [
       {
-        "reference": "city_delivery_callback_outbox.cdcout_event_fk",
-        "candidate": "city_delivery_callback_outbox.city_delivery_callback_outbox_event_id_city_delivery_callback_e"
-      },
-      {
-        "reference": "city_delivery_callback_watermark.cdcwm_event_fk",
-        "candidate": "city_delivery_callback_watermark.city_delivery_callback_watermark_last_event_id_city_delivery_ca"
-      },
-      {
-        "reference": "city_delivery_reconciliation_case.cdcrc_delivery_order_fk",
-        "candidate": "city_delivery_reconciliation_case.city_delivery_reconciliation_case_delivery_order_id_store_deliv"
-      },
-      {
-        "reference": "city_delivery_reconciliation_case.cdcrc_event_fk",
-        "candidate": "city_delivery_reconciliation_case.city_delivery_reconciliation_case_last_event_id_city_delivery_c"
-      },
-      {
-        "reference": "data_migration_checkpoint.data_migration_checkpoint_run_id_fkey",
-        "candidate": "data_migration_checkpoint.data_migration_checkpoint_run_id_data_migration_run_run_id_fk"
-      },
-      {
-        "reference": "merchant_shipment_callback_outbox.mscout_event_fk",
-        "candidate": "merchant_shipment_callback_outbox.merchant_shipment_callback_outbox_event_id_merchant_shipment_ca"
-      },
-      {
-        "reference": "merchant_shipment_callback_watermark.mscwm_event_fk",
-        "candidate": "merchant_shipment_callback_watermark.merchant_shipment_callback_watermark_last_event_id_merchant_shi"
-      },
-      {
-        "reference": "payment_callback_outbox.pco_event_fk",
-        "candidate": "payment_callback_outbox.payment_callback_outbox_event_id_payment_callback_event_id_fk"
-      },
-      {
-        "reference": "payment_reconciliation_action.pra_case_fk",
-        "candidate": "payment_reconciliation_action.payment_reconciliation_action_case_id_payment_reconciliation_ca"
-      },
-      {
-        "reference": "payment_reconciliation_case.prc_callback_event_fk",
-        "candidate": "payment_reconciliation_case.payment_reconciliation_case_callback_event_id_payment_callback_"
-      },
-      {
-        "reference": "wechat_callback_outbox.wcout_event_fk",
-        "candidate": "wechat_callback_outbox.wechat_callback_outbox_event_id_wechat_callback_event_id_fk"
-      },
-      {
-        "reference": "wechat_callback_watermark.wcwm_event_fk",
-        "candidate": "wechat_callback_watermark.wechat_callback_watermark_last_event_id_wechat_callback_event_i"
+        "comparison": "externalVsOrm",
+        "category": "sequences",
+        "change": "changed",
+        "value": {
+          "key": "kefu_visitor_uid_seq",
+          "fields": [
+            "ownedBy",
+            "type"
+          ],
+          "reference": {
+            "key": "kefu_visitor_uid_seq",
+            "name": "kefu_visitor_uid_seq",
+            "type": "integer",
+            "start": "1000000000",
+            "min": "1",
+            "max": "2147483647",
+            "increment": "1",
+            "cache": "1",
+            "cycle": false,
+            "ownedBy": "public.kefu_visitor_session.visitor_uid"
+          },
+          "candidate": {
+            "key": "kefu_visitor_uid_seq",
+            "name": "kefu_visitor_uid_seq",
+            "type": "bigint",
+            "start": "1000000000",
+            "min": "1",
+            "max": "2147483647",
+            "increment": "1",
+            "cache": "1",
+            "cycle": false,
+            "ownedBy": null
+          }
+        }
       }
     ],
-    "removedRawDifferenceRecords": 36,
-    "unchangedRemainingDifferenceRecords": 10,
-    "comparison": "Deep equality of all remaining raw records; no SQL, validation-state, name or array-order normalization",
-    "previousIndexDefaultConstraintAndGeneratorProofsUnchanged": true
+    "comparison": "Deep equality of the one remaining raw sequence record; no SQL, validation-state, name or array-order normalization",
+    "priorProofInitialStatementChanges": [
+      {
+        "proof": "upgradeVerification",
+        "previousInitialStatements": 1070,
+        "initialStatements": 1078,
+        "otherFieldsUnchanged": true
+      },
+      {
+        "proof": "columnDefaultUpgradeVerification",
+        "previousInitialStatements": 1068,
+        "initialStatements": 1076,
+        "otherFieldsUnchanged": true
+      },
+      {
+        "proof": "missingConstraintUpgradeVerification",
+        "previousInitialStatements": 1059,
+        "initialStatements": 1067,
+        "otherFieldsUnchanged": true
+      },
+      {
+        "proof": "foreignKeyNameUpgradeVerification",
+        "previousInitialStatements": 1068,
+        "initialStatements": 1076,
+        "otherFieldsUnchanged": true
+      }
+    ],
+    "allOtherPriorIndexDefaultConstraintForeignKeyProofFieldsUnchanged": true,
+    "priorSevenDefaultWriteProofsUnchanged": true,
+    "eighthDefaultWriteMatchesFreshOrm": true,
+    "externalDuplicateIndexRetirementProofUnchanged": true,
+    "independentNotValidGeneratorProofUnchanged": true
   },
   "ciVerification": {
-    "jobsPassed": 8,
-    "jobsTotal": 8,
-    "unitFilesPassed": 248,
-    "unitTestsPassed": 1589,
+    "jobsPassed": 10,
+    "jobsTotal": 10,
+    "unitFilesPassed": 250,
+    "unitTestsPassed": 1596,
     "unitTestsSkipped": 0,
-    "unitDurationSeconds": 835.38,
+    "unitDurationSeconds": 646.96,
     "runtimeFilesPassed": 3,
     "runtimeTestsPassed": 24,
     "kefuFilesPassed": 3,
     "kefuTestsPassed": 17,
-    "historyCommitsScanned": 257,
+    "historyCommitsScanned": 260,
     "secretsFound": 0,
     "typecheckOldSpaceLimitMiB": 4096,
-    "workerJobDurationSeconds": 1134,
-    "workerJobTimeoutSeconds": 1200,
-    "dedicatedCatalogDatabases": 7,
+    "workerUnitJobDurationSeconds": 750,
+    "workerUnitJobTimeoutSeconds": 1200,
+    "workerUnitJobHeadroomSeconds": 450,
+    "catalogJobDurationSeconds": 245,
+    "catalogJobTimeoutSeconds": 1200,
+    "catalogJobHeadroomSeconds": 955,
+    "aggregateJobDurationSeconds": 2,
+    "dedicatedCatalogDatabases": 8,
     "dedicatedGeneratorDatabases": 2,
-    "allCleanupConfirmed": true
+    "allCleanupConfirmed": true,
+    "ciCapacityReview": {
+      "previousCombinedJobSeconds": 1134,
+      "previousCombinedHeadroomSeconds": 66,
+      "observedSplitUnitJobSeconds": [
+        1071,
+        750
+      ],
+      "observedSplitUnitHeadroomSeconds": [
+        129,
+        450
+      ],
+      "conservativeObservedHeadroomSeconds": 129,
+      "defaultConcurrencyAndChildTimeoutsUnchanged": true,
+      "allOriginalExecutionStepBodiesPreserved": true,
+      "aggregateFailClosedObserved": true,
+      "task": "TEST-006",
+      "status": "current_batch_split_verified; future_added_paths_require_capacity_review"
+    }
   },
   "ciAttemptNotes": {
     "preFixCodeRun": {
-      "sha": "9fba575844a3a8ce90cb874d9bb031d47c3d9a0c",
-      "runId": 34020071977,
+      "sha": "8494360a3401cbf156fdcc47f716445935d78af0",
+      "runId": 34023806931,
       "attempt": 1,
-      "failedStep": "Run both TypeScript configurations",
-      "exitCode": 134,
-      "error": "FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory",
-      "heapLimitMiBApproximately": 2048,
-      "otherJobsPassed": 7,
-      "unitAndPg16NotReached": true,
-      "diagnosis": "Confirmed V8 compiler heap exhaustion; not a SQL assertion or the earlier TEST-005 allocator crash"
+      "conclusion": "failure",
+      "failedJob": "Isolated PostgreSQL 16 migration catalog execution",
+      "failedStep": "Execute isolated PostgreSQL 16 ORM and migration catalog audit",
+      "error": "0144 replacement postcondition failed: division_apply.da_status_ck",
+      "exitCode": 1,
+      "rawCatalogSummaryProduced": false,
+      "independentNotValidGeneratorAuditReached": false,
+      "successfulJobs": 8,
+      "failedJobs": 2,
+      "unitFilesPassed": 250,
+      "unitTestsPassed": 1596,
+      "unitTestsSkipped": 0,
+      "unitDurationSeconds": 952.19,
+      "unitJobDurationSeconds": 1071,
+      "unitJobHeadroomSeconds": 129,
+      "aggregateFailClosedObserved": true,
+      "diagnosis": "PG16 conbin includes parser character offsets; PG18 normal nodeToString emits -1. Original CREATE TABLE and replacement ALTER TABLE offsets differ without semantic differences. Fix permits only bounded integer :location fields in the internal tree; raw catalog SQL is not normalized."
     },
     "acceptedCodeRun": {
+      "sha": "194be1cb517efb4fc7db0a73d25fe460101c76a2",
+      "runId": 34024902767,
+      "attempt": 1,
+      "conclusion": "success",
+      "change": "Only the guarded CHECK internal-tree comparison and engine proof exclude parser character locations; all semantic node fields and raw catalog SQL comparisons remain strict. PostgreSQL 16 confirmed exactly eight location-only changes and seven semantic mutation refusals.",
+      "oldFailedShaRerun": false
+    },
+    "previousCompilerHeapFix": {
       "sha": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
       "runId": 34020575416,
       "attempt": 1,
@@ -1414,8 +1619,7 @@
       "openChecklistItem": "TEST-005"
     },
     "openChecklistItems": [
-      "TEST-005",
-      "TEST-006"
+      "TEST-005"
     ]
   },
   "productionChanged": false
