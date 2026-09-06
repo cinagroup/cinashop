@@ -1,13 +1,13 @@
 {
-  "sourceCommit": "404baf33d03bcd4968baf732bbfafc65a8b12e24",
-  "runId": 33970859482,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/33970859482",
+  "sourceCommit": "58ac3ce831dfeb803af3065a38b018819a8535c5",
+  "runId": 34002410416,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34002410416",
   "status": "not_equivalent",
   "kind": "summary",
-  "scope": "Fresh isolated PostgreSQL 16 catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Canonical expression differences are review candidates, not proof of behavioral inequivalence. Does not inspect production rows, privileges, functions, triggers, policies or views.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade/rollback/fixture and FK dependency checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
   "serverVersionNum": 160014,
   "externalInputSha256": "4660b957edcf4297227169384e2b60a735bfa2e1e2803287b03e39bf4d269dc1",
-  "generatedSqlSha256": "daffe3d311fc74a85986787f8edb9d6c388f476ab3a93adfa73cb19e77e724c2",
+  "generatedSqlSha256": "8ff01639a57fa6f5be659f11afcbf67b8c9d948ec8e0ee803d09d3b8f8210caa",
   "paths": [
     {
       "path": "external",
@@ -20,6 +20,10 @@
     {
       "path": "orm",
       "steps": 1061
+    },
+    {
+      "path": "orm_upgrade",
+      "steps": 1175
     }
   ],
   "counts": {
@@ -38,6 +42,13 @@
       "sequences": 227
     },
     "orm": {
+      "tables": 263,
+      "columns": 3700,
+      "constraints": 529,
+      "indexes": 1008,
+      "sequences": 227
+    },
+    "orm_upgrade": {
       "tables": 263,
       "columns": 3700,
       "constraints": 529,
@@ -100,7 +111,7 @@
       "indexes": {
         "referenceOnly": 52,
         "candidateOnly": 97,
-        "changed": 57,
+        "changed": 0,
         "possibleRenames": 47
       },
       "sequences": {
@@ -112,7 +123,7 @@
     }
   },
   "verifiedIndexContracts": {
-    "mode": "exact named definitions; reject any drift in either candidate path",
+    "mode": "exact named definitions; reject drift in embedded, fresh ORM and upgraded ORM paths",
     "keys": [
       "category.category_kefu_speechcraft",
       "store_bargain.store_bargain_system_form_active",
@@ -135,8 +146,74 @@
       "store_seckill.store_seckill_system_form_active",
       "store_visit.sv_kefu_recent",
       "system_supplier.supplier_admin_id_uq",
-      "work_callback_event.wce_payload_redaction_ready"
+      "work_callback_event.wce_payload_redaction_ready",
+      "agreement.agreement_visible",
+      "article_category.ac_admin_active_sort",
+      "article_category.ac_visible_sort",
+      "community.c_admin_moderation",
+      "community.c_author_public_latest",
+      "community.c_public_feed",
+      "community_comment.cc_admin_moderation",
+      "community_comment.cc_public_thread",
+      "community_topic.ct_admin_catalog",
+      "community_user.cu_recommend_rank",
+      "express_company.ec_visible_sort",
+      "kefu_visitor_session.kvs_active_expiry",
+      "kefu_visitor_session.kvs_kefu_active",
+      "luck_lottery.luck_lottery_factor_active",
+      "order_print_job.opj_order_history",
+      "order_print_job.opj_owner_history",
+      "order_waybill_job.owj_order_history",
+      "order_waybill_job.owj_owner_history",
+      "page_category.page_category_tree_lookup",
+      "page_link.page_link_category_lookup",
+      "shipping_templates.st_owner_active",
+      "store_bargain.sbarg_visible",
+      "store_combination.scomb_visible",
+      "store_integral.sint_visible",
+      "store_order.so_delivery_mobile_active",
+      "store_order_cart_info.soci_old_cart_id",
+      "store_pink.sp_leader_active",
+      "store_product.sp_platform_article_options",
+      "store_product_log.spl_user_source_latest",
+      "store_product_words.spw_owner_active_sort",
+      "store_product_words.spw_public_visible_sort",
+      "store_seckill.sseckill_visible",
+      "store_service_record.ssr_direction",
+      "store_service_record.ssr_kefu_inbox",
+      "store_service_record.ssr_kefu_recent",
+      "system_article.sa_admin_active_sort",
+      "system_article.sa_admin_category_active",
+      "system_article.sa_visible_sort",
+      "system_config.system_config_lookup",
+      "system_log.syslog_admin_time",
+      "system_log.syslog_type_time",
+      "system_message.smsg_visible_user",
+      "user_extract.ue_status_time",
+      "user_extract.ue_uid_time",
+      "user_relation.ur_user_product_collect_latest",
+      "user_search.user_search_keyword_cache",
+      "user_search.user_search_uid_active_time",
+      "user_search.user_search_uid_keyword_active",
+      "video.video_storefront_latest",
+      "video.video_storefront_recommended",
+      "video.video_storefront_sort",
+      "video_comment.video_comment_owner",
+      "video_comment.video_comment_thread",
+      "work_client_current.wcc_catalog_idx",
+      "work_department_current.wdc_active_tree_idx",
+      "work_group_chat_current.wgcc_catalog_idx",
+      "work_group_chat_member_current.wgcmc_group_state_idx"
     ]
+  },
+  "upgradeVerification": {
+    "initialStatements": 1061,
+    "upgradeStatements": 114,
+    "reconciledIndexes": 57,
+    "verifiedContracts": 79,
+    "rollbackConfirmed": true,
+    "rowsAndDependenciesPreserved": true,
+    "freshCatalogMatched": true
   },
   "missingIndexEvidence": {
     "externalVsEmbedded": [
