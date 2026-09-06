@@ -2210,6 +2210,484 @@
     "productionAccessed": false,
     "productionChanged": false
   },
+  "sequenceEmbeddedRegistrationVerification": {
+    "sourceCommit": "7d14b887378a850cd6e9d38b3b37c2916dfbfb80",
+    "runId": 34036234197,
+    "runAttempt": 1,
+    "productionAccessed": false,
+    "productionChanged": false,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34036234197",
+    "status": "code_and_isolated_pg16_ci_accepted_not_production",
+    "scope": "Code and isolated PostgreSQL 16 acceptance of the guarded business visitor sequence migration only; not production or full application equivalence.",
+    "supersedesPendingRegistrationIn": [
+      "sequenceBusinessCandidateVerification",
+      "sequenceExecutionBoundaryVerification"
+    ],
+    "previousRootAndHistoricalProofFieldsRetained": true,
+    "embeddedMigration": "0151",
+    "externalSql": "0145_kefu_sequence_alignment.sql",
+    "pureSqlMirrorExact": true,
+    "embeddedExecutedSteps": 152,
+    "historicalMigrationMethodsUnchanged": 151,
+    "historicalSqlUnchanged": true,
+    "rootRunnerOutsideGenericTransaction": true,
+    "registrationOrchestrationTests": 9,
+    "modernFailureNotSkippedRetriedOrRecordedSuccessful": true,
+    "priorModernFailureStopsBeforeRegistration": true,
+    "historicalSkipAnd0118SupersessionPreserved": true,
+    "existingDatabaseUpgradeUsesStandaloneRunnerOnly": true,
+    "guardedHttpRoutesAndPermissionsUnchanged": true,
+    "catalogRecheck": {
+      "referenceSourceCommit": "c9de50997c3a898376ce392de5ba52ecf55590f6",
+      "referenceRunId": 34034710427,
+      "catalogJobId": 101494706672,
+      "paths": [
+        {
+          "path": "external",
+          "steps": 147
+        },
+        {
+          "path": "embedded",
+          "steps": 152
+        },
+        {
+          "path": "orm",
+          "steps": 1077
+        },
+        {
+          "path": "orm_upgrade",
+          "steps": 1197
+        },
+        {
+          "path": "orm_default_upgrade",
+          "steps": 1078
+        },
+        {
+          "path": "orm_constraints",
+          "steps": 1069
+        },
+        {
+          "path": "orm_fk_names",
+          "steps": 1078
+        },
+        {
+          "path": "orm_checks",
+          "steps": 1070
+        },
+        {
+          "path": "orm_sequences",
+          "steps": 1077
+        }
+      ],
+      "counts": {
+        "external": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "embedded": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "orm": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "orm_upgrade": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "orm_default_upgrade": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "orm_constraints": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "orm_fk_names": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "orm_checks": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        },
+        "orm_sequences": {
+          "tables": 263,
+          "columns": 3700,
+          "constraints": 570,
+          "indexes": 1006,
+          "sequences": 227
+        }
+      },
+      "summary": {
+        "externalVsEmbedded": {
+          "tables": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "columns": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "constraints": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "indexes": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "sequences": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          }
+        },
+        "externalVsOrm": {
+          "tables": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "columns": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "constraints": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "indexes": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "sequences": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          }
+        }
+      },
+      "serverVersionNum": 160014,
+      "externalInputSha256": "e2b035dd6c1085dc46fd77ab4670634de4a4d0e29686fa74c48241030be89b6e",
+      "generatedSqlSha256": "e5ac664c51f51b7a5298a56573a4d9b38b7c442a70fd47e99abc77763f6f2696",
+      "exactRawReportChanges": [
+        {
+          "path": ".orm.0.paths.1.steps",
+          "before": 151,
+          "after": 152
+        },
+        {
+          "path": ".orm.0.checkStateUpgradeVerification.lockVerification.lockRefusalMs",
+          "before": 2005,
+          "after": 2006
+        },
+        {
+          "path": ".orm.0.kefuSequenceUpgradeVerification.lockVerification.waitMs",
+          "before": 2006,
+          "after": 2007
+        }
+      ],
+      "otherRawReportFieldsDeepEqual": true,
+      "independentKefuReportChanges": [
+        {
+          "path": ".kefu.0.lockVerification.waitMs",
+          "before": 2006,
+          "after": 2007
+        },
+        {
+          "path": ".kefu.0.durationMs",
+          "before": 26568,
+          "after": 29962
+        }
+      ],
+      "notValidGeneratorReportDeepEqual": true,
+      "sequenceGeneratorReportDeepEqual": true,
+      "catalogAndGeneratorDatabasesRemoved": 13,
+      "cleanupConfirmed": true,
+      "additionalRunnerDatabaseRemoved": 1,
+      "allDedicatedDatabasesRemoved": 14
+    },
+    "embeddedNewGuardRegistered": true,
+    "businessSequenceUpgradeAccepted": true,
+    "releaseReady": false,
+    "remainingDb009FGate": "External-vs-embedded/fresh-ORM table metadata differences are currently reported but do not fail the catalog task; add a full table hard gate and negative tests.",
+    "standaloneRunnerRecheck": {
+      "referenceSourceCommit": "c9de50997c3a898376ce392de5ba52ecf55590f6",
+      "referenceRunId": 34034710427,
+      "report": {
+        "format": "pg16",
+        "fullOldModelPath": {
+          "initialStatements": 1076,
+          "guardedStatements": 1,
+          "generatedProposalStatements": 2,
+          "modelAligned": true,
+          "committedUpgradeExecution": "standalone-drizzle-transaction",
+          "changedSequenceStorageFiles": 1,
+          "originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved": true,
+          "committedOldRowsPreserved": 2,
+          "originalCounterPreserved": true,
+          "driftRefusals": [
+            "increment",
+            "minimum",
+            "maximum",
+            "start",
+            "cache",
+            "cycle",
+            "integer-unowned",
+            "bigint-owned",
+            "wrong-owning-column",
+            "wrong-owning-table",
+            "owner-role",
+            "missing-default",
+            "wrong-default",
+            "nullable",
+            "column-type",
+            "missing-unique",
+            "wrong-unique-name",
+            "rls",
+            "inheritance",
+            "unlogged",
+            "extra-sequence-consumer",
+            "counter-before-range",
+            "uncalled-counter-overlaps-row",
+            "row-beyond-counter",
+            "missing-schema",
+            "missing-table",
+            "missing-sequence",
+            "unprivileged-role",
+            "ddl-event-hook",
+            "repeatable-read"
+          ],
+          "failureAfterAlterRollbackConfirmed": true,
+          "allPreflightBeforeTypeMutationConfirmed": true,
+          "noOpStorageAndCounterConfirmed": true,
+          "tempIsolationConfirmed": true,
+          "quotedNonPublicSchemaIsolationConfirmed": true,
+          "uncalledFirstValuePreserved": true,
+          "ownershipDeletionRollbackConfirmed": true,
+          "newDefaultWriteConfirmed": true,
+          "upperBoundAndExhaustionConfirmed": true,
+          "lockVerification": {
+            "waitRefused": true,
+            "waitMs": 2007,
+            "directNextvalSetvalAndTableWriterBlocked": true,
+            "peerNextvalNotRolledBack": true,
+            "ddlRollbackConfirmed": true,
+            "concurrentDistinctNumbers": 16
+          },
+          "syntheticRowsCleanupConfirmed": true
+        },
+        "databaseRemovedAndAbsenceVerified": true,
+        "localMemoryClosed": false
+      },
+      "exactReportChanges": [
+        {
+          "path": ".fullOldModelPath.lockVerification.waitMs",
+          "before": 2008,
+          "after": 2007
+        }
+      ],
+      "postgres16BlockedDoCancellation": {
+        "sessionStatementTimeoutMs": 500,
+        "actualTestDurationMs": 527,
+        "expectedAndAssertedSqlState": "57014",
+        "rollbackAndSessionRestoreConfirmed": true
+      }
+    },
+    "ci": {
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 101494706509,
+          "name": "Repository secret scan",
+          "conclusion": "success",
+          "seconds": 12
+        },
+        {
+          "id": 101494706613,
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "conclusion": "success",
+          "seconds": 539
+        },
+        {
+          "id": 101494706623,
+          "name": "workerd runtime tests",
+          "conclusion": "success",
+          "seconds": 37
+        },
+        {
+          "id": 101494706634,
+          "name": "Kefu build",
+          "conclusion": "success",
+          "seconds": 28
+        },
+        {
+          "id": 101494706635,
+          "name": "PC build",
+          "conclusion": "success",
+          "seconds": 38
+        },
+        {
+          "id": 101494706655,
+          "name": "Supplier build",
+          "conclusion": "success",
+          "seconds": 40
+        },
+        {
+          "id": 101494706665,
+          "name": "Admin build",
+          "conclusion": "success",
+          "seconds": 44
+        },
+        {
+          "id": 101494706672,
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "conclusion": "success",
+          "seconds": 285
+        },
+        {
+          "id": 101494706763,
+          "name": "UniApp build",
+          "conclusion": "success",
+          "seconds": 95
+        },
+        {
+          "id": 101494706769,
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "conclusion": "success",
+          "seconds": 697
+        },
+        {
+          "id": 101496315233,
+          "name": "Worker type, unit, schema and route gates",
+          "conclusion": "success",
+          "seconds": 3
+        }
+      ],
+      "unitFiles": 254,
+      "unitTests": 1629,
+      "unitSkipped": 0,
+      "shards": [
+        {
+          "shard": 1,
+          "shardCount": 2,
+          "inventoryFiles": 254,
+          "inventorySha256": "7469c147ffbdcfd7254aae6a50b93113b0d125d239d0de4a2048b7eec2b2789d",
+          "executedFiles": 127,
+          "executedFileSha256": "bdb5d363dff0abaf8a72c6f92419c85a7beb7b1d28df419852b968a1d882fbf8",
+          "passedTests": 824,
+          "skippedTests": 0,
+          "nativePartitionCompleteAndDisjoint": true,
+          "executedFilesMatchNativePartition": true
+        },
+        {
+          "shard": 2,
+          "shardCount": 2,
+          "inventoryFiles": 254,
+          "inventorySha256": "7469c147ffbdcfd7254aae6a50b93113b0d125d239d0de4a2048b7eec2b2789d",
+          "executedFiles": 127,
+          "executedFileSha256": "c0693adae2f28d44672d5376ead2681db13419c35e6b6c09ba7158953001c37d",
+          "passedTests": 805,
+          "skippedTests": 0,
+          "nativePartitionCompleteAndDisjoint": true,
+          "executedFilesMatchNativePartition": true
+        }
+      ],
+      "unitTestSeconds": [
+        580.95,
+        507.24
+      ],
+      "unitJobSeconds": [
+        697,
+        539
+      ],
+      "unitHeadroomSeconds": [
+        503,
+        661
+      ],
+      "catalogJobSeconds": 285,
+      "catalogHeadroomSeconds": 915,
+      "aggregateJobSeconds": 3,
+      "registrationTestFile": "test/kefu-sequence-registration.test.ts",
+      "registrationTests": 9,
+      "registrationTestDurationMs": 82,
+      "runnerTestFile": "test/kefu-sequence-runner.test.ts",
+      "runnerTests": 11,
+      "runnerTestDurationMs": 31163,
+      "priorConservativeHeadroomSeconds": 490,
+      "conservativeHeadroomSeconds": 490,
+      "capacityObservationScope": "Four complete two-shard runs; keep the prior 490-second conservative minimum, not a future guarantee.",
+      "limitsConcurrencyVersionsAndExistingAssertionsUnchanged": true,
+      "nativeAllocatorStabilityIssueResolved": false
+    },
+    "localVerification": {
+      "typecheckConfigurationsPassed": 2,
+      "registrationAndEnterpriseCallback": {
+        "files": 2,
+        "passed": 27,
+        "seconds": 3.11
+      },
+      "sequenceRegression": {
+        "files": 3,
+        "passed": 24,
+        "pg16OnlySkipped": 1,
+        "seconds": 86.05
+      },
+      "scopeAndCatalogRegression": {
+        "files": 2,
+        "passed": 11,
+        "seconds": 4.39
+      },
+      "capacityRegression": {
+        "files": 1,
+        "passed": 3,
+        "seconds": 0.751
+      }
+    }
+  },
   "sequenceBusinessCandidateVerification": {
     "sourceCommit": "f3cf196ba9826bf3ef7207ebc190574f5c3ddc2f",
     "runId": 34032529050,
