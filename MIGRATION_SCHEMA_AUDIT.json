@@ -1,21 +1,21 @@
 {
-  "sourceCommit": "cc2e5db9ac1a13975c30c713bed90f4e2c4e79d2",
-  "runId": 34010180395,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34010180395",
+  "sourceCommit": "9af7fb665d65919a0b0c217db3005838347dc92a",
+  "runId": 34011673361,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34011673361",
   "status": "not_equivalent",
   "kind": "summary",
-  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals, 44 ordinary and three owning-constraint guarded name alignments, and five guarded external duplicate retirements. Complete index category is an exact four-path gate. Verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM and default-upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes the existing six index upgrade phases, five external duplicate retirements and a separate full-schema four-default upgrade. Complete index and column categories are exact five-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes; upgrade probes cover dependency preservation/refusal, rollback, rows, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "0a262ab28bb5b80aca2cf738abadbdc6b6e5ba2640f22659baa974fa54ffe770",
-  "generatedSqlSha256": "d83b69556905b95a7c7afcb18fb6028662516a96f03493ab79d0f15b7bfed9a4",
+  "externalInputSha256": "5316999278e44236fc36de93a10f9d62911aa8f2bbd4003018a737c1f916cc22",
+  "generatedSqlSha256": "da6bc010653f656c3d72207dadc190951cf3aadb505bab134b2392bc1378a5a3",
   "paths": [
     {
       "path": "external",
-      "steps": 142
+      "steps": 143
     },
     {
       "path": "embedded",
-      "steps": 147
+      "steps": 148
     },
     {
       "path": "orm",
@@ -24,6 +24,10 @@
     {
       "path": "orm_upgrade",
       "steps": 1179
+    },
+    {
+      "path": "orm_default_upgrade",
+      "steps": 1060
     }
   ],
   "counts": {
@@ -49,6 +53,13 @@
       "sequences": 227
     },
     "orm_upgrade": {
+      "tables": 263,
+      "columns": 3700,
+      "constraints": 529,
+      "indexes": 1006,
+      "sequences": 227
+    },
+    "orm_default_upgrade": {
       "tables": 263,
       "columns": 3700,
       "constraints": 529,
@@ -99,7 +110,7 @@
       "columns": {
         "referenceOnly": 0,
         "candidateOnly": 0,
-        "changed": 4,
+        "changed": 0,
         "possibleRenames": 0
       },
       "constraints": {
@@ -123,7 +134,7 @@
     }
   },
   "verifiedIndexContracts": {
-    "mode": "exact named definitions; reject drift in embedded, fresh ORM and upgraded ORM paths",
+    "mode": "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path",
     "keys": [
       "category.category_kefu_speechcraft",
       "store_bargain.store_bargain_system_form_active",
@@ -377,7 +388,7 @@
     ]
   },
   "fullIndexCatalogContract": {
-    "mode": "all four paths: exact complete index names and definitions; no additions, omissions or aliases waived",
+    "mode": "all five paths: exact complete index names and definitions; no additions, omissions or aliases waived",
     "count": 1006,
     "retiredExternalKeys": [
       "store_order_refund.sor_store_order_id_idx",
@@ -386,6 +397,118 @@
       "wechat_user.wu_uid_idx",
       "wechat_user.wu_unionid_idx"
     ]
+  },
+  "fullColumnCatalogContract": {
+    "mode": "all five paths: exact complete columns, types, nullability, defaults, identity, generation and collation",
+    "count": 3700,
+    "defaultKeys": [
+      "store_order_outbox.payload",
+      "store_seckill.time_id",
+      "system_queue_dead_letter.body",
+      "user_brokerage_frozen.price"
+    ]
+  },
+  "columnDefaultUpgradeVerification": {
+    "initialStatements": 1059,
+    "guardedStatements": 1,
+    "generatedDefaultStatements": 4,
+    "defaultsAligned": [
+      "store_order_outbox.payload",
+      "store_seckill.time_id",
+      "system_queue_dead_letter.body",
+      "user_brokerage_frozen.price"
+    ],
+    "rejectionCases": [
+      "json-unknown-default",
+      "json-null-literal-default",
+      "text-missing-default",
+      "numeric-missing-default",
+      "numeric-nonzero-default",
+      "nullable",
+      "generated-column",
+      "wrong-precision",
+      "wrong-collation",
+      "missing-column",
+      "missing-table",
+      "missing-schema",
+      "inherited-table",
+      "unknown-default-not-evaluated"
+    ],
+    "oldJsonOmissionsRejected": 2,
+    "fixtureRowsPreserved": 8,
+    "dependentViewsPreserved": 4,
+    "foreignKeysAndTriggersPreserved": 4,
+    "nonTargetOidsAndFilesPreserved": true,
+    "unknownDefaultsNotEvaluated": true,
+    "nullDefaultNormalizedToAbsence": true,
+    "failureRollbackConfirmed": true,
+    "generatedProposalMatchesGuardedResult": true,
+    "mixedStateAndTempIsolationConfirmed": true,
+    "nonPublicSchemaIsolationConfirmed": true,
+    "noOpIncludesDefaultOids": true,
+    "writes": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
+    },
+    "freshCatalogMatched": true
+  },
+  "columnWriteVerification": {
+    "external": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
+    },
+    "embedded": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
+    },
+    "orm": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
+    },
+    "orm_upgrade": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
+    },
+    "orm_default_upgrade": {
+      "omittedDefaults": 4,
+      "explicitDefaults": 4,
+      "explicitValues": 4,
+      "sqlNullRejections": 4,
+      "updateDefaults": 4,
+      "jsonNullPreserved": 2,
+      "numericRoundingAndBoundsConfirmed": true,
+      "textLengthPreserved": true
+    }
   },
   "externalDuplicateIndexRetirement": {
     "removedIndexes": [
