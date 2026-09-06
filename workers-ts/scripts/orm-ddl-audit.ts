@@ -11,6 +11,7 @@ import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
 import { extendConstraintNameContracts, assertConstraintNamesAligned } from "./data-migration/constraint-name-contracts";
 import { extendExternalDuplicateContracts, assertAllIndexesAligned } from "./data-migration/external-duplicate-index-contracts";
+import { assertColumnDefaultContracts, assertAllColumnsAligned } from "./data-migration/column-default-contracts";
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -35,6 +36,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const paths: Array<{ path: string; steps: number }> = [];
   let upgradeVerification;
   let externalDuplicateIndexRetirement;
+  let columnDefaultUpgradeVerification;
+  const columnWriteVerification: Record<string, unknown> = {};
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
     if (identity.database !== "cinashop_finance_test" || identity.role !== "finance_test" || Math.floor(Number(identity.version) / 10_000) !== 16) {
@@ -52,9 +55,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     migrationNames.forEach((name, index) => inputDigest.update(name).update(migrationSources[index]));
     const snapshot = generateDrizzleJson(models);
     const generated = await generateMigration(generateDrizzleJson({}), snapshot);
-    for (const path of ["external", "embedded", "orm", "orm_upgrade"] as const) {
+    const auditDefaults = createRequire(import.meta.url)("../test/helpers/columnDefaultAudit.cjs");
+    for (const path of ["external", "embedded", "orm", "orm_upgrade", "orm_default_upgrade"] as const) {
       const name = `orm_audit_${path}_${randomUUID().replaceAll("-", "")}`;
-      if (!/^orm_audit_(external|embedded|orm|orm_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Invalid isolated database name");
+      if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Invalid isolated database name");
       await control.unsafe(`CREATE DATABASE "${name}" TEMPLATE template0`);
       created.push(name);
       const isolated = new URL(target.href);
@@ -88,6 +92,13 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
             throw new Error(`Embedded path incomplete: ${JSON.stringify(result)}`);
           }
           steps = result.executed.length;
+        } else if (path === "orm_default_upgrade") {
+          // Separate full-schema old-default path; don't extend the bounded six-stage index probe.
+          columnDefaultUpgradeVerification = await auditDefaults({ api, models, format: "pg16", database: {
+            exec: (query: string) => client.unsafe(query),
+            query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
+          } });
+          steps = columnDefaultUpgradeVerification.initialStatements + columnDefaultUpgradeVerification.guardedStatements;
         } else if (path === "orm_upgrade") {
           // Same actual generator/rollback/row/OID/FK assertions as the local API probes,
           // but backed by this fresh, identity-checked PostgreSQL 16 database.
@@ -101,6 +112,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           await client.unsafe(generated.join("\n"));
           steps = generated.length;
         }
+        columnWriteVerification[path] = await auditDefaults.verifyDefaultWrites({
+          exec: (query: string) => client.unsafe(query),
+          query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
+        });
         catalogs[path] = await readCatalog(async (query) => Array.from(await client.unsafe(query)) as CatalogRow[]);
         paths.push({ path, steps });
       } finally { await client.end({ timeout: 5 }); }
@@ -132,31 +147,44 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const owningContracts = extendConstraintNameContracts(namedKeys, contractManifests[5]);
     const duplicateContracts = extendExternalDuplicateContracts(owningContracts.keys, contractManifests[6]);
     const requiredIndexKeys = duplicateContracts.keys;
+    const defaultManifest = JSON.parse(await readFile(resolve(root, "audit/orm-column-default-reconciliation.json"), "utf8"));
     for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     for (const catalog of Object.values(catalogs)) assertOldIndexNamesAbsent(catalog, oldKeys);
     for (const catalog of Object.values(catalogs)) assertConstraintNamesAligned(catalogs.external, catalog);
     for (const catalog of Object.values(catalogs)) assertAllIndexesAligned(catalogs.external, catalog);
+    for (const catalog of Object.values(catalogs)) {
+      assertColumnDefaultContracts(catalog, defaultManifest);
+      assertAllColumnsAligned(catalogs.external, catalog);
+    }
     assertIndexContracts(catalogs.external, catalogs.embedded, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm_upgrade, requiredIndexKeys);
+    assertIndexContracts(catalogs.external, catalogs.orm_default_upgrade, requiredIndexKeys);
     const ormVsUpgraded = compareCatalogs(catalogs.orm, catalogs.orm_upgrade);
     if (!externalDuplicateIndexRetirement) throw new Error("External duplicate retirement verification is missing");
+    const ormVsDefaultUpgraded = compareCatalogs(catalogs.orm, catalogs.orm_default_upgrade);
+    if (!columnDefaultUpgradeVerification || Object.values(ormVsDefaultUpgraded).some(changes => Object.values(changes).some(rows => rows.length))) {
+      throw new Error("Fresh ORM and default-upgraded ORM catalogs differ");
+    }
     if (!upgradeVerification || Object.values(ormVsUpgraded).some((changes) => Object.values(changes).some((values) => values.length))) {
       throw new Error("Fresh ORM and upgraded ORM catalogs differ");
     }
     return {
-      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals, 44 ordinary and three owning-constraint guarded name alignments, and five guarded external duplicate retirements. Complete index category is an exact four-path gate. Verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
+      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM and default-upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes the existing six index upgrade phases, five external duplicate retirements and a separate full-schema four-default upgrade. Complete index and column categories are exact five-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes; upgrade probes cover dependency preservation/refusal, rollback, rows, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
       serverVersionNum: Number(identity.version),
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      verifiedIndexContracts: { mode: "exact named definitions; reject drift in embedded, fresh ORM and upgraded ORM paths", keys: requiredIndexKeys },
+      verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
       alignedIndexNameContracts: { mode: "exact canonical names in positive contracts; reject all 44 old physical names in every path", oldKeys },
       alignedConstraintNameContracts: { mode: "exact owning primary/unique constraints and indexes; reject all three old names in every path", constraintKeys: owningContracts.constraintKeys, oldKeys: owningContracts.oldKeys },
-      fullIndexCatalogContract: { mode: "all four paths: exact complete index names and definitions; no additions, omissions or aliases waived", count: catalogs.external.indexes.length, retiredExternalKeys: duplicateContracts.retiredKeys },
+      fullIndexCatalogContract: { mode: "all five paths: exact complete index names and definitions; no additions, omissions or aliases waived", count: catalogs.external.indexes.length, retiredExternalKeys: duplicateContracts.retiredKeys },
+      fullColumnCatalogContract: { mode: "all five paths: exact complete columns, types, nullability, defaults, identity, generation and collation", count: catalogs.external.columns.length, defaultKeys: defaultManifest.entries.map((e: { key: string }) => e.key) },
+      columnDefaultUpgradeVerification: { ...columnDefaultUpgradeVerification, freshCatalogMatched: true },
+      columnWriteVerification,
       externalDuplicateIndexRetirement,
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },
       missingIndexEvidence: {
@@ -172,7 +200,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     try {
       for (const name of created.reverse()) {
         try {
-          if (!/^orm_audit_(external|embedded|orm|orm_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Unsafe cleanup target");
+          if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Unsafe cleanup target");
           await control.unsafe(`DROP DATABASE "${name}"`);
           const remains = await control`SELECT datname FROM pg_database WHERE datname=${name}`;
           if (remains.length) throw new Error("Isolated database cleanup was not confirmed");

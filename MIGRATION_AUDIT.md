@@ -5344,6 +5344,20 @@ PostgreSQL16.14实际路径如下；四路径均263表、3,700列、227序列：
 
 最终回填仅修改根目录审计、清单和JSON，受测实现不再变更。生产发布前置、真实角色/provider、初始化和当前数据完整性门禁仍开放；全程无生产连接、生产DDL/DML或部署。PostgreSQL技能促使本批同时验证唯一性、真实依赖、短锁等待和对象保留，并将已收口索引类别升级为全量门禁。
 
+## DB-009E1 四处默认值的合同恢复与独立升级门禁（2026-09-06）
+
+从干净af5de6f及cc2e5db/Actions34010180395的完整目录继续。四条原始column.changed记录均只有default字段：store_order_outbox.payload和system_queue_dead_letter.body的ORM缺少外部'{}'::jsonb；store_seckill.time_id的列已由0032扩为text，外部保留最初varchar默认表达式，ORM为text字面默认；已停用的user_brokerage_frozen.price外部DEFAULT 0，ORM为带引号数值默认。新audit/orm-column-default-reconciliation.json绑定四条完整旧/目标目录、真实Drizzle旧/新列快照、四模型精确声明和0010/0004+0032/0080/0056源行；不改历史来源清单。模型只改四处default，使用精确SQL表达式保留部署合同，不变更OrderOutboxPayload联合类型、金额精度、text长度或非空约束；当前出站事件仍显式构造payload，死信仍先脱敏再计算body摘要，不以空默认替代应用流程。
+
+依[PostgreSQL默认值定义](https://www.postgresql.org/docs/16/ddl-default.html)，省略列或显式DEFAULT会使用默认值；原ORM两处JSONB缺默认会在省略写入时触发23502。本批选择恢复既有部署行为，而不是删掉外部默认或放宽NOT NULL。外部0141/逐字内嵌0147以2秒锁等待、schema限定的ACCESS EXCLUSIVE短事务，只接受普通永久且无继承/分区关系的表、精确类型/精度/校对规则/非空/非生成与非identity列，以及已知旧或目标默认。仅不同时ALTER TABLE ONLY ALTER COLUMN SET DEFAULT，读回精确表达式；未知默认只读pg_attrdef，不执行它来判定同义。[ALTER TABLE的SET DEFAULT语义](https://www.postgresql.org/docs/16/sql-altertable.html)不要求重写既有行，本批仍以行、对象和依赖断言独立核验，不把文档预期当作实际通过。
+
+新增独立完整ORM旧默认升级探针，不扩充原六阶段CJS/ESM索引子进程。真实生成器增量恰为4条SET DEFAULT，无建表、删列、改类型或改非空；四条提案实际在隔离事务执行后回滚，再执行守卫DO并比较结果。旧快照生成完整表集，先证实两处省略JSON写入23502；显式ID插入8行保留数据，四列各建立视图及对应ID外键，守卫升级和重复执行必须保持表/索引OID及relfilenode、约束/触发器/依赖、非目标默认OID和原行。目标pg_attrdef允许仅因实际SET DEFAULT被重建，no-op时包括它们的OID也必须不变。首条真实ALTER后注入除零验证原子回滚；混合旧/新状态、非public schema与临时同名表隔离也须通过。动态nextval默认作为拒绝夹具，序列is_called必须仍false，证明未靠执行未知表达式消差异。
+
+首次本机专项5静态通过、2引擎失败，定位为测试错误要求SET DEFAULT NULL必须被拒绝。引擎把此命令归为无pg_attrdef的已知旧状态，故改为正向验证这一事实，负向改测语义不同的JSON 'null'默认；迁移守卫没有放宽。修正后CJS/ESM及来源/镜像/合同/错误字段/应用写入保护7项全部通过，54.16秒。最终14类拒绝覆盖未知JSON/JSON null默认、text/numeric缺默认、非零金额默认、可空、生成列、错误精度/校对规则、缺列/表/schema、继承表及不可执行的未知默认。省略/DEFAULT/显式值/UPDATE DEFAULT各四组、四次带精确列名的SQL NULL拒绝、两次JSON null保留、金额舍入/上下界及超过64字符text写入均实际验证；SQL NULL和JSON null不混同，所有业务写入夹具均回滚。
+
+CI将增加专用loopback身份的第五座随机orm_default_upgrade库（真实旧默认的完整ORM，而不是给旧索引升级路径冒充新阶段）；外部、内嵌、新建ORM、索引升级ORM及默认升级ORM均验证省略/default/显式/NULL写入，并严格比较全部列与全部索引。四个精确来源列合同额外固定，不把表达式归一化或相同空值解释为豁免。新建与两条升级路径各自全部已覆盖目录都须匹配，所有随机库在finally仅按本次创建的准确名称清理。两套TypeScript已通过，全量本机/精确提交Linux CI/真实PG16结果待回填；上一轮MIGRATION_SCHEMA_AUDIT.json仍是当前已验证证据，E1与F列部分不提前勾选。其余约束及序列差异继续开放，无生产连接、生产DDL/DML、provider调用或部署。PostgreSQL技能要求的类型保持与短事务核验直接决定了此默认专用迁移及无重写/未知表达式拒绝测试。
+
+本机最终全量maxWorkers=2为244文件全部通过，1,568通过/4项专用PG测试因无本机服务跳过，共1,572项，257.63秒；补充的精确四tuple静态断言另单独通过。两套TypeScript及差异检查已通过，远端main确认仍af5de6f。准备提交精确实现供Linux默认并发及五座PG16隔离库验收；未改CI并发、原测试时限或扫描例外，不用PGlite证据代替真实PG16。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

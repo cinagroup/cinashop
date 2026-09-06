@@ -85,7 +85,7 @@ export const storeOrderOutbox = pgTable(
     aggregateType: varchar("aggregate_type", { length: 32 }).default("order").notNull(),
     aggregateId: integer("aggregate_id").notNull(),
     eventType: varchar("event_type", { length: 64 }).notNull(),
-    payload: jsonb("payload").$type<OrderOutboxPayload>().notNull(),
+    payload: jsonb("payload").$type<OrderOutboxPayload>().default(sql`'{}'::jsonb`).notNull(),
     /** PENDING/ENQUEUING/ENQUEUED/PROCESSING/COMPLETED/FAILED/DEAD */
     status: varchar("status", { length: 16 }).default("PENDING").notNull(),
     dispatchCount: integer("dispatch_count").default(0).notNull(),

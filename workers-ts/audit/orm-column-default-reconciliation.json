@@ -1,0 +1,225 @@
+{
+  "scope": "DB-009E1: exact four defaults, source/model/engine evidence. No column type, nullability or production data change.",
+  "evidence": {
+    "commit": "cc2e5db9ac1a13975c30c713bed90f4e2c4e79d2",
+    "run": 34010180395,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34010180395"
+  },
+  "entries": [
+    {
+      "key": "store_order_outbox.payload",
+      "decision": "restore-deployed-jsonb-default",
+      "catalog": {
+        "key": "store_order_outbox.payload",
+        "name": "payload",
+        "table": "store_order_outbox",
+        "type": "jsonb",
+        "notNull": true,
+        "default": "'{}'::jsonb",
+        "identity": "",
+        "generated": "",
+        "collation": null
+      },
+      "previousCatalog": {
+        "key": "store_order_outbox.payload",
+        "name": "payload",
+        "table": "store_order_outbox",
+        "type": "jsonb",
+        "notNull": true,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null
+      },
+      "previousSnapshotColumn": {
+        "name": "payload",
+        "type": "jsonb",
+        "primaryKey": false,
+        "notNull": true
+      },
+      "snapshotColumn": {
+        "name": "payload",
+        "type": "jsonb",
+        "primaryKey": false,
+        "notNull": true,
+        "default": "'{}'::jsonb"
+      },
+      "model": {
+        "file": "src/models/schema/order_outbox.ts",
+        "line": 88,
+        "previousDeclaration": "    payload: jsonb(\"payload\").$type<OrderOutboxPayload>().notNull(),",
+        "declaration": "    payload: jsonb(\"payload\").$type<OrderOutboxPayload>().default(sql`'{}'::jsonb`).notNull(),"
+      },
+      "sources": [
+        {
+          "file": "migrations/0010_payment_outbox.sql",
+          "line": 9,
+          "sql": "  \"payload\" JSONB DEFAULT '{}'::jsonb NOT NULL,"
+        }
+      ]
+    },
+    {
+      "key": "store_seckill.time_id",
+      "decision": "preserve-deployed-default-expression",
+      "catalog": {
+        "key": "store_seckill.time_id",
+        "name": "time_id",
+        "table": "store_seckill",
+        "type": "text",
+        "notNull": true,
+        "default": "''::character varying",
+        "identity": "",
+        "generated": "",
+        "collation": "pg_catalog.default"
+      },
+      "previousCatalog": {
+        "key": "store_seckill.time_id",
+        "name": "time_id",
+        "table": "store_seckill",
+        "type": "text",
+        "notNull": true,
+        "default": "''::text",
+        "identity": "",
+        "generated": "",
+        "collation": "pg_catalog.default"
+      },
+      "previousSnapshotColumn": {
+        "name": "time_id",
+        "type": "text",
+        "primaryKey": false,
+        "notNull": true,
+        "default": "''"
+      },
+      "snapshotColumn": {
+        "name": "time_id",
+        "type": "text",
+        "primaryKey": false,
+        "notNull": true,
+        "default": "''::character varying"
+      },
+      "model": {
+        "file": "src/models/schema/activity.ts",
+        "line": 199,
+        "previousDeclaration": "    timeId: text(\"time_id\").default(\"\").notNull(),",
+        "declaration": "    timeId: text(\"time_id\").default(sql`''::character varying`).notNull(),"
+      },
+      "sources": [
+        {
+          "file": "migrations/0004_user_activity.sql",
+          "line": 155,
+          "sql": "  \"time_id\" VARCHAR(64) DEFAULT '' NOT NULL,"
+        },
+        {
+          "file": "migrations/0032_activity_catalog_legacy_columns.sql",
+          "line": 117,
+          "sql": "  ALTER COLUMN \"time_id\" TYPE TEXT;"
+        }
+      ]
+    },
+    {
+      "key": "system_queue_dead_letter.body",
+      "decision": "restore-deployed-jsonb-default",
+      "catalog": {
+        "key": "system_queue_dead_letter.body",
+        "name": "body",
+        "table": "system_queue_dead_letter",
+        "type": "jsonb",
+        "notNull": true,
+        "default": "'{}'::jsonb",
+        "identity": "",
+        "generated": "",
+        "collation": null
+      },
+      "previousCatalog": {
+        "key": "system_queue_dead_letter.body",
+        "name": "body",
+        "table": "system_queue_dead_letter",
+        "type": "jsonb",
+        "notNull": true,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null
+      },
+      "previousSnapshotColumn": {
+        "name": "body",
+        "type": "jsonb",
+        "primaryKey": false,
+        "notNull": true
+      },
+      "snapshotColumn": {
+        "name": "body",
+        "type": "jsonb",
+        "primaryKey": false,
+        "notNull": true,
+        "default": "'{}'::jsonb"
+      },
+      "model": {
+        "file": "src/models/schema/queue_dead_letter.ts",
+        "line": 29,
+        "previousDeclaration": "    body: jsonb(\"body\").$type<unknown>().notNull(),",
+        "declaration": "    body: jsonb(\"body\").$type<unknown>().default(sql`'{}'::jsonb`).notNull(),"
+      },
+      "sources": [
+        {
+          "file": "migrations/0080_order_queue_dead_letter.sql",
+          "line": 11,
+          "sql": "  \"body\" JSONB DEFAULT '{}'::jsonb NOT NULL,"
+        }
+      ]
+    },
+    {
+      "key": "user_brokerage_frozen.price",
+      "decision": "preserve-deployed-default-expression",
+      "catalog": {
+        "key": "user_brokerage_frozen.price",
+        "name": "price",
+        "table": "user_brokerage_frozen",
+        "type": "numeric(12,2)",
+        "notNull": true,
+        "default": "0",
+        "identity": "",
+        "generated": "",
+        "collation": null
+      },
+      "previousCatalog": {
+        "key": "user_brokerage_frozen.price",
+        "name": "price",
+        "table": "user_brokerage_frozen",
+        "type": "numeric(12,2)",
+        "notNull": true,
+        "default": "'0'::numeric",
+        "identity": "",
+        "generated": "",
+        "collation": null
+      },
+      "previousSnapshotColumn": {
+        "name": "price",
+        "type": "numeric(12, 2)",
+        "primaryKey": false,
+        "notNull": true,
+        "default": "'0'"
+      },
+      "snapshotColumn": {
+        "name": "price",
+        "type": "numeric(12, 2)",
+        "primaryKey": false,
+        "notNull": true,
+        "default": "0"
+      },
+      "model": {
+        "file": "src/models/schema/brokerage.ts",
+        "line": 170,
+        "previousDeclaration": "    price: decimal(\"price\", { precision: 12, scale: 2 }).default(\"0\").notNull(),",
+        "declaration": "    price: decimal(\"price\", { precision: 12, scale: 2 }).default(sql`0`).notNull(),"
+      },
+      "sources": [
+        {
+          "file": "migrations/0056_distribution_relationships.sql",
+          "line": 46,
+          "sql": "  \"price\" DECIMAL(12,2) DEFAULT 0 NOT NULL,"
+        }
+      ]
+    }
+  ]
+}

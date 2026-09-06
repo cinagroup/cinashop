@@ -167,7 +167,7 @@ export const userBrokerageFrozen = pgTable(
   {
     id: serial("id").primaryKey(),
     uid: integer("uid").default(0).notNull(),
-    price: decimal("price", { precision: 12, scale: 2 }).default("0").notNull(),
+    price: decimal("price", { precision: 12, scale: 2 }).default(sql`0`).notNull(),
     /** Preserve the source typo verbatim. */
     uillId: integer("uill_id").default(0).notNull(),
     frozenTime: integer("frozen_time").default(0).notNull(),

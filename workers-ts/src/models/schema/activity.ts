@@ -196,7 +196,7 @@ export const storeSeckill = pgTable(
     productType: smallint("product_type").default(0).notNull(),
     relationId: integer("relation_id").default(0).notNull(),
     /** 时间段 ID 逗号串 (关联 store_seckill_time) */
-    timeId: text("time_id").default("").notNull(),
+    timeId: text("time_id").default(sql`''::character varying`).notNull(),
     storeName: varchar("store_name", { length: 256 }).default("").notNull(),
     image: varchar("image", { length: 256 }).default("").notNull(),
     images: varchar("images", { length: 2000 }).default("").notNull(),

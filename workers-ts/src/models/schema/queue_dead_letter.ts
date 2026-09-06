@@ -26,7 +26,7 @@ export const systemQueueDeadLetter = pgTable(
     messageTimestampMs: bigint("message_timestamp_ms", { mode: "number" }).default(0).notNull(),
     dlqAttempts: integer("dlq_attempts").default(1).notNull(),
     messageType: varchar("message_type", { length: 64 }).default("unknown").notNull(),
-    body: jsonb("body").$type<unknown>().notNull(),
+    body: jsonb("body").$type<unknown>().default(sql`'{}'::jsonb`).notNull(),
     bodySha256: varchar("body_sha256", { length: 64 }).notNull(),
     replayPolicy: varchar("replay_policy", { length: 24 })
       .$type<QueueDeadLetterReplayPolicy>()
