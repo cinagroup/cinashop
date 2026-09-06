@@ -1,29 +1,29 @@
 {
-  "sourceCommit": "2ef0d333ccf5485bb03e439685450d468872607c",
-  "runId": 34003919501,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34003919501",
+  "sourceCommit": "86cb73a83c9380b88406d464142b022632792bb1",
+  "runId": 34005185002,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34005185002",
   "status": "not_equivalent",
   "kind": "summary",
-  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade and 28 legacy query index restoration, rejection/rollback/fixture/OID/FK dependency/idempotence/schema-isolation checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-definition upgrade, 28 legacy/20 Worker query index restorations and two redundant ORM index removals with dependency refusal, rollback, fixtures, OIDs, FK/unique enforcement, equality index plans, idempotence and schema isolation. Does not inspect production rows, privileges, functions, triggers, policies or views.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "959064d23521260baaff2af5d008fe1a7363eb1d824a8887d406cf4efc07f370",
-  "generatedSqlSha256": "8ff01639a57fa6f5be659f11afcbf67b8c9d948ec8e0ee803d09d3b8f8210caa",
+  "externalInputSha256": "b1d33a1d1d1b15876b5f7f8717414b0afc0f144e07e58352ca46569fcded3b48",
+  "generatedSqlSha256": "b47c86ddc6099fb73f72c308351341516a1423fc679edaac2c429fc0f9c239f8",
   "paths": [
     {
       "path": "external",
-      "steps": 138
+      "steps": 139
     },
     {
       "path": "embedded",
-      "steps": 143
+      "steps": 144
     },
     {
       "path": "orm",
-      "steps": 1061
+      "steps": 1059
     },
     {
       "path": "orm_upgrade",
-      "steps": 1175
+      "steps": 1177
     }
   ],
   "counts": {
@@ -31,28 +31,28 @@
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
-      "indexes": 991,
+      "indexes": 1011,
       "sequences": 227
     },
     "embedded": {
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
-      "indexes": 986,
+      "indexes": 1006,
       "sequences": 227
     },
     "orm": {
       "tables": 263,
       "columns": 3700,
       "constraints": 529,
-      "indexes": 1008,
+      "indexes": 1006,
       "sequences": 227
     },
     "orm_upgrade": {
       "tables": 263,
       "columns": 3700,
       "constraints": 529,
-      "indexes": 1008,
+      "indexes": 1006,
       "sequences": 227
     }
   },
@@ -110,7 +110,7 @@
       },
       "indexes": {
         "referenceOnly": 52,
-        "candidateOnly": 69,
+        "candidateOnly": 47,
         "changed": 0,
         "possibleRenames": 47
       },
@@ -231,14 +231,43 @@
       "user_bill.ub_status",
       "user_brokerage.ub_uid",
       "user_extract.ue_uid",
-      "user_money.um_type_link"
+      "user_money.um_type_link",
+      "community.c_add_time",
+      "community.c_status",
+      "community_comment.cc_add_time",
+      "community_comment.cc_uid",
+      "express_company.ec_status",
+      "shipping_templates.st_status",
+      "store_bargain.sbarg_status",
+      "store_bargain_user.sbu_bargain",
+      "store_bargain_user.sbu_uid",
+      "store_combination.scomb_status",
+      "store_coupon_issue.sci_type",
+      "store_integral.sint_status",
+      "store_pink.sp_kid",
+      "store_service.ss_account",
+      "store_service_log.ssl_add_time",
+      "system_message.sm_add_time",
+      "system_message.sm_user",
+      "user_brokerage.ub_cat_type",
+      "user_brokerage.ub_link",
+      "user_message.um_uid_msg",
+      "store_order.so_order_id_uq"
+    ]
+  },
+  "retiredIndexContracts": {
+    "mode": "reject the two retired physical index names in every compared path",
+    "keys": [
+      "store_order.so_order_id",
+      "system_supplier.supplier_admin_id"
     ]
   },
   "upgradeVerification": {
     "initialStatements": 1061,
-    "upgradeStatements": 114,
+    "upgradeStatements": 116,
+    "definitionUpgradeStatements": 114,
     "reconciledIndexes": 57,
-    "verifiedContracts": 107,
+    "verifiedContracts": 128,
     "rollbackConfirmed": true,
     "rowsAndDependenciesPreserved": true,
     "legacyQueryIndexes": {
@@ -261,6 +290,41 @@
       "nonTargetObjectsAndDependenciesPreserved": true,
       "idempotent": true,
       "schemaIsolationConfirmed": true
+    },
+    "ordinaryQueryIndexes": {
+      "restoredIndexes": 20,
+      "rejectionCases": [
+        "unique",
+        "reversed",
+        "descending",
+        "predicate",
+        "include",
+        "wrong-table",
+        "relation-name",
+        "constraint-owner",
+        "expression",
+        "missing-table",
+        "missing-schema"
+      ],
+      "rollbackConfirmed": true,
+      "duplicateRowsPreserved": true,
+      "nonTargetObjectsAndDependenciesPreserved": true,
+      "idempotent": true,
+      "schemaIsolationConfirmed": true,
+      "retirement": {
+        "statements": 2,
+        "removedIndexes": [
+          "store_order.so_order_id",
+          "system_supplier.supplier_admin_id"
+        ],
+        "dependentObjectRejections": 2,
+        "failureRollbackConfirmed": true,
+        "uniqueIndexesAndForeignKeysPreserved": true,
+        "fixtureRowsPreserved": 4,
+        "nonTargetOidsPreserved": true,
+        "equalityIndexPlansConfirmed": true,
+        "noOpConfirmed": true
+      }
     },
     "freshCatalogMatched": true
   },
