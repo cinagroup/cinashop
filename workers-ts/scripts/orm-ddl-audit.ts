@@ -94,9 +94,18 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const contractManifests = await Promise.all([
       "orm-query-index-reconciliation.json",
       "orm-index-definition-reconciliation.json",
+      "orm-extra-index-reconciliation.json",
     ].map(async (name) => JSON.parse(await readFile(resolve(root, "audit", name), "utf8"))));
     if (contractManifests.some((manifest) => !Array.isArray(manifest.entries))) throw new Error("Invalid reconciled index manifest");
-    const requiredIndexKeys = contractManifests.flatMap((manifest) => manifest.entries.map((entry: { key: string }) => entry.key));
+    const extra = contractManifests[2].entries;
+    if (contractManifests[0].entries.length !== 22 || contractManifests[1].entries.length !== 57 || extra.length !== 50
+      || extra.some((entry: { decision: string }) => !["restore-missing-legacy-query-index", "review-orm-only"].includes(entry.decision))) {
+      throw new Error("Reconciled index cohort changed; explicit review required");
+    }
+    const restoredLegacy = extra.filter((entry: { decision: string }) => entry.decision === "restore-missing-legacy-query-index");
+    if (restoredLegacy.length !== 28) throw new Error("Expected all 28 legacy query index contracts");
+    const requiredIndexKeys = [...contractManifests[0].entries, ...contractManifests[1].entries, ...restoredLegacy]
+      .map((entry: { key: string }) => entry.key);
     assertIndexContracts(catalogs.external, catalogs.embedded, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm_upgrade, requiredIndexKeys);
@@ -105,7 +114,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       throw new Error("Fresh ORM and upgraded ORM catalogs differ");
     }
     return {
-      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade/rollback/fixture and FK dependency checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
+      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade and 28 legacy query index restoration, rejection/rollback/fixture/OID/FK dependency/idempotence/schema-isolation checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
       serverVersionNum: Number(identity.version),
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),

@@ -1,0 +1,1552 @@
+{
+  "sourceCommit": "58ac3ce831dfeb803af3065a38b018819a8535c5",
+  "runId": 34002410416,
+  "scope": "All 50 non-alias ORM-only indexes in the verified PG16 comparison. Restore only the 28 indexes with exact ordered nonunique, non-prefix PHP KEY counterparts; leave the remaining 22 for query/dependency review. No drops, uniqueness changes, or production application.",
+  "legacyAuthority": {
+    "path": "audit/legacy-index-authority.json",
+    "sourceSha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a"
+  },
+  "entries": [
+    {
+      "key": "community.c_add_time",
+      "catalog": {
+        "key": "community.c_add_time",
+        "name": "c_add_time",
+        "table": "community",
+        "definition": "public.community USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "legacyTable": "eb_community",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "community.c_status",
+      "catalog": {
+        "key": "community.c_status",
+        "name": "c_status",
+        "table": "community",
+        "definition": "public.community USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_community",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "community.c_type",
+      "catalog": {
+        "key": "community.c_type",
+        "name": "c_type",
+        "table": "community",
+        "definition": "public.community USING btree (type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "type"
+      ],
+      "legacyTable": "eb_community",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 11564,
+          "sourceSql": "KEY `type` (`type`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "community_comment.cc_add_time",
+      "catalog": {
+        "key": "community_comment.cc_add_time",
+        "name": "cc_add_time",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "legacyTable": "eb_community_comment",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "community_comment.cc_community",
+      "catalog": {
+        "key": "community_comment.cc_community",
+        "name": "cc_community",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (community_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "community_id"
+      ],
+      "legacyTable": "eb_community_comment",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "community_id",
+          "unique": false,
+          "sourceLine": 11607,
+          "sourceSql": "KEY `community_id` (`community_id`)",
+          "columns": [
+            {
+              "name": "community_id",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "community_comment.cc_uid",
+      "catalog": {
+        "key": "community_comment.cc_uid",
+        "name": "cc_uid",
+        "table": "community_comment",
+        "definition": "public.community_comment USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "legacyTable": "eb_community_comment",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "express_company.ec_status",
+      "catalog": {
+        "key": "express_company.ec_status",
+        "name": "ec_status",
+        "table": "express_company",
+        "definition": "public.express_company USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_express",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "shipping_templates.st_status",
+      "catalog": {
+        "key": "shipping_templates.st_status",
+        "name": "st_status",
+        "table": "shipping_templates",
+        "definition": "public.shipping_templates USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_shipping_templates",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_bargain.sbarg_status",
+      "catalog": {
+        "key": "store_bargain.sbarg_status",
+        "name": "sbarg_status",
+        "table": "store_bargain",
+        "definition": "public.store_bargain USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_store_bargain",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_bargain_user.sbu_bargain",
+      "catalog": {
+        "key": "store_bargain_user.sbu_bargain",
+        "name": "sbu_bargain",
+        "table": "store_bargain_user",
+        "definition": "public.store_bargain_user USING btree (bargain_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "bargain_id"
+      ],
+      "legacyTable": "eb_store_bargain_user",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_bargain_user.sbu_uid",
+      "catalog": {
+        "key": "store_bargain_user.sbu_uid",
+        "name": "sbu_uid",
+        "table": "store_bargain_user",
+        "definition": "public.store_bargain_user USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "legacyTable": "eb_store_bargain_user",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_cart.sc_uid_new",
+      "catalog": {
+        "key": "store_cart.sc_uid_new",
+        "name": "sc_uid_new",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (uid, is_new)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid",
+        "is_new"
+      ],
+      "legacyTable": "eb_store_cart",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "uid_3",
+          "unique": false,
+          "sourceLine": 2044,
+          "sourceSql": "KEY `uid_3` (`uid`,`is_new`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "is_new",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_combination.scomb_status",
+      "catalog": {
+        "key": "store_combination.scomb_status",
+        "name": "scomb_status",
+        "table": "store_combination",
+        "definition": "public.store_combination USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_store_combination",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_coupon_issue.sci_type",
+      "catalog": {
+        "key": "store_coupon_issue.sci_type",
+        "name": "sci_type",
+        "table": "store_coupon_issue",
+        "definition": "public.store_coupon_issue USING btree (coupon_type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "coupon_type"
+      ],
+      "legacyTable": "eb_store_coupon_issue",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_integral.sint_status",
+      "catalog": {
+        "key": "store_integral.sint_status",
+        "name": "sint_status",
+        "table": "store_integral",
+        "definition": "public.store_integral USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_store_integral",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_order.so_add_time",
+      "catalog": {
+        "key": "store_order.so_add_time",
+        "name": "so_add_time",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "legacyTable": "eb_store_order",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 2424,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_order.so_order_id",
+      "catalog": {
+        "key": "store_order.so_order_id",
+        "name": "so_order_id",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (order_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "order_id"
+      ],
+      "legacyTable": "eb_store_order",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_order_refund.sor_order_id",
+      "catalog": {
+        "key": "store_order_refund.sor_order_id",
+        "name": "sor_order_id",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (order_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "order_id"
+      ],
+      "legacyTable": "eb_store_order_refund",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "order_id",
+          "unique": false,
+          "sourceLine": 2603,
+          "sourceSql": "KEY `order_id` (`order_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "order_id",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_order_status.sos_change_type",
+      "catalog": {
+        "key": "store_order_status.sos_change_type",
+        "name": "sos_change_type",
+        "table": "store_order_status",
+        "definition": "public.store_order_status USING btree (change_type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "change_type"
+      ],
+      "legacyTable": "eb_store_order_status",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "change_type",
+          "unique": false,
+          "sourceLine": 2619,
+          "sourceSql": "KEY `change_type` (`change_type`) USING BTREE",
+          "columns": [
+            {
+              "name": "change_type",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_pink.sp_kid",
+      "catalog": {
+        "key": "store_pink.sp_kid",
+        "name": "sp_kid",
+        "table": "store_pink",
+        "definition": "public.store_pink USING btree (k_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "k_id"
+      ],
+      "legacyTable": "eb_store_pink",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_product.is_benefit",
+      "catalog": {
+        "key": "store_product.is_benefit",
+        "name": "is_benefit",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (is_benefit)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_benefit"
+      ],
+      "legacyTable": "eb_store_product",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "is_benefit",
+          "unique": false,
+          "sourceLine": 2766,
+          "sourceSql": "KEY `is_benefit` (`is_benefit`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_benefit",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_product.is_best",
+      "catalog": {
+        "key": "store_product.is_best",
+        "name": "is_best",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (is_best)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_best"
+      ],
+      "legacyTable": "eb_store_product",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "is_best",
+          "unique": false,
+          "sourceLine": 2767,
+          "sourceSql": "KEY `is_best` (`is_best`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_best",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_product.is_hot",
+      "catalog": {
+        "key": "store_product.is_hot",
+        "name": "is_hot",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (is_hot)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_hot"
+      ],
+      "legacyTable": "eb_store_product",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "is_hot",
+          "unique": false,
+          "sourceLine": 2765,
+          "sourceSql": "KEY `is_hot` (`is_hot`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_hot",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_product.is_new",
+      "catalog": {
+        "key": "store_product.is_new",
+        "name": "is_new",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (is_new)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_new"
+      ],
+      "legacyTable": "eb_store_product",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "is_new",
+          "unique": false,
+          "sourceLine": 2768,
+          "sourceSql": "KEY `is_new` (`is_new`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_new",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_product.is_postage",
+      "catalog": {
+        "key": "store_product.is_postage",
+        "name": "is_postage",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (is_postage)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_postage"
+      ],
+      "legacyTable": "eb_store_product",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "is_postage",
+          "unique": false,
+          "sourceLine": 2775,
+          "sourceSql": "KEY `is_postage` (`is_postage`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_postage",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_product_category.add_time",
+      "catalog": {
+        "key": "store_product_category.add_time",
+        "name": "add_time",
+        "table": "store_product_category",
+        "definition": "public.store_product_category USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "legacyTable": "eb_store_product_category",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 2073,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_product_category.sort",
+      "catalog": {
+        "key": "store_product_category.sort",
+        "name": "sort",
+        "table": "store_product_category",
+        "definition": "public.store_product_category USING btree (sort)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "sort"
+      ],
+      "legacyTable": "eb_store_product_category",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "sort",
+          "unique": false,
+          "sourceLine": 2072,
+          "sourceSql": "KEY `sort` (`sort`) USING BTREE,",
+          "columns": [
+            {
+              "name": "sort",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_product_label.type_label",
+      "catalog": {
+        "key": "store_product_label.type_label",
+        "name": "type_label",
+        "table": "store_product_label",
+        "definition": "public.store_product_label USING btree (type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "type"
+      ],
+      "legacyTable": "eb_store_product_label",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3389,
+          "sourceSql": "KEY `type` (`type`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_seckill.ss_status",
+      "catalog": {
+        "key": "store_seckill.ss_status",
+        "name": "ss_status",
+        "table": "store_seckill",
+        "definition": "public.store_seckill USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_store_seckill",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "is_show",
+          "unique": false,
+          "sourceLine": 3625,
+          "sourceSql": "KEY `is_show` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "store_service.ss_account",
+      "catalog": {
+        "key": "store_service.ss_account",
+        "name": "ss_account",
+        "table": "store_service",
+        "definition": "public.store_service USING btree (account)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "account"
+      ],
+      "legacyTable": "eb_store_service",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "store_service_log.ssl_add_time",
+      "catalog": {
+        "key": "store_service_log.ssl_add_time",
+        "name": "ssl_add_time",
+        "table": "store_service_log",
+        "definition": "public.store_service_log USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "legacyTable": "eb_store_service_log",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "system_admin.sa_status",
+      "catalog": {
+        "key": "system_admin.sa_status",
+        "name": "sa_status",
+        "table": "system_admin",
+        "definition": "public.system_admin USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_system_admin",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 3880,
+          "sourceSql": "KEY `status` (`status`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "system_config.config_tab_id",
+      "catalog": {
+        "key": "system_config.config_tab_id",
+        "name": "config_tab_id",
+        "table": "system_config",
+        "definition": "public.system_config USING btree (config_tab_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "config_tab_id"
+      ],
+      "legacyTable": "eb_system_config",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "config_tab_id",
+          "unique": false,
+          "sourceLine": 8002,
+          "sourceSql": "KEY `config_tab_id` (`config_tab_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "config_tab_id",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "system_message.sm_add_time",
+      "catalog": {
+        "key": "system_message.sm_add_time",
+        "name": "sm_add_time",
+        "table": "system_message",
+        "definition": "public.system_message USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "legacyTable": "eb_system_message",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "system_message.sm_user",
+      "catalog": {
+        "key": "system_message.sm_user",
+        "name": "sm_user",
+        "table": "system_message",
+        "definition": "public.system_message USING btree (user_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "user_id"
+      ],
+      "legacyTable": "eb_system_message",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "system_supplier.supplier_admin_id",
+      "catalog": {
+        "key": "system_supplier.supplier_admin_id",
+        "name": "supplier_admin_id",
+        "table": "system_supplier",
+        "definition": "public.system_supplier USING btree (admin_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "admin_id"
+      ],
+      "legacyTable": "eb_system_supplier",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "user.add_time_delete_sex",
+      "catalog": {
+        "key": "user.add_time_delete_sex",
+        "name": "add_time_delete_sex",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (add_time, delete_time, sex)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time",
+        "delete_time",
+        "sex"
+      ],
+      "legacyTable": "eb_user",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "add_time_delete_sex",
+          "unique": false,
+          "sourceLine": 10190,
+          "sourceSql": "KEY `add_time_delete_sex` (`add_time`, `delete_time`, `sex`) USING BTREE",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            },
+            {
+              "name": "delete_time",
+              "prefix": null
+            },
+            {
+              "name": "sex",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user.is_promoter",
+      "catalog": {
+        "key": "user.is_promoter",
+        "name": "is_promoter",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (is_promoter, phone)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_promoter",
+        "phone"
+      ],
+      "legacyTable": "eb_user",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "is_promoter",
+          "unique": false,
+          "sourceLine": 10187,
+          "sourceSql": "KEY `is_promoter` (`is_promoter`,`phone`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_promoter",
+              "prefix": null
+            },
+            {
+              "name": "phone",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user.level",
+      "catalog": {
+        "key": "user.level",
+        "name": "level",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (level)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "level"
+      ],
+      "legacyTable": "eb_user",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "level",
+          "unique": false,
+          "sourceLine": 10184,
+          "sourceSql": "KEY `level` (`level`) USING BTREE,",
+          "columns": [
+            {
+              "name": "level",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user.spreaduid",
+      "catalog": {
+        "key": "user.spreaduid",
+        "name": "spreaduid",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (spread_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "spread_uid"
+      ],
+      "legacyTable": "eb_user",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "spreaduid",
+          "unique": false,
+          "sourceLine": 10183,
+          "sourceSql": "KEY `spreaduid` (`spread_uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "spread_uid",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user.work_uid",
+      "catalog": {
+        "key": "user.work_uid",
+        "name": "work_uid",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (work_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "work_uid"
+      ],
+      "legacyTable": "eb_user",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "work_uid",
+          "unique": false,
+          "sourceLine": 10186,
+          "sourceSql": "KEY `work_uid` (`work_uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "work_uid",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user_bill.ub_add_time",
+      "catalog": {
+        "key": "user_bill.ub_add_time",
+        "name": "ub_add_time",
+        "table": "user_bill",
+        "definition": "public.user_bill USING btree (add_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "add_time"
+      ],
+      "legacyTable": "eb_user_bill",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 10246,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user_bill.ub_pm",
+      "catalog": {
+        "key": "user_bill.ub_pm",
+        "name": "ub_pm",
+        "table": "user_bill",
+        "definition": "public.user_bill USING btree (pm)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "pm"
+      ],
+      "legacyTable": "eb_user_bill",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "pm",
+          "unique": false,
+          "sourceLine": 10247,
+          "sourceSql": "KEY `pm` (`pm`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pm",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user_bill.ub_status",
+      "catalog": {
+        "key": "user_bill.ub_status",
+        "name": "ub_status",
+        "table": "user_bill",
+        "definition": "public.user_bill USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "legacyTable": "eb_user_bill",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 10245,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user_brokerage.ub_cat_type",
+      "catalog": {
+        "key": "user_brokerage.ub_cat_type",
+        "name": "ub_cat_type",
+        "table": "user_brokerage",
+        "definition": "public.user_brokerage USING btree (category, type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "category",
+        "type"
+      ],
+      "legacyTable": "eb_user_brokerage",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "user_brokerage.ub_link",
+      "catalog": {
+        "key": "user_brokerage.ub_link",
+        "name": "ub_link",
+        "table": "user_brokerage",
+        "definition": "public.user_brokerage USING btree (link_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "link_id"
+      ],
+      "legacyTable": "eb_user_brokerage",
+      "legacyTableFound": true,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "user_brokerage.ub_uid",
+      "catalog": {
+        "key": "user_brokerage.ub_uid",
+        "name": "ub_uid",
+        "table": "user_brokerage",
+        "definition": "public.user_brokerage USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "legacyTable": "eb_user_brokerage",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 11464,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user_extract.ue_uid",
+      "catalog": {
+        "key": "user_extract.ue_uid",
+        "name": "ue_uid",
+        "table": "user_extract",
+        "definition": "public.user_extract USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "legacyTable": "eb_user_extract",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "openid",
+          "unique": false,
+          "sourceLine": 10331,
+          "sourceSql": "KEY `openid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    },
+    {
+      "key": "user_message.um_uid_msg",
+      "catalog": {
+        "key": "user_message.um_uid_msg",
+        "name": "um_uid_msg",
+        "table": "user_message",
+        "definition": "public.user_message USING btree (uid, message_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid",
+        "message_id"
+      ],
+      "legacyTable": "eb_user_message",
+      "legacyTableFound": false,
+      "legacyIndexes": [],
+      "decision": "review-orm-only"
+    },
+    {
+      "key": "user_money.um_type_link",
+      "catalog": {
+        "key": "user_money.um_type_link",
+        "name": "um_type_link",
+        "table": "user_money",
+        "definition": "public.user_money USING btree (type, link_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "type",
+        "link_id"
+      ],
+      "legacyTable": "eb_user_money",
+      "legacyTableFound": true,
+      "legacyIndexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 11492,
+          "sourceSql": "KEY `type` (`type`,`link_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "link_id",
+              "prefix": null
+            }
+          ]
+        }
+      ],
+      "decision": "restore-missing-legacy-query-index"
+    }
+  ]
+}

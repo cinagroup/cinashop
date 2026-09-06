@@ -1,0 +1,4852 @@
+{
+  "source": "cinashop-php/public/install/crmeb.sql",
+  "sourceSha256": "0096d86464b81935106311e4bb4092b647ab3acaf2bab0febe5695f8f66c593a",
+  "scope": "Read-only snapshot of the 201 installer CREATE TABLE bodies and their non-primary KEY/UNIQUE KEY declarations. No INSERT statements or business data. Names/ordered columns/prefixes/uniqueness only; not a cross-engine performance or collation equivalence proof.",
+  "tables": [
+    {
+      "table": "eb_work_channel_code",
+      "sourceLine": 5,
+      "indexes": [
+        {
+          "name": "cate_id",
+          "unique": false,
+          "sourceLine": 25,
+          "sourceSql": "KEY `cate_id` (`cate_id`),",
+          "columns": [
+            {
+              "name": "cate_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 26,
+          "sourceSql": "KEY `status` (`status`)",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_channel_cycle",
+      "sourceLine": 33,
+      "indexes": [
+        {
+          "name": "channel_id",
+          "unique": false,
+          "sourceLine": 39,
+          "sourceSql": "KEY `channel_id` (`channel_id`)",
+          "columns": [
+            {
+              "name": "channel_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_channel_limit",
+      "sourceLine": 46,
+      "indexes": [
+        {
+          "name": "channel_id",
+          "unique": false,
+          "sourceLine": 50,
+          "sourceSql": "KEY `channel_id` (`channel_id`)",
+          "columns": [
+            {
+              "name": "channel_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_client",
+      "sourceLine": 57,
+      "indexes": [
+        {
+          "name": "external_userid",
+          "unique": false,
+          "sourceLine": 76,
+          "sourceSql": "KEY `external_userid` (`external_userid`),",
+          "columns": [
+            {
+              "name": "external_userid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "corp_id",
+          "unique": false,
+          "sourceLine": 77,
+          "sourceSql": "KEY `corp_id` (`corp_id`,`external_userid`),",
+          "columns": [
+            {
+              "name": "corp_id",
+              "prefix": null
+            },
+            {
+              "name": "external_userid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 78,
+          "sourceSql": "KEY `uid` (`uid`),",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "unionid",
+          "unique": false,
+          "sourceLine": 79,
+          "sourceSql": "KEY `unionid` (`unionid`)",
+          "columns": [
+            {
+              "name": "unionid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_client_follow",
+      "sourceLine": 86,
+      "indexes": [
+        {
+          "name": "state",
+          "unique": false,
+          "sourceLine": 102,
+          "sourceSql": "KEY `state` (`state`),",
+          "columns": [
+            {
+              "name": "state",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "client_id",
+          "unique": false,
+          "sourceLine": 103,
+          "sourceSql": "KEY `client_id` (`client_id`)",
+          "columns": [
+            {
+              "name": "client_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_client_follow_tags",
+      "sourceLine": 110,
+      "indexes": [
+        {
+          "name": "follow_id",
+          "unique": false,
+          "sourceLine": 117,
+          "sourceSql": "KEY `follow_id` (`follow_id`)",
+          "columns": [
+            {
+              "name": "follow_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_department",
+      "sourceLine": 124,
+      "indexes": []
+    },
+    {
+      "table": "eb_work_group_chat",
+      "sourceLine": 142,
+      "indexes": [
+        {
+          "name": "corp_id",
+          "unique": false,
+          "sourceLine": 157,
+          "sourceSql": "KEY `corp_id` (`corp_id`,`chat_id`)",
+          "columns": [
+            {
+              "name": "corp_id",
+              "prefix": null
+            },
+            {
+              "name": "chat_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_group_chat_auth",
+      "sourceLine": 164,
+      "indexes": []
+    },
+    {
+      "table": "eb_work_group_chat_member",
+      "sourceLine": 184,
+      "indexes": [
+        {
+          "name": "group_id",
+          "unique": false,
+          "sourceLine": 202,
+          "sourceSql": "KEY `group_id` (`group_id`),",
+          "columns": [
+            {
+              "name": "group_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "group_id_2",
+          "unique": false,
+          "sourceLine": 203,
+          "sourceSql": "KEY `group_id_2` (`group_id`,`userid`)",
+          "columns": [
+            {
+              "name": "group_id",
+              "prefix": null
+            },
+            {
+              "name": "userid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_group_chat_statistic",
+      "sourceLine": 210,
+      "indexes": [
+        {
+          "name": "group_id",
+          "unique": false,
+          "sourceLine": 220,
+          "sourceSql": "KEY `group_id` (`group_id`)",
+          "columns": [
+            {
+              "name": "group_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_group_msg_relation",
+      "sourceLine": 227,
+      "indexes": []
+    },
+    {
+      "table": "eb_work_group_msg_send_result",
+      "sourceLine": 236,
+      "indexes": [
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 247,
+          "sourceSql": "KEY `status` (`status`),",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "msg_id",
+          "unique": false,
+          "sourceLine": 248,
+          "sourceSql": "KEY `msg_id` (`msg_id`)",
+          "columns": [
+            {
+              "name": "msg_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_group_msg_task",
+      "sourceLine": 255,
+      "indexes": [
+        {
+          "name": "msg_id",
+          "unique": false,
+          "sourceLine": 263,
+          "sourceSql": "KEY `msg_id` (`msg_id`)",
+          "columns": [
+            {
+              "name": "msg_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_group_template",
+      "sourceLine": 270,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 288,
+          "sourceSql": "KEY `type` (`type`),",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "template_type",
+          "unique": false,
+          "sourceLine": 289,
+          "sourceSql": "KEY `template_type` (`template_type`,`send_time`)",
+          "columns": [
+            {
+              "name": "template_type",
+              "prefix": null
+            },
+            {
+              "name": "send_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_label",
+      "sourceLine": 296,
+      "indexes": [
+        {
+          "name": "group_id",
+          "unique": false,
+          "sourceLine": 305,
+          "sourceSql": "KEY `group_id` (`group_id`)",
+          "columns": [
+            {
+              "name": "group_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_media",
+      "sourceLine": 312,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 325,
+          "sourceSql": "KEY `type` (`type`,`md5_path`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "md5_path",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_member",
+      "sourceLine": 332,
+      "indexes": [
+        {
+          "name": "userid",
+          "unique": true,
+          "sourceLine": 360,
+          "sourceSql": "UNIQUE KEY `userid` (`userid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "userid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "corp_id",
+          "unique": false,
+          "sourceLine": 361,
+          "sourceSql": "KEY `corp_id` (`corp_id`),",
+          "columns": [
+            {
+              "name": "corp_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "corp_id_2",
+          "unique": false,
+          "sourceLine": 362,
+          "sourceSql": "KEY `corp_id_2` (`corp_id`,`userid`),",
+          "columns": [
+            {
+              "name": "corp_id",
+              "prefix": null
+            },
+            {
+              "name": "userid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "mobile",
+          "unique": false,
+          "sourceLine": 363,
+          "sourceSql": "KEY `mobile` (`mobile`)",
+          "columns": [
+            {
+              "name": "mobile",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_member_other",
+      "sourceLine": 370,
+      "indexes": [
+        {
+          "name": "member_id",
+          "unique": true,
+          "sourceLine": 374,
+          "sourceSql": "UNIQUE KEY `member_id` (`member_id`)",
+          "columns": [
+            {
+              "name": "member_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_member_relation",
+      "sourceLine": 381,
+      "indexes": [
+        {
+          "name": "member_id",
+          "unique": false,
+          "sourceLine": 387,
+          "sourceSql": "KEY `member_id` (`member_id`)",
+          "columns": [
+            {
+              "name": "member_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_moment",
+      "sourceLine": 394,
+      "indexes": [
+        {
+          "name": "jobid",
+          "unique": false,
+          "sourceLine": 411,
+          "sourceSql": "KEY `jobid` (`jobid`),",
+          "columns": [
+            {
+              "name": "jobid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "moment_id",
+          "unique": false,
+          "sourceLine": 412,
+          "sourceSql": "KEY `moment_id` (`moment_id`),",
+          "columns": [
+            {
+              "name": "moment_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "send_time",
+          "unique": false,
+          "sourceLine": 413,
+          "sourceSql": "KEY `send_time` (`send_time`,`send_type`,`jobid`)",
+          "columns": [
+            {
+              "name": "send_time",
+              "prefix": null
+            },
+            {
+              "name": "send_type",
+              "prefix": null
+            },
+            {
+              "name": "jobid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_moment_send_result",
+      "sourceLine": 420,
+      "indexes": [
+        {
+          "name": "moment_id",
+          "unique": false,
+          "sourceLine": 428,
+          "sourceSql": "KEY `moment_id` (`moment_id`)",
+          "columns": [
+            {
+              "name": "moment_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_work_welcome",
+      "sourceLine": 435,
+      "indexes": []
+    },
+    {
+      "table": "eb_work_welcome_relation",
+      "sourceLine": 451,
+      "indexes": [
+        {
+          "name": "welcome_id",
+          "unique": false,
+          "sourceLine": 454,
+          "sourceSql": "KEY `welcome_id` (`welcome_id`)",
+          "columns": [
+            {
+              "name": "welcome_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_agent_level",
+      "sourceLine": 461,
+      "indexes": [
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 472,
+          "sourceSql": "KEY `status` (`status`, `is_del`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            },
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_agent_level_task",
+      "sourceLine": 490,
+      "indexes": []
+    },
+    {
+      "table": "eb_agent_level_task_record",
+      "sourceLine": 508,
+      "indexes": []
+    },
+    {
+      "table": "eb_queue_list",
+      "sourceLine": 522,
+      "indexes": []
+    },
+    {
+      "table": "eb_agreement",
+      "sourceLine": 545,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": true,
+          "sourceLine": 554,
+          "sourceSql": "UNIQUE KEY `type` (`type`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_article",
+      "sourceLine": 570,
+      "indexes": []
+    },
+    {
+      "table": "eb_article_category",
+      "sourceLine": 600,
+      "indexes": []
+    },
+    {
+      "table": "eb_article_content",
+      "sourceLine": 620,
+      "indexes": [
+        {
+          "name": "nid",
+          "unique": true,
+          "sourceLine": 623,
+          "sourceSql": "UNIQUE KEY `nid` (`nid`) USING BTREE",
+          "columns": [
+            {
+              "name": "nid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_queue_auxiliary",
+      "sourceLine": 632,
+      "indexes": []
+    },
+    {
+      "table": "eb_cache",
+      "sourceLine": 650,
+      "indexes": []
+    },
+    {
+      "table": "eb_capital_flow",
+      "sourceLine": 672,
+      "indexes": []
+    },
+    {
+      "table": "eb_category",
+      "sourceLine": 695,
+      "indexes": [
+        {
+          "name": "pid",
+          "unique": false,
+          "sourceLine": 710,
+          "sourceSql": "KEY `pid` (`pid`),",
+          "columns": [
+            {
+              "name": "pid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "name",
+          "unique": false,
+          "sourceLine": 711,
+          "sourceSql": "KEY `name` (`name`),",
+          "columns": [
+            {
+              "name": "name",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_be",
+          "unique": false,
+          "sourceLine": 712,
+          "sourceSql": "KEY `is_be` (`owner_id`,`type`,`id`),",
+          "columns": [
+            {
+              "name": "owner_id",
+              "prefix": null
+            },
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "group",
+          "unique": false,
+          "sourceLine": 713,
+          "sourceSql": "KEY `group` (`group`)",
+          "columns": [
+            {
+              "name": "group",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_delivery_service",
+      "sourceLine": 730,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 742,
+          "sourceSql": "KEY `uid` (`uid`, `is_del`, `status`) USING BTREE",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "is_del",
+              "prefix": null
+            },
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_division_apply",
+      "sourceLine": 750,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_form",
+      "sourceLine": 771,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_form_data",
+      "sourceLine": 795,
+      "indexes": []
+    },
+    {
+      "table": "eb_diy",
+      "sourceLine": 813,
+      "indexes": [
+        {
+          "name": "template_name",
+          "unique": false,
+          "sourceLine": 839,
+          "sourceSql": "KEY `template_name` (`template_name`, `type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "template_name",
+              "prefix": null
+            },
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status_type",
+          "unique": false,
+          "sourceLine": 840,
+          "sourceSql": "KEY `status_type` (`status`, `type`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            },
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_express",
+      "sourceLine": 864,
+      "indexes": [
+        {
+          "name": "code",
+          "unique": true,
+          "sourceLine": 884,
+          "sourceSql": "UNIQUE KEY `code` (`code`) USING BTREE,",
+          "columns": [
+            {
+              "name": "code",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_show",
+          "unique": false,
+          "sourceLine": 885,
+          "sourceSql": "KEY `is_show` (`is_show`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_show",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_live_anchor",
+      "sourceLine": 1465,
+      "indexes": []
+    },
+    {
+      "table": "eb_live_goods",
+      "sourceLine": 1483,
+      "indexes": []
+    },
+    {
+      "table": "eb_live_room",
+      "sourceLine": 1510,
+      "indexes": []
+    },
+    {
+      "table": "eb_live_room_goods",
+      "sourceLine": 1544,
+      "indexes": [
+        {
+          "name": "broadcast_room_id",
+          "unique": false,
+          "sourceLine": 1547,
+          "sourceSql": "KEY `broadcast_room_id` (`live_room_id`,`live_goods_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "live_room_id",
+              "prefix": null
+            },
+            {
+              "name": "live_goods_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_luck_lottery",
+      "sourceLine": 1556,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 1584,
+          "sourceSql": "KEY `type` (`type`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_luck_lottery_record",
+      "sourceLine": 1593,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 1609,
+          "sourceSql": "KEY `uid` (`uid`),",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "prize_id",
+          "unique": false,
+          "sourceLine": 1610,
+          "sourceSql": "KEY `prize_id` (`prize_id`),",
+          "columns": [
+            {
+              "name": "prize_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "lottery_id",
+          "unique": false,
+          "sourceLine": 1611,
+          "sourceSql": "KEY `lottery_id` (`lottery_id`)",
+          "columns": [
+            {
+              "name": "lottery_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_luck_prize",
+      "sourceLine": 1620,
+      "indexes": [
+        {
+          "name": "lottery_id",
+          "unique": false,
+          "sourceLine": 1638,
+          "sourceSql": "KEY `lottery_id` (`lottery_id`)",
+          "columns": [
+            {
+              "name": "lottery_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_member_card",
+      "sourceLine": 1647,
+      "indexes": []
+    },
+    {
+      "table": "eb_member_card_batch",
+      "sourceLine": 1666,
+      "indexes": []
+    },
+    {
+      "table": "eb_member_right",
+      "sourceLine": 1689,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 1702,
+          "sourceSql": "KEY `type` (`right_type`)",
+          "columns": [
+            {
+              "name": "right_type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_member_ship",
+      "sourceLine": 1722,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 1734,
+          "sourceSql": "KEY `type` (`type`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_other_order",
+      "sourceLine": 1754,
+      "indexes": []
+    },
+    {
+      "table": "eb_other_order_status",
+      "sourceLine": 1787,
+      "indexes": [
+        {
+          "name": "oid",
+          "unique": false,
+          "sourceLine": 1793,
+          "sourceSql": "KEY `oid` (`oid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "oid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "change_type",
+          "unique": false,
+          "sourceLine": 1794,
+          "sourceSql": "KEY `change_type` (`change_type`) USING BTREE",
+          "columns": [
+            {
+              "name": "change_type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_qrcode",
+      "sourceLine": 1803,
+      "indexes": [
+        {
+          "name": "third_type",
+          "unique": true,
+          "sourceLine": 1816,
+          "sourceSql": "UNIQUE KEY `third_type` (`third_type`,`third_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "third_type",
+              "prefix": null
+            },
+            {
+              "name": "third_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_shipping_templates",
+      "sourceLine": 1825,
+      "indexes": []
+    },
+    {
+      "table": "eb_shipping_templates_free",
+      "sourceLine": 1851,
+      "indexes": []
+    },
+    {
+      "table": "eb_shipping_templates_no_delivery",
+      "sourceLine": 1870,
+      "indexes": []
+    },
+    {
+      "table": "eb_shipping_templates_region",
+      "sourceLine": 1885,
+      "indexes": []
+    },
+    {
+      "table": "eb_sms_record",
+      "sourceLine": 1910,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_bargain",
+      "sourceLine": 1929,
+      "indexes": [
+        {
+          "name": "is_del",
+          "unique": false,
+          "sourceLine": 1978,
+          "sourceSql": "KEY `is_del` (`is_del`, `status`, `product_id`, `start_time`, `stop_time`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            },
+            {
+              "name": "status",
+              "prefix": null
+            },
+            {
+              "name": "product_id",
+              "prefix": null
+            },
+            {
+              "name": "start_time",
+              "prefix": null
+            },
+            {
+              "name": "stop_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_bargain_user",
+      "sourceLine": 1987,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_bargain_user_help",
+      "sourceLine": 2006,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_cart",
+      "sourceLine": 2023,
+      "indexes": [
+        {
+          "name": "goods_id",
+          "unique": false,
+          "sourceLine": 2041,
+          "sourceSql": "KEY `goods_id` (`product_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 2042,
+          "sourceSql": "KEY `uid` (`uid`,`is_pay`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "is_pay",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid_2",
+          "unique": false,
+          "sourceLine": 2043,
+          "sourceSql": "KEY `uid_2` (`uid`,`is_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid_3",
+          "unique": false,
+          "sourceLine": 2044,
+          "sourceSql": "KEY `uid_3` (`uid`,`is_new`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "is_new",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 2045,
+          "sourceSql": "KEY `type` (`type`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_category",
+      "sourceLine": 2054,
+      "indexes": [
+        {
+          "name": "pid",
+          "unique": false,
+          "sourceLine": 2070,
+          "sourceSql": "KEY `pid` (`pid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_base",
+          "unique": false,
+          "sourceLine": 2071,
+          "sourceSql": "KEY `is_base` (`is_show`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_show",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "sort",
+          "unique": false,
+          "sourceLine": 2072,
+          "sourceSql": "KEY `sort` (`sort`) USING BTREE,",
+          "columns": [
+            {
+              "name": "sort",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 2073,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_category_brand",
+      "sourceLine": 2116,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_combination",
+      "sourceLine": 2136,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_coupon_issue",
+      "sourceLine": 2192,
+      "indexes": [
+        {
+          "name": "start_time",
+          "unique": false,
+          "sourceLine": 2224,
+          "sourceSql": "KEY `start_time` (`start_time`,`end_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "start_time",
+              "prefix": null
+            },
+            {
+              "name": "end_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "remain_count",
+          "unique": false,
+          "sourceLine": 2225,
+          "sourceSql": "KEY `remain_count` (`remain_count`) USING BTREE,",
+          "columns": [
+            {
+              "name": "remain_count",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 2226,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_del",
+          "unique": false,
+          "sourceLine": 2227,
+          "sourceSql": "KEY `is_del` (`is_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "receive_type",
+          "unique": false,
+          "sourceLine": 2228,
+          "sourceSql": "KEY `receive_type` (`receive_type`) USING BTREE",
+          "columns": [
+            {
+              "name": "receive_type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_coupon_issue_user",
+      "sourceLine": 2237,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_coupon_product",
+      "sourceLine": 2249,
+      "indexes": [
+        {
+          "name": "coupon_id",
+          "unique": false,
+          "sourceLine": 2252,
+          "sourceSql": "KEY `coupon_id` (`coupon_id`)",
+          "columns": [
+            {
+              "name": "coupon_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_coupon_user",
+      "sourceLine": 2261,
+      "indexes": [
+        {
+          "name": "cid",
+          "unique": false,
+          "sourceLine": 2276,
+          "sourceSql": "KEY `cid` (`cid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "cid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 2277,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 2278,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "end_time",
+          "unique": false,
+          "sourceLine": 2279,
+          "sourceSql": "KEY `end_time` (`end_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "end_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 2280,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_fail",
+          "unique": false,
+          "sourceLine": 2281,
+          "sourceSql": "KEY `is_fail` (`is_fail`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_fail",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_discounts",
+      "sourceLine": 2287,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_discounts_products",
+      "sourceLine": 2312,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_order",
+      "sourceLine": 2328,
+      "indexes": [
+        {
+          "name": "pid",
+          "unique": false,
+          "sourceLine": 2420,
+          "sourceSql": "KEY `pid` (`pid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "order_id_2",
+          "unique": true,
+          "sourceLine": 2421,
+          "sourceSql": "UNIQUE KEY `order_id_2` (`order_id`,`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "order_id",
+              "prefix": null
+            },
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "unique",
+          "unique": true,
+          "sourceLine": 2422,
+          "sourceSql": "UNIQUE KEY `unique` (`unique`) USING BTREE,",
+          "columns": [
+            {
+              "name": "unique",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 2423,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 2424,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "paid",
+          "unique": false,
+          "sourceLine": 2425,
+          "sourceSql": "KEY `paid` (`paid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "paid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pay_time",
+          "unique": false,
+          "sourceLine": 2426,
+          "sourceSql": "KEY `pay_time` (`pay_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pay_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pay_type",
+          "unique": false,
+          "sourceLine": 2427,
+          "sourceSql": "KEY `pay_type` (`pay_type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pay_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 2428,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_del",
+          "unique": false,
+          "sourceLine": 2429,
+          "sourceSql": "KEY `is_del` (`is_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "store_id",
+          "unique": false,
+          "sourceLine": 2430,
+          "sourceSql": "KEY `store_id` (`store_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "store_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "refund_status",
+          "unique": false,
+          "sourceLine": 2431,
+          "sourceSql": "KEY `refund_status` (`refund_status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "refund_status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_system_del",
+          "unique": false,
+          "sourceLine": 2432,
+          "sourceSql": "KEY `is_system_del` (`is_system_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_system_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pid_2",
+          "unique": false,
+          "sourceLine": 2433,
+          "sourceSql": "KEY `pid_2` (`uid`, `is_del`, `is_system_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "is_del",
+              "prefix": null
+            },
+            {
+              "name": "is_system_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid_2",
+          "unique": false,
+          "sourceLine": 2434,
+          "sourceSql": "KEY `uid_2` (`uid`, `paid`, `status`, `refund_status`, `is_del`, `pid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "paid",
+              "prefix": null
+            },
+            {
+              "name": "status",
+              "prefix": null
+            },
+            {
+              "name": "refund_status",
+              "prefix": null
+            },
+            {
+              "name": "is_del",
+              "prefix": null
+            },
+            {
+              "name": "pid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "erp_order_id",
+          "unique": false,
+          "sourceLine": 2435,
+          "sourceSql": "KEY `erp_order_id` (`erp_order_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "erp_order_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "index_0",
+          "unique": false,
+          "sourceLine": 2436,
+          "sourceSql": "KEY `index_0` (`paid`, `pid`, `uid`, `refund_status`)",
+          "columns": [
+            {
+              "name": "paid",
+              "prefix": null
+            },
+            {
+              "name": "pid",
+              "prefix": null
+            },
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "refund_status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_order_cart_info",
+      "sourceLine": 2445,
+      "indexes": [
+        {
+          "name": "oid",
+          "unique": true,
+          "sourceLine": 2478,
+          "sourceSql": "UNIQUE KEY `oid` (`oid`,`unique`) USING BTREE,",
+          "columns": [
+            {
+              "name": "oid",
+              "prefix": null
+            },
+            {
+              "name": "unique",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "cart_id",
+          "unique": false,
+          "sourceLine": 2479,
+          "sourceSql": "KEY `cart_id` (`cart_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "cart_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "old_cart_id",
+          "unique": false,
+          "sourceLine": 2480,
+          "sourceSql": "KEY `old_cart_id` (`old_cart_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "old_cart_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "split_status",
+          "unique": false,
+          "sourceLine": 2481,
+          "sourceSql": "KEY `split_status` (`split_status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "split_status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "product_id",
+          "unique": false,
+          "sourceLine": 2482,
+          "sourceSql": "KEY `product_id` (`product_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "index_0",
+          "unique": false,
+          "sourceLine": 2483,
+          "sourceSql": "KEY `index_0` (`cart_id`, `refund_num`)",
+          "columns": [
+            {
+              "name": "cart_id",
+              "prefix": null
+            },
+            {
+              "name": "refund_num",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_order_economize",
+      "sourceLine": 2492,
+      "indexes": [
+        {
+          "name": "order_id_2",
+          "unique": true,
+          "sourceLine": 2505,
+          "sourceSql": "UNIQUE KEY `order_id_2` (`order_id`,`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "order_id",
+              "prefix": null
+            },
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 2506,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 2507,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pay_price",
+          "unique": false,
+          "sourceLine": 2508,
+          "sourceSql": "KEY `pay_price` (`pay_price`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pay_price",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 2509,
+          "sourceSql": "KEY `status` (`status`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_order_invoice",
+      "sourceLine": 2518,
+      "indexes": [
+        {
+          "name": "order_id",
+          "unique": false,
+          "sourceLine": 2544,
+          "sourceSql": "KEY `order_id` (`order_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "order_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_order_promotions",
+      "sourceLine": 2553,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_order_refund",
+      "sourceLine": 2570,
+      "indexes": [
+        {
+          "name": "store_order_id",
+          "unique": false,
+          "sourceLine": 2600,
+          "sourceSql": "KEY `store_order_id` (`store_order_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "store_order_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 2601,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "store_id",
+          "unique": false,
+          "sourceLine": 2602,
+          "sourceSql": "KEY `store_id` (`store_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "store_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "order_id",
+          "unique": false,
+          "sourceLine": 2603,
+          "sourceSql": "KEY `order_id` (`order_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "order_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "refund_type",
+          "unique": false,
+          "sourceLine": 2604,
+          "sourceSql": "KEY `refund_type` (`is_cancel`, `store_order_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_cancel",
+              "prefix": null
+            },
+            {
+              "name": "store_order_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_order_status",
+      "sourceLine": 2613,
+      "indexes": [
+        {
+          "name": "oid",
+          "unique": false,
+          "sourceLine": 2618,
+          "sourceSql": "KEY `oid` (`oid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "oid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "change_type",
+          "unique": false,
+          "sourceLine": 2619,
+          "sourceSql": "KEY `change_type` (`change_type`) USING BTREE",
+          "columns": [
+            {
+              "name": "change_type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_order_writeoff",
+      "sourceLine": 2628,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_pink",
+      "sourceLine": 2653,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_product",
+      "sourceLine": 2682,
+      "indexes": [
+        {
+          "name": "cate_id",
+          "unique": false,
+          "sourceLine": 2764,
+          "sourceSql": "KEY `cate_id` (`cate_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "cate_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_hot",
+          "unique": false,
+          "sourceLine": 2765,
+          "sourceSql": "KEY `is_hot` (`is_hot`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_hot",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_benefit",
+          "unique": false,
+          "sourceLine": 2766,
+          "sourceSql": "KEY `is_benefit` (`is_benefit`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_benefit",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_best",
+          "unique": false,
+          "sourceLine": 2767,
+          "sourceSql": "KEY `is_best` (`is_best`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_best",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_new",
+          "unique": false,
+          "sourceLine": 2768,
+          "sourceSql": "KEY `is_new` (`is_new`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_new",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "toggle_on_sale, is_del",
+          "unique": false,
+          "sourceLine": 2769,
+          "sourceSql": "KEY `toggle_on_sale, is_del` (`is_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "price",
+          "unique": false,
+          "sourceLine": 2770,
+          "sourceSql": "KEY `price` (`price`) USING BTREE,",
+          "columns": [
+            {
+              "name": "price",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_show",
+          "unique": false,
+          "sourceLine": 2771,
+          "sourceSql": "KEY `is_show` (`is_show`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_show",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "sort",
+          "unique": false,
+          "sourceLine": 2772,
+          "sourceSql": "KEY `sort` (`sort`) USING BTREE,",
+          "columns": [
+            {
+              "name": "sort",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "sales",
+          "unique": false,
+          "sourceLine": 2773,
+          "sourceSql": "KEY `sales` (`sales`) USING BTREE,",
+          "columns": [
+            {
+              "name": "sales",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 2774,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_postage",
+          "unique": false,
+          "sourceLine": 2775,
+          "sourceSql": "KEY `is_postage` (`is_postage`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_postage",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_attr",
+      "sourceLine": 2795,
+      "indexes": [
+        {
+          "name": "store_id",
+          "unique": false,
+          "sourceLine": 2802,
+          "sourceSql": "KEY `store_id` (`product_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_attr_result",
+      "sourceLine": 2829,
+      "indexes": [
+        {
+          "name": "product_id",
+          "unique": false,
+          "sourceLine": 2836,
+          "sourceSql": "KEY `product_id` (`product_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_attr_value",
+      "sourceLine": 2859,
+      "indexes": [
+        {
+          "name": "unique",
+          "unique": false,
+          "sourceLine": 2891,
+          "sourceSql": "KEY `unique` (`unique`,`suk`) USING BTREE,",
+          "columns": [
+            {
+              "name": "unique",
+              "prefix": null
+            },
+            {
+              "name": "suk",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "store_id",
+          "unique": false,
+          "sourceLine": 2892,
+          "sourceSql": "KEY `store_id` (`product_id`,`suk`) USING BTREE",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            },
+            {
+              "name": "suk",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_cate",
+      "sourceLine": 3087,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_product_coupon",
+      "sourceLine": 3121,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_product_description",
+      "sourceLine": 3136,
+      "indexes": [
+        {
+          "name": "product_id",
+          "unique": false,
+          "sourceLine": 3140,
+          "sourceSql": "KEY `product_id` (`product_id`,`type`),",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            },
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3141,
+          "sourceSql": "KEY `type` (`type`,`product_id`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_log",
+      "sourceLine": 3161,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3179,
+          "sourceSql": "KEY `type` (`type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "product_id",
+          "unique": false,
+          "sourceLine": 3180,
+          "sourceSql": "KEY `product_id` (`product_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 3181,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 3182,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid_type",
+          "unique": false,
+          "sourceLine": 3183,
+          "sourceSql": "KEY `uid_type` (`uid`, `type`) USING BTREE",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_relation",
+      "sourceLine": 3192,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3200,
+          "sourceSql": "KEY `type` (`type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "category",
+          "unique": false,
+          "sourceLine": 3201,
+          "sourceSql": "KEY `category` (`category`) USING BTREE",
+          "columns": [
+            {
+              "name": "category",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_reply",
+      "sourceLine": 3210,
+      "indexes": [
+        {
+          "name": "order_id_2",
+          "unique": true,
+          "sourceLine": 3237,
+          "sourceSql": "UNIQUE KEY `order_id_2` (`oid`,`unique`) USING BTREE,",
+          "columns": [
+            {
+              "name": "oid",
+              "prefix": null
+            },
+            {
+              "name": "unique",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 3238,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "parent_id",
+          "unique": false,
+          "sourceLine": 3239,
+          "sourceSql": "KEY `parent_id` (`reply_type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "reply_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_del",
+          "unique": false,
+          "sourceLine": 3240,
+          "sourceSql": "KEY `is_del` (`is_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "product_score",
+          "unique": false,
+          "sourceLine": 3241,
+          "sourceSql": "KEY `product_score` (`product_score`) USING BTREE,",
+          "columns": [
+            {
+              "name": "product_score",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "service_score",
+          "unique": false,
+          "sourceLine": 3242,
+          "sourceSql": "KEY `service_score` (`service_score`) USING BTREE",
+          "columns": [
+            {
+              "name": "service_score",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_reply_comment",
+      "sourceLine": 3251,
+      "indexes": [
+        {
+          "name": "reply_id",
+          "unique": false,
+          "sourceLine": 3263,
+          "sourceSql": "KEY `reply_id` (`reply_id`)",
+          "columns": [
+            {
+              "name": "reply_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_rule",
+      "sourceLine": 3273,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_product_relation",
+      "sourceLine": 3295,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3304,
+          "sourceSql": "KEY `type` (`type`),",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "relation_id",
+          "unique": false,
+          "sourceLine": 3305,
+          "sourceSql": "KEY `relation_id` (`relation_id`),",
+          "columns": [
+            {
+              "name": "relation_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "product_id",
+          "unique": false,
+          "sourceLine": 3306,
+          "sourceSql": "KEY `product_id` (`product_id`)",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_stock_record",
+      "sourceLine": 3316,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_product_unit",
+      "sourceLine": 3334,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_product_virtual",
+      "sourceLine": 3352,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_product_label",
+      "sourceLine": 3372,
+      "indexes": [
+        {
+          "name": "label_cate",
+          "unique": false,
+          "sourceLine": 3388,
+          "sourceSql": "KEY `label_cate` (`label_cate`),",
+          "columns": [
+            {
+              "name": "label_cate",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3389,
+          "sourceSql": "KEY `type` (`type`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_label_auxiliary",
+      "sourceLine": 3411,
+      "indexes": [
+        {
+          "name": "label_id",
+          "unique": false,
+          "sourceLine": 3416,
+          "sourceSql": "KEY `label_id` (`label_id`,`product_id`)",
+          "columns": [
+            {
+              "name": "label_id",
+              "prefix": null
+            },
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_ensure",
+      "sourceLine": 3425,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3436,
+          "sourceSql": "KEY `type` (`type`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_specs",
+      "sourceLine": 3459,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3470,
+          "sourceSql": "KEY `type` (`type`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_product_words",
+      "sourceLine": 3480,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_promotions",
+      "sourceLine": 3505,
+      "indexes": [
+        {
+          "name": "pid",
+          "unique": false,
+          "sourceLine": 3539,
+          "sourceSql": "KEY `pid` (`pid`),",
+          "columns": [
+            {
+              "name": "pid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 3540,
+          "sourceSql": "KEY `type` (`type`,`store_id`),",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "store_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "promotions_type",
+          "unique": false,
+          "sourceLine": 3541,
+          "sourceSql": "KEY `promotions_type` (`promotions_type`),",
+          "columns": [
+            {
+              "name": "promotions_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "update_time",
+          "unique": false,
+          "sourceLine": 3542,
+          "sourceSql": "KEY `update_time` (`update_time`)",
+          "columns": [
+            {
+              "name": "update_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_promotions_auxiliary",
+      "sourceLine": 3551,
+      "indexes": [
+        {
+          "name": "promotions_id",
+          "unique": false,
+          "sourceLine": 3565,
+          "sourceSql": "KEY `promotions_id` (`promotions_id`,`product_id`)",
+          "columns": [
+            {
+              "name": "promotions_id",
+              "prefix": null
+            },
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_seckill",
+      "sourceLine": 3575,
+      "indexes": [
+        {
+          "name": "product_id",
+          "unique": false,
+          "sourceLine": 3621,
+          "sourceSql": "KEY `product_id` (`product_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "start_time",
+          "unique": false,
+          "sourceLine": 3622,
+          "sourceSql": "KEY `start_time` (`start_time`,`stop_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "start_time",
+              "prefix": null
+            },
+            {
+              "name": "stop_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_del",
+          "unique": false,
+          "sourceLine": 3623,
+          "sourceSql": "KEY `is_del` (`is_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_hot",
+          "unique": false,
+          "sourceLine": 3624,
+          "sourceSql": "KEY `is_hot` (`is_hot`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_hot",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_show",
+          "unique": false,
+          "sourceLine": 3625,
+          "sourceSql": "KEY `is_show` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 3626,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "sort",
+          "unique": false,
+          "sourceLine": 3627,
+          "sourceSql": "KEY `sort` (`sort`) USING BTREE,",
+          "columns": [
+            {
+              "name": "sort",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_postage",
+          "unique": false,
+          "sourceLine": 3628,
+          "sourceSql": "KEY `is_postage` (`is_postage`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_postage",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_seckill_time",
+      "sourceLine": 3638,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_activity",
+      "sourceLine": 3657,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_activity_relation",
+      "sourceLine": 3692,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_service",
+      "sourceLine": 3706,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 3724,
+          "sourceSql": "KEY `uid` (`uid`)",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_service_feedback",
+      "sourceLine": 3733,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 3743,
+          "sourceSql": "KEY `uid` (`uid`)",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_service_log",
+      "sourceLine": 3752,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_service_record",
+      "sourceLine": 3773,
+      "indexes": [
+        {
+          "name": "to_uid",
+          "unique": false,
+          "sourceLine": 3788,
+          "sourceSql": "KEY `to_uid` (`to_uid`)",
+          "columns": [
+            {
+              "name": "to_uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_service_speechcraft",
+      "sourceLine": 3797,
+      "indexes": [
+        {
+          "name": "kefu_id",
+          "unique": false,
+          "sourceLine": 3806,
+          "sourceSql": "KEY `kefu_id` (`kefu_id`),",
+          "columns": [
+            {
+              "name": "kefu_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "cate_id",
+          "unique": false,
+          "sourceLine": 3807,
+          "sourceSql": "KEY `cate_id` (`cate_id`)",
+          "columns": [
+            {
+              "name": "cate_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_visit",
+      "sourceLine": 3839,
+      "indexes": [
+        {
+          "name": "product_id",
+          "unique": false,
+          "sourceLine": 3850,
+          "sourceSql": "KEY `product_id` (`product_id`)",
+          "columns": [
+            {
+              "name": "product_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_admin",
+      "sourceLine": 3859,
+      "indexes": [
+        {
+          "name": "account",
+          "unique": false,
+          "sourceLine": 3879,
+          "sourceSql": "KEY `account` (`account`) USING BTREE,",
+          "columns": [
+            {
+              "name": "account",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 3880,
+          "sourceSql": "KEY `status` (`status`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_attachment",
+      "sourceLine": 3896,
+      "indexes": [
+        {
+          "name": "time",
+          "unique": false,
+          "sourceLine": 3913,
+          "sourceSql": "KEY `time` (`time`) USING BTREE",
+          "columns": [
+            {
+              "name": "time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_attachment_category",
+      "sourceLine": 3988,
+      "indexes": [
+        {
+          "name": "id",
+          "unique": true,
+          "sourceLine": 3997,
+          "sourceSql": "UNIQUE KEY `id` (`id`) USING BTREE",
+          "columns": [
+            {
+              "name": "id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_city",
+      "sourceLine": 4013,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_config",
+      "sourceLine": 7983,
+      "indexes": [
+        {
+          "name": "is_store",
+          "unique": false,
+          "sourceLine": 8001,
+          "sourceSql": "KEY `is_store` (`is_store`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_store",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "config_tab_id",
+          "unique": false,
+          "sourceLine": 8002,
+          "sourceSql": "KEY `config_tab_id` (`config_tab_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "config_tab_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "menu_name",
+          "unique": false,
+          "sourceLine": 8003,
+          "sourceSql": "KEY `menu_name` (`menu_name`) USING BTREE",
+          "columns": [
+            {
+              "name": "menu_name",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_config_tab",
+      "sourceLine": 8345,
+      "indexes": [
+        {
+          "name": "pid",
+          "unique": false,
+          "sourceLine": 8357,
+          "sourceSql": "KEY `pid` (`pid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_store",
+          "unique": false,
+          "sourceLine": 8358,
+          "sourceSql": "KEY `is_store` (`is_store`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_store",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "eng_title",
+          "unique": false,
+          "sourceLine": 8359,
+          "sourceSql": "KEY `eng_title` (`eng_title`) USING BTREE",
+          "columns": [
+            {
+              "name": "eng_title",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_file",
+      "sourceLine": 8427,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_group",
+      "sourceLine": 8443,
+      "indexes": [
+        {
+          "name": "config_name",
+          "unique": true,
+          "sourceLine": 8451,
+          "sourceSql": "UNIQUE KEY `config_name` (`config_name`) USING BTREE",
+          "columns": [
+            {
+              "name": "config_name",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_group_data",
+      "sourceLine": 8480,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_log",
+      "sourceLine": 8602,
+      "indexes": [
+        {
+          "name": "admin_id",
+          "unique": false,
+          "sourceLine": 8615,
+          "sourceSql": "KEY `admin_id` (`admin_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "admin_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 8616,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 8617,
+          "sourceSql": "KEY `type` (`type`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_menus",
+      "sourceLine": 8626,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 8650,
+          "sourceSql": "KEY `type` (`type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pid",
+          "unique": false,
+          "sourceLine": 8651,
+          "sourceSql": "KEY `pid` (`pid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_show",
+          "unique": false,
+          "sourceLine": 8652,
+          "sourceSql": "KEY `is_show` (`is_show`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_show",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "access",
+          "unique": false,
+          "sourceLine": 8653,
+          "sourceSql": "KEY `access` (`access`) USING BTREE",
+          "columns": [
+            {
+              "name": "access",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_notice",
+      "sourceLine": 9657,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": true,
+          "sourceLine": 9668,
+          "sourceSql": "UNIQUE KEY `type` (`type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 9669,
+          "sourceSql": "KEY `status` (`status`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_notice_admin",
+      "sourceLine": 9678,
+      "indexes": [
+        {
+          "name": "admin_id",
+          "unique": false,
+          "sourceLine": 9689,
+          "sourceSql": "KEY `admin_id` (`admin_id`,`notice_type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "admin_id",
+              "prefix": null
+            },
+            {
+              "name": "notice_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 9690,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_visit",
+          "unique": false,
+          "sourceLine": 9691,
+          "sourceSql": "KEY `is_visit` (`is_visit`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_visit",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_click",
+          "unique": false,
+          "sourceLine": 9692,
+          "sourceSql": "KEY `is_click` (`is_click`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_click",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_role",
+      "sourceLine": 9701,
+      "indexes": [
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 9710,
+          "sourceSql": "KEY `status` (`status`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_sign_reward",
+      "sourceLine": 9719,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_store",
+      "sourceLine": 9734,
+      "indexes": [
+        {
+          "name": "phone",
+          "unique": false,
+          "sourceLine": 9766,
+          "sourceSql": "KEY `phone` (`phone`) USING BTREE",
+          "columns": [
+            {
+              "name": "phone",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_store_staff",
+      "sourceLine": 9775,
+      "indexes": [
+        {
+          "name": "idx_uid_status_isdel_verifystatus",
+          "unique": false,
+          "sourceLine": 9799,
+          "sourceSql": "KEY `idx_uid_status_isdel_verifystatus` (`uid`, `status`, `is_del`, `verify_status`) USING BTREE",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "status",
+              "prefix": null
+            },
+            {
+              "name": "is_del",
+              "prefix": null
+            },
+            {
+              "name": "verify_status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_supplier_ticket_print",
+      "sourceLine": 9808,
+      "indexes": [
+        {
+          "name": "supplier_id",
+          "unique": false,
+          "sourceLine": 9817,
+          "sourceSql": "KEY `supplier_id` (`supplier_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "supplier_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_supplier_flowing_water",
+      "sourceLine": 9826,
+      "indexes": []
+    },
+    {
+      "table": "eb_supplier_transactions",
+      "sourceLine": 9852,
+      "indexes": []
+    },
+    {
+      "table": "eb_supplier_extract",
+      "sourceLine": 9875,
+      "indexes": [
+        {
+          "name": "supplier_id",
+          "unique": false,
+          "sourceLine": 9897,
+          "sourceSql": "KEY `supplier_id` (`supplier_id`),",
+          "columns": [
+            {
+              "name": "supplier_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "extract_type",
+          "unique": false,
+          "sourceLine": 9898,
+          "sourceSql": "KEY `extract_type` (`extract_type`),",
+          "columns": [
+            {
+              "name": "extract_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 9899,
+          "sourceSql": "KEY `status` (`status`),",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 9900,
+          "sourceSql": "KEY `add_time` (`add_time`)",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_supplier",
+      "sourceLine": 9909,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_user_apply",
+      "sourceLine": 9942,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_timer",
+      "sourceLine": 9966,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_user_level",
+      "sourceLine": 10010,
+      "indexes": []
+    },
+    {
+      "table": "eb_template_message",
+      "sourceLine": 10049,
+      "indexes": []
+    },
+    {
+      "table": "eb_user",
+      "sourceLine": 10109,
+      "indexes": [
+        {
+          "name": "account",
+          "unique": false,
+          "sourceLine": 10182,
+          "sourceSql": "KEY `account` (`account`) USING BTREE,",
+          "columns": [
+            {
+              "name": "account",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "spreaduid",
+          "unique": false,
+          "sourceLine": 10183,
+          "sourceSql": "KEY `spreaduid` (`spread_uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "spread_uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "level",
+          "unique": false,
+          "sourceLine": 10184,
+          "sourceSql": "KEY `level` (`level`) USING BTREE,",
+          "columns": [
+            {
+              "name": "level",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 10185,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "work_uid",
+          "unique": false,
+          "sourceLine": 10186,
+          "sourceSql": "KEY `work_uid` (`work_uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "work_uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_promoter",
+          "unique": false,
+          "sourceLine": 10187,
+          "sourceSql": "KEY `is_promoter` (`is_promoter`,`phone`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_promoter",
+              "prefix": null
+            },
+            {
+              "name": "phone",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "phone",
+          "unique": false,
+          "sourceLine": 10188,
+          "sourceSql": "KEY `phone` (`phone`) USING BTREE,",
+          "columns": [
+            {
+              "name": "phone",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "index_0",
+          "unique": false,
+          "sourceLine": 10189,
+          "sourceSql": "KEY `index_0` (`delete_time`),",
+          "columns": [
+            {
+              "name": "delete_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time_delete_sex",
+          "unique": false,
+          "sourceLine": 10190,
+          "sourceSql": "KEY `add_time_delete_sex` (`add_time`, `delete_time`, `sex`) USING BTREE",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            },
+            {
+              "name": "delete_time",
+              "prefix": null
+            },
+            {
+              "name": "sex",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_address",
+      "sourceLine": 10199,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10217,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_default",
+          "unique": false,
+          "sourceLine": 10218,
+          "sourceSql": "KEY `is_default` (`is_default`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_default",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_del",
+          "unique": false,
+          "sourceLine": 10219,
+          "sourceSql": "KEY `is_del` (`is_del`) USING BTREE",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_bill",
+      "sourceLine": 10228,
+      "indexes": [
+        {
+          "name": "openid",
+          "unique": false,
+          "sourceLine": 10244,
+          "sourceSql": "KEY `openid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 10245,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 10246,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pm",
+          "unique": false,
+          "sourceLine": 10247,
+          "sourceSql": "KEY `pm` (`pm`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pm",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 10248,
+          "sourceSql": "KEY `type` (`category`,`type`,`link_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "category",
+              "prefix": null
+            },
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "link_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_brokerage_frozen",
+      "sourceLine": 10257,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10267,
+          "sourceSql": "KEY `uid` (`uid`,`status`)",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_enter",
+      "sourceLine": 10276,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": true,
+          "sourceLine": 10296,
+          "sourceSql": "UNIQUE KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "province",
+          "unique": false,
+          "sourceLine": 10297,
+          "sourceSql": "KEY `province` (`province`,`city`,`district`) USING BTREE,",
+          "columns": [
+            {
+              "name": "province",
+              "prefix": null
+            },
+            {
+              "name": "city",
+              "prefix": null
+            },
+            {
+              "name": "district",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_lock",
+          "unique": false,
+          "sourceLine": 10298,
+          "sourceSql": "KEY `is_lock` (`is_lock`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_lock",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "is_del",
+          "unique": false,
+          "sourceLine": 10299,
+          "sourceSql": "KEY `is_del` (`is_del`) USING BTREE,",
+          "columns": [
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 10300,
+          "sourceSql": "KEY `status` (`status`) USING BTREE",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_extract",
+      "sourceLine": 10309,
+      "indexes": [
+        {
+          "name": "extract_type",
+          "unique": false,
+          "sourceLine": 10328,
+          "sourceSql": "KEY `extract_type` (`extract_type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "extract_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 10329,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 10330,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "openid",
+          "unique": false,
+          "sourceLine": 10331,
+          "sourceSql": "KEY `openid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "fail_time",
+          "unique": false,
+          "sourceLine": 10332,
+          "sourceSql": "KEY `fail_time` (`fail_time`) USING BTREE",
+          "columns": [
+            {
+              "name": "fail_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_friends",
+      "sourceLine": 10341,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10347,
+          "sourceSql": "KEY `uid` (`uid`)",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_group",
+      "sourceLine": 10356,
+      "indexes": []
+    },
+    {
+      "table": "eb_user_invoice",
+      "sourceLine": 10368,
+      "indexes": []
+    },
+    {
+      "table": "eb_user_label",
+      "sourceLine": 10393,
+      "indexes": [
+        {
+          "name": "label_cate",
+          "unique": false,
+          "sourceLine": 10401,
+          "sourceSql": "KEY `label_cate` (`label_cate`)",
+          "columns": [
+            {
+              "name": "label_cate",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_label_relation",
+      "sourceLine": 10410,
+      "indexes": []
+    },
+    {
+      "table": "eb_user_level",
+      "sourceLine": 10425,
+      "indexes": [
+        {
+          "name": "id",
+          "unique": true,
+          "sourceLine": 10440,
+          "sourceSql": "UNIQUE KEY `id` (`id`) USING BTREE",
+          "columns": [
+            {
+              "name": "id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_notice",
+      "sourceLine": 10449,
+      "indexes": []
+    },
+    {
+      "table": "eb_user_notice_see",
+      "sourceLine": 10468,
+      "indexes": []
+    },
+    {
+      "table": "eb_user_recharge",
+      "sourceLine": 10482,
+      "indexes": [
+        {
+          "name": "order_id",
+          "unique": true,
+          "sourceLine": 10500,
+          "sourceSql": "UNIQUE KEY `order_id` (`order_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "order_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10501,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "recharge_type",
+          "unique": false,
+          "sourceLine": 10502,
+          "sourceSql": "KEY `recharge_type` (`recharge_type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "recharge_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "paid",
+          "unique": false,
+          "sourceLine": 10503,
+          "sourceSql": "KEY `paid` (`paid`) USING BTREE",
+          "columns": [
+            {
+              "name": "paid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_sign",
+      "sourceLine": 10512,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10522,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_spread",
+      "sourceLine": 10531,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10539,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "spread_uid",
+          "unique": false,
+          "sourceLine": 10540,
+          "sourceSql": "KEY `spread_uid` (`spread_uid`) USING BTREE",
+          "columns": [
+            {
+              "name": "spread_uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_visit",
+      "sourceLine": 10549,
+      "indexes": [
+        {
+          "name": "time",
+          "unique": false,
+          "sourceLine": 10559,
+          "sourceSql": "KEY `time` (`channel_type`,`add_time`)",
+          "columns": [
+            {
+              "name": "channel_type",
+              "prefix": null
+            },
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_search",
+      "sourceLine": 10568,
+      "indexes": []
+    },
+    {
+      "table": "eb_wechat_key",
+      "sourceLine": 10586,
+      "indexes": []
+    },
+    {
+      "table": "eb_wechat_media",
+      "sourceLine": 10599,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": true,
+          "sourceLine": 10608,
+          "sourceSql": "UNIQUE KEY `type` (`type`,`media_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "media_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_wechat_message",
+      "sourceLine": 10617,
+      "indexes": [
+        {
+          "name": "openid",
+          "unique": false,
+          "sourceLine": 10624,
+          "sourceSql": "KEY `openid` (`openid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "openid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 10625,
+          "sourceSql": "KEY `type` (`type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 10626,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_wechat_news_category",
+      "sourceLine": 10635,
+      "indexes": []
+    },
+    {
+      "table": "eb_wechat_reply",
+      "sourceLine": 10651,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 10658,
+          "sourceSql": "KEY `type` (`type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 10659,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "hide",
+          "unique": false,
+          "sourceLine": 10660,
+          "sourceSql": "KEY `hide` (`hide`) USING BTREE",
+          "columns": [
+            {
+              "name": "hide",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_wechat_qrcode",
+      "sourceLine": 10669,
+      "indexes": []
+    },
+    {
+      "table": "eb_wechat_qrcode_cate",
+      "sourceLine": 10695,
+      "indexes": []
+    },
+    {
+      "table": "eb_wechat_qrcode_record",
+      "sourceLine": 10718,
+      "indexes": []
+    },
+    {
+      "table": "eb_wechat_user",
+      "sourceLine": 10731,
+      "indexes": [
+        {
+          "name": "openid",
+          "unique": true,
+          "sourceLine": 10754,
+          "sourceSql": "UNIQUE KEY `openid` (`openid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "openid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "groupid",
+          "unique": false,
+          "sourceLine": 10755,
+          "sourceSql": "KEY `groupid` (`groupid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "groupid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "subscribe_time",
+          "unique": false,
+          "sourceLine": 10756,
+          "sourceSql": "KEY `subscribe_time` (`subscribe_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "subscribe_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 10757,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "subscribe",
+          "unique": false,
+          "sourceLine": 10758,
+          "sourceSql": "KEY `subscribe` (`subscribe`) USING BTREE,",
+          "columns": [
+            {
+              "name": "subscribe",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "unionid",
+          "unique": false,
+          "sourceLine": 10759,
+          "sourceSql": "KEY `unionid` (`unionid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "unionid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10760,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_integral",
+      "sourceLine": 10769,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_integral_order",
+      "sourceLine": 10808,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_integral_order_status",
+      "sourceLine": 10867,
+      "indexes": []
+    },
+    {
+      "table": "eb_system_message",
+      "sourceLine": 10882,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 10892,
+          "sourceSql": "KEY `uid` (`uid`,`look`,`is_del`) USING BTREE",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            },
+            {
+              "name": "look",
+              "prefix": null
+            },
+            {
+              "name": "is_del",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_notification",
+      "sourceLine": 10901,
+      "indexes": []
+    },
+    {
+      "table": "eb_page_category",
+      "sourceLine": 10976,
+      "indexes": []
+    },
+    {
+      "table": "eb_page_link",
+      "sourceLine": 11011,
+      "indexes": []
+    },
+    {
+      "table": "eb_print_document",
+      "sourceLine": 11088,
+      "indexes": []
+    },
+    {
+      "table": "eb_promoter_apply",
+      "sourceLine": 11112,
+      "indexes": []
+    },
+    {
+      "table": "eb_out_account",
+      "sourceLine": 11131,
+      "indexes": []
+    },
+    {
+      "table": "eb_out_interface",
+      "sourceLine": 11159,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_config",
+      "sourceLine": 11244,
+      "indexes": []
+    },
+    {
+      "table": "eb_wechat_card",
+      "sourceLine": 11258,
+      "indexes": []
+    },
+    {
+      "table": "eb_user_card",
+      "sourceLine": 11285,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_finance_flow",
+      "sourceLine": 11307,
+      "indexes": [
+        {
+          "name": "store_id",
+          "unique": false,
+          "sourceLine": 11328,
+          "sourceSql": "KEY `store_id` (`store_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "store_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 11329,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "staff_id",
+          "unique": false,
+          "sourceLine": 11330,
+          "sourceSql": "KEY `staff_id` (`staff_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "staff_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 11331,
+          "sourceSql": "KEY `type` (`type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 11332,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_extract",
+      "sourceLine": 11339,
+      "indexes": [
+        {
+          "name": "store_id",
+          "unique": false,
+          "sourceLine": 11362,
+          "sourceSql": "KEY `store_id` (`store_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "store_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "extract_type",
+          "unique": false,
+          "sourceLine": 11363,
+          "sourceSql": "KEY `extract_type` (`extract_type`) USING BTREE,",
+          "columns": [
+            {
+              "name": "extract_type",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 11364,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 11365,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_user",
+      "sourceLine": 11373,
+      "indexes": [
+        {
+          "name": "store_id",
+          "unique": false,
+          "sourceLine": 11381,
+          "sourceSql": "KEY `store_id` (`store_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "store_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 11382,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_branch_product",
+      "sourceLine": 11389,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_branch_product_attr_value",
+      "sourceLine": 11413,
+      "indexes": [
+        {
+          "name": "code",
+          "unique": false,
+          "sourceLine": 11424,
+          "sourceSql": "KEY `code` (`code`) USING BTREE",
+          "columns": [
+            {
+              "name": "code",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_store_brand",
+      "sourceLine": 11432,
+      "indexes": []
+    },
+    {
+      "table": "eb_user_brokerage",
+      "sourceLine": 11449,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 11464,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 11465,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 11466,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pm",
+          "unique": false,
+          "sourceLine": 11467,
+          "sourceSql": "KEY `pm` (`pm`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pm",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 11468,
+          "sourceSql": "KEY `type` (`type`,`link_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "link_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_user_money",
+      "sourceLine": 11475,
+      "indexes": [
+        {
+          "name": "uid",
+          "unique": false,
+          "sourceLine": 11488,
+          "sourceSql": "KEY `uid` (`uid`) USING BTREE,",
+          "columns": [
+            {
+              "name": "uid",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "unique": false,
+          "sourceLine": 11489,
+          "sourceSql": "KEY `status` (`status`) USING BTREE,",
+          "columns": [
+            {
+              "name": "status",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "add_time",
+          "unique": false,
+          "sourceLine": 11490,
+          "sourceSql": "KEY `add_time` (`add_time`) USING BTREE,",
+          "columns": [
+            {
+              "name": "add_time",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "pm",
+          "unique": false,
+          "sourceLine": 11491,
+          "sourceSql": "KEY `pm` (`pm`) USING BTREE,",
+          "columns": [
+            {
+              "name": "pm",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 11492,
+          "sourceSql": "KEY `type` (`type`,`link_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            },
+            {
+              "name": "link_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_system_storage",
+      "sourceLine": 11498,
+      "indexes": []
+    },
+    {
+      "table": "eb_community_topic",
+      "sourceLine": 11519,
+      "indexes": []
+    },
+    {
+      "table": "eb_community",
+      "sourceLine": 11537,
+      "indexes": [
+        {
+          "name": "type",
+          "unique": false,
+          "sourceLine": 11564,
+          "sourceSql": "KEY `type` (`type`)",
+          "columns": [
+            {
+              "name": "type",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_community_relevance",
+      "sourceLine": 11570,
+      "indexes": [
+        {
+          "name": "left_id",
+          "unique": false,
+          "sourceLine": 11577,
+          "sourceSql": "KEY        `left_id` (`left_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "left_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "right_id",
+          "unique": false,
+          "sourceLine": 11578,
+          "sourceSql": "KEY        `right_id` (`right_id`) USING BTREE",
+          "columns": [
+            {
+              "name": "right_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_community_comment",
+      "sourceLine": 11583,
+      "indexes": [
+        {
+          "name": "pid",
+          "unique": false,
+          "sourceLine": 11606,
+          "sourceSql": "KEY `pid` (`reply_id`),",
+          "columns": [
+            {
+              "name": "reply_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "community_id",
+          "unique": false,
+          "sourceLine": 11607,
+          "sourceSql": "KEY `community_id` (`community_id`)",
+          "columns": [
+            {
+              "name": "community_id",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "eb_community_user",
+      "sourceLine": 11613,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_newcomer",
+      "sourceLine": 11636,
+      "indexes": []
+    },
+    {
+      "table": "eb_store_delivery_order",
+      "sourceLine": 11655,
+      "indexes": []
+    },
+    {
+      "table": "eb_city_area",
+      "sourceLine": 11690,
+      "indexes": [
+        {
+          "name": "parent_id",
+          "unique": false,
+          "sourceLine": 11701,
+          "sourceSql": "KEY `parent_id` (`parent_id`) USING BTREE,",
+          "columns": [
+            {
+              "name": "parent_id",
+              "prefix": null
+            }
+          ]
+        },
+        {
+          "name": "path",
+          "unique": false,
+          "sourceLine": 11702,
+          "sourceSql": "KEY `path` (`path`) USING BTREE",
+          "columns": [
+            {
+              "name": "path",
+              "prefix": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

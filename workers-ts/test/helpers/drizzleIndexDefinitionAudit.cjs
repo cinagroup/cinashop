@@ -9,6 +9,8 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
   const { readCatalog, compareCatalogs, assertIndexContracts } = require("tsx/cjs/api").require("../../scripts/data-migration/postgres-catalog-audit.ts", __filename);
   const manifest = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-index-definition-reconciliation.json"), "utf8"));
   const priorContracts = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-query-index-reconciliation.json"), "utf8"));
+  const legacyContracts = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-extra-index-reconciliation.json"), "utf8"))
+    .entries.filter((entry) => entry.decision === "restore-missing-legacy-query-index");
   const keys = manifest.entries.map((entry) => entry.key).sort();
   assert.equal(keys.length, 57);
   const old = structuredClone(snapshot);
@@ -68,7 +70,7 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
     await db.exec(delta.join("\n"));
     await db.exec("COMMIT");
     const after = await read();
-    const allEntries = [...priorContracts.entries, ...manifest.entries];
+    const allEntries = [...priorContracts.entries, ...manifest.entries, ...legacyContracts];
     for (const entry of allEntries) assert.deepEqual(after.indexes.find((row) => row.key === entry.key), entry.catalog, entry.key);
     assertIndexContracts({ ...after, indexes: allEntries.map((entry) => entry.catalog) }, after, allEntries.map((entry) => entry.key));
     const diff = compareCatalogs(before, after);
@@ -84,8 +86,9 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
     assert.deepEqual((await db.query("SELECT session_id FROM kefu_visitor_session WHERE kefu_uid=7 AND revoked_at=0 AND expires_at>10")).rows, [{ session_id: "active-fixture" }]);
     assert.deepEqual((await db.query("SELECT old_cart_id FROM store_order_cart_info WHERE old_cart_id<>''")).rows, [{ old_cart_id: "parent-fixture" }]);
     assert.deepEqual(await generateMigration(target, generateDrizzleJson(models, target.id)), []);
-    console.log(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, 79 contracts, no-op passed`);
+    console.log(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, ${allEntries.length} contracts, no-op passed`);
+    const legacyQueryIndexes = await require("./legacyQueryIndexAudit.cjs")({ db, read, objects, dependencies, format });
     return { initialStatements: initial.length, upgradeStatements: delta.length, reconciledIndexes: 57,
-      verifiedContracts: allEntries.length, rollbackConfirmed: true, rowsAndDependenciesPreserved: true };
+      verifiedContracts: allEntries.length, rollbackConfirmed: true, rowsAndDependenciesPreserved: true, legacyQueryIndexes };
   } finally { if (!database) await db.close(); }
 };

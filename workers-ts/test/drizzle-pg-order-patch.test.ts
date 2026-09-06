@@ -98,7 +98,8 @@ describe("DB-008 pinned PostgreSQL generator ordering", () => {
       expect(result.error).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain(`DB-008 ${format}: initial, index/constraint upgrades, tenant FK, full-model no-op passed`);
-      expect(result.stdout).toContain(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, 79 contracts, no-op passed`);
+      expect(result.stdout).toContain(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, 107 contracts, no-op passed`);
+      expect(result.stdout).toContain(`DB-009D2b3a ${format}: 28 restored, 11 rejection rollbacks, duplicate rows/OIDs/FK dependencies preserved, idempotence and schema isolation passed`);
       const audit = JSON.parse(readFileSync(report, "utf8"));
       expect(audit.networkAttempts).toBe(0);
       expect(audit.loaded.filter((path: string) => path.includes("/@esbuild-kit/"))).toEqual([]);
