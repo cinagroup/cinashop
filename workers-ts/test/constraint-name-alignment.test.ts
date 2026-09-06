@@ -108,7 +108,7 @@ describe("DB-009D2b3d owning constraint and index identity", () => {
     }
     const runner=read("scripts/orm-ddl-audit.ts");
     expect(runner).toContain("for (const catalog of Object.values(catalogs)) assertConstraintNamesAligned(catalogs.external, catalog)");
-    expect(runner).toContain("const requiredIndexKeys = owningContracts.keys");
+    expect(runner).toContain("extendExternalDuplicateContracts(owningContracts.keys, contractManifests[6])");
     expect(runner).toContain("compareCatalogs(catalogs.orm, catalogs.orm_upgrade)");
   });
 });

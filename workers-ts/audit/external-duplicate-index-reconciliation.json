@@ -1,0 +1,271 @@
+{
+  "scope": "DB-009D2b3e: five external-only physical duplicates. No production execution or dependency assumptions.",
+  "evidence": {
+    "commit": "b0c15fca2c299a195c0f197d7bb3def11301e919",
+    "run": 34008849823,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34008849823",
+    "retainedCatalogProvenance": "Derived from the exactCandidates classifier (only key/name excluded), not a raw candidate-only row. Independently assert both actual catalog rows before removal in isolated engine probes."
+  },
+  "entries": [
+    {
+      "key": "store_order_refund.sor_store_order_id_idx",
+      "retainedKey": "store_order_refund.sor_store_order_id",
+      "column": "store_order_id",
+      "decision": "remove-exact-external-duplicate-only-if-unreferenced",
+      "catalog": {
+        "key": "store_order_refund.sor_store_order_id_idx",
+        "name": "sor_store_order_id_idx",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (store_order_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "retainedCatalog": {
+        "key": "store_order_refund.sor_store_order_id",
+        "name": "sor_store_order_id",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (store_order_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "source": {
+        "file": "migrations/0003_refund.sql",
+        "line": 34,
+        "sql": "CREATE INDEX IF NOT EXISTS \"sor_store_order_id_idx\" ON \"store_order_refund\" (\"store_order_id\");"
+      },
+      "retainedSource": {
+        "file": "migrations/0108_store_order_refund_lookup_index.sql",
+        "line": 6,
+        "sql": "CREATE INDEX IF NOT EXISTS \"sor_store_order_id\"\n  ON \"store_order_refund\" (\"store_order_id\");"
+      },
+      "model": {
+        "file": "src/models/schema/order_refund.ts",
+        "line": 63,
+        "sql": "    index(\"sor_store_order_id\").on(t.storeOrderId),"
+      },
+      "consumer": {
+        "file": "src/dao/order/RefundDaos.ts",
+        "line": 12,
+        "sql": "      storeOrderId: (v) => eq(storeOrderRefund.storeOrderId, Number(v)),"
+      }
+    },
+    {
+      "key": "user_recharge.ur_uid_idx",
+      "retainedKey": "user_recharge.ur_uid",
+      "column": "uid",
+      "decision": "remove-exact-external-duplicate-only-if-unreferenced",
+      "catalog": {
+        "key": "user_recharge.ur_uid_idx",
+        "name": "ur_uid_idx",
+        "table": "user_recharge",
+        "definition": "public.user_recharge USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "retainedCatalog": {
+        "key": "user_recharge.ur_uid",
+        "name": "ur_uid",
+        "table": "user_recharge",
+        "definition": "public.user_recharge USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "source": {
+        "file": "migrations/0004_user_activity.sql",
+        "line": 84,
+        "sql": "CREATE INDEX IF NOT EXISTS \"ur_uid_idx\" ON \"user_recharge\" (\"uid\");"
+      },
+      "retainedSource": {
+        "file": "migrations/0082_payment_checkout_integrity.sql",
+        "line": 7,
+        "sql": "CREATE INDEX IF NOT EXISTS \"ur_uid\"\n  ON \"user_recharge\" (\"uid\");"
+      },
+      "model": {
+        "file": "src/models/schema/user_center.ts",
+        "line": 159,
+        "sql": "    index(\"ur_uid\").on(t.uid),"
+      },
+      "consumer": {
+        "file": "src/dao/user/UserCenterDaos.ts",
+        "line": 190,
+        "sql": "      uid: (v) => eq(userRecharge.uid, Number(v)),"
+      }
+    },
+    {
+      "key": "wechat_user.wu_openid_uq_idx",
+      "retainedKey": "wechat_user.wu_openid_uq",
+      "column": "openid",
+      "decision": "remove-exact-external-duplicate-only-if-unreferenced",
+      "catalog": {
+        "key": "wechat_user.wu_openid_uq_idx",
+        "name": "wu_openid_uq_idx",
+        "table": "wechat_user",
+        "definition": "public.wechat_user USING btree (openid)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "retainedCatalog": {
+        "key": "wechat_user.wu_openid_uq",
+        "name": "wu_openid_uq",
+        "table": "wechat_user",
+        "definition": "public.wechat_user USING btree (openid)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "source": {
+        "file": "migrations/0005_wechat.sql",
+        "line": 27,
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS \"wu_openid_uq_idx\" ON \"wechat_user\" (\"openid\");"
+      },
+      "retainedSource": {
+        "file": "migrations/0085_external_notification_delivery.sql",
+        "line": 59,
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS \"wu_openid_uq\" ON \"wechat_user\" (\"openid\");"
+      },
+      "model": {
+        "file": "src/models/schema/wechat.ts",
+        "line": 49,
+        "sql": "    uniqueIndex(\"wu_openid_uq\").on(t.openid),"
+      },
+      "consumer": {
+        "file": "src/services/wechat/WechatAuthService.ts",
+        "line": 188,
+        "sql": "          or(eq(wechatUser.openid, openid), eq(wechatUser.unionid, openid)),"
+      }
+    },
+    {
+      "key": "wechat_user.wu_uid_idx",
+      "retainedKey": "wechat_user.wu_uid",
+      "column": "uid",
+      "decision": "remove-exact-external-duplicate-only-if-unreferenced",
+      "catalog": {
+        "key": "wechat_user.wu_uid_idx",
+        "name": "wu_uid_idx",
+        "table": "wechat_user",
+        "definition": "public.wechat_user USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "retainedCatalog": {
+        "key": "wechat_user.wu_uid",
+        "name": "wu_uid",
+        "table": "wechat_user",
+        "definition": "public.wechat_user USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "source": {
+        "file": "migrations/0005_wechat.sql",
+        "line": 29,
+        "sql": "CREATE INDEX IF NOT EXISTS \"wu_uid_idx\" ON \"wechat_user\" (\"uid\");"
+      },
+      "retainedSource": {
+        "file": "migrations/0085_external_notification_delivery.sql",
+        "line": 61,
+        "sql": "CREATE INDEX IF NOT EXISTS \"wu_uid\" ON \"wechat_user\" (\"uid\");"
+      },
+      "model": {
+        "file": "src/models/schema/wechat.ts",
+        "line": 51,
+        "sql": "    index(\"wu_uid\").on(t.uid),"
+      },
+      "consumer": {
+        "file": "src/services/payment/WechatPaymentIdentity.ts",
+        "line": 66,
+        "sql": "      eq(wechatUser.uid, uid),"
+      }
+    },
+    {
+      "key": "wechat_user.wu_unionid_idx",
+      "retainedKey": "wechat_user.wu_unionid",
+      "column": "unionid",
+      "decision": "remove-exact-external-duplicate-only-if-unreferenced",
+      "catalog": {
+        "key": "wechat_user.wu_unionid_idx",
+        "name": "wu_unionid_idx",
+        "table": "wechat_user",
+        "definition": "public.wechat_user USING btree (unionid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "retainedCatalog": {
+        "key": "wechat_user.wu_unionid",
+        "name": "wu_unionid",
+        "table": "wechat_user",
+        "definition": "public.wechat_user USING btree (unionid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "source": {
+        "file": "migrations/0005_wechat.sql",
+        "line": 28,
+        "sql": "CREATE INDEX IF NOT EXISTS \"wu_unionid_idx\" ON \"wechat_user\" (\"unionid\");"
+      },
+      "retainedSource": {
+        "file": "migrations/0085_external_notification_delivery.sql",
+        "line": 60,
+        "sql": "CREATE INDEX IF NOT EXISTS \"wu_unionid\" ON \"wechat_user\" (\"unionid\");"
+      },
+      "model": {
+        "file": "src/models/schema/wechat.ts",
+        "line": 50,
+        "sql": "    index(\"wu_unionid\").on(t.unionid),"
+      },
+      "consumer": {
+        "file": "src/services/wechat/WechatAuthService.ts",
+        "line": 1201,
+        "sql": "        .where(and(eq(wechatUser.unionid, identity.unionid), eq(wechatUser.isDel, 0)))"
+      }
+    }
+  ]
+}

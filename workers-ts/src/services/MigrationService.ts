@@ -38,6 +38,7 @@ import { LEGACY_QUERY_INDEX_ALIGNMENT_SQL } from "@/migrations/legacyQueryIndexA
 import { WORKER_QUERY_INDEX_ALIGNMENT_SQL } from "@/migrations/workerQueryIndexAlignment";
 import { ORDINARY_INDEX_NAME_ALIGNMENT_SQL } from "@/migrations/ordinaryIndexNameAlignment";
 import { CONSTRAINT_NAME_ALIGNMENT_SQL } from "@/migrations/constraintNameAlignment";
+import { EXTERNAL_DUPLICATE_INDEX_RETIREMENT_SQL } from "@/migrations/externalDuplicateIndexRetirement";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -380,6 +381,7 @@ export class MigrationService {
       this.migration_0143(),
       this.migration_0144(),
       this.migration_0145(),
+      this.migration_0146(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8382,5 +8384,9 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0145(): string {
     return CONSTRAINT_NAME_ALIGNMENT_SQL;
+  }
+
+  private migration_0146(): string {
+    return EXTERNAL_DUPLICATE_INDEX_RETIREMENT_SQL;
   }
 }

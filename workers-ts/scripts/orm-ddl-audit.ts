@@ -10,6 +10,7 @@ import type { Container } from "../src/lib/di";
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
 import { extendConstraintNameContracts, assertConstraintNamesAligned } from "./data-migration/constraint-name-contracts";
+import { extendExternalDuplicateContracts, assertAllIndexesAligned } from "./data-migration/external-duplicate-index-contracts";
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -33,6 +34,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const catalogs: Record<string, Catalog> = {};
   const paths: Array<{ path: string; steps: number }> = [];
   let upgradeVerification;
+  let externalDuplicateIndexRetirement;
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
     if (identity.database !== "cinashop_finance_test" || identity.role !== "finance_test" || Math.floor(Number(identity.version) / 10_000) !== 16) {
@@ -64,6 +66,17 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         let steps = 0;
         if (path === "external") {
           for (let index = 0; index < migrationNames.length; index++) {
+            if (migrationNames[index] === "0140_external_duplicate_index_retirement.sql") {
+              // Before the final removal, probe the actual full external-history catalog.
+              // The helper commits exactly this migration after all rollback fixtures pass.
+              const auditDuplicates = createRequire(import.meta.url)("../test/helpers/externalDuplicateIndexAudit.cjs");
+              externalDuplicateIndexRetirement = await auditDuplicates({ format: "pg16", db: {
+                exec: (query: string) => client.unsafe(query),
+                query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
+              }, read: () => readCatalog(async (query) => Array.from(await client.unsafe(query)) as CatalogRow[]) });
+              steps++;
+              continue;
+            }
             try { await client.begin(async (tx) => { await tx.unsafe("SET LOCAL search_path TO public, pg_temp"); await tx.unsafe(migrationSources[index]); }); }
             catch (error) { throw new Error(`External path failed at ${migrationNames[index]}: ${error instanceof Error ? error.message : "SQL failure"}`); }
             steps++;
@@ -101,6 +114,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       "orm-ordinary-index-reconciliation.json",
       "orm-index-name-reconciliation.json",
       "orm-constraint-name-reconciliation.json",
+      "external-duplicate-index-reconciliation.json",
     ].map(async (name) => JSON.parse(await readFile(resolve(root, "audit", name), "utf8"))));
     if (contractManifests.some((manifest) => !Array.isArray(manifest.entries))) throw new Error("Invalid reconciled index manifest");
     const extra = contractManifests[2].entries;
@@ -116,19 +130,22 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const { retiredKeys } = ordinaryContracts;
     const { keys: namedKeys, oldKeys } = extendIndexNameContracts(ordinaryContracts.keys, contractManifests[4]);
     const owningContracts = extendConstraintNameContracts(namedKeys, contractManifests[5]);
-    const requiredIndexKeys = owningContracts.keys;
+    const duplicateContracts = extendExternalDuplicateContracts(owningContracts.keys, contractManifests[6]);
+    const requiredIndexKeys = duplicateContracts.keys;
     for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     for (const catalog of Object.values(catalogs)) assertOldIndexNamesAbsent(catalog, oldKeys);
     for (const catalog of Object.values(catalogs)) assertConstraintNamesAligned(catalogs.external, catalog);
+    for (const catalog of Object.values(catalogs)) assertAllIndexesAligned(catalogs.external, catalog);
     assertIndexContracts(catalogs.external, catalogs.embedded, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm_upgrade, requiredIndexKeys);
     const ormVsUpgraded = compareCatalogs(catalogs.orm, catalogs.orm_upgrade);
+    if (!externalDuplicateIndexRetirement) throw new Error("External duplicate retirement verification is missing");
     if (!upgradeVerification || Object.values(ormVsUpgraded).some((changes) => Object.values(changes).some((values) => values.length))) {
       throw new Error("Fresh ORM and upgraded ORM catalogs differ");
     }
     return {
-      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals, 44 ordinary and three owning-constraint guarded name alignments; verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique/cascade enforcement, equality index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
+      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals, 44 ordinary and three owning-constraint guarded name alignments, and five guarded external duplicate retirements. Complete index category is an exact four-path gate. Verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
       serverVersionNum: Number(identity.version),
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),
@@ -139,6 +156,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
       alignedIndexNameContracts: { mode: "exact canonical names in positive contracts; reject all 44 old physical names in every path", oldKeys },
       alignedConstraintNameContracts: { mode: "exact owning primary/unique constraints and indexes; reject all three old names in every path", constraintKeys: owningContracts.constraintKeys, oldKeys: owningContracts.oldKeys },
+      fullIndexCatalogContract: { mode: "all four paths: exact complete index names and definitions; no additions, omissions or aliases waived", count: catalogs.external.indexes.length, retiredExternalKeys: duplicateContracts.retiredKeys },
+      externalDuplicateIndexRetirement,
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },
       missingIndexEvidence: {
         externalVsEmbedded: classifyMissingIndexes(catalogs.external, catalogs.embedded),
