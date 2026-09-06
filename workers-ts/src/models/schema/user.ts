@@ -23,6 +23,7 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { notValid } from "../pgNotValid";
 
 export const user = pgTable(
   "user",
@@ -123,9 +124,9 @@ export const user = pgTable(
     index("user_division_parent").on(t.divisionId, t.agentId, t.staffId),
     index("user_division_role").on(t.divisionType, t.divisionStatus, t.divisionEndTime),
     index("user_division_invite").on(t.divisionInvite).where(sql`${t.divisionInvite} <> 0`),
-    check("user_division_type_ck", sql`${t.divisionType} BETWEEN 0 AND 3`),
-    check("user_division_status_ck", sql`${t.divisionStatus} BETWEEN 0 AND 1`),
-    check("user_division_percent_ck", sql`${t.divisionPercent} BETWEEN 0 AND 100`),
+    notValid(check("user_division_type_ck", sql`${t.divisionType} BETWEEN 0 AND 3`)),
+    notValid(check("user_division_status_ck", sql`${t.divisionStatus} BETWEEN 0 AND 1`)),
+    notValid(check("user_division_percent_ck", sql`${t.divisionPercent} BETWEEN 0 AND 100`)),
   ],
 );
 

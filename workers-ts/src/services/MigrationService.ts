@@ -42,6 +42,7 @@ import { EXTERNAL_DUPLICATE_INDEX_RETIREMENT_SQL } from "@/migrations/externalDu
 import { COLUMN_DEFAULT_ALIGNMENT_SQL } from "@/migrations/columnDefaultAlignment";
 import { MISSING_CONSTRAINT_ALIGNMENT_SQL } from "@/migrations/missingConstraintAlignment";
 import { FOREIGN_KEY_NAME_ALIGNMENT_SQL } from "@/migrations/foreignKeyNameAlignment";
+import { CHECK_STATE_ALIGNMENT_SQL } from "@/migrations/checkStateAlignment";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -388,6 +389,7 @@ export class MigrationService {
       this.migration_0147(),
       this.migration_0148(),
       this.migration_0149(),
+      this.migration_0150(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8406,5 +8408,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0149(): string {
     return FOREIGN_KEY_NAME_ALIGNMENT_SQL;
+  }
+
+  private migration_0150(): string {
+    return CHECK_STATE_ALIGNMENT_SQL;
   }
 }

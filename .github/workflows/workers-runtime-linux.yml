@@ -34,8 +34,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Preserve the existing required-check name and fail closed on either dependency.
   worker-static:
     name: Worker type, unit, schema and route gates
+    if: ${{ always() }}
+    needs: [worker-unit, worker-catalog]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require both unchanged gate groups to succeed
+        env:
+          UNIT_RESULT: ${{ needs.worker-unit.result }}
+          CATALOG_RESULT: ${{ needs.worker-catalog.result }}
+        run: |
+          test "$UNIT_RESULT" = "success"
+          test "$CATALOG_RESULT" = "success"
+
+  worker-unit:
+    name: Worker type, unit, schema and route execution
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -86,12 +102,6 @@ jobs:
       - name: Audit production observability contract
         run: npm run audit:observability
 
-      - name: Execute isolated PostgreSQL 16 ORM and migration catalog audit
-        run: npm run audit:orm
-
-      - name: Verify NOT VALID generator semantics on isolated PostgreSQL 16
-        run: npm run audit:orm:not-valid
-
       - name: Audit legacy-to-PostgreSQL schema drift
         run: |
           npx --no-install tsx scripts/mysql-to-postgres.ts schema-audit --json |
@@ -101,6 +111,52 @@ jobs:
         run: |
           npx --no-install tsx scripts/route-parity-audit.ts |
             node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);console.log(JSON.stringify({authority:r.phpRoot,...r.totals}));})'
+
+  worker-catalog:
+    name: Isolated PostgreSQL 16 migration catalog execution
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16.14-alpine
+        env:
+          POSTGRES_USER: finance_test
+          POSTGRES_PASSWORD: finance_test
+          POSTGRES_DB: cinashop_finance_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U finance_test -d cinashop_finance_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_FINANCE_POSTGRES_URL: postgresql://finance_test:finance_test@127.0.0.1:5432/cinashop_finance_test
+    defaults:
+      run:
+        working-directory: workers-ts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24.14.1"
+          cache: npm
+          cache-dependency-path: workers-ts/package-lock.json
+
+      - name: Verify pinned Node and npm
+        run: |
+          test "$(node --version)" = "v24.14.1"
+          test "$(npm --version)" = "11.11.0"
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Execute isolated PostgreSQL 16 ORM and migration catalog audit
+        run: npm run audit:orm
+
+      - name: Verify NOT VALID generator semantics on isolated PostgreSQL 16
+        run: npm run audit:orm:not-valid
 
   runtime:
     name: workerd runtime tests

@@ -86,10 +86,10 @@ export const storeProductReply = pgTable(
     uniqueIndex("spr_active_cart_uq")
       .on(t.orderCartInfoId)
       .where(sql`${t.orderCartInfoId} IS NOT NULL AND ${t.isDel} = 0`),
-    check(
+    notValid(check(
       "spr_scores_ck",
       sql`${t.productScore} BETWEEN 1 AND 5 AND ${t.serviceScore} BETWEEN 1 AND 5 AND ${t.logisticsScore} BETWEEN 1 AND 5 AND ${t.deliveryScore} BETWEEN 1 AND 5 AND ${t.replyScore} BETWEEN 1 AND 3`,
-    ),
+    )),
     notValid(foreignKey({ name: "spr_order_cart_info_fk", columns: [t.orderCartInfoId], foreignColumns: [storeOrderCartInfo.id] })),
   ],
 );

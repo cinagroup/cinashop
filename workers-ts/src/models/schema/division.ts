@@ -15,6 +15,7 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { notValid } from "../pgNotValid";
 
 export const divisionApply = pgTable(
   "division_apply",
@@ -39,7 +40,7 @@ export const divisionApply = pgTable(
     index("da_division_status").on(t.divisionId, t.status, t.isDel),
     index("da_status_time").on(t.status, t.addTime),
     uniqueIndex("da_uid_active_uq").on(t.uid).where(sql`${t.isDel} = 0`),
-    check("da_status_ck", sql`${t.status} BETWEEN 0 AND 2`),
+    notValid(check("da_status_ck", sql`${t.status} BETWEEN 0 AND 2`)),
   ],
 );
 

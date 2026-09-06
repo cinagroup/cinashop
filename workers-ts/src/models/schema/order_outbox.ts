@@ -108,9 +108,9 @@ export const storeOrderOutbox = pgTable(
       'order.second_card.advent.notice',
       'order.second_card.expired.notice',
       'withdrawal.approved.notice',
+      'withdrawal.refused.notice',
       'withdrawal.applied.notice',
-      'withdrawal.staff.refresh',
-      'withdrawal.refused.notice'
+      'withdrawal.staff.refresh'
     )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),
     index("soob_aggregate").on(t.aggregateType, t.aggregateId),

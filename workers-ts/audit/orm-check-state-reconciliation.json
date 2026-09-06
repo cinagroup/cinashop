@@ -1,0 +1,1108 @@
+{
+  "baselineCommit": "b07d01e54c384bafc7507ec2113ffd0f42fbda8c",
+  "sourceCommit": "eebe827f7eeab8630df7faf4acfc0cce07d1ddd5",
+  "sourceRunId": 34020575416,
+  "scope": "Nine CHECK differences: eight validation states and one equivalent event-list order. No production access.",
+  "entries": [
+    {
+      "key": "division_apply.da_status_ck",
+      "catalog": {
+        "key": "division_apply.da_status_ck",
+        "name": "da_status_ck",
+        "table": "division_apply",
+        "type": "c",
+        "definition": "CHECK (((status >= 0) AND (status <= 2))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "division_apply.da_status_ck",
+        "name": "da_status_ck",
+        "table": "division_apply",
+        "type": "c",
+        "definition": "CHECK (((status >= 0) AND (status <= 2)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "da_status_ck",
+        "value": "\"division_apply\".\"status\" BETWEEN 0 AND 2"
+      },
+      "snapshot": {
+        "name": "da_status_ck",
+        "value": "\"division_apply\".\"status\" BETWEEN 0 AND 2",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/division.ts",
+        "exportName": "divisionApply",
+        "line": 42,
+        "previousDeclaration": "check(\"da_status_ck\", sql`${t.status} BETWEEN 0 AND 2`)",
+        "declaration": "notValid(check(\"da_status_ck\", sql`${t.status} BETWEEN 0 AND 2`))"
+      },
+      "fields": [
+        {
+          "property": "status",
+          "name": "status",
+          "type": "smallint",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "status: smallint(\"status\").default(0).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0014_division_management.sql",
+          "line": 36,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"da_status_ck\"\n      CHECK (\"status\" BETWEEN 0 AND 2) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1781,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"da_status_ck\"\n      CHECK (\"status\" BETWEEN 0 AND 2) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0014_division_management.sql",
+        "line": 36,
+        "lineCount": 2,
+        "sql": "CONSTRAINT \"da_status_ck\"\n      CHECK (\"status\" BETWEEN 0 AND 2) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "division_apply.status",
+          "name": "status",
+          "table": "division_apply",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "store_order.so_division_brokerage_ck",
+      "catalog": {
+        "key": "store_order.so_division_brokerage_ck",
+        "name": "so_division_brokerage_ck",
+        "table": "store_order",
+        "type": "c",
+        "definition": "CHECK (((division_brokerage >= (0)::numeric) AND (division_agent_brokerage >= (0)::numeric) AND (division_staff_brokerage >= (0)::numeric))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "store_order.so_division_brokerage_ck",
+        "name": "so_division_brokerage_ck",
+        "table": "store_order",
+        "type": "c",
+        "definition": "CHECK (((division_brokerage >= (0)::numeric) AND (division_agent_brokerage >= (0)::numeric) AND (division_staff_brokerage >= (0)::numeric)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "so_division_brokerage_ck",
+        "value": "\"store_order\".\"division_brokerage\" >= 0 AND \"store_order\".\"division_agent_brokerage\" >= 0 AND \"store_order\".\"division_staff_brokerage\" >= 0"
+      },
+      "snapshot": {
+        "name": "so_division_brokerage_ck",
+        "value": "\"store_order\".\"division_brokerage\" >= 0 AND \"store_order\".\"division_agent_brokerage\" >= 0 AND \"store_order\".\"division_staff_brokerage\" >= 0",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "exportName": "storeOrder",
+        "line": 196,
+        "previousDeclaration": "check(\n      \"so_division_brokerage_ck\",\n      sql`${t.divisionBrokerage} >= 0 AND ${t.divisionAgentBrokerage} >= 0 AND ${t.divisionStaffBrokerage} >= 0`,\n    )",
+        "declaration": "notValid(check(\n      \"so_division_brokerage_ck\",\n      sql`${t.divisionBrokerage} >= 0 AND ${t.divisionAgentBrokerage} >= 0 AND ${t.divisionStaffBrokerage} >= 0`,\n    ))"
+      },
+      "fields": [
+        {
+          "property": "divisionBrokerage",
+          "name": "division_brokerage",
+          "type": "numeric(12, 2)",
+          "notNull": true
+        },
+        {
+          "property": "divisionAgentBrokerage",
+          "name": "division_agent_brokerage",
+          "type": "numeric(12, 2)",
+          "notNull": true
+        },
+        {
+          "property": "divisionStaffBrokerage",
+          "name": "division_staff_brokerage",
+          "type": "numeric(12, 2)",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "divisionBrokerage: decimal(\"division_brokerage\", { precision: 12, scale: 2 }).default(\"0.00\").notNull()",
+        "divisionAgentBrokerage: decimal(\"division_agent_brokerage\", { precision: 12, scale: 2 }).default(\"0.00\").notNull()",
+        "divisionStaffBrokerage: decimal(\"division_staff_brokerage\", { precision: 12, scale: 2 }).default(\"0.00\").notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0013_division_brokerage.sql",
+          "line": 43,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"so_division_brokerage_ck\"\n      CHECK (\"division_brokerage\" >= 0 AND \"division_agent_brokerage\" >= 0 AND \"division_staff_brokerage\" >= 0) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1723,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"so_division_brokerage_ck\"\n      CHECK (\"division_brokerage\" >= 0 AND \"division_agent_brokerage\" >= 0 AND \"division_staff_brokerage\" >= 0) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0013_division_brokerage.sql",
+        "line": 43,
+        "lineCount": 2,
+        "sql": "CONSTRAINT \"so_division_brokerage_ck\"\n      CHECK (\"division_brokerage\" >= 0 AND \"division_agent_brokerage\" >= 0 AND \"division_staff_brokerage\" >= 0) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "store_order.division_agent_brokerage",
+          "name": "division_agent_brokerage",
+          "table": "store_order",
+          "type": "numeric(12,2)",
+          "notNull": true,
+          "default": "0.00",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order.division_brokerage",
+          "name": "division_brokerage",
+          "table": "store_order",
+          "type": "numeric(12,2)",
+          "notNull": true,
+          "default": "0.00",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order.division_staff_brokerage",
+          "name": "division_staff_brokerage",
+          "table": "store_order",
+          "type": "numeric(12,2)",
+          "notNull": true,
+          "default": "0.00",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "store_order.so_supplier_allocation_status_ck",
+      "catalog": {
+        "key": "store_order.so_supplier_allocation_status_ck",
+        "name": "so_supplier_allocation_status_ck",
+        "table": "store_order",
+        "type": "c",
+        "definition": "CHECK (((supplier_allocation_status >= 0) AND (supplier_allocation_status <= 2))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "store_order.so_supplier_allocation_status_ck",
+        "name": "so_supplier_allocation_status_ck",
+        "table": "store_order",
+        "type": "c",
+        "definition": "CHECK (((supplier_allocation_status >= 0) AND (supplier_allocation_status <= 2)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "so_supplier_allocation_status_ck",
+        "value": "\"store_order\".\"supplier_allocation_status\" BETWEEN 0 AND 2"
+      },
+      "snapshot": {
+        "name": "so_supplier_allocation_status_ck",
+        "value": "\"store_order\".\"supplier_allocation_status\" BETWEEN 0 AND 2",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "exportName": "storeOrder",
+        "line": 200,
+        "previousDeclaration": "check(\n      \"so_supplier_allocation_status_ck\",\n      sql`${t.supplierAllocationStatus} BETWEEN 0 AND 2`,\n    )",
+        "declaration": "notValid(check(\n      \"so_supplier_allocation_status_ck\",\n      sql`${t.supplierAllocationStatus} BETWEEN 0 AND 2`,\n    ))"
+      },
+      "fields": [
+        {
+          "property": "supplierAllocationStatus",
+          "name": "supplier_allocation_status",
+          "type": "smallint",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "supplierAllocationStatus: smallint(\"supplier_allocation_status\").default(0).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0018_supplier_order_allocation.sql",
+          "line": 23,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"so_supplier_allocation_status_ck\"\n      CHECK (\"supplier_allocation_status\" BETWEEN 0 AND 2) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1977,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"so_supplier_allocation_status_ck\"\n      CHECK (\"supplier_allocation_status\" BETWEEN 0 AND 2) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0018_supplier_order_allocation.sql",
+        "line": 23,
+        "lineCount": 2,
+        "sql": "CONSTRAINT \"so_supplier_allocation_status_ck\"\n      CHECK (\"supplier_allocation_status\" BETWEEN 0 AND 2) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "store_order.supplier_allocation_status",
+          "name": "supplier_allocation_status",
+          "table": "store_order",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "store_order_cart_info.soci_split_state_ck",
+      "catalog": {
+        "key": "store_order_cart_info.soci_split_state_ck",
+        "name": "soci_split_state_ck",
+        "table": "store_order_cart_info",
+        "type": "c",
+        "definition": "CHECK ((((split_status >= 0) AND (split_status <= 2)) AND (split_surplus_num >= 0))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "store_order_cart_info.soci_split_state_ck",
+        "name": "soci_split_state_ck",
+        "table": "store_order_cart_info",
+        "type": "c",
+        "definition": "CHECK ((((split_status >= 0) AND (split_status <= 2)) AND (split_surplus_num >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "soci_split_state_ck",
+        "value": "\"store_order_cart_info\".\"split_status\" BETWEEN 0 AND 2 AND \"store_order_cart_info\".\"split_surplus_num\" >= 0"
+      },
+      "snapshot": {
+        "name": "soci_split_state_ck",
+        "value": "\"store_order_cart_info\".\"split_status\" BETWEEN 0 AND 2 AND \"store_order_cart_info\".\"split_surplus_num\" >= 0",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "exportName": "storeOrderCartInfo",
+        "line": 267,
+        "previousDeclaration": "check(\n      \"soci_split_state_ck\",\n      sql`${t.splitStatus} BETWEEN 0 AND 2 AND ${t.splitSurplusNum} >= 0`,\n    )",
+        "declaration": "notValid(check(\n      \"soci_split_state_ck\",\n      sql`${t.splitStatus} BETWEEN 0 AND 2 AND ${t.splitSurplusNum} >= 0`,\n    ))"
+      },
+      "fields": [
+        {
+          "property": "splitSurplusNum",
+          "name": "split_surplus_num",
+          "type": "integer",
+          "notNull": true
+        },
+        {
+          "property": "splitStatus",
+          "name": "split_status",
+          "type": "smallint",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "splitSurplusNum: integer(\"split_surplus_num\").default(0).notNull()",
+        "splitStatus: smallint(\"split_status\").default(0).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0017_supplier_split_fulfillment.sql",
+          "line": 31,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"soci_split_state_ck\"\n      CHECK (\"split_status\" BETWEEN 0 AND 2 AND \"split_surplus_num\" >= 0) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1946,
+          "lineCount": 2,
+          "sql": "CONSTRAINT \"soci_split_state_ck\"\n      CHECK (\"split_status\" BETWEEN 0 AND 2 AND \"split_surplus_num\" >= 0) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0017_supplier_split_fulfillment.sql",
+        "line": 31,
+        "lineCount": 2,
+        "sql": "CONSTRAINT \"soci_split_state_ck\"\n      CHECK (\"split_status\" BETWEEN 0 AND 2 AND \"split_surplus_num\" >= 0) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "store_order_cart_info.split_status",
+          "name": "split_status",
+          "table": "store_order_cart_info",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_cart_info.split_surplus_num",
+          "name": "split_surplus_num",
+          "table": "store_order_cart_info",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "store_order_outbox.soob_event_type_ck",
+      "catalog": {
+        "key": "store_order_outbox.soob_event_type_ck",
+        "name": "soob_event_type_ck",
+        "table": "store_order_outbox",
+        "type": "c",
+        "definition": "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.refused.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "store_order_outbox.soob_event_type_ck",
+        "name": "soob_event_type_ck",
+        "table": "store_order_outbox",
+        "type": "c",
+        "definition": "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying, 'withdrawal.refused.notice'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "soob_event_type_ck",
+        "value": "\"store_order_outbox\".\"event_type\" IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice',\n      'order.second_card.advent.notice',\n      'order.second_card.expired.notice',\n      'withdrawal.approved.notice',\n      'withdrawal.applied.notice',\n      'withdrawal.staff.refresh',\n      'withdrawal.refused.notice'\n    )"
+      },
+      "snapshot": {
+        "name": "soob_event_type_ck",
+        "value": "\"store_order_outbox\".\"event_type\" IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice',\n      'order.second_card.advent.notice',\n      'order.second_card.expired.notice',\n      'withdrawal.approved.notice',\n      'withdrawal.refused.notice',\n      'withdrawal.applied.notice',\n      'withdrawal.staff.refresh'\n    )"
+      },
+      "allowedValues": {
+        "previous": [
+          "order.paid",
+          "order.delivery.notice",
+          "order.refund.refused.notice",
+          "order.second_card.advent.notice",
+          "order.second_card.expired.notice",
+          "withdrawal.approved.notice",
+          "withdrawal.applied.notice",
+          "withdrawal.staff.refresh",
+          "withdrawal.refused.notice"
+        ],
+        "target": [
+          "order.paid",
+          "order.delivery.notice",
+          "order.refund.refused.notice",
+          "order.second_card.advent.notice",
+          "order.second_card.expired.notice",
+          "withdrawal.approved.notice",
+          "withdrawal.refused.notice",
+          "withdrawal.applied.notice",
+          "withdrawal.staff.refresh"
+        ]
+      },
+      "model": {
+        "file": "src/models/schema/order_outbox.ts",
+        "exportName": "storeOrderOutbox",
+        "line": 104,
+        "previousDeclaration": "check(\"soob_event_type_ck\", sql`${t.eventType} IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice',\n      'order.second_card.advent.notice',\n      'order.second_card.expired.notice',\n      'withdrawal.approved.notice',\n      'withdrawal.applied.notice',\n      'withdrawal.staff.refresh',\n      'withdrawal.refused.notice'\n    )`)",
+        "declaration": "check(\"soob_event_type_ck\", sql`${t.eventType} IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice',\n      'order.second_card.advent.notice',\n      'order.second_card.expired.notice',\n      'withdrawal.approved.notice',\n      'withdrawal.refused.notice',\n      'withdrawal.applied.notice',\n      'withdrawal.staff.refresh'\n    )`)"
+      },
+      "fields": [
+        {
+          "property": "eventType",
+          "name": "event_type",
+          "type": "varchar(64)",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "eventType: varchar(\"event_type\", { length: 64 }).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0010_payment_outbox.sql",
+          "line": 22,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\"event_type\" IN ('order.paid'))"
+        },
+        {
+          "file": "migrations/0084_order_notification_outbox.sql",
+          "line": 15,
+          "lineCount": 7,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n    \"event_type\" IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice'\n    )\n  )"
+        },
+        {
+          "file": "migrations/0129_second_card_reminder_indexes.sql",
+          "line": 9,
+          "lineCount": 9,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n    \"event_type\" IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice',\n      'order.second_card.advent.notice',\n      'order.second_card.expired.notice'\n    )\n  )"
+        },
+        {
+          "file": "migrations/0131_withdrawal_effects.sql",
+          "line": 15,
+          "lineCount": 5,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n  \"event_type\" IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice',\n    'order.second_card.advent.notice', 'order.second_card.expired.notice',\n    'withdrawal.approved.notice', 'withdrawal.refused.notice')\n)"
+        },
+        {
+          "file": "migrations/0132_withdrawal_application_notice.sql",
+          "line": 2,
+          "lineCount": 5,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n  \"event_type\" IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice',\n    'order.second_card.advent.notice', 'order.second_card.expired.notice',\n    'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice')\n)"
+        },
+        {
+          "file": "migrations/0133_staff_notification_refresh.sql",
+          "line": 2,
+          "lineCount": 6,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n  \"event_type\" IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice',\n    'order.second_card.advent.notice', 'order.second_card.expired.notice',\n    'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice',\n    'withdrawal.staff.refresh')\n)"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1513,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\"event_type\" IN ('order.paid'))"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 5570,
+          "lineCount": 7,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n    \"event_type\" IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice'\n    )\n  )"
+        },
+        {
+          "file": "src/migrations/secondCardReminderIndexes.ts",
+          "line": 7,
+          "lineCount": 9,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n    \"event_type\" IN (\n      'order.paid',\n      'order.delivery.notice',\n      'order.refund.refused.notice',\n      'order.second_card.advent.notice',\n      'order.second_card.expired.notice'\n    )\n  )"
+        },
+        {
+          "file": "src/migrations/staffNotificationRefresh.ts",
+          "line": 4,
+          "lineCount": 6,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n  \"event_type\" IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice',\n    'order.second_card.advent.notice', 'order.second_card.expired.notice',\n    'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice',\n    'withdrawal.staff.refresh')\n)"
+        },
+        {
+          "file": "src/migrations/withdrawalApplicationNotice.ts",
+          "line": 4,
+          "lineCount": 5,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n  \"event_type\" IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice',\n    'order.second_card.advent.notice', 'order.second_card.expired.notice',\n    'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice')\n)"
+        },
+        {
+          "file": "src/migrations/withdrawalEffects.ts",
+          "line": 17,
+          "lineCount": 5,
+          "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n  \"event_type\" IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice',\n    'order.second_card.advent.notice', 'order.second_card.expired.notice',\n    'withdrawal.approved.notice', 'withdrawal.refused.notice')\n)"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0133_staff_notification_refresh.sql",
+        "line": 2,
+        "lineCount": 6,
+        "sql": "CONSTRAINT \"soob_event_type_ck\" CHECK (\n  \"event_type\" IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice',\n    'order.second_card.advent.notice', 'order.second_card.expired.notice',\n    'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice',\n    'withdrawal.staff.refresh')\n)"
+      },
+      "columns": [
+        {
+          "key": "store_order_outbox.event_type",
+          "name": "event_type",
+          "table": "store_order_outbox",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "store_product_reply.spr_scores_ck",
+      "catalog": {
+        "key": "store_product_reply.spr_scores_ck",
+        "name": "spr_scores_ck",
+        "table": "store_product_reply",
+        "type": "c",
+        "definition": "CHECK ((((product_score >= 1) AND (product_score <= 5)) AND ((service_score >= 1) AND (service_score <= 5)) AND ((logistics_score >= 1) AND (logistics_score <= 5)) AND ((delivery_score >= 1) AND (delivery_score <= 5)) AND ((reply_score >= 1) AND (reply_score <= 3)))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "store_product_reply.spr_scores_ck",
+        "name": "spr_scores_ck",
+        "table": "store_product_reply",
+        "type": "c",
+        "definition": "CHECK ((((product_score >= 1) AND (product_score <= 5)) AND ((service_score >= 1) AND (service_score <= 5)) AND ((logistics_score >= 1) AND (logistics_score <= 5)) AND ((delivery_score >= 1) AND (delivery_score <= 5)) AND ((reply_score >= 1) AND (reply_score <= 3))))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "spr_scores_ck",
+        "value": "\"store_product_reply\".\"product_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"service_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"logistics_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"delivery_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"reply_score\" BETWEEN 1 AND 3"
+      },
+      "snapshot": {
+        "name": "spr_scores_ck",
+        "value": "\"store_product_reply\".\"product_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"service_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"logistics_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"delivery_score\" BETWEEN 1 AND 5 AND \"store_product_reply\".\"reply_score\" BETWEEN 1 AND 3",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/reply.ts",
+        "exportName": "storeProductReply",
+        "line": 89,
+        "previousDeclaration": "check(\n      \"spr_scores_ck\",\n      sql`${t.productScore} BETWEEN 1 AND 5 AND ${t.serviceScore} BETWEEN 1 AND 5 AND ${t.logisticsScore} BETWEEN 1 AND 5 AND ${t.deliveryScore} BETWEEN 1 AND 5 AND ${t.replyScore} BETWEEN 1 AND 3`,\n    )",
+        "declaration": "notValid(check(\n      \"spr_scores_ck\",\n      sql`${t.productScore} BETWEEN 1 AND 5 AND ${t.serviceScore} BETWEEN 1 AND 5 AND ${t.logisticsScore} BETWEEN 1 AND 5 AND ${t.deliveryScore} BETWEEN 1 AND 5 AND ${t.replyScore} BETWEEN 1 AND 3`,\n    ))"
+      },
+      "fields": [
+        {
+          "property": "replyScore",
+          "name": "reply_score",
+          "type": "smallint",
+          "notNull": true
+        },
+        {
+          "property": "productScore",
+          "name": "product_score",
+          "type": "smallint",
+          "notNull": true
+        },
+        {
+          "property": "serviceScore",
+          "name": "service_score",
+          "type": "smallint",
+          "notNull": true
+        },
+        {
+          "property": "logisticsScore",
+          "name": "logistics_score",
+          "type": "smallint",
+          "notNull": true
+        },
+        {
+          "property": "deliveryScore",
+          "name": "delivery_score",
+          "type": "smallint",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "replyScore: smallint(\"reply_score\").default(3).notNull()",
+        "productScore: smallint(\"product_score\").default(5).notNull()",
+        "serviceScore: smallint(\"service_score\").default(5).notNull()",
+        "logisticsScore: smallint(\"logistics_score\").default(5).notNull()",
+        "deliveryScore: smallint(\"delivery_score\").default(5).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0019_order_review_integrity.sql",
+          "line": 82,
+          "lineCount": 8,
+          "sql": "CONSTRAINT \"spr_scores_ck\"\n      CHECK (\n        \"product_score\" BETWEEN 1 AND 5\n        AND \"service_score\" BETWEEN 1 AND 5\n        AND \"logistics_score\" BETWEEN 1 AND 5\n        AND \"delivery_score\" BETWEEN 1 AND 5\n        AND \"reply_score\" BETWEEN 1 AND 3\n      ) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 2067,
+          "lineCount": 8,
+          "sql": "CONSTRAINT \"spr_scores_ck\"\n      CHECK (\n        \"product_score\" BETWEEN 1 AND 5\n        AND \"service_score\" BETWEEN 1 AND 5\n        AND \"logistics_score\" BETWEEN 1 AND 5\n        AND \"delivery_score\" BETWEEN 1 AND 5\n        AND \"reply_score\" BETWEEN 1 AND 3\n      ) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0019_order_review_integrity.sql",
+        "line": 82,
+        "lineCount": 8,
+        "sql": "CONSTRAINT \"spr_scores_ck\"\n      CHECK (\n        \"product_score\" BETWEEN 1 AND 5\n        AND \"service_score\" BETWEEN 1 AND 5\n        AND \"logistics_score\" BETWEEN 1 AND 5\n        AND \"delivery_score\" BETWEEN 1 AND 5\n        AND \"reply_score\" BETWEEN 1 AND 3\n      ) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "store_product_reply.delivery_score",
+          "name": "delivery_score",
+          "table": "store_product_reply",
+          "type": "smallint",
+          "notNull": true,
+          "default": "5",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_product_reply.logistics_score",
+          "name": "logistics_score",
+          "table": "store_product_reply",
+          "type": "smallint",
+          "notNull": true,
+          "default": "5",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_product_reply.product_score",
+          "name": "product_score",
+          "table": "store_product_reply",
+          "type": "smallint",
+          "notNull": true,
+          "default": "5",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_product_reply.reply_score",
+          "name": "reply_score",
+          "table": "store_product_reply",
+          "type": "smallint",
+          "notNull": true,
+          "default": "3",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_product_reply.service_score",
+          "name": "service_score",
+          "table": "store_product_reply",
+          "type": "smallint",
+          "notNull": true,
+          "default": "5",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "user.user_division_percent_ck",
+      "catalog": {
+        "key": "user.user_division_percent_ck",
+        "name": "user_division_percent_ck",
+        "table": "user",
+        "type": "c",
+        "definition": "CHECK (((division_percent >= 0) AND (division_percent <= 100))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "user.user_division_percent_ck",
+        "name": "user_division_percent_ck",
+        "table": "user",
+        "type": "c",
+        "definition": "CHECK (((division_percent >= 0) AND (division_percent <= 100)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "user_division_percent_ck",
+        "value": "\"user\".\"division_percent\" BETWEEN 0 AND 100"
+      },
+      "snapshot": {
+        "name": "user_division_percent_ck",
+        "value": "\"user\".\"division_percent\" BETWEEN 0 AND 100",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/user.ts",
+        "exportName": "user",
+        "line": 128,
+        "previousDeclaration": "check(\"user_division_percent_ck\", sql`${t.divisionPercent} BETWEEN 0 AND 100`)",
+        "declaration": "notValid(check(\"user_division_percent_ck\", sql`${t.divisionPercent} BETWEEN 0 AND 100`))"
+      },
+      "fields": [
+        {
+          "property": "divisionPercent",
+          "name": "division_percent",
+          "type": "integer",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "divisionPercent: integer(\"division_percent\").default(0).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0013_division_brokerage.sql",
+          "line": 26,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"user_division_percent_ck\" CHECK (\"division_percent\" BETWEEN 0 AND 100) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1706,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"user_division_percent_ck\" CHECK (\"division_percent\" BETWEEN 0 AND 100) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0013_division_brokerage.sql",
+        "line": 26,
+        "lineCount": 1,
+        "sql": "CONSTRAINT \"user_division_percent_ck\" CHECK (\"division_percent\" BETWEEN 0 AND 100) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "user.division_percent",
+          "name": "division_percent",
+          "table": "user",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "user.user_division_status_ck",
+      "catalog": {
+        "key": "user.user_division_status_ck",
+        "name": "user_division_status_ck",
+        "table": "user",
+        "type": "c",
+        "definition": "CHECK (((division_status >= 0) AND (division_status <= 1))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "user.user_division_status_ck",
+        "name": "user_division_status_ck",
+        "table": "user",
+        "type": "c",
+        "definition": "CHECK (((division_status >= 0) AND (division_status <= 1)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "user_division_status_ck",
+        "value": "\"user\".\"division_status\" BETWEEN 0 AND 1"
+      },
+      "snapshot": {
+        "name": "user_division_status_ck",
+        "value": "\"user\".\"division_status\" BETWEEN 0 AND 1",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/user.ts",
+        "exportName": "user",
+        "line": 127,
+        "previousDeclaration": "check(\"user_division_status_ck\", sql`${t.divisionStatus} BETWEEN 0 AND 1`)",
+        "declaration": "notValid(check(\"user_division_status_ck\", sql`${t.divisionStatus} BETWEEN 0 AND 1`))"
+      },
+      "fields": [
+        {
+          "property": "divisionStatus",
+          "name": "division_status",
+          "type": "integer",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "divisionStatus: integer(\"division_status\").default(0).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0013_division_brokerage.sql",
+          "line": 23,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"user_division_status_ck\" CHECK (\"division_status\" BETWEEN 0 AND 1) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1703,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"user_division_status_ck\" CHECK (\"division_status\" BETWEEN 0 AND 1) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0013_division_brokerage.sql",
+        "line": 23,
+        "lineCount": 1,
+        "sql": "CONSTRAINT \"user_division_status_ck\" CHECK (\"division_status\" BETWEEN 0 AND 1) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "user.division_status",
+          "name": "division_status",
+          "table": "user",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    },
+    {
+      "key": "user.user_division_type_ck",
+      "catalog": {
+        "key": "user.user_division_type_ck",
+        "name": "user_division_type_ck",
+        "table": "user",
+        "type": "c",
+        "definition": "CHECK (((division_type >= 0) AND (division_type <= 3))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "user.user_division_type_ck",
+        "name": "user_division_type_ck",
+        "table": "user",
+        "type": "c",
+        "definition": "CHECK (((division_type >= 0) AND (division_type <= 3)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "user_division_type_ck",
+        "value": "\"user\".\"division_type\" BETWEEN 0 AND 3"
+      },
+      "snapshot": {
+        "name": "user_division_type_ck",
+        "value": "\"user\".\"division_type\" BETWEEN 0 AND 3",
+        "notValid": true
+      },
+      "model": {
+        "file": "src/models/schema/user.ts",
+        "exportName": "user",
+        "line": 126,
+        "previousDeclaration": "check(\"user_division_type_ck\", sql`${t.divisionType} BETWEEN 0 AND 3`)",
+        "declaration": "notValid(check(\"user_division_type_ck\", sql`${t.divisionType} BETWEEN 0 AND 3`))"
+      },
+      "fields": [
+        {
+          "property": "divisionType",
+          "name": "division_type",
+          "type": "integer",
+          "notNull": true
+        }
+      ],
+      "fieldDeclarations": [
+        "divisionType: integer(\"division_type\").default(0).notNull()"
+      ],
+      "sources": [
+        {
+          "file": "migrations/0013_division_brokerage.sql",
+          "line": 20,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"user_division_type_ck\" CHECK (\"division_type\" BETWEEN 0 AND 3) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1700,
+          "lineCount": 1,
+          "sql": "CONSTRAINT \"user_division_type_ck\" CHECK (\"division_type\" BETWEEN 0 AND 3) NOT VALID"
+        }
+      ],
+      "targetSource": {
+        "file": "migrations/0013_division_brokerage.sql",
+        "line": 20,
+        "lineCount": 1,
+        "sql": "CONSTRAINT \"user_division_type_ck\" CHECK (\"division_type\" BETWEEN 0 AND 3) NOT VALID"
+      },
+      "columns": [
+        {
+          "key": "user.division_type",
+          "name": "division_type",
+          "table": "user",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "dependencyContract": {
+        "perColumn": [
+          "a",
+          "n"
+        ],
+        "incomingAllowed": false,
+        "sharedAllowed": false,
+        "labelsAllowed": false,
+        "comments": "preserve exactly across replacements"
+      }
+    }
+  ]
+}

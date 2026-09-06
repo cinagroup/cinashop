@@ -22,6 +22,7 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { notValid } from "../pgNotValid";
 
 // ─── 购物车 ──────────────────────────────────────────────────
 export const storeCart = pgTable(
@@ -193,14 +194,14 @@ export const storeOrder = pgTable(
     index("so_activity_type_visible")
       .on(t.activityId, t.type)
       .where(sql`${t.type} IN (1, 2, 3) AND ${t.isDel} = 0 AND ${t.isSystemDel} = 0`),
-    check(
+    notValid(check(
       "so_division_brokerage_ck",
       sql`${t.divisionBrokerage} >= 0 AND ${t.divisionAgentBrokerage} >= 0 AND ${t.divisionStaffBrokerage} >= 0`,
-    ),
-    check(
+    )),
+    notValid(check(
       "so_supplier_allocation_status_ck",
       sql`${t.supplierAllocationStatus} BETWEEN 0 AND 2`,
-    ),
+    )),
   ],
 );
 
@@ -264,10 +265,10 @@ export const storeOrderCartInfo = pgTable(
       .on(t.writeEnd, t.id)
       .where(sql`${t.productType} = 4 AND ${t.isWriteoff} = 0
         AND ${t.isExpireSms} = 0 AND ${t.writeStart} > 0 AND ${t.writeEnd} > 0`),
-    check(
+    notValid(check(
       "soci_split_state_ck",
       sql`${t.splitStatus} BETWEEN 0 AND 2 AND ${t.splitSurplusNum} >= 0`,
-    ),
+    )),
   ],
 );
 
