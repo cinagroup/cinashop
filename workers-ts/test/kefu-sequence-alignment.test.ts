@@ -109,6 +109,7 @@ describe("DB-009E5B guarded business sequence alignment", () => {
       expect(line).toBeDefined();
       const proof = JSON.parse(line!.slice("KEFU_SEQUENCE_AUDIT ".length));
       expect(proof.modelAligned).toBe(true);
+      expect(proof.committedUpgradeExecution).toBe("standalone-drizzle-transaction");
       expect(proof.driftRefusals).toHaveLength(30);
       expect(proof.newDefaultWriteConfirmed).toBe(true);
       expect(proof.syntheticRowsCleanupConfirmed).toBe(true);

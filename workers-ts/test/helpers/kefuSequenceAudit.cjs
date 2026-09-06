@@ -15,7 +15,7 @@ const insert=(slot,uid)=>`INSERT INTO public.kefu_visitor_session(session_id,${u
   VALUES ('sequence-audit-${slot}',${uid===undefined?"":uid+","}1,1,'${slot.toString(16).padStart(64,"0")}',1,100,1);`;
 const sorted=rows=>rows.map(r=>JSON.stringify(r)).sort();
 
-module.exports=async function auditKefuSequence({api,models,format,database}) {
+module.exports=async function auditKefuSequence({api,models,format,database,runAlignment}) {
   const started=Date.now(),snapshot=api.generateDrizzleJson(models),old=structuredClone(snapshot),target=structuredClone(snapshot);
   // Require the actual business model, not a synthesized target substituted for it.
   assert.deepEqual(snapshot.sequences[key],targetSnapshot,"Business model must declare exact integer type and owning column");
@@ -29,6 +29,12 @@ module.exports=async function auditKefuSequence({api,models,format,database}) {
   assert.ok(proposal.every(s=>s.startsWith('ALTER SEQUENCE "public"."kefu_visitor_uid_seq" ')));
   assert.ok(proposal.every(s=>! /\b(DROP|RESTART|setval|nextval)\b/i.test(s)));
   const db=database??new PGlite();
+  // Exercise the actual standalone Drizzle transaction for local complete-model
+  // paths; identity-checked PG16 callers may supply the same production adapter.
+  const align=runAlignment??(!database
+    ? ()=>require("tsx/cjs/api").require("../../src/migrations/runKefuSequenceAlignment.ts",__filename)
+      .runKefuSequenceAlignment(require("drizzle-orm/pglite").drizzle(db))
+    : ()=>db.exec(sql));
   const query=async s=>(await db.query(s)).rows;
   const read=()=>readCatalog(query);
   const counter=async()=> (await query("SELECT last_value::text AS value,is_called,log_cnt::text AS log FROM public.kefu_visitor_uid_seq"))[0];
@@ -174,8 +180,8 @@ module.exports=async function auditKefuSequence({api,models,format,database}) {
       assert.deepEqual(await capture(),fixture,"Scoped alignment does not touch public objects or counters");
     }finally {await db.exec("ROLLBACK");}
     assert.deepEqual(await capture(),fixture);
-    await db.exec(sql);expectAligned(await capture(),fixture);
-    const aligned=await capture();await db.exec(sql);assert.deepEqual(await capture(),aligned);
+    await align();expectAligned(await capture(),fixture);
+    const aligned=await capture();await align();assert.deepEqual(await capture(),aligned);
     await db.exec(insert(3));
     const issued=(await query("SELECT visitor_uid FROM public.kefu_visitor_session WHERE session_id='sequence-audit-3'"))[0].visitor_uid;
     assert.equal(issued,Number(fixture.counter.value)+1);
@@ -209,6 +215,7 @@ module.exports=async function auditKefuSequence({api,models,format,database}) {
       }finally{await fresh.close();}
     }
     const report={initialStatements:initial.length,guardedStatements:1,generatedProposalStatements:proposal.length,modelAligned,
+      committedUpgradeExecution:runAlignment||!database?"standalone-drizzle-transaction":"direct-sql",
       changedSequenceStorageFiles:1,originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved:true,
       committedOldRowsPreserved:2,originalCounterPreserved:true,driftRefusals:refusals,
       failureAfterAlterRollbackConfirmed:true,allPreflightBeforeTypeMutationConfirmed:true,

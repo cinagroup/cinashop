@@ -5615,7 +5615,7 @@ Linux全量251文件/1,603单元全部通过、无跳过，耗时954.90秒；三
 
 ## DB-009E5B：业务序列接入与第九条隔离路径候选（2026-09-06）
 
-本批承接94816da/Actions34030550652已验收基线，不使用旧PHP历史数据，也没有连接生产Hyperdrive。浏览器连接已确认可用，本批未进行页面交互或新增浏览器验收结论。按PostgreSQL短事务/固定锁顺序与Workers无导入时I/O要求，业务模型现通过withSequenceState显式声明integer和kefu_visitor_session.visitor_uid拥有关系，编号范围、默认分配表达式及客服运行时分配逻辑均未修改。新增清单绑定原始b07d01e目录差异、94816da已验收来源、旧/新快照、实际模型AST/列声明、0104外部及0110内嵌的精确来源语句与摘要；原始基线不覆盖。
+本批承接94816da/Actions34030550652已验收基线，不使用旧PHP历史数据，也没有连接生产Hyperdrive。浏览器连接已确认可用，本批未进行页面交互或新增浏览器验收结论。按PostgreSQL短事务/固定锁顺序与Workers无导入时I/O要求，业务模型现通过withSequenceState显式声明integer和kefu_visitor_session.visitor_uid拥有关系，编号范围、默认分配表达式及客服运行时分配逻辑均未修改。新增清单绑定原始b07d01e目录差异、94816da已验收来源、旧/新快照、实际模型AST/列声明、0104外部及0111内嵌的精确来源语句与摘要；原始基线不覆盖。此处原误写0110，现按实际kefuVisitorSessionMigrationSqlForVerification→migration_0111纠正，冻结来源SQL/摘要本身未变。
 
 0145守卫及此前本机完整旧ORM探针进入正式单元测试，探针现在强制modelAligned=true，不再允许合成目标替代实际业务模型。纯SQL镜像与外部文件逐字比较；新的内嵌0151登记尚未完成，不将镜像文件存在等同于已经接入MigrationService。新增orm_sequences第九条专用PG16路径，固定loopback/finance_test/cinashop_finance_test、真实16版本和精确随机隔离库身份，关闭连接后只删除本次成功创建的库。双连接探针必须证明2秒锁等待拒绝、nextval/setval/会话写入被升级锁阻止、取号不被回滚回收、DDL回滚保留原对象，以及并发16个不同号码；尚待Linux执行，不能以单连接PGlite声称锁验收。
 
@@ -5634,6 +5634,14 @@ Linux全量251文件/1,603单元全部通过、无跳过，耗时954.90秒；三
 根JSON已绑定本批受测SHA/CI，并如实改为`catalog_equivalent_candidate`，旧E4差异消除证明移到historicalRawDifferenceVerification完整保留，E5A及分片历史证据保留。新增sequenceBusinessCandidateVerification明确`embeddedNewGuardRegistered=false`、`businessSequenceUpgradeAccepted=false`、`releaseReady=false`；旧内嵌建库本身已是规范状态，但新增0145守卫的0151登记仍没有完成。E5B/E5/DB-009与所有业务/生产门禁不勾选；下一子批需要补登记和执行边界并再验收，不能以九条隔离目录零差异推断所有函数、视图、触发器、权限、RLS或线上部署已等价。本批无生产连接、DDL/DML、提供商调用或发布。
 
 回填后，根JSON与读取的CI证据逐字段精确核对通过；294项清单编号/顺序/勾选状态全部保持，没有将候选阶段冒充完成。3文件14项来源/目录/容量回归通过（4.47秒）；这次筛选有2项重型序列用例未重复执行，两项均已在上述同一SHA的完整CI通过，不能把筛选结果写成16项全量通过。差异检查通过，本次回填仅改三份根审计文档。
+
+## DB-009E5B：独立执行边界本地候选（2026-09-06）
+
+新增runKefuSequenceAlignment单一用途函数，仅对调用方提供的根Drizzle连接执行固定public序列守卫；不创建连接、不读取环境、不开放新HTTP入口、不重试、不调用runAll或重放历史补写。事务显式READ COMMITTED，拒绝实际嵌套Drizzle事务，避免savepoint结束后外层继续持锁。依照[PG16语句时限](https://www.postgresql.org/docs/16/runtime-config-client.html)，在发送DO之前的独立请求将statement_timeout上限收紧为30秒、idle_in_transaction_session_timeout上限收紧为5秒，0代表关闭而转为该上限，更严格值保留；[LOCAL设置](https://www.postgresql.org/docs/16/sql-set.html)随提交/回滚恢复，原SQL内2秒锁上限不变。此函数需要调用方单独授权维护操作，不因导入或本次推送自动作用于生产。
+
+完整旧模型CJS/ESM的最终提交与no-op现在走实际Drizzle入口，原30类拒绝及全目录/旧行/OID/角色/ACL/注释/编号保护断言保留。新增执行器测试用独立完整旧模型检验0/宽松/更严三组时限、默认serializable→本次READ COMMITTED、默认pg_catalog→本次public后恢复、ALTER后真实除零回滚、设置阶段故障传播、实际定义漂移拒绝及嵌套事务拒绝。PG16测试另加500ms会话时限下被另一连接阻塞的DO，必须实际得到57014并恢复状态；连接仅允许既有loopback finance_test测试服务，经数据库/角色/16版本校验后创建唯一随机库，关闭自己连接后删除且检查不存在，不使用共享测试库public。此项在本机没有PG16时明确跳过，不以PGlite代替真实取消/锁证据。
+
+本机双TypeScript通过，2文件15项通过、1项PG16专用测试跳过（91.54秒）。首轮发现测试夹具AS bigint会把恰为integer类型默认值的MAXVALUE自动扩大，已在测试还原中明确保留2147483647；这不是生产守卫缺陷，未改动0145 SQL/镜像、模型、历史来源或目录比较规则。另修正Node与Workers URL类型混用。根JSON继续绑定已验收f3cf196目录候选，等待本批精确SHA的CI；内嵌0151登记仍未实现，本项不勾选。清单DB-009E父项的ce5805a旧数字已按f3cf196零差异候选纠正，避免与子项矛盾。无生产连接、DDL/DML、提供商调用、部署或浏览器业务验收。
 
 ## 完成定义
 
