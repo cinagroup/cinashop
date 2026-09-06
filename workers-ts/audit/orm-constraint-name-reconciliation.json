@@ -1,0 +1,242 @@
+{
+  "sourceCommit": "d416f318863f2ccf127cfde477f137b9b100e282",
+  "runId": 34007245605,
+  "scope": "All three remaining constraint-owned index aliases. Rename the owning primary/unique constraint and its index together, preserving both OIDs, uniqueness, dependent foreign keys and views. Excludes other constraint differences, sequence ownership and five external duplicates. No production execution.",
+  "entries": [
+    {
+      "key": "data_migration_checkpoint.data_migration_checkpoint_pkey",
+      "previousKey": "data_migration_checkpoint.data_migration_checkpoint_run_id_table_name_pk",
+      "catalog": {
+        "key": "data_migration_checkpoint.data_migration_checkpoint_pkey",
+        "name": "data_migration_checkpoint_pkey",
+        "table": "data_migration_checkpoint",
+        "definition": "public.data_migration_checkpoint USING btree (run_id, table_name)",
+        "unique": true,
+        "primary": true,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": true
+      },
+      "previousCatalog": {
+        "key": "data_migration_checkpoint.data_migration_checkpoint_run_id_table_name_pk",
+        "name": "data_migration_checkpoint_run_id_table_name_pk",
+        "table": "data_migration_checkpoint",
+        "definition": "public.data_migration_checkpoint USING btree (run_id, table_name)",
+        "unique": true,
+        "primary": true,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": true
+      },
+      "constraint": {
+        "key": "data_migration_checkpoint.data_migration_checkpoint_pkey",
+        "name": "data_migration_checkpoint_pkey",
+        "table": "data_migration_checkpoint",
+        "type": "p",
+        "definition": "PRIMARY KEY (run_id, table_name)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousConstraint": {
+        "key": "data_migration_checkpoint.data_migration_checkpoint_run_id_table_name_pk",
+        "name": "data_migration_checkpoint_run_id_table_name_pk",
+        "table": "data_migration_checkpoint",
+        "type": "p",
+        "definition": "PRIMARY KEY (run_id, table_name)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "snapshotField": "compositePrimaryKeys",
+      "previousSnapshotConstraint": {
+        "name": "data_migration_checkpoint_run_id_table_name_pk",
+        "columns": [
+          "run_id",
+          "table_name"
+        ]
+      },
+      "columns": [
+        "run_id",
+        "table_name"
+      ],
+      "model": {
+        "file": "src/models/schema/migration.ts",
+        "line": 52,
+        "previousDeclaration": "    primaryKey({ columns: [table.runId, table.tableName] }),",
+        "declaration": "    primaryKey({ name: \"data_migration_checkpoint_pkey\", columns: [table.runId, table.tableName] }),"
+      },
+      "source": {
+        "file": "migrations/0020_data_migration_control.sql",
+        "line": 29,
+        "sql": "  PRIMARY KEY (\"run_id\", \"table_name\"),"
+      }
+    },
+    {
+      "key": "kefu_visitor_session.kefu_visitor_session_token_hash_key",
+      "previousKey": "kefu_visitor_session.kefu_visitor_session_token_hash_unique",
+      "catalog": {
+        "key": "kefu_visitor_session.kefu_visitor_session_token_hash_key",
+        "name": "kefu_visitor_session_token_hash_key",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (token_hash)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": true
+      },
+      "previousCatalog": {
+        "key": "kefu_visitor_session.kefu_visitor_session_token_hash_unique",
+        "name": "kefu_visitor_session_token_hash_unique",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (token_hash)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": true
+      },
+      "constraint": {
+        "key": "kefu_visitor_session.kefu_visitor_session_token_hash_key",
+        "name": "kefu_visitor_session_token_hash_key",
+        "table": "kefu_visitor_session",
+        "type": "u",
+        "definition": "UNIQUE (token_hash)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousConstraint": {
+        "key": "kefu_visitor_session.kefu_visitor_session_token_hash_unique",
+        "name": "kefu_visitor_session_token_hash_unique",
+        "table": "kefu_visitor_session",
+        "type": "u",
+        "definition": "UNIQUE (token_hash)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "snapshotField": "uniqueConstraints",
+      "previousSnapshotConstraint": {
+        "name": "kefu_visitor_session_token_hash_unique",
+        "nullsNotDistinct": false,
+        "columns": [
+          "token_hash"
+        ]
+      },
+      "columns": [
+        "token_hash"
+      ],
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "line": 354,
+        "previousDeclaration": "    tokenHash: varchar(\"token_hash\", { length: 64 }).notNull().unique(),",
+        "declaration": "    tokenHash: varchar(\"token_hash\", { length: 64 }).notNull().unique(\"kefu_visitor_session_token_hash_key\"),"
+      },
+      "source": {
+        "file": "migrations/0104_kefu_visitor_session.sql",
+        "line": 11,
+        "sql": "  \"token_hash\" VARCHAR(64) NOT NULL UNIQUE,"
+      }
+    },
+    {
+      "key": "kefu_visitor_session.kefu_visitor_session_visitor_uid_key",
+      "previousKey": "kefu_visitor_session.kefu_visitor_session_visitor_uid_unique",
+      "catalog": {
+        "key": "kefu_visitor_session.kefu_visitor_session_visitor_uid_key",
+        "name": "kefu_visitor_session_visitor_uid_key",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (visitor_uid)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": true
+      },
+      "previousCatalog": {
+        "key": "kefu_visitor_session.kefu_visitor_session_visitor_uid_unique",
+        "name": "kefu_visitor_session_visitor_uid_unique",
+        "table": "kefu_visitor_session",
+        "definition": "public.kefu_visitor_session USING btree (visitor_uid)",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": true
+      },
+      "constraint": {
+        "key": "kefu_visitor_session.kefu_visitor_session_visitor_uid_key",
+        "name": "kefu_visitor_session_visitor_uid_key",
+        "table": "kefu_visitor_session",
+        "type": "u",
+        "definition": "UNIQUE (visitor_uid)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousConstraint": {
+        "key": "kefu_visitor_session.kefu_visitor_session_visitor_uid_unique",
+        "name": "kefu_visitor_session_visitor_uid_unique",
+        "table": "kefu_visitor_session",
+        "type": "u",
+        "definition": "UNIQUE (visitor_uid)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "snapshotField": "uniqueConstraints",
+      "previousSnapshotConstraint": {
+        "name": "kefu_visitor_session_visitor_uid_unique",
+        "nullsNotDistinct": false,
+        "columns": [
+          "visitor_uid"
+        ]
+      },
+      "columns": [
+        "visitor_uid"
+      ],
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "line": 351,
+        "previousDeclaration": "      .unique(),",
+        "declaration": "      .unique(\"kefu_visitor_session_visitor_uid_key\"),"
+      },
+      "source": {
+        "file": "migrations/0104_kefu_visitor_session.sql",
+        "line": 8,
+        "sql": "  \"visitor_uid\" INTEGER DEFAULT nextval('\"kefu_visitor_uid_seq\"') NOT NULL UNIQUE,"
+      }
+    }
+  ]
+}

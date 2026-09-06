@@ -348,10 +348,10 @@ export const kefuVisitorSession = pgTable(
     visitorUid: integer("visitor_uid")
       .default(sql`nextval('"kefu_visitor_uid_seq"')`)
       .notNull()
-      .unique(),
+      .unique("kefu_visitor_session_visitor_uid_key"),
     serviceId: integer("service_id").notNull(),
     kefuUid: integer("kefu_uid").notNull(),
-    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique("kefu_visitor_session_token_hash_key"),
     nickname: varchar("nickname", { length: 50 }).default("").notNull(),
     avatar: varchar("avatar", { length: 255 }).default("").notNull(),
     createdAt: integer("created_at").notNull(),

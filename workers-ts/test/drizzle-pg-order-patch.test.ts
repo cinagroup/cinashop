@@ -98,11 +98,12 @@ describe("DB-008 pinned PostgreSQL generator ordering", () => {
       expect(result.error).toBeUndefined();
       expect(result.status, result.stdout + result.stderr).toBe(0);
       expect(result.stdout).toContain(`DB-008 ${format}: initial, index/constraint upgrades, tenant FK, full-model no-op passed`);
-      expect(result.stdout).toContain(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, 172 contracts, no-op passed`);
+      expect(result.stdout).toContain(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, 175 contracts, no-op passed`);
       expect(result.stdout).toContain(`DB-009D2b3a ${format}: 28 restored, 11 rejection rollbacks, duplicate rows/OIDs/FK dependencies preserved, idempotence and schema isolation passed`);
       expect(result.stdout).toContain(`DB-009D2b3b ${format}: 20 restored, 11 rejection rollbacks, duplicate rows/OIDs/FK dependencies preserved, idempotence and schema isolation passed`);
       expect(result.stdout).toContain(`DB-009D2b3b ${format}: 2 exact ORM removals, restrictive dependencies, rollback, unique/query/FK preservation, no-op passed`);
       expect(result.stdout).toContain(`DB-009D2b3c ${format}: 44 guarded renames, OIDs/files/44 dependent views preserved, 45 destructive proposals rejected, 12 drift rollbacks, mixed-state/schema-isolation/idempotence passed`);
+      expect(result.stdout).toContain(`DB-009D2b3d ${format}: 3 owning constraints renamed, OIDs/files/3 FKs/3 views preserved, 7 destructive refusals, 12 drift rollbacks, unique/FK/cascade/no-op passed`);
       const audit = JSON.parse(readFileSync(report, "utf8"));
       expect(audit.networkAttempts).toBe(0);
       expect(audit.loaded.filter((path: string) => path.includes("/@esbuild-kit/"))).toEqual([]);

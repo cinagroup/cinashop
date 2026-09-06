@@ -49,7 +49,7 @@ export const dataMigrationCheckpoint = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.runId, table.tableName] }),
+    primaryKey({ name: "data_migration_checkpoint_pkey", columns: [table.runId, table.tableName] }),
     check(
       "dmc_counts_ck",
       sql`${table.sourceCount} >= 0 AND ${table.insertedCount} >= 0 AND ${table.conflictCount} >= 0`,

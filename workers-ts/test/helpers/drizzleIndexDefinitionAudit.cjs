@@ -15,6 +15,9 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
   const retired = ordinaryManifest.entries.filter((entry) => entry.decision === "remove-redundant-orm-declaration");
   const namingManifest = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-index-name-reconciliation.json"), "utf8"));
   const { extendIndexNameContracts, assertOldIndexNamesAbsent } = require("tsx/cjs/api").require("../../scripts/data-migration/index-name-contracts.ts", __filename);
+  const owningManifest = JSON.parse(readFileSync(join(__dirname, "../../audit/orm-constraint-name-reconciliation.json"), "utf8"));
+  const owningNames = require("./constraintNameAudit.cjs");
+  const { extendConstraintNameContracts, assertConstraintNamesAligned } = require("tsx/cjs/api").require("../../scripts/data-migration/constraint-name-contracts.ts", __filename);
   const { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } = require("tsx/cjs/api").require("../../scripts/data-migration/ordinary-index-contracts.ts", __filename);
   const keys = manifest.entries.map((entry) => entry.key).sort();
   assert.equal(keys.length, 57);
@@ -38,6 +41,7 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
     delete indexes[entry.catalog.name];
     indexes[entry.previousCatalog.name] = structuredClone(entry.previousSnapshotIndex);
   }
+  for (const state of [old, target]) owningNames.holdOldNames(state);
   const delta = await generateMigration(old, target);
   assert.equal(delta.length, 114);
   const drops = delta.filter((statement) => /^DROP INDEX /.test(statement));
@@ -112,18 +116,22 @@ module.exports = async function auditIndexDefinitions({ api, models, snapshot, f
     assert.deepEqual((await db.query("SELECT old_cart_id FROM store_order_cart_info WHERE old_cart_id<>''")).rows, [{ old_cart_id: "parent-fixture" }]);
     const legacyQueryIndexes = await require("./legacyQueryIndexAudit.cjs")({ db, read, objects, dependencies, format });
     const ordinaryQueryIndexes = await require("./legacyQueryIndexAudit.cjs")({ db, read, objects, dependencies, format, alignment: "worker" });
-    const naming = await require("./ordinaryIndexNameAudit.cjs")({ api, models, previous: target, db, read, objects, dependencies, format });
+    const owning = await owningNames({ api, models, previous: target, db, read, objects, format });
+    const naming = await require("./ordinaryIndexNameAudit.cjs")({ api, models, previous: owning.targetSnapshot, db, read, objects, dependencies, format });
     const retirement = await require("./ordinaryIndexRetirementAudit.cjs")({ api, models, previous: naming.targetSnapshot, db, read, objects, dependencies, format });
     const final = await read();
     const alignedContracts = extendIndexNameContracts(contracts.keys, namingManifest);
-    const alignedEntries = [...allEntries, ...namingManifest.entries];
-    assertIndexContracts({ ...final, indexes: alignedEntries.map((entry) => entry.catalog) }, final, alignedContracts.keys);
+    const owningContracts = extendConstraintNameContracts(alignedContracts.keys, owningManifest);
+    const alignedEntries = [...allEntries, ...namingManifest.entries, ...owningManifest.entries];
+    assertIndexContracts({ ...final, indexes: alignedEntries.map((entry) => entry.catalog) }, final, owningContracts.keys);
+    assertConstraintNamesAligned({ ...final, constraints: owningManifest.entries.map((entry) => entry.constraint) }, final);
     assertRetiredIndexesAbsent(final, contracts.retiredKeys);
     assertOldIndexNamesAbsent(final, alignedContracts.oldKeys);
     console.log(`DB-009D2b2 ${format}: 57 exact replacements, rollback, rows/OIDs/FK dependencies preserved, ${alignedEntries.length} contracts, no-op passed`);
-    return { initialStatements: initial.length, upgradeStatements: delta.length + retirement.statements + naming.verification.guardedStatements,
+    return { initialStatements: initial.length, upgradeStatements: delta.length + retirement.statements + naming.verification.guardedStatements + owning.verification.guardedStatements,
       definitionUpgradeStatements: delta.length, namingUpgradeStatements: naming.verification.guardedStatements, reconciledIndexes: 57,
       verifiedContracts: alignedEntries.length, rollbackConfirmed: true, rowsAndDependenciesPreserved: true, legacyQueryIndexes,
-      ordinaryQueryIndexes: { ...ordinaryQueryIndexes, retirement }, indexNameAlignment: naming.verification };
+      ordinaryQueryIndexes: { ...ordinaryQueryIndexes, retirement }, indexNameAlignment: naming.verification,
+      constraintNameAlignment: owning.verification };
   } finally { if (!database) await db.close(); }
 };

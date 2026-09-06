@@ -37,6 +37,7 @@ import { CORE_INDEX_ALIGNMENT_SQL } from "@/migrations/coreIndexAlignment";
 import { LEGACY_QUERY_INDEX_ALIGNMENT_SQL } from "@/migrations/legacyQueryIndexAlignment";
 import { WORKER_QUERY_INDEX_ALIGNMENT_SQL } from "@/migrations/workerQueryIndexAlignment";
 import { ORDINARY_INDEX_NAME_ALIGNMENT_SQL } from "@/migrations/ordinaryIndexNameAlignment";
+import { CONSTRAINT_NAME_ALIGNMENT_SQL } from "@/migrations/constraintNameAlignment";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -378,6 +379,7 @@ export class MigrationService {
       this.migration_0142(),
       this.migration_0143(),
       this.migration_0144(),
+      this.migration_0145(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -8377,5 +8379,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0144(): string {
     return ORDINARY_INDEX_NAME_ALIGNMENT_SQL;
+  }
+  private migration_0145(): string {
+    return CONSTRAINT_NAME_ALIGNMENT_SQL;
   }
 }
