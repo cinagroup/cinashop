@@ -1,21 +1,21 @@
 {
-  "sourceCommit": "d416f318863f2ccf127cfde477f137b9b100e282",
-  "runId": 34007245605,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34007245605",
+  "sourceCommit": "b0c15fca2c299a195c0f197d7bb3def11301e919",
+  "runId": 34008849823,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34008849823",
   "status": "not_equivalent",
   "kind": "summary",
-  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals and 44 guarded name alignments; verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique enforcement, equality index plans, idempotence and schema isolation. Dependent-view probes cover only self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes 57-definition upgrade, 28 legacy/20 Worker index restorations, two redundant ORM index removals, 44 ordinary and three owning-constraint guarded name alignments; verifies dependency refusal/preservation, rollback, fixtures, OIDs/files, FK/unique/cascade enforcement, equality index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "45d058a100a64cc98acd377f411e164c465ac47864d938ab0ffb9e58083fa68b",
-  "generatedSqlSha256": "416c0dd8d68c531595bf094b5aeb2cbcd0dc8c30364077810e5a62438ae6e494",
+  "externalInputSha256": "703bd381a0b7d4a978e0039600f8d27779668551537f6c79db4e9962bcdb728d",
+  "generatedSqlSha256": "d83b69556905b95a7c7afcb18fb6028662516a96f03493ab79d0f15b7bfed9a4",
   "paths": [
     {
       "path": "external",
-      "steps": 140
+      "steps": 141
     },
     {
       "path": "embedded",
-      "steps": 145
+      "steps": 146
     },
     {
       "path": "orm",
@@ -23,7 +23,7 @@
     },
     {
       "path": "orm_upgrade",
-      "steps": 1178
+      "steps": 1179
     }
   ],
   "counts": {
@@ -103,16 +103,16 @@
         "possibleRenames": 0
       },
       "constraints": {
-        "referenceOnly": 56,
-        "candidateOnly": 15,
+        "referenceOnly": 53,
+        "candidateOnly": 12,
         "changed": 9,
-        "possibleRenames": 15
+        "possibleRenames": 12
       },
       "indexes": {
-        "referenceOnly": 8,
-        "candidateOnly": 3,
+        "referenceOnly": 5,
+        "candidateOnly": 0,
         "changed": 0,
-        "possibleRenames": 3
+        "possibleRenames": 0
       },
       "sequences": {
         "referenceOnly": 0,
@@ -296,7 +296,10 @@
       "user.user_status_idx",
       "user_bill.ub_cat_type_link_idx",
       "user_invoice.ui_uid_idx",
-      "user_money.um_uid_idx"
+      "user_money.um_uid_idx",
+      "data_migration_checkpoint.data_migration_checkpoint_pkey",
+      "kefu_visitor_session.kefu_visitor_session_token_hash_key",
+      "kefu_visitor_session.kefu_visitor_session_visitor_uid_key"
     ]
   },
   "retiredIndexContracts": {
@@ -355,13 +358,26 @@
       "user_money.um_uid"
     ]
   },
+  "alignedConstraintNameContracts": {
+    "mode": "exact owning primary/unique constraints and indexes; reject all three old names in every path",
+    "constraintKeys": [
+      "data_migration_checkpoint.data_migration_checkpoint_pkey",
+      "kefu_visitor_session.kefu_visitor_session_token_hash_key",
+      "kefu_visitor_session.kefu_visitor_session_visitor_uid_key"
+    ],
+    "oldKeys": [
+      "data_migration_checkpoint.data_migration_checkpoint_run_id_table_name_pk",
+      "kefu_visitor_session.kefu_visitor_session_token_hash_unique",
+      "kefu_visitor_session.kefu_visitor_session_visitor_uid_unique"
+    ]
+  },
   "upgradeVerification": {
     "initialStatements": 1061,
-    "upgradeStatements": 117,
+    "upgradeStatements": 118,
     "definitionUpgradeStatements": 114,
     "namingUpgradeStatements": 1,
     "reconciledIndexes": 57,
-    "verifiedContracts": 172,
+    "verifiedContracts": 175,
     "rollbackConfirmed": true,
     "rowsAndDependenciesPreserved": true,
     "legacyQueryIndexes": {
@@ -449,6 +465,41 @@
       "schemaIsolationConfirmed": true,
       "idempotent": true
     },
+    "constraintNameAlignment": {
+      "guardedStatements": 1,
+      "renamedConstraints": 3,
+      "renamedIndexes": 3,
+      "generatorProposedStatements": 6,
+      "generatorAppliedAsUpgrade": false,
+      "destructiveDependencyRejections": 7,
+      "dependentForeignKeysPreserved": 3,
+      "dependentViewsPreserved": 3,
+      "fixtureRowsPreserved": 5,
+      "foreignKeyRowsPreserved": 1,
+      "constraintAndIndexOidsAndFilesPreserved": true,
+      "dependenciesAndTriggersPreserved": true,
+      "uniqueAndForeignKeyEnforcementConfirmed": true,
+      "canonicalErrorNamesConfirmed": true,
+      "updateAndDeleteCascadesConfirmed": true,
+      "rejectionCases": [
+        "missing-pair",
+        "index-without-constraint",
+        "target-index-collision",
+        "both-constraints",
+        "wrong-columns",
+        "deferrable",
+        "nulls-not-distinct",
+        "include",
+        "wrong-type",
+        "target-wrong-columns",
+        "missing-table",
+        "missing-schema"
+      ],
+      "failureRollbackConfirmed": true,
+      "mixedStateConfirmed": true,
+      "schemaIsolationConfirmed": true,
+      "idempotent": true
+    },
     "freshCatalogMatched": true
   },
   "missingIndexEvidence": {
@@ -485,24 +536,6 @@
       }
     ],
     "externalVsOrm": [
-      {
-        "reference": "data_migration_checkpoint.data_migration_checkpoint_pkey",
-        "exactCandidates": [
-          "data_migration_checkpoint.data_migration_checkpoint_run_id_table_name_pk"
-        ]
-      },
-      {
-        "reference": "kefu_visitor_session.kefu_visitor_session_token_hash_key",
-        "exactCandidates": [
-          "kefu_visitor_session.kefu_visitor_session_token_hash_unique"
-        ]
-      },
-      {
-        "reference": "kefu_visitor_session.kefu_visitor_session_visitor_uid_key",
-        "exactCandidates": [
-          "kefu_visitor_session.kefu_visitor_session_visitor_uid_unique"
-        ]
-      },
       {
         "reference": "store_order_refund.sor_store_order_id_idx",
         "exactCandidates": [
