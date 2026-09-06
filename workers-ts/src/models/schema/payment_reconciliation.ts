@@ -7,6 +7,7 @@ import {
   bigint,
   bigserial,
   check,
+  foreignKey,
   index,
   integer,
   pgTable,
@@ -58,8 +59,7 @@ export const paymentReconciliationCase = pgTable(
     providerTransactionId: varchar("provider_transaction_id", { length: 100 })
       .default("").notNull(),
     providerEventTime: integer("provider_event_time").default(0).notNull(),
-    callbackEventId: bigint("callback_event_id", { mode: "number" })
-      .references(() => paymentCallbackEvent.id, { onDelete: "restrict" }),
+    callbackEventId: bigint("callback_event_id", { mode: "number" }),
     attemptCount: integer("attempt_count").default(0).notNull(),
     nextCheckTime: integer("next_check_time").default(0).notNull(),
     leaseUntil: integer("lease_until").default(0).notNull(),
@@ -73,6 +73,7 @@ export const paymentReconciliationCase = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "prc_callback_event_fk", columns: [table.callbackEventId], foreignColumns: [paymentCallbackEvent.id] }).onDelete("restrict"),
     uniqueIndex("prc_replay_key_uq").on(table.replayKey),
     uniqueIndex("prc_provider_order_uq").on(table.provider, table.orderNo),
     index("prc_due").on(table.nextCheckTime, table.id)
@@ -123,8 +124,7 @@ export const paymentReconciliationAction = pgTable(
   "payment_reconciliation_action",
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
-    caseId: bigint("case_id", { mode: "number" }).notNull()
-      .references(() => paymentReconciliationCase.id, { onDelete: "restrict" }),
+    caseId: bigint("case_id", { mode: "number" }).notNull(),
     actionKey: varchar("action_key", { length: 36 }).notNull(),
     adminId: integer("admin_id").notNull(),
     actionType: varchar("action_type", { length: 16 })
@@ -137,6 +137,7 @@ export const paymentReconciliationAction = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "pra_case_fk", columns: [table.caseId], foreignColumns: [paymentReconciliationCase.id] }).onDelete("restrict"),
     uniqueIndex("pra_action_key_uq").on(table.actionKey),
     index("pra_case_history").on(table.caseId, table.id),
     check("pra_action_key_ck", sql`

@@ -3,6 +3,7 @@ import {
   bigint,
   bigserial,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -123,8 +124,7 @@ export const cityDeliveryCallbackOutbox = pgTable(
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
     eventId: bigint("event_id", { mode: "number" })
-      .notNull()
-      .references(() => cityDeliveryCallbackEvent.id, { onDelete: "restrict" }),
+      .notNull(),
     replayKey: varchar("replay_key", { length: 36 }).notNull(),
     status: varchar("status", { length: 16 })
       .$type<CityDeliveryCallbackOutboxStatus>()
@@ -142,6 +142,7 @@ export const cityDeliveryCallbackOutbox = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "cdcout_event_fk", columns: [table.eventId], foreignColumns: [cityDeliveryCallbackEvent.id] }).onDelete("restrict"),
     uniqueIndex("cdcout_event_uq").on(table.eventId),
     uniqueIndex("cdcout_replay_key_uq").on(table.replayKey),
     index("cdcout_dispatch_ready")
@@ -174,8 +175,7 @@ export const cityDeliveryCallbackWatermark = pgTable(
     provider: varchar("provider", { length: 16 }).$type<"dada" | "uu">().default("dada").notNull(),
     subjectKeyHash: varchar("subject_key_hash", { length: 64 }).notNull(),
     lastEventId: bigint("last_event_id", { mode: "number" })
-      .notNull()
-      .references(() => cityDeliveryCallbackEvent.id, { onDelete: "restrict" }),
+      .notNull(),
     lastEventKey: varchar("last_event_key", { length: 64 }).notNull(),
     lastState: varchar("last_state", { length: 32 }).notNull(),
     lastRank: integer("last_rank").default(0).notNull(),
@@ -184,6 +184,7 @@ export const cityDeliveryCallbackWatermark = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "cdcwm_event_fk", columns: [table.lastEventId], foreignColumns: [cityDeliveryCallbackEvent.id] }).onDelete("restrict"),
     primaryKey({ name: "cdcwm_pkey", columns: [table.provider, table.subjectKeyHash] }),
     index("cdcwm_last_event").on(table.lastEventId),
     check("cdcwm_provider_ck", sql`${table.provider} IN ('dada', 'uu')`),
@@ -216,8 +217,7 @@ export const cityDeliveryReconciliationCase = pgTable(
     provider: varchar("provider", { length: 16 }).$type<"dada" | "uu">().default("dada").notNull(),
     subjectKeyHash: varchar("subject_key_hash", { length: 64 }).notNull(),
     deliveryOrderId: integer("delivery_order_id")
-      .notNull()
-      .references(() => storeDeliveryOrder.id, { onDelete: "restrict" }),
+      .notNull(),
     status: varchar("status", { length: 16 })
       .$type<CityDeliveryReconciliationStatus>()
       .default("PENDING")
@@ -226,14 +226,15 @@ export const cityDeliveryReconciliationCase = pgTable(
     nextAttemptTime: integer("next_attempt_time").default(0).notNull(),
     leaseUntil: integer("lease_until").default(0).notNull(),
     leaseToken: varchar("lease_token", { length: 36 }).default("").notNull(),
-    lastEventId: bigint("last_event_id", { mode: "number" })
-      .references(() => cityDeliveryCallbackEvent.id, { onDelete: "restrict" }),
+    lastEventId: bigint("last_event_id", { mode: "number" }),
     lastErrorCode: varchar("last_error_code", { length: 64 }).default("").notNull(),
     addTime: integer("add_time").default(0).notNull(),
     updateTime: integer("update_time").default(0).notNull(),
     resolvedTime: integer("resolved_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "cdcrc_delivery_order_fk", columns: [table.deliveryOrderId], foreignColumns: [storeDeliveryOrder.id] }).onDelete("restrict"),
+    foreignKey({ name: "cdcrc_event_fk", columns: [table.lastEventId], foreignColumns: [cityDeliveryCallbackEvent.id] }).onDelete("restrict"),
     uniqueIndex("cdcrc_provider_subject_uq").on(table.provider, table.subjectKeyHash),
     uniqueIndex("cdcrc_delivery_order_uq").on(table.deliveryOrderId),
     index("cdcrc_due")

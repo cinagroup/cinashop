@@ -2,6 +2,7 @@ import {
   bigint,
   char,
   check,
+  foreignKey,
   index,
   jsonb,
   numeric,
@@ -37,8 +38,7 @@ export const dataMigrationCheckpoint = pgTable(
   "data_migration_checkpoint",
   {
     runId: varchar("run_id", { length: 64 })
-      .notNull()
-      .references(() => dataMigrationRun.runId, { onDelete: "cascade" }),
+      .notNull(),
     tableName: varchar("table_name", { length: 64 }).notNull(),
     lastKey: numeric("last_key", { precision: 30, scale: 0 }),
     lastKeyJson: jsonb("last_key_json").$type<string[]>(),
@@ -49,6 +49,7 @@ export const dataMigrationCheckpoint = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
+    foreignKey({ name: "data_migration_checkpoint_run_id_fkey", columns: [table.runId], foreignColumns: [dataMigrationRun.runId] }).onDelete("cascade"),
     primaryKey({ name: "data_migration_checkpoint_pkey", columns: [table.runId, table.tableName] }),
     check(
       "dmc_counts_ck",

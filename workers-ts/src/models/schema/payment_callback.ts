@@ -9,6 +9,7 @@ import {
   bigint,
   bigserial,
   check,
+  foreignKey,
   index,
   integer,
   pgTable,
@@ -117,8 +118,7 @@ export const paymentCallbackOutbox = pgTable(
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
     eventId: bigint("event_id", { mode: "number" })
-      .notNull()
-      .references(() => paymentCallbackEvent.id, { onDelete: "restrict" }),
+      .notNull(),
     replayKey: varchar("replay_key", { length: 36 }).notNull(),
     status: varchar("status", { length: 16 })
       .$type<PaymentCallbackOutboxStatus>()
@@ -136,6 +136,7 @@ export const paymentCallbackOutbox = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "pco_event_fk", columns: [table.eventId], foreignColumns: [paymentCallbackEvent.id] }).onDelete("restrict"),
     uniqueIndex("pco_event_uq").on(table.eventId),
     uniqueIndex("pco_replay_key_uq").on(table.replayKey),
     index("pco_dispatch_ready")

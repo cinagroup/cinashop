@@ -3,6 +3,7 @@ import {
   bigint,
   bigserial,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -113,8 +114,7 @@ export const wechatCallbackOutbox = pgTable(
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
     eventId: bigint("event_id", { mode: "number" })
-      .notNull()
-      .references(() => wechatCallbackEvent.id, { onDelete: "restrict" }),
+      .notNull(),
     replayKey: varchar("replay_key", { length: 36 }).notNull(),
     status: varchar("status", { length: 16 })
       .$type<WechatCallbackOutboxStatus>()
@@ -132,6 +132,7 @@ export const wechatCallbackOutbox = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "wcout_event_fk", columns: [table.eventId], foreignColumns: [wechatCallbackEvent.id] }).onDelete("restrict"),
     uniqueIndex("wcout_event_uq").on(table.eventId),
     uniqueIndex("wcout_replay_key_uq").on(table.replayKey),
     index("wcout_dispatch_ready")
@@ -166,14 +167,14 @@ export const wechatCallbackWatermark = pgTable(
     projectionType: varchar("projection_type", { length: 32 }).notNull(),
     subjectKeyHash: varchar("subject_key_hash", { length: 64 }).notNull(),
     lastEventId: bigint("last_event_id", { mode: "number" })
-      .notNull()
-      .references(() => wechatCallbackEvent.id, { onDelete: "restrict" }),
+      .notNull(),
     lastEventKey: varchar("last_event_key", { length: 64 }).notNull(),
     lastEventTime: integer("last_event_time").default(0).notNull(),
     lastSequenceRank: integer("last_sequence_rank").default(0).notNull(),
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "wcwm_event_fk", columns: [table.lastEventId], foreignColumns: [wechatCallbackEvent.id] }).onDelete("restrict"),
     primaryKey({
       name: "wcwm_pkey",
       columns: [table.source, table.projectionType, table.subjectKeyHash],

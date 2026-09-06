@@ -3,6 +3,7 @@ import {
   bigint,
   bigserial,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -112,8 +113,7 @@ export const merchantShipmentCallbackOutbox = pgTable(
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
     eventId: bigint("event_id", { mode: "number" })
-      .notNull()
-      .references(() => merchantShipmentCallbackEvent.id, { onDelete: "restrict" }),
+      .notNull(),
     replayKey: varchar("replay_key", { length: 36 }).notNull(),
     status: varchar("status", { length: 16 })
       .$type<MerchantShipmentCallbackOutboxStatus>()
@@ -131,6 +131,7 @@ export const merchantShipmentCallbackOutbox = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "mscout_event_fk", columns: [table.eventId], foreignColumns: [merchantShipmentCallbackEvent.id] }).onDelete("restrict"),
     uniqueIndex("mscout_event_uq").on(table.eventId),
     uniqueIndex("mscout_replay_key_uq").on(table.replayKey),
     index("mscout_dispatch_ready")
@@ -165,8 +166,7 @@ export const merchantShipmentCallbackWatermark = pgTable(
     projectionType: varchar("projection_type", { length: 16 }).notNull(),
     subjectKeyHash: varchar("subject_key_hash", { length: 64 }).notNull(),
     lastEventId: bigint("last_event_id", { mode: "number" })
-      .notNull()
-      .references(() => merchantShipmentCallbackEvent.id, { onDelete: "restrict" }),
+      .notNull(),
     lastEventKey: varchar("last_event_key", { length: 64 }).notNull(),
     lastState: varchar("last_state", { length: 32 }).notNull(),
     lastRank: integer("last_rank").default(0).notNull(),
@@ -174,6 +174,7 @@ export const merchantShipmentCallbackWatermark = pgTable(
     updateTime: integer("update_time").default(0).notNull(),
   },
   (table) => [
+    foreignKey({ name: "mscwm_event_fk", columns: [table.lastEventId], foreignColumns: [merchantShipmentCallbackEvent.id] }).onDelete("restrict"),
     primaryKey({
       name: "mscwm_pkey",
       columns: [table.provider, table.projectionType, table.subjectKeyHash],

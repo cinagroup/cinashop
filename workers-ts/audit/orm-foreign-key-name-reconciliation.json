@@ -1,0 +1,1520 @@
+{
+  "baselineCommit": "b07d01e54c384bafc7507ec2113ffd0f42fbda8c",
+  "sourceCommit": "70103a0291f270412e0bfa1fb51af19e06b89dec",
+  "sourceRunId": 34017020788,
+  "scope": "Twelve definition-identical foreign key aliases. Preserve constraint/trigger/index OIDs and all referential actions; do not apply generated DROP/ADD proposals.",
+  "entries": [
+    {
+      "key": "city_delivery_callback_outbox.cdcout_event_fk",
+      "previousKey": "city_delivery_callback_outbox.city_delivery_callback_outbox_event_id_city_delivery_callback_e",
+      "catalog": {
+        "key": "city_delivery_callback_outbox.cdcout_event_fk",
+        "name": "cdcout_event_fk",
+        "table": "city_delivery_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES city_delivery_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "city_delivery_callback_outbox.city_delivery_callback_outbox_event_id_city_delivery_callback_e",
+        "name": "city_delivery_callback_outbox_event_id_city_delivery_callback_e",
+        "table": "city_delivery_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES city_delivery_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "city_delivery_callback_outbox_event_id_city_delivery_callback_event_id_fk",
+        "tableFrom": "city_delivery_callback_outbox",
+        "tableTo": "city_delivery_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "cdcout_event_fk",
+        "tableFrom": "city_delivery_callback_outbox",
+        "tableTo": "city_delivery_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "eventId",
+          "name": "event_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "city_delivery_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "city_delivery_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/city_delivery_callback.ts",
+        "exportName": "cityDeliveryCallbackOutbox",
+        "line": 125,
+        "previousDeclaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()\n      .references(() => cityDeliveryCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"cdcout_event_fk\", columns: [table.eventId], foreignColumns: [cityDeliveryCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 6182
+      },
+      "sources": [
+        {
+          "file": "migrations/0124_city_delivery_callback_pipeline.sql",
+          "line": 84,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcout_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"city_delivery_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/cityDeliveryCallbackPipeline.ts",
+          "line": 84,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcout_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"city_delivery_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "city_delivery_callback_outbox.event_id",
+          "name": "event_id",
+          "table": "city_delivery_callback_outbox",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "city_delivery_callback_event.id",
+          "name": "id",
+          "table": "city_delivery_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('city_delivery_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "city_delivery_callback_watermark.cdcwm_event_fk",
+      "previousKey": "city_delivery_callback_watermark.city_delivery_callback_watermark_last_event_id_city_delivery_ca",
+      "catalog": {
+        "key": "city_delivery_callback_watermark.cdcwm_event_fk",
+        "name": "cdcwm_event_fk",
+        "table": "city_delivery_callback_watermark",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES city_delivery_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "city_delivery_callback_watermark.city_delivery_callback_watermark_last_event_id_city_delivery_ca",
+        "name": "city_delivery_callback_watermark_last_event_id_city_delivery_ca",
+        "table": "city_delivery_callback_watermark",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES city_delivery_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "city_delivery_callback_watermark_last_event_id_city_delivery_callback_event_id_fk",
+        "tableFrom": "city_delivery_callback_watermark",
+        "tableTo": "city_delivery_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "cdcwm_event_fk",
+        "tableFrom": "city_delivery_callback_watermark",
+        "tableTo": "city_delivery_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "lastEventId",
+          "name": "last_event_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "city_delivery_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "city_delivery_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/city_delivery_callback.ts",
+        "exportName": "cityDeliveryCallbackWatermark",
+        "line": 176,
+        "previousDeclaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })\n      .notNull()\n      .references(() => cityDeliveryCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"cdcwm_event_fk\", columns: [table.lastEventId], foreignColumns: [cityDeliveryCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 8064
+      },
+      "sources": [
+        {
+          "file": "migrations/0124_city_delivery_callback_pipeline.sql",
+          "line": 121,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcwm_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"city_delivery_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/cityDeliveryCallbackPipeline.ts",
+          "line": 121,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcwm_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"city_delivery_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "city_delivery_callback_watermark.last_event_id",
+          "name": "last_event_id",
+          "table": "city_delivery_callback_watermark",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "city_delivery_callback_event.id",
+          "name": "id",
+          "table": "city_delivery_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('city_delivery_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "city_delivery_reconciliation_case.cdcrc_delivery_order_fk",
+      "previousKey": "city_delivery_reconciliation_case.city_delivery_reconciliation_case_delivery_order_id_store_deliv",
+      "catalog": {
+        "key": "city_delivery_reconciliation_case.cdcrc_delivery_order_fk",
+        "name": "cdcrc_delivery_order_fk",
+        "table": "city_delivery_reconciliation_case",
+        "type": "f",
+        "definition": "FOREIGN KEY (delivery_order_id) REFERENCES store_delivery_order(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "city_delivery_reconciliation_case.city_delivery_reconciliation_case_delivery_order_id_store_deliv",
+        "name": "city_delivery_reconciliation_case_delivery_order_id_store_deliv",
+        "table": "city_delivery_reconciliation_case",
+        "type": "f",
+        "definition": "FOREIGN KEY (delivery_order_id) REFERENCES store_delivery_order(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "city_delivery_reconciliation_case_delivery_order_id_store_delivery_order_id_fk",
+        "tableFrom": "city_delivery_reconciliation_case",
+        "tableTo": "store_delivery_order",
+        "columnsFrom": [
+          "delivery_order_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "cdcrc_delivery_order_fk",
+        "tableFrom": "city_delivery_reconciliation_case",
+        "tableTo": "store_delivery_order",
+        "columnsFrom": [
+          "delivery_order_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "deliveryOrderId",
+          "name": "delivery_order_id",
+          "type": "integer",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "store_delivery_order",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "serial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "store_delivery_order_pkey",
+        "equalityOperator": "pg_catalog.=(integer,integer)"
+      },
+      "model": {
+        "file": "src/models/schema/city_delivery_callback.ts",
+        "exportName": "cityDeliveryReconciliationCase",
+        "line": 218,
+        "previousDeclaration": "deliveryOrderId: integer(\"delivery_order_id\")\n      .notNull()\n      .references(() => storeDeliveryOrder.id, { onDelete: \"restrict\" })",
+        "declaration": "deliveryOrderId: integer(\"delivery_order_id\")\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"cdcrc_delivery_order_fk\", columns: [table.deliveryOrderId], foreignColumns: [storeDeliveryOrder.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 10422
+      },
+      "sources": [
+        {
+          "file": "migrations/0124_city_delivery_callback_pipeline.sql",
+          "line": 157,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcrc_delivery_order_fk\" FOREIGN KEY (\"delivery_order_id\")\n    REFERENCES \"store_delivery_order\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/cityDeliveryCallbackPipeline.ts",
+          "line": 157,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcrc_delivery_order_fk\" FOREIGN KEY (\"delivery_order_id\")\n    REFERENCES \"store_delivery_order\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "city_delivery_reconciliation_case.delivery_order_id",
+          "name": "delivery_order_id",
+          "table": "city_delivery_reconciliation_case",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "store_delivery_order.id",
+          "name": "id",
+          "table": "store_delivery_order",
+          "type": "integer",
+          "notNull": true,
+          "default": "nextval('store_delivery_order_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "city_delivery_reconciliation_case.cdcrc_event_fk",
+      "previousKey": "city_delivery_reconciliation_case.city_delivery_reconciliation_case_last_event_id_city_delivery_c",
+      "catalog": {
+        "key": "city_delivery_reconciliation_case.cdcrc_event_fk",
+        "name": "cdcrc_event_fk",
+        "table": "city_delivery_reconciliation_case",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES city_delivery_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "city_delivery_reconciliation_case.city_delivery_reconciliation_case_last_event_id_city_delivery_c",
+        "name": "city_delivery_reconciliation_case_last_event_id_city_delivery_c",
+        "table": "city_delivery_reconciliation_case",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES city_delivery_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "city_delivery_reconciliation_case_last_event_id_city_delivery_callback_event_id_fk",
+        "tableFrom": "city_delivery_reconciliation_case",
+        "tableTo": "city_delivery_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "cdcrc_event_fk",
+        "tableFrom": "city_delivery_reconciliation_case",
+        "tableTo": "city_delivery_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "lastEventId",
+          "name": "last_event_id",
+          "type": "bigint",
+          "notNull": false
+        }
+      ],
+      "reference": {
+        "table": "city_delivery_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "city_delivery_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/city_delivery_callback.ts",
+        "exportName": "cityDeliveryReconciliationCase",
+        "line": 229,
+        "previousDeclaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })\n      .references(() => cityDeliveryCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })",
+        "foreignKeyDeclaration": "foreignKey({ name: \"cdcrc_event_fk\", columns: [table.lastEventId], foreignColumns: [cityDeliveryCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 10422
+      },
+      "sources": [
+        {
+          "file": "migrations/0124_city_delivery_callback_pipeline.sql",
+          "line": 159,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcrc_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"city_delivery_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/cityDeliveryCallbackPipeline.ts",
+          "line": 159,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"cdcrc_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"city_delivery_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "city_delivery_reconciliation_case.last_event_id",
+          "name": "last_event_id",
+          "table": "city_delivery_reconciliation_case",
+          "type": "bigint",
+          "notNull": false,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "city_delivery_callback_event.id",
+          "name": "id",
+          "table": "city_delivery_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('city_delivery_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "data_migration_checkpoint.data_migration_checkpoint_run_id_fkey",
+      "previousKey": "data_migration_checkpoint.data_migration_checkpoint_run_id_data_migration_run_run_id_fk",
+      "catalog": {
+        "key": "data_migration_checkpoint.data_migration_checkpoint_run_id_fkey",
+        "name": "data_migration_checkpoint_run_id_fkey",
+        "table": "data_migration_checkpoint",
+        "type": "f",
+        "definition": "FOREIGN KEY (run_id) REFERENCES data_migration_run(run_id) ON DELETE CASCADE",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "data_migration_checkpoint.data_migration_checkpoint_run_id_data_migration_run_run_id_fk",
+        "name": "data_migration_checkpoint_run_id_data_migration_run_run_id_fk",
+        "table": "data_migration_checkpoint",
+        "type": "f",
+        "definition": "FOREIGN KEY (run_id) REFERENCES data_migration_run(run_id) ON DELETE CASCADE",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "data_migration_checkpoint_run_id_data_migration_run_run_id_fk",
+        "tableFrom": "data_migration_checkpoint",
+        "tableTo": "data_migration_run",
+        "columnsFrom": [
+          "run_id"
+        ],
+        "columnsTo": [
+          "run_id"
+        ],
+        "onDelete": "cascade",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "data_migration_checkpoint_run_id_fkey",
+        "tableFrom": "data_migration_checkpoint",
+        "tableTo": "data_migration_run",
+        "columnsFrom": [
+          "run_id"
+        ],
+        "columnsTo": [
+          "run_id"
+        ],
+        "onDelete": "cascade",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "runId",
+          "name": "run_id",
+          "type": "varchar(64)",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "data_migration_run",
+        "columns": [
+          {
+            "property": "runId",
+            "name": "run_id",
+            "type": "varchar(64)",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "data_migration_run_pkey",
+        "equalityOperator": "pg_catalog.=(text,text)"
+      },
+      "model": {
+        "file": "src/models/schema/migration.ts",
+        "exportName": "dataMigrationCheckpoint",
+        "line": 39,
+        "previousDeclaration": "runId: varchar(\"run_id\", { length: 64 })\n      .notNull()\n      .references(() => dataMigrationRun.runId, { onDelete: \"cascade\" })",
+        "declaration": "runId: varchar(\"run_id\", { length: 64 })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"data_migration_checkpoint_run_id_fkey\", columns: [table.runId], foreignColumns: [dataMigrationRun.runId] }).onDelete(\"cascade\")",
+        "extraConfigStart": 1835
+      },
+      "sources": [
+        {
+          "file": "migrations/0020_data_migration_control.sql",
+          "line": 16,
+          "lineCount": 1,
+          "sql": "  \"run_id\" VARCHAR(64) NOT NULL REFERENCES \"data_migration_run\" (\"run_id\") ON DELETE CASCADE,"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 2095,
+          "lineCount": 1,
+          "sql": "  \"run_id\" VARCHAR(64) NOT NULL REFERENCES \"data_migration_run\" (\"run_id\") ON DELETE CASCADE,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "data_migration_checkpoint.run_id",
+          "name": "run_id",
+          "table": "data_migration_checkpoint",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "data_migration_run.run_id",
+          "name": "run_id",
+          "table": "data_migration_run",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "merchant_shipment_callback_outbox.mscout_event_fk",
+      "previousKey": "merchant_shipment_callback_outbox.merchant_shipment_callback_outbox_event_id_merchant_shipment_ca",
+      "catalog": {
+        "key": "merchant_shipment_callback_outbox.mscout_event_fk",
+        "name": "mscout_event_fk",
+        "table": "merchant_shipment_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES merchant_shipment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "merchant_shipment_callback_outbox.merchant_shipment_callback_outbox_event_id_merchant_shipment_ca",
+        "name": "merchant_shipment_callback_outbox_event_id_merchant_shipment_ca",
+        "table": "merchant_shipment_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES merchant_shipment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "merchant_shipment_callback_outbox_event_id_merchant_shipment_callback_event_id_fk",
+        "tableFrom": "merchant_shipment_callback_outbox",
+        "tableTo": "merchant_shipment_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "mscout_event_fk",
+        "tableFrom": "merchant_shipment_callback_outbox",
+        "tableTo": "merchant_shipment_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "eventId",
+          "name": "event_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "merchant_shipment_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "merchant_shipment_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/merchant_shipment_callback.ts",
+        "exportName": "merchantShipmentCallbackOutbox",
+        "line": 114,
+        "previousDeclaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()\n      .references(() => merchantShipmentCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"mscout_event_fk\", columns: [table.eventId], foreignColumns: [merchantShipmentCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 5559
+      },
+      "sources": [
+        {
+          "file": "migrations/0123_merchant_shipment_callback_pipeline.sql",
+          "line": 77,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"mscout_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"merchant_shipment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/merchantShipmentCallbackPipeline.ts",
+          "line": 78,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"mscout_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"merchant_shipment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "merchant_shipment_callback_outbox.event_id",
+          "name": "event_id",
+          "table": "merchant_shipment_callback_outbox",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "merchant_shipment_callback_event.id",
+          "name": "id",
+          "table": "merchant_shipment_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('merchant_shipment_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "merchant_shipment_callback_watermark.mscwm_event_fk",
+      "previousKey": "merchant_shipment_callback_watermark.merchant_shipment_callback_watermark_last_event_id_merchant_shi",
+      "catalog": {
+        "key": "merchant_shipment_callback_watermark.mscwm_event_fk",
+        "name": "mscwm_event_fk",
+        "table": "merchant_shipment_callback_watermark",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES merchant_shipment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "merchant_shipment_callback_watermark.merchant_shipment_callback_watermark_last_event_id_merchant_shi",
+        "name": "merchant_shipment_callback_watermark_last_event_id_merchant_shi",
+        "table": "merchant_shipment_callback_watermark",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES merchant_shipment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "merchant_shipment_callback_watermark_last_event_id_merchant_shipment_callback_event_id_fk",
+        "tableFrom": "merchant_shipment_callback_watermark",
+        "tableTo": "merchant_shipment_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "mscwm_event_fk",
+        "tableFrom": "merchant_shipment_callback_watermark",
+        "tableTo": "merchant_shipment_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "lastEventId",
+          "name": "last_event_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "merchant_shipment_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "merchant_shipment_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/merchant_shipment_callback.ts",
+        "exportName": "merchantShipmentCallbackWatermark",
+        "line": 167,
+        "previousDeclaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })\n      .notNull()\n      .references(() => merchantShipmentCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"mscwm_event_fk\", columns: [table.lastEventId], foreignColumns: [merchantShipmentCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 7498
+      },
+      "sources": [
+        {
+          "file": "migrations/0123_merchant_shipment_callback_pipeline.sql",
+          "line": 114,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"mscwm_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"merchant_shipment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/merchantShipmentCallbackPipeline.ts",
+          "line": 115,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"mscwm_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"merchant_shipment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "merchant_shipment_callback_watermark.last_event_id",
+          "name": "last_event_id",
+          "table": "merchant_shipment_callback_watermark",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "merchant_shipment_callback_event.id",
+          "name": "id",
+          "table": "merchant_shipment_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('merchant_shipment_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "payment_callback_outbox.pco_event_fk",
+      "previousKey": "payment_callback_outbox.payment_callback_outbox_event_id_payment_callback_event_id_fk",
+      "catalog": {
+        "key": "payment_callback_outbox.pco_event_fk",
+        "name": "pco_event_fk",
+        "table": "payment_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES payment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "payment_callback_outbox.payment_callback_outbox_event_id_payment_callback_event_id_fk",
+        "name": "payment_callback_outbox_event_id_payment_callback_event_id_fk",
+        "table": "payment_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES payment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "payment_callback_outbox_event_id_payment_callback_event_id_fk",
+        "tableFrom": "payment_callback_outbox",
+        "tableTo": "payment_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "pco_event_fk",
+        "tableFrom": "payment_callback_outbox",
+        "tableTo": "payment_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "eventId",
+          "name": "event_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "payment_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "payment_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/payment_callback.ts",
+        "exportName": "paymentCallbackOutbox",
+        "line": 119,
+        "previousDeclaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()\n      .references(() => paymentCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"pco_event_fk\", columns: [table.eventId], foreignColumns: [paymentCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 5687
+      },
+      "sources": [
+        {
+          "file": "migrations/0120_payment_callback_pipeline.sql",
+          "line": 81,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"pco_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"payment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/paymentCallbackPipeline.ts",
+          "line": 81,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"pco_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"payment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "payment_callback_outbox.event_id",
+          "name": "event_id",
+          "table": "payment_callback_outbox",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "payment_callback_event.id",
+          "name": "id",
+          "table": "payment_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('payment_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "payment_reconciliation_action.pra_case_fk",
+      "previousKey": "payment_reconciliation_action.payment_reconciliation_action_case_id_payment_reconciliation_ca",
+      "catalog": {
+        "key": "payment_reconciliation_action.pra_case_fk",
+        "name": "pra_case_fk",
+        "table": "payment_reconciliation_action",
+        "type": "f",
+        "definition": "FOREIGN KEY (case_id) REFERENCES payment_reconciliation_case(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "payment_reconciliation_action.payment_reconciliation_action_case_id_payment_reconciliation_ca",
+        "name": "payment_reconciliation_action_case_id_payment_reconciliation_ca",
+        "table": "payment_reconciliation_action",
+        "type": "f",
+        "definition": "FOREIGN KEY (case_id) REFERENCES payment_reconciliation_case(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "payment_reconciliation_action_case_id_payment_reconciliation_case_id_fk",
+        "tableFrom": "payment_reconciliation_action",
+        "tableTo": "payment_reconciliation_case",
+        "columnsFrom": [
+          "case_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "pra_case_fk",
+        "tableFrom": "payment_reconciliation_action",
+        "tableTo": "payment_reconciliation_case",
+        "columnsFrom": [
+          "case_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "caseId",
+          "name": "case_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "payment_reconciliation_case",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "payment_reconciliation_case_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/payment_reconciliation.ts",
+        "exportName": "paymentReconciliationAction",
+        "line": 126,
+        "previousDeclaration": "caseId: bigint(\"case_id\", { mode: \"number\" }).notNull()\n      .references(() => paymentReconciliationCase.id, { onDelete: \"restrict\" })",
+        "declaration": "caseId: bigint(\"case_id\", { mode: \"number\" }).notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"pra_case_fk\", columns: [table.caseId], foreignColumns: [paymentReconciliationCase.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 6138
+      },
+      "sources": [
+        {
+          "file": "migrations/0121_payment_reconciliation.sql",
+          "line": 91,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"pra_case_fk\" FOREIGN KEY (\"case_id\")\n    REFERENCES \"payment_reconciliation_case\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/paymentReconciliation.ts",
+          "line": 91,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"pra_case_fk\" FOREIGN KEY (\"case_id\")\n    REFERENCES \"payment_reconciliation_case\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "payment_reconciliation_action.case_id",
+          "name": "case_id",
+          "table": "payment_reconciliation_action",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "payment_reconciliation_case.id",
+          "name": "id",
+          "table": "payment_reconciliation_case",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('payment_reconciliation_case_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "payment_reconciliation_case.prc_callback_event_fk",
+      "previousKey": "payment_reconciliation_case.payment_reconciliation_case_callback_event_id_payment_callback_",
+      "catalog": {
+        "key": "payment_reconciliation_case.prc_callback_event_fk",
+        "name": "prc_callback_event_fk",
+        "table": "payment_reconciliation_case",
+        "type": "f",
+        "definition": "FOREIGN KEY (callback_event_id) REFERENCES payment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "payment_reconciliation_case.payment_reconciliation_case_callback_event_id_payment_callback_",
+        "name": "payment_reconciliation_case_callback_event_id_payment_callback_",
+        "table": "payment_reconciliation_case",
+        "type": "f",
+        "definition": "FOREIGN KEY (callback_event_id) REFERENCES payment_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "payment_reconciliation_case_callback_event_id_payment_callback_event_id_fk",
+        "tableFrom": "payment_reconciliation_case",
+        "tableTo": "payment_callback_event",
+        "columnsFrom": [
+          "callback_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "prc_callback_event_fk",
+        "tableFrom": "payment_reconciliation_case",
+        "tableTo": "payment_callback_event",
+        "columnsFrom": [
+          "callback_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "callbackEventId",
+          "name": "callback_event_id",
+          "type": "bigint",
+          "notNull": false
+        }
+      ],
+      "reference": {
+        "table": "payment_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "payment_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/payment_reconciliation.ts",
+        "exportName": "paymentReconciliationCase",
+        "line": 61,
+        "previousDeclaration": "callbackEventId: bigint(\"callback_event_id\", { mode: \"number\" })\n      .references(() => paymentCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "callbackEventId: bigint(\"callback_event_id\", { mode: \"number\" })",
+        "foreignKeyDeclaration": "foreignKey({ name: \"prc_callback_event_fk\", columns: [table.callbackEventId], foreignColumns: [paymentCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 2941
+      },
+      "sources": [
+        {
+          "file": "migrations/0121_payment_reconciliation.sql",
+          "line": 29,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"prc_callback_event_fk\" FOREIGN KEY (\"callback_event_id\")\n    REFERENCES \"payment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/paymentReconciliation.ts",
+          "line": 29,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"prc_callback_event_fk\" FOREIGN KEY (\"callback_event_id\")\n    REFERENCES \"payment_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "payment_reconciliation_case.callback_event_id",
+          "name": "callback_event_id",
+          "table": "payment_reconciliation_case",
+          "type": "bigint",
+          "notNull": false,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "payment_callback_event.id",
+          "name": "id",
+          "table": "payment_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('payment_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "wechat_callback_outbox.wcout_event_fk",
+      "previousKey": "wechat_callback_outbox.wechat_callback_outbox_event_id_wechat_callback_event_id_fk",
+      "catalog": {
+        "key": "wechat_callback_outbox.wcout_event_fk",
+        "name": "wcout_event_fk",
+        "table": "wechat_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES wechat_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "wechat_callback_outbox.wechat_callback_outbox_event_id_wechat_callback_event_id_fk",
+        "name": "wechat_callback_outbox_event_id_wechat_callback_event_id_fk",
+        "table": "wechat_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES wechat_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "wechat_callback_outbox_event_id_wechat_callback_event_id_fk",
+        "tableFrom": "wechat_callback_outbox",
+        "tableTo": "wechat_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "wcout_event_fk",
+        "tableFrom": "wechat_callback_outbox",
+        "tableTo": "wechat_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "eventId",
+          "name": "event_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "wechat_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "wechat_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/wechat_callback.ts",
+        "exportName": "wechatCallbackOutbox",
+        "line": 115,
+        "previousDeclaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()\n      .references(() => wechatCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "eventId: bigint(\"event_id\", { mode: \"number\" })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"wcout_event_fk\", columns: [table.eventId], foreignColumns: [wechatCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 5293
+      },
+      "sources": [
+        {
+          "file": "migrations/0122_wechat_callback_pipeline.sql",
+          "line": 75,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"wcout_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"wechat_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/wechatCallbackPipeline.ts",
+          "line": 76,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"wcout_event_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"wechat_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "wechat_callback_outbox.event_id",
+          "name": "event_id",
+          "table": "wechat_callback_outbox",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "wechat_callback_event.id",
+          "name": "id",
+          "table": "wechat_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('wechat_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "wechat_callback_watermark.wcwm_event_fk",
+      "previousKey": "wechat_callback_watermark.wechat_callback_watermark_last_event_id_wechat_callback_event_i",
+      "catalog": {
+        "key": "wechat_callback_watermark.wcwm_event_fk",
+        "name": "wcwm_event_fk",
+        "table": "wechat_callback_watermark",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES wechat_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousCatalog": {
+        "key": "wechat_callback_watermark.wechat_callback_watermark_last_event_id_wechat_callback_event_i",
+        "name": "wechat_callback_watermark_last_event_id_wechat_callback_event_i",
+        "table": "wechat_callback_watermark",
+        "type": "f",
+        "definition": "FOREIGN KEY (last_event_id) REFERENCES wechat_callback_event(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "previousSnapshot": {
+        "name": "wechat_callback_watermark_last_event_id_wechat_callback_event_id_fk",
+        "tableFrom": "wechat_callback_watermark",
+        "tableTo": "wechat_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "snapshot": {
+        "name": "wcwm_event_fk",
+        "tableFrom": "wechat_callback_watermark",
+        "tableTo": "wechat_callback_event",
+        "columnsFrom": [
+          "last_event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "restrict",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "property": "lastEventId",
+          "name": "last_event_id",
+          "type": "bigint",
+          "notNull": true
+        }
+      ],
+      "reference": {
+        "table": "wechat_callback_event",
+        "columns": [
+          {
+            "property": "id",
+            "name": "id",
+            "type": "bigserial",
+            "notNull": true
+          }
+        ],
+        "primaryKey": "wechat_callback_event_pkey",
+        "equalityOperator": "pg_catalog.=(bigint,bigint)"
+      },
+      "model": {
+        "file": "src/models/schema/wechat_callback.ts",
+        "exportName": "wechatCallbackWatermark",
+        "line": 168,
+        "previousDeclaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })\n      .notNull()\n      .references(() => wechatCallbackEvent.id, { onDelete: \"restrict\" })",
+        "declaration": "lastEventId: bigint(\"last_event_id\", { mode: \"number\" })\n      .notNull()",
+        "foreignKeyDeclaration": "foreignKey({ name: \"wcwm_event_fk\", columns: [table.lastEventId], foreignColumns: [wechatCallbackEvent.id] }).onDelete(\"restrict\")",
+        "extraConfigStart": 7191
+      },
+      "sources": [
+        {
+          "file": "migrations/0122_wechat_callback_pipeline.sql",
+          "line": 111,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"wcwm_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"wechat_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        },
+        {
+          "file": "src/migrations/wechatCallbackPipeline.ts",
+          "line": 112,
+          "lineCount": 2,
+          "sql": "  CONSTRAINT \"wcwm_event_fk\" FOREIGN KEY (\"last_event_id\")\n    REFERENCES \"wechat_callback_event\" (\"id\") ON DELETE RESTRICT,"
+        }
+      ],
+      "columnsCatalog": [
+        {
+          "key": "wechat_callback_watermark.last_event_id",
+          "name": "last_event_id",
+          "table": "wechat_callback_watermark",
+          "type": "bigint",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "referenceColumnsCatalog": [
+        {
+          "key": "wechat_callback_event.id",
+          "name": "id",
+          "table": "wechat_callback_event",
+          "type": "bigint",
+          "notNull": true,
+          "default": "nextval('wechat_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    }
+  ]
+}
