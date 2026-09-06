@@ -25,6 +25,7 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  check,
 } from "drizzle-orm/pg-core";
 
 // ─── 优惠券模板 (可领取) ───────────────────────────────────
@@ -182,6 +183,10 @@ export const storeOrderProductCouponReward = pgTable(
     uniqueIndex("sopcr_order_issue_uq").on(table.orderId, table.issueCouponId),
     uniqueIndex("sopcr_coupon_user_uq").on(table.couponUserId),
     index("sopcr_uid_order").on(table.uid, table.orderId, table.id),
+    check("sopcr_positive_ids_ck", sql`
+      ${table.orderId} > 0 AND ${table.uid} > 0 AND ${table.productId} > 0
+      AND ${table.issueCouponId} > 0 AND ${table.couponUserId} > 0 AND ${table.addTime} >= 0
+    `),
   ],
 );
 

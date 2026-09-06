@@ -13,7 +13,10 @@ import {
   index,
   uniqueIndex,
   check,
+  foreignKey,
 } from "drizzle-orm/pg-core";
+import { notValid } from "../pgNotValid";
+import { storeOrderCartInfo } from "./order";
 import { sql } from "drizzle-orm";
 
 /** 商品评价 (对应原版 store_product_reply) */
@@ -87,6 +90,7 @@ export const storeProductReply = pgTable(
       "spr_scores_ck",
       sql`${t.productScore} BETWEEN 1 AND 5 AND ${t.serviceScore} BETWEEN 1 AND 5 AND ${t.logisticsScore} BETWEEN 1 AND 5 AND ${t.deliveryScore} BETWEEN 1 AND 5 AND ${t.replyScore} BETWEEN 1 AND 3`,
     ),
+    notValid(foreignKey({ name: "spr_order_cart_info_fk", columns: [t.orderCartInfoId], foreignColumns: [storeOrderCartInfo.id] })),
   ],
 );
 

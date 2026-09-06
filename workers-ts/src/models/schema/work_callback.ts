@@ -15,6 +15,8 @@ import {
   unique,
   uniqueIndex,
   varchar,
+  check,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 
 export type WorkCallbackPayload = Record<string, string | number>;
@@ -72,6 +74,33 @@ export const workCallbackEvent = pgTable(
       table.updateTime,
       table.id,
     ),
+    check("wce_hashes_ck", sql`
+      ${table.eventKey} ~ '^[0-9a-f]{64}$'
+      AND ${table.payloadHash} ~ '^[0-9a-f]{64}$'
+      AND ${table.subjectKeyHash} ~ '^[0-9a-f]{64}$'
+    `),
+    check("wce_payload_object_ck", sql`jsonb_typeof(${table.payload}) = 'object'`),
+    check("wce_payload_retention_ck", sql`
+      ${table.payloadRetainedUntil} >= ${table.receivedTime}
+      AND ${table.payloadRedactedTime} >= 0
+      AND (${table.payloadRedactedTime} = 0 OR ${table.payloadRedactedTime} >= ${table.receivedTime})
+    `),
+    check("wce_projection_status_ck", sql`
+      ${table.projectionStatus} IN (
+      'PENDING','PROCESSING','REFRESH_REQUIRED','APPLIED','APPLIED_NOOP',
+      'SUPERSEDED','IGNORED','FAILED','DEAD'
+      )
+    `),
+    check("wce_status_ck", sql`
+      ${table.status} IN (
+      'RECEIVED','PROCESSING','ORDERED','APPLIED','APPLIED_NOOP',
+      'SUPERSEDED','IGNORED','FAILED','DEAD'
+      )
+    `),
+    check("wce_time_ck", sql`
+      ${table.eventTime} >= 0 AND ${table.receivedTime} >= 0 AND ${table.processedTime} >= 0
+      AND ${table.updateTime} >= 0 AND ${table.leaseUntil} >= 0 AND ${table.attemptCount} >= 0
+    `),
   ],
 );
 
@@ -103,6 +132,14 @@ export const workCallbackOutbox = pgTable(
     index("wco_expired_lease")
       .on(table.leaseUntil, table.id)
       .where(sql`${table.status} IN ('ENQUEUING', 'ENQUEUED', 'PROCESSING')`),
+    foreignKey({ name: "wco_event_id_fk", columns: [table.eventId], foreignColumns: [workCallbackEvent.id] }).onDelete("cascade"),
+    check("wco_event_key_ck", sql`${table.eventKey} ~ '^[0-9a-f]{64}$'`),
+    check("wco_status_ck", sql`${table.status} IN ('PENDING','ENQUEUING','ENQUEUED','PROCESSING','COMPLETED','FAILED','DEAD')`),
+    check("wco_time_ck", sql`
+      ${table.dispatchCount} >= 0 AND ${table.attemptCount} >= 0 AND ${table.availableTime} >= 0
+      AND ${table.leaseUntil} >= 0 AND ${table.enqueuedTime} >= 0 AND ${table.processedTime} >= 0
+      AND ${table.addTime} >= 0 AND ${table.updateTime} >= 0
+    `),
   ],
 );
 
@@ -113,7 +150,10 @@ export const workCallbackWatermark = pgTable("work_callback_watermark", {
   eventId: integer("event_id").notNull(),
   eventKey: varchar("event_key", { length: 64 }).notNull(),
   updateTime: integer("update_time").default(0).notNull(),
-});
+}, (table) => [
+    check("wcw_hashes_ck", sql`${table.subjectKeyHash} ~ '^[0-9a-f]{64}$' AND ${table.eventKey} ~ '^[0-9a-f]{64}$'`),
+    check("wcw_time_ck", sql`${table.eventTime} >= 0 AND ${table.updateTime} >= 0`),
+]);
 
 export type WorkCallbackEvent = typeof workCallbackEvent.$inferSelect;
 export type WorkCallbackOutbox = typeof workCallbackOutbox.$inferSelect;

@@ -21,6 +21,7 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { notValid } from "../pgNotValid";
 import { sql } from "drizzle-orm";
 
 // ─── 管理员 ──────────────────────────────────────────────────
@@ -102,6 +103,15 @@ export const systemMenus = pgTable(
     index("sm_parent_sort").on(t.type, t.pid, t.sort),
     index("sm_unique_auth").on(t.uniqueAuth, t.isDel),
     index("sm_api_method").on(t.type, t.authType, t.methods, t.apiUrl, t.isDel),
+    notValid(check("sm_auth_type_ck", sql`${t.authType} BETWEEN 0 AND 2`)),
+    notValid(check("sm_flags_ck", sql`
+      ${t.isShow} BETWEEN 0 AND 1 AND
+      ${t.isShowPath} BETWEEN 0 AND 1 AND
+      ${t.access} BETWEEN 0 AND 1 AND
+      ${t.isHeader} BETWEEN 0 AND 1 AND
+      ${t.isDel} BETWEEN 0 AND 1
+    `)),
+    notValid(check("sm_type_ck", sql`${t.type} BETWEEN 1 AND 4`)),
   ],
 );
 
@@ -324,6 +334,14 @@ export const storeServiceTransfer = pgTable(
     index("sst_customer_time").on(t.customerUid, t.createdAt, t.requestKey),
     index("sst_customer_scope_time").on(t.customerUid, t.isTourist, t.createdAt, t.requestKey),
     index("sst_target_time").on(t.toKefuUid, t.createdAt, t.requestKey),
+    check("sst_count_time_ck", sql`${t.copiedMessageCount} >= 0 AND ${t.createdAt} >= 0`),
+    check("sst_distinct_kefu_ck", sql`${t.fromKefuUid} <> ${t.toKefuUid}`),
+    check("sst_is_tourist_ck", sql`${t.isTourist} IN (0, 1)`),
+    check("sst_positive_ids_ck", sql`
+      ${t.customerUid} > 0 AND ${t.fromKefuUid} > 0 AND ${t.toKefuUid} > 0
+      AND ${t.fromServiceId} > 0 AND ${t.toServiceId} > 0
+      AND ${t.sourceRecordId} > 0 AND ${t.targetRecordId} > 0
+    `),
   ],
 );
 
@@ -364,5 +382,12 @@ export const kefuVisitorSession = pgTable(
       .where(sql`${t.revokedAt} = 0`),
     index("kvs_kefu_active").on(t.kefuUid, t.expiresAt, t.visitorUid)
       .where(sql`${t.revokedAt} = 0`),
+    check("kvs_positive_ids_ck", sql`${t.visitorUid} >= 1000000000 AND ${t.serviceId} > 0 AND ${t.kefuUid} > 0`),
+    check("kvs_time_ck", sql`
+      ${t.createdAt} > 0 AND ${t.expiresAt} > ${t.createdAt}
+      AND ${t.lastSeenAt} >= ${t.createdAt} AND ${t.lastSeenAt} <= ${t.expiresAt}
+      AND (${t.revokedAt} = 0 OR ${t.revokedAt} >= ${t.createdAt})
+    `),
+    check("kvs_token_hash_ck", sql`${t.tokenHash} ~ '^[0-9a-f]{64}$'`),
   ],
 );

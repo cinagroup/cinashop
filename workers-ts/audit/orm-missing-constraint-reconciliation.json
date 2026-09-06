@@ -1,0 +1,3058 @@
+{
+  "sourceCommit": "1641e653c455e53d6b07d1d097dbbbae114992ba",
+  "sourceRunId": 34013882048,
+  "baselineCommit": "b07d01e54c384bafc7507ec2113ffd0f42fbda8c",
+  "scope": "41 true missing constraints only: 39 CHECK, 2 FK, including 8 NOT VALID. No alias or same-name change is waived.",
+  "entries": [
+    {
+      "key": "agent_level.al_brokerage_ck",
+      "catalog": {
+        "key": "agent_level.al_brokerage_ck",
+        "name": "al_brokerage_ck",
+        "table": "agent_level",
+        "type": "c",
+        "definition": "CHECK ((((one_brokerage >= 0) AND (one_brokerage <= 1000)) AND ((two_brokerage >= 0) AND (two_brokerage <= 1000))))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/agent_level.ts",
+        "exportName": "agentLevel",
+        "parameters": [
+          "t"
+        ],
+        "line": 29,
+        "declaration": "check(\"al_brokerage_ck\", sql`${t.oneBrokerage} BETWEEN 0 AND 1000 AND ${t.twoBrokerage} BETWEEN 0 AND 1000`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0011_order_brokerage_settlement.sql",
+          "line": 14,
+          "declarationStart": "  CONSTRAINT \"al_brokerage_ck\" CHECK (",
+          "sql": "CONSTRAINT \"al_brokerage_ck\" CHECK (\n    \"one_brokerage\" BETWEEN 0 AND 1000 AND \"two_brokerage\" BETWEEN 0 AND 1000\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1546,
+          "declarationStart": "  CONSTRAINT \"al_brokerage_ck\" CHECK (",
+          "sql": "CONSTRAINT \"al_brokerage_ck\" CHECK (\n    \"one_brokerage\" BETWEEN 0 AND 1000 AND \"two_brokerage\" BETWEEN 0 AND 1000\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "al_brokerage_ck",
+        "value": "\"agent_level\".\"one_brokerage\" BETWEEN 0 AND 1000 AND \"agent_level\".\"two_brokerage\" BETWEEN 0 AND 1000"
+      },
+      "columns": [
+        {
+          "key": "agent_level.one_brokerage",
+          "name": "one_brokerage",
+          "table": "agent_level",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "agent_level.two_brokerage",
+          "name": "two_brokerage",
+          "table": "agent_level",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "kefu_visitor_session.kvs_positive_ids_ck",
+      "catalog": {
+        "key": "kefu_visitor_session.kvs_positive_ids_ck",
+        "name": "kvs_positive_ids_ck",
+        "table": "kefu_visitor_session",
+        "type": "c",
+        "definition": "CHECK (((visitor_uid >= 1000000000) AND (service_id > 0) AND (kefu_uid > 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "kefuVisitorSession",
+        "parameters": [
+          "t"
+        ],
+        "line": 385,
+        "declaration": "check(\"kvs_positive_ids_ck\", sql`${t.visitorUid} >= 1000000000 AND ${t.serviceId} > 0 AND ${t.kefuUid} > 0`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0104_kefu_visitor_session.sql",
+          "line": 18,
+          "declarationStart": "  CONSTRAINT \"kvs_positive_ids_ck\" CHECK (",
+          "sql": "CONSTRAINT \"kvs_positive_ids_ck\" CHECK (\n    \"visitor_uid\" >= 1000000000 AND \"service_id\" > 0 AND \"kefu_uid\" > 0\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6255,
+          "declarationStart": "  CONSTRAINT \"kvs_positive_ids_ck\" CHECK (",
+          "sql": "CONSTRAINT \"kvs_positive_ids_ck\" CHECK (\n    \"visitor_uid\" >= 1000000000 AND \"service_id\" > 0 AND \"kefu_uid\" > 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "kvs_positive_ids_ck",
+        "value": "\"kefu_visitor_session\".\"visitor_uid\" >= 1000000000 AND \"kefu_visitor_session\".\"service_id\" > 0 AND \"kefu_visitor_session\".\"kefu_uid\" > 0"
+      },
+      "columns": [
+        {
+          "key": "kefu_visitor_session.visitor_uid",
+          "name": "visitor_uid",
+          "table": "kefu_visitor_session",
+          "type": "integer",
+          "notNull": true,
+          "default": "nextval('kefu_visitor_uid_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "kefu_visitor_session.service_id",
+          "name": "service_id",
+          "table": "kefu_visitor_session",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "kefu_visitor_session.kefu_uid",
+          "name": "kefu_uid",
+          "table": "kefu_visitor_session",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "kefu_visitor_session.kvs_time_ck",
+      "catalog": {
+        "key": "kefu_visitor_session.kvs_time_ck",
+        "name": "kvs_time_ck",
+        "table": "kefu_visitor_session",
+        "type": "c",
+        "definition": "CHECK (((created_at > 0) AND (expires_at > created_at) AND (last_seen_at >= created_at) AND (last_seen_at <= expires_at) AND ((revoked_at = 0) OR (revoked_at >= created_at))))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "kefuVisitorSession",
+        "parameters": [
+          "t"
+        ],
+        "line": 386,
+        "declaration": "check(\"kvs_time_ck\", sql`\n      ${t.createdAt} > 0 AND ${t.expiresAt} > ${t.createdAt}\n      AND ${t.lastSeenAt} >= ${t.createdAt} AND ${t.lastSeenAt} <= ${t.expiresAt}\n      AND (${t.revokedAt} = 0 OR ${t.revokedAt} >= ${t.createdAt})\n    `)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0104_kefu_visitor_session.sql",
+          "line": 22,
+          "declarationStart": "  CONSTRAINT \"kvs_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"kvs_time_ck\" CHECK (\n    \"created_at\" > 0 AND \"expires_at\" > \"created_at\"\n    AND \"last_seen_at\" >= \"created_at\" AND \"last_seen_at\" <= \"expires_at\"\n    AND (\"revoked_at\" = 0 OR \"revoked_at\" >= \"created_at\")\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6259,
+          "declarationStart": "  CONSTRAINT \"kvs_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"kvs_time_ck\" CHECK (\n    \"created_at\" > 0 AND \"expires_at\" > \"created_at\"\n    AND \"last_seen_at\" >= \"created_at\" AND \"last_seen_at\" <= \"expires_at\"\n    AND (\"revoked_at\" = 0 OR \"revoked_at\" >= \"created_at\")\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "kvs_time_ck",
+        "value": "\n      \"kefu_visitor_session\".\"created_at\" > 0 AND \"kefu_visitor_session\".\"expires_at\" > \"kefu_visitor_session\".\"created_at\"\n      AND \"kefu_visitor_session\".\"last_seen_at\" >= \"kefu_visitor_session\".\"created_at\" AND \"kefu_visitor_session\".\"last_seen_at\" <= \"kefu_visitor_session\".\"expires_at\"\n      AND (\"kefu_visitor_session\".\"revoked_at\" = 0 OR \"kefu_visitor_session\".\"revoked_at\" >= \"kefu_visitor_session\".\"created_at\")\n    "
+      },
+      "columns": [
+        {
+          "key": "kefu_visitor_session.created_at",
+          "name": "created_at",
+          "table": "kefu_visitor_session",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "kefu_visitor_session.expires_at",
+          "name": "expires_at",
+          "table": "kefu_visitor_session",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "kefu_visitor_session.last_seen_at",
+          "name": "last_seen_at",
+          "table": "kefu_visitor_session",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "kefu_visitor_session.revoked_at",
+          "name": "revoked_at",
+          "table": "kefu_visitor_session",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "kefu_visitor_session.kvs_token_hash_ck",
+      "catalog": {
+        "key": "kefu_visitor_session.kvs_token_hash_ck",
+        "name": "kvs_token_hash_ck",
+        "table": "kefu_visitor_session",
+        "type": "c",
+        "definition": "CHECK (((token_hash)::text ~ '^[0-9a-f]{64}$'::text))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "kefuVisitorSession",
+        "parameters": [
+          "t"
+        ],
+        "line": 391,
+        "declaration": "check(\"kvs_token_hash_ck\", sql`${t.tokenHash} ~ '^[0-9a-f]{64}$'`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0104_kefu_visitor_session.sql",
+          "line": 21,
+          "declarationStart": "  CONSTRAINT \"kvs_token_hash_ck\" CHECK (\"token_hash\" ~ '^[0-9a-f]{64}$'),",
+          "sql": "CONSTRAINT \"kvs_token_hash_ck\" CHECK (\"token_hash\" ~ '^[0-9a-f]{64}$')"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6258,
+          "declarationStart": "  CONSTRAINT \"kvs_token_hash_ck\" CHECK (\"token_hash\" ~ '^[0-9a-f]{64}$'),",
+          "sql": "CONSTRAINT \"kvs_token_hash_ck\" CHECK (\"token_hash\" ~ '^[0-9a-f]{64}$')"
+        }
+      ],
+      "snapshot": {
+        "name": "kvs_token_hash_ck",
+        "value": "\"kefu_visitor_session\".\"token_hash\" ~ '^[0-9a-f]{64}$'"
+      },
+      "columns": [
+        {
+          "key": "kefu_visitor_session.token_hash",
+          "name": "token_hash",
+          "table": "kefu_visitor_session",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "store_order_outbox.soob_count_ck",
+      "catalog": {
+        "key": "store_order_outbox.soob_count_ck",
+        "name": "soob_count_ck",
+        "table": "store_order_outbox",
+        "type": "c",
+        "definition": "CHECK (((dispatch_count >= 0) AND (attempt_count >= 0) AND (replay_count >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/order_outbox.ts",
+        "exportName": "storeOrderOutbox",
+        "parameters": [
+          "t"
+        ],
+        "line": 123,
+        "declaration": "check(\"soob_count_ck\", sql`${t.dispatchCount} >= 0 AND ${t.attemptCount} >= 0 AND ${t.replayCount} >= 0`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0010_payment_outbox.sql",
+          "line": 26,
+          "declarationStart": "  CONSTRAINT \"soob_count_ck\" CHECK (",
+          "sql": "CONSTRAINT \"soob_count_ck\" CHECK (\n    \"dispatch_count\" >= 0 AND \"attempt_count\" >= 0 AND \"replay_count\" >= 0\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1513,
+          "declarationStart": "  CONSTRAINT \"soob_count_ck\" CHECK (",
+          "sql": "CONSTRAINT \"soob_count_ck\" CHECK (\n    \"dispatch_count\" >= 0 AND \"attempt_count\" >= 0 AND \"replay_count\" >= 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "soob_count_ck",
+        "value": "\"store_order_outbox\".\"dispatch_count\" >= 0 AND \"store_order_outbox\".\"attempt_count\" >= 0 AND \"store_order_outbox\".\"replay_count\" >= 0"
+      },
+      "columns": [
+        {
+          "key": "store_order_outbox.dispatch_count",
+          "name": "dispatch_count",
+          "table": "store_order_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_outbox.attempt_count",
+          "name": "attempt_count",
+          "table": "store_order_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_outbox.replay_count",
+          "name": "replay_count",
+          "table": "store_order_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_order_outbox.soob_status_ck",
+      "catalog": {
+        "key": "store_order_outbox.soob_status_ck",
+        "name": "soob_status_ck",
+        "table": "store_order_outbox",
+        "type": "c",
+        "definition": "CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ENQUEUING'::character varying, 'ENQUEUED'::character varying, 'PROCESSING'::character varying, 'COMPLETED'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/order_outbox.ts",
+        "exportName": "storeOrderOutbox",
+        "parameters": [
+          "t"
+        ],
+        "line": 124,
+        "declaration": "check(\"soob_status_ck\", sql`${t.status} IN ('PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'DEAD')`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0010_payment_outbox.sql",
+          "line": 23,
+          "declarationStart": "  CONSTRAINT \"soob_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"soob_status_ck\" CHECK (\n    \"status\" IN ('PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'DEAD')\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1510,
+          "declarationStart": "  CONSTRAINT \"soob_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"soob_status_ck\" CHECK (\n    \"status\" IN ('PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'DEAD')\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "soob_status_ck",
+        "value": "\"store_order_outbox\".\"status\" IN ('PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'DEAD')"
+      },
+      "columns": [
+        {
+          "key": "store_order_outbox.status",
+          "name": "status",
+          "table": "store_order_outbox",
+          "type": "character varying(16)",
+          "notNull": true,
+          "default": "'PENDING'::character varying",
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "store_order_outbox.soob_time_ck",
+      "catalog": {
+        "key": "store_order_outbox.soob_time_ck",
+        "name": "soob_time_ck",
+        "table": "store_order_outbox",
+        "type": "c",
+        "definition": "CHECK (((available_time >= 0) AND (lease_until >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/order_outbox.ts",
+        "exportName": "storeOrderOutbox",
+        "parameters": [
+          "t"
+        ],
+        "line": 125,
+        "declaration": "check(\"soob_time_ck\", sql`${t.availableTime} >= 0 AND ${t.leaseUntil} >= 0`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0010_payment_outbox.sql",
+          "line": 29,
+          "declarationStart": "  CONSTRAINT \"soob_time_ck\" CHECK (\"available_time\" >= 0 AND \"lease_until\" >= 0)",
+          "sql": "CONSTRAINT \"soob_time_ck\" CHECK (\"available_time\" >= 0 AND \"lease_until\" >= 0)"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1516,
+          "declarationStart": "  CONSTRAINT \"soob_time_ck\" CHECK (\"available_time\" >= 0 AND \"lease_until\" >= 0)",
+          "sql": "CONSTRAINT \"soob_time_ck\" CHECK (\"available_time\" >= 0 AND \"lease_until\" >= 0)"
+        }
+      ],
+      "snapshot": {
+        "name": "soob_time_ck",
+        "value": "\"store_order_outbox\".\"available_time\" >= 0 AND \"store_order_outbox\".\"lease_until\" >= 0"
+      },
+      "columns": [
+        {
+          "key": "store_order_outbox.available_time",
+          "name": "available_time",
+          "table": "store_order_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_outbox.lease_until",
+          "name": "lease_until",
+          "table": "store_order_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_order_product_coupon_reward.sopcr_positive_ids_ck",
+      "catalog": {
+        "key": "store_order_product_coupon_reward.sopcr_positive_ids_ck",
+        "name": "sopcr_positive_ids_ck",
+        "table": "store_order_product_coupon_reward",
+        "type": "c",
+        "definition": "CHECK (((order_id > 0) AND (uid > 0) AND (product_id > 0) AND (issue_coupon_id > 0) AND (coupon_user_id > 0) AND (add_time >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/activity.ts",
+        "exportName": "storeOrderProductCouponReward",
+        "parameters": [
+          "table"
+        ],
+        "line": 186,
+        "declaration": "check(\"sopcr_positive_ids_ck\", sql`\n      ${table.orderId} > 0 AND ${table.uid} > 0 AND ${table.productId} > 0\n      AND ${table.issueCouponId} > 0 AND ${table.couponUserId} > 0 AND ${table.addTime} >= 0\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0100_order_product_coupon_reward.sql",
+          "line": 11,
+          "declarationStart": "  CONSTRAINT \"sopcr_positive_ids_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sopcr_positive_ids_ck\" CHECK (\n    \"order_id\" > 0 AND \"uid\" > 0 AND \"product_id\" > 0\n      AND \"issue_coupon_id\" > 0 AND \"coupon_user_id\" > 0 AND \"add_time\" >= 0\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6143,
+          "declarationStart": "  CONSTRAINT \"sopcr_positive_ids_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sopcr_positive_ids_ck\" CHECK (\n    \"order_id\" > 0 AND \"uid\" > 0 AND \"product_id\" > 0\n      AND \"issue_coupon_id\" > 0 AND \"coupon_user_id\" > 0 AND \"add_time\" >= 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "sopcr_positive_ids_ck",
+        "value": "\n      \"store_order_product_coupon_reward\".\"order_id\" > 0 AND \"store_order_product_coupon_reward\".\"uid\" > 0 AND \"store_order_product_coupon_reward\".\"product_id\" > 0\n      AND \"store_order_product_coupon_reward\".\"issue_coupon_id\" > 0 AND \"store_order_product_coupon_reward\".\"coupon_user_id\" > 0 AND \"store_order_product_coupon_reward\".\"add_time\" >= 0\n    "
+      },
+      "columns": [
+        {
+          "key": "store_order_product_coupon_reward.order_id",
+          "name": "order_id",
+          "table": "store_order_product_coupon_reward",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_product_coupon_reward.uid",
+          "name": "uid",
+          "table": "store_order_product_coupon_reward",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_product_coupon_reward.product_id",
+          "name": "product_id",
+          "table": "store_order_product_coupon_reward",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_product_coupon_reward.issue_coupon_id",
+          "name": "issue_coupon_id",
+          "table": "store_order_product_coupon_reward",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_product_coupon_reward.coupon_user_id",
+          "name": "coupon_user_id",
+          "table": "store_order_product_coupon_reward",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_product_coupon_reward.add_time",
+          "name": "add_time",
+          "table": "store_order_product_coupon_reward",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_order_refund_payment.sorp_amount_ck",
+      "catalog": {
+        "key": "store_order_refund_payment.sorp_amount_ck",
+        "name": "sorp_amount_ck",
+        "table": "store_order_refund_payment",
+        "type": "c",
+        "definition": "CHECK (((request_amount >= 0) AND (total_amount >= 0) AND (request_amount <= total_amount)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/order_refund_payment.ts",
+        "exportName": "storeOrderRefundPayment",
+        "parameters": [
+          "t"
+        ],
+        "line": 46,
+        "declaration": "check(\"sorp_amount_ck\", sql`${t.requestAmount} >= 0 AND ${t.totalAmount} >= 0 AND ${t.requestAmount} <= ${t.totalAmount}`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0009_third_party_refund.sql",
+          "line": 25,
+          "declarationStart": "  CONSTRAINT \"sorp_amount_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sorp_amount_ck\" CHECK (\n    \"request_amount\" >= 0 AND \"total_amount\" >= 0 AND \"request_amount\" <= \"total_amount\"\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1471,
+          "declarationStart": "  CONSTRAINT \"sorp_amount_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sorp_amount_ck\" CHECK (\n    \"request_amount\" >= 0 AND \"total_amount\" >= 0 AND \"request_amount\" <= \"total_amount\"\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "sorp_amount_ck",
+        "value": "\"store_order_refund_payment\".\"request_amount\" >= 0 AND \"store_order_refund_payment\".\"total_amount\" >= 0 AND \"store_order_refund_payment\".\"request_amount\" <= \"store_order_refund_payment\".\"total_amount\""
+      },
+      "columns": [
+        {
+          "key": "store_order_refund_payment.request_amount",
+          "name": "request_amount",
+          "table": "store_order_refund_payment",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_order_refund_payment.total_amount",
+          "name": "total_amount",
+          "table": "store_order_refund_payment",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_order_refund_payment.sorp_provider_ck",
+      "catalog": {
+        "key": "store_order_refund_payment.sorp_provider_ck",
+        "name": "sorp_provider_ck",
+        "table": "store_order_refund_payment",
+        "type": "c",
+        "definition": "CHECK (((provider)::text = ANY ((ARRAY['wechat'::character varying, 'alipay'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/order_refund_payment.ts",
+        "exportName": "storeOrderRefundPayment",
+        "parameters": [
+          "t"
+        ],
+        "line": 47,
+        "declaration": "check(\"sorp_provider_ck\", sql`${t.provider} IN ('wechat', 'alipay')`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0009_third_party_refund.sql",
+          "line": 21,
+          "declarationStart": "  CONSTRAINT \"sorp_provider_ck\" CHECK (\"provider\" IN ('wechat', 'alipay')),",
+          "sql": "CONSTRAINT \"sorp_provider_ck\" CHECK (\"provider\" IN ('wechat', 'alipay'))"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1467,
+          "declarationStart": "  CONSTRAINT \"sorp_provider_ck\" CHECK (\"provider\" IN ('wechat', 'alipay')),",
+          "sql": "CONSTRAINT \"sorp_provider_ck\" CHECK (\"provider\" IN ('wechat', 'alipay'))"
+        }
+      ],
+      "snapshot": {
+        "name": "sorp_provider_ck",
+        "value": "\"store_order_refund_payment\".\"provider\" IN ('wechat', 'alipay')"
+      },
+      "columns": [
+        {
+          "key": "store_order_refund_payment.provider",
+          "name": "provider",
+          "table": "store_order_refund_payment",
+          "type": "character varying(16)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "store_order_refund_payment.sorp_status_ck",
+      "catalog": {
+        "key": "store_order_refund_payment.sorp_status_ck",
+        "name": "sorp_status_ck",
+        "table": "store_order_refund_payment",
+        "type": "c",
+        "definition": "CHECK (((provider_status)::text = ANY ((ARRAY['CREATED'::character varying, 'REQUESTING'::character varying, 'PROCESSING'::character varying, 'SUCCESS'::character varying, 'CLOSED'::character varying, 'ABNORMAL'::character varying, 'FAILED'::character varying, 'UNKNOWN'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/order_refund_payment.ts",
+        "exportName": "storeOrderRefundPayment",
+        "parameters": [
+          "t"
+        ],
+        "line": 48,
+        "declaration": "check(\"sorp_status_ck\", sql`${t.providerStatus} IN ('CREATED', 'REQUESTING', 'PROCESSING', 'SUCCESS', 'CLOSED', 'ABNORMAL', 'FAILED', 'UNKNOWN')`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0009_third_party_refund.sql",
+          "line": 22,
+          "declarationStart": "  CONSTRAINT \"sorp_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sorp_status_ck\" CHECK (\n    \"provider_status\" IN ('CREATED', 'REQUESTING', 'PROCESSING', 'SUCCESS', 'CLOSED', 'ABNORMAL', 'FAILED', 'UNKNOWN')\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1468,
+          "declarationStart": "  CONSTRAINT \"sorp_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sorp_status_ck\" CHECK (\n    \"provider_status\" IN ('CREATED', 'REQUESTING', 'PROCESSING', 'SUCCESS', 'CLOSED', 'ABNORMAL', 'FAILED', 'UNKNOWN')\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "sorp_status_ck",
+        "value": "\"store_order_refund_payment\".\"provider_status\" IN ('CREATED', 'REQUESTING', 'PROCESSING', 'SUCCESS', 'CLOSED', 'ABNORMAL', 'FAILED', 'UNKNOWN')"
+      },
+      "columns": [
+        {
+          "key": "store_order_refund_payment.provider_status",
+          "name": "provider_status",
+          "table": "store_order_refund_payment",
+          "type": "character varying(24)",
+          "notNull": true,
+          "default": "'CREATED'::character varying",
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "store_product_attr_value.spav_is_retired_ck",
+      "catalog": {
+        "key": "store_product_attr_value.spav_is_retired_ck",
+        "name": "spav_is_retired_ck",
+        "table": "store_product_attr_value",
+        "type": "c",
+        "definition": "CHECK ((is_retired = ANY (ARRAY[0, 1]))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "exportName": "storeProductAttrValue",
+        "parameters": [
+          "t"
+        ],
+        "line": 179,
+        "declaration": "notValid(check(\"spav_is_retired_ck\", sql`${t.isRetired} IN (0, 1)`))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0126_product_sku_retirement.sql",
+          "line": 16,
+          "declarationStart": "      ADD CONSTRAINT \"spav_is_retired_ck\" CHECK (\"is_retired\" IN (0, 1)) NOT VALID;",
+          "sql": "CONSTRAINT \"spav_is_retired_ck\" CHECK (\"is_retired\" IN (0, 1)) NOT VALID"
+        },
+        {
+          "file": "src/migrations/productSkuRetirement.ts",
+          "line": 16,
+          "declarationStart": "      ADD CONSTRAINT \"spav_is_retired_ck\" CHECK (\"is_retired\" IN (0, 1)) NOT VALID;",
+          "sql": "CONSTRAINT \"spav_is_retired_ck\" CHECK (\"is_retired\" IN (0, 1)) NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "spav_is_retired_ck",
+        "value": "\"store_product_attr_value\".\"is_retired\" IN (0, 1)",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "store_product_attr_value.is_retired",
+          "name": "is_retired",
+          "table": "store_product_attr_value",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_product_description.spd_type_ck",
+      "catalog": {
+        "key": "store_product_description.spd_type_ck",
+        "name": "spd_type_ck",
+        "table": "store_product_description",
+        "type": "c",
+        "definition": "CHECK (((type >= 0) AND (type <= 7))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "exportName": "storeProductDescription",
+        "parameters": [
+          "t"
+        ],
+        "line": 218,
+        "declaration": "notValid(check(\"spd_type_ck\", sql`${t.type} BETWEEN 0 AND 7`))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0016_supplier_product_management.sql",
+          "line": 44,
+          "declarationStart": "    ALTER TABLE \"store_product_description\" ADD CONSTRAINT \"spd_type_ck\"",
+          "sql": "CONSTRAINT \"spd_type_ck\"\n      CHECK (\"type\" BETWEEN 0 AND 7) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1895,
+          "declarationStart": "    ALTER TABLE \"store_product_description\" ADD CONSTRAINT \"spd_type_ck\"",
+          "sql": "CONSTRAINT \"spd_type_ck\"\n      CHECK (\"type\" BETWEEN 0 AND 7) NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "spd_type_ck",
+        "value": "\"store_product_description\".\"type\" BETWEEN 0 AND 7",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "store_product_description.type",
+          "name": "type",
+          "table": "store_product_description",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_product_reply.spr_order_cart_info_fk",
+      "catalog": {
+        "key": "store_product_reply.spr_order_cart_info_fk",
+        "name": "spr_order_cart_info_fk",
+        "table": "store_product_reply",
+        "type": "f",
+        "definition": "FOREIGN KEY (order_cart_info_id) REFERENCES store_order_cart_info(id) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/reply.ts",
+        "exportName": "storeProductReply",
+        "parameters": [
+          "t"
+        ],
+        "line": 93,
+        "declaration": "notValid(foreignKey({ name: \"spr_order_cart_info_fk\", columns: [t.orderCartInfoId], foreignColumns: [storeOrderCartInfo.id] }))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0019_order_review_integrity.sql",
+          "line": 71,
+          "declarationStart": "      ADD CONSTRAINT \"spr_order_cart_info_fk\"",
+          "sql": "CONSTRAINT \"spr_order_cart_info_fk\"\n      FOREIGN KEY (\"order_cart_info_id\")\n      REFERENCES \"store_order_cart_info\" (\"id\") NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 2052,
+          "declarationStart": "      ADD CONSTRAINT \"spr_order_cart_info_fk\"",
+          "sql": "CONSTRAINT \"spr_order_cart_info_fk\"\n      FOREIGN KEY (\"order_cart_info_id\")\n      REFERENCES \"store_order_cart_info\" (\"id\") NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "spr_order_cart_info_fk",
+        "tableFrom": "store_product_reply",
+        "tableTo": "store_order_cart_info",
+        "columnsFrom": [
+          "order_cart_info_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "no action",
+        "onUpdate": "no action",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "store_product_reply.order_cart_info_id",
+          "name": "order_cart_info_id",
+          "table": "store_product_reply",
+          "type": "integer",
+          "notNull": false,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "reference": {
+        "table": "store_order_cart_info",
+        "columns": [
+          "id"
+        ],
+        "primaryKey": "store_order_cart_info_pkey",
+        "columnCatalog": {
+          "key": "store_order_cart_info.id",
+          "name": "id",
+          "table": "store_order_cart_info",
+          "type": "integer",
+          "notNull": true,
+          "default": "nextval('store_order_cart_info_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        "onDelete": "a",
+        "onUpdate": "a"
+      }
+    },
+    {
+      "key": "store_product_stock_record.spsr_number_ck",
+      "catalog": {
+        "key": "store_product_stock_record.spsr_number_ck",
+        "name": "spsr_number_ck",
+        "table": "store_product_stock_record",
+        "type": "c",
+        "definition": "CHECK ((number >= 0)) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "exportName": "storeProductStockRecord",
+        "parameters": [
+          "t"
+        ],
+        "line": 239,
+        "declaration": "notValid(check(\"spsr_number_ck\", sql`${t.number} >= 0`))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0016_supplier_product_management.sql",
+          "line": 52,
+          "declarationStart": "    ALTER TABLE \"store_product_stock_record\" ADD CONSTRAINT \"spsr_number_ck\"",
+          "sql": "CONSTRAINT \"spsr_number_ck\"\n      CHECK (\"number\" >= 0) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1903,
+          "declarationStart": "    ALTER TABLE \"store_product_stock_record\" ADD CONSTRAINT \"spsr_number_ck\"",
+          "sql": "CONSTRAINT \"spsr_number_ck\"\n      CHECK (\"number\" >= 0) NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "spsr_number_ck",
+        "value": "\"store_product_stock_record\".\"number\" >= 0",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "store_product_stock_record.number",
+          "name": "number",
+          "table": "store_product_stock_record",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_product_stock_record.spsr_pm_ck",
+      "catalog": {
+        "key": "store_product_stock_record.spsr_pm_ck",
+        "name": "spsr_pm_ck",
+        "table": "store_product_stock_record",
+        "type": "c",
+        "definition": "CHECK (((pm >= 0) AND (pm <= 1))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "exportName": "storeProductStockRecord",
+        "parameters": [
+          "t"
+        ],
+        "line": 240,
+        "declaration": "notValid(check(\"spsr_pm_ck\", sql`${t.pm} BETWEEN 0 AND 1`))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0016_supplier_product_management.sql",
+          "line": 48,
+          "declarationStart": "    ALTER TABLE \"store_product_stock_record\" ADD CONSTRAINT \"spsr_pm_ck\"",
+          "sql": "CONSTRAINT \"spsr_pm_ck\"\n      CHECK (\"pm\" BETWEEN 0 AND 1) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1899,
+          "declarationStart": "    ALTER TABLE \"store_product_stock_record\" ADD CONSTRAINT \"spsr_pm_ck\"",
+          "sql": "CONSTRAINT \"spsr_pm_ck\"\n      CHECK (\"pm\" BETWEEN 0 AND 1) NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "spsr_pm_ck",
+        "value": "\"store_product_stock_record\".\"pm\" BETWEEN 0 AND 1",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "store_product_stock_record.pm",
+          "name": "pm",
+          "table": "store_product_stock_record",
+          "type": "smallint",
+          "notNull": true,
+          "default": "1",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_service_transfer.sst_count_time_ck",
+      "catalog": {
+        "key": "store_service_transfer.sst_count_time_ck",
+        "name": "sst_count_time_ck",
+        "table": "store_service_transfer",
+        "type": "c",
+        "definition": "CHECK (((copied_message_count >= 0) AND (created_at >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "storeServiceTransfer",
+        "parameters": [
+          "t"
+        ],
+        "line": 337,
+        "declaration": "check(\"sst_count_time_ck\", sql`${t.copiedMessageCount} >= 0 AND ${t.createdAt} >= 0`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0094_kefu_transfer_audit.sql",
+          "line": 20,
+          "declarationStart": "  CONSTRAINT \"sst_count_time_ck\" CHECK (\"copied_message_count\" >= 0 AND \"created_at\" >= 0)",
+          "sql": "CONSTRAINT \"sst_count_time_ck\" CHECK (\"copied_message_count\" >= 0 AND \"created_at\" >= 0)"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 5988,
+          "declarationStart": "  CONSTRAINT \"sst_count_time_ck\" CHECK (\"copied_message_count\" >= 0 AND \"created_at\" >= 0)",
+          "sql": "CONSTRAINT \"sst_count_time_ck\" CHECK (\"copied_message_count\" >= 0 AND \"created_at\" >= 0)"
+        }
+      ],
+      "snapshot": {
+        "name": "sst_count_time_ck",
+        "value": "\"store_service_transfer\".\"copied_message_count\" >= 0 AND \"store_service_transfer\".\"created_at\" >= 0"
+      },
+      "columns": [
+        {
+          "key": "store_service_transfer.copied_message_count",
+          "name": "copied_message_count",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.created_at",
+          "name": "created_at",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_service_transfer.sst_distinct_kefu_ck",
+      "catalog": {
+        "key": "store_service_transfer.sst_distinct_kefu_ck",
+        "name": "sst_distinct_kefu_ck",
+        "table": "store_service_transfer",
+        "type": "c",
+        "definition": "CHECK ((from_kefu_uid <> to_kefu_uid))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "storeServiceTransfer",
+        "parameters": [
+          "t"
+        ],
+        "line": 338,
+        "declaration": "check(\"sst_distinct_kefu_ck\", sql`${t.fromKefuUid} <> ${t.toKefuUid}`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0094_kefu_transfer_audit.sql",
+          "line": 19,
+          "declarationStart": "  CONSTRAINT \"sst_distinct_kefu_ck\" CHECK (\"from_kefu_uid\" <> \"to_kefu_uid\"),",
+          "sql": "CONSTRAINT \"sst_distinct_kefu_ck\" CHECK (\"from_kefu_uid\" <> \"to_kefu_uid\")"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 5987,
+          "declarationStart": "  CONSTRAINT \"sst_distinct_kefu_ck\" CHECK (\"from_kefu_uid\" <> \"to_kefu_uid\"),",
+          "sql": "CONSTRAINT \"sst_distinct_kefu_ck\" CHECK (\"from_kefu_uid\" <> \"to_kefu_uid\")"
+        }
+      ],
+      "snapshot": {
+        "name": "sst_distinct_kefu_ck",
+        "value": "\"store_service_transfer\".\"from_kefu_uid\" <> \"store_service_transfer\".\"to_kefu_uid\""
+      },
+      "columns": [
+        {
+          "key": "store_service_transfer.from_kefu_uid",
+          "name": "from_kefu_uid",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.to_kefu_uid",
+          "name": "to_kefu_uid",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_service_transfer.sst_is_tourist_ck",
+      "catalog": {
+        "key": "store_service_transfer.sst_is_tourist_ck",
+        "name": "sst_is_tourist_ck",
+        "table": "store_service_transfer",
+        "type": "c",
+        "definition": "CHECK ((is_tourist = ANY (ARRAY[0, 1])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "storeServiceTransfer",
+        "parameters": [
+          "t"
+        ],
+        "line": 339,
+        "declaration": "check(\"sst_is_tourist_ck\", sql`${t.isTourist} IN (0, 1)`)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0104_kefu_visitor_session.sql",
+          "line": 52,
+          "declarationStart": "      ADD CONSTRAINT \"sst_is_tourist_ck\" CHECK (\"is_tourist\" IN (0, 1));",
+          "sql": "CONSTRAINT \"sst_is_tourist_ck\" CHECK (\"is_tourist\" IN (0, 1))"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6289,
+          "declarationStart": "      ADD CONSTRAINT \"sst_is_tourist_ck\" CHECK (\"is_tourist\" IN (0, 1));",
+          "sql": "CONSTRAINT \"sst_is_tourist_ck\" CHECK (\"is_tourist\" IN (0, 1))"
+        }
+      ],
+      "snapshot": {
+        "name": "sst_is_tourist_ck",
+        "value": "\"store_service_transfer\".\"is_tourist\" IN (0, 1)"
+      },
+      "columns": [
+        {
+          "key": "store_service_transfer.is_tourist",
+          "name": "is_tourist",
+          "table": "store_service_transfer",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "store_service_transfer.sst_positive_ids_ck",
+      "catalog": {
+        "key": "store_service_transfer.sst_positive_ids_ck",
+        "name": "sst_positive_ids_ck",
+        "table": "store_service_transfer",
+        "type": "c",
+        "definition": "CHECK (((customer_uid > 0) AND (from_kefu_uid > 0) AND (to_kefu_uid > 0) AND (from_service_id > 0) AND (to_service_id > 0) AND (source_record_id > 0) AND (target_record_id > 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "storeServiceTransfer",
+        "parameters": [
+          "t"
+        ],
+        "line": 340,
+        "declaration": "check(\"sst_positive_ids_ck\", sql`\n      ${t.customerUid} > 0 AND ${t.fromKefuUid} > 0 AND ${t.toKefuUid} > 0\n      AND ${t.fromServiceId} > 0 AND ${t.toServiceId} > 0\n      AND ${t.sourceRecordId} > 0 AND ${t.targetRecordId} > 0\n    `)",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0094_kefu_transfer_audit.sql",
+          "line": 14,
+          "declarationStart": "  CONSTRAINT \"sst_positive_ids_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sst_positive_ids_ck\" CHECK (\n    \"customer_uid\" > 0 AND \"from_kefu_uid\" > 0 AND \"to_kefu_uid\" > 0\n    AND \"from_service_id\" > 0 AND \"to_service_id\" > 0\n    AND \"source_record_id\" > 0 AND \"target_record_id\" > 0\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 5982,
+          "declarationStart": "  CONSTRAINT \"sst_positive_ids_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sst_positive_ids_ck\" CHECK (\n    \"customer_uid\" > 0 AND \"from_kefu_uid\" > 0 AND \"to_kefu_uid\" > 0\n    AND \"from_service_id\" > 0 AND \"to_service_id\" > 0\n    AND \"source_record_id\" > 0 AND \"target_record_id\" > 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "sst_positive_ids_ck",
+        "value": "\n      \"store_service_transfer\".\"customer_uid\" > 0 AND \"store_service_transfer\".\"from_kefu_uid\" > 0 AND \"store_service_transfer\".\"to_kefu_uid\" > 0\n      AND \"store_service_transfer\".\"from_service_id\" > 0 AND \"store_service_transfer\".\"to_service_id\" > 0\n      AND \"store_service_transfer\".\"source_record_id\" > 0 AND \"store_service_transfer\".\"target_record_id\" > 0\n    "
+      },
+      "columns": [
+        {
+          "key": "store_service_transfer.customer_uid",
+          "name": "customer_uid",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.from_kefu_uid",
+          "name": "from_kefu_uid",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.to_kefu_uid",
+          "name": "to_kefu_uid",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.from_service_id",
+          "name": "from_service_id",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.to_service_id",
+          "name": "to_service_id",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.source_record_id",
+          "name": "source_record_id",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "store_service_transfer.target_record_id",
+          "name": "target_record_id",
+          "table": "store_service_transfer",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "system_menus.sm_auth_type_ck",
+      "catalog": {
+        "key": "system_menus.sm_auth_type_ck",
+        "name": "sm_auth_type_ck",
+        "table": "system_menus",
+        "type": "c",
+        "definition": "CHECK (((auth_type >= 0) AND (auth_type <= 2))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "systemMenus",
+        "parameters": [
+          "t"
+        ],
+        "line": 106,
+        "declaration": "notValid(check(\"sm_auth_type_ck\", sql`${t.authType} BETWEEN 0 AND 2`))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0015_admin_menu_acl.sql",
+          "line": 41,
+          "declarationStart": "    ALTER TABLE \"system_menus\" ADD CONSTRAINT \"sm_auth_type_ck\"",
+          "sql": "CONSTRAINT \"sm_auth_type_ck\"\n      CHECK (\"auth_type\" BETWEEN 0 AND 2) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1833,
+          "declarationStart": "    ALTER TABLE \"system_menus\" ADD CONSTRAINT \"sm_auth_type_ck\"",
+          "sql": "CONSTRAINT \"sm_auth_type_ck\"\n      CHECK (\"auth_type\" BETWEEN 0 AND 2) NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "sm_auth_type_ck",
+        "value": "\"system_menus\".\"auth_type\" BETWEEN 0 AND 2",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "system_menus.auth_type",
+          "name": "auth_type",
+          "table": "system_menus",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "system_menus.sm_flags_ck",
+      "catalog": {
+        "key": "system_menus.sm_flags_ck",
+        "name": "sm_flags_ck",
+        "table": "system_menus",
+        "type": "c",
+        "definition": "CHECK ((((is_show >= 0) AND (is_show <= 1)) AND ((is_show_path >= 0) AND (is_show_path <= 1)) AND ((access >= 0) AND (access <= 1)) AND ((is_header >= 0) AND (is_header <= 1)) AND ((is_del >= 0) AND (is_del <= 1)))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "systemMenus",
+        "parameters": [
+          "t"
+        ],
+        "line": 107,
+        "declaration": "notValid(check(\"sm_flags_ck\", sql`\n      ${t.isShow} BETWEEN 0 AND 1 AND\n      ${t.isShowPath} BETWEEN 0 AND 1 AND\n      ${t.access} BETWEEN 0 AND 1 AND\n      ${t.isHeader} BETWEEN 0 AND 1 AND\n      ${t.isDel} BETWEEN 0 AND 1\n    `))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0015_admin_menu_acl.sql",
+          "line": 45,
+          "declarationStart": "    ALTER TABLE \"system_menus\" ADD CONSTRAINT \"sm_flags_ck\"",
+          "sql": "CONSTRAINT \"sm_flags_ck\"\n      CHECK (\n        \"is_show\" BETWEEN 0 AND 1 AND\n        \"is_show_path\" BETWEEN 0 AND 1 AND\n        \"access\" BETWEEN 0 AND 1 AND\n        \"is_header\" BETWEEN 0 AND 1 AND\n        \"is_del\" BETWEEN 0 AND 1\n      ) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1837,
+          "declarationStart": "    ALTER TABLE \"system_menus\" ADD CONSTRAINT \"sm_flags_ck\"",
+          "sql": "CONSTRAINT \"sm_flags_ck\"\n      CHECK (\n        \"is_show\" BETWEEN 0 AND 1 AND\n        \"is_show_path\" BETWEEN 0 AND 1 AND\n        \"access\" BETWEEN 0 AND 1 AND\n        \"is_header\" BETWEEN 0 AND 1 AND\n        \"is_del\" BETWEEN 0 AND 1\n      ) NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "sm_flags_ck",
+        "value": "\n      \"system_menus\".\"is_show\" BETWEEN 0 AND 1 AND\n      \"system_menus\".\"is_show_path\" BETWEEN 0 AND 1 AND\n      \"system_menus\".\"access\" BETWEEN 0 AND 1 AND\n      \"system_menus\".\"is_header\" BETWEEN 0 AND 1 AND\n      \"system_menus\".\"is_del\" BETWEEN 0 AND 1\n    ",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "system_menus.is_show",
+          "name": "is_show",
+          "table": "system_menus",
+          "type": "smallint",
+          "notNull": true,
+          "default": "1",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_menus.is_show_path",
+          "name": "is_show_path",
+          "table": "system_menus",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_menus.access",
+          "name": "access",
+          "table": "system_menus",
+          "type": "smallint",
+          "notNull": true,
+          "default": "1",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_menus.is_header",
+          "name": "is_header",
+          "table": "system_menus",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_menus.is_del",
+          "name": "is_del",
+          "table": "system_menus",
+          "type": "smallint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "system_menus.sm_type_ck",
+      "catalog": {
+        "key": "system_menus.sm_type_ck",
+        "name": "sm_type_ck",
+        "table": "system_menus",
+        "type": "c",
+        "definition": "CHECK (((type >= 1) AND (type <= 4))) NOT VALID",
+        "validated": false,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "exportName": "systemMenus",
+        "parameters": [
+          "t"
+        ],
+        "line": 114,
+        "declaration": "notValid(check(\"sm_type_ck\", sql`${t.type} BETWEEN 1 AND 4`))",
+        "parameter": "t"
+      },
+      "sources": [
+        {
+          "file": "migrations/0015_admin_menu_acl.sql",
+          "line": 37,
+          "declarationStart": "    ALTER TABLE \"system_menus\" ADD CONSTRAINT \"sm_type_ck\"",
+          "sql": "CONSTRAINT \"sm_type_ck\"\n      CHECK (\"type\" BETWEEN 1 AND 4) NOT VALID"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 1829,
+          "declarationStart": "    ALTER TABLE \"system_menus\" ADD CONSTRAINT \"sm_type_ck\"",
+          "sql": "CONSTRAINT \"sm_type_ck\"\n      CHECK (\"type\" BETWEEN 1 AND 4) NOT VALID"
+        }
+      ],
+      "snapshot": {
+        "name": "sm_type_ck",
+        "value": "\"system_menus\".\"type\" BETWEEN 1 AND 4",
+        "notValid": true
+      },
+      "columns": [
+        {
+          "key": "system_menus.type",
+          "name": "type",
+          "table": "system_menus",
+          "type": "smallint",
+          "notNull": true,
+          "default": "1",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "system_queue_dead_letter.sqdl_time_ck",
+      "catalog": {
+        "key": "system_queue_dead_letter.sqdl_time_ck",
+        "name": "sqdl_time_ck",
+        "table": "system_queue_dead_letter",
+        "type": "c",
+        "definition": "CHECK (((message_timestamp_ms >= 0) AND (first_seen_time >= 0) AND (last_seen_time >= 0) AND (replay_requested_time >= 0) AND (replayed_time >= 0) AND (resolved_time >= 0) AND (replay_lease_until >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/queue_dead_letter.ts",
+        "exportName": "systemQueueDeadLetter",
+        "parameters": [
+          "table"
+        ],
+        "line": 75,
+        "declaration": "check(\"sqdl_time_ck\", sql`\n      ${table.messageTimestampMs} >= 0 AND ${table.firstSeenTime} >= 0\n      AND ${table.lastSeenTime} >= 0 AND ${table.replayRequestedTime} >= 0\n      AND ${table.replayedTime} >= 0 AND ${table.resolvedTime} >= 0\n      AND ${table.replayLeaseUntil} >= 0\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0080_order_queue_dead_letter.sql",
+          "line": 41,
+          "declarationStart": "  CONSTRAINT \"sqdl_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sqdl_time_ck\" CHECK (\n    \"message_timestamp_ms\" >= 0 AND \"first_seen_time\" >= 0\n      AND \"last_seen_time\" >= 0 AND \"replay_requested_time\" >= 0\n      AND \"replayed_time\" >= 0 AND \"resolved_time\" >= 0\n      AND \"replay_lease_until\" >= 0\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 5437,
+          "declarationStart": "  CONSTRAINT \"sqdl_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"sqdl_time_ck\" CHECK (\n    \"message_timestamp_ms\" >= 0 AND \"first_seen_time\" >= 0\n      AND \"last_seen_time\" >= 0 AND \"replay_requested_time\" >= 0\n      AND \"replayed_time\" >= 0 AND \"resolved_time\" >= 0\n      AND \"replay_lease_until\" >= 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "sqdl_time_ck",
+        "value": "\n      \"system_queue_dead_letter\".\"message_timestamp_ms\" >= 0 AND \"system_queue_dead_letter\".\"first_seen_time\" >= 0\n      AND \"system_queue_dead_letter\".\"last_seen_time\" >= 0 AND \"system_queue_dead_letter\".\"replay_requested_time\" >= 0\n      AND \"system_queue_dead_letter\".\"replayed_time\" >= 0 AND \"system_queue_dead_letter\".\"resolved_time\" >= 0\n      AND \"system_queue_dead_letter\".\"replay_lease_until\" >= 0\n    "
+      },
+      "columns": [
+        {
+          "key": "system_queue_dead_letter.message_timestamp_ms",
+          "name": "message_timestamp_ms",
+          "table": "system_queue_dead_letter",
+          "type": "bigint",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_queue_dead_letter.first_seen_time",
+          "name": "first_seen_time",
+          "table": "system_queue_dead_letter",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_queue_dead_letter.last_seen_time",
+          "name": "last_seen_time",
+          "table": "system_queue_dead_letter",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_queue_dead_letter.replay_requested_time",
+          "name": "replay_requested_time",
+          "table": "system_queue_dead_letter",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_queue_dead_letter.replayed_time",
+          "name": "replayed_time",
+          "table": "system_queue_dead_letter",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_queue_dead_letter.resolved_time",
+          "name": "resolved_time",
+          "table": "system_queue_dead_letter",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "system_queue_dead_letter.replay_lease_until",
+          "name": "replay_lease_until",
+          "table": "system_queue_dead_letter",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_callback_event.wce_hashes_ck",
+      "catalog": {
+        "key": "work_callback_event.wce_hashes_ck",
+        "name": "wce_hashes_ck",
+        "table": "work_callback_event",
+        "type": "c",
+        "definition": "CHECK ((((event_key)::text ~ '^[0-9a-f]{64}$'::text) AND ((payload_hash)::text ~ '^[0-9a-f]{64}$'::text) AND ((subject_key_hash)::text ~ '^[0-9a-f]{64}$'::text)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackEvent",
+        "parameters": [
+          "table"
+        ],
+        "line": 77,
+        "declaration": "check(\"wce_hashes_ck\", sql`\n      ${table.eventKey} ~ '^[0-9a-f]{64}$'\n      AND ${table.payloadHash} ~ '^[0-9a-f]{64}$'\n      AND ${table.subjectKeyHash} ~ '^[0-9a-f]{64}$'\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 21,
+          "declarationStart": "  CONSTRAINT \"wce_hashes_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_hashes_ck\" CHECK (\n    event_key ~ '^[0-9a-f]{64}$'\n    AND payload_hash ~ '^[0-9a-f]{64}$'\n    AND subject_key_hash ~ '^[0-9a-f]{64}$'\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6330,
+          "declarationStart": "  CONSTRAINT \"wce_hashes_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_hashes_ck\" CHECK (\n    event_key ~ '^[0-9a-f]{64}$'\n    AND payload_hash ~ '^[0-9a-f]{64}$'\n    AND subject_key_hash ~ '^[0-9a-f]{64}$'\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wce_hashes_ck",
+        "value": "\n      \"work_callback_event\".\"event_key\" ~ '^[0-9a-f]{64}$'\n      AND \"work_callback_event\".\"payload_hash\" ~ '^[0-9a-f]{64}$'\n      AND \"work_callback_event\".\"subject_key_hash\" ~ '^[0-9a-f]{64}$'\n    "
+      },
+      "columns": [
+        {
+          "key": "work_callback_event.event_key",
+          "name": "event_key",
+          "table": "work_callback_event",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_callback_event.payload_hash",
+          "name": "payload_hash",
+          "table": "work_callback_event",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_callback_event.subject_key_hash",
+          "name": "subject_key_hash",
+          "table": "work_callback_event",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_callback_event.wce_payload_object_ck",
+      "catalog": {
+        "key": "work_callback_event.wce_payload_object_ck",
+        "name": "wce_payload_object_ck",
+        "table": "work_callback_event",
+        "type": "c",
+        "definition": "CHECK ((jsonb_typeof(payload) = 'object'::text))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackEvent",
+        "parameters": [
+          "table"
+        ],
+        "line": 82,
+        "declaration": "check(\"wce_payload_object_ck\", sql`jsonb_typeof(${table.payload}) = 'object'`)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 33,
+          "declarationStart": "  CONSTRAINT \"wce_payload_object_ck\" CHECK (jsonb_typeof(payload) = 'object')",
+          "sql": "CONSTRAINT \"wce_payload_object_ck\" CHECK (jsonb_typeof(payload) = 'object')"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6342,
+          "declarationStart": "  CONSTRAINT \"wce_payload_object_ck\" CHECK (jsonb_typeof(payload) = 'object')",
+          "sql": "CONSTRAINT \"wce_payload_object_ck\" CHECK (jsonb_typeof(payload) = 'object')"
+        }
+      ],
+      "snapshot": {
+        "name": "wce_payload_object_ck",
+        "value": "jsonb_typeof(\"work_callback_event\".\"payload\") = 'object'"
+      },
+      "columns": [
+        {
+          "key": "work_callback_event.payload",
+          "name": "payload",
+          "table": "work_callback_event",
+          "type": "jsonb",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_callback_event.wce_payload_retention_ck",
+      "catalog": {
+        "key": "work_callback_event.wce_payload_retention_ck",
+        "name": "wce_payload_retention_ck",
+        "table": "work_callback_event",
+        "type": "c",
+        "definition": "CHECK (((payload_retained_until >= received_time) AND (payload_redacted_time >= 0) AND ((payload_redacted_time = 0) OR (payload_redacted_time >= received_time))))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackEvent",
+        "parameters": [
+          "table"
+        ],
+        "line": 83,
+        "declaration": "check(\"wce_payload_retention_ck\", sql`\n      ${table.payloadRetainedUntil} >= ${table.receivedTime}\n      AND ${table.payloadRedactedTime} >= 0\n      AND (${table.payloadRedactedTime} = 0 OR ${table.payloadRedactedTime} >= ${table.receivedTime})\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0118_work_contact_action_outbox.sql",
+          "line": 21,
+          "declarationStart": "      ADD CONSTRAINT \"wce_payload_retention_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_payload_retention_ck\" CHECK (\n        payload_retained_until >= received_time\n        AND payload_redacted_time >= 0\n        AND (payload_redacted_time = 0 OR payload_redacted_time >= received_time)\n      )"
+        },
+        {
+          "file": "src/migrations/workContactActionOutbox.ts",
+          "line": 21,
+          "declarationStart": "      ADD CONSTRAINT \"wce_payload_retention_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_payload_retention_ck\" CHECK (\n        payload_retained_until >= received_time\n        AND payload_redacted_time >= 0\n        AND (payload_redacted_time = 0 OR payload_redacted_time >= received_time)\n      )"
+        }
+      ],
+      "snapshot": {
+        "name": "wce_payload_retention_ck",
+        "value": "\n      \"work_callback_event\".\"payload_retained_until\" >= \"work_callback_event\".\"received_time\"\n      AND \"work_callback_event\".\"payload_redacted_time\" >= 0\n      AND (\"work_callback_event\".\"payload_redacted_time\" = 0 OR \"work_callback_event\".\"payload_redacted_time\" >= \"work_callback_event\".\"received_time\")\n    "
+      },
+      "columns": [
+        {
+          "key": "work_callback_event.received_time",
+          "name": "received_time",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_event.payload_retained_until",
+          "name": "payload_retained_until",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_event.payload_redacted_time",
+          "name": "payload_redacted_time",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_callback_event.wce_projection_status_ck",
+      "catalog": {
+        "key": "work_callback_event.wce_projection_status_ck",
+        "name": "wce_projection_status_ck",
+        "table": "work_callback_event",
+        "type": "c",
+        "definition": "CHECK (((projection_status)::text = ANY ((ARRAY['PENDING'::character varying, 'PROCESSING'::character varying, 'REFRESH_REQUIRED'::character varying, 'APPLIED'::character varying, 'APPLIED_NOOP'::character varying, 'SUPERSEDED'::character varying, 'IGNORED'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackEvent",
+        "parameters": [
+          "table"
+        ],
+        "line": 88,
+        "declaration": "check(\"wce_projection_status_ck\", sql`\n      ${table.projectionStatus} IN (\n      'PENDING','PROCESSING','REFRESH_REQUIRED','APPLIED','APPLIED_NOOP',\n      'SUPERSEDED','IGNORED','FAILED','DEAD'\n      )\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0111_work_callback_projection_state.sql",
+          "line": 138,
+          "declarationStart": "      ADD CONSTRAINT \"wce_projection_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_projection_status_ck\" CHECK (\n        \"projection_status\" IN (\n          'PENDING','PROCESSING','REFRESH_REQUIRED','APPLIED','APPLIED_NOOP',\n          'SUPERSEDED','IGNORED','FAILED','DEAD'\n        )\n      )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6597,
+          "declarationStart": "      ADD CONSTRAINT \"wce_projection_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_projection_status_ck\" CHECK (\n        \"projection_status\" IN (\n          'PENDING','PROCESSING','REFRESH_REQUIRED','APPLIED','APPLIED_NOOP',\n          'SUPERSEDED','IGNORED','FAILED','DEAD'\n        )\n      )"
+        }
+      ],
+      "snapshot": {
+        "name": "wce_projection_status_ck",
+        "value": "\n      \"work_callback_event\".\"projection_status\" IN (\n      'PENDING','PROCESSING','REFRESH_REQUIRED','APPLIED','APPLIED_NOOP',\n      'SUPERSEDED','IGNORED','FAILED','DEAD'\n      )\n    "
+      },
+      "columns": [
+        {
+          "key": "work_callback_event.projection_status",
+          "name": "projection_status",
+          "table": "work_callback_event",
+          "type": "character varying(16)",
+          "notNull": true,
+          "default": "'PENDING'::character varying",
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_callback_event.wce_status_ck",
+      "catalog": {
+        "key": "work_callback_event.wce_status_ck",
+        "name": "wce_status_ck",
+        "table": "work_callback_event",
+        "type": "c",
+        "definition": "CHECK (((status)::text = ANY ((ARRAY['RECEIVED'::character varying, 'PROCESSING'::character varying, 'ORDERED'::character varying, 'APPLIED'::character varying, 'APPLIED_NOOP'::character varying, 'SUPERSEDED'::character varying, 'IGNORED'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackEvent",
+        "parameters": [
+          "table"
+        ],
+        "line": 94,
+        "declaration": "check(\"wce_status_ck\", sql`\n      ${table.status} IN (\n      'RECEIVED','PROCESSING','ORDERED','APPLIED','APPLIED_NOOP',\n      'SUPERSEDED','IGNORED','FAILED','DEAD'\n      )\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 30,
+          "declarationStart": "  CONSTRAINT \"wce_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_status_ck\" CHECK (\n    status IN ('RECEIVED','PROCESSING','ORDERED','SUPERSEDED','IGNORED','FAILED','DEAD')\n  )"
+        },
+        {
+          "file": "migrations/0110_work_callback_follow_projection.sql",
+          "line": 34,
+          "declarationStart": "      ADD CONSTRAINT \"wce_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_status_ck\" CHECK (\n        status IN (\n          'RECEIVED','PROCESSING','ORDERED','APPLIED','APPLIED_NOOP',\n          'SUPERSEDED','IGNORED','FAILED','DEAD'\n        )\n      )"
+        },
+        {
+          "file": "migrations/0111_work_callback_projection_state.sql",
+          "line": 93,
+          "declarationStart": "      ADD CONSTRAINT \"wce_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_status_ck\" CHECK (\n        \"status\" IN (\n          'RECEIVED','PROCESSING','ORDERED','APPLIED','APPLIED_NOOP',\n          'SUPERSEDED','IGNORED','FAILED','DEAD'\n        )\n      )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6339,
+          "declarationStart": "  CONSTRAINT \"wce_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_status_ck\" CHECK (\n    status IN ('RECEIVED','PROCESSING','ORDERED','SUPERSEDED','IGNORED','FAILED','DEAD')\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6440,
+          "declarationStart": "      ADD CONSTRAINT \"wce_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_status_ck\" CHECK (\n        status IN (\n          'RECEIVED','PROCESSING','ORDERED','APPLIED','APPLIED_NOOP',\n          'SUPERSEDED','IGNORED','FAILED','DEAD'\n        )\n      )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6552,
+          "declarationStart": "      ADD CONSTRAINT \"wce_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_status_ck\" CHECK (\n        \"status\" IN (\n          'RECEIVED','PROCESSING','ORDERED','APPLIED','APPLIED_NOOP',\n          'SUPERSEDED','IGNORED','FAILED','DEAD'\n        )\n      )"
+        }
+      ],
+      "snapshot": {
+        "name": "wce_status_ck",
+        "value": "\n      \"work_callback_event\".\"status\" IN (\n      'RECEIVED','PROCESSING','ORDERED','APPLIED','APPLIED_NOOP',\n      'SUPERSEDED','IGNORED','FAILED','DEAD'\n      )\n    "
+      },
+      "columns": [
+        {
+          "key": "work_callback_event.status",
+          "name": "status",
+          "table": "work_callback_event",
+          "type": "character varying(16)",
+          "notNull": true,
+          "default": "'RECEIVED'::character varying",
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_callback_event.wce_time_ck",
+      "catalog": {
+        "key": "work_callback_event.wce_time_ck",
+        "name": "wce_time_ck",
+        "table": "work_callback_event",
+        "type": "c",
+        "definition": "CHECK (((event_time >= 0) AND (received_time >= 0) AND (processed_time >= 0) AND (update_time >= 0) AND (lease_until >= 0) AND (attempt_count >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackEvent",
+        "parameters": [
+          "table"
+        ],
+        "line": 100,
+        "declaration": "check(\"wce_time_ck\", sql`\n      ${table.eventTime} >= 0 AND ${table.receivedTime} >= 0 AND ${table.processedTime} >= 0\n      AND ${table.updateTime} >= 0 AND ${table.leaseUntil} >= 0 AND ${table.attemptCount} >= 0\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 26,
+          "declarationStart": "  CONSTRAINT \"wce_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_time_ck\" CHECK (\n    event_time >= 0 AND received_time >= 0 AND processed_time >= 0\n    AND update_time >= 0 AND lease_until >= 0 AND attempt_count >= 0\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6335,
+          "declarationStart": "  CONSTRAINT \"wce_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wce_time_ck\" CHECK (\n    event_time >= 0 AND received_time >= 0 AND processed_time >= 0\n    AND update_time >= 0 AND lease_until >= 0 AND attempt_count >= 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wce_time_ck",
+        "value": "\n      \"work_callback_event\".\"event_time\" >= 0 AND \"work_callback_event\".\"received_time\" >= 0 AND \"work_callback_event\".\"processed_time\" >= 0\n      AND \"work_callback_event\".\"update_time\" >= 0 AND \"work_callback_event\".\"lease_until\" >= 0 AND \"work_callback_event\".\"attempt_count\" >= 0\n    "
+      },
+      "columns": [
+        {
+          "key": "work_callback_event.event_time",
+          "name": "event_time",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_event.attempt_count",
+          "name": "attempt_count",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_event.lease_until",
+          "name": "lease_until",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_event.received_time",
+          "name": "received_time",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_event.processed_time",
+          "name": "processed_time",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_event.update_time",
+          "name": "update_time",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_callback_outbox.wco_event_id_fk",
+      "catalog": {
+        "key": "work_callback_outbox.wco_event_id_fk",
+        "name": "wco_event_id_fk",
+        "table": "work_callback_outbox",
+        "type": "f",
+        "definition": "FOREIGN KEY (event_id) REFERENCES work_callback_event(id) ON DELETE CASCADE",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": true,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackOutbox",
+        "parameters": [
+          "table"
+        ],
+        "line": 135,
+        "declaration": "foreignKey({ name: \"wco_event_id_fk\", columns: [table.eventId], foreignColumns: [workCallbackEvent.id] }).onDelete(\"cascade\")",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 58,
+          "declarationStart": "  CONSTRAINT \"wco_event_id_fk\" FOREIGN KEY (\"event_id\")",
+          "sql": "CONSTRAINT \"wco_event_id_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"work_callback_event\" (\"id\") ON DELETE CASCADE"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6367,
+          "declarationStart": "  CONSTRAINT \"wco_event_id_fk\" FOREIGN KEY (\"event_id\")",
+          "sql": "CONSTRAINT \"wco_event_id_fk\" FOREIGN KEY (\"event_id\")\n    REFERENCES \"work_callback_event\" (\"id\") ON DELETE CASCADE"
+        }
+      ],
+      "snapshot": {
+        "name": "wco_event_id_fk",
+        "tableFrom": "work_callback_outbox",
+        "tableTo": "work_callback_event",
+        "columnsFrom": [
+          "event_id"
+        ],
+        "columnsTo": [
+          "id"
+        ],
+        "onDelete": "cascade",
+        "onUpdate": "no action"
+      },
+      "columns": [
+        {
+          "key": "work_callback_outbox.event_id",
+          "name": "event_id",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ],
+      "reference": {
+        "table": "work_callback_event",
+        "columns": [
+          "id"
+        ],
+        "primaryKey": "work_callback_event_pkey",
+        "columnCatalog": {
+          "key": "work_callback_event.id",
+          "name": "id",
+          "table": "work_callback_event",
+          "type": "integer",
+          "notNull": true,
+          "default": "nextval('work_callback_event_id_seq'::regclass)",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        "onDelete": "c",
+        "onUpdate": "a"
+      }
+    },
+    {
+      "key": "work_callback_outbox.wco_event_key_ck",
+      "catalog": {
+        "key": "work_callback_outbox.wco_event_key_ck",
+        "name": "wco_event_key_ck",
+        "table": "work_callback_outbox",
+        "type": "c",
+        "definition": "CHECK (((event_key)::text ~ '^[0-9a-f]{64}$'::text))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackOutbox",
+        "parameters": [
+          "table"
+        ],
+        "line": 136,
+        "declaration": "check(\"wco_event_key_ck\", sql`${table.eventKey} ~ '^[0-9a-f]{64}$'`)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 60,
+          "declarationStart": "  CONSTRAINT \"wco_event_key_ck\" CHECK (event_key ~ '^[0-9a-f]{64}$'),",
+          "sql": "CONSTRAINT \"wco_event_key_ck\" CHECK (event_key ~ '^[0-9a-f]{64}$')"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6369,
+          "declarationStart": "  CONSTRAINT \"wco_event_key_ck\" CHECK (event_key ~ '^[0-9a-f]{64}$'),",
+          "sql": "CONSTRAINT \"wco_event_key_ck\" CHECK (event_key ~ '^[0-9a-f]{64}$')"
+        }
+      ],
+      "snapshot": {
+        "name": "wco_event_key_ck",
+        "value": "\"work_callback_outbox\".\"event_key\" ~ '^[0-9a-f]{64}$'"
+      },
+      "columns": [
+        {
+          "key": "work_callback_outbox.event_key",
+          "name": "event_key",
+          "table": "work_callback_outbox",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_callback_outbox.wco_status_ck",
+      "catalog": {
+        "key": "work_callback_outbox.wco_status_ck",
+        "name": "wco_status_ck",
+        "table": "work_callback_outbox",
+        "type": "c",
+        "definition": "CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ENQUEUING'::character varying, 'ENQUEUED'::character varying, 'PROCESSING'::character varying, 'COMPLETED'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackOutbox",
+        "parameters": [
+          "table"
+        ],
+        "line": 137,
+        "declaration": "check(\"wco_status_ck\", sql`${table.status} IN ('PENDING','ENQUEUING','ENQUEUED','PROCESSING','COMPLETED','FAILED','DEAD')`)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 66,
+          "declarationStart": "  CONSTRAINT \"wco_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wco_status_ck\" CHECK (\n    status IN ('PENDING','ENQUEUING','ENQUEUED','PROCESSING','COMPLETED','FAILED','DEAD')\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6375,
+          "declarationStart": "  CONSTRAINT \"wco_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wco_status_ck\" CHECK (\n    status IN ('PENDING','ENQUEUING','ENQUEUED','PROCESSING','COMPLETED','FAILED','DEAD')\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wco_status_ck",
+        "value": "\"work_callback_outbox\".\"status\" IN ('PENDING','ENQUEUING','ENQUEUED','PROCESSING','COMPLETED','FAILED','DEAD')"
+      },
+      "columns": [
+        {
+          "key": "work_callback_outbox.status",
+          "name": "status",
+          "table": "work_callback_outbox",
+          "type": "character varying(16)",
+          "notNull": true,
+          "default": "'PENDING'::character varying",
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_callback_outbox.wco_time_ck",
+      "catalog": {
+        "key": "work_callback_outbox.wco_time_ck",
+        "name": "wco_time_ck",
+        "table": "work_callback_outbox",
+        "type": "c",
+        "definition": "CHECK (((dispatch_count >= 0) AND (attempt_count >= 0) AND (available_time >= 0) AND (lease_until >= 0) AND (enqueued_time >= 0) AND (processed_time >= 0) AND (add_time >= 0) AND (update_time >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackOutbox",
+        "parameters": [
+          "table"
+        ],
+        "line": 138,
+        "declaration": "check(\"wco_time_ck\", sql`\n      ${table.dispatchCount} >= 0 AND ${table.attemptCount} >= 0 AND ${table.availableTime} >= 0\n      AND ${table.leaseUntil} >= 0 AND ${table.enqueuedTime} >= 0 AND ${table.processedTime} >= 0\n      AND ${table.addTime} >= 0 AND ${table.updateTime} >= 0\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 61,
+          "declarationStart": "  CONSTRAINT \"wco_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wco_time_ck\" CHECK (\n    dispatch_count >= 0 AND attempt_count >= 0 AND available_time >= 0\n    AND lease_until >= 0 AND enqueued_time >= 0 AND processed_time >= 0\n    AND add_time >= 0 AND update_time >= 0\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6370,
+          "declarationStart": "  CONSTRAINT \"wco_time_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wco_time_ck\" CHECK (\n    dispatch_count >= 0 AND attempt_count >= 0 AND available_time >= 0\n    AND lease_until >= 0 AND enqueued_time >= 0 AND processed_time >= 0\n    AND add_time >= 0 AND update_time >= 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wco_time_ck",
+        "value": "\n      \"work_callback_outbox\".\"dispatch_count\" >= 0 AND \"work_callback_outbox\".\"attempt_count\" >= 0 AND \"work_callback_outbox\".\"available_time\" >= 0\n      AND \"work_callback_outbox\".\"lease_until\" >= 0 AND \"work_callback_outbox\".\"enqueued_time\" >= 0 AND \"work_callback_outbox\".\"processed_time\" >= 0\n      AND \"work_callback_outbox\".\"add_time\" >= 0 AND \"work_callback_outbox\".\"update_time\" >= 0\n    "
+      },
+      "columns": [
+        {
+          "key": "work_callback_outbox.dispatch_count",
+          "name": "dispatch_count",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_outbox.attempt_count",
+          "name": "attempt_count",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_outbox.available_time",
+          "name": "available_time",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_outbox.lease_until",
+          "name": "lease_until",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_outbox.enqueued_time",
+          "name": "enqueued_time",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_outbox.processed_time",
+          "name": "processed_time",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_outbox.add_time",
+          "name": "add_time",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_outbox.update_time",
+          "name": "update_time",
+          "table": "work_callback_outbox",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_callback_watermark.wcw_hashes_ck",
+      "catalog": {
+        "key": "work_callback_watermark.wcw_hashes_ck",
+        "name": "wcw_hashes_ck",
+        "table": "work_callback_watermark",
+        "type": "c",
+        "definition": "CHECK ((((subject_key_hash)::text ~ '^[0-9a-f]{64}$'::text) AND ((event_key)::text ~ '^[0-9a-f]{64}$'::text)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackWatermark",
+        "parameters": [],
+        "line": 154,
+        "declaration": "check(\"wcw_hashes_ck\", sql`${table.subjectKeyHash} ~ '^[0-9a-f]{64}$' AND ${table.eventKey} ~ '^[0-9a-f]{64}$'`)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 89,
+          "declarationStart": "  CONSTRAINT \"wcw_hashes_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcw_hashes_ck\" CHECK (\n    subject_key_hash ~ '^[0-9a-f]{64}$' AND event_key ~ '^[0-9a-f]{64}$'\n  )"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6398,
+          "declarationStart": "  CONSTRAINT \"wcw_hashes_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcw_hashes_ck\" CHECK (\n    subject_key_hash ~ '^[0-9a-f]{64}$' AND event_key ~ '^[0-9a-f]{64}$'\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wcw_hashes_ck",
+        "value": "\"work_callback_watermark\".\"subject_key_hash\" ~ '^[0-9a-f]{64}$' AND \"work_callback_watermark\".\"event_key\" ~ '^[0-9a-f]{64}$'"
+      },
+      "columns": [
+        {
+          "key": "work_callback_watermark.subject_key_hash",
+          "name": "subject_key_hash",
+          "table": "work_callback_watermark",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_callback_watermark.event_key",
+          "name": "event_key",
+          "table": "work_callback_watermark",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_callback_watermark.wcw_time_ck",
+      "catalog": {
+        "key": "work_callback_watermark.wcw_time_ck",
+        "name": "wcw_time_ck",
+        "table": "work_callback_watermark",
+        "type": "c",
+        "definition": "CHECK (((event_time >= 0) AND (update_time >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_callback.ts",
+        "exportName": "workCallbackWatermark",
+        "parameters": [],
+        "line": 155,
+        "declaration": "check(\"wcw_time_ck\", sql`${table.eventTime} >= 0 AND ${table.updateTime} >= 0`)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0109_work_callback_pipeline.sql",
+          "line": 92,
+          "declarationStart": "  CONSTRAINT \"wcw_time_ck\" CHECK (event_time >= 0 AND update_time >= 0)",
+          "sql": "CONSTRAINT \"wcw_time_ck\" CHECK (event_time >= 0 AND update_time >= 0)"
+        },
+        {
+          "file": "src/services/MigrationService.ts",
+          "line": 6401,
+          "declarationStart": "  CONSTRAINT \"wcw_time_ck\" CHECK (event_time >= 0 AND update_time >= 0)",
+          "sql": "CONSTRAINT \"wcw_time_ck\" CHECK (event_time >= 0 AND update_time >= 0)"
+        }
+      ],
+      "snapshot": {
+        "name": "wcw_time_ck",
+        "value": "\"work_callback_watermark\".\"event_time\" >= 0 AND \"work_callback_watermark\".\"update_time\" >= 0"
+      },
+      "columns": [
+        {
+          "key": "work_callback_watermark.event_time",
+          "name": "event_time",
+          "table": "work_callback_watermark",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_callback_watermark.update_time",
+          "name": "update_time",
+          "table": "work_callback_watermark",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_contact_action_audit.wcaa_actor_reason_ck",
+      "catalog": {
+        "key": "work_contact_action_audit.wcaa_actor_reason_ck",
+        "name": "wcaa_actor_reason_ck",
+        "table": "work_contact_action_audit",
+        "type": "c",
+        "definition": "CHECK (((actor_id > 0) AND ((char_length(btrim((reason)::text)) >= 8) AND (char_length(btrim((reason)::text)) <= 500)) AND ((reason)::text !~ '[[:cntrl:]]'::text) AND (add_time >= 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_contact_action.ts",
+        "exportName": "workContactActionAudit",
+        "parameters": [
+          "table"
+        ],
+        "line": 165,
+        "declaration": "check(\"wcaa_actor_reason_ck\", sql`\n      ${table.actorId} > 0 AND char_length(btrim(${table.reason})) BETWEEN 8 AND 500\n      AND ${table.reason} !~ '[[:cntrl:]]' AND ${table.addTime} >= 0\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0118_work_contact_action_outbox.sql",
+          "line": 141,
+          "declarationStart": "  CONSTRAINT \"wcaa_actor_reason_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_actor_reason_ck\" CHECK (\n    actor_id > 0 AND char_length(btrim(reason)) BETWEEN 8 AND 500\n    AND reason !~ '[[:cntrl:]]' AND add_time >= 0\n  )"
+        },
+        {
+          "file": "src/migrations/workContactActionOutbox.ts",
+          "line": 141,
+          "declarationStart": "  CONSTRAINT \"wcaa_actor_reason_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_actor_reason_ck\" CHECK (\n    actor_id > 0 AND char_length(btrim(reason)) BETWEEN 8 AND 500\n    AND reason !~ '[[:cntrl:]]' AND add_time >= 0\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wcaa_actor_reason_ck",
+        "value": "\n      \"work_contact_action_audit\".\"actor_id\" > 0 AND char_length(btrim(\"work_contact_action_audit\".\"reason\")) BETWEEN 8 AND 500\n      AND \"work_contact_action_audit\".\"reason\" !~ '[[:cntrl:]]' AND \"work_contact_action_audit\".\"add_time\" >= 0\n    "
+      },
+      "columns": [
+        {
+          "key": "work_contact_action_audit.actor_id",
+          "name": "actor_id",
+          "table": "work_contact_action_audit",
+          "type": "integer",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": null
+        },
+        {
+          "key": "work_contact_action_audit.reason",
+          "name": "reason",
+          "table": "work_contact_action_audit",
+          "type": "character varying(500)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_contact_action_audit.add_time",
+          "name": "add_time",
+          "table": "work_contact_action_audit",
+          "type": "integer",
+          "notNull": true,
+          "default": "0",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_contact_action_audit.wcaa_operation_ck",
+      "catalog": {
+        "key": "work_contact_action_audit.wcaa_operation_ck",
+        "name": "wcaa_operation_ck",
+        "table": "work_contact_action_audit",
+        "type": "c",
+        "definition": "CHECK (((operation)::text = ANY ((ARRAY['CONFIRM_SUCCEEDED'::character varying, 'RETRY_WITH_RISK'::character varying, 'CLOSE'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_contact_action.ts",
+        "exportName": "workContactActionAudit",
+        "parameters": [
+          "table"
+        ],
+        "line": 169,
+        "declaration": "check(\"wcaa_operation_ck\", sql`${table.operation} IN ('CONFIRM_SUCCEEDED','RETRY_WITH_RISK','CLOSE')`)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0118_work_contact_action_outbox.sql",
+          "line": 134,
+          "declarationStart": "  CONSTRAINT \"wcaa_operation_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_operation_ck\" CHECK (\n    operation IN ('CONFIRM_SUCCEEDED','RETRY_WITH_RISK','CLOSE')\n  )"
+        },
+        {
+          "file": "src/migrations/workContactActionOutbox.ts",
+          "line": 134,
+          "declarationStart": "  CONSTRAINT \"wcaa_operation_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_operation_ck\" CHECK (\n    operation IN ('CONFIRM_SUCCEEDED','RETRY_WITH_RISK','CLOSE')\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wcaa_operation_ck",
+        "value": "\"work_contact_action_audit\".\"operation\" IN ('CONFIRM_SUCCEEDED','RETRY_WITH_RISK','CLOSE')"
+      },
+      "columns": [
+        {
+          "key": "work_contact_action_audit.operation",
+          "name": "operation",
+          "table": "work_contact_action_audit",
+          "type": "character varying(24)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_contact_action_audit.wcaa_request_ck",
+      "catalog": {
+        "key": "work_contact_action_audit.wcaa_request_ck",
+        "name": "wcaa_request_ck",
+        "table": "work_contact_action_audit",
+        "type": "c",
+        "definition": "CHECK ((((request_key)::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'::text) AND ((request_hash)::text ~ '^[0-9a-f]{64}$'::text) AND ((provider_reference_hash IS NULL) OR ((provider_reference_hash)::text ~ '^[0-9a-f]{64}$'::text))))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_contact_action.ts",
+        "exportName": "workContactActionAudit",
+        "parameters": [
+          "table"
+        ],
+        "line": 170,
+        "declaration": "check(\"wcaa_request_ck\", sql`\n      ${table.requestKey} ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'\n      AND ${table.requestHash} ~ '^[0-9a-f]{64}$'\n      AND (${table.providerReferenceHash} IS NULL OR ${table.providerReferenceHash} ~ '^[0-9a-f]{64}$')\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0118_work_contact_action_outbox.sql",
+          "line": 129,
+          "declarationStart": "  CONSTRAINT \"wcaa_request_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_request_ck\" CHECK (\n    request_key ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'\n    AND request_hash ~ '^[0-9a-f]{64}$'\n    AND (provider_reference_hash IS NULL OR provider_reference_hash ~ '^[0-9a-f]{64}$')\n  )"
+        },
+        {
+          "file": "src/migrations/workContactActionOutbox.ts",
+          "line": 129,
+          "declarationStart": "  CONSTRAINT \"wcaa_request_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_request_ck\" CHECK (\n    request_key ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'\n    AND request_hash ~ '^[0-9a-f]{64}$'\n    AND (provider_reference_hash IS NULL OR provider_reference_hash ~ '^[0-9a-f]{64}$')\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wcaa_request_ck",
+        "value": "\n      \"work_contact_action_audit\".\"request_key\" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'\n      AND \"work_contact_action_audit\".\"request_hash\" ~ '^[0-9a-f]{64}$'\n      AND (\"work_contact_action_audit\".\"provider_reference_hash\" IS NULL OR \"work_contact_action_audit\".\"provider_reference_hash\" ~ '^[0-9a-f]{64}$')\n    "
+      },
+      "columns": [
+        {
+          "key": "work_contact_action_audit.request_key",
+          "name": "request_key",
+          "table": "work_contact_action_audit",
+          "type": "character varying(36)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_contact_action_audit.request_hash",
+          "name": "request_hash",
+          "table": "work_contact_action_audit",
+          "type": "character varying(64)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_contact_action_audit.provider_reference_hash",
+          "name": "provider_reference_hash",
+          "table": "work_contact_action_audit",
+          "type": "character varying(64)",
+          "notNull": false,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    },
+    {
+      "key": "work_contact_action_audit.wcaa_risk_ck",
+      "catalog": {
+        "key": "work_contact_action_audit.wcaa_risk_ck",
+        "name": "wcaa_risk_ck",
+        "table": "work_contact_action_audit",
+        "type": "c",
+        "definition": "CHECK ((((operation)::text <> 'RETRY_WITH_RISK'::text) OR risk_accepted))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_contact_action.ts",
+        "exportName": "workContactActionAudit",
+        "parameters": [
+          "table"
+        ],
+        "line": 175,
+        "declaration": "check(\"wcaa_risk_ck\", sql`${table.operation} <> 'RETRY_WITH_RISK' OR ${table.riskAccepted}`)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0118_work_contact_action_outbox.sql",
+          "line": 145,
+          "declarationStart": "  CONSTRAINT \"wcaa_risk_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_risk_ck\" CHECK (\n    operation <> 'RETRY_WITH_RISK' OR risk_accepted\n  )"
+        },
+        {
+          "file": "src/migrations/workContactActionOutbox.ts",
+          "line": 145,
+          "declarationStart": "  CONSTRAINT \"wcaa_risk_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_risk_ck\" CHECK (\n    operation <> 'RETRY_WITH_RISK' OR risk_accepted\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wcaa_risk_ck",
+        "value": "\"work_contact_action_audit\".\"operation\" <> 'RETRY_WITH_RISK' OR \"work_contact_action_audit\".\"risk_accepted\""
+      },
+      "columns": [
+        {
+          "key": "work_contact_action_audit.operation",
+          "name": "operation",
+          "table": "work_contact_action_audit",
+          "type": "character varying(24)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_contact_action_audit.risk_accepted",
+          "name": "risk_accepted",
+          "table": "work_contact_action_audit",
+          "type": "boolean",
+          "notNull": true,
+          "default": "false",
+          "identity": "",
+          "generated": "",
+          "collation": null
+        }
+      ]
+    },
+    {
+      "key": "work_contact_action_audit.wcaa_status_ck",
+      "catalog": {
+        "key": "work_contact_action_audit.wcaa_status_ck",
+        "name": "wcaa_status_ck",
+        "table": "work_contact_action_audit",
+        "type": "c",
+        "definition": "CHECK ((((from_status)::text = ANY ((ARRAY['UNKNOWN'::character varying, 'DEAD'::character varying])::text[])) AND ((to_status)::text = ANY ((ARRAY['SUCCEEDED'::character varying, 'RETRYABLE'::character varying, 'CLOSED'::character varying])::text[]))))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false,
+        "noInherit": false,
+        "local": true,
+        "inheritCount": 0
+      },
+      "model": {
+        "file": "src/models/schema/work_contact_action.ts",
+        "exportName": "workContactActionAudit",
+        "parameters": [
+          "table"
+        ],
+        "line": 176,
+        "declaration": "check(\"wcaa_status_ck\", sql`\n      ${table.fromStatus} IN ('UNKNOWN','DEAD')\n      AND ${table.toStatus} IN ('SUCCEEDED','RETRYABLE','CLOSED')\n    `)",
+        "parameter": "table"
+      },
+      "sources": [
+        {
+          "file": "migrations/0118_work_contact_action_outbox.sql",
+          "line": 137,
+          "declarationStart": "  CONSTRAINT \"wcaa_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_status_ck\" CHECK (\n    from_status IN ('UNKNOWN','DEAD')\n    AND to_status IN ('SUCCEEDED','RETRYABLE','CLOSED')\n  )"
+        },
+        {
+          "file": "src/migrations/workContactActionOutbox.ts",
+          "line": 137,
+          "declarationStart": "  CONSTRAINT \"wcaa_status_ck\" CHECK (",
+          "sql": "CONSTRAINT \"wcaa_status_ck\" CHECK (\n    from_status IN ('UNKNOWN','DEAD')\n    AND to_status IN ('SUCCEEDED','RETRYABLE','CLOSED')\n  )"
+        }
+      ],
+      "snapshot": {
+        "name": "wcaa_status_ck",
+        "value": "\n      \"work_contact_action_audit\".\"from_status\" IN ('UNKNOWN','DEAD')\n      AND \"work_contact_action_audit\".\"to_status\" IN ('SUCCEEDED','RETRYABLE','CLOSED')\n    "
+      },
+      "columns": [
+        {
+          "key": "work_contact_action_audit.from_status",
+          "name": "from_status",
+          "table": "work_contact_action_audit",
+          "type": "character varying(16)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        },
+        {
+          "key": "work_contact_action_audit.to_status",
+          "name": "to_status",
+          "table": "work_contact_action_audit",
+          "type": "character varying(16)",
+          "notNull": true,
+          "default": null,
+          "identity": "",
+          "generated": "",
+          "collation": "pg_catalog.default"
+        }
+      ]
+    }
+  ]
+}

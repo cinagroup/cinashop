@@ -12,6 +12,7 @@ import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migr
 import { extendConstraintNameContracts, assertConstraintNamesAligned } from "./data-migration/constraint-name-contracts";
 import { extendExternalDuplicateContracts, assertAllIndexesAligned } from "./data-migration/external-duplicate-index-contracts";
 import { assertColumnDefaultContracts, assertAllColumnsAligned } from "./data-migration/column-default-contracts";
+import { assertMissingConstraintContracts } from "./data-migration/missing-constraint-contracts";
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
 const root = resolve(import.meta.dirname, "..");
@@ -37,6 +38,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   let upgradeVerification;
   let externalDuplicateIndexRetirement;
   let columnDefaultUpgradeVerification;
+  let missingConstraintUpgradeVerification;
   const columnWriteVerification: Record<string, unknown> = {};
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
@@ -56,9 +58,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const snapshot = generateDrizzleJson(models);
     const generated = await generateMigration(generateDrizzleJson({}), snapshot);
     const auditDefaults = createRequire(import.meta.url)("../test/helpers/columnDefaultAudit.cjs");
-    for (const path of ["external", "embedded", "orm", "orm_upgrade", "orm_default_upgrade"] as const) {
+    for (const path of ["external", "embedded", "orm", "orm_upgrade", "orm_default_upgrade", "orm_constraints"] as const) {
       const name = `orm_audit_${path}_${randomUUID().replaceAll("-", "")}`;
-      if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Invalid isolated database name");
+      if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade|orm_constraints)_[a-f0-9]{32}$/.test(name) || name.length > 63) throw new Error("Invalid isolated database name");
       await control.unsafe(`CREATE DATABASE "${name}" TEMPLATE template0`);
       created.push(name);
       const isolated = new URL(target.href);
@@ -92,6 +94,13 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
             throw new Error(`Embedded path incomplete: ${JSON.stringify(result)}`);
           }
           steps = result.executed.length;
+        } else if (path === "orm_constraints") {
+          const auditConstraints = createRequire(import.meta.url)("../test/helpers/missingConstraintAudit.cjs");
+          missingConstraintUpgradeVerification = await auditConstraints({ api, models, format: "pg16", database: {
+            exec: (query: string) => client.unsafe(query),
+            query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
+          } });
+          steps = missingConstraintUpgradeVerification.initialStatements + missingConstraintUpgradeVerification.guardedStatements;
         } else if (path === "orm_default_upgrade") {
           // Separate full-schema old-default path; don't extend the bounded six-stage index probe.
           columnDefaultUpgradeVerification = await auditDefaults({ api, models, format: "pg16", database: {
@@ -148,6 +157,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const duplicateContracts = extendExternalDuplicateContracts(owningContracts.keys, contractManifests[6]);
     const requiredIndexKeys = duplicateContracts.keys;
     const defaultManifest = JSON.parse(await readFile(resolve(root, "audit/orm-column-default-reconciliation.json"), "utf8"));
+    const missingConstraintManifest = JSON.parse(await readFile(resolve(root, "audit/orm-missing-constraint-reconciliation.json"), "utf8"));
     for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     for (const catalog of Object.values(catalogs)) assertOldIndexNamesAbsent(catalog, oldKeys);
     for (const catalog of Object.values(catalogs)) assertConstraintNamesAligned(catalogs.external, catalog);
@@ -155,11 +165,17 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     for (const catalog of Object.values(catalogs)) {
       assertColumnDefaultContracts(catalog, defaultManifest);
       assertAllColumnsAligned(catalogs.external, catalog);
+      assertMissingConstraintContracts(catalog, missingConstraintManifest);
     }
     assertIndexContracts(catalogs.external, catalogs.embedded, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm_upgrade, requiredIndexKeys);
     assertIndexContracts(catalogs.external, catalogs.orm_default_upgrade, requiredIndexKeys);
+    assertIndexContracts(catalogs.external, catalogs.orm_constraints, requiredIndexKeys);
+    const ormVsConstraintUpgraded = compareCatalogs(catalogs.orm, catalogs.orm_constraints);
+    if (!missingConstraintUpgradeVerification || Object.values(ormVsConstraintUpgraded).some(changes => Object.values(changes).some(rows => rows.length))) {
+      throw new Error("Fresh ORM and constraint-upgraded ORM catalogs differ");
+    }
     const ormVsUpgraded = compareCatalogs(catalogs.orm, catalogs.orm_upgrade);
     if (!externalDuplicateIndexRetirement) throw new Error("External duplicate retirement verification is missing");
     const ormVsDefaultUpgraded = compareCatalogs(catalogs.orm, catalogs.orm_default_upgrade);
@@ -170,7 +186,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       throw new Error("Fresh ORM and upgraded ORM catalogs differ");
     }
     return {
-      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM and default-upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes the existing six index upgrade phases, five external duplicate retirements and a separate full-schema four-default upgrade. Complete index and column categories are exact five-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes; upgrade probes cover dependency preservation/refusal, rollback, rows, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
+      scope: "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM, default-upgraded ORM and constraint-upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes six existing index phases, five external duplicate retirements, a separate four-default upgrade and a separate 41-constraint addition preserving eight NOT VALID states. Complete index/column categories and the 41 exact constraint contracts are six-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes. Upgrade probes verify synthetic rows, OIDs/files/dependencies, drift refusal, rollback, new writes, FK/unique/cascade behavior, idempotence and schema isolation. View/function/trigger probes cover self-created fixtures, not complete schema equivalence for those categories, privileges or policies. No production rows inspected.",
       serverVersionNum: Number(identity.version),
       externalInputSha256: inputDigest.digest("hex"),
       generatedSqlSha256: createHash("sha256").update(generated.join("\n")).digest("hex"),
@@ -181,8 +197,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
       alignedIndexNameContracts: { mode: "exact canonical names in positive contracts; reject all 44 old physical names in every path", oldKeys },
       alignedConstraintNameContracts: { mode: "exact owning primary/unique constraints and indexes; reject all three old names in every path", constraintKeys: owningContracts.constraintKeys, oldKeys: owningContracts.oldKeys },
-      fullIndexCatalogContract: { mode: "all five paths: exact complete index names and definitions; no additions, omissions or aliases waived", count: catalogs.external.indexes.length, retiredExternalKeys: duplicateContracts.retiredKeys },
-      fullColumnCatalogContract: { mode: "all five paths: exact complete columns, types, nullability, defaults, identity, generation and collation", count: catalogs.external.columns.length, defaultKeys: defaultManifest.entries.map((e: { key: string }) => e.key) },
+      fullIndexCatalogContract: { mode: "all six paths: exact complete index names and definitions; no additions, omissions or aliases waived", count: catalogs.external.indexes.length, retiredExternalKeys: duplicateContracts.retiredKeys },
+      fullColumnCatalogContract: { mode: "all six paths: exact complete columns, types, nullability, defaults, identity, generation and collation", count: catalogs.external.columns.length, defaultKeys: defaultManifest.entries.map((e: { key: string }) => e.key) },
+      missingConstraintContracts: { mode: "all six paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived", keys: missingConstraintManifest.entries.map((e: { key: string }) => e.key) },
+      missingConstraintUpgradeVerification: { ...missingConstraintUpgradeVerification, freshCatalogMatched: true },
       columnDefaultUpgradeVerification: { ...columnDefaultUpgradeVerification, freshCatalogMatched: true },
       columnWriteVerification,
       externalDuplicateIndexRetirement,
@@ -200,7 +218,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     try {
       for (const name of created.reverse()) {
         try {
-          if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade)_[a-f0-9]{32}$/.test(name)) throw new Error("Unsafe cleanup target");
+          if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade|orm_constraints)_[a-f0-9]{32}$/.test(name) || name.length > 63) throw new Error("Unsafe cleanup target");
           await control.unsafe(`DROP DATABASE "${name}"`);
           const remains = await control`SELECT datname FROM pg_database WHERE datname=${name}`;
           if (remains.length) throw new Error("Isolated database cleanup was not confirmed");

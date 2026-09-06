@@ -72,6 +72,12 @@ export const systemQueueDeadLetter = pgTable(
       "sqdl_count_ck",
       sql`${table.dlqAttempts} > 0 AND ${table.occurrenceCount} > 0 AND ${table.replayCount} >= 0`,
     ),
+    check("sqdl_time_ck", sql`
+      ${table.messageTimestampMs} >= 0 AND ${table.firstSeenTime} >= 0
+      AND ${table.lastSeenTime} >= 0 AND ${table.replayRequestedTime} >= 0
+      AND ${table.replayedTime} >= 0 AND ${table.resolvedTime} >= 0
+      AND ${table.replayLeaseUntil} >= 0
+    `),
   ],
 );
 

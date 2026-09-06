@@ -22,7 +22,10 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { notValid } from "../pgNotValid";
 
 // ─── 商品分类 ────────────────────────────────────────────────
 export const storeProductCategory = pgTable(
@@ -173,6 +176,7 @@ export const storeProductAttrValue = pgTable(
     index("spav_product_suk_idx").on(t.productId, t.suk),
     index("spav_product_active").on(t.productId, t.type, t.isRetired, t.id),
     index("spav_product_type_suk").on(t.productId, t.type, t.suk),
+    notValid(check("spav_is_retired_ck", sql`${t.isRetired} IN (0, 1)`)),
   ],
 );
 
@@ -211,6 +215,7 @@ export const storeProductDescription = pgTable(
   (t) => [
     uniqueIndex("spd_product_type_unique").on(t.productId, t.type),
     index("spd_type_product").on(t.type, t.productId),
+    notValid(check("spd_type_ck", sql`${t.type} BETWEEN 0 AND 7`)),
   ],
 );
 
@@ -231,6 +236,8 @@ export const storeProductStockRecord = pgTable(
   (t) => [
     index("spsr_product_time").on(t.productId, t.addTime),
     index("spsr_unique_time").on(t.unique, t.addTime),
+    notValid(check("spsr_number_ck", sql`${t.number} >= 0`)),
+    notValid(check("spsr_pm_ck", sql`${t.pm} BETWEEN 0 AND 1`)),
   ],
 );
 

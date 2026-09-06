@@ -162,6 +162,21 @@ export const workContactActionAudit = pgTable(
     }).onDelete("restrict"),
     uniqueIndex("wcaa_request_uq").on(table.actionId, table.requestKey),
     index("wcaa_action_time").on(table.actionId, table.addTime, table.id),
+    check("wcaa_actor_reason_ck", sql`
+      ${table.actorId} > 0 AND char_length(btrim(${table.reason})) BETWEEN 8 AND 500
+      AND ${table.reason} !~ '[[:cntrl:]]' AND ${table.addTime} >= 0
+    `),
+    check("wcaa_operation_ck", sql`${table.operation} IN ('CONFIRM_SUCCEEDED','RETRY_WITH_RISK','CLOSE')`),
+    check("wcaa_request_ck", sql`
+      ${table.requestKey} ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      AND ${table.requestHash} ~ '^[0-9a-f]{64}$'
+      AND (${table.providerReferenceHash} IS NULL OR ${table.providerReferenceHash} ~ '^[0-9a-f]{64}$')
+    `),
+    check("wcaa_risk_ck", sql`${table.operation} <> 'RETRY_WITH_RISK' OR ${table.riskAccepted}`),
+    check("wcaa_status_ck", sql`
+      ${table.fromStatus} IN ('UNKNOWN','DEAD')
+      AND ${table.toStatus} IN ('SUCCEEDED','RETRYABLE','CLOSED')
+    `),
   ],
 );
 

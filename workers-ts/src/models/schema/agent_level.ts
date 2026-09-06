@@ -1,4 +1,13 @@
-import { index, integer, pgTable, serial, smallint, varchar } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  pgTable,
+  serial,
+  smallint,
+  varchar,
+  check,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /** PHP eb_agent_level：分销等级及一、二级佣金上浮百分比。 */
 export const agentLevel = pgTable(
@@ -15,7 +24,10 @@ export const agentLevel = pgTable(
     isDel: smallint("is_del").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
-  (t) => [index("al_status_del").on(t.status, t.isDel)],
+  (t) => [
+    index("al_status_del").on(t.status, t.isDel),
+    check("al_brokerage_ck", sql`${t.oneBrokerage} BETWEEN 0 AND 1000 AND ${t.twoBrokerage} BETWEEN 0 AND 1000`),
+  ],
 );
 
 /** PHP eb_agent_level_task: upgrade requirements attached to a distributor level. */

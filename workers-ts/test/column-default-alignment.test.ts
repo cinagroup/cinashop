@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { assertAllColumnsAligned, assertColumnDefaultContracts } from "../scripts/data-migration/column-default-contracts";
 import type { Catalog, CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { COLUMN_DEFAULT_ALIGNMENT_SQL as sql } from "../src/migrations/columnDefaultAlignment";
+import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(join(root, path), "utf8").replace(/\r\n/g, "\n");
@@ -27,7 +28,7 @@ describe("DB-009E1 exact column default reconciliation", () => {
       expect(original.reference).toEqual(e.catalog);
       expect(original.candidate).toEqual(e.previousCatalog);
       expect({ ...e.previousCatalog, default: e.catalog.default }).toEqual(e.catalog);
-      expect(read(e.model.file).split("\n")[e.model.line - 1]).toBe(e.model.declaration);
+      assertModelDeclaration(read(e.model.file), String(e.catalog.table), e.model.declaration);
       for (const source of e.sources) expect(read(source.file).split("\n")[source.line - 1]).toBe(source.sql);
     }
   });

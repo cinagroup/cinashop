@@ -120,6 +120,9 @@ export const storeOrderOutbox = pgTable(
     index("soob_expired_lease")
       .on(t.leaseUntil, t.id)
       .where(sql`${t.status} IN ('ENQUEUING', 'ENQUEUED', 'PROCESSING')`),
+    check("soob_count_ck", sql`${t.dispatchCount} >= 0 AND ${t.attemptCount} >= 0 AND ${t.replayCount} >= 0`),
+    check("soob_status_ck", sql`${t.status} IN ('PENDING', 'ENQUEUING', 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'DEAD')`),
+    check("soob_time_ck", sql`${t.availableTime} >= 0 AND ${t.leaseUntil} >= 0`),
   ],
 );
 

@@ -6,6 +6,7 @@ import { extendOrdinaryIndexContracts } from "../scripts/data-migration/ordinary
 import { extendIndexNameContracts } from "../scripts/data-migration/index-name-contracts";
 import { extendConstraintNameContracts, assertConstraintNamesAligned } from "../scripts/data-migration/constraint-name-contracts";
 import { CONSTRAINT_NAME_ALIGNMENT_SQL as sql } from "../src/migrations/constraintNameAlignment";
+import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
 
 type Entry = { key: string; previousKey: string; catalog: CatalogRow; previousCatalog: CatalogRow; constraint: CatalogRow; previousConstraint: CatalogRow;
   columns: string[]; previousSnapshotConstraint: { name: string; columns: string[] }; snapshotField: string;
@@ -50,7 +51,7 @@ describe("DB-009D2b3d owning constraint and index identity", () => {
       expect(e.constraint).toEqual({...e.previousConstraint,key:e.key,name:e.constraint.name});
       expect(e.previousSnapshotConstraint).toMatchObject({name:e.previousCatalog.name,columns:e.columns});
       expect(e.snapshotField).toBe(e.constraint.type==="p"?"compositePrimaryKeys":"uniqueConstraints");
-      expect(read(e.model.file).split("\n")[e.model.line-1]).toBe(e.model.declaration);
+      assertModelDeclaration(read(e.model.file), String(e.catalog.table), e.model.declaration);
       const replacement=e.constraint.type==="p"?e.model.previousDeclaration.replace("primaryKey({ columns:",`primaryKey({ name: "${e.catalog.name}", columns:`)
         :e.model.previousDeclaration.replace(".unique()",`.unique("${e.catalog.name}")`);
       expect(e.model.declaration).toBe(replacement);

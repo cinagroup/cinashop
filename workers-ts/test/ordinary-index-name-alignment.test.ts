@@ -4,6 +4,7 @@ import { assertIndexContracts, type Catalog, type CatalogRow } from "../scripts/
 import { extendOrdinaryIndexContracts } from "../scripts/data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "../scripts/data-migration/index-name-contracts";
 import { ORDINARY_INDEX_NAME_ALIGNMENT_SQL as sql } from "../src/migrations/ordinaryIndexNameAlignment";
+import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
 
 type Entry = { key: string; previousKey: string; catalog: CatalogRow; previousCatalog: CatalogRow; columns: string[];
   previousSnapshotIndex: { name: string; isUnique: boolean; method: string;
@@ -41,7 +42,7 @@ describe("DB-009D2b3c identity-preserving ordinary index names", () => {
       expect(entry.previousSnapshotIndex).toMatchObject({ name: entry.previousCatalog.name, isUnique: false, method: "btree" });
       expect(entry.previousSnapshotIndex.columns).toEqual(entry.columns.map((expression) => ({ expression, isExpression: false, asc: true, nulls: "last" })));
       expect(entry.model.previousDeclaration.replace(`index("${entry.previousCatalog.name}")`, `index("${entry.catalog.name}")`)).toBe(entry.model.declaration);
-      expect(read(entry.model.file).split("\n")[entry.model.line - 1]).toBe(entry.model.declaration);
+      assertModelDeclaration(read(entry.model.file), String(entry.catalog.table), entry.model.declaration);
       for (const source of entry.sources) expect(read(source.source).split("\n")[source.sourceLine - 1]).toBe(source.sourceSql);
     }
   });

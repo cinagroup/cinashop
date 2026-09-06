@@ -5,7 +5,9 @@ import {
   serial,
   uniqueIndex,
   varchar,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /**
  * 第三方原路退款状态。
@@ -41,5 +43,8 @@ export const storeOrderRefundPayment = pgTable(
     uniqueIndex("sorp_out_refund_no_uq").on(t.outRefundNo),
     index("sorp_order_id").on(t.storeOrderId),
     index("sorp_provider_status").on(t.provider, t.providerStatus),
+    check("sorp_amount_ck", sql`${t.requestAmount} >= 0 AND ${t.totalAmount} >= 0 AND ${t.requestAmount} <= ${t.totalAmount}`),
+    check("sorp_provider_ck", sql`${t.provider} IN ('wechat', 'alipay')`),
+    check("sorp_status_ck", sql`${t.providerStatus} IN ('CREATED', 'REQUESTING', 'PROCESSING', 'SUCCESS', 'CLOSED', 'ABNORMAL', 'FAILED', 'UNKNOWN')`),
   ],
 );
