@@ -1977,6 +1977,239 @@
     "externalDuplicateIndexRetirementProofUnchanged": true,
     "independentNotValidGeneratorProofUnchanged": true
   },
+  "sequenceExecutionBoundaryVerification": {
+    "sourceCommit": "c9de50997c3a898376ce392de5ba52ecf55590f6",
+    "runId": 34034710427,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34034710427",
+    "runAttempt": 1,
+    "status": "standalone_execution_verified_embedded_registration_pending",
+    "scope": "Standalone root-Drizzle public-schema execution only; embedded 0151 is not registered. Main catalog evidence above remains bound to f3cf196/34032529050.",
+    "statementTimeoutCapMs": 30000,
+    "idleInTransactionTimeoutCapMs": 5000,
+    "guardLockTimeoutMs": 2000,
+    "stricterStatementAndIdleSettingsPreserved": true,
+    "settingsAppliedBeforeDo": true,
+    "sessionSettingsRestoredAfterCommitAndRollback": true,
+    "readCommittedExplicit": true,
+    "nestedDrizzleTransactionRejected": true,
+    "historicalMigrationsReplayed": false,
+    "setupFailurePropagatedAndRolledBack": true,
+    "realAlterFailureRolledBack": true,
+    "postgres16BlockedDoCancellation": {
+      "sessionStatementTimeoutMs": 500,
+      "sqlState": "57014",
+      "testDurationMs": 527,
+      "rollbackAndSettingsRestoreConfirmed": true
+    },
+    "fullOldModelPath": {
+      "initialStatements": 1076,
+      "guardedStatements": 1,
+      "generatedProposalStatements": 2,
+      "modelAligned": true,
+      "committedUpgradeExecution": "standalone-drizzle-transaction",
+      "changedSequenceStorageFiles": 1,
+      "originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved": true,
+      "committedOldRowsPreserved": 2,
+      "originalCounterPreserved": true,
+      "driftRefusals": [
+        "increment",
+        "minimum",
+        "maximum",
+        "start",
+        "cache",
+        "cycle",
+        "integer-unowned",
+        "bigint-owned",
+        "wrong-owning-column",
+        "wrong-owning-table",
+        "owner-role",
+        "missing-default",
+        "wrong-default",
+        "nullable",
+        "column-type",
+        "missing-unique",
+        "wrong-unique-name",
+        "rls",
+        "inheritance",
+        "unlogged",
+        "extra-sequence-consumer",
+        "counter-before-range",
+        "uncalled-counter-overlaps-row",
+        "row-beyond-counter",
+        "missing-schema",
+        "missing-table",
+        "missing-sequence",
+        "unprivileged-role",
+        "ddl-event-hook",
+        "repeatable-read"
+      ],
+      "failureAfterAlterRollbackConfirmed": true,
+      "allPreflightBeforeTypeMutationConfirmed": true,
+      "noOpStorageAndCounterConfirmed": true,
+      "tempIsolationConfirmed": true,
+      "quotedNonPublicSchemaIsolationConfirmed": true,
+      "uncalledFirstValuePreserved": true,
+      "ownershipDeletionRollbackConfirmed": true,
+      "newDefaultWriteConfirmed": true,
+      "upperBoundAndExhaustionConfirmed": true,
+      "lockVerification": {
+        "waitRefused": true,
+        "waitMs": 2008,
+        "directNextvalSetvalAndTableWriterBlocked": true,
+        "peerNextvalNotRolledBack": true,
+        "ddlRollbackConfirmed": true,
+        "concurrentDistinctNumbers": 16
+      },
+      "syntheticRowsCleanupConfirmed": true
+    },
+    "dedicatedDatabaseRemovedAndAbsenceVerified": true,
+    "ci": {
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 101490563793,
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "conclusion": "success",
+          "seconds": 539
+        },
+        {
+          "id": 101490563797,
+          "name": "workerd runtime tests",
+          "conclusion": "success",
+          "seconds": 43
+        },
+        {
+          "id": 101490563810,
+          "name": "Repository secret scan",
+          "conclusion": "success",
+          "seconds": 11
+        },
+        {
+          "id": 101490563817,
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "conclusion": "success",
+          "seconds": 262
+        },
+        {
+          "id": 101490563853,
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "conclusion": "success",
+          "seconds": 710
+        },
+        {
+          "id": 101490563858,
+          "name": "UniApp build",
+          "conclusion": "success",
+          "seconds": 84
+        },
+        {
+          "id": 101490563860,
+          "name": "Admin build",
+          "conclusion": "success",
+          "seconds": 54
+        },
+        {
+          "id": 101490563884,
+          "name": "PC build",
+          "conclusion": "success",
+          "seconds": 37
+        },
+        {
+          "id": 101490563915,
+          "name": "Kefu build",
+          "conclusion": "success",
+          "seconds": 27
+        },
+        {
+          "id": 101490563946,
+          "name": "Supplier build",
+          "conclusion": "success",
+          "seconds": 40
+        },
+        {
+          "id": 101492197923,
+          "name": "Worker type, unit, schema and route gates",
+          "conclusion": "success",
+          "seconds": 2
+        }
+      ],
+      "unitFiles": 253,
+      "unitTests": 1620,
+      "unitSkipped": 0,
+      "shards": [
+        {
+          "shard": 1,
+          "shardCount": 2,
+          "inventoryFiles": 253,
+          "inventorySha256": "f8b5bdf4c431d9a050bab0f9c45cae848882859465f519e6ecdcd331b1cf6a05",
+          "executedFiles": 127,
+          "executedFileSha256": "7ce41f18190c20bb0fce5a0733ec916ab6da32e627797cfc2a40dfd7599d3afe",
+          "passedTests": 821,
+          "skippedTests": 0,
+          "nativePartitionCompleteAndDisjoint": true,
+          "executedFilesMatchNativePartition": true
+        },
+        {
+          "shard": 2,
+          "shardCount": 2,
+          "inventoryFiles": 253,
+          "inventorySha256": "f8b5bdf4c431d9a050bab0f9c45cae848882859465f519e6ecdcd331b1cf6a05",
+          "executedFiles": 126,
+          "executedFileSha256": "66cc01877b3c39a191e14137ce06fb7a1897c289556cadf48b462e20826aab38",
+          "passedTests": 799,
+          "skippedTests": 0,
+          "nativePartitionCompleteAndDisjoint": true,
+          "executedFilesMatchNativePartition": true
+        }
+      ],
+      "runnerTestFile": "test/kefu-sequence-runner.test.ts",
+      "runnerTests": 11,
+      "runnerTestDurationMs": 31309,
+      "unitTestSeconds": [
+        586.27,
+        501.95
+      ],
+      "unitJobSeconds": [
+        710,
+        539
+      ],
+      "unitHeadroomSeconds": [
+        490,
+        661
+      ],
+      "priorAcceptedHeadroomSeconds": 529,
+      "conservativeHeadroomSeconds": 490,
+      "limitsConcurrencyVersionsAndExistingAssertionsUnchanged": true,
+      "nativeAllocatorStabilityIssueResolved": false
+    },
+    "catalogRecheck": {
+      "referenceSourceCommit": "f3cf196ba9826bf3ef7207ebc190574f5c3ddc2f",
+      "referenceRunId": 34032529050,
+      "paths": 9,
+      "allFiveCategoryDifferences": 0,
+      "inputAndGeneratedSqlHashesUnchanged": true,
+      "rawReportChanges": [
+        {
+          "path": ".orm.0.kefuSequenceUpgradeVerification.lockVerification.waitMs",
+          "before": 2007,
+          "after": 2006
+        },
+        {
+          "path": ".orm.0.kefuSequenceUpgradeVerification.committedUpgradeExecution",
+          "after": "direct-sql"
+        }
+      ],
+      "notValidGeneratorReportDeepEqual": true,
+      "sequenceGeneratorReportDeepEqual": true,
+      "catalogAndGeneratorDatabasesRemoved": 13,
+      "additionalRunnerDatabaseRemoved": 1
+    },
+    "embeddedNewGuardRegistered": false,
+    "businessSequenceUpgradeAccepted": false,
+    "releaseReady": false,
+    "productionAccessed": false,
+    "productionChanged": false
+  },
   "sequenceBusinessCandidateVerification": {
     "sourceCommit": "f3cf196ba9826bf3ef7207ebc190574f5c3ddc2f",
     "runId": 34032529050,
