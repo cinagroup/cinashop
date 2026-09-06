@@ -1,21 +1,21 @@
 {
-  "sourceCommit": "58ac3ce831dfeb803af3065a38b018819a8535c5",
-  "runId": 34002410416,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34002410416",
+  "sourceCommit": "2ef0d333ccf5485bb03e439685450d468872607c",
+  "runId": 34003919501,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34003919501",
   "status": "not_equivalent",
   "kind": "summary",
-  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade/rollback/fixture and FK dependency checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
+  "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM and upgraded ORM catalogs: tables, columns (type/default/nullability/identity/generated/collation), constraints, indexes, sequences. Includes generated 57-index upgrade and 28 legacy query index restoration, rejection/rollback/fixture/OID/FK dependency/idempotence/schema-isolation checks. Does not inspect production rows, privileges, functions, triggers, policies or views.",
   "serverVersionNum": 160014,
-  "externalInputSha256": "4660b957edcf4297227169384e2b60a735bfa2e1e2803287b03e39bf4d269dc1",
+  "externalInputSha256": "959064d23521260baaff2af5d008fe1a7363eb1d824a8887d406cf4efc07f370",
   "generatedSqlSha256": "8ff01639a57fa6f5be659f11afcbf67b8c9d948ec8e0ee803d09d3b8f8210caa",
   "paths": [
     {
       "path": "external",
-      "steps": 137
+      "steps": 138
     },
     {
       "path": "embedded",
-      "steps": 142
+      "steps": 143
     },
     {
       "path": "orm",
@@ -31,14 +31,14 @@
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
-      "indexes": 963,
+      "indexes": 991,
       "sequences": 227
     },
     "embedded": {
       "tables": 263,
       "columns": 3700,
       "constraints": 570,
-      "indexes": 958,
+      "indexes": 986,
       "sequences": 227
     },
     "orm": {
@@ -110,7 +110,7 @@
       },
       "indexes": {
         "referenceOnly": 52,
-        "candidateOnly": 97,
+        "candidateOnly": 69,
         "changed": 0,
         "possibleRenames": 47
       },
@@ -203,16 +203,65 @@
       "work_client_current.wcc_catalog_idx",
       "work_department_current.wdc_active_tree_idx",
       "work_group_chat_current.wgcc_catalog_idx",
-      "work_group_chat_member_current.wgcmc_group_state_idx"
+      "work_group_chat_member_current.wgcmc_group_state_idx",
+      "community.c_type",
+      "community_comment.cc_community",
+      "store_cart.sc_uid_new",
+      "store_order.so_add_time",
+      "store_order_refund.sor_order_id",
+      "store_order_status.sos_change_type",
+      "store_product.is_benefit",
+      "store_product.is_best",
+      "store_product.is_hot",
+      "store_product.is_new",
+      "store_product.is_postage",
+      "store_product_category.add_time",
+      "store_product_category.sort",
+      "store_product_label.type_label",
+      "store_seckill.ss_status",
+      "system_admin.sa_status",
+      "system_config.config_tab_id",
+      "user.add_time_delete_sex",
+      "user.is_promoter",
+      "user.level",
+      "user.spreaduid",
+      "user.work_uid",
+      "user_bill.ub_add_time",
+      "user_bill.ub_pm",
+      "user_bill.ub_status",
+      "user_brokerage.ub_uid",
+      "user_extract.ue_uid",
+      "user_money.um_type_link"
     ]
   },
   "upgradeVerification": {
     "initialStatements": 1061,
     "upgradeStatements": 114,
     "reconciledIndexes": 57,
-    "verifiedContracts": 79,
+    "verifiedContracts": 107,
     "rollbackConfirmed": true,
     "rowsAndDependenciesPreserved": true,
+    "legacyQueryIndexes": {
+      "restoredIndexes": 28,
+      "rejectionCases": [
+        "unique",
+        "reversed",
+        "descending",
+        "predicate",
+        "include",
+        "wrong-table",
+        "relation-name",
+        "constraint-owner",
+        "expression",
+        "missing-table",
+        "missing-schema"
+      ],
+      "rollbackConfirmed": true,
+      "duplicateRowsPreserved": true,
+      "nonTargetObjectsAndDependenciesPreserved": true,
+      "idempotent": true,
+      "schemaIsolationConfirmed": true
+    },
     "freshCatalogMatched": true
   },
   "missingIndexEvidence": {
