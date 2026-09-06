@@ -1,7 +1,7 @@
 {
-  "sourceCommit": "9af7fb665d65919a0b0c217db3005838347dc92a",
-  "runId": 34011673361,
-  "url": "https://github.com/cinagroup/cinashop/actions/runs/34011673361",
+  "sourceCommit": "1641e653c455e53d6b07d1d097dbbbae114992ba",
+  "runId": 34013882048,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34013882048",
   "status": "not_equivalent",
   "kind": "summary",
   "scope": "Isolated PostgreSQL 16 external SQL, embedded migration, fresh ORM, index-upgraded ORM and default-upgraded ORM catalogs: tables, columns, constraints, indexes and sequences. Includes the existing six index upgrade phases, five external duplicate retirements and a separate full-schema four-default upgrade. Complete index and column categories are exact five-path gates. All paths verify omitted/DEFAULT/explicit/NULL writes; upgrade probes cover dependency preservation/refusal, rollback, rows, OIDs/files, FK/unique/cascade enforcement, equality queries/index plans, idempotence and schema isolation. Dependent-view/trigger probes cover self-created fixtures, not a full view/function/privilege/trigger/policy audit. No production rows inspected.",
@@ -673,5 +673,56 @@
     "externalVsOrm": []
   },
   "cleanupConfirmed": true,
-  "mode": "inventory; differences remain open until individually reviewed"
+  "mode": "inventory; differences remain open until individually reviewed",
+  "notValidGeneratorVerification": {
+    "scope": "Generator prerequisites on self-created fixtures only; no business constraints migrated and no production access",
+    "records": [
+      {
+        "format": "cjs",
+        "serverVersionNum": 160014,
+        "initialStatements": 12,
+        "upgradeStatements": 5,
+        "markedConstraints": [
+          "nv_amount_ck",
+          "nv_child_fk",
+          "nv_message_ck",
+          "nv_tenant_amount_ck",
+          "nv_tenant_fk"
+        ],
+        "freshAndUpgradeMatched": true,
+        "oldRowsPreserved": 4,
+        "oldObjectIdentitiesPreserved": true,
+        "validationRefusals": 5,
+        "nullChecksPreserved": true,
+        "crossSchemaCascadeConfirmed": true,
+        "invalidMetadataRejections": 8,
+        "noOpConfirmed": true,
+        "introspectionRefusedReadOnly": true
+      },
+      {
+        "format": "esm",
+        "serverVersionNum": 160014,
+        "initialStatements": 12,
+        "upgradeStatements": 5,
+        "markedConstraints": [
+          "nv_amount_ck",
+          "nv_child_fk",
+          "nv_message_ck",
+          "nv_tenant_amount_ck",
+          "nv_tenant_fk"
+        ],
+        "freshAndUpgradeMatched": true,
+        "oldRowsPreserved": 4,
+        "oldObjectIdentitiesPreserved": true,
+        "validationRefusals": 5,
+        "nullChecksPreserved": true,
+        "crossSchemaCascadeConfirmed": true,
+        "invalidMetadataRejections": 8,
+        "noOpConfirmed": true,
+        "introspectionRefusedReadOnly": true
+      }
+    ],
+    "databasesCreated": 2,
+    "cleanupConfirmed": true
+  }
 }
