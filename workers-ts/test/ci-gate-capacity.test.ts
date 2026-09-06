@@ -30,7 +30,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(names(unit)).toEqual([...setup,"Audit production dependencies","Run both TypeScript configurations","Run Worker unit tests",
       "Audit production observability contract","Audit legacy-to-PostgreSQL schema drift","Audit legacy-to-Worker route parity"]);
     expect(names(catalog)).toEqual([...setup,"Execute isolated PostgreSQL 16 ORM and migration catalog audit",
-      "Verify NOT VALID generator semantics on isolated PostgreSQL 16"]);
+      "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16"]);
     for(const block of [unit,catalog]) {
       expect(block).toContain("timeout-minutes: 20");
       expect(block).toContain("image: postgres:16.14-alpine");
@@ -44,6 +44,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       expect(unit).toContain("run: "+command);
     expect(catalog).toContain("run: npm run audit:orm\n");
     expect(catalog).toContain("run: npm run audit:orm:not-valid\n");
+    expect(catalog).toContain("run: npm run audit:orm:sequences\n");
     expect(unit).not.toContain("run: npm run audit:orm");
     expect(workflow).not.toContain("secrets.");
   });

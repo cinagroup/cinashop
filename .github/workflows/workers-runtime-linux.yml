@@ -158,6 +158,9 @@ jobs:
       - name: Verify NOT VALID generator semantics on isolated PostgreSQL 16
         run: npm run audit:orm:not-valid
 
+      - name: Verify sequence generator semantics on isolated PostgreSQL 16
+        run: npm run audit:orm:sequences
+
   runtime:
     name: workerd runtime tests
     runs-on: ubuntu-24.04

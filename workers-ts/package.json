@@ -18,6 +18,7 @@
     "data:schema-audit": "tsx scripts/mysql-to-postgres.ts schema-audit",
     "audit:orm": "tsx scripts/orm-ddl-audit.ts",
     "audit:orm:not-valid": "tsx scripts/audit-pg-not-valid.ts",
+    "audit:orm:sequences": "tsx scripts/audit-pg-sequence-state.ts",
     "audit:routes": "tsx scripts/route-parity-audit.ts",
     "audit:admin-frontend": "tsx scripts/admin-frontend-parity-audit.ts",
     "audit:admin-api": "tsx scripts/admin-frontend-api-audit.ts",
