@@ -5689,6 +5689,26 @@ PG16目录任务实际通过未mock的MigrationService.runAll：external147、em
 
 本地追加复验4文件27项通过（4.51秒），两套TypeScript检查通过，差异检查通过；原工作流上限、测试并发、依赖版本、所有迁移SQL/模型和冻结基线不变。本项仍等待完整Linux验证，不提前回填完成状态。
 
+### DB-009G：下一项索引审查的源代码证据（未验收）
+
+等待F的CI期间，仅作只读源代码复核。`payment_reconciliation_case.callback_event_id`仍无以该列开头的索引；注册/回调回填在PaymentReconciliationRegistry中按provider/orderNo或case主键读写，已检查的PaymentCallbackEventService更新改变状态、租约和时间而不改主键，尚不能据此声称全部父事件清理/主键操作路径都不存在。另一项有明确当前父端DELETE：SupplierFulfillmentService.splitDelivery的非首次拆分分支在1189行删除active订单的store_order_cart_info，再插入剩余快照；这不是纯理论维护入口。ReplyService.reviewedCartIds虽以is_del=0读取活跃评价，现有spr_active_cart_uq也仅覆盖非空且未删除行，但[外键父端检查](https://www.postgresql.org/docs/16/ddl-constraints.html#DDL-CONSTRAINTS-FK)不能由此推断仅需检查活跃评价；[部分索引](https://www.postgresql.org/docs/16/indexes-partial.html)需要查询条件蕴含其谓词。
+
+G仍须在隔离PG16验证无匹配引用、活跃/删除态引用、NULL及父端DELETE/键更新的真实行为和查询计划，再决定最小索引集合，并保持原活跃唯一性与NOT VALID状态。没有新增索引、修改拆单/评价流程或查询生产；本节不算性能修复或G验收，也不把技能中的一般索引建议当作不经测量的实施依据。
+
+## DB-009F：完整表门禁最终Linux/PG16验收（2026-09-06）
+
+提交`70e01eab3e17a467478e2b616b98a5432afccf11`的[Actions34037834052](https://github.com/cinagroup/cinashop/actions/runs/34037834052) attempt 1最终11/11成功，没有CI重跑。两片128/127文件、837/805项，合计255文件1,642项、0跳过；共同清单摘要072c593f2d70b991e38a2185057b35578418fa2d1a72a0a2545911432baf2721，执行文件摘要bcf530f2a7fe62a3eb33db2923607f1b866cf2a2e6b070c56a33bd28c8579d5e、c0693adae2f28d44672d5376ead2681db13419c35e6b6c09ba7158953001c37d。第二片文件集合及805项与7d14b88相同，新13项全部落在第一片并于2,877ms通过；真实原生分区与实际JSON逐文件/逐断言相符。
+
+PG16.14完整目录任务返回完整表合同：263个唯一身份、8字段，所有九条项目路径都调用硬门禁。新增独立空库执行rls-enabled/rls-forced/persistence/kind/partition-key/partition-member/renamed/missing/extra九类真实DDL变化，每例正反比较都拒绝并在回滚后确认全五类目录复原；前六例仅tables变化，其他四类严格为空，同名临时表被忽略。该夹具不是第十条完整项目路径，也不是生产权限/RLS策略验证；故障拒绝在真实引擎中断言，全路径调用及既有CLI非零退出分支由结构测试确认，没有声称故意跑过一次失败的工作流。
+
+与7d14b88的完整目录摘要比较，只改变scope、mode并新增fullTableCatalogContract/tableCatalogGateVerification；删去这四个明确字段后整份摘要逐值相等，包括九条路径步骤、所有263表/3,700列/570约束/1,006索引/227序列统计、五类零差异、原SQL输入/生成摘要、所有旧保护证明及其锁等待观测。独立客服报告仅耗时29,962→29,937ms，NOT VALID和序列生成器两份报告整份深度相等。既有真实PG16独立序列入口11项继续通过（23,300ms），500ms取消测试522ms完成；入口完整旧模型报告仅锁等待2007→2008ms，其他字段相同并确认专用库删除。9座项目目录库、1座表级夹具库、2座NOT VALID库、2座序列生成器库、1座执行器库共15座本批专用库均清理并复查不存在。
+
+两片测试440.64/513.55秒，任务550/548秒（距20分钟上限余650/652秒）；目录288秒余912秒，汇总3秒，五端构建、workerd与密钥扫描通过。五次分片观测仍采用历史最小490秒余量，不将本次变快归因于新增门禁，也不据此保证未来增长。原并发/隔离/时限/依赖及既有断言不变，TEST-005原生allocator根因仍未定位。
+
+根JSON只追加tableCatalogGateAcceptance，以本批受测SHA/CI取代历史登记验收字段中的“F待完成”描述，原根f3cf196目录及所有历史证明保持原样，不覆盖463记录冻结基线。本轮只将F勾为代码与隔离PG16 CI完成，DB-009整体、G及业务/provider/生产发布门禁仍开放；G新增拆单父端DELETE的只读证据，尚无查询计划或索引实施验收。没有连接或修改生产，没有发布Worker/前端、调用提供商或进行新增浏览器业务验收。
+
+最终文档核验：去掉唯一新增tableCatalogGateAcceptance后，根JSON与回填前所有字段深度相等；新增字段与实际CI证据对象精确一致。294个清单编号/顺序不变，仅F由未完成改为代码/PG16 CI完成，DB-009/G/TEST-005仍未勾选。4文件27项回归再次通过（4.60秒），差异检查通过；本次最终回填只修改三份根审计文档。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
