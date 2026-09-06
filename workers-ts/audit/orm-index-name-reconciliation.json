@@ -1,0 +1,2766 @@
+{
+  "sourceCommit": "86cb73a83c9380b88406d464142b022632792bb1",
+  "runId": 34005185002,
+  "scope": "All 44 standalone ordinary ORM index-name mismatches, excluding three constraint-owned names and five external-only duplicates. Definitions and ordered plain columns are identical; align model names to existing external/embedded names and use guarded ALTER INDEX RENAME to retain OIDs, storage and dependencies. Raw generator DROP/CREATE output is inspection-only, not the deployed upgrade. No production execution.",
+  "entries": [
+    {
+      "key": "store_cart.sc_product_id_idx",
+      "previousKey": "store_cart.sc_product_id",
+      "catalog": {
+        "key": "store_cart.sc_product_id_idx",
+        "name": "sc_product_id_idx",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_cart.sc_product_id",
+        "name": "sc_product_id",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "product_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sc_product_id",
+        "columns": [
+          {
+            "expression": "product_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 51,
+        "previousDeclaration": "    index(\"sc_product_id\").on(t.productId),",
+        "declaration": "    index(\"sc_product_id_idx\").on(t.productId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 23,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_product_id_idx\" ON \"store_cart\" (\"product_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_cart.sc_type_idx",
+      "previousKey": "store_cart.sc_type",
+      "catalog": {
+        "key": "store_cart.sc_type_idx",
+        "name": "sc_type_idx",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_cart.sc_type",
+        "name": "sc_type",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "type"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sc_type",
+        "columns": [
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 55,
+        "previousDeclaration": "    index(\"sc_type\").on(t.type),",
+        "declaration": "    index(\"sc_type_idx\").on(t.type),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 26,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_type_idx\" ON \"store_cart\" (\"type\");"
+        }
+      ]
+    },
+    {
+      "key": "store_cart.sc_uid_del_idx",
+      "previousKey": "store_cart.sc_uid_del",
+      "catalog": {
+        "key": "store_cart.sc_uid_del_idx",
+        "name": "sc_uid_del_idx",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (uid, is_del)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_cart.sc_uid_del",
+        "name": "sc_uid_del",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (uid, is_del)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid",
+        "is_del"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sc_uid_del",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 53,
+        "previousDeclaration": "    index(\"sc_uid_del\").on(t.uid, t.isDel),",
+        "declaration": "    index(\"sc_uid_del_idx\").on(t.uid, t.isDel),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 25,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_uid_del_idx\" ON \"store_cart\" (\"uid\", \"is_del\");"
+        }
+      ]
+    },
+    {
+      "key": "store_cart.sc_uid_pay_idx",
+      "previousKey": "store_cart.sc_uid_pay",
+      "catalog": {
+        "key": "store_cart.sc_uid_pay_idx",
+        "name": "sc_uid_pay_idx",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (uid, is_pay)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_cart.sc_uid_pay",
+        "name": "sc_uid_pay",
+        "table": "store_cart",
+        "definition": "public.store_cart USING btree (uid, is_pay)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid",
+        "is_pay"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sc_uid_pay",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_pay",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 52,
+        "previousDeclaration": "    index(\"sc_uid_pay\").on(t.uid, t.isPay),",
+        "declaration": "    index(\"sc_uid_pay_idx\").on(t.uid, t.isPay),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 24,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sc_uid_pay_idx\" ON \"store_cart\" (\"uid\", \"is_pay\");"
+        }
+      ]
+    },
+    {
+      "key": "store_coupon_issue.sci_status_idx",
+      "previousKey": "store_coupon_issue.sci_status",
+      "catalog": {
+        "key": "store_coupon_issue.sci_status_idx",
+        "name": "sci_status_idx",
+        "table": "store_coupon_issue",
+        "definition": "public.store_coupon_issue USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_coupon_issue.sci_status",
+        "name": "sci_status",
+        "table": "store_coupon_issue",
+        "definition": "public.store_coupon_issue USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sci_status",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/activity.ts",
+        "line": 81,
+        "previousDeclaration": "    index(\"sci_status\").on(t.status),",
+        "declaration": "    index(\"sci_status_idx\").on(t.status),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0004_user_activity.sql",
+          "sourceLine": 129,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sci_status_idx\" ON \"store_coupon_issue\" (\"status\");"
+        }
+      ]
+    },
+    {
+      "key": "store_coupon_user.scu_uid_status_idx",
+      "previousKey": "store_coupon_user.scu_uid_status",
+      "catalog": {
+        "key": "store_coupon_user.scu_uid_status_idx",
+        "name": "scu_uid_status_idx",
+        "table": "store_coupon_user",
+        "definition": "public.store_coupon_user USING btree (uid, status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_coupon_user.scu_uid_status",
+        "name": "scu_uid_status",
+        "table": "store_coupon_user",
+        "definition": "public.store_coupon_user USING btree (uid, status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid",
+        "status"
+      ],
+      "previousSnapshotIndex": {
+        "name": "scu_uid_status",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/activity.ts",
+        "line": 111,
+        "previousDeclaration": "    index(\"scu_uid_status\").on(t.uid, t.status),",
+        "declaration": "    index(\"scu_uid_status_idx\").on(t.uid, t.status),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0004_user_activity.sql",
+          "sourceLine": 148,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"scu_uid_status_idx\" ON \"store_coupon_user\" (\"uid\", \"status\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order.so_paid_idx",
+      "previousKey": "store_order.so_paid",
+      "catalog": {
+        "key": "store_order.so_paid_idx",
+        "name": "so_paid_idx",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (paid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order.so_paid",
+        "name": "so_paid",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (paid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "paid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "so_paid",
+        "columns": [
+          {
+            "expression": "paid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 177,
+        "previousDeclaration": "    index(\"so_paid\").on(t.paid),",
+        "declaration": "    index(\"so_paid_idx\").on(t.paid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 87,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_paid_idx\" ON \"store_order\" (\"paid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order.so_status_idx",
+      "previousKey": "store_order.so_status",
+      "catalog": {
+        "key": "store_order.so_status_idx",
+        "name": "so_status_idx",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order.so_status",
+        "name": "so_status",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "previousSnapshotIndex": {
+        "name": "so_status",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 178,
+        "previousDeclaration": "    index(\"so_status\").on(t.status),",
+        "declaration": "    index(\"so_status_idx\").on(t.status),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 88,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_status_idx\" ON \"store_order\" (\"status\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order.so_uid_idx",
+      "previousKey": "store_order.so_uid",
+      "catalog": {
+        "key": "store_order.so_uid_idx",
+        "name": "so_uid_idx",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order.so_uid",
+        "name": "so_uid",
+        "table": "store_order",
+        "definition": "public.store_order USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "so_uid",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 172,
+        "previousDeclaration": "    index(\"so_uid\").on(t.uid),",
+        "declaration": "    index(\"so_uid_idx\").on(t.uid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 86,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"so_uid_idx\" ON \"store_order\" (\"uid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order_cart_info.soci_oid_idx",
+      "previousKey": "store_order_cart_info.soci_oid",
+      "catalog": {
+        "key": "store_order_cart_info.soci_oid_idx",
+        "name": "soci_oid_idx",
+        "table": "store_order_cart_info",
+        "definition": "public.store_order_cart_info USING btree (oid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order_cart_info.soci_oid",
+        "name": "soci_oid",
+        "table": "store_order_cart_info",
+        "definition": "public.store_order_cart_info USING btree (oid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "oid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "soci_oid",
+        "columns": [
+          {
+            "expression": "oid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 250,
+        "previousDeclaration": "    index(\"soci_oid\").on(t.oid),",
+        "declaration": "    index(\"soci_oid_idx\").on(t.oid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 111,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"soci_oid_idx\" ON \"store_order_cart_info\" (\"oid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order_cart_info.soci_uid_idx",
+      "previousKey": "store_order_cart_info.soci_uid",
+      "catalog": {
+        "key": "store_order_cart_info.soci_uid_idx",
+        "name": "soci_uid_idx",
+        "table": "store_order_cart_info",
+        "definition": "public.store_order_cart_info USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order_cart_info.soci_uid",
+        "name": "soci_uid",
+        "table": "store_order_cart_info",
+        "definition": "public.store_order_cart_info USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "soci_uid",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 251,
+        "previousDeclaration": "    index(\"soci_uid\").on(t.uid),",
+        "declaration": "    index(\"soci_uid_idx\").on(t.uid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 112,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"soci_uid_idx\" ON \"store_order_cart_info\" (\"uid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order_refund.sor_cancel_oid_idx",
+      "previousKey": "store_order_refund.sor_cancel_oid",
+      "catalog": {
+        "key": "store_order_refund.sor_cancel_oid_idx",
+        "name": "sor_cancel_oid_idx",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (is_cancel, store_order_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order_refund.sor_cancel_oid",
+        "name": "sor_cancel_oid",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (is_cancel, store_order_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_cancel",
+        "store_order_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sor_cancel_oid",
+        "columns": [
+          {
+            "expression": "is_cancel",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "store_order_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order_refund.ts",
+        "line": 68,
+        "previousDeclaration": "    index(\"sor_cancel_oid\").on(t.isCancel, t.storeOrderId),",
+        "declaration": "    index(\"sor_cancel_oid_idx\").on(t.isCancel, t.storeOrderId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0003_refund.sql",
+          "sourceLine": 36,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sor_cancel_oid_idx\" ON \"store_order_refund\" (\"is_cancel\", \"store_order_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order_refund.sor_uid_idx",
+      "previousKey": "store_order_refund.sor_uid",
+      "catalog": {
+        "key": "store_order_refund.sor_uid_idx",
+        "name": "sor_uid_idx",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order_refund.sor_uid",
+        "name": "sor_uid",
+        "table": "store_order_refund",
+        "definition": "public.store_order_refund USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sor_uid",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order_refund.ts",
+        "line": 64,
+        "previousDeclaration": "    index(\"sor_uid\").on(t.uid),",
+        "declaration": "    index(\"sor_uid_idx\").on(t.uid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0003_refund.sql",
+          "sourceLine": 35,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sor_uid_idx\" ON \"store_order_refund\" (\"uid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order_status.sos_change_time_idx",
+      "previousKey": "store_order_status.sos_change_time",
+      "catalog": {
+        "key": "store_order_status.sos_change_time_idx",
+        "name": "sos_change_time_idx",
+        "table": "store_order_status",
+        "definition": "public.store_order_status USING btree (change_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order_status.sos_change_time",
+        "name": "sos_change_time",
+        "table": "store_order_status",
+        "definition": "public.store_order_status USING btree (change_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "change_time"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sos_change_time",
+        "columns": [
+          {
+            "expression": "change_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order_refund.ts",
+        "line": 87,
+        "previousDeclaration": "    index(\"sos_change_time\").on(t.changeTime),",
+        "declaration": "    index(\"sos_change_time_idx\").on(t.changeTime),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0003_refund.sql",
+          "sourceLine": 47,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sos_change_time_idx\" ON \"store_order_status\" (\"change_time\");"
+        }
+      ]
+    },
+    {
+      "key": "store_order_status.sos_oid_idx",
+      "previousKey": "store_order_status.sos_oid",
+      "catalog": {
+        "key": "store_order_status.sos_oid_idx",
+        "name": "sos_oid_idx",
+        "table": "store_order_status",
+        "definition": "public.store_order_status USING btree (oid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_order_status.sos_oid",
+        "name": "sos_oid",
+        "table": "store_order_status",
+        "definition": "public.store_order_status USING btree (oid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "oid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sos_oid",
+        "columns": [
+          {
+            "expression": "oid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order_refund.ts",
+        "line": 84,
+        "previousDeclaration": "    index(\"sos_oid\").on(t.oid),",
+        "declaration": "    index(\"sos_oid_idx\").on(t.oid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0003_refund.sql",
+          "sourceLine": 46,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sos_oid_idx\" ON \"store_order_status\" (\"oid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_pink.sp_combination_idx",
+      "previousKey": "store_pink.sp_combination",
+      "catalog": {
+        "key": "store_pink.sp_combination_idx",
+        "name": "sp_combination_idx",
+        "table": "store_pink",
+        "definition": "public.store_pink USING btree (combination_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_pink.sp_combination",
+        "name": "sp_combination",
+        "table": "store_pink",
+        "definition": "public.store_pink USING btree (combination_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "combination_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sp_combination",
+        "columns": [
+          {
+            "expression": "combination_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/activity.ts",
+        "line": 359,
+        "previousDeclaration": "    index(\"sp_combination\").on(t.combinationId),",
+        "declaration": "    index(\"sp_combination_idx\").on(t.combinationId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0004_user_activity.sql",
+          "sourceLine": 217,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_combination_idx\" ON \"store_pink\" (\"combination_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product.sp_cate_id_idx",
+      "previousKey": "store_product.cate_id",
+      "catalog": {
+        "key": "store_product.sp_cate_id_idx",
+        "name": "sp_cate_id_idx",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (cate_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product.cate_id",
+        "name": "cate_id",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (cate_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "cate_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "cate_id",
+        "columns": [
+          {
+            "expression": "cate_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product.ts",
+        "line": 122,
+        "previousDeclaration": "    index(\"cate_id\").on(t.cateId),",
+        "declaration": "    index(\"sp_cate_id_idx\").on(t.cateId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 87,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_cate_id_idx\" ON \"store_product\" (\"cate_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product.sp_is_del_idx",
+      "previousKey": "store_product.is_del",
+      "catalog": {
+        "key": "store_product.sp_is_del_idx",
+        "name": "sp_is_del_idx",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (is_del)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product.is_del",
+        "name": "is_del",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (is_del)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_del"
+      ],
+      "previousSnapshotIndex": {
+        "name": "is_del",
+        "columns": [
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product.ts",
+        "line": 127,
+        "previousDeclaration": "    index(\"is_del\").on(t.isDel),",
+        "declaration": "    index(\"sp_is_del_idx\").on(t.isDel),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 88,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_is_del_idx\" ON \"store_product\" (\"is_del\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product.sp_price_idx",
+      "previousKey": "store_product.price",
+      "catalog": {
+        "key": "store_product.sp_price_idx",
+        "name": "sp_price_idx",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (price)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product.price",
+        "name": "price",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (price)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "price"
+      ],
+      "previousSnapshotIndex": {
+        "name": "price",
+        "columns": [
+          {
+            "expression": "price",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product.ts",
+        "line": 128,
+        "previousDeclaration": "    index(\"price\").on(t.price),",
+        "declaration": "    index(\"sp_price_idx\").on(t.price),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 93,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_price_idx\" ON \"store_product\" (\"price\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product.sp_sales_idx",
+      "previousKey": "store_product.sales",
+      "catalog": {
+        "key": "store_product.sp_sales_idx",
+        "name": "sp_sales_idx",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (sales)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product.sales",
+        "name": "sales",
+        "table": "store_product",
+        "definition": "public.store_product USING btree (sales)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "sales"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sales",
+        "columns": [
+          {
+            "expression": "sales",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product.ts",
+        "line": 131,
+        "previousDeclaration": "    index(\"sales\").on(t.sales),",
+        "declaration": "    index(\"sp_sales_idx\").on(t.sales),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 91,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sp_sales_idx\" ON \"store_product\" (\"sales\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_attr.spa_product_id_idx",
+      "previousKey": "store_product_attr.store_id_attr",
+      "catalog": {
+        "key": "store_product_attr.spa_product_id_idx",
+        "name": "spa_product_id_idx",
+        "table": "store_product_attr",
+        "definition": "public.store_product_attr USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_attr.store_id_attr",
+        "name": "store_id_attr",
+        "table": "store_product_attr",
+        "definition": "public.store_product_attr USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "product_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "store_id_attr",
+        "columns": [
+          {
+            "expression": "product_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 111,
+        "previousDeclaration": "  (t) => [index(\"store_id_attr\").on(t.productId)],",
+        "declaration": "  (t) => [index(\"spa_product_id_idx\").on(t.productId)],"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 150,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spa_product_id_idx\" ON \"store_product_attr\" (\"product_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_attr_result.spar_product_id_idx",
+      "previousKey": "store_product_attr_result.store_id_result",
+      "catalog": {
+        "key": "store_product_attr_result.spar_product_id_idx",
+        "name": "spar_product_id_idx",
+        "table": "store_product_attr_result",
+        "definition": "public.store_product_attr_result USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_attr_result.store_id_result",
+        "name": "store_id_result",
+        "table": "store_product_attr_result",
+        "definition": "public.store_product_attr_result USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "product_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "store_id_result",
+        "columns": [
+          {
+            "expression": "product_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 125,
+        "previousDeclaration": "  (t) => [index(\"store_id_result\").on(t.productId)],",
+        "declaration": "  (t) => [index(\"spar_product_id_idx\").on(t.productId)],"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 160,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spar_product_id_idx\" ON \"store_product_attr_result\" (\"product_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_attr_value.spav_product_suk_idx",
+      "previousKey": "store_product_attr_value.store_id_value",
+      "catalog": {
+        "key": "store_product_attr_value.spav_product_suk_idx",
+        "name": "spav_product_suk_idx",
+        "table": "store_product_attr_value",
+        "definition": "public.store_product_attr_value USING btree (product_id, suk)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_attr_value.store_id_value",
+        "name": "store_id_value",
+        "table": "store_product_attr_value",
+        "definition": "public.store_product_attr_value USING btree (product_id, suk)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "product_id",
+        "suk"
+      ],
+      "previousSnapshotIndex": {
+        "name": "store_id_value",
+        "columns": [
+          {
+            "expression": "product_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "suk",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 173,
+        "previousDeclaration": "    index(\"store_id_value\").on(t.productId, t.suk),",
+        "declaration": "    index(\"spav_product_suk_idx\").on(t.productId, t.suk),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 196,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spav_product_suk_idx\" ON \"store_product_attr_value\" (\"product_id\", \"suk\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_attr_value.spav_unique_suk_idx",
+      "previousKey": "store_product_attr_value.unique_suk",
+      "catalog": {
+        "key": "store_product_attr_value.spav_unique_suk_idx",
+        "name": "spav_unique_suk_idx",
+        "table": "store_product_attr_value",
+        "definition": "public.store_product_attr_value USING btree (\"unique\", suk)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_attr_value.unique_suk",
+        "name": "unique_suk",
+        "table": "store_product_attr_value",
+        "definition": "public.store_product_attr_value USING btree (\"unique\", suk)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "unique",
+        "suk"
+      ],
+      "previousSnapshotIndex": {
+        "name": "unique_suk",
+        "columns": [
+          {
+            "expression": "unique",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "suk",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 172,
+        "previousDeclaration": "    index(\"unique_suk\").on(t.unique, t.suk),",
+        "declaration": "    index(\"spav_unique_suk_idx\").on(t.unique, t.suk),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 195,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spav_unique_suk_idx\" ON \"store_product_attr_value\" (\"unique\", \"suk\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_category.spc_is_show_idx",
+      "previousKey": "store_product_category.is_show",
+      "catalog": {
+        "key": "store_product_category.spc_is_show_idx",
+        "name": "spc_is_show_idx",
+        "table": "store_product_category",
+        "definition": "public.store_product_category USING btree (is_show)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_category.is_show",
+        "name": "is_show",
+        "table": "store_product_category",
+        "definition": "public.store_product_category USING btree (is_show)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_show"
+      ],
+      "previousSnapshotIndex": {
+        "name": "is_show",
+        "columns": [
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 52,
+        "previousDeclaration": "    index(\"is_show\").on(t.isShow),",
+        "declaration": "    index(\"spc_is_show_idx\").on(t.isShow),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 113,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spc_is_show_idx\" ON \"store_product_category\" (\"is_show\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_category.spc_pid_idx",
+      "previousKey": "store_product_category.pid",
+      "catalog": {
+        "key": "store_product_category.spc_pid_idx",
+        "name": "spc_pid_idx",
+        "table": "store_product_category",
+        "definition": "public.store_product_category USING btree (pid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_category.pid",
+        "name": "pid",
+        "table": "store_product_category",
+        "definition": "public.store_product_category USING btree (pid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "pid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "pid",
+        "columns": [
+          {
+            "expression": "pid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 50,
+        "previousDeclaration": "    index(\"pid\").on(t.pid),",
+        "declaration": "    index(\"spc_pid_idx\").on(t.pid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 112,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spc_pid_idx\" ON \"store_product_category\" (\"pid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_label.spl_label_cate_idx",
+      "previousKey": "store_product_label.label_cate",
+      "catalog": {
+        "key": "store_product_label.spl_label_cate_idx",
+        "name": "spl_label_cate_idx",
+        "table": "store_product_label",
+        "definition": "public.store_product_label USING btree (label_cate)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_label.label_cate",
+        "name": "label_cate",
+        "table": "store_product_label",
+        "definition": "public.store_product_label USING btree (label_cate)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "label_cate"
+      ],
+      "previousSnapshotIndex": {
+        "name": "label_cate",
+        "columns": [
+          {
+            "expression": "label_cate",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 259,
+        "previousDeclaration": "    index(\"label_cate\").on(t.labelCate),",
+        "declaration": "    index(\"spl_label_cate_idx\").on(t.labelCate),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 215,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spl_label_cate_idx\" ON \"store_product_label\" (\"label_cate\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_relation.spr_product_id_idx",
+      "previousKey": "store_product_relation.product_id",
+      "catalog": {
+        "key": "store_product_relation.spr_product_id_idx",
+        "name": "spr_product_id_idx",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_relation.product_id",
+        "name": "product_id",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (product_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "product_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "product_id",
+        "columns": [
+          {
+            "expression": "product_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 76,
+        "previousDeclaration": "    index(\"product_id\").on(t.productId),",
+        "declaration": "    index(\"spr_product_id_idx\").on(t.productId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 126,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_product_id_idx\" ON \"store_product_relation\" (\"product_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_relation.spr_relation_id_idx",
+      "previousKey": "store_product_relation.relation_id",
+      "catalog": {
+        "key": "store_product_relation.spr_relation_id_idx",
+        "name": "spr_relation_id_idx",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (relation_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_relation.relation_id",
+        "name": "relation_id",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (relation_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "relation_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "relation_id",
+        "columns": [
+          {
+            "expression": "relation_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 75,
+        "previousDeclaration": "    index(\"relation_id\").on(t.relationId),",
+        "declaration": "    index(\"spr_relation_id_idx\").on(t.relationId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 127,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_relation_id_idx\" ON \"store_product_relation\" (\"relation_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_product_relation.spr_type_idx",
+      "previousKey": "store_product_relation.type",
+      "catalog": {
+        "key": "store_product_relation.spr_type_idx",
+        "name": "spr_type_idx",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_product_relation.type",
+        "name": "type",
+        "table": "store_product_relation",
+        "definition": "public.store_product_relation USING btree (type)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "type"
+      ],
+      "previousSnapshotIndex": {
+        "name": "type",
+        "columns": [
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/product_relations.ts",
+        "line": 74,
+        "previousDeclaration": "    index(\"type\").on(t.type),",
+        "declaration": "    index(\"spr_type_idx\").on(t.type),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0001_product.sql",
+          "sourceLine": 125,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"spr_type_idx\" ON \"store_product_relation\" (\"type\");"
+        }
+      ]
+    },
+    {
+      "key": "store_seckill.ss_time_idx",
+      "previousKey": "store_seckill.ss_time",
+      "catalog": {
+        "key": "store_seckill.ss_time_idx",
+        "name": "ss_time_idx",
+        "table": "store_seckill",
+        "definition": "public.store_seckill USING btree (time_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_seckill.ss_time",
+        "name": "ss_time",
+        "table": "store_seckill",
+        "definition": "public.store_seckill USING btree (time_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "time_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "ss_time",
+        "columns": [
+          {
+            "expression": "time_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/activity.ts",
+        "line": 241,
+        "previousDeclaration": "    index(\"ss_time\").on(t.timeId),",
+        "declaration": "    index(\"ss_time_idx\").on(t.timeId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0004_user_activity.sql",
+          "sourceLine": 171,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"ss_time_idx\" ON \"store_seckill\" (\"time_id\");"
+        }
+      ]
+    },
+    {
+      "key": "store_service_log.ssl_uid_toUid_idx",
+      "previousKey": "store_service_log.ssl_uid_toUid",
+      "catalog": {
+        "key": "store_service_log.ssl_uid_toUid_idx",
+        "name": "ssl_uid_toUid_idx",
+        "table": "store_service_log",
+        "definition": "public.store_service_log USING btree (uid, to_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_service_log.ssl_uid_toUid",
+        "name": "ssl_uid_toUid",
+        "table": "store_service_log",
+        "definition": "public.store_service_log USING btree (uid, to_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid",
+        "to_uid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "ssl_uid_toUid",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "to_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "line": 268,
+        "previousDeclaration": "    index(\"ssl_uid_toUid\").on(t.uid, t.toUid),",
+        "declaration": "    index(\"ssl_uid_toUid_idx\").on(t.uid, t.toUid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0006_admin_kefu.sql",
+          "sourceLine": 71,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"ssl_uid_toUid_idx\" ON \"store_service_log\" (\"uid\", \"to_uid\");"
+        }
+      ]
+    },
+    {
+      "key": "store_service_record.ssr_to_uid_idx",
+      "previousKey": "store_service_record.ssr_to_uid",
+      "catalog": {
+        "key": "store_service_record.ssr_to_uid_idx",
+        "name": "ssr_to_uid_idx",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (to_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "store_service_record.ssr_to_uid",
+        "name": "ssr_to_uid",
+        "table": "store_service_record",
+        "definition": "public.store_service_record USING btree (to_uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "to_uid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "ssr_to_uid",
+        "columns": [
+          {
+            "expression": "to_uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "line": 298,
+        "previousDeclaration": "    index(\"ssr_to_uid\").on(t.toUid),",
+        "declaration": "    index(\"ssr_to_uid_idx\").on(t.toUid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0006_admin_kefu.sql",
+          "sourceLine": 89,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"ssr_to_uid_idx\" ON \"store_service_record\" (\"to_uid\");"
+        },
+        {
+          "source": "migrations/0021_repository_schema_parity.sql",
+          "sourceLine": 36,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"ssr_to_uid_idx\" ON \"store_service_record\" (\"to_uid\");"
+        }
+      ]
+    },
+    {
+      "key": "system_admin.sa_account_idx",
+      "previousKey": "system_admin.sa_account",
+      "catalog": {
+        "key": "system_admin.sa_account_idx",
+        "name": "sa_account_idx",
+        "table": "system_admin",
+        "definition": "public.system_admin USING btree (account)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_admin.sa_account",
+        "name": "sa_account",
+        "table": "system_admin",
+        "definition": "public.system_admin USING btree (account)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "account"
+      ],
+      "previousSnapshotIndex": {
+        "name": "sa_account",
+        "columns": [
+          {
+            "expression": "account",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/admin.ts",
+        "line": 55,
+        "previousDeclaration": "    index(\"sa_account\").on(t.account),",
+        "declaration": "    index(\"sa_account_idx\").on(t.account),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0006_admin_kefu.sql",
+          "sourceLine": 24,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"sa_account_idx\" ON \"system_admin\" (\"account\");"
+        }
+      ]
+    },
+    {
+      "key": "system_config.system_config_is_store_idx",
+      "previousKey": "system_config.is_store",
+      "catalog": {
+        "key": "system_config.system_config_is_store_idx",
+        "name": "system_config_is_store_idx",
+        "table": "system_config",
+        "definition": "public.system_config USING btree (is_store)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_config.is_store",
+        "name": "is_store",
+        "table": "system_config",
+        "definition": "public.system_config USING btree (is_store)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_store"
+      ],
+      "previousSnapshotIndex": {
+        "name": "is_store",
+        "columns": [
+          {
+            "expression": "is_store",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/system.ts",
+        "line": 45,
+        "previousDeclaration": "    index(\"is_store\").on(t.isStore),",
+        "declaration": "    index(\"system_config_is_store_idx\").on(t.isStore),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0000_init.sql",
+          "sourceLine": 93,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"system_config_is_store_idx\" ON \"system_config\" (\"is_store\");"
+        }
+      ]
+    },
+    {
+      "key": "system_config.system_config_menu_name_idx",
+      "previousKey": "system_config.menu_name",
+      "catalog": {
+        "key": "system_config.system_config_menu_name_idx",
+        "name": "system_config_menu_name_idx",
+        "table": "system_config",
+        "definition": "public.system_config USING btree (menu_name)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_config.menu_name",
+        "name": "menu_name",
+        "table": "system_config",
+        "definition": "public.system_config USING btree (menu_name)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "menu_name"
+      ],
+      "previousSnapshotIndex": {
+        "name": "menu_name",
+        "columns": [
+          {
+            "expression": "menu_name",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/system.ts",
+        "line": 47,
+        "previousDeclaration": "    index(\"menu_name\").on(t.menuName),",
+        "declaration": "    index(\"system_config_menu_name_idx\").on(t.menuName),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0000_init.sql",
+          "sourceLine": 92,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"system_config_menu_name_idx\" ON \"system_config\" (\"menu_name\");"
+        }
+      ]
+    },
+    {
+      "key": "system_supplier.supplier_status_idx",
+      "previousKey": "system_supplier.supplier_status",
+      "catalog": {
+        "key": "system_supplier.supplier_status_idx",
+        "name": "supplier_status_idx",
+        "table": "system_supplier",
+        "definition": "public.system_supplier USING btree (is_show, is_del)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "system_supplier.supplier_status",
+        "name": "supplier_status",
+        "table": "system_supplier",
+        "definition": "public.system_supplier USING btree (is_show, is_del)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "is_show",
+        "is_del"
+      ],
+      "previousSnapshotIndex": {
+        "name": "supplier_status",
+        "columns": [
+          {
+            "expression": "is_show",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "is_del",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/supplier.ts",
+        "line": 41,
+        "previousDeclaration": "    index(\"supplier_status\").on(t.isShow, t.isDel),",
+        "declaration": "    index(\"supplier_status_idx\").on(t.isShow, t.isDel),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0007_supplier_core.sql",
+          "sourceLine": 34,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"supplier_status_idx\" ON \"system_supplier\" (\"is_show\", \"is_del\");"
+        }
+      ]
+    },
+    {
+      "key": "user.user_account_idx",
+      "previousKey": "user.account",
+      "catalog": {
+        "key": "user.user_account_idx",
+        "name": "user_account_idx",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (account)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user.account",
+        "name": "account",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (account)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "account"
+      ],
+      "previousSnapshotIndex": {
+        "name": "account",
+        "columns": [
+          {
+            "expression": "account",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/user.ts",
+        "line": 111,
+        "previousDeclaration": "    index(\"account\").on(t.account),",
+        "declaration": "    index(\"user_account_idx\").on(t.account),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0000_init.sql",
+          "sourceLine": 68,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_account_idx\" ON \"user\" (\"account\");"
+        }
+      ]
+    },
+    {
+      "key": "user.user_delete_time_idx",
+      "previousKey": "user.index_0",
+      "catalog": {
+        "key": "user.user_delete_time_idx",
+        "name": "user_delete_time_idx",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (delete_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user.index_0",
+        "name": "index_0",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (delete_time)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "delete_time"
+      ],
+      "previousSnapshotIndex": {
+        "name": "index_0",
+        "columns": [
+          {
+            "expression": "delete_time",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/user.ts",
+        "line": 121,
+        "previousDeclaration": "    index(\"index_0\").on(t.deleteTime),",
+        "declaration": "    index(\"user_delete_time_idx\").on(t.deleteTime),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0000_init.sql",
+          "sourceLine": 71,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_delete_time_idx\" ON \"user\" (\"delete_time\");"
+        }
+      ]
+    },
+    {
+      "key": "user.user_phone_idx",
+      "previousKey": "user.phone",
+      "catalog": {
+        "key": "user.user_phone_idx",
+        "name": "user_phone_idx",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (phone)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user.phone",
+        "name": "phone",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (phone)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "phone"
+      ],
+      "previousSnapshotIndex": {
+        "name": "phone",
+        "columns": [
+          {
+            "expression": "phone",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/user.ts",
+        "line": 117,
+        "previousDeclaration": "    index(\"phone\").on(t.phone),",
+        "declaration": "    index(\"user_phone_idx\").on(t.phone),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0000_init.sql",
+          "sourceLine": 70,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_phone_idx\" ON \"user\" (\"phone\");"
+        }
+      ]
+    },
+    {
+      "key": "user.user_status_idx",
+      "previousKey": "user.status",
+      "catalog": {
+        "key": "user.user_status_idx",
+        "name": "user_status_idx",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user.status",
+        "name": "status",
+        "table": "user",
+        "definition": "public.\"user\" USING btree (status)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "status"
+      ],
+      "previousSnapshotIndex": {
+        "name": "status",
+        "columns": [
+          {
+            "expression": "status",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/user.ts",
+        "line": 114,
+        "previousDeclaration": "    index(\"status\").on(t.status),",
+        "declaration": "    index(\"user_status_idx\").on(t.status),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0000_init.sql",
+          "sourceLine": 69,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"user_status_idx\" ON \"user\" (\"status\");"
+        }
+      ]
+    },
+    {
+      "key": "user_bill.ub_cat_type_link_idx",
+      "previousKey": "user_bill.ub_cat_type_link",
+      "catalog": {
+        "key": "user_bill.ub_cat_type_link_idx",
+        "name": "ub_cat_type_link_idx",
+        "table": "user_bill",
+        "definition": "public.user_bill USING btree (category, type, link_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_bill.ub_cat_type_link",
+        "name": "ub_cat_type_link",
+        "table": "user_bill",
+        "definition": "public.user_bill USING btree (category, type, link_id)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "category",
+        "type",
+        "link_id"
+      ],
+      "previousSnapshotIndex": {
+        "name": "ub_cat_type_link",
+        "columns": [
+          {
+            "expression": "category",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "type",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          },
+          {
+            "expression": "link_id",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/order.ts",
+        "line": 302,
+        "previousDeclaration": "    index(\"ub_cat_type_link\").on(t.category, t.type, t.linkId),",
+        "declaration": "    index(\"ub_cat_type_link_idx\").on(t.category, t.type, t.linkId),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0002_order.sql",
+          "sourceLine": 132,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"ub_cat_type_link_idx\" ON \"user_bill\" (\"category\", \"type\", \"link_id\");"
+        }
+      ]
+    },
+    {
+      "key": "user_invoice.ui_uid_idx",
+      "previousKey": "user_invoice.ui_uid",
+      "catalog": {
+        "key": "user_invoice.ui_uid_idx",
+        "name": "ui_uid_idx",
+        "table": "user_invoice",
+        "definition": "public.user_invoice USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_invoice.ui_uid",
+        "name": "ui_uid",
+        "table": "user_invoice",
+        "definition": "public.user_invoice USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "ui_uid",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/user_center.ts",
+        "line": 186,
+        "previousDeclaration": "  (t) => [index(\"ui_uid\").on(t.uid)],",
+        "declaration": "  (t) => [index(\"ui_uid_idx\").on(t.uid)],"
+      },
+      "sources": [
+        {
+          "source": "migrations/0004_user_activity.sql",
+          "sourceLine": 104,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"ui_uid_idx\" ON \"user_invoice\" (\"uid\");"
+        }
+      ]
+    },
+    {
+      "key": "user_money.um_uid_idx",
+      "previousKey": "user_money.um_uid",
+      "catalog": {
+        "key": "user_money.um_uid_idx",
+        "name": "um_uid_idx",
+        "table": "user_money",
+        "definition": "public.user_money USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "previousCatalog": {
+        "key": "user_money.um_uid",
+        "name": "um_uid",
+        "table": "user_money",
+        "definition": "public.user_money USING btree (uid)",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "nullsNotDistinct": false,
+        "replicaIdentity": false,
+        "constraintOwned": false
+      },
+      "columns": [
+        "uid"
+      ],
+      "previousSnapshotIndex": {
+        "name": "um_uid",
+        "columns": [
+          {
+            "expression": "uid",
+            "isExpression": false,
+            "asc": true,
+            "nulls": "last"
+          }
+        ],
+        "isUnique": false,
+        "concurrently": false,
+        "method": "btree",
+        "with": {}
+      },
+      "model": {
+        "file": "src/models/schema/user_center.ts",
+        "line": 123,
+        "previousDeclaration": "    index(\"um_uid\").on(t.uid),",
+        "declaration": "    index(\"um_uid_idx\").on(t.uid),"
+      },
+      "sources": [
+        {
+          "source": "migrations/0004_user_activity.sql",
+          "sourceLine": 63,
+          "sourceSql": "CREATE INDEX IF NOT EXISTS \"um_uid_idx\" ON \"user_money\" (\"uid\");"
+        }
+      ]
+    }
+  ]
+}

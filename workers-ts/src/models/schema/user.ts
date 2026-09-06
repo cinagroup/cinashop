@@ -108,17 +108,17 @@ export const user = pgTable(
     divisionInvite: integer("division_invite").default(0).notNull(),
   },
   (t) => [
-    index("account").on(t.account),
+    index("user_account_idx").on(t.account),
     index("spreaduid").on(t.spreadUid),
     index("level").on(t.level),
-    index("status").on(t.status),
+    index("user_status_idx").on(t.status),
     index("work_uid").on(t.workUid),
     index("is_promoter").on(t.isPromoter, t.phone),
-    index("phone").on(t.phone),
+    index("user_phone_idx").on(t.phone),
     uniqueIndex("user_active_phone_uq")
       .on(t.phone)
       .where(sql`${t.isDel} = 0 AND ${t.deleteTime} IS NULL AND ${t.phone} <> ''`),
-    index("index_0").on(t.deleteTime),
+    index("user_delete_time_idx").on(t.deleteTime),
     index("add_time_delete_sex").on(t.addTime, t.deleteTime, t.sex),
     index("user_division_parent").on(t.divisionId, t.agentId, t.staffId),
     index("user_division_role").on(t.divisionType, t.divisionStatus, t.divisionEndTime),

@@ -61,11 +61,11 @@ export const storeOrderRefund = pgTable(
   },
   (t) => [
     index("sor_store_order_id").on(t.storeOrderId),
-    index("sor_uid").on(t.uid),
+    index("sor_uid_idx").on(t.uid),
     index("sor_kefu_customer_refunds").on(t.uid, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.isCancel} = 0 AND ${t.isDel} = 0`),
     index("sor_order_id").on(t.orderId),
-    index("sor_cancel_oid").on(t.isCancel, t.storeOrderId),
+    index("sor_cancel_oid_idx").on(t.isCancel, t.storeOrderId),
   ],
 );
 
@@ -81,9 +81,9 @@ export const storeOrderStatus = pgTable(
     changeTime: integer("change_time").default(0).notNull(),
   },
   (t) => [
-    index("sos_oid").on(t.oid),
+    index("sos_oid_idx").on(t.oid),
     index("sos_oid_change_time").on(t.oid, t.changeTime),
     index("sos_change_type").on(t.changeType),
-    index("sos_change_time").on(t.changeTime),
+    index("sos_change_time_idx").on(t.changeTime),
   ],
 );

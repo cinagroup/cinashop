@@ -48,11 +48,11 @@ export const storeCart = pgTable(
     status: smallint("status").default(1).notNull(),
   },
   (t) => [
-    index("sc_product_id").on(t.productId),
-    index("sc_uid_pay").on(t.uid, t.isPay),
-    index("sc_uid_del").on(t.uid, t.isDel),
+    index("sc_product_id_idx").on(t.productId),
+    index("sc_uid_pay_idx").on(t.uid, t.isPay),
+    index("sc_uid_del_idx").on(t.uid, t.isDel),
     index("sc_uid_new").on(t.uid, t.isNew),
-    index("sc_type").on(t.type),
+    index("sc_type_idx").on(t.type),
   ],
 );
 
@@ -169,13 +169,13 @@ export const storeOrder = pgTable(
     uniqueIndex("so_order_id_uq").on(t.orderId),
     /** unique 幂等: 同 uid + 同 key 只能生成一个订单 */
     uniqueIndex("so_unique_uid_uq").on(t.unique, t.uid),
-    index("so_uid").on(t.uid),
+    index("so_uid_idx").on(t.uid),
     index("so_kefu_customer_orders").on(t.uid, t.id.desc().nullsFirst())
       .where(sql`${t.isSystemDel} = 0 AND ${t.isDel} = 0 AND ${t.storeId} = 0
         AND ${t.pid} = 0 AND ${t.refundType} IN (0, 1, 3, 6)`),
     index("so_verify_code").on(t.verifyCode),
-    index("so_paid").on(t.paid),
-    index("so_status").on(t.status),
+    index("so_paid_idx").on(t.paid),
+    index("so_status_idx").on(t.status),
     index("so_delivery_mobile_active")
       .on(t.deliveryUid, t.status, t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.deliveryUid} > 0 AND ${t.paid} = 1 AND ${t.isDel} = 0 AND ${t.isSystemDel} = 0 AND ${t.refundStatus} IN (0, 3)`),
@@ -247,8 +247,8 @@ export const storeOrderCartInfo = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("soci_oid").on(t.oid),
-    index("soci_uid").on(t.uid),
+    index("soci_oid_idx").on(t.oid),
+    index("soci_uid_idx").on(t.uid),
     index("soci_kefu_order_product").on(t.oid, t.productId),
     index("soci_split_pending").on(t.oid, t.splitStatus, t.id),
     index("soci_old_cart_id").on(t.oldCartId)
@@ -299,7 +299,7 @@ export const userBill = pgTable(
     index("ub_status").on(t.status),
     index("ub_add_time").on(t.addTime),
     index("ub_pm").on(t.pm),
-    index("ub_cat_type_link").on(t.category, t.type, t.linkId),
+    index("ub_cat_type_link_idx").on(t.category, t.type, t.linkId),
     index("ub_event_key").on(t.eventKey),
     uniqueIndex("ub_order_reward_uq")
       .on(t.uid, t.linkId, t.eventKey)

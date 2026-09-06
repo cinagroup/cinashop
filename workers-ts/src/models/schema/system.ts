@@ -42,9 +42,9 @@ export const systemConfig = pgTable(
     status: smallint("status").default(0).notNull(),
   },
   (t) => [
-    index("is_store").on(t.isStore),
+    index("system_config_is_store_idx").on(t.isStore),
     index("config_tab_id").on(t.configTabId),
-    index("menu_name").on(t.menuName),
+    index("system_config_menu_name_idx").on(t.menuName),
     index("system_config_lookup").on(t.isStore, t.menuName, t.sort.desc().nullsFirst(), t.id.desc().nullsFirst()),
   ],
 );

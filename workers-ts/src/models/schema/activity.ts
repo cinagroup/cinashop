@@ -78,7 +78,7 @@ export const storeCouponIssue = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("sci_status").on(t.status),
+    index("sci_status_idx").on(t.status),
     index("sci_type").on(t.couponType),
     index("sci_claim_window").on(t.status, t.isDel, t.receiveType, t.startTime, t.endTime),
     index("sci_scope").on(t.couponType, t.legacyCategoryId, t.legacyBrandId),
@@ -108,7 +108,7 @@ export const storeCouponUser = pgTable(
     isFail: smallint("is_fail").default(0).notNull(),
   },
   (t) => [
-    index("scu_uid_status").on(t.uid, t.status),
+    index("scu_uid_status_idx").on(t.uid, t.status),
     index("scu_uid_issue").on(t.uid, t.issueCouponId),
   ],
 );
@@ -238,7 +238,7 @@ export const storeSeckill = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("ss_time").on(t.timeId),
+    index("ss_time_idx").on(t.timeId),
     index("ss_status").on(t.status),
     index("sseckill_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort.desc().nullsFirst()),
     index("store_seckill_system_form_active").on(t.systemFormId, t.isDel, t.status)
@@ -356,7 +356,7 @@ export const storePink = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("sp_combination").on(t.combinationId),
+    index("sp_combination_idx").on(t.combinationId),
     index("sp_kid").on(t.kId),
     index("sp_leader_active").on(t.combinationId, t.kId, t.status, t.addTime.desc().nullsFirst()),
     index("sp_group_member").on(t.kId, t.isRefund, t.status),

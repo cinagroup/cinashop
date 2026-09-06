@@ -38,7 +38,7 @@ export const systemSupplier = pgTable(
   },
   (t) => [
     uniqueIndex("supplier_admin_id_uq").on(t.adminId),
-    index("supplier_status").on(t.isShow, t.isDel),
+    index("supplier_status_idx").on(t.isShow, t.isDel),
   ],
 );
 

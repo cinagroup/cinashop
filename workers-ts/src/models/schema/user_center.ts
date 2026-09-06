@@ -120,7 +120,7 @@ export const userMoney = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("um_uid").on(t.uid),
+    index("um_uid_idx").on(t.uid),
     index("um_type_link").on(t.type, t.linkId),
     uniqueIndex("um_out_request_uq")
       .on(t.uid, t.linkId, t.type)
@@ -183,5 +183,5 @@ export const userInvoice = pgTable(
     isDel: smallint("is_del").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
   },
-  (t) => [index("ui_uid").on(t.uid)],
+  (t) => [index("ui_uid_idx").on(t.uid)],
 );

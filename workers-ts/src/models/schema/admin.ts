@@ -52,7 +52,7 @@ export const systemAdmin = pgTable(
     isDel: smallint("is_del").default(0).notNull(),
   },
   (t) => [
-    index("sa_account").on(t.account),
+    index("sa_account_idx").on(t.account),
     index("sa_status").on(t.status),
     index("sa_division").on(t.divisionId, t.isDel, t.status),
   ],
@@ -265,7 +265,7 @@ export const storeServiceLog = pgTable(
     msnType: smallint("msn_type").default(1).notNull(),
   },
   (t) => [
-    index("ssl_uid_toUid").on(t.uid, t.toUid),
+    index("ssl_uid_toUid_idx").on(t.uid, t.toUid),
     index("ssl_add_time").on(t.addTime),
     index("ssl_chat_history").on(t.uid, t.toUid, t.isTourist, t.id),
     index("ssl_unread_direction")
@@ -295,7 +295,7 @@ export const storeServiceRecord = pgTable(
     messageType: smallint("message_type").default(1).notNull(),
   },
   (t) => [
-    index("ssr_to_uid").on(t.toUid),
+    index("ssr_to_uid_idx").on(t.toUid),
     index("ssr_kefu_recent").on(t.toUid, t.isTourist, t.updateTime.desc().nullsFirst(), t.id.desc().nullsFirst()),
     index("ssr_kefu_inbox").on(t.userId, t.isTourist, t.updateTime.desc().nullsFirst(), t.id.desc().nullsFirst()),
     index("ssr_direction").on(t.userId, t.toUid, t.isTourist, t.id.desc().nullsFirst()),

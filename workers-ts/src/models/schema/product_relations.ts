@@ -47,9 +47,9 @@ export const storeProductCategory = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("pid").on(t.pid),
+    index("spc_pid_idx").on(t.pid),
     index("spc_supplier_tree").on(t.type, t.relationId, t.pid, t.isShow, t.sort.desc().nullsFirst()),
-    index("is_show").on(t.isShow),
+    index("spc_is_show_idx").on(t.isShow),
     index("sort").on(t.sort),
     index("add_time").on(t.addTime),
   ],
@@ -71,9 +71,9 @@ export const storeProductRelation = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("type").on(t.type),
-    index("relation_id").on(t.relationId),
-    index("product_id").on(t.productId),
+    index("spr_type_idx").on(t.type),
+    index("spr_relation_id_idx").on(t.relationId),
+    index("spr_product_id_idx").on(t.productId),
     index("spr_product_type_relation").on(t.productId, t.type, t.relationId),
     index("spr_kefu_product_category").on(t.type, t.productId, t.relationId),
     index("spr_kefu_category_product").on(t.type, t.relationId, t.productId),
@@ -108,7 +108,7 @@ export const storeProductAttr = pgTable(
     /** 0=商品 1=秒杀 2=砍价 3=拼团 */
     type: smallint("type").default(0).notNull(),
   },
-  (t) => [index("store_id_attr").on(t.productId)],
+  (t) => [index("spa_product_id_idx").on(t.productId)],
 );
 
 // ─── 属性快照 (JSON 缓存) ───────────────────────────────────
@@ -122,7 +122,7 @@ export const storeProductAttrResult = pgTable(
     changeTime: integer("change_time").default(0).notNull(),
     type: smallint("type").default(0).notNull(),
   },
-  (t) => [index("store_id_result").on(t.productId)],
+  (t) => [index("spar_product_id_idx").on(t.productId)],
 );
 
 // ─── SKU 行 (库存/价格权威来源) ────────────────────────────
@@ -169,8 +169,8 @@ export const storeProductAttrValue = pgTable(
     retireReason: varchar("retire_reason", { length: 255 }).default("").notNull(),
   },
   (t) => [
-    index("unique_suk").on(t.unique, t.suk),
-    index("store_id_value").on(t.productId, t.suk),
+    index("spav_unique_suk_idx").on(t.unique, t.suk),
+    index("spav_product_suk_idx").on(t.productId, t.suk),
     index("spav_product_active").on(t.productId, t.type, t.isRetired, t.id),
     index("spav_product_type_suk").on(t.productId, t.type, t.suk),
   ],
@@ -256,7 +256,7 @@ export const storeProductLabel = pgTable(
     addTime: integer("add_time").default(0).notNull(),
   },
   (t) => [
-    index("label_cate").on(t.labelCate),
+    index("spl_label_cate_idx").on(t.labelCate),
     index("type_label").on(t.type),
   ],
 );
