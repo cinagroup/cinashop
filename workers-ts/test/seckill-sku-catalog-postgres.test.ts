@@ -5,6 +5,8 @@ import { financePostgres } from "./helpers/financePostgres";
 import { createContainerFromDb } from "../src/lib/di";
 import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user } from "../src/models/schema";
 import { SeckillSkuCatalogService } from "../src/services/activity/SeckillSkuCatalogService";
+import { ActivityService } from "../src/services/activity/ActivityService";
+import { seckillDayStart } from "../src/services/activity/SeckillScheduleService";
 import { resolveLegacyActivitySkuPair } from "../src/services/activity/ActivityOrderSkuService";
 import { StoreCartService } from "../src/services/order/StoreCartService";
 import { seckillDetail } from "../src/controllers/api/v1/UserActivityController";
@@ -46,16 +48,18 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
   });
   const read = (uid = 0) => service.read(uid, "20");
   const snapshot = async () => ({ products: await f.db.select().from(storeProduct), skus: await f.db.select().from(storeProductAttrValue),
+    parents: await f.db.select().from(storeActivity), slots: await f.db.select().from(storeSeckillTime),
     activities: await f.db.select().from(storeSeckill), carts: await f.db.select().from(storeCart),
     orders: await f.db.select().from(storeOrder), users: await f.db.select().from(user) });
 
-  it("returns only matching activity SKUs with decimal catalogue prices and a six-stock minimum, in three queries without writes", async () => {
+  it("returns matching activity SKUs and schedule with a six-stock minimum in four bounded queries without writes", async () => {
     const before = await snapshot(), spy = vi.spyOn(f.db, "select");
     let result: Awaited<ReturnType<typeof read>>;
-    try { result = await read(); expect(spy).toHaveBeenCalledTimes(3); } finally { spy.mockRestore(); }
+    try { result = await read(); expect(spy).toHaveBeenCalledTimes(4); } finally { spy.mockRestore(); }
     expect(result!).toEqual({ selection_only: true, type: 1, seckill_id: 20, product_id: 70, parent_activity_id: 900,
       title: "秒杀<script>文字</script>", image: "/seckill.svg", once_limit: 3, total_limit: 6,
-      date_window: "active", start_time: null, stop_time: null, skus: [
+      date_window: "active", start_time: null, stop_time: null,
+      schedule: { timezone: "Asia/Shanghai", state: "active", message: "秒杀进行中", starts_at: expect.any(String), ends_at: expect.any(String), active_slot_ids: [4] }, skus: [
         { unique: "actired1", base_unique: "basered1", suk: "红色,大号", catalog_price: "8.25", ot_price: "90.00", stock: 6, max_quantity: 3, image: "/red.svg" },
         { unique: "actiblu1", base_unique: "baseblu1", suk: "蓝色,小号", catalog_price: "12.75", ot_price: "100.00", stock: 2, max_quantity: 2, image: "/seckill.svg" },
       ] });
@@ -176,13 +180,44 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
     await expect(read()).rejects.toThrow("库存配置无效");
     await f.db.update(storeSeckill).set({ onceNum: 0 }); await expect(read()).rejects.toThrow("限购配置无效");
   });
-  it("projects only the date window, leaving parent/time-slot eligibility to the order path", async () => {
+  it("preserves the date-only view alongside separate parent/time-slot metadata", async () => {
     await f.db.update(storeSeckill).set({ startTime: new Date("2026-09-07T10:00:00Z"), stopTime: new Date("2026-09-07T11:00:00Z") });
     for (const [clock, state] of [["09:59:59", "future"], ["10:00:00", "active"], ["11:00:00", "active"], ["11:00:01", "ended"]]) {
       expect(await service.read(0, "20", new Date(`2026-09-07T${clock}Z`))).toMatchObject({ date_window: state, selection_only: true });
     }
     await f.db.update(storeSeckill).set({ stopTime: new Date("2026-09-06T10:00:00Z") });
     await expect(read()).rejects.toThrow("日期配置无效");
+  });
+  it("keeps legacy midnight final dates active in both detail views and the real cart", async () => {
+    const now = new Date(), midnight = new Date(seckillDayStart(now));
+    await f.db.update(storeSeckill).set({ startTime: midnight, stopTime: midnight });
+    const result = await service.read(11, "20", now);
+    expect(result).toMatchObject({ date_window: "active", schedule: { state: "active", active_slot_ids: [4] } });
+    expect((await new ActivityService(container).seckillDetail(20, now)).schedule).toEqual(result.schedule);
+    await expect(new StoreCartService(container).add({ uid: 11, productId: 70, activityId: 20, type: 1,
+      unique: result.skus[0].unique, cartNum: 1, isNew: 1 })).resolves.toHaveProperty("id");
+  });
+  it.each(["parent", "slot"])("reports %s stop in both detail views and refuses a previously selected SKU without writes", async kind => {
+    const prior = await read(11);
+    if (kind === "parent") await f.db.update(storeActivity).set({ status: 0 });
+    else await f.db.update(storeSeckillTime).set({ status: 0 });
+    const before = await snapshot(), now = new Date();
+    const result = await service.read(11, "20", now);
+    expect(result).toMatchObject({ selection_only: true, date_window: "active", schedule: { state: "unavailable", active_slot_ids: [] } });
+    expect(result.skus).toEqual(prior.skus);
+    expect((await new ActivityService(container).seckillDetail(20, now)).schedule).toEqual(result.schedule);
+    await expect(new StoreCartService(container).add({ uid: 11, productId: 70, activityId: 20, type: 1,
+      unique: prior.skus[0].unique, cartNum: 1, isNew: 1 })).rejects.toThrow(result.schedule.message);
+    expect(await snapshot()).toEqual(before);
+  });
+  it("makes a future daily session browsable without presenting it as an active purchase window", async () => {
+    const now = new Date(seckillDayStart(new Date()) + 9 * 3600000);
+    await f.db.update(storeSeckillTime).set({ startTime: "1800", endTime: "2000" });
+    expect(await container.storeSeckillDao.getByTimeId("4", 1, 10, now)).toHaveLength(1);
+    const result = await service.read(0, "20", now);
+    expect(result).toMatchObject({ date_window: "active", schedule: { state: "future", active_slot_ids: [],
+      starts_at: new Date(seckillDayStart(now) + 18 * 3600000).toISOString() } });
+    expect((await new ActivityService(container).seckillDetail(20, now)).schedule).toEqual(result.schedule);
   });
   it("filters unsafe image URLs and leaves names as literal text", async () => {
     for (const image of ["javascript:alert(1)", "//evil.test/i", "/\\evil.test/i", "https://u:p@example.test/i", "http://example.test/i"]) {
@@ -204,7 +239,7 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
     ]).flat());
     const spy = vi.spyOn(f.db, "select");
     try {
-      const result = await read(); expect(result.skus).toHaveLength(500); expect(spy).toHaveBeenCalledTimes(3);
+      const result = await read(); expect(result.skus).toHaveLength(500); expect(spy).toHaveBeenCalledTimes(4);
       expect(result.skus.at(-1)).toMatchObject({ unique: "aa000497", base_unique: "bb000497", catalog_price: "1.23", max_quantity: 1 });
     } finally { spy.mockRestore(); }
   });

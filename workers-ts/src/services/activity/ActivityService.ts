@@ -36,39 +36,7 @@ import {
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
-
-const SHANGHAI_CLOCK = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Shanghai",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
-
-function shanghaiClock(now: Date): { date: string; hhmm: string } {
-  const parts = Object.fromEntries(
-    SHANGHAI_CLOCK.formatToParts(now)
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-  return {
-    date: `${parts.year}-${parts.month}-${parts.day}`,
-    hhmm: `${parts.hour}:${parts.minute}`,
-  };
-}
-
-function legacyStopSeconds(date: string, value: string): number {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
-  if (!match) return 0;
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  if (hour > 23 || minute > 59) return 0;
-  return Math.floor(Date.parse(
-    `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+08:00`,
-  ) / 1_000);
-}
+import { readSeckillScheduleSlots, seckillDayStart, seckillScheduleView, seckillSlotMinutes } from "./SeckillScheduleService";
 
 function normalizeListPage(pageValue: unknown, limitValue: unknown): { page: number; limit: number } {
   const parsedPage = Number(pageValue);
@@ -263,26 +231,37 @@ export class ActivityService {
       this.container.storeSeckillTimeDao.getAll(),
       this.container.systemConfigDao.getValues(["seckill_header_banner", "site_url"]),
     ]);
-    const clock = shanghaiClock(now);
-    let activeIndex = -1;
-    const seckillTime = times.map((item, index) => {
-      const active = clock.hhmm >= item.startTime && clock.hhmm <= item.endTime;
-      const upcoming = clock.hhmm < item.startTime;
-      if (active && activeIndex === -1) activeIndex = index;
+    if (times.length > 1000) throw new ValidateException("秒杀时段超过1000项，请先整理配置");
+    const dayStart = seckillDayStart(now), minute = (now.getTime() - dayStart) / 60000;
+    const format = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+    const ordered = times.map(item => {
+      try {
+        const start = seckillSlotMinutes(item.startTime), end = seckillSlotMinutes(item.endTime, true);
+        if (start >= end) throw new ValidateException("秒杀时段配置无效");
+        return { item, start, end };
+      } catch (error) {
+        if (!(error instanceof ValidateException)) throw error;
+        return { item, start: Infinity, end: Infinity };
+      }
+    }).sort((a, b) => a.start - b.start || a.item.id - b.item.id);
+    const seckillTime = ordered.map(({ item, start, end }) => {
+      const valid = Number.isFinite(start), active = valid && minute >= start && minute < end;
+      const upcoming = valid && minute < start;
       return {
         id: item.id,
         title: item.title,
         pic: item.pic,
         describe: item.describe,
-        start_time: item.startTime,
-        end_time: item.endTime,
+        start_time: valid ? format(start) : "",
+        end_time: valid ? format(end) : "",
         status: active ? 1 : upcoming ? 2 : 0,
-        state: active ? "疯抢中" : upcoming ? "即将开始" : "已结束",
-        time: item.startTime,
-        stop: legacyStopSeconds(clock.date, item.endTime),
+        state: !valid ? "配置不可用" : active ? "疯抢中" : upcoming ? "即将开始" : "已结束",
+        time: valid ? format(start) : "",
+        stop: valid ? Math.floor((dayStart + end * 60000) / 1000) : 0,
         add_time: item.addTime,
       };
     });
+    let activeIndex = seckillTime.findIndex((item) => item.status === 1);
     if (activeIndex === -1) activeIndex = seckillTime.findIndex((item) => item.status === 2);
     const banner = String(configs.seckill_header_banner ?? "").trim().replaceAll("\\", "/");
     const siteUrl = String(configs.site_url ?? "").trim().replace(/\/$/, "");
@@ -320,7 +299,7 @@ export class ActivityService {
   }
 
   /** 秒杀详情 */
-  async seckillDetail(id: number) {
+  async seckillDetail(id: number, now = new Date()) {
     const item = await this.container.storeSeckillDao.getById(id);
     if (!item) throw new NotFoundException("秒杀商品不存在");
     const activity = item.activityId > 0
@@ -336,7 +315,8 @@ export class ActivityService {
     const percent = item.quotaShow > 0
       ? Math.round(((item.quotaShow - item.quota) / item.quotaShow) * 100)
       : 0;
-    return { ...item, activity, percent };
+    const schedule = await readSeckillScheduleSlots(this.container.db, item, activity);
+    return { ...item, activity, percent, schedule: seckillScheduleView(schedule, now) };
   }
 
   // ─── 拼团 ─────────────────────────────────────────────────

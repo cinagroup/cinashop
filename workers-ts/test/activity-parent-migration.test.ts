@@ -58,10 +58,11 @@ describe("parent activity migration", () => {
     expect(names.indexOf("store_activity")).toBeLessThan(names.indexOf("store_seckill"));
   });
 
-  it("returns the parent schedule with seckill detail without changing list eligibility", () => {
+  it("retains the parent detail while adding the shared schedule projection", () => {
     const source = readFileSync("src/services/activity/ActivityService.ts", "utf8");
     expect(source).toContain(".from(storeActivity)");
     expect(source).toContain("eq(storeActivity.id, item.activityId)");
-    expect(source).toContain("return { ...item, activity, percent }");
+    expect(source).toContain("readSeckillScheduleSlots(this.container.db, item, activity)");
+    expect(source).toContain("return { ...item, activity, percent, schedule: seckillScheduleView(schedule, now) }");
   });
 });

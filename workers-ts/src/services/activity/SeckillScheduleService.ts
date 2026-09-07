@@ -40,6 +40,10 @@ export function seckillSlotMinutes(value: string, end = false): number {
 }
 
 function midnight(ms: number): boolean { return (ms + SHANGHAI_OFFSET) % DAY === 0; }
+export function seckillDayStart(now: Date): number {
+  if (!Number.isFinite(now.getTime())) throw new ValidateException("秒杀查询时间无效");
+  return Math.floor((now.getTime() + SHANGHAI_OFFSET) / DAY) * DAY - SHANGHAI_OFFSET;
+}
 /** Legacy section_time is date-only/inclusive; non-midnight TS values remain precise instants. */
 export function seckillDateEnd(value: Date | null): number {
   if (value === null) return Infinity;
@@ -80,7 +84,7 @@ export function evaluateSeckillSchedule(snapshot: SeckillScheduleSnapshot, now: 
     if (!slots.length) return result("unavailable", "秒杀没有有效的启用时段");
     if (clock < start) return result("future", "秒杀尚未开始");
     if (clock >= end) return result("ended", "秒杀已结束");
-    const dayStart = Math.floor((clock + SHANGHAI_OFFSET) / DAY) * DAY - SHANGHAI_OFFSET;
+    const dayStart = seckillDayStart(now);
     const windows = slots.map(slot => ({ id: slot.id, start: Math.max(start, dayStart + slot.from * 60_000),
       end: Math.min(end, dayStart + slot.to * 60_000) })).filter(window => window.start < window.end);
     const active = windows.filter(window => clock >= window.start && clock < window.end);
@@ -99,6 +103,29 @@ export function assertSeckillSchedule(snapshot: SeckillScheduleSnapshot, now = n
   const state = evaluateSeckillSchedule(snapshot, now);
   if (state.state !== "active") throw new ValidateException(state.message);
   return state;
+}
+
+/** Catalogue visibility for one daily session; browsing is not current purchase admission. */
+export function canBrowseSeckillSlot(snapshot: SeckillScheduleSnapshot, id: number, now: Date): boolean {
+  const state = evaluateSeckillSchedule(snapshot, now), { child, parent } = snapshot;
+  if (["unavailable", "invalid", "ended"].includes(state.state)) return false;
+  const clock = now.getTime();
+  const start = Math.max(child.startTime?.getTime() ?? -Infinity, child.activityId === 0 ? -Infinity : parent!.startDay * 1000);
+  const end = Math.min(seckillDateEnd(child.stopTime), child.activityId === 0 ? Infinity : parent!.endDay * 1000 + DAY);
+  if (clock < start || !seckillSlotIds(child.timeId).includes(id) ||
+    (child.activityId !== 0 && !seckillSlotIds(parent!.timeId).includes(id))) return false;
+  const slot = snapshot.slots.find(slot => slot.id === id && slot.status === 1);
+  if (!slot) return false;
+  const dayStart = seckillDayStart(now);
+  return dayStart + seckillSlotMinutes(slot.startTime) * 60000 < end &&
+    dayStart + seckillSlotMinutes(slot.endTime, true) * 60000 > start;
+}
+
+export function seckillScheduleView(snapshot: SeckillScheduleSnapshot, now: Date) {
+  const state = evaluateSeckillSchedule(snapshot, now);
+  return { timezone: "Asia/Shanghai" as const, state: state.state, message: state.message,
+    starts_at: state.startsAt === null ? null : new Date(state.startsAt).toISOString(),
+    ends_at: state.endsAt === null ? null : new Date(state.endsAt).toISOString(), active_slot_ids: state.activeSlotIds };
 }
 
 const childFields = { id: storeSeckill.id, activityId: storeSeckill.activityId, productId: storeSeckill.productId,
@@ -122,6 +149,15 @@ export async function loadSeckillSchedule(db: Pick<DbClient, "select">, id: numb
   }
   const child = locked ? (await db.select(childFields).from(storeSeckill).where(eq(storeSeckill.id, id)).limit(1).for("update"))[0] : initial;
   if (!child || child.activityId !== initial.activityId) throw new ValidateException("秒杀排期已变化，请重试");
+  return loadSlots(db, child, parent, locked);
+}
+
+/** Reuse server-read child/parent projections for read-only detail. Never use as a write gate. */
+export function readSeckillScheduleSlots(db: Pick<DbClient, "select">, child: Child, parent: Parent | null) {
+  return loadSlots(db, child, parent, false);
+}
+
+async function loadSlots(db: Pick<DbClient, "select">, child: Child, parent: Parent | null, locked: boolean): Promise<SeckillScheduleSnapshot> {
   let ids: number[];
   try {
     ids = seckillSlotIds(child.timeId);

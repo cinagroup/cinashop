@@ -76,7 +76,8 @@ describe("activity catalog migration parity", () => {
       expect(source).toContain("storeCombination.startTime");
       expect(source).toContain("storeCombination.stopTime");
     }
-    expect(dao).toContain("storeSeckill.isShow");
+    expect(readFileSync("src/services/activity/SeckillScheduleQuery.ts", "utf8")).toContain("storeSeckill.isShow");
+    expect(dao).toContain(".where(seckillCatalogSchedulePredicate(timeId, now))");
     expect(dao).toContain("storeIntegral.isDel");
     expect(order).toContain("storeBargain.isDel");
     expect(join).toContain("storeBargain.startTime");

@@ -94,7 +94,9 @@ describe("DB-009E1 exact column default reconciliation", () => {
     const deadLetter = read("src/services/order/OrderQueueDeadLetterService.ts");
     for (const source of ["prepareOrderQueueDeadLetter(message.body)", "sha256(prepared.body)", "body: prepared.body", "bodySha256: bodyHash"])
       expect(deadLetter).toContain(source);
-    expect(read("src/dao/activity/ActivityDaos.ts")).toContain("string_to_array(${storeSeckill.timeId}, ',')");
+    expect(read("src/dao/activity/ActivityDaos.ts")).toContain(".where(seckillCatalogSchedulePredicate(timeId, now))");
+    expect(read("src/services/activity/SeckillScheduleQuery.ts")).toContain("ids(storeSeckill.timeId)");
+    expect(read("src/services/activity/SeckillScheduleQuery.ts")).toContain("string_to_array(CASE");
     expect(read("src/models/schema/brokerage.ts")).toContain("Active commission code uses user_brokerage.frozen_time instead.");
   });
 

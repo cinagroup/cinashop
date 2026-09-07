@@ -6203,6 +6203,22 @@ A1勾选、A2拆分a/b/c后任务行统计为211勾选/151开放/362项。开放
 
 冻结后双Worker类型检查（unit/runtime）通过，路由审计器与新系统数据口径两文件5项431ms通过，git diff检查通过；本地证据不替代待运行的自身Linux CI和A2c多连接验收。
 
+### 9066a4f购买排期守卫精确Linux验收（2026-09-07）
+
+`9066a4f193b3dd1e2a8afd182613ea90f0dd2d93` 的 [Actions34122859491](https://github.com/cinagroup/cinashop/actions/runs/34122859491)终态11/11成功。两分片101744671052/101744670912各139文件，1,001/941项，合计278文件1,942项、零跳过，耗时587.45/524.60秒。共同inventorySha256=`d45310d93fa75d194cf217000a9f14bb0c2852b0c38cf36fced11cb5e966961e`；executedFileSha256分别`65cbad88209aa8827049d737b6e15b10fb3afb9269aa7cd44e30deb1dfc567a3`、`67b1ecb007b595384c5ffb49d97c4ef708279f5f45e97646e2dddfec61e5a03e`。两片nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true。五端构建、Linux workerd、独立PG16目录和密钥扫描通过，A2a勾选；A2c多连接竞争与完整锁序仍未关闭，不能借单连接测试宣称并发完成。
+
+### FE-003L-A2b：目录、时段索引和详情排期一致性（2026-09-07，本地候选）
+
+`SeckillScheduleQuery`把购买策略的父/子活动启用、删除、日期、CSV时段交集与坏配置拒绝翻译为参数化SQL。严格1～64个正int32标识、输入最多1024字符，显式ECMAScript空白裁剪；先限制输入再拆分，嵌套CASE避免优化器重排造成非法数值转换。子时间戳按UTC表示计算，午夜截止包含上海当天，精确截止保留毫秒包含端点，NULL为无界；父活动仅接受type=1且上海午夜日字段合法。所有资格过滤在LIMIT/OFFSET之前完成，排序为sort DESC/id DESC，同日尚未开始或已过的有效场次仍可浏览，但展示不是购买授权。
+
+时段索引只读最多1001个启用行，以数值分钟和ID排序；HHmm/HH:mm统一输出HH:mm，开始含/结束不含，24:00映射次日午夜。坏配置保留为“配置不可用”并且不会成为当前或未来选中项；超过1000项明确报配置错误，不静默丢掉时段。保留PHP的lovely/seckillTime/seckillTimeIndex和各项旧投影。旧详情与view=skus均新增同源schedule（Asia/Shanghai、状态、原因、ISO窗口、活动时段ID），旧date_window继续保留但不表示父/时段资格。SKU入口在原商品可见性查询中LEFT JOIN最小父活动投影，再批查时段与两类SKU，匿名正常四条有界查询、无逐SKU查询；不返回成本、佣金或原始父配置。该视图不是事务快照、限额余额、库存预留或最终报价，写链路仍重新校验。
+
+新增`seckill-catalog-schedule-postgres.test.ts`48项：真实SQL对纯策略差分、父/子/时段各种停用和坏配置、CSV空白/整数溢出/数量上限、换行格式拒绝、当前日期内未来与已过场次、包含截止日/毫秒端点/不同数据库会话时区；125条中100条高排序无效活动不会挤占有效分页，实得10/10/5/0及25个无重漏ID。索引验证混合格式排序、结束排除、24:00、坏配置和1000/1001溢出。SKU文件增至35项，补截止当天的真实加购、父/时段停止后两类详情同态且已选SKU被实际购物车拒绝、未来场次可浏览但schedule=future；只读/拒绝前后业务快照不变。相关7文件136项19.52秒通过，单独column-default-alignment的7项（含禁socket的CJS/ESM真实DDL）60.35秒通过。没有用生产连接或模拟订单服务替代这批SQL证据；大目录CSV谓词、相关子查询和OFFSET仍需要代表性查询计划评估，不宣称引擎扫描有固定行数上限，不为小样本投机增加生产索引。
+
+上一轮CUA浏览器实际打开生产PC首页与/seckill：首页非空、有商品及六类分类，秒杀三个时段显示“－”和空商品。只读公开API确认线上仍返回camelCase时间数组，而页面读取snake_case并把缺失的start_time当查询参数；当前仓库API还将PHP index对象声明为数组，后续正式切换也会不匹配。A3继续开放，尚无点击、控制台、截图、移动端和购买流程验收。本候选未更改或发布前端；Workers/PostgreSQL技能用于请求内有界读取和分页前过滤审查，未引入新binding、依赖、DDL、provider或生产写入。A2a验收后清单为212勾选/150开放/362项，A2b待自己的Linux CI，旧历史数据复制仍N/A。
+
+冻结前复验：11个相关文件165项22.26秒通过（含路由审计器、新系统口径和旧活动/DIY合同），另column-default-alignment 7项通过；Worker unit/runtime两套类型检查通过，git diff --check通过。A2b自身CI仍待推送后核验，当前无后台测试进程、未启动本地服务器或重试Windows workerd。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

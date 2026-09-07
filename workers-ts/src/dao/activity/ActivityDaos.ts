@@ -4,6 +4,7 @@
  */
 import { and, asc, desc, eq, getTableColumns, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
+import { seckillCatalogSchedulePredicate } from "@/services/activity/SeckillScheduleQuery";
 import {
   storeCouponIssue,
   storeCouponUser,
@@ -80,21 +81,13 @@ export class StoreSeckillDao extends BaseDao<typeof storeSeckill> {
     super(db, storeSeckill, { status: (v) => eq(storeSeckill.status, Number(v)) });
   }
 
-  /** 按时间段取秒杀商品 (time_id 逗号分隔 → PG string_to_array 匹配) */
-  async getByTimeId(timeId: string, page = 1, limit = 10) {
-    const now = new Date().toISOString();
+  /** Apply the full parent/child/slot policy before stable legacy pagination. */
+  async getByTimeId(timeId: string, page = 1, limit = 10, now = new Date()) {
     return this.db
       .select()
       .from(storeSeckill)
-      .where(
-        sql`${timeId} = ANY(string_to_array(${storeSeckill.timeId}, ','))
-          AND ${storeSeckill.status} = 1
-          AND ${storeSeckill.isShow} = 1
-          AND ${storeSeckill.isDel} = 0
-          AND (${storeSeckill.startTime} IS NULL OR ${storeSeckill.startTime} <= ${now})
-          AND (${storeSeckill.stopTime} IS NULL OR ${storeSeckill.stopTime} >= ${now})`,
-      )
-      .orderBy(sql`${storeSeckill.sort} DESC`)
+      .where(seckillCatalogSchedulePredicate(timeId, now))
+      .orderBy(desc(storeSeckill.sort), desc(storeSeckill.id))
       .limit(limit)
       .offset((page - 1) * limit);
   }
@@ -122,7 +115,7 @@ export class StoreSeckillTimeDao extends BaseDao<typeof storeSeckillTime> {
       .select()
       .from(storeSeckillTime)
       .where(eq(storeSeckillTime.status, 1))
-      .orderBy(sql`${storeSeckillTime.startTime}`);
+      .orderBy(asc(storeSeckillTime.id)).limit(1001);
   }
 }
 
