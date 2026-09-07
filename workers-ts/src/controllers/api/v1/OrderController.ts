@@ -8,6 +8,7 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ApiException, ValidateException } from "@/utils/errors";
 import { StoreCartService } from "@/services/order/StoreCartService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
+import { OrderFormRejectedException } from "@/services/order/OrderSystemFormService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderInvoiceService } from "@/services/order/StoreOrderInvoiceService";
 import { StoreDeliveryOrderService } from "@/services/order/StoreDeliveryOrderService";
@@ -341,6 +342,7 @@ export async function orderCreate(c: C) {
   const paymentChannel = body.from ?? c.req.header("Form-type") ?? "h5";
 
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
+  let creationReturned = false;
   try {
     const result = await svc.createOrder({
       uid,
@@ -370,6 +372,7 @@ export async function orderCreate(c: C) {
       couponId: body.couponId ?? body.coupon_id,
       customForm: body.customForm ?? body.custom_form,
     });
+    creationReturned = true;
     if (requestedPayType) {
       const payment = await new StoreOrderPayService(c.get("container"), c.env).pay(
         uid,
@@ -386,6 +389,9 @@ export async function orderCreate(c: C) {
     }
     return jsonOk(c, result, "订单创建成功");
   } catch (e) {
+    if (e instanceof OrderFormRejectedException && !creationReturned) {
+      return jsonFail(c, e.message, { errorCode: "ORDER_FORM_REJECTED", orderKey: key });
+    }
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
   }

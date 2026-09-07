@@ -1,11 +1,11 @@
 <template>
   <section v-if="modelValue.length" class="system-form">
     <h3 class="system-form__title">{{ title || "补充信息" }}</h3>
-    <el-form label-position="top">
+    <el-form label-position="top" :disabled="disabled">
       <el-form-item
         v-for="(item, index) in modelValue"
         :key="String(item.id ?? index)"
-        :required="Boolean(item.titleShow?.val)"
+        :required="isRequired(item)"
         :label="item.titleConfig?.value || `表单项 ${index + 1}`"
       >
         <el-input
@@ -82,14 +82,15 @@
         <div v-else-if="item.name === 'uploadPicture'" class="upload-field">
           <div v-for="(image, imageIndex) in arrayValue(item.value)" :key="image" class="upload-image">
             <span>{{ image }}</span>
-            <el-button link type="danger" @click="removeImage(index, imageIndex)">移除</el-button>
+            <el-button link type="danger" :disabled="disabled || uploadingFields.includes(index)" @click="removeImage(index, imageIndex)">移除</el-button>
           </div>
           <el-upload
             :show-file-list="false"
             :http-request="uploadRequestFor(index)"
+            :disabled="disabled || uploadingFields.includes(index)"
             accept="image/jpeg,image/png,image/webp,image/gif"
           >
-            <el-button :loading="uploadingIndex === index">上传图片</el-button>
+            <el-button :disabled="disabled" :loading="uploadingFields.includes(index)">上传图片</el-button>
           </el-upload>
           <small>最多 {{ uploadLimit(item) }} 张，图片存入私有 R2。</small>
         </div>
@@ -106,16 +107,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onUnmounted, ref } from "vue";
 import { ElMessage, type UploadRequestOptions } from "element-plus";
 import { apiOrderFormImageUpload } from "@/api/order";
 import type { SystemFormComponent } from "@/types/systemForm";
+import { SystemFormUploads } from "@/utils/systemFormUploads";
 
-const props = defineProps<{ modelValue: SystemFormComponent[]; title?: string }>();
-const emit = defineEmits<{ (event: "update:modelValue", value: SystemFormComponent[]): void }>();
-const uploadingIndex = ref(-1);
+const props = defineProps<{ modelValue: SystemFormComponent[]; title?: string; disabled?: boolean }>();
+const emit = defineEmits<{
+  (event: "update:modelValue", value: SystemFormComponent[]): void;
+  (event: "pending-change", count: number): void;
+}>();
+const uploadingFields = ref<number[]>([]);
+const uploads = new SystemFormUploads((indices) => {
+  uploadingFields.value = indices;
+  emit("pending-change", indices.length);
+});
+onUnmounted(() => uploads.reset());
+
+function isRequired(item: SystemFormComponent) {
+  const value: unknown = item.titleShow?.val;
+  return value === true || value === 1 || value === "1";
+}
 
 function update(index: number, value: unknown) {
+  if (props.disabled) return;
   emit("update:modelValue", props.modelValue.map((item, itemIndex) => (
     itemIndex === index ? { ...item, value } : item
   )));
@@ -151,24 +167,34 @@ function setTimeRange(index: number, value: unknown) {
   update(index, Array.isArray(value) && value.length === 2 ? value.map(String).join(" - ") : "");
 }
 async function upload(index: number, file: File) {
+  if (props.disabled || uploadingFields.value.includes(index)) throw new Error("请等待当前操作完成");
+  const component = props.modelValue[index];
+  if (!component || component.name !== "uploadPicture") throw new Error("图片表单已失效");
   const current = arrayValue(props.modelValue[index]?.value);
-  const limit = uploadLimit(props.modelValue[index]);
-  if (current.length >= limit) return ElMessage.error(`最多上传 ${limit} 张图片`);
-  uploadingIndex.value = index;
+  const limit = uploadLimit(component);
+  if (current.length >= limit) { ElMessage.error(`最多上传 ${limit} 张图片`); throw new Error("图片数量已达上限"); }
+  const ticket = uploads.begin(index);
+  if (!ticket) throw new Error("图片正在上传");
   try {
     const uploaded = await apiOrderFormImageUpload(file);
-    update(index, [...current, uploaded.url]);
+    if (!uploads.current(ticket) || props.disabled || props.modelValue[index]?.id !== component.id
+      || props.modelValue[index]?.name !== component.name) return;
+    const latest = arrayValue(props.modelValue[index].value);
+    if (latest.length >= uploadLimit(props.modelValue[index])) throw new Error("图片数量已达上限");
+    update(index, [...latest, uploaded.url]);
     ElMessage.success("图片已上传");
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "图片上传失败");
+    if (uploads.current(ticket)) ElMessage.error(error instanceof Error ? error.message : "图片上传失败");
+    throw error;
   } finally {
-    uploadingIndex.value = -1;
+    uploads.finish(ticket);
   }
 }
 function uploadRequestFor(index: number) {
   return (options: UploadRequestOptions) => upload(index, options.file);
 }
 function removeImage(index: number, imageIndex: number) {
+  if (props.disabled || uploadingFields.value.includes(index)) return;
   update(index, arrayValue(props.modelValue[index]?.value).filter((_, current) => current !== imageIndex));
 }
 </script>

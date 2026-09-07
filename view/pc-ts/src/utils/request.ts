@@ -11,6 +11,7 @@
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
 import type { ApiResponse } from "@/types/api";
 import { getToken, clearAuth } from "@/utils/auth";
+import { ApiResponseError } from "./apiError";
 
 const request: AxiosInstance = axios.create({
   baseURL: "/api",
@@ -43,7 +44,7 @@ request.interceptors.response.use(
         window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
       }
     }
-    return Promise.reject(new Error(data?.msg ?? "请求失败"));
+    return Promise.reject(new ApiResponseError(data?.msg ?? "请求失败", data?.status, data?.data));
   },
   (error) => {
     return Promise.reject(error);
@@ -61,7 +62,7 @@ export async function getData<T>(
   const resp = await promise;
   const body = resp.data as ApiResponse<T>;
   if (body.status !== 200) {
-    throw new Error(body.msg ?? "请求失败");
+    throw new ApiResponseError(body.msg ?? "请求失败", body.status, body.data);
   }
   return body.data;
 }

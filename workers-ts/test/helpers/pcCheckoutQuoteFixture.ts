@@ -1,6 +1,7 @@
 /** Disposable SQL fixture for the actual confirmation/quote service. No order-create or payment route is mounted. */
 import { Hono } from "hono";
 import { financePostgres } from "./financePostgres";
+import type { PgTable } from "drizzle-orm/pg-core";
 import { createContainerFromDb } from "../../src/lib/di";
 import { orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderController";
 import { StoreCartService } from "../../src/services/order/StoreCartService";
@@ -10,9 +11,9 @@ import {
 } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
 
-export async function createPcCheckoutQuoteFixture() {
+export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = []) {
   const fixture = await financePostgres([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
-    memberRight, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore]);
+    memberRight, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore, ...extraTables]);
   const container = createContainerFromDb(fixture.db);
   const cache = new Map<string, string>();
   const config: Record<string, string> = {

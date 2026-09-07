@@ -112,9 +112,14 @@
 
     <SystemFormFields
       v-if="customForm.length"
+      :key="formRevision"
       v-model="customForm"
       :title="systemFormName"
+      :disabled="checkoutLoading || !!pendingSubmission"
+      @pending-change="pendingUploads = $event"
     />
+    <el-alert v-if="!checkoutLoading && formValidationError" :title="formValidationError" type="warning" :closable="false" show-icon />
+    <p v-if="pendingUploads" role="status">图片正在上传，完成前无法提交订单。</p>
     </fieldset>
 
     <section class="section quote-section" aria-live="polite" :aria-busy="quoteState.loading">
@@ -141,7 +146,8 @@
         <span>订单备注:</span>
         <el-input v-model="remark" placeholder="选填" class="remark-input" :disabled="!!pendingSubmission" />
       </div>
-      <el-alert v-if="submissionError" :title="submissionError" description="重试会复用相同订单标识和提交内容，不会自动发起付款。" type="error" :closable="false" show-icon />
+      <el-alert v-if="submissionError" :title="submissionError" :description="pendingSubmission ? '结果尚未确认；重试会复用相同订单标识和提交内容，不会自动发起付款。' : '服务端已明确拒绝本次表单且未完成建单；请修改后重新提交。'" type="error" :closable="false" show-icon />
+      <el-button v-if="submissionError && !pendingSubmission" :disabled="checkoutLoading" @click="loadCheckout">重新加载结算要求</el-button>
       <div class="submit-row">
         <span class="total">
           应付: <span class="price">{{ quoteReady ? `¥${quoteState.result?.prices.payable}` : '待报价' }}</span>
@@ -190,6 +196,8 @@ import {
 import type { CartItem, PickupStore, UserAddress } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import SystemFormFields from "@/components/SystemFormFields.vue";
+import { prepareOrderSystemFormSubmission } from "../../../../common/order-system-form";
+import { canEditRejectedOrder } from "@/utils/apiError";
 
 const router = useRouter();
 const route = useRoute();
@@ -208,6 +216,13 @@ const addrForm = ref({ realName: "", phone: "", region: "", detail: "" });
 const customForm = ref<SystemFormComponent[]>([]);
 const systemFormName = ref("");
 const systemFormError = ref("");
+const formRevision = ref(0);
+const pendingUploads = ref(0);
+const formValidationError = computed(() => {
+  if (!customForm.value.length) return "";
+  try { prepareOrderSystemFormSubmission(customForm.value, customForm.value, 0); return ""; }
+  catch (error) { return error instanceof Error ? error.message : "请检查补充信息"; }
+});
 const selectedItems = ref<CartItem[]>([]);
 const selectionError = ref("");
 const checkoutLoading = ref(true);
@@ -218,6 +233,7 @@ const storeError = ref("");
 const useIntegral = ref(false);
 const savingAddress = ref(false);
 const submissionError = ref("");
+const submissionUncertain = ref(false);
 const pendingSubmission = shallowRef<Parameters<typeof apiOrderCreate>[1] | null>(null);
 const activityOptions = ref<Pick<CheckoutQuoteOptions, "type" | "pinkId" | "combinationId" | "seckillId" | "bargainUserId">>({ type: 0 });
 const checkoutItems = computed(() => checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath
@@ -242,7 +258,8 @@ const quoteReady = computed(() => !checkoutLoading.value && !selectionError.valu
   && !quoteState.value.loading && !!quoteState.value.result
   && quoteState.value.fingerprint === checkoutQuoteFingerprint(checkoutItems.value, quoteOptions.value));
 const displayItems = computed(() => quoteReady.value ? quoteState.value.result!.items : checkoutItems.value);
-const canSubmit = computed(() => quoteReady.value && !systemFormError.value && !submitting.value && !savingAddress.value);
+const canSubmit = computed(() => quoteReady.value && !systemFormError.value && !formValidationError.value
+  && pendingUploads.value === 0 && !submitting.value && !savingAddress.value);
 
 async function reloadQuote() {
   if (pendingSubmission.value) return;
@@ -277,6 +294,8 @@ function initializeComponent(item: SystemFormComponent): SystemFormComponent {
 }
 
 async function loadSystemForm(items: CartItem[], generation: number) {
+  formRevision.value++;
+  pendingUploads.value = 0;
   const ids = [...new Set(items
     .map((item) => Number(item.productInfo?.systemFormId ?? 0))
     .filter((id) => id > 0))];
@@ -393,7 +412,16 @@ async function submitOrder() {
     await cartStore.fetchList().catch(() => {});
     if (generation === checkoutGeneration) await router.push(`/order/${result.orderId}`);
   } catch (e) {
-    if (generation === checkoutGeneration) submissionError.value = e instanceof Error ? e.message : "下单结果未确认";
+    if (generation !== checkoutGeneration) return;
+    submissionError.value = e instanceof Error ? e.message : "下单结果未确认";
+    if (canEditRejectedOrder(e, orderKey.value, submissionUncertain.value)) {
+      pendingSubmission.value = null;
+      quoteSession.invalidate();
+      await reloadQuote();
+    } else {
+      // Even a later explicit rejection cannot settle an earlier transport timeout.
+      submissionUncertain.value = true;
+    }
   } finally {
     if (generation === checkoutGeneration) submitting.value = false;
   }
@@ -407,6 +435,8 @@ async function loadCheckout() {
   selectionError.value = "";
   selectedItems.value = [];
   pendingSubmission.value = null;
+  submissionUncertain.value = false;
+  pendingUploads.value = 0;
   submissionError.value = "";
   submitting.value = false;
   savingAddress.value = false;
