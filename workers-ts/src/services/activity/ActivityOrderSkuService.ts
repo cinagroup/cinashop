@@ -59,6 +59,12 @@ export async function resolveLegacyActivitySkuPair(
     if (activityRows.length > 1 || baseRows.length > 1) {
       throw new ValidateException("商品规格标识不唯一");
     }
+    if (activityRows[0] && baseRows[0] && activityRows[0].suk !== baseRows[0].suk) {
+      throw new ValidateException("活动与基础商品规格标识冲突");
+    }
+    if (requestedSuk && baseRows[0] && baseRows[0].suk !== requestedSuk) {
+      throw new ValidateException("活动商品规格与指定规格不匹配");
+    }
     if (!activityRows[0] && !baseRows[0] && !requestedSuk) {
       throw new ValidateException("商品规格标识无效");
     }
@@ -82,6 +88,9 @@ export async function resolveLegacyActivitySkuPair(
     throw new ValidateException(activityRows.length ? "活动商品规格不唯一" : "活动商品规格不存在或已失效");
   }
   const activitySku = activityRows[0];
+  if (requestedSuk && activitySku.suk !== requestedSuk) {
+    throw new ValidateException("活动商品规格与指定规格不匹配");
+  }
 
   if (!baseRows[0] || baseRows[0].suk !== activitySku.suk) {
     baseRows = await db

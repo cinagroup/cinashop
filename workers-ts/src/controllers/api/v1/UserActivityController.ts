@@ -8,6 +8,7 @@ import { UserCenterService } from "@/services/user/UserCenterService";
 import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibilityService";
 import { UserCollectCompatibilityService } from "@/services/user/UserCollectCompatibilityService";
 import { ActivityService } from "@/services/activity/ActivityService";
+import { SeckillSkuCatalogService } from "@/services/activity/SeckillSkuCatalogService";
 import { V2CouponCompatibilityService } from "@/services/activity/V2CouponCompatibilityService";
 import { UserCouponWalletService, couponWalletQuery, couponWalletFilter } from "@/services/activity/UserCouponWalletService";
 import { StoreDiscountService } from "@/services/activity/StoreDiscountService";
@@ -461,6 +462,12 @@ export async function seckillList(c: C) {
 }
 
 export async function seckillDetail(c: C) {
+  const view = c.req.query("view");
+  if (view !== undefined) {
+    privateNoStore(c);
+    if (view !== "skus") throw new ValidateException("秒杀详情视图无效");
+    return jsonOk(c, await new SeckillSkuCatalogService(c.get("container")).read(c.get("uid") ?? 0, c.req.param("id")));
+  }
   const svc = new ActivityService(c.get("container"));
   return jsonOk(c, await svc.seckillDetail(Number(c.req.param("id"))));
 }
