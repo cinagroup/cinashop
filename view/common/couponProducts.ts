@@ -9,6 +9,15 @@ export function couponProductId(value: unknown): number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) throw new Error("优惠券标识无效");
   return value;
 }
+export function normalizeCouponProduct(entry: unknown): CouponProduct {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("券范围商品无效");
+  const product = entry as Record<string, unknown>;
+  if (typeof product.id !== "number") throw new Error("商品标识无效");
+  const id = couponProductId(product.id);
+  if (typeof product.store_name !== "string" || product.store_name.length > 1000 || typeof product.image !== "string" || product.image.length > 4096) throw new Error("商品说明无效");
+  const image = /^(https?:\/\/|\/(?!\/))/.test(product.image) && !/[\\\u0000-\u001f\u007f]/.test(product.image) ? product.image : "";
+  return { id, title: product.store_name, image, catalogPrice: quoteMoney(product.catalog_price) };
+}
 export function normalizeCouponProducts(value: unknown, couponId: number, before?: number): CouponProductsPage {
   couponProductId(couponId); if (before !== undefined) couponProductId(before);
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("券范围商品数据无效");
@@ -17,15 +26,9 @@ export function normalizeCouponProducts(value: unknown, couponId: number, before
     || typeof row.scope_type !== "number" || ![0, 1, 2, 3].includes(row.scope_type) || !Array.isArray(row.list) || row.list.length > 100) throw new Error("券范围商品合同不匹配");
   let previous = before ?? Infinity;
   const list = row.list.map((entry): CouponProduct => {
-    if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("券范围商品无效");
-    const product = entry as Record<string, unknown>;
-    if (typeof product.id !== "number") throw new Error("商品标识无效");
-    const id = couponProductId(product.id);
+    const product = normalizeCouponProduct(entry), id = product.id;
     if (id >= previous) throw new Error("券范围商品分页顺序无效"); previous = id;
-    if (typeof product.store_name !== "string" || product.store_name.length > 1000 || typeof product.image !== "string" || product.image.length > 4096) throw new Error("商品说明无效");
-    // Only display public HTTP(S) or same-origin images; never interpret URLs as navigation or markup.
-    const image = /^(https?:\/\/|\/(?!\/))/.test(product.image) && !/[\\\u0000-\u001f\u007f]/.test(product.image) ? product.image : "";
-    return { id, title: product.store_name, image, catalogPrice: quoteMoney(product.catalog_price) };
+    return product;
   });
   const nextCursor = row.next_cursor === null ? null : typeof row.next_cursor === "number" ? couponProductId(row.next_cursor) : (() => { throw new Error("券范围分页标识无效"); })();
   if (nextCursor !== null && ((before !== undefined && nextCursor >= before) || (list.length && nextCursor > list[list.length - 1]!.id))) throw new Error("券范围分页标识不匹配");

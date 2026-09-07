@@ -2,6 +2,18 @@ import { http } from "@/utils/request";
 import { useAuthStore } from "@/stores/auth";
 import { couponProductId, normalizeCouponProducts } from "../../../common/couponProducts";
 import { normalizeScopeDescription } from "../../../common/couponScopeDescription";
+import { couponSearchOptions, couponSearchCursor, normalizeCouponSearch, type CouponSearchOptions } from "../../../common/couponProductSearch";
+
+export async function apiCouponProductSearch(couponId: number, options: CouponSearchOptions, cursor?: string) {
+  couponProductId(couponId); const query = couponSearchOptions(options.keyword, options.sort);
+  if (cursor !== undefined) couponSearchCursor(cursor);
+  const auth = useAuthStore();
+  if (!auth.isLoggedIn || auth.uid <= 0) throw new Error("请先登录后查看券范围商品");
+  const owner = { uid: auth.uid, token: auth.token, version: auth.sessionVersion };
+  const data = await http.get<unknown>(`/coupons/user/${couponId}/products`, { view: "search", limit: 20, ...query, ...(cursor !== undefined ? { cursor } : {}) });
+  if (auth.uid !== owner.uid || auth.token !== owner.token || auth.sessionVersion !== owner.version) throw new Error("登录状态已变化，请重新加载");
+  return normalizeCouponSearch(data, couponId, query, cursor);
+}
 
 export async function apiCouponScopeDescription(couponId: number, before?: number) {
   couponProductId(couponId); if (before !== undefined) couponProductId(before);

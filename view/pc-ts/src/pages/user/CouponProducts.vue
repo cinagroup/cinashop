@@ -2,6 +2,13 @@
   <section class="scope-page container">
     <h2>券范围商品</h2><p v-if="state.loaded" class="summary">{{ state.title }} · {{ scopeLabel }}</p>
     <p class="notice">这里只展示券范围内当前可见的商品。目录价不是会员价或用券后价格；库存、门槛和活动互斥以结算页服务端报价为准。进入详情不会自动使用优惠券。</p>
+    <form class="search-controls" @submit.prevent="applySearch()">
+      <label class="search-name">商品名称<input v-model="keyword" maxlength="100" placeholder="在券范围内搜索商品名称" /></label>
+      <el-button native-type="submit">搜索</el-button><el-button @click="clearSearch()">清空搜索</el-button>
+      <label>排序<select :value="filters.sort" @change="changeSort"><option v-for="option in sorts" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
+    </form>
+    <p class="notice">排序作用于当前搜索的全部范围商品。目录销量含商家配置的展示销量；目录实时变化，结果异常时请刷新。</p>
+    <p v-if="state.loaded" role="status">当前搜索：{{ state.keyword || '全部名称' }} · 已检查 {{ state.totalScanned }} 个目录候选，找到 {{ state.list.length }} 个范围商品。</p>
     <section v-if="state.loaded && !error" class="scope-definition" aria-label="配置范围总览">
       <h3>配置范围总览</h3>
       <p>以下是商家配置的范围，不是当前可购买商品数量。品类/品牌包含下级，商品包含关联子商品；名称不提供直接购买入口。</p>
@@ -27,9 +34,10 @@
         <el-button :disabled="blocked" @click="openProduct(product.id)">查看商品详情</el-button>
       </li>
     </ul>
-    <p v-if="!state.loading && !error && state.loaded && !state.list.length">{{ state.nextCursor !== null ? '本批未匹配到范围商品，尚未扫描完，请继续加载。' : '当前券范围内暂无可见商品。' }}</p>
+    <p v-if="!state.loading && !error && state.loaded && !state.list.length">{{ state.nextCursor !== null ? '本批未匹配到范围商品，尚未扫描完，请继续加载。' : state.keyword ? '当前券范围内没有匹配该名称的可见商品，可清空搜索或换个词。' : '当前券范围内暂无可见商品。' }}</p>
+    <p v-if="state.scanLimitReached && !state.loading && !error" class="notice">本次已检查500个候选，已达到单次扫描上限；仍有目录未检查，请继续加载，不代表没有更多匹配。</p>
     <el-button v-if="state.nextCursor !== null" :disabled="state.loading" @click="load(true)">继续加载范围商品</el-button>
-    <p v-else-if="state.loaded && !state.loading && !error && state.list.length">已读取全部当前范围商品</p>
+    <p v-else-if="state.loaded && !state.loading && !error && state.list.length">本次搜索已读完，目录变化后请刷新。</p>
   </section>
 </template>
 <script setup lang="ts">
@@ -38,12 +46,14 @@ import { useRoute, useRouter } from "vue-router";
 import { createCouponProductsView } from "@/composables/couponProductsView";
 const route = useRoute(), router = useRouter();
 const view = createCouponProductsView(path => { void router.push(path); });
-const { state, scopeState, error, blocked, scopeLabel, load, loadScope, openProduct } = view;
+const { state, scopeState, error, blocked, scopeLabel, keyword, filters, sorts, applySearch, clearSearch, load, loadScope, openProduct } = view;
+function changeSort(event: Event) { void applySearch((event.target as HTMLSelectElement).value); }
 watch(() => [route.name, route.params.id] as const, ([name, value]) => { void view.setRoute(name, value); }, { immediate: true, flush: "sync" });
 onUnmounted(view.dispose);
 </script>
 <style scoped>
 .scope-page { padding-top: 24px; padding-bottom: 40px; overflow-wrap: anywhere; }.summary { font-weight: 600; }.notice { color: #666; line-height: 1.7; }
+.search-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-top: 20px; }.search-controls label { display: flex; flex-direction: column; gap: 6px; max-width: 100%; }.search-name { flex: 1 1 240px; }.search-controls input,.search-controls select { box-sizing: border-box; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 10px; border: 1px solid #aaa; border-radius: 5px; font: inherit; background: white; }.search-controls .el-button + .el-button { margin-left: 0; }
 .scope-definition { background: #fff; border: 1px solid #ddd; border-radius: 10px; margin: 20px 0; padding: 20px; line-height: 1.7; }.scope-names { max-height: 280px; overflow-y: auto; padding-left: 22px; }.scope-names li { margin: 8px 0; }
 .scope-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 20px; list-style: none; padding: 0; margin: 24px 0; }.scope-product { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 20px; min-width: 0; }.scope-product img { width: 100%; height: 180px; object-fit: contain; }.scope-product h3 { font-size: 18px; }.scope-product p,.error { color: #b72a1d; }
 </style>

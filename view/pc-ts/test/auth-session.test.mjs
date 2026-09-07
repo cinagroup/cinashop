@@ -152,15 +152,17 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
     const calls = []; let fail = true;
     const product = { id: 70, store_name: "范围商品", image: "/image.svg", catalog_price: "10.00" };
     api.defaults.adapter = async config => {
-      calls.push(config.params.before); assert.equal(config.url, "/coupons/user/42/products");
-      if (config.params.before && fail) { fail = false; throw new Error("offline"); }
+      calls.push(config.params.cursor); assert.equal(config.url, "/coupons/user/42/products"); assert.equal(config.params.view, 'search'); assert.equal(config.params.before, undefined);
+      if (config.params.cursor && fail) { fail = false; throw new Error("offline"); }
       return response(config, { status: 200, data: { coupon_id: 42, coupon_title: "范围券", scope_type: 2, scope_only: true,
-        list: config.params.before ? [product] : [], next_cursor: config.params.before ? null : 100 } });
+        keyword: '', sort: 'recommended', scanned_count: config.params.cursor ? 1 : 500, scan_limit_reached: !config.params.cursor,
+        list: config.params.cursor ? [product] : [], next_cursor: config.params.cursor ? null : 'cursor100' } });
     };
     try {
-      await view.setCouponId("42"); assert.equal(view.state.value.nextCursor, 100); assert.deepEqual(view.state.value.list, []);
+      await view.setCouponId("42"); assert.equal(view.state.value.nextCursor, 'cursor100'); assert.deepEqual(view.state.value.list, []);
+      assert.equal(view.state.value.totalScanned, 500); assert.equal(view.state.value.scanLimitReached, true);
       await view.load(true); assert.match(view.error.value, /offline/); await view.load(true);
-      assert.deepEqual(calls, [undefined, 100, 100]); view.openProduct(999); view.openProduct(70); assert.deepEqual(navigation, ["/goods/70"]);
+      assert.deepEqual(calls, [undefined, 'cursor100', 'cursor100']); assert.equal(view.state.value.totalScanned, 501); view.openProduct(999); view.openProduct(70); assert.deepEqual(navigation, ["/goods/70"]);
       await view.setRoute("goods-detail", "70"); assert.equal(calls.length, 3); assert.deepEqual(view.state.value.list, []);
     } finally { view.dispose(); }
   });
@@ -193,13 +195,82 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
   });
   const scopeEntry = (id = 222) => ({ id, name: '叶<script>literal</script>', ancestors: [{ id: 1, name: '根' }, { id: 2, name: null }], hierarchy_complete: false });
   const scopePage = (entries = [scopeEntry()], next_cursor = null, total_count = 1) => ({ coupon_id: 42, coupon_title: '范围券', scope_type: 1, scope_only: true, entries, next_cursor, total_count, scope_version: 'a'.repeat(64) });
-  const catalog = { coupon_id: 42, coupon_title: '范围券', scope_type: 1, scope_only: true, list: [], next_cursor: 100 };
+  const catalog = { coupon_id: 42, coupon_title: '范围券', scope_type: 1, scope_only: true, list: [], next_cursor: 'cursor100', keyword: '', sort: 'recommended', scanned_count: 500, scan_limit_reached: true };
+  const searchProduct = (id = 70) => ({ id, store_name: `商品${id}<script>literal</script>`, image: '/image.svg', catalog_price: '10.00' });
+  const searchPage = (params = {}, changes = {}) => ({ ...catalog, keyword: params.keyword ?? '', sort: params.sort ?? 'recommended',
+    list: [searchProduct()], next_cursor: null, scanned_count: 1, scan_limit_reached: false, ...changes });
+  it('sends all seven server-side sorts and normalized keywords without sorting the returned page by ID', async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(() => {}), calls = [];
+    api.defaults.adapter = async config => { calls.push(config.params); return response(config, { status: 200, data: searchPage(config.params, { list: [searchProduct(70), searchProduct(90)], scanned_count: 2 }) }); };
+    try {
+      await view.setCouponId('42'); view.keyword.value = '  中文%_\\  ';
+      for (const option of view.sorts) {
+        await view.applySearch(option.value); assert.equal(view.error.value, '');
+        assert.deepEqual(calls.at(-1), { view: 'search', limit: 20, keyword: '中文%_\\', sort: option.value });
+        assert.deepEqual(view.state.value.list.map(row => row.id), [70, 90]);
+      }
+      await view.clearSearch(); assert.equal(calls.at(-1).keyword, ''); assert.equal(view.filters.value.sort, 'sales_asc');
+    } finally { view.dispose(); }
+  });
+  it('switches search during pending success or failure, clearing old cursors and scope metadata', async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(() => {});
+    try {
+      api.defaults.adapter = async config => response(config, { status: 200, data: config.params.view === 'scope' ? scopePage() : searchPage(config.params) });
+      await view.setCouponId('42'); await view.loadScope(); assert.equal(view.scopeState.value.loaded, true);
+      for (const outcome of ['success', 'failure']) {
+        const late = delayed(); view.keyword.value = 'old'; const pending = view.applySearch(); await late.started;
+        api.defaults.adapter = async config => { assert.equal(config.params.cursor, undefined); return response(config, { status: 200, data: searchPage(config.params, { list: [searchProduct(90)] }) }); };
+        view.keyword.value = 'new'; await view.applySearch('price_asc'); assert.equal(view.scopeState.value.loaded, false);
+        if (outcome === 'success') late.success({ status: 200, data: searchPage({ keyword: 'old', sort: 'price_asc' }) }); else late.fail(Error('stale offline'));
+        await pending; assert.equal(view.state.value.keyword, 'new'); assert.equal(view.state.value.sort, 'price_asc'); assert.equal(view.error.value, '');
+        assert.deepEqual(view.state.value.list.map(row => row.id), [90]);
+      }
+      authUtils.setAuth('session-a', 11); assert.deepEqual(view.filters.value, { keyword: '', sort: 'recommended' }); assert.equal(view.keyword.value, '');
+    } finally { view.dispose(); }
+  });
+  it('retries the exact cursor with applied filters, not unsubmitted draft text, and refuses duplicate catalogue pages', async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(url => navigation.push(url)), calls = []; let fail = true, duplicate = false;
+    api.defaults.adapter = async config => {
+      calls.push(config.params);
+      if (config.params.cursor && fail) { fail = false; throw Error('offline search'); }
+      return response(config, { status: 200, data: searchPage(config.params, config.params.cursor
+        ? { list: [searchProduct(duplicate ? 70 : 90)] } : { next_cursor: 'cursorA' }) });
+    };
+    try {
+      await view.setCouponId('42'); view.keyword.value = '提交词'; await view.applySearch('price_desc'); view.keyword.value = '未提交词';
+      await view.load(true); assert.match(view.error.value, /offline/); assert.equal(view.blocked.value, true);
+      await view.load(true); assert.deepEqual(calls.at(-1), calls.at(-2)); assert.equal(calls.at(-1).keyword, '提交词');
+      assert.deepEqual(view.state.value.list.map(row => row.id), [70, 90]);
+      duplicate = true; await view.load(); await view.load(true); assert.match(view.error.value, /已变化/);
+      assert.deepEqual(view.state.value.list.map(row => row.id), [70]); view.openProduct(70); assert.deepEqual(navigation, []);
+    } finally { view.dispose(); }
+  });
+  it('validates search adapters before I/O and rejects wrong echoes, impossible scan counters and cursor cycles', async () => {
+    const { apiCouponProductSearch } = await server.ssrLoadModule('/src/api/couponProducts.ts'); let calls = 0;
+    api.defaults.adapter = async config => { calls++; return response(config, { status: 200, data: searchPage(config.params) }); };
+    for (const options of [{ keyword: 'x'.repeat(101), sort: 'newest' }, { keyword: 'x\n', sort: 'newest' }, { keyword: '', sort: 'raw SQL' }]) await assert.rejects(apiCouponProductSearch(42, options));
+    for (const cursor of [0, '', 'x'.repeat(513), '+/']) await assert.rejects(apiCouponProductSearch(42, { keyword: '', sort: 'recommended' }, cursor));
+    assert.equal(calls, 0);
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(() => {}); let change = {};
+    api.defaults.adapter = async config => response(config, { status: 200, data: searchPage(config.params, change) });
+    try {
+      await view.setCouponId('42');
+      for (const bad of [{ keyword: 'wrong' }, { sort: 'newest' }, { scanned_count: 501 }, { scanned_count: 0 }, { scan_limit_reached: true }, { next_cursor: 100 }]) {
+        change = bad; await view.load(); assert.ok(view.error.value); assert.deepEqual(view.state.value.list, []);
+      }
+      change = { list: [], scanned_count: 500, scan_limit_reached: true, next_cursor: 'cursorA' }; await view.load();
+      change = { ...change, next_cursor: 'cursorB' }; await view.load(true);
+      change = { ...change, next_cursor: 'cursorA' }; await view.load(true); assert.match(view.error.value, /游标已变化/);
+      assert.equal(view.state.value.totalScanned, 1000);
+      authUtils.clearAuth(); await assert.rejects(apiCouponProductSearch(42, { keyword: '', sort: 'recommended' }), /请先登录/);
+    } finally { view.dispose(); }
+  });
   it('loads complete scope configuration separately and retries exact configuration cursors, not product cursors', async () => {
     const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts');
     const view = createCouponProductsView(url => navigation.push(url)), calls = []; let fail = true;
     api.defaults.adapter = async config => {
       calls.push(config.params);
-      if (!config.params.view) return response(config, { status: 200, data: catalog });
+      if (config.params.view === 'search') return response(config, { status: 200, data: catalog });
       assert.equal(config.params.view, 'scope');
       if (config.params.before && fail) { fail = false; throw Error('scope offline'); }
       return response(config, { status: 200, data: config.params.before ? scopePage([scopeEntry(221)], null, 2) : scopePage([scopeEntry()], 222, 2) });
@@ -209,13 +280,13 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
       assert.equal(view.scopeState.value.entries[0].name, '叶<script>literal</script>'); assert.equal(view.scopeState.value.entries[0].ancestors[1].name, null);
       await view.loadScope(true); assert.match(view.scopeState.value.error, /offline/); assert.equal(view.scopeState.value.entries.length, 1); assert.equal(view.blocked.value, true);
       await view.loadScope(true); assert.deepEqual(calls.map(call => call.before), [undefined, undefined, 222, 222]);
-      assert.equal(view.scopeState.value.entries.length, 2); assert.equal(view.state.value.nextCursor, 100); assert.equal(view.scopeState.value.nextCursor, null);
+      assert.equal(view.scopeState.value.entries.length, 2); assert.equal(view.state.value.nextCursor, 'cursor100'); assert.equal(view.scopeState.value.nextCursor, null);
       await view.loadScope(true); assert.equal(calls.length, 4); await view.load(); assert.equal(view.scopeState.value.loaded, false);
     } finally { view.dispose(); }
   });
   it('rejects malformed scope names, hierarchy, metadata and cursors rather than displaying unvalidated configuration', async () => {
     const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(() => {}); let data = scopePage();
-    api.defaults.adapter = async config => response(config, { status: 200, data: config.params.view ? data : catalog });
+    api.defaults.adapter = async config => response(config, { status: 200, data: config.params.view === 'scope' ? data : catalog });
     try {
       await view.setCouponId('42');
       for (const bad of [{ ...scopePage(), coupon_id: 99 }, { ...scopePage(), scope_type: 3 }, { ...scopePage(), scope_only: false },

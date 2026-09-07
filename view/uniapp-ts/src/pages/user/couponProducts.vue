@@ -3,6 +3,13 @@
     <view class="heading">券范围商品</view>
     <view v-if="state.loaded" class="summary">{{ state.title }} · {{ scopeLabel }}</view>
     <view class="notice">这里只展示券范围内当前可见的商品。目录价不是会员价或用券后价格；库存、门槛和活动互斥以结算页服务端报价为准。进入详情不会自动使用优惠券。</view>
+    <view class="search-controls">
+      <view>商品名称</view><input v-model="keyword" :maxlength="100" placeholder="在券范围内搜索商品名称" confirm-type="search" @confirm="applySearch()" />
+      <view class="search-actions"><button size="mini" @tap="applySearch()">搜索</button><button size="mini" @tap="clearSearch()">清空搜索</button></view>
+      <picker :range="sorts" range-key="label" :value="sortIndex" @change="changeSort"><view class="sort-picker">排序：{{ sorts[sortIndex]?.label }} ▾</view></picker>
+    </view>
+    <view class="notice">排序作用于当前搜索的全部范围商品。目录销量含商家配置的展示销量；目录实时变化，结果异常时请刷新。</view>
+    <view v-if="state.loaded" class="notice">当前搜索：{{ state.keyword || '全部名称' }} · 已检查 {{ state.totalScanned }} 个目录候选，找到 {{ state.list.length }} 个范围商品。</view>
     <view v-if="state.loaded && !error" class="scope-definition">
       <view class="summary">配置范围总览</view>
       <view class="notice">以下是商家配置的范围，不是当前可购买商品数量。品类/品牌包含下级，商品包含关联子商品；名称不提供直接购买入口。</view>
@@ -29,20 +36,25 @@
         <button size="mini" :disabled="blocked" @tap="openProduct(product.id)">查看商品详情</button>
       </view>
     </view>
-    <view v-if="!state.loading && !error && state.loaded && !state.list.length" class="notice">{{ state.nextCursor !== null ? '本批未匹配到范围商品，尚未扫描完，请继续加载。' : '当前券范围内暂无可见商品。' }}</view>
+    <view v-if="!state.loading && !error && state.loaded && !state.list.length" class="notice">{{ state.nextCursor !== null ? '本批未匹配到范围商品，尚未扫描完，请继续加载。' : state.keyword ? '当前券范围内没有匹配该名称的可见商品，可清空搜索或换个词。' : '当前券范围内暂无可见商品。' }}</view>
+    <view v-if="state.scanLimitReached && !state.loading && !error" class="notice">本次已检查500个候选，已达到单次扫描上限；仍有目录未检查，请继续加载，不代表没有更多匹配。</view>
     <button v-if="state.nextCursor !== null" :disabled="state.loading" @tap="load(true)">继续加载范围商品</button>
-    <view v-else-if="state.loaded && !state.loading && !error && state.list.length" class="notice">已读取全部当前范围商品</view>
+    <view v-else-if="state.loaded && !state.loading && !error && state.list.length" class="notice">本次搜索已读完，目录变化后请刷新。</view>
   </view>
   <DiySuspendedNavigation />
 </template>
 <script setup lang="ts">
 import { useCouponProducts } from "@/composables/useCouponProducts";
+import { computed } from "vue";
 defineOptions({ inheritAttrs: false });
-const { state, scopeState, error, blocked, scopeLabel, load, loadScope, openProduct } = useCouponProducts();
+const { state, scopeState, error, blocked, scopeLabel, keyword, filters, sorts, applySearch, clearSearch, load, loadScope, openProduct } = useCouponProducts();
+const sortIndex = computed(() => sorts.findIndex(option => option.value === filters.value.sort));
+function changeSort(event: { detail: { value: string | number } }) { void applySearch(sorts[Number(event.detail.value)]?.value); }
 </script>
 <style scoped>
 .scope-page { padding: 24rpx 24rpx calc(32rpx + env(safe-area-inset-bottom)); font-size: 28rpx; overflow-wrap: anywhere; }
 .heading { font-size: 36rpx; font-weight: 700; }.summary { margin-top: 18rpx; font-weight: 600; }
+.search-controls { background: white; border-radius: 14rpx; padding: 24rpx; margin-top: 24rpx; }.search-controls input { border: 1px solid #aaa; border-radius: 8rpx; padding: 14rpx; margin: 14rpx 0; }.search-actions { display: flex; gap: 16rpx; }.search-actions button { margin: 0; }.sort-picker { margin-top: 20rpx; padding: 18rpx; border: 1px solid #aaa; border-radius: 8rpx; }
 .scope-definition { background: white; border-radius: 14rpx; margin: 24rpx 0; padding: 24rpx; line-height: 1.7; }.scope-names { max-height: 400rpx; }.scope-name { margin: 16rpx 0; }
 .notice { color: #666; line-height: 1.7; font-size: 24rpx; margin: 24rpx 0; }.error { color: #b72a1d; margin: 20rpx 0; line-height: 1.7; }
 .scope-grid { display: flex; flex-wrap: wrap; gap: 20rpx; margin: 24rpx 0; }.scope-product { box-sizing: border-box; flex: 1 1 280rpx; max-width: 680rpx; padding: 24rpx; border-radius: 14rpx; background: white; }
