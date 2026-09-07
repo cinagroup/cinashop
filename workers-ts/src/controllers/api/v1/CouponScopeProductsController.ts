@@ -5,7 +5,8 @@ import { couponScopeProductsQuery, CouponScopeProductsService } from "@/services
 
 export async function couponScopeProducts(c: Context<{ Bindings: Env; Variables: AppVariables }>) {
   c.header("Cache-Control", "private, no-store");
-  const result = await new CouponScopeProductsService(c.get("container"))
-    .list(c.get("uid"), couponScopeProductsQuery(c.req.param("id"), c.req.query()));
+  const service = new CouponScopeProductsService(c.get("container"));
+  const query = couponScopeProductsQuery(c.req.param("id"), c.req.query());
+  const result = c.req.query("view") === "scope" ? await service.describe(c.get("uid"), query) : await service.list(c.get("uid"), query);
   return jsonOk(c, result);
 }

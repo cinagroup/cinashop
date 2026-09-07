@@ -5,8 +5,10 @@ import { ValidateException } from "@/utils/errors";
 import { prepareCouponScope } from "./OrderCouponService";
 import { calculateCouponEligibleSubtotalCents, parseCouponScopeIds, reconcileCouponProductScopeIds } from "./ProductCouponService";
 import { projectOwnedCoupon } from "./UserCouponWalletService";
+import { describeCouponScope } from "./CouponScopeDescriptionService";
 
 export function couponScopeProductsQuery(id: string | undefined, query: Record<string, string | undefined>) {
+  if (query.view !== undefined && query.view !== "scope") throw new ValidateException("优惠券商品视图无效");
   const integer = (value: string | undefined, fallback: number, min: number, max: number) => {
     if (value === undefined) return fallback;
     if (!/^\d+$/.test(value)) throw new ValidateException("优惠券商品查询参数无效");
@@ -23,7 +25,7 @@ export function couponScopeProductsQuery(id: string | undefined, query: Record<s
 export class CouponScopeProductsService {
   constructor(private readonly container: Container) {}
 
-  async list(uid: number, query: ReturnType<typeof couponScopeProductsQuery>) {
+  private async owned(uid: number, query: ReturnType<typeof couponScopeProductsQuery>) {
     if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("请先登录");
     // Validate internal callers too, before constructing a query or reading private state.
     const input = couponScopeProductsQuery(String(query.couponId), { limit: String(query.limit), before: String(query.before) });
@@ -36,6 +38,20 @@ export class CouponScopeProductsService {
     }
     const current = await this.container.userDao.findForAuth(uid);
     if (!current) throw new ValidateException("请先登录");
+    return { input, owned, current, issue: owned.issue };
+  }
+
+  async describe(uid: number, query: ReturnType<typeof couponScopeProductsQuery>) {
+    const { input, owned, current, issue } = await this.owned(uid, query);
+    const scope = await prepareCouponScope(this.container, [], [issue]);
+    const definition = { productIds: reconcileCouponProductScopeIds([issue.legacyProductIds, issue.productId], scope.related.get(issue.id) ?? []),
+      categoryIds: parseCouponScopeIds(issue.legacyCategoryId, issue.category_id), brandIds: parseCouponScopeIds(issue.legacyBrandId, issue.brandId) };
+    return { coupon_id: owned.coupon.id, coupon_title: owned.coupon.couponTitle, scope_type: issue.couponType,
+      scope_only: true as const, ...await describeCouponScope(this.container, issue.couponType, definition, !!current.isMoneyLevel, input) };
+  }
+
+  async list(uid: number, query: ReturnType<typeof couponScopeProductsQuery>) {
+    const { input, owned, current, issue } = await this.owned(uid, query);
     const where = [eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0), eq(storeProduct.isVerify, 1)];
     // Match the existing public catalogue's membership visibility, including sold-out products.
     if (!current.isMoneyLevel) where.push(eq(storeProduct.isVipProduct, 0));
@@ -43,7 +59,7 @@ export class CouponScopeProductsService {
     const rows = await this.container.db.select({ id: storeProduct.id, pid: storeProduct.pid, cateId: storeProduct.cateId,
       brandId: storeProduct.brandId, store_name: storeProduct.storeName, image: storeProduct.image, price: storeProduct.price })
       .from(storeProduct).where(and(...where)).orderBy(desc(storeProduct.id)).limit(input.limit + 1);
-    const candidates = rows.slice(0, input.limit), issue = owned.issue;
+    const candidates = rows.slice(0, input.limit);
     // Reuse precisely the checkout hierarchy and conflicting-representation rules, not a second SQL parser.
     const scope = await prepareCouponScope(this.container, candidates.map(product => ({ product,
       cart: { cartNum: 1 }, unitPriceCents: 1 })), [issue]);

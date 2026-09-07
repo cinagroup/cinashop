@@ -191,6 +191,61 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
     assert.equal(cart.items.length, 0);
     assert.equal(cart.count, 0);
   });
+  const scopeEntry = (id = 222) => ({ id, name: '叶<script>literal</script>', ancestors: [{ id: 1, name: '根' }, { id: 2, name: null }], hierarchy_complete: false });
+  const scopePage = (entries = [scopeEntry()], next_cursor = null, total_count = 1) => ({ coupon_id: 42, coupon_title: '范围券', scope_type: 1, scope_only: true, entries, next_cursor, total_count, scope_version: 'a'.repeat(64) });
+  const catalog = { coupon_id: 42, coupon_title: '范围券', scope_type: 1, scope_only: true, list: [], next_cursor: 100 };
+  it('loads complete scope configuration separately and retries exact configuration cursors, not product cursors', async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts');
+    const view = createCouponProductsView(url => navigation.push(url)), calls = []; let fail = true;
+    api.defaults.adapter = async config => {
+      calls.push(config.params);
+      if (!config.params.view) return response(config, { status: 200, data: catalog });
+      assert.equal(config.params.view, 'scope');
+      if (config.params.before && fail) { fail = false; throw Error('scope offline'); }
+      return response(config, { status: 200, data: config.params.before ? scopePage([scopeEntry(221)], null, 2) : scopePage([scopeEntry()], 222, 2) });
+    };
+    try {
+      await view.setCouponId('42'); assert.equal(calls.length, 1); await view.loadScope();
+      assert.equal(view.scopeState.value.entries[0].name, '叶<script>literal</script>'); assert.equal(view.scopeState.value.entries[0].ancestors[1].name, null);
+      await view.loadScope(true); assert.match(view.scopeState.value.error, /offline/); assert.equal(view.scopeState.value.entries.length, 1); assert.equal(view.blocked.value, true);
+      await view.loadScope(true); assert.deepEqual(calls.map(call => call.before), [undefined, undefined, 222, 222]);
+      assert.equal(view.scopeState.value.entries.length, 2); assert.equal(view.state.value.nextCursor, 100); assert.equal(view.scopeState.value.nextCursor, null);
+      await view.loadScope(true); assert.equal(calls.length, 4); await view.load(); assert.equal(view.scopeState.value.loaded, false);
+    } finally { view.dispose(); }
+  });
+  it('rejects malformed scope names, hierarchy, metadata and cursors rather than displaying unvalidated configuration', async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(() => {}); let data = scopePage();
+    api.defaults.adapter = async config => response(config, { status: 200, data: config.params.view ? data : catalog });
+    try {
+      await view.setCouponId('42');
+      for (const bad of [{ ...scopePage(), coupon_id: 99 }, { ...scopePage(), scope_type: 3 }, { ...scopePage(), scope_only: false },
+        { ...scopePage(), total_count: -1 }, { ...scopePage(), total_count: '1' }, scopePage([], 222, 2), scopePage([scopeEntry()], 223, 2),
+        scopePage([scopeEntry(), scopeEntry()], null, 2), scopePage([{ ...scopeEntry(), name: 'x'.repeat(1001) }]),
+        scopePage([{ ...scopeEntry(), ancestors: [{ id: 222, name: 'self' }] }]), scopePage([{ ...scopeEntry(), hierarchy_complete: 'true' }])]) {
+        data = bad; await view.loadScope(); assert.ok(view.scopeState.value.error); assert.deepEqual(view.scopeState.value.entries, []);
+      }
+    } finally { view.dispose(); }
+  });
+  it('clears scope metadata on renewal and route disposal, ignoring late successes and failures', async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(() => {});
+    api.defaults.adapter = async config => response(config, { status: 200, data: catalog }); await view.setCouponId('42');
+    const old = delayed(), loading = view.loadScope(); await old.started; authUtils.setAuth('session-a', 11);
+    old.success({ status: 200, data: scopePage() }); await loading; assert.deepEqual(view.scopeState.value.entries, []);
+    api.defaults.adapter = async config => response(config, { status: 200, data: catalog }); await view.load();
+    const pending = delayed(), loading2 = view.loadScope(); await pending.started; await view.setRoute('goods-detail', '70');
+    pending.fail(Error('old failure')); await loading2; assert.deepEqual(view.scopeState.value.entries, []); assert.equal(view.scopeState.value.error, '');
+  });
+  it('rejects invalid scope requests before I/O and invalidates pending metadata on product refresh', async () => {
+    const { apiCouponScopeDescription } = await server.ssrLoadModule('/src/api/couponProducts.ts');
+    api.defaults.adapter = async () => { throw Error('must not request'); };
+    for (const args of [[0], [42, -1], [42, 1.5]]) await assert.rejects(apiCouponScopeDescription(...args), /标识/);
+    authUtils.clearAuth(); await assert.rejects(apiCouponScopeDescription(42), /请先登录/); authUtils.setAuth('session-a', 11);
+    const { createCouponProductsView } = await server.ssrLoadModule('/src/composables/couponProductsView.ts'); const view = createCouponProductsView(() => {});
+    api.defaults.adapter = async config => response(config, { status: 200, data: catalog }); await view.setCouponId('42');
+    const late = delayed(), pending = view.loadScope(); await late.started;
+    api.defaults.adapter = async config => response(config, { status: 200, data: catalog }); await view.load();
+    late.success({ status: 200, data: scopePage() }); await pending; assert.deepEqual(view.scopeState.value.entries, []); view.dispose();
+  });
   it("clears all current client state and preserves the full checkout return URL on expiration", async () => {
     api.defaults.adapter = async (config) => {
       assert.equal(config.headers.get("Authori-zation"), "Bearer session-a");

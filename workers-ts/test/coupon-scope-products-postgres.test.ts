@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import { createPcCouponFixture } from "./helpers/pcCouponFixture";
@@ -7,6 +7,7 @@ import { couponScopeProducts } from "../src/controllers/api/v1/CouponScopeProduc
 import { couponScopeProductsQuery, CouponScopeProductsService } from "../src/services/activity/CouponScopeProductsService";
 import { resolveOrderCoupon } from "../src/services/activity/OrderCouponService";
 import { CouponProductsSession, emptyCouponProducts, normalizeCouponProducts } from "../../view/common/couponProducts";
+import { normalizeScopeDescription } from "../../view/common/couponScopeDescription";
 
 describe("owned coupon scope browsing uses checkout membership and disposable SQL", () => {
   let f: Awaited<ReturnType<typeof createPcCouponFixture>>;
@@ -115,5 +116,68 @@ describe("owned coupon scope browsing uses checkout membership and disposable SQ
     await session.load(110, true); expect(state.list.map(p => p.id)).toEqual([71, 70]); expect(state.nextCursor).toBeNull();
     expect(state.list[0]).toMatchObject({ title: "范围样本71", catalogPrice: "10.00" }); expect(cursors).toEqual([undefined, 72]);
     await session.load(110, true); expect(cursors).toHaveLength(2); session.reset(); expect(state).toEqual(emptyCouponProducts());
+  });
+  it("paginates the complete configured collection independently of scanned product pages, with batched public names and parent paths", async () => {
+    await f.db.update(storeProductCategory).set({ cateName: "一级品类" }).where(eq(storeProductCategory.id, 1));
+    await f.db.update(storeProductCategory).set({ cateName: "二级品类" }).where(eq(storeProductCategory.id, 2));
+    await f.db.insert(storeProductCategory).values(Array.from({ length: 23 }, (_, i) => ({ id: 200 + i, cateName: `范围${i}<script>literal</script>`, pid: 2, path: "1,2" })));
+    await f.db.insert(storeCouponIssue).values({ id: 20, couponType: 1, type: 1, category_id: JSON.stringify(Array.from({ length: 23 }, (_, i) => 200 + i)) });
+    await f.db.insert(storeCouponUser).values({ id: 120, uid: 11, issueCouponId: 20, couponTitle: "多范围券", couponPrice: "1.00" });
+    const before = await f.snapshot(), spy = vi.spyOn(f.db, "select");
+    let first: Awaited<ReturnType<typeof request>>;
+    try { first = await request("120", "11", "?view=scope&limit=20"); expect(spy.mock.calls.length).toBeLessThanOrEqual(5); }
+    finally { spy.mockRestore(); }
+    expect(first.body.status).toBe(200); expect(first.response.headers.get("Cache-Control")).toBe("private, no-store");
+    const page = normalizeScopeDescription(first.body.data, 120);
+    expect(page).toMatchObject({ total: 23, nextCursor: 203 }); expect(page.entries).toHaveLength(20);
+    expect(page.entries[0]).toEqual({ id: 222, name: "范围22<script>literal</script>", ancestors: [{ id: 1, name: "一级品类" }, { id: 2, name: "二级品类" }], hierarchyComplete: true });
+    const next = normalizeScopeDescription((await request("120", "11", "?view=scope&limit=20&before=203")).body.data, 120, 203);
+    expect(next.entries.map(row => row.id)).toEqual([202, 201, 200]); expect(next.nextCursor).toBeNull();
+    expect((await list(120)).list).toEqual([]); expect(await f.snapshot()).toEqual(before); expect(f.writes).toEqual([]);
+    await f.db.update(storeCouponIssue).set({ category_id: JSON.stringify(Array.from({ length: 23 }, (_, i) => 201 + i)) }).where(eq(storeCouponIssue.id, 20));
+    const changed = normalizeScopeDescription((await request("120", "11", "?view=scope")).body.data, 120);
+    expect(changed.total).toBe(page.total); expect(changed.version).not.toBe(page.version);
+  });
+  it("redacts hidden, deleted, private and VIP-only configured names without broadening eligibility or dropping configuration IDs", async () => {
+    await f.db.insert(storeCouponIssue).values({ id: 21, couponType: 2, type: 1, productId: "70,74,75,76,77,9999" });
+    await f.db.insert(storeCouponUser).values({ id: 121, uid: 11, issueCouponId: 21, couponPrice: "1.00" });
+    const read = async () => normalizeScopeDescription((await request("121", "11", "?view=scope")).body.data, 121);
+    const page = await read(); expect(page.total).toBe(6); expect(page.entries.filter(row => row.name !== null).map(row => row.id)).toEqual([70]);
+    await f.db.update(user).set({ isMoneyLevel: 1 }).where(eq(user.uid, 11));
+    try { expect((await read()).entries.filter(row => row.name !== null).map(row => row.id)).toEqual([77, 70]); }
+    finally { await f.db.update(user).set({ isMoneyLevel: 0 }).where(eq(user.uid, 11)); }
+    await f.db.update(storeProductCategory).set({ type: 2, relationId: 88, cateName: "供应商私有名称" }).where(eq(storeProductCategory.id, 1));
+    try { const scope = normalizeScopeDescription((await request("111", "11", "?view=scope")).body.data, 111); expect(scope.entries[0]).toMatchObject({ id: 1, name: null, hierarchyComplete: false }); }
+    finally { await f.db.update(storeProductCategory).set({ type: 0, relationId: 0 }).where(eq(storeProductCategory.id, 1)); }
+    await f.db.update(storeBrand).set({ isShow: 0, brandName: "隐藏品牌机密" }).where(eq(storeBrand.id, 1));
+    try { expect(JSON.stringify((await request("112", "11", "?view=scope")).body)).not.toContain("隐藏品牌机密"); expect((await list(112)).list.map(row => row.id)).toEqual([72, 70]); }
+    finally { await f.db.update(storeBrand).set({ isShow: 1 }).where(eq(storeBrand.id, 1)); }
+  });
+  it("shows brand ancestry and explicitly marks cycles, missing parents, stale paths and bounded deep chains", async () => {
+    await f.db.update(storeBrand).set({ brandName: "根品牌" }).where(eq(storeBrand.id, 1));
+    await f.db.update(storeBrand).set({ brandName: "子品牌" }).where(eq(storeBrand.id, 2));
+    // PublicCatalogService does not treat a nonzero store_id as a private/hidden brand.
+    await f.db.update(storeBrand).set({ brandName: "叶品牌", storeId: 88 }).where(eq(storeBrand.id, 3));
+    await f.db.insert(storeCouponIssue).values({ id: 22, couponType: 3, type: 1, brandId: "3" });
+    await f.db.insert(storeCouponUser).values({ id: 122, uid: 11, issueCouponId: 22, couponPrice: "1.00" });
+    const read = async () => normalizeScopeDescription((await request("122", "11", "?view=scope")).body.data, 122);
+    expect((await read()).entries[0]).toEqual({ id: 3, name: "叶品牌", ancestors: [{ id: 1, name: "根品牌" }, { id: 2, name: "子品牌" }], hierarchyComplete: true });
+    for (const change of [{ pid: 3 }, { pid: 999 }, { pid: 2, fid: "999" }]) {
+      await f.db.update(storeBrand).set(change).where(eq(storeBrand.id, 3)); expect((await read()).entries[0]!.hierarchyComplete).toBe(false);
+    }
+    await f.db.update(storeBrand).set({ pid: 2, fid: "1" }).where(eq(storeBrand.id, 3));
+    await f.db.insert(storeBrand).values(Array.from({ length: 35 }, (_, i) => ({ id: 900 + i, brandName: `深层${i}`, pid: i === 0 ? 0 : 899 + i })));
+    await f.db.update(storeCouponIssue).set({ brandId: "934" }).where(eq(storeCouponIssue.id, 22));
+    const deep = (await read()).entries[0]!; expect(deep.ancestors).toHaveLength(32); expect(deep.hierarchyComplete).toBe(false);
+  });
+  it("keeps scope-view owner, availability and conflict guards; empty configured scope never means general", async () => {
+    for (const id of [43, 44, 45, 46, 47, 99999]) expect((await request(String(id), "11", "?view=scope")).body.status).toBe(400);
+    expect((await request("110", "22", "?view=scope")).body).toMatchObject({ status: 400, msg: "优惠券不存在" });
+    expect((await request("110", "", "?view=scope")).body.status).toBe(400);
+    expect((await request("115", "11", "?view=scope&before=1")).body.msg).toMatch(/范围数据不一致/);
+    expect((await request("110", "11", "?view=other")).body.status).toBe(400);
+    expect(normalizeScopeDescription((await request("116", "11", "?view=scope")).body.data, 116)).toMatchObject({ scopeType: 2, total: 0, entries: [], nextCursor: null });
+    expect(normalizeScopeDescription((await request("41", "11", "?view=scope&ids=70&uid=22")).body.data, 41)).toMatchObject({ scopeType: 0, total: 0, entries: [] });
+    const before = await f.snapshot(); await request("110", "11", "?view=scope"); expect(await f.snapshot()).toEqual(before); expect(f.writes).toEqual([]);
   });
 });
