@@ -1,4 +1,5 @@
 import type { GoodsDetail } from "../types/product";
+import { normalizeGoodsSkus } from "./productPurchase";
 
 /** The detail endpoint uses ORM camelCase plus computed snake_case fields;
  * older clients/responses use snake_case. Keep that wire format out of views. */
@@ -43,6 +44,7 @@ export function normalizeGoodsDetail(value: unknown): GoodsDetail {
     store_info: text("store_info", "storeInfo"),
     image: text("image"),
     slider_image: strings("slider_image", "sliderImage"),
+    skus: normalizeGoodsSkus(source.skus ?? source.attr_value),
     price, // Preserve decimal strings; this adapter does not recalculate prices.
     ot_price: text("ot_price", "otPrice"),
     vip_price: text("vip_price", "vipPrice"),

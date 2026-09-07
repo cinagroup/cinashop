@@ -84,6 +84,7 @@ function progressOf(p: unknown) {
 
 /** 开团: 活动加购 → 统一结算页填写地址/系统表单 → 创建拼团订单。 */
 async function join(pinkId = 0) {
+  if (joining.value) return;
   joining.value = true;
   try {
     const cart = await apiCartAdd({
@@ -92,6 +93,7 @@ async function join(pinkId = 0) {
       cartNum: 1,
       type: 3,
       activityId: comboId,
+      new: 1,
     });
     router.push({
       path: "/checkout",

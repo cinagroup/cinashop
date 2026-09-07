@@ -38,7 +38,8 @@ export const useCartStore = defineStore("cart", {
     async fetchList(): Promise<void> {
       this.loading = true;
       try {
-        this.items = await apiCartList();
+        const selected = new Set(this.items.filter((item) => item.checked).map((item) => item.id));
+        this.items = (await apiCartList()).map((item) => ({ ...item, checked: item.isValid && selected.has(item.id) }));
       } finally {
         this.loading = false;
       }

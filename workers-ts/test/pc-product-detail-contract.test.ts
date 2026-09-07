@@ -14,13 +14,17 @@ describe("FE-002B PC product detail adapter", () => {
     const daoProduct = { ...fixture, sliderImage: JSON.stringify(["/test-one.svg"]), deliveryType: "1,2" };
     const container = {
       storeProductDao: { getById: vi.fn(async () => daoProduct) },
-      storeProductAttrValueDao: { getByProductId: vi.fn(async () => []), getPriceRange: vi.fn(async () => ({ min: 0.1, max: 20 })) },
+      storeProductAttrValueDao: { getByProductId: vi.fn(async () => [
+        { id: 901, unique: "realred1", suk: "红色,大号", price: "19.90", otPrice: "29.90", vipPrice: "17.90", stock: 8, sales: 2, image: "" },
+      ]), getPriceRange: vi.fn(async () => ({ min: 0.1, max: 20 })) },
     } as unknown as ConstructorParameters<typeof StoreProductService>[0];
     try {
       const service = new StoreProductService(container, {} as ConstructorParameters<typeof StoreProductService>[1]);
       const wire = await service.getProductDetail(70, 0);
       expect(wire).not.toHaveProperty("store_name");
       expect(wire).not.toHaveProperty("cart_button");
+      expect(normalizeGoodsDetail(wire).skus).toEqual([{ unique: "realred1", suk: "红色,大号", price: "19.90",
+        ot_price: "29.90", vip_price: "17.90", stock: 8, image: "" }]);
       expect(normalizeGoodsDetail(wire)).toMatchObject({ store_name: fixture.storeName,
         store_info: fixture.storeInfo, price: "99.90", ot_price: "199.00", vip_price: "79.90",
         slider_image: ["/test-one.svg"], delivery_type: ["1", "2"], cart_button: 1 });
@@ -84,7 +88,8 @@ describe("FE-002B PC product detail adapter", () => {
     const api = readFileSync("../view/pc-ts/src/api/product.ts", "utf8");
     const page = readFileSync("../view/pc-ts/src/pages/goods/GoodsDetail.vue", "utf8");
     expect(api).toContain("normalizeGoodsDetail(await getData<unknown>(request.get(`/product/detail/${id}`)))");
-    expect(page.match(/:disabled="detail.cart_button === 0"/g)).toHaveLength(2);
-    expect(page).toContain("Math.max(detail.stock, 1)");
+    expect(page.match(/:disabled="!canPurchase \|\| purchaseSubmitting"/g)).toHaveLength(2);
+    expect(page).toContain("detail.value?.cart_button === 1");
+    expect(page).toContain("Math.max(selectedStock, 1)");
   });
 });

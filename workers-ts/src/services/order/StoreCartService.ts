@@ -43,6 +43,10 @@ import {
 
 const CART_ADVISORY_LOCK_NAMESPACE = 1128354388;
 
+/** Explicit scopes let migrated clients isolate checkout rows without changing
+ * the unscoped legacy endpoint used by other clients during migration. */
+export type CartReadScope = { mode: "cart" } | { mode: "buy"; ids: number[] };
+
 async function lockCartUser(tx: DbClient, uid: number): Promise<void> {
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_ADVISORY_LOCK_NAMESPACE}, ${uid})`);
 }
@@ -162,6 +166,8 @@ export class StoreCartService {
     const activityId = params.activityId ?? 0;
     let productId = params.productId;
     let unique = params.unique;
+
+    if (isNew !== 0 && isNew !== 1) throw new ValidateException("购物车类型无效");
 
     if (!Number.isSafeInteger(cartNum) || cartNum <= 0) {
       throw new ValidateException("购买数量必须是大于 0 的整数");
@@ -361,7 +367,9 @@ export class StoreCartService {
     assertLegacyActivityQuantity(cartNum);
 
     // 3. 合并或新建
-    const existing = await this.container.storeCartDao.findExisting(
+    // A direct purchase always owns a fresh row and the exact requested quantity.
+    // It must never merge with reusable carts or another checkout in progress.
+    const existing = isNew === 1 ? null : await this.container.storeCartDao.findExisting(
       uid,
       productId,
       unique,
@@ -413,8 +421,18 @@ export class StoreCartService {
    * 购物车列表 (对应 PHP StoreCart::getCartList)
    * 关联商品 + SKU 信息, 计算小计
    */
-  async list(uid: number): Promise<unknown[]> {
-    const carts = await this.container.storeCartDao.getUserCart(uid);
+  async list(uid: number, scope?: CartReadScope): Promise<unknown[]> {
+    if (scope?.mode === "buy" && (
+      !scope.ids.length || scope.ids.length > 100 ||
+      new Set(scope.ids).size !== scope.ids.length ||
+      scope.ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
+    )) throw new ValidateException("请选择有效的立即购买商品");
+    const carts = await this.container.storeCartDao.getUserCart(uid, scope
+      ? { isNew: scope.mode === "buy" ? 1 : 0, ids: scope.mode === "buy" ? scope.ids : undefined }
+      : undefined);
+    if (scope?.mode === "buy" && (
+      carts.length !== scope.ids.length || carts.some((cart) => cart.status !== 1 || cart.cartNum <= 0)
+    )) throw new ValidateException("立即购买商品已失效或不属于当前用户");
     if (carts.length === 0) return [];
 
     // 批量查商品和 SKU (避免 N+1)
@@ -430,7 +448,7 @@ export class StoreCartService {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
         | undefined;
-      if (!product || !product.isShow || product.isDel) {
+      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1)) {
         // 商品失效, 跳过但保留购物车项 (前端可提示)
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
@@ -440,6 +458,10 @@ export class StoreCartService {
         0,
         cart.productId,
       );
+      if (scope && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {
+        result.push({ ...cart, isValid: false, productInfo: null });
+        continue;
+      }
       let price = sku ? Number(sku.price) : Number(product.price);
       let integral = 0;
       let displayName = product.storeName;
@@ -624,6 +646,7 @@ export class StoreCartService {
         type: cart.type,
         activityId: cart.activityId,
         unique: cart.productAttrUnique,
+        isNew: cart.isNew,
         isValid: true,
         productInfo: {
           storeName: displayName,
@@ -639,6 +662,13 @@ export class StoreCartService {
         // 小计 = 单价 * 数量
         sumPrice: (price * cart.cartNum).toFixed(2),
       });
+    }
+    if (scope?.mode === "buy") {
+      if (result.some((item) => !item.isValid)) {
+        throw new ValidateException("立即购买商品或规格已失效，请重新选择");
+      }
+      const byId = new Map(result.map((item) => [item.id, item]));
+      return scope.ids.map((id) => byId.get(id)!);
     }
     return result;
   }
@@ -1258,11 +1288,12 @@ export class StoreCartService {
   }
 
   /** 购物车数量统计 (角标用) */
-  async count(uid: number): Promise<number> {
+  async count(uid: number, ordinaryOnly = false): Promise<number> {
     return this.container.storeCartDao.count({
       uid,
       isDel: 0,
       isPay: 0,
+      ...(ordinaryOnly ? { isNew: 0 } : {}),
     });
   }
 

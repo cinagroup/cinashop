@@ -11,6 +11,7 @@ export interface CartItem {
   cartNum: number;
   type: number;
   unique: string;
+  isNew: number;
   isValid: boolean;
   productInfo: {
     storeName: string;

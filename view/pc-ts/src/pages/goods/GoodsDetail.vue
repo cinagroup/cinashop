@@ -19,16 +19,16 @@
 
           <div class="price-box">
             <span class="price-label">价格</span>
-            <span class="price">¥{{ detail.price }}</span>
-            <span v-if="detail.ot_price && Number(detail.ot_price) > Number(detail.price)" class="ot-price">
-              ¥{{ detail.ot_price }}
+            <span class="price">¥{{ selectedSku?.price ?? detail.price }}</span>
+            <span v-if="displayOriginalPrice && Number(displayOriginalPrice) > Number(selectedSku?.price ?? detail.price)" class="ot-price">
+              ¥{{ displayOriginalPrice }}
             </span>
-            <span v-if="detail.is_vip" class="vip-tag">SVIP ¥{{ detail.vip_price }}</span>
+            <span v-if="detail.is_vip && displayVipPrice" class="vip-tag">SVIP ¥{{ displayVipPrice }}</span>
           </div>
 
           <div class="meta">
             <span>已售 {{ detail.fsales }}</span>
-            <span>库存 {{ detail.stock }}</span>
+            <span>库存 {{ selectedStock }}</span>
             <span>评分 {{ detail.star }}</span>
           </div>
 
@@ -49,16 +49,25 @@
             </button>
           </div>
 
+          <fieldset class="sku-picker" :disabled="purchaseSubmitting">
+            <legend>选择规格</legend>
+            <label v-for="sku in detail.skus" :key="sku.unique" class="sku-choice">
+              <input v-model="selectedUnique" type="radio" name="product-sku" :value="sku.unique" :disabled="sku.stock <= 0" />
+              {{ sku.suk }} · ¥{{ sku.price }}{{ sku.stock <= 0 ? '（无库存）' : '' }}
+            </label>
+            <p v-if="!detail.skus.length">暂无有效规格，暂不可购买</p>
+          </fieldset>
+
           <div class="qty-row">
             <span class="qty-label">数量</span>
-            <el-input-number v-model="qty" :min="1" :max="Math.max(detail.stock, 1)" />
+            <el-input-number :key="selectedUnique" v-model="qty" aria-label="购买数量" :disabled="purchaseSubmitting || !selectedSku" :min="1" :max="Math.max(selectedStock, 1)" />
           </div>
 
           <div class="actions">
             <el-button
               type="danger"
               size="large"
-              :disabled="detail.cart_button === 0"
+              :disabled="!canPurchase || purchaseSubmitting"
               @click="addToCart"
             >
               加入购物车
@@ -66,7 +75,7 @@
             <el-button
               type="primary"
               size="large"
-              :disabled="detail.cart_button === 0"
+              :disabled="!canPurchase || purchaseSubmitting"
               @click="buyNow"
             >
               立即购买
@@ -165,11 +174,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { apiGoodsDetail, apiReplyConfig, apiReplyList } from "@/api/product";
 import { apiCartAdd, apiDiscountCartAdd } from "@/api/cart";
+import { productCartInput } from "@/api/productPurchase";
 import { apiCollectAdd, apiCollectDel } from "@/api/user";
 import {
   apiDiscountPackages,
@@ -184,6 +194,15 @@ const router = useRouter();
 const detail = ref<GoodsDetail | null>(null);
 const loading = ref(true);
 const qty = ref(1);
+const selectedUnique = ref("");
+const purchaseSubmitting = ref(false);
+const selectedSku = computed(() => detail.value?.skus.find((sku) => sku.unique === selectedUnique.value));
+const selectedStock = computed(() => Math.min(selectedSku.value?.stock ?? 0, detail.value?.stock ?? 0, 32767));
+const displayOriginalPrice = computed(() => selectedSku.value?.ot_price ?? detail.value?.ot_price);
+const displayVipPrice = computed(() => selectedSku.value?.vip_price ?? detail.value?.vip_price);
+const canPurchase = computed(() => detail.value?.cart_button === 1 && !!selectedSku.value && selectedStock.value > 0
+  && Number.isSafeInteger(qty.value) && qty.value > 0 && qty.value <= selectedStock.value);
+watch(selectedUnique, () => { qty.value = Math.max(1, Math.min(qty.value, selectedStock.value)); });
 const collected = ref(false);
 const collectSubmitting = ref(false);
 const replies = ref<unknown[]>([]);
@@ -232,22 +251,35 @@ async function loadReplies(productId: number) {
   }
 }
 
+let loadGeneration = 0;
 async function load() {
+  const generation = ++loadGeneration;
   loading.value = true;
+  detail.value = null;
+  selectedUnique.value = "";
+  qty.value = 1;
   try {
     const id = Number(route.params.id);
     const [goods, packages] = await Promise.all([
       apiGoodsDetail(id),
       apiDiscountPackages(id).catch(() => []),
     ]);
+    if (generation !== loadGeneration) return;
     detail.value = goods;
+    const requested = route.query.sku;
+    selectedUnique.value = requested === undefined
+      ? goods.skus.find((sku) => sku.stock > 0)?.unique ?? ""
+      : goods.skus.find((sku) => sku.unique === requested && sku.stock > 0)?.unique ?? "";
+    const requestedQuantity = Number(route.query.qty ?? 1);
+    qty.value = Number.isSafeInteger(requestedQuantity) && requestedQuantity > 0
+      ? Math.max(1, Math.min(requestedQuantity, selectedStock.value)) : 1;
     discountPackages.value = packages;
     collected.value = detail.value.userCollect;
     loadReplies(id);
   } catch (e) {
-    console.error("商品详情加载失败", e);
+    if (generation === loadGeneration) ElMessage.error(e instanceof Error ? e.message : "商品详情加载失败");
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 
@@ -304,24 +336,33 @@ async function buyPackage() {
 }
 
 async function addToCart() {
-  if (!isLoggedIn()) return router.push({ path: "/login", query: { redirect: route.fullPath } });
-  if (!detail.value) return;
-  try {
-    await apiCartAdd({
-      productId: detail.value.id,
-      unique: `sku${String(detail.value.id).padStart(5, "0")}`,
-      cartNum: qty.value,
-    });
-    ElMessage.success("已加入购物车");
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加入失败");
-  }
+  await purchase(false);
 }
 
-function buyNow() {
-  if (!isLoggedIn()) return router.push({ path: "/login", query: { redirect: route.fullPath } });
-  ElMessage.info("立即购买接入中, 请先在购物车结算");
-  addToCart();
+async function buyNow() {
+  await purchase(true);
+}
+
+async function purchase(direct: boolean) {
+  if (!detail.value || purchaseSubmitting.value) return;
+  try {
+    const input = productCartInput(detail.value, selectedUnique.value, qty.value, direct);
+    if (!isLoggedIn()) {
+      const redirect = router.resolve({ path: route.path, query: { ...route.query, sku: input.unique, qty: String(input.cartNum) } }).fullPath;
+      await router.push({ path: "/login", query: { redirect } });
+      return;
+    }
+    purchaseSubmitting.value = true;
+    const result = await apiCartAdd(input);
+    if (direct) {
+      if (!Number.isSafeInteger(result.id) || result.id <= 0) throw new Error("立即购买返回标识无效，请重新选择");
+      await router.push({ path: "/checkout", query: { mode: "buy", cartIds: String(result.id) } });
+    } else ElMessage.success("已加入购物车");
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : "加入失败");
+  } finally {
+    purchaseSubmitting.value = false;
+  }
 }
 
 async function toggleCollect() {
@@ -341,7 +382,7 @@ async function toggleCollect() {
   }
 }
 
-onMounted(load);
+watch(() => route.params.id, load, { immediate: true });
 </script>
 
 <style scoped>
@@ -607,6 +648,10 @@ onMounted(load);
   font-size: 12px;
   color: #bbb;
 }
+
+.sku-picker { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
+.sku-picker legend { margin-bottom: 8px; color: #666; }
+.sku-choice { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; overflow-wrap: anywhere; }
 
 /* Keep long content and actions in normal flow, not clipped off-screen. */
 .price-box, .meta, .package-card, .actions, .reply-head, .reply-pics, .reply-meta {

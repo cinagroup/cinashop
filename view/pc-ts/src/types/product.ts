@@ -45,12 +45,23 @@ export interface GoodsItem {
 }
 
 /** PC view model, normalized by api/productDetail.ts (not the raw wire response). */
+export interface GoodsSku {
+  unique: string;
+  suk: string;
+  price: string;
+  ot_price: string;
+  vip_price: string;
+  stock: number;
+  image: string;
+}
+
 export interface GoodsDetail {
   id: number;
   store_name: string;
   store_info: string;
   image: string;
   slider_image: string[];
+  skus: GoodsSku[];
   price: string;
   ot_price: string;
   vip_price: string;

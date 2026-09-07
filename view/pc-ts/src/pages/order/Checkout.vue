@@ -1,6 +1,8 @@
 <template>
   <div class="checkout container">
     <h2 class="title">确认订单</h2>
+    <el-alert v-if="selectionError" :title="selectionError" type="error" :closable="false" show-icon />
+    <el-skeleton v-if="checkoutLoading" :rows="3" animated />
 
     <section class="section">
       <h3 class="section-title">配送方式</h3>
@@ -72,7 +74,7 @@
           <template #default="{ row }">
             <div class="product-cell">
               <img v-if="row.productInfo" :src="row.productInfo.image" class="thumb" />
-              <span>{{ row.productInfo?.storeName }}</span>
+              <span>{{ row.productInfo?.storeName }}<small class="checkout-sku">{{ row.productInfo?.suk }}</small></span>
             </div>
           </template>
         </el-table-column>
@@ -107,7 +109,7 @@
         <span class="total">
           应付: <span class="price">¥{{ checkoutTotal }}</span>
         </span>
-        <el-button type="primary" size="large" :loading="submitting" @click="submitOrder">
+        <el-button type="primary" size="large" :loading="submitting" :disabled="checkoutLoading || !!selectionError || !checkoutItems.length" @click="submitOrder">
           提交订单
         </el-button>
       </div>
@@ -132,10 +134,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useCartStore } from "@/stores/cart";
+import { apiDirectCartList } from "@/api/cart";
+import { parseCheckoutSelection, type CheckoutSelection } from "@/api/productPurchase";
 import {
   apiAddressList,
   apiAddressSave,
@@ -144,7 +148,7 @@ import {
   apiOrderSystemForm,
   apiPickupStores,
 } from "@/api/order";
-import type { FirstOrderQuote, PickupStore, UserAddress } from "@/types/order";
+import type { CartItem, FirstOrderQuote, PickupStore, UserAddress } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import SystemFormFields from "@/components/SystemFormFields.vue";
 
@@ -166,17 +170,14 @@ const customForm = ref<SystemFormComponent[]>([]);
 const systemFormName = ref("");
 const systemFormError = ref("");
 const firstOrderQuote = ref<FirstOrderQuote | null>(null);
-const directCartIds = computed(() => {
-  const raw = String(route.query.cartIds ?? route.query.cartId ?? "");
-  const ids = [...new Set(raw.split(",").map(Number).filter((id) => Number.isSafeInteger(id) && id > 0))];
-  return ids.length <= 100 ? ids : [];
-});
-const checkoutItems = computed(() => {
-  const ids = new Set(directCartIds.value);
-  return route.query.mode === "buy" && ids.size > 0
-    ? cartStore.items.filter((item) => ids.has(item.id))
-    : cartStore.checkedItems;
-});
+const selection = ref<CheckoutSelection | null>(null);
+const directItems = ref<CartItem[]>([]);
+const selectionError = ref("");
+const checkoutLoading = ref(true);
+const loadedRoute = ref("");
+const orderKey = ref("");
+const checkoutItems = computed(() => checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath
+  ? [] : selection.value?.mode === "buy" ? directItems.value : cartStore.checkedItems.filter((item) => item.isValid));
 const includesSecondCard = computed(() => checkoutItems.value.some(
   (item) => item.productInfo?.productType === 4,
 ));
@@ -278,6 +279,7 @@ async function saveAddress() {
 }
 
 async function submitOrder() {
+  if (submitting.value || checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath) return;
   const addr = addresses.value.find((a) => a.id === selectedAddrId.value);
   if (shippingType.value === 1 && !addr) return ElMessage.error("请选择收货地址");
   if (shippingType.value === 2 && !selectedStoreId.value) return ElMessage.error("请选择自提门店");
@@ -294,8 +296,7 @@ async function submitOrder() {
 
   submitting.value = true;
   try {
-    const key = `pc_${crypto.randomUUID().replaceAll("-", "")}`;
-    const result = await apiOrderCreate(key, {
+    const result = await apiOrderCreate(orderKey.value, {
       cartIds: items.map((i) => i.id),
       realName: shippingType.value === 1 ? addr?.real_name : pickupContact.value.realName.trim(),
       userPhone: shippingType.value === 1 ? addr?.phone : pickupContact.value.phone.trim(),
@@ -323,11 +324,40 @@ async function submitOrder() {
   }
 }
 
-onMounted(async () => {
-  await Promise.all([cartStore.fetchList(), loadAddresses(), loadPickupStores()]);
-  if (includesSecondCard.value) shippingType.value = 2;
-  await Promise.all([loadSystemForm(), loadFirstOrderQuote()]);
-});
+let checkoutGeneration = 0;
+async function loadCheckout() {
+  const generation = ++checkoutGeneration;
+  checkoutLoading.value = true;
+  selectionError.value = "";
+  directItems.value = [];
+  selection.value = null;
+  firstOrderQuote.value = null;
+  customForm.value = [];
+  orderKey.value = `pc_${crypto.randomUUID().replaceAll("-", "")}`;
+  try {
+    const requested = parseCheckoutSelection(route.query);
+    if (requested.mode === "buy") {
+      const rows = await apiDirectCartList(requested.ids);
+      if (generation !== checkoutGeneration) return;
+      if (!Array.isArray(rows) || rows.length !== requested.ids.length || new Set(rows.map((item) => item.id)).size !== rows.length
+        || rows.some((item) => !requested.ids.includes(item.id) || item.isNew !== 1 || !item.isValid || !item.productInfo)) {
+        throw new Error("立即购买商品不完整或已失效，请重新选择");
+      }
+      directItems.value = rows;
+    } else await cartStore.fetchList();
+    if (generation !== checkoutGeneration) return;
+    selection.value = requested;
+    loadedRoute.value = route.fullPath;
+    checkoutLoading.value = false;
+    if (includesSecondCard.value) shippingType.value = 2;
+    await Promise.all([loadAddresses(), loadPickupStores(), loadSystemForm(), loadFirstOrderQuote()]);
+  } catch (error) {
+    if (generation === checkoutGeneration) selectionError.value = error instanceof Error ? error.message : "结算商品加载失败";
+  } finally {
+    if (generation === checkoutGeneration) checkoutLoading.value = false;
+  }
+}
+watch(() => route.fullPath, loadCheckout, { immediate: true });
 </script>
 
 <style scoped>
@@ -444,6 +474,8 @@ onMounted(async () => {
   object-fit: cover;
   border-radius: 4px;
 }
+
+.checkout-sku { display: block; color: #777; margin-top: 4px; }
 
 .submit-section {
   display: flex;

@@ -28,7 +28,10 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
   }
 
   /** 取用户购物车 (未删除/未购买) */
-  async getUserCart(uid: number): Promise<(typeof storeCart.$inferSelect)[]> {
+  async getUserCart(
+    uid: number,
+    scope?: { isNew: 0 | 1; ids?: number[] },
+  ): Promise<(typeof storeCart.$inferSelect)[]> {
     return this.db
       .select()
       .from(storeCart)
@@ -37,6 +40,8 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
           eq(storeCart.uid, uid),
           eq(storeCart.isDel, 0),
           eq(storeCart.isPay, 0),
+          scope ? eq(storeCart.isNew, scope.isNew) : undefined,
+          scope?.ids ? inArray(storeCart.id, scope.ids) : undefined,
         ),
       )
       .orderBy(sql`${storeCart.addTime} DESC`);
@@ -69,6 +74,8 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
           eq(storeCart.productAttrUnique, unique),
           eq(storeCart.type, type),
           eq(storeCart.activityId, activityId),
+          eq(storeCart.isNew, 0),
+          eq(storeCart.status, 1),
           eq(storeCart.isDel, 0),
           eq(storeCart.isPay, 0),
         ),

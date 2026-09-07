@@ -133,13 +133,17 @@ export async function cartAdd(c: C) {
     if (!body.productId || (!unique && ![1, 2, 3].includes(activityType))) {
       return jsonFail(c, "参数错误");
     }
+    const rawIsNew: unknown = body.isNew ?? body.is_new ?? body.new ?? 0;
+    if (rawIsNew !== 0 && rawIsNew !== 1 && rawIsNew !== "0" && rawIsNew !== "1") {
+      return jsonFail(c, "购物车类型无效");
+    }
     const result = await svc.add({
       uid,
       productId: Number(body.productId),
       unique,
       cartNum: Number(body.cartNum ?? 1),
       type: activityType,
-      isNew: body.isNew ?? body.is_new ?? body.new ?? 0,
+      isNew: Number(rawIsNew),
       activityId: Number(body.activityId ?? body.activity_id ?? legacyActivity?.id ?? 0),
     });
     return jsonOk(c, { ...result, cartId: result.id }, "加入购物车成功");
@@ -154,8 +158,19 @@ export async function cartList(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new StoreCartService(c.get("container"));
-  const list = await svc.list(uid);
-  return jsonOk(c, list);
+  try {
+    const scope = c.req.query("scope");
+    const rawIds = c.req.query("ids");
+    if (scope === undefined && rawIds === undefined) return jsonOk(c, await svc.list(uid));
+    if (scope === "cart" && rawIds === undefined) return jsonOk(c, await svc.list(uid, { mode: "cart" }));
+    if (scope !== "buy" || !rawIds || rawIds.length > 1600 || !/^[1-9]\d*(?:,[1-9]\d*)*$/.test(rawIds)) {
+      return jsonFail(c, "购物车读取范围无效");
+    }
+    return jsonOk(c, await svc.list(uid, { mode: "buy", ids: rawIds.split(",").map(Number) }));
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
 }
 
 /** POST /api/cart/num */
@@ -251,7 +266,9 @@ export async function cartCount(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonOk(c, { count: 0 });
   const svc = new StoreCartService(c.get("container"));
-  const count = await svc.count(uid);
+  const scope = c.req.query("scope");
+  if (scope !== undefined && scope !== "cart") return jsonFail(c, "购物车读取范围无效");
+  const count = await svc.count(uid, scope === "cart");
   return jsonOk(c, { count });
 }
 

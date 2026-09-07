@@ -6,7 +6,12 @@ import type { CartItem } from "@/types/order";
 
 /** 购物车列表 (GET /api/cart/list) */
 export function apiCartList(): Promise<CartItem[]> {
-  return getData(request.get<CartItem[]>("/cart/list"));
+  return getData(request.get<CartItem[]>("/cart/list", { params: { scope: "cart" } }));
+}
+
+/** Exact owner-scoped direct purchase rows; never load the ordinary cart here. */
+export function apiDirectCartList(ids: number[]): Promise<CartItem[]> {
+  return getData(request.get<CartItem[]>("/cart/list", { params: { scope: "buy", ids: ids.join(",") } }));
 }
 
 /** 加入购物车 (POST /api/cart/add) */
@@ -16,6 +21,7 @@ export function apiCartAdd(params: {
   cartNum: number;
   type?: number;
   activityId?: number;
+  new?: 0 | 1;
 }): Promise<{ id: number; cartNum: number }> {
   return getData(request.post<{ id: number; cartNum: number }>("/cart/add", params));
 }
@@ -40,5 +46,5 @@ export function apiCartDel(ids: number[]): Promise<null> {
 
 /** 购物车数量 (GET /api/cart/count) */
 export function apiCartCount(): Promise<{ count: number }> {
-  return getData(request.get<{ count: number }>("/cart/count"));
+  return getData(request.get<{ count: number }>("/cart/count", { params: { scope: "cart" } }));
 }
