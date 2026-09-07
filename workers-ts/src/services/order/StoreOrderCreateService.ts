@@ -96,6 +96,7 @@ import {
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
+import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
 
 /** 下单入参 */
@@ -911,6 +912,11 @@ export class StoreOrderCreateService {
     if (type === 1 && (!Number.isSafeInteger(params.seckillId) || (params.seckillId ?? 0) <= 0)) {
       throw new ValidateException("缺少秒杀活动信息");
     }
+    if (type === 1) {
+      const schedule = await loadSeckillSchedule(c.db, params.seckillId!);
+      assertSeckillSchedule(schedule);
+      if (schedule.child.productId !== carts[0]?.productId) throw new ValidateException("秒杀商品不匹配");
+    }
     if (type === 2 && (!Number.isSafeInteger(params.bargainUserId) || (params.bargainUserId ?? 0) <= 0)) {
       throw new ValidateException("缺少砍价记录");
     }
@@ -1046,9 +1052,7 @@ export class StoreOrderCreateService {
           .where(eq(storeSeckill.id, params.seckillId))
           .limit(1);
         if (
-          !seckill[0] || seckill[0].status !== 1 || seckill[0].isShow !== 1 || seckill[0].isDel !== 0 ||
-          (seckill[0].startTime !== null && seckill[0].startTime.getTime() > Date.now()) ||
-          (seckill[0].stopTime !== null && seckill[0].stopTime.getTime() < Date.now())
+          !seckill[0] || seckill[0].status !== 1 || seckill[0].isShow !== 1 || seckill[0].isDel !== 0
         ) throw new ValidateException("秒杀活动不存在或已结束");
         if (seckill[0].productId !== product.id) throw new ValidateException("秒杀商品不匹配");
         if (cart.activityId !== seckill[0].id) throw new ValidateException("秒杀购物车与活动不匹配");
@@ -1671,6 +1675,13 @@ export class StoreOrderCreateService {
       if (concurrentExistingRows[0]) assertExistingScope(concurrentExistingRows[0]);
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
 
+      // Lock parent -> child -> sorted slots before the other business locks. Time is rechecked
+      // at inventory admission; the initial preview cannot authorize a later expired purchase.
+      const seckillSchedule = type === 1 ? await loadSeckillSchedule(tx, params.seckillId!, true) : null;
+      if (seckillSchedule) {
+        assertSeckillSchedule(seckillSchedule);
+        if (seckillSchedule.child.productId !== orderItems[0]?.product.id) throw new ValidateException("秒杀商品已变化");
+      }
       const now = Math.floor(Date.now() / 1000);
       if (user && (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && type === 0))) {
         // 不同幂等键也必须按用户串行化首单资格。资格、订单和消费标记同事务提交，
@@ -1977,6 +1988,8 @@ export class StoreOrderCreateService {
         }
       }
       if (type === 1 && params.seckillId) {
+        if (!seckillSchedule) throw new ValidateException("缺少秒杀排期");
+        const window = assertSeckillSchedule(seckillSchedule);
         // 秒杀: 扣活动 quota (守卫)
         const sk = await tx
           .update(storeSeckill)
@@ -1991,8 +2004,9 @@ export class StoreOrderCreateService {
               eq(storeSeckill.status, 1),
               eq(storeSeckill.isShow, 1),
               eq(storeSeckill.isDel, 0),
-              sql`(${storeSeckill.startTime} IS NULL OR ${storeSeckill.startTime} <= NOW())`,
-              sql`(${storeSeckill.stopTime} IS NULL OR ${storeSeckill.stopTime} >= NOW())`,
+              // NOW() is transaction-start time, not wall-clock time after lock waits.
+              sql`clock_timestamp() >= ${new Date(window.startsAt!).toISOString()}::timestamptz`,
+              sql`clock_timestamp() < ${new Date(window.endsAt!).toISOString()}::timestamptz`,
               sql`quota >= ${totalNum}`,
               sql`stock >= ${totalNum}`,
             ),

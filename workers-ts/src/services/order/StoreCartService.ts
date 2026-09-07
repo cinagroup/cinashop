@@ -5,6 +5,7 @@
  */
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
+import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
@@ -229,12 +230,13 @@ export class StoreCartService {
           .where(eq(storeSeckill.id, activityId)).limit(1);
         const activity = rows[0];
         if (!activity) throw new ValidateException("秒杀活动不存在");
+        const schedule = await loadSeckillSchedule(this.container.db, activityId);
+        assertSeckillSchedule(schedule);
+        if (schedule.child.productId !== productId) throw new ValidateException("活动商品与基础商品不匹配");
         activityProductId = activity.productId;
         activityStatus = activity.status;
         activityIsDel = activity.isDel;
         activityIsShow = activity.isShow;
-        activityStart = activity.startTime;
-        activityStop = activity.stopTime;
         legacyActivityOnceNum = activity.onceNum;
         legacyActivityTotalNum = activity.num;
         legacyActivityStock = activity.stock;
@@ -480,15 +482,16 @@ export class StoreCartService {
           let activityStock = 0;
           let activityQuota = 0;
           if (cart.type === 1) {
+            const schedule = await loadSeckillSchedule(this.container.db, cart.activityId);
+            assertSeckillSchedule(schedule);
+            if (schedule.child.productId !== product.id) throw new ValidateException("秒杀商品不匹配");
             const rows = await this.container.db.select().from(storeSeckill)
               .where(eq(storeSeckill.id, cart.activityId)).limit(1);
             const activity = rows[0];
             if (
               !activity || activity.productId !== product.id || activity.status !== 1 ||
               activity.isShow !== 1 || activity.isDel !== 0 ||
-              activity.onceNum <= 0 || activity.num <= 0 ||
-              (activity.startTime !== null && activity.startTime.getTime() > now) ||
-              (activity.stopTime !== null && activity.stopTime.getTime() < now)
+              activity.onceNum <= 0 || activity.num <= 0
             ) throw new ValidateException("秒杀活动已失效");
             price = Number(pair.activitySku.price);
             displayName = activity.storeName || product.storeName;

@@ -17,6 +17,7 @@ import {
   storeProductAttrValue,
   storeProductCoupon,
   storeSeckill,
+  storeSeckillTime,
   systemStore,
   systemUserLevel,
   user,
@@ -50,6 +51,7 @@ const CLONED_TABLES = [
   "store_product",
   "store_product_attr_value",
   "store_seckill",
+  "store_seckill_time",
   "store_bargain",
   "store_bargain_user",
   "store_combination",
@@ -701,8 +703,11 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       title: "paid order reward",
     }]);
 
+    // Explicit standalone full-day schedule, owned by this isolated fixture.
+    await tx.insert(storeSeckillTime).values({ id: ids.seckill.activityId, status: 1, startTime: "0000", endTime: "2400" });
     await tx.insert(storeSeckill).values({
       id: ids.seckill.activityId,
+      timeId: String(ids.seckill.activityId),
       productId: ids.seckill.productId,
       storeName: "create-order seckill",
       price: "6.00",

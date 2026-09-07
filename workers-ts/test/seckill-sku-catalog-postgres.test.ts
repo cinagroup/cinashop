@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { financePostgres } from "./helpers/financePostgres";
 import { createContainerFromDb } from "../src/lib/di";
-import { storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user } from "../src/models/schema";
+import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user } from "../src/models/schema";
 import { SeckillSkuCatalogService } from "../src/services/activity/SeckillSkuCatalogService";
 import { resolveLegacyActivitySkuPair } from "../src/services/activity/ActivityOrderSkuService";
 import { StoreCartService } from "../src/services/order/StoreCartService";
@@ -17,7 +17,7 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
   let service: SeckillSkuCatalogService;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   beforeAll(async () => {
-    f = await financePostgres([storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user]);
+    f = await financePostgres([storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, storeCart, storeOrder, user]);
     container = createContainerFromDb(f.db);
     service = new SeckillSkuCatalogService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -32,6 +32,9 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
     await f.reset();
     await f.db.insert(user).values({ uid: 11, account: "seckill-fixture", status: 1, isMoneyLevel: 0 });
     await f.db.insert(storeProduct).values({ id: 70, storeName: "基础商品", stock: 12, price: "90.00", isShow: 1, isVerify: 1, image: "/base.svg" });
+    const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
+    await f.db.insert(storeActivity).values({ id: 900, type: 1, status: 1, startDay: today - 86_400, endDay: today + 86_400, timeId: "4,8" });
+    await f.db.insert(storeSeckillTime).values({ id: 4, startTime: "0000", endTime: "2400", status: 1 });
     await f.db.insert(storeSeckill).values({ id: 20, activityId: 900, productId: 70, storeName: "秒杀<script>文字</script>",
       price: "8.00", cost: "1.00", stock: 10, quota: 9, quotaShow: 10, onceNum: 3, num: 6, image: "/seckill.svg", timeId: "4,8" });
     await f.db.insert(storeProductAttrValue).values([
@@ -46,7 +49,7 @@ describe("read-only seckill SKU selection catalogue on disposable SQL", () => {
     activities: await f.db.select().from(storeSeckill), carts: await f.db.select().from(storeCart),
     orders: await f.db.select().from(storeOrder), users: await f.db.select().from(user) });
 
-  it("returns only matching activity SKUs with decimal catalogue prices and a five-stock minimum, in three queries without writes", async () => {
+  it("returns only matching activity SKUs with decimal catalogue prices and a six-stock minimum, in three queries without writes", async () => {
     const before = await snapshot(), spy = vi.spyOn(f.db, "select");
     let result: Awaited<ReturnType<typeof read>>;
     try { result = await read(); expect(spy).toHaveBeenCalledTimes(3); } finally { spy.mockRestore(); }
