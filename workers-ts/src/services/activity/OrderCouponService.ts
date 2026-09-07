@@ -17,7 +17,7 @@ export interface OrderCouponQuery { limit: number; before: number; unpaged: bool
 export type OrderCouponPage = Awaited<ReturnType<typeof eligibleOrderCoupons>>;
 
 /** One batch of scope metadata, reused by every coupon. No per-coupon pricing or global request state. */
-async function prepareScope(container: Container, orderItems: readonly PricedCouponItem[], issues: readonly Issue[]) {
+export async function prepareCouponScope(container: Container, orderItems: readonly PricedCouponItem[], issues: readonly Issue[]) {
   const productIssueIds = [...new Set(issues.filter((issue) => issue.couponType === 2).map((issue) => issue.id))];
   const categoryIds = issues.some((issue) => issue.couponType === 1)
     ? [...new Set(orderItems.flatMap(({ product }) => parseCouponScopeIds(product.cateId)))] : [];
@@ -52,7 +52,7 @@ async function prepareScope(container: Container, orderItems: readonly PricedCou
   return { related, items };
 }
 
-function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<ReturnType<typeof prepareScope>>, now: number) {
+function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<ReturnType<typeof prepareCouponScope>>, now: number) {
   if (!issue) throw new ValidateException("优惠券模板不存在，无法校验适用范围");
   if (coupon.status !== 0 || coupon.isFail !== 0) throw new ValidateException("优惠券已使用或已失效");
   if (coupon.startTime && coupon.startTime.getTime() > now) throw new ValidateException("优惠券尚未到可用时间");
@@ -77,7 +77,7 @@ export async function resolveOrderCoupon(container: Container, uid: number, coup
     .where(and(eq(storeCouponUser.id, couponId), eq(storeCouponUser.uid, uid))).limit(1);
   const row = rows[0];
   if (!row) throw new ValidateException("优惠券不存在");
-  const scope = await prepareScope(container, items, row.issue ? [row.issue] : []);
+  const scope = await prepareCouponScope(container, items, row.issue ? [row.issue] : []);
   return { priceCents: evaluateCoupon(row.coupon, row.issue, scope, Date.now()).priceCents, row: row.coupon };
 }
 
@@ -96,7 +96,7 @@ export async function eligibleOrderCoupons(container: Container, uid: number, it
     .where(and(...where)).orderBy(desc(storeCouponUser.id)).limit(query.limit + 1);
   if (query.unpaged && rows.length > query.limit) throw new ValidateException("优惠券数量超过单次上限，请使用limit/before分页");
   const candidates = rows.slice(0, query.limit);
-  const scope = await prepareScope(container, items, candidates.flatMap(({ issue }) => issue ? [issue] : []));
+  const scope = await prepareCouponScope(container, items, candidates.flatMap(({ issue }) => issue ? [issue] : []));
   const list = candidates.flatMap(({ coupon, issue }) => {
     try {
       const value = evaluateCoupon(coupon, issue, scope, now.getTime());

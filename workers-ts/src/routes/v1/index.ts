@@ -18,6 +18,7 @@ import * as PayController from "@/controllers/api/v1/PayController";
 import * as PaymentCallbackController from "@/controllers/api/v1/PaymentCallbackController";
 import * as UserActivityController from "@/controllers/api/v1/UserActivityController";
 import * as OrderCouponController from "@/controllers/api/v1/OrderCouponController";
+import { couponScopeProducts } from "@/controllers/api/v1/CouponScopeProductsController";
 import * as UserFinanceController from "@/controllers/api/v1/UserFinanceController";
 import * as UserFinanceReadController from "@/controllers/api/v1/UserFinanceReadController";
 import * as UserLevelController from "@/controllers/api/v1/UserLevelController";
@@ -760,6 +761,7 @@ v1Routes.get("/invoice/get_default/:type", authMiddleware({ force: true }), User
 v1Routes.get("/coupons", authMiddleware({ force: false }), UserActivityController.couponList);
 v1Routes.post("/coupon/receive", authMiddleware({ force: true }), UserActivityController.couponReceive);
 v1Routes.get("/coupons/user/num", authMiddleware({ force: true }), UserActivityController.myCouponCounts);
+v1Routes.get("/coupons/user/:id/products", authMiddleware({ force: true }), couponScopeProducts);
 v1Routes.get("/coupons/user/:types", authMiddleware({ force: true }), UserActivityController.myCoupons);
 v1Routes.get("/coupons/order/:price", stationOpenMiddleware(), authMiddleware({ force: true }), OrderCouponController.orderCoupons);
 

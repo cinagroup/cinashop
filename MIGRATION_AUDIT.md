@@ -6003,6 +6003,30 @@ type/issue_type接受空或-1/0/1/2/3，两者冲突拒绝；0..3过滤目标cou
 
 Workers技能要求已完整阅读修改的生产服务/控制器/路由，获取[官方最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)、最新5.20260907.1类型到Temp并核对Hyperdrive/config schema；沿用仓库绑定，不升级依赖或平台配置。PostgreSQL技能采用有界游标与服务端聚合，未根据小样本新增索引或声称生产性能提升。本轮没有DDL、生产连接/provider请求或部署；上述代码仍待自身精确SHA Linux。
 
+### FE-003L-S1：持有券范围商品合同（2026-09-07，本地候选，未接页面）
+
+本轮开始确认工作树干净、HEAD及origin/main为6bf16cfad93aba8310d3ddec2f941632454de87c，继续观察既有34099746241而非重启CI。最近查询9个作业成功、第一单元分片仍运行，尚未借给新代码使用；新S1有自己的后续Linux门禁。
+
+范围审计证据：PHP view/uniapp/pages/users/user_coupon/index.vue:179起按category_type选择cid/sid、product_id单个直达/多个productId列表、brand_id转brandId导航；源文件SHA-256为A991DE0FC405E79F4655BA2609E47595CC8C41D7D3D37B3501B14AE3A433CDF1。当前UniApp goods/list.vue只从入口读取keyword/cid，未消费productId/brandId/sid；钱包仅通用浏览。更关键的是当前结算还按product.pid、分类pid/path、品牌pid/fid及商品关系表一致性判定。直接恢复源URL或取第一ID不能证明集合准确，故把“权威集合读取”和“真实页面闭环”拆成S1/S2继续跟踪，不将源码存在算作迁移完成。
+
+S1新增强制认证GET /api/coupons/user/:id/products，券ID必须属于当前身份；仅接受当前available券，其他用户/缺券、过期/已用/占用/未来/失效、缺模板和非法类型均拒绝，不回退全商品。每次读取重新校验券和当前会员可见性；在is_show=1/is_del=0/is_verify=1目录范围内，普通用户排除SVIP专属，售罄品仍可浏览，与现有目录可见性一致。身份认证生产middleware仅检查实际注册，HTTP测试使用隔离夹具注入UID，不能冒充真实JWT/生产角色E2E。
+
+将原OrderCouponService的prepareScope仅重命名并导出为prepareCouponScope，报价/建单/筛券调用仍执行原逻辑。新读取复用该有界批量元数据及calculateCouponEligibleSubtotalCents，以单位占位值1只判集合、不计算优惠；productId/legacyProductIds按既有解析合并且与store_coupon_product存在时必须严格一致，冲突即使候选为空也拒绝。品类使用直接ID及pid/path，品牌使用直接ID及pid/fid，父商品按原pid规则；空范围不变成通用券。未添加第二套正则SQL范围解析，避免与结算分歧。
+
+分页合同：limit默认20、最大100，before正安全整数或0，不接受page；按公开目录ID倒序扫描limit+1，最多返回limit个匹配，next_cursor取最后扫描候选。可能出现list=[]而next_cursor非空，S2必须继续/重试该游标，不能把空页显示为全局无商品。该设计有界但稀疏范围可能需要多次读取；尚无生产数据量的查询计划或体验证据，不宣称高效搜索/性能问题已关闭。关系表最多20,001探测并沿用20,000上限，品类范围沿用10,000上限。
+
+响应仅含持有券ID/标题/范围类型、scope_only=true、商品id/store_name/image/catalog_price及next_cursor。catalog_price是目录原价，不是会员报价、折后价、库存承诺或满足门槛的证明。测试明确同一商品能出现在范围列表，但实际结算仍因未满20元拒券；本合同不建购物车、不领取/核销、不报价或支付。券、目录和元数据分步只读，并非原子快照或预留，后续结算仍权威校验。
+
+8项新增真实控制器/隔离PGlite测试：五组父商品/分类/品牌/JSON/CSV逐商品与实际resolveOrderCoupon比较；encoded-only/relation-only/冲突/空/缺失/非法模板；公开目录及会员可见性；空页游标/尾页；其他owner/匿名/URL伪造集合、五种不可用状态及续页撤销；严格参数/投影/私有缓存；门槛非承诺；读前后商品/SKU/购物车/用户/订单/账单、券/关系行与KV写记录不变（样本准备与显式状态变更除外）。扩大至11文件106项通过11.49秒、零跳过。首轮类型检查发现测试品牌fid误用number，已按真实varchar模型改为string，不通过cast掩盖；修正后双TypeScript通过。
+
+Workers技能本轮重新获取官方最佳实践及npm官方最新类型版本5.20260907.1，与上一轮Temp实际类型一致，核对Hyperdrive.connectionString和本地Wrangler schema；首次受限npm镜像读取EACCES后通过已授权官方只读查询确认，不升级依赖。Postgres技能约束有界游标与批量元数据；前端测试技能用于识别导航闭环需要的证据，本轮没有修改页面或开展新的渲染验收，上一批截图不能证明S2。
+
+路由重新执行得到PHP1904、TS1649、匹配881、可执行863、明确不可用18、缺失1023、退役17、可执行缺口1006；api457/865/440/437/3/17/2/15。本新增安全合同没有PHP同名路由，因此PHP覆盖分子不变。S1待自身精确SHA Linux，S2接线、具体名称/层级解释、排序/范围搜索体验、PC对应UI、真机、活动/上传/跨标签/真实角色/provider及发布仍开放。清单新增两个未完成子项，204勾选/147开放/351项；未访问生产、无DDL、未部署，历史数据复制仍N/A。
+
+### 6bf16cf数量/筛选/规则增量精确Linux验收（2026-09-07）
+
+本轮结束前[Actions34099746241](https://github.com/cinagroup/cinashop/actions/runs/34099746241)最终11/11成功，覆盖精确SHA 6bf16cfad93aba8310d3ddec2f941632454de87c；上节中途运行状态作为历史保留。Worker两片各136文件、955/879项，合计272文件1,834项、0跳过；共同inventorySha256=`e4054b26e901c2c0c063ad39be175db615a0504e3de0280450dbce1b2e3a3454`，executedFileSha256分别为`a97b5af74f981e4564a0c9f88f3a4586793f3f868f4191fb215dd6e10b5d653e`、`c5c803abb330bb43bc691b006b383b57112e541b836e64ee061e1b864557ced2`。两片nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true，测试610.73/508.04秒；新增钱包筛选4项在第一片506ms通过。五端、workerd、隔离PG16目录、密钥扫描和最终汇总均成功。只验收上一SHA，不关闭本轮S1、S2、TEST-005或生产发布门禁。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
