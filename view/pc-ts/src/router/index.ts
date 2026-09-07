@@ -35,6 +35,7 @@ const routes: RouteRecordRaw[] = [
       { path: "user/address", name: "user-address", component: () => import("@/pages/user/AddressList.vue") },
       { path: "user/collect", name: "user-collect", component: () => import("@/pages/user/CollectList.vue") },
       { path: "user/coupon", name: "user-coupon", component: () => import("@/pages/user/CouponList.vue") },
+      { path: "user/coupon/:id/products", name: "coupon-products", component: () => import("@/pages/user/CouponProducts.vue"), meta: { title: "券范围商品" } },
       { path: "user/balance", name: "user-balance", component: () => import("@/pages/user/BalanceList.vue") },
       { path: "user/spread", name: "user-spread", component: () => import("@/pages/user/SpreadCenter.vue") },
       { path: "user/invoice", name: "user-invoice", component: () => import("@/pages/user/InvoiceList.vue") },

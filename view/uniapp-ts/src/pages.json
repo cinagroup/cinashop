@@ -38,6 +38,10 @@
       }
     },
     {
+      "path": "pages/user/couponProducts",
+      "style": { "navigationBarTitleText": "券范围商品" }
+    },
+    {
       "path": "pages/goods/list",
       "style": {
         "navigationBarTitleText": "商品列表"

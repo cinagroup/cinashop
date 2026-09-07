@@ -6,6 +6,7 @@ import { storeBrand, storeProductCategory, storeProduct, storeCouponIssue, store
 import { couponScopeProducts } from "../src/controllers/api/v1/CouponScopeProductsController";
 import { couponScopeProductsQuery, CouponScopeProductsService } from "../src/services/activity/CouponScopeProductsService";
 import { resolveOrderCoupon } from "../src/services/activity/OrderCouponService";
+import { CouponProductsSession, emptyCouponProducts, normalizeCouponProducts } from "../../view/common/couponProducts";
 
 describe("owned coupon scope browsing uses checkout membership and disposable SQL", () => {
   let f: Awaited<ReturnType<typeof createPcCouponFixture>>;
@@ -101,5 +102,18 @@ describe("owned coupon scope browsing uses checkout membership and disposable SQ
     expect(await f.db.select().from(storeCouponProduct)).toEqual(links); expect(f.writes).toEqual([]);
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
     expect(routes).toContain('v1Routes.get("/coupons/user/:id/products", authMiddleware({ force: true }), couponScopeProducts)');
+  });
+  it("feeds the shared frontend adapter and session through real controller pages, including an empty scanned page", async () => {
+    let state = emptyCouponProducts(); const cursors: Array<number | undefined> = [];
+    const session = new CouponProductsSession(async (id, before) => {
+      cursors.push(before);
+      const result = await request(String(id), "11", `?limit=2${before === undefined ? "" : `&before=${before}`}`);
+      expect(result.body.status).toBe(200);
+      return normalizeCouponProducts(result.body.data, id, before);
+    }, next => { state = next; });
+    await session.load(110); expect(state).toMatchObject({ loaded: true, list: [], nextCursor: 72, error: "" });
+    await session.load(110, true); expect(state.list.map(p => p.id)).toEqual([71, 70]); expect(state.nextCursor).toBeNull();
+    expect(state.list[0]).toMatchObject({ title: "范围样本71", catalogPrice: "10.00" }); expect(cursors).toEqual([undefined, 72]);
+    await session.load(110, true); expect(cursors).toHaveLength(2); session.reset(); expect(state).toEqual(emptyCouponProducts());
   });
 });

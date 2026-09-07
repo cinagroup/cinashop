@@ -71,7 +71,7 @@ test('future, used, expired and reserved coupons cannot trigger browsing from ei
 });
 test('available coupon browsing does not redeem, pay or forward an assumed coupon entitlement', async () => {
   const r = walletRuntime({ send: () => ({ data: [coupon] }) }); await r.start(); r.checkout.openDetail(42); r.checkout.browseGoods(42);
-  assert.equal(r.checkout.detail.value, null); assert.deepEqual(r.navigations, ['/pages/goods/list']); assert.equal(r.calls.length, 1); r.stop();
+  assert.equal(r.checkout.detail.value, null); assert.deepEqual(r.navigations, ['/pages/user/couponProducts?couponId=42']); assert.equal(r.calls.length, 1); r.stop();
 });
 test('initial failure differs from empty state and refresh never leaves a stale modal or prior list', async () => {
   let fail = false; const r = walletRuntime({ send: () => fail ? { status: 400, msg: 'unavailable' } : { data: [coupon] } });

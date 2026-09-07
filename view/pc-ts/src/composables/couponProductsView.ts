@@ -1,0 +1,39 @@
+import { computed, ref, shallowRef } from "vue";
+import { getUid, isLoggedIn, onAuthChange } from "@/utils/auth";
+import { apiCouponProducts } from "@/api/couponProducts";
+import { couponProductId, couponScopeLabels, CouponProductsSession, emptyCouponProducts } from "../../../common/couponProducts";
+
+export function createCouponProductsView(navigate: (path: string) => void) {
+  const couponId = ref(0), guardError = ref("");
+  const state = shallowRef(emptyCouponProducts());
+  let disposed = false;
+  const session = new CouponProductsSession(apiCouponProducts, next => { state.value = next; });
+  const error = computed(() => guardError.value || state.value.error);
+  const blocked = computed(() => disposed || !couponId.value || !!error.value || state.value.loading);
+  const scopeLabel = computed(() => couponScopeLabels[state.value.scopeType]);
+  const unbind = onAuthChange(() => { session.reset(); guardError.value = "登录状态已变化，请刷新后重新加载"; });
+  async function load(append = false) {
+    if (disposed || !couponId.value) return;
+    if (!isLoggedIn() || getUid() <= 0) { session.reset(); guardError.value = "请先登录后查看券范围商品"; return; }
+    if (!append) guardError.value = "";
+    if (guardError.value) return;
+    await session.load(couponId.value, append);
+  }
+  async function setCouponId(value: unknown) {
+    session.reset(); couponId.value = 0;
+    try { couponId.value = couponProductId(value); guardError.value = ""; }
+    catch { guardError.value = "优惠券标识无效，请返回钱包重新进入"; return; }
+    await load();
+  }
+  function openProduct(id: number) {
+    if (!disposed && !blocked.value && isLoggedIn() && getUid() > 0 && state.value.list.some(row => row.id === id)) navigate(`/goods/${id}`);
+  }
+  function dispose() { disposed = true; unbind(); session.reset(); }
+  async function setRoute(name: unknown, value: unknown) {
+    // Vue Router updates the old component's reactive params before it unmounts.
+    // A goods/:id destination must never be interpreted as a different coupon ID.
+    if (name !== "coupon-products") { dispose(); return; }
+    await setCouponId(value);
+  }
+  return { state, error, blocked, scopeLabel, load, setCouponId, setRoute, openProduct, dispose };
+}

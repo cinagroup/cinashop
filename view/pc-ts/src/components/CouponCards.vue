@@ -5,6 +5,7 @@
       <div class="coupon-detail">
         <strong>{{ coupon.title }}</strong><span>{{ coupon.scope }}</span><small>{{ coupon.validity }}</small><small>{{ coupon.message }}</small>
         <small v-if="coupon.estimatedDiscount !== undefined">当前适用商品 ¥{{ coupon.eligibleSubtotal }} · 预计抵扣 ¥{{ coupon.estimatedDiscount }}</small>
+        <button v-if="browsable && coupon.availability === 'available'" type="button" :disabled="disabled" @click="$emit('browse', coupon.id)">浏览券范围商品</button>
         <button v-if="selectable" type="button" :aria-pressed="selectedId === coupon.id" :disabled="disabled || coupon.availability !== 'available'" @click="$emit('select', coupon.id)">
           {{ selectedId === coupon.id ? '已选择' : '选择' }}：{{ coupon.title }}
         </button>
@@ -14,8 +15,8 @@
 </template>
 <script setup lang="ts">
 import type { OwnedCoupon } from "@/api/couponWallet";
-defineProps<{ coupons: OwnedCoupon[]; selectable?: boolean; selectedId?: number; disabled?: boolean }>();
-defineEmits<{ select: [id: number] }>();
+defineProps<{ coupons: OwnedCoupon[]; selectable?: boolean; browsable?: boolean; selectedId?: number; disabled?: boolean }>();
+defineEmits<{ select: [id: number]; browse: [id: number] }>();
 </script>
 <style scoped>
 .coupon-grid { list-style: none; padding: 0; margin: 12px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

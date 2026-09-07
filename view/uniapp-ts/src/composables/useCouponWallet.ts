@@ -36,7 +36,7 @@ export function useCouponWallet() {
     if (blocked.value || state.value.loading || !state.value.list.some(c => c.id === id && c.availability === "available")) return;
     detailId.value = null;
     // Browsing is not automatic coupon application; checkout establishes actual eligibility.
-    uni.navigateTo({ url: "/pages/goods/list" });
+    uni.navigateTo({ url: `/pages/user/couponProducts?couponId=${id}` });
   }
   function suspend() { visible.value = false; detailId.value = null; wallet.reset(); }
   watch(() => auth.sessionVersion, () => { wallet.reset(); detailId.value = null; authError.value = "登录状态已变化，请重新加载优惠券"; }, { flush: "sync" });

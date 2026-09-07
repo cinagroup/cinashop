@@ -25,7 +25,7 @@
           <view class="status">{{ coupon.message }}</view>
           <view class="actions">
             <button size="mini" :disabled="blocked || state.loading" @tap="openDetail(coupon.id)">查看详情</button>
-            <button v-if="coupon.availability === 'available'" size="mini" :disabled="blocked || state.loading" @tap="browseGoods(coupon.id)">浏览商品</button>
+            <button v-if="coupon.availability === 'available'" size="mini" :disabled="blocked || state.loading" @tap="browseGoods(coupon.id)">浏览券范围商品</button>
           </view>
         </view>
       </view>
@@ -43,7 +43,7 @@
         <view class="detail-row rule">用券规则：{{ detail.rule || '商家未配置具体规则' }}</view>
         <view v-if="detail.ruleTruncated" class="error">规则过长，仅展示部分内容，请联系商家确认完整规则。</view>
         <view class="notice">是否可用于具体商品、可抵扣金额及叠加规则，以结算页服务端报价为准。浏览商品不会自动使用此券。</view>
-        <button v-if="detail.availability === 'available'" :disabled="blocked || state.loading" @tap="browseGoods(detail.id)">浏览商品</button>
+        <button v-if="detail.availability === 'available'" :disabled="blocked || state.loading" @tap="browseGoods(detail.id)">浏览券范围商品</button>
         <button @tap="detailId = null">关闭详情</button>
       </view>
     </view>

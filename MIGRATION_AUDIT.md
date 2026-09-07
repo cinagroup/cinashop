@@ -6027,6 +6027,28 @@ Workers技能本轮重新获取官方最佳实践及npm官方最新类型版本5
 
 本轮结束前[Actions34099746241](https://github.com/cinagroup/cinashop/actions/runs/34099746241)最终11/11成功，覆盖精确SHA 6bf16cfad93aba8310d3ddec2f941632454de87c；上节中途运行状态作为历史保留。Worker两片各136文件、955/879项，合计272文件1,834项、0跳过；共同inventorySha256=`e4054b26e901c2c0c063ad39be175db615a0504e3de0280450dbce1b2e3a3454`，executedFileSha256分别为`a97b5af74f981e4564a0c9f88f3a4586793f3f868f4191fb215dd6e10b5d653e`、`c5c803abb330bb43bc691b006b383b57112e541b836e64ee061e1b864557ced2`。两片nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true，测试610.73/508.04秒；新增钱包筛选4项在第一片506ms通过。五端、workerd、隔离PG16目录、密钥扫描和最终汇总均成功。只验收上一SHA，不关闭本轮S1、S2、TEST-005或生产发布门禁。
 
+### 36f2439权威券范围读取精确Linux验收（2026-09-07）
+
+精确SHA `36f24391104535f09f923713ac2aa157ad9bf99b`的[Actions34101253387](https://github.com/cinagroup/cinashop/actions/runs/34101253387)最终11/11成功。Worker分片作业101675986001/101675986019分别137/136文件、963/879项，共273文件1,842项、0跳过，耗时586.61/531.47秒；新增范围读取8项在专用loopback PG16分片672ms通过。共同inventorySha256=`d42828a619d83d168b9e16b6829d5b8c0acb18703249e0cc00b1a73659e58d98`，executedFileSha256分别为`2ed25f97c0f496cf1c490d1187919f1fba00fc55c3ba57099a7d6d15861cfe7a`、`c5c803abb330bb43bc691b006b383b57112e541b836e64ee061e1b864557ced2`，两片nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true。五端、workerd、PG16目录、密钥扫描及最终汇总通过。S1按代码/Linux范围勾选；历史中途状态保留，不将本证据借给下面新增前端候选。TEST-005及容量保守476秒结论不变。
+
+### FE-003L-S2：PC与UniApp范围商品导航（2026-09-07，本地候选）
+
+两端钱包可用券新增“浏览券范围商品”，分别进入`/user/coupon/:id/products`和`/pages/user/couponProducts?couponId=...`，只携带持有券ID，不传自拟商品/品牌集合。共同适配器`view/common/couponProducts.ts`严格检查券身份、scope_only、范围类型、目录金额、ID倒序去重及扫描游标进展，白名单映射图片/标题；无效响应拒绝而非回退通用目录。API适配器请求前后核对登录身份及会话版本；共享请求代次阻止迟到成功或失败覆盖新页，刷新立即清空，追加失败保留原游标以便精确重试，身份变化/离页清空并阻止旧商品导航。PC额外按route.name确认仍在范围页，不把目的商品路由参数当券ID。UniApp保留DiySuspendedNavigation。
+
+UI明确区分“本批未匹配，继续扫描”和“已无后续商品”，不以空list错误结束；展示券标题、四类范围语义、目录价和以结算为准的非承诺。真实controller→共享适配器/会话新增第9项SQL测试覆盖空扫描页再续到准确集合，原8项保持。尚未展示配置集合的具体分类/品牌名称及完整层级总览，也未完成搜索/排序与稀疏目录体验，不将S2整体勾选。
+
+本地验证：UniApp `test:toolchain`40/40（11结算、13钱包、8范围、8开发边界）；PC `test:auth`13/13（既有10项保留），包含路由离页不再发错误券请求。相关Worker8文件94项通过6.70秒，含范围9项；Worker两套TypeScript、UniApp类型、PC类型及构建通过，PC1,851模块8.35秒。UniApp `test:runtime-i18n`9项通过并实际重建H5/MP-WEIXIN/APP，后续构建产物3项通过；闭包为H5 80chunks/281loaded、MP101chunks/324loaded、App249entries，既有外部Vue边界保留，不冒称APK/IPA或真机已验证。现有CI脚本加入范围运行时测试，无依赖版本、锁文件、工作流或生产路由/DDL变更。
+
+前端测试技能要求实际交互与渲染证据，使用已授权CUA内置浏览器；当前未列出独立Browser skill，不安装新浏览器依赖。临时fixture置于系统Temp，显式禁用TEST_FINANCE_POSTGRES_URL，以隔离PGlite和合成登录提供真实范围Controller/Service及商品详情Controller/Service，非目标评价/套餐仅为空夹具。地址为UniApp `http://127.0.0.1:5176`、PC `http://127.0.0.1:5177`，API仅loopback5229。桌面1280×900和移动390×844核对URL/标题、有意义内容、无框架错误遮罩及无横向溢出，并留截图。UniApp钱包品类筛选→coupon60范围页空扫描→模拟失败→同一104游标重试→唯一product70→真实详情通过；PC登录回跳钱包→钱包追加失败重试→brand61范围空扫描→续页唯一product70→真实详情通过，退出后迟到范围响应不回填。
+
+浏览器发现并修复两项新接线问题：UniApp fragment根节点收到couponId的extraneous attrs警告，新增inheritAttrs:false后重放无新增该告警；PC旧页面在离开时读取新goods/:id参数，曾发一次`/coupons/user/70/products`，加入route.name守卫及回归测试后重放，历史错误请求仍恰为1、没有新增。DCloud既有vue-router弃用警告保留。PC退出落到未提供公共首页接口的本地夹具产生一次“首页加载失败”，属于非目标fixture边界，不宣称全站控制台零错误或首页验收。
+
+真实商品详情读取会写访问统计，故本次不是“全部SQL零写”：仅一次性隔离库终态visits=1、productLogs=3；orders=0、bills=0、capturedOrders=[]、stock=8、integral=100。没有访问生产、提交真实订单、扣款、预占券、DDL或部署。候选仍待自己的精确SHA Linux、真机、真实角色及发布验收。
+
+### FE-003L-S3：新发现的UniApp SKU会员价展示缺口
+
+同一隔离SQL商品70设置商品级vipPrice=0、实际SKU vipPrice=9，PC详情按选中SKU显示SVIP ¥9，UniApp却显示¥0。证据为`view/uniapp-ts/src/pages/goods/detail.vue:16`直接读取detail.vip_price，而`view/uniapp-ts/src/api/productDetail.ts`只保留商品级会员价、SKU投影缺会员价。属于可复现前端合同差异，未推定为生产收费或展示事故；范围页catalog_price=10本身是有意的目录价，不与此混淆。新增未勾选S3，后续补严格SKU会员价适配、切换规格价/库存及异常值回归；不改变权威结算。本轮清单205勾选/147开放/352项，S2、FE-003L及生产门禁仍开放，旧历史数据复制仍N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -62,6 +62,42 @@ function delayed() {
 }
 
 describe("actual Axios + storage + Pinia auth-session isolation", { concurrency: false }, () => {
+  it("loads scope products through actual Axios and retries an empty scan at the same cursor", async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule("/src/composables/couponProductsView.ts");
+    const view = createCouponProductsView(url => navigation.push(url));
+    const calls = []; let fail = true;
+    const product = { id: 70, store_name: "范围商品", image: "/image.svg", catalog_price: "10.00" };
+    api.defaults.adapter = async config => {
+      calls.push(config.params.before); assert.equal(config.url, "/coupons/user/42/products");
+      if (config.params.before && fail) { fail = false; throw new Error("offline"); }
+      return response(config, { status: 200, data: { coupon_id: 42, coupon_title: "范围券", scope_type: 2, scope_only: true,
+        list: config.params.before ? [product] : [], next_cursor: config.params.before ? null : 100 } });
+    };
+    try {
+      await view.setCouponId("42"); assert.equal(view.state.value.nextCursor, 100); assert.deepEqual(view.state.value.list, []);
+      await view.load(true); assert.match(view.error.value, /offline/); await view.load(true);
+      assert.deepEqual(calls, [undefined, 100, 100]); view.openProduct(999); view.openProduct(70); assert.deepEqual(navigation, ["/goods/70"]);
+      await view.setRoute("goods-detail", "70"); assert.equal(calls.length, 3); assert.deepEqual(view.state.value.list, []);
+    } finally { view.dispose(); }
+  });
+  it("clears the scope view on identity change and ignores pending old success after disposal", async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule("/src/composables/couponProductsView.ts");
+    const view = createCouponProductsView(url => navigation.push(url)), pending = delayed();
+    const result = view.setCouponId("42"); await pending.started; authUtils.setAuth("session-b", 22);
+    assert.deepEqual(view.state.value.list, []); assert.match(view.error.value, /登录状态已变化/);
+    view.dispose(); pending.success({ status: 200, data: { coupon_id: 42, coupon_title: "旧券", scope_type: 0, scope_only: true, list: [], next_cursor: null } });
+    await result; assert.deepEqual(view.state.value.list, []); view.openProduct(70); assert.deepEqual(navigation, []);
+  });
+  it("does not send invalid scope IDs or turn a failed refresh into stale navigable goods", async () => {
+    const { createCouponProductsView } = await server.ssrLoadModule("/src/composables/couponProductsView.ts");
+    const view = createCouponProductsView(url => navigation.push(url)); let count = 0;
+    api.defaults.adapter = async config => { count++; return response(config, { status: 400, msg: "范围配置冲突" }); };
+    try {
+      for (const id of [undefined, "0", "NaN", ["42", "43"]]) await view.setCouponId(id);
+      assert.equal(count, 0); await view.setCouponId("42"); assert.match(view.error.value, /范围配置冲突/);
+      view.openProduct(70); assert.deepEqual(navigation, []); assert.deepEqual(view.state.value.list, []);
+    } finally { view.dispose(); }
+  });
   it("removes persistent legacy credentials and atomically publishes the current identity", () => {
     assert.equal(localStorage.getItem("pc_token"), null);
     assert.equal(localStorage.getItem("pc_uid"), null);
