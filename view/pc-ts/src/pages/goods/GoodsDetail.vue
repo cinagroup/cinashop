@@ -5,7 +5,7 @@
       <div class="detail-main">
         <!-- 图片 -->
         <div class="gallery">
-          <el-carousel height="400px">
+          <el-carousel height="100%" class="product-carousel">
             <el-carousel-item v-for="(img, i) in detail.slider_image" :key="i">
               <img :src="img" class="gallery-img" :alt="detail.store_name" />
             </el-carousel-item>
@@ -83,7 +83,7 @@
         </div>
       </div>
 
-      <el-dialog v-model="packageVisible" :title="selectedPackage?.title || '搭配购'" width="680px">
+      <el-dialog v-model="packageVisible" :title="selectedPackage?.title || '搭配购'" width="min(680px, calc(100vw - 32px))">
         <div v-if="selectedPackage" class="package-picker">
           <div
             v-for="entry in selectedPackage.products"
@@ -359,18 +359,27 @@ onMounted(load);
 
 .gallery {
   flex: 0 0 400px;
+  width: 400px;
+  height: 400px;
+  align-self: flex-start;
   border-radius: 8px;
   overflow: hidden;
 }
 
+.product-carousel {
+  height: 100%;
+}
+
 .gallery-img {
   width: 100%;
-  height: 400px;
+  height: 100%;
   object-fit: cover;
 }
 
 .info {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .name {
@@ -467,7 +476,7 @@ onMounted(load);
 
 .package-product {
   display: grid;
-  grid-template-columns: 70px 64px 1fr;
+  grid-template-columns: 70px 64px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   padding: 12px 0;
@@ -483,6 +492,8 @@ onMounted(load);
 
 .package-product-info {
   display: flex;
+  min-width: 0;
+  overflow-wrap: anywhere;
   flex-direction: column;
   gap: 8px;
 }
@@ -595,5 +606,65 @@ onMounted(load);
   margin-top: 8px;
   font-size: 12px;
   color: #bbb;
+}
+
+/* Keep long content and actions in normal flow, not clipped off-screen. */
+.price-box, .meta, .package-card, .actions, .reply-head, .reply-pics, .reply-meta {
+  flex-wrap: wrap;
+}
+
+.reply-comment {
+  overflow-wrap: anywhere;
+}
+
+.actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+@media (max-width: 900px) {
+  .detail-main {
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px;
+  }
+
+  .gallery {
+    flex: none;
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    aspect-ratio: 1;
+    align-self: center;
+  }
+
+  .info {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions :deep(.el-button) {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .actions :deep(.el-button:last-child) {
+    grid-column: 1 / -1;
+  }
+
+  .reply-section {
+    padding: 16px;
+  }
+
+  .package-product {
+    grid-template-columns: 60px 48px minmax(0, 1fr);
+    gap: 8px;
+  }
 }
 </style>

@@ -125,6 +125,7 @@ onMounted(() => {
 }
 
 .title {
+  overflow-wrap: anywhere;
   font-size: 18px;
   margin: 20px 0;
 }
@@ -166,6 +167,8 @@ onMounted(() => {
 
 .goods-bottom {
   display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   justify-content: space-between;
   margin-top: 8px;
 }

@@ -3,10 +3,10 @@
     <!-- 顶部导航 -->
     <header class="header">
       <div class="container header-inner">
-        <div class="logo" @click="$router.push('/')">
+        <router-link to="/" class="logo" aria-label="返回商城首页">
           <img :src="siteLogo" :alt="siteName" class="logo-img" />
-        </div>
-        <nav class="nav">
+        </router-link>
+        <nav class="nav" aria-label="商城导航">
           <router-link to="/" class="nav-link">首页</router-link>
           <router-link to="/category" class="nav-link">全部分类</router-link>
           <router-link to="/goods" class="nav-link">全部商品</router-link>
@@ -16,17 +16,19 @@
           <router-link to="/community" class="nav-link">社区</router-link>
           <router-link to="/service" class="nav-link">客服</router-link>
         </nav>
-        <div class="actions">
+        <form class="search-form" role="search" aria-label="商品搜索" @submit.prevent="doSearch">
           <el-input
             v-model="searchWord"
             placeholder="搜索商品"
+            aria-label="搜索商品"
             class="search-input"
-            @keyup.enter="doSearch"
           >
             <template #append>
-              <el-button @click="doSearch">搜索</el-button>
+              <el-button native-type="submit">搜索</el-button>
             </template>
           </el-input>
+        </form>
+        <div class="actions">
           <router-link to="/cart" class="action-link">
             <el-badge :value="cartStore.count" :hidden="cartStore.count === 0">
               购物车
@@ -138,13 +140,18 @@ onMounted(async () => {
 }
 
 .header-inner {
-  display: flex;
+  display: grid;
+  grid-template-areas: "logo nav search account";
+  grid-template-columns: auto minmax(0, 1fr) 260px auto;
   align-items: center;
-  gap: 24px;
-  height: 64px;
+  gap: 16px;
+  min-height: 64px;
+  padding-block: 10px;
 }
 
 .logo {
+  grid-area: logo;
+  display: flex;
   cursor: pointer;
 }
 
@@ -155,11 +162,17 @@ onMounted(async () => {
 }
 
 .nav {
+  grid-area: nav;
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-width: 0;
 }
 
 .nav-link {
+  white-space: nowrap;
+  padding-block: 6px;
   color: #333;
   font-size: 15px;
   transition: color 0.2s;
@@ -171,17 +184,23 @@ onMounted(async () => {
 }
 
 .actions {
-  margin-left: auto;
+  grid-area: account;
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
+.search-form {
+  grid-area: search;
+  min-width: 0;
+}
+
 .search-input {
-  width: 260px;
+  width: 100%;
 }
 
 .action-link {
+  white-space: nowrap;
   color: #333;
   font-size: 14px;
 }
@@ -190,10 +209,23 @@ onMounted(async () => {
   color: #e64340;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
   .header-inner {
-    height: 56px;
-    gap: 10px;
+    grid-template-areas: "logo search account" "nav nav nav";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px 16px;
+  }
+
+  .nav {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-inner {
+    grid-template-areas: "logo account" "search search" "nav nav";
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
     padding-inline: 12px;
   }
 
@@ -201,9 +233,14 @@ onMounted(async () => {
     height: 34px;
   }
 
-  .nav,
-  .search-input {
-    display: none;
+  .nav {
+    justify-content: flex-start;
+    gap: 0 16px;
+  }
+
+  .nav-link {
+    font-size: 14px;
+    padding-block: 8px;
   }
 
   .actions {
@@ -229,6 +266,8 @@ onMounted(async () => {
 
 .footer-inner {
   display: flex;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
   justify-content: center;
   gap: 24px;
   color: #999;
