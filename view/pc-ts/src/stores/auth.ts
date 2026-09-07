@@ -4,7 +4,7 @@
 import { defineStore } from "pinia";
 import { apiLogin, apiLogout, apiMobileLogin } from "@/api/auth";
 import type { LoginResult } from "@/types/api";
-import { getToken, setToken, clearAuth, getUid, setUid } from "@/utils/auth";
+import { getToken, getUid, setAuth, captureAuthSession, clearAuthIfCurrent } from "@/utils/auth";
 
 interface AuthState {
   token: string;
@@ -23,16 +23,14 @@ export const useAuthStore = defineStore("auth", {
 
   actions: {
     applyLogin(result: LoginResult): void {
-      this.token = result.token;
-      setToken(result.token);
+      let uid = 0;
       try {
-        const payload = JSON.parse(atob(result.token.split(".")[1]));
-        this.uid = payload.jti?.id ?? 0;
-        setUid(this.uid);
-      } catch {
-        this.uid = 0;
-        setUid(0);
-      }
+        const payload = JSON.parse(atob(result.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        uid = Number(payload.jti?.id ?? 0);
+      } catch { /* UID is display-only; the server authenticates the token. */ }
+      setAuth(result.token, uid);
+      this.token = getToken() ?? "";
+      this.uid = getUid();
     },
 
     /** 账号密码登录 */
@@ -47,17 +45,17 @@ export const useAuthStore = defineStore("auth", {
     },
 
     /** 退出登录 */
-    async logout(): Promise<boolean> {
+    async logout(): Promise<{ serverRevoked: boolean; clearedCurrentSession: boolean }> {
+      const session = captureAuthSession();
       let serverRevoked = true;
       try {
         await apiLogout();
       } catch {
         serverRevoked = false;
       }
-      this.token = "";
-      this.uid = 0;
-      clearAuth();
-      return serverRevoked;
+      const clearedCurrentSession = clearAuthIfCurrent(session);
+      if (clearedCurrentSession) { this.token = ""; this.uid = 0; }
+      return { serverRevoked, clearedCurrentSession };
     },
   },
 });

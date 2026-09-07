@@ -4,6 +4,7 @@
  */
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import { isLoggedIn } from "@/utils/auth";
+import { requiresPcAuth } from "@/utils/authNavigation";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -51,12 +52,9 @@ const router = createRouter({
   routes,
 });
 
-// 需要登录的路由
-const AUTH_PATHS = ["/cart", "/checkout", "/order", "/user"];
-
 // 路由守卫
 router.beforeEach((to) => {
-  const needAuth = AUTH_PATHS.some((p) => to.path.startsWith(p));
+  const needAuth = requiresPcAuth(to.path);
   if (needAuth && !isLoggedIn()) {
     return { path: "/login", query: { redirect: to.fullPath } };
   }

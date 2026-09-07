@@ -54,6 +54,7 @@ describe("FE-002E PC purchase selection contracts", () => {
     expect(detail).not.toContain("立即购买接入中");
     expect(detail).toContain("purchaseSubmitting.value = true");
     expect(detail).toContain("sku: input.unique, qty: String(input.cartNum)");
+    expect(detail).toContain("hash: route.hash }).fullPath");
     expect(checkout).toContain("await apiDirectCartList(requested.ids)");
     expect(checkout).toContain("parseCheckoutSelection(route.query)");
     expect(checkout).not.toContain("ids.size > 0");

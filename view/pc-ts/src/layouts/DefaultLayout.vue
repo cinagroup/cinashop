@@ -101,7 +101,8 @@ function doSearch() {
 }
 
 async function handleLogout() {
-  const serverRevoked = await authStore.logout();
+  const { serverRevoked, clearedCurrentSession } = await authStore.logout();
+  if (!clearedCurrentSession) return;
   if (serverRevoked) ElMessage.success("已退出登录");
   else ElMessage.warning("本机已退出，但服务器会话撤销未确认；旧会话可能持续到过期，如需立即失效请修改密码或联系管理员");
   router.push("/");
@@ -110,7 +111,7 @@ async function handleLogout() {
 onMounted(async () => {
   if (authStore.isLoggedIn) {
     cartStore.fetchCount();
-    cartStore.fetchList();
+    void cartStore.fetchList().catch(() => {});
   }
   const [site, share] = await Promise.allSettled([getSiteConfig(), getShareConfig()]);
   if (site.status === "fulfilled") {

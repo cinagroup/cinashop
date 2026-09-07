@@ -4,6 +4,7 @@
 import { defineStore } from "pinia";
 import { apiCartList, apiCartCount } from "@/api/cart";
 import type { CartItem } from "@/types/order";
+import { captureAuthSession, isCurrentAuthSession } from "@/utils/auth";
 
 interface CartState {
   items: CartItem[];
@@ -36,20 +37,24 @@ export const useCartStore = defineStore("cart", {
   actions: {
     /** 刷新购物车列表 */
     async fetchList(): Promise<void> {
+      const session = captureAuthSession();
       this.loading = true;
       try {
         const selected = new Set(this.items.filter((item) => item.checked).map((item) => item.id));
-        this.items = (await apiCartList()).map((item) => ({ ...item, checked: item.isValid && selected.has(item.id) }));
+        const rows = await apiCartList();
+        if (!isCurrentAuthSession(session)) return;
+        this.items = rows.map((item) => ({ ...item, checked: item.isValid && selected.has(item.id) }));
       } finally {
-        this.loading = false;
+        if (isCurrentAuthSession(session)) this.loading = false;
       }
     },
 
     /** 刷新数量角标 */
     async fetchCount(): Promise<void> {
+      const session = captureAuthSession();
       try {
         const { count } = await apiCartCount();
-        this.count = count;
+        if (isCurrentAuthSession(session)) this.count = count;
       } catch {
         // ignore
       }

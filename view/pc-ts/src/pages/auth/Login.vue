@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 import QRCode from "qrcode";
-import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import {
@@ -103,6 +103,7 @@ import {
 } from "@/api/auth";
 import { requestSmsChallenge } from "@/composables/smsChallenge";
 import { useAuthStore } from "@/stores/auth";
+import { safeLoginRedirect } from "@/utils/authNavigation";
 
 type LoginTab = "account" | "mobile" | "scan";
 type ScanStage = "idle" | "pending" | "scanned" | "expired";
@@ -142,23 +143,15 @@ function queryText(value: unknown): string {
 }
 
 function safeRedirect(value: unknown): string {
-  const candidate = queryText(value).trim();
-  if (!candidate.startsWith("/") || candidate.startsWith("//")) return "/";
-  try {
-    const resolved = new URL(candidate, window.location.origin);
-    if (resolved.origin !== window.location.origin || resolved.pathname === "/login") return "/";
-    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
-  } catch {
-    return "/";
-  }
+  return safeLoginRedirect(value, window.location.origin);
 }
 
-const requestedRedirect = safeRedirect(route.query.redirect);
+const requestedRedirect = computed(() => safeRedirect(route.query.redirect));
 
 async function redirectAfterLogin(fromOauth = false) {
   const stored = fromOauth ? sessionStorage.getItem(OAUTH_REDIRECT_KEY) : null;
   sessionStorage.removeItem(OAUTH_REDIRECT_KEY);
-  await router.replace(safeRedirect(stored ?? requestedRedirect));
+  await router.replace(safeRedirect(stored ?? requestedRedirect.value));
 }
 
 async function handleLogin() {
@@ -325,7 +318,7 @@ async function startWechatLogin() {
   oauthStarting.value = true;
   try {
     const { state } = await apiCreatePcOauthState();
-    sessionStorage.setItem(OAUTH_REDIRECT_KEY, requestedRedirect);
+    sessionStorage.setItem(OAUTH_REDIRECT_KEY, requestedRedirect.value);
     const callback = new URL("/login", window.location.origin).toString();
     const authorization = new URL("https://open.weixin.qq.com/connect/qrconnect");
     authorization.searchParams.set("appid", appid.value);

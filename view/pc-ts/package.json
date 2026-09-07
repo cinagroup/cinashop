@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "test:auth": "node --test test/auth-session.test.mjs",
+    "build": "npm run test:auth && vue-tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -348,7 +348,7 @@ async function purchase(direct: boolean) {
   try {
     const input = productCartInput(detail.value, selectedUnique.value, qty.value, direct);
     if (!isLoggedIn()) {
-      const redirect = router.resolve({ path: route.path, query: { ...route.query, sku: input.unique, qty: String(input.cartNum) } }).fullPath;
+      const redirect = router.resolve({ path: route.path, query: { ...route.query, sku: input.unique, qty: String(input.cartNum) }, hash: route.hash }).fullPath;
       await router.push({ path: "/login", query: { redirect } });
       return;
     }
