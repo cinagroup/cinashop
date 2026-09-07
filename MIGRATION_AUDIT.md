@@ -5941,6 +5941,30 @@ PC实际Axios/Pinia10项、vue-tsc与Vite生产构建通过（1845模块，8.98�
 
 进一步审计发现严格new=1不能单独接进confirm：goods/detail的普通立即购买以及秒杀、砍价、拼团、积分五类入口没有传new=1，只有套餐已明确传1；当前后端无scope的cart/list没有new过滤，现状是混合集合而非仅new0。商品详情还在缺SKU时拼出sku+ID，三个活动入口固定sku00001。后续必须从真实SKU及活动合同修复入口，保留普通加购new0，再接quote/筛券/表单上传门禁/冻结key和payload/离页刷新恢复；不能通过严格读取把既有购买入口全部变成报错来宣称完成。confirm仍为旧本地计价和每次随机key，FE-003L及钱包、活动、真实Pinia/浏览器/设备/provider门禁全部开放。清单204勾选/145开放/349项不变；本轮没有业务路由、SQL/DDL、依赖、工作流、生产数据库或部署变更，候选待自身精确SHA Linux。
 
+### FE-003L基础提交精确Linux验收（2026-09-07）
+
+`0a20ec60daef2a74df826e5eda1a5dea7c839718`的[Actions34092567687](https://github.com/cinagroup/cinashop/actions/runs/34092567687)11/11成功。Worker两片136/135文件、961/868项，合计271文件1,829项、零跳过；共同inventorySha256=`a3905c2dde91a7f551b6828bb91964672e6277c64bd2b2661ccce5329755d502`，executedFileSha256分别为`0dbe8727cc58b2e32ca642044814a95f88da691df8afbf62a36b8762cba2a9f2`、`dae4d89e629389ea31bc098f13b9a67dc8bca90c3ea94b3ea59ccad677ecb062`，两份UNIT_SHARD_AUDIT均nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition=true。workerd、隔离PG16目录、五端与密钥扫描通过。仅关闭基础提交“待自身Linux”，不借给下面的新页面代码使用，TEST-005及生产门禁仍开放。
+
+### FE-003L：UniApp真实报价页面与持久化订单意图（2026-09-07，本地候选）
+
+**本节覆盖上节基础提交时“confirm仍未接线”的历史状态，不表示整域迁移完成。** confirm.vue改为useCheckout：严格buy ID/new1或明确勾选普通new0；加载配送和单一系统表单，再经完整confirm/computed取得绑定商品、地址、选项与key的费用。配送、积分、券改变即清旧报价并禁提交，券使用订单范围及最后扫描游标，不再从钱包本地计算折扣。展示会员、首单、券、积分及运费分层结果。选择自提要求当前门店及联系人，次卡仅自提；其他履约类型仍待逐项端到端覆盖。
+
+新增CheckoutIntentJournal：按uid持久化白名单payload和服务端key，写入并回读成功才发送；刷新/返回先读旧意图、不再加载新购物车或生成新key；未知响应只重放相同内容。读取损坏或储存异常阻止新意图，写入成功但回读/回传失败能恢复已存记录。只有无更早不确定尝试的同key、HTTP200/业务400、ORDER_FORM_REJECTED允许清记录重新填表；其余错误保留待确认。校验成功结果的key/orderId并先保存，导航成功后才清本地记录，导航失败可只重试查看结果。移除未实际用于该请求的支付选择，创建成功仅跳订单详情，不自动发起支付。未知记录没有自动过期、换key或删除按钮；跨标签原子竞争与人工核对后的恢复流程未完成，不以单页双击测试代替。
+
+SystemFormFields新增disabled/pending，原生选图阶段就阻止下单，完成每次上传前验证组件代际；卸载/禁用后旧回调不能改新表单。原生选图引起onHide时保留当前表单，onShow重新报价；账号变化清联系人/备注/地址/表单并隔离旧记录。现有11项Node测试执行真实Vue/Pinia、auth/cart store、request/API和composable，替换原生生命周期与I/O，不替代H5渲染、DCloud条件预处理或真机；覆盖冻结重试、双击、导航失败、表单必填/加载失败、存储失败、隐藏/显示、账号切换及真实SKU归一。上传组件本身的文件选择、私有R2上传和所有取消竞态未完整跑，保留开放。
+
+购买入口同步：商品详情消费后端attr_value真实unique，不再缺SKU时制造sku+ID；秒杀/砍价/拼团用共享ActivityPurchase选择真实基础SKU，由服务端解析活动规格关系，不再固定sku00001。弹窗明确标注基础库存和活动资格/最终报价由服务端核验，不冒充活动库存/价格。修复重复打开弹窗后busy残留与普通购买模式在途改变；普通加购new0，立即购买、活动、积分new1，套餐原new1保留。购物车列表与数量显式scope=cart。三类活动详情仍有旧any合同及未逐入口浏览器/真实SQL覆盖，不能据此勾选活动迁移完成。
+
+额外发现完整报价缺兑换积分：CreateService已由activitySku.integral×cartNum算requiredIntegral并用于payIntegral，却未在只读quote返回。仅增加requiredIntegralPoints及Legacy priceGroup.pay_integral，共用适配器对type4强制安全整数（缺字段不降级为0），页面单独展示“兑换所需积分”，不混同普通usedIntegral。新增隔离SQL测试30×2=60，现金4.00，confirm/computed一致，库存/积分/订单/账单与活动快照完全不变。没有改动SQL、事务、绑定或DDL；Workers技能限定为完整阅读所改服务、现有本地类型/配置检查与真实无写报价测试，没有因技能加入部署或平台API。初始测试SKU points001超过真实char(8)，改成point001后通过；旧newcomer源码断言couponExclusive改为完整报价及活动券隔离合同，保留原后端断言，不掩盖初始失败。
+
+最终本地：相关Worker14文件167项通过（10文件103项8.69秒 + 4文件64项6.44秒），Worker两个TypeScript配置通过；新增真实Vue/Pinia11项1.58秒，UniApp类型通过，H5/MP-WEIXIN/APP最终构建通过。工具链原8项、产物3项及运行时i18n9项通过，i18n测试真实重建三端业务图，无新Intlify消费；APP原生设备Vue/APK/IPA仍明确不在该图证明内。PC auth10项与类型/1845模块生产构建8.16秒通过，保留原VueUse PURE注释告警。
+
+**H5浏览器QA**：已安装的统一CUA浏览器可用，旧browser技能不存在；沿用其受控Playwright/AX API，无另装浏览器。第一次重置会话受本机deny-read ACL初始化失败，同一标签重试成功，未切外部浏览器。仅访问127.0.0.1:5174，代理5228的内存PGlite夹具，未继承生产URL；用户/联系方式均合成。通过可见登录进入confirm?mode=buy&cartId=1；先空适用页cursor104，继续查找失败显示错误，重试同游标得到8.5折/现金券；现金5令21→16，切自提清旧券→18，开启50积分抵扣→17.50，再选现金→12.50。提交夹具仅捕获、不挂真实建单或支付；刷新后同key恢复并再次重试，两次body逐字段一致（cartIds[1]、couponId41、useIntegral=true、自提storeId1），订单/账单0、库存8、积分100未变。
+
+页面身份/非空/无框架错误浮层/交互/截图均通过；1280×900、390×844首屏及费用、待确认状态无观察到遮挡或横向溢出；控制台无业务error，只有DCloud内置vue-router导入弃用warn。开关是UniApp自定义DOM，AX无原生checkbox；首次坐标操作未变化，读取可见DOM后用uni-switch语义定位成功，没有把未生效点击当通过。报价及刷新重试截图通过浏览器原生输出留证。
+
+**仍开放**：本批精确SHA Linux；钱包券类型/时间/分页及错误态；活动实际SQL加购→报价→建单逐入口；所有表单上传/切后台/取消/多文件竞态与真机TextEncoder/BigInt/Intl兼容；跨标签并发及不确定订单的受控核对恢复；cart store旧请求失败可能清空新会话列表的遗留问题；地址管理返回后的表单草稿保留；真实角色、provider、预发与生产发布。本轮没有新路由、SQL/DDL、依赖版本或工作流文件变更；仅package test:toolchain加入状态测试，现有CI会执行。清单204勾选/145开放/349项不变，FE-003L不勾选，未访问或修改生产、未部署。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

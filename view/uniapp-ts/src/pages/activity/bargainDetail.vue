@@ -59,6 +59,7 @@
       </view>
     </view>
     <view v-else class="empty">砍价活动不存在或已结束</view>
+    <ActivityPurchase :visible="purchaseVisible" :product-id="Number(bargain?.productId || 0)" :activity-id="bargainId" :type="2" @close="purchaseVisible = false" @purchased="checkout" />
   </view>
   <DiySuspendedNavigation />
 </template>
@@ -67,13 +68,14 @@
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";
-import { apiCartAdd } from "@/api/order";
+import ActivityPurchase from "@/components/ActivityPurchase.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const bargain = ref<any>(null);
 const myBargain = ref<any>(null);
 const authStore = useAuthStore();
 const bargainId = ref(0);
+const purchaseVisible = ref(false);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 const progressPercent = computed(() => {
@@ -132,21 +134,9 @@ async function helpSelf() {
 async function buyNow() {
   if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
   if (!myBargain.value || myBargain.value.status !== 3) return;
-  try {
-    const cart = await apiCartAdd({
-      productId: bargain.value.productId,
-      unique: "sku00001",
-      cartNum: 1,
-      type: 2,
-      activityId: bargainId.value,
-    });
-    uni.navigateTo({
-      url: `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=2&bargainUserId=${myBargain.value.id}`,
-    });
-  } catch (e) {
-    uni.showToast({ title: e instanceof Error ? e.message : "购买失败", icon: "none" });
-  }
+  purchaseVisible.value = true;
 }
+function checkout(id: number) { purchaseVisible.value = false; uni.navigateTo({ url: `/pages/order/confirm?mode=buy&cartId=${id}&type=2&bargainUserId=${myBargain.value.id}` }); }
 
 function goDetail() {
   if (!bargain.value) return;

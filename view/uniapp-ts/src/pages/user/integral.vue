@@ -142,6 +142,7 @@ async function confirmExchange() {
       unique: selectedSku.value.unique,
       cartNum: quantity.value,
       type: 4,
+      new: 1,
       activityId: detail.storeInfo.id,
     });
     closeSku(true);

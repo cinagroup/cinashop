@@ -27,6 +27,7 @@ export interface CheckoutPrices {
   integralDiscount: string;
   firstOrderDiscount: string;
   usedIntegral: number;
+  requiredIntegral: number;
   remainingIntegral: number;
 }
 
@@ -96,6 +97,7 @@ export function normalizeCheckoutQuote(
     couponDiscount: quoteMoney(price.couponPrice), integralDiscount: quoteMoney(price.deduction_price),
     firstOrderDiscount: quoteMoney(price.firstOrderPrice), usedIntegral: points(price.usedIntegral),
     remainingIntegral: points(price.SurplusIntegral),
+    requiredIntegral: points(price.pay_integral === undefined && options.type !== 4 ? 0 : price.pay_integral),
   } };
 }
 

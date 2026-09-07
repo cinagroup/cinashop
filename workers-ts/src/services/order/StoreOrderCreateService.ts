@@ -174,6 +174,7 @@ export interface OrderPricingQuote {
   firstOrderPriceCents: number;
   deductionCents: number;
   usedIntegralPoints: number;
+  requiredIntegralPoints: number;
   surplusIntegralPoints: number;
   memberDiscountCents: number;
   levelDiscountCents: number;
@@ -1600,6 +1601,7 @@ export class StoreOrderCreateService {
         firstOrderPriceCents,
         deductionCents,
         usedIntegralPoints,
+        requiredIntegralPoints: requiredIntegral,
         surplusIntegralPoints,
         memberDiscountCents,
         levelDiscountCents,

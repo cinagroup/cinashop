@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { createPcCheckoutQuoteFixture } from "./helpers/pcCheckoutQuoteFixture";
 import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "../../view/pc-ts/src/api/checkoutQuote";
 import type { CartItem } from "../../view/pc-ts/src/types/order";
-import { storeProductAttrValue, userAddress } from "../src/models/schema";
+import { storeProductAttrValue, userAddress, storeIntegral, storeCart } from "../src/models/schema";
 
 describe("PC full quote through real controller/service/SQL", () => {
   let fixture: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -23,8 +23,35 @@ describe("PC full quote through real controller/service/SQL", () => {
     expect(quote.prices).toMatchObject({ subtotal: "20.00", goodsPayable: "18.00", payable: "19.20", memberDiscount: "2.00", firstOrderDiscount: "1.80",
       postage: "6.00", postageDiscount: "3.00", postagePayable: "3.00", integralDiscount: "0.00" });
     expect(quote.items[0].quotedUnitPrice).toBe("9.00");
+    expect(quote.prices.requiredIntegral).toBe(0);
     expect(fixture.writes.at(-1)).toEqual({ key: `order:confirm:11:${quote.key}`, ttl: 1800 });
     expect(await fixture.snapshot()).toEqual(before);
+  });
+  it("returns required redemption points from activity SKU/quantity on confirm and computed without writes", async () => {
+    const redemption = await createPcCheckoutQuoteFixture([storeIntegral]);
+    try {
+      await redemption.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: "points sample", stock: 8, quota: 8, status: 1, isShow: 1, isDel: 0, freight: 1 });
+      await redemption.db.insert(storeProductAttrValue).values({ id: 2, productId: 9, type: 4, unique: "point001", suk: "红色,大号", stock: 8, quota: 8, price: "2.00", integral: 30 });
+      await redemption.db.update(storeCart).set({ type: 4, activityId: 9 }).where(eq(storeCart.id, 1));
+      const before = await redemption.snapshot();
+      const activityBefore = await redemption.db.select().from(storeIntegral);
+      const selected = await redemption.readItems() as CartItem[];
+      const requested = { ...options, type: 4 };
+      async function call(path: string, body: object) {
+        const response = await redemption.app.request(path, { method: "POST", headers: { "Content-Type": "application/json", "x-fixture-user": "11" }, body: JSON.stringify(body) }, redemption.env);
+        return response.json() as Promise<{ status: number; msg: string; data: Record<string, unknown> }>;
+      }
+      const first = await call("/api/order/confirm", { ...requested, cartIds: [1] });
+      expect(first.status, first.msg).toBe(200);
+      const quote = normalizeCheckoutQuote(first.data, selected, requested);
+      expect(quote.prices).toMatchObject({ requiredIntegral: 60, usedIntegral: 0, integralDiscount: "0.00", payable: "4.00" });
+      const computed = await call(`/api/order/computed/${quote.key}`, requested);
+      expect(computed.status, computed.msg).toBe(200);
+      expect(normalizeCheckoutQuote(computed.data, selected, requested, quote.key).prices).toEqual(quote.prices);
+      expect(() => normalizeCheckoutQuote({ ...computed.data, pay_integral: undefined }, selected, requested, quote.key)).toThrow("报价积分无效");
+      expect(await redemption.snapshot()).toEqual(before);
+      expect(await redemption.db.select().from(storeIntegral)).toEqual(activityBefore);
+    } finally { await redemption.close(); }
   });
   it("recalculates the selected address and points under the same owned key, preserving legacy flat amounts", async () => {
     const before = await fixture.snapshot();

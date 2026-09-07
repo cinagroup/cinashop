@@ -31,6 +31,7 @@
       <view class="join-btn" @tap="join()">立即开团</view>
     </view>
     <view v-else class="empty">拼团活动不存在或已结束</view>
+    <ActivityPurchase :visible="purchaseVisible" :product-id="Number(info?.combination?.productId || 0)" :activity-id="Number(info?.combination?.id || 0)" :type="3" @close="purchaseVisible = false" @purchased="checkout" />
   </view>
   <DiySuspendedNavigation />
 </template>
@@ -39,8 +40,12 @@
 import { ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";
+import ActivityPurchase from "@/components/ActivityPurchase.vue";
+import { useAuthStore } from "@/stores/auth";
 
 const info = ref<any>(null);
+const purchaseVisible = ref(false), selectedPinkId = ref(0);
+const auth = useAuthStore();
 
 async function load(id: number) {
   try {
@@ -51,24 +56,13 @@ async function load(id: number) {
 }
 
 async function join(pinkId = 0) {
-  try {
-    const combo = info.value?.combination;
-    if (!combo) return;
-    const cart = await http.post<{ id: number }>("/cart/add", {
-      productId: combo.productId,
-      unique: "sku00001",
-      cartNum: 1,
-      type: 3,
-      activityId: combo.id,
-    });
-    uni.navigateTo({
-      url: pinkId > 0
-        ? `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=3&pinkId=${pinkId}`
-        : `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=3&combinationId=${combo.id}`,
-    });
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || (pinkId > 0 ? "参团失败" : "开团失败"), icon: "none" });
-  }
+  if (!auth.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
+  if (!info.value?.combination) return;
+  selectedPinkId.value = pinkId; purchaseVisible.value = true;
+}
+function checkout(id: number) {
+  purchaseVisible.value = false;
+  uni.navigateTo({ url: `/pages/order/confirm?mode=buy&cartId=${id}&type=3&combinationId=${info.value.combination.id}&pinkId=${selectedPinkId.value}` });
 }
 
 onLoad((query) => {

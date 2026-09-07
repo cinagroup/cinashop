@@ -38,6 +38,7 @@
       </view>
     </view>
     <view v-else class="empty">秒杀商品不存在或已结束</view>
+    <ActivityPurchase :visible="purchaseVisible" :product-id="Number(info?.productId || 0)" :activity-id="seckillId" :type="1" @close="purchaseVisible = false" @purchased="checkout" />
   </view>
 </template>
 
@@ -45,12 +46,13 @@
 import { ref, computed } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { http } from "@/utils/request";
-import { apiCartAdd } from "@/api/order";
+import ActivityPurchase from "@/components/ActivityPurchase.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const info = ref<any>(null);
 const authStore = useAuthStore();
 const seckillId = ref(0);
+const purchaseVisible = ref(false);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 const progressPercent = computed(() => {
@@ -77,22 +79,9 @@ function goDetail() {
 async function buyNow() {
   if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
   if (!info.value) return;
-  try {
-    // 秒杀活动加购后统一进入结算页，地址和系统表单都在那里提交。
-    const cart = await apiCartAdd({
-      productId: info.value.productId,
-      unique: "sku00001",
-      cartNum: 1,
-      type: 1,
-      activityId: seckillId.value,
-    });
-    uni.navigateTo({
-      url: `/pages/order/confirm?mode=buy&cartId=${cart.id}&type=1&seckillId=${seckillId.value}`,
-    });
-  } catch (e) {
-    uni.showToast({ title: e instanceof Error ? e.message : "抢购失败", icon: "none" });
-  }
+  purchaseVisible.value = true;
 }
+function checkout(id: number) { purchaseVisible.value = false; uni.navigateTo({ url: `/pages/order/confirm?mode=buy&cartId=${id}&type=1&seckillId=${seckillId.value}` }); }
 
 onLoad((options) => {
   const id = Number(options?.id ?? 0);

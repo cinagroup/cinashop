@@ -356,6 +356,7 @@ export class LegacyOrderCompatibilityService {
       coupon_price: money(quote.couponPriceCents),
       deduction_price: money(quote.deductionCents),
       usedIntegral: quote.usedIntegralPoints,
+      pay_integral: quote.requiredIntegralPoints,
       SurplusIntegral: quote.surplusIntegralPoints,
       firstOrderPrice: money(quote.firstOrderPriceCents),
       first_order_price: money(quote.firstOrderPriceCents),

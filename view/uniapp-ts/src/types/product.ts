@@ -16,7 +16,10 @@ export interface GoodsItem {
   star: string;
 }
 
+export interface GoodsSku { unique: string; suk: string; price: string; ot_price: string; stock: number }
+
 export interface GoodsDetail {
+  skus: GoodsSku[];
   id: number;
   store_name: string;
   store_info: string;

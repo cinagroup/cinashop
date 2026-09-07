@@ -63,7 +63,12 @@ describe("newcomer catalog migration", () => {
     expect(pcCheckout).toContain("quoteState.result.prices.firstOrderDiscount");
     expect(pcCheckout).toContain("首单优惠（不与优惠券叠加）");
     expect(pcCheckout).not.toContain("apiFirstOrderQuote");
-    expect(uniCheckout).toContain("couponExclusive");
+    expect(uniCheckout).toContain("quote.result.prices.firstOrderDiscount");
+    expect(uniCheckout).toContain("首单优惠或适用范围限制");
+    expect(uniCheckout).not.toContain("apiFirstOrderQuote");
+    const uniSession = readFileSync("../view/uniapp-ts/src/composables/useCheckout.ts", "utf8");
+    expect(uniSession).toContain("new CheckoutQuoteSession(checkoutApi");
+    expect(uniSession).toContain("activity.value.type === 0 ? couponId.value : 0");
   });
 
   it("initializes newcomer eligibility for password and WeChat registrations", () => {

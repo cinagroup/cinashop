@@ -4,6 +4,7 @@
 import { http } from "@/utils/request";
 import type { GoodsItem, GoodsDetail, CategoryNode } from "@/types/product";
 import type { PageResult } from "@/types/api";
+import { normalizeMobileGoods } from "./productDetail";
 
 export interface GoodsListParams {
   keyword?: string;
@@ -26,8 +27,10 @@ export function apiGoodsList(params: GoodsListParams): Promise<PageResult<GoodsI
   return http.get<PageResult<GoodsItem>>("/products", params as Record<string, unknown>);
 }
 
-export function apiGoodsDetail(id: number): Promise<GoodsDetail> {
-  return http.get<GoodsDetail>(`/product/detail/${id}`);
+export async function apiGoodsDetail(id: number): Promise<GoodsDetail> {
+  const goods = normalizeMobileGoods(await http.get<unknown>(`/product/detail/${id}`));
+  if (goods.id !== id) throw new Error("商品详情与请求不匹配");
+  return goods;
 }
 
 export function apiCategory(): Promise<CategoryNode[]> {

@@ -19,7 +19,7 @@ import type { SystemFormComponent, SystemFormInfo } from "@/types/systemForm";
 
 // ─── 购物车 ─────────────────────────────────────────────────
 export function apiCartList(): Promise<CartItem[]> {
-  return http.get<CartItem[]>("/cart/list");
+  return http.get<CartItem[]>("/cart/list", { scope: "cart" });
 }
 
 export function apiCartAdd(params: {
@@ -28,6 +28,7 @@ export function apiCartAdd(params: {
   cartNum: number;
   type?: number;
   activityId?: number;
+  new?: 0 | 1;
 }): Promise<{ id: number; cartNum: number }> {
   return http.post<{ id: number; cartNum: number }>("/cart/add", params as Record<string, unknown>);
 }
@@ -41,7 +42,7 @@ export function apiCartDel(ids: number[]): Promise<null> {
 }
 
 export function apiCartCount(): Promise<{ count: number }> {
-  return http.get<{ count: number }>("/cart/count");
+  return http.get<{ count: number }>("/cart/count", { scope: "cart" });
 }
 
 // ─── 订单 ───────────────────────────────────────────────────
@@ -79,6 +80,8 @@ export function apiOrderCreate(
   key: string,
   params: {
     cartIds: number[];
+    addressId?: number;
+    useIntegral?: boolean;
     realName?: string;
     userPhone?: string;
     province?: string;

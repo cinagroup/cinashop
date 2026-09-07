@@ -10,6 +10,7 @@
       <input
         v-if="item.name === 'texts' || item.name === 'citys'"
         class="field"
+        :disabled="disabled"
         :value="stringValue(item.value)"
         :type="item.name === 'texts' && Number(item.valConfig?.tabVal) === 4 ? 'number' : 'text'"
         :placeholder="item.tipConfig?.value || '请输入'"
@@ -18,14 +19,14 @@
 
       <radio-group v-else-if="item.name === 'radios'" class="choice-list" @change="setValue(index, eventValue($event))">
         <label v-for="choice in choices(item)" :key="choice" class="choice">
-          <radio :value="choice" :checked="stringValue(item.value) === choice" />
+          <radio :disabled="disabled" :value="choice" :checked="stringValue(item.value) === choice" />
           <text>{{ choice }}</text>
         </label>
       </radio-group>
 
       <checkbox-group v-else-if="item.name === 'checkboxs'" class="choice-list" @change="setCheckboxes(index, eventValue($event))">
         <label v-for="choice in choices(item)" :key="choice" class="choice">
-          <checkbox :value="choice" :checked="checkboxValues(item.value).includes(choice)" />
+          <checkbox :disabled="disabled" :value="choice" :checked="checkboxValues(item.value).includes(choice)" />
           <text>{{ choice }}</text>
         </label>
       </checkbox-group>
@@ -33,35 +34,36 @@
       <picker
         v-else-if="item.name === 'selects'"
         :range="choices(item)"
+        :disabled="disabled"
         @change="setValue(index, choices(item)[eventIndex($event)] || '')"
       >
         <view class="picker-field">{{ stringValue(item.value) || "请选择" }}</view>
       </picker>
 
-      <picker v-else-if="item.name === 'dates'" mode="date" @change="setValue(index, eventValue($event))">
+      <picker :disabled="disabled" v-else-if="item.name === 'dates'" mode="date" @change="setValue(index, eventValue($event))">
         <view class="picker-field">{{ stringValue(item.value) || "请选择日期" }}</view>
       </picker>
 
-      <picker v-else-if="item.name === 'times'" mode="time" @change="setValue(index, eventValue($event))">
+      <picker :disabled="disabled" v-else-if="item.name === 'times'" mode="time" @change="setValue(index, eventValue($event))">
         <view class="picker-field">{{ stringValue(item.value) || "请选择时间" }}</view>
       </picker>
 
       <view v-else-if="item.name === 'dateranges'" class="range-field">
-        <picker mode="date" @change="setRangePart(index, 0, eventValue($event))">
+        <picker :disabled="disabled" mode="date" @change="setRangePart(index, 0, eventValue($event))">
           <view class="picker-field">{{ arrayValue(item.value)[0] || "开始日期" }}</view>
         </picker>
         <text>至</text>
-        <picker mode="date" @change="setRangePart(index, 1, eventValue($event))">
+        <picker :disabled="disabled" mode="date" @change="setRangePart(index, 1, eventValue($event))">
           <view class="picker-field">{{ arrayValue(item.value)[1] || "结束日期" }}</view>
         </picker>
       </view>
 
       <view v-else-if="item.name === 'timeranges'" class="range-field">
-        <picker mode="time" @change="setTimePart(index, 0, eventValue($event))">
+        <picker :disabled="disabled" mode="time" @change="setTimePart(index, 0, eventValue($event))">
           <view class="picker-field">{{ timeParts(item.value)[0] || "开始时间" }}</view>
         </picker>
         <text>至</text>
-        <picker mode="time" @change="setTimePart(index, 1, eventValue($event))">
+        <picker :disabled="disabled" mode="time" @change="setTimePart(index, 1, eventValue($event))">
           <view class="picker-field">{{ timeParts(item.value)[1] || "结束时间" }}</view>
         </picker>
       </view>
@@ -73,13 +75,14 @@
             <text class="remove" @tap="removeImage(index, imageIndex)">移除</text>
           </view>
         </view>
-        <button size="mini" :loading="uploadingIndex === index" @tap="chooseImages(index)">上传图片</button>
+        <button size="mini" :disabled="disabled || uploadingIndex >= 0" :loading="uploadingIndex === index" @tap="chooseImages(index)">上传图片</button>
         <text class="hint">最多 {{ uploadLimit(item) }} 张，图片存入私有 R2。</text>
       </view>
 
       <input
         v-else
         class="field"
+        :disabled="disabled"
         :value="stringValue(item.value)"
         :placeholder="item.tipConfig?.value || '请输入'"
         @input="setValue(index, eventValue($event))"
@@ -89,17 +92,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch, onUnmounted } from "vue";
 import { apiSupplierImageUpload } from "@/api/supplierApplication";
 import type { SystemFormComponent } from "@/types/systemForm";
 
-const props = defineProps<{ modelValue: SystemFormComponent[]; title?: string }>();
-const emit = defineEmits<{ (event: "update:modelValue", value: SystemFormComponent[]): void }>();
+const props = defineProps<{ modelValue: SystemFormComponent[]; title?: string; disabled?: boolean }>();
+const emit = defineEmits<{ (event: "update:modelValue", value: SystemFormComponent[]): void; (event: "pending", value: number): void }>();
 const uploadingIndex = ref(-1);
+let generation = 0, active = true;
+watch(() => props.disabled, (disabled) => { if (disabled) { generation++; uploadingIndex.value = -1; emit("pending", 0); } });
+onUnmounted(() => { active = false; generation++; emit("pending", 0); });
 
 type UniValueEvent = { detail?: { value?: unknown } };
 
 function update(index: number, value: unknown) {
+  if (!active || props.disabled) return;
   emit("update:modelValue", props.modelValue.map((item, itemIndex) => (
     itemIndex === index ? { ...item, value } : item
   )));
@@ -145,8 +152,10 @@ function setTimePart(index: number, part: number, value: unknown) {
 async function chooseImages(index: number) {
   const current = arrayValue(props.modelValue[index]?.value);
   const remaining = uploadLimit(props.modelValue[index]) - current.length;
-  if (remaining <= 0 || uploadingIndex.value >= 0) return;
-  let paths: string[];
+  if (remaining <= 0 || uploadingIndex.value >= 0 || props.disabled) return;
+  const revision = ++generation;
+  uploadingIndex.value = index;
+  emit("pending", 1); // The native chooser itself is pending too, not only the network upload.
   try {
     const selected = await new Promise<{ tempFilePaths: string[] }>((resolve, reject) => uni.chooseImage({
       count: remaining,
@@ -154,20 +163,19 @@ async function chooseImages(index: number) {
       success: (result) => resolve({ tempFilePaths: Array.isArray(result.tempFilePaths) ? result.tempFilePaths : [result.tempFilePaths] }),
       fail: reject,
     }));
-    paths = selected.tempFilePaths;
-  } catch {
-    return;
-  }
-  uploadingIndex.value = index;
-  try {
+    if (!active || revision !== generation || props.disabled) return;
     const uploaded = [...current];
-    for (const path of paths) uploaded.push((await apiSupplierImageUpload(path)).url);
+    for (const path of selected.tempFilePaths) {
+      const result = await apiSupplierImageUpload(path);
+      if (!active || revision !== generation || props.disabled) return;
+      uploaded.push(result.url);
+    }
     update(index, uploaded);
     uni.showToast({ title: "图片已上传", icon: "success" });
   } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "图片上传失败", icon: "none" });
+    if (active && revision === generation) uni.showToast({ title: error instanceof Error ? error.message : "图片选择或上传失败", icon: "none" });
   } finally {
-    uploadingIndex.value = -1;
+    if (active && revision === generation) { uploadingIndex.value = -1; emit("pending", 0); }
   }
 }
 function removeImage(index: number, imageIndex: number) {

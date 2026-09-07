@@ -28,7 +28,7 @@ export const useCartStore = defineStore("cart", {
   actions: {
     async fetchList(): Promise<void> {
       try {
-        const list = await http.get<CartItem[]>("/cart/list", undefined, { noAuth: false });
+        const list = await http.get<CartItem[]>("/cart/list", { scope: "cart" }, { noAuth: false });
         // 保留已选中状态 (按 id 合并 checked, 避免跳转后选中丢失)
         const prevChecked = new Set(this.items.filter((i) => i.checked).map((i) => i.id));
         this.items = list.map((item) => ({ ...item, checked: prevChecked.has(item.id) }));
@@ -39,7 +39,7 @@ export const useCartStore = defineStore("cart", {
 
     async fetchCount(): Promise<void> {
       try {
-        const { count } = await http.get<{ count: number }>("/cart/count");
+        const { count } = await http.get<{ count: number }>("/cart/count", { scope: "cart" });
         this.count = count;
       } catch {
         // ignore

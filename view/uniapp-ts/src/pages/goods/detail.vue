@@ -134,9 +134,9 @@
             </view>
           </view>
 
-          <view class="sheet-btn" @tap="confirmSku">
-            {{ skuMode === "buy" ? "立即购买" : "加入购物车" }}
-          </view>
+          <button class="sheet-btn" :disabled="buying" :loading="buying" @tap="confirmSku">
+            {{ buying ? "处理中…" : skuMode === "buy" ? "立即购买" : "加入购物车" }}
+          </button>
         </view>
       </view>
 
@@ -198,18 +198,8 @@ import {
 import { apiReplyConfig, apiReplyList } from "@/api/reply";
 import type { ProductReviewListItem } from "@/api/reply";
 import { useAuthStore } from "@/stores/auth";
-import type { GoodsDetail } from "@/types/product";
+import type { GoodsDetail, GoodsSku as SkuItem } from "@/types/product";
 import type { DiscountPackage, DiscountPackageProduct } from "@/types/order";
-
-interface SkuItem {
-  id: number;
-  unique: string;
-  suk: string;
-  price: string;
-  ot_price: string;
-  stock: number;
-  sales: number;
-}
 
 const detail = ref<GoodsDetail | null>(null);
 const authStore = useAuthStore();
@@ -241,9 +231,11 @@ const skuMode = ref<"cart" | "buy">("cart");
 const skuList = ref<SkuItem[]>([]);
 const selectedSku = ref<SkuItem | null>(null);
 const num = ref(1);
+const buying = ref(false);
 const maxNum = computed(() => selectedSku.value?.stock ?? 99);
 
 function openSku(mode: "cart" | "buy") {
+  if (buying.value) return;
   if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
   skuMode.value = mode;
   num.value = 1;
@@ -251,24 +243,27 @@ function openSku(mode: "cart" | "buy") {
 }
 
 function pickSku(sku: SkuItem) {
-  if (sku.stock <= 0) return;
+  if (buying.value || sku.stock <= 0) return;
   selectedSku.value = sku;
 }
 
 async function confirmSku() {
-  if (!detail.value) return;
+  if (!detail.value || buying.value) return;
   if (!selectedSku.value) return uni.showToast({ title: "请选择规格", icon: "none" });
   const sku = selectedSku.value;
-  if (sku.stock < num.value) return uni.showToast({ title: "库存不足", icon: "none" });
+  if (!Number.isSafeInteger(num.value) || num.value < 1 || num.value > Math.min(sku.stock, detail.value.stock, 32767)) return uni.showToast({ title: "数量无效或库存不足", icon: "none" });
 
+  buying.value = true;
+  const mode = skuMode.value;
   try {
     const cart = await apiCartAdd({
       productId: detail.value.id,
       unique: sku.unique,
       cartNum: num.value,
+      new: mode === "buy" ? 1 : 0,
     });
     skuVisible.value = false;
-    if (skuMode.value === "buy") {
+    if (mode === "buy") {
       // 立即购买 → 确认订单页 (buy 模式, 仅结算当前加购的商品)
       uni.navigateTo({
         url: `/pages/order/confirm?mode=buy&cartId=${cart.id}&from=sku`,
@@ -278,7 +273,7 @@ async function confirmSku() {
     }
   } catch (e) {
     uni.showToast({ title: e instanceof Error ? e.message : "操作失败", icon: "none" });
-  }
+  } finally { buying.value = false; }
 }
 
 function isRequiredPackageEntry(entry: DiscountPackageProduct): boolean {
@@ -380,26 +375,8 @@ onLoad(async (options) => {
     detail.value = goods;
     discountPackages.value = packages;
     loadReplies(id);
-    // 初始化 SKU 列表: 优先 attr_value, 兜底单规格
-    const attrValue = (detail.value as any).attr_value as SkuItem[] | undefined;
-    if (attrValue?.length) {
-      skuList.value = attrValue;
-      const first = attrValue.find((s) => s.stock > 0) ?? attrValue[0];
-      if (first) selectedSku.value = first;
-    } else {
-      skuList.value = [
-        {
-          id: 0,
-          unique: `sku${String(id).padStart(5, "0")}`,
-          suk: "默认",
-          price: String((detail.value as any).price ?? 0),
-          ot_price: String((detail.value as any).ot_price ?? 0),
-          stock: Number((detail.value as any).stock ?? 0),
-          sales: 0,
-        },
-      ];
-      selectedSku.value = skuList.value[0];
-    }
+    skuList.value = goods.skus;
+    selectedSku.value = goods.skus.find((sku) => sku.stock > 0) ?? null;
   } catch (e) {
     console.error("商品详情加载失败", e);
   }
