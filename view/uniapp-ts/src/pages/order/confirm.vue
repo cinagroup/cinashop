@@ -92,6 +92,7 @@
       <button class="submit-btn" :disabled="!canSubmit" :loading="submitting" @tap="submit">{{ pending?.orderId ? '查看订单' : pending ? '重试确认订单' : '提交订单' }}</button>
     </view>
   </view>
+  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">
