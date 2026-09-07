@@ -5735,6 +5735,18 @@ CUA应用内浏览器实际验证详情在320/390/768/1024/1280×844下clientWid
 
 新增6项结构/夹具回归，使用锁中已有PostCSS解析样式，防止重新隐藏导航/搜索、重复搜索提交入口、恢复固定窄屏画廊或用overflow-x隐藏缺陷；这些仅是结构门禁。连同上批详情10项和PC合同6项共3文件22项通过（6.27秒），Worker单元类型检查、PC类型/生产构建通过（1829模块，11.00秒）。既有VueUse PURE注释构建告警保留，无依赖或工作流变更。临时窗口覆盖已恢复、浏览器标签关闭、两个自建服务停止并确认5218/5219无监听；未操作用户其他进程。本项等待精确提交的Linux和发布后复验，FE-002整体、B/C/D、DB-009G、真实角色/provider及交易门禁均保持开放。
 
+### FE-002D：精确提交Linux复核（2026-09-07）
+
+`69067f23f119e08415d949183ce4c7bc3b6d0a95`的[Actions34072256820](https://github.com/cinagroup/cinashop/actions/runs/34072256820) attempt 1最终11/11成功，未重跑。两片实际129/128文件、847/811项，共257文件1658项、0跳过；共同清单摘要18ba37cdb1d8dc2a860c1f6a5b99f9b18212550923000beab0f5a858a1780f9b，执行文件摘要分别534be15c3d6adeea0f24fcab6d1175eba536cb011e7cee2c3f64272231bf66d5、67e21047c3bb056a59a9e9aa53d73c2f28e8a9b3ea1c5d6b1945e0f586fc4972。两片均确认原生分区完整且互不重叠、实际执行清单与分区一致；新增响应式6项在第二片23ms通过，详情合同10项在第一片13ms通过。
+
+两片任务703/554秒，隔离PostgreSQL目录任务264秒，PC构建45秒；五端构建、workerd、密钥扫描及汇总门禁均成功。本次只核验目录任务成功，不声称重新下载比较完整目录工件或测量DB-009G索引。更新D为候选通过Linux，仍因真实角色、搭配购弹窗、发布与上线复验未完成而不勾选；FE-002整体和B/C/E、DB-009G仍开放。根MIGRATION_SCHEMA_AUDIT.json与冻结ORM目录基线无变化，生产数据库及部署未操作。
+
+### FE-002E：下一项交易链路源端证据（仅审计，未实施）
+
+等待69067f2的Linux检查期间，只读核对`cinashop-php/view/PC/pages/goods_detail/_id/index.vue`：attrSelected监听在582–587行根据用户所选属性组合取得productValue，并同步stock/unique；buy在723–743行提交productId/cartNum/new/uniqueId，立即购买分支用返回cartId导航到order_confirm。旧`pages/order_confirm.vue`473行继续把new标记送到/order/confirm。新`view/pc-ts/src/pages/goods/GoodsDetail.vue`312行仍以商品ID拼接unique，321行buyNow只是提示后调用普通加购；`src/api/cart.ts`普通apiCartAdd参数没有new标记，只有套餐接口显式传new:1。新Checkout的170–179行只从常规cartStore.items过滤directCartIds，尚未证明独立即买购物车能由该常规读取返回，空/非法ID又会回落到checkedItems。故新增独立未完成FE-002E，要求贯通规格选择、真实unique、正确创建/读取合同和确认页失败关闭，不以单一跳转冒充迁移完成。本批未修改这段交易实现，也未调用真实购物车或订单接口。
+
+源端文件SHA-256分别为`view/PC/pages/goods_detail/_id/index.vue`的1AAC380500A5E470803623968F2DCC33C6DE9C29C688EFF5DC64C94327E2D3C0及`view/PC/pages/order_confirm.vue`的5635DD8324AB0FEAB5D7DEED5232C788977F828D793C477DA5E0D7D19A4C2DC8，绑定本次只读证据；尚未审查当前Worker购物车实现，不将前端发现扩展为已经验证的服务端缺陷。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
