@@ -55,7 +55,9 @@ describe("PC coupon wallet and selection contracts", () => {
     expect(checkout).toContain("couponId: activityOptions.value.type === 0 ? selectedCouponId.value : 0");
     expect(checkout).toContain("watch(quoteOptions"); expect(checkout).toContain("...quoteOptions.value,");
     expect(checkout).toContain("couponDiscount === '0.00'");
-    expect(checkout).toContain('if (pendingSubmission.value || !couponState.value.list.some');
+    expect(checkout).toContain('if (pendingSubmission.value || couponState.value.loading');
+    expect(checkout).toContain('couponState.value.fingerprint !== couponContext.value.scope?.fingerprint');
+    expect(checkout).toContain('!couponState.value.list.some');
     expect(checkout).not.toContain("couponPrice:");
     const page = readFileSync("../view/pc-ts/src/pages/user/CouponList.vue", "utf8");
     expect(page).not.toContain("as any"); expect(page).toContain('name="3"'); expect(page).toContain("state.error");

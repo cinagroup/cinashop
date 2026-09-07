@@ -16,6 +16,12 @@ import type {
 import type { SystemFormComponent, SystemFormInfo } from "@/types/systemForm";
 import type { CartItem } from "@/types/order";
 import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "./checkoutQuote";
+import { normalizeOrderCouponPage, orderCouponRequest, type OrderCouponScope } from "./orderCoupons";
+
+export async function apiOrderCoupons(scope: OrderCouponScope, before?: number) {
+  const response = await request.get("/coupons/order/0", { params: orderCouponRequest(scope, before) });
+  return normalizeOrderCouponPage(response.data.data, response.headers["x-coupon-next-cursor"], before);
+}
 
 export async function apiOrderConfirm(items: CartItem[], options: CheckoutQuoteOptions) {
   const response = await getData<unknown>(request.post("/order/confirm", { cartIds: items.map((item) => item.id), ...options }));

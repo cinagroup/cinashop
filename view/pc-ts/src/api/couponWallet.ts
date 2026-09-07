@@ -9,6 +9,9 @@ export interface OwnedCoupon {
   validity: string;
   availability: "available" | "future" | "used" | "expired" | "invalid" | "reserved";
   message: string;
+  /** Present only for an order-specific server preview, never a client-calculated total. */
+  estimatedDiscount?: string;
+  eligibleSubtotal?: string;
 }
 export interface CouponPage { list: OwnedCoupon[]; nextCursor: number | null }
 

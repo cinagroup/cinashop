@@ -4,6 +4,7 @@
       <div class="coupon-benefit"><strong>{{ coupon.benefit }}</strong><span>{{ coupon.minimum === '0.00' ? '无门槛' : `适用商品满 ¥${coupon.minimum}` }}</span></div>
       <div class="coupon-detail">
         <strong>{{ coupon.title }}</strong><span>{{ coupon.scope }}</span><small>{{ coupon.validity }}</small><small>{{ coupon.message }}</small>
+        <small v-if="coupon.estimatedDiscount !== undefined">当前适用商品 ¥{{ coupon.eligibleSubtotal }} · 预计抵扣 ¥{{ coupon.estimatedDiscount }}</small>
         <button v-if="selectable" type="button" :aria-pressed="selectedId === coupon.id" :disabled="disabled || coupon.availability !== 'available'" @click="$emit('select', coupon.id)">
           {{ selectedId === coupon.id ? '已选择' : '选择' }}：{{ coupon.title }}
         </button>
