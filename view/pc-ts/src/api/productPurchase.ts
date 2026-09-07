@@ -31,17 +31,4 @@ export function productCartInput(detail: GoodsDetail, unique: string, quantity: 
   return { productId: detail.id, unique: sku.unique, cartNum: quantity, new: direct ? 1 as const : 0 as const };
 }
 
-export type CheckoutSelection = { mode: "cart" } | { mode: "buy"; ids: number[] };
-export function parseCheckoutSelection(query: Record<string, unknown>): CheckoutSelection {
-  const raw = query.cartIds ?? query.cartId;
-  if (query.mode === undefined && raw === undefined) return { mode: "cart" };
-  if (query.mode !== "buy" || typeof raw !== "string" || raw.length > 1600 || !/^[1-9]\d*(?:,[1-9]\d*)*$/.test(raw)) {
-    throw new Error("立即购买商品参数无效，请返回商品页重新选择");
-  }
-  if (query.cartIds !== undefined && query.cartId !== undefined) throw new Error("立即购买参数重复");
-  const ids = raw.split(",").map(Number);
-  if (ids.length > 100 || ids.some((id) => !Number.isSafeInteger(id)) || new Set(ids).size !== ids.length) {
-    throw new Error("立即购买商品参数无效");
-  }
-  return { mode: "buy", ids };
-}
+export { parseCheckoutSelection, type CheckoutSelection } from "../../../common/checkoutSelection";

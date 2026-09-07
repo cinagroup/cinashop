@@ -10,12 +10,15 @@ const UID_KEY = "uni_uid";
 interface AuthState {
   token: string;
   uid: number;
+  /** In-memory epoch separates logins even when uid/token strings are reused. */
+  sessionVersion: number;
 }
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
     token: uni.getStorageSync(TOKEN_KEY) || "",
     uid: Number(uni.getStorageSync(UID_KEY)) || 0,
+    sessionVersion: 0,
   }),
 
   getters: {
@@ -24,6 +27,7 @@ export const useAuthStore = defineStore("auth", {
 
   actions: {
     setLogin(token: string, uid: number): void {
+      this.sessionVersion++;
       this.token = token;
       this.uid = uid;
       uni.setStorageSync(TOKEN_KEY, token);
@@ -31,6 +35,7 @@ export const useAuthStore = defineStore("auth", {
     },
 
     clear(): void {
+      this.sessionVersion++;
       this.token = "";
       this.uid = 0;
       uni.removeStorageSync(TOKEN_KEY);

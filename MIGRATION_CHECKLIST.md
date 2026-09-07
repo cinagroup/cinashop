@@ -14,9 +14,9 @@
 | PHP HTTP 合同 | 精确匹配 880/1,904；可执行 862；其中 18 条明确不可用、17 条有证据退役 | 精确注册 46.2%，可执行 45.3%，退役后有效覆盖 45.7% |
 | 旧站历史数据复制 | `deploymentMode=fresh_system`；`data_migration_run/checkpoint=0/0` | 不适用；空迁移账本符合部署口径 |
 | 新系统运营数据 | 商品/订单/明细/售后为 71/29/28/3；客服账号/会话 0/0，描述/访问/分类关系 0/0/0 | 上线初始化与真实角色验收未完成 |
-| Worker 单元测试 | `d33bccd`的Linux CI两片合计267文件、1,774项全部通过，无跳过 | 134/133文件、932/842项；JSON证明实际文件与完整互斥的原生分片一致，新增订单筛券23项在专用PG16实际执行 |
-| Workers runtime | `d33bccd`的Linux workerd任务通过；既往Windows收集前 `0xc0000005`、0项执行仍保留 | 当前PC筛券前端候选另待其精确SHA完整Linux；隔离运行时不代替生产E2E |
-| CI | [Actions `34088007196`](https://github.com/cinagroup/cinashop/actions/runs/34088007196) 对 `d33bccd` 首轮11/11；五端构建及密钥扫描通过 | 两片任务440/448秒，余760/752秒，目录272秒；容量审查继续采用历史保守476秒，不保证后续增长。TEST-005及生产门禁仍开放 |
+| Worker 单元测试 | `1c1dc90`的Linux CI两片合计269文件、1,805项全部通过，无跳过 | 135/134文件、957/848项；JSON证明实际文件与完整互斥的原生分片一致，新增PC筛券26+5项实际执行 |
+| Workers runtime | `1c1dc90`的Linux workerd任务通过（39秒）；既往Windows收集前 `0xc0000005`、0项执行仍保留 | UniApp共用结算契约候选另待其精确SHA完整Linux；隔离运行时不代替生产E2E |
+| CI | [Actions `34090658553`](https://github.com/cinagroup/cinashop/actions/runs/34090658553) 对 `1c1dc90` 首轮11/11；五端构建及密钥扫描通过 | 两片任务723/445秒，余477/755秒，目录268秒；容量审查继续采用历史保守476秒，不保证后续增长。TEST-005及生产门禁仍开放 |
 | 主 Worker 发布 | 已记录生产版本为 `9f1fd655-e60f-41c1-8280-738bc85d73ef`，本轮未重查 | 本轮未发布当前代码 |
 | Pages 发布 | 已记录Admin/H5来源为 `48297d2`；PC来源为空；无Supplier/Kefu项目，本轮未重查 | 本轮未发布当前代码 |
 
@@ -437,6 +437,8 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
   - [ ] **FE-003J 真机矩阵**：在真实H5、微信开发者工具/真机及App容器逐项验证路由、登录、分享、支付、扫码、上传和平台条件分支。
   - [ ] **FE-003K 真实账号、数据与发布观察**：使用客户、门店核销员及受限角色完成生产历史链接、Provider回调和越权E2E；另行批准后发布并观察。
   - [ ] **FE-003L UniApp完整结算金额、筛券与冻结幂等**：2026-09-07复查confirm.vue仍以goodsTotal减客户端局部couponDiscount/首单金额生成totalPay，未接confirm/computed完整费用链；钱包未分页就当可用券、过滤失败直接变空，85折扣值仍按/10并封顶1计算且弹层/钱包固定¥金额。每次submit生成新的uni_Date.now/random key，未知响应重试存在重复建单意图风险；buy模式还从普通cartStore找目标而非严格new=1读取，非法目标可能回落。必须一起接完整服务端报价、正确类型/时间/范围及最后扫描游标、购买范围/登录状态隔离、错误与空态区分、固定key/payload重试及表单/上传门禁；以H5隔离真实控制器/SQL和三端条件编译验证后，再由J/K验真机与真实交易。不能只换筛券URI或套用PC通过结果。
+    - **共用契约前置增量（2026-09-07，本地候选，未接页面）**：PC的纯quote/券页/分页状态机与购买参数解析提取到view/common，保留原PC导出入口；新增UniApp checkoutApi对严格buy/普通已选行、confirm/computed和订单筛券做边界校验，不发送客户端金额/支付方式。uni.request增加独立getResponse保留大小写归一响应头；原get/post等仍返回data，错误保留status/data/httpStatus；登录会话版本防止旧请求成功/过期响应污染新登录。新增20项实际请求模块/适配合同和4项真实控制器/隔离SQL测试通过，相关18文件179项、Worker最终双类型、PC构建、UniApp三端构建通过。**confirm.vue仍未接新API，现有本地计价和随机key问题未修复，不能勾选FE-003L，也不能将未进入页面产物的新模块当三端运行时验收。**
+    - **购买入口必须同步修复**：goods/detail的立即购买、seckillDetail、bargainDetail、activity/detail及user/integral加购没有new=1；只有套餐apiDiscountCartAdd显式new=1。普通无scope cart/list确实包含两类行，不能把现状描述为服务端默认只返回new=0。严格buy接线须同步所有入口，保留普通加购new=0，不能先改确认页导致全部旧入口失效。商品页还伪造sku加ID，秒杀/砍价/拼团固定sku00001；需按实际SKU/活动合同修复，不能凭猜测替换。待完成还包括真实Pinia生命周期、H5浏览器全链、离页/刷新意图恢复、表单上传门禁、活动报价及真机/provider。
 - [ ] **FE-004 Supplier 对账**：旧端共 41 个 `pages/**/*.vue` 文件，但只有 19 个不同的可导航业务屏幕（20 条 route record，其中账单页重复注册）；其余为 16 个内嵌组件和 7 个未路由/错误脚手架。新端当前为 18 个页面组件、19 条屏幕 route record，不再使用“41→13”失真页数衡量覆盖。19 个旧屏幕中 17 个已有候选覆盖、2 个为部分替代、0 个整屏可执行缺口；逐屏证据和 12 项 granular checklist 固化在 `workers-ts/audit/supplier-frontend-parity.json`。浏览器 API 已同源 `/supplierapi`，Pages Function/Vite proxy 已接入，但正式 Supplier Pages 项目、`WORKERS_API` 映射和部署仍未验收。
   - [x] **FE-004A 页面/能力盘点**：逐项映射 19 个旧业务屏幕、16 个旧内嵌组件、18 个新页面和 19 条新屏幕路由；区分候选覆盖、整合替代、缺失与外部门禁。
   - [x] **FE-004B 订单/财务导出与 Queue 历史入口**：新端已接四个有界 manifest 和两条租户内只读历史合同；订单/发货单、批任务与财务只导出显式勾选行，物流目录保持只读下载，浏览器 CSV 二次中和公式/NUL并清理文件名。旧全局 Queue 重跑、停止、删除入口未恢复。

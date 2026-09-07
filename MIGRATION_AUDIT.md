@@ -5923,6 +5923,24 @@ PC确认页现调用`/coupons/order/0`，只发送当前已验证cartId/new、�
 
 本批仅改变PC与测试/审计记录；PostgreSQL技能约束有界扫描及真实隔离数据验收，没有新索引或生产性能结论。路由、模型/DDL、冻结ORM/根JSON、依赖/工作流未变，未访问生产数据库、调用provider或发布Worker/Pages。仍待本批精确SHA完整Linux；UniApp整链、促销overlay/具体范围展示、跨刷新意图恢复、并发、真实账号/设备/provider及生产验收继续开放。
 
+### FE-002E-C：PC订单筛券精确Linux验收（2026-09-07）
+
+`1c1dc9007fba892dd585dd4986f79f8f7fe0e9fc`的[Actions34090658553](https://github.com/cinagroup/cinashop/actions/runs/34090658553)首轮最终11/11成功。两片269文件1,805项、零跳过；第一片135文件957项、任务723秒（06:24:09→06:36:12UTC），第二片134文件848项、任务445秒（06:24:38→06:32:03UTC）。20分钟任务上限余477/755秒，历史保守476秒继续保留，不把耗时波动或通过结果等同TEST-005 allocator根因修复。
+
+共同inventorySha256=`f0a7aa68532a3ef997954182b6bca2e8f7de55abb2d22602a99b677d353163f3`；第一片executedFileSha256=`04d49b10ba74534912e12dd728556bc5349d2e69fbd7a64dc2ba67962162ca52`，第二片=`ec0186007332af118a5972504c3138feb47f12d62275af0d3eaef2ff6122300d`。两份JSON均证明原生分片完整互斥且实际执行文件完全匹配。新增PC订单筛券26项在第一片15ms通过、5项控制器/专用PG16用例582ms通过。workerd39秒、目录268秒、PC37秒、UniApp70秒、Admin53秒、Supplier45秒、Kefu27秒、密钥10秒与汇总3秒均成功。本节关闭该SHA“待Linux”证据状态，不关闭FE-002E-C或发布门禁。
+
+### FE-003L：共用结算契约与UniApp请求边界（2026-09-07，本地候选，页面未接线）
+
+本轮先补迁移整链需要的传输边界：PC checkoutQuote/couponWallet/orderCoupons纯模块移至view/common，PC原路径保留重导出；购买参数解析也共用，禁止非法buy目标退回普通购物车。新增validateCheckoutItems要求选中ID精确齐全、无重复、所有权由真实服务验证、new模式一致且行有效，普通购物车仅提取明确已选ID，不默默丢掉失效选中行。新createCheckoutApi/UniApp checkoutApi读取scope=buy+ids或scope=cart；confirm/computed只发送显式白名单选项，接收同一完整商品/地址/key/费用快照，隔离输入在途变化，不发送客户端金额或payType。筛券保留最后扫描游标，允许空适用页继续，而非钱包游标假设。
+
+UniApp旧请求层仅返回data、错误只保留status，原本会丢掉X-Coupon-Next-Cursor与ORDER_FORM_REJECTED的key/data。现新增可选getResponse，大小写归一响应头且拒绝歧义重复；旧get/post/put/delete接口返回data不变。成功同时要求HTTP 2xx与业务status200；RequestError保留status/data/httpStatus，运输失败仍无业务status。auth增加内存sessionVersion，setLogin/clear每次递增；在成功、失败及自动登出之前验证原会话，不允许旧token或同uid/token的新会话被迟到成功/过期响应覆盖。checkoutApi另外要求有效登录并绑定调用身份。没有扩展第三方请求目标、凭据或付款行为。
+
+新增20项合同/实际uni.request包装模块测试与4项真实OrderController/OrderCouponController/SQL测试，专项2文件24项最终通过（5.97秒），相关18文件179项通过（12.26秒），零跳过。测试执行生产request/checkout适配器代码，替换原生uni.request、导航与认证store；不是断言源码存在方法，也不是实际Pinia、平台条件预处理或浏览器运行证明。真实隔离fixture严格区分new1行1与new0行2，错模式/外部用户不能读取；八五折适用18.00、预计2.70，完整报价21.00→折扣18.30→现金16.00，另一地址加积分23.50；24个门槛不足样本导致空页cursor104再得到42/41；数量改变、报价KV过期均拒绝。订单、库存、积分与账单快照不变，只写隔离确认KV；未挂载建单或支付路由。
+
+PC实际Axios/Pinia10项、vue-tsc与Vite生产构建通过（1845模块，8.98秒，保留既有VueUse PURE注释告警）；UniApp typecheck和H5/MP-WEIXIN/APP三端构建通过，APP保留旧confirm动态引入request与静态引入并存的告警。新增SQL桥接最初直接对Hono Response|Promise<Response>调用then，测试能运行但Worker类型失败；改为Promise.resolve统一后专项24项和Worker两套TypeScript配置最终均通过，不弱化类型声明。本轮没有更改渲染页面，也没有复跑浏览器：前端测试技能据此要求后续真正页面接线再做完整交互/截图，而不能用构建冒充UI通过。特别是checkoutApi还未被confirm引用，因此三端构建**不证明新共用报价/券模块已进入移动端产物或兼容所有真机运行时**。
+
+进一步审计发现严格new=1不能单独接进confirm：goods/detail的普通立即购买以及秒杀、砍价、拼团、积分五类入口没有传new=1，只有套餐已明确传1；当前后端无scope的cart/list没有new过滤，现状是混合集合而非仅new0。商品详情还在缺SKU时拼出sku+ID，三个活动入口固定sku00001。后续必须从真实SKU及活动合同修复入口，保留普通加购new0，再接quote/筛券/表单上传门禁/冻结key和payload/离页刷新恢复；不能通过严格读取把既有购买入口全部变成报错来宣称完成。confirm仍为旧本地计价和每次随机key，FE-003L及钱包、活动、真实Pinia/浏览器/设备/provider门禁全部开放。清单204勾选/145开放/349项不变；本轮没有业务路由、SQL/DDL、依赖、工作流、生产数据库或部署变更，候选待自身精确SHA Linux。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
