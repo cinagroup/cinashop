@@ -44,10 +44,8 @@ export function apiCouponReceive(id: number): Promise<{ couponUserId: number }> 
   return getData(request.post<{ couponUserId: number }>("/coupon/receive", { id }));
 }
 
-/** 我的优惠券 (GET /api/coupons/user/:types) */
-export function apiMyCoupons(types = 0): Promise<unknown[]> {
-  return getData(request.get<unknown[]>(`/coupons/user/${types}`));
-}
+/** Keep one normalized user-coupon contract for both API entry points. */
+export { apiMyCoupons } from "./user";
 
 /** 秒杀时间段 (GET /api/seckill/index) */
 export function apiSeckillIndex(): Promise<unknown[]> {

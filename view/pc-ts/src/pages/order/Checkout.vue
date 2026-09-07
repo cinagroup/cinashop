@@ -110,6 +110,22 @@
       <el-checkbox v-if="checkoutItems.length && checkoutItems.every(item => item.type === 0)" v-model="useIntegral">使用积分抵扣（可用额度由系统计算）</el-checkbox>
     </section>
 
+    <section class="section" aria-label="结算优惠券">
+      <h3 class="section-title">优惠券</h3>
+      <p v-if="activityOptions.type !== 0">当前活动订单不叠加普通优惠券。</p>
+      <template v-else>
+        <p>以下为已领取的未使用券，范围和门槛会在选择后由服务端重新校验；首单优惠优先且不与优惠券叠加。</p>
+        <el-button :disabled="!!pendingSubmission" @click="selectedCouponId = 0">不使用优惠券</el-button>
+        <el-button :disabled="couponState.loading || !!pendingSubmission" @click="refreshCoupons">刷新优惠券</el-button>
+        <p v-if="couponState.loading" role="status">正在加载优惠券…</p>
+        <el-alert v-if="couponState.error" :title="couponState.error" type="error" :closable="false" show-icon />
+        <CouponCards :coupons="couponState.list" selectable :selected-id="selectedCouponId" :disabled="!!pendingSubmission" @select="selectCoupon" />
+        <p v-if="!couponState.loading && !couponState.error && !couponState.list.length">暂无未使用优惠券</p>
+        <el-button v-if="couponState.nextCursor" :disabled="couponState.loading || !!pendingSubmission" @click="couponWallet.load(0, true)">加载更多优惠券</el-button>
+        <el-alert v-if="selectedCouponId && quoteReady && quoteState.result?.prices.couponDiscount === '0.00'" title="所选优惠券本次未产生抵扣，请核对首单互斥及费用明细，也可取消或重选。" type="warning" :closable="false" show-icon />
+      </template>
+    </section>
+
     <SystemFormFields
       v-if="customForm.length"
       :key="formRevision"
@@ -198,6 +214,9 @@ import type { SystemFormComponent } from "@/types/systemForm";
 import SystemFormFields from "@/components/SystemFormFields.vue";
 import { prepareOrderSystemFormSubmission } from "../../../../common/order-system-form";
 import { canEditRejectedOrder } from "@/utils/apiError";
+import { apiMyCoupons } from "@/api/user";
+import { CouponWalletSession, type CouponWalletState } from "@/api/couponWallet";
+import CouponCards from "@/components/CouponCards.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -231,6 +250,9 @@ const orderKey = ref("");
 const addressError = ref("");
 const storeError = ref("");
 const useIntegral = ref(false);
+const selectedCouponId = ref(0);
+const couponState = shallowRef<CouponWalletState>({ list: [], nextCursor: null, loading: false, error: "" });
+const couponWallet = new CouponWalletSession(apiMyCoupons, (next) => { couponState.value = next; });
 const savingAddress = ref(false);
 const submissionError = ref("");
 const submissionUncertain = ref(false);
@@ -246,7 +268,7 @@ const quoteOptions = computed<CheckoutQuoteOptions>(() => ({
   addressId: shippingType.value === 1 ? selectedAddrId.value : 0,
   shippingType: shippingType.value,
   storeId: shippingType.value === 2 ? selectedStoreId.value : 0,
-  couponId: 0,
+  couponId: activityOptions.value.type === 0 ? selectedCouponId.value : 0,
   useIntegral: useIntegral.value,
 }));
 const deliveryError = computed(() => checkoutLoading.value || selectionError.value ? "" : shippingType.value === 1
@@ -260,6 +282,16 @@ const quoteReady = computed(() => !checkoutLoading.value && !selectionError.valu
 const displayItems = computed(() => quoteReady.value ? quoteState.value.result!.items : checkoutItems.value);
 const canSubmit = computed(() => quoteReady.value && !systemFormError.value && !formValidationError.value
   && pendingUploads.value === 0 && !submitting.value && !savingAddress.value);
+
+function selectCoupon(id: number) {
+  if (pendingSubmission.value || !couponState.value.list.some((coupon) => coupon.id === id && coupon.availability === "available")) return;
+  selectedCouponId.value = id;
+}
+function refreshCoupons() {
+  if (pendingSubmission.value) return;
+  selectedCouponId.value = 0;
+  void couponWallet.load(0);
+}
 
 async function reloadQuote() {
   if (pendingSubmission.value) return;
@@ -445,6 +477,8 @@ async function loadCheckout() {
   systemFormError.value = "";
   showAddressDialog.value = false;
   useIntegral.value = false;
+  selectedCouponId.value = 0;
+  couponWallet.reset();
   customForm.value = [];
   orderKey.value = "";
   try {
@@ -474,6 +508,7 @@ async function loadCheckout() {
       activity[name] = Number(value);
     }
     activityOptions.value = activity;
+    if (type === 0) void couponWallet.load(0);
     selectedItems.value = rows;
     loadedRoute.value = route.fullPath;
     shippingType.value = rows.some((item) => item.productInfo?.productType === 4) ? 2 : 1;
@@ -486,7 +521,7 @@ async function loadCheckout() {
 }
 watch(quoteOptions, () => { void reloadQuote(); }, { flush: "sync" });
 watch(() => route.fullPath, loadCheckout, { immediate: true, flush: "sync" });
-onUnmounted(() => { checkoutGeneration++; quoteSession.reset(); });
+onUnmounted(() => { checkoutGeneration++; quoteSession.reset(); couponWallet.reset(); });
 </script>
 
 <style scoped>

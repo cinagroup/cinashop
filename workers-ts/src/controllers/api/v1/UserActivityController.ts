@@ -9,6 +9,7 @@ import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibil
 import { UserCollectCompatibilityService } from "@/services/user/UserCollectCompatibilityService";
 import { ActivityService } from "@/services/activity/ActivityService";
 import { V2CouponCompatibilityService } from "@/services/activity/V2CouponCompatibilityService";
+import { UserCouponWalletService, couponWalletQuery } from "@/services/activity/UserCouponWalletService";
 import { StoreDiscountService } from "@/services/activity/StoreDiscountService";
 import type { AppVariables, Env } from "@/env";
 
@@ -417,11 +418,13 @@ export async function couponReceive(c: C) {
 }
 
 export async function myCoupons(c: C) {
+  privateNoStore(c);
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const q = c.req.query("status");
-  const svc = new ActivityService(c.get("container"));
-  return jsonOk(c, await svc.myCoupons(uid, q !== undefined ? Number(q) : undefined));
+  const options = couponWalletQuery(c.req.param("types"), c.req.query());
+  const result = await new UserCouponWalletService(c.get("container")).list(uid, options);
+  c.header("X-Coupon-Next-Cursor", result.nextCursor === null ? "" : String(result.nextCursor));
+  return jsonOk(c, result.list);
 }
 
 // ─── 营销活动: 秒杀/拼团/砍价/积分 ─────────────────────────
