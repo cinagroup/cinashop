@@ -62,6 +62,90 @@ function delayed() {
 }
 
 describe("actual Axios + storage + Pinia auth-session isolation", { concurrency: false }, () => {
+  const walletRow = (change = {}) => ({ id: 60, coupon_title: '九折品类券', coupon_price: '90.00', use_min_price: '10.00', coupon_type: 2, applicable_type: 1,
+    start_time: null, end_time: null, availability: 'available', availability_message: '可使用', rule: '第一行\n<script>literal only</script>', rule_truncated: true, ...change });
+  const counts = { not_used: 3, used: 1, expired: 2, reserved: 1 };
+  const walletResponse = (config, list = [walletRow()], cursor, quantity = counts) => ({ ...response(config, { status: 200, data: list }),
+    headers: { ...(cursor ? { 'x-coupon-next-cursor': cursor } : {}), ...(quantity === undefined ? {} : { 'x-coupon-counts': JSON.stringify(quantity) }) } });
+  it('reads filtered wallet counts and literal rules through actual Axios, requesting counts only on refresh', async () => {
+    const { apiMyCoupons } = await server.ssrLoadModule('/src/api/user.ts');
+    const calls = [];
+    api.defaults.adapter = async config => { calls.push(config); return walletResponse(config); };
+    for (const filter of [null, -1, 0, 1, 2, 3]) {
+      const page = await apiMyCoupons(0, undefined, filter);
+      assert.deepEqual(calls.at(-1).params, { limit: 20, include_counts: 1, ...(filter !== null ? { type: filter } : {}) });
+      assert.deepEqual(page.counts, counts); assert.equal(page.list[0].benefit, '9折');
+      assert.equal(page.list[0].rule, '第一行\n<script>literal only</script>'); assert.equal(page.list[0].ruleTruncated, true);
+    }
+    await apiMyCoupons(3, 70, 0); assert.equal(calls.at(-1).url, '/coupons/user/3'); assert.deepEqual(calls.at(-1).params, { limit: 20, before: 70, type: 0 });
+  });
+  it('rejects invalid wallet inputs before I/O and malformed counts without inventing zero counts', async () => {
+    const { apiMyCoupons } = await server.ssrLoadModule('/src/api/user.ts'); let calls = 0;
+    api.defaults.adapter = async config => { calls++; return { ...response(config, { status: 200, data: [] }), headers: {} }; };
+    for (const args of [[4], ['0'], [NaN], [0, 0], [0, -1], [0, 1.5], [0, undefined, 4], [0, undefined, '1']]) await assert.rejects(apiMyCoupons(...args));
+    assert.equal(calls, 0); assert.equal((await apiMyCoupons()).counts, undefined);
+    for (const header of ['oops', '{}', JSON.stringify({ ...counts, used: -1 }), 'x'.repeat(513), 3]) {
+      api.defaults.adapter = async config => ({ ...response(config, { status: 200, data: [] }), headers: { 'x-coupon-counts': header } });
+      await assert.rejects(apiMyCoupons());
+    }
+    authUtils.clearAuth(); const previous = calls; await assert.rejects(apiMyCoupons(), /请先登录/); assert.equal(calls, previous);
+  });
+  it('preserves wallet counts and exact cursor on append failure but closes details and blocks stale actions', async () => {
+    const { createCouponWalletView } = await server.ssrLoadModule('/src/composables/couponWalletView.ts');
+    const view = createCouponWalletView(url => navigation.push(url)); const cursors = []; let fail = true;
+    api.defaults.adapter = async config => {
+      cursors.push(config.params.before);
+      if (config.params.before && fail) { fail = false; throw new Error('offline'); }
+      return { ...response(config, { status: 200, data: [walletRow({ id: config.params.before ? 59 : 60 })] }),
+        headers: config.params.before ? {} : { 'x-coupon-next-cursor': '60', 'x-coupon-counts': JSON.stringify(counts) } };
+    };
+    try {
+      await view.load(); view.openDetail(60); assert.equal(view.detail.value.id, 60);
+      await view.load(true); assert.equal(view.detail.value, null); assert.match(view.state.value.error, /offline/); assert.deepEqual(view.state.value.counts, counts);
+      view.openDetail(60); view.browse(60); assert.equal(view.detail.value, null); assert.deepEqual(navigation, []);
+      await view.load(true); assert.deepEqual(cursors, [undefined, 60, 60]); assert.deepEqual(view.state.value.list.map(c => c.id), [60, 59]); assert.deepEqual(view.state.value.counts, counts);
+      view.browse(59); assert.deepEqual(navigation, ['/user/coupon/59/products']);
+      view.openDetail(60); api.defaults.adapter = async () => { throw new Error('refresh failed'); }; await view.load();
+      assert.equal(view.detail.value, null); assert.deepEqual(view.state.value.list, []); assert.equal(view.state.value.counts, undefined);
+    } finally { view.dispose(); }
+  });
+  it('switches wallet filter and status with fresh counts, discarding late prior-filter success and failure', async () => {
+    const { createCouponWalletView } = await server.ssrLoadModule('/src/composables/couponWalletView.ts');
+    const view = createCouponWalletView(url => navigation.push(url));
+    try {
+      const old = delayed(), first = view.load(); await old.started;
+      api.defaults.adapter = async config => { assert.equal(config.params.type, 3); assert.equal(config.params.before, undefined); return walletResponse(config, [walletRow({ id: 61, applicable_type: 3 })], undefined, { ...counts, not_used: 1 }); };
+      await view.switchFilter(3); old.success({ status: 200, data: [walletRow()] }); await first;
+      assert.deepEqual(view.state.value.list.map(c => c.id), [61]); assert.equal(view.state.value.counts.not_used, 1);
+      view.openDetail(61); const pending = delayed(), refresh = view.load(); await pending.started;
+      assert.equal(view.detail.value, null); assert.equal(view.state.value.counts, undefined);
+      api.defaults.adapter = async config => { assert.equal(config.url, '/coupons/user/3'); assert.equal(config.params.type, 3); return walletResponse(config, [walletRow({ availability: 'reserved' })]); };
+      await view.switchTab(3); pending.fail(new Error('old transport error')); await refresh;
+      assert.equal(view.state.value.error, ''); assert.equal(view.state.value.list[0].availability, 'reserved');
+    } finally { view.dispose(); }
+  });
+  it('removes wallet rows, counts and rules across identical-token session renewals and disposal', async () => {
+    const { createCouponWalletView } = await server.ssrLoadModule('/src/composables/couponWalletView.ts');
+    const view = createCouponWalletView(url => navigation.push(url));
+    api.defaults.adapter = async config => walletResponse(config); await view.load(); view.openDetail(60);
+    authUtils.clearAuth(); assert.equal(view.blocked.value, true); assert.equal(view.detail.value, null);
+    authUtils.setAuth('session-a', 11); await view.load(); assert.equal(view.blocked.value, false); view.openDetail(60); assert.equal(view.detail.value.id, 60);
+    authUtils.setAuth('session-a', 11); assert.deepEqual(view.state.value.list, []); assert.equal(view.state.value.counts, undefined); assert.equal(view.detail.value, null);
+    const pending = delayed(), refresh = view.load(); await pending.started; view.dispose();
+    pending.success({ status: 200, data: [walletRow()] }); await refresh;
+    assert.deepEqual(view.state.value.list, []); assert.equal(view.detail.value, null); view.browse(60); assert.deepEqual(navigation, []);
+    api.defaults.adapter = async () => { throw new Error('disposed view must not request'); }; await view.load();
+  });
+  it('shows rules for unavailable coupons without letting them navigate or silently changing invalid filters', async () => {
+    const { createCouponWalletView } = await server.ssrLoadModule('/src/composables/couponWalletView.ts');
+    const view = createCouponWalletView(url => navigation.push(url)); let calls = 0;
+    api.defaults.adapter = async config => { calls++; return walletResponse(config, ['future', 'used', 'expired', 'invalid', 'reserved'].map((availability, i) => walletRow({ id: 60 - i, availability }))); };
+    try {
+      await view.load(); for (const coupon of view.state.value.list) { view.openDetail(coupon.id); assert.equal(view.detail.value.id, coupon.id); view.browse(coupon.id); }
+      assert.deepEqual(navigation, []); const count = calls; await view.switchTab(4); await view.switchFilter(4); assert.equal(calls, count);
+      view.closeDetail(); assert.equal(view.detail.value, null); view.openDetail(999); assert.equal(view.detail.value, null);
+    } finally { view.dispose(); }
+  });
   it("loads scope products through actual Axios and retries an empty scan at the same cursor", async () => {
     const { createCouponProductsView } = await server.ssrLoadModule("/src/composables/couponProductsView.ts");
     const view = createCouponProductsView(url => navigation.push(url));

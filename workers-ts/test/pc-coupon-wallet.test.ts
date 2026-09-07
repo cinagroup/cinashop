@@ -6,6 +6,15 @@ import { normalizeCouponPage, CouponWalletSession, type CouponWalletState, type 
 const row = { id: 42, coupon_title: "八五折", coupon_price: "85.00", use_min_price: "10.00", coupon_type: 2, applicable_type: 3,
   start_time: "2026-09-06T16:00:00.000Z", end_time: null, availability: "available", availability_message: "未使用" };
 describe("PC coupon wallet and selection contracts", () => {
+  it("wires filtered counts and literal rule details without changing order-picker card actions", () => {
+    const page = readFileSync("../view/pc-ts/src/pages/user/CouponList.vue", "utf8");
+    for (const field of ["not_used", "used", "expired", "reserved"]) expect(page).toContain(`state.counts?.${field}`);
+    expect(page).toContain('value: -1, name: "24小时内到期"'); expect(page).toContain('value: 3, name: "品牌券"');
+    expect(page).toContain("{{ detail.rule ||"); expect(page).toContain("detail.ruleTruncated"); expect(page).not.toContain("v-html");
+    expect(page).toContain('inspectable :disabled="blocked"'); expect(page).toContain('@inspect="openDetail"');
+    const cards = readFileSync("../view/pc-ts/src/components/CouponCards.vue", "utf8");
+    expect(cards).toContain('v-if="inspectable"'); expect(cards).toContain('v-if="selectable"'); expect(cards).toContain("$emit('select', coupon.id)");
+  });
   it("honours path status, retains the existing query override and bounds pagination", () => {
     expect(couponWalletQuery("2", {})).toEqual({ status: 2, limit: 20, before: 0, page: 1, filter: null });
     expect(couponWalletQuery("0", { status: "1", before: "88", limit: "10" })).toEqual({ status: 1, limit: 10, before: 88, page: 1, filter: null });

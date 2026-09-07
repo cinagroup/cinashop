@@ -6071,6 +6071,26 @@ UI明确区分“本批未匹配，继续扫描”和“已无后续商品”，
 
 最终浏览器夹具状态再次核对：重启后的单次详情读取visits=1/productLogs=1，orders=0/bills=0/captured=[]，库存8、积分100；仅隔离访问统计发生预期写入，临时监听与标签页在验收后关闭。
 
+### e40fe07导航登记及SKU修复精确Linux验收（2026-09-07）
+
+精确SHA `e40fe07b89a72d0a4e8f079e53b21cd1394cfaa2`的[Actions34105686239](https://github.com/cinagroup/cinashop/actions/runs/34105686239)最终11/11成功。两片101690038235/101690038234各137文件、962/882项，总274文件1,844项、0跳过，耗时597.50/511.57秒；共同inventorySha256=`e75a30e562c09f6b0a7db469c0a137228e7d94eab8d49e41e69f27757e1720ef`，executedFileSha256分别`b1a50d019f75407cd5c2f1348084091e33c9e04f082104ec6f4edfa11076553f`、`b698e31be90fdcd6f1c1c16f80ff9c435c92739f20b4b66e5e10b070ef843aad`，两片nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true。新增SKU真实SQL项在第一片371ms通过，原失败uniapp-frontend-parity六项在第二片14ms通过；五端、workerd、专用PG16目录、密钥扫描及汇总成功。没有重跑4af0638，其失败记录保留；S3按代码/Linux完成勾选，S2只关闭接线本批待Linux，不关闭完整展示和生产门禁。新PC钱包候选不能借此SHA验收。
+
+### FE-003L-S4：PC钱包数量、筛选和规则详情（2026-09-07，本地候选）
+
+审查旧PC `view/PC/pages/user/myCoupon.vue`（SHA-256 `9909B8EC216F86BC62B8589E154CFBA59A6C28C9D4339BCB9A44BE0F537247F7`），源页按pc_type分两组、展示现金/折扣及范围，没有本次四状态/数量/规则交互。因此本批是本项目已列跨端功能合同的补齐，不谎称逐像素恢复旧PC。目标此前仅四状态卡片，无数量、类型筛选或规则详情；现在继续使用已验收的GET /coupons/user/:types及现有共享CouponWalletSession/normalizer，不引入第二套优惠计算或订单选券API。
+
+apiMyCoupons新增严格状态/正游标/六值filter参数、请求前后身份快照，首刷include_counts=1，续页只发before；解析至多512字符的数量头，四项非负安全整数严格校验，缺头保留undefined而非假造0，异常响应失败。PC视图四类数量明确按当前筛选统计，全部/24小时内到期/通用/品类/商品/品牌六入口；规则详情含标题、金额/折扣、门槛、范围、有效期、状态、换行文本、缺规则说明与截断提示，Vue插值而非v-html。通用CouponCards仅新增可选inspectable按钮/事件，Checkout未启用该按钮、原select行为保留。
+
+独立couponWalletView沿用请求代次：刷新清空旧行/数量，续页失败保留精确游标/旧数量但禁用卡片动作，重试不追加重复；切状态/筛选、任意加载、身份变化和离页关闭详情，迟到成功/失败不回填。失效/未来/占用券可查规则不可浏览；有效券只导航持有券ID范围页，不领取、预占、下单或支付。审查补充了blocked computed必须始终订阅state的处理，避免storage-backed auth短路后再登录无法解禁，并有退出→登录→刷新恢复测试。
+
+新增6项PC实际Axios/Vue/Pinia测试，既有13项保留，19/19零跳过：六筛选与数量头、规则原文/截断、非法参数无I/O、缺失/坏数量、精确游标故障重试、刷新清空、迟到筛选响应、会话续签/退出重登/离页、不可用券及虚构ID禁止浏览。新增1项Worker页面接线/纯文本/订单卡片保留断言；旧pc-order-coupon测试仍假设钱包Session内联于页面，迁至视图后更新为验证页面→视图→apiMyCoupons且不调用apiOrderCoupons，所有原订单报价/冻结/建单断言保留，未删失败测试。相关6文件66项8.01秒、双Worker类型通过；PC最终19项/类型/1,852模块构建通过7.96秒。开发期两个模板回调隐式any已改为显式类型处理函数；既有VueUse PURE构建告警未变化。无新依赖/锁文件/工作流、公共HTTP路由/DDL或UniApp文件变化。
+
+前端测试技能指导实际浏览器验收：已授权CUA内置浏览器，未列独立Browser skill、未安装替代浏览器；`http://127.0.0.1:5177/user/coupon`只代理一次性loopback5229 PGlite真实Controller/Service与合成登录。1280×900和390×844核对URL/标题/非空/无框架遮罩、布局和规则弹窗；全部数量31/1/2/1→品类1/0/0/0→临期5/0/0/0→品牌1/0/0/0。规则中的`<script>alert(1)</script>`只是文本，DOM无规则script节点、white-space=pre-wrap。品牌详情“浏览券范围商品”到正确/user/coupon/61/products空扫描页；钱包分页故障保留20卡与数量且按钮全禁用，同一before104重试得到31卡并无后页。另施加5秒品类延迟后立即切品牌，检查最终仍为品牌数据。截图证明两端规则弹窗可读和关闭，不冒称真实设备、角色或生产验收。
+
+本批浏览器仅钱包/范围读取，隔离终态orders=0/bills=0/captured=[]/visits=0/productLogs=0，SKU库存8和积分100保持，无访问生产或部署。S4待自身精确SHA Linux；S3凭上一精确Linux勾选后，新增S4使清单206勾选/147开放/353项。完整范围名称/层级、搜索排序、促销/活动、真机、真实角色/provider及发布门禁继续开放，历史数据复制仍N/A。
+
+PC最终代码重载后再次核对品类数量与规则弹窗，390px文档宽度等于视口、无规则script节点；本次浏览器控制台error/warn均为空。临时服务器、浏览器标签与视口覆盖在验收后清理，未保留生产连接。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

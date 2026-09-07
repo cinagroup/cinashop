@@ -90,6 +90,10 @@ describe("PC order coupon scope lifecycle", () => {
     expect(checkout).toContain('v-if="!pendingSubmission && couponContext.scope');
     expect(checkout).toContain("提交内容已锁定，确认结果前不能更换优惠券");
     expect(checkout).toContain("selectedCouponId.value = 0"); expect(checkout).toContain("await apiOrderCreate(orderKey.value, pendingSubmission.value!)");
-    expect(readFileSync("../view/pc-ts/src/pages/user/CouponList.vue", "utf8")).toContain("new CouponWalletSession(apiMyCoupons");
+    expect(readFileSync("../view/pc-ts/src/pages/user/CouponList.vue", "utf8")).toContain("createCouponWalletView");
+    const wallet = readFileSync("../view/pc-ts/src/composables/couponWalletView.ts", "utf8");
+    expect(wallet).toContain("new CouponWalletSession");
+    expect(wallet).toContain("apiMyCoupons(status, before, activeFilter.value)");
+    expect(wallet).not.toContain("apiOrderCoupons");
   });
 });
