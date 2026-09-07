@@ -51,6 +51,17 @@ describe("seckill schedule admission on disposable SQL", () => {
   const create = (nextOrderId = async () => "local_schedule_order") =>
     StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, nextOrderId }, params);
 
+  it.each(["claimed", "once-limit", "child-quota", "parent-disabled"])(
+    "refuses quantity edits for %s without writes", async target => {
+      if (target === "claimed") await f.db.update(storeCart).set({ isPay: 1 });
+      if (target === "once-limit") await f.db.update(storeSeckill).set({ onceNum: 1 });
+      if (target === "child-quota") await f.db.update(storeSeckill).set({ quota: 1 });
+      if (target === "parent-disabled") await f.db.update(storeActivity).set({ status: 0 });
+      const before = await snapshot();
+      await expect(new StoreCartService(f.container).setNum(11, 1, 3)).rejects.toThrow();
+      expect(await snapshot()).toEqual(before);
+    });
+
   it("loads bounded schedule fields and locks them inside the actual SQL transaction without writes", async () => {
     const before = await snapshot();
     const unlocked = await loadSeckillSchedule(f.db, 20);
@@ -59,6 +70,89 @@ describe("seckill schedule admission on disposable SQL", () => {
     expect(Object.keys(locked.child).sort()).toEqual(["id", "activityId", "productId", "status", "isShow", "isDel", "timeId", "startTime", "stopTime"].sort());
     expect(locked.slots.map(slot => slot.id)).toEqual([4, 8]);
     expect(await snapshot()).toEqual(before);
+  });
+  it.each([0, -1, 1.5, NaN, Infinity, 32768])("rejects invalid quantity %s without writes", async quantity => {
+    const before = await snapshot();
+    await expect(new StoreCartService(f.container).setNum(11, 1, quantity)).rejects.toThrow();
+    expect(await snapshot()).toEqual(before);
+  });
+  it.each(["other-owner", "deleted", "inactive", "staff", "tourist", "store", "product-hidden", "product-unapproved",
+    "product-stock", "base-stock", "activity-stock", "activity-quota", "child-stock", "zero-once", "zero-total",
+    "base-retired", "activity-retired", "wrong-product", "missing-child", "empty-sku"])(
+    "rejects quantity change for %s without touching business state", async target => {
+      if (target === "other-owner") await f.db.update(storeCart).set({ uid: 12 });
+      if (target === "deleted") await f.db.update(storeCart).set({ isDel: 1 });
+      if (target === "inactive") await f.db.update(storeCart).set({ status: 0 });
+      if (target === "staff") await f.db.update(storeCart).set({ staffId: 9 });
+      if (target === "tourist") await f.db.update(storeCart).set({ touristUid: "isolated" });
+      if (target === "store") await f.db.update(storeCart).set({ storeId: 9 });
+      if (target === "product-hidden") await f.db.update(storeProduct).set({ isShow: 0 });
+      if (target === "product-unapproved") await f.db.update(storeProduct).set({ isVerify: 0 });
+      if (target === "product-stock") await f.db.update(storeProduct).set({ stock: 1 });
+      if (target === "base-stock") await f.db.update(storeProductAttrValue).set({ stock: 1 }).where(eq(storeProductAttrValue.id, 1));
+      if (target === "activity-stock") await f.db.update(storeProductAttrValue).set({ stock: 1 }).where(eq(storeProductAttrValue.id, 2));
+      if (target === "activity-quota") await f.db.update(storeProductAttrValue).set({ quota: 1 }).where(eq(storeProductAttrValue.id, 2));
+      if (target === "child-stock") await f.db.update(storeSeckill).set({ stock: 1 });
+      if (target === "zero-once") await f.db.update(storeSeckill).set({ onceNum: 0 });
+      if (target === "zero-total") await f.db.update(storeSeckill).set({ num: 0 });
+      if (target === "base-retired") await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.id, 1));
+      if (target === "activity-retired") await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.id, 2));
+      if (target === "wrong-product") await f.db.update(storeSeckill).set({ productId: 99 });
+      if (target === "missing-child") await f.db.delete(storeSeckill);
+      if (target === "empty-sku") await f.db.update(storeCart).set({ productAttrUnique: "" });
+      const before = await snapshot();
+      await expect(new StoreCartService(f.container).setNum(11, 1, 3)).rejects.toThrow();
+      expect(await snapshot()).toEqual(before);
+    });
+  it.each(["qared001", "qatime01"])("changes quantity with %s identity without reserving inventory", async unique => {
+    await f.db.update(storeCart).set({ productAttrUnique: unique });
+    const before = await snapshot();
+    await new StoreCartService(f.container).setNum(11, 1, 3);
+    expect(await snapshot()).toEqual({ ...before, carts: before.carts.map(cart => ({ ...cart, cartNum: 3 })) });
+  });
+  it.each([
+    { paid: 1, isDel: 0, pid: 0, counted: true },
+    { paid: 1, isDel: 1, pid: -1, counted: true },
+    { paid: 0, isDel: 0, pid: -1, counted: true },
+    { paid: 0, isDel: 1, pid: 0, counted: false },
+    { paid: 1, isDel: 0, pid: 99, counted: false },
+  ])("uses PHP cumulative purchase scope $paid/$isDel/$pid", async ({ counted, ...order }) => {
+    await f.db.insert(storeOrder).values({ ...order, uid: 11, orderId: "isolated_prior", type: 1, activityId: 20, totalNum: 8 });
+    const before = await snapshot(), change = new StoreCartService(f.container).setNum(11, 1, 3);
+    if (counted) { await expect(change).rejects.toThrow("累计限购"); expect(await snapshot()).toEqual(before); }
+    else { await change; expect(await snapshot()).toEqual({ ...before, carts: before.carts.map(cart => ({ ...cart, cartNum: 3 })) }); }
+  });
+  it("rejects quantity editing after real order creation and preserves its inventory and snapshots", async () => {
+    await create();
+    const before = await snapshot();
+    await expect(new StoreCartService(f.container).setNum(11, 1, 3)).rejects.toThrow("已下单");
+    expect(await snapshot()).toEqual(before);
+  });
+  it("invalidates in-flight order pricing after a successful quantity edit", async () => {
+    let before: Awaited<ReturnType<typeof snapshot>> | undefined;
+    await expect(create(async () => {
+      await new StoreCartService(f.container).setNum(11, 1, 3);
+      before = await snapshot();
+      return "isolated_stale_quantity";
+    })).rejects.toThrow(/已变化|被占用/);
+    expect(await snapshot()).toEqual(before);
+    await create();
+    expect((await snapshot()).orders[0]).toMatchObject({ totalNum: 3, payPrice: "18.75" });
+  });
+  it("refuses a quantity write when the database clock has passed the checked window", async () => {
+    const current = Math.floor(Date.now() / 1000) * 1000 + 123;
+    await f.db.update(storeSeckill).set({ stopTime: new Date(current - 10_000) });
+    const before = await snapshot();
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(current - 60_000);
+    const realAssert = schedulePolicy.assertSeckillSchedule;
+    let evaluations = 0;
+    vi.spyOn(schedulePolicy, "assertSeckillSchedule").mockImplementation((...args) => {
+      const result = realAssert(...args);
+      if (++evaluations === 2) vi.useRealTimers();
+      return result;
+    });
+    await expect(new StoreCartService(f.container).setNum(11, 1, 3)).rejects.toThrow("时段已结束");
+    expect(evaluations).toBe(2); expect(await snapshot()).toEqual(before);
   });
   it.each(["parent-disabled", "parent-deleted", "parent-missing", "parent-wrong-type", "parent-future", "parent-ended",
     "child-future", "child-ended", "slots-disabled", "slots-missing", "slots-disjoint", "slots-invalid", "slots-overnight", "clock-outside"])(
@@ -83,6 +177,7 @@ describe("seckill schedule admission on disposable SQL", () => {
       const before = await snapshot(), allocate = vi.fn(async () => "must_not_allocate");
       const cart = new StoreCartService(f.container);
       await expect(cart.add(cartParams)).rejects.toThrow();
+      await expect(cart.setNum(11, 1, 3)).rejects.toThrow();
       await expect(cart.list(11, { mode: "buy", ids: [1] })).rejects.toThrow("已失效");
       expect(await cart.list(11)).toMatchObject([{ id: 1, isValid: false }]);
       await expect(quote()).rejects.toThrow(); await expect(create(allocate)).rejects.toThrow();

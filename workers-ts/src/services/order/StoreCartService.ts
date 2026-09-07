@@ -6,6 +6,7 @@
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
+import { setSeckillCartQuantity } from "@/services/activity/SeckillCartQuantityService";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
@@ -1247,11 +1248,14 @@ export class StoreCartService {
 
   /** 修改数量 (对应 PHP StoreCart::setCartNum) */
   async setNum(uid: number, id: number, cartNum: number): Promise<void> {
-    if (cartNum <= 0) throw new ValidateException("数量必须大于 0");
+    if (!Number.isSafeInteger(cartNum) || cartNum <= 0 || cartNum > 32767) {
+      throw new ValidateException("数量必须为 1 至 32767 的整数");
+    }
     const cart = await this.container.storeCartDao.get(id);
     if (!cart || cart.uid !== uid || cart.isDel) {
       throw new NotFoundException("购物车项不存在");
     }
+    if (cart.type === 1) return setSeckillCartQuantity(this.container, uid, id, cartNum);
     if ([5, 7].includes(cart.type) && cartNum !== 1) {
       throw new ValidateException(cart.type === 5 ? "套餐商品每项限购一件" : "新人专享商品限购一件");
     }
