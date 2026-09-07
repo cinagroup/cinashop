@@ -6,6 +6,7 @@ import { prepareCouponScope } from "./OrderCouponService";
 import { calculateCouponEligibleSubtotalCents, parseCouponScopeIds, reconcileCouponProductScopeIds } from "./ProductCouponService";
 import { projectOwnedCoupon } from "./UserCouponWalletService";
 import { describeCouponScope } from "./CouponScopeDescriptionService";
+import { couponScopeSearchQuery, searchCouponScope } from "./CouponScopeSearch";
 
 export function couponScopeProductsQuery(id: string | undefined, query: Record<string, string | undefined>) {
   if (query.view !== undefined && query.view !== "scope") throw new ValidateException("优惠券商品视图无效");
@@ -24,6 +25,12 @@ export function couponScopeProductsQuery(id: string | undefined, query: Record<s
 /** Scope membership only: never a spendable quote, reservation or auto-applied coupon. */
 export class CouponScopeProductsService {
   constructor(private readonly container: Container) {}
+
+  async search(uid: number, id: string | undefined, query: Record<string, string | undefined>) {
+    const input = couponScopeSearchQuery(id, query);
+    const { owned, current, issue } = await this.owned(uid, input);
+    return searchCouponScope(this.container, uid, !!current.isMoneyLevel, issue, owned.coupon.couponTitle, input);
+  }
 
   private async owned(uid: number, query: ReturnType<typeof couponScopeProductsQuery>) {
     if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("请先登录");

@@ -6115,6 +6115,24 @@ Cloudflare技能指导沿用请求内container/Hyperdrive，不新增连接、�
 
 本批所有浏览器业务读取均在一次性库，最终orders=0/bills=0/captured=[]/visits=0/productLogs=0，库存8、积分100不变；不访问生产、做DDL或部署。S5待自己的精确Linux；S2搜索/排序与稀疏目录体验、真实设备、角色/provider及正式发布仍开放。S4验收后新增S5，当前207勾选/147开放/354项；HTTP路由与旧151页差异分母均未改，历史数据迁移仍N/A。
 
+### 1fa8a44范围总览精确Linux验收（2026-09-07）
+
+精确SHA `1fa8a44dd77a6d8ab8d11637a14ecaf5dc8543e7` 的 [Actions34113516414](https://github.com/cinagroup/cinashop/actions/runs/34113516414)最终11/11通过。分片101714916664/101714916565各137文件、967/882项，合计274文件1,849项、零跳过，耗时590.04/518.31秒。共同inventorySha256=`e75a30e562c09f6b0a7db469c0a137228e7d94eab8d49e41e69f27757e1720ef`，executedFileSha256分别`b1a50d019f75407cd5c2f1348084091e33c9e04f082104ec6f4edfa11076553f`、`b698e31be90fdcd6f1c1c16f80ff9c435c92739f20b4b66e5e10b070ef843aad`；两片nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true。五端构建、Linux workerd、专用PG16目录、密钥扫描及汇总成功，S5按代码/Linux勾选。Windows此前原生启动失败保留，不扩大为线上失败，也不借上一SHA验收新搜索候选。
+
+### FE-003L-S6：券范围名称搜索、全局排序与有界扫描后端（2026-09-07，本地候选）
+
+旧UniApp `view/uniapp/pages/goods/goods_list/index.vue` 14/205行支持名称keyword，243～246行综合/好评/新品，以及478～483行价格/销量双向排序。目标范围页此前只按ID逐页扫20行，缺搜索排序且目录稀疏时需要连续空页。本批先补权威后端，不把当前页客户端排序冒充全目录排序，未更改两端页面或声明新的浏览器交互验收。
+
+现有GET `/api/coupons/user/:id/products`增加`view=search`；`keyword`最多100字符、去两端空格、大小写不敏感名称字面量子串，转义LIKE的百分号/下划线/反斜杠且所有输入SQL参数化。`sort`严格七值：recommended=`sort DESC,id DESC`，rating=`star DESC,sort DESC,id DESC`，newest=`id DESC`，price_asc/price_desc和sales_asc/sales_desc均补`id DESC`稳定同值键。价格保留numeric字符串比较，销量沿用旧目录的sales+ficti但先转bigint避免整数溢出，不等同实际销售数量。limit为1～100，默认20；拒绝page/before混用。缺view及view=scope旧合同保持，路由注册计数不变。
+
+游标为有界规范base64url JSON，存储完整排序键和最后实际检查ID，不依赖锚点商品仍存在；SHA-256摘要绑定UID、持有券ID、模板、标题、VIP、keyword、sort、范围类型与排序后的配置集合。同数量配置替换也拒绝旧游标。它不是签名授权令牌或事务快照：每次仍校验owner/可用性、公共目录和当前VIP可见性；伪造位置只能改变扫描起点，不能扩大访问范围。商品目录价格/排序在跨请求间变化仍可能造成重复或遗漏，未来两端应提示刷新，不承诺动态目录的快照完整性。
+
+每请求最多检查500候选，每批100另取1条前瞻；数据库先全局排序，应用用现有prepareCouponScope与calculateCouponEligibleSubtotalCents判断归属。商品关系范围只读一次；批内先与结算规范化商品/父ID相交，避免每行重复建立完整20,000-ID集合。沿用JSON/CSV及Number旧数字语义，例如cateId=3e0仍可通过品类祖先判断，不用不等价SQL字符串预过滤。达到limit时游标停在实际检查行，不跳过已取出而未检查的批尾。响应`scanned_count`、`scan_limit_reached`、`next_cursor`区分“本次扫描上限”和“真正耗尽”；空配置直接空结果，不扩成通用券。限制的是传入应用的候选数，不是PG引擎扫描成本；大目录LIKE与销量表达式排序的索引/查询计划仍需要代表性数据评估，本批不无依据改生产索引。
+
+新增`coupon-scope-search-postgres.test.ts`共17项真实一次性PGlite SQL测试：七种全局排序逐页穷尽/同值及重放、最大numeric金额与sales+ficti溢出边界、大小写/中文/引号/LIKE转义、父商品/3e0分类/品牌范围、605行前500无匹配仍续查、跨批填页且不跳批尾、删除锚点、同数量范围替换、用户/券/搜索/VIP变化、券撤销、伪造位置不越权、坏游标无SQL、恰好500行耗尽及只读Controller输出。相关7文件87项零跳过9.73秒，双Worker类型通过；读取前后商品/SKU/购物车/用户/券/关系/订单/账单一致，KV写为空。无新依赖、配置、DDL、生产连接或部署；本机workerd已知原生启动问题不重复碰绿，新候选待自己的Linux CI。
+
+本轮确认CUA内置浏览器连接可用、没有打开标签；未启动新UI服务器或运行新页面交互。Cloudflare/Workers技能用于检查请求内状态、Web Crypto类型与有界输出，PostgreSQL技能用于完整排序键和批查询；最新Workers类型5.20260907.1与当天npm版本相同。附加路由审计器/新系统数据口径两文件5项234ms通过，git diff检查通过。S2前端搜索适配、排序切换/迟到响应隔离、稀疏空页交互与浏览器/真机仍开放。S5勾选后新增S6，清单208勾选/147开放/355项（按任务行统计），历史数据复制继续N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
