@@ -5791,6 +5791,24 @@ PC请求层在410000/410001/410002时只将window.location.pathname写入登录�
 
 按Workers技能核对官方最佳实践、临时5.20260907.1类型和本地Wrangler schema；PostgreSQL技能用于审查隔离连接边界，未新增数据库优化或声称生产性能。FE-002E和全部347个checkbox状态保持不变；下一项仍是会话过期完整查询返回、优惠券选择、真实报价/建单与活动/并发验收。候选发布顺序必须先兼容Worker报价响应，再PC；若旧Worker缺computed详情，新PC会拒绝报价。等待精确提交Linux证据，不发布Worker/Pages，不改根MIGRATION_SCHEMA_AUDIT.json或冻结ORM目录基线。
 
+### FE-002E：下一批表单纠错、会话与优惠券源证据（仅审计）
+
+等待f982683精确Linux时继续只读检查。SystemFormFields的required只是el-form-item标记，无提交校验，uploadingIndex仅组件内部使用；Checkout.canSubmit未检查字段有效性或上传状态。服务端OrderSystemFormService会按权威模板校验必填、选择、文本子类型、日期和图片归属；quoteOrder在进入事务及loadOrderSystemFormSubmission之前即返回。因此“报价成功”不证明表单有效，本批首次提交冻结后，必填遗漏/格式错误也会保留不能就地修改的失败快照。下一批应先补提交前校验、上传/路由失效守卫与明确业务拒绝的安全纠错，不允许靠更换订单key盲目重试未知结果。当前仅合成可选文本表单捕获验收，真实拒绝后的纠错尚未通过，是完整下单及发布门禁。
+
+请求层410000/410001/410002直接clearAuth且返回地址仅pathname；相比路由守卫to.fullPath与Login.safeRedirect的同站路径约束，这里丢失search/hash。响应也未核对发出请求所用token是否仍为当前token，需用隔离延迟失败验证不会清除后来登录的新身份，并同步Pinia而不只清sessionStorage。Login中的requestedRedirect在setup时计算一次，同组件查询变化仍需覆盖；OAuth继续使用既有同站安全解析和一次性state，不新增provider动作。普通购物车勾选只在Pinia内存保存，硬导航后不能声称恢复普通购物车选择；直接购买应保留目标ID且绝不自动下单。
+
+优惠券还存在独立合同缺口：PC CouponList按0/1/2路径段调用/api/coupons/user/:types，而UserActivityController.myCoupons只读取query status后交ActivityService.myCoupons；列表服务直接返回camelCase模型，页面却用any读取coupon_price/coupon_title/start_time。下一批不能直接复用这个列表假设“可用券”：应先核对旧types语义、显式状态/字段适配及所有者限制，再把couponId送同一完整报价并以服务端商品范围/门槛决定适用性。本节为代码证据，未调用优惠券或真实账号接口，不把推断当线上复现。
+
+本次验收自建浏览器标签已关闭、视口覆盖已恢复；5218/5219确认无监听，未操作其他服务。以上发现不改变347个checkbox状态，不将本批普通商品报价候选升级为完整交易完成。
+
+### FE-002E：Linux首轮失败与旧合同断言修正（2026-09-07）
+
+代码f9826832660558b4819fc7d8ec88455c3e0f9f5e已正常推送main。[Actions34077838707](https://github.com/cinagroup/cinashop/actions/runs/34077838707) attempt1最终9/11成功，第二片单元失败且最终汇总按预期失败，不能验收为绿。准确失败为newcomer-migration.test.ts:60仍要求PC Checkout含apiFirstOrderQuote；本批已经用完整confirm/computed替代该调用，这是遗漏更新的旧接线断言，不是原生allocator或金额SQL断言失败。首轮15文件本地范围未包含newcomer，是覆盖选择遗漏；不通过添加死调用/注释来满足旧断言，也不重跑同一代码碰绿。
+
+第一片131文件860项全通过（任务716秒）；第二片130文件825项中824通过、1失败（任务544秒），后续第二片覆盖核验未执行，不声称两片均通过完整核验。新增PC报价8项在第二片17ms、实际PG16报价5项550ms通过；目录272秒、PC39秒、其他四端构建、workerd及密钥扫描均成功。第一片覆盖审计给出inventoryFiles261、inventorySha256=d5c17334965734a7338dd80fe5a4b2f046418bbe59bb888c8307a6f1bdd53658、executedFileSha256=2f7cbca31d759603edc333399b8f63c3a3f1409e0aaf4651f2359f1873ce6bfb、零跳过且其实际执行清单匹配；不把第二片未运行的审核补成通过。
+
+修正newcomer合同为验证PC完整报价confirm/computed接线、firstOrderDiscount展示、首单与券互斥标签及禁止恢复局部apiFirstOrderQuote；保留服务端旧接口、首单计算、SKU/库存、注册资格及UniApp原断言，6项测试不删减。连同本批相关测试最终16文件115项全部通过（10.10秒）。没有再改生产代码/依赖/工作流或放宽断言，重新提交后须跑全新精确SHA的完整Linux门禁；当前尚未验收该后续运行。TEST-005根因状态、347个checkbox及生产部署均不变。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -57,7 +57,12 @@ describe("newcomer catalog migration", () => {
     expect(order).toContain("preliminaryFirstOrderEligible");
     expect(routes).toContain("/order/first_order_quote");
     expect(cart).toContain("quoteFirstOrderDiscount");
-    expect(pcCheckout).toContain("apiFirstOrderQuote");
+    // PC now obtains first-order savings from the complete server quote;
+    // keep the legacy endpoint for other clients without restoring client-side totals.
+    expect(pcCheckout).toContain("confirm: apiOrderConfirm, computed: apiOrderComputed");
+    expect(pcCheckout).toContain("quoteState.result.prices.firstOrderDiscount");
+    expect(pcCheckout).toContain("首单优惠（不与优惠券叠加）");
+    expect(pcCheckout).not.toContain("apiFirstOrderQuote");
     expect(uniCheckout).toContain("couponExclusive");
   });
 
