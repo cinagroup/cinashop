@@ -32,11 +32,7 @@ import {
   storePink,
   storeBargain,
   storeBargainUser,
-  storeCouponIssue,
-  storeCouponProduct,
   storeCouponUser,
-  storeProductCategory,
-  storeBrand,
   shippingTemplates,
   shippingTemplatesRegion,
   shippingTemplatesFree,
@@ -70,12 +66,7 @@ import {
   expandShippingRegionIds,
   ShippingConfigurationError,
 } from "@/services/order/ShippingCalculator";
-import {
-  calculateCouponDiscountCents,
-  calculateCouponEligibleSubtotalCents,
-  parseCouponScopeIds,
-  reconcileCouponProductScopeIds,
-} from "@/services/activity/ProductCouponService";
+import { resolveOrderCoupon, eligibleOrderCoupons, type OrderCouponQuery, type OrderCouponPage } from "@/services/activity/OrderCouponService";
 import {
   allocateLegacyDiscountCents,
   calculateFirstOrderDiscountCents,
@@ -171,6 +162,8 @@ export function customerVisibleManualVirtualContent(order: {
 }
 
 export interface OrderPricingQuote {
+  /** Only returned to an explicit read-only order-coupon request. Never a reservation. */
+  couponPage?: OrderCouponPage;
   rawTotalCents: number;
   totalCents: number;
   payCents: number;
@@ -735,11 +728,6 @@ export async function cancelStoreOrder(
   });
 }
 
-interface CouponResolution {
-  priceCents: number;
-  row: { id: number } | null;
-}
-
 function firstOrderAccountEligible(
   account: Pick<typeof userTable.$inferSelect, "addTime" | "isFirstOrder">,
   config: FirstOrderDiscountConfig,
@@ -765,112 +753,6 @@ async function hasPaidNonNewcomerOrder(
   return rows.length > 0;
 }
 
-async function resolveOrderCoupon(
-  container: Container,
-  uid: number,
-  couponId: number | undefined,
-  orderItems: OrderItem[],
-): Promise<CouponResolution> {
-  if (!couponId) return { priceCents: 0, row: null };
-  const couponRows = await container.db
-    .select({ coupon: storeCouponUser, issue: storeCouponIssue })
-    .from(storeCouponUser)
-    .leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))
-    .where(and(eq(storeCouponUser.id, couponId), eq(storeCouponUser.uid, uid)))
-    .limit(1);
-  const coupon = couponRows[0]?.coupon;
-  const issue = couponRows[0]?.issue;
-  if (!coupon) throw new ValidateException("优惠券不存在");
-  if (!issue) throw new ValidateException("优惠券模板不存在，无法校验适用范围");
-  if (coupon.status !== 0 || coupon.isFail !== 0) {
-    throw new ValidateException("优惠券已使用或已失效");
-  }
-  const nowMs = Date.now();
-  if (coupon.startTime && coupon.startTime.getTime() > nowMs) {
-    throw new ValidateException("优惠券尚未到可用时间");
-  }
-  if (coupon.endTime && coupon.endTime.getTime() < nowMs) {
-    throw new ValidateException("优惠券已过期");
-  }
-
-  const couponProductRows = issue.couponType === 2
-    ? await container.db
-        .select({ productId: storeCouponProduct.productId })
-        .from(storeCouponProduct)
-        .where(eq(storeCouponProduct.couponId, issue.id))
-        .orderBy(storeCouponProduct.productId)
-    : [];
-  const couponProductIds = reconcileCouponProductScopeIds(
-    [issue.legacyProductIds, issue.productId],
-    couponProductRows.map((row) => row.productId),
-  );
-
-  const directCategoryIds = issue.couponType === 1
-    ? [...new Set(orderItems.flatMap(({ product }) => parseCouponScopeIds(product.cateId)))]
-    : [];
-  const categoryRows = directCategoryIds.length
-    ? await container.db
-        .select({ id: storeProductCategory.id, pid: storeProductCategory.pid, path: storeProductCategory.path })
-        .from(storeProductCategory)
-        .where(inArray(storeProductCategory.id, directCategoryIds))
-    : [];
-  const categoryById = new Map(categoryRows.map((row) => [row.id, row]));
-
-  const directBrandIds = issue.couponType === 3
-    ? [...new Set(orderItems.map(({ product }) => product.brandId).filter((id) => id > 0))]
-    : [];
-  const brandRows = directBrandIds.length
-    ? await container.db
-        .select({ id: storeBrand.id, pid: storeBrand.pid, fid: storeBrand.fid })
-        .from(storeBrand)
-        .where(inArray(storeBrand.id, directBrandIds))
-    : [];
-  const brandById = new Map(brandRows.map((row) => [row.id, row]));
-
-  const eligibleSubtotalCents = calculateCouponEligibleSubtotalCents({
-    scopeType: issue.couponType,
-    productIds: couponProductIds,
-    categoryIds: parseCouponScopeIds(issue.legacyCategoryId, issue.category_id),
-    brandIds: parseCouponScopeIds(issue.legacyBrandId, issue.brandId),
-    items: orderItems.map(({ cart, product, unitPriceCents }) => {
-      const categoryIds = parseCouponScopeIds(product.cateId);
-      const categoryAncestorIds = categoryIds.flatMap((id) => {
-        const category = categoryById.get(id);
-        return category ? parseCouponScopeIds(category.pid, category.path) : [];
-      });
-      const brand = brandById.get(product.brandId);
-      return {
-        productId: product.id,
-        parentProductId: product.pid || product.id,
-        categoryIds,
-        categoryAncestorIds,
-        brandId: product.brandId,
-        brandAncestorIds: brand ? parseCouponScopeIds(brand.pid, brand.fid) : [],
-        subtotalCents: unitPriceCents * cart.cartNum,
-      };
-    }),
-  });
-  if (eligibleSubtotalCents <= 0) {
-    throw new ValidateException("优惠券不适用于当前商品");
-  }
-  let useMinPriceCents: number;
-  try {
-    useMinPriceCents = decimalToCents(coupon.useMinPrice);
-  } catch {
-    throw new ValidateException("优惠券使用门槛配置无效");
-  }
-  if (eligibleSubtotalCents < useMinPriceCents) {
-    throw new ValidateException(`适用商品满 ¥${coupon.useMinPrice} 才能使用该券`);
-  }
-  return {
-    priceCents: calculateCouponDiscountCents({
-      discountType: issue.type,
-      couponPrice: coupon.couponPrice,
-      eligibleSubtotalCents,
-    }),
-    row: coupon,
-  };
-}
 
 export class StoreOrderCreateService {
   constructor(
@@ -902,6 +784,7 @@ export class StoreOrderCreateService {
   /** Read-only checkout quote that executes the same pre-transaction pricing path as createOrder. */
   async quoteOrder(
     params: Omit<CreateOrderParams, "key" | "userIp">,
+    couponQuery?: OrderCouponQuery,
   ): Promise<OrderPricingQuote> {
     return StoreOrderCreateService.createWithRuntime(
       this.container,
@@ -916,7 +799,7 @@ export class StoreOrderCreateService {
         key: `preview_${crypto.randomUUID().replaceAll("-", "")}`,
         userIp: "0.0.0.0",
       },
-      { preview: true },
+      { preview: true, couponQuery },
     );
   }
 
@@ -930,13 +813,13 @@ export class StoreOrderCreateService {
     c: Container,
     runtime: StoreOrderCreationRuntime,
     params: CreateOrderParams,
-    options: { preview: true },
+    options: { preview: true; couponQuery?: OrderCouponQuery },
   ): Promise<OrderPricingQuote>;
   static async createWithRuntime(
     c: Container,
     runtime: StoreOrderCreationRuntime,
     params: CreateOrderParams,
-    options?: { preview?: boolean },
+    options?: { preview?: boolean; couponQuery?: OrderCouponQuery },
   ): Promise<{ orderId: string; key: string } | OrderPricingQuote> {
     const { uid, key, cartIds } = params;
     const assisted = params.assisted;
@@ -981,7 +864,9 @@ export class StoreOrderCreateService {
       throw new ValidateException("配送方式只能选择快递或门店自提");
     }
     const pickupStoreId = shippingType === 2 ? Number(params.storeId ?? 0) : 0;
-    if (shippingType === 2 && (!Number.isSafeInteger(pickupStoreId) || pickupStoreId <= 0)) {
+    // Legacy coupon selection can precede choosing a pickup store. Normal quote/create still require one.
+    const couponPreview = options?.preview === true && options.couponQuery !== undefined;
+    if (shippingType === 2 && (!Number.isSafeInteger(pickupStoreId) || pickupStoreId < (couponPreview ? 0 : 1))) {
       throw new ValidateException("请选择有效的自提门店");
     }
 
@@ -1702,6 +1587,9 @@ export class StoreOrderCreateService {
     let actualProductCents = Math.max(0, payCents - postageCents);
     if (options?.preview) {
       return {
+        ...(options.couponQuery ? { couponPage: !user || preliminaryFirstOrderEligible || type !== 0
+          ? { list: [], nextCursor: null }
+          : await eligibleOrderCoupons(c, uid, orderItems, options.couponQuery) } : {}),
         rawTotalCents,
         totalCents,
         payCents,

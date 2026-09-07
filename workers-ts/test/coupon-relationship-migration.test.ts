@@ -46,6 +46,7 @@ describe("coupon relationship evidence migration", () => {
     const activity = readFileSync("src/services/activity/ActivityService.ts", "utf8");
     const grants = readFileSync("src/services/activity/ProductCouponService.ts", "utf8");
     const orders = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
+    const resolver = readFileSync("src/services/activity/OrderCouponService.ts", "utf8");
 
     expect(admin).toContain('.for("update")');
     expect(admin).toContain("tx.delete(storeCouponProduct)");
@@ -55,7 +56,9 @@ describe("coupon relationship evidence migration", () => {
     expect(admin).toContain("legacyBrandId: Number(brandId)");
     expect(activity).toContain("tx.insert(storeCouponIssueUser)");
     expect(grants).toContain("tx.insert(storeCouponIssueUser)");
-    expect(orders).toContain(".from(storeCouponProduct)");
-    expect(orders).toContain("reconcileCouponProductScopeIds");
+    expect(orders).toContain('from "@/services/activity/OrderCouponService"');
+    expect(orders).toContain("await resolveOrderCoupon(c, uid, params.couponId, orderItems)");
+    expect(resolver).toContain(".from(storeCouponProduct)");
+    expect(resolver).toContain("reconcileCouponProductScopeIds");
   });
 });

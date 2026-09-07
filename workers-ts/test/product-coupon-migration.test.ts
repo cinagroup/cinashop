@@ -95,13 +95,16 @@ describe("product coupon migration", () => {
 
   it("enforces coupon scope at order creation and grants links inside paid outbox", () => {
     const createOrder = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
+    const resolver = readFileSync("src/services/activity/OrderCouponService.ts", "utf8");
     const outbox = readFileSync("src/services/order/OrderOutboxService.ts", "utf8");
     const grants = readFileSync("src/services/activity/ProductCouponService.ts", "utf8");
     const receive = readFileSync("src/services/activity/ActivityService.ts", "utf8");
     const admin = readFileSync("src/controllers/api/v1/AdminCrudController.ts", "utf8");
-    expect(createOrder).toContain("leftJoin(storeCouponIssue");
-    expect(createOrder).toContain("calculateCouponEligibleSubtotalCents");
-    expect(createOrder).toContain("eligibleSubtotalCents < useMinPriceCents");
+    expect(createOrder).toContain('from "@/services/activity/OrderCouponService"');
+    expect(createOrder).toContain("await resolveOrderCoupon(c, uid, params.couponId, orderItems)");
+    expect(resolver).toContain("leftJoin(storeCouponIssue");
+    expect(resolver).toContain("calculateCouponEligibleSubtotalCents");
+    expect(resolver).toContain("eligibleSubtotalCents < minimum");
     expect(createOrder).not.toContain("totalCents / 100 < Number(cu[0].useMinPrice)");
     expect(outbox).toContain("grantPaidOrderProductCoupons(tx, order.id, order.uid, now)");
     expect(grants).toContain('.for("update")');

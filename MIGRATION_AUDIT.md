@@ -5875,6 +5875,30 @@ PC钱包和结算共用严格适配器/卡片，现金/折扣、门槛、有效�
 
 按Workers技能核对[官方最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)、5.20260907.1类型及本地Wrangler schema；本批只增加有界、owner绑定的读接口投影，不改兼容日期、绑定、依赖或工作流。根MIGRATION_SCHEMA_AUDIT.json、冻结ORM目录基线、模型/DDL和生产数据均不变，主Worker/Pages未发布。完整Linux仍须核验本批新提交；本地证据不升级为生产验收。
 
+### FE-002E：钱包与结算选择精确 Linux 验收（2026-09-07）
+
+提交`7e0b1750771f9e003ce3fdba79a9778fdc650346`的[Actions34086118111](https://github.com/cinagroup/cinashop/actions/runs/34086118111)最终11/11成功。两片共266文件1,751项、零跳过；第一片133文件909项（测试589.51秒、任务711秒、余489秒），第二片133文件842项（测试513.90秒、任务544秒、余656秒）。容量继续保留历史保守476秒，不将速度波动视为TEST-005原生allocator根因已解决。
+
+两片nativePartitionCompleteAndDisjoint与executedFilesMatchNativePartition均为true；共同inventorySha256=`cb6da8d4a45e27f0f7a2e7c991c6fa71c3127180424e17840e360014cb720541`，第一片executedFileSha256=`f984e5f788e079acf006e3879d8c4358dc4fb29e17c5d96b4fc06172c6418f9d`，第二片=`9fcd877f63675d93e24e0cb69104e9a1bfda23be9475047f1b890d13fe56aa10`。新增钱包16项在第一片27ms、真实控制器/专用PG16的5项在第二片853ms通过；workerd37秒、目录285秒、PC40秒，其他四端、密钥扫描和汇总均成功。本节取代钱包候选的待精确Linux状态，不关闭真实交易、订单预筛/跨端或发布门禁。
+
+### FE-002E-C：普通订单权威筛券后端（2026-09-07，本地候选）
+
+来源为旧`route/api.php:275`、`StoreCoupons::order`、`StoreCouponIssueServices::beUseable`与`StoreCouponUserServices::getUseableCouponList`。旧路径虽有`:price`，实际用本人`cartId/new`重新获取商品价格及范围，且自提筛券可以发生在选择门店前。本批实现GET `/coupons/order/:price`，保留station开关和强制登录，严格限制cartId数量/格式/唯一性、new/配送/分页；核对归属、代客/游客隔离、未付款/未删除/有效状态及同一活动类型，忽略path price，不接受客户端金额作为权威。
+
+把原建单内部优惠券解析抽为`OrderCouponService`，quote、create与筛券共用同一范围及整数分计算；范围支持商品父级、分类pid/path与品牌pid/fid祖先、编码字段与关系表一致性，现金/折扣语义不变。类型越界和缺模板失败关闭，已用/占用/失效/未来/到期及范围/门槛不符不进入适用结果。筛券只调用一次既有quote路径，按实际会员商品价计算，不对每券重跑报价；首单判定直接复用资格布尔值，即使减免为0仍不叠券，非普通活动返回空券集。仅显式coupon-preview允许自提门店暂为0，普通quote/create仍拒绝缺门店，商品配送类型限制未绕过。
+
+接口保持旧data数组及两套字段别名，补estimated_discount/eligible_subtotal供展示；响应private/no-store，不预占券。显式分页每次最多100个候选，旧无分页最多1000且超过时明确要求分页；使用limit+1和ID倒序，X-Coupon-Next-Cursor取最后扫描候选，故适用结果为空也可能有下一页。商品关系最多读取20,001条探测并在超过20,000时拒绝，商品分类输入最多10,000；范围元数据按券模板/商品ID批量读取，没有逐券范围查询。本次仅验证通用券1→100候选保持1次直接筛券查询，不冒称已取得生产EXPLAIN或端到端固定查询数；既有报价仍有逐商品加载成本。
+
+新增23项解析/接线/隔离SQL回归，覆盖归属/new、状态/时间、会员18元而非原价20元的门槛、现金/折扣与真实quote一致、分类/品牌祖先及商品父级、关系漂移、缺/非法模板、首单零减免/活动互斥、自提选择顺序、空适用页继续翻页、无分页超限与批量查询，以及购物车/券查询故障不能吞成空列表。快照证明筛券无订单、库存、积分、券状态或KV写入；测试仅用受守卫的本机PGlite或CI专用loopback PG16，没有连接生产。抽取计算器后两份旧源代码接线断言改为验证共享模块和真实create调用，保留原授券/关系/事务断言；最初的一条旧文件位置断言失败保留。类型检查也发现测试品牌fid/name与模型不符，已改为字符串fid/brandName，不通过类型断言规避。
+
+最终验证：相关34文件251项全部通过、0跳过（16.18秒），Worker unit/runtime双TypeScript配置通过。新增测试品牌夹具经两次类型检查先后纠正fid的字符串类型和brandName字段；此前34文件250项通过不是最终新增非法模板回归后的数量。Windows workerd实际尝试在收集前出现0xc0000005、3个启动错误、0项测试、退出1，另有Wrangler日志EPERM及退出等待超时；不以空测试或父提交绿色冒充本批运行时通过。未删减旧业务断言或放宽超时、并发、依赖及工作流以取得通过，本批仍待新SHA完整Linux。
+
+本次只读`npm run audit:routes`输出（2026-09-07T05:36:47Z）：PHP1,904、TS1,647、精确880、可执行862、不可用18、原始缺失1,024、退役17、可执行缺口1,007；覆盖46.2%/45.3%/45.7%。API面PHP457、TS863、精确439、可执行436、不可用3、缺失18、退役2、可执行缺口16。只新增这一条精确可执行路由，没有改旧路由authority快照；注册覆盖不代表行为等价，清单204已勾选/144开放/348总项不变。
+
+**仍未完成**：PC/UniApp尚未改用该新端点，PC现有钱包游标适配要求最后返回行等于cursor，不能直接用于这里的“最后扫描行”合同。旧type/issue_type筛选、具体范围与层级展示、UniApp折扣/分页/结算仍需分别核对。旧PHP还按促销overlay中的5决定能否叠券，新建单尚未完整接入该促销价格/互斥链；本批仅保证普通订单与当前权威报价一致，不能宣布完整旧站促销等价。并发下模板/券状态最终复核、未知建单意图跨刷新恢复、活动规格、真实身份/provider和发布后复验继续开放，FE-002E-C及父项不勾选。
+
+Workers与PostgreSQL技能用于一次权威预览、无请求级全局状态、所有者过滤和有界批量查询；按[Workers官方实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)与5.20260907.1类型核对，本批没有改配置/绑定/依赖/工作流。根MIGRATION_SCHEMA_AUDIT.json、冻结ORM证据及模型/DDL不变；无生产DML/DDL、provider请求、主Worker或Pages部署，也没有把前一批浏览器截图充当本批前端验收。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

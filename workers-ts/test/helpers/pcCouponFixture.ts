@@ -1,9 +1,10 @@
 import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
+import type { PgTable } from "drizzle-orm/pg-core";
 import { myCoupons } from "../../src/controllers/api/v1/UserActivityController";
 import { storeCouponIssue, storeCouponUser, storeCouponProduct, storeOrderCartInfo, storeOrderStatus, printDocument } from "../../src/models/schema";
 
-export async function createPcCouponFixture() {
-  const fixture = await createPcCheckoutQuoteFixture([storeCouponIssue, storeCouponUser, storeCouponProduct, storeOrderCartInfo, storeOrderStatus, printDocument]);
+export async function createPcCouponFixture(extraTables: PgTable[] = []) {
+  const fixture = await createPcCheckoutQuoteFixture([storeCouponIssue, storeCouponUser, storeCouponProduct, storeOrderCartInfo, storeOrderStatus, printDocument, ...extraTables]);
   try {
     fixture.config.first_order_status = "0";
     await fixture.db.insert(storeCouponIssue).values([
