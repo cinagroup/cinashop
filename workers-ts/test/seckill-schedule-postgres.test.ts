@@ -2,11 +2,13 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { eq } from "drizzle-orm";
 import { createPcCheckoutQuoteFixture } from "./helpers/pcCheckoutQuoteFixture";
 import { StoreCartService } from "../src/services/order/StoreCartService";
-import { StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
+import { cancelStoreOrder, StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { assertSeckillSchedule, loadSeckillSchedule } from "../src/services/activity/SeckillScheduleService";
 import * as schedulePolicy from "../src/services/activity/SeckillScheduleService";
+import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, systemStore,
-  storeCart, storeOrder, storeOrderCartInfo, storeOrderStatus, printDocument } from "../src/models/schema";
+  storeCart, storeOrder, storeOrderCartInfo, storeOrderStatus, printDocument, storeOrderRefund, storeOrderRefundPayment,
+  storeOrderInvoice, userBrokerage, user, userBill } from "../src/models/schema";
 
 /** Real cart, quote and order SQL. Only the external Sequence DO is replaced; no payment/provider. */
 describe("seckill schedule admission on disposable SQL", () => {
@@ -18,7 +20,8 @@ describe("seckill schedule admission on disposable SQL", () => {
   const cartParams = { uid: 11, productId: 70, activityId: 20, type: 1, unique: "qatime01", cartNum: 1, isNew: 1 };
   const today = () => Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
   beforeAll(async () => {
-    f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument]);
+    f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument,
+      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
     for (const key of Object.keys(f.config)) f.config[key] = "0";
     await f.db.update(systemStore).set({ isStore: 1 });
     [initialBaseSku] = await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id, 1));
@@ -26,7 +29,9 @@ describe("seckill schedule admission on disposable SQL", () => {
   }, 30_000);
   beforeEach(async () => {
     f.cache.clear(); f.writes.length = 0;
-    for (const table of [storeActivity, storeSeckillTime, storeSeckill, storeOrder, storeOrderCartInfo, storeOrderStatus, printDocument]) await f.db.delete(table);
+    for (const table of [storeActivity, storeSeckillTime, storeSeckill, storeOrder, storeOrderCartInfo, storeOrderStatus, printDocument,
+      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, userBill]) await f.db.delete(table);
+    await f.db.update(user).set({ nowMoney: "0.00", integral: 100 });
     await f.db.delete(storeCart);
     await f.db.insert(storeCart).values({ id: 1, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2,
       activityId: 20, type: 1, isNew: 1, status: 1 });
@@ -50,6 +55,89 @@ describe("seckill schedule admission on disposable SQL", () => {
   const quote = () => new StoreOrderCreateService(f.container, f.env).quoteOrder(params);
   const create = (nextOrderId = async () => "local_schedule_order") =>
     StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, nextOrderId }, params);
+  const prepareRefund = async () => {
+    await create();
+    const [order] = await f.db.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
+    await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_refund",
+      applyType: 1, refundType: 0, refundPrice: "12.50", refundNum: 2, cartInfo: JSON.stringify({ cartIds: [{ cartId: 1, cartNum: 2 }] }) });
+  };
+  const refundSnapshot = async () => ({ ...await snapshot(), refunds: await f.db.select().from(storeOrderRefund),
+    invoices: await f.db.select().from(storeOrderInvoice), brokerage: await f.db.select().from(userBrokerage) });
+
+  it.each(["parent-disabled", "child-ended", "child-missing"])("finalizes an isolated balance refund despite %s and replays without effects", async target => {
+    await prepareRefund(); // Synthetic paid state, not a real payment/provider call.
+    if (target === "parent-disabled") await f.db.update(storeActivity).set({ status: 0 });
+    if (target === "child-ended") await f.db.update(storeSeckill).set({ stopTime: new Date(Date.now() - 172_800_000) });
+    if (target === "child-missing") await f.db.delete(storeSeckill);
+    expect(await finalizeStoreOrderRefund(f.container, 1)).toBe("completed");
+    const state = await refundSnapshot();
+    expect(state.products[0]).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    if (target === "child-missing") expect(state.children).toEqual([]);
+    else expect(state.children[0]).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    expect(state.users[0].nowMoney).toBe("12.50");
+    expect(state.bills.filter(bill => bill.type === "pay_product_refund")).toHaveLength(1);
+    expect(state.refunds[0]).toMatchObject({ refundType: 6, refundedPrice: "12.50" });
+    expect(await finalizeStoreOrderRefund(f.container, 1)).toBe("already-completed");
+    expect(await refundSnapshot()).toEqual(state);
+  });
+  it("rolls back refund, balances, snapshots and all stock on a late missing activity SKU", async () => {
+    await prepareRefund();
+    await f.db.delete(storeProductAttrValue).where(eq(storeProductAttrValue.id, 2));
+    const before = await refundSnapshot();
+    await expect(finalizeStoreOrderRefund(f.container, 1)).rejects.toThrow("无法完整回退");
+    expect(await refundSnapshot()).toEqual(before);
+  });
+  it("does not restore inventory for an already dispatched seckill order refund", async () => {
+    await prepareRefund();
+    await f.db.update(storeOrder).set({ status: 1 });
+    const before = await refundSnapshot();
+    expect(await finalizeStoreOrderRefund(f.container, 1)).toBe("completed");
+    const after = await refundSnapshot();
+    expect(after.products).toEqual(before.products); expect(after.skus).toEqual(before.skus);
+    expect(after.children).toEqual(before.children); expect(after.users[0].nowMoney).toBe("12.50");
+  });
+
+  it.each(["parent-disabled", "slot-disabled", "child-ended", "parent-missing", "child-missing"])(
+    "cancels an existing order and restores stock even when %s", async target => {
+      const original = await snapshot();
+      await create();
+      if (target === "parent-disabled") await f.db.update(storeActivity).set({ status: 0 });
+      if (target === "slot-disabled") await f.db.update(storeSeckillTime).set({ status: 0 });
+      if (target === "child-ended") await f.db.update(storeSeckill).set({ stopTime: new Date(Date.now() - 172_800_000) });
+      if (target === "parent-missing") await f.db.delete(storeActivity);
+      if (target === "child-missing") await f.db.delete(storeSeckill);
+      await cancelStoreOrder(f.container, { uid: 11, orderId: "local_schedule_order" });
+      const state = await snapshot();
+      expect(state.products).toEqual(original.products); expect(state.skus).toEqual(original.skus);
+      expect(state.users).toEqual(original.users); expect(state.bills).toEqual(original.bills);
+      expect(state.carts).toEqual(original.carts);
+      expect(state.orders).toHaveLength(1); expect(state.orders[0]).toMatchObject({ status: -2, isDel: 1, paid: 0 });
+      expect(state.details).toHaveLength(1); expect(state.statuses.filter(row => row.changeType === "cancel")).toHaveLength(1);
+      if (target === "child-missing") expect(state.children).toEqual([]);
+      else expect(state.children[0]).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+      await expect(cancelStoreOrder(f.container, { uid: 11, orderId: "local_schedule_order" })).rejects.toThrow("不允许取消");
+      expect(await snapshot()).toEqual(state);
+    });
+  it.each(["paid", "other-owner", "missing-activity-sku"])("cancellation failure for %s rolls back all business changes", async target => {
+    await create();
+    if (target === "paid") await f.db.update(storeOrder).set({ paid: 1 });
+    if (target === "missing-activity-sku") await f.db.delete(storeProductAttrValue).where(eq(storeProductAttrValue.id, 2));
+    const before = await snapshot();
+    await expect(cancelStoreOrder(f.container, { uid: target === "other-owner" ? 22 : 11, orderId: "local_schedule_order" })).rejects.toThrow();
+    expect(await snapshot()).toEqual(before);
+  });
+  it("returns retired base SKU stock without increasing the visible product stock", async () => {
+    await create();
+    await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.id, 1));
+    await cancelStoreOrder(f.container, { uid: 11, orderId: "local_schedule_order" });
+    const state = await snapshot();
+    expect(state.products[0]).toMatchObject({ stock: 6, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 8, sales: 0, isRetired: 1 });
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    expect(state.children[0]).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+  });
 
   it.each(["claimed", "once-limit", "child-quota", "parent-disabled"])(
     "refuses quantity edits for %s without writes", async target => {

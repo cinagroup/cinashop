@@ -440,9 +440,12 @@ export async function cancelStoreOrder(
     let missingLegacyActivityMain = false;
     let bargainParticipant: { id: number; bargainId: number } | null = null;
     if (order.type === 1) {
+      // Serialize same-activity cancellation with create BEFORE touching SKU stock.
+      // Otherwise cancel holds base SKU while waiting for the child held by create,
+      // and create waits for that SKU. Cancellation never requires active schedule.
       const rows = order.activityId > 0
         ? await tx.select({ id: storeSeckill.id }).from(storeSeckill)
-            .where(eq(storeSeckill.id, order.activityId)).limit(1)
+            .where(eq(storeSeckill.id, order.activityId)).limit(1).for("update")
         : [];
       missingLegacyActivityMain = !rows[0];
     } else if (order.type === 2) {

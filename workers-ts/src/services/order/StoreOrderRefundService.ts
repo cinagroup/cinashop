@@ -526,6 +526,14 @@ export async function finalizeStoreOrderRefund(
     }
     const pureIntegralOrder = paidCents === 0 && order.type === 4 && order.payIntegral > 0;
 
+    // Seckill create/cancel serialize inventory on the child activity. Take that
+    // lock BEFORE settlement users as well as SKU writes, not inside late stock
+    // restoration. Stopped/missing activities retain the existing refund policy.
+    if (order.type === 1 && order.status === 0 && order.activityId > 0) {
+      await tx.select({ id: storeSeckill.id }).from(storeSeckill)
+        .where(eq(storeSeckill.id, order.activityId)).limit(1).for("update");
+    }
+
     const refundAmount = centsToDecimal(refundCents);
     const cumulativeAmount = centsToDecimal(cumulativeCents);
     const updated = await tx

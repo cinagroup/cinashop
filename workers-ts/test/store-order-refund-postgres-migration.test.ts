@@ -3,6 +3,17 @@ import { describe, expect, it } from "vitest";
 import { targetSupplierRefundCents } from "../src/services/supplier/SupplierFinanceService";
 
 describe("订单退款 PostgreSQL 迁移", () => {
+  it("秒杀未发货退款在结算用户和库存之前锁活动，重放与已发货退款不额外占锁", () => {
+    const source = readFileSync("src/services/order/StoreOrderRefundService.ts", "utf8");
+    const finalize = source.slice(source.indexOf("export async function finalizeStoreOrderRefund("), source.indexOf("async function createOrderRefundApplication("));
+    const start = finalize.indexOf("if (order.type === 1 && order.status === 0 && order.activityId > 0)");
+    expect(start).toBeGreaterThan(finalize.indexOf('if (refund.refundType === 6) return "already-completed"'));
+    const locked = finalize.indexOf('.for("update")', start);
+    expect(locked).toBeGreaterThan(start);
+    expect(locked).toBeLessThan(finalize.indexOf("await lockOrderSettlementUsers(tx, order)"));
+    expect(locked).toBeLessThan(finalize.indexOf("await restoreRefundStock("));
+    expect(finalize).not.toMatch(/assertSeckillSchedule|loadSeckillSchedule/);
+  });
   it("把余额退款与全部补偿副作用收敛到可验证的生产事务核心", () => {
     const source = readFileSync("src/services/order/StoreOrderRefundService.ts", "utf8");
     expect(source).toContain("export async function finalizeStoreOrderRefund(");

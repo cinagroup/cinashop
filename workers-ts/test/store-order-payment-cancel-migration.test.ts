@@ -2,6 +2,14 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("订单支付与取消 PostgreSQL 迁移", () => {
+  it("秒杀取消在恢复任一SKU之前锁定子活动，但不要求购买排期有效", () => {
+    const source = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
+    const cancel = source.slice(source.indexOf("export async function cancelStoreOrder("), source.indexOf("function firstOrderAccountEligible("));
+    const seckill = cancel.slice(cancel.indexOf("if (order.type === 1)"), cancel.indexOf("} else if (order.type === 2)"));
+    expect(seckill).toContain('.for("update")');
+    expect(cancel.indexOf("if (order.type === 1)")).toBeLessThan(cancel.indexOf("const skuRestored"));
+    expect(cancel).not.toMatch(/assertSeckillSchedule|loadSeckillSchedule/);
+  });
   it("取消订单锁定订单行并将资源补偿与状态证据放在同一事务", () => {
     const source = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
     expect(source).toContain("export async function cancelStoreOrder(");

@@ -3,10 +3,12 @@ import { eq, sql } from "drizzle-orm";
 import { createPcCheckoutQuoteFixture } from "./helpers/pcCheckoutQuoteFixture";
 import { withFinancePeers, waitForFinanceBlock, waitForFinanceClock, outcome, type FinancePeer } from "./helpers/financePeers";
 import { createContainerFromDb, withTx } from "../src/lib/di";
-import { StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
+import { cancelStoreOrder, StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { StoreCartService } from "../src/services/order/StoreCartService";
+import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { storeActivity, storeSeckillTime, storeSeckill, storeProductAttrValue, systemStore,
-  storeCart, storeOrderCartInfo, storeOrderStatus, printDocument } from "../src/models/schema";
+  storeCart, storeOrderCartInfo, storeOrderStatus, printDocument, storeOrder, storeOrderRefund, storeOrderRefundPayment,
+  storeOrderInvoice, userBrokerage } from "../src/models/schema";
 
 // PGlite cannot prove independent backend locks. CI supplies its dedicated PG16
 // service to BOTH unit shards; the exact-coverage gate refuses skipped assertions.
@@ -15,7 +17,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
   const params: CreateOrderParams = { uid: 11, key: "concurrent_order", cartIds: [1], type: 1, seckillId: 20,
     shippingType: 2, storeId: 1, realName: "隔离并发样本", userPhone: "00000000000", userIp: "127.0.0.1" };
   beforeEach(async () => {
-    f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument]);
+    f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument,
+      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
     for (const key of Object.keys(f.config)) f.config[key] = "0";
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.update(storeCart).set({ type: 1, activityId: 20 });
@@ -33,6 +36,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     prints: await f.db.select().from(printDocument) });
   const create = (peer: FinancePeer, input = params) => StoreOrderCreateService.createWithRuntime(createContainerFromDb(peer.db),
     { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => `isolated_${input.key}` }, input);
+  const prepareOldRefund = async () => {
+    await StoreOrderCreateService.createWithRuntime(f.container,
+      { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => "isolated_refund_order" }, { ...params, key: "refund_order" });
+    const [order] = await f.db.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
+    await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_refund",
+      applyType: 1, refundType: 0, refundPrice: "12.50", refundNum: 2, cartInfo: JSON.stringify({ cartIds: [{ cartId: 1, cartNum: 2 }] }) });
+    await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2,
+      type: 1, activityId: 20, isNew: 1, status: 1 });
+  };
   const oneOrder = async () => {
     const state = await snapshot();
     expect(state.orders).toHaveLength(1); expect(state.details).toHaveLength(1);
@@ -43,6 +55,104 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect(state.carts.filter(cart => cart.isPay === 1)).toHaveLength(1);
     return state;
   };
+
+  it("same-activity cancellation waits before SKU restoration and does not deadlock a new order", async () => {
+    await StoreOrderCreateService.createWithRuntime(f.container,
+      { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => "isolated_old_order" }, { ...params, key: "old_order" });
+    await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2,
+      type: 1, activityId: 20, isNew: 1, status: 1 });
+    await withFinancePeers(f.db, async ([blocker, buyer, canceller]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_cart WHERE id=2 FOR UPDATE");
+      const pending = outcome(create(buyer, { ...params, cartIds: [2] }));
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      const cancel = outcome(cancelStoreOrder(createContainerFromDb(canceller.db), { uid: 11, orderId: "isolated_old_order" }));
+      await waitForFinanceBlock(f.db, canceller.pid, buyer.pid);
+      await blocker.exec("COMMIT");
+      // Both operations must succeed without retries. The previous late child
+      // lock forms a child -> SKU -> child cycle when this barrier is released.
+      expect(await pending).toMatchObject({ ok: true }); expect(await cancel).toMatchObject({ ok: true });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(2); expect(state.details).toHaveLength(2);
+    expect(state.orders.find(order => order.orderId === "isolated_old_order")).toMatchObject({ status: -2, isDel: 1 });
+    expect(state.orders.find(order => order.orderId !== "isolated_old_order")).toMatchObject({ status: 0, isDel: 0, totalNum: 2 });
+    expect(state.carts.find(cart => cart.id === 1)?.isPay).toBe(0); expect(state.carts.find(cart => cart.id === 2)?.isPay).toBe(1);
+    expect(state.products[0]).toMatchObject({ stock: 6, sales: 2 });
+    expect(state.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 6, sales: 2 });
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 5, quota: 4, sales: 2 });
+    expect(state.children[0]).toMatchObject({ stock: 5, quota: 4, sales: 2 });
+    expect(state.statuses.filter(row => row.changeType === "cancel")).toHaveLength(1);
+  }, 15_000);
+
+  it("duplicate cancellations actually wait on the same order and restore resources once", async () => {
+    await StoreOrderCreateService.createWithRuntime(f.container,
+      { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => "isolated_cancel_once" }, params);
+    await withFinancePeers(f.db, async ([blocker, first, second]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_seckill WHERE id=20 FOR UPDATE");
+      const cancel = (peer: FinancePeer) => cancelStoreOrder(createContainerFromDb(peer.db), { uid: 11, orderId: "isolated_cancel_once" });
+      const a = outcome(cancel(first));
+      await waitForFinanceBlock(f.db, first.pid, blocker.pid);
+      const b = outcome(cancel(second));
+      await waitForFinanceBlock(f.db, second.pid, first.pid);
+      await blocker.exec("COMMIT");
+      expect(await a).toMatchObject({ ok: true });
+      expect(await b).toMatchObject({ ok: false, error: { message: expect.stringContaining("不允许取消") } });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(1); expect(state.orders[0]).toMatchObject({ status: -2, isDel: 1 });
+    expect(state.products[0]).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    expect(state.children[0]).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    expect(state.carts[0].isPay).toBe(0); expect(state.statuses.filter(row => row.changeType === "cancel")).toHaveLength(1);
+  }, 15_000);
+
+  it("same-activity refund waits before stock restoration and completes alongside a new order", async () => {
+    await prepareOldRefund(); // Paid balance state is synthetic; no payment provider is invoked.
+    await withFinancePeers(f.db, async ([blocker, buyer, refunder]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_cart WHERE id=2 FOR UPDATE");
+      const pending = outcome(create(buyer, { ...params, cartIds: [2] }));
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      const refund = outcome(finalizeStoreOrderRefund(createContainerFromDb(refunder.db), 1));
+      await waitForFinanceBlock(f.db, refunder.pid, buyer.pid);
+      await blocker.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: true }); expect(await refund).toEqual({ ok: true, value: "completed" });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(2); expect(state.details).toHaveLength(2);
+    expect(state.orders.find(order => order.orderId === "isolated_refund_order")).toMatchObject({ refundStatus: 2, refundPrice: "12.50" });
+    expect(state.products[0]).toMatchObject({ stock: 6, sales: 2 });
+    expect(state.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 6, sales: 2 });
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 5, quota: 4, sales: 2 });
+    expect(state.children[0]).toMatchObject({ stock: 5, quota: 4, sales: 2 });
+    expect(state.users[0].nowMoney).toBe("12.50"); expect(state.bills.filter(bill => bill.type === "pay_product_refund")).toHaveLength(1);
+  }, 15_000);
+
+  it("refund waiting for cancellation does not hold a settlement-user lock and both compensate exactly once", async () => {
+    await prepareOldRefund();
+    await StoreOrderCreateService.createWithRuntime(f.container,
+      { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => "isolated_to_cancel" }, { ...params, key: "cancel_order", cartIds: [2] });
+    await withFinancePeers(f.db, async ([blocker, canceller, refunder]) => {
+      await blocker.exec("BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE");
+      const cancel = outcome(cancelStoreOrder(createContainerFromDb(canceller.db), { uid: 11, orderId: "isolated_to_cancel" }));
+      await waitForFinanceBlock(f.db, canceller.pid, blocker.pid);
+      const refund = outcome(finalizeStoreOrderRefund(createContainerFromDb(refunder.db), 1));
+      await waitForFinanceBlock(f.db, refunder.pid, canceller.pid);
+      // Fails if refund takes settlement users BEFORE waiting for the activity.
+      await f.exec('SELECT uid FROM "user" WHERE uid=11 FOR UPDATE NOWAIT');
+      await blocker.exec("COMMIT");
+      expect(await cancel).toMatchObject({ ok: true }); expect(await refund).toEqual({ ok: true, value: "completed" });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(2); expect(state.details).toHaveLength(2);
+    expect(state.orders.find(order => order.orderId === "isolated_to_cancel")).toMatchObject({ status: -2, isDel: 1 });
+    expect(state.orders.find(order => order.orderId === "isolated_refund_order")).toMatchObject({ refundStatus: 2, refundPrice: "12.50" });
+    expect(state.products[0]).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 1)).toMatchObject({ stock: 8, sales: 0 });
+    expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    expect(state.children[0]).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    expect(state.users[0].nowMoney).toBe("12.50"); expect(state.bills.filter(bill => bill.type === "pay_product_refund")).toHaveLength(1);
+  }, 15_000);
 
   it.each(["parent", "slot"])("rereads a stopped %s after an observed lock wait and rolls back", async target => {
     const before = await snapshot();
