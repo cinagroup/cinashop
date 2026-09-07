@@ -1,6 +1,6 @@
 import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
 import type { PgTable } from "drizzle-orm/pg-core";
-import { myCoupons } from "../../src/controllers/api/v1/UserActivityController";
+import { myCoupons, myCouponCounts } from "../../src/controllers/api/v1/UserActivityController";
 import { storeCouponIssue, storeCouponUser, storeCouponProduct, storeOrderCartInfo, storeOrderStatus, printDocument } from "../../src/models/schema";
 
 export async function createPcCouponFixture(extraTables: PgTable[] = []) {
@@ -26,6 +26,7 @@ export async function createPcCouponFixture(extraTables: PgTable[] = []) {
       { id: 49, uid: 11, issueCouponId: 3, couponTitle: "仅限其他商品", couponPrice: "1.00", endTime },
       { id: 50, uid: 11, issueCouponId: 1, couponTitle: "满20减3", couponPrice: "3.00", useMinPrice: "20.00", endTime },
     ]);
+    fixture.app.get("/api/coupons/user/num", myCouponCounts);
     fixture.app.get("/api/coupons/user/:types", myCoupons);
     return fixture;
   } catch (error) { await fixture.close(); throw error; }

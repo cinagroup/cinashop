@@ -9,7 +9,7 @@ import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibil
 import { UserCollectCompatibilityService } from "@/services/user/UserCollectCompatibilityService";
 import { ActivityService } from "@/services/activity/ActivityService";
 import { V2CouponCompatibilityService } from "@/services/activity/V2CouponCompatibilityService";
-import { UserCouponWalletService, couponWalletQuery } from "@/services/activity/UserCouponWalletService";
+import { UserCouponWalletService, couponWalletQuery, couponWalletFilter } from "@/services/activity/UserCouponWalletService";
 import { StoreDiscountService } from "@/services/activity/StoreDiscountService";
 import type { AppVariables, Env } from "@/env";
 
@@ -422,9 +422,19 @@ export async function myCoupons(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const options = couponWalletQuery(c.req.param("types"), c.req.query());
-  const result = await new UserCouponWalletService(c.get("container")).list(uid, options);
+  const service = new UserCouponWalletService(c.get("container"));
+  const now = new Date();
+  const result = await service.list(uid, options, now);
+  if (c.req.query("include_counts") === "1") c.header("X-Coupon-Counts", JSON.stringify(await service.counts(uid, options.filter, now)));
   c.header("X-Coupon-Next-Cursor", result.nextCursor === null ? "" : String(result.nextCursor));
   return jsonOk(c, result.list);
+}
+
+export async function myCouponCounts(c: C) {
+  privateNoStore(c);
+  const uid = c.get("uid");
+  if (!uid) return jsonFail(c, "请先登录");
+  return jsonOk(c, await new UserCouponWalletService(c.get("container")).counts(uid, couponWalletFilter(c.req.query())));
 }
 
 // ─── 营销活动: 秒杀/拼团/砍价/积分 ─────────────────────────

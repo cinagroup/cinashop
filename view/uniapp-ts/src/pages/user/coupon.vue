@@ -1,8 +1,10 @@
 <template>
   <view class="page">
     <view class="tabs">
-      <button v-for="tab in tabs" :key="tab.type" class="tab" :class="{ active: activeType === tab.type }" @tap="switchTab(tab.type)">{{ tab.name }}</button>
+      <button v-for="tab in tabs" :key="tab.type" class="tab" :class="{ active: activeType === tab.type }" @tap="switchTab(tab.type)">{{ tab.name }}（{{ state.counts?.[tab.count] ?? '—' }}）</button>
     </view>
+    <view class="filters"><button v-for="filter in filters" :key="String(filter.value)" size="mini" :class="{ active: activeFilter === filter.value }" @tap="switchFilter(filter.value)">{{ filter.name }}</button></view>
+    <view class="notice">数量按当前筛选统计，未支付订单占用单列；状态可能随订单或时间变化。{{ !state.loading && !state.counts ? '数量暂不可用，可刷新重试。' : '' }}</view>
     <view class="notice">钱包状态不代表当前订单一定可用，商品范围、门槛及首单互斥以结算报价为准。</view>
     <button size="mini" :disabled="state.loading" @tap="load(false)">刷新优惠券</button>
     <view v-if="state.loading" class="notice">正在加载优惠券…</view>
@@ -38,6 +40,8 @@
         <view class="detail-row">适用范围：{{ detail.scope }}</view>
         <view class="detail-row">有效期：{{ detail.validity }}</view>
         <view class="detail-row">状态：{{ detail.message }}</view>
+        <view class="detail-row rule">用券规则：{{ detail.rule || '商家未配置具体规则' }}</view>
+        <view v-if="detail.ruleTruncated" class="error">规则过长，仅展示部分内容，请联系商家确认完整规则。</view>
         <view class="notice">是否可用于具体商品、可抵扣金额及叠加规则，以结算页服务端报价为准。浏览商品不会自动使用此券。</view>
         <button v-if="detail.availability === 'available'" :disabled="blocked || state.loading" @tap="browseGoods(detail.id)">浏览商品</button>
         <button @tap="detailId = null">关闭详情</button>
@@ -49,15 +53,20 @@
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth";
 import { useCouponWallet } from "@/composables/useCouponWallet";
-import type { WalletStatus } from "@/api/couponWallet";
+import type { WalletStatus, WalletFilter } from "@/api/couponWallet";
+import type { CouponCounts } from "../../../../common/couponWallet";
 const auth = useAuthStore();
-const tabs: { type: WalletStatus; name: string }[] = [{ type: 0, name: "未使用" }, { type: 1, name: "已使用" }, { type: 2, name: "已过期/失效" }, { type: 3, name: "订单占用中" }];
-const { activeType, state, blocked, error, detail, detailId, load, switchTab, openDetail, browseGoods } = useCouponWallet();
+const tabs: { type: WalletStatus; name: string; count: keyof CouponCounts }[] = [{ type: 0, name: "未使用", count: "not_used" }, { type: 1, name: "已使用", count: "used" }, { type: 2, name: "已过期/失效", count: "expired" }, { type: 3, name: "订单占用中", count: "reserved" }];
+const filters: { value: WalletFilter; name: string }[] = [{ value: null, name: "全部" }, { value: -1, name: "24小时内到期" }, { value: 0, name: "通用券" }, { value: 1, name: "品类券" }, { value: 2, name: "商品券" }, { value: 3, name: "品牌券" }];
+const { activeType, activeFilter, state, blocked, error, detail, detailId, load, switchTab, switchFilter, openDetail, browseGoods } = useCouponWallet();
 function login() { uni.navigateTo({ url: "/pages/auth/login" }); }
 </script>
 <style scoped>
 .page { padding: 20rpx 20rpx calc(30rpx + env(safe-area-inset-bottom)); font-size: 28rpx; overflow-wrap: anywhere; }
 .tabs { display: flex; flex-wrap: wrap; gap: 8rpx; padding: 8rpx; background: white; border-radius: 12rpx; }
+.filters { display: flex; flex-wrap: wrap; gap: 12rpx; margin: 20rpx 0; }
+.filters button { margin: 0; font-size: 24rpx; }
+.rule { white-space: pre-wrap; }
 .tab { flex: 1 0 40%; margin: 0; font-size: 26rpx; line-height: 2.7; padding: 0 10rpx; }
 .active { color: white; background: #d83122; }
 .notice { color: #666; font-size: 24rpx; margin: 20rpx 0; line-height: 1.6; }

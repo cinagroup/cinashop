@@ -6,6 +6,36 @@ import { ValidateException } from "@/utils/errors";
 type Coupon = typeof storeCouponUser.$inferSelect;
 type Issue = typeof storeCouponIssue.$inferSelect;
 
+export type WalletFilter = -1 | 0 | 1 | 2 | 3 | null;
+export function couponWalletFilter(query: Record<string, string | undefined>): WalletFilter {
+  const parse = (value: string | undefined): WalletFilter => {
+    if (value === undefined || value === "") return null;
+    if (!["-1", "0", "1", "2", "3"].includes(value)) throw new ValidateException("优惠券筛选参数无效");
+    return Number(value) as Exclude<WalletFilter, null>;
+  };
+  const type = parse(query.type), alias = parse(query.issue_type);
+  if (query.type !== undefined && query.issue_type !== undefined && type !== alias) throw new ValidateException("优惠券筛选参数冲突");
+  return query.type !== undefined ? type : alias;
+}
+
+function walletStatusWhere(status: number, now: Date): SQL {
+  if (status === 0) return sql`${storeCouponUser.status} = 0 AND ${storeCouponUser.isFail} = 0
+    AND ${storeCouponIssue.id} IS NOT NULL AND ${storeCouponIssue.type} IN (1, 2) AND ${storeCouponIssue.couponType} IN (0, 1, 2, 3)
+    AND (${storeCouponUser.endTime} IS NULL OR ${storeCouponUser.endTime} >= ${now.toISOString()})`;
+  if (status === 2) return sql`${storeCouponUser.status} NOT IN (1, 3) AND
+    (${storeCouponUser.status} <> 0 OR ${storeCouponUser.isFail} <> 0 OR ${storeCouponUser.endTime} < ${now.toISOString()}
+    OR ${storeCouponIssue.id} IS NULL OR ${storeCouponIssue.type} NOT IN (1, 2) OR ${storeCouponIssue.couponType} NOT IN (0, 1, 2, 3))`;
+  return eq(storeCouponUser.status, status);
+}
+
+function walletFilterWhere(filter: WalletFilter, now: Date): SQL {
+  if (filter === null) return sql`true`;
+  // Correct the PHP DAO's reversed >= tomorrow predicate. Expired and unlimited coupons are not imminent.
+  if (filter === -1) return sql`${storeCouponUser.endTime} >= ${now.toISOString()}
+    AND ${storeCouponUser.endTime} <= ${new Date(now.getTime() + 86400000).toISOString()}`;
+  return eq(storeCouponIssue.couponType, filter);
+}
+
 export function couponWalletQuery(pathStatus: unknown, query: Record<string, string | undefined>) {
   const integer = (value: unknown, fallback: number, min: number, max: number) => {
     if (value === undefined) return fallback;
@@ -20,7 +50,7 @@ export function couponWalletQuery(pathStatus: unknown, query: Record<string, str
   const before = integer(query.before, 0, 0, Number.MAX_SAFE_INTEGER);
   const page = integer(query.page, 1, 1, 1000);
   if (before && page !== 1) throw new ValidateException("优惠券分页方式不能混用");
-  return { status, limit, before, page };
+  return { status, limit, before, page, filter: couponWalletFilter(query) };
 }
 
 export function projectOwnedCoupon(coupon: Coupon, issue: Issue | null, now = new Date()) {
@@ -40,6 +70,7 @@ export function projectOwnedCoupon(coupon: Coupon, issue: Issue | null, now = ne
     coupon_type: issue?.type ?? coupon.type, applicable_type: issue?.couponType ?? -1,
     start_time: start, end_time: end, add_time: start, receive_type: issue?.receiveType ?? 0,
     receive_source: coupon.receiveSource, is_fail: coupon.isFail,
+    rule: issue?.rule?.slice(0, 8000) ?? "", rule_truncated: (issue?.rule?.length ?? 0) > 8000,
     availability: state, availability_message: message, pc_type: state === "available" || state === "future" ? 1 : 0, pc_msg: message,
   };
 }
@@ -49,15 +80,8 @@ export class UserCouponWalletService {
   constructor(private readonly container: Container) {}
   async list(uid: number, options: ReturnType<typeof couponWalletQuery>, now = new Date()) {
     if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("请先登录");
-    const { status, limit, before, page } = options;
-    const where: SQL[] = [eq(storeCouponUser.uid, uid)];
-    if (status === 0) where.push(sql`${storeCouponUser.status} = 0 AND ${storeCouponUser.isFail} = 0
-      AND ${storeCouponIssue.id} IS NOT NULL AND ${storeCouponIssue.type} IN (1, 2) AND ${storeCouponIssue.couponType} IN (0, 1, 2, 3)
-      AND (${storeCouponUser.endTime} IS NULL OR ${storeCouponUser.endTime} >= ${now.toISOString()})`);
-    else if (status === 2) where.push(sql`${storeCouponUser.status} NOT IN (1, 3) AND
-      (${storeCouponUser.status} <> 0 OR ${storeCouponUser.isFail} <> 0 OR ${storeCouponUser.endTime} < ${now.toISOString()}
-      OR ${storeCouponIssue.id} IS NULL OR ${storeCouponIssue.type} NOT IN (1, 2) OR ${storeCouponIssue.couponType} NOT IN (0, 1, 2, 3))`);
-    else where.push(eq(storeCouponUser.status, status));
+    const { status, limit, before, page, filter } = options;
+    const where: SQL[] = [eq(storeCouponUser.uid, uid), walletStatusWhere(status, now), walletFilterWhere(filter, now)];
     if (before) where.push(lt(storeCouponUser.id, before));
     const rows = await this.container.db.select({ coupon: storeCouponUser, issue: storeCouponIssue })
       .from(storeCouponUser).leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))
@@ -65,5 +89,13 @@ export class UserCouponWalletService {
     const visible = rows.slice(0, limit);
     return { list: visible.map(({ coupon, issue }) => projectOwnedCoupon(coupon, issue, now)),
       nextCursor: rows.length > limit ? visible[visible.length - 1]!.coupon.id : null };
+  }
+  async counts(uid: number, filter: WalletFilter = null, now = new Date()) {
+    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("请先登录");
+    const count = (status: number) => sql<number>`count(*) filter (where ${walletStatusWhere(status, now)})`.mapWith(Number);
+    const [result] = await this.container.db.select({ not_used: count(0), used: count(1), expired: count(2), reserved: count(3) })
+      .from(storeCouponUser).leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))
+      .where(and(eq(storeCouponUser.uid, uid), walletFilterWhere(filter, now)));
+    return result!;
   }
 }

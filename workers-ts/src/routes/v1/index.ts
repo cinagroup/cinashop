@@ -759,6 +759,7 @@ v1Routes.get("/invoice/get_default/:type", authMiddleware({ force: true }), User
 // ─── 优惠券 (M5) ───────────────────────────────────────────────
 v1Routes.get("/coupons", authMiddleware({ force: false }), UserActivityController.couponList);
 v1Routes.post("/coupon/receive", authMiddleware({ force: true }), UserActivityController.couponReceive);
+v1Routes.get("/coupons/user/num", authMiddleware({ force: true }), UserActivityController.myCouponCounts);
 v1Routes.get("/coupons/user/:types", authMiddleware({ force: true }), UserActivityController.myCoupons);
 v1Routes.get("/coupons/order/:price", stationOpenMiddleware(), authMiddleware({ force: true }), OrderCouponController.orderCoupons);
 

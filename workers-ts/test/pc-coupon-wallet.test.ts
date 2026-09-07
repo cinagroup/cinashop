@@ -7,8 +7,8 @@ const row = { id: 42, coupon_title: "八五折", coupon_price: "85.00", use_min_
   start_time: "2026-09-06T16:00:00.000Z", end_time: null, availability: "available", availability_message: "未使用" };
 describe("PC coupon wallet and selection contracts", () => {
   it("honours path status, retains the existing query override and bounds pagination", () => {
-    expect(couponWalletQuery("2", {})).toEqual({ status: 2, limit: 20, before: 0, page: 1 });
-    expect(couponWalletQuery("0", { status: "1", before: "88", limit: "10" })).toEqual({ status: 1, limit: 10, before: 88, page: 1 });
+    expect(couponWalletQuery("2", {})).toEqual({ status: 2, limit: 20, before: 0, page: 1, filter: null });
+    expect(couponWalletQuery("0", { status: "1", before: "88", limit: "10" })).toEqual({ status: 1, limit: 10, before: 88, page: 1, filter: null });
     expect(couponWalletQuery("3", {}).status).toBe(3);
     for (const q of [{ status: "-1" }, { status: "4" }, { status: "1x" }, { limit: "0" }, { limit: "101" }, { before: "NaN" }, { before: "2", page: "2" }, { page: "1001" }]) expect(() => couponWalletQuery("0", q)).toThrow();
   });

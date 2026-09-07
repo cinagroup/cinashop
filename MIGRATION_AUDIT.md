@@ -5981,6 +5981,28 @@ SystemFormFields新增disabled/pending，原生选图阶段就阻止下单，完
 
 本批没有业务路由、模型/DDL、依赖版本、工作流或生产变更。package的现有test:toolchain加入钱包测试；临时浏览器夹具位于系统Temp，不入库。清单204勾选/145开放/349项不变，修复候选仍待自己的精确SHA Linux。
 
+### FE-003L钱包基础修复精确Linux验收（2026-09-07）
+
+`10656f1e3f48610e7cb5cfa99649c3c33157563e`的[Actions34097678013](https://github.com/cinagroup/cinashop/actions/runs/34097678013)最终11/11成功，修复了acac7c3结算页遗漏悬浮导航的真实回归。Worker两片136/135文件、961/869项，共271文件1,830项，零跳过。共同inventorySha256=`a3905c2dde91a7f551b6828bb91964672e6277c64bd2b2661ccce5329755d502`；两片executedFileSha256分别为`0dbe8727cc58b2e32ca642044814a95f88da691df8afbf62a36b8762cba2a9f2`和`dae4d89e629389ea31bc098f13b9a67dc8bca90c3ea94b3ea59ccad677ecb062`，nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true。两片单元耗时603.99/506.40秒；workerd、五端、PG16目录与密钥扫描通过。只关闭该SHA的“待Linux”，不代表下面的新合同或生产已验收。
+
+### FE-003L：钱包数量、范围筛选和规则文本（2026-09-07，本地候选）
+
+源证据为PHP route/api.php:273～274、StoreCoupons::userCount/user、StoreCouponUserServices::getUserCounpon/getUserCounponNum，以及StoreCouponUserDao::search。补回静态GET /api/coupons/user/num，置于:types之前并强制auth，返回旧not_used/used/expired及目标reserved字段；均private,no-store且只使用服务端uid。列表和数量共用walletStatusWhere，过期、失效、缺模板、未来生效、已用及未支付占用分类保持一致。SQL单次聚合COUNT FILTER完成四数量，不读取全部券回JS计数；数量不受limit/page/before影响，列表仍limit+1及降序游标。列表首请求可include_counts=1取得X-Coupon-Counts，新客户端缺头显示“—/数量暂不可用”，不伪造零。数量和列表为同一请求时间下的两次读取，并非一个不可变事务快照；并发订单改变时允许短时变化，UI明确提示，结算仍为唯一资格/金额权威。
+
+type/issue_type接受空或-1/0/1/2/3，两者冲突拒绝；0..3过滤目标couponType（源type范围），不是目标type（源coupon_type金额/折扣）。省略保持原目标默认全部。旧PHP将“快过期”实现为end_time >= now+24h，与文案相反；本轮有意修正为now <= end_time <= now+24h，并在新UI明确“24小时内到期”，null不限期限和已过期不进入。此行为差异显式记录，不宣称错误谓词逐字等价。
+
+钱包投影新增商家规则，最多8,000字符，超长rule_truncated明确提示仅部分内容；空规则显示商家未配置。共用适配器严格校验数量、安全整数及规则类型；UniApp用普通插值/pre-wrap，不使用v-html。范围/标签切换同步清旧列表、详情、数量及游标，追加/重试保留同筛选数量，刷新失败和账号切换不留旧数量。旧请求成功、失败和数量头均通过原代际隔离。PC共用纯模块仍兼容旧导出，但PC页面新增筛选/规则UI未接，继续开放。
+
+验证：新增4项真实控制器/隔离PGlite测试，包含其他UID、缺模板、四范围、类型互换、游标、临期前1ms/当刻/24h/24h+1ms、null有效期、文本标签/截断、参数冲突与无效数量；实际表、券行、订单/账单/库存/积分和KV写记录前后不变（测试样本准备除外）。13项真实Vue/Pinia钱包测试覆盖原10项及筛选清理/迟到数量/重试保留/规则文本/坏元数据，1.01秒；相关10文件116项Worker通过9.78秒，双TypeScript通过。UniApp类型、H5/MP-WEIXIN/APP构建、产物3项及业务图i18n9项通过；PC实际auth10项、类型与1845模块构建8.44秒通过，保留原VueUse注释告警。
+
+前端测试技能驱动真实CUA验收：127.0.0.1:5176仅代理5229内存夹具，1280×900/390×844；全部未使用31，品类1/9折，品牌1，24小时临期5，品牌已使用0显示空态。规则中的<script>alert(1)</script>只显示文本，DOM .rule script数量0；手机scrollWidth=innerWidth=390。页面身份/非空/无框架浮层、交互与截图通过，控制台只有既有DCloud vue-router弃用warn。没有触发建单或支付，夹具订单/账单0、库存8、积分100。真机、实际商家范围导航和生产账号未覆盖。
+
+最终完整UniApp工具链32项通过、零跳过（11项结算、13项钱包、8项开发边界），3.159秒；不将其与Worker单元数量混算。
+
+路由重审现为PHP1904、TS1648、精确881、可执行863、明确不可用18、原始缺失1023、退役17、可执行缺口1006；api面457/864/440/437/3/17/2/15。新增1条精确数量合同，未改变分母。尚缺商品/品类层级/品牌具体集合展示及导航、PC对应UI、促销叠加、活动全链、上传真机、跨标签幂等恢复、数据初始化与真实角色/provider/发布，FE-003L仍不勾选，清单204/145/349保持不变。
+
+Workers技能要求已完整阅读修改的生产服务/控制器/路由，获取[官方最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)、最新5.20260907.1类型到Temp并核对Hyperdrive/config schema；沿用仓库绑定，不升级依赖或平台配置。PostgreSQL技能采用有界游标与服务端聚合，未根据小样本新增索引或声称生产性能提升。本轮没有DDL、生产连接/provider请求或部署；上述代码仍待自身精确SHA Linux。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
