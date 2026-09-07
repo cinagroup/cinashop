@@ -1,4 +1,12 @@
 import type { GoodsDetail, GoodsSku } from "../types/product";
+import { quoteMoney } from "../../../common/checkoutQuote";
+
+function optionalSkuMoney(sku: Record<string, unknown>, snake: string, camel: string): string | null {
+  const read = (value: unknown) => value === undefined || value === null || value === "" ? null : quoteMoney(value);
+  const a = read(sku[snake]), b = read(sku[camel]);
+  if (sku[snake] !== undefined && sku[camel] !== undefined && a !== b) throw new Error("商品规格金额别名不一致");
+  return a ?? b;
+}
 
 export function normalizeMobileGoods(value: unknown): GoodsDetail {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("商品详情格式错误");
@@ -17,11 +25,11 @@ export function normalizeMobileGoods(value: unknown): GoodsDetail {
     if (typeof sku.unique !== "string" || !sku.unique.trim() || sku.unique.length > 16 || seen.has(sku.unique)
       || !Number.isSafeInteger(sku.stock) || Number(sku.stock) < 0 || typeof sku.price !== "string" || !/^\d+(?:\.\d{1,2})?$/.test(sku.price)) throw new Error("商品规格价格、库存或标识无效");
     seen.add(sku.unique);
-    return { unique: sku.unique, suk: typeof sku.suk === "string" ? sku.suk : "默认规格", stock: Number(sku.stock), price: sku.price,
-      ot_price: typeof (sku.ot_price ?? sku.otPrice) === "string" ? String(sku.ot_price ?? sku.otPrice) : "" };
+    return { unique: sku.unique, suk: typeof sku.suk === "string" ? sku.suk : "默认规格", stock: Number(sku.stock), price: quoteMoney(sku.price),
+      ot_price: optionalSkuMoney(sku, "ot_price", "otPrice"), vip_price: optionalSkuMoney(sku, "vip_price", "vipPrice") };
   });
   const slider = field("slider_image", "sliderImage");
-  return { id: Number(raw.id), stock: Number(raw.stock), price: raw.price, skus,
+  return { id: Number(raw.id), stock: Number(raw.stock), price: quoteMoney(raw.price), skus,
     store_name: text("store_name", "storeName"), store_info: text("store_info", "storeInfo"), image: text("image"),
     slider_image: Array.isArray(slider) ? slider.filter((image): image is string => typeof image === "string") : [],
     ot_price: text("ot_price", "otPrice"), vip_price: text("vip_price", "vipPrice"), sales: number("sales"), ficti: number("ficti"), fsales: number("fsales"),

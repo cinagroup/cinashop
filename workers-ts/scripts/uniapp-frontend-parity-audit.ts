@@ -14,7 +14,7 @@ interface Gap { id: string; legacyRoutes: string[] }
 interface Audit {
   counting: {
     legacy: { logicalManifestRouteRecords: number; manifestSha256: string };
-    target: { logicalManifestRouteRecords: number; manifestSha256: string };
+    target: { logicalManifestRouteRecords: number; manifestSha256: string; manifestHashNormalization: "LF" };
     routeLedger: Record<string, number>;
   };
   directRegisteredLegacyRoutes: string[];
@@ -146,7 +146,8 @@ for (const [source, rule] of Object.entries(LEGACY_ROUTE_RULES)) {
 if (sha256(legacyRaw) !== audit.counting.legacy.manifestSha256) {
   throw new Error("Legacy manifest SHA-256 changed; recount and review the route ledger");
 }
-if (sha256(targetRaw) !== audit.counting.target.manifestSha256) {
+// Git checks this file out with platform-native newlines; retain every other byte in the authority hash.
+if (audit.counting.target.manifestHashNormalization !== "LF" || sha256(targetRaw.replace(/\r\n/g, "\n")) !== audit.counting.target.manifestSha256) {
   throw new Error("Target manifest SHA-256 changed; recount and review registered routes");
 }
 if (legacyRoutes.length !== audit.counting.legacy.logicalManifestRouteRecords) {

@@ -11,9 +11,9 @@
       <!-- 价格区 -->
       <view class="price-section">
         <view class="price-row">
-          <text class="price">¥{{ selectedSku?.price || detail.price }}</text>
-          <text v-if="detail.ot_price" class="ot-price">¥{{ detail.ot_price }}</text>
-          <text v-if="detail.is_vip" class="vip-tag">SVIP ¥{{ detail.vip_price }}</text>
+          <text class="price">¥{{ selectedSku?.price ?? detail.price }}</text>
+          <text v-if="displayOriginalPrice !== null" class="ot-price">¥{{ displayOriginalPrice }}</text>
+          <text v-if="displayVipPrice !== null" class="vip-tag">SVIP ¥{{ displayVipPrice }}</text>
         </view>
         <view class="meta-row">
           <text>已售 {{ detail.fsales }}</text>
@@ -104,7 +104,9 @@
               mode="aspectFill"
             />
             <view class="sku-info">
-              <text class="sku-price">¥{{ selectedSku?.price || detail.price }}</text>
+              <text class="sku-price">¥{{ selectedSku?.price ?? detail.price }}</text>
+              <text v-if="displayOriginalPrice !== null" class="ot-price">¥{{ displayOriginalPrice }}</text>
+              <text v-if="displayVipPrice !== null" class="vip-tag">SVIP ¥{{ displayVipPrice }}</text>
               <text class="sku-stock" v-if="selectedSku">库存 {{ selectedSku.stock }}</text>
               <text class="sku-name">{{ selectedSku?.suk || "请选择规格" }}</text>
             </view>
@@ -117,10 +119,10 @@
                 v-for="sku in skuList"
                 :key="sku.unique"
                 class="sku-opt"
-                :class="{ active: selectedSku?.unique === sku.unique, disabled: sku.stock <= 0 }"
+                :class="{ active: selectedSku?.unique === sku.unique, soldout: sku.stock <= 0 }"
                 @tap="pickSku(sku)"
               >
-                {{ sku.suk }}
+                {{ sku.suk }}{{ sku.stock <= 0 ? '（售罄）' : '' }}
               </view>
             </view>
           </view>
@@ -134,8 +136,8 @@
             </view>
           </view>
 
-          <button class="sheet-btn" :disabled="buying" :loading="buying" @tap="confirmSku">
-            {{ buying ? "处理中…" : skuMode === "buy" ? "立即购买" : "加入购物车" }}
+          <button class="sheet-btn" :disabled="buying || maxNum <= 0" :loading="buying" @tap="confirmSku">
+            {{ buying ? "处理中…" : maxNum <= 0 ? "暂无库存" : skuMode === "buy" ? "立即购买" : "加入购物车" }}
           </button>
         </view>
       </view>
@@ -232,7 +234,11 @@ const skuList = ref<SkuItem[]>([]);
 const selectedSku = ref<SkuItem | null>(null);
 const num = ref(1);
 const buying = ref(false);
-const maxNum = computed(() => selectedSku.value?.stock ?? 99);
+const maxNum = computed(() => Math.min(selectedSku.value?.stock ?? 0, detail.value?.stock ?? 0, 32767));
+// A selected SKU is authoritative for display; absent SKU prices must not inherit another price.
+const displayOriginalPrice = computed(() => selectedSku.value?.ot_price && selectedSku.value.ot_price !== "0.00" ? selectedSku.value.ot_price : null);
+// The checkout contract uses zero as no paid-member price, never as a free-item offer.
+const displayVipPrice = computed(() => detail.value?.is_vip === 1 && selectedSku.value?.vip_price && selectedSku.value.vip_price !== "0.00" ? selectedSku.value.vip_price : null);
 
 function openSku(mode: "cart" | "buy") {
   if (buying.value) return;
@@ -243,8 +249,9 @@ function openSku(mode: "cart" | "buy") {
 }
 
 function pickSku(sku: SkuItem) {
-  if (buying.value || sku.stock <= 0) return;
+  if (buying.value || !skuList.value.includes(sku)) return;
   selectedSku.value = sku;
+  num.value = Math.max(1, Math.min(num.value, maxNum.value));
 }
 
 async function confirmSku() {
@@ -376,7 +383,7 @@ onLoad(async (options) => {
     discountPackages.value = packages;
     loadReplies(id);
     skuList.value = goods.skus;
-    selectedSku.value = goods.skus.find((sku) => sku.stock > 0) ?? null;
+    selectedSku.value = goods.skus.find((sku) => sku.stock > 0) ?? goods.skus[0] ?? null;
   } catch (e) {
     console.error("商品详情加载失败", e);
   }
@@ -404,6 +411,7 @@ onLoad(async (options) => {
 
 .price-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 16rpx;
 }
@@ -421,6 +429,7 @@ onLoad(async (options) => {
 }
 
 .vip-tag {
+  align-self: flex-start;
   background: linear-gradient(90deg, #d4a94e, #f5d97a);
   color: #fff;
   border-radius: 6rpx;
@@ -829,7 +838,7 @@ onLoad(async (options) => {
   background: #fff5f4;
 }
 
-.sku-opt.disabled {
+.sku-opt.soldout:not(.active) {
   color: #ccc;
   border-color: #eee;
   background: #fafafa;

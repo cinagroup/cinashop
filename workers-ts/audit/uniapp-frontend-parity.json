@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "snapshotDate": "2026-09-04",
+  "snapshotDate": "2026-09-07",
   "scope": "legacy cinashop-php UniApp to view/uniapp-ts",
   "counting": {
     "legacy": {
@@ -17,10 +17,11 @@
       ]
     },
     "target": {
-      "pagesTreeVueFiles": 59,
-      "logicalManifestRouteRecords": 59,
-      "platformActiveRouteRecords": { "H5": 59, "MP-WEIXIN": 59, "APP-PLUS": 59 },
-      "manifestSha256": "B0840BC56FE1AF51BA4CEA7D002384DEFC9EF3398AD36C8D96CD307CA00F4BB9"
+      "pagesTreeVueFiles": 60,
+      "logicalManifestRouteRecords": 60,
+      "platformActiveRouteRecords": { "H5": 60, "MP-WEIXIN": 60, "APP-PLUS": 60 },
+      "manifestHashNormalization": "LF",
+      "manifestSha256": "CBC15FAA3D079F3C81B3F6C5C5BDA9EA535DB402C42EE80193E85BF1ED609764"
     },
     "routeLedger": {
       "directRegistered": 3,

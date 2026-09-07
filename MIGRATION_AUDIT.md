@@ -6049,6 +6049,28 @@ UI明确区分“本批未匹配，继续扫描”和“已无后续商品”，
 
 同一隔离SQL商品70设置商品级vipPrice=0、实际SKU vipPrice=9，PC详情按选中SKU显示SVIP ¥9，UniApp却显示¥0。证据为`view/uniapp-ts/src/pages/goods/detail.vue:16`直接读取detail.vip_price，而`view/uniapp-ts/src/api/productDetail.ts`只保留商品级会员价、SKU投影缺会员价。属于可复现前端合同差异，未推定为生产收费或展示事故；范围页catalog_price=10本身是有意的目录价，不与此混淆。新增未勾选S3，后续补严格SKU会员价适配、切换规格价/库存及异常值回归；不改变权威结算。本轮清单205勾选/147开放/352项，S2、FE-003L及生产门禁仍开放，旧历史数据复制仍N/A。
 
+### 4af0638精确Linux失败与范围页登记修复（2026-09-07）
+
+`4af0638258af82553c2262814f9901ebfdef42f9`的[Actions34103876533](https://github.com/cinagroup/cinashop/actions/runs/34103876533)最终failure：9作业成功、第二单元分片和最终汇总失败。第一片101684320273为137文件964项全通过、0跳过、602.58秒；新controller→范围前端适配器的第9项合同也在其中，范围文件9项675ms。该片inventorySha256=`d42828a619d83d168b9e16b6829d5b8c0acb18703249e0cc00b1a73659e58d98`、executedFileSha256=`2ed25f97c0f496cf1c490d1187919f1fba00fc55c3ba57099a7d6d15861cfe7a`，nativePartitionCompleteAndDisjoint/executedFilesMatchNativePartition均true。第二片101684320311为136文件、878通过/1失败、518.83秒；因失败未产生成功覆盖审计，不把第一片证据推广到整体。五端、workerd、PG16目录与密钥扫描通过，汇总按设计失败，没有重跑旧提交。
+
+具体失败为`uniapp-frontend-parity.test.ts`的运行导航白名单/manifest一致性断言：新增`/pages/user/couponProducts`未登记进REGISTERED_PAGE_ROUTES，收到59、期望60。上一轮局部回归未包含该测试，因而漏检，本节明确纠正“不存在其他接线遗漏”的可能印象。补登记真实页面，不删断言或允许任意路由；同步目标审计为60个Vue页面/60条H5、MP-WEIXIN、APP-PLUS注册，保留PHP151条、3直达/97别名（60候选/37部分替代）及51缺口的完整账本。新增范围页查询参数的导航解析断言，并把当前manifest数量和SHA纳入测试，避免再使用旧审计快照自证。
+
+目标manifest在Windows与Git/Linux的CRLF/LF不同，明确新增manifestHashNormalization=LF，只规范化换行而保留其余字节，SHA为`CBC15FAA3D079F3C81B3F6C5C5BDA9EA535DB402C42EE80193E85BF1ED609764`；官方源PHP原始SHA不变。审计CLI同时要求LF策略和精确目标摘要，`npm run audit:uniapp`通过。本次修复不是调整分母或降低覆盖门禁；不修改业务HTTP路由、DDL、工作流或依赖版本，修复候选仍待自己的精确Linux。
+
+### FE-003L-S3：实际SKU价格与库存显示修复（2026-09-07，本地候选）
+
+源端`cinashop-php/view/uniapp/pages/goods_details/index.vue` SHA-256=`179AE3009462F55BA46BF0144D37145B674E799997909AE1687CF5112901BEBE`，第1141～1146及1334～1340行随选中SKU同步price/ot_price/stock/unique/vip_price。目标真实ProductController和StoreProductService已给attr_value输出SKU三类价，问题在UniApp投影遗漏vip_price且模板用商品级会员/划线价。现GoodsSku新增nullable vip_price，ot_price也区分缺失；使用既有十进制定点验证，拒绝负数、非字符串、指数、三位小数、超安全范围及冲突别名，规范化合法金额但不计算折扣。SKU缺失价不借父商品；会员价0按StoreOrderCreateService.calculateMemberUnitPriceCents的`paidMemberPriceCents > 0`语义不展示成免费，未开启商品会员标记也隐藏，未改变权威报价。
+
+实际详情页和SKU弹窗用同一选中SKU计算售价、划线价、会员价和库存；数量上限为min(SKU库存,商品库存,32767)，切较小库存时收敛数量。售罄SKU可选查看价格/库存但确认按钮禁用，程序入口仍校验库存；无SKU不生成虚构标识或购买能力，加载全售罄目录可展示首个真实规格。选择只接受当前列表对象，正在提交不切规格；加购new0/立即购买new1及建单参数不变。前端测试技能的截图检查进一步修正弹窗会员标签被flex拉满的问题，未进行整体页面重设计。
+
+测试新增4项直接编译实际detail.vue的SFC脚本并运行Vue/Pinia/真实API适配器（仅native生命周期与I/O替身），验证红/蓝/售罄切换、低库存数量、零价/缺失价、非法外部规格、busy状态、无规格/全售罄拒购及异常金额；现有40项保留，工具链44项通过。新增1项实际ProductController→StoreProductService→隔离SQL→移动适配器合同，父价0/99与三SKU会员9/18/0、划线12/25/35及库存8/2/0逐字段通过。开发中先因测试SKU超char(8)、再因遗漏store_product_relation夹具表失败，均修正夹具后通过，未修改真实schema或绕过断言。读取前后商品/SKU/购物车/用户/订单/账单完全相同、KV写为空；详情有意在隔离库生成1条visit和1条product_log，非“全部SQL零写”。
+
+相关Worker6文件53项通过6.26秒（包括上次CI失败文件）、两套Worker类型、UniApp类型通过；三端实际重建的runtime-i18n9项22.885秒及产物3项通过，H5 80chunks/281loaded、MP101chunks/324loaded、App249entries，既有原生Vue/APK/IPA/预打包排除边界不变。没有依赖安装或降级测试并发/超时，本机workerd不重跑碰绿，目标候选仍需Linux。
+
+浏览器使用已授权CUA内置浏览器（无独立Browser skill、新安装或外部浏览器依赖），H5 `http://127.0.0.1:5176/#/pages/goods/detail?id=70`，代理仅loopback5229一次性PGlite与合成登录。目标流程：详情→打开规格→蓝色→数量最多2→售罄→切回；DOM确认两处价格同步、售罄库存0/uni-button disabled=true、没有SVIP0标签，390×844与1280×900均无横向溢出/框架遮罩、标题URL正确，截图已保留。无业务控制台error，仅既有DCloud vue-router弃用warn。临时夹具最初给varchar slider_image传数组导致图片空白，按实际模型改为JSON字符串后重启一次性库并重放，未归因为生产前端问题。整个测试未调用真实加购、建单或支付，没有访问生产库、DDL或发布。S3代码/本地验收完成但待精确Linux不勾选；S2完整范围解释、PC钱包完整UI、真实设备/角色/provider和发布门禁继续开放，清单205/147/352不变。
+
+最终浏览器夹具状态再次核对：重启后的单次详情读取visits=1/productLogs=1，orders=0/bills=0/captured=[]，库存8、积分100；仅隔离访问统计发生预期写入，临时监听与标签页在验收后关闭。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

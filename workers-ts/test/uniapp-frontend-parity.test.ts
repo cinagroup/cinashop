@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
   LEGACY_ROUTE_RULES,
@@ -10,7 +11,7 @@ import {
 interface ParityAudit {
   counting: {
     legacy: { pagesTreeVueFiles: number; logicalManifestRouteRecords: number; platformActiveRouteRecords: Record<string, number> };
-    target: { pagesTreeVueFiles: number; logicalManifestRouteRecords: number; platformActiveRouteRecords: Record<string, number> };
+    target: { pagesTreeVueFiles: number; logicalManifestRouteRecords: number; platformActiveRouteRecords: Record<string, number>; manifestSha256: string; manifestHashNormalization: string };
     routeLedger: Record<string, number>;
   };
   directRegisteredLegacyRoutes: string[];
@@ -31,9 +32,9 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.counting.legacy.pagesTreeVueFiles).toBe(250);
     expect(parity.counting.legacy.logicalManifestRouteRecords).toBe(151);
     expect(parity.counting.legacy.platformActiveRouteRecords).toEqual({ H5: 151, "MP-WEIXIN": 150, "APP-PLUS": 150 });
-    expect(parity.counting.target.pagesTreeVueFiles).toBe(59);
-    expect(parity.counting.target.logicalManifestRouteRecords).toBe(59);
-    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 59, "MP-WEIXIN": 59, "APP-PLUS": 59 });
+    expect(parity.counting.target.pagesTreeVueFiles).toBe(60);
+    expect(parity.counting.target.logicalManifestRouteRecords).toBe(60);
+    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 60, "MP-WEIXIN": 60, "APP-PLUS": 60 });
     expect(parity.counting.routeLedger).toMatchObject({
       directRegistered: 3,
       legacyCompatibilityRules: 97,
@@ -47,6 +48,10 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   it("keeps the runtime allowlist synchronized with pages.json and actual page files", () => {
     const manifestRoutes = pages.pages.map((page) => `/${page.path}`).sort();
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
+    expect(manifestRoutes).toHaveLength(parity.counting.target.logicalManifestRouteRecords);
+    expect(parity.counting.target.manifestHashNormalization).toBe("LF");
+    const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
+    expect(createHash("sha256").update(manifest).digest("hex").toUpperCase()).toBe(parity.counting.target.manifestSha256);
     for (const page of pages.pages) {
       expect(existsSync(resolve("../view/uniapp-ts/src", `${page.path}.vue`))).toBe(true);
     }
@@ -75,6 +80,8 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   it("rejects unregistered internal links and preserves only audited legacy aliases", () => {
     expect(resolveRegisteredPageRoute("/pages/not-migrated/index")).toBe("");
     expect(resolveRegisteredPageRoute("/pages/index/index")).toBe("/pages/index/index");
+    expect(resolveRegisteredPageRoute("/pages/user/couponProducts", "couponId=60"))
+      .toBe("/pages/user/couponProducts?couponId=60");
     expect(resolveRegisteredPageRoute("/pages/goods/order_details/index", "order_id=abc&from=share"))
       .toBe("/pages/order/detail?orderId=abc&from=share");
     expect(resolveRegisteredPageRoute("/pages/goods/goods_search/index", "searchVal=tea"))
