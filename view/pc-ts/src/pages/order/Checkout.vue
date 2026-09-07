@@ -2,8 +2,10 @@
   <div class="checkout container">
     <h2 class="title">确认订单</h2>
     <el-alert v-if="selectionError" :title="selectionError" type="error" :closable="false" show-icon />
+    <el-button v-if="selectionError" @click="loadCheckout">重新加载结算信息</el-button>
     <el-skeleton v-if="checkoutLoading" :rows="3" animated />
 
+    <fieldset class="checkout-controls" :disabled="checkoutLoading || !!pendingSubmission">
     <section class="section">
       <h3 class="section-title">配送方式</h3>
       <el-alert
@@ -38,10 +40,12 @@
     <section v-if="shippingType === 1" class="section">
       <h3 class="section-title">收货地址</h3>
       <div class="address-list">
-        <div
+        <button
           v-for="addr in addresses"
           :key="addr.id"
           class="address-card"
+          type="button"
+          :aria-pressed="selectedAddrId === addr.id"
           :class="{ selected: selectedAddrId === addr.id }"
           @click="selectedAddrId = addr.id"
         >
@@ -53,7 +57,7 @@
           <div class="addr-detail">
             {{ addr.province }}{{ addr.city }}{{ addr.district }}{{ addr.detail }}
           </div>
-        </div>
+        </button>
       </div>
       <el-button size="small" @click="showAddressDialog = true">+ 新增地址</el-button>
     </section>
@@ -69,7 +73,7 @@
     <!-- 商品清单 -->
     <section class="section">
       <h3 class="section-title">商品清单</h3>
-      <el-table :data="checkoutItems">
+      <el-table :data="displayItems" class="checkout-desktop-items">
         <el-table-column label="商品">
           <template #default="{ row }">
             <div class="product-cell">
@@ -78,19 +82,32 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="单价" width="120">
-          <template #default="{ row }">¥{{ row.productInfo?.price }}</template>
+        <el-table-column label="商品单价" width="120">
+          <template #default="{ row }">
+            <span v-if="quoteReady">¥{{ row.productInfo?.price }}<small v-if="row.quotedUnitPrice !== row.productInfo?.price" class="checkout-sku">优惠价 ¥{{ row.quotedUnitPrice }}</small></span>
+            <span v-else>待报价</span>
+          </template>
         </el-table-column>
         <el-table-column prop="cartNum" label="数量" width="80" />
-        <el-table-column label="小计" width="120">
-          <template #default="{ row }">¥{{ row.sumPrice }}</template>
+        <el-table-column label="优惠前小计" width="120">
+          <template #default="{ row }">{{ quoteReady ? `¥${row.sumPrice}` : '待报价' }}</template>
         </el-table-column>
       </el-table>
-      <div v-if="firstOrderQuote?.eligible" class="first-order-summary">
-        <span>首单优惠（不与优惠券叠加）</span>
-        <strong v-if="firstOrderDiscount > 0">-¥{{ firstOrderDiscount.toFixed(2) }}</strong>
-        <span v-else>已启用</span>
-      </div>
+      <ul class="checkout-mobile-items" aria-label="结算商品">
+        <li v-for="item in displayItems" :key="item.id">
+          <div class="product-cell">
+            <img v-if="item.productInfo" :src="item.productInfo.image" alt="" class="thumb" />
+            <span>{{ item.productInfo?.storeName }}<small class="checkout-sku">{{ item.productInfo?.suk }}</small></span>
+          </div>
+          <dl>
+            <div><dt>商品单价</dt><dd>{{ quoteReady ? `¥${item.productInfo?.price}` : '待报价' }}</dd></div>
+            <div v-if="quoteReady && 'quotedUnitPrice' in item && item.quotedUnitPrice !== item.productInfo?.price"><dt>优惠单价</dt><dd>¥{{ item.quotedUnitPrice }}</dd></div>
+            <div><dt>数量</dt><dd>{{ item.cartNum }}</dd></div>
+            <div><dt>优惠前小计</dt><dd>{{ quoteReady ? `¥${item.sumPrice}` : '待报价' }}</dd></div>
+          </dl>
+        </li>
+      </ul>
+      <el-checkbox v-if="checkoutItems.length && checkoutItems.every(item => item.type === 0)" v-model="useIntegral">使用积分抵扣（可用额度由系统计算）</el-checkbox>
     </section>
 
     <SystemFormFields
@@ -98,25 +115,45 @@
       v-model="customForm"
       :title="systemFormName"
     />
+    </fieldset>
+
+    <section class="section quote-section" aria-live="polite" :aria-busy="quoteState.loading">
+      <h3 class="section-title">费用明细</h3>
+      <p v-if="quoteState.loading">正在计算最新报价，完成前无法提交订单…</p>
+      <el-alert v-else-if="deliveryError || quoteState.error" :title="deliveryError || quoteState.error" type="error" :closable="false" show-icon />
+      <el-button v-if="quoteState.error && !pendingSubmission" @click="renewQuote">重新获取报价</el-button>
+      <el-button v-if="addressError || storeError" :disabled="!!pendingSubmission" @click="loadCheckout">重试配送信息</el-button>
+      <dl v-if="quoteReady && quoteState.result" class="quote-prices">
+        <div><dt>商品金额</dt><dd>¥{{ quoteState.result.prices.subtotal }}</dd></div>
+        <div v-if="quoteState.result.prices.memberDiscount !== '0.00'"><dt>会员优惠</dt><dd>-¥{{ quoteState.result.prices.memberDiscount }}</dd></div>
+        <div v-if="quoteState.result.prices.firstOrderDiscount !== '0.00'"><dt>首单优惠（不与优惠券叠加）</dt><dd>-¥{{ quoteState.result.prices.firstOrderDiscount }}</dd></div>
+        <div v-if="quoteState.result.prices.couponDiscount !== '0.00'"><dt>优惠券</dt><dd>-¥{{ quoteState.result.prices.couponDiscount }}</dd></div>
+        <div v-if="quoteState.result.prices.integralDiscount !== '0.00'"><dt>积分抵扣（{{ quoteState.result.prices.usedIntegral }} 积分）</dt><dd>-¥{{ quoteState.result.prices.integralDiscount }}</dd></div>
+        <div><dt>运费</dt><dd>¥{{ quoteState.result.prices.postage }}</dd></div>
+        <div v-if="quoteState.result.prices.postageDiscount !== '0.00'"><dt>运费优惠</dt><dd>-¥{{ quoteState.result.prices.postageDiscount }}</dd></div>
+        <div class="quote-payable"><dt>应付金额</dt><dd>¥{{ quoteState.result.prices.payable }}</dd></div>
+      </dl>
+    </section>
 
     <!-- 备注 + 提交 -->
     <section class="section submit-section">
       <div class="remark-row">
         <span>订单备注:</span>
-        <el-input v-model="remark" placeholder="选填" class="remark-input" />
+        <el-input v-model="remark" placeholder="选填" class="remark-input" :disabled="!!pendingSubmission" />
       </div>
+      <el-alert v-if="submissionError" :title="submissionError" description="重试会复用相同订单标识和提交内容，不会自动发起付款。" type="error" :closable="false" show-icon />
       <div class="submit-row">
         <span class="total">
-          应付: <span class="price">¥{{ checkoutTotal }}</span>
+          应付: <span class="price">{{ quoteReady ? `¥${quoteState.result?.prices.payable}` : '待报价' }}</span>
         </span>
-        <el-button type="primary" size="large" :loading="submitting" :disabled="checkoutLoading || !!selectionError || !checkoutItems.length" @click="submitOrder">
-          提交订单
+        <el-button type="primary" size="large" :loading="submitting" :disabled="!canSubmit" @click="submitOrder">
+          {{ pendingSubmission ? '重试确认订单' : '提交订单' }}
         </el-button>
       </div>
     </section>
 
     <!-- 新增地址弹窗 -->
-    <el-dialog v-model="showAddressDialog" title="新增地址" width="480px">
+    <el-dialog v-model="showAddressDialog" title="新增地址" width="min(480px, calc(100vw - 24px))">
       <el-form :model="addrForm" label-width="80px">
         <el-form-item label="收货人"><el-input v-model="addrForm.realName" /></el-form-item>
         <el-form-item label="手机号"><el-input v-model="addrForm.phone" /></el-form-item>
@@ -127,28 +164,30 @@
       </el-form>
       <template #footer>
         <el-button @click="showAddressDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveAddress">保存</el-button>
+        <el-button type="primary" :loading="savingAddress" @click="saveAddress">保存</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, shallowRef, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useCartStore } from "@/stores/cart";
 import { apiDirectCartList } from "@/api/cart";
-import { parseCheckoutSelection, type CheckoutSelection } from "@/api/productPurchase";
+import { parseCheckoutSelection } from "@/api/productPurchase";
+import { CheckoutQuoteSession, checkoutQuoteFingerprint, type CheckoutQuoteOptions, type CheckoutQuoteState } from "@/api/checkoutQuote";
 import {
   apiAddressList,
   apiAddressSave,
-  apiFirstOrderQuote,
+  apiOrderConfirm,
+  apiOrderComputed,
   apiOrderCreate,
   apiOrderSystemForm,
   apiPickupStores,
 } from "@/api/order";
-import type { CartItem, FirstOrderQuote, PickupStore, UserAddress } from "@/types/order";
+import type { CartItem, PickupStore, UserAddress } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import SystemFormFields from "@/components/SystemFormFields.vue";
 
@@ -169,36 +208,54 @@ const addrForm = ref({ realName: "", phone: "", region: "", detail: "" });
 const customForm = ref<SystemFormComponent[]>([]);
 const systemFormName = ref("");
 const systemFormError = ref("");
-const firstOrderQuote = ref<FirstOrderQuote | null>(null);
-const selection = ref<CheckoutSelection | null>(null);
-const directItems = ref<CartItem[]>([]);
+const selectedItems = ref<CartItem[]>([]);
 const selectionError = ref("");
 const checkoutLoading = ref(true);
 const loadedRoute = ref("");
 const orderKey = ref("");
+const addressError = ref("");
+const storeError = ref("");
+const useIntegral = ref(false);
+const savingAddress = ref(false);
+const submissionError = ref("");
+const pendingSubmission = shallowRef<Parameters<typeof apiOrderCreate>[1] | null>(null);
+const activityOptions = ref<Pick<CheckoutQuoteOptions, "type" | "pinkId" | "combinationId" | "seckillId" | "bargainUserId">>({ type: 0 });
 const checkoutItems = computed(() => checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath
-  ? [] : selection.value?.mode === "buy" ? directItems.value : cartStore.checkedItems.filter((item) => item.isValid));
+  ? [] : selectedItems.value);
 const includesSecondCard = computed(() => checkoutItems.value.some(
   (item) => item.productInfo?.productType === 4,
 ));
-const firstOrderDiscount = computed(() => Number(firstOrderQuote.value?.firstOrderPrice ?? 0));
-const checkoutTotal = computed(() => Math.max(
-  0,
-  checkoutItems.value.reduce((sum, item) => sum + Number(item.sumPrice), 0)
-    - firstOrderDiscount.value,
-).toFixed(2));
+const quoteOptions = computed<CheckoutQuoteOptions>(() => ({
+  ...activityOptions.value,
+  addressId: shippingType.value === 1 ? selectedAddrId.value : 0,
+  shippingType: shippingType.value,
+  storeId: shippingType.value === 2 ? selectedStoreId.value : 0,
+  couponId: 0,
+  useIntegral: useIntegral.value,
+}));
+const deliveryError = computed(() => checkoutLoading.value || selectionError.value ? "" : shippingType.value === 1
+  ? addressError.value || (!addresses.value.some((item) => item.id === selectedAddrId.value) ? "请选择收货地址后获取完整报价" : "")
+  : storeError.value || (!pickupStores.value.some((item) => item.id === selectedStoreId.value) ? "请选择自提门店后获取报价" : ""));
+const quoteState = shallowRef<CheckoutQuoteState>({ loading: false, error: "", fingerprint: "", result: null });
+const quoteSession = new CheckoutQuoteSession({ confirm: apiOrderConfirm, computed: apiOrderComputed }, (state) => { quoteState.value = state; });
+const quoteReady = computed(() => !checkoutLoading.value && !selectionError.value && !deliveryError.value
+  && !quoteState.value.loading && !!quoteState.value.result
+  && quoteState.value.fingerprint === checkoutQuoteFingerprint(checkoutItems.value, quoteOptions.value));
+const displayItems = computed(() => quoteReady.value ? quoteState.value.result!.items : checkoutItems.value);
+const canSubmit = computed(() => quoteReady.value && !systemFormError.value && !submitting.value && !savingAddress.value);
 
-async function loadFirstOrderQuote() {
-  const cartIds = checkoutItems.value.map((item) => item.id);
-  if (!cartIds.length) {
-    firstOrderQuote.value = null;
+async function reloadQuote() {
+  if (pendingSubmission.value) return;
+  if (checkoutLoading.value || savingAddress.value || selectionError.value || systemFormError.value || deliveryError.value || !checkoutItems.value.length) {
+    quoteSession.invalidate();
     return;
   }
-  try {
-    firstOrderQuote.value = await apiFirstOrderQuote(cartIds);
-  } catch {
-    firstOrderQuote.value = null;
-  }
+  await quoteSession.load(checkoutItems.value, quoteOptions.value);
+}
+function renewQuote() {
+  if (pendingSubmission.value) return;
+  quoteSession.reset();
+  void reloadQuote();
 }
 
 function choiceText(value: unknown): string {
@@ -219,67 +276,87 @@ function initializeComponent(item: SystemFormComponent): SystemFormComponent {
   return { ...item, value };
 }
 
-async function loadSystemForm() {
-  const ids = [...new Set(checkoutItems.value
+async function loadSystemForm(items: CartItem[], generation: number) {
+  const ids = [...new Set(items
     .map((item) => Number(item.productInfo?.systemFormId ?? 0))
     .filter((id) => id > 0))];
   customForm.value = [];
   systemFormName.value = "";
   systemFormError.value = ids.length > 1 ? "同一订单不能包含不同的自定义表单" : "";
-  if (systemFormError.value) return;
+  if (systemFormError.value) { selectionError.value = systemFormError.value; return; }
   if (!ids[0]) return;
   try {
     const form = await apiOrderSystemForm(ids[0]);
+    if (generation !== checkoutGeneration) return;
     systemFormName.value = form.name;
     customForm.value = form.value.map(initializeComponent);
   } catch (error) {
+    if (generation !== checkoutGeneration) return;
     systemFormError.value = error instanceof Error ? error.message : "系统表单加载失败";
+    selectionError.value = systemFormError.value;
   }
 }
 
-async function loadAddresses() {
+async function loadAddresses(generation: number) {
   try {
-    addresses.value = await apiAddressList();
+    const rows = await apiAddressList();
+    if (generation !== checkoutGeneration) return;
+    addresses.value = rows;
+    addressError.value = "";
     const def = addresses.value.find((a) => a.is_default);
     selectedAddrId.value = def?.id ?? addresses.value[0]?.id ?? 0;
     const contact = def ?? addresses.value[0];
     if (contact && !pickupContact.value.realName && !pickupContact.value.phone) {
       pickupContact.value = { realName: contact.real_name, phone: contact.phone };
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    if (generation !== checkoutGeneration) return;
+    addresses.value = [];
+    selectedAddrId.value = 0;
+    addressError.value = error instanceof Error ? error.message : "收货地址加载失败";
   }
 }
 
-async function loadPickupStores() {
+async function loadPickupStores(generation: number) {
   try {
-    pickupStores.value = await apiPickupStores();
+    const rows = await apiPickupStores();
+    if (generation !== checkoutGeneration) return;
+    pickupStores.value = rows;
+    storeError.value = "";
     selectedStoreId.value = pickupStores.value[0]?.id ?? 0;
-  } catch {
+  } catch (error) {
+    if (generation !== checkoutGeneration) return;
     pickupStores.value = [];
     selectedStoreId.value = 0;
+    storeError.value = error instanceof Error ? error.message : "自提门店加载失败";
   }
 }
 
 async function saveAddress() {
+  if (savingAddress.value || pendingSubmission.value) return;
+  const generation = checkoutGeneration;
   const f = addrForm.value;
   if (!f.realName || !f.phone || !f.detail) return ElMessage.error("请填写完整地址信息");
   const [province = "", city = "", district = ""] = f.region.split(/\s+/);
-  await apiAddressSave({
-    real_name: f.realName,
-    phone: f.phone,
-    province,
-    city,
-    district,
-    detail: f.detail,
-  });
-  showAddressDialog.value = false;
-  ElMessage.success("地址已保存");
-  await loadAddresses();
+  savingAddress.value = true;
+  quoteSession.invalidate();
+  try {
+    const saved = await apiAddressSave({ real_name: f.realName, phone: f.phone, province, city, district, detail: f.detail });
+    if (generation !== checkoutGeneration) return;
+    showAddressDialog.value = false;
+    ElMessage.success("地址已保存");
+    await loadAddresses(generation);
+    if (generation !== checkoutGeneration) return;
+    if (addresses.value.some((item) => item.id === saved.id)) selectedAddrId.value = saved.id;
+  } catch (error) {
+    if (generation === checkoutGeneration) ElMessage.error(error instanceof Error ? error.message : "地址保存失败");
+  } finally {
+    if (generation === checkoutGeneration) { savingAddress.value = false; await reloadQuote(); }
+  }
 }
 
 async function submitOrder() {
-  if (submitting.value || checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath) return;
+  if (!canSubmit.value || loadedRoute.value !== route.fullPath) return;
   const addr = addresses.value.find((a) => a.id === selectedAddrId.value);
   if (shippingType.value === 1 && !addr) return ElMessage.error("请选择收货地址");
   if (shippingType.value === 2 && !selectedStoreId.value) return ElMessage.error("请选择自提门店");
@@ -295,72 +372,105 @@ async function submitOrder() {
   if (systemFormError.value) return ElMessage.error(systemFormError.value);
 
   submitting.value = true;
+  submissionError.value = "";
+  const generation = checkoutGeneration;
   try {
-    const result = await apiOrderCreate(orderKey.value, {
-      cartIds: items.map((i) => i.id),
-      realName: shippingType.value === 1 ? addr?.real_name : pickupContact.value.realName.trim(),
-      userPhone: shippingType.value === 1 ? addr?.phone : pickupContact.value.phone.trim(),
-      province: shippingType.value === 1 ? addr?.province : "",
-      userAddress: shippingType.value === 1 && addr
-        ? `${addr.city}${addr.district}${addr.detail}`
-        : "",
-      shippingType: shippingType.value,
-      storeId: shippingType.value === 2 ? selectedStoreId.value : 0,
-      mark: remark.value,
-      customForm: customForm.value,
-      type: Number(route.query.type ?? 0) || undefined,
-      pinkId: Number(route.query.pinkId ?? 0) || undefined,
-      combinationId: Number(route.query.combinationId ?? 0) || undefined,
-      seckillId: Number(route.query.seckillId ?? 0) || undefined,
-      bargainUserId: Number(route.query.bargainUserId ?? 0) || undefined,
-    });
+    if (!pendingSubmission.value) {
+      orderKey.value = quoteState.value.result!.key;
+      // Freeze the same address/options as the accepted quote. Never send a client total or payType.
+      pendingSubmission.value = JSON.parse(JSON.stringify({
+        ...quoteOptions.value,
+        cartIds: items.map((i) => i.id),
+        ...(shippingType.value === 2 ? { realName: pickupContact.value.realName.trim(), userPhone: pickupContact.value.phone.trim() } : {}),
+        mark: remark.value,
+        customForm: customForm.value,
+      }));
+    }
+    const result = await apiOrderCreate(orderKey.value, pendingSubmission.value!);
+    if (generation !== checkoutGeneration) return;
     ElMessage.success("订单创建成功");
-    await cartStore.fetchList();
-    router.push(`/order/${result.orderId}`);
+    // A badge/list refresh failure must not turn a successful order into a failed submission.
+    await cartStore.fetchList().catch(() => {});
+    if (generation === checkoutGeneration) await router.push(`/order/${result.orderId}`);
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "下单失败");
+    if (generation === checkoutGeneration) submissionError.value = e instanceof Error ? e.message : "下单结果未确认";
   } finally {
-    submitting.value = false;
+    if (generation === checkoutGeneration) submitting.value = false;
   }
 }
 
 let checkoutGeneration = 0;
 async function loadCheckout() {
   const generation = ++checkoutGeneration;
+  quoteSession.reset();
   checkoutLoading.value = true;
   selectionError.value = "";
-  directItems.value = [];
-  selection.value = null;
-  firstOrderQuote.value = null;
+  selectedItems.value = [];
+  pendingSubmission.value = null;
+  submissionError.value = "";
+  submitting.value = false;
+  savingAddress.value = false;
+  addressError.value = "";
+  storeError.value = "";
+  systemFormError.value = "";
+  showAddressDialog.value = false;
+  useIntegral.value = false;
   customForm.value = [];
-  orderKey.value = `pc_${crypto.randomUUID().replaceAll("-", "")}`;
+  orderKey.value = "";
   try {
     const requested = parseCheckoutSelection(route.query);
+    let rows: CartItem[];
     if (requested.mode === "buy") {
-      const rows = await apiDirectCartList(requested.ids);
+      rows = await apiDirectCartList(requested.ids);
       if (generation !== checkoutGeneration) return;
       if (!Array.isArray(rows) || rows.length !== requested.ids.length || new Set(rows.map((item) => item.id)).size !== rows.length
         || rows.some((item) => !requested.ids.includes(item.id) || item.isNew !== 1 || !item.isValid || !item.productInfo)) {
         throw new Error("立即购买商品不完整或已失效，请重新选择");
       }
-      directItems.value = rows;
-    } else await cartStore.fetchList();
+    } else {
+      await cartStore.fetchList();
+      rows = cartStore.checkedItems.filter((item) => item.isValid);
+    }
     if (generation !== checkoutGeneration) return;
-    selection.value = requested;
+    if (!rows.length) throw new Error("请选择要结算的商品");
+    const type = rows[0].type;
+    if (rows.some((item) => item.type !== type)) throw new Error("不同活动的商品请分开结算");
+    const activity: typeof activityOptions.value = { type };
+    for (const name of ["type", "pinkId", "combinationId", "seckillId", "bargainUserId"] as const) {
+      const value = route.query[name];
+      if (value === undefined) continue;
+      if (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) throw new Error("活动结算参数无效");
+      if (name === "type" && Number(value) !== type) throw new Error("活动类型与结算商品不匹配");
+      activity[name] = Number(value);
+    }
+    activityOptions.value = activity;
+    selectedItems.value = rows;
     loadedRoute.value = route.fullPath;
-    checkoutLoading.value = false;
-    if (includesSecondCard.value) shippingType.value = 2;
-    await Promise.all([loadAddresses(), loadPickupStores(), loadSystemForm(), loadFirstOrderQuote()]);
+    shippingType.value = rows.some((item) => item.productInfo?.productType === 4) ? 2 : 1;
+    await Promise.all([loadAddresses(generation), loadPickupStores(generation), loadSystemForm(rows, generation)]);
   } catch (error) {
     if (generation === checkoutGeneration) selectionError.value = error instanceof Error ? error.message : "结算商品加载失败";
   } finally {
-    if (generation === checkoutGeneration) checkoutLoading.value = false;
+    if (generation === checkoutGeneration) { checkoutLoading.value = false; await reloadQuote(); }
   }
 }
-watch(() => route.fullPath, loadCheckout, { immediate: true });
+watch(quoteOptions, () => { void reloadQuote(); }, { flush: "sync" });
+watch(() => route.fullPath, loadCheckout, { immediate: true, flush: "sync" });
+onUnmounted(() => { checkoutGeneration++; quoteSession.reset(); });
 </script>
 
 <style scoped>
+.checkout-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+.checkout-mobile-items { display: none; list-style: none; padding: 0; margin: 0 0 12px; }
+.checkout-mobile-items li + li { border-top: 1px solid #eee; padding-top: 14px; margin-top: 14px; }
+.checkout-mobile-items dl { margin: 12px 0 0; }
+.checkout-mobile-items dl > div { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; }
+.checkout-mobile-items dd { margin: 0; }
+.quote-prices { width: min(100%, 430px); margin: 0 0 0 auto; }
+.quote-prices > div { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; }
+.quote-prices dd { margin: 0; flex-shrink: 0; }
+.quote-payable { border-top: 1px solid #eee; color: #d93025; font-weight: 600; }
+.quote-section > .el-button { margin-top: 12px; }
 .title {
   font-size: 20px;
   margin: 20px 0;
@@ -431,6 +541,10 @@ watch(() => route.fullPath, loadCheckout, { immediate: true });
 }
 
 .address-card {
+  text-align: left;
+  background: white;
+  color: inherit;
+  font: inherit;
   border: 1px solid #eee;
   border-radius: 8px;
   padding: 12px;
@@ -504,5 +618,18 @@ watch(() => route.fullPath, loadCheckout, { immediate: true });
   color: #e64340;
   font-size: 24px;
   font-weight: 700;
+}
+@media (max-width: 900px) {
+  .address-list, .store-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .checkout-desktop-items { display: none; }
+  .checkout-mobile-items { display: block; }
+  .checkout-mobile-items .product-cell > span { min-width: 0; overflow-wrap: anywhere; }
+  .checkout-mobile-items .thumb { flex-shrink: 0; }
+  .section { padding: 14px; }
+  .address-list, .store-list { grid-template-columns: minmax(0, 1fr); }
+  .addr-top, .submit-row, .remark-row { flex-wrap: wrap; }
+  .quote-prices { font-size: 13px; }
 }
 </style>

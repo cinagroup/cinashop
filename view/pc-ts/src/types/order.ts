@@ -2,7 +2,7 @@
  * 订单/购物车相关类型
  * 与后端 schema 对齐
  */
-import type { SystemFormComponent } from "@/types/systemForm";
+import type { SystemFormComponent } from "./systemForm";
 
 /** 购物车项 */
 export interface CartItem {

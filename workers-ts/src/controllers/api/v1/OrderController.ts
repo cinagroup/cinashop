@@ -446,6 +446,7 @@ export async function orderConfirm(c: C) {
       .checkoutPreview(uid, cartIds, {
         addressId: Number(body.addressId ?? body.address_id ?? 0),
         couponId: Number(body.couponId ?? body.coupon_id ?? 0),
+        useIntegral: Number(body.useIntegral ?? body.use_integral ?? 0) > 0,
         shippingType: Number(body.shippingType ?? body.shipping_type ?? 1),
         storeId: Number(body.storeId ?? body.store_id ?? 0),
         type: body.type === undefined ? undefined : Number(body.type),
@@ -488,7 +489,14 @@ export async function orderComputed(c: C) {
         combinationId: Number(body.combinationId ?? body.combination_id ?? 0) || undefined,
       },
     );
-    return jsonOk(c, preview.priceGroup);
+    // Preserve every legacy flat amount while returning the detail snapshot
+    // from the same calculation, so clients do not display stale cart prices.
+    return jsonOk(c, {
+      ...preview.priceGroup,
+      cartInfo: preview.cartInfo,
+      addressInfo: preview.addressInfo,
+      orderKey: preview.orderKey,
+    });
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);
     throw error;

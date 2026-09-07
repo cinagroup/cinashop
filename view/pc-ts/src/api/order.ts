@@ -14,6 +14,18 @@ import type {
   UserAddress,
 } from "@/types/order";
 import type { SystemFormComponent, SystemFormInfo } from "@/types/systemForm";
+import type { CartItem } from "@/types/order";
+import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "./checkoutQuote";
+
+export async function apiOrderConfirm(items: CartItem[], options: CheckoutQuoteOptions) {
+  const response = await getData<unknown>(request.post("/order/confirm", { cartIds: items.map((item) => item.id), ...options }));
+  return normalizeCheckoutQuote(response, items, options);
+}
+
+export async function apiOrderComputed(key: string, items: CartItem[], options: CheckoutQuoteOptions) {
+  const response = await getData<unknown>(request.post(`/order/computed/${encodeURIComponent(key)}`, options));
+  return normalizeCheckoutQuote(response, items, options, key);
+}
 
 function toSnake(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(toSnake);
@@ -35,6 +47,9 @@ function toSnake(value: unknown): unknown {
 /** 创建订单 (POST /api/order/create/:key) */
 export function apiOrderCreate(key: string, params: {
   cartIds: number[];
+  addressId?: number;
+  couponId?: number;
+  useIntegral?: boolean;
   realName?: string;
   userPhone?: string;
   province?: string;
