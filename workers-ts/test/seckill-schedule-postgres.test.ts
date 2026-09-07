@@ -11,6 +11,8 @@ import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProdu
 /** Real cart, quote and order SQL. Only the external Sequence DO is replaced; no payment/provider. */
 describe("seckill schedule admission on disposable SQL", () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let initialBaseSku: typeof storeProductAttrValue.$inferSelect;
+  let initialProduct: typeof storeProduct.$inferSelect;
   const params: CreateOrderParams = { uid: 11, key: "schedule_order", cartIds: [1], type: 1, seckillId: 20,
     shippingType: 2, storeId: 1, realName: "隔离秒杀样本", userPhone: "00000000000", userIp: "127.0.0.1" };
   const cartParams = { uid: 11, productId: 70, activityId: 20, type: 1, unique: "qatime01", cartNum: 1, isNew: 1 };
@@ -19,6 +21,8 @@ describe("seckill schedule admission on disposable SQL", () => {
     f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument]);
     for (const key of Object.keys(f.config)) f.config[key] = "0";
     await f.db.update(systemStore).set({ isStore: 1 });
+    [initialBaseSku] = await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id, 1));
+    [initialProduct] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
   }, 30_000);
   beforeEach(async () => {
     f.cache.clear(); f.writes.length = 0;
@@ -27,9 +31,9 @@ describe("seckill schedule admission on disposable SQL", () => {
     await f.db.insert(storeCart).values({ id: 1, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2,
       activityId: 20, type: 1, isNew: 1, status: 1 });
     await f.exec("select setval(pg_get_serial_sequence('store_cart', 'id'), 1)");
-    await f.db.update(storeProduct).set({ stock: 8, sales: 0 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProduct).set({ ...initialProduct, stock: 8, sales: 0 }).where(eq(storeProduct.id, 70));
     await f.db.delete(storeProductAttrValue).where(eq(storeProductAttrValue.type, 1));
-    await f.db.update(storeProductAttrValue).set({ stock: 8, sales: 0 }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.update(storeProductAttrValue).set({ ...initialBaseSku, stock: 8, sales: 0 }).where(eq(storeProductAttrValue.id, 1));
     await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 20, type: 1, unique: "qatime01", suk: "红色,大号",
       stock: 7, quota: 6, price: "6.25" });
     await f.db.insert(storeActivity).values({ id: 9, type: 1, status: 1, timeId: "4,8", startDay: today() - 86_400, endDay: today() + 86_400 });
@@ -127,6 +131,82 @@ describe("seckill schedule admission on disposable SQL", () => {
     await expect(create(allocate)).rejects.toThrow("秒杀库存不足");
     expect(evaluations).toBe(3);
     expect(allocate).toHaveBeenCalledOnce(); expect(await snapshot()).toEqual(before);
+  });
+  it.each(["once-limit", "total-limit", "activity-price", "activity-retired", "base-retired", "cart-quantity",
+    "activity-cost", "activity-identity", "activity-label", "activity-settlement", "activity-reward",
+    "base-identity", "base-label", "base-weight", "base-price", "base-delivery", "base-validity",
+    "child-postage", "child-reward", "child-form", "cart-sku", "cart-activity", "cart-mode",
+    "product-hidden", "product-unapproved", "product-supplier", "product-refund", "product-type"])(
+    "rolls back when %s changes after pricing and before transaction writes", async target => {
+      let before: Awaited<ReturnType<typeof snapshot>> | undefined;
+      const allocate = vi.fn(async () => {
+        if (target === "once-limit") await f.db.update(storeSeckill).set({ onceNum: 1 });
+        if (target === "total-limit") await f.db.update(storeSeckill).set({ num: 1 });
+        if (target === "activity-price") await f.db.update(storeProductAttrValue).set({ price: "9.99" }).where(eq(storeProductAttrValue.id, 2));
+        if (target === "activity-retired") await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.id, 2));
+        if (target === "base-retired") await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.id, 1));
+        if (target === "cart-quantity") await f.db.update(storeCart).set({ cartNum: 3 });
+        if (target === "activity-cost") await f.db.update(storeProductAttrValue).set({ cost: "1.23" }).where(eq(storeProductAttrValue.id, 2));
+        if (target === "activity-identity") await f.db.update(storeProductAttrValue).set({ unique: "changed1" }).where(eq(storeProductAttrValue.id, 2));
+        if (target === "activity-label") await f.db.update(storeProductAttrValue).set({ suk: "替换规格" }).where(eq(storeProductAttrValue.id, 2));
+        if (target === "activity-settlement") await f.db.update(storeProductAttrValue).set({ settlePrice: "1.23" }).where(eq(storeProductAttrValue.id, 2));
+        if (target === "activity-reward") await f.db.update(storeProductAttrValue).set({ integral: 9 }).where(eq(storeProductAttrValue.id, 2));
+        if (target === "base-identity") await f.db.update(storeProductAttrValue).set({ unique: "changed2" }).where(eq(storeProductAttrValue.id, 1));
+        if (target === "base-label") await f.db.update(storeProductAttrValue).set({ suk: "替换规格" }).where(eq(storeProductAttrValue.id, 1));
+        if (target === "base-weight") await f.db.update(storeProductAttrValue).set({ weight: "9.00" }).where(eq(storeProductAttrValue.id, 1));
+        if (target === "base-price") await f.db.update(storeProductAttrValue).set({ price: "99.00" }).where(eq(storeProductAttrValue.id, 1));
+        if (target === "base-delivery") await f.db.update(storeProductAttrValue).set({ diskInfo: "isolated new delivery definition" }).where(eq(storeProductAttrValue.id, 1));
+        if (target === "base-validity") await f.db.update(storeProductAttrValue).set({ writeDays: 9 }).where(eq(storeProductAttrValue.id, 1));
+        if (target === "child-postage") await f.db.update(storeSeckill).set({ postage: "8.00" });
+        if (target === "child-reward") await f.db.update(storeSeckill).set({ giveIntegral: "9" });
+        if (target === "child-form") await f.db.update(storeSeckill).set({ systemFormId: 99 });
+        if (target === "cart-sku") await f.db.update(storeCart).set({ productAttrUnique: "changed3" });
+        if (target === "cart-activity") await f.db.update(storeCart).set({ activityId: 99 });
+        if (target === "cart-mode") await f.db.update(storeCart).set({ isNew: 0 });
+        if (target === "product-hidden") await f.db.update(storeProduct).set({ isShow: 0 });
+        if (target === "product-unapproved") await f.db.update(storeProduct).set({ isVerify: 0 });
+        if (target === "product-supplier") await f.db.update(storeProduct).set({ relationId: 99 });
+        if (target === "product-refund") await f.db.update(storeProduct).set({ isSupportRefund: 0 });
+        if (target === "product-type") await f.db.update(storeProduct).set({ productType: 3 });
+        before = await snapshot();
+        return "local_changed_rules_order";
+      });
+      await expect(create(allocate)).rejects.toThrow(/已变化|被占用/);
+      expect(allocate).toHaveBeenCalledOnce(); expect(await snapshot()).toEqual(before);
+    });
+  it("allows a fresh confirmation at the changed price and preserves idempotency after later rule changes", async () => {
+    expect(await quote()).toMatchObject({ payCents: 1250 });
+    await expect(create(async () => {
+      await f.db.update(storeProductAttrValue).set({ price: "7.50" }).where(eq(storeProductAttrValue.id, 2));
+      return "local_stale_price_order";
+    })).rejects.toThrow("已变化");
+    expect(await quote()).toMatchObject({ payCents: 1500 });
+    const result = await create();
+    expect((await snapshot()).orders[0]).toMatchObject({ payPrice: "15.00", totalNum: 2 });
+    await f.db.update(storeSeckill).set({ onceNum: 1, num: 1 });
+    expect(await create()).toEqual(result);
+    expect((await snapshot()).orders).toHaveLength(1);
+  });
+  it("rejects unapproved seckill base products before quoting or allocating an order ID", async () => {
+    await f.db.update(storeProduct).set({ isVerify: 0 });
+    const before = await snapshot(), allocate = vi.fn(async () => "must_not_allocate");
+    await expect(quote()).rejects.toThrow("未审核通过");
+    await expect(create(allocate)).rejects.toThrow("未审核通过");
+    expect(allocate).not.toHaveBeenCalled(); expect(await snapshot()).toEqual(before);
+  });
+  it("does not reject unrelated inventory changes when the current stock and quota still suffice", async () => {
+    await create(async () => {
+      await f.db.update(storeSeckill).set({ stock: 6, quota: 5, sales: 1 });
+      await f.db.update(storeProductAttrValue).set({ stock: 6, quota: 5, sales: 1 }).where(eq(storeProductAttrValue.id, 2));
+      await f.db.update(storeProductAttrValue).set({ stock: 7, sales: 1 }).where(eq(storeProductAttrValue.id, 1));
+      await f.db.update(storeProduct).set({ stock: 7, sales: 1 });
+      return "local_current_stock_order";
+    });
+    const result = await snapshot();
+    expect(result.orders).toHaveLength(1);
+    expect(result.children[0]).toMatchObject({ stock: 4, quota: 3, sales: 3 });
+    expect(result.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 4, quota: 3, sales: 3 });
+    expect(result.products[0]).toMatchObject({ stock: 5, sales: 3 });
   });
   it("creates exactly one order during admission and preserves idempotent replay after the parent is stopped", async () => {
     const before = await snapshot(), result = await create();

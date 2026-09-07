@@ -185,7 +185,7 @@
       ],
       "queryEvidence": {
         "source": "src/dao/activity/ActivityDaos.ts",
-        "sourceLine": 165,
+        "sourceLine": 158,
         "purpose": "Bargain status search",
         "sourceSql": "    super(db, storeBargain, { status: (v) => eq(storeBargain.status, Number(v)) });"
       },
@@ -266,7 +266,7 @@
       ],
       "queryEvidence": {
         "source": "src/dao/activity/ActivityDaos.ts",
-        "sourceLine": 132,
+        "sourceLine": 125,
         "purpose": "Combination status search",
         "sourceSql": "    super(db, storeCombination, { status: (v) => eq(storeCombination.status, Number(v)) });"
       },
@@ -320,7 +320,7 @@
       ],
       "queryEvidence": {
         "source": "src/services/activity/ActivityService.ts",
-        "sourceLine": 756,
+        "sourceLine": 736,
         "purpose": "Active integral activity filter",
         "sourceSql": "        })\n        .where(\n          and(\n            eq(storeIntegral.id, integralId),\n            eq(storeIntegral.status, 1),\n            eq(storeIntegral.isShow, 1),\n            eq(storeIntegral.isDel, 0),"
       },

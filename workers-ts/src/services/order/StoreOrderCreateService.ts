@@ -97,6 +97,7 @@ import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPri
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
+import { seckillCartQuoteGuard, seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
 
 /** 下单入参 */
@@ -998,6 +999,7 @@ export class StoreOrderCreateService {
     let pinkCombinationId = 0;
     let legacyActivityOnceNum = 0;
     let legacyActivityTotalNum = 0;
+    let seckillPricingSnapshot: typeof storeSeckill.$inferSelect | null = null;
     let integralActivityId = 0;
     let requiredIntegral = 0;
     const orderItems: OrderItem[] = [];
@@ -1008,6 +1010,7 @@ export class StoreOrderCreateService {
       if (!product.isShow || product.isDel) {
         throw new ValidateException(`商品「${product.storeName}」已下架`);
       }
+      if (type === 1 && product.isVerify !== 1) throw new ValidateException("秒杀基础商品未审核通过");
       if (cart.productType !== product.productType) {
         throw new ValidateException(`商品「${product.storeName}」类型已变化，请重新购买`);
       }
@@ -1056,6 +1059,7 @@ export class StoreOrderCreateService {
         ) throw new ValidateException("秒杀活动不存在或已结束");
         if (seckill[0].productId !== product.id) throw new ValidateException("秒杀商品不匹配");
         if (cart.activityId !== seckill[0].id) throw new ValidateException("秒杀购物车与活动不匹配");
+        seckillPricingSnapshot = seckill[0];
         itemSystemFormId = seckill[0].systemFormId;
         legacyActivityOnceNum = seckill[0].onceNum;
         legacyActivityTotalNum = seckill[0].num;
@@ -1924,11 +1928,12 @@ export class StoreOrderCreateService {
             eq(storeCart.isPay, 0),
             eq(storeCart.isDel, 0),
             eq(storeCart.status, 1),
+            type === 1 ? seckillCartQuoteGuard(carts[0]) : undefined,
           ),
         )
         .returning({ id: storeCart.id });
       if (claimedCarts.length !== cartIds.length) {
-        throw new ValidateException("购物车商品已被其他订单占用");
+        throw new ValidateException(type === 1 ? "秒杀购物车已变化或被占用，请刷新后重试" : "购物车商品已被其他订单占用");
       }
 
       // 5a0. 活动库存与拼团团 (M17: 事务内保证一致)
@@ -1951,11 +1956,12 @@ export class StoreOrderCreateService {
             eq(storeProductAttrValue.id, activitySku.id),
             eq(storeProductAttrValue.productId, activityId),
             eq(storeProductAttrValue.type, activityType),
+            activityType === 1 ? seckillSkuQuoteGuard(activitySku) : undefined,
             sql`stock >= ${totalNum}`,
             sql`quota >= ${totalNum}`,
           ))
           .returning({ id: storeProductAttrValue.id });
-        if (!updated[0]) throw new ValidateException(`${label}规格库存不足`);
+        if (!updated[0]) throw new ValidateException(activityType === 1 ? "秒杀规格已变化或库存不足，请刷新后重试" : `${label}规格库存不足`);
       };
       if ([1, 3].includes(type)) {
         const activityId = type === 1 ? (params.seckillId ?? 0) : pinkCombinationId;
@@ -1989,6 +1995,7 @@ export class StoreOrderCreateService {
       }
       if (type === 1 && params.seckillId) {
         if (!seckillSchedule) throw new ValidateException("缺少秒杀排期");
+        if (!seckillPricingSnapshot) throw new ValidateException("缺少秒杀计价快照");
         const window = assertSeckillSchedule(seckillSchedule);
         // 秒杀: 扣活动 quota (守卫)
         const sk = await tx
@@ -2004,6 +2011,7 @@ export class StoreOrderCreateService {
               eq(storeSeckill.status, 1),
               eq(storeSeckill.isShow, 1),
               eq(storeSeckill.isDel, 0),
+              seckillRuleQuoteGuard(seckillPricingSnapshot),
               // NOW() is transaction-start time, not wall-clock time after lock waits.
               sql`clock_timestamp() >= ${new Date(window.startsAt!).toISOString()}::timestamptz`,
               sql`clock_timestamp() < ${new Date(window.endsAt!).toISOString()}::timestamptz`,
@@ -2012,7 +2020,7 @@ export class StoreOrderCreateService {
             ),
           )
           .returning({ id: storeSeckill.id });
-        if (!sk.length) throw new ValidateException("秒杀库存不足");
+        if (!sk.length) throw new ValidateException("秒杀库存不足、排期或计价规则已变化，请刷新后重试");
         await reserveLegacyActivitySku(1, params.seckillId, "秒杀");
       } else if (type === 2 && params.bargainUserId) {
         // 砍价: 扣活动库存 + 标记记录已购买 (status=4)
@@ -2282,10 +2290,11 @@ export class StoreOrderCreateService {
             stock: sql`stock - ${cart.cartNum}`,
             sales: sql`sales + ${cart.cartNum}`,
           })
-          .where(and(eq(storeProductAttrValue.id, sku.id), sql`stock >= ${cart.cartNum}`))
+          .where(and(eq(storeProductAttrValue.id, sku.id), sql`stock >= ${cart.cartNum}`,
+            type === 1 ? seckillSkuQuoteGuard(sku, true) : undefined))
           .returning({ id: storeProductAttrValue.id });
         if (!skuUpdated.length) {
-          throw new ValidateException(`商品「${product.storeName}」库存不足`);
+          throw new ValidateException(type === 1 ? "秒杀基础规格已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」库存不足`);
         }
 
         // 主商品库存 (也带守卫)
@@ -2295,10 +2304,11 @@ export class StoreOrderCreateService {
             stock: sql`stock - ${cart.cartNum}`,
             sales: sql`sales + ${cart.cartNum}`,
           })
-          .where(and(eq(storeProduct.id, product.id), sql`stock >= ${cart.cartNum}`))
+          .where(and(eq(storeProduct.id, product.id), sql`stock >= ${cart.cartNum}`,
+            type === 1 ? seckillProductQuoteGuard(product) : undefined))
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
-          throw new ValidateException(`商品「${product.storeName}」总库存不足`);
+          throw new ValidateException(type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);
         }
 
         // 5c. 订单商品快照

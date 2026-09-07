@@ -515,6 +515,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
     await tx.insert(storeProduct).values(products.map(([id, stock, name]) => ({
       id,
       storeName: `create-order ${name}`,
+      isVerify: 1,
       price: "10.00",
       stock,
       sales: 0,

@@ -29,7 +29,8 @@ describe("DB-009D2b3b complete ordinary index disposition", () => {
       const query = entry.queryEvidence;
       expect(query.purpose).toBeTruthy();
       const source = readFileSync(query.source, "utf8").replace(/\r\n/g, "\n");
-      expect(source.split("\n").slice(query.sourceLine - 1).join("\n").startsWith(query.sourceSql)).toBe(true);
+      expect(source.split("\n").slice(query.sourceLine - 1).join("\n").startsWith(query.sourceSql),
+        `${entry.key}: ${query.source}:${query.sourceLine}`).toBe(true);
       for (const column of entry.columns) {
         const camel = column.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
         expect(query.sourceSql.includes(column) || query.sourceSql.includes(camel), `${entry.key}.${column}`).toBe(true);
