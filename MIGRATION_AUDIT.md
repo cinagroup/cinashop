@@ -6743,6 +6743,26 @@ PostgreSQL技能促使保留有效部分/窄索引并明确统计不确定性，
 
 前端技能促使保留真实404证据、测试实际原生错误与可访问提示，而不是仅依赖构建或用占位图消除报错。生产素材、登录后的收藏/券范围/交易页渲染、其他浏览器和真机、本候选精确SHA CI、获批发布及发布后复验仍开放；Logo、分类图标、聊天媒体和评价上传图不在本商品组件范围内。清单仍221勾选/156开放/377项，FE-002C不冒进勾选；本轮无生产SQL、部署、真实账号/provider副作用，历史复制N/A。
 
+### eb206ec推送后审计：砍价专用规格与本人参与目录（2026-09-08）
+
+起点main工作区干净，`eb206ec54d4a259e6869a7f1bf36f3fce1f1e8be`已在origin/main。只读复核[Actions34213578273](https://github.com/cinagroup/cinashop/actions/runs/34213578273)为completed/failure，check 102019990699注释仍为账户近期付款失败或消费额度限制而未启动。未重跑、取消或修改计费，34abedc继续作为最近完整全绿证据，不能为本轮代码背书。
+
+审计发现：ActivityService.bargainList返回title/min_price，但PC Bargain.vue读取storeName/minPrice；本人列表返回snake_case，PC和UniApp仍按bargainId/bargainPrice查找和展示，PC进度把同一个起价同时当当前价。UniApp bargainDetail.vue经ActivityPurchase走通用购买选择器，而非专用砍价参与目录。ActivityJoinService.myBargains的pay_status排除3，来自旧PHP对3的已购买解释；当前Worker模型和下单链路定义3为已砍完可购买、4为已创建订单，取消订单恢复3。startBargain只复用1，没有复用仍有效的3，存在重复有效参与的代码路径。以上页面和写入状态缺口未在本轮暗中修改，分别列入A3f～A3h。
+
+新增BargainSkuCatalogService及既有GET /api/bargain/detail/:id的view=skus分支。可选bargain_user_id严格是该活动、当前主体的精确参与ID，不接受活动ID别名、重复参数或非规范正整数；无选择器的旧raw详情保持。匿名只能读公开商品规格，不查询/暴露参与记录，不允许以query uid/vip冒充主体；登录用户按实际非删除/启用用户及既有isMoneyLevel可见性合同筛选。活动和基础商品须有效可见。响应只投影标题、图片、活动ID、基础商品ID、价格/日期、本人参与状态及必要规格；private no-store，不含用户身份、成本或其他参与者信息。
+
+活动type2与基础type0各最多500项、读取501检测溢出，按精确suk映射unique；拒绝重复标签/unique、缺基础规格、冲突标识及无效库存，不猜测基础SKU。库存取活动stock/quota、基础商品stock、活动SKU stock/quota与基础SKU stock最小值，数量再限制32767；不把帮砍人数或活动num臆造为购买件数上限。过期/未开始/售罄/未砍完/已关闭/已用均不可选择；时间沿用现有首尾包含的时间戳规则。活动unique用于加购，base_unique仅说明对应关系。过滤脚本、data、协议相对、带凭据和控制字符图片URL，不请求图片、不补外部占位素材。
+
+本人有效参与最多读取2条，超过1条拒绝，即使请求精确ID也不绕过：当前cart按活动找最新参与，目录不能让用户误以为消费的是另一条。1或3且原始起价减已砍金额等于底价才ready，状态3而金额未完成拒绝；2为closed、4为used；没有有效记录时不默认选已消费记录。进度依据真实累计已砍金额，不沿用PHP最低10%展示。状态和金额读取在同一REPEATABLE READ/READ ONLY事务，语句及事务空闲期限最多5秒并保留更严格值，事务后恢复；无DML、锁定库存、预留、序列推进、KV写入或外部provider调用。
+
+价格实测保留一个重要未决规则：现有报价为max(参与底价,max(参与起价,活动当前起价)-已砍金额)。合成参与起价10.00、底价2.00、已砍8.00，在活动起价10.00时目录与报价为2.00；将活动起价改为12.00则同一参与变4.00。活动SKU故意设777/999，证明没有误用SKU金额。新目录匹配既有报价并显式给出activity_price_changed；不是承诺参与起价永远冻结或当前价格必为底价。是否仍保留旧Worker零起价修复兼容及如何处理活动改价需独立决定，A3i开放，不在本轮单改显示或改实际计价规则。
+
+新增隔离fixture使用已有financePostgres防护，默认PGlite；PG分支只允许loopback、cinashop_finance_test/finance_test及PG16身份，并使用独立随机schema。夹具安装真实模型列/默认/主键，不包含完整生产FK/CHECK/触发器，明确不冒充全目录/并发证明。主体和KV为合成替身，未继承宿主凭据；只挂实际detail/cart/confirm/computed控制器，没有建单/支付入口。只读目录前后比对业务行、参与、帮砍、序列和KV；真实cart/add可写隔离cart，confirm只允许合成KV变化且订单/库存/参与等不变。
+
+首轮25项中22通过、3失败：参与行更新恢复后无ORDER BY导致物理行序变化、继承夹具只有isEverLevel而缺目录所用isMoneyLevel、PGlite execute返回{rows}而测试按数组索引。修正夹具稳定排序、显式会员字段和两驱动结果读取，不更改服务逻辑以迎合测试。另加活动关闭/删除、两套SKU溢出和严格750ms期限/恢复场景。最终29项新测试全部通过；相关10文件80项零跳过、53.54秒，包含真实加购与PC严格完整报价归一化。Worker unit/runtime类型检查均终态成功，git diff --check通过；不是全仓库测试数，也未取得本候选自身PG16或workerd运行证据。
+
+Workers技能促使保持请求内有界事务、等待全部I/O与既有绑定，核对当前公开建议及5.20260908.1 Hyperdrive类型；PostgreSQL技能促使批量有上限读取，避免逐SKU N+1和跨查询状态漂移。未更改依赖、锁文件、Wrangler配置或生产连接。本轮仅服务端及测试/文档，不声称浏览器或两端页面验收。清单新增A3e～A3i，221勾选/161开放/382项；生产SQL、发布、真实账号/provider副作用均未执行，历史复制N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

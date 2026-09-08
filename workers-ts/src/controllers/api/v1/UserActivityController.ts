@@ -10,6 +10,7 @@ import { UserCollectCompatibilityService } from "@/services/user/UserCollectComp
 import { ActivityService } from "@/services/activity/ActivityService";
 import { SeckillSkuCatalogService } from "@/services/activity/SeckillSkuCatalogService";
 import { CombinationSkuCatalogService } from "@/services/activity/CombinationSkuCatalogService";
+import { BargainSkuCatalogService } from "@/services/activity/BargainSkuCatalogService";
 import { V2CouponCompatibilityService } from "@/services/activity/V2CouponCompatibilityService";
 import { UserCouponWalletService, couponWalletQuery, couponWalletFilter } from "@/services/activity/UserCouponWalletService";
 import { StoreDiscountService } from "@/services/activity/StoreDiscountService";
@@ -498,6 +499,15 @@ export async function bargainList(c: C) {
 }
 
 export async function bargainDetail(c: C) {
+  const view = c.req.query("view"), participationId = c.req.query("bargain_user_id");
+  if (view !== undefined || participationId !== undefined) {
+    privateNoStore(c);
+    if (view !== "skus" || c.req.queries("view")?.length !== 1) throw new ValidateException("砍价详情视图无效");
+    if (participationId !== undefined && c.req.queries("bargain_user_id")?.length !== 1) throw new ValidateException("砍价记录ID无效");
+    return jsonOk(c, await new BargainSkuCatalogService(c.get("container")).read(
+      c.get("uid") ?? 0, c.req.param("id"), participationId,
+    ));
+  }
   const svc = new ActivityService(c.get("container"));
   return jsonOk(c, await svc.bargainDetail(Number(c.req.param("id"))));
 }
