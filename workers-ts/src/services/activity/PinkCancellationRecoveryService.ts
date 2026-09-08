@@ -1,6 +1,6 @@
-import { and, asc, eq, gt, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gt, lte, sql } from "drizzle-orm";
 import type { Env } from "@/env";
-import { withTx, type Container } from "@/lib/di";
+import { withTx, type Container, type DbClient } from "@/lib/di";
 import { storeOrder, storeOrderRefund } from "@/models/schema";
 import { lockRefundExecution, StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
 import { amountToCents } from "@/services/payment/RefundGateway";
@@ -9,6 +9,28 @@ import { ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 export const PINK_CANCELLATION_RECOVERY_PAGE_SIZE = 5;
+
+/** One query definition for execution and isolated EXPLAIN audits. Callers must
+ * validate the cursor/time and freeze the ceiling before executing this scan. */
+export function pinkCancellationRecoveryScan(db: Pick<DbClient, "select">,
+  cursor: number, highWater: number, scheduledAt: number) {
+  return db.select({ id: storeOrderRefund.id, uid: storeOrderRefund.uid,
+    orderId: storeOrderRefund.orderId, storeOrderId: storeOrderRefund.storeOrderId,
+    refundPrice: storeOrderRefund.refundPrice, refundNum: storeOrderRefund.refundNum,
+    pinkId: storeOrder.pinkId, cid: storeOrder.activityId })
+    .from(storeOrderRefund).leftJoin(storeOrder, eq(storeOrder.id, storeOrderRefund.storeOrderId))
+    .where(and(gt(storeOrderRefund.id, cursor), lte(storeOrderRefund.id, highWater),
+      // Allow an initiating HTTP request to finish before the next cron pass.
+      lte(storeOrderRefund.addTime, Math.floor(scheduledAt / 1000) - 60),
+      // Immutable business predicates stay literal so even a generic plan can
+      // prove partial-index eligibility. Never inline cursor/time/user input.
+      sql`${storeOrderRefund.isCancel} = 0 AND ${storeOrderRefund.isDel} = 0 AND ${storeOrderRefund.applyType} = 1
+        AND ${storeOrderRefund.refundType} IN (0, 1, 2, 4, 5)
+        AND ${storeOrderRefund.refundReason} = '用户手动取消拼团'
+        AND ${storeOrderRefund.refundExplain} = '用户手动取消未成团的拼团订单'
+        AND left(${storeOrderRefund.orderId}, 12) = 'pink_cancel_'`))
+    .orderBy(asc(storeOrderRefund.id)).limit(PINK_CANCELLATION_RECOVERY_PAGE_SIZE);
+}
 
 /** Recovery of a durable, owner-authorized cancellation, never auto-approval of
  * ordinary after-sales or creation of a replacement application. The scheduled
@@ -27,20 +49,7 @@ export class PinkCancellationRecoveryService {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
       const highWater = ceiling ?? (await tx.select({ id: sql<number>`COALESCE(MAX(${storeOrderRefund.id}), 0)::int` })
         .from(storeOrderRefund))[0].id;
-      const candidates = await tx.select({ id: storeOrderRefund.id, uid: storeOrderRefund.uid,
-        orderId: storeOrderRefund.orderId, storeOrderId: storeOrderRefund.storeOrderId,
-        refundPrice: storeOrderRefund.refundPrice, refundNum: storeOrderRefund.refundNum,
-        pinkId: storeOrder.pinkId, cid: storeOrder.activityId })
-        .from(storeOrderRefund).leftJoin(storeOrder, eq(storeOrder.id, storeOrderRefund.storeOrderId))
-        .where(and(gt(storeOrderRefund.id, cursor), lte(storeOrderRefund.id, highWater),
-          // Allow an initiating HTTP request to finish before the next cron pass.
-          lte(storeOrderRefund.addTime, Math.floor(scheduledAt / 1000) - 60),
-          eq(storeOrderRefund.isCancel, 0), eq(storeOrderRefund.isDel, 0), eq(storeOrderRefund.applyType, 1),
-          inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]),
-          eq(storeOrderRefund.refundReason, "用户手动取消拼团"),
-          eq(storeOrderRefund.refundExplain, "用户手动取消未成团的拼团订单"),
-          sql`left(${storeOrderRefund.orderId}, 12) = 'pink_cancel_'`))
-        .orderBy(asc(storeOrderRefund.id)).limit(PINK_CANCELLATION_RECOVERY_PAGE_SIZE);
+      const candidates = await pinkCancellationRecoveryScan(tx, cursor, highWater, scheduledAt);
       return { candidates, highWater };
     });
     let completed = 0, pending = 0, attention = 0, errors = 0;
