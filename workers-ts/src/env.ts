@@ -186,6 +186,7 @@ export type ScheduledMaintenanceJob =
   | "live_goods_sync"
   | "live_anchor_sync"
   | "refund_reconciliation"
+  | "pink_cancellation_recovery"
   | "reminder_unverified_remind"
   | "sign_remind_time";
 

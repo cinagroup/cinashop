@@ -32,6 +32,7 @@ import { ReplyService } from "@/services/product/ReplyService";
 import { WechatLiveService } from "@/services/wechat/WechatLiveService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { PinkTimeoutService } from "@/services/activity/PinkTimeoutService";
+import { PinkCancellationRecoveryService } from "@/services/activity/PinkCancellationRecoveryService";
 import {
   isSignReminderDispatchTime,
   SignReminderService,
@@ -56,6 +57,7 @@ const ROOT_JOBS: readonly ScheduledMaintenanceJob[] = [
   "live_goods_sync",
   "live_anchor_sync",
   "refund_reconciliation",
+  "pink_cancellation_recovery",
   "reminder_unverified_remind",
   "sign_remind_time",
 ];
@@ -207,6 +209,8 @@ export class ScheduledMaintenanceService {
         return new WechatLiveService(this.container, this.env).syncAnchors(message);
       case "refund_reconciliation":
         return this.reconcileRefunds(message);
+      case "pink_cancellation_recovery":
+        return this.recoverPinkCancellations(message);
       case "reminder_unverified_remind":
         return new SecondCardReminderService(this.container, this.env).scan(message);
       case "sign_remind_time":
@@ -606,6 +610,15 @@ export class ScheduledMaintenanceService {
       cursor: message.cursor,
       ...result,
     };
+  }
+
+  private async recoverPinkCancellations(message: ScheduledMaintenanceMessage): Promise<Record<string, unknown>> {
+    const result = await new PinkCancellationRecoveryService(this.container, this.env)
+      .recoverPage(message.cursor, message.scheduledAt, message.threshold);
+    if (result.hasMore) {
+      await this.sendContinuation({ ...message, threshold: result.highWater }, result.nextCursor);
+    }
+    return { event: "scheduled_pink_cancellation_recovery", job: message.job, runId: message.runId, ...result };
   }
 
   private async resolveThreshold(
