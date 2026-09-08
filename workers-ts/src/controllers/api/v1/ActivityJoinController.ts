@@ -53,12 +53,20 @@ export async function pinkStats(c: C) {
 
 /** POST /api/combination/remove — 取消开团 */
 export async function removePink(c: C) {
+  privateNoStore(c);
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { id?: number; cid?: number };
-  if (!body.id || !body.cid) return jsonFail(c, "缺少参数");
+  const body: unknown = await c.req.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body) || !("id" in body) || !("cid" in body)) {
+    return jsonFail(c, "拼团参数错误");
+  }
+  const { id, cid } = body;
+  if (typeof id !== "number" || typeof cid !== "number" ||
+      [id, cid].some((value) => !Number.isSafeInteger(value) || value <= 0 || value > 2_147_483_647)) {
+    return jsonFail(c, "拼团参数错误");
+  }
   const svc = new ActivityJoinService(c.get("container"), c.env);
-  const result = await svc.removePink(uid, body.id, body.cid);
+  const result = await svc.removePink(uid, id, cid);
   return jsonOk(c, result, result.completed ? "拼团已取消并退款" : "退款处理中");
 }
 

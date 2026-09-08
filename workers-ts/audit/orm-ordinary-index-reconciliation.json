@@ -239,7 +239,7 @@
       ],
       "queryEvidence": {
         "source": "src/services/activity/ActivityJoinService.ts",
-        "sourceLine": 702,
+        "sourceLine": 726,
         "purpose": "User bargain participation list",
         "sourceSql": "      .from(storeBargainUser)\n      .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))\n      .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0)))\n      .orderBy(desc(storeBargainUser.addTime), desc(storeBargainUser.id))"
       },
