@@ -2,6 +2,7 @@
  * 营销活动 API
  */
 import request, { getData } from "@/utils/request";
+import { parseSeckillIndex, parseSeckillList, parseSeckillSelection } from "../../../common/seckillPurchase";
 
 export interface DiscountPackageSku {
   id: number;
@@ -48,13 +49,18 @@ export function apiCouponReceive(id: number): Promise<{ couponUserId: number }> 
 export { apiMyCoupons } from "./user";
 
 /** 秒杀时间段 (GET /api/seckill/index) */
-export function apiSeckillIndex(): Promise<unknown[]> {
-  return getData(request.get<unknown[]>("/seckill/index"));
+export async function apiSeckillIndex() {
+  return parseSeckillIndex(await getData(request.get("/seckill/index")));
 }
 
 /** 秒杀商品列表 (GET /api/seckill/list/:time) */
-export function apiSeckillList(time: string): Promise<unknown[]> {
-  return getData(request.get<unknown[]>(`/seckill/list/${time}`));
+export async function apiSeckillList(timeId: number, page = 1, limit = 20) {
+  return parseSeckillList(await getData(request.get(`/seckill/list/${timeId}`, { params: { page, limit } })));
+}
+
+/** Activity-specific selection only; never fall back to ordinary product SKUs. */
+export async function apiSeckillSelection(id: number) {
+  return parseSeckillSelection(await getData(request.get(`/seckill/detail/${id}`, { params: { view: "skus" } })), id);
 }
 
 /** 拼团列表 (GET /api/combination/list) */

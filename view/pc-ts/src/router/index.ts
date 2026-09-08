@@ -17,6 +17,7 @@ const routes: RouteRecordRaw[] = [
       { path: "category", name: "goods-cate", component: () => import("@/pages/goods/GoodsCate.vue") },
       { path: "search", name: "goods-search", component: () => import("@/pages/goods/GoodsSearch.vue") },
       { path: "seckill", name: "seckill", component: () => import("@/pages/activity/Seckill.vue") },
+      { path: "seckill/:id", name: "seckill-detail", component: () => import("@/pages/activity/SeckillDetail.vue") },
       { path: "bargain", name: "bargain", component: () => import("@/pages/activity/Bargain.vue") },
       { path: "combination", name: "combination", component: () => import("@/pages/activity/Combination.vue") },
       { path: "combination/:id", name: "combination-detail", component: () => import("@/pages/activity/CombinationDetail.vue") },
