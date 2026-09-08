@@ -349,7 +349,7 @@ export async function applyStoreOrderBalancePayment(
     const paidOrder = paidRows[0];
     if (!paidOrder) return { outcome: "not-payable", outbox: null };
 
-    await activatePaidPink(tx, paidOrder, now);
+    await activatePaidPink(tx, paidOrder, now, { allowGroupReplacement: false });
     await tx
       .update(storeOrderInvoice)
       .set({ isPay: 1 })

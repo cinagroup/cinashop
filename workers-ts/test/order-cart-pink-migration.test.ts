@@ -75,7 +75,8 @@ describe("order cart and group-buy migration parity", () => {
     expect(lifecycleSource).toContain("orderIdKey: String(order.id)");
     expect(lifecycleSource).toContain("memberCount: 1");
     expect(lifecycleSource).toContain('.for("update")');
-    expect(paymentSource.match(/await activatePaidPink\(tx, paidOrder, now\);/g)).toHaveLength(2);
+    expect(paymentSource.match(/await activatePaidPink\(tx, paidOrder, now(?:, \{ allowGroupReplacement: false \})?\);/g)).toHaveLength(2);
+    expect(paymentSource).toContain("await activatePaidPink(tx, paidOrder, now, { allowGroupReplacement: false });");
     expect(routesSource).toContain('v1Routes.get("/pink"');
     expect(routesSource).not.toContain('v1Routes.post("/pink"');
     expect(orderSource).toContain("writeSurplusTimes: writeTimes");

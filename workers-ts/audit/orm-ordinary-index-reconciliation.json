@@ -239,7 +239,7 @@
       ],
       "queryEvidence": {
         "source": "src/services/activity/ActivityJoinService.ts",
-        "sourceLine": 760,
+        "sourceLine": 764,
         "purpose": "User bargain participation list",
         "sourceSql": "      .from(storeBargainUser)\n      .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))\n      .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0)))\n      .orderBy(desc(storeBargainUser.addTime), desc(storeBargainUser.id))"
       },
@@ -402,7 +402,7 @@
       ],
       "queryEvidence": {
         "source": "src/services/activity/PinkLifecycleService.ts",
-        "sourceLine": 340,
+        "sourceLine": 356,
         "purpose": "Group leader/participant lookup",
         "sourceSql": "    })\n    .where(eq(storePink.id, leader.id));\n  if (completed) {\n    await tx\n      .update(storePink)\n      .set({ status: 2, stopTime: paidAt })\n      .where(eq(storePink.kId, leader.id));"
       },

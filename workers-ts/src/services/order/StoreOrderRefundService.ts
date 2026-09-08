@@ -117,6 +117,9 @@ export interface ApplyOrderRefundInput {
   expectedRefundAmountCents?: number;
   /** Stable internal identifier for privileged at-least-once applications. */
   applicationOrderId?: string;
+  /** Internal SQL-only authorization, under the order lock and before a NEW
+   * application. A committed idempotent replay does not re-run admission. */
+  authorizeApplication?: (tx: DbClient, order: typeof storeOrder.$inferSelect) => Promise<void>;
   /** Optional immutable actor audit committed with the application row. */
   audit?: {
     changeType: string;
@@ -765,6 +768,7 @@ async function createOrderRefundApplication(
       if (options.reuseExisting) return { refundId: openRefund.id };
       throw new ValidateException("该订单已有进行中的退款申请");
     }
+    await params.authorizeApplication?.(tx, order);
     const completedRefunds = previousRefunds.filter(
       (item) => item.refundType === 6 && !item.isCancel && !item.isDel,
     );

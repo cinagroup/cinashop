@@ -23,6 +23,7 @@ import { ValidateException, NotFoundException } from "@/utils/errors";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
 import { amountToCents } from "@/services/payment/RefundGateway";
+import { authorizePinkCancellationApplication } from "@/services/activity/PinkCancellationIntent";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { createQrSvgDataUrl } from "@/services/user/MembershipScanService";
@@ -257,8 +258,8 @@ export class ActivityJoinService {
     }
     if (!this.env) throw new Error("取消拼团缺少运行环境");
     // A fresh, consistent preflight avoids Hyperdrive's transaction-external
-    // read cache. This is not a reservation against concurrent join/payment:
-    // that lifecycle contract must be completed before exposing UI cancellation.
+    // read cache. First-time admission is repeated under the order and leader
+    // locks by authorizeApplication when the durable intent is inserted.
     const { order, existingRefundId } = await withTx(this.container, async (tx) => {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
       const account = await tx.select({ uid: user.uid }).from(user).where(and(
@@ -357,6 +358,9 @@ export class ActivityJoinService {
       applyType: 1,
       applicationOrderId,
       expectedRefundAmountCents: refundCents,
+      authorizeApplication: (tx, lockedOrder) => authorizePinkCancellationApplication(
+        tx, lockedOrder, { uid, pinkId, combinationId },
+      ),
     });
     return refundService.agreeRefund(created.refundId, {
       expectedUid: uid,

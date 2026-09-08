@@ -7,6 +7,7 @@ import {
 } from "@/models/schema";
 import type { DbClient } from "@/lib/di";
 import { ValidateException } from "@/utils/errors";
+import { hasPendingPinkCancellation } from "@/services/activity/PinkCancellationIntent";
 
 export interface PinkReservation {
   leaderId: number;
@@ -50,6 +51,7 @@ export async function assertPinkOrderPayable(
   if (order.pinkId <= 0) return;
   const leaders = await db
     .select({
+      id: storePink.id,
       uid: storePink.uid,
       orderId: storePink.orderId,
       orderIdKey: storePink.orderIdKey,
@@ -63,6 +65,9 @@ export async function assertPinkOrderPayable(
     .where(eq(storePink.id, order.pinkId))
     .limit(1);
   const leader = leaders[0];
+  if (leader && await hasPendingPinkCancellation(db, leader)) {
+    throw new ValidateException("团长取消处理中，请稍后查看拼团结果");
+  }
   if (
     leader
     && leader.kId === 0
@@ -116,6 +121,9 @@ export async function reservePinkJoin(
   }
   if (leader.combinationId !== params.combinationId) {
     throw new ValidateException("拼团信息不匹配");
+  }
+  if (await hasPendingPinkCancellation(tx, leader)) {
+    throw new ValidateException("团长取消处理中，暂不能参团");
   }
 
   const [activeRows, pendingRows, duplicatePink, duplicateOrder] = await Promise.all([
@@ -204,6 +212,7 @@ export async function activatePaidPink(
   tx: DbClient,
   order: PaidPinkOrder,
   now = Math.floor(Date.now() / 1000),
+  options: { allowGroupReplacement?: boolean } = {},
 ): Promise<{ pinkId: number; completed: boolean } | null> {
   if (order.type !== 3 || order.activityId <= 0) return null;
   const combinations = await tx
@@ -236,12 +245,14 @@ export async function activatePaidPink(
     .limit(1)
     .for("update");
   const leader = leaders[0];
+  const cancelling = leader ? await hasPendingPinkCancellation(tx, leader) : false;
   const legacyOwnLeader = leader
     && leader.kId === 0
     && leader.combinationId === combination.id
     && pinkBelongsToOrder(leader, order);
   if (
     legacyOwnLeader
+    && !cancelling
     && leader.isRefund === 0
     && [1, 2].includes(leader.status)
     && (leader.stopTime === null || leader.stopTime.getTime() > paidAt.getTime())
@@ -273,7 +284,7 @@ export async function activatePaidPink(
     return { pinkId: leader.id, completed };
   }
   if (
-    !leader ||
+    !leader || cancelling ||
     leader.kId !== 0 ||
     leader.status !== 1 ||
     leader.isRefund !== 0 ||
@@ -282,6 +293,11 @@ export async function activatePaidPink(
     // Payment callbacks can arrive after the selected group expires or its
     // leader is refunded. The money has already moved at that point, so never
     // strand a charged order as unpaid: transparently open a fresh group.
+    // A reversible local balance transaction instead rolls back its debit and
+    // asks for a fresh choice; it must not silently replace a selected group.
+    if (options.allowGroupReplacement === false) {
+      throw new ValidateException("该拼团已失效或取消处理中，请重新确认");
+    }
     return createPaidPinkLeader(tx, order, combination, buyer, now);
   }
   if (leader.combinationId !== combination.id) throw new ValidateException("拼团信息不匹配");

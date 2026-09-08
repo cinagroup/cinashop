@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } fr
 import { Hono } from "hono";
 import { sql } from "drizzle-orm";
 import { financePostgres } from "./helpers/financePostgres";
-import { createContainerFromDb } from "../src/lib/di";
+import { withFinancePeers, waitForFinanceBlock, waitForFinanceClock, outcome } from "./helpers/financePeers";
+import { createContainerFromDb, withTx } from "../src/lib/di";
+import { reservePinkJoin } from "../src/services/activity/PinkLifecycleService";
 import { ActivityJoinService } from "../src/services/activity/ActivityJoinService";
 import { StoreOrderRefundService } from "../src/services/order/StoreOrderRefundService";
 import { SystemConfigService } from "../src/services/system/SystemConfigService";
@@ -118,6 +120,95 @@ describe("pink cancellation authorization before privileged refund execution", (
     expect(await f.db.select().from(storeOrderStatus)).toHaveLength(1);
     expect((await f.db.select().from(storePink))[0].isRefund).toBe(0);
   });
+  it.each(["expired", "full", "refunded", "order", "account", "pending-join"])("rechecks %s after preflight, before committing a new application", async change => {
+    const apply = StoreOrderRefundService.prototype.applyRefund;
+    vi.spyOn(StoreOrderRefundService.prototype, "applyRefund").mockImplementationOnce(async function (this: StoreOrderRefundService, ...args) {
+      if (change === "expired") await f.db.update(storePink).set({ stopTime: new Date(0) });
+      if (change === "full") await f.db.update(storePink).set({ people: 1 });
+      if (change === "refunded") await f.db.update(storePink).set({ isRefund: 400 });
+      if (change === "order") await f.db.update(storeOrder).set({ pinkId: 401 });
+      if (change === "account") await f.db.update(user).set({ status: 0 });
+      if (change === "pending-join") await f.db.insert(storeOrder).values({ id: 501, uid: 22, type: 3, pinkId: 400, paid: 0 });
+      return apply.apply(this, args);
+    });
+    await expect(cancel()).rejects.toThrow();
+    expect(execute).not.toHaveBeenCalled();
+    expect(await f.db.select().from(storeOrderRefund)).toHaveLength(0);
+    expect(await f.db.select().from(storeOrderStatus)).toHaveLength(0);
+  });
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("uses the actual deadline after waiting for the leader lock on PostgreSQL", async () => {
+    await withFinancePeers(f.db, async ([blocker, first]) => {
+      await blocker.exec('BEGIN; SELECT id FROM store_pink WHERE id=400 FOR UPDATE');
+      // Preflight sees the old committed deadline. The new deadline elapses
+      // while admission waits; transaction-start NOW() would wrongly accept it.
+      const [deadline] = await blocker.db.update(storePink).set({ stopTime: sql`clock_timestamp() + INTERVAL '1 second'` })
+        .returning({ time: storePink.stopTime });
+      const pending = outcome(new ActivityJoinService(createContainerFromDb(first.db), env).removePink(11, 400, 30));
+      await waitForFinanceBlock(f.db, first.pid, blocker.pid);
+      await waitForFinanceClock(f.db, deadline.time!.getTime());
+      await blocker.exec("COMMIT");
+      const result = await pending;
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.message).toContain("已到期");
+    });
+    expect(execute).not.toHaveBeenCalled();
+    expect(await f.db.select().from(storeOrderRefund)).toHaveLength(0);
+    expect(await f.db.select().from(storeOrderStatus)).toHaveLength(0);
+  }, 15_000);
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("holds the leader until cancellation intent commits, then rejects a waiting reservation", async () => {
+    await withFinancePeers(f.db, async ([first, second]) => {
+      let release = () => {};
+      let announce = () => {};
+      const gate = new Promise<void>(resolve => { release = resolve; });
+      const locked = new Promise<void>(resolve => { announce = resolve; });
+      const apply = StoreOrderRefundService.prototype.applyRefund;
+      vi.spyOn(StoreOrderRefundService.prototype, "applyRefund").mockImplementationOnce(function (this: StoreOrderRefundService, input) {
+        return apply.call(this, { ...input, authorizeApplication: async (tx, order) => {
+          await input.authorizeApplication!(tx, order);
+          announce(); await gate;
+        } });
+      });
+      const cancelling = outcome(new ActivityJoinService(createContainerFromDb(first.db), env).removePink(11, 400, 30));
+      try {
+        await Promise.race([locked, cancelling.then(() => { throw new Error("Cancellation finished before admission barrier"); })]);
+        const joining = outcome(withTx(createContainerFromDb(second.db), tx => reservePinkJoin(tx, { uid: 22, leaderId: 400, combinationId: 30 })));
+        await waitForFinanceBlock(f.db, second.pid, first.pid);
+        expect(await f.db.select().from(storeOrderRefund)).toHaveLength(0);
+        release();
+        expect(await cancelling).toMatchObject({ ok: true, value: { completed: false, status: "PROCESSING" } });
+        const result = await joining;
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.message).toContain("取消处理中");
+        expect(await f.db.select().from(storeOrderRefund)).toHaveLength(1);
+      } finally { release(); await cancelling; }
+    });
+  }, 15_000);
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("rejects cancellation when an earlier locked reservation commits an unpaid join", async () => {
+    await withFinancePeers(f.db, async ([first, second]) => {
+      let release = () => {};
+      let announce = () => {};
+      const gate = new Promise<void>(resolve => { release = resolve; });
+      const locked = new Promise<void>(resolve => { announce = resolve; });
+      const joining = outcome(withTx(createContainerFromDb(first.db), async tx => {
+        await reservePinkJoin(tx, { uid: 22, leaderId: 400, combinationId: 30 });
+        await tx.insert(storeOrder).values({ id: 501, uid: 22, type: 3, activityId: 30, pinkId: 400, paid: 0 });
+        announce(); await gate;
+      }));
+      try {
+        await Promise.race([locked, joining.then(() => { throw new Error("Reservation finished before barrier"); })]);
+        const cancelling = outcome(new ActivityJoinService(createContainerFromDb(second.db), env).removePink(11, 400, 30));
+        await waitForFinanceBlock(f.db, second.pid, first.pid);
+        release();
+        expect(await joining).toMatchObject({ ok: true });
+        const result = await cancelling;
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.message).toContain("待支付参团订单");
+      } finally { release(); await joining; }
+    });
+    expect(execute).not.toHaveBeenCalled();
+    expect(await f.db.select().from(storeOrderRefund)).toHaveLength(0);
+    expect(await f.db.select().from(storeOrderStatus)).toHaveLength(0);
+  }, 15_000);
   it.each(["null", "[]", "{", '{}', '{"id":true,"cid":30}', '{"id":-1,"cid":30}', '{"id":400.5,"cid":30}', '{"id":"400","cid":30}'])("rejects malformed JSON IDs with a private business error: %s", async (body) => {
     const result = await request(body);
     expect(result.body.status).toBe(400);
