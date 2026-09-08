@@ -5,6 +5,7 @@ import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { ActivityJoinService } from "@/services/activity/ActivityJoinService";
+import { LegacyPinkStatusService } from "@/services/activity/LegacyPinkStatusService";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -31,14 +32,12 @@ async function resolveBargainUserId(
 
 // ═══ 拼团 ═════════════════════════════════════════════════
 
-/** GET /api/combination/pink/:id — 拼团详情含进行中的团 */
+/** GET /api/combination/pink/:id — 团成员/团长记录的只读状态，不是活动ID。 */
 export async function pinkInfo(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  const uid = c.get("uid");
-  const svc = new ActivityJoinService(c.get("container"));
+  privateNoStore(c);
+  const svc = new LegacyPinkStatusService(c.get("container"));
   try {
-    return jsonOk(c, await svc.pinkInfo(uid, id));
+    return jsonOk(c, await svc.read(c.get("uid"), c.req.param("id")));
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;

@@ -2,7 +2,7 @@
  * 活动参与 Service (拼团/砍价)
  *
  * 对应原版端点:
- *   - 拼团: combination/pink/:id, pink, combination/remove
+ *   - 拼团: pink, combination/remove (记录状态在 LegacyPinkStatusService)
  *   - 砍价: bargain/start, bargain/user/list, bargain/user/cancel
  */
 import { eq, and, desc, gt, inArray, or, sql } from "drizzle-orm";
@@ -158,84 +158,6 @@ export class ActivityJoinService {
   }
 
   // ═══ 拼团 ═════════════════════════════════════════════════
-
-  /** 拼团详情含进行中的团 (combination/pink/:id) */
-  async pinkInfo(uid: number, combinationId: number) {
-    const combo = await this.container.db
-      .select()
-      .from(storeCombination)
-      .where(
-        and(
-          eq(storeCombination.id, combinationId),
-          eq(storeCombination.status, 1),
-          eq(storeCombination.isShow, 1),
-          eq(storeCombination.isDel, 0),
-          sql`(${storeCombination.startTime} IS NULL OR ${storeCombination.startTime} <= NOW())`,
-          sql`(${storeCombination.stopTime} IS NULL OR ${storeCombination.stopTime} >= NOW())`,
-        ),
-      )
-      .limit(1);
-    if (!combo[0]) throw new NotFoundException("拼团活动不存在");
-
-    // 进行中的团
-    const pinks = await this.container.db
-      .select()
-      .from(storePink)
-      .where(
-        and(
-          eq(storePink.combinationId, combinationId),
-          eq(storePink.kId, 0),
-          eq(storePink.status, 1),
-          eq(storePink.isRefund, 0),
-          sql`(${storePink.stopTime} IS NULL OR ${storePink.stopTime} > NOW())`,
-        ),
-      )
-      .orderBy(sql`${storePink.addTime} DESC`)
-      .limit(5);
-
-    const pinkList = await Promise.all(
-      pinks.map(async (pink) => {
-        const currentPeople = pink.memberCount > 0
-          ? pink.memberCount
-          : Number(
-              (
-                await this.container.db
-                  .select({ count: sql<number>`COUNT(*)::int` })
-                  .from(storePink)
-                  .where(
-                    and(
-                      or(eq(storePink.id, pink.id), eq(storePink.kId, pink.id)),
-                      eq(storePink.isRefund, 0),
-                    ),
-                  )
-              )[0]?.count ?? 1,
-            );
-        return { ...pink, requiredPeople: pink.people, people: currentPeople };
-      }),
-    );
-    const myPink = await this.container.db
-      .select()
-      .from(storePink)
-      .where(
-        and(
-          eq(storePink.combinationId, combinationId),
-          eq(storePink.uid, uid),
-          eq(storePink.isRefund, 0),
-        ),
-      )
-      .orderBy(sql`${storePink.addTime} DESC`)
-      .limit(1);
-
-    return {
-      combination: combo[0],
-      pinkList,
-      people: combo[0].people,
-      price: combo[0].price,
-      otPrice: combo[0].otPrice,
-      // 是否已参与
-      myPink: myPink[0] ?? null,
-    };
-  }
 
   /** PHP GET /pink: completed/all participant count and up to three avatars. */
   async pinkStats(type = 1): Promise<{ pink_count: number; avatars: string[] }> {

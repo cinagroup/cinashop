@@ -61,6 +61,8 @@ describe("order cart and group-buy migration parity", () => {
   it("keeps required group size separate from serialized runtime occupancy", () => {
     const orderSource = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
     const activitySource = readFileSync("src/services/activity/ActivityJoinService.ts", "utf8");
+    const statusSource = readFileSync("src/services/activity/LegacyPinkStatusService.ts", "utf8");
+    const catalogSource = readFileSync("src/services/activity/CombinationSkuCatalogService.ts", "utf8");
     const lifecycleSource = readFileSync("src/services/activity/PinkLifecycleService.ts", "utf8");
     const paymentSource = readFileSync("src/services/order/StoreOrderPayService.ts", "utf8");
     const routesSource = readFileSync("src/routes/v1/index.ts", "utf8");
@@ -77,7 +79,9 @@ describe("order cart and group-buy migration parity", () => {
     expect(routesSource).toContain('v1Routes.get("/pink"');
     expect(routesSource).not.toContain('v1Routes.post("/pink"');
     expect(orderSource).toContain("writeSurplusTimes: writeTimes");
-    expect(activitySource).toContain("requiredPeople: pink.people");
+    expect(catalogSource).toContain("required_people: required");
+    expect(statusSource).toContain("leader.people - members.length - 1");
+    expect(statusSource).not.toContain("storePink.memberCount");
     expect(activitySource).toContain("eq(storePink.kId, 0)");
     expect(activitySource).toContain("withTx(this.container");
   });

@@ -6351,6 +6351,24 @@ Workers技能据当日官方best-practices及直接npm官方registry的workers-t
 
 最终3次cart请求：1次蓝2成功，1次合成会话过期，1次真实服务下架拒绝；仅生成1条type3/activity30/product70/base qablue01/qty2/isNew1记录。新增订单0，既有1条合成订单及商品/SKU数组快照相等。团人数被本轮测试控制器改为3再恢复4，最终无ORDER BY的整数组比较unchangedPinks=false；可能涉及更新后行序变化，但未取得按主键逐行差分，故不宣称团表指纹不变。没有生产数据或provider写入。视口已恢复、自建浏览器标签关闭、两个本轮服务停止。清单为220勾选/151开放/371项；A3全流程、砍价、旧pink状态、真机/真实角色/生产发布保持开放。
 
+### 819b447 CI失败修复与API-006-ACTIVITY-PINK只读状态合同（2026-09-08，本地候选）
+
+`819b4472ba2eae4a59c86e9770fa483372a7af5e` / [Actions34180110549](https://github.com/cinagroup/cinashop/actions/runs/34180110549)终态9/11成功；单元分片一101917312798成功，分片二101917312767失败，汇总101919392643失败。分片二142文件、1,039通过/1失败、515.73秒，唯一失败为diy-home-frontend-migration要求38个旧目标页挂载DiySuspendedNavigation，而activity/detail重写时漏掉组件。没有弱化断言或重跑掩盖失败：模板恢复原全局组件，定向回归通过。五端、workerd、PG16目录及secret在该SHA成功，但整批不算验收通过，A3d继续开放。分片一详细日志下载另遇TLS handshake timeout，未凭成功状态编造其测试数；最近完整全绿基线仍是74648e7。
+
+沿PHP StoreCombinationServices.getPinkInfo、StorePinkServices/Dao及旧goods_combination_status重新核对，旧pink路径接收成员/团长记录ID，不是活动ID。新LegacyPinkStatusService独立承接该GET，删除ActivityJoinService中错误实现；严格正int32参数、真实有效用户及private,no-store。先沿is_refund解析同活动/商品替代记录，再经k_id取得团长，拒绝自退款、循环、缺失、跨活动/商品、嵌套团长和超过32次查询的替代链。活动及商品可见性、审核和会员限制在真实SQL中执行；时间边界保留已有Worker的nullable开放语义，不能声称逐字复制PHP的非空时间条件。
+
+恢复有意义的旧响应字段userInfo/is_ok/userBool/pinkBool/pinkT/pinkAll/count/store_combination/store_combination_host/current_pink_order和两个门店开关；显式投影不返回其他成员订单号、订单主键、交易金额、成本或佣金。本人订单通过规范数字order_id_key安全转换JOIN，并检查订单归属、type3、活动、团长及两种删除标记；不将索引主键转为文本，坏格式和超长值安全无匹配。实际非退款成员行按ID稳定排序，缺口人数不相信缓存member_count、待付订单或购买件数。活动SKU保留type3/unique及价格，基础库存/价格按suk批量对应；重复标识拒绝，缺失/退役基础SKU令可售库存为0。属性优先活动定义，否则回退基础定义，仅保留活动规格标签。图片仅允许安全根相对路径或无凭据HTTPS。配置用SQL存在性及原排序规则，缺省与显式空值区分，主开关控制自提。
+
+GET全程在数据库READ ONLY、REPEATABLE READ事务内完成，不写KV、不调用provider、不更新团/订单、不补虚拟成员。持久化status2/3分别投影成功/失败；status1但人数已满、截止已到或截止缺失时，返回state=settlement_pending及settlement_pending=true，pinkBool/is_ok仍为0。它是明确的安全合同扩展，不是PHP GET同步pinkComplete/pinkFail的等价执行；结算和退款责任仍属于既有生命周期/超时维护服务，本批没有修改它们，也没有验证新状态页与这些写链路的完整衔接。成员总数及每类SKU最多500、选中属性最多64、单属性原文最多32,768字符，超限拒绝而非静默裁切；推荐最多20条并返回截断标记。只读快照和批量查询不等同于已取得生产执行计划或负载验收。
+
+新增29项真实Hono/一次性SQL测试，覆盖记录命名空间、认证、本人订单隐私、真实成员计数、持久化成败、待结算只读、退款替代链及深度、外来团/成员、坏订单键、规格/属性/退役、配置、可见性、推荐及大数据边界。8张夹具表按规范行序快照比较；重复读取无外部fetch，数据库实际拒绝只读事务内DML并回滚。最终相关10文件96项零跳过、54.01秒通过；随后本人订单JOIN由主键文本转换改为有界数字键转换，并扩充坏键样本，最终29项再次通过、43.39秒，unit/runtime双类型再通过。直接默认2GB运行tsc曾堆内存耗尽，改用仓库原有npm run typecheck的4GB脚本成功，不将OOM伪装业务错误，也未调整项目内存门禁。删除旧方法仅令既有索引审计清单的一处源码定位780→702，SQL和严格定位校验未改变，无DDL/索引新增。
+
+提交前对最终代码再次完整执行上述10文件96项，零跳过、46.45秒全部通过；git diff --check通过，清单精确统计220勾选/151开放。远端main仍为819b447，前一CI已终态失败，不会因本轮推送取消前一在途验收。
+
+前端恢复后完整toolchain99项零跳过、vue-tsc、H5/MP-WEIXIN/APP三构建及3项产物测试全部通过。按前端测试技能使用可用CUA浏览器，5190仅代理5192的本机一次性真实Hono/PGlite夹具；悬浮配置和图片为明确合成样本。桌面1265×712与390×844截图复核，显式重载详情后点击“+”展开，再点击悬浮项到营销活动页；手机innerWidth390、clientWidth/scrollWidth均375，无横向溢出或框架错误层。控制台无error，保留DCloud既有vue-router深导入弃用告警。该轮只有5次GET，cart空、新订单0，既有合成订单及团/商品/SKU快照均相等；这是独立导航夹具，不抹去上一轮团表无序数组比较false的证据。没有登录、加购、订单提交或付款。自建标签关闭、视口恢复、两端服务停止。
+
+路由审计重新完成：PHP1,904、TS1,649、匹配881、可执行863、不可用18、缺失1,023、退役17、可行动缺失1,006，注册46.3%/可执行45.3%/退役后45.7%；注册数不因修复已有端点而上涨，也不代表功能等价百分比。Workers技能按当日官方best-practices与npm官方latest workers-types5.20260908.1复核，未升级依赖或改绑定；PostgreSQL技能影响只读一致快照、有界投影及批量规格查询，前端测试技能要求实际悬浮导航闭环。旧历史数据仍N/A，未连接生产、发布、执行生产DDL/DML或provider。清单保持220勾选/151开放/371项；本候选待自身Linux/专用PG16/workerd，旧状态页、运行时深链接、完整结算及发布门禁继续开放。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

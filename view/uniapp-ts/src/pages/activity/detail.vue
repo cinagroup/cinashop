@@ -37,6 +37,7 @@
       </view>
     </view>
     <view class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : selectedGroup ? '参加所选团' : '立即开团' }}</button></view>
+    <DiySuspendedNavigation />
   </view>
 </template>
 

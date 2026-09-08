@@ -69,8 +69,9 @@ describe("activity catalog migration parity", () => {
     const dao = readFileSync("src/dao/activity/ActivityDaos.ts", "utf8");
     const order = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
     const join = readFileSync("src/services/activity/ActivityJoinService.ts", "utf8");
+    const pink = readFileSync("src/services/activity/LegacyPinkStatusService.ts", "utf8");
 
-    for (const source of [dao, order, join]) {
+    for (const source of [dao, order, pink]) {
       expect(source).toContain("storeCombination.isShow");
       expect(source).toContain("storeCombination.isDel");
       expect(source).toContain("storeCombination.startTime");
