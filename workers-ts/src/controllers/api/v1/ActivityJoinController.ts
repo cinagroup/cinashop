@@ -6,6 +6,7 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { ActivityJoinService } from "@/services/activity/ActivityJoinService";
 import { LegacyPinkStatusService } from "@/services/activity/LegacyPinkStatusService";
+import { PinkCancellationStatusService } from "@/services/activity/PinkCancellationStatusService";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -68,6 +69,15 @@ export async function removePink(c: C) {
   const svc = new ActivityJoinService(c.get("container"), c.env);
   const result = await svc.removePink(uid, id, cid);
   return jsonOk(c, result, result.completed ? "拼团已取消并退款" : "退款处理中");
+}
+
+/** GET /api/combination/remove/:id?cid=... — 本人原团长取消申请的只读结果。 */
+export async function pinkCancellationStatus(c: C) {
+  privateNoStore(c);
+  if (c.req.queries("cid")?.length !== 1) throw new ValidateException("拼团取消查询参数无效");
+  return jsonOk(c, await new PinkCancellationStatusService(c.get("container")).read(
+    c.get("uid"), c.req.param("id"), c.req.query("cid"),
+  ));
 }
 
 // ═══ 砍价 ═════════════════════════════════════════════════

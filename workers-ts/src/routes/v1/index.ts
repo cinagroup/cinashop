@@ -790,6 +790,7 @@ v1Routes.get("/bargain/detail/:id", authMiddleware({ force: false }), UserActivi
 v1Routes.get("/combination/pink/:id", authMiddleware({ force: false }), ActivityJoinController.pinkInfo);
 v1Routes.get("/pink", authMiddleware({ force: false }), ActivityJoinController.pinkStats);
 v1Routes.post("/combination/remove", authMiddleware({ force: true }), ActivityJoinController.removePink);
+v1Routes.get("/combination/remove/:id", authMiddleware({ force: true }), ActivityJoinController.pinkCancellationStatus);
 v1Routes.post("/bargain/start", authMiddleware({ force: true }), ActivityJoinController.startBargain);
 v1Routes.post("/bargain/start/user", authMiddleware({ force: true }), ActivityJoinController.bargainStartUser);
 v1Routes.post("/bargain/share", authMiddleware({ force: true }), ActivityJoinController.bargainShare);

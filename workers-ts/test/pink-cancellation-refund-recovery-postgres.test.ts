@@ -4,9 +4,12 @@ import { createPcCheckoutQuoteFixture } from "./helpers/pcCheckoutQuoteFixture";
 import { withFinancePeers, waitForFinanceBlock, outcome } from "./helpers/financePeers";
 import { createContainerFromDb } from "../src/lib/di";
 import { ActivityJoinService } from "../src/services/activity/ActivityJoinService";
+import { PinkCancellationStatusService } from "../src/services/activity/PinkCancellationStatusService";
 import { StoreOrderRefundService } from "../src/services/order/StoreOrderRefundService";
 import { WechatPayService } from "../src/services/wechat/WechatPayService";
-import { removePink } from "../src/controllers/api/v1/ActivityJoinController";
+import { removePink, pinkCancellationStatus } from "../src/controllers/api/v1/ActivityJoinController";
+import { authMiddleware } from "../src/middleware/auth";
+import { createToken, md5 } from "../src/utils/jwt";
 import { storeCombination, storePink, storeOrder, storeOrderCartInfo, storeOrderStatus,
   storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage, storeProductAttrValue, user } from "../src/models/schema";
 
@@ -22,6 +25,7 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     for (const key of Object.keys(f.config)) f.config[key] = "0";
     svc = new ActivityJoinService(f.container, f.env);
     f.app.post("/api/combination/remove", removePink);
+    f.app.get("/api/combination/remove/:id", authMiddleware({ force: true }), pinkCancellationStatus);
     await f.db.insert(storeCombination).values({ id: 30, productId: 70, storeName: "Isolated cancellation",
       people: 4, price: "6.25", stock: 7, quota: 7, sales: 1 });
     await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 30, type: 3, unique: "actred30",
@@ -35,6 +39,7 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
   }, 30_000);
   afterEach(async () => { vi.restoreAllMocks(); await f?.close(); });
   const cancel = () => svc.removePink(11, 400, 30);
+  const readCancellation = () => new PinkCancellationStatusService(f.container).read(11, "400", "30");
   const request = async () => {
     const response = await f.app.request("/api/combination/remove", { method: "POST", headers: {
       "content-type": "application/json", "x-fixture-user": "11",
@@ -67,12 +72,39 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     expect(first.skus.find(row => row.id === 2)).toMatchObject({ stock: 8, quota: 8 });
     expect(first.combinations[0]).toMatchObject({ stock: 8, quota: 8 });
     expect(first.bills.filter(row => row.type === "pay_product_refund")).toHaveLength(1);
+    expect(await readCancellation()).toMatchObject({ state: "completed", completed: true, resumable: false });
     for (let attempt = 0; attempt < 2; attempt++) {
       const replay = await request();
       expect(replay.body).toMatchObject({ status: 200, data: { completed: true, status: "SUCCESS" } });
       expect(replay.response.headers.get("cache-control")).toBe("private, no-store");
     }
     expect(await snapshot()).toEqual(first);
+  });
+
+  it("uses real signed user auth for readback and rejects cross-user, wrong-role and changed-password tokens", async () => {
+    // This fixture does not inherit production env or Redis. Its own signing
+    // secret is scoped to these in-process requests and is never printed.
+    f.env.APP_KEY = crypto.randomUUID(); f.env.UPSTASH_REDIS_URL = ""; f.env.UPSTASH_REDIS_TOKEN = "";
+    const own = await createToken(11, "api", md5(""), f.env.APP_KEY);
+    await f.db.insert(user).values({ uid: 22 });
+    const foreign = await createToken(22, "api", md5(""), f.env.APP_KEY);
+    const admin = await createToken(11, "admin", md5(""), f.env.APP_KEY);
+    await cancel(); const before = await snapshot();
+    const get = async (token?: string) => {
+      const response = await f.app.request("/api/combination/remove/400?cid=30&uid=11", {
+        headers: { "x-fixture-user": "11", ...(token ? { "Authori-zation": `Bearer ${token}` } : {}) },
+      }, f.env);
+      return { response, body: await response.json<{ status: number; data: { state: string } | null }>() };
+    };
+    const good = await get(own.token);
+    expect(good.body).toMatchObject({ status: 200, data: { state: "completed" } });
+    expect(good.response.headers.get("cache-control")).toBe("private, no-store");
+    for (const token of [undefined, foreign.token, admin.token, "invalid-isolated-token"]) {
+      const denied = await get(token); expect(denied.body.status).not.toBe(200); expect(denied.body.data).toBeNull();
+    }
+    expect(await snapshot()).toEqual(before);
+    await f.db.update(user).set({ pwd: "changed" }).where(eq(user.uid, 11));
+    expect((await get(own.token)).body.status).not.toBe(200);
   });
 
   it("promotes the surviving member and replays via the original leader identity without touching that member's order", async () => {
@@ -85,6 +117,7 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     const first = await snapshot();
     expect(first.pinks.find(row => row.id === 401)).toMatchObject({ kId: 0, status: 1, isRefund: 0, memberCount: 1 });
     expect(first.orders.find(row => row.id === 501)).toMatchObject({ pinkId: 401, refundStatus: 0 });
+    expect(await readCancellation()).toMatchObject({ pink_id: 400, state: "completed" });
     expect(await cancel()).toEqual({ completed: true, status: "SUCCESS" });
     expect(await snapshot()).toEqual(first);
   });
@@ -94,10 +127,13 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     const send = vi.spyOn(WechatPayService.prototype, "requestRefund").mockResolvedValue({ status: "PROCESSING", providerRefundId: "isolated-refund" });
     const query = vi.spyOn(WechatPayService.prototype, "queryRefund").mockResolvedValue({ status: "SUCCESS", providerRefundId: "isolated-refund" });
     expect(await cancel()).toEqual({ completed: false, status: "PROCESSING" });
+    expect(await readCancellation()).toMatchObject({ state: "processing", completed: false, resumable: true });
+    expect(query).not.toHaveBeenCalled();
     expect((await snapshot()).orders[0].refundStatus).toBe(0);
     await f.db.update(storePink).set({ stopTime: new Date(0), status: 3 });
     expect(await cancel()).toEqual({ completed: true, status: "SUCCESS" });
     expect(send).toHaveBeenCalledTimes(1); expect(query).toHaveBeenCalledTimes(1);
+    expect((await readCancellation()).state).toBe("completed");
     expect(query.mock.calls[0][0]).toEqual(send.mock.calls[0][0]);
     const first = await snapshot();
     expect(first.refunds).toHaveLength(1); expect(first.refunds[0]).toMatchObject({ refundType: 6, refundedPrice: "6.25" });
@@ -113,6 +149,7 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     const query = vi.spyOn(WechatPayService.prototype, "queryRefund").mockResolvedValue({ status: "SUCCESS", providerRefundId: "isolated-refund" });
     await expect(cancel()).rejects.toThrow("结果未知");
     expect((await f.db.select().from(storeOrderRefundPayment))[0].providerStatus).toBe("UNKNOWN");
+    expect((await readCancellation()).state).toBe("unknown"); expect(query).not.toHaveBeenCalled();
     await f.db.update(storePink).set({ stopTime: new Date(0) });
     expect(await cancel()).toEqual({ completed: true, status: "SUCCESS" });
     expect(send).toHaveBeenCalledTimes(1); expect(query).toHaveBeenCalledTimes(1);
@@ -128,6 +165,7 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     expect(failed.orders).toEqual(before.orders); expect(failed.skus).toEqual(before.skus);
     expect(failed.bills).toEqual(before.bills); expect(failed.details).toEqual(before.details);
     expect(failed.refunds).toHaveLength(1); expect(failed.refunds[0].refundType).toBe(0);
+    expect((await readCancellation()).state).toBe("accepted");
     await f.db.update(storeOrderCartInfo).set({ cartInfo: JSON.stringify({ truePrice: "6.25", sku: { id: 1 }, activitySku: { id: 2 } }) });
     await f.db.update(storePink).set({ stopTime: new Date(0) });
     expect(await cancel()).toMatchObject({ completed: true });
@@ -171,6 +209,9 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
       await blocker.exec('BEGIN; SELECT uid FROM "user" WHERE uid=11 FOR UPDATE');
       const a = outcome(new ActivityJoinService(createContainerFromDb(first.db), f.env).removePink(11, 400, 30));
       await waitForFinanceBlock(f.db, first.pid, blocker.pid);
+      // The read-only endpoint sees the committed application while actual
+      // balance finalization waits; it neither waits for row locks nor finishes it.
+      expect(await readCancellation()).toMatchObject({ state: "accepted", completed: false });
       // The first application has committed, but its real balance transaction
       // has not. Recovery must find that application after the deadline passes.
       await f.db.update(storePink).set({ stopTime: new Date(0) }).where(eq(storePink.id, 400));
@@ -186,5 +227,6 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     expect(state.bills.filter(row => row.type === "pay_product_refund")).toHaveLength(1);
     expect(state.details[0].refundNum).toBe(1);
     expect(state.skus.find(row => row.id === 2)).toMatchObject({ stock: 8, quota: 8 });
+    expect((await readCancellation()).state).toBe("completed");
   }, 15_000);
 });
