@@ -32,14 +32,14 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.counting.legacy.pagesTreeVueFiles).toBe(250);
     expect(parity.counting.legacy.logicalManifestRouteRecords).toBe(151);
     expect(parity.counting.legacy.platformActiveRouteRecords).toEqual({ H5: 151, "MP-WEIXIN": 150, "APP-PLUS": 150 });
-    expect(parity.counting.target.pagesTreeVueFiles).toBe(60);
-    expect(parity.counting.target.logicalManifestRouteRecords).toBe(60);
-    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 60, "MP-WEIXIN": 60, "APP-PLUS": 60 });
+    expect(parity.counting.target.pagesTreeVueFiles).toBe(61);
+    expect(parity.counting.target.logicalManifestRouteRecords).toBe(61);
+    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 61, "MP-WEIXIN": 61, "APP-PLUS": 61 });
     expect(parity.counting.routeLedger).toMatchObject({
-      directRegistered: 3,
-      legacyCompatibilityRules: 97,
+      directRegistered: 4,
+      legacyCompatibilityRules: 96,
       candidateCoveredRules: 60,
-      partialReplacementRules: 37,
+      partialReplacementRules: 36,
       unmappedOrCrossSurface: 51,
       accountedLegacyRoutes: 151,
     });

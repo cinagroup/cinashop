@@ -302,6 +302,10 @@
       }
     },
     {
+      "path": "pages/activity/goods_combination_status/index",
+      "style": { "navigationBarTitleText": "拼团状态" }
+    },
+    {
       "path": "pages/activity/seckillDetail",
       "style": {
         "navigationBarTitleText": "秒杀详情"

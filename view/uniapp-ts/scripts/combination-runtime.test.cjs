@@ -40,7 +40,7 @@ test('legacy pink-record links retain their namespace and cannot accidentally bu
   const r = setup(); try {
     const navigation = r.load(require('node:path').resolve(__dirname, '../src/config/navigation.ts'));
     assert.equal(navigation.resolveRegisteredPageRoute('/pages/activity/goods_combination_status/index', 'id=20'),
-      '/pages/activity/detail?pinkRecordId=20');
+      '/pages/activity/goods_combination_status/index?id=20');
     await r.start({ id: '20', pinkRecordId: '20' }); // explicit namespace wins even if another query adds id
     assert.equal(r.calls.length, 0); assert.equal(r.checkout.canBuy.value, false);
     assert.match(r.checkout.error.value, /旧拼团状态链接尚未迁移/);

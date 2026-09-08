@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "snapshotDate": "2026-09-07",
+  "snapshotDate": "2026-09-08",
   "scope": "legacy cinashop-php UniApp to view/uniapp-ts",
   "counting": {
     "legacy": {
@@ -17,17 +17,17 @@
       ]
     },
     "target": {
-      "pagesTreeVueFiles": 60,
-      "logicalManifestRouteRecords": 60,
-      "platformActiveRouteRecords": { "H5": 60, "MP-WEIXIN": 60, "APP-PLUS": 60 },
+      "pagesTreeVueFiles": 61,
+      "logicalManifestRouteRecords": 61,
+      "platformActiveRouteRecords": { "H5": 61, "MP-WEIXIN": 61, "APP-PLUS": 61 },
       "manifestHashNormalization": "LF",
-      "manifestSha256": "CBC15FAA3D079F3C81B3F6C5C5BDA9EA535DB402C42EE80193E85BF1ED609764"
+      "manifestSha256": "6AE096ACDB2788BFE3C24EE36CFA3155CA3E4A21E187E426C34DCD0862004446"
     },
     "routeLedger": {
-      "directRegistered": 3,
-      "legacyCompatibilityRules": 97,
+      "directRegistered": 4,
+      "legacyCompatibilityRules": 96,
       "candidateCoveredRules": 60,
-      "partialReplacementRules": 37,
+      "partialReplacementRules": 36,
       "unmappedOrCrossSurface": 51,
       "accountedLegacyRoutes": 151
     },
@@ -49,7 +49,8 @@
   "directRegisteredLegacyRoutes": [
     "/pages/index/index",
     "/pages/user/index",
-    "/pages/annex/vip_active/index"
+    "/pages/annex/vip_active/index",
+    "/pages/activity/goods_combination_status/index"
   ],
   "gaps": [
     {

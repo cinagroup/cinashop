@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import { createContainerFromDb, withTx, type Container } from "@/lib/di";
 import { storeCombination, storeOrder, storePink, storeProduct, storeProductAttr, storeProductAttrValue, user } from "@/models/schema";
 import { AuthException, NotFoundException, ValidateException } from "@/utils/errors";
@@ -99,8 +99,10 @@ export class LegacyPinkStatusService {
     const visible = and(eq(storeCombination.status, 1), eq(storeCombination.isShow, 1), eq(storeCombination.isDel, 0),
       eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0), eq(storeProduct.isVerify, 1),
       ...(!current.vip ? [eq(storeProduct.isVipProduct, 0)] : []),
-      sql`(${storeCombination.startTime} IS NULL OR ${storeCombination.startTime} <= ${now})`,
-      sql`(${storeCombination.stopTime} IS NULL OR ${storeCombination.stopTime} >= ${now})`);
+      // Typed predicates bind Date through the timestamp column's encoder.
+      // Raw SQL interpolation bypasses it and fails with postgres-js/PG16.
+      or(isNull(storeCombination.startTime), lte(storeCombination.startTime, now)),
+      or(isNull(storeCombination.stopTime), gte(storeCombination.stopTime, now)));
     const [combination] = await db.select(comboFields).from(storeCombination)
       .innerJoin(storeProduct, eq(storeProduct.id, storeCombination.productId))
       .where(and(visible, eq(storeCombination.id, leader.combinationId), eq(storeCombination.productId, leader.productId))).limit(1);

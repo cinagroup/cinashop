@@ -21,7 +21,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, feature =
       else call.success({ statusCode: result?.httpStatus ?? 200, header: result?.headers ?? {}, data: { status: result?.status ?? 200, msg: result?.msg ?? 'ok', data: result?.data } });
     }).catch(error => call.fail({ errMsg: error.message })); },
   };
-  const lifecycle = Object.fromEntries(['onLoad', 'onShow', 'onHide', 'onUnload'].map(name => [name, fn => { hooks[name] = fn; }]));
+  const lifecycle = Object.fromEntries(['onLoad', 'onShow', 'onHide', 'onUnload', 'onShareAppMessage'].map(name => [name, fn => { hooks[name] = fn; }]));
   function load(file) {
     file = path.resolve(file); if (!path.extname(file)) file += '.ts';
     if (cache.has(file)) return cache.get(file);

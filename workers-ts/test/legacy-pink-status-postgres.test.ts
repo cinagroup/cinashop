@@ -8,6 +8,7 @@ import { pinkInfo } from "../src/controllers/api/v1/ActivityJoinController";
 import { ApiException } from "../src/utils/errors";
 import { storePink, storeCombination, storeProduct, storeProductAttr, storeProductAttrValue, storeOrder, systemConfig, user } from "../src/models/schema";
 import type { AppVariables, Env } from "../src/env";
+import { parsePinkStatus } from "../../view/common/pinkStatus";
 
 describe("legacy pink status through real HTTP and disposable SQL", () => {
   let f: Awaited<ReturnType<typeof financePostgres>>, svc: LegacyPinkStatusService;
@@ -72,6 +73,20 @@ describe("legacy pink status through real HTTP and disposable SQL", () => {
     expect((await read(33)).userBool).toBe(1); expect((await read(11)).userBool).toBe(0);
     const publicData = JSON.stringify(await read(11));
     for (const secret of ["private-leader", "private-member", "private-pending", "order_id_key", "total_price", "brokerage", '"cost"', "memberCount"]) expect(publicData).not.toContain(secret);
+  });
+  it("feeds the replacement status page parser without confusing member, leader or activity identity", async () => {
+    const data = parsePinkStatus(await read(33, "401"), 33);
+    expect(data).toMatchObject({ resolvedId: 401, joined: true, orderId: "private-member", activity: { id: 30, productId: 70 }, leader: { id: 400 } });
+    expect(() => parsePinkStatus(data, 11)).toThrow();
+  });
+  it("encodes timestamp filter parameters with the actual column codecs before the driver boundary", async () => {
+    const start = vi.spyOn(storeCombination.startTime, "mapToDriverValue"), stop = vi.spyOn(storeCombination.stopTime, "mapToDriverValue");
+    await read();
+    // PGlite accepts a raw Date parameter; postgres-js with a server-described
+    // timestamptz parameter does not. Both detail and host filters need the codec.
+    expect(start).toHaveBeenCalledWith(now); expect(stop).toHaveBeenCalledWith(now);
+    expect(start.mock.calls.length).toBe(2); expect(stop.mock.calls.length).toBe(2);
+    for (const result of [...start.mock.results, ...stop.mock.results]) expect(result.value).toBe(now.toISOString());
   });
   it.each(["0", "-1", "1.5", "1e2", "0400", "Infinity", "2147483648", "400junk"])("rejects noncanonical record ID %s", async id => {
     const { response, body } = await request(id); expect(body.status).toBe(400); expect(response.headers.get("cache-control")).toBe("private, no-store");
