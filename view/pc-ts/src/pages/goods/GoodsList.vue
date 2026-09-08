@@ -37,7 +37,7 @@
           @click="$router.push(`/goods/${item.id}`)"
         >
           <div class="goods-image">
-            <img :src="item.image || placeholder" :alt="item.store_name" loading="lazy" />
+            <ProductImage :src="item.image" :alt="item.store_name" loading="lazy" />
           </div>
           <div class="goods-info">
             <div class="goods-name">{{ item.store_name }}</div>
@@ -65,6 +65,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { ref, reactive, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { apiGoodsList, apiCategory } from "@/api/product";
@@ -77,7 +78,6 @@ const loading = ref(true);
 const page = ref(1);
 const limit = 12;
 const total = ref(0);
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 const filter = reactive({
   cid: route.query.cid ? Number(route.query.cid) : undefined as number | undefined,
@@ -175,7 +175,7 @@ onMounted(async () => {
   background: #f8f8f8;
 }
 
-.goods-image img {
+.goods-image > .product-media {
   width: 100%;
   height: 100%;
   object-fit: cover;

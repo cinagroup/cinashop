@@ -17,7 +17,7 @@
         <div class="order-body" @click="$router.push(`/order/${order.order_id}`)">
           <template v-if="order.cart_info?.length">
             <div v-for="ci in order.cart_info" :key="ci.id" class="cart-line">
-              <img v-if="ci.cart_info?.product" :src="ci.cart_info.product.image" class="thumb" />
+              <ProductImage v-if="ci.cart_info?.product" :src="ci.cart_info.product.image" :alt="ci.cart_info.product.storeName" class="thumb" />
               <span class="cart-name">{{ ci.cart_info?.product?.storeName }}</span>
               <span class="cart-num">x{{ ci.cart_num }}</span>
             </div>
@@ -49,6 +49,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { apiOrderList, apiOrderTake } from "@/api/order";

@@ -2,6 +2,7 @@ import { after, before, beforeEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
+import vue from "@vitejs/plugin-vue";
 import { createPinia } from "pinia";
 import { AxiosError } from "axios";
 import { seckillComponentPlugin, registerSeckillPurchaseTests } from "./seckill-purchase.test.mjs";
@@ -26,7 +27,7 @@ before(async () => {
   localStorage.setItem("pc_token", "obsolete-persistent-token");
   localStorage.setItem("pc_uid", "99");
   server = await createServer({ configFile: false, root, envFile: false, logLevel: "error",
-    plugins: [seckillComponentPlugin(root), combinationComponentPlugin(root)],
+    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root)],
     optimizeDeps: { noDiscovery: true, include: [] },
     resolve: { alias: { "@": fileURLToPath(new URL("../src", import.meta.url)) } },
     server: { middlewareMode: true, hmr: false, watch: null } });

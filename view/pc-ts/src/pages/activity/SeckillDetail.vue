@@ -6,7 +6,7 @@
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-button :disabled="loading || buying" @click="load">刷新活动与规格</el-button>
     <section v-if="detail" class="selection" aria-label="秒杀活动规格">
-      <img class="product-image" :src="selectedSku?.image || detail.image || placeholder" :alt="detail.title" />
+      <ProductImage class="product-image" :src="selectedSku?.image || detail.image" :alt="detail.title" fit="contain" />
       <div class="selection-info">
         <h3>{{ detail.title }}</h3>
         <p role="status">{{ open ? detail.schedule.message : detail.schedule.state === 'active' ? '当前场次已变化，请刷新活动' : detail.schedule.message }}</p>
@@ -30,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiSeckillSelection } from '@/api/activity';
@@ -42,7 +43,6 @@ const detail = shallowRef<SeckillSelection | null>(null);
 const selected = ref(''), quantity = ref<number | string>(1), error = ref(''), loading = ref(false), buying = ref(false);
 const clock = ref(Date.now());
 let revision = 0, disposed = false, restoredQueryFor = 0, timer: ReturnType<typeof setInterval> | undefined;
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 const selectedSku = computed(() => detail.value?.skus.find(sku => sku.unique === selected.value));
 const open = computed(() => !!detail.value && seckillOpen(detail.value, clock.value));
 const canBuy = computed(() => !loading.value && !buying.value && open.value && !!selectedSku.value &&

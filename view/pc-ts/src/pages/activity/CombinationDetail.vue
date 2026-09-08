@@ -7,7 +7,7 @@
     <el-button v-if="!prepared" :disabled="loading || buying" @click="load()">刷新活动与拼团</el-button>
     <el-button v-if="!detail && !loading && error && selectedGroup" :disabled="buying" @click="discardGroup">放弃指定团并重新选择</el-button>
     <section v-if="detail" class="selection" aria-label="拼团活动规格">
-      <img class="product-image" :src="selectedSku?.image || detail.image || placeholder" :alt="detail.title" />
+      <ProductImage class="product-image" :src="selectedSku?.image || detail.image" :alt="detail.title" fit="contain" />
       <div class="selection-info">
         <h3>{{ detail.title }}</h3>
         <p role="status">{{ open ? '拼团活动进行中' : '活动未开始或已结束，请刷新确认' }}</p>
@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiCombinationSelection } from '@/api/activity';
@@ -58,7 +59,6 @@ const detail = shallowRef<CombinationSelection | null>(null), selected = ref('')
 const error = ref(''), loading = ref(false), buying = ref(false), clock = ref(Date.now());
 const prepared = shallowRef<{ cartId: number; activityId: number; pinkId: number } | null>(null);
 let revision = 0, disposed = false, savingPath: string | null = null, timer: ReturnType<typeof setInterval> | undefined;
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 const selectedSku = computed(() => detail.value?.skus.find(sku => sku.unique === selected.value));
 const open = computed(() => !!detail.value && combinationOpen(detail.value, clock.value));
 const groups = computed(() => {

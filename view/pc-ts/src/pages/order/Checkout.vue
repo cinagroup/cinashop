@@ -77,7 +77,7 @@
         <el-table-column label="商品">
           <template #default="{ row }">
             <div class="product-cell">
-              <img v-if="row.productInfo" :src="row.productInfo.image" class="thumb" />
+              <ProductImage v-if="row.productInfo" :src="row.productInfo.image" :alt="row.productInfo.storeName" class="thumb" />
               <span>{{ row.productInfo?.storeName }}<small class="checkout-sku">{{ row.productInfo?.suk }}</small></span>
             </div>
           </template>
@@ -96,7 +96,7 @@
       <ul class="checkout-mobile-items" aria-label="结算商品">
         <li v-for="item in displayItems" :key="item.id">
           <div class="product-cell">
-            <img v-if="item.productInfo" :src="item.productInfo.image" alt="" class="thumb" />
+            <ProductImage v-if="item.productInfo" :src="item.productInfo.image" :alt="item.productInfo.storeName" class="thumb" />
             <span>{{ item.productInfo?.storeName }}<small class="checkout-sku">{{ item.productInfo?.suk }}</small></span>
           </div>
           <dl>
@@ -196,6 +196,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { computed, onUnmounted, ref, shallowRef, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";

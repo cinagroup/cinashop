@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "test:auth": "node --test test/auth-session.test.mjs",
-    "build": "npm run test:auth && vue-tsc -b && vite build",
+    "test:images": "node --test test/product-image.test.mjs",
+    "build": "npm run test:auth && npm run test:images && vue-tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

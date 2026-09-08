@@ -9,7 +9,7 @@
     <div v-if="goods.length" class="goods-grid">
       <div v-for="item in goods" :key="(item as any).id" class="goods-card">
         <div class="goods-image">
-          <img :src="(item as any).image || placeholder" :alt="(item as any).store_name" loading="lazy" />
+          <ProductImage :src="(item as any).image" :alt="(item as any).store_name" loading="lazy" />
         </div>
         <div class="goods-info">
           <div class="goods-name">{{ (item as any).storeName }}</div>
@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { apiBargainList, apiBargainStart, apiBargainHelp, apiMyBargains, apiBargainCancel } from "@/api/activity";
@@ -56,7 +57,6 @@ const goods = ref<unknown[]>([]);
 const myList = ref<unknown[]>([]);
 const loading = ref(true);
 const myVisible = ref(false);
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 function percentOf(item: unknown) {
   const min = Number((item as any).bargainPriceMin ?? 0);
@@ -143,7 +143,7 @@ onMounted(async () => {
   background: #f8f8f8;
 }
 
-.goods-image img {
+.goods-image > .product-media {
   width: 100%;
   height: 100%;
   object-fit: cover;

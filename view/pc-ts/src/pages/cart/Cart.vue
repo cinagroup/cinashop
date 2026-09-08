@@ -10,7 +10,7 @@
         <el-table-column label="商品" min-width="300">
           <template #default="{ row }">
             <div class="product-cell" @click="$router.push(`/goods/${row.productId}`)">
-              <img v-if="row.productInfo" :src="row.productInfo.image" class="thumb" />
+              <ProductImage v-if="row.productInfo" :src="row.productInfo.image" :alt="row.productInfo.storeName" class="thumb" />
               <span class="name">{{ row.productInfo?.storeName ?? "商品已失效" }}</span>
             </div>
           </template>
@@ -58,6 +58,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";

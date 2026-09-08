@@ -118,7 +118,7 @@
       <div class="detail-card">
         <h3>商品清单</h3>
         <div v-for="ci in order.cart_info" :key="ci.id" class="cart-line">
-          <img v-if="ci.cart_info?.product" :src="ci.cart_info.product.image" class="thumb" />
+          <ProductImage v-if="ci.cart_info?.product" :src="ci.cart_info.product.image" :alt="ci.cart_info.product.storeName" class="thumb" />
           <span class="cart-name">{{ ci.cart_info?.product?.storeName }}</span>
           <span class="cart-price">¥{{ ci.cart_info?.sku?.price }}</span>
           <span class="cart-num">x{{ ci.cart_num }}</span>
@@ -198,7 +198,7 @@
     <el-dialog v-model="reviewVisible" title="评价订单" width="min(520px, 92vw)" destroy-on-close>
       <div v-if="order" class="review-products">
         <div v-for="item in order.cart_info" :key="item.id" class="review-product">
-          <img v-if="item.cart_info?.product" :src="item.cart_info.product.image" alt="" />
+          <ProductImage v-if="item.cart_info?.product" :src="item.cart_info.product.image" :alt="item.cart_info.product.storeName" class="review-product-image" />
           <span>{{ item.cart_info?.product?.storeName || "商品" }}</span>
         </div>
       </div>
@@ -255,6 +255,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -963,7 +964,7 @@ onBeforeUnmount(() => {
   color: #606266;
 }
 
-.review-product img {
+.review-product-image {
   width: 42px;
   height: 42px;
   border-radius: 6px;

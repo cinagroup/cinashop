@@ -30,7 +30,7 @@
     <div v-if="error" role="alert" class="error"><p>{{ error }}</p><el-button :disabled="state.loading" @click="load(state.nextCursor !== null)">重试加载范围商品</el-button></div>
     <ul class="scope-grid">
       <li v-for="product in state.list" :key="product.id" class="scope-product">
-        <img v-if="product.image" :src="product.image" alt="" /><h3>{{ product.title }}</h3><p>目录价 ¥{{ product.catalogPrice }}</p>
+        <ProductImage :src="product.image" :alt="product.title" class="scope-product-image" fit="contain" /><h3>{{ product.title }}</h3><p>目录价 ¥{{ product.catalogPrice }}</p>
         <el-button :disabled="blocked" @click="openProduct(product.id)">查看商品详情</el-button>
       </li>
     </ul>
@@ -41,6 +41,7 @@
   </section>
 </template>
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { createCouponProductsView } from "@/composables/couponProductsView";
@@ -55,5 +56,5 @@ onUnmounted(view.dispose);
 .scope-page { padding-top: 24px; padding-bottom: 40px; overflow-wrap: anywhere; }.summary { font-weight: 600; }.notice { color: #666; line-height: 1.7; }
 .search-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-top: 20px; }.search-controls label { display: flex; flex-direction: column; gap: 6px; max-width: 100%; }.search-name { flex: 1 1 240px; }.search-controls input,.search-controls select { box-sizing: border-box; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 10px; border: 1px solid #aaa; border-radius: 5px; font: inherit; background: white; }.search-controls .el-button + .el-button { margin-left: 0; }
 .scope-definition { background: #fff; border: 1px solid #ddd; border-radius: 10px; margin: 20px 0; padding: 20px; line-height: 1.7; }.scope-names { max-height: 280px; overflow-y: auto; padding-left: 22px; }.scope-names li { margin: 8px 0; }
-.scope-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 20px; list-style: none; padding: 0; margin: 24px 0; }.scope-product { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 20px; min-width: 0; }.scope-product img { width: 100%; height: 180px; object-fit: contain; }.scope-product h3 { font-size: 18px; }.scope-product p,.error { color: #b72a1d; }
+.scope-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 20px; list-style: none; padding: 0; margin: 24px 0; }.scope-product { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 20px; min-width: 0; }.scope-product-image { width: 100%; height: 180px; }.scope-product h3 { font-size: 18px; }.scope-product p,.error { color: #b72a1d; }
 </style>

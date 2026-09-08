@@ -5,11 +5,14 @@
       <div class="detail-main">
         <!-- 图片 -->
         <div class="gallery">
-          <el-carousel height="100%" class="product-carousel">
-            <el-carousel-item v-for="(img, i) in detail.slider_image" :key="i">
-              <img :src="img" class="gallery-img" :alt="detail.store_name" />
-            </el-carousel-item>
-          </el-carousel>
+          <template v-if="detail.slider_image.length">
+            <el-carousel height="100%" class="product-carousel">
+              <el-carousel-item v-for="(img, i) in detail.slider_image" :key="i">
+                <ProductImage :src="img" class="gallery-img" :alt="detail.store_name" />
+              </el-carousel-item>
+            </el-carousel>
+          </template>
+          <ProductImage v-else :src="detail.image" class="gallery-img" :alt="detail.store_name" />
         </div>
 
         <!-- 信息 -->
@@ -106,7 +109,7 @@
             >
               {{ isRequiredPackageEntry(entry) ? "必选" : "可选" }}
             </el-checkbox>
-            <img :src="entry.image" class="package-product-image" />
+            <ProductImage :src="entry.image" :alt="entry.title" class="package-product-image" />
             <div class="package-product-info">
               <strong>{{ entry.title }}</strong>
               <el-select
@@ -174,6 +177,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";

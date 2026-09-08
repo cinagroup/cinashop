@@ -13,7 +13,7 @@
         :to="`/combination/${item.id}`"
       >
         <div class="goods-image">
-          <img :src="item.image || placeholder" :alt="item.title" loading="lazy" />
+          <ProductImage :src="item.image" :alt="item.title" loading="lazy" />
         </div>
         <div class="goods-info">
           <div class="goods-name">{{ item.title }}</div>
@@ -38,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductImage from "@/components/ProductImage.vue";
 import { ref, onMounted, onUnmounted } from "vue";
 import { apiCombinationList } from "@/api/activity";
 import type { CombinationItem } from '../../../../common/combinationPurchase';
@@ -46,7 +47,6 @@ const list = ref<CombinationItem[]>([]);
 const loading = ref(true);
 const page = ref(1), error = ref('');
 let revision = 0, disposed = false;
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 async function load(nextPage = 1) {
   if (disposed) return;
@@ -84,7 +84,7 @@ onUnmounted(() => { disposed = true; revision++; });
   background: #f8f8f8;
 }
 
-.goods-image img {
+.goods-image > .product-media {
   width: 100%;
   height: 100%;
   object-fit: cover;
