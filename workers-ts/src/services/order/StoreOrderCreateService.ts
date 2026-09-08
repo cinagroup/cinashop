@@ -86,6 +86,7 @@ import { reservePinkJoin } from "@/services/activity/PinkLifecycleService";
 import { lockPinkInventory } from "@/services/activity/PinkInventoryLocks";
 import { readBargainOrderParticipation, type BargainOrderParticipation } from "@/services/activity/BargainOrderSnapshot";
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
+import { lockBargainInventory, assertBargainCheckoutWindow } from "@/services/activity/BargainInventoryLocks";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { parseVirtualDeliveryInfo } from "@/services/order/VirtualProductDeliveryService";
 import { customerRefundEligibility } from "@/services/order/VirtualProductRefundPolicy";
@@ -485,9 +486,7 @@ export async function cancelStoreOrder(
         throw new Error(`订单 ${orderId} 的砍价参与记录无法唯一定位`);
       }
       bargainParticipant = bargainUsers[0];
-      const rows = await tx.select({ id: storeBargain.id }).from(storeBargain)
-        .where(eq(storeBargain.id, bargainParticipant.bargainId)).limit(1);
-      missingLegacyActivityMain = !rows[0];
+      missingLegacyActivityMain = !(await lockBargainInventory(tx, bargainParticipant.bargainId));
     } else if (order.type === 3) {
       const rows = order.activityId > 0
         ? await tx.select({ id: storeCombination.id }).from(storeCombination)
@@ -1705,6 +1704,7 @@ export class StoreOrderCreateService {
       // Before cart claims as well as SKU/group writes: cancellation restores
       // carts and refunds can relink pending orders under this same boundary.
       if (type === 3) await lockPinkInventory(tx, pinkCombinationId);
+      if (type === 2) await lockBargainInventory(tx, bargainActivityId);
 
       // Lock parent -> child -> sorted slots before the other business locks. Time is rechecked
       // at inventory admission; the initial preview cannot authorize a later expired purchase.
@@ -2488,6 +2488,7 @@ export class StoreOrderCreateService {
         if (!reserved.length) throw new ValidateException("优惠券已被其他订单占用");
       }
 
+      if (type === 2) await assertBargainCheckoutWindow(tx, bargainActivityId);
       return order;
     });
 

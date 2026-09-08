@@ -22,7 +22,7 @@ function positiveId(value: unknown): value is number {
 export function readBargainOrderParticipation(
   cartInfos: ReadonlyArray<{ cartInfo: string | null }>, uid: number, activityId: number,
 ): BargainOrderParticipation | null {
-  const invalid = () => new Error("砍价订单参与快照无效或不一致，无法安全取消");
+  const invalid = () => new Error("砍价订单参与快照无效或不一致，无法安全恢复资源");
   if (!cartInfos.length) throw invalid();
   let identity: BargainOrderParticipation | null = null;
   let missing = 0;

@@ -60,6 +60,8 @@ import { enqueueOrderRefundRefusedNoticeEvent } from "@/services/order/OrderNoti
 import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { assertVirtualProductRefundPolicy } from "@/services/order/VirtualProductRefundPolicy";
+import { lockBargainInventory } from "@/services/activity/BargainInventoryLocks";
+import { readBargainOrderParticipation } from "@/services/activity/BargainOrderSnapshot";
 
 const REFUND_LOCK_NAMESPACE = 63841;
 const REQUEST_LEASE_SECONDS = 120;
@@ -539,6 +541,10 @@ export async function finalizeStoreOrderRefund(
       await tx.select({ id: storeSeckill.id }).from(storeSeckill)
         .where(eq(storeSeckill.id, order.activityId)).limit(1).for("update");
     }
+    // Resolve legacy aliases once, and keep exactly that activity locked before
+    // settlement users/SKUs. A later lookup must not choose another inventory.
+    const bargainInventory = order.type === 2 && order.status === 0
+      ? await lockBargainRefundInventory(tx, order) : null;
 
     const refundAmount = centsToDecimal(refundCents);
     const cumulativeAmount = centsToDecimal(cumulativeCents);
@@ -615,7 +621,7 @@ export async function finalizeStoreOrderRefund(
     }
 
     if (order.status === 0) {
-      await restoreRefundStock(tx, order, refund.refundNum, refund.cartInfo);
+      await restoreRefundStock(tx, order, refund.refundNum, refund.cartInfo, bargainInventory);
       if (fullyRefunded && order.type === 5 && order.activityId > 0) {
         const restored = await tx
           .update(storeDiscounts)
@@ -1964,11 +1970,35 @@ export async function lockRefundExecution(tx: DbClient, refundId: number): Promi
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${REFUND_LOCK_NAMESPACE}, ${refundId})`);
 }
 
+interface BargainRefundInventory { activityId: number; missingMain: boolean }
+
+async function lockBargainRefundInventory(
+  tx: DbClient, order: Pick<typeof storeOrder.$inferSelect, "id" | "uid" | "activityId">,
+): Promise<BargainRefundInventory> {
+  const cartInfos = await tx.select({ cartInfo: storeOrderCartInfo.cartInfo }).from(storeOrderCartInfo)
+    .where(eq(storeOrderCartInfo.oid, order.id)).orderBy(storeOrderCartInfo.id);
+  const identity = readBargainOrderParticipation(cartInfos, order.uid, order.activityId);
+  if (identity) {
+    return { activityId: identity.activityId, missingMain: !(await lockBargainInventory(tx, identity.activityId)) };
+  }
+  // Preserve pre-snapshot refund identity rules: direct activity first, then
+  // the owner-scoped legacy participation alias only if the direct row is gone.
+  if (await lockBargainInventory(tx, order.activityId)) {
+    return { activityId: order.activityId, missingMain: false };
+  }
+  const participants = await tx.select({ bargainId: storeBargainUser.bargainId }).from(storeBargainUser)
+    .where(and(eq(storeBargainUser.uid, order.uid), eq(storeBargainUser.id, order.activityId))).limit(2);
+  if (participants.length !== 1) throw new ValidateException("退款砍价活动无法唯一定位");
+  const activityId = participants[0].bargainId;
+  return { activityId, missingMain: !(await lockBargainInventory(tx, activityId)) };
+}
+
 async function restoreRefundStock(
   tx: DbClient,
   order: Pick<typeof storeOrder.$inferSelect, "id" | "uid" | "type" | "activityId">,
   refundNum: number,
   cartInfoSnapshot: string | null,
+  bargainInventory: BargainRefundInventory | null,
 ): Promise<void> {
   const cartInfos = await tx
     .select()
@@ -1992,27 +2022,9 @@ async function restoreRefundStock(
       : [];
     missingLegacyActivityMain = !rows[0];
   } else if (order.type === 2) {
-    const directRows = order.activityId > 0
-      ? await tx.select({ id: storeBargain.id }).from(storeBargain)
-          .where(eq(storeBargain.id, order.activityId)).limit(1)
-      : [];
-    if (!directRows[0]) {
-      const participants = await tx
-        .select({ bargainId: storeBargainUser.bargainId })
-        .from(storeBargainUser)
-        .where(and(
-          eq(storeBargainUser.uid, order.uid),
-          eq(storeBargainUser.id, order.activityId),
-        ))
-        .limit(2);
-      if (participants.length !== 1) {
-        throw new ValidateException("退款砍价活动无法唯一定位");
-      }
-      effectiveActivityId = participants[0].bargainId;
-      const rows = await tx.select({ id: storeBargain.id }).from(storeBargain)
-        .where(eq(storeBargain.id, effectiveActivityId)).limit(1);
-      missingLegacyActivityMain = !rows[0];
-    }
+    if (!bargainInventory) throw new ValidateException("退款砍价库存锁缺失");
+    effectiveActivityId = bargainInventory.activityId;
+    missingLegacyActivityMain = bargainInventory.missingMain;
   } else if (order.type === 3) {
     const rows = order.activityId > 0
       ? await tx.select({ id: storeCombination.id }).from(storeCombination)
