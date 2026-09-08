@@ -3,11 +3,15 @@ import { sql } from "drizzle-orm";
 import { getTableConfig, PgDialect, type PgTable } from "drizzle-orm/pg-core";
 import { financePostgres } from "./helpers/financePostgres";
 import { storeOrder, storeOrderRefund } from "../src/models/schema";
-import { pinkCancellationRecoveryScan } from "../src/services/activity/PinkCancellationRecoveryService";
+import { pinkCancellationRecoveryScan, pinkCancellationRecoveryWindow, pinkCancellationRecoverySnapshot,
+  PINK_CANCELLATION_RECOVERY_SCAN_SIZE } from "../src/services/activity/PinkCancellationRecoveryService";
+import { createContainerFromDb } from "../src/lib/di";
 import { runPinkRecoveryIndex } from "../src/migrations/runPinkRecoveryIndex";
 
 // Execute the formal single-purpose migration in an isolated fixture. This is
 // selected-distribution evidence, not a production latency/capacity guarantee.
+// Unwindowed scans below preserve the old failure distribution for comparison;
+// the bounded measurements and traversal execute the current snapshot path.
 type Plan = { "Node Type": string; "Index Name"?: string; "Relation Name"?: string;
   "Actual Rows"?: number; "Actual Loops"?: number; "Rows Removed by Filter"?: number;
   "Shared Hit Blocks"?: number; "Shared Read Blocks"?: number; Plans?: Plan[] };
@@ -115,8 +119,8 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
     await db.execute(sql`UPDATE store_order_refund SET refund_type = 0 WHERE id = 100006`);
     expect((await scan()).map(row => row.id)).toEqual([100006, 100011, 100012, 100013, 100014]);
     // Report, do not turn a fast custom plan into a generic/production guarantee.
-    console.log("PINK_RECOVERY_QUERY_AUDIT " + JSON.stringify({ rows: 100030, before, candidate: after, tail, generic,
-      migrationApplied: "0146", genericUsesCandidate: generic.indexes.includes("sor_pink_recovery_scan") }));
+    process.stdout.write("PINK_RECOVERY_QUERY_AUDIT " + JSON.stringify({ rows: 100030, before, candidate: after, tail, generic,
+      migrationApplied: "0146", genericUsesCandidate: generic.indexes.includes("sor_pink_recovery_scan") }) + "\n");
   }, 60_000);
 
   it("measures recent-prefix growth, empty scans, dense backlog and interleaved ages with distinct orders", async () => {
@@ -138,6 +142,22 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
     await addRefunds(100001, 100005, 0);
     await db.execute(sql`ANALYZE store_order`);
     const scan = (cursor = 0, ceiling = 100005) => pinkCancellationRecoveryScan(db, cursor, ceiling, 1060000);
+    const container = createContainerFromDb(db);
+    const boundedMeasure = async (cursor: number, ceiling: number) => {
+      const page = await pinkCancellationRecoverySnapshot(container, cursor, 1060000, ceiling);
+      const windowQuery = pinkCancellationRecoveryWindow(db, cursor, ceiling);
+      const window = await windowQuery;
+      expect(page.examined).toBe(window.length);
+      expect(page.examined).toBeLessThanOrEqual(PINK_CANCELLATION_RECOVERY_SCAN_SIZE);
+      const windowPlan = summary(queryPlan(await db.execute(sql`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${windowQuery.getSQL()}`)));
+      expect(windowPlan.rows).toBe(window.length);
+      const last = window.at(-1)?.id;
+      const scanPlan = last === undefined ? null : summary(queryPlan(await db.execute(
+        sql`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${scan(cursor, last).getSQL()}`)));
+      if (scanPlan) expect(scanPlan.rows).toBe(page.candidates.length);
+      return { examined: page.examined, checked: page.candidates.length, nextCursor: page.nextCursor, hasMore: page.hasMore,
+        window: windowPlan, scan: scanPlan };
+    };
     const measure = async (ids: number[], cursor = 0, ceiling = 100005) => {
       const actual = await scan(cursor, ceiling);
       expect(actual.map(row => row.id)).toEqual(ids);
@@ -149,7 +169,7 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
       }
       const plan = queryPlan(await db.execute(sql`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${scan(cursor, ceiling).getSQL()}`));
       expect(plan["Actual Rows"]).toBe(ids.length);
-      return summary(plan);
+      return { ...summary(plan), bounded: await boundedMeasure(cursor, ceiling) };
     };
     const dueTail = [100001, 100002, 100003, 100004, 100005];
     await db.execute(sql`ANALYZE store_order_refund`);
@@ -157,6 +177,14 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
     await addRefunds(10001, 100000, 2000);
     await db.execute(sql`ANALYZE store_order_refund`);
     const recent100k = await measure(dueTail);
+    // A selected, maintained-shape regression gate, not an arbitrary production
+    // SLO: the new page must not repeat the 10x recent-prefix growth in work.
+    const boundedBlocks = (measurement: typeof recent10k) =>
+      (measurement.bounded.window.hits ?? 0) + (measurement.bounded.window.reads ?? 0) +
+      (measurement.bounded.scan?.hits ?? 0) + (measurement.bounded.scan?.reads ?? 0);
+    expect(recent100k.bounded).toMatchObject({ examined: 1000, checked: 0, nextCursor: 1000, hasMore: true });
+    expect(boundedBlocks(recent100k)).toBeLessThan(150);
+    expect(boundedBlocks(recent100k)).toBeLessThanOrEqual(boundedBlocks(recent10k) + 32);
     const frozenCeiling = await measure([], 0, 100000);
     const lateCursor = await measure(dueTail, 100000);
     const query = scan().toSQL();
@@ -170,6 +198,45 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
       } finally { await tx.execute(sql`DEALLOCATE audit_pink_capacity`); }
     });
     expect(generic.rows).toBe(5);
+    const boundedGeneric = await db.transaction(async tx => {
+      await tx.execute(sql`SET LOCAL plan_cache_mode = force_generic_plan`);
+      const windowQuery = pinkCancellationRecoveryWindow(tx, 0, 100005).toSQL();
+      expect(windowQuery.params).toEqual([0, 100005, 1000]);
+      await tx.execute(sql.raw(`PREPARE audit_pink_window AS ${windowQuery.sql}`));
+      await tx.execute(sql.raw(`PREPARE audit_pink_window_due AS ${query.sql}`));
+      try {
+        return {
+          window: summary(queryPlan(await tx.execute(sql`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) EXECUTE audit_pink_window(0, 100005, 1000)`))),
+          scan: summary(queryPlan(await tx.execute(sql`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) EXECUTE audit_pink_window_due(0, 1000, 1000, 5)`))),
+        };
+      } finally {
+        await tx.execute(sql`DEALLOCATE audit_pink_window`);
+        await tx.execute(sql`DEALLOCATE audit_pink_window_due`);
+      }
+    });
+    expect(boundedGeneric.window.rows).toBe(1000);
+    expect(boundedGeneric.scan.rows).toBe(0);
+    expect(boundedGeneric.window.indexes).toContain("sor_pink_recovery_scan");
+    expect(boundedGeneric.scan.indexes).toContain("sor_pink_recovery_scan");
+    // Full traversal, not just the first empty page: the fixed-age run must
+    // reach the five old rows behind 100k recent rows without a query restart.
+    let traversalCursor = 0, pages = 0, emptyPages = 0, examined = 0;
+    const recoveredIds: number[] = [];
+    while (true) {
+      if (++pages > 110) throw new Error("Bounded capacity traversal failed to converge");
+      const page = await pinkCancellationRecoverySnapshot(container, traversalCursor, 1060000, 100005);
+      expect(page.examined).toBeLessThanOrEqual(PINK_CANCELLATION_RECOVERY_SCAN_SIZE);
+      expect(page.candidates.length).toBeLessThanOrEqual(5);
+      expect(page.highWater).toBe(100005);
+      examined += page.examined;
+      if (!page.candidates.length) emptyPages++;
+      recoveredIds.push(...page.candidates.map(row => row.id));
+      if (!page.hasMore) break;
+      expect(page.nextCursor).toBeGreaterThan(traversalCursor);
+      traversalCursor = page.nextCursor;
+    }
+    expect(recoveredIds).toEqual(dueTail);
+    expect({ pages, emptyPages, examined }).toEqual({ pages: 102, emptyPages: 101, examined: 100005 });
     await db.execute(sql`UPDATE store_order_refund SET add_time=2000 WHERE id > 100000`);
     await db.execute(sql`ANALYZE store_order_refund`);
     const allRecentEmpty = await measure([]);
@@ -189,9 +256,10 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
     const maintainedInterleaved = await measure([10000, 20000, 30000, 40000, 50000]);
     // Measurements are not universal budget gates: later index keys may reject
     // heap visits without reducing index pages traversed. No provider I/O here.
-    console.log("PINK_RECOVERY_CAPACITY_AUDIT " + JSON.stringify({ version: identity.version, orders: 100005, refunds: 100005, syntheticOwners: 1000,
+    process.stdout.write("PINK_RECOVERY_CAPACITY_AUDIT " + JSON.stringify({ version: identity.version, orders: 100005, refunds: 100005, syntheticOwners: 1000,
       recent10k, recent100k, frozenCeiling, lateCursor, generic, allRecentEmpty,
       backlogHead, backlogMiddle, backlogTail, interleaved, interleavedNext, interleavedTail, maintainedInterleaved,
-      productionLatencyClaim: false, universalScanBoundProven: false }));
+      boundedGeneric, traversal: { pages, emptyPages, examined, recoveredIds },
+      productionLatencyClaim: false, universalScanBoundProven: false }) + "\n");
   }, 120_000);
 });

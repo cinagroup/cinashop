@@ -57,7 +57,7 @@ describe("B1 read-only cancellation recovery scan budgets", () => {
       verified = true;
     });
     expect(await pinkCancellationRecoverySnapshot(createContainerFromDb(bounded), 0, 1060000, null))
-      .toEqual({ candidates: [], highWater: 0 });
+      .toEqual({ candidates: [], highWater: 0, nextCursor: 0, hasMore: false, examined: 0 });
     expect(verified).toBe(true);
     expect(await settings(db)).toEqual(original);
   });
@@ -80,7 +80,7 @@ describe("B1 read-only cancellation recovery scan budgets", () => {
       .rejects.toMatchObject({ cause: { code: "22012" } });
     expect(await settings(db)).toEqual(original);
     expect(await pinkCancellationRecoverySnapshot(createContainerFromDb(db), 0, 1060000, null))
-      .toEqual({ candidates: [], highWater: 0 });
+      .toEqual({ candidates: [], highWater: 0, nextCursor: 0, hasMore: false, examined: 0 });
   }, 15000);
 
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each([null, 100])(
@@ -98,7 +98,26 @@ describe("B1 read-only cancellation recovery scan budgets", () => {
           expect(await settings(reader.db)).toEqual(original);
         } finally { await blocker.exec("ROLLBACK"); }
         expect(await pinkCancellationRecoverySnapshot(createContainerFromDb(reader.db), 0, 1060000, ceiling))
-          .toEqual({ candidates: [], highWater: ceiling ?? 0 });
+          .toEqual({ candidates: [], highWater: ceiling ?? 0, nextCursor: 0, hasMore: false, examined: 0 });
+      });
+    }, 15000);
+
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))(
+    "PG16 also bounds the second-stage order join after the ID window has completed", async () => {
+      const { db } = await fixture();
+      await db.insert(storeOrderRefund).values({ id: 1, orderId: "pink_cancel_fixture", applyType: 1,
+        refundReason: "用户手动取消拼团", refundExplain: "用户手动取消未成团的拼团订单" });
+      await withFinancePeers(db, async ([blocker, reader]) => {
+        const original = await settings(reader.db);
+        await blocker.exec("BEGIN; LOCK TABLE store_order IN ACCESS EXCLUSIVE MODE");
+        try {
+          const pending = outcome(pinkCancellationRecoverySnapshot(createContainerFromDb(reader.db), 0, 1060000, 1));
+          await waitForFinanceBlock(db, reader.pid, blocker.pid);
+          const result = await pending;
+          expect(result.ok).toBe(false);
+          if (!result.ok) expect(result.error).toMatchObject({ cause: { code: "55P03" } });
+          expect(await settings(reader.db)).toEqual(original);
+        } finally { await blocker.exec("ROLLBACK"); }
       });
     }, 15000);
 

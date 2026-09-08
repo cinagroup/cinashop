@@ -197,6 +197,32 @@ describe("scheduled original pink cancellation recovery through actual SQL", () 
     expect(await new ScheduledMaintenanceService(f.container, f.env).processMaintenance(next)).toMatchObject({ checked: 1, attention: 1 });
   });
 
+  it("replays an empty recent window after send failure, then refunds the genuinely accepted tail application once", async () => {
+    const real = await acceptWithoutExecution();
+    await f.db.update(storeOrderRefund).set({ id: 2001 }).where(eq(storeOrderRefund.id, real.id));
+    await f.db.execute(sql`INSERT INTO store_order_refund
+      (id, store_order_id, order_id, apply_type, refund_reason, refund_explain, add_time)
+      SELECT n, n+10000, 'pink_cancel_recent_' || n, 1, '用户手动取消拼团', '用户手动取消未成团的拼团订单',
+        ${Math.floor(run.scheduledAt / 1000)} FROM generate_series(1, 1000) n`);
+    const before = await snapshot();
+    send.mockRejectedValueOnce(new Error("Queue unavailable after empty window"));
+    await expect(recover()).rejects.toThrow("Queue unavailable");
+    expect(await snapshot()).toEqual(before);
+    expect(await recover()).toMatchObject({ checked: 0, examined: 1000, nextCursor: 1000, highWater: 2001, hasMore: true });
+    expect(await snapshot()).toEqual(before);
+    const continuation: ScheduledMaintenanceMessage = { ...run, cursor: 1000, threshold: 2001 };
+    expect(send.mock.calls.at(-1)![0]).toEqual(continuation);
+    const service = new ScheduledMaintenanceService(f.container, f.env);
+    expect(await service.processMaintenance(continuation)).toMatchObject({ checked: 1, completed: 1, errors: 0, hasMore: false });
+    const after = await snapshot();
+    expect(after.users[0].nowMoney).toBe("6.25");
+    expect(after.bills.filter(row => row.type === "pay_product_refund")).toHaveLength(1);
+    expect(after.refunds.find(row => row.id === 2001)?.refundType).toBe(6);
+    expect(after.refunds.filter(row => row.id <= 1000).every(row => row.refundType === 0)).toBe(true);
+    expect(await service.processMaintenance(continuation)).toMatchObject({ checked: 0 });
+    expect(await snapshot()).toEqual(after);
+  }, 20000);
+
   it("rejects invalid pagination before any execution and emits no private identifiers in recovery logs", async () => {
     const service = new PinkCancellationRecoveryService(f.container, f.env);
     for (const args of [[-1, run.scheduledAt, null], [0, 0, null], [0, run.scheduledAt, -1], [NaN, run.scheduledAt, null]] as const)

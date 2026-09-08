@@ -9,9 +9,30 @@ import { ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 export const PINK_CANCELLATION_RECOVERY_PAGE_SIZE = 5;
+export const PINK_CANCELLATION_RECOVERY_SCAN_SIZE = 1000;
+
+// One immutable predicate for index eligibility and both discovery stages.
+// Dynamic IDs/time remain bound parameters, never interpolated SQL literals.
+function cancellationPredicate() {
+  return sql`${storeOrderRefund.isCancel} = 0 AND ${storeOrderRefund.isDel} = 0 AND ${storeOrderRefund.applyType} = 1
+    AND ${storeOrderRefund.refundType} IN (0, 1, 2, 4, 5)
+    AND ${storeOrderRefund.refundReason} = '用户手动取消拼团'
+    AND ${storeOrderRefund.refundExplain} = '用户手动取消未成团的拼团订单'
+    AND left(${storeOrderRefund.orderId}, 12) = 'pink_cancel_'`;
+}
+
+/** Bound the live candidate window BEFORE applying age eligibility. Otherwise
+ * a recent-only prefix can force scanning the entire remaining partial index. */
+export function pinkCancellationRecoveryWindow(db: Pick<DbClient, "select">,
+  cursor: number, highWater: number) {
+  return db.select({ id: storeOrderRefund.id }).from(storeOrderRefund)
+    .where(and(gt(storeOrderRefund.id, cursor), lte(storeOrderRefund.id, highWater), cancellationPredicate()))
+    .orderBy(asc(storeOrderRefund.id)).limit(PINK_CANCELLATION_RECOVERY_SCAN_SIZE);
+}
 
 /** One query definition for execution and isolated EXPLAIN audits. Callers must
- * validate the cursor/time and freeze the ceiling before executing this scan. */
+ * validate cursor/time and restrict highWater to the last ID from the bounded
+ * window in the SAME repeatable-read transaction before executing this scan. */
 export function pinkCancellationRecoveryScan(db: Pick<DbClient, "select">,
   cursor: number, highWater: number, scheduledAt: number) {
   return db.select({ id: storeOrderRefund.id, uid: storeOrderRefund.uid,
@@ -22,13 +43,7 @@ export function pinkCancellationRecoveryScan(db: Pick<DbClient, "select">,
     .where(and(gt(storeOrderRefund.id, cursor), lte(storeOrderRefund.id, highWater),
       // Allow an initiating HTTP request to finish before the next cron pass.
       lte(storeOrderRefund.addTime, Math.floor(scheduledAt / 1000) - 60),
-      // Immutable business predicates stay literal so even a generic plan can
-      // prove partial-index eligibility. Never inline cursor/time/user input.
-      sql`${storeOrderRefund.isCancel} = 0 AND ${storeOrderRefund.isDel} = 0 AND ${storeOrderRefund.applyType} = 1
-        AND ${storeOrderRefund.refundType} IN (0, 1, 2, 4, 5)
-        AND ${storeOrderRefund.refundReason} = '用户手动取消拼团'
-        AND ${storeOrderRefund.refundExplain} = '用户手动取消未成团的拼团订单'
-        AND left(${storeOrderRefund.orderId}, 12) = 'pink_cancel_'`))
+      cancellationPredicate()))
     .orderBy(asc(storeOrderRefund.id)).limit(PINK_CANCELLATION_RECOVERY_PAGE_SIZE);
 }
 
@@ -55,8 +70,16 @@ export async function pinkCancellationRecoverySnapshot(container: Container,
         LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'), 0), 5000)::text || 'ms', true)`);
     const highWater = ceiling ?? (await tx.select({ id: sql<number>`COALESCE(MAX(${storeOrderRefund.id}), 0)::int` })
       .from(storeOrderRefund))[0].id;
-    const candidates = await pinkCancellationRecoveryScan(tx, cursor, highWater, scheduledAt);
-    return { candidates, highWater };
+    const window = await pinkCancellationRecoveryWindow(tx, cursor, highWater);
+    const scannedThrough = window.at(-1)?.id ?? cursor;
+    const candidates = window.length ? await pinkCancellationRecoveryScan(tx, cursor, scannedThrough, scheduledAt) : [];
+    const fullPage = candidates.length === PINK_CANCELLATION_RECOVERY_PAGE_SIZE;
+    // Never advance beyond the fifth due row: later due rows in this window
+    // still require execution. A partial/empty due page advances past the
+    // examined recent rows, not past unexamined candidates or the frozen ceiling.
+    const nextCursor = fullPage ? candidates[candidates.length - 1].id : scannedThrough;
+    const hasMore = fullPage || window.length === PINK_CANCELLATION_RECOVERY_SCAN_SIZE;
+    return { candidates, highWater, nextCursor, hasMore, examined: window.length };
   });
 }
 
@@ -68,7 +91,7 @@ export class PinkCancellationRecoveryService {
   constructor(private readonly container: Container, private readonly env: Env) {}
 
   async recoverPage(cursor: number, scheduledAt: number, ceiling: number | null) {
-    const { candidates, highWater } = await pinkCancellationRecoverySnapshot(this.container, cursor, scheduledAt, ceiling);
+    const { candidates, highWater, nextCursor, hasMore, examined } = await pinkCancellationRecoverySnapshot(this.container, cursor, scheduledAt, ceiling);
     let completed = 0, pending = 0, attention = 0, errors = 0;
     for (const candidate of candidates) {
       try {
@@ -112,12 +135,11 @@ export class PinkCancellationRecoveryService {
     // Poison rows do not starve later IDs. Unfinished rows remain durable and
     // are reconsidered by the next five-minute root run, not a tight local loop.
     const result = { checked: candidates.length, completed, pending, attention, errors,
-      nextCursor: candidates.at(-1)?.id ?? cursor, hasMore: candidates.length === PINK_CANCELLATION_RECOVERY_PAGE_SIZE,
-      highWater };
+      nextCursor, hasMore, highWater, examined };
     emitOperationalEvent(attention || errors ? "warn" : "info", {
       event: "pink_cancellation_recovery_page", component: "refund", operation: "pink_cancellation_recovery",
       outcome: attention || errors ? "unknown" : "success", resourceCount: candidates.length,
-      completed, pending, attention, errors,
+      completed, pending, attention, errors, examined,
     });
     return result;
   }
