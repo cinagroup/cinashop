@@ -36,6 +36,8 @@ export const storeCart = pgTable(
     productId: integer("product_id").default(0).notNull(),
     productType: smallint("product_type").default(0).notNull(),
     activityId: integer("activity_id").default(0).notNull(),
+    /** Exact bargain participation; 0 preserves legacy/unbound carts without guessing. */
+    bargainUserId: integer("bargain_user_id").default(0).notNull(),
     storeId: integer("store_id").default(0).notNull(),
     staffId: integer("staff_id").default(0).notNull(),
     /** SKU unique (char 8) */
@@ -54,6 +56,7 @@ export const storeCart = pgTable(
     index("sc_uid_del_idx").on(t.uid, t.isDel),
     index("sc_uid_new").on(t.uid, t.isNew),
     index("sc_type_idx").on(t.type),
+    check("sc_bargain_participation_ck", sql`${t.bargainUserId} >= 0 AND (${t.type} = 2 OR ${t.bargainUserId} = 0)`),
   ],
 );
 

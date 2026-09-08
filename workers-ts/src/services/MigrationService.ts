@@ -52,9 +52,15 @@ import { FOREIGN_KEY_CHILD_INDEX_SQL } from "@/migrations/foreignKeyChildIndexes
 import { runForeignKeyChildIndexes } from "@/migrations/runForeignKeyChildIndexes";
 import { WORK_CONTACT_CLIENT_INDEX_SQL } from "@/migrations/workContactClientIndex";
 import { runWorkContactClientIndex } from "@/migrations/runWorkContactClientIndex";
+import { BARGAIN_CART_PARTICIPATION_SQL } from "@/migrations/bargainCartParticipation";
+import { runBargainCartParticipation } from "@/migrations/runBargainCartParticipation";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  bargainCartParticipationMigrationSqlForVerification(): string {
+    return this.migration_0155();
+  }
 
   /** Exact embedded DDL used by isolated production-engine verification. */
   receiptPrintJobMigrationSqlForVerification(): string {
@@ -408,6 +414,7 @@ export class MigrationService {
       this.migration_0152(),
       this.migration_0153(),
       this.migration_0154(),
+      this.migration_0155(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
@@ -415,6 +422,11 @@ export class MigrationService {
         if (i === 154) {
           await runWorkContactClientIndex(this.container.db);
           executed.push("0154");
+          continue;
+        }
+        if (i === 155) {
+          await runBargainCartParticipation(this.container.db);
+          executed.push("0155");
           continue;
         }
         if (i === 153) {
@@ -8466,5 +8478,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0154(): string {
     return WORK_CONTACT_CLIENT_INDEX_SQL;
+  }
+  private migration_0155(): string {
+    return BARGAIN_CART_PARTICIPATION_SQL;
   }
 }
