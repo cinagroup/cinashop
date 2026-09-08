@@ -410,6 +410,14 @@ export async function reconcileRefundedPink(
   now = Math.floor(Date.now() / 1000),
 ): Promise<void> {
   if (order.type !== 3 || order.pinkId <= 0 || order.refundStatus !== 2) return;
+  // Timeout locks leader -> members. Never hold a member while waiting for its
+  // leader. The refund's inventory boundary already serializes promotion; the
+  // read also handles historical orders pointing directly at a member row.
+  const [reference] = await tx.select({ kId: storePink.kId }).from(storePink)
+    .where(eq(storePink.id, order.pinkId)).limit(1);
+  const leaderId = reference?.kId ? reference.kId : order.pinkId;
+  const [lockedLeader] = await tx.select().from(storePink)
+    .where(eq(storePink.id, leaderId)).limit(1).for("update");
   const rows = await tx
     .select()
     .from(storePink)
@@ -428,13 +436,8 @@ export async function reconcileRefundedPink(
   const endedAt = new Date(now * 1000);
 
   if (participant.kId !== 0) {
-    const leaderRows = await tx
-      .select()
-      .from(storePink)
-      .where(eq(storePink.id, participant.kId))
-      .limit(1)
-      .for("update");
-    const leader = leaderRows[0];
+    if (participant.kId !== leaderId) throw new ValidateException("拼团关联已变化，请重试");
+    const leader = lockedLeader;
     await tx
       .update(storePink)
       .set({ isRefund: participant.kId, status: 3, stopTime: endedAt })

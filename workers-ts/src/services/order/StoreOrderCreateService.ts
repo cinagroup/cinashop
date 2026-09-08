@@ -83,6 +83,7 @@ import {
 } from "@/services/order/OrderSystemFormService";
 import { AttachmentService } from "@/services/system/AttachmentService";
 import { reservePinkJoin } from "@/services/activity/PinkLifecycleService";
+import { lockPinkInventory } from "@/services/activity/PinkInventoryLocks";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { parseVirtualDeliveryInfo } from "@/services/order/VirtualProductDeliveryService";
 import { customerRefundEligibility } from "@/services/order/VirtualProductRefundPolicy";
@@ -416,6 +417,12 @@ export async function cancelStoreOrder(
 ): Promise<void> {
   const { uid, orderId } = params;
   await withTx(container, async (tx) => {
+    // A pink refund can relink this unpaid order. Take its inventory boundary
+    // before the order row, matching create/refund rather than restoring late.
+    const [initial] = await tx.select({ uid: storeOrder.uid, type: storeOrder.type, activityId: storeOrder.activityId })
+      .from(storeOrder).where(eq(storeOrder.orderId, orderId)).limit(1);
+    if (!initial || initial.uid !== uid) throw new NotFoundException("订单不存在");
+    if (initial?.type === 3) await lockPinkInventory(tx, initial.activityId);
     const orderRows = await tx
       .select()
       .from(storeOrder)
@@ -424,6 +431,10 @@ export async function cancelStoreOrder(
       .for("update");
     const order = orderRows[0];
     if (!order || order.uid !== uid) throw new NotFoundException("订单不存在");
+    if ((initial?.type === 3 || order.type === 3) &&
+        (initial?.type !== order.type || initial.activityId !== order.activityId)) {
+      throw new ValidateException("拼团订单活动已变化，请重试");
+    }
     if (order.pid === -1 || order.supplierAllocationStatus === 1) {
       throw new ValidateException("拆分审计订单不能取消");
     }
@@ -1681,6 +1692,10 @@ export class StoreOrderCreateService {
         .limit(1);
       if (concurrentExistingRows[0]) assertExistingScope(concurrentExistingRows[0]);
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
+
+      // Before cart claims as well as SKU/group writes: cancellation restores
+      // carts and refunds can relink pending orders under this same boundary.
+      if (type === 3) await lockPinkInventory(tx, pinkCombinationId);
 
       // Lock parent -> child -> sorted slots before the other business locks. Time is rechecked
       // at inventory admission; the initial preview cannot authorize a later expired purchase.

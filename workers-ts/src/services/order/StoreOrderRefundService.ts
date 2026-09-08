@@ -55,6 +55,7 @@ import {
 } from "@/services/payment/RefundGateway";
 import { WechatApiError, WechatPayService } from "@/services/wechat/WechatPayService";
 import { reconcileRefundedPink } from "@/services/activity/PinkLifecycleService";
+import { lockPinkRefundOrders } from "@/services/activity/PinkInventoryLocks";
 import { enqueueOrderRefundRefusedNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
@@ -467,6 +468,7 @@ export async function finalizeStoreOrderRefund(
 
     // Distinct refund rows can complete concurrently. The order lock makes the
     // cumulative amount check and all proportional compensation deterministic.
+    const pinkOrdersLocked = await lockPinkRefundOrders(tx, refund.storeOrderId);
     await lockOrderSettlement(tx, refund.storeOrderId);
     if (refund.isCancel || refund.isDel) throw new ValidateException("退款申请已取消或删除");
 
@@ -478,6 +480,7 @@ export async function finalizeStoreOrderRefund(
       .for("update");
     const order = orders[0];
     if (!order) throw new NotFoundException("订单不存在");
+    if (order.type === 3 && !pinkOrdersLocked) throw new ValidateException("拼团订单类型已变化，请重试");
     assertRefundExecutionScope(refund, order, scope);
     if (refund.refundType === 6) return "already-completed";
     if (![0, 1, 2, 4, 5].includes(refund.refundType)) {
