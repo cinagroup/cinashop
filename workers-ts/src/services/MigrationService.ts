@@ -46,6 +46,8 @@ import { FOREIGN_KEY_NAME_ALIGNMENT_SQL } from "@/migrations/foreignKeyNameAlign
 import { CHECK_STATE_ALIGNMENT_SQL } from "@/migrations/checkStateAlignment";
 import { KEFU_SEQUENCE_ALIGNMENT_SQL } from "@/migrations/kefuSequenceAlignment";
 import { runKefuSequenceAlignment } from "@/migrations/runKefuSequenceAlignment";
+import { PINK_RECOVERY_INDEX_SQL } from "@/migrations/pinkRecoveryIndex";
+import { runPinkRecoveryIndex } from "@/migrations/runPinkRecoveryIndex";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -399,10 +401,16 @@ export class MigrationService {
       this.migration_0149(),
       this.migration_0150(),
       this.migration_0151(),
+      this.migration_0152(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 152) {
+          await runPinkRecoveryIndex(this.container.db);
+          executed.push("0152");
+          continue;
+        }
         if (i === 151) {
           // The standalone runner owns its bounded READ COMMITTED transaction.
           // Never wrap it in the generic transaction below (that is a savepoint).
@@ -8432,5 +8440,9 @@ $work_member_resolved_rename_fence$;
 
   private migration_0151(): string {
     return KEFU_SEQUENCE_ALIGNMENT_SQL;
+  }
+
+  private migration_0152(): string {
+    return PINK_RECOVERY_INDEX_SQL;
   }
 }

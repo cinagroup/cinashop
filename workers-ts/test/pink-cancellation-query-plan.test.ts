@@ -4,9 +4,10 @@ import { getTableConfig, PgDialect, type PgTable } from "drizzle-orm/pg-core";
 import { financePostgres } from "./helpers/financePostgres";
 import { storeOrder, storeOrderRefund } from "../src/models/schema";
 import { pinkCancellationRecoveryScan } from "../src/services/activity/PinkCancellationRecoveryService";
+import { runPinkRecoveryIndex } from "../src/migrations/runPinkRecoveryIndex";
 
-// This is an index design experiment, not a production migration or a claim
-// that the current query's scan cost is acceptable. CI repeats it on PG16.
+// Execute the formal single-purpose migration in an isolated fixture. This is
+// selected-distribution evidence, not a production latency/capacity guarantee.
 type Plan = { "Node Type": string; "Index Name"?: string; "Relation Name"?: string;
   "Actual Rows"?: number; "Actual Loops"?: number; "Rows Removed by Filter"?: number;
   "Shared Hit Blocks"?: number; "Shared Read Blocks"?: number; Plans?: Plan[] };
@@ -27,14 +28,15 @@ function summary(plan: Plan) {
 describe("original cancellation scan: isolated 100k-row index design evidence", () => {
   let f: Awaited<ReturnType<typeof financePostgres>> | undefined;
   afterEach(async () => { await f?.close(); f = undefined; });
-  it("executes the same service query before/after a candidate index and exposes generic-plan eligibility", async () => {
+  it("executes the same service query before/after the formal index migration, including generic plans", async () => {
     f = await financePostgres([storeOrder, storeOrderRefund]);
     const db = f.db;
-    // financePostgres creates columns/PKs only. Install EVERY current model
-    // secondary index here so the baseline cannot pretend existing indexes are absent.
+    // Install all PRE-0146 secondary indexes; omit ONLY this newly added index
+    // to reproduce the existing-database upgrade baseline.
     for (const table of [storeOrder, storeOrderRefund] as PgTable[]) {
       const definition = getTableConfig(table);
       for (const { config } of definition.indexes) {
+        if (definition.name === "store_order_refund" && config.name === "sor_pink_recovery_scan") continue;
         if (!config.name || config.method !== "btree" || config.with || config.concurrently || config.only) {
           throw new Error("Review changed fixture index options");
         }
@@ -70,16 +72,12 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
     expect(beforeRows.map(row => row.id)).toEqual([100006, 100007, 100008, 100009, 100010]);
     const before = summary(await explain());
 
-    // Fixed literal predicate only in this disposable design experiment.
-    // Time is an index key, NOT a volatile now()-based partial predicate.
-    await db.execute(sql`CREATE INDEX audit_pink_recovery_candidate ON store_order_refund (id, add_time)
-      WHERE is_cancel = 0 AND is_del = 0 AND apply_type = 1 AND refund_type IN (0, 1, 2, 4, 5)
-      AND refund_reason = '用户手动取消拼团' AND refund_explain = '用户手动取消未成团的拼团订单'
-      AND left(order_id, 12) = 'pink_cancel_'`);
+    const [identity] = await db.select({ schema: sql<string>`current_schema()` }).from(sql`(values (1)) as probe(n)`);
+    await runPinkRecoveryIndex(db, identity.schema);
     await db.execute(sql`ANALYZE store_order_refund`);
     const after = summary(await explain());
     expect(await scan()).toEqual(beforeRows);
-    expect(after.indexes).toContain("audit_pink_recovery_candidate");
+    expect(after.indexes).toContain("sor_pink_recovery_scan");
     expect(after.filtered).toBeLessThan(100);
     expect((await scan(100025)).map(row => row.id)).toEqual([100026, 100027, 100028, 100029, 100030]);
     expect(await scan(100030)).toEqual([]);
@@ -100,7 +98,7 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
       finally { await tx.execute(sql`DEALLOCATE audit_pink_scan`); }
     });
     expect(generic.rows).toBe(5);
-    expect(generic.indexes).toContain("audit_pink_recovery_candidate");
+    expect(generic.indexes).toContain("sor_pink_recovery_scan");
     expect(generic.filtered).toBeLessThan(100);
     // Index membership must track mutable terminal/withdrawal/business flags;
     // the candidate cannot merely return the right initial five rows.
@@ -114,6 +112,6 @@ describe("original cancellation scan: isolated 100k-row index design evidence", 
     expect((await scan()).map(row => row.id)).toEqual([100006, 100011, 100012, 100013, 100014]);
     // Report, do not turn a fast custom plan into a generic/production guarantee.
     console.log("PINK_RECOVERY_QUERY_AUDIT " + JSON.stringify({ rows: 100030, before, candidate: after, tail, generic,
-      candidateMigrationApplied: false, genericUsesCandidate: generic.indexes.includes("audit_pink_recovery_candidate") }));
+      migrationApplied: "0146", genericUsesCandidate: generic.indexes.includes("sor_pink_recovery_scan") }));
   }, 60_000);
 });

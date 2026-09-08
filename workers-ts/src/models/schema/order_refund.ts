@@ -66,6 +66,12 @@ export const storeOrderRefund = pgTable(
       .where(sql`${t.isCancel} = 0 AND ${t.isDel} = 0`),
     index("sor_order_id").on(t.orderId),
     index("sor_cancel_oid_idx").on(t.isCancel, t.storeOrderId),
+    index("sor_pink_recovery_scan").on(t.id, t.addTime)
+      .where(sql`${t.isCancel} = 0 AND ${t.isDel} = 0 AND ${t.applyType} = 1
+        AND ${t.refundType} IN (0, 1, 2, 4, 5)
+        AND ${t.refundReason} = '用户手动取消拼团'
+        AND ${t.refundExplain} = '用户手动取消未成团的拼团订单'
+        AND left(${t.orderId}, 12) = 'pink_cancel_'`),
   ],
 );
 

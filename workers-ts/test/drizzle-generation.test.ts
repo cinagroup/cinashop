@@ -123,6 +123,14 @@ module.exports = { ...base, out: ${JSON.stringify(relative(root, output).replace
       const snapshot = JSON.parse(readFileSync(join(output, "meta/0000_snapshot.json"), "utf8"));
       expect(Object.values(snapshot.tables).map((table) => (table as { name: string }).name).sort()).toEqual(tableNames);
       await db.exec(readFileSync(join(output, "0000_audit.sql"), "utf8"));
+      // Validate the new partial index against actual drizzle-kit SQL, not just
+      // a hand-rendered model fixture. Repeating the guard must retain its OID.
+      const recoveryIndex = () => db.query("SELECT oid::text, pg_get_indexdef(oid) AS definition FROM pg_class WHERE oid='public.sor_pink_recovery_scan'::regclass");
+      const recoveryBefore = await recoveryIndex();
+      const recoveryGuard = readFileSync(join(root, "migrations/0146_pink_recovery_index.sql"), "utf8");
+      await db.exec(recoveryGuard);
+      await db.exec(recoveryGuard);
+      expect(await recoveryIndex()).toEqual(recoveryBefore);
       // Exact deployed closed-surface guards must still accept generated keys.
       for (const [migration, tag] of [
         ["0115_work_client_current_projection.sql", "work_client_closed_surface_verification"],
