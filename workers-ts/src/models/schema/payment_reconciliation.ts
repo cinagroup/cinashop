@@ -76,6 +76,8 @@ export const paymentReconciliationCase = pgTable(
     foreignKey({ name: "prc_callback_event_fk", columns: [table.callbackEventId], foreignColumns: [paymentCallbackEvent.id] }).onDelete("restrict"),
     uniqueIndex("prc_replay_key_uq").on(table.replayKey),
     uniqueIndex("prc_provider_order_uq").on(table.provider, table.orderNo),
+    // Parent FK checks include every status, not just active reconciliation cases.
+    index("prc_callback_event").on(table.callbackEventId),
     index("prc_due").on(table.nextCheckTime, table.id)
       .where(sql`${table.status} IN ('OPEN', 'WAITING', 'UNKNOWN')`),
     index("prc_expired_lease").on(table.leaseUntil, table.id)

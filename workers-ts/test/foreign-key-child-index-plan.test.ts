@@ -6,6 +6,7 @@ import { paymentCallbackEvent } from "../src/models/schema/payment_callback";
 import { paymentReconciliationCase } from "../src/models/schema/payment_reconciliation";
 import { storeOrderCartInfo } from "../src/models/schema/order";
 import { storeProductReply } from "../src/models/schema/reply";
+import { runForeignKeyChildIndexes } from "../src/migrations/runForeignKeyChildIndexes";
 
 type Plan = { "Node Type": string; "Index Name"?: string; "Actual Rows"?: number; "Actual Loops"?: number;
   "Shared Hit Blocks"?: number; "Shared Read Blocks"?: number; "Rows Removed by Filter"?: number; Plans?: Plan[] };
@@ -30,6 +31,8 @@ async function installRelations(db: Awaited<ReturnType<typeof financePostgres>>[
   for (const table of tables) {
     const definition = getTableConfig(table);
     for (const { config } of definition.indexes) {
+      // Deliberate pre-0147 baseline; retain every other actual model index.
+      if (["prc_callback_event", "spr_order_cart_info"].includes(config.name ?? "")) continue;
       if (!config.name || config.method !== "btree" || config.with || config.concurrently || config.only)
         throw new Error("Review changed fixture index options");
       const columns = config.columns.map(column => {
@@ -58,18 +61,19 @@ async function installRelations(db: Awaited<ReturnType<typeof financePostgres>>[
 
 const cases = [
   { name: "payment reconciliation callback reference", parent: paymentCallbackEvent, child: paymentReconciliationCase,
-    column: "callback_event_id", constraint: "prc_callback_event_fk", candidate: "audit_prc_callback_fk", type: "bigint", validated: true, deletion: "r" },
+    column: "callback_event_id", constraint: "prc_callback_event_fk", candidate: "prc_callback_event", type: "bigint", validated: true, deletion: "r" },
   { name: "reply snapshot reference including deleted replies", parent: storeOrderCartInfo, child: storeProductReply,
-    column: "order_cart_info_id", constraint: "spr_order_cart_info_fk", candidate: "audit_spr_cart_fk", type: "integer", validated: false, deletion: "a" },
+    column: "order_cart_info_id", constraint: "spr_order_cart_info_fk", candidate: "spr_order_cart_info", type: "integer", validated: false, deletion: "a" },
 ] as const;
 
 describe("DB-009G child-index evidence for parent FK checks", () => {
   let f: Awaited<ReturnType<typeof financePostgres>> | undefined;
   afterEach(async () => { await f?.close(); f = undefined; });
   it.each(cases)("executes probes and actual parent actions: $name", async target => {
-    f = await financePostgres([target.parent, target.child]);
+    const tables = [paymentCallbackEvent, paymentReconciliationCase, storeOrderCartInfo, storeProductReply];
+    f = await financePostgres(tables);
     const db = f.db;
-    await installRelations(db, [target.parent, target.child]);
+    await installRelations(db, tables);
     const reference = getTableConfig(target.child).foreignKeys.find(fk => fk.getName() === target.constraint)?.reference();
     expect(reference?.columns.map(column => column.name)).toEqual([target.column]);
     expect(reference?.foreignTable).toBe(target.parent);
@@ -160,8 +164,8 @@ describe("DB-009G child-index evidence for parent FK checks", () => {
       return actual;
     };
     const parentBefore = await parentActions();
-    // Test-only candidate. Formal ORM/external/embedded DDL is NOT changed here.
-    await db.execute(sql`CREATE INDEX ${sql.identifier(target.candidate)} ON ${sql.identifier(childName)} (${sql.identifier(target.column)})`);
+    const [scope] = await db.select({ schema: sql<string>`current_schema()` }).from(sql`(values (1)) as probe(n)`);
+    await runForeignKeyChildIndexes(db, scope.schema);
     await db.execute(sql`ANALYZE ${sql.identifier(childName)}`);
     const after = await plans();
     expect(after.absent.rows).toBe(0);
@@ -182,6 +186,6 @@ describe("DB-009G child-index evidence for parent FK checks", () => {
     process.stdout.write("FK_CHILD_INDEX_AUDIT " + JSON.stringify({ target: target.constraint, version: identity.version, rows: 100003,
       before, after, parentBefore, parentAfter, nullableRows: nulls.count, referencedKeyDistribution: "one hot key plus two rare keys",
       existingForeignKeyUnchanged: true, childRowsUnchanged: true, parentRowsUnchanged: true,
-      candidateMigrationApplied: false, nestedTriggerPlanCaptured: false, productionLatencyClaim: false }) + "\n");
+      candidateMigrationApplied: false, migrationApplied: "0147", nestedTriggerPlanCaptured: false, productionLatencyClaim: false }) + "\n");
   }, 120000);
 });

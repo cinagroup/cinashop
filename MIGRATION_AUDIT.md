@@ -6649,6 +6649,28 @@ DB-009G新增两项真实模型关系测试，采用financePostgres既有防护�
 
 前端测试技能促使页面证据与构建结果分开记录；PostgreSQL技能促使检查完整引用范围而非只看活跃行查询。没有生产SQL/DDL、部署、真实账户/订单/付款或历史复制；清单仍221勾选/154开放/375项。本轮提交仅新增隔离审计测试和更新审计记录。
 
+### 34abedc 全绿、两处正式外键索引升级与范围纠正（2026-09-08）
+
+`34abedc0e6947c1e906c4460280aa4d1f51909e0` / [Actions34204645032](https://github.com/cinagroup/cinashop/actions/runs/34204645032)终态11/11成功。分片一101991187772：149文件1227项、687.78秒；分片二101991187645：148文件1142项；合计297文件2369项零跳过，汇总101995167284成功。inventory SHA=`cc656e39e8e97cfe8fd10d9f259d52d2e454559e3bd5e4f995437a1968cdeea4`，executed SHA依次`e1a108fdc3497c00672a1c3bd941d1c4701507c960a9a537b9eec089daab8eb4`、`b47430e558ea85307b865c5204c6dee7aebee11dae897bd9713f9aad71695ca5`，完整互斥/实际文件匹配均true。目录101991187710、workerd101991187580、秘密扫描101991187332及五个前端全部成功；本轮没有重新提取该目录的完整逐项计数。
+
+该SHA两项外键实验已在PG16（160014）通过：100003子行/50001 NULL，无匹配原hit2273/1471、过滤100003；测试索引后read2、过滤0，活跃/删除或关闭态hit4，generic无匹配hit2。真实父端保护、回滚、父子行指纹/FK定义及验证状态不变。这是隔离热键证据，不是生产延迟或嵌套触发器计划捕获。
+
+当前正式增加prc_callback_event(callback_event_id)与spr_order_cart_info(order_cart_info_id)两个非唯一、非局部B-tree，保留评价活跃行唯一索引和全部FK/CHECK。ORM、外部0147、字节一致的内嵌SQL、编号0153及runForeignKeyChildIndexes根事务入口同步接入。无导入时I/O、新连接、生产调用、认证或绑定变更。普通建索引会阻塞写入，正式执行须维护窗口，见[PG16 CREATE INDEX](https://www.postgresql.org/docs/16/sql-createindex.html)；不能以含历史补写的runAll代替单项升级。
+
+升级以固定表序、单个READ COMMITTED事务执行，DO前最多30秒语句/5秒空闲期限，DO内最多2秒锁等待，保留更严格调用方值。固定schema并绕开临时对象，拒绝非法/系统schema、非根事务、缺表、继承/非永久表、引用列类型/可空状态漂移、错误同名对象、局部/唯一/表达式/hash/排序/INCLUDE/存储参数/约束归属等定义漂移及启用的DDL事件触发器。第二表失败时第一表的新索引也回滚，不覆盖对象或更改业务行/序列。九路径新增两个索引的正向存在门禁，保留完整目录比较，不允许“两边都遗漏”通过。
+
+计划测试保留全部实际模型列/默认/主键/其他索引/CHECK/FK，仅故障基线排除两个新索引，随后调用正式升级器，不再手写候选DDL。本地正式升级后仍为无匹配read2、活跃/删除态hit4、generic hit2，原父端保护及指纹断言全部通过；输出migrationApplied=0147、nestedTriggerPlanCaptured=false、productionLatencyClaim=false。
+
+升级专项覆盖有行/空表、重复执行保留OID/文件/行/序列、13类同名漂移、4类列漂移、整批回滚、临时与显式schema隔离、继承/非永久/缺第二表拒绝、严格/宽松/禁用超时。真实drizzle-kit全库SQL含public限定引用，已将其从随机schema夹具改为既有防护下的独立可销毁数据库，不重写SQL或使用共享CI public；两遍升级保留全库索引身份。两个PG16独立写锁场景分别阻塞第一/第二表，要求确切阻塞PID、55P03、整批回滚、设置恢复及解锁后成功，本地明确跳过。注册精确154步，保留0151/0152失败关闭与旧skip/supersession，新增0153失败关闭；序列完整ORM因新增两索引从1077更新1079，其30类漂移拒绝等原断言保留。
+
+最终相关5文件81项通过/4项PG跳过，共85项、146.87秒；新升级专项33项中31本地通过/2项PG锁跳过，另两项跳过为旧恢复索引写锁及序列期限。Worker unit/runtime两套类型检查终态成功。其后只修正SQL注释，明确是“两处引用”而非全部外键。新正式DDL仍需自身PG16目录及锁竞争CI，不能借用34abedc的测试候选结果。
+
+范围纠正：当前真实Drizzle模型共45个FK，不是此前E3子集的12个。加入两个新索引后，29项有覆盖全部引用列的非局部索引/主键/唯一约束首部；16项不满足这一充分但非必要的静态形状。其中12项已有较窄last_event_id或corp_id首列候选：wcc_last_event_fk、wcfc_last_event_fk、wcfpf_last_event_fk、wcpf_last_event_fk、wdc_last_event_fk、wdpf_last_event_fk、wetc_last_event_fk、wetgc_last_event_fk、wetpf_last_event_fk、wgcc_last_event_fk、wgcmc_last_event_fk、wgcpf_last_event_fk。不能据此机械补12个六列宽索引。
+
+4项尚未找到任何引用列开头的非局部候选：work_contact_action_outbox.wcao_client_fk、work_member_current.wmc_last_event_fk、work_member_identity_alias.wmia_last_event_fk及wmia_link_event_fk。它们的局部索引、父操作、保留策略及计划未验证，不称为四个已证实慢查询。新增G1正式升级验收与G2企业微信剩余范围，清单221勾选/156开放/377项，DB-009G不关闭；下一步优先验证这4个静态候选。
+
+PostgreSQL/Workers技能推动有界事务、范围复核、实际生成器与目录验证；已核验当前官方Workers最佳实践、5.20260908.1 Hyperdrive类型及本地Wrangler schema，未改依赖或绑定。本轮无浏览器、生产SQL/DDL、部署或真实provider操作；历史复制仍N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

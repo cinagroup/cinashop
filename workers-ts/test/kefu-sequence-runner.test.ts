@@ -75,8 +75,8 @@ describe("standalone sequence transaction execution boundary", () => {
   });
 
   it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", () => {
-    // The current ORM also includes the independent 0146 recovery scan index.
-    expect(fullPath.initialStatements).toBe(1077);
+    // Current ORM includes 0146 recovery plus the two independent 0147 FK indexes.
+    expect(fullPath.initialStatements).toBe(1079);
     expect(fullPath.committedUpgradeExecution).toBe("standalone-drizzle-transaction");
     expect(fullPath.driftRefusals).toHaveLength(30);
     expect(fullPath.originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved).toBe(true);

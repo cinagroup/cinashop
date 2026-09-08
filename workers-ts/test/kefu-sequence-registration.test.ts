@@ -10,16 +10,20 @@ import { KEFU_SEQUENCE_ALIGNMENT_SQL } from "../src/migrations/kefuSequenceAlign
 import { runKefuSequenceAlignment } from "../src/migrations/runKefuSequenceAlignment";
 import { PINK_RECOVERY_INDEX_SQL } from "../src/migrations/pinkRecoveryIndex";
 import { runPinkRecoveryIndex } from "../src/migrations/runPinkRecoveryIndex";
+import { FOREIGN_KEY_CHILD_INDEX_SQL } from "../src/migrations/foreignKeyChildIndexes";
+import { runForeignKeyChildIndexes } from "../src/migrations/runForeignKeyChildIndexes";
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
 vi.mock("../src/migrations/runKefuSequenceAlignment", () => ({ runKefuSequenceAlignment: vi.fn() }));
 vi.mock("../src/migrations/runPinkRecoveryIndex", () => ({ runPinkRecoveryIndex: vi.fn() }));
+vi.mock("../src/migrations/runForeignKeyChildIndexes", () => ({ runForeignKeyChildIndexes: vi.fn() }));
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
+const childRunner = vi.mocked(runForeignKeyChildIndexes);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 153 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 154 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -48,16 +52,22 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(depth, "0152 must also receive the root DB outside an outer transaction").toBe(0);
     expect(runner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  childRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db);
+    expect(depth, "0153 must receive the root DB outside an outer transaction").toBe(0);
+    expect(pinkRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
 beforeEach(() => {
   runner.mockReset();
   pinkRunner.mockReset();
+  childRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains the exact 0151 guard once, followed by 0152, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152/0153, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -76,15 +86,17 @@ describe("embedded 0151 sequence registration", () => {
     expect(runner).not.toHaveBeenCalled();
   });
 
-  it("executes all 153 steps in order and dispatches 0151 and 0152 to their independent root transaction runners", async () => {
+  it("executes all 154 steps in order and dispatches 0151–0153 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
     expect(runner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(pinkRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(childRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.sqlCalls.filter(c => c.sql === "SET LOCAL search_path TO public, pg_temp")).toHaveLength(151);
     expect(setup.sqlCalls.some(c => c.sql === KEFU_SEQUENCE_ALIGNMENT_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PINK_RECOVERY_INDEX_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === FOREIGN_KEY_CHILD_INDEX_SQL)).toBe(false);
   });
 
   it.each([new Error("already exists"), new Error("sequence drift"), "raw rejection"])(
@@ -97,6 +109,7 @@ describe("embedded 0151 sequence registration", () => {
       expect(runner).toHaveBeenCalledExactlyOnceWith(setup.db);
       expect(setup.transaction).toHaveBeenCalledTimes(151);
       expect(pinkRunner).not.toHaveBeenCalled();
+      expect(childRunner).not.toHaveBeenCalled();
     });
 
   it.each([115, 150])("never dispatches 0151 after modern step %i fails, including an already-exists error", async index => {
@@ -105,6 +118,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.transaction).toHaveBeenCalledTimes(index + 1);
     expect(runner).not.toHaveBeenCalled();
     expect(pinkRunner).not.toHaveBeenCalled();
+    expect(childRunner).not.toHaveBeenCalled();
   });
 
   it.each([new Error("already exists"), new Error("index drift"), "raw rejection"])(
@@ -114,8 +128,20 @@ describe("embedded 0151 sequence registration", () => {
       const result = await setup.service.runAll();
       expect(result.executed).toEqual(names.slice(0, 152));
       expect(result.errors).toEqual([`0152: ${error instanceof Error ? error.message : error}`]);
+      expect(childRunner).not.toHaveBeenCalled();
       expect(runner).toHaveBeenCalledExactlyOnceWith(setup.db);
       expect(pinkRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+      expect(setup.transaction).toHaveBeenCalledTimes(151);
+    });
+
+  it.each([new Error("already exists"), new Error("index drift"), "raw rejection"])(
+    "fails closed at 0153 without retrying or recording success (%s)", async error => {
+      const setup = harness();
+      childRunner.mockRejectedValue(error);
+      const result = await setup.service.runAll();
+      expect(result.executed).toEqual(names.slice(0, 153));
+      expect(result.errors).toEqual([`0153: ${error instanceof Error ? error.message : error}`]);
+      expect(childRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
       expect(setup.transaction).toHaveBeenCalledTimes(151);
     });
 

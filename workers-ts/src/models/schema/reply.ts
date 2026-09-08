@@ -83,6 +83,8 @@ export const storeProductReply = pgTable(
     index("spr_unique").on(t.unique),
     index("spr_uid").on(t.uid),
     index("spr_order_unique").on(t.oid, t.unique, t.isDel),
+    // The active unique index cannot serve FK checks for soft-deleted replies.
+    index("spr_order_cart_info").on(t.orderCartInfoId),
     uniqueIndex("spr_active_cart_uq")
       .on(t.orderCartInfoId)
       .where(sql`${t.orderCartInfoId} IS NOT NULL AND ${t.isDel} = 0`),

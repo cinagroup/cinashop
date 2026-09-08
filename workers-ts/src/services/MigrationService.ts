@@ -48,6 +48,8 @@ import { KEFU_SEQUENCE_ALIGNMENT_SQL } from "@/migrations/kefuSequenceAlignment"
 import { runKefuSequenceAlignment } from "@/migrations/runKefuSequenceAlignment";
 import { PINK_RECOVERY_INDEX_SQL } from "@/migrations/pinkRecoveryIndex";
 import { runPinkRecoveryIndex } from "@/migrations/runPinkRecoveryIndex";
+import { FOREIGN_KEY_CHILD_INDEX_SQL } from "@/migrations/foreignKeyChildIndexes";
+import { runForeignKeyChildIndexes } from "@/migrations/runForeignKeyChildIndexes";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -402,10 +404,16 @@ export class MigrationService {
       this.migration_0150(),
       this.migration_0151(),
       this.migration_0152(),
+      this.migration_0153(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 153) {
+          await runForeignKeyChildIndexes(this.container.db);
+          executed.push("0153");
+          continue;
+        }
         if (i === 152) {
           await runPinkRecoveryIndex(this.container.db);
           executed.push("0152");
@@ -8444,5 +8452,8 @@ $work_member_resolved_rename_fence$;
 
   private migration_0152(): string {
     return PINK_RECOVERY_INDEX_SQL;
+  }
+  private migration_0153(): string {
+    return FOREIGN_KEY_CHILD_INDEX_SQL;
   }
 }
