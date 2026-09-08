@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 import { createPinia } from "pinia";
 import { AxiosError } from "axios";
+import { seckillComponentPlugin, registerSeckillPurchaseTests } from "./seckill-purchase.test.mjs";
 
 // Load the actual PC request layer and Pinia stores with Vite's existing TS/alias support.
 // No HTTP listener, API proxy, external request, new dependency or browser-global mutation in production.
@@ -24,6 +25,7 @@ before(async () => {
   localStorage.setItem("pc_token", "obsolete-persistent-token");
   localStorage.setItem("pc_uid", "99");
   server = await createServer({ configFile: false, root, envFile: false, logLevel: "error",
+    plugins: [seckillComponentPlugin(root)],
     optimizeDeps: { noDiscovery: true, include: [] },
     resolve: { alias: { "@": fileURLToPath(new URL("../src", import.meta.url)) } },
     server: { middlewareMode: true, hmr: false, watch: null } });
@@ -62,6 +64,7 @@ function delayed() {
 }
 
 describe("actual Axios + storage + Pinia auth-session isolation", { concurrency: false }, () => {
+  registerSeckillPurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
   const walletRow = (change = {}) => ({ id: 60, coupon_title: '九折品类券', coupon_price: '90.00', use_min_price: '10.00', coupon_type: 2, applicable_type: 1,
     start_time: null, end_time: null, availability: 'available', availability_message: '可使用', rule: '第一行\n<script>literal only</script>', rule_truncated: true, ...change });
   const counts = { not_used: 3, used: 1, expired: 2, reserved: 1 };

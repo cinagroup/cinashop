@@ -16,17 +16,22 @@
     <!-- 秒杀 -->
     <view v-if="active === 'seckill'" class="body">
       <view class="time-slots">
-        <view
+        <button
           v-for="s in slots"
           :key="s.id"
           class="slot"
-          :class="{ active: s.status === 1 }"
+          :class="{ active: selectedTime === s.id }"
+          :disabled="!s.start_time || !s.end_time"
           @tap="loadSeckill(s.id)"
         >
-          <text class="slot-time">{{ s.start_time }}</text>
+          <text class="slot-time">{{ s.start_time || '—' }} - {{ s.end_time || '—' }}</text>
           <text class="slot-status">{{ s.state }}</text>
-        </view>
+        </button>
       </view>
+      <button size="mini" :disabled="seckillLoading" @tap="loadSeckill()">刷新秒杀时段</button>
+      <view class="notice">时段时间为北京时间，购买资格以结算校验为准。</view>
+      <view v-if="seckillLoading" class="notice">正在加载秒杀商品…</view>
+      <view v-if="seckillError" class="error">{{ seckillError }}<button v-if="selectedTime" size="mini" :disabled="seckillLoading" @tap="loadSeckill(selectedTime, seckillPage)">重试列表</button></view>
       <view v-if="seckillList.length" class="goods-list">
         <view v-for="g in seckillList" :key="g.id" class="goods-item" @tap="goSeckill(g.id)">
           <view class="goods-info">
@@ -38,7 +43,12 @@
           </view>
         </view>
       </view>
-      <view v-else class="empty">当前时段暂无秒杀商品</view>
+      <view v-else-if="!seckillLoading && !seckillError" class="empty">{{ slots.length ? '当前时段暂无秒杀商品' : '暂无秒杀时段' }}</view>
+      <view v-if="selectedTime" class="pagination">
+        <button size="mini" :disabled="seckillLoading || seckillPage <= 1" @tap="loadSeckill(selectedTime, seckillPage - 1)">上一页</button>
+        <text>第 {{ seckillPage }} 页</text>
+        <button size="mini" :disabled="seckillLoading || !!seckillError || seckillList.length < 20" @tap="loadSeckill(selectedTime, seckillPage + 1)">下一页</button>
+      </view>
     </view>
 
     <!-- 砍价 -->
@@ -88,16 +98,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
+import { onShow, onHide, onUnload } from '@dcloudio/uni-app';
+import { apiSeckillCatalogIndex, apiSeckillCatalogPage } from '@/api/seckill';
+import type { SeckillSlot, SeckillItem } from '../../../../common/seckillPurchase';
 import {
-  apiSeckillIndex,
-  apiSeckillList,
   apiBargainList,
   apiCombinationList,
   type BargainListItem,
   type CombinationListItem,
-  type SeckillListItem,
-  type SeckillTimeItem,
 } from "@/api/activity";
 
 const tabs = [
@@ -107,24 +116,32 @@ const tabs = [
   { key: "lottery", name: "抽奖" },
 ];
 const active = ref("seckill");
-const slots = ref<SeckillTimeItem[]>([]);
-const seckillList = ref<SeckillListItem[]>([]);
+const slots = ref<SeckillSlot[]>([]);
+const seckillList = ref<SeckillItem[]>([]);
+const selectedTime = ref(0), seckillPage = ref(1), seckillLoading = ref(false), seckillError = ref('');
+let visible = false, seckillRevision = 0;
 const bargainList = ref<BargainListItem[]>([]);
 const combinationList = ref<CombinationListItem[]>([]);
 
-async function loadSeckill(time?: string | number) {
+async function loadSeckill(time?: number, page = 1) {
+  if (!visible || active.value !== 'seckill') return;
+  const current = ++seckillRevision;
+  seckillLoading.value = true; seckillError.value = ''; seckillList.value = []; seckillPage.value = page;
+  if (!time) { slots.value = []; selectedTime.value = 0; }
+  else selectedTime.value = time;
   try {
-    if (time) {
-      seckillList.value = await apiSeckillList(time);
-    } else {
-      const idx = await apiSeckillIndex();
+    if (!time) {
+      const idx = await apiSeckillCatalogIndex();
+      if (current !== seckillRevision || !visible) return;
       slots.value = idx.seckillTime;
-      const act = idx.seckillTime[idx.seckillTimeIndex];
-      if (act) seckillList.value = await apiSeckillList(act.id);
+      const act = idx.seckillTime[idx.seckillTimeIndex] ?? idx.seckillTime.find(slot => slot.start_time && slot.end_time);
+      if (!act) return;
+      time = act.id; selectedTime.value = time;
     }
-  } catch {
-    seckillList.value = [];
-  }
+    const list = await apiSeckillCatalogPage(time, page);
+    if (current === seckillRevision && visible) seckillList.value = list;
+  } catch (e) { if (current === seckillRevision && visible) seckillError.value = e instanceof Error ? e.message : '秒杀列表加载失败'; }
+  finally { if (current === seckillRevision && visible) seckillLoading.value = false; }
 }
 
 async function loadBargain() {
@@ -144,6 +161,7 @@ async function loadCombination() {
 }
 
 function switchTab(key: string) {
+  seckillRevision++; seckillList.value = []; seckillLoading.value = false;
   active.value = key;
   if (key === "seckill") loadSeckill();
   if (key === "bargain") loadBargain();
@@ -151,6 +169,7 @@ function switchTab(key: string) {
 }
 
 function goSeckill(id: number) {
+  if (!visible || active.value !== 'seckill' || seckillLoading.value || !seckillList.value.some(item => item.id === id)) return;
   uni.navigateTo({ url: `/pages/activity/seckillDetail?id=${id}` });
 }
 
@@ -170,9 +189,9 @@ function goLottery() {
   uni.navigateTo({ url: "/pages/activity/lottery" });
 }
 
-onMounted(() => {
-  loadSeckill();
-});
+onShow(() => { visible = true; if (active.value === 'seckill') void loadSeckill(); });
+function suspendSeckill() { visible = false; seckillRevision++; seckillList.value = []; seckillLoading.value = false; }
+onHide(suspendSeckill); onUnload(suspendSeckill);
 </script>
 
 <style scoped>
@@ -305,6 +324,9 @@ onMounted(() => {
   margin-top: 20rpx;
   padding: 20rpx;
 }
+.notice { margin: 18rpx 0; font-size: 24rpx; color: #666; line-height: 1.6; }
+.error { color: #a72823; margin: 20rpx 0; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16rpx; padding: 20rpx 0; font-size: 24rpx; }
 
 .lottery-entry {
   min-height: 300rpx;

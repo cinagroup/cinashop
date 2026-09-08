@@ -1,218 +1,59 @@
 <template>
   <view class="seckill-detail">
-    <view v-if="info">
-      <!-- 商品图 -->
-      <image class="goods-img" :src="info.image || placeholder" mode="aspectFill" />
-
-      <!-- 价格区 -->
-      <view class="price-section">
-        <view class="price-row">
-          <text class="price">¥{{ info.price }}</text>
-          <text class="ot-price">¥{{ info.otPrice }}</text>
-          <text class="limit-tag">限购 {{ info.num }} 件</text>
-        </view>
-        <view class="meta-row">
-          <text>已抢 {{ info.sales }}</text>
-          <text v-if="info.quotaShow > 0">剩余 {{ info.quota }}</text>
-        </view>
-        <!-- 库存进度 -->
-        <view class="progress-wrap" v-if="info.quotaShow > 0">
-          <view class="progress-bar">
-            <view class="progress-fill" :style="{ width: progressPercent + '%' }" />
-          </view>
-        </view>
-      </view>
-
-      <!-- 商品信息 -->
+    <view v-if="loading" class="notice">正在加载活动规格…</view>
+    <view v-if="error" class="error">{{ error }}</view>
+    <button v-if="!prepared" size="mini" :disabled="loading || locked" @tap="load">刷新活动与规格</button>
+    <view v-if="detail" class="product">
+      <image class="goods-img" :src="selectedSku?.image || detail.image || placeholder" mode="aspectFit" />
       <view class="info-section">
-        <view class="goods-name">{{ info.storeName }}</view>
-      </view>
-
-      <!-- 底部操作栏 -->
-      <view class="action-bar">
-        <view class="action-btn" @tap="goDetail">
-          <text class="action-icon">🔍</text>
-          <text class="action-text">查看详情</text>
+        <view class="goods-name">{{ detail.title }}</view>
+        <view class="notice">{{ open ? detail.schedule.message : detail.schedule.state === 'active' ? '当前场次已变化，请刷新活动' : detail.schedule.message }}</view>
+        <view class="notice">北京时间 · 每单限购 {{ detail.once_limit }} 件 · 累计限购 {{ detail.total_limit }} 件</view>
+        <view class="section-title">选择活动规格</view>
+        <button v-for="sku in detail.skus" :key="sku.unique" class="sku" :class="{ selected: selected === sku.unique }"
+          :disabled="locked || loading || sku.max_quantity < 1" @tap="choose(sku.unique)">
+          {{ sku.suk || '默认规格' }} · ¥{{ sku.catalog_price }}{{ sku.max_quantity < 1 ? ' · 已售罄' : '' }}
+        </button>
+        <view v-if="!detail.skus.length" class="notice">暂无可购买规格</view>
+        <view v-if="selectedSku" class="price">活动参考价 ¥{{ selectedSku.catalog_price }}</view>
+        <view class="quantity-row">
+          <text>购买数量</text>
+          <input :value="quantity" type="number" :disabled="locked || loading" @input="setQuantity" aria-label="购买数量" />
         </view>
-        <view class="buy-btn" @tap="buyNow">立即抢购 ¥{{ info.price }}</view>
+        <view class="notice">库存和限购余量尚未预留，最终金额及购买资格由服务端重新校验。</view>
       </view>
     </view>
-    <view v-else class="empty">秒杀商品不存在或已结束</view>
-    <ActivityPurchase :visible="purchaseVisible" :product-id="Number(info?.productId || 0)" :activity-id="seckillId" :type="1" @close="purchaseVisible = false" @purchased="checkout" />
+    <view class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '立即抢购' }}</button></view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { onLoad } from "@dcloudio/uni-app";
-import { http } from "@/utils/request";
-import ActivityPurchase from "@/components/ActivityPurchase.vue";
-import { useAuthStore } from "@/stores/auth";
-
-const info = ref<any>(null);
-const authStore = useAuthStore();
-const seckillId = ref(0);
-const purchaseVisible = ref(false);
-const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
-
-const progressPercent = computed(() => {
-  if (!info.value || info.value.quotaShow <= 0) return 0;
-  return Math.min(
-    100,
-    Math.round(((info.value.quotaShow - info.value.quota) / info.value.quotaShow) * 100),
-  );
-});
-
-async function load(id: number) {
-  try {
-    info.value = await http.get<any>(`/seckill/detail/${id}`);
-  } catch {
-    info.value = null;
-  }
+import { useSeckillPurchase } from '@/composables/useSeckillPurchase';
+const { detail, selected, quantity, selectedSku, loading, buying, navigating, error, open, locked, canBuy, prepared, choose, load, purchase } = useSeckillPurchase();
+const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
+function setQuantity(event: unknown) {
+  const payload = event as { detail?: { value?: unknown }; target?: { value?: unknown } };
+  const value = payload.detail?.value ?? payload.target?.value;
+  const raw = typeof value === 'string' ? value : '';
+  quantity.value = /^[1-9]\d{0,4}$/.test(raw) ? Number(raw) : raw;
 }
-
-function goDetail() {
-  if (!info.value) return;
-  uni.navigateTo({ url: `/pages/goods/detail?id=${info.value.productId}` });
-}
-
-async function buyNow() {
-  if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
-  if (!info.value) return;
-  purchaseVisible.value = true;
-}
-function checkout(id: number) { purchaseVisible.value = false; uni.navigateTo({ url: `/pages/order/confirm?mode=buy&cartId=${id}&type=1&seckillId=${seckillId.value}` }); }
-
-onLoad((options) => {
-  const id = Number(options?.id ?? 0);
-  if (id) {
-    seckillId.value = id;
-    load(id);
-  }
-});
 </script>
 
 <style scoped>
-.seckill-detail {
-  padding-bottom: 140rpx;
-}
-
-.goods-img {
-  width: 100%;
-  height: 600rpx;
-  background: #f5f5f5;
-}
-
-.price-section {
-  background: #fff;
-  padding: 24rpx;
-}
-
-.price-row {
-  display: flex;
-  align-items: baseline;
-  gap: 16rpx;
-}
-
-.price {
-  color: #e93323;
-  font-size: 44rpx;
-  font-weight: 700;
-}
-
-.ot-price {
-  color: #999;
-  text-decoration: line-through;
-  font-size: 26rpx;
-}
-
-.limit-tag {
-  background: #fff5f4;
-  color: #e93323;
-  font-size: 22rpx;
-  border-radius: 6rpx;
-  padding: 4rpx 12rpx;
-}
-
-.meta-row {
-  display: flex;
-  gap: 40rpx;
-  color: #999;
-  font-size: 24rpx;
-  margin-top: 12rpx;
-}
-
-.progress-wrap {
-  margin-top: 16rpx;
-}
-
-.progress-bar {
-  height: 14rpx;
-  background: #ffe9e5;
-  border-radius: 8rpx;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #ff9a45, #e93323);
-  border-radius: 8rpx;
-}
-
-.info-section {
-  background: #fff;
-  padding: 24rpx;
-  margin-top: 20rpx;
-}
-
-.goods-name {
-  font-size: 32rpx;
-  font-weight: 600;
-}
-
-.action-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  padding: 16rpx 20rpx;
-  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.action-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 20rpx;
-}
-
-.action-icon {
-  font-size: 40rpx;
-}
-
-.action-text {
-  font-size: 20rpx;
-  color: #555;
-}
-
-.buy-btn {
-  flex: 1;
-  background: linear-gradient(90deg, #ff9a45, #e93323);
-  color: #fff;
-  text-align: center;
-  padding: 22rpx;
-  border-radius: 44rpx;
-  font-size: 30rpx;
-}
-
-.empty {
-  text-align: center;
-  color: #999;
-  padding: 100rpx 0;
-  font-size: 26rpx;
-}
+.seckill-detail { padding: 24rpx 24rpx calc(150rpx + env(safe-area-inset-bottom)); }
+.product { margin-top: 24rpx; background: white; border-radius: 16rpx; overflow: hidden; }
+.goods-img { width: 100%; height: 520rpx; background: #f5f5f5; }
+.info-section { padding: 24rpx; }
+.goods-name { font-size: 34rpx; font-weight: 600; overflow-wrap: anywhere; }
+.notice { margin: 18rpx 0; font-size: 25rpx; color: #666; line-height: 1.6; }
+.error { padding: 20rpx; color: #a72823; background: #fff0ed; margin-bottom: 20rpx; }
+.section-title { margin-top: 24rpx; font-size: 28rpx; }
+.sku { margin-top: 16rpx; font-size: 26rpx; }
+.sku.selected { color: #ad261d; border: 2rpx solid #e93323; }
+.price { color: #b72a1d; margin: 24rpx 0; font-size: 34rpx; }
+.quantity-row { display: flex; gap: 20rpx; align-items: center; font-size: 28rpx; }
+.quantity-row input { width: 140rpx; padding: 12rpx; border: 1rpx solid #aaa; }
+.action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)); background: white; box-shadow: 0 -2rpx 10rpx #0001; }
+.buy-btn { background: #e93323; color: white; font-size: 30rpx; }
+.buy-btn[disabled] { background: #eee; color: #777; }
 </style>

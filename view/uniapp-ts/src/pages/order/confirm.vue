@@ -98,6 +98,8 @@
 <script setup lang="ts">
 import SystemFormFields from "@/components/SystemFormFields.vue";
 import { useCheckout } from "@/composables/useCheckout";
+// Route parameters are validated by useCheckout.onLoad, not DOM attributes.
+defineOptions({ inheritAttrs: false });
 const { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
   customForm, formName, formRevision, formValidation, uploads, activity, useIntegral, quote, ready, deliveryError, refreshQuote,
   coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit } = useCheckout();

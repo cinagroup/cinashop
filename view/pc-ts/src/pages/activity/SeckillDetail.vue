@@ -34,7 +34,7 @@ import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiSeckillSelection } from '@/api/activity';
 import { apiCartAdd } from '@/api/cart';
-import { captureAuthSession, isCurrentAuthSession, isLoggedIn, onAuthChange } from '@/utils/auth';
+import { captureAuthSession, isCurrentAuthSession, onAuthChange } from '@/utils/auth';
 import { seckillCartInput, seckillId, seckillOpen, type SeckillSelection } from '../../../../common/seckillPurchase';
 
 const route = useRoute(), router = useRouter();
@@ -72,20 +72,27 @@ async function load() {
 }
 async function buy() {
   if (!canBuy.value || !detail.value) return;
-  if (!isLoggedIn()) {
-    const redirect = router.resolve({ path: route.path, query: { sku: selected.value, quantity: String(quantity.value) } }).fullPath;
-    await router.push({ path: '/login', query: { redirect } }); return;
-  }
   const current = revision, session = captureAuthSession();
+  const selection = detail.value, key = selected.value, count = Number(quantity.value), startingPath = route.fullPath;
+  const redirect = router.resolve({ path: route.path, query: { ...route.query, sku: key, quantity: String(count) }, hash: route.hash }).fullPath;
   buying.value = true; error.value = '';
   try {
-    const input = seckillCartInput(detail.value, selected.value, Number(quantity.value));
+    // The request layer returns to window.location if an existing token expires.
+    // Persist this validated intent before either login or a write, not just for anonymous buyers.
+    seckillCartInput(selection, key, count);
+    if (route.fullPath !== redirect && await router.replace(redirect)) return;
+    if (disposed || current !== revision || route.fullPath !== redirect || !isCurrentAuthSession(session)) return;
+    if (!session.token) {
+      await router.push({ path: '/login', query: { redirect } }); return;
+    }
+    // A navigation guard may have waited across the end of the activity window.
+    const input = seckillCartInput(selection, key, count);
     const cart = await apiCartAdd(input);
-    if (disposed || current !== revision || !isCurrentAuthSession(session)) return;
+    if (disposed || current !== revision || route.fullPath !== redirect || !isCurrentAuthSession(session)) return;
     if (!Number.isSafeInteger(cart.id) || cart.id < 1) throw new Error('购买记录响应无效，请刷新活动');
     await router.push({ path: '/checkout', query: { mode: 'buy', cartId: String(cart.id), type: '1', seckillId: String(input.activityId) } });
   } catch (e) {
-    if (!disposed && current === revision) {
+    if (!disposed && current === revision && (route.fullPath === startingPath || route.fullPath === redirect) && isCurrentAuthSession(session)) {
       // Never silently switch SKUs/prices or automatically retry a write.
       detail.value = null; selected.value = '';
       error.value = (e as Error).message || '购买失败，请刷新活动重新确认';
