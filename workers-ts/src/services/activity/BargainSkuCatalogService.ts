@@ -1,6 +1,7 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { createContainerFromDb, withTx, type Container } from "@/lib/di";
-import { storeBargain, storeBargainUser, storeProduct, storeProductAttrValue } from "@/models/schema";
+import { storeBargain, storeProduct, storeProductAttrValue } from "@/models/schema";
+import { findBargainParticipation } from "./BargainParticipationSelection";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { centsToDecimal } from "@/services/order/OrderBrokerageService";
 
@@ -122,17 +123,9 @@ export class BargainSkuCatalogService {
 
   private async participation(uid: number, bargainId: number, requestedId: number, activityPrice: string) {
     if (!uid) return null;
-    const fields = { id: storeBargainUser.id, status: storeBargainUser.status, original: storeBargainUser.bargainPrice,
-      minimum: storeBargainUser.bargainPriceMin, cut: storeBargainUser.price };
-    const scope = and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.bargainId, bargainId), eq(storeBargainUser.isDel, 0));
-    // Cart currently resolves the owner's live participation by activity. Do not
-    // silently choose a different record when the dataset makes that ambiguous.
-    const active = await this.container.db.select(fields).from(storeBargainUser)
-      .where(and(scope, inArray(storeBargainUser.status, [1, 3])))
-      .orderBy(desc(storeBargainUser.id)).limit(2);
-    if (active.length > 1) throw new ValidateException("砍价有效记录不唯一，请先核对参与记录");
-    const record = requestedId ? (await this.container.db.select(fields).from(storeBargainUser)
-      .where(and(scope, eq(storeBargainUser.id, requestedId))).limit(1))[0] : active[0];
+    const participant = await findBargainParticipation(this.container.db, uid, bargainId, requestedId || undefined);
+    const record = participant ? { id: participant.id, status: participant.status, original: participant.bargainPrice,
+      minimum: participant.bargainPriceMin, cut: participant.price } : null;
     if (!record) {
       if (requestedId) throw new NotFoundException("指定砍价记录不存在或不属于当前用户及活动");
       return null;

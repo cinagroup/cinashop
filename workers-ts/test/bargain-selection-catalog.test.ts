@@ -57,9 +57,11 @@ describe("bounded bargain selection catalogue, actual controller and isolated SQ
     await f.db.update(storeBargainUser).set({ isDel: 0 }).where(eq(storeBargainUser.id, 80));
     expect(await f.snapshot()).toEqual(before);
   });
-  it("rejects ambiguous live participation even if a requested ID could hide the conflict", async () => {
+  it("rejects implicit ambiguity but allows an exact owned participation without hiding other states", async () => {
     await f.db.update(storeBargainUser).set({ status: 1 }).where(eq(storeBargainUser.id, 82));
-    await expect(read()).rejects.toThrow(/不唯一/); await expect(read(11, "80")).rejects.toThrow(/不唯一/);
+    await expect(read()).rejects.toThrow(/不唯一/);
+    expect(await read(11, "80")).toMatchObject({ can_select: true, participation: { id: 80, state: "ready" } });
+    expect(await read(11, "82")).toMatchObject({ can_select: false, participation: { id: 82, state: "cutting" } });
     expect((await read(0)).participation).toBeNull();
   });
   it("does not silently restart or expose consumed participation when no live record exists", async () => {

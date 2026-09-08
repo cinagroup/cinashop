@@ -104,6 +104,7 @@ import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/
 import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
+import { cartBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -136,6 +137,8 @@ export interface CreateOrderParams {
   seckillId?: number;
   /** 砍价: 砍价记录 ID (store_bargain_user) */
   bargainUserId?: number;
+  /** Legacy activity alias; must match cart.activityId and cannot select a participation. */
+  bargainId?: number;
   /** 优惠券: 用户优惠券 ID (store_coupon_user) */
   couponId?: number;
   /** 系统自定义表单组件和值；表单 ID 始终由商品/活动记录决定。 */
@@ -921,6 +924,9 @@ export class StoreOrderCreateService {
     // 2. 预加载商品 + SKU + 计算总价 (整数分, 避免浮点误差)
     //    活动单 (秒杀/砍价/拼团) 用活动价替换 SKU 价
     const type = params.type ?? 0;
+    if (type !== 2 && [params.bargainUserId, params.bargainId].some(value => value !== undefined && value !== 0)) {
+      throw new ValidateException("非砍价订单不能选择砍价记录");
+    }
     if (uid === 0 && type !== 0) throw new ValidateException("游客仅支持普通商品代客下单");
     if (carts.some((cart) => cart.type !== type)) {
       throw new ValidateException("购物车活动类型与订单类型不匹配");
@@ -941,9 +947,6 @@ export class StoreOrderCreateService {
       const schedule = await loadSeckillSchedule(c.db, params.seckillId!);
       assertSeckillSchedule(schedule);
       if (schedule.child.productId !== carts[0]?.productId) throw new ValidateException("秒杀商品不匹配");
-    }
-    if (type === 2 && (!Number.isSafeInteger(params.bargainUserId) || (params.bargainUserId ?? 0) <= 0)) {
-      throw new ValidateException("缺少砍价记录");
     }
     if (
       type === 3 &&
@@ -1117,24 +1120,8 @@ export class StoreOrderCreateService {
         activityPostage = seckill[0].postage;
         activityTempId = seckill[0].tempId;
         activityGiveIntegral = seckill[0].giveIntegral;
-      } else if (type === 2 && params.bargainUserId) {
-        const candidates = await c.db
-          .select()
-          .from(storeBargainUser)
-          .where(and(
-            eq(storeBargainUser.uid, uid),
-            eq(storeBargainUser.isDel, 0),
-            inArray(storeBargainUser.status, [1, 3]),
-            or(
-              eq(storeBargainUser.id, params.bargainUserId),
-              eq(storeBargainUser.bargainId, params.bargainUserId),
-            ),
-          ))
-          .orderBy(desc(storeBargainUser.id))
-          .limit(3);
-        const matching = candidates.filter((candidate) => candidate.bargainId === cart.activityId);
-        if (matching.length !== 1) throw new ValidateException("砍价记录不存在或不唯一");
-        const participant = matching[0];
+      } else if (type === 2) {
+        const participant = await cartBargainParticipation(c.db, uid, cart, params);
         if (!isBargainParticipationReady(participant)) throw new ValidateException("还未砍到最低价或砍价金额异常, 请刷新后重试");
         bargainParticipantId = participant.id;
         bargainParticipantQuote = { bargainPrice: participant.bargainPrice, bargainPriceMin: participant.bargainPriceMin, price: participant.price };
@@ -2053,7 +2040,7 @@ export class StoreOrderCreateService {
           .returning({ id: storeSeckill.id });
         if (!sk.length) throw new ValidateException("秒杀库存不足、排期或计价规则已变化，请刷新后重试");
         await reserveLegacyActivitySku(1, params.seckillId, "秒杀");
-      } else if (type === 2 && params.bargainUserId) {
+      } else if (type === 2) {
         if (!bargainParticipantQuote) throw new ValidateException("砍价参与报价缺失");
         // 砍价: 扣活动库存 + 标记记录已购买 (status=4)
         const bargain = await tx

@@ -3,11 +3,13 @@
  *
  * 对应 PHP app/services/order/StoreCartServices.php (核心方法: addCart/getCartList/setCartNum/delCart)
  */
-import { withTx, type Container, type DbClient } from "@/lib/di";
+import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { setSeckillCartQuantity } from "@/services/activity/SeckillCartQuantityService";
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
+import { cartBargainParticipation, findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
+import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
@@ -32,7 +34,6 @@ import {
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import {
   storeBargain,
-  storeBargainUser,
   storeCart,
   storeCombination,
   storeDiscounts,
@@ -45,6 +46,18 @@ import {
 } from "@/models/schema";
 
 const CART_ADVISORY_LOCK_NAMESPACE = 1128354388;
+
+interface CartAddParams {
+  uid: number;
+  productId: number;
+  unique: string;
+  cartNum: number;
+  type?: number;
+  isNew?: number;
+  activityId?: number;
+  /** Exact owned participation ID; omitted only for a sole live record. */
+  bargainUserId?: number;
+}
 
 /** Explicit scopes let migrated clients isolate checkout rows without changing
  * the unscoped legacy endpoint used by other clients during migration. */
@@ -154,19 +167,29 @@ export class StoreCartService {
    *   2. 校验 SKU unique 存在 + 库存 >= 数量
    *   3. 已存在同 SKU → 合并数量; 否则新建
    */
-  async add(params: {
-    uid: number;
-    productId: number;
-    unique: string; // SKU unique
-    cartNum: number;
-    type?: number; // 0普通 1秒杀...
-    isNew?: number; // 立即购买
-    activityId?: number;
-  }): Promise<{ id: number; cartNum: number }> {
+  async add(params: CartAddParams): Promise<{ id: number; cartNum: number }> {
+    if ((params.type ?? 0) !== 2) {
+      if (params.bargainUserId !== undefined) throw new ValidateException("非砍价购物车不能选择砍价记录");
+      return this.addResolved(params);
+    }
+    if (!Number.isSafeInteger(params.uid) || params.uid <= 0 || params.uid > 2_147_483_647) throw new ValidateException("请先登录");
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+      await tx.execute(sql.raw(`SELECT
+        pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true),
+        pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+      await lockCartUser(tx, params.uid);
+      return new StoreCartService(createContainerFromDb(tx), this.env).addResolved(params);
+    });
+  }
+
+  private async addResolved(params: CartAddParams): Promise<{ id: number; cartNum: number }> {
     const { uid, cartNum } = params;
     const type = params.type ?? 0;
     const isNew = params.isNew ?? 0;
     const activityId = params.activityId ?? 0;
+    let bargainUserId = 0;
     let productId = params.productId;
     let unique = params.unique;
 
@@ -255,29 +278,13 @@ export class StoreCartService {
         activityStop = activity.stopTime;
         legacyActivityStock = activity.stock;
         legacyActivityQuota = activity.quota;
-        const participants = await this.container.db
-          .select({
-            status: storeBargainUser.status,
-            bargainPrice: storeBargainUser.bargainPrice,
-            bargainPriceMin: storeBargainUser.bargainPriceMin,
-            price: storeBargainUser.price,
-          })
-          .from(storeBargainUser)
-          .where(and(
-            eq(storeBargainUser.uid, uid),
-            eq(storeBargainUser.bargainId, activityId),
-            eq(storeBargainUser.isDel, 0),
-            inArray(storeBargainUser.status, [1, 3]),
-          ))
-          .orderBy(desc(storeBargainUser.id))
-          .limit(2);
-        if (participants.length > 1) throw new ValidateException("砍价有效记录不唯一，请先核对参与记录");
-        const participant = participants[0];
+        const participant = await findBargainParticipation(this.container.db, uid, activityId, params.bargainUserId);
         if (
           !participant || !isBargainParticipationReady(participant)
         ) {
           throw new ValidateException("砍价未成功");
         }
+        bargainUserId = participant.id;
       } else {
         const rows = await this.container.db.select().from(storeCombination)
           .where(eq(storeCombination.id, activityId)).limit(1);
@@ -379,6 +386,7 @@ export class StoreCartService {
       unique,
       type,
       activityId,
+      bargainUserId,
     );
     if (existing) {
       const newNum = existing.cartNum + cartNum;
@@ -389,7 +397,13 @@ export class StoreCartService {
       } else if (newNum > sku.stock) {
         throw new ValidateException("加入购物车数量超过库存");
       }
-      await this.container.storeCartDao.update(existing.id, { cartNum: newNum });
+      if (type === 2) {
+        const updated = await this.container.db.update(storeCart).set({ cartNum: newNum }).where(and(
+          activityCartQuoteGuard(existing), eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ""),
+          eq(storeCart.storeId, 0), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1),
+        )).returning({ id: storeCart.id });
+        if (!updated.length) throw new ValidateException("砍价购物车已变化或被占用，请刷新后重试");
+      } else await this.container.storeCartDao.update(existing.id, { cartNum: newNum });
       return { id: existing.id, cartNum: newNum };
     }
 
@@ -399,6 +413,7 @@ export class StoreCartService {
       productId,
       productType: product.productType,
       activityId,
+      bargainUserId,
       productAttrUnique: unique,
       cartNum,
       addTime: Math.floor(Date.now() / 1000),
@@ -501,20 +516,14 @@ export class StoreCartService {
             activityStock = activity.stock;
             activityQuota = activity.quota;
           } else if (cart.type === 2) {
-            const [activities, participants] = await Promise.all([
+            const [activities, participant] = await Promise.all([
               this.container.db.select().from(storeBargain)
                 .where(eq(storeBargain.id, cart.activityId)).limit(1),
-              this.container.db.select().from(storeBargainUser).where(and(
-                eq(storeBargainUser.uid, uid),
-                eq(storeBargainUser.bargainId, cart.activityId),
-                eq(storeBargainUser.isDel, 0),
-                inArray(storeBargainUser.status, [1, 3]),
-              )).orderBy(desc(storeBargainUser.id)).limit(2),
+              cartBargainParticipation(this.container.db, uid, cart),
             ]);
             const activity = activities[0];
-            const participant = participants[0];
             if (
-              !activity || !participant || participants.length !== 1 || activity.productId !== product.id ||
+              !activity || activity.productId !== product.id ||
               activity.status !== 1 || activity.isDel !== 0 ||
               (activity.startTime !== null && activity.startTime.getTime() > now) ||
               (activity.stopTime !== null && activity.stopTime.getTime() < now) ||
@@ -649,6 +658,7 @@ export class StoreCartService {
         cartNum: cart.cartNum,
         type: cart.type,
         activityId: cart.activityId,
+        bargainUserId: cart.bargainUserId,
         unique: cart.productAttrUnique,
         isNew: cart.isNew,
         isValid: true,

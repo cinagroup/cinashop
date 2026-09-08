@@ -52,16 +52,16 @@ describe("bargain participation state consistency on isolated SQL", () => {
     expect(after.participations.filter(row => row.id !== created.id)).toEqual(before.participations);
     expect({ ...after, participations: before.participations, sequences: before.sequences }).toEqual(before);
   });
-  it("refuses duplicates in start, catalog, add and cart display even when only one fits the list page", async () => {
+  it("rejects implicit duplicates while preserving an existing binding and exact paginated selection", async () => {
     const added = await add();
     await f.db.update(storeBargainUser).set({ status: 3, price: "8.00" }).where(eq(storeBargainUser.id, 82));
     const before = await f.snapshot();
     await expect(join().startBargain(11, 40)).rejects.toThrow(/不唯一/);
-    await expect(new BargainSkuCatalogService(f.container).read(11, "40", "80")).rejects.toThrow(/不唯一/);
+    expect(await new BargainSkuCatalogService(f.container).read(11, "40", "80")).toMatchObject({ can_select: true, participation: { id: 80 } });
     await expect(add()).rejects.toThrow(/不唯一/);
-    await expect(cart().list(11, { mode: "buy", ids: [added.id] })).rejects.toThrow(/失效/);
-    expect(await cart().list(11)).toMatchObject([{ id: added.id, isValid: false }]);
-    expect((await join().myBargains(11, 3, 1))[0]).toMatchObject({ id: 80, pay_status: false });
+    expect(await cart().list(11, { mode: "buy", ids: [added.id] })).toMatchObject([{ id: added.id, bargainUserId: 80, isValid: true }]);
+    expect(await cart().list(11)).toMatchObject([{ id: added.id, isValid: true }]);
+    expect((await join().myBargains(11, 3, 1))[0]).toMatchObject({ id: 80, pay_status: true });
     expect(await f.snapshot()).toEqual(before);
   });
   it.each([

@@ -782,7 +782,6 @@ export class ActivityJoinService {
         startTime: storeBargain.startTime,
         activityStatus: storeBargain.status,
         activityIsDel: storeBargain.isDel,
-        liveCount: sql<string>`COUNT(*) FILTER (WHERE ${storeBargainUser.status} IN (1,3)) OVER (PARTITION BY ${storeBargainUser.bargainId})`,
       })
       .from(storeBargainUser)
       .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))
@@ -791,7 +790,7 @@ export class ActivityJoinService {
       .limit(safeLimit)
       .offset((safePage - 1) * safeLimit);
     const now = Date.now();
-    return rows.map(({ stopTime, startTime, activityStatus, activityIsDel, liveCount, ...row }) => {
+    return rows.map(({ stopTime, startTime, activityStatus, activityIsDel, ...row }) => {
       const residueCents = Math.max(0, decimalToCents(row.bargain_price) - decimalToCents(row.price));
       const effectiveStatus = [1, 3].includes(row.status) && stopTime && stopTime.getTime() < now ? 2 : row.status;
       const activityAvailable = activityStatus === 1 && activityIsDel === 0
@@ -800,7 +799,9 @@ export class ActivityJoinService {
         ...row,
         status: effectiveStatus,
         residue_price: centsToDecimal(residueCents),
-        pay_status: activityAvailable && Number(liveCount) === 1 && isBargainParticipationReady({ status: effectiveStatus,
+        // This exact row can be selected by ID; another participation does not
+        // invalidate it. Implicit cart/start selection still rejects ambiguity.
+        pay_status: activityAvailable && isBargainParticipationReady({ status: effectiveStatus,
           bargainPrice: row.bargain_price, bargainPriceMin: row.bargain_price_min, price: row.price }),
       };
     });

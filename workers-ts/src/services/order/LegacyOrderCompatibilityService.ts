@@ -36,6 +36,7 @@ export interface LegacyCheckoutPreviewOptions {
   type?: number;
   seckillId?: number;
   bargainUserId?: number;
+  bargainId?: number;
   pinkId?: number;
   combinationId?: number;
 }
@@ -125,6 +126,7 @@ function legacyCartRow(item: Record<string, unknown>): Record<string, unknown> {
     product_id: Number(item.productId ?? 0),
     cart_num: Number(item.cartNum ?? 0),
     activity_id: Number(item.activityId ?? 0),
+    bargain_user_id: Number(item.bargainUserId ?? 0),
     truePrice: price,
     productInfo: {
       ...product,
@@ -325,6 +327,7 @@ export class LegacyOrderCompatibilityService {
       type,
       seckillId: options.seckillId ?? (type === 1 ? firstCart.activityId : undefined),
       bargainUserId: options.bargainUserId,
+      bargainId: options.bargainId,
       pinkId: options.pinkId,
       combinationId: options.combinationId ?? (type === 3 ? firstCart.activityId : undefined),
     });

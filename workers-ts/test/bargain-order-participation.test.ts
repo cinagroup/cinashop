@@ -153,6 +153,7 @@ describe("actual bargain create/cancel on isolated SQL (no payment/provider)", (
     { productAttrUnique: "qablue01" }, { productType: 1 }, { activityId: 41 },
     { type: 0 }, { isNew: 0 }, { uid: 22 }, { staffId: 1 }, { touristUid: "another-session" },
     { isPay: 1 }, { isDel: 1 }, { status: 0 },
+    { bargainUserId: 90 },
   ])("refuses cart changes after quote %j without consuming inventory or participation", async values => {
     let before: Awaited<ReturnType<typeof snapshot>>;
     await expect(create(params, async () => {
@@ -184,7 +185,7 @@ describe("actual bargain create/cancel on isolated SQL (no payment/provider)", (
 
   it("does not reject non-quote metadata changes and keeps legacy activity/SKU aliases cancellable", async () => {
     await f.db.update(storeCart).set({ productAttrUnique: "actred40" }).where(eq(storeCart.id, 10));
-    await create({ ...params, bargainUserId: 40 }, async () => {
+    await create({ ...params, bargainUserId: undefined, bargainId: 40 }, async () => {
       await f.db.update(storeCart).set({ addTime: 123 }).where(eq(storeCart.id, 10));
     });
     const created = await snapshot();

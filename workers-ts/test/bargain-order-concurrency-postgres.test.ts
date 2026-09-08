@@ -60,6 +60,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
     { label: "activity", values: { activityId: 41 } },
     { label: "cart type", values: { type: 0 } },
     { label: "cart mode", values: { isNew: 0 } },
+    { label: "participation binding", values: { bargainUserId: 90 } },
   ];
   it.each(cartEdits)("re-evaluates $label after an observed cart row wait and refuses the stale quote", async ({ values }) => {
     const before = await snapshot();

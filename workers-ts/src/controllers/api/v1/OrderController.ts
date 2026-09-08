@@ -7,6 +7,7 @@ import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { ApiException, ValidateException } from "@/utils/errors";
 import { StoreCartService } from "@/services/order/StoreCartService";
+import { parseBargainSelection } from "@/services/activity/BargainParticipationSelection";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { OrderFormRejectedException } from "@/services/order/OrderSystemFormService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
@@ -90,6 +91,9 @@ export async function cartAdd(c: C) {
       seckillId?: number;
       seckill_id?: number;
       bargainId?: number;
+      bargain_id?: number;
+      bargainUserId?: number;
+      bargain_user_id?: number;
       combinationId?: number;
       storeIntegralId?: number;
       newcomerId?: number;
@@ -99,9 +103,11 @@ export async function cartAdd(c: C) {
       discount_infos?: unknown[];
     };
     const svc = new StoreCartService(c.get("container"), c.env);
+    const bargainSelection = parseBargainSelection(body);
     const discountId = Number(body.discountId ?? body.discount_id ?? 0);
     const discountInfos = body.discountInfos ?? body.discount_infos;
     if (Number(body.type ?? 0) === 5 || discountId > 0 || Array.isArray(discountInfos)) {
+      if (bargainSelection.bargainUserId || bargainSelection.bargainId) throw new ValidateException("套餐购物车不能选择砍价记录");
       if (!Number.isSafeInteger(discountId) || discountId <= 0 || !Array.isArray(discountInfos)) {
         return jsonFail(c, "套餐参数错误");
       }
@@ -120,8 +126,8 @@ export async function cartAdd(c: C) {
     }
     const legacyActivity = body.secKillId ?? body.seckillId ?? body.seckill_id
       ? { type: 1, id: Number(body.secKillId ?? body.seckillId ?? body.seckill_id) }
-      : body.bargainId
-        ? { type: 2, id: Number(body.bargainId) }
+      : bargainSelection.bargainId
+        ? { type: 2, id: bargainSelection.bargainId }
         : body.combinationId
           ? { type: 3, id: Number(body.combinationId) }
           : body.storeIntegralId
@@ -131,6 +137,10 @@ export async function cartAdd(c: C) {
               : null;
     const unique = String(body.unique ?? body.uniqueId ?? "").trim();
     const activityType = Number(body.type ?? legacyActivity?.type ?? 0);
+    const activityId = Number(body.activityId ?? body.activity_id ?? legacyActivity?.id ?? 0);
+    if (bargainSelection.bargainId && (activityType !== 2 || activityId !== bargainSelection.bargainId)) {
+      throw new ValidateException("砍价购物车与活动不匹配");
+    }
     if (!body.productId || (!unique && ![1, 2, 3].includes(activityType))) {
       return jsonFail(c, "参数错误");
     }
@@ -145,7 +155,8 @@ export async function cartAdd(c: C) {
       cartNum: Number(body.cartNum ?? 1),
       type: activityType,
       isNew: Number(rawIsNew),
-      activityId: Number(body.activityId ?? body.activity_id ?? legacyActivity?.id ?? 0),
+      activityId,
+      bargainUserId: bargainSelection.bargainUserId,
     });
     return jsonOk(c, { ...result, cartId: result.id }, "加入购物车成功");
   } catch (e) {
@@ -309,6 +320,8 @@ export async function orderCreate(c: C) {
     seckill_id?: number;
     bargainUserId?: number;
     bargainId?: number;
+    bargain_user_id?: number;
+    bargain_id?: number;
     couponId?: number;
     coupon_id?: number;
     payType?: string;
@@ -368,7 +381,7 @@ export async function orderCreate(c: C) {
       pinkId: body.pinkId,
       combinationId: body.combinationId,
       seckillId: body.seckillId ?? body.seckill_id,
-      bargainUserId: body.bargainUserId ?? body.bargainId,
+      ...parseBargainSelection(body),
       couponId: body.couponId ?? body.coupon_id,
       customForm: body.customForm ?? body.custom_form,
     });
@@ -457,7 +470,7 @@ export async function orderConfirm(c: C) {
         storeId: Number(body.storeId ?? body.store_id ?? 0),
         type: body.type === undefined ? undefined : Number(body.type),
         seckillId: Number(body.seckillId ?? body.seckill_id ?? 0) || undefined,
-        bargainUserId: Number(body.bargainUserId ?? body.bargainId ?? 0) || undefined,
+        ...parseBargainSelection(body),
         pinkId: Number(body.pinkId ?? body.pink_id ?? 0) || undefined,
         combinationId: Number(body.combinationId ?? body.combination_id ?? 0) || undefined,
       });
@@ -490,7 +503,7 @@ export async function orderComputed(c: C) {
         payType: String(body.payType ?? body.pay_type ?? "yue"),
         type: body.type === undefined ? undefined : Number(body.type),
         seckillId: Number(body.seckillId ?? body.seckill_id ?? 0) || undefined,
-        bargainUserId: Number(body.bargainUserId ?? body.bargainId ?? 0) || undefined,
+        ...parseBargainSelection(body),
         pinkId: Number(body.pinkId ?? body.pink_id ?? 0) || undefined,
         combinationId: Number(body.combinationId ?? body.combination_id ?? 0) || undefined,
       },
