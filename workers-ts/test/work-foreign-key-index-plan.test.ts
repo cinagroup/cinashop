@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { sequenceRunnerDatabase } from "./helpers/kefuSequenceRunnerDatabase";
 import { foreignKeyIndexInventory } from "../scripts/foreign-key-index-audit";
+import { runWorkContactClientIndex } from "../src/migrations/runWorkContactClientIndex";
 
 type Node = { "Node Type": string; "Index Name"?: string; "Actual Rows"?: number; "Actual Loops"?: number;
   "Shared Hit Blocks"?: number; "Shared Read Blocks"?: number; "Rows Removed by Filter"?: number; Plans?: Node[] };
@@ -26,7 +27,7 @@ const targets = [
   { fk: "wmc_last_event_fk", table: "work_member_current", column: "last_event_id", index: "wmc_last_event_idx", parent: "work_callback_event", existing: true },
   { fk: "wmia_last_event_fk", table: "work_member_identity_alias", column: "last_event_id", index: "wmia_last_event_idx", parent: "work_callback_event", existing: true },
   { fk: "wmia_link_event_fk", table: "work_member_identity_alias", column: "link_event_id", index: "wmia_link_event_idx", parent: "work_callback_event", existing: true },
-  { fk: "wcao_client_fk", table: "work_contact_action_outbox", column: "client_id", index: "audit_wcao_client_fk", parent: "work_client_current", existing: false },
+  { fk: "wcao_client_fk", table: "work_contact_action_outbox", column: "client_id", index: "wcao_client_ref", parent: "work_client_current", existing: false },
 ] as const;
 
 describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
@@ -35,14 +36,17 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>> | undefined;
   beforeAll(async () => {
     const api = await import("drizzle-kit/api"), models = await import("../src/models/schema");
-    generated = (await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join("\n");
+    const statements = await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models));
+    const baseline = statements.filter(statement => !statement.startsWith('CREATE INDEX "wcao_client_ref"'));
+    expect(statements.length - baseline.length).toBe(1);
+    generated = baseline.join("\n");
     expectedForeignKeys = foreignKeyIndexInventory(models).entries.map(entry => `${entry.table}.${entry.name}`).sort();
   }, 120000);
   afterEach(async () => { await f?.close(); f = undefined; });
   it.each(targets)("uses real model constraints and parent actions for $fk", async target => {
     f = await sequenceRunnerDatabase();
     const { db, exec, query } = f;
-    // Full unmodified ORM SQL, including all constraints, identity columns and indexes.
+    // Full ORM SQL except the single new index, providing its pre-0148 baseline.
     // The public schema belongs to this isolated database, never the shared CI service.
     await exec(generated);
     const actualForeignKeys = await query("SELECT t.relname,c.conname FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='public' AND c.contype='f'");
@@ -151,7 +155,7 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
       })).rejects.toBe(rollback);
       expect(await indexState()).toEqual(originalIndexes);
     } else {
-      await db.execute(sql`CREATE INDEX ${sql.identifier(target.index)} ON public.work_contact_action_outbox(corp_id,client_id)`);
+      await runWorkContactClientIndex(db);
       await exec("ANALYZE public.work_contact_action_outbox");
       indexed = await plans();
       // Default ANALYZE can miss three rare client keys in this deliberately
@@ -218,7 +222,7 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
       completeModelForeignKeys: expectedForeignKeys.length,
       defaultStatisticsTrials, fullSampleDiagnostic, diagnosticStatisticsTarget: target.existing ? null : 1000,
       defaultStatisticsUniversalIndexUseProven: false,
-      nullRows: target.existing ? 50001 : 0, formalMigrationApplied: false, existingIndexPreserved: target.existing,
+      nullRows: target.existing ? 50001 : 0, formalMigrationApplied: target.existing ? false : "0148", existingIndexPreserved: target.existing,
       parentAndChildRowsUnchanged: true, foreignKeyUnchanged: true, nestedTriggerPlanCaptured: false, productionLatencyClaim: false }) + "\n");
   }, 180000);
 });

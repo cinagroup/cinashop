@@ -50,6 +50,8 @@ import { PINK_RECOVERY_INDEX_SQL } from "@/migrations/pinkRecoveryIndex";
 import { runPinkRecoveryIndex } from "@/migrations/runPinkRecoveryIndex";
 import { FOREIGN_KEY_CHILD_INDEX_SQL } from "@/migrations/foreignKeyChildIndexes";
 import { runForeignKeyChildIndexes } from "@/migrations/runForeignKeyChildIndexes";
+import { WORK_CONTACT_CLIENT_INDEX_SQL } from "@/migrations/workContactClientIndex";
+import { runWorkContactClientIndex } from "@/migrations/runWorkContactClientIndex";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -405,10 +407,16 @@ export class MigrationService {
       this.migration_0151(),
       this.migration_0152(),
       this.migration_0153(),
+      this.migration_0154(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 154) {
+          await runWorkContactClientIndex(this.container.db);
+          executed.push("0154");
+          continue;
+        }
         if (i === 153) {
           await runForeignKeyChildIndexes(this.container.db);
           executed.push("0153");
@@ -8455,5 +8463,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0153(): string {
     return FOREIGN_KEY_CHILD_INDEX_SQL;
+  }
+  private migration_0154(): string {
+    return WORK_CONTACT_CLIENT_INDEX_SQL;
   }
 }

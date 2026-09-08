@@ -8,7 +8,9 @@ describe("complete offline FK candidate inventory", () => {
   it("includes all 45 model foreign keys and does not discard partial indexes", () => {
     const result = foreignKeyIndexInventory(models);
     expect(result.count).toBe(45);
-    expect(result.withoutLeadingCandidate).toEqual(["work_contact_action_outbox.wcao_client_fk"]);
+    expect(result.withoutLeadingCandidate).toEqual([]);
+    expect(result.entries.find(entry => entry.name === "wcao_client_fk")?.leadingCandidates)
+      .toContainEqual(expect.objectContaining({ name: "wcao_client_ref", columns: ["corp_id", "client_id"], predicate: null, fullReferencePrefix: true }));
     expect(result.partialOnly).toEqual([
       "work_member_current.wmc_last_event_fk",
       "work_member_identity_alias.wmia_last_event_fk",

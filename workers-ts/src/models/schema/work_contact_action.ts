@@ -91,6 +91,7 @@ export const workContactActionOutbox = pgTable(
       .on(table.leaseUntil, table.id)
       .where(sql`${table.status} IN ('ENQUEUING','ENQUEUED','PROCESSING')`),
     index("wcao_event_status").on(table.eventId, table.status, table.id),
+    index("wcao_client_ref").on(table.corpId, table.clientId),
     index("wcao_manual_queue")
       .on(table.status, table.updateTime, table.id)
       .where(sql`${table.status} IN ('UNKNOWN','DEAD')`),

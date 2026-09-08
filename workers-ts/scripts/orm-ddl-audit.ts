@@ -217,6 +217,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     // the new recovery index must not count as aligned.
     const requiredIndexKeys = [...duplicateContracts.keys, "store_order_refund.sor_pink_recovery_scan"];
     requiredIndexKeys.push("payment_reconciliation_case.prc_callback_event", "store_product_reply.spr_order_cart_info");
+    requiredIndexKeys.push("work_contact_action_outbox.wcao_client_ref");
     const defaultManifest = JSON.parse(await readFile(resolve(root, "audit/orm-column-default-reconciliation.json"), "utf8"));
     const missingConstraintManifest = JSON.parse(await readFile(resolve(root, "audit/orm-missing-constraint-reconciliation.json"), "utf8"));
     const foreignKeyNameManifest = JSON.parse(await readFile(resolve(root, "audit/orm-foreign-key-name-reconciliation.json"), "utf8"));
