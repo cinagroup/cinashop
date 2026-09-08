@@ -6917,6 +6917,22 @@ Workers技能促使保持请求级原Hyperdrive连接、等待全部事务I/O；
 
 A3h获得本地代码、运行时和H5隔离交互候选，仍不勾选：自身Linux CI/PG16、微信/App真机、真实角色发起/帮砍、完整结算支付和发布观察尚未完成。A3e/f/g及A3i政策与全局并发状态审查继续开放；发布须先完成独立字段升级及验证，再发布引用新字段的Worker和前端，不可只发布新页面配旧API。清单维持221勾选/161开放/382项；旧PHP历史复制仍N/A。
 
+### 014e384推送后审计：跨参与帮砍次数与价格政策分离（2026-09-09）
+
+上一轮UniApp入口为实质进展；本轮起点main/origin为`014e38470db98ade522e0cfb55f8d610b793e4ba`且工作区干净。重新只读确认[Actions34291593225](https://github.com/cinagroup/cinashop/actions/runs/34291593225)已终态failure；该精确run先前已核验11/11任务runner_id=0及账户付款/额度未启动注释，本轮没有重跑或修改计费。继续实现可本地推进的缺口，不把整体目标标为阻塞或完成。
+
+A3i源码证据进一步明确：旧PHP `app/services/activity/bargain/StoreBargainUserServices.php:125`发起时写入bargain_price/min快照，`:106`用快照计算可砍总额，`StoreBargainUserHelpServices.php:130`只累计price，`app/services/order/StoreCartServices.php:358`返回参与底价。当前Worker help仍以max(参与起价,活动起价)修复并覆盖bargainPrice，目录/购物车/建单仍引入活动现价，本人列表/进度按参与快照展示。旧PHP历史数据已明确不继承，不能把旧Worker早期坏行修复当作全新系统必须永久保留的收费政策。已向用户确认“既有参与保留发起时快照、改价仅影响新参与”或“既有参与随活动现价重算”；尚未收到选择，本批没有修改任何价格公式、帮助金额算法、状态码或前端金额展示。A3i仍是需产品决定的开放项，不以仅统一展示来关闭。
+
+发现独立的A3f次数竞争：旧helpBargain只锁731627/参与ID以及参与行，但好友上限查询是uid+bargain_id+type0，跨多个参与记录。两条不同参与上的同一helper并发可以各看到尚未用完的次数，单参与锁不能保护该谓词。新增不与已有命名空间冲突的事务级731628/helper UID锁，固定在旧参与建议锁和参与行锁之前取得；相同helper跨活动也短暂串行，但次数仍按各活动分别计算，自砍type1继续不占好友额度，不同helper不共用此新锁。READ COMMITTED保证等待后的计数读到前次提交，不能沿用调用方repeatable-read旧快照。请求参数补齐32位正整数上限；每语句最多5秒、锁等待最多2秒、事务空闲最多5秒，并保留调用方更严格限制，事务结束自动恢复设置和释放建议锁。保留活动KEY SHARE以兼容既有库存NO KEY UPDATE，没有升级成会与checkout反转的活动UPDATE/SHARE锁；后台可变规则和全部状态/锁序仍待后续审查。
+
+新增bargain-help-admission.test.ts的12项真实控制器/隔离SQL测试，覆盖同helper跨参与次数、自砍、不同活动独立额度、不同helper、重复帮砍、五组非法ID、参与写入失败的完整业务回滚与显式重试。实际INSERT触发器查询pg_locks验证两个正确namespace/key已持有、事务结束无残留；另两组触发器验证实际READ COMMITTED及默认/更严格超时，事务结束恢复调用方设置。回滚断言不要求非事务序列回退。PGlite只有单后端，这些检查证实实际SQL和事务设置，不证实并发赢家数量。
+
+新增bargain-help-concurrency-postgres.test.ts的6项独立PG16候选：同helper跨参与limit1/2、同参与不同helper最后一刀、不同参与不同helper互不阻塞、500ms严格锁超时回滚重试、真实等待跨活动截止。沿用专用loopback finance_test URL/schema/版本验证与四个互异稳定PID，通过pg_blocking_pids确认实际等待，不用固定sleep或单连接Promise.all冒充竞争。limit1/2第二连接显式默认repeatable read，以检测实现是否真的在等待后采用新语句快照；计数作用域不依赖新增唯一约束。本机未配置TEST_FINANCE_POSTGRES_URL且未找到可用postgres/psql/initdb/docker命令，因此6项未运行，不能标为已复现或已证实并发修复。既有CI以test/*.test.ts全量分片和PG16服务执行，未排除此文件或改变零跳过门禁。
+
+最终活动相关12文件9通过/3跳过，166项通过/36项独立PG跳过（134.35秒）；36项为本批帮助6、原发起7、原订单23。索引合同3文件11项通过（0.659秒），与前组不重叠，合计177项本地通过/36项跳过；Worker unit/runtime两套类型检查终态成功。ActivityJoinService新增11行导致sbu_uid查询证据从786移至797，仅同步orm-ordinary-index-reconciliation.json的sourceLine，原SQL片段、定义、不可变目录和既有证据保持不变；相关索引门禁验证通过。没有全仓库、Linux workerd、自身PG16或生产验收结论。
+
+Workers技能促使先复核最新[Cloudflare请求级连接规则](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)并保留原Hyperdrive请求连接，不新增跨请求状态或外部调用。最新types的unpkg获取失败，按技能回退核查已安装5.20260828.1的Hyperdrive/ExecutionContext类型及Wrangler schema；没有绑定、配置或API签名变化。PostgreSQL技能结合[PG16锁规则](https://www.postgresql.org/docs/16/explicit-locking.html)与[隔离级别](https://www.postgresql.org/docs/16/transaction-iso.html)，采用事务级而非会话级锁、固定顺序和有界等待。没有生产SQL、临时线上Worker、部署、浏览器或provider调用；未安装新数据库/依赖。A3f/A3i与生产门禁保持开放，清单221勾选/161开放/382项不变，旧PHP历史复制N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

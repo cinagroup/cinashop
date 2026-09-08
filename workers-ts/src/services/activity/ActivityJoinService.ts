@@ -35,6 +35,7 @@ import { emitOperationalEvent, operationalErrorCode } from "@/utils/observabilit
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
+const BARGAIN_HELP_USER_LOCK_NAMESPACE = 731_628;
 
 export function calculateBargainHelpCutCents(input: {
   remainingCents: number;
@@ -548,14 +549,24 @@ export class ActivityJoinService {
 
   /** 帮砍：每个参与记录串行处理，保留帮助明细并执行人数/次数限制。 */
   async helpBargain(uid: number, bargainUserId: number): Promise<{ price: string }> {
-    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("用户ID错误");
-    if (!Number.isSafeInteger(bargainUserId) || bargainUserId <= 0) {
+    if (!Number.isSafeInteger(uid) || uid <= 0 || uid > 2_147_483_647) throw new ValidateException("用户ID错误");
+    if (!Number.isSafeInteger(bargainUserId) || bargainUserId <= 0 || bargainUserId > 2_147_483_647) {
       throw new ValidateException("砍价记录ID错误");
     }
     const user = await this.container.userDao.findForAuth(uid);
     if (!user) throw new NotFoundException("用户不存在");
 
     return withTx(this.container, async (tx) => {
+      // The friend-help limit spans multiple participation rows. Serialize this
+      // helper BEFORE taking any participant lock; a per-participant lock alone
+      // allows simultaneous requests to each observe the same unused allowance.
+      // READ COMMITTED gives the next count a fresh snapshot after a lock wait.
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+      await tx.execute(sql.raw(`SELECT
+        pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true),
+        pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true)`));
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${BARGAIN_HELP_USER_LOCK_NAMESPACE}, ${uid})`);
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(${BARGAIN_HELP_LOCK_NAMESPACE}, ${bargainUserId})`,
       );
