@@ -1,7 +1,7 @@
 <template>
   <view class="pink-status">
     <view class="heading">拼团状态</view>
-    <view class="hint">团记录 #{{ recordId || '无效' }} · 状态只读查询</view>
+    <view class="hint">团记录 #{{ recordId || '无效' }} · 刷新仅查询，取消须单独确认</view>
     <view v-if="error" class="error" role="alert">{{ error }}</view>
     <view v-if="!loggedIn && recordId" class="card">
       <text>登录后查看拼团成员、进度和本人订单。</text>
@@ -9,9 +9,18 @@
     </view>
     <view v-if="loading" class="hint">正在读取拼团状态…</view>
     <view class="toolbar">
-      <button size="mini" :disabled="loading || navigating || !loggedIn || !recordId" @tap="load">刷新状态</button>
+      <button size="mini" :disabled="loading || navigating || cancelBusy || !loggedIn || !recordId" @tap="load">刷新状态</button>
       <button size="mini" :disabled="navigating" @tap="list">活动列表</button>
       <button v-if="loggedIn" size="mini" :disabled="navigating" @tap="orders">我的订单</button>
+    </view>
+    <view v-if="loggedIn && (cancelIntent || cancellation || cancelError)" class="card" aria-live="polite">
+      <view class="product-title">本人原团取消结果 · #{{ recordId }}</view>
+      <view class="hint">{{ cancellationMessage }}</view>
+      <view v-if="cancelError" class="error" role="alert">{{ cancelError }}</view>
+      <view v-if="cancelBusy" class="hint">正在确认或提交，请勿重复操作…</view>
+      <button v-if="canResumeCancellation" :disabled="cancelBusy || navigating" @tap="cancelPink">继续处理同一取消申请</button>
+      <button v-if="cancellation" :disabled="cancelBusy || navigating" @tap="cancellationOrder">查看取消关联的本人订单</button>
+      <view class="hint">刷新不会发起退款。“继续处理”会重新校验并推进原申请，不会取消其他团。</view>
     </view>
     <template v-if="detail">
       <view class="card">
@@ -37,10 +46,11 @@
         <view v-if="canJoin" class="hint">此处人数不扣除待支付预占席位。下一页会重新校验该团资格，不自动改为开团。</view>
         <button v-if="detail.orderId" :disabled="navigating" @tap="order">查看本人订单</button>
         <view v-else-if="detail.joined" class="hint">当前没有可展示的本人订单，请从我的订单查询。</view>
-        <view v-if="detail.joined" class="hint">取消或售后请从本人订单申请；此页面不会直接退款。</view>
-        <button v-if="detail.leader.status === 1 && !pending" :disabled="navigating" @tap="copyInvite">复制邀请链接</button>
+        <button v-if="canCancel" :disabled="cancelBusy || navigating" @tap="cancelPink">取消本人的拼团</button>
+        <view v-if="detail.joined" class="hint">团长取消拼团须单独确认；其他售后请从本人订单查询。</view>
+        <button v-if="canInvite" :disabled="navigating" @tap="copyInvite">复制邀请链接</button>
         <!-- #ifdef MP-WEIXIN -->
-        <button v-if="detail.leader.status === 1 && !pending" open-type="share">分享给好友</button>
+        <button v-if="canInvite" open-type="share">分享给好友</button>
         <!-- #endif -->
         <button :disabled="navigating" @tap="openActivity()">重新选择活动并开新团</button>
       </view>
@@ -58,6 +68,7 @@
 import { onShareAppMessage } from '@dcloudio/uni-app';
 import { usePinkStatus } from '@/composables/usePinkStatus';
 const { recordId, detail, loading, error, navigating, loggedIn, pending, canJoin, title, remaining,
+  cancelIntent, cancellation, cancellationMessage, cancelBusy, cancelError, canCancel, canResumeCancellation, canInvite, cancelPink, cancellationOrder,
   load, login, join, openActivity, order, orders, list, copyInvite, invitation } = usePinkStatus();
 onShareAppMessage(() => invitation() ?? { title: '查看拼团活动', path: '/pages/activity/index' });
 </script>
