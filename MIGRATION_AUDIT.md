@@ -6693,6 +6693,24 @@ wcao_client_fk无索引时无匹配hit4001、过滤100003。仅在测试库添�
 
 最新浏览器授权下已确认CUA内置浏览器可用，并只读打开生产`https://cinashop-pc.pages.dev/seckill`。加载后重新读取页面树：标题CinaShop - PC 商城、导航和限时秒杀内容存在，三个时段仍显示“-”，提示当前时段暂无秒杀商品。没有点击/控制台/截图/移动端证据，不声称完整UI验收或空活动已确认；没有登录、购物车、订单或付款操作。没有主Worker/Pages部署或生产SQL。PostgreSQL技能推动保留有效部分索引，并把默认统计证据与诊断配置明确分开；旧历史迁移继续N/A。
 
+### 19e4a32推送后审计：十二个复合外键实测与目录证据补齐（2026-09-08）
+
+上一轮有实质代码/测试/证据进展，本轮起点工作区6个审计文件的修改完整保留。确认44b6ef4任务终止后提交推送`19e4a32498d28483ffa8ba6d69669169060f5285`，ls-remote确认origin/main一致。自身[Actions34208942097](https://github.com/cinagroup/cinashop/actions/runs/34208942097)终态failure，11个任务runner_id均0；分片一102005061684的check注释明确仍因账户付款或消费额度限制未启动。没有把未运行说成测试失败，没有重跑、取消CI、修改计费或绕过门禁。最新完整全绿仍为34abedc；需所有者处理Billing & plans。
+
+补取44b6ef4的目录任务101997070718成功日志：serverVersionNum160014，九路径均263表/3700列/570约束/1009索引/227序列。external/embedded/orm/orm_upgrade/orm_default_upgrade/orm_constraints/orm_fk_names/orm_checks/orm_sequences步骤分别149/154/1080/1200/1081/1072/1081/1073/1080。externalInputSha256=`336cf866f2586a569b51cde3a4640cd484ba521925f67613877148308f26892a`；generatedSqlSha256=`f2eae7806c19a21323a9d9a7ab31a2bfb87e23ca2dda3e60666cbf164f0bff29`。外部对内嵌/ORM五类差异全部0，六类旧模型升级freshCatalogMatched均true，两个新增子表索引列于verifiedIndexContracts，cleanupConfirmed=true。结合已核对的九路径严格比较代码及任务成功，完成G1目录证据补核，不代表生产已应用或整个CI全绿。
+
+新增`work-composite-foreign-key-plan.test.ts`覆盖全部12个六列事件引用：wcc/wcfc/wcfpf/wcpf/wdc/wdpf/wetc/wetgc/wetpf/wgcc/wgcmc/wgcpf的last_event_fk。目标集合从完整模型清单推导，并与12个明确夹具双向比对，不能漏掉未适配对象。各用未修改的完整Drizzle生成DDL及独立可销毁数据库，保留所有CHECK/FK/identity/二级索引；每项100003条子行、单企业、每子行不同事件，必要的客户/部门/群/标签组父对象按真实约束建立。不是生产抽样，也不是所有可能分布的证明。
+
+探针严格包含last_event_id、corp_id、last_event_key、last_event_subject_key_hash、last_event_time、last_sequence_rank六个比较及FOR KEY SHARE，不加LIMIT、不关闭顺扫。普通及forced generic无匹配各访问2个缓冲块，两个引用键各4块，均用既有last_event_id单列索引；当前态夹具分别含ACTIVE与INACTIVE/DELETED/DISMISSED/LEFT，fence表只有两个引用键而无业务生命周期，日志active/inactive在这些fence场景仅为键2/3标签。跨企业错误匹配返回0且访问3块，优化器选择现有corp_id索引/主键。
+
+首轮12项全部失败（206.61秒），具体是测试错误地要求跨企业无匹配也必须使用last_event_id索引；实际均已用企业索引3块/0过滤排除。保留该证据，纠正断言为必须使用模型已有候选、结果0、最多1条过滤和小于50块预算；其他四种计划仍严格要求事件单列索引。未更改任何生产查询、索引或数据库统计配置来迎合断言。
+
+最终12/12本地PGlite180003通过，245.43秒；unit类型独立终态成功。真实父行DELETE与sequence_rank更新在键2/3精确命中对应FK拒绝（PG18 RESTRICT删除23001，其余23503）；无引用父操作实际执行并确认对应约束触发一次，随后事务回滚。父子全行指纹、FK定义/验证状态及动作保持不变。没有捕获嵌套触发器计划，没有新宽索引，也没有生产延迟声明。PG16分支仍通过现有专用loopback finance_test身份/版本/随机独立库防护，计费问题下尚无本测试自身PG16证据。
+
+父操作路径再次检查：部门applyDepartmentDelete只物理清理leader关系并更新部门墓碑；标签/标签组删除更新DELETED并保留行；群解散更新成员/群DISMISSED。回调payload清理由redactCompletedCallbackPayloads更新字段而不删除事件/修改六列父引用键。它们会更新子侧最新事件引用，不是本实验模拟的回调父DELETE/键更新。未找到生产回调事件物理删除路径，未来维护清理策略仍需审阅，不能从方法名含delete推断父端热路径。
+
+PostgreSQL技能促使按实际计划评估窄索引，参照[PG16多列索引说明](https://www.postgresql.org/docs/16/indexes-multicolumn.html)核对前导列与额外宽度的取舍，而非机械补12个六列索引。当前证据支持此单企业高基数分布下保留既有索引；热点多子行、其他租户分布、生产统计/维护策略及wcao_client_fk正式索引与统计决策仍开放。G1维护窗口/发布、G2自身PG16与剩余决策均未勾选，清单仍221勾选/156开放/377项。无浏览器操作、生产SQL/DDL、部署或真实账户/provider副作用；历史复制N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
