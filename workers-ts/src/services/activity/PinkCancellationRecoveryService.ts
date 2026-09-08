@@ -32,6 +32,34 @@ export function pinkCancellationRecoveryScan(db: Pick<DbClient, "select">,
     .orderBy(asc(storeOrderRefund.id)).limit(PINK_CANCELLATION_RECOVERY_PAGE_SIZE);
 }
 
+/** Read-only discovery has its own budgets, restored before refund execution.
+ * A timeout must reject the page, not masquerade as an exhausted traversal.
+ * These are per-statement/lock/idle limits, not a total job latency guarantee. */
+export async function pinkCancellationRecoverySnapshot(container: Container,
+  cursor: number, scheduledAt: number, ceiling: number | null) {
+  const validId = (n: number) => Number.isSafeInteger(n) && n >= 0 && n <= 2_147_483_647;
+  if (!validId(cursor) || ceiling !== null && !validId(ceiling) ||
+    !Number.isSafeInteger(scheduledAt) || scheduledAt <= 0 || scheduledAt > 8_640_000_000_000_000) {
+    throw new ValidateException("拼团取消恢复游标或时间无效");
+  }
+  return withTx(container, async tx => {
+    await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+    // Install LOCAL budgets in a separate statement before MAX or the scan.
+    // Zero means disabled; never relax a stricter caller deadline.
+    await tx.execute(sql`SELECT
+      pg_catalog.set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'), 0), 3000)::text || 'ms', true),
+      pg_catalog.set_config('lock_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'), 0), 500)::text || 'ms', true),
+      pg_catalog.set_config('idle_in_transaction_session_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'), 0), 5000)::text || 'ms', true)`);
+    const highWater = ceiling ?? (await tx.select({ id: sql<number>`COALESCE(MAX(${storeOrderRefund.id}), 0)::int` })
+      .from(storeOrderRefund))[0].id;
+    const candidates = await pinkCancellationRecoveryScan(tx, cursor, highWater, scheduledAt);
+    return { candidates, highWater };
+  });
+}
+
 /** Recovery of a durable, owner-authorized cancellation, never auto-approval of
  * ordinary after-sales or creation of a replacement application. The scheduled
  * run supplies the age cutoff; a frozen high-water ID bounds every traversal.
@@ -40,18 +68,7 @@ export class PinkCancellationRecoveryService {
   constructor(private readonly container: Container, private readonly env: Env) {}
 
   async recoverPage(cursor: number, scheduledAt: number, ceiling: number | null) {
-    const validId = (n: number) => Number.isSafeInteger(n) && n >= 0 && n <= 2_147_483_647;
-    if (!validId(cursor) || ceiling !== null && !validId(ceiling) ||
-      !Number.isSafeInteger(scheduledAt) || scheduledAt <= 0 || scheduledAt > 8_640_000_000_000_000) {
-      throw new ValidateException("拼团取消恢复游标或时间无效");
-    }
-    const { candidates, highWater } = await withTx(this.container, async tx => {
-      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
-      const highWater = ceiling ?? (await tx.select({ id: sql<number>`COALESCE(MAX(${storeOrderRefund.id}), 0)::int` })
-        .from(storeOrderRefund))[0].id;
-      const candidates = await pinkCancellationRecoveryScan(tx, cursor, highWater, scheduledAt);
-      return { candidates, highWater };
-    });
+    const { candidates, highWater } = await pinkCancellationRecoverySnapshot(this.container, cursor, scheduledAt, ceiling);
     let completed = 0, pending = 0, attention = 0, errors = 0;
     for (const candidate of candidates) {
       try {

@@ -6587,6 +6587,28 @@ Workers/PostgreSQL技能推动完整迁移入口审查、当前[Workers规则](h
 
 冻结验证补记：最终8文件86项通过/3项PG专用跳过（共89项，102.10秒）；跳过为新索引真实锁超时1项和既有后台并发2项。迁移专项24项中23项本地通过，真实Drizzle全库生成与新索引守卫两遍验证通过。正式升级后的同查询PGlite首批hit11/read1、通用hit7/read0、过滤0，空尾页hit1/read0；这不是生产延迟指标。Worker unit/runtime两套类型检查终态成功，git diff --check通过，清单仍221/154/375。当前提交的PG16锁竞争、九路径目录及整轮CI仍待推送后验证。
 
+### 6fe767d 终态、近期候选容量与只读扫描预算（2026-09-08，当前候选）
+
+`6fe767df3bfe81aaa068d8245bd45d78f95af038` / [Actions34198457466](https://github.com/cinagroup/cinashop/actions/runs/34198457466)已终态9/11，不能写成全绿。分片一101971471869为147文件中146通过/1失败，1217项通过/1失败，699.76秒；唯一失败为`kefu-sequence-runner.test.ts:78`仍固定1076条初始建库语句，而当前完整ORM新增0146索引后生成1077条。总门禁101975097979随之失败。本轮将这一明确计数更新为1077并注明原因，保留完整旧序列模型执行、30类漂移拒绝、OID/目录/行/权限/注释/序列计数及清理断言，没有跳过测试或改成宽松下限。最近整轮全绿仍d579fbc，未重跑/取消旧CI。
+
+分片二101971471899为147文件1133项零跳过、459.74秒，inventory SHA=`4c9f7624a84273fa76691b66b03cdaaf8452e50324f932605e745a7092184222`，executed SHA=`9b4d8619de83d378d86e90f92e294561cc2663a767cf6b53c917e2872d5dac55`，该片完整互斥/文件匹配true；失败片未取得成功的分片凭证，不能声明整轮聚合证明成立。正式索引专项24项全部通过（3652ms），其中实际PG16写锁阻塞/超时/回滚/解除后成功2123ms。该SHA正式0146的查询计划为100030行，旧计划hit3516/过滤100005，正式索引普通hit2/read1、generic hit7/read0、过滤0，空尾页hit1；migrationApplied=0146而非旧测试候选。
+
+PG16目录job101971471558成功，serverVersionNum=160014。external/embedded/orm/orm_upgrade/orm_default_upgrade/orm_constraints/orm_fk_names/orm_checks/orm_sequences九路径步数依次148/153/1078/1198/1079/1070/1079/1071/1078；每条路径263表、3700列、570约束、1007索引、227序列，完整原始目录比较零差异，新索引正向必需存在成立，cleanupConfirmed=true。externalInputSha256=`718e1afd42ba2e16df1d7d64a0943473a771049959116e4aa3df275fbac48156`，generatedSqlSha256=`2ed2685691f88f8718368214674133f662f33eb19a817997812b02216bb2682b`。workerd101971471890、秘密扫描101971471844及五个前端均成功。这是隔离目录/升级证据，不是生产DDL应用证明。
+
+新容量实验继续执行同一`pinkCancellationRecoveryScan`，两张实际模型表与全部模型二级索引，正式守卫验证现有索引，不模拟返回数据。100005个不同订单和对应退款，分布于1000个合成owner ID，专用申请号与关联字段逐行断言；未建立1000个真实用户，不冒充完整财务/用户端到端数据。第一版夹具触发真实`so_unique_uid_uq`，已为每个订单设置不同unique，保留约束。默认本地PGlite报告180003，不是PG16；CI继续只允许专用PG16隔离服务。
+
+本地最终分布证据（shared reads均0、过滤均0）：近期前缀1万时hit46，增至10万hit292，强制generic同为292；冻结最大ID排除尾部时空结果hit275，全近期空结果也275；直接从100000游标开始取5条hit19；全积压首/中/尾页各19；每10000条才有一条已到宽限年龄时前页569、后页571、空尾页3；执行仅针对可销毁夹具表的VACUUM (ANALYZE)后前页仍569。输出`PINK_RECOVERY_CAPACITY_AUDIT`明确productionLatencyClaim=false、universalScanBoundProven=false。依据[PG16多列B-tree规则](https://www.postgresql.org/docs/16/indexes-multicolumn.html)，后位add_time能减少heap访问却不保证缩小id范围内的索引遍历，不能用Rows Removed=0替代缓冲块/扫描成本证据。这里没有生产P95或总吞吐结论。
+
+当前代码将既有验证及READ ONLY REPEATABLE READ发现事务提取为`pinkCancellationRecoverySnapshot`，在MAX和候选查询之前以单独语句安装LOCAL statement_timeout最多3000ms、lock_timeout最多500ms、idle_in_transaction_session_timeout最多5000ms。0代表未限制，LEAST/NULLIF保留更严格调用方设置；预算只在扫描事务内有效，事务退出后再做原有身份/金额/状态检查及退款I/O，未扩大自动审批范围、未改绑定/依赖/部署。[PG16超时规则](https://www.postgresql.org/docs/16/runtime-config-client.html)的语句、每次锁获取与空闲期限各自独立，不是总事务、连接建立、网络往返或整页provider工作时限。
+
+新增预算测试验证禁用/宽松/严格设置、只读隔离等级、提交恢复、非法边界在事务前拒绝、实际SQL错误抛出/回滚/连接恢复。PG16专项分别用null ceiling阻塞MAX、固定ceiling阻塞候选扫描，通过pg_blocking_pids观察实际阻塞后验证55P03；另在真实扫描事务回调末尾注入pg_sleep(10)验证安装的3秒限制实际触发57014及同一后端设置恢复。该注入不是声称普通MAX自然耗时10秒；真实取消仅CI运行，本地明确跳过。新增workerd专项在恢复服务边界注入两种SQL错误，经过实际ScheduledMaintenanceService及Worker Queue分派，断言无ack/无continuation、原游标及最大ID不变，成功重放后才ack。SQL故障与Queue边界是分层验证，不冒充跨Hyperdrive生产端到端。
+
+本地第一轮6文件70通过/1失败/6跳过（84.49秒），失败为新SQL错误恢复测试碰到Vitest默认5000ms总测试上限，不是数据库超时被吞。仅将该含夹具初始化/断言/恢复的测试总限设为15秒，数据库3秒/500ms/5秒不变；串行复核6文件71通过/6项PG跳过（161.56秒）。随后将PG锁专项扩为MAX与显式最大ID扫描两个用例，最终专项及类型检查结果另记。没有重复本机已知收集前崩溃的workerd，新增runtime专项必须由新SHA的Linux CI验证。
+
+Workers/PostgreSQL技能推动当前平台规则、5.20260908.1 Hyperdrive类型与Wrangler schema核验，及事务局部预算/真实计划验证；没有改变平台配置或引入额外客户端。本轮浏览器连接只确认Codex内置浏览器可用、无打开标签，未声称页面QA通过。所有数据实验在可销毁本地/CI夹具，未访问生产数据库、发布或调用真实provider。B1仍需自身PG16容量/预算CI、物理遍历工作量与连续超时饥饿处理、积压清空SLO、维护窗口/受控发布；父项不关闭，清单221勾选/154开放/375项，历史导入N/A。
+
+冻结补记：扩展后预算专项8项中5项本地通过/3项PG专用跳过（10.47秒），两套Worker unit/runtime类型检查均终态成功。6文件串行回归71通过/6跳过的结果先于新增第二个PG锁场景，不能把本地跳过计为PG执行通过；新workerd两项亦待自身Linux CI。git diff --check及清单计数复核后提交，未操作生产。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
