@@ -19,6 +19,7 @@ const routes: RouteRecordRaw[] = [
       { path: "seckill", name: "seckill", component: () => import("@/pages/activity/Seckill.vue") },
       { path: "seckill/:id", name: "seckill-detail", component: () => import("@/pages/activity/SeckillDetail.vue") },
       { path: "bargain", name: "bargain", component: () => import("@/pages/activity/Bargain.vue") },
+      { path: "bargain/:id", name: "bargain-detail", component: () => import("@/pages/activity/BargainDetail.vue") },
       { path: "combination", name: "combination", component: () => import("@/pages/activity/Combination.vue") },
       { path: "combination/:id", name: "combination-detail", component: () => import("@/pages/activity/CombinationDetail.vue") },
       { path: "refund/:orderId", name: "refund-apply", component: () => import("@/pages/order/RefundApply.vue") },

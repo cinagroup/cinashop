@@ -115,9 +115,9 @@ it('isolates sibling failures and tolerates detached events after unmount', asyn
     assert.deepEqual(first.warnings, []); assert.deepEqual(second.warnings, []);
   } finally { second.close(); }
 });
-it('integrates all 15 product-image pages without changing the source data to placeholder artwork', async () => {
+it('integrates all 16 product-image pages without changing the source data to placeholder artwork', async () => {
   const pages = ['Home', 'goods/GoodsList', 'goods/GoodsSearch', 'goods/GoodsDetail', 'user/CollectList', 'user/CouponProducts',
-    'activity/Seckill', 'activity/SeckillDetail', 'activity/Combination', 'activity/CombinationDetail', 'activity/Bargain',
+    'activity/Seckill', 'activity/SeckillDetail', 'activity/Combination', 'activity/CombinationDetail', 'activity/Bargain', 'activity/BargainDetail',
     'cart/Cart', 'order/Checkout', 'order/OrderList', 'order/OrderDetail'];
   for (const page of pages) {
     const source = await readFile(`${root}src/pages/${page}.vue`, 'utf8');

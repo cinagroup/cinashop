@@ -4,6 +4,8 @@
 import request, { getData } from "@/utils/request";
 import { parseSeckillIndex, parseSeckillList, parseSeckillSelection } from "../../../common/seckillPurchase";
 import { parseCombinationList, parseCombinationSelection } from '../../../common/combinationPurchase';
+import { bargainPage, parseBargainList, parseBargainSelection, parseMyBargains } from '../../../common/bargainPurchase';
+import { captureAuthSession, getUid, isCurrentAuthSession } from '@/utils/auth';
 
 export interface DiscountPackageSku {
   id: number;
@@ -76,8 +78,16 @@ export async function apiCombinationSelection(id: number, pinkId = 0) {
 }
 
 /** 砍价列表 (GET /api/bargain/list) */
-export function apiBargainList(): Promise<unknown[]> {
-  return getData(request.get<unknown[]>("/bargain/list"));
+export async function apiBargainList(page = 1) {
+  return parseBargainList(await getData(request.get('/bargain/list', { params: { page: bargainPage(page), limit: 20 } })));
+}
+
+export async function apiBargainSelection(id: number, participantId = 0) {
+  const session = captureAuthSession();
+  if (participantId && !session.token) throw new Error('请先登录查看自己的砍价记录');
+  const result = await getData(request.get(`/bargain/detail/${id}`, { params: { view: 'skus', ...(participantId ? { bargain_user_id: participantId } : {}) } }));
+  if (!isCurrentAuthSession(session)) throw new Error('登录状态已变化，请重新操作');
+  return parseBargainSelection(result, id, participantId, !!session.token);
 }
 
 /** 砍价详情 (GET /api/bargain/detail/:id) */
@@ -96,8 +106,12 @@ export function apiBargainHelp(bargainUserId: number): Promise<{ price: string }
 }
 
 /** 我的砍价列表 (GET /api/bargain/user/list) */
-export function apiMyBargains(): Promise<unknown[]> {
-  return getData(request.get<unknown[]>("/bargain/user/list"));
+export async function apiMyBargains(page = 1) {
+  const session = captureAuthSession(), uid = getUid();
+  if (!session.token || !uid) throw new Error('请先登录');
+  const result = await getData(request.get('/bargain/user/list', { params: { page: bargainPage(page), limit: 20 } }));
+  if (!isCurrentAuthSession(session)) throw new Error('登录状态已变化，请重新操作');
+  return parseMyBargains(result, uid);
 }
 
 /** 取消砍价 (POST /api/bargain/user/cancel) */
