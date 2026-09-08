@@ -32,6 +32,7 @@ import {
   type LegacyActivityCodeType,
 } from "@/services/wechat/WechatMiniProgramCodeService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
 
@@ -376,10 +377,17 @@ export class ActivityJoinService {
 
   /** 发起砍价 (bargain/start) */
   async startBargain(uid: number, bargainId: number): Promise<{ id: number }> {
-    if (!Number.isSafeInteger(uid) || uid <= 0 || !Number.isSafeInteger(bargainId) || bargainId <= 0) {
+    if ([uid, bargainId].some(value => !Number.isSafeInteger(value) || value <= 0 || value > 2_147_483_647)) {
       throw new ValidateException("砍价参数错误");
     }
     return withTx(this.container, async (tx) => {
+      // A new statement must see the predecessor's committed participation after
+      // the admission lock. A caller's old repeatable snapshot cannot do that.
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+      await tx.execute(sql.raw(`SELECT
+        set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true),
+        set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true)`));
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtextextended(${`bargain-start:${uid}:${bargainId}`}, 0))`,
       );
@@ -391,12 +399,14 @@ export class ActivityJoinService {
             eq(storeBargain.id, bargainId),
             eq(storeBargain.status, 1),
             eq(storeBargain.isDel, 0),
-            sql`(${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= NOW())`,
-            sql`(${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= NOW())`,
+            // Drizzle stores/decodes these timestamp-without-time-zone values
+            // as UTC. Never implicitly reinterpret them in the session timezone.
+            sql`(${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= (clock_timestamp() AT TIME ZONE 'UTC'))`,
+            sql`(${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= (clock_timestamp() AT TIME ZONE 'UTC'))`,
           ),
         )
         .limit(1)
-        .for("key share");
+        .for("share");
       const bargain = bargains[0];
       if (!bargain) throw new NotFoundException("砍价活动不存在");
 
@@ -407,12 +417,21 @@ export class ActivityJoinService {
           and(
             eq(storeBargainUser.uid, uid),
             eq(storeBargainUser.bargainId, bargainId),
-            eq(storeBargainUser.status, 1),
+            inArray(storeBargainUser.status, [1, 3]),
             eq(storeBargainUser.isDel, 0),
           ),
         )
         .orderBy(desc(storeBargainUser.id))
-        .limit(1);
+        .limit(2)
+        .for("update");
+      if (existing.length > 1) throw new ValidateException("砍价有效记录不唯一，请先核对参与记录");
+      // The participant row lock may also have waited. Recheck the wall clock
+      // after that wait; the activity SHARE lock keeps its schedule unchanged.
+      const [admission] = await tx.select({ open: sql<boolean>`
+        (${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= (clock_timestamp() AT TIME ZONE 'UTC')) AND
+        (${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= (clock_timestamp() AT TIME ZONE 'UTC'))` })
+        .from(storeBargain).where(eq(storeBargain.id, bargainId)).limit(1);
+      if (!admission?.open) throw new NotFoundException("砍价活动不存在或已结束");
       if (existing[0]) return { id: existing[0].id };
 
       const rows = await tx
@@ -760,6 +779,10 @@ export class ActivityJoinService {
         image: storeBargain.image,
         datatime: sql<string>`CASE WHEN ${storeBargain.stopTime} IS NULL THEN '' ELSE to_char(${storeBargain.stopTime}, 'YYYY-MM-DD HH24:MI:SS') END`,
         stopTime: storeBargain.stopTime,
+        startTime: storeBargain.startTime,
+        activityStatus: storeBargain.status,
+        activityIsDel: storeBargain.isDel,
+        liveCount: sql<string>`COUNT(*) FILTER (WHERE ${storeBargainUser.status} IN (1,3)) OVER (PARTITION BY ${storeBargainUser.bargainId})`,
       })
       .from(storeBargainUser)
       .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))
@@ -768,14 +791,17 @@ export class ActivityJoinService {
       .limit(safeLimit)
       .offset((safePage - 1) * safeLimit);
     const now = Date.now();
-    return rows.map(({ stopTime, ...row }) => {
+    return rows.map(({ stopTime, startTime, activityStatus, activityIsDel, liveCount, ...row }) => {
       const residueCents = Math.max(0, decimalToCents(row.bargain_price) - decimalToCents(row.price));
-      const effectiveStatus = row.status === 1 && stopTime && stopTime.getTime() < now ? 2 : row.status;
+      const effectiveStatus = [1, 3].includes(row.status) && stopTime && stopTime.getTime() < now ? 2 : row.status;
+      const activityAvailable = activityStatus === 1 && activityIsDel === 0
+        && (!startTime || startTime.getTime() <= now) && (!stopTime || stopTime.getTime() >= now);
       return {
         ...row,
         status: effectiveStatus,
         residue_price: centsToDecimal(residueCents),
-        pay_status: residueCents <= decimalToCents(row.bargain_price_min) && effectiveStatus !== 3,
+        pay_status: activityAvailable && Number(liveCount) === 1 && isBargainParticipationReady({ status: effectiveStatus,
+          bargainPrice: row.bargain_price, bargainPriceMin: row.bargain_price_min, price: row.price }),
       };
     });
   }

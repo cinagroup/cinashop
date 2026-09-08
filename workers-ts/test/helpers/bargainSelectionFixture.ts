@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { eq, sql } from "drizzle-orm";
 import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
 import { bargainDetail } from "../../src/controllers/api/v1/UserActivityController";
+import { startBargain, myBargains, cancelBargain } from "../../src/controllers/api/v1/ActivityJoinController";
 import { cartAdd, cartList, orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderController";
 import { storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttrValue, storeCart, user } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
@@ -39,6 +40,9 @@ export async function createBargainSelectionFixture() {
     });
     app.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
     app.get("/api/bargain/detail/:id", bargainDetail);
+    app.post("/api/bargain/start", startBargain);
+    app.get("/api/bargain/user/list", myBargains);
+    app.post("/api/bargain/user/cancel", cancelBargain);
     app.post("/api/cart/add", cartAdd); app.get("/api/cart/list", cartList);
     app.post("/api/order/confirm", orderConfirm); app.post("/api/order/computed/:key", orderComputed);
     const snapshot = async () => ({ ...await f.snapshot(),

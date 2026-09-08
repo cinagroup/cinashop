@@ -262,6 +262,7 @@ export async function bargainHelpList(c: C) {
 
 /** GET /api/bargain/user/list — 我的砍价 */
 export async function myBargains(c: C) {
+  privateNoStore(c);
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new ActivityJoinService(c.get("container"));

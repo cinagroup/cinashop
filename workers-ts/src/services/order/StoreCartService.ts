@@ -7,6 +7,7 @@ import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { Env } from "@/env";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { setSeckillCartQuantity } from "@/services/activity/SeckillCartQuantityService";
+import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
@@ -256,6 +257,7 @@ export class StoreCartService {
         legacyActivityQuota = activity.quota;
         const participants = await this.container.db
           .select({
+            status: storeBargainUser.status,
             bargainPrice: storeBargainUser.bargainPrice,
             bargainPriceMin: storeBargainUser.bargainPriceMin,
             price: storeBargainUser.price,
@@ -268,12 +270,11 @@ export class StoreCartService {
             inArray(storeBargainUser.status, [1, 3]),
           ))
           .orderBy(desc(storeBargainUser.id))
-          .limit(1);
+          .limit(2);
+        if (participants.length > 1) throw new ValidateException("砍价有效记录不唯一，请先核对参与记录");
         const participant = participants[0];
         if (
-          !participant ||
-          decimalToCents(participant.bargainPrice) - decimalToCents(participant.price) >
-            decimalToCents(participant.bargainPriceMin)
+          !participant || !isBargainParticipationReady(participant)
         ) {
           throw new ValidateException("砍价未成功");
         }
@@ -508,17 +509,16 @@ export class StoreCartService {
                 eq(storeBargainUser.bargainId, cart.activityId),
                 eq(storeBargainUser.isDel, 0),
                 inArray(storeBargainUser.status, [1, 3]),
-              )).orderBy(desc(storeBargainUser.id)).limit(1),
+              )).orderBy(desc(storeBargainUser.id)).limit(2),
             ]);
             const activity = activities[0];
             const participant = participants[0];
             if (
-              !activity || !participant || activity.productId !== product.id ||
+              !activity || !participant || participants.length !== 1 || activity.productId !== product.id ||
               activity.status !== 1 || activity.isDel !== 0 ||
               (activity.startTime !== null && activity.startTime.getTime() > now) ||
               (activity.stopTime !== null && activity.stopTime.getTime() < now) ||
-              decimalToCents(participant.bargainPrice) - decimalToCents(participant.price) >
-                decimalToCents(participant.bargainPriceMin)
+              !isBargainParticipationReady(participant)
             ) throw new ValidateException("砍价活动已失效");
             price = Math.max(
               decimalToCents(participant.bargainPriceMin),
