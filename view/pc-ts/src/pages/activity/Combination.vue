@@ -1,48 +1,65 @@
 <template>
   <div class="combination container">
     <h2 class="title">多人拼团</h2>
+    <el-button :disabled="loading" @click="load(page)">刷新拼团列表</el-button>
+    <p v-if="loading" role="status">正在加载拼团商品…</p>
+    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-button v-if="error" :disabled="loading" @click="load(page)">重试商品列表</el-button>
     <div v-if="list.length" class="goods-grid">
-      <div
+      <router-link
         v-for="item in list"
-        :key="(item as any).id"
+        :key="item.id"
         class="goods-card"
-        @click="$router.push(`/combination/${(item as any).id}`)"
+        :to="`/combination/${item.id}`"
       >
         <div class="goods-image">
-          <img :src="(item as any).image || placeholder" :alt="(item as any).store_name" loading="lazy" />
+          <img :src="item.image || placeholder" :alt="item.title" loading="lazy" />
         </div>
         <div class="goods-info">
-          <div class="goods-name">{{ (item as any).store_name }}</div>
+          <div class="goods-name">{{ item.title }}</div>
           <div class="goods-bottom">
-            <span class="price">¥{{ (item as any).price }}</span>
-            <span class="ot-price">¥{{ (item as any).ot_price }}</span>
+            <span class="price">¥{{ item.price.toFixed(2) }}</span>
+            <span class="ot-price">¥{{ item.ot_price.toFixed(2) }}</span>
           </div>
           <div class="group-info">
-            <span>{{ (item as any).people }}人团</span>
+            <span>{{ item.people }}人团</span>
             <span class="group-btn">去拼团</span>
           </div>
         </div>
-      </div>
+      </router-link>
     </div>
-    <el-empty v-else-if="!loading" description="暂无拼团活动" />
+    <el-empty v-else-if="!loading && !error" description="当前页暂无拼团活动" />
+    <nav class="pagination" aria-label="拼团商品分页">
+      <el-button :disabled="loading || page <= 1" @click="load(page - 1)">上一页</el-button>
+      <span>第 {{ page }} 页</span>
+      <el-button :disabled="loading || !!error || list.length < 20" @click="load(page + 1)">下一页</el-button>
+    </nav>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { apiCombinationList } from "@/api/activity";
+import type { CombinationItem } from '../../../../common/combinationPurchase';
 
-const list = ref<unknown[]>([]);
+const list = ref<CombinationItem[]>([]);
 const loading = ref(true);
+const page = ref(1), error = ref('');
+let revision = 0, disposed = false;
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
-onMounted(async () => {
+async function load(nextPage = 1) {
+  if (disposed) return;
+  const current = ++revision;
+  list.value = []; error.value = ''; loading.value = true; page.value = nextPage;
   try {
-    list.value = await apiCombinationList();
-  } finally {
-    loading.value = false;
-  }
-});
+    const rows = await apiCombinationList(nextPage);
+    if (!disposed && current === revision) list.value = rows;
+  } catch (e) { if (!disposed && current === revision) error.value = e instanceof Error ? e.message : '拼团列表加载失败'; }
+  finally { if (!disposed && current === revision) loading.value = false; }
+}
+onMounted(() => { void load(); });
+onUnmounted(() => { disposed = true; revision++; });
 </script>
 
 <style scoped>
@@ -50,8 +67,12 @@ onMounted(async () => {
   font-size: 22px;
   margin: 20px 0;
 }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; }
 
 .goods-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
   background: #fff;
   border-radius: 8px;
   overflow: hidden;

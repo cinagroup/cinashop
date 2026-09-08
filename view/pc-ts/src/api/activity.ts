@@ -3,6 +3,7 @@
  */
 import request, { getData } from "@/utils/request";
 import { parseSeckillIndex, parseSeckillList, parseSeckillSelection } from "../../../common/seckillPurchase";
+import { parseCombinationList, parseCombinationSelection } from '../../../common/combinationPurchase';
 
 export interface DiscountPackageSku {
   id: number;
@@ -63,9 +64,15 @@ export async function apiSeckillSelection(id: number) {
   return parseSeckillSelection(await getData(request.get(`/seckill/detail/${id}`, { params: { view: "skus" } })), id);
 }
 
-/** 拼团列表 (GET /api/combination/list) */
-export function apiCombinationList(): Promise<unknown[]> {
-  return getData(request.get<unknown[]>("/combination/list"));
+/** 拼团列表 (GET /api/combination/list), preserving server pagination. */
+export async function apiCombinationList(page = 1) {
+  return parseCombinationList(await getData(request.get('/combination/list', { params: { page, limit: 20 } })));
+}
+
+export async function apiCombinationSelection(id: number, pinkId = 0) {
+  return parseCombinationSelection(await getData(request.get(`/combination/detail/${id}`, {
+    params: { view: 'skus', ...(pinkId ? { pink_id: pinkId } : {}) },
+  })), id, pinkId);
 }
 
 /** 砍价列表 (GET /api/bargain/list) */

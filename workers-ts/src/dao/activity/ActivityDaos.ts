@@ -137,7 +137,7 @@ export class StoreCombinationDao extends BaseDao<typeof storeCombination> {
           AND (${storeCombination.startTime} IS NULL OR ${storeCombination.startTime} <= ${now})
           AND (${storeCombination.stopTime} IS NULL OR ${storeCombination.stopTime} >= ${now})`,
       )
-      .orderBy(sql`${storeCombination.sort} DESC`)
+      .orderBy(desc(storeCombination.sort), desc(storeCombination.id))
       .limit(limit)
       .offset((page - 1) * limit);
   }

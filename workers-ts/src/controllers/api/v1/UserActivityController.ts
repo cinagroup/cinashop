@@ -9,6 +9,7 @@ import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibil
 import { UserCollectCompatibilityService } from "@/services/user/UserCollectCompatibilityService";
 import { ActivityService } from "@/services/activity/ActivityService";
 import { SeckillSkuCatalogService } from "@/services/activity/SeckillSkuCatalogService";
+import { CombinationSkuCatalogService } from "@/services/activity/CombinationSkuCatalogService";
 import { V2CouponCompatibilityService } from "@/services/activity/V2CouponCompatibilityService";
 import { UserCouponWalletService, couponWalletQuery, couponWalletFilter } from "@/services/activity/UserCouponWalletService";
 import { StoreDiscountService } from "@/services/activity/StoreDiscountService";
@@ -478,6 +479,15 @@ export async function combinationList(c: C) {
 }
 
 export async function combinationDetail(c: C) {
+  const view = c.req.query("view"), pinkId = c.req.query("pink_id");
+  if (view !== undefined || pinkId !== undefined) {
+    privateNoStore(c);
+    if (view !== "skus" || c.req.queries("view")?.length !== 1) throw new ValidateException("拼团详情视图无效");
+    if (pinkId !== undefined && c.req.queries("pink_id")?.length !== 1) throw new ValidateException("拼团团长ID无效");
+    return jsonOk(c, await new CombinationSkuCatalogService(c.get("container")).read(
+      c.get("uid") ?? 0, c.req.param("id"), pinkId,
+    ));
+  }
   const svc = new ActivityService(c.get("container"));
   return jsonOk(c, await svc.combinationDetail(Number(c.req.param("id"))));
 }

@@ -6311,6 +6311,28 @@ UniApp秒杀之前使用原始any详情与仅基础SKU的ActivityPurchase，不�
 
 本轮候选尚待自身Linux CI；没有生产DDL/DML、Cloudflare部署、真实账号、真机、订单提交、付款或provider调用。PC拼团硬编码SKU、UniApp砍价/拼团基础SKU购买组件、全局并发锁序及新系统上线配置等仍待后续A3/A2c/发布门禁。当前生产API旧目录合同不能与新前端单独混发。旧站真实历史数据迁移继续按用户确认N/A，不重新引入源端对账。
 
+### 10564a2自身Linux验收与A3c PC拼团入口（2026-09-08，本地候选）
+
+上一提交`10564a259f1f91d4a033c605419099b04bc69504`的[Actions34175430169](https://github.com/cinagroup/cinashop/actions/runs/34175430169)复核终态11/11成功。分片一101903759044为141文件1,073项、618.19秒；分片二101903759022为141文件1,033项、516.22秒；合计282文件2,106项零跳过。两片inventory为025b2436170a7f726873df01e996dbab6abfa57e187c7dc5de5a249734fdb60f，执行摘要分别d99702b107c8f44ddd841a53e2c67c5e783e610ff5f18da4f24bff2240b75c8a、2037c4bb78c66cb92180053d71d3c5756c8d4873f3564d3d6a94f1ae0ce43596，完整互斥及实际匹配均true。A3a/A3b按代码/隔离入口候选勾选，真实角色、真机、完整结算和发布仍属开放A3。新增A3c和旧pink合同缺口后清单219勾选/151开放/370项，本轮拼团另待自身CI。
+
+源合同依据PHP及旧UniApp，不声称搬运已有旧PC拼团购买页：StoreCombinationServices.php的detail/SKU与getPinkInfo分别使用活动ID和pink记录ID，后者经k_id解析团长；旧UniApp api/activity.js、goods_details、goods_combination_status和order_confirm保留该区分。当前Worker ActivityJoinService.pinkInfo却按活动ID解释旧pink路径，是独立待修缺口。原PC与当前简化Worker本来同用活动ID，不能仅凭PHP差异断言原PC该请求必然404。可证PC问题是硬编码sku00001/数量1、复用路由保留旧活动、迟到加购跳旧结算、未保存最新登录返回意图，以及列表读取store_name而后端输出title。
+
+新增CombinationSkuCatalogService仅在detail?view=skus启用，旧raw detail保持。严格正int32活动/团长参数，未知/重复view、重复pink_id或仅pink_id失败关闭，响应private,no-store。用户状态/会员资格取真实DAO，不相信query uid/vip。投影查询过滤活动/商品状态，type3活动SKU按suk映射有效type0基础SKU，歧义unique/suk、跨命名空间冲突、退役/缺映射、坏价格/库存/日期均拒绝；501行哨兵限制500规格。库存取活动stock/quota、商品stock、活动SKU stock/quota及基础SKU stock六者最小，上限另受once_num/num/32767约束；num是规则上限，不冒充个人累计剩余额度，活动价只是参考价。
+
+活动start/stop包含端点，团stop不包含端点，null沿用既有服务开放边界，不套秒杀整日扩展。最多5建议团及额外1指定团先合并，再以两条group-by查询统计实际active成员和paid=0/status=0/is_del=0/type3订单；COUNT订单笔数而非SUM件数，不相信memberCount，不返回成员身份。reservePinkJoin的满员/已参加/个人待付款拒绝通过既有withTx边界测试。目录不锁团、不预留库存/席位，多次读取不承诺一致快照，checkout仍须事务重验。PHP GETpink含状态/退款副作用，本轮未搬入只读目录，也未更改旧pink路由。
+
+PC combinationPurchase严格解析身份/价格/数量/日期/团快照，重复或矛盾数据拒绝。列表改title及20项分页，DAO加sort DESC,id DESC，真实21行测试确认20/1无重叠、同排序重复读稳定且sort优先；不承诺并发插入下offset分页不漂移。详情显式选活动SKU/数量/开团或指定团，失效团不自动降级；提供明确“放弃指定团并重新选择”，重读且清规格。购买前持写入门禁保存最新query意图，异步导航后复核页面/身份/截止，迟到加购不跳旧结算；已创建cart导航重试复用同cart。参团checkout同时携带type3、combinationId和pinkId，开团不带pinkId。
+
+本地最终定向4文件36项零跳过（31.97秒）：新增22项真实控制器/SQL与4项纯合同，另5项order-cart-pink及5项ordinary-query-index-alignment。Worker unit/runtime双TypeScript通过；PC实际SFC setup/VueRouter/Axios新增22项，合计60项零跳过、vue-tsc和1859模块构建通过。早期3处测试直接transaction的DbClient类型不兼容改用既有withTx；分页JSON unknown通过运行时envelope守卫与实际列表解析器处理，不加双重强转。两条既有VueUse PURE构建注释告警保留，未更改依赖、DDL、生产绑定或CI门禁。
+
+用户授权浏览器后，本轮通过cua_repl确认并使用Codex内置浏览器，不再沿用旧外部Playwright分支。前端测试技能要求渲染和交互；本机5191网关接真实Hono与一次性PGlite，静态资源转发5189 Vite（API代理固定127.0.0.1:9），无建单/支付/生产认证路由，页面CSP限制同源。临时脚本及合成身份页在用户Temp，不入提交。默认桌面及390×844首屏/滚动截图人工复核无空白/框架遮罩/横溢（390px innerWidth、375px document.scrollWidth），实际规格/数量/团状态和按钮无裁切，应用console error/warn为0。
+
+真实浏览器验证：列表→活动30→蓝规格8.75，数量3禁买/2可买，团400显示active2/required4/pending1/available1；匿名登录redirect保存actblu30/2/pink400，显式本机合成身份后回相同URL恢复。真实cart/add发送product70/activity30/type3/actblu30/2/new1，数据库存uid11、基础qablue01、数量2；确认订单页可见且URL保留combinationId30/pinkId400。随后改红3并明确开团，模拟410002后真实请求层redirect为actred30/3且无旧pinkId。列表业务失败显示错误/同页重试并恢复；真实不存在的pink999拒绝且无购买按钮，明确放弃后重读清规格，立即开团禁用。
+
+限制和失败保留：一次语义点击在派发前超时，确认页面未变后滚动/AX按钮成功；临时身份页未标charset出现乱码，固定测试按钮设置身份成功，正式商城无乱码。一处夹具满团注入错用eb_store_pink表名失败、未改行，不计满团浏览器验收；该状态由真实SQL/SFC覆盖。最终恰1条购物记录，既有1条合成待支付订单、全部团行、商品和SKU逐行不变，新增订单0。site_config/share/cart-count/pc-get-appid、地址/门店接口明确未纳入，不能把确认页待报价当完整checkout通过。真实登录、全量浏览器竞态、建单/支付/provider、生产写入和部署均未执行。
+
+Workers技能据当日官方best-practices及直接npm官方registry的workers-types5.20260908.1复核Hyperdrive/ExecutionContext；镜像先返回5.20260907.1不再称最新，项目依赖未升级。PostgreSQL技能影响有界投影、批量聚合、稳定排序和保留结算锁边界。A3c待自身Linux/PG16，UniApp拼团/砍价及旧pink合同仍开放；生产旧API与新前端不能未经发布门禁单独混发，旧站历史复制/逐行对账继续N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
