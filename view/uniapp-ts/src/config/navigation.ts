@@ -142,7 +142,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/activity/goods_bargain/index": { target: "/pages/activity/index", coverage: "candidate_covered" },
   "/pages/activity/goods_bargain_details/index": { target: "/pages/activity/bargainDetail", coverage: "candidate_covered" },
   "/pages/activity/goods_combination/index": { target: "/pages/activity/index", coverage: "candidate_covered" },
-  "/pages/activity/goods_combination_status/index": { target: "/pages/activity/detail", coverage: "partial_replacement" },
+  "/pages/activity/goods_combination_status/index": { target: "/pages/activity/detail", coverage: "partial_replacement", queryAliases: { id: "pinkRecordId" } },
   "/pages/activity/goods_seckill/index": { target: "/pages/activity/index", coverage: "candidate_covered" },
   "/pages/activity/goods_details/index": { target: "/pages/goods/detail", coverage: "partial_replacement" },
   "/pages/activity/bargain/index": { target: "/pages/activity/index", coverage: "partial_replacement" },

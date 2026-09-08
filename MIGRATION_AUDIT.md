@@ -6333,6 +6333,24 @@ PC combinationPurchase严格解析身份/价格/数量/日期/团快照，重复
 
 Workers技能据当日官方best-practices及直接npm官方registry的workers-types5.20260908.1复核Hyperdrive/ExecutionContext；镜像先返回5.20260907.1不再称最新，项目依赖未升级。PostgreSQL技能影响有界投影、批量聚合、稳定排序和保留结算锁边界。A3c待自身Linux/PG16，UniApp拼团/砍价及旧pink合同仍开放；生产旧API与新前端不能未经发布门禁单独混发，旧站历史复制/逐行对账继续N/A。
 
+### 74648e7自身CI与A3d UniApp拼团入口（2026-09-08，本地候选）
+
+精确SHA `74648e7708609e0494b33e2347781f7972477298` / [Actions34178371997](https://github.com/cinagroup/cinashop/actions/runs/34178371997)终态11/11成功，未取消或重跑。单元分片101912206937/101912206885各142文件，分别1,092/1,040项，合计284文件2,132项，零跳过。共同inventorySha256为47fc5898d735a046cd7372fa8b0fd8c26a8c5db822072012c91afd9f8569e18e，executedFileSha256分别0da983dbc6d620f12ab330a54f35ed9a946878a3cbcc10ae3deb8d011818e2ab、77ab31fa99e37ff542665c5f162b14fc66d115b91dc274f2ad510aa6d04ee37d；完整互斥/实际执行匹配均true。五端、workerd、PG16目录、secret和汇总门禁全部成功。A3c按代码/隔离候选勾选，不能借给本轮UniApp改动。
+
+审计旧pink端点时，沿PHP StoreCombinationServices.getPinkInfo、StorePinkServices.getCurrentPink/getPinkMemberAndPinkK追踪确认：参数是团成员/团长记录ID，包含k_id解析、本人订单、退款和成败状态；PHP GET还会触发完成/退款等写副作用。当前Worker却把它解释为活动ID，返回形状也不兼容。进一步发现新UniApp activity/detail同样依赖这个错误形状，因此本批先解除该依赖，未直接改动旧端点，防止修复合同同时破坏现有调用者。API-006-ACTIVITY-PINK继续开放，未来需把安全只读投影与状态变更职责分离。
+
+新增api/combination.ts及useCombinationPurchase，复用已验证的view=skus严格目录、活动SKU载荷和checkout参数生成器。活动30、基础商品70、团长400和活动unique/基础unique保持分离；明确选SKU/数量/开团或指定团，没有默认规格、客户端价格提交或将购买件数作为团员人数。登录前保存最新意图，匿名/过期返回先重新读取指定团资格；库存缩小时不静默改数量，满员/已加入/有待付/过期不自动开团。隐藏、卸载、身份版本变化和旧异步/原生导航回调均隔离；已生成购物记录但导航失败只重试导航。列表切换、隐藏和重入重新取20项分页，失败保留同页可重试，不显示虚假空态。
+
+旧goods_combination_status/index?id的导航别名改为pinkRecordId，冷启动明确显示“旧拼团状态链接尚未迁移”，无活动查询且禁购，不再错误购买同ID活动。这是临时保护，不是旧状态页完成：旧151页/新60页、97别名（60候选/37部分替代）和51缺口原数不变。浏览器另外观察到同一路径只修改hash查询时H5复用旧实例，不触发onLoad；本次冷启动拦截需reload才验证，运行中深链接重入的完整覆盖仍保留在旧状态页任务，不夸称所有导航形态已覆盖。
+
+新增27项实际Vue/Pinia/request/composable及活动列表SFC回归，覆盖组ID与活动ID不同、每单一席、两类登录恢复、无效团、显式放弃、同token续期、实例重用、点击瞬间截止、重复加购/导航、晚到结果及分页错误。完整UniApp toolchain最终99项全部通过、零跳过，vue-tsc通过；H5、MP-WEIXIN、APP三目标构建成功，产物检查3项通过。Worker纯合同/UniApp路由回归2文件10项通过，audit:uniapp通过。未改Worker逻辑、SQL、依赖版本或CI门禁；本轮仍待自己的Linux CI，不以本地成功关闭A3d。
+
+前端测试技能要求实际页面闭环，因此使用可用CUA浏览器，未启用其他浏览器自动化后备。H5仅监听127.0.0.1:5190，API只代理到5192的一次性PGlite/Hono真实拼团/购物车夹具；TEST_FINANCE_POSTGRES_URL显式清空，认证是合成响应，未使用真实账号。默认桌面1265×712及390×844截图、页面标题/URL/非空内容、无框架错误层均确认；手机innerWidth390、document scrollWidth375，无横向越界。控制台无error，只有DCloud依赖内vue-router深路径导入弃用warning（重载后重复），未冒称零告警。
+
+浏览器交互证据：蓝色数量3禁购，改2并选团400，真实登录页面返回仍蓝2/团400，后台重新GET带pink_id=400；参团后URL为confirm?mode=buy&cartId=1&type=3&combinationId=30&pinkId=400，确认页仅显示蓝色2件。配送/门店API明确不在夹具范围，页面待报价，未点击提交或支付，不据此声称完整结算通过。返回后清空SKU并重新读取资格；测试控制器模拟满员后保留指定团且禁参，明确选开新团/红色3件后注入410002，重新登录返回红3/开团并重读目录。随后直接将活动下架，真实cart服务拒绝，页面清除失效选择。列表模拟失败显示错误而非空态，重试仍page1/limit20并恢复正确标题；不存在的pinkId999须显式放弃才取正常目录，恢复后无选中SKU且禁购。截图已在任务中展示。
+
+最终3次cart请求：1次蓝2成功，1次合成会话过期，1次真实服务下架拒绝；仅生成1条type3/activity30/product70/base qablue01/qty2/isNew1记录。新增订单0，既有1条合成订单及商品/SKU数组快照相等。团人数被本轮测试控制器改为3再恢复4，最终无ORDER BY的整数组比较unchangedPinks=false；可能涉及更新后行序变化，但未取得按主键逐行差分，故不宣称团表指纹不变。没有生产数据或provider写入。视口已恢复、自建浏览器标签关闭、两个本轮服务停止。清单为220勾选/151开放/371项；A3全流程、砍价、旧pink状态、真机/真实角色/生产发布保持开放。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -71,6 +71,9 @@
 
     <!-- 拼团 -->
     <view v-if="active === 'combination'" class="body">
+      <button size="mini" :disabled="combinationLoading" @tap="loadCombination(combinationPage)">刷新拼团列表</button>
+      <view v-if="combinationLoading" class="notice">正在加载拼团商品…</view>
+      <view v-if="combinationError" class="error">{{ combinationError }}<button size="mini" :disabled="combinationLoading" @tap="loadCombination(combinationPage)">重试拼团列表</button></view>
       <view v-if="combinationList.length" class="goods-list">
         <view v-for="g in combinationList" :key="g.id" class="goods-item" @tap="goCombination(g.id)">
           <view class="goods-info">
@@ -83,7 +86,12 @@
           <view class="go-btn">去拼团</view>
         </view>
       </view>
-      <view v-else class="empty">暂无拼团活动</view>
+      <view v-else-if="!combinationLoading && !combinationError" class="empty">当前页暂无拼团活动</view>
+      <view class="pagination">
+        <button size="mini" :disabled="combinationLoading || combinationPage <= 1" @tap="loadCombination(combinationPage - 1)">上一页</button>
+        <text>第 {{ combinationPage }} 页</text>
+        <button size="mini" :disabled="combinationLoading || !!combinationError || combinationList.length < 20" @tap="loadCombination(combinationPage + 1)">下一页</button>
+      </view>
     </view>
     <view v-if="active === 'lottery'" class="body">
       <view class="lottery-entry" @tap="goLottery">
@@ -102,11 +110,11 @@ import { ref } from "vue";
 import { onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { apiSeckillCatalogIndex, apiSeckillCatalogPage } from '@/api/seckill';
 import type { SeckillSlot, SeckillItem } from '../../../../common/seckillPurchase';
+import { apiCombinationCatalogPage } from '@/api/combination';
+import type { CombinationItem } from '../../../../common/combinationPurchase';
 import {
   apiBargainList,
-  apiCombinationList,
   type BargainListItem,
-  type CombinationListItem,
 } from "@/api/activity";
 
 const tabs = [
@@ -121,7 +129,9 @@ const seckillList = ref<SeckillItem[]>([]);
 const selectedTime = ref(0), seckillPage = ref(1), seckillLoading = ref(false), seckillError = ref('');
 let visible = false, seckillRevision = 0;
 const bargainList = ref<BargainListItem[]>([]);
-const combinationList = ref<CombinationListItem[]>([]);
+const combinationList = ref<CombinationItem[]>([]);
+const combinationPage = ref(1), combinationLoading = ref(false), combinationError = ref('');
+let combinationRevision = 0;
 
 async function loadSeckill(time?: number, page = 1) {
   if (!visible || active.value !== 'seckill') return;
@@ -152,16 +162,20 @@ async function loadBargain() {
   }
 }
 
-async function loadCombination() {
+async function loadCombination(page = 1) {
+  if (!visible || active.value !== 'combination') return;
+  const current = ++combinationRevision;
+  combinationList.value = []; combinationError.value = ''; combinationLoading.value = true; combinationPage.value = page;
   try {
-    combinationList.value = await apiCombinationList();
-  } catch {
-    combinationList.value = [];
-  }
+    const rows = await apiCombinationCatalogPage(page);
+    if (current === combinationRevision && visible) combinationList.value = rows;
+  } catch (e) { if (current === combinationRevision && visible) combinationError.value = e instanceof Error ? e.message : '拼团列表加载失败'; }
+  finally { if (current === combinationRevision && visible) combinationLoading.value = false; }
 }
 
 function switchTab(key: string) {
   seckillRevision++; seckillList.value = []; seckillLoading.value = false;
+  combinationRevision++; combinationList.value = []; combinationLoading.value = false;
   active.value = key;
   if (key === "seckill") loadSeckill();
   if (key === "bargain") loadBargain();
@@ -178,6 +192,7 @@ function goBargain(id: number) {
 }
 
 function goCombination(id: number) {
+  if (!visible || active.value !== 'combination' || combinationLoading.value || !combinationList.value.some(item => item.id === id)) return;
   uni.navigateTo({ url: `/pages/activity/detail?id=${id}` });
 }
 
@@ -189,8 +204,11 @@ function goLottery() {
   uni.navigateTo({ url: "/pages/activity/lottery" });
 }
 
-onShow(() => { visible = true; if (active.value === 'seckill') void loadSeckill(); });
-function suspendSeckill() { visible = false; seckillRevision++; seckillList.value = []; seckillLoading.value = false; }
+onShow(() => { visible = true; if (active.value === 'seckill') void loadSeckill(); if (active.value === 'combination') void loadCombination(); });
+function suspendSeckill() {
+  visible = false; seckillRevision++; seckillList.value = []; seckillLoading.value = false;
+  combinationRevision++; combinationList.value = []; combinationLoading.value = false;
+}
 onHide(suspendSeckill); onUnload(suspendSeckill);
 </script>
 

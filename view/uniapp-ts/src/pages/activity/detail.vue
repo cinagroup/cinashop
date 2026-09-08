@@ -1,201 +1,80 @@
 <template>
-  <view class="pink-detail">
-    <view v-if="info" class="body">
-      <!-- 商品 -->
-      <view class="goods-card">
-        <view class="goods-name">{{ (info as any).combination?.storeName }}</view>
-        <view class="goods-price">
-          <text class="price">¥{{ (info as any).price }}</text>
-          <text class="ot-price">¥{{ (info as any).otPrice }}</text>
+  <view class="combination-detail">
+    <view v-if="loading" class="notice">正在加载活动规格与参团资格…</view>
+    <view v-if="error" class="error">{{ error }}</view>
+    <button v-if="!prepared" size="mini" :disabled="loading || locked" @tap="load">刷新活动与拼团</button>
+    <button v-if="!detail && !loading && error && selectedGroup" size="mini" :disabled="locked" @tap="discardGroup">放弃指定团并重新选择</button>
+    <view v-if="detail" class="product">
+      <image class="goods-img" :src="selectedSku?.image || detail.image || placeholder" mode="aspectFit" />
+      <view class="info-section">
+        <view class="goods-name">{{ detail.title }}</view>
+        <view class="notice">{{ open ? '拼团活动进行中' : '活动未开始或已结束，请刷新确认' }}</view>
+        <view class="notice">{{ detail.people }} 人成团 · 每单限购 {{ detail.once_limit }} 件 · 累计限购 {{ detail.total_limit }} 件</view>
+        <view class="notice">北京时间：{{ formatDate(detail.start_time) }} 至 {{ formatDate(detail.stop_time) }}</view>
+        <view class="section-title">选择活动规格</view>
+        <button v-for="sku in detail.skus" :key="sku.unique" class="sku" :class="{ selected: selected === sku.unique }"
+          :disabled="locked || loading || sku.max_quantity < 1" @tap="choose(sku.unique)">
+          {{ sku.suk || '默认规格' }} · ¥{{ sku.catalog_price }}{{ sku.max_quantity < 1 ? ' · 已售罄' : '' }}
+        </button>
+        <view v-if="!detail.skus.length" class="notice">暂无可购买规格</view>
+        <view v-if="selectedSku" class="price">活动参考价 ¥{{ selectedSku.catalog_price }}</view>
+        <view class="quantity-row">
+          <text>购买数量</text>
+          <input :value="quantity" type="number" :disabled="locked || loading" @input="setQuantity" aria-label="购买数量" />
         </view>
-        <view class="people-tip">{{ (info as any).people }} 人成团</view>
+        <view class="section-title">开团或参加指定团</view>
+        <button class="group" :class="{ selected: selectedGroup === 0 }" :disabled="locked || loading" @tap="chooseGroup(0)">发起新团</button>
+        <button v-for="group in groups" :key="group.id" class="group" :class="{ selected: selectedGroup === group.id }"
+          :disabled="locked || loading || !groupAvailable(group)" @tap="chooseGroup(group.id)">
+          <text>参加团 #{{ group.id }}</text>
+          <text>已参与 {{ group.active_people }} / {{ group.required_people }} 人 · 待支付预占 {{ group.reserved_people }} 人</text>
+          <text>{{ group.already_joined ? '您已参加该团' : group.has_pending_order ? '您有该团待支付订单' : groupAvailable(group) ? '可用席位 ' + group.available_places : '该团已不可参加' }}</text>
+          <text>截止：{{ formatDate(group.stop_time) }}</text>
+        </button>
+        <view v-if="!groups.length" class="notice">暂无可展示的进行中拼团</view>
+        <view v-if="selectedGroup && !selectedGroupAvailable" class="error">原指定团已不可参加；不会自动改为开团，请明确重新选择。</view>
+        <view class="notice">每笔订单占 1 个团员席位，与购买件数不同。目录不预留库存或席位，支付后才参与拼团；价格和资格由服务端重新校验。</view>
       </view>
-
-      <!-- 进行中的团 -->
-      <view class="pink-list">
-        <view class="section-title">正在拼团 ({{ (info as any).pinkList?.length ?? 0 }})</view>
-        <view v-if="(info as any).pinkList?.length" class="pink-item" v-for="p in (info as any).pinkList" :key="p.id">
-          <view class="pink-info">
-            <view class="pink-people">{{ p.people }} / {{ (info as any).people }} 人</view>
-            <view class="progress"><view class="progress-bar" :style="{ width: Math.min(100, (p.people / (info as any).people) * 100) + '%' }" /></view>
-          </view>
-          <view v-if="p.status === 1" class="pink-actions">
-            <text class="pink-status">拼团中</text>
-            <text class="pink-join" @tap="join(Number(p.id))">参加该团</text>
-          </view>
-          <text class="pink-status done" v-else>已完成</text>
-        </view>
-        <view v-else class="empty">暂无进行中的拼团</view>
-      </view>
-
-      <view class="join-btn" @tap="join()">立即开团</view>
     </view>
-    <view v-else class="empty">拼团活动不存在或已结束</view>
-    <ActivityPurchase :visible="purchaseVisible" :product-id="Number(info?.combination?.productId || 0)" :activity-id="Number(info?.combination?.id || 0)" :type="3" @close="purchaseVisible = false" @purchased="checkout" />
+    <view class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : selectedGroup ? '参加所选团' : '立即开团' }}</button></view>
   </view>
-  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { onLoad } from "@dcloudio/uni-app";
-import { http } from "@/utils/request";
-import ActivityPurchase from "@/components/ActivityPurchase.vue";
-import { useAuthStore } from "@/stores/auth";
-
-const info = ref<any>(null);
-const purchaseVisible = ref(false), selectedPinkId = ref(0);
-const auth = useAuthStore();
-
-async function load(id: number) {
-  try {
-    info.value = await http.get<any>(`/combination/pink/${id}`);
-  } catch {
-    info.value = null;
-  }
+import { useCombinationPurchase } from '@/composables/useCombinationPurchase';
+const { detail, selected, quantity, selectedSku, loading, buying, navigating, error, open, locked, canBuy, prepared,
+  selectedGroup, groups, selectedGroupAvailable, groupAvailable, choose, chooseGroup, discardGroup, load, purchase } = useCombinationPurchase();
+const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
+function setQuantity(event: unknown) {
+  const payload = event as { detail?: { value?: unknown }; target?: { value?: unknown } };
+  const value = payload.detail?.value ?? payload.target?.value;
+  const raw = typeof value === 'string' ? value : '';
+  quantity.value = /^[1-9]\d{0,4}$/.test(raw) ? Number(raw) : raw;
 }
-
-async function join(pinkId = 0) {
-  if (!auth.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
-  if (!info.value?.combination) return;
-  selectedPinkId.value = pinkId; purchaseVisible.value = true;
+// Fixed UTC+8 formatting also works in native targets without Intl timezone support.
+function formatDate(value: string | null) {
+  if (!value) return '不限';
+  return new Date(Date.parse(value) + 8 * 3600_000).toISOString().slice(0, 19).replace('T', ' ');
 }
-function checkout(id: number) {
-  purchaseVisible.value = false;
-  uni.navigateTo({ url: `/pages/order/confirm?mode=buy&cartId=${id}&type=3&combinationId=${info.value.combination.id}&pinkId=${selectedPinkId.value}` });
-}
-
-onLoad((query) => {
-  const id = Number(query?.id ?? 0);
-  if (id) load(id);
-});
 </script>
 
 <style scoped>
-.body {
-  padding: 20rpx;
-}
-
-.goods-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-}
-
-.goods-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
-}
-
-.goods-price {
-  display: flex;
-  align-items: baseline;
-  gap: 16rpx;
-  margin-top: 16rpx;
-}
-
-.price {
-  font-size: 44rpx;
-  color: #e93323;
-  font-weight: 700;
-}
-
-.ot-price {
-  font-size: 24rpx;
-  color: #999;
-  text-decoration: line-through;
-}
-
-.people-tip {
-  font-size: 24rpx;
-  color: #666;
-  margin-top: 12rpx;
-}
-
-.pink-list {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-}
-
-.section-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 20rpx;
-}
-
-.pink-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f7f7f7;
-}
-
-.pink-info {
-  flex: 1;
-  margin-right: 20rpx;
-}
-
-.pink-people {
-  font-size: 24rpx;
-  color: #555;
-  margin-bottom: 8rpx;
-}
-
-.progress {
-  height: 10rpx;
-  background: #f0f0f0;
-  border-radius: 8rpx;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: #e93323;
-  border-radius: 8rpx;
-}
-
-.pink-status {
-  font-size: 24rpx;
-  color: #e93323;
-}
-
-.pink-actions {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-}
-
-.pink-join {
-  background: #e93323;
-  color: #fff;
-  border-radius: 24rpx;
-  padding: 8rpx 18rpx;
-  font-size: 22rpx;
-}
-
-.pink-status.done {
-  color: #999;
-}
-
-.empty {
-  text-align: center;
-  color: #999;
-  font-size: 24rpx;
-  padding: 60rpx 0;
-}
-
-.join-btn {
-  background: #e93323;
-  color: #fff;
-  text-align: center;
-  border-radius: 44rpx;
-  padding: 24rpx 0;
-  font-size: 30rpx;
-  font-weight: 600;
-}
+.combination-detail { padding: 24rpx 24rpx calc(150rpx + env(safe-area-inset-bottom)); }
+.product { margin-top: 24rpx; background: white; border-radius: 16rpx; overflow: hidden; }
+.goods-img { width: 100%; height: 520rpx; background: #f5f5f5; }
+.info-section { padding: 24rpx; }
+.goods-name { font-size: 34rpx; font-weight: 600; overflow-wrap: anywhere; }
+.notice { margin: 18rpx 0; font-size: 25rpx; color: #666; line-height: 1.6; }
+.error { padding: 20rpx; color: #a72823; background: #fff0ed; margin-bottom: 20rpx; }
+.section-title { margin-top: 24rpx; font-size: 28rpx; }
+.sku, .group { margin-top: 16rpx; font-size: 26rpx; }
+.group { padding: 20rpx; text-align: left; line-height: 1.8; }
+.group text { display: block; }
+.selected { color: #ad261d; border: 2rpx solid #e93323; }
+.price { color: #b72a1d; margin: 24rpx 0; font-size: 34rpx; }
+.quantity-row { display: flex; gap: 20rpx; align-items: center; font-size: 28rpx; }
+.quantity-row input { width: 140rpx; padding: 12rpx; border: 1rpx solid #aaa; }
+.action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)); background: white; box-shadow: 0 -2rpx 10rpx #0001; }
+.buy-btn { background: #e93323; color: white; font-size: 30rpx; }
+.buy-btn[disabled] { background: #eee; color: #777; }
 </style>
