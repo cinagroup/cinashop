@@ -6671,6 +6671,28 @@ DB-009G新增两项真实模型关系测试，采用financePostgres既有防护�
 
 PostgreSQL/Workers技能推动有界事务、范围复核、实际生成器与目录验证；已核验当前官方Workers最佳实践、5.20260908.1 Hyperdrive类型及本地Wrangler schema，未改依赖或绑定。本轮无浏览器、生产SQL/DDL、部署或真实provider操作；历史复制仍N/A。
 
+### 44b6ef4计费阻断与企业微信外键补审（2026-09-08）
+
+`44b6ef4c3abc7194d799fe294c3e17361c30a1cd` / [Actions34206488081](https://github.com/cinagroup/cinashop/actions/runs/34206488081)终态10/11成功、整体failure。汇总任务102001161012的steps为空、runner_id=0；读取check-run注释明确为账户近期付款失败或消费额度限制，任务未启动，不是代码断言失败。没有日志可供该任务复盘；未重跑、取消其他运行、提高额度、修改计费或弱化门禁。需所有者在GitHub Billing & plans处理。34abedc继续作为最近完整全绿基线。
+
+本SHA分片一101997071035为149文件1230项、690.21秒；分片二101997070845为149文件1175项、595.11秒，总298文件2405项零跳过。inventory SHA=`210d72e2c009ec3a1e81cf2c8d68189c692d744d8c4dc6bc2ff73cdab29a9c18`，executed SHA依次`e1a108fdc3497c00672a1c3bd941d1c4701507c960a9a537b9eec089daab8eb4`、`ae57857784c635303e419d0fcc7c4d369d4cbbbd41e668cab8c48775f2d661ae`，两片完整互斥/执行文件匹配均true。目录101997070718、workerd、五端和秘密扫描成功；没有把旧九路径逐字段计数伪称为本轮重新提取的目录结果。
+
+正式0147升级专项33项10307ms全通过，包括两处真实写锁、准确拒绝/预算恢复/释放后重试。两项计划报告version160014、migrationApplied=0147：100003子行，原无匹配hit2273/1471、过滤100003，正式索引后read2、活跃/关闭或删除态hit4、generic hit2。真实父端拒绝/回滚及父子行/FK保持断言通过；不是生产执行，也不是新G2测试的CI证据。
+
+新增`scripts/foreign-key-index-audit.ts`与`audit:orm:foreign-key-indexes`命令，只读取Drizzle模型，不连接数据库。完整枚举45个FK，保存实际引用列、父表、动作、索引方法、首列/完整首部形状及部分谓词；去重重复导出。候选不代表可用或性能合格，不丢弃IS NOT NULL部分索引。两项单元覆盖真实45引用及乱序复合/窄首列/尾列/表达式/部分索引的区别。CLI已执行：唯一无首列候选为work_contact_action_outbox.wcao_client_fk；只有部分候选的恰为wmc_last_event_fk、wmia_last_event_fk、wmia_link_event_fk。
+
+新增四项隔离计划测试，每项完整执行未改写的Drizzle全模型SQL，目录FK名称逐一与离线45项比对；实际保留全部CHECK/FK/identity/索引。默认PGlite180003；PG16分支仅允许既有loopback finance_test专用服务中随机独立数据库，不连接生产或共享public。每子表100003行，合成热键、罕见键、不同生命周期状态和跨租户样本。SELECT 1 FROM ONLY/FOR KEY SHARE忠实探针不加LIMIT、不关闭顺扫；另外实际执行引用父行DELETE/键更新并确认准确FK拒绝，无引用操作在事务中执行后回滚，校验父子全行指纹及FK定义/动作/验证状态不变。客户id为GENERATED ALWAYS，更新corp_id这一引用组成列而不关闭identity保护。没有捕获嵌套触发器计划，不宣称生产延迟或真实provider流程。
+
+三项事件引用已有IS NOT NULL部分索引。最终本地默认/custom与generic无匹配均hit2，罕见状态hit4、过滤0；同事务暂时去掉准确索引的反事实均hit2084/过滤100003，哨兵回滚恢复OID/定义；每项50001个NULL，父端保护及行/FK指纹不变。此证据支持保留原索引而非补重复非局部索引，自身PG16验证仍待运行。
+
+wcao_client_fk无索引时无匹配hit4001、过滤100003。仅在测试库添加(corp_id,client_id)候选，默认统计下custom无匹配read2/罕见态hit4，但五次ANALYZE试验中的trial3漏采罕见键，corp_id/client_id的n_distinct均为1、most_common_freqs=[1]，generic又顺扫hit4001/过滤100003。没有删除失败样本或把随机某次选中索引写成普遍通过。独立诊断把两列统计目标调至1000后再次ANALYZE，当前夹具下custom/generic均hit2、罕见态hit4；这是诊断分支，不是正式迁移或生产统计配置建议。随机采样可能改变计划以及统计目标的权衡参见[PG16 ANALYZE](https://www.postgresql.org/docs/16/sql-analyze.html)。默认计划稳定性、适用分布和维护成本仍开放。
+
+源代码路径补查：EnterpriseWechatContactActionService.redactCompletedCallbackPayloads只更新已完成事件payload及脱敏时间，不删除回调事件或更新引用键；EnterpriseWechatClientCurrentService的跟进删除变更生命周期而不改变corp_id/id。当前检索未找到对workCallbackEvent/workClientCurrent父表的直接删除路径，不能将合成父操作误称为线上热路径。成员合并中的workMemberCurrent删除是另一个父子关系，不能冒充这三处事件引用的父端删除。保留/清理策略与另外12个复合引用仍须独立审查。
+
+恢复工作时发现上一命令把git diff --check接在tsc后，进程exit0并不表示前面的tsc成功：目录query的row类型为unknown。现增加运行时字段校验和类型收窄，未用any掩盖；独立重跑unit类型检查终态成功，最终两文件6/6通过、48.83秒，CLI清单通过。没有改运行时模型/正式迁移/依赖锁文件或生产配置。G2不关闭，清单维持221勾选/156开放/377项。
+
+最新浏览器授权下已确认CUA内置浏览器可用，并只读打开生产`https://cinashop-pc.pages.dev/seckill`。加载后重新读取页面树：标题CinaShop - PC 商城、导航和限时秒杀内容存在，三个时段仍显示“-”，提示当前时段暂无秒杀商品。没有点击/控制台/截图/移动端证据，不声称完整UI验收或空活动已确认；没有登录、购物车、订单或付款操作。没有主Worker/Pages部署或生产SQL。PostgreSQL技能推动保留有效部分索引，并把默认统计证据与诊断配置明确分开；旧历史迁移继续N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
