@@ -28,6 +28,7 @@ export function apiCartAdd(params: {
   cartNum: number;
   type?: number;
   activityId?: number;
+  bargainUserId?: number;
   new?: 0 | 1;
 }): Promise<{ id: number; cartNum: number }> {
   return http.post<{ id: number; cartNum: number }>("/cart/add", params as Record<string, unknown>);

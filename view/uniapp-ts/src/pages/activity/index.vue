@@ -53,19 +53,27 @@
 
     <!-- 砍价 -->
     <view v-if="active === 'bargain'" class="body">
+      <button size="mini" :disabled="bargainLoading" @tap="loadBargain(bargainPage)">刷新砍价列表</button>
+      <view v-if="bargainLoading" class="notice">正在加载砍价商品…</view>
+      <view v-if="bargainError" class="error">{{ bargainError }}<button size="mini" :disabled="bargainLoading" @tap="loadBargain(bargainPage)">重试砍价列表</button></view>
       <view v-if="bargainList.length" class="goods-list">
         <view v-for="g in bargainList" :key="g.id" class="goods-item" @tap="goBargain(g.id)">
           <view class="goods-info">
             <view class="goods-name">{{ g.title }}</view>
             <view class="goods-price">
               <text class="price">¥{{ g.price }}</text>
-              <text class="ot-price">可砍至 ¥{{ g.min_price }}</text>
+              <text class="minimum-price">可砍至 ¥{{ g.minimum }}</text>
             </view>
           </view>
           <view class="go-btn" @tap.stop="goBargain(g.id)">去砍价</view>
         </view>
       </view>
-      <view v-else class="empty">暂无砍价商品</view>
+      <view v-else-if="!bargainLoading && !bargainError" class="empty">当前页暂无砍价商品</view>
+      <view class="pagination">
+        <button size="mini" :disabled="bargainLoading || bargainPage <= 1" @tap="loadBargain(bargainPage - 1)">上一页</button>
+        <text>第 {{ bargainPage }} 页</text>
+        <button size="mini" :disabled="bargainLoading || !!bargainError || bargainList.length < 20 || bargainPage >= 10000" @tap="loadBargain(bargainPage + 1)">下一页</button>
+      </view>
       <view class="my-link" @tap="goMyBargain">我的砍价 ›</view>
     </view>
 
@@ -101,21 +109,19 @@
         <view class="lottery-button">立即参与 ›</view>
       </view>
     </view>
+    <DiySuspendedNavigation />
   </view>
-  <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { onShow, onHide, onUnload } from '@dcloudio/uni-app';
+import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { apiSeckillCatalogIndex, apiSeckillCatalogPage } from '@/api/seckill';
 import type { SeckillSlot, SeckillItem } from '../../../../common/seckillPurchase';
 import { apiCombinationCatalogPage } from '@/api/combination';
 import type { CombinationItem } from '../../../../common/combinationPurchase';
-import {
-  apiBargainList,
-  type BargainListItem,
-} from "@/api/activity";
+import { apiBargainCatalogPage } from '@/api/bargain';
+import type { BargainItem } from '../../../../common/bargainPurchase';
 
 const tabs = [
   { key: "seckill", name: "限时秒杀" },
@@ -128,7 +134,9 @@ const slots = ref<SeckillSlot[]>([]);
 const seckillList = ref<SeckillItem[]>([]);
 const selectedTime = ref(0), seckillPage = ref(1), seckillLoading = ref(false), seckillError = ref('');
 let visible = false, seckillRevision = 0;
-const bargainList = ref<BargainListItem[]>([]);
+const bargainList = ref<BargainItem[]>([]);
+const bargainPage = ref(1), bargainLoading = ref(false), bargainError = ref('');
+let bargainRevision = 0;
 const combinationList = ref<CombinationItem[]>([]);
 const combinationPage = ref(1), combinationLoading = ref(false), combinationError = ref('');
 let combinationRevision = 0;
@@ -154,12 +162,15 @@ async function loadSeckill(time?: number, page = 1) {
   finally { if (current === seckillRevision && visible) seckillLoading.value = false; }
 }
 
-async function loadBargain() {
+async function loadBargain(page = 1) {
+  if (!visible || active.value !== 'bargain') return;
+  const current = ++bargainRevision;
+  bargainList.value = []; bargainError.value = ''; bargainLoading.value = true; bargainPage.value = page;
   try {
-    bargainList.value = await apiBargainList();
-  } catch {
-    bargainList.value = [];
-  }
+    const rows = await apiBargainCatalogPage(page);
+    if (current === bargainRevision && visible) bargainList.value = rows;
+  } catch (e) { if (current === bargainRevision && visible) bargainError.value = e instanceof Error ? e.message : '砍价列表加载失败'; }
+  finally { if (current === bargainRevision && visible) bargainLoading.value = false; }
 }
 
 async function loadCombination(page = 1) {
@@ -174,8 +185,10 @@ async function loadCombination(page = 1) {
 }
 
 function switchTab(key: string) {
+  if (!tabs.some(tab => tab.key === key)) return;
   seckillRevision++; seckillList.value = []; seckillLoading.value = false;
   combinationRevision++; combinationList.value = []; combinationLoading.value = false;
+  bargainRevision++; bargainList.value = []; bargainLoading.value = false;
   active.value = key;
   if (key === "seckill") loadSeckill();
   if (key === "bargain") loadBargain();
@@ -188,6 +201,7 @@ function goSeckill(id: number) {
 }
 
 function goBargain(id: number) {
+  if (!visible || active.value !== 'bargain' || bargainLoading.value || !bargainList.value.some(item => item.id === id)) return;
   uni.navigateTo({ url: `/pages/activity/bargainDetail?id=${id}` });
 }
 
@@ -197,6 +211,7 @@ function goCombination(id: number) {
 }
 
 function goMyBargain() {
+  if (!visible || active.value !== 'bargain') return;
   uni.navigateTo({ url: `/pages/activity/bargainDetail?mine=1` });
 }
 
@@ -204,10 +219,12 @@ function goLottery() {
   uni.navigateTo({ url: "/pages/activity/lottery" });
 }
 
-onShow(() => { visible = true; if (active.value === 'seckill') void loadSeckill(); if (active.value === 'combination') void loadCombination(); });
+onLoad(query => { if (tabs.some(tab => tab.key === query?.type)) active.value = query!.type!; });
+onShow(() => { visible = true; if (active.value === 'seckill') void loadSeckill(); if (active.value === 'combination') void loadCombination(); if (active.value === 'bargain') void loadBargain(); });
 function suspendSeckill() {
   visible = false; seckillRevision++; seckillList.value = []; seckillLoading.value = false;
   combinationRevision++; combinationList.value = []; combinationLoading.value = false;
+  bargainRevision++; bargainList.value = []; bargainLoading.value = false;
 }
 onHide(suspendSeckill); onUnload(suspendSeckill);
 </script>
@@ -342,6 +359,7 @@ onHide(suspendSeckill); onUnload(suspendSeckill);
   margin-top: 20rpx;
   padding: 20rpx;
 }
+.minimum-price { font-size: 22rpx; color: #777; }
 .notice { margin: 18rpx 0; font-size: 24rpx; color: #666; line-height: 1.6; }
 .error { color: #a72823; margin: 20rpx 0; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: 16rpx; padding: 20rpx 0; font-size: 24rpx; }
