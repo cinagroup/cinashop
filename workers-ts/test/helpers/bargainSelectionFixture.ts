@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { eq, sql } from "drizzle-orm";
+import type { PgTable } from "drizzle-orm/pg-core";
 import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
 import { bargainDetail } from "../../src/controllers/api/v1/UserActivityController";
 import { startBargain, myBargains, cancelBargain } from "../../src/controllers/api/v1/ActivityJoinController";
@@ -10,8 +11,8 @@ import type { AppVariables, Env } from "../../src/env";
 /** Owned SQL fixture using the existing PGlite / dedicated loopback PG16 guard.
  * Auth and KV are isolated substitutes. No order-create/payment route is mounted.
  */
-export async function createBargainSelectionFixture() {
-  const f = await createPcCheckoutQuoteFixture([storeBargain, storeBargainUser, storeBargainUserHelp]);
+export async function createBargainSelectionFixture(extraTables: PgTable[] = []) {
+  const f = await createPcCheckoutQuoteFixture([storeBargain, storeBargainUser, storeBargainUserHelp, ...extraTables]);
   try {
     for (const key of Object.keys(f.config)) f.config[key] = "0";
     await f.db.delete(storeCart);

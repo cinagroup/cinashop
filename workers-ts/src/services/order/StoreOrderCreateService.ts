@@ -84,6 +84,8 @@ import {
 import { AttachmentService } from "@/services/system/AttachmentService";
 import { reservePinkJoin } from "@/services/activity/PinkLifecycleService";
 import { lockPinkInventory } from "@/services/activity/PinkInventoryLocks";
+import { readBargainOrderParticipation, type BargainOrderParticipation } from "@/services/activity/BargainOrderSnapshot";
+import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { parseVirtualDeliveryInfo } from "@/services/order/VirtualProductDeliveryService";
 import { customerRefundEligibility } from "@/services/order/VirtualProductRefundPolicy";
@@ -460,6 +462,7 @@ export async function cancelStoreOrder(
         : [];
       missingLegacyActivityMain = !rows[0];
     } else if (order.type === 2) {
+      const participation = readBargainOrderParticipation(cartInfos, uid, order.activityId);
       const bargainUsers = await tx
         .select({ id: storeBargainUser.id, bargainId: storeBargainUser.bargainId })
         .from(storeBargainUser)
@@ -467,7 +470,11 @@ export async function cancelStoreOrder(
           and(
             eq(storeBargainUser.uid, uid),
             eq(storeBargainUser.status, 4),
-            or(
+            eq(storeBargainUser.isDel, 0),
+            participation ? and(
+              eq(storeBargainUser.id, participation.participantId),
+              eq(storeBargainUser.bargainId, participation.activityId),
+            ) : or(
               eq(storeBargainUser.bargainId, order.activityId),
               eq(storeBargainUser.id, order.activityId),
             ),
@@ -680,6 +687,9 @@ export async function cancelStoreOrder(
         .where(
           and(
             eq(storeBargainUser.id, bargainParticipant.id),
+            eq(storeBargainUser.uid, uid),
+            eq(storeBargainUser.bargainId, bargainParticipant.bargainId),
+            eq(storeBargainUser.isDel, 0),
             eq(storeBargainUser.status, 4),
           ),
         )
@@ -1009,6 +1019,7 @@ export class StoreOrderCreateService {
     let paidMemberDiscountCents = 0;
     let bargainActivityId = 0;
     let bargainParticipantId = 0;
+    let bargainParticipantQuote: Pick<typeof storeBargainUser.$inferSelect, "bargainPrice" | "bargainPriceMin" | "price"> | null = null;
     let orderSystemFormId = 0;
     let pinkCombinationId = 0;
     let legacyActivityOnceNum = 0;
@@ -1124,11 +1135,9 @@ export class StoreOrderCreateService {
         const matching = candidates.filter((candidate) => candidate.bargainId === cart.activityId);
         if (matching.length !== 1) throw new ValidateException("砍价记录不存在或不唯一");
         const participant = matching[0];
-        if (
-          decimalToCents(participant.bargainPrice) - decimalToCents(participant.price) >
-            decimalToCents(participant.bargainPriceMin)
-        ) throw new ValidateException("还未砍到最低价, 请继续砍价");
+        if (!isBargainParticipationReady(participant)) throw new ValidateException("还未砍到最低价或砍价金额异常, 请刷新后重试");
         bargainParticipantId = participant.id;
+        bargainParticipantQuote = { bargainPrice: participant.bargainPrice, bargainPriceMin: participant.bargainPriceMin, price: participant.price };
         const bargain = await c.db
           .select()
           .from(storeBargain)
@@ -2041,6 +2050,7 @@ export class StoreOrderCreateService {
         if (!sk.length) throw new ValidateException("秒杀库存不足、排期或计价规则已变化，请刷新后重试");
         await reserveLegacyActivitySku(1, params.seckillId, "秒杀");
       } else if (type === 2 && params.bargainUserId) {
+        if (!bargainParticipantQuote) throw new ValidateException("砍价参与报价缺失");
         // 砍价: 扣活动库存 + 标记记录已购买 (status=4)
         const bargain = await tx
           .update(storeBargain)
@@ -2054,8 +2064,8 @@ export class StoreOrderCreateService {
               eq(storeBargain.id, bargainActivityId),
               eq(storeBargain.status, 1),
               eq(storeBargain.isDel, 0),
-              sql`(${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= NOW())`,
-              sql`(${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= NOW())`,
+              sql`(${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= (clock_timestamp() AT TIME ZONE 'UTC'))`,
+              sql`(${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= (clock_timestamp() AT TIME ZONE 'UTC'))`,
               sql`quota >= ${totalNum}`,
               sql`stock >= ${totalNum}`,
             ),
@@ -2069,12 +2079,16 @@ export class StoreOrderCreateService {
             and(
               eq(storeBargainUser.id, bargainParticipantId),
               eq(storeBargainUser.uid, uid),
+              eq(storeBargainUser.bargainId, bargainActivityId),
               eq(storeBargainUser.isDel, 0),
               inArray(storeBargainUser.status, [1, 3]),
+              eq(storeBargainUser.bargainPrice, bargainParticipantQuote.bargainPrice),
+              eq(storeBargainUser.bargainPriceMin, bargainParticipantQuote.bargainPriceMin),
+              eq(storeBargainUser.price, bargainParticipantQuote.price),
             ),
           )
           .returning({ id: storeBargainUser.id });
-        if (!bargainUser.length) throw new ValidateException("砍价记录已被使用");
+        if (!bargainUser.length) throw new ValidateException("砍价记录已被使用或参与报价已变化，请刷新后重试");
         await reserveLegacyActivitySku(2, bargainActivityId, "砍价");
       } else if (type === 3) {
         // 拼团: 扣活动库存 (守卫)
@@ -2347,6 +2361,9 @@ export class StoreOrderCreateService {
             })
           : { writeStart: sku.writeStart, writeEnd: sku.writeEnd };
         const cartInfoJson = JSON.stringify({
+          ...(type === 2 ? { bargainParticipation: {
+            version: 1, participantId: bargainParticipantId, activityId: bargainActivityId, uid,
+          } satisfies BargainOrderParticipation } : {}),
           coupon_price: (lineCouponCents / 100).toFixed(2),
           integral_price: (lineDeductionCents / 100).toFixed(2),
           first_order_price: (lineFirstOrderCents / 100).toFixed(2),
