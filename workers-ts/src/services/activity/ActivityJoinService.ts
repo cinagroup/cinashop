@@ -5,7 +5,7 @@
  *   - 拼团: pink, combination/remove (记录状态在 LegacyPinkStatusService)
  *   - 砍价: bargain/start, bargain/user/list, bargain/user/cancel
  */
-import { eq, and, desc, gt, inArray, or, sql } from "drizzle-orm";
+import { eq, and, desc, gt, getTableColumns, inArray, or, sql } from "drizzle-orm";
 import {
   storePink,
   storeSeckill,
@@ -14,6 +14,7 @@ import {
   storeBargainUser,
   storeBargainUserHelp,
   storeOrder,
+  storeOrderRefund,
   user,
 } from "@/models/schema";
 import { withTx, type Container } from "@/lib/di";
@@ -258,14 +259,14 @@ export class ActivityJoinService {
     // A fresh, consistent preflight avoids Hyperdrive's transaction-external
     // read cache. This is not a reservation against concurrent join/payment:
     // that lifecycle contract must be completed before exposing UI cancellation.
-    const order = await withTx(this.container, async (tx) => {
+    const { order, existingRefundId } = await withTx(this.container, async (tx) => {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
       const account = await tx.select({ uid: user.uid }).from(user).where(and(
         eq(user.uid, uid), eq(user.status, 1), eq(user.isDel, 0),
       )).limit(1);
       if (!account[0]) throw new NotFoundException("用户不存在或已停用");
       const pink = await tx
-        .select()
+        .select({ ...getTableColumns(storePink), canCancel: sql<boolean | null>`${storePink.stopTime} > NOW()` })
         .from(storePink)
         .where(
           and(
@@ -273,9 +274,6 @@ export class ActivityJoinService {
             eq(storePink.uid, uid),
             eq(storePink.combinationId, combinationId),
             eq(storePink.kId, 0),
-            eq(storePink.status, 1),
-            eq(storePink.isRefund, 0),
-            sql`${storePink.stopTime} > NOW()`,
           ),
         )
         .limit(1);
@@ -287,10 +285,46 @@ export class ActivityJoinService {
       const orders = await tx.select().from(storeOrder).where(and(
         eq(storeOrder.id, Number(key)), eq(storeOrder.orderId, pink[0].orderId),
         eq(storeOrder.uid, uid), eq(storeOrder.type, 3), eq(storeOrder.activityId, combinationId),
-        eq(storeOrder.pinkId, pinkId), eq(storeOrder.paid, 1), eq(storeOrder.status, 0),
-        eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0), eq(storeOrder.refundStatus, 0),
+        eq(storeOrder.pinkId, pinkId), eq(storeOrder.paid, 1),
+        eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0),
       )).limit(1);
       if (!orders[0]) throw new ValidateException("拼团订单不匹配或不可取消");
+      const order = orders[0];
+      const receipts = await tx.select().from(storeOrderRefund).where(and(
+        eq(storeOrderRefund.storeOrderId, order.id),
+        eq(storeOrderRefund.orderId, `pink_cancel_${pinkId}_${order.id}`),
+      )).limit(2);
+      if (receipts.length > 1) throw new ValidateException("拼团取消记录重复，请先核对");
+      const receipt = receipts[0];
+      if (receipt) {
+        if (receipt.uid !== uid || receipt.applyType !== 1 || receipt.refundNum !== order.totalNum ||
+            receipt.refundReason !== "用户手动取消拼团" ||
+            receipt.refundExplain !== "用户手动取消未成团的拼团订单" ||
+            amountToCents(receipt.refundPrice) !== amountToCents(order.payPrice)) {
+          throw new ValidateException("拼团取消记录与原申请不一致");
+        }
+        if (receipt.isCancel || receipt.isDel || receipt.refundType === 3) {
+          throw new ValidateException("拼团取消申请已撤销、删除或拒绝，请从订单售后处理");
+        }
+        if (receipt.refundType === 6) {
+          if (order.refundStatus !== 2 || pink[0].isRefund !== pinkId ||
+              amountToCents(receipt.refundedPrice) !== amountToCents(order.payPrice)) {
+            throw new ValidateException("拼团退款完成记录不一致，请先核对");
+          }
+        } else if (order.status !== 0 || order.refundStatus !== 0) {
+          throw new ValidateException("拼团订单不匹配或不可取消");
+        }
+        // The original identity remains on the refunded leader row. A retry
+        // resumes the SAME application even after expiry or leader promotion;
+        // the core repeats its locked execution checks and completed guard.
+        return { order, existingRefundId: receipt.id };
+      }
+      if (pink[0].status !== 1 || pink[0].isRefund !== 0 || pink[0].canCancel !== true) {
+        throw new NotFoundException("未查到可取消的拼团记录");
+      }
+      if (order.status !== 0 || order.refundStatus !== 0) {
+        throw new ValidateException("拼团订单不匹配或不可取消");
+      }
 
       const [activeMembers, pendingOrders] = await Promise.all([
         tx.select({ count: sql<number>`COUNT(*)::int` }).from(storePink)
@@ -307,7 +341,7 @@ export class ActivityJoinService {
       if (Number(activeMembers[0]?.count ?? 0) === 0 && Number(pendingOrders[0]?.count ?? 0) > 0) {
         throw new ValidateException("该团仍有待支付参团订单，暂不能取消");
       }
-      return orders[0];
+      return { order, existingRefundId: null };
     });
     const refundCents = amountToCents(order.payPrice);
     if (refundCents === null || refundCents <= 0) throw new ValidateException("拼团订单实付金额无效");
@@ -315,7 +349,7 @@ export class ActivityJoinService {
     // Reuse only this cancellation's application. The refund core serializes
     // creation on the order and rejects unrelated open customer after-sales.
     const applicationOrderId = `pink_cancel_${pinkId}_${order.id}`;
-    const created = await refundService.applyRefund({
+    const created = existingRefundId !== null ? { refundId: existingRefundId } : await refundService.applyRefund({
       uid,
       orderId: order.orderId,
       refundReason: "用户手动取消拼团",
