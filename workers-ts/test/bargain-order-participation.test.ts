@@ -148,6 +148,57 @@ describe("actual bargain create/cancel on isolated SQL (no payment/provider)", (
       expect(await snapshot()).toEqual(before!);
     });
 
+  it.each([
+    { cartNum: 2 }, { cartNum: 0 }, { cartNum: -1 }, { productId: 71 },
+    { productAttrUnique: "qablue01" }, { productType: 1 }, { activityId: 41 },
+    { type: 0 }, { isNew: 0 }, { uid: 22 }, { staffId: 1 }, { touristUid: "another-session" },
+    { isPay: 1 }, { isDel: 1 }, { status: 0 },
+  ])("refuses cart changes after quote %j without consuming inventory or participation", async values => {
+    let before: Awaited<ReturnType<typeof snapshot>>;
+    await expect(create(params, async () => {
+      await f.db.update(storeCart).set(values).where(eq(storeCart.id, 10)); before = await snapshot();
+    })).rejects.toThrow("砍价购物车已变化或被占用");
+    // The outside writer's update remains; only the failed checkout rolls back.
+    expect(await snapshot()).toEqual(before!);
+    expect(before!.orders).toHaveLength(0); expect(before!.details).toHaveLength(0);
+    expect(before!.participations.find(row => row.id === 80)?.status).toBe(3);
+  });
+
+  it("accepts a fresh SKU/quantity quote after refusing the stale cart claim and cancels exact inventory", async () => {
+    await expect(create(params, async () => {
+      await f.db.update(storeCart).set({ productAttrUnique: "qablue01", cartNum: 2 }).where(eq(storeCart.id, 10));
+    })).rejects.toThrow("砍价购物车已变化或被占用");
+    const refreshed = await snapshot();
+    await create();
+    const created = await snapshot();
+    expect(created.orders[0]).toMatchObject({ totalNum: 2, payPrice: "4.00", activityId: 40 });
+    expect(created.skus.find(row => row.id === 1)).toEqual(refreshed.skus.find(row => row.id === 1));
+    expect(created.skus.find(row => row.id === 2)?.stock).toBe(0);
+    expect(created.skus.find(row => row.id === 4)).toMatchObject({ stock: 2, quota: 2, sales: 2 });
+    expect(JSON.parse(created.details[0].cartInfo!).bargainParticipation).toEqual(identity);
+    await cancel();
+    const cancelled = await snapshot();
+    for (const field of ["carts", "products", "skus", "bargains", "participations"] as const)
+      expect(cancelled[field]).toEqual(refreshed[field]);
+  });
+
+  it("does not reject non-quote metadata changes and keeps legacy activity/SKU aliases cancellable", async () => {
+    await f.db.update(storeCart).set({ productAttrUnique: "actred40" }).where(eq(storeCart.id, 10));
+    await create({ ...params, bargainUserId: 40 }, async () => {
+      await f.db.update(storeCart).set({ addTime: 123 }).where(eq(storeCart.id, 10));
+    });
+    const created = await snapshot();
+    expect(created.orders[0]).toMatchObject({ payPrice: "2.00", totalNum: 1 });
+    expect(created.carts[0]).toMatchObject({ addTime: 123, productAttrUnique: "actred40", isPay: 1 });
+    // Completed-key retries must remain idempotent, even if the live cart changes later.
+    await f.db.update(storeCart).set({ cartNum: 2 }).where(eq(storeCart.id, 10));
+    const retried = await snapshot(); await create(); expect(await snapshot()).toEqual(retried);
+    await cancel();
+    const cancelled = await snapshot();
+    expect(cancelled.skus.find(row => row.id === 3)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
+    expect(cancelled.participations.find(row => row.id === 80)?.status).toBe(3);
+  });
+
   it("rolls back participant consumption when a later activity SKU reservation fails", async () => {
     let before: Awaited<ReturnType<typeof snapshot>>;
     await expect(create(params, async () => {

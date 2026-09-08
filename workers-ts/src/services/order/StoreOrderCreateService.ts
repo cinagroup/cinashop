@@ -101,7 +101,8 @@ import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPri
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
-import { seckillCartQuoteGuard, seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
+import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
+import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
 
 /** 下单入参 */
@@ -1955,12 +1956,15 @@ export class StoreOrderCreateService {
             eq(storeCart.isPay, 0),
             eq(storeCart.isDel, 0),
             eq(storeCart.status, 1),
-            type === 1 ? seckillCartQuoteGuard(carts[0]) : undefined,
+            // Both are single-cart orders. Recheck the quote in the write itself,
+            // including after PostgreSQL waits for a concurrent cart editor.
+            type === 1 || type === 2 ? activityCartQuoteGuard(carts[0]) : undefined,
           ),
         )
         .returning({ id: storeCart.id });
       if (claimedCarts.length !== cartIds.length) {
-        throw new ValidateException(type === 1 ? "秒杀购物车已变化或被占用，请刷新后重试" : "购物车商品已被其他订单占用");
+        throw new ValidateException(type === 1 ? "秒杀购物车已变化或被占用，请刷新后重试"
+          : type === 2 ? "砍价购物车已变化或被占用，请刷新后重试" : "购物车商品已被其他订单占用");
       }
 
       // 5a0. 活动库存与拼团团 (M17: 事务内保证一致)

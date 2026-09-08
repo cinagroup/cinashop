@@ -1,5 +1,6 @@
 import { and, eq, sql, type SQL } from "drizzle-orm";
-import { storeCart, storeProduct, storeProductAttrValue, storeSeckill } from "@/models/schema";
+import { storeProduct, storeProductAttrValue, storeSeckill } from "@/models/schema";
+export { activityCartQuoteGuard as seckillCartQuoteGuard } from "./ActivityCartQuoteGuard";
 
 /** Compare pricing inputs at the existing write/lock boundary, not in another unlocked read.
  * A mismatch rolls back the caller's entire transaction and requires a fresh confirmation.
@@ -18,11 +19,6 @@ export function seckillSkuQuoteGuard(row: typeof storeProductAttrValue.$inferSel
   return and(eq(storeProductAttrValue.isRetired, 0),
     ...keys.map(key => sql`${storeProductAttrValue[key]} IS NOT DISTINCT FROM ${row[key]}`),
     ...(base ? baseKeys.map(key => sql`${storeProductAttrValue[key]} IS NOT DISTINCT FROM ${row[key]}`) : []))!;
-}
-
-export function seckillCartQuoteGuard(row: typeof storeCart.$inferSelect): SQL {
-  const keys = ["id", "cartNum", "productId", "productAttrUnique", "productType", "activityId", "type", "isNew"] as const;
-  return and(...keys.map(key => sql`${storeCart[key]} IS NOT DISTINCT FROM ${row[key]}`))!;
 }
 
 export function seckillProductQuoteGuard(row: typeof storeProduct.$inferSelect): SQL {

@@ -34,7 +34,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
       orders: value.orders.sort((a, b) => a.id - b.id),
       details: await f.db.select().from(storeOrderCartInfo).orderBy(storeOrderCartInfo.id),
       refunds: await f.db.select().from(storeOrderRefund).orderBy(storeOrderRefund.id),
-      statuses: await f.db.select().from(storeOrderStatus).orderBy(storeOrderStatus.id) };
+      statuses: await f.db.select().from(storeOrderStatus).orderBy(storeOrderStatus.id),
+      prints: await f.db.select().from(printDocument) };
   };
   const nextParams = { ...params, key: "next_bargain", cartIds: [11], bargainUserId: 90 };
   const prepareSecond = async (paid: boolean) => {
@@ -48,6 +49,47 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
     await f.db.insert(storeBargainUser).values({ id: 90, bargainId: 40, uid: 11,
       bargainPrice: "10.00", bargainPriceMin: "2.00", price: "8.00", status: 3 });
   };
+
+  const cartEdits: Array<{ label: string; values: Partial<typeof storeCart.$inferInsert> }> = [
+    { label: "quantity", values: { cartNum: 2 } },
+    { label: "zero quantity", values: { cartNum: 0 } },
+    { label: "negative quantity", values: { cartNum: -1 } },
+    { label: "SKU", values: { productAttrUnique: "qablue01" } },
+    { label: "product", values: { productId: 71 } },
+    { label: "product type", values: { productType: 1 } },
+    { label: "activity", values: { activityId: 41 } },
+    { label: "cart type", values: { type: 0 } },
+    { label: "cart mode", values: { isNew: 0 } },
+  ];
+  it.each(cartEdits)("re-evaluates $label after an observed cart row wait and refuses the stale quote", async ({ values }) => {
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([editor, buyer]) => {
+      await editor.exec("BEGIN");
+      await editor.db.update(storeCart).set(values).where(eq(storeCart.id, 10));
+      // The buyer quotes the committed old version, then waits in UPDATE is_pay.
+      const pending = outcome(create(buyer)); await waitForFinanceBlock(f.db, buyer.pid, editor.pid);
+      await editor.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false, error: { message: expect.stringContaining("砍价购物车已变化或被占用") } });
+    });
+    expect(await snapshot()).toEqual({ ...before, carts: before.carts.map(row => row.id === 10 ? { ...row, ...values } : row) });
+  }, 15_000);
+
+  it.each(["rollback", "metadata"])("allows an unchanged quote after a verified %s cart edit wait", async mode => {
+    await withFinancePeers(f.db, async ([editor, buyer]) => {
+      await editor.exec("BEGIN");
+      await editor.db.update(storeCart).set(mode === "rollback" ? { cartNum: 2 } : { addTime: 123 }).where(eq(storeCart.id, 10));
+      const pending = outcome(create(buyer)); await waitForFinanceBlock(f.db, buyer.pid, editor.pid);
+      await editor.exec(mode === "rollback" ? "ROLLBACK" : "COMMIT");
+      expect(await pending).toMatchObject({ ok: true });
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(1);
+    expect(state.orders[0]).toMatchObject({ totalNum: 1, payPrice: "2.00", activityId: 40 });
+    expect(state.carts[0]).toMatchObject({ cartNum: 1, isPay: 1 });
+    if (mode === "metadata") expect(state.carts[0].addTime).toBe(123);
+    expect(state.participations.find(row => row.id === 80)?.status).toBe(4);
+    expect(state.skus.find(row => row.id === 3)).toMatchObject({ stock: 6, quota: 5, sales: 1 });
+  }, 15_000);
 
   it("two carts cannot consume one exact participation twice after an observed row wait", async () => {
     await withFinancePeers(f.db, async ([blocker, first, second]) => {
