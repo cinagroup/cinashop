@@ -117,6 +117,33 @@ test('click-time deadline revalidation blocks stale visible join and invite cont
     r.checkout.join(); r.checkout.copyInvite(); assert.equal(r.navigations.length + r.copies.length, 0);
   } finally { Date.now = realNow; r.stop(); }
 });
+
+test('cancellation pending has precise text, disables join and sharing, and refreshes read-only', async () => {
+  const data = status(); data.cancellation_pending = true; data.settlement_pending = true; data.state = 'settlement_pending';
+  const r = setup({ component: 'pages/activity/goods_combination_status/index.vue', send: () => ({ data }) });
+  try {
+    await start(r); assert.equal(r.checkout.title.value, '团长取消处理中');
+    assert.equal(r.checkout.canJoin.value, false); assert.equal(r.checkout.remaining.value, '');
+    r.checkout.join(); r.checkout.copyInvite(); assert.equal(r.navigations.length + r.copies.length, 0);
+    assert.equal(r.checkout.invitation(), null); assert.equal(r.hooks.onShareAppMessage().path, '/pages/activity/index');
+    await r.checkout.load(); assert.equal(r.calls.length, 2); assert.equal(r.checkout.title.value, '团长取消处理中');
+    r.auth.clear(); assert.equal(r.checkout.detail.value, null); assert.equal(r.checkout.title.value, '');
+  } finally { r.stop(); }
+});
+
+test('cancellation flag is strictly boolean and consistent, while absent legacy extensions remain readable', async () => {
+  const r = setup(); try {
+    const parser = r.load(path.resolve(__dirname, '../../common/pinkStatus.ts'));
+    assert.equal(parser.parsePinkStatus(status(), 11).cancellationPending, false);
+    for (const value of [null, 0, 1, 'true', {}, []]) assert.throws(() => parser.parsePinkStatus({ ...status(), cancellation_pending: value }, 11));
+    assert.throws(() => parser.parsePinkStatus({ ...status(), cancellation_pending: true }, 11));
+    for (const terminal of [2, 3]) {
+      const data = status(); data.cancellation_pending = true; data.pinkT.status = terminal;
+      data.state = terminal === 2 ? 'success' : 'failed'; data.pinkBool = terminal === 2 ? 1 : -1; data.is_ok = terminal === 2 ? 1 : 0;
+      assert.throws(() => parser.parsePinkStatus(data, 11));
+    }
+  } finally { r.stop(); }
+});
 test('invites contain only the canonical leader record and no token, uid or order ID', async () => {
   const r = setup(); try { await start(r); r.checkout.copyInvite(); assert.deepEqual(r.copies, [`${route}?id=400`]); }
   finally { r.stop(); }

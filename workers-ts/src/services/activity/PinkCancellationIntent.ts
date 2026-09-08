@@ -1,7 +1,23 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import type { DbClient } from "@/lib/di";
 import { storeOrder, storeOrderRefund, storePink, user } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+
+function pendingCancellation(orderId: number | SQL, uid: number | SQL, application: string | SQL) {
+  return and(eq(storeOrderRefund.storeOrderId, orderId), eq(storeOrderRefund.uid, uid),
+    eq(storeOrderRefund.orderId, application), eq(storeOrderRefund.isCancel, 0), eq(storeOrderRefund.isDel, 0),
+    inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]));
+}
+
+/** Correlated predicate for catalog filtering BEFORE LIMIT, without per-group queries.
+ * CASE protects the cast even for malformed legacy keys; the int order ID cannot
+ * match an out-of-range bigint. Keep identity and refund states shared with admission. */
+export function pendingPinkCancellationExists(): SQL<boolean> {
+  return sql<boolean>`EXISTS (SELECT 1 FROM ${storeOrderRefund} WHERE ${pendingCancellation(
+    sql`CASE WHEN ${storePink.orderIdKey} ~ '^[1-9][0-9]{0,9}$' THEN ${storePink.orderIdKey}::bigint ELSE NULL END`,
+    sql`${storePink.uid}`, sql`concat('pink_cancel_', ${storePink.id}::text, '_', ${storePink.orderIdKey})`,
+  )})`;
+}
 
 /** The dedicated refund row is the durable cancellation intent. No new pink
  * status is invented, and provider failure never masquerades as money returned. */
@@ -10,11 +26,8 @@ export async function hasPendingPinkCancellation(
   leader: Pick<typeof storePink.$inferSelect, "id" | "uid" | "orderIdKey">,
 ): Promise<boolean> {
   if (!/^[1-9]\d{0,9}$/.test(leader.orderIdKey) || Number(leader.orderIdKey) > 2_147_483_647) return false;
-  const pending = await db.select({ id: storeOrderRefund.id }).from(storeOrderRefund).where(and(
-    eq(storeOrderRefund.storeOrderId, Number(leader.orderIdKey)), eq(storeOrderRefund.uid, leader.uid),
-    eq(storeOrderRefund.orderId, `pink_cancel_${leader.id}_${leader.orderIdKey}`),
-    eq(storeOrderRefund.isCancel, 0), eq(storeOrderRefund.isDel, 0),
-    inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]),
+  const pending = await db.select({ id: storeOrderRefund.id }).from(storeOrderRefund).where(pendingCancellation(
+    Number(leader.orderIdKey), leader.uid, `pink_cancel_${leader.id}_${leader.orderIdKey}`,
   )).limit(1);
   return pending.length > 0;
 }

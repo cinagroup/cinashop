@@ -21,7 +21,7 @@
             <view class="hint">活动 #{{ detail.activity.id }} · {{ detail.leader.people }} 人成团</view></view>
         </view>
         <view class="state" :class="{ pending }">{{ title }}</view>
-        <view v-if="pending" class="hint">成团或到期状态正在由服务端确认。刷新不会发起结算或退款，请稍后查询本人订单。</view>
+        <view v-if="pending" class="hint">{{ detail.cancellationPending ? '团长取消申请正在处理，暂不能参团或邀请；退款是否到账请以本人订单记录为准。刷新不会发起退款。' : '成团或到期状态正在由服务端确认。刷新不会发起结算或退款，请稍后查询本人订单。' }}</view>
         <view v-else-if="detail.leader.status === 1">还差 {{ detail.count }} 人 · 剩余 {{ remaining }}</view>
         <view v-else-if="detail.leader.status === 3" class="hint">拼团已失败；退款是否到账请以订单和退款记录为准。</view>
         <view v-else class="hint">拼团已成功；发货与履约进度请查看本人订单。</view>

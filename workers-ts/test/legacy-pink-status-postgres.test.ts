@@ -6,15 +6,15 @@ import { createContainerFromDb } from "../src/lib/di";
 import { LegacyPinkStatusService } from "../src/services/activity/LegacyPinkStatusService";
 import { pinkInfo } from "../src/controllers/api/v1/ActivityJoinController";
 import { ApiException } from "../src/utils/errors";
-import { storePink, storeCombination, storeProduct, storeProductAttr, storeProductAttrValue, storeOrder, systemConfig, user } from "../src/models/schema";
+import { storePink, storeCombination, storeProduct, storeProductAttr, storeProductAttrValue, storeOrder, storeOrderRefund, systemConfig, user } from "../src/models/schema";
 import type { AppVariables, Env } from "../src/env";
-import { parsePinkStatus } from "../../view/common/pinkStatus";
+import { parsePinkStatus, pinkCanJoin } from "../../view/common/pinkStatus";
 
 describe("legacy pink status through real HTTP and disposable SQL", () => {
   let f: Awaited<ReturnType<typeof financePostgres>>, svc: LegacyPinkStatusService;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   const now = new Date("2026-09-08T00:00:00Z"), future = new Date("2026-09-09T00:00:00Z");
-  const tables = [user, storePink, storeCombination, storeProduct, storeProductAttr, storeProductAttrValue, storeOrder, systemConfig];
+  const tables = [user, storePink, storeCombination, storeProduct, storeProductAttr, storeProductAttrValue, storeOrder, storeOrderRefund, systemConfig];
   beforeEach(async () => {
     f = await financePostgres(tables); const container = createContainerFromDb(f.db); svc = new LegacyPinkStatusService(container);
     await f.db.insert(user).values([{ uid: 11, nickname: "Viewer", avatar: "/viewer.svg" }, { uid: 22, nickname: "Leader" }, { uid: 33, nickname: "Member" }]);
@@ -52,7 +52,7 @@ describe("legacy pink status through real HTTP and disposable SQL", () => {
   const snapshot = async () => {
     const result: Record<string, unknown> = {};
     // Canonical row order: physical tuple order may change after fixture UPDATEs.
-    for (const table of ["user", "store_pink", "store_combination", "store_product", "store_product_attr", "store_product_attr_value", "store_order", "system_config"]) {
+    for (const table of ["user", "store_pink", "store_combination", "store_product", "store_product_attr", "store_product_attr_value", "store_order", "store_order_refund", "system_config"]) {
       result[table] = await f.exec(`SELECT to_jsonb(t) AS row FROM "${table}" t ORDER BY to_jsonb(t)::text`);
     }
     return result;
@@ -105,9 +105,30 @@ describe("legacy pink status through real HTTP and disposable SQL", () => {
     const result = await read(); expect(result.count).toBe(2); expect(result.userBool).toBe(0); expect(result.pinkAll).toHaveLength(1);
   });
   it.each([2, 3])("projects persisted terminal status %i without settling or refunding anything", async status => {
+    await f.db.insert(storeOrderRefund).values({ id: 1, uid: 22, storeOrderId: 500, orderId: "pink_cancel_400_500", refundType: 1 });
     await f.db.update(storePink).set({ status }).where(eq(storePink.id, 400)); const before = await snapshot();
     const result = await read(); expect(result.is_ok).toBe(status === 2 ? 1 : 0); expect(result.pinkBool).toBe(status === 2 ? 1 : -1);
-    expect(result.settlement_pending).toBe(false); expect(await snapshot()).toEqual(before);
+    expect(result.settlement_pending).toBe(false); expect(result.cancellation_pending).toBe(false); expect(await snapshot()).toEqual(before);
+  });
+  it.each([0, 1, 2, 4, 5])("projects cancellation intent state %i without claiming a refund or permitting a join", async refundType => {
+    await f.db.insert(storeOrderRefund).values({ id: 1, uid: 22, storeOrderId: 500, orderId: "pink_cancel_400_500", refundType });
+    const outgoing = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No provider calls"));
+    const before = await snapshot();
+    const result = await read();
+    expect(result).toMatchObject({ cancellation_pending: true, settlement_pending: true, state: "settlement_pending", is_ok: 0, pinkBool: 0 });
+    expect(pinkCanJoin(parsePinkStatus(result, 11), now.getTime())).toBe(false);
+    expect(JSON.stringify(result)).not.toMatch(/pink_cancel_|orderIdKey|private-leader|refund_price/);
+    expect(await snapshot()).toEqual(before); expect(outgoing).not.toHaveBeenCalled();
+  });
+  it("ignores withdrawn, deleted, rejected, completed and foreign cancellation applications", async () => {
+    for (const patch of [{ isCancel: 1 }, { isDel: 1 }, { refundType: 3 }, { refundType: 6 },
+      { uid: 33 }, { storeOrderId: 501 }, { orderId: "ordinary-refund" }]) {
+      await f.db.delete(storeOrderRefund);
+      await f.db.insert(storeOrderRefund).values({ id: 1, uid: 22, storeOrderId: 500, orderId: "pink_cancel_400_500", refundType: 1, ...patch });
+      const before = await snapshot();
+      expect(await read()).toMatchObject({ cancellation_pending: false, settlement_pending: false, state: "active" });
+      expect(await snapshot()).toEqual(before);
+    }
   });
   it.each(["expired", "full", "null-deadline"])("does not fabricate success/refund for an unsettled %s group", async mode => {
     await f.db.update(storePink).set(mode === "full" ? { people: 2 } : { stopTime: mode === "expired" ? now : null }).where(eq(storePink.id, 400));

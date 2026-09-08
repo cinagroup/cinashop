@@ -4,6 +4,7 @@ import { storeCombination, storeOrder, storePink, storeProduct, storeProductAttr
 import { AuthException, NotFoundException, ValidateException } from "@/utils/errors";
 import { normalizeConfigScalar } from "@/utils/config";
 import { parseLegacyProductAttrValues } from "@/services/product/StoreProductService";
+import { hasPendingPinkCancellation } from "./PinkCancellationIntent";
 
 const MAX_MEMBERS = 500, MAX_SKUS = 500, MAX_ATTRS = 64, MAX_REDIRECTS = 32, MAX_HOSTS = 20;
 const pinkFields = {
@@ -11,6 +12,7 @@ const pinkFields = {
   combinationId: storePink.combinationId, productId: storePink.productId, kId: storePink.kId,
   people: storePink.people, status: storePink.status, stopTime: storePink.stopTime,
   isRefund: storePink.isRefund, isVirtual: storePink.isVirtual, addTime: storePink.addTime,
+  orderIdKey: storePink.orderIdKey,
 };
 type Pink = Pick<typeof storePink.$inferSelect, keyof typeof pinkFields>;
 const comboFields = {
@@ -133,7 +135,8 @@ export class LegacyPinkStatusService {
     const joined = leader.uid === uid || members.some(row => row.uid === uid);
     const expired = leader.stopTime === null || leader.stopTime.getTime() <= now.getTime();
     // Never invent committed success/refund from cached member_count or a clock.
-    const pending = leader.status === 1 && (expired || count === 0);
+    const cancellationPending = leader.status === 1 && await hasPendingPinkCancellation(db, leader);
+    const pending = leader.status === 1 && (expired || count === 0 || cancellationPending);
     const enabled = configs.store_func_status?.exists ? Number(normalizeConfigScalar(configs.store_func_status.value)) === 1 : true;
     const mention = enabled && configs.store_self_mention?.exists && Number(normalizeConfigScalar(configs.store_self_mention.value)) === 1;
     const projectCombination = (row: typeof combination) => ({ ...row, image: image(row.image),
@@ -149,6 +152,7 @@ export class LegacyPinkStatusService {
       store_func_status: enabled ? 1 : 0, store_self_mention: mention ? 1 : 0,
       // Safe extensions for the replacement status page; old clients may ignore them.
       resolved_pink_id: record.id, settlement_pending: pending,
+      cancellation_pending: cancellationPending,
       state: leader.status === 2 ? "success" : leader.status === 3 ? "failed" : pending ? "settlement_pending" : "active",
       store_combination_host_truncated: hosts.length > MAX_HOSTS,
     };

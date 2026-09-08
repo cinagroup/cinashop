@@ -11,7 +11,7 @@ export function usePinkStatus() {
   const loggedIn = computed(() => auth.isLoggedIn);
   const pending = computed(() => !!detail.value && pinkAwaitingSettlement(detail.value, clock.value));
   const canJoin = computed(() => !!detail.value && pinkCanJoin(detail.value, clock.value) && !loading.value && !navigating.value);
-  const title = computed(() => !detail.value ? '' : detail.value.state === 'success' ? '拼团成功' : detail.value.state === 'failed' ? '拼团失败' : pending.value ? '等待结算确认' : '拼团进行中');
+  const title = computed(() => !detail.value ? '' : detail.value.state === 'success' ? '拼团成功' : detail.value.state === 'failed' ? '拼团失败' : detail.value.cancellationPending ? '团长取消处理中' : pending.value ? '等待结算确认' : '拼团进行中');
   const remaining = computed(() => {
     if (!detail.value || pending.value || detail.value.leader.status !== 1) return '';
     const seconds = Math.max(0, Math.ceil((detail.value.leader.deadline * 1000 - clock.value) / 1000));

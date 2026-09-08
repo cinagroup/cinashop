@@ -1,7 +1,8 @@
-import { and, asc, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
-import type { Container } from "@/lib/di";
+import { and, asc, desc, eq, gt, inArray, isNull, not, or, sql } from "drizzle-orm";
+import { createContainerFromDb, withTx, type Container } from "@/lib/di";
 import { storeCombination, storeOrder, storePink, storeProduct, storeProductAttrValue } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { pendingPinkCancellationExists } from "./PinkCancellationIntent";
 
 const MAX_SKUS = 500;
 const MAX_GROUPS = 5;
@@ -51,6 +52,13 @@ export class CombinationSkuCatalogService {
     if (!Number.isSafeInteger(uid) || uid < 0 || !Number.isFinite(now.getTime())) {
       throw new ValidateException("拼团规格查询参数无效");
     }
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      return new CombinationSkuCatalogService(createContainerFromDb(tx)).snapshot(uid, combinationId, pinkId, now);
+    });
+  }
+
+  private async snapshot(uid: number, combinationId: number, pinkId: number, now: Date) {
     const current = uid > 0 ? await this.container.userDao.findForAuth(uid) : null;
     if (uid > 0 && (!current || current.status !== 1)) throw new ValidateException("请重新登录");
     const [entry] = await this.container.db.select({
@@ -127,12 +135,13 @@ export class CombinationSkuCatalogService {
     const liveLeader = and(eq(storePink.combinationId, combinationId), eq(storePink.kId, 0),
       eq(storePink.status, 1), eq(storePink.isRefund, 0), or(isNull(storePink.stopTime), gt(storePink.stopTime, now)));
     const [suggested, requested] = await Promise.all([
-      this.container.db.select(fields).from(storePink).where(liveLeader)
+      this.container.db.select(fields).from(storePink).where(and(liveLeader, not(pendingPinkCancellationExists())))
         .orderBy(desc(storePink.addTime), desc(storePink.id)).limit(MAX_GROUPS),
-      pinkId ? this.container.db.select(fields).from(storePink)
+      pinkId ? this.container.db.select({ ...fields, cancellationPending: pendingPinkCancellationExists() }).from(storePink)
         .where(and(liveLeader, eq(storePink.id, pinkId))).limit(1) : Promise.resolve([]),
     ]);
     if (pinkId && !requested[0]) throw new ValidateException("指定拼团不存在、已结束或不是本活动团长");
+    if (requested[0]?.cancellationPending) throw new ValidateException("指定拼团团长取消处理中，暂不能参团");
     const leaders = new Map([...suggested, ...requested].map(row => [row.id, row]));
     if (!leaders.size) return { groups: [], requested_group: null };
     const ids = [...leaders.keys()];

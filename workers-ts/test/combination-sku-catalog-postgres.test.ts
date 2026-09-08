@@ -6,7 +6,7 @@ import { createPcCombinationFixture } from "./helpers/pcCombinationFixture";
 import { CombinationSkuCatalogService } from "../src/services/activity/CombinationSkuCatalogService";
 import { reservePinkJoin } from "../src/services/activity/PinkLifecycleService";
 import { resolveLegacyActivitySkuPair } from "../src/services/activity/ActivityOrderSkuService";
-import { storeCombination, storePink, storeProduct, storeProductAttrValue, storeCart, storeOrder, user } from "../src/models/schema";
+import { storeCombination, storePink, storeProduct, storeProductAttrValue, storeCart, storeOrder, storeOrderRefund, user } from "../src/models/schema";
 
 describe("read-only combination selection catalogue on disposable SQL", () => {
   let f: Awaited<ReturnType<typeof createPcCombinationFixture>>;
@@ -40,10 +40,16 @@ describe("read-only combination selection catalogue on disposable SQL", () => {
   });
 
   it("keeps all three ID namespaces distinct, limits stock/quantity and batches six anonymous queries without writes", async () => {
-    const before = await f.snapshot(), queries = vi.spyOn(f.db, "select"), auth = vi.spyOn(f.container.userDao, "findForAuth");
+    const before = await f.snapshot(), auth = vi.spyOn(f.container.userDao, "findForAuth");
+    const transaction = f.db.transaction.bind(f.db);
+    const transactions = vi.spyOn(f.db, "transaction").mockImplementation((fn, config) => transaction(async tx => {
+      const queries = vi.spyOn(tx, "select");
+      try { return await fn(tx); }
+      finally { expect(queries).toHaveBeenCalledTimes(6); queries.mockRestore(); }
+    }, config));
     let result: Awaited<ReturnType<typeof read>>;
-    try { result = await read(); expect(queries).toHaveBeenCalledTimes(6); expect(auth).not.toHaveBeenCalled(); }
-    finally { queries.mockRestore(); auth.mockRestore(); }
+    try { result = await read(); expect(transactions).toHaveBeenCalledTimes(1); expect(auth).not.toHaveBeenCalled(); }
+    finally { transactions.mockRestore(); auth.mockRestore(); }
     expect(result!).toMatchObject({ selection_only: true, type: 3, combination_id: 30, product_id: 70,
       title: "拼团红蓝双规格", people: 4, once_limit: 3, total_limit: 6, date_window: "active", requested_group: null,
       start_time: expect.any(String), stop_time: expect.any(String),
@@ -247,6 +253,38 @@ describe("read-only combination selection catalogue on disposable SQL", () => {
     expect(result.requested_group).toMatchObject({ id: 400, active_people: 2, reserved_people: 1 });
     const included = await read(11, "416");
     expect(included.requested_group).toEqual(included.groups[0]);
+  });
+
+  it.each([0, 1, 2, 4, 5])("excludes cancellation state %i before LIMIT and rejects explicit selection without fallback", async refundType => {
+    await f.db.insert(storePink).values(Array.from({ length: 6 }, (_, i) => ({
+      id: 410 + i, combinationId: 30, productId: 70, uid: 80 + i, people: 2, addTime: 20, orderIdKey: String(510 + i),
+    })));
+    await f.db.insert(storeOrderRefund).values({ id: 1, uid: 85, storeOrderId: 515, orderId: "pink_cancel_415_515", refundType });
+    const before = await f.snapshot();
+    expect((await read()).groups.map(group => group.id)).toEqual([414, 413, 412, 411, 410]);
+    await expect(read(11, "415")).rejects.toThrow("团长取消处理中");
+    const response = await request("view=skus&pink_id=415");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.json()).toMatchObject({ status: 400, data: null, msg: "指定拼团团长取消处理中，暂不能参团" });
+    expect(await f.snapshot()).toEqual(before);
+  });
+
+  it("shares canonical cancellation identity and ignores inactive or foreign applications", async () => {
+    await f.db.update(storePink).set({ orderIdKey: "500" }).where(eq(storePink.id, 400));
+    for (const patch of [{ isCancel: 1 }, { isDel: 1 }, { refundType: 3 }, { refundType: 6 },
+      { uid: 33 }, { storeOrderId: 501 }, { orderId: "ordinary-refund" }]) {
+      await f.db.delete(storeOrderRefund);
+      await f.db.insert(storeOrderRefund).values({ id: 1, uid: 22, storeOrderId: 500, orderId: "pink_cancel_400_500", refundType: 1, ...patch });
+      expect((await read(0, "400")).requested_group?.id).toBe(400);
+    }
+    await f.db.delete(storeOrderRefund);
+    await f.db.insert(storeOrderRefund).values({ id: 1, uid: 22, storeOrderId: 500, orderId: "pink_cancel_400_500", refundType: 1 });
+    for (const key of ["", "0500", "500abc", "2147483648", "9999999999", "999999999999999999999999"] ) {
+      await f.db.update(storePink).set({ orderIdKey: key }).where(eq(storePink.id, 400));
+      const before = await f.snapshot();
+      expect((await read(0, "400")).requested_group?.id).toBe(400);
+      expect(await f.snapshot()).toEqual(before);
+    }
   });
 
   it("submits the activity SKU through real cart HTTP and persists the corresponding base SKU without stock/order writes", async () => {

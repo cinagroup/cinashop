@@ -63,6 +63,8 @@ export function parsePinkStatus(value: unknown, viewerUid: number) {
   const count = int(row.count, 0, 499), joined = leader.uid === viewerUid || members.some(item => item.uid === viewerUid);
   if (count !== Math.max(0, leader.people - members.length - 1) || row.userBool !== (joined ? 1 : 0)) return invalid();
   const state = text(row.state), pending = row.settlement_pending;
+  const cancellationPending = row.cancellation_pending === undefined ? false : row.cancellation_pending;
+  if (typeof cancellationPending !== 'boolean' || cancellationPending && (leader.status !== 1 || pending !== true)) return invalid();
   if (typeof pending !== 'boolean' || row.pinkBool !== (leader.status === 2 ? 1 : leader.status === 3 ? -1 : 0) ||
     row.is_ok !== (leader.status === 2 ? 1 : 0) || state !== (leader.status === 2 ? 'success' : leader.status === 3 ? 'failed' : pending ? 'settlement_pending' : 'active') ||
     leader.status !== 1 && pending || leader.status === 1 && (count === 0 || leader.deadline === 0) && !pending) return invalid();
@@ -70,7 +72,7 @@ export function parsePinkStatus(value: unknown, viewerUid: number) {
   if (orderId !== null && (!joined || !orderId || /[\s\u0000-\u001f\u007f]/u.test(orderId))) return invalid();
   const hosts = list(row.store_combination_host, 20).map(product);
   if (new Set(hosts.map(item => item.id)).size !== hosts.length || typeof row.store_combination_host_truncated !== 'boolean') return invalid();
-  return { leader, members, activity, count, joined, state, pending, orderId,
+  return { leader, members, activity, count, joined, state, pending, cancellationPending, orderId,
     resolvedId: int(row.resolved_pink_id, 1), hosts, hostsTruncated: row.store_combination_host_truncated };
 }
 export type PinkStatus = ReturnType<typeof parsePinkStatus>;

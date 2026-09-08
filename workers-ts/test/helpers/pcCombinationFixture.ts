@@ -3,12 +3,12 @@ import { eq } from "drizzle-orm";
 import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
 import { combinationList, combinationDetail } from "../../src/controllers/api/v1/UserActivityController";
 import { cartAdd, cartList } from "../../src/controllers/api/v1/OrderController";
-import { storeCombination, storePink, storeProductAttrValue, storeCart, storeOrder, systemConfig } from "../../src/models/schema";
+import { storeCombination, storePink, storeProductAttrValue, storeCart, storeOrder, storeOrderRefund, systemConfig } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
 
 /** Disposable HTTP/SQL fixture. No production auth, order-create or payment route is mounted. */
 export async function createPcCombinationFixture() {
-  const f = await createPcCheckoutQuoteFixture([storeCombination, storePink, systemConfig]);
+  const f = await createPcCheckoutQuoteFixture([storeCombination, storePink, storeOrderRefund, systemConfig]);
   try {
     for (const key of Object.keys(f.config)) f.config[key] = "0";
     await f.db.delete(storeCart);
@@ -40,6 +40,7 @@ export async function createPcCombinationFixture() {
     app.get("/api/cart/list", cartList);
     const snapshot = async () => ({ ...await f.snapshot(),
       combinations: await f.db.select().from(storeCombination), pinks: await f.db.select().from(storePink),
+      refunds: await f.db.select().from(storeOrderRefund),
       configs: await f.db.select().from(systemConfig), kv: [...f.cache], kvWrites: [...f.writes] });
     return { ...f, app, snapshot,
       setActive: (active: boolean) => f.db.update(storeCombination).set({ status: active ? 1 : 0 }).where(eq(storeCombination.id, 30)),
