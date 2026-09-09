@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "1ca3d3de9e367f0957eca11ae219464379f2f516",
+  "status": "partial_local_candidate",
+  "scope": {
+    "bargain": ["deliveryType", "startTime", "stopTime", "num", "isSupportRefund", "systemFormId", "giveIntegral"],
+    "combination": ["people", "effectiveTime", "onceNum", "num", "startTime", "stopTime", "deliveryType", "systemFormId", "isSupportRefund"],
+    "integral": ["onceNum", "num", "deliveryType", "systemFormId"],
+    "seckillAdded": ["deliveryType", "isSupportRefund"],
+    "notAllFieldsIndividuallyMutationTested": true
+  },
+  "implementation": {
+    "boundary": "existing atomic activity inventory UPDATE WHERE, null-safe explicit scalar projection",
+    "newLocksOrDatabaseRoundTrips": false,
+    "transactionNetworkCallsAdded": false,
+    "pricingFormulaChanged": false,
+    "changedRules": "ORDER_QUOTE_RECONFIRM_REQUIRED with rollback when a confirmation is present",
+    "cosmeticAndSufficientInventoryChanges": "accepted, with exact inventory decrement verified",
+    "sequenceConsumptionGuaranteedRollback": false
+  },
+  "evidence": {
+    "red": {
+      "engine": "dedicated loopback PostgreSQL 16.15",
+      "files": 1, "passed": 52, "failed": 16, "skipped": 0,
+      "businessFailures": { "lateHttpEdits": 8, "independentWriterWaits": 8 },
+      "report": "cinashop-activity-scalar-pg-red-20260909.json",
+      "sha256": "34bb9686b0d2c71fc93e3b7f6df66177b4b3051fc72efff7dd543210413846ce"
+    },
+    "firstGreen": {
+      "files": 1, "passed": 68, "failed": 0, "skipped": 0,
+      "report": "cinashop-activity-scalar-pg-green-20260909.json",
+      "sha256": "147a440abf48ec9f873a8fd2fa8382b6118164b7df60b7504d01cb3c4830daea"
+    },
+    "finalRegression": {
+      "environment": "Windows, dedicated loopback PostgreSQL 16.15 for SQL fixtures, plus pure unit/source contract tests",
+      "files": 30, "passed": 622, "failed": 0, "skipped": 0,
+      "report": "cinashop-activity-scalar-pg-regression-20260909.json",
+      "sha256": "da2ef0b4617a0b8c686d13f4b7fb12fef9b900803a514f14ffb61d5318f68594",
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts", "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts", "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts", "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts", "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts", "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts", "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts", "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts", "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts", "test/order-delivery-address.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts", "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts", "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts", "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts", "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts", "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts", "test/uniapp-checkout-contract.test.ts"
+      ]
+    },
+    "confirmationRulesFile": { "tests": 72, "independentPgTests": 24, "newIndependentPgTests": 16 },
+    "newTestsIncludingProjectionUnits": 27,
+    "typechecks": { "unit": "passed", "runtime": "passed" },
+    "independentPeers": "4 distinct non-reconnecting backends, exact pg_blocking_pids barrier",
+    "rollbackExpectation": "captured inside editor transaction before buyer writes, retaining only committed editor facts",
+    "ownImmutableCi": "not run; precise main push rejected by safety review"
+  },
+  "remaining": [
+    "Natural expiration after lock waits: combination NOW(), package pre-wait now and later blocking points",
+    "Other initial product/SKU price and integral facts; form ID is not a content version",
+    "Package member insertions by raw writers not following the parent lock",
+    "Referenced-but-missing seckill slot insertion and equivalent schedule/rule encodings",
+    "Coupon issue/scope/ancestor consistency and phantoms",
+    "Global SQL/KV configuration authority, production identity/storage/Hyperdrive and release gates",
+    "Full immutable candidate CI; Windows subset is not Linux/workerd release acceptance"
+  ],
+  "push": {
+    "originMain": "f58f6178ccbc3e8b8c9d84a8f29947d8747894ca",
+    "attemptedExactTarget": "1ca3d3de9e367f0957eca11ae219464379f2f516:refs/heads/main",
+    "result": "rejected by safety review; no retry or workaround",
+    "userReply": "授权",
+    "reviewReason": "reviewer required exact approval for default-branch push"
+  },
+  "safety": {
+    "productionWrites": false, "deployment": false, "externalPayments": false,
+    "synthetic": ["HTTP identity", "KV", "sequence"],
+    "cleanupIdentity": { "database": "cinashop_finance_test", "role": "finance_test", "version": 160015, "timezone": "UTC" },
+    "fixtureCleanup": { "baselineDatabases": 4, "testSchemas": 0, "publicTables": 0, "otherClients": 0 },
+    "dedicatedPostgresStoppedAt": "2026-09-09T11:22:19Z",
+    "binariesDataAndReportsRetained": true
+  }
+}

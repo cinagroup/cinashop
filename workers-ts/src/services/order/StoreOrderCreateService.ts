@@ -98,6 +98,7 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
+import { activityRuleQuoteGuard } from "@/services/activity/ActivityRuleQuoteGuard";
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
 import { cartBargainParticipation } from "@/services/activity/BargainParticipationSelection";
@@ -2076,10 +2077,14 @@ export class StoreOrderCreateService {
             ),
           )
           .returning({ id: storeSeckill.id });
-        if (!sk.length) throw new ValidateException("秒杀库存不足、排期或计价规则已变化，请刷新后重试");
+        if (!sk.length) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("秒杀库存不足、排期或计价规则已变化，请刷新后重试");
+        }
         await reserveLegacyActivitySku(1, params.seckillId, "秒杀");
       } else if (type === 2) {
         if (!bargainParticipantQuote) throw new ValidateException("砍价参与报价缺失");
+        if (!bargainConfirmationRules) throw new ValidateException("砍价活动规则快照缺失");
         // 砍价: 扣活动库存 + 标记记录已购买 (status=4)
         const bargain = await tx
           .update(storeBargain)
@@ -2091,6 +2096,7 @@ export class StoreOrderCreateService {
           .where(
             and(
               eq(storeBargain.id, bargainActivityId),
+              activityRuleQuoteGuard(bargainConfirmationRules, storeBargain),
               eq(storeBargain.status, 1),
               eq(storeBargain.isDel, 0),
               sql`(${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= (clock_timestamp() AT TIME ZONE 'UTC'))`,
@@ -2100,7 +2106,10 @@ export class StoreOrderCreateService {
             ),
           )
           .returning({ id: storeBargain.id });
-        if (!bargain.length) throw new ValidateException("砍价活动库存不足");
+        if (!bargain.length) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("砍价活动库存不足");
+        }
         const bargainUser = await tx
           .update(storeBargainUser)
           .set({ status: 4 })
@@ -2121,6 +2130,7 @@ export class StoreOrderCreateService {
         await reserveLegacyActivitySku(2, bargainActivityId, "砍价");
       } else if (type === 3) {
         // 拼团: 扣活动库存 (守卫)
+        if (!combinationConfirmationRules) throw new ValidateException("拼团活动规则快照缺失");
         const comb = await tx
           .update(storeCombination)
           .set({
@@ -2131,6 +2141,7 @@ export class StoreOrderCreateService {
           .where(
             and(
               eq(storeCombination.id, pinkCombinationId),
+              activityRuleQuoteGuard(combinationConfirmationRules, storeCombination),
               shippingSnapshot ? and(eq(storeCombination.freight, orderItems[0].activityFreight!), eq(storeCombination.postage, orderItems[0].activityPostage!), eq(storeCombination.tempId, orderItems[0].activityTempId!)) : undefined,
               eq(storeCombination.status, 1),
               eq(storeCombination.isShow, 1),
@@ -2142,7 +2153,10 @@ export class StoreOrderCreateService {
             ),
           )
           .returning({ id: storeCombination.id });
-        if (!comb.length) throw new ValidateException("拼团库存不足");
+        if (!comb.length) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("拼团库存不足");
+        }
         await reserveLegacyActivitySku(3, pinkCombinationId, "拼团");
 
         const comboRow = await tx
@@ -2211,6 +2225,12 @@ export class StoreOrderCreateService {
           .where(
             and(
               eq(storeIntegral.id, integralActivityId),
+              activityRuleQuoteGuard({
+                onceNum: item.integralActivity.onceNum,
+                num: item.integralActivity.num,
+                deliveryType: item.integralActivity.deliveryType,
+                systemFormId: item.integralActivity.systemFormId,
+              }, storeIntegral),
               shippingSnapshot ? and(eq(storeIntegral.freight, item.integralActivity.freight), eq(storeIntegral.postage, item.integralActivity.postage), eq(storeIntegral.tempId, item.integralActivity.tempId)) : undefined,
               eq(storeIntegral.productId, item.product.id),
               eq(storeIntegral.status, 1),
@@ -2221,7 +2241,10 @@ export class StoreOrderCreateService {
             ),
           )
           .returning({ id: storeIntegral.id });
-        if (!activityUpdated.length) throw new ValidateException("积分商品库存不足");
+        if (!activityUpdated.length) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("积分商品库存不足");
+        }
 
         const activitySkuUpdated = await tx
           .update(storeProductAttrValue)

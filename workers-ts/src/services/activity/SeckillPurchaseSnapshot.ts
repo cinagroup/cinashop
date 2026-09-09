@@ -9,7 +9,7 @@ export { activityCartQuoteGuard as seckillCartQuoteGuard } from "./ActivityCartQ
  */
 export function seckillRuleQuoteGuard(row: typeof storeSeckill.$inferSelect): SQL {
   const keys = ["activityId", "productId", "onceNum", "num", "freight", "postage", "tempId",
-    "giveIntegral", "systemFormId", "storeName", "image"] as const;
+    "giveIntegral", "systemFormId", "deliveryType", "isSupportRefund", "storeName", "image"] as const;
   return and(...keys.map(key => sql`${storeSeckill[key]} IS NOT DISTINCT FROM ${row[key]}`))!;
 }
 

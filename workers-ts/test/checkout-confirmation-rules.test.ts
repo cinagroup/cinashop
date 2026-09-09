@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { createContainerFromDb } from '../src/lib/di';
+import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
 import { OrderQuoteReconfirmRequired } from '../src/services/order/CheckoutConfirmation';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
@@ -81,6 +81,69 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     ...(kind === 'seckill' ? { seckills: await f.db.select().from(storeSeckill), slots: await f.db.select().from(storeSeckillTime),
       parents: await f.db.select().from(storeActivity) } : {}),
   });
+  if (kind === 'bargain' || kind === 'combination' || kind === 'integral' || kind === 'seckill') {
+    const activityState = async (db: DbClient) => kind === 'bargain' ? { bargains: await db.select().from(storeBargain) }
+      : kind === 'combination' ? { combinations: await db.select().from(storeCombination) }
+      : kind === 'integral' ? { integrals: await db.select().from(storeIntegral) }
+      : { seckills: await db.select().from(storeSeckill) };
+    const businessState = async () => ({ ...await state(), ...await activityState(f.db) });
+    const editRules = async (db: DbClient, variant: 'primary' | 'secondary' | 'cosmetic' | 'inventory') => {
+      // Simulate an independent stock adjustment while leaving enough stock for this purchase.
+      if (variant === 'inventory') {
+        const counters = { stock: 9, quota: 9, sales: 1 };
+        if (kind === 'bargain') await db.update(storeBargain).set(counters).where(eq(storeBargain.id, 40));
+        else if (kind === 'combination') await db.update(storeCombination).set(counters).where(eq(storeCombination.id, 40));
+        else if (kind === 'integral') await db.update(storeIntegral).set(counters).where(eq(storeIntegral.id, 40));
+        else await db.update(storeSeckill).set(counters).where(eq(storeSeckill.id, 40));
+        return;
+      }
+      if (kind === 'bargain') await db.update(storeBargain).set(variant === 'primary' ? { num: 9 }
+        : variant === 'secondary' ? { stopTime: new Date(Date.now() + 7_200_000) } : { title: '仅改活动标题' }).where(eq(storeBargain.id, 40));
+      else if (kind === 'combination') await db.update(storeCombination).set(variant === 'primary' ? { people: 3 }
+        : variant === 'secondary' ? { effectiveTime: 7200 } : { sort: 9 }).where(eq(storeCombination.id, 40));
+      else if (kind === 'integral') await db.update(storeIntegral).set(variant === 'primary' ? { onceNum: 4 }
+        : variant === 'secondary' ? { num: 9 } : { sort: 9 }).where(eq(storeIntegral.id, 40));
+      else await db.update(storeSeckill).set(variant === 'primary' ? { deliveryType: '1' }
+        : variant === 'secondary' ? { isSupportRefund: 0 } : { sort: 9 }).where(eq(storeSeckill.id, 40));
+    };
+    it.each(['primary', 'secondary'] as const)('rejects late scalar activity %s facts with full rollback and explicit same-price reconfirmation', async variant => {
+      const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
+      let calls = 0, edited: Awaited<ReturnType<typeof businessState>> | undefined;
+      beforeSequence = async () => { calls++; await editRules(f.db, variant); edited = await businessState(); };
+      const path = `/api/order/create/${a.data.orderKey}`;
+      expect(await request(path, { ...input, quoteToken: a.data.quoteToken })).toMatchObject({ status: 400,
+        data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: a.data.orderKey } });
+      expect(calls).toBe(1); expect(edited).toBeDefined(); expect(await businessState()).toEqual(edited);
+      beforeSequence = undefined;
+      const b = await request(`/api/order/computed/${a.data.orderKey}`, input); expect(b.status, b.msg).toBe(200);
+      expect(b.data.pay_price).toBe(a.data.priceGroup.pay_price);
+      expect((await request(path, { ...input, quoteToken: b.data.quoteToken })).status).toBe(200);
+    });
+    it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['primary', 'secondary', 'cosmetic', 'inventory'] as const)(
+      'checks scalar activity %s facts after a real PostgreSQL writer wait', async variant => {
+        const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
+        const before = await businessState();
+        await withFinancePeers(f.db, async ([editor, buyer]) => {
+          await editor.exec('BEGIN'); await editRules(editor.db, variant);
+          const edited = { ...before, ...await activityState(editor.db) };
+          const buying = outcome(StoreOrderCreateService.createWithRuntime(createContainerFromDb(buyer.db), {
+            CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, nextOrderId: async () => `scalar_peer_${kind}`,
+          }, { ...input, uid: 11, key: a.data.orderKey, quoteToken: a.data.quoteToken, userIp: '127.0.0.1' }));
+          await waitForFinanceBlock(f.db, buyer.pid, editor.pid); await editor.exec('COMMIT');
+          const permitted = variant === 'cosmetic' || variant === 'inventory';
+          const result = await buying; expect(result.ok).toBe(permitted);
+          if (!result.ok) expect(result.error).toBeInstanceOf(OrderQuoteReconfirmRequired);
+          const after = await businessState();
+          if (permitted) {
+            expect(after.orders).toHaveLength(1); expect(after.orders[0]).toMatchObject({ paid: 0, payPrice: a.data.priceGroup.pay_price });
+            if (variant === 'inventory') {
+              const rows = Object.values(await activityState(f.db))[0];
+              expect(rows).toHaveLength(1); expect(rows[0]).toMatchObject({ stock: 8, quota: 8, sales: 2 });
+            }
+          } else expect(after).toEqual(edited);
+        });
+      }, 15_000);
+  }
   if (kind === 'coupon') {
     it.each(['minimum', 'ineligible', 'invalidated', 'value', 'issue', 'starts', 'ends'] as const)(
       'rolls back when owned-coupon %s changes after initial receipt validation', async variant => {

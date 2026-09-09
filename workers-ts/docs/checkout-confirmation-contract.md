@@ -116,3 +116,31 @@ f58f617经明确授权推送main，自身Actions34339592124最终失败。两个
 - 验收：新候选完整不可变CI、正式身份/KV/Redis/Hyperdrive及发布仍未完成，A3k11c保持开放，不将本轮518项外推为整体迁移完成。
 
 专用PG16.15在核验4个基线数据库、零夹具schema/public表/其它客户端后，于11:00:55 UTC正常停止。二进制、数据目录和报告保留。
+
+## 活动标量规则的原子预占校验（2026-09-09，基线1ca3d3d）
+
+在专用PG16.15上新增20项实际SQL测试，旧48项保持不变。修复前68项中52通过/16失败、0跳过；失败均是在已验证凭据后改规则，仍按原价建单：8项由实际HTTP创建核心的合成Sequence边界触发已提交编辑，8项由独立SQL编辑者持有真实行锁、买方实际等待后提交编辑。每类另有1项排序/标题写锁对照通过。独立连接沿用4个不重连后端身份核验和精确pg_blocking_pids屏障，不以sleep或替身断言冒充竞争。
+
+新增通用activityRuleQuoteGuard仅接受显式标量投影，在现有原子UPDATE的WHERE内做IS NOT DISTINCT FROM比较。Date以ISO字符串交给驱动，null不是省略条件；空投影或未映射列失败关闭。沿用原有锁顺序/库存数量守卫，未增加数据库往返、跨请求事务或事务内KV/provider调用。确认凭据存在时，活动预占不匹配返回ORDER_QUOTE_RECONFIRM_REQUIRED；旧纯核心无凭据测试仍保留原ValidateException。未改价格公式、库存算法及幂等重放顺序。
+
+| 活动 | 纳入现有预占UPDATE的规则字段 | 本轮请求内与独立写锁反例 |
+| --- | --- | --- |
+| 砍价 | deliveryType、startTime、stopTime、num、isSupportRefund、systemFormId、giveIntegral | num 1→9、stopTime延期 |
+| 拼团 | people、effectiveTime、onceNum、num、startTime、stopTime、deliveryType、systemFormId、isSupportRefund | people 2→3、effectiveTime 3600→7200 |
+| 积分 | onceNum、num、deliveryType、systemFormId | onceNum 3→4、num 8→9 |
+| 秒杀 | 在原有守卫上补deliveryType、isSupportRefund | 配送集合缩小但当前配送仍合法、退款1→0 |
+
+这张表列出代码保护的投影，不宣称每个字段均已逐一执行编辑矩阵。反例保持订单价格相同；HTTP拒绝后，购物车/订单明细/库存/用户/账单及活动状态必须等于编辑者已提交的预期快照，随后同key显式重取凭据与二次提交成功。独立PG预期快照在编辑者事务内、买方写入前固定，只保留编辑本身，不用建单后的数据反向构造预期。整笔回滚不承诺订单取号或SQL序列没有消耗。
+
+原68项绿测全通过后，另补4项独立库存/额度/销量编辑正向对照：stock/quota改为9、sales改为1，旧凭据仍成功建一笔未支付订单，最终准确为8/8/2；加3项SQL投影编码/空投影/缺列单元检查。最终扩大回归30文件622项全部通过、0失败/跳过，Worker unit/runtime双类型通过。规则文件72项中24项是本文件独立PG竞争（本轮新增16项），不是全部622项都是SQL竞争。覆盖优惠券、套餐、七类确认、代客、地址、秒杀、砍价下单/绑定/库存补偿、积分及拼团取消/付款准入/退款锁序；不与68项或此前518项累加。报告摘要和可重跑文件清单见../audit/activity-scalar-rule-boundary-20260909.json。
+
+尚未关闭的边界：
+
+- 标量相等不代表时间被冻结。拼团仍用NOW()、套餐仍传递等锁前now，秒杀及其它时限在后续阻塞点的最终自然截止需要独立验证；本轮没有改变这些准入政策。
+- 其它初读计价事实：部分非秒杀活动SKU价格/积分及普通基础SKU价格没有同等的最后原子比较；表单ID不等于表单内容版本。已有主商品/规格/配送守卫按各自分支生效，不能泛化为所有事实都稳定。
+- 套餐非协作SQL新增成员、秒杀不存在的引用时段新增、券模板/适用关系及分类品牌祖先的集合完整性、等价规则表达仍待验。
+- A3i砍价价格政策、A3k11d全局SQL/KV配置、正式登录/KV/Redis/Hyperdrive、候选完整不可变CI与发布门禁不在本轮完成范围。
+
+推送状态：用户回复“授权”后，精确1ca3d3d→origin/main仍被安全审批拒绝；没有绕过或再次推送。origin/main仍为f58f617，新候选仅本地，不能沿用旧CI结果。
+
+专用实例身份为cinashop_finance_test/finance_test、PostgreSQL160015、UTC；停止前确认仅4个基线数据库、0夹具schema、0public表、0其它客户端。11:22:19 UTC正常停止，保留二进制、数据与报告。认证/KV/Sequence为本地替身，未调用外部支付、写生产或执行部署。
