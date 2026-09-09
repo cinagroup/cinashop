@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "2065ec79ab9e192f265dbef4f588a53c1d88a753",
+  "scope": "Bargain save-time source product eligibility, inherited fields and source SHARE lock; local candidate, not complete PHP editor or global retirement ordering.",
+  "environment": {
+    "platform": "Windows x64", "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432", "database": "cinashop_finance_test", "role": "finance_test", "maxWorkers": 2,
+    "fixtureBoundary": "Random owned schemas with actual columns/defaults/not-null/PK, not all production FK/CHECK. Explicit offline tests use PGlite; HTTP fixtures substitute authentication.",
+    "productionAccess": false, "deployment": false, "ddlChanged": false, "pricingFormulaChanged": false,
+    "frontendChanged": false, "systemServiceInstalled": false, "globalEnvironmentChanged": false
+  },
+  "inputHashNormalization": "UTF-8 with CRLF converted to LF; paths relative to repository root",
+  "changedExecutableInputs": [
+    { "file": "workers-ts/src/services/activity/BargainAdminService.ts", "sha256": "1923d8f002ca00e7efb1a4f9b0e0413f5abe871f9f4220d06f983e4b622337fe" },
+    { "file": "workers-ts/src/services/activity/BargainProductPolicy.ts", "sha256": "3fa348a72db71d03fedc1f9ca64e694d2e563c602e4ee08ae95193b30c2868b6" },
+    { "file": "workers-ts/test/bargain-admin-product.test.ts", "sha256": "2dbf6a5ec2502426aba0c772fafc7b3e269e41d73a7e7ece7fe802511854157c" },
+    { "file": "workers-ts/test/bargain-admin-product-postgres.test.ts", "sha256": "1614922f9446672c4d227f9191b79d4fd15c9e22b77100e6b070da0b63174c97" }
+  ],
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "runs": [
+    { "file": "bargain-product-red.json", "sha256": "d990d188041d882e326180a51920f970a1bd604fb486e3c820f5f784e8ccded9", "files": 1, "passed": 3, "failed": 14, "skipped": 0, "boundary": "PGlite, old unchanged service" },
+    { "file": "bargain-product-green.json", "sha256": "153073169274d11bd127eac306a6af66c8045069e11814d2d10b4a795eed110c", "files": 3, "passed": 0, "failed": 78, "skipped": 0, "boundary": "Environment failure, all ECONNREFUSED 55432 during fixture setup. Temporary server startup omitted dedicated port, listened loopback5432. Confirmed PID2232 and stopped before explicitly starting loopback55432/UTC. No business execution or production access." },
+    { "file": "bargain-product-green-retry.json", "sha256": "95f7b39caa5ab3dc041854e57b812f8236b6414b7fc9c7fac82ff9c4428a8a6c", "files": 3, "passed": 78, "failed": 0, "skipped": 0, "durationSeconds": 24.64 },
+    { "file": "bargain-product-regression.json", "sha256": "e06d792f75eaef75c54f5028d0cf1f0e4984d35d9359d67114e3bed3f965ee2e", "files": 24, "passed": 393, "failed": 0, "skipped": 0, "durationSeconds": 124.40 },
+    { "file": "bargain-product-pglite.json", "sha256": "58cd89f9da482342c796b2d99058aa8fba2d8cf926e55a693ea5df282cf4cff8", "files": 1, "passed": 17, "failed": 0, "skipped": 0, "durationSeconds": 27.98 }
+  ],
+  "regressionFilters": ["bargain", "ordinary-query-index-alignment", "orm-query-index-alignment", "legacy-query-index-alignment"],
+  "newTests": { "sourceContract": 17, "pgOnly": 9, "total": 26 },
+  "checks": {
+    "workerUnitTypes": "passed", "workerRuntimeTypes": "passed", "typeLog": "bargain-product-types.log",
+    "fullWorkerInventory": false, "ninePathCatalog": false, "browser": false, "linuxWorkerd": false,
+    "pgProofs": [
+      "Save waits for source UPDATE, then refuses committed VIP/presale/deleted/unapproved product",
+      "Source writer waits behind SHARE held through real activity UPDATE",
+      "After a verified wait, inherited metadata uses committed source fields but inventory is not replayed",
+      "Two activity editors share one product concurrently",
+      "Stricter 500ms lock timeout yields 55P03, all state rolls back, settings restore, explicit retry succeeds",
+      "Waiting on product past original activity deadline cannot be bypassed by extending stopTime"
+    ]
+  },
+  "cleanup": {
+    "databases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "publicTables": 0, "fixtureSchemas": 0, "otherClients": 0, "manualDatabaseDeletion": false,
+    "postgresPid": 1716, "stoppedAtUtc": "2026-09-09T02:34:30.367Z", "pidAbsent": true,
+    "initialMisconfiguredPid": 2232, "initialMisconfiguredPidAbsent": true, "listenersAbsent": [55432, 5432],
+    "retained": "Stopped temporary cluster, binaries and reports; random owned fixtures and final PGlite instance closed."
+  },
+  "remaining": [
+    "PHP attrs/items, activity SKU creation/editing, title/unit/description/images, complete freight/delivery/copy workflows",
+    "Rebind with existing participations/SKUs; global product and SKU retirement ordering; save-time SHARE does not implement automatic disable or consumer-wide eligibility",
+    "Participation price policy choice; pricing and status endpoint intentionally unchanged",
+    "Real role/provider/browser/full inventory/Linux/workerd and own CI/production release gates"
+  ]
+}

@@ -1,7 +1,8 @@
 import { and, eq, sql } from "drizzle-orm";
 import { withTx, type Container, type DbClient } from "@/lib/di";
-import { storeBargain, storeProduct } from "@/models/schema";
+import { storeBargain } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
+import { lockBargainProductPolicy } from "./BargainProductPolicy";
 
 type Patch = Partial<typeof storeBargain.$inferInsert>;
 const MAX_INT = 2_147_483_647;
@@ -81,7 +82,8 @@ async function limits(tx: DbClient): Promise<void> {
 }
 
 /** Generic Worker editor contract; not PHP's complete SKU/description editor.
- * Omitted properties mean unchanged. Stock writes additionally compare the
+ * Omitted editable properties mean unchanged; derived metadata comes from the
+ * locked source product. Stock writes additionally compare the
  * original stock/quota pair, so a stale form cannot undo checkout/compensation.
  */
 export async function saveBargain(container: Container, body: Record<string, unknown>): Promise<number> {
@@ -121,15 +123,14 @@ export async function saveBargain(container: Container, body: Record<string, unk
     if (!current || patch.stock !== undefined || patch.quota !== undefined) {
       if (integer(merged.quota, "额度") > integer(merged.stock, "库存")) throw new ValidateException("砍价额度不能超过库存");
     }
-    if (!current || patch.productId !== undefined) {
-      const [product] = await tx.select({ id: storeProduct.id }).from(storeProduct).where(and(
-        eq(storeProduct.id, merged.productId!), eq(storeProduct.isDel, 0), eq(storeProduct.isVerify, 1),
-      )).limit(1);
-      if (!product) throw new ValidateException("关联商品不存在或不可用");
-    }
+    // PHP rechecks the source on every save, even when productId was omitted.
+    // Only changed inherited fields are written; ordinary no-op edits stay no-op.
+    const derived = await lockBargainProductPolicy(tx, merged.productId!);
+    Object.assign(values, Object.fromEntries(Object.entries(derived).filter(([key, value]) =>
+      !current || current[key as keyof typeof current] !== value)));
     if (current) {
       if (patch.quota !== undefined) values.quotaShow = patch.quota;
-      // Only supplied fields are written. Never replay the entire locked row.
+      // Write supplied editable fields and changed source metadata, not the row.
       if (Object.keys(values).length) await tx.update(storeBargain).set(values).where(eq(storeBargain.id, current.id));
       const [saved] = await tx.select({ start: storeBargain.startTime, stop: storeBargain.stopTime }).from(storeBargain)
         .where(eq(storeBargain.id, current.id)).limit(1);

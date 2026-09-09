@@ -7023,6 +7023,22 @@ Workers技能保持请求内事务资源与无外部副作用；PG技能指导�
 
 最终只余4个基线库、public表0、fixture schema0、其他客户端0；准确PG PID14300于02:18:02.495 UTC完成checkpoint并关闭，pg_ctl无运行实例，原PID及55432/5208/5209监听均不存在。内存SQL实例关闭，Vite以Ctrl-C停止；保留停止的临时集群/二进制/报告/截图，未人工删除数据库或安装系统服务。变更输入LF摘要和原始报告摘要见`workers-ts/audit/local-pg16-bargain-admin-dates-acceptance.json`。
 
+## 2026-09-09：砍价保存的原商品资格与继承字段
+
+起点为已推送`2065ec79ab9e192f265dbef4f588a53c1d88a753`且工作区干净；其[Actions34302903432](https://github.com/cinagroup/cinashop/actions/runs/34302903432)终态failure，11项runner_id=0/steps=0，check102313461645注释说明账户付款/消费额度使job未启动。未修改计费、重跑或放宽CI。上一日期合同属于实质进展，不将其历史验证直接算作本次新增代码通过。
+
+PHP StoreBargainServices::saveData每次读取is_del=0/is_verify=1的原商品，并拒绝is_vip_product与is_presale_product；产品type/product_type/relation_id/custom_form/system_form_id/store_label_id/ensure_id/specs取自数据库，不信任活动提交值。当前Worker只在创建或显式提交productId时检查存在/审核，缺少两项资格及派生字段。新增17项受控测试在旧服务上14失败/3通过，复现新建/普通改名绕过资格与错误的归属/表单/类型继承；没有用静态关键词代替业务执行。
+
+新BargainProductPolicy在每次保存读取所选源商品，SHARE行锁持续至保存事务结束；编辑先获得既有活动NO KEY UPDATE再读取商品，不锁参与/SKU，不加入外部调用，沿用READ COMMITTED和2/5/5秒局部上限及更严格设置。商品尚未上架不等于禁止后台配置，保留PHP的is_show独立合同；新选商品同样检查，显式伪造派生字段不会覆盖源字段。返回八项派生字段，仅当与活动当前值不同才写入，故不把来源库存/价格/销量复制进活动；源可空字段清除时允许同步清除旧快照。按PHP对非实物类型设置delivery_type=2，对1/2/3设置freight=2/temp_id=0/postage=0；这不是完整配送/运费编辑、SKU建立或这些履约类型端到端验收。
+
+新增9项独立PG16验证准确pg_blocking_pids屏障：原商品已更新SVIP/预售/删除/待审而未提交时，保存等待并在提交后拒绝；保存真实UPDATE后停在测试advisory屏障时，稍后商品写入等待保存持有的SHARE；来源归属/表单/库存变更先提交时，保存读取新派生值但不回放库存；不同活动可同时共享同一来源行锁；500ms严格超时回滚、设置恢复和释放后重试；等待商品期间跨过原活动截止后，即使提交延期也回滚。商品在保存完成之后仍可被其他操作改为预售，下一次保存会拒绝；本改动不自动停用已有活动，不声称消费者全路径或商品/SKU退役全局排序已经完成。
+
+第一次PG验收启动命令遗漏专用端口，临时数据目录实例PID2232监听默认loopback5432，因此78项均在ECONNREFUSED 55432连接阶段失败，未执行业务。确认该实际进程/句柄后正常停止，无生产访问；清理进程环境并显式以127.0.0.1:55432和UTC重启，随后相同3文件78项全通过（24.64秒）。保留失败报告，不把环境失败当代码红证据。Workers unit/runtime双类型通过；本轮无前端代码、页面验收、DDL、依赖或部署变更。
+
+使用Workers技能复核请求内连接/事务资源、现有Hyperdrive绑定与无浮动异步，PostgreSQL技能指导短事务和[兼容行锁](https://www.postgresql.org/docs/16/explicit-locking.html)。[Cloudflare最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)已检索；最新types读取失败，按技能回退核查本地5.20260828.1/Hyperdrive和Wrangler schema。A3k完整attrs/items、描述/轮播图、运费、复制、商品重绑与已有参与/SKU的映射仍未完成，不能用商品元数据继承代替完整SKU保存；A3i价格策略不改。
+
+最终相关24文件393项全部通过、零跳过（124.40秒），包含既有砍价下单/取消/退款/help/日期竞争与三类索引证据；新增26项为17项来源合同加9项PG专属，另外最终PGlite17项通过（27.98秒）。不继承旧全Worker库存、九路径目录、浏览器或Linux/workerd结果。最终控制库4个基线数据库、public表0、fixture schema0、其他客户端0；准确PID1716于02:34:30.367 UTC完成checkpoint并停止，pg_ctl无运行实例，PID1716/先前2232及55432/5432监听均不存在。临时集群/二进制/原始报告保留，未人工删库、安装系统服务或改用户环境。源码LF和报告摘要见`workers-ts/audit/local-pg16-bargain-admin-product-acceptance.json`；清单225勾选/162开放/387项，仅关闭A3k3本地候选，不关闭A3k整体。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
