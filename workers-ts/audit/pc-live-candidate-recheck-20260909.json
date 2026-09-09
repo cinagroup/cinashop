@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-09-09T06:52:45Z",
+  "sourceCommit": "8b65dcf3a8c87192e63bc345dca5c241ae1fe229",
+  "kind": "read-only-live-versus-candidate-recheck",
+  "applicationCodeChanged": false,
+  "production": {
+    "url": "https://cinashop-pc.pages.dev/goods/70",
+    "deploymentId": null,
+    "gitSha": null,
+    "entryScriptObservedInDom": "/assets/index-ClV6Erfd.js",
+    "stylesObservedInDom": ["/assets/index-BpGhQPay.css", "/assets/DefaultLayout-o-dn0z2K.css", "/assets/GoodsDetail-CxSaFUoM.css"],
+    "afterReload": { "headingEmpty": true, "subtitleEmpty": true, "galleryEmpty": true, "priceText": "99.90", "stockText": "100", "purchaseButtonsRenderedEnabled": true },
+    "previousTurnEvidence": { "flow": ["/", "/goods", "/goods/70"], "quantity": [1, 2], "sampledImageSource": "https://via.placeholder.com/300", "sampledImagesComplete": true, "sampledImagesNaturalWidth": 0 },
+    "doesNotProve": ["deployed Git SHA", "identical behavior across CDN nodes", "duplicate product identity", "origin of current database rows"]
+  },
+  "candidate": {
+    "nodeVersion": "24.14.1",
+    "entryScript": "index-CMfYW0GE.js",
+    "entryScriptSha256": "2208a8a0781f5d1734910439c95555aafb2ea715800ec28d8b83d6a4cb07e363",
+    "detailScript": "GoodsDetail-34iGEAck.js",
+    "detailScriptSha256": "43d3541e64c39feabc377c79df46c8107447b9e3a3fc9db17374a111bcb21e25",
+    "existingImplementations": ["view/pc-ts/src/api/productDetail.ts", "view/pc-ts/src/components/ProductImage.vue", "view/pc-ts/src/pages/goods/GoodsDetail.vue"],
+    "tests": {
+      "workerCommand": "npx vitest run --config vitest.config.ts test/pc-product-detail-contract.test.ts test/pc-purchase-selection.test.ts test/pc-responsive-layout.test.ts --maxWorkers=1",
+      "workerFiles": 3, "workerPassed": 21, "workerSkipped": 0, "workerDurationSeconds": 3.40,
+      "workerCoverage": "Service with isolated DAO/cache, pure contracts and static structure; not PostgreSQL",
+      "pcCommand": "npm run build", "authPassed": 92, "imagesPassed": 7, "vueTscExit": 0, "viteExit": 0,
+      "buildWarnings": ["Two misplaced PURE annotations in @vueuse/core removed by Rollup"]
+    },
+    "browser": {
+      "tool": "CUA in-app browser; no separate Playwright process",
+      "url": "http://127.0.0.1:5218/goods/70",
+      "source": "Built dist, existing pcProductDetailFixture.ts; synthetic responses, no production proxy",
+      "methodsAllowed": ["GET"],
+      "heading": "商品详情兼容测试", "subtitle": "仅用于本地页面验收",
+      "missingImageText": "暂无商品图片",
+      "missingSku": { "quantityDisabled": true, "addDisabled": true, "buyDisabled": true },
+      "interaction": ["detail -> all goods", "named gallery fixture -> /goods/72", "carousel LOCAL TEST 1 -> LOCAL TEST 2"],
+      "geometryObservations": [
+        { "mode": "default responsive app panel", "innerWidth": 933, "innerHeight": 792, "clientWidth": 918, "scrollWidth": 918 },
+        { "mode": "explicit mobile override", "innerWidth": 390, "innerHeight": 844, "clientWidth": 375, "scrollWidth": 375 }
+      ],
+      "frameworkOverlayObserved": false, "capturedConsoleErrorWarn": [],
+      "screenshots": "Displayed in task; not archived as repository files",
+      "viewportReset": true, "localTabClosed": true
+    }
+  },
+  "cleanup": { "serverSession": 67729, "serverPid": 6756, "interruptExitCode": 1, "pidAbsent": true, "port5218ListenerAbsent": true, "temporaryScriptRetained": true },
+  "scope": { "productionSql": false, "login": false, "cartWrite": false, "orderCreate": false, "payment": false, "deployment": false },
+  "checklist": { "checked": 233, "open": 168, "total": 401, "closedThisTurn": [], "existingOpenItems": ["FE-002B", "FE-002C", "FE-002D", "FE-002E", "DATA-006", "DATA-008", "REL-002", "REL-003"], "next": "FE-003L-A3k11b" }
+}

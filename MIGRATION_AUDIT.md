@@ -7165,6 +7165,20 @@ ShippingTemplateSnapshot以一个SQL语句返回父模板、区域费率、条�
 
 所有测试终态后，隔离PG16.15基线为四个数据库、public表0、额外非系统schema0、其他客户端0。PID1972收到fast停止后，pg_ctl等待20秒超时退出1；没有重复停止或强杀。原服务器先完成进行中的273.046秒检查点，再完成4.309秒关闭检查点，06:39:32.816 UTC日志确认停止；原执行句柄退出0，PID1972及55432监听均消失。没有人工删除数据库，测试schema自行清理，临时二进制/集群/原始报告保留。生产与历史数据均未参与此验证。
 
+## 2026-09-09 PC线上与当前候选只读复核
+
+起点为`8b65dcf3a8c87192e63bc345dca5c241ae1fe229`，tracked工作树干净。上一轮已完成正式PC首页→全部商品→商品70详情的匿名导航与数量1→2，只获得读操作/客户端控件证据，不是购买验收。首页与列表可见重复名称“测试商品A/会员专享商品B”，已检查的图片DOM地址为`https://via.placeholder.com/300`，complete=true但naturalWidth=0。仓库初始化代码含同名示例与占位图，但本次没有查生产SQL，不能据此认定同名商品ID重复、确定数据来源或自动删除。备案占位值仍是运营配置问题。
+
+本轮刷新正式`https://cinashop-pc.pages.dev/goods/70`后再次确认h1/简介为空、轮播没有图片，价格99.90、库存100与购买按钮仍显示。DOM静态资源是`/assets/index-ClV6Erfd.js`、`/assets/index-BpGhQPay.css`、`/assets/DefaultLayout-o-dn0z2K.css`、`/assets/GoodsDetail-CxSaFUoM.css`。已观察正式页面的资源和行为，不是Cloudflare deployment元数据；没有获取部署ID、Git SHA或证明CDN全部节点一致，正式版本仍未知。
+
+逐项核对当前源码后，这些展示缺陷已分别有候选：`src/api/productDetail.ts`映射storeName/storeInfo等混合字段，`ProductImage.vue`区分空图片与加载失败并处理旧图片延迟事件，`GoodsDetail.vue`回退真实主图并要求有效SKU。对应清单FE-002B/C/D/E均仍开放，不能新建同义任务或再次声称完成了相同代码修复。无需改动应用代码，部署及真实素材依然未完成。本次以Node24.14.1重新构建PC，产出`index-CMfYW0GE.js`与`GoodsDetail-34iGEAck.js`；资源差异及行为差异支持“当前候选与所观察线上不一致”，不用于猜测线上提交。两项@vueuse/core PURE注释告警由构建器移除，构建退出0，不写作无告警。
+
+验证范围：`pc-product-detail-contract`10项（真实详情service+隔离DAO/cache、映射与负向合同）、`pc-purchase-selection`5项（纯合同/接线）、`pc-responsive-layout`6项（结构/夹具）合计21项通过，3.40秒；它们不是21项真实SQL或浏览器测试。`npm run build`依次执行92项实际Axios/会话夹具、7项Vue图片模板/生命周期、vue-tsc及Vite，均通过。没有本轮完整Worker、PG16、Linux/workerd结果。
+
+随后以仓库外临时HTTP服务在127.0.0.1:5218提供本次dist及既有`pcProductDetailFixture.ts`，只允许GET、无生产代理、无数据库连接代码，其他方法拒绝。浏览器采用已授权CUA应用内控制，未用独立Playwright进程。实际本地`/goods/70`显示“商品详情兼容测试/仅用于本地页面验收”、99.90/199.00/79.90及“暂无商品图片”；该夹具没有SKU，界面明确禁用加购/立即购买/数量，不将其当作有效购买正向样本。详情→全部商品→有图商品进入`/goods/72`，390×844下document clientWidth/scrollWidth均375，标题可见，LOCAL TEST 1→2轮播点击成功，已采集console error/warn为空、无框架错误层，截图在任务中展示。大屏采用默认尺寸，观测几何为933×792、client/scroll均918；截图与几何可能因应用面板自适应尺寸不同，不宣称固定桌面断点测量。没有使用正式商品响应替换夹具，也没有登录、收藏、加购、建单或支付。
+
+临时服务原句柄67729收到中断后退出1；独立确认PID6756不存在、5218无监听，故已停止，不把退出1当测试失败或优雅退出证明。浏览器尺寸已reset，本地临时标签关闭，正式详情页保留。没有删除文件，临时脚本保留于用户Temp，dist为忽略的构建产物。机器可读摘要见`workers-ts/audit/pc-live-candidate-recheck-20260909.json`。此次只更新审计，不关闭任何未验收项；233/168/401不变，继续A3k11b，生产初始化、真实角色与发布仍需各自证据。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
