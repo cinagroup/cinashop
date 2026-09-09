@@ -13,7 +13,7 @@ const priceGroup = { sumPrice: "20.00", totalPrice: "18.00", pay_price: "20.50",
   pay_postage: "4.00", vipPrice: "2.00", levelPrice: "0.00", memberPrice: "2.00", couponPrice: "0.00", deduction_price: "0.50",
   firstOrderPrice: "1.00", usedIntegral: 50, SurplusIntegral: 100 };
 function preview(key = "fixture_quote_1") {
-  return { orderKey: key, addressInfo: { id: 11 }, priceGroup,
+  return { orderKey: key, quoteToken: 'a'.repeat(32), addressInfo: { id: 11 }, priceGroup,
     cartInfo: selected.map((item) => ({ ...item, productInfo: { ...item.productInfo, price: "10.00" }, truePrice: "9.00", sumPrice: "20.00" })) };
 }
 function quote(key = "fixture_quote_1") { return normalizeCheckoutQuote(preview(key), selected, options); }
@@ -25,6 +25,13 @@ function deferred<T>() {
 }
 
 describe("FE-002E server-authoritative PC checkout quote", () => {
+  it('requires and preserves the exact server receipt instead of inventing one from the displayed amount', () => {
+    expect(quote().quoteToken).toBe('a'.repeat(32));
+    for (const quoteToken of [undefined, null, '', true, {}, 'A'.repeat(32), 'a'.repeat(31)]) {
+      expect(() => normalizeCheckoutQuote({ ...preview(), quoteToken }, selected, options)).toThrow('报价凭据');
+    }
+    expect(normalizeCheckoutQuote({ ...preview(), quoteToken: 'b'.repeat(32) }, selected, options).quoteToken).toBe('b'.repeat(32));
+  });
   it.each([1, 2, 3])("accepts null address only for non-logistics type %i with matching quote product type", productType => {
     const items = selected.map(item => ({ ...item, productInfo: { ...item.productInfo!, productType } }));
     const payload = { ...preview(), addressInfo: null, cartInfo: preview().cartInfo.map(item => ({ ...item, productInfo: { ...item.productInfo, productType } })) };

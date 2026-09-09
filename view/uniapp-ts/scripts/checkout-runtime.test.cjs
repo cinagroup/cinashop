@@ -13,7 +13,7 @@ function server(overrides = {}) {
     if (call.url === '/api/store/list') return { data: [{ id: 1, name: 'local' }] };
     if (call.url.startsWith('/api/coupons/order/')) return { data: [], headers: {} };
     if (call.url === '/api/order/confirm' || call.url.startsWith('/api/order/computed/')) return { data: {
-      orderKey: 'checkout_key1', addressInfo: { id: call.data.addressId },
+      orderKey: 'checkout_key1', quoteToken: 'a'.repeat(32), addressInfo: { id: call.data.addressId },
       cartInfo: [{ ...item, truePrice: '9.00', sumPrice: '20.00', productInfo: { ...item.productInfo, price: '10.00' } }],
       priceGroup: { sumPrice: '20.00', totalPrice: '18.00', pay_price: call.data.shippingType === 2 ? '18.00' : '21.00',
         total_postage: '6.00', storePostageDiscount: '3.00', pay_postage: '3.00', vipPrice: '2.00', levelPrice: '0.00', memberPrice: '2.00',
@@ -95,6 +95,29 @@ test('first-attempt definitive form rejection unlocks; same error after uncertai
   await r.start(); await r.checkout.submit(); assert.equal(r.checkout.pending.value, null); assert.equal(r.storage.has(key), false);
   uncertain = true; await r.checkout.submit(); uncertain = false; await r.checkout.submit();
   assert.ok(r.checkout.pending.value); assert.ok(r.storage.has(key)); r.stop();
+});
+test('quote rejection refreshes its receipt, while a later rejection cannot resolve a prior timeout', async () => {
+  let currentToken = 'a'.repeat(32), uncertain = false;
+  const base = server({ '/api/order/create/checkout_key1': () => {
+    currentToken = 'b'.repeat(32);
+    return uncertain ? { transport: 'timeout' } : { status: 400, msg: '请重新确认报价', data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: 'checkout_key1' } };
+  } });
+  const r = runtime({ send: async call => { const result = await base(call);
+    if (call.url === '/api/order/confirm' || call.url.startsWith('/api/order/computed/')) result.data.quoteToken = currentToken;
+    return result;
+  } });
+  try {
+    await r.start(); await r.checkout.submit();
+    assert.equal(r.checkout.pending.value, null); assert.equal(r.storage.has(key), false);
+    assert.equal(r.checkout.quote.value.result.quoteToken, 'b'.repeat(32));
+    uncertain = true; await r.checkout.submit(); uncertain = false; await r.checkout.submit();
+    assert.ok(r.checkout.pending.value); assert.ok(r.storage.has(key));
+    const submissions = r.calls.filter(c => c.url.includes('/create/'));
+    assert.equal(submissions[0].data.quoteToken, 'a'.repeat(32));
+    assert.equal(submissions[1].data.quoteToken, 'b'.repeat(32));
+    assert.deepEqual(submissions[1].data, submissions[2].data);
+    assert.equal(r.calls.some(c => c.url.includes('/pay/')), false);
+  } finally { r.stop(); }
 });
 test('account switch or page hide while submission is pending does not publish a late old result', async () => {
   const pending = deferred(); const r = runtime({ send: server({ '/api/order/create/checkout_key1': () => pending.promise }) });

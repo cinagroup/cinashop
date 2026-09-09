@@ -72,7 +72,7 @@ try {
       const cached = f.cache.get(`order:confirm:11:${key}`);
       await scenario.mutate?.(f, key);
       const before = await f.snapshot();
-      const created = await request(`/api/order/create/${key}`, { ...body, ...scenario.body });
+      const created = await request(`/api/order/create/${key}`, { ...body, quoteToken: confirmed?.data?.quoteToken, ...scenario.body });
       let after = await f.snapshot();
       if (scenario.replay) {
         assert.equal(created.status, 200);
@@ -115,6 +115,6 @@ try {
   const unproven = results.filter(r => r.verdict === 'unproven_rejection').length;
   console.log(JSON.stringify({ audit: 'FE-003L-A3k11c', runtime: 'in-memory PGlite',
     synthetic: ['authenticated identity', 'KV', 'sequence'], productionWrites: false, networkAttempts,
-    confirmationInvariantsComplete: gaps === 0 && unproven === 0, gaps, unproven, results }, null, 2));
+    probeInvariantsPassed: gaps === 0 && unproven === 0, gaps, unproven, results }, null, 2));
   if (gaps || unproven) process.exitCode = 1;
 } finally { globalThis.fetch = originalFetch; }

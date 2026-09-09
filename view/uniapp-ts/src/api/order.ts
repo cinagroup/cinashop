@@ -81,6 +81,7 @@ export function apiOrderCreate(
   key: string,
   params: {
     cartIds: number[];
+    quoteToken?: string;
     addressId?: number;
     useIntegral?: boolean;
     realName?: string;

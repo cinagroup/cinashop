@@ -10,6 +10,7 @@ import { StoreCartService } from "@/services/order/StoreCartService";
 import { parseBargainSelection } from "@/services/activity/BargainParticipationSelection";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
+import { OrderQuoteReconfirmRequired } from '@/services/order/CheckoutConfirmation';
 import { OrderFormRejectedException } from "@/services/order/OrderSystemFormService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderInvoiceService } from "@/services/order/StoreOrderInvoiceService";
@@ -289,6 +290,7 @@ export async function cartCount(c: C) {
 
 /** POST /api/order/create/:key */
 export async function orderCreate(c: C) {
+  c.header('Cache-Control', 'private, no-store');
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const key = c.req.param("key");
@@ -297,6 +299,7 @@ export async function orderCreate(c: C) {
   const body = await readBoundedJsonObject(c) as {
     cartIds?: number[];
     cart_ids?: number[];
+    quoteToken?: unknown;
     cartId?: string | number | number[];
     addressId?: number;
     address_id?: number;
@@ -361,6 +364,7 @@ export async function orderCreate(c: C) {
       uid,
       key,
       cartIds,
+      quoteToken: body.quoteToken,
       addressId: body.addressId,
       addressAlias: body.address_id,
       // Contacts are client-selected only for pickup. Delivery fields are
@@ -399,6 +403,7 @@ export async function orderCreate(c: C) {
     }
     return jsonOk(c, result, "订单创建成功");
   } catch (e) {
+    if (e instanceof OrderQuoteReconfirmRequired && !creationReturned) return jsonFail(c, e.message, e.data);
     if (e instanceof OrderFormRejectedException && !creationReturned) {
       return jsonFail(c, e.message, { errorCode: "ORDER_FORM_REJECTED", orderKey: key });
     }
@@ -454,6 +459,7 @@ export async function orderCheckShipping(c: C) {
 
 /** POST /api/order/confirm — legacy checkout preview backed by a short-lived KV key. */
 export async function orderConfirm(c: C) {
+  c.header('Cache-Control', 'private, no-store');
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const body = await readBoundedJsonObject(c);
@@ -481,6 +487,7 @@ export async function orderConfirm(c: C) {
 
 /** POST /api/order/computed/:key — display quote; createOrder remains authoritative. */
 export async function orderComputed(c: C) {
+  c.header('Cache-Control', 'private, no-store');
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const key = c.req.param("key") ?? "";
@@ -513,6 +520,7 @@ export async function orderComputed(c: C) {
       cartInfo: preview.cartInfo,
       addressInfo: preview.addressInfo,
       orderKey: preview.orderKey,
+      quoteToken: preview.quoteToken,
     });
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);

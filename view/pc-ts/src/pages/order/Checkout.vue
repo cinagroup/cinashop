@@ -167,7 +167,7 @@
         <span>订单备注:</span>
         <el-input v-model="remark" placeholder="选填" class="remark-input" :disabled="!!pendingSubmission" />
       </div>
-      <el-alert v-if="submissionError" :title="submissionError" :description="pendingSubmission ? '结果尚未确认；重试会复用相同订单标识和提交内容，不会自动发起付款。' : '服务端已明确拒绝本次表单且未完成建单；请修改后重新提交。'" type="error" :closable="false" show-icon />
+      <el-alert v-if="submissionError" :title="submissionError" :description="pendingSubmission ? '结果尚未确认；重试会复用相同订单标识和提交内容，不会自动发起付款。' : '服务端已明确拒绝本次结算且未完成建单；请检查信息和最新报价后重新提交。'" type="error" :closable="false" show-icon />
       <el-button v-if="submissionError && !pendingSubmission" :disabled="checkoutLoading" @click="loadCheckout">重新加载结算要求</el-button>
       <div class="submit-row">
         <span class="total">
@@ -484,6 +484,7 @@ async function submitOrder() {
       orderKey.value = quoteState.value.result!.key;
       // Freeze the same address/options as the accepted quote. Never send a client total or payType.
       pendingSubmission.value = JSON.parse(JSON.stringify({
+        quoteToken: quoteState.value.result!.quoteToken,
         ...quoteOptions.value,
         cartIds: items.map((i) => i.id),
         ...(shippingType.value === 2 ? { realName: pickupContact.value.realName.trim(), userPhone: pickupContact.value.phone.trim() } : {}),

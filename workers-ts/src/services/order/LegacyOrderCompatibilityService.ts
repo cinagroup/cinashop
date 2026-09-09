@@ -17,6 +17,7 @@ import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService"
 import { StoreCartService } from "@/services/order/StoreCartService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { checkoutAddressId } from './OrderDeliveryAddress';
+import { issueCheckoutConfirmation } from './CheckoutConfirmation';
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readBargainShippingSelection } from '@/services/activity/BargainShippingSelection';
@@ -349,6 +350,7 @@ export class LegacyOrderCompatibilityService {
       row.sumPrice = (item.rawUnitPriceCents * quantity / 100).toFixed(2);
     }
     const key = options.existingKey ?? await this.rememberCheckout(uid, cartIds);
+    const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV, { uid, key }, quote.confirmationFingerprint);
     const money = (cents: number) => (cents / 100).toFixed(2);
     const priceGroup = {
       sumPrice: money(quote.rawTotalCents),
@@ -391,6 +393,7 @@ export class LegacyOrderCompatibilityService {
         vip_price: money(quote.memberDiscountCents),
       },
       orderKey: key,
+      quoteToken,
       priceGroup,
       give_coupon: [],
       give_integral: 0,

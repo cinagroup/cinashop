@@ -33,6 +33,7 @@ export interface CheckoutPrices {
 
 export interface CheckoutQuote {
   key: string;
+  quoteToken: string;
   items: Array<CartItem & { quotedUnitPrice: string }>;
   prices: CheckoutPrices;
 }
@@ -65,6 +66,8 @@ export function normalizeCheckoutQuote(
 ): CheckoutQuote {
   const source = record(value, "订单报价");
   const key = source.orderKey;
+  const quoteToken = source.quoteToken;
+  if (typeof quoteToken !== 'string' || !/^[a-f0-9]{32}$/.test(quoteToken)) throw new Error('订单报价凭据无效，请重新确认');
   if (typeof key !== "string" || !/^[A-Za-z0-9_-]{8,64}$/.test(key) || (expectedKey && key !== expectedKey)) {
     throw new Error("订单报价标识无效，请重新确认");
   }
@@ -94,7 +97,7 @@ export function normalizeCheckoutQuote(
   });
   // Confirm uses priceGroup; computed keeps legacy flat fields and adds the matching detail snapshot.
   const price = source.priceGroup === undefined ? source : record(source.priceGroup, "报价明细");
-  return { key, items, prices: {
+  return { key, quoteToken, items, prices: {
     subtotal: quoteMoney(price.sumPrice), goodsPayable: quoteMoney(price.totalPrice), payable: quoteMoney(price.pay_price),
     postage: quoteMoney(price.total_postage), postageDiscount: quoteMoney(price.storePostageDiscount),
     postagePayable: quoteMoney(price.pay_postage), memberDiscount: quoteMoney(price.vipPrice),

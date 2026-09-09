@@ -64,7 +64,7 @@ describe('delivery address authority at the actual order core', () => {
   });
   const request = async (body: Record<string, unknown>, path = '/api/order/create/address_http') => {
     const response = await f.app.request(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-fixture-user': '11' }, body: JSON.stringify(body) }, f.env);
-    return response.json() as Promise<{ status: number; msg: string; data: { orderId?: string } }>;
+    return response.json() as Promise<{ status: number; msg: string; data: { orderId?: string; orderKey?: string; quoteToken?: string } }>;
   };
   it.each(['oops', -1, 1.5, null, {}, [], true, '1e1', ' 11'].map(addressId => ({ addressId })))('rejects malformed HTTP address ID $addressId before writes', async ({ addressId }) => {
     const before = await f.snapshot(); expect((await request({ cartIds: [1], addressId })).status).toBe(400); expect(await f.snapshot()).toEqual(before);
@@ -77,10 +77,12 @@ describe('delivery address authority at the actual order core', () => {
   });
   it('creates through HTTP from the saved address, then replays after address deletion', async () => {
     const body = { cartIds: [1], address_id: '11', cityId: 102, userAddress: '客户端地址', realName: '客户端姓名' };
-    expect((await request(body)).status).toBe(200);
+    const confirmation = await request(body, '/api/order/confirm');
+    const path = `/api/order/create/${confirmation.data.orderKey}`;
+    expect((await request({ ...body, quoteToken: confirmation.data.quoteToken }, path)).status).toBe(200);
     expect((await f.snapshot()).orders[0]).toMatchObject({ realName: '本地地址甲', payPostage: '6.00' });
     await f.db.update(userAddress).set({ isDel: 1 }).where(eq(userAddress.id, 11));
-    const before = await f.snapshot(); expect((await request(body)).status).toBe(200); expect(await f.snapshot()).toEqual(before);
+    const before = await f.snapshot(); expect((await request(body, path)).status).toBe(200); expect(await f.snapshot()).toEqual(before);
   });
   it('allows physical pickup without consulting an invalid delivery address', async () => {
     await create({ ...input(), shippingType: 2, storeId: 1, addressId: 999 });
@@ -153,7 +155,7 @@ describe('delivery address authority at the actual order core', () => {
     expect(confirmed.orderKey).toMatch(/^[a-f0-9]{32}$/);
     expect((await service.computed(7, uid, confirmed.orderKey, body)).extended).toBe(false);
     expect(await f.snapshot()).toEqual(before);
-    const created = await service.create(7, uid, confirmed.orderKey, body, '127.0.0.1');
+    const created = await service.create(7, uid, confirmed.orderKey, { ...body, quoteToken: confirmed.quoteToken }, '127.0.0.1');
     expect(created.extended).toBe(false);
     expect((await f.snapshot()).orders[0]).toMatchObject({ uid, staffId: 7, isChannel: 2,
       payPostage: ['manual', 'guest'].includes(kind) ? '12.00' : kind === 'saved' ? '6.00' : '0.00' });

@@ -24,7 +24,10 @@ describe("PC full quote through real controller/service/SQL", () => {
       postage: "6.00", postageDiscount: "3.00", postagePayable: "3.00", integralDiscount: "0.00" });
     expect(quote.items[0].quotedUnitPrice).toBe("9.00");
     expect(quote.prices.requiredIntegral).toBe(0);
-    expect(fixture.writes.at(-1)).toEqual({ key: `order:confirm:11:${quote.key}`, ttl: 1800 });
+    expect(fixture.writes.slice(-2)).toEqual([
+      { key: `order:confirm:11:${quote.key}`, ttl: 1800 },
+      { key: `order:quote:v1:11:0:${quote.key}:${quote.quoteToken}`, ttl: 1800 },
+    ]);
     expect(await fixture.snapshot()).toEqual(before);
   });
   it("returns required redemption points from activity SKU/quantity on confirm and computed without writes", async () => {

@@ -18,7 +18,7 @@ const store={id:1,name:'所属门店',introduction:'',phone:'',address:'隔离�
 const item={id:10,productId:70,unique:'qared001',cartNum:1,type:2,isNew:1,isValid:true,productInfo:{price:'10.00',storeName:'隔离砍价',image:'',stock:8,otPrice:'',suk:'红色',systemFormId:0,productType:0},sumPrice:'10.00'};
 const selection=(types=[1,2],address=true)=>({kind:'bargain',activityId:40,cartIds:[10],methods:types,shippingTypes:types,requiresAddress:address,stores:types.includes(2)?[store]:[]});
 export function registerCheckoutShippingTests(getContext){
- async function mount(shipping=()=>selection(),addressFailure=false,productType=0,type=2){
+ async function mount(shipping=()=>selection(),addressFailure=false,productType=0,type=2,createResponse){
   const selectedItem={...item,type,productInfo:{...item.productInfo,productType}};
   const {server,api,response}=getContext();const calls=[];let view;
   api.defaults.adapter=async config=>{const body=config.method==='post'?JSON.parse(config.data):{};calls.push({url:config.url,body});
@@ -27,7 +27,8 @@ export function registerCheckoutShippingTests(getContext){
    if(config.url==='/order/check_shipping')return response(config,{status:200,data:await shipping()});
    if(config.url==='/store/list')return response(config,{status:200,data:[store]});
    if(config.url==='/coupons/order/0')return response(config,{status:200,data:[]});
-   if(config.url==='/order/confirm'||config.url.startsWith('/order/computed/'))return response(config,{status:200,data:{orderKey:'shipping_key1',addressInfo:body.addressId?{id:body.addressId}:null,cartInfo:[{...selectedItem,truePrice:'2.00',sumPrice:'2.00',productInfo:{...selectedItem.productInfo,price:'2.00'}}],priceGroup:{sumPrice:'2.00',totalPrice:'2.00',pay_price:'2.00',total_postage:'0.00',pay_postage:'0.00',storePostageDiscount:'0.00',vipPrice:'0.00',levelPrice:'0.00',memberPrice:'0.00',couponPrice:'0.00',deduction_price:'0.00',firstOrderPrice:'0.00',usedIntegral:0,SurplusIntegral:0,pay_integral:0}}});
+   if(config.url.startsWith('/order/create/')&&createResponse)return response(config,await createResponse(body));
+   if(config.url==='/order/confirm'||config.url.startsWith('/order/computed/'))return response(config,{status:200,data:{orderKey:'shipping_key1',quoteToken:(calls.some(c=>c.url.startsWith('/order/create/'))?'b':'a').repeat(32),addressInfo:body.addressId?{id:body.addressId}:null,cartInfo:[{...selectedItem,truePrice:'2.00',sumPrice:'2.00',productInfo:{...selectedItem.productInfo,price:'2.00'}}],priceGroup:{sumPrice:'2.00',totalPrice:'2.00',pay_price:'2.00',total_postage:'0.00',pay_postage:'0.00',storePostageDiscount:'0.00',vipPrice:'0.00',levelPrice:'0.00',memberPrice:'0.00',couponPrice:'0.00',deduction_price:'0.00',firstOrderPrice:'0.00',usedIntegral:0,SurplusIntegral:0,pay_integral:0}}});
    throw new Error('Unexpected request '+config.url);
   };
   const component=(await server.ssrLoadModule(script)).default;
@@ -68,6 +69,19 @@ export function registerCheckoutShippingTests(getContext){
  });
  it('PC ordinary physical checkout still requires a usable saved address',async()=>{
   const f=await mount(undefined,true,0,0);try{assert.equal(f.view.requiresAddress.value,true);assert.equal(f.view.quoteReady.value,false);assert.equal(f.calls.some(c=>c.url==='/order/confirm'),false);}finally{f.close();}
+ });
+ it('PC definite quote rejection releases the old intent and obtains a new receipt without payment',async()=>{
+  const f=await mount(undefined,false,0,0,async()=>({status:400,msg:'请重新确认报价',data:{errorCode:'ORDER_QUOTE_RECONFIRM_REQUIRED',orderKey:'shipping_key1'}}));
+  try{await f.view.submitOrder();await flush();assert.equal(f.view.pendingSubmission.value,null);assert.equal(f.view.quoteReady.value,true);
+   const sent=f.calls.find(c=>c.url.startsWith('/order/create/'));assert.equal(sent.body.quoteToken,'a'.repeat(32));
+   assert.equal(f.view.quoteState.value.result.quoteToken,'b'.repeat(32));assert.equal(f.calls.some(c=>c.url.includes('/pay/')),false);
+  }finally{f.close();}
+ });
+ it('PC quote rejection after a timeout preserves the exact uncertain payload and receipt',async()=>{
+  let attempts=0;const f=await mount(undefined,false,0,0,async()=>{if(++attempts===1)throw new Error('network uncertainty');return {status:400,msg:'请重新确认报价',data:{errorCode:'ORDER_QUOTE_RECONFIRM_REQUIRED',orderKey:'shipping_key1'}};});
+  try{await f.view.submitOrder();await f.view.submitOrder();await flush();assert.ok(f.view.pendingSubmission.value);
+   const sent=f.calls.filter(c=>c.url.startsWith('/order/create/'));assert.equal(sent.length,2);assert.deepEqual(sent[0].body,sent[1].body);assert.equal(sent[1].body.quoteToken,'a'.repeat(32));
+  }finally{f.close();}
  });
  for(const change of ['route','identity'])it(`PC late shipping response cannot restore eligibility after ${change} changes`,async()=>{
   const waiting=gate();let delay=false;const f=await mount(()=>delay?waiting.promise:selection());try{

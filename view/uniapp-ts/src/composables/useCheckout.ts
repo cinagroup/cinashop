@@ -165,6 +165,7 @@ export function useCheckout() {
     let sent = false;
     try {
       if (!pending.value) pending.value = journal.begin(owner.uid, quote.value.result!.key, {
+        quoteToken: quote.value.result!.quoteToken,
         ...options.value, cartIds: items.value.map((row) => row.id), mark: mark.value,
         ...(shippingType.value === 2 ? { realName: contact.value.realName.trim(), userPhone: contact.value.userPhone.trim() } : {}), customForm: customForm.value,
       });
@@ -181,7 +182,7 @@ export function useCheckout() {
       if (owner.uid !== auth.uid || owner.version !== auth.sessionVersion || current !== generation) return;
       submissionError.value = message(e, "下单结果尚未确认");
       const data = e instanceof RequestError && e.status === 400 && e.httpStatus === 200 ? e.data as { errorCode?: unknown; orderKey?: unknown } | null : null;
-      if (sent && !uncertain && pending.value && data?.errorCode === "ORDER_FORM_REJECTED" && data.orderKey === pending.value.key) {
+      if (sent && !uncertain && pending.value && (data?.errorCode === "ORDER_FORM_REJECTED" || data?.errorCode === "ORDER_QUOTE_RECONFIRM_REQUIRED") && data.orderKey === pending.value.key) {
         try { journal.clear(pending.value); pending.value = null; await refreshQuote(); }
         catch (storageError) { submissionError.value = message(storageError, "待确认记录处理失败"); }
       } else if (sent) uncertain = true;

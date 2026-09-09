@@ -71,14 +71,33 @@ function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<Retu
 
 /** Authoritative single-coupon resolution shared by quote, create and the order picker. */
 export async function resolveOrderCoupon(container: Container, uid: number, couponId: number | undefined, items: readonly PricedCouponItem[]) {
-  if (!couponId) return { priceCents: 0, row: null };
+  if (!couponId) return { priceCents: 0, row: null, quoteFacts: null };
   const rows = await container.db.select({ coupon: storeCouponUser, issue: storeCouponIssue }).from(storeCouponUser)
     .leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))
     .where(and(eq(storeCouponUser.id, couponId), eq(storeCouponUser.uid, uid))).limit(1);
   const row = rows[0];
   if (!row) throw new ValidateException("优惠券不存在");
   const scope = await prepareCouponScope(container, items, row.issue ? [row.issue] : []);
-  return { priceCents: evaluateCoupon(row.coupon, row.issue, scope, Date.now()).priceCents, row: row.coupon };
+  const evaluated = evaluateCoupon(row.coupon, row.issue, scope, Date.now());
+  // Bind the rules actually used by evaluateCoupon, not mutable titles/claim counters.
+  // Canonical sets avoid invalidation from equivalent legacy scope ordering.
+  const issue = row.issue!, coupon = row.coupon;
+  const ordered = (ids: number[]) => [...new Set(ids)].sort((a, b) => a - b);
+  const quoteFacts = {
+    id: coupon.id, uid: coupon.uid, issueId: issue.id, discountType: issue.type, scopeType: issue.couponType,
+    valueHundredths: decimalToCents(coupon.couponPrice), minimumCents: decimalToCents(coupon.useMinPrice),
+    startsAt: coupon.startTime?.getTime() ?? null, endsAt: coupon.endTime?.getTime() ?? null,
+    productIds: issue.couponType === 2 ? ordered(reconcileCouponProductScopeIds([issue.legacyProductIds, issue.productId], scope.related.get(issue.id) ?? [])) : [],
+    categoryIds: issue.couponType === 1 ? ordered(parseCouponScopeIds(issue.legacyCategoryId, issue.category_id)) : [],
+    brandIds: issue.couponType === 3 ? ordered(parseCouponScopeIds(issue.legacyBrandId, issue.brandId)) : [],
+    eligibleSubtotalCents: evaluated.eligibleSubtotalCents,
+    items: scope.items.map(item => ({ productId: item.productId, parentProductId: item.parentProductId,
+      categoryIds: issue.couponType === 1 ? ordered([...(item.categoryIds ?? []), ...(item.categoryAncestorIds ?? [])]) : [],
+      brandIds: issue.couponType === 3 ? ordered([item.brandId ?? 0, ...(item.brandAncestorIds ?? [])]) : [],
+      subtotalCents: item.subtotalCents,
+    })).sort((a, b) => a.productId - b.productId || a.subtotalCents - b.subtotalCents),
+  };
+  return { priceCents: evaluated.priceCents, row: coupon, quoteFacts };
 }
 
 /** Read-only snapshot, not a reservation. Legacy unpaged callers fail explicitly above 1000 candidates. */

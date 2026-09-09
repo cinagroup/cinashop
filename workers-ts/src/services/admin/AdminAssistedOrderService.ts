@@ -30,6 +30,7 @@ import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { assistedDeliveryAddress, checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
+import { issueCheckoutConfirmation } from '@/services/order/CheckoutConfirmation';
 
 const ASSISTED_CHECKOUT_TTL_SECONDS = 30 * 60;
 const MAX_CART_ITEMS = 200;
@@ -584,6 +585,8 @@ export class AdminAssistedOrderService {
       assisted: { adminId, touristUid: selection.touristUid },
     });
     const orderKey = key ?? await this.remember(adminId, selection);
+    const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV,
+      { uid: selection.uid, key: orderKey, adminId, touristUid: selection.touristUid }, quote.confirmationFingerprint);
     const quoted = new Map(quote.items.map((item) => [item.cartId, item]));
     for (const row of cartInfo) {
       const item = quoted.get(Number(row.id));
@@ -593,7 +596,7 @@ export class AdminAssistedOrderService {
       row.price_type = item.priceType;
     }
     return {
-      result: priceGroup(quote),
+      result: { ...priceGroup(quote), quoteToken },
       quote,
       response: {
         addressInfo: legacyAddress(quote.deliveryAddress ?? (shippingType === 2 ? address : null)),
@@ -612,6 +615,7 @@ export class AdminAssistedOrderService {
             }
           : { uid: 0, phone: "", now_money: "0.00", integral: 0, vip: false },
         orderKey,
+        quoteToken,
         priceGroup: priceGroup(quote),
         valid_count: cartInfo.length,
         type: 0,
@@ -819,6 +823,7 @@ export class AdminAssistedOrderService {
       uid,
       key,
       cartIds: snapshot.cartIds,
+      quoteToken: body.quoteToken,
       addressId: address?.id ?? addressId,
       manualAddress,
       realName,

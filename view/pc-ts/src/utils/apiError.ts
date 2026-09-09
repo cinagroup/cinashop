@@ -10,7 +10,7 @@ export function isOrderFormRejection(error: unknown, key: string): boolean {
   if (!(error instanceof ApiResponseError) || error.status !== 400 || !key) return false;
   const value = error.data;
   return !!value && typeof value === "object" && !Array.isArray(value)
-    && "errorCode" in value && value.errorCode === "ORDER_FORM_REJECTED"
+    && "errorCode" in value && (value.errorCode === "ORDER_FORM_REJECTED" || value.errorCode === "ORDER_QUOTE_RECONFIRM_REQUIRED")
     && "orderKey" in value && value.orderKey === key;
 }
 

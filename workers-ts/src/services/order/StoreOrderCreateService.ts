@@ -75,6 +75,7 @@ import {
   collectOrderSystemForm,
   loadOrderSystemFormSubmission,
   readOrderSystemFormSnapshot,
+  OrderFormRejectedException,
 } from "@/services/order/OrderSystemFormService";
 import { AttachmentService } from "@/services/system/AttachmentService";
 import { reservePinkJoin } from "@/services/activity/PinkLifecycleService";
@@ -104,6 +105,7 @@ import { assertBargainShippingMethod, assertBargainShippingQuote, type BargainSh
 import { assertBargainPickup, assertBargainPickupQuote, boundBargainPickupTransaction } from "@/services/activity/BargainPickupPolicy";
 import { readShippingTemplateSnapshot, shippingTemplateIds, assertShippingTemplateBindings, assertShippingTemplateSnapshot, boundShippingTemplateTransaction, type ShippingTemplateSnapshot } from "./ShippingTemplateSnapshot";
 import { resolveDeliveryAddress, assertDeliveryAddressSnapshot, deliveryAddressText, checkoutContact, type DeliveryAddressSnapshot, type ManualDeliveryAddress } from './OrderDeliveryAddress';
+import { checkoutFingerprint, readCheckoutConfirmation, assertCheckoutConfirmation, OrderQuoteReconfirmRequired } from './CheckoutConfirmation';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -111,6 +113,8 @@ export interface CreateOrderParams {
   /** 确认订单的 key (幂等防重) */
   key: string;
   cartIds: number[];
+  /** Opaque server receipt; never a client-supplied total. */
+  quoteToken?: unknown;
   /** Untrusted selection, resolved inside the core after existing-order replay. */
   addressId?: unknown;
   addressAlias?: unknown;
@@ -157,6 +161,8 @@ export interface CreateOrderParams {
 
 /** Infrastructure needed by the real order-creation core. */
 export interface StoreOrderCreationRuntime extends SystemConfigEnv {
+  /** All public service entry points require a server-issued receipt. Pure core fixtures may omit this adapter policy. */
+  requireConfirmation?: boolean;
   nextOrderId(): Promise<string>;
 }
 
@@ -176,6 +182,7 @@ export function customerVisibleManualVirtualContent(order: {
 }
 
 export interface OrderPricingQuote {
+  confirmationFingerprint: string;
   deliveryAddress: DeliveryAddressSnapshot['saved'];
   /** Only returned to an explicit read-only order-coupon request. Never a reservation. */
   couponPage?: OrderCouponPage;
@@ -801,10 +808,11 @@ export class StoreOrderCreateService {
    * 购物车认领和库存扣减都在 PostgreSQL 事务内完成。
    */
   async createOrder(params: CreateOrderParams): Promise<{ orderId: string; key: string }> {
-    return StoreOrderCreateService.createWithRuntime(
+    try { return await StoreOrderCreateService.createWithRuntime(
       this.container,
       {
         CONFIG_KV: this.env.CONFIG_KV,
+        requireConfirmation: true,
         nextOrderId: async () => {
           const seqId = this.env.SEQUENCE.idFromName("seq");
           const seq = this.env.SEQUENCE.get(seqId);
@@ -813,7 +821,14 @@ export class StoreOrderCreateService {
         },
       },
       params,
-    );
+    ); } catch (error) {
+      // Business rejection before a successful commit is definitive; SQL/transport failures are not.
+      if (params.quoteToken !== undefined && !(error instanceof OrderFormRejectedException)
+        && (error instanceof ValidateException || error instanceof NotFoundException)) {
+        throw new OrderQuoteReconfirmRequired(params.key);
+      }
+      throw error;
+    }
   }
 
   /** Read-only checkout quote that executes the same pre-transaction pricing path as createOrder. */
@@ -948,10 +963,12 @@ export class StoreOrderCreateService {
     if (type === 1 && (!Number.isSafeInteger(params.seckillId) || (params.seckillId ?? 0) <= 0)) {
       throw new ValidateException("缺少秒杀活动信息");
     }
+    let seckillConfirmationSchedule: Awaited<ReturnType<typeof loadSeckillSchedule>> | null = null;
     if (type === 1) {
       const schedule = await loadSeckillSchedule(c.db, params.seckillId!);
       assertSeckillSchedule(schedule);
       if (schedule.child.productId !== carts[0]?.productId) throw new ValidateException("秒杀商品不匹配");
+      seckillConfirmationSchedule = schedule;
     }
     if (
       type === 3 &&
@@ -1028,9 +1045,13 @@ export class StoreOrderCreateService {
     let bargainActivityId = 0;
     let bargainParticipantId = 0;
     let bargainShippingQuote: BargainShippingQuote | null = null;
+    let bargainConfirmationRules: Pick<typeof storeBargain.$inferSelect,
+      'deliveryType' | 'startTime' | 'stopTime' | 'num' | 'isSupportRefund' | 'systemFormId' | 'giveIntegral'> | null = null;
     let bargainParticipantQuote: Pick<typeof storeBargainUser.$inferSelect, "bargainPrice" | "bargainPriceMin" | "price"> | null = null;
     let orderSystemFormId = 0;
     let pinkCombinationId = 0;
+    let combinationConfirmationRules: Pick<typeof storeCombination.$inferSelect,
+      'people' | 'effectiveTime' | 'onceNum' | 'num' | 'startTime' | 'stopTime' | 'deliveryType' | 'systemFormId' | 'isSupportRefund'> | null = null;
     let legacyActivityOnceNum = 0;
     let legacyActivityTotalNum = 0;
     let seckillPricingSnapshot: typeof storeSeckill.$inferSelect | null = null;
@@ -1149,6 +1170,9 @@ export class StoreOrderCreateService {
         if (cart.activityId !== bargain[0].id) throw new ValidateException("砍价购物车与活动不匹配");
         assertBargainShippingMethod(bargain[0], product.productType, shippingType);
         bargainShippingQuote = bargain[0];
+        bargainConfirmationRules = { deliveryType: bargain[0].deliveryType, startTime: bargain[0].startTime,
+          stopTime: bargain[0].stopTime, num: bargain[0].num, isSupportRefund: bargain[0].isSupportRefund,
+          systemFormId: bargain[0].systemFormId, giveIntegral: bargain[0].giveIntegral };
         itemSystemFormId = bargain[0].systemFormId;
         bargainActivityId = bargain[0].id;
         if (!activitySku) {
@@ -1208,6 +1232,9 @@ export class StoreOrderCreateService {
         ) throw new ValidateException("拼团活动不存在或已结束");
         if (comboRow[0].productId !== product.id) throw new ValidateException("拼团商品不匹配");
         if (cart.activityId !== comboRow[0].id) throw new ValidateException("拼团购物车与活动不匹配");
+        combinationConfirmationRules = { people: comboRow[0].people, effectiveTime: comboRow[0].effectiveTime,
+          onceNum: comboRow[0].onceNum, num: comboRow[0].num, startTime: comboRow[0].startTime, stopTime: comboRow[0].stopTime,
+          deliveryType: comboRow[0].deliveryType, systemFormId: comboRow[0].systemFormId, isSupportRefund: comboRow[0].isSupportRefund };
         itemSystemFormId = comboRow[0].systemFormId;
         legacyActivityOnceNum = comboRow[0].onceNum;
         legacyActivityTotalNum = comboRow[0].num;
@@ -1449,7 +1476,7 @@ export class StoreOrderCreateService {
       throw new ValidateException("游客订单不能使用用户优惠券");
     }
     let couponResolution = !user || preliminaryFirstOrderEligible || type !== 0
-      ? { priceCents: 0, row: null }
+      ? { priceCents: 0, row: null, quoteFacts: null }
       : await resolveOrderCoupon(c, uid, params.couponId, orderItems);
     let couponPriceCents = couponResolution.priceCents;
     let couponRow = couponResolution.row;
@@ -1555,8 +1582,44 @@ export class StoreOrderCreateService {
       totalCents - couponPriceCents - firstOrderPriceCents - deductionCents + postageCents,
     );
     let actualProductCents = Math.max(0, payCents - postageCents);
+    // Re-evaluated after final first-order/integral admission inside the transaction.
+    // Mutable inventory and address-default metadata are deliberately not quote facts.
+    const confirmationFingerprint = () => checkoutFingerprint({
+      version: 1, uid, adminId: assisted?.adminId ?? 0, touristUid: assisted?.touristUid ?? '',
+      type, shippingType, pickupStoreId, offlinePricing: payType === 'offline',
+      couponId: params.couponId ?? 0, wantsIntegral, pinkId: params.pinkId ?? 0,
+      bargainActivityId, bargainParticipantId, bargainParticipantQuote, pinkCombinationId,
+      bargainConfirmationRules, discountRules: discountPackage?.confirmationRules ?? null,
+      couponRules: couponResolution.quoteFacts,
+      seckillConfirmationSchedule,
+      seckillRules: seckillPricingSnapshot ? { onceNum: seckillPricingSnapshot.onceNum, num: seckillPricingSnapshot.num,
+        giveIntegral: seckillPricingSnapshot.giveIntegral, systemFormId: seckillPricingSnapshot.systemFormId,
+        deliveryType: seckillPricingSnapshot.deliveryType, isSupportRefund: seckillPricingSnapshot.isSupportRefund } : null,
+      combinationConfirmationRules, newcomerConfig, orderSystemFormId,
+      integralActivityId, discountActivityId, newcomerActivityId, newcomerActivitySkuId,
+      address: deliveryAddress ? { id: deliveryAddress.saved?.id ?? 0, fields: deliveryAddress.fields, regions: deliveryAddress.regions } : null,
+      shippingSnapshot, pricingConfig, firstOrderConfig, levelDiscountPercent, activePaidMember,
+      // Contacts for pickup are intentionally editable independently of pricing. The selected store is bound.
+      items: orderItems.map(item => ({ cartId: item.cart.id, quantity: item.cart.cartNum,
+        isNew: item.cart.isNew, productId: item.product.id, productType: item.product.productType,
+        ownerType: item.product.type, relationId: item.product.relationId, activityId: item.cart.activityId,
+        isSupportRefund: item.product.isSupportRefund,
+        integralRules: item.integralActivity ? { onceNum: item.integralActivity.onceNum, num: item.integralActivity.num,
+          deliveryType: item.integralActivity.deliveryType, systemFormId: item.integralActivity.systemFormId } : null,
+        skuId: item.sku.id, unique: item.sku.unique, suk: item.sku.suk, activitySkuId: item.activitySku?.id ?? 0,
+        weight: item.sku.weight, volume: item.sku.volume, rawUnitPriceCents: item.rawUnitPriceCents,
+        unitPriceCents: item.unitPriceCents, priceType: item.priceType,
+        freight: item.activityFreight ?? item.integralActivity?.freight ?? item.product.freight,
+        postage: item.activityPostage ?? item.integralActivity?.postage ?? item.product.postage,
+        tempId: item.activityTempId ?? item.integralActivity?.tempId ?? item.product.tempId,
+      })).sort((a, b) => a.cartId - b.cartId),
+      rawTotalCents, totalCents, payCents, totalPostageCents, postageCents, postageDiscountCents,
+      couponPriceCents, firstOrderPriceCents, deductionCents, usedIntegralPoints, requiredIntegral,
+      memberDiscountCents, levelDiscountCents, paidMemberDiscountCents, totalNum, isStoreFreePostage,
+    });
     if (options?.preview) {
       return {
+        confirmationFingerprint: await confirmationFingerprint(),
         deliveryAddress: deliveryAddress?.saved ?? null,
         ...(options.couponQuery ? { couponPage: !user || preliminaryFirstOrderEligible || type !== 0
           ? { list: [], nextCursor: null }
@@ -1588,6 +1651,11 @@ export class StoreOrderCreateService {
         })),
       };
     }
+
+    const confirmation = runtime.requireConfirmation || params.quoteToken !== undefined
+      ? await readCheckoutConfirmation(runtime.CONFIG_KV, { uid, key, adminId: assisted?.adminId, touristUid: assisted?.touristUid }, params.quoteToken)
+      : null;
+    if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
 
     // 5. 订单号只在真实创建时生成；只读报价不会消耗 Sequence DO 编号。
     const orderId = (await runtime.nextOrderId()).trim();
@@ -2164,6 +2232,9 @@ export class StoreOrderCreateService {
         if (!activitySkuUpdated.length) throw new ValidateException("积分商品规格库存不足");
       }
 
+      // No KV/network call under the transaction. A changed final discount must roll back all prior claims.
+      if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
+
       // 5a. INSERT 订单 (unique(uid,unique) 约束兜底)
       const orderInsert = await tx
         .insert(storeOrder)
@@ -2454,6 +2525,7 @@ export class StoreOrderCreateService {
       if (deliveryAddress) await assertDeliveryAddressSnapshot(tx, deliveryAddress);
       if (shippingSnapshot) await assertShippingTemplateSnapshot(tx, shippingSnapshot, templateIds, params.cityId);
       if (type === 2) await assertBargainCheckoutWindow(tx, bargainActivityId);
+      if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
       return order;
     });
 

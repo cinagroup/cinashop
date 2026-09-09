@@ -46,14 +46,16 @@ export function registerDeliveryAddressAuthTests() {
     const request = async (path: string, bearer: string, body: Record<string, unknown>) => {
       const response = await app.request(path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bearer}`,
         'x-fixture-user': '11', 'x-user-id': '11', 'x-admin-id': '7' }, body: JSON.stringify(body) }, f.env);
-      return response.json() as Promise<{ status: number; msg: string; data: { orderKey?: string; result?: { order_id: string } } | null }>;
+      return response.json() as Promise<{ status: number; msg: string; data: { orderKey?: string; quoteToken?: string; result?: { order_id: string } } | null }>;
     };
     const normal = { cartIds: [1], addressId: 11, shippingType: 1 };
     const assisted = { cartId: [1], new: 1, addressId: 11, shipping_type: 1 };
     const confirmPath = '/api/admin/order/confirm/11';
 
     it('uses the signed user and saved address despite forged body/header identities', async () => {
-      expect((await request('/api/order/create/address_auth', await token(), { ...normal, uid: 22, realName: 'override', cityId: 102 })).status).toBe(200);
+      const bearer = await token();
+      const confirmed = await request('/api/order/confirm', bearer, normal);
+      expect((await request(`/api/order/create/${confirmed.data?.orderKey}`, bearer, { ...normal, quoteToken: confirmed.data?.quoteToken, uid: 22, realName: 'override', cityId: 102 })).status).toBe(200);
       expect((await f.snapshot()).orders[0]).toMatchObject({ uid: 11, realName: '本地地址甲', payPostage: '6.00', paid: 0 });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -90,7 +92,7 @@ export function registerDeliveryAddressAuthTests() {
       const before = await f.snapshot(); expect((await request(path, bearer, assisted)).status).toBe(400011);
       expect(await f.snapshot()).toEqual(before);
       await f.db.update(systemRole).set({ status: 1 }).where(eq(systemRole.id, 1));
-      expect((await request(path, bearer, assisted)).status).toBe(200);
+      expect((await request(path, bearer, { ...assisted, quoteToken: confirmation.data?.quoteToken })).status).toBe(200);
       expect((await f.snapshot()).orders[0]).toMatchObject({ uid: 11, staffId: 7, isChannel: 2, realName: '本地地址甲', payPostage: '6.00', paid: 0 });
       expect(fetch).not.toHaveBeenCalled();
     });

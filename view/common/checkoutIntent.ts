@@ -1,6 +1,8 @@
 import type { CheckoutQuoteOptions } from "./checkoutQuote";
 
 export interface CheckoutSubmission extends CheckoutQuoteOptions {
+  /** Optional only when decoding an old unresolved submission for idempotent replay. */
+  quoteToken?: string;
   cartIds: number[];
   realName?: string;
   userPhone?: string;
@@ -21,7 +23,7 @@ export function decodeCheckoutIntent(value: unknown, uid: number): CheckoutInten
   try { record = JSON.parse(value) as CheckoutIntent; }
   catch { throw new Error("待确认订单记录不可读，请先核对订单列表"); }
   const p = record?.payload;
-  const fields = ["cartIds", "addressId", "shippingType", "storeId", "couponId", "useIntegral", "type", "pinkId", "combinationId", "seckillId", "bargainUserId", "realName", "userPhone", "mark", "customForm"];
+  const fields = ["quoteToken", "cartIds", "addressId", "shippingType", "storeId", "couponId", "useIntegral", "type", "pinkId", "combinationId", "seckillId", "bargainUserId", "realName", "userPhone", "mark", "customForm"];
   if (record?.version !== 1 || !positive(uid) || record.uid !== uid || typeof record.key !== "string" || !keyPattern.test(record.key)
     || !p || typeof p !== "object" || Array.isArray(p) || Object.keys(p).some((field) => !fields.includes(field))
     || !Array.isArray(p.cartIds) || !p.cartIds.length || p.cartIds.length > 100 || !p.cartIds.every(positive)
@@ -30,6 +32,7 @@ export function decodeCheckoutIntent(value: unknown, uid: number): CheckoutInten
     || typeof p.useIntegral !== "boolean" || typeof p.mark !== "string" || p.mark.length > 200 || !Array.isArray(p.customForm) || p.customForm.length > 100
     || [p.pinkId, p.combinationId, p.seckillId, p.bargainUserId].some((id) => id !== undefined && !nonnegative(id))
     || [p.realName, p.userPhone].some((v) => v !== undefined && typeof v !== "string")
+    || (p.quoteToken !== undefined && (typeof p.quoteToken !== 'string' || !/^[a-f0-9]{32}$/.test(p.quoteToken)))
     || (record.orderId !== undefined && (typeof record.orderId !== "string" || !/^[A-Za-z0-9_-]{1,96}$/.test(record.orderId)))) {
     throw new Error("待确认订单记录无效，请先核对订单列表");
   }

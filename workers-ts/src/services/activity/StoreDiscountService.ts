@@ -38,6 +38,18 @@ export interface ResolvedDiscountPackageItem {
 export interface ResolvedDiscountPackage {
   discount: DiscountPackage;
   items: ResolvedDiscountPackageItem[];
+  confirmationRules: ReturnType<typeof discountConfirmationRules>;
+}
+
+/** Purchase terms, including unselected membership rules; remaining quota is not a quote version. */
+function discountConfirmationRules(discount: DiscountPackage, entries: DiscountProduct[]) {
+  return { id: discount.id, type: discount.type, isLimit: discount.isLimit,
+    startTime: discount.startTime, stopTime: discount.stopTime, freeShipping: discount.freeShipping,
+    isSupportRefund: discount.isSupportRefund, deliveryType: discount.deliveryType, freight: discount.freight,
+    customForm: discount.customForm,
+    entries: entries.map(entry => ({ id: entry.id, productId: entry.productId, productType: entry.productType,
+      type: entry.type, tempId: entry.tempId })).sort((a, b) => a.id - b.id),
+  };
 }
 
 function parseAmountToCents(value: string | number): number | null {
@@ -252,7 +264,7 @@ export async function resolveDiscountPackageSelection(
     }
     return { entry, product, packageSku, baseSku, priceCents };
   });
-  return { discount, items };
+  return { discount, items, confirmationRules: discountConfirmationRules(discount, entries) };
 }
 
 /**
