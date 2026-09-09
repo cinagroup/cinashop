@@ -1,0 +1,396 @@
+{
+  "generatedAt": "2026-09-09T06:10:08.051Z",
+  "baseCommit": "26aa5339069ace11f21d10816902fb431d94d8a5",
+  "status": "local candidate; not deployed",
+  "environment": {
+    "postgres": "isolated loopback PostgreSQL 16.15; random owned schemas",
+    "auth": "actual Hono controller; authentication omitted by local fixture",
+    "productionAccess": false,
+    "frontendChanged": false,
+    "browserTested": false
+  },
+  "sourceHashes": [
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256Lf": "def6e98f85df0dea2b6c8731847b0c5b3892508d97b124b8e1e8d884031acea8"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminShippingTemplateService.ts",
+      "sha256Lf": "ce97a73b94018b65bedd77775c7f0788188b9f948151bbc9329a2d8ebd628206"
+    },
+    {
+      "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+      "sha256Lf": "bb5827f5bfe696b715b0ab586f21cb1ab26a328567dc3fb098d7bc99f2d20e58"
+    },
+    {
+      "file": "workers-ts/test/admin-shipping-atomic-postgres.test.ts",
+      "sha256Lf": "6006d6105851b27ab2d8eb12a3c3915d8159b46e2ddd7c75b006e99f95111db5"
+    },
+    {
+      "file": "workers-ts/test/helpers/adminShippingFixture.ts",
+      "sha256Lf": "30dbd56763e5ba67c56d2f91a5cf629591f8a6e171f8d92e73d1b861d2757f73"
+    }
+  ],
+  "rawDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "reports": [
+    {
+      "file": "admin-template-red.json",
+      "sha256": "2c41c030c2f9a1f4fc5a76ae156dfd3110cc2b9504acfadf073910e9ed433ec9",
+      "success": false,
+      "total": 6,
+      "passed": 1,
+      "failed": 5,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+          "status": "failed",
+          "total": 6,
+          "failed": [
+            {
+              "name": "actual admin shipping writes are atomic rolls back template and all regions after a later insert failure, id=0",
+              "errorExcerpt": "AssertionError: expected { templates: [ …(2) ], …(3) } to deeply equal { …(4) }\n    at C:/cinagroup/cinashop/workers-ts/test/admin-shipping-atomic.test.ts:14:30\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "actual admin shipping writes are atomic rolls back template and all regions after a later insert failure, id=10",
+              "errorExcerpt": "AssertionError: expected { …(4) } to deeply equal { …(4) }\n    at C:/cinagroup/cinashop/workers-ts/test/admin-shipping-atomic.test.ts:14:30\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "actual admin shipping writes are atomic preserves omitted metadata, rule sets, ownership and creation time on a rename",
+              "errorExcerpt": "AssertionError: expected { …(4) } to deeply equal { …(4) }\n    at C:/cinagroup/cinashop/workers-ts/test/admin-shipping-atomic.test.ts:18:30\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "actual admin shipping writes are atomic does not create orphan child rows when editing a missing template",
+              "errorExcerpt": "AssertionError: expected 200 not to be 200 // Object.is equality\n    at C:/cinagroup/cinashop/workers-ts/test/admin-shipping-atomic.test.ts:21:127\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "actual admin shipping writes are atomic does not edit a retired template",
+              "errorExcerpt": "AssertionError: expected 200 not to be 200 // Object.is equality\n    at C:/cinagroup/cinashop/workers-ts/test/admin-shipping-atomic.test.ts:26:95\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "admin-template-green.json",
+      "sha256": "45f88a7c80e44ed1527a42e425a9851a9f2244ac829ed39bd4605fdaea41cc0d",
+      "success": true,
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "admin-template-targeted.json",
+      "sha256": "35ed9397477e40797a2fc8e015b990382438f9c7379ac056d458347947adf010",
+      "success": true,
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "pending": 0,
+      "files": 2,
+      "results": [
+        {
+          "file": "workers-ts/test/admin-shipping-atomic-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "total": 26,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "admin-template-offline.json",
+      "sha256": "fa990204563aa6b8f3b0cb71dd400370fd226701e3f8c20c335c2727ea45b20f",
+      "success": true,
+      "total": 26,
+      "passed": 26,
+      "failed": 0,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "total": 26,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "admin-template-regression.json",
+      "sha256": "af82cab15bc00855df4ceefa72068062f28d7439119944b4112829468d58fc89",
+      "success": true,
+      "total": 415,
+      "passed": 415,
+      "failed": 0,
+      "pending": 0,
+      "files": 30,
+      "results": [
+        {
+          "file": "workers-ts/test/admin-shipping-atomic-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "total": 26,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-form.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-retirement.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-save.test.ts",
+          "status": "passed",
+          "total": 52,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping.test.ts",
+          "status": "passed",
+          "total": 28,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-form.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-postgres.test.ts",
+          "status": "passed",
+          "total": 14,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-contract.test.ts",
+          "status": "passed",
+          "total": 25,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/legacy-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/ordinary-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/orm-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/reply-shipping-migration.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/request-body.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/supplier-shipping-template.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        }
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "file": "admin-template-red.log",
+      "sha256": "435527e06df7e517c4a0973c65826c3a0799896de311aa8aafe761aec35d289a"
+    },
+    {
+      "file": "admin-template-green.log",
+      "sha256": "5c07939151937018226464f77d5bcbae88bcc894d67ec94d81493a9f327df938"
+    },
+    {
+      "file": "admin-template-targeted.log",
+      "sha256": "108cd9561ccbd62af2bcf5304df1e1b2626a7ef8078392a769a1c2509d524e9e"
+    },
+    {
+      "file": "admin-template-offline.log",
+      "sha256": "c2ec89caba887494f0f501ee5b8ad09bfdf688856038ff8fd415561810d8f50a"
+    },
+    {
+      "file": "admin-template-regression.log",
+      "sha256": "9e4a395aeb76e399919ab8dc24a8795ccfa83fa817ac5c8cdc58b3dd5ac090e9"
+    },
+    {
+      "file": "admin-template-types.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "admin-template-server.log",
+      "sha256": "764f742e5761d70961ec2decc210f5ba9894a47935c6880f04e2891e3ccad323"
+    }
+  ],
+  "verification": {
+    "workerUnitAndRuntimeTypecheck": "passed; original process exit 0",
+    "regressionScope": "30 files: changed admin shipping controller/service, supplier writer, shipping calculator/migration, request body, bargain admin and downstream shipping/pickup, three index manifests; not full Worker suite",
+    "initialRed": "old writer: 5 failed of 6, including partial create/update, rename clobbering, missing and retired template writes",
+    "postgresConcurrency": "7 tests: parent SHARE, admin edit, actual supplier save, admin delete, deletion recheck, independent template and stricter timeout rollback/restoration",
+    "transactionBounds": "statement/lock/idle 5/2/5 seconds preserving stricter caller settings; no total transaction deadline"
+  },
+  "limitations": [
+    "Quote and create template reads/revalidation not changed.",
+    "Admin list still separate unbounded reads.",
+    "No template reference lifecycle/deletion protection.",
+    "Full PHP grouped city/free/no-delivery editor and optimistic stale-form conflict handling not implemented.",
+    "Direct SQL child writers must follow parent-lock protocol; no universal database enforcement.",
+    "Explicit empty regions and zero quantities retained; this is not full operational rate validation.",
+    "No real authentication, frontend build/browser, production, deployment or current CI acceptance."
+  ],
+  "cleanup": {
+    "baseline": {
+      "databases": [
+        "cinashop_finance_test",
+        "postgres",
+        "template0",
+        "template1"
+      ],
+      "publicTables": 0,
+      "nonSystemSchemas": null,
+      "otherClients": 0,
+      "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit"
+    },
+    "postgresPid": 17012,
+    "stopRequest": "fast shutdown; pg_ctl -w -t 20 timed out with exit 1; did not repeat or force kill",
+    "originalForegroundSession": "75820 terminated normally with exit 0",
+    "serverStoppedAtUtc": "2026-09-09 06:09:42.647 UTC",
+    "shutdownCheckpointSeconds": 23.866,
+    "port55432Listening": false,
+    "pidPresent": false,
+    "artifacts": "temporary cluster, binaries and logs retained; fixture schemas self-cleaned; no manual database deletion"
+  }
+}

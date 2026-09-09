@@ -2028,78 +2028,10 @@ export async function adminShippingTemplateList(c: C) {
 
 /** POST /api/admin/shipping_template/save — 新增/编辑模板 (含区域) */
 export async function adminShippingTemplateSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    name?: string;
-    type?: number;
-    sort?: number;
-    status?: number;
-    regions?: { region_id: number; region_name: string; first: string; first_price: string; continue: string; continue_price: string }[];
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { shippingTemplates, shippingTemplatesRegion } = await import("@/models/schema");
-  const now = Math.floor(Date.now() / 1000);
-
-  if (body.id) {
-    await container.db
-      .update(shippingTemplates)
-      .set({
-        name: body.name ?? "",
-        type: body.type ?? 1,
-        sort: body.sort ?? 0,
-        status: body.status ?? 1,
-      })
-      .where(eq(shippingTemplates.id, body.id));
-    // 重建区域
-    await container.db
-      .delete(shippingTemplatesRegion)
-      .where(eq(shippingTemplatesRegion.templateId, body.id));
-    for (const r of body.regions ?? []) {
-      await container.db.insert(shippingTemplatesRegion).values({
-        templateId: body.id,
-        regionId: r.region_id,
-        regionName: r.region_name,
-        first: r.first ?? "1",
-        firstPrice: r.first_price ?? "0.00",
-        continue: r.continue ?? "1",
-        continuePrice: r.continue_price ?? "0.00",
-        addTime: now,
-      });
-    }
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-
-  if (!body.name) return jsonFail(c, "请输入模板名称");
-  const row = await container.db
-    .insert(shippingTemplates)
-    .values({
-      ownerType: 0,
-      relationId: 0,
-      name: body.name,
-      type: body.type ?? 1,
-      appoint: 0,
-      noDelivery: 0,
-      sort: body.sort ?? 0,
-      status: body.status ?? 1,
-      isDel: 0,
-      addTime: now,
-    })
-    .returning({ id: shippingTemplates.id });
-  const tid = row[0].id;
-  for (const r of body.regions ?? []) {
-    await container.db.insert(shippingTemplatesRegion).values({
-      templateId: tid,
-      regionId: r.region_id,
-      regionName: r.region_name,
-      first: r.first ?? "1",
-      firstPrice: r.first_price ?? "0.00",
-      continue: r.continue ?? "1",
-      continuePrice: r.continue_price ?? "0.00",
-      addTime: now,
-    });
-  }
-  return jsonOk(c, { id: tid }, "创建成功");
+  privateNoStore(c);
+  const { saveAdminShippingTemplate } = await import("@/services/admin/AdminShippingTemplateService");
+  const result = await saveAdminShippingTemplate(c.get("container"), await readBoundedJsonObject(c.req.raw, 256 * 1024));
+  return jsonOk(c, { id: result.id }, result.created ? "创建成功" : "更新成功");
 }
 
 /** DELETE /api/admin/shipping_template/del/:id — 删除模板 */
