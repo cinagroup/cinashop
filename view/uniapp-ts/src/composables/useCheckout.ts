@@ -12,12 +12,15 @@ import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "../
 import { parseCheckoutSelection, type CheckoutCartItem } from "../../../common/checkoutSelection";
 import { CheckoutIntentJournal, type CheckoutIntent } from "../../../common/checkoutIntent";
 import { prepareOrderSystemFormSubmission } from "../../../common/order-system-form";
+import type { BargainShippingSelection } from '../../../common/bargainShipping';
 
 export function useCheckout() {
   const auth = useAuthStore(), cart = useCartStore();
   const loading = ref(true), error = ref(""), submitting = ref(false), visible = ref(false);
   const items = ref<CheckoutCartItem[]>([]), addresses = ref<UserAddress[]>([]), stores = ref<PickupStore[]>([]);
   const addressId = ref(0), storeId = ref(0), shippingType = ref<1 | 2>(1), couponId = ref(0), useIntegral = ref(false);
+  const shippingSelection = shallowRef<BargainShippingSelection | null>(null), shippingLoading = ref(false), shippingError = ref('');
+  let shippingGeneration = 0;
   const contact = ref({ realName: "", userPhone: "" }), mark = ref("");
   const addressError = ref(""), storeError = ref(""), formError = ref("");
   const customForm = ref<SystemFormComponent[]>([]), formName = ref(""), formRevision = ref(0), uploads = ref(0);
@@ -27,15 +30,18 @@ export function useCheckout() {
   let query: Record<string, unknown> = {}, checkedIds: number[] = [], generation = 0;
   let uncertain = false;
   let resumeForm = false;
-  const locked = computed(() => loading.value || !!pending.value || !visible.value || !auth.isLoggedIn);
+  const locked = computed(() => loading.value || shippingLoading.value || !!pending.value || !visible.value || !auth.isLoggedIn);
   // Native image selection can hide the page. Do not invalidate its owned form on that hide.
   const formLocked = computed(() => loading.value || !!pending.value || !auth.isLoggedIn);
-  const options = computed<CheckoutQuoteOptions>(() => ({ ...activity.value, addressId: shippingType.value === 1 ? addressId.value : 0,
+  const allowedShippingTypes = computed<readonly number[]>(() => activity.value.type === 2 ? shippingSelection.value?.shippingTypes ?? [] : items.value.some(i => i.productInfo?.productType === 4) ? [2] : [1,2]);
+  const requiresAddress = computed(() => activity.value.type !== 2 || shippingSelection.value?.requiresAddress !== false);
+  const options = computed<CheckoutQuoteOptions>(() => ({ ...activity.value, addressId: shippingType.value === 1 && requiresAddress.value ? addressId.value : 0,
     shippingType: shippingType.value, storeId: shippingType.value === 2 ? storeId.value : 0,
     couponId: activity.value.type === 0 ? couponId.value : 0, useIntegral: activity.value.type === 0 && useIntegral.value }));
-  const deliveryError = computed(() => shippingType.value === 1
+  const deliveryError = computed(() => shippingLoading.value ? '正在读取活动配送规则' : shippingError.value ||
+    (!allowedShippingTypes.value.includes(shippingType.value) ? allowedShippingTypes.value.length ? '原配送方式已不可用，请重新选择' : '当前没有可用配送方式，请刷新或联系商家' : shippingType.value === 1 && !requiresAddress.value ? '' : shippingType.value === 1
     ? addressError.value || (!addresses.value.some((a) => a.id === addressId.value) ? "请选择收货地址" : "")
-    : storeError.value || (!stores.value.some((s) => s.id === storeId.value) ? "请选择自提门店" : ""));
+    : storeError.value || (!stores.value.some((s) => s.id === storeId.value) ? "请选择自提门店" : "")));
   const formValidation = computed(() => {
     if (formError.value) return formError.value;
     if (!customForm.value.length) return "";
@@ -59,6 +65,7 @@ export function useCheckout() {
   async function refreshQuote(renew = false) {
     if (pending.value) return;
     if (renew) quoteSession.reset();
+    if (renew && activity.value.type === 2) { await loadShipping(generation); return; }
     if (locked.value || error.value || deliveryError.value || formError.value || !items.value.length) { quoteSession.invalidate(); return; }
     await quoteSession.load(items.value, options.value);
   }
@@ -73,12 +80,28 @@ export function useCheckout() {
     await couponSession.load(couponScope.value, append);
   }
   function setShipping(type: 1 | 2) {
-    if (locked.value || (type === 1 && items.value.some((i) => i.productInfo?.productType === 4))) return;
+    if (locked.value || !allowedShippingTypes.value.includes(type)) return;
     shippingType.value = type;
+  }
+  async function loadShipping(current: number, initial = false) {
+    const request = ++shippingGeneration;
+    shippingLoading.value = true; shippingError.value = ''; quoteSession.invalidate();
+    try {
+      const result = await checkoutApi.bargainShipping(items.value.map(item => item.id));
+      if (current !== generation || request !== shippingGeneration) return;
+      shippingSelection.value = result; stores.value = result.stores; storeError.value = '';
+      if (initial) shippingType.value = result.shippingTypes[0] ?? 1;
+      if (!result.stores.some(store => store.id === storeId.value)) storeId.value = initial ? result.stores[0]?.id ?? 0 : 0;
+    } catch (e) {
+      if (current === generation && request === shippingGeneration) { shippingSelection.value = null; stores.value = []; shippingError.value = message(e, '活动配送加载失败'); }
+    } finally {
+      if (current === generation && request === shippingGeneration) { shippingLoading.value = false; if (!loading.value) await refreshQuote(); }
+    }
   }
   async function load() {
     if (!visible.value || submitting.value) return;
     const current = ++generation;
+    shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
     quoteSession.reset(); couponSession.reset(); loading.value = true; error.value = "";
     items.value = []; customForm.value = []; formRevision.value++; uploads.value = 0;
     formError.value = ""; submissionError.value = ""; couponId.value = 0;
@@ -111,7 +134,7 @@ export function useCheckout() {
           addressId.value = address?.id ?? 0;
           if (address && !contact.value.realName && !contact.value.userPhone) contact.value = { realName: address.real_name, userPhone: address.phone };
         }).catch((e) => { if (current === generation) { addresses.value = []; addressError.value = message(e, "地址加载失败"); } }),
-        apiPickupStores().then((list) => { if (current === generation) { stores.value = list; storeError.value = ""; storeId.value = list.some((s) => s.id === storeId.value) ? storeId.value : list[0]?.id ?? 0; } })
+        type === 2 ? loadShipping(current, true) : apiPickupStores().then((list) => { if (current === generation) { stores.value = list; storeError.value = ""; storeId.value = list.some((s) => s.id === storeId.value) ? storeId.value : list[0]?.id ?? 0; } })
           .catch((e) => { if (current === generation) { stores.value = []; storeError.value = message(e, "门店加载失败"); } }),
         formIds.length ? apiOrderSystemForm(formIds[0]).then((form) => {
           if (current !== generation) return;
@@ -168,7 +191,7 @@ export function useCheckout() {
       }
     } finally { submitting.value = false; if (visible.value && current !== generation) void load(); }
   }
-  function suspend() { resumeForm = uploads.value > 0; visible.value = false; generation++; quoteSession.reset(); couponSession.reset(); }
+  function suspend() { resumeForm = uploads.value > 0; visible.value = false; generation++; shippingGeneration++; shippingLoading.value = false; quoteSession.reset(); couponSession.reset(); }
   watch(() => couponScope.value?.fingerprint ?? "", () => {
     if (pending.value) { couponSession.pause(); return; }
     couponId.value = 0; couponSession.reset();
@@ -177,6 +200,7 @@ export function useCheckout() {
   watch(options, () => { void refreshQuote(); }, { flush: "sync" });
   watch(() => auth.sessionVersion, () => {
     generation++; quoteSession.reset(); couponSession.reset(); pending.value = null; items.value = [];
+    shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
     customForm.value = []; formRevision.value++; formName.value = ""; uploads.value = 0;
     contact.value = { realName: "", userPhone: "" }; mark.value = ""; addresses.value = []; stores.value = [];
     addressId.value = 0; storeId.value = 0; couponId.value = 0; useIntegral.value = false;
@@ -185,11 +209,12 @@ export function useCheckout() {
   onLoad((params) => { query = params ?? {}; checkedIds = cart.checkedItems.map((row) => row.id); });
   onShow(() => {
     visible.value = true;
-    if (resumeForm && items.value.length && !error.value) { resumeForm = false; void refreshQuote(); void loadCoupons(); }
+    if (resumeForm && items.value.length && !error.value) { resumeForm = false; void refreshQuote(activity.value.type === 2); void loadCoupons(); }
     else void load();
   });
   onHide(suspend); onUnload(suspend);
   return { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
+    allowedShippingTypes, requiresAddress, shippingLoading,
     customForm, formName, formRevision, formValidation, uploads, activity, useIntegral, quote, ready, deliveryError, refreshQuote,
     coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit };
 }

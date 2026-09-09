@@ -438,6 +438,7 @@ export async function orderDetail(c: C) {
 
 /** POST /api/order/check_shipping — legacy checkout delivery selector. */
 export async function orderCheckShipping(c: C) {
+  c.header('Cache-Control', 'private, no-store');
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const body = await readBoundedJsonObject(c);
@@ -446,7 +447,7 @@ export async function orderCheckShipping(c: C) {
     return jsonOk(
       c,
       await new LegacyOrderCompatibilityService(c.get("container"), c.env)
-        .checkShipping(uid, cartIds),
+        .checkShipping(uid, cartIds, body.view === 'bargain'),
     );
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);

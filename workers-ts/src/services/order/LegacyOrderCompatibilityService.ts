@@ -18,6 +18,7 @@ import { StoreCartService } from "@/services/order/StoreCartService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { readBargainShippingSelection } from '@/services/activity/BargainShippingSelection';
 
 const CHECKOUT_TTL_SECONDS = 30 * 60;
 const LEGACY_ALIPAY_TTL_SECONDS = 5 * 60;
@@ -250,8 +251,9 @@ export class LegacyOrderCompatibilityService {
     return { uid, orderId };
   }
 
-  async checkShipping(uid: number, cartIds: number[]) {
+  async checkShipping(uid: number, cartIds: number[], bargainOnly = false) {
     const carts = await this.container.storeCartDao.getByIds(cartIds);
+    if (bargainOnly || carts.some(cart => cart.type === 2)) return readBargainShippingSelection(this.container, this.env, uid, cartIds);
     if (
       carts.length !== cartIds.length ||
       carts.some((cart) => cart.uid !== uid || cart.isPay !== 0 || cart.isDel !== 0 || cart.status !== 1)
@@ -295,10 +297,12 @@ export class LegacyOrderCompatibilityService {
   ) {
     const rows = await this.checkoutRows(uid, cartIds);
     const addressId = Number(options.addressId ?? 0);
+    const noLogisticsAddress = options.shippingType === 1 && addressId === 0
+      && rows.length > 0 && rows.every(row => [1, 2, 3].includes(Number(record(row.productInfo).productType)));
     const [account, readiness, requestedAddress] = await Promise.all([
       this.container.userDao.findForAuth(uid),
       getPaymentReadiness(this.container, this.env),
-      addressId > 0 ? this.container.userAddressDao.get(addressId) : this.container.userAddressDao.getDefault(uid),
+      noLogisticsAddress ? Promise.resolve(null) : addressId > 0 ? this.container.userAddressDao.get(addressId) : this.container.userAddressDao.getDefault(uid),
     ]);
     if (!account) throw new NotFoundException("用户不存在");
     const address = requestedAddress && requestedAddress.uid === uid && requestedAddress.isDel === 0

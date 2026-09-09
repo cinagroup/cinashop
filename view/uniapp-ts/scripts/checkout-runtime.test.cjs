@@ -115,3 +115,42 @@ test('required system form prevents submission, and load errors are not treated 
   fail = true; await r.checkout.load(); assert.equal(r.checkout.canSubmit.value, false); assert.equal(r.checkout.ready.value, false);
   assert.match(r.checkout.formValidation.value, /form unavailable/); r.stop();
 });
+
+const bargainItem={...item,type:2};
+const pickup={id:1,name:'所属门店',introduction:'',phone:'',address:'隔离',detailed_address:'',image:'',latitude:'',longitude:'',valid_time:'',day_time:''};
+const shipping=(types=[1,2],requiresAddress=true)=>({kind:'bargain',cartIds:[1],activityId:40,methods:types,shippingTypes:types,requiresAddress,stores:types.includes(2)?[pickup]:[]});
+const bargainServer=(select,overrides={},productType=0)=>{
+ const selected={...bargainItem,productInfo:{...bargainItem.productInfo,productType}};
+ const send=server({'/api/cart/list':()=>({data:[selected]}),'/api/order/check_shipping':async()=>({data:await select()}),...overrides});
+ return async call=>{const result=await send(call);
+  if(call.url==='/api/order/confirm'||call.url.startsWith('/api/order/computed/')){
+   result.data.cartInfo=result.data.cartInfo.map(row=>({...row,type:2,productInfo:{...row.productInfo,productType}}));
+   if(!call.data.addressId)result.data.addressInfo=null;
+  }
+  return result;
+ };
+};
+test('UniApp actual checkout uses scoped pickup, blocks unsupported choices and keeps original mode on rule refresh',async()=>{
+ let types=[2];const r=runtime({send:bargainServer(()=>shipping(types))});await r.start();
+ assert.equal(r.checkout.shippingType.value,2);assert.equal(r.checkout.ready.value,true);assert.equal(r.calls.some(c=>c.url==='/api/store/list'),false);
+ r.checkout.setShipping(1);assert.equal(r.checkout.shippingType.value,2);
+ types=[1];await r.checkout.refreshQuote(true);assert.equal(r.checkout.shippingType.value,2);assert.equal(r.checkout.ready.value,false);assert.match(r.checkout.deliveryError.value,/重新选择/);
+ r.checkout.setShipping(1);await tick();assert.equal(r.checkout.ready.value,true);r.stop();
+});
+test('UniApp malformed/empty shipping blocks quote and explicit refresh can recover',async()=>{
+ let data={type:0};const r=runtime({send:bargainServer(()=>data)});await r.start();assert.equal(r.checkout.ready.value,false);assert.match(r.checkout.deliveryError.value,/响应无效/);
+ data=shipping([]);await r.checkout.refreshQuote(true);assert.match(r.checkout.deliveryError.value,/没有可用/);
+ data=shipping([1]);await r.checkout.refreshQuote(true);assert.equal(r.checkout.ready.value,true);r.stop();
+});
+test('UniApp non-logistics checkout does not need an address and native upload return rereads shipping without losing form',async()=>{
+ const r=runtime({send:bargainServer(()=>shipping([1],false),{'/api/address/list':()=>({transport:'address unavailable'})},3)});await r.start();
+ assert.equal(r.checkout.ready.value,true);assert.equal(r.calls.find(c=>c.url==='/api/order/confirm').data.addressId,0);
+ r.checkout.customForm.value=[{id:1,name:'texts',value:'未保存表单'}];r.checkout.uploads.value=1;r.hooks.onHide();r.hooks.onShow();await tick();
+ assert.equal(r.checkout.customForm.value[0].value,'未保存表单');assert.equal(r.calls.filter(c=>c.url==='/api/order/check_shipping').length,2);assert.equal(r.checkout.shippingLoading.value,false);r.stop();
+});
+for(const change of ['account','hide','newer'])test(`UniApp late shipping response does not replace state after ${change}`,async()=>{
+ const wait=deferred();let requests=0;const r=runtime({send:bargainServer(()=>++requests===2?wait.promise:shipping(requests===1?[1]:[2]))});await r.start();
+ const reading=r.checkout.refreshQuote(true);await tick();if(change==='account')r.auth.setLogin('other-owner',22);else if(change==='hide')r.hooks.onHide();else await r.checkout.refreshQuote(true);
+ wait.resolve(shipping([1]));await reading;await tick();
+ if(change==='newer')assert.deepEqual(r.checkout.allowedShippingTypes.value,[2]);else assert.equal(r.checkout.canSubmit.value,false);r.stop();
+});

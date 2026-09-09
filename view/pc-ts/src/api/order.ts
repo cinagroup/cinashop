@@ -17,6 +17,12 @@ import type { SystemFormComponent, SystemFormInfo } from "@/types/systemForm";
 import type { CartItem } from "@/types/order";
 import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "./checkoutQuote";
 import { normalizeOrderCouponPage, orderCouponRequest, type OrderCouponScope } from "./orderCoupons";
+import { normalizeBargainShipping } from '../../../common/bargainShipping';
+
+export async function apiBargainShipping(cartIds: number[]) {
+  const ids = [...cartIds];
+  return normalizeBargainShipping(await getData<unknown>(request.post('/order/check_shipping', {cartIds:ids,view:'bargain'})), ids);
+}
 
 export async function apiOrderCoupons(scope: OrderCouponScope, before?: number) {
   const response = await request.get("/coupons/order/0", { params: orderCouponRequest(scope, before) });

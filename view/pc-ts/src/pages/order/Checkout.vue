@@ -15,10 +15,12 @@
         :closable="false"
         show-icon
       />
-      <el-radio-group v-else v-model="shippingType">
-        <el-radio-button :value="1">快递配送</el-radio-button>
-        <el-radio-button :value="2">门店自提</el-radio-button>
+      <el-radio-group v-model="shippingType" :disabled="checkoutLoading || shippingLoading || !!pendingSubmission">
+        <el-radio-button v-if="allowedShippingTypes.includes(1)" :value="1">{{ requiresAddress ? '快递配送' : '无需物流配送' }}</el-radio-button>
+        <el-radio-button v-if="allowedShippingTypes.includes(2)" :value="2">门店自提</el-radio-button>
       </el-radio-group>
+      <el-button v-if="activityOptions.type === 2" :disabled="checkoutLoading || shippingLoading || !!pendingSubmission" @click="renewQuote">刷新配送方式及报价</el-button>
+      <p v-if="shippingLoading">正在读取活动配送规则…</p>
       <div v-if="shippingType === 2" class="store-list">
         <button
           v-for="store in pickupStores"
@@ -37,7 +39,7 @@
     </section>
 
     <!-- 收货地址 -->
-    <section v-if="shippingType === 1" class="section">
+    <section v-if="shippingType === 1 && requiresAddress" class="section">
       <h3 class="section-title">收货地址</h3>
       <div class="address-list">
         <button
@@ -62,7 +64,7 @@
       <el-button size="small" @click="showAddressDialog = true">+ 新增地址</el-button>
     </section>
 
-    <section v-else class="section">
+    <section v-else-if="shippingType === 2" class="section">
       <h3 class="section-title">自提联系人</h3>
       <el-form label-width="90px" class="pickup-contact">
         <el-form-item label="联系人"><el-input v-model="pickupContact.realName" maxlength="32" /></el-form-item>
@@ -213,6 +215,7 @@ import {
   apiOrderCoupons,
   apiOrderSystemForm,
   apiPickupStores,
+  apiBargainShipping,
 } from "@/api/order";
 import type { CartItem, PickupStore, UserAddress } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
@@ -221,6 +224,7 @@ import { prepareOrderSystemFormSubmission } from "../../../../common/order-syste
 import { canEditRejectedOrder } from "@/utils/apiError";
 import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "@/api/orderCoupons";
 import CouponCards from "@/components/CouponCards.vue";
+import type { BargainShippingSelection } from '../../../../common/bargainShipping';
 
 const router = useRouter();
 const route = useRoute();
@@ -229,6 +233,9 @@ const cartStore = useCartStore();
 const addresses = ref<UserAddress[]>([]);
 const selectedAddrId = ref(0);
 const shippingType = ref<1 | 2>(1);
+const shippingSelection = shallowRef<BargainShippingSelection | null>(null);
+const shippingLoading = ref(false), shippingError = ref('');
+let shippingGeneration = 0;
 const pickupStores = ref<PickupStore[]>([]);
 const selectedStoreId = ref(0);
 const pickupContact = ref({ realName: "", phone: "" });
@@ -267,6 +274,8 @@ const checkoutItems = computed(() => checkoutLoading.value || selectionError.val
 const includesSecondCard = computed(() => checkoutItems.value.some(
   (item) => item.productInfo?.productType === 4,
 ));
+const allowedShippingTypes = computed<readonly number[]>(() => activityOptions.value.type === 2 ? shippingSelection.value?.shippingTypes ?? [] : includesSecondCard.value ? [2] : [1,2]);
+const requiresAddress = computed(() => activityOptions.value.type !== 2 || shippingSelection.value?.requiresAddress !== false);
 const couponContext = computed(() => {
   if (!checkoutItems.value.length || activityOptions.value.type !== 0) return { scope: null, error: "" };
   try { return { scope: orderCouponScope(checkoutItems.value, shippingType.value, selectedStoreId.value), error: "" }; }
@@ -274,15 +283,17 @@ const couponContext = computed(() => {
 });
 const quoteOptions = computed<CheckoutQuoteOptions>(() => ({
   ...activityOptions.value,
-  addressId: shippingType.value === 1 ? selectedAddrId.value : 0,
+  addressId: shippingType.value === 1 && requiresAddress.value ? selectedAddrId.value : 0,
   shippingType: shippingType.value,
   storeId: shippingType.value === 2 ? selectedStoreId.value : 0,
   couponId: activityOptions.value.type === 0 ? selectedCouponId.value : 0,
   useIntegral: useIntegral.value,
 }));
-const deliveryError = computed(() => checkoutLoading.value || selectionError.value ? "" : shippingType.value === 1
+const deliveryError = computed(() => checkoutLoading.value || selectionError.value ? "" : shippingLoading.value ? '正在读取活动配送规则' : shippingError.value ||
+  (!allowedShippingTypes.value.includes(shippingType.value) ? allowedShippingTypes.value.length ? '原配送方式已不可用，请重新选择' : '当前没有可用配送方式，请刷新或联系商家' : shippingType.value === 1
+  && !requiresAddress.value ? '' : shippingType.value === 1
   ? addressError.value || (!addresses.value.some((item) => item.id === selectedAddrId.value) ? "请选择收货地址后获取完整报价" : "")
-  : storeError.value || (!pickupStores.value.some((item) => item.id === selectedStoreId.value) ? "请选择自提门店后获取报价" : ""));
+  : storeError.value || (!pickupStores.value.some((item) => item.id === selectedStoreId.value) ? "请选择自提门店后获取报价" : "")));
 const quoteState = shallowRef<CheckoutQuoteState>({ loading: false, error: "", fingerprint: "", result: null });
 const quoteSession = new CheckoutQuoteSession({ confirm: apiOrderConfirm, computed: apiOrderComputed }, (state) => { quoteState.value = state; });
 const quoteReady = computed(() => !checkoutLoading.value && !selectionError.value && !deliveryError.value
@@ -326,7 +337,26 @@ async function reloadQuote() {
 function renewQuote() {
   if (pendingSubmission.value) return;
   quoteSession.reset();
+  if (activityOptions.value.type === 2) { void loadShipping(checkoutGeneration); return; }
   void reloadQuote();
+}
+
+async function loadShipping(generation: number, initial = false) {
+  const request = ++shippingGeneration;
+  shippingLoading.value = true; shippingError.value = ''; quoteSession.invalidate();
+  try {
+    const result = await apiBargainShipping(selectedItems.value.map(item => item.id));
+    if (generation !== checkoutGeneration || request !== shippingGeneration) return;
+    shippingSelection.value = result; pickupStores.value = result.stores; storeError.value = '';
+    if (initial) shippingType.value = result.shippingTypes[0] ?? 1;
+    if (!result.stores.some(store => store.id === selectedStoreId.value)) selectedStoreId.value = initial ? result.stores[0]?.id ?? 0 : 0;
+  } catch (error) {
+    if (generation === checkoutGeneration && request === shippingGeneration) {
+      shippingSelection.value = null; pickupStores.value = []; shippingError.value = error instanceof Error ? error.message : '活动配送加载失败';
+    }
+  } finally {
+    if (generation === checkoutGeneration && request === shippingGeneration) { shippingLoading.value = false; if (!checkoutLoading.value) await reloadQuote(); }
+  }
 }
 
 function choiceText(value: unknown): string {
@@ -431,7 +461,7 @@ async function saveAddress() {
 async function submitOrder() {
   if (!canSubmit.value || loadedRoute.value !== route.fullPath) return;
   const addr = addresses.value.find((a) => a.id === selectedAddrId.value);
-  if (shippingType.value === 1 && !addr) return ElMessage.error("请选择收货地址");
+  if (shippingType.value === 1 && requiresAddress.value && !addr) return ElMessage.error("请选择收货地址");
   if (shippingType.value === 2 && !selectedStoreId.value) return ElMessage.error("请选择自提门店");
   if (
     shippingType.value === 2
@@ -484,6 +514,7 @@ async function submitOrder() {
 let checkoutGeneration = 0;
 async function loadCheckout() {
   const generation = ++checkoutGeneration;
+  shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
   quoteSession.reset();
   checkoutLoading.value = true;
   selectionError.value = "";
@@ -533,7 +564,7 @@ async function loadCheckout() {
     selectedItems.value = rows;
     loadedRoute.value = route.fullPath;
     shippingType.value = rows.some((item) => item.productInfo?.productType === 4) ? 2 : 1;
-    await Promise.all([loadAddresses(generation), loadPickupStores(generation), loadSystemForm(rows, generation)]);
+    await Promise.all([loadAddresses(generation), type === 2 ? loadShipping(generation, true) : loadPickupStores(generation), loadSystemForm(rows, generation)]);
   } catch (error) {
     if (generation === checkoutGeneration) selectionError.value = error instanceof Error ? error.message : "结算商品加载失败";
   } finally {

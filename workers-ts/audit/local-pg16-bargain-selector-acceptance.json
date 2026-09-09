@@ -1,0 +1,718 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "5beb2665c27be4b6b948ebb254b977f799ff291c",
+  "scope": "FE-003L-A3k8 bargain consumer shipping selector, PC/UniApp refresh and non-logistics quote; local candidate only",
+  "environment": {
+    "platform": "Windows x64",
+    "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "productionAccess": false,
+    "deployment": false,
+    "ddlChanged": false,
+    "pricingFormulaChanged": false,
+    "userEnvironmentChanged": false,
+    "fixtureBoundary": "Owned random PG schemas (columns/defaults/PK, not all production constraints); browser PGlite with auth/KV/site/address-list substitutes; real cart/selector/quote/admin-save controllers; no create/payment route"
+  },
+  "contract": {
+    "rules": [
+      "Exact authenticated cart selection, one bargain activity and matching source product; private no-store",
+      "Activity methods, global pickup flags, active isStore pickup stores scoped to source owner; no non-bargain union change",
+      "UTC SQL clock comparison, nullable legacy windows, bounded REPEATABLE READ READ ONLY transaction; KV read before SQL snapshot",
+      "Malformed or empty shipping response never restores both channels; refresh preserves invalid prior choice until explicit selection",
+      "Types 1/2/3 may quote with addressId 0 and null address without selecting a saved default; strict quoted product type comparison"
+    ],
+    "remaining": [
+      "Global flags/store ownership must still be enforced and rechecked by quote/create; selector is advisory, not authorization/reservation",
+      "Same-city range/fees/dispatch and template lifecycle/internal concurrency",
+      "Other activities still use legacy union selector",
+      "Full PHP editor/copy/rebind/multi-SKU compatibility and A3i price policy",
+      "Linux/workerd/real roles/native devices/providers and production release"
+    ]
+  },
+  "inputHashNormalization": "UTF-8 CRLF -> LF",
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08/",
+  "changedExecutableInputs": [
+    {
+      "file": "view/common/bargainShipping.ts",
+      "sha256": "55067ce311df6d395e56541a839241c4ffcf7f8233caa540a8cd379b2ffa78c9"
+    },
+    {
+      "file": "view/common/checkoutApi.ts",
+      "sha256": "06bbc6c60566ccad09f016d4c569e53c2299ac1f2e5602d4036387e22c7baba9"
+    },
+    {
+      "file": "view/common/checkoutQuote.ts",
+      "sha256": "9c2cb44438fc16184a3e719b867a12209317f3b1d262e09ce42c2af63c5dedab"
+    },
+    {
+      "file": "view/pc-ts/src/api/order.ts",
+      "sha256": "2e5c203ae1e25163e214267966001fb1ec5a900fdff1cd965bf1e8b503f5ef4a"
+    },
+    {
+      "file": "view/pc-ts/src/pages/order/Checkout.vue",
+      "sha256": "2bafac3b643a9f5e2de0de15bac1546cbef0564ba1c267d1a4554b430106daec"
+    },
+    {
+      "file": "view/pc-ts/test/auth-session.test.mjs",
+      "sha256": "38e2ffbf7e3c616e4f2fb256d7dc36573fd70732ca7ebbb646abd1341fa83426"
+    },
+    {
+      "file": "view/pc-ts/test/bargain-checkout-shipping.test.mjs",
+      "sha256": "810b76696573ca77f1e444d3652b00b7799c3eb7619aaa73415df9ce490c720c"
+    },
+    {
+      "file": "view/uniapp-ts/scripts/checkout-runtime.test.cjs",
+      "sha256": "cadb70aa1fc20ae9a21b6fab873a23d34570ac867b3f46888e5d191c804a320c"
+    },
+    {
+      "file": "view/uniapp-ts/src/composables/useCheckout.ts",
+      "sha256": "5bebc084160392e5fa6b807ae1a28a0d1746cddcfff01669925789b699620e51"
+    },
+    {
+      "file": "view/uniapp-ts/src/pages/order/confirm.vue",
+      "sha256": "db395440cafe5bd1d9c7009f11880f043d619f1d40c947c422e098cee4608cba"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "1cb36e4769985b7d2a0db1f41a151a8301bec6dc3c45a7fe7b0ffff705a4ec62"
+    },
+    {
+      "file": "workers-ts/src/services/order/LegacyOrderCompatibilityService.ts",
+      "sha256": "aaf382e7f3c3e0315128418d029e26e0ec1a9ac6d59b396fdf5138f3fa823be2"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainShippingSelection.ts",
+      "sha256": "099a54d392d376bda31777b4d879db8aa3e7253256826cdfdde423115fa4f196"
+    },
+    {
+      "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+      "sha256": "594a4cf9c9c1c3308d529bd3b057ad3c2591e068e2b57db903f3117cb0860708"
+    },
+    {
+      "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+      "sha256": "1187b5f43daf2a4191f7168426f7f0d93388e34c78e375d7a52bd42214c728b2"
+    },
+    {
+      "file": "workers-ts/test/pc-checkout-quote.test.ts",
+      "sha256": "ed9dadc1da7f3960eb84087e14f85821cdfa310ddc2a9aad510d60e42d9909f1"
+    }
+  ],
+  "runs": [
+    {
+      "file": "bargain-selector-pglite.json",
+      "sha256": "ac3025f12453bd1b1008506941036c364cd4d846b69a611284789c6ff19f15c6",
+      "files": 1,
+      "total": 34,
+      "passed": 16,
+      "failed": 18,
+      "pending": 0,
+      "success": false,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "failed",
+          "total": 34,
+          "failed": 18,
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-selector-pglite2.json",
+      "sha256": "fab82fba5cee7c332a78a1d6f4a3f061884b4d7052adb8a7a3a88aa332dedda1",
+      "files": 2,
+      "total": 42,
+      "passed": 41,
+      "failed": 1,
+      "pending": 0,
+      "success": false,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 34,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote.test.ts",
+          "status": "failed",
+          "total": 8,
+          "failed": 1,
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-selector-pg-final.json",
+      "sha256": "2d3e35576096f83b444e20162fc7ef848f99257542c46ffd8fdffc5db42c5c80",
+      "files": 3,
+      "total": 54,
+      "passed": 54,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": 0,
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-selector-pglite-final.json",
+      "sha256": "f73d2aaa3eba6e17320d63d6993b5d8298b96c738aedeb72bc092d6637232119",
+      "files": 2,
+      "total": 52,
+      "passed": 52,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": 0,
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-selector-regression.json",
+      "sha256": "33e232da2c8ef1658943b2e8d9ebfd7e9964af42d6e21612ca9ad083e25573a1",
+      "files": 45,
+      "total": 665,
+      "passed": 665,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-admin-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-form.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-retirement.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-save.test.ts",
+          "status": "passed",
+          "total": 52,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping.test.ts",
+          "status": "passed",
+          "total": 28,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-form.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-participation-migration.test.ts",
+          "status": "passed",
+          "total": 34,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-help-admission.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-help-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-inventory-compensation.test.ts",
+          "status": "passed",
+          "total": 13,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-order-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 23,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-order-participation.test.ts",
+          "status": "passed",
+          "total": 54,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-participation-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-participation-state.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-selection-catalog.test.ts",
+          "status": "passed",
+          "total": 29,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-contract.test.ts",
+          "status": "passed",
+          "total": 25,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-user-help-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/legacy-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/manual-virtual-product.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/order-reward.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/ordinary-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/orm-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-bargain-purchase.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form.test.ts",
+          "status": "passed",
+          "total": 36,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote-postgres.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/store-order-create-postgres-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/uniapp-checkout-contract.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": 0,
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/uniapp-checkout-postgres.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": 0,
+          "pending": 0
+        }
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "file": "bargain-selector-types-final2.log",
+      "sha256": "c66cce09a4b1ed81ea575439ec5fad1a3bb2aa13347fcd684b5ef7420e379dbb"
+    },
+    {
+      "file": "bargain-selector-pc-build-final.log",
+      "sha256": "319dcf8ff38ca862760e0cf3f1645f88f999888936493863a3d4533b303da0ab"
+    },
+    {
+      "file": "bargain-selector-uni-final.log",
+      "sha256": "c9588b34fec28e335fb8e913fd0394c5abb3ab6670f06d5949aa197c39c1bc95"
+    },
+    {
+      "file": "bargain-selector-pc-runtime.log",
+      "sha256": "ecae7aacd1e400e1405a104ba0919419846bd39593821d8534b14b5556dc2eb2"
+    },
+    {
+      "file": "bargain-selector-uni-runtime.log",
+      "sha256": "a7a8de071fef3604bf837816b809c8bd091fef2325aaa87efa60cdcfc221524b"
+    },
+    {
+      "file": "bargain-selector-diagnostic2.log",
+      "sha256": "f83ad9d9f232031f796a8e69078288fae676dd4031c7b7dbe11419081a1c8811"
+    },
+    {
+      "file": "bargain-selector-browser.log",
+      "sha256": "6222557cca1620235ad99bb3429aeb5212a1e430376254e7affef9fe24699dc7"
+    },
+    {
+      "file": "bargain-selector-browser2.log",
+      "sha256": "790fe5767cd5c9b97400ab5b25f96f2bb769ff78a0d97e0e680b2628905568dc"
+    },
+    {
+      "file": "bargain-selector-browser3.log",
+      "sha256": "3f0d9056a6d3caa66aba02416623f0d9f1cb8e9a85549feaca9778f10be5adc0"
+    }
+  ],
+  "frontend": {
+    "pcAuth": 92,
+    "pcImages": 7,
+    "uniToolchain": 182,
+    "uniBuildArtifacts": 3,
+    "pcBuild": true,
+    "uniTypecheck": true,
+    "uniBuilds": [
+      "h5",
+      "mp-weixin",
+      "app"
+    ],
+    "workerTypes": [
+      "unit",
+      "runtime"
+    ]
+  },
+  "firstFailures": [
+    "PGlite 18/34 failed: implicit timestamp timezone comparison and malformed it.each array argument; diagnostic SQL proved UTC+8 offset; fixed explicit UTC and tuple fixtures",
+    "PC runtime 1/92 and Uni runtime 3/182 failed: null-address contract and inconsistent activity/product types in fixtures; fixed contract and actual HTTP default-address behavior, corrected fixtures",
+    "Intermediate quote source-shape assertion still expected unconditional pickup-store list; updated for scoped selector branch",
+    "Browser runs failed on initial-loading wait and PC/Uni exact-text locator mismatches; fixed temporary script waits/selectors, no production behavior hidden"
+  ],
+  "browserAvailability": "Browser skill absent; existing Playwright/Chrome fallback, no dependency install",
+  "browser": {
+    "evidence": [
+      {
+        "surface": "pc",
+        "label": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "url": "http://127.0.0.1:5210/checkout?mode=buy&cartId=10&type=2&bargainUserId=80",
+        "title": "CinaShop 配送隔离验收",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-selector-pc-desktop.png",
+        "errors": [],
+        "warnings": [],
+        "checks": [
+          "nonblank",
+          "no-overlay",
+          "no-horizontal-overflow",
+          "pickup-only",
+          "scoped-store",
+          "rule-refresh-preserves-selection",
+          "explicit-switch-requotes"
+        ]
+      },
+      {
+        "surface": "pc",
+        "label": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "url": "http://127.0.0.1:5210/checkout?mode=buy&cartId=10&type=2&bargainUserId=80",
+        "title": "CinaShop 配送隔离验收",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-selector-pc-mobile.png",
+        "errors": [],
+        "warnings": [],
+        "checks": [
+          "nonblank",
+          "no-overlay",
+          "no-horizontal-overflow",
+          "pickup-only",
+          "scoped-store",
+          "rule-refresh-preserves-selection",
+          "explicit-switch-requotes"
+        ]
+      },
+      {
+        "surface": "uni",
+        "label": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "url": "http://127.0.0.1:5211/#/pages/order/confirm?mode=buy&cartId=10&type=2&bargainUserId=80",
+        "title": "确认订单",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-selector-uni-desktop.png",
+        "errors": [],
+        "warnings": [
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+        ],
+        "checks": [
+          "nonblank",
+          "no-overlay",
+          "no-horizontal-overflow",
+          "pickup-only",
+          "scoped-store",
+          "rule-refresh-preserves-selection",
+          "explicit-switch-requotes"
+        ]
+      },
+      {
+        "surface": "uni",
+        "label": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "url": "http://127.0.0.1:5211/#/pages/order/confirm?mode=buy&cartId=10&type=2&bargainUserId=80",
+        "title": "确认订单",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-selector-uni-mobile.png",
+        "errors": [],
+        "warnings": [
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+        ],
+        "checks": [
+          "nonblank",
+          "no-overlay",
+          "no-horizontal-overflow",
+          "pickup-only",
+          "scoped-store",
+          "rule-refresh-preserves-selection",
+          "explicit-switch-requotes"
+        ]
+      }
+    ],
+    "orders": 0,
+    "businessUnchanged": true
+  },
+  "browserReportSha256": "8c1ab5ec9209841a0ed16d2584e3d394ed64f533db74e84baafb493b88aace1b",
+  "cleanup": {
+    "databases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "publicTables": 0,
+    "fixtureSchemas": 0,
+    "otherClients": 0,
+    "postgresPid": 12280,
+    "manualDatabaseDeletion": false,
+    "artifactsRetained": true,
+    "stopped": true,
+    "stoppedAtUtc": "2026-09-09 05:12:59.095 UTC",
+    "portsAbsent": [55432, 5208, 5210, 5211],
+    "stopWaitTimedOut": true,
+    "stopExplanation": "pg_ctl fast wait 20s timed out during checkpoint; original process exited normally without force or retry"
+  }
+}

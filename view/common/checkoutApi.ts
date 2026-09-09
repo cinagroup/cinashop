@@ -1,6 +1,7 @@
 import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "./checkoutQuote";
 import { normalizeOrderCouponPage, orderCouponRequest, type OrderCouponScope } from "./orderCoupons";
 import { validateCheckoutItems, type CheckoutCartItem, type CheckoutSelection } from "./checkoutSelection";
+import { normalizeBargainShipping } from './bargainShipping';
 
 export interface CheckoutTransport {
   get(url: string, params: Record<string, unknown>): Promise<{ data: unknown; headers: Record<string, string> }>;
@@ -18,6 +19,10 @@ export function createCheckoutApi(transport: CheckoutTransport) {
     ...(options.bargainUserId === undefined ? {} : { bargainUserId: options.bargainUserId }),
   });
   return {
+    async bargainShipping(cartIds: number[]) {
+      const ids = [...cartIds];
+      return normalizeBargainShipping(await transport.post('/order/check_shipping', { cartIds: ids, view: 'bargain' }), ids);
+    },
     async items(selection: CheckoutSelection, checkedIds: readonly number[] = []) {
       const ids = [...(selection.mode === "buy" ? selection.ids : checkedIds)];
       if (!ids.length || ids.length > 100 || ids.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(ids).size !== ids.length) throw new Error("请选择有效的结算商品");

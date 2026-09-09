@@ -15,17 +15,19 @@
         <view class="heading">配送方式</view>
         <view v-if="items.some(item => item.productInfo?.productType === 4)" class="muted">次卡商品仅支持门店自提，支付后到店按次数核销。</view>
         <view class="choices">
-          <button size="mini" :class="{ active: shippingType === 1 }" :disabled="locked || items.some(item => item.productInfo?.productType === 4)" @tap="setShipping(1)">快递配送</button>
-          <button size="mini" :class="{ active: shippingType === 2 }" :disabled="locked" @tap="setShipping(2)">门店自提</button>
+          <button v-if="allowedShippingTypes.includes(1)" size="mini" :class="{ active: shippingType === 1 }" :disabled="locked" @tap="setShipping(1)">{{ requiresAddress ? '快递配送' : '无需物流配送' }}</button>
+          <button v-if="allowedShippingTypes.includes(2)" size="mini" :class="{ active: shippingType === 2 }" :disabled="locked" @tap="setShipping(2)">门店自提</button>
+          <button v-if="activity.type === 2" size="mini" :disabled="locked" @tap="refreshQuote(true)">刷新配送方式及报价</button>
         </view>
-        <template v-if="shippingType === 1">
+        <view v-if="shippingLoading">正在读取活动配送规则…</view>
+        <template v-if="shippingType === 1 && requiresAddress">
           <button v-for="address in addresses" :key="address.id" class="address" :class="{ active: addressId === address.id }" :disabled="locked" @tap="addressId = address.id">
             <view>{{ address.real_name }} {{ address.phone }}</view>
             <view class="muted">{{ address.province }}{{ address.city }}{{ address.district }}{{ address.detail }}</view>
           </button>
           <button size="mini" :disabled="locked" @tap="addAddress">新增或管理地址</button>
         </template>
-        <template v-else>
+        <template v-else-if="shippingType === 2">
           <button v-for="store in stores" :key="store.id" class="address" :class="{ active: storeId === store.id }" :disabled="locked" @tap="storeId = store.id">
             <view>{{ store.name }}</view><view class="muted">{{ store.address }}{{ store.detailed_address }}</view>
           </button>
@@ -101,6 +103,7 @@ import { useCheckout } from "@/composables/useCheckout";
 // Route parameters are validated by useCheckout.onLoad, not DOM attributes.
 defineOptions({ inheritAttrs: false });
 const { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
+  allowedShippingTypes, requiresAddress, shippingLoading,
   customForm, formName, formRevision, formValidation, uploads, activity, useIntegral, quote, ready, deliveryError, refreshQuote,
   coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit } = useCheckout();
 function addAddress() { if (!locked.value) uni.navigateTo({ url: "/pages/user/address" }); }

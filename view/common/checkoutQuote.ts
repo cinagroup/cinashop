@@ -71,7 +71,9 @@ export function normalizeCheckoutQuote(
   if (!selected.length || selected.length > 100 || new Set(selected.map((item) => item.id)).size !== selected.length) {
     throw new Error("请选择有效的结算商品");
   }
-  if (options.shippingType === 1 && record(source.addressInfo, "报价收货地址").id !== options.addressId) {
+  const nonLogistics = selected.every(item => item.productInfo && [1, 2, 3].includes(item.productInfo.productType));
+  if (options.shippingType === 1 && !(nonLogistics && options.addressId === 0 && source.addressInfo === null)
+    && record(source.addressInfo, "报价收货地址").id !== options.addressId) {
     throw new Error("报价收货地址不匹配，请重新选择");
   }
   if (!Array.isArray(source.cartInfo) || source.cartInfo.length !== selected.length) throw new Error("报价商品不完整");
@@ -84,6 +86,9 @@ export function normalizeCheckoutQuote(
       throw new Error("报价商品或数量已变化，请重新确认商品");
     }
     const product = record(row.productInfo, "报价商品详情");
+    if (nonLogistics && product.productType !== item.productInfo.productType) {
+      throw new Error("报价商品配送类型已变化，请重新确认商品");
+    }
     return { ...item, sumPrice: quoteMoney(row.sumPrice), quotedUnitPrice: quoteMoney(row.truePrice),
       productInfo: { ...item.productInfo, price: quoteMoney(product.price) } };
   });

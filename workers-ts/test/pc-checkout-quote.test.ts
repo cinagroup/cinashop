@@ -25,6 +25,16 @@ function deferred<T>() {
 }
 
 describe("FE-002E server-authoritative PC checkout quote", () => {
+  it.each([1, 2, 3])("accepts null address only for non-logistics type %i with matching quote product type", productType => {
+    const items = selected.map(item => ({ ...item, productInfo: { ...item.productInfo!, productType } }));
+    const payload = { ...preview(), addressInfo: null, cartInfo: preview().cartInfo.map(item => ({ ...item, productInfo: { ...item.productInfo, productType } })) };
+    const request = { ...options, addressId: 0 };
+    expect(normalizeCheckoutQuote(payload, items, request)).toBeTruthy();
+    expect(() => normalizeCheckoutQuote(payload, selected, request)).toThrow();
+    expect(() => normalizeCheckoutQuote(payload, items, options)).toThrow();
+    expect(() => normalizeCheckoutQuote({ ...payload, cartInfo: preview().cartInfo }, items, request)).toThrow('配送类型');
+    expect(() => normalizeCheckoutQuote({ ...payload, addressInfo: { id: 12 } }, items, request)).toThrow();
+  });
   it("uses the complete server amount and item snapshot, never the cached cart total", () => {
     expect(quote()).toMatchObject({ key: "fixture_quote_1", items: [{ productInfo: { price: "10.00" }, quotedUnitPrice: "9.00", sumPrice: "20.00" }],
       prices: { payable: "20.50", postage: "6.00", postageDiscount: "2.00", memberDiscount: "2.00", firstOrderDiscount: "1.00", integralDiscount: "0.50" } });
@@ -108,7 +118,7 @@ describe("FE-002E server-authoritative PC checkout quote", () => {
     expect(source).toContain('quoteState.value.result!.key');
     expect(source).toContain('...quoteOptions.value');
     expect(source).toContain('apiOrderCreate(orderKey.value, pendingSubmission.value!)');
-    expect(source).toContain('await Promise.all([loadAddresses(generation), loadPickupStores(generation), loadSystemForm(rows, generation)])');
+    expect(source).toContain('await Promise.all([loadAddresses(generation), type === 2 ? loadShipping(generation, true) : loadPickupStores(generation), loadSystemForm(rows, generation)])');
     expect(source).toContain('class="checkout-mobile-items" aria-label="结算商品"');
     expect(source).toContain('.checkout-desktop-items { display: none; }');
     expect(source).toContain('.checkout-mobile-items { display: block; }');
