@@ -1,0 +1,494 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "df9baff137bfdc5ac23fd6713b73f54eac927157",
+  "scope": "A3k4 single-source-SKU bargain creation/editing and actual admin selector. Local acceptance candidate, not full PHP editor or production release.",
+  "environment": {
+    "platform": "Windows x64",
+    "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "maxWorkers": 2,
+    "fixtureBoundary": "Owned random schemas using real columns/defaults/not-null/PK; not all production FK/CHECK. Authentication and KV are fixture substitutes. No production secrets used.",
+    "productionAccess": false,
+    "deployment": false,
+    "ddlChanged": false,
+    "pricingFormulaChanged": false,
+    "frontendChanged": true,
+    "systemServiceInstalled": false,
+    "globalEnvironmentChanged": false
+  },
+  "contract": {
+    "source": "PHP view/admin/src/pages/marketing/storeBargain/create.vue uses one selected source SKU; StoreBargainServices::saveData derives main inventory/prices from attrs[0].",
+    "creation": "Requires sku.baseUnique; allocates globally collision-checked independent type=2 identity, selected dimensions and attr result in the same transaction.",
+    "editing": "Preserves existing identity and sales, forbids changing source product or SKU combination, does not shrink existing multi-SKU rows. Original SKU id/unique/stock/quota required; explicit main inventory edits retain the existing main-pair comparison. Price-only saves preserve differing SKU inventory.",
+    "locking": "After activity NO KEY UPDATE and source product SHARE, global identity pg_try_advisory_xact_lock and secondary SKU NOWAIT reject contention rather than wait across incompatible existing lock orders. This is a bounded local solution, not a universal lock-order claim.",
+    "read": "Authenticated GET in adminapi and v1 admin route groups; repeatable-read read-only transaction, max 500 per option/current list, private no-store and narrow projection excluding diskInfo.",
+    "release": "New creation request requires sku. Coordinate Worker/Admin rollout; old clients without sku cannot create. Existing metadata-only saves remain supported."
+  },
+  "inputHashNormalization": "UTF-8 with CRLF converted to LF; paths relative to repository root",
+  "changedExecutableInputs": [
+    {
+      "file": "view/admin-ts/src/api/activity.ts",
+      "sha256": "0db718864cd47886ed175823af29321c3aef6b78013de2bbdcdf630fc8847d43"
+    },
+    {
+      "file": "view/admin-ts/src/api/bargainSkuEdit.ts",
+      "sha256": "5a16145b40288e5e8bff3a7cbf14ea5e91170db4f84bb91b6117190e49acabd5"
+    },
+    {
+      "file": "view/admin-ts/src/pages/activity/ActivityList.vue",
+      "sha256": "1724b5b51da15c5ada9a14e0d4dec9cc9cba9139ef3d401c17e8dd72ca8c6d4f"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "598a4a22e28c9042f2329eae0d63029d43a6241d8447d110c038c608cb8e53a8"
+    },
+    {
+      "file": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "b235c8c4c07d1c5d13decbe1db13ecef81c01fb3c7246389ff60b65ce073ce29"
+    },
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "7f52968c6bb3553e9c73a93360134458a26ed8886c7e7bdfe56bd118d6ad1eee"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainAdminService.ts",
+      "sha256": "896aebcaad5e256ad2828b6f6ffdca4d34abbec88b0ca294ad437fb1b63e0880"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainAdminSkuService.ts",
+      "sha256": "620c5eaff11b6838b37d79c6249db844761f7770acd1eecf13ea9ddb63a61570"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts",
+      "sha256": "73dd698367b594f4c0472518c575703b5bbba22d4256a5c595c7f2a347929d23"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-dates.test.ts",
+      "sha256": "a4247ba348621f30a33a0e893110e3d6263d62f5544e0493fc782dd1bf5888fe"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-product.test.ts",
+      "sha256": "c92fc9d1e823897e06926a269df18373d3c173ede2259e163ed1555b709bac78"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-save.test.ts",
+      "sha256": "55514493d3397cbbb09440f3fc1edb8d50fe296d9f337a83aedd11c5bf59e0c1"
+    },
+    {
+      "file": "workers-ts/test/helpers/bargainSelectionFixture.ts",
+      "sha256": "d6480c07d36dc3a5a1c9b40494f4337580e0236a3bbbfd868129daaa6c586976"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-sku-form.test.ts",
+      "sha256": "2167a26d437358c6e4f8237f50ae4f407e1af57eef3d466db2cc8c69bb82f308"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-sku-postgres.test.ts",
+      "sha256": "72ef1385199814fb4af5ba5864350738bb0fa96c1f71c53988509201e4004778"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-sku.test.ts",
+      "sha256": "628f7f96d0bfb9d4dda145b300243359161a1dc68cc641ff1bf1dd53f070a2aa"
+    }
+  ],
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "runs": [
+    {
+      "file": "bargain-sku-green.json",
+      "sha256": "554e8a147bd643c726e7cb038371f8add263a045d4fa1ed11ea4e9d6bf977958",
+      "files": 4,
+      "passed": 42,
+      "failed": 12,
+      "skipped": 0,
+      "perFile": [
+        {
+          "file": "bargain-admin-dates.test.ts",
+          "tests": 18,
+          "status": "failed"
+        },
+        {
+          "file": "bargain-admin-product.test.ts",
+          "tests": 17,
+          "status": "failed"
+        },
+        {
+          "file": "bargain-admin-sku-form.test.ts",
+          "tests": 3,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-sku.test.ts",
+          "tests": 16,
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "file": "bargain-sku-retry.json",
+      "sha256": "287fd84a903f534849c1f7138825bb68db76d79589f1f2dd160775e19bd5f63d",
+      "files": 4,
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "perFile": [
+        {
+          "file": "bargain-admin-dates.test.ts",
+          "tests": 18,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-product.test.ts",
+          "tests": 17,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-sku-form.test.ts",
+          "tests": 3,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-sku.test.ts",
+          "tests": 18,
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "bargain-sku-final.json",
+      "sha256": "a8c6bd8bb9073c8e7d96faf68b87931a6796a6efbbd31affaf19ca000bea7974",
+      "files": 24,
+      "passed": 409,
+      "failed": 0,
+      "skipped": 0,
+      "perFile": [
+        {
+          "file": "bargain-admin-concurrency-postgres.test.ts",
+          "tests": 9,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-dates-postgres.test.ts",
+          "tests": 8,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-dates.test.ts",
+          "tests": 18,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-form.test.ts",
+          "tests": 11,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-product-postgres.test.ts",
+          "tests": 9,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-product.test.ts",
+          "tests": 17,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-retirement.test.ts",
+          "tests": 20,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-save.test.ts",
+          "tests": 52,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-sku-form.test.ts",
+          "tests": 3,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-sku-postgres.test.ts",
+          "tests": 7,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-sku.test.ts",
+          "tests": 18,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-cart-binding-concurrency-postgres.test.ts",
+          "tests": 3,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-cart-binding.test.ts",
+          "tests": 17,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-cart-participation-migration.test.ts",
+          "tests": 34,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-help-admission.test.ts",
+          "tests": 12,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-help-concurrency-postgres.test.ts",
+          "tests": 12,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-inventory-compensation.test.ts",
+          "tests": 13,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-order-concurrency-postgres.test.ts",
+          "tests": 23,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-order-participation.test.ts",
+          "tests": 54,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-participation-concurrency-postgres.test.ts",
+          "tests": 7,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-participation-state.test.ts",
+          "tests": 24,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-selection-catalog.test.ts",
+          "tests": 29,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-user-help-migration.test.ts",
+          "tests": 5,
+          "status": "passed"
+        },
+        {
+          "file": "pc-bargain-purchase.test.ts",
+          "tests": 4,
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "bargain-sku-index.json",
+      "sha256": "08ffb82c2190975ccb31229f4ef15adbc753a1da1bb57c3f988caa0daf3d212e",
+      "files": 3,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "perFile": [
+        {
+          "file": "legacy-query-index-alignment.test.ts",
+          "tests": 4,
+          "status": "passed"
+        },
+        {
+          "file": "ordinary-query-index-alignment.test.ts",
+          "tests": 5,
+          "status": "passed"
+        },
+        {
+          "file": "orm-query-index-alignment.test.ts",
+          "tests": 3,
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "bargain-sku-pglite.json",
+      "sha256": "b8df678f00a4c06f3956f8980afc8141efad9d7168057aa36db3da2aea569720",
+      "files": 2,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "perFile": [
+        {
+          "file": "bargain-admin-sku-form.test.ts",
+          "tests": 3,
+          "status": "passed"
+        },
+        {
+          "file": "bargain-admin-sku.test.ts",
+          "tests": 18,
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "regressionFilters": {
+    "first": [
+      "bargain",
+      "index-recovery",
+      "index-contract",
+      "index-audit"
+    ],
+    "note": "Only bargain matched files in the first command. Exact index filters were run separately; totals combine disjoint executed files, not duplicate runs.",
+    "second": [
+      "ordinary-query-index-alignment",
+      "orm-query-index-alignment",
+      "legacy-query-index-alignment"
+    ]
+  },
+  "newTests": {
+    "serviceHttp": 18,
+    "frontendPayload": 3,
+    "pgOnly": 7,
+    "total": 28
+  },
+  "finalRelated": {
+    "files": 27,
+    "passed": 421,
+    "failed": 0,
+    "skipped": 0,
+    "bargainDurationSeconds": 151,
+    "indexDurationSeconds": 0.724
+  },
+  "retainedFailures": [
+    {
+      "log": "bargain-sku-green.log",
+      "result": "42 passed / 12 failed",
+      "cause": "Explicit fixture SKU IDs did not advance serial sequence; real inserts collided with id=1. Fixed fixture setval, reran all affected tests; no production sequence changes."
+    },
+    {
+      "log": "bargain-sku-types-final.log",
+      "cause": "Frontend payload helper type import pulled activity.ts and its @/utils/request through Worker alias. Moved pure types into helper and re-exported from frontend API. Both final typechecks pass."
+    },
+    {
+      "log": "bargain-sku-browser-first.log",
+      "cause": "Playwright clicked Element Plus readonly input covered by placeholder span. Scoped visible placeholder click succeeded; no force click or UI bypass. Final screenshots wait until prior success toast disappears."
+    }
+  ],
+  "checks": {
+    "workerUnitTypes": "passed",
+    "workerRuntimeTypes": "passed",
+    "typeLog": "bargain-sku-types-final2.log",
+    "adminBuild": "passed",
+    "adminBuildLog": "bargain-sku-admin-build-final.log",
+    "fullWorkerInventory": false,
+    "ninePathCatalog": false,
+    "linuxWorkerd": false,
+    "pgProofs": [
+      "Identity and source-SKU lock contention reject promptly with no partial writes, then retry succeeds",
+      "Existing activity SKU row lock rolls back preceding main edit",
+      "Real checkout paused after source SKU update can complete after admin rejects NOWAIT; cancellation restores source inventory",
+      "Actual first admin SKU write blocks second activity editor; stale second SKU snapshot rejected after release",
+      "Deadline crossed after actual attr result insert rolls back main, SKU, dimensions and result",
+      "Committed source SKU retirement is rejected"
+    ],
+    "serviceFlow": "Actual save -> start -> two helpers -> catalog -> checkout -> exact cancellation restoration, no provider/payment."
+  },
+  "browser": {
+    "availability": "Browser plugin not available",
+    "reason": "Current session catalog does not list browser SKILL.md; frontend-testing-debugging specifies regular Playwright fallback. No installation changes.",
+    "runtime": "Existing Playwright, headless installed Chrome, actual Vue/Vite/Axios to memory-only SQL fixture; non-loopback browser requests aborted.",
+    "flow": "/activity -> bargain tab -> new -> load/select source SKU -> save -> reload -> change quota -> synthetic local SKU-only stock change -> price edit rejected with visible error and retained form",
+    "checks": [
+      {
+        "label": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "url": "http://127.0.0.1:5209/activity",
+        "title": "营销活动 - CinaShop 管理后台",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-bargain-sku-desktop.png",
+        "activityId": 3,
+        "skuId": 7,
+        "checks": [
+          "identity",
+          "not-blank",
+          "no-overlay",
+          "missing-selection-rejected",
+          "create-real-sku",
+          "reload-selection",
+          "edit-quota-preserves-identity",
+          "stale-sku-rollback",
+          "form-values-retained",
+          "visible-error",
+          "responsive-dialog"
+        ],
+        "errors": [],
+        "warnings": [],
+        "orders": 0
+      },
+      {
+        "label": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "url": "http://127.0.0.1:5209/activity",
+        "title": "营销活动 - CinaShop 管理后台",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-bargain-sku-mobile.png",
+        "activityId": 4,
+        "skuId": 8,
+        "checks": [
+          "identity",
+          "not-blank",
+          "no-overlay",
+          "missing-selection-rejected",
+          "create-real-sku",
+          "reload-selection",
+          "edit-quota-preserves-identity",
+          "stale-sku-rollback",
+          "form-values-retained",
+          "visible-error",
+          "responsive-dialog"
+        ],
+        "errors": [],
+        "warnings": [],
+        "orders": 0
+      }
+    ],
+    "log": "bargain-sku-browser-final.log",
+    "limitations": "Trusted auth/KV fixture and synthetic browser inventory change. Actual checkout/concurrency tested separately via real SQL service tests. Not a production role/payment/browser test."
+  },
+  "cleanup": {
+    "databases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "publicTables": 0,
+    "fixtureSchemas": 0,
+    "otherClients": 0,
+    "manualDatabaseDeletion": false,
+    "postgresPid": 3884,
+    "stoppedAtUtc": "2026-09-09T03:05:24.395Z",
+    "pidAbsent": true,
+    "qaVitePid": 4168,
+    "qaVitePidAbsent": true,
+    "listenersAbsent": [
+      55432,
+      5208,
+      5209
+    ],
+    "retained": "Stopped cluster/binaries/logs and browser screenshots retained. Memory fixture closed, owned Vite process stopped, no recursive deletion."
+  },
+  "remaining": [
+    "Full PHP attrs/items compatibility, descriptions/images/title/unit/freight/delivery/copy workflows",
+    "Rebinding with history and multi-SKU cleanup intentionally rejected, not completed",
+    "Old clients omitting sku can still change only main stock; global main/source/activity inventory synchronization remains open",
+    "Nonphysical end-to-end fulfillment and global product/SKU retirement contracts not validated",
+    "Participation pricing policy remains pending; no formula or payment policy change",
+    "Real auth roles, provider, current full Worker inventory/Linux/workerd, own CI and production release gates"
+  ]
+}

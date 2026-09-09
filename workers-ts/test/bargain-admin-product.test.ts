@@ -9,7 +9,7 @@ describe('bargain admin source product contract', () => {
   beforeEach(async () => { f = await createBargainSelectionFixture(); }, 30_000);
   afterEach(async () => { await f?.close(); });
   const snapshot = async () => ({ ...await f.snapshot(), sequences: undefined });
-  const body = () => ({ productId:70, storeName:'商品资格', price:'10.00', minPrice:'2.00', people:2,
+  const body = () => ({ productId:70, storeName:'商品资格', price:'10.00', minPrice:'2.00', people:2,stock:8,quota:8,sku:{baseUnique:'qared001'},
     startTime:f.startTime.toISOString(), stopTime:f.stopTime.toISOString() });
   for (const mode of ['create','edit'] as const) {
     it.each([
@@ -47,10 +47,10 @@ describe('bargain admin source product contract', () => {
     await f.db.update(storeProduct).set({isShow:0}).where(eq(storeProduct.id,70));
     await expect(saveBargain(f.container,{id:40,storeName:'尚未上架可配置'})).resolves.toBe(40);
   });
-  it('reads the newly selected product rather than trusting the old product or request metadata', async () => {
+  it('rejects rebinding an existing activity to another product', async () => {
     await f.db.insert(storeProduct).values({id:71,storeName:'新原商品',isVerify:1,isVipProduct:1});
     const before=await snapshot();
-    await expect(saveBargain(f.container,{id:40,productId:71})).rejects.toThrow('SVIP');
+    await expect(saveBargain(f.container,{id:40,productId:71})).rejects.toThrow('不能更换原商品');
     expect(await snapshot()).toEqual(before);
   });
 });

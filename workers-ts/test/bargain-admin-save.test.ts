@@ -74,12 +74,12 @@ describe('bargain admin edits preserve existing business data', () => {
   });
   it('creates a basic activity with validated submitted rules and zero sales', async () => {
     const response = await request({ type: 'bargain', productId: 70, storeName: '新活动', price: '10', minPrice: '2.5',
-      stock: 12, quota: 9, people: 3, num: 2, status: 0, startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString() });
+      stock: 6, quota: 5, people: 3, num: 2, status: 0, sku:{baseUnique:'qared001'}, startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString() });
     expect(response).toMatchObject({ status: 200 });
     const rows = await f.db.select().from(storeBargain).where(eq(storeBargain.storeName, '新活动'));
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ productId: 70, price: '10.00', minPrice: '2.50', stock: 12, quota: 9,
-      quotaShow: 9, people: 3, num: 2, sales: 0, status: 0, isDel: 0 });
+    expect(rows[0]).toMatchObject({ productId: 70, price: '10.00', minPrice: '2.50', stock: 6, quota: 5,
+      quotaShow: 5, people: 3, num: 2, sales: 0, status: 0, isDel: 0 });
     expect(rows[0].addTime).toBeGreaterThan(0);
   });
   it('updates explicitly submitted rules and quota without resetting their unrelated fields', async () => {
@@ -92,7 +92,7 @@ describe('bargain admin edits preserve existing business data', () => {
   it.each([{ productId: 999 }, { price: '0.00' }, { people: 801 }, { quota: 101 }, { minPrice: '10.00' }])('rejects invalid basic creation %j', async patch => {
     const before = await snapshot();
     expect(await request({ type: 'bargain', productId: 70, storeName: '新建', price: '10.00', minPrice: '2.00',
-      startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString(), ...patch })).toMatchObject({ status: 400 });
+      startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString(), stock:8, quota:8, sku:{baseUnique:'qared001'}, ...patch })).toMatchObject({ status: 400 });
     expect(await snapshot()).toEqual(before);
   });
   it.each(['save', 'status'])('rolls back an injected database failure after %s writes', async path => {

@@ -2916,3 +2916,10 @@ export async function adminSmsConfigSave(c: C) {
   }
   return jsonOk(c, null, "保存成功");
 }
+
+/** Bounded source-SKU selector for the authenticated bargain editor. */
+export async function adminBargainSkuOptions(c: C) {
+  c.header("Cache-Control", "private, no-store");
+  const { readBargainSkuOptions } = await import("@/services/activity/BargainAdminSkuService");
+  return jsonOk(c, await readBargainSkuOptions(c.get("container"), c.req.query("productId"), c.req.query("activityId")));
+}

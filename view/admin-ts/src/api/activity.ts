@@ -78,3 +78,9 @@ export function apiAdminActivitySave(data: Record<string, unknown>): Promise<{ i
 export function apiAdminActivityDel(type: string, id: number): Promise<null> {
   return getData(request.delete<null>(`/activity/del/${type}/${id}`));
 }
+
+import type { BargainSkuOptions } from './bargainSkuEdit';
+export type { BargainSkuOption, BargainSkuOptions } from './bargainSkuEdit';
+export function apiAdminBargainSkuOptions(productId: number, activityId?: number): Promise<BargainSkuOptions> {
+  return getData(request.get('/activity/bargain/sku-options', { params: { productId, activityId } }));
+}

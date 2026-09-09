@@ -41,7 +41,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('admin bargain da
       const [clock] = await f.db.select({ deadline: sql<number>`floor(extract(epoch from clock_timestamp())*1000)+1000` }).from(sql`(VALUES(1)) AS p(n)`);
       const deadline = Number(clock.deadline);
       await blocker.exec('BEGIN; SELECT pg_advisory_xact_lock(731631,40)');
-      const creating = outcome(saveBargain(createContainerFromDb(editor.db), { productId: 70, storeName:'跨截止新建',price:'10.00',minPrice:'2.00',
+      const creating = outcome(saveBargain(createContainerFromDb(editor.db), { productId: 70, storeName:'跨截止新建',price:'10.00',minPrice:'2.00',stock:8,quota:8,sku:{baseUnique:'qared001'},
         startTime:f.startTime.toISOString(),stopTime:new Date(deadline).toISOString() }));
       await waitForFinanceBlock(f.db,editor.pid,blocker.pid); await waitForFinanceClock(f.db,deadline); await blocker.exec('COMMIT');
       await refuses(creating,'时间'); expect(await snapshot()).toEqual(before);

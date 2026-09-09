@@ -5,17 +5,21 @@ import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
 import { bargainDetail } from "../../src/controllers/api/v1/UserActivityController";
 import { startBargain, myBargains, cancelBargain } from "../../src/controllers/api/v1/ActivityJoinController";
 import { cartAdd, cartList, orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderController";
-import { storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttrValue, storeCart, user } from "../../src/models/schema";
+import { storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, storeProductAttrValue, storeCart, user } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
 
 /** Owned SQL fixture using the existing PGlite / dedicated loopback PG16 guard.
  * Auth and KV are isolated substitutes. No order-create/payment route is mounted.
  */
 export async function createBargainSelectionFixture(extraTables: PgTable[] = []) {
-  const f = await createPcCheckoutQuoteFixture([storeBargain, storeBargainUser, storeBargainUserHelp, ...extraTables]);
+  const f = await createPcCheckoutQuoteFixture([storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, ...extraTables]);
   try {
     for (const key of Object.keys(f.config)) f.config[key] = "0";
     await f.db.delete(storeCart);
+    await f.db.insert(storeProductAttr).values([
+      { productId: 70, type: 0, attrName: '颜色', attrValues: '红色,蓝色' },
+      { productId: 70, type: 0, attrName: '尺码', attrValues: '大号,小号' },
+    ]);
     // Catalog visibility uses the stored isMoneyLevel flag, not isEverLevel.
     await f.db.update(user).set({ isMoneyLevel: 1 }).where(eq(user.uid, 11));
     const startTime = new Date(Date.now() - 3_600_000), stopTime = new Date(Date.now() + 3_600_000);
@@ -27,6 +31,8 @@ export async function createBargainSelectionFixture(extraTables: PgTable[] = [])
       { id: 3, productId: 40, type: 2, unique: "actred40", suk: "红色,大号", stock: 7, quota: 6, price: "777.00", otPrice: "888.00" },
       { id: 4, productId: 40, type: 2, unique: "actblu40", suk: "蓝色,小号", stock: 4, quota: 4, price: "999.00", otPrice: "999.00" },
     ]);
+    // Explicit fixture IDs must not collide with the next real admin SKU insert.
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'), (SELECT max(id) FROM store_product_attr_value), true)");
     await f.db.insert(storeBargainUser).values([
       { id: 80, bargainId: 40, uid: 11, bargainPrice: "10.00", bargainPriceMin: "2.00", price: "8.00", status: 3 },
       { id: 81, bargainId: 40, uid: 22, bargainPrice: "10.00", bargainPriceMin: "2.00", price: "1.00", status: 1 },

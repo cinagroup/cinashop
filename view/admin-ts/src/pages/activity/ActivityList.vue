@@ -73,8 +73,17 @@
       </div>
       <el-form :model="form" label-width="100px">
         <el-form-item label="商品ID" required>
-          <el-input-number v-model="form.productId" :min="1" />
+          <el-input-number v-model="form.productId" :min="1" :disabled="formType === 'bargain' && !!form.id" />
         </el-form-item>
+        <template v-if="formType === 'bargain'">
+          <el-form-item label="活动规格" required>
+            <el-button :loading="skuLoading" @click="loadBargainSkus">加载商品规格</el-button>
+            <el-select v-model="selectedBaseUnique" placeholder="选择一个原商品规格" style="width:100%; margin-top:8px" @change="selectBargainSku">
+              <el-option v-for="sku in skuOptions?.options ?? []" :key="sku.id" :value="sku.unique" :label="`${sku.suk || '默认规格'}（库存 ${sku.stock}）`" />
+            </el-select>
+          </el-form-item>
+          <p class="time-hint">新活动必须选择一个原商品规格；已有规格身份不可替换。仅改名不会重写规格库存。</p>
+        </template>
         <el-form-item label="活动名称" required>
           <el-input v-model="form.storeName" placeholder="如: 夏季促销商品" />
         </el-form-item>
@@ -219,11 +228,14 @@ import {
   apiAdminSeckillTimes,
   apiAdminActivitySave,
   apiAdminActivityDel,
+  apiAdminBargainSkuOptions,
+  type BargainSkuOptions,
   type ActivityItem,
 } from "@/api/activity";
 import { ElMessageBox } from "element-plus";
 import DiscountPackageManager from "@/pages/activity/DiscountPackageManager.vue";
 import { bargainEditPayload, bargainFormDate } from "@/api/bargainEdit";
+import { withBargainSku } from "@/api/bargainSkuEdit";
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
@@ -244,6 +256,11 @@ const formErrorElement = ref<HTMLElement | null>(null);
 const formType = ref("seckill");
 const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 let bargainOriginal: Record<string, unknown> | null = null;
+const skuOptions = ref<BargainSkuOptions | null>(null);
+const skuLoading = ref(false);
+const selectedBaseUnique = ref('');
+let originalBaseUnique = '';
+let skuRequest = 0;
 const form = reactive({
   id: 0,
   productId: 1,
@@ -342,6 +359,11 @@ async function toggleStatus(row: ActivityItem) {
 }
 
 function openForm(row?: ActivityItem) {
+  skuRequest++;
+  skuOptions.value = null;
+  skuLoading.value = false;
+  selectedBaseUnique.value = '';
+  originalBaseUnique = '';
   formError.value = "";
   formType.value = activeTab.value;
   try {
@@ -384,6 +406,27 @@ function openForm(row?: ActivityItem) {
   }
   bargainOriginal = row && formType.value === "bargain" ? { ...form } : null;
   formVisible.value = true;
+  if (row && formType.value === 'bargain') void loadBargainSkus();
+}
+
+async function loadBargainSkus() {
+  const requestId = ++skuRequest, productId = form.productId, activityId = form.id;
+  skuLoading.value = true;
+  try {
+    const result = await apiAdminBargainSkuOptions(productId, activityId || undefined);
+    if (requestId !== skuRequest || form.productId !== productId || form.id !== activityId || !formVisible.value) return;
+    skuOptions.value = result;
+    const matching = result.current.length === 1 ? result.options.find(row => row.suk === result.current[0].suk) : undefined;
+    originalBaseUnique = matching?.unique ?? '';
+    selectedBaseUnique.value = originalBaseUnique;
+  } catch (error) {
+    if (requestId === skuRequest) { skuOptions.value = null; formError.value = error instanceof Error ? error.message : '规格加载失败'; }
+  } finally { if (requestId === skuRequest) skuLoading.value = false; }
+}
+function selectBargainSku() {
+  if (form.id) return;
+  const sku = skuOptions.value?.options.find(row => row.unique === selectedBaseUnique.value);
+  if (sku) { form.stock = sku.stock; form.quota = sku.stock; }
 }
 
 async function save() {
@@ -392,7 +435,8 @@ async function save() {
   saving.value = true;
   formError.value = "";
   try {
-    await apiAdminActivitySave(formType.value === "bargain" ? bargainEditPayload(form, bargainOriginal) : {
+    await apiAdminActivitySave(formType.value === "bargain" ? withBargainSku(bargainEditPayload(form, bargainOriginal),
+      skuOptions.value, selectedBaseUnique.value, originalBaseUnique, form.productId) : {
       type: formType.value,
       id: form.id || undefined,
       productId: form.productId,

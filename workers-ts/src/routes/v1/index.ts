@@ -1640,6 +1640,7 @@ v1Routes.get("/admin/statistic/balance/get_type", adminAuth, AdminController.adm
 v1Routes.get("/admin/activity/seckill", adminAuth, AdminCrud.adminSeckillList);
 v1Routes.get("/admin/activity/combination", adminAuth, AdminCrud.adminCombinationList);
 v1Routes.get("/admin/activity/bargain", adminAuth, AdminCrud.adminBargainList);
+v1Routes.get("/admin/activity/bargain/sku-options", adminAuth, AdminCrud.adminBargainSkuOptions);
 v1Routes.get("/admin/activity/integral", adminAuth, AdminCrud.adminIntegralList);
 v1Routes.post("/admin/activity/status", adminAuth, AdminCrud.adminActivityStatus);
 v1Routes.get("/admin/lottery/list", adminAuth, AdminLotteryController.list);

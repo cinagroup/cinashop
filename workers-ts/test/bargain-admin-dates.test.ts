@@ -9,7 +9,7 @@ describe('admin bargain date contract', () => {
   beforeEach(async () => { f = await createBargainSelectionFixture(); }, 30_000);
   afterEach(async () => { vi.restoreAllMocks(); await f?.close(); });
   const snapshot = async () => ({ ...await f.snapshot(), sequences: undefined });
-  const createBody = () => ({ productId: 70, storeName: '时间活动', price: '10.00', minPrice: '2.00', people: 2,
+  const createBody = () => ({ productId: 70, storeName: '时间活动', price: '10.00', minPrice: '2.00', people: 2, stock:8, quota:8, sku:{baseUnique:'qared001'},
     startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString() });
   it('persists exact UTC instants on creation and changes only a supplied endpoint on edit', async () => {
     const id = await saveBargain(f.container, createBody());

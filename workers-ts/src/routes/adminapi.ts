@@ -542,6 +542,7 @@ adminapiRoutes.get("/statistic/balance/get_type", adminAuth, AdminController.adm
 adminapiRoutes.get("/activity/seckill", adminAuth, AdminCrud.adminSeckillList);
 adminapiRoutes.get("/activity/combination", adminAuth, AdminCrud.adminCombinationList);
 adminapiRoutes.get("/activity/bargain", adminAuth, AdminCrud.adminBargainList);
+adminapiRoutes.get("/activity/bargain/sku-options", adminAuth, AdminCrud.adminBargainSkuOptions);
 adminapiRoutes.get("/activity/integral", adminAuth, AdminCrud.adminIntegralList);
 adminapiRoutes.post("/activity/status", adminAuth, AdminCrud.adminActivityStatus);
 // PHP-compatible discount-package administration. The legacy status mutation

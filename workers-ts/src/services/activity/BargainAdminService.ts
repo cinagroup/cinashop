@@ -3,6 +3,7 @@ import { withTx, type Container, type DbClient } from "@/lib/di";
 import { storeBargain } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
 import { lockBargainProductPolicy } from "./BargainProductPolicy";
+import { parseBargainSku, saveBargainSku } from "./BargainAdminSkuService";
 
 type Patch = Partial<typeof storeBargain.$inferInsert>;
 const MAX_INT = 2_147_483_647;
@@ -89,6 +90,7 @@ async function limits(tx: DbClient): Promise<void> {
 export async function saveBargain(container: Container, body: Record<string, unknown>): Promise<number> {
   const id = own(body, "id") ? integer(body.id, "活动ID", 1) : undefined;
   const patch = parse(body);
+  const sku = parseBargainSku(body.sku);
   let expected: { stock: number; quota: number } | undefined;
   if (own(body, "expected")) {
     const value = body.expected;
@@ -103,6 +105,9 @@ export async function saveBargain(container: Container, body: Record<string, unk
     await limits(tx);
     const current = id ? (await tx.select().from(storeBargain).where(eq(storeBargain.id, id)).limit(1).for("no key update"))[0] : undefined;
     if (id && (!current || current.isDel !== 0)) throw new ValidateException("砍价活动不存在或已删除");
+    if (current && patch.productId !== undefined && patch.productId !== current.productId) {
+      throw new ValidateException("已有砍价活动不能更换原商品，请新建活动");
+    }
     if (current && expected && (current.stock !== expected.stock || current.quota !== expected.quota)) {
       throw new ValidateException("砍价库存或额度已变化，请刷新后重试");
     }
@@ -126,12 +131,16 @@ export async function saveBargain(container: Container, body: Record<string, unk
     // PHP rechecks the source on every save, even when productId was omitted.
     // Only changed inherited fields are written; ordinary no-op edits stay no-op.
     const derived = await lockBargainProductPolicy(tx, merged.productId!);
+    if (!current && !sku) throw new ValidateException("请选择砍价规格");
     Object.assign(values, Object.fromEntries(Object.entries(derived).filter(([key, value]) =>
       !current || current[key as keyof typeof current] !== value)));
     if (current) {
       if (patch.quota !== undefined) values.quotaShow = patch.quota;
       // Write supplied editable fields and changed source metadata, not the row.
       if (Object.keys(values).length) await tx.update(storeBargain).set(values).where(eq(storeBargain.id, current.id));
+      if (sku) await saveBargainSku(tx, current.id, merged.productId!, sku,
+        { stock: merged.stock!, quota: merged.quota!, price: merged.price!,
+          stockProvided: patch.stock !== undefined, quotaProvided: patch.quota !== undefined }, false);
       const [saved] = await tx.select({ start: storeBargain.startTime, stop: storeBargain.stopTime }).from(storeBargain)
         .where(eq(storeBargain.id, current.id)).limit(1);
       await assertWindow(tx, saved?.start, saved?.stop, current.stopTime);
@@ -139,6 +148,8 @@ export async function saveBargain(container: Container, body: Record<string, unk
     }
     const [created] = await tx.insert(storeBargain).values({ ...values, quotaShow: values.quota,
       sales: 0, addTime: sql`floor(extract(epoch from clock_timestamp()))::int` }).returning({ id: storeBargain.id });
+    await saveBargainSku(tx, created.id, merged.productId!, sku!,
+      { stock: merged.stock!, quota: merged.quota!, price: merged.price! }, true);
     const [saved] = await tx.select({ start: storeBargain.startTime, stop: storeBargain.stopTime }).from(storeBargain)
       .where(eq(storeBargain.id, created.id)).limit(1);
     await assertWindow(tx, saved?.start, saved?.stop);
