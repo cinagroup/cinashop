@@ -1,0 +1,937 @@
+{
+  "generatedAt": "2026-09-09T05:46:14.176Z",
+  "baseCommit": "8dc43e7d0197a6b6361eb349c8949854c1396bf4",
+  "status": "local candidate; not deployed",
+  "environment": {
+    "postgres": "isolated loopback PG16.15, random owned schemas",
+    "auth": "fixture",
+    "kv": "fixture deliberately stale",
+    "productionAccess": false,
+    "frontendChanged": false
+  },
+  "sourceHashes": [
+    {
+      "file": "workers-ts/src/services/activity/BargainPickupPolicy.ts",
+      "sha256Lf": "fc8a3dd808b6777c85e04d673afb60c9858e94a30a46014669c30d2a8324372e"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainShippingSelection.ts",
+      "sha256Lf": "d174c70fec8266d80bf1db8cc16176109128a7322cc3366310d78c30becb2e75"
+    },
+    {
+      "file": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256Lf": "b42c1cdb008fc06450f253c34be80280d53d4203d59d340d2fe4bbe4863bc813"
+    },
+    {
+      "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+      "sha256Lf": "998c6b77da4ba7474550630eef4eb9da70e9871c54a2f6ce47974b90f238556f"
+    },
+    {
+      "file": "workers-ts/test/bargain-pickup-postgres.test.ts",
+      "sha256Lf": "ad6a85d2c2f4323eb6601e00e45d03815a7b8fe0d3bfa4b2d1551a3c76e99204"
+    },
+    {
+      "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+      "sha256Lf": "3200491bf2c3567863f23095d5c6aaf479f80ee150bb7ec0c033cff18e4adfee"
+    },
+    {
+      "file": "workers-ts/test/helpers/bargainSelectionFixture.ts",
+      "sha256Lf": "4e97b7e1e98e1b31fabadfa889be6d2eadbd163920477cddd939aa33afc7ede6"
+    }
+  ],
+  "rawDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "reports": [
+    {
+      "file": "bargain-pickup-red.json",
+      "sha256": "08a81bf355c55321546b5e7180d918baa629ada01bde1cb36a47d1d4980ae88a",
+      "success": false,
+      "total": 14,
+      "passed": 2,
+      "failed": 12,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+          "status": "failed",
+          "total": 14,
+          "failed": [
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects authoritative store_func_status disabled despite enabled stale KV",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:21:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects authoritative store_self_mention disabled despite enabled stale KV",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:21:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects unavailable pickup store already during quote {\"isStore\":0}",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:25:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects unavailable pickup store already during quote {\"isShow\":0}",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:25:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects unavailable pickup store already during quote {\"isDel\":1}",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:25:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects foreign or malformed source owner {\"type\":1,\"relationId\":2}",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:29:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects foreign or malformed source owner {\"type\":0,\"relationId\":99}",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:29:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects foreign or malformed source owner {\"type\":2,\"relationId\":0}",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:29:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rejects foreign or malformed source owner {\"type\":7,\"relationId\":0}",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 1000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:29:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rechecks config changed after the real pricing path and leaves no partial order",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'pickup_admission', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:38:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission rechecks owner changed after the real pricing path and leaves no partial order",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'pickup_admission', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:38:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "bargain pickup authoritative quote and creation admission revalidates global pickup settings through actual HTTP confirmation and recomputation",
+              "errorExcerpt": "AssertionError: expected 200 not to be 200 // Object.is equality\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-pickup-admission.test.ts:50:107\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            }
+          ],
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-pickup-regression.json",
+      "sha256": "0b52c07eba598ed29a2faac8b5539784fe2e5b92d69fd525cfc10c5c6ff2052d",
+      "success": false,
+      "total": 696,
+      "passed": 693,
+      "failed": 3,
+      "pending": 0,
+      "files": 47,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-admin-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-form.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-retirement.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-save.test.ts",
+          "status": "passed",
+          "total": 52,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping.test.ts",
+          "status": "passed",
+          "total": 28,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-form.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-participation-migration.test.ts",
+          "status": "passed",
+          "total": 34,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-help-admission.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-help-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-inventory-compensation.test.ts",
+          "status": "passed",
+          "total": 13,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-order-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 23,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-order-participation.test.ts",
+          "status": "failed",
+          "total": 54,
+          "failed": [
+            {
+              "name": "actual bargain create/cancel on isolated SQL (no payment/provider) creates with UTC-stored activity dates in a UTC SQL session",
+              "errorExcerpt": "Error: Failed query: SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY\nparams: \n    at PostgresJsPreparedQuery.queryWithCache (file:///C:/cinagroup/cinashop/workers-ts/node_modules/drizzle-orm/pg-core/session.js:41:15)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at C:/cinagroup/cinashop/workers-ts/src/services/activity/BargainPickupPolicy.ts:72:5\n    at scope (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:260:18)\n    at assertBargainPickupQuote (C:/cinagroup/cinashop/workers-ts/src/services/activity/BargainPickupPolicy.ts:71:3)\n    at StoreOrderCreateService.createWithRuntime (C:/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts:1407:43)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-order-participation.test.ts:226:7\n    at scope (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:260:18)\n    at sql.begin (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:243:14)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-order-participation.test.ts:224:5"
+            },
+            {
+              "name": "actual bargain create/cancel on isolated SQL (no payment/provider) creates with UTC-stored activity dates in a Asia/Shanghai SQL session",
+              "errorExcerpt": "Error: Failed query: SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY\nparams: \n    at PostgresJsPreparedQuery.queryWithCache (file:///C:/cinagroup/cinashop/workers-ts/node_modules/drizzle-orm/pg-core/session.js:41:15)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at C:/cinagroup/cinashop/workers-ts/src/services/activity/BargainPickupPolicy.ts:72:5\n    at scope (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:260:18)\n    at assertBargainPickupQuote (C:/cinagroup/cinashop/workers-ts/src/services/activity/BargainPickupPolicy.ts:71:3)\n    at StoreOrderCreateService.createWithRuntime (C:/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts:1407:43)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-order-participation.test.ts:226:7\n    at scope (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:260:18)\n    at sql.begin (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:243:14)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-order-participation.test.ts:224:5"
+            },
+            {
+              "name": "actual bargain create/cancel on isolated SQL (no payment/provider) creates with UTC-stored activity dates in a America/New_York SQL session",
+              "errorExcerpt": "Error: Failed query: SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY\nparams: \n    at PostgresJsPreparedQuery.queryWithCache (file:///C:/cinagroup/cinashop/workers-ts/node_modules/drizzle-orm/pg-core/session.js:41:15)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at C:/cinagroup/cinashop/workers-ts/src/services/activity/BargainPickupPolicy.ts:72:5\n    at scope (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:260:18)\n    at assertBargainPickupQuote (C:/cinagroup/cinashop/workers-ts/src/services/activity/BargainPickupPolicy.ts:71:3)\n    at StoreOrderCreateService.createWithRuntime (C:/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts:1407:43)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-order-participation.test.ts:226:7\n    at scope (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:260:18)\n    at sql.begin (file:///C:/cinagroup/cinashop/workers-ts/node_modules/postgres/src/index.js:243:14)\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-order-participation.test.ts:224:5"
+            }
+          ],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-participation-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-participation-state.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-postgres.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-selection-catalog.test.ts",
+          "status": "passed",
+          "total": 29,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-contract.test.ts",
+          "status": "passed",
+          "total": 25,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-user-help-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/legacy-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/manual-virtual-product.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/order-reward.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/ordinary-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/orm-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-bargain-purchase.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form.test.ts",
+          "status": "passed",
+          "total": 36,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote-postgres.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/store-order-create-postgres-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/uniapp-checkout-contract.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/uniapp-checkout-postgres.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": [],
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-pickup-regression-final.json",
+      "sha256": "451da74fc9fa397c3e123487fd636616e55fd0ae5a746b11a2dc2627f6e04e68",
+      "success": false,
+      "total": 703,
+      "passed": 702,
+      "failed": 1,
+      "pending": 0,
+      "files": 47,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-admin-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-form.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-retirement.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-save.test.ts",
+          "status": "passed",
+          "total": 52,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping.test.ts",
+          "status": "passed",
+          "total": 28,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-form.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-participation-migration.test.ts",
+          "status": "failed",
+          "total": 34,
+          "failed": [
+            {
+              "name": "0149 durable bargain cart binding schema upgrades the exact historical external cart table DDL",
+              "errorExcerpt": "Error: STACK_TRACE_ERROR\n    at task (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1784:27)\n    at Object.<anonymous> (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1817:16)\n    at Object.<anonymous> (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1563:28)\n    at Object.chain (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:599:14)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:7\n    at Array.forEach (<anonymous>)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2021:10\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-cart-participation-migration.test.ts:173:45\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:40\n    at runWithSuite (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2258:8)"
+            }
+          ],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-help-admission.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-help-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-inventory-compensation.test.ts",
+          "status": "passed",
+          "total": 13,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-order-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 23,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-order-participation.test.ts",
+          "status": "passed",
+          "total": 54,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-participation-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-participation-state.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-postgres.test.ts",
+          "status": "passed",
+          "total": 14,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-selection-catalog.test.ts",
+          "status": "passed",
+          "total": 29,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-contract.test.ts",
+          "status": "passed",
+          "total": 25,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-user-help-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/legacy-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/manual-virtual-product.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/order-reward.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/ordinary-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/orm-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-bargain-purchase.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form.test.ts",
+          "status": "passed",
+          "total": 36,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote-postgres.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-quote.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/store-order-create-postgres-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/uniapp-checkout-contract.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/uniapp-checkout-postgres.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": [],
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-pickup-offline-final2.json",
+      "sha256": "154c51476b730aa71662710fa7bd8c42d81cad9cd1e9202cfdc236b02d444792",
+      "success": true,
+      "total": 65,
+      "passed": 65,
+      "failed": 0,
+      "pending": 0,
+      "files": 2,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": [],
+          "pending": 0
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": [],
+          "pending": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-pickup-migration-recheck.json",
+      "sha256": "de59cdde2e0ac21a15d974d194b40f791f912d1b5d3837e90524c7743f15ff80",
+      "success": true,
+      "total": 34,
+      "passed": 34,
+      "failed": 0,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/bargain-cart-participation-migration.test.ts",
+          "status": "passed",
+          "total": 34,
+          "failed": [],
+          "pending": 0
+        }
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "file": "bargain-pickup-typecheck.log",
+      "sha256": "eb1f0173173494e318202c73c312e1b980eb3342ba5fcbf7005f0d005faaaada"
+    },
+    {
+      "file": "bargain-pickup-typecheck-final3.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "bargain-pickup-cleanup-invalid.log",
+      "sha256": "7eac26e9dae6d3c36c7a94a14378db0a0ccc82034280b19cd11b2e760b96c953"
+    }
+  ],
+  "limitations": [
+    "No production SQL/DDL/deploy/provider/payment/real-role/browser validation this turn",
+    "Config table SHARE blocks ALL config writes until commit; config/store admission locks are NOWAIT; statement/lock/idle timeouts are not a total transaction deadline",
+    "Source ownership/type/visibility is checked atomically at inventory UPDATE, preserving SKU-before-product ordering",
+    "Same-city fulfillment, template lifecycle/content races, global lock protocol and A3i price policy remain open"
+  ],
+  "cleanup": {
+    "databases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "publicTables": 0,
+    "fixtureSchemas": 0,
+    "otherClients": 0,
+    "version": "160015",
+    "postgresPid": 332,
+    "stopped": true,
+    "stoppedAtUtc": "2026-09-09 05:45:29.382 UTC",
+    "portsAbsent": [
+      55432
+    ],
+    "artifactsRetained": true,
+    "manualDatabaseDeletion": {
+      "name": "cinashop_kefu_runner_bdd95244ae504b918b6b58c01aaa8e8f",
+      "owner": "finance_test",
+      "clientsBefore": 0,
+      "datconnlimitBefore": -2,
+      "recoverable": false,
+      "syntheticOnly": true
+    }
+  },
+  "validationSummary": {
+    "newAdmissionTests": 24,
+    "newIndependentPostgresTests": 14,
+    "workerTypes": [
+      "unit",
+      "runtime"
+    ],
+    "finalBroad": {
+      "files": 47,
+      "passed": 702,
+      "failed": 1,
+      "total": 703,
+      "explanation": "Unchanged historical external-cart migration test timed out at 30s; contemporaneous PG log proves DROP DATABASE statement timeout during a 279.599s checkpoint. Preserved, not claimed green."
+    },
+    "isolatedRecheck": {
+      "files": 1,
+      "passed": 34,
+      "total": 34,
+      "timeoutUnchanged": true
+    },
+    "offline": {
+      "files": 2,
+      "passed": 65,
+      "total": 65
+    }
+  },
+  "firstFailures": [
+    "Old implementation: 12/14 new SQL admission tests failed",
+    "Initial typecheck: unused systemConfig test import",
+    "Intermediate 696-case regression: 3 nested-transaction timezone tests failed with 25001; replaced quote RR transaction mode change with a single coherent SELECT; this intermediate run spans edits and is not final immutable-input evidence",
+    "Final 703-case regression: one historical migration test timed out; cleanup blocked during checkpoint; unchanged 34-case file passed in isolation after cleanup"
+  ]
+}

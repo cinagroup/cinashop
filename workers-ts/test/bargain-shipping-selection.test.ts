@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { orderCheckShipping } from '../src/controllers/api/v1/OrderController';
-import { storeBargain, storeCart, storeProduct, systemStore } from '../src/models/schema';
+import { storeBargain, storeCart, storeProduct, systemStore, systemConfig } from '../src/models/schema';
 import { createBargainSelectionFixture } from './helpers/bargainSelectionFixture';
 import { readBargainShippingSelection } from '../src/services/activity/BargainShippingSelection';
 import { normalizeBargainShipping } from '../../view/common/bargainShipping';
@@ -36,7 +36,7 @@ describe('bargain owned checkout shipping selector',()=>{
   expect(parsed.stores).toHaveLength(shippingTypes.includes(2 as never)?1:0);expect(await state()).toEqual(before);
  });
  it.each(['store_func_status','store_self_mention'])('removes pickup when global flag %s is off without enabling delivery for pickup-only activity',async key=>{
-  await f.db.update(storeBargain).set({deliveryType:'2'});f.config[key]='0';expect(await read()).toMatchObject({methods:[],shippingTypes:[],stores:[],type:0});
+  await f.db.update(storeBargain).set({deliveryType:'2'});await f.db.update(systemConfig).set({value:'0'}).where(eq(systemConfig.menuName,key));expect(await read()).toMatchObject({methods:[],shippingTypes:[],stores:[],type:0});
  });
  it.each([{isStore:0},{isDel:1},{isShow:0}])('does not expose unusable pickup stores %j',async patch=>{
   await f.db.update(systemStore).set(patch);expect((await read()).shippingTypes).toEqual([1]);expect((await read()).stores).toEqual([]);

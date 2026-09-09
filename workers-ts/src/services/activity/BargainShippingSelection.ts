@@ -1,19 +1,19 @@
 import { and, asc, eq, gt, inArray, sql } from 'drizzle-orm';
 import { withTx, type Container } from '@/lib/di';
 import { storeBargain, storeCart, storeProduct, systemStore } from '@/models/schema';
-import { SystemConfigService, type SystemConfigEnv } from '@/services/system/SystemConfigService';
+import type { SystemConfigEnv } from '@/services/system/SystemConfigService';
+import { readBargainPickupEnabled } from './BargainPickupPolicy';
 import { ValidateException } from '@/utils/errors';
 
 /** Advisory UI selection, not an order reservation. The checkout/create path
  * must still validate its current rules. No locks or remote I/O inside the
- * bounded, read-only SQL snapshot; KV config is read before entering it.
+ * bounded, read-only SQL snapshot, including the authoritative SQL settings.
  */
-export async function readBargainShippingSelection(container: Container, env: SystemConfigEnv, uid: number, cartIds: number[]) {
+export async function readBargainShippingSelection(container: Container, _env: SystemConfigEnv, uid: number, cartIds: number[]) {
   if (!Number.isSafeInteger(uid) || uid <= 0 || !Array.isArray(cartIds) || !cartIds.length || cartIds.length > 200 ||
       cartIds.some(id => !Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) || new Set(cartIds).size !== cartIds.length) {
     throw new ValidateException('砍价配送购物车参数无效');
   }
-  const config = await new SystemConfigService(container, env).getMany(['store_func_status', 'store_self_mention']);
   return withTx(container, async tx => {
     await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
     await tx.execute(sql.raw(`SELECT
@@ -40,7 +40,7 @@ export async function readBargainShippingSelection(container: Container, env: Sy
     if (!nonLogistics && source.deliveryType && !/^[123](?:,[123])*$/.test(source.deliveryType)) throw new ValidateException('砍价配送配置无效');
     let methods = nonLogistics ? [1] : source.deliveryType ? [...new Set(source.deliveryType.split(',').map(Number))] : [1,2,3];
     if (source.productType === 4) methods = methods.filter(method => method === 2);
-    const pickupEnabled = config.store_func_status !== '0' && config.store_self_mention !== '0';
+    const pickupEnabled = methods.includes(2) && await readBargainPickupEnabled(tx);
     const stores = methods.includes(2) && pickupEnabled ? await tx.select({ id: systemStore.id, name: systemStore.name,
       introduction: systemStore.introduction, phone: systemStore.phone, address: systemStore.address,
       detailed_address: systemStore.detailedAddress, image: systemStore.image, latitude: systemStore.latitude,

@@ -5,16 +5,17 @@ import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
 import { bargainDetail } from "../../src/controllers/api/v1/UserActivityController";
 import { startBargain, myBargains, cancelBargain } from "../../src/controllers/api/v1/ActivityJoinController";
 import { cartAdd, cartList, orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderController";
-import { storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, storeProductAttrValue, storeProductDescription, storeCart, user } from "../../src/models/schema";
+import { storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, storeProductAttrValue, storeProductDescription, storeCart, systemConfig, user } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
 
 /** Owned SQL fixture using the existing PGlite / dedicated loopback PG16 guard.
  * Auth and KV are isolated substitutes. No order-create/payment route is mounted.
  */
 export async function createBargainSelectionFixture(extraTables: PgTable[] = []) {
-  const f = await createPcCheckoutQuoteFixture([storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, storeProductDescription, ...extraTables]);
+  const f = await createPcCheckoutQuoteFixture([storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, storeProductDescription, systemConfig, ...extraTables]);
   try {
     for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.db.insert(systemConfig).values([{menuName:'store_func_status',value:'1'}, {menuName:'store_self_mention',value:'1'}]);
     await f.db.delete(storeCart);
     await f.db.insert(storeProductAttr).values([
       { productId: 70, type: 0, attrName: '颜色', attrValues: '红色,蓝色' },

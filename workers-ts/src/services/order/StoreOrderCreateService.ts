@@ -106,6 +106,7 @@ import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGua
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
 import { cartBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { assertBargainShippingMethod, assertBargainShippingQuote, type BargainShippingQuote } from "@/services/activity/BargainShippingPolicy";
+import { assertBargainPickup, assertBargainPickupQuote, boundBargainPickupTransaction } from "@/services/activity/BargainPickupPolicy";
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -1403,6 +1404,7 @@ export class StoreOrderCreateService {
     }
     const orderProductType = productTypes.size === 1 ? [...productTypes][0] : 0;
     assertProductCheckoutShippingType(orderProductType, shippingType);
+    if (type === 2 && shippingType === 2) await assertBargainPickupQuote(c, orderItems[0].product, pickupStoreId);
     if (
       type === 4 && shippingType === 1 && ![1, 2, 3].includes(orderProductType) &&
       (!params.realName?.trim() || !params.userPhone?.trim() || !params.userAddress?.trim())
@@ -1678,6 +1680,7 @@ export class StoreOrderCreateService {
 
     // 5. 事务 (ACID): 订单 + 库存 + 快照 + 积分
     const orderRow = await withTx(c, async (tx) => {
+      if (type === 2 && shippingType === 2) await boundBargainPickupTransaction(tx);
       // 同一用户/幂等键必须在事务内串行化并复查。仅依赖唯一索引会把
       // 并发重试暴露为数据库异常，而不是返回第一次创建的订单。
       await tx.execute(sql`
@@ -1699,6 +1702,7 @@ export class StoreOrderCreateService {
       if (type === 2) {
         await lockBargainInventory(tx, bargainActivityId);
         await assertBargainShippingQuote(tx, bargainActivityId, bargainShippingQuote, orderProductType, shippingType);
+        if (shippingType === 2) await assertBargainPickup(tx, orderItems[0].product, pickupStoreId, true);
       }
 
       // Lock parent -> child -> sorted slots before the other business locks. Time is rechecked
@@ -2335,10 +2339,15 @@ export class StoreOrderCreateService {
             sales: sql`sales + ${cart.cartNum}`,
           })
           .where(and(eq(storeProduct.id, product.id), sql`stock >= ${cart.cartNum}`,
+            type === 2 && shippingType === 2 ? and(
+              eq(storeProduct.type, product.type), eq(storeProduct.relationId, product.relationId),
+              eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
+            ) : undefined,
             type === 1 ? seckillProductQuoteGuard(product) : undefined))
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
-          throw new ValidateException(type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);
+          throw new ValidateException(type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
+            : type === 2 && shippingType === 2 ? "砍价自提商品归属已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);
         }
 
         // 5c. 订单商品快照
