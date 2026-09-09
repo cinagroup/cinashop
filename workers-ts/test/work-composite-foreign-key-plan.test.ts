@@ -66,7 +66,14 @@ describe("all twelve six-column callback references with existing narrow indexes
     const api = await import("drizzle-kit/api");
     generated = (await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join("\n");
   }, 120000);
-  afterEach(async () => { await fixture?.close(); fixture = undefined; });
+  afterEach(async () => {
+    const owned = fixture;
+    fixture = undefined;
+    // Physical DROP DATABASE can wait on storage/checkpoints. Keep the
+    // driver's 30s statement limit and two bounded connection drains intact;
+    // a late cleanup must never clear the next fixture's reference.
+    await owned?.close();
+  }, 45_000);
   it.each(targets)("validates full predicates and actual parent protections for $name", async target => {
     fixture = await sequenceRunnerDatabase();
     const { db, exec, query } = fixture;

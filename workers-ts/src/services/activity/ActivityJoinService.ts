@@ -587,14 +587,19 @@ export class ActivityJoinService {
         .limit(1)
         .for("key share");
       const bargain = bargainRows[0];
-      const nowMs = Date.now();
-      if (
-        !bargain || bargain.status !== 1 || bargain.isDel !== 0
-        || (bargain.startTime && bargain.startTime.getTime() > nowMs)
-        || (bargain.stopTime && bargain.stopTime.getTime() < nowMs)
-      ) {
-        throw new ValidateException("砍价活动已结束");
-      }
+      if (!bargain) throw new ValidateException("砍价活动已结束");
+      // Read the database wall clock AFTER the lock wait, not application time
+      // or transaction-start NOW(). KEY SHARE must remain compatible with the
+      // checkout activity lock; a fresh statement also observes schedule edits.
+      const assertActivityOpen = async () => {
+        const [open] = await tx.select({ id: storeBargain.id }).from(storeBargain).where(and(
+          eq(storeBargain.id, record.bargainId), eq(storeBargain.status, 1), eq(storeBargain.isDel, 0),
+          sql`(${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= (clock_timestamp() AT TIME ZONE 'UTC'))`,
+          sql`(${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= (clock_timestamp() AT TIME ZONE 'UTC'))`,
+        )).limit(1);
+        if (!open) throw new ValidateException("砍价活动已结束");
+      };
+      await assertActivityOpen();
 
       const priorHelp = await tx
         .select({ id: storeBargainUserHelp.id })
@@ -645,7 +650,7 @@ export class ActivityJoinService {
         percent: randomBargainPercent(),
       });
       const newAlreadyCutCents = alreadyCutCents + cutCents;
-      const now = Math.floor(nowMs / 1000);
+      const now = Math.floor(Date.now() / 1000);
 
       await tx.insert(storeBargainUserHelp).values({
         uid,
@@ -663,6 +668,9 @@ export class ActivityJoinService {
           status: newAlreadyCutCents >= maximumCutCents ? 3 : 1,
         })
         .where(eq(storeBargainUser.id, bargainUserId));
+      // Counts and writes can cross the deadline too. Reject within the same
+      // transaction so neither the help detail nor participation cut survives.
+      await assertActivityOpen();
       return { price: centsToDecimal(cutCents) };
     });
   }

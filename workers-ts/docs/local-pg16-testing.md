@@ -47,6 +47,20 @@ npm run audit:orm
 
 第一条是砍价范围，不是全仓库。第二条比较九条完整建库/升级路径及独立表元数据夹具，包含原始目录、升级/回滚和清理门禁。全仓库测试可另执行 `npm run test:unit`；不得把过滤测试或跳过项算成全量通过。测试 JSON 可用 Vitest `--reporter=json --outputFile.json=<绝对临时路径>` 保存。
 
+### 完整 Worker unit 分片
+
+本机共享一个临时集群时，两片顺序执行，各用有限并行度；不要同时启动两轮物理建库测试。以下仅调整本机资源预算，不修改 CI 或业务事务超时：
+
+```powershell
+npm run test:unit -- --shard=1/2 --maxWorkers=2 --silent=passed-only --reporter=default --reporter=json --outputFile.json=C:/path/to/reports/unit-shard1.json
+# 上一进程终态退出后，再执行第二片。
+npm run test:unit -- --shard=2/2 --maxWorkers=2 --silent=passed-only --reporter=default --reporter=json --outputFile.json=C:/path/to/reports/unit-shard2.json
+```
+
+用 `scripts/audit-unit-shards.mjs` 导出的 `inspectUnitPartition()` 和 `verifyExecutedShard(partition, index, parsedReport)` 核验实际 JSON：两片必须覆盖配置内全部文件且互斥，每个文件和断言都通过，无 skip/todo。该模块 CLI 的固定文件名是 CI 防线，不为本机报告放宽。保留首轮失败报告；减少并行度后通过不等于已证明首轮等待失败的根因，也不证明高并发性能或 Linux/workerd 通过。
+
+设置专用 URL 不会把所有 unit 用例转换成 PG16：纯单元、显式离线 PGlite 和网络禁止的打包夹具仍按各自定义执行。真实 PostgreSQL 多连接结论只适用于核验专用实例及独立后端的用例。
+
 ## 清理核验与停止
 
 测试结束后检查控制库 `public` 无业务表、`finance_test_*` schema 为零；`pg_database` 应仅剩 `postgres/template0/template1/cinashop_finance_test`。如有残留，先查明准确所有权、活动连接和失败原因，不用通配删除或 `DROP DATABASE ... FORCE` 掩盖清理失败。

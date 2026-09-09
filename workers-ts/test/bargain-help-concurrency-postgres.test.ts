@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { eq, sql } from 'drizzle-orm';
 import { createBargainSelectionFixture } from './helpers/bargainSelectionFixture';
 import { withFinancePeers, waitForFinanceBlock, waitForFinanceClock, outcome } from './helpers/financePeers';
 import { createContainerFromDb } from '../src/lib/di';
@@ -16,7 +16,47 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('bargain independ
     for (const id of [80,81]) await f.db.update(storeBargainUser).set({ price: '0.00', status: 1 }).where(eq(storeBargainUser.id, id));
     await f.db.insert(storeBargainUser).values({ id: 84, uid: 22, bargainId: 40, bargainPrice: '10.00', bargainPriceMin: '2.00', price: '0.00', status: 1 });
   }, 30_000);
-  afterEach(async () => { await f?.close(); });
+  afterEach(async () => { vi.restoreAllMocks(); await f?.close(); });
+
+  it.each(['expired', 'not started'] as const)('uses database admission when the application clock disguises an activity as open (%s)', async state => {
+    const [clock] = await f.db.select({ ms: sql<number>`floor(extract(epoch from clock_timestamp()) * 1000)::float8` })
+      .from(sql`(values (1)) as probe(n)`);
+    await f.db.update(storeBargain).set(state === 'expired'
+      ? { stopTime: new Date(clock.ms - 10_000) }
+      : { startTime: new Date(clock.ms + 10_000) });
+    const before = await f.snapshot();
+    vi.spyOn(Date, 'now').mockReturnValue(clock.ms + (state === 'expired' ? -60_000 : 60_000));
+    await expect(new ActivityJoinService(f.container).helpBargain(11, 81)).rejects.toMatchObject({
+      name: 'ValidateException', code: 400, message: '砍价活动已结束',
+    });
+    expect(await f.snapshot()).toEqual(before);
+  });
+
+  it.each(['store_bargain_user_help', 'store_bargain_user'] as const)('rolls back both writes when the database deadline crosses during %s mutation', async table => {
+    // A local-only trigger deterministically crosses the deadline inside the
+    // actual transaction. No sleeps, service doubles or production mutations.
+    await f.exec(`CREATE FUNCTION expire_help_activity() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN UPDATE store_bargain SET stop_time=(clock_timestamp() AT TIME ZONE 'UTC') - interval '1 second' WHERE id=40;
+      RETURN NEW; END $$;
+      CREATE TRIGGER expire_help_activity AFTER ${table === 'store_bargain_user_help' ? 'INSERT' : 'UPDATE'} ON ${table}
+      FOR EACH ROW EXECUTE FUNCTION expire_help_activity()`);
+    const before = await f.snapshot();
+    await expect(new ActivityJoinService(f.container).helpBargain(11, 81)).rejects.toMatchObject({
+      name: 'ValidateException', code: 400, message: '砍价活动已结束',
+    });
+    // nextval is intentionally nontransactional; all business state must roll back.
+    expect({ ...await f.snapshot(), sequences: undefined }).toEqual({ ...before, sequences: undefined });
+  });
+
+  it.each([-1, 1])('allows an activity still open in PostgreSQL despite application clock skew (%s)', async direction => {
+    const appNow = Date.now();
+    await f.exec("SET TIME ZONE 'Asia/Shanghai'");
+    vi.spyOn(Date, 'now').mockReturnValue(appNow + direction * 7_200_000);
+    await expect(new ActivityJoinService(f.container).helpBargain(11, 81)).resolves.toEqual({ price: '8.00' });
+    const state = await f.snapshot();
+    expect(state.helps).toHaveLength(1);
+    expect(state.participations.find(row => row.id === 81)).toMatchObject({ price: '8.00', status: 3 });
+  });
 
   it.each([1,2])('one helper across two records serializes and observes the committed count at limit %s', async limit => {
     await f.db.update(storeBargain).set({ bargainNum: limit });

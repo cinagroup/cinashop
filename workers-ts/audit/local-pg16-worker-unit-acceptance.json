@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "cfb443f2668a1f7f0e5c9de1c516536e17ef0edd",
+  "sourceDelta": "One production service change: database-clock admission and post-write rollback guard for bargain help. Test registration, exact refusal assertions, bounded owned-fixture cleanup and source-line evidence updated. Pricing, schema, dependencies and CI unchanged.",
+  "scope": "Complete local Worker unit inventory, not Linux/workerd, frontend, production or high-concurrency performance acceptance.",
+  "environment": {
+    "platform": "Windows x64",
+    "node": "24.14.1",
+    "postgresServerVersionNum": 160015,
+    "timezone": "UTC",
+    "listener": "127.0.0.1:55432",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "initialMaxWorkers": 4,
+    "finalMaxWorkers": 2,
+    "shardsRunSequentially": true,
+    "systemServiceInstalled": false,
+    "globalPathOrUserEnvironmentChanged": false,
+    "engineBoundary": "Dedicated-URL and peer cases use PG16; pure unit and explicit offline PGlite/network-denied fixtures retain their own engines."
+  },
+  "changedExecutableInputs": [
+    {
+      "file": "src/services/activity/ActivityJoinService.ts",
+      "sha256": "885680950826a4b237fd7d347462f8e1b7d483de0b9fa7320835e15d91932727"
+    },
+    {
+      "file": "test/bargain-help-concurrency-postgres.test.ts",
+      "sha256": "aaefabf6a7788cd70a382106eeb6bece7ae5ab1ae58f2cccd285fa45c47a620d"
+    },
+    {
+      "file": "test/kefu-sequence-registration.test.ts",
+      "sha256": "2476e7b888bd08ea855ee3368a17036fe829e3ae2554fd29a9d0d1168e5e3bac"
+    },
+    {
+      "file": "test/seckill-concurrency-postgres.test.ts",
+      "sha256": "c0f5238f8f8bfcb9c64ab019bb09b17e14a2a2a589e7755082e1c80f54d1c32d"
+    },
+    {
+      "file": "test/work-composite-foreign-key-plan.test.ts",
+      "sha256": "b42d57d99bab5ed56440fe4f78e0116ca58ce717d9e05bd12884f00a171a0bd7"
+    },
+    {
+      "file": "audit/orm-ordinary-index-reconciliation.json",
+      "sha256": "6d178e3d1c4d18773150cbe36e826523f7cdffdb3a6c0b9e250b915b5b2b4be5"
+    }
+  ],
+  "inputHashNormalization": "UTF-8 with CRLF converted to LF",
+  "initialRuns": [
+    {
+      "shard": 1,
+      "files": 157,
+      "passed": 1404,
+      "failed": 7,
+      "skipped": 0,
+      "durationSeconds": 393.25
+    },
+    {
+      "shard": 2,
+      "files": 157,
+      "passed": 1274,
+      "failed": 4,
+      "skipped": 0,
+      "durationSeconds": 242.46
+    }
+  ],
+  "initialFailureClasses": {
+    "outdatedMigrationRegistration": 4,
+    "seckillBusinessErrorAssertion": 1,
+    "fixtureCleanupHookTimeout": 1,
+    "helpAllowedAfterDatabaseDeadline": 1,
+    "participationLockTimeout": 1,
+    "orderClockWaitTimeout": 3
+  },
+  "controlledRegression": {
+    "beforeFix": {
+      "passed": 6,
+      "failed": 4,
+      "skipped": 0
+    },
+    "confirmedDefects": [
+      "Application clock skew admits expired/not-started activity",
+      "Deadline crossing during either write does not roll back help and participation"
+    ],
+    "afterFixTargeted": {
+      "files": 6,
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 295.29
+    },
+    "finalHelpFile": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "additionalCases": "Two positive database-open/application-skew cases in Asia/Shanghai SQL session were added after the 89-case targeted run and are included in the final complete run."
+  },
+  "finalRun": {
+    "files": 314,
+    "passed": 2698,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "shardDurationsSeconds": [
+      560.55,
+      349.21
+    ],
+    "shards": [
+      {
+        "shard": 1,
+        "shardCount": 2,
+        "inventoryFiles": 314,
+        "inventorySha256": "1a85648368eea8192c9f450eb1bc07b043be1bede81d3e5d44e1d6c09fc1bbb5",
+        "executedFiles": 157,
+        "executedFileSha256": "72673d0fe1e2de204fad1bba3cef5555663798eb8945dfeb47254dc33fde4e2d",
+        "passedTests": 1414,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      },
+      {
+        "shard": 2,
+        "shardCount": 2,
+        "inventoryFiles": 314,
+        "inventorySha256": "1a85648368eea8192c9f450eb1bc07b043be1bede81d3e5d44e1d6c09fc1bbb5",
+        "executedFiles": 157,
+        "executedFileSha256": "c5823310f9e64a9735d88c56057062477be9629b6d3d98d45ccbe6d178c4157b",
+        "passedTests": 1284,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      }
+    ],
+    "verifier": "Unmodified inspectUnitPartition and verifyExecutedShard exports from scripts/audit-unit-shards.mjs; CI CLI restrictions unchanged.",
+    "unitAndRuntimeTypecheckPassed": true
+  },
+  "unresolvedTimingRootCause": "The initial participation 55P03 and three order clock-wait failures were not reproduced in the targeted or final two-worker runs. No business timeout or expiry assertion was relaxed. The original clock/scheduling cause remains unproven.",
+  "staticAudit": {
+    "phpTables": 201,
+    "targetTables": 263,
+    "fullyMappedSourceTables": 201,
+    "missingSourceColumns": 0,
+    "phpRoutes": 1904,
+    "workerRoutes": 1650,
+    "matchedRoutes": 881,
+    "executableMatchedRoutes": 863,
+    "unavailableRoutes": 18,
+    "rawMissingRoutes": 1023,
+    "retiredRoutes": 17,
+    "actionableMissingRoutes": 1006
+  },
+  "cleanup": {
+    "automaticCleanupNotUniversallyClaimed": true,
+    "oldResidualDatabase": "cinashop_kefu_runner_ea5824d5c03147af8f2693a359440036",
+    "residualCreatedUtc": "2026-09-09T00:24:53Z",
+    "residualOwner": "finance_test",
+    "residualEvidence": "Initial-run database directory creation time; 263 tables; only populated tables were work_callback_event (100005), work_group_chat_current (100003), work_group_chat_projection_fence (100003); no nonfixture callback events; zero clients. Consistent with late old hook clearing the next fixture reference.",
+    "manualExactDropConfirmed": true,
+    "usedForceOrWildcardDrop": false,
+    "finalDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "fixtureSchemas": 0,
+    "controlPublicTables": 0,
+    "otherClients": 0,
+    "serverStopped": true,
+    "originalPidAbsent": true,
+    "listenerAbsent": true,
+    "retained": "Stopped cluster, binaries and reports retained. Removed synthetic database is reproducible from the fixture."
+  },
+  "retainedReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "reports": [
+    {
+      "file": "full-unit-shard1-initial.json",
+      "sha256": "f450dffe3666215c8db3caaa6c36d951f5d65c60fb2f1adb83cf57fd10b73dd9"
+    },
+    {
+      "file": "full-unit-shard2-initial.json",
+      "sha256": "7bb7c9f8634395420f63c83759102a920a9aebb18cbbe357a675549b2691a166"
+    },
+    {
+      "file": "help-clock-red.json",
+      "sha256": "64935a08de40fe3a98b0531bcaab2e959b41f656e74ef56ee3028f2b1519ac41"
+    },
+    {
+      "file": "full-unit-repair-targeted.json",
+      "sha256": "8b89e2dc3514b93ac5876838718e639987545f199abe4251eecbfb7ca38a5c74"
+    },
+    {
+      "file": "full-unit-shard1-final.json",
+      "sha256": "9cc447da37bf7f345f30dbc31ec04b0e0ea82881f9c85311a6ba6ea067560b32"
+    },
+    {
+      "file": "full-unit-shard2-final.json",
+      "sha256": "3461e4fd2ad6f5a9fe1e9ccaf690f02c3913dbfe39da50f9a2b2b289de99978b"
+    },
+    {
+      "file": "help-clock-typecheck-final.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "full-route-audit.json",
+      "sha256": "9793758d3cf9df04110b7d4323f0d5d5c740c378e9a2db9c505aaddf1e3dba93"
+    },
+    {
+      "file": "full-source-schema-audit.json",
+      "sha256": "0e99617d9c6e2938fbfde00cff301e80e33c55837a604a14caee4829f89789a8"
+    }
+  ],
+  "boundaries": {
+    "productionSql": false,
+    "hyperdriveAccess": false,
+    "deployment": false,
+    "browserOrProviderAction": false,
+    "oldPhpHistoricalDataMigration": "not applicable",
+    "pricingPolicy": "pending explicit choice; unchanged",
+    "checklist": {
+      "checked": 221,
+      "open": 161,
+      "total": 382
+    },
+    "ciAcceptance": false
+  }
+}

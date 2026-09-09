@@ -284,7 +284,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
       await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
       await waitForFinanceClock(f.db, deadline + 1);
       await blocker.exec("COMMIT");
-      expect(await pending).toMatchObject({ ok: false, error: { message: expect.stringMatching(/秒杀已结束|秒杀库存不足/) } });
+      const result = await pending;
+      expect(result).toMatchObject({ ok: false, error: { name: "ValidateException", code: 400 } });
+      if (result.ok) throw new Error("Expired cart operation unexpectedly succeeded");
+      // The application-clock check or the final database-clock CAS may refuse
+      // first. Require the exact expiry guards for this operation, not any error
+      // (in particular a lock timeout must not count as expiry verification).
+      expect(target === "quantity"
+        ? ["秒杀已结束", "秒杀时段已结束或购物车已下单"]
+        : ["秒杀已结束", "秒杀库存不足、排期或计价规则已变化，请刷新后重试"])
+        .toContain(result.error.message);
     });
     expect(await snapshot()).toEqual(before);
   }, 15_000);
