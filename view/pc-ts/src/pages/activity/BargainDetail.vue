@@ -7,9 +7,16 @@
     <el-button v-if="!prepared && !pendingStart" :disabled="loading || busy" @click="load()">刷新规格与资格</el-button>
     <el-button v-if="!authenticated" :disabled="busy || loading" @click="login">登录查看本人资格</el-button>
     <section v-if="detail" class="selection" aria-label="砍价活动规格">
-      <ProductImage class="product-image" :src="selectedSku?.image || detail.image" :alt="detail.title" fit="contain" />
+      <div class="product-gallery">
+        <ProductImage class="product-image" :src="galleryImage || selectedSku?.image || detail.image" :alt="detail.title" fit="contain" />
+        <div v-if="detail.content?.images.length" class="gallery-thumbs" aria-label="活动轮播图">
+          <button v-for="(image,index) in detail.content.images" :key="index" :aria-label="`查看活动图片 ${index+1}`" :aria-pressed="galleryImage === image" @click="galleryImage=image"><ProductImage :src="image" :alt="`活动图片 ${index+1}`" /></button>
+        </div>
+      </div>
       <div class="selection-info">
         <h3>{{ detail.title }}</h3>
+        <p v-if="detail.content?.info">{{ detail.content.info }}</p>
+        <p v-if="detail.content?.unit_name">商品单位：{{ detail.content.unit_name }}</p>
         <p>{{ open ? '活动进行中' : '活动未开始或已结束，请刷新确认' }}</p>
         <p>活动起价 ¥{{ detail.activity_price }} · 活动底价 ¥{{ detail.minimum_price }}</p>
         <p>北京时间：{{ formatDate(detail.start_time) }} 至 {{ formatDate(detail.stop_time) }}</p>
@@ -34,10 +41,12 @@
         <el-button type="danger" :loading="busy" :disabled="!canBuy" @click="buy">{{ prepared ? '继续结算' : '用本条参与购买' }}</el-button>
       </div>
     </section>
+    <section v-if="safeDescription" class="activity-description" aria-label="活动描述"><h3>活动描述</h3><div v-html="safeDescription" /></section>
   </div>
 </template>
 <script setup lang="ts">
 import ProductImage from "@/components/ProductImage.vue";
+import { sanitizeArticleRichText } from '../../../../common/articleRichText';
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiBargainSelection, apiBargainStart } from '@/api/activity';
@@ -46,6 +55,8 @@ import { captureAuthSession, isCurrentAuthSession, onAuthChange } from '@/utils/
 import { bargainId, bargainOpen, bargainCartInput, bargainCheckoutQuery, type BargainSelection, type BargainParticipation } from '../../../../common/bargainPurchase';
 const route = useRoute(), router = useRouter();
 const detail = shallowRef<BargainSelection | null>(null), selected = ref(''), quantity = ref<number | string>(1);
+const galleryImage=ref('');
+const safeDescription=computed(()=>sanitizeArticleRichText(detail.value?.content?.description ?? ''));
 const loading = ref(false), busy = ref(false), error = ref(''), clock = ref(Date.now()), authenticated = ref(!!captureAuthSession().token);
 const prepared = shallowRef<{ cartId: number; participantId: number } | null>(null), pendingStart = ref(0);
 let revision = 0, disposed = false, savingPath: string | null = null, timer: ReturnType<typeof setInterval> | undefined;
@@ -57,12 +68,12 @@ const stateLabel = (state: BargainParticipation['state']) => ({ cutting: '砍价
 function formatDate(value: string | null) { return value ? new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value)) : '未设期限'; }
 function choose(key: string) {
   if (busy.value || loading.value || prepared.value || pendingStart.value || !detail.value?.skus.some(s => s.unique === key && s.max_quantity > 0)) return;
-  selected.value = key; quantity.value = 1; error.value = '';
+  selected.value = key; quantity.value = 1; error.value = ''; galleryImage.value='';
 }
 async function load(restore = false) {
   if (disposed || (prepared.value || pendingStart.value) && !restore) return;
   const current = ++revision, path = route.fullPath, session = captureAuthSession();
-  detail.value = null; selected.value = ''; quantity.value = 1; prepared.value = null; pendingStart.value = 0;
+  detail.value = null; selected.value = ''; quantity.value = 1; prepared.value = null; pendingStart.value = 0; galleryImage.value='';
   error.value = ''; loading.value = true; authenticated.value = !!session.token;
   try {
     const id = bargainId(route.params.id), requested = route.query.bargainUserId === undefined ? 0 : bargainId(route.query.bargainUserId);
@@ -139,11 +150,14 @@ onUnmounted(() => { disposed = true; revision++; unbind(); if (timer) clearInter
 <style scoped>
 .bargain-detail { padding-top: 20px; padding-bottom: 32px; } h2 { margin: 16px 0; }
 .selection { display: flex; gap: 28px; padding: 24px; margin-top: 20px; background: white; border-radius: 8px; }
-.product-image { width: 40%; max-width: 400px; aspect-ratio: 1; align-self: flex-start; }
+.product-gallery { width:40%;max-width:400px;align-self:flex-start;min-width:0; }
+.product-image { width:100%;aspect-ratio:1; }
+.gallery-thumbs { display:flex;gap:8px;flex-wrap:wrap;margin-top:12px; }.gallery-thumbs button { width:64px;height:64px;background:white;border:1px solid #ddd;padding:2px; }.gallery-thumbs .product-image {width:100%;height:100%;}
+.activity-description {padding:24px;background:white;margin-top:20px;overflow-wrap:anywhere;overflow-x:auto;}.activity-description :deep(img) {max-width:100%;height:auto;}.activity-description :deep(table) {max-width:100%;table-layout:fixed;}.activity-description :deep(pre) {white-space:pre-wrap;}
 .selection-info { flex: 1; min-width: 0; overflow-wrap: anywhere; } p { margin: 12px 0; line-height: 1.6; }
 fieldset { border: 1px solid #ddd; padding: 12px; margin-top: 16px; }
 .sku { background: white; border: 1px solid #aaa; padding: 10px; margin: 4px; border-radius: 4px; cursor: pointer; }
 .sku[aria-pressed='true'] { border: 2px solid #b32421; color: #b32421; } button:disabled { opacity: .55; cursor: not-allowed; }
 input { width: 80px; padding: 8px; margin-left: 8px; } .catalog-price { font-size: 22px; color: #b32421; }
-@media (max-width: 680px) { .selection { flex-direction: column; padding: 12px; } .product-image { width: 100%; max-width: 100%; } }
+@media (max-width: 680px) { .selection { flex-direction: column; padding: 12px; } .product-gallery { width: 100%; max-width: 100%; } }
 </style>

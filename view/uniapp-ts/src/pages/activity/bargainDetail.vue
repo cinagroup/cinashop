@@ -22,9 +22,14 @@
       </view>
     </view>
     <view v-else-if="detail" class="product">
-      <image class="goods-img" :src="selectedSku?.image || detail.image || placeholder" mode="aspectFit" />
+      <image v-if="selectedSku || !detail.content?.images.length" class="goods-img" :src="selectedSku?.image || detail.image || placeholder" mode="aspectFit" />
+      <swiper v-else class="gallery" indicator-dots :autoplay="false">
+        <swiper-item v-for="(image,index) in detail.content?.images" :key="index"><image class="goods-img" :src="image" mode="aspectFit" /></swiper-item>
+      </swiper>
       <view class="info-section">
         <view class="heading">{{ detail.title }}</view>
+        <view v-if="detail.content?.info" class="notice">{{ detail.content.info }}</view>
+        <view v-if="detail.content?.unit_name" class="notice">商品单位：{{ detail.content.unit_name }}</view>
         <view class="notice">{{ open ? '活动进行中' : '活动未开始或已结束' }} · 起价 ¥{{ detail.activity_price }} · 活动底价 ¥{{ detail.minimum_price }}</view>
         <view v-if="detail.participation" class="participation">
           <view class="heading">记录 #{{ detail.participation.id }} · {{ stateText(detail.participation.state) }}</view>
@@ -46,6 +51,7 @@
         <view class="notice">仅砍至底价且仍有效的本人记录可购买。目录不锁库存，金额与资格以服务端结算复核为准。</view>
         <button v-if="canStart" :disabled="locked" @tap="startBargain">发起砍价</button>
         <button v-if="canHelp" :disabled="locked" @tap="helpSelf">帮自己砍一刀</button>
+        <view v-if="safeDescription" class="activity-description"><view class="heading">活动描述</view><rich-text :nodes="safeDescription" /></view>
       </view>
     </view>
     <view v-if="!mine" class="action-bar"><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '购买所选砍价规格' }}</button></view>
@@ -55,8 +61,11 @@
 
 <script setup lang="ts">
 import { useBargainPurchase } from '@/composables/useBargainPurchase';
+import { computed } from 'vue';
+import { sanitizeArticleRichText } from '@/utils/articleRichText';
 const { mine, records, page, loggedIn, detail, selected, quantity, selectedSku, loading, buying, navigating, error, prepared,
   open, locked, canBuy, canStart, canHelp, choose, load, login, goMine, chooseRecord, purchase, startBargain, helpSelf } = useBargainPurchase();
+const safeDescription=computed(()=>sanitizeArticleRichText(detail.value?.content?.description ?? ''));
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 function statusText(status: number) { return ({ 1: '砍价中', 2: '已关闭', 3: '待复核资格', 4: '已使用' } as Record<number, string>)[status] || '未知'; }
 function stateText(state: string) { return ({ cutting: '砍价中', ready: '可购买', closed: '已关闭', used: '已使用' } as Record<string, string>)[state] || '未知'; }
@@ -73,6 +82,7 @@ function setQuantity(event: unknown) {
 .product, .record { margin-top: 24rpx; background: white; border-radius: 16rpx; overflow: hidden; }
 .record, .info-section { padding: 24rpx; }
 .goods-img { width: 100%; height: 440rpx; background: #f5f5f5; }
+.gallery {height:440rpx;}.activity-description {overflow-wrap:anywhere;overflow-x:auto;margin-top:24rpx;}
 .notice { margin: 18rpx 0; font-size: 25rpx; color: #666; line-height: 1.6; }
 .error { padding: 20rpx; color: #a72823; background: #fff0ed; margin-bottom: 20rpx; }
 .price { color: #b72a1d; margin: 24rpx 0; font-size: 34rpx; }

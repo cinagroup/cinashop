@@ -9,6 +9,7 @@ export interface BargainSelection {
   selection_only: true; type: 2; bargain_id: number; product_id: number; title: string; image: string; activity_price: string;
   minimum_price: string; people: number; start_time: string | null; stop_time: string | null; date_window: 'future' | 'active' | 'ended';
   can_select: boolean; participation: BargainParticipation | null; skus: BargainSku[];
+  content?: {info:string;unit_name:string;images:string[];description:string};
 }
 export interface BargainItem { id: number; title: string; image: string; price: string; minimum: string }
 export interface MyBargain { id: number; activityId: number; title: string; image: string; status: number; current: string; minimum: string; cut: string; progress: number; ready: boolean; amountsValid: boolean }
@@ -86,7 +87,14 @@ export function parseBargainSelection(value: unknown, expectedId: number, reques
   if (!['future', 'active', 'ended'].includes(state) || start_time && stop_time && Date.parse(start_time) > Date.parse(stop_time)) return invalid();
   const can_select = flag(row.can_select);
   if (can_select !== (state === 'active' && participation?.state === 'ready' && skus.some(s => s.max_quantity > 0))) return invalid();
+  let content: BargainSelection['content'];
+  if(row.content !== undefined){
+    const c=object(row.content),info=text(c.info),unit_name=text(c.unit_name),description=text(c.description);
+    if(info.length>255||unit_name.length>16||description.length>200_000)return invalid();
+    content={info,unit_name,description,images:array(c.images,8).map(seckillImage).filter(Boolean)};
+  }
   return { selection_only: true, type: 2, bargain_id: expectedId, product_id: int(row.product_id, 1), title: text(row.title), image: seckillImage(row.image),
+    ...(content ? {content} : {}),
     activity_price, minimum_price, people: int(row.people, 1), start_time, stop_time, date_window: state as BargainSelection['date_window'], participation, skus, can_select };
 }
 export function bargainOpen(detail: BargainSelection, now = Date.now()): boolean {

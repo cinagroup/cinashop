@@ -320,7 +320,7 @@
       ],
       "queryEvidence": {
         "source": "src/services/activity/ActivityService.ts",
-        "sourceLine": 736,
+        "sourceLine": 738,
         "purpose": "Active integral activity filter",
         "sourceSql": "        })\n        .where(\n          and(\n            eq(storeIntegral.id, integralId),\n            eq(storeIntegral.status, 1),\n            eq(storeIntegral.isShow, 1),\n            eq(storeIntegral.isDel, 0),"
       },

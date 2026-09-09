@@ -4,6 +4,7 @@ import { storeBargain } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
 import { lockBargainProductPolicy } from "./BargainProductPolicy";
 import { parseBargainSku, saveBargainSku } from "./BargainAdminSkuService";
+import { alignBargainCover, parseBargainContent, saveBargainDescription } from "./BargainContentService";
 
 type Patch = Partial<typeof storeBargain.$inferInsert>;
 const MAX_INT = 2_147_483_647;
@@ -89,7 +90,8 @@ async function limits(tx: DbClient): Promise<void> {
  */
 export async function saveBargain(container: Container, body: Record<string, unknown>): Promise<number> {
   const id = own(body, "id") ? integer(body.id, "活动ID", 1) : undefined;
-  const patch = parse(body);
+  const content = parseBargainContent(body);
+  const patch = { ...parse(body), ...content.fields };
   const sku = parseBargainSku(body.sku);
   let expected: { stock: number; quota: number } | undefined;
   if (own(body, "expected")) {
@@ -105,6 +107,7 @@ export async function saveBargain(container: Container, body: Record<string, unk
     await limits(tx);
     const current = id ? (await tx.select().from(storeBargain).where(eq(storeBargain.id, id)).limit(1).for("no key update"))[0] : undefined;
     if (id && (!current || current.isDel !== 0)) throw new ValidateException("砍价活动不存在或已删除");
+    alignBargainCover(patch,current?.images ?? '');
     if (current && patch.productId !== undefined && patch.productId !== current.productId) {
       throw new ValidateException("已有砍价活动不能更换原商品，请新建活动");
     }
@@ -141,6 +144,7 @@ export async function saveBargain(container: Container, body: Record<string, unk
       if (sku) await saveBargainSku(tx, current.id, merged.productId!, sku,
         { stock: merged.stock!, quota: merged.quota!, price: merged.price!,
           stockProvided: patch.stock !== undefined, quotaProvided: patch.quota !== undefined }, false);
+      await saveBargainDescription(tx, current.id, content.description);
       const [saved] = await tx.select({ start: storeBargain.startTime, stop: storeBargain.stopTime }).from(storeBargain)
         .where(eq(storeBargain.id, current.id)).limit(1);
       await assertWindow(tx, saved?.start, saved?.stop, current.stopTime);
@@ -150,6 +154,7 @@ export async function saveBargain(container: Container, body: Record<string, unk
       sales: 0, addTime: sql`floor(extract(epoch from clock_timestamp()))::int` }).returning({ id: storeBargain.id });
     await saveBargainSku(tx, created.id, merged.productId!, sku!,
       { stock: merged.stock!, quota: merged.quota!, price: merged.price! }, true);
+    await saveBargainDescription(tx, created.id, content.description);
     const [saved] = await tx.select({ start: storeBargain.startTime, stop: storeBargain.stopTime }).from(storeBargain)
       .where(eq(storeBargain.id, created.id)).limit(1);
     await assertWindow(tx, saved?.start, saved?.stop);

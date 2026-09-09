@@ -4,6 +4,7 @@ import { storeBargain, storeProduct, storeProductAttrValue } from "@/models/sche
 import { findBargainParticipation } from "./BargainParticipationSelection";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { centsToDecimal } from "@/services/order/OrderBrokerageService";
+import { readBargainContent, renderBargainContent } from './BargainContentService';
 
 const MAX_SKUS = 500;
 function id(value: unknown, label: string): number {
@@ -37,7 +38,7 @@ function validDate(value: Date | null): boolean { return value === null || Numbe
  * Existing raw detail, help, start, quote and purchase contracts are unchanged.
  */
 export class BargainSkuCatalogService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
 
   async read(uid: number, rawId: unknown, rawParticipationId?: unknown, now = new Date()) {
     const bargainId = id(rawId, "砍价活动");
@@ -51,7 +52,7 @@ export class BargainSkuCatalogService {
       await tx.execute(sql.raw(`SELECT
         pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
         pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
-      return new BargainSkuCatalogService(createContainerFromDb(tx)).snapshot(uid, bargainId, participationId, now);
+      return new BargainSkuCatalogService(createContainerFromDb(tx),this.appKey).snapshot(uid, bargainId, participationId, now);
     });
   }
 
@@ -60,6 +61,7 @@ export class BargainSkuCatalogService {
     if (uid > 0 && (!current || current.status !== 1)) throw new ValidateException("请重新登录");
     const [entry] = await this.container.db.select({
       productId: storeBargain.productId, title: storeBargain.title, storeName: storeBargain.storeName,
+      info: storeBargain.info, unitName: storeBargain.unitName, images: storeBargain.images,
       image: storeBargain.image, stock: storeBargain.stock, quota: storeBargain.quota,
       price: storeBargain.price, minimum: storeBargain.minPrice, people: storeBargain.people,
       startTime: storeBargain.startTime, stopTime: storeBargain.stopTime,
@@ -113,11 +115,12 @@ export class BargainSkuCatalogService {
     });
     const dateWindow = entry.startTime && entry.startTime > now ? "future" as const
       : entry.stopTime && entry.stopTime < now ? "ended" as const : "active" as const;
+    const content = await renderBargainContent(await readBargainContent(this.container.db,bargainId,entry),this.appKey);
     return { selection_only: true as const, type: 2 as const, bargain_id: bargainId, product_id: entry.productId,
-      title: entry.title || entry.storeName, image: imageUrl(entry.image) || imageUrl(entry.productImage),
+      title: entry.title || entry.storeName, image: content.images[0] || imageUrl(entry.image) || imageUrl(entry.productImage),
       activity_price: entry.price, minimum_price: entry.minimum, people: entry.people,
       start_time: entry.startTime?.toISOString() ?? null, stop_time: entry.stopTime?.toISOString() ?? null,
-      date_window: dateWindow, participation, skus,
+      date_window: dateWindow, participation, skus, content,
       can_select: dateWindow === "active" && participation?.state === "ready" && skus.some(sku => sku.max_quantity > 0) };
   }
 

@@ -36,6 +36,7 @@ import {
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
+import { renderPublishedArticleMediaReferences } from '@/services/content/ArticleContentPolicy';
 import { readSeckillScheduleSlots, seckillDayStart, seckillScheduleView, seckillSlotMinutes } from "./SeckillScheduleService";
 
 function normalizeListPage(pageValue: unknown, limitValue: unknown): { page: number; limit: number } {
@@ -352,7 +353,8 @@ export class ActivityService {
   async bargainList(pageValue?: unknown, limitValue?: unknown) {
     const { page, limit } = normalizeListPage(pageValue, limitValue);
     const rows = await this.container.storeBargainDao.list(page, limit);
-    return rows.map((item) => ({
+    const images = await renderPublishedArticleMediaReferences(this.env?.APP_KEY,rows.map(item=>item.image));
+    return rows.map((item,index) => ({
       id: item.id,
       type: item.type,
       relation_id: item.relationId,
@@ -361,7 +363,7 @@ export class ActivityService {
       price: Number(item.price),
       min_price: Number(item.minPrice),
       ot_price: Number(item.price),
-      image: item.image,
+      image: images[index] ?? '',
       title: item.title || item.storeName,
       info: item.info,
       sales: item.sales,

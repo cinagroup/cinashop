@@ -87,9 +87,17 @@
         <el-form-item label="活动名称" required>
           <el-input v-model="form.storeName" placeholder="如: 夏季促销商品" />
         </el-form-item>
-        <el-form-item label="图片URL">
+        <el-form-item label="图片URL" v-if="formType !== 'bargain'">
           <el-input v-model="form.image" placeholder="商品图 URL" />
         </el-form-item>
+        <template v-if="formType === 'bargain'">
+          <p v-if="!contentReady" class="time-hint">正在等待活动内容加载；可点击“加载商品规格”重试。</p>
+          <el-form-item label="展示标题"><el-input v-model="content.title" :disabled="!contentReady" maxlength="255" placeholder="留空使用活动名称" /></el-form-item>
+          <el-form-item label="活动简介"><el-input v-model="content.info" :disabled="!contentReady" maxlength="255" /></el-form-item>
+          <el-form-item label="商品单位"><el-input v-model="content.unitName" :disabled="!contentReady" maxlength="16" placeholder="如：件、盒" /></el-form-item>
+          <el-form-item label="轮播图URL"><el-input v-model="content.imageLines" :disabled="!contentReady" type="textarea" :rows="3" placeholder="每行一张，最多8张；首张为主图。HTTPS或站内绝对路径。" /></el-form-item>
+          <el-form-item label="活动描述HTML"><el-input v-model="content.description" :disabled="!contentReady" type="textarea" :rows="4" maxlength="16000" placeholder="支持段落、列表、表格和图片；脚本及事件属性会被移除。" /></el-form-item>
+        </template>
         <el-form-item label="活动价" required>
           <el-input v-model="form.price" placeholder="如: 49.90" />
         </el-form-item>
@@ -236,6 +244,7 @@ import { ElMessageBox } from "element-plus";
 import DiscountPackageManager from "@/pages/activity/DiscountPackageManager.vue";
 import { bargainEditPayload, bargainFormDate } from "@/api/bargainEdit";
 import { withBargainSku } from "@/api/bargainSkuEdit";
+import { contentForm, withBargainContent, type BargainContentForm } from '@/api/bargainContentEdit';
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
@@ -261,6 +270,8 @@ const skuLoading = ref(false);
 const selectedBaseUnique = ref('');
 let originalBaseUnique = '';
 let skuRequest = 0;
+const content = reactive(contentForm()), contentReady = ref(false);
+let originalContent: BargainContentForm | null = null;
 const form = reactive({
   id: 0,
   productId: 1,
@@ -359,6 +370,7 @@ async function toggleStatus(row: ActivityItem) {
 }
 
 function openForm(row?: ActivityItem) {
+  Object.assign(content,contentForm()); contentReady.value = !row; originalContent = null;
   skuRequest++;
   skuOptions.value = null;
   skuLoading.value = false;
@@ -416,6 +428,9 @@ async function loadBargainSkus() {
     const result = await apiAdminBargainSkuOptions(productId, activityId || undefined);
     if (requestId !== skuRequest || form.productId !== productId || form.id !== activityId || !formVisible.value) return;
     skuOptions.value = result;
+    if (activityId && !contentReady.value && result.content) {
+      Object.assign(content,contentForm(result.content)); originalContent = {...content}; contentReady.value = true;
+    }
     const matching = result.current.length === 1 ? result.options.find(row => row.suk === result.current[0].suk) : undefined;
     originalBaseUnique = matching?.unique ?? '';
     selectedBaseUnique.value = originalBaseUnique;
@@ -435,8 +450,8 @@ async function save() {
   saving.value = true;
   formError.value = "";
   try {
-    await apiAdminActivitySave(formType.value === "bargain" ? withBargainSku(bargainEditPayload(form, bargainOriginal),
-      skuOptions.value, selectedBaseUnique.value, originalBaseUnique, form.productId) : {
+    await apiAdminActivitySave(formType.value === "bargain" ? withBargainContent(withBargainSku(bargainEditPayload(form, bargainOriginal),
+      skuOptions.value, selectedBaseUnique.value, originalBaseUnique, form.productId),content,originalContent,contentReady.value) : {
       type: formType.value,
       id: form.id || undefined,
       productId: form.productId,

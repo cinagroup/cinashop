@@ -1,0 +1,717 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "58c425ea899ef08e896b11465bcea78bdfedae7a",
+  "scope": "A3k5 local admin-to-PC/UniApp bargain content candidate, not a completed full editor or production release.",
+  "environment": {
+    "platform": "Windows x64",
+    "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "sqlTimezone": "UTC",
+    "finalMaxWorkers": 1,
+    "fixtureBoundary": "Owned random SQL schemas; actual columns/defaults/NOT NULL/PK, not all production FK/CHECK/unique constraints. Authentication/KV substitutes.",
+    "productionAccess": false,
+    "deployment": false,
+    "ddlChanged": false,
+    "pricingFormulaChanged": false,
+    "systemServiceInstalled": false,
+    "userEnvironmentChanged": false
+  },
+  "contract": {
+    "phpSource": "app/services/activity/bargain/StoreBargainServices.php:176-212: first gallery cover, JSON images, same-transaction type=2 description.",
+    "content": "Title 255, info 255, unitName 16, up to 8 unique HTTPS/root-relative images with bounded JSON, description <=16000 chars, existing HTTP body bound 64KiB.",
+    "write": "Existing activity/SKU transaction and locks extended to type=2 description; omitted fields preserved, explicit empty values clear, legacy image-only edit preserves gallery tail. Final original-deadline check after content write.",
+    "read": "Authenticated editor read in one read-only repeatable-read snapshot; public view=skus response adds content and signs durable R2 references, private no-store. No remote R2 downloads tested.",
+    "frontend": "Admin deliberate-difference payload; unread fields disabled. PC gallery and UniApp swiper/rich-text. Existing client article allowlist moved unchanged to common with backward-compatible re-export.",
+    "limitations": "Not complete raw PHP detail/attrs/items compatibility; script tag bodies may remain inert text, not arbitrary HTML style preservation or a complete security scan."
+  },
+  "inputHashNormalization": "UTF-8 with CRLF converted to LF; paths relative to repository root",
+  "changedExecutableInputs": [
+    {
+      "file": "view/admin-ts/src/api/bargainSkuEdit.ts",
+      "sha256": "096480dd02d2e4f80739e908a929249aef635ad7846cfd0200394de617006e42"
+    },
+    {
+      "file": "view/admin-ts/src/pages/activity/ActivityList.vue",
+      "sha256": "1558e31244197f43077d142e932e77b028d7e2a03601e74cdd5755d0c468da16"
+    },
+    {
+      "file": "view/common/bargainPurchase.ts",
+      "sha256": "7d3d715d57df2ae16746c35541d7560bcd26026baadf81886e9c975666eaed80"
+    },
+    {
+      "file": "view/pc-ts/src/pages/activity/BargainDetail.vue",
+      "sha256": "64cb4dfed3868758bb08d3d13c3e87b235cdd2639a2cce7ec4a26d7979863b9f"
+    },
+    {
+      "file": "view/uniapp-ts/src/pages/activity/bargainDetail.vue",
+      "sha256": "1c49f00058b5cfa39b144198e6e0730a4d9ff27a789825c3b4428a8701bd4499"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/articleRichText.ts",
+      "sha256": "88fca0145179f259414d169ae067ed2eda748f95b58fc73f0ee01ce4b8c21b04"
+    },
+    {
+      "file": "workers-ts/audit/orm-ordinary-index-reconciliation.json",
+      "sha256": "9b6849ec45d9b6d9b3d524ca20dd4d7a7a5124505d3a05ab5fd1d38a4dba4095"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/UserActivityController.ts",
+      "sha256": "4a48d3aaf9d76a88d52ce3679d98b2050265198e2905905e8c4016d49fce6fdd"
+    },
+    {
+      "file": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "c3a9a78e87d7527e6a174b875837d62cf87d595e958fe35c2b14da6c5660b902"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainAdminService.ts",
+      "sha256": "9b3e0fa91ef2e0305b6cafb0104582bb719cba6ca8c00101b9321a8022c1e61c"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainAdminSkuService.ts",
+      "sha256": "a07dadcda6a233575b3bf92e404235cd57ce640b65b6ac24f029479ca403aefa"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainSkuCatalogService.ts",
+      "sha256": "fddb02b8cf65facd12b979ed223edf4c69f93e8943b28bb8bc6f4a705107338d"
+    },
+    {
+      "file": "workers-ts/test/helpers/bargainSelectionFixture.ts",
+      "sha256": "71c35d7ac5aff0e9e8bfabe67ac0601433d3b829007c9aa602afa5e88fe6f4c1"
+    },
+    {
+      "file": "view/admin-ts/src/api/bargainContentEdit.ts",
+      "sha256": "806684586ec895486fe893d81a6bf3a22e4d9601a262d22ceee545119484c9ad"
+    },
+    {
+      "file": "view/common/articleRichText.ts",
+      "sha256": "1ae7109b6b092aa648a691bb92bdf98297ec184199cd18d7f280e245c32b87dd"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainContentService.ts",
+      "sha256": "33f2b3be013b250c7c3b43b170d909106d2920f3f463bfc64085d9df573e40a1"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-content-postgres.test.ts",
+      "sha256": "849aad6009248393866f7330414baf1dbafb74e12465ab25a8261d0192a75bb8"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-content.test.ts",
+      "sha256": "5826112564ce9078389cec493c224b66c5e1ace24ef2216178650bd3bb1fee84"
+    }
+  ],
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "runs": [
+    {
+      "file": "bargain-content-final.json",
+      "sha256": "5c646449db26232d74608972461b6b01fe0a309661fb3e81bb8021cb43688987",
+      "files": 31,
+      "total": 470,
+      "passed": 469,
+      "failed": 1,
+      "pending": 0,
+      "success": false,
+      "results": [
+        {
+          "file": "test/bargain-cart-participation-migration.test.ts",
+          "passed": 33,
+          "failed": [
+            {
+              "name": "0149 durable bargain cart binding schema upgrades the exact historical external cart table DDL",
+              "message": "Error: STACK_TRACE_ERROR\n    at task (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1784:27)\n    at Object.<anonymous> (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1817:16)\n    at Object.<anonymous> (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1563:28)\n    at Object.chain (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-arti"
+            }
+          ],
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-content-first.json",
+      "sha256": "0470eaf10678b76c2228b63257ff25decd4cfa11ce631fa92f12df94dd76466a",
+      "files": 3,
+      "total": 53,
+      "passed": 52,
+      "failed": 1,
+      "pending": 0,
+      "success": false,
+      "results": [
+        {
+          "file": "test/bargain-admin-content.test.ts",
+          "passed": 23,
+          "failed": [
+            {
+              "name": "bargain content admin-to-consumer contract creates content and real SKU atomically and exposes it through the actual public selector and shared client parser",
+              "message": "AssertionError: expected 400 to be 200 // Object.is equality\n    at C:/cinagroup/cinashop/workers-ts/test/bargain-admin-content.test.ts:22:89\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            }
+          ],
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-content-pglite.json",
+      "sha256": "6318f7bfebabecd5e0379c95535a324ee0bd683dc29ed84af3494188a49e16f0",
+      "files": 2,
+      "total": 35,
+      "passed": 35,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": []
+    },
+    {
+      "file": "bargain-content-regression.json",
+      "sha256": "321ce8732e46062d0c35e86a79ada950ece252c68424a38bcd0bcb99b9044e9b",
+      "files": 31,
+      "total": 470,
+      "passed": 469,
+      "failed": 1,
+      "pending": 0,
+      "success": false,
+      "results": [
+        {
+          "file": "test/ordinary-query-index-alignment.test.ts",
+          "passed": 4,
+          "failed": [
+            {
+              "name": "DB-009D2b3b complete ordinary index disposition binds all remaining 22 objects and ordered columns to immutable history and real query source lines",
+              "message": "AssertionError: store_integral.sint_status: src/services/activity/ActivityService.ts:736: expected false to be true // Object.is equality\n    at C:/cinagroup/cinashop/workers-ts/test/ordinary-query-index-alignment.test.ts:33:62\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///C:/cinagroup/cinashop/workers-ts/node_module"
+            }
+          ],
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-content-serial-pg.json",
+      "sha256": "218422cc979cb418237b1cd9a5bd7324a870a553b8f0443847901e64892b7c06",
+      "files": 31,
+      "total": 470,
+      "passed": 470,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "test/bargain-admin-concurrency-postgres.test.ts",
+          "passed": 9,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-content-postgres.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-content.test.ts",
+          "passed": 24,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-dates-postgres.test.ts",
+          "passed": 8,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-dates.test.ts",
+          "passed": 18,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-form.test.ts",
+          "passed": 11,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-product-postgres.test.ts",
+          "passed": 9,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-product.test.ts",
+          "passed": 17,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-retirement.test.ts",
+          "passed": 20,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-save.test.ts",
+          "passed": 52,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-sku-form.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-sku-postgres.test.ts",
+          "passed": 7,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-sku.test.ts",
+          "passed": 18,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-cart-binding-concurrency-postgres.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-cart-binding.test.ts",
+          "passed": 17,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-cart-participation-migration.test.ts",
+          "passed": 34,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-help-admission.test.ts",
+          "passed": 12,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-help-concurrency-postgres.test.ts",
+          "passed": 12,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-inventory-compensation.test.ts",
+          "passed": 13,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-order-concurrency-postgres.test.ts",
+          "passed": 23,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-order-participation.test.ts",
+          "passed": 54,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-participation-concurrency-postgres.test.ts",
+          "passed": 7,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-participation-state.test.ts",
+          "passed": 24,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-selection-catalog.test.ts",
+          "passed": 29,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-user-help-migration.test.ts",
+          "passed": 5,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/diy-home-frontend-migration.test.ts",
+          "passed": 11,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/legacy-query-index-alignment.test.ts",
+          "passed": 4,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/ordinary-query-index-alignment.test.ts",
+          "passed": 5,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/orm-query-index-alignment.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/pc-bargain-purchase.test.ts",
+          "passed": 4,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/public-article-migration.test.ts",
+          "passed": 11,
+          "failed": [],
+          "skipped": 0
+        }
+      ]
+    }
+  ],
+  "acceptedNewTests": 27,
+  "failureNotes": [
+    "First content HTTP fixture omitted type=bargain: 52/53 passed; fixture fixed.",
+    "First related regression 469/470: stale integral query evidence line 736 corrected to exact 738, SQL/index DDL unchanged.",
+    "Second parallel related regression 469/470: historical external-cart upgrade exceeded unchanged 30s budget. Server log confirms DROP DATABASE cleanup timeout and overlapping 65.373s checkpoint; not a proven content assertion failure.",
+    "Wrong TEST_POSTGRES_URL serial invocation was interrupted before results. Only TEST_FINANCE_POSTGRES_URL serial report is valid PG evidence.",
+    "Same 31-file scope rerun at maxWorkers=1, 470/470 pass, zero skipped, 245.88 seconds. Parallel failure retained, test/SQL timeouts not increased."
+  ],
+  "commands": {
+    "regression": "TEST_FINANCE_POSTGRES_URL=dedicated_loopback_fixture npm run test:unit -- bargain public-article-migration diy-home-frontend-migration ordinary-query-index-alignment orm-query-index-alignment legacy-query-index-alignment --maxWorkers=1 --silent=passed-only --reporter=default --reporter=json",
+    "pglite": "Without TEST_FINANCE_POSTGRES_URL: npm run test:unit -- bargain-admin-content.test public-article-migration --maxWorkers=1",
+    "workerTypes": "npm run typecheck",
+    "admin": "npm run build",
+    "pc": "npm run build",
+    "uniapp": "npm run typecheck; npm run build:h5; npm run build:mp-weixin; npm run build:app; npm run test:toolchain; npm run test:build-artifacts"
+  },
+  "builds": {
+    "workerUnitAndRuntimeTypes": "passed",
+    "admin": "passed",
+    "pc": "passed",
+    "uniappTypes": "passed",
+    "uniappH5": "passed",
+    "uniappWeixin": "passed",
+    "uniappApp": "passed",
+    "uniappToolchain": {
+      "passed": 176,
+      "failed": 0,
+      "skipped": 0
+    },
+    "uniappBuildArtifacts": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "logs": [
+    {
+      "file": "bargain-content-admin-build.log",
+      "sha256": "cb1301d1b3afa2892527b0e9f128b47cc43222fecb1bf43d905e2fb0115523c8"
+    },
+    {
+      "file": "bargain-content-admin-vite.log",
+      "sha256": "89eedfe764906030727f1558dd3a9490c8b4dec530e97d883488a6b041b2295f"
+    },
+    {
+      "file": "bargain-content-artifacts.log",
+      "sha256": "95a26a3bbdeb5d06c2d53da773532ec6f6f9ccf1e07bf115362604952d704705"
+    },
+    {
+      "file": "bargain-content-browser-final.log",
+      "sha256": "14d08cf08ccf88769a7d921b99742e1c536cdb52b93f7cbc750fc9549dd6adce"
+    },
+    {
+      "file": "bargain-content-browser-first.log",
+      "sha256": "cd68b2bd41c9240292cf79e327f7de4d8c7c55f4da45d6500b5d9f6f12efe3ef"
+    },
+    {
+      "file": "bargain-content-browser-retry.log",
+      "sha256": "176b5c30e32c1ef2eeb02b96eed9725d3db072c7c9718b6abec7735957c69c06"
+    },
+    {
+      "file": "bargain-content-final.log",
+      "sha256": "6cddfc540dcd7de0a0db28c8405b01d117289b636f969064a6a6bcd2598e5f75"
+    },
+    {
+      "file": "bargain-content-first.log",
+      "sha256": "b18fe2b9faf6577cc811a1f1ecb13b5a4834cdfd582082d343059e08fd725ce9"
+    },
+    {
+      "file": "bargain-content-pc-build.log",
+      "sha256": "f1114c03db5294a2d185d8a965f0d3994623c53e0aab27a9fb32cfd94cd12fa8"
+    },
+    {
+      "file": "bargain-content-pc-vite.log",
+      "sha256": "c01eff68b8d94877fd78021b131599daad976a94d229ad6b11d0d871a47383d1"
+    },
+    {
+      "file": "bargain-content-pglite.log",
+      "sha256": "d47b22b761cf7aa49f158774d90759a7cfd833ff2bf10206ca651c8530cd27d4"
+    },
+    {
+      "file": "bargain-content-regression.log",
+      "sha256": "8a226e26535049e488c047ccbe672142ecd20e48b9927f9c6974bb99afec147b"
+    },
+    {
+      "file": "bargain-content-serial-pg.log",
+      "sha256": "07c82f951ba4a8ee726fc29c210313a15c670826d4f5bac4df0c8bcb21e701ae"
+    },
+    {
+      "file": "bargain-content-serial.log",
+      "sha256": "ad4506707bbfb0ac42bc46718961d5c25111a65f90ecefdc909e4218362ae6f5"
+    },
+    {
+      "file": "bargain-content-types-final.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "bargain-content-types.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "bargain-content-uni-app.log",
+      "sha256": "919647f7cf958dd65d576b6aee2342fde023ee15ed8da899aced8fc1b94a698b"
+    },
+    {
+      "file": "bargain-content-uni-h5.log",
+      "sha256": "59edc4969d0f51a51735d79c3a24e462ccebee0161d37a17d3256c0b8294cb55"
+    },
+    {
+      "file": "bargain-content-uni-toolchain.log",
+      "sha256": "9befeeda49817714b99078d356fbaf9c251823f3a49b178bcfcffb80ea3dc988"
+    },
+    {
+      "file": "bargain-content-uni-types.log",
+      "sha256": "9cea822dc34c22852dffebca0ac664a0262dedbbf4c9672bb4ce233f1d2ca966"
+    },
+    {
+      "file": "bargain-content-uni-vite.log",
+      "sha256": "0d0d480eed7f28eac8e326ea6f4a6955b0865b4b9c9d26ec7d6dd01a52293e71"
+    },
+    {
+      "file": "bargain-content-uni-weixin.log",
+      "sha256": "7f25680061b761555c78710f13992a54183f04c2217109872e95fb1bfc6a7155"
+    }
+  ],
+  "browser": {
+    "availability": "Browser skill entry absent in current available-skills catalog; existing Playwright/installed Chrome fallback per frontend-testing-debugging skill, no installation.",
+    "driver": "Playwright with installed Chrome, headless",
+    "auth": "trusted isolated fixture",
+    "api": "Actual local controllers and in-memory SQL; no production endpoint allowed",
+    "evidence": [
+      {
+        "surface": "admin",
+        "label": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "url": "http://127.0.0.1:5209/activity",
+        "title": "营销活动 - CinaShop 管理后台",
+        "checks": [
+          "save",
+          "reload",
+          "unsaved-content-survives-sku-refresh",
+          "sanitized-storage",
+          "no-overlay"
+        ],
+        "errors": [],
+        "warnings": [],
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-content-admin-desktop.png"
+      },
+      {
+        "surface": "admin",
+        "label": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "url": "http://127.0.0.1:5209/activity",
+        "title": "营销活动 - CinaShop 管理后台",
+        "checks": [
+          "save",
+          "reload",
+          "unsaved-content-survives-sku-refresh",
+          "sanitized-storage",
+          "no-overlay"
+        ],
+        "errors": [],
+        "warnings": [],
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-content-admin-mobile.png"
+      },
+      {
+        "surface": "pc",
+        "label": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "url": "http://127.0.0.1:5210/bargain/40",
+        "title": "CinaShop 内容隔离验收",
+        "checks": [
+          "identity",
+          "not-blank",
+          "content-from-admin",
+          "gallery-switch",
+          "sku-switch",
+          "sanitized-render",
+          "no-overflow",
+          "no-overlay"
+        ],
+        "errors": [],
+        "warnings": [],
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-content-pc-desktop.png"
+      },
+      {
+        "surface": "pc",
+        "label": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "url": "http://127.0.0.1:5210/bargain/40",
+        "title": "CinaShop 内容隔离验收",
+        "checks": [
+          "identity",
+          "not-blank",
+          "content-from-admin",
+          "gallery-switch",
+          "sku-switch",
+          "sanitized-render",
+          "no-overflow",
+          "no-overlay"
+        ],
+        "errors": [],
+        "warnings": [],
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-content-pc-mobile.png"
+      },
+      {
+        "surface": "uni-h5",
+        "label": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "url": "http://127.0.0.1:5211/#/pages/activity/bargainDetail?id=40",
+        "title": "砍价详情",
+        "checks": [
+          "identity",
+          "not-blank",
+          "content-from-admin",
+          "two-gallery-slides",
+          "swipe-second-indicator",
+          "sanitized-rich-text",
+          "no-overflow",
+          "no-overlay"
+        ],
+        "errors": [],
+        "warnings": [
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+        ],
+        "warningExplanation": "UniApp H5 development dependency graph emits this warning; the precise importing module has not been established. No application exception. Not changed in this content migration.",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-content-uni-mobile.png"
+      },
+      {
+        "surface": "uni-h5",
+        "label": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "url": "http://127.0.0.1:5211/#/pages/activity/bargainDetail?id=40",
+        "title": "砍价详情",
+        "checks": [
+          "identity",
+          "not-blank",
+          "content-from-admin",
+          "two-gallery-slides",
+          "swipe-second-indicator",
+          "sanitized-rich-text",
+          "no-overflow",
+          "no-overlay"
+        ],
+        "errors": [],
+        "warnings": [
+          "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly."
+        ],
+        "warningExplanation": "UniApp H5 development dependency graph emits this warning; the precise importing module has not been established. No application exception. Not changed in this content migration.",
+        "screenshot": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-content-uni-desktop.png"
+      }
+    ],
+    "orders": 0,
+    "firstAttempt": "Missing fixture-only DIY suspended endpoint produced 404; added neutral local route. Existing Vue Router deprecation kept as explicit warning, precise importing module not established.",
+    "script": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-content-browser.mjs"
+  },
+  "cleanup": {
+    "version": "160015",
+    "role": "finance_test",
+    "database": "cinashop_finance_test",
+    "timezone": "UTC",
+    "databases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "publicTables": 0,
+    "fixtureSchemas": 0,
+    "otherClients": 0,
+    "manualDatabaseDeletion": true,
+    "deletedDatabase": "cinashop_kefu_runner_0bf9769393fc4947ad57691c3f290bbf",
+    "deletedDatabaseIdentity": {
+      "owner": "finance_test",
+      "datconnlimit": -2,
+      "connections": 0
+    },
+    "recoverability": "Unusable synthetic test database permanently dropped; no historical/production data.",
+    "firstCleanupError": "Stop was requested while initial exact DROP still running; command interrupted. Restarted same owned cluster, exact DROP completed before final baseline and shutdown.",
+    "postgresPids": [
+      3036,
+      7496
+    ],
+    "qaPids": [
+      11624,
+      16964,
+      11536,
+      13308
+    ],
+    "allPidsAbsent": true,
+    "listenersAbsent": [
+      55432,
+      5208,
+      5209,
+      5210,
+      5211
+    ],
+    "stoppedAtUtc": "2026-09-09T03:46:02.429Z",
+    "retained": "Stopped cluster, binaries, raw logs and screenshots; no recursive deletion."
+  },
+  "ci": {
+    "sourceBaseRun": "https://github.com/cinagroup/cinashop/actions/runs/34305965177",
+    "sourceBaseResult": "11 jobs failed without runners/steps due to account payment/spending limit; not source validation.",
+    "newCommitRun": "Must be verified after push; no success claim in this artifact."
+  },
+  "remaining": [
+    "Full PHP attrs/items/raw-detail compatibility and visual rich-text/media-upload picker",
+    "Complete freight/delivery/copy and proven activity deliveryType fulfillment enforcement",
+    "Source rebinding/history, multi-SKU cleanup, old client main-only stock writes and global inventory/retirement concurrency",
+    "Participation pricing policy awaiting user decision, formula unchanged",
+    "Actual remote R2 downloads and existing per-SKU image signing coverage",
+    "Real roles, full browser checkout/payment, physical devices, current full Worker inventory/nine-path catalog/Linux/workerd, own CI and production release"
+  ]
+}

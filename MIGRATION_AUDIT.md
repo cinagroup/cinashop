@@ -7039,6 +7039,24 @@ PHP StoreBargainServices::saveData每次读取is_del=0/is_verify=1的原商品�
 
 最终相关24文件393项全部通过、零跳过（124.40秒），包含既有砍价下单/取消/退款/help/日期竞争与三类索引证据；新增26项为17项来源合同加9项PG专属，另外最终PGlite17项通过（27.98秒）。不继承旧全Worker库存、九路径目录、浏览器或Linux/workerd结果。最终控制库4个基线数据库、public表0、fixture schema0、其他客户端0；准确PID1716于02:34:30.367 UTC完成checkpoint并停止，pg_ctl无运行实例，PID1716/先前2232及55432/5432监听均不存在。临时集群/二进制/原始报告保留，未人工删库、安装系统服务或改用户环境。源码LF和报告摘要见`workers-ts/audit/local-pg16-bargain-admin-product-acceptance.json`；清单225勾选/162开放/387项，仅关闭A3k3本地候选，不关闭A3k整体。
 
+## 2026-09-09：砍价展示内容的后台到消费端闭环（A3k5 本地候选）
+
+起点`58c425ea899ef08e896b11465bcea78bdfedae7a`已推送；其Actions34305965177因账户付款/额度限制未启动，不能借用旧CI通过结果。本轮不连接生产PostgreSQL/Hyperdrive、不执行生产SQL/DDL、不部署、不调用支付或其他provider。旧PHP真实历史继承继续N/A。
+
+PHP `StoreBargainServices.php:176–212`读取description、首张images作为image，并在保存主活动的同一事务以type=2保存描述。目标后台此前只有主图URL，消费端专用砍价页无描述/轮播图；有数据库列不等于迁移完成。本轮接通展示标题、简介、单位、最多8张轮播图和16000字符HTML描述：认证编辑读取返回同一只读快照，主活动/SKU/type=2描述共用现有有界事务，省略内容不重写、显式空值可清空，旧image-only请求替换首图但保留后续图片。描述写入之后仍复核原截止时间；不修改参与价格公式或库存同步政策。
+
+复用现有文章发布策略规范化媒体引用和HTML；R2引用只存持久路径，在公开响应阶段签名，不保存过期签名。共享客户端HTML允许列表从UniApp移至view/common，保留原算法和UniApp兼容导出，PC与UniApp均使用；脚本标签/事件属性被去除，脚本文本可能作为普通文字保留，不宣称完整安全扫描或所有旧HTML样式无损。公开描述仅接通`view=skus`专用合同，旧raw detail兼容尚未完善。没有实测远端R2对象下载，既有SKU自身图片的全路径签名也不纳入本候选完成范围。
+
+新增24项真实SQL/HTTP与实际前端payload测试、3项独立PG16后端测试。后者以准确pg_blocking_pids验证真实描述写入持有活动边界、实际下单等待后成功及取消库存恢复、编辑期间读取旧的完整快照和提交后新快照、实际描述写后跨原截止则元数据/描述一起回滚。夹具使用随机schema、真实字段/默认值/NOT NULL/PK，未重建全部生产FK/CHECK/唯一约束；认证/KV为替身，不是生产角色验收。
+
+首次内容HTTP创建测试遗漏type导致400，修正夹具请求；首次相关回归469/470通过，唯一失败是ActivityService增行后索引证据sourceLine 736失配，准确更新为738，未变SQL或DDL。随后并行回归同为469/470通过，失败为历史external cart建库测试30秒超时；未放宽业务或测试超时，保留原始失败并以单进程重新执行相同31文件范围。一次误用TEST_POSTGRES_URL的单进程启动在结果产生前中止，不作PG验收证据；有效配置是TEST_FINANCE_POSTGRES_URL。最终结果及LF源码/原始报告摘要见`workers-ts/audit/local-pg16-bargain-admin-content-acceptance.json`。
+
+Worker unit/runtime类型、Admin/PC构建、UniApp类型与H5/Weixin/App构建通过；UniApp工具链176项和三端产物检查3项通过。浏览器技能入口在当前可用技能列表缺失，按frontend-testing-debugging技能采用已有Playwright与Chrome，本机内存SQL控制器提供隔离API；未安装或重新授权插件。实际Vue/Axios页面在1280×900、390×844共6组验证后台保存/重载、编辑中重读SKU不覆盖未保存内容、PC切图/切规格、UniApp滑动后第二指示点、描述允许列表展示及无横向溢出。浏览器订单0，PG服务下单另行验证。Admin/PC控制台error/warning均0；UniApp每组一条Vue Router dist入口弃用warning，具体导入模块未定位，不能写为零警告。首次浏览器夹具缺少DIY悬浮按钮接口的404由隔离响应补齐，未改变生产业务。
+
+最终单进程31文件470项全部通过、零失败/跳过（245.88秒）；离线PGlite2文件35项通过，不混算独立PG竞争。清理发现并行失败留下一个无效的随机测试库`cinashop_kefu_runner_0bf9769393fc4947ad57691c3f290bbf`：03:31:44 UTC服务日志明确DROP DATABASE语句超时，同期间checkpoint耗时65.373秒；后续核实属finance_test、datconnlimit=-2、连接0，不能连接。首次人工精确清理尚未结束便过早发出停服，导致清理被中断；如实保留操作错误记录。随后仅重启同一隔离集群，精确DROP成功后再核验四个基线库、public表0、fixture schema0、其他客户端0，最后正常停止。两次PG PID3036/7496和四个页面服务PID均消失，55432/5208–5211无监听。删除的是不可用合成测试库，不可恢复且不含真实业务数据；停止的集群、二进制、日志和截图保留，无递归文件删除。
+
+使用Workers最佳实践技能检查请求内资源与现有Hyperdrive绑定，PostgreSQL技能维持短事务/兼容锁，前端测试技能要求实际页面和截图验收。当前Windows/PGlite/浏览器证据不替代完整Worker库存、九路径目录复审、Linux/workerd、真机、真实认证角色或发布验收。A3k仍缺完整PHP attrs/items兼容、可视化富文本/资源上传选择、运费配送及复制、商品重绑/多规格整理和全局库存/退役并发。订单活动分支目前可见freight/postage/tempId覆盖，尚未证实活动deliveryType由履约门禁完整消费，必须独立接通并验证，不能仅加后台字段便勾选。A3i参与价格快照政策仍待用户选择。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -494,7 +494,8 @@ export async function combinationDetail(c: C) {
 }
 
 export async function bargainList(c: C) {
-  const svc = new ActivityService(c.get("container"));
+  privateNoStore(c);
+  const svc = new ActivityService(c.get("container"),c.env);
   return jsonOk(c, await svc.bargainList(c.req.query("page"), c.req.query("limit")));
 }
 
@@ -504,7 +505,7 @@ export async function bargainDetail(c: C) {
     privateNoStore(c);
     if (view !== "skus" || c.req.queries("view")?.length !== 1) throw new ValidateException("砍价详情视图无效");
     if (participationId !== undefined && c.req.queries("bargain_user_id")?.length !== 1) throw new ValidateException("砍价记录ID无效");
-    return jsonOk(c, await new BargainSkuCatalogService(c.get("container")).read(
+    return jsonOk(c, await new BargainSkuCatalogService(c.get("container"),c.env.APP_KEY).read(
       c.get("uid") ?? 0, c.req.param("id"), participationId,
     ));
   }

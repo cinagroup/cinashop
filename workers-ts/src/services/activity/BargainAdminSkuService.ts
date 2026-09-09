@@ -3,6 +3,7 @@ import { withTx, type Container, type DbClient } from "@/lib/di";
 import { storeBargain, storeProduct, storeProductAttr, storeProductAttrResult, storeProductAttrValue } from "@/models/schema";
 import { PRODUCT_SKU_IDENTITY_LOCK_KEY, PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
 import { ValidateException } from "@/utils/errors";
+import { readBargainContent } from './BargainContentService';
 
 type Sku = typeof storeProductAttrValue.$inferSelect;
 export interface BargainSkuInput {
@@ -48,17 +49,19 @@ export async function readBargainSkuOptions(container: Container, product: strin
     const [source] = await tx.select({ id: storeProduct.id }).from(storeProduct).where(and(eq(storeProduct.id, productId),
       eq(storeProduct.isDel, 0), eq(storeProduct.isVerify, 1), eq(storeProduct.isVipProduct, 0), eq(storeProduct.isPresaleProduct, 0))).limit(1);
     if (!source) throw new ValidateException("原商品不符合砍价资格");
+    let content: Awaited<ReturnType<typeof readBargainContent>> | null = null;
     if (activityId) {
-      const [row] = await tx.select({ id: storeBargain.id }).from(storeBargain).where(and(eq(storeBargain.id, activityId),
+      const [row] = await tx.select().from(storeBargain).where(and(eq(storeBargain.id, activityId),
         eq(storeBargain.productId, productId), eq(storeBargain.isDel, 0))).limit(1);
       if (!row) throw new ValidateException("砍价活动与商品不匹配");
+      content = await readBargainContent(tx,activityId,row);
     }
     const options = await tx.select(projection).from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, productId),
       eq(storeProductAttrValue.type, 0), eq(storeProductAttrValue.isRetired, 0))).orderBy(asc(storeProductAttrValue.id)).limit(501);
     const current = activityId ? await tx.select(projection).from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, activityId),
       eq(storeProductAttrValue.type, 2))).orderBy(asc(storeProductAttrValue.id)).limit(501) : [];
     if (options.length > 500 || current.length > 500) throw new ValidateException("规格超过500项，请先整理");
-    return { productId, activityId, options, current };
+    return { productId, activityId, options, current, content };
   });
 }
 
