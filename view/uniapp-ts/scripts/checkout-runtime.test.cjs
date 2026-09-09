@@ -23,6 +23,41 @@ function server(overrides = {}) {
   };
 }
 const key = 'cinashop_checkout_pending_v1_11';
+
+test('shared delivery eligibility retains physical, mixed, second-card and unknown requirements',()=>{
+  const r=runtime({send:server()});
+  try{const {checkoutRequiresAddress}=r.load(path.join(root,'../common/checkoutSelection.ts'));
+    const typed=productType=>({...item,productInfo:{...item.productInfo,productType}});
+    for(const rows of [[],[{productInfo:null}],[typed(0)],[typed(4)],[typed(99)],[typed(2),typed(0)]])assert.equal(checkoutRequiresAddress(rows),true);
+    assert.equal(checkoutRequiresAddress([typed(1),typed(2),typed(3)]),false);
+  }finally{r.stop();}
+});
+
+for (const productType of [1,2,3]) test(`ordinary non-logistics type ${productType} quotes and creates without an address`, async () => {
+  const selected = {...item,productInfo:{...item.productInfo,productType}};
+  const base = server({
+    '/api/cart/list': () => ({data:[selected]}),
+    '/api/address/list': () => ({transport:'address unavailable'}),
+    '/api/order/create/checkout_key1': () => ({data:{key:'checkout_key1',orderId:'local_virtual'}}),
+  });
+  const r=runtime({send:async call=>{
+    const result=await base(call);
+    if(call.url==='/api/order/confirm'||call.url.startsWith('/api/order/computed/')){
+      result.data.cartInfo=result.data.cartInfo.map(row=>({...row,productInfo:{...row.productInfo,productType}}));
+      result.data.addressInfo=null;
+    }
+    return result;
+  }});
+  try {await r.start();assert.equal(r.checkout.requiresAddress.value,false);assert.equal(r.checkout.ready.value,true);
+    await r.checkout.submit();const created=r.calls.find(c=>c.url.includes('/create/'));
+    assert.equal(created.data.addressId,0);assert.equal(created.data.shippingType,1);
+    assert.deepEqual(r.navigations,['/pages/order/detail?orderId=local_virtual']);
+  } finally {r.stop();}
+});
+test('ordinary physical checkout still refuses unavailable addresses before quoting',async()=>{
+  const r=runtime({send:server({'/api/address/list':()=>({transport:'address unavailable'})})});
+  try{await r.start();assert.equal(r.checkout.requiresAddress.value,true);assert.equal(r.checkout.ready.value,false);assert.equal(r.calls.some(c=>c.url==='/api/order/confirm'),false);}finally{r.stop();}
+});
 test('actual checkout gates on server quote, requotes delivery and blocks while uploading', async () => {
   const r = runtime({ send: server() }); await r.start();
   assert.equal(r.checkout.ready.value, true); assert.equal(r.checkout.quote.value.result.prices.payable, '21.00');

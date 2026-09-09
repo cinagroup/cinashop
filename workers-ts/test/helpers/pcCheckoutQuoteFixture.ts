@@ -30,8 +30,8 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = []) 
   try {
     await fixture.db.insert(user).values({ uid: 11, account: "local-qa", nickname: "本地报价测试", isEverLevel: 1, integral: 100 });
     await fixture.db.insert(userAddress).values([
-      { id: 11, uid: 11, realName: "本地地址甲", phone: "00000000000", province: "本地省", city: "测试甲市", cityId: 101, detail: "隔离样本一号", isDefault: 1 },
-      { id: 12, uid: 11, realName: "本地地址乙", phone: "00000000000", province: "本地省", city: "测试乙市", cityId: 102, detail: "隔离样本二号" },
+      { id: 11, uid: 11, realName: "本地地址甲", phone: "00000000000", province: "本地省", city: "测试甲市", district: "测试甲区", cityId: 101, detail: "隔离样本一号", isDefault: 1 },
+      { id: 12, uid: 11, realName: "本地地址乙", phone: "00000000000", province: "本地省", city: "测试乙市", district: "测试乙区", cityId: 102, detail: "隔离样本二号" },
     ]);
     await fixture.db.insert(storeProduct).values({ id: 70, storeName: "完整报价隔离样本", stock: 8, price: "10.00", isShow: 1, isVerify: 1, isVip: 1, freight: 3, tempId: 10, image: "/api/qa/image.svg" });
     await fixture.db.insert(storeProductAttrValue).values({ id: 1, productId: 70, type: 0, unique: "qared001", suk: "红色,大号", stock: 8, price: "10.00", vipPrice: "9.00", image: "/api/qa/image.svg" });
@@ -42,7 +42,13 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = []) 
       { id: 1, templateId: 10, regionId: 101, regionName: "测试甲市", first: "2.00", firstPrice: "6.00", continue: "1.00", continuePrice: "1.00" },
       { id: 2, templateId: 10, regionId: 102, regionName: "测试乙市", first: "2.00", firstPrice: "12.00", continue: "1.00", continuePrice: "1.00" },
     ]);
-    await fixture.db.insert(cityArea).values([{ id: 101, name: "测试甲市", path: "/" }, { id: 102, name: "测试乙市", path: "/" }]);
+    await fixture.db.insert(cityArea).values([
+      { id: 901, name: '本地省', path: '/', parentId: 0 },
+      { id: 902, name: '测试甲市', path: '/901/', parentId: 901 },
+      { id: 903, name: '测试乙市', path: '/901/', parentId: 901 },
+      { id: 101, name: '测试甲区', path: '/901/902/', parentId: 902 },
+      { id: 102, name: '测试乙区', path: '/901/903/', parentId: 903 },
+    ]);
     await fixture.db.insert(systemStore).values({ id: 1, name: "隔离自提门店", address: "本地测试地址", isShow: 1, isDel: 0 });
   } catch (error) { await fixture.close(); throw error; }
   const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();

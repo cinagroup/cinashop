@@ -103,6 +103,7 @@ import { cartBargainParticipation } from "@/services/activity/BargainParticipati
 import { assertBargainShippingMethod, assertBargainShippingQuote, type BargainShippingQuote } from "@/services/activity/BargainShippingPolicy";
 import { assertBargainPickup, assertBargainPickupQuote, boundBargainPickupTransaction } from "@/services/activity/BargainPickupPolicy";
 import { readShippingTemplateSnapshot, shippingTemplateIds, assertShippingTemplateBindings, assertShippingTemplateSnapshot, boundShippingTemplateTransaction, type ShippingTemplateSnapshot } from "./ShippingTemplateSnapshot";
+import { resolveDeliveryAddress, assertDeliveryAddressSnapshot, deliveryAddressText, checkoutContact, type DeliveryAddressSnapshot, type ManualDeliveryAddress } from './OrderDeliveryAddress';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -110,6 +111,11 @@ export interface CreateOrderParams {
   /** 确认订单的 key (幂等防重) */
   key: string;
   cartIds: number[];
+  /** Untrusted selection, resolved inside the core after existing-order replay. */
+  addressId?: unknown;
+  addressAlias?: unknown;
+  /** Only an authenticated assisted checkout may supply a complete manual address. */
+  manualAddress?: ManualDeliveryAddress;
   realName?: string;
   userPhone?: string;
   province?: string;
@@ -170,6 +176,7 @@ export function customerVisibleManualVirtualContent(order: {
 }
 
 export interface OrderPricingQuote {
+  deliveryAddress: DeliveryAddressSnapshot['saved'];
   /** Only returned to an explicit read-only order-coupon request. Never a reservation. */
   couponPage?: OrderCouponPage;
   rawTotalCents: number;
@@ -1401,12 +1408,18 @@ export class StoreOrderCreateService {
     const orderProductType = productTypes.size === 1 ? [...productTypes][0] : 0;
     assertProductCheckoutShippingType(orderProductType, shippingType);
     if (type === 2 && shippingType === 2) await assertBargainPickupQuote(c, orderItems[0].product, pickupStoreId);
-    if (
-      type === 4 && shippingType === 1 && ![1, 2, 3].includes(orderProductType) &&
-      (!params.realName?.trim() || !params.userPhone?.trim() || !params.userAddress?.trim())
-    ) {
-      throw new ValidateException("请填写完整的收货人、手机号和收货地址");
-    }
+    const deliveryAddress = shippingType === 1 && ![1, 2, 3].includes(orderProductType)
+      ? await resolveDeliveryAddress(c.db, { uid, addressId: params.addressId, addressAlias: params.addressAlias,
+          manual: params.manualAddress, assisted: Boolean(assisted), required: !options?.preview })
+      : null;
+    // Never mutate the caller's DTO. Saved-address fields, not client overrides,
+    // are the shared source of pricing and the persisted delivery snapshot.
+    if (shippingType === 1 && ![1, 2, 3].includes(orderProductType)) params = { ...params,
+      realName: deliveryAddress?.fields.realName, userPhone: deliveryAddress?.fields.phone,
+      province: deliveryAddress?.fields.province, cityId: deliveryAddress?.fields.cityId,
+      userAddress: deliveryAddress ? deliveryAddressText(deliveryAddress.fields) : undefined };
+    else params = { ...params, ...checkoutContact(params.realName, params.userPhone, shippingType === 2 && !options?.preview),
+      province: undefined, cityId: undefined, userAddress: undefined };
     const staffIds = new Set(
       orderItems.map(({ cart }) => cart.staffId).filter((staffId) => staffId > 0),
     );
@@ -1544,6 +1557,7 @@ export class StoreOrderCreateService {
     let actualProductCents = Math.max(0, payCents - postageCents);
     if (options?.preview) {
       return {
+        deliveryAddress: deliveryAddress?.saved ?? null,
         ...(options.couponQuery ? { couponPage: !user || preliminaryFirstOrderEligible || type !== 0
           ? { list: [], nextCursor: null }
           : await eligibleOrderCoupons(c, uid, orderItems, options.couponQuery) } : {}),
@@ -1612,7 +1626,7 @@ export class StoreOrderCreateService {
 
     // 5. 事务 (ACID): 订单 + 库存 + 快照 + 积分
     const orderRow = await withTx(c, async (tx) => {
-      if (shippingSnapshot) await boundShippingTemplateTransaction(tx);
+      if (shippingSnapshot || deliveryAddress) await boundShippingTemplateTransaction(tx);
       if (type === 2 && shippingType === 2) await boundBargainPickupTransaction(tx);
       // 同一用户/幂等键必须在事务内串行化并复查。仅依赖唯一索引会把
       // 并发重试暴露为数据库异常，而不是返回第一次创建的订单。
@@ -2437,6 +2451,7 @@ export class StoreOrderCreateService {
         if (!reserved.length) throw new ValidateException("优惠券已被其他订单占用");
       }
 
+      if (deliveryAddress) await assertDeliveryAddressSnapshot(tx, deliveryAddress);
       if (shippingSnapshot) await assertShippingTemplateSnapshot(tx, shippingSnapshot, templateIds, params.cityId);
       if (type === 2) await assertBargainCheckoutWindow(tx, bargainActivityId);
       return order;

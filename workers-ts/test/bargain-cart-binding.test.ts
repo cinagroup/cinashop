@@ -42,7 +42,7 @@ describe("durable bargain identity through real HTTP/cart/quote/create/cancel", 
   }
   const second = () => f.db.insert(storeBargainUser).values({ id: 90, uid: 11, bargainId: 40,
     bargainPrice: "10.00", bargainPriceMin: "4.00", price: "6.00", status: 3 });
-  const checkout = { type: 2, addressId: 11, shippingType: 2, storeId: 1 };
+  const checkout = { type: 2, addressId: 11, shippingType: 2, storeId: 1, realName: '隔离自提人', userPhone: '00000000000' };
   type Preview = { orderKey: string; priceGroup: { pay_price: string }; cartInfo: Array<{ bargainUserId: number; bargain_user_id: number }> };
   const confirm = (id: number, selection: object = {}) => wire<Preview>("/order/confirm", { ...checkout, cartIds: [id], ...selection });
   const create = (key: string, selection: object = {}) => wire<{ orderId: string }>(`/order/create/${key}`, { ...checkout, ...selection });

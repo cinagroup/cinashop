@@ -6,7 +6,7 @@ import { shippingTemplates,shippingTemplatesRegion,shippingTemplatesFree,shippin
 
 describe('shipping template authoritative quote and actual order',()=>{
  let f:Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
- const params:CreateOrderParams={uid:11,key:'template_quote',cartIds:[1],shippingType:1,cityId:101,province:'本地省',userAddress:'隔离地址',realName:'隔离',userPhone:'00000000000',userIp:'127.0.0.1'};
+ const params:CreateOrderParams={uid:11,key:'template_quote',cartIds:[1],shippingType:1,addressId:11,cityId:101,province:'本地省',userAddress:'隔离地址',realName:'隔离',userPhone:'00000000000',userIp:'127.0.0.1'};
  beforeEach(async()=>{f=await createPcCheckoutQuoteFixture([storeOrderCartInfo,storeOrderStatus,printDocument]);for(const key of Object.keys(f.config))f.config[key]='0';},30_000);
  afterEach(async()=>{await f?.close();});
  const quote=()=>new StoreOrderCreateService(f.container,f.env).quoteOrder(params);
@@ -31,7 +31,7 @@ describe('shipping template authoritative quote and actual order',()=>{
    if(kind==='free'){await f.db.update(shippingTemplates).set({appoint:1});return f.db.insert(shippingTemplatesFree).values({tempId:10,cityId:101,number:'1',price:'1'});}
    if(kind==='noDelivery'){await f.db.update(shippingTemplates).set({noDelivery:1});return f.db.insert(shippingTemplatesNoDelivery).values({tempId:10,cityId:101});}
    return f.db.update(cityArea).set({path:'/102/'}).where(eq(cityArea.id,101));
-  })).rejects.toThrow('配送');expect(await f.snapshot()).toEqual(before);
+  })).rejects.toThrow(kind==='city'?'收货地址区域':'配送');expect(await f.snapshot()).toEqual(before);
  });
  it('preserves zero raw/pay postage for allowed whole-order waivers',async()=>{
   f.config.whole_free_shipping='1';f.config.store_free_postage='1';expect(await quote()).toMatchObject({totalPostageCents:0,payPostageCents:0,payCents:2000});
@@ -47,7 +47,7 @@ describe('shipping template authoritative quote and actual order',()=>{
  });
  it('rejects missing template and unknown city rather than using an unprotected fallback',async()=>{
   await f.db.update(storeProduct).set({tempId:99});await expect(quote()).rejects.toThrow('模板');
-  await f.db.update(storeProduct).set({tempId:10});await f.db.delete(cityArea).where(eq(cityArea.id,101));await expect(quote()).rejects.toThrow('城市不存在');
+  await f.db.update(storeProduct).set({tempId:10});await f.db.delete(cityArea).where(eq(cityArea.id,101));await expect(quote()).rejects.toThrow('收货地址区域不存在');
  });
  it('accepts same-owner supplier templates',async()=>{
   await f.db.update(storeProduct).set({type:2,relationId:5});await f.db.update(shippingTemplates).set({ownerType:2,relationId:5});

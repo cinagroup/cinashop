@@ -9,7 +9,7 @@ import type { UserAddress, PickupStore } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import { CheckoutQuoteSession, checkoutQuoteFingerprint, type CheckoutQuoteOptions, type CheckoutQuoteState } from "../../../common/checkoutQuote";
 import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "../../../common/orderCoupons";
-import { parseCheckoutSelection, type CheckoutCartItem } from "../../../common/checkoutSelection";
+import { parseCheckoutSelection, checkoutRequiresAddress, type CheckoutCartItem } from "../../../common/checkoutSelection";
 import { CheckoutIntentJournal, type CheckoutIntent } from "../../../common/checkoutIntent";
 import { prepareOrderSystemFormSubmission } from "../../../common/order-system-form";
 import type { BargainShippingSelection } from '../../../common/bargainShipping';
@@ -34,7 +34,8 @@ export function useCheckout() {
   // Native image selection can hide the page. Do not invalidate its owned form on that hide.
   const formLocked = computed(() => loading.value || !!pending.value || !auth.isLoggedIn);
   const allowedShippingTypes = computed<readonly number[]>(() => activity.value.type === 2 ? shippingSelection.value?.shippingTypes ?? [] : items.value.some(i => i.productInfo?.productType === 4) ? [2] : [1,2]);
-  const requiresAddress = computed(() => activity.value.type !== 2 || shippingSelection.value?.requiresAddress !== false);
+  const requiresAddress = computed(() => activity.value.type === 2
+    ? shippingSelection.value?.requiresAddress !== false : checkoutRequiresAddress(items.value));
   const options = computed<CheckoutQuoteOptions>(() => ({ ...activity.value, addressId: shippingType.value === 1 && requiresAddress.value ? addressId.value : 0,
     shippingType: shippingType.value, storeId: shippingType.value === 2 ? storeId.value : 0,
     couponId: activity.value.type === 0 ? couponId.value : 0, useIntegral: activity.value.type === 0 && useIntegral.value }));

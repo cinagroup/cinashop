@@ -9,6 +9,7 @@ import { ApiException, ValidateException } from "@/utils/errors";
 import { StoreCartService } from "@/services/order/StoreCartService";
 import { parseBargainSelection } from "@/services/activity/BargainParticipationSelection";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
+import { checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
 import { OrderFormRejectedException } from "@/services/order/OrderSystemFormService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderInvoiceService } from "@/services/order/StoreOrderInvoiceService";
@@ -293,14 +294,16 @@ export async function orderCreate(c: C) {
   const key = c.req.param("key");
   if (!key) return jsonFail(c, "参数错误");
 
-  const body = (await c.req.json().catch(() => ({}))) as {
+  const body = await readBoundedJsonObject(c) as {
     cartIds?: number[];
     cart_ids?: number[];
     cartId?: string | number | number[];
     addressId?: number;
     address_id?: number;
     realName?: string;
+    real_name?: string;
     userPhone?: string;
+    phone?: string;
     province?: string;
     cityId?: number;
     city_id?: number;
@@ -348,9 +351,6 @@ export async function orderCreate(c: C) {
   }
 
   const firstCart = cartIds.length ? await c.get("container").storeCartDao.get(cartIds[0]) : null;
-  const addressId = Number(body.addressId ?? body.address_id ?? 0);
-  const address = addressId > 0 ? await c.get("container").userAddressDao.get(addressId) : null;
-  if (address && (address.uid !== uid || address.isDel !== 0)) return jsonFail(c, "收货地址不存在");
   const requestedPayType = String(body.payType ?? body.pay_type ?? "").trim().toLowerCase();
   const paymentChannel = body.from ?? c.req.header("Form-type") ?? "h5";
 
@@ -361,15 +361,12 @@ export async function orderCreate(c: C) {
       uid,
       key,
       cartIds,
-      realName: body.realName ?? address?.realName,
-      userPhone: body.userPhone ?? address?.phone,
-      province: body.province ?? address?.province,
-      cityId: body.cityId ?? body.city_id ?? address?.cityId,
-      userAddress: body.userAddress ?? (address
-        ? [address.province, address.city, address.district, address.street, address.detail]
-            .filter(Boolean)
-            .join(" ")
-        : undefined),
+      addressId: body.addressId,
+      addressAlias: body.address_id,
+      // Contacts are client-selected only for pickup. Delivery fields are
+      // resolved from the user's address inside the core, after replay checks.
+      realName: body.realName ?? body.real_name,
+      userPhone: body.userPhone ?? body.phone,
       mark: body.mark,
       shippingType: body.shippingType ?? body.shipping_type,
       storeId: body.storeId ?? body.store_id,
@@ -464,7 +461,7 @@ export async function orderConfirm(c: C) {
     const cartIds = parseLegacyCartIds(body.cartIds ?? body.cart_ids ?? body.cartId);
     const result = await new LegacyOrderCompatibilityService(c.get("container"), c.env)
       .checkoutPreview(uid, cartIds, {
-        addressId: Number(body.addressId ?? body.address_id ?? 0),
+        addressId: checkoutAddressId(body.addressId, body.address_id),
         couponId: Number(body.couponId ?? body.coupon_id ?? 0),
         useIntegral: Number(body.useIntegral ?? body.use_integral ?? 0) > 0,
         shippingType: Number(body.shippingType ?? body.shipping_type ?? 1),
@@ -495,7 +492,7 @@ export async function orderComputed(c: C) {
       uid,
       cartIds,
       {
-        addressId: Number(body.addressId ?? body.address_id ?? 0),
+        addressId: checkoutAddressId(body.addressId, body.address_id),
         existingKey: key,
         couponId: Number(body.couponId ?? body.coupon_id ?? 0),
         useIntegral: Number(body.useIntegral ?? body.use_integral ?? 0) > 0,

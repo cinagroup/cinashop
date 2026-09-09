@@ -1,6 +1,7 @@
 import { and, count, eq, inArray, sql } from "drizzle-orm";
 import {
   memberRight,
+  cityArea,
   storeCouponIssue,
   storeCouponIssueUser,
   storeCouponUser,
@@ -19,8 +20,10 @@ import {
   storeSeckill,
   storeSeckillTime,
   systemStore,
+  systemConfig,
   systemUserLevel,
   user,
+  userAddress,
   userBill,
 } from "@/models/schema";
 import {
@@ -42,6 +45,10 @@ import { MigrationService } from "@/services/MigrationService";
 
 const CLONED_TABLES = [
   "user",
+  "user_address",
+  "city_area",
+  "system_config",
+  "print_document",
   "system_store",
   "store_cart",
   "store_order",
@@ -62,20 +69,12 @@ const CLONED_TABLES = [
   "store_coupon_issue",
   "store_coupon_issue_user",
   "store_coupon_user",
+  "store_coupon_product",
   "store_product_coupon",
   "shipping_templates",
   "shipping_templates_region",
   "shipping_templates_free",
   "shipping_templates_no_delivery",
-] as const;
-
-const LOCAL_SEQUENCE_TABLES = [
-  "store_order",
-  "store_order_cart_info",
-  "store_order_status",
-  "user_bill",
-  "store_coupon_user",
-  "member_right",
 ] as const;
 
 interface PublicSnapshot {
@@ -96,6 +95,7 @@ interface PublicSnapshot {
   order_sequence: string | null;
   cart_info_sequence: string | null;
   status_sequence: string | null;
+  public_sequences: Array<{ name: string; last_value: string | null }>;
 }
 
 export interface StoreOrderCreatePostgresReport {
@@ -164,6 +164,7 @@ export interface StoreOrderCreatePostgresReport {
     cancel_status_rows: number;
   };
   pricing_and_reward_policy: {
+    authoritative_address: boolean;
     quote_matches_order: boolean;
     raw_total: string;
     member_total: string;
@@ -226,6 +227,8 @@ interface FixtureIds {
     activityId: number;
   };
   pricing: {
+    addressId: number;
+    regionIds: [number, number, number];
     levelId: number;
     productId: number;
     secondProductId: number;
@@ -314,6 +317,8 @@ function makeFixtureIds(base: number): FixtureIds {
       activityId: base + 5_006,
     },
     pricing: {
+      addressId: base + 9_000,
+      regionIds: [base + 9_001, base + 9_002, base + 9_003],
       levelId: base + 7_000,
       productId: base + 1_007,
       secondProductId: base + 1_008,
@@ -383,7 +388,7 @@ async function withSchema<T>(
 ): Promise<T> {
   const root = createContainerFromDb(db);
   return withTx(root, async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL search_path TO ${identifier(schemaName)}, public`));
+    await tx.execute(sql.raw(`SET LOCAL search_path TO ${identifier(schemaName)}`));
     await tx.execute(sql`SET LOCAL lock_timeout = '3s'`);
     await tx.execute(sql`SET LOCAL statement_timeout = '20s'`);
     return fn(createContainerFromDb(tx));
@@ -442,7 +447,9 @@ async function publicSnapshot(db: DbClient): Promise<PublicSnapshot> {
       (SELECT last_value::text FROM pg_sequences
         WHERE schemaname = 'public' AND sequencename = 'store_order_cart_info_id_seq') AS cart_info_sequence,
       (SELECT last_value::text FROM pg_sequences
-        WHERE schemaname = 'public' AND sequencename = 'store_order_status_id_seq') AS status_sequence
+        WHERE schemaname = 'public' AND sequencename = 'store_order_status_id_seq') AS status_sequence,
+      (SELECT jsonb_agg(jsonb_build_object('name',sequencename,'last_value',last_value::text) ORDER BY sequencename)
+        FROM pg_sequences WHERE schemaname='public') AS public_sequences
   `;
   const row = rows[0];
   if (!row) throw new Error("unable to read public PostgreSQL snapshot");
@@ -501,6 +508,19 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
       isShow: 1,
       isDel: 0,
     });
+    await tx.insert(systemConfig).values([
+      { id: 1, menuName: 'store_func_status', value: '1' },
+      { id: 2, menuName: 'store_self_mention', value: '1' },
+    ]);
+    const [provinceId, cityId, districtId] = ids.pricing.regionIds;
+    await tx.insert(cityArea).values([
+      { id: provinceId, name: 'Integration Province', parentId: 0, path: '/' },
+      { id: cityId, name: 'Integration City', parentId: provinceId, path: `/${provinceId}/` },
+      { id: districtId, name: 'Integration District', parentId: cityId, path: `/${provinceId}/${cityId}/` },
+    ]);
+    await tx.insert(userAddress).values({ id: ids.pricing.addressId, uid: ids.users[7],
+      realName: 'PostgreSQL integration', phone: '13000000000', province: 'Integration Province',
+      city: 'Integration City', district: 'Integration District', cityId: districtId, detail: 'Integration Street' });
 
     const products = [
       [ids.sameCart.productId, 5, "same cart"],
@@ -622,7 +642,7 @@ async function seedFixtures(db: DbClient, schemaName: string, ids: FixtureIds): 
         status: 1, isPay: 0, isDel: 0 },
       { id: ids.bargain.cartId, uid: ids.users[0], productId: ids.bargain.productId,
         productAttrUnique: ids.bargain.activitySkuUnique, cartNum: 1, type: 2, activityId: ids.bargain.activityId,
-        status: 1, isPay: 0, isDel: 0 },
+        bargainUserId: ids.bargain.bargainUserId, status: 1, isPay: 0, isDel: 0 },
       { id: ids.combination.cartId, uid: ids.users[5], productId: ids.combination.productId,
         productAttrUnique: ids.combination.activitySkuUnique, cartNum: 1, type: 3,
         activityId: ids.combination.activityId, status: 1, isPay: 0, isDel: 0 },
@@ -1029,7 +1049,7 @@ async function runBargainReservationCancel(
       ids.bargain.cartId,
       {
         type: 2,
-        bargainUserId: ids.bargain.activityId,
+        bargainUserId: ids.bargain.bargainUserId,
         payType: "offline",
         from: "h5",
       },
@@ -1062,7 +1082,7 @@ async function runBargainReservationCancel(
     ids.bargain.cartId,
     {
       type: 2,
-      bargainUserId: ids.bargain.activityId,
+      bargainUserId: ids.bargain.bargainUserId,
       couponId: ids.pricing.activityCouponUserId,
     },
   ));
@@ -1347,8 +1367,9 @@ async function runPricingAndRewardPolicy(
     {
       shippingType: 1,
       storeId: 0,
-      province: "Integration Province",
-      userAddress: "Integration Province Integration City Integration Street",
+      addressId: ids.pricing.addressId,
+      province: "Untrusted client province",
+      userAddress: "Untrusted client address",
       couponId: ids.pricing.discountCouponUserId,
       useIntegral: true,
       payType: "yue",
@@ -1439,6 +1460,10 @@ async function runPricingAndRewardPolicy(
     };
   });
   assertCondition(state.order && state.account && state.rewardIssue, "pricing/reward state is incomplete");
+  const authoritativeAddress = state.order.realName === 'PostgreSQL integration'
+    && state.order.userPhone === '13000000000' && state.order.province === 'Integration Province'
+    && state.order.userAddress === 'Integration Province Integration City Integration District Integration Street';
+  assertCondition(authoritativeAddress, 'pricing order did not persist the authoritative saved address');
   const quoteMatchesOrder =
     state.order.totalPrice === (quote.totalCents / 100).toFixed(2) &&
     state.order.couponPrice === (quote.couponPriceCents / 100).toFixed(2) &&
@@ -1474,6 +1499,7 @@ async function runPricingAndRewardPolicy(
   assertCondition(state.rewardIssue.remainCount === 9, "reward inventory was not decremented once");
   assertCondition(state.prize.coupons.length === 1, "order prize did not expose the durable coupon reward");
   return {
+    authoritative_address: authoritativeAddress,
     quote_matches_order: quoteMatchesOrder,
     raw_total: (quote.rawTotalCents / 100).toFixed(2),
     member_total: (quote.totalCents / 100).toFixed(2),
@@ -1523,16 +1549,22 @@ export async function runStoreOrderCreatePostgresScenario(
           `CREATE TABLE ${schemaIdentifier}.${tableIdentifier} (LIKE public.${tableIdentifier} INCLUDING ALL)`,
         );
       }
-      for (const table of LOCAL_SEQUENCE_TABLES) {
+      // INCLUDING ALL copies serial defaults pointing at public sequences.
+      // Discover actual serial columns: join tables may have no id at all.
+      // Native identity sequences are already independently cloned by LIKE.
+      for (const table of CLONED_TABLES) {
         const tableIdentifier = identifier(table);
-        const sequenceIdentifier = identifier(`${table}_id_seq_it`);
-        await tx.unsafe(`CREATE SEQUENCE ${schemaIdentifier}.${sequenceIdentifier}`);
-        await tx.unsafe(
-          `ALTER SEQUENCE ${schemaIdentifier}.${sequenceIdentifier} OWNED BY ${schemaIdentifier}.${tableIdentifier}."id"`,
-        );
-        await tx.unsafe(
-          `ALTER TABLE ${schemaIdentifier}.${tableIdentifier} ALTER COLUMN "id" SET DEFAULT nextval('${schemaName}.${table}_id_seq_it'::regclass)`,
-        );
+        const columns = await tx<{ name: string }[]>`SELECT attname AS name FROM pg_attribute
+          WHERE attrelid=${`public.${table}`}::regclass AND attnum>0 AND NOT attisdropped AND attidentity=''
+          AND pg_get_serial_sequence(${`public.${table}`},attname) IS NOT NULL ORDER BY attnum`;
+        for (const column of columns) {
+          const columnIdentifier = identifier(column.name);
+          const sequenceName = `${table}_${column.name}_seq_it`;
+          const sequenceIdentifier = identifier(sequenceName);
+          await tx.unsafe(`CREATE SEQUENCE ${schemaIdentifier}.${sequenceIdentifier}`);
+          await tx.unsafe(`ALTER SEQUENCE ${schemaIdentifier}.${sequenceIdentifier} OWNED BY ${schemaIdentifier}.${tableIdentifier}.${columnIdentifier}`);
+          await tx.unsafe(`ALTER TABLE ${schemaIdentifier}.${tableIdentifier} ALTER COLUMN ${columnIdentifier} SET DEFAULT nextval('${schemaName}.${sequenceName}'::regclass)`);
+        }
       }
       await tx.unsafe(`SET LOCAL search_path TO ${schemaIdentifier}`);
       await tx.unsafe(

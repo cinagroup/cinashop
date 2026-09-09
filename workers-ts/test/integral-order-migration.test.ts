@@ -150,7 +150,11 @@ describe("integral order migration", () => {
     expect(create).toContain("payIntegral: requiredIntegral");
     expect(create).toContain("积分商品不能使用优惠券");
     expect(create).toContain("积分商品不能叠加普通订单积分抵扣");
-    expect(create).toContain("请填写完整的收货人、手机号和收货地址");
+    expect(create).toContain("await resolveDeliveryAddress(c.db");
+    expect(create).toContain("required: !options?.preview");
+    const address = readFileSync("src/services/order/OrderDeliveryAddress.ts", "utf8");
+    expect(address).toContain("请选择完整的收货地址");
+    expect(address).toContain("请填写完整的收货地址、收货人和电话");
     expect(pay).toContain("debitRequiredOrderIntegral");
     expect(storefront).toContain("apiCartAdd");
     expect(storefront).toContain("/pages/order/confirm?mode=buy");

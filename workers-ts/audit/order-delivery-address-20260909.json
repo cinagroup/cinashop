@@ -1,0 +1,70 @@
+{
+  "date": "2026-09-09",
+  "baseCommit": "64a0e5426ce16887d3fe9d66eb8722f608619a64",
+  "candidateState": "local candidate validation; own CI pending, not deployed, checklist item open",
+  "checklist": "FE-003L-A3k11b",
+  "productionWrites": false,
+  "historicalDataReconciliation": "not applicable: new system",
+  "browser": {
+    "connected": true,
+    "url": "https://cinashop-pc.pages.dev/goods/70",
+    "scope": "prior CUA production page identity only; current local candidate acceptance below",
+    "localCandidate": {
+      "runtime": "Playwright 1.62.1 with installed Chrome; Browser skill not exposed in this session",
+      "productionNetworkAllowed": false,
+      "api": "127.0.0.1:5228, in-memory PGlite, actual quote/create controllers and services",
+      "synthetic": ["auth", "sequence", "empty coupon list", "out-of-scope order detail"],
+      "surfaces": [{ "name": "PC", "url": "http://127.0.0.1:5229/checkout?mode=buy&cartId=1&type=0", "viewport": "1280x900" }, { "name": "UniApp H5", "url": "http://127.0.0.1:5230/#/pages/order/confirm?mode=buy&cartId=1&type=0", "viewport": "390x844" }],
+      "passedFlows": 6,
+      "flowsPerSurface": ["delivery: invalid source rejected, explicit retry, address A 26.00 to B 32.00, persisted B postage 12.00", "pickup: independent contact, empty delivery address, payable 20.00/postage 0.00", "virtual type 2: no saved address, payable 20.00/postage 0.00"],
+      "checks": ["expected URL/title", "nonblank", "no framework overlay", "no horizontal overflow", "screenshots", "actual interaction and HTTP create 200", "one unpaid order per isolated scenario", "product/SKU stock each reduced by two", "no payment requests"],
+      "consoleErrors": 0,
+      "warnings": ["UniApp pre-existing vue-router import deprecation", "After creation, out-of-scope UniApp detail emits extraneous orderId attribute warning"],
+      "firstFailure": "Ordinary virtual PC checkout still demanded an address; independently reproduced by three UniApp runtime tests, fixed in both clients via shared checkoutRequiresAddress",
+      "harnessCorrection": "UniApp native input renders inside uni-input; corrected test locator, not application input",
+      "screenshotNames": ["cinashop-address-pc-delivery.png", "cinashop-address-pc-pickup.png", "cinashop-address-pc-virtual.png", "cinashop-address-uni-delivery.png", "cinashop-address-uni-pickup.png", "cinashop-address-uni-virtual.png"],
+      "cleanup": "temporary API/Vite sessions stopped; ports 5228,5229,5230 no longer listening; in-memory fixtures discarded",
+      "realAuthAndDetailPaymentAccepted": false
+    }
+  },
+  "evidenceDirectory": "C:/Users/cina/AppData/Local/Temp",
+  "runs": [
+    { "report": "cinashop-address-red-20260909.json", "passed": 3, "failed": 8, "scope": "pre-fix isolated SQL red tests" },
+    { "report": "cinashop-address-core-green-20260909.json", "passed": 11, "failed": 0, "scope": "initial shared-core fix" },
+    { "report": "cinashop-address-http-green-20260909.json", "passed": 24, "failed": 1, "scope": "filename is misleading: pickup fixture was not an active store" },
+    { "report": "cinashop-address-boundary-20260909.json", "passed": 33, "failed": 0, "scope": "address length, contact capacity, source changes and malformed HTTP IDs" },
+    { "report": "cinashop-address-related-20260909.json", "files": 4, "passed": 46, "failed": 0, "scope": "PC quote, shipping quote/activity and assisted static regressions; PGlite where SQL applies" },
+    { "report": "cinashop-address-assisted-20260909.json", "passed": 42, "failed": 0, "scope": "actual HTTP/core and assisted service confirm/computed/create/replay; isolated PGlite; synthetic auth/KV/sequence" },
+    { "report": "cinashop-address-pg16-20260909.json", "files": 3, "passed": 59, "failed": 0, "skipped": 0, "scope": "42 address cases, 9 independent address concurrency cases, 8 shipping concurrency cases; dedicated loopback PostgreSQL 16.15" },
+    { "report": "cinashop-address-broad-20260909.json", "files": 55, "passed": 706, "failed": 10, "skipped": 0, "maxWorkers": 2 },
+    { "report": "cinashop-address-broad-serial-20260909.json", "files": 55, "passed": 716, "failed": 0, "skipped": 0, "maxWorkers": 1 },
+    { "report": "cinashop-create-scenario-initial-20260909.json", "passed": 0, "failed": 1, "scope": "full legacy scenario exposed stale bargain participant/cart binding" },
+    { "report": "cinashop-create-scenario-isolated-20260909.json", "passed": 0, "failed": 1, "scope": "initial sequence-isolation change wrongly assumed an id column on join tables; corrected via PostgreSQL catalog discovery" },
+    { "report": "cinashop-create-scenario-serial-columns-20260909.json", "passed": 1, "failed": 0, "scope": "actual complete creation scenario on an owned fully migrated PG16 database; claims/cancel/pricing/rewards and public sequence invariance" },
+    { "report": "cinashop-address-null-red-20260909.json", "passed": 0, "failed": 2, "scope": "filtered red test: explicit assisted camel/snake null was treated as absent; subsequently fixed" },
+    { "report": "cinashop-address-auth-routes-20260909.json", "files": 1, "passed": 58, "failed": 0, "skipped": 0, "scope": "PGlite: original 44 plus 14 actual registered-route/JWT/DB-role cases; initial denial assertions were non-200" },
+    { "report": "cinashop-address-auth-routes-pg16-20260909.json", "files": 1, "passed": 58, "failed": 0, "skipped": 0, "scope": "dedicated PG16: same 58 with exact authentication error codes; real registered v1 router/JWT/account/role/controller/SQL, token store/KV/sequence substitutes, all external fetch forbidden" }
+  ],
+  "firstBroadFailures": {
+    "addressContractFixturesAndStaticAssertions": 8,
+    "otherConcurrencyFailures": [
+      "bargain-admin-sku-postgres: different early lock-conflict message",
+      "bargain-order-participation: pickup verify-code advisory lock failure"
+    ],
+    "qualification": "Both concurrency cases pass in the final serial run without weakening assertions or business timeouts. Their initial root causes are not proven resolved. Per-test independent-connection concurrency remains enabled. Counts across runs overlap and must not be added."
+  },
+  "typecheck": { "unit": "passed", "runtime": "passed" },
+  "authAcceptance": { "newCases": 14, "realRouter": "v1Routes", "injectedIdentity": false, "realJwtSignatureAndDatabaseRoles": true, "superAdminUsed": false, "revocationBetweenConfirmAndCreate": "rejected with 400011, restored role then creates once", "productionLoginRedisHyperdriveAccepted": false, "coverageQualification": "shard 1 was executed before these 14 were registered; final candidate requires supplemental result and own CI, not arithmetic reuse of the old test count" },
+  "frontend": { "pcAuthTests": 96, "pcImageTests": 7, "uniToolchainTests": 187, "failed": 0, "pcBuild": "passed", "uniTypes": "passed", "uniH5Build": "passed", "uniWeixinBuild": "passed", "uniAppBuild": "passed", "workerAffectedTests": { "report": "cinashop-address-frontend-worker-regression-20260909.json", "files": 8, "passed": 128, "failed": 0, "skipped": 0, "qualification": "rerun after the frontend eligibility fix; not additional disjoint Worker coverage" } },
+  "fullUnit": { "state": "shard 1 passed, shard 2 running; full suite not acceptance yet", "session": 85412, "maxWorkers": 1, "reports": ["cinashop-address-full-shard1-20260909.json", "cinashop-address-full-shard2-20260909.json"], "shard1": { "files": 173, "passed": 1669, "failed": 0, "skipped": 0, "inventoryFiles": 345, "inventorySha256": "d49098386cc9aab926ddb6807b66906aec90447f1a5e85f5287e2a272bd2195a", "executedFileSha256": "9ac777dcc9df51ff4ffcf7741a91aba94e345f13d71e0941c2fff77838342c4e", "executedFilesMatchNativePartition": true } },
+  "databaseIdentity": { "database": "cinashop_finance_test", "role": "finance_test", "serverVersionNum": 160015, "host": "127.0.0.1", "port": 55432 },
+  "priorCleanupBeforeShutdown": { "databases": ["cinashop_finance_test", "postgres", "template0", "template1"], "fixtureSchemas": 0, "publicTables": 0 },
+  "priorShutdown": "pg_ctl stop exited 0; original PID 7728 and port 55432 absent; pg_ctl status: no server running; binaries/data/reports retained",
+  "currentDatabaseState": "same dedicated PG16 restarted for full unit validation; cleanup/shutdown pending",
+  "remaining": [
+    "Full Worker unit suite, own Linux CI and runtime validation",
+    "Production login/token storage/Hyperdrive and deployment gates; local actual routes/DB roles now verified",
+    "Independent diagnosis of initial parallel lock failures",
+    "Commit/push and deployment gates"
+  ]
+}

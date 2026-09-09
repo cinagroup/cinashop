@@ -6,7 +6,7 @@ import { storeCart, storeBargain, storeProduct, systemStore, storeOrderCartInfo,
 
 describe('bargain shipping quote and actual creation contract',()=>{
  let f:Awaited<ReturnType<typeof createBargainSelectionFixture>>;
- const params:CreateOrderParams={uid:11,key:'shipping_contract',cartIds:[10],type:2,bargainUserId:80,shippingType:2,storeId:1,realName:'隔离配送',userPhone:'00000000000',userIp:'127.0.0.1'};
+ const params:CreateOrderParams={uid:11,key:'shipping_contract',cartIds:[10],type:2,bargainUserId:80,shippingType:2,addressId:11,storeId:1,realName:'隔离配送',userPhone:'00000000000',userIp:'127.0.0.1'};
  beforeEach(async()=>{f=await createBargainSelectionFixture([storeOrderCartInfo,storeOrderStatus,printDocument]);
   await f.db.update(systemStore).set({isStore:1}).where(eq(systemStore.id,1));
   await f.db.insert(storeCart).values({id:10,uid:11,productId:70,productAttrUnique:'qared001',cartNum:1,type:2,activityId:40,bargainUserId:80,isNew:1,status:1});

@@ -27,7 +27,7 @@ describe('activity checkout consumes authoritative shipping template rules',()=>
   const activityId=type===2?40:type===3?50:type===4?60:90;
   await f.db.insert(storeCart).values({id:10,uid:11,productId:70,productAttrUnique:'qared001',cartNum:1,type,activityId,bargainUserId:type===2?80:0,isNew:1,status:1});
   if(type===5)await f.db.insert(storeCart).values({id:11,uid:11,productId:71,productAttrUnique:'ship0071',cartNum:1,type,activityId,isNew:1,status:1});
-  return {uid:11,key:'activity_template',cartIds:type===5?[10,11]:[10],type,...(type===2?{bargainUserId:80}:{}),...(type===3?{combinationId:50}:{}),shippingType:1,cityId:101,userAddress:'隔离地址',realName:'隔离',userPhone:'00000000000',userIp:'127.0.0.1'};
+  return {uid:11,key:'activity_template',cartIds:type===5?[10,11]:[10],type,...(type===2?{bargainUserId:80}:{}),...(type===3?{combinationId:50}:{}),shippingType:1,addressId:11,cityId:101,userAddress:'隔离地址',realName:'隔离',userPhone:'00000000000',userIp:'127.0.0.1'};
  };
  const create=(params:CreateOrderParams,change?:()=>Promise<unknown>)=>StoreOrderCreateService.createWithRuntime(f.container,{CONFIG_KV:f.env.CONFIG_KV,nextOrderId:async()=>{await change?.();return params.key;}},params);
  const state=async()=>({...await f.snapshot(),sequences:undefined,details:await f.db.select().from(storeOrderCartInfo),combination:await f.db.select().from(storeCombination),integral:await f.db.select().from(storeIntegral)});

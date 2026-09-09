@@ -22,7 +22,7 @@ describe('bargain admin shipping through saved SQL and real quote', () => {
   return response.json() as Promise<{status:number;msg:string}>;
  };
  const input = async (patch: object = {}) => ({deliveryType:'1,2',freight:1,postage:'0.00',tempId:0,expected:await current(),...patch});
- const quote = () => new StoreOrderCreateService(f.container,f.env).quoteOrder({uid:11,cartIds:[10],type:2,bargainUserId:80,shippingType:1,cityId:101});
+ const quote = () => new StoreOrderCreateService(f.container,f.env).quoteOrder({uid:11,cartIds:[10],type:2,bargainUserId:80,shippingType:1,addressId:11,cityId:101});
  it.each([[1,'9.00',10,'0.00',0,200],[2,'8.50',10,'8.50',0,1050],[3,'9.00',10,'0.00',10,800]] as const)(
   'saves freight=%i, normalizes inactive fields, reloads and changes actual checkout price', async (freight,postage,tempId,storedPostage,storedTemplate,payCents) => {
    const before = await state(); expect((await request({shipping:await input({freight,postage,tempId})})).status).toBe(200);

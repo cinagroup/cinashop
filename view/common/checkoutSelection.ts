@@ -23,6 +23,13 @@ export interface CheckoutCartItem {
 }
 
 export type CheckoutSelection = { mode: "cart" } | { mode: "buy"; ids: number[] };
+
+/** UI eligibility only: the order service re-reads product types and delivery rules. */
+export function checkoutRequiresAddress(items: readonly Pick<CheckoutCartItem, "productInfo">[]): boolean {
+  // Empty or incomplete selections fail closed; only known non-logistics types are exempt.
+  return !items.length || items.some(item => !item.productInfo || ![1, 2, 3].includes(item.productInfo.productType));
+}
+
 export function parseCheckoutSelection(query: Record<string, unknown>): CheckoutSelection {
   const raw = query.cartIds ?? query.cartId;
   if (query.mode === undefined && raw === undefined) return { mode: "cart" };

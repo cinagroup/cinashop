@@ -16,6 +16,7 @@ import { CheckoutCashierService } from "@/services/payment/CheckoutCashierServic
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { StoreCartService } from "@/services/order/StoreCartService";
 import { StoreOrderCreateService } from "@/services/order/StoreOrderCreateService";
+import { checkoutAddressId } from './OrderDeliveryAddress';
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readBargainShippingSelection } from '@/services/activity/BargainShippingSelection';
@@ -296,7 +297,7 @@ export class LegacyOrderCompatibilityService {
     options: LegacyCheckoutPreviewOptions = {},
   ) {
     const rows = await this.checkoutRows(uid, cartIds);
-    const addressId = Number(options.addressId ?? 0);
+    const addressId = checkoutAddressId(options.addressId);
     const noLogisticsAddress = options.shippingType === 1 && addressId === 0
       && rows.length > 0 && rows.every(row => [1, 2, 3].includes(Number(record(row.productInfo).productType)));
     const [account, readiness, requestedAddress] = await Promise.all([
@@ -308,12 +309,14 @@ export class LegacyOrderCompatibilityService {
     const address = requestedAddress && requestedAddress.uid === uid && requestedAddress.isDel === 0
       ? requestedAddress
       : null;
+    if (addressId > 0 && !address) throw new ValidateException('收货地址不存在或不属于当前用户');
     const firstCart = await this.container.storeCartDao.get(cartIds[0]);
     if (!firstCart || firstCart.uid !== uid) throw new ValidateException("购物车商品已失效");
     const type = options.type ?? firstCart.type;
     const quote = await new StoreOrderCreateService(this.container, this.env).quoteOrder({
       uid,
       cartIds,
+      addressId: address?.id ?? 0,
       realName: address?.realName,
       userPhone: address?.phone,
       province: address?.province,
@@ -371,7 +374,7 @@ export class LegacyOrderCompatibilityService {
       isStoreFreePostage: quote.isStoreFreePostage,
     };
     return {
-      addressInfo: legacyAddress(address ? address as unknown as Record<string, unknown> : null),
+      addressInfo: legacyAddress(quote.deliveryAddress ?? (options.shippingType === 2 ? address : null)),
       upgrade_addr: false,
       cartInfo: rows,
       custom_form: [],

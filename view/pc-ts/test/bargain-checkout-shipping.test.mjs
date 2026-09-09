@@ -18,19 +18,21 @@ const store={id:1,name:'所属门店',introduction:'',phone:'',address:'隔离�
 const item={id:10,productId:70,unique:'qared001',cartNum:1,type:2,isNew:1,isValid:true,productInfo:{price:'10.00',storeName:'隔离砍价',image:'',stock:8,otPrice:'',suk:'红色',systemFormId:0,productType:0},sumPrice:'10.00'};
 const selection=(types=[1,2],address=true)=>({kind:'bargain',activityId:40,cartIds:[10],methods:types,shippingTypes:types,requiresAddress:address,stores:types.includes(2)?[store]:[]});
 export function registerCheckoutShippingTests(getContext){
- async function mount(shipping=()=>selection(),addressFailure=false,productType=0){
-  const selectedItem={...item,productInfo:{...item.productInfo,productType}};
+ async function mount(shipping=()=>selection(),addressFailure=false,productType=0,type=2){
+  const selectedItem={...item,type,productInfo:{...item.productInfo,productType}};
   const {server,api,response}=getContext();const calls=[];let view;
   api.defaults.adapter=async config=>{const body=config.method==='post'?JSON.parse(config.data):{};calls.push({url:config.url,body});
    if(config.url==='/cart/list')return response(config,{status:200,data:[selectedItem]});
    if(config.url==='/address/list')return response(config,addressFailure?{status:400,msg:'地址不可用'}:{status:200,data:[{id:11,real_name:'隔离',phone:'00000000000',is_default:1}]});
    if(config.url==='/order/check_shipping')return response(config,{status:200,data:await shipping()});
+   if(config.url==='/store/list')return response(config,{status:200,data:[store]});
+   if(config.url==='/coupons/order/0')return response(config,{status:200,data:[]});
    if(config.url==='/order/confirm'||config.url.startsWith('/order/computed/'))return response(config,{status:200,data:{orderKey:'shipping_key1',addressInfo:body.addressId?{id:body.addressId}:null,cartInfo:[{...selectedItem,truePrice:'2.00',sumPrice:'2.00',productInfo:{...selectedItem.productInfo,price:'2.00'}}],priceGroup:{sumPrice:'2.00',totalPrice:'2.00',pay_price:'2.00',total_postage:'0.00',pay_postage:'0.00',storePostageDiscount:'0.00',vipPrice:'0.00',levelPrice:'0.00',memberPrice:'0.00',couponPrice:'0.00',deduction_price:'0.00',firstOrderPrice:'0.00',usedIntegral:0,SurplusIntegral:0,pay_integral:0}}});
    throw new Error('Unexpected request '+config.url);
   };
   const component=(await server.ssrLoadModule(script)).default;
   const router=createRouter({history:createMemoryHistory(),routes:[{path:'/checkout',component:{setup(props,ctx){view=component.setup(props,ctx);return()=>null;}}},{path:'/away',component:{render:()=>null}}]});
-  const app=renderer.createApp({render:()=>h(RouterView)});app.use(router);await router.push('/checkout?mode=buy&cartId=10&type=2&bargainUserId=80');app.mount({children:[]});await flush();
+  const app=renderer.createApp({render:()=>h(RouterView)});app.use(router);await router.push(`/checkout?mode=buy&cartId=10&type=${type}${type===2?'&bargainUserId=80':''}`);app.mount({children:[]});await flush();
   return {view,calls,router,close(){app.unmount();}};
  }
  it('PC actual checkout chooses the sole allowed pickup channel and uses only the scoped stores',async()=>{
@@ -60,6 +62,12 @@ export function registerCheckoutShippingTests(getContext){
  });
  it('PC does not require an address for non-logistics bargain checkout',async()=>{
   const f=await mount(()=>selection([1],false),true,3);try{assert.equal(f.view.requiresAddress.value,false);assert.equal(f.view.quoteReady.value,true,f.view.quoteState.value.error);assert.equal(f.calls.find(c=>c.url==='/order/confirm').body.addressId,0);}finally{f.close();}
+ });
+ for(const productType of [1,2,3])it(`PC ordinary non-logistics type ${productType} quotes without a saved address`,async()=>{
+  const f=await mount(undefined,true,productType,0);try{assert.equal(f.view.requiresAddress.value,false);assert.equal(f.view.quoteReady.value,true,f.view.quoteState.value.error);assert.equal(f.calls.find(c=>c.url==='/order/confirm').body.addressId,0);}finally{f.close();}
+ });
+ it('PC ordinary physical checkout still requires a usable saved address',async()=>{
+  const f=await mount(undefined,true,0,0);try{assert.equal(f.view.requiresAddress.value,true);assert.equal(f.view.quoteReady.value,false);assert.equal(f.calls.some(c=>c.url==='/order/confirm'),false);}finally{f.close();}
  });
  for(const change of ['route','identity'])it(`PC late shipping response cannot restore eligibility after ${change} changes`,async()=>{
   const waiting=gate();let delay=false;const f=await mount(()=>delay?waiting.promise:selection());try{

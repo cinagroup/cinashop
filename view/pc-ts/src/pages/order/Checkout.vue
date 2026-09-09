@@ -225,6 +225,7 @@ import { canEditRejectedOrder } from "@/utils/apiError";
 import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "@/api/orderCoupons";
 import CouponCards from "@/components/CouponCards.vue";
 import type { BargainShippingSelection } from '../../../../common/bargainShipping';
+import { checkoutRequiresAddress } from '../../../../common/checkoutSelection';
 
 const router = useRouter();
 const route = useRoute();
@@ -275,7 +276,8 @@ const includesSecondCard = computed(() => checkoutItems.value.some(
   (item) => item.productInfo?.productType === 4,
 ));
 const allowedShippingTypes = computed<readonly number[]>(() => activityOptions.value.type === 2 ? shippingSelection.value?.shippingTypes ?? [] : includesSecondCard.value ? [2] : [1,2]);
-const requiresAddress = computed(() => activityOptions.value.type !== 2 || shippingSelection.value?.requiresAddress !== false);
+const requiresAddress = computed(() => activityOptions.value.type === 2
+  ? shippingSelection.value?.requiresAddress !== false : checkoutRequiresAddress(checkoutItems.value));
 const couponContext = computed(() => {
   if (!checkoutItems.value.length || activityOptions.value.type !== 0) return { scope: null, error: "" };
   try { return { scope: orderCouponScope(checkoutItems.value, shippingType.value, selectedStoreId.value), error: "" }; }

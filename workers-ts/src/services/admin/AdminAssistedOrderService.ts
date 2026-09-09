@@ -29,6 +29,7 @@ import {
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { assistedDeliveryAddress, checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
 
 const ASSISTED_CHECKOUT_TTL_SECONDS = 30 * 60;
 const MAX_CART_ITEMS = 200;
@@ -543,7 +544,8 @@ export class AdminAssistedOrderService {
     key?: string,
   ) {
     const shippingType = integer(options.shipping_type, "配送方式", { min: 1, max: 2, fallback: 1 });
-    const addressId = integer(options.addressId, "地址参数", { min: 0, fallback: 0 });
+    const addressId = checkoutAddressId(options.addressId, options.address_id);
+    const manualAddress = assistedDeliveryAddress(options);
     const requestedStoreId = integer(options.store_id, "自提门店", { min: 0, fallback: 0 });
     const storeId = await this.pickupStoreId(shippingType, requestedStoreId);
     const couponId = integer(options.couponId, "优惠券", { min: 0, fallback: 0 });
@@ -557,13 +559,15 @@ export class AdminAssistedOrderService {
         ids: selection.cartIds,
       }),
       selection.uid > 0 ? this.container.userDao.findForAuth(selection.uid) : Promise.resolve(null),
-      this.address(selection.uid, addressId),
+      manualAddress ? Promise.resolve(null) : this.address(selection.uid, addressId),
       getPaymentReadiness(this.container, this.env),
     ]);
     if (selection.uid > 0 && !account) throw new NotFoundException("用户不存在");
     const quote = await new StoreOrderCreateService(this.container, this.env).quoteOrder({
       uid: selection.uid,
       cartIds: selection.cartIds,
+      addressId: address?.id ?? addressId,
+      manualAddress,
       realName: address?.realName,
       userPhone: address?.phone,
       province: address?.province,
@@ -592,7 +596,7 @@ export class AdminAssistedOrderService {
       result: priceGroup(quote),
       quote,
       response: {
-        addressInfo: legacyAddress(address as unknown as Record<string, unknown> | null),
+        addressInfo: legacyAddress(quote.deliveryAddress ?? (shippingType === 2 ? address : null)),
         upgrade_addr: false,
         cartInfo,
         custom_form: [],
@@ -802,28 +806,25 @@ export class AdminAssistedOrderService {
     const existing = await this.existing(adminId, uid, key);
     if (existing) return { order_id: existing.orderId, key, pay_price: existing.payPrice, extended: true };
     const snapshot = await this.snapshot(adminId, uid, key);
-    const addressId = integer(body.addressId, "地址参数", { min: 0, fallback: 0 });
+    const addressId = checkoutAddressId(body.addressId, body.address_id);
+    const manualAddress = assistedDeliveryAddress(body);
     const shippingType = integer(body.shipping_type, "配送方式", { min: 1, max: 2, fallback: 1 });
     const requestedStoreId = integer(body.store_id, "自提门店", { min: 0, fallback: 0 });
     const storeId = await this.pickupStoreId(shippingType, requestedStoreId);
-    const address = await this.address(uid, addressId);
+    const address = manualAddress ? null : await this.address(uid, addressId);
     const realName = boundedText(body.real_name ?? address?.realName, "收货人", 32);
     const phone = boundedText(body.phone ?? address?.phone, "手机号", 18);
-    const customAddress = boundedText(body.address, "收货地址", 100);
-    const userAddress = customAddress || (address
-      ? [address.province, address.city, address.district, address.street, address.detail].filter(Boolean).join(" ")
-      : "");
-    if (!realName || !phone) throw new ValidateException("请填写姓名和电话");
-    if (shippingType === 1 && !userAddress) throw new ValidateException("请选择或填写收货地址");
+    if (shippingType === 2 && (!realName || !phone)) throw new ValidateException("请填写姓名和电话");
     const result = await new StoreOrderCreateService(this.container, this.env).createOrder({
       uid,
       key,
       cartIds: snapshot.cartIds,
+      addressId: address?.id ?? addressId,
+      manualAddress,
       realName,
       userPhone: phone,
       province: address?.province ?? "",
       cityId: address?.cityId,
-      userAddress,
       mark: boundedText(body.mark, "订单备注", 512),
       shippingType,
       storeId,
