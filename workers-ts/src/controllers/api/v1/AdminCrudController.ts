@@ -57,6 +57,7 @@ import {
   type AdminMobileUserActor,
 } from "@/services/admin/AdminMobileUserService";
 import { readBoundedJsonObject } from "@/utils/request-body";
+import { retireBargain } from "@/services/activity/BargainRetirementService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -1353,8 +1354,9 @@ export async function adminCombinationList(c: C) {
 
 /** GET /api/admin/activity/bargain — 砍价活动列表 */
 export async function adminBargainList(c: C) {
+  privateNoStore(c);
   const container = c.get("container");
-  const list = await container.storeBargainDao.selectList({ where: {}, limit: 100 });
+  const list = await container.storeBargainDao.selectList({ where: { isDel: 0 }, page: 1, limit: 100 });
   return jsonOk(c, list);
 }
 
@@ -2277,6 +2279,11 @@ export async function adminActivityDel(c: C) {
   const type = c.req.param("type") as "seckill" | "combination" | "bargain" | "integral";
   const id = Number(c.req.param("id") ?? "0");
   const container = c.get("container");
+  if (type === "bargain") {
+    privateNoStore(c);
+    await retireBargain(container, c.req.param("id"));
+    return jsonOk(c, null, "删除成功");
+  }
   const { eq } = await import("drizzle-orm");
   const schema = await import("@/models/schema");
   const tableMap = {

@@ -6975,6 +6975,22 @@ Workers技能促使先复核最新[Cloudflare请求级连接规则](https://deve
 
 完整结果、首轮失败、受控红→绿、变更源码LF摘要及原始报告摘要记录于`workers-ts/audit/local-pg16-worker-unit-acceptance.json`，不覆盖上一轮砍价/九路径证据或历史CI。清单保持221完成/161开放/382项；未知初轮时钟/调度根因、价格政策、后台/商品全局锁序、前端真实角色与完整支付、Linux/workerd/自身CI及生产发布门禁均不借此关闭。
 
+## 2026-09-09：砍价后台删除恢复 PHP 历史保留合同
+
+本轮源码基线为已推送`2c269f233a151910357b7c97032615de973c4d9e`。其[Actions34297887347](https://github.com/cinagroup/cinashop/actions/runs/34297887347)终态failure、11项runner_id均0，check102298352452注释为账户付款/消费额度导致任务未启动；未重跑、改计费或放宽门禁。当前新候选不得继承旧SHA的CI或2698项全量结果。
+
+PHP `app/controller/admin/v1/marketing/bargain/StoreBargain.php`删除仅更新`is_del=1`，index过滤`is_del=0`；Worker共用`adminActivityDel`原先物理DELETE，`adminBargainList`无过滤且BaseDao在缺page时忽略limit。受控初轮14项中13失败/1通过，实际观察到活动历史行消失、列表102条（含退役行）、错误ID处理不一致和不存在仍返回成功。取消/退款测试在删除后历史断言处失败，不能据此声称补偿服务已实际抛错。
+
+新`BargainRetirementService`在短事务只更新isDel，保持状态、库存、销量、价格、参与、SKU和订单数据不变。严格正十进制32位ID；不存在拒绝、已有墓碑重复成功。局部锁2秒、语句5秒、空闲5秒，均不放宽更严格值；没有事务内外部调用。非键UPDATE与结算NO KEY UPDATE串行而兼容help KEY SHARE，不额外锁参与/SKU或升级FOR UPDATE。后台列表增加isDel=0、page=1使100条SQL限制真正生效，以及private no-store；两套既有管理路由复用控制器，注册/认证中间件未改。其他三类活动删除与价格公式未改，无DDL/平台配置/生产部署。
+
+最终新增20项实际控制器/业务SQL测试：仅墓碑和幂等、列表过滤/上限/缓存、7类错误ID、缺行、实际建单后取消与余额退款精确补偿、退役后新发起/帮砍/规格/建单拒绝、SQL触发器注入失败回滚。独立PG16后端验证实际建单先持锁/删除等待，以及实际删除未提交/买家等待的相反顺序，均以pg_blocking_pids准确PID为屏障；help在真实INSERT之后持KEY SHARE时删除可完成，随后help最终检查拒绝并回滚参与金额及help行。更严格500ms实际产生55P03且没有数据变更，锁释放后重试成功；触发器校验三类事务期限及成功/失败后会话设置恢复。退款明细refundNum正常增为1，初次修复后唯一失败是测试误要求该字段不变，已纠正精确预期，业务退款代码未改。回滚快照排除非事务序列分配，不声称序列可回滚。
+
+扩展回归17文件269项零失败/跳过，89.01秒，含20项新增专项、全部现有砍价测试及三类查询索引证据。AdminCrud新增两行使既有查询引用1484→1486，只同步证据行号，不改变目录。最终Worker unit/runtime两套类型通过；首次类型检查指出新增测试response.json为unknown，已补测试响应类型。当前完整Worker全量、Linux/workerd、真实认证、前端、provider及生产未重验。夹具为专用loopback finance_test控制库的随机schema，真实列/默认/非空/主键不等于全部生产FK/CHECK；显式离线测试仍保留PGlite引擎，不能把269项都称为PG16多连接验证。原始报告和摘要见`workers-ts/audit/local-pg16-bargain-retirement-acceptance.json`。
+
+使用Workers技能约束请求内资源与无外部副作用；PostgreSQL技能指导短事务和兼容锁，参照[PG16行锁合同](https://www.postgresql.org/docs/16/explicit-locking.html)与[Cloudflare连接最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)。最新类型获取失败时已检查本地Workers types5.20260828.1/Hyperdrive及Wrangler schema，本轮无绑定/API配置变更。范围限于A3j本地候选；新A3k记录后台保存将缺省库存/额度改100、销量清0、人数强制10等明确源码风险，须独立实现和PG验证。A3i既有参与锁快照或跟随现价仍待用户决定，不作隐式选择。当前清单222勾选/162开放/384项，A3f和发布门禁保持开放。
+
+收尾最终重跑20项专项零失败/跳过，14.67秒；控制库仅4个基线数据库、public表0、随机fixture schema0、其他客户端0，无须人工删库。提权pg_ctl首次无法向原进程发信号，原执行环境的pg_ctl随后成功完成checkpoint并于01:26:30.128 UTC停止；原PID13252和55432监听消失，保留停止的临时集群、二进制和原始报告。本轮未安装系统服务或变更全局环境。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

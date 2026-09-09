@@ -212,7 +212,7 @@
       ],
       "queryEvidence": {
         "source": "src/controllers/api/v1/AdminCrudController.ts",
-        "sourceLine": 1484,
+        "sourceLine": 1486,
         "purpose": "Admin bargain participant query",
         "sourceSql": "  const rows = await container.db\n    .select()\n    .from(schema.storeBargainUser)\n    .where(eq(schema.storeBargainUser.bargainId, bargainId))\n    .orderBy(desc(schema.storeBargainUser.addTime))\n    .limit(50);"
       },

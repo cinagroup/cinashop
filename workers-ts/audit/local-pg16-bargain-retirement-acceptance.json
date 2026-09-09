@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "2c269f233a151910357b7c97032615de973c4d9e",
+  "sourceDelta": "Bargain-only admin soft deletion, bounded transaction, filtered bounded uncached list; source-line reference and new tests. No pricing, schema, dependencies, routes, auth or CI changes.",
+  "scope": "Local candidate acceptance, not complete migration, Linux/workerd, real-role/provider or production acceptance.",
+  "environment": {
+    "platform": "Windows x64",
+    "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "maxWorkers": 2,
+    "fixtureBoundary": "Random owned schema; real columns/defaults/not-null/PK, not all production FK/CHECK. HTTP fixture injects trusted container and does not validate authentication. Explicit offline tests retain their PGlite engine.",
+    "productionAccess": false,
+    "deployment": false,
+    "systemServiceInstalled": false,
+    "globalEnvironmentChanged": false
+  },
+  "inputHashNormalization": "UTF-8 with CRLF converted to LF",
+  "changedExecutableInputs": [
+    { "file": "src/services/activity/BargainRetirementService.ts", "sha256": "1e5089c96d7cde26edd1c2b54597bf1b051f13102b8477ecbdc31b1ecac342f2" },
+    { "file": "src/controllers/api/v1/AdminCrudController.ts", "sha256": "91a934e27191e1df0684e873b5ff84736076ef6a23cf7b1b57680a0019ae8398" },
+    { "file": "test/bargain-admin-retirement.test.ts", "sha256": "a29f59c1b40c4f77a38d7bdb33676c6daba46c29a26c35cbaf4f463473c4421c" },
+    { "file": "audit/orm-ordinary-index-reconciliation.json", "sha256": "48ea76881851e19c2d233185a5196d7f3a9712b509751c668d761ff8979d4f08" }
+  ],
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "runs": [
+    {
+      "file": "bargain-retirement-red.json", "sha256": "70ab4d9e186bee290e67dbe865b1c709fcc688c4c79dfbe4163ce38efb0696f9",
+      "files": 1, "passed": 1, "failed": 13, "skipped": 0,
+      "interpretation": "Unmodified production code: activity history physically removed, list includes tombstones and ignores limit, malformed/missing identity contract mismatches. Cancel/refund cases fail before compensation, not evidence compensation actually threw."
+    },
+    {
+      "file": "bargain-retirement-green-initial.json", "sha256": "3ae18d494583895fb8bed16034d7a824f7dc850934ea24deb1cbf1373e3f8ae7",
+      "files": 1, "passed": 13, "failed": 1, "skipped": 0,
+      "interpretation": "Remaining failure was incorrect test expectation: refund legitimately increments order-detail refundNum. Corrected exact expected field, no refund business change."
+    },
+    {
+      "file": "bargain-retirement-green.json", "sha256": "dde3da6c6948b56e9b337eaa617605aa5840e678fd6d5951e223d79232e381ce",
+      "files": 1, "passed": 18, "failed": 0, "skipped": 0
+    },
+    {
+      "file": "bargain-retirement-regression.json", "sha256": "462f97910f968b615f63ed41218730fdc0def76ec2703855900a88ad1ab4d947",
+      "files": 17, "passed": 269, "failed": 0, "skipped": 0, "durationSeconds": 89.01,
+      "filters": ["bargain", "ordinary-query-index-alignment", "orm-query-index-alignment", "legacy-query-index-alignment"],
+      "interpretation": "Includes final 20 retirement cases. A type-only response.json assertion was added during this run; exact final input replay is separately recorded below. Not full Worker unit inventory or nine-path catalog audit."
+    },
+    {
+      "file": "bargain-retirement-final.json", "sha256": "8a9622f61976124022c527799d2e154b09a455a32c8fa59c67869e2dc5ae6d23",
+      "files": 1, "passed": 20, "failed": 0, "skipped": 0, "durationSeconds": 14.67
+    }
+  ],
+  "newTestFile": {
+    "file": "test/bargain-admin-retirement.test.ts",
+    "tests": 20,
+    "pgOnlyTests": 6,
+    "independentLockWaitCases": 4,
+    "proof": "Exact pg_blocking_pids pairs: retirement behind checkout, checkout behind retirement, help blocked after real insert while retirement completes, stricter 55P03 then retry. Two further peer tests inspect transaction settings through actual update triggers."
+  },
+  "typecheck": {
+    "unit": "passed", "runtime": "passed",
+    "finalLog": "bargain-retirement-typecheck-final.log",
+    "initialLog": "bargain-retirement-typecheck.log",
+    "initialFailure": "New test response.json unknown typing; corrected test response type."
+  },
+  "cleanup": {
+    "databases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "publicTables": 0, "fixtureSchemas": 0, "otherClients": 0,
+    "manualDatabaseDeletion": false,
+    "postgresPid": 13252,
+    "stoppedAtUtc": "2026-09-09T01:26:30.128Z",
+    "shutdown": "Elevated pg_ctl could not signal original process; pg_ctl in original execution context succeeded, checkpoint completed and server shut down.",
+    "pidAbsent": true, "listenerAbsent": true,
+    "retained": "Stopped local data directory, binaries, raw JSON and logs; fixture schemas were automatically cleaned."
+  },
+  "remaining": [
+    "A3k admin save/status field preservation, validation and global transaction ordering",
+    "A3i user choice on existing participation price snapshots",
+    "Own Linux CI/workerd, complete real-role frontend/payment/provider and production release gates"
+  ]
+}
