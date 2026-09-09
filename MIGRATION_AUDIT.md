@@ -7057,6 +7057,24 @@ Worker unit/runtime类型、Admin/PC构建、UniApp类型与H5/Weixin/App构建�
 
 使用Workers最佳实践技能检查请求内资源与现有Hyperdrive绑定，PostgreSQL技能维持短事务/兼容锁，前端测试技能要求实际页面和截图验收。当前Windows/PGlite/浏览器证据不替代完整Worker库存、九路径目录复审、Linux/workerd、真机、真实认证角色或发布验收。A3k仍缺完整PHP attrs/items兼容、可视化富文本/资源上传选择、运费配送及复制、商品重绑/多规格整理和全局库存/退役并发。订单活动分支目前可见freight/postage/tempId覆盖，尚未证实活动deliveryType由履约门禁完整消费，必须独立接通并验证，不能仅加后台字段便勾选。A3i参与价格快照政策仍待用户选择。
 
+## 2026-09-09：砍价配送/运费的报价与建单门禁（A3k6 服务端候选）
+
+起点`c9cc56c6bb3a73d7d2e314805a88bf303623909b`已推送且工作区干净。其[Actions34308540941](https://github.com/cinagroup/cinashop/actions/runs/34308540941)终态failure，11项runner_id=0/steps=0，check102330186794注释确认账户付款/消费额度限制，未启动执行；没有修改计费、重跑或放宽门禁。上一轮内容闭环是实质进展，本轮不将其浏览器/构建证据归为新配送功能已通过。
+
+PHP `StoreCartServices.php:911–938`按活动productInfo的delivery_type判断是否可配送：空历史配置不限制；shipping_type=1允许快递1或门店配送3；shipping_type=2须含自提2；商品类型1/2/3走非物流合同。Worker `StoreOrderCreateService`此前只复制活动freight/postage/tempId用于计价，没有检查deliveryType，也没有在报价后的活动行锁等待结束时验证这三个运费字段。新增24项真实SQL用例在旧代码上13失败/11通过，复现禁止配送仍可报价/建单，以及真实计价后规则改变仍能提交，不是静态关键词推断。
+
+新BargainShippingPolicy接入共享quote/create路径，保留PHP空配置兼容及非物流合同；非空畸形配送串拒绝，不默认扩大权限。活动配置优先于原商品配送配置，不取交集、不默认为继承。shippingType=1仍是既有“配送”总通道，允许delivery_type=3不意味着已实现同城距离/费用/派单。已有ManualVirtualDeliveryPolicy继续限制卡密/虚拟无自提、次卡仅自提。本轮不改变活动价/参与快照价格公式。
+
+真实建单在既有活动NO KEY UPDATE后、认领购物车前，以主键重读productId/deliveryType/freight/postage/tempId并精确比较此次计价快照；改变时拒绝并要求刷新，不在锁后偷偷改运费，也不把库存和普通标题变更当作配送冲突。没有增加其他资源行锁、外部I/O或数据库结构；保持原库存/取消/退款与截止复核机制。已生成订单的同key重试仍直接返回原订单，不用新活动规则否定历史幂等结果。
+
+最终专项25项服务/真实HTTP测试和8项独立PG16竞争测试通过：确认/重算拒绝禁止方式且不消耗购物车；真实创建和取消恢复库存；配送/运费变化前后及无关改名、规则回滚；准确pg_blocking_pids验证活动更新者先行时买家等待并重读，真实order_cart_info写入后被屏障保持时后来的活动更新者不能越过建单。测试用独立本机PG16.15和随机schema，认证/KV替身；不是生产角色、真实付款或浏览器结算验收。原始红/绿、相关回归、离线和类型结果及源码摘要见`workers-ts/audit/local-pg16-bargain-shipping-acceptance.json`。
+
+审计同时证实未完成环节：LegacyOrderCompatibilityService::checkShipping仍读取原商品deliveryType；PC Checkout与UniApp useCheckout未按活动方式约束选择，除次卡外仍显示两种方式；后台保存目前未接通配送/运费字段。全局store_func_status/store_self_mention、门店归属/自提资格、同城范围、运费模板内容在并发修改下的一致性，以及原商品履约类型变化均需后续完整接通验证。本候选只关闭服务端活动规则门禁A3k6，不关闭整个A3k或配送闭环。
+
+最终相关41文件586项全部通过、零失败/跳过（262.54秒）；PGlite离线25项全部通过（36.69秒），Worker unit/runtime双类型通过。不将离线测试算作独立PG竞争。所有测试终态后核实四个基线数据库、public表0、fixture schema0、其他客户端0，再正常停止临时PG；PID6496于04:05:01.588 UTC停止且55432监听消失。本轮没有人工清理残留数据库，集群/二进制/原始报告保留。清单228勾选/162开放/390项，A3k父项和发布门禁仍开放。
+
+按Workers技能检索[当前最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)，最新types请求失败后回退本地5.20260828.1的Hyperdrive定义及Wrangler schema，既有绑定未修改；PostgreSQL技能用于保持短事务与既有兼容锁。未修改前端、依赖、用户环境或生产，不借用旧Linux/workerd/全Worker目录及页面证据。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -105,6 +105,7 @@ import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard }
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
 import { cartBargainParticipation } from "@/services/activity/BargainParticipationSelection";
+import { assertBargainShippingMethod, assertBargainShippingQuote, type BargainShippingQuote } from "@/services/activity/BargainShippingPolicy";
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -1022,6 +1023,7 @@ export class StoreOrderCreateService {
     let paidMemberDiscountCents = 0;
     let bargainActivityId = 0;
     let bargainParticipantId = 0;
+    let bargainShippingQuote: BargainShippingQuote | null = null;
     let bargainParticipantQuote: Pick<typeof storeBargainUser.$inferSelect, "bargainPrice" | "bargainPriceMin" | "price"> | null = null;
     let orderSystemFormId = 0;
     let pinkCombinationId = 0;
@@ -1141,6 +1143,8 @@ export class StoreOrderCreateService {
           throw new ValidateException("砍价商品不匹配");
         }
         if (cart.activityId !== bargain[0].id) throw new ValidateException("砍价购物车与活动不匹配");
+        assertBargainShippingMethod(bargain[0], product.productType, shippingType);
+        bargainShippingQuote = bargain[0];
         itemSystemFormId = bargain[0].systemFormId;
         bargainActivityId = bargain[0].id;
         if (!activitySku) {
@@ -1692,7 +1696,10 @@ export class StoreOrderCreateService {
       // Before cart claims as well as SKU/group writes: cancellation restores
       // carts and refunds can relink pending orders under this same boundary.
       if (type === 3) await lockPinkInventory(tx, pinkCombinationId);
-      if (type === 2) await lockBargainInventory(tx, bargainActivityId);
+      if (type === 2) {
+        await lockBargainInventory(tx, bargainActivityId);
+        await assertBargainShippingQuote(tx, bargainActivityId, bargainShippingQuote, orderProductType, shippingType);
+      }
 
       // Lock parent -> child -> sorted slots before the other business locks. Time is rechecked
       // at inventory admission; the initial preview cannot authorize a later expired purchase.

@@ -1,0 +1,517 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "c9cc56c6bb3a73d7d2e314805a88bf303623909b",
+  "scope": "FE-003L-A3k6: bargain shipping method admission and quote-to-create shipping rule consistency, backend local candidate only.",
+  "environment": {
+    "platform": "Windows x64",
+    "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432",
+    "role": "finance_test",
+    "database": "cinashop_finance_test",
+    "sqlTimezone": "UTC",
+    "maxWorkers": 1,
+    "fixtureBoundary": "Owned random schemas with real fields/defaults/NOT NULL/PK, not all production FK/CHECK/unique constraints. Auth/KV substitutes.",
+    "productionAccess": false,
+    "deployment": false,
+    "ddlChanged": false,
+    "frontendChanged": false,
+    "pricingFormulaChanged": false,
+    "newResourceLocks": false,
+    "systemServiceInstalled": false,
+    "userEnvironmentChanged": false
+  },
+  "contract": {
+    "phpReferences": [
+      "app/services/order/StoreCartServices.php:286-288,415-425: bargain activity as productInfo",
+      "app/services/order/StoreCartServices.php:911-938: delivery_type admission and non-logistics exception",
+      "app/services/order/StoreOrderServices.php:2453: checkShipping selector",
+      "app/services/product/product/StoreProductServices.php:2574: global/store pickup filtering"
+    ],
+    "rules": [
+      "shippingType=1 allows activity delivery_type containing 1 or 3; shippingType=2 requires 2",
+      "Empty historical delivery_type remains unrestricted and does not inherit the base-product methods",
+      "Non-logistics product types 1/2/3 keep separate ManualVirtualDeliveryPolicy semantics; malformed nonempty physical configuration fails closed",
+      "Once activity NO KEY UPDATE is held, read productId/deliveryType/freight/postage/tempId by primary key and compare with this create call's pricing snapshot before cart claims",
+      "A changed rule requires a fresh quote, never silently changes postage; unrelated metadata and existing completed idempotency remain supported"
+    ],
+    "notClaimed": "This is not the complete delivery workflow, global/store pickup enforcement, same-city delivery implementation, template-internal snapshotting or UI selection."
+  },
+  "inputHashNormalization": "UTF-8 CRLF -> LF; relative paths",
+  "changedExecutableInputs": [
+    {
+      "file": "workers-ts/src/services/activity/BargainShippingPolicy.ts",
+      "sha256": "8aee1bfa44ef0f8c8999d5f1f8b3801e08d37d8ff9bbf2ab5b49319d168d4d9b"
+    },
+    {
+      "file": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "27af903761209dedce9e4db8c3c81da495201a0600525776f812f9d88982de49"
+    },
+    {
+      "file": "workers-ts/test/bargain-shipping-contract.test.ts",
+      "sha256": "99e88ecf566ff7dcdf4a68cd4138bd7d208ffba796b69e38ae641b4a009a235c"
+    },
+    {
+      "file": "workers-ts/test/bargain-shipping-postgres.test.ts",
+      "sha256": "49bfc89770cda126eefbbe53afff42b7605e9df495cf0c45c127a9d0a893374d"
+    }
+  ],
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "runs": [
+    {
+      "file": "bargain-shipping-green.json",
+      "sha256": "de407c03970433e11c7e6d17251f725563875e0d4296f450a0807d8271712776",
+      "files": 1,
+      "total": 24,
+      "passed": 24,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "test/bargain-shipping-contract.test.ts",
+          "passed": 24,
+          "failed": [],
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-shipping-pglite.json",
+      "sha256": "ae183b9be45ea96ab8f0a83794889b503ca4760061a06caf697f6c52462fd43a",
+      "files": 1,
+      "total": 25,
+      "passed": 25,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "test/bargain-shipping-contract.test.ts",
+          "passed": 25,
+          "failed": [],
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-shipping-red.json",
+      "sha256": "b129e67769cdedbb102ee3dbd2e0a3fbb3b564b9d9086c9741dad2bf7534d6a9",
+      "files": 1,
+      "total": 24,
+      "passed": 11,
+      "failed": 13,
+      "pending": 0,
+      "success": false,
+      "results": [
+        {
+          "file": "test/bargain-shipping-contract.test.ts",
+          "passed": 11,
+          "failed": [
+            "bargain shipping quote and actual creation contract rejects delivery_type=1 / shippingType=2 in quote and create without writes",
+            "bargain shipping quote and actual creation contract rejects delivery_type=3 / shippingType=2 in quote and create without writes",
+            "bargain shipping quote and actual creation contract rejects delivery_type=1,3 / shippingType=2 in quote and create without writes",
+            "bargain shipping quote and actual creation contract rejects delivery_type=2 / shippingType=1 in quote and create without writes",
+            "bargain shipping quote and actual creation contract rejects malformed nonempty delivery configuration 4",
+            "bargain shipping quote and actual creation contract rejects malformed nonempty delivery configuration 0",
+            "bargain shipping quote and actual creation contract rejects malformed nonempty delivery configuration 1,x",
+            "bargain shipping quote and actual creation contract rejects malformed nonempty delivery configuration 1,,2",
+            "bargain shipping quote and actual creation contract rejects malformed nonempty delivery configuration [1,2]",
+            "bargain shipping quote and actual creation contract rejects a shipping rule changed after the real pricing path: {\"deliveryType\":\"1\"}",
+            "bargain shipping quote and actual creation contract rejects a shipping rule changed after the real pricing path: {\"freight\":2}",
+            "bargain shipping quote and actual creation contract rejects a shipping rule changed after the real pricing path: {\"postage\":\"8.00\"}",
+            "bargain shipping quote and actual creation contract rejects a shipping rule changed after the real pricing path: {\"tempId\":10}"
+          ],
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-shipping-regression.json",
+      "sha256": "43bb315d9d6323a21621815341b511d9f9a04d0da2c54e5549f6743b799a015d",
+      "files": 41,
+      "total": 586,
+      "passed": 586,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "test/bargain-admin-concurrency-postgres.test.ts",
+          "passed": 9,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-content-postgres.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-content.test.ts",
+          "passed": 24,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-dates-postgres.test.ts",
+          "passed": 8,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-dates.test.ts",
+          "passed": 18,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-form.test.ts",
+          "passed": 11,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-product-postgres.test.ts",
+          "passed": 9,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-product.test.ts",
+          "passed": 17,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-retirement.test.ts",
+          "passed": 20,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-save.test.ts",
+          "passed": 52,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-sku-form.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-sku-postgres.test.ts",
+          "passed": 7,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-admin-sku.test.ts",
+          "passed": 18,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-cart-binding-concurrency-postgres.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-cart-binding.test.ts",
+          "passed": 17,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-cart-participation-migration.test.ts",
+          "passed": 34,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-help-admission.test.ts",
+          "passed": 12,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-help-concurrency-postgres.test.ts",
+          "passed": 12,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-inventory-compensation.test.ts",
+          "passed": 13,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-order-concurrency-postgres.test.ts",
+          "passed": 23,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-order-participation.test.ts",
+          "passed": 54,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-participation-concurrency-postgres.test.ts",
+          "passed": 7,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-participation-state.test.ts",
+          "passed": 24,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-selection-catalog.test.ts",
+          "passed": 29,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-shipping-contract.test.ts",
+          "passed": 25,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-shipping-postgres.test.ts",
+          "passed": 8,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-user-help-migration.test.ts",
+          "passed": 5,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/legacy-query-index-alignment.test.ts",
+          "passed": 4,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/manual-virtual-product.test.ts",
+          "passed": 7,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/order-reward.test.ts",
+          "passed": 6,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/ordinary-query-index-alignment.test.ts",
+          "passed": 5,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/orm-query-index-alignment.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/pc-bargain-purchase.test.ts",
+          "passed": 4,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/pc-checkout-form-postgres.test.ts",
+          "passed": 5,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/pc-checkout-form.test.ts",
+          "passed": 36,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/pc-checkout-quote-postgres.test.ts",
+          "passed": 6,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/pc-checkout-quote.test.ts",
+          "passed": 8,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/shipping-calculator.test.ts",
+          "passed": 10,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/store-order-create-postgres-migration.test.ts",
+          "passed": 3,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/uniapp-checkout-contract.test.ts",
+          "passed": 20,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/uniapp-checkout-postgres.test.ts",
+          "passed": 4,
+          "failed": [],
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "file": "bargain-shipping-targeted.json",
+      "sha256": "250ec70771ca20caecf91f9ca549e3eb47917ba1d6968fd9b837f09765b77862",
+      "files": 2,
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "results": [
+        {
+          "file": "test/bargain-shipping-contract.test.ts",
+          "passed": 25,
+          "failed": [],
+          "skipped": 0
+        },
+        {
+          "file": "test/bargain-shipping-postgres.test.ts",
+          "passed": 8,
+          "failed": [],
+          "skipped": 0
+        }
+      ]
+    }
+  ],
+  "acceptedNewTests": 33,
+  "failureRecord": "Old code: 24 new cases, 13 failed/11 passed. Red failures reproduce unsupported/malformed methods and shipping changes after actual pricing being accepted. Implementation then 24/24 green; HTTP and independent PG tests extended accepted coverage to 25+8. No application/test/SQL timeout relaxed.",
+  "commands": {
+    "regression": "TEST_FINANCE_POSTGRES_URL=dedicated_loopback_fixture npm run test:unit -- bargain shipping-calculator pc-checkout uniapp-checkout manual-virtual-product order-reward store-order-create-postgres-migration ordinary-query-index-alignment orm-query-index-alignment legacy-query-index-alignment --maxWorkers=1 --silent=passed-only --reporter=default --reporter=json",
+    "targeted": "With dedicated loopback TEST_FINANCE_POSTGRES_URL: npm run test:unit -- bargain-shipping --maxWorkers=1",
+    "offline": "Without TEST_FINANCE_POSTGRES_URL: npm run test:unit -- bargain-shipping-contract --maxWorkers=1",
+    "types": "npm run typecheck (unit + runtime)"
+  },
+  "acceptance": {
+    "related": {
+      "files": 41,
+      "passed": 586,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 262.54
+    },
+    "offline": {
+      "files": 1,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 36.69
+    },
+    "workerUnitTypes": "passed",
+    "workerRuntimeTypes": "passed",
+    "browser": "not run; no frontend change",
+    "linuxWorkerd": "not run",
+    "fullWorkerInventory": "not run",
+    "ninePathCatalog": "not run; existing bargain migration cases in related scope do not stand in for all catalog paths"
+  },
+  "logs": [
+    {
+      "file": "bargain-shipping-green.log",
+      "sha256": "04f037aa0ea3d5005dcd335a309d2e6c4824da8929a3a7e8d26dae902c47b59c"
+    },
+    {
+      "file": "bargain-shipping-pglite.log",
+      "sha256": "6702ecb6f6a22bcd4daa769f606ee8aee1189d92cf3b2020c43ac96224d93ccb"
+    },
+    {
+      "file": "bargain-shipping-red.log",
+      "sha256": "9514a7cfc6b3eee3945fa9a69fa2b1ff6709386a5e6841e84940d253f91c303f"
+    },
+    {
+      "file": "bargain-shipping-regression.log",
+      "sha256": "9b2a2bbe860535ebcd6353893e331f01943449dfd4957da4737f0d8a5fadb7c3"
+    },
+    {
+      "file": "bargain-shipping-targeted.log",
+      "sha256": "a5711fdeee7c145262b63696cdd6f1b43bddb86a85e149b34b2fedea99194d4d"
+    },
+    {
+      "file": "bargain-shipping-types-final.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "bargain-shipping-types.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    }
+  ],
+  "cleanup": {
+    "version": "160015",
+    "role": "finance_test",
+    "database": "cinashop_finance_test",
+    "timezone": "UTC",
+    "databases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "publicTables": 0,
+    "fixtureSchemas": 0,
+    "otherClients": 0,
+    "manualDatabaseDeletion": false,
+    "postgresPid": 6496,
+    "pidAbsent": true,
+    "listenersAbsent": [
+      55432
+    ],
+    "stoppedAtUtc": "2026-09-09T04:05:01.588Z",
+    "retained": "Stopped cluster/binaries/logs; no recursive file deletion, no installed system service."
+  },
+  "ci": {
+    "baseRun": "https://github.com/cinagroup/cinashop/actions/runs/34308540941",
+    "baseStatus": "failure",
+    "baseJobs": 11,
+    "baseAllRunnersZero": true,
+    "baseAllStepsZero": true,
+    "baseAnnotationCheck": 102330186794,
+    "baseReason": "Account payments failed or spending limit must be increased; jobs did not start.",
+    "newCommitRun": "Check after push; this artifact makes no new CI pass claim."
+  },
+  "skills": {
+    "workers": "Current best-practices page retrieved; latest types fetch failed, installed workers-types 5.20260828.1 Hyperdrive and Wrangler schema fallback. Binding unchanged.",
+    "postgres": "Preserve short transaction and existing compatible activity lock; no additional lock resource or external I/O."
+  },
+  "remaining": [
+    "Legacy checkShipping still uses base product methods instead of activity methods",
+    "Admin shipping/freight editing and PC/UniApp allowed-method selection still need implementation",
+    "Global store_func_status/store_self_mention, pickup store scope/eligibility, same-city delivery range and template content concurrency remain open",
+    "Base product fulfillment-type changes and complete global inventory/retirement concurrency remain open",
+    "Participation pricing policy requires user decision; no formula changed",
+    "Real roles, providers, current frontend/browser delivery E2E, physical devices, full Worker/Linux/workerd/CI and production release"
+  ]
+}
