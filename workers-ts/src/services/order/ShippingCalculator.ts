@@ -191,9 +191,10 @@ function matchesRuleDestination(
   destination: ShippingDestinationInput,
 ): boolean {
   const regionIds = destinationRegionIds(destination);
+  const legacyPath = legacyRulePath(rule.value, rule.tempId);
+  if (rule.cityId === 0 && rule.provinceId === 0 && legacyPath.every(id => id === 0)) return true;
   if (!regionIds.length) return rule.cityId === 0 && rule.provinceId === 0;
   if (regionIds.includes(rule.cityId) || regionIds.includes(rule.provinceId)) return true;
-  const legacyPath = legacyRulePath(rule.value, rule.tempId);
   return legacyPath.some((regionId) => regionIds.includes(regionId));
 }
 
@@ -236,6 +237,7 @@ export function calculateOrderPostageCents(
   destination: ShippingDestinationInput,
   freeRules: readonly ShippingFreeRuleInput[] = [],
   noDeliveryRules: readonly ShippingNoDeliveryRuleInput[] = [],
+  options: { waivePostage?: boolean } = {},
 ): number {
   if (
     destination.cityId !== undefined &&
@@ -258,7 +260,7 @@ export function calculateOrderPostageCents(
   const measurements = new Map<number, TemplateMeasurement>();
   const templatesById = new Map(templates.map((template) => [template.id, template]));
 
-  for (const templateId of new Set(items.map((item) => item.tempId).filter((id) => id > 0))) {
+  for (const templateId of new Set(items.map((item) => item.tempId > 0 ? item.tempId : ![1, 2].includes(item.freight) ? 1 : 0).filter((id) => id > 0))) {
     const template = templatesById.get(templateId);
     if (template?.noDelivery !== 1) continue;
     const rules = noDeliveryRules.filter((rule) => rule.tempId === templateId);
@@ -274,6 +276,10 @@ export function calculateOrderPostageCents(
       throw new ShippingConfigurationError("当前地区不支持配送");
     }
   }
+
+  // A monetary waiver never grants delivery eligibility. Keep the historical
+  // zero raw postage for whole-order/package waivers, after checking no-delivery.
+  if (options.waivePostage) return 0;
 
   for (const item of items) {
     if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {

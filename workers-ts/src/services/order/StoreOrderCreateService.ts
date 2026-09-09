@@ -33,11 +33,6 @@ import {
   storeBargain,
   storeBargainUser,
   storeCouponUser,
-  shippingTemplates,
-  shippingTemplatesRegion,
-  shippingTemplatesFree,
-  shippingTemplatesNoDelivery,
-  cityArea,
   storeOrderEconomize,
   storeOrderInvoice,
   storeOrderPromotions,
@@ -107,6 +102,7 @@ import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPa
 import { cartBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { assertBargainShippingMethod, assertBargainShippingQuote, type BargainShippingQuote } from "@/services/activity/BargainShippingPolicy";
 import { assertBargainPickup, assertBargainPickupQuote, boundBargainPickupTransaction } from "@/services/activity/BargainPickupPolicy";
+import { readShippingTemplateSnapshot, shippingTemplateIds, assertShippingTemplateBindings, assertShippingTemplateSnapshot, boundShippingTemplateTransaction, type ShippingTemplateSnapshot } from "./ShippingTemplateSnapshot";
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -1488,86 +1484,21 @@ export class StoreOrderCreateService {
     );
     isStoreFreePostage = shippingType === 1 && pricingConfig.wholeFreeShipping
       && totalCents >= pricingConfig.storeFreePostageCents;
+    let shippingSnapshot: ShippingTemplateSnapshot | null = null;
+    const shippingBindings = orderItems.map(({ product, integralActivity, activityTempId, activityFreight }) => ({
+      tempId: activityTempId ?? integralActivity?.tempId ?? product.tempId,
+      freight: activityFreight ?? integralActivity?.freight ?? product.freight,
+      ownerType: product.type, relationId: product.relationId,
+    }));
+    const templateIds = shippingTemplateIds(shippingBindings);
     if (
-      shippingType === 1 && hasDeliveryAddress && !postageExempt && !isStoreFreePostage &&
-      !(type === 5 && discountPackage?.discount.freeShipping === 1)
+      shippingType === 1 && hasDeliveryAddress && !postageExempt
     ) {
-      const templateIds = Array.from(
-        new Set(
-          orderItems
-            .map(({ product, integralActivity, activityTempId }) => {
-              const tempId = activityTempId ?? integralActivity?.tempId ?? product.tempId;
-              return tempId > 0 ? tempId : 1;
-            }),
-        ),
-      );
-      const templateRows = templateIds.length
-        ? await c.db
-            .select({
-              id: shippingTemplates.id,
-              type: shippingTemplates.type,
-              appoint: shippingTemplates.appoint,
-              noDelivery: shippingTemplates.noDelivery,
-            })
-            .from(shippingTemplates)
-            .where(
-              and(
-                inArray(shippingTemplates.id, templateIds),
-                eq(shippingTemplates.status, 1),
-                eq(shippingTemplates.isDel, 0),
-              ),
-            )
-        : [];
-      const regionRows = templateIds.length
-        ? await c.db
-            .select({
-              id: shippingTemplatesRegion.id,
-              templateId: shippingTemplatesRegion.templateId,
-              regionId: shippingTemplatesRegion.regionId,
-              regionName: shippingTemplatesRegion.regionName,
-              first: shippingTemplatesRegion.first,
-              firstPrice: shippingTemplatesRegion.firstPrice,
-              continue: shippingTemplatesRegion.continue,
-              continuePrice: shippingTemplatesRegion.continuePrice,
-            })
-            .from(shippingTemplatesRegion)
-            .where(inArray(shippingTemplatesRegion.templateId, templateIds))
-        : [];
-      const freeRows = templateIds.length
-        ? await c.db
-            .select({
-              id: shippingTemplatesFree.id,
-              tempId: shippingTemplatesFree.tempId,
-              provinceId: shippingTemplatesFree.provinceId,
-              cityId: shippingTemplatesFree.cityId,
-              number: shippingTemplatesFree.number,
-              price: shippingTemplatesFree.price,
-              value: shippingTemplatesFree.value,
-            })
-            .from(shippingTemplatesFree)
-            .where(inArray(shippingTemplatesFree.tempId, templateIds))
-        : [];
-      const noDeliveryRows = templateIds.length
-        ? await c.db
-            .select({
-              id: shippingTemplatesNoDelivery.id,
-              tempId: shippingTemplatesNoDelivery.tempId,
-              provinceId: shippingTemplatesNoDelivery.provinceId,
-              cityId: shippingTemplatesNoDelivery.cityId,
-              value: shippingTemplatesNoDelivery.value,
-            })
-            .from(shippingTemplatesNoDelivery)
-            .where(inArray(shippingTemplatesNoDelivery.tempId, templateIds))
-        : [];
-      const cityRows = params.cityId && params.cityId > 0
-        ? await c.db
-            .select({ path: cityArea.path })
-            .from(cityArea)
-            .where(eq(cityArea.id, params.cityId))
-            .limit(1)
-        : [];
+      shippingSnapshot = templateIds.length ? await readShippingTemplateSnapshot(c.db, templateIds, params.cityId)
+        : { templates: [], regions: [], free: [], noDelivery: [], cityPath: null };
+      assertShippingTemplateBindings(shippingSnapshot, shippingBindings);
       try {
-        const regionIds = expandShippingRegionIds(params.cityId, cityRows[0]?.path);
+        const regionIds = expandShippingRegionIds(params.cityId, shippingSnapshot?.cityPath ?? undefined);
         totalPostageCents = calculateOrderPostageCents(
           orderItems.map(({
             cart, product, sku, integralActivity, unitPriceCents,
@@ -1581,11 +1512,12 @@ export class StoreOrderCreateService {
             weight: sku.weight,
             volume: sku.volume,
           })),
-          templateRows,
-          regionRows,
+          shippingSnapshot?.templates ?? [],
+          shippingSnapshot?.regions ?? [],
           { cityId: params.cityId, province: params.province, regionIds },
-          freeRows,
-          noDeliveryRows,
+          shippingSnapshot?.free ?? [],
+          shippingSnapshot?.noDelivery ?? [],
+          { waivePostage: isStoreFreePostage || (type === 5 && discountPackage?.discount.freeShipping === 1) },
         );
       } catch (error) {
         if (error instanceof ShippingConfigurationError) {
@@ -1680,6 +1612,7 @@ export class StoreOrderCreateService {
 
     // 5. 事务 (ACID): 订单 + 库存 + 快照 + 积分
     const orderRow = await withTx(c, async (tx) => {
+      if (shippingSnapshot) await boundShippingTemplateTransaction(tx);
       if (type === 2 && shippingType === 2) await boundBargainPickupTransaction(tx);
       // 同一用户/幂等键必须在事务内串行化并复查。仅依赖唯一索引会把
       // 并发重试暴露为数据库异常，而不是返回第一次创建的订单。
@@ -1956,12 +1889,13 @@ export class StoreOrderCreateService {
             eq(storeCart.status, 1),
             // Both are single-cart orders. Recheck the quote in the write itself,
             // including after PostgreSQL waits for a concurrent cart editor.
-            type === 1 || type === 2 ? activityCartQuoteGuard(carts[0]) : undefined,
+            shippingSnapshot ? or(...carts.map(activityCartQuoteGuard))
+              : type === 1 || type === 2 ? activityCartQuoteGuard(carts[0]) : undefined,
           ),
         )
         .returning({ id: storeCart.id });
       if (claimedCarts.length !== cartIds.length) {
-        throw new ValidateException(type === 1 ? "秒杀购物车已变化或被占用，请刷新后重试"
+        throw new ValidateException(shippingSnapshot ? "配送购物车已变化或被占用，请刷新后重试" : type === 1 ? "秒杀购物车已变化或被占用，请刷新后重试"
           : type === 2 ? "砍价购物车已变化或被占用，请刷新后重试" : "购物车商品已被其他订单占用");
       }
 
@@ -2104,6 +2038,7 @@ export class StoreOrderCreateService {
           .where(
             and(
               eq(storeCombination.id, pinkCombinationId),
+              shippingSnapshot ? and(eq(storeCombination.freight, orderItems[0].activityFreight!), eq(storeCombination.postage, orderItems[0].activityPostage!), eq(storeCombination.tempId, orderItems[0].activityTempId!)) : undefined,
               eq(storeCombination.status, 1),
               eq(storeCombination.isShow, 1),
               eq(storeCombination.isDel, 0),
@@ -2183,6 +2118,7 @@ export class StoreOrderCreateService {
           .where(
             and(
               eq(storeIntegral.id, integralActivityId),
+              shippingSnapshot ? and(eq(storeIntegral.freight, item.integralActivity.freight), eq(storeIntegral.postage, item.integralActivity.postage), eq(storeIntegral.tempId, item.integralActivity.tempId)) : undefined,
               eq(storeIntegral.productId, item.product.id),
               eq(storeIntegral.status, 1),
               eq(storeIntegral.isShow, 1),
@@ -2325,10 +2261,13 @@ export class StoreOrderCreateService {
             sales: sql`sales + ${cart.cartNum}`,
           })
           .where(and(eq(storeProductAttrValue.id, sku.id), sql`stock >= ${cart.cartNum}`,
+            shippingSnapshot ? and(eq(storeProductAttrValue.productId, product.id),eq(storeProductAttrValue.type,0),
+              eq(storeProductAttrValue.unique,sku.unique),eq(storeProductAttrValue.suk,sku.suk),eq(storeProductAttrValue.isRetired,0),
+              eq(storeProductAttrValue.weight,sku.weight),eq(storeProductAttrValue.volume,sku.volume)) : undefined,
             type === 1 ? seckillSkuQuoteGuard(sku, true) : undefined))
           .returning({ id: storeProductAttrValue.id });
         if (!skuUpdated.length) {
-          throw new ValidateException(type === 1 ? "秒杀基础规格已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」库存不足`);
+          throw new ValidateException(shippingSnapshot ? "配送商品规格已变化或库存不足，请刷新后重试" : type === 1 ? "秒杀基础规格已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」库存不足`);
         }
 
         // 主商品库存 (也带守卫)
@@ -2339,6 +2278,9 @@ export class StoreOrderCreateService {
             sales: sql`sales + ${cart.cartNum}`,
           })
           .where(and(eq(storeProduct.id, product.id), sql`stock >= ${cart.cartNum}`,
+            shippingSnapshot ? and(eq(storeProduct.type,product.type),eq(storeProduct.relationId,product.relationId),
+              eq(storeProduct.productType,product.productType),eq(storeProduct.isShow,1),eq(storeProduct.isDel,0),
+              activityFreightIsInherited(item) ? and(eq(storeProduct.freight,product.freight),eq(storeProduct.postage,product.postage),eq(storeProduct.tempId,product.tempId)) : undefined) : undefined,
             type === 2 && shippingType === 2 ? and(
               eq(storeProduct.type, product.type), eq(storeProduct.relationId, product.relationId),
               eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
@@ -2346,7 +2288,7 @@ export class StoreOrderCreateService {
             type === 1 ? seckillProductQuoteGuard(product) : undefined))
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
-          throw new ValidateException(type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
+          throw new ValidateException(shippingSnapshot ? "配送商品归属或规则已变化，请刷新后重试" : type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
             : type === 2 && shippingType === 2 ? "砍价自提商品归属已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);
         }
 
@@ -2495,6 +2437,7 @@ export class StoreOrderCreateService {
         if (!reserved.length) throw new ValidateException("优惠券已被其他订单占用");
       }
 
+      if (shippingSnapshot) await assertShippingTemplateSnapshot(tx, shippingSnapshot, templateIds, params.cityId);
       if (type === 2) await assertBargainCheckoutWindow(tx, bargainActivityId);
       return order;
     });
@@ -2920,6 +2863,10 @@ export class StoreOrderCreateService {
     }
     return { cartIds };
   }
+}
+
+function activityFreightIsInherited(item: OrderItem): boolean {
+  return item.activityFreight === null && item.integralActivity === null;
 }
 
 interface OrderItem {

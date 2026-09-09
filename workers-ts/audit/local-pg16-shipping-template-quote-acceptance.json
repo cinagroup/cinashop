@@ -1,0 +1,1207 @@
+{
+  "generatedAt": "2026-09-09T06:39:58.646Z",
+  "baseCommit": "bee185aae34bce66b0f37df865dcdc11e104096f",
+  "status": "A3k11a local candidate only; A3k11 parent still open; not deployed",
+  "environment": {
+    "postgres": "isolated loopback PostgreSQL 16.15; disposable random schemas",
+    "auth": "fixture; actual service and confirm/computed Hono handlers",
+    "config": "in-memory KV fixture; not production configuration validation",
+    "productionAccess": false,
+    "frontendChanged": false,
+    "browserTested": false
+  },
+  "sourceHashes": [
+    {
+      "file": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256Lf": "328ba8c1b467737fba586ce2156ef05f4cd42a0a3c69fdd93d4a3087c872566f"
+    },
+    {
+      "file": "workers-ts/src/services/order/ShippingCalculator.ts",
+      "sha256Lf": "cb89054f28eec35c9b45c2b61e752fa250cf32b5d401bf5e37b38e9cbaabb658"
+    },
+    {
+      "file": "workers-ts/src/services/order/ShippingTemplateSnapshot.ts",
+      "sha256Lf": "56d5aeb3b901016f914f31b23622062b0838a4083e4bc6da6ba73752af0057ee"
+    },
+    {
+      "file": "workers-ts/test/shipping-template-quote.test.ts",
+      "sha256Lf": "b8da44c13dc01709eb536a9dc9ea3b77f6a41ebcc66890c324462bd61496f7a1"
+    },
+    {
+      "file": "workers-ts/test/shipping-template-quote-postgres.test.ts",
+      "sha256Lf": "db245a9c66782aa91bcc342594a7cdf5048d2ed9a4cd38fd6a8af30f9fd43cd9"
+    },
+    {
+      "file": "workers-ts/test/shipping-template-activity.test.ts",
+      "sha256Lf": "0654eb2563f88d372e60d9fe3eadad4f9ebdb4931cb05034e3cb88d22f149fbc"
+    }
+  ],
+  "rawDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "reports": [
+    {
+      "file": "template-quote-red.json",
+      "sha256": "55193adbc6d8e155801e7847703d7b0e4698d539945c48add6c3deb75c28933a",
+      "success": false,
+      "total": 9,
+      "passed": 0,
+      "failed": 9,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/shipping-template-quote.test.ts",
+          "status": "failed",
+          "total": 9,
+          "failed": [
+            {
+              "name": "shipping template authoritative quote and actual order does not let whole-order free shipping bypass no-delivery",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 2000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:18:56\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects a template belonging to another supplier in quote and create",
+              "errorExcerpt": "Error: promise resolved \"{ rawTotalCents: 2000, …(18) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:22:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects fee changed after actual pricing without consuming business resources",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'template_quote', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:34:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects status changed after actual pricing without consuming business resources",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'template_quote', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:34:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects deleted changed after actual pricing without consuming business resources",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'template_quote', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:34:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects owner changed after actual pricing without consuming business resources",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'template_quote', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:34:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects free changed after actual pricing without consuming business resources",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'template_quote', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:34:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects noDelivery changed after actual pricing without consuming business resources",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'template_quote', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:34:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "shipping template authoritative quote and actual order rejects city changed after actual pricing without consuming business resources",
+              "errorExcerpt": "Error: promise resolved \"{ orderId: 'template_quote', …(1) }\" instead of rejecting\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-quote.test.ts:34:6\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "template-quote-green.json",
+      "sha256": "df5cc4534748776ad1bb462b9b5edaeb76563f435c1594c9b90463bd3fb3a122",
+      "success": true,
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/shipping-template-quote.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "template-quote-targeted.json",
+      "sha256": "8ac994e411fd290292ee56e0486e95b6aed2005f44ce54528be36a7b7371bab0",
+      "success": true,
+      "total": 40,
+      "passed": 40,
+      "failed": 0,
+      "pending": 0,
+      "files": 3,
+      "results": [
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-quote-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-quote.test.ts",
+          "status": "passed",
+          "total": 22,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "template-quote-activity.json",
+      "sha256": "1dc2b584e61fd3e08dcd902856e76f8c9016e75e5391cf3e573e510794d5f0e0",
+      "success": false,
+      "total": 12,
+      "passed": 9,
+      "failed": 3,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/shipping-template-activity.test.ts",
+          "status": "failed",
+          "total": 12,
+          "failed": [
+            {
+              "name": "activity checkout consumes authoritative shipping template rules preserves real type=5 checkout including package free postage",
+              "errorExcerpt": "ValidateException: 套餐商品「0」规格已失效\n    at C:/cinagroup/cinashop/workers-ts/src/services/activity/StoreDiscountService.ts:244:13\n    at Array.map (<anonymous>)\n    at resolveDiscountPackageSelection (C:/cinagroup/cinashop/workers-ts/src/services/activity/StoreDiscountService.ts:226:28)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at StoreOrderCreateService.createWithRuntime (C:/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts:971:25)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-activity.test.ts:35:39\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "activity checkout consumes authoritative shipping template rules rolls back actual type=5 order if the template changed after quote",
+              "errorExcerpt": "Error: expected [Function] to throw error including '配送' but got '套餐商品「0」规格已失效'\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-activity.test.ts:39:155\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            },
+            {
+              "name": "activity checkout consumes authoritative shipping template rules does not let package free shipping bypass a component no-delivery region",
+              "errorExcerpt": "Error: expected [Function] to throw error including '不支持配送' but got '套餐商品「0」规格已失效'\n    at _Assertion.__VITEST_REJECTS__ (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/expect/dist/index.js:1747:17)\n    at _Assertion.propertyGetter (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1570:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///C:/cinagroup/cinashop/workers-ts/node_modules/chai/index.js:1659:22)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-template-activity.test.ts:49:53\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "template-quote-activity-final.json",
+      "sha256": "c4345a0753c9c2badeb1cbfba11711b6fbc07934af75176c95102b8ddaae1cac",
+      "success": true,
+      "total": 12,
+      "passed": 12,
+      "failed": 0,
+      "pending": 0,
+      "files": 1,
+      "results": [
+        {
+          "file": "workers-ts/test/shipping-template-activity.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "template-quote-regression.json",
+      "sha256": "52c1448f79a5c7d1a8717830f43043569ad22233831e5d0212aa8ea0e072d540",
+      "success": true,
+      "total": 910,
+      "passed": 910,
+      "failed": 0,
+      "pending": 0,
+      "files": 72,
+      "results": [
+        {
+          "file": "workers-ts/test/activity-catalog-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-assisted-order-migration.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-shipping-atomic-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "total": 26,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/api-order-after-sale-migration.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/api006-activity-compatibility-migration.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-form.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-retirement.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-save.test.ts",
+          "status": "passed",
+          "total": 52,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping.test.ts",
+          "status": "passed",
+          "total": 28,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-form.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-inventory-compensation.test.ts",
+          "status": "passed",
+          "total": 13,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-order-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 23,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-order-participation.test.ts",
+          "status": "passed",
+          "total": 54,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-postgres.test.ts",
+          "status": "passed",
+          "total": 14,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-contract.test.ts",
+          "status": "passed",
+          "total": 25,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-user-help-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/business.test.ts",
+          "status": "passed",
+          "total": 16,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/checkout-payment.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/coupon-relationship-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/discount-package-migration.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/integral-order-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/legacy-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/manual-virtual-product.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/newcomer-migration.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-auxiliary-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-cart-pink-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-coupon-picker.test.ts",
+          "status": "passed",
+          "total": 23,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-legacy-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-supplier-allocation.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/ordinary-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/orm-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pc-coupon-wallet-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pc-order-coupon-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pink-refund-lock-order-postgres.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/product-coupon-migration.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/product-sku-retirement.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/promotion-catalog-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/receipt-print-job.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/reply-shipping-migration.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/request-body.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/seckill-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 16,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+          "status": "passed",
+          "total": 111,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/second-card-product.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/second-card-validity.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-quote-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-quote.test.ts",
+          "status": "passed",
+          "total": 22,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/store-order-create-postgres-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/store-order-payment-cancel-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/store-order-writeoff-migration.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/supplier-shipping-template.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/supplier-split-fulfillment.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/system-form-migration.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/virtual-product-delivery.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "template-quote-regression-final.json",
+      "sha256": "1d256ee2d2f3c4af3906b50a656f3369776ad0e046ffa967641ecd1f98b86370",
+      "success": true,
+      "total": 924,
+      "passed": 924,
+      "failed": 0,
+      "pending": 0,
+      "files": 73,
+      "results": [
+        {
+          "file": "workers-ts/test/activity-catalog-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-assisted-order-migration.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-shipping-atomic-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "total": 26,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/api-order-after-sale-migration.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/api006-activity-compatibility-migration.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-content.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-dates.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-form.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product-postgres.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-product.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-retirement.test.ts",
+          "status": "passed",
+          "total": 20,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-save.test.ts",
+          "status": "passed",
+          "total": 52,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-shipping.test.ts",
+          "status": "passed",
+          "total": 28,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-form.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku-postgres.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-admin-sku.test.ts",
+          "status": "passed",
+          "total": 18,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-cart-binding.test.ts",
+          "status": "passed",
+          "total": 17,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-inventory-compensation.test.ts",
+          "status": "passed",
+          "total": 13,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-order-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 23,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-order-participation.test.ts",
+          "status": "passed",
+          "total": 54,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-admission.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-pickup-postgres.test.ts",
+          "status": "passed",
+          "total": 14,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-contract.test.ts",
+          "status": "passed",
+          "total": 25,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection-postgres.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-shipping-selection.test.ts",
+          "status": "passed",
+          "total": 41,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/bargain-user-help-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/business.test.ts",
+          "status": "passed",
+          "total": 16,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/checkout-payment.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/coupon-relationship-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/discount-package-migration.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/integral-order-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/legacy-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 4,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/manual-virtual-product.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/newcomer-migration.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-auxiliary-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-cart-pink-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-coupon-picker.test.ts",
+          "status": "passed",
+          "total": 23,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-legacy-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/order-supplier-allocation.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/ordinary-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/orm-query-index-alignment.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pc-checkout-form-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pc-coupon-wallet-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pc-order-coupon-postgres.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/pink-refund-lock-order-postgres.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/product-coupon-migration.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/product-sku-retirement.test.ts",
+          "status": "passed",
+          "total": 11,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/promotion-catalog-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/receipt-print-job.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/reply-shipping-migration.test.ts",
+          "status": "passed",
+          "total": 2,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/request-body.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/seckill-concurrency-postgres.test.ts",
+          "status": "passed",
+          "total": 16,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/seckill-schedule-postgres.test.ts",
+          "status": "passed",
+          "total": 111,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/second-card-product.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/second-card-validity.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-activity.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-quote-postgres.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-quote.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/store-order-create-postgres-migration.test.ts",
+          "status": "passed",
+          "total": 3,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/store-order-payment-cancel-migration.test.ts",
+          "status": "passed",
+          "total": 5,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/store-order-writeoff-migration.test.ts",
+          "status": "passed",
+          "total": 8,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/supplier-shipping-template.test.ts",
+          "status": "passed",
+          "total": 7,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/supplier-split-fulfillment.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/system-form-migration.test.ts",
+          "status": "passed",
+          "total": 6,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/virtual-product-delivery.test.ts",
+          "status": "passed",
+          "total": 9,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "file": "template-quote-offline.json",
+      "sha256": "13b1f5e8488c4fbcef3271992a3ae56dc6383cff1bc9dc8e3526d2299a0bb290",
+      "success": true,
+      "total": 46,
+      "passed": 46,
+      "failed": 0,
+      "pending": 0,
+      "files": 3,
+      "results": [
+        {
+          "file": "workers-ts/test/shipping-calculator.test.ts",
+          "status": "passed",
+          "total": 10,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-activity.test.ts",
+          "status": "passed",
+          "total": 12,
+          "failed": []
+        },
+        {
+          "file": "workers-ts/test/shipping-template-quote.test.ts",
+          "status": "passed",
+          "total": 24,
+          "failed": []
+        }
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "file": "template-quote-types.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "template-quote-types-final.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "template-quote-types-complete.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "template-quote-server.log",
+      "sha256": "ea4b9cce34a7b0f73d4cdbfd8e74a4f0cd1ed3826133a7b5fffb26892b590467"
+    },
+    {
+      "file": "template-quote-red.log",
+      "sha256": "8cb1cc0093c2bd65325249fbec5e454941cbf78560d9e23b4325cd3da912acd6"
+    },
+    {
+      "file": "template-quote-green.log",
+      "sha256": "3e1d60f7fe98e82ff1533b1c08238642486e164da5491e53609c7d95e18e8776"
+    },
+    {
+      "file": "template-quote-targeted.log",
+      "sha256": "0475a0fa00f96cf4305f420c32445eddea2d70193ce6626f439a5938b464638a"
+    },
+    {
+      "file": "template-quote-activity.log",
+      "sha256": "a0d159ab038ed578bcd6530f53f026206aad4f2bda9726289ae8228a66461e95"
+    },
+    {
+      "file": "template-quote-activity-final.log",
+      "sha256": "d43ecd49e818fb9c0a5e609f8bea38f63d7c7f9b2277ee82896fd97a4f08f2ec"
+    },
+    {
+      "file": "template-quote-regression.log",
+      "sha256": "8322a19f393ce1828bb5da025d3883b9fe9ec04322f4fb2f75d685dc0722a0ea"
+    },
+    {
+      "file": "template-quote-regression-final.log",
+      "sha256": "fd42074f865053f74490c1c513aaeb89aed1b4b5ec0b358d775c3c4b0fdb29a6"
+    },
+    {
+      "file": "template-quote-offline.log",
+      "sha256": "0effacbd3f1f07d02919d927366ea1f5e71b8b61ca26fdd6a536224210f03b4a"
+    }
+  ],
+  "verification": {
+    "workerTypecheck": "unit and runtime passed; final original process 52069 exited 0",
+    "postgresConcurrency": "8 independent-backend cases; one-statement MVCC during verified concurrent commit, actual admin writer/create ordering and rollback, parent/city locks held to outer commit, nested isolation and timeout restoration",
+    "scope": "related unit suite contains static, pure, SQL and independent PostgreSQL tests; not all results are PostgreSQL concurrency tests and not the complete Worker suite",
+    "initialRed": "9 of 9 fail on old implementation; quote permits foreign owner/waiver bypass and actual create accepts later rule/city changes",
+    "initialActivityFailure": "3 of 12 fail before reaching template behavior: test unique identifiers had 7 chars, CHAR(8) padding mismatched exact map keys; replaced with 8-char generated-contract fixtures, no production selector change",
+    "transactionBounds": "READ COMMITTED create; statement/lock/idle 5/2/5 seconds preserving stricter settings; not total deadline",
+    "quoteSnapshot": "single SELECT, up to 200 templates and 10000 rows per child set; no truncation; no mutable cross-request cache"
+  },
+  "limitations": [
+    "Scope is shippingType=1, physical products with an address recognized by the existing core. Missing-address create can still bypass this segment (A3k11b).",
+    "Same-create-request pricing-to-commit guards do not bind a prior HTTP confirm/computed quote; checkout key stores only cart IDs (A3k11c).",
+    "Global fee-waiver/offline/member-right configuration remains separately read and partly KV cached (A3k11d).",
+    "Direct child SQL must observe parent locking; no universal database enforcement.",
+    "Template reference lifecycle/deletion and complete admin UI remain open (A3k12/A3k13).",
+    "No browser, real authentication, Linux/workerd, production or deployment acceptance."
+  ],
+  "cleanup": {
+    "baseline": {
+      "databases": [
+        "cinashop_finance_test",
+        "postgres",
+        "template0",
+        "template1"
+      ],
+      "publicTables": 0,
+      "nonSystemSchemas": null,
+      "otherClients": 0,
+      "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit"
+    },
+    "postgresPid": 1972,
+    "stopRequest": "fast shutdown, pg_ctl -w -t 20 observation timed out with exit 1; did not repeat or force kill",
+    "originalForegroundSession": "30109 terminated normally with exit 0",
+    "serverStoppedAtUtc": "2026-09-09 06:39:32.816 UTC",
+    "port55432Listening": false,
+    "pidPresent": false,
+    "checkpoint": "completed pre-existing 273.046s checkpoint then 4.309s shutdown checkpoint",
+    "artifacts": "cluster, binaries, logs and raw reports retained; all fixture schemas self-cleaned; no manual database deletion"
+  }
+}
