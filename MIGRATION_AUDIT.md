@@ -7007,6 +7007,22 @@ PHP `app/controller/admin/v1/marketing/bargain/StoreBargain.php`删除仅更新`
 
 所有本轮测试随机schema已自动清理，最终仅4个基线库、public表0、fixture schema0、其他客户端0。临时PG16准确PID12588于01:55:46.352 UTC完成checkpoint并停止；5208内存SQL服务器关闭且Vite5209停止，三处监听均消失，保留本机报告/二进制/截图，不需人工删库。源码与报告摘要见`workers-ts/audit/local-pg16-bargain-admin-save-acceptance.json`。
 
+## 2026-09-09：砍价后台时间窗口与已结束编辑保护
+
+本轮基线为已推送`dc28e34d1eed63393a9e7f6b550e414dd9c5d228`；其[Actions34301338858](https://github.com/cinagroup/cinashop/actions/runs/34301338858)11项均runner_id=0/steps=0，check102308695307注明账户付款失败/消费额度限制导致未启动，未重跑或修改计费。PHP StoreBargain控制器/Validate要求section_time、拒绝过去结束时间与已结束活动保存；StoreBargainServices将时间段转为Unix时间，copy=1走新建。Worker上一版基本编辑没有时间输入和相应保存校验，本轮只补等价起止/过期保存合同，不冒充完整copy/SKU编辑。
+
+服务端仅接受`YYYY-MM-DDTHH:mm:ss.SSSZ`规范UTC格式，严格往返验证拒绝日期溢出、无时区及其他格式；新建和合并后的更新均须有有效起止且开始严格早于结束。旧NULL日期没有明确PHP等价物，选择要求管理员显式补两端，不自动填入当前时间。READ COMMITTED活动NO KEY UPDATE后使用数据库clock_timestamp判断有效期，实际写后重新读取并复核；编辑的原始截止时间始终保留为额外门禁，因此先排队或实际写后阻塞跨过旧截止，不能靠新的未来截止复活。实际INSERT跨新截止也回滚。保持既有2/5/5秒事务局部限制及更严格设置，不增加参与/SKU锁、不修改状态接口或报价公式，无DDL/绑定变更。
+
+初轮18项均失败，其中16项是旧代码缺少时间保存/校验的业务失败，另外2项是PGlite不支持prepared多语句的触发器夹具设置错误；后者改为fixture.exec后才计入验证，不算业务红证据。修复后日期/基本保存/前端辅助函数3文件81项通过，新增独立PG16 8项通过。准确pg_blocking_pids屏障及数据库时钟等待覆盖锁前/实际UPDATE后跨原截止、INSERT后跨新截止、两位管理员只改各自端点导致合并后顺序冲突、实际help INSERT持KEY SHARE时延后开始可提交而help最终拒绝回滚；SQL会话UTC/上海/纽约均保持精确时刻。另测试应用Date.now快慢两小时不替代PG准入、触发器更改实际保存截止后整体回滚。快照不包含非事务序列。
+
+最终全部砍价相关19文件355项通过（118.78秒），另三类索引证据3文件12项通过（0.595秒），两范围不重叠，合计22文件367项零失败/跳过；新增31项（日期18、PG专属8、前端辅助函数新增5）。Worker unit/runtime双类型、最终Admin vue-tsc与Vite构建通过。采用真实列/默认/非空/主键的随机SQL schema，不等于全部生产FK/CHECK；显式离线测试仍用PGlite，不称367项全为多连接PG测试。未重跑全Worker单元、九路径目录或Linux/workerd，不能借用旧提交全量/CI。
+
+前端新增原生Date对象日期选择器和时区提示，编辑按精确UTC时刻比较，只提交变化端点；保存失败保留输入，nextTick后将内联错误自动滚入视野。按前端测试技能，在browser skill未提供时使用现有Playwright/Chrome。127.0.0.1:5209实际Vue/Element Plus/Axios连接5208内存SQL真实控制器，认证/站点配置/待办明确替身，阻止外部网络。首轮桌面通过后手机断言失败，经请求和SQL核查是测试状态取排序第一行：新建活动id=1后不再是目标40；修正夹具按ID取值并重启内存实例，未改业务时区代码。最终1280×900/Asia/Singapore与390×844/America/New_York均通过身份/非空/无框架遮罩/console0错误0警告/截图和交互：创建日期必填、编辑保存刷新不偏移、仅改结束时间、倒置日期不发HTTP、过去截止被实际服务端拒绝且数据不变。截图人工查看无弹窗横向裁切，手机长表单内部可滚动且提示自动可见。日期弹层键盘输入/确认已用，尚未专项验证DST切换和全部日历鼠标路径；基本创建不生成SKU或真实订单。
+
+Workers技能保持请求内事务资源与无外部副作用；PG技能指导短事务与兼容锁，[PG16时间函数](https://www.postgresql.org/docs/16/functions-datetime.html)明确墙钟与事务固定时间的区别；前端技能驱动双视口实际交互、时区及错误可见性验证。[Cloudflare最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)与[Element Plus日期组件](https://element-plus.org/en-US/component/date-picker.html)已检索；最新types读取失败，沿用已核查本地5.20260828.1/Hyperdrive/Wrangler schema，未变更平台API。A3k2只勾选本地候选，A3k完整规格/图片/描述/运费/资格/复制/商品重绑与全局锁序继续开放；A3i参与价格快照仍未作产品选择。当前224勾选/162开放/386项。无生产SQL、DDL、部署或provider调用，发布必须配套前后端并处理旧客户端无日期的创建请求。
+
+最终只余4个基线库、public表0、fixture schema0、其他客户端0；准确PG PID14300于02:18:02.495 UTC完成checkpoint并关闭，pg_ctl无运行实例，原PID及55432/5208/5209监听均不存在。内存SQL实例关闭，Vite以Ctrl-C停止；保留停止的临时集群/二进制/报告/截图，未人工删除数据库或安装系统服务。变更输入LF摘要和原始报告摘要见`workers-ts/audit/local-pg16-bargain-admin-dates-acceptance.json`。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

@@ -67,8 +67,10 @@
     </el-table>
 
     <!-- 活动创建/编辑弹窗 -->
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑活动' : '新增活动'" width="min(560px, calc(100vw - 24px))">
-      <el-alert v-if="formError" :title="formError" type="error" :closable="false" show-icon class="form-error" />
+    <el-dialog v-model="formVisible" :title="form.id ? '编辑活动' : '新增活动'" width="min(560px, calc(100vw - 24px))" top="5vh" :style="{ maxHeight: '90vh', overflowY: 'auto' }">
+      <div v-if="formError" ref="formErrorElement">
+        <el-alert :title="formError" type="error" :closable="false" show-icon class="form-error" />
+      </div>
       <el-form :model="form" label-width="100px">
         <el-form-item label="商品ID" required>
           <el-input-number v-model="form.productId" :min="1" />
@@ -105,6 +107,15 @@
         <el-form-item label="底价" v-if="formType === 'bargain'">
           <el-input v-model="form.minPrice" placeholder="可砍至最低价" />
         </el-form-item>
+        <template v-if="formType === 'bargain'">
+          <el-form-item label="开始时间" required>
+            <el-date-picker v-model="form.startTime" type="datetime" format="YYYY-MM-DD HH:mm:ss" placeholder="选择开始时间" style="width: 100%" />
+          </el-form-item>
+          <el-form-item label="结束时间" required>
+            <el-date-picker v-model="form.stopTime" type="datetime" format="YYYY-MM-DD HH:mm:ss" placeholder="选择结束时间" style="width: 100%" />
+          </el-form-item>
+          <p class="time-hint">时间按本地时区 {{ browserTimeZone }} 显示，保存为 UTC；已结束活动不可直接编辑重启。</p>
+        </template>
         <el-form-item label="积分" v-if="formType === 'integral'">
           <el-input-number v-model="form.integral" :min="0" />
         </el-form-item>
@@ -195,7 +206,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessage } from "element-plus";
 import {
   apiAdminSeckillList,
@@ -212,7 +223,7 @@ import {
 } from "@/api/activity";
 import { ElMessageBox } from "element-plus";
 import DiscountPackageManager from "@/pages/activity/DiscountPackageManager.vue";
-import { bargainEditPayload } from "@/api/bargainEdit";
+import { bargainEditPayload, bargainFormDate } from "@/api/bargainEdit";
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
@@ -229,7 +240,9 @@ const seckillTimes = ref<{ id: number; startTime: string; endTime: string; conti
 const formVisible = ref(false);
 const saving = ref(false);
 const formError = ref("");
+const formErrorElement = ref<HTMLElement | null>(null);
 const formType = ref("seckill");
+const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 let bargainOriginal: Record<string, unknown> | null = null;
 const form = reactive({
   id: 0,
@@ -246,6 +259,8 @@ const form = reactive({
   integral: 100,
   sort: 90,
   status: 1,
+  startTime: null as Date | null,
+  stopTime: null as Date | null,
 });
 
 function formatTime(ts: number): string {
@@ -329,6 +344,13 @@ async function toggleStatus(row: ActivityItem) {
 function openForm(row?: ActivityItem) {
   formError.value = "";
   formType.value = activeTab.value;
+  try {
+    form.startTime = row && formType.value === "bargain" ? bargainFormDate(row.startTime) : null;
+    form.stopTime = row && formType.value === "bargain" ? bargainFormDate(row.stopTime) : null;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "活动时间无效");
+    return;
+  }
   if (row) {
     form.id = row.id;
     form.productId = row.productId ?? 1;
@@ -392,6 +414,8 @@ async function save() {
     load();
   } catch (e) {
     formError.value = e instanceof Error ? e.message : "保存失败";
+    await nextTick();
+    formErrorElement.value?.scrollIntoView({ block: "nearest" });
   } finally {
     saving.value = false;
   }
@@ -438,4 +462,6 @@ onMounted(load);
 .form-error {
   margin-bottom: 16px;
 }
+
+.time-hint { color: #606266; font-size: 12px; margin: 0 0 16px 0; }
 </style>

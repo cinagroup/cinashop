@@ -29,6 +29,27 @@ function text(value: unknown, maximum: number, required: boolean): string {
   }
   return value;
 }
+function instant(value: unknown): Date {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
+    throw new ValidateException("砍价时间须为明确的UTC时间");
+  }
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime()) || date.toISOString() !== value) throw new ValidateException("砍价时间无效");
+  return date;
+}
+
+async function assertWindow(tx: DbClient, start: Date | null | undefined, stop: Date | null | undefined, previousStop?: Date | null): Promise<void> {
+  if (!(start instanceof Date) || !(stop instanceof Date) || !Number.isFinite(start.getTime()) || !Number.isFinite(stop.getTime())) {
+    throw new ValidateException("请配置有效的砍价开始和结束时间");
+  }
+  const [clock] = await tx.select({
+    open: sql<boolean>`${stop.toISOString()}::timestamptz >= clock_timestamp()`,
+    editable: previousStop ? sql<boolean>`${previousStop.toISOString()}::timestamptz >= clock_timestamp()` : sql<boolean>`true`,
+  }).from(sql`(VALUES (1)) AS window_probe(n)`);
+  if (!clock.editable) throw new ValidateException("活动已结束，请重新添加活动");
+  if (!clock.open) throw new ValidateException("活动结束时间不能小于数据库当前时间");
+  if (start >= stop) throw new ValidateException("活动开始时间必须早于结束时间");
+}
 function parse(body: Record<string, unknown>): Patch {
   for (const field of ["sales", "addTime", "isDel", "quotaShow"]) {
     if (own(body, field)) throw new ValidateException(`砍价${field}由系统维护`);
@@ -45,6 +66,8 @@ function parse(body: Record<string, unknown>): Patch {
   if (own(body, "num")) patch.num = integer(body.num, "限购数量", 1);
   if (own(body, "sort")) patch.sort = integer(body.sort, "排序");
   if (own(body, "status")) patch.status = integer(body.status, "状态", 0, 1);
+  if (own(body, "startTime")) patch.startTime = instant(body.startTime);
+  if (own(body, "stopTime")) patch.stopTime = instant(body.stopTime);
   // The legacy generic form also sends fields belonging to other activity types.
   // They are not bargain columns and remain ignored, never mass-assigned.
   return patch;
@@ -87,6 +110,9 @@ export async function saveBargain(container: Container, body: Record<string, unk
       people: 10, num: 1, status: 1, sort: 90, ...patch,
     };
     const merged = { ...current, ...values };
+    // Retain the original deadline even if the edit extends it: waiting across
+    // that deadline must not resurrect an activity PHP considers ended.
+    await assertWindow(tx, merged.startTime, merged.stopTime, current?.stopTime);
     if (!current || patch.price !== undefined || patch.minPrice !== undefined || patch.people !== undefined) {
       const delta = cents(merged.price!) - cents(merged.minPrice!);
       if (delta <= 0) throw new ValidateException("砍价底价必须低于起价");
@@ -105,10 +131,16 @@ export async function saveBargain(container: Container, body: Record<string, unk
       if (patch.quota !== undefined) values.quotaShow = patch.quota;
       // Only supplied fields are written. Never replay the entire locked row.
       if (Object.keys(values).length) await tx.update(storeBargain).set(values).where(eq(storeBargain.id, current.id));
+      const [saved] = await tx.select({ start: storeBargain.startTime, stop: storeBargain.stopTime }).from(storeBargain)
+        .where(eq(storeBargain.id, current.id)).limit(1);
+      await assertWindow(tx, saved?.start, saved?.stop, current.stopTime);
       return current.id;
     }
     const [created] = await tx.insert(storeBargain).values({ ...values, quotaShow: values.quota,
       sales: 0, addTime: sql`floor(extract(epoch from clock_timestamp()))::int` }).returning({ id: storeBargain.id });
+    const [saved] = await tx.select({ start: storeBargain.startTime, stop: storeBargain.stopTime }).from(storeBargain)
+      .where(eq(storeBargain.id, created.id)).limit(1);
+    await assertWindow(tx, saved?.start, saved?.stop);
     return created.id;
   });
 }

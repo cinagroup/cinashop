@@ -74,7 +74,7 @@ describe('bargain admin edits preserve existing business data', () => {
   });
   it('creates a basic activity with validated submitted rules and zero sales', async () => {
     const response = await request({ type: 'bargain', productId: 70, storeName: '新活动', price: '10', minPrice: '2.5',
-      stock: 12, quota: 9, people: 3, num: 2, status: 0 });
+      stock: 12, quota: 9, people: 3, num: 2, status: 0, startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString() });
     expect(response).toMatchObject({ status: 200 });
     const rows = await f.db.select().from(storeBargain).where(eq(storeBargain.storeName, '新活动'));
     expect(rows).toHaveLength(1);
@@ -91,7 +91,8 @@ describe('bargain admin edits preserve existing business data', () => {
   });
   it.each([{ productId: 999 }, { price: '0.00' }, { people: 801 }, { quota: 101 }, { minPrice: '10.00' }])('rejects invalid basic creation %j', async patch => {
     const before = await snapshot();
-    expect(await request({ type: 'bargain', productId: 70, storeName: '新建', price: '10.00', minPrice: '2.00', ...patch })).toMatchObject({ status: 400 });
+    expect(await request({ type: 'bargain', productId: 70, storeName: '新建', price: '10.00', minPrice: '2.00',
+      startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString(), ...patch })).toMatchObject({ status: 400 });
     expect(await snapshot()).toEqual(before);
   });
   it.each(['save', 'status'])('rolls back an injected database failure after %s writes', async path => {

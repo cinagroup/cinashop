@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "dc28e34d1eed63393a9e7f6b550e414dd9c5d228",
+  "scope": "Generic bargain admin start/end dates, UTC roundtrip and database-clock expired-edit rejection; local candidate, not complete PHP SKU/copy or production acceptance.",
+  "environment": {
+    "platform": "Windows x64", "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432", "database": "cinashop_finance_test", "role": "finance_test", "maxWorkers": 2,
+    "fixtureBoundary": "Random owned SQL schemas with real columns/defaults/not-null/PK, not all production FK/CHECK. Explicit offline tests retain PGlite. HTTP tests inject trusted auth, not real authentication.",
+    "productionAccess": false, "deployment": false, "ddlChanged": false, "pricingFormulaChanged": false,
+    "systemServiceInstalled": false, "globalEnvironmentChanged": false
+  },
+  "inputHashNormalization": "UTF-8 with CRLF converted to LF; file paths relative to repository root",
+  "changedExecutableInputs": [
+    { "file": "workers-ts/src/services/activity/BargainAdminService.ts", "sha256": "edc83c9a6b664e5e11ab0575750ce0f7bada0394ba8dd1a53c627ccb510b282e" },
+    { "file": "view/admin-ts/src/api/bargainEdit.ts", "sha256": "e9dc5f6bbc8da8d3ed2631760f186bd98dd19add261856d3a31e54d432eaf56b" },
+    { "file": "view/admin-ts/src/pages/activity/ActivityList.vue", "sha256": "7c644c23876427783a563e1944821d3191dd9bfd2526a54f261a9107e28026a4" },
+    { "file": "workers-ts/test/bargain-admin-form.test.ts", "sha256": "178af12ea7c2e6639c0fa377faa26cde78737eca6858cc1b5e66b567a5a7e682" },
+    { "file": "workers-ts/test/bargain-admin-save.test.ts", "sha256": "9afbe6c5eea8402aee5f05dacb2be9c0b68b0c630b1df2f8a2c342471511cf1f" },
+    { "file": "workers-ts/test/bargain-admin-dates.test.ts", "sha256": "11c3a39b032439430f0249d61c3d96eb4cd695806b5ddad668dfef7a3c404154" },
+    { "file": "workers-ts/test/bargain-admin-dates-postgres.test.ts", "sha256": "e8271df196c62c5f72339323746efaaef5232a0245956affbb23599ce71fd2a5" }
+  ],
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "runs": [
+    { "file": "bargain-dates-red.json", "sha256": "47d868b45b6cf68dcfa5475546ed70cbad61a1adf0a127e1ffb673d7be3cc35c", "files": 1, "passed": 0, "failed": 18, "skipped": 0, "boundary": "16 business failures on old service; 2 trigger fixture setup failures (PGlite prepared multi-statement SQL42601), corrected to fixture.exec before validation; not 18 business-red proofs." },
+    { "file": "bargain-dates-green.json", "sha256": "74e8fa8ef4d6f214c53a3d3249a545264461a112ffee95e6c09da274a45afce0", "files": 3, "passed": 81, "failed": 0, "skipped": 0 },
+    { "file": "bargain-dates-concurrency.json", "sha256": "915437c269af12dd898077f23b8c70503c7d41ed2a55bc40a4bf0cc8288836fc", "files": 1, "passed": 8, "failed": 0, "skipped": 0, "durationSeconds": 11.09 },
+    { "file": "bargain-dates-final.json", "sha256": "d51c9869f80ed7e109f87b3fc36223da8249948d6cc4b66b2182d20b82c6f561", "files": 19, "passed": 355, "failed": 0, "skipped": 0, "durationSeconds": 118.78 },
+    { "file": "bargain-dates-indexes.json", "sha256": "d2f35392ca67c13aa5a0e1dedf539b70886e08152ab92faeaca7019500d1dd00", "files": 3, "passed": 12, "failed": 0, "skipped": 0, "durationSeconds": 0.595 }
+  ],
+  "finalRegression": {
+    "files": 22, "passed": 367, "failed": 0, "skipped": 0,
+    "boundary": "Two disjoint executed ranges: all bargain files (19/355), then ordinary-query-index-alignment, orm-query-index-alignment, legacy-query-index-alignment (3/12). Extra catalog-* filters in the first command matched no additional files. Not one 367-test run or the full Worker inventory.",
+    "newTests": { "dateContract": 18, "pgOnlyConcurrency": 8, "additionalFormCases": 5, "total": 31 }
+  },
+  "checks": {
+    "workerUnitTypes": "passed", "workerRuntimeTypes": "passed", "adminBuild": "passed",
+    "typeLog": "bargain-dates-types.log", "adminBuildLog": "bargain-dates-admin-build-final.log",
+    "fullWorkerUnitRerun": false, "ninePathCatalogRerun": false, "linuxWorkerd": false,
+    "pgClockProofs": ["Exact blocking PIDs before UPDATE and after real UPDATE; old deadline crossed then extension rolled back", "Real INSERT blocked past new deadline rolled back", "Concurrent partial endpoints revalidated against committed row", "Real help INSERT KEY SHARE compatible with start postponement; help final validation rolls back"],
+    "sqlTimeZones": ["UTC", "Asia/Shanghai", "America/New_York"],
+    "applicationClockSkewMilliseconds": [-7200000, 7200000]
+  },
+  "browser": {
+    "url": "http://127.0.0.1:5209/activity",
+    "fixture": "Loopback 5208 PGlite and real controllers; auth/site metadata/counts substituted; external requests blocked; no production or real orders",
+    "driver": "Existing Playwright/Chrome; Browser skill not listed in current session",
+    "finalLog": "bargain-dates-browser-final.log",
+    "initialLog": "bargain-dates-browser.log",
+    "initialFailure": "Desktop passed; mobile state assertion selected first sorted fixture activity, which became newly inserted id=1. Request and actual id=40 SQL confirmed correct New York UTC values. Fixed state selector to id=40, restarted memory instance and reran both contexts.",
+    "changes": "Native Date picker, local-zone label, ISO-only changed endpoints; bounded-height scrolling dialog and automatic error visibility after nextTick",
+    "checks": { "identity": "passed", "notBlank": "passed", "noFrameworkOverlay": "passed", "consoleErrors": 0, "consoleWarnings": 0, "screenshots": "reviewed", "interaction": "passed" },
+    "flow": "Edit both dates; save and reload verifies local display. Change only stop; payload excludes unchanged start. Reversed dates refuse before HTTP and show error automatically; past stop rejected by real controller with persisted values unchanged. New activity refuses missing dates then succeeds with explicit valid pair.",
+    "contexts": [
+      { "viewport": "1280x900", "timeZone": "Asia/Singapore", "localStart": "2030-06-01 10:15:30", "persistedStartUtc": "2030-06-01T02:15:30.000Z" },
+      { "viewport": "390x844", "timeZone": "America/New_York", "localStart": "2030-06-01 10:15:30", "persistedStartUtc": "2030-06-01T14:15:30.000Z" }
+    ],
+    "screenshots": [
+      { "file": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-bargain-dates-desktop.png", "sha256": "1039875491a63a642d9c1877883645a56cc1e41ea8f0982444b12015f2da9e1c" },
+      { "file": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-bargain-dates-mobile.png", "sha256": "77eb6a16f916f62d024fb10cee09a528ecbc7f27f16dcbd4acc974ced65710db" }
+    ]
+  },
+  "cleanup": {
+    "databases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "publicTables": 0, "fixtureSchemas": 0, "otherClients": 0, "manualDatabaseDeletion": false,
+    "postgresPid": 14300, "stoppedAtUtc": "2026-09-09T02:18:02.495Z", "pidAbsent": true,
+    "listenersAbsent": [55432, 5208, 5209],
+    "retained": "Stopped local PG16 cluster, binaries, raw reports, temporary scripts and screenshots. Owned SQL fixtures and memory instance closed; Vite stopped with Ctrl-C."
+  },
+  "remaining": [
+    "Full PHP attrs/items, activity SKU creation/editing, descriptions, freight, images, product eligibility and copy workflows",
+    "Product rebind and global ordering with checkout/product retirement; unchanged pricing policy awaiting user choice",
+    "Browser DST transitions, all calendar pointer paths, full real-role auth/payment/provider flows",
+    "Own CI/Linux/workerd and production acceptance; publish frontend/backend together and handle cached clients whose create request lacks dates"
+  ]
+}
