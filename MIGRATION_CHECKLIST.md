@@ -4,6 +4,10 @@
 
 ## 审计结论
 
+快照补验（2026-09-09）：已核对Admin activity.ts调用、adminapi.ts带adminAuth的注册和实际adminBargainSkuOptions处理器，以原生成器更新admin-frontend-api-contracts.json。343调用点/363路径变体全部已注册，0未解析/未注册；所有既有调用和处理器合同逐项不变，仅增加SKU选项路径及更新行号/摘要/计数。原严格快照测试2项通过，未修改测试或生成器；新增TEST-004I保持开放至自身Linux CI通过。实际清单233勾选/171开放/404项，覆盖历史计数。
+
+- [ ] **TEST-004I 后台API审计快照同步**：cd5ac6c第二分片唯一失败来自新增砍价SKU选项接口后快照未更新。现由原生成器严格重新生成并通过2项回归，所有既有调用/处理器合同不变；等待当前提交自身Linux完整门禁，不借用旧提交成功项。
+
 最新依赖候选（2026-09-09，基线666b21c）：Hono固定4.13.5，Worker/Kefu Vitest及mocker固定4.1.11，保留原Vite/pool/Wrangler与安全断言。最终Worker定向52项、客服17项/工具链11项、构建和双类型通过；生产Worker与全树Kefu审计0漏洞，Worker完整开发树既有8个节点未消除。Windows workerd启动崩溃，执行0项；独立候选复核未产生结论，自身Linux CI待验，TEST-004G/H不勾选。下条历史CI现已终态failure，第二分片发现后台API快照过期（1515通过/1失败），PG目录成功；快照单独修复，不弱化门禁。当前实际计数233勾选/170开放/403项，覆盖下方旧计数；见dependency-patch-20260909.json。
 
 自身CI增量（2026-09-09，cd5ac6c / Actions34321285989，仍在运行）：已确认有实际runner和执行步骤，先前计费阻断不能沿用。PC/Admin/Supplier/UniApp构建与密钥扫描完成成功；runtime任务和Worker第一分片在生产依赖审计失败，日志为Hono三个moderate公告；Kefu完成构建后的全依赖审计因Vitest/mocker新moderate公告失败。第二分片及PG目录仍在运行，不能宣称最终全量结果。新增TEST-004G/H两项开放，当前233勾选/170开放/403项。先核对官方公告及补丁兼容性、修复依赖门禁，再回到A3k11b；不运行audit fix --force、不降低audit门槛、不假定扫描命中等于业务可利用。该记录仅描述cd5ac6c自身CI，不借给后续提交。

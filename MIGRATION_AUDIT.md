@@ -7193,6 +7193,10 @@ ShippingTemplateSnapshot以一个SQL语句返回父模板、区域费率、条�
 
 Worker生产审计和Kefu完整审计均0漏洞；Worker完整开发树仍有4 moderate/4 high依赖节点，来自既有Drizzle/esbuild及sharp/Miniflare/Wrangler/pool链，不宣称全仓库清零。Windows workerd命令退出1，启动0xc0000005及日志EPERM，实际执行0项；不能将类型检查或单元结果当作runtime证明。当前自身Linux CI与独立候选复核仍缺，TEST-004G/H保持开放，状态为待验证候选。机器摘要见workers-ts/audit/dependency-patch-20260909.json，无生产操作或部署。
 
+## 2026-09-09 后台API审计快照同步（TEST-004I）
+
+依赖候选单独提交c78f01f后处理旧CI第二分片唯一断言失败。原快照未记录已存在的GET /activity/bargain/sku-options；实际Admin API调用、带adminAuth的路由及adminBargainSkuOptions服务转接已核对。使用原audit:admin-api --write --summary --strict重新生成，无测试或生成器改动；343调用点/363路径变体均注册、0未注册/未解析。独立结构比较确认全部既有calls及去除定位行号后的route合同严格不变，仅新增该接口、更新源摘要与后续行号/计数。原快照回归2项通过，待自身Linux CI，清单233勾选/171开放/404项。不以静态注册推导完整浏览器/权限或生产验收。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

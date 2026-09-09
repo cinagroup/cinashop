@@ -7,7 +7,7 @@
   },
   "backend": {
     "file": "workers-ts/src/routes/adminapi.ts",
-    "sha256": "621b6335668d01fd4ec70ef1db04cbb4986e344398011a1b4df9f8d37cb1ff21",
+    "sha256": "b235c8c4c07d1c5d13decbe1db13ecef81c01fb3c7246389ff60b65ce073ce29",
     "registeredRoutes": [
       {
         "method": "POST",
@@ -2153,1450 +2153,1457 @@
       },
       {
         "method": "GET",
-        "path": "/activity/integral",
+        "path": "/activity/bargain/sku-options",
         "line": 545,
+        "handler": "AdminCrud.adminBargainSkuOptions",
+        "availability": "executable"
+      },
+      {
+        "method": "GET",
+        "path": "/activity/integral",
+        "line": 546,
         "handler": "AdminCrud.adminIntegralList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/activity/status",
-        "line": 546,
+        "line": 547,
         "handler": "AdminCrud.adminActivityStatus",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/discounts/products",
-        "line": 549,
+        "line": 550,
         "handler": "AdminDiscountPackage.productOptions",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/discounts/labels",
-        "line": 550,
+        "line": 551,
         "handler": "AdminDiscountPackage.labelOptions",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/discounts/list",
-        "line": 551,
+        "line": 552,
         "handler": "AdminDiscountPackage.list",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/discounts/info/:id",
-        "line": 552,
+        "line": 553,
         "handler": "AdminDiscountPackage.detail",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/discounts/save",
-        "line": 553,
+        "line": 554,
         "handler": "AdminDiscountPackage.save",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/discounts/set_status/:id/:status",
-        "line": 554,
+        "line": 555,
         "handler": "AdminDiscountPackage.setStatus",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/discounts/set_status/:id/:status",
-        "line": 559,
+        "line": 560,
         "handler": "AdminDiscountPackage.setStatus",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/discounts/del/:id",
-        "line": 564,
+        "line": 565,
         "handler": "AdminDiscountPackage.remove",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/lottery/list",
-        "line": 565,
+        "line": 566,
         "handler": "AdminLotteryController.list",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/lottery/detail/:id",
-        "line": 566,
+        "line": 567,
         "handler": "AdminLotteryController.detail",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/lottery/factor_info/:factor",
-        "line": 567,
+        "line": 568,
         "handler": "AdminLotteryController.factorInfo",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/lottery/add",
-        "line": 568,
+        "line": 569,
         "handler": "AdminLotteryController.add",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/lottery/edit/:id",
-        "line": 569,
+        "line": 570,
         "handler": "AdminLotteryController.edit",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/lottery/del/:id",
-        "line": 570,
+        "line": 571,
         "handler": "AdminLotteryController.remove",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/lottery/set_status/:id/:status",
-        "line": 571,
+        "line": 572,
         "handler": "AdminLotteryController.setStatus",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/lottery/record/list",
-        "line": 572,
+        "line": 573,
         "handler": "AdminLotteryController.records",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/lottery/record/list/:id",
-        "line": 573,
+        "line": 574,
         "handler": "AdminLotteryController.activityRecords",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/lottery/record/detail/:id",
-        "line": 574,
+        "line": 575,
         "handler": "AdminLotteryController.recordDetail",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/lottery/record/deliver",
-        "line": 575,
+        "line": 576,
         "handler": "AdminLotteryController.deliver",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/lottery/record/deliver/:id",
-        "line": 576,
+        "line": 577,
         "handler": "AdminLotteryController.deliver",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/service/sessions",
-        "line": 579,
+        "line": 580,
         "handler": "AdminController.chatSessions",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/service/chat",
-        "line": 580,
+        "line": 581,
         "handler": "AdminController.chatHistory",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/feedback",
-        "line": 581,
+        "line": 582,
         "handler": "CustomerServiceCatalogController.adminFeedbackList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/feedback/:id",
-        "line": 582,
+        "line": 583,
         "handler": "CustomerServiceCatalogController.adminFeedbackDetail",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/feedback/:id",
-        "line": 583,
+        "line": 584,
         "handler": "CustomerServiceCatalogController.adminFeedbackUpdate",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/feedback/:id",
-        "line": 584,
+        "line": 585,
         "handler": "CustomerServiceCatalogController.adminFeedbackDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/speechcraft",
-        "line": 585,
+        "line": 586,
         "handler": "CustomerServiceCatalogController.adminSpeechcraftList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/speechcraft/categories",
-        "line": 586,
+        "line": 587,
         "handler": "CustomerServiceCatalogController.adminSpeechcraftCategories",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat/speechcraft",
-        "line": 587,
+        "line": 588,
         "handler": "CustomerServiceCatalogController.adminSpeechcraftCreate",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/speechcraft/:id",
-        "line": 588,
+        "line": 589,
         "handler": "CustomerServiceCatalogController.adminSpeechcraftDetail",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/wechat/speechcraft/:id",
-        "line": 589,
+        "line": 590,
         "handler": "CustomerServiceCatalogController.adminSpeechcraftUpdate",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/wechat/speechcraft/:id",
-        "line": 590,
+        "line": 591,
         "handler": "CustomerServiceCatalogController.adminSpeechcraftDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/reply",
-        "line": 594,
+        "line": 595,
         "handler": "AdminWechatContentController.reservedReply",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/code_reply/:id",
-        "line": 595,
+        "line": 596,
         "handler": "AdminWechatQrcodeController.replyCodeStatus",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat/code_reply/:id/provision",
-        "line": 596,
+        "line": 597,
         "handler": "AdminWechatQrcodeController.provisionReplyCode",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/keyword",
-        "line": 597,
+        "line": 598,
         "handler": "AdminWechatContentController.replyList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/keyword/:id",
-        "line": 598,
+        "line": 599,
         "handler": "AdminWechatContentController.replyDetail",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat/keyword/:id",
-        "line": 599,
+        "line": 600,
         "handler": "AdminWechatContentController.saveReply",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/wechat/keyword/:id",
-        "line": 600,
+        "line": 601,
         "handler": "AdminWechatContentController.deleteReply",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/wechat/keyword/set_status/:id/:status",
-        "line": 601,
+        "line": 602,
         "handler": "AdminWechatContentController.setReplyStatus",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/media",
-        "line": 606,
+        "line": 607,
         "handler": "AdminWechatContentController.mediaList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/news",
-        "line": 607,
+        "line": 608,
         "handler": "AdminWechatContentController.newsList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/news/:id",
-        "line": 608,
+        "line": 609,
         "handler": "AdminWechatContentController.newsDetail",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat/news",
-        "line": 609,
+        "line": 610,
         "handler": "AdminWechatContentController.saveNews",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/wechat/news/:id",
-        "line": 610,
+        "line": 611,
         "handler": "AdminWechatContentController.deleteNews",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/message",
-        "line": 611,
+        "line": 612,
         "handler": "AdminWechatContentController.messageList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/message/operate",
-        "line": 612,
+        "line": 613,
         "handler": "AdminWechatContentController.messageTypes",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat/push",
-        "line": 613,
+        "line": 614,
         "handler": "AdminWechatContentController.pushUnavailable",
         "availability": "controlled_unavailable"
       },
       {
         "method": "GET",
         "path": "/wechat/card",
-        "line": 617,
+        "line": 618,
         "handler": "AdminWechatMemberCard.cards",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/card/summary",
-        "line": 618,
+        "line": 619,
         "handler": "AdminWechatMemberCard.summary",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat/card/users",
-        "line": 619,
+        "line": 620,
         "handler": "AdminWechatMemberCard.claims",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat/card",
-        "line": 620,
+        "line": 621,
         "handler": "AdminWechatMemberCard.remoteWriteUnavailable",
         "availability": "controlled_unavailable"
       },
       {
         "method": "GET",
         "path": "/wechat_qrcode/cate/list",
-        "line": 622,
+        "line": 623,
         "handler": "AdminWechatQrcodeController.categoryList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat_qrcode/cate/create/:id",
-        "line": 623,
+        "line": 624,
         "handler": "AdminWechatQrcodeController.categoryDetail",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat_qrcode/cate/save",
-        "line": 624,
+        "line": 625,
         "handler": "AdminWechatQrcodeController.saveCategory",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/wechat_qrcode/cate/del/:id",
-        "line": 625,
+        "line": 626,
         "handler": "AdminWechatQrcodeController.deleteCategory",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat_qrcode/save/:id",
-        "line": 626,
+        "line": 627,
         "handler": "AdminWechatQrcodeController.saveChannel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat_qrcode/info/:id",
-        "line": 627,
+        "line": 628,
         "handler": "AdminWechatQrcodeController.channelDetail",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat_qrcode/list",
-        "line": 628,
+        "line": 629,
         "handler": "AdminWechatQrcodeController.channelList",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/wechat_qrcode/del/:id",
-        "line": 629,
+        "line": 630,
         "handler": "AdminWechatQrcodeController.deleteChannel",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/wechat_qrcode/set_status/:id/:status",
-        "line": 630,
+        "line": 631,
         "handler": "AdminWechatQrcodeController.setChannelStatus",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/wechat_qrcode/provision/:id",
-        "line": 631,
+        "line": 632,
         "handler": "AdminWechatQrcodeController.provisionChannel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat_qrcode/user_list/:qid",
-        "line": 632,
+        "line": 633,
         "handler": "AdminWechatQrcodeController.channelUsers",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/wechat_qrcode/statistic/:qid",
-        "line": 633,
+        "line": 634,
         "handler": "AdminWechatQrcodeController.channelStatistics",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/reply/list",
-        "line": 636,
+        "line": 637,
         "handler": "AdminCrud.adminReplyList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/reply/status/:id",
-        "line": 637,
+        "line": 638,
         "handler": "AdminCrud.adminReplyStatus",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/reply/del/:id",
-        "line": 638,
+        "line": 639,
         "handler": "AdminCrud.adminReplyDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/activity/pink/:combinationId",
-        "line": 639,
+        "line": 640,
         "handler": "AdminCrud.adminPinkList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/activity/bargain_users/:bargainId",
-        "line": 642,
+        "line": 643,
         "handler": "AdminCrud.adminBargainUsers",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/activity/seckill_times",
-        "line": 643,
+        "line": 644,
         "handler": "AdminCrud.adminSeckillTimes",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/service/send",
-        "line": 646,
+        "line": 647,
         "handler": "AdminController.serviceReply",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/brand/list",
-        "line": 649,
+        "line": 650,
         "handler": "AdminCrud.adminBrandList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/brand/save",
-        "line": 650,
+        "line": 651,
         "handler": "AdminCrud.adminBrandSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/brand/del/:id",
-        "line": 651,
+        "line": 652,
         "handler": "AdminCrud.adminBrandDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/system_admin/list",
-        "line": 654,
+        "line": 655,
         "handler": "AdminCrud.adminSystemAdminList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/system_admin/save",
-        "line": 655,
+        "line": 656,
         "handler": "AdminCrud.adminSystemAdminSave",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/system_role/list",
-        "line": 656,
+        "line": 657,
         "handler": "AdminCrud.adminSystemRoleList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/system_role/save",
-        "line": 657,
+        "line": 658,
         "handler": "AdminCrud.adminSystemRoleSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/system_role/del/:id",
-        "line": 658,
+        "line": 659,
         "handler": "AdminCrud.adminSystemRoleDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/system_menus/tree",
-        "line": 659,
+        "line": 660,
         "handler": "AdminCrud.adminSystemPermissionTree",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/extract/list",
-        "line": 662,
+        "line": 663,
         "handler": "AdminCrud.adminExtractList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/extract/status/:id",
-        "line": 663,
+        "line": 664,
         "handler": "AdminCrud.adminExtractStatus",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/supplier/extract/list",
-        "line": 666,
+        "line": 667,
         "handler": "AdminSupplierFinance.supplierExtractList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/supplier/extract/verify/:id",
-        "line": 667,
+        "line": 668,
         "handler": "AdminSupplierFinance.supplierExtractReview",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/supplier/extract/save_transfer/:id",
-        "line": 668,
+        "line": 669,
         "handler": "AdminSupplierFinance.supplierExtractTransfer",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/supplier/extract/mark/:id",
-        "line": 669,
+        "line": 670,
         "handler": "AdminSupplierFinance.supplierExtractMark",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/bill/list",
-        "line": 672,
+        "line": 673,
         "handler": "AdminCrud.adminBillList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/flow/get_list",
-        "line": 673,
+        "line": 674,
         "handler": "AdminCapitalFlow.list",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/flow/set_mark/:id",
-        "line": 674,
+        "line": 675,
         "handler": "AdminCapitalFlow.setMark",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/level/list",
-        "line": 677,
+        "line": 678,
         "handler": "AdminCrud.adminLevelList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/level/save",
-        "line": 678,
+        "line": 679,
         "handler": "AdminCrud.adminLevelSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/level/del/:id",
-        "line": 679,
+        "line": 680,
         "handler": "AdminCrud.adminLevelDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/shipping_template/list",
-        "line": 682,
+        "line": 683,
         "handler": "AdminCrud.adminShippingTemplateList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/shipping_template/save",
-        "line": 683,
+        "line": 684,
         "handler": "AdminCrud.adminShippingTemplateSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/shipping_template/del/:id",
-        "line": 684,
+        "line": 685,
         "handler": "AdminCrud.adminShippingTemplateDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/express/list",
-        "line": 685,
+        "line": 686,
         "handler": "AdminCrud.adminExpressList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/express/save",
-        "line": 686,
+        "line": 687,
         "handler": "AdminCrud.adminExpressSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/express/del/:id",
-        "line": 687,
+        "line": 688,
         "handler": "AdminCrud.adminExpressDel",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/activity/save",
-        "line": 690,
+        "line": 691,
         "handler": "AdminCrud.adminActivitySave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/activity/del/:type/:id",
-        "line": 691,
+        "line": 692,
         "handler": "AdminCrud.adminActivityDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/statistic/trend",
-        "line": 694,
+        "line": 695,
         "handler": "AdminController.adminStatisticTrend",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/statistic/rank",
-        "line": 695,
+        "line": 696,
         "handler": "AdminController.adminStatisticRank",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/product_label/list",
-        "line": 696,
+        "line": 697,
         "handler": "AdminCrud.adminProductLabelList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/product_label/save",
-        "line": 697,
+        "line": 698,
         "handler": "AdminCrud.adminProductLabelSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/product_label/del/:id",
-        "line": 698,
+        "line": 699,
         "handler": "AdminCrud.adminProductLabelDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/user_label/list",
-        "line": 699,
+        "line": 700,
         "handler": "AdminCrud.adminUserLabelList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/user_label/save",
-        "line": 700,
+        "line": 701,
         "handler": "AdminCrud.adminUserLabelSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/user_label/del/:id",
-        "line": 701,
+        "line": 702,
         "handler": "AdminCrud.adminUserLabelDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/dise/list",
-        "line": 704,
+        "line": 705,
         "handler": "AdminCrud.adminDiseList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/dise/save",
-        "line": 705,
+        "line": 706,
         "handler": "AdminCrud.adminDiseSave",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/dise/del/:id",
-        "line": 706,
+        "line": 707,
         "handler": "AdminCrud.adminDiseDel",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/diy/get_page_category",
-        "line": 707,
+        "line": 708,
         "handler": "PageNavigationController.getPageCategory",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/diy/get_page_link/:cate_id",
-        "line": 708,
+        "line": 709,
         "handler": "PageNavigationController.getPageLinks",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/diy/save_link/:cate_id",
-        "line": 709,
+        "line": 710,
         "handler": "PageNavigationController.savePageLink",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/diy/del_link/:id",
-        "line": 710,
+        "line": 711,
         "handler": "PageNavigationController.deletePageLink",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/diy/get_url",
-        "line": 711,
+        "line": 712,
         "handler": "AdminLegacyContent.getUniAppUrls",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/diy/open_adv/info",
-        "line": 712,
+        "line": 713,
         "handler": "AdminLegacyContent.getOpenAdv",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/diy/open_adv/add",
-        "line": 713,
+        "line": 714,
         "handler": "AdminLegacyContent.setOpenAdv",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/article/list",
-        "line": 714,
+        "line": 715,
         "handler": "AdminArticle.list",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/article/detail/:id",
-        "line": 715,
+        "line": 716,
         "handler": "AdminArticle.detail",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/article/save",
-        "line": 716,
+        "line": 717,
         "handler": "AdminArticle.save",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/article/del/:id",
-        "line": 717,
+        "line": 718,
         "handler": "AdminArticle.remove",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/article/category",
-        "line": 718,
+        "line": 719,
         "handler": "AdminArticle.categoryList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/article/category",
-        "line": 719,
+        "line": 720,
         "handler": "AdminArticle.createCategory",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/article/category/:id",
-        "line": 720,
+        "line": 721,
         "handler": "AdminArticle.updateCategory",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/article/category/:id/status",
-        "line": 721,
+        "line": 722,
         "handler": "AdminArticle.categoryStatus",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/article/category/:id",
-        "line": 722,
+        "line": 723,
         "handler": "AdminArticle.removeCategory",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/article/product-options",
-        "line": 723,
+        "line": 724,
         "handler": "AdminArticle.productOptions",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/article/attachment-options",
-        "line": 724,
+        "line": 725,
         "handler": "AdminArticle.attachmentOptions",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/article/attachment-categories",
-        "line": 725,
+        "line": 726,
         "handler": "AdminArticle.attachmentCategories",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/log/list",
-        "line": 726,
+        "line": 727,
         "handler": "AdminCrud.adminLogList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/spread/list",
-        "line": 729,
+        "line": 730,
         "handler": "AdminCrud.adminSpreadList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/brokerage/list",
-        "line": 730,
+        "line": 731,
         "handler": "AdminCrud.adminBrokerageList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/promoter/apply/list",
-        "line": 731,
+        "line": 732,
         "handler": "PromoterApplicationController.adminList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/promoter/apply/examine/:id/:uid/:status",
-        "line": 732,
+        "line": 733,
         "handler": "PromoterApplicationController.adminExamine",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/promoter/apply/del/:id",
-        "line": 737,
+        "line": 738,
         "handler": "PromoterApplicationController.adminDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/supplier/apply/list",
-        "line": 744,
+        "line": 745,
         "handler": "SupplierApplicationController.adminList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/supplier/apply/info/:id",
-        "line": 745,
+        "line": 746,
         "handler": "SupplierApplicationController.adminDetail",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/supplier/apply/verify/form/:id",
-        "line": 746,
+        "line": 747,
         "handler": "SupplierApplicationController.adminReviewForm",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/supplier/apply/verify/:id",
-        "line": 747,
+        "line": 748,
         "handler": "SupplierApplicationController.adminReview",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/supplier/apply/mark/form/:id",
-        "line": 748,
+        "line": 749,
         "handler": "SupplierApplicationController.adminMarkForm",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/supplier/apply/mark/:id",
-        "line": 749,
+        "line": 750,
         "handler": "SupplierApplicationController.adminMark",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/supplier/apply/del/:id",
-        "line": 750,
+        "line": 751,
         "handler": "SupplierApplicationController.adminDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/list",
-        "line": 752,
-        "handler": "AdminDivision.divisionList",
-        "availability": "executable"
-      },
-      {
-        "method": "GET",
-        "path": "/agent/division/down_list",
         "line": 753,
         "handler": "AdminDivision.divisionList",
         "availability": "executable"
       },
       {
         "method": "GET",
-        "path": "/agent/division/detail/:uid",
+        "path": "/agent/division/down_list",
         "line": 754,
+        "handler": "AdminDivision.divisionList",
+        "availability": "executable"
+      },
+      {
+        "method": "GET",
+        "path": "/agent/division/detail/:uid",
+        "line": 755,
         "handler": "AdminDivision.divisionDetail",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/agent/division/save",
-        "line": 755,
+        "line": 756,
         "handler": "AdminDivision.saveDivision",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/agent/division_agent/save",
-        "line": 756,
+        "line": 757,
         "handler": "AdminDivision.saveAgent",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/agent/division_staff/save",
-        "line": 757,
+        "line": 758,
         "handler": "AdminDivision.saveStaff",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/agent/division/del/:uid",
-        "line": 758,
+        "line": 759,
         "handler": "AdminDivision.deleteDivisionRole",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/agent/division/status/:uid/:status",
-        "line": 759,
+        "line": 760,
         "handler": "AdminDivision.setDivisionStatus",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/order/list",
-        "line": 760,
+        "line": 761,
         "handler": "AdminDivision.divisionOrders",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/option",
-        "line": 761,
+        "line": 762,
         "handler": "AdminDivision.divisionOptions",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/agent_option/:divisionId",
-        "line": 762,
+        "line": 763,
         "handler": "AdminDivision.agentOptions",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/statistics",
-        "line": 763,
+        "line": 764,
         "handler": "AdminDivision.divisionStatistics",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/trend",
-        "line": 764,
+        "line": 765,
         "handler": "AdminDivision.divisionTrend",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/ranking",
-        "line": 765,
+        "line": 766,
         "handler": "AdminDivision.divisionRanking",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/agent/division/apply/list",
-        "line": 766,
+        "line": 767,
         "handler": "AdminDivision.applicationList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/agent/division/apply/examine/save",
-        "line": 767,
+        "line": 768,
         "handler": "AdminDivision.applicationReview",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/agent/division/apply/del/:id",
-        "line": 768,
+        "line": 769,
         "handler": "AdminDivision.applicationDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/notification/list",
-        "line": 769,
+        "line": 770,
         "handler": "AdminNotification.templateList",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/notification/save",
-        "line": 770,
+        "line": 771,
         "handler": "AdminNotification.templateSave",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/notification/order-config",
-        "line": 771,
+        "line": 772,
         "handler": "AdminNotification.orderConfigList",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/notification/order-config/:mark",
-        "line": 772,
+        "line": 773,
         "handler": "AdminNotification.orderConfigSave",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/notification/shipping",
-        "line": 773,
+        "line": 774,
         "handler": "AdminNotification.shippingConfigSave",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/notification/readiness",
-        "line": 774,
+        "line": 775,
         "handler": "AdminNotification.readiness",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/notification/deliveries",
-        "line": 775,
+        "line": 776,
         "handler": "AdminNotification.deliveryList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/notification/deliveries/:id/actions",
-        "line": 776,
+        "line": 777,
         "handler": "AdminNotification.deliveryActions",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/notification/deliveries/:id/confirm-sent",
-        "line": 777,
+        "line": 778,
         "handler": "AdminNotification.deliveryConfirmSent",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/notification/deliveries/:id/confirm-retry",
-        "line": 778,
+        "line": 779,
         "handler": "AdminNotification.deliveryConfirmRetry",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/notification/deliveries/:id/close",
-        "line": 779,
+        "line": 780,
         "handler": "AdminNotification.deliveryClose",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/sms/config",
-        "line": 780,
+        "line": 781,
         "handler": "AdminNotification.smsConfig",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/sms/config",
-        "line": 781,
+        "line": 782,
         "handler": "AdminNotification.smsConfigSave",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/settings",
-        "line": 784,
+        "line": 785,
         "handler": "AdminCommunity.communitySettings",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/settings",
-        "line": 785,
+        "line": 786,
         "handler": "AdminCommunity.saveCommunitySettings",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/all_topic",
-        "line": 786,
+        "line": 787,
         "handler": "AdminCommunity.allTopics",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/topic/list",
-        "line": 787,
+        "line": 788,
         "handler": "AdminCommunity.topicList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/topic/save_form/:id",
-        "line": 788,
+        "line": 789,
         "handler": "AdminCommunity.topicForm",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/topic/save/:id",
-        "line": 789,
+        "line": 790,
         "handler": "AdminCommunity.topicSave",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/topic/set_status/:id/:status",
-        "line": 792,
+        "line": 793,
         "handler": "AdminCommunity.topicStatus",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/topic/set_hot/:id/:hot",
-        "line": 793,
+        "line": 794,
         "handler": "AdminCommunity.topicRecommend",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/community/topic/del/:id",
-        "line": 794,
+        "line": 795,
         "handler": "AdminCommunity.topicDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/community/header",
-        "line": 796,
+        "line": 797,
         "handler": "AdminCommunity.postHeader",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/community/list",
-        "line": 797,
+        "line": 798,
         "handler": "AdminCommunity.postList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/community/info/:id",
-        "line": 798,
+        "line": 799,
         "handler": "AdminCommunity.postInfo",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/community/save/:id",
-        "line": 799,
+        "line": 800,
         "handler": "AdminCommunity.postSave",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/community/set_status/:id/:status",
-        "line": 800,
+        "line": 801,
         "handler": "AdminCommunity.postStatus",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/community/star/form/:id",
-        "line": 801,
+        "line": 802,
         "handler": "AdminCommunity.postStarForm",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/community/star/:id",
-        "line": 802,
+        "line": 803,
         "handler": "AdminCommunity.postStar",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/community/set_recommend/:id/:recommend",
-        "line": 803,
+        "line": 804,
         "handler": "AdminCommunity.postRecommend",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/community/verify/form/:id",
-        "line": 808,
+        "line": 809,
         "handler": "AdminCommunity.postVerifyForm",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/community/take_down/form/:id",
-        "line": 809,
+        "line": 810,
         "handler": "AdminCommunity.postTakeDownForm",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/community/set_verify/:id",
-        "line": 810,
+        "line": 811,
         "handler": "AdminCommunity.postVerify",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/community/community/del/:id",
-        "line": 811,
+        "line": 812,
         "handler": "AdminCommunity.postDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/comment/list",
-        "line": 813,
+        "line": 814,
         "handler": "AdminCommunity.commentList",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/comment/reply/:id",
-        "line": 814,
+        "line": 815,
         "handler": "AdminCommunity.commentReplies",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/comment/reply/form/:id",
-        "line": 815,
+        "line": 816,
         "handler": "AdminCommunity.commentReplyForm",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/comment/reply/:id",
-        "line": 816,
+        "line": 817,
         "handler": "AdminCommunity.commentReply",
         "availability": "executable"
       },
       {
         "method": "DELETE",
         "path": "/community/comment/del/:id",
-        "line": 817,
+        "line": 818,
         "handler": "AdminCommunity.commentDelete",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/comment/verify/form/:id",
-        "line": 818,
+        "line": 819,
         "handler": "AdminCommunity.commentVerifyForm",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/comment/take_down/form/:id",
-        "line": 819,
+        "line": 820,
         "handler": "AdminCommunity.commentTakeDownForm",
         "availability": "executable"
       },
       {
         "method": "PUT",
         "path": "/community/comment/set_status/:id/:status",
-        "line": 820,
+        "line": 821,
         "handler": "AdminCommunity.commentStatus",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/comment/set_verify/:id",
-        "line": 821,
+        "line": 822,
         "handler": "AdminCommunity.commentVerify",
         "availability": "executable"
       },
       {
         "method": "GET",
         "path": "/community/comment/fictitious/:id",
-        "line": 822,
+        "line": 823,
         "handler": "AdminCommunity.fictitiousCommentForm",
         "availability": "executable"
       },
       {
         "method": "POST",
         "path": "/community/comment/save_fictitious",
-        "line": 823,
+        "line": 824,
         "handler": "AdminCommunity.saveFictitiousComment",
         "availability": "executable"
       }
@@ -3605,7 +3612,7 @@
   "frontendSources": [
     {
       "file": "view/admin-ts/src/api/activity.ts",
-      "sha256": "e187789b40f96b343b8e685440ff31f11a907b926381f74ed784ddb9ed219edc"
+      "sha256": "0db718864cd47886ed175823af29321c3aef6b78013de2bbdcdf630fc8847d43"
     },
     {
       "file": "view/admin-ts/src/api/article.ts",
@@ -3777,10 +3784,10 @@
     }
   ],
   "counts": {
-    "callSites": 342,
-    "pathVariants": 362,
-    "registered": 362,
-    "executable": 362,
+    "callSites": 343,
+    "pathVariants": 363,
+    "registered": 363,
+    "executable": 363,
     "controlledUnavailable": 0,
     "unregistered": 0,
     "unresolved": 0
@@ -3917,6 +3924,16 @@
       "registered": true,
       "matchedRoute": "/activity/del/:type/:id",
       "matchedHandler": "AdminCrud.adminActivityDel",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/activity/bargain/sku-options",
+      "source": "view/admin-ts/src/api/activity.ts",
+      "line": 85,
+      "registered": true,
+      "matchedRoute": "/activity/bargain/sku-options",
+      "matchedHandler": "AdminCrud.adminBargainSkuOptions",
       "availability": "executable"
     },
     {
