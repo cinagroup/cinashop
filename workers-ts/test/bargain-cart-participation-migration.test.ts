@@ -188,7 +188,10 @@ describe("0149 durable bargain cart binding schema", () => {
       await runBargainCartParticipation(owned.db);
       expect(await catalog(owned.db)).toEqual(installed);
     } finally { await owned.close(); }
-  });
+  // Includes physical CREATE/DROP DATABASE on PG16, not just the cart DDL.
+  // Keep a finite integration budget under parallel disk load; SQL/lock
+  // deadlines and every catalog, row-preservation and idempotency check remain.
+  }, 30_000);
   it.each([[0,0,"30000","5000"],[120000,12000,"30000","5000"],[15000,3000,"15000","3000"]])(
     "bounds timeouts before DDL and restores session settings: %i/%i", async (statement, idle, expectedStatement, expectedIdle) => {
       const { db, schema, exec } = await fixture();

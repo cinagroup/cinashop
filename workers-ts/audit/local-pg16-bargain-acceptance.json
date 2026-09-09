@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "a8170a88a68d17ed90875ba9f721fcaedd8f1ee7",
+  "sourceDelta": "Production sources, migrations, ORM, dependencies and CI unchanged. Only the two historical cart integration tests receive a 30-second test budget; all assertions and SQL/lock deadlines remain unchanged.",
+  "scope": "Local Windows PostgreSQL 16 bargain regression and nine-path catalog verification, not production or CI acceptance.",
+  "environment": {
+    "platform": "Windows x64",
+    "node": "24.14.1",
+    "postgresServerVersionNum": 160015,
+    "timezone": "UTC",
+    "listener": "127.0.0.1:55432",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "binarySource": "https://sbp.enterprisedb.com/getfile.jsp?fileid=1260494",
+    "officialDownloadPage": "https://www.postgresql.org/download/windows/",
+    "binaryArchiveSha256": "5e8afffe67daf949aeeb03b74951f1ec2324e1888f73fbd036ab0e567ab004d9",
+    "hashScope": "Locally calculated download identity; not an independently verified publisher signature.",
+    "systemServiceInstalled": false,
+    "globalPathOrUserEnvironmentChanged": false
+  },
+  "commands": [
+    "npm run test:unit -- test/bargain test/pc-bargain-purchase.test.ts test/api006-activity-compatibility-migration.test.ts --silent=passed-only --reporter=default --reporter=json --outputFile.json=<temporary-report>",
+    "npm run audit:orm",
+    "npm run typecheck"
+  ],
+  "earlierRuns": [
+    {
+      "scope": "5 admission/concurrency files",
+      "passed": 51,
+      "failed": 0,
+      "skipped": 0,
+      "includedInFinalRun": true
+    },
+    {
+      "scope": "First full 14-file run",
+      "passed": 237,
+      "failed": 2,
+      "skipped": 0,
+      "failure": "Two historical physical CREATE/DROP DATABASE tests exceeded the default 5000ms under parallel load. No assertion failure was reported."
+    },
+    {
+      "scope": "Diagnostic exact historical tests only",
+      "passed": 2,
+      "filteredOut": 32,
+      "durationsMs": [
+        834,
+        535
+      ],
+      "acceptance": false
+    }
+  ],
+  "tests": {
+    "success": true,
+    "passed": 239,
+    "failed": 0,
+    "skipped": 0,
+    "files": [
+      {
+        "file": "test/api006-activity-compatibility-migration.test.ts",
+        "sourceSha256Lf": "8e4149e15be5933f26afd8b7e51d9f88f777d6175b31ea91fc2ad076185c0e54",
+        "tests": 8,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "sourceSha256Lf": "03a48615efeb17bc7cc6c4f9bc4de0e1c94deb5699feee8a80de9c7c1e981723",
+        "tests": 3,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-cart-binding.test.ts",
+        "sourceSha256Lf": "6128054cc4d5c09cbbc900c16cb002d1c5d0d440e2855196ca96f982c510da37",
+        "tests": 17,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-cart-participation-migration.test.ts",
+        "sourceSha256Lf": "74484f72a97f598d1af7af1c4f154d5a62aa89994e7432c5820e2580b1b9d4b0",
+        "tests": 34,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-help-admission.test.ts",
+        "sourceSha256Lf": "e091f5fa173f76436673194f940bcd2f2944de3180938033bbdf4d24d0e377ee",
+        "tests": 12,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-help-concurrency-postgres.test.ts",
+        "sourceSha256Lf": "c1f56ae8fe5232720148127e6142b968665c712462d8463e9860ef5733e1820c",
+        "tests": 6,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-inventory-compensation.test.ts",
+        "sourceSha256Lf": "d80932e0be181a047a1c20f90a56f90f714f66ab377a73867a0360d6ceea1d05",
+        "tests": 13,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-order-concurrency-postgres.test.ts",
+        "sourceSha256Lf": "c456441b230ef48f4e238e0cba1be5fdd7e6127233c3726cbbd6c5093917808e",
+        "tests": 23,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-order-participation.test.ts",
+        "sourceSha256Lf": "04aa610e746fa4b4e8ac42fb846abe87a0e991284b29d953e4b55198e30568e3",
+        "tests": 54,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-participation-concurrency-postgres.test.ts",
+        "sourceSha256Lf": "38db73d84c77fb205b7f7ba264e106589f44d8098a201915e3ddc9b7e66f32bb",
+        "tests": 7,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-participation-state.test.ts",
+        "sourceSha256Lf": "ab319d15643757a22840c40944b4a6d39bc024d3741b7c8af54de77850d2bd4d",
+        "tests": 24,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-selection-catalog.test.ts",
+        "sourceSha256Lf": "390db771f4208f59faa2559748f46e1cdabaefb4f72ee71648fa38a7f0dd037a",
+        "tests": 29,
+        "status": "passed"
+      },
+      {
+        "file": "test/bargain-user-help-migration.test.ts",
+        "sourceSha256Lf": "6ee8178c40b59661546d3c960411c79bb50e730e97996f5057d17efe47b028cc",
+        "tests": 5,
+        "status": "passed"
+      },
+      {
+        "file": "test/pc-bargain-purchase.test.ts",
+        "sourceSha256Lf": "b16aff65c3d6cf66178bfa231052faac8cf437db883cab3a6a392cfcb616b479",
+        "tests": 4,
+        "status": "passed"
+      }
+    ],
+    "reportSha256": "971903431ab2e73dbb0bf9b358b2e83633de8ac048825cfda1c68b82947d0c22",
+    "durationSeconds": 63.86,
+    "independentBusinessConcurrencyTests": 39,
+    "independentMigrationLockTests": 2,
+    "previouslySkippedCompleteHistoryTests": 2,
+    "note": "Total includes static/contract tests; not every assertion executes SQL. Do not add earlier runs to this total. sourceSha256Lf uses UTF-8 text with CRLF normalized to LF."
+  },
+  "typecheck": {
+    "unit": "passed",
+    "runtime": "passed",
+    "runtimeTestsExecuted": false
+  },
+  "catalog": {
+    "serverVersionNum": 160015,
+    "paths": [
+      {
+        "path": "external",
+        "steps": 151
+      },
+      {
+        "path": "embedded",
+        "steps": 156
+      },
+      {
+        "path": "orm",
+        "steps": 1081
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1201
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1082
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1073
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1082
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1074
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1081
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "externalInputSha256": "c01c313cdc86430f93de67c7b8e1bb8645cc2a623dce9e13a5413b2878dbe0f6",
+    "generatedSqlSha256": "b2b7cfd6b41c81a6e16c1f1911dc703bf74e43830561b6ef78b4a4ca04290847",
+    "cleanupConfirmed": true,
+    "upgradeFreshCatalogMatched": true,
+    "defaultFreshCatalogMatched": true,
+    "constraintFreshCatalogMatched": true,
+    "foreignKeyFreshCatalogMatched": true,
+    "checkFreshCatalogMatched": true,
+    "sequenceFreshCatalogMatched": true,
+    "wcaoIndexRequired": [
+      "work_contact_action_outbox.wcao_client_ref"
+    ],
+    "logSha256": "7eb4b0145217486550864ebecafcdf71df6dc544214d44d24ae7d670b822a689"
+  },
+  "finalCleanup": {
+    "databases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "residualFixtureSchemas": 0,
+    "publicTables": 0,
+    "otherClientSessions": 0,
+    "serverStopped": true,
+    "originalBackendProcessAbsent": true,
+    "listenerAbsent": true,
+    "binaryDataAndReportsRetained": true
+  },
+  "limitations": [
+    "Not a full Worker unit run, Linux workerd run, CI success, frontend/real-role E2E, or production deployment.",
+    "Local PostgreSQL 16.15 is not the CI Linux PostgreSQL 16.14 platform.",
+    "Nine-path equality is limited to the audited table, column, constraint, index and sequence fields. Full privileges, views, functions, triggers and policies remain unaudited.",
+    "No production URL, Hyperdrive, production database DDL/DML, payment provider, or deployment used.",
+    "Activity repricing policy still needs an explicit product decision; existing pricing logic is unchanged.",
+    "Business fixtures reproduce selected model columns/defaults/primary keys, not all production constraints.",
+    "The full global activity/admin/product lock graph and remaining checklist acceptance gates remain open."
+  ]
+}

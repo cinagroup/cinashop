@@ -6933,6 +6933,24 @@ A3i源码证据进一步明确：旧PHP `app/services/activity/bargain/StoreBarg
 
 Workers技能促使先复核最新[Cloudflare请求级连接规则](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)并保留原Hyperdrive请求连接，不新增跨请求状态或外部调用。最新types的unpkg获取失败，按技能回退核查已安装5.20260828.1的Hyperdrive/ExecutionContext类型及Wrangler schema；没有绑定、配置或API签名变化。PostgreSQL技能结合[PG16锁规则](https://www.postgresql.org/docs/16/explicit-locking.html)与[隔离级别](https://www.postgresql.org/docs/16/transaction-iso.html)，采用事务级而非会话级锁、固定顺序和有界等待。没有生产SQL、临时线上Worker、部署、浏览器或provider调用；未安装新数据库/依赖。A3f/A3i与生产门禁保持开放，清单221勾选/161开放/382项不变，旧PHP历史复制N/A。
 
+### 本机独立 PG16 补验：砍价竞争、字段升级与九路径目录（2026-09-09）
+
+上一轮已提交并推送`a8170a88a68d17ed90875ba9f721fcaedd8f1ee7`，属于实质进展；本轮起点工作区干净。[该提交的Actions34292738328](https://github.com/cinagroup/cinashop/actions/runs/34292738328)仍因账户付款/额度限制未启动，11项runner_id均0。没有重跑、修改计费或弱化CI门禁；改价政策尚未获得明确选择，价格公式不变。针对此前大量PG专属用例未执行的缺口，本轮建立独立本机测试实例，而非改连生产。
+
+按PostgreSQL技能保留专用loopback/角色/数据库/PG16版本及随机schema防线，独立连接继续验证四个不同且不重连的PID，以pg_blocking_pids和数据库墙上时钟作为屏障。经[PostgreSQL官方Windows下载页](https://www.postgresql.org/download/windows/)指向的[EDB二进制页](https://www.enterprisedb.com/download-postgresql-binaries)取得16.15 x64 ZIP，下载SHA256为`5e8afffe67daf949aeeb03b74951f1ec2324e1888f73fbd036ab0e567ab004d9`；此为本地追踪摘要，不冒充独立供应商签名。仅解压，不运行安装器、不注册服务、不修改全局PATH或用户环境。完整目录位于`C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08`，服务程序为其`binaries/pgsql/bin/postgres.exe`。
+
+初始化使用UTF8/C及SCRAM测试认证。沙箱initdb输出受限token警告但退出0并完成bootstrap；隐藏pg_ctl启动包装退出1，随后status确认无运行实例，才改用前台postgres成功启动。实际核验server_version_num=160015、finance_test/cinashop_finance_test、仅监听127.0.0.1:55432及UTC，初始public表0。Windows16.15和CI的Linux16.14分开记录；没有安装MySQL或建立生产隧道。
+
+首批5文件51项全部通过，其中帮砍6、发起7、建单/取消/退款23、加购3共39项独立连接竞争真实执行。完整砍价回归首轮14文件237通过/2失败/0跳过；失败是两项历史购物车升级测试在物理CREATE/DROP DATABASE并行磁盘负载下超过默认5秒，单独原样诊断复跑834ms/535ms通过（其余32项是过滤，不计验收）。仅为这两项增加明确30秒集成预算，SQL/锁期限和所有目录、行、幂等与回滚断言不变；没有改业务代码、迁移、依赖或CI。
+
+最终完整复跑14文件**239通过/0失败/0跳过，63.86秒**：12个bargain文件、pc-bargain-purchase与api006兼容。39项业务竞争之外，还执行0149的两项独立读锁冲突（55P03/57014、回滚/释放/重试）、完整外部151文件/内嵌至0155/真实ORM建库后重复字段升级等34项结构用例。历史外部购物车用例在本次并行运行实际耗时13.142秒，仍在有限30秒预算内。不能将初次51项或诊断复跑重复累加；239中包含静态合同，并非239项都是SQL。Worker unit/runtime两套类型检查终态通过，runtime测试没有执行。
+
+随后未改动的audit:orm真实执行九条完整路径：external151步、embedded156步、orm1081步，以及六条升级路径；独立table_gate夹具不算第十条项目路径。全部九路径均为**263表/3701列/571约束/1010索引/227序列**，外部↔内嵌和外部↔ORM五类原始目录差异全0，六类升级freshCatalogMatched均true，wcao_client_ref正向合同存在。含表元数据拒绝、外键/CHECK/序列漂移、写入、回滚、真实锁等待和幂等门禁；新0148/0149获得本机PG16目录证据，不借用旧CI，也不把全目录一致外推到完整权限/视图/函数/触发器/RLS策略或生产已应用。
+
+审计自身cleanupConfirmed=true后再次独立只读核验：集群仅余postgres/template0/template1/cinashop_finance_test四库，fixture schema0、控制库public表0、其它客户端0。按准确数据目录执行pg_ctl fast stop，命令和原服务句柄均退出0；再次status显示no server running，原PID2232和55432监听均不存在。夹具数据库已自动删除且不可恢复（仅合成测试数据）；停止后的空控制库、二进制和报告保留以便复核，不递归删除目录。
+
+逐文件LF归一化源摘要、结果数、原始报告摘要、九路径计数/输入摘要、清理与范围限制保存于`workers-ts/audit/local-pg16-bargain-acceptance.json`，复现说明为`workers-ts/docs/local-pg16-testing.md`。不覆盖根MIGRATION_SCHEMA_AUDIT.json中的历史CI证据。当前清单仍221勾选/161开放/382项：A3f的已定义竞争及字段路径缺口取得新证据，但全局后台/商品锁序、价格政策、两端真实角色与完整结算、Linux/workerd/CI及生产升级发布仍未完成，不能关闭父项。无生产SQL、Hyperdrive、线上Worker、部署、浏览器或provider调用；旧PHP历史复制N/A。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
