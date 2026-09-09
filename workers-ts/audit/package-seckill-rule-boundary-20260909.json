@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "96d7a710340661f52b67d6c51e9d3fd73abd1d77",
+  "status": "partial_local_candidate",
+  "scope": ["locked package confirmation projection", "locked seckill parent/child/slot schedule projection"],
+  "implementation": {
+    "newLockOrder": false,
+    "transactionNetworkCallsAdded": false,
+    "crossRequestTransactionAdded": false,
+    "changedFacts": "ORDER_QUOTE_RECONFIRM_REQUIRED and rollback",
+    "unchangedCosmeticFields": "remain admissible"
+  },
+  "evidence": {
+    "inRequestRed": { "engine": "PGlite", "passed": 36, "failed": 4, "skipped": 0 },
+    "initialPgRed": { "engine": "PostgreSQL 16.15", "passed": 38, "failed": 8, "skipped": 0, "exactWriterWaitGaps": 4 },
+    "initialRegression": { "files": 11, "passed": 328, "failed": 0, "skipped": 0 },
+    "expandedFirstAttempt": {
+      "files": 21, "passed": 514, "failed": 4, "skipped": 0,
+      "cause": "New parent activity fixture inherited status=0 and was rejected at initial confirmation",
+      "businessGapEvidence": false
+    },
+    "finalRegression": { "engine": "dedicated loopback PostgreSQL 16.15", "files": 21, "passed": 518, "failed": 0, "skipped": 0 },
+    "confirmationRulesFile": { "tests": 48, "independentPgTests": 8 },
+    "typechecks": { "unit": "passed", "runtime": "passed" },
+    "independentPeers": "4 distinct non-reconnecting backends, exact pg_blocking_pids barrier",
+    "rollbackExpectation": "snapshot read inside editor transaction before buyer, retaining only that committed edit",
+    "ownImmutableCi": "not run; no new main push approval"
+  },
+  "remaining": [
+    "Package final wall-clock deadline after lock waits",
+    "Package member insertions by raw SQL writers not following the parent lock",
+    "Referenced-but-missing seckill slot insertions and equivalent schedule encodings",
+    "Seckill delivery/refund fields and remaining combination/integral/bargain rule guards",
+    "Coupon issue/scope/ancestor consistency and phantoms",
+    "Global KV configuration authority, production auth/storage/Hyperdrive and release gates"
+  ],
+  "safety": {
+    "productionWrites": false,
+    "deployment": false,
+    "payments": false,
+    "synthetic": ["HTTP identity", "KV", "sequence"],
+    "cleanupIdentity": { "database": "cinashop_finance_test", "role": "finance_test", "version": 160015, "timezone": "UTC" },
+    "fixtureCleanup": { "baselineDatabases": 4, "testSchemas": 0, "publicTables": 0, "otherClients": 0 },
+    "dedicatedPostgresStoppedAt": "2026-09-09T11:00:55Z"
+  }
+}

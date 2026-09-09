@@ -1726,6 +1726,11 @@ export class StoreOrderCreateService {
       if (seckillSchedule) {
         assertSeckillSchedule(seckillSchedule);
         if (seckillSchedule.child.productId !== orderItems[0]?.product.id) throw new ValidateException("秒杀商品已变化");
+        // Compare the projection of the parent/child/slot rows already locked here.
+        // Current eligibility alone does not authorize a different confirmed schedule.
+        if (confirmation && await checkoutFingerprint(seckillSchedule) !== await checkoutFingerprint(seckillConfirmationSchedule)) {
+          throw new OrderQuoteReconfirmRequired(key);
+        }
       }
       const now = Math.floor(Date.now() / 1000);
       if (user && (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && type === 0))) {
@@ -1913,6 +1918,12 @@ export class StoreOrderCreateService {
           lockRows: true,
           now,
         });
+        // Reuse the explicit quote projection, including unselected member rules.
+        // Keep the original parent/entry/product/SKU lock ordering unchanged.
+        if (confirmation && await checkoutFingerprint(lockedPackage.confirmationRules)
+          !== await checkoutFingerprint(discountPackage.confirmationRules)) {
+          throw new OrderQuoteReconfirmRequired(key);
+        }
         if (
           lockedPackage.discount.type !== discountPackage.discount.type ||
           lockedPackage.discount.freeShipping !== discountPackage.discount.freeShipping ||

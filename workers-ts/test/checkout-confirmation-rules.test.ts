@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
+import { createContainerFromDb } from '../src/lib/di';
+import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
+import { OrderQuoteReconfirmRequired } from '../src/services/order/CheckoutConfirmation';
+import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { createBargainSelectionFixture } from './helpers/bargainSelectionFixture';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
@@ -74,6 +78,8 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     details: await f.db.select().from(storeOrderCartInfo), statuses: await f.db.select().from(storeOrderStatus),
     ...(kind === 'coupon' ? { coupons: await f.db.select().from(storeCouponUser) } : {}),
     ...(kind === 'package' ? { packages: await f.db.select().from(storeDiscounts), entries: await f.db.select().from(storeDiscountsProducts) } : {}),
+    ...(kind === 'seckill' ? { seckills: await f.db.select().from(storeSeckill), slots: await f.db.select().from(storeSeckillTime),
+      parents: await f.db.select().from(storeActivity) } : {}),
   });
   if (kind === 'coupon') {
     it.each(['minimum', 'ineligible', 'invalidated', 'value', 'issue', 'starts', 'ends'] as const)(
@@ -108,6 +114,82 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
       expect(result.status, result.msg).toBe(200); expect(calls).toBe(1);
       expect((await state()).orders[0]).toMatchObject({ paid: 0, payPrice: a.data.priceGroup.pay_price });
     });
+  }
+  if (kind === 'package' || kind === 'seckill') {
+    it.each(['window', 'membership'] as const)('rejects late %s rules even when purchase remains valid at the same price', async variant => {
+      if (kind === 'seckill') await f.db.insert(storeSeckillTime).values({ id: 2, startTime: '00:00', endTime: '24:00' });
+      const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
+      let calls = 0, edited: Awaited<ReturnType<typeof state>> | undefined;
+      beforeSequence = async () => {
+        calls++;
+        if (kind === 'package') {
+          if (variant === 'window') await f.db.update(storeDiscounts).set({ stopTime: Math.floor(Date.now() / 1000) + 86400 });
+          else await f.db.update(storeDiscountsProducts).set({ type: 1 }).where(eq(storeDiscountsProducts.id, 101));
+        } else await f.db.update(storeSeckill).set(variant === 'window'
+          ? { stopTime: new Date(Date.now() + 86_400_000) } : { timeId: '1,2' });
+        edited = await state();
+      };
+      const path = `/api/order/create/${a.data.orderKey}`;
+      expect(await request(path, { ...input, quoteToken: a.data.quoteToken })).toMatchObject({ status: 400,
+        data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: a.data.orderKey } });
+      expect(calls).toBe(1); expect(edited).toBeDefined(); expect(await state()).toEqual(edited);
+      beforeSequence = undefined;
+      const b = await request(`/api/order/computed/${a.data.orderKey}`, input); expect(b.status, b.msg).toBe(200);
+      expect(b.data.pay_price).toBe(a.data.priceGroup.pay_price);
+      expect((await request(path, { ...input, quoteToken: b.data.quoteToken })).status).toBe(200);
+    });
+    const peerVariants = kind === 'package' ? ['window', 'membership', 'cosmetic', 'append'] as const
+      : ['window', 'membership', 'cosmetic', 'parent'] as const;
+    it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(peerVariants)(
+      'checks %s after a real PostgreSQL rule-writer lock wait', async variant => {
+        if (kind === 'seckill') {
+          await f.db.insert(storeSeckillTime).values({ id: 2, startTime: '00:00', endTime: '24:00' });
+          const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
+          await f.db.insert(storeActivity).values({ id: 9, type: 1, status: 1, startDay: today, endDay: today + 86400, timeId: '1,2' });
+          await f.db.update(storeSeckill).set({ activityId: 9 });
+        } else if (variant === 'append') {
+          await f.db.update(storeDiscounts).set({ type: 1 });
+          await f.db.update(storeDiscountsProducts).set({ type: 1 }).where(eq(storeDiscountsProducts.id, 101));
+          await f.db.insert(storeProduct).values({ id: 72, storeName: '未选可选商品', stock: 8, price: '10.00', isShow: 1, freight: 1 });
+        }
+        const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
+        const before = await state();
+        let edited = before;
+        await withFinancePeers(f.db, async ([editor, buyer]) => {
+          await editor.exec('BEGIN');
+          if (kind === 'package') {
+            if (variant === 'membership') await editor.db.update(storeDiscountsProducts).set({ type: 1 }).where(eq(storeDiscountsProducts.id, 101));
+            else if (variant === 'append') {
+              // The production admin save locks the parent before inserting/removing members.
+              await editor.exec('SELECT id FROM store_discounts WHERE id=40 FOR UPDATE');
+              await editor.db.insert(storeDiscountsProducts).values({ id: 103, discountId: 40, productId: 72, type: 0 });
+            }
+            else await editor.db.update(storeDiscounts).set(variant === 'window'
+              ? { stopTime: Math.floor(Date.now() / 1000) + 86400 } : { title: '并发仅改标题' }).where(eq(storeDiscounts.id, 40));
+            edited = { ...before, packages: await editor.db.select().from(storeDiscounts), entries: await editor.db.select().from(storeDiscountsProducts) };
+          } else {
+            if (variant === 'parent') await editor.db.update(storeActivity).set({ endDay: before.parents![0].endDay + 86400 }).where(eq(storeActivity.id, 9));
+            else await editor.db.update(storeSeckill).set(variant === 'window'
+              ? { stopTime: new Date(Date.now() + 86_400_000) } : variant === 'membership' ? { timeId: '1,2' } : { sort: 9 }).where(eq(storeSeckill.id, 40));
+            edited = { ...before, seckills: await editor.db.select().from(storeSeckill), parents: await editor.db.select().from(storeActivity) };
+          }
+          const buying = outcome(StoreOrderCreateService.createWithRuntime(createContainerFromDb(buyer.db), {
+            CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, nextOrderId: async () => `rules_peer_${kind}`,
+          }, { ...input, uid: 11, key: a.data.orderKey, quoteToken: a.data.quoteToken, userIp: '127.0.0.1' }));
+          await waitForFinanceBlock(f.db, buyer.pid, editor.pid);
+          await editor.exec('COMMIT');
+          const result = await buying;
+          expect(result.ok).toBe(variant === 'cosmetic');
+          if (!result.ok) expect(result.error).toBeInstanceOf(OrderQuoteReconfirmRequired);
+        });
+        const after = await state();
+        if (variant === 'cosmetic') {
+          expect(after.orders).toHaveLength(1); expect(after.orders[0]).toMatchObject({ paid: 0, payPrice: a.data.priceGroup.pay_price });
+        } else {
+          // Retain the independently committed edit while rolling back every checkout write.
+          expect(after).toEqual(edited);
+        }
+      }, 15_000);
   }
   it('preserves a valid confirmed order and idempotent replay after removing receipts', async () => {
     const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
