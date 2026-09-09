@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-09",
+  "baseCommit": "666b21c4fcb3d4172547808affc912008561d323",
+  "status": "candidate_pending_linux_ci_and_independent_review",
+  "versions": {
+    "hono": { "before": "4.13.0", "after": "4.13.5" },
+    "workerVitestAndMocker": { "before": "4.1.10", "after": "4.1.11" },
+    "kefuVitestAndMocker": { "before": "3.2.6", "after": "4.1.11" },
+    "unchanged": { "workersPool": "0.21.2", "workerVite": "8.2.1", "kefuVite": "6.4.3", "rolldown": "1.2.3", "wrangler": "4.122.0" }
+  },
+  "advisories": [
+    "https://github.com/advisories/GHSA-gqvv-2mrq-wpjv",
+    "https://github.com/advisories/GHSA-g6gw-c38x-mqfc",
+    "https://github.com/advisories/GHSA-crvj-82cr-hjcx",
+    "https://github.com/advisories/GHSA-82fw-gwwq-j7x9"
+  ],
+  "scope": "Dependency boundary regressions, not a claim that SSG, dot form parsing or mocker browser plugins are enabled in production. The query advisory explicitly excludes Cloudflare Workers fragment-normalizing requests.",
+  "verification": {
+    "honoBefore": { "tests": 13, "passed": 5, "failed": 8 },
+    "mockerBeforeEachPackage": { "tests": 5, "passed": 1, "failed": 4 },
+    "workerFinalFocused": { "files": 5, "tests": 52, "passed": 52, "failed": 0, "durationSeconds": 9.76 },
+    "workerTypecheck": "unit and runtime configurations passed",
+    "kefuApplication": { "files": 3, "tests": 17, "passed": 17 },
+    "kefuToolchain": { "tests": 11, "passed": 11 },
+    "kefuBuild": "vue-tsc and Vite passed",
+    "workerProductionAudit": { "exitCode": 0, "vulnerabilities": 0 },
+    "kefuFullAudit": { "exitCode": 0, "vulnerabilities": 0 },
+    "workerFullAudit": { "exitCode": 1, "moderateNodes": 4, "highNodes": 4, "remaining": "Existing Drizzle/esbuild and sharp/Miniflare/Wrangler/pool chains; Hono/Vitest/mocker absent" },
+    "windowsRuntime": { "exitCode": 1, "executedTests": 0, "reason": "workerd 0xc0000005 startup access violation; also Wrangler log EPERM. No assertion-level runtime result." },
+    "independentInvestigator": "completed; versions, callers and compatibility inspected",
+    "independentCandidateReviewer": "failed before producing a review; no independent approval claimed",
+    "linuxCandidateCi": "not yet obtained"
+  },
+  "controls": [
+    "Encoded hashes, repeated query values, spaces, Chinese text and application numeric casting",
+    "Ordinary nested and repeated forms, default flat dot fields",
+    "Ordinary SSG through inert in-memory filesystem adapters; no filesystem writes",
+    "Allowed in-root tsconfig read through actual mocker hooks; denied targets never registered/read; no exposed socket",
+    "Existing Vitest API network write/exec defaults, registered-file reads and snapshot/rerun permissions retained"
+  ],
+  "limitations": [
+    "Standalone mocker plugin boundary tested locally; authenticated browser RPC and production exposure are not asserted",
+    "Whole Worker suite and Linux workerd/PG16 CI required before closing TEST-004G/H",
+    "No production database, migration, deployment, billing or provider operation"
+  ]
+}

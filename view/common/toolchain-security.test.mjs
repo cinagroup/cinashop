@@ -39,9 +39,10 @@ test("the actual PostCSS fixed-size caller preserves anonymous CSS parsing", () 
 });
 
 if (manifest.name === "cinashop-kefu-ts") {
+  await import("./mocker-security.test.mjs");
   test("Kefu has no vulnerable Vitest or nested Vite/esbuild copies", () => {
-    assert.equal(manifest.devDependencies.vitest, "3.2.6");
-    assert.equal(lock.packages["node_modules/vitest"].version, "3.2.6");
+    assert.equal(manifest.devDependencies.vitest, "4.1.11");
+    assert.equal(lock.packages["node_modules/vitest"].version, "4.1.11");
     for (const [path, pkg] of Object.entries(lock.packages)) {
       const [major, minor, patch] = (pkg.version ?? "").split(".").map(Number);
       if (path.endsWith("node_modules/vite")) assert.ok(major > 6 || (major === 6 && (minor > 4 || (minor === 4 && patch >= 3))), path);

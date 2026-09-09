@@ -7183,6 +7183,16 @@ ShippingTemplateSnapshot以一个SQL语句返回父模板、区域费率、条�
 
 自身CI跟进：审计提交`cd5ac6ce4d31fdb55b7be02a31f267ad122b88dc`已推送并与origin/main核对一致。Actions34321285989已实际执行，不能沿用上一提交的计费阻断。最近快照为五项成功（PC/Admin/Supplier/UniApp/密钥扫描）、三项失败、两项运行中（第二分片/PG目录）；后续汇总及终态尚未取得。runtime与第一分片失败步骤为Audit production dependencies，日志明确为Hono的GHSA-gqvv-2mrq-wpjv、GHSA-g6gw-c38x-mqfc、GHSA-crvj-82cr-hjcx；Kefu的应用测试/构建及六项工具链测试后，全树审计在GHSA-82fw-gwwq-j7x9失败。以上只是CI报告的依赖命中与门禁原因，不是业务路径可利用性判定。没有强制升级、扫描豁免或重跑。新增TEST-004G/H优先核对与修复，清单改为233勾选/170开放/403项，A3k11b随后继续。该运行必须用原ID继续观察，运行中不等于已停止，后续提交不得借用此SHA的通过项。
 
+## 2026-09-09 Hono / Vitest 依赖修复候选（TEST-004G/H）
+
+基线666b21c。cd5ac6c的Actions34321285989已终态failure：PG16目录成功；第二单元分片1515通过/1失败，唯一断言失败是Admin API审计快照落后于砍价SKU选项路由，另行处理。该旧运行结果不借给当前候选。
+
+根据四份官方公告，Hono精确固定4.13.5；Worker和Kefu的Vitest/mocker全部锁定4.1.11。客服由3.2.6升级至仍兼容Vite6的4系，未force升级5、未强行覆盖mocker。保留pool0.21.2、Worker Vite8.2.1、Kefu Vite6.4.3、Rolldown1.2.3与Wrangler4.122.0，撤回安装附带的无关工具升级。fix-finding技能用于独立调查、最小补丁和正反向验证；独立调查已完成，但候选复核代理未产生结论，不能声称独立复核通过。
+
+新增Hono 13项边界回归在旧版8失败/5通过，mocker在两个旧依赖树分别4失败/1通过；升级后最终Worker相关5文件52项、客服17项、工具链11项、客服构建与Worker双类型均通过。原有网络API写/执行权限、注册文件读取、快照与重跑权限断言保留。SSG使用无副作用内存文件适配器，mocker只读本地非敏感tsconfig正向样本且不暴露socket。SSG/dot解析/浏览器mocker未证明在业务中启用，fragment公告明确Cloudflare Workers请求归一化不受影响，依赖命中不等于生产可利用。
+
+Worker生产审计和Kefu完整审计均0漏洞；Worker完整开发树仍有4 moderate/4 high依赖节点，来自既有Drizzle/esbuild及sharp/Miniflare/Wrangler/pool链，不宣称全仓库清零。Windows workerd命令退出1，启动0xc0000005及日志EPERM，实际执行0项；不能将类型检查或单元结果当作runtime证明。当前自身Linux CI与独立候选复核仍缺，TEST-004G/H保持开放，状态为待验证候选。机器摘要见workers-ts/audit/dependency-patch-20260909.json，无生产操作或部署。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。
