@@ -9,12 +9,14 @@ import { storeOrderCartInfo, storeOrderStatus, printDocument, storeCouponIssue, 
 
 for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'integral', 'newcomer'] as const) describe(`cross-request ${kind} semantic rules`, () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let beforeSequence: (() => Promise<void>) | undefined;
   const input = kind === 'coupon' ? { cartIds: [1], addressId: 11, couponId: 41, type: 0 }
     : kind === 'package' ? { cartIds: [1, 2], addressId: 11, type: 5 }
     : kind === 'bargain' ? { cartIds: [10], addressId: 11, type: 2, bargainUserId: 80 }
     : { cartIds: [1], addressId: 11, type: { seckill: 1, combination: 3, integral: 4, newcomer: 7 }[kind],
       ...(kind === 'seckill' ? { seckillId: 40 } : kind === 'combination' ? { combinationId: 40 } : {}) };
   beforeEach(async () => {
+    beforeSequence = undefined;
     const extra = [storeOrderCartInfo, storeOrderStatus, printDocument];
     if (kind === 'bargain') {
       f = await createBargainSelectionFixture(extra);
@@ -58,7 +60,10 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
       }
     }
     f.app.post('/api/order/create/:key', orderCreate);
-    Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => new Response(`rules_${kind}`) }) } });
+    Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => {
+      await beforeSequence?.();
+      return new Response(`rules_${kind}`);
+    } }) } });
   }, 30_000);
   afterEach(async () => { await f?.close(); });
   const request = async (path: string, body: object) => {
@@ -70,6 +75,40 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
     ...(kind === 'coupon' ? { coupons: await f.db.select().from(storeCouponUser) } : {}),
     ...(kind === 'package' ? { packages: await f.db.select().from(storeDiscounts), entries: await f.db.select().from(storeDiscountsProducts) } : {}),
   });
+  if (kind === 'coupon') {
+    it.each(['minimum', 'ineligible', 'invalidated', 'value', 'issue', 'starts', 'ends'] as const)(
+      'rolls back when owned-coupon %s changes after initial receipt validation', async variant => {
+        const startTime = new Date(Date.now() - 3_600_000), endTime = new Date(Date.now() + 3_600_000);
+        await f.db.insert(storeCouponIssue).values({ id: 2, type: 1, couponType: 0 });
+        await f.db.update(storeCouponUser).set({ startTime, endTime });
+        const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
+        let calls = 0, edited: Awaited<ReturnType<typeof state>> | undefined;
+        beforeSequence = async () => {
+          calls++;
+          await f.db.update(storeCouponUser).set(variant === 'minimum' ? { useMinPrice: '1.00' }
+            : variant === 'ineligible' ? { useMinPrice: '999.00' }
+            : variant === 'invalidated' ? { isFail: 1 }
+            : variant === 'value' ? { couponPrice: '2.00' }
+            : variant === 'issue' ? { issueCouponId: 2 }
+            : variant === 'starts' ? { startTime: new Date(startTime.getTime() + 1000) }
+            : { endTime: new Date(endTime.getTime() + 1000) }).where(eq(storeCouponUser.id, 41));
+          edited = await state();
+        };
+        expect(await request(`/api/order/create/${a.data.orderKey}`, { ...input, quoteToken: a.data.quoteToken })).toMatchObject({
+          status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: a.data.orderKey },
+        });
+        expect(calls).toBe(1); expect(edited).toBeDefined(); expect(await state()).toEqual(edited);
+      });
+    it('permits a late cosmetic edit to a still-valid dated coupon', async () => {
+      await f.db.update(storeCouponUser).set({ startTime: new Date(Date.now() - 3_600_000), endTime: new Date(Date.now() + 3_600_000) });
+      const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
+      let calls = 0;
+      beforeSequence = async () => { calls++; await f.db.update(storeCouponUser).set({ couponTitle: '晚到的展示编辑' }); };
+      const result = await request(`/api/order/create/${a.data.orderKey}`, { ...input, quoteToken: a.data.quoteToken });
+      expect(result.status, result.msg).toBe(200); expect(calls).toBe(1);
+      expect((await state()).orders[0]).toMatchObject({ paid: 0, payPrice: a.data.priceGroup.pay_price });
+    });
+  }
   it('preserves a valid confirmed order and idempotent replay after removing receipts', async () => {
     const a = await request('/api/order/confirm', input); expect(a.status, a.msg).toBe(200);
     const path = `/api/order/create/${a.data.orderKey}`;

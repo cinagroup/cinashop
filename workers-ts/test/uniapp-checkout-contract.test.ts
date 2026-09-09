@@ -9,7 +9,7 @@ const item: CheckoutCartItem = { id: 1, productId: 70, cartNum: 2, unique: "sku1
 const options = { type: 0, addressId: 11, shippingType: 1 as const, storeId: 0, couponId: 0, useIntegral: false };
 const prices = { sumPrice: "20.00", totalPrice: "18.00", pay_price: "21.00", total_postage: "6.00", storePostageDiscount: "3.00", pay_postage: "3.00",
   vipPrice: "2.00", levelPrice: "0.00", memberPrice: "2.00", couponPrice: "0.00", deduction_price: "0.00", firstOrderPrice: "0.00", usedIntegral: 0, SurplusIntegral: 100 };
-const preview = () => ({ orderKey: "checkout_key1", priceGroup: prices, addressInfo: { id: 11 }, cartInfo: [{ ...item, productInfo: { ...item.productInfo, price: "10.00" }, sumPrice: "20.00", truePrice: "9.00" }] });
+const preview = () => ({ orderKey: "checkout_key1", quoteToken: "a".repeat(32), priceGroup: prices, addressInfo: { id: 11 }, cartInfo: [{ ...item, productInfo: { ...item.productInfo, price: "10.00" }, sumPrice: "20.00", truePrice: "9.00" }] });
 
 describe("UniApp checkout transport and strict shared boundary", () => {
   it("retains existing data-only callers and exposes case-normalized pagination metadata separately", async () => {
@@ -92,10 +92,16 @@ describe("UniApp checkout transport and strict shared boundary", () => {
     const request = api.confirm(selected, requestOptions);
     selected[0].cartNum = 100; requestOptions.addressId = 22;
     resolve(preview());
-    expect((await request).prices.payable).toBe("21.00");
+    const confirmed = await request;
+    expect(confirmed.prices.payable).toBe("21.00"); expect(confirmed.quoteToken).toBe("a".repeat(32));
     expect(post).toHaveBeenNthCalledWith(1, "/order/confirm", { cartIds: [1], ...options });
-    await api.computed("checkout_key1", [item], options);
+    expect((await api.computed("checkout_key1", [item], options)).quoteToken).toBe("a".repeat(32));
     expect(post).toHaveBeenNthCalledWith(2, "/order/computed/checkout_key1", options);
     await expect(api.computed("wrong_key1", [item], options)).rejects.toThrow("订单报价标识无效");
+  });
+  it.each([undefined, null, "", "a".repeat(31), "g".repeat(32)])("rejects a missing or malformed quote receipt %j", async quoteToken => {
+    const api = createCheckoutApi({ get: vi.fn(), post: vi.fn().mockResolvedValue({ ...preview(), quoteToken }) });
+    await expect(api.confirm([item], options)).rejects.toThrow("订单报价凭据无效");
+    await expect(api.computed("checkout_key1", [item], options)).rejects.toThrow("订单报价凭据无效");
   });
 });

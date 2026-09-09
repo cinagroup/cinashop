@@ -2516,16 +2516,42 @@ export class StoreOrderCreateService {
               eq(storeCouponUser.id, couponRow.id),
               eq(storeCouponUser.uid, uid),
               eq(storeCouponUser.status, 0),
+              // Compare the owned-coupon facts at the atomic reservation boundary.
+              // The UPDATE lock keeps these fields stable through commit; a second
+              // unlocked quote read would leave another edit window.
+              eq(storeCouponUser.isFail, 0),
+              eq(storeCouponUser.issueCouponId, couponRow.issueCouponId),
+              eq(storeCouponUser.couponPrice, couponRow.couponPrice),
+              eq(storeCouponUser.useMinPrice, couponRow.useMinPrice),
+              sql`${storeCouponUser.startTime} IS NOT DISTINCT FROM ${couponRow.startTime?.toISOString() ?? null}::timestamp`,
+              sql`${storeCouponUser.endTime} IS NOT DISTINCT FROM ${couponRow.endTime?.toISOString() ?? null}::timestamp`,
             ),
           )
           .returning({ id: storeCouponUser.id });
-        if (!reserved.length) throw new ValidateException("优惠券已被其他订单占用");
+        if (!reserved.length) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("优惠券状态或使用规则已变化，请重新确认");
+        }
       }
 
       if (deliveryAddress) await assertDeliveryAddressSnapshot(tx, deliveryAddress);
       if (shippingSnapshot) await assertShippingTemplateSnapshot(tx, shippingSnapshot, templateIds, params.cityId);
       if (type === 2) await assertBargainCheckoutWindow(tx, bargainActivityId);
       if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
+      if (couponRow && (couponRow.startTime || couponRow.endTime)) {
+        // A lock-only writer need not change the tuple, so an UPDATE predicate's
+        // pre-wait clock is not sufficient. Check again after reservation and all
+        // other blocking guards, on the database wall clock (legacy UTC timestamp).
+        const valid = await tx.select({ id: storeCouponUser.id }).from(storeCouponUser).where(and(
+          eq(storeCouponUser.id, couponRow.id), eq(storeCouponUser.uid, uid), eq(storeCouponUser.status, 3),
+          sql`(${storeCouponUser.startTime} IS NULL OR ${storeCouponUser.startTime} <= (clock_timestamp() AT TIME ZONE 'UTC'))`,
+          sql`(${storeCouponUser.endTime} IS NULL OR ${storeCouponUser.endTime} >= (clock_timestamp() AT TIME ZONE 'UTC'))`,
+        )).limit(1);
+        if (!valid.length) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException("优惠券尚未生效或已过期");
+        }
+      }
       return order;
     });
 

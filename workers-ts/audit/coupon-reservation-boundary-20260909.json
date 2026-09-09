@@ -1,0 +1,53 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "status": "partial_local_candidate",
+  "baseCommit": "f58f6178ccbc3e8b8c9d84a8f29947d8747894ca",
+  "basePushedWithExplicitApproval": true,
+  "baseCi": {
+    "runId": 34339592124,
+    "conclusion": "failure",
+    "shards": [
+      { "files": 174, "passed": 1709, "failed": 1 },
+      { "files": 174, "passed": 1553, "failed": 1 }
+    ],
+    "failedFiles": ["bargain-cart-binding.test.ts", "uniapp-checkout-contract.test.ts"],
+    "cause": "Old positive test fixtures omitted the newly required quoteToken",
+    "postTestExactShardGatesRan": false,
+    "otherSuccessfulJobs": ["PC", "Admin", "Supplier", "Kefu", "UniApp", "workerd", "secret scan", "PG16 catalog"]
+  },
+  "ownedCouponBoundary": {
+    "guard": "atomic UPDATE compares ownership, status, isFail, issueCouponId, couponPrice, useMinPrice and null-safe startTime/endTime",
+    "timeGuard": "database UTC wall clock after reservation lock and remaining blocking guards",
+    "preserves": ["existing lock order", "cosmetic edits", "exact quote rejection", "transaction rollback", "existing-order replay"],
+    "doesNotGuarantee": ["no sequence allocation on late rejection", "coupon issue/scope relational consistency", "all marketing activity rule consistency"]
+  },
+  "evidence": {
+    "manualRed": { "scenarios": 14, "gaps": 3, "unproven": 0, "networkAttempts": 0 },
+    "manualGreen": { "scenarios": 14, "controls": 3, "exactRejections": 11, "gaps": 0, "unproven": 0, "networkAttempts": 0 },
+    "rulesRed": { "passed": 29, "failed": 7, "skipped": 0 },
+    "peerRed": { "passed": 3, "failed": 4, "businessGapsProven": 3, "expiryTestHitExistingLockTimeout": true },
+    "firstPeerGreenAttempt": { "files": 5, "passed": 97, "failed": 1, "reason": "expiry fixture window exceeded the existing 2-second lock timeout" },
+    "expiryFixtureCorrection": "2.5-second future deadline reduced to 1.5 seconds; no production timeout changes",
+    "ciFixtureLocalRed": { "passed": 35, "failed": 2, "skipped": 0 },
+    "finalRegression": { "engine": "dedicated loopback PostgreSQL 16.15", "files": 14, "passed": 266, "failed": 0, "skipped": 0 },
+    "finalTypechecks": ["unit: passed", "runtime: passed"],
+    "mixedSourcePGliteDiagnostic": { "files": 346, "passed": 3037, "failed": 6, "skipped": 191, "immutableCandidateAcceptance": false }
+  },
+  "safety": {
+    "productionWrites": false,
+    "deployment": false,
+    "payments": false,
+    "synthetic": ["HTTP identity", "KV", "sequence"],
+    "fixtureCleanup": { "baselineDatabases": 4, "testSchemas": 0, "publicTables": 0, "otherClients": 0 },
+    "dedicatedPostgresStoppedAt": "2026-09-09T10:40:24Z"
+  },
+  "remaining": [
+    "Push approval and own immutable-candidate CI",
+    "Coupon issue type and scope relationships, category/brand ancestor changes and phantoms",
+    "Activity/package rules at the final creation boundary",
+    "Global KV configuration authority (A3k11d)",
+    "Production auth/storage/Hyperdrive and release gates",
+    "Investigate four remaining PGlite date/trigger diagnostic failures"
+  ]
+}

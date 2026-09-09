@@ -43,7 +43,7 @@ describe("durable bargain identity through real HTTP/cart/quote/create/cancel", 
   const second = () => f.db.insert(storeBargainUser).values({ id: 90, uid: 11, bargainId: 40,
     bargainPrice: "10.00", bargainPriceMin: "4.00", price: "6.00", status: 3 });
   const checkout = { type: 2, addressId: 11, shippingType: 2, storeId: 1, realName: '隔离自提人', userPhone: '00000000000' };
-  type Preview = { orderKey: string; priceGroup: { pay_price: string }; cartInfo: Array<{ bargainUserId: number; bargain_user_id: number }> };
+  type Preview = { orderKey: string; quoteToken: string; priceGroup: { pay_price: string }; cartInfo: Array<{ bargainUserId: number; bargain_user_id: number }> };
   const confirm = (id: number, selection: object = {}) => wire<Preview>("/order/confirm", { ...checkout, cartIds: [id], ...selection });
   const create = (key: string, selection: object = {}) => wire<{ orderId: string }>(`/order/create/${key}`, { ...checkout, ...selection });
   const state = async () => {
@@ -73,7 +73,8 @@ describe("durable bargain identity through real HTTP/cart/quote/create/cancel", 
     const before = await state();
     expect(await wire(`/order/computed/${other.data.orderKey}`, { ...checkout, bargainUserId: 90, bargainId: 40 })).toMatchObject({ status: 200, data: { pay_price: "4.00" } });
     expect(await state()).toEqual(before);
-    const createdFirst = await create(first.data.orderKey), createdSecond = await create(other.data.orderKey, { bargain_user_id: "90" });
+    const createdFirst = await create(first.data.orderKey, { quoteToken: first.data.quoteToken }),
+      createdSecond = await create(other.data.orderKey, { bargain_user_id: "90", quoteToken: other.data.quoteToken });
     expect(createdFirst.status, createdFirst.msg).toBe(200); expect(createdSecond.status, createdSecond.msg).toBe(200);
     const purchased = await state();
     expect(purchased.orders.map(row => row.payPrice)).toEqual(["2.00", "4.00"]);
@@ -141,7 +142,7 @@ describe("durable bargain identity through real HTTP/cart/quote/create/cancel", 
       { bargainUserId: 80, bargainId: 40, bargain_id: 90 }, { bargainUserId: 40 }]) {
       expect(await confirm(id, choice)).toMatchObject({ status: 400 });
       expect(await wire(`/order/computed/${good.data.orderKey}`, { ...checkout, ...choice })).toMatchObject({ status: 400 });
-      expect(await create(good.data.orderKey, choice)).toMatchObject({ status: 400 });
+      expect(await create(good.data.orderKey, { ...choice, quoteToken: good.data.quoteToken })).toMatchObject({ status: 400 });
     }
     expect(await state()).toEqual(before); expect(allocations).toBe(0);
     expect(await confirm(id, { bargainUserId: 80, bargain_user_id: "80", bargainId: 40, bargain_id: "40" })).toMatchObject({ status: 200 });

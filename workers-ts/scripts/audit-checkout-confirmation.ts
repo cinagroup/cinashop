@@ -9,19 +9,26 @@ import { eq } from 'drizzle-orm';
 import { createPcCheckoutQuoteFixture } from '../test/helpers/pcCheckoutQuoteFixture';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
 import { storeCart, storeProductAttrValue, shippingTemplatesRegion, userAddress,
-  storeOrderCartInfo, storeOrderStatus, printDocument } from '../src/models/schema';
+  storeOrderCartInfo, storeOrderStatus, printDocument, storeCouponIssue, storeCouponUser } from '../src/models/schema';
 
 type Fixture = Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
 type Body = Record<string, unknown>;
 type Envelope = { status: number; msg?: string; data: Body | null };
 type Scenario = { name: string; control?: boolean; withoutConfirm?: boolean;
-  mutate?: (f: Fixture, key: string) => Promise<void>; body?: Body; replay?: boolean };
+  mutate?: (f: Fixture, key: string) => Promise<void>; body?: Body; replay?: boolean;
+  setup?: (f: Fixture) => Promise<void>; quoteInput?: Body; expectedPayable?: string;
+  duringCreate?: (f: Fixture) => Promise<void> };
 
 // The test helper supports dedicated PG16, but this audit intentionally cannot.
 if (process.env.TEST_FINANCE_POSTGRES_URL) throw new Error('This probe requires in-memory SQL; unset TEST_FINANCE_POSTGRES_URL');
 const originalFetch = globalThis.fetch;
 let networkAttempts = 0;
 globalThis.fetch = async () => { networkAttempts++; throw new Error('Network is forbidden in the confirmation audit'); };
+const couponSetup = async (f: Fixture) => {
+  await f.db.insert(storeCouponIssue).values({ id: 1, type: 1, couponType: 0 });
+  await f.db.insert(storeCouponUser).values({ id: 41, uid: 11, issueCouponId: 1, couponPrice: '1.00', useMinPrice: '0.00' });
+};
+const couponScenario = { setup: couponSetup, quoteInput: { couponId: 41 }, expectedPayable: '25.00' };
 const scenarios: Scenario[] = [
   { name: 'unchanged confirmation creates exactly its quoted order', control: true },
   { name: 'postage rule changed after confirmation', mutate: async f => {
@@ -43,17 +50,40 @@ const scenarios: Scenario[] = [
   { name: 'unissued key with explicit cart IDs', withoutConfirm: true },
   { name: 'expired confirmation with explicit cart IDs', mutate: async f => { f.cache.clear(); } },
   { name: 'existing order replays after confirmation expires', control: true, replay: true },
+  { ...couponScenario, name: 'unchanged coupon confirmation creates its quoted order', control: true },
+  { ...couponScenario, name: 'coupon minimum changed after receipt validation at the same amount', duringCreate: async f => {
+    await f.db.update(storeCouponUser).set({ useMinPrice: '1.00' }).where(eq(storeCouponUser.id, 41));
+  } },
+  { ...couponScenario, name: 'coupon becomes ineligible after receipt validation', duringCreate: async f => {
+    await f.db.update(storeCouponUser).set({ useMinPrice: '999.00' }).where(eq(storeCouponUser.id, 41));
+  } },
+  { ...couponScenario, name: 'coupon invalidated after receipt validation', duringCreate: async f => {
+    await f.db.update(storeCouponUser).set({ isFail: 1 }).where(eq(storeCouponUser.id, 41));
+  } },
 ];
 
 const results: Body[] = [];
 try {
   for (const scenario of scenarios) {
-    const f = await createPcCheckoutQuoteFixture([storeOrderCartInfo, storeOrderStatus, printDocument]);
+    const f = await createPcCheckoutQuoteFixture([storeOrderCartInfo, storeOrderStatus, printDocument, storeCouponIssue, storeCouponUser]);
     try {
       for (const key of Object.keys(f.config)) f.config[key] = '0';
+      await scenario.setup?.(f);
+      const snapshot = async () => ({ ...await f.snapshot(),
+        coupons: await f.db.select().from(storeCouponUser), issues: await f.db.select().from(storeCouponIssue),
+        details: await f.db.select().from(storeOrderCartInfo), statuses: await f.db.select().from(storeOrderStatus),
+      });
+      let before: Awaited<ReturnType<typeof snapshot>>;
       let sequences = 0;
       Object.assign(f.env, { SEQUENCE: { idFromName: () => 'local', get: () => ({
-        fetch: async () => new Response(`confirmation_audit_${++sequences}`),
+        fetch: async () => {
+          assert.equal(sequences, 0, 'Only one new order number may be requested per scenario');
+          // The real core calls Sequence after accepting the receipt but before opening its transaction.
+          // This deterministic SQL edit is not a multi-connection/lock-contention proof.
+          await scenario.duringCreate?.(f);
+          if (scenario.duringCreate) before = await snapshot();
+          return new Response(`confirmation_audit_${++sequences}`);
+        },
       }) } });
       f.app.post('/api/order/create/:key', orderCreate);
       const request = async (path: string, body: Body): Promise<Envelope> => {
@@ -62,34 +92,36 @@ try {
         assert.equal(response.status, 200, 'Unexpected HTTP failure must not count as a quote rejection');
         return await response.json() as Envelope;
       };
-      const body = { cartIds: [1], addressId: 11, shippingType: 1 };
+      const body = { cartIds: [1], addressId: 11, shippingType: 1, ...scenario.quoteInput };
+      const expectedPayable = scenario.expectedPayable ?? '26.00';
       const confirmed = scenario.withoutConfirm ? null : await request('/api/order/confirm', body);
       if (confirmed) assert.equal(confirmed.status, 200, 'Baseline confirmation failed');
       const key = confirmed ? String(confirmed.data?.orderKey) : 'unissued_confirmation_audit';
       assert.match(key, /^[A-Za-z0-9_-]{8,64}$/);
       const quoted = confirmed?.data?.priceGroup as Body | undefined;
-      if (confirmed) assert.equal(quoted?.pay_price, '26.00');
+      if (confirmed) assert.equal(quoted?.pay_price, expectedPayable);
       const cached = f.cache.get(`order:confirm:11:${key}`);
       await scenario.mutate?.(f, key);
-      const before = await f.snapshot();
+      before = await snapshot();
       const created = await request(`/api/order/create/${key}`, { ...body, quoteToken: confirmed?.data?.quoteToken, ...scenario.body });
-      let after = await f.snapshot();
+      if (scenario.duringCreate) assert.equal(sequences, 1, 'Late-edit hook was not reached');
+      let after = await snapshot();
       if (scenario.replay) {
         assert.equal(created.status, 200);
         f.cache.clear();
         await f.db.update(userAddress).set({ isDel: 1 });
-        const replayBefore = await f.snapshot();
+        const replayBefore = await snapshot();
         const replay = await request(`/api/order/create/${key}`, {});
         assert.equal(replay.status, 200);
         assert.equal(replay.data?.orderId, created.data?.orderId);
-        assert.deepEqual(await f.snapshot(), replayBefore);
-        after = await f.snapshot();
+        assert.deepEqual(await snapshot(), replayBefore);
+        after = await snapshot();
       }
       let verdict: string;
       if (scenario.control) {
         assert.equal(created.status, 200);
         assert.equal(after.orders.length, 1);
-        assert.equal(after.orders[0].payPrice, '26.00');
+        assert.equal(after.orders[0].payPrice, expectedPayable);
         verdict = 'control_passed';
       } else if (created.status === 200 && after.orders.length === 1) {
         verdict = 'gap_reproduced';
@@ -103,11 +135,13 @@ try {
       }
       for (const order of after.orders) assert.equal(order.paid, 0, 'Audit must never pay an order');
       results.push({ scenario: scenario.name, verdict, cachedFields: cached ? Object.keys(JSON.parse(cached)).sort() : [],
+        editPhase: scenario.duringCreate ? 'after_receipt_validation_before_transaction' : 'between_http_requests',
         confirmedPayable: quoted?.pay_price ?? null, createStatus: created.status,
         errorCode: created.data?.errorCode ?? null, orders: after.orders.length,
         persistedPayable: after.orders[0]?.payPrice ?? null, persistedPostage: after.orders[0]?.payPostage ?? null,
         addressChanged: !!after.orders[0] && after.orders[0].userAddress !== '本地省 测试甲市 测试甲区 隔离样本一号',
-        persistedQuantity: after.orders[0]?.totalNum ?? null });
+        persistedQuantity: after.orders[0]?.totalNum ?? null,
+        persistedCoupon: after.coupons[0] ? { minimum: after.coupons[0].useMinPrice, isFail: after.coupons[0].isFail, status: after.coupons[0].status } : null });
     } finally { await f.close(); }
   }
   assert.equal(networkAttempts, 0);
