@@ -58,6 +58,7 @@ import {
 } from "@/services/admin/AdminMobileUserService";
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { retireBargain } from "@/services/activity/BargainRetirementService";
+import { saveBargain, setBargainStatus } from "@/services/activity/BargainAdminService";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -1369,7 +1370,13 @@ export async function adminIntegralList(c: C) {
 
 /** POST /api/admin/activity/status — 活动上下架 (通用) */
 export async function adminActivityStatus(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
+  const input = await readBoundedJsonObject(c.req.raw, 64 * 1024);
+  if (input.type === "bargain") {
+    privateNoStore(c);
+    await setBargainStatus(c.get("container"), input);
+    return jsonOk(c, null, "操作成功");
+  }
+  const body = input as {
     type: string;
     id: number;
     status: number;
@@ -1384,9 +1391,6 @@ export async function adminActivityStatus(c: C) {
       break;
     case "combination":
       await container.storeCombinationDao.update(id, { status });
-      break;
-    case "bargain":
-      await container.storeBargainDao.update(id, { status });
       break;
     case "integral":
       await container.storeIntegralDao.update(id, { status });
@@ -2178,7 +2182,13 @@ export async function adminExpressDel(c: C) {
 
 /** POST /api/admin/activity/save — 创建/编辑活动 (type 分发) */
 export async function adminActivitySave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
+  const input = await readBoundedJsonObject(c.req.raw, 64 * 1024);
+  if (input.type === "bargain") {
+    privateNoStore(c);
+    const id = await saveBargain(c.get("container"), input);
+    return jsonOk(c, { id }, input.id === undefined ? "创建成功" : "更新成功");
+  }
+  const body = input as {
     type: "seckill" | "combination" | "bargain" | "integral";
     id?: number;
     productId?: number;
@@ -2242,15 +2252,6 @@ export async function adminActivitySave(c: C) {
         return jsonOk(c, { id: body.id }, "更新成功");
       }
       const row = await container.db.insert(schema.storeCombination).values(vals).returning({ id: schema.storeCombination.id });
-      return jsonOk(c, { id: row[0].id }, "创建成功");
-    }
-    if (body.type === "bargain") {
-      const vals = { ...common, minPrice: body.minPrice ?? "0.00", sales: 0, people: 10, addTime: now };
-      if (body.id) {
-        await container.db.update(schema.storeBargain).set(vals).where(eq(schema.storeBargain.id, body.id));
-        return jsonOk(c, { id: body.id }, "更新成功");
-      }
-      const row = await container.db.insert(schema.storeBargain).values(vals).returning({ id: schema.storeBargain.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     if (body.type === "integral") {

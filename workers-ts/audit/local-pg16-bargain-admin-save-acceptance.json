@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "fef93242afebf19215ea6504235bf89c49d6d279",
+  "scope": "Generic bargain admin editor field preservation and optimistic inventory comparison; local candidate, not the complete PHP SKU editor or production acceptance.",
+  "environment": {
+    "platform": "Windows x64", "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432", "database": "cinashop_finance_test", "role": "finance_test",
+    "maxWorkers": 2,
+    "fixtureBoundary": "Random owned SQL schemas with real columns/defaults/not-null/PK, not all production FK/CHECK. Explicit offline tests retain PGlite. HTTP tests inject a trusted container, not real auth.",
+    "productionAccess": false, "deployment": false, "ddlChanged": false, "pricingFormulaChanged": false,
+    "systemServiceInstalled": false, "globalEnvironmentChanged": false
+  },
+  "inputHashNormalization": "UTF-8 with CRLF converted to LF; file paths relative to repository root",
+  "changedExecutableInputs": [
+    { "file": "workers-ts/src/services/activity/BargainAdminService.ts", "sha256": "ba0b7e7382957a30e8b57f8d667ac3b152e33510a5e22ba2dd8521fc65e5e720" },
+    { "file": "workers-ts/src/controllers/api/v1/AdminCrudController.ts", "sha256": "8a5bc173d27cfce0f20328b20b8a87471e1d1a3cb24b26d521ef4454e08cff94" },
+    { "file": "workers-ts/test/bargain-admin-save.test.ts", "sha256": "a28e53304175ea324440021fcbb4dfb3768368dfb8bdba63905224767ed57a42" },
+    { "file": "workers-ts/test/bargain-admin-form.test.ts", "sha256": "52485bb33fe1361df42318b71892c13419a9a81a0d0a3a8c3ee7d43a5a597f7e" },
+    { "file": "workers-ts/test/bargain-admin-concurrency-postgres.test.ts", "sha256": "cd8dd8c8e3cce2b0f10b74c30c33662eb6f9f3187e1ca80b745fbb294d025d91" },
+    { "file": "workers-ts/audit/orm-ordinary-index-reconciliation.json", "sha256": "f6502b4b04bd760646f1bc5ce784f079ce2d3b25d5f20d76330e17b7ba7c38f2" },
+    { "file": "view/admin-ts/src/api/bargainEdit.ts", "sha256": "d1b18c1352d10d75a160cd7cb4272eb29bfb1f1f80ca94c2456aca9e4ec1760c" },
+    { "file": "view/admin-ts/src/pages/activity/ActivityList.vue", "sha256": "2910c4e973469028ef6b22d823b204819026aa664e1df17a0360a5c8ae2211b9" }
+  ],
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "runs": [
+    { "file": "bargain-save-red.json", "sha256": "fb430dfc2e01a434f2df68aa102a9a7d16f7dbc70bbd26d347a2d69792056e98", "files": 1, "passed": 6, "failed": 32, "skipped": 0, "engine": "PGlite; unmodified production code" },
+    { "file": "bargain-save-green.json", "sha256": "09ed04d9e00a7bf55121778ec26077021dbc35b33c3ad0f4c7295b935310b329", "files": 2, "passed": 44, "failed": 0, "skipped": 0 },
+    { "file": "bargain-save-concurrency.json", "sha256": "287a1be87dc5f4168376fca09a41573381888cd6dcb4ee9518ddffbc6e4b0ac8", "files": 1, "passed": 9, "failed": 0, "skipped": 0 },
+    { "file": "bargain-save-regression.json", "sha256": "59520e8cede905930432554af6923acc506a854ed90d2db5627c542c044dc68d", "files": 20, "passed": 331, "failed": 0, "skipped": 0, "durationSeconds": 112.03 },
+    { "file": "bargain-save-regression-final.json", "sha256": "5e8b532e34041775d5306869f7e4d22d3b530dc35b168be94f5fe9e80511aa05", "files": 20, "passed": 336, "failed": 0, "skipped": 0, "durationSeconds": 134.23 }
+  ],
+  "regressionFilters": ["bargain", "ordinary-query-index-alignment", "orm-query-index-alignment", "legacy-query-index-alignment"],
+  "newTestFiles": [
+    { "file": "test/bargain-admin-save.test.ts", "tests": 52 },
+    { "file": "test/bargain-admin-form.test.ts", "tests": 6 },
+    { "file": "test/bargain-admin-concurrency-postgres.test.ts", "tests": 9, "pgOnly": true }
+  ],
+  "checks": {
+    "workerUnitTypes": "passed", "workerRuntimeTypes": "passed", "adminBuild": "passed",
+    "typeLog": "bargain-save-types-complete.log", "adminBuildLog": "bargain-save-admin-build-final.log",
+    "initialTypeFailure": "New concurrency test unused import and Promise<number>|Promise<void> generic inference; corrected test typing. Earlier service typecheck passed.",
+    "fullWorkerUnitRerun": false, "ninePathCatalogRerun": false, "linuxWorkerd": false
+  },
+  "browser": {
+    "url": "http://127.0.0.1:5209/activity",
+    "fixture": "http://127.0.0.1:5208; PGlite, real controllers; substituted auth, site config and pending-count metadata; external network blocked",
+    "driver": "Existing Playwright/Chrome; Browser skill not listed in current session",
+    "viewports": ["1280x900", "390x844"],
+    "finalLog": "bargain-save-browser-verified.log",
+    "checks": { "identity": "passed", "notBlank": "passed", "noFrameworkOverlay": "passed", "consoleErrors": 0, "consoleWarnings": 0, "screenshots": "reviewed", "interaction": "passed" },
+    "flow": "Open edit; committed synthetic SQL stock change; rename submits only changed field. Reopen, edit stock, synthetic SQL change; reject stale original values and keep form. Reload/reopen and explicitly edit stock; success without changing sales.",
+    "initialFindings": [
+      "Missing local site_config fixture caused two 404s; added explicit metadata substitute.",
+      "Diagnostic rerun reused unchanged name and correctly generated no-op; made test name unique and rebuilt memory fixture.",
+      "Screenshot showed mobile 560px dialog clipping and weak transient error visibility; responsive width and inline retained error added and rerun."
+    ],
+    "screenshots": [
+      { "file": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-bargain-desktop.png", "sha256": "35a64850311f34960817114058e2b5390cb2143949a0aa699d2f42259dd6b09c" },
+      { "file": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-bargain-mobile.png", "sha256": "b3aea7cf705c2bfe99775adca3b22c09dea765fb5d798c1bdfd7c13246028e9a" }
+    ],
+    "retainedMemoryFixtureTotals": { "saveCalls": 12, "accepted": 8, "expectedConflicts": 4, "syntheticStockChanges": 8, "stock": 8, "quota": 0, "sales": 11, "orders": 0, "helps": 0 },
+    "boundary": "Two complete viewport rounds share the rebuilt fixture. Synthetic stock changes are not actual orders; actual order interleavings are independently tested in PG16."
+  },
+  "cleanup": {
+    "databases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "publicTables": 0, "fixtureSchemas": 0, "otherClients": 0, "manualDatabaseDeletion": false,
+    "postgresPid": 12588, "stoppedAtUtc": "2026-09-09T01:55:46.352Z", "pidAbsent": true,
+    "listenersAbsent": [55432, 5208, 5209],
+    "retained": "Stopped local PG16 cluster, binaries, raw reports, temporary QA scripts and screenshots. All owned SQL fixtures and memory instance closed."
+  },
+  "remaining": [
+    "Full PHP attrs/items, activity SKU creation/editing, descriptions, dates/expired-edit rules, freight, images, product eligibility and copy workflows",
+    "Product rebind with existing participations/SKUs, base/activity inventory synchronization and product-retirement global ordering; ordinary product existence query is not a concurrency guarantee",
+    "User choice on participation price snapshots; no implicit choice made",
+    "Own CI/Linux/workerd, full real-role/provider and production acceptance; publish frontend/backend together because legacy stock posts lack expected values"
+  ]
+}

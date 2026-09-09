@@ -67,7 +67,8 @@
     </el-table>
 
     <!-- 活动创建/编辑弹窗 -->
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑活动' : '新增活动'" width="560px">
+    <el-dialog v-model="formVisible" :title="form.id ? '编辑活动' : '新增活动'" width="min(560px, calc(100vw - 24px))">
+      <el-alert v-if="formError" :title="formError" type="error" :closable="false" show-icon class="form-error" />
       <el-form :model="form" label-width="100px">
         <el-form-item label="商品ID" required>
           <el-input-number v-model="form.productId" :min="1" />
@@ -81,24 +82,30 @@
         <el-form-item label="活动价" required>
           <el-input v-model="form.price" placeholder="如: 49.90" />
         </el-form-item>
-        <el-form-item label="原价">
+        <el-form-item label="原价" v-if="formType !== 'bargain'">
           <el-input v-model="form.otPrice" placeholder="如: 99.90" />
         </el-form-item>
         <el-form-item label="库存">
           <el-input-number v-model="form.stock" :min="0" />
         </el-form-item>
-        <el-form-item label="限购/成团人数" v-if="activeTab !== 'integral' && activeTab !== 'bargain'">
-          <el-input-number v-model="form.num" :min="1" />
-          <span class="hint" v-if="activeTab === 'combination'">成团人数</span>
-          <span class="hint" v-else>秒杀限购</span>
+        <el-form-item label="活动额度" v-if="formType === 'bargain'">
+          <el-input-number v-model="form.quota" :min="0" />
         </el-form-item>
-        <el-form-item label="成团人数" v-if="activeTab === 'combination'">
+        <el-form-item label="砍价人数" v-if="formType === 'bargain'">
           <el-input-number v-model="form.people" :min="2" />
         </el-form-item>
-        <el-form-item label="底价" v-if="activeTab === 'bargain'">
+        <el-form-item label="限购/成团人数" v-if="formType !== 'integral' && formType !== 'bargain'">
+          <el-input-number v-model="form.num" :min="1" />
+          <span class="hint" v-if="formType === 'combination'">成团人数</span>
+          <span class="hint" v-else>秒杀限购</span>
+        </el-form-item>
+        <el-form-item label="成团人数" v-if="formType === 'combination'">
+          <el-input-number v-model="form.people" :min="2" />
+        </el-form-item>
+        <el-form-item label="底价" v-if="formType === 'bargain'">
           <el-input v-model="form.minPrice" placeholder="可砍至最低价" />
         </el-form-item>
-        <el-form-item label="积分" v-if="activeTab === 'integral'">
+        <el-form-item label="积分" v-if="formType === 'integral'">
           <el-input-number v-model="form.integral" :min="0" />
         </el-form-item>
         <el-form-item label="排序">
@@ -205,6 +212,7 @@ import {
 } from "@/api/activity";
 import { ElMessageBox } from "element-plus";
 import DiscountPackageManager from "@/pages/activity/DiscountPackageManager.vue";
+import { bargainEditPayload } from "@/api/bargainEdit";
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
@@ -220,6 +228,9 @@ const seckillTimes = ref<{ id: number; startTime: string; endTime: string; conti
 // M20: 表单
 const formVisible = ref(false);
 const saving = ref(false);
+const formError = ref("");
+const formType = ref("seckill");
+let bargainOriginal: Record<string, unknown> | null = null;
 const form = reactive({
   id: 0,
   productId: 1,
@@ -316,6 +327,8 @@ async function toggleStatus(row: ActivityItem) {
 }
 
 function openForm(row?: ActivityItem) {
+  formError.value = "";
+  formType.value = activeTab.value;
   if (row) {
     form.id = row.id;
     form.productId = row.productId ?? 1;
@@ -347,6 +360,7 @@ function openForm(row?: ActivityItem) {
     form.sort = 90;
     form.status = 1;
   }
+  bargainOriginal = row && formType.value === "bargain" ? { ...form } : null;
   formVisible.value = true;
 }
 
@@ -354,9 +368,10 @@ async function save() {
   if (!form.storeName) return ElMessage.error("请输入活动名称");
   if (!form.price) return ElMessage.error("请输入活动价");
   saving.value = true;
+  formError.value = "";
   try {
-    await apiAdminActivitySave({
-      type: activeTab.value,
+    await apiAdminActivitySave(formType.value === "bargain" ? bargainEditPayload(form, bargainOriginal) : {
+      type: formType.value,
       id: form.id || undefined,
       productId: form.productId,
       storeName: form.storeName,
@@ -376,7 +391,7 @@ async function save() {
     formVisible.value = false;
     load();
   } catch (e) {
-    ElMessage.error((e as Error).message || "保存失败");
+    formError.value = e instanceof Error ? e.message : "保存失败";
   } finally {
     saving.value = false;
   }
@@ -418,5 +433,9 @@ onMounted(load);
 
 .time-card {
   margin-top: 16px;
+}
+
+.form-error {
+  margin-bottom: 16px;
 }
 </style>
