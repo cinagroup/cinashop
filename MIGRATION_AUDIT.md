@@ -7075,6 +7075,24 @@ PHP `StoreCartServices.php:911–938`按活动productInfo的delivery_type判断�
 
 按Workers技能检索[当前最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)，最新types请求失败后回退本地5.20260828.1的Hyperdrive定义及Wrangler schema，既有绑定未修改；PostgreSQL技能用于保持短事务与既有兼容锁。未修改前端、依赖、用户环境或生产，不借用旧Linux/workerd/全Worker目录及页面证据。
 
+## 2026-09-09：砍价后台配送配置到真实报价（A3k7 本地候选）
+
+起点`bbebaaee92cdbd5f9d93fa8e6e65a349a516f8c3`已推送，工作区干净；其[Actions34309737141](https://github.com/cinagroup/cinashop/actions/runs/34309737141)因账户付款/额度限制未启动，11项runner_id=0/steps=0，不能当作Linux通过。本轮继续本地完善，不连接生产、执行DDL、部署或调用provider，旧PHP真实历史复制继续N/A。
+
+PHP `StoreBargainServices.php:134–182`规定freight=1包邮、2固定运费、3模板：包邮清postage/tempId，固定清tempId且物流类金额必须大于零，模板清postage且必须选择；非实物delivery_type=2，类型1/2/3另强制freight=2/postage=0/tempId=0，次卡4不视为这三类免物流。本轮按此合同补齐认证规格读取中的配送配置/可用模板与后台表单，金额按实际numeric(10,2)限制8位整数及2位小数。模板owner_type与商品type同为0平台/1门店/2供应商，只接受同relationId的active/non-deleted模板，不跨租户回退；按sort/id排序且最多500项，未知归属失败关闭。
+
+嵌套shipping只表示显式编辑意图；已有活动须携带deliveryType/freight/postage/tempId完整原值，在活动NO KEY UPDATE后比较，过期表单连带名称/描述一起拒绝。省略shipping和前端无差异保留历史原规则，重读SKU不覆盖未保存配送。沿用来源商品SHARE和2/5/5秒局部限制，模板SHARE必须NOWAIT，防止持活动/商品后反向等待模板编辑者；该锁持续到活动/规格/描述及最终截止检查全部完成。没有增加外部I/O、配置绑定或DDL，未改参与价格公式。当前API直接创建省略shipping仍走旧默认兼容路径，前端新建要求加载配送配置；这不是完整PHP创建必填合同收口。
+
+新增28项实际SQL/HTTP/前端payload测试及5项独立PG16事务测试：三类运费规范化后真实quote分别为2.00/10.50/8.00元；仅改配送不改变活动SKU库存、参与或订单；原值冲突、非法金额/方法/模板/归属拒绝，虚拟/次卡继承、新建单SKU与描述失败回滚。准确pg_blocking_pids验证活动锁提交/回滚后的原值比较、模板锁未释放时快速拒绝、等待源商品后读取已提交模板停用、实际描述写入期间模板SHARE持有及旧新一致性读取。模板可在保存提交后被停用，这是明确未解决的生命周期问题，不把保存期间的锁声称为永久引用保护或结算模板内部快照。
+
+首轮PGlite为26/28，测试给quoteOrder传了addressId而不是该服务使用的cityId，未产生配送目的地，因此两个运费断言失败；首轮类型检查也捕获多余key。修正测试参数而未修改报价逻辑，保留失败报告。最终专项33/33、单进程相关43文件619/619（282.55秒）、PGlite28/28（40.65秒）零失败/跳过，Worker unit/runtime类型及Admin vue-tsc/Vite构建通过。未运行全Worker库存/九路径重审、PC/UniApp构建或Linux/workerd，不借用旧批结果。
+
+前端技能中要求的browser技能入口未列出，按其fallback用已有Playwright与Chrome，未安装依赖或重复要求插件授权。实际页面`http://127.0.0.1:5209/activity`连接5208内存SQL真实控制器，认证/KV/站点配置/通知为替身，外部请求阻止。1280×900与390×844检查身份、非空首屏、无overlay、控制台零error/warn；实际操作固定运费零值被拒且不发HTTP、输入8.50/12.75、重读SKU保留编辑、保存重载、模板选择重载，并由同一活动真实服务验证总价10.50/14.75及模板8.00元。订单0，SKU与参与快照不变；手机弹窗在视口内、复选自然换行，原列表窄屏表格仍需横向滚动。首轮脚本点Element Plus隐藏原生checkbox超时，改点可见标签；第二轮因隔离夹具缺site_config出现404，补明确测试配置响应后最终通过，不改生产接口。失败日志与截图均保留。
+
+使用Workers技能维护请求内资源和既有Hyperdrive接口，PostgreSQL技能指导短事务/NOWAIT与真实锁屏障，前端技能驱动双视口实际交互和截图检查。沿用已检索的[Cloudflare当前最佳实践](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)及本地5.20260828.1/Hyperdrive/Wrangler schema；最新types远程读取失败，不改变绑定。可复核输入LF摘要、原始成功/失败报告摘要及页面信息见`workers-ts/audit/local-pg16-bargain-admin-shipping-acceptance.json`。
+
+全部测试终态后确认4个基线库、public表0、fixture schema0、其他客户端0；只停止本轮PG PID14172，04:29:46.084 UTC服务正常关闭，55432/5208/5209均无监听，内存SQL和Vite已结束。没有人工删库或安装系统服务，集群/二进制/证据保留。清单229勾选/162开放/391项，仅新增A3k7本地候选。消费端checkShipping仍基于原商品、两端配送选择/门店归属和全局开关/同城履约、模板引用删除保护与内容并发、完整PHP编辑兼容和A3i价格选择仍开放；真实角色、真机、provider与生产发布须另验。
+
 ## 完成定义
 
 一个业务域只有同时满足以下条件才可标为“完成”：旧新路由/权限/状态机映射齐全；若部署范围包含旧历史继承，则数据迁移可重复且校验通过，本部署改由新系统初始化与当前数据完整性验收替代；关键并发与失败恢复有集成测试，前端真实流程通过，预发Cloudflare和第三方回调有远端证据。源码中存在接口或页面不等于迁移完成。

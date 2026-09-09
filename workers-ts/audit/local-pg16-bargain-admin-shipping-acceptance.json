@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-09-09",
+  "sourceCommit": "bbebaaee92cdbd5f9d93fa8e6e65a349a516f8c3",
+  "scope": "FE-003L-A3k7: admin bargain delivery/freight configuration to saved SQL and actual quote. Local candidate only, not full consumer delivery workflow.",
+  "environment": {
+    "platform": "Windows x64",
+    "postgresServerVersionNum": 160015,
+    "listener": "127.0.0.1:55432",
+    "role": "finance_test",
+    "database": "cinashop_finance_test",
+    "sqlTimezone": "UTC",
+    "maxWorkers": 1,
+    "fixtureBoundary": "Owned random schemas; real columns/defaults/PK/NOT NULL, not all production FK/CHECK/unique constraints. Browser SQL is PGlite; auth/KV/site config/notification substitutes.",
+    "productionAccess": false,
+    "deployment": false,
+    "ddlChanged": false,
+    "frontendChanged": true,
+    "pricingFormulaChanged": false,
+    "userEnvironmentChanged": false
+  },
+  "contract": {
+    "phpReference": "app/services/activity/bargain/StoreBargainServices.php:134-182",
+    "rules": [
+      "freight 1=free, 2=fixed positive amount, 3=active owned template; clear inactive monetary/template fields",
+      "Nonphysical delivery becomes 2; types 1/2/3 force freight 2, postage zero, no template; type 4 retains postage validation",
+      "Explicit existing shipping edits compare the complete original group after the activity lock; omission and no-op UI do not replay historical rules",
+      "Only active exact product-owner templates; bounded 501 probe with >500 rejection; no cross-owner fallback",
+      "Source SHARE precedes template SHARE NOWAIT, held through the entire existing bounded transaction; no external I/O"
+    ],
+    "remaining": [
+      "Existing API creation without shipping remains a compatibility default path, not full PHP required-field parity",
+      "Consumer checkShipping still reads base product; PC/UniApp delivery selection and global/store/same-city rules remain open",
+      "Template retirement reference protection and template-internal consistency after save/quote remain open",
+      "Full PHP attrs/items/raw-detail/copy/rebind/multi-SKU and A3i price policy remain open",
+      "Linux/workerd, real roles/devices/provider and production release not validated"
+    ]
+  },
+  "inputHashNormalization": "UTF-8 CRLF -> LF; relative paths",
+  "rawReportsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+  "changedExecutableInputs": [
+    {
+      "file": "workers-ts/src/services/activity/BargainAdminShippingService.ts",
+      "sha256": "67293ead93379e979311725eec580f2be1c7641e795a6b55b439654f60922ad2"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainAdminService.ts",
+      "sha256": "e8d251be9f7b2d9b86bbf21d5e4fa75d1e5c530cb26ecbea5617221c71e1d9df"
+    },
+    {
+      "file": "workers-ts/src/services/activity/BargainAdminSkuService.ts",
+      "sha256": "f3b9bdbc05893ec11816440ceb54f31845d7dd20d06798ad2c9fda916415d82d"
+    },
+    {
+      "file": "view/admin-ts/src/api/bargainShippingEdit.ts",
+      "sha256": "5e702c3a86657bff843cf72659dd3fc297513b78ff0c762f091d215d302c03ab"
+    },
+    {
+      "file": "view/admin-ts/src/api/bargainSkuEdit.ts",
+      "sha256": "ea17edd735b1a56af411e16f6f08afa88f4f4f3cffe7c881317bac312992d07a"
+    },
+    {
+      "file": "view/admin-ts/src/pages/activity/ActivityList.vue",
+      "sha256": "fc46ccf19382190c6b4ff963bf90ed0e5235f3d2a5c5df5476449f46d4c56dd5"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-shipping.test.ts",
+      "sha256": "3c8b7e881a1d8d8ed3c11240d4fb1a4fd26da1c455bf4646ffa88a9818277af9"
+    },
+    {
+      "file": "workers-ts/test/bargain-admin-shipping-postgres.test.ts",
+      "sha256": "523c8e099fb6fe75d2d98624a9d1b9c8e45a39a28148cf1eedacfa7b473be13c"
+    }
+  ],
+  "runs": [
+    {
+      "file": "bargain-admin-shipping-pglite.json",
+      "sha256": "45b65d5eec1dafb35c06e5433edd4a1efc3632f097f491b43901451a0eac267b",
+      "files": 1,
+      "total": 28,
+      "passed": 26,
+      "failed": 2,
+      "pending": 0,
+      "success": false
+    },
+    {
+      "file": "bargain-admin-shipping-pglite-final.json",
+      "sha256": "b99b07981e300362ecdef9dba27a4c7de57d89093b1a12283b6b5dde4711df45",
+      "files": 1,
+      "total": 28,
+      "passed": 28,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    },
+    {
+      "file": "bargain-admin-shipping-targeted.json",
+      "sha256": "b70babf3b5822ef279016670a851af75fb2ac3c1cdeefc798ac63de06815015b",
+      "files": 2,
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    },
+    {
+      "file": "bargain-admin-shipping-regression.json",
+      "sha256": "03a2697efe14119b143eaddf1a1438bc3f10b91e9b9f08e84efdf467f15acf13",
+      "files": 43,
+      "total": 619,
+      "passed": 619,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    }
+  ],
+  "browser": {
+    "evidence": [
+      {
+        "label": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "url": "http://127.0.0.1:5209/activity",
+        "title": "营销活动 - CinaShop 管理后台",
+        "checks": [
+          "identity",
+          "not-blank",
+          "first-viewport",
+          "no-overlay",
+          "no-console-errors",
+          "invalid-input-no-request",
+          "unsaved-shipping-survives-refresh",
+          "fixed-save-reload-real-quote",
+          "template-save-reload-real-quote",
+          "dialog-in-viewport",
+          "no-orders-or-inventory-changes"
+        ],
+        "fixedQuoteCents": 1050,
+        "templateQuoteCents": 800,
+        "errors": [],
+        "warnings": [],
+        "screenshots": [
+          "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-desktop-first.png",
+          "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-desktop-fixed.png",
+          "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-desktop-template.png"
+        ]
+      },
+      {
+        "label": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "url": "http://127.0.0.1:5209/activity",
+        "title": "营销活动 - CinaShop 管理后台",
+        "checks": [
+          "identity",
+          "not-blank",
+          "first-viewport",
+          "no-overlay",
+          "no-console-errors",
+          "invalid-input-no-request",
+          "unsaved-shipping-survives-refresh",
+          "fixed-save-reload-real-quote",
+          "template-save-reload-real-quote",
+          "dialog-in-viewport",
+          "no-orders-or-inventory-changes"
+        ],
+        "fixedQuoteCents": 1475,
+        "templateQuoteCents": 800,
+        "errors": [],
+        "warnings": [],
+        "screenshots": [
+          "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-mobile-first.png",
+          "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-mobile-fixed.png",
+          "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-mobile-template.png"
+        ]
+      }
+    ],
+    "orders": 0
+  },
+  "logs": [
+    {
+      "file": "bargain-admin-shipping-types.log",
+      "sha256": "d030c5bfa895123aac66c2806a013a2099c76be3caa47825e10b4871b203f4fa"
+    },
+    {
+      "file": "bargain-admin-shipping-types-final.log",
+      "sha256": "a051ee586b84d0f99e2f003536624abaa9dec6cfb142660304d1da455ae42766"
+    },
+    {
+      "file": "bargain-admin-shipping-admin-build.log",
+      "sha256": "a72f1b705468d708d0e4990f8916e8d7d570fd5f190b094aa8ba932a15450015"
+    },
+    {
+      "file": "bargain-admin-shipping-browser.log",
+      "sha256": "483352323a66d187b676b0b74143f77344432812484b9bc25ccf5bdc4cf4fd07"
+    },
+    {
+      "file": "bargain-admin-shipping-browser-retry.log",
+      "sha256": "d7e44b770321d84f19357e98cf87dc171d3510962b54bf4c2c3dcc39fef99cef"
+    },
+    {
+      "file": "bargain-admin-shipping-browser-final.log",
+      "sha256": "bc537489f3c8ab358c3ddb84b92b603b0ec3e1a400d7be9d05509c60a7add723"
+    }
+  ],
+  "commands": {
+    "postgresRegression": "npm run test:unit -- bargain shipping-calculator pc-checkout uniapp-checkout manual-virtual-product order-reward store-order-create-postgres-migration ordinary-query-index-alignment orm-query-index-alignment legacy-query-index-alignment --maxWorkers=1 --silent=passed-only --reporter=default --reporter=json",
+    "types": "npm run typecheck (unit and runtime)",
+    "admin": "npm run build",
+    "browser": "Existing Playwright Chromium using installed Chrome; local Vite 5209 -> in-memory actual controllers 5208. External requests blocked.",
+    "availability": "Browser plugin not available under the frontend skill's listed browser-skill criterion; no dependency/plugin installation attempted."
+  },
+  "initialFailures": {
+    "test": "Initial PGlite 26/28: fixture sent addressId to quoteOrder instead of its cityId contract, so postage had no destination. Fixed test input; no pricing code changed. First typecheck also caught invalid key field.",
+    "browser": "First attempt targeted Element Plus hidden native checkbox; use visible label click. Retry exercised save/quote but failed console checks for missing isolated /api/site_config; supplied explicit site-config substitute. All initial logs retained."
+  },
+  "cleanup": {
+    "baselineDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "publicTables": 0,
+    "fixtureSchemas": 0,
+    "otherClients": 0,
+    "postgresPid": 14172,
+    "stoppedAtUTC": "2026-09-09 04:29:46.084",
+    "listenersAfter": [],
+    "browserFixtureStopped": true,
+    "viteStopped": true,
+    "manualDatabaseDeletion": false,
+    "temporaryArtifactsRetained": true
+  },
+  "ci": "This artifact precedes its commit SHA; inspect the new SHA's run after pushing. Prior bbebaae run 34309737141 did not start due to GitHub account billing/spending limit; not counted as validation.",
+  "checklist": {
+    "checked": 229,
+    "open": 162,
+    "total": 391
+  }
+}

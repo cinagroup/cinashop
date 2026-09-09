@@ -5,6 +5,7 @@ import { ValidateException } from "@/utils/errors";
 import { lockBargainProductPolicy } from "./BargainProductPolicy";
 import { parseBargainSku, saveBargainSku } from "./BargainAdminSkuService";
 import { alignBargainCover, parseBargainContent, saveBargainDescription } from "./BargainContentService";
+import { parseBargainShipping, prepareBargainShipping } from './BargainAdminShippingService';
 
 type Patch = Partial<typeof storeBargain.$inferInsert>;
 const MAX_INT = 2_147_483_647;
@@ -93,6 +94,7 @@ export async function saveBargain(container: Container, body: Record<string, unk
   const content = parseBargainContent(body);
   const patch = { ...parse(body), ...content.fields };
   const sku = parseBargainSku(body.sku);
+  const shipping = parseBargainShipping(body.shipping);
   let expected: { stock: number; quota: number } | undefined;
   if (own(body, "expected")) {
     const value = body.expected;
@@ -134,6 +136,9 @@ export async function saveBargain(container: Container, body: Record<string, unk
     // PHP rechecks the source on every save, even when productId was omitted.
     // Only changed inherited fields are written; ordinary no-op edits stay no-op.
     const derived = await lockBargainProductPolicy(tx, merged.productId!);
+    Object.assign(values, await prepareBargainShipping(tx, shipping, current, {
+      type: derived.type!, relationId: derived.relationId!, productType: derived.productType!,
+    }));
     if (!current && !sku) throw new ValidateException("请选择砍价规格");
     Object.assign(values, Object.fromEntries(Object.entries(derived).filter(([key, value]) =>
       !current || current[key as keyof typeof current] !== value)));

@@ -1,10 +1,12 @@
 import type { BargainEditorContent } from './bargainContentEdit';
+import type { BargainShippingOptions } from './bargainShippingEdit';
 export interface BargainSkuOption {
   id: number; unique: string; suk: string; stock: number; quota: number; price: string; image: string;
 }
 export interface BargainSkuOptions {
   productId: number; activityId: number; options: BargainSkuOption[]; current: BargainSkuOption[];
   content?: BargainEditorContent | null;
+  shipping?: BargainShippingOptions;
 }
 
 /** Add the single-SKU write only for an explicit selection/rule/inventory edit.

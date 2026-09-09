@@ -83,6 +83,31 @@
             </el-select>
           </el-form-item>
           <p class="time-hint">新活动必须选择一个原商品规格；已有规格身份不可替换。仅改名不会重写规格库存。</p>
+          <fieldset class="shipping-fields" :disabled="shippingProductId !== form.productId || !skuOptions?.shipping">
+            <legend>配送与运费</legend>
+            <p v-if="shippingProductId !== form.productId || !skuOptions?.shipping" class="time-hint">请先加载商品规格，以读取配送规则和可用模板。</p>
+            <el-form-item label="配送方式">
+              <el-checkbox-group v-model="shipping.methods" :disabled="skuOptions?.shipping?.productType !== 0">
+                <el-checkbox value="1">快递</el-checkbox><el-checkbox value="2">到店自提</el-checkbox><el-checkbox value="3">门店配送</el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+            <p v-if="originalShipping?.deliveryType === ''" class="time-hint">旧活动未限定配送方式；不修改此组配置会保留原规则。</p>
+            <p v-if="skuOptions?.shipping && skuOptions.shipping.productType !== 0" class="time-hint">非实物商品按原商品类型继承配送规则。类型1/2/3不收物流运费。</p>
+            <el-form-item label="运费方式">
+              <el-select v-model="shipping.freight" aria-label="运费方式" :disabled="[1,2,3].includes(skuOptions?.shipping?.productType ?? -1)" style="width:100%">
+                <el-option :value="1" label="包邮" /><el-option :value="2" label="固定运费" /><el-option :value="3" label="运费模板" />
+              </el-select>
+            </el-form-item>
+            <el-form-item v-if="shipping.freight === 2 && ![1,2,3].includes(skuOptions?.shipping?.productType ?? -1)" label="固定运费">
+              <el-input v-model="shipping.postage" placeholder="元，例如 8.50" inputmode="decimal" />
+            </el-form-item>
+            <el-form-item v-if="shipping.freight === 3" label="运费模板">
+              <el-select v-model="shipping.tempId" aria-label="运费模板" placeholder="选择所属方的可用模板" style="width:100%">
+                <el-option v-for="item in skuOptions?.shipping?.templates ?? []" :key="item.id" :value="item.id" :label="item.name" />
+              </el-select>
+            </el-form-item>
+            <p class="time-hint">配送仍受门店及结算端开关约束；这里不启用门店或修改模板内容。</p>
+          </fieldset>
         </template>
         <el-form-item label="活动名称" required>
           <el-input v-model="form.storeName" placeholder="如: 夏季促销商品" />
@@ -245,6 +270,7 @@ import DiscountPackageManager from "@/pages/activity/DiscountPackageManager.vue"
 import { bargainEditPayload, bargainFormDate } from "@/api/bargainEdit";
 import { withBargainSku } from "@/api/bargainSkuEdit";
 import { contentForm, withBargainContent, type BargainContentForm } from '@/api/bargainContentEdit';
+import { shippingForm, withBargainShipping, type BargainShippingFields } from '@/api/bargainShippingEdit';
 
 const previewMode =
   import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1";
@@ -272,6 +298,8 @@ let originalBaseUnique = '';
 let skuRequest = 0;
 const content = reactive(contentForm()), contentReady = ref(false);
 let originalContent: BargainContentForm | null = null;
+const shipping = reactive(shippingForm()), shippingProductId = ref(0);
+const originalShipping = ref<BargainShippingFields | null>(null);
 const form = reactive({
   id: 0,
   productId: 1,
@@ -370,6 +398,7 @@ async function toggleStatus(row: ActivityItem) {
 }
 
 function openForm(row?: ActivityItem) {
+  Object.assign(shipping, shippingForm()); shippingProductId.value = 0; originalShipping.value = null;
   Object.assign(content,contentForm()); contentReady.value = !row; originalContent = null;
   skuRequest++;
   skuOptions.value = null;
@@ -428,6 +457,13 @@ async function loadBargainSkus() {
     const result = await apiAdminBargainSkuOptions(productId, activityId || undefined);
     if (requestId !== skuRequest || form.productId !== productId || form.id !== activityId || !formVisible.value) return;
     skuOptions.value = result;
+    if (result.shipping && shippingProductId.value !== productId) {
+      originalShipping.value = result.shipping.current ? { ...result.shipping.current } : null;
+      Object.assign(shipping, shippingForm(result.shipping.current));
+      if (!activityId && result.shipping.productType !== 0) shipping.methods = ['2'];
+      if (!activityId && [1,2,3].includes(result.shipping.productType)) shipping.freight = 2;
+      shippingProductId.value = productId;
+    }
     if (activityId && !contentReady.value && result.content) {
       Object.assign(content,contentForm(result.content)); originalContent = {...content}; contentReady.value = true;
     }
@@ -450,8 +486,9 @@ async function save() {
   saving.value = true;
   formError.value = "";
   try {
-    await apiAdminActivitySave(formType.value === "bargain" ? withBargainContent(withBargainSku(bargainEditPayload(form, bargainOriginal),
-      skuOptions.value, selectedBaseUnique.value, originalBaseUnique, form.productId),content,originalContent,contentReady.value) : {
+    await apiAdminActivitySave(formType.value === "bargain" ? withBargainShipping(withBargainContent(withBargainSku(bargainEditPayload(form, bargainOriginal),
+      skuOptions.value, selectedBaseUnique.value, originalBaseUnique, form.productId),content,originalContent,contentReady.value),
+      shipping, originalShipping.value, shippingProductId.value, form.productId, skuOptions.value?.shipping) : {
       type: formType.value,
       id: form.id || undefined,
       productId: form.productId,
@@ -523,4 +560,7 @@ onMounted(load);
 }
 
 .time-hint { color: #606266; font-size: 12px; margin: 0 0 16px 0; }
+.shipping-fields { min-width: 0; margin: 0 0 20px; padding: 12px; border: 1px solid #dcdfe6; border-radius: 6px; }
+.shipping-fields legend { color: #303133; padding: 0 6px; }
+.shipping-fields :deep(.el-checkbox) { margin-right: 16px; }
 </style>
