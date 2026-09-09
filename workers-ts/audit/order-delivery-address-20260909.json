@@ -1,7 +1,9 @@
 {
   "date": "2026-09-09",
   "baseCommit": "64a0e5426ce16887d3fe9d66eb8722f608619a64",
-  "candidateState": "local candidate validation; own CI pending, not deployed, checklist item open",
+  "candidateCommit": "450b1bdb6d9aac9e6aa4df7098a63f5ad46f173d",
+  "candidateState": "committed and pushed; own Linux CI 11/11 passed; local full shards and supplemental authentication passed; no deployment command executed, checklist item open for release acceptance",
+  "ownCi": { "runId": 34332455890, "url": "https://github.com/cinagroup/cinashop/actions/runs/34332455890", "headSha": "450b1bdb6d9aac9e6aa4df7098a63f5ad46f173d", "state": "completed", "conclusion": "success", "jobsPassed": 11, "jobsTotal": 11, "unit": { "files": 345, "passed": 3206, "failed": 0, "skipped": 0, "shard1Files": 173, "shard1Passed": 1683, "shard2Files": 172, "shard2Passed": 1523, "nativePartitionCompleteAndDisjoint": true, "inventorySha256": "d49098386cc9aab926ddb6807b66906aec90447f1a5e85f5287e2a272bd2195a" }, "runtime": { "files": 4, "passed": 27 }, "schema": { "source": 201, "target": 263, "shared": 201, "sourceGaps": 0, "externalOnly": 0, "workerOnly": 0, "columnDrift": 0 }, "routes": { "php": 1904, "ts": 1652, "matched": 881, "executableMatched": 863, "unavailable": 18, "missing": 1023, "retired": 17, "actionableMissing": 1006 }, "qualification": "CI confirms these existing gates, not full functional route parity or production release. Evidence applies to this exact source SHA, not subsequent audit commits." },
   "checklist": "FE-003L-A3k11b",
   "productionWrites": false,
   "historicalDataReconciliation": "not applicable: new system",
@@ -56,15 +58,15 @@
   "typecheck": { "unit": "passed", "runtime": "passed" },
   "authAcceptance": { "newCases": 14, "realRouter": "v1Routes", "injectedIdentity": false, "realJwtSignatureAndDatabaseRoles": true, "superAdminUsed": false, "revocationBetweenConfirmAndCreate": "rejected with 400011, restored role then creates once", "productionLoginRedisHyperdriveAccepted": false, "coverageQualification": "shard 1 was executed before these 14 were registered; final candidate requires supplemental result and own CI, not arithmetic reuse of the old test count" },
   "frontend": { "pcAuthTests": 96, "pcImageTests": 7, "uniToolchainTests": 187, "failed": 0, "pcBuild": "passed", "uniTypes": "passed", "uniH5Build": "passed", "uniWeixinBuild": "passed", "uniAppBuild": "passed", "workerAffectedTests": { "report": "cinashop-address-frontend-worker-regression-20260909.json", "files": 8, "passed": 128, "failed": 0, "skipped": 0, "qualification": "rerun after the frontend eligibility fix; not additional disjoint Worker coverage" } },
-  "fullUnit": { "state": "shard 1 passed, shard 2 running; full suite not acceptance yet", "session": 85412, "maxWorkers": 1, "reports": ["cinashop-address-full-shard1-20260909.json", "cinashop-address-full-shard2-20260909.json"], "shard1": { "files": 173, "passed": 1669, "failed": 0, "skipped": 0, "inventoryFiles": 345, "inventorySha256": "d49098386cc9aab926ddb6807b66906aec90447f1a5e85f5287e2a272bd2195a", "executedFileSha256": "9ac777dcc9df51ff4ffcf7741a91aba94e345f13d71e0941c2fff77838342c4e", "executedFilesMatchNativePartition": true } },
+  "fullUnit": { "state": "both local shards passed; process exited 0; final candidate authentication changes covered separately, own Linux CI passed separately (345 files, 3206 tests)", "session": 85412, "exitCode": 0, "maxWorkers": 1, "reports": ["cinashop-address-full-shard1-20260909.json", "cinashop-address-full-shard2-20260909.json"], "passed": 3192, "failed": 0, "skipped": 0, "nativePartitionCompleteAndDisjoint": true, "qualification": "These reports predate the 14 added authentication cases in shard 1; the separate final 58-case PostgreSQL report supplements them. Do not describe 3192 as a single full run of the final candidate or sum overlapping runs.", "shard1": { "files": 173, "passed": 1669, "failed": 0, "skipped": 0, "inventoryFiles": 345, "inventorySha256": "d49098386cc9aab926ddb6807b66906aec90447f1a5e85f5287e2a272bd2195a", "executedFileSha256": "9ac777dcc9df51ff4ffcf7741a91aba94e345f13d71e0941c2fff77838342c4e", "executedFilesMatchNativePartition": true }, "shard2": { "files": 172, "passed": 1523, "failed": 0, "skipped": 0, "inventoryFiles": 345, "inventorySha256": "d49098386cc9aab926ddb6807b66906aec90447f1a5e85f5287e2a272bd2195a", "executedFileSha256": "eaff0a58c8ec0949adeca4304a9fca9d4409db5555e6abbaedfee76c80505bf2", "executedFilesMatchNativePartition": true } },
   "databaseIdentity": { "database": "cinashop_finance_test", "role": "finance_test", "serverVersionNum": 160015, "host": "127.0.0.1", "port": 55432 },
   "priorCleanupBeforeShutdown": { "databases": ["cinashop_finance_test", "postgres", "template0", "template1"], "fixtureSchemas": 0, "publicTables": 0 },
   "priorShutdown": "pg_ctl stop exited 0; original PID 7728 and port 55432 absent; pg_ctl status: no server running; binaries/data/reports retained",
-  "currentDatabaseState": "same dedicated PG16 restarted for full unit validation; cleanup/shutdown pending",
+  "currentCleanupBeforeShutdown": { "databases": ["cinashop_finance_test", "postgres", "template0", "template1"], "fixtureSchemas": 0, "publicTables": 0, "otherClientConnections": 0 },
+  "currentDatabaseState": "dedicated temporary PG16 stopped at 2026-09-09T09:07:57Z; pg_ctl stop and original session 62414 exited 0; pg_ctl status reports no server, original PID 14080 and port 55432 absent; binaries/data/reports retained",
   "remaining": [
-    "Full Worker unit suite, own Linux CI and runtime validation",
     "Production login/token storage/Hyperdrive and deployment gates; local actual routes/DB roles now verified",
     "Independent diagnosis of initial parallel lock failures",
-    "Commit/push and deployment gates"
+    "Deployment gates; candidate commit/push already complete"
   ]
 }
