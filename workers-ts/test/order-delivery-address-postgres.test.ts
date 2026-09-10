@@ -12,7 +12,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('delivery address
     addressId: 11, userIp: '127.0.0.1' };
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeOrderCartInfo, storeOrderStatus, printDocument]);
-    for (const key of Object.keys(f.config)) f.config[key] = '0';
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     // No template binding: address protection must not depend on template locks.
     await f.db.update(storeProduct).set({ freight: 1, tempId: 0 });
   }, 30_000);

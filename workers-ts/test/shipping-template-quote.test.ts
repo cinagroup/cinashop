@@ -7,12 +7,12 @@ import { shippingTemplates,shippingTemplatesRegion,shippingTemplatesFree,shippin
 describe('shipping template authoritative quote and actual order',()=>{
  let f:Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
  const params:CreateOrderParams={uid:11,key:'template_quote',cartIds:[1],shippingType:1,addressId:11,cityId:101,province:'本地省',userAddress:'隔离地址',realName:'隔离',userPhone:'00000000000',userIp:'127.0.0.1'};
- beforeEach(async()=>{f=await createPcCheckoutQuoteFixture([storeOrderCartInfo,storeOrderStatus,printDocument]);for(const key of Object.keys(f.config))f.config[key]='0';},30_000);
+ beforeEach(async()=>{f=await createPcCheckoutQuoteFixture([storeOrderCartInfo,storeOrderStatus,printDocument]);await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));},30_000);
  afterEach(async()=>{await f?.close();});
  const quote=()=>new StoreOrderCreateService(f.container,f.env).quoteOrder(params);
  const create=(change?:()=>Promise<unknown>)=>StoreOrderCreateService.createWithRuntime(f.container,{CONFIG_KV:f.env.CONFIG_KV,nextOrderId:async()=>{await change?.();return 'template_quote';}},params);
  it('does not let whole-order free shipping bypass no-delivery',async()=>{
-  f.config.whole_free_shipping='1';f.config.store_free_postage='1';
+  await f.setConfig({ whole_free_shipping: '1' });await f.setConfig({ store_free_postage: '1' });
   await f.db.update(shippingTemplates).set({noDelivery:1}).where(eq(shippingTemplates.id,10));
   await f.db.insert(shippingTemplatesNoDelivery).values({tempId:10,cityId:101});
   const before=await f.snapshot();await expect(quote()).rejects.toThrow('不支持配送');await expect(create()).rejects.toThrow('不支持配送');expect(await f.snapshot()).toEqual(before);
@@ -34,7 +34,7 @@ describe('shipping template authoritative quote and actual order',()=>{
   })).rejects.toThrow(kind==='city'?'收货地址区域':'配送');expect(await f.snapshot()).toEqual(before);
  });
  it('preserves zero raw/pay postage for allowed whole-order waivers',async()=>{
-  f.config.whole_free_shipping='1';f.config.store_free_postage='1';expect(await quote()).toMatchObject({totalPostageCents:0,payPostageCents:0,payCents:2000});
+  await f.setConfig({ whole_free_shipping: '1' });await f.setConfig({ store_free_postage: '1' });expect(await quote()).toMatchObject({totalPostageCents:0,payPostageCents:0,payCents:2000});
   await create();expect((await f.snapshot()).orders[0]).toMatchObject({totalPostage:'0.00',payPostage:'0.00',payPrice:'20.00'});
  });
  it.each([1,2,3])('enforces nationwide no-delivery for freight=%i even with a known city',async freight=>{

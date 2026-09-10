@@ -1,0 +1,381 @@
+{
+  "date": "2026-09-10",
+  "status": "local-mobile-management-row-deadlocks-fixed; full-checklist-open",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "item": "FE-003L-A3k11c",
+    "itemClosed": false
+  },
+  "sourceChange": {
+    "file": "src/services/admin/AdminMobileProductService.ts",
+    "previousGitBlob": "17e217a20aae43696309fc60ad234d952bb0a68a",
+    "change": "NOWAIT product and active SKU locks; one materialized locked-cart CTE drives the existing show/hide cart update. Nested 55P03 becomes explicit refresh refusal; original transaction rolls back.",
+    "preserved": [
+      "Original checkout inventory order and guards",
+      "2s lock_timeout and 5s statement_timeout",
+      "Original per-product advisory lock order",
+      "Stock, sumStock, max-price summary and stock-record arithmetic",
+      "Existing open/non-deleted cart predicate and readback",
+      "Ownership, reference validation, nine batch payload contracts, audit writes"
+    ],
+    "notUsed": [
+      "SKIP LOCKED",
+      "unbounded Worker-memory cart ID lists",
+      "automatic stale stock replay"
+    ]
+  },
+  "redEvidence": [
+    {
+      "operation": "setShow",
+      "serverTimestamp": "2026-09-10T05:55:50.961Z",
+      "editorPid": 13760,
+      "buyerPid": 15780,
+      "victimPid": 13760,
+      "cycle": "Editor holds product and waits buyer cart; buyer holds cart/SKU and waits editor product",
+      "observed": "deadlock detected",
+      "sqlstate": "40P01",
+      "evidence": "PG server log with exact SQL/PIDs, actual HTTP handlers, independent blocker probes"
+    },
+    {
+      "operation": "updateAttrs",
+      "serverTimestamp": "2026-09-10T05:55:57.540Z",
+      "editorPid": 6916,
+      "buyerPid": 14920,
+      "victimPid": 14920,
+      "cycle": "Editor holds product and waits buyer SKU; buyer holds SKU and waits editor product",
+      "observed": "deadlock detected",
+      "sqlstate": "40P01",
+      "evidence": "PG server log with exact SQL/PIDs, actual HTTP handlers, independent blocker probes"
+    },
+    {
+      "operation": "batchProcess",
+      "serverTimestamp": "2026-09-10T05:56:02.397Z",
+      "editorPid": 7800,
+      "buyerPid": 15168,
+      "victimPid": 7800,
+      "cycle": "Batch holds product 70 and waits buyer product 71; buyer has processed 71 and waits batch product 70",
+      "observed": "deadlock detected",
+      "sqlstate": "40P01",
+      "evidence": "PG server log with exact SQL/PIDs, actual HTTP handlers, independent blocker probes"
+    }
+  ],
+  "reports": [
+    {
+      "stage": "red",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-product-red-20260910.json",
+      "sha256": "1d465f6b3c2968c88c459f6573ed5887a72834778402c3682ed22d8a0dcb94da",
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-mobile-product-concurrency.test.ts"
+      ],
+      "startTime": 1789019741772,
+      "success": false
+    },
+    {
+      "stage": "fixed",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-product-fixed-20260910.json",
+      "sha256": "db8112f294f224d72f29c6eb7677c9133dc1ee520f30ac24732663f2c790046f",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-mobile-product-concurrency.test.ts"
+      ],
+      "startTime": 1789019843193,
+      "success": true
+    },
+    {
+      "stage": "expanded",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-product-expanded-20260910.json",
+      "sha256": "757d32f17124f88f721794a6542b57f5933ae2bce3b7148b810a8fc35d655111",
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-mobile-product-concurrency.test.ts"
+      ],
+      "startTime": 1789020020450,
+      "success": true
+    },
+    {
+      "stage": "final",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-product-final-20260910.json",
+      "sha256": "66c6f214a5d28fd22f22330fe950086625cf0cac69be53327a0d9e72cab93ff9",
+      "passed": 101,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-mobile-product-concurrency.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/supplier-product-management.test.ts"
+      ],
+      "fileResults": [
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-migration.test.ts",
+          "passed": 9,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+          "passed": 25,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-mobile-product-concurrency.test.ts",
+          "passed": 19,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+          "passed": 17,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+          "passed": 8,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts",
+          "passed": 11,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/supplier-product-management.test.ts",
+          "passed": 12,
+          "failed": 0
+        }
+      ],
+      "startTime": 1789020164022
+    }
+  ],
+  "selectedSourceHashes": [
+    {
+      "path": "package-lock.json",
+      "sha256": "b2cb80928931024e8e77d77bd4318257dbc1c03e14bdb0969472857aa2006891"
+    },
+    {
+      "path": "package.json",
+      "sha256": "716ca118b7bc54b4c43abc29a4efccea850325033ad8c8d9459c283dff1a4513"
+    },
+    {
+      "path": "src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "032f94ef3c050181921189eecbf27cd0d29547ab5890621e454925a786861426"
+    },
+    {
+      "path": "src/controllers/supplier/SupplierController.ts",
+      "sha256": "1831cde1aa8f9f7441410a371e84124a83083aee4c38f4a6c5093a44ecdb70f4"
+    },
+    {
+      "path": "src/lib/di.ts",
+      "sha256": "13ae0fc3225eff23bb589af2982cb1c1ea1bc98c5bf56c1ba2ecfb02845220a0"
+    },
+    {
+      "path": "src/models/schema/activity.ts",
+      "sha256": "39e7107a4c101a71d8dc0d8b3c53b7db6f764ce292aa490d263dbde66c9df396"
+    },
+    {
+      "path": "src/models/schema/index.ts",
+      "sha256": "e90f5de06338f33bbfdef80903fd85e5147aa66763b4293398ed44544aafb908"
+    },
+    {
+      "path": "src/models/schema/order.ts",
+      "sha256": "56af227975c70e5a573119334bb74734620fe171f48d3c6800a2f46d79085d08"
+    },
+    {
+      "path": "src/models/schema/product_relations.ts",
+      "sha256": "ecf9a5429d15333f36de50dafa42e90613a7a940902773be3756963ae854ea58"
+    },
+    {
+      "path": "src/models/schema/system_metadata.ts",
+      "sha256": "28bdc4780ff816431bcc0a999c7abe4090e7d20182aa26d98561241dfd06ae19"
+    },
+    {
+      "path": "src/services/admin/AdminMobileProductService.ts",
+      "sha256": "fd7029350db24817ace7bca97e42d25aff6722e3e9f730e49efa66ba9d7119e3"
+    },
+    {
+      "path": "src/services/order/StoreOrderCreateService.ts",
+      "sha256": "46c7199f20900153789e8794bbbf6dee445209f3e8220fb2ca427238c468db24"
+    },
+    {
+      "path": "src/services/product/ProductAssociationService.ts",
+      "sha256": "1c787cb6ae4a7dc625a2f822df185ed7baaae480c1c43daa84488a7d92b8813f"
+    },
+    {
+      "path": "src/services/product/ProductSkuEditorService.ts",
+      "sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2"
+    },
+    {
+      "path": "src/services/product/ProductSkuIdentity.ts",
+      "sha256": "dfaffd1645892a0bbca35eb7cb22b62d309b4c37a18ee453b826ef5cd3b73668"
+    },
+    {
+      "path": "src/services/product/ProductSkuRetirementService.ts",
+      "sha256": "793d483df11a1c54090b1ee7be42292fd6cbae6164425a8707219419f4926d9c"
+    },
+    {
+      "path": "src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "ea578d3d8397360b2023c8a81646a46fc387b76a4a86ee261ef031c71360e26f"
+    },
+    {
+      "path": "test/admin-mobile-product-migration.test.ts",
+      "sha256": "b54cb61ef61fa10fb2264a1158856262490d9fd6dee7a59b25bedfae8d5a2bc5"
+    },
+    {
+      "path": "test/checkout-catalog-management.test.ts",
+      "sha256": "ad17a7cb624e71a75846b3af0e1ef3ddca2aabc1bd4a45ecbe3db70d8d054c8d"
+    },
+    {
+      "path": "test/checkout-mobile-product-concurrency.test.ts",
+      "sha256": "cfb08bda5e3a4be3ffdbda8569bc5d13452f0142889c4de1378fc57fb4c2032c"
+    },
+    {
+      "path": "test/checkout-sku-lifecycle-concurrency.test.ts",
+      "sha256": "df721ae5457cc323e4812511c6c9c608f2b6dca90d2c623c20a9314299b055cb"
+    },
+    {
+      "path": "test/helpers/financePeers.ts",
+      "sha256": "1210756e0727149a175d9372437ea88c8e770fc86c6db2cb8d803c6784e706cb"
+    },
+    {
+      "path": "test/helpers/kefuSequenceRunnerDatabase.ts",
+      "sha256": "9d7cf6b00d87176f82238426dfca8d5853f5580dae93e8366d78b3fd65f9d9ee"
+    },
+    {
+      "path": "test/helpers/pcCheckoutQuoteFixture.ts",
+      "sha256": "6cb965b1fb3ebbda5b98a963a936e2b422fdb5dfe8471a4208b8c4752e35ff04"
+    },
+    {
+      "path": "test/product-sku-editor-migration.test.ts",
+      "sha256": "48a6474a037f31b0c45af86732d3aaf0b6cbef85c8db8e957da7e6f556c3894d"
+    },
+    {
+      "path": "test/product-sku-retirement.test.ts",
+      "sha256": "2a7b6d388e4a806a47f63a1a32ce0803b07511e465e34b96cd0d89d4b3668750"
+    },
+    {
+      "path": "test/supplier-product-management.test.ts",
+      "sha256": "3219dd54ab9578e3df4b1d7f9dfcb302658647fac00d8577f58beeea628a18fe"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e"
+    }
+  ],
+  "scope": {
+    "newFullOrmTests": 19,
+    "database": "Dedicated loopback PG16.15 finance_test, owned per-test random database, complete ORM DDL, unchanged constraints",
+    "independentBackends": 4,
+    "synthetic": [
+      "authentication inputs",
+      "KV",
+      "Sequence",
+      "all business data"
+    ],
+    "real": [
+      "controllers",
+      "services",
+      "order confirm/create",
+      "SQL transactions",
+      "row/advisory locks",
+      "rollbacks",
+      "normal batch field/relation/audit results"
+    ],
+    "productionFallback": false,
+    "formalAuth": false,
+    "allRegisteredMigrations": false,
+    "wholeProjectCi": false
+  },
+  "testCoverage": [
+    "Three exact deadlock regressions with refusal before inventory gate release",
+    "Show/hide preserves paid/deleted/unrelated cart exclusions and non-category relations; resets autoOffTime on show",
+    "Late busy cart releases earlier cart/product locks and all prior writes",
+    "Post-checkout explicit inventory refresh preserves sales, retired SKU exclusion and correct stock-record difference",
+    "All nine batch types update two products and actual related rows/audits",
+    "Show/attrs/batch final SQL failure rolls back all business changes",
+    "Actual non-lock SELECT SQL error is not translated into inventory retry"
+  ],
+  "typecheck": {
+    "command": "npm run typecheck",
+    "sessionId": 76810,
+    "unitExitCode": 0,
+    "runtimeExitCode": 0
+  },
+  "staticContractAdjustment": "Existing admin-mobile test expected blocking product locks and a separate ORM cart UPDATE; updated to NOWAIT/materialized locked candidate statement. Actual SQL tests remain the behavior evidence.",
+  "remaining": [
+    "Other Out/SKU and reference-management interleavings",
+    "Advisory/DDL and newly inserted cart policies",
+    "Mobile update_attrs controller bounded-body contract: direct req.json observed, not changed in this phase",
+    "Formal login/ACL/least privilege/Hyperdrive/maintenance isolation",
+    "Global configuration, business-subject/form/PHP policies",
+    "Immutable full CI and release gates"
+  ],
+  "safety": {
+    "productionWrites": false,
+    "deployment": false,
+    "providerCalls": false,
+    "commit": false,
+    "push": false,
+    "historicalReconciliation": "N/A by owner decision"
+  },
+  "skills": {
+    "used": [
+      "cloudflare:workers-best-practices",
+      "build-web-apps:supabase-postgres-best-practices"
+    ],
+    "effect": "Actual blocker evidence, bounded non-waiting row operations and single-SQL candidate set, whole-transaction rollback/positive controls",
+    "officialReferences": [
+      "https://www.postgresql.org/docs/16/explicit-locking.html",
+      "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/"
+    ],
+    "types": "Prior latest retrieval EACCES; installed 5.20260828.1 inspected again; no binding or platform API change"
+  },
+  "finalVerification": {
+    "files": 7,
+    "passed": 101,
+    "failed": 0,
+    "skipped": 0,
+    "maxWorkers": 2,
+    "unchangedSelectedHashes": 28,
+    "wholeProjectCi": false
+  },
+  "cleanup": {
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "version": "16.15",
+    "timezone": "UTC",
+    "port": 55432,
+    "baselineDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "fixtureDatabases": 0,
+    "fixtureSchemas": 0,
+    "publicTables": 0,
+    "runtimeRoles": 0,
+    "otherClients": 0,
+    "stoppedPid": 15356,
+    "stoppedAt": "2026-09-10T06:05:56.838Z",
+    "foregroundExitCode": 0,
+    "pgCtlStatus": "no server running",
+    "pidFileAbsent": true,
+    "retained": [
+      "binaries",
+      "dedicated PG data directory",
+      "raw test reports"
+    ]
+  }
+}

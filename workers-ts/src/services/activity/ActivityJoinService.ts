@@ -269,7 +269,7 @@ export class ActivityJoinService {
       )).limit(1);
       if (!account[0]) throw new NotFoundException("用户不存在或已停用");
       const pink = await tx
-        .select({ ...getTableColumns(storePink), canCancel: sql<boolean | null>`${storePink.stopTime} > NOW()` })
+        .select({ ...getTableColumns(storePink), canCancel: sql<boolean | null>`${storePink.stopTime} > (NOW() AT TIME ZONE 'UTC')` })
         .from(storePink)
         .where(
           and(

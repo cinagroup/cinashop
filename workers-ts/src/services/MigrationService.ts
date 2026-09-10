@@ -54,9 +54,21 @@ import { WORK_CONTACT_CLIENT_INDEX_SQL } from "@/migrations/workContactClientInd
 import { runWorkContactClientIndex } from "@/migrations/runWorkContactClientIndex";
 import { BARGAIN_CART_PARTICIPATION_SQL } from "@/migrations/bargainCartParticipation";
 import { runBargainCartParticipation } from "@/migrations/runBargainCartParticipation";
+import { BROKERAGE_PAID_ORDER_FENCE_SQL } from "@/migrations/brokeragePaidOrderFence";
+import { runBrokeragePaidOrderFence } from "@/migrations/runBrokeragePaidOrderFence";
+import { COUPON_PRODUCT_SCOPE_FENCE_SQL } from "@/migrations/couponProductScopeFence";
+import { runCouponProductScopeFence } from "@/migrations/runCouponProductScopeFence";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  couponProductScopeFenceMigrationSqlForVerification(): string {
+    return this.migration_0157();
+  }
+
+  brokeragePaidOrderFenceMigrationSqlForVerification(): string {
+    return this.migration_0156();
+  }
 
   bargainCartParticipationMigrationSqlForVerification(): string {
     return this.migration_0155();
@@ -415,10 +427,18 @@ export class MigrationService {
       this.migration_0153(),
       this.migration_0154(),
       this.migration_0155(),
+      this.migration_0156(),
+      this.migration_0157(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 157) {
+          // Filesystem 0151: explicit root transaction, never a nested savepoint.
+          await runCouponProductScopeFence(this.container.db);
+          executed.push("0157");
+          continue;
+        }
         if (i === 154) {
           await runWorkContactClientIndex(this.container.db);
           executed.push("0154");
@@ -427,6 +447,12 @@ export class MigrationService {
         if (i === 155) {
           await runBargainCartParticipation(this.container.db);
           executed.push("0155");
+          continue;
+        }
+        if (i === 156) {
+          // Filesystem 0150: the maintenance runner owns a bounded root transaction.
+          await runBrokeragePaidOrderFence(this.container.db);
+          executed.push("0156");
           continue;
         }
         if (i === 153) {
@@ -8481,5 +8507,11 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0155(): string {
     return BARGAIN_CART_PARTICIPATION_SQL;
+  }
+  private migration_0156(): string {
+    return BROKERAGE_PAID_ORDER_FENCE_SQL;
+  }
+  private migration_0157(): string {
+    return COUPON_PRODUCT_SCOPE_FENCE_SQL;
   }
 }

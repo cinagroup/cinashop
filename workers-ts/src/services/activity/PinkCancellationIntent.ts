@@ -52,7 +52,7 @@ export async function authorizePinkCancellationApplication(
   }
   // Do not use the transaction start time, or a deadline evaluated BEFORE a
   // lock wait. This statement runs after the leader lock is actually acquired.
-  const [deadline] = await tx.select({ active: sql<boolean | null>`${storePink.stopTime} > clock_timestamp()` })
+  const [deadline] = await tx.select({ active: sql<boolean | null>`${storePink.stopTime} > (clock_timestamp() AT TIME ZONE 'UTC')` })
     .from(storePink).where(eq(storePink.id, pinkId));
   if (deadline?.active !== true) throw new ValidateException("拼团已到期，等待结算");
   const [account] = await tx.select({ uid: user.uid }).from(user).where(and(

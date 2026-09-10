@@ -20,7 +20,7 @@ export function registerDeliveryAddressAuthTests() {
     beforeEach(async () => {
       f = await createPcCheckoutQuoteFixture([systemAdmin, systemRole, storeOrderCartInfo, storeOrderStatus, printDocument]);
       buckets = new Map(); secret = crypto.randomUUID();
-      for (const key of Object.keys(f.config)) f.config[key] = '0';
+      await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
       Object.assign(f.env, { APP_KEY: secret, NODE_ENV: 'production', UPSTASH_REDIS_URL: 'https://isolated-redis.invalid', UPSTASH_REDIS_TOKEN: 'isolated-test-only',
         SEQUENCE: { idFromName: () => 'isolated-auth', get: () => ({ fetch: async () => new Response('address_auth_order') }) } });
       vi.spyOn(cache, 'getTokenBucket').mockImplementation(async key => buckets.get(key) ?? null);

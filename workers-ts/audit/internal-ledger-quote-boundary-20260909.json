@@ -1,0 +1,266 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "status": "partial_uncommitted_worktree_candidate",
+  "userWorkflow": "逐个完成checklist，然后提交推送。",
+  "priorWorktreeEvidence": [
+    "activity-deadline-boundary-20260909.json",
+    "monetary-quote-boundary-20260909.json",
+    "membership-quote-boundary-20260909.json",
+    "gift-points-quote-boundary-20260909.json"
+  ],
+  "implementation": {
+    "internalLedgerFields": [
+      "cost",
+      "settlePrice"
+    ],
+    "addedToCustomerFingerprint": false,
+    "editsBetweenConfirmationAndCreate": "allowed using fresh create-time internal values",
+    "editsAfterCreateInitialRead": "existing atomic update or locked-row comparison rejects and rolls back",
+    "baseSourceKinds": [
+      "ordinary type 0"
+    ],
+    "activitySourceKinds": [
+      "package",
+      "bargain",
+      "seckill",
+      "combination",
+      "integral",
+      "newcomer"
+    ],
+    "zeroSkuValueFallsBackToParent": false,
+    "guards": {
+      "ordinary": "existing base SKU stock/sales UPDATE",
+      "bargainAndCombination": "existing activity SKU UPDATE",
+      "integral": "existing activity SKU UPDATE",
+      "package": "compare already locked packageSku",
+      "seckill": "unchanged existing seckillSkuQuoteGuard including conservative base guard",
+      "newcomer": "assign outer activitySku; existing locked SELECT includes cost/settlePrice and unique identity predicate"
+    },
+    "additionalQueries": 0,
+    "additionalLocks": 0,
+    "existingLockOrderChanged": false,
+    "transactionExternalIoAdded": false,
+    "inventoryAlgorithmChanged": false,
+    "newcomerLedgerSourceCorrected": true,
+    "newcomerActivitySkuInventoryConsumed": false,
+    "pricingFormulaOrRewardPolicyChanged": false,
+    "originalNewcomerUncommittedReceipts": "activitySkuId changes from 0 to actual SKU; pre-fix pending receipts require explicit reconfirmation after release",
+    "existingOrdersRecomputed": false
+  },
+  "evidence": {
+    "reportDirectory": "C:/Users/cina/AppData/Local/Temp",
+    "red": {
+      "report": "cinashop-internal-ledger-pg-red-20260909.json",
+      "sha256": "87f780914f54d09066a7205dae25d8838865e3d3abd91d6b64620af259a68b8e",
+      "files": 1,
+      "passed": 41,
+      "failed": 24,
+      "nameFiltered": 186,
+      "incorrectOrderAdmissions": 24,
+      "description": "6 kinds excluding preprotected seckill x 2 ledger fields x 2 late edit modes"
+    },
+    "intermediateGreen": {
+      "report": "cinashop-internal-ledger-pg-green-20260909.json",
+      "sha256": "ccb5c14661d0258a4a8e2deaceda7315cb8208375e829dfb8af4df9e0cebaee6",
+      "files": 1,
+      "passed": 251,
+      "failed": 0,
+      "nameFiltered": 0,
+      "sourceSha256": "ff22efac0e372ff840740f63d36ad4597380022079f7706bab371aa5821d31f9",
+      "rulesSha256": "40198a5eb33d2af507aff85cbf10d20d2635d770b392f1e27e94035c9a45665c",
+      "semanticallyIncomplete": "still used shadowed newcomer base SKU; superseded, not migration-equivalence proof"
+    },
+    "newcomerRed": {
+      "report": "cinashop-newcomer-ledger-pg-red-20260909.json",
+      "sha256": "a4ad08525b4196bdb6fede7aaaea2c683a0c6aa9ddeec56e0ddd4335c67c4743",
+      "files": 1,
+      "passed": 0,
+      "failed": 12,
+      "nameFiltered": 244,
+      "incorrectOrderAdmissions": 4,
+      "incorrectSnapshots": 4,
+      "incorrectRejections": 4,
+      "sourceSha256": "ff22efac0e372ff840740f63d36ad4597380022079f7706bab371aa5821d31f9"
+    },
+    "newcomerGreen": {
+      "report": "cinashop-newcomer-ledger-pg-green-20260909.json",
+      "sha256": "6168410ad02dbb793f7a2b9fbdb3134de69406c10ed1e808c19d20c66bcecc2f",
+      "files": 1,
+      "passed": 27,
+      "failed": 0,
+      "nameFiltered": 229,
+      "note": "actual persisted activitySku identity assertion added subsequently to final regression"
+    },
+    "finalRegression": {
+      "status": "passed",
+      "report": "cinashop-internal-ledger-pg-regression-20260909.json",
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts",
+        "test/admin-paid-membership.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts",
+        "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts",
+        "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts",
+        "test/bargain-order-participation.test.ts",
+        "test/bargain-participation-concurrency-postgres.test.ts",
+        "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts",
+        "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts",
+        "test/checkout-membership-boundary.test.ts",
+        "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/finance-peer-boundary.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts",
+        "test/order-brokerage.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/order-delivery-address.test.ts",
+        "test/order-reward.test.ts",
+        "test/paid-membership-migration.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts",
+        "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts",
+        "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/uniapp-checkout-contract.test.ts",
+        "test/user-level-migration.test.ts",
+        "test/order-supplier-allocation.test.ts",
+        "test/supplier-split-fulfillment.test.ts",
+        "test/store-order-refund-postgres-migration.test.ts",
+        "test/store-order-writeoff-migration.test.ts"
+      ],
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "environment": "Windows dedicated PostgreSQL 16.15 SQL fixtures plus pure unit/source-contract tests",
+      "sha256": "52970cb2bd87c402fce43d24d6d087f8594f4c6c2385867425c0c6276f7b6cff",
+      "files": 45,
+      "passed": 993,
+      "failed": 0,
+      "skipped": 0,
+      "startedAt": "2026-09-09T12:57:20.991Z",
+      "lastFileEndedAt": "2026-09-09T13:05:04.920Z",
+      "observedFilesMatchRequested": true,
+      "extraFourFiles": "25 pure function/source-contract checks, not independent supplier financial SQL scenarios"
+    },
+    "newTests": {
+      "total": 70,
+      "actualHttp": 46,
+      "independentPg": 24
+    },
+    "rulesFile": {
+      "tests": 256,
+      "independentPg": 111
+    },
+    "independentPeers": "4 distinct non-reconnecting backends, exact pg_blocking_pids, expected committed edit snapshot fixed before buyer writes",
+    "assertions": [
+      "same-token fresh internal values when edited before create",
+      "typed rejection and full business rollback for late edits",
+      "same-key explicit computed recovery at same customer price",
+      "client internal amount fields ignored",
+      "persisted cost total and settlePrice per line",
+      "idempotent replay after catalog edit and receipt cache clear",
+      "zero SKU amount not replaced by nonzero parent",
+      "unused base amount edits allowed except unchanged conservative seckill guards",
+      "newcomer activity cost=3.25/settle=2.50 override base=9.00",
+      "newcomer base stock 8->7 and sales 0->1; activity stock/quota 8/8 and sales 0 unchanged"
+    ],
+    "sourceFiles": [
+      {
+        "path": "src/services/order/StoreOrderCreateService.ts",
+        "sha256": "6eb9c6b6eaa6b1d59c31c4e6abdde5ed901d6d9899678f18351b30ebddb1b9e6"
+      },
+      {
+        "path": "test/checkout-confirmation-rules.test.ts",
+        "sha256": "5136176692a69576aa1db9d7ffd443f342ce3d4e5575679a68dc0ea29672a6a9"
+      },
+      {
+        "path": "src/services/order/CheckoutMembershipSnapshot.ts",
+        "sha256": "bb6f1546fbd48d982360a0a89e9d9f5f0ee88d8ca86c78437a1be22e68a4649e"
+      },
+      {
+        "path": "test/checkout-membership-boundary.test.ts",
+        "sha256": "6031cd88f48a789e745728e5b0d5ceba883393018b8afa4caef4541fd811efc2"
+      }
+    ],
+    "preLedgerSourceSha256": "9bafc0de66686782063cf3d1ad1ddf713e4fd26349a573392d575c6a27f85bff",
+    "legacyEvidence": [
+      {
+        "path": "C:/cinagroup/cinashop-php/app/services/activity/newcomer/StoreNewcomerServices.php",
+        "line": 393,
+        "sha256": "a81165dd66b9ccb03b8ccb5a80483de1fbb9079c260064b17ec805d221c2f13b",
+        "fact": "checkNewcomerStock queries type=7 attrInfo and returns it"
+      },
+      {
+        "path": "C:/cinagroup/cinashop-php/app/services/order/StoreCartServices.php",
+        "line": 419,
+        "sha256": "d4c2a3f74175979c23da0d93e9b239cc287b32d0b1e48c6082a785c8c0776d92",
+        "fact": "returned attrInfo is saved and supplies costPrice"
+      },
+      {
+        "path": "C:/cinagroup/cinashop-php/app/services/order/StoreOrderCartInfoServices.php",
+        "line": 104,
+        "sha256": "a7c2556beae47dd3ade1cc9bba211e41d8ccbd6e0f428a10273b522d65f0b2f4",
+        "fact": "line settlement comes from productInfo.attrInfo.settle_price"
+      }
+    ],
+    "typechecks": {
+      "intermediate": "passed",
+      "final": "unit and runtime passed",
+      "optionsWeakened": false
+    },
+    "ownImmutableCi": "not run; intentionally uncommitted candidate",
+    "workersReference": "current official best-practices page read; official npm registry latest-version lookup EACCES, cached fetched 5.20260908.1 definitions read; no binding/API/config changes",
+    "sourceAndTestsUnchangedDuringFinalRegression": true
+  },
+  "remaining": [
+    "SKU specified brokerage amounts and product isSub; promoter/division identity and ratio configuration authority",
+    "Business ownership relations, form content versions, coupon/ancestor/referenced collection phantoms and equivalent rules",
+    "Global SQL/KV and memberRight authority A3k11d",
+    "Real supplier payment/settlement/refund and production identity/storage/Hyperdrive/release gates",
+    "Full immutable Linux CI/workerd; A3i bargain policy unresolved and unchanged"
+  ],
+  "safety": {
+    "gitCommitThisTurn": false,
+    "pushThisTurn": false,
+    "productionWrites": false,
+    "deployment": false,
+    "externalPayments": false,
+    "synthetic": [
+      "HTTP identity",
+      "KV",
+      "Sequence"
+    ],
+    "fullProductionForeignKeyOrAdminHttpFixtures": false,
+    "unpaidSnapshotTestsArePaymentEndToEnd": false,
+    "sequenceRollbackGuaranteed": false,
+    "dedicatedPostgresStartedAt": "2026-09-09T12:48:17.121Z",
+    "binariesDataAndReportsRetained": true,
+    "cleanupIdentity": {
+      "database": "cinashop_finance_test",
+      "role": "finance_test",
+      "version": 160015,
+      "timezone": "UTC"
+    },
+    "fixtureCleanup": {
+      "baselineDatabases": 4,
+      "testSchemas": 0,
+      "publicTables": 0,
+      "otherClients": 0
+    },
+    "dedicatedPostgresStoppedAt": "2026-09-09T13:06:25.997Z"
+  }
+}

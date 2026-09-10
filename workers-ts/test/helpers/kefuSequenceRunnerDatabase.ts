@@ -5,6 +5,12 @@ import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { DbClient } from "../../src/lib/di";
 
+export interface SequenceRunnerPeer {
+  db: DbClient;
+  pid: number;
+  exec: (statement: string) => Promise<postgres.Row[]>;
+}
+
 const prefix = /^cinashop_kefu_runner_[a-f0-9]{32}$/;
 
 export function validateSequenceRunnerTestUrl(value: string): URL {
@@ -31,6 +37,7 @@ export async function sequenceRunnerDatabase() {
       exec: (statement: string) => memory.exec(statement),
       close: () => memory.close(),
       withPeer: undefined,
+      withRuntimeRole: undefined,
     };
   }
   const base = validateSequenceRunnerTestUrl(url);
@@ -45,9 +52,10 @@ export async function sequenceRunnerDatabase() {
   let created = false;
   async function verify(connection: ReturnType<typeof postgres>, database: string) {
     const [row] = await connection`SELECT current_database() AS database, current_user AS role,
-      current_setting('server_version_num') AS version`;
+      current_setting('server_version_num') AS version, pg_backend_pid() AS pid`;
     if (row.database !== database || row.role !== "finance_test" || Math.floor(Number(row.version) / 10_000) !== 16)
       throw new Error("Unexpected sequence runner test database identity/version");
+    return Number(row.pid);
   }
   async function close() {
     try {
@@ -75,11 +83,55 @@ export async function sequenceRunnerDatabase() {
       query: async (statement: string) => ({ rows: Array.from(await checkedClient.unsafe(statement)) }),
       exec: async (statement: string) => Array.from(await checkedClient.unsafe(statement)),
       close,
-      withPeer: async <T>(callback: (peer: { exec: (statement: string) => Promise<postgres.Row[]> }) => Promise<T>) => {
-        const peer = postgres(target.href, options);
+      withRuntimeRole: async <T>(callback: (peer: SequenceRunnerPeer & { role: string; connectionString: string }) => Promise<T>) => {
+        // Real LOGIN rather than SET ROLE on a superuser session: RESET ROLE
+        // must not recover maintenance authority. No production fallback.
+        await verify(checkedClient, name);
+        const role = `cinashop_runtime_${randomUUID().replaceAll('-', '')}`;
+        if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(role)) throw new Error('Invalid isolated runtime role');
+        const password = randomUUID().replaceAll('-', '');
+        let roleCreated = false;
+        let runtime: ReturnType<typeof postgres> | undefined;
         try {
-          await verify(peer, name);
-          return await callback({ exec: async statement => Array.from(await peer.unsafe(statement)) });
+          await checkedClient.unsafe(`CREATE ROLE "${role}" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD '${password}'`);
+          roleCreated = true;
+          await checkedClient.unsafe(`GRANT CONNECT ON DATABASE "${name}" TO "${role}"; GRANT USAGE ON SCHEMA public TO "${role}"`);
+          const runtimeUrl = new URL(target.href); runtimeUrl.username = role; runtimeUrl.password = password;
+          runtime = postgres(runtimeUrl.href, { ...options, idle_timeout: 0, max_lifetime: 0 });
+          const checkedRuntime = runtime;
+          const identity = async () => {
+            const [row] = await checkedRuntime`SELECT current_database() AS database,current_user AS role,session_user AS session,
+              current_setting('server_version_num') AS version,pg_backend_pid() AS pid`;
+            if (row.database !== name || row.role !== role || row.session !== role
+              || Math.floor(Number(row.version) / 10_000) !== 16) throw new Error('Unexpected runtime-role test identity');
+            return Number(row.pid);
+          };
+          const pid = await identity();
+          const result = await callback({ role, connectionString: runtimeUrl.href, db: drizzlePostgres(runtime), pid,
+            exec: async statement => Array.from(await checkedRuntime.unsafe(statement)) });
+          if (await identity() !== pid) throw new Error('Runtime-role peer unexpectedly reconnected');
+          return result;
+        } finally {
+          await runtime?.end({ timeout: 5 });
+          if (roleCreated) {
+            await verify(checkedClient, name);
+            // This role was created here and only received grants in this owned
+            // database. Remove those grants/owned test objects, then the role.
+            await checkedClient.unsafe(`DROP OWNED BY "${role}"; DROP ROLE "${role}"`);
+            const rows = await checkedClient`SELECT oid FROM pg_roles WHERE rolname=${role}`;
+            if (rows.length) throw new Error('Isolated runtime role cleanup not confirmed');
+          }
+        }
+      },
+      withPeer: async <T>(callback: (peer: SequenceRunnerPeer) => Promise<T>) => {
+        // Keep the backend stable while an observer checks pg_blocking_pids.
+        const peer = postgres(target.href, { ...options, idle_timeout: 0, max_lifetime: 0 });
+        try {
+          const pid = await verify(peer, name);
+          const result = await callback({ db: drizzlePostgres(peer), pid,
+            exec: async statement => Array.from(await peer.unsafe(statement)) });
+          if (await verify(peer, name) !== pid) throw new Error("Sequence runner peer unexpectedly reconnected");
+          return result;
         } finally { await peer.end({ timeout: 5 }); }
       },
     };

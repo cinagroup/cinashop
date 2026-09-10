@@ -1,0 +1,106 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "priorWorktreeEvidence": "activity-deadline-boundary-20260909.json",
+  "status": "partial_uncommitted_worktree_candidate",
+  "userWorkflow": "逐个完成checklist，然后提交推送。",
+  "scope": ["coupon", "package", "bargain", "seckill", "combination", "integral", "newcomer"],
+  "implementation": {
+    "baseSku": "existing stock UPDATE compares identity, non-retired state and price for every order type",
+    "memberPrice": "ordinary non-activity lines with positive base price, active member and enabled pricing compare product isVip, and vipPrice if product enabled; same facts added to confirmation projection",
+    "bargain": "activity price added to existing explicit rule projection; activity SKU identity protected but unused activity SKU price remains mutable",
+    "combination": "activity SKU identity, non-retired state and price compared at reservation",
+    "integral": "activity SKU identity, non-retired state, price and integral compared at reservation",
+    "existingPackageSeckillNewcomerPriceGuardsRetained": true,
+    "additionalSqlRoundTripsForMonetaryPatch": 0,
+    "lockOrderChanged": false,
+    "transactionNetworkCallsAdded": false,
+    "pricingFormulaChanged": false,
+    "sequenceRollbackGuaranteed": false
+  },
+  "evidence": {
+    "reportDirectory": "C:/Users/cina/AppData/Local/Temp",
+    "monetaryRed": {
+      "passed": 16, "failed": 20, "filteredByName": 92,
+      "filter": "monetary fact",
+      "failureClass": "incorrect successful orders after relevant monetary fact edits, not setup failures",
+      "report": "cinashop-monetary-facts-pg-red-20260909.json",
+      "sha256": "63eec445799beafa4d8e005f2c09fbac119d4dea7d82f470606c6496765b8531"
+    },
+    "memberRed": {
+      "passed": 2, "failed": 6, "filteredByName": 128,
+      "filter": "paid-member price fact",
+      "failureClass": "incorrect successful orders after applicable VIP price or product membership-price flag edits",
+      "report": "cinashop-member-price-pg-red-20260909.json",
+      "sha256": "55ab60662721e7fe5cd345bc92fa31133ee77e02fd13151bd7fb1392daf83755"
+    },
+    "firstGreen": {
+      "files": 1, "passed": 136, "failed": 0, "skipped": 0,
+      "report": "cinashop-monetary-facts-pg-green-20260909.json",
+      "sha256": "7aecbd267989122ddab5ba9a71fa179d897a215e1de2946b37d2fa75b5db32ad"
+    },
+    "freeBaseOverguardRed": {
+      "passed": 0, "failed": 2, "filteredByName": 136,
+      "failureClass": "first patch over-rejected unused VIP edits on free base products; not an original legacy defect",
+      "correction": "exclude zero base price from member projection and both member guards, matching calculator early return",
+      "report": "cinashop-free-member-price-pg-red-20260909.json",
+      "sha256": "3077ff6db09dbb007b5c66b25605fd177b4c88b4df227eed23fe738d6dc69329"
+    },
+    "finalRegression": {
+      "files": 35, "passed": 769, "failed": 0, "skipped": 0,
+      "environment": "Windows, dedicated PostgreSQL 16.15 SQL fixtures and pure unit/source contract tests",
+      "report": "cinashop-monetary-facts-pg-regression-20260909.json",
+      "sha256": "aff035a513ffb8e8123682f53198ce91f07a8554e33fa456a1450e253301c247",
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts", "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts", "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts", "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts", "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts", "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts", "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts", "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts", "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts", "test/order-delivery-address.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts", "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts", "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts", "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts", "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts", "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts", "test/uniapp-checkout-contract.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts", "test/bargain-participation-concurrency-postgres.test.ts",
+        "test/paid-membership-migration.test.ts", "test/bargain-order-participation.test.ts",
+        "test/first-order-discount.test.ts"
+      ]
+    },
+    "confirmationRulesFile": { "tests": 138, "independentPgTests": 71, "newTests": 46, "newActualHttpTests": 19, "newIndependentPgTests": 27 },
+    "independentPeers": "4 distinct non-reconnecting backends and exact pg_blocking_pids barrier; expected edited rows fixed before buyer writes",
+    "negativeResult": "actual HTTP 400 ORDER_QUOTE_RECONFIRM_REQUIRED with same key, or typed error from actual service adapter; full business rollback preserving editor changes",
+    "positiveControls": ["unused VIP prices", "disabled product membership pricing", "zero base price", "bargain activity SKU price unused by formula"],
+    "httpRecovery": "same key explicit computed receipt refresh and second create produces one unpaid order at refreshed price",
+    "typechecks": { "unit": "passed", "runtime": "passed" },
+    "sourceSha256": "7675178b869e8d6c0a718f6f5a63f5c1e4eaafbea1a33c8c33f799297a799463",
+    "testSha256": "3e8b6c33b3df6cf007a27a8aab4cab36323be1346dc4694650f5335f6e0a6c3f",
+    "sourceAndTestUnchangedDuringFinalRegression": true,
+    "ownImmutableCi": "not run; current changes intentionally uncommitted"
+  },
+  "remaining": [
+    "User membership, level rights and natural membership expiry still derive from early reads",
+    "Product gift points, other settlement facts and form content versions not fully protected",
+    "Coupon issue/scope/ancestor relationships and phantom inserts; non-cooperating package member inserts; missing seckill slot inserts",
+    "Equivalent rule representations, global SQL/KV authority A3k11d and bargain product policy A3i",
+    "Full immutable Linux CI/workerd, production identity/storage/Hyperdrive and release gates"
+  ],
+  "safety": {
+    "gitCommitThisTurn": false, "pushThisTurn": false,
+    "productionWrites": false, "deployment": false, "externalPayments": false,
+    "synthetic": ["HTTP identity", "KV", "sequence"],
+    "fullProductionForeignKeyAndAdminHttpFixtures": false,
+    "cleanupIdentity": { "database": "cinashop_finance_test", "role": "finance_test", "version": 160015, "timezone": "UTC" },
+    "fixtureCleanup": { "baselineDatabases": 4, "testSchemas": 0, "publicTables": 0, "otherClients": 0 },
+    "dedicatedPostgresStoppedAt": "2026-09-09T12:01:39Z",
+    "binariesDataAndReportsRetained": true
+  }
+}

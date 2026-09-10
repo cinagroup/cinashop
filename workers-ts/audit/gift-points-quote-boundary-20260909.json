@@ -1,0 +1,223 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "priorWorktreeEvidence": [
+    "activity-deadline-boundary-20260909.json",
+    "monetary-quote-boundary-20260909.json",
+    "membership-quote-boundary-20260909.json"
+  ],
+  "status": "partial_uncommitted_worktree_candidate",
+  "userWorkflow": "逐个完成checklist，然后提交推送。",
+  "implementation": {
+    "receiptProjection": "per-line effective giveIntegral and total gainIntegral",
+    "baseSourceKinds": [
+      "coupon ordinary type 0",
+      "package",
+      "combination",
+      "integral",
+      "newcomer"
+    ],
+    "activitySourceKinds": [
+      "bargain",
+      "seckill"
+    ],
+    "baseAtomicGuard": "existing product stock/sales UPDATE compares giveIntegral only when activityGiveIntegral is null",
+    "activityAtomicGuard": "existing activity rule UPDATE projections already include giveIntegral",
+    "unusedBaseGiftMayChangeUnderActivityOverride": true,
+    "additionalQueries": 0,
+    "additionalLocks": 0,
+    "existingLockOrderChanged": false,
+    "transactionExternalIoAdded": false,
+    "pricingFormulaOrRewardPolicyChanged": false,
+    "persistedSnapshots": [
+      "store_order.gain_integral",
+      "store_order_cart_info.cart_info.product.giveIntegral"
+    ],
+    "rewardPolicy": "Only normal order type=0 grants productIntegral in calculateReceiptRewards; marketing snapshot persistence does not grant new marketing rewards",
+    "truncation": "floor each effective giveIntegral * line quantity, then sum"
+  },
+  "evidence": {
+    "reportDirectory": "C:/Users/cina/AppData/Local/Temp",
+    "red": {
+      "report": "cinashop-gift-points-pg-red-20260909.json",
+      "sha256": "8cfae32a5f16b5ee82be7cadda292d99b8fa0360fca72283fdb9f8db7529e3f8",
+      "files": 1,
+      "passed": 18,
+      "failed": 30,
+      "nameFiltered": 138,
+      "incorrectOrderAdmissions": 30,
+      "description": "5 base-source kinds x 2 values x 3 edit modes; 20 actual HTTP wrong status 200 and 10 independent PG wrong success true; no setup failures"
+    },
+    "firstGreen": {
+      "report": "cinashop-gift-points-pg-green-20260909.json",
+      "sha256": "1aebf3ea2d68a39c8c2243e719e6570ab76de512db35cf77b589170502446faa",
+      "files": 1,
+      "passed": 186,
+      "failed": 0,
+      "skipped": 0
+    },
+    "finalRegression": {
+      "status": "passed",
+      "report": "cinashop-gift-points-pg-regression-20260909.json",
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts",
+        "test/admin-paid-membership.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts",
+        "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts",
+        "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts",
+        "test/bargain-order-participation.test.ts",
+        "test/bargain-participation-concurrency-postgres.test.ts",
+        "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts",
+        "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts",
+        "test/checkout-membership-boundary.test.ts",
+        "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/finance-peer-boundary.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts",
+        "test/order-brokerage.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/order-delivery-address.test.ts",
+        "test/order-reward.test.ts",
+        "test/paid-membership-migration.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts",
+        "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts",
+        "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/uniapp-checkout-contract.test.ts",
+        "test/user-level-migration.test.ts"
+      ],
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "environment": "Windows dedicated PostgreSQL 16.15 SQL fixtures and pure unit/source-contract tests",
+      "sha256": "0fe0454508e81d6a97e986b9a4d9d66051c860597e3e97bee3bc4f92c1054345",
+      "files": 41,
+      "passed": 898,
+      "failed": 0,
+      "skipped": 0,
+      "startedAt": "2026-09-09T12:37:05.093Z",
+      "lastFileEndedAt": "2026-09-09T12:43:26.404Z",
+      "observedFilesMatchRequested": true
+    },
+    "newTests": {
+      "total": 48,
+      "actualHttp": 32,
+      "independentPg": 16,
+      "changedEffectiveGift": 42,
+      "unusedBaseGiftPositiveControls": 6
+    },
+    "rulesFile": {
+      "tests": 186,
+      "independentPg": 87
+    },
+    "values": [
+      {
+        "before": "0.00",
+        "after": "3.25",
+        "purpose": "changes whole-point aggregate"
+      },
+      {
+        "before": "0.10",
+        "after": "0.20",
+        "purpose": "per-line rule change while integer aggregate remains zero"
+      }
+    ],
+    "independentPeers": "4 distinct non-reconnecting backends and exact pg_blocking_pids; expected edited business snapshot captured before buyer writes",
+    "actualHttpAssertions": [
+      "typed reconfirmation rejection and same key",
+      "full business rollback preserving editor changes",
+      "explicit same-key computed refresh",
+      "same monetary price and exactly one unpaid order",
+      "client gainIntegral=99999 ignored",
+      "persisted line and aggregate gift values",
+      "catalog change and cache clear after create preserve idempotent replay"
+    ],
+    "typechecks": {
+      "unit": "passed",
+      "runtime": "passed",
+      "optionsWeakened": false
+    },
+    "sourceFiles": [
+      {
+        "path": "src/services/order/StoreOrderCreateService.ts",
+        "sha256": "9bafc0de66686782063cf3d1ad1ddf713e4fd26349a573392d575c6a27f85bff"
+      },
+      {
+        "path": "test/checkout-confirmation-rules.test.ts",
+        "sha256": "b5e44c7225f006d410b9be749b292831008a2e1102dac57cf272786d6c1da164"
+      },
+      {
+        "path": "src/services/order/CheckoutMembershipSnapshot.ts",
+        "sha256": "bb6f1546fbd48d982360a0a89e9d9f5f0ee88d8ca86c78437a1be22e68a4649e"
+      },
+      {
+        "path": "test/checkout-membership-boundary.test.ts",
+        "sha256": "6031cd88f48a789e745728e5b0d5ceba883393018b8afa4caef4541fd811efc2"
+      }
+    ],
+    "preGiftSourceSha256": "5e152469868cabbe361177a88acef7dc5759d9fbf2042ebc2d0ec7daf4881840",
+    "preGiftRulesSha256": "3e8b6c33b3df6cf007a27a8aab4cab36323be1346dc4694650f5335f6e0a6c3f",
+    "ownImmutableCi": "not run; candidate intentionally uncommitted",
+    "workersReference": "official current best-practices page read; latest-version retrieval previously unavailable, using fetched 5.20260908.1 types; no binding/API/config changes",
+    "sourceAndTestsUnchangedDuringFinalRegression": true,
+    "runtimeDiagnostics": {
+      "windowsPgWarningAt": "2026-09-09T12:38:49.380Z",
+      "warning": "could not reserve shared memory region for child; error code 487",
+      "allRequestedTestsStillPassed": true,
+      "rootCauseResolved": false
+    }
+  },
+  "remaining": [
+    "Internal cost, supplier settlement and commission authority",
+    "Form content versions; coupon issue/scope/ancestor and referenced collection phantoms; equivalent rules",
+    "Global SQL/KV configuration and memberRight authority A3k11d",
+    "Full immutable Linux CI/workerd and production identity/storage/Hyperdrive/release gates",
+    "A3i bargain policy unresolved and unchanged"
+  ],
+  "safety": {
+    "gitCommitThisTurn": false,
+    "pushThisTurn": false,
+    "productionWrites": false,
+    "deployment": false,
+    "externalPayments": false,
+    "synthetic": [
+      "HTTP identity",
+      "KV",
+      "Sequence"
+    ],
+    "fullProductionForeignKeyOrAdminHttpFixtures": false,
+    "unpaidOrderSnapshotTestsArePaidReceiptEndToEnd": false,
+    "sequenceRollbackGuaranteed": false,
+    "dedicatedPostgresStartedAt": "2026-09-09T12:30:36Z",
+    "binariesDataAndReportsRetained": true,
+    "cleanupIdentity": {
+      "database": "cinashop_finance_test",
+      "role": "finance_test",
+      "version": 160015,
+      "timezone": "UTC"
+    },
+    "fixtureCleanup": {
+      "baselineDatabases": 4,
+      "testSchemas": 0,
+      "publicTables": 0,
+      "otherClients": 0
+    },
+    "dedicatedPostgresStoppedAt": "2026-09-09T12:44:44.068Z"
+  }
+}

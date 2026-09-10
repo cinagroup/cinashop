@@ -1,0 +1,83 @@
+{
+  "date": "2026-09-10",
+  "status": "full-unit-passed-not-production-release-acceptance",
+  "scope": "Existing POST /api/admin/config/save only; frontend generic editor stays disabled; no permission grants, new endpoint or production access",
+  "environment": {
+    "postgres": "Dedicated loopback PG16.15, 127.0.0.1:55432, Australia/Darwin",
+    "serverSession": 70092,
+    "serverPid": 13044,
+    "serverStartedAtUtc": "2026-09-10T08:18:42.893Z",
+    "realAuthComponents": ["Hono middleware", "JWT verification", "SQL administrator account validation", "config.view/config.manage role authorization"],
+    "syntheticComponents": ["Administrator identities and signing key", "Local CONFIG_KV", "Order sequence"],
+    "redisTokenBucketConfigured": false,
+    "productionLoginOrHyperdriveAcceptance": false
+  },
+  "implementation": {
+    "maxBodyBytes": 131072,
+    "maxKeys": 100,
+    "maxKeyCharacters": 255,
+    "maxPrefixedKvKeyBytes": 512,
+    "maxValueUnicodeCharacters": 5000,
+    "input": "Flat string values, complete validation before mutation, NUL/unpaired-surrogate rejection",
+    "isolation": "READ COMMITTED",
+    "firstBusinessLock": "system_config SHARE ROW EXCLUSIVE",
+    "lockTimeoutMs": 2000,
+    "statementTimeoutMs": 5000,
+    "idleTransactionTimeoutMs": 5000,
+    "clientDmlStatements": 2,
+    "winner": "is_store=0, sort DESC/id DESC; losing duplicates, store rows and metadata preserved",
+    "readback": "At most 100 effective rows; mismatch rolls back the whole transaction",
+    "cacheInvalidation": "After SQL commit; await all results; failures explicitly report that SQL is already saved"
+  },
+  "reportsNotAdditive": [
+    { "session": 5478, "file": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-config-batch-red-20260910.json", "sha256": "4288e1c08b0aaf4b7433665276149abb989d45976d66ccdefcd4b5f819117338", "passed": 12, "failed": 24, "skipped": 0 },
+    { "session": 34533, "file": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-config-batch-fixed-20260910.json", "sha256": "e0efc258973d34a335b2a51ecb29ad26c50045e61d9fc11c9283dd76418e55b7", "passed": 36, "failed": 0, "skipped": 0 },
+    { "session": 70243, "file": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-config-batch-expanded-20260910.json", "sha256": "2bb117dca1695b2439ab5506a59c20771d9b67a43adc3f485e9c3562ba54d5a0", "files": 6, "passed": 132, "failed": 0, "skipped": 0, "newFileTests": 46 }
+  ],
+  "typecheck": {
+    "firstSession": 54486,
+    "firstExitCode": 1,
+    "firstFailure": "Unused sql import in the new test, removed before final verification",
+    "finalSession": 64256,
+    "finalExitCode": 0,
+    "command": "npm run typecheck (unit and runtime)"
+  },
+  "selectedSourceScope": {
+    "count": 1150,
+    "sha256": "3a089407fe57a9d647def2ee1b10578d413e8d13cb731a06437af1de53613568",
+    "captures": ["2026-09-10T08:28:08.491Z during expanded run", "2026-09-10T08:31:25.941Z after expanded run and before full unit start", "2026-09-10T09:06:10.091Z after full unit terminal; same hash"],
+    "limitation": "rg-visible src/test/scripts TS/MJS/CJS/JSON/SQL plus six package/test/TypeScript configs; excludes external dependencies, bindings and audit documents; not a before-expanded-run capture"
+  },
+  "betweenRunsCleanup": {
+    "remainingDatabases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "remainingNonPgSchemas": ["public", "information_schema"],
+    "publicTables": 0,
+    "temporaryRuntimeRoles": 0,
+    "otherClientConnections": 0,
+    "serverKeptRunningForFullSuite": true
+  },
+  "fullUnit": {
+    "session": 90502,
+    "status": "passed",
+    "exitCode": 0,
+    "files": 371,
+    "passed": 4287,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "durationSeconds": 1958.52,
+    "reportSha256": "c91ec98541fed6d5f626cdcb0495864c8bf1ed12ddd602ee865d835e50046465",
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-config-full-20260910.json",
+    "command": "npx vitest run --config vitest.config.ts --maxWorkers=2 --reporter=default --reporter=json --outputFile=C:/Users/cina/AppData/Local/Temp/cinashop-admin-config-full-20260910.json",
+    "sourceFrozenUntilTerminal": true,
+    "freezeReleasedAfterTerminalEvidence": true,
+    "postRunCleanup": "Four baseline databases; no temporary roles, public tables or other client connections at 09:06 UTC"
+  },
+  "remaining": [
+    "Checkout SELECT-only role still lacks SHARE table lock capability; no config write privilege was granted to hide this",
+    "Whole-table contention and other domain-admin/noncooperative writer interactions remain open",
+    "No durable invalidation queue or global immediate KV consistency proof",
+    "Unit terminal is passed; workerd, immutable CI, formal storage/provider identities and release gates remain open",
+    "Checklist remains 234 checked / 170 open / 404 total; domain binding and separate PC preview deployment are recorded in release-domain-baseline-20260910.json, not a production application rollout"
+  ]
+}

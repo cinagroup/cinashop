@@ -1,0 +1,76 @@
+{
+  "date": "2026-09-10",
+  "status": "local-write-protocol-foundation-only",
+  "head": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "applicationReaderIntegrated": false,
+  "migrationServiceRegistered": false,
+  "productionWrites": false,
+  "deployed": false,
+  "committedOrPushedThisStage": false,
+  "checklist": { "checked": 234, "open": 170, "total": 404, "A3k11c": "open" },
+  "finalTests": {
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-fence-pg-final-20260910.json",
+    "sha256": "d7779e1f1f35d9a713689f7d83358bbeb5ac3b7bc714211c70c199676391fd02",
+    "files": 1,
+    "passed": 40,
+    "failed": 0,
+    "skipped": 0,
+    "sqlMirrorTests": 1,
+    "postgresFixtureTests": 39,
+    "includesUnsafeBaselineDemonstration": 1,
+    "startTimeUnixMs": 1789000808696,
+    "endTimeUnixMs": 1789000821362.8484,
+    "scope": "test/brokerage-paid-order-fence.test.ts; not an application checkout or full regression run"
+  },
+  "firstTests": {
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-fence-pg-first-20260910.json",
+    "sha256": "65b819e78f2961d31cb1b1aae1afcc46b5ecc3c808948b375e0a4c8327ca70d6",
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0,
+    "addToFinalCount": false
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "initial": "failed TS2769: Node readFileSync versus Workers URL type",
+    "fix": "Explicit node:url URL import in test, without weakening types",
+    "finalUnit": "passed",
+    "finalRuntime": "passed",
+    "finalSession": 53507
+  },
+  "sha256": {
+    "src/migrations/brokeragePaidOrderFence.ts": "8dcb7c3ee73bf18bc9f6423d795508fd35680679e900c3a9f91df490ad4bb935",
+    "src/migrations/runBrokeragePaidOrderFence.ts": "779b3577af26a8c22859982014f2c9973ecee365256d715a6388b9176c70fdfc",
+    "migrations/0150_brokerage_paid_order_fence.sql": "2a5420131196e8d268b86ac52a6a9138e227bdeff2084cfa77b39548e79b37e2",
+    "test/brokerage-paid-order-fence.test.ts": "3ba92667dec972dd68cb33baa341182cb90b75d0410fd18345bfc001d8b58e51"
+  },
+  "unchangedApplicationSha256": {
+    "src/services/order/StoreOrderCreateService.ts": "25ff244af2ed6d647e3e84494c462d77fb6198dc7b27d6765cb1179064205675",
+    "src/services/order/OrderBrokerageService.ts": "69d60619f92733a542d2d9b47975af93be5fccc68471a6bafb79e563d9f45f00",
+    "src/services/order/CheckoutBrokerageAuthority.ts": "4737013b94dc647e0440289a16b6e6357ec16b0c180e57f0d06c027ee4246d5b"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "name": "cinashop_finance_test",
+    "role": "finance_test",
+    "serverVersionNum": 160015,
+    "timezone": "UTC",
+    "baselineDatabases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "fixtureSchemasAfterTests": 0,
+    "publicTablesAfterTests": 0,
+    "otherClientsAfterTests": 0,
+    "pidBeforeStop": 5504,
+    "stop": "pg_ctl fast shutdown completed successfully",
+    "stopConfirmedAtUtc": "2026-09-10T00:45:46.6820296Z",
+    "binariesDataAndReportsRetained": true
+  },
+  "remaining": [
+    "Mode=3 reader qualification snapshot and locked re-evaluation",
+    "Fail-closed reader checks for missing, disabled or drifted write protocol",
+    "MigrationService registration and authorized deployment readiness",
+    "Real payment/refund multi-statement lock ordering and full foreign-key/privilege coverage",
+    "Privileged trigger bypass and maintenance gates",
+    "Immutable full CI/workerd and production environment acceptance"
+  ]
+}

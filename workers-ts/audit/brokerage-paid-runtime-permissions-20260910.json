@@ -1,0 +1,215 @@
+{
+  "date": "2026-09-10",
+  "status": "local-candidate-verified-not-committed-or-deployed",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "scope": "Read-only paid-order runtime identity/privilege preflight and actual non-owner LOGIN business/locking tests on isolated PostgreSQL 16; not production acceptance",
+  "changes": {
+    "auditModule": "src/migrations/auditPaidOrderRuntimePermissions.ts",
+    "cli": "scripts/audit-paid-runtime-permissions.ts",
+    "command": "npm run audit:paid-runtime-permissions",
+    "test": "test/brokerage-paid-runtime-permissions.test.ts",
+    "helper": "test/helpers/kefuSequenceRunnerDatabase.ts",
+    "businessOrFenceSqlChanged": false,
+    "platformBindingsChanged": false,
+    "deployAutomaticallyWired": false
+  },
+  "contract": {
+    "identities": [
+      "current_user",
+      "session_user",
+      "pg_stat_activity.usesysid for pg_backend_pid()"
+    ],
+    "reachableRoles": "USAGE, SET and MEMBER WITH ADMIN OPTION from all three identities; missing real connection identity fails closed",
+    "transaction": "REPEATABLE READ / READ ONLY; local statement/lock/idle-transaction upper limits 5/1/5 seconds retaining stricter settings",
+    "target": "Only explicit PAID_RUNTIME_AUDIT_DATABASE_URL; remote also requires PAID_RUNTIME_AUDIT_ALLOW_REMOTE=1; no DATABASE_URL/.env/Hyperdrive discovery fallback",
+    "output": "Fixed check names, booleans, failure names; no role names, URL, SQL, exception text or secrets",
+    "exitCodes": {
+      "0": "Permission envelope ready",
+      "1": "Completed, not ready",
+      "2": "Invalid/unconfirmed target or unable to finish"
+    }
+  },
+  "evidence": {
+    "first": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-first-20260910.json",
+      "sha256": "33bfd5512bf25c63f944afaef5f68027ee8b230a2cd998ab5258fb7a484f5346",
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "typecheck": "TS2352 static rootless mock cast removed; structural transaction argument retained"
+    },
+    "expanded": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-expanded-20260910.json",
+      "sha256": "8f8c26953911b93a92c36e5717fad2bd98edc2c9728890f269f8a2f2ce11b331",
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "typecheck": "Child ProcessEnv needed nine generated non-secret required fields. Explicit allowlist added, never spreading host environment or credentials.",
+      "limitation": "Initial reader UPDATE held payer order row. Replaced by zero-row UPDATE relation lock before the 184-case core run; exact backend blocking then tests the user fence rather than same-order blocking."
+    },
+    "preIdentityFixCore": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-final-20260910.json",
+      "sha256": "4dda9765dd6ffd20cd519fa1dc324c137d545eab3cfbe64101f6fefe17e93c9c",
+      "files": 7,
+      "passed": 184,
+      "failed": 0,
+      "skipped": 0,
+      "superseded": true
+    },
+    "identityRed": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-session-red-20260910.json",
+      "sha256": "9ffd12d8038f7427d698e8780589818adc2d59936d39db0753612f0429962f99",
+      "passed": 0,
+      "failed": 1,
+      "nameFilteredSkipped": 20,
+      "reason": "SET SESSION AUTHORIZATION changed both current_user and session_user; old preflight wrongly returned ready=true. Added original backend connection usesysid."
+    },
+    "identityFixed": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-session-fixed-20260910.json",
+      "sha256": "ee549ce81600835a3c752f4c29c2eecacf778180481d83bb016baea58ee6411e",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0
+    },
+    "coreBeforeSchemaFix": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-final-fixed-20260910.json",
+      "sha256": "a63a3a8088d425b2126d5ed9cd121abe44c396cdb0546402f363683bc2413564",
+      "startUnixMs": 1789007512039,
+      "endUnixMs": 1789007792993.2046,
+      "files": 7,
+      "passed": 185,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "noSourceOrTestEditsDuringInvocation": true,
+      "permissionModuleSha256": "3e3b5b5a9035647b2f0b82cf20e6a5d5471904dd4f49c2840d8a2917ed9d1bfc",
+      "fileCounts": {
+        "test/brokerage-paid-business-transactions.test.ts": 20,
+        "test/brokerage-paid-order-fence.test.ts": 40,
+        "test/brokerage-paid-order-migration.test.ts": 7,
+        "test/brokerage-paid-runtime-permissions.test.ts": 21,
+        "test/checkout-brokerage-paid-authority.test.ts": 62,
+        "test/kefu-sequence-registration.test.ts": 24,
+        "test/kefu-sequence-runner.test.ts": 11
+      },
+      "limitation": "The 21-case permission entry is superseded by the subsequent pgx schema fix. Other six files (164 tests) do not import the changed preflight module and their source/test dependencies were unchanged."
+    },
+    "schemaRed": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-schema-red-20260910.json",
+      "sha256": "f26be914d600d6cdae2abffb7356c96ba48914295053875fd9b6feed4959661f",
+      "passed": 0,
+      "failed": 1,
+      "nameFilteredSkipped": 21,
+      "reason": "NOT LIKE 'pg_%' excluded ordinary pgx_review schema and missed an executable SECURITY DEFINER routine. Replaced with literal pg_catalog.starts_with(name,'pg_')."
+    },
+    "helperConsumers": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-helper-consumers-20260910.json",
+      "sha256": "314764285d60a439fe1d0f6b556ab13d078ee70d121629663b3ef28179f491c5",
+      "startUnixMs": 1789006902605,
+      "endUnixMs": 1789007308552.5857,
+      "files": 6,
+      "passed": 121,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "fileCounts": {
+        "test/bargain-cart-participation-migration.test.ts": 34,
+        "test/foreign-key-child-index-migration.test.ts": 33,
+        "test/store-order-create-scenario-postgres.test.ts": 1,
+        "test/work-composite-foreign-key-plan.test.ts": 12,
+        "test/work-contact-client-index-migration.test.ts": 37,
+        "test/work-foreign-key-index-plan.test.ts": 4
+      },
+      "scope": "All six other direct shared-helper consumers; disjoint from core seven. Helper and these tests/dependencies unchanged during this run, but unrelated permission module/test were edited. Not an immutable whole-workspace claim."
+    },
+    "coverage": [
+      "Genuine separate LOGIN, non-owner and unprivileged attributes; root/unsafe schema rejected before SQL",
+      "Read-only settings and unchanged business snapshots; actual CLI exit 0/1/2 and output redaction",
+      "Actual balance payment, qualification read and full refund/replay under runtime role",
+      "Provider payment without user UPDATE fails 42501 and rolls back; UPDATE(now_money) permits row locking without ownership/SECURITY DEFINER",
+      "Reader and payer are independent authenticated logins, observer is third backend, exact pg_blocking_pids after zero-row order relation lock and user SHARE",
+      "Eight actual forbidden trigger/function/table/schema/replication operations rejected with 42501; payment remains operational",
+      "SET ROLE and SET SESSION AUTHORIZATION cannot disguise administrative connection; elevated attributes, TRIGGER/TRUNCATE, CREATE, replication parameter privileges, SET-only and ADMIN-only owner membership rejected",
+      "Callable ordinary-schema SECURITY DEFINER routines conservatively flagged, including PUBLIC and pgx-prefixed schemas; explicit revoke positive controls",
+      "Missing fence objects fail without automatic repair; created LOGIN/grants removed on callback failure"
+    ],
+    "finalPermissionSuite": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-permissions-schema-fixed-20260910.json",
+      "sha256": "312fa1cb3db2f6f59972ae350f31d1d3130bd67111159bddb7a4d91ab5919735",
+      "startUnixMs": 1789007845645,
+      "endUnixMs": 1789007950077.5813,
+      "files": 1,
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "maxWorkers": 1,
+      "noSourceOrTestEditsDuringInvocation": true,
+      "scope": "Full final permission suite (2 static/CLI configuration tests, 20 real-PG cases). Supersedes previous permission runs; do not add overlapping counts. Six unchanged core files and six helper consumer files retain separately scoped evidence; not a single 307-case immutable invocation or whole-project CI."
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "unit": "passed",
+      "runtime": "passed",
+      "exitCode": 0,
+      "afterFinalSchemaFix": true
+    }
+  },
+  "sourceSha256": {
+    "src/migrations/auditPaidOrderRuntimePermissions.ts": "4e84008663a8565e2770dc1ef47c508e5afb58f14ba49e95c4cc1b770c1c5d7e",
+    "scripts/audit-paid-runtime-permissions.ts": "a316b7d97fdb9bc4ed99285f3fd9d3f382557c3b1f04ee38877b57b8edac806d",
+    "test/brokerage-paid-runtime-permissions.test.ts": "a0be8e476916f0ddfbd70db2ace81f339138a48d8874803d47337f0f845be552",
+    "test/helpers/kefuSequenceRunnerDatabase.ts": "9d7cf6b00d87176f82238426dfca8d5853f5580dae93e8366d78b3fd65f9d9ee",
+    "package.json": "716ca118b7bc54b4c43abc29a4efccea850325033ad8c8d9459c283dff1a4513",
+    "src/services/order/StoreOrderPayService.ts": "55d294db4eb4223baac9e107d510a8e4caa81d0adf49c453b6e4e66c4cae82cb",
+    "src/services/order/StoreOrderRefundService.ts": "0e0c2a17f89e9e73b0cd94b7ca9b4a45f4305703666dec4930fb31cace405b3b",
+    "src/migrations/brokeragePaidOrderFence.ts": "bdc142a13887156c7f9595de5631f367fce4cb75b4a01707740508813c026776"
+  },
+  "limits": [
+    "Not full application minimal GRANT recipe, production Worker/Hyperdrive identity or catalog acceptance",
+    "Not complete PostgreSQL privilege combinations or built-in/extension privileged-routine proof",
+    "Does not prevent separate administrator changing catalog/privileges after preflight; explicit maintenance/release controls remain",
+    "Installed function/trigger definitions and RLS checked by separate checkout guard, not this preflight",
+    "Other activity/commission/supplier/settled reward roles, PHP qualification/binding policy, own immutable CI/workerd/release remain open",
+    "No legacy real-history reconciliation required per project owner; no change to that N/A decision"
+  ],
+  "skills": "Workers/PostgreSQL references guided bounded read-only audit and actual non-owner login evidence. Latest Workers types retrieval hit EACCES; inspected installed 5.20260828.1, no platform API/binding changes.",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "newlyChecked": 0,
+    "stillOpen": "FE-003L-A3k11c and formal runtime/release gates"
+  },
+  "externalWrites": {
+    "productionDatabase": false,
+    "deployment": false,
+    "provider": false,
+    "commit": false,
+    "push": false
+  },
+  "isolation": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "baseDatabase": "cinashop_finance_test",
+    "maintenanceRole": "finance_test",
+    "version": "16.15",
+    "timezone": "UTC",
+    "readyUtc": "2026-09-10T02:04:57.990Z",
+    "serverPid": 3196,
+    "shutdownConfirmedUtc": "2026-09-10T02:40:12.2783558Z",
+    "serverTerminalExitCode": 0,
+    "baselineDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "remainingFixtureDatabases": 0,
+    "remainingFixtureSchemas": 0,
+    "basePublicTables": 0,
+    "remainingRuntimeOrAuthProbeRoles": 0,
+    "otherClientBackends": 0,
+    "retained": "PostgreSQL binaries/data directory and raw reports. Only helper-owned disposable databases/roles and grants were removed; synthetic fixtures can be recreated by tests."
+  }
+}

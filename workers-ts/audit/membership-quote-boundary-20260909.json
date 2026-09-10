@@ -1,0 +1,188 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "priorWorktreeEvidence": [
+    "activity-deadline-boundary-20260909.json",
+    "monetary-quote-boundary-20260909.json"
+  ],
+  "status": "partial_uncommitted_worktree_candidate",
+  "userWorkflow": "逐个完成checklist，然后提交推送。",
+  "implementation": {
+    "receiptProjection": "enabled paid membership active boolean, enabled user level ID, referenced level id/discount/isShow/isDel; null means feature disabled",
+    "finalRows": "SHARE NOWAIT on user then referenced level after existing business writes; held through owning transaction commit",
+    "maxAdditionalRowReads": 2,
+    "maxAdditionalClockReads": 1,
+    "clockSharedWithActivityWindow": true,
+    "membershipClock": "isEverLevel=1 OR (isMoneyLevel>0 AND clock_timestamp()<to_timestamp(overdueTime)); compare with confirmed active boolean after remaining business SQL",
+    "missingReferencedLevel": "preview currently retains fallback; create fails closed until reference repaired or restored level explicitly reconfirmed; no table lock or automatic data repair",
+    "equivalentRenewalOrForeverTransitionPermitted": true,
+    "existingBusinessWriteLockOrderChanged": false,
+    "newReverseRowLockWait": false,
+    "allDdlOrExistingLockWaitsEliminated": false,
+    "transactionExternalIoAdded": false,
+    "pricingFormulaOrRewardPolicyChanged": false,
+    "physicalCommitInstantGuaranteed": false,
+    "sequenceRollbackGuaranteed": false
+  },
+  "evidence": {
+    "reportDirectory": "C:/Users/cina/AppData/Local/Temp",
+    "red": {
+      "report": "cinashop-membership-boundary-pg-red-20260909.json",
+      "sha256": "d985181c64cd4e4d0c7285a174117806860d797573e001607705e6c794e01e06",
+      "files": 1,
+      "passed": 12,
+      "failed": 20,
+      "skipped": 0,
+      "incorrectOrderAdmissions": 18,
+      "unprotectedHeldRowInvariants": 2,
+      "description": "7 HTTP edits, 7 committed edits during proven SKU waits, 4 natural expirations with/without existing integral user lock; 2 held-row invariants are not separate price bugs"
+    },
+    "firstGreen": {
+      "report": "cinashop-membership-boundary-pg-green-20260909.json",
+      "sha256": "79bd3ec0035e5c0d6dcb999603162b438a4a34ebf8f7dfe3fb906dc960887c7b",
+      "files": 1,
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expandedGreen": {
+      "report": "cinashop-membership-boundary-pg-expanded-20260909.json",
+      "sha256": "4b12528ef515c205cac12e1d598d99ddcc02a2c92ea7898d0e3130eba973b2f6",
+      "files": 1,
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0
+    },
+    "finalRegression": {
+      "report": "cinashop-membership-boundary-pg-regression-20260909.json",
+      "sha256": "f6f291436eb3e80112676be689adc14c0d7cccd152f7077a9bde12011b9f629e",
+      "files": 41,
+      "passed": 850,
+      "failed": 0,
+      "skipped": 0,
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts",
+        "test/admin-paid-membership.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts",
+        "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts",
+        "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts",
+        "test/bargain-order-participation.test.ts",
+        "test/bargain-participation-concurrency-postgres.test.ts",
+        "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts",
+        "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts",
+        "test/checkout-membership-boundary.test.ts",
+        "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/finance-peer-boundary.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts",
+        "test/order-brokerage.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/order-delivery-address.test.ts",
+        "test/order-reward.test.ts",
+        "test/paid-membership-migration.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts",
+        "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts",
+        "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/uniapp-checkout-contract.test.ts",
+        "test/user-level-migration.test.ts"
+      ],
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "environment": "Windows dedicated PostgreSQL 16.15 SQL fixtures and pure unit/source-contract tests"
+    },
+    "membershipFile": {
+      "tests": 50,
+      "actualHttpTests": 17,
+      "independentPgTests": 29,
+      "syntheticErrorClassificationTests": 4
+    },
+    "independentPeers": "4 distinct non-reconnecting backends; exact pg_blocking_pids for wait cases; held writer not released before NOWAIT result",
+    "recovery": "same key explicit computed receipt refresh, then one unpaid order; dangling level reference repaired explicitly in isolated fixture only",
+    "lockRetention": "user and level editor waits observed until owning transaction commits; artificial outer transaction only for lock ownership observation, not permission to extend expiry admission",
+    "reverseWait": "editor holds user row, waits for buyer-owned SKU; releasing late cart-info blocker causes buyer NOWAIT typed rejection and full business rollback; editor then commits",
+    "timezones": [
+      "UTC",
+      "America/New_York"
+    ],
+    "typechecks": {
+      "firstAttempt": "unit exit 2 TS6133 unused test import; reverse-wait coverage then used the import",
+      "finalUnit": "passed",
+      "finalRuntime": "passed",
+      "optionsWeakened": false
+    },
+    "sourceFiles": [
+      {
+        "path": "src/services/order/StoreOrderCreateService.ts",
+        "sha256": "5e152469868cabbe361177a88acef7dc5759d9fbf2042ebc2d0ec7daf4881840"
+      },
+      {
+        "path": "src/services/order/CheckoutMembershipSnapshot.ts",
+        "sha256": "bb6f1546fbd48d982360a0a89e9d9f5f0ee88d8ca86c78437a1be22e68a4649e"
+      },
+      {
+        "path": "test/checkout-membership-boundary.test.ts",
+        "sha256": "6031cd88f48a789e745728e5b0d5ceba883393018b8afa4caef4541fd811efc2"
+      },
+      {
+        "path": "test/checkout-confirmation-rules.test.ts",
+        "sha256": "3e8b6c33b3df6cf007a27a8aab4cab36323be1346dc4694650f5335f6e0a6c3f"
+      }
+    ],
+    "sourceAndTestsUnchangedDuringFinalRegression": true,
+    "ownImmutableCi": "not run; candidate intentionally uncommitted",
+    "workersReference": "current official best-practices page read; npm mirror latest-version lookup EACCES and registry web lookup unavailable, using previously fetched 5.20260908.1 type definitions; no binding/API/config changes"
+  },
+  "remaining": [
+    "memberRight and global SQL/KV configuration authority A3k11d",
+    "Product gift points and other settlement/commission facts; form content versions",
+    "Coupon issue/scope/ancestor and referenced collection phantoms; equivalent rule representations",
+    "Full immutable Linux CI/workerd, production identity/storage/Hyperdrive and release gates",
+    "A3i bargain policy remains unresolved and unchanged"
+  ],
+  "safety": {
+    "gitCommitThisTurn": false,
+    "pushThisTurn": false,
+    "productionWrites": false,
+    "deployment": false,
+    "externalPayments": false,
+    "synthetic": [
+      "HTTP identity",
+      "KV",
+      "Sequence",
+      "four error-classification failures"
+    ],
+    "fullProductionForeignKeyOrAdminHttpFixtures": false,
+    "cleanupIdentity": {
+      "database": "cinashop_finance_test",
+      "role": "finance_test",
+      "version": 160015,
+      "timezone": "UTC"
+    },
+    "fixtureCleanup": {
+      "baselineDatabases": 4,
+      "testSchemas": 0,
+      "publicTables": 0,
+      "otherClients": 0
+    },
+    "dedicatedPostgresStoppedAt": "2026-09-09T12:24:32Z",
+    "binariesDataAndReportsRetained": true
+  }
+}

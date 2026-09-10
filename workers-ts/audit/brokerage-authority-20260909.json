@@ -1,0 +1,271 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "status": "partial_uncommitted_worktree_candidate",
+  "userWorkflow": "逐个完成checklist，然后提交推送。",
+  "priorWorktreeEvidence": [
+    "activity-deadline-boundary-20260909.json",
+    "monetary-quote-boundary-20260909.json",
+    "membership-quote-boundary-20260909.json",
+    "gift-points-quote-boundary-20260909.json",
+    "internal-ledger-quote-boundary-20260909.json",
+    "brokerage-item-quote-boundary-20260909.json"
+  ],
+  "implementation": {
+    "addedToCustomerFingerprint": false,
+    "ephemeralMetadata": "OrderBrokerageSnapshot.authority; never persisted or returned to customer",
+    "accountFacts": "buyer/first/second relations and promoter status/spreadOpen/isPromoter where applicable, used agentLevel identities, division graph and actual activeRate roles",
+    "levelFacts": "raw row identity/status/isDel; applicable one/two uplift only when active; inactive levels retain prior formula fallback",
+    "missingPositiveReferences": "fail closed; explicit repair required; no auto-insert or fabricated receiver",
+    "rowBoundary": "end of business writes; sorted users then levels SHARE NOWAIT retained to commit",
+    "maximumAdditionalRowQueries": 2,
+    "maximumUsers": 6,
+    "maximumLevels": 2,
+    "divisionTime": "capture actual activeRate roles in existing calculator, compare observed active boolean on final database wall clock using locked current status/deadline",
+    "equivalentRenewalAllowed": true,
+    "finalClock": "merged with existing activity/membership constant-bound SQL after all potentially blocking business checks",
+    "maximumAdditionalClockQueries": 1,
+    "originalBusinessWriteOrderChanged": false,
+    "reverseRowWaitAdded": false,
+    "globalTableLockAdded": false,
+    "transactionExternalIoAdded": false,
+    "formulaAndSettlementPolicyChanged": false,
+    "existingOrderReplayRecomputed": false,
+    "notProtectedByTheseRowLocks": [
+      "mode=3 paid-order SUM predicate/phantoms",
+      "SQL/KV global configuration",
+      "memberRight authority"
+    ]
+  },
+  "evidence": {
+    "reportDirectory": "C:/Users/cina/AppData/Local/Temp",
+    "red": {
+      "report": "cinashop-brokerage-authority-pg-red-20260909.json",
+      "sha256": "154e0d6cc610ef41adc40c360755e8a6e029a99ce3ce59794e42f9dfd51ad7f3",
+      "files": 1,
+      "passed": 31,
+      "failed": 32,
+      "skipped": 0,
+      "incorrectAdmissionsAfterLateEdits": 30,
+      "missingReferenceAdmissions": 2,
+      "testSha256": "4d6286e4e599ff60b4c99e94a070b329e50a7fc951cc96390c712011663903a3",
+      "sourceHashes": [
+        {
+          "path": "src/services/order/StoreOrderCreateService.ts",
+          "sha256": "72d46539faf71f0fdc426d53fc164c15c7327e2c25115cd60a938687ac6f7be3"
+        },
+        {
+          "path": "src/services/order/OrderBrokerageService.ts",
+          "sha256": "95732af0f5f0645229bb44d524351dc26e357acd4b13d999a16552ee1d349e4d"
+        }
+      ]
+    },
+    "firstGreen": {
+      "report": "cinashop-brokerage-authority-pg-green-20260909.json",
+      "sha256": "8b3827de04f4a6383cafa461afd16f00d51a4d281ebbc17487f2032210a18b61",
+      "files": 1,
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "testSha256": "4d6286e4e599ff60b4c99e94a070b329e50a7fc951cc96390c712011663903a3"
+    },
+    "expanded": {
+      "report": "cinashop-brokerage-authority-pg-expanded-20260909.json",
+      "sha256": "3816c70b711cdccf94ed8e97a24887a364eaf6c792509f4d7ef5b3d0bc970beb",
+      "files": 3,
+      "passed": 144,
+      "failed": 0,
+      "skipped": 0,
+      "authorityFileTests": 92,
+      "testSha256": "a72d5a2d5ce7ae4f5714ceecdb0530f74684e126fe3da0aa75c78a78d3f4f173"
+    },
+    "divisionRoles": {
+      "report": "cinashop-brokerage-authority-roles-pg-20260909.json",
+      "sha256": "8ba973dce5e9e38690903429bfdf5ad90d1c3695a128a0e0eff547b56dcff799",
+      "files": 1,
+      "passed": 12,
+      "failed": 0,
+      "nameFiltered": 92,
+      "testSha256": "df90a41d00490eb1f00d020406b738c4847cb00e4a5d0ff0ccc0a52c564d1e24"
+    },
+    "finalClock": {
+      "report": "cinashop-brokerage-authority-final-clock-pg-20260909.json",
+      "sha256": "f02022fd1a9f112767cb44d83ba586ba65b9b2432fce7066fa2375c2cf420873",
+      "files": 1,
+      "passed": 4,
+      "failed": 0,
+      "nameFiltered": 104
+    },
+    "finalRegression": {
+      "status": "passed",
+      "report": "cinashop-brokerage-authority-pg-regression-20260909.json",
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts",
+        "test/admin-paid-membership.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts",
+        "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts",
+        "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts",
+        "test/bargain-order-participation.test.ts",
+        "test/bargain-participation-concurrency-postgres.test.ts",
+        "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts",
+        "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts",
+        "test/checkout-membership-boundary.test.ts",
+        "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/finance-peer-boundary.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts",
+        "test/order-brokerage.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/order-delivery-address.test.ts",
+        "test/order-reward.test.ts",
+        "test/paid-membership-migration.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts",
+        "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts",
+        "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/uniapp-checkout-contract.test.ts",
+        "test/user-level-migration.test.ts",
+        "test/order-supplier-allocation.test.ts",
+        "test/supplier-split-fulfillment.test.ts",
+        "test/store-order-refund-postgres-migration.test.ts",
+        "test/store-order-writeoff-migration.test.ts",
+        "test/checkout-brokerage-boundary.test.ts",
+        "test/checkout-brokerage-authority.test.ts"
+      ],
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "environment": "Windows dedicated PG16.15 SQL fixtures plus pure unit/source-contract tests",
+      "sha256": "ce66adbdb58f8ef30ff6986cc772ff6829d3aef933c58f8f4ba5f278aaafe876",
+      "files": 47,
+      "passed": 1147,
+      "failed": 0,
+      "skipped": 0,
+      "startedAt": "2026-09-09T13:46:20.5270000+00:00",
+      "lastFileEndedAt": "2026-09-09T13:55:07.7560000+00:00",
+      "observedFilesMatchRequested": true
+    },
+    "newTests": {
+      "total": 108,
+      "actualHonoHttp": 48,
+      "independentPg": 56,
+      "syntheticSqlErrorClassification": 4
+    },
+    "assertions": [
+      "fresh create-time input accepted without adding internal commission to customer quote",
+      "late edits typed rejection and full business rollback",
+      "missing positive references require explicit repair",
+      "disabled feature/tier and unused specified-level controls",
+      "mode=2 ignores isPromoter toggle",
+      "same-price explicit recovery and original order replay",
+      "six row targets NOWAIT rejection while holder still owns lock",
+      "six row targets held through owning transaction commit",
+      "three reverse editor->inventory waits cause deterministic checkout rollback",
+      "UTC and America/New_York expiry, still-valid, already-expired and unused-specified controls",
+      "integral locked-user recomputation preserves authority and rollback",
+      "staff/agent/division/self/overlap and missing-staff role recovery",
+      "final clock after new authority locks and subsequent shipping child-table SELECT wait",
+      "unpaid snapshot and no brokerage income rows"
+    ],
+    "independentPeers": "4 distinct non-reconnecting backends, exact pg_blocking_pids, expected committed edit snapshot fixed before buyer writes",
+    "sourceFiles": [
+      {
+        "path": "src/services/order/StoreOrderCreateService.ts",
+        "sha256": "25ff244af2ed6d647e3e84494c462d77fb6198dc7b27d6765cb1179064205675"
+      },
+      {
+        "path": "src/services/order/OrderBrokerageService.ts",
+        "sha256": "69d60619f92733a542d2d9b47975af93be5fccc68471a6bafb79e563d9f45f00"
+      },
+      {
+        "path": "src/services/order/CheckoutBrokerageAuthority.ts",
+        "sha256": "4737013b94dc647e0440289a16b6e6357ec16b0c180e57f0d06c027ee4246d5b"
+      },
+      {
+        "path": "test/checkout-brokerage-authority.test.ts",
+        "sha256": "ad939fb9ba6b27993056c53de23c05b64cebaf5eb8738ee75b1763f747e7d0e6"
+      },
+      {
+        "path": "test/checkout-brokerage-boundary.test.ts",
+        "sha256": "3b00e01d9c4f60ac7150c46b3012a39371e507be1d65966891c3c8b80245828d"
+      },
+      {
+        "path": "test/checkout-confirmation-rules.test.ts",
+        "sha256": "8a0a28e50fa8829d0f50bd2e16b987cf836e44c827edf30e1c9500d9c3bdee69"
+      }
+    ],
+    "typechecks": {
+      "initial": "unit and runtime passed",
+      "expanded": "unit and runtime passed",
+      "final": "unit and runtime passed",
+      "optionsWeakened": false
+    },
+    "workersReference": "current official best-practices page retrieved; configured npm registry version lookup EACCES; cached previously retrieved 5.20260908.1 relevant definitions read; no platform API/binding/config changes",
+    "ownImmutableCi": "not run; intentionally uncommitted candidate",
+    "sourceAndTestsUnchangedDuringFinalRegression": true,
+    "environmentWarnings": {
+      "windowsSharedMemoryReservation487": [
+        "2026-09-09T13:44:10.625Z",
+        "2026-09-09T13:49:33.255Z"
+      ],
+      "associatedTestFailure": false,
+      "rootCauseFixed": false
+    }
+  },
+  "remaining": [
+    "mode=3 paid-order aggregate eligibility and collection phantoms",
+    "global SQL/KV, memberRight authority A3k11d",
+    "ownership, form versions, coupon/ancestor/referenced collections and equivalent expressions",
+    "real payment/receipt/refund, identity/storage/Hyperdrive and release gates",
+    "full immutable Linux CI/workerd; A3i policy unchanged"
+  ],
+  "safety": {
+    "gitCommitThisTurn": false,
+    "pushThisTurn": false,
+    "productionWrites": false,
+    "deployment": false,
+    "externalPayments": false,
+    "synthetic": [
+      "HTTP identity",
+      "KV",
+      "Sequence",
+      "HTTP edit hook before business transaction"
+    ],
+    "fullProductionForeignKeyOrAdminHttpFixtures": false,
+    "unpaidSnapshotTestsArePaymentEndToEnd": false,
+    "sequenceRollbackGuaranteed": false,
+    "physicalCommitDeadlineGuaranteed": false,
+    "allDdlWaitsEliminated": false,
+    "dedicatedPostgresStartedAt": "2026-09-09T13:32:11.869Z",
+    "binariesDataAndReportsRetained": true,
+    "fixtureCleanup": {
+      "baselineDatabases": 4,
+      "testSchemas": 0,
+      "publicTables": 0,
+      "otherClients": 0
+    },
+    "cleanupIdentity": {
+      "database": "cinashop_finance_test",
+      "role": "finance_test",
+      "version": 160015,
+      "timezone": "UTC"
+    },
+    "dedicatedPostgresStoppedAt": "2026-09-09T13:55:54.806Z"
+  }
+}

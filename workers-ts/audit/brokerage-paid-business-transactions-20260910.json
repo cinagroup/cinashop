@@ -1,0 +1,135 @@
+{
+  "date": "2026-09-10",
+  "status": "local-candidate-verified-not-committed-or-deployed",
+  "scope": "Full ORM schema plus installed paid-order fence: actual payment/refund SQL cores and pink create/payment/promotion concurrency",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "changes": {
+    "productionBusinessCodeChanged": false,
+    "sqlOrBindingsChanged": false,
+    "newTest": "test/brokerage-paid-business-transactions.test.ts",
+    "helper": "test/helpers/kefuSequenceRunnerDatabase.ts",
+    "helperBehavior": "Expose typed Drizzle client and backend PID on an already-owned disposable database peer; disable idle/lifetime expiry; verify backend PID after successful callback. New tests assert observer plus three distinct peer PIDs and exact pg_blocking_pids barriers."
+  },
+  "evidence": {
+    "first": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-business-first-20260910.json",
+      "sha256": "fa4089aef14a017408530fa3d419c8a980aaeb84185d2fc392f7c29ef69f8fb2",
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "typecheck": "New test catalog query inferred unknown (TS2571). Replaced with typed Drizzle projection; no business-code change."
+    },
+    "expanded": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-business-expanded-20260910.json",
+      "sha256": "5bc9ce63d0b8ea5adbc32d3a59074feab84a84b90b61168b300c9034f1a5ae57",
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "final": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-business-final-20260910.json",
+      "sha256": "25ad5517142fde768f65afbe9a98f9b462e13e5628a859aa95d0ba4fe95b6a71",
+      "startUnixMs": 1789005139393,
+      "endUnixMs": 1789005352996.371,
+      "files": 11,
+      "passed": 204,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "maxWorkers": 1,
+      "fileCounts": {
+        "test/brokerage-paid-business-transactions.test.ts": 20,
+        "test/brokerage-paid-order-fence.test.ts": 40,
+        "test/brokerage-paid-order-migration.test.ts": 7,
+        "test/checkout-brokerage-paid-authority.test.ts": 62,
+        "test/kefu-sequence-registration.test.ts": 24,
+        "test/kefu-sequence-runner.test.ts": 11,
+        "test/order-brokerage.test.ts": 12,
+        "test/order-reward.test.ts": 6,
+        "test/pink-refund-lock-order-postgres.test.ts": 12,
+        "test/store-order-payment-cancel-migration.test.ts": 5,
+        "test/store-order-refund-postgres-migration.test.ts": 5
+      },
+      "noSourceOrTestEditsDuringFinalInvocation": true,
+      "claimBoundary": "Local targeted regression, not whole-project immutable CI or production/Hyperdrive/provider acceptance. Do not add overlapping 16/20专项 or earlier 167/1249 runs."
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "unit": "passed",
+      "runtime": "passed",
+      "exitCode": 0
+    },
+    "newCoverage": [
+      "20 cases on independent fully constructed ORM databases, with standalone write-fence installation; 10 use four distinct PostgreSQL backends",
+      "Real catalog FK presence overall and absence on user/store_order/store_order_refund; enforced duplicate order-number unique constraint and refund amount check; installed three fence triggers",
+      "Balance and synthetic provider payment commit/replay and provider replay mismatch; balance, integral, invoice and outbox rollback after a real PostgreSQL late outbox failure",
+      "Actual refund application then partial/full execution; balance, product/SKU stock, cart refund quantity, SUM qualification and duplicate replay",
+      "Return approval removes contribution; refusal restores contribution, with no monetary refund and idempotent repeat",
+      "Absent/mismatched synthetic provider refund confirmation fails without business writes",
+      "Real late refund-bill exception rolls back order qualification, inventory, invoice and ledger state; explicit retry succeeds",
+      "Duplicate balance/provider payments and same/distinct-partial refund executions serialize behind observed user/order blockers without double credit",
+      "Production qualification guard on a real manual reader transaction holds provider payment through reader commit or rollback; not an HTTP checkout claim",
+      "Four actual create -> balance-pay -> leader refund/pending-member payment races, both directions and both funding modes; successor promotion/relinking, balance, stock/quota, outbox and replay verified"
+    ],
+    "contractBoundary": [
+      "Partial refund status=3 continues contributing the original pay_price; this verifies existing TypeScript semantics, not a newly approved PHP-equivalence or net-spend policy",
+      "Ordinary orders and provider-success evidence are synthetic fixture rows; no external charge, signature verification, real identity or gateway callback was exercised",
+      "Full ORM DDL includes declared constraints/indexes/FKs; this is not a live production catalog comparison or all historical/custom-trigger combinations",
+      "Dedicated test role finance_test is superuser/createdb/createrole/bypassrls; runtime non-owner permissions remain unproven",
+      "New matrix does not cover every activity, pure-integral/free order, completed reward/commission/supplier ledger combination, role overlap, or privileged DDL/replication bypass"
+    ],
+    "skillReferences": {
+      "workers": "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/",
+      "postgres": "https://www.postgresql.org/docs/16/explicit-locking.html",
+      "latestTypesAttempt": "npm view failed EACCES at configured registry.npmmirror.com; used documented installed workers-types 5.20260828.1 Hyperdrive fallback. No platform binding/config change.",
+      "influence": "Use actual SQL transaction cores without provider I/O and independent PostgreSQL blockers; do not infer full-schema or production-role acceptance from lightweight fixtures."
+    }
+  },
+  "sourceSha256": {
+    "test/brokerage-paid-business-transactions.test.ts": "f90f820ebf4baef53d9282b7c2699796f0e85a6de846b5c64626456f0cbe55b7",
+    "test/helpers/kefuSequenceRunnerDatabase.ts": "e71c5a20cc7ca34fd526e13f0698e29901c396e5bb570da81d657401712e105c",
+    "src/services/order/StoreOrderPayService.ts": "55d294db4eb4223baac9e107d510a8e4caa81d0adf49c453b6e4e66c4cae82cb",
+    "src/services/order/StoreOrderRefundService.ts": "0e0c2a17f89e9e73b0cd94b7ca9b4a45f4305703666dec4930fb31cace405b3b",
+    "src/services/activity/PinkInventoryLocks.ts": "e389cdf59f7b01c3a596c331115f2a2f20e15b6dd5f515fc7404f15bda4f7fff",
+    "src/services/activity/PinkLifecycleService.ts": "a952ba6baab5c595b6905c9dc12933d10266c94985265b3abd24a2d26be57e6a",
+    "src/services/order/CheckoutPaidOrderAuthority.ts": "c79246e384a422da8d6067c9aeb094e57c2e4c1a2b26a6a8d88cb344e343fe8f",
+    "src/migrations/brokeragePaidOrderFence.ts": "bdc142a13887156c7f9595de5631f367fce4cb75b4a01707740508813c026776"
+  },
+  "isolation": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "baseDatabase": "cinashop_finance_test",
+    "role": "finance_test",
+    "version": "16.15",
+    "timezone": "UTC",
+    "readyUtc": "2026-09-10T01:43:30.752Z",
+    "serverPid": 10552,
+    "shutdownConfirmedUtc": "2026-09-10T01:56:30.8920021Z",
+    "serverTerminalExitCode": 0,
+    "baselineDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "remainingFixtureDatabases": 0,
+    "remainingFixtureSchemas": 0,
+    "basePublicTables": 0,
+    "otherClientBackends": 0,
+    "retained": "PostgreSQL binaries/data directory and raw reports; each owned random test database was dropped and absence checked"
+  },
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "newlyChecked": 0,
+    "stillOpen": "FE-003L-A3k11c; other roles, contracts, configurations and formal release gates"
+  },
+  "externalWrites": {
+    "productionDatabase": false,
+    "deployment": false,
+    "provider": false,
+    "commit": false,
+    "push": false
+  }
+}

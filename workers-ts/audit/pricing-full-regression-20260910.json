@@ -1,0 +1,80 @@
+{
+  "date": "2026-09-10",
+  "status": "targeted-final-verification-passed-not-release-acceptance",
+  "environment": {
+    "database": "Dedicated loopback PG16.15 on 127.0.0.1:55432; synthetic owned schemas/databases only",
+    "serverTimezone": "Australia/Darwin",
+    "productionAccess": false,
+    "deploymentCommitOrPush": false
+  },
+  "fullUnitBaseline": {
+    "session": 41115,
+    "exitCode": 1,
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-pricing-config-full-20260910.json",
+    "sha256": "6beab9632b72dbbbb348eb74114b6f4fb9837fe9f7c2bc92135e6f455c969293",
+    "files": 370,
+    "passedFiles": 364,
+    "failedFiles": 6,
+    "tests": 4231,
+    "passed": 4225,
+    "failed": 6,
+    "skipped": 0,
+    "additionalAfterAllTimeout": 1,
+    "scopeHash": "2c4655f377009dcb553e4f0fceec924c8666029c461b5a0525ac4303d1ba5be8",
+    "scopeCount": 1148,
+    "scopeCapture": "During run 07:29:42.257Z, rechecked 07:53:12.960Z and after terminal 08:02:16.789Z; not a before-start capture",
+    "scopeLimit": "rg-visible src/test/scripts TS/MJS/CJS/JSON/SQL and six package/test/TypeScript configs; excludes runtime bindings, node_modules and transitive external graph"
+  },
+  "failuresAndChanges": [
+    { "file": "test/store-order-create-scenario-postgres.test.ts", "failure": "Missing SQL integral policy produced 15.50 instead of 13.50", "change": "Seed original eleven pricing values in the owned scenario schema; preserve original order, reward and concurrency assertions" },
+    { "file": "test/activity-catalog-migration.test.ts", "failure": "Stale source substring no longer represented the activity snapshot guard", "change": "Assert current snapshot guard, initial dates and final UTC deadline expressions; no business guard changes" },
+    { "file": "test/ordinary-query-index-alignment.test.ts", "failure": "Two source line anchors moved", "change": "Refresh only line numbers 1490 to 1492 and 587 to 647; exact SQL and historical catalog unchanged" },
+    { "file": "test/kefu-sequence-runner.test.ts", "failure": "All eleven assertions passed but full ORM afterAll disposal exceeded 10 seconds", "change": "Bound and await cleanup with 120-second hook; preserve business and migration deadlines" },
+    { "file": "test/checkout-coupon-management.test.ts", "failure": "Out deletion held config table lock while waiting for checkout coupon lock, forcing both schema variants to reject checkout", "change": "Acquire config fence NOWAIT after the coupon row lock, retain reference guards and replay transaction; assert config lock absent while waiting and zero side effects under held config write lock" },
+    { "file": "test/pink-cancellation-authorization-postgres.test.ts", "failure": "Naive fixture timestamp conversion missed deadline barrier under Darwin", "change": "UTC fixture clock and three-zone tests revealed real preflight and post-lock timezone defects; both business comparisons now explicitly UTC" }
+  ],
+  "intermediateReportsNotAdditive": [
+    { "file": "C:/Users/cina/AppData/Local/Temp/cinashop-pricing-out-delete-red-20260910.json", "sha256": "b0c721329a3f2a33fb79d2094a362ebbf6daa227a66d91082f5cade8e51d9570", "passed": 0, "failed": 2, "skippedByNameFilter": 50 },
+    { "file": "C:/Users/cina/AppData/Local/Temp/cinashop-pricing-full-failures-fixed-20260910.json", "sha256": "2b87c2b04d2cc16db7dabfff2cb751d1657fa37e1a4b5428be902248a1b06a18", "files": 8, "passed": 149, "failed": 1, "skipped": 0, "remainingFailure": "New America/New_York lock-wait test incorrectly permitted cancellation after expiry" },
+    { "file": "C:/Users/cina/AppData/Local/Temp/cinashop-pink-cancel-timezone-red-20260910.json", "sha256": "f955e13e49e358a757c9e102ff4bec743643af44a369afb8a5907cc60d8f6ea7", "passed": 53, "failed": 3, "skipped": 0, "failures": ["Darwin rejects a still-active deadline", "New York accepts an expired deadline", "New York accepts expiry after the actual leader-lock wait"] }
+  ],
+  "finalRegression": {
+    "session": 92370,
+    "status": "passed",
+    "exitCode": 0,
+    "files": 15,
+    "passed": 275,
+    "failed": 0,
+    "skipped": 0,
+    "reportSha256": "bc1a5663400fe3c1d6fca641902b6d6ccba8623f291aab79579a0278027fdd4b",
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-pricing-regression-final-20260910.json",
+    "scopeBeforeAt": "2026-09-10T08:10:15.922Z",
+    "scopeBeforeSha256": "4cc668bbb36f9faa914cc333d40433daed978447010e1500d9f7f2b8075e3f62",
+    "scopeCount": 1148,
+    "scopeAfterAt": "2026-09-10T08:14:22.663Z",
+    "scopeAfterSha256": "4cc668bbb36f9faa914cc333d40433daed978447010e1500d9f7f2b8075e3f62",
+    "sameSelectedScopeBeforeAndAfter": true
+  },
+  "cleanup": {
+    "verifiedAfterFinalTests": true,
+    "remainingDatabases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "remainingNonPgSchemas": ["public", "information_schema"],
+    "publicTables": 0,
+    "temporaryRuntimeRoles": 0,
+    "otherClientConnections": 0,
+    "serverStopped": true,
+    "serverPid": 11920,
+    "serverSessionExitCode": 0,
+    "serverStoppedAtUtc": "2026-09-10T08:15:50.195Z",
+    "localFilesRetained": "PostgreSQL binaries/data and test reports retained; only synthetic test schemas/databases and roles were disposed"
+  },
+  "typecheck": { "session": 52501, "exitCode": 0, "command": "npm run typecheck", "unitAndRuntime": true },
+  "limitations": [
+    "No complete 370-file rerun on the final changed candidate; no summing overlapping stages",
+    "Local controller tests use synthetic identity/KV/sequence and intercept cancellation refund execution; not real provider or Hyperdrive acceptance",
+    "Generic admin config batch atomicity/global winner defects and low-privilege SHARE-lock denial remain open",
+    "Generic config UI is intentionally disabled in view/admin-ts/src/api/config.ts; the routed server handler still exists, not a claim that a current UI submitted these requests",
+    "Other config groups, reference-write lock combinations, production contention, workerd, immutable CI and release gates remain open",
+    "Checklist remains 234 checked / 170 open / 404 total"
+  ]
+}

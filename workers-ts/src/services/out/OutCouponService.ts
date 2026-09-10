@@ -585,12 +585,28 @@ export class OutCouponService {
       await lockCouponCatalog(tx);
       await tx.execute(sql.raw(
         'LOCK TABLE "store_product_coupon", "luck_prize", "luck_lottery", "store_promotions", '
-          + '"store_promotions_auxiliary", "system_config" IN SHARE ROW EXCLUSIVE MODE',
+          + '"store_promotions_auxiliary" IN SHARE ROW EXCLUSIVE MODE',
       ));
       const rows = await tx.select().from(storeCouponIssue)
         .where(eq(storeCouponIssue.id, couponId)).limit(1).for("update");
       const issue = rows[0];
       if (!issue) throw new NotFoundException("优惠券不存在");
+      // Wait for a checkout's coupon lock BEFORE owning the global config
+      // fence; otherwise an unrelated deletion forces that checkout to abort.
+      // Once we own the coupon, never wait behind a reverse-order config writer.
+      try {
+        await tx.execute(sql`LOCK TABLE ${systemConfig} IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
+      } catch (error) {
+        let cause: unknown = error;
+        for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+          if ('code' in cause && cause.code === '55P03') {
+            throw new ValidateException('优惠券发放配置正在更新，请稍后重试');
+          }
+          if (!('cause' in cause) || cause.cause === cause) break;
+          cause = cause.cause;
+        }
+        throw error;
+      }
       const preservedUsage = await usageCounts(tx, couponId);
       if (issue.isDel === 1 || issue.status === -1) {
         await recordReplay(tx, account.id, operation, key, hash, couponId, -1);

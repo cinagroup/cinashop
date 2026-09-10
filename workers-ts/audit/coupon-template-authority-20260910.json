@@ -1,0 +1,174 @@
+{
+  "date": "2026-09-10",
+  "status": "local-candidate-verified-not-committed-or-deployed",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "scope": "Owned-coupon template row authority at checkout after reservation; relationship-set and referenced-product/category/brand authority remain open",
+  "changes": {
+    "added": "src/services/order/CheckoutCouponTemplateAuthority.ts",
+    "resolution": "src/services/activity/OrderCouponService.ts now carries an internal template snapshot from the actual evaluator inputs",
+    "integration": "src/services/order/StoreOrderCreateService.ts invokes the one-row SHARE NOWAIT guard after coupon reservation and before remaining membership/brokerage/delivery/shipping guards",
+    "receiptProjectionChanged": false,
+    "discountFormulaChanged": false,
+    "ddlOrMigrationChanged": false,
+    "platformBindingsChanged": false
+  },
+  "evidence": {
+    "red": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-template-red-20260910.json",
+      "sha256": "46824a73b42df8c235d09ac111a71d9f407f2e74068d3378007e276a2409ad96",
+      "passed": 5,
+      "failed": 9,
+      "skipped": 0,
+      "reason": "Nine actual HTTP late template rule edits/deletion unexpectedly created orders; five unrelated/equivalent edit controls passed."
+    },
+    "firstFix": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-template-fixed-20260910.json",
+      "sha256": "e1757069bbf4106e487abca781c58d64bac03e5e751111130d548fce02782b7e",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expanded": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-template-expanded-20260910.json",
+      "sha256": "14b7d17ddc856b1b202b8846e2a151f0bdce905d9ede712b9bd8e04ef1800cc2",
+      "passed": 24,
+      "failed": 1,
+      "skipped": 0,
+      "reason": "Rollback probe used nonexistent shipping_templates_free.template_id/region_id SQL columns; business implementation unchanged."
+    },
+    "fixtureFirstCorrection": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-template-expanded-fixed-20260910.json",
+      "sha256": "779e614d95a1cc7d1cd16a1765c0e52206f3bbb55c3c1f327735aaa392587938",
+      "passed": 24,
+      "failed": 1,
+      "skipped": 0,
+      "reason": "ORM insert still used wrong property names templateId/regionId, so the intended change to template 10 was not made and checkout unexpectedly succeeded. Corrected to model properties tempId/cityId without weakening expected rollback."
+    },
+    "expandedFinal": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-template-expanded-final-20260910.json",
+      "sha256": "7e34ea17888cb0c08657c16c64f357d357d85ba8a8786f78bc4eac4701b04471",
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "unit": "passed",
+      "runtime": "passed",
+      "exitCode": 0,
+      "afterFinalTestFix": true
+    },
+    "newCoverage": {
+      "actualHttpCases": 17,
+      "independentPostgresCases": 3,
+      "rootClientRejection": 1,
+      "errorClassificationCases": 4,
+      "total": 25,
+      "description": [
+        "Nine actual late rule/deletion failures now roll back carts, stocks, order/details, coupon reservation and bills; explicit requote succeeds for valid edited templates",
+        "Canonical alias/set equivalence, unused scope fields, cosmetic/claim-only fields and no-coupon positive controls; successful same-key replay survives cache clearing",
+        "Template alias added consistently with original related product snapshot accepted; conflicting alias rejected without claiming relation-set protection",
+        "Four distinct non-reconnecting PostgreSQL backends; uncommitted template writer rejects checkout before editor commit; later template writer waits through actual checkout commit and forced downstream shipping rollback",
+        "Only SQLSTATE 55P03 mapped to business rejection; deadlock, timeout and connection errors preserved; root database rejected"
+      ]
+    },
+    "finalRegression": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-template-regression-20260910.json",
+      "sha256": "20c772a4ede9068499267145e663eb3e7032d975d65280ea28a9d0209a5522ee",
+      "startUnixMs": 1789008781685,
+      "endUnixMs": 1789009199856.0728,
+      "files": 26,
+      "passed": 719,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "maxWorkers": 1,
+      "fileCounts": {
+        "test/admin-assisted-order-migration.test.ts": 4,
+        "test/checkout-brokerage-authority.test.ts": 108,
+        "test/checkout-brokerage-paid-authority.test.ts": 62,
+        "test/checkout-confirmation-postgres.test.ts": 7,
+        "test/checkout-confirmation-rules.test.ts": 262,
+        "test/checkout-confirmation.test.ts": 27,
+        "test/checkout-coupon-template-authority.test.ts": 25,
+        "test/checkout-membership-boundary.test.ts": 50,
+        "test/coupon-issue-migration.test.ts": 3,
+        "test/coupon-migration.test.ts": 1,
+        "test/coupon-relationship-migration.test.ts": 3,
+        "test/coupon-scope-products-postgres.test.ts": 13,
+        "test/coupon-scope-search-postgres.test.ts": 17,
+        "test/coupon-wallet-filters-postgres.test.ts": 4,
+        "test/order-coupon-picker.test.ts": 23,
+        "test/pc-checkout-quote-postgres.test.ts": 6,
+        "test/pc-checkout-quote.test.ts": 12,
+        "test/pc-coupon-wallet-postgres.test.ts": 5,
+        "test/pc-coupon-wallet.test.ts": 17,
+        "test/pc-order-coupon-postgres.test.ts": 5,
+        "test/pc-order-coupon.test.ts": 26,
+        "test/product-coupon-migration.test.ts": 6,
+        "test/store-order-create-postgres-migration.test.ts": 3,
+        "test/store-order-create-scenario-postgres.test.ts": 1,
+        "test/uniapp-checkout-contract.test.ts": 25,
+        "test/uniapp-checkout-postgres.test.ts": 4
+      },
+      "exactRequestedFileSet": true,
+      "noSourceOrTestEditsDuringInvocation": true,
+      "claimBoundary": "Local targeted 26-file regression; includes new 25 cases. Do not add overlapping red/fix/expanded or previous 1249 and other runs. Not whole-project immutable CI, real login, Hyperdrive or provider acceptance."
+    }
+  },
+  "sourceSha256": {
+    "src/services/order/CheckoutCouponTemplateAuthority.ts": "c0f423fcebe5d16207cff34feb99b048878b27b69a94bbda813d96410d59cd4e",
+    "src/services/activity/OrderCouponService.ts": "e0a7825f06dd6130fd129bd90e707e080f7b9ff02ade6e7ee4da66907063789a",
+    "src/services/order/StoreOrderCreateService.ts": "46c7199f20900153789e8794bbbf6dee445209f3e8220fb2ca427238c468db24",
+    "test/checkout-coupon-template-authority.test.ts": "8801cdf03c5805ae6255736d259e7c0daab45a180de7cc140dc039ae631f41e4"
+  },
+  "limits": [
+    "Template row only; store_coupon_product set inserts/updates/deletes, empty/last-row fallback and duplicate relationships need a separate installed write protocol and fresh locked read",
+    "Product parent/category/brand fields and referenced category pid/path / brand pid/fid, including missing-reference insertion, remain unprotected by this guard",
+    "Finance fixture models columns but not full foreign keys, all indexes, checks or production triggers; complete ORM/real runtime role validation still required",
+    "Template FOR SHARE requires SELECT and UPDATE on at least one column; previous paid-order permission preflight is not a complete application GRANT audit",
+    "No guarantee against privileged DDL or that all relation-level DDL waits are NOWAIT",
+    "Synthetic HTTP authentication/KV/sequence and local PG only, not formal login, Hyperdrive, provider or immutable whole-project CI",
+    "Does not resolve PHP policy, global SQL/KV configuration or other form/merchant/role contracts"
+  ],
+  "skills": "Workers and PostgreSQL skill references guided short transactions, actual SQL lock evidence, no new external I/O, and canonical used facts only. Latest Workers types retrieval failed EACCES at configured npm mirror; read installed 5.20260828.1 Hyperdrive definitions, platform bindings unchanged.",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "newlyChecked": 0,
+    "stillOpen": "FE-003L-A3k11c; relationship-set/reference authority and formal release gates"
+  },
+  "externalWrites": {
+    "productionDatabase": false,
+    "deployment": false,
+    "provider": false,
+    "commit": false,
+    "push": false
+  },
+  "isolation": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "version": "16.15",
+    "timezone": "UTC",
+    "serverPid": 2332,
+    "readyUtc": "2026-09-10T02:44:44.471Z",
+    "shutdownConfirmedUtc": "2026-09-10T03:00:47.7390056Z",
+    "serverTerminalExitCode": 0,
+    "baselineDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "remainingFixtureDatabases": 0,
+    "remainingFixtureSchemas": 0,
+    "basePublicTables": 0,
+    "remainingRuntimeOrAuthProbeRoles": 0,
+    "otherClientBackends": 0,
+    "retained": "Binaries, data directory and raw reports. Only tests' own synthetic disposable databases/schemas were removed; fixtures can be recreated from tests."
+  }
+}

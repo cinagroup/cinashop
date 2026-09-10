@@ -1,0 +1,341 @@
+{
+  "date": "2026-09-10",
+  "status": "scoped-local-SKU-lifecycle-deadlock-fix; checklist-open",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "item": "FE-003L-A3k11c",
+    "itemClosed": false
+  },
+  "sourceChange": {
+    "file": "src/services/product/ProductSkuRetirementService.ts",
+    "previousGitBlob": "a0d5fdc452a8dd64876b6ed77233e4c0fa6fcef7",
+    "change": "Preserve advisory lock order; product and selected SKU FOR UPDATE NOWAIT. Translate only nested 55P03 from those explicit reads; escape original transaction to roll back. No automatic retry.",
+    "unchanged": [
+      "Checkout inventory guards and order",
+      "Pricing and stock arithmetic",
+      "Ownership, reference checks, identity, projection and audit semantics",
+      "2s lock_timeout and 5s statement_timeout",
+      "Schema, production configuration, bindings and privileges"
+    ]
+  },
+  "redEvidence": {
+    "serverTimestamp": "2026-09-10T05:34:27.605Z",
+    "observed": "deadlock detected",
+    "victimPid": 6028,
+    "retirementPid": 6028,
+    "buyerPid": 13920,
+    "editorPid": 13416,
+    "cycle": [
+      "retirement holds global SKU advisory lock [731602,0], waits buyer product A",
+      "buyer waits editor product B",
+      "editor waits retirement global SKU advisory lock"
+    ],
+    "sqlstate": "40P01",
+    "basis": "Actual PG server log and independent pg_blocking_pids barriers; not inferred from timeout",
+    "fixedSchedule": "Retirement refuses occupied product row. Both retirement and editor finish with busy-inventory rejection before the second-SKU gate is released; buyer then succeeds."
+  },
+  "reports": [
+    {
+      "stage": "red",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-sku-lifecycle-red-20260910.json",
+      "sha256": "6cca7dd3a0b65db76f9a74590ac49745ea5dc95540b2ce573047becc7ee8588a",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts"
+      ],
+      "startTime": 1789018458917,
+      "success": false
+    },
+    {
+      "stage": "fixed",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-sku-lifecycle-fixed-20260910.json",
+      "sha256": "90958703b2371028347fcc0127e8d7b74f31473b92f9bd3685078f072af890af",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts"
+      ],
+      "startTime": 1789018818915,
+      "success": true
+    },
+    {
+      "stage": "expanded",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-sku-lifecycle-expanded-20260910.json",
+      "sha256": "3cd419dd1e15984cf9b781a3a8014266d70685b8a47f15daf9f711ec62161827",
+      "passed": 45,
+      "failed": 10,
+      "skipped": 0,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts"
+      ],
+      "startTime": 1789018896692,
+      "success": false
+    },
+    {
+      "stage": "complete",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-sku-lifecycle-complete-20260910.json",
+      "sha256": "1150ce51d2129a4d2a57ebed8a743ca21ff90638e4eddfe62fc0ad731bdfa13c",
+      "passed": 61,
+      "failed": 0,
+      "skipped": 0,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts"
+      ],
+      "startTime": 1789019058233,
+      "success": true
+    },
+    {
+      "stage": "final",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-sku-lifecycle-final-20260910.json",
+      "sha256": "8f99c4168b81bf11e5308a4687dc709a0d54cce47d013fb8967f3f4a2dd72c23",
+      "passed": 73,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/supplier-product-management.test.ts"
+      ],
+      "fileResults": [
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+          "passed": 25,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+          "passed": 17,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+          "passed": 8,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts",
+          "passed": 11,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/supplier-product-management.test.ts",
+          "passed": 12,
+          "failed": 0
+        }
+      ],
+      "startTime": 1789019258325
+    }
+  ],
+  "history": {
+    "expandedFailure": {
+      "passed": 45,
+      "failed": 10,
+      "skipped": 0,
+      "cause": "All ten failed in new lifecycleFixture: qablue001 exceeds original character(8) SKU unique column. Server logged value too long for type character(8).",
+      "testFileSha256": "e785951e5c23550ad2ec4dbb8be6708407aac5b05aa8c90d404446baaeca65ee",
+      "correction": "Only owned seed shortened to qablue01; no schema or business change."
+    },
+    "complete": {
+      "passed": 61,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Four-file run after fixture correction and additional rollback tests. Later added explicit before-gate-finish assertion and reran final manifest; do not sum stages."
+    }
+  },
+  "scope": {
+    "newTests": 17,
+    "database": "Per-test owned random database with complete generated ORM DDL on loopback dedicated PG16.15, finance_test maintenance role",
+    "independentConnections": 5,
+    "real": [
+      "HTTP handlers",
+      "services",
+      "SQL transactions",
+      "checkout quote/create",
+      "advisory/row lock probes"
+    ],
+    "synthetic": [
+      "admin/supplier authentication inputs",
+      "KV",
+      "Sequence identifiers",
+      "all business records"
+    ],
+    "noProductionFallback": true,
+    "notEquivalentTo": [
+      "formal auth or ACL",
+      "production Hyperdrive",
+      "all registered migrations",
+      "entire-project CI"
+    ]
+  },
+  "selectedSourceHashes": [
+    {
+      "path": "test/checkout-sku-lifecycle-concurrency.test.ts",
+      "sha256": "df721ae5457cc323e4812511c6c9c608f2b6dca90d2c623c20a9314299b055cb"
+    },
+    {
+      "path": "test/checkout-catalog-management.test.ts",
+      "sha256": "ad17a7cb624e71a75846b3af0e1ef3ddca2aabc1bd4a45ecbe3db70d8d054c8d"
+    },
+    {
+      "path": "test/product-sku-editor-migration.test.ts",
+      "sha256": "48a6474a037f31b0c45af86732d3aaf0b6cbef85c8db8e957da7e6f556c3894d"
+    },
+    {
+      "path": "test/product-sku-retirement.test.ts",
+      "sha256": "2a7b6d388e4a806a47f63a1a32ce0803b07511e465e34b96cd0d89d4b3668750"
+    },
+    {
+      "path": "test/supplier-product-management.test.ts",
+      "sha256": "3219dd54ab9578e3df4b1d7f9dfcb302658647fac00d8577f58beeea628a18fe"
+    },
+    {
+      "path": "src/services/product/ProductSkuRetirementService.ts",
+      "sha256": "793d483df11a1c54090b1ee7be42292fd6cbae6164425a8707219419f4926d9c"
+    },
+    {
+      "path": "src/services/product/ProductSkuEditorService.ts",
+      "sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2"
+    },
+    {
+      "path": "src/services/product/ProductAssociationService.ts",
+      "sha256": "1c787cb6ae4a7dc625a2f822df185ed7baaae480c1c43daa84488a7d92b8813f"
+    },
+    {
+      "path": "src/services/product/ProductSkuIdentity.ts",
+      "sha256": "dfaffd1645892a0bbca35eb7cb22b62d309b4c37a18ee453b826ef5cd3b73668"
+    },
+    {
+      "path": "src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "ea578d3d8397360b2023c8a81646a46fc387b76a4a86ee261ef031c71360e26f"
+    },
+    {
+      "path": "src/services/order/StoreOrderCreateService.ts",
+      "sha256": "46c7199f20900153789e8794bbbf6dee445209f3e8220fb2ca427238c468db24"
+    },
+    {
+      "path": "src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "032f94ef3c050181921189eecbf27cd0d29547ab5890621e454925a786861426"
+    },
+    {
+      "path": "src/controllers/supplier/SupplierController.ts",
+      "sha256": "1831cde1aa8f9f7441410a371e84124a83083aee4c38f4a6c5093a44ecdb70f4"
+    },
+    {
+      "path": "src/lib/di.ts",
+      "sha256": "13ae0fc3225eff23bb589af2982cb1c1ea1bc98c5bf56c1ba2ecfb02845220a0"
+    },
+    {
+      "path": "src/models/schema/index.ts",
+      "sha256": "e90f5de06338f33bbfdef80903fd85e5147aa66763b4293398ed44544aafb908"
+    },
+    {
+      "path": "test/helpers/pcCheckoutQuoteFixture.ts",
+      "sha256": "6cb965b1fb3ebbda5b98a963a936e2b422fdb5dfe8471a4208b8c4752e35ff04"
+    },
+    {
+      "path": "test/helpers/kefuSequenceRunnerDatabase.ts",
+      "sha256": "9d7cf6b00d87176f82238426dfca8d5853f5580dae93e8366d78b3fd65f9d9ee"
+    },
+    {
+      "path": "test/helpers/financePeers.ts",
+      "sha256": "1210756e0727149a175d9372437ea88c8e770fc86c6db2cb8d803c6784e706cb"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e"
+    },
+    {
+      "path": "package.json",
+      "sha256": "716ca118b7bc54b4c43abc29a4efccea850325033ad8c8d9459c283dff1a4513"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "b2cb80928931024e8e77d77bd4318257dbc1c03e14bdb0969472857aa2006891"
+    }
+  ],
+  "remaining": [
+    "Other Out/mobile/SKU entry points and cross-product interleavings",
+    "Global configuration and business-subject/form/PHP policies",
+    "Formal identity, permissions, Hyperdrive and maintenance isolation",
+    "Immutable full CI and release gates"
+  ],
+  "safety": {
+    "productionWrites": false,
+    "deployment": false,
+    "providerCalls": false,
+    "commit": false,
+    "push": false,
+    "historicalReconciliation": "N/A by owner decision"
+  },
+  "skills": {
+    "used": [
+      "cloudflare:workers-best-practices",
+      "build-web-apps:supabase-postgres-best-practices"
+    ],
+    "effect": "Exact server lock evidence, NOWAIT refusal and whole-transaction rollback/positive controls",
+    "officialReferences": [
+      "https://www.postgresql.org/docs/16/explicit-locking.html",
+      "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/"
+    ],
+    "workersTypes": "Latest fetch EACCES; installed 5.20260828.1 inspected; no platform API change"
+  },
+  "finalVerification": {
+    "passed": 73,
+    "failed": 0,
+    "skipped": 0,
+    "files": 5,
+    "maxWorkers": 2,
+    "newLifecycleTests": 17,
+    "sourceHashesUnchanged": true,
+    "selectedHashes": 21,
+    "typecheck": {
+      "unitExitCode": 0,
+      "runtimeExitCode": 0,
+      "combinedCommand": "npm run typecheck",
+      "sessionId": 37133
+    },
+    "wholeProjectCi": false
+  },
+  "cleanup": {
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "version": "16.15",
+    "timezone": "UTC",
+    "port": 55432,
+    "baselineDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "fixtureDatabases": 0,
+    "fixtureSchemas": 0,
+    "publicTables": 0,
+    "runtimeRoles": 0,
+    "otherClients": 0,
+    "stoppedPid": 15696,
+    "stoppedAt": "2026-09-10T05:50:09.927Z",
+    "foregroundExitCode": 0,
+    "pgCtlStatus": "no server running",
+    "pidFileAbsent": true,
+    "retained": [
+      "binaries",
+      "dedicated PG data directory",
+      "raw test reports"
+    ]
+  }
+}

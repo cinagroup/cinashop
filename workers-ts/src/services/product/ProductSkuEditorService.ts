@@ -594,10 +594,27 @@ export async function replaceProductSkuEditor(
     ${PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE},
     ${PRODUCT_SKU_IDENTITY_LOCK_KEY}
   )`);
-  const allCurrentRows = await tx.select().from(storeProductAttrValue).where(and(
-    eq(storeProductAttrValue.productId, product.id),
-    eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
-  )).orderBy(asc(storeProductAttrValue.id)).for("update");
+  // Both editor callers already own the product row. Checkout/restoration can
+  // own a SKU first and wait for that product: never add the reverse row wait.
+  // Let the owning editor transaction roll back all earlier product/relations
+  // writes, then require a fresh editor read rather than replaying stale stock.
+  let allCurrentRows: Array<typeof storeProductAttrValue.$inferSelect>;
+  try {
+    allCurrentRows = await tx.select().from(storeProductAttrValue).where(and(
+      eq(storeProductAttrValue.productId, product.id),
+      eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+    )).orderBy(asc(storeProductAttrValue.id)).for("update", { noWait: true });
+  } catch (error) {
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {
+      if ("code" in cause && cause.code === "55P03") {
+        throw new ValidateException("商品库存正在变化，请刷新商品后重试");
+      }
+      if (!("cause" in cause) || cause.cause === cause) break;
+      cause = cause.cause;
+    }
+    throw error;
+  }
   if (
     new Set(allCurrentRows.map((row) => row.suk)).size !== allCurrentRows.length
     || new Set(allCurrentRows.map((row) => row.unique)).size !== allCurrentRows.length

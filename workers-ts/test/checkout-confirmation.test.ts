@@ -56,7 +56,7 @@ describe('actual HTTP and SQL quote confirmation', () => {
   const input = { cartIds: [1], addressId: 11, shippingType: 1 };
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeOrderCartInfo, storeOrderStatus, printDocument]);
-    for (const key of Object.keys(f.config)) f.config[key] = '0';
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     f.app.post('/api/order/create/:key', orderCreate);
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'fixture', get: () => ({ fetch: async () => new Response('confirmed_order') }) } });
   }, 30_000);
@@ -102,7 +102,7 @@ describe('actual HTTP and SQL quote confirmation', () => {
   });
   it.each(['first_order', 'integral'] as const)('rolls back if final transaction changes %s amount after initial quote admission', async kind => {
     if (kind === 'first_order') Object.assign(f.config, { newcomer_status: '1', first_order_status: '1', first_order_discount: '90', first_order_discount_limit: '100', newcomer_limit_status: '0' });
-    else Object.assign(f.config, { integral_ratio_status: '1', integral_ratio: '0.01', integral_max_type: '1', integral_max_num: '50' });
+    else await f.setConfig({ integral_ratio_status: '1', integral_ratio: '0.01', integral_max_type: '1', integral_max_num: '50' });
     const params = { ...input, useIntegral: kind === 'integral' };
     const confirmed = await request('/api/order/confirm', params); expect(confirmed.status).toBe(200);
     let before: Awaited<ReturnType<typeof f.snapshot>> | undefined;

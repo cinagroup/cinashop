@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-10",
+  "status": "isolated-feasibility-passed-not-integrated",
+  "frozenApplicationScopeVerification": {
+    "capturedAtUtc": "2026-09-10T08:44:45.295Z",
+    "selectedPaths": 1150,
+    "sha256": "3a089407fe57a9d647def2ee1b10578d413e8d13cb731a06437af1de53613568",
+    "matchesBeforeFullUnitStart": true,
+    "excludes": ["audit/docs", "external dependencies", "runtime bindings"],
+    "fullUnitSession": 90502,
+    "fullUnitState": "live; latest output includes pricing authority 20 and admin batch 46 passing tests, not a terminal suite result"
+  },
+  "probe": "audit/probe-pricing-lock-capability.mjs",
+  "probeSha256": "2b15ccca7c85756fe3a4915e6aae871b8ed5de42157ebcc35bd55ca63f6a818d",
+  "environment": "Dedicated loopback PG16.15 at 127.0.0.1:55432; random owned database, two minimal synthetic tables and three random owned roles",
+  "initialRun": {
+    "exitCode": 1,
+    "sqlState": "42501",
+    "passedChecks": ["independent_nonprivileged_login", "owned_database_and_roles_removed"],
+    "cause": "Expected denied LOCK was caught inside postgres.js begin callback; the aborted transaction was still rejected at callback completion",
+    "correction": "Use explicit BEGIN / expected SQLSTATE / ROLLBACK for that negative permission probe; database permission expectations unchanged"
+  },
+  "finalRun": {
+    "exitCode": 0,
+    "checks": [
+      "independent_nonprivileged_login",
+      "direct_table_fence_denied",
+      "both_tables_direct_dml_and_ddl_denied",
+      "owner_assumption_ungranted_execute_and_function_edit_denied",
+      "commit_identity_restored_after_function",
+      "commit_fixed_real_relations_block_both_writers",
+      "commit_releases_fence",
+      "rollback_identity_restored_after_function",
+      "rollback_fixed_real_relations_block_both_writers",
+      "rollback_releases_fence",
+      "competing_writer_nowait_fails_closed",
+      "higher_isolation_rejected",
+      "synthetic_configuration_values_preserved",
+      "owned_database_and_roles_removed"
+    ]
+  },
+  "capability": {
+    "function": "Zero-argument fixed-schema SECURITY DEFINER; no dynamic SQL or DML; READ COMMITTED check then member_right/system_config SHARE NOWAIT",
+    "searchPath": "pg_catalog, pg_temp; both business relations schema-qualified",
+    "owner": "NOLOGIN, not table/schema owner, no SUPERUSER/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS; receives only SELECT and UPDATE on the two tables plus schema USAGE",
+    "runtime": "Independent LOGIN; SELECT on the two tables plus explicit function EXECUTE and schema USAGE; no direct configuration DML, no owner role membership",
+    "installation": "Create function, revoke PUBLIC EXECUTE, set owner and selective EXECUTE in one transaction",
+    "shadowingEvidence": "Caller creates same-name temporary tables and sets pg_temp first; observed ShareLocks still belong to the real fixed-schema relations",
+    "writerEvidence": "Separate writer attempts UPDATE on each table with 100ms lock timeout while runtime transaction holds function-acquired locks; both fail 55P03, then succeed after commit and after rollback"
+  },
+  "remaining": [
+    "Application still uses direct LOCK and SELECT-only runtime still fails; this probe does not change that",
+    "Need reviewed fail-closed protocol identity, ownership/ACL/definition/RLS checks and explicit migration integration before switching application reads",
+    "Existing paid-runtime audit conservatively rejects callable non-system SECURITY DEFINER functions; no blanket exemption may be added",
+    "Full ORM, real Hono checkout/admin transactions, role inheritance/maintenance drift and production Hyperdrive identity remain unverified for this capability",
+    "Whole-table contention and long caller transactions are not reduced by the privilege wrapper",
+    "Complete Worker unit session 90502 is independent and remains running; src/test/scripts/config candidate stayed frozen",
+    "No production access, deployment, commit or push; checklist not checked off"
+  ]
+}

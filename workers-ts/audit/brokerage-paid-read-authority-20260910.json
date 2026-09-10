@@ -1,0 +1,261 @@
+{
+  "date": "2026-09-10",
+  "status": "partial-uncommitted-read-write-candidate",
+  "objective": "逐个完成checklist，然后提交推送。",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "checklist": {
+    "id": "FE-003L-A3k11c",
+    "status": "open",
+    "checked": 234,
+    "open": 170,
+    "total": 404
+  },
+  "implementation": {
+    "readerIntegrated": true,
+    "migrationServiceRegistered": false,
+    "customerFingerprintChanged": false,
+    "captured": "Only actual mode=3 SUM branch records uid/thresholdCents/eligible; not persisted or returned",
+    "boundary": "Existing checkout order INSERT, sorted user SHARE NOWAIT, per-call protocol validation, separate READ COMMITTED aggregate SELECTs",
+    "maximumAdditionalProtocolQueries": 1,
+    "maximumAdditionalAggregateQueries": 2,
+    "predicate": "uid matches, pid<>-1, paid=1, is_del=0, refund_status IN (0,3), SUM(pay_price) strictly greater than threshold",
+    "readiness": "Exact function body/properties and three enabled statement triggers; same-schema permanent non-RLS non-inherited tables, seven column shapes, user PK, current transaction order relation write lock, read committed, origin/local replication role",
+    "missingOrDriftedProtocol": "fail closed; never auto-migrate or cache readiness",
+    "changesWithEquivalentEligibility": "allowed",
+    "writerLockHeldUntil": "owning transaction commit or rollback",
+    "rootCalls": "rejected when aggregate is used",
+    "paymentOrReceiptPolicyChanged": false,
+    "globalWriterExclusionAdded": false,
+    "transactionExternalIoAdded": false
+  },
+  "evidence": {
+    "directory": "C:/Users/cina/AppData/Local/Temp",
+    "red": {
+      "report": "cinashop-paid-authority-red-20260910.json",
+      "sha256": "851354c46dea49061d13e36b7880335737bafd6fe790727314ff50bc2997ca90",
+      "passed": 17,
+      "failed": 19,
+      "skipped": 0,
+      "incorrectAdmissions": 19
+    },
+    "firstGreen": {
+      "report": "cinashop-paid-authority-first-green-20260910.json",
+      "sha256": "81a376522e1b89188289e50f18a080124c17ca93dce7f19fad6ab54fadbc52c1",
+      "files": 2,
+      "passed": 76,
+      "failed": 0,
+      "skipped": 0
+    },
+    "expanded": {
+      "report": "cinashop-paid-authority-expanded-20260910.json",
+      "sha256": "d177fdf15b2d78e54561593ca18ee3093451c3cc01bcd5e6b7b97957d09ac504",
+      "passed": 51,
+      "failed": 2,
+      "skipped": 0,
+      "failure": "Snapshot arrays lacked stable primary-key ordering after UPDATE; all fields retained when canonicalized"
+    },
+    "corrected": {
+      "report": "cinashop-paid-authority-expanded-final-20260910.json",
+      "sha256": "6425cfcbea65176fa4ecaa554d160be79531b77887984a221b7463f2fe081192",
+      "passed": 55,
+      "failed": 0,
+      "skipped": 0
+    },
+    "finalFocused": {
+      "report": "cinashop-paid-authority-final-focused-20260910.json",
+      "sha256": "8b7d889bfa8a10b0bc830193ead498c9e218c4e9c277c08fccd933864c192d12",
+      "passed": 62,
+      "failed": 0,
+      "skipped": 0,
+      "actualHonoHttp": 41,
+      "independentFourBackendTests": 19,
+      "transactionContractTests": 2
+    },
+    "regression": {
+      "status": "passed",
+      "session": 58533,
+      "report": "cinashop-paid-authority-regression-20260910.json",
+      "requestedTestFiles": [
+        "test/activity-rule-quote-guard.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts",
+        "test/admin-paid-membership.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts",
+        "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts",
+        "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts",
+        "test/bargain-order-participation.test.ts",
+        "test/bargain-participation-concurrency-postgres.test.ts",
+        "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts",
+        "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts",
+        "test/checkout-membership-boundary.test.ts",
+        "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/finance-peer-boundary.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts",
+        "test/order-brokerage.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/order-delivery-address.test.ts",
+        "test/order-reward.test.ts",
+        "test/paid-membership-migration.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts",
+        "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts",
+        "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/uniapp-checkout-contract.test.ts",
+        "test/user-level-migration.test.ts",
+        "test/order-supplier-allocation.test.ts",
+        "test/supplier-split-fulfillment.test.ts",
+        "test/store-order-refund-postgres-migration.test.ts",
+        "test/store-order-writeoff-migration.test.ts",
+        "test/checkout-brokerage-boundary.test.ts",
+        "test/checkout-brokerage-authority.test.ts",
+        "test/brokerage-paid-order-fence.test.ts",
+        "test/checkout-brokerage-paid-authority.test.ts"
+      ],
+      "addOverlappingRuns": false,
+      "files": 49,
+      "passed": 1249,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "startTime": 1789002037761,
+      "endTime": 1789002653676.8562,
+      "sha256": "6356faa4cb47272965a6ccf8fee06e11fbacf73dba5195413a90b2f562322fac",
+      "fileScopeMatches": true,
+      "finalSourceHashesMatch": true,
+      "startedAtUtc": "2026-09-10T01:00:37.761Z",
+      "lastFileEndedAtUtc": "2026-09-10T01:10:53.676Z"
+    },
+    "typecheck": {
+      "firstPreRootGuard": "passed",
+      "expanded": "failed TS2774 because DbClient declares $client as always defined",
+      "fix": "select plus optional $client structural transaction type; runtime root guard unchanged",
+      "finalUnit": "passed",
+      "finalRuntime": "passed",
+      "finalSession": 65587
+    },
+    "midRegressionTypeOnlyEdit": {
+      "allSourceBytesUnchanged": false,
+      "changedFile": "src/services/order/CheckoutPaidOrderAuthority.ts",
+      "typescriptEmittedJavaScriptIdentical": true,
+      "target": "ES2022",
+      "module": "ESNext",
+      "emittedSha256": "c32da287c8a73b3ca40a6184363633be0bdc394ec5505dc386ddb0011582b5bd",
+      "beforeSourceSha256": "07ea8dcf2d8ff9239b3f5214dc04998140cfd32aade20892d6ab94b82a2e1db8",
+      "afterSourceSha256": "c79246e384a422da8d6067c9aeb094e57c2e4c1a2b26a6a8d88cb344e343fe8f",
+      "scope": "TypeScript emission comparison, not a claim that an immutable full CI candidate ran"
+    },
+    "sha256": {
+      "test/brokerage-paid-order-fence.test.ts": "3ba92667dec972dd68cb33baa341182cb90b75d0410fd18345bfc001d8b58e51",
+      "src/migrations/brokeragePaidOrderFence.ts": "11690fd7b2a9e6da244a6c680bfa9bc884aa795de5316c7fac2508d6b04c607b",
+      "src/services/order/CheckoutPaidOrderAuthority.ts": "c79246e384a422da8d6067c9aeb094e57c2e4c1a2b26a6a8d88cb344e343fe8f",
+      "src/services/order/StoreOrderCreateService.ts": "25ff244af2ed6d647e3e84494c462d77fb6198dc7b27d6765cb1179064205675",
+      "migrations/0150_brokerage_paid_order_fence.sql": "2a5420131196e8d268b86ac52a6a9138e227bdeff2084cfa77b39548e79b37e2",
+      "test/checkout-brokerage-paid-authority.test.ts": "a4fa127bc0378afb38975e613c651bbb657773e4a9df46a6afffd6e75da31feb",
+      "src/migrations/runBrokeragePaidOrderFence.ts": "779b3577af26a8c22859982014f2c9973ecee365256d715a6388b9176c70fdfc",
+      "src/services/order/CheckoutBrokerageAuthority.ts": "56ca12add79bcc3aaa47dacbeac318c3b37104531da7d61094747da458d9252b",
+      "test/checkout-brokerage-authority.test.ts": "5de4fd3e6280acf11ad347131240acd16d7e33fdc0998d5cce7d94f56a18677d",
+      "src/services/order/OrderBrokerageService.ts": "c35290822f770c3774c57824b6e9316726fd649730f3545437d3508a98732de0"
+    }
+  },
+  "phpStaticReview": {
+    "fullRuntimeParityProved": false,
+    "sources": [
+      {
+        "path": "C:/cinagroup/cinashop-php/app/services/user/UserServices.php",
+        "sha256": "d8c5aae71df278a885b238bc44c1fc73d3644a5fa68441260a3cc22fdc2e6a25",
+        "lines": [
+          1769,
+          1770,
+          1772,
+          2125,
+          2145,
+          2149,
+          2152,
+          2456
+        ]
+      },
+      {
+        "path": "C:/cinagroup/cinashop-php/app/dao/BaseDao.php",
+        "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+        "lines": [
+          399
+        ]
+      },
+      {
+        "path": "C:/cinagroup/cinashop-php/app/services/order/StoreOrderTakeServices.php",
+        "sha256": "b23fcbebf0a561ec51c14a66eae7018d8c3938cf7ace6dfac5c49452d186c4ce",
+        "lines": [
+          265,
+          332
+        ]
+      }
+    ],
+    "openQuestions": [
+      "PHP SUM is conditional on nonzero sumPrice argument; receipt callers omit it",
+      "PHP user-info path can persist is_promoter",
+      "Inner PHP sum defaults to direct where(pid=0), distinct from searchPidAttr",
+      "PHP promotion binding expiration versus current TS relation contract"
+    ],
+    "policyChangedThisStage": false
+  },
+  "references": {
+    "workers": "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/",
+    "postgresIsolation": "https://www.postgresql.org/docs/16/transaction-iso.html",
+    "postgresTrigger": "https://www.postgresql.org/docs/16/sql-createtrigger.html",
+    "latestTypesRetrieval": "npm registry EACCES; inspected local 5.20260828.1 Hyperdrive types; no platform bindings changed"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "name": "cinashop_finance_test",
+    "role": "finance_test",
+    "version": 160015,
+    "timezone": "UTC",
+    "pid": 9272,
+    "processSession": 24184,
+    "readyAtUtc": "2026-09-10T00:49:37.259Z",
+    "status": "stopped",
+    "baselineDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "fixtureSchemasAfterTests": 0,
+    "publicTablesAfterTests": 0,
+    "otherClientsAfterTests": 0,
+    "stopConfirmedAtUtc": "2026-09-10T01:12:06.4229021Z",
+    "binariesDataAndReportsRetained": true
+  },
+  "remaining": [
+    "Register explicit migration runner as internal 0156 for disk 0150",
+    "Full foreign-key/privilege and actual payment/refund multi-statement lock integration",
+    "Privileged concurrent function replacement and writer replication-role bypass gate",
+    "Resolve and verify PHP versus target cumulative-qualification and binding-policy semantics",
+    "Global SQL/KV authority, coupon/reference collections, other checklist work",
+    "Immutable CI/workerd and production release acceptance"
+  ],
+  "safety": {
+    "productionWrites": false,
+    "externalPayments": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "legacyHistoricalCopy": "not applicable per owner"
+  }
+}

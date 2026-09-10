@@ -59,13 +59,15 @@ describe("standalone sequence transaction execution boundary", () => {
     fullPath = await auditKefuSequence({ api, models, format: `runner-${fixture.format}`, database: fixture,
       runAlignment: () => runKefuSequenceAlignment(fixture.db) });
   }, 180_000);
+  // Full ORM disposal may wait for a server-wide disk checkpoint on Windows.
+  // Bound and await cleanup without changing migration or business-test deadlines.
   afterAll(async () => {
     if (fixture) {
       await fixture.close();
       process.stdout.write("KEFU_SEQUENCE_RUNNER_AUDIT " + JSON.stringify({ format: fixture.format, fullOldModelPath: fullPath,
         databaseRemovedAndAbsenceVerified: fixture.format === "pg16", localMemoryClosed: fixture.format === "pglite" }) + "\n");
     }
-  });
+  }, 120_000);
   beforeEach(async () => {
     await fixture.exec(`RESET ALL;
       SET statement_timeout='30s'; SET lock_timeout='3s';

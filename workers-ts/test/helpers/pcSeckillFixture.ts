@@ -10,7 +10,7 @@ import type { AppVariables, Env } from '../../src/env';
 export async function createPcSeckillFixture() {
   const f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, systemConfig]);
   try {
-    for (const key of Object.keys(f.config)) f.config[key] = '0';
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.delete(storeCart);
     const today = Math.floor((Date.now() + 28_800_000) / 86_400_000) * 86_400 - 28_800;
     await f.db.insert(storeActivity).values({ id: 900, type: 1, status: 1, startDay: today - 86400, endDay: today + 86400, timeId: '4,8' });

@@ -1,0 +1,224 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "status": "partial_uncommitted_worktree_candidate",
+  "userWorkflow": "逐个完成checklist，然后提交推送。",
+  "priorWorktreeEvidence": [
+    "activity-deadline-boundary-20260909.json",
+    "monetary-quote-boundary-20260909.json",
+    "membership-quote-boundary-20260909.json",
+    "gift-points-quote-boundary-20260909.json",
+    "internal-ledger-quote-boundary-20260909.json"
+  ],
+  "implementation": {
+    "internalLedgerFields": [
+      "product.isSub",
+      "sku.brokerage",
+      "sku.brokerageTwo"
+    ],
+    "addedToCustomerFingerprint": false,
+    "editsBetweenConfirmationAndCreate": "allowed using fresh create-time values",
+    "editsAfterCreateInitialRead": "meaningful changes rejected by existing stock UPDATE predicates and full transaction rolled back",
+    "ephemeralMetadata": "itemRuleUsage: oneEligible/twoEligible or null; not persisted or returned to customer",
+    "guardScope": "ordinary orders only; isSub when observed recipient or division rates can use rules; specified amount only for its eligible tier",
+    "lockedUserRecalculation": "same snapshot builder retains dependency metadata",
+    "additionalQueries": 0,
+    "additionalLocks": 0,
+    "existingLockOrderChanged": false,
+    "transactionExternalIoAdded": false,
+    "formulaOrSettlementPolicyChanged": false,
+    "existingOrdersRecomputed": false
+  },
+  "evidence": {
+    "reportDirectory": "C:/Users/cina/AppData/Local/Temp",
+    "red": {
+      "report": "cinashop-brokerage-item-pg-red-20260909.json",
+      "sha256": "6e73860fb78119ae3300b5da41a4893af2ba299514309e5f34ec3bf65de0a301",
+      "files": 1,
+      "passed": 24,
+      "failed": 12,
+      "nameFiltered": 0,
+      "incorrectOrderAdmissions": 12,
+      "description": "six meaningful variants x late HTTP and independent PG writer",
+      "coreSourceSha256": "6eb9c6b6eaa6b1d59c31c4e6abdde5ed901d6d9899678f18351b30ebddb1b9e6",
+      "brokerageSourceSha256": "02d7e6b7379caddeb52e8d25605df043278a4559810ee00117cebaefea637b86",
+      "testSha256": "4aabee35cfc6338144c01cbfbd8272e2e74066eaef3f167a83f54fdba064ff30"
+    },
+    "firstGreen": {
+      "report": "cinashop-brokerage-item-pg-green-20260909.json",
+      "sha256": "a430f7a64b0b34c59a2457b30dbb447476130e871e95823f47076f1385b86499",
+      "files": 1,
+      "passed": 36,
+      "failed": 0,
+      "nameFiltered": 0,
+      "testSha256": "4aabee35cfc6338144c01cbfbd8272e2e74066eaef3f167a83f54fdba064ff30"
+    },
+    "expanded": {
+      "report": "cinashop-brokerage-item-pg-expanded-20260909.json",
+      "sha256": "8ccee05b927f5834b0ec152017ea8c2298f72b397b682b3e9bb4b770b76040a9",
+      "files": 2,
+      "passed": 46,
+      "failed": 0,
+      "nameFiltered": 256
+    },
+    "finalRegression": {
+      "status": "passed",
+      "report": "cinashop-brokerage-item-pg-regression-20260909.json",
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts",
+        "test/admin-paid-membership.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts",
+        "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts",
+        "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts",
+        "test/bargain-order-participation.test.ts",
+        "test/bargain-participation-concurrency-postgres.test.ts",
+        "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts",
+        "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts",
+        "test/checkout-membership-boundary.test.ts",
+        "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/finance-peer-boundary.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts",
+        "test/order-brokerage.test.ts",
+        "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts",
+        "test/order-delivery-address.test.ts",
+        "test/order-reward.test.ts",
+        "test/paid-membership-migration.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts",
+        "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts",
+        "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/uniapp-checkout-contract.test.ts",
+        "test/user-level-migration.test.ts",
+        "test/order-supplier-allocation.test.ts",
+        "test/supplier-split-fulfillment.test.ts",
+        "test/store-order-refund-postgres-migration.test.ts",
+        "test/store-order-writeoff-migration.test.ts",
+        "test/checkout-brokerage-boundary.test.ts"
+      ],
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "environment": "Windows dedicated PostgreSQL 16.15 SQL fixtures plus pure unit/source-contract tests",
+      "sha256": "830f55b9163af826771336c0c1918237cd1bad5c9bfb12437cf66b43681e9bb6",
+      "files": 46,
+      "passed": 1039,
+      "failed": 0,
+      "skipped": 0,
+      "startedAt": "2026-09-09T13:20:30.5220000+00:00",
+      "lastFileEndedAt": "2026-09-09T13:28:06.1240000+00:00",
+      "observedFilesMatchRequested": true
+    },
+    "newTests": {
+      "total": 46,
+      "actualHttp": 32,
+      "independentPg": 14,
+      "brokerageFile": 40,
+      "marketingControls": 6
+    },
+    "rulesFile": {
+      "tests": 262,
+      "independentPg": 111
+    },
+    "independentPeers": "4 distinct non-reconnecting backends, exact pg_blocking_pids, expected committed edit snapshot fixed before buyer writes",
+    "assertions": [
+      "fresh internal edits accepted with original customer quote",
+      "meaningful late edits cause typed rejection and full business rollback",
+      "same-key explicit computed recovery at same customer price",
+      "forged client commission ignored",
+      "idempotent replay after catalog edits and cache clear",
+      "disabled feature/tier and ineligible recipient controls",
+      "unused specified amounts remain editable",
+      "division isSub switch guarded without freezing unused specified amount",
+      "integral locked-user recalculation retains guards and rejection rolls back points",
+      "six marketing kinds ignore ordinary brokerage rules",
+      "unpaid order snapshot does not grant account brokerage or create income rows"
+    ],
+    "sourceFiles": [
+      {
+        "path": "src/services/order/StoreOrderCreateService.ts",
+        "sha256": "72d46539faf71f0fdc426d53fc164c15c7327e2c25115cd60a938687ac6f7be3"
+      },
+      {
+        "path": "src/services/order/OrderBrokerageService.ts",
+        "sha256": "95732af0f5f0645229bb44d524351dc26e357acd4b13d999a16552ee1d349e4d"
+      },
+      {
+        "path": "test/checkout-brokerage-boundary.test.ts",
+        "sha256": "3b00e01d9c4f60ac7150c46b3012a39371e507be1d65966891c3c8b80245828d"
+      },
+      {
+        "path": "test/checkout-confirmation-rules.test.ts",
+        "sha256": "8a0a28e50fa8829d0f50bd2e16b987cf836e44c827edf30e1c9500d9c3bdee69"
+      }
+    ],
+    "legacyEvidence": [
+      {
+        "path": "C:/cinagroup/cinashop-php/app/services/order/StoreOrderCreateServices.php",
+        "line": 883,
+        "sha256": "723418afcfc9d0740e1345e88d559717c0756d16c0ddb179645344f8fc2b6c43",
+        "fact": "specified is_sub uses SKU brokerage/two x quantity, else ratio computation including division"
+      }
+    ],
+    "typechecks": {
+      "final": "unit and runtime passed",
+      "optionsWeakened": false
+    },
+    "ownImmutableCi": "not run; intentionally uncommitted candidate",
+    "workersReference": "current official best-practices page read; official npm registry latest-version lookup EACCES, cached fetched 5.20260908.1 definitions read; no binding/API/config changes",
+    "sourceAndTestsUnchangedDuringFinalRegression": true
+  },
+  "remaining": [
+    "promoter/buyer relations and eligibility, agent level/division identity/rates/natural expiry authority",
+    "Global SQL/KV and memberRight authority A3k11d",
+    "Ownership, form versions, coupon/ancestor/referenced collection phantoms",
+    "Real payment/settlement/refund, identity/storage/Hyperdrive and release gates",
+    "Full immutable Linux CI/workerd; A3i bargain policy unchanged"
+  ],
+  "safety": {
+    "gitCommitThisTurn": false,
+    "pushThisTurn": false,
+    "productionWrites": false,
+    "deployment": false,
+    "externalPayments": false,
+    "synthetic": [
+      "HTTP identity",
+      "KV",
+      "Sequence"
+    ],
+    "fullProductionForeignKeyOrAdminHttpFixtures": false,
+    "unpaidSnapshotTestsArePaymentEndToEnd": false,
+    "sequenceRollbackGuaranteed": false,
+    "dedicatedPostgresStartedAt": "2026-09-09T13:10:12.159Z",
+    "binariesDataAndReportsRetained": true,
+    "fixtureCleanup": {
+      "baselineDatabases": 4,
+      "testSchemas": 0,
+      "publicTables": 0,
+      "otherClients": 0
+    },
+    "cleanupIdentity": {
+      "database": "cinashop_finance_test",
+      "role": "finance_test",
+      "version": 160015,
+      "timezone": "UTC"
+    },
+    "dedicatedPostgresStoppedAt": "2026-09-09T13:29:01.874Z"
+  }
+}

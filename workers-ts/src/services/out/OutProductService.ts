@@ -327,6 +327,36 @@ function skuInsert(
   } as const;
 }
 
+/** Only explicit non-waiting inventory locks become a refreshable business error. */
+async function inventoryLock<T>(read: () => PromiseLike<T>): Promise<T> {
+  try {
+    return await read();
+  } catch (error) {
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {
+      if ("code" in cause && cause.code === "55P03") {
+        throw new ValidateException("商品或购物车正在变化，请刷新后重试");
+      }
+      cause = "cause" in cause ? cause.cause : undefined;
+    }
+    throw error;
+  }
+}
+
+async function updateCartStatus(tx: DbClient, productId: number, status: number): Promise<void> {
+  // Preserve the Out API's existing all-carts predicate, and update only the
+  // candidates locked by this same statement. Never skip busy carts.
+  await inventoryLock(() => tx.execute(sql`
+    WITH locked_carts AS MATERIALIZED (
+      SELECT ${storeCart.id} FROM ${storeCart}
+      WHERE ${eq(storeCart.productId, productId)}
+      ORDER BY ${storeCart.id} FOR UPDATE NOWAIT
+    )
+    UPDATE ${storeCart} SET status = ${status}
+    FROM locked_carts WHERE ${storeCart.id} = locked_carts.id
+  `));
+}
+
 export class OutProductService {
   constructor(private readonly container: Container) {}
 
@@ -365,7 +395,7 @@ export class OutProductService {
       let existing: typeof storeProduct.$inferSelect | undefined;
       let currentSkus: Array<typeof storeProductAttrValue.$inferSelect> = [];
       if (productId > 0) {
-        currentSkus = await tx
+        currentSkus = await inventoryLock(() => tx
           .select()
           .from(storeProductAttrValue)
           .where(and(
@@ -373,9 +403,9 @@ export class OutProductService {
             eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
           ))
           .orderBy(asc(storeProductAttrValue.id))
-          .for("update");
+          .for("update", { noWait: true }));
         existing = (
-          await tx
+          await inventoryLock(() => tx
             .select()
             .from(storeProduct)
             .where(and(
@@ -385,7 +415,7 @@ export class OutProductService {
               eq(storeProduct.isDel, 0),
             ))
             .limit(1)
-            .for("update")
+            .for("update", { noWait: true }))
         )[0];
         if (!existing) throw new NotFoundException("商品不存在或不属于平台");
         if (existing.productType !== PHYSICAL_PRODUCT_TYPE) {
@@ -569,7 +599,7 @@ export class OutProductService {
         changeTime: now,
         type: PRODUCT_ATTR_TYPE,
       });
-      await tx.update(storeCart).set({ status: input.isShow }).where(eq(storeCart.productId, savedProductId));
+      await updateCartStatus(tx, savedProductId, input.isShow);
       await recordReplay(tx, account.id, operation, key, hash, savedProductId);
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
@@ -655,7 +685,7 @@ export class OutProductService {
       const replay = await replayResult(tx, account.id, "product_show", key, hash);
       if (replay) return { id: replay.productId, is_show: isShow, idempotent: true };
       const product = (
-        await tx
+        await inventoryLock(() => tx
           .select({ id: storeProduct.id, isShow: storeProduct.isShow, price: storeProduct.price })
           .from(storeProduct)
           .where(and(
@@ -665,7 +695,7 @@ export class OutProductService {
             eq(storeProduct.isDel, 0),
           ))
           .limit(1)
-          .for("update")
+          .for("update", { noWait: true }))
       )[0];
       if (!product) throw new NotFoundException("商品不存在或不属于平台");
       if (isShow === 1 && moneyCents(product.price) <= 0n) {
@@ -677,7 +707,7 @@ export class OutProductService {
           .update(storeProduct)
           .set(isShow ? { isShow, autoOffTime: 0 } : { isShow })
           .where(eq(storeProduct.id, productId));
-        await tx.update(storeCart).set({ status: isShow }).where(eq(storeCart.productId, productId));
+        await updateCartStatus(tx, productId, isShow);
         await tx
           .update(storeProductRelation)
           .set({ status: isShow })
@@ -695,39 +725,58 @@ export class OutProductService {
     return withTx(this.container, async (tx) => {
       const replay = await replayResult(tx, account.id, "stock_upload", key, hash);
       if (replay) return { updated: replay.resultCount, idempotent: true };
-      // Serialize barcode resolution with product create/update so a concurrent
-      // write cannot introduce or remove a duplicate between lookup and locks.
+      // Serialize barcode resolution with cooperating product/SKU identity writes.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_SAVE_LOCK_NAMESPACE}, 0)`);
       const barCodes = items.map((item) => item.barCode);
-      const candidates = await tx
-        .select({ id: storeProductAttrValue.id })
-        .from(storeProductAttrValue)
-        .innerJoin(storeProduct, eq(storeProduct.id, storeProductAttrValue.productId))
-        .where(and(
-          eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
-          eq(storeProductAttrValue.isRetired, 0),
-          inArray(storeProductAttrValue.barCode, barCodes),
-          eq(storeProduct.type, PLATFORM_TYPE),
-          eq(storeProduct.relationId, PLATFORM_RELATION_ID),
-          eq(storeProduct.isDel, 0),
-        ));
+      // Two eligible rows prove ambiguity. Apply all eligibility predicates before
+      // ranking, so unrelated/retired/non-physical rows cannot hide a valid match.
+      // Rank one filtered set, rather than rescanning unindexed barcodes per input.
+      const candidates = await tx.execute<{ id: number; barCode: string }>(sql`
+        SELECT matched.id, matched.bar_code AS "barCode"
+        FROM (
+          SELECT ${storeProductAttrValue.id} AS id, ${storeProductAttrValue.barCode} AS bar_code,
+            row_number() OVER (PARTITION BY ${storeProductAttrValue.barCode} ORDER BY ${storeProductAttrValue.id}) AS match_number
+          FROM ${storeProductAttrValue}
+          INNER JOIN ${storeProduct} ON ${eq(storeProduct.id, storeProductAttrValue.productId)}
+          WHERE ${and(
+            inArray(storeProductAttrValue.barCode, barCodes),
+            eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+            eq(storeProductAttrValue.isRetired, 0),
+            eq(storeProduct.type, PLATFORM_TYPE),
+            eq(storeProduct.relationId, PLATFORM_RELATION_ID),
+            eq(storeProduct.productType, PHYSICAL_PRODUCT_TYPE),
+            eq(storeProduct.isDel, 0),
+          )}
+        ) AS matched
+        WHERE matched.match_number <= 2
+        ORDER BY matched.id
+      `);
+      const candidateCounts = new Map<string, number>();
+      for (const row of candidates) candidateCounts.set(row.barCode, (candidateCounts.get(row.barCode) ?? 0) + 1);
+      for (const item of items) {
+        const matches = candidateCounts.get(item.barCode) ?? 0;
+        if (matches === 0) throw new ValidateException(`属性编码 ${item.barCode} 不存在于平台商品`);
+        if (matches > 1) throw new ValidateException(`属性编码 ${item.barCode} 存在重复，拒绝猜测商品`);
+      }
+      // Only an initially unique set proceeds to locks. Never reinterpret a
+      // truncated ambiguous set as unique after one candidate changes/disappears.
       const candidateIds = candidates.map((row) => row.id);
       const allMatchingSkus = candidateIds.length > 0
-        ? await tx
+        ? await inventoryLock(() => tx
             .select()
             .from(storeProductAttrValue)
             .where(inArray(storeProductAttrValue.id, candidateIds))
             .orderBy(asc(storeProductAttrValue.id))
-            .for("update")
+            .for("update", { noWait: true }))
         : [];
       const productIds = [...new Set(allMatchingSkus.map((sku) => sku.productId))];
       const products = productIds.length > 0
-        ? await tx
+        ? await inventoryLock(() => tx
             .select()
             .from(storeProduct)
             .where(inArray(storeProduct.id, productIds))
             .orderBy(asc(storeProduct.id))
-            .for("update")
+            .for("update", { noWait: true }))
         : [];
       const platformProducts = new Map(products.filter((product) =>
         product.type === PLATFORM_TYPE
@@ -779,6 +828,7 @@ export class OutProductService {
           .where(and(
             eq(storeProductAttrValue.productId, affectedProductId),
             eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+            eq(storeProductAttrValue.isRetired, 0),
           ));
         const stock = Number(totals[0]?.stock ?? 0);
         await tx

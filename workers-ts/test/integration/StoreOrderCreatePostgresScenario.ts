@@ -351,8 +351,7 @@ function createRuntime(): StoreOrderCreationRuntime {
   };
 }
 
-function createPricingRuntime(): StoreOrderCreationRuntime {
-  const values: Record<string, string> = {
+const pricingConfigValues: Record<string, string> = {
     member_func_status: "1",
     member_card_status: "1",
     svip_price_status: "1",
@@ -364,11 +363,13 @@ function createPricingRuntime(): StoreOrderCreationRuntime {
     whole_free_shipping: "0",
     store_free_postage: "0",
     offline_postage: "0",
-  };
+};
+
+function createPricingRuntime(): StoreOrderCreationRuntime {
   return {
     CONFIG_KV: {
       async get(key: string) {
-        return values[key.replace(/^cfg_/, "")] ?? "0";
+        return pricingConfigValues[key.replace(/^cfg_/, "")] ?? "0";
       },
       async put() {},
       async delete() {},
@@ -1358,6 +1359,13 @@ async function runPricingAndRewardPolicy(
   schemaName: string,
   ids: FixtureIds,
 ): Promise<StoreOrderCreatePostgresReport["pricing_and_reward_policy"]> {
+  // Checkout pricing is SQL-authoritative. Seed only the owned scenario schema,
+  // not public, retaining the original coupon/points/postage assertions below.
+  await withSchema(observerDb, schemaName, async ({ db }) => {
+    await db.insert(systemConfig).values(Object.entries(pricingConfigValues).map(([menuName, value], index) => ({
+      id: 100 + index, menuName, value, isStore: 0,
+    })));
+  });
   const uid = ids.users[7];
   const params = orderParams(
     ids,

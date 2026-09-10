@@ -19,7 +19,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument,
       storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
-    for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.update(storeCart).set({ type: 1, activityId: 20 });
     await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 20, type: 1, unique: "qatime01", suk: "红色,大号",

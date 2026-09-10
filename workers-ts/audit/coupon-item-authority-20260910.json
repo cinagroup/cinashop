@@ -1,0 +1,455 @@
+{
+  "date": "2026-09-10",
+  "status": "local-coupon-item-and-direct-reference-authority-verified; broader-checklist-open",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "item": "FE-003L-A3k11c",
+    "itemClosed": false
+  },
+  "scope": "Actual checkout product pid/cateId/brandId and direct category pid/path or brand pid/fid dependencies. Dedicated local synthetic PostgreSQL only; not full migration or release acceptance.",
+  "selectedSourceTestHelperHashes": {
+    "src/services/activity/OrderCouponService.ts": "f5c5ccbebb96b27f9a751090b7e71388fdc0a07b20a611efc144fdf577959155",
+    "src/migrations/runCouponProductScopeFence.ts": "f135f362c7cd803da722b25649e4cb9ef4a5d7a1a6ab851165f922a48f56cd8d",
+    "test/checkout-coupon-template-authority.test.ts": "282976a78b78b91141152cb0e999d18dc11d853dc52efc965e789b2bd39b3878",
+    "src/services/MigrationService.ts": "1d751b967e6a4a4587e210ed3844e6b1e26c12b7b4c22605da3ff15d0142deb3",
+    "src/services/order/StoreOrderCreateService.ts": "46c7199f20900153789e8794bbbf6dee445209f3e8220fb2ca427238c468db24",
+    "test/kefu-sequence-registration.test.ts": "a293bf3776daec91c0460059eb4f0334d054f7fa4cae674fdd8928acd574c52e",
+    "src/services/order/CheckoutCouponTemplateAuthority.ts": "38f3279d9f241d0a210375c7c61de793fb994235d5377315782cbd1df2250327",
+    "test/coupon-product-scope-migration.test.ts": "8b17d0152d9e0dd54524ddd1493e833bb5bcd8b605b2ed8ac66ab109aac95218",
+    "src/migrations/couponProductScopeFence.ts": "e098c77aa5356115d8908d90e0f53e86706731feb03c0950b03972f311733c53",
+    "src/services/order/CheckoutCouponRelationsAuthority.ts": "ba961444342c0897469df9147d92a646cc727375692f655103e711c85a0d161f",
+    "test/checkout-coupon-relations-authority.test.ts": "0511f03cf4ded67a3a554537b94d0ff21aa25eea5e61ff5e7ceb56e40d43877a",
+    "test/checkout-confirmation-rules.test.ts": "2a8055725792a7191ef13ba55bcde3d7d1ed88952438032575dbe860a5151931",
+    "migrations/0151_coupon_product_scope_fence.sql": "5ce37fb8805205a0639250698e68fdfcb2a1fb0770438766d035faed29b43604",
+    "test/brokerage-paid-order-migration.test.ts": "371a263fc14eccb1cc5351b8775c003e824b46e5be8daab349217912b064d779",
+    "src/services/order/CheckoutCouponItemAuthority.ts": "39b690a01a6737ee612458aa0ed4cb7f11eb1cd4dc84952115f4ba2edf504f1d",
+    "test/admin-assisted-order-migration.test.ts": "ee0b53a32ce693645a1dcd45e92da6111182c2294dbf8969e74884a27305cc09",
+    "test/brokerage-paid-order-fence.test.ts": "3ba92667dec972dd68cb33baa341182cb90b75d0410fd18345bfc001d8b58e51",
+    "test/checkout-brokerage-authority.test.ts": "5de4fd3e6280acf11ad347131240acd16d7e33fdc0998d5cce7d94f56a18677d",
+    "test/checkout-brokerage-paid-authority.test.ts": "a4fa127bc0378afb38975e613c651bbb657773e4a9df46a6afffd6e75da31feb",
+    "test/checkout-confirmation-postgres.test.ts": "32ae6c5307af96db9e29314e46ba280393a2f7c206e91998e92ab2462552ad76",
+    "test/checkout-confirmation.test.ts": "c54a812651961b648e83a68a20c20d537985fb04e2bb4eb097bce1d96802ddb4",
+    "test/checkout-membership-boundary.test.ts": "6031cd88f48a789e745728e5b0d5ceba883393018b8afa4caef4541fd811efc2",
+    "test/coupon-issue-migration.test.ts": "5ad386b38d2a684241d28a708ee5fb365c613c07f5be6b860ba8ecaf050886ed",
+    "test/coupon-migration.test.ts": "634223b8ce5951ad28de66b3eb184d4a94be0795244c563ebbbaabda6a1602ae",
+    "test/coupon-product-scope-fence.test.ts": "05a7d8373b5ccf652a0ec5eddd9c4f4dc32447eece29554f039706117b8cdf61",
+    "test/coupon-relationship-migration.test.ts": "ed923b4c03268d6647cf0b2eae818f20eac37e6d9731e840f0def78a0e35fab3",
+    "test/coupon-scope-products-postgres.test.ts": "e7f4edb2838dca2fd7e6125a8cd07a065f597a273e8583f69d0b740652598f7b",
+    "test/coupon-scope-search-postgres.test.ts": "6e1495e14e20f7ae7c3413ae8cebbadf56c2ebf8a4750e622b8d3cbed6657fbe",
+    "test/coupon-wallet-filters-postgres.test.ts": "d3f1e8ad4e534b18d7dd084161e7e5fe4b7c2f6cb1433503def20232beca023c",
+    "test/order-coupon-picker.test.ts": "b4fe3478594b340ec75d8edc07d19731b27a94664015d4032b730f0e214989f7",
+    "test/pc-checkout-quote-postgres.test.ts": "9c9b2c708f05e2103b22f2e384ee2d97e84fe48452258e9bcc8628d1594e4c2f",
+    "test/pc-checkout-quote.test.ts": "f5b7090b237819aa7abb8cf5492dab843389afef5e995e11ef00812ee4929a37",
+    "test/pc-coupon-wallet-postgres.test.ts": "cf1d9a2f14014d60222676e195e952fd752070b39c571489275a41918f9bc341",
+    "test/pc-coupon-wallet.test.ts": "55a71f99282066204597272a159bf8589f3958ad7b31c8b8b7d74b17e4bf6b38",
+    "test/pc-order-coupon-postgres.test.ts": "b0b4d062f139909a1827b30fd7d4a2387fcb9d2283fba352746adda764b41e7f",
+    "test/pc-order-coupon.test.ts": "02ee1a68759d901fab553fd2f6195adb87c4fb39013d4771774461e09ed4c50a",
+    "test/product-coupon-migration.test.ts": "0c534d473b98468ca2d93e3d7192e353eddf18f4205220c7bcc90f2af79592bf",
+    "test/store-order-create-postgres-migration.test.ts": "2b998fb0fabeefd021aea069fadcb655427985f443d0e00ffa3aacebe8e3c691",
+    "test/store-order-create-scenario-postgres.test.ts": "0469c6021da9443edc9c85782c293df1d470dc2b57bc0315c8c1e255de2fa173",
+    "test/uniapp-checkout-contract.test.ts": "3dd995793ab51e8a73b33fe7ed01fed2663fc1350d2f131eee4a754b8cf73f20",
+    "test/uniapp-checkout-postgres.test.ts": "ea2ba3c04515973a0f0a4ee1e8b590c543c1b4f08ecd4471b57f1d9ab4be0549",
+    "test/checkout-coupon-item-authority.test.ts": "bd50c35dd8b5127670c6091a043d6e9287c26e55768657e3383fe6e5015917b7",
+    "src/services/activity/ProductCouponService.ts": "43f02a68ee9cbcccf24a2c1cb1638be9647fe13f10c8001ac9be6070bfe1cf9c",
+    "test/helpers/financePostgres.ts": "04720bee03dc96f315ba3a2bb0380760b791e70888ef121f1df41aee096235b3",
+    "test/helpers/financePeers.ts": "1210756e0727149a175d9372437ea88c8e770fc86c6db2cb8d803c6784e706cb",
+    "test/helpers/pcCheckoutQuoteFixture.ts": "c49e443bc61b719587e9d0d16d763cf52fb103b3aa8b39fc7aa61bb33f64f8fc",
+    "test/helpers/kefuSequenceRunnerDatabase.ts": "9d7cf6b00d87176f82238426dfca8d5853f5580dae93e8366d78b3fd65f9d9ee",
+    "src/models/schema/product_relations.ts": "ecf9a5429d15333f36de50dafa42e90613a7a940902773be3756963ae854ea58"
+  },
+  "reports": [
+    {
+      "stage": "red",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-items-red-20260910.json",
+      "sha256": "0a5c31003741a79e352959412e9ac9e5954ff89956ad9189e670bb40e242d4b7",
+      "passed": 9,
+      "failed": 13,
+      "skipped": 0,
+      "files": 1,
+      "startTime": 1789013017751,
+      "endTime": 1789013034341.8093,
+      "terminalExitCode": 1
+    },
+    {
+      "stage": "fixed",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-items-fixed-20260910.json",
+      "sha256": "c9596dae16b7aaf5ab62053e85a08579a47ed8b67f1a5a225b6a7f7610095609",
+      "passed": 94,
+      "failed": 0,
+      "skipped": 0,
+      "files": 3,
+      "startTime": 1789013122584,
+      "endTime": 1789013153361.146,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "expanded",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-items-expanded-20260910.json",
+      "sha256": "c4628c81fcb3481f6c0cd1f2d6e10730913364e39de665b81b97150e86d519dc",
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "files": 1,
+      "startTime": 1789013261764,
+      "endTime": 1789013291255.111,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "authority",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-items-authority-20260910.json",
+      "sha256": "cb2dc67aa5f43cc822e4c2fba5b55f6ac940909d28a6e4bb6d18268027808968",
+      "passed": 52,
+      "failed": 0,
+      "skipped": 0,
+      "files": 1,
+      "startTime": 1789013425715,
+      "endTime": 1789013486372.6843,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "memory",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-items-memory-20260910.json",
+      "sha256": "a3b4bcfa5024e80c886ca1042fc53b0033ea9b17b65e923409d2e895d3a43c5d",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 3,
+      "files": 1,
+      "startTime": 1789013606222,
+      "endTime": 1789013696388.2158,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "final",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-items-final-20260910.json",
+      "sha256": "97caa68a151229f47a5f1408b6cff3623ea1942485d5775f9aeb0c45ba21e429",
+      "passed": 947,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "files": 33,
+      "startTime": 1789013541366,
+      "endTime": 1789013808972.3752,
+      "manifest": [
+        {
+          "file": "test/admin-assisted-order-migration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "file": "test/brokerage-paid-order-fence.test.ts",
+          "status": "passed",
+          "tests": 40
+        },
+        {
+          "file": "test/brokerage-paid-order-migration.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "file": "test/checkout-brokerage-authority.test.ts",
+          "status": "passed",
+          "tests": 108
+        },
+        {
+          "file": "test/checkout-brokerage-paid-authority.test.ts",
+          "status": "passed",
+          "tests": 62
+        },
+        {
+          "file": "test/checkout-confirmation-postgres.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "file": "test/checkout-confirmation-rules.test.ts",
+          "status": "passed",
+          "tests": 262
+        },
+        {
+          "file": "test/checkout-confirmation.test.ts",
+          "status": "passed",
+          "tests": 27
+        },
+        {
+          "file": "test/checkout-coupon-item-authority.test.ts",
+          "status": "passed",
+          "tests": 55
+        },
+        {
+          "file": "test/checkout-coupon-relations-authority.test.ts",
+          "status": "passed",
+          "tests": 47
+        },
+        {
+          "file": "test/checkout-coupon-template-authority.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "file": "test/checkout-membership-boundary.test.ts",
+          "status": "passed",
+          "tests": 50
+        },
+        {
+          "file": "test/coupon-issue-migration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "file": "test/coupon-migration.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "file": "test/coupon-product-scope-fence.test.ts",
+          "status": "passed",
+          "tests": 45
+        },
+        {
+          "file": "test/coupon-product-scope-migration.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "file": "test/coupon-relationship-migration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "file": "test/coupon-scope-products-postgres.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "file": "test/coupon-scope-search-postgres.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "file": "test/coupon-wallet-filters-postgres.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "file": "test/kefu-sequence-registration.test.ts",
+          "status": "passed",
+          "tests": 27
+        },
+        {
+          "file": "test/order-coupon-picker.test.ts",
+          "status": "passed",
+          "tests": 23
+        },
+        {
+          "file": "test/pc-checkout-quote-postgres.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "file": "test/pc-checkout-quote.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "file": "test/pc-coupon-wallet-postgres.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "file": "test/pc-coupon-wallet.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "file": "test/pc-order-coupon-postgres.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "file": "test/pc-order-coupon.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "file": "test/product-coupon-migration.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "file": "test/store-order-create-postgres-migration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "file": "test/store-order-create-scenario-postgres.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "file": "test/uniapp-checkout-contract.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "file": "test/uniapp-checkout-postgres.test.ts",
+          "status": "passed",
+          "tests": 4
+        }
+      ],
+      "terminalExitCode": 0,
+      "sessionId": 39714,
+      "requestedManifestMatched": true
+    }
+  ],
+  "evidence": {
+    "red": "13 of 22 actual HTTP tests wrongly allowed checkout: product parent/direct category/direct brand changes, category/brand ancestor changes or deletion, and missing positive direct references. Nine canonical-equivalent/unrelated controls passed.",
+    "fixed": "Initial 22 plus existing template and relation suites: 94 passed in three files.",
+    "expanded": "40 passed, including independent PostgreSQL writers and actual checkout commit/rollback.",
+    "authority": "52 passed after adding transaction/error controls and two complete ORM/nonowner LOGIN cases.",
+    "final": "One terminal 33-file run: 947 passed, zero failed/skipped. New file contains 55 tests; these are included in 947. Do not add overlapping stages.",
+    "newSuiteBreakdown": {
+      "actualHttpSyntheticIdentityKvSequence": 30,
+      "independentPostgresConcurrency": 14,
+      "directTransactionAndErrorControls": 9,
+      "completeOrmActualNonownerLogin": 2
+    },
+    "memory": "Final PGlite template compatibility: 22 passed, three real PostgreSQL concurrency cases conditionally skipped. Not independent concurrency evidence.",
+    "concurrency": [
+      "Independent uncommitted category/brand writers remain open while checkout rejects.",
+      "Independent reference commit after initial calculation and before final guard is detected by a new read.",
+      "Later product/category/brand writer is blocked by actual checkout until commit or downstream shipping-error rollback.",
+      "Product editor commits after checkout waits at original inventory update: changed parent rejects, canonical fallback allows.",
+      "Incompatible category/brand relation lock causes bounded refusal.",
+      "Exact pg_blocking_pids barriers and four distinct stable backends; HTTP hooks are not counted as independent concurrency."
+    ],
+    "roles": "Complete ORM-generated schema and real nonsuperuser LOGIN. Template SELECT/UPDATE alone cannot lock products (42501); product SELECT plus UPDATE(store_name) still cannot lock references (42501); adding only UPDATE(cate_name) or UPDATE(brand_name) permits successful validation and proves an independent writer waits. No table-level UPDATE widening.",
+    "multiItem": "Second initially non-eligible product's scope facts are also bound; reversed cart ID input and unchanged coupon amount do not bypass comparison.",
+    "reconfirmation": "Same payable amount but changed effective scope requires explicit new confirmation. Successful replay still returns the original order after reference deletion."
+  },
+  "contract": {
+    "capture": "Copy original calculator item dependencies into the internal coupon template snapshot. No new customer quoteFacts, pricing formula, persisted fields or inventory-update conditions.",
+    "order": [
+      "Original business inventory writes and coupon reservation.",
+      "Existing coupon-template guard and, for product coupons, validated relation protocol/fresh set.",
+      "Owned READ COMMITTED transaction check.",
+      "Fresh products sorted by ID FOR SHARE NOWAIT.",
+      "Fresh positive direct categories for scopeType=1 or brands for scopeType=3, sorted by ID FOR SHARE NOWAIT.",
+      "Reject missing direct references; compare the original quote item's canonical effective sets."
+    ],
+    "timeouts": "Transaction-local lock_timeout=1ms bounds implicit relation acquisition as well as row NOWAIT. Restore original timeout on success; SQL failure rolls back owning transaction without restoration SQL masking the original error.",
+    "equivalence": [
+      "pid=0 versus product's own ID fallback.",
+      "Duplicate/nonpositive/ordered category encoding and ancestor aliases.",
+      "Changed direct category ID with the same complete effective set.",
+      "Unused category/brand fields, unrelated references and display-only metadata."
+    ],
+    "missingReference": "Final missing positive direct reference rejects. A formerly missing row inserted before the locked read may pass if it is now locked and the canonical set remains equal. No absence lock is claimed.",
+    "ancestry": "Only direct category row pid/path and direct brand row pid/fid are read by the existing calculator. Does not recursively require ancestor row existence or redefine PHP policy.",
+    "scopeGating": "Only actual resolved coupon paths supply dependencies. Categories/brands are only read for their corresponding coupon scope. Universal coupon parent remains bound because the existing customer quote already includes it.",
+    "errorHandling": "Existing outer guard maps only SQLSTATE 55P03 to reconfirmation; 40P01, 57014 and 08006 remain errors.",
+    "limits": "Category direct IDs retain the existing 10000 bound. No new external transaction I/O, binding configuration, DDL or automatic grants."
+  },
+  "verification": {
+    "initialTypecheck": {
+      "sessionId": 36456,
+      "terminalExitCode": 1,
+      "cause": "Four unused test imports/helpers reserved for planned concurrency tests: TS6133/TS6192. Runtime typecheck did not run because unit typecheck failed."
+    },
+    "expandedTypecheck": {
+      "sessionId": 35656,
+      "terminalExitCode": 0,
+      "unit": true,
+      "runtime": true
+    },
+    "authorityTypecheck": {
+      "sessionId": 60793,
+      "terminalExitCode": 0,
+      "unit": true,
+      "runtime": true
+    },
+    "finalTypecheck": {
+      "sessionId": 65720,
+      "terminalExitCode": 0,
+      "unit": true,
+      "runtime": true
+    },
+    "finalRunSelectedHashesUnchanged": 48,
+    "finalSourceAndTestsModifiedDuringRun": false,
+    "gitDiffCheck": "passed",
+    "scopeLimit": "Selected dependency hashes and targeted regression, not immutable full-repository/Linux/workerd CI."
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "version": "16.15",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "timeZone": "Australia/Darwin",
+    "logTimeZone": "ACST",
+    "root": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+    "serverPid": 4256,
+    "serverSessionId": 49626,
+    "readyAtUtc": "2026-09-10T04:01:43.904Z",
+    "cleanup": {
+      "baselineDatabases": [
+        "cinashop_finance_test",
+        "postgres",
+        "template0",
+        "template1"
+      ],
+      "additionalDatabases": 0,
+      "nonSystemNonPublicSchemas": 0,
+      "publicTables": 0,
+      "testRuntimeRoles": 0,
+      "otherClientBackends": 0
+    },
+    "stop": {
+      "pidCheckedBeforeStop": true,
+      "mode": "fast",
+      "commandSessionId": 39937,
+      "commandExitCode": 0,
+      "serverSessionExitCode": 0,
+      "serverStoppedAtUtc": "2026-09-10T04:17:52.264Z",
+      "commandConfirmedAtUtc": "2026-09-10T04:17:52.3116707Z",
+      "subsequentPgCtlStatus": "no server running"
+    },
+    "retained": [
+      "PostgreSQL binaries",
+      "dedicated database directory",
+      "raw reports"
+    ],
+    "productionWrites": false
+  },
+  "remaining": [
+    "Actual admin coupon save / Out create, category/brand/product management handlers interleaved with checkout, beyond direct SQL competitors.",
+    "Full production schema/runtime identity and least-privilege grant inventory; privileged maintenance isolation and Hyperdrive validation.",
+    "PHP policy decisions, merchant relationships, forms, global SQL/KV configuration and member-right authority.",
+    "Full immutable candidate CI, release, rollback and all other open checklist requirements."
+  ],
+  "skills": [
+    "cloudflare:workers-best-practices",
+    "build-web-apps:supabase-postgres-best-practices"
+  ],
+  "skillInfluence": "Fresh statement snapshots, short transactions, stable lock ordering, bounded reverse waits, actual column-grant tests, fail-closed missing references, and no new external I/O.",
+  "workersTypes": {
+    "latestRetrieval": "npm view failed with EACCES against configured registry",
+    "fallbackInstalledVersion": "5.20260828.1",
+    "platformBindingsChanged": false
+  },
+  "references": [
+    "https://www.postgresql.org/docs/16/transaction-iso.html",
+    "https://www.postgresql.org/docs/16/explicit-locking.html",
+    "https://www.postgresql.org/docs/16/sql-lock.html",
+    "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/"
+  ],
+  "authorizationBoundary": {
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "productionDatabaseModified": false,
+    "realProviderInvoked": false,
+    "historicalPhpDataReconciliation": "not applicable per owner"
+  }
+}

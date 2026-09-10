@@ -1,5 +1,6 @@
 /** Disposable SQL fixture for the actual confirmation/quote service. No order-create or payment route is mounted. */
 import { Hono } from "hono";
+import { and, eq } from 'drizzle-orm';
 import { financePostgres } from "./financePostgres";
 import type { PgTable } from "drizzle-orm/pg-core";
 import { createContainerFromDb } from "../../src/lib/di";
@@ -7,18 +8,36 @@ import { orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderC
 import { StoreCartService } from "../../src/services/order/StoreCartService";
 import {
   user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
-  memberRight, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore,
+  memberRight, systemConfig, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore,
 } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
 
-export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = []) {
-  const fixture = await financePostgres([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
-    memberRight, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore, ...extraTables]);
+// An explicit test-owned factory can supply a complete ORM database. The default
+// remains the existing disposable column fixture; no environment/production fallback.
+type QuoteFixtureDatabase = Pick<Awaited<ReturnType<typeof financePostgres>>, 'db' | 'exec' | 'close'>;
+export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
+  createDatabase: (tables: PgTable[]) => Promise<QuoteFixtureDatabase> = financePostgres) {
+  const fixture = await createDatabase([...new Set([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
+    memberRight, systemConfig, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore, ...extraTables])]);
   const container = createContainerFromDb(fixture.db);
   const cache = new Map<string, string>();
+  const pricingKeys = ['member_func_status', 'member_card_status', 'svip_price_status', 'integral_ratio_status',
+    'integral_ratio', 'integral_max_type', 'integral_max_num', 'integral_max_rate', 'whole_free_shipping', 'store_free_postage', 'offline_postage'];
   const config: Record<string, string> = {
+    ...Object.fromEntries(pricingKeys.map(key => [key, '0'])),
     member_card_status: "1", svip_price_status: "1", integral_ratio_status: "1", integral_ratio: "0.01", integral_max_type: "1", integral_max_num: "50",
     newcomer_status: "1", first_order_status: "1", first_order_discount: "90", first_order_discount_limit: "100", newcomer_limit_status: "0",
+  };
+  // Tests changing pricing policy must update the actual SQL authority, not only
+  // a KV substitute. Direct config mutations remain available for stale-KV tests.
+  const setConfig = async (values: Record<string, string>) => {
+    for (const [menuName, value] of Object.entries(values)) {
+      if (!pricingKeys.includes(menuName)) continue;
+      const rows = await fixture.db.update(systemConfig).set({ value })
+        .where(and(eq(systemConfig.menuName, menuName), eq(systemConfig.isStore, 0))).returning({ id: systemConfig.id });
+      if (!rows.length) await fixture.db.insert(systemConfig).values({ menuName, value });
+    }
+    Object.assign(config, values);
   };
   const writes: Array<{ key: string; ttl?: number }> = [];
   // Only this in-memory KV subset is used by the real quote path. Never inherit host bindings/secrets.
@@ -28,6 +47,7 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = []) 
     delete: async (key: string) => { cache.delete(key); },
   } } as Env;
   try {
+    await fixture.db.insert(systemConfig).values(pricingKeys.map(menuName => ({ menuName, value: config[menuName] })));
     await fixture.db.insert(user).values({ uid: 11, account: "local-qa", nickname: "本地报价测试", isEverLevel: 1, integral: 100 });
     await fixture.db.insert(userAddress).values([
       { id: 11, uid: 11, realName: "本地地址甲", phone: "00000000000", province: "本地省", city: "测试甲市", district: "测试甲区", cityId: 101, detail: "隔离样本一号", isDefault: 1 },
@@ -66,5 +86,5 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = []) 
     skus: await fixture.db.select().from(storeProductAttrValue), users: await fixture.db.select().from(user),
     orders: await fixture.db.select().from(storeOrder), bills: await fixture.db.select().from(userBill),
   });
-  return { ...fixture, container, app, env, cache, config, writes, readItems, snapshot };
+  return { ...fixture, container, app, env, cache, config, setConfig, writes, readItems, snapshot };
 }

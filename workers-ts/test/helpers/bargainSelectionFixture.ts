@@ -14,7 +14,7 @@ import type { AppVariables, Env } from "../../src/env";
 export async function createBargainSelectionFixture(extraTables: PgTable[] = []) {
   const f = await createPcCheckoutQuoteFixture([storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, storeProductDescription, systemConfig, ...extraTables]);
   try {
-    for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.insert(systemConfig).values([{menuName:'store_func_status',value:'1'}, {menuName:'store_self_mention',value:'1'}]);
     await f.db.delete(storeCart);
     await f.db.insert(storeProductAttr).values([

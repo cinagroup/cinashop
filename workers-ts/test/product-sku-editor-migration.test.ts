@@ -153,7 +153,8 @@ describe("FE-001E5A product SKU editor migration", () => {
     expect(source).toContain("pg_advisory_xact_lock");
     expect(source).toContain("PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE");
     expect(source).toContain("PRODUCT_SKU_IDENTITY_LOCK_KEY");
-    expect(source).toContain('for("update")');
+    expect(source).toContain('for("update", { noWait: true })');
+    expect(source).toContain('cause.code === "55P03"');
     expect(source).toContain("currentBySuk.get(sku.suk)");
     expect(source).toContain("不能删除或重命名已有SKU");
     expect(source).toContain("storeProductStockRecord");

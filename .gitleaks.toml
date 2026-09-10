@@ -1,6 +1,35 @@
 title = "CinaShop repository secret scanning"
 minVersion = "8.29.0"
 
+# Reviewed release-candidate findings: fixed replay IDs and historical source
+# digests are not authentication material. Match only exact values and files.
+[[allowlists]]
+description = "Fixed non-secret Out stock/product idempotency fixture"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = [
+  '''^workers-ts/test/out-stock-candidate-boundary\.test\.ts$''',
+  '''^workers-ts/test/checkout-out-product-concurrency\.test\.ts$''',
+]
+regexes = ['''^8c237c34-9995-4e47-8e02-c6d3e67524db$''']
+
+[[allowlists]]
+description = "Exact historical source SHA256 entries in catalog/coupon audit manifests"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''^workers-ts/audit/catalog-management-20260910\.json$''',
+  '''^workers-ts/audit/coupon-management-20260910\.json$''',
+]
+regexes = [
+  '''^\s*"src/controllers/out/OutApiController\.ts": "21bab85795333324ac30e7684409f0c64b09e7e183efbc245939480f1f639f45",$''',
+  '''^\s*"src/services/out/OutApiService\.ts": "795f0ddcb7db35d0dd59728ea30eb38c1272e3c8409a12ccd94b2a4ebedefe5e",$''',
+  '''^\s*"test/admin-frontend-api-contract\.test\.ts": "9eba537130dcc47866b1e8596927ff4bc734bc0366b934df90d3a8573d02f858",$''',
+  '''^\s*"test/out-api-migration\.test\.ts": "5a1821fe6c80fe367cfce3cac700b785cfa033b8a25d6f0f0038383ed8d66990",$''',
+]
+
 [extend]
 useDefault = true
 

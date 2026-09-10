@@ -31,6 +31,7 @@ import {
   type SystemFormAdminActor,
 } from "@/services/system/SystemMetadataService";
 import { SystemSignRewardService } from "@/services/system/SystemSignRewardService";
+import { AdminConfigBatchService, readAdminConfigBatch } from "@/services/system/AdminConfigBatchService";
 import { AgentLevelTaskService } from "@/services/agent/AgentLevelTaskService";
 import {
   calculateCouponDiscountCents,
@@ -297,7 +298,9 @@ export async function adminMobileProductAttrs(c: C) {
 /** POST /api/admin/product/update_attrs/:id — 行锁下更新库存价格。 */
 export async function adminMobileProductUpdateAttrs(c: C) {
   privateNoStore(c);
-  const body: unknown = await c.req.json().catch(() => null);
+  // Accommodate 500 SKU rows, including Unicode IDs and formatted JSON, while
+  // bounding actual streamed bytes before parsing or entering the transaction.
+  const body = await readBoundedJsonObject(c.req.raw, 128 * 1024);
   return jsonOk(c, await mobileProducts(c).updateAttrs(c.req.param("id"), body), "修改成功");
 }
 
@@ -812,31 +815,9 @@ export async function adminConfigList(c: C) {
 
 /** POST /api/admin/config/save — 保存配置 (批量) */
 export async function adminConfigSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as Record<string, string>;
-  const container = c.get("container");
-  const configSvc = new (await import("@/services/system/SystemConfigService")).SystemConfigService(
-    container,
-    c.env,
-  );
-
-  for (const [key, value] of Object.entries(body)) {
-    // 更新 DB
-    const existing = await container.systemConfigDao.getOne({ menuName: key });
-    if (existing) {
-      await container.systemConfigDao.update(existing.id, { value });
-    } else {
-      await container.systemConfigDao.save({
-        menuName: key,
-        value,
-        info: key,
-        isStore: 0,
-        type: "text",
-        inputType: "input",
-      });
-    }
-    // 失效 KV 缓存
-    await configSvc.invalidate(key);
-  }
+  c.header('Cache-Control', 'private, no-store');
+  const body = await readAdminConfigBatch(c.req.raw);
+  await new AdminConfigBatchService(c.get('container'), c.env).save(body);
   return jsonOk(c, null, "保存成功");
 }
 

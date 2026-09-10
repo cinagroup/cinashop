@@ -10,7 +10,7 @@ import { outcome,waitForFinanceBlock,withFinancePeers } from './helpers/financeP
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping snapshot independent PostgreSQL boundaries',()=>{
  let f:Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
  const params:CreateOrderParams={uid:11,key:'template_pg',cartIds:[1],shippingType:1,addressId:11,cityId:101,province:'本地省',userAddress:'隔离地址',realName:'隔离',userPhone:'00000000000',userIp:'127.0.0.1'};
- beforeEach(async()=>{f=await createPcCheckoutQuoteFixture([storeOrderCartInfo,storeOrderStatus,printDocument]);for(const key of Object.keys(f.config))f.config[key]='0';},30_000);
+ beforeEach(async()=>{f=await createPcCheckoutQuoteFixture([storeOrderCartInfo,storeOrderStatus,printDocument]);await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));},30_000);
  afterEach(async()=>{await f?.close();});
  const quote=(db:DbClient)=>new StoreOrderCreateService(createContainerFromDb(db),f.env).quoteOrder(params);
  const create=(db:DbClient)=>StoreOrderCreateService.createWithRuntime(createContainerFromDb(db),{CONFIG_KV:f.env.CONFIG_KV,nextOrderId:async()=>params.key},params);

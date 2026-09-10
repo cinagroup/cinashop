@@ -22,7 +22,7 @@ describe("seckill schedule admission on disposable SQL", () => {
   beforeAll(async () => {
     f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument,
       storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
-    for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(systemStore).set({ isStore: 1 });
     [initialBaseSku] = await f.db.select().from(storeProductAttrValue).where(eq(storeProductAttrValue.id, 1));
     [initialProduct] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));

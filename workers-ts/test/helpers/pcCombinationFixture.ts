@@ -10,7 +10,7 @@ import type { AppVariables, Env } from "../../src/env";
 export async function createPcCombinationFixture() {
   const f = await createPcCheckoutQuoteFixture([storeCombination, storePink, storeOrderRefund, systemConfig]);
   try {
-    for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.delete(storeCart);
     const startTime = new Date(Date.now() - 3_600_000), stopTime = new Date(Date.now() + 3_600_000);
     await f.db.insert(storeCombination).values({ id: 30, productId: 70, storeName: "拼团红蓝双规格", price: "6.25", otPrice: "10.00",

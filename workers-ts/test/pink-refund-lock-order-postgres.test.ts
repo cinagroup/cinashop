@@ -31,7 +31,7 @@ describe("pink inventory, order and member lock ordering", () => {
     f = await createPcCheckoutQuoteFixture([storeCombination, storePink, storeOrderCartInfo, storeOrderRefund,
       storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, storeOrderStatus, userBrokerage, printDocument]);
     await f.exec('CREATE UNIQUE INDEX fixture_pink_outbox_event ON store_order_outbox (event_key)');
-    for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.update(user).set({ nowMoney: "100.00" });
     await f.db.insert(user).values([22, 33, 44].map(uid => ({ uid, nowMoney: "100.00" })));

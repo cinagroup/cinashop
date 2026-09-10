@@ -62,6 +62,25 @@ export type AdminProductBatchInput =
 type SkuRow = typeof storeProductAttrValue.$inferSelect;
 type CategoryRow = typeof storeProductCategory.$inferSelect;
 
+// Management must not wait on inventory/cart rows while retaining product rows:
+// checkout claims carts before SKU/product updates, including multiple products.
+// Only explicit NOWAIT lock operations use this translation; the error escapes
+// withTx and rolls back every earlier write/lock. Never replay stale stock input.
+async function inventoryLock<T>(read: () => PromiseLike<T>): Promise<T> {
+  try {
+    return await read();
+  } catch (error) {
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {
+      if ("code" in cause && cause.code === "55P03") {
+        throw new ValidateException("商品或购物车正在变化，请刷新后重试");
+      }
+      cause = "cause" in cause ? cause.cause : undefined;
+    }
+    throw error;
+  }
+}
+
 export interface AdminProductCategoryNode {
   id: number;
   pid: number;
@@ -521,11 +540,11 @@ export class AdminMobileProductService {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
       for (const productId of input.ids) await lockProductWrite(tx, productId);
-      const products = await tx.select({
+      const products = await inventoryLock(() => tx.select({
         id: storeProduct.id,
         isDel: storeProduct.isDel,
         isVerify: storeProduct.isVerify,
-      }).from(storeProduct).where(inArray(storeProduct.id, input.ids)).orderBy(asc(storeProduct.id)).for("update");
+      }).from(storeProduct).where(inArray(storeProduct.id, input.ids)).orderBy(asc(storeProduct.id)).for("update", { noWait: true }));
       if (products.length !== input.ids.length) throw new NotFoundException("商品不存在");
       if (products.some((product) => product.isDel === 1)) {
         throw new ValidateException("回收站商品不能修改上下架状态");
@@ -536,11 +555,18 @@ export class AdminMobileProductService {
       await tx.update(storeProduct).set(input.isShow === 1
         ? { isShow: 1, autoOffTime: 0 }
         : { isShow: 0 }).where(inArray(storeProduct.id, input.ids));
-      await tx.update(storeCart).set({ status: input.isShow }).where(and(
-        inArray(storeCart.productId, input.ids),
-        eq(storeCart.isPay, 0),
-        eq(storeCart.isDel, 0),
-      ));
+      // One statement uses the same locked candidate set for the update. Do not
+      // fetch an unbounded cart ID list into a Worker, skip busy carts, or perform
+      // a separate UPDATE that can discover a newly committed, unlocked row.
+      await inventoryLock(() => tx.execute(sql`
+        WITH locked_carts AS MATERIALIZED (
+          SELECT ${storeCart.id} FROM ${storeCart}
+          WHERE ${and(inArray(storeCart.productId, input.ids), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0))}
+          ORDER BY ${storeCart.id} FOR UPDATE NOWAIT
+        )
+        UPDATE ${storeCart} SET status = ${input.isShow}
+        FROM locked_carts WHERE ${storeCart.id} = locked_carts.id
+      `));
       await tx.update(storeProductRelation).set({ status: input.isShow }).where(and(
         inArray(storeProductRelation.productId, input.ids),
         eq(storeProductRelation.type, PRODUCT_CATEGORY_RELATION),
@@ -648,16 +674,16 @@ export class AdminMobileProductService {
     return withTx(this.container, async (tx) => {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
-      const product = (await tx.select().from(storeProduct).where(and(
+      const product = (await inventoryLock(() => tx.select().from(storeProduct).where(and(
         eq(storeProduct.id, productId),
         eq(storeProduct.isDel, 0),
-      )).for("update").limit(1))[0];
+      )).for("update", { noWait: true }).limit(1)))[0];
       if (!product) throw new NotFoundException("商品不存在");
-      const current = await tx.select().from(storeProductAttrValue).where(and(
+      const current = await inventoryLock(() => tx.select().from(storeProductAttrValue).where(and(
         eq(storeProductAttrValue.productId, productId),
         eq(storeProductAttrValue.type, 0),
         eq(storeProductAttrValue.isRetired, 0),
-      )).orderBy(storeProductAttrValue.id).for("update");
+      )).orderBy(storeProductAttrValue.id).for("update", { noWait: true }));
       if (!current.length) throw new NotFoundException("商品规格不存在");
       const currentByUnique = new Map(current.map((item) => [item.unique, item]));
       if (updates.some((item) => !currentByUnique.has(item.unique))) {
@@ -719,7 +745,7 @@ export class AdminMobileProductService {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
       for (const productId of input.ids) await lockProductWrite(tx, productId);
-      const products = await tx.select({
+      const products = await inventoryLock(() => tx.select({
         id: storeProduct.id,
         isShow: storeProduct.isShow,
         type: storeProduct.type,
@@ -727,7 +753,7 @@ export class AdminMobileProductService {
       }).from(storeProduct).where(and(
         inArray(storeProduct.id, input.ids),
         eq(storeProduct.isDel, 0),
-      )).orderBy(asc(storeProduct.id)).for("update");
+      )).orderBy(asc(storeProduct.id)).for("update", { noWait: true }));
       if (products.length !== input.ids.length) throw new NotFoundException("商品不存在或已删除");
       const productById = new Map(products.map((product) => [product.id, product]));
       const now = Math.floor(Date.now() / 1000);

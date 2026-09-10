@@ -1,0 +1,458 @@
+{
+  "date": "2026-09-10",
+  "status": "local-coupon-relation-read-authority-and-migration-registration-verified; broader-checklist-open",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "item": "FE-003L-A3k11c",
+    "itemClosed": false
+  },
+  "scope": "Actual product-coupon checkout relation protocol verification, locked fresh relation read, and embedded migration 0157. Synthetic dedicated local PostgreSQL only; not a complete coupon, application, production or release acceptance.",
+  "sourceHashes": {
+    "src/services/activity/OrderCouponService.ts": "e0a7825f06dd6130fd129bd90e707e080f7b9ff02ade6e7ee4da66907063789a",
+    "src/migrations/runCouponProductScopeFence.ts": "f135f362c7cd803da722b25649e4cb9ef4a5d7a1a6ab851165f922a48f56cd8d",
+    "test/checkout-coupon-template-authority.test.ts": "282976a78b78b91141152cb0e999d18dc11d853dc52efc965e789b2bd39b3878",
+    "src/services/MigrationService.ts": "1d751b967e6a4a4587e210ed3844e6b1e26c12b7b4c22605da3ff15d0142deb3",
+    "src/services/order/StoreOrderCreateService.ts": "46c7199f20900153789e8794bbbf6dee445209f3e8220fb2ca427238c468db24",
+    "test/kefu-sequence-registration.test.ts": "a293bf3776daec91c0460059eb4f0334d054f7fa4cae674fdd8928acd574c52e",
+    "src/services/order/CheckoutCouponTemplateAuthority.ts": "299f607ab7e1810326f04642eba17531639fd15efb0a0539443390804a438b5d",
+    "test/coupon-product-scope-migration.test.ts": "8b17d0152d9e0dd54524ddd1493e833bb5bcd8b605b2ed8ac66ab109aac95218",
+    "src/migrations/couponProductScopeFence.ts": "e098c77aa5356115d8908d90e0f53e86706731feb03c0950b03972f311733c53",
+    "src/services/order/CheckoutCouponRelationsAuthority.ts": "ba961444342c0897469df9147d92a646cc727375692f655103e711c85a0d161f",
+    "test/checkout-coupon-relations-authority.test.ts": "0511f03cf4ded67a3a554537b94d0ff21aa25eea5e61ff5e7ceb56e40d43877a",
+    "test/checkout-confirmation-rules.test.ts": "2a8055725792a7191ef13ba55bcde3d7d1ed88952438032575dbe860a5151931",
+    "migrations/0151_coupon_product_scope_fence.sql": "5ce37fb8805205a0639250698e68fdfcb2a1fb0770438766d035faed29b43604",
+    "test/brokerage-paid-order-migration.test.ts": "371a263fc14eccb1cc5351b8775c003e824b46e5be8daab349217912b064d779"
+  },
+  "reports": [
+    {
+      "stage": "red",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-red-20260910.json",
+      "sha256": "5265589e08d9b4f32212efc30b83faf03bd762e7a01362f088538f983cd4f2bd",
+      "passed": 4,
+      "failed": 14,
+      "skipped": 0,
+      "files": 1,
+      "startTime": 1789010867789,
+      "endTime": 1789010879680.7988,
+      "terminalExitCode": 1
+    },
+    {
+      "stage": "fixed",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-fixed-20260910.json",
+      "sha256": "b75ebeded0ab62dd20021de2e31422135f7aa99db9c569c77ef1ec92d1355aba",
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "files": 1,
+      "startTime": 1789010987578,
+      "endTime": 1789010999520.2307,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "expanded",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-expanded-20260910.json",
+      "sha256": "c01e7f61a14ed8f7feece59a617a1ff86159d9b34eff505f7199e8f31e60802e",
+      "passed": 60,
+      "failed": 0,
+      "skipped": 0,
+      "files": 2,
+      "startTime": 1789011150323,
+      "endTime": 1789011175189.3723,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "memory",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-memory-20260910.json",
+      "sha256": "17af2be1c4bc558564e539c4e97438499112b88c4a70528aa08af30ea30cff41",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 3,
+      "files": 1,
+      "startTime": 1789011161187,
+      "endTime": 1789011197566.2188,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "registration-red",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-registration-red-20260910.json",
+      "sha256": "3083640185d97545a9cadd1e6c625d4f04a560227b69314586f2d44e7e375210",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 6,
+      "files": 1,
+      "startTime": 1789011274802,
+      "endTime": 1789011277800.3667,
+      "terminalExitCode": 1
+    },
+    {
+      "stage": "registration-fixed",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-registration-fixed-20260910.json",
+      "sha256": "69e70318a3b47309237cbb5a1ff71d9ffb77825ddfd31f27217b6a2358c21690",
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "files": 3,
+      "startTime": 1789011347190,
+      "endTime": 1789011384938.791,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "final-regression",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-final-regression-20260910.json",
+      "sha256": "e0d353b09ebba98c86bd6a59eeff0eaacc4d1622b2c7e668eec7f1d29fac8389",
+      "passed": 889,
+      "failed": 1,
+      "skipped": 0,
+      "files": 32,
+      "startTime": 1789011508117,
+      "endTime": 1789011738622.3384,
+      "terminalExitCode": 1
+    },
+    {
+      "stage": "permission-fixed",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-permission-fixed-20260910.json",
+      "sha256": "1421911b44aba41b06f21ec0ed9230827718338df09de8d047145edb6c018c37",
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "files": 2,
+      "startTime": 1789011911718,
+      "endTime": 1789011976070.6262,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "memory-final",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-memory-final-20260910.json",
+      "sha256": "20b4ab5a1b6223e54533de1c45c11d08b982cb5741fd9d1c2257984be1f1180b",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 3,
+      "files": 1,
+      "startTime": 1789012084469,
+      "endTime": 1789012163484.8257,
+      "terminalExitCode": 0
+    },
+    {
+      "stage": "final-verified",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-relations-final-verified-20260910.json",
+      "sha256": "8f764360ce4af485ce26910fa243d1ce768fdd82542a5c114378fb090bd2f1da",
+      "passed": 892,
+      "failed": 0,
+      "skipped": 0,
+      "files": 32,
+      "startTime": 1789012072598,
+      "endTime": 1789012306328.3418,
+      "manifest": [
+        {
+          "file": "test/admin-assisted-order-migration.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "file": "test/brokerage-paid-order-fence.test.ts",
+          "status": "passed",
+          "tests": 40
+        },
+        {
+          "file": "test/brokerage-paid-order-migration.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "file": "test/checkout-brokerage-authority.test.ts",
+          "status": "passed",
+          "tests": 108
+        },
+        {
+          "file": "test/checkout-brokerage-paid-authority.test.ts",
+          "status": "passed",
+          "tests": 62
+        },
+        {
+          "file": "test/checkout-confirmation-postgres.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "file": "test/checkout-confirmation-rules.test.ts",
+          "status": "passed",
+          "tests": 262
+        },
+        {
+          "file": "test/checkout-confirmation.test.ts",
+          "status": "passed",
+          "tests": 27
+        },
+        {
+          "file": "test/checkout-coupon-relations-authority.test.ts",
+          "status": "passed",
+          "tests": 47
+        },
+        {
+          "file": "test/checkout-coupon-template-authority.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "file": "test/checkout-membership-boundary.test.ts",
+          "status": "passed",
+          "tests": 50
+        },
+        {
+          "file": "test/coupon-issue-migration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "file": "test/coupon-migration.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "file": "test/coupon-product-scope-fence.test.ts",
+          "status": "passed",
+          "tests": 45
+        },
+        {
+          "file": "test/coupon-product-scope-migration.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "file": "test/coupon-relationship-migration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "file": "test/coupon-scope-products-postgres.test.ts",
+          "status": "passed",
+          "tests": 13
+        },
+        {
+          "file": "test/coupon-scope-search-postgres.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "file": "test/coupon-wallet-filters-postgres.test.ts",
+          "status": "passed",
+          "tests": 4
+        },
+        {
+          "file": "test/kefu-sequence-registration.test.ts",
+          "status": "passed",
+          "tests": 27
+        },
+        {
+          "file": "test/order-coupon-picker.test.ts",
+          "status": "passed",
+          "tests": 23
+        },
+        {
+          "file": "test/pc-checkout-quote-postgres.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "file": "test/pc-checkout-quote.test.ts",
+          "status": "passed",
+          "tests": 12
+        },
+        {
+          "file": "test/pc-coupon-wallet-postgres.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "file": "test/pc-coupon-wallet.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "file": "test/pc-order-coupon-postgres.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "file": "test/pc-order-coupon.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "file": "test/product-coupon-migration.test.ts",
+          "status": "passed",
+          "tests": 6
+        },
+        {
+          "file": "test/store-order-create-postgres-migration.test.ts",
+          "status": "passed",
+          "tests": 3
+        },
+        {
+          "file": "test/store-order-create-scenario-postgres.test.ts",
+          "status": "passed",
+          "tests": 1
+        },
+        {
+          "file": "test/uniapp-checkout-contract.test.ts",
+          "status": "passed",
+          "tests": 25
+        },
+        {
+          "file": "test/uniapp-checkout-postgres.test.ts",
+          "status": "passed",
+          "tests": 4
+        }
+      ],
+      "terminalExitCode": 0,
+      "sessionId": 9732,
+      "requestedManifestMatched": true
+    }
+  ],
+  "reportInterpretation": {
+    "red": "14 of 18 actual HTTP tests wrongly created an order: relation expansion/replacement/last deletion/transfer/first insertion/TRUNCATE/overflow and seven missing or drifted protocol cases.",
+    "fixed": "Same initial 18 tests passed after read integration.",
+    "expanded": "60 tests covered the initial expanded read suite and original 25 template tests; intermediate coverage is not added to final totals.",
+    "registrationRed": "Name-filtered registration test failed before 0157 was registered. Six excluded tests are not evidence of execution.",
+    "registrationFixed": "41 tests passed before additional real nonowner-role coverage was added.",
+    "firstFullRegression": "889 passed / 1 failed. This was a real runtime permission defect, not a fixture failure: explicit LOCK ROW SHARE requires table-level write permission, whereas SELECT with single-column UPDATE suffices for FOR SHARE.",
+    "permissionFix": "Kept original SELECT plus UPDATE(title) grants. Replaced explicit template LOCK ROW SHARE with WHERE false FOR SHARE, temporarily using transaction-local lock_timeout=1ms only for that statement. Restore the caller's timeout on success; failure aborts the transaction without issuing restoration SQL that masks 55P03. Two additional tests verify restoration from 0 and 31ms.",
+    "final": "One completed 32-file run: 892 passed, zero failed or skipped. The 47-test relation suite and 7-test migration suite are included, not added to 892.",
+    "memory": "Final original template compatibility run: 22 passed, three independent PostgreSQL cases conditionally skipped. PGlite is not concurrency evidence."
+  },
+  "contract": {
+    "order": [
+      "Require an owned transaction for actual product-coupon scope dependencies.",
+      "Acquire relation ACCESS SHARE NOWAIT and bounded template ROW SHARE relation mode before catalog validation.",
+      "Check uncached READ COMMITTED / replication role, ordinary permanent same-schema relations, RLS / inheritance / columns / parent primary key, exact trigger function and trigger properties.",
+      "Acquire actual coupon template row FOR SHARE NOWAIT.",
+      "Read relation rows in a new statement after the parent lock, reject raw row count above 20000, and compare canonical effective scope with the original calculation."
+    ],
+    "preserved": [
+      "Existing coupon formulas and customer quoteFacts.",
+      "Canonical duplicate/nonpositive-ID and encoding-fallback equivalence, unrelated coupon edits.",
+      "No new relation protocol dependency for non-product coupon paths.",
+      "Successful order idempotent replay.",
+      "Only SQLSTATE 55P03 is mapped to reconfirmation; deadlock, statement timeout and connection exceptions remain errors."
+    ],
+    "notGuaranteed": [
+      "Privileged concurrent function replacement or replication-role bypass on other connections.",
+      "All catalog queries being strictly nonblocking: the implicit template relation lock is bounded at 1ms, not NOWAIT.",
+      "Production role or all-application minimum grants."
+    ]
+  },
+  "migration": {
+    "disk": "0151_coupon_product_scope_fence.sql",
+    "embedded": "migration_0157",
+    "newDatabaseSteps": 158,
+    "historicalMethodCount": 157,
+    "historicalMethodRange": "0000–0156",
+    "historicalMethodAstTextSha256BeforeAndAfter": "eba7ca7bf38eced9101b09cf9cc14d73ea49c8139b6ff450225e03d91640d4ad",
+    "pathsVerified": [
+      "Complete sorted external SQL migrations.",
+      "Complete embedded MigrationService runAll.",
+      "Complete ORM-generated schema followed by explicit independent upgrade."
+    ],
+    "failureTests": [
+      "Previous step 0156 failure halts.",
+      "Step 0157 failure halts.",
+      "Failure after fence DDL rolls back protection objects."
+    ],
+    "idempotence": "Repeated explicit installation preserves object OIDs and business rows.",
+    "existingDatabaseRule": "Use explicit independent upgrade; do not replay historical runAll. No request-time DDL or automatic grants.",
+    "productionInstalled": false
+  },
+  "concurrencyEvidence": [
+    "Actual HTTP create with committed late relation changes and canonical equivalents.",
+    "Independent uncommitted insert/delete/transfer writers cause checkout refusal before the writer is released.",
+    "Independent commits after initial calculation are observed by the fresh locked read.",
+    "Later relation writers wait for actual checkout commit or downstream-error rollback.",
+    "TRUNCATE waits while checkout holds the relation lock.",
+    "Incompatible relation/template locks are rejected with bounded waiting.",
+    "Actual nonowner LOGIN on a full ORM database: SELECT-only fails with 42501; adding only UPDATE(title) allows the guard and its parent-lock blocking proof.",
+    "pg_blocking_pids barriers and distinct backend connections; no production identity or provider calls."
+  ],
+  "verification": {
+    "unitTypecheck": {
+      "sessionId": 48705,
+      "terminalExitCode": 0
+    },
+    "runtimeTypecheck": {
+      "sessionId": 48705,
+      "terminalExitCode": 0
+    },
+    "sourceHashesRecheckedAfterFinalRun": 14,
+    "historicalReportHashesRechecked": 9,
+    "gitDiffCheck": "passed",
+    "finalSourceAndTestsChangedDuringRun": false
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "version": "16.15",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "root": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+    "serverPid": 3200,
+    "serverSessionId": 99627,
+    "readyAt": "2026-09-10T03:26:03.269Z",
+    "cleanup": {
+      "baselineDatabases": [
+        "cinashop_finance_test",
+        "postgres",
+        "template0",
+        "template1"
+      ],
+      "additionalDatabases": 0,
+      "nonSystemNonPublicSchemas": 0,
+      "publicTables": 0,
+      "testRuntimeRoles": 0,
+      "otherClientBackends": 0
+    },
+    "stop": {
+      "pidCheckedBeforeStop": true,
+      "mode": "fast",
+      "commandExitCode": 0,
+      "serverSessionExitCode": 0,
+      "serverStoppedAt": "2026-09-10T03:57:32.060Z",
+      "commandConfirmedAt": "2026-09-10T03:57:32.1401548Z",
+      "postmasterPidFileExists": false,
+      "subsequentPgCtlStatus": "no server running"
+    },
+    "retained": [
+      "PostgreSQL binaries",
+      "dedicated database directory",
+      "raw test reports"
+    ],
+    "productionWrites": false
+  },
+  "remaining": [
+    "Product pid/cateId/brandId authority at actual checkout.",
+    "Category pid/path and brand pid/fid authority; deletion and newly created missing positive references.",
+    "Actual admin-save/Out-create handler interleavings with checkout, beyond independent SQL writers.",
+    "Production Worker/Hyperdrive runtime identity, complete minimum grants and privileged maintenance isolation.",
+    "PHP policy decisions, global configuration, forms and merchant contracts.",
+    "Immutable candidate CI, release and rollback gates; broader 170 checklist items remain open."
+  ],
+  "skills": [
+    "cloudflare:workers-best-practices",
+    "build-web-apps:supabase-postgres-best-practices"
+  ],
+  "skillInfluence": "Short transactions, new-statement READ COMMITTED snapshot, stable lock order and actual privilege validation, fail-closed checks, no added external transaction I/O.",
+  "references": [
+    "https://www.postgresql.org/docs/16/sql-lock.html",
+    "https://www.postgresql.org/docs/16/transaction-iso.html",
+    "https://www.postgresql.org/docs/16/explicit-locking.html",
+    "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/"
+  ],
+  "authorizationBoundary": {
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "productionDatabaseModified": false,
+    "realProviderInvoked": false,
+    "historicalPhpDataReconciliation": "not applicable per owner"
+  }
+}

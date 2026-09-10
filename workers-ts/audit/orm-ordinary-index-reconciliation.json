@@ -212,7 +212,7 @@
       ],
       "queryEvidence": {
         "source": "src/controllers/api/v1/AdminCrudController.ts",
-        "sourceLine": 1490,
+        "sourceLine": 1471,
         "purpose": "Admin bargain participant query",
         "sourceSql": "  const rows = await container.db\n    .select()\n    .from(schema.storeBargainUser)\n    .where(eq(schema.storeBargainUser.bargainId, bargainId))\n    .orderBy(desc(schema.storeBargainUser.addTime))\n    .limit(50);"
       },
@@ -620,7 +620,7 @@
       ],
       "queryEvidence": {
         "source": "src/services/order/OrderBrokerageService.ts",
-        "sourceLine": 587,
+        "sourceLine": 647,
         "purpose": "Order-linked brokerage lookup",
         "sourceSql": "    .from(userBrokerage)\n    .where(\n      and(\n        eq(userBrokerage.linkId, linkId),\n        eq(userBrokerage.pm, 1),\n        inArray(userBrokerage.type, incomeTypes),\n        eq(userBrokerage.status, 1),\n      ),"
       },

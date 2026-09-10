@@ -29,7 +29,7 @@ describe("pink cancellation authorization before privileged refund execution", (
     execute = vi.spyOn(StoreOrderRefundService.prototype, "agreeRefund").mockResolvedValue({ completed: false, status: "PROCESSING" });
     await f.db.insert(user).values({ uid: 11, nickname: "Isolated leader" });
     await f.db.insert(storePink).values({ id: 400, uid: 11, combinationId: 30, productId: 70, people: 4,
-      orderIdKey: "500", orderId: "isolated-pink-order", stopTime: sql`NOW() + INTERVAL '1 day'` });
+      orderIdKey: "500", orderId: "isolated-pink-order", stopTime: sql`(NOW() AT TIME ZONE 'UTC') + INTERVAL '1 day'` });
     await f.db.insert(storeOrder).values({ id: 500, uid: 11, orderId: "isolated-pink-order", type: 3,
       activityId: 30, pinkId: 400, paid: 1, payPrice: "6.25", totalNum: 1, payType: "yue" });
     await f.db.insert(storeOrderCartInfo).values({ id: 1, oid: 500, cartId: "1", cartNum: 1,
@@ -136,12 +136,31 @@ describe("pink cancellation authorization before privileged refund execution", (
     expect(await f.db.select().from(storeOrderRefund)).toHaveLength(0);
     expect(await f.db.select().from(storeOrderStatus)).toHaveLength(0);
   });
-  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("uses the actual deadline after waiting for the leader lock on PostgreSQL", async () => {
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(
+    ['UTC', 'Australia/Darwin', 'America/New_York'].flatMap(timezone => [-60, 60].map(seconds => ({ timezone, seconds }))),
+  )('uses the UTC deadline at preflight (%j)', async ({ timezone, seconds }) => {
+    await withFinancePeers(f.db, async ([peer]) => {
+      await peer.db.execute(sql`SELECT set_config('TimeZone', ${timezone}, false)`);
+      await f.db.update(storePink).set({ stopTime: sql`(clock_timestamp() AT TIME ZONE 'UTC') + ${seconds} * INTERVAL '1 second'` });
+      const result = await outcome(new ActivityJoinService(createContainerFromDb(peer.db), env).removePink(11, 400, 30));
+      expect(result.ok).toBe(seconds > 0);
+      if (seconds > 0) {
+        expect(execute).toHaveBeenCalledTimes(1);
+        expect(await f.db.select().from(storeOrderRefund)).toHaveLength(1);
+      } else {
+        await untouched();
+        expect(await f.db.select().from(storeOrderRefund)).toHaveLength(0);
+      }
+    });
+  }, 15_000);
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['UTC', 'Australia/Darwin', 'America/New_York'])("uses the actual deadline after waiting for the leader lock on PostgreSQL (%s)", async timezone => {
     await withFinancePeers(f.db, async ([blocker, first]) => {
+      await blocker.db.execute(sql`SELECT set_config('TimeZone', ${timezone}, false)`);
+      await first.db.execute(sql`SELECT set_config('TimeZone', ${timezone}, false)`);
       await blocker.exec('BEGIN; SELECT id FROM store_pink WHERE id=400 FOR UPDATE');
       // Preflight sees the old committed deadline. The new deadline elapses
       // while admission waits; transaction-start NOW() would wrongly accept it.
-      const [deadline] = await blocker.db.update(storePink).set({ stopTime: sql`clock_timestamp() + INTERVAL '1 second'` })
+      const [deadline] = await blocker.db.update(storePink).set({ stopTime: sql`(clock_timestamp() AT TIME ZONE 'UTC') + INTERVAL '1 second'` })
         .returning({ time: storePink.stopTime });
       const pending = outcome(new ActivityJoinService(createContainerFromDb(first.db), env).removePink(11, 400, 30));
       await waitForFinanceBlock(f.db, first.pid, blocker.pid);

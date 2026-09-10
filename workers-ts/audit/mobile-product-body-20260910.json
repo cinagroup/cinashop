@@ -1,0 +1,383 @@
+{
+  "date": "2026-09-10",
+  "status": "local-mobile-SKU-request-body-boundary-fixed; workerd-and-full-checklist-open",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "item": "FE-003L-A3k11c",
+    "itemClosed": false
+  },
+  "sourceChange": {
+    "file": "src/controllers/api/v1/AdminCrudController.ts",
+    "previousGitBlob": "7a0db51b1d16d5b3a7d63354fadc22fea04c58af",
+    "handler": "adminMobileProductUpdateAttrs",
+    "maxBytes": 131072,
+    "change": "Use existing readBoundedJsonObject on c.req.raw before constructing/calling the service.",
+    "preserved": [
+      "500-row parser limit",
+      "Original inventory transaction, locks, membership and pricing/stock policies",
+      "PHP response envelope and private no-store"
+    ],
+    "compatibility": "Empty/null body is normalized to an empty object by the existing helper; remains rejected, now with missing-attribute message. Unknown fields/whitespace count against the byte limit."
+  },
+  "redEvidence": {
+    "cases": [
+      "declared oversized",
+      "no Content-Length",
+      "lying small Content-Length"
+    ],
+    "oldResult": {
+      "status": 200,
+      "msg": "修改成功",
+      "data": {
+        "changed": 1
+      }
+    },
+    "expected": {
+      "status": 400,
+      "msg": "请求数据不能超过128 KiB",
+      "data": null
+    },
+    "scope": "Actual Request/Hono/controller; service spy invokes real input parser. Not a SQL or auth test."
+  },
+  "reports": [
+    {
+      "stage": "red",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-body-red-20260910.json",
+      "sha256": "ba6bdfdb38a311265596e3c1fca0276f2021d124be1ec0c5271982c8456a0504",
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0,
+      "success": false,
+      "startTime": 1789021097310,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-body.test.ts"
+      ]
+    },
+    {
+      "stage": "fixed",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-body-fixed-20260910.json",
+      "sha256": "76685aa70bb8d5ca597fe69ef7acc0bc4e67576b907be50eace5720f03e2331f",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "startTime": 1789021119545,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-body.test.ts"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-body-expanded-20260910.json",
+      "sha256": "382fafd82de51fb825498530350c72a9d2f36778ce2db61f15c9ffcd39a39032",
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "startTime": 1789021217510,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-body.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/request-body.test.ts"
+      ]
+    },
+    {
+      "stage": "workerd",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-body-workerd-20260910.json",
+      "sha256": "7464aa2421a5ec7df17bec84d86c34ed7466e834ec913a72c72a8c67471559ca",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "success": false,
+      "startTime": 1789021255030,
+      "testFiles": []
+    },
+    {
+      "stage": "final",
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-mobile-body-final-20260910.json",
+      "sha256": "bf85e9070a854b1a063bdd8d214467247e9ca3756b33e5d4e15fd8d756078f22",
+      "passed": 129,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "startTime": 1789021357408,
+      "testFiles": [
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-body.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-mobile-product-concurrency.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/request-body.test.ts",
+        "C:/cinagroup/cinashop/workers-ts/test/supplier-product-management.test.ts"
+      ],
+      "fileResults": [
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-body.test.ts",
+          "status": "passed",
+          "passed": 22,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/admin-mobile-product-migration.test.ts",
+          "status": "passed",
+          "passed": 9,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-catalog-management.test.ts",
+          "status": "passed",
+          "passed": 25,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-mobile-product-concurrency.test.ts",
+          "status": "passed",
+          "passed": 20,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/checkout-sku-lifecycle-concurrency.test.ts",
+          "status": "passed",
+          "passed": 17,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/product-sku-editor-migration.test.ts",
+          "status": "passed",
+          "passed": 8,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/product-sku-retirement.test.ts",
+          "status": "passed",
+          "passed": 11,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/request-body.test.ts",
+          "status": "passed",
+          "passed": 5,
+          "failed": 0
+        },
+        {
+          "path": "C:/cinagroup/cinashop/workers-ts/test/supplier-product-management.test.ts",
+          "status": "passed",
+          "passed": 12,
+          "failed": 0
+        }
+      ]
+    }
+  ],
+  "testCoverage": {
+    "sharedContractCases": 22,
+    "sharedContract": "Exact 128 KiB, +1 byte, no/lying/oversize headers, UTF-8 byte count, chunk cancellation and unread tail, declared oversize before first read, multibyte split, malformed/non-object roots, empty attributes, 500-row formatted UTF-8/escaped maximum fields, 501-row rejection, input stream failure.",
+    "postgres": "One new full-ORM test seeds 500 SKUs. Oversized body leaves snapshots unchanged. Exactly 128 KiB formatted JSON commits all 500 rows; each SKU's identity/sales and stock/sumStock/prices, every stock-difference record and aggregate product stock/prices are checked; unrelated snapshot tables unchanged.",
+    "runtime": "Same shared tests added to workerd suite; Windows startup access violation executed zero tests; not passed."
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "unitExit": 0,
+    "runtimeExit": 0,
+    "finalSession": 58788
+  },
+  "selectedSourceHashes": [
+    {
+      "path": "package-lock.json",
+      "sha256": "b2cb80928931024e8e77d77bd4318257dbc1c03e14bdb0969472857aa2006891"
+    },
+    {
+      "path": "package.json",
+      "sha256": "716ca118b7bc54b4c43abc29a4efccea850325033ad8c8d9459c283dff1a4513"
+    },
+    {
+      "path": "src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "32a601226158b11d52c6e4b50045b5703d4b8b3656920073d4ac517e55827829"
+    },
+    {
+      "path": "src/controllers/supplier/SupplierController.ts",
+      "sha256": "1831cde1aa8f9f7441410a371e84124a83083aee4c38f4a6c5093a44ecdb70f4"
+    },
+    {
+      "path": "src/lib/di.ts",
+      "sha256": "13ae0fc3225eff23bb589af2982cb1c1ea1bc98c5bf56c1ba2ecfb02845220a0"
+    },
+    {
+      "path": "src/models/schema/activity.ts",
+      "sha256": "39e7107a4c101a71d8dc0d8b3c53b7db6f764ce292aa490d263dbde66c9df396"
+    },
+    {
+      "path": "src/models/schema/index.ts",
+      "sha256": "e90f5de06338f33bbfdef80903fd85e5147aa66763b4293398ed44544aafb908"
+    },
+    {
+      "path": "src/models/schema/order.ts",
+      "sha256": "56af227975c70e5a573119334bb74734620fe171f48d3c6800a2f46d79085d08"
+    },
+    {
+      "path": "src/models/schema/product_relations.ts",
+      "sha256": "ecf9a5429d15333f36de50dafa42e90613a7a940902773be3756963ae854ea58"
+    },
+    {
+      "path": "src/models/schema/system_metadata.ts",
+      "sha256": "28bdc4780ff816431bcc0a999c7abe4090e7d20182aa26d98561241dfd06ae19"
+    },
+    {
+      "path": "src/services/admin/AdminMobileProductService.ts",
+      "sha256": "fd7029350db24817ace7bca97e42d25aff6722e3e9f730e49efa66ba9d7119e3"
+    },
+    {
+      "path": "src/services/order/StoreOrderCreateService.ts",
+      "sha256": "46c7199f20900153789e8794bbbf6dee445209f3e8220fb2ca427238c468db24"
+    },
+    {
+      "path": "src/services/product/ProductAssociationService.ts",
+      "sha256": "1c787cb6ae4a7dc625a2f822df185ed7baaae480c1c43daa84488a7d92b8813f"
+    },
+    {
+      "path": "src/services/product/ProductSkuEditorService.ts",
+      "sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2"
+    },
+    {
+      "path": "src/services/product/ProductSkuIdentity.ts",
+      "sha256": "dfaffd1645892a0bbca35eb7cb22b62d309b4c37a18ee453b826ef5cd3b73668"
+    },
+    {
+      "path": "src/services/product/ProductSkuRetirementService.ts",
+      "sha256": "793d483df11a1c54090b1ee7be42292fd6cbae6164425a8707219419f4926d9c"
+    },
+    {
+      "path": "src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "ea578d3d8397360b2023c8a81646a46fc387b76a4a86ee261ef031c71360e26f"
+    },
+    {
+      "path": "src/utils/request-body.ts",
+      "sha256": "8004bd6c9205ce389e505d280e7a593a76ffc7158a657e0c6d7e792bc2b245cd"
+    },
+    {
+      "path": "test/admin-mobile-product-body.test.ts",
+      "sha256": "0a0859661a09a78d93c3586a942cbf4ca915e09955c935fa3a412c8013bfaee4"
+    },
+    {
+      "path": "test/admin-mobile-product-migration.test.ts",
+      "sha256": "b54cb61ef61fa10fb2264a1158856262490d9fd6dee7a59b25bedfae8d5a2bc5"
+    },
+    {
+      "path": "test/checkout-catalog-management.test.ts",
+      "sha256": "ad17a7cb624e71a75846b3af0e1ef3ddca2aabc1bd4a45ecbe3db70d8d054c8d"
+    },
+    {
+      "path": "test/checkout-mobile-product-concurrency.test.ts",
+      "sha256": "1e6c9ee00f5d6b44ea9cdd5ca5575c864431ad1c0afddf0023405a85c0b88a73"
+    },
+    {
+      "path": "test/checkout-sku-lifecycle-concurrency.test.ts",
+      "sha256": "df721ae5457cc323e4812511c6c9c608f2b6dca90d2c623c20a9314299b055cb"
+    },
+    {
+      "path": "test/helpers/financePeers.ts",
+      "sha256": "1210756e0727149a175d9372437ea88c8e770fc86c6db2cb8d803c6784e706cb"
+    },
+    {
+      "path": "test/helpers/kefuSequenceRunnerDatabase.ts",
+      "sha256": "9d7cf6b00d87176f82238426dfca8d5853f5580dae93e8366d78b3fd65f9d9ee"
+    },
+    {
+      "path": "test/helpers/mobileProductBodyContract.ts",
+      "sha256": "e7a73ac8183fc86f5336fe9e497704a8675bbf2ed16da38f8ffa901269cc6045"
+    },
+    {
+      "path": "test/helpers/pcCheckoutQuoteFixture.ts",
+      "sha256": "6cb965b1fb3ebbda5b98a963a936e2b422fdb5dfe8471a4208b8c4752e35ff04"
+    },
+    {
+      "path": "test/product-sku-editor-migration.test.ts",
+      "sha256": "48a6474a037f31b0c45af86732d3aaf0b6cbef85c8db8e957da7e6f556c3894d"
+    },
+    {
+      "path": "test/product-sku-retirement.test.ts",
+      "sha256": "2a7b6d388e4a806a47f63a1a32ce0803b07511e465e34b96cd0d89d4b3668750"
+    },
+    {
+      "path": "test/request-body.test.ts",
+      "sha256": "84140e3f148e52b845ee0bcdd2eb2627f44ddb9714022b0db54f7ccc03179984"
+    },
+    {
+      "path": "test/runtime/admin-mobile-product-body.test.ts",
+      "sha256": "bf9b0cb697e54a242cacbca711e3b444fe1b9ce99342939a96302775664aecb8"
+    },
+    {
+      "path": "test/supplier-product-management.test.ts",
+      "sha256": "3219dd54ab9578e3df4b1d7f9dfcb302658647fac00d8577f58beeea628a18fe"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "40d6859b4ab81a2115ff14610fb1ed523bd45c12797ea9f37054e75f531d261e"
+    },
+    {
+      "path": "vitest.worker.config.ts",
+      "sha256": "c329c7533f837c15ec3b907149522260d666a64dc56204aa7339632b4acb7999"
+    },
+    {
+      "path": "wrangler.test.toml",
+      "sha256": "8a857330803f71245e2ce9b6778c27e7e8a18da7b9ee71a47d1d206b97bc3faf"
+    }
+  ],
+  "hashVerification": "35 selected source/test/config hashes captured during the final test run and matched again after terminal success; not a complete dependency graph or immutable CI artifact.",
+  "runtimeFailure": {
+    "session": 39600,
+    "exitCode": 1,
+    "testsExecuted": 0,
+    "observed": [
+      "EPERM writing Wrangler log under roaming xdg.config",
+      "There was an access violation in the runtime",
+      "Vite close timed out after 10000ms"
+    ],
+    "rootCause": "Not established. Tool suggests checking Visual C++ Redistributable; no system package change or runtime bypass performed."
+  },
+  "cleanup": {
+    "instanceRoot": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+    "serverPid": 14948,
+    "foregroundSession": 59850,
+    "serverVersion": "16.15",
+    "timeZone": "UTC",
+    "port": 55432,
+    "baselineDatabases": 4,
+    "publicTables": 0,
+    "temporaryRoles": 0,
+    "otherClients": 0,
+    "ownedTestDatabasesRemaining": 0,
+    "stopCommandExit": 0,
+    "foregroundExit": 0,
+    "binariesAndDataRetained": true
+  },
+  "remaining": [
+    "workerd execution and immutable full CI",
+    "Other Out product/SKU and reference-management interleavings",
+    "Formal authentication, least-privilege Hyperdrive identity and maintenance isolation",
+    "Remaining checkout configuration/entity/form/PHP policy requirements",
+    "All other checklist items and production release verification"
+  ],
+  "safety": {
+    "productionWrites": false,
+    "providerCalls": false,
+    "deployment": false,
+    "commit": false,
+    "push": false,
+    "historicalPhpDataReconciliation": "N/A by project owner"
+  },
+  "skills": {
+    "used": [
+      "cloudflare:workers-best-practices"
+    ],
+    "impact": "Reused bounded streamed parser and added actual Request/stream and runtime tests; no binding changes.",
+    "workersTypes": "Latest pack attempt EACCES; fallback installed 5.20260828.1 RequestInit/ReadableStreamDefaultReader inspected.",
+    "references": [
+      "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/",
+      "https://developers.cloudflare.com/workers/runtime-apis/streams/"
+    ]
+  }
+}

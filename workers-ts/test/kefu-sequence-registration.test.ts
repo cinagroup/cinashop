@@ -16,6 +16,10 @@ import { WORK_CONTACT_CLIENT_INDEX_SQL } from "../src/migrations/workContactClie
 import { runWorkContactClientIndex } from "../src/migrations/runWorkContactClientIndex";
 import { BARGAIN_CART_PARTICIPATION_SQL } from "../src/migrations/bargainCartParticipation";
 import { runBargainCartParticipation } from "../src/migrations/runBargainCartParticipation";
+import { BROKERAGE_PAID_ORDER_FENCE_SQL } from "../src/migrations/brokeragePaidOrderFence";
+import { runBrokeragePaidOrderFence } from "../src/migrations/runBrokeragePaidOrderFence";
+import { COUPON_PRODUCT_SCOPE_FENCE_SQL } from "../src/migrations/couponProductScopeFence";
+import { runCouponProductScopeFence } from "../src/migrations/runCouponProductScopeFence";
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
@@ -24,14 +28,18 @@ vi.mock("../src/migrations/runPinkRecoveryIndex", () => ({ runPinkRecoveryIndex:
 vi.mock("../src/migrations/runForeignKeyChildIndexes", () => ({ runForeignKeyChildIndexes: vi.fn() }));
 vi.mock("../src/migrations/runWorkContactClientIndex", () => ({ runWorkContactClientIndex: vi.fn() }));
 vi.mock("../src/migrations/runBargainCartParticipation", () => ({ runBargainCartParticipation: vi.fn() }));
+vi.mock("../src/migrations/runBrokeragePaidOrderFence", () => ({ runBrokeragePaidOrderFence: vi.fn() }));
+vi.mock("../src/migrations/runCouponProductScopeFence", () => ({ runCouponProductScopeFence: vi.fn() }));
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
 const childRunner = vi.mocked(runForeignKeyChildIndexes);
 const contactRunner = vi.mocked(runWorkContactClientIndex);
 const bargainRunner = vi.mocked(runBargainCartParticipation);
+const paidRunner = vi.mocked(runBrokeragePaidOrderFence);
+const couponRunner = vi.mocked(runCouponProductScopeFence);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 156 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 158 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -75,6 +83,16 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(depth, "0155 must receive the root DB outside an outer transaction").toBe(0);
     expect(contactRunner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  paidRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db);
+    expect(depth, "0156 must receive the root DB outside an outer transaction").toBe(0);
+    expect(bargainRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
+  couponRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db);
+    expect(depth, "0157 must receive the root DB outside an outer transaction").toBe(0);
+    expect(paidRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
@@ -84,10 +102,12 @@ beforeEach(() => {
   childRunner.mockReset();
   contactRunner.mockReset();
   bargainRunner.mockReset();
+  paidRunner.mockReset();
+  couponRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains 0151 once, followed by 0152–0155, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152–0157, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -104,12 +124,18 @@ describe("embedded 0151 sequence registration", () => {
     expect(KEFU_SEQUENCE_ALIGNMENT_SQL.trim()).toBe(readFileSync(resolve(root, "migrations/0145_kefu_sequence_alignment.sql"), "utf8").trim());
     expect(setup.service.bargainCartParticipationMigrationSqlForVerification()).toBe(BARGAIN_CART_PARTICIPATION_SQL);
     expect(BARGAIN_CART_PARTICIPATION_SQL.trim()).toBe(readFileSync(resolve(root, "migrations/0149_bargain_cart_participation.sql"), "utf8").trim());
+    expect(setup.service.brokeragePaidOrderFenceMigrationSqlForVerification()).toBe(BROKERAGE_PAID_ORDER_FENCE_SQL);
+    expect(BROKERAGE_PAID_ORDER_FENCE_SQL.trim()).toBe(readFileSync(resolve(root, "migrations/0150_brokerage_paid_order_fence.sql"), "utf8").trim());
+    expect(setup.service.couponProductScopeFenceMigrationSqlForVerification()).toBe(COUPON_PRODUCT_SCOPE_FENCE_SQL);
+    expect(COUPON_PRODUCT_SCOPE_FENCE_SQL.trim()).toBe(readFileSync(resolve(root, "migrations/0151_coupon_product_scope_fence.sql"), "utf8").trim());
     expect(setup.transaction).not.toHaveBeenCalled();
     expect(runner).not.toHaveBeenCalled();
     expect(bargainRunner).not.toHaveBeenCalled();
+    expect(paidRunner).not.toHaveBeenCalled();
+    expect(couponRunner).not.toHaveBeenCalled();
   });
 
-  it("executes all 156 steps in order and dispatches 0151–0155 to independent root transaction runners", async () => {
+  it("executes all 158 steps in order and dispatches 0151–0157 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
@@ -118,12 +144,16 @@ describe("embedded 0151 sequence registration", () => {
     expect(childRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(contactRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(bargainRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(paidRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(couponRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.sqlCalls.filter(c => c.sql === "SET LOCAL search_path TO public, pg_temp")).toHaveLength(151);
     expect(setup.sqlCalls.some(c => c.sql === KEFU_SEQUENCE_ALIGNMENT_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PINK_RECOVERY_INDEX_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === FOREIGN_KEY_CHILD_INDEX_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === WORK_CONTACT_CLIENT_INDEX_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === BARGAIN_CART_PARTICIPATION_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === BROKERAGE_PAID_ORDER_FENCE_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === COUPON_PRODUCT_SCOPE_FENCE_SQL)).toBe(false);
   });
 
   it.each([new Error("already exists"), new Error("sequence drift"), "raw rejection"])(
@@ -197,8 +227,31 @@ describe("embedded 0151 sequence registration", () => {
       bargainRunner.mockRejectedValue(error);
       expect(await setup.service.runAll()).toEqual({ executed: names.slice(0, 155),
         errors: [`0155: ${error instanceof Error ? error.message : error}`] });
+      expect(paidRunner).not.toHaveBeenCalled();
       expect(contactRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
       expect(bargainRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+      expect(setup.transaction).toHaveBeenCalledTimes(151);
+    });
+
+  it.each([new Error("already exists"), new Error("fence drift"), "raw rejection"])(
+    "fails closed at 0156 without retry, legacy skip or false success (%s)", async error => {
+      const setup = harness();
+      paidRunner.mockRejectedValue(error);
+      expect(await setup.service.runAll()).toEqual({ executed: names.slice(0, 156),
+        errors: [`0156: ${error instanceof Error ? error.message : error}`] });
+      expect(paidRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+      expect(couponRunner).not.toHaveBeenCalled();
+      expect(setup.transaction).toHaveBeenCalledTimes(151);
+    });
+
+  it.each([new Error("already exists"), new Error("coupon fence drift"), "raw rejection"])(
+    "fails closed at 0157 without retry, legacy skip or false success (%s)", async error => {
+      const setup = harness();
+      couponRunner.mockRejectedValue(error);
+      expect(await setup.service.runAll()).toEqual({ executed: names.slice(0, 157),
+        errors: [`0157: ${error instanceof Error ? error.message : error}`] });
+      expect(paidRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+      expect(couponRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
       expect(setup.transaction).toHaveBeenCalledTimes(151);
     });
 

@@ -249,11 +249,14 @@ describe("embedded admin mobile product migration", () => {
   it("uses product and SKU locks, authoritative membership, and stock audit", () => {
     const service = readFileSync("src/services/admin/AdminMobileProductService.ts", "utf8");
     expect(service).toContain("for (const productId of input.ids) await lockProductWrite(tx, productId)");
-    expect(service).toContain('.orderBy(asc(storeProduct.id)).for("update")');
+    expect(service).toContain('.orderBy(asc(storeProduct.id)).for("update", { noWait: true })');
     expect(service).toContain('eq(storeProductAttrValue.productId, productId)');
     expect(service).toContain('if (updates.some((item) => !currentByUnique.has(item.unique)))');
     expect(service).toContain('await tx.insert(storeProductStockRecord).values(stockRecords)');
-    expect(service).toContain('await tx.update(storeCart).set({ status: input.isShow })');
+    expect(service).toContain('WITH locked_carts AS MATERIALIZED');
+    expect(service).toContain('ORDER BY ${storeCart.id} FOR UPDATE NOWAIT');
+    expect(service).toContain('FROM locked_carts WHERE ${storeCart.id} = locked_carts.id');
+    expect(service).toContain('cause.code === "55P03"');
     expect(service).toContain('eq(storeProductRelation.type, PRODUCT_CATEGORY_RELATION)');
     expect(service).toContain('eq(storeProduct.isDel, 0)');
     expect(service).toContain("商品批量上下架数据库回读校验失败");

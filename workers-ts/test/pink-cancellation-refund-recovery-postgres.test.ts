@@ -22,7 +22,7 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeCombination, storePink, storeOrderCartInfo, storeOrderStatus,
       storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
-    for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     svc = new ActivityJoinService(f.container, f.env);
     f.app.post("/api/combination/remove", removePink);
     f.app.get("/api/combination/remove/:id", authMiddleware({ force: true }), pinkCancellationStatus);

@@ -13,7 +13,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('checkout receipt
   const input = { cartIds: [1], addressId: 11, shippingType: 1 };
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeOrderCartInfo, storeOrderStatus, printDocument, storeCouponIssue, storeCouponUser]);
-    for (const key of Object.keys(f.config)) f.config[key] = '0';
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
   }, 30_000);
   afterEach(async () => { vi.restoreAllMocks(); await f?.close(); });
   const quote = async (key?: string, couponId?: number) => {

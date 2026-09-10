@@ -1,0 +1,90 @@
+{
+  "date": "2026-09-09",
+  "checklist": "FE-003L-A3k11c",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "status": "partial_uncommitted_worktree_candidate",
+  "userWorkflow": "逐个完成checklist，然后提交推送。",
+  "scope": ["package", "combination", "seckill"],
+  "implementation": {
+    "finalBoundary": "database clock after all other business SQL, on locked or atomically matched activity bounds",
+    "package": "positive epoch-second stop includes its full final second; zero is unbounded",
+    "combination": "explicit UTC timestamp instants, inclusive stop, null is unbounded; no transaction-start NOW()",
+    "seckill": "reuse existing locked schedule active window, exclusive end",
+    "maxAdditionalSqlRoundTripsPerCreate": 1,
+    "additionalBusinessTableReadsOrLocks": false,
+    "transactionNetworkCallsAdded": false,
+    "lockTimeoutChanged": false,
+    "pricingFormulaChanged": false,
+    "failure": "ORDER_QUOTE_RECONFIRM_REQUIRED and full business rollback with a confirmation; ValidateException without one",
+    "exactPhysicalCommitInstantGuaranteed": false,
+    "outerCallerMustNotExtendTransactionBeyondAdmission": true,
+    "sequenceRollbackGuaranteed": false
+  },
+  "evidence": {
+    "red": {
+      "engine": "dedicated loopback PostgreSQL 16.15",
+      "passed": 12, "failed": 6, "filteredByName": 72,
+      "businessFailures": "all three kinds expired during a late order INSERT wait in both session timezones, yet created successfully",
+      "report": "cinashop-activity-deadline-pg-red-20260909.json",
+      "sha256": "cee9b631fb12ce77184369bc6ee2395019b88361c51e2b419ba41e18c2f1515e"
+    },
+    "firstGreen": {
+      "files": 1, "passed": 90, "failed": 0, "skipped": 0,
+      "report": "cinashop-activity-deadline-pg-green-20260909.json",
+      "sha256": "f386270e284e108586dabe18049732f225294345ee938eff719d237f66c54a4e"
+    },
+    "finalRegression": {
+      "files": 32, "passed": 657, "failed": 0, "skipped": 0,
+      "environment": "Windows, dedicated PostgreSQL 16.15 SQL fixtures and pure unit/source contract tests",
+      "report": "cinashop-activity-deadline-pg-regression-20260909.json",
+      "sha256": "4f2b9d5c56e45d64f89959c63890ea3eb8debc7c333632a01f0811a9b0597d50",
+      "commandPrefix": "npm run test:unit --",
+      "commandSuffix": "--maxWorkers=1 --reporter=json --outputFile=<local-report.json>",
+      "testFiles": [
+        "test/activity-rule-quote-guard.test.ts", "test/admin-assisted-order-migration.test.ts",
+        "test/admin-discount-package.test.ts", "test/bargain-cart-binding-concurrency-postgres.test.ts",
+        "test/bargain-cart-binding.test.ts", "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts", "test/bargain-shipping-contract.test.ts",
+        "test/checkout-confirmation-postgres.test.ts", "test/checkout-confirmation-rules.test.ts",
+        "test/checkout-confirmation.test.ts", "test/coupon-scope-products-postgres.test.ts",
+        "test/discount-package-migration.test.ts", "test/integral-order-migration.test.ts",
+        "test/integral-storefront-compatibility.test.ts", "test/order-cart-pink-migration.test.ts",
+        "test/order-coupon-picker.test.ts", "test/order-delivery-address.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts", "test/pc-checkout-quote.test.ts",
+        "test/pc-order-coupon-postgres.test.ts", "test/pc-seckill-purchase.test.ts",
+        "test/pink-cancellation-payment-admission-postgres.test.ts", "test/pink-refund-lock-order-postgres.test.ts",
+        "test/seckill-catalog-schedule-postgres.test.ts", "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-schedule-postgres.test.ts", "test/seckill-schedule.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts", "test/uniapp-checkout-contract.test.ts",
+        "test/bargain-admin-dates-postgres.test.ts", "test/bargain-participation-concurrency-postgres.test.ts"
+      ]
+    },
+    "confirmationRulesFile": { "tests": 92, "independentPgTests": 44, "newIndependentPgTests": 20 },
+    "timezones": ["UTC", "America/New_York"],
+    "newPositiveBoundaryTests": "package last valid second remains admissible in both session timezones",
+    "independentPeers": "4 distinct non-reconnecting backends with exact pg_blocking_pids barrier",
+    "blockingFixture": "SHARE table lock on isolated store_order, blocking INSERT after activity reservation without changing tuples",
+    "expiryProof": "observed using database clock_timestamp before releasing holder",
+    "typechecks": { "unit": "passed", "runtime": "passed" },
+    "sourceSha256": "b0d42b450404fa7cb16ab7b3b0f933e0c7183347a5c7539fa6adfa79ef4ed781",
+    "testSha256": "f7d9c752c7e66551c5bee86e8c85102dc731f6b31ce2e077aa19e0bda5a8e53e",
+    "sourceAndTestUnchangedDuringFinalRegression": true,
+    "ownImmutableCi": "not run; current changes intentionally uncommitted"
+  },
+  "remaining": [
+    "Other initial product/SKU monetary and integral facts; form ID is not form content version",
+    "Package member insertions by raw writers not following parent locks",
+    "Referenced-but-missing seckill slots, coupon issue/scope/ancestor phantoms and equivalent encodings",
+    "Global SQL/KV configuration authority, production identity/storage/Hyperdrive and release gates",
+    "Full immutable Linux CI/workerd acceptance; subset evidence does not close the parent checklist item"
+  ],
+  "safety": {
+    "gitCommitThisTurn": false, "pushThisTurn": false,
+    "productionWrites": false, "deployment": false, "externalPayments": false,
+    "synthetic": ["HTTP identity", "KV", "sequence"],
+    "cleanupIdentity": { "database": "cinashop_finance_test", "role": "finance_test", "version": 160015, "timezone": "UTC" },
+    "fixtureCleanup": { "baselineDatabases": 4, "testSchemas": 0, "publicTables": 0, "otherClients": 0 },
+    "dedicatedPostgresStoppedAt": "2026-09-09T11:39:06Z",
+    "binariesDataAndReportsRetained": true
+  }
+}

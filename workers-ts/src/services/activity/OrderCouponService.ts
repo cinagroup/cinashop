@@ -5,6 +5,7 @@ import { ValidateException } from "@/utils/errors";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { calculateCouponDiscountCents, calculateCouponEligibleSubtotalCents, parseCouponScopeIds, reconcileCouponProductScopeIds, type CouponScopeItem } from "./ProductCouponService";
 import { projectOwnedCoupon } from "./UserCouponWalletService";
+import { couponTemplateSnapshot } from '@/services/order/CheckoutCouponTemplateAuthority';
 
 type Coupon = typeof storeCouponUser.$inferSelect;
 type Issue = typeof storeCouponIssue.$inferSelect;
@@ -71,7 +72,7 @@ function evaluateCoupon(coupon: Coupon, issue: Issue | null, scope: Awaited<Retu
 
 /** Authoritative single-coupon resolution shared by quote, create and the order picker. */
 export async function resolveOrderCoupon(container: Container, uid: number, couponId: number | undefined, items: readonly PricedCouponItem[]) {
-  if (!couponId) return { priceCents: 0, row: null, quoteFacts: null };
+  if (!couponId) return { priceCents: 0, row: null, quoteFacts: null, template: null };
   const rows = await container.db.select({ coupon: storeCouponUser, issue: storeCouponIssue }).from(storeCouponUser)
     .leftJoin(storeCouponIssue, eq(storeCouponIssue.id, storeCouponUser.issueCouponId))
     .where(and(eq(storeCouponUser.id, couponId), eq(storeCouponUser.uid, uid))).limit(1);
@@ -97,7 +98,8 @@ export async function resolveOrderCoupon(container: Container, uid: number, coup
       subtotalCents: item.subtotalCents,
     })).sort((a, b) => a.productId - b.productId || a.subtotalCents - b.subtotalCents),
   };
-  return { priceCents: evaluated.priceCents, row: coupon, quoteFacts };
+  return { priceCents: evaluated.priceCents, row: coupon, quoteFacts,
+    template: couponTemplateSnapshot(issue, scope.related.get(issue.id) ?? [], scope.items) };
 }
 
 /** Read-only snapshot, not a reservation. Legacy unpaged callers fail explicitly above 1000 candidates. */

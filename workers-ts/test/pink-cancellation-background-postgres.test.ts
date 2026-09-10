@@ -21,7 +21,7 @@ describe("scheduled original pink cancellation recovery through actual SQL", () 
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeCombination, storePink, storeOrderCartInfo, storeOrderStatus,
       storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
-    for (const key of Object.keys(f.config)) f.config[key] = "0";
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     send.mockClear();
     f.env.ORDER_QUEUE = { send, sendBatch: vi.fn().mockResolvedValue({ metadata: { metrics: {} } }),
       metrics: vi.fn().mockResolvedValue({ backlogCount: 0, backlogBytes: 0 }) };

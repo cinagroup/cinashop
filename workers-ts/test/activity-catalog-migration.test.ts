@@ -71,12 +71,21 @@ describe("activity catalog migration parity", () => {
     const join = readFileSync("src/services/activity/ActivityJoinService.ts", "utf8");
     const pink = readFileSync("src/services/activity/LegacyPinkStatusService.ts", "utf8");
 
-    for (const source of [dao, order, pink]) {
+    for (const source of [dao, pink]) {
       expect(source).toContain("storeCombination.isShow");
       expect(source).toContain("storeCombination.isDel");
       expect(source).toContain("storeCombination.startTime");
       expect(source).toContain("storeCombination.stopTime");
     }
+    // Checkout now guards the complete activity snapshot and rechecks its UTC
+    // deadline at the transaction tail, not a second ad-hoc column predicate.
+    for (const field of ['isShow', 'isDel']) expect(order).toContain(`storeCombination.${field}`);
+    for (const field of ['startTime', 'stopTime']) {
+      expect(order).toContain(`comboRow[0].${field}.getTime()`);
+      expect(order).toContain(`combinationConfirmationRules.${field}.toISOString()`);
+    }
+    expect(order).toContain('activityRuleQuoteGuard(combinationConfirmationRules, storeCombination)');
+    expect(order).toContain('finalActivityWindow');
     expect(readFileSync("src/services/activity/SeckillScheduleQuery.ts", "utf8")).toContain("storeSeckill.isShow");
     expect(dao).toContain(".where(seckillCatalogSchedulePredicate(timeId, now))");
     expect(dao).toContain("storeIntegral.isDel");

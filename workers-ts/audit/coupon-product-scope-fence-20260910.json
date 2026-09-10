@@ -1,0 +1,177 @@
+{
+  "date": "2026-09-10",
+  "status": "local-write-fence-foundation-verified-read-integration-pending",
+  "checklist": {
+    "checked": 234,
+    "open": 170,
+    "total": 404,
+    "item": "FE-003L-A3k11c",
+    "itemClosed": false
+  },
+  "scope": "Coupon/product multiset DML fence, explicit bounded maintenance runner, independent PostgreSQL and actual nonowner permission verification. Not a completed checkout read/write contract.",
+  "files": {
+    "src/migrations/couponProductScopeFence.ts": "66ec8a0a5ab9b6311b205004c68ca6a24b33dcf3218b49b33370f03770c6e2dc",
+    "migrations/0151_coupon_product_scope_fence.sql": "5ce37fb8805205a0639250698e68fdfcb2a1fb0770438766d035faed29b43604",
+    "src/migrations/runCouponProductScopeFence.ts": "f135f362c7cd803da722b25649e4cb9ef4a5d7a1a6ab851165f922a48f56cd8d",
+    "test/coupon-product-scope-fence.test.ts": "05a7d8373b5ccf652a0ec5eddd9c4f4dc32447eece29554f039706117b8cdf61"
+  },
+  "unchangedIntegrationFiles": {
+    "src/services/order/CheckoutCouponTemplateAuthority.ts": "c0f423fcebe5d16207cff34feb99b048878b27b69a94bbda813d96410d59cd4e",
+    "src/services/activity/OrderCouponService.ts": "e0a7825f06dd6130fd129bd90e707e080f7b9ff02ade6e7ee4da66907063789a",
+    "src/services/order/StoreOrderCreateService.ts": "46c7199f20900153789e8794bbbf6dee445209f3e8220fb2ca427238c468db24",
+    "src/services/MigrationService.ts": "5966b80fc26b1eb62399b2b3cf3f88787a5d52adf3c2af039ba3d1008aa3d576"
+  },
+  "reports": [
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-scope-fence-first-20260910.json",
+      "sha256": "f09d4db9ddd6481100e6135d283cfaf332c890fea861ff46243243cfebc4b7d4",
+      "files": 1,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "terminalExitCode": 0
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-scope-fence-regression-20260910.json",
+      "sha256": "84e471f56b8cdcfb3ed1799b5493bb9b8950f91617e433507bb23c4f8d23a49c",
+      "files": 7,
+      "passed": 149,
+      "failed": 1,
+      "skipped": 0,
+      "terminalExitCode": 1,
+      "failure": "New parent-creation test issued BEGIN on a max:4 pool; postgres-js rejected UNSAFE_TRANSACTION. Fixed by running identical SQL using the existing stable max:1 peer. No weakened assertion or helper safety change."
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-coupon-scope-fence-final-20260910.json",
+      "sha256": "730022acdc866181407d86a3702d7b1d31118a2c3703a0dd887b655e552965e5",
+      "files": 7,
+      "passed": 150,
+      "failed": 0,
+      "skipped": 0,
+      "terminalExitCode": 0,
+      "startTime": 1789010384622,
+      "endTime": 1789010426132.9885,
+      "sourceAndTestsUnchangedDuringFinalRun": true
+    }
+  ],
+  "finalFileCounts": {
+    "brokerage-paid-order-fence.test.ts": 40,
+    "brokerage-paid-order-migration.test.ts": 7,
+    "checkout-coupon-template-authority.test.ts": 25,
+    "coupon-product-scope-fence.test.ts": 45,
+    "coupon-relationship-migration.test.ts": 3,
+    "kefu-sequence-registration.test.ts": 24,
+    "out-coupon-migration.test.ts": 6
+  },
+  "testScope": {
+    "newTests": 45,
+    "sqlMirrorTests": 1,
+    "isolatedSchemaTests": 43,
+    "fullOrmActualLoginTests": 1,
+    "independentBackends": "financePeers validates four distinct stable backend PIDs; waiting cases use exact pg_blocking_pids, not elapsed-time guesses. Full ORM uses a random owned database and an actual nonowner LOGIN.",
+    "baselineGaps": [
+      "Without the migration a parent SHARE lock does not prevent direct SQL relation INSERT.",
+      "Even with DML triggers a parent SHARE lock alone does not prevent TRUNCATE."
+    ],
+    "covered": [
+      "first relation",
+      "last deletion",
+      "duplicate insert and single duplicate deletion",
+      "nonpositive product IDs and existing nonpositive parent IDs",
+      "old and new parents on transfer",
+      "batch exchange and ascending parent lock order",
+      "equal count/sum but different pair multiset",
+      "exact net-zero/no-op/zero-row and unrelated-parent nonblocking controls",
+      "BEFORE trigger final values",
+      "commit and rollback with a subsequent fresh reader statement",
+      "same-transaction parent creation/relation replacement and pre-owned parent lock",
+      "mixed valid/orphan batch rollback",
+      "function/trigger/column/PK/RLS/inheritance drift",
+      "late installation failure rolls back partially created objects",
+      "bounded maintenance lock timeout",
+      "actual template UPDATE privilege required by SECURITY INVOKER parent lock",
+      "low-privilege DML lock wait and dangerous DDL denial",
+      "full ORM and full external migration-directory construction"
+    ],
+    "excluded": [
+      "actual checkout relation-set authority",
+      "actual admin/out coupon business-handler integration",
+      "Hyperdrive/production runtime identity",
+      "workerd/browser/real-provider validation"
+    ]
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "unit": "passed",
+    "runtime": "passed",
+    "finalSessionId": 1832,
+    "terminalExitCode": 0
+  },
+  "maintenance": {
+    "automaticRequestInstallation": false,
+    "automaticDeployment": false,
+    "embeddedRegistration": false,
+    "embeddedNextStep": "0157",
+    "existingEmbeddedSteps": 157,
+    "runnerIsolation": "read committed",
+    "maximumStatementTimeoutMs": 30000,
+    "maximumLockTimeoutMs": 2000,
+    "maximumIdleTransactionTimeoutMs": 5000,
+    "existingStricterTimeoutsRetained": true,
+    "businessRowsRewritten": false,
+    "duplicateRelationsPreserved": true,
+    "requirement": "Authorized explicit upgrade on existing database; do not replay the full historical MigrationService.runAll merely to install this fence."
+  },
+  "localPostgres": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "version": "16.15",
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "dataRoot": "C:/Users/cina/AppData/Local/Temp/cinashop-pg16-3eddc58621bf4a2d97ea256c150ecc08",
+    "foregroundSessionId": 91760,
+    "verifiedServerPid": 12776,
+    "readyAt": "2026-09-10T03:10:57.424Z",
+    "shutdownConfirmedAt": "2026-09-10T03:21:19.5743665Z",
+    "foregroundTerminalExitCode": 0,
+    "finalDatabases": [
+      "cinashop_finance_test",
+      "postgres",
+      "template0",
+      "template1"
+    ],
+    "extraSchemas": 0,
+    "publicTables": 0,
+    "testRuntimeOrAuthProbeRoles": 0,
+    "otherClientBackends": 0,
+    "cleanup": "Only fixture-owned random databases/schemas/roles were removed by their helpers. Verified the exact dedicated server PID before stopping it. Binaries, data directory and original reports retained."
+  },
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createtrigger.html",
+    "https://www.postgresql.org/docs/16/explicit-locking.html",
+    "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/"
+  ],
+  "skills": {
+    "used": [
+      "cloudflare:workers-best-practices",
+      "build-web-apps:supabase-postgres-best-practices"
+    ],
+    "influence": "Short transactions, deterministic parent locking, transition-table semantics, rollback and actual nonowner verification; no new external transaction I/O.",
+    "latestWorkersTypesRetrieval": "npm view failed EACCES; used installed 5.20260828.1 Hyperdrive definitions. No bindings changed."
+  },
+  "limitations": [
+    "The existing template guard still evaluates the original relation snapshot; parent locking without fresh relation reading is insufficient.",
+    "Reader must hold the relation lock, validate the installed protocol and isolation/role/RLS contract, acquire parent SHARE, then issue a fresh set SELECT. No automatic checkout migration.",
+    "TRUNCATE requires an ordinary relation lock at read time; these INSERT/UPDATE/DELETE triggers do not cover it.",
+    "Administrative table/function/role/replica changes can bypass this protocol; local nonowner examples are not a production permissions gate.",
+    "Not a bidirectional foreign key: deleting a parent after a completed relation write is not prohibited by this fence.",
+    "Exact per-statement ordering does not eliminate all multi-statement or other-business deadlocks.",
+    "MigrationService registration, actual business handler integration, product/category/brand references, policy decisions, immutable CI and release remain open.",
+    "Tests are separate terminal runs and must not be summed with overlapping earlier reports. Historical PHP row reconciliation remains N/A per owner."
+  ],
+  "committed": false,
+  "pushed": false,
+  "deployed": false,
+  "productionWrites": false,
+  "realProviderCalls": false
+}

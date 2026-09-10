@@ -10,6 +10,7 @@ import { withTx, type Container, type DbClient } from "@/lib/di";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { settleSupplierPayment } from "@/services/supplier/SupplierFinanceService";
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
+import type { CheckoutBrokerageAuthority, BrokerageAccountFacts } from "@/services/order/CheckoutBrokerageAuthority";
 import {
   loadOrderRewardConfig,
   reverseOrderRewards,
@@ -41,6 +42,11 @@ export interface BrokerageOrderItem {
 }
 
 export interface OrderBrokerageSnapshot {
+  authority: CheckoutBrokerageAuthority | null;
+  /** Create-time dependencies only; not a customer quote or persisted ledger field.
+   * null means no recipient can use product/SKU commission rules in this snapshot.
+   */
+  itemRuleUsage: { oneEligible: boolean; twoEligible: boolean } | null;
   spreadUid: number;
   spreadTwoUid: number;
   oneBrokerageCents: number;
@@ -242,7 +248,7 @@ export function calculateDivisionBrokerageRates(input: {
   staff: DivisionAccount | null;
   agent: DivisionAccount | null;
   division: DivisionAccount | null;
-}): DivisionBrokerageRates {
+}, observeRate?: (role: 'buyer' | 'staff' | 'agent' | 'division', account: DivisionAccount | null) => void): DivisionBrokerageRates {
   if (!input.enabled) {
     return {
       oneBasisPoints: input.baseOneBasisPoints,
@@ -252,7 +258,8 @@ export function calculateDivisionBrokerageRates(input: {
       divisionBasisPoints: 0,
     };
   }
-  const activeRate = (account: DivisionAccount | null): number => {
+  const activeRate = (account: DivisionAccount | null, role: 'buyer' | 'staff' | 'agent' | 'division'): number => {
+    observeRate?.(role, account);
     if (!account || account.divisionStatus !== 1 || account.divisionEndTime <= input.now) return 0;
     if (!Number.isSafeInteger(account.divisionPercent) || account.divisionPercent < 0 || account.divisionPercent > 100) {
       throw new Error(`用户 ${account.uid} 的事业部分佣比例无效`);
@@ -269,18 +276,18 @@ export function calculateDivisionBrokerageRates(input: {
   if (buyer.divisionType === 1) {
     one = 0;
     two = 0;
-    division = input.selfBrokerage ? activeRate(buyer) : 0;
+    division = input.selfBrokerage ? activeRate(buyer, 'buyer') : 0;
   } else if (buyer.divisionType === 2) {
     one = 0;
     two = 0;
-    agent = input.selfBrokerage ? activeRate(buyer) : 0;
-    division = activeRate(input.division) - agent;
+    agent = input.selfBrokerage ? activeRate(buyer, 'buyer') : 0;
+    division = activeRate(input.division, 'division') - agent;
   } else if (buyer.divisionType === 3) {
     one = 0;
     two = 0;
-    staff = input.selfBrokerage ? activeRate(buyer) : 0;
-    agent = activeRate(input.agent) - staff;
-    division = activeRate(input.division) - staff - agent;
+    staff = input.selfBrokerage ? activeRate(buyer, 'buyer') : 0;
+    agent = activeRate(input.agent, 'agent') - staff;
+    division = activeRate(input.division, 'division') - staff - agent;
   } else if (buyer.staffId > 0) {
     if (buyer.staffId === buyer.spreadUid) {
       one = input.selfBrokerage ? input.baseOneBasisPoints : 0;
@@ -292,9 +299,9 @@ export function calculateDivisionBrokerageRates(input: {
         : input.baseTwoBasisPoints;
     }
     const storeRates = one + two;
-    staff = activeRate(input.staff) - storeRates;
-    agent = activeRate(input.agent) - storeRates - staff;
-    division = activeRate(input.division) - storeRates - staff - agent;
+    staff = activeRate(input.staff, 'staff') - storeRates;
+    agent = activeRate(input.agent, 'agent') - storeRates - staff;
+    division = activeRate(input.division, 'division') - storeRates - staff - agent;
   } else if (buyer.agentId > 0) {
     if (buyer.agentId === buyer.spreadUid) {
       one = input.selfBrokerage ? input.baseOneBasisPoints : 0;
@@ -306,8 +313,8 @@ export function calculateDivisionBrokerageRates(input: {
         : input.baseTwoBasisPoints;
     }
     const storeRates = one + two;
-    agent = activeRate(input.agent) - storeRates;
-    division = activeRate(input.division) - storeRates - agent;
+    agent = activeRate(input.agent, 'agent') - storeRates;
+    division = activeRate(input.division, 'division') - storeRates - agent;
   } else if (buyer.divisionId > 0) {
     if (buyer.divisionId === buyer.spreadUid) {
       one = input.selfBrokerage ? input.baseOneBasisPoints : 0;
@@ -318,7 +325,7 @@ export function calculateDivisionBrokerageRates(input: {
         ? 0
         : input.baseTwoBasisPoints;
     }
-    division = activeRate(input.division) - one - two;
+    division = activeRate(input.division, 'division') - one - two;
   }
   return {
     oneBasisPoints: Math.max(one, 0),
@@ -340,6 +347,8 @@ export async function buildOrderBrokerageSnapshot(
   },
 ): Promise<OrderBrokerageSnapshot> {
   const empty = {
+    authority: null,
+    itemRuleUsage: null,
     spreadUid: 0,
     spreadTwoUid: 0,
     oneBrokerageCents: 0,
@@ -372,15 +381,20 @@ export async function buildOrderBrokerageSnapshot(
   const normalizedTwoUid = second?.uid ?? 0;
   const mode = parseConfigInteger(values.store_brokerage_statu, 1);
   const thresholdCents = decimalToCents(values.store_brokerage_price || "0");
+  const paidOrders: CheckoutBrokerageAuthority['paidOrders'] = [];
   const [oneEligible, twoEligible] = await Promise.all([
-    first ? isEligiblePromoter(container.db, first, mode, thresholdCents) : false,
-    second ? isEligiblePromoter(container.db, second, mode, thresholdCents) : false,
+    first ? isEligiblePromoter(container.db, first, mode, thresholdCents,
+      eligible => { paidOrders.push({ uid: first.uid, thresholdCents, eligible }); }) : false,
+    second ? isEligiblePromoter(container.db, second, mode, thresholdCents,
+      eligible => { paidOrders.push({ uid: second.uid, thresholdCents, eligible }); }) : false,
   ]);
 
-  const [firstLevel, secondLevel] = await Promise.all([
+  const [firstLevelRow, secondLevelRow] = await Promise.all([
     first ? loadLevel(container, first.agentLevel) : null,
     second ? loadLevel(container, second.agentLevel) : null,
   ]);
+  const firstLevel = firstLevelRow?.status === 1 && firstLevelRow.isDel === 0 ? firstLevelRow : null;
+  const secondLevel = secondLevelRow?.status === 1 && secondLevelRow.isDel === 0 ? secondLevelRow : null;
   const oneBasisPoints = applyBrokerageUplift(
     parsePercentBasisPoints(values.store_brokerage_ratio || "0", "一级返佣比例"),
     firstLevel?.oneBrokerage ?? 0,
@@ -405,10 +419,41 @@ export async function buildOrderBrokerageSnapshot(
     if (uid === input.buyer.uid) return input.buyer;
     return relationById.get(uid) ?? null;
   };
+  const divisionEnabled = parseConfigInteger(values.division_status, 1) === 1;
+  const hasRatioItems = input.items.some(item => !item.specified);
+  const usesOneLevel = hasRatioItems && oneBasisPoints > 0 && (oneEligible || divisionEnabled);
+  const usesTwoLevel = hasRatioItems && twoBasisPoints > 0 && (twoEligible || divisionEnabled);
+  const authority: CheckoutBrokerageAuthority = { accounts: [], levels: [], missingReference: false, divisionClocks: [], paidOrders };
+  const buyerFacts: BrokerageAccountFacts = { uid: input.buyer.uid };
+  if (!selfBrokerage || (divisionEnabled && hasRatioItems)) buyerFacts.spreadUid = input.buyer.spreadUid;
+  if (divisionEnabled && hasRatioItems) Object.assign(buyerFacts, {
+    divisionType: input.buyer.divisionType, divisionId: input.buyer.divisionId,
+    agentId: input.buyer.agentId, staffId: input.buyer.staffId,
+  });
+  authority.accounts.push(buyerFacts);
+  const capturePromoter = (account: typeof user.$inferSelect | null, candidateUid: number, useLevel: boolean, isFirst: boolean) => {
+    if (!account) { if (candidateUid > 0) authority.missingReference = true; return; }
+    const facts: BrokerageAccountFacts = { uid: account.uid, status: account.status, spreadOpen: account.spreadOpen };
+    if (mode !== 2) facts.isPromoter = account.isPromoter;
+    if (isFirst && (twoLevels || (divisionEnabled && hasRatioItems))) facts.spreadUid = account.spreadUid;
+    if (useLevel) facts.agentLevel = account.agentLevel;
+    authority.accounts.push(facts);
+  };
+  capturePromoter(first, !selfBrokerage && spreadCandidate === input.buyer.uid ? 0 : spreadCandidate, usesOneLevel, true);
+  capturePromoter(second, [input.buyer.uid, first?.uid ?? 0].includes(spreadTwoUid) ? 0 : spreadTwoUid, usesTwoLevel, false);
+  const captureLevel = (id: number, row: typeof agentLevel.$inferSelect | null, used: boolean, tier: 'oneBrokerage' | 'twoBrokerage') => {
+    if (!used || id <= 0) return;
+    if (!row) { authority.missingReference = true; return; }
+    authority.levels.push({ id, status: row.status, isDel: row.isDel,
+      ...(row.status === 1 && row.isDel === 0 ? { [tier]: row[tier] } : {}) });
+  };
+  captureLevel(first?.agentLevel ?? 0, firstLevelRow, usesOneLevel, 'oneBrokerage');
+  captureLevel(second?.agentLevel ?? 0, secondLevelRow, usesTwoLevel, 'twoBrokerage');
+  const now = Math.floor(Date.now() / 1000);
   const divisionRates = calculateDivisionBrokerageRates({
-    enabled: parseConfigInteger(values.division_status, 1) === 1,
+    enabled: divisionEnabled,
     selfBrokerage,
-    now: Math.floor(Date.now() / 1000),
+    now,
     baseOneBasisPoints: oneBasisPoints,
     baseTwoBasisPoints: twoBasisPoints,
     buyer: input.buyer,
@@ -416,6 +461,17 @@ export async function buildOrderBrokerageSnapshot(
     staff: getRelation(input.buyer.staffId),
     agent: getRelation(input.buyer.agentId),
     division: getRelation(input.buyer.divisionId),
+  }, (role, account) => {
+    if (!hasRatioItems) return;
+    if (!account) {
+      const reference = role === 'buyer' ? input.buyer.uid : role === 'staff' ? input.buyer.staffId
+        : role === 'agent' ? input.buyer.agentId : input.buyer.divisionId;
+      if (reference > 0) authority.missingReference = true;
+      return;
+    }
+    const active = account.divisionStatus === 1 && account.divisionEndTime > now;
+    authority.accounts.push({ uid: account.uid, ...(active ? { divisionPercent: account.divisionPercent } : {}) });
+    authority.divisionClocks.push({ uid: account.uid, active });
   });
   const brokerage = calculateOrderBrokerage({
     items: input.items,
@@ -430,6 +486,10 @@ export async function buildOrderBrokerageSnapshot(
     twoEligible,
   });
   return {
+    authority,
+    itemRuleUsage: oneEligible || twoEligible || divisionRates.staffBasisPoints > 0 ||
+      divisionRates.agentBasisPoints > 0 || divisionRates.divisionBasisPoints > 0
+      ? { oneEligible, twoEligible } : null,
     spreadUid,
     spreadTwoUid: normalizedTwoUid,
     oneBrokerageCents: brokerage.oneCents,
@@ -796,7 +856,7 @@ async function loadLevel(container: Container, id: number) {
   const rows = await container.db
     .select()
     .from(agentLevel)
-    .where(and(eq(agentLevel.id, id), eq(agentLevel.status, 1), eq(agentLevel.isDel, 0)))
+    .where(eq(agentLevel.id, id))
     .limit(1);
   return rows[0] ?? null;
 }
@@ -806,6 +866,7 @@ async function isEligiblePromoter(
   candidate: typeof user.$inferSelect,
   mode: number,
   thresholdCents: number,
+  observePaidQualification?: (eligible: boolean) => void,
 ): Promise<boolean> {
   if (candidate.status !== 1 || candidate.spreadOpen !== 1) return false;
   if (candidate.isPromoter === 1 || mode === 2) return true;
@@ -822,7 +883,9 @@ async function isEligiblePromoter(
         inArray(storeOrder.refundStatus, [0, 3]),
       ),
     );
-  return decimalToCents(rows[0]?.total ?? "0") > thresholdCents;
+  const eligible = decimalToCents(rows[0]?.total ?? "0") > thresholdCents;
+  observePaidQualification?.(eligible);
+  return eligible;
 }
 
 export function decimalToCents(value: string | number): number {

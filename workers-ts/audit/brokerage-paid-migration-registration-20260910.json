@@ -1,0 +1,118 @@
+{
+  "date": "2026-09-10",
+  "status": "local-candidate-verified-not-committed-or-deployed",
+  "scope": "Register filesystem 0150 as embedded 0156 and verify new-database construction, standalone repeat upgrade and failure boundaries",
+  "baseCommit": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+  "registry": {
+    "previousMethodCount": 156,
+    "currentMethodCount": 157,
+    "changedHistoricalMethods": [],
+    "addedMethod": "migration_0156",
+    "historicalMethodsNormalizedAstSha256": "0558ab4f33c63f01f31aeb81322996472fbf3f88f06082a79f967d0d31ee9a72",
+    "methodComparison": "TypeScript AST method.getText, normalized CRLF to LF, comparing HEAD to working tree for every migration_0000 through migration_0155",
+    "migrationServiceBeforeSha256": "eb86748dcec003cbd4eee7618c08a46b01296cee7b70df6906a3be23ce998714",
+    "execution": "Explicit root READ COMMITTED runner, outside the generic MigrationService transaction; statement timeout capped at 30s, idle transaction at 5s, lock wait at 2s",
+    "existingDatabaseWarning": "Use the standalone runner only after maintenance authorization; runAll includes historical data writes and must not be replayed just to install this fence",
+    "ormWarning": "Generated ORM DDL does not install the triggers; the explicit standalone runner is required afterward",
+    "sqlAndRunnerChanged": false,
+    "sqlModuleChange": "Registration status comment only; SQL/function body unchanged"
+  },
+  "evidence": {
+    "red": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-registration-red-20260910.json",
+      "sha256": "950f458e54ddd4a0854b115db92d843fa994d4521715cdffcf8fec725eb70464",
+      "tests": 7,
+      "passed": 3,
+      "failed": 4,
+      "skipped": 0,
+      "interpretation": "Missing registry and embedded step, plus two fault probes never reaching the absent step; not four independent production failures. External construction, ORM plus standalone installation and preceding-step stop passed."
+    },
+    "firstGreen": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-registration-green-20260910.json",
+      "sha256": "2d0a525bcaa9291a42933b31992bfc592285fda2047d2808e13e746d2e76cbd9",
+      "files": 4,
+      "passed": 105,
+      "failed": 0,
+      "skipped": 0,
+      "typecheck": "Test helper query rows inferred unknown; replaced catalog query with typed Drizzle projection before final run. Production code was not changed for this type fix."
+    },
+    "final": {
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-paid-registration-final-20260910.json",
+      "sha256": "efaed6ac50e20e8e8621d6ada30361e77984c778ba5bdf799a5c3a20ea65a8a1",
+      "startUnixMs": 1789003640736,
+      "endUnixMs": 1789003745090.1226,
+      "files": 5,
+      "passed": 167,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "maxWorkers": 1,
+      "fileCounts": {
+        "test/brokerage-paid-order-migration.test.ts": 7,
+        "test/kefu-sequence-registration.test.ts": 24,
+        "test/brokerage-paid-order-fence.test.ts": 40,
+        "test/bargain-cart-participation-migration.test.ts": 34,
+        "test/checkout-brokerage-paid-authority.test.ts": 62
+      },
+      "coverage": [
+        "Actual full filesystem SQL history and full embedded 157-step construction on separately owned random PostgreSQL databases",
+        "Actual complete ORM DDL plus explicit standalone fence installation",
+        "Users/orders and table OID/relfilenode preservation; repeated installed function and trigger identity preservation",
+        "Installed paid insert/update/refund/delete behavior and missing-positive-user rejection",
+        "Preceding step failure prevents fence dispatch; current failure has no false success/retry/legacy already-exists skip",
+        "Real PostgreSQL exception after fence DDL rolls back all newly installed objects; independent retry succeeds",
+        "READ COMMITTED, search_path and bounded settings verified at real runner SQL execution",
+        "Existing independent PostgreSQL write fences and 62-case checkout read-authority regression"
+      ],
+      "noSourceOrTestEditsDuringFinalInvocation": true,
+      "claimBoundary": "Local targeted regression only, not whole-project immutable Linux CI/workerd/Hyperdrive acceptance. Do not add overlapping 105 or previous 1249 tests to this total."
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "unit": "passed",
+      "runtime": "passed",
+      "exitCode": 0
+    },
+    "skillReferences": {
+      "workersBestPractices": "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/",
+      "latestTypesAttempt": "npm view failed with EACCES at configured registry.npmmirror.com; used documented fallback: installed workers-types 5.20260828.1 Hyperdrive interface. No binding/config API changed.",
+      "postgresGuidance": "Short transactions with bounded statement and lock waits; no network/provider I/O in migration transactions."
+    }
+  },
+  "sha256": {
+    "src/services/MigrationService.ts": "5966b80fc26b1eb62399b2b3cf3f88787a5d52adf3c2af039ba3d1008aa3d576",
+    "src/migrations/brokeragePaidOrderFence.ts": "bdc142a13887156c7f9595de5631f367fce4cb75b4a01707740508813c026776",
+    "src/migrations/runBrokeragePaidOrderFence.ts": "779b3577af26a8c22859982014f2c9973ecee365256d715a6388b9176c70fdfc",
+    "migrations/0150_brokerage_paid_order_fence.sql": "2a5420131196e8d268b86ac52a6a9138e227bdeff2084cfa77b39548e79b37e2",
+    "test/brokerage-paid-order-migration.test.ts": "42c2f5f76877ebe809cf1d8e5b42bff0f36323c082a96d9d3229c9eda23c16ac",
+    "test/kefu-sequence-registration.test.ts": "cb53677296b536d3030ed0a411629bc271e9a91d4c0c73dcf11cba898e31128e"
+  },
+  "isolationAndCleanup": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "version": "160015",
+    "timezone": "UTC",
+    "processId": 7992,
+    "readyUtc": "2026-09-10T01:22:59.295Z",
+    "finalDatabases": ["cinashop_finance_test", "postgres", "template0", "template1"],
+    "remainingFixtureSchemas": 0,
+    "remainingPublicTables": 0,
+    "otherClients": 0,
+    "stoppedConfirmedUtc": "2026-09-10T01:30:35.4235906Z",
+    "retained": "Dedicated PostgreSQL binaries/data and raw reports; exact owned disposable databases removed by fixture cleanup"
+  },
+  "checklist": { "checked": 234, "open": 170, "total": 404, "A3k11c": "open" },
+  "remaining": [
+    "Full foreign-key/role-privilege and actual payment/refund multi-statement lock integration",
+    "Privileged concurrent function replacement and writer replication-role bypass deployment gate",
+    "PHP versus target cumulative-qualification and spread-binding semantic contract",
+    "Global SQL/KV authority, coupon/reference collections and other checklist work",
+    "Whole-project immutable CI/workerd and authorized production release acceptance"
+  ],
+  "productionWrites": false,
+  "deployed": false,
+  "committed": false,
+  "pushed": false
+}

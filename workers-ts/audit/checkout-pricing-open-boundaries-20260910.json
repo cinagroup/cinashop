@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-10",
+  "status": "verified-open-requirements-not-a-release-pass",
+  "environment": "Dedicated loopback PG16, random owned database with full ORM-generated DDL; no production connection",
+  "permissionProbe": {
+    "execSession": 95909,
+    "exitCode": 0,
+    "realLogin": true,
+    "superuser": false,
+    "createRole": false,
+    "createDatabase": false,
+    "bypassRls": false,
+    "selectOnly": { "pricingReadSucceeded": true, "pricingTableFenceSqlState": "42501" },
+    "selectPlusColumnUpdateId": { "pricingTableFenceSqlState": "42501" },
+    "configurationRows": 0,
+    "rightsRows": 0,
+    "ownedRoleAndDatabaseCleanupConfirmed": true,
+    "limitation": "Empty-source permission probe, not a complete order or production runtime-role acceptance test"
+  },
+  "adminWriteProbe": {
+    "execSession": 37358,
+    "exitCode": 0,
+    "path": "/api/admin/config/save",
+    "implementation": "Actual Hono handler, DAO, SQL and quote service; identity/error handler/KV are fixture substitutes",
+    "partialFailure": {
+      "input": "whole_free_shipping=1 followed by store_free_postage containing 5001 digits",
+      "businessResponseStatus": 400,
+      "postageBeforeCents": 600,
+      "postageAfterCents": 0,
+      "finding": "Earlier config UPDATE remains committed when a later varchar(5000) write fails"
+    },
+    "duplicateWinner": {
+      "seed": "Existing disabled free-shipping key plus a higher-priority sort=10/id=100 duplicate with value=0",
+      "requestedValue": "1",
+      "businessResponseStatus": 200,
+      "effectiveSqlValueAfterSave": "0",
+      "finding": "Unordered getOne updates a non-winning duplicate despite a successful response"
+    },
+    "ownedDatabaseCleanupConfirmed": true,
+    "limitation": "No order was created, no real admin authentication or KV service was used"
+  },
+  "sourceHashes": {
+    "src/services/order/CheckoutPricingSources.ts": "3837d48782cf9a51ae080b30010f871f24b286361bfb0a35aa7ae599b92d950c",
+    "src/controllers/api/v1/AdminCrudController.ts": "32a601226158b11d52c6e4b50045b5703d4b8b3656920073d4ac517e55827829",
+    "src/dao/system/SystemConfigDao.ts": "d4bb1ed10b1f783403273610d468a1bfa9918b90b2892a1b2ccf8fb7941166a3",
+    "test/helpers/pcCheckoutQuoteFixture.ts": "17bd9dbc707e6eb5876b199598409bf64e9901dd3c31aceab56c235ff9a4cd34",
+    "test/helpers/kefuSequenceRunnerDatabase.ts": "9d7cf6b00d87176f82238426dfca8d5853f5580dae93e8366d78b3fd65f9d9ee"
+  },
+  "candidateFullUnitRun": { "session": 41115, "stateAtRecord": "running", "finalResultAvailable": false },
+  "initialProbeSetupFailure": "The first permission probe imported schema.ts instead of schema/index.ts and failed before database setup; corrected probe is the evidence above",
+  "nextRequirements": [
+    "Make the actual generic admin batch writer atomic and align global scope/effective duplicate priority without deleting historical rows",
+    "Test actual admin write/checkout overlap, commit and rollback, not only direct SQL mutations",
+    "Resolve and verify runtime table-lock permissions without granting configuration write access merely to pass a checkout test",
+    "Collect the terminal full-suite result and address every failure before treating the candidate as validated"
+  ]
+}

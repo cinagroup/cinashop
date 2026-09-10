@@ -1,0 +1,121 @@
+{
+  "date": "2026-09-10",
+  "status": "domain-active-pc-preview-verified-production-application-unchanged",
+  "authorization": {
+    "objective": "逐个完成checklist，提交推送部署，直接在线上测试",
+    "adminProject": "cinashop-admin",
+    "adminOrigin": "https://cinashop-admin.pages.dev",
+    "storefrontOrigin": "https://shop.cinaseek.ai",
+    "preserveOccupiedNames": ["cinaseek.ai", "admin.cinaseek.ai", "api.cinaseek.ai", "www.cinaseek.ai"],
+    "note": "User explicitly selected cinashop-admin, then rejected occupied apex/admin/api names and requested shop subdomain"
+  },
+  "accountId": "7ea8e46d8210bad342fa7595f7935fea",
+  "zone": { "name": "cinaseek.ai", "id": "335aa09ca03bdd3d1901d24ee19c1089", "status": "active" },
+  "workerBaseline": {
+    "name": "cinashop-api",
+    "origin": "https://cinashop-api.cinagroup.workers.dev",
+    "latestDeploymentId": "92db1b32-2d9f-42ec-a5ca-f8eed30e351d",
+    "createdOn": "2026-08-09T13:59:31.976932Z",
+    "activeVersionId": "9f1fd655-e60f-41c1-8280-738bc85d73ef",
+    "trafficPercent": 100,
+    "gitShaVerified": false
+  },
+  "pagesBaselines": [
+    { "project": "cinashop-pc", "deploymentId": "5f3bfab4-64cc-443c-8d5c-a400508d519e", "createdOn": "2026-08-08T10:53:01.278075Z", "reportedSource": null, "branch": "main" },
+    { "project": "cinashop-h5", "deploymentId": "15330769-f7ef-4635-81f5-4e7b4e2dba4a", "reportedSource": "48297d2", "branch": "main" },
+    { "project": "cinashop-admin", "deploymentId": "00ac193e-be07-464e-8e77-b89295e9df7a", "reportedSource": "48297d2", "branch": "main" },
+    { "project": "cinashop-admin-ts", "deploymentId": "03e6cd56-603a-40f2-9e18-9217efc2adc8", "reportedSource": null, "branch": "main", "selectedForDeployment": false }
+  ],
+  "notFoundInProjectInventory": ["cinashop-supplier", "cinashop-kefu"],
+  "customDomainChange": {
+    "name": "shop.cinaseek.ai",
+    "pagesProject": "cinashop-pc",
+    "precheck": "No exact-name DNS records and no matching shop/wildcard-apex Worker routes; project had only cinashop-pc.pages.dev",
+    "domainId": "5481cbb5-282e-4ad3-99a7-e4e6269d7bcf",
+    "domainCreatedOn": "2026-09-10T08:53:31.335789Z",
+    "dnsRecordId": "85b4cbf4793e66752e8cef145059842c",
+    "dnsCreatedOn": "2026-09-10T08:54:07.005975Z",
+    "dns": { "type": "CNAME", "content": "cinashop-pc.pages.dev", "proxied": true, "ttl": 1 },
+    "initialControlPlaneState": { "status": "pending", "validation": "pending", "verification": "active" },
+    "lastControlPlaneState": { "capturedAtUtc": "2026-09-10T08:57:22Z", "status": "active", "validation": "active", "verification": "active" },
+    "httpsHome": { "status": 200, "title": "CinaShop - PC 商城", "entry": "/assets/index-ClV6Erfd.js" },
+    "renderedHome": { "browserTab": "7", "url": "https://shop.cinaseek.ai/", "title": "CinaShop - PC 商城", "meaningfulContent": ["商城导航", "推荐商品", "商品分类"], "screenshotOrInteractionAcceptance": false },
+    "rollbackScope": "Remove only the recorded new shop CNAME and Pages domain binding if needed; do not touch other zone records or replace the existing deployment",
+    "rollbackExecuted": false
+  },
+  "onlineBaseline": {
+    "capturedAt": "2026-09-10T08:50:12.348Z",
+    "probe": "audit/probe-live-release-baseline.mjs",
+    "probeSha256": "0b8a3b7d1d9fba81cc79887dc0c7af3d1481fa47a0ae19d754b367510b387bec",
+    "requests": "Nine unauthenticated GETs; no explicit application mutations or provider actions. This is not a database READ ONLY transaction guarantee; ordinary page/API access may generate logs or view statistics.",
+    "findings": [
+      "Worker health returned HTTP 200 and ok=true",
+      "PC, Admin and H5 returned HTML app shells; this alone does not prove rendered interactions",
+      "PC same-origin product detail proxy and direct Worker endpoint returned JSON business status 200 with flat camelCase product fields",
+      "Admin /adminapi/config/list returned the exact HTML shell, not an API authentication response; current formal Pages proxy is not verified working",
+      "Direct Worker /api/admin/config/list rejected anonymous access with business status 410000 and null data despite HTTP 200",
+      "Inspected Worker JSON responses lacked Cache-Control and X-Content-Type-Options; source candidate security middleware is not proven deployed"
+    ],
+    "probeFieldLimitation": "storeNamePresent checks a nested snake_case shape; false must not be interpreted as an absent title in the flat production product object"
+  },
+  "pcPreview": {
+    "deploymentId": "157b8f1c-f19a-4b31-8fbc-17ed495bb5f7",
+    "createdOn": "2026-09-10T09:04:03.894908Z",
+    "url": "https://157b8f1c.cinashop-pc.pages.dev",
+    "branch": "codex-shop-validation",
+    "environment": "preview",
+    "status": "success",
+    "reportedCommitHash": "af86b95f202712f7ebe3c6ffc027beaee3df1e5b",
+    "reportedCommitDirty": true,
+    "sourceQualification": "PC and view/common matched HEAD; unrelated Worker candidate changes were dirty and were not deployed by this Pages upload",
+    "build": { "command": "npm run build in view/pc-ts", "exitCode": 0, "authTests": 98, "imageTests": 7, "typecheck": "passed", "vite": "passed", "warnings": "Two existing misplaced PURE annotations in @vueuse/core removed by Rollup" },
+    "dist": { "files": 86, "sha256": "b95c5f6dd874d963369fbbc1c6a317556dd9dadfb85f7cf4da3819b20531873d", "manifestScope": "Sorted view/pc-ts/dist relative paths and each file SHA256", "entry": "/assets/index-BKWUsebi.js" },
+    "qa": {
+      "browser": "Headless Edge via installed Playwright 1.62.1; browser skill absent, CUA navigation evidence separate",
+      "flow": "Home -> All products -> price ascending -> /goods/16 -> mobile viewport",
+      "viewports": ["1440x1000", "390x844"],
+      "remoteApi": true,
+      "fixtures": false,
+      "nonReadRequestsBlocked": true,
+      "blockedWrites": 0,
+      "javascriptPageErrors": 0,
+      "frameworkOverlays": 0,
+      "horizontalOverflow": false,
+      "findings": [
+        "Meaningful home, 12 products after list loading completes; price control sends actual priceOrder=asc and renders ascending prices",
+        "Detail title and subtitle render from flat production API response",
+        "Unavailable external placeholder image produces two resource console errors and a visible image-load-failed fallback",
+        "Product 16 has no usable SKU; visible unavailable-specification message and disabled add-to-cart/buy buttons; not buyable catalog acceptance"
+      ],
+      "probeCorrection": "Initial networkidle-only snapshot captured list loading; probe now waits for actual list loading to finish and actual sort response. No frontend code was changed for this timing issue.",
+      "screenshotsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-preview-qa-e7e1024c60cd46138bff70bf9bf0c5a1",
+      "screenshots": ["settled-home-desktop.png", "settled-goods-after-navigation.png", "settled-goods-price-ascending.png", "settled-detail-desktop.png", "settled-detail-mobile.png"],
+      "notTested": ["Login/logout/refresh", "Order creation or payment", "WebSocket", "Provider side effects", "Production candidate rollout"]
+    }
+  },
+  "workerUnitTerminal": { "session": 90502, "exitCode": 0, "files": 371, "passed": 4287, "failed": 0, "pending": 0, "sourceScopeHash": "3a089407fe57a9d647def2ee1b10578d413e8d13cb731a06437af1de53613568", "evidence": "admin-config-batch-authority-20260910.json", "qualification": "Before subsequent shop configuration/test changes; not immutable CI or production acceptance" },
+  "shopOriginCandidate": {
+    "changed": ["wrangler.toml ALLOWED_ORIGINS and PC_AUTH_ALLOWED_ORIGINS", "Regenerated worker-configuration.d.ts", "test/deployment-shop-origin.test.ts"],
+    "productionWorkerSettingsChanged": false,
+    "red": { "passed": 12, "failed": 4 },
+    "green": { "files": 2, "passed": 21, "failed": 0 },
+    "typecheck": { "initialSession": 31508, "initialExitCode": 1, "initialFailure": "New test parsed NODE_ENV as string instead of generated production literal", "fix": "Explicit runtime production-value guard with narrowed return type; no unsafe assertion", "finalSession": 30487, "finalExitCode": 0, "scope": "Unit and runtime TypeScript" },
+    "generatedTypesCheck": "passed",
+    "workerDeployDryRun": { "exitCode": 0, "deployed": false },
+    "candidateHashes": {
+      "wrangler.toml": "44c3b81858d427072bb94c28d41e1ade23cbbc458768936eff45d05c2c744d11",
+      "worker-configuration.d.ts": "6c4950c33a682a8ae552a0e8e52bfff27e82a4d0d329f30097a1159a1873b41f",
+      "test/deployment-shop-origin.test.ts": "c3fac3953d4558d617a9c12784a7b668de085f7089054c42027ce6e4336b355d"
+    },
+    "boundary": "Exact shop HTTPS origin only; retain PC/H5 distinctions; reject occupied apex/admin/api/www, lookalikes, alternate scheme/port and preview origins; real Hono CORS plus metadata-only synthetic route, not real login"
+  },
+  "remaining": [
+    "Custom domain is active and HTTPS/rendered homepage were observed; complete navigation/API/login acceptance remains",
+    "Shop origin added to local auth/CORS candidate; deploy reviewed Worker settings and verify login, logout, refresh and WebSocket behavior online",
+    "PC preview built/deployed and browse-tested; formal PC/Admin rollout and authenticated acceptance remain",
+    "Complete database migration/permission, runtime/CI and rollback readiness before deploying new Worker",
+    "Supplier/Kefu project mapping, formal identities and provider-side-effect test scope remain to be resolved",
+    "Full unit session 90502 passed under frozen selected sources; subsequent origin configuration regression is separate, workerd and own immutable CI remain",
+    "Checklist remains 234 checked / 170 open; PC preview is a real deployment, formal applications are unchanged; no commit or push yet"
+  ]
+}

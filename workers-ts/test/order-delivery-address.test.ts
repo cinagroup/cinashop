@@ -16,7 +16,7 @@ describe('delivery address authority at the actual order core', () => {
     f.app.post('/api/order/create/:key', orderCreate);
     // Only the sequence response is synthetic; controller, core and SQL are real.
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'local-sequence', get: () => ({ fetch: async () => new Response('address_http') }) } });
-    for (const key of Object.keys(f.config)) f.config[key] = '0';
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
   }, 30_000);
   afterEach(async () => { await f?.close(); });

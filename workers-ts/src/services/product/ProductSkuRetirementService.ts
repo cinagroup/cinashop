@@ -236,6 +236,23 @@ function assertTrustedScope(scope: ProductSkuRetirementScope): void {
   if (!platform && !supplier) throw new ValidateException("商品归属范围无效");
 }
 
+// Only the explicit NOWAIT row reads use this translation. Let the exception
+// escape withTx so every previously acquired row/advisory lock is rolled back.
+async function inventoryLock<T>(read: () => PromiseLike<T>): Promise<T> {
+  try {
+    return await read();
+  } catch (error) {
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {
+      if ("code" in cause && cause.code === "55P03") {
+        throw new ValidateException("商品库存正在变化，请刷新商品后重试");
+      }
+      cause = "cause" in cause ? cause.cause : undefined;
+    }
+    throw error;
+  }
+}
+
 export class ProductSkuRetirementService {
   constructor(private readonly container: Container) {}
 
@@ -251,13 +268,15 @@ export class ProductSkuRetirementService {
       await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
       await tx.execute(sql.raw("SET LOCAL statement_timeout = '5s'"));
       await lockProductWrite(tx, input.productId);
-      // Match the normal admin editor's lock order, and serialize with Out/supplier
-      // SKU identity and inventory writes before locking mutable rows.
+      // Preserve the existing Out/supplier identity serialization order. Never
+      // wait for mutable product/SKU rows while holding this global lock:
+      // multi-product checkout can otherwise connect unrelated editor requests
+      // into a three-way cycle. A busy row aborts the entire lifecycle change.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(
         ${PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE},
         ${PRODUCT_SKU_IDENTITY_LOCK_KEY}
       )`);
-      const products = await tx.select({
+      const products = await inventoryLock(() => tx.select({
         id: storeProduct.id,
         type: storeProduct.type,
         relationId: storeProduct.relationId,
@@ -269,7 +288,7 @@ export class ProductSkuRetirementService {
         eq(storeProduct.type, scope.ownerType),
         eq(storeProduct.relationId, scope.relationId),
         eq(storeProduct.isDel, 0),
-      )).limit(1).for("update");
+      )).limit(1).for("update", { noWait: true }));
       const product = products[0];
       if (!product) {
         throw new NotFoundException(scope.surface === "supplier"
@@ -280,12 +299,12 @@ export class ProductSkuRetirementService {
         throw new ValidateException("当前阶段仅支持实物、卡密或手工虚拟商品SKU退役");
       }
       const expectedStatus = action === "retire" ? 0 : 1;
-      const skus = await tx.select().from(storeProductAttrValue).where(and(
+      const skus = await inventoryLock(() => tx.select().from(storeProductAttrValue).where(and(
         eq(storeProductAttrValue.productId, input.productId),
         eq(storeProductAttrValue.type, PRODUCT_SKU_TYPE),
         inArray(storeProductAttrValue.id, input.skuIds),
         eq(storeProductAttrValue.isRetired, expectedStatus),
-      )).orderBy(storeProductAttrValue.id).for("update");
+      )).orderBy(storeProductAttrValue.id).for("update", { noWait: true }));
       if (skus.length !== input.skuIds.length) {
         throw new ValidateException(action === "retire" ? "SKU不存在或已退役" : "SKU不存在或未退役");
       }
