@@ -1,0 +1,87 @@
+{
+  "date": "2026-09-10",
+  "status": "production-readonly-audit-completed-with-release-blocking-findings",
+  "baseCommit": "ab691c802ee338395ffa1cdcf4fb8d315ba3c3ed",
+  "scope": "Existing production Hyperdrive identity, paid-order permission envelope only; not full schema, trigger definitions, RLS, app roles or provider acceptance",
+  "production": {
+    "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",
+    "formalBindingIndependentlyMatched": true,
+    "formalWorker": "cinashop-api",
+    "formalDeploymentUnchanged": "92db1b32-2d9f-42ec-a5ca-f8eed30e351d",
+    "formalVersionUnchanged": "9f1fd655-e60f-41c1-8280-738bc85d73ef",
+    "trafficPercentage": 100,
+    "databaseWrites": false,
+    "grantsOrRevokes": false,
+    "migrationExecution": false,
+    "providerCalls": false
+  },
+  "execution": {
+    "completedAt": "2026-09-10T10:12:35.5091345+00:00",
+    "session": 23601,
+    "exitCode": 1,
+    "exitMeaning": "Completed audit found gaps; not an execution error",
+    "temporaryWorker": "cinashop-paid-runtime-audit-98a21ba3260a",
+    "access": { "anonymousGet": 403, "authenticatedPost": 405, "queryInput": 404, "authenticatedAudit": 200 },
+    "cacheControl": "no-store",
+    "token": "Random256-bit value kept in process memory; only SHA256 verifier deployed, 10-minute expiry; no verifier/token retained here",
+    "transaction": { "isolation": "repeatable read", "access": "read only", "statementTimeoutMs": 5000, "lockTimeoutMs": 1000, "idleTransactionTimeoutMs": 5000, "preservesStricterSettings": true },
+    "result": {
+      "ready": false,
+      "checks": {
+        "connectionIdentityVisible": true,
+        "objectsPresent": false,
+        "unprivilegedReachableRoles": false,
+        "noOwnerControl": false,
+        "noSchemaCreation": false,
+        "noTriggerCreation": false,
+        "noTruncate": false,
+        "noReplicationBypass": false,
+        "noUnreviewedDefinerRoutine": true,
+        "protocolReadWritePrivileges": true
+      },
+      "failures": ["objectsPresent", "unprivilegedReachableRoles", "noOwnerControl", "noSchemaCreation", "noTriggerCreation", "noTruncate", "noReplicationBypass"]
+    },
+    "cleanup": { "exactRandomWorkerDeleted": true, "controlPlane404": true, "publicEndpoint404": true }
+  },
+  "sourceSha256": {
+    "src/migrations/auditPaidOrderRuntimePermissions.ts": "4e84008663a8565e2770dc1ef47c508e5afb58f14ba49e95c4cc1b770c1c5d7e",
+    "test/integration/PaidRuntimeAuditWorker.ts": "0f8d04cb76a5266c520d55bbf39f795b6859cf817a43e4c57f4f4de8b4af7c81",
+    "test/integration/paid-runtime-audit.wrangler.jsonc": "892b9d6eafeed2291225c55aaff26cfc510d401aa05f7c564d51896c4caeb502",
+    "scripts/run-paid-runtime-production-audit.ps1": "d797be1259416786207bbe5d44f3ceb0237ae4841f1c7eeb6f419284a993d031"
+  },
+  "localValidation": {
+    "finalSession": 95606,
+    "files": 3,
+    "tests": 45,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 99.27,
+    "reportPath": "C:/Users/cina/AppData/Local/Temp/cinashop-release-preflight-20260910.json",
+    "reportSha256": "c280f636c9f4fec3dd4403516ed89b28e65b63522f72506f55a6ec828239a1f9",
+    "coverage": "20 Worker access/lifecycle/error contracts, 22 existing actual PG16 independent-login permission tests, 3 CI capacity/coverage-verifier tests",
+    "types": "Session34682: unit and runtime TypeScript both exit0 after module-scoping generated diagnostic bindings",
+    "dryRun": "Wrangler4.122.0 success; empty verifier denies all by default; 766.93KiB upload/132.21KiB gzip",
+    "initialTypeFailures": "Global generated diagnostic Env collided with app/test Env. Final generator keeps generated bindings module-scoped; existing runtime tests and subprocess environments unchanged.",
+    "runtimeContract": "Included for next Linux CI; prior ab691c8 CI does not cover this new probe",
+    "localPgCleanupAfterEarlier42TestRun": { "publicTables": 0, "extraDatabases": 0, "extraRoles": 0 }
+  },
+  "candidateCi": {
+    "runId": 34463119442,
+    "head": "ab691c802ee338395ffa1cdcf4fb8d315ba3c3ed",
+    "conclusion": "failure",
+    "failedJob": 102825348935,
+    "failure": "ci-gate-capacity.test.ts still required unit whole-job20 after workflow changed to40",
+    "firstShard": { "files": 187, "failedFiles": 1, "tests": 2177, "failedTests": 1, "seconds": 783.95, "coverageVerifierExecuted": false },
+    "secondShard": { "files": 186, "tests": 2136, "skipped": 0, "seconds": 697.39, "inventoryFiles": 373, "inventorySha256": "2456c59a91636f84c3e5c217fa7773aee3f1f67b0a9bc09adcd90686adfca313", "nativePartitionCompleteAndDisjoint": true, "executedFilesMatchNativePartition": true },
+    "runtime": { "files": 6, "tests": 59, "failed": 0 },
+    "otherSuccessfulJobs": ["Admin", "PC", "Supplier", "Kefu", "UniApp", "secret scan", "isolated PG16 catalog"],
+    "fix": "Pin unit40 and catalog20 independently; per-test deadlines, two-shard exact coverage, required-check name and failure rejection unchanged. New CI required."
+  },
+  "nextRequired": [
+    "Identify exactly which prerequisite catalog objects are missing with fixed read-only queries before choosing incremental migrations; objectsPresent=false alone does not identify the object.",
+    "Prepare separate maintenance and restricted runtime identities; do not revoke existing live identity privileges or change Hyperdrive credentials blindly.",
+    "Complete pricing lock capability for SELECT-only runtime identities without blanket SECURITY DEFINER exemption.",
+    "Run immutable Linux CI, then complete migration/role/application release and real-role online acceptance."
+  ],
+  "checklist": { "checked": 234, "open": 170, "total": 404, "itemsClosedByThisProbe": 0 }
+}

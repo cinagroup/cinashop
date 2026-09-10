@@ -18,6 +18,31 @@
 
 ## 检查合同
 
+### 使用正式 Hyperdrive 的临时探针
+
+已获准访问生产时，可在 PowerShell 7 的 `workers-ts` 目录显式执行
+`./scripts/run-paid-runtime-production-audit.ps1`。它要求现有 Cloudflare API 凭据，
+使用与正式应用相同的 Hyperdrive 绑定；不更换绑定或部署主应用。
+脚本先证明随机 Worker 名称不存在，部署独立探针，检查匿名／错误方法／查询参数拒绝，
+执行一次固定权限检查，最后删除这个确切的 Worker 并向控制面验证不存在。
+即使部署返回不确定错误，也会尝试清理本次随机目标；退出 2 或清理未证实时须人工复核，不能盲目重试。
+
+探针只保存随机 256 位令牌的 SHA-256 校验值，令牌不写入源码、URL 或报告；10 分钟有效，
+空配置或已过期请求在创建数据库客户端前拒绝。响应均 `no-store`；错误只记录固定事件名。
+`GET /audit` 不接受 schema、SQL 或其它查询参数。没有 DDL／业务数据写入路径，也不挂载到正式 API。
+其权限结果沿用前述范围和退出码；`ready=false` 是有效检查发现缺口，不是网络失败。
+上文5秒连接超时指直连CLI；Hyperdrive探针复用现有连接工厂，SQL仍受5／1／5秒局部超时约束，不声称事务或整个请求只有5秒。
+
+绑定类型由 `node scripts/generate-paid-runtime-audit-types.mjs` 生成。
+脚本保留 Wrangler 生成字段并将声明限制在模块内，避免临时诊断绑定污染正式应用的
+`Cloudflare.Env`／`NodeJS.ProcessEnv`；不要手工补写或双重强转来掩盖冲突。
+
+2026-09-10 的真实 Hyperdrive 检查完成但未通过：必要对象和六类权限限制共七项失败。
+现有运行身份可读写，但不能据此批准发布。详见
+[线上预检证据](../audit/paid-runtime-production-preflight-20260910.json)。
+应先只读定位缺失对象并准备增量迁移，再隔离维护身份与运行身份，验证后受控切换；
+不得直接撤销旧站正在使用的角色权限或执行完整历史 `runAll`。
+
 检查同时考虑上述三个身份直接拥有、立即继承、可SET切换及具ADMIN OPTION而可进一步授予的角色。对可达角色的高权限属性采用保守拒绝策略；这不是对所有PostgreSQL权限组合的完备证明。
 
 - 目标schema、普通user／store_order表及保护函数必须存在。这里只检查必要对象存在，不验证完整触发器定义。

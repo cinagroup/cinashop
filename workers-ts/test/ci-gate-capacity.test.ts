@@ -26,15 +26,18 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(aggregate).toContain('run: |\n          test "$UNIT_RESULT" = "success"\n          test "$CATALOG_RESULT" = "success"');
     expect(aggregate).not.toMatch(/continue-on-error|if:.*success\(\)|\|\| true/);
   });
-  it("retains every existing gate exactly once and does not increase execution or child time limits",()=>{
+  it("retains every gate, pins the measured unit job budget and preserves catalog and child limits",()=>{
     const unit=job("worker-unit"),catalog=job("worker-catalog");
     expect(names(unit)).toEqual([...setup,"Audit production dependencies","Run both TypeScript configurations","Run Worker unit tests",
       "Verify exact executed unit shard coverage",
       "Audit production observability contract","Audit legacy-to-PostgreSQL schema drift","Audit legacy-to-Worker route parity"]);
     expect(names(catalog)).toEqual([...setup,"Execute isolated PostgreSQL 16 ORM and migration catalog audit",
       "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16"]);
+    // Run 34460778121 exceeded the old whole-job budget while tests continued.
+    // Only unit-job capacity changed; no per-test deadline or gate is relaxed.
+    expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 40"]);
+    expect(catalog.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 20"]);
     for(const block of [unit,catalog]) {
-      expect(block).toContain("timeout-minutes: 20");
       expect(block).toContain("image: postgres:16.14-alpine");
       expect(block).toContain("TEST_FINANCE_POSTGRES_URL: postgresql://finance_test:finance_test@127.0.0.1:5432/cinashop_finance_test");
       expect(block).toContain('node-version: "24.14.1"');
