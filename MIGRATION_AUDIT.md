@@ -1,5 +1,15 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 候选已推送与后台预览修复（2026-09-10）
+
+终态补充：Actions34460778121最终cancelled，第一分片被20分钟job上限取消，汇总门禁failure；其余9作业成功。日志记录62个完成模块且直到09:48:04仍持续完成测试，未见Vitest断言失败行，但没有完整覆盖结果，不算全量通过。现仅将整个unit job预算改为40分钟，保持单测期限、断言、原两分片及精确零跳过门禁；将与3872506品牌修复共同提交并执行自身CI。下面“第一分片仍运行”是终态前快照，TEST-004G/H仍开放。
+
+已向独立分支 `codex/migration-shop-release-20260910` 推送迁移候选 `8ee335e`，另提交推送 `3872506` 补齐后台只读 `/api/site_config` Pages 路由。暂存范围及三个既有未推送提交经 Gitleaks 8.29.0 扫描；10 处初始命中经核实为固定幂等 UUID／源文件摘要，只按精确文件和值设置例外，复扫零泄露。未纳入意外 `workers-ts/NUL/README.md`，未改动远端 main 或正式应用流量。
+
+首轮自身 Linux [Actions 34460778121](https://github.com/cinagroup/cinashop/actions/runs/34460778121) 对应 `8ee335e`，当前已通过 workerd（49项）、五端、密钥扫描、PG16目录与第二单元分片（186文件／2136项／零跳过），第一分片及汇总尚待终态；不据阶段绿灯勾选 TEST-004G/H。后续品牌修复需自身CI，本机workerd新旧两组在启动前均报0xc0000005并执行0项，明确记为失败；31项Node测试及双类型通过。
+
+用户指定 `cinashop-admin` 的两次真实预览分别为 `9573c5d6`（8ee335e）与 `df175ac1`（3872506），完整ID见 `workers-ts/audit/release-domain-baseline-20260910.json`。修复前后均验证根路径跳登录、空表单本地拒绝、1440×1000／390×844无横向溢出、无控制台错误及匿名管理API JSON拒绝；品牌接口从HTML壳变为JSON200。但正式后端当前品牌数据仅含备案号，真实登录、完整品牌字段和管理业务仍待正式后端升级与验收，不宣称生产发布完成。下方“未提交／推送／没有新应用部署”均是此前阶段历史。
+
 ## 最新终态：shop 接通、PC 预览与完整单元回归（2026-09-10）
 
 `https://shop.cinaseek.ai` 已绑定 `cinashop-pc`，域名／验证／证书校验均 active，HTTPS 首页 200；根域名、admin、api、www 未改。正式流量仍为旧 PC 入口。新 PC 仅发布到预览 `https://157b8f1c.cinashop-pc.pages.dev`，完整部署 ID 和构建／浏览器证据见 `workers-ts/audit/release-domain-baseline-20260910.json`。真实线上首页→全部商品→价格升序→详情在桌面和移动视口无空白、运行时覆盖层或横向溢出；详情标题正常，但占位图片不可达、测试商品没有有效 SKU，购买按钮正确禁用，不能称完整购买链验收。

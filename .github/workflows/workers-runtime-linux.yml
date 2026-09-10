@@ -57,7 +57,9 @@ jobs:
       matrix:
         shard: [1, 2]
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Full-ORM transaction suites outgrew the job budget (run 34460778121).
+    # Keep per-test deadlines and exact zero-skip shard coverage unchanged.
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:16.14-alpine

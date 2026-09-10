@@ -1,6 +1,74 @@
 {
   "date": "2026-09-10",
-  "status": "domain-active-pc-preview-verified-production-application-unchanged",
+  "status": "candidate-pushed-pc-admin-previews-verified-production-application-unchanged",
+  "candidateProgress": {
+    "branch": "codex/migration-shop-release-20260910",
+    "migrationCommit": "8ee335eb9098013fe3c377b02bb8ec709d7aba46",
+    "brandingProxyCommit": "38725063d994d409a640d8bf28f07b9d0ca6383f",
+    "pushed": true,
+    "remoteMainAtFetch": "f58f6178ccbc3e8b8c9d84a8f29947d8747894ca",
+    "mainChanged": false,
+    "ci": { "runId": 34460778121, "commit": "8ee335eb9098013fe3c377b02bb8ec709d7aba46", "statusAtSnapshot": "in_progress", "completedSuccessfully": ["workerd", "Admin", "PC", "Supplier", "Kefu", "UniApp", "secret scan", "PG16 catalog", "unit shard 2"], "remainingAtSnapshot": ["unit shard 1", "dependent aggregate"], "qualification": "Does not cover subsequent branding proxy commit; its own Linux CI remains required" },
+    "ciTerminal": {
+      "runId": 34460778121,
+      "status": "completed",
+      "conclusion": "cancelled",
+      "failedAggregateJob": 102823859933,
+      "cancelledShardJob": 102817842382,
+      "annotation": "The job has exceeded the maximum execution time of 20m0s",
+      "unitStartedAt": "2026-09-10T09:29:27.0784352Z",
+      "lastPassedModuleAt": "2026-09-10T09:48:04.9257620Z",
+      "completedModuleLines": 62,
+      "explicitVitestFailureLinesObserved": 0,
+      "completeShardCoverageProven": false,
+      "successfulSecondShard": { "files": 186, "tests": 2136, "skipped": 0, "inventoryFiles": 372, "inventorySha256": "98bbb8e0d281acf252c0bb7d64ed5e1e6a0d571f6eee1ba08a1ff26745534bd8", "executedFileSha256": "8262875ba06876d04c967ad13b1dfadc0d7f03bb2c9354e83d7caffde38eec76", "exactNativeCoverageVerified": true },
+      "successfulRuntime": { "files": 5, "tests": 49 },
+      "followup": "Increase whole unit-job budget from 20 to 40 minutes based on sustained module progress until cancellation; preserve per-test deadlines, assertions, native two-shard partition and fail-closed zero-skip coverage verifier; next run must include branding proxy commit"
+    },
+    "secretScan": {
+      "version": "8.29.0",
+      "windowsArchiveSha256": "262f6d6a41ba11892ece339ab866b21a02e4d029e16e8916a9b0b59292001fe7",
+      "initialFindings": 10,
+      "review": "Two fixed idempotency UUID occurrences and eight source SHA256 manifest entries; four unique source hashes independently matched local files",
+      "exceptionScope": "Exact files AND exact values/lines only; no path-wide rule suppression",
+      "finalStagedBytes": 1081394,
+      "unpublishedHistoryCommits": 3,
+      "unpublishedHistoryBytes": 62480,
+      "finalLeaks": 0,
+      "invalidAttempts": "Sandbox Git ownership/config warnings included a zero-byte scan; those attempts were rejected, then repeated as repository owner with positive scanned byte counts",
+      "brandingCommitStagedBytes": 4285,
+      "brandingCommitLeaks": 0
+    },
+    "excludedUnrelatedPath": "workers-ts/NUL/README.md was not staged, changed or deleted",
+    "whitespaceCorrection": "Removed one trailing empty line from external migration 0150; no SQL semantic change"
+  },
+  "adminPreview": {
+    "project": "cinashop-admin",
+    "baseline": { "id": "9573c5d6-b598-407f-a278-f28272e74b29", "commit": "8ee335eb9098013fe3c377b02bb8ec709d7aba46", "createdOn": "2026-09-10T09:31:18.220451Z" },
+    "fixed": { "id": "df175ac1-2c04-46e1-bae3-18288d2e794a", "url": "https://df175ac1.cinashop-admin.pages.dev", "commit": "38725063d994d409a640d8bf28f07b9d0ca6383f", "createdOn": "2026-09-10T09:38:53.61146Z", "environment": "preview", "status": "success", "commitDirty": false },
+    "build": { "session": 92862, "exitCode": 0, "modules": 2446, "viteSeconds": 20.43, "staticFiles": 125, "fixedDeployStaticUploads": 0, "functionsRecompiled": true },
+    "fix": "Add exact /api/site_config Pages route, allow GET/HEAD only, forward no authentication headers/cookies, preserve upstream response stream/status/cache policy and manual redirects",
+    "tests": { "initial": "Missing-route import failure, zero test assertions; online baseline independently returned HTML", "unit": "10 new plus 21 related tests passed", "types": "Unit/runtime both passed in session 54816", "windowsRuntime": "Session 16749 exited 1: both new branding and existing notification pools failed to start with 0xc0000005, zero tests; not waived or recorded as passing", "latestTypesReviewed": "5.20260910.1 downloaded outside repository; project dependency unchanged" },
+    "onlineQa": {
+      "browser": "Installed Playwright 1.62.1 with headless Edge; browser skill absent",
+      "viewports": ["1440x1000", "390x844"],
+      "flow": "Root redirects to /login; empty form shows account/password-required message before any network write",
+      "pageIdentity": "登录 - CinaShop 管理后台",
+      "blankPage": false,
+      "frameworkOverlay": false,
+      "consoleErrorsOrWarnings": 0,
+      "horizontalOverflow": false,
+      "blockedNonReadRequests": 0,
+      "adminApi": "Before and after previews: /adminapi/config/list returns JSON status 410000 and null data for anonymous requests",
+      "brandingApi": "Before: /api/site_config returns HTML shell; after: application/json with business status 200 and non-null data",
+      "productionBackendLimitation": "Direct production /api/site_config currently exposes only record_No, not full branding fields; generic login fallback is not full branding-settings acceptance",
+      "screenshotsDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-preview-qa-179fd04ae0414b5e9db81fe2dea7a58e",
+      "afterScreenshots": ["after-login-desktop.png", "after-empty-form.png", "after-login-mobile.png"],
+      "beforeScreenshots": ["before-login-desktop.png", "before-empty-form.png", "before-login-mobile.png"],
+      "realLoginOrBusinessWriteTested": false
+    },
+    "formalDeploymentUnchanged": "00ac193e-be07-464e-8e77-b89295e9df7a"
+  },
   "authorization": {
     "objective": "逐个完成checklist，提交推送部署，直接在线上测试",
     "adminProject": "cinashop-admin",
@@ -116,6 +184,6 @@
     "Complete database migration/permission, runtime/CI and rollback readiness before deploying new Worker",
     "Supplier/Kefu project mapping, formal identities and provider-side-effect test scope remain to be resolved",
     "Full unit session 90502 passed under frozen selected sources; subsequent origin configuration regression is separate, workerd and own immutable CI remain",
-    "Checklist remains 234 checked / 170 open; PC preview is a real deployment, formal applications are unchanged; no commit or push yet"
+    "Checklist remains 234 checked / 170 open; migration and branding commits pushed to independent candidate branch; PC/Admin previews are real deployments but formal applications are unchanged"
   ]
 }
