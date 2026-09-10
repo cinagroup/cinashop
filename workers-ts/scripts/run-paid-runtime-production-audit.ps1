@@ -1,7 +1,7 @@
 # Deploy only a new, random, expiring diagnostic Worker, then remove that exact
 # Worker even if deployment or the HTTP check fails. Never changes cinashop-api.
 [CmdletBinding()]
-param()
+param([switch]$CatalogOnly)
 $ErrorActionPreference = 'Stop'
 if (-not $env:CLOUDFLARE_API_TOKEN) { throw 'CLOUDFLARE_API_TOKEN is required' }
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -24,6 +24,8 @@ $taskWrongMethodStatus = 0
 $taskWrongPathStatus = 0
 $taskUrl = $null
 $taskStage = 'target-absence'
+$taskRoute = if ($CatalogOnly) { 'catalog' } else { 'audit' }
+$taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } else { 'paid-order-runtime-permissions' }
 $env:CLOUDFLARE_ACCOUNT_ID = $taskAccount
 $env:WRANGLER_SEND_METRICS = 'false'
 $env:WRANGLER_LOG_PATH = Join-Path $env:TEMP "$taskName.log"
@@ -40,20 +42,22 @@ try {
     $taskMatch = [regex]::Match(($taskDeploy -join "`n"), 'https://' + [regex]::Escape($taskName) + '\.[a-z0-9-]+\.workers\.dev')
     if (-not $taskMatch.Success) { throw 'Expected owned Worker URL not found' }
     $taskUrl = $taskMatch.Value
+    $taskEndpoint = "$taskUrl/$taskRoute"
     $taskStage = 'access-boundaries'
-    $taskNoTokenStatus = [int](Invoke-WebRequest -Uri "$taskUrl/audit" -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    $taskNoTokenStatus = [int](Invoke-WebRequest -Uri $taskEndpoint -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
     $taskAuth = @{ 'X-Audit-Token' = $taskToken }
-    $taskWrongMethodStatus = [int](Invoke-WebRequest -Uri "$taskUrl/audit" -Method Post -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
-    $taskWrongPathStatus = [int](Invoke-WebRequest -Uri "$taskUrl/audit?schema=other" -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    $taskWrongMethodStatus = [int](Invoke-WebRequest -Uri $taskEndpoint -Method Post -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    $taskWrongPathStatus = [int](Invoke-WebRequest -Uri ($taskEndpoint + '?schema=other') -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
     if ($taskNoTokenStatus -ne 403 -or $taskWrongMethodStatus -ne 405 -or $taskWrongPathStatus -ne 404) {
         throw 'Online access boundary check failed'
     }
     $taskStage = 'database-audit'
-    $taskResponse = Invoke-WebRequest -Uri "$taskUrl/audit" -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 30
+    $taskResponse = Invoke-WebRequest -Uri $taskEndpoint -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 30
     if ([int]$taskResponse.StatusCode -ne 200) { throw 'Online permission audit could not complete' }
     if ($taskResponse.Headers['Cache-Control'] -notcontains 'no-store') { throw 'Audit response cache policy mismatch' }
     $taskReport = $taskResponse.Content | ConvertFrom-Json
-    if ($taskReport.scope -ne 'paid-order-runtime-permissions' -or $taskReport.ready -isnot [bool]) {
+    if ($taskReport.scope -ne $taskScope -or (-not $CatalogOnly -and $taskReport.ready -isnot [bool]) -or
+        ($CatalogOnly -and $taskReport.catalog.schemaPresent -isnot [bool])) {
         $taskReport = $null
         throw 'Unexpected audit response shape'
     }
@@ -77,7 +81,7 @@ try {
     generatedAt = [DateTimeOffset]::UtcNow.ToString('o')
     workerName = $taskName
     url = $taskUrl
-    scope = 'Existing Hyperdrive identity; paid-order permission envelope only, not full migration or application readiness'
+    scope = "$taskScope; evidence only, not full migration or application readiness"
     report = $taskReport
     access = @{ noToken = $taskNoTokenStatus; wrongMethod = $taskWrongMethodStatus; queryInput = $taskWrongPathStatus }
     cleanup = @{ attempted = $taskAttempted; deleteSucceeded = $taskDeleted; controlPlaneMissing = $taskMissing }
@@ -85,4 +89,4 @@ try {
     lastAuditStage = $taskStage
 } | ConvertTo-Json -Depth 8
 if ($taskFailure -or -not $taskMissing -or $null -eq $taskReport) { exit 2 }
-if (-not $taskReport.ready) { exit 1 }
+if (-not $CatalogOnly -and -not $taskReport.ready) { exit 1 }

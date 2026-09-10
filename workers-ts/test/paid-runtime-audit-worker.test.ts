@@ -2,9 +2,10 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import worker from './integration/PaidRuntimeAuditWorker';
 import type { PaidRuntimeAuditEnv } from './integration/paid-runtime-audit-bindings';
 
-const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), end: vi.fn() }));
+const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), catalog: vi.fn(), end: vi.fn() }));
 vi.mock('@/lib/di', () => ({ createDbFromConnectionString: mocks.create }));
 vi.mock('@/migrations/auditPaidOrderRuntimePermissions', () => ({ auditPaidOrderRuntimePermissions: mocks.audit }));
+vi.mock('@/migrations/auditReleasePrerequisiteCatalog', () => ({ auditReleasePrerequisiteCatalog: mocks.catalog }));
 
 const token = 'a'.repeat(64); // synthetic token, not a deployed credential
 let env: PaidRuntimeAuditEnv;
@@ -26,10 +27,34 @@ beforeEach(async () => {
   mocks.create.mockReturnValue({ $client: { end: mocks.end } });
   mocks.end.mockResolvedValue(undefined);
   mocks.audit.mockResolvedValue({ ready: false, checks: { objectsPresent: false }, failures: ['objectsPresent'] });
+  mocks.catalog.mockResolvedValue({ schemaPresent: true });
 });
 afterEach(() => vi.restoreAllMocks());
 
 describe('temporary production runtime permission audit', () => {
+  it('serves the fixed catalog separately without interpreting it as readiness', async () => {
+    const response = await worker.fetch(request('/catalog'), env);
+    expect(await response.json()).toEqual({ scope: 'release-prerequisite-catalog', catalog: { schemaPresent: true } });
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(mocks.catalog).toHaveBeenCalledExactlyOnceWith(mocks.create.mock.results[0].value);
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.end).toHaveBeenCalledExactlyOnceWith({ timeout: 1 });
+  });
+  it('denies anonymous, mutating or parameterized catalog requests before SQL', async () => {
+    expect((await worker.fetch(request('/catalog', 'GET', ''), env)).status).toBe(403);
+    expect((await worker.fetch(request('/catalog', 'POST'), env)).status).toBe(405);
+    expect((await worker.fetch(request('/catalog?schema=private'), env)).status).toBe(404);
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+  it('redacts catalog failures and closes the client', async () => {
+    mocks.catalog.mockRejectedValue(new Error('private catalog context'));
+    const response = await worker.fetch(request('/catalog'), env);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: 'audit failed' });
+    expect(logCalls).toContainEqual([JSON.stringify({ event: 'paid_runtime_audit_failed' })]);
+    expect(JSON.stringify(logCalls)).not.toContain('private catalog context');
+    expect(mocks.end).toHaveBeenCalledExactlyOnceWith({ timeout: 1 });
+  });
   it.each(['', 'b'.repeat(64), 'a'.repeat(65), 'A'.repeat(64)])('denies invalid token %s before connecting', async credential => {
     const response = await worker.fetch(request('/audit', 'GET', credential), env);
     expect(response.status).toBe(403);

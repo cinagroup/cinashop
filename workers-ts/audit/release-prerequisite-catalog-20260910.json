@@ -1,0 +1,301 @@
+{
+  "date": "2026-09-10",
+  "scope": "Fixed catalog-only production inspection; no business rows, DDL or permission changes",
+  "baseCommit": "2a6fa02b7ccf3fda286697c39ed283aff1725d3f",
+  "execution": {
+    "generatedAt": "2026-09-10T10:33:17.7726045+00:00",
+    "workerName": "cinashop-paid-runtime-audit-7cb58cf07009",
+    "url": "https://cinashop-paid-runtime-audit-7cb58cf07009.cinagroup.workers.dev",
+    "scope": "release-prerequisite-catalog; evidence only, not full migration or application readiness",
+    "report": {
+      "scope": "release-prerequisite-catalog",
+      "catalog": {
+        "tables": [
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "capital_flow",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "order_notification_delivery",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_coupon_issue",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_coupon_product",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order_outbox",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "system_message",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "user",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "user_extract",
+            "exists": true
+          }
+        ],
+        "columns": [
+          {
+            "name": "event_key",
+            "type": null,
+            "table": "capital_flow",
+            "exists": false,
+            "notNull": null,
+            "defaultHash": null
+          },
+          {
+            "name": "order_id",
+            "type": "integer",
+            "table": "order_notification_delivery",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": null
+          },
+          {
+            "name": "withdrawal_id",
+            "type": null,
+            "table": "order_notification_delivery",
+            "exists": false,
+            "notNull": null,
+            "defaultHash": null
+          },
+          {
+            "name": "request_hash",
+            "type": null,
+            "table": "user_extract",
+            "exists": false,
+            "notNull": null,
+            "defaultHash": null
+          },
+          {
+            "name": "request_key",
+            "type": null,
+            "table": "user_extract",
+            "exists": false,
+            "notNull": null,
+            "defaultHash": null
+          },
+          {
+            "name": "wechat",
+            "type": "character varying(15)",
+            "table": "user_extract",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          }
+        ],
+        "indexes": [
+          {
+            "name": "cf_event_key_uq",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "ond_withdrawal",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "smsg_staff_inbox",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "ue_request_replay_uq",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          }
+        ],
+        "triggers": [
+          {
+            "name": "coupon_product_delete_0151",
+            "table": "store_coupon_product",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "coupon_product_insert_0151",
+            "table": "store_coupon_product",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "coupon_product_update_0151",
+            "table": "store_coupon_product",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_delete_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_insert_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_update_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          }
+        ],
+        "functions": [
+          {
+            "name": "brokerage_paid_order_fence_0150",
+            "exists": false,
+            "sourceHash": null,
+            "securityDefiner": null
+          },
+          {
+            "name": "coupon_product_scope_fence_0151",
+            "exists": false,
+            "sourceHash": null,
+            "securityDefiner": null
+          }
+        ],
+        "constraints": [
+          {
+            "name": "ond_subject_ck",
+            "table": "order_notification_delivery",
+            "exists": false,
+            "truncated": null,
+            "validated": null,
+            "definition": null
+          },
+          {
+            "name": "soob_event_type_ck",
+            "table": "store_order_outbox",
+            "exists": true,
+            "truncated": false,
+            "validated": true,
+            "definition": "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying])::text[])))"
+          }
+        ],
+        "serverMajor": 16,
+        "schemaPresent": true,
+        "reachableRoleAttributes": {
+          "createDb": true,
+          "bypassRls": true,
+          "superuser": true,
+          "createRole": true,
+          "replication": true
+        }
+      }
+    },
+    "access": {
+      "noToken": 403,
+      "wrongMethod": 405,
+      "queryInput": 404
+    },
+    "cleanup": {
+      "controlPlaneMissing": true,
+      "attempted": true,
+      "deleteSucceeded": true
+    },
+    "failure": null,
+    "lastAuditStage": "audit-completed"
+  },
+  "findings": {
+    "db006": "request_key/request_hash and replay index absent; wechat varchar(15)",
+    "db007": "event_key/withdrawal_id, three indexes and subject constraint absent; order_id still NOT NULL; event CHECK contains only five original order events",
+    "checkoutFences": "Both0150/0151 functions and all six triggers absent",
+    "role": "Reachable role attributes include superuser, createdb, createrole, replication and bypassrls",
+    "scopeBoundary": "Does not inspect all0134-0149 migrations or prove full release readiness"
+  },
+  "tests": {
+    "catalogAndHttp": 28,
+    "failed": 0,
+    "types": "Unit/runtime passed session16465",
+    "dryRun": "Wrangler4.122.0,773.51KiB/133.44KiB gzip"
+  },
+  "ciBaseline": {
+    "runId": 34465733296,
+    "commit": "2a6fa02b7ccf3fda286697c39ed283aff1725d3f",
+    "conclusion": "success",
+    "unit": {
+      "files": 374,
+      "tests": 4333,
+      "skipped": 0,
+      "shard1": 2192,
+      "shard2": 2141,
+      "inventorySha256": "c9bea72784cb0b0ac50542553c289b069fbf57dbcd9e53e0c9a99a797422009e",
+      "exactNativePartitionsVerified": true
+    },
+    "runtime": {
+      "files": 7,
+      "tests": 79
+    },
+    "workerProductionVulnerabilities": 0,
+    "kefuFullTreeVulnerabilities": 0,
+    "qualification": "Supports TEST-004G/H dependency fix closure at this immutable commit, not subsequent diagnostic/migration changes or production business acceptance"
+  }
+}

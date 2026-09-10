@@ -1,5 +1,13 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 最新完整门禁和数据库增量准备（2026-09-10）
+
+`2a6fa02`的[完整Linux门禁](https://github.com/cinagroup/cinashop/actions/runs/34465733296)已全部成功，374文件4333单元零跳过、79 workerd、五端、PG目录和依赖审计通过。关闭TEST-004G/H，当前236完成／168开放／404项；不扩展为后续维护代码或正式业务验收。
+
+通过同一生产Hyperdrive的固定只读catalog，现已定位：DB-006两个重放列／索引缺失且wechat为varchar(15)；DB-007事件键／提现主体列、索引和约束缺失，出箱仍仅允许五个旧订单事件；0150／0151两个函数及六个触发器缺失。可达角色拥有SUPERUSER等高权限，不应作为正式低权限运行身份。临时目录探针已删除，未写生产；结果见[固定目录证据](workers-ts/audit/release-prerequisite-catalog-20260910.json)。
+
+DB-006独立维护候选仅做已审查的0130增量；拒绝漂移／并发占锁／过大表，核对持锁整行SHA-256和独立只读postflight，不自动重试未知结果。4文件57项本机测试通过，尚未执行生产DDL，正式应用不切换。操作及回滚边界见[维护说明](workers-ts/docs/withdrawal-replay-production-upgrade.md)。
+
 ## 生产运行身份预检与当前 CI 终态（2026-09-10）
 
 探针提交`1fed16a`已推送。其自身Actions34465418616的workerd为76通过／3失败：错误响应断言通过后，新测试读取console.error.mock.calls异常。修复仅改日志观察方式并增加错误事件正向断言，不改正式逻辑；本机23项通过，Windows workerd启动失败执行0项。详细版本边界见证据中的probeCiFollowup；必须以修复提交自身CI验证，不将旧绿灯借给新测试。
