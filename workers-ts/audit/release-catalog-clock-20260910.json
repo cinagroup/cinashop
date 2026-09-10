@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-10",
+  "baseCommit": "ceac573",
+  "scope": "Expanded fixed readonly production catalog and test-only division clock wait correction; no production DDL or formal application deployment",
+  "candidateCi": {
+    "runId": 34468277203,
+    "head": "1f8ca6bab014b6e620ce0f187a3b9588fc67ae6f",
+    "conclusion": "failure",
+    "unit1": { "files": 189, "passed": 2201, "failed": 1, "seconds": 849.48 },
+    "unit2": { "files": 188, "passed": 2168, "skipped": 0, "seconds": 587.88 },
+    "runtime": { "files": 8, "passed": 98 },
+    "otherJobs": "five frontend builds, PostgreSQL catalog and secret scan succeeded; aggregate failed",
+    "soleFailure": "checkout-brokerage-authority: rechecks division clock after late business wait (UTC, valid); detail INSERT failed with PostgreSQL55P03 lock timeout",
+    "automaticRetry": false
+  },
+  "clockDiagnosis": {
+    "unchangedLocalBaseline": { "session": 49680, "tests": 108, "passed": 108, "seconds": 84.05, "note": "CI's SQL failure did not reproduce in this one unchanged local run; this does not invalidate the CI failure" },
+    "deterministicBoundaryRed": "The old ceil((millis+1200)/1000) deadline violates the <=1500ms test-probe budget; selected pure timing test failed, 108 business cases were intentionally name-filtered out",
+    "reasoning": "Rounding can extend the synthetic wait to almost2200ms, beyond boundShippingTemplateTransaction's unchanged2000ms lock_timeout. CI supplies the corresponding actual lock-timeout failure, but not exact clock phase telemetry.",
+    "change": "Only test deadline padding1200->500ms; pure test covers all1000 integer millisecond phases. Expiring cases additionally prove the observed blocker starts before expiry. Existing clock-after-deadline, real blocker PID, order/reconfirmation, rollback and SQL-error identity assertions remain.",
+    "productionCodeOrTimeoutChanged": false
+  },
+  "localFinal": {
+    "session": 53764,
+    "files": 5,
+    "tests": 168,
+    "passed": 168,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 97.39,
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-catalog-clock-final-20260910.json",
+    "reportSha256": "edd12d99c1e01c8d5a4bbd9edad1ae9f1a9dcb2427cd19793615dcb2ab918378",
+    "filesExecuted": ["checkout-brokerage-authority.test.ts", "release-prerequisite-catalog.test.ts", "paid-runtime-audit-worker.test.ts", "withdrawal-replay-upgrade.test.ts", "withdrawal-replay-migration-worker.test.ts"],
+    "types": { "session": 49860, "unit": "passed", "runtime": "passed" },
+    "sourceHashesObservedDuringAndAfterFinalRun": {
+      "src/migrations/auditReleasePrerequisiteCatalog.ts": "d0276dcd1eb6b4fdc3e4e15bb9b02978605b3a18a6012ac4157d89fc920adcb9",
+      "test/release-prerequisite-catalog.test.ts": "64c021f3861a2bb28d0e3d034696d6e40cb9cd83127f0d13cf93145b22a5f8ca",
+      "test/checkout-brokerage-authority.test.ts": "8913a967fd905b534a2e6e419adfd2954a32daa40adfa0baebef84020a9fd5c0"
+    },
+    "cleanup": { "testSchemas": 0, "publicTables": 0, "extraDatabases": 0, "extraRoles": 0 },
+    "scopeLimit": "Targeted local regression, not full candidate CI. Counts do not add overlapping baseline or earlier59-test runs."
+  },
+  "productionCatalog": {
+    "evidence": "release-expanded-production-catalog-20260910.json",
+    "worker": "cinashop-paid-runtime-audit-3933db56d0c0",
+    "dryRun": "Wrangler4.122.0 passed;773.96KiB/133.60KiB gzip",
+    "counts": { "tables": 15, "columns": 11, "indexes": 8, "constraints": 3, "functions": 2, "triggers": 6 },
+    "newEvidence": "0134 target widths already present;0146-0148 four indexes and0149 bargain_user_id/check absent",
+    "notCovered": "0135-0145 alignment, whole schema/protocol equivalence, runtime least privilege and business/provider acceptance",
+    "readOnly": true,
+    "cleanup": { "deleteSucceeded": true, "controlPlane404": true, "publicEndpoint404": true },
+    "formalDeploymentUnchanged": "92db1b32-2d9f-42ec-a5ca-f8eed30e351d",
+    "formalVersion100Percent": "9f1fd655-e60f-41c1-8280-738bc85d73ef"
+  },
+  "next": "Commit and push this candidate branch, run its exact Linux CI, then continue release prerequisites. DB-006 specific production DDL authorization remains unanswered; do not retry or bypass the rejected operation.",
+  "checklist": { "checked": 236, "open": 168, "total": 404 }
+}

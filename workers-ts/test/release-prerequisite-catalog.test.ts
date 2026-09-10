@@ -20,7 +20,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('fixed release ca
     expect(queries.at(-1)?.toLowerCase()).toBe('commit');
     expect(result.serverMajor).toBe(16);
     expect(result.schemaPresent).toBe(true);
-    for (const [key, count] of [['tables',9],['columns',6],['indexes',4],['constraints',2],['functions',2],['triggers',6]] as const) {
+    for (const [key, count] of [['tables',15],['columns',11],['indexes',8],['constraints',3],['functions',2],['triggers',6]] as const) {
       expect(result[key]).toHaveLength(count);
       expect(result[key].every(item => item.exists === false)).toBe(true);
     }
@@ -45,11 +45,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('fixed release ca
       await f.exec(readFileSync(`migrations/${name}.sql`, 'utf8'));
     }
     const after = await auditReleasePrerequisiteCatalog(f.db);
-    expect(after.columns.every(c => c.exists)).toBe(true);
+    expect(after.columns.filter(c => ['user_extract','capital_flow','order_notification_delivery'].includes(c.table))).toHaveLength(6);
+    expect(after.columns.filter(c => ['user_extract','capital_flow','order_notification_delivery'].includes(c.table)).every(c => c.exists)).toBe(true);
     expect(after.columns.find(c => c.name === 'wechat')?.type).toBe('character varying(64)');
     expect(after.columns.find(c => c.name === 'order_id')?.notNull).toBe(false);
-    expect(after.indexes.every(i => i.exists && i.valid && i.ready && !i.truncated)).toBe(true);
-    expect(after.constraints.every(c => c.exists && c.validated && !c.truncated)).toBe(true);
+    const withdrawalIndexes = after.indexes.filter(i => ['ue_request_replay_uq','cf_event_key_uq','ond_withdrawal','smsg_staff_inbox'].includes(i.name));
+    expect(withdrawalIndexes).toHaveLength(4);
+    expect(withdrawalIndexes.every(i => i.exists && i.valid && i.ready && !i.truncated)).toBe(true);
+    const withdrawalConstraints = after.constraints.filter(c => c.table !== 'store_cart');
+    expect(withdrawalConstraints).toHaveLength(2);
+    expect(withdrawalConstraints.every(c => c.exists && c.validated && !c.truncated)).toBe(true);
     expect(after.constraints.find(c => c.name === 'soob_event_type_ck')?.definition).toContain('withdrawal.staff.refresh');
     expect(JSON.stringify(after)).not.toContain('synthetic-contact');
     expect(JSON.stringify(after)).not.toContain('synthetic-private-note');
@@ -64,6 +69,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('fixed release ca
     await runBrokeragePaidOrderFence(f.db);
     await runCouponProductScopeFence(f.db);
     const result = await auditReleasePrerequisiteCatalog(f.db);
+    expect(result.tables).toHaveLength(15);
+    expect(result.tables.every(t => t.exists && t.kind === 'r' && !t.rls)).toBe(true);
+    expect(result.columns).toHaveLength(11);
+    expect(result.columns.every(c => c.exists)).toBe(true);
+    expect(result.indexes).toHaveLength(8);
+    expect(result.indexes.every(i => i.exists && i.valid && i.ready && !i.truncated)).toBe(true);
+    expect(result.constraints).toHaveLength(3);
+    expect(result.constraints.every(c => c.exists && c.validated && !c.truncated)).toBe(true);
     expect(result.functions).toHaveLength(2);
     expect(result.functions.every(p => p.exists && !p.securityDefiner && /^[a-f0-9]{32}$/.test(p.sourceHash ?? ''))).toBe(true);
     expect(result.triggers).toHaveLength(6);
@@ -81,6 +94,73 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('fixed release ca
     expect(column?.defaultHash).toMatch(/^[a-f0-9]{32}$/);
     expect(result.columns.find(c => c.name === 'wechat')?.exists).toBe(false);
     expect(JSON.stringify(result)).not.toContain('synthetic-sensitive-default');
+  });
+
+  it('observes 0134 widths before and after the actual migration without exposing or altering values', async () => {
+    await f.exec(`CREATE TABLE public.user(add_ip varchar(16) NOT NULL,last_ip varchar(16) NOT NULL);
+      CREATE TABLE store_order(user_ip varchar(16) NOT NULL);
+      CREATE TABLE store_product_category(pic varchar(128) NOT NULL);
+      INSERT INTO public.user VALUES('192.0.2.1','192.0.2.2');
+      INSERT INTO store_order VALUES('192.0.2.3');
+      INSERT INTO store_product_category VALUES('synthetic-private-image-path');`);
+    const rows = () => f.exec(`SELECT jsonb_build_object('user',(SELECT jsonb_agg(u) FROM public.user u),
+      'order',(SELECT jsonb_agg(o) FROM store_order o),'category',(SELECT jsonb_agg(c) FROM store_product_category c)) AS value`);
+    const beforeRows = await rows();
+    const before = await auditReleasePrerequisiteCatalog(f.db);
+    const widths = (catalog: typeof before) => catalog.columns.filter(c => ['add_ip','last_ip','user_ip','pic'].includes(c.name));
+    expect(widths(before).map(c => [c.name,c.type])).toEqual([
+      ['user_ip','character varying(16)'],['pic','character varying(128)'],
+      ['add_ip','character varying(16)'],['last_ip','character varying(16)'],
+    ]);
+    await f.exec(readFileSync('migrations/0134_repository_column_width_alignment.sql','utf8'));
+    const after = await auditReleasePrerequisiteCatalog(f.db);
+    expect(widths(after).map(c => [c.name,c.type,c.notNull])).toEqual([
+      ['user_ip','character varying(45)',true],['pic','character varying(512)',true],
+      ['add_ip','character varying(45)',true],['last_ip','character varying(45)',true],
+    ]);
+    expect(await rows()).toEqual(beforeRows);
+    expect(JSON.stringify(after)).not.toContain('192.0.2.1');
+    expect(JSON.stringify(after)).not.toContain('synthetic-private-image-path');
+  });
+
+  it('observes actual 0146-0149 incremental definitions, including missing and drifted objects', async () => {
+    await f.exec(`CREATE TABLE store_order_refund(id integer NOT NULL,add_time integer NOT NULL,
+      is_cancel smallint NOT NULL,is_del smallint NOT NULL,apply_type smallint NOT NULL,refund_type smallint NOT NULL,
+      refund_reason varchar(255) NOT NULL,refund_explain varchar(255) NOT NULL,order_id varchar(50) NOT NULL);
+      CREATE TABLE payment_reconciliation_case(callback_event_id bigint);
+      CREATE TABLE store_product_reply(order_cart_info_id integer);
+      CREATE TABLE work_contact_action_outbox(corp_id varchar(18) NOT NULL,client_id integer NOT NULL);
+      CREATE TABLE store_cart(id integer PRIMARY KEY,type smallint NOT NULL);
+      INSERT INTO store_cart VALUES(17,0),(18,2);`);
+    const names = ['sor_pink_recovery_scan','prc_callback_event','spr_order_cart_info','wcao_client_ref'];
+    const before = await auditReleasePrerequisiteCatalog(f.db);
+    expect(before.indexes.filter(i => names.includes(i.name))).toHaveLength(4);
+    expect(before.indexes.filter(i => names.includes(i.name)).every(i => !i.exists)).toBe(true);
+    expect(before.columns.find(c => c.name === 'bargain_user_id')?.exists).toBe(false);
+    expect(before.constraints.find(c => c.name === 'sc_bargain_participation_ck')?.exists).toBe(false);
+    for (const name of ['0146_pink_recovery_index','0147_foreign_key_child_indexes',
+      '0148_work_contact_client_index','0149_bargain_cart_participation']) {
+      await f.exec(readFileSync(`migrations/${name}.sql`,'utf8'));
+    }
+    const after = await auditReleasePrerequisiteCatalog(f.db);
+    const indexes = after.indexes.filter(i => names.includes(i.name));
+    expect(indexes.every(i => i.exists && i.valid && i.ready && !i.unique && !i.truncated)).toBe(true);
+    expect(indexes.find(i => i.name === 'prc_callback_event')?.definition).toContain('USING btree (callback_event_id)');
+    expect(indexes.find(i => i.name === 'spr_order_cart_info')?.definition).toContain('USING btree (order_cart_info_id)');
+    expect(indexes.find(i => i.name === 'wcao_client_ref')?.definition).toContain('USING btree (corp_id, client_id)');
+    expect(indexes.find(i => i.name === 'sor_pink_recovery_scan')?.definition).toContain('pink_cancel_');
+    expect(after.columns.find(c => c.name === 'bargain_user_id')).toMatchObject({ exists:true,type:'integer',notNull:true,defaultHash:'cfcd208495d565ef66e7dff9f98764da' });
+    expect(after.constraints.find(c => c.name === 'sc_bargain_participation_ck')).toMatchObject({ exists:true,validated:true,truncated:false });
+    expect(await f.exec('SELECT * FROM store_cart ORDER BY id')).toEqual([
+      { id:17,type:0,bargain_user_id:0 },{ id:18,type:2,bargain_user_id:0 },
+    ]);
+    await f.exec(`DROP INDEX wcao_client_ref;
+      CREATE INDEX wcao_client_ref ON work_contact_action_outbox(client_id);
+      ALTER TABLE store_cart DROP CONSTRAINT sc_bargain_participation_ck;
+      ALTER TABLE store_cart ADD CONSTRAINT sc_bargain_participation_ck CHECK(bargain_user_id>=0) NOT VALID;`);
+    const drifted = await auditReleasePrerequisiteCatalog(f.db);
+    expect(drifted.indexes.find(i => i.name === 'wcao_client_ref')?.definition).toContain('USING btree (client_id)');
+    expect(drifted.constraints.find(c => c.name === 'sc_bargain_participation_ck')?.validated).toBe(false);
   });
 
   it('works through a real non-owner login without business read privileges and restores transaction settings', async () => {

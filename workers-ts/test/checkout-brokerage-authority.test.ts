@@ -11,6 +11,21 @@ import { agentLevel, printDocument, storeOrderCartInfo, storeOrderStatus, storeP
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { outcome, waitForFinanceBlock, waitForFinanceClock, withFinancePeers } from './helpers/financePeers';
 
+// Epoch-second rounding adds up to another second. The former +1200ms could
+// deliberately hold the detail lock for 2.2s, exceeding the application's 2s
+// lock_timeout before its clock guard ran. Keep a 0.5-1.5s probe window; never
+// relax the business timeout or treat an unrelated SQL timeout as reconfirmation.
+const divisionProbeDeadline = (millis: number) => Math.ceil((millis + 500) / 1000);
+
+it('keeps every millisecond phase of the division clock probe below the unchanged 2s business lock timeout', () => {
+  for (let phase = 0; phase < 1000; phase++) {
+    const millis = 1_700_000_000_000 + phase;
+    const wait = divisionProbeDeadline(millis) * 1000 - millis;
+    expect(wait).toBeGreaterThanOrEqual(500);
+    expect(wait).toBeLessThanOrEqual(1500);
+  }
+});
+
 describe('checkout brokerage participant authority', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   const input = { cartIds: [1], addressId: 11, type: 0 };
@@ -202,13 +217,18 @@ describe('checkout brokerage participant authority', () => {
     await withFinancePeers(f.db, async ([holder, buyer]) => {
       await buyer.db.execute(sql`SELECT set_config('TimeZone', ${timezone}, false)`);
       const [clock] = await f.db.select({ millis: sql<string>`extract(epoch from clock_timestamp()) * 1000` }).from(sql`(values (1)) as probe(n)`);
-      const deadline = Math.ceil((Number(clock.millis) + 1200) / 1000);
+      const deadline = divisionProbeDeadline(Number(clock.millis));
       await f.db.update(user).set({ divisionEndTime: variant === 'valid' ? deadline + 3600 : variant === 'expired' ? deadline - 3600 : deadline }).where(eq(user.uid, 44));
       const receipt = await request('/api/order/confirm', { ...input, useIntegral }); expect(receipt.status, receipt.msg).toBe(200);
       const before = await state();
       await holder.exec('BEGIN; LOCK TABLE store_order_cart_info IN SHARE MODE');
       const buying = outcome(create(buyer.db, receipt.data, useIntegral));
       await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
+      if (variant === 'expires' || variant === 'integral-expires') {
+        const [barrier] = await f.db.select({ beforeDeadline: sql<boolean>`extract(epoch from clock_timestamp()) * 1000 < ${deadline * 1000}` })
+          .from(sql`(values (1)) as probe(n)`);
+        expect(barrier.beforeDeadline, 'expiry must occur after the observed business lock wait begins').toBe(true);
+      }
       await waitForFinanceClock(f.db, deadline * 1000); await holder.exec('COMMIT');
       const result = await buying;
       // Preserve the actual failure when a positive control unexpectedly rejects.

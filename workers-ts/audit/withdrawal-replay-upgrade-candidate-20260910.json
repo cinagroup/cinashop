@@ -23,14 +23,18 @@
   "ci": {
     "runId": 34468277203,
     "head": "1f8ca6bab014b6e620ce0f187a3b9588fc67ae6f",
-    "runStatusAtSnapshot": "in_progress",
+    "runStatusAtSnapshot": "completed",
+    "conclusion": "failure",
+    "unitShard1": { "job": 102841913745, "files": 189, "tests": 2202, "passed": 2201, "failed": 1, "seconds": 849.48 },
+    "unitShard2": { "job": 102841913913, "files": 188, "tests": 2168, "passed": 2168, "skipped": 0, "seconds": 587.88, "nativePartitionCompleteAndDisjoint": true, "executedFilesMatchNativePartition": true },
+    "failure": "checkout-brokerage-authority.test.ts: rechecks division clock after late business wait (UTC, valid); PostgreSQL55P03 lock timeout at store_order_cart_info INSERT",
     "runtimeJob": 102841913556,
     "runtimeConclusion": "success",
     "runtimeFiles": 8,
     "runtimeTests": 98,
     "newMaintenanceHttpTests": 16,
     "expandedReadOnlyHttpTests": 23,
-    "qualification": "Full unit and aggregate completion still required; runtime success is not full candidate CI success"
+    "qualification": "Full candidate CI failed; workerd, shard2, all five frontends, secret scan and PG catalog succeeded. This result does not cover later expanded catalog work. No automatic rerun or production release."
   },
   "productionAttempt": {
     "command": "./scripts/run-withdrawal-replay-production-migration.ps1 -Apply -VerifyIdempotence",

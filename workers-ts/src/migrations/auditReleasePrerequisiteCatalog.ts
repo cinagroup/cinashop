@@ -12,9 +12,10 @@ export interface ReleasePrerequisiteCatalog {
   reachableRoleAttributes: { superuser: boolean; createDb: boolean; createRole: boolean; replication: boolean; bypassRls: boolean };
 }
 
-/** Fixed public-catalog inventory for DB-006/007 and two checkout fences.
+/** Fixed public-catalog inventory for DB-006/007, 0134, 0146-0149 and two checkout fences.
  * No business rows, routine bodies, role names or user-provided SQL/schema.
  * Presence and readable definitions are evidence, NOT a ready-to-deploy verdict.
+ * In particular this does not attest the 0135-0145 alignment migrations.
  */
 export async function auditReleasePrerequisiteCatalog(db: Pick<DbClient, '$client'>): Promise<ReleasePrerequisiteCatalog> {
   if (!db.$client) throw new Error('Release catalog audit requires a root database');
@@ -26,12 +27,17 @@ export async function auditReleasePrerequisiteCatalog(db: Pick<DbClient, '$clien
     const [row] = await tx<{ catalog: ReleasePrerequisiteCatalog }[]>`
       WITH ns AS (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname='public'),
       selected_tables(name) AS (VALUES ('user'),('store_order'),('user_extract'),('capital_flow'),
-        ('order_notification_delivery'),('store_order_outbox'),('system_message'),('store_coupon_issue'),('store_coupon_product')),
+        ('order_notification_delivery'),('store_order_outbox'),('system_message'),('store_coupon_issue'),('store_coupon_product'),
+        ('store_product_category'),('store_order_refund'),('payment_reconciliation_case'),('store_product_reply'),
+        ('work_contact_action_outbox'),('store_cart')),
       selected_columns(table_name,name) AS (VALUES
         ('user_extract','request_key'),('user_extract','request_hash'),('user_extract','wechat'),
-        ('capital_flow','event_key'),('order_notification_delivery','withdrawal_id'),('order_notification_delivery','order_id')),
-      selected_indexes(name) AS (VALUES ('ue_request_replay_uq'),('cf_event_key_uq'),('ond_withdrawal'),('smsg_staff_inbox')),
-      selected_constraints(table_name,name) AS (VALUES ('order_notification_delivery','ond_subject_ck'),('store_order_outbox','soob_event_type_ck')),
+        ('capital_flow','event_key'),('order_notification_delivery','withdrawal_id'),('order_notification_delivery','order_id'),
+        ('user','add_ip'),('user','last_ip'),('store_order','user_ip'),('store_product_category','pic'),('store_cart','bargain_user_id')),
+      selected_indexes(name) AS (VALUES ('ue_request_replay_uq'),('cf_event_key_uq'),('ond_withdrawal'),('smsg_staff_inbox'),
+        ('sor_pink_recovery_scan'),('prc_callback_event'),('spr_order_cart_info'),('wcao_client_ref')),
+      selected_constraints(table_name,name) AS (VALUES ('order_notification_delivery','ond_subject_ck'),('store_order_outbox','soob_event_type_ck'),
+        ('store_cart','sc_bargain_participation_ck')),
       selected_functions(name) AS (VALUES ('brokerage_paid_order_fence_0150'),('coupon_product_scope_fence_0151')),
       selected_triggers(table_name,name) AS (VALUES
         ('store_order','brokerage_paid_insert_0150'),('store_order','brokerage_paid_update_0150'),('store_order','brokerage_paid_delete_0150'),
