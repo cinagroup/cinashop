@@ -2,6 +2,8 @@
 
 ## 生产运行身份预检与当前 CI 终态（2026-09-10）
 
+探针提交`1fed16a`已推送。其自身Actions34465418616的workerd为76通过／3失败：错误响应断言通过后，新测试读取console.error.mock.calls异常。修复仅改日志观察方式并增加错误事件正向断言，不改正式逻辑；本机23项通过，Windows workerd启动失败执行0项。详细版本边界见证据中的probeCiFollowup；必须以修复提交自身CI验证，不将旧绿灯借给新测试。
+
 已通过正式同一 Hyperdrive 执行限时、只读 REPEATABLE READ 权限查询，未执行业务DML／DDL／GRANT。必要对象存在检查及六类最小权限限制失败，说明当前可读写身份不能直接作为新版发布验收依据；具体缺失对象仍须后续固定catalog查询定位，不能只据一个布尔值断言某迁移缺失。临时探针 `cinashop-paid-runtime-audit-98a21ba3260a` 已删除，控制面及公开路径404，正式Worker部署和100%版本均未改变。完整布尔结果、源哈希、访问拒绝及后续顺序见 [线上预检证据](workers-ts/audit/paid-runtime-production-preflight-20260910.json)。
 
 `ab691c8` 的 [Actions34463119442](https://github.com/cinagroup/cinashop/actions/runs/34463119442) 已终态failure，不是超时：容量合同遗漏同步20→40的单元job预算，第一分片2177项中仅此1项失败。第二分片186文件／2136项精确覆盖验证成功，workerd6文件／59项、五端、密钥扫描与PG目录成功。现同步单元40／目录20的精确断言，保留其它门禁；本机最终3文件45项通过，双类型通过，需新提交自身CI。不据局部通过关闭TEST-004G/H；仍234完成／170开放。

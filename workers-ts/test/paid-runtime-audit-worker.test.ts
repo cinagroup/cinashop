@@ -8,13 +8,15 @@ vi.mock('@/migrations/auditPaidOrderRuntimePermissions', () => ({ auditPaidOrder
 
 const token = 'a'.repeat(64); // synthetic token, not a deployed credential
 let env: PaidRuntimeAuditEnv;
+let logCalls: unknown[][];
 const request = (path = '/audit', method = 'GET', credential = token) => new Request(`https://audit.invalid${path}`, {
   method, headers: credential ? { 'X-Audit-Token': credential } : {},
 });
 
 beforeEach(async () => {
   vi.resetAllMocks();
-  vi.spyOn(console, 'error').mockImplementation(() => {});
+  logCalls = [];
+  vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => { logCalls.push(args); });
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
   env = {
     HYPERDRIVE: { connectionString: 'postgresql://synthetic.invalid/test' } as Hyperdrive,
@@ -78,7 +80,11 @@ describe('temporary production runtime permission audit', () => {
     const response = await worker.fetch(request(), env);
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: 'audit failed' });
-    expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain(secretError.message);
+    // workerd may wrap console methods, so observe the installed implementation
+    // instead of assuming the next console.error getter exposes Vitest metadata.
+    expect(logCalls).toContainEqual([JSON.stringify({ event: 'paid_runtime_audit_failed' })]);
+    if (stage === 'end') expect(logCalls).toContainEqual([JSON.stringify({ event: 'paid_runtime_audit_close_failed' })]);
+    expect(JSON.stringify(logCalls)).not.toContain(secretError.message);
     if (stage !== 'create') expect(mocks.end).toHaveBeenCalledWith({ timeout: 1 });
   });
 });

@@ -65,6 +65,20 @@
     "runtimeContract": "Included for next Linux CI; prior ab691c8 CI does not cover this new probe",
     "localPgCleanupAfterEarlier42TestRun": { "publicTables": 0, "extraDatabases": 0, "extraRoles": 0 }
   },
+  "probeCiFollowup": {
+    "runId": 34465418616,
+    "commit": "1fed16a12599d97d5409846dfe9c3f57a5700ffc",
+    "runtimeJob": 102832737602,
+    "runtimeConclusion": "failure",
+    "runtimeFiles": 7,
+    "runtimeTests": 79,
+    "runtimePassed": 76,
+    "runtimeFailed": 3,
+    "cause": "New error-redaction tests accessed console.error.mock.calls; workerd did not expose mock metadata on the subsequently retrieved console function. HTTP503 and response redaction assertions passed before this test-observation error.",
+    "fix": "Capture calls inside the installed log implementation; positively require failure/close-failure events and retain the no-private-error assertion. No production Worker logic changed.",
+    "localFollowup": "23/23 Node tests passed. Windows workerd startup failed with0xc0000005 and ran0 tests, not considered passing.",
+    "remainingJobsAtDiagnosis": "Still running; must not claim full run terminal from one failed job. Superseded by corrected source, not restarted for an observation timeout."
+  },
   "candidateCi": {
     "runId": 34463119442,
     "head": "ab691c802ee338395ffa1cdcf4fb8d315ba3c3ed",
