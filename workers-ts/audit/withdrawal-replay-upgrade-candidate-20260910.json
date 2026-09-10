@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-10",
+  "sourceCommit": "1f8ca6bab014b6e620ce0f187a3b9588fc67ae6f",
+  "scope": "DB-006 only; fixed public.user_extract additive upgrade, not DB-007, checkout fences, grants or application deployment",
+  "local": {
+    "session": 67378,
+    "files": 4,
+    "tests": 57,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 18.41,
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-withdrawal-upgrade-candidate-20260910.json",
+    "reportSha256": "3cc80472e90b8f7e47f110409e7421065fd41a6a01b1a875e598eafdc9dcc0d2",
+    "types": { "session": 60925, "unit": "passed", "runtime": "passed" },
+    "dryRun": "Wrangler4.122.0 passed,768.87KiB/132.75KiB gzip, empty token verifier denies access by default",
+    "powershell": "Parser validation passed",
+    "initialFailures": [
+      "11 setup failures: synthetic contact exceeded original varchar15; shortened fixture, no production or migration SQL had executed",
+      "Typecheck rejected the union PG/PGlite row type; helper now explicitly narrows to actual PG16, no double cast or weakened assertion"
+    ],
+    "cleanup": { "publicTables": 0, "extraDatabases": 0, "extraRoles": 0 }
+  },
+  "ci": {
+    "runId": 34468277203,
+    "head": "1f8ca6bab014b6e620ce0f187a3b9588fc67ae6f",
+    "runStatusAtSnapshot": "in_progress",
+    "runtimeJob": 102841913556,
+    "runtimeConclusion": "success",
+    "runtimeFiles": 8,
+    "runtimeTests": 98,
+    "newMaintenanceHttpTests": 16,
+    "expandedReadOnlyHttpTests": 23,
+    "qualification": "Full unit and aggregate completion still required; runtime success is not full candidate CI success"
+  },
+  "productionAttempt": {
+    "command": "./scripts/run-withdrawal-replay-production-migration.ps1 -Apply -VerifyIdempotence",
+    "status": "rejected-before-process-start",
+    "reason": "Safety approval requires explicit authorization for this specific production DDL and maintenance window involving a table-level exclusive lock",
+    "workerCreated": false,
+    "sqlExecuted": false,
+    "databaseChanged": false,
+    "workaroundAttempted": false,
+    "next": "Obtain explicit approval for the fixed DB-006 production operation and immediate maintenance window before running the reviewed script"
+  },
+  "controls": [
+    "Exact table and operation, expiring256-bit token capability; no arbitrary SQL/schema input",
+    "Readonly independent pre/postflight; short READ COMMITTED mutation with ACCESS EXCLUSIVE NOWAIT",
+    "Reject catalog drift, event triggers, RLS/inheritance, narrowing and >10000-row short-window target",
+    "SHA256 canonical whole-row fingerprints include existing replay values and normalize only absent added fields to empty strings",
+    "Transaction rollback on postflight or data mismatch; explicit second execution only after confirmed success and readonly postflight",
+    "HTTP503 means unconfirmed, never a false rollback guarantee; no automatic retry",
+    "Delete exact newly created temporary Worker even for ambiguous deployment results; retain additive schema on application rollback"
+  ],
+  "checklist": { "checked": 236, "open": 168, "total": 404, "db006": "open; no production execution" }
+}
