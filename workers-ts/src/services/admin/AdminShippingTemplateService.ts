@@ -2,6 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { withTx, type Container } from '@/lib/di';
 import { shippingTemplates, shippingTemplatesRegion } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
+import { assertShippingTemplateUnreferenced } from '../product/ShippingTemplateLifecycleService';
 
 type Fields = Pick<typeof shippingTemplates.$inferInsert, 'name' | 'type' | 'sort' | 'status'>;
 type Region = Pick<typeof shippingTemplatesRegion.$inferInsert,
@@ -68,10 +69,11 @@ export async function saveAdminShippingTemplate(container: Container, raw: unkno
       const now = Math.floor(Date.now() / 1000);
       let id = input.id, billingGroup = input.fields.type ?? 1;
       if (id) {
-        const [current] = await tx.select({ id: shippingTemplates.id, type: shippingTemplates.type }).from(shippingTemplates)
+        const [current] = await tx.select({ id: shippingTemplates.id, type: shippingTemplates.type, status: shippingTemplates.status }).from(shippingTemplates)
           .where(and(eq(shippingTemplates.id, id), eq(shippingTemplates.isDel, 0))).limit(1).for('no key update');
         if (!current) throw new ValidateException('运费模板不存在或已删除');
         billingGroup = input.fields.type ?? current.type;
+        if (input.fields.status === 0 && current.status !== 0) await assertShippingTemplateUnreferenced(tx, id);
         if (Object.keys(input.fields).length) await tx.update(shippingTemplates).set(input.fields).where(eq(shippingTemplates.id, id));
       } else {
         const [created] = await tx.insert(shippingTemplates).values({ ...input.fields, ownerType: 0, relationId: 0,

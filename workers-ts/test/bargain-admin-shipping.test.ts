@@ -38,6 +38,17 @@ describe('bargain admin shipping through saved SQL and real quote', () => {
   expect(response.status).not.toBe(200); expect(response.msg).toContain('已变化'); expect(await state()).toEqual(before);
   await expect(quote()).rejects.toThrow('配送');
  });
+ it('rejects retained shipping when refreshed source ownership changes, but accepts an explicit matching rebind',async()=>{
+  await saveBargain(f.container,{id:40,shipping:await input({freight:3,tempId:10})});
+  await f.db.update(storeProduct).set({type:2,relationId:77}).where(eq(storeProduct.id,70));
+  const before=await state();
+  const rejected=await request({storeName:'不能保留其他所属方模板'});
+  expect(rejected.status).toBe(400);expect(rejected.msg).toContain('所属方');expect(await state()).toEqual(before);
+  await f.db.insert(shippingTemplates).values({id:11,name:'新所属方',ownerType:2,relationId:77});
+  const accepted=await request({shipping:await input({freight:3,tempId:11})});
+  expect(accepted.status,accepted.msg).toBe(200);
+  expect((await f.db.select().from(storeBargain).where(eq(storeBargain.id,40)))[0]).toMatchObject({type:2,relationId:77,tempId:11});
+ });
  it.each([{deliveryType:''},{deliveryType:'1,1'},{deliveryType:'4'},{freight:0},{freight:'2'},
   {freight:2,postage:'0.00'},{postage:'1.001'},{postage:'100000000.00'},{postage:1},{tempId:-1},
   {freight:3,tempId:0},{freight:3,tempId:999},{expected:undefined},{expected:null}])('rejects invalid shipping %# without writes',async patch=>{

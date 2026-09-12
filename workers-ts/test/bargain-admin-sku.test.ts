@@ -24,7 +24,7 @@ describe('single-SKU bargain admin save', () => {
   const activitySku=async(id:number)=>(await f.db.select().from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId,id),eq(storeProductAttrValue.type,2))))[0];
   it('creates the selected SKU, dimensions and snapshot atomically through the actual HTTP controller',async()=>{
     const response=await f.app.request('/admin/save',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body())},f.env);
-    const result=await response.json() as {status:number;data:{id:number}};expect(result.status).toBe(200);
+    const result=await response.json() as {status:number;msg?:string;data:{id:number}};expect(result.status,result.msg).toBe(200);
     const sku=await activitySku(result.data.id);
     expect(sku).toMatchObject({suk:'红色,大号',stock:6,quota:5,quotaShow:5,price:'10.00',sales:0,type:2});
     expect(sku.unique).toMatch(/^[a-f0-9]{8}$/);expect(sku.unique).not.toBe('qared001');

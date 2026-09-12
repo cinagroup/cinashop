@@ -11,6 +11,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import { withTx, type Container, type DbClient } from "@/lib/di";
+import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
 import {
   storeDiscounts,
   storeDiscountsProducts,
@@ -716,6 +717,10 @@ export class AdminDiscountPackageService {
         }
       }
 
+      // Package entries store explicit template IDs, independent of later source
+      // edits; hold those parent identities until all entries commit.
+      await lockShippingTemplateBindings(tx, products.map(product => ({ tempId: product.tempId,
+        freight: 2, ownerType: product.type, relationId: product.relationId })));
       const baseSkus = await tx
         .select()
         .from(storeProductAttrValue)

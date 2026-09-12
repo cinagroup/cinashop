@@ -95,12 +95,12 @@ describe("Out API product write migration", () => {
     const embedded = service
       .match(/private migration_0104\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]
       ?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, '\n')).toBe(migration.replace(/\r\n/g, '\n'));
     expect(migration).not.toMatch(/store_name|bar_code|stock_value|request_body|response_body/i);
   });
 
   it("uses fixed lock order, platform scope and stock-preserving updates", () => {
-    const source = readFileSync("src/services/out/OutProductService.ts", "utf8");
+    const source = readFileSync("src/services/out/OutProductService.ts", "utf8").replace(/\r\n/g, '\n');
     expect(source).toContain('LOCK TABLE "store_product_category" IN SHARE ROW EXCLUSIVE MODE');
     expect(source).toContain("Out API 修改商品不能增删SKU");
     expect(source).toContain("stock: current.stock");

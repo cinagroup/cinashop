@@ -8,9 +8,9 @@ import {
 } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
+import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
 import {
   legacyCategory,
-  shippingTemplates,
   storeCart,
   storeBrand,
   storeCouponIssue,
@@ -884,20 +884,10 @@ export class AdminMobileProductService {
         operation = "freight";
         evidenceValues = [input.freight, input.postage, input.templateId];
         if (input.templateId > 0) {
-          const templates = await tx.select({
-            id: shippingTemplates.id,
-            ownerType: shippingTemplates.ownerType,
-            relationId: shippingTemplates.relationId,
-          }).from(shippingTemplates).where(and(
-            eq(shippingTemplates.id, input.templateId),
-            eq(shippingTemplates.status, 1),
-            eq(shippingTemplates.isDel, 0),
-          )).limit(1).for("share");
-          const template = templates[0];
-          if (!template || products.some((product) => !(
-            (template.ownerType === 0 && template.relationId === 0)
-            || (template.ownerType === product.type && template.relationId === product.relationId)
-          ))) throw new ValidateException("运费模板不存在或不属于所选商品");
+          // Match the checkout authority: platform templates are not a universal
+          // tenant fallback. Products have already been locked by this batch.
+          await lockShippingTemplateBindings(tx, products.map(product => ({ tempId: input.templateId,
+            freight: input.freight, ownerType: product.type, relationId: product.relationId })));
         }
         await tx.update(storeProduct).set({
           freight: input.freight,

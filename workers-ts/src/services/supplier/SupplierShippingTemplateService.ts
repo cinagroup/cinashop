@@ -14,10 +14,10 @@ import {
   shippingTemplatesFree,
   shippingTemplatesNoDelivery,
   shippingTemplatesRegion,
-  storeProduct,
   systemCity,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { retireShippingTemplate } from '../product/ShippingTemplateLifecycleService';
 
 const SUPPLIER_OWNER_TYPE = 2;
 const SHIPPING_LOCK_NAMESPACE = 731_604;
@@ -553,39 +553,7 @@ export class SupplierShippingTemplateService {
 
   async delete(supplierIdValue: number, templateId: number): Promise<void> {
     const supplierId = validSupplierId(supplierIdValue);
-    await withTx(this.container, async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${SHIPPING_LOCK_NAMESPACE}, ${supplierId})`);
-      const existing = await tx
-        .select({ id: shippingTemplates.id })
-        .from(shippingTemplates)
-        .where(templateScope(supplierId, templateId))
-        .limit(1)
-        .for("update");
-      if (!existing[0]) throw new NotFoundException("运费模板不存在或不属于当前供应商");
-      const products = await tx
-        .select({ id: storeProduct.id })
-        .from(storeProduct)
-        .where(and(
-          eq(storeProduct.type, SUPPLIER_OWNER_TYPE),
-          eq(storeProduct.relationId, supplierId),
-          eq(storeProduct.tempId, templateId),
-          eq(storeProduct.isDel, 0),
-        ))
-        .limit(1)
-        .for("key share");
-      if (products[0]) throw new ValidateException("运费模板仍被商品使用，不能删除");
-      await Promise.all([
-        tx.delete(shippingTemplatesRegion).where(eq(shippingTemplatesRegion.templateId, templateId)),
-        tx.delete(shippingTemplatesFree).where(eq(shippingTemplatesFree.tempId, templateId)),
-        tx.delete(shippingTemplatesNoDelivery).where(eq(shippingTemplatesNoDelivery.tempId, templateId)),
-      ]);
-      const updated = await tx
-        .update(shippingTemplates)
-        .set({ isDel: 1, status: 0 })
-        .where(templateScope(supplierId, templateId))
-        .returning({ id: shippingTemplates.id });
-      if (!updated[0]) throw new NotFoundException("运费模板不存在或不属于当前供应商");
-    });
+    await retireShippingTemplate(this.container, templateId, supplierId);
   }
 
   async cityList() {

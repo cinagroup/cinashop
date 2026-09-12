@@ -227,9 +227,8 @@ describe("supplier product migration contracts", () => {
   it("authorizes selected shipping templates against the current supplier", () => {
     const source = readFileSync("src/services/supplier/SupplierProductManagementService.ts", "utf8");
     expect(source).toContain("assertShippingTemplate(tx, supplierId, input)");
-    expect(source).toContain("eq(shippingTemplates.ownerType, SUPPLIER_TYPE)");
-    expect(source).toContain("eq(shippingTemplates.relationId, supplierId)");
-    expect(source).toContain("eq(shippingTemplates.status, 1)");
+    expect(source).toContain("lockShippingTemplateBindings(tx,");
+    expect(source).toContain("ownerType: SUPPLIER_TYPE, relationId: supplierId");
   });
 
   it("keeps card-backed stock authoritative to the virtual inventory ledger", () => {
@@ -255,10 +254,12 @@ describe("supplier product migration contracts", () => {
     expect(form).not.toContain("card_no");
   });
 
-  it("keeps the file migration and embedded production migration byte-equivalent after trimming", () => {
+  it("keeps file and embedded migrations exact after trimming and line-ending normalization", () => {
     const migration = readFileSync("migrations/0016_supplier_product_management.sql", "utf8").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service.match(/private migration_0023\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]?.trim();
-    expect(embedded).toBe(migration);
+    // Windows checkout can use CRLF in the embedded TypeScript while SQL files
+    // remain LF. Compare exact content after line-ending normalization only.
+    expect(embedded?.replace(/\r\n/g, "\n")).toBe(migration.replace(/\r\n/g, "\n"));
   });
 });

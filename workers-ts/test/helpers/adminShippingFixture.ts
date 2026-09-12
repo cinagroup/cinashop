@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { createContainerFromDb, type DbClient } from '../../src/lib/di';
 import type { AppVariables, Env } from '../../src/env';
-import { shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, storeProduct, systemCity } from '../../src/models/schema';
+import { shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, storeProduct, systemCity,
+ storeSeckill, storeBargain, storeCombination, storeIntegral, storeDiscountsProducts } from '../../src/models/schema';
 import { adminShippingTemplateSave, adminShippingTemplateDel } from '../../src/controllers/api/v1/AdminCrudController';
 import { financePostgres } from './financePostgres';
 
@@ -19,7 +20,8 @@ export async function postShipping(db:DbClient,body:unknown) {
  return response.json() as Promise<{status:number;msg:string;data:{id:number}|null}>;
 }
 export async function createAdminShippingFixture() {
- const f=await financePostgres([shippingTemplates,shippingTemplatesRegion,shippingTemplatesFree,shippingTemplatesNoDelivery,storeProduct,systemCity]);
+ const f=await financePostgres([shippingTemplates,shippingTemplatesRegion,shippingTemplatesFree,shippingTemplatesNoDelivery,storeProduct,systemCity,
+  storeSeckill,storeBargain,storeCombination,storeIntegral,storeDiscountsProducts]);
  try {
   await f.db.insert(shippingTemplates).values({id:10,name:'原模板',type:2,sort:9,status:0,appoint:1,noDelivery:1,addTime:123});
   await f.db.insert(shippingTemplatesRegion).values({id:10,templateId:10,regionId:0,regionName:'全国',first:'1.00',firstPrice:'6.00',continue:'1.00',continuePrice:'2.00'});

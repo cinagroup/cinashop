@@ -36,7 +36,7 @@ describe("superseded product auxiliary migration", () => {
     const migration = readFileSync("migrations/0068_superseded_product_relations.sql", "utf8").trim();
     const service = readFileSync("src/services/MigrationService.ts", "utf8");
     const embedded = service.match(/private migration_0075\(\): string \{\s*return `([\s\S]*?)`;\s*\}/)?.[1]?.trim();
-    expect(embedded).toBe(migration);
+    expect(embedded?.replace(/\r\n/g, '\n')).toBe(migration.replace(/\r\n/g, '\n'));
     expect(migration).not.toMatch(/FOREIGN KEY\s*\(|REFERENCES\s+"|CREATE UNIQUE INDEX/i);
     expect(migration.match(/CREATE INDEX IF NOT EXISTS/g)).toHaveLength(2);
     expect(migration).toContain('("label_id", "product_id")');

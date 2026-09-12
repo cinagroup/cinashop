@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
+import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
 import {
   outProductWriteReplay,
   storeCart,
@@ -431,6 +432,8 @@ export class OutProductService {
         }
       }
 
+      await lockShippingTemplateBindings(tx, [{ tempId: input.tempId, freight: input.freight,
+        ownerType: PLATFORM_TYPE, relationId: PLATFORM_RELATION_ID }]);
       const currentBySuk = new Map(currentSkus.map((sku) => [sku.suk, sku]));
       for (const sku of input.skus) {
         const current = currentBySuk.get(sku.suk);

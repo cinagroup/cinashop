@@ -167,7 +167,7 @@ describe("supplier shipping-template migration wiring", () => {
     expect(service).toContain("eq(shippingTemplates.isDel, 0)");
     expect(service).toContain("pg_advisory_xact_lock");
     expect(service).toContain('.for("update")');
-    expect(service).toContain("运费模板仍被商品使用，不能删除");
+    expect(service).toContain("retireShippingTemplate(this.container, templateId, supplierId)");
     expect(service).toContain("await replaceRules(tx, savedId, input, cities, now)");
   });
 });

@@ -8,6 +8,7 @@ import {
 } from "drizzle-orm";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
+import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
 import {
   storeCart,
   storeProduct,
@@ -16,7 +17,6 @@ import {
   storeProductDescription,
   storeProductRelation,
   storeProductStockRecord,
-  shippingTemplates,
 } from "@/models/schema";
 import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
 import {
@@ -571,19 +571,8 @@ export class SupplierProductManagementService {
 
   private async assertShippingTemplate(tx: DbClient, supplierId: number, input: SupplierProductInput) {
     if (input.productType !== PHYSICAL_PRODUCT_TYPE || input.freight !== 3) return;
-    const rows = await tx
-      .select({ id: shippingTemplates.id })
-      .from(shippingTemplates)
-      .where(and(
-        eq(shippingTemplates.id, input.tempId),
-        eq(shippingTemplates.ownerType, SUPPLIER_TYPE),
-        eq(shippingTemplates.relationId, supplierId),
-        eq(shippingTemplates.status, 1),
-        eq(shippingTemplates.isDel, 0),
-      ))
-      .limit(1)
-      .for("key share");
-    if (!rows[0]) throw new ValidateException("运费模板不存在或不属于当前供应商");
+    await lockShippingTemplateBindings(tx, [{ tempId: input.tempId, freight: input.freight,
+      ownerType: SUPPLIER_TYPE, relationId: supplierId }]);
   }
 
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord) {

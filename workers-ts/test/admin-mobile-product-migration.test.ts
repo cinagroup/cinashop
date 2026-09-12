@@ -263,7 +263,7 @@ describe("embedded admin mobile product migration", () => {
     expect(service).toContain("商品批量运营数据库回读校验失败");
     expect(service).toContain("await tx.delete(storeProductCoupon)");
     expect(service).toContain("eq(systemForm.status, 1)");
-    expect(service).toContain("eq(shippingTemplates.status, 1)");
+    expect(service).toContain("lockShippingTemplateBindings(tx, products.map");
     expect(service).toContain("await writeBatchAudit(");
     expect(service).toContain("await tx.insert(systemLog).values");
     const searchers = readFileSync("src/models/searchers/product.ts", "utf8");

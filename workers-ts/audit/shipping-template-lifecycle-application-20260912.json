@@ -1,0 +1,212 @@
+{
+  "scope": "FE-003L-A3k12 application integration candidate",
+  "baseCommit": "c833ce9a5ff962f2781449637aa89f8a178cf603",
+  "branch": "codex/shipping-lifecycle-integration-20260912",
+  "published": false,
+  "checklistCompleted": false,
+  "tests": {
+    "total": 306,
+    "passed": 306,
+    "failed": 0,
+    "pending": 0,
+    "files": [
+      {
+        "file": "admin-discount-package.test.ts",
+        "status": "passed",
+        "passed": 5,
+        "failed": 0
+      },
+      {
+        "file": "admin-mobile-product-migration.test.ts",
+        "status": "passed",
+        "passed": 9,
+        "failed": 0
+      },
+      {
+        "file": "admin-shipping-atomic-postgres.test.ts",
+        "status": "passed",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "file": "admin-shipping-atomic.test.ts",
+        "status": "passed",
+        "passed": 26,
+        "failed": 0
+      },
+      {
+        "file": "bargain-admin-content.test.ts",
+        "status": "passed",
+        "passed": 24,
+        "failed": 0
+      },
+      {
+        "file": "bargain-admin-save.test.ts",
+        "status": "passed",
+        "passed": 52,
+        "failed": 0
+      },
+      {
+        "file": "bargain-admin-shipping-postgres.test.ts",
+        "status": "passed",
+        "passed": 5,
+        "failed": 0
+      },
+      {
+        "file": "bargain-admin-shipping.test.ts",
+        "status": "passed",
+        "passed": 29,
+        "failed": 0
+      },
+      {
+        "file": "bargain-admin-sku.test.ts",
+        "status": "passed",
+        "passed": 18,
+        "failed": 0
+      },
+      {
+        "file": "checkout-out-product-concurrency.test.ts",
+        "status": "passed",
+        "passed": 17,
+        "failed": 0
+      },
+      {
+        "file": "out-product-migration.test.ts",
+        "status": "passed",
+        "passed": 5,
+        "failed": 0
+      },
+      {
+        "file": "product-auxiliary-migration.test.ts",
+        "status": "passed",
+        "passed": 3,
+        "failed": 0
+      },
+      {
+        "file": "product-sku-editor-migration.test.ts",
+        "status": "passed",
+        "passed": 8,
+        "failed": 0
+      },
+      {
+        "file": "product-sku-retirement.test.ts",
+        "status": "passed",
+        "passed": 11,
+        "failed": 0
+      },
+      {
+        "file": "shipping-template-lifecycle-candidate.test.ts",
+        "status": "passed",
+        "passed": 20,
+        "failed": 0
+      },
+      {
+        "file": "shipping-template-lifecycle-services.test.ts",
+        "status": "passed",
+        "passed": 48,
+        "failed": 0
+      },
+      {
+        "file": "supplier-product-management.test.ts",
+        "status": "passed",
+        "passed": 12,
+        "failed": 0
+      },
+      {
+        "file": "supplier-shipping-template.test.ts",
+        "status": "passed",
+        "passed": 7,
+        "failed": 0
+      }
+    ]
+  },
+  "regressionReport": {
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-lifecycle-regression-bounded-20260912.json",
+    "sha256": "44761acd357d678eb354cce1c2a5379d0603ff87b8abe6ab605b60f0353d1e6e",
+    "maxWorkers": 2,
+    "applicationOrTestTimeoutsRelaxed": false
+  },
+  "earlierAttempts": [
+    {
+      "scope": "previous saved regression",
+      "passed": 299,
+      "failed": 4,
+      "note": "Three CRLF-sensitive static assertions fixed by line-ending normalization only; isolated bargain HTTP creation failure was not reproduced; assertion now reports business message."
+    },
+    {
+      "scope": "same final 18-file selection without worker cap",
+      "passed": 305,
+      "failed": 1,
+      "failedFiles": 2,
+      "reportSha256": "5a1e0eefe38c9e9c75d6a19eefc50e91ba512ca2930c8a2ba9fa60431f85399b",
+      "note": "PostgreSQL statement timeouts in Out checkout concurrency test and database candidate suite cleanup; all 20 candidate cases passed but suite failed. Not a passing run."
+    }
+  ],
+  "bargainOwnershipRedTest": {
+    "beforePatch": {
+      "expectedBusinessStatus": 400,
+      "actualBusinessStatus": 200
+    },
+    "afterPatch": "Included in 29 passing bargain-admin-shipping tests; rejected rename preserves snapshot; explicit matching-owner rebind succeeds."
+  },
+  "types": {
+    "unit": "passed",
+    "runtime": "passed"
+  },
+  "pairedAcceptance": [
+    {
+      "candidateInstalled": false,
+      "protected": 8,
+      "mutationsObserved": 0,
+      "exitCode": 0
+    },
+    {
+      "candidateInstalled": true,
+      "protected": 8,
+      "mutationsObserved": 0,
+      "exitCode": 0
+    }
+  ],
+  "directSqlProtectionProvenByApplicationAudit": false,
+  "cleanup": {
+    "genuinePostgresVersion": "16.15",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "role": "finance_test",
+    "invalidDatabasesRecoveredByCompletingDrop": [
+      "cinashop_kefu_runner_7b740b6dcb0446c9b61c4263de496d54",
+      "cinashop_kefu_runner_06b311cdcb8743c5bae463c9a8257994"
+    ],
+    "prechecks": [
+      "exact names",
+      "owner finance_test",
+      "datconnlimit=-2",
+      "zero active connections"
+    ],
+    "remainingRandomDatabases": 0,
+    "remainingRandomSchemas": 0,
+    "remainingRuntimeRoles": 0
+  },
+  "ci": {
+    "status": "not yet dispatched at evidence creation; inspect branch exact commit run before acceptance",
+    "previousMainRun": 34694953292,
+    "previousMainConclusion": "11/11 success; does not cover current implementation"
+  },
+  "remaining": [
+    "formal direct-SQL protocol migration/new and upgrade registration",
+    "existing-row validity and ACL/catalog drift/idempotence guards",
+    "full binding/unbinding/restore/source-owner writer inventory and multirow interleavings",
+    "retention policy and capacity/index acceptance",
+    "exact-commit Linux CI and real-role online acceptance"
+  ],
+  "production": {
+    "unchangedThisTurn": true,
+    "sourceCommit": "c833ce9a5ff962f2781449637aa89f8a178cf603",
+    "workerVersion": "d7819607-14e6-4db4-9aab-dc2913e6f966",
+    "previousTurnRedeploymentArtifact": "full-test-redeployment-c833ce9-20260912.json"
+  },
+  "skillsInfluence": [
+    "PostgreSQL: consistent parent admission order, no reverse child locks in retirement, restricted-role/RLS fail-closed evidence",
+    "Workers: awaited transaction work, actual global sanitized error handler rather than raw SQL errors"
+  ]
+}

@@ -2017,11 +2017,12 @@ export async function adminShippingTemplateSave(c: C) {
 
 /** DELETE /api/admin/shipping_template/del/:id — 删除模板 */
 export async function adminShippingTemplateDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { shippingTemplates } = await import("@/models/schema");
-  await container.db.update(shippingTemplates).set({ isDel: 1 }).where(eq(shippingTemplates.id, id));
+  privateNoStore(c);
+  const rawId = c.req.param("id") ?? '';
+  if (!/^[1-9]\d*$/.test(rawId)) throw new ValidateException('运费模板ID错误');
+  const id = Number(rawId);
+  const { retireShippingTemplate } = await import("@/services/product/ShippingTemplateLifecycleService");
+  await retireShippingTemplate(c.get("container"), id);
   return jsonOk(c, null, "删除成功");
 }
 
@@ -2095,6 +2096,7 @@ export async function adminExpressDel(c: C) {
 
 /** POST /api/admin/activity/save — 创建/编辑活动 (type 分发) */
 export async function adminActivitySave(c: C) {
+  privateNoStore(c);
   const input = await readBoundedJsonObject(c.req.raw, 64 * 1024);
   if (input.type === "bargain") {
     privateNoStore(c);
@@ -2142,7 +2144,22 @@ export async function adminActivitySave(c: C) {
     sort,
   };
 
-  try {
+  return withTx(container, async tx => {
+    const activityTables = { seckill: schema.storeSeckill, combination: schema.storeCombination, integral: schema.storeIntegral };
+    if (!['seckill', 'combination', 'integral'].includes(body.type)) return jsonFail(c, "未知活动类型");
+    const activityTable = activityTables[body.type as keyof typeof activityTables];
+    if (!activityTable) return jsonFail(c, "未知活动类型");
+    if (body.id) {
+      const { boundShippingTemplateTransaction } = await import('@/services/order/ShippingTemplateSnapshot');
+      const { lockActivityShippingSource, shippingLifecycleLock } = await import('@/services/product/ShippingTemplateLifecycleService');
+      await boundShippingTemplateTransaction(tx);
+      const [current] = await shippingLifecycleLock(() => tx.select({ tempId: activityTable.tempId, freight: activityTable.freight, productId: activityTable.productId })
+        .from(activityTable).where(eq(activityTable.id, body.id!)).limit(1).for('no key update', { noWait: true }));
+      if (current) {
+        if (body.productId === undefined) common.productId = current.productId;
+        await lockActivityShippingSource(tx, common.productId, current);
+      }
+    }
     if (body.type === "seckill") {
       const vals = {
         ...common,
@@ -2152,19 +2169,19 @@ export async function adminActivitySave(c: C) {
         addTime: now,
       };
       if (body.id) {
-        await container.db.update(schema.storeSeckill).set(vals).where(eq(schema.storeSeckill.id, body.id));
+        await tx.update(schema.storeSeckill).set(vals).where(eq(schema.storeSeckill.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
-      const row = await container.db.insert(schema.storeSeckill).values(vals).returning({ id: schema.storeSeckill.id });
+      const row = await tx.insert(schema.storeSeckill).values(vals).returning({ id: schema.storeSeckill.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     if (body.type === "combination") {
       const vals = { ...common, people: body.people ?? 2, sales: 0, addTime: now };
       if (body.id) {
-        await container.db.update(schema.storeCombination).set(vals).where(eq(schema.storeCombination.id, body.id));
+        await tx.update(schema.storeCombination).set(vals).where(eq(schema.storeCombination.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
-      const row = await container.db.insert(schema.storeCombination).values(vals).returning({ id: schema.storeCombination.id });
+      const row = await tx.insert(schema.storeCombination).values(vals).returning({ id: schema.storeCombination.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     if (body.type === "integral") {
@@ -2176,16 +2193,14 @@ export async function adminActivitySave(c: C) {
         addTime: now,
       };
       if (body.id) {
-        await container.db.update(schema.storeIntegral).set(vals).where(eq(schema.storeIntegral.id, body.id));
+        await tx.update(schema.storeIntegral).set(vals).where(eq(schema.storeIntegral.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
-      const row = await container.db.insert(schema.storeIntegral).values(vals).returning({ id: schema.storeIntegral.id });
+      const row = await tx.insert(schema.storeIntegral).values(vals).returning({ id: schema.storeIntegral.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     return jsonFail(c, "未知活动类型");
-  } catch (e) {
-    return jsonFail(c, e instanceof Error ? e.message : "保存失败");
-  }
+  });
 }
 
 /** DELETE /api/admin/activity/del/:type/:id — 删除活动 */

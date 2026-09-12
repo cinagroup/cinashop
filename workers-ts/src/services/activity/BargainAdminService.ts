@@ -6,6 +6,7 @@ import { lockBargainProductPolicy } from "./BargainProductPolicy";
 import { parseBargainSku, saveBargainSku } from "./BargainAdminSkuService";
 import { alignBargainCover, parseBargainContent, saveBargainDescription } from "./BargainContentService";
 import { parseBargainShipping, prepareBargainShipping } from './BargainAdminShippingService';
+import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
 
 type Patch = Partial<typeof storeBargain.$inferInsert>;
 const MAX_INT = 2_147_483_647;
@@ -142,6 +143,14 @@ export async function saveBargain(container: Container, body: Record<string, unk
     if (!current && !sku) throw new ValidateException("请选择砍价规格");
     Object.assign(values, Object.fromEntries(Object.entries(derived).filter(([key, value]) =>
       !current || current[key as keyof typeof current] !== value)));
+    // Refreshing inherited ownership is itself a binding change, even when the
+    // shipping form was omitted. Validate the final normalized values while the
+    // source SHARE lock is held; never silently carry another owner's template.
+    if (current && (current.type !== derived.type || current.relationId !== derived.relationId)) {
+      const final = { ...current, ...values };
+      await lockShippingTemplateBindings(tx, [{ tempId: final.tempId, freight: final.freight,
+        ownerType: derived.type!, relationId: derived.relationId! }]);
+    }
     if (current) {
       if (patch.quota !== undefined) values.quotaShow = patch.quota;
       // Write supplied editable fields and changed source metadata, not the row.
