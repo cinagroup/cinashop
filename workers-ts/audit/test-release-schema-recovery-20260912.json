@@ -1,0 +1,238 @@
+{
+  "date": "2026-09-12",
+  "scope": "Online test redeployment; no reset, historical DML, grants or provider calls",
+  "initial": {
+    "generatedAt": "2026-09-12T08:57:09.6986339+00:00",
+    "worker": "cinashop-test-release-schema-migrate-4544da921a26",
+    "stage": "apply-test-release",
+    "first": null,
+    "exitCode": 1,
+    "cleanup": {
+      "deleteSucceeded": true,
+      "attempted": true,
+      "controlPlaneMissing": true
+    },
+    "beforeFingerprint": {
+      "rows": 65,
+      "sha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+      "tables": [
+        {
+          "table": "payment_reconciliation_case",
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "table": "store_cart",
+          "rows": 27,
+          "sha256": "62a0cd982f9544719cf23998109906691a354f860c531e879e83063aa752f04d"
+        },
+        {
+          "table": "store_coupon_issue",
+          "rows": 1,
+          "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+        },
+        {
+          "table": "store_coupon_product",
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "table": "store_order",
+          "rows": 29,
+          "sha256": "3c5e74ea9e1f8373fb0138bb4a7199d3d2fc7efd98b77d7d591966e8f8f10268"
+        },
+        {
+          "table": "store_order_refund",
+          "rows": 3,
+          "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+        },
+        {
+          "table": "store_product_reply",
+          "rows": 2,
+          "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+        },
+        {
+          "table": "user",
+          "rows": 3,
+          "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+        },
+        {
+          "table": "work_contact_action_outbox",
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  },
+  "independentRead": {
+    "generatedAt": "2026-09-12T09:01:25.1783688+00:00",
+    "worker": "cinashop-test-release-schema-migrate-c745a808212c",
+    "exitCode": 0,
+    "onlyRead": true,
+    "ready": false,
+    "diagnostics": {
+      "dangling_paid_users": 12,
+      "dangling_coupon_templates": 0,
+      "operand_columns": [
+        {
+          "type": "bigint",
+          "table": "payment_reconciliation_case",
+          "column": "callback_event_id",
+          "notNull": false
+        },
+        {
+          "type": "smallint",
+          "table": "store_cart",
+          "column": "type",
+          "notNull": true
+        },
+        {
+          "type": "smallint",
+          "table": "store_order",
+          "column": "is_del",
+          "notNull": true
+        },
+        {
+          "type": "smallint",
+          "table": "store_order",
+          "column": "paid",
+          "notNull": true
+        },
+        {
+          "type": "numeric(12,2)",
+          "table": "store_order",
+          "column": "pay_price",
+          "notNull": true
+        },
+        {
+          "type": "integer",
+          "table": "store_order",
+          "column": "pid",
+          "notNull": true
+        },
+        {
+          "type": "smallint",
+          "table": "store_order",
+          "column": "refund_status",
+          "notNull": true
+        },
+        {
+          "type": "integer",
+          "table": "store_order",
+          "column": "uid",
+          "notNull": true
+        },
+        {
+          "type": "integer",
+          "table": "store_order_refund",
+          "column": "add_time",
+          "notNull": true
+        },
+        {
+          "type": "smallint",
+          "table": "store_order_refund",
+          "column": "apply_type",
+          "notNull": true
+        },
+        {
+          "type": "integer",
+          "table": "store_order_refund",
+          "column": "id",
+          "notNull": true
+        },
+        {
+          "type": "smallint",
+          "table": "store_order_refund",
+          "column": "is_cancel",
+          "notNull": true
+        },
+        {
+          "type": "smallint",
+          "table": "store_order_refund",
+          "column": "is_del",
+          "notNull": true
+        },
+        {
+          "type": "character varying(50)",
+          "table": "store_order_refund",
+          "column": "order_id",
+          "notNull": true
+        },
+        {
+          "type": "character varying(255)",
+          "table": "store_order_refund",
+          "column": "refund_explain",
+          "notNull": true
+        },
+        {
+          "type": "character varying(255)",
+          "table": "store_order_refund",
+          "column": "refund_reason",
+          "notNull": true
+        },
+        {
+          "type": "smallint",
+          "table": "store_order_refund",
+          "column": "refund_type",
+          "notNull": true
+        },
+        {
+          "type": "integer",
+          "table": "store_product_reply",
+          "column": "order_cart_info_id",
+          "notNull": false
+        },
+        {
+          "type": "integer",
+          "table": "work_contact_action_outbox",
+          "column": "client_id",
+          "notNull": true
+        },
+        {
+          "type": "character varying(18)",
+          "table": "work_contact_action_outbox",
+          "column": "corp_id",
+          "notNull": true
+        }
+      ]
+    },
+    "catalogUnchanged": true,
+    "fingerprintUnchanged": true,
+    "cleanup": {
+      "deleteSucceeded": true,
+      "controlPlaneMissing": true,
+      "attempted": true
+    }
+  },
+  "qualification": "First POST did not confirm success; subsequent independent read observed all target objects still absent and identical whole-row fingerprints. Twelve dangling paid-user references block the unmodified 0150 installer. No automatic replay or data deletion. Separate fixed core scope explicitly excludes 0150; full release and least-privilege gates remain open.",
+  "local": {
+    "db007Regression": {
+      "files": 5,
+      "tests": 76,
+      "failed": 0,
+      "pending": 0,
+      "reportSha256": "32f4855c0882e1d7d88f402055b310d9e7f38182cbc255e28db884015efc0238"
+    },
+    "schemaAndOrigins": {
+      "files": 3,
+      "tests": 38,
+      "failed": 0,
+      "pending": 0
+    },
+    "runtimeIdentityRegression": {
+      "files": 4,
+      "tests": 60,
+      "failed": 0,
+      "pending": 0
+    },
+    "coreScope": {
+      "files": 3,
+      "tests": 38,
+      "failed": 0,
+      "pending": 0
+    },
+    "types": "Both configurations passed; generated Origin type conflict fixed by existing Omit override pattern; subprocess retains narrow non-secret env pass-through",
+    "dryRun": "Main API 7321.05KiB/1357.99KiB gzip; core maintenance810.69KiB/140.42KiB gzip; both succeeded"
+  },
+  "deploymentStatus": "API and five frontends built, Supplier/Kefu Pages created; application deployment still pending at this evidence snapshot."
+}

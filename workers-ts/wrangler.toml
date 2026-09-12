@@ -59,7 +59,9 @@ OUT_API_WRITE_LIMIT_PER_MINUTE = "30"
 # Only the approved shop subdomain belongs to this storefront; apex/admin/api are occupied.
 ALLOWED_ORIGINS = "https://cinashop-pc.pages.dev,https://cinashop-h5.pages.dev,https://shop.cinaseek.ai"
 PC_AUTH_ALLOWED_ORIGINS = "https://cinashop-pc.pages.dev,https://shop.cinaseek.ai"
-# KEFU_AUTH_ALLOWED_ORIGINS intentionally omitted until the formal Kefu origin is approved.
+# Full online test deployment: separate staff Origins, never the occupied custom domains.
+AUTH_ALLOWED_ORIGINS = "https://cinashop-admin.pages.dev"
+KEFU_AUTH_ALLOWED_ORIGINS = "https://cinashop-kefu.pages.dev"
 # WORK_WECHAT_ALLOWED_ORIGINS and all WECHAT_WORK_* credentials intentionally remain
 # absent until the formal Enterprise WeChat H5 origin, callback and credentials are approved.
 

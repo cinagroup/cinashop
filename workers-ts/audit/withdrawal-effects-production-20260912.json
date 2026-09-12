@@ -1,0 +1,259 @@
+{
+  "date": "2026-09-12",
+  "scope": "Authorized DB-007 only, external 0131-0133; test-environment full deployment subsequently authorized by user. No reset, business DML, role changes or provider calls.",
+  "sourceSha256": "57c55c1f434d9159db61de2ec161fc4716a7223ad7b483426db407519a93a740",
+  "local": {
+    "files": 5,
+    "tests": 76,
+    "passed": 76,
+    "failed": 0,
+    "pending": 0,
+    "reportSha256": "32f4855c0882e1d7d88f402055b310d9e7f38182cbc255e28db884015efc0238",
+    "types": "unit and runtime passed; maintenance dry-run passed",
+    "initialTestFailure": "One fixture expected a later drift report, but the earlier DB-006 guard correctly rejected enabled event triggers. Fixed the expectation and positively verified no DDL/locks."
+  },
+  "execution": {
+    "exitCode": 0,
+    "generatedAt": "2026-09-12T08:49:40.5923494+00:00",
+    "workerName": "cinashop-withdrawal-effects-migrate-451957a7a2aa",
+    "url": "https://cinashop-withdrawal-effects-migrate-451957a7a2aa.cinagroup.workers.dev",
+    "before": {
+      "supported": true,
+      "ready": false,
+      "withinBudget": true,
+      "catalog": {
+        "indexes": [],
+        "keyCorrect": false,
+        "keyPresent": false,
+        "baseSupported": true,
+        "orderNullable": false,
+        "eventValidated": true,
+        "subjectCorrect": false,
+        "subjectPresent": false,
+        "eventDefinition": "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying])::text[])))",
+        "noEventTriggers": true,
+        "withdrawalCorrect": false,
+        "withdrawalPresent": false
+      },
+      "fingerprint": {
+        "rows": 1,
+        "sha256": "0c49e4361b4f07b80ec2ef84d2b1d1e15e6a986db79d40f89d8a9e1b9de04a29",
+        "tables": [
+          {
+            "table": "capital_flow",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "order_notification_delivery",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "system_message",
+            "rows": 1,
+            "sha256": "5c9d95467e041d985a96430782acfc999443295a74a02200266aa16ebe480580"
+          }
+        ]
+      }
+    },
+    "first": {
+      "migration": "0131-0133-withdrawal-effects",
+      "applied": true,
+      "ready": true,
+      "before": {
+        "rows": 1,
+        "sha256": "0c49e4361b4f07b80ec2ef84d2b1d1e15e6a986db79d40f89d8a9e1b9de04a29",
+        "tables": [
+          {
+            "table": "capital_flow",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "order_notification_delivery",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "system_message",
+            "rows": 1,
+            "sha256": "5c9d95467e041d985a96430782acfc999443295a74a02200266aa16ebe480580"
+          }
+        ]
+      },
+      "after": {
+        "rows": 1,
+        "sha256": "0c49e4361b4f07b80ec2ef84d2b1d1e15e6a986db79d40f89d8a9e1b9de04a29",
+        "tables": [
+          {
+            "table": "capital_flow",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "order_notification_delivery",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "system_message",
+            "rows": 1,
+            "sha256": "5c9d95467e041d985a96430782acfc999443295a74a02200266aa16ebe480580"
+          }
+        ]
+      }
+    },
+    "after": {
+      "supported": true,
+      "ready": true,
+      "withinBudget": true,
+      "catalog": {
+        "indexes": [
+          {
+            "name": "cf_event_key_uq",
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX cf_event_key_uq ON public.capital_flow USING btree (event_key)"
+          },
+          {
+            "name": "ond_withdrawal",
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX ond_withdrawal ON public.order_notification_delivery USING btree (withdrawal_id, id) WHERE (withdrawal_id IS NOT NULL)"
+          },
+          {
+            "name": "smsg_staff_inbox",
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX smsg_staff_inbox ON public.system_message USING btree (user_id, id) WHERE ((type = 2) AND (status = 1) AND (is_del = 0))"
+          }
+        ],
+        "keyCorrect": true,
+        "keyPresent": true,
+        "baseSupported": true,
+        "orderNullable": true,
+        "eventValidated": true,
+        "subjectCorrect": true,
+        "subjectPresent": true,
+        "eventDefinition": "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.refused.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying])::text[])))",
+        "noEventTriggers": true,
+        "withdrawalCorrect": true,
+        "withdrawalPresent": true
+      },
+      "fingerprint": {
+        "rows": 1,
+        "sha256": "0c49e4361b4f07b80ec2ef84d2b1d1e15e6a986db79d40f89d8a9e1b9de04a29",
+        "tables": [
+          {
+            "table": "capital_flow",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "order_notification_delivery",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "system_message",
+            "rows": 1,
+            "sha256": "5c9d95467e041d985a96430782acfc999443295a74a02200266aa16ebe480580"
+          }
+        ]
+      }
+    },
+    "idempotence": {
+      "migration": "0131-0133-withdrawal-effects",
+      "applied": false,
+      "ready": true,
+      "before": {
+        "rows": 1,
+        "sha256": "0c49e4361b4f07b80ec2ef84d2b1d1e15e6a986db79d40f89d8a9e1b9de04a29",
+        "tables": [
+          {
+            "table": "capital_flow",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "order_notification_delivery",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "system_message",
+            "rows": 1,
+            "sha256": "5c9d95467e041d985a96430782acfc999443295a74a02200266aa16ebe480580"
+          }
+        ]
+      },
+      "after": {
+        "rows": 1,
+        "sha256": "0c49e4361b4f07b80ec2ef84d2b1d1e15e6a986db79d40f89d8a9e1b9de04a29",
+        "tables": [
+          {
+            "table": "capital_flow",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "order_notification_delivery",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "system_message",
+            "rows": 1,
+            "sha256": "5c9d95467e041d985a96430782acfc999443295a74a02200266aa16ebe480580"
+          }
+        ]
+      }
+    },
+    "access": {
+      "readinessAttempts": 4,
+      "noExplicitOperation": 400,
+      "wrongMethod": 405,
+      "noToken": 403,
+      "readinessStatus": 403
+    },
+    "cleanup": {
+      "attempted": true,
+      "deleteSucceeded": true,
+      "controlPlaneMissing": true
+    },
+    "lastStage": "completed",
+    "failure": null
+  },
+  "publicCleanupStatus": 404
+}

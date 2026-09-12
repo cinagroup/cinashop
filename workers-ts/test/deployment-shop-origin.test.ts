@@ -22,6 +22,8 @@ const env = {
   NODE_ENV: productionEnvironment(),
   ALLOWED_ORIGINS: deploymentVar("ALLOWED_ORIGINS"),
   PC_AUTH_ALLOWED_ORIGINS: deploymentVar("PC_AUTH_ALLOWED_ORIGINS"),
+  AUTH_ALLOWED_ORIGINS: deploymentVar("AUTH_ALLOWED_ORIGINS"),
+  KEFU_AUTH_ALLOWED_ORIGINS: deploymentVar("KEFU_AUTH_ALLOWED_ORIGINS"),
 };
 const shop = "https://shop.cinaseek.ai";
 const app = new Hono<{ Bindings: typeof env }>();
@@ -36,6 +38,14 @@ app.post("/api/pc/key", (c) => {
 });
 
 describe("shop custom-domain deployment origins", () => {
+  it("keeps staff deployment Origins separate from storefront admission", () => {
+    expect(env.AUTH_ALLOWED_ORIGINS).toBe("https://cinashop-admin.pages.dev");
+    expect(env.KEFU_AUTH_ALLOWED_ORIGINS).toBe("https://cinashop-kefu.pages.dev");
+    expect(isAllowedAuthOrigin(env.KEFU_AUTH_ALLOWED_ORIGINS, env, "kefu_agent")).toBe(true);
+    expect(isAllowedAuthOrigin(env.AUTH_ALLOWED_ORIGINS, env, "kefu_agent")).toBe(false);
+    expect(isAllowedAuthOrigin(env.KEFU_AUTH_ALLOWED_ORIGINS, env, "pc_user")).toBe(false);
+    expect(isAllowedAuthOrigin(env.AUTH_ALLOWED_ORIGINS, env, "pc_user")).toBe(false);
+  });
   it("adds only shop while retaining existing storefront origins", () => {
     expect(env.NODE_ENV).toBe("production");
     expect(env.ALLOWED_ORIGINS.split(",").sort()).toEqual([
