@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-12",
+  "scope": "DB-009G2 explicit-target read-only parent identity permission CLI",
+  "command": "npm run audit:work-parent-permissions",
+  "connectionContract": {
+    "targetVariable": "WORK_PARENT_AUDIT_DATABASE_URL",
+    "remoteOptIn": "WORK_PARENT_AUDIT_ALLOW_REMOTE=1",
+    "genericDatabaseUrlFallback": false,
+    "argumentsAndUrlOptionsAccepted": false,
+    "remoteTls": "Explicit rejectUnauthorized=true; source contract verified, remote TLS integration not exercised",
+    "inheritedPgEnvironment": "PG* variables removed inside the dedicated CLI process before constructing the client",
+    "serverMajor": 16,
+    "readOnlyStartup": true,
+    "exitCodes": { "0": "parent identity envelope ready", "1": "unsafe or incomplete envelope", "2": "input, connection, audit or cleanup error" }
+  },
+  "verification": {
+    "postgresVersion": "160015",
+    "report": "cinashop-work-parent-cli-isolated-20260912.json",
+    "reportSha256": "E4A3CB32778E597CF5DBF921894FA0B5B093CE228CF6B014FFB9F1BB636DAE5C",
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0,
+    "cliTests": 3,
+    "permissionTests": 27,
+    "typecheckUnit": "passed",
+    "typecheckRuntime": "passed",
+    "invalidInputCases": 6,
+    "sentinelConnections": 0,
+    "actualProcessChecks": [
+      "Genuine restricted LOGIN with nonempty full-ORM parent tables returns exit 0",
+      "Owner grants DELETE, CLI returns exit 1 and names the unsafe check",
+      "Incorrect password returns exit 2 with fixed redacted message",
+      "Passwordless URL cannot borrow the correct PGPASSWORD from the environment; actual authentication fails with exit 2",
+      "Business rows and table ACL unchanged across each CLI execution",
+      "Output excludes role names, connection passwords and input secrets"
+    ],
+    "cleanup": { "runnerDatabases": 0, "financeSchemas": 0, "runtimeRoles": 0 }
+  },
+  "sourceSha256": {
+    "scripts/audit-work-parent-permissions.ts": "D2AA4EB995E3E94F94A0E18616822E9E265C8D80B1DDB08D8BD86861F2604D1A",
+    "test/work-parent-permission-cli.test.ts": "E8CAB908CF96F93589AF87393EA824E66A7E3308F0987AEE7AFF815449B0E096"
+  },
+  "limitations": [
+    "Does not prove complete application grants, provider or Queue flows, production identity or all-FK performance acceptance",
+    "No live remote TLS acceptance or unsupported-server fixture test",
+    "Current CLI and preceding eight business tests still require their own Linux CI",
+    "No production grants, credential changes, migrations or business writes"
+  ]
+}

@@ -1,5 +1,31 @@
 # DB-009G2：热点、多租户引用验收边界
 
+## 当前增量：可执行只读权限命令（2026-09-12）
+
+在 `workers-ts` 目录执行 `npm run audit:work-parent-permissions`。
+必须事先通过安全的环境注入设置 `WORK_PARENT_AUDIT_DATABASE_URL`，使用待审应用的实际登录凭据；
+不要把连接串贴入日志、文档或命令行参数。命令不读取通用 `DATABASE_URL`、dotenv 或 Hyperdrive 配置，
+并在本CLI进程内清除驱动会继承的 `PG*` 环境变量，不借用 `PGPASSWORD` 或 `PGPORT`。
+目标限 PostgreSQL 16；URL 不接受查询选项/fragment，命令不接受额外参数。
+非 `127.0.0.1` / `localhost` / `[::1]` 目标还须设置 `WORK_PARENT_AUDIT_ALLOW_REMOTE=1`，
+直接远程连接显式 `rejectUnauthorized=true` 强制验证 TLS；本机或已明确建立的环回隧道不启用 PostgreSQL 层 TLS。
+若提供商要求 URL 中的 TLS 查询选项，需从专用审计 URL 移除，不能因此绕过证书校验。
+
+连接启动即设只读、固定 search_path 及有界超时，审计内部再使用只读事务。
+退出码 `0` 仅表示两张父表的身份保护范围通过；`1` 表示权限过宽或必要检查不满足；
+`2` 表示输入、连接、执行或清理失败。输出只有具名检查结果，不输出身份、连接串或原始异常。
+本机30项（3命令+27权限）零失败零跳过，双类型通过，临时库/schema/角色零残留。
+真实子进程覆盖非空完整ORM下安全身份、提升DELETE权限及错误密码；六类非法输入被连接前拒绝，
+监听哨兵收到0次连接，各次有效审计前后业务行与ACL一致。
+远程TLS目前只有配置合同证据，未实际调用线上身份，不声称完整业务授权或远程验收。
+最小权限技能将本命令限定为检查，不自动 GRANT/REVOKE 或更换凭据。
+证据 `audit/work-parent-permission-cli-20260912.json`。
+
+27adf07 / Actions34691224392现已11/11成功，精确覆盖383文件、4491项单元零跳过，
+两个分片集合完整且互斥，容量步骤和此前两项CI失败均已复验。
+此终态覆盖权限预检及15目标/百万行证据，不覆盖其后的8业务用例和本命令；两者仍需自身CI。
+详见 `audit/work-parent-permissions-ci-20260912.json`。下文运行中/待验收描述保留为阶段历史。
+
 ## 当前增量：真实受限角色业务调用（2026-09-12）
 
 新增 `work-parent-runtime-flows.test.ts`，每项用完整ORM创建独立PG16随机库及真实临时LOGIN。

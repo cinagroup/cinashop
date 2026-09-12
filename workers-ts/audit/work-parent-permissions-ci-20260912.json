@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-12",
+  "runId": 34691224392,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34691224392",
+  "headSha": "27adf07f108e947d47f69e4598c90031f513842a",
+  "status": "completed",
+  "conclusion": "success",
+  "jobsPassed": 11,
+  "jobsTotal": 11,
+  "shards": [
+    {
+      "jobId": 103546707389,
+      "shard": 1,
+      "shardCount": 2,
+      "inventoryFiles": 383,
+      "inventorySha256": "3b06f6a8d21736b7d560a60c62df5c9b090d59780489fb54dd46a07ff125c7ed",
+      "executedFiles": 192,
+      "executedFileSha256": "0d9bf0a9656bb41b28cea51c419a3b1b3b07bab34a2c655820f3478361d7448d",
+      "passedTests": 2289,
+      "skippedTests": 0,
+      "nativePartitionCompleteAndDisjoint": true,
+      "executedFilesMatchNativePartition": true
+    },
+    {
+      "jobId": 103546707372,
+      "shard": 2,
+      "shardCount": 2,
+      "inventoryFiles": 383,
+      "inventorySha256": "3b06f6a8d21736b7d560a60c62df5c9b090d59780489fb54dd46a07ff125c7ed",
+      "executedFiles": 191,
+      "executedFileSha256": "3644a9e3aedfae81f2f1d6e5e1c841a9f9b5944bf9611f2d89dec1bfbfc897d1",
+      "passedTests": 2202,
+      "skippedTests": 0,
+      "nativePartitionCompleteAndDisjoint": true,
+      "executedFilesMatchNativePartition": true
+    }
+  ],
+  "unitFiles": 383,
+  "unitPassed": 4491,
+  "unitSkipped": 0,
+  "catalogJobId": 103546707380,
+  "statisticsScaleStep": "success",
+  "otherGates": "workerd runtime, five frontend builds, secret scan and aggregate all succeeded",
+  "scopeBoundary": "Covers parent permission auditor, repaired CI contracts, preceding nested RI and statistics scale work. Does not cover subsequent 856dcf7 business tests or the new CLI. Not production identity or formal performance acceptance."
+}

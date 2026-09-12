@@ -22,6 +22,7 @@
     "audit:orm:foreign-key-indexes": "tsx scripts/foreign-key-index-audit.ts",
     "audit:work-fk:statistics-scale": "tsx scripts/audit-work-fk-statistics-scale.ts",
     "audit:paid-runtime-permissions": "tsx scripts/audit-paid-runtime-permissions.ts",
+    "audit:work-parent-permissions": "tsx scripts/audit-work-parent-permissions.ts",
     "audit:routes": "tsx scripts/route-parity-audit.ts",
     "audit:admin-frontend": "tsx scripts/admin-frontend-parity-audit.ts",
     "audit:admin-api": "tsx scripts/admin-frontend-api-audit.ts",
