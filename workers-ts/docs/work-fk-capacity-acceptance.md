@@ -1,5 +1,30 @@
 # DB-009G2：热点、多租户引用验收边界
 
+## 当前增量：实际 Hyperdrive 身份实测（2026-09-12）
+
+通过与正式 `cinashop-api` 相同的 Hyperdrive 绑定运行一次固定只读目录审计，结果 `ready=false`。
+两张父表、8个引用键及读权限齐全；实际身份可见，但以下六类身份保护仍失败：
+可达高权限角色、对象所有权、建对象权限、父表删除/触发器权限、引用键更新和复制绕过。
+这不是业务访问失败，也不是安全验收通过；说明不能用当前连接声称父身份不可变。
+未更换凭据、GRANT/REVOKE、改表、清理业务数据或发布正式应用。
+
+按 Cloudflare/Workers 技能沿用隔离的临时 Worker、已有生成绑定类型和 Hyperdrive 连接，
+不将诊断路由挂入正式 API。执行 `scripts/run-paid-runtime-production-audit.ps1 -WorkParents`，
+该开关与 `-CatalogOnly` 互斥；默认仍审计原有付款权限范围。
+短期随机令牌、精确路径/方法、no-store、只读事务、有界超时及异常脱敏保持。
+请求结束前关闭客户端符合 [Cloudflare 连接生命周期指引](https://developers.cloudflare.com/hyperdrive/concepts/connection-lifecycle/)。
+
+前两次因新 workers.dev 路由短时404停在访问校验，未执行数据库审计；它们先被删除后才重试。
+最终执行器对无SQL的匿名GET/鉴权POST至多六轮就绪检查，仅重试404组合，仍要求403/405/404；
+第三次在三轮后通过访问检查，数据库审计GET仅一次，HTTP200返回上述真实失败项。
+三个随机探针均独立确认控制面及公开端点404，正式版本 `89dfbd1e` 和绑定前后未变。
+
+本机56项（29探针合同+27真实PG16权限）零失败零跳过、双类型检查和Wrangler打包通过，
+本机workerd则启动崩溃、0项执行，不能记为通过。新探针增量仍需自身Linux CI；
+当前c486f22运行不包含它。证据 `audit/work-parent-production-permissions-20260912.json`。
+下一步仍需独立的受限运行身份、完整业务授予/维护隔离及线上实际业务验收；
+不能只删除六类权限就宣称整个应用可运行，也不因发现缺口盲目更换 Hyperdrive 凭据。
+
 ## 当前增量：可执行只读权限命令（2026-09-12）
 
 在 `workers-ts` 目录执行 `npm run audit:work-parent-permissions`。

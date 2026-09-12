@@ -1,7 +1,10 @@
 # Deploy only a new, random, expiring diagnostic Worker, then remove that exact
 # Worker even if deployment or the HTTP check fails. Never changes cinashop-api.
-[CmdletBinding()]
-param([switch]$CatalogOnly)
+[CmdletBinding(DefaultParameterSetName = 'Paid')]
+param(
+    [Parameter(ParameterSetName = 'Catalog')][switch]$CatalogOnly,
+    [Parameter(ParameterSetName = 'WorkParents')][switch]$WorkParents
+)
 $ErrorActionPreference = 'Stop'
 if (-not $env:CLOUDFLARE_API_TOKEN) { throw 'CLOUDFLARE_API_TOKEN is required' }
 $taskRoot = Split-Path -Parent $PSScriptRoot
@@ -20,12 +23,13 @@ $taskMissing = $false
 $taskReport = $null
 $taskFailure = $null
 $taskNoTokenStatus = 0
+$taskBoundaryAttempt = 0
 $taskWrongMethodStatus = 0
 $taskWrongPathStatus = 0
 $taskUrl = $null
 $taskStage = 'target-absence'
-$taskRoute = if ($CatalogOnly) { 'catalog' } else { 'audit' }
-$taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } else { 'paid-order-runtime-permissions' }
+$taskRoute = if ($CatalogOnly) { 'catalog' } elseif ($WorkParents) { 'work-parents' } else { 'audit' }
+$taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } elseif ($WorkParents) { 'work-parent-identity-only' } else { 'paid-order-runtime-permissions' }
 $env:CLOUDFLARE_ACCOUNT_ID = $taskAccount
 $env:WRANGLER_SEND_METRICS = 'false'
 $env:WRANGLER_LOG_PATH = Join-Path $env:TEMP "$taskName.log"
@@ -44,9 +48,17 @@ try {
     $taskUrl = $taskMatch.Value
     $taskEndpoint = "$taskUrl/$taskRoute"
     $taskStage = 'access-boundaries'
-    $taskNoTokenStatus = [int](Invoke-WebRequest -Uri $taskEndpoint -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    # A newly created workers.dev route can briefly return an edge 404 for
+    # different requests independently. Retry only these SQL-free access probes;
+    # never relax the required 403/405 or repeat the database audit request.
     $taskAuth = @{ 'X-Audit-Token' = $taskToken }
-    $taskWrongMethodStatus = [int](Invoke-WebRequest -Uri $taskEndpoint -Method Post -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    for ($taskBoundaryAttempt = 1; $taskBoundaryAttempt -le 6; $taskBoundaryAttempt++) {
+        $taskNoTokenStatus = [int](Invoke-WebRequest -Uri $taskEndpoint -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+        $taskWrongMethodStatus = [int](Invoke-WebRequest -Uri $taskEndpoint -Method Post -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+        if (($taskNoTokenStatus -eq 403 -and $taskWrongMethodStatus -eq 405) -or $taskBoundaryAttempt -eq 6) { break }
+        if ($taskNoTokenStatus -notin @(403,404) -or $taskWrongMethodStatus -notin @(404,405)) { break }
+        Start-Sleep -Milliseconds 1000
+    }
     $taskWrongPathStatus = [int](Invoke-WebRequest -Uri ($taskEndpoint + '?schema=other') -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
     if ($taskNoTokenStatus -ne 403 -or $taskWrongMethodStatus -ne 405 -or $taskWrongPathStatus -ne 404) {
         throw 'Online access boundary check failed'
@@ -83,7 +95,7 @@ try {
     url = $taskUrl
     scope = "$taskScope; evidence only, not full migration or application readiness"
     report = $taskReport
-    access = @{ noToken = $taskNoTokenStatus; wrongMethod = $taskWrongMethodStatus; queryInput = $taskWrongPathStatus }
+    access = @{ noToken = $taskNoTokenStatus; wrongMethod = $taskWrongMethodStatus; queryInput = $taskWrongPathStatus; boundaryAttempts = $taskBoundaryAttempt }
     cleanup = @{ attempted = $taskAttempted; deleteSucceeded = $taskDeleted; controlPlaneMissing = $taskMissing }
     failure = $taskFailure
     lastAuditStage = $taskStage

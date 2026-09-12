@@ -1,0 +1,104 @@
+{
+  "date": "2026-09-12",
+  "baseCommit": "c486f2286ed59eb4c05e799afe1efd4f3d8b654e",
+  "status": "completed-with-permission-gaps",
+  "scope": "Current deployed Hyperdrive identity, work parent identity envelope only",
+  "formalWorker": "cinashop-api",
+  "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",
+  "bindingIndependentlyMatched": true,
+  "formalDeployment": "8a7109fd-fb85-4479-b31d-ab7ac1a02d0a",
+  "formalVersion": "89dfbd1e-775a-4227-9548-039bc3cac268",
+  "trafficPercentage": 100,
+  "formalDeploymentAndBindingUnchangedAfterAudit": true,
+  "cleanup": {
+    "allThreeRandomWorkersDeleted": true,
+    "independentControlPlaneStatuses": [404, 404, 404],
+    "independentPublicEndpointStatuses": [404, 404, 404],
+    "existingWorkersOrVersionsDeleted": false
+  },
+  "execution": {
+    "generatedAt": "2026-09-12T12:10:54.4329939+00:00",
+    "workerName": "cinashop-paid-runtime-audit-5fc0064ecf1a",
+    "stage": "audit-completed",
+    "failure": null,
+    "access": { "anonymous": 403, "authenticatedPost": 405, "queryInput": 404, "authenticatedAudit": 200, "boundaryAttempts": 3 },
+    "cacheControl": "no-store",
+    "token": "Random 256-bit in-memory token; only SHA256 verifier deployed; 10-minute expiry; neither retained here",
+    "databaseAuditRequests": 1,
+    "transaction": "Fixed catalog queries in bounded READ ONLY REPEATABLE READ; preserves stricter existing timeouts",
+    "result": {
+      "scope": "work-parent-identity-only",
+      "ready": false,
+      "checks": {
+        "connectionIdentityVisible": true,
+        "objectsAndKeysPresent": true,
+        "unprivilegedReachableRoles": false,
+        "noOwnerControl": false,
+        "noSchemaCreation": false,
+        "noParentRemovalOrTriggerCreation": false,
+        "noReferencedKeyUpdate": false,
+        "noReplicationBypass": false,
+        "noUnreviewedDefinerRoutine": true,
+        "parentReadAccess": true
+      },
+      "failures": [
+        "unprivilegedReachableRoles", "noOwnerControl", "noSchemaCreation",
+        "noParentRemovalOrTriggerCreation", "noReferencedKeyUpdate", "noReplicationBypass"
+      ]
+    }
+  },
+  "priorAttempts": [
+    {
+      "workerName": "cinashop-paid-runtime-audit-5071569c23c4",
+      "generatedAt": "2026-09-12T12:07:48.7629738+00:00",
+      "stage": "access-boundaries",
+      "anonymous": 404,
+      "authenticatedPost": 405,
+      "queryInput": 404,
+      "databaseAuditRequests": 0,
+      "report": null
+    },
+    {
+      "workerName": "cinashop-paid-runtime-audit-ff9f21e0e08d",
+      "generatedAt": "2026-09-12T12:09:19.4782603+00:00",
+      "stage": "access-boundaries",
+      "anonymous": 403,
+      "authenticatedPost": 404,
+      "queryInput": 404,
+      "databaseAuditRequests": 0,
+      "report": null
+    }
+  ],
+  "readinessAdjustment": "At most six rounds of SQL-free anonymous GET/authenticated POST probes, retrying only edge-404 combinations; still require exact 403/405/404 before the single database audit. No retry of SQL or relaxation of access assertions.",
+  "localVerification": {
+    "report": "cinashop-work-parent-probe-20260912.json",
+    "reportSha256": "1EBD900A412D2398F138209D75E0282E253249A239EEF798454407EDB8827B61",
+    "passed": 56,
+    "failed": 0,
+    "skipped": 0,
+    "nodeProbeContracts": 29,
+    "genuinePg16PermissionTests": 27,
+    "typecheckUnit": "passed",
+    "typecheckRuntime": "passed",
+    "wranglerVersion": "4.122.0",
+    "dryRun": "success; 780.01 KiB / gzip 134.20 KiB",
+    "bindingTypes": "regenerated with Wrangler; no semantic binding changes",
+    "powershellSyntax": "valid",
+    "localWorkerd": "failed to start with Windows 0xc0000005; zero tests executed; not counted as pass",
+    "fixtureCleanup": { "runnerDatabases": 0, "financeSchemas": 0, "runtimeRoles": 0 }
+  },
+  "sourceSha256": {
+    "test/integration/PaidRuntimeAuditWorker.ts": "2EE709738845D05F60E45C57E0EB7AF3402A53240542FE3F81A72819258CD27C",
+    "test/paid-runtime-audit-worker.test.ts": "FB58B59673975BC3887813426A92B912498D1FA656236240AFD88FF80F9C3961",
+    "scripts/run-paid-runtime-production-audit.ps1": "4FA55BE5FEA8745A74A66274933DC1804A78B440998C5997445B80FB515D0686"
+  },
+  "boundaries": {
+    "databaseWrites": false,
+    "grantsOrRevokes": false,
+    "credentialChanges": false,
+    "formalApplicationDeployment": false,
+    "providerCalls": false,
+    "fullBusinessOrPerformanceAcceptance": false,
+    "linuxCi": "This new probe increment is not part of the already running c486f22 CI and still needs its own Linux execution"
+  }
+}

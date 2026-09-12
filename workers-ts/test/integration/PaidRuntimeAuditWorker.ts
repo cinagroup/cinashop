@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { createDbFromConnectionString } from '@/lib/di';
 import { auditPaidOrderRuntimePermissions } from '@/migrations/auditPaidOrderRuntimePermissions';
 import { auditReleasePrerequisiteCatalog } from '@/migrations/auditReleasePrerequisiteCatalog';
+import { auditWorkParentIdentityPermissions } from '@/migrations/auditWorkParentIdentityPermissions';
 
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 
@@ -26,7 +27,7 @@ export default {
       return Response.json({ error: 'forbidden' }, { status: 403, headers });
     }
     const url = new URL(request.url);
-    if (!['/audit', '/catalog'].includes(url.pathname) || url.search) {
+    if (!['/audit', '/catalog', '/work-parents'].includes(url.pathname) || url.search) {
       return Response.json({ error: 'not found' }, { status: 404, headers });
     }
     if (request.method !== 'GET') {
@@ -39,6 +40,8 @@ export default {
       });
       const result = url.pathname === '/catalog'
         ? { scope: 'release-prerequisite-catalog', catalog: await auditReleasePrerequisiteCatalog(db) }
+        : url.pathname === '/work-parents'
+        ? await auditWorkParentIdentityPermissions(db)
         : { scope: 'paid-order-runtime-permissions', ...await auditPaidOrderRuntimePermissions(db) };
       // A close failure must not escape this handler or expose a raw DB error.
       await db.$client.end({ timeout: 1 });
