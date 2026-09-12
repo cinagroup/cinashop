@@ -1,0 +1,1355 @@
+{
+  "date": "2026-09-12",
+  "sourceCommit": "97b2a13feee089eaa550aa5579671c7be1fa7448",
+  "scope": "User-authorized online test deployment. Fixed 0146-0149 and 0151 only; no reset or business DML. 0150 remains excluded because 12 existing paid orders reference missing users.",
+  "execution": {
+    "exitCode": 0,
+    "generatedAt": "2026-09-12T09:07:16.3751141+00:00",
+    "workerName": "cinashop-test-release-core-schema-migrate-066cb5d6fa87",
+    "url": "https://cinashop-test-release-core-schema-migrate-066cb5d6fa87.cinagroup.workers.dev",
+    "before": {
+      "supported": true,
+      "ready": false,
+      "withinBudget": true,
+      "catalog": {
+        "tables": [
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "capital_flow",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "order_notification_delivery",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "payment_reconciliation_case",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_cart",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_coupon_issue",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_coupon_product",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order_outbox",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order_refund",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_product_category",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_product_reply",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "system_message",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "user",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "user_extract",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "work_contact_action_outbox",
+            "exists": true
+          }
+        ],
+        "columns": [
+          {
+            "name": "event_key",
+            "type": "character varying(128)",
+            "table": "capital_flow",
+            "exists": true,
+            "notNull": false,
+            "defaultHash": null
+          },
+          {
+            "name": "order_id",
+            "type": "integer",
+            "table": "order_notification_delivery",
+            "exists": true,
+            "notNull": false,
+            "defaultHash": null
+          },
+          {
+            "name": "withdrawal_id",
+            "type": "integer",
+            "table": "order_notification_delivery",
+            "exists": true,
+            "notNull": false,
+            "defaultHash": null
+          },
+          {
+            "name": "bargain_user_id",
+            "type": null,
+            "table": "store_cart",
+            "exists": false,
+            "notNull": null,
+            "defaultHash": null
+          },
+          {
+            "name": "user_ip",
+            "type": "character varying(45)",
+            "table": "store_order",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "pic",
+            "type": "character varying(512)",
+            "table": "store_product_category",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "add_ip",
+            "type": "character varying(45)",
+            "table": "user",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "last_ip",
+            "type": "character varying(45)",
+            "table": "user",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "request_hash",
+            "type": "character varying(64)",
+            "table": "user_extract",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "request_key",
+            "type": "character varying(96)",
+            "table": "user_extract",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "wechat",
+            "type": "character varying(64)",
+            "table": "user_extract",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          }
+        ],
+        "indexes": [
+          {
+            "name": "cf_event_key_uq",
+            "ready": true,
+            "table": "capital_flow",
+            "valid": true,
+            "exists": true,
+            "unique": true,
+            "truncated": false,
+            "definition": "CREATE UNIQUE INDEX cf_event_key_uq ON public.capital_flow USING btree (event_key)"
+          },
+          {
+            "name": "ond_withdrawal",
+            "ready": true,
+            "table": "order_notification_delivery",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX ond_withdrawal ON public.order_notification_delivery USING btree (withdrawal_id, id) WHERE (withdrawal_id IS NOT NULL)"
+          },
+          {
+            "name": "prc_callback_event",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "smsg_staff_inbox",
+            "ready": true,
+            "table": "system_message",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX smsg_staff_inbox ON public.system_message USING btree (user_id, id) WHERE ((type = 2) AND (status = 1) AND (is_del = 0))"
+          },
+          {
+            "name": "sor_pink_recovery_scan",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "spr_order_cart_info",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "ue_request_replay_uq",
+            "ready": true,
+            "table": "user_extract",
+            "valid": true,
+            "exists": true,
+            "unique": true,
+            "truncated": false,
+            "definition": "CREATE UNIQUE INDEX ue_request_replay_uq ON public.user_extract USING btree (uid, request_key) WHERE ((request_key)::text <> ''::text)"
+          },
+          {
+            "name": "wcao_client_ref",
+            "ready": null,
+            "table": null,
+            "valid": null,
+            "exists": false,
+            "unique": null,
+            "truncated": null,
+            "definition": null
+          }
+        ],
+        "triggers": [
+          {
+            "name": "coupon_product_delete_0151",
+            "table": "store_coupon_product",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "coupon_product_insert_0151",
+            "table": "store_coupon_product",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "coupon_product_update_0151",
+            "table": "store_coupon_product",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_delete_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_insert_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_update_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          }
+        ],
+        "functions": [
+          {
+            "name": "brokerage_paid_order_fence_0150",
+            "exists": false,
+            "sourceHash": null,
+            "securityDefiner": null
+          },
+          {
+            "name": "coupon_product_scope_fence_0151",
+            "exists": false,
+            "sourceHash": null,
+            "securityDefiner": null
+          }
+        ],
+        "constraints": [
+          {
+            "name": "ond_subject_ck",
+            "table": "order_notification_delivery",
+            "exists": true,
+            "truncated": false,
+            "validated": true,
+            "definition": "CHECK ((((withdrawal_id IS NULL) AND (order_id IS NOT NULL)) OR ((withdrawal_id IS NOT NULL) AND (withdrawal_id > 0) AND (order_id IS NULL))))"
+          },
+          {
+            "name": "sc_bargain_participation_ck",
+            "table": "store_cart",
+            "exists": false,
+            "truncated": null,
+            "validated": null,
+            "definition": null
+          },
+          {
+            "name": "soob_event_type_ck",
+            "table": "store_order_outbox",
+            "exists": true,
+            "truncated": false,
+            "validated": true,
+            "definition": "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.refused.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying])::text[])))"
+          }
+        ],
+        "serverMajor": 16,
+        "schemaPresent": true,
+        "reachableRoleAttributes": {
+          "createDb": true,
+          "bypassRls": true,
+          "superuser": true,
+          "createRole": true,
+          "replication": true
+        }
+      },
+      "excluded": [
+        "0150-brokerage-paid-order-fence"
+      ],
+      "diagnostics": {
+        "dangling_paid_users": 12,
+        "dangling_coupon_templates": 0,
+        "operand_columns": [
+          {
+            "type": "bigint",
+            "table": "payment_reconciliation_case",
+            "column": "callback_event_id",
+            "notNull": false
+          },
+          {
+            "type": "smallint",
+            "table": "store_cart",
+            "column": "type",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order",
+            "column": "is_del",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order",
+            "column": "paid",
+            "notNull": true
+          },
+          {
+            "type": "numeric(12,2)",
+            "table": "store_order",
+            "column": "pay_price",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order",
+            "column": "pid",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order",
+            "column": "refund_status",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order",
+            "column": "uid",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order_refund",
+            "column": "add_time",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "apply_type",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order_refund",
+            "column": "id",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "is_cancel",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "is_del",
+            "notNull": true
+          },
+          {
+            "type": "character varying(50)",
+            "table": "store_order_refund",
+            "column": "order_id",
+            "notNull": true
+          },
+          {
+            "type": "character varying(255)",
+            "table": "store_order_refund",
+            "column": "refund_explain",
+            "notNull": true
+          },
+          {
+            "type": "character varying(255)",
+            "table": "store_order_refund",
+            "column": "refund_reason",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "refund_type",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_product_reply",
+            "column": "order_cart_info_id",
+            "notNull": false
+          },
+          {
+            "type": "integer",
+            "table": "work_contact_action_outbox",
+            "column": "client_id",
+            "notNull": true
+          },
+          {
+            "type": "character varying(18)",
+            "table": "work_contact_action_outbox",
+            "column": "corp_id",
+            "notNull": true
+          }
+        ]
+      },
+      "fingerprint": {
+        "rows": 65,
+        "sha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+        "tables": [
+          {
+            "table": "payment_reconciliation_case",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_cart",
+            "rows": 27,
+            "sha256": "62a0cd982f9544719cf23998109906691a354f860c531e879e83063aa752f04d"
+          },
+          {
+            "table": "store_coupon_issue",
+            "rows": 1,
+            "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+          },
+          {
+            "table": "store_coupon_product",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order",
+            "rows": 29,
+            "sha256": "3c5e74ea9e1f8373fb0138bb4a7199d3d2fc7efd98b77d7d591966e8f8f10268"
+          },
+          {
+            "table": "store_order_refund",
+            "rows": 3,
+            "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+          },
+          {
+            "table": "store_product_reply",
+            "rows": 2,
+            "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+          },
+          {
+            "table": "user",
+            "rows": 3,
+            "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+          },
+          {
+            "table": "work_contact_action_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      }
+    },
+    "first": {
+      "migration": "0146-0149-0151-test-release-core-schema",
+      "excluded": [
+        "0150-brokerage-paid-order-fence"
+      ],
+      "applied": true,
+      "ready": true,
+      "before": {
+        "rows": 65,
+        "sha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+        "tables": [
+          {
+            "table": "payment_reconciliation_case",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_cart",
+            "rows": 27,
+            "sha256": "62a0cd982f9544719cf23998109906691a354f860c531e879e83063aa752f04d"
+          },
+          {
+            "table": "store_coupon_issue",
+            "rows": 1,
+            "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+          },
+          {
+            "table": "store_coupon_product",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order",
+            "rows": 29,
+            "sha256": "3c5e74ea9e1f8373fb0138bb4a7199d3d2fc7efd98b77d7d591966e8f8f10268"
+          },
+          {
+            "table": "store_order_refund",
+            "rows": 3,
+            "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+          },
+          {
+            "table": "store_product_reply",
+            "rows": 2,
+            "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+          },
+          {
+            "table": "user",
+            "rows": 3,
+            "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+          },
+          {
+            "table": "work_contact_action_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      "after": {
+        "rows": 65,
+        "sha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+        "tables": [
+          {
+            "table": "payment_reconciliation_case",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_cart",
+            "rows": 27,
+            "sha256": "62a0cd982f9544719cf23998109906691a354f860c531e879e83063aa752f04d"
+          },
+          {
+            "table": "store_coupon_issue",
+            "rows": 1,
+            "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+          },
+          {
+            "table": "store_coupon_product",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order",
+            "rows": 29,
+            "sha256": "3c5e74ea9e1f8373fb0138bb4a7199d3d2fc7efd98b77d7d591966e8f8f10268"
+          },
+          {
+            "table": "store_order_refund",
+            "rows": 3,
+            "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+          },
+          {
+            "table": "store_product_reply",
+            "rows": 2,
+            "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+          },
+          {
+            "table": "user",
+            "rows": 3,
+            "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+          },
+          {
+            "table": "work_contact_action_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      }
+    },
+    "after": {
+      "supported": true,
+      "ready": true,
+      "withinBudget": true,
+      "catalog": {
+        "tables": [
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "capital_flow",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "order_notification_delivery",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "payment_reconciliation_case",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_cart",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_coupon_issue",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_coupon_product",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order_outbox",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_order_refund",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_product_category",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "store_product_reply",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "system_message",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "user",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "user_extract",
+            "exists": true
+          },
+          {
+            "rls": false,
+            "kind": "r",
+            "name": "work_contact_action_outbox",
+            "exists": true
+          }
+        ],
+        "columns": [
+          {
+            "name": "event_key",
+            "type": "character varying(128)",
+            "table": "capital_flow",
+            "exists": true,
+            "notNull": false,
+            "defaultHash": null
+          },
+          {
+            "name": "order_id",
+            "type": "integer",
+            "table": "order_notification_delivery",
+            "exists": true,
+            "notNull": false,
+            "defaultHash": null
+          },
+          {
+            "name": "withdrawal_id",
+            "type": "integer",
+            "table": "order_notification_delivery",
+            "exists": true,
+            "notNull": false,
+            "defaultHash": null
+          },
+          {
+            "name": "bargain_user_id",
+            "type": "integer",
+            "table": "store_cart",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "cfcd208495d565ef66e7dff9f98764da"
+          },
+          {
+            "name": "user_ip",
+            "type": "character varying(45)",
+            "table": "store_order",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "pic",
+            "type": "character varying(512)",
+            "table": "store_product_category",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "add_ip",
+            "type": "character varying(45)",
+            "table": "user",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "last_ip",
+            "type": "character varying(45)",
+            "table": "user",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "request_hash",
+            "type": "character varying(64)",
+            "table": "user_extract",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "request_key",
+            "type": "character varying(96)",
+            "table": "user_extract",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          },
+          {
+            "name": "wechat",
+            "type": "character varying(64)",
+            "table": "user_extract",
+            "exists": true,
+            "notNull": true,
+            "defaultHash": "5001af52b868852e1ace9362f2f67171"
+          }
+        ],
+        "indexes": [
+          {
+            "name": "cf_event_key_uq",
+            "ready": true,
+            "table": "capital_flow",
+            "valid": true,
+            "exists": true,
+            "unique": true,
+            "truncated": false,
+            "definition": "CREATE UNIQUE INDEX cf_event_key_uq ON public.capital_flow USING btree (event_key)"
+          },
+          {
+            "name": "ond_withdrawal",
+            "ready": true,
+            "table": "order_notification_delivery",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX ond_withdrawal ON public.order_notification_delivery USING btree (withdrawal_id, id) WHERE (withdrawal_id IS NOT NULL)"
+          },
+          {
+            "name": "prc_callback_event",
+            "ready": true,
+            "table": "payment_reconciliation_case",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX prc_callback_event ON public.payment_reconciliation_case USING btree (callback_event_id)"
+          },
+          {
+            "name": "smsg_staff_inbox",
+            "ready": true,
+            "table": "system_message",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX smsg_staff_inbox ON public.system_message USING btree (user_id, id) WHERE ((type = 2) AND (status = 1) AND (is_del = 0))"
+          },
+          {
+            "name": "sor_pink_recovery_scan",
+            "ready": true,
+            "table": "store_order_refund",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX sor_pink_recovery_scan ON public.store_order_refund USING btree (id, add_time) WHERE ((is_cancel = 0) AND (is_del = 0) AND (apply_type = 1) AND (refund_type = ANY (ARRAY[0, 1, 2, 4, 5])) AND ((refund_reason)::text = '用户手动取消拼团'::text) AND ((refund_explain)::text = '用户手动取消未成团的拼团订单'::text) AND (\"left\"((order_id)::text, 12) = 'pink_cancel_'::text))"
+          },
+          {
+            "name": "spr_order_cart_info",
+            "ready": true,
+            "table": "store_product_reply",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX spr_order_cart_info ON public.store_product_reply USING btree (order_cart_info_id)"
+          },
+          {
+            "name": "ue_request_replay_uq",
+            "ready": true,
+            "table": "user_extract",
+            "valid": true,
+            "exists": true,
+            "unique": true,
+            "truncated": false,
+            "definition": "CREATE UNIQUE INDEX ue_request_replay_uq ON public.user_extract USING btree (uid, request_key) WHERE ((request_key)::text <> ''::text)"
+          },
+          {
+            "name": "wcao_client_ref",
+            "ready": true,
+            "table": "work_contact_action_outbox",
+            "valid": true,
+            "exists": true,
+            "unique": false,
+            "truncated": false,
+            "definition": "CREATE INDEX wcao_client_ref ON public.work_contact_action_outbox USING btree (corp_id, client_id)"
+          }
+        ],
+        "triggers": [
+          {
+            "name": "coupon_product_delete_0151",
+            "table": "store_coupon_product",
+            "exists": true,
+            "enabled": "O",
+            "truncated": false,
+            "definition": "CREATE TRIGGER coupon_product_delete_0151 AFTER DELETE ON public.store_coupon_product REFERENCING OLD TABLE AS coupon_scope_old FOR EACH STATEMENT EXECUTE FUNCTION coupon_product_scope_fence_0151()"
+          },
+          {
+            "name": "coupon_product_insert_0151",
+            "table": "store_coupon_product",
+            "exists": true,
+            "enabled": "O",
+            "truncated": false,
+            "definition": "CREATE TRIGGER coupon_product_insert_0151 AFTER INSERT ON public.store_coupon_product REFERENCING NEW TABLE AS coupon_scope_new FOR EACH STATEMENT EXECUTE FUNCTION coupon_product_scope_fence_0151()"
+          },
+          {
+            "name": "coupon_product_update_0151",
+            "table": "store_coupon_product",
+            "exists": true,
+            "enabled": "O",
+            "truncated": false,
+            "definition": "CREATE TRIGGER coupon_product_update_0151 AFTER UPDATE ON public.store_coupon_product REFERENCING OLD TABLE AS coupon_scope_old NEW TABLE AS coupon_scope_new FOR EACH STATEMENT EXECUTE FUNCTION coupon_product_scope_fence_0151()"
+          },
+          {
+            "name": "brokerage_paid_delete_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_insert_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          },
+          {
+            "name": "brokerage_paid_update_0150",
+            "table": "store_order",
+            "exists": false,
+            "enabled": null,
+            "truncated": null,
+            "definition": null
+          }
+        ],
+        "functions": [
+          {
+            "name": "brokerage_paid_order_fence_0150",
+            "exists": false,
+            "sourceHash": null,
+            "securityDefiner": null
+          },
+          {
+            "name": "coupon_product_scope_fence_0151",
+            "exists": true,
+            "sourceHash": "bbd598446a92c2705879eaa5ba595337",
+            "securityDefiner": false
+          }
+        ],
+        "constraints": [
+          {
+            "name": "ond_subject_ck",
+            "table": "order_notification_delivery",
+            "exists": true,
+            "truncated": false,
+            "validated": true,
+            "definition": "CHECK ((((withdrawal_id IS NULL) AND (order_id IS NOT NULL)) OR ((withdrawal_id IS NOT NULL) AND (withdrawal_id > 0) AND (order_id IS NULL))))"
+          },
+          {
+            "name": "sc_bargain_participation_ck",
+            "table": "store_cart",
+            "exists": true,
+            "truncated": false,
+            "validated": true,
+            "definition": "CHECK (((bargain_user_id >= 0) AND ((type = 2) OR (bargain_user_id = 0))))"
+          },
+          {
+            "name": "soob_event_type_ck",
+            "table": "store_order_outbox",
+            "exists": true,
+            "truncated": false,
+            "validated": true,
+            "definition": "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.refused.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying])::text[])))"
+          }
+        ],
+        "serverMajor": 16,
+        "schemaPresent": true,
+        "reachableRoleAttributes": {
+          "createDb": true,
+          "bypassRls": true,
+          "superuser": true,
+          "createRole": true,
+          "replication": true
+        }
+      },
+      "excluded": [
+        "0150-brokerage-paid-order-fence"
+      ],
+      "diagnostics": {
+        "dangling_paid_users": 12,
+        "dangling_coupon_templates": 0,
+        "operand_columns": [
+          {
+            "type": "bigint",
+            "table": "payment_reconciliation_case",
+            "column": "callback_event_id",
+            "notNull": false
+          },
+          {
+            "type": "smallint",
+            "table": "store_cart",
+            "column": "type",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order",
+            "column": "is_del",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order",
+            "column": "paid",
+            "notNull": true
+          },
+          {
+            "type": "numeric(12,2)",
+            "table": "store_order",
+            "column": "pay_price",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order",
+            "column": "pid",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order",
+            "column": "refund_status",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order",
+            "column": "uid",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order_refund",
+            "column": "add_time",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "apply_type",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_order_refund",
+            "column": "id",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "is_cancel",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "is_del",
+            "notNull": true
+          },
+          {
+            "type": "character varying(50)",
+            "table": "store_order_refund",
+            "column": "order_id",
+            "notNull": true
+          },
+          {
+            "type": "character varying(255)",
+            "table": "store_order_refund",
+            "column": "refund_explain",
+            "notNull": true
+          },
+          {
+            "type": "character varying(255)",
+            "table": "store_order_refund",
+            "column": "refund_reason",
+            "notNull": true
+          },
+          {
+            "type": "smallint",
+            "table": "store_order_refund",
+            "column": "refund_type",
+            "notNull": true
+          },
+          {
+            "type": "integer",
+            "table": "store_product_reply",
+            "column": "order_cart_info_id",
+            "notNull": false
+          },
+          {
+            "type": "integer",
+            "table": "work_contact_action_outbox",
+            "column": "client_id",
+            "notNull": true
+          },
+          {
+            "type": "character varying(18)",
+            "table": "work_contact_action_outbox",
+            "column": "corp_id",
+            "notNull": true
+          }
+        ]
+      },
+      "fingerprint": {
+        "rows": 65,
+        "sha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+        "tables": [
+          {
+            "table": "payment_reconciliation_case",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_cart",
+            "rows": 27,
+            "sha256": "62a0cd982f9544719cf23998109906691a354f860c531e879e83063aa752f04d"
+          },
+          {
+            "table": "store_coupon_issue",
+            "rows": 1,
+            "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+          },
+          {
+            "table": "store_coupon_product",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order",
+            "rows": 29,
+            "sha256": "3c5e74ea9e1f8373fb0138bb4a7199d3d2fc7efd98b77d7d591966e8f8f10268"
+          },
+          {
+            "table": "store_order_refund",
+            "rows": 3,
+            "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+          },
+          {
+            "table": "store_product_reply",
+            "rows": 2,
+            "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+          },
+          {
+            "table": "user",
+            "rows": 3,
+            "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+          },
+          {
+            "table": "work_contact_action_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      }
+    },
+    "idempotence": {
+      "migration": "0146-0149-0151-test-release-core-schema",
+      "excluded": [
+        "0150-brokerage-paid-order-fence"
+      ],
+      "applied": false,
+      "ready": true,
+      "before": {
+        "rows": 65,
+        "sha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+        "tables": [
+          {
+            "table": "payment_reconciliation_case",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_cart",
+            "rows": 27,
+            "sha256": "62a0cd982f9544719cf23998109906691a354f860c531e879e83063aa752f04d"
+          },
+          {
+            "table": "store_coupon_issue",
+            "rows": 1,
+            "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+          },
+          {
+            "table": "store_coupon_product",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order",
+            "rows": 29,
+            "sha256": "3c5e74ea9e1f8373fb0138bb4a7199d3d2fc7efd98b77d7d591966e8f8f10268"
+          },
+          {
+            "table": "store_order_refund",
+            "rows": 3,
+            "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+          },
+          {
+            "table": "store_product_reply",
+            "rows": 2,
+            "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+          },
+          {
+            "table": "user",
+            "rows": 3,
+            "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+          },
+          {
+            "table": "work_contact_action_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      "after": {
+        "rows": 65,
+        "sha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+        "tables": [
+          {
+            "table": "payment_reconciliation_case",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_cart",
+            "rows": 27,
+            "sha256": "62a0cd982f9544719cf23998109906691a354f860c531e879e83063aa752f04d"
+          },
+          {
+            "table": "store_coupon_issue",
+            "rows": 1,
+            "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+          },
+          {
+            "table": "store_coupon_product",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "table": "store_order",
+            "rows": 29,
+            "sha256": "3c5e74ea9e1f8373fb0138bb4a7199d3d2fc7efd98b77d7d591966e8f8f10268"
+          },
+          {
+            "table": "store_order_refund",
+            "rows": 3,
+            "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+          },
+          {
+            "table": "store_product_reply",
+            "rows": 2,
+            "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+          },
+          {
+            "table": "user",
+            "rows": 3,
+            "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+          },
+          {
+            "table": "work_contact_action_outbox",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      }
+    },
+    "access": {
+      "readinessAttempts": 1,
+      "wrongMethod": 405,
+      "readinessStatus": 403,
+      "noExplicitOperation": 400,
+      "noToken": 403
+    },
+    "cleanup": {
+      "deleteSucceeded": true,
+      "controlPlaneMissing": true,
+      "attempted": true
+    },
+    "lastStage": "completed",
+    "failure": null
+  },
+  "independentPublicCleanupHttp": 404,
+  "local": {
+    "unitFiles": 3,
+    "tests": 38,
+    "passed": 38,
+    "failed": 0,
+    "skipped": 0,
+    "types": "unit and runtime passed",
+    "report": "cinashop-test-release-core-20260912.json"
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "date": "2026-09-12",
+  "releaseMode": "Online test environment, not formal production acceptance",
+  "sourceCommit": "97b2a13feee089eaa550aa5579671c7be1fa7448",
+  "worker": {
+    "name": "cinashop-api",
+    "deploymentId": "5a25b379-cc48-4ed0-9871-688528e47412",
+    "versions": [
+      {
+        "version_id": "42e39c18-08b8-44c1-8518-5421c6307ea9",
+        "percentage": 100
+      }
+    ],
+    "createdOn": "2026-09-12T09:13:15.183207Z",
+    "previousVersion": "9f1fd655-e60f-41c1-8280-738bc85d73ef",
+    "secretsPreserved": true
+  },
+  "pages": [
+    {
+      "project": "cinashop-admin",
+      "branch": "main",
+      "domains": [
+        "cinashop-admin.pages.dev"
+      ],
+      "deploymentId": "dcfb9cb5-052d-4fd4-9edf-41f26a85355d",
+      "url": "https://dcfb9cb5.cinashop-admin.pages.dev",
+      "environment": "production",
+      "stage": {
+        "name": "deploy",
+        "started_on": null,
+        "ended_on": "2026-09-12T09:13:32.612886Z",
+        "status": "success"
+      },
+      "commit": "97b2a13feee089eaa550aa5579671c7be1fa7448"
+    },
+    {
+      "project": "cinashop-pc",
+      "branch": "main",
+      "domains": [
+        "cinashop-pc.pages.dev",
+        "shop.cinaseek.ai"
+      ],
+      "deploymentId": "afdf9f00-fbf3-4119-a26e-e15842f7d00a",
+      "url": "https://afdf9f00.cinashop-pc.pages.dev",
+      "environment": "production",
+      "stage": {
+        "name": "deploy",
+        "started_on": null,
+        "ended_on": "2026-09-12T09:13:37.828195Z",
+        "status": "success"
+      },
+      "commit": "97b2a13feee089eaa550aa5579671c7be1fa7448"
+    },
+    {
+      "project": "cinashop-h5",
+      "branch": "main",
+      "domains": [
+        "cinashop-h5.pages.dev"
+      ],
+      "deploymentId": "bce44919-59d8-4d46-a345-261fc07dcd8a",
+      "url": "https://bce44919.cinashop-h5.pages.dev",
+      "environment": "production",
+      "stage": {
+        "name": "deploy",
+        "started_on": null,
+        "ended_on": "2026-09-12T09:13:39.871287Z",
+        "status": "success"
+      },
+      "commit": "97b2a13feee089eaa550aa5579671c7be1fa7448"
+    },
+    {
+      "project": "cinashop-supplier",
+      "branch": "main",
+      "domains": [
+        "cinashop-supplier.pages.dev"
+      ],
+      "deploymentId": "ed1fc411-4830-4fed-af5e-6b86fa0a2de0",
+      "url": "https://ed1fc411.cinashop-supplier.pages.dev",
+      "environment": "production",
+      "stage": {
+        "name": "deploy",
+        "started_on": null,
+        "ended_on": "2026-09-12T09:13:40.415712Z",
+        "status": "success"
+      },
+      "commit": "97b2a13feee089eaa550aa5579671c7be1fa7448"
+    },
+    {
+      "project": "cinashop-kefu",
+      "branch": "main",
+      "domains": [
+        "cinashop-kefu.pages.dev"
+      ],
+      "deploymentId": "81e33ea0-f3cd-4799-8a03-6d03a7f3a7b3",
+      "url": "https://81e33ea0.cinashop-kefu.pages.dev",
+      "environment": "production",
+      "stage": {
+        "name": "deploy",
+        "started_on": null,
+        "ended_on": "2026-09-12T09:13:38.297463Z",
+        "status": "success"
+      },
+      "commit": "97b2a13feee089eaa550aa5579671c7be1fa7448"
+    }
+  ],
+  "checks": {
+    "apiHealth": {
+      "http": 200,
+      "ok": true
+    },
+    "storefrontProducts": {
+      "http": 200,
+      "status": 200
+    },
+    "publicBootstrap": "PC, Admin, H5, Supplier, Kefu JSON status 200",
+    "protectedAnonymous": "Admin /adminapi/config/list, Supplier /supplierapi/config, Kefu /kefuapi/service/info: HTTP 200 with JSON status 410000, no data",
+    "htmlAndEntryAssets": "All five production hosts HTTP 200 and entry JavaScript HTTP 200",
+    "cors": {
+      "shop": "OPTIONS 204, exact shop origin",
+      "adminAgainstStorefront": "OPTIONS 204, no allow-origin",
+      "occupiedRoot": "OPTIONS 204, no allow-origin"
+    },
+    "browser": {
+      "tool": "Codex in-app browser via cua_repl",
+      "url": "https://shop.cinaseek.ai/goods",
+      "title": "CinaShop",
+      "viewportScreenshot": "1265x712",
+      "flow": "Homepage -> click All products -> /goods renders sort controls and populated list",
+      "blankPage": false,
+      "frameworkOverlay": false,
+      "capturedErrorWarnLogs": [],
+      "screenshots": "Homepage and product list emitted in tool results",
+      "finding": "Existing test product images fail to load; visible fallback text. No image data changed.",
+      "untested": "Mobile, authenticated flows and five-app complete visual QA"
+    }
+  },
+  "entryAssets": {
+    "pc": "index-BKWUsebi.js",
+    "admin": "index-DWSX3JjF.js",
+    "h5": "index-BAblUde7.js",
+    "supplier": "index-DHHtNs1E.js",
+    "kefu": "index-CT8BhVXO.js"
+  },
+  "database": {
+    "evidence": "test-release-core-schema-production-20260912.json",
+    "retainedRows": 65,
+    "fingerprint": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+    "excluded": "0150-brokerage-paid-order-fence",
+    "danglingPaidOrders": 12
+  },
+  "notClaimed": [
+    "Authenticated login / checkout / payment / refund E2E",
+    "Formal production least privilege",
+    "0150 installed or waived",
+    "Full 0135-0145 catalog alignment",
+    "Rollback rehearsal across new Durable Object migration"
+  ],
+  "preserved": [
+    "All existing test data",
+    "Occupied cinaseek.ai / admin / api / www hosts",
+    "cinashop-admin-ts project",
+    "Unrelated branches and deployments"
+  ],
+  "ci": {
+    "runId": 34685058465,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34685058465",
+    "headSha": "97b2a13feee089eaa550aa5579671c7be1fa7448",
+    "statusAtEvidence": "in_progress",
+    "completedSuccess": [
+      "Repository secret scan",
+      "workerd runtime tests",
+      "Isolated PostgreSQL 16 migration catalog execution",
+      "Admin build",
+      "PC build",
+      "UniApp build",
+      "Supplier build",
+      "Kefu build"
+    ],
+    "pending": [
+      "Worker unit shard 1/2",
+      "Worker unit shard 2/2",
+      "Worker aggregate gate"
+    ],
+    "note": "Test release and main merge authorized independently of formal production acceptance. Pending tests are not claimed as passed."
+  },
+  "git": {
+    "releaseBranch": "codex/migration-shop-release-20260910",
+    "target": "main",
+    "strategy": "Fast-forward only, preserve existing main commits",
+    "cleanup": "Only release branch after successful main push; final command result is authoritative"
+  }
+}
