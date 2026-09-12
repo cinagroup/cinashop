@@ -4,6 +4,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import { foreignKeyIndexInventory } from "../scripts/foreign-key-index-audit";
 import * as models from "../src/models/schema";
 import { sequenceRunnerDatabase } from "./helpers/kefuSequenceRunnerDatabase";
+import { foreignKeyNestedPlans } from "./helpers/foreignKeyNestedPlans";
 
 const count = 100003;
 const eventColumns = "last_event_id,corp_id,last_event_key,last_event_subject_key_hash,last_event_time,last_sequence_rank";
@@ -261,6 +262,17 @@ describe("all twelve six-column callback references with existing narrow indexes
         })).rejects.toBe(rollback);
       }
     }
+    const nestedPlans = fixture.withPeer ? await foreignKeyNestedPlans(fixture, {
+      table: target.table, constraint: target.name, columns: target.columns,
+      cases: [
+        { name: "hotA", key: 1 }, { name: "hotB", key: 2 },
+        { name: "rareA", key: 3 }, { name: "rareB", key: 4 },
+        { name: "absentA", key: 7 }, { name: "absentB", key: 6 },
+      ].map(p => ({ ...p, referenced: p.key <= 4,
+        deleteStatement: `DELETE FROM public.work_callback_event WHERE id=${p.key}`,
+        updateStatement: `UPDATE public.work_callback_event SET sequence_rank=sequence_rank+1 WHERE id=${p.key}` })),
+    }) : [];
+    if (fixture.withPeer) expect(nestedPlans).toHaveLength(46);
     expect(await fingerprint(target.table)).toEqual(beforeRows);
     expect(await fingerprint("work_callback_event")).toEqual(beforeParents);
     expect(await catalog()).toEqual(beforeCatalog);
@@ -268,6 +280,6 @@ describe("all twelve six-column callback references with existing narrow indexes
       rows:count,distribution:distribution.rows,measured,actualParentRejections:8,unreferencedParentRollbacks:4,
       parentAndChildRowsUnchanged:true,indexesConstraintsAndStatisticsUnchanged:true,addedIndexes:0,
       selectiveProbesUnder50:measured.filter(p=>p.expectedRows<=1).every(p=>p.custom.buffers<50 && p.generic.buffers<50),
-      nestedTriggerPlanCaptured:false,performanceAcceptance:false,productionLatencyClaim:false }) + "\n");
+      nestedTriggerPlanCaptured:nestedPlans.length>0,nestedPlans,performanceAcceptance:false,productionLatencyClaim:false }) + "\n");
   },180000);
 });

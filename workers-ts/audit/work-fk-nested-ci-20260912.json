@@ -1,0 +1,2366 @@
+{
+  "runId": 34688447565,
+  "conclusion": "success",
+  "headSha": "0d9fee6c1a892ce57c4d924d7a811cffbce106b6",
+  "jobs": [
+    {
+      "completedAt": "2026-09-12T10:26:37Z",
+      "conclusion": "success",
+      "databaseId": 103539442585,
+      "name": "Repository secret scan",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:29:32Z",
+      "conclusion": "success",
+      "databaseId": 103539442660,
+      "name": "Isolated PostgreSQL 16 migration catalog execution",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:40:02Z",
+      "conclusion": "success",
+      "databaseId": 103539442664,
+      "name": "Worker type, unit, schema and route execution (shard 1/2)",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:27:06Z",
+      "conclusion": "success",
+      "databaseId": 103539442702,
+      "name": "workerd runtime tests",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:27:55Z",
+      "conclusion": "success",
+      "databaseId": 103539442716,
+      "name": "UniApp build",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:27:02Z",
+      "conclusion": "success",
+      "databaseId": 103539442731,
+      "name": "Admin build",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:38:58Z",
+      "conclusion": "success",
+      "databaseId": 103539442740,
+      "name": "Worker type, unit, schema and route execution (shard 2/2)",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:27:00Z",
+      "conclusion": "success",
+      "databaseId": 103539442753,
+      "name": "Supplier build",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:26:46Z",
+      "conclusion": "success",
+      "databaseId": 103539442755,
+      "name": "Kefu build",
+      "startedAt": "2026-09-12T10:26:28Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:27:01Z",
+      "conclusion": "success",
+      "databaseId": 103539442771,
+      "name": "PC build",
+      "startedAt": "2026-09-12T10:26:29Z",
+      "status": "completed"
+    },
+    {
+      "completedAt": "2026-09-12T10:40:07Z",
+      "conclusion": "success",
+      "databaseId": 103540985788,
+      "name": "Worker type, unit, schema and route gates",
+      "startedAt": "2026-09-12T10:40:05Z",
+      "status": "completed"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-09-12T10:40:08Z",
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34688447565",
+  "scope": "0d9fee6 only, including wcao nested RI and default-cache warmup; excludes 6615ceb scale benchmark and this 15-target capture increment",
+  "unitCoverage": {
+    "files": 382,
+    "passed": 4464,
+    "skipped": 0,
+    "shards": [
+      {
+        "shard": 1,
+        "shardCount": 2,
+        "inventoryFiles": 382,
+        "inventorySha256": "de95a55aff30848d5cbae48e9bd9e719cf9f2347f3d090a63d984afddee55054",
+        "executedFiles": 191,
+        "executedFileSha256": "b99e49f8116daa1c25b9d19854401b60024581edbd734bde0dc90450863df83b",
+        "passedTests": 2262,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      },
+      {
+        "shard": 2,
+        "shardCount": 2,
+        "inventoryFiles": 382,
+        "inventorySha256": "de95a55aff30848d5cbae48e9bd9e719cf9f2347f3d090a63d984afddee55054",
+        "executedFiles": 191,
+        "executedFileSha256": "3644a9e3aedfae81f2f1d6e5e1c841a9f9b5944bf9611f2d89dec1bfbfc897d1",
+        "passedTests": 2202,
+        "skippedTests": 0,
+        "nativePartitionCompleteAndDisjoint": true,
+        "executedFilesMatchNativePartition": true
+      }
+    ]
+  },
+  "linuxWcao": {
+    "sourceJob": 103539442664,
+    "sourceEndpoint": "https://api.github.com/repos/cinagroup/cinashop/actions/jobs/103539442664/logs",
+    "cacheLogWasIncomplete": true,
+    "freshEndpointUsed": true,
+    "fullScanDefaultAutoSamples": 3,
+    "target": "wcao_client_fk",
+    "version": "160014",
+    "nestedTriggerPlanCaptured": true,
+    "defaultCacheTrials": [
+      {
+        "trial": 0,
+        "mode": "auto",
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 4,
+            "most_common_freqs": [
+              0.9999
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          }
+        ],
+        "operations": [
+          {
+            "action": "DELETE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "trial": 1,
+        "mode": "auto",
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "operations": [
+          {
+            "action": "DELETE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 89,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 100000,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Heap Scan",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Bitmap Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "trial": 2,
+        "mode": "auto",
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "operations": [
+          {
+            "action": "DELETE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4002,
+            "reads": 0,
+            "filtered": 100000,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4002,
+            "reads": 0,
+            "filtered": 100000,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "trial": 3,
+        "mode": "auto",
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "operations": [
+          {
+            "action": "DELETE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4002,
+            "reads": 0,
+            "filtered": 100000,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4002,
+            "reads": 0,
+            "filtered": 100000,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "trial": 4,
+        "mode": "auto",
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "operations": [
+          {
+            "action": "DELETE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": true,
+            "rows": 0,
+            "hits": 4001,
+            "reads": 0,
+            "filtered": 100003,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": true,
+            "rows": 1,
+            "hits": 4002,
+            "reads": 0,
+            "filtered": 100000,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "DELETE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": false,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 1,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 2,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 3,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 4,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 5,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 6,
+            "key": 1,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Seq Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 7,
+            "key": 4,
+            "parameterizedPlan": false,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 8,
+            "key": 2,
+            "parameterizedPlan": false,
+            "rows": 1,
+            "hits": 4,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 1,
+                "loops": 1
+              },
+              {
+                "type": "Index Scan",
+                "rows": 1,
+                "loops": 1
+              }
+            ]
+          },
+          {
+            "action": "UPDATE",
+            "ordinal": 9,
+            "key": 4,
+            "parameterizedPlan": false,
+            "rows": 0,
+            "hits": 2,
+            "reads": 0,
+            "filtered": 0,
+            "nodes": [
+              {
+                "type": "LockRows",
+                "rows": 0,
+                "loops": 1
+              },
+              {
+                "type": "Index Scan",
+                "rows": 0,
+                "loops": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "parentAndChildRowsUnchanged": true,
+    "diagnosticStatisticsRestored": true
+  },
+  "productionChanges": false,
+  "G2Closed": false
+}

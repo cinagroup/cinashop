@@ -175,6 +175,9 @@ jobs:
       - name: Verify sequence generator semantics on isolated PostgreSQL 16
         run: npm run audit:orm:sequences
 
+      - name: Measure FK statistics candidates on isolated PostgreSQL 16
+        run: npm run audit:work-fk:statistics-scale
+
   runtime:
     name: workerd runtime tests
     runs-on: ubuntu-24.04

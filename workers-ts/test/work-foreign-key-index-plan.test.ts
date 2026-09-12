@@ -2,6 +2,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { sql } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { sequenceRunnerDatabase } from "./helpers/kefuSequenceRunnerDatabase";
+import { foreignKeyNestedPlans } from "./helpers/foreignKeyNestedPlans";
 import { foreignKeyIndexInventory } from "../scripts/foreign-key-index-audit";
 import { runWorkContactClientIndex } from "../src/migrations/runWorkContactClientIndex";
 
@@ -254,6 +255,19 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
     }
     const nestedTriggerPlans: unknown[] = [];
     const defaultCacheTrials: unknown[] = [];
+    if (target.existing && f.withPeer) {
+      const beforeNestedStats = await statisticsState(), beforeNestedIndexes = await indexState();
+      nestedTriggerPlans.push(...await foreignKeyNestedPlans(f, {
+        table: target.table, constraint: target.fk, columns: [target.column],
+        cases: [1, 2, 3, 4].map(key => ({ key, name: key === 1 ? "hot" : key === 4 ? "absent" : `rare${key}`,
+          referenced: key !== 4,
+          deleteStatement: `DELETE FROM public.work_callback_event WHERE id=${key}`,
+          updateStatement: `UPDATE public.work_callback_event SET id=id+200000 WHERE id=${key}` })),
+      }));
+      expect(nestedTriggerPlans).toHaveLength(34);
+      expect(await statisticsState()).toEqual(beforeNestedStats);
+      expect(await indexState()).toEqual(beforeNestedIndexes);
+    }
     if (!target.existing && f.withPeer) {
       // Session-local, isolated PG16 only. Observe the real RI SPI query rather
       // than replacing it with an uncapped SELECT or a hand-written LIMIT.
