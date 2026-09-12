@@ -4,6 +4,10 @@
 
 ## 审计结论
 
+A3k12运费生命周期红色验收（2026-09-12）：完整ORM/独立本机PG16中调用真实Admin删除控制器和Supplier服务，六类显式引用、供应商保留砍价引用及默认模板1共8例全部复现“仍被引用却删除”，验收脚本返回1，不是功能通过。已确认KEY SHARE/SHARE及反向锁顺序差异；不照搬PHP自动重绑模板1，不改线上数据。双类型通过、远程入口拒绝、随机库/schema/角色零残留；共同绑定/解绑/删除协议、完整入口/并发/所属方/历史订单及正式验收仍待实现。证据workers-ts/audit/shipping-template-lifecycle-gaps-20260912.json和docs/shipping-template-lifecycle.md；239／165／404不变。
+
+G2命令与业务Linux终态（2026-09-12）：c486f22 / Actions34692558945已11/11成功，385文件4502单元零跳过、精确分片完整互斥，覆盖8受限业务和3命令用例。新Hyperdrive探针bb04311的Actions34693434221已启动，不能把前次CI外推到新探针或运费复现。证据workers-ts/audit/work-parent-cli-business-ci-20260912.json；实际线上六类权限缺口仍未修改。
+
 G2实际Hyperdrive权限实测（2026-09-12）：固定只读临时探针确认两张父表/8引用键齐全、实际身份可见且可读，但ready=false，高权限角色、所有权、建对象、父删除/触发器、引用键更新、复制绕过六类失败。最终访问403/405/404、审计200；两次路由传播404前置失败未执行SQL，三个随机Worker均独立删除复核404，正式89dfbd1e版本/绑定未变。56项本地测试及双类型/打包通过；Windows workerd启动失败0执行，新探针自身Linux CI仍待验。未改变线上权限/凭据/数据，不把当前身份视为最小权限，G2及完整业务验收继续开放；239／165／404不变。证据workers-ts/audit/work-parent-production-permissions-20260912.json。
 
 G2权限命令及Linux复验（2026-09-12）：显式目标只读入口 `npm run audit:work-parent-permissions` 已补齐，退出码0/1/2、非法输入连接前拒绝、真实非空完整ORM身份及错误密码有子进程证据；30项零失败零跳过、双类型通过、隔离资源零残留。27adf07 / Actions34691224392已11/11成功，383文件4491单元零跳过，精确分片完整互斥，覆盖权限预检及前序15目标/百万行容量增量；不覆盖随后8业务用例和本命令，后者CI待验。没有调用线上身份或更改权限/凭据，G2的运行身份、完整业务和wcao策略仍开放；239／165／404不变。证据workers-ts/audit/work-parent-permission-cli-20260912.json和work-parent-permissions-ci-20260912.json；下方相应运行中/待验收为阶段历史。

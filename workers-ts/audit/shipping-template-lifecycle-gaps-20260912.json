@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-12",
+  "baseCommit": "bb04311d61f50f22d2798d2afd0c074ed763332a",
+  "checklist": "FE-003L-A3k12",
+  "status": "red-acceptance-reproduced-not-fixed",
+  "command": "node node_modules/tsx/dist/cli.mjs scripts/audit-shipping-template-lifecycle.ts",
+  "environment": { "postgresVersion": "160015", "fullOrm": true, "ownedRandomDatabase": true, "productionConnection": false },
+  "execution": {
+    "exitCode": 1,
+    "meaning": "Audit executed and cleaned up, lifecycle readiness failed",
+    "ready": false,
+    "cases": 8,
+    "protected": 0,
+    "deletedWhileReferenced": ["product", "seckill", "bargain", "combination", "integral", "package", "supplier retained bargain", "implicit default template 1"],
+    "referenceRows": "Explicit reference rows unchanged while their parent became is_del=1",
+    "repeat": "Repeated after fixing TypeScript union-table insertion typing; same eight failures, no business code changes",
+    "remoteInputGuard": "Non-loopback TEST_FINANCE_POSTGRES_URL rejected with exit 2 before fixture creation",
+    "typecheckUnit": "passed",
+    "typecheckRuntime": "passed",
+    "cleanup": { "runnerDatabases": 0, "financeSchemas": 0, "runtimeRoles": 0 }
+  },
+  "sourceSha256": {
+    "scripts/audit-shipping-template-lifecycle.ts": "0238B189D4204863DC69A8825ECF750F787487931C86449793DB5C215B8B9360",
+    "src/controllers/api/v1/AdminCrudController.ts": "6B1975FAEF2E0EE6963B64353B3CE46BC5448CE2BC666EB77A62BBC5A2AC0998",
+    "src/services/supplier/SupplierShippingTemplateService.ts": "1FF521C2CFE9FE98D751D1FB067DD5C0A3407B4521D540A471885E55D823AD8B",
+    "src/services/order/ShippingTemplateSnapshot.ts": "56D5AEB3B901016F914F31B23622062B0838A4083E4BC6DA6BA73752AF0057EE"
+  },
+  "sourceFindings": [
+    "Admin deletion updates only shipping_templates.is_del without reference inspection",
+    "Supplier deletion inspects active same-supplier store_product references but not independent activity references",
+    "Supplier product shipping admission uses KEY SHARE, unlike bargain SHARE NOWAIT and mobile admin SHARE",
+    "ShippingTemplateSnapshot resolves nonpositive temp_id and freight outside 1/2 to implicit template 1",
+    "PHP ShippingTemplatesServices.detete deletes rules and rewrites all product temp_id references to 1; this behavior must not be copied as an automatic data repair"
+  ],
+  "limitations": [
+    "No correction of application or database lifecycle protection yet",
+    "HTTP controller fixture bypasses real admin authentication; supplier service uses explicit synthetic supplier identity",
+    "These eight sequential cases do not prove concurrent binding/deletion, ownership transition or historical-order behavior",
+    "Writer inventory remains incomplete; source findings are confirmed examples, not a whole-repository proof",
+    "No direct-SQL bypass prevention, upgrade migration or production acceptance"
+  ]
+}

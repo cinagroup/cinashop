@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-12",
+  "runId": 34692558945,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34692558945",
+  "headSha": "c486f2286ed59eb4c05e799afe1efd4f3d8b654e",
+  "status": "completed",
+  "conclusion": "success",
+  "jobsPassed": 11,
+  "jobsTotal": 11,
+  "unitFiles": 385,
+  "unitPassed": 4502,
+  "unitSkipped": 0,
+  "inventorySha256": "a32a5a4a54f2145462d3151d5df75d42a8af8683058ca5e68fa2a514cba75648",
+  "shards": [
+    { "jobId": 103550295216, "shard": 1, "executedFiles": 193, "passedTests": 2291, "skippedTests": 0,
+      "executedFileSha256": "b93f588285bcd747ad2b0f40c6cb388390b356f9e1bef193d159785d21c92189",
+      "nativePartitionCompleteAndDisjoint": true, "executedFilesMatchNativePartition": true },
+    { "jobId": 103550295174, "shard": 2, "executedFiles": 192, "passedTests": 2211, "skippedTests": 0,
+      "executedFileSha256": "aef6504649668ce39419e9ae8183d7050a15f32b9ecde3042978791f714b121f",
+      "nativePartitionCompleteAndDisjoint": true, "executedFilesMatchNativePartition": true }
+  ],
+  "scope": "Includes the eight restricted-role business tests and three explicit-target permission CLI tests, plus previous gates. Not formal production-role business acceptance.",
+  "nextRun": { "id": 34693434221, "headSha": "bb04311d61f50f22d2798d2afd0c074ed763332a", "observedStatus": "in_progress", "scope": "New Hyperdrive work-parent probe; no shipping lifecycle script in this commit" }
+}
