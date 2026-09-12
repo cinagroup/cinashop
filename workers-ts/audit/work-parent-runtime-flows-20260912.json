@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-12",
+  "scope": "DB-009G2 restricted-role client projection, UID action consumption and callback payload redaction",
+  "sourceFile": "test/work-parent-runtime-flows.test.ts",
+  "sourceSha256": "6F7855346CC398C416BD75F1247CC93FCA5135810DBCF16B5227C88F8B714789",
+  "environment": {
+    "postgresVersion": "160015",
+    "fullOrmGenerated": true,
+    "genuineTemporaryLogins": true,
+    "remoteProviders": "strict no-call factory; synthetic snapshot provider for prepare phase",
+    "databaseIsolation": "new owned random database for each of 8 business tests"
+  },
+  "verification": {
+    "report": "cinashop-work-parent-runtime-catalog-final-20260912.json",
+    "reportSha256": "906FC4BF4D725F092B5F29EEC3D3A01DF69754008A9F1E4AF397E1BB3319D422",
+    "passed": 35,
+    "failed": 0,
+    "skipped": 0,
+    "typecheckUnit": "passed",
+    "typecheckRuntime": "passed",
+    "permissionTests": 27,
+    "businessTests": 8,
+    "businessDurationMs": 38711.322021484375,
+    "permissionDurationMs": 9453.145263671875,
+    "catalogInvariant": "All public constraints OID/definition/validated and indexes OID/definition/valid/ready equal before/after each business test",
+    "cleanup": {
+      "runnerDatabases": 0,
+      "financeSchemas": 0,
+      "runtimeRoles": 0
+    }
+  },
+  "businessCases": [
+    "Client first projection, replay no-op, edit/tag replacement, callback-authoritative relationship tombstone and tombstone replay; preserve another tenant and complete callback rows",
+    "Revoke client name column UPDATE: parent identity preflight still passes, actual projection refuses 42501 with whole projection rollback; explicit regrant restores operation",
+    "Unique unionid authority: actual action consumer links UID once and replays already-terminal; complete user/identity/event records unchanged",
+    "Ambiguous unionid: actual consumer marks DEAD without changing client",
+    "Conflicting existing client UID: actual consumer marks DEAD without changing client",
+    "Missing unionid authority: actual consumer skips without creating user or identity rows",
+    "Redact only eligible completed callbacks in bounded pages; retain PENDING/UNKNOWN action dependencies, future retention and incomplete callback outboxes; keys and dependent rows unchanged",
+    "Two real independent runtime connections: skip locked eligible event then process it after release"
+  ],
+  "permissionFinding": {
+    "requiredForRedaction": "UPDATE privilege on at least one work_callback_outbox column because the joined SELECT FOR UPDATE locks both tables",
+    "testedMinimalSupplement": "UPDATE(update_time) on work_callback_outbox",
+    "missingGrant": "Actual redaction fails 42501 and leaves callback rows unchanged; parent identity preflight alone remains insufficient",
+    "parentKeys": "No UPDATE on client corp_id/id or six callback referenced keys; no parent DELETE/TRUNCATE/TRIGGER",
+    "proofBoundary": "The explicit test grants are not a complete application permission prescription"
+  },
+  "limitations": [
+    "No production role invocation or grant changes",
+    "No callback ingress/Queue transport/provider network end-to-end acceptance",
+    "No authenticated browser or full real-tenant acceptance",
+    "No performance capacity claim from small business fixtures",
+    "New business suite requires its own Linux CI; ongoing 34691224392 covers prior 27adf07, not this file",
+    "wcao runtime identity, scale/statistics/retention and formal acceptance remain open"
+  ]
+}
