@@ -1,0 +1,1269 @@
+{
+  "scope": "DB-009G2 local isolated PostgreSQL 16 actual wcao_client_fk nested RI plans",
+  "capturedAtUtc": "2026-09-12T10:16:09Z",
+  "baseCommit": "10e7c638e6b2ec46f6773a0538dcd3eb513d53a7",
+  "sourceSha256": {
+    "test/work-foreign-key-index-plan.test.ts": "cf2e6f875d18e4c4f5e66a84da366ec104742c2e03df9cc7eed60d7bf026c5f4",
+    "test/helpers/kefuSequenceRunnerDatabase.ts": "85174617125bad4ef50f0642796329bd7c0e2dd902e884dde1010cd958d9babc"
+  },
+  "testReport": {
+    "file": "cinashop-g2-nested-ri-20260912.json",
+    "sha256": "0324da0a4b4473d7a37b2208fe09930fbd2510619982a552f1622887edcf563d",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 51451.366455078125
+  },
+  "typecheck": {
+    "unit": "passed",
+    "runtime": "passed"
+  },
+  "cleanup": {
+    "runnerDatabases": 0,
+    "financeSchemas": 0,
+    "runtimeRoles": 0,
+    "existingLocalServerLeftRunning": true
+  },
+  "capture": {
+    "module": "auto_explain",
+    "sessionOnly": true,
+    "logLevel": "notice",
+    "logNestedStatements": true,
+    "logAnalyze": true,
+    "logBuffers": true,
+    "logTiming": false,
+    "logParameterMaxLength": 0,
+    "fullOrmConstraintsRetained": true,
+    "operationsRolledBack": 12,
+    "referencedRejections": 6,
+    "unreferencedSuccessesRolledBack": 6
+  },
+  "boundaries": [
+    "Only wcao_client_fk nested plans captured; other 15 previously examined targets remain outside this new nested-plan evidence.",
+    "auto mode has only two operations per RI statement kind: not proof of long-lived automatic generic-plan selection.",
+    "force_custom_plan and force_generic_plan are session-local diagnostic modes, not production settings or measured production behavior.",
+    "This run's last default ANALYZE sample chose an index for generic no-reference lookup; earlier default generic full-scan variability remains open.",
+    "Hot generic bitmap index scans processed 100000 entries before the RI LockRows returned one row: row limit does not eliminate startup work.",
+    "No production credentials, statistics, indexes or business data were changed. DB-009G2 remains open."
+  ],
+  "officialReference": "https://www.postgresql.org/docs/16/auto-explain.html",
+  "record": {
+    "target": "wcao_client_fk",
+    "version": "160015",
+    "rows": 100003,
+    "existingPartialIndex": false,
+    "existingPlans": {
+      "absent": {
+        "rows": 0,
+        "hits": 4001,
+        "reads": 0,
+        "filtered": 100003,
+        "indexes": [],
+        "triggers": []
+      },
+      "firstState": {
+        "rows": 1,
+        "hits": 4002,
+        "reads": 0,
+        "filtered": 100002,
+        "indexes": [],
+        "triggers": []
+      },
+      "secondState": {
+        "rows": 1,
+        "hits": 4002,
+        "reads": 0,
+        "filtered": 100002,
+        "indexes": [],
+        "triggers": []
+      },
+      "genericAbsent": {
+        "rows": 0,
+        "hits": 4001,
+        "reads": 0,
+        "filtered": 100003,
+        "indexes": [],
+        "triggers": []
+      }
+    },
+    "withoutIndexAbsent": {
+      "rows": 0,
+      "hits": 4001,
+      "reads": 0,
+      "filtered": 100003,
+      "indexes": [],
+      "triggers": []
+    },
+    "indexed": {
+      "absent": {
+        "rows": 0,
+        "hits": 0,
+        "reads": 2,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "firstState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "secondState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "genericAbsent": {
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      }
+    },
+    "completeModelForeignKeys": 45,
+    "defaultStatisticsTrials": [
+      {
+        "trial": 0,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 0,
+          "reads": 2,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 1,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 4001,
+          "reads": 0,
+          "filtered": 100003,
+          "indexes": [],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 2,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 4001,
+          "reads": 0,
+          "filtered": 100003,
+          "indexes": [],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 3,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 4,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        }
+      }
+    ],
+    "fullSampleDiagnostic": {
+      "absent": {
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "firstState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "secondState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "genericAbsent": {
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      }
+    },
+    "diagnosticStatisticsTarget": 1000,
+    "diagnosticStatisticsRestored": true,
+    "parentActionsUseDefaultStatistics": true,
+    "defaultStatisticsUniversalIndexUseProven": false,
+    "nullRows": 0,
+    "formalMigrationApplied": "0148",
+    "existingIndexPreserved": false,
+    "parentAndChildRowsUnchanged": true,
+    "foreignKeyUnchanged": true,
+    "nestedTriggerPlanCaptured": true,
+    "nestedTriggerPlans": [
+      {
+        "mode": "auto",
+        "key": 1,
+        "action": "DELETE",
+        "rows": 1,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0,
+            "Total Cost": 6501.01,
+            "Plan Rows": 99996,
+            "Plan Width": 10,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0,
+                "Total Cost": 5501.05,
+                "Plan Rows": 99996,
+                "Plan Width": 10,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Filter": "(('fixture'::text = (corp_id)::text) AND (1 = client_id))",
+                "Rows Removed by Filter": 0,
+                "Shared Hit Blocks": 1,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "auto",
+        "key": 1,
+        "action": "UPDATE",
+        "rows": 1,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0,
+            "Total Cost": 6501.01,
+            "Plan Rows": 99996,
+            "Plan Width": 10,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0,
+                "Total Cost": 5501.05,
+                "Plan Rows": 99996,
+                "Plan Width": 10,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Filter": "(('fixture'::text = (corp_id)::text) AND (1 = client_id))",
+                "Rows Removed by Filter": 0,
+                "Shared Hit Blocks": 1,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "auto",
+        "key": 4,
+        "action": "DELETE",
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0.29,
+            "Total Cost": 11.88,
+            "Plan Rows": 3,
+            "Plan Width": 10,
+            "Actual Rows": 0,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "wcao_client_ref",
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0.29,
+                "Total Cost": 11.85,
+                "Plan Rows": 3,
+                "Plan Width": 10,
+                "Actual Rows": 0,
+                "Actual Loops": 1,
+                "Index Cond": "(((corp_id)::text = 'fixture'::text) AND (client_id = 4))",
+                "Rows Removed by Index Recheck": 0,
+                "Shared Hit Blocks": 2,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "auto",
+        "key": 4,
+        "action": "UPDATE",
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0.29,
+            "Total Cost": 11.88,
+            "Plan Rows": 3,
+            "Plan Width": 10,
+            "Actual Rows": 0,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "wcao_client_ref",
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0.29,
+                "Total Cost": 11.85,
+                "Plan Rows": 3,
+                "Plan Width": 10,
+                "Actual Rows": 0,
+                "Actual Loops": 1,
+                "Index Cond": "(((corp_id)::text = 'fixture'::text) AND (client_id = 4))",
+                "Rows Removed by Index Recheck": 0,
+                "Shared Hit Blocks": 2,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_custom_plan",
+        "key": 1,
+        "action": "DELETE",
+        "rows": 1,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0,
+            "Total Cost": 6501.01,
+            "Plan Rows": 99996,
+            "Plan Width": 10,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0,
+                "Total Cost": 5501.05,
+                "Plan Rows": 99996,
+                "Plan Width": 10,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Filter": "(('fixture'::text = (corp_id)::text) AND (1 = client_id))",
+                "Rows Removed by Filter": 0,
+                "Shared Hit Blocks": 1,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_custom_plan",
+        "key": 1,
+        "action": "UPDATE",
+        "rows": 1,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0,
+            "Total Cost": 6501.01,
+            "Plan Rows": 99996,
+            "Plan Width": 10,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0,
+                "Total Cost": 5501.05,
+                "Plan Rows": 99996,
+                "Plan Width": 10,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Filter": "(('fixture'::text = (corp_id)::text) AND (1 = client_id))",
+                "Rows Removed by Filter": 0,
+                "Shared Hit Blocks": 1,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_custom_plan",
+        "key": 4,
+        "action": "DELETE",
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0.29,
+            "Total Cost": 11.88,
+            "Plan Rows": 3,
+            "Plan Width": 10,
+            "Actual Rows": 0,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "wcao_client_ref",
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0.29,
+                "Total Cost": 11.85,
+                "Plan Rows": 3,
+                "Plan Width": 10,
+                "Actual Rows": 0,
+                "Actual Loops": 1,
+                "Index Cond": "(((corp_id)::text = 'fixture'::text) AND (client_id = 4))",
+                "Rows Removed by Index Recheck": 0,
+                "Shared Hit Blocks": 2,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_custom_plan",
+        "key": 4,
+        "action": "UPDATE",
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 0.29,
+            "Total Cost": 11.88,
+            "Plan Rows": 3,
+            "Plan Width": 10,
+            "Actual Rows": 0,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "wcao_client_ref",
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 0.29,
+                "Total Cost": 11.85,
+                "Plan Rows": 3,
+                "Plan Width": 10,
+                "Actual Rows": 0,
+                "Actual Loops": 1,
+                "Index Cond": "(((corp_id)::text = 'fixture'::text) AND (client_id = 4))",
+                "Rows Removed by Index Recheck": 0,
+                "Shared Hit Blocks": 2,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_generic_plan",
+        "key": 1,
+        "action": "DELETE",
+        "rows": 1,
+        "hits": 4,
+        "reads": 85,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 348.55,
+            "Total Cost": 4974.58,
+            "Plan Rows": 25001,
+            "Plan Width": 10,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 4,
+            "Shared Read Blocks": 85,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Bitmap Heap Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 348.55,
+                "Total Cost": 4724.57,
+                "Plan Rows": 25001,
+                "Plan Width": 10,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Recheck Cond": "((($1)::text = (corp_id)::text) AND ($2 = client_id))",
+                "Rows Removed by Index Recheck": 0,
+                "Exact Heap Blocks": 1,
+                "Lossy Heap Blocks": 0,
+                "Shared Hit Blocks": 3,
+                "Shared Read Blocks": 85,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Index Name": "wcao_client_ref",
+                    "Startup Cost": 0,
+                    "Total Cost": 342.3,
+                    "Plan Rows": 25001,
+                    "Plan Width": 0,
+                    "Actual Rows": 100000,
+                    "Actual Loops": 1,
+                    "Index Cond": "(((corp_id)::text = ($1)::text) AND (client_id = $2))",
+                    "Shared Hit Blocks": 2,
+                    "Shared Read Blocks": 85,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_generic_plan",
+        "key": 1,
+        "action": "UPDATE",
+        "rows": 1,
+        "hits": 89,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 348.55,
+            "Total Cost": 4974.58,
+            "Plan Rows": 25001,
+            "Plan Width": 10,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 89,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Bitmap Heap Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 348.55,
+                "Total Cost": 4724.57,
+                "Plan Rows": 25001,
+                "Plan Width": 10,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Recheck Cond": "((($1)::text = (corp_id)::text) AND ($2 = client_id))",
+                "Rows Removed by Index Recheck": 0,
+                "Exact Heap Blocks": 1,
+                "Lossy Heap Blocks": 0,
+                "Shared Hit Blocks": 88,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Index Name": "wcao_client_ref",
+                    "Startup Cost": 0,
+                    "Total Cost": 342.3,
+                    "Plan Rows": 25001,
+                    "Plan Width": 0,
+                    "Actual Rows": 100000,
+                    "Actual Loops": 1,
+                    "Index Cond": "(((corp_id)::text = ($1)::text) AND (client_id = $2))",
+                    "Shared Hit Blocks": 87,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_generic_plan",
+        "key": 4,
+        "action": "DELETE",
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 348.55,
+            "Total Cost": 4974.58,
+            "Plan Rows": 25001,
+            "Plan Width": 10,
+            "Actual Rows": 0,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Bitmap Heap Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 348.55,
+                "Total Cost": 4724.57,
+                "Plan Rows": 25001,
+                "Plan Width": 10,
+                "Actual Rows": 0,
+                "Actual Loops": 1,
+                "Recheck Cond": "((($1)::text = (corp_id)::text) AND ($2 = client_id))",
+                "Rows Removed by Index Recheck": 0,
+                "Exact Heap Blocks": 0,
+                "Lossy Heap Blocks": 0,
+                "Shared Hit Blocks": 2,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Index Name": "wcao_client_ref",
+                    "Startup Cost": 0,
+                    "Total Cost": 342.3,
+                    "Plan Rows": 25001,
+                    "Plan Width": 0,
+                    "Actual Rows": 0,
+                    "Actual Loops": 1,
+                    "Index Cond": "(((corp_id)::text = ($1)::text) AND (client_id = $2))",
+                    "Shared Hit Blocks": 2,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "mode": "force_generic_plan",
+        "key": 4,
+        "action": "UPDATE",
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "executedPlan": {
+          "Query Text": "SELECT 1 FROM ONLY \"public\".\"work_contact_action_outbox\" x WHERE $1::pg_catalog.text OPERATOR(pg_catalog.=) \"corp_id\"::pg_catalog.text AND $2 OPERATOR(pg_catalog.=) \"client_id\" FOR KEY SHARE OF x",
+          "Plan": {
+            "Node Type": "LockRows",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 348.55,
+            "Total Cost": 4974.58,
+            "Plan Rows": 25001,
+            "Plan Width": 10,
+            "Actual Rows": 0,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Bitmap Heap Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Relation Name": "work_contact_action_outbox",
+                "Alias": "x",
+                "Startup Cost": 348.55,
+                "Total Cost": 4724.57,
+                "Plan Rows": 25001,
+                "Plan Width": 10,
+                "Actual Rows": 0,
+                "Actual Loops": 1,
+                "Recheck Cond": "((($1)::text = (corp_id)::text) AND ($2 = client_id))",
+                "Rows Removed by Index Recheck": 0,
+                "Exact Heap Blocks": 0,
+                "Lossy Heap Blocks": 0,
+                "Shared Hit Blocks": 2,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Index Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Index Name": "wcao_client_ref",
+                    "Startup Cost": 0,
+                    "Total Cost": 342.3,
+                    "Plan Rows": 25001,
+                    "Plan Width": 0,
+                    "Actual Rows": 0,
+                    "Actual Loops": 1,
+                    "Index Cond": "(((corp_id)::text = ($1)::text) AND (client_id = $2))",
+                    "Shared Hit Blocks": 2,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "productionLatencyClaim": false
+  }
+}

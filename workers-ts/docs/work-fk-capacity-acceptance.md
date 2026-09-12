@@ -28,7 +28,28 @@ PostgreSQL 16 `ri_PerformCheck` 对SELECT检查传给SPI的行数上限为1；�
 替代真实RI执行，也不自行加SQL LIMIT并宣称规划完全等价。
 [PostgreSQL官方源代码](https://github.com/postgres/postgres/blob/REL_16_STABLE/src/backend/utils/adt/ri_triggers.c)。
 
-## 仍需完成
+## 真实RI内部计划增量（2026-09-12）
+
+`work-foreign-key-index-plan.test.ts` 在专用PG16随机库的独立连接中加载auto_explain，
+按官方支持的NOTICE/JSON捕获嵌套查询，启用实际行数与块计数，关闭逐节点计时与参数日志。
+模块只加载该连接，所有设置为SET LOCAL；12次真实父DELETE/键更新均结束于ROLLBACK。
+不改线上日志配置、不重启本机服务、不添加SQL LIMIT替代RI。
+[PostgreSQL 16 auto_explain官方文档](https://www.postgresql.org/docs/16/auto-explain.html)。
+
+本机PG16.15四项测试全部通过（51.45秒），双类型通过，隔离数据库/schema/角色零残留。
+wcao_client_fk捕获12份完整内部查询计划：auto/custom/generic各含热点和无引用父键的DELETE/UPDATE。
+6次引用拒绝精确核验23503及约束名，6次无引用操作成功后回滚；父子行指纹、外键、索引和统计目录保持。
+
+- auto/custom热点实际返回1行、2块；无引用0行、2块。
+- generic热点实际返回1行，但Bitmap Index Scan先读取100000项，合计89块；不能由输出一行推断启动工作量小。
+- 本次最后默认统计样本下generic无引用为2块；前面五次ANALYZE的独立诊断仍有两次扫描100003行/4001块，不抹除之前三次全扫描的历史证据。
+- auto阶段每种RI语句只有两次调用，不证明长连接自动切换generic后的表现；强制模式只用于诊断。
+
+完整证据`audit/work-fk-nested-ri-20260912.json`。本增量只覆盖wcao的真实内部计划，
+不替代另外15个目标的嵌套计划、默认缓存热身/多次采样、真实运行身份与规模、生产保留/统计策略。
+测试代码本身不作为已部署应用变更；本增量自身Linux CI仍待执行，G2继续开放。
+
+## 前序验收与仍需完成
 
 2026-09-12本机PG16.15实际执行：原12项加新12项全部通过，431.38秒，双类型通过；
 新用例合计96次父端拒绝、48次无引用操作回滚，合法选择性探针2–4块，错误租户过滤50000行但返回0。

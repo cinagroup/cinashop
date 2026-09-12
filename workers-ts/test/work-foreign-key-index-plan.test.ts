@@ -147,6 +147,11 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
     const defaultStatisticsTrials: unknown[] = [];
     let fullSampleDiagnostic: Awaited<ReturnType<typeof plans>> | undefined;
     let diagnosticStatisticsRestored = false;
+    const statisticsState = () => query(`SELECT a.attname,a.attstattarget,to_jsonb(s) AS statistics
+      FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_statistic s
+        ON s.starelid=a.attrelid AND s.staattnum=a.attnum
+      WHERE a.attrelid='public.${target.table}'::regclass
+        AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum,s.stainherit`);
     if (target.existing) {
       const rollback = new Error("restore fixture index");
       await expect(db.transaction(async tx => {
@@ -173,11 +178,6 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
         defaultStatisticsTrials.push({ trial, stats: stats.rows, absent: sample.absent, genericAbsent: sample.genericAbsent });
         if (trial < 4) await exec("ANALYZE public.work_contact_action_outbox");
       }
-      const statisticsState = () => query(`SELECT a.attname,a.attstattarget,to_jsonb(s) AS statistics
-        FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_statistic s
-          ON s.starelid=a.attrelid AND s.staattnum=a.attnum
-        WHERE a.attrelid='public.work_contact_action_outbox'::regclass
-          AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum,s.stainherit`);
       const beforeDiagnostic = await statisticsState();
       // Separate diagnostic only: target 1000 samples this entire 100003-row
       // fixture. This is NOT a migration or a recommendation to change production
@@ -230,6 +230,60 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
         throw rollback;
       })).rejects.toBe(rollback);
     }
+    const nestedTriggerPlans: unknown[] = [];
+    if (!target.existing && f.withPeer) {
+      // Session-local, isolated PG16 only. Observe the real RI SPI query rather
+      // than replacing it with an uncapped SELECT or a hand-written LIMIT.
+      const beforeNestedStats = await statisticsState(), beforeNestedIndexes = await indexState();
+      const notices: string[] = [];
+      await f.withPeer(async peer => {
+        await peer.exec("LOAD 'auto_explain'");
+        for (const mode of ["auto", "force_custom_plan", "force_generic_plan"] as const) {
+          for (const key of [1, 4]) {
+            for (const action of ["DELETE", "UPDATE"] as const) {
+              notices.length = 0;
+              await peer.exec("BEGIN");
+              try {
+                await peer.exec(`SET LOCAL plan_cache_mode=${mode};
+                  SET LOCAL client_min_messages=notice;
+                  SET LOCAL auto_explain.log_level=notice;
+                  SET LOCAL auto_explain.log_format=json;
+                  SET LOCAL auto_explain.log_analyze=on;
+                  SET LOCAL auto_explain.log_buffers=on;
+                  SET LOCAL auto_explain.log_timing=off;
+                  SET LOCAL auto_explain.log_nested_statements=on;
+                  SET LOCAL auto_explain.log_parameter_max_length=0;
+                  SET LOCAL auto_explain.log_min_duration=0`);
+                const operation = action === "DELETE"
+                  ? `DELETE FROM public.work_client_current WHERE corp_id='fixture' AND id=${key}`
+                  : `UPDATE public.work_client_current SET corp_id='moved' WHERE corp_id='fixture' AND id=${key}`;
+                if (key === 1) {
+                  await expect(peer.exec(operation)).rejects.toMatchObject({ code: "23503", constraint_name: target.fk });
+                } else {
+                  await peer.exec(operation);
+                }
+              } finally { await peer.exec("ROLLBACK"); }
+              const plans = notices.flatMap(message => {
+                const start = message.indexOf("{\n");
+                if (start < 0) return [];
+                const plan = JSON.parse(message.slice(start)) as Explained & { "Query Text"?: string };
+                return plan["Query Text"]?.includes('FROM ONLY "public"."work_contact_action_outbox"') ? [plan] : [];
+              });
+              expect(plans, JSON.stringify({ mode, key, action, notices })).toHaveLength(1);
+              const plan = plans[0];
+              expect(plan["Query Text"]).toContain("FOR KEY SHARE");
+              expect(plan["Query Text"]).toContain('"corp_id"');
+              expect(plan["Query Text"]).toContain('"client_id"');
+              expect(plan.Plan["Actual Rows"]).toBe(key === 1 ? 1 : 0);
+              nestedTriggerPlans.push({ mode, key, action, ...summary(plan), executedPlan: plan });
+            }
+          }
+        }
+      }, notice => { if (notice.message) notices.push(notice.message); });
+      expect(nestedTriggerPlans).toHaveLength(12);
+      expect(await statisticsState()).toEqual(beforeNestedStats);
+      expect(await indexState()).toEqual(beforeNestedIndexes);
+    }
     expect(await fingerprint(target.table)).toEqual(beforeRows);
     expect(await fingerprint(target.parent)).toEqual(beforeParents);
     expect(await fkState()).toEqual(beforeFk);
@@ -243,6 +297,7 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
       parentActionsUseDefaultStatistics: true,
       defaultStatisticsUniversalIndexUseProven: false,
       nullRows: target.existing ? 50001 : 0, formalMigrationApplied: target.existing ? false : "0148", existingIndexPreserved: target.existing,
-      parentAndChildRowsUnchanged: true, foreignKeyUnchanged: true, nestedTriggerPlanCaptured: false, productionLatencyClaim: false }) + "\n");
+      parentAndChildRowsUnchanged: true, foreignKeyUnchanged: true,
+      nestedTriggerPlanCaptured: nestedTriggerPlans.length > 0, nestedTriggerPlans, productionLatencyClaim: false }) + "\n");
   }, 180000);
 });

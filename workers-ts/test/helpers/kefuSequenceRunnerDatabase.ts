@@ -123,9 +123,10 @@ export async function sequenceRunnerDatabase() {
           }
         }
       },
-      withPeer: async <T>(callback: (peer: SequenceRunnerPeer) => Promise<T>) => {
+      withPeer: async <T>(callback: (peer: SequenceRunnerPeer) => Promise<T>, onnotice?: (notice: postgres.Notice) => void) => {
         // Keep the backend stable while an observer checks pg_blocking_pids.
-        const peer = postgres(target.href, { ...options, idle_timeout: 0, max_lifetime: 0 });
+        const peer = postgres(target.href, { ...options, idle_timeout: 0, max_lifetime: 0,
+          ...(onnotice ? { onnotice } : {}) });
         try {
           const pid = await verify(peer, name);
           const result = await callback({ db: drizzlePostgres(peer), pid,
