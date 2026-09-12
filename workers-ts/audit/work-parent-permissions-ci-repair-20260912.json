@@ -1,0 +1,86 @@
+{
+  "date": "2026-09-12",
+  "scope": "DB-009G2 permission preflight and candidate CI repair; not formal acceptance",
+  "priorCi": {
+    "run": 34689831315,
+    "head": "8fe0993e6f974766d6c7b018737c8971b7c1f24d",
+    "conclusion": "failure",
+    "shards": [
+      {
+        "job": 103543026507,
+        "passed": 2261,
+        "failed": 1,
+        "failure": "ci-gate-capacity.test.ts omitted the added statistics-scale step from its exact expected catalog list"
+      },
+      {
+        "job": 103543026596,
+        "passed": 2201,
+        "failed": 1,
+        "failure": "bargain-order-concurrency-postgres.test.ts base-SKU expiry case received lock timeout instead of the expected expired-window refusal"
+      }
+    ],
+    "otherJobs": "PG16 catalog including statistics-scale, runtime, secret scan and all five frontend jobs succeeded"
+  },
+  "changes": {
+    "ciContract": "Preserve all existing names, budgets and exact-shard requirements; explicitly require the new scale step and command",
+    "expiryRace": "Arm a real PostgreSQL-clock 1s deadline after snapshots and peer/row-barrier setup; verify actual Lock wait and query_start before expiry; sleep+commit in one blocker server request; retain exact expired-window refusal and full business snapshot rollback. Application lock/statement timeouts unchanged.",
+    "permissionAudit": "Read-only repeatable-read bounded catalog check for work_client_current and work_callback_event parent identities; no GRANT/REVOKE or production entry point"
+  },
+  "local": {
+    "postgresVersion": "160015",
+    "report": "cinashop-g2-permissions-ci-repair-final-20260912.json",
+    "reportSha256": "187344DEF6820913CB026F59454C70727EDF8754EFF910C3E7CF7B2B12AA85CB",
+    "passed": 53,
+    "failed": 0,
+    "skipped": 0,
+    "files": [
+      {
+        "file": "bargain-order-concurrency-postgres.test.ts",
+        "passed": 23,
+        "durationMs": 21435.082275390625
+      },
+      {
+        "file": "ci-gate-capacity.test.ts",
+        "passed": 3,
+        "durationMs": 560.27587890625
+      },
+      {
+        "file": "work-parent-identity-permissions.test.ts",
+        "passed": 27,
+        "durationMs": 8820.557861328125
+      }
+    ],
+    "typecheckUnit": "passed",
+    "typecheckRuntime": "passed",
+    "cleanup": {
+      "runnerDatabases": 0,
+      "financeSchemas": 0,
+      "runtimeRoles": 0
+    }
+  },
+  "permissionCoverage": [
+    "All 8 referenced key columns and table-wide UPDATE",
+    "DELETE/TRUNCATE/TRIGGER grants",
+    "Genuine LOGIN versus maintenance SET ROLE and SET SESSION AUTHORIZATION",
+    "INHERIT-only, SET-only, ADMIN-only and inert memberships",
+    "PUBLIC key grants and revoke recovery",
+    "Schema CREATE and session_replication_role SET/current replica state",
+    "Callable SECURITY DEFINER routines including PUBLIC revoke recovery",
+    "Missing objects and missing read access",
+    "Read-only transaction and restoration of default/stricter timeout settings",
+    "Empty-parent-table non-key UPDATE allowed and actual key UPDATE/DELETE denied"
+  ],
+  "sourceSha256": {
+    "src/migrations/auditWorkParentIdentityPermissions.ts": "7C1C991634AC364E0B838A5BE39D24A8FDAAC42ABE227698558A6171674DE1F6",
+    "test/work-parent-identity-permissions.test.ts": "2413AD8C9A920EBE2FDF2B2BB02835B9633F690AEEA39076B5D097A127F3B7B9",
+    "test/bargain-order-concurrency-postgres.test.ts": "E6DA760E3CF4E436DA5485BAD5779939B70427E3D9E8E1A1AA0170AB3272C9E2",
+    "test/ci-gate-capacity.test.ts": "97E65EC877CF4BC20D8E6B5D1F9236CDA7AC247DB50D77B4E2A6366AA495A0CF"
+  },
+  "limitations": [
+    "No current production identity invocation or privilege change",
+    "No complete WeChat real-role business-flow acceptance; empty-table grants prove permission semantics only",
+    "Not a full application grant/RLS/ownership or all-45-FK audit",
+    "Candidate's new Linux run still required; previous failed run is not green",
+    "wcao scale/statistics/retention strategy and formal performance acceptance remain open"
+  ]
+}

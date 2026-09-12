@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { createBargainSelectionFixture } from "./helpers/bargainSelectionFixture";
-import { outcome, waitForFinanceBlock, waitForFinanceClock, withFinancePeers, type FinancePeer } from "./helpers/financePeers";
+import { outcome, waitForFinanceBlock, withFinancePeers, type FinancePeer } from "./helpers/financePeers";
 import { createContainerFromDb } from "../src/lib/di";
 import { StoreOrderCreateService, cancelStoreOrder, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
@@ -174,18 +174,36 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
   }, 15_000);
 
   it.each(["participant", "activity SKU", "base SKU"])("expiry during %s lock wait rolls back the entire actual create transaction", async target => {
-    const deadline = Date.now() + 2_000;
-    await f.db.update(storeBargain).set({ stopTime: new Date(deadline) }).where(eq(storeBargain.id, 40));
     const before = await snapshot();
+    let deadline: Date | undefined;
     await withFinancePeers(f.db, async ([blocker, buyer]) => {
       await blocker.exec(target === "participant" ? "BEGIN; SELECT id FROM store_bargain_user WHERE id=80 FOR UPDATE"
         : target === "activity SKU" ? "BEGIN; SELECT id FROM store_product_attr_value WHERE id=3 FOR UPDATE"
         : "BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE");
+      // Arm the deadline only after snapshots, peer connections and the row
+      // barrier are ready. Use the actual server clock, not a mocked clock or
+      // the runner's wall clock. Leave headroom below the unchanged 2s lock cap.
+      const [armed] = await f.db.update(storeBargain).set({ stopTime:
+        sql`date_trunc('milliseconds', clock_timestamp() AT TIME ZONE 'UTC') + interval '1 second'`,
+      }).where(eq(storeBargain.id, 40)).returning({ stopTime: storeBargain.stopTime });
+      expect(armed.stopTime).toBeInstanceOf(Date);
+      deadline = armed.stopTime!;
+      const deadlineMs = deadline.getTime();
+      expect(Number.isSafeInteger(deadlineMs)).toBe(true);
       const pending = outcome(create(buyer)); await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
-      await waitForFinanceClock(f.db, deadline); await blocker.exec("COMMIT");
+      const [wait] = await f.db.select({ beforeExpiry: sql<boolean>`query_start < to_timestamp(${deadlineMs}::double precision / 1000)`,
+        waiting: sql<boolean>`wait_event_type = 'Lock'`,
+      }).from(sql`pg_catalog.pg_stat_activity`).where(sql`pid = ${buyer.pid}`);
+      expect(wait).toEqual({ beforeExpiry: true, waiting: true });
+      // Sleep and commit in one server request: JS scheduling after observing
+      // expiry must not extend the held row lock into the application's cap.
+      await blocker.exec(`SELECT pg_sleep(GREATEST(0,
+        (${deadlineMs}::double precision / 1000 - extract(epoch FROM clock_timestamp())) + 0.01)); COMMIT`);
       expect(await pending).toMatchObject({ ok: false, error: { message: expect.stringContaining("砍价活动已结束") } });
     });
-    expect(await snapshot()).toEqual(before);
+    expect(await snapshot()).toEqual({ ...before,
+      bargains: before.bargains.map(row => row.id === 40 ? { ...row, stopTime: deadline } : row),
+    });
   }, 15_000);
 
   it("actual help can acquire KEY SHARE while checkout owns NO KEY UPDATE", async () => {

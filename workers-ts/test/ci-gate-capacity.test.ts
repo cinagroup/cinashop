@@ -32,7 +32,8 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       "Verify exact executed unit shard coverage",
       "Audit production observability contract","Audit legacy-to-PostgreSQL schema drift","Audit legacy-to-Worker route parity"]);
     expect(names(catalog)).toEqual([...setup,"Execute isolated PostgreSQL 16 ORM and migration catalog audit",
-      "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16"]);
+      "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16",
+      "Measure FK statistics candidates on isolated PostgreSQL 16"]);
     // Run 34460778121 exceeded the old whole-job budget while tests continued.
     // Only unit-job capacity changed; no per-test deadline or gate is relaxed.
     expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 40"]);
@@ -50,6 +51,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(catalog).toContain("run: npm run audit:orm\n");
     expect(catalog).toContain("run: npm run audit:orm:not-valid\n");
     expect(catalog).toContain("run: npm run audit:orm:sequences\n");
+    expect(catalog).toContain("- name: Measure FK statistics candidates on isolated PostgreSQL 16\n        run: npm run audit:work-fk:statistics-scale\n");
     expect(unit).not.toContain("run: npm run audit:orm");
     expect(unit).toContain("strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2]");
     expect(unit.match(/--shard=/g)).toHaveLength(1);
