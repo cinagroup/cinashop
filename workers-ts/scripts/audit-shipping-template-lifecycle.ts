@@ -7,17 +7,20 @@ import type { AppVariables, Env } from '../src/env';
 import { adminShippingTemplateDel } from '../src/controllers/api/v1/AdminCrudController';
 import { SupplierShippingTemplateService } from '../src/services/supplier/SupplierShippingTemplateService';
 import * as schema from '../src/models/schema';
+import { installShippingTemplateLifecycleCandidate } from '../test/helpers/shippingTemplateLifecycleCandidate';
 
 // This is a red acceptance probe, not a passing characterization of a defect.
 // It creates only an owned random local PG16 database, never uses production.
 // Exit 1 means lifecycle protection is still missing; exit 2 is an audit error.
 async function main() {
   assert.equal(process.argv.length, 2, 'No arguments accepted');
+  assert.ok(process.env.SHIPPING_LIFECYCLE_CANDIDATE === undefined || process.env.SHIPPING_LIFECYCLE_CANDIDATE === '1', 'Invalid candidate selector');
   validateSequenceRunnerTestUrl(process.env.TEST_FINANCE_POSTGRES_URL ?? '');
   const f = await sequenceRunnerDatabase();
   try {
     const api = await import('drizzle-kit/api');
     await f.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+    if (process.env.SHIPPING_LIFECYCLE_CANDIDATE === '1') await installShippingTemplateLifecycleCandidate(f.db);
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use('*', async (c, next) => { c.set('container', createContainerFromDb(f.db)); await next(); });
     app.onError((_error, c) => c.json({ status: 400, data: null }));
@@ -62,7 +65,9 @@ async function main() {
     catch (error) {
       // A missing-table/SQL/runtime error cannot be mistaken for protection.
       const { ValidateException } = await import('../src/utils/errors');
-      if (!(error instanceof ValidateException)) throw error;
+      let cause: unknown = error;
+      for (let depth = 0; depth < 8 && cause && typeof cause === 'object' && 'cause' in cause && cause.cause; depth++) cause = cause.cause;
+      if (!(error instanceof ValidateException) && !(cause && typeof cause === 'object' && 'code' in cause && cause.code === '23503')) throw error;
       rejected = true;
     }
     const [supplierParent] = await f.db.select().from(schema.shippingTemplates).where(eq(schema.shippingTemplates.id, 200));
@@ -78,6 +83,7 @@ async function main() {
     results.push({ name: 'admin-implicit-default-template', protected: fallback.status !== 200 && defaultParent.isDel === 0,
       mutationObserved: defaultParent.isDel !== 0 });
     return { scope: 'shipping-template-lifecycle-red-acceptance', ready: results.every(result => result.protected),
+      candidateInstalled: process.env.SHIPPING_LIFECYCLE_CANDIDATE === '1',
       fullOrm: true, genuinePostgres16: true, remoteConnection: false, results };
   } finally { await f.close(); }
 }

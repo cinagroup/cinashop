@@ -1,5 +1,10 @@
 # DB-009G2：热点、多租户引用验收边界
 
+最新CI补验：bb04311 / Actions34693434221已11/11成功，385文件4508单元零跳过，
+精确分片完整互斥且workerd通过，补齐新Hyperdrive探针自身Linux证据。
+线上六类权限缺口未改变，不把测试成功视为权限整改完成；后续运费生命周期不在该提交内。
+证据见 `audit/work-parent-production-permissions-20260912.json` 的ciFollowup；下文待CI为阶段历史。
+
 ## 当前增量：实际 Hyperdrive 身份实测（2026-09-12）
 
 通过与正式 `cinashop-api` 相同的 Hyperdrive 绑定运行一次固定只读目录审计，结果 `ready=false`。

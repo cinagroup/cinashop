@@ -1,0 +1,64 @@
+{
+  "date": "2026-09-12",
+  "baseCommit": "8909f58",
+  "checklist": "FE-003L-A3k12",
+  "status": "database-protocol-candidate-verified-locally-not-integrated",
+  "implementation": {
+    "path": "test/helpers/shippingTemplateLifecycleCandidate.ts",
+    "installationBoundary": "Requires PostgreSQL 16 and an owned cinashop_kefu_runner_<32hex> test database; no production entrypoint",
+    "admission": "AFTER INSERT/UPDATE validates final row values, source owner and explicit/implicit template identity; holds template SHARE NOWAIT to transaction end",
+    "retirement": "AFTER UPDATE/DELETE rejects retained references across all six tables under fresh READ COMMITTED catalog/data reads",
+    "ownerChanges": "Product owner changes revalidate independent activity bindings; referenced parent identity/owner changes rejected",
+    "truncate": "Template TRUNCATE explicitly refused",
+    "security": "SECURITY INVOKER, schema-qualified relations, row_security=off to fail rather than silently filter dependencies",
+    "retiredReferences": "Conservative candidate keeps stored references protected until explicitly unbound/deleted; not an approved historical-retention policy"
+  },
+  "verification": {
+    "postgresVersion": "160015",
+    "fullOrm": true,
+    "report": "cinashop-shipping-lifecycle-candidate-final-20260912.json",
+    "reportSha256": "BF37B5BCCAB2A824AC6483EC994E188AE91E7B5A3E043EF20D613D18FC950537",
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "typecheckUnit": "passed",
+    "typecheckRuntime": "passed",
+    "cases": [
+      "Six explicit reference families reject actual Admin retirement and direct hard deletion; reference rows preserved",
+      "Missing/deleted/disabled/foreign-owner template rejects new binding",
+      "Implicit default template 1, explicit unbind and historical order row preservation",
+      "BEFORE trigger rebind during an unrelated column UPDATE cannot bypass the AFTER guard",
+      "Source-product deletion/ownership and template ownership guarded against retained activity references",
+      "TRUNCATE and REPEATABLE READ binding rejected",
+      "Independent connections: bind-first verified parent lock wait followed by fresh-snapshot refusal after bind commits",
+      "Independent connections: retire-first NOWAIT refusal, then distinct committed/rolled-back retirement outcomes",
+      "Unrelated product stock/price changes do not wait on a template editor",
+      "Genuine restricted LOGIN admitted with explicit SELECT/INSERT and template UPDATE(name), but cannot retire template",
+      "RLS-hidden reference makes deleting LOGIN fail 42501 rather than delete the parent"
+    ],
+    "pairedOriginalAcceptance": {
+      "command": "node node_modules/tsx/dist/cli.mjs scripts/audit-shipping-template-lifecycle.ts",
+      "sameSourceForBothRuns": true,
+      "withoutCandidate": { "exitCode": 1, "ready": false, "protected": 0, "parentMutated": 8 },
+      "withCandidateEnv": "SHIPPING_LIFECYCLE_CANDIDATE=1",
+      "withCandidate": { "exitCode": 0, "ready": true, "protected": 8, "parentMutated": 0 },
+      "note": "Separate owned full-ORM databases; includes the actual Supplier service and implicit default case. Eight acceptance scenarios are not added to the unit-test count."
+    },
+    "cleanup": { "runnerDatabases": 0, "financeSchemas": 0, "runtimeRoles": 0 }
+  },
+  "sourceSha256": {
+    "test/helpers/shippingTemplateLifecycleCandidate.ts": "93E421C6802E4B5541CF2CA5189E6F47EEB7365317CFA1028B9EFD583081D7AA",
+    "test/shipping-template-lifecycle-candidate.test.ts": "B5C26AEF86DAE1A038E85E3245D0E1F1E4BB2E7BFE52D020E6738BE49010FFC8",
+    "scripts/audit-shipping-template-lifecycle.ts": "844F497FB59A67C30829CB9B061FE09EF13187CA861DD3FEA036D0FB91377E8F"
+  },
+  "remaining": [
+    "Production-grade baseline/definition/ACL drift guards and idempotent installer; external/embedded/ORM upgrade integration",
+    "Complete binding/unbinding/retirement writer inventory and actual application write-flow integration, error mapping and permission grants",
+    "Supplier deletion prechecks and other existing reader lock orders can still require application-level NOWAIT/alignment before the database trigger runs",
+    "Concurrent source-owner transitions, multi-template/multi-row writes and full historical-order workflow acceptance",
+    "Existing invalid/retired reference treatment, direct maintenance/DDL/replica bypass policy and production role separation",
+    "Indexes, bounded capacity measurement and Linux CI for this new candidate",
+    "Authorized deployment and real-role online acceptance"
+  ],
+  "productionChanges": false
+}

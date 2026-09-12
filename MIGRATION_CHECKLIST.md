@@ -4,6 +4,8 @@
 
 ## 审计结论
 
+A3k12数据库协议候选（2026-09-12）：完整ORM/PG16限定的AFTER触发器覆盖六类最终引用值、源所属方、父删除/软删/停用/身份改变，SHARE NOWAIT和RC快照拒绝并发失效绑定，另拒绝模板TRUNCATE；SECURITY INVOKER且RLS隐藏引用失败关闭。20项本地测试零失败零跳过、双类型通过，真实受限LOGIN及双连接提交/回滚有证据；同一8案例原始基线仍8失败，安装候选后8通过且父行未变。零临时库/schema/角色残留。候选仅在测试帮助器，未注册正式安装/升级、未完成存量/ACL漂移/应用写端和错误映射、保留策略/容量/自身CI，未改线上；A3k12仍开放，239／165／404不变。证据workers-ts/audit/shipping-template-lifecycle-candidate-20260912.json。
+
 A3k12运费生命周期红色验收（2026-09-12）：完整ORM/独立本机PG16中调用真实Admin删除控制器和Supplier服务，六类显式引用、供应商保留砍价引用及默认模板1共8例全部复现“仍被引用却删除”，验收脚本返回1，不是功能通过。已确认KEY SHARE/SHARE及反向锁顺序差异；不照搬PHP自动重绑模板1，不改线上数据。双类型通过、远程入口拒绝、随机库/schema/角色零残留；共同绑定/解绑/删除协议、完整入口/并发/所属方/历史订单及正式验收仍待实现。证据workers-ts/audit/shipping-template-lifecycle-gaps-20260912.json和docs/shipping-template-lifecycle.md；239／165／404不变。
 
 G2命令与业务Linux终态（2026-09-12）：c486f22 / Actions34692558945已11/11成功，385文件4502单元零跳过、精确分片完整互斥，覆盖8受限业务和3命令用例。新Hyperdrive探针bb04311的Actions34693434221已启动，不能把前次CI外推到新探针或运费复现。证据workers-ts/audit/work-parent-cli-business-ci-20260912.json；实际线上六类权限缺口仍未修改。

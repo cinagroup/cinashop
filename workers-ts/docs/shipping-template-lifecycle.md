@@ -1,5 +1,28 @@
 # 运费模板引用与生命周期：A3k12
 
+## 2026-09-12 数据库协议候选
+
+已实现隔离库限定的候选 `test/helpers/shippingTemplateLifecycleCandidate.ts`，不是生产安装器。
+六类引用在 AFTER 行触发器中检查最终值，避免只看 UPDATE 列表而漏掉 BEFORE 触发器改绑。
+引用准入读取并持有模板 SHARE NOWAIT，活动同时核对源商品所属方；父删除/软删/停用/
+身份与所属方变化通过固定六表查询拒绝现存引用，禁止模板TRUNCATE，并拒绝相关写入使用旧RR快照。
+触发器为SECURITY INVOKER，固定schema且row_security=off，避免RLS隐藏子行导致误判无引用。
+这是按 [PG16锁兼容规则](https://www.postgresql.org/docs/16/explicit-locking.html) 和
+[触发器数据可见性](https://www.postgresql.org/docs/16/trigger-datachanges.html) 实现的候选，
+仍须用真实并发证据约束，不能只据理论称完成。
+
+完整ORM/PG16的20项测试零失败零跳过，双类型通过，包含真实独立连接的两个提交方向、
+回滚与NOWAIT、最终BEFORE值、真实非所有者LOGIN和RLS隐藏引用拒绝，以及历史订单整行不变。
+同一8案例脚本在不安装候选时仍8项失败；设置 `SHIPPING_LIFECYCLE_CANDIDATE=1` 后8项通过，
+Admin控制器和Supplier服务的删除均被数据库拒绝且父模板未变。各运行仅使用自己的随机库，零残留。
+证据 `audit/shipping-template-lifecycle-candidate-20260912.json`，两组计数不累加为单元测试总数。
+
+当前候选采用“存储引用未清除即保护”，包括已退役记录；这不是批准保留期或自动清理政策。
+尚未提供存量有效性/目录漂移/幂等安装守卫，未注册新建与升级迁移、未接入应用错误提示和完整授权。
+尤其Supplier删除现有的先锁模板再锁商品流程，仍可能在触发器执行前与商品编辑相撞，须一并对齐。
+未验证完整写入口、全部多行/多模板竞争、容量和正式角色；没有生产写入，A3k12仍开放。
+下文“未修复”为原始基线；候选本机证明不等于正式应用已修复。
+
 ## 2026-09-12 真实红色验收
 
 `scripts/audit-shipping-template-lifecycle.ts` 只接受专用本机 PG16 测试连接，使用完整ORM随机数据库。
