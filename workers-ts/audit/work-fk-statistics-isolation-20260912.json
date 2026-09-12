@@ -1,0 +1,387 @@
+{
+  "date": "2026-09-12",
+  "checklistItem": "DB-009G2",
+  "baseline": "main@214dfb2e4ad1ce37230b5fac4e8069094f27f619",
+  "changedFile": "test/work-foreign-key-index-plan.test.ts",
+  "changedFileSha256": "0fb9103f3c56829bb74dda866a7a1d27917894ea0dbe4303bf40813739d703ed",
+  "finding": "The full-sample diagnostic committed SET STATISTICS 1000 and ANALYZE before subsequent parent-action assertions, so the old sequence did not prove those actions under restored default statistics.",
+  "red": {
+    "report": "cinashop-g2-statistics-red-20260912.json",
+    "passed": 0,
+    "failed": 1,
+    "filteredOtherCases": 3,
+    "failure": "New exact pg_attribute/pg_statistic state comparison failed at line 185 after the old diagnostic."
+  },
+  "fix": {
+    "sameConnection": true,
+    "diagnosticTransaction": "ALTER statistics targets, ANALYZE and every diagnostic plan use the same transaction. Throw an exact sentinel and verify rollback.",
+    "stateVerification": "Compare all non-dropped outbox column attstattarget and full to_jsonb(pg_statistic) rows against the pre-diagnostic state, before actual parent DELETE/key UPDATE assertions.",
+    "productionChanges": false
+  },
+  "verification": {
+    "serverVersion": 160015,
+    "files": 3,
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0,
+    "tests": {
+      "inventory": 2,
+      "migration": 37,
+      "plan": 4
+    },
+    "reportSha256": "38b3ec0fb10683666d1bee5db1c53f1a04ed74268de8211ee900362576844e41",
+    "unitTypes": "passed",
+    "runtimeTypes": "passed",
+    "cleanup": {
+      "randomDatabases": 0,
+      "financeSchemas": 0,
+      "runtimeRoles": 0
+    },
+    "ci": "Existing main CI predates this test-only fix; candidate-specific Linux CI not yet run."
+  },
+  "planEvidence": {
+    "target": "wcao_client_fk",
+    "version": "160015",
+    "rows": 100003,
+    "existingPartialIndex": false,
+    "existingPlans": {
+      "absent": {
+        "rows": 0,
+        "hits": 4001,
+        "reads": 0,
+        "filtered": 100003,
+        "indexes": [],
+        "triggers": []
+      },
+      "firstState": {
+        "rows": 1,
+        "hits": 4002,
+        "reads": 0,
+        "filtered": 100002,
+        "indexes": [],
+        "triggers": []
+      },
+      "secondState": {
+        "rows": 1,
+        "hits": 4002,
+        "reads": 0,
+        "filtered": 100002,
+        "indexes": [],
+        "triggers": []
+      },
+      "genericAbsent": {
+        "rows": 0,
+        "hits": 4001,
+        "reads": 0,
+        "filtered": 100003,
+        "indexes": [],
+        "triggers": []
+      }
+    },
+    "withoutIndexAbsent": {
+      "rows": 0,
+      "hits": 4001,
+      "reads": 0,
+      "filtered": 100003,
+      "indexes": [],
+      "triggers": []
+    },
+    "indexed": {
+      "absent": {
+        "rows": 0,
+        "hits": 0,
+        "reads": 2,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "firstState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "secondState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "genericAbsent": {
+        "rows": 0,
+        "hits": 4001,
+        "reads": 0,
+        "filtered": 100003,
+        "indexes": [],
+        "triggers": []
+      }
+    },
+    "completeModelForeignKeys": 45,
+    "defaultStatisticsTrials": [
+      {
+        "trial": 0,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 0,
+          "reads": 2,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 4001,
+          "reads": 0,
+          "filtered": 100003,
+          "indexes": [],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 1,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 2,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 4001,
+          "reads": 0,
+          "filtered": 100003,
+          "indexes": [],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 3,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 4001,
+          "reads": 0,
+          "filtered": 100003,
+          "indexes": [],
+          "triggers": []
+        }
+      },
+      {
+        "trial": 4,
+        "stats": [
+          {
+            "attname": "client_id",
+            "n_distinct": 2,
+            "most_common_freqs": [
+              0.9999667
+            ]
+          },
+          {
+            "attname": "corp_id",
+            "n_distinct": 1,
+            "most_common_freqs": [
+              1
+            ]
+          }
+        ],
+        "absent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        },
+        "genericAbsent": {
+          "rows": 0,
+          "hits": 2,
+          "reads": 0,
+          "filtered": 0,
+          "indexes": [
+            "wcao_client_ref"
+          ],
+          "triggers": []
+        }
+      }
+    ],
+    "fullSampleDiagnostic": {
+      "absent": {
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "firstState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "secondState": {
+        "rows": 1,
+        "hits": 4,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      },
+      "genericAbsent": {
+        "rows": 0,
+        "hits": 2,
+        "reads": 0,
+        "filtered": 0,
+        "indexes": [
+          "wcao_client_ref"
+        ],
+        "triggers": []
+      }
+    },
+    "diagnosticStatisticsTarget": 1000,
+    "diagnosticStatisticsRestored": true,
+    "parentActionsUseDefaultStatistics": true,
+    "defaultStatisticsUniversalIndexUseProven": false,
+    "nullRows": 0,
+    "formalMigrationApplied": "0148",
+    "existingIndexPreserved": false,
+    "parentAndChildRowsUnchanged": true,
+    "foreignKeyUnchanged": true,
+    "nestedTriggerPlanCaptured": false,
+    "productionLatencyClaim": false
+  },
+  "remaining": [
+    "Default ANALYZE generic-plan stability: three of five observed trials scan 100003 rows / 4001 shared-hit blocks despite the index",
+    "Hot multi-child and multi-tenant coverage for all twelve composite references",
+    "Production statistics/retention policy and full parent DB-009G acceptance"
+  ],
+  "notClaimed": [
+    "Universal index use",
+    "Production latency improvement",
+    "Actual nested FK-trigger query plan captured",
+    "New production migrations or statistics changes",
+    "DB-009G2 completion"
+  ]
+}

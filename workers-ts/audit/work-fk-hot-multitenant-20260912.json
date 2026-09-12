@@ -1,0 +1,2564 @@
+{
+  "date": "2026-09-12",
+  "item": "DB-009G2",
+  "baseline": "214dfb2e4ad1ce37230b5fac4e8069094f27f619",
+  "scope": "All twelve six-column references with only narrow leading indexes; existing distinct-event cases plus new hot two-tenant cases. Full unmodified ORM in independent loopback PG16 databases.",
+  "test": {
+    "file": "test/work-composite-foreign-key-plan.test.ts",
+    "sha256": "3745e38fe4c8961c16fdd479335196fd9615e28d92ea2c9b746ef5f2ff1ddd85",
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 431380.4523925781,
+    "reportSha256": "1266af1c797bc734c8c917f9c7dc353779a1f47e72405223375442e40e9bed1a",
+    "unitTypes": "passed",
+    "runtimeTypes": "passed",
+    "typeCorrection": "Two TS2339 diagnostics were fixed with an erased query-result type annotation. Transpiled JavaScript SHA256 before and after: 507de9a7ab35764014f94e454437ccb39f7d50cf14a23644b7f1555e2459193f."
+  },
+  "summary": {
+    "distinctCases": 12,
+    "hotCases": 12,
+    "rowsPerCase": 100003,
+    "rowsPerHotKey": 50000,
+    "tenants": 2,
+    "hotParentRejections": 96,
+    "unreferencedParentRollbacks": 48,
+    "validParentSelectiveBuffersMin": 2,
+    "validParentSelectiveBuffersMax": 4,
+    "wrongTenantRowsReturned": 0,
+    "wrongTenantRowsFiltered": 50000,
+    "indexesAdded": 0,
+    "productionMutations": 0,
+    "cleanup": {
+      "databases": 0,
+      "schemas": 0,
+      "roles": 0
+    }
+  },
+  "distinctTargets": [
+    {
+      "target": "wcc_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wcfc_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wcfpf_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wcpf_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wdc_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wdpf_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wetc_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wetgc_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wetpf_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wgcc_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wgcmc_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    },
+    {
+      "target": "wgcpf_last_event_fk",
+      "version": "160015",
+      "parentAndChildRowsUnchanged": true,
+      "foreignKeyUnchanged": true
+    }
+  ],
+  "hotEvidence": [
+    {
+      "target": "wcc_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51595,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51595,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51557,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51557,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1595,
+            "filtered": 50000,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1595,
+            "filtered": 50000,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1557,
+            "filtered": 50000,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1557,
+            "filtered": 50000,
+            "indexes": [
+              "wcc_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wcfc_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wcfc_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wcfpf_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcfpf_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wcpf_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wcpf_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wdc_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wdc_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wdpf_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51261,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51261,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51262,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51262,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1261,
+            "filtered": 50000,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1261,
+            "filtered": 50000,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1262,
+            "filtered": 50000,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1262,
+            "filtered": 50000,
+            "indexes": [
+              "wdpf_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wetc_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wetc_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wetgc_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wetgc_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wetpf_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51356,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51356,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51358,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51358,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1356,
+            "filtered": 50000,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1356,
+            "filtered": 50000,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1358,
+            "filtered": 50000,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1358,
+            "filtered": 50000,
+            "indexes": [
+              "wetpf_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wgcc_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51604,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1604,
+            "filtered": 50000,
+            "indexes": [
+              "wgcc_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wgcmc_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51512,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51513,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1512,
+            "filtered": 50000,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1513,
+            "filtered": 50000,
+            "indexes": [
+              "wgcmc_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    },
+    {
+      "target": "wgcpf_last_event_fk",
+      "version": "160015",
+      "rows": 100003,
+      "distribution": [
+        {
+          "corp_id": "fixture",
+          "last_event_id": 1,
+          "count": 50000
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 2,
+          "count": 50000
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 3,
+          "count": 1
+        },
+        {
+          "corp_id": "other",
+          "last_event_id": 4,
+          "count": 1
+        },
+        {
+          "corp_id": "fixture",
+          "last_event_id": 5,
+          "count": 1
+        }
+      ],
+      "measured": [
+        {
+          "name": "hotA",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51291,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "hotB",
+          "expectedRows": 50000,
+          "custom": {
+            "rows": 50000,
+            "buffers": 51292,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 50000,
+            "buffers": 51292,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareA",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "rareB",
+          "expectedRows": 1,
+          "custom": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 1,
+            "buffers": 4,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "absentB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 2,
+            "filtered": 0,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantA",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1291,
+            "filtered": 50000,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        },
+        {
+          "name": "wrongTenantB",
+          "expectedRows": 0,
+          "custom": {
+            "rows": 0,
+            "buffers": 1292,
+            "filtered": 50000,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          },
+          "generic": {
+            "rows": 0,
+            "buffers": 1292,
+            "filtered": 50000,
+            "indexes": [
+              "wgcpf_last_event_idx"
+            ]
+          }
+        }
+      ],
+      "actualParentRejections": 8,
+      "unreferencedParentRollbacks": 4,
+      "parentAndChildRowsUnchanged": true,
+      "indexesConstraintsAndStatisticsUnchanged": true,
+      "addedIndexes": 0,
+      "selectiveProbesUnder50": false,
+      "nestedTriggerPlanCaptured": false,
+      "performanceAcceptance": false,
+      "productionLatencyClaim": false
+    }
+  ],
+  "interpretation": "Hot full-result diagnostic probes are uncapped, whereas PostgreSQL RI SELECT checks pass a one-row limit to SPI. Wrong-tenant/event combinations test predicate isolation but are not existing legitimate parent identities. No nested-trigger execution plan or production latency claim.",
+  "reference": "https://github.com/postgres/postgres/blob/REL_16_STABLE/src/backend/utils/adt/ri_triggers.c",
+  "remaining": [
+    "wcao default ANALYZE generic-plan instability",
+    "production scale and retention/statistics policy",
+    "candidate-specific Linux CI",
+    "actual nested RI query-plan evidence"
+  ],
+  "checklist": {
+    "complete": 239,
+    "open": 165,
+    "total": 404,
+    "G2": "open"
+  }
+}

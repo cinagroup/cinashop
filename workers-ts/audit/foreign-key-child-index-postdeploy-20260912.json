@@ -1,0 +1,184 @@
+{
+  "date": "2026-09-12",
+  "scope": "DB-009G1 exact 0147 child-index installation and post-deployment acceptance; not full DB-009/G2 or production release acceptance",
+  "sourceCommit": "214dfb2e4ad1ce37230b5fac4e8069094f27f619",
+  "priorInstallationEvidence": "test-release-core-schema-production-20260912.json",
+  "postDeployment": {
+    "generatedAt": "2026-09-12T17:43:33.6524973+08:00",
+    "workerName": "cinashop-test-release-core-schema-migrate-a0c93a565ea2",
+    "url": "https://cinashop-test-release-core-schema-migrate-a0c93a565ea2.cinagroup.workers.dev",
+    "ready": true,
+    "supported": true,
+    "indexes": [
+      {
+        "name": "prc_callback_event",
+        "ready": true,
+        "table": "payment_reconciliation_case",
+        "valid": true,
+        "exists": true,
+        "unique": false,
+        "truncated": false,
+        "definition": "CREATE INDEX prc_callback_event ON public.payment_reconciliation_case USING btree (callback_event_id)"
+      },
+      {
+        "name": "spr_order_cart_info",
+        "ready": true,
+        "table": "store_product_reply",
+        "valid": true,
+        "exists": true,
+        "unique": false,
+        "truncated": false,
+        "definition": "CREATE INDEX spr_order_cart_info ON public.store_product_reply USING btree (order_cart_info_id)"
+      }
+    ],
+    "fingerprint": {
+      "rows": 65,
+      "sha256": "12ca5abc960b687cb9b13f9d26f4b765e50c15ee344d35a188dbfa6c4384e460",
+      "tables": [
+        {
+          "table": "payment_reconciliation_case",
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "table": "store_cart",
+          "rows": 27,
+          "sha256": "1f102be7c9a7ff9ce555e43d4d047dc83ede4716a9ad7a0df3c0ccab5672b391"
+        },
+        {
+          "table": "store_coupon_issue",
+          "rows": 1,
+          "sha256": "b16079b96ddff47e4c2ca49f0aac293390e12e7a2aab7443bc672374160445ac"
+        },
+        {
+          "table": "store_coupon_product",
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "table": "store_order",
+          "rows": 29,
+          "sha256": "fdc5abae0e648374b1c5a59d55207f07e61a85933f47e7aabd1d32920808d9ef"
+        },
+        {
+          "table": "store_order_refund",
+          "rows": 3,
+          "sha256": "db0bfb344596eddcda2d0f3b80efb11af89d58692871eafda7c9f574076cb8a6"
+        },
+        {
+          "table": "store_product_reply",
+          "rows": 2,
+          "sha256": "f9c2930670a9605c32a89918578a98017f86f30cf00919da34540e17e68d2ba9"
+        },
+        {
+          "table": "user",
+          "rows": 3,
+          "sha256": "6b86228740941d3c24febc3b65c458450e70b5f6c32cce8f26cf7bf372341dba"
+        },
+        {
+          "table": "work_contact_action_outbox",
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    "excluded": [
+      "0150-brokerage-paid-order-fence"
+    ],
+    "danglingPaidUsers": 12,
+    "first": null,
+    "after": null,
+    "idempotence": null,
+    "cleanup": {
+      "controlPlaneMissing": true,
+      "attempted": true,
+      "deleteSucceeded": true
+    },
+    "lastStage": "completed",
+    "failure": null,
+    "exitCode": 0
+  },
+  "comparison": {
+    "sameTotalRows": 65,
+    "unchangedTargetTables": [
+      "payment_reconciliation_case",
+      "store_product_reply"
+    ],
+    "changedOtherTableFingerprints": [
+      "store_cart",
+      "store_order"
+    ],
+    "previousAggregateSha256": "b7bc89e431b844d3fc2528f32e858ae5c57826ff71788f789d121684c4b24e7e",
+    "currentAggregateSha256": "12ca5abc960b687cb9b13f9d26f4b765e50c15ee344d35a188dbfa6c4384e460",
+    "secondReadMatchesFirst": true,
+    "meaning": "Both post-deployment read-only checks observed the same new fingerprint. Only target table preservation is claimed across deployment; cause of order/cart changes is not established. No restoration or data modification performed."
+  },
+  "ci": {
+    "mainRun": 34685623400,
+    "mainConclusion": "success",
+    "jobsPassed": 11,
+    "deployedSourceRun": 34685058465,
+    "deployedSourceConclusion": "success",
+    "catalog": {
+      "postgres": 160014,
+      "paths": 9,
+      "counts": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1010,
+        "sequences": 227
+      },
+      "externalVsEmbeddedAndOrm": "all five categories: zero reference-only, candidate-only, changed and renames",
+      "targetKeys": [
+        "payment_reconciliation_case.prc_callback_event",
+        "store_product_reply.spr_order_cart_info"
+      ],
+      "cleanupConfirmed": true
+    }
+  },
+  "verifiedTerminal": {
+  "unit": {
+    "files": 382,
+    "passed": 4452,
+    "skipped": 0,
+    "shards": [
+      {
+        "files": 191,
+        "passed": 2250
+      },
+      {
+        "files": 191,
+        "passed": 2202
+      }
+    ],
+    "inventorySha256": "de95a55aff30848d5cbae48e9bd9e719cf9f2347f3d090a63d984afddee55054"
+  },
+  "runtime": {
+    "files": 11,
+    "passed": 146
+  },
+  "targetTests": {
+    "migration": 33,
+    "executedPlan": 2,
+    "passed": 35,
+    "skipped": 0
+  },
+  "firstPostdeployRead": {
+    "generatedAt": "2026-09-12T09:41:19.6242838+00:00",
+    "workerName": "cinashop-test-release-core-schema-migrate-d442b50cc14e",
+    "publicHttp": 404,
+    "controlPlaneMissing": true,
+    "ready": true,
+    "rows": 65,
+    "aggregateSha256": "12ca5abc960b687cb9b13f9d26f4b765e50c15ee344d35a188dbfa6c4384e460"
+  },
+  "secondPublicHttp": 404
+},
+  "acceptance": {
+    "codeContract": "0147 is fixed additive-only DDL and identical embedded SQL; guards metadata, locks, rollback and idempotence",
+    "maintenanceWindow": "User-authorized online test full deployment on 2026-09-12; successful bounded core migration includes unchanged 0147",
+    "postflight": "Exact target definitions, exists/valid/ready true, unique false, not truncated",
+    "boundary": "DB-009G/G2 remain open. 0150 still absent, 12 dangling paid users preserved. No new DDL/DML/GRANT, provider requests or application deployments in this follow-up."
+  }
+}

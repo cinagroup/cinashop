@@ -124,7 +124,7 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
     const probe = (key: number) => sql`SELECT 1 FROM ONLY public.${sql.identifier(target.table)} x WHERE
       ${target.existing ? sql`` : sql`${"fixture"}::varchar OPERATOR(pg_catalog.=) x.corp_id AND`}
       ${key}::integer OPERATOR(pg_catalog.=) x.${sql.identifier(target.column)} FOR KEY SHARE OF x`;
-    const generic = async () => db.transaction(async tx => {
+    const genericOn = async (tx: Pick<typeof db, "execute">) => {
       await tx.execute(sql`SET LOCAL plan_cache_mode=force_generic_plan`);
       const built = new PgDialect().sqlToQuery(probe(4));
       expect(built.params).toEqual(target.existing ? [4] : ["fixture", 4]);
@@ -134,17 +134,19 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
           ? sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) EXECUTE audit_work_fk(4)`
           : sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) EXECUTE audit_work_fk('fixture',4)`)));
       } finally { await tx.execute(sql`DEALLOCATE audit_work_fk`); }
-    });
-    const plans = async () => ({
-      absent: summary(explainResult(await db.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${probe(4)}`))),
-      firstState: summary(explainResult(await db.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${probe(2)}`))),
-      secondState: summary(explainResult(await db.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${probe(3)}`))),
-      genericAbsent: await generic(),
+    };
+    const generic = () => db.transaction(genericOn);
+    const plans = async (executor: Pick<typeof db, "execute"> = db, genericProbe = generic) => ({
+      absent: summary(explainResult(await executor.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${probe(4)}`))),
+      firstState: summary(explainResult(await executor.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${probe(2)}`))),
+      secondState: summary(explainResult(await executor.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${probe(3)}`))),
+      genericAbsent: await genericProbe(),
     });
     const existingPlans = await plans();
     let indexed = existingPlans, withoutIndex = existingPlans;
     const defaultStatisticsTrials: unknown[] = [];
     let fullSampleDiagnostic: Awaited<ReturnType<typeof plans>> | undefined;
+    let diagnosticStatisticsRestored = false;
     if (target.existing) {
       const rollback = new Error("restore fixture index");
       await expect(db.transaction(async tx => {
@@ -171,11 +173,27 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
         defaultStatisticsTrials.push({ trial, stats: stats.rows, absent: sample.absent, genericAbsent: sample.genericAbsent });
         if (trial < 4) await exec("ANALYZE public.work_contact_action_outbox");
       }
+      const statisticsState = () => query(`SELECT a.attname,a.attstattarget,to_jsonb(s) AS statistics
+        FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_statistic s
+          ON s.starelid=a.attrelid AND s.staattnum=a.attnum
+        WHERE a.attrelid='public.work_contact_action_outbox'::regclass
+          AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum,s.stainherit`);
+      const beforeDiagnostic = await statisticsState();
       // Separate diagnostic only: target 1000 samples this entire 100003-row
       // fixture. This is NOT a migration or a recommendation to change production
       // statistics. Default-plan variability remains an open acceptance item.
-      await exec("ALTER TABLE public.work_contact_action_outbox ALTER COLUMN corp_id SET STATISTICS 1000; ALTER TABLE public.work_contact_action_outbox ALTER COLUMN client_id SET STATISTICS 1000; ANALYZE public.work_contact_action_outbox");
-      fullSampleDiagnostic = await plans();
+      const rollbackDiagnostic = new Error("restore fixture statistics before parent actions");
+      await expect(db.transaction(async tx => {
+        await tx.execute(sql`ALTER TABLE public.work_contact_action_outbox ALTER COLUMN corp_id SET STATISTICS 1000`);
+        await tx.execute(sql`ALTER TABLE public.work_contact_action_outbox ALTER COLUMN client_id SET STATISTICS 1000`);
+        await tx.execute(sql`ANALYZE public.work_contact_action_outbox`);
+        // Use the same transaction for every plan; root queries would wait on
+        // our DDL locks. Rollback restores both targets and pg_statistic rows.
+        fullSampleDiagnostic = await plans(tx, () => genericOn(tx));
+        throw rollbackDiagnostic;
+      })).rejects.toBe(rollbackDiagnostic);
+      expect(await statisticsState()).toEqual(beforeDiagnostic);
+      diagnosticStatisticsRestored = true;
     }
     expect(withoutIndex.absent.filtered).toBeGreaterThanOrEqual(100000);
     expect(indexed.absent.rows).toBe(0);
@@ -221,6 +239,8 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
       rows: 100003, existingPartialIndex: target.existing, existingPlans, withoutIndexAbsent: withoutIndex.absent, indexed,
       completeModelForeignKeys: expectedForeignKeys.length,
       defaultStatisticsTrials, fullSampleDiagnostic, diagnosticStatisticsTarget: target.existing ? null : 1000,
+      diagnosticStatisticsRestored: target.existing ? null : diagnosticStatisticsRestored,
+      parentActionsUseDefaultStatistics: true,
       defaultStatisticsUniversalIndexUseProven: false,
       nullRows: target.existing ? 50001 : 0, formalMigrationApplied: target.existing ? false : "0148", existingIndexPreserved: target.existing,
       parentAndChildRowsUnchanged: true, foreignKeyUnchanged: true, nestedTriggerPlanCaptured: false, productionLatencyClaim: false }) + "\n");

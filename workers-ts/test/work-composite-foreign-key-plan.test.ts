@@ -158,4 +158,116 @@ describe("all twelve six-column callback references with existing narrow indexes
       existingIndex: index, addedIndexes: 0, actualParentActions: true, parentAndChildRowsUnchanged: true,
       foreignKeyUnchanged: true, nestedTriggerPlanCaptured: false, productionLatencyClaim: false }) + "\n");
   }, 180000);
+  it.each(targets)("hot multi-tenant correctness and measured plans for $name", async target => {
+    fixture = await sequenceRunnerDatabase();
+    const { db, exec, query } = fixture;
+    await exec(generated);
+    const prefix = target.name.replace(/_last_event_fk$/, ""), data = fixtures[prefix];
+    await exec(`INSERT INTO work_callback_event(id,corp_id,event_key,subject_key_hash,payload_hash,payload,event_time)
+      SELECT n,corp,lpad(to_hex(n),64,'0'),repeat('c',64),repeat('b',64),'{}',1
+      FROM (VALUES (1,'fixture'),(2,'other'),(3,'fixture'),(4,'other'),(5,'fixture'),
+        (6,'other'),(7,'fixture'),(${count+2},'fixture'),(${count+3},'other')) p(n,corp)`);
+    // Seed the actual support relations in both tenants. Equal numeric ids in
+    // composite tenant keys are deliberate; no CHECK/FK/identity is removed.
+    for (const corp of ["fixture", "other"] as const) {
+      if (prefix === "wcpf") await exec(`INSERT INTO work_client_current(corp_id,external_userid)
+        SELECT '${corp}','client_'||n FROM generate_series(1,${count}) n`);
+      if (["wcfc", "wcfpf"].includes(prefix)) await exec(`INSERT INTO work_client_current(id,corp_id,external_userid)
+        OVERRIDING SYSTEM VALUE VALUES (1,'${corp}','client')`);
+      if (prefix === "wdpf") await exec(`INSERT INTO work_department_current(corp_id,department_id)
+        SELECT '${corp}',n FROM generate_series(1,${count}) n`);
+      if (prefix === "wetc") {
+        const supportEvent = count + (corp === "fixture" ? 2 : 3);
+        await exec(`INSERT INTO work_external_tag_group_current(group_id,lifecycle_state,deleted_time,${eventColumns})
+          VALUES ('support','DELETED',1,${supportEvent},'${corp}',lpad(to_hex(${supportEvent}),64,'0'),repeat('c',64),1,0)`);
+      }
+      if (prefix === "wgcpf") await exec(`INSERT INTO work_group_chat_current(corp_id,chat_id)
+        SELECT '${corp}','chat_'||n FROM generate_series(1,${count}) n`);
+      if (prefix === "wgcmc") await exec(`INSERT INTO work_group_chat_current(id,corp_id,chat_id)
+        OVERRIDING SYSTEM VALUE VALUES (1,'${corp}','chat')`);
+    }
+    await exec(`WITH seed AS (SELECT n,
+      CASE WHEN n<=50000 THEN 1 WHEN n<=100000 THEN 2 WHEN n=100001 THEN 3 WHEN n=100002 THEN 4 ELSE 5 END AS event_id,
+      CASE WHEN (n>50000 AND n<=100000) OR n=100002 THEN 'other' ELSE 'fixture' END AS corp
+      FROM generate_series(1,${count}) n)
+      INSERT INTO public.${target.table}(${eventColumns},${data.columns})
+      SELECT event_id,corp,lpad(to_hex(event_id),64,'0'),repeat('c',64),1,0,${data.values} FROM seed`);
+    await exec(`ANALYZE public.${target.table}; ANALYZE public.work_callback_event`);
+    const version = await query("SELECT current_setting('server_version_num') AS version") as { rows: Array<{ version: string }> };
+    const fingerprint = (table: string) => query(`SELECT count(*)::int AS count,
+      md5(string_agg(to_jsonb(x)::text,'' ORDER BY to_jsonb(x)::text)) AS digest FROM public.${table} x`);
+    const catalog = () => query(`SELECT
+      (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.oid) FROM pg_constraint c WHERE c.conrelid='public.${target.table}'::regclass) AS constraints,
+      (SELECT jsonb_agg(jsonb_build_object('oid',i.indexrelid,'definition',pg_get_indexdef(i.indexrelid),'metadata',to_jsonb(i)) ORDER BY i.indexrelid)
+        FROM pg_index i WHERE i.indrelid='public.${target.table}'::regclass) AS indexes,
+      (SELECT jsonb_agg(jsonb_build_object('column',a.attname,'target',a.attstattarget,'statistics',to_jsonb(s)) ORDER BY a.attnum,s.stainherit)
+        FROM pg_attribute a LEFT JOIN pg_statistic s ON s.starelid=a.attrelid AND s.staattnum=a.attnum
+        WHERE a.attrelid='public.${target.table}'::regclass AND a.attnum>0 AND NOT a.attisdropped) AS statistics`);
+    const beforeRows = await fingerprint(target.table), beforeParents = await fingerprint("work_callback_event"), beforeCatalog = await catalog();
+    expect(beforeRows.rows).toMatchObject([{ count }]);
+    const distribution = await query(`SELECT corp_id,last_event_id,count(*)::int AS count FROM public.${target.table}
+      GROUP BY corp_id,last_event_id ORDER BY last_event_id`);
+    expect(distribution.rows).toEqual([
+      { corp_id:"fixture",last_event_id:1,count:50000 },{ corp_id:"other",last_event_id:2,count:50000 },
+      { corp_id:"fixture",last_event_id:3,count:1 },{ corp_id:"other",last_event_id:4,count:1 },{ corp_id:"fixture",last_event_id:5,count:1 },
+    ]);
+    const probes = [
+      { name:"hotA",key:1,corp:"fixture",rows:50000 },{ name:"hotB",key:2,corp:"other",rows:50000 },
+      { name:"rareA",key:3,corp:"fixture",rows:1 },{ name:"rareB",key:4,corp:"other",rows:1 },
+      { name:"absentA",key:7,corp:"fixture",rows:0 },{ name:"absentB",key:6,corp:"other",rows:0 },
+      { name:"wrongTenantA",key:1,corp:"other",rows:0 },{ name:"wrongTenantB",key:2,corp:"fixture",rows:0 },
+    ];
+    const probe = (key: number, corp: string) => sql`SELECT 1 FROM ONLY public.${sql.identifier(target.table)} x WHERE
+      ${key}::integer OPERATOR(pg_catalog.=) x.last_event_id AND ${corp}::varchar OPERATOR(pg_catalog.=) x.corp_id
+      AND ${key.toString(16).padStart(64,"0")}::varchar OPERATOR(pg_catalog.=) x.last_event_key
+      AND ${"c".repeat(64)}::varchar OPERATOR(pg_catalog.=) x.last_event_subject_key_hash
+      AND ${1}::integer OPERATOR(pg_catalog.=) x.last_event_time AND ${0}::integer OPERATOR(pg_catalog.=) x.last_sequence_rank FOR KEY SHARE OF x`;
+    const measured: Array<{ name:string;expectedRows:number;custom:ReturnType<typeof summary>;generic:ReturnType<typeof summary> }> = [];
+    for (const p of probes) {
+      const custom = summary(explained(await db.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${probe(p.key,p.corp)}`)));
+      const generic = await db.transaction(async tx => {
+        await tx.execute(sql`SET LOCAL plan_cache_mode=force_generic_plan`);
+        const built = new PgDialect().sqlToQuery(probe(p.key,p.corp));
+        expect(built.params).toHaveLength(6);
+        await tx.execute(sql.raw(`PREPARE audit_hot_fk AS ${built.sql}`));
+        try { return summary(explained(await tx.execute(sql.raw(`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON)
+          EXECUTE audit_hot_fk(${p.key},'${p.corp}','${p.key.toString(16).padStart(64,"0")}','${"c".repeat(64)}',1,0)`)))); }
+        finally { await tx.execute(sql`DEALLOCATE audit_hot_fk`); }
+      });
+      expect(custom.rows).toBe(p.rows); expect(generic.rows).toBe(p.rows);
+      measured.push({ name:p.name,expectedRows:p.rows,custom,generic });
+    }
+    // Hot matches necessarily return many rows in these uncapped diagnostic
+    // probes. Record costs without imposing the distinct-key fixture's <50
+    // budget or claiming these are the nested RI trigger execution plans.
+    for (const key of [1,2,3,4]) {
+      for (const deletion of [true,false]) {
+        const operation = deletion ? sql`DELETE FROM public.work_callback_event WHERE id=${key}`
+          : sql`UPDATE public.work_callback_event SET sequence_rank=sequence_rank+1 WHERE id=${key}`;
+        const error = await db.execute(operation).then(()=>undefined,error=>error as unknown);
+        expect(message(error)).toContain(target.name);
+        expect(error).toMatchObject({ cause:{ code: deletion && String(version.rows[0]?.version).startsWith("18") ? "23001" : "23503" } });
+      }
+    }
+    for (const key of [6,7]) {
+      for (const deletion of [true,false]) {
+        const operation = deletion ? sql`DELETE FROM public.work_callback_event WHERE id=${key}`
+          : sql`UPDATE public.work_callback_event SET sequence_rank=sequence_rank+1 WHERE id=${key}`;
+        const rollback = new Error("restore unreferenced hot-fixture parent");
+        await expect(db.transaction(async tx => {
+          const actual = explained(await tx.execute(sql`EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${operation}`));
+          expect(actual.Triggers).toContainEqual(expect.objectContaining({ "Constraint Name":target.name,Calls:1 }));
+          throw rollback;
+        })).rejects.toBe(rollback);
+      }
+    }
+    expect(await fingerprint(target.table)).toEqual(beforeRows);
+    expect(await fingerprint("work_callback_event")).toEqual(beforeParents);
+    expect(await catalog()).toEqual(beforeCatalog);
+    process.stdout.write("WORK_HOT_COMPOSITE_FK_AUDIT " + JSON.stringify({ target:target.name,version:version.rows[0]?.version,
+      rows:count,distribution:distribution.rows,measured,actualParentRejections:8,unreferencedParentRollbacks:4,
+      parentAndChildRowsUnchanged:true,indexesConstraintsAndStatisticsUnchanged:true,addedIndexes:0,
+      selectiveProbesUnder50:measured.filter(p=>p.expectedRows<=1).every(p=>p.custom.buffers<50 && p.generic.buffers<50),
+      nestedTriggerPlanCaptured:false,performanceAcceptance:false,productionLatencyClaim:false }) + "\n");
+  },180000);
 });
