@@ -1,0 +1,126 @@
+{
+  "runId": 34687629456,
+  "url": "https://github.com/cinagroup/cinashop/actions/runs/34687629456",
+  "headSha": "10e7c638e6b2ec46f6773a0538dcd3eb513d53a7",
+  "status": "completed",
+  "conclusion": "success",
+  "completedAt": "2026-09-12T10:23:32Z",
+  "scope": "Candidate 10e7c63 only; does not cover ea1e91f actual nested-RI capture or the subsequent default-cache warmup patch",
+  "jobs": [
+    {
+      "databaseId": 103537293300,
+      "name": "Isolated PostgreSQL 16 migration catalog execution",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:12:11Z"
+    },
+    {
+      "databaseId": 103537293358,
+      "name": "Worker type, unit, schema and route execution (shard 1/2)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:23:25Z"
+    },
+    {
+      "databaseId": 103537293380,
+      "name": "Repository secret scan",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:08:02Z"
+    },
+    {
+      "databaseId": 103537293385,
+      "name": "Worker type, unit, schema and route execution (shard 2/2)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:20:24Z"
+    },
+    {
+      "databaseId": 103537293398,
+      "name": "PC build",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:08:22Z"
+    },
+    {
+      "databaseId": 103537293406,
+      "name": "UniApp build",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:09:00Z"
+    },
+    {
+      "databaseId": 103537293407,
+      "name": "workerd runtime tests",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:08:26Z"
+    },
+    {
+      "databaseId": 103537293420,
+      "name": "Admin build",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:08:37Z"
+    },
+    {
+      "databaseId": 103537293430,
+      "name": "Supplier build",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:08:25Z"
+    },
+    {
+      "databaseId": 103537293440,
+      "name": "Kefu build",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:07:52Z",
+      "completedAt": "2026-09-12T10:08:09Z"
+    },
+    {
+      "databaseId": 103539106791,
+      "name": "Worker type, unit, schema and route gates",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-12T10:23:29Z",
+      "completedAt": "2026-09-12T10:23:31Z"
+    }
+  ],
+  "unitCoverage": {
+    "source": "UNIT_SHARD_AUDIT from job 103537293358 at 10:23:20.3727616Z and job 103537293385 at 10:20:20.0820580Z",
+    "inventoryFiles": 382,
+    "inventorySha256": "de95a55aff30848d5cbae48e9bd9e719cf9f2347f3d090a63d984afddee55054",
+    "passedTests": 4464,
+    "skippedTests": 0,
+    "shards": [
+      {
+        "shard": 1,
+        "executedFiles": 191,
+        "passedTests": 2262,
+        "skippedTests": 0,
+        "executedFileSha256": "b99e49f8116daa1c25b9d19854401b60024581edbd734bde0dc90450863df83b"
+      },
+      {
+        "shard": 2,
+        "executedFiles": 191,
+        "passedTests": 2202,
+        "skippedTests": 0,
+        "executedFileSha256": "3644a9e3aedfae81f2f1d6e5e1c841a9f9b5944bf9611f2d89dec1bfbfc897d1"
+      }
+    ],
+    "nativePartitionCompleteAndDisjoint": true,
+    "executedFilesMatchNativePartition": true
+  },
+  "productionChanges": false,
+  "G2Closed": false
+}

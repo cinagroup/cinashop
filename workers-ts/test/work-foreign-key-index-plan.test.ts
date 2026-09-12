@@ -8,6 +8,28 @@ import { runWorkContactClientIndex } from "../src/migrations/runWorkContactClien
 type Node = { "Node Type": string; "Index Name"?: string; "Actual Rows"?: number; "Actual Loops"?: number;
   "Shared Hit Blocks"?: number; "Shared Read Blocks"?: number; "Rows Removed by Filter"?: number; Plans?: Node[] };
 type Explained = { Plan: Node; Triggers?: Array<{ "Constraint Name"?: string; Calls?: number }> };
+function nestedContactPlan(notices: string[], context: unknown) {
+  const plans = notices.flatMap(message => {
+    const start = message.indexOf("{\n");
+    if (start < 0) return [];
+    const plan = JSON.parse(message.slice(start)) as Explained & { "Query Text"?: string };
+    return plan["Query Text"]?.includes('FROM ONLY "public"."work_contact_action_outbox"') ? [plan] : [];
+  });
+  expect(plans, JSON.stringify({ context, notices })).toHaveLength(1);
+  expect(plans[0]["Query Text"]).toContain("FOR KEY SHARE");
+  expect(plans[0]["Query Text"]).toContain('"corp_id"');
+  expect(plans[0]["Query Text"]).toContain('"client_id"');
+  return plans[0];
+}
+const captureSettings = `SET LOCAL client_min_messages=notice;
+  SET LOCAL auto_explain.log_level=notice;
+  SET LOCAL auto_explain.log_format=json;
+  SET LOCAL auto_explain.log_analyze=on;
+  SET LOCAL auto_explain.log_buffers=on;
+  SET LOCAL auto_explain.log_timing=off;
+  SET LOCAL auto_explain.log_nested_statements=on;
+  SET LOCAL auto_explain.log_parameter_max_length=0;
+  SET LOCAL auto_explain.log_min_duration=0`;
 function explainResult(result: unknown): Explained {
   const rows = Array.isArray(result) ? result : result && typeof result === "object" && "rows" in result ? result.rows : null;
   if (!Array.isArray(rows) || !Array.isArray(rows[0]?.["QUERY PLAN"]) || !rows[0]["QUERY PLAN"][0]?.Plan)
@@ -231,6 +253,7 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
       })).rejects.toBe(rollback);
     }
     const nestedTriggerPlans: unknown[] = [];
+    const defaultCacheTrials: unknown[] = [];
     if (!target.existing && f.withPeer) {
       // Session-local, isolated PG16 only. Observe the real RI SPI query rather
       // than replacing it with an uncapped SELECT or a hand-written LIMIT.
@@ -244,16 +267,7 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
               notices.length = 0;
               await peer.exec("BEGIN");
               try {
-                await peer.exec(`SET LOCAL plan_cache_mode=${mode};
-                  SET LOCAL client_min_messages=notice;
-                  SET LOCAL auto_explain.log_level=notice;
-                  SET LOCAL auto_explain.log_format=json;
-                  SET LOCAL auto_explain.log_analyze=on;
-                  SET LOCAL auto_explain.log_buffers=on;
-                  SET LOCAL auto_explain.log_timing=off;
-                  SET LOCAL auto_explain.log_nested_statements=on;
-                  SET LOCAL auto_explain.log_parameter_max_length=0;
-                  SET LOCAL auto_explain.log_min_duration=0`);
+                await peer.exec(`SET LOCAL plan_cache_mode=${mode}; ${captureSettings}`);
                 const operation = action === "DELETE"
                   ? `DELETE FROM public.work_client_current WHERE corp_id='fixture' AND id=${key}`
                   : `UPDATE public.work_client_current SET corp_id='moved' WHERE corp_id='fixture' AND id=${key}`;
@@ -263,17 +277,7 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
                   await peer.exec(operation);
                 }
               } finally { await peer.exec("ROLLBACK"); }
-              const plans = notices.flatMap(message => {
-                const start = message.indexOf("{\n");
-                if (start < 0) return [];
-                const plan = JSON.parse(message.slice(start)) as Explained & { "Query Text"?: string };
-                return plan["Query Text"]?.includes('FROM ONLY "public"."work_contact_action_outbox"') ? [plan] : [];
-              });
-              expect(plans, JSON.stringify({ mode, key, action, notices })).toHaveLength(1);
-              const plan = plans[0];
-              expect(plan["Query Text"]).toContain("FOR KEY SHARE");
-              expect(plan["Query Text"]).toContain('"corp_id"');
-              expect(plan["Query Text"]).toContain('"client_id"');
+              const plan = nestedContactPlan(notices, { mode, key, action });
               expect(plan.Plan["Actual Rows"]).toBe(key === 1 ? 1 : 0);
               nestedTriggerPlans.push({ mode, key, action, ...summary(plan), executedPlan: plan });
             }
@@ -281,6 +285,45 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
         }
       }, notice => { if (notice.message) notices.push(notice.message); });
       expect(nestedTriggerPlans).toHaveLength(12);
+      for (let trial = 0; trial < 5; trial++) {
+        const operations: unknown[] = [];
+        // A fresh backend resets the RI plan cache between samples. Within each
+        // sample, ANALYZE and every data change are rolled back, but savepoint
+        // recovery permits repeated real constraint failures on that backend.
+        await f.withPeer(async peer => {
+          await peer.exec("LOAD 'auto_explain'; BEGIN");
+          try {
+            expect(await peer.exec("SELECT current_setting('plan_cache_mode') AS mode")).toEqual([{ mode: "auto" }]);
+            await peer.exec("ANALYZE public.work_contact_action_outbox");
+            const stats = await peer.exec("SELECT attname,n_distinct,most_common_freqs FROM pg_stats WHERE schemaname='public' AND tablename='work_contact_action_outbox' AND attname IN ('corp_id','client_id') ORDER BY attname");
+            await peer.exec(captureSettings);
+            for (const action of ["DELETE", "UPDATE"] as const) {
+              const keys = [1, 1, 1, 1, 1, 1, 4, 2, 4];
+              for (const [offset, key] of keys.entries()) {
+                notices.length = 0;
+                await peer.exec("SAVEPOINT ri_attempt");
+                try {
+                  const operation = action === "DELETE"
+                    ? `DELETE FROM public.work_client_current WHERE corp_id='fixture' AND id=${key}`
+                    : `UPDATE public.work_client_current SET corp_id='moved' WHERE corp_id='fixture' AND id=${key}`;
+                  if (key === 4) await peer.exec(operation);
+                  else await expect(peer.exec(operation)).rejects.toMatchObject({ code: "23503", constraint_name: target.fk });
+                } finally { await peer.exec("ROLLBACK TO SAVEPOINT ri_attempt; RELEASE SAVEPOINT ri_attempt"); }
+                const plan = nestedContactPlan(notices, { trial, action, ordinal: offset + 1, key });
+                expect(plan.Plan["Actual Rows"]).toBe(key === 4 ? 0 : 1);
+                const parameterizedPlan = /\$[12]\b/.test(JSON.stringify(plan.Plan));
+                operations.push({ action, ordinal: offset + 1, key, parameterizedPlan, ...summary(plan),
+                  nodes: walk(plan.Plan).map(node => ({ type: node["Node Type"], rows: node["Actual Rows"], loops: node["Actual Loops"] })),
+                  ...(offset >= 6 ? { executedPlan: plan } : {}) });
+              }
+            }
+            expect(operations).toHaveLength(18);
+            defaultCacheTrials.push({ trial, mode: "auto", freshBackend: true, stats, operations });
+          } finally { await peer.exec("ROLLBACK"); }
+        }, notice => { if (notice.message) notices.push(notice.message); });
+        expect(await statisticsState()).toEqual(beforeNestedStats);
+      }
+      expect(defaultCacheTrials).toHaveLength(5);
       expect(await statisticsState()).toEqual(beforeNestedStats);
       expect(await indexState()).toEqual(beforeNestedIndexes);
     }
@@ -298,6 +341,6 @@ describe("DB-009G2 Enterprise WeChat FK index decisions", () => {
       defaultStatisticsUniversalIndexUseProven: false,
       nullRows: target.existing ? 50001 : 0, formalMigrationApplied: target.existing ? false : "0148", existingIndexPreserved: target.existing,
       parentAndChildRowsUnchanged: true, foreignKeyUnchanged: true,
-      nestedTriggerPlanCaptured: nestedTriggerPlans.length > 0, nestedTriggerPlans, productionLatencyClaim: false }) + "\n");
+      nestedTriggerPlanCaptured: nestedTriggerPlans.length > 0, nestedTriggerPlans, defaultCacheTrials, productionLatencyClaim: false }) + "\n");
   }, 180000);
 });
