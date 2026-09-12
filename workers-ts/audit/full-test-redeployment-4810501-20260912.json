@@ -1,0 +1,77 @@
+{
+  "sourceCommit": "48105010af4172265a0ac6820cae775c0315c2a2",
+  "mode": "full six-app redeployment of existing online test environment",
+  "sourceMergedAndPushedToMain": true,
+  "worker": {
+    "name": "cinashop-api",
+    "deploymentId": "6df4215b-8fea-483b-b964-f576407b4ea7",
+    "versionId": "3fc99931-0471-4509-9903-c05b8c513842",
+    "createdOn": "2026-09-12T14:07:02.091668Z",
+    "percentage": 100,
+    "previousVersionId": "d7819607-14e6-4db4-9aab-dc2913e6f966",
+    "keepVars": true,
+    "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",
+    "dryRunPassed": true,
+    "bundleInputs": 764,
+    "applicationLifecycleProtectionBundled": true,
+    "auditOrCandidateInputsBundled": []
+  },
+  "pages": [
+    {"project":"cinashop-pc","origin":"https://shop.cinaseek.ai","deploymentId":"2f219240-8cff-4009-8dca-2a060d6bf0fd","environment":"production","branch":"main","stage":"success"},
+    {"project":"cinashop-admin","origin":"https://cinashop-admin.pages.dev","deploymentId":"f138b4df-7e9f-4e8a-b125-c2eaac687a47","environment":"production","branch":"main","stage":"success"},
+    {"project":"cinashop-h5","origin":"https://cinashop-h5.pages.dev","deploymentId":"21303069-2faf-49c2-aca2-2e51bc4f0fbe","environment":"production","branch":"main","stage":"success"},
+    {"project":"cinashop-supplier","origin":"https://cinashop-supplier.pages.dev","deploymentId":"d7f6b714-f286-400a-8ddb-764b2912a456","environment":"production","branch":"main","stage":"success"},
+    {"project":"cinashop-kefu","origin":"https://cinashop-kefu.pages.dev","deploymentId":"a9a1656b-bd9b-4229-84a9-b1a382f9b631","environment":"production","branch":"main","stage":"success"}
+  ],
+  "build": {
+    "allSixApplicationsRebuilt": true,
+    "allFivePagesFunctionsCompiledAndUploaded": true,
+    "allPagesSourceCommitVerified": true,
+    "allPagesCommitDirty": false,
+    "trackedSourceDiffEmpty": true,
+    "untrackedBuildDirectories": ["workers-ts/build-release/", "workers-ts/build-release-4810501/"],
+    "dependencyInstallationsReusedViaJunctions": true,
+    "pcTestsPassed": 105,
+    "nativeAppAndMiniProgramBuiltThisRelease": false
+  },
+  "ci": {
+    "runId": 34697111300,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34697111300",
+    "headSha": "48105010af4172265a0ac6820cae775c0315c2a2",
+    "conclusion": "success",
+    "successfulJobs": 11,
+    "mainRepeatRunAtCapture": {"runId":34698164368,"status":"in_progress"}
+  },
+  "smoke": {
+    "capturedAt": "2026-09-12T14:08:08.855Z",
+    "passed": true,
+    "checks": 17,
+    "fiveHomeAndEntryAssetsHttp": 200,
+    "allFiveEntryHashesMatchLocal": true,
+    "entrySha256": {
+      "pc": "408108bf423646721d1e2727f6c9285454d2b3a91dede989e66cae532b53c755",
+      "admin": "c2cbfac6cf38921d3ccfa866edc5787bc1d6417bfa5513159d9ee6dc0a88a874",
+      "h5": "d68b10f010107030b62c5af74b9810903db00b4a9fbd55c0fef32e77284b0f1e",
+      "supplier": "be85ecd185bcd4026d7357e0c7cb7586015125f288d296d6db0bd546a8be8cd1",
+      "kefu": "cd3d4750912db255eb17a201048adeeb63aef296d0fb2e74d338ae885e49bc76"
+    },
+    "healthOk": true,
+    "publicJsonStatus": {"pc-bootstrap":200,"pc-products":200,"admin-bootstrap":200,"h5-bootstrap":200,"supplier-bootstrap":200},
+    "anonymousStaffJsonStatus": {"admin":410000,"supplier":410000,"kefu":410000},
+    "corsHttp": 204,
+    "corsAllowedOrigin": "https://shop.cinaseek.ai",
+    "corsDeniedOrigins": ["https://cinaseek.ai","https://cinashop-admin.pages.dev"]
+  },
+  "boundaries": {
+    "databaseReset": false,
+    "databaseMigrationsExecuted": false,
+    "secretsOrHyperdriveCredentialsChanged": false,
+    "providerWritesInvokedByThisRelease": false,
+    "fullBusinessAcceptance": false,
+    "uncommittedBaselineOrCandidateChangesDeployed": false,
+    "originalUncommittedChangesPreserved": true,
+    "cronAndQueuesRemainEnabled": true,
+    "historicalDeploymentsRetained": true
+  },
+  "releaseWorktree": "C:/Users/cina/AppData/Local/Temp/cinashop-full-redeploy-4fa4764286b449608600baac9fd8c25f"
+}
