@@ -1,0 +1,116 @@
+{
+  "date": "2026-09-12",
+  "sourceCommit": "cb5b8ad791f7ab0decafe64591adebf5a2d5a06e",
+  "scope": "DB-006 only; explicitly authorized production additive DDL and bounded exclusive lock. No DB-007, grants, provider calls or formal application deployment.",
+  "ci": {
+    "runId": 34470894844,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34470894844",
+    "head": "cb5b8ad791f7ab0decafe64591adebf5a2d5a06e",
+    "status": "completed",
+    "conclusion": "success",
+    "qualification": "Full candidate CI succeeded; exact test totals are not inferred from earlier runs."
+  },
+  "execution": {
+    "exitCode": 0,
+    "generatedAt": "2026-09-12T08:27:12.3427305+00:00",
+    "workerName": "cinashop-withdrawal-replay-migrate-fd2500028b55",
+    "url": "https://cinashop-withdrawal-replay-migrate-fd2500028b55.cinagroup.workers.dev",
+    "before": {
+      "supported": true,
+      "ready": false,
+      "withinBudget": true,
+      "catalog": {
+        "idAndUid": true,
+        "keyCorrect": false,
+        "keyPresent": false,
+        "hashCorrect": false,
+        "hashPresent": false,
+        "wechatWidth": 15,
+        "indexCorrect": false,
+        "indexPresent": false,
+        "supportedTable": true,
+        "noEventTriggers": true
+      },
+      "fingerprint": {
+        "rows": 5,
+        "sha256": "d01eff7841b764289a5ed79ebe2679b40f80f0c5dd733b878508bba3556c6c0a"
+      }
+    },
+    "first": {
+      "migration": "0130-user-withdrawal-replay",
+      "applied": true,
+      "ready": true,
+      "before": {
+        "rows": 5,
+        "sha256": "d01eff7841b764289a5ed79ebe2679b40f80f0c5dd733b878508bba3556c6c0a"
+      },
+      "after": {
+        "rows": 5,
+        "sha256": "d01eff7841b764289a5ed79ebe2679b40f80f0c5dd733b878508bba3556c6c0a"
+      }
+    },
+    "after": {
+      "supported": true,
+      "ready": true,
+      "withinBudget": true,
+      "catalog": {
+        "idAndUid": true,
+        "keyCorrect": true,
+        "keyPresent": true,
+        "hashCorrect": true,
+        "hashPresent": true,
+        "wechatWidth": 64,
+        "indexCorrect": true,
+        "indexPresent": true,
+        "supportedTable": true,
+        "noEventTriggers": true
+      },
+      "fingerprint": {
+        "rows": 5,
+        "sha256": "d01eff7841b764289a5ed79ebe2679b40f80f0c5dd733b878508bba3556c6c0a"
+      }
+    },
+    "idempotence": {
+      "migration": "0130-user-withdrawal-replay",
+      "applied": false,
+      "ready": true,
+      "before": {
+        "rows": 5,
+        "sha256": "d01eff7841b764289a5ed79ebe2679b40f80f0c5dd733b878508bba3556c6c0a"
+      },
+      "after": {
+        "rows": 5,
+        "sha256": "d01eff7841b764289a5ed79ebe2679b40f80f0c5dd733b878508bba3556c6c0a"
+      }
+    },
+    "access": {
+      "wrongMethod": 405,
+      "noExplicitOperation": 400,
+      "noToken": 403
+    },
+    "cleanup": {
+      "attempted": true,
+      "deleteSucceeded": true,
+      "controlPlaneMissing": true
+    },
+    "lastStage": "completed",
+    "failure": null
+  },
+  "independentCleanupAndReleaseCheck": {
+    "checkedAt": "2026-09-12T08:27:42.9989739+00:00",
+    "publicEndpointStatus": 404,
+    "formalWorker": "cinashop-api",
+    "deployment": "92db1b32-2d9f-42ec-a5ca-f8eed30e351d",
+    "version": "9f1fd655-e60f-41c1-8280-738bc85d73ef",
+    "percentage": 100,
+    "unchanged": true
+  },
+  "checklist": {
+    "checked": 237,
+    "open": 167,
+    "total": 404,
+    "db006": "complete",
+    "db007": "open"
+  },
+  "next": "Prepare and obtain specific authorization for DB-007; other structural, least-privilege and real-role release gates remain open. Preserve release branch until formal production verification."
+}

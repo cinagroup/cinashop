@@ -7,6 +7,12 @@ provider调用、角色授权或其它历史迁移；DB-007与0150/0151仍独立
 
 ## 显式运行
 
+2026-09-12 已获本次明确授权并完成生产执行：首次 `applied=true`，独立只读复核
+`ready=true`，第二次 `applied=false`。现有5行的规范化SHA-256在所有阶段一致；
+重放列及索引符合合同，`wechat` 从15扩至64。临时Worker已删除，控制面和公开端点
+均404，正式API版本未变。证据：`../audit/withdrawal-replay-production-20260912.json`。
+这只关闭DB-006，不代表DB-007、权限门禁或应用发布完成；下面命令不是待自动重跑任务。
+
 已获准的生产维护窗口，在 PowerShell7 的 workers-ts 目录运行：
 
 ```powershell
