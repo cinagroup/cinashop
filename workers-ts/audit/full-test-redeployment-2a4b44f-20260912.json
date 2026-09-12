@@ -1,0 +1,84 @@
+{
+  "sourceCommit": "2a4b44f933c7e823cd133cae975a58fbeae152bd",
+  "mode": "full redeploy of existing online test environment",
+  "worker": {
+    "name": "cinashop-api",
+    "deploymentId": "4cd42372-f85f-4a5e-864c-1490db383f43",
+    "versionId": "5a9e9b13-563c-4870-be55-4e091a6faace",
+    "createdOn": "2026-09-12T12:50:59.84975Z",
+    "percentage": 100,
+    "previousVersionId": "89dfbd1e-775a-4227-9548-039bc3cac268",
+    "tag": "2a4b44f",
+    "keepVars": true,
+    "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",
+    "dryRunPassed": true,
+    "bundleInputs": 763,
+    "auditOrCandidateInputsBundled": []
+  },
+  "pages": [
+    { "project": "cinashop-pc", "url": "https://shop.cinaseek.ai", "deploymentId": "3d3493ef-3453-49a4-9180-c1741ae976b5" },
+    { "project": "cinashop-admin", "url": "https://cinashop-admin.pages.dev", "deploymentId": "47d8cd87-edf4-4e3b-bf39-23b988c72c10" },
+    { "project": "cinashop-h5", "url": "https://cinashop-h5.pages.dev", "deploymentId": "ec3876b7-7b2b-4c08-a9ed-b6c754c8b1a9" },
+    { "project": "cinashop-supplier", "url": "https://cinashop-supplier.pages.dev", "deploymentId": "41cecd02-5c01-42dc-bbf3-94d726be80c8" },
+    { "project": "cinashop-kefu", "url": "https://cinashop-kefu.pages.dev", "deploymentId": "bd6f9168-934b-4177-b7c0-ca4024d78b70" }
+  ],
+  "pagesVerification": {
+    "allRebuiltLocally": true,
+    "allFunctionsCompiledAndUploaded": true,
+    "allCanonicalDeploymentsMatchSourceCommit": true,
+    "allCanonicalDeploymentsSuccessful": true,
+    "branch": "main",
+    "environment": "production",
+    "commitDirty": false,
+    "identicalAssetsDeduplicatedByCloudflare": true
+  },
+  "smoke": {
+    "command": "node workers-ts/audit/probe-full-test-redeploy.mjs",
+    "capturedAt": "2026-09-12T12:52:02.895Z",
+    "passed": 17,
+    "failed": 0,
+    "checks": [
+      "pc entry HTTP 200 and exact local/remote SHA-256",
+      "admin entry HTTP 200 and exact local/remote SHA-256",
+      "h5 entry HTTP 200 and exact local/remote SHA-256",
+      "supplier entry HTTP 200 and exact local/remote SHA-256",
+      "kefu entry HTTP 200 and exact local/remote SHA-256",
+      "API health HTTP 200 and ok=true",
+      "PC site configuration JSON status=200",
+      "PC product listing JSON status=200",
+      "Admin site configuration JSON status=200",
+      "H5 site configuration JSON status=200",
+      "Supplier login information JSON status=200",
+      "Admin protected endpoint anonymous JSON status=410000 and no data",
+      "Supplier protected endpoint anonymous JSON status=410000 and no data",
+      "Kefu protected endpoint anonymous JSON status=410000 and no data",
+      "Storefront CORS allows exactly https://shop.cinaseek.ai",
+      "Storefront CORS does not allow https://cinaseek.ai",
+      "Storefront CORS does not allow https://cinashop-admin.pages.dev"
+    ],
+    "entrySha256": {
+      "pc": "d425e347579c322747813b29bc8bc41a54783a571b2f442568eb53e2f5abfd67",
+      "admin": "e699ff11233bbd650c202b50fd243a07f4183f2547dbceb24f1c8d45f85ec1d8",
+      "h5": "05649c947d6b6ba8c970ceff053bf84ca17ce2037d030cdd4c86c77ff4b009d5",
+      "supplier": "beadd868e8b40dc65d46c74e28a1d3698934419f06e8a628f8609daef1a1db27",
+      "kefu": "074eec1a27445f7f2b1159d2520bb4b4b238db6e6d5d7db47b24cb3f2eff6174"
+    }
+  },
+  "ciAtPublication": {
+    "runId": 34694580952,
+    "headSha": "2a4b44f933c7e823cd133cae975a58fbeae152bd",
+    "status": "in_progress",
+    "passedJobs": ["workerd runtime", "secret scan", "Admin", "PC", "UniApp", "Supplier", "Kefu"],
+    "runningJobs": ["unit shard 1", "unit shard 2", "PostgreSQL catalog"],
+    "note": "This is publication-time evidence, not a claim of full CI completion. Local shipping candidate 20 tests and both type configurations previously passed; the deployed runtime excludes that test-only candidate."
+  },
+  "boundaries": {
+    "databaseReset": false,
+    "databaseMigrationsExecuted": false,
+    "secretsOrHyperdriveCredentialsChanged": false,
+    "providerWritesInvokedByThisRelease": false,
+    "fullBusinessAcceptance": false,
+    "testOnlyShippingCandidateInstalledOnline": false,
+    "note": "Application runtime source matches the preceding release; new audit code is not imported into the bundle. Existing scheduled/queue services remain enabled. Database permission, orphan-order and shipping lifecycle acceptance gaps remain open. No existing data, occupied domains or historical deployments were removed."
+  }
+}
