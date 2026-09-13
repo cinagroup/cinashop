@@ -30,10 +30,20 @@ export interface ShippingTemplate {
 export interface ShippingTemplateListResult {
   list: ShippingTemplate[];
   regions: (ShippingRegion & { templateId: number })[];
+  count: number;
+  limit: number;
+  nextCursor: string | null;
 }
 
-export function apiAdminShippingTemplateList(): Promise<ShippingTemplateListResult> {
-  return getData(request.get<ShippingTemplateListResult>("/shipping_template/list"));
+export async function apiAdminShippingTemplateList(params: { limit: number; name?: string; cursor?: string }): Promise<ShippingTemplateListResult> {
+  const result = await getData<ShippingTemplateListResult>(request.get("/shipping_template/list", { params }));
+  if (!result || !Array.isArray(result.list) || !Array.isArray(result.regions) || result.list.length > params.limit
+    || result.regions.length > 1000 || result.limit !== params.limit || !Number.isSafeInteger(result.count) || result.count < result.list.length
+    || (result.nextCursor !== null && (typeof result.nextCursor !== 'string' || !/^-?\d{1,10}:[1-9]\d{0,9}$/.test(result.nextCursor)))
+    || result.regions.some(region => !result.list.some(template => template.id === region.templateId))) {
+    throw new Error('运费列表响应不完整，请刷新后重试');
+  }
+  return result;
 }
 
 export function apiAdminShippingTemplateSave(data: Record<string, unknown>): Promise<{ id: number }> {

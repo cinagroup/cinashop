@@ -8,11 +8,21 @@
         </div>
       </template>
 
+      <div class="list-controls">
+        <el-input v-model="searchName" maxlength="255" clearable placeholder="搜索模板名称" aria-label="搜索模板名称" @keyup.enter="search" />
+        <el-button @click="search">查询</el-button>
+        <el-select v-model="limit" aria-label="每页模板数量" @change="search">
+          <el-option v-for="size in [1, 5, 10, 20, 50]" :key="size" :label="`每页 ${size} 条`" :value="size" />
+        </el-select>
+      </div>
+      <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon />
+      <el-button v-if="loadError" @click="load">重试当前页</el-button>
+      <p v-if="compactTable" class="table-hint">左右滑动表格可查看全部列和操作</p>
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="name" label="模板名称" min-width="160" />
         <el-table-column label="计费方式" width="110">
-          <template #default="{ row }">{{ row.type === 1 ? "按件" : "按重" }}</template>
+          <template #default="{ row }">{{ row.type === 1 ? "按件" : row.type === 2 ? "按重" : "按体积" }}</template>
         </el-table-column>
         <el-table-column label="配送区域" min-width="200">
           <template #default="{ row }">
@@ -25,13 +35,18 @@
             <el-tag :type="row.status ? 'success' : 'info'">{{ row.status ? "启用" : "停用" }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="140" :fixed="compactTable ? false : 'right'">
           <template #default="{ row }">
             <el-button size="small" @click="openForm(row)">编辑</el-button>
             <el-button size="small" type="danger" @click="del(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
+      <div class="list-pagination">
+        <span>{{ count === null ? '总数待刷新' : `共 ${count} 个模板` }} · 第 {{ cursors.length }} 页</span>
+        <el-button :disabled="loading || cursors.length === 1" @click="previousPage">上一页</el-button>
+        <el-button :disabled="loading || !nextCursor || !!loadError" @click="nextPage">下一页</el-button>
+      </div>
     </el-card>
 
     <!-- 表单弹窗 -->
@@ -79,8 +94,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getToken } from '@/utils/auth';
 import {
   apiAdminShippingTemplateList,
   apiAdminShippingTemplateSave,
@@ -92,6 +108,17 @@ import {
 const list = ref<ShippingTemplate[]>([]);
 const regions = ref<(ShippingRegion & { templateId: number })[]>([]);
 const loading = ref(false);
+const compactTable = ref(window.innerWidth <= 768);
+const updateTableWidth = () => { compactTable.value = window.innerWidth <= 768; };
+window.addEventListener('resize', updateTableWidth);
+const searchName = ref('');
+const appliedName = ref('');
+const limit = ref(20);
+const count = ref<number | null>(null);
+const cursors = ref<Array<string | undefined>>([undefined]);
+const nextCursor = ref<string | null>(null);
+const loadError = ref('');
+let loadGeneration = 0;
 const formVisible = ref(false);
 const saving = ref(false);
 const form = reactive({
@@ -121,17 +148,33 @@ function addRegion() {
 }
 
 async function load() {
+  const generation = ++loadGeneration;
+  const token = getToken();
   loading.value = true;
+  loadError.value = '';
+  list.value = [];
+  regions.value = [];
+  nextCursor.value = null;
+  count.value = null;
   try {
-    const result = await apiAdminShippingTemplateList();
+    const result = await apiAdminShippingTemplateList({ limit: limit.value, name: appliedName.value, cursor: cursors.value.at(-1) });
+    if (generation !== loadGeneration || getToken() !== token) return;
     list.value = result.list;
     regions.value = result.regions;
+    count.value = result.count;
+    nextCursor.value = result.nextCursor;
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加载失败");
+    if (generation === loadGeneration && getToken() === token) loadError.value = e instanceof Error ? e.message : '加载失败';
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
+
+function refreshFirstPage() { cursors.value = [undefined]; void load(); }
+function search() { appliedName.value = searchName.value.trim(); refreshFirstPage(); }
+function nextPage() { if (!loading.value && nextCursor.value) { cursors.value.push(nextCursor.value); void load(); } }
+function previousPage() { if (!loading.value && cursors.value.length > 1) { cursors.value.pop(); void load(); } }
+onBeforeUnmount(() => { loadGeneration++; window.removeEventListener('resize', updateTableWidth); });
 
 function openForm(row?: ShippingTemplate) {
   if (row) {
@@ -175,7 +218,7 @@ async function save() {
     });
     ElMessage.success("保存成功");
     formVisible.value = false;
-    load();
+    refreshFirstPage();
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : "保存失败");
   } finally {
@@ -192,7 +235,7 @@ async function del(row: ShippingTemplate) {
   try {
     await apiAdminShippingTemplateDel(row.id);
     ElMessage.success("已删除");
-    load();
+    refreshFirstPage();
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : "删除失败");
   }
@@ -237,4 +280,10 @@ onMounted(load);
   font-size: 12px;
   color: #999;
 }
+.list-controls, .list-pagination { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.list-controls .el-input { max-width: 260px; }
+.list-controls .el-select { width: 140px; }
+.list-pagination { justify-content: flex-end; }
+.list-pagination span { font-size: 13px; color: #666; }
+.table-hint { color: #666; font-size: 12px; margin: 8px 0; }
 </style>

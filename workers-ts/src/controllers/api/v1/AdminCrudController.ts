@@ -1991,20 +1991,10 @@ export async function adminLevelDel(c: C) {
 
 /** GET /api/admin/shipping_template/list — 运费模板列表 (含区域费率) */
 export async function adminShippingTemplateList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { shippingTemplates, shippingTemplatesRegion } = await import("@/models/schema");
-  const rows = await container.db
-    .select()
-    .from(shippingTemplates)
-    .where(sql`${shippingTemplates.isDel} = 0`)
-    .orderBy(sql`${shippingTemplates.sort} DESC, ${shippingTemplates.id} DESC`);
-  // 区域费率
-  const regions = await container.db
-    .select()
-    .from(shippingTemplatesRegion)
-    .orderBy(sql`${shippingTemplatesRegion.id} ASC`);
-  return jsonOk(c, { list: rows, regions });
+  privateNoStore(c);
+  if (Object.values(c.req.queries()).some(values => values.length !== 1)) throw new ValidateException('运费列表查询参数不能重复');
+  const { listAdminShippingTemplates } = await import('@/services/admin/AdminShippingTemplateListService');
+  return jsonOk(c, await listAdminShippingTemplates(c.get('container'), c.req.query()));
 }
 
 /** POST /api/admin/shipping_template/save — 新增/编辑模板 (含区域) */

@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-13",
+  "scope": "FE-003L-A3k13 bounded consistent global-admin list, partial increment only",
+  "baseCommit": "361323c",
+  "deployed": false,
+  "productionBusinessWrites": 0,
+  "database": "Dedicated local PostgreSQL 16.15, port 55432",
+  "contract": {
+    "defaultLimit": 20,
+    "maxLimit": 50,
+    "maxRegions": 1000,
+    "ordering": "sort DESC, id DESC",
+    "cursor": "sort:id",
+    "name": "trimmed literal case-insensitive substring, max 255 characters",
+    "snapshot": "One data statement for parents, selected children, count and hasMore",
+    "visibility": "Existing global-admin visibility retained; deleted parents excluded",
+    "overflow": "Reject whole response, never return partial editable rules",
+    "timeoutsMs": { "statement": 5000, "lock": 2000, "idleTransaction": 5000 }
+  },
+  "red": {
+    "passed": 0,
+    "failed": 2,
+    "skipped": 0,
+    "findings": ["limit=1 returned three templates", "old parent paired with newly committed child price 9.00 instead of 6.00"],
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-list-red-20260913.json",
+    "sha256": "742e5e5f23e494a33c524b4413d8182a9f7bca9fa838e96eadfdff07a83d7559"
+  },
+  "finalRuns": [
+    {
+      "passed": 38, "failed": 0, "skipped": 0,
+      "files": [
+        { "path": "test/admin-shipping-list.test.ts", "tests": 5 },
+        { "path": "test/admin-shipping-atomic.test.ts", "tests": 26 },
+        { "path": "test/admin-shipping-atomic-postgres.test.ts", "tests": 7 }
+      ],
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-list-regression-20260913.json",
+      "sha256": "28b78bc436ff26170d64849b46114efbbf1ab83002d008eeee2491ad70761e34"
+    },
+    {
+      "passed": 237, "failed": 0, "skipped": 0,
+      "files": [
+        { "path": "test/shipping-lifecycle-route-auth.test.ts", "tests": 230 },
+        { "path": "test/supplier-shipping-template.test.ts", "tests": 7 }
+      ],
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-list-routes-20260913.json",
+      "sha256": "c3d5b5948f7e07681928cd0494d042f86281be41a36e68a3a9a63e30d449b10d"
+    }
+  ],
+  "coverageNote": "275 distinct assertions in five files across two runs, not one immutable CI run. Initial mistyped supplier-shipping filter matched no file; actual supplier-shipping-template file explicitly run in final second report. New list tests use actual Hono controller with fixture authentication; registered-route suite is regression, not proof of new-list restricted identity.",
+  "build": { "workerUnitTypes": "pass", "workerRuntimeTypes": "pass", "adminVueTypesAndViteBuild": "pass", "warnings": "Existing Rollup PURE annotation warnings in vueuse; no build failure" },
+  "ui": {
+    "origin": "http://127.0.0.1:18173/shipping",
+    "browser": "Playwright 1.62.1, headless Edge; Browser skill absent",
+    "viewports": ["1280x900", "390x844"],
+    "transport": "Synthetic API responses and notification WebSocket; external HTTP blocked; local proxy target port 9",
+    "checks": ["page identity", "meaningful content", "no framework overlay", "zero console errors and warnings", "next and previous", "page size", "name search", "late search response ignored", "failure clears data and retry restores", "incomplete old response rejected", "no root horizontal overflow"],
+    "initialIssues": ["Unmocked unrelated notification WebSocket caused console errors; isolated exact transport", "Mobile fixed-right operation column obscured name; fixed column disabled below 769px", "Harness input click intercepted by selected placeholder; use scoped visible label"],
+    "artifacts": [
+      { "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-list-qa-dfbc688ef7bb4c569aa167cbbabc0312/report.json", "sha256": "c5afea8a96e773c722479d3dc7efa587ca7cb38483d2a2f5bd839c2fad1bb70e" },
+      { "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-list-qa-dfbc688ef7bb4c569aa167cbbabc0312/shipping-1280.png", "sha256": "73af2bd354a92c679df7e2edc1bcee88d3cf571264eb9c496659adbef13fb4e7" },
+      { "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-list-qa-dfbc688ef7bb4c569aa167cbbabc0312/shipping-390.png", "sha256": "054eaeddd833c921f6f73fae2510823daaa9ac96c34a756e675ebecf2b9e0e8a" }
+    ]
+  },
+  "cleanup": "Read-only post-run check: zero finance_fixture_/cinashop_kefu_runner_/orm_audit_ databases, finance_test_ schemas, cinashop_ roles. Dedicated server retained.",
+  "remaining": ["Own exact-SHA Linux CI", "Full grouped PHP rule editing and validation", "Stale edit conflict handling", "Real authenticated browser plus SQL end-to-end flow", "Identity-change browser scenario", "Other browsers and real devices", "Production-scale scans and indexes", "No stable multi-request cursor snapshot promise", "Deployment and online acceptance of this increment"],
+  "checklist": { "checked": 240, "open": 164, "total": 404, "A3k13": "open" }
+}
