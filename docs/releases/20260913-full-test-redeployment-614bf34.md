@@ -1,5 +1,10 @@
 # 2026-09-13 全量测试重部署（614bf34）
 
+后续CI终态（2026-09-13 08:49 UTC核实）：本次main 614bf34的
+[Actions34747816178](https://github.com/cinagroup/cinashop/actions/runs/34747816178)
+现已11/11作业成功，包含两个单元分片与汇总、目录、workerd、五端构建和密钥扫描。
+下方08:33的运行中状态保留为发布当时记录，不代表当前终态。
+
 按用户“目前线上的为测试状态，直接全量重新部署”的要求，提交测试隔离修复，
 合并已完成的审计分支并推送 main，以 `614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f`
 重新构建并发布 API Worker、PC、H5、Admin、Supplier、Kefu 六个应用。

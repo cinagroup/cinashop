@@ -4,7 +4,7 @@
 
 ## 审计结论
 
-Supplier Pages 配置验收（2026-09-13）：FE-004K 已以实际 production/main@614bf34、Functions 标记、项目与部署环境清单、固定 API 默认映射、同源构建和线上请求核实关闭。Pages 本身无需直接数据库/存储绑定或 Secret；不外推到上游 Worker 最小权限。新增只读重复检查与 24 项反向/代理测试，联合域名合同 41 项、双类型通过。真实账号/第三方和发布观察仍属 FE-004I/J/L；当前240勾选／164开放／404项，详见 workers-ts/audit/supplier-pages-acceptance-20260913.json。最新六应用测试发布为614bf34，17项冒烟通过；该main CI仍运行，下方各旧SHA状态为历史记录。
+Supplier Pages 配置验收（2026-09-13）：FE-004K 已以实际 production/main@614bf34、Functions 标记、项目与部署环境清单、固定 API 默认映射、同源构建和线上请求核实关闭。Pages 本身无需直接数据库/存储绑定或 Secret；不外推到上游 Worker 最小权限。新增只读重复检查与 24 项反向/代理测试，联合域名合同 41 项、双类型通过。真实账号/第三方和发布观察仍属 FE-004I/J/L；当前240勾选／164开放／404项，详见 workers-ts/audit/supplier-pages-acceptance-20260913.json。最新六应用测试发布为614bf34，17项冒烟通过；该main Actions34747816178现11/11成功，新验收器bd212ef的Actions34748498956已排队，下方各旧SHA状态为历史记录。
 
 运费受限 LOGIN 路由验收（2026-09-13，本机）：实际注册路由以维护账号和独立受限 LOGIN 双身份执行，230 项通过；模板管理权限仅含四张模板/规则表必要 DML、四序列 USAGE、六引用表及账号/角色/城市只读，不能读取订单或修改账号、商品引用、DDL。补齐自动ID新建、非空三类规则、详情/城市、回滚和同连接权限恢复；不代表整个Worker最小权限、数据库级租户隔离或线上身份验收。A3k12和239／165／404不变，详见workers-ts/audit/shipping-lifecycle-restricted-routes-20260913.json。
 

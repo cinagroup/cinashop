@@ -1,4 +1,80 @@
 {
+  "ciFollowup": {
+    "capturedAt": "2026-09-13T08:49:13.2919976Z",
+    "id": 34747816178,
+    "headSha": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/34747816178",
+    "jobs": [
+      {
+        "id": 103698865943,
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866001,
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866028,
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866037,
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866040,
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866049,
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866058,
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866065,
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866069,
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103698866121,
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103700521399,
+        "name": "Worker type, unit, schema and route gates",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
   "sourceCommit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f",
   "featureCommits": [
     "e71138beb240d49fb0d464316fdcc9615e2328f2",
@@ -633,7 +709,7 @@
       "remainingFinanceFixtureDatabases": 0,
       "remainingOldFinanceRootSchemas": 0
     },
-    "remainingVerification": "Full Linux main CI pending; local 36-file coverage is not all finance fixture consumers"
+    "remainingVerification": "Full Linux main CI subsequently passed all 11 jobs; see ciFollowup. Local 36-file coverage alone does not cover all fixture consumers."
   },
   "previousWorkerVersion": "92b2edc3-c487-4059-bc02-c64ee900d4c0",
   "cleanup": {

@@ -101,7 +101,15 @@
     "typecheckUnit": "passed",
     "typecheckRuntime": "passed",
     "scriptSyntax": "passed",
-    "currentIncrementCi": "not yet dispatched"
+    "currentIncrementCi": {
+      "capturedAt": "2026-09-13T08:49:13.2919976Z",
+      "sourceCommit": "bd212ef3bab597ac8479040f1d5b6d9d1a41ef72",
+      "id": 34748498956,
+      "head_sha": "bd212ef3bab597ac8479040f1d5b6d9d1a41ef72",
+      "status": "queued",
+      "conclusion": null,
+      "html_url": "https://github.com/cinagroup/cinashop/actions/runs/34748498956"
+    }
   },
   "checklist": {
     "closed": "FE-004K",
