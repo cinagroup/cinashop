@@ -102,11 +102,13 @@ jobs:
         if: matrix.shard == 1
         run: npm run audit:prod
 
-      # The unit suite bundles the real Admin auth/Axios code. Frontend build
-      # jobs have separate filesystems, so install its lockfile in both shards
-      # instead of relying on a developer's existing view/admin-ts/node_modules.
+      # The unit suite bundles real Admin/Supplier auth and Axios code. Frontend
+      # build jobs have separate filesystems; both unit shards need each lockfile.
       - name: Install locked Admin dependencies for cross-package unit tests
         run: npm ci --prefix ../view/admin-ts
+
+      - name: Install locked Supplier dependencies for cross-package unit tests
+        run: npm ci --prefix ../view/supplier-ts
 
       - name: Run both TypeScript configurations
         if: matrix.shard == 1

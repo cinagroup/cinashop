@@ -38,6 +38,9 @@ initialSmokeAttempt。不更改代码、不放宽阈值，完整复测 17/17 通
 [main CI 34759671112](https://github.com/cinagroup/cinashop/actions/runs/34759671112)
 发布采集时仍运行，未重跑、取消或冒称成功；两者均针对精确源 SHA 7dc52ed。
 
+终态追记：main CI 34759671112 已 completed/success，headSha仍为7dc52ed；候选与main均成功。
+此结论不适用于之后的Supplier会话增量。
+
 ## 清理与边界
 
 使用 Cloudflare/Wrangler 技能核对现有项目、dry-run、keep-vars 发布与控制面验证；发布命令依

@@ -8,7 +8,11 @@ import {
   getShippingTemplate,
   getShippingTemplates,
   saveShippingTemplate,
+  previewMode,
 } from "@/api/supplier";
+import { ApiError } from '@/api/http';
+import { useAuthStore } from '@/stores/auth';
+import { createSupplierSessionScope } from '@/utils/supplierSession';
 import type {
   ShippingCityOption,
   ShippingFreeRule,
@@ -27,8 +31,14 @@ const saving = ref(false);
 const reading = ref(false);
 const editError = ref('');
 const needsReload = ref(false);
+const sessionInvalidated = ref(false);
+const uncertainMutation = ref('');
+const deleting = ref(false);
+const auth = useAuthStore();
+const canManage = computed(() => !sessionInvalidated.value && (previewMode || auth.can('supplier.shipping.manage')));
 let editGeneration = 0;
-onBeforeUnmount(() => { editGeneration += 1; });
+let listGeneration = 0;
+let confirmationPending = false;
 const dialogVisible = ref(false);
 const rows = ref<ShippingTemplateRow[]>([]);
 const count = ref(0);
@@ -57,6 +67,23 @@ const blankForm = (): TemplateForm => ({
   no_delivery_info: [],
 });
 const form = reactive<TemplateForm>(blankForm());
+const session = createSupplierSessionScope(() => {
+  if (confirmationPending) ElMessageBox.close();
+  confirmationPending = false;
+  sessionInvalidated.value = true; editGeneration += 1; listGeneration += 1;
+  dialogVisible.value = false; rows.value = []; count.value = 0; cities.value = [];
+  Object.assign(form, blankForm()); loading.value = false; reading.value = false; saving.value = false; deleting.value = false;
+}, previewMode);
+onBeforeUnmount(() => {
+  if (confirmationPending) ElMessageBox.close();
+  confirmationPending = false; editGeneration += 1; listGeneration += 1; session.dispose();
+});
+function current() { return session.isCurrent(); }
+function canWrite() { return current() && canManage.value && !uncertainMutation.value; }
+function unknownResult(action: string) {
+  uncertainMutation.value = `${action}结果未知，已暂停本页写入。请查询列表并核对实际记录；不要直接重复提交。`;
+  return uncertainMutation.value;
+}
 
 const cascaderProps = {
   value: "city_id",
@@ -96,20 +123,24 @@ function validationMessage() {
 }
 
 async function load() {
+  if (!current()) return;
+  const generation = ++listGeneration;
   loading.value = true;
   try {
-    const result = await getShippingTemplates(filter);
+    const result = await getShippingTemplates({ ...filter }, session.signal);
+    if (!current() || generation !== listGeneration) return;
     rows.value = result.data;
     count.value = result.count;
   } catch (error) {
+    if (!current() || generation !== listGeneration) return;
     ElMessage.error(error instanceof Error ? error.message : "运费模板加载失败");
   } finally {
-    loading.value = false;
+    if (current() && generation === listGeneration) loading.value = false;
   }
 }
 
 function openCreate() {
-  if (saving.value) return;
+  if (!canWrite() || saving.value || deleting.value) return;
   editGeneration += 1;
   reading.value = false;
   editError.value = '';
@@ -119,12 +150,12 @@ function openCreate() {
 }
 
 async function openEdit(id: number) {
-  if (saving.value) return;
+  if (!current() || saving.value || deleting.value) return;
   const generation = ++editGeneration;
   reading.value = true;
   try {
-    const detail = await getShippingTemplate(id);
-    if (generation !== editGeneration) return;
+    const detail = await getShippingTemplate(id, session.signal);
+    if (!current() || generation !== editGeneration) return;
     if (!/^shipping-v1:[a-f0-9]{64}$/.test(detail.revision)) throw new Error('编辑版本缺失或无效，请重新读取模板');
     const regions = detail.templateList.map((rule) => ({ ...rule, city_ids: rule.city_ids.map((path) => [...path]) }));
     const nationwideIndex = regions.findIndex(isNationwide);
@@ -145,30 +176,33 @@ async function openEdit(id: number) {
     editError.value = '';
     needsReload.value = false;
   } catch (error) {
-    if (generation !== editGeneration) return;
+    if (!current() || generation !== editGeneration) return;
     // A failed reload never replaces the user's current form or version.
     editError.value = error instanceof Error ? error.message : '运费模板详情加载失败';
     ElMessage.error(error instanceof Error ? error.message : "运费模板详情加载失败");
   } finally {
-    if (generation === editGeneration) reading.value = false;
+    if (current() && generation === editGeneration) reading.value = false;
   }
 }
 
 async function reloadEditor() {
-  if (saving.value || reading.value || !form.id) return;
+  if (!current() || confirmationPending || saving.value || reading.value || !form.id) return;
   const generation = editGeneration, id = form.id;
   try {
+    confirmationPending = true;
     await ElMessageBox.confirm('重新读取会替换当前输入。请先复制需要保留的内容，再与最新模板核对。', '重新读取模板',
       { type: 'warning', confirmButtonText: '读取最新模板', cancelButtonText: '保留输入' });
-    if (generation !== editGeneration || !dialogVisible.value || saving.value) return;
+    confirmationPending = false;
+    if (!current() || generation !== editGeneration || !dialogVisible.value || saving.value) return;
     await openEdit(id);
   } catch (error) {
+    if (!current()) return;
     if (error !== 'cancel' && error !== 'close') ElMessage.error('重新读取失败，当前输入已保留');
-  }
+  } finally { confirmationPending = false; }
 }
 
 async function submit() {
-  if (saving.value || reading.value || needsReload.value || !dialogVisible.value) return;
+  if (!canWrite() || saving.value || deleting.value || reading.value || needsReload.value || !dialogVisible.value) return;
   const message = validationMessage();
   if (message) return ElMessage.warning(message);
   saving.value = true;
@@ -186,37 +220,45 @@ async function submit() {
       appoint_info: form.appoint ? form.appoint_info : [],
       no_delivery_info: form.no_delivery ? form.no_delivery_info : [],
     };
-    await saveShippingTemplate(id, JSON.parse(JSON.stringify(payload)));
-    if (generation !== editGeneration) return;
+    await saveShippingTemplate(id, JSON.parse(JSON.stringify(payload)), session.signal);
+    if (!current() || generation !== editGeneration) return;
     dialogVisible.value = false;
     ElMessage.success(form.id ? "运费模板已更新" : "运费模板已创建");
     await load();
   } catch (error) {
-    if (generation !== editGeneration) return;
-    editError.value = error instanceof Error ? error.message : '运费模板保存失败';
+    if (!current() || generation !== editGeneration) return;
+    editError.value = error instanceof ApiError && error.status === 400 ? error.message : unknownResult('保存');
     needsReload.value = /其他操作修改|编辑版本/.test(editError.value);
-    ElMessage.error(error instanceof Error ? error.message : "运费模板保存失败");
+    ElMessage.error(editError.value);
   } finally {
-    if (generation === editGeneration) saving.value = false;
+    if (current() && generation === editGeneration) saving.value = false;
   }
 }
 
 async function removeTemplate(row: ShippingTemplateRow) {
-  if (row.id === 1) return;
+  if (row.id === 1 || !canWrite() || deleting.value || saving.value || reading.value || dialogVisible.value) return;
+  deleting.value = true;
+  let dispatched = false;
   try {
+    confirmationPending = true;
     await ElMessageBox.confirm(
       `删除“${row.name}”后不能恢复；被商品使用的模板会被服务器拒绝删除。`,
       "删除运费模板",
       { type: "warning", confirmButtonText: "确认删除", cancelButtonText: "取消" },
     );
-    await deleteShippingTemplate(row.id);
+    confirmationPending = false;
+    if (!canWrite()) return;
+    dispatched = true;
+    await deleteShippingTemplate(row.id, session.signal);
+    if (!current()) return;
     ElMessage.success("运费模板已删除");
     await load();
   } catch (error) {
+    if (!current()) return;
     if (error !== "cancel" && error !== "close") {
-      ElMessage.error(error instanceof Error ? error.message : "运费模板删除失败");
+      ElMessage.error(dispatched && !(error instanceof ApiError && error.status === 400) ? unknownResult('删除') : error instanceof Error ? error.message : '运费模板删除失败');
     }
-  }
+  } finally { confirmationPending = false; if (current()) deleting.value = false; }
 }
 
 function addRegion() {
@@ -235,9 +277,13 @@ function addNoDeliveryRule() {
 }
 
 onMounted(async () => {
+  if (!current()) return;
   try {
-    cities.value = await getShippingCities();
+    const result = await getShippingCities(session.signal);
+    if (!current()) return;
+    cities.value = result;
   } catch (error) {
+    if (!current()) return;
     ElMessage.error(error instanceof Error ? error.message : "城市数据加载失败");
   }
   await load();
@@ -248,12 +294,14 @@ onMounted(async () => {
   <section class="page-section shipping-page">
     <header class="page-heading">
       <div><h1>运费模板</h1><p>按供应商隔离管理配送费、指定包邮和禁配区域</p></div>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新增模板</el-button>
+      <el-button type="primary" :icon="Plus" :disabled="!canManage || !!uncertainMutation || saving || deleting" @click="openCreate">新增模板</el-button>
     </header>
 
+    <el-alert v-if="sessionInvalidated" title="登录身份或权限已改变，当前页面已失效。请重新进入本页。" type="warning" :closable="false" show-icon />
+    <el-alert v-else-if="uncertainMutation" :title="uncertainMutation" type="error" :closable="false" show-icon />
     <article class="surface filter-bar">
       <el-input v-model="filter.name" clearable maxlength="255" placeholder="搜索模板名称" @keyup.enter="load" />
-      <el-button type="primary" @click="load">查询</el-button>
+      <el-button type="primary" :disabled="sessionInvalidated" @click="load">查询</el-button>
     </article>
 
     <article class="surface table-card" v-loading="loading">
@@ -268,19 +316,19 @@ onMounted(async () => {
         <el-table-column prop="add_time" label="更新时间" width="175" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
-            <el-button link type="primary" @click="openEdit(scope.row.id)">编辑</el-button>
-            <el-button v-if="scope.row.id !== 1" link type="danger" @click="removeTemplate(scope.row)">删除</el-button>
+            <el-button link type="primary" :disabled="sessionInvalidated || saving || deleting" @click="openEdit(scope.row.id)">编辑</el-button>
+            <el-button v-if="scope.row.id !== 1" link type="danger" :disabled="!canManage || !!uncertainMutation || saving || deleting || reading" @click="removeTemplate(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
       <div class="table-footer"><span>共 {{ count }} 个模板</span></div>
     </article>
 
-    <el-dialog v-model="dialogVisible" class="supplier-shipping-dialog" align-center :title="form.id ? '编辑运费模板' : '新增运费模板'" width="min(1080px, 94vw)" destroy-on-close
+    <el-dialog v-if="!sessionInvalidated" v-model="dialogVisible" class="supplier-shipping-dialog" align-center :title="form.id ? '编辑运费模板' : '新增运费模板'" width="min(1080px, 94vw)" destroy-on-close
       :close-on-click-modal="!saving && !reading" :close-on-press-escape="!saving && !reading" :show-close="!saving && !reading">
       <el-alert v-if="editError" class="edit-error" :title="editError" type="error" :closable="false" show-icon
         :description="needsReload ? '当前输入已保留；保存已暂停。请先复制需要的内容，再重新读取最新模板核对。' : '当前输入已保留。'" />
-      <el-form label-position="top" class="shipping-form" :disabled="saving || reading">
+      <el-form label-position="top" class="shipping-form" :disabled="saving || reading || !canManage">
         <div class="form-grid top-grid">
           <el-form-item label="模板名称" required><el-input v-model="form.name" maxlength="255" show-word-limit /></el-form-item>
           <el-form-item label="计费方式"><el-radio-group v-model="form.type"><el-radio-button :value="1">按件数</el-radio-button><el-radio-button :value="2">按重量</el-radio-button><el-radio-button :value="3">按体积</el-radio-button></el-radio-group></el-form-item>
@@ -329,7 +377,7 @@ onMounted(async () => {
       <template #footer>
         <el-button :disabled="saving || reading" @click="dialogVisible = false; editGeneration += 1">取消</el-button>
         <el-button v-if="form.id" :disabled="saving || reading" :loading="reading" @click="reloadEditor">重新读取模板</el-button>
-        <el-button type="primary" :loading="saving" :disabled="reading || needsReload" @click="submit">保存模板</el-button>
+        <el-button type="primary" :loading="saving" :disabled="reading || needsReload || !canManage || !!uncertainMutation" @click="submit">保存模板</el-button>
       </template>
     </el-dialog>
   </section>

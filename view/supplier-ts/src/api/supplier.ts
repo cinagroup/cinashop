@@ -1,4 +1,4 @@
-import { apiRequest } from "./http";
+import { ApiError, apiRequest } from "./http";
 import type {
   DashboardStats,
   ExpressCompany,
@@ -397,7 +397,9 @@ export async function login(account: string, pwd: string) {
 
 export async function logout() {
   if (previewMode) return null;
-  return apiRequest<null>({ method: "GET", url: "/logout" });
+  const receipt = await apiRequest<null>({ method: "GET", url: "/logout" });
+  if (receipt !== null) throw new Error('服务器会话撤销结果未知');
+  return receipt;
 }
 
 export async function getDashboard(): Promise<DashboardStats> {
@@ -507,8 +509,10 @@ export async function deleteProductRule(id: number) {
 
 export async function getShippingTemplates(
   params: Record<string, string | number> = {},
+  signal?: AbortSignal,
 ): Promise<ShippingTemplateListResult> {
   if (previewMode) {
+    signal?.throwIfAborted();
     const data = previewShippingTemplates.map((item, index) => ({
       id: index + 1,
       name: item.formData.name,
@@ -520,14 +524,16 @@ export async function getShippingTemplates(
     return { data, count: data.length };
   }
   return apiRequest<ShippingTemplateListResult>({
+    signal,
     method: "GET",
     url: "/setting/shipping_templates/list",
     params,
   });
 }
 
-export async function getShippingTemplate(id: number): Promise<ShippingTemplateDetail> {
+export async function getShippingTemplate(id: number, signal?: AbortSignal): Promise<ShippingTemplateDetail> {
   if (previewMode) {
+    signal?.throwIfAborted();
     const detail = previewShippingTemplates[id - 1];
     if (!detail) throw new Error("运费模板不存在");
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({ id, detail })));
@@ -535,16 +541,19 @@ export async function getShippingTemplate(id: number): Promise<ShippingTemplateD
     return { ...JSON.parse(JSON.stringify(detail)), revision } as ShippingTemplateDetail;
   }
   return apiRequest<ShippingTemplateDetail>({
+    signal,
     method: "GET",
     url: `/setting/shipping_templates/${id}/edit`,
   });
 }
 
-export async function saveShippingTemplate(id: number, data: ShippingTemplatePayload) {
+export async function saveShippingTemplate(id: number, data: ShippingTemplatePayload, signal?: AbortSignal) {
   if (previewMode) {
-    if (id > 0 && data.expectedRevision !== (await getShippingTemplate(id)).revision) {
-      throw new Error('模板已被其他操作修改，请保留输入并重新打开模板后核对');
+    signal?.throwIfAborted();
+    if (id > 0 && data.expectedRevision !== (await getShippingTemplate(id, signal)).revision) {
+      throw new ApiError('模板已被其他操作修改，请保留输入并重新打开模板后核对', 400);
     }
+    signal?.throwIfAborted();
     const detail: Omit<ShippingTemplateDetail, 'revision'> = {
       formData: {
         name: data.name,
@@ -561,24 +570,34 @@ export async function saveShippingTemplate(id: number, data: ShippingTemplatePay
     previewShippingTemplates[savedId - 1] = detail;
     return { id: savedId };
   }
-  return apiRequest<{ id: number }>({
+  const receipt = await apiRequest<{ id: number }>({
+    signal,
     method: "POST",
     url: `/setting/shipping_templates/save/${id}`,
     data,
   });
+  if (!receipt || !Number.isInteger(receipt.id) || receipt.id <= 0 || receipt.id > 2147483647 || (id > 0 && receipt.id !== id)) {
+    throw new Error('保存结果未知，请核对列表和模板内容，勿直接重试');
+  }
+  return receipt;
 }
 
-export async function deleteShippingTemplate(id: number) {
+export async function deleteShippingTemplate(id: number, signal?: AbortSignal) {
   if (previewMode) {
+    signal?.throwIfAborted();
     previewShippingTemplates.splice(id - 1, 1);
     return null;
   }
-  return apiRequest<null>({ method: "DELETE", url: `/setting/shipping_templates/del/${id}` });
+  const receipt = await apiRequest<null>({ signal, method: "DELETE", url: `/setting/shipping_templates/del/${id}` });
+  if (receipt !== null) throw new Error('删除结果未知，请核对列表，勿直接重试');
+  return receipt;
 }
 
-export async function getShippingCities(): Promise<ShippingCityOption[]> {
+export async function getShippingCities(signal?: AbortSignal): Promise<ShippingCityOption[]> {
+  signal?.throwIfAborted();
   if (previewMode) return JSON.parse(JSON.stringify(previewShippingCities)) as ShippingCityOption[];
   return apiRequest<ShippingCityOption[]>({
+    signal,
     method: "GET",
     url: "/setting/shipping_templates/city_list",
   });

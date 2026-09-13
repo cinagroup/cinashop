@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { onScopeDispose, ref } from "vue";
 import * as supplierApi from "@/api/supplier";
 import type { SupplierUser } from "@/types";
+import { clearSupplierSession, createSupplierSessionScope, isSupplierStorageEvent, setSupplierSession } from '@/utils/supplierSession';
 
 function storedUser(): SupplierUser | null {
   try {
@@ -15,7 +16,8 @@ function storedUser(): SupplierUser | null {
 function storedPermissions(): string[] {
   try {
     const value = localStorage.getItem("supplier-permissions");
-    return value ? (JSON.parse(value) as string[]) : [];
+    const parsed: unknown = value ? JSON.parse(value) : [];
+    return Array.isArray(parsed) && parsed.every(item => typeof item === 'string') ? parsed : [];
   } catch {
     return [];
   }
@@ -26,32 +28,37 @@ export const useAuthStore = defineStore("supplier-auth", () => {
   const user = ref<SupplierUser | null>(storedUser());
   const permissions = ref<string[]>(storedPermissions());
   const permissionsLoaded = ref(localStorage.getItem("supplier-permissions") !== null);
+  let loginGeneration = 0;
+  function sync() {
+    token.value = localStorage.getItem('supplier-token') ?? '';
+    user.value = storedUser(); permissions.value = storedPermissions();
+    permissionsLoaded.value = localStorage.getItem('supplier-permissions') !== null;
+  }
+  function storage(event: StorageEvent) { if (isSupplierStorageEvent(event)) sync(); }
+  window.addEventListener('supplier-session-changed', sync);
+  window.addEventListener('storage', storage);
+  onScopeDispose(() => { window.removeEventListener('supplier-session-changed', sync); window.removeEventListener('storage', storage); });
 
   async function signIn(account: string, password: string) {
-    const result = await supplierApi.login(account, password);
-    token.value = result.token;
-    user.value = result.user_info;
-    permissions.value = result.unique_auth;
-    permissionsLoaded.value = true;
-    localStorage.setItem("supplier-token", result.token);
-    localStorage.setItem("supplier-user", JSON.stringify(result.user_info));
-    localStorage.setItem("supplier-permissions", JSON.stringify(result.unique_auth));
+    const generation = ++loginGeneration, scope = createSupplierSessionScope(() => {}, true);
+    try {
+      const result = await supplierApi.login(account, password);
+      if (generation !== loginGeneration || !scope.isCurrent()) throw new Error('登录会话已改变，请重新确认');
+      setSupplierSession(result);
+    } finally { scope.dispose(); }
   }
 
   async function signOut(): Promise<boolean> {
+    loginGeneration += 1;
+    // Capture the old token for server revocation, then invalidate local work immediately.
+    const request = supplierApi.logout();
+    clearSupplierSession();
     let serverRevoked = true;
     try {
-      await supplierApi.logout();
+      await request;
     } catch {
       serverRevoked = false;
     }
-    token.value = "";
-    user.value = null;
-    permissions.value = [];
-    permissionsLoaded.value = false;
-    localStorage.removeItem("supplier-token");
-    localStorage.removeItem("supplier-user");
-    localStorage.removeItem("supplier-permissions");
     return serverRevoked;
   }
 

@@ -42,6 +42,7 @@ async function navigate(path: string) {
 async function signOut() {
   mobileOpen.value = false;
   const serverRevoked = await auth.signOut();
+  if (auth.token || localStorage.getItem('supplier-token')) return;
   await router.push("/login");
   if (!serverRevoked) {
     ElMessage.warning("本机已退出，但服务器会话撤销未确认；旧会话可能持续到过期，请联系管理员禁用账号或重置密码");

@@ -28,7 +28,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
   });
   it("retains every gate, pins the measured unit job budget and preserves catalog and child limits",()=>{
     const unit=job("worker-unit"),catalog=job("worker-catalog");
-    expect(names(unit)).toEqual([...setup,"Audit production dependencies","Install locked Admin dependencies for cross-package unit tests","Run both TypeScript configurations","Run Worker unit tests",
+    expect(names(unit)).toEqual([...setup,"Audit production dependencies","Install locked Admin dependencies for cross-package unit tests","Install locked Supplier dependencies for cross-package unit tests","Run both TypeScript configurations","Run Worker unit tests",
       "Preserve unit shard diagnostics even on failure",
       "Verify exact executed unit shard coverage",
       "Audit production observability contract","Audit legacy-to-PostgreSQL schema drift","Audit legacy-to-Worker route parity"]);
@@ -61,6 +61,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(catalog).toContain("if-no-files-found: error");
     expect(unit).not.toContain("run: npm run audit:orm");
     expect(unit).toContain("- name: Install locked Admin dependencies for cross-package unit tests\n        run: npm ci --prefix ../view/admin-ts\n");
+    expect(unit).toContain("- name: Install locked Supplier dependencies for cross-package unit tests\n        run: npm ci --prefix ../view/supplier-ts\n");
     expect(unit).toContain("strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2]");
     expect(unit.match(/--shard=/g)).toHaveLength(1);
     expect(unit).toContain("- name: Run Worker unit tests\n        shell: bash\n        run: |\n          set -o pipefail\n          npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log");
