@@ -8,6 +8,7 @@
  *       JSON/逗号列的访问器在 services 层做 (对应 PHP model getter)。
  */
 import { sql } from "drizzle-orm";
+import { SHIPPING_REFERENCE_EXPRESSION_SQL } from '../../lib/shippingReferenceExpression';
 import {
   pgTable,
   serial,
@@ -120,6 +121,7 @@ export const storeProduct = pgTable(
   },
   (t) => [
     index("sp_cate_id_idx").on(t.cateId),
+    index("sp_shipping_ref").on(sql.raw(`(${SHIPPING_REFERENCE_EXPRESSION_SQL})`)),
     index("is_hot").on(t.isHot),
     index("is_benefit").on(t.isBenefit),
     index("is_best").on(t.isBest),

@@ -14,6 +14,7 @@
  * M5 只实现只读 + 领券; 秒杀/拼团/砍价的"参与"写操作留后续。
  */
 import { sql } from "drizzle-orm";
+import { SHIPPING_REFERENCE_EXPRESSION_SQL } from '../../lib/shippingReferenceExpression';
 import {
   pgTable,
   serial,
@@ -244,6 +245,8 @@ export const storeSeckill = pgTable(
   },
   (t) => [
     index("ss_time_idx").on(t.timeId),
+    index("sseckill_shipping_ref").on(sql.raw(`(${SHIPPING_REFERENCE_EXPRESSION_SQL})`)),
+    index("sseckill_shipping_source").on(t.productId),
     index("ss_status").on(t.status),
     index("sseckill_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort.desc().nullsFirst()),
     index("store_seckill_system_form_active").on(t.systemFormId, t.isDel, t.status)
@@ -324,6 +327,8 @@ export const storeCombination = pgTable(
   },
   (t) => [
     index("scomb_status").on(t.status),
+    index("scomb_shipping_ref").on(sql.raw(`(${SHIPPING_REFERENCE_EXPRESSION_SQL})`)),
+    index("scomb_shipping_source").on(t.productId),
     index("scomb_visible").on(t.status, t.isShow, t.isDel, t.stopTime, t.sort.desc().nullsFirst()),
     index("store_combination_system_form_active").on(t.systemFormId, t.isDel, t.status)
       .where(sql`${t.systemFormId} > 0`),
@@ -425,6 +430,8 @@ export const storeBargain = pgTable(
   },
   (t) => [
     index("sbarg_status").on(t.status),
+    index("sbarg_shipping_ref").on(sql.raw(`(${SHIPPING_REFERENCE_EXPRESSION_SQL})`)),
+    index("sbarg_shipping_source").on(t.productId),
     index("sbarg_visible").on(t.status, t.isDel, t.stopTime, t.sort.desc().nullsFirst()),
     index("store_bargain_system_form_active").on(t.systemFormId, t.isDel, t.status)
       .where(sql`${t.systemFormId} > 0`),
@@ -473,6 +480,8 @@ export const storeIntegral = pgTable(
   },
   (t) => [
     index("sint_status").on(t.status),
+    index("sint_shipping_ref").on(sql.raw(`(${SHIPPING_REFERENCE_EXPRESSION_SQL})`)),
+    index("sint_shipping_source").on(t.productId),
     index("sint_visible").on(t.status, t.isShow, t.isDel, t.sort.desc().nullsFirst()),
     index("store_integral_system_form_active").on(t.systemFormId, t.isDel, t.status)
       .where(sql`${t.systemFormId} > 0`),

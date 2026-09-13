@@ -15,13 +15,19 @@ it.each([undefined,
   { originTriggersActive: 1, noEnabledEventTriggers: true },
   { originTriggersActive: true, noEnabledEventTriggers: 1 },
 ])('fails closed for an absent or non-true installation environment result: %j', async environment => {
-  const db = { select: () => ({ from: async () => environment === undefined ? [] : [{...environment,noUnreviewedRelationTriggers:true}] }) } as unknown as Pick<DbClient, 'select'>;
+  const db = { select: () => ({ from: async () => environment === undefined ? [] : [{...environment,noUnreviewedRelationTriggers:true,noUnreviewedRelationRules:true}] }) } as unknown as Pick<DbClient, 'select'>;
   await expect(assertShippingLifecycleInstallationEnvironment(db)).rejects.toThrow('installation environment requires review');
 });
 
 it.each([undefined,false,null,1])('requires an explicitly true relation interaction result: %j',async value=>{
   const db={select:()=>({from:async()=>[{originTriggersActive:true,noEnabledEventTriggers:true,
-    noUnreviewedRelationTriggers:value}]})} as unknown as Pick<DbClient,'select'>;
+    noUnreviewedRelationTriggers:value,noUnreviewedRelationRules:true}]})} as unknown as Pick<DbClient,'select'>;
+  await expect(assertShippingLifecycleInstallationEnvironment(db)).rejects.toThrow('installation environment requires review');
+});
+
+it.each([undefined,false,null,1])('requires an explicitly true relation rule result: %j',async value=>{
+  const db={select:()=>({from:async()=>[{originTriggersActive:true,noEnabledEventTriggers:true,
+    noUnreviewedRelationTriggers:true,noUnreviewedRelationRules:value}]})} as unknown as Pick<DbClient,'select'>;
   await expect(assertShippingLifecycleInstallationEnvironment(db)).rejects.toThrow('installation environment requires review');
 });
 

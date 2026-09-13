@@ -1,0 +1,629 @@
+{
+  "scope": "A3k12 shipping lifecycle rewrite-rule installation guards",
+  "baseCommit": "029cf03b1f3417d836971b816d7a25c64615c4e4",
+  "sourceHashesNormalizedLf": {
+    "workers-ts/src/migrations/assertShippingLifecycleInstallationEnvironment.ts": "59dacad06bdb69a881a615082a88f972f05295284e61302086bf84df24d7a762",
+    "workers-ts/src/migrations/shippingLifecycleInstallation.ts": "4b823bbd3eee81b199114a84f7644c65f0e7c71e75d1aa2a4ac4ef2929d2f6e6",
+    "workers-ts/src/migrations/shippingLifecycleIndexInstallation.ts": "7655c61859365a9eaf5cdeb21348561aa9a21162ab1af0ff500eb65d2097e78b",
+    "workers-ts/migrations/0152_shipping_lifecycle.sql": "4530567e588d09976875ebf27565cbede983c3539873ef9109d1c60c4e203f47",
+    "workers-ts/migrations/0153_shipping_lifecycle_indexes.sql": "f0840230593ab3c539e76dc58213ce6a4179290be6e80dc9bbf4f61ed528d91b",
+    "workers-ts/test/shipping-lifecycle-rules.test.ts": "156d2841b4ce5af00747d8948482b5694caf3091c21de189e5f924d530490468",
+    "workers-ts/test/shipping-lifecycle-install-environment.test.ts": "ef05232d8aba7f15687e1a4b751fb8b3302e71ae93f2797b4894efdce445f0fb",
+    ".github/workflows/workers-runtime-linux.yml": "704b24173966ed6a88aba0dbdbccdcf2e76906086fba0425a9cc61f3ea2ef514",
+    "workers-ts/test/ci-gate-capacity.test.ts": "661f464bdccfda55bc9fd541defb042840942f7cb12d2448eea220e17b9ad674",
+    "workers-ts/test/kefu-sequence-runner.test.ts": "3144a3a8a8596f7931bc60b01c0b65c58afb75451b95653c3c87c9b765f5c04f",
+    "workers-ts/test/table-catalog-gate.test.ts": "558797fc4281bccf86e34f0d2a33b258036db9cfc539129019de6c0dd8f71107"
+  },
+  "contract": {
+    "targetTables": [
+      "shipping_templates",
+      "store_product",
+      "store_seckill",
+      "store_bargain",
+      "store_combination",
+      "store_integral",
+      "store_discounts_products"
+    ],
+    "rejectRuleEnabledStates": [
+      "O",
+      "R",
+      "A"
+    ],
+    "disabledAndUnrelatedRulesPreserved": true,
+    "noNameExemption": true,
+    "preflightAndLockedRecheck": true,
+    "peerEnableBeforeLockRejected": true,
+    "peerEnableUnderBarrierBlocked": true,
+    "installationTimeOnly": true
+  },
+  "verification": {
+    "red": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-rules-red-20260913.json",
+      "sha256": "AEE7977911326FE8A12D4D4D28657A53DAAC4A75B840EDEC49EFE6E82B624A63",
+      "passed": 13,
+      "failed": 40,
+      "skipped": 0,
+      "note": "Before environment fix; final adds two peer cases. Two bare-protocol counterexamples are intentional demonstrations."
+    },
+    "shippingRegression": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-rules-final-20260913.json",
+      "sha256": "A0FD18E1C126E61D0C779487C06D430189E9C62B4CEBC9F5275F45848BDE3CCD",
+      "success": true,
+      "passed": 507,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        {
+          "name": "brokerage-paid-order-migration.test.ts",
+          "passed": 7,
+          "status": "passed"
+        },
+        {
+          "name": "ci-gate-capacity.test.ts",
+          "passed": 3,
+          "status": "passed"
+        },
+        {
+          "name": "coupon-product-scope-migration.test.ts",
+          "passed": 7,
+          "status": "passed"
+        },
+        {
+          "name": "kefu-sequence-registration.test.ts",
+          "passed": 35,
+          "status": "passed"
+        },
+        {
+          "name": "owned-audit-cleanup.test.ts",
+          "passed": 11,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-baseline-cli.test.ts",
+          "passed": 2,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-baseline.test.ts",
+          "passed": 26,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-capacity-cli.test.ts",
+          "passed": 1,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-indexes.test.ts",
+          "passed": 48,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-install-environment.test.ts",
+          "passed": 27,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-interactions.test.ts",
+          "passed": 44,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-migration.test.ts",
+          "passed": 52,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-plan-cache.test.ts",
+          "passed": 1,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-protocol-catalog.test.ts",
+          "passed": 38,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-reference-expression.test.ts",
+          "passed": 10,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-rules.test.ts",
+          "passed": 55,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-runtime-permissions.test.ts",
+          "passed": 34,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-write-barrier.test.ts",
+          "passed": 22,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-template-lifecycle-candidate.test.ts",
+          "passed": 36,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-template-lifecycle-services.test.ts",
+          "passed": 48,
+          "status": "passed"
+        }
+      ],
+      "ruleAssertions": [
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema rejects a peer enabling a rule between initial inspection and relation locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema blocks peer rule enabling while the relation barrier is held",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema demonstrates a rule changing historical postage despite a complete bare trigger protocol",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema demonstrates a rule deleting a retained reference before the parent trigger sees it",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses an enabled rule on shipping_templates without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses an enabled rule on store_product without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses an enabled rule on store_seckill without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses an enabled rule on store_bargain without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses an enabled rule on store_combination without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses an enabled rule on store_integral without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses an enabled rule on store_discounts_products without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file does not waive an ENABLE REPLICA rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file does not waive an ENABLE ALWAYS rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file preserves a disabled rule without enabling or rewriting it",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file refuses new rule interactions even for an otherwise complete repeated installation",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-file does not ban unrelated table rules",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses an enabled rule on shipping_templates without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses an enabled rule on store_product without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses an enabled rule on store_seckill without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses an enabled rule on store_bargain without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses an enabled rule on store_combination without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses an enabled rule on store_integral without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses an enabled rule on store_discounts_products without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner does not waive an ENABLE REPLICA rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner does not waive an ENABLE ALWAYS rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner preserves a disabled rule without enabling or rewriting it",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner refuses new rule interactions even for an otherwise complete repeated installation",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema protocol-runner does not ban unrelated table rules",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses an enabled rule on shipping_templates without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses an enabled rule on store_product without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses an enabled rule on store_seckill without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses an enabled rule on store_bargain without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses an enabled rule on store_combination without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses an enabled rule on store_integral without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses an enabled rule on store_discounts_products without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file does not waive an ENABLE REPLICA rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file does not waive an ENABLE ALWAYS rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file preserves a disabled rule without enabling or rewriting it",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file refuses new rule interactions even for an otherwise complete repeated installation",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-file does not ban unrelated table rules",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses an enabled rule on shipping_templates without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses an enabled rule on store_product without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses an enabled rule on store_seckill without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses an enabled rule on store_bargain without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses an enabled rule on store_combination without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses an enabled rule on store_integral without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses an enabled rule on store_discounts_products without changing it, protocol, indexes or rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner does not waive an ENABLE REPLICA rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner does not waive an ENABLE ALWAYS rule",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner preserves a disabled rule without enabling or rewriting it",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner refuses new rule interactions even for an otherwise complete repeated installation",
+          "status": "passed"
+        },
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema index-runner does not ban unrelated table rules",
+          "status": "passed"
+        },
+        {
+          "fullName": "rule absence on actual complete construction paths checks all seven tables on external before relying on rule rejection",
+          "status": "passed"
+        },
+        {
+          "fullName": "rule absence on actual complete construction paths checks all seven tables on embedded before relying on rule rejection",
+          "status": "passed"
+        },
+        {
+          "fullName": "rule absence on actual complete construction paths checks all seven tables on orm before relying on rule rejection",
+          "status": "passed"
+        }
+      ]
+    },
+    "ciFixRegression": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-rules-ci-regression-20260913.json",
+      "sha256": "84F5CDD2DD1F6E3A02F134C68601E0CA0C933321788917548BF5CD0E27E630E6",
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        {
+          "name": "ci-gate-capacity.test.ts",
+          "tests": 3,
+          "status": "passed"
+        },
+        {
+          "name": "kefu-sequence-runner.test.ts",
+          "tests": 11,
+          "status": "passed"
+        },
+        {
+          "name": "owned-audit-cleanup.test.ts",
+          "tests": 11,
+          "status": "passed"
+        },
+        {
+          "name": "table-catalog-gate.test.ts",
+          "tests": 13,
+          "status": "passed"
+        }
+      ]
+    },
+    "bothTypeScriptConfigurationsPassed": true,
+    "catalogReport": "workers-ts/audit/shipping-lifecycle-rules-catalog-20260913.json",
+    "catalogPaths": [
+      {
+        "path": "external",
+        "steps": 155
+      },
+      {
+        "path": "embedded",
+        "steps": 160
+      },
+      {
+        "path": "orm",
+        "steps": 1091
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1211
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1092
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1083
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1092
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1084
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1091
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "cleanupRecoveries": [
+      {
+        "database": "orm_audit_table_gate_b95278afdf894725af1307f3819468c8",
+        "timeoutRecovered": true,
+        "retried": true
+      }
+    ],
+    "isolatedCleanup": {
+      "serverVersionNum": 160015,
+      "databases": 0,
+      "schemas": 0,
+      "roles": 0
+    }
+  },
+  "ci": {
+    "previousIndexRun": 34741866997,
+    "previousHead": "029cf03b1f3417d836971b816d7a25c64615c4e4",
+    "previousConclusion": "failure",
+    "failureCauses": [
+      {
+        "file": "kefu-sequence-runner.test.ts",
+        "cause": "Stale initialStatements=1080 assertion; ten new registered shipping indexes give1090"
+      },
+      {
+        "file": "table-catalog-gate.test.ts",
+        "cause": "Stale inline DROP source assertion after introducing dropOwnedAuditDatabase"
+      }
+    ],
+    "correspondingTestsCorrectedAndPassed": true,
+    "unitDiagnosticsAlwaysUploaded": true,
+    "teePreservesFailureViaPipefail": true,
+    "perTestAndJobTimeoutsUnchanged": true,
+    "exactIncrementStatus": "pending_commit_and_dispatch"
+  },
+  "boundaries": {
+    "onlineDatabaseChanged": false,
+    "credentialsOrPrivilegesChanged": false,
+    "deployed": false,
+    "preventsPrivilegedDdlAfterCommit": false,
+    "fullCrossTableRuleInteractionCoverage": false,
+    "fullWriteAndConcurrencyCoverage": false,
+    "realRuntimeRoleAcceptance": false,
+    "A3k12Complete": false
+  },
+  "checklist": {
+    "checked": 239,
+    "open": 165,
+    "total": 404
+  }
+}

@@ -15,7 +15,7 @@ Worker 新版本 `f203772c-3c05-42a7-869f-12976f6a3409` 承接 100% 流量。
 
 精确源提交的 [Actions 34737696153](https://github.com/cinagroup/cinashop/actions/runs/34737696153)
 已 11/11 成功；合并 main 后同源自动复跑
-[34739769626](https://github.com/cinagroup/cinashop/actions/runs/34739769626) 在记录时仍进行中。
+[34739769626](https://github.com/cinagroup/cinashop/actions/runs/34739769626) 后续已确认 11/11 成功。
 Wrangler dry-run 成功；774 个打包输入不包含审计脚本、测试或未提交的索引迁移。
 CLI dirty 警告仅来自独立发布工作树内未跟踪构建目录，受跟踪源码无差异。
 

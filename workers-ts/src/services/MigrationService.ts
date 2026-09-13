@@ -60,12 +60,18 @@ import { COUPON_PRODUCT_SCOPE_FENCE_SQL } from "@/migrations/couponProductScopeF
 import { runCouponProductScopeFence } from "@/migrations/runCouponProductScopeFence";
 import { SHIPPING_LIFECYCLE_INSTALLATION_SQL } from "@/migrations/shippingLifecycleInstallation";
 import { runShippingLifecycle } from "@/migrations/runShippingLifecycle";
+import { SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL } from "@/migrations/shippingLifecycleIndexInstallation";
+import { runShippingLifecycleIndexes } from "@/migrations/runShippingLifecycleIndexes";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
 
   shippingLifecycleMigrationSqlForVerification(): string {
     return this.migration_0158();
+  }
+
+  shippingLifecycleIndexMigrationSqlForVerification(): string {
+    return this.migration_0159();
   }
 
   couponProductScopeFenceMigrationSqlForVerification(): string {
@@ -436,10 +442,16 @@ export class MigrationService {
       this.migration_0156(),
       this.migration_0157(),
       this.migration_0158(),
+      this.migration_0159(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 159) {
+          await runShippingLifecycleIndexes(this.container.db);
+          executed.push("0159");
+          continue;
+        }
         if (i === 158) {
           // Filesystem 0152: explicit standalone maintenance transaction.
           await runShippingLifecycle(this.container.db);
@@ -8529,5 +8541,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0158(): string {
     return SHIPPING_LIFECYCLE_INSTALLATION_SQL;
+  }
+  private migration_0159(): string {
+    return SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL;
   }
 }

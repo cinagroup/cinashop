@@ -39,7 +39,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping interac
         }
       } else if(path==='embedded') {
         expect(await new MigrationService({db:f.db} as Container).runAll()).toEqual({
-          executed:Array.from({length:159},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+          executed:Array.from({length:160},(_,i)=>String(i).padStart(4,'0')),errors:[]});
       } else await orm(f);
       expect((await f.query(otherTriggers)).rows).toEqual([]);
       expect(await runShippingLifecycle(f.db)).toEqual({applied:path==='orm'});

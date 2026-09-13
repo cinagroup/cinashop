@@ -1,3 +1,7 @@
 # SQL routine bodies and embedded migration mirrors are compared byte-for-byte.
 # Keep checkout line endings stable across Windows and Linux.
 workers-ts/migrations/*.sql text eol=lf
+# Preserve captured index-audit report hashes across Windows/Linux checkouts.
+workers-ts/audit/shipping-lifecycle-index*.json text eol=lf
+workers-ts/audit/shipping-lifecycle-rules*.json text eol=lf
+workers-ts/audit/shipping-lifecycle-route-auth*.json text eol=lf

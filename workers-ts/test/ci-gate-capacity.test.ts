@@ -29,11 +29,13 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
   it("retains every gate, pins the measured unit job budget and preserves catalog and child limits",()=>{
     const unit=job("worker-unit"),catalog=job("worker-catalog");
     expect(names(unit)).toEqual([...setup,"Audit production dependencies","Run both TypeScript configurations","Run Worker unit tests",
+      "Preserve unit shard diagnostics even on failure",
       "Verify exact executed unit shard coverage",
       "Audit production observability contract","Audit legacy-to-PostgreSQL schema drift","Audit legacy-to-Worker route parity"]);
     expect(names(catalog)).toEqual([...setup,"Execute isolated PostgreSQL 16 ORM and migration catalog audit",
       "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16",
-      "Measure FK statistics candidates on isolated PostgreSQL 16"]);
+      "Measure FK statistics candidates on isolated PostgreSQL 16",
+      "Verify formal shipping indexes and measure isolated read/write costs", "Preserve complete synthetic shipping plans"]);
     // Run 34460778121 exceeded the old whole-job budget while tests continued.
     // Only unit-job capacity changed; no per-test deadline or gate is relaxed.
     expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 40"]);
@@ -46,16 +48,25 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       expect(block).toContain("run: npm ci");
       expect(block).not.toMatch(/needs:|continue-on-error|--maxWorkers|--testTimeout|--no-isolate|--retry|--passWithNoTests/);
     }
-    for(const command of ["npm run audit:prod","npm run typecheck","npm run test:unit","npm run audit:observability"])
+    for(const command of ["npm run audit:prod","npm run typecheck","npm run audit:observability"])
       expect(unit).toContain("run: "+command);
     expect(catalog).toContain("run: npm run audit:orm\n");
     expect(catalog).toContain("run: npm run audit:orm:not-valid\n");
     expect(catalog).toContain("run: npm run audit:orm:sequences\n");
     expect(catalog).toContain("- name: Measure FK statistics candidates on isolated PostgreSQL 16\n        run: npm run audit:work-fk:statistics-scale\n");
+    expect(catalog).toContain("run: npm run audit:shipping-lifecycle-capacity\n");
+    expect(catalog).toContain("TMPDIR: ${{ runner.temp }}");
+    expect(catalog).toContain("uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
+    expect(catalog).toContain("path: ${{ runner.temp }}/cinashop-shipping-capacity-*.json");
+    expect(catalog).toContain("if-no-files-found: error");
     expect(unit).not.toContain("run: npm run audit:orm");
     expect(unit).toContain("strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2]");
     expect(unit.match(/--shard=/g)).toHaveLength(1);
-    expect(unit).toContain("run: npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json");
+    expect(unit).toContain("- name: Run Worker unit tests\n        shell: bash\n        run: |\n          set -o pipefail\n          npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log");
+    expect(unit).toContain("- name: Preserve unit shard diagnostics even on failure\n        if: ${{ always() }}\n        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
+    expect(unit).toContain("name: unit-shard-${{ matrix.shard }}-${{ github.sha }}");
+    expect(unit).toContain("path: |\n            workers-ts/unit-shard-results.json\n            workers-ts/unit-shard.log\n          if-no-files-found: error\n          retention-days: 7");
+    expect(unit).not.toMatch(/\|\| true|continue-on-error|set \+e/);
     expect(unit).toContain("run: node scripts/audit-unit-shards.mjs ${{ matrix.shard }} unit-shard-results.json");
     expect(unit.match(/if: matrix.shard == 1/g)).toHaveLength(5);
     for(const name of ["Audit production dependencies", "Run both TypeScript configurations", "Audit production observability contract",

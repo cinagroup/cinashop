@@ -15,9 +15,12 @@ import { SHIPPING_REFERENCE_EXPRESSION_SQL, SHIPPING_PACKAGE_REFERENCE_EXPRESSIO
 import { inspectShippingLifecycleProtocol } from '../src/migrations/inspectShippingLifecycleProtocol';
 import { shippingReferenceStatement } from '../test/helpers/shippingReferenceStatement';
 import { shippingLifecycleNestedPlans } from '../test/helpers/shippingLifecycleNestedPlans';
+import { SHIPPING_LIFECYCLE_INDEXES } from '../src/migrations/shippingLifecycleIndexes';
+import { inspectShippingLifecycleIndexes, runShippingLifecycleIndexes } from '../src/migrations/runShippingLifecycleIndexes';
 
 // Fixed bounded synthetic experiment. No production fallback, caller SQL, user
-// data, permanent indexes, new roles or mutation of the shared control database.
+// data, new roles or mutation of the shared control database. Formal index
+// upgrade is exercised only within the helper-owned throwaway database.
 const tables=['store_product','store_seckill','store_bargain','store_combination','store_integral','store_discounts_products'] as const;
 const size=50_000;
 const expression=(table:string)=>table==='store_discounts_products'
@@ -36,9 +39,15 @@ async function main(){
     const sourceHashes=Object.fromEntries(['../src/lib/shippingReferenceExpression.ts',
       '../src/services/product/ShippingTemplateLifecycleService.ts','../src/migrations/shippingLifecycleProtocol.ts',
       '../migrations/0152_shipping_lifecycle.sql','../test/helpers/shippingReferenceStatement.ts',
+      '../migrations/0153_shipping_lifecycle_indexes.sql','../src/migrations/shippingLifecycleIndexes.ts',
+      '../src/migrations/shippingLifecycleIndexInstallation.ts','../src/migrations/runShippingLifecycleIndexes.ts',
+      '../src/models/schema/product.ts','../src/models/schema/activity.ts','../src/models/schema/discounts.ts',
       '../test/helpers/shippingLifecycleNestedPlans.ts','./audit-shipping-lifecycle-capacity.ts'].map(path=>[path,createHash('sha256').update(readFileSync(new URL(path,import.meta.url))).digest('hex')]));
     const api=await import('drizzle-kit/api'),models=await import('../src/models/schema');
     await f.exec((await api.generateMigration(api.generateDrizzleJson({}),api.generateDrizzleJson(models))).join('\n'));
+    assert.equal((await inspectShippingLifecycleIndexes(f.db)).complete,true,'Full ORM must include the formal indexes');
+    // Simulate the pre-index upgrade shape only in this newly created fixture.
+    for(const spec of SHIPPING_LIFECYCLE_INDEXES) await f.exec(`DROP INDEX public.${spec.name}`);
     await f.exec(`INSERT INTO public.shipping_templates(id,name) VALUES(1,'default'),(10,'common'),(11,'unreferenced'),(12,'rare');
       INSERT INTO public.store_order(id,order_id,pay_postage,cart_id) VALUES(999,'capacity-history','12.34','[77]')`);
     for(const table of tables){
@@ -100,29 +109,50 @@ async function main(){
       return results;
     };
     const applicationPlans=async()=>Promise.all([11,12,1].map(async id=>({id,...await explain(await shippingReferenceStatement(id))})));
+    const writeCost=async()=>{
+      const samples: {table:string;sample:number;operation:string;fullPlan:unknown}[]=[];
+      // Real indexed writes with the unchanged lifecycle triggers enabled. Each
+      // table/sample is a fresh transaction and rolls back all inserted rows.
+      await f.withPeer!(async peer=>{
+        for(const table of tables) for(let sample=0;sample<3;sample++){
+          const product=table==='store_product',packageTable=table==='store_discounts_products';
+          await peer.exec('BEGIN');
+          try {
+            const statements=[
+              ['insert',`INSERT INTO public.${table}(id,temp_id${product?'':',product_id'}${packageTable?'':',freight'}) SELECT n,10${product?'':',1'}${packageTable?'':',3'} FROM generate_series(${size+1},${size+100}) n`],
+              ['update',`UPDATE public.${table} SET temp_id=12 WHERE id BETWEEN ${size+1} AND ${size+100}`],
+              ['delete',`DELETE FROM public.${table} WHERE id BETWEEN ${size+1} AND ${size+100}`],
+            ];
+            for(const [operation,statement] of statements){
+              const rows=await peer.exec(`EXPLAIN (ANALYZE,BUFFERS,WAL,FORMAT JSON) ${statement}`);
+              samples.push({table,sample,operation,fullPlan:rows[0]['QUERY PLAN']});
+            }
+          } finally {await peer.exec('ROLLBACK');}
+        }
+      });
+      return {rowsPerStatement:100,samplesPerTable:3,protocolEnabled:true,allTransactionsRolledBack:true,samples};
+    };
     assert.equal((await inspectShippingLifecycleProtocol(f.db)).state,'complete');
-    const baseline={plans:await plans(),application:await applicationPlans(),source:await sourcePlan(),retirement:await retirement()};
+    const baseline={plans:await plans(),application:await applicationPlans(),source:await sourcePlan(),retirement:await retirement(),writeCost:await writeCost()};
     assert.deepEqual(await fingerprint(),before,'Baseline timing changed business rows');
     const indexBuildStart=performance.now();
-    for(const [i,table] of tables.entries()) {
-      await f.exec(`CREATE INDEX qa_shipping_ref_${i} ON public.${table}((${expression(table)}))`);
-      if(i>0&&i<5) await f.exec(`CREATE INDEX qa_shipping_source_${i} ON public.${table}(product_id)`);
-      await f.exec(`ANALYZE public.${table}`);
-    }
+    await runShippingLifecycleIndexes(f.db);
+    assert.equal((await inspectShippingLifecycleIndexes(f.db)).complete,true);
+    for(const table of tables) await f.exec(`ANALYZE public.${table}`);
     const indexBuildMs=performance.now()-indexBuildStart;
-    const indexed={plans:await plans(),application:await applicationPlans(),source:await sourcePlan(),retirement:await retirement()};
+    const indexed={plans:await plans(),application:await applicationPlans(),source:await sourcePlan(),retirement:await retirement(),writeCost:await writeCost()};
     const nested=await shippingLifecycleNestedPlans(f);
-    assert.equal((await inspectShippingLifecycleProtocol(f.db)).state,'complete','Candidate indexes must not replace the installed protocol');
+    assert.equal((await inspectShippingLifecycleProtocol(f.db)).state,'complete','Index upgrade must not replace the installed protocol');
     await assert.rejects(f.exec('UPDATE public.shipping_templates SET is_del=1 WHERE id=12'),{code:'23503'});
-    assert.deepEqual(await fingerprint(),before,'Candidate experiment changed business rows');
-    const candidateSelectiveScans=indexed.plans.filter(p=>p.id!==1).flatMap(p=>p.currentExpression.scans);
-    assert.ok(candidateSelectiveScans.every(p=>p.type!=='Seq Scan'),'Candidate selective check still scans the whole table');
+    assert.deepEqual(await fingerprint(),before,'Formal index experiment changed business rows');
+    const selectiveScans=indexed.plans.filter(p=>p.id!==1).flatMap(p=>p.currentExpression.scans);
+    assert.ok(selectiveScans.every(p=>p.type!=='Seq Scan'),'Formal selective check still scans the whole table');
     assert.ok(indexed.application.filter(p=>p.id!==1).flatMap(p=>p.scans).every(p=>p.type!=='Seq Scan'),'Actual application selective query still scans the whole table');
     return {scope:'isolated shipping lifecycle 300000-reference performance experiment',engine:'PG16',rowsPerTable:size,
       capturedAt:new Date().toISOString(),sourceHashes,fingerprints:before,
       totalReferences:size*tables.length,installMs,indexBuildMs,baseline,indexed,nested,exactProtocolPreserved:true,
       rowsPreserved:true,referencedRetirementStillRejected:true,forcedPlannerSettings:false,
-      candidateIndexCount:10,registeredCapacityMigration:false,productionChanged:false,fullCapacityAcceptance:false};
+      registeredIndexCount:10,registeredCapacityMigration:true,productionChanged:false,fullCapacityAcceptance:false};
   } finally { await f.close(); }
 }
 main().then(report=>{

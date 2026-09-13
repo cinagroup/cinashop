@@ -58,7 +58,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered shipp
         }
       } else if (path === 'embedded') {
         const result = await new MigrationService({ db: f.db } as Container).runAll();
-        expect(result).toEqual({ executed: Array.from({ length: 159 }, (_, i) => String(i).padStart(4,'0')), errors: [] });
+        expect(result).toEqual({ executed: Array.from({ length: 160 }, (_, i) => String(i).padStart(4,'0')), errors: [] });
       } else await orm(f);
       expect((await inspectShippingLifecycleProtocol(f.db)).state).toBe(path === 'orm-upgrade' ? 'absent' : 'complete');
       await seed(f);

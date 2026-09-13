@@ -100,7 +100,12 @@ describe("DB-009F complete table catalog hard gate", () => {
     expect(source).toContain('if (!tableCatalogGateVerification) throw new Error("Table catalog engine gate verification is missing")');
     expect(source).toContain("tableCatalogGateVerification = await verifyTableCatalogGate(");
     expect(source).toContain('process.exitCode = 1;');
-    expect(source).toContain('await control.unsafe(`DROP DATABASE "${name}"`)');
+    expect(source).toContain('await dropOwnedAuditDatabase((statement, parameters) => control.unsafe(statement, parameters), name, created)');
+    expect(source).toContain('if (recovery.timeoutRecovered) cleanupRecoveries.push({ database: name, ...recovery })');
+    const cleanup = readFileSync(resolve(import.meta.dirname, "../scripts/data-migration/drop-owned-audit-database.ts"), "utf8");
+    expect(cleanup).toContain('!created.includes(name)');
+    expect(cleanup).toContain('const drop = `DROP DATABASE "${name}"`');
+    expect(cleanup).toContain('rows[0].datconnlimit !== -2 || rows[0].connections !== 0');
     expect(source).toContain('if (remains.length) throw new Error("Isolated database cleanup was not confirmed")');
   });
 });

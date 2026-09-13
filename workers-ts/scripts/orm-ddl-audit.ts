@@ -9,6 +9,9 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import type { Container } from "../src/lib/di";
 import { runShippingLifecycle } from "../src/migrations/runShippingLifecycle";
 import { inspectShippingLifecycleProtocol } from "../src/migrations/inspectShippingLifecycleProtocol";
+import { inspectShippingLifecycleIndexes, runShippingLifecycleIndexes } from '../src/migrations/runShippingLifecycleIndexes';
+import { SHIPPING_LIFECYCLE_INDEXES } from '../src/migrations/shippingLifecycleIndexes';
+import { dropOwnedAuditDatabase } from './data-migration/drop-owned-audit-database';
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
 import { extendConstraintNameContracts, assertConstraintNamesAligned } from "./data-migration/constraint-name-contracts";
@@ -51,6 +54,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   let tableCatalogGateVerification;
   const columnWriteVerification: Record<string, unknown> = {};
   const shippingLifecycleVerification: Record<string, unknown> = {};
+  const shippingIndexVerification: Record<string, unknown> = {};
+  const cleanupRecoveries: Array<{ database: string; timeoutRecovered: boolean; retried: boolean }> = [];
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
     if (identity.database !== "cinashop_finance_test" || identity.role !== "finance_test" || Math.floor(Number(identity.version) / 10_000) !== 16) {
@@ -185,6 +190,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         // Explicitly prove this protocol on every real construction path, with
         // no repair masking a missing external/embedded registration.
         const shippingDb = drizzle(client);
+        const initialShippingIndexes = await inspectShippingLifecycleIndexes(shippingDb);
+        if (!initialShippingIndexes.complete) throw new Error(`Shipping index registration differs on ${path}`);
+        const shippingIndexOidQuery = `SELECT c.relname,c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN (${SHIPPING_LIFECYCLE_INDEXES.map(s=>`'${s.name}'`).join(',')}) ORDER BY c.relname`;
+        const shippingIndexOids = await client.unsafe(shippingIndexOidQuery);
         const initialShipping = await inspectShippingLifecycleProtocol(shippingDb);
         const shippingExpected = path === "external" || path === "embedded" ? "complete" : "absent";
         if (initialShipping.state !== shippingExpected) throw new Error(`Shipping protocol registration differs on ${path}`);
@@ -195,6 +204,13 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         if (shippingRepeat.applied || verifiedShipping.state !== "complete") throw new Error(`Shipping repeat verification differs on ${path}`);
         shippingLifecycleVerification[path] = { initial: initialShipping.state, firstApplied: shippingFirst.applied,
           repeatApplied: shippingRepeat.applied, ...verifiedShipping };
+        await runShippingLifecycleIndexes(shippingDb);
+        await runShippingLifecycleIndexes(shippingDb);
+        const verifiedShippingIndexes = await inspectShippingLifecycleIndexes(shippingDb);
+        if (!verifiedShippingIndexes.complete || JSON.stringify(await client.unsafe(shippingIndexOidQuery)) !== JSON.stringify(shippingIndexOids))
+          throw new Error(`Shipping index repeat identity differs on ${path}`);
+        shippingIndexVerification[path] = { initialComplete: true, repeatComplete: true, oidsPreserved: true,
+          indexCount: verifiedShippingIndexes.present, reusedPackageSourceCompatible: verifiedShippingIndexes.reusedPackageSourceCompatible };
         columnWriteVerification[path] = await auditDefaults.verifyDefaultWrites({
           exec: (query: string) => client.unsafe(query),
           query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
@@ -317,6 +333,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       columnDefaultUpgradeVerification: { ...columnDefaultUpgradeVerification, freshCatalogMatched: true },
       columnWriteVerification,
       shippingLifecycleVerification,
+      shippingIndexVerification,
+      cleanupRecoveries,
       externalDuplicateIndexRetirement,
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },
       missingIndexEvidence: {
@@ -333,7 +351,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       for (const name of created.reverse()) {
         try {
           if (!/^orm_audit_(external|embedded|orm|orm_upgrade|orm_default_upgrade|orm_constraints|orm_fk_names|orm_checks|orm_sequences|table_gate)_[a-f0-9]{32}$/.test(name) || name.length > 63) throw new Error("Unsafe cleanup target");
-          await control.unsafe(`DROP DATABASE "${name}"`);
+          const recovery = await dropOwnedAuditDatabase((statement, parameters) => control.unsafe(statement, parameters), name, created);
+          if (recovery.timeoutRecovered) cleanupRecoveries.push({ database: name, ...recovery });
           const remains = await control`SELECT datname FROM pg_database WHERE datname=${name}`;
           if (remains.length) throw new Error("Isolated database cleanup was not confirmed");
         } catch (error) { cleanupErrors.push(new Error(`Cleanup failed for ${name}`, { cause: error })); }
