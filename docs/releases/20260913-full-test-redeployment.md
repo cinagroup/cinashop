@@ -1,5 +1,8 @@
 # 2026-09-13 全量测试环境重新部署
 
+后续终态复核：main@d391e7b 的 Actions34730887286 已 completed/success，11作业全部通过。
+下面“仍运行”保留为实际发布时的状态；本结果不外推到后续 ba0df78 安装环境修复。
+
 源提交 `d391e7b14a5372e35b677f477d127ceb57eb9283` 已合并推送 main。
 01:35–01:38 UTC，API、PC、Admin、H5、Supplier、Kefu 全部重新构建并发布。
 Worker `3bd4a6d5-7d18-465e-aada-ef9ae947f8e2` 占流量100%；五端 Pages

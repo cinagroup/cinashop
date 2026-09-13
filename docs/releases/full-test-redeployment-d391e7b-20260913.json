@@ -98,7 +98,9 @@
     "priorCatalogRun": 34729849777,
     "priorCatalogConclusion": "failure",
     "priorFailure": "checkout-confirmation-rules.test.ts afterEach database cleanup hook exceeded 10000ms; complete unchanged suite passed 262 tests locally",
-    "fullCiAcceptance": false
+    "fullCiAcceptance": true,
+    "mainConclusionAfterRelease": "success",
+    "mainSuccessfulJobsAfterRelease": 11
   },
   "smoke": {
     "capturedAt": "2026-09-13T01:38:27.421Z",
