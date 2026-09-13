@@ -3644,6 +3644,7 @@
       "src/pages/setting/NotificationList.vue",
       "src/pages/setting/PrintOperations.vue",
       "src/pages/setting/WaybillOperations.vue",
+      "src/pages/shipping/ShippingTemplateEditor.vue",
       "src/pages/shipping/ShippingTemplates.vue",
       "src/pages/statistic/Dashboard.vue",
       "src/pages/statistic/components/BalanceStatisticsPanel.vue",
@@ -4213,6 +4214,7 @@
     "unroutedPageFiles": [
       "src/pages/activity/DiscountPackageManager.vue",
       "src/pages/operations/QueueDeadLetterPanel.vue",
+      "src/pages/shipping/ShippingTemplateEditor.vue",
       "src/pages/statistic/components/BalanceStatisticsPanel.vue",
       "src/pages/statistic/components/TradeStatisticsPanel.vue",
       "src/pages/statistic/components/UserStatisticsPanel.vue"
@@ -4257,7 +4259,7 @@
       "user": 1
     },
     "counts": {
-      "pageVueFiles": 58,
+      "pageVueFiles": 59,
       "routeRecords": 55,
       "businessPageRouteRecords": 54,
       "distinctRoutedPageComponents": 53,
@@ -4265,7 +4267,7 @@
       "layoutRouteRecords": 1,
       "otherRouteRecords": 0,
       "unresolvedComponents": 0,
-      "unroutedPageFiles": 5
+      "unroutedPageFiles": 6
     }
   }
 }

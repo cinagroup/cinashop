@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { buildAdminFrontendApiAuditReport } from "../scripts/admin-frontend-api-audit";
+import { buildAdminFrontendApiAuditReport, normalizeAdminAuditSource } from "../scripts/admin-frontend-api-audit";
 
 interface ApiAuditReport {
   version: number;
@@ -34,6 +34,11 @@ const committed = JSON.parse(readFileSync(
 )) as ApiAuditReport;
 
 describe("Admin frontend API registration audit", () => {
+  it.each(["\n", "\r\n", "\r"])("canonicalizes source line endings %j without changing handler text", (ending) => {
+    const lines = ["(c) =>", "  c.json({ status: 200 })", ""];
+    expect(normalizeAdminAuditSource(lines.join(ending))).toBe(lines.join("\n"));
+  });
+
   it("has no statically unregistered or unresolved request paths", () => {
     expect(committed.version).toBe(2);
     expect(committed.counts.callSites).toBeGreaterThan(250);

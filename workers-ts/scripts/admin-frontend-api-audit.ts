@@ -37,8 +37,12 @@ function normalizedRelative(root: string, file: string): string {
   return relative(root, file).replace(/\\/g, "/");
 }
 
+export function normalizeAdminAuditSource(text: string): string {
+  return text.replace(/\r\n?/g, "\n");
+}
+
 function sha256(file: string): string {
-  const canonicalText = readFileSync(file, "utf8").replace(/\r\n?/g, "\n");
+  const canonicalText = normalizeAdminAuditSource(readFileSync(file, "utf8"));
   return createHash("sha256").update(canonicalText).digest("hex");
 }
 
@@ -158,7 +162,7 @@ function normalizePath(path: string): string {
 }
 
 function sourceUnits(file: string): Array<{ source: ts.SourceFile; lineOffset: number }> {
-  const text = readFileSync(file, "utf8");
+  const text = normalizeAdminAuditSource(readFileSync(file, "utf8"));
   if (!file.endsWith(".vue")) {
     return [{
       source: ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS),
@@ -235,7 +239,7 @@ function collectApiCalls(files: string[]): { calls: Omit<ApiCall, "registered" |
 }
 
 function collectRegisteredRoutes(): RegisteredRoute[] {
-  const text = readFileSync(backendFile, "utf8");
+  const text = normalizeAdminAuditSource(readFileSync(backendFile, "utf8"));
   const source = ts.createSourceFile(backendFile, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const routes: RegisteredRoute[] = [];
   const visit = (node: ts.Node) => {

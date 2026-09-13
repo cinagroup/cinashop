@@ -1,0 +1,287 @@
+{
+  "sourceCommit": "37d330829718543a3cc7469d2edc3eb10174a994",
+  "scope": "six-application online test redeployment; application source unchanged by subsequent audit-only corrections",
+  "control": {
+    "capturedAt": "2026-09-13T10:31:03.7067986Z",
+    "pages": [
+      {
+        "name": "cinashop-admin",
+        "branch": "main",
+        "domains": [
+          "cinashop-admin.pages.dev"
+        ],
+        "deployment": "c858c2c5-eeb3-4fbd-8daa-099e4905cc39",
+        "commit": "37d330829718543a3cc7469d2edc3eb10174a994",
+        "status": "success",
+        "environment": "production",
+        "functions": true
+      },
+      {
+        "name": "cinashop-pc",
+        "branch": "main",
+        "domains": [
+          "cinashop-pc.pages.dev",
+          "shop.cinaseek.ai"
+        ],
+        "deployment": "e70b40a5-ad30-4d71-8f3e-0d9b6d4a2cbb",
+        "commit": "37d330829718543a3cc7469d2edc3eb10174a994",
+        "status": "success",
+        "environment": "production",
+        "functions": true
+      },
+      {
+        "name": "cinashop-h5",
+        "branch": "main",
+        "domains": [
+          "cinashop-h5.pages.dev"
+        ],
+        "deployment": "e1b1559f-03de-4e0b-959b-9cbc2f842752",
+        "commit": "37d330829718543a3cc7469d2edc3eb10174a994",
+        "status": "success",
+        "environment": "production",
+        "functions": true
+      },
+      {
+        "name": "cinashop-supplier",
+        "branch": "main",
+        "domains": [
+          "cinashop-supplier.pages.dev"
+        ],
+        "deployment": "e548c785-deb9-40a2-a2df-d97a53a5ab6c",
+        "commit": "37d330829718543a3cc7469d2edc3eb10174a994",
+        "status": "success",
+        "environment": "production",
+        "functions": true
+      },
+      {
+        "name": "cinashop-kefu",
+        "branch": "main",
+        "domains": [
+          "cinashop-kefu.pages.dev"
+        ],
+        "deployment": "110b1371-87f5-4e3f-bd89-f31f16a888f2",
+        "commit": "37d330829718543a3cc7469d2edc3eb10174a994",
+        "status": "success",
+        "environment": "production",
+        "functions": true
+      }
+    ],
+    "worker": {
+      "id": "b6a85f5d-dbfe-4cb1-8383-fedd7a48020c",
+      "created_on": "2026-09-13T10:29:35.942705Z",
+      "versions": [
+        {
+          "version_id": "89286bbd-d8ca-4db1-a952-6f51bc2f6427",
+          "percentage": 100
+        }
+      ],
+      "annotations": {
+        "workers/message": "Full six-app test redeploy main 37d330829718543a3cc7469d2edc3eb10174a994",
+        "workers/triggered_by": "deployment"
+      }
+    }
+  },
+  "smoke": {
+    "capturedAt": "2026-09-13T10:30:42.838Z",
+    "mode": "read-only-full-test-redeploy",
+    "passed": true,
+    "results": [
+      {
+        "name": "pc",
+        "origin": "https://shop.cinaseek.ai",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-BKWUsebi.js",
+        "localHash": "d425e347579c322747813b29bc8bc41a54783a571b2f442568eb53e2f5abfd67",
+        "remoteHash": "d425e347579c322747813b29bc8bc41a54783a571b2f442568eb53e2f5abfd67",
+        "pass": true
+      },
+      {
+        "name": "admin",
+        "origin": "https://cinashop-admin.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-C1FBBU3V.js",
+        "localHash": "ff7cc191db51d282fd9e5f95cf31acaf6f7d3177285b5272c2781ace74b58457",
+        "remoteHash": "ff7cc191db51d282fd9e5f95cf31acaf6f7d3177285b5272c2781ace74b58457",
+        "pass": true
+      },
+      {
+        "name": "h5",
+        "origin": "https://cinashop-h5.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-BAblUde7.js",
+        "localHash": "05649c947d6b6ba8c970ceff053bf84ca17ce2037d030cdd4c86c77ff4b009d5",
+        "remoteHash": "05649c947d6b6ba8c970ceff053bf84ca17ce2037d030cdd4c86c77ff4b009d5",
+        "pass": true
+      },
+      {
+        "name": "supplier",
+        "origin": "https://cinashop-supplier.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-DHHtNs1E.js",
+        "localHash": "beadd868e8b40dc65d46c74e28a1d3698934419f06e8a628f8609daef1a1db27",
+        "remoteHash": "beadd868e8b40dc65d46c74e28a1d3698934419f06e8a628f8609daef1a1db27",
+        "pass": true
+      },
+      {
+        "name": "kefu",
+        "origin": "https://cinashop-kefu.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-CT8BhVXO.js",
+        "localHash": "074eec1a27445f7f2b1159d2520bb4b4b238db6e6d5d7db47b24cb3f2eff6174",
+        "remoteHash": "074eec1a27445f7f2b1159d2520bb4b4b238db6e6d5d7db47b24cb3f2eff6174",
+        "pass": true
+      },
+      {
+        "name": "health",
+        "http": 200,
+        "observed": true,
+        "pass": true
+      },
+      {
+        "name": "pc-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "pc-products",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "admin-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "h5-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "supplier-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "admin-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "supplier-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "kefu-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "cors-https://shop.cinaseek.ai",
+        "http": 204,
+        "allowed": "https://shop.cinaseek.ai",
+        "pass": true
+      },
+      {
+        "name": "cors-https://cinaseek.ai",
+        "http": 204,
+        "allowed": null,
+        "pass": true
+      },
+      {
+        "name": "cors-https://cinashop-admin.pages.dev",
+        "http": 204,
+        "allowed": null,
+        "pass": true
+      }
+    ]
+  },
+  "validation": {
+    "frontendBuilds": [
+      "admin",
+      "pc",
+      "h5",
+      "supplier",
+      "kefu"
+    ],
+    "workerDryRun": true,
+    "workerDualTypecheck": true,
+    "bundleInputCount": 780,
+    "bundleContainsTestOrAuditScripts": false,
+    "existingLocalRegression": {
+      "passed": 303,
+      "failed": 0,
+      "skipped": 0,
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-grouped-final3-20260913.json",
+      "sha256": "87b55a80e119838c47edea7eac0e8ddf3f2f2d246f76dd82ae216b2fed5b5373"
+    },
+    "auditCorrectionTests": {
+      "files": 3,
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "ci": {
+    "preRelease": {
+      "id": 34751343686,
+      "conclusion": "failure",
+      "successfulJobs": 9,
+      "failedJobs": 2,
+      "failedShard": {
+        "passed": 2751,
+        "failed": 1,
+        "skipped": 0,
+        "test": "admin-frontend-inventory.test.ts:104",
+        "cause": "New nested ShippingTemplateEditor.vue absent from committed navigation inventory",
+        "reportSha256": "66eb6df0b665778de037a58bd3d46cd81cb894d2ac98630e4778f50aa63bdfb5"
+      }
+    },
+    "mainBeforeCorrection": {
+      "id": 34751911259,
+      "status": "in_progress",
+      "conclusion": null
+    },
+    "correction": "Regenerated target-only navigation inventory; normalized audit source line endings (hashing and AST inputs), preserved deterministic assertions; runtime source/config/frontend unchanged",
+    "correctedMainRun": "pending commit and push"
+  },
+  "previousWorkerVersion": "932cb018-2a26-442c-b01a-b7328f19bd3d",
+  "cleanup": {
+    "deletedLocalAndRemoteBranches": [
+      "codex/admin-shipping-grouped-editor-20260913",
+      "codex/admin-shipping-list-snapshot-20260913",
+      "codex/supplier-pages-configuration-acceptance-20260913"
+    ],
+    "allCommitsRetainedInMain": true,
+    "oldDeploymentsRetained": true,
+    "oldDetachedReleaseWorktreePreserved": true
+  },
+  "boundaries": {
+    "databaseReset": false,
+    "databaseMigrationExecuted": false,
+    "secretsHyperdriveOrDomainsChanged": false,
+    "existingCronAndQueuesRemainEnabled": true,
+    "fullLoginPurchasePaymentAcceptance": false,
+    "migrationChecklistCompleted": false
+  },
+  "notes": [
+    "Cloudflare/Wrangler skills used for dry-run, keep-vars deployment and control-plane validation.",
+    "All five Functions rebuilt and uploaded; unchanged static content deduplicated by Cloudflare.",
+    "Page-directory Vue count 59 includes nested editor, not an additional routed business page; distinct routed components remain 53.",
+    "Original failed CI and local intermediate failing audit result retained; no assertions removed."
+  ]
+}
