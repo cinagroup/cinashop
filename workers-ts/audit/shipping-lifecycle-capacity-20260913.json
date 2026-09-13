@@ -244,7 +244,12 @@
     ]
   },
   "ci": {
-    "status": "not_yet_dispatched_for_this_increment",
+    "status": "completed_success_for_897136b",
+    "verifiedSourceSha": "897136b4fc33ed22d65abdb2bd40f1c0b55a93c6",
+    "sourceRun": 34737696153,
+    "sourceSuccessfulJobs": 11,
+    "mainRun": 34739769626,
+    "mainSuccessfulJobs": 11,
     "deployedSourceMainRun": 34735685981,
     "deployedSourceSha": "c116838b21324a7f3f7a72debced2772ad9adbf6",
     "deployedSourceConclusion": "success",

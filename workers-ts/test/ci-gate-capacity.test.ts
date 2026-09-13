@@ -33,7 +33,8 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       "Audit production observability contract","Audit legacy-to-PostgreSQL schema drift","Audit legacy-to-Worker route parity"]);
     expect(names(catalog)).toEqual([...setup,"Execute isolated PostgreSQL 16 ORM and migration catalog audit",
       "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16",
-      "Measure FK statistics candidates on isolated PostgreSQL 16"]);
+      "Measure FK statistics candidates on isolated PostgreSQL 16",
+      "Verify formal shipping indexes and measure isolated read/write costs", "Preserve complete synthetic shipping plans"]);
     // Run 34460778121 exceeded the old whole-job budget while tests continued.
     // Only unit-job capacity changed; no per-test deadline or gate is relaxed.
     expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 40"]);
@@ -52,6 +53,11 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(catalog).toContain("run: npm run audit:orm:not-valid\n");
     expect(catalog).toContain("run: npm run audit:orm:sequences\n");
     expect(catalog).toContain("- name: Measure FK statistics candidates on isolated PostgreSQL 16\n        run: npm run audit:work-fk:statistics-scale\n");
+    expect(catalog).toContain("run: npm run audit:shipping-lifecycle-capacity\n");
+    expect(catalog).toContain("TMPDIR: ${{ runner.temp }}");
+    expect(catalog).toContain("uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
+    expect(catalog).toContain("path: ${{ runner.temp }}/cinashop-shipping-capacity-*.json");
+    expect(catalog).toContain("if-no-files-found: error");
     expect(unit).not.toContain("run: npm run audit:orm");
     expect(unit).toContain("strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2]");
     expect(unit.match(/--shard=/g)).toHaveLength(1);

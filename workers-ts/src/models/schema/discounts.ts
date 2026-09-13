@@ -1,5 +1,7 @@
 /** Legacy bundle/discount packages and their product snapshots. */
 import { index, integer, pgTable, serial, smallint, text, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm';
+import { SHIPPING_PACKAGE_REFERENCE_EXPRESSION_SQL } from '../../lib/shippingReferenceExpression';
 
 export const storeDiscounts = pgTable(
   "store_discounts",
@@ -47,6 +49,7 @@ export const storeDiscountsProducts = pgTable(
   },
   (t) => [
     index("sdp_discount_product").on(t.discountId, t.productId),
+    index("sdp_shipping_ref").on(sql.raw(`(${SHIPPING_PACKAGE_REFERENCE_EXPRESSION_SQL})`)),
     index("sdp_product_discount").on(t.productId, t.discountId),
     index("sdp_discount_order").on(t.discountId, t.id),
   ],

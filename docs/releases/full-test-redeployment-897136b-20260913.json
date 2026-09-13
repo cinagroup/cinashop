@@ -115,8 +115,9 @@
     "successfulJobs": 11,
     "sourceSha": "897136b4fc33ed22d65abdb2bd40f1c0b55a93c6",
     "mainRun": 34739769626,
-    "mainStatusAtRecord": "in_progress",
-    "mainConclusion": null,
+    "mainStatusAtRecord": "completed",
+    "mainConclusion": "success",
+    "mainSuccessfulJobs": 11,
     "sameExactSourceSha": true
   },
   "smoke": {

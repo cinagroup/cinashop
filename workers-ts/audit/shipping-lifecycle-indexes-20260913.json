@@ -1,0 +1,1267 @@
+{
+  "scope": "A3k12 formal shipping lifecycle index registration and bounded local capacity evidence",
+  "baseCommit": "c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+  "registration": {
+    "filesystem": "0153_shipping_lifecycle_indexes.sql",
+    "embedded": "0159",
+    "embeddedSteps": 160,
+    "existingStepsUnchanged": "0000–0158",
+    "existingDatabaseEntrypoint": "runShippingLifecycleIndexes(rootDb)",
+    "automaticStartup": false,
+    "replayHistoricalRunAllForExistingDatabase": false,
+    "managedReferenceIndexes": 6,
+    "managedSourceIndexes": 4,
+    "reusedPackageSourceIndex": "sdp_product_discount(product_id,discount_id)",
+    "allRetainedRows": true
+  },
+  "contract": {
+    "engine": "PostgreSQL 16",
+    "schema": "public",
+    "rootReadWriteReadCommitted": true,
+    "lock": "seven tables SHARE ROW EXCLUSIVE NOWAIT",
+    "freshBaselineAndEnvironment": true,
+    "exactExistingProtocolRequired": true,
+    "doesNotImplicitlyInstallOrReplaceProtocol": true,
+    "fixedIndexDefinitionAndStateContract": true,
+    "sameNameDriftRejected": true,
+    "presentCompatibleOidsPreserved": true,
+    "missingOnlyCreated": true,
+    "postverifiedOrWholeTransactionRollback": true,
+    "maintenanceStatementTimeoutMs": 30000,
+    "lockTimeoutMs": 1000,
+    "idleTimeoutMs": 5000,
+    "stricterCallerLimitsPreserved": true,
+    "applicationDeadlineNotWidened": true,
+    "analyzeInInstaller": false,
+    "dataRepair": false,
+    "grants": false
+  },
+  "sourceHashes": {
+    "workers-ts/src/models/schema/product.ts": "10C7FB980613C599C2392BD02BDC31B762504D92B9002953357C77EC8CB4D300",
+    ".github/workflows/workers-runtime-linux.yml": "BA8342978FA2CB52B261048A3E73A2138A14A1AE22CDC8B1CC9D88B81E6B7058",
+    "workers-ts/test/shipping-lifecycle-indexes.test.ts": "48A30DEBC2E661802D9D911F5BEDF8440E58CA5CC9C41D6AF2493D95174D74D5",
+    "workers-ts/src/models/schema/discounts.ts": "57D792A401CA31BF68EB24CEB17AC8DD1CF37CC0AAA4AA15F9FC1369FE886CB0",
+    "workers-ts/src/services/MigrationService.ts": "F973562BEFC7AEC8FB269C8DC83314822383882394237A34C856895116DF401A",
+    "workers-ts/scripts/data-migration/drop-owned-audit-database.ts": "E980950BAA8AACF2BBA36443F6DA10E4972AFF10F597E68B0EEF0BD06689B25C",
+    "workers-ts/src/migrations/shippingLifecycleIndexInstallation.ts": "0AAF36D8F0C18E79AC6F820E8BE907CB9F9D96E7D40A6E4DD2325D26DCD12770",
+    "workers-ts/src/migrations/shippingLifecycleIndexes.ts": "554F0FB2708598ADD9627980167C2AB14967FD8743470DD4B6166DEAE0581580",
+    "workers-ts/src/migrations/runShippingLifecycleIndexes.ts": "EFFCDD95FC3FCBF810310A2B679A0593E55A893FA0548AC7D4A4EA5852D4CA27",
+    "workers-ts/scripts/audit-shipping-lifecycle-capacity.ts": "63718F78EF5F889595727FD5CC286DF99025350C502DB2C35262E954B6E46B6C",
+    "workers-ts/test/ci-gate-capacity.test.ts": "AFE9577EEDB2411C02F85AB2FC4FC71B11DCB7BB75D972F706BD0CED686F6EF7",
+    "workers-ts/src/models/schema/activity.ts": "37D55970FE3D56D067B889654C012F957F7B9C24C7BD334B587B884D2409F32F",
+    "workers-ts/migrations/0153_shipping_lifecycle_indexes.sql": "A7FDB146EC7D963672DA30CD7DD889A2D7A29930532D84D6B09DB065FB2F451D",
+    "workers-ts/test/owned-audit-cleanup.test.ts": "55EDB5F545F41AE3A1F8EDF0ACCD6020B05C480A7A9A309A4516E5D97C7EE34F",
+    "workers-ts/scripts/orm-ddl-audit.ts": "3AF6B36B448BB6ADCD3FEAEBDCFCA101AAFEE152E7AC2332F1BC7B7C15259249"
+  },
+  "verification": {
+    "shippingRegression": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-index-serial-20260913.json",
+      "sha256": "3499703D10A506A22B218EBF66598D57F47234DD42A25D36E6A7CECD48094D9F",
+      "success": true,
+      "passed": 434,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        {
+          "name": "brokerage-paid-order-migration.test.ts",
+          "status": "passed",
+          "count": 7
+        },
+        {
+          "name": "coupon-product-scope-migration.test.ts",
+          "status": "passed",
+          "count": 7
+        },
+        {
+          "name": "kefu-sequence-registration.test.ts",
+          "status": "passed",
+          "count": 35
+        },
+        {
+          "name": "shipping-lifecycle-baseline-cli.test.ts",
+          "status": "passed",
+          "count": 2
+        },
+        {
+          "name": "shipping-lifecycle-baseline.test.ts",
+          "status": "passed",
+          "count": 26
+        },
+        {
+          "name": "shipping-lifecycle-capacity-cli.test.ts",
+          "status": "passed",
+          "count": 1
+        },
+        {
+          "name": "shipping-lifecycle-indexes.test.ts",
+          "status": "passed",
+          "count": 48
+        },
+        {
+          "name": "shipping-lifecycle-install-environment.test.ts",
+          "status": "passed",
+          "count": 23
+        },
+        {
+          "name": "shipping-lifecycle-interactions.test.ts",
+          "status": "passed",
+          "count": 44
+        },
+        {
+          "name": "shipping-lifecycle-migration.test.ts",
+          "status": "passed",
+          "count": 52
+        },
+        {
+          "name": "shipping-lifecycle-plan-cache.test.ts",
+          "status": "passed",
+          "count": 1
+        },
+        {
+          "name": "shipping-lifecycle-protocol-catalog.test.ts",
+          "status": "passed",
+          "count": 38
+        },
+        {
+          "name": "shipping-lifecycle-reference-expression.test.ts",
+          "status": "passed",
+          "count": 10
+        },
+        {
+          "name": "shipping-lifecycle-runtime-permissions.test.ts",
+          "status": "passed",
+          "count": 34
+        },
+        {
+          "name": "shipping-lifecycle-write-barrier.test.ts",
+          "status": "passed",
+          "count": 22
+        },
+        {
+          "name": "shipping-template-lifecycle-candidate.test.ts",
+          "status": "passed",
+          "count": 36
+        },
+        {
+          "name": "shipping-template-lifecycle-services.test.ts",
+          "status": "passed",
+          "count": 48
+        }
+      ],
+      "indexTests": [
+        {
+          "fullName": "mirrors external 0153 exactly and rejects non-root input before SQL",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index full PG16 construction matches all ten definitions on external and preserves repeated install OIDs/data",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index full PG16 construction matches all ten definitions on embedded and preserves repeated install OIDs/data",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index full PG16 construction matches all ten definitions on orm-upgrade and preserves repeated install OIDs/data",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file adds missing indexes and preserves a compatible existing subset plus the package source index",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects wrong expression without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects partial without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects unique without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects include without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects descending without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects wrong access method without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects wrong table without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects a missing reused package source index instead of recreating it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects a renamed protocol function and never repairs it implicitly",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects enabled relation side effects even for repeated complete indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects a false indisvalid catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects a false indisready catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects a false indislive catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects a false indimmediate catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 file rejects a view occupying a managed name without removing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone adds missing indexes and preserves a compatible existing subset plus the package source index",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects wrong expression without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects partial without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects unique without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects include without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects descending without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects wrong access method without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects wrong table without repairing or creating missing indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects a missing reused package source index instead of recreating it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects a renamed protocol function and never repairs it implicitly",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects enabled relation side effects even for repeated complete indexes",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects a false indisvalid catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects a false indisready catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects a false indislive catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects a false indimmediate catalog flag without repairing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 standalone rejects a view occupying a managed name without removing it",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses an existing shipping_templates writer and releases partial acquired locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses an existing store_bargain writer and releases partial acquired locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses an existing store_combination writer and releases partial acquired locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses an existing store_discounts_products writer and releases partial acquired locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses an existing store_integral writer and releases partial acquired locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses an existing store_product writer and releases partial acquired locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses an existing store_seckill writer and releases partial acquired locks",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 rolls back every partial creation on a middle DDL failure",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 rolls back all creations when final exact verification finds drift",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 cannot install as a real SELECT-only LOGIN",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 refuses a repeatable-read raw installation before index creation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping index guarded installation on owned full ORM PG16 preserves a stricter caller deadline and rolls back timed-out DDL",
+          "status": "passed"
+        }
+      ]
+    },
+    "harnessRegression": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-index-harness-20260913.json",
+      "sha256": "F93DE473559E0F13938CD1D1FE8EB71AFC705D8445F2DA6BDDCAD99C3D03F03D",
+      "success": true,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        {
+          "name": "ci-gate-capacity.test.ts",
+          "status": "passed",
+          "count": 3
+        },
+        {
+          "name": "owned-audit-cleanup.test.ts",
+          "status": "passed",
+          "count": 11
+        }
+      ]
+    },
+    "distinctFiles": 19,
+    "totalPassed": 448,
+    "totalFailed": 0,
+    "totalSkipped": 0,
+    "typecheck": {
+      "unit": true,
+      "runtime": true
+    },
+    "catalogArtifact": "shipping-lifecycle-index-catalog-20260913.json",
+    "catalogSha256": "0148EA0D54EBD5727FF66994A6FDE606489E0E60475A51FA8DBCB84C9F0984B8",
+    "catalogPaths": [
+      {
+        "path": "external",
+        "steps": 155
+      },
+      {
+        "path": "embedded",
+        "steps": 160
+      },
+      {
+        "path": "orm",
+        "steps": 1091
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1211
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1092
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1083
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1092
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1084
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1091
+      }
+    ],
+    "catalogCounts": {
+      "external": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 263,
+        "columns": 3701,
+        "constraints": 571,
+        "indexes": 1020,
+        "sequences": 227
+      }
+    },
+    "shippingIndexVerification": {
+      "external": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "embedded": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "orm": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "orm_upgrade": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "orm_default_upgrade": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "orm_constraints": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "orm_fk_names": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "orm_checks": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      },
+      "orm_sequences": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsPreserved": true,
+        "indexCount": 10,
+        "reusedPackageSourceCompatible": true
+      }
+    },
+    "cleanupRecovery": [
+      {
+        "database": "orm_audit_table_gate_da934696ed4040e18bde897c193e1418",
+        "timeoutRecovered": true,
+        "retried": true
+      }
+    ],
+    "finalResourceCheck": {
+      "version": "160015",
+      "remaining_databases": 0,
+      "remaining_audit_databases": 0,
+      "remaining_schemas": 0,
+      "remaining_roles": 0
+    }
+  },
+  "capacity": {
+    "artifact": "shipping-lifecycle-index-capacity-20260913.json",
+    "sha256": "d4468456c39be6a4d9551a93e39572db761e6001d02c5d232fe031c1135743c5",
+    "capturedAt": "2026-09-13T05:47:18.145Z",
+    "totalReferences": 300000,
+    "rowsPerTable": 50000,
+    "realStandaloneIndexMigration": true,
+    "protocolInstalledBeforeTiming": true,
+    "exactProtocolAndLogicalRowsPreserved": true,
+    "temporaryQaIndexSubstitute": false,
+    "forcedPlannerSettings": false,
+    "installationAndReadSamples": {
+      "reportPath": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-shipping-capacity-6f9d53b4-d834-4754-aa9e-a77d59bc13c7.json",
+      "reportSha256": "d4468456c39be6a4d9551a93e39572db761e6001d02c5d232fe031c1135743c5",
+      "capturedAt": "2026-09-13T05:47:18.145Z",
+      "totalReferences": 300000,
+      "installMs": 1872.892200000002,
+      "indexBuildMs": 3735.3800000000047,
+      "baselineRetirement": [
+        {
+          "kind": "database",
+          "samplesMs": [
+            114.85310000000027,
+            111.60710000000108,
+            114.64569999999367
+          ]
+        },
+        {
+          "kind": "application",
+          "samplesMs": [
+            300.331600000005,
+            246.9400999999998,
+            272.36569999999483
+          ]
+        }
+      ],
+      "indexedRetirement": [
+        {
+          "kind": "database",
+          "samplesMs": [
+            4.087400000003981,
+            3.2917000000015832,
+            3.7075000000040745
+          ]
+        },
+        {
+          "kind": "application",
+          "samplesMs": [
+            42.61049999999523,
+            49.10250000000815,
+            45.26559999999881
+          ]
+        }
+      ],
+      "sourceBeforeMs": 72.503,
+      "sourceAfterMs": 0.541,
+      "rowsPreserved": true,
+      "exactProtocolPreserved": true,
+      "cleanupConfirmed": true
+    },
+    "nestedAbsent": [
+      {
+        "action": "UPDATE",
+        "mode": "auto",
+        "filtered": 0,
+        "buffers": 12,
+        "scans": [
+          {
+            "type": "Index Scan",
+            "table": "store_product",
+            "index": "sp_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_seckill",
+            "index": "sseckill_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_bargain",
+            "index": "sbarg_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_combination",
+            "index": "scomb_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_integral",
+            "index": "sint_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_discounts_products",
+            "index": "sdp_shipping_ref",
+            "loops": 1
+          }
+        ]
+      },
+      {
+        "action": "DELETE",
+        "mode": "auto",
+        "filtered": 0,
+        "buffers": 12,
+        "scans": [
+          {
+            "type": "Index Scan",
+            "table": "store_product",
+            "index": "sp_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_seckill",
+            "index": "sseckill_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_bargain",
+            "index": "sbarg_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_combination",
+            "index": "scomb_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_integral",
+            "index": "sint_shipping_ref",
+            "loops": 1
+          },
+          {
+            "type": "Index Scan",
+            "table": "store_discounts_products",
+            "index": "sdp_shipping_ref",
+            "loops": 1
+          }
+        ]
+      }
+    ],
+    "writeCost": {
+      "rowsPerStatement": 100,
+      "samplesPerTable": 3,
+      "operations": [
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ],
+      "tables": 6,
+      "totalExplainPlans": 108,
+      "walIncluded": true,
+      "realProtocolEnabled": true,
+      "allTransactionsRolledBack": true,
+      "samples": {
+        "baseline": {
+          "store_product": {
+            "insert": {
+              "ms": [
+                39.129,
+                13.445,
+                16.062
+              ],
+              "walBytes": [
+                124900,
+                127486,
+                127688
+              ]
+            },
+            "update": {
+              "ms": [
+                25.148,
+                20.097,
+                28.067
+              ],
+              "walBytes": [
+                140220,
+                124279,
+                126489
+              ]
+            },
+            "delete": {
+              "ms": [
+                7464.142,
+                7361.264,
+                7201.889
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_seckill": {
+            "insert": {
+              "ms": [
+                13.682,
+                9.089,
+                8.494
+              ],
+              "walBytes": [
+                45156,
+                46292,
+                46155
+              ]
+            },
+            "update": {
+              "ms": [
+                14.987,
+                10.51,
+                11.139
+              ],
+              "walBytes": [
+                52832,
+                44092,
+                50714
+              ]
+            },
+            "delete": {
+              "ms": [
+                3.241,
+                3.056,
+                3.027
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_bargain": {
+            "insert": {
+              "ms": [
+                9.745,
+                7.686,
+                7.371
+              ],
+              "walBytes": [
+                39156,
+                40152,
+                40128
+              ]
+            },
+            "update": {
+              "ms": [
+                10.372,
+                10.391,
+                10.285
+              ],
+              "walBytes": [
+                46780,
+                37263,
+                45665
+              ]
+            },
+            "delete": {
+              "ms": [
+                3.498,
+                3.419,
+                3.323
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_combination": {
+            "insert": {
+              "ms": [
+                12.078,
+                8.746,
+                7.764
+              ],
+              "walBytes": [
+                40756,
+                42079,
+                41804
+              ]
+            },
+            "update": {
+              "ms": [
+                11.861,
+                11.146,
+                14.922
+              ],
+              "walBytes": [
+                48432,
+                46891,
+                44157
+              ]
+            },
+            "delete": {
+              "ms": [
+                3.329,
+                3.297,
+                4.496
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_integral": {
+            "insert": {
+              "ms": [
+                10.57,
+                9.12,
+                9.043
+              ],
+              "walBytes": [
+                35956,
+                36994,
+                36992
+              ]
+            },
+            "update": {
+              "ms": [
+                10.678,
+                10.7,
+                11.026
+              ],
+              "walBytes": [
+                43580,
+                42869,
+                40265
+              ]
+            },
+            "delete": {
+              "ms": [
+                3.505,
+                3.432,
+                3.505
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_discounts_products": {
+            "insert": {
+              "ms": [
+                11.802,
+                6.462,
+                6.282
+              ],
+              "walBytes": [
+                33812,
+                35846,
+                34546
+              ]
+            },
+            "update": {
+              "ms": [
+                8.285,
+                7.753,
+                6.406
+              ],
+              "walBytes": [
+                42895,
+                7389,
+                7100
+              ]
+            },
+            "delete": {
+              "ms": [
+                1.308,
+                1.39,
+                1.192
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          }
+        },
+        "indexed": {
+          "store_product": {
+            "insert": {
+              "ms": [
+                26.398,
+                18.669,
+                14.841
+              ],
+              "walBytes": [
+                133489,
+                133221,
+                133449
+              ]
+            },
+            "update": {
+              "ms": [
+                27.154,
+                26.604,
+                23.446
+              ],
+              "walBytes": [
+                147571,
+                137814,
+                139268
+              ]
+            },
+            "delete": {
+              "ms": [
+                39.797,
+                9.263,
+                11.83
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_seckill": {
+            "insert": {
+              "ms": [
+                12.796,
+                10.126,
+                10.291
+              ],
+              "walBytes": [
+                59047,
+                58987,
+                59038
+              ]
+            },
+            "update": {
+              "ms": [
+                16.284,
+                15.207,
+                16.092
+              ],
+              "walBytes": [
+                66156,
+                66126,
+                64810
+              ]
+            },
+            "delete": {
+              "ms": [
+                3.964,
+                3.59,
+                4.313
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_bargain": {
+            "insert": {
+              "ms": [
+                11.907,
+                10.853,
+                10.411
+              ],
+              "walBytes": [
+                52501,
+                53853,
+                53225
+              ]
+            },
+            "update": {
+              "ms": [
+                15.805,
+                13.529,
+                15.467
+              ],
+              "walBytes": [
+                62939,
+                59366,
+                59333
+              ]
+            },
+            "delete": {
+              "ms": [
+                4.126,
+                3.993,
+                3.779
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_combination": {
+            "insert": {
+              "ms": [
+                13.309,
+                8.738,
+                10.878
+              ],
+              "walBytes": [
+                54577,
+                54686,
+                54686
+              ]
+            },
+            "update": {
+              "ms": [
+                15.433,
+                15.868,
+                13.741
+              ],
+              "walBytes": [
+                62883,
+                59345,
+                59262
+              ]
+            },
+            "delete": {
+              "ms": [
+                4.571,
+                4.286,
+                3.329
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_integral": {
+            "insert": {
+              "ms": [
+                7.891,
+                7.636,
+                7.703
+              ],
+              "walBytes": [
+                49287,
+                50473,
+                49845
+              ]
+            },
+            "update": {
+              "ms": [
+                9.234,
+                9.585,
+                10.421
+              ],
+              "walBytes": [
+                57956,
+                54378,
+                54362
+              ]
+            },
+            "delete": {
+              "ms": [
+                2.73,
+                2.586,
+                2.919
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5400
+              ]
+            }
+          },
+          "store_discounts_products": {
+            "insert": {
+              "ms": [
+                6.63,
+                6.584,
+                6.748
+              ],
+              "walBytes": [
+                40871,
+                40293,
+                47177
+              ]
+            },
+            "update": {
+              "ms": [
+                6.298,
+                7.569,
+                7.343
+              ],
+              "walBytes": [
+                44127,
+                40880,
+                43618
+              ]
+            },
+            "delete": {
+              "ms": [
+                1.271,
+                1.533,
+                1.059
+              ],
+              "walBytes": [
+                5400,
+                5400,
+                5465
+              ]
+            }
+          }
+        }
+      },
+      "limitations": [
+        "Fixed synthetic distribution only, not production SLO or broad-scale acceptance",
+        "Logical row rollback does not undo WAL or physical/cache effects",
+        "Some write timings and WAL increase after indexing; not a universally faster write workload"
+      ]
+    }
+  },
+  "failureHistory": [
+    {
+      "artifact": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-index-first-20260913.json",
+      "sha256": "399D2A861DC71A37DC5D986466773C01FFBD3D6DC0A6BD1B82F57E4EA0F7AC09",
+      "passed": 38,
+      "failed": 1,
+      "skipped": 32,
+      "success": false,
+      "cause": "Drizzle CASE expression index output lacked required parentheses; ORM construction failed",
+      "resolution": "Extra expression parentheses in all six models"
+    },
+    {
+      "artifact": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-index-second-20260913.json",
+      "sha256": "2C9938DEA9EBD7B592C1A3AA4D2D4FD318CE684EF23A915CA28A394FE4CF204E",
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "scope": "Intermediate three-file run before further guard coverage"
+    },
+    {
+      "artifact": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-index-final-20260913.json",
+      "sha256": "78EFB3F6E872B82424E1E4E8BA3041FB077149ED27BB852CC5F507CD349C142E",
+      "passed": 433,
+      "failed": 1,
+      "skipped": 0,
+      "success": false,
+      "failedFiles": 2,
+      "cause": "Old 159-step assertion plus separate afterAll DROP DATABASE timeout",
+      "resolution": "Exact 160-step assertion; verified zero-session invalid fixture removed; unchanged complete selection rerun serially without widening deadlines"
+    },
+    {
+      "sessions": [
+        66991,
+        40726
+      ],
+      "success": false,
+      "cause": "Two full catalog audit attempts failed during first database cleanup; second confirmed 57014 and datconnlimit=-2 with no sessions",
+      "resolution": "Only successful-created exact random audit names can recover once after cancellation and independent invalid/zero-session check; normal databases and other errors refused; same deadlines and no FORCE. Final session 55536 passed with one recorded real recovery."
+    }
+  ],
+  "ci": {
+    "status": "pending_exact_increment_dispatch",
+    "workflow": ".github/workflows/workers-runtime-linux.yml",
+    "existingGatesAndTimeoutsPreserved": true,
+    "addedSameCapacityExperimentToCatalogJob": true,
+    "completeSyntheticPlansArtifactRetentionDays": 7,
+    "pinnedUploadAction": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+    "localWorkflowContractTestsPassed": 3,
+    "standaloneYamlParserUnavailable": true,
+    "priorReleasedSource": "897136b4fc33ed22d65abdb2bd40f1c0b55a93c6",
+    "priorSourceRun": 34737696153,
+    "priorMainRun": 34739769626,
+    "priorSuccessfulJobsEach": 11,
+    "priorCiNotEvidenceForThisIncrement": true
+  },
+  "boundaries": {
+    "productionChanged": false,
+    "deployed": false,
+    "onlineDatabaseMigrationExecuted": false,
+    "credentialsOrPrivilegesChanged": false,
+    "fullCapacityAcceptance": false,
+    "A3k12Complete": false
+  },
+  "remaining": [
+    "Exact increment Linux CI including the newly added full capacity experiment",
+    "Broader distributions and scales, realistic sustained/concurrent write load, statistics/retention policy",
+    "Full lifecycle service authorization, remaining write/concurrency/rule interactions and high-privilege maintenance coordination",
+    "Separately authorized online installation and actual runtime-role/business acceptance"
+  ],
+  "checklist": {
+    "checked": 239,
+    "open": 165,
+    "total": 404,
+    "A3k12Complete": false
+  }
+}

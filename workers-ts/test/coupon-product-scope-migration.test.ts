@@ -36,7 +36,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('coupon relation 
           await f.exec(`BEGIN; SET LOCAL search_path TO public,pg_temp; SET LOCAL statement_timeout='30s'; ${readFileSync(`migrations/${file}`, 'utf8')}\nCOMMIT;`);
         }
       } else if (path === 'embedded') {
-        expect(await service(f.db).runAll()).toEqual({ executed: steps(159), errors: [] });
+        expect(await service(f.db).runAll()).toEqual({ executed: steps(160), errors: [] });
       } else {
         const api = await import('drizzle-kit/api'), models = await import('../src/models/schema');
         await f.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));
