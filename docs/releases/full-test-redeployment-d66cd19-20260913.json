@@ -1,0 +1,142 @@
+{
+  "sourceCommit": "d66cd192e66b87e7cf2a7eb9db36bf171e1377bc",
+  "mode": "full six-app redeployment of existing online test environment",
+  "sourceMergedAndPushedToMain": true,
+  "worker": {
+    "name": "cinashop-api",
+    "deploymentId": "1b89720e-46ac-4743-929c-ab8905cc100d",
+    "versionId": "fdb8a977-0a3a-41fb-90ce-aa77a871f90b",
+    "createdOn": "2026-09-13T02:22:50.927304Z",
+    "percentage": 100,
+    "previousVersionId": "3bd4a6d5-7d18-465e-aada-ef9ae947f8e2",
+    "keepVars": true,
+    "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",
+    "dryRunPassed": true,
+    "bundleInputs": 764,
+    "auditOrCandidateInputsBundled": [],
+    "uncommittedFormalInstallerBundled": false
+  },
+  "pages": [
+    {
+      "project": "cinashop-pc",
+      "domains": [
+        "cinashop-pc.pages.dev",
+        "shop.cinaseek.ai"
+      ],
+      "id": "eba5851a-2b2b-4703-8e18-60d2bffc40f8",
+      "environment": "production",
+      "stage": "success",
+      "metadata": {
+        "branch": "main",
+        "commit_hash": "d66cd192e66b87e7cf2a7eb9db36bf171e1377bc",
+        "commit_message": "Full test redeploy main d66cd19",
+        "commit_dirty": false
+      }
+    },
+    {
+      "project": "cinashop-admin",
+      "domains": [
+        "cinashop-admin.pages.dev"
+      ],
+      "id": "3449a207-b6ed-4bac-a0d4-775c18142c8a",
+      "environment": "production",
+      "stage": "success",
+      "metadata": {
+        "branch": "main",
+        "commit_hash": "d66cd192e66b87e7cf2a7eb9db36bf171e1377bc",
+        "commit_message": "Full test redeploy main d66cd19",
+        "commit_dirty": false
+      }
+    },
+    {
+      "project": "cinashop-h5",
+      "domains": [
+        "cinashop-h5.pages.dev"
+      ],
+      "id": "ecf90cdd-81a6-4e18-bdaf-f695f45b1b3f",
+      "environment": "production",
+      "stage": "success",
+      "metadata": {
+        "branch": "main",
+        "commit_hash": "d66cd192e66b87e7cf2a7eb9db36bf171e1377bc",
+        "commit_message": "Full test redeploy main d66cd19",
+        "commit_dirty": false
+      }
+    },
+    {
+      "project": "cinashop-supplier",
+      "domains": [
+        "cinashop-supplier.pages.dev"
+      ],
+      "id": "c5534e8a-936f-4327-b0c8-b8a0295558c8",
+      "environment": "production",
+      "stage": "success",
+      "metadata": {
+        "branch": "main",
+        "commit_hash": "d66cd192e66b87e7cf2a7eb9db36bf171e1377bc",
+        "commit_message": "Full test redeploy main d66cd19",
+        "commit_dirty": false
+      }
+    },
+    {
+      "project": "cinashop-kefu",
+      "domains": [
+        "cinashop-kefu.pages.dev"
+      ],
+      "id": "06d41dd4-8425-493b-b9f1-8cbf07d31b3a",
+      "environment": "production",
+      "stage": "success",
+      "metadata": {
+        "branch": "main",
+        "commit_hash": "d66cd192e66b87e7cf2a7eb9db36bf171e1377bc",
+        "commit_message": "Full test redeploy main d66cd19",
+        "commit_dirty": false
+      }
+    }
+  ],
+  "build": {
+    "allSixApplicationsRebuilt": true,
+    "allFivePagesFunctionsCompiledAndUploaded": true,
+    "trackedSourceDiffEmpty": true,
+    "cliDirtyWarningCause": "Only untracked workers-ts/build-release* directories in isolated release worktree",
+    "nativeAppAndMiniProgramBuiltThisRelease": false
+  },
+  "ci": {
+    "equivalentCodeRun": 34731627125,
+    "equivalentCodeCommit": "ba0df78931ae6fa1bebbdb21daf936ed521ccf13",
+    "equivalentCodeConclusion": "success",
+    "successfulJobs": 11,
+    "differenceFromRelease": "two release-document files only",
+    "mainRun": 34732805548,
+    "mainStatusAtRelease": "in_progress"
+  },
+  "smoke": {
+    "capturedAt": "2026-09-13T02:29:18.917Z",
+    "readOnly": true,
+    "passed": true,
+    "total": 17,
+    "allFiveHomepagesAndEntryAssetsHttp200": true,
+    "allFiveEntryAssetsLocalRemoteSha256Match": true,
+    "healthOk": true,
+    "publicBootstrapAndProductReadsPassed": true,
+    "adminSupplierKefuAnonymousStatus": 410000,
+    "storefrontCorsExact": true,
+    "fullBusinessAcceptance": false
+  },
+  "boundaries": {
+    "databaseReset": false,
+    "databaseMigrationsExecuted": false,
+    "secretsOrHyperdriveCredentialsChanged": false,
+    "providerWritesInvokedByThisRelease": false,
+    "cronAndQueuesRemainEnabled": true,
+    "historicalDeploymentsRetained": true,
+    "uncommittedShippingRegistrationPreservedAndExcluded": true
+  },
+  "unreleasedWorkspaceVerification": {
+    "testFiles": 12,
+    "testsPassed": 322,
+    "testsFailed": 0,
+    "bothTypechecksPassed": true,
+    "notReleaseAcceptance": true
+  }
+}
