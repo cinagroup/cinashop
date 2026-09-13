@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Delete, Plus } from "@element-plus/icons-vue";
 import {
@@ -24,6 +24,11 @@ interface TemplateForm extends ShippingTemplatePayload {
 
 const loading = ref(false);
 const saving = ref(false);
+const reading = ref(false);
+const editError = ref('');
+const needsReload = ref(false);
+let editGeneration = 0;
+onBeforeUnmount(() => { editGeneration += 1; });
 const dialogVisible = ref(false);
 const rows = ref<ShippingTemplateRow[]>([]);
 const count = ref(0);
@@ -41,6 +46,7 @@ const blankFree = (): ShippingFreeRule => ({ city_ids: [], number: "1.00", price
 const blankNoDelivery = (): ShippingNoDeliveryRule => ({ city_ids: [] });
 const blankForm = (): TemplateForm => ({
   id: 0,
+  expectedRevision: undefined,
   name: "",
   type: 1,
   appoint: 0,
@@ -103,18 +109,29 @@ async function load() {
 }
 
 function openCreate() {
+  if (saving.value) return;
+  editGeneration += 1;
+  reading.value = false;
+  editError.value = '';
+  needsReload.value = false;
   Object.assign(form, blankForm());
   dialogVisible.value = true;
 }
 
 async function openEdit(id: number) {
+  if (saving.value) return;
+  const generation = ++editGeneration;
+  reading.value = true;
   try {
     const detail = await getShippingTemplate(id);
+    if (generation !== editGeneration) return;
+    if (!/^shipping-v1:[a-f0-9]{64}$/.test(detail.revision)) throw new Error('编辑版本缺失或无效，请重新读取模板');
     const regions = detail.templateList.map((rule) => ({ ...rule, city_ids: rule.city_ids.map((path) => [...path]) }));
     const nationwideIndex = regions.findIndex(isNationwide);
     if (nationwideIndex > 0) regions.unshift(regions.splice(nationwideIndex, 1)[0]);
     Object.assign(form, {
       id,
+      expectedRevision: detail.revision,
       name: detail.formData.name,
       type: detail.formData.type,
       appoint: detail.formData.appoint_check,
@@ -125,17 +142,41 @@ async function openEdit(id: number) {
       no_delivery_info: detail.noDeliveryList,
     });
     dialogVisible.value = true;
+    editError.value = '';
+    needsReload.value = false;
   } catch (error) {
+    if (generation !== editGeneration) return;
+    // A failed reload never replaces the user's current form or version.
+    editError.value = error instanceof Error ? error.message : '运费模板详情加载失败';
     ElMessage.error(error instanceof Error ? error.message : "运费模板详情加载失败");
+  } finally {
+    if (generation === editGeneration) reading.value = false;
+  }
+}
+
+async function reloadEditor() {
+  if (saving.value || reading.value || !form.id) return;
+  const generation = editGeneration, id = form.id;
+  try {
+    await ElMessageBox.confirm('重新读取会替换当前输入。请先复制需要保留的内容，再与最新模板核对。', '重新读取模板',
+      { type: 'warning', confirmButtonText: '读取最新模板', cancelButtonText: '保留输入' });
+    if (generation !== editGeneration || !dialogVisible.value || saving.value) return;
+    await openEdit(id);
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') ElMessage.error('重新读取失败，当前输入已保留');
   }
 }
 
 async function submit() {
+  if (saving.value || reading.value || needsReload.value || !dialogVisible.value) return;
   const message = validationMessage();
   if (message) return ElMessage.warning(message);
   saving.value = true;
+  const generation = editGeneration, id = form.id;
+  editError.value = '';
   try {
     const payload: ShippingTemplatePayload = {
+      ...(id > 0 ? { expectedRevision: form.expectedRevision } : {}),
       name: form.name.trim(),
       type: form.type,
       appoint: form.appoint,
@@ -145,14 +186,18 @@ async function submit() {
       appoint_info: form.appoint ? form.appoint_info : [],
       no_delivery_info: form.no_delivery ? form.no_delivery_info : [],
     };
-    await saveShippingTemplate(form.id, payload);
+    await saveShippingTemplate(id, JSON.parse(JSON.stringify(payload)));
+    if (generation !== editGeneration) return;
     dialogVisible.value = false;
     ElMessage.success(form.id ? "运费模板已更新" : "运费模板已创建");
     await load();
   } catch (error) {
+    if (generation !== editGeneration) return;
+    editError.value = error instanceof Error ? error.message : '运费模板保存失败';
+    needsReload.value = /其他操作修改|编辑版本/.test(editError.value);
     ElMessage.error(error instanceof Error ? error.message : "运费模板保存失败");
   } finally {
-    saving.value = false;
+    if (generation === editGeneration) saving.value = false;
   }
 }
 
@@ -231,8 +276,11 @@ onMounted(async () => {
       <div class="table-footer"><span>共 {{ count }} 个模板</span></div>
     </article>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑运费模板' : '新增运费模板'" width="min(1080px, 94vw)" destroy-on-close>
-      <el-form label-position="top" class="shipping-form">
+    <el-dialog v-model="dialogVisible" class="supplier-shipping-dialog" align-center :title="form.id ? '编辑运费模板' : '新增运费模板'" width="min(1080px, 94vw)" destroy-on-close
+      :close-on-click-modal="!saving && !reading" :close-on-press-escape="!saving && !reading" :show-close="!saving && !reading">
+      <el-alert v-if="editError" class="edit-error" :title="editError" type="error" :closable="false" show-icon
+        :description="needsReload ? '当前输入已保留；保存已暂停。请先复制需要的内容，再重新读取最新模板核对。' : '当前输入已保留。'" />
+      <el-form label-position="top" class="shipping-form" :disabled="saving || reading">
         <div class="form-grid top-grid">
           <el-form-item label="模板名称" required><el-input v-model="form.name" maxlength="255" show-word-limit /></el-form-item>
           <el-form-item label="计费方式"><el-radio-group v-model="form.type"><el-radio-button :value="1">按件数</el-radio-button><el-radio-button :value="2">按重量</el-radio-button><el-radio-button :value="3">按体积</el-radio-button></el-radio-group></el-form-item>
@@ -278,17 +326,25 @@ onMounted(async () => {
           </template>
         </section>
       </el-form>
-      <template #footer><el-button @click="dialogVisible = false">取消</el-button><el-button type="primary" :loading="saving" @click="submit">保存模板</el-button></template>
+      <template #footer>
+        <el-button :disabled="saving || reading" @click="dialogVisible = false; editGeneration += 1">取消</el-button>
+        <el-button v-if="form.id" :disabled="saving || reading" :loading="reading" @click="reloadEditor">重新读取模板</el-button>
+        <el-button type="primary" :loading="saving" :disabled="reading || needsReload" @click="submit">保存模板</el-button>
+      </template>
     </el-dialog>
   </section>
 </template>
 
 <style scoped>
 .filter-bar { display: flex; gap: 12px; padding: 18px; }
+.edit-error { margin-bottom: 12px; }
+:global(.supplier-shipping-dialog) { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); }
+:global(.supplier-shipping-dialog .el-dialog__body) { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+:global(.supplier-shipping-dialog .el-dialog__header), :global(.supplier-shipping-dialog .el-dialog__footer), .edit-error { flex-shrink: 0; }
 .filter-bar .el-input { max-width: 360px; }
 .table-card { overflow: hidden; }
 .table-footer { display: flex; justify-content: flex-end; padding: 14px 20px; color: var(--text-muted); }
-.shipping-form { max-height: 68vh; overflow-y: auto; padding-right: 8px; }
+.shipping-form { flex: 1; min-height: 0; max-height: 68vh; overflow-y: auto; padding-right: 8px; }
 .top-grid { grid-template-columns: minmax(240px, 1fr) minmax(300px, 1fr) 160px; }
 .rule-section { padding: 20px 0; border-top: 1px solid var(--border); }
 .rule-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }

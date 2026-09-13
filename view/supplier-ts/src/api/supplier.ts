@@ -234,7 +234,7 @@ const previewFinanceSummary: FinanceSummary = {
   paid_extract: "375520.30",
 };
 
-const previewShippingTemplates: ShippingTemplateDetail[] = [
+const previewShippingTemplates: Omit<ShippingTemplateDetail, 'revision'>[] = [
   {
     formData: { name: "全国标准运费", type: 1, appoint_check: 1, no_delivery_check: 0, sort: 100 },
     templateList: [{ id: 101, city_ids: [[0]], first: "1.00", first_price: "8.00", continue: "1.00", continue_price: "2.00" }],
@@ -530,7 +530,9 @@ export async function getShippingTemplate(id: number): Promise<ShippingTemplateD
   if (previewMode) {
     const detail = previewShippingTemplates[id - 1];
     if (!detail) throw new Error("运费模板不存在");
-    return JSON.parse(JSON.stringify(detail)) as ShippingTemplateDetail;
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({ id, detail })));
+    const revision = 'shipping-v1:' + Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+    return { ...JSON.parse(JSON.stringify(detail)), revision } as ShippingTemplateDetail;
   }
   return apiRequest<ShippingTemplateDetail>({
     method: "GET",
@@ -540,7 +542,10 @@ export async function getShippingTemplate(id: number): Promise<ShippingTemplateD
 
 export async function saveShippingTemplate(id: number, data: ShippingTemplatePayload) {
   if (previewMode) {
-    const detail: ShippingTemplateDetail = {
+    if (id > 0 && data.expectedRevision !== (await getShippingTemplate(id)).revision) {
+      throw new Error('模板已被其他操作修改，请保留输入并重新打开模板后核对');
+    }
+    const detail: Omit<ShippingTemplateDetail, 'revision'> = {
       formData: {
         name: data.name,
         type: data.type,

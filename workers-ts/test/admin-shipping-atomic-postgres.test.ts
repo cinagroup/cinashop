@@ -3,6 +3,7 @@ import { eq,sql } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
 import { shippingTemplates } from '../src/models/schema';
 import { SupplierShippingTemplateService } from '../src/services/supplier/SupplierShippingTemplateService';
+import { readAdminShippingSnapshot } from '../src/services/admin/AdminShippingTemplateSnapshot';
 import { createAdminShippingFixture,postShipping,shippingRegion,shippingAdminApp } from './helpers/adminShippingFixture';
 import { outcome,waitForFinanceBlock,withFinancePeers } from './helpers/financePeers';
 
@@ -28,14 +29,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('admin shipping w
    await waitForFinanceBlock(f.db,second.pid,first.pid);await holder.exec('COMMIT');expect((await a).status).toBe(200);expect(await b).toMatchObject({status:400,msg:expect.stringContaining('其他操作修改')});
   });const after=await f.snapshot();expect(after.templates[0]).toMatchObject({name:change.name,type:3,status:1});expect(after.regions[0].firstPrice).toBe('8.50');
  },15_000);
- it('serializes the actual supplier writer on the same parent boundary',async()=>{
+ it('rejects a stale supplier form after serializing on the same parent boundary',async()=>{
   await f.db.update(shippingTemplates).set({ownerType:2,relationId:20}).where(eq(shippingTemplates.id,10));await barrier();
   await withFinancePeers(f.db,async([holder,admin,supplier])=>{
    await holder.exec('BEGIN; SELECT pg_advisory_xact_lock(731639,10)');const a=postShipping(admin.db,change);
    await waitForFinanceBlock(f.db,admin.pid,holder.pid);
-   const b=outcome(new SupplierShippingTemplateService(createContainerFromDb(supplier.db)).save(20,10,{name:'供应商随后完整保存',type:2,appoint:0,no_delivery:0,sort:5,region_info:[{city_ids:[[0]],first:'1',first_price:'7',continue:'1',continue_price:'2'}],appoint_info:[],no_delivery_info:[]}));
-   await waitForFinanceBlock(f.db,supplier.pid,admin.pid);await holder.exec('COMMIT');expect((await a).status).toBe(200);expect(await b).toMatchObject({ok:true,value:10});
-  });const after=await f.snapshot();expect(after.templates[0]).toMatchObject({name:'供应商随后完整保存',ownerType:2,relationId:20,type:2});expect(after.regions).toHaveLength(1);expect(after.regions[0].firstPrice).toBe('7.00');expect(after.free).toHaveLength(0);expect(after.noDelivery).toHaveLength(0);
+   const expectedRevision=(await readAdminShippingSnapshot(supplier.db,10)).revision;
+   const b=outcome(new SupplierShippingTemplateService(createContainerFromDb(supplier.db)).save(20,10,{expectedRevision,name:'供应商随后完整保存',type:2,appoint:0,no_delivery:0,sort:5,region_info:[{city_ids:[[0]],first:'1',first_price:'7',continue:'1',continue_price:'2'}],appoint_info:[],no_delivery_info:[]}));
+   await waitForFinanceBlock(f.db,supplier.pid,admin.pid);await holder.exec('COMMIT');expect((await a).status).toBe(200);expect(await b).toMatchObject({ok:false,error:expect.objectContaining({message:expect.stringContaining('其他操作修改')})});
+  });const after=await f.snapshot();expect(after.templates[0]).toMatchObject({name:change.name,ownerType:2,relationId:20,type:3});expect(after.regions).toHaveLength(1);expect(after.regions[0].firstPrice).toBe('8.50');expect(after.free).toHaveLength(1);expect(after.noDelivery).toHaveLength(1);
  },15_000);
  it('serializes actual admin deletion behind the complete save',async()=>{
   await barrier();await withFinancePeers(f.db,async([holder,writer,deleter])=>{

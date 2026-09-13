@@ -92,7 +92,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     const body = supplier ? { name: 'explicit edit', type: 1, appoint: 0, no_delivery: 0, sort: 0,
       region_info: [{ city_ids: [[0]], first: '1', first_price: '9', continue: '1', continue_price: '2' }],
       appoint_info: [], no_delivery_info: [],
-      supplierId: 30, relation_id: 30, owner_type: 0 }
+      supplierId: 30, relation_id: 30, owner_type: 0,
+      ...(id > 0 && operation === 'save' ? { expectedRevision: (await readAdminShippingSnapshot(f.db,id)).revision } : {}) }
       : { id, name: 'explicit edit', status: 0, adminId: 999, roles: 'shipping.manage',
         ...(id > 0 && operation === 'save' ? { expectedRevision: (await readAdminShippingSnapshot(f.db,id)).revision } : {}) };
     const response = await app.request(path, { method: operation === 'save' ? 'POST' : 'DELETE',
@@ -107,6 +108,32 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     appoint_info: [{ city_ids: [[101,102]], number: '2', price: '20' }],
     no_delivery_info: [{ city_ids: [[101]] }],
   };
+  for (const adminSurface of ['adminapi', 'api/admin'] as const) it(`supplier rejects an old form after ${adminSurface} commits and can explicitly reload`, async () => {
+    const supplierToken = await token('supplierapi');
+    const headers = { Authorization: `Bearer ${supplierToken}` };
+    const detail = await (await app.request('/supplierapi/setting/shipping_templates/20/edit', { headers }, env)).json() as { status: number; data: { revision: string } };
+    expect(detail.status).toBe(200);
+    expect(detail.data.revision).toBe((await readAdminShippingSnapshot(f.db,20)).revision);
+    expect((await request(adminSurface,'save',await token(adminSurface),20)).body.status).toBe(200);
+    const newer = await snapshot();
+    expect((await request('supplierapi','save',supplierToken,20,{ expectedRevision: detail.data.revision })).body)
+      .toMatchObject({ status: 400, msg: expect.stringContaining('其他操作修改'), data: null });
+    expect(await snapshot()).toEqual(newer);
+    const reloaded = await (await app.request('/supplierapi/setting/shipping_templates/20/edit', { headers }, env)).json() as { data: { revision: string } };
+    expect(reloaded.data.revision).not.toBe(detail.data.revision);
+    expect((await request('supplierapi','save',supplierToken,20,{ ...fullRules, expectedRevision: reloaded.data.revision })).body.status).toBe(200);
+    const committed = await snapshot();
+    expect((await request('supplierapi','save',supplierToken,20,{ expectedRevision: reloaded.data.revision })).body.status).toBe(400);
+    expect(await snapshot()).toEqual(committed);
+  });
+  it('supplier edits require a baseline but authentication and permission still run first', async () => {
+    const bearer = await token('supplierapi'), before = await snapshot();
+    expect((await request('supplierapi','save','',20,{expectedRevision:null})).body.status).toBe(410000);
+    expect((await request('supplierapi','save',bearer,20,{expectedRevision:null})).body).toMatchObject({status:400,msg:expect.stringContaining('编辑版本')});
+    expect(await snapshot()).toEqual(before);
+    await f.exec("UPDATE system_role SET rules='supplier.shipping.view' WHERE id=2");
+    expect((await request('supplierapi','save',bearer,20,{expectedRevision:null})).body.status).toBe(400011);
+  });
   for (const surface of surfaces) describe(surface, () => {
     it('reserves default ID 1 independently of references without bypassing authentication or manage permission', async () => {
       const bearer = await token(surface), before = await snapshot();

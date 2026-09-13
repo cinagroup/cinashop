@@ -345,6 +345,7 @@ export interface ShippingNoDeliveryRule {
 }
 
 export interface ShippingTemplateDetail {
+  revision: string;
   formData: {
     name: string;
     type: 1 | 2 | 3;
@@ -358,6 +359,7 @@ export interface ShippingTemplateDetail {
 }
 
 export interface ShippingTemplatePayload {
+  expectedRevision?: string;
   name: string;
   type: 1 | 2 | 3;
   appoint: 0 | 1;
