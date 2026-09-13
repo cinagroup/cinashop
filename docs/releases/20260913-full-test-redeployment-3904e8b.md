@@ -39,6 +39,9 @@ Supplier 上传 20 个新增静态文件，其他同内容文件由 Cloudflare �
 [main CI 34762472925](https://github.com/cinagroup/cinashop/actions/runs/34762472925)
 在本次收尾采集时仍 in_progress，精确 headSha 为 3904e8b；未取消、重跑或冒称通过。
 
+终态追记：main CI 34762472925 已 completed/success，headSha 仍为3904e8b；候选与main均成功。
+该结论仅适用于已发布版本，不适用于后续持久回执候选。
+
 ## 清理与边界
 
 使用 Cloudflare/Wrangler 技能核对现有项目、dry-run、keep-vars 发布与控制面验证；命令依据
