@@ -1,5 +1,40 @@
 # 运费模板引用与生命周期：A3k12
 
+## 2026-09-13 受限 LOGIN 注册路由与发布后 CI
+
+`test/shipping-lifecycle-route-auth.test.ts` 从98项扩展至230项：维护账号101项、
+真实独立 LOGIN 129项，复用实际 Admin 两兼容入口和 Supplier 路由。未修改业务代码。
+受限角色仅获模板 SELECT/INSERT/UPDATE、三规则表 SELECT/INSERT/DELETE、四序列 USAGE；
+六类引用及 system_admin/system_role/system_supplier/system_city 只读，无订单权限。
+正式协议函数沿用既有 PUBLIC EXECUTE；不宣称完整 Worker 最小授权或数据库级租户隔离。
+按 PostgreSQL 最小权限技能显式授予限定对象权限，没有对全部表 GRANT ALL 或修改线上角色。
+
+原有业务角色/JWT/跨租户矩阵在受限 LOGIN 下重新执行；新增自动ID创建、非空区域/包邮/禁配
+替换、城市/详情读取、删除后各端规则保留合同、历史订单和其他所属方不变。
+28项受限专属用例覆盖所需权限缺失、六引用表不可读、DDL/复制/账号/引用写入等拒绝，
+以及同一 LOGIN backend 在规则插入失败全回滚、角色读取撤权、恢复授权及 RESET ROLE 后
+继续工作，身份和超时设置不变。失败行快照不包含序列：nextval不是事务回滚保证。
+令牌桶仍为替身，禁止外部 fetch；不覆盖浏览器、真实Redis或线上角色。
+
+路由及相关权限/表单/CI合同5文件280项通过；原命令的服务文件名不匹配，另按实际名称
+`shipping-template-lifecycle-services.test.ts`执行48项通过，明确为两次运行合计328项，
+不宣称第一次命令覆盖了6个文件。首轮路由223项也全部通过，后补7项得到230项。
+
+已发布 b6dc8cb 的 main CI 两单元分片各1失败，源eaa6773 CI则11/11成功：
+一项规则快照仅观察到 relpages/reltuples 变化，未出现规则/订单/索引定义改写。
+按 [PG16 pg_class](https://www.postgresql.org/docs/16/catalog-pg-class.html) 的统计字段定义，
+快照排除 relpages/reltuples/relallvisible，并新增 pg_index 全状态及 pg_get_indexdef 比较，
+OID/名称/所有者/ACL/存储和参数仍保留。真实ANALYZE红测复现；首版一万行全快照验证
+触及5秒测试预算（报告为STACK_TRACE_ERROR、5114ms），改为100行统计语义样本后56项通过。
+既有时限、规则门禁和数据断言不放宽，也不将此样本当容量验收。
+
+另一项砍价新建返回400，原断言没有保留响应及SQL原因。52项本机复验通过不能解释Linux
+失败；仅在隔离测试响应和正向断言中保留嵌套SQLSTATE/消息，业务代码未改，原因继续开放。
+完整证据和失败报告哈希见 `audit/shipping-lifecycle-restricted-routes-20260913.json`。
+最终8文件分四次运行合计436项零失败/跳过，最终双类型检查通过；专用本机PG16.15的
+随机数据库/schema/角色均为0。完整Linux CI需要本提交自己的结果，不能借用源eaa6773。
+完整写面、其他服务数据库授权、真实规模/角色及线上安装等仍未完成，A3k12不勾选。
+
 ## 2026-09-13 注册路由授权验收（本机，未上线）
 
 新增 `test/shipping-lifecycle-route-auth.test.ts`，在独占随机 PG16 完整 ORM 库中执行正式

@@ -1,5 +1,15 @@
 # 2026-09-13 全量测试重部署（b6dc8cb）
 
+## CI 后续终态（不改变下方当时部署/冒烟记录）
+
+源提交 eaa6773 / Actions34744845166 最终11/11成功；main b6dc8cb /
+Actions34745307600 最终8成功3失败：两单元分片各1失败，汇总作业按预期拒绝。
+规则快照误把索引统计刷新当改写，已本机复现并修正测试；砍价创建返回400原因尚未确定，
+52项本机复验通过不等于Linux故障已修复。新诊断/受限LOGIN验收分支尚未完成自身CI。
+详见 workers-ts/audit/shipping-lifecycle-restricted-routes-20260913.json。
+
+## 发布时记录
+
 按用户“目前线上为测试状态，直接全量重新部署”的要求，将三个已提交的运费迁移相关分支
 合并并推送到 main，以 `b6dc8cb6e68b9e9bc55352632883c1fa87bb797e` 重新构建并部署六个应用。
 商城为 https://shop.cinaseek.ai，后台为 https://cinashop-admin.pages.dev；
@@ -30,4 +40,3 @@ Admin 首次遇到网络 fetch 失败，查询云端确认没有新部署后重�
 shipping-route-authorization，均为 codex/ 前缀及 -20260913 后缀）已删除本地及远端引用，
 全部提交仍在 main。本机主目录已切回 main；临时发布工作树以 detached 状态保留，
 未删除目录、依赖或测试数据。相邻 JSON 保存完整部署 ID、资源哈希及检查状态。
-

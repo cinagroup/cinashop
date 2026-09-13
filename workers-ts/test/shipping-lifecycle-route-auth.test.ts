@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
 import { createContainerFromDb } from '../src/lib/di';
 import type { AppVariables, Env } from '../src/env';
 import { adminapiRoutes } from '../src/routes/adminapi';
@@ -21,23 +21,41 @@ const stateTables = [...shippingTables, ...children, 'store_order', 'system_admi
 // Registered routes, real JWT verification, DB principals/role resolution and
 // controllers/services with the formal protocol installed on full isolated ORM.
 // Only token-bucket storage is substituted. No login/provider/online-role claim.
-describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping lifecycle registered-route authorization on full PG16', () => {
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenance', 'restricted LOGIN'] as const)('shipping lifecycle registered-route authorization on full PG16: %s', identity => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
   let env: Env;
   let buckets: Map<string, cache.TokenBucket>;
+  let omittedGrant: string | undefined;
+  let pooledRuntime: SequenceRunnerPeer | undefined;
+  const asRuntime = (callback: (runtime: SequenceRunnerPeer & { role: string }) => Promise<void>) => f.withRuntimeRole!(async runtime => {
+    // Template-management scope only: reference tables are read-only. This is
+    // deliberately not the broader seven-table writer permission envelope.
+    await f.exec(`GRANT SELECT,INSERT,UPDATE ON public.shipping_templates TO "${runtime.role}";
+      GRANT SELECT ON ${children.map(t => `public.${t}`).join(',')},public.system_admin,public.system_role,public.system_supplier,public.system_city TO "${runtime.role}";
+      GRANT SELECT,INSERT,DELETE ON ${shippingTables.slice(1).map(t => `public.${t}`).join(',')} TO "${runtime.role}";
+      GRANT USAGE ON SEQUENCE ${shippingTables.map(t => `public.${t}_id_seq`).join(',')} TO "${runtime.role}"`);
+    if (omittedGrant) await f.exec(`REVOKE ${omittedGrant} FROM "${runtime.role}"`);
+    await callback(runtime);
+  });
   beforeAll(async () => {
     f = await sequenceRunnerDatabase();
     const api = await import('drizzle-kit/api'), models = await import('../src/models/schema');
     await f.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));
     await runShippingLifecycle(f.db);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
-    app.use('*', async (c, next) => { c.set('container', createContainerFromDb(f.db)); await next(); });
+    app.use('*', async (c, next) => {
+      if (pooledRuntime) { c.set('container', createContainerFromDb(pooledRuntime.db)); await next(); }
+      else if (identity === 'maintenance') { c.set('container', createContainerFromDb(f.db)); await next(); }
+      else await asRuntime(async runtime => { c.set('container', createContainerFromDb(runtime.db)); await next(); });
+    });
     app.onError(errorHandler);
     app.route('/adminapi', adminapiRoutes); app.route('/api', v1Routes); app.route('/supplierapi', supplierapiRoutes);
   }, 120000);
   afterAll(async () => { await f?.close(); }, 45000);
   beforeEach(async () => {
+    omittedGrant = undefined;
+    pooledRuntime = undefined;
     buckets = new Map();
     env = { APP_KEY: crypto.randomUUID(), NODE_ENV: 'production', UPSTASH_REDIS_URL: 'https://isolated-token-bucket.invalid',
       UPSTASH_REDIS_TOKEN: 'isolated-not-a-provider-credential' } as Env;
@@ -46,6 +64,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping lifecyc
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('External I/O forbidden in shipping authorization acceptance'); }));
     for (const table of [...children.slice(1), children[0], ...shippingTables.slice(1), shippingTables[0], 'system_admin', 'system_role', 'system_supplier', 'store_order'])
       await f.exec(`DELETE FROM public.${table}`);
+    await f.exec("DELETE FROM system_city; INSERT INTO system_city(city_id,parent_id,name) VALUES(101,0,'isolated province'),(102,101,'isolated city'); SELECT setval('shipping_templates_id_seq',10000)");
     await f.exec(`INSERT INTO system_role(id,type,relation_id,rules,status) VALUES
       (1,1,0,'shipping.manage',1),(2,4,20,'supplier.shipping.manage',1),(3,4,30,'supplier.shipping.manage',1);
       INSERT INTO system_admin(id,account,admin_type,relation_id,roles,level) VALUES
@@ -65,7 +84,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping lifecyc
     buckets.set(md5(issued.token), { ...issued, uid: id, type });
     return issued.token;
   };
-  const request = async (surface: Surface, operation: Operation, bearer: string, id = surface === 'supplierapi' ? 20 : 10) => {
+  const request = async (surface: Surface, operation: Operation, bearer: string, id = surface === 'supplierapi' ? 20 : 10, override: Record<string, unknown> = {}) => {
     const supplier = surface === 'supplierapi';
     const path = supplier ? `/supplierapi/setting/shipping_templates/${operation === 'save' ? 'save' : 'del'}/${id}`
       : `/${surface}/shipping_template/${operation === 'save' ? 'save' : `del/${id}`}`;
@@ -76,11 +95,42 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping lifecyc
       : { id, name: 'explicit edit', status: 0, adminId: 999, roles: 'shipping.manage' };
     const response = await app.request(path, { method: operation === 'save' ? 'POST' : 'DELETE',
       headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'x-admin-id': '7', 'x-supplier-id': '30' },
-      ...(operation === 'save' ? { body: JSON.stringify(body) } : {}) }, env);
+      ...(operation === 'save' ? { body: JSON.stringify({ ...body, ...override }) } : {}) }, env);
     return { http: response.status, body: await response.json() as { status: number; msg: string; data: unknown } };
   };
   const denials = ['absent', 'signature', 'expired', 'revoked', 'bucket_owner', 'wrong_type', 'jwt_type', 'banned', 'deleted', 'password', 'view_only', 'role_disabled', 'role_missing'] as const;
+  const fullRules = {
+    appoint: 1, no_delivery: 1,
+    region_info: [{ city_ids: [[0], [101,102]], first: '1', first_price: '9', continue: '1', continue_price: '2' }],
+    appoint_info: [{ city_ids: [[101,102]], number: '2', price: '20' }],
+    no_delivery_info: [{ city_ids: [[101]] }],
+  };
   for (const surface of surfaces) describe(surface, () => {
+    it('creates auto-ID templates, replaces nonempty rules, reads and retires without order-table privileges', async () => {
+      const bearer = await token(surface), supplier = surface === 'supplierapi';
+      const stable = () => f.query("SELECT jsonb_build_object('orders',(SELECT jsonb_agg(to_jsonb(t)) FROM store_order t),'existing',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM shipping_templates t WHERE id<=30)) AS state");
+      const before = await stable();
+      const form = supplier ? fullRules : { regions: [{ region_id: 102, region_name: 'isolated city', first_price: '9' }], status: 1 };
+      expect((await request(surface, 'save', bearer, 0, form)).body.status).toBe(200);
+      const [created] = (await f.query('SELECT id,owner_type,relation_id FROM shipping_templates WHERE id>30')).rows as Array<{ id: number; owner_type: number; relation_id: number }>;
+      expect(created).toMatchObject({ id: 10001, owner_type: supplier ? 2 : 0, relation_id: supplier ? 20 : 0 });
+      expect((await request(surface, 'save', bearer, created.id, form)).body.status).toBe(200);
+      expect((await f.query(`SELECT count(*)::int AS count FROM shipping_templates_region WHERE template_id=${created.id}`)).rows).toEqual([{ count: supplier ? 2 : 1 }]);
+      if (supplier) {
+        for (const table of shippingTables.slice(2)) expect((await f.query(`SELECT count(*)::int AS count FROM ${table} WHERE temp_id=${created.id}`)).rows).toEqual([{ count: 1 }]);
+        for (const path of [`/supplierapi/setting/shipping_templates/${created.id}/edit`, '/supplierapi/setting/shipping_templates/city_list']) {
+          const response = await app.request(path, { headers: { Authorization: `Bearer ${bearer}` } }, env);
+          expect((await response.json() as { status: number }).status).toBe(200);
+        }
+      }
+      expect((await request(surface, 'delete', bearer, created.id)).body.status).toBe(200);
+      expect((await f.query(`SELECT is_del FROM shipping_templates WHERE id=${created.id}`)).rows).toEqual([{ is_del: 1 }]);
+      for (const table of shippingTables.slice(1)) {
+        const key = table === 'shipping_templates_region' ? 'template_id' : 'temp_id';
+        expect((await f.query(`SELECT count(*)::int AS count FROM ${table} WHERE ${key}=${created.id}`)).rows).toEqual([{ count: !supplier && key === 'template_id' ? 1 : 0 }]);
+      }
+      expect(await stable()).toEqual(before);
+    });
     for (const operation of ['save', 'delete'] as const) it.each(denials)(`${operation} rejects %s before any shipping/history mutation`, async kind => {
       let bearer = await token(surface, { badKey: kind === 'signature', expired: kind === 'expired', type: ['wrong_type','jwt_type'].includes(kind) ? 'api' : undefined });
       const actor = surface === 'supplierapi' ? 27 : 7, role = surface === 'supplierapi' ? 2 : 1;
@@ -169,4 +219,66 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping lifecyc
     expect((await request('supplierapi', 'delete', bearer)).body.status).toBe(kind === 'foreign_role' ? 400011 : 410002);
     expect(await snapshot()).toEqual(before);
   });
+  if (identity === 'restricted LOGIN') {
+    it('reuses the same LOGIN backend after rolled-back rule failure and revoked auth-read privileges', async () => {
+      await asRuntime(async runtime => {
+        pooledRuntime = runtime;
+        try {
+          const settings = () => runtime.exec("SELECT pg_backend_pid() AS pid,current_user=session_user AS same,current_setting('statement_timeout') AS statement,current_setting('lock_timeout') AS lock,current_setting('idle_in_transaction_session_timeout') AS idle");
+          const initial = await settings(), bearer = await token('supplierapi'), before = await snapshot();
+          await f.exec(`REVOKE INSERT ON public.shipping_templates_no_delivery FROM "${runtime.role}"`);
+          expect((await request('supplierapi', 'save', bearer, 20, fullRules)).body.status).toBe(500);
+          expect(await snapshot()).toEqual(before);
+          await f.exec(`GRANT INSERT ON public.shipping_templates_no_delivery TO "${runtime.role}"`);
+          expect((await request('supplierapi', 'save', bearer, 20, fullRules)).body.status).toBe(200);
+          const saved = await snapshot();
+          await f.exec(`REVOKE SELECT ON public.system_role FROM "${runtime.role}"`);
+          expect((await request('supplierapi', 'delete', bearer)).body.status).toBe(500);
+          expect(await snapshot()).toEqual(saved);
+          await f.exec(`GRANT SELECT ON public.system_role TO "${runtime.role}"`);
+          await runtime.exec('RESET ROLE');
+          expect((await request('supplierapi', 'delete', bearer)).body.status).toBe(200);
+          expect(await settings()).toEqual(initial);
+        } finally { pooledRuntime = undefined; }
+      });
+    });
+    for (const surface of surfaces) it.each(['INSERT ON public.shipping_templates', 'USAGE ON SEQUENCE public.shipping_templates_id_seq'])(`${surface} cannot create without %s`, async grant => {
+      omittedGrant = grant;
+      const before = await snapshot();
+      expect((await request(surface, 'save', await token(surface), 0, surface === 'supplierapi' ? fullRules : {})).body.status).toBe(500);
+      expect(await snapshot()).toEqual(before);
+    });
+    it('has no maintenance, auth mutation, reference writer or order privileges and cannot recover them with RESET ROLE', async () => {
+      await asRuntime(async runtime => {
+        await runtime.exec('RESET ROLE');
+        expect(await runtime.exec('SELECT current_user=session_user AS same,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls FROM pg_roles WHERE rolname=current_user'))
+          .toMatchObject([{ same: true, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolreplication: false, rolbypassrls: false }]);
+        for (const statement of [
+          'SELECT * FROM store_order', 'UPDATE system_admin SET level=0 WHERE id=7', 'UPDATE system_role SET status=0 WHERE id=1',
+          'UPDATE system_supplier SET admin_id=27 WHERE id=20', 'UPDATE system_city SET name=\'changed\' WHERE city_id=101',
+          ...children.map(t => `DELETE FROM ${t}`),
+          'DELETE FROM shipping_templates WHERE id=10', 'TRUNCATE shipping_templates_region',
+          'ALTER TABLE shipping_templates DISABLE TRIGGER ALL', 'CREATE TABLE public.forbidden_shipping(id integer)',
+          "SET session_replication_role='replica'", "SELECT setval('shipping_templates_id_seq',1)",
+        ]) await expect(runtime.exec(statement)).rejects.toMatchObject({ code: '42501' });
+      });
+    });
+    it.each([
+      'SELECT ON public.system_admin', 'SELECT ON public.system_role', 'SELECT ON public.system_supplier', 'SELECT ON public.system_city',
+      'UPDATE ON public.shipping_templates',
+      ...shippingTables.slice(1).flatMap(t => [`DELETE ON public.${t}`, `INSERT ON public.${t}`, `USAGE ON SEQUENCE public.${t}_id_seq`]),
+    ])('missing %s fails closed and rolls back the entire supplier edit, including earlier rule deletes', async grant => {
+      omittedGrant = grant;
+      const before = await snapshot();
+      expect(await request('supplierapi', 'save', await token('supplierapi'), 20, fullRules))
+        .toMatchObject({ http: 200, body: { status: 500, msg: '系统繁忙,请稍后再试', data: null } });
+      expect(await snapshot()).toEqual(before);
+    });
+    it.each(children)('cannot retire when retained-reference table %s is unreadable', async table => {
+      omittedGrant = `SELECT ON public.${table}`;
+      const before = await snapshot();
+      expect((await request('supplierapi', 'delete', await token('supplierapi'))).body.status).toBe(500);
+      expect(await snapshot()).toEqual(before);
+    });
+  }
 });

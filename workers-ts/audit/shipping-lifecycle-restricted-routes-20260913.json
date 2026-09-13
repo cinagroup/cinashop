@@ -1,0 +1,366 @@
+{
+  "scope": "local PG16 template-management registered routes under real restricted LOGIN, plus diagnosis of prior main CI",
+  "baseCommit": "3a26f53",
+  "applicationCodeChanged": false,
+  "registeredRouteCases": 230,
+  "previousRouteCases": 98,
+  "maintenanceCases": 101,
+  "restrictedLoginCases": 129,
+  "grantEnvelope": {
+    "shipping_templates": [
+      "SELECT",
+      "INSERT",
+      "UPDATE"
+    ],
+    "shippingRuleTables": [
+      "SELECT",
+      "INSERT",
+      "DELETE"
+    ],
+    "sixReferenceTables": [
+      "SELECT"
+    ],
+    "system_admin": [
+      "SELECT"
+    ],
+    "system_role": [
+      "SELECT"
+    ],
+    "system_supplier": [
+      "SELECT"
+    ],
+    "system_city": [
+      "SELECT"
+    ],
+    "fourShippingSequences": [
+      "USAGE"
+    ],
+    "orders": [],
+    "ddl": [],
+    "functionExecution": "existing formal protocol PUBLIC EXECUTE; not changed"
+  },
+  "coverage": [
+    "actual JWT/account/role/controller/service/protocol through both Admin aliases and Supplier routes",
+    "auto-ID create, nonempty region/free/no-delivery replacement, city/detail reads and owner-specific retirement retention",
+    "denied authentication, business permission revocation, foreign supplier and forged request identity without writes",
+    "28 additional restricted-only cases: pooled LOGIN recovery, template create permission omissions, forbidden authority, rule/auth/sequence omissions and six reference SELECT omissions",
+    "same backend retains original identity and settings after rollback, restoring grants and RESET ROLE",
+    "all-business-row snapshots on denied operations; no sequence rollback claim"
+  ],
+  "boundaries": {
+    "productionDatabaseTouched": false,
+    "hyperdriveCredentialsChanged": false,
+    "onlineRoleAcceptance": false,
+    "loginOrRealRedisAcceptance": false,
+    "completeServiceWriterPrivilegesVerified": false,
+    "databaseEnforcedTenantIsolation": false,
+    "allProductActivityWritersCovered": false,
+    "providerOrBrowserAcceptance": false,
+    "shippingInstallationOnline": false,
+    "checklistCompleted": false
+  },
+  "reports": [
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-restricted-route-first-20260913.json",
+      "sha256": "8401DB9375E83A4DACCB4CF3D857950A7E600369E1886E636689D4649847B203",
+      "tests": 223,
+      "passed": 223,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "files": [
+        {
+          "file": "C:/cinagroup/cinashop/workers-ts/test/shipping-lifecycle-route-auth.test.ts",
+          "status": "passed",
+          "tests": 223,
+          "failed": []
+        }
+      ]
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-restricted-route-regression-20260913.json",
+      "sha256": "7702926D9CB8EA1B3A81D9CA6C4838EFA0820860F16C0D8DD0DD4F8B91B6D0D3",
+      "tests": 280,
+      "passed": 280,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "files": [
+        {
+          "file": "C:/cinagroup/cinashop/workers-ts/test/admin-permission.test.ts",
+          "status": "passed",
+          "tests": 6,
+          "failed": []
+        },
+        {
+          "file": "C:/cinagroup/cinashop/workers-ts/test/ci-gate-capacity.test.ts",
+          "status": "passed",
+          "tests": 3,
+          "failed": []
+        },
+        {
+          "file": "C:/cinagroup/cinashop/workers-ts/test/shipping-lifecycle-route-auth.test.ts",
+          "status": "passed",
+          "tests": 230,
+          "failed": []
+        },
+        {
+          "file": "C:/cinagroup/cinashop/workers-ts/test/shipping-lifecycle-runtime-permissions.test.ts",
+          "status": "passed",
+          "tests": 34,
+          "failed": []
+        },
+        {
+          "file": "C:/cinagroup/cinashop/workers-ts/test/supplier-shipping-template.test.ts",
+          "status": "passed",
+          "tests": 7,
+          "failed": []
+        }
+      ]
+    }
+  ],
+  "serviceRegression": {
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-restricted-route-services-20260913.json",
+    "sha256": "40DD18995CBCBFF558D4DC2063222B4B98B101E413E8D1193BB08C7DE820DA98",
+    "tests": 48,
+    "passed": 48,
+    "failed": 0,
+    "pending": 0,
+    "success": true,
+    "files": [
+      {
+        "file": "C:/cinagroup/cinashop/workers-ts/test/shipping-template-lifecycle-services.test.ts",
+        "status": "passed",
+        "tests": 48,
+        "failed": []
+      }
+    ]
+  },
+  "ruleStatistics": [
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-rule-statistics-red-20260913.json",
+      "sha256": "18B87930D67D188F12939E7902BE20AA33F6539D1EA7B63E2889A2B483B1FEBD",
+      "tests": 56,
+      "passed": 0,
+      "failed": 1,
+      "pending": 55,
+      "success": false,
+      "failures": [
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema keeps statistics refresh outside logical index equality but detects a renamed index",
+          "duration": 5158.3881,
+          "failureMessages": [
+            "AssertionError: expected { rules: { rows: [] }, …(1) } to deeply equal { rules: { rows: [] }, …(1) }\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-lifecycle-rules.test.ts:62:32\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-rule-statistics-green-20260913.json",
+      "sha256": "25DD41FBDE00E028B74BAD174494E42EF0848C410B3FBD37A42BA86C9492E6E1",
+      "tests": 56,
+      "passed": 55,
+      "failed": 1,
+      "pending": 0,
+      "success": false,
+      "failures": [
+        {
+          "fullName": "rewrite rules on full isolated shipping PG16 schema keeps statistics refresh outside logical index equality but detects a renamed index",
+          "duration": 5114.4782,
+          "failureMessages": [
+            "Error: STACK_TRACE_ERROR\n    at task (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1784:27)\n    at Object.<anonymous> (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1817:16)\n    at Object.<anonymous> (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1563:28)\n    at chain (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:599:14)\n    at C:/cinagroup/cinashop/workers-ts/test/shipping-lifecycle-rules.test.ts:60:3\n    at file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:40\n    at runWithSuite (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2258:8)\n    at Object.collect (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1889:10)\n    at Object.collect (file:///C:/cinagroup/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:54)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-rule-statistics-final-20260913.json",
+      "sha256": "3950E150136D55CE9137213EF1A2E175C8DD6AC168C9883C233A5ED0F21B996D",
+      "tests": 56,
+      "passed": 56,
+      "failed": 0,
+      "pending": 0,
+      "success": true,
+      "failures": []
+    }
+  ],
+  "bargainInitialRecheck": {
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-save-ci-recheck-20260913.json",
+    "sha256": "F88787468A5517F8D1E737E929612B4A540146F2ECFFAD8F0BFFA5B21A46B245",
+    "tests": 52,
+    "passed": 52,
+    "failed": 0,
+    "pending": 0,
+    "success": true,
+    "files": [
+      {
+        "file": "C:/cinagroup/cinashop/workers-ts/test/bargain-admin-save.test.ts",
+        "status": "passed",
+        "tests": 52,
+        "failed": []
+      }
+    ]
+  },
+  "bargainFinalDiagnostics": {
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-bargain-save-diagnostics-final-20260913.json",
+    "sha256": "D529DFB31791E2D09885D8501C6709E6AE1EA363BE271AAF1AA4A007FCF624EF",
+    "tests": 52,
+    "passed": 52,
+    "failed": 0,
+    "pending": 0,
+    "success": true
+  },
+  "finalTypecheck": {
+    "unit": "passed",
+    "runtime": "passed"
+  },
+  "cleanup": {
+    "version": "160015",
+    "databases": 0,
+    "schemas": 0,
+    "roles": 0
+  },
+  "ciFollowup": {
+    "sourceRun": {
+      "id": 34744845166,
+      "headSha": "eaa6773f08e0c2b0aef2f5506101156017ff1da1",
+      "conclusion": "success",
+      "jobsPassed": 11
+    },
+    "mainRun": {
+      "capturedAt": "2026-09-13T07:51:08.7328293Z",
+      "id": 34745307600,
+      "headSha": "b6dc8cb6e68b9e9bc55352632883c1fa87bb797e",
+      "status": "completed",
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "id": 103692048666,
+          "name": "Repository secret scan",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048738,
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048778,
+          "name": "workerd runtime tests",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048782,
+          "name": "Supplier build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048812,
+          "name": "UniApp build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048837,
+          "name": "Admin build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048877,
+          "name": "Kefu build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048903,
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "id": 103692048909,
+          "name": "PC build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048991,
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "id": 103694066861,
+          "name": "Worker type, unit, schema and route gates",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    "issues": [
+      {
+        "jobId": 103692048903,
+        "test": "shipping-lifecycle-rules.test.ts",
+        "cause": "snapshot compares pg_class planner statistics; observed only relpages/reltuples drift in failed diff",
+        "status": "local deterministic reproduction and 56-test corrected regression passed; new Linux CI pending"
+      },
+      {
+        "jobId": 103692048991,
+        "test": "bargain-admin-save.test.ts",
+        "cause": "unknown: creation response status 400, original assertion omitted response message and nested SQL cause",
+        "status": "52 local cases pass; synthetic-only diagnostics added; not declared fixed"
+      }
+    ]
+  },
+  "newCommitCi": "pending commit and workflow dispatch",
+  "checklist": {
+    "checked": 239,
+    "open": 165,
+    "total": 404
+  },
+  "forensicArtifacts": [
+    {
+      "id": 10313772827,
+      "archive": "C:/Users/cina/AppData/Local/Temp/cinashop-main-ci-failures-44534914e84f428dae801167c43b159e/10313772827.zip",
+      "sha256": "9C28DC5F87BD53266465596B718C68559B35871BD733830C48A2A70E71065706"
+    },
+    {
+      "id": 10313807515,
+      "archive": "C:/Users/cina/AppData/Local/Temp/cinashop-main-ci-failures-44534914e84f428dae801167c43b159e/10313807515.zip",
+      "sha256": "213F85F641C25A17B59ADACF6CA62C874A5281C210152954B53E2AB937CFF570"
+    }
+  ],
+  "sourceSha256Lf": [
+    {
+      "path": "workers-ts/test/shipping-lifecycle-route-auth.test.ts",
+      "sha256": "c6a6b610e64ef7888202de0b1a3efe00ec322b722957607ab6445b708f229c0f"
+    },
+    {
+      "path": "workers-ts/test/shipping-lifecycle-rules.test.ts",
+      "sha256": "fc72729bf68f346ec19a0ee059747f6bdfea8301b2ad1eb2954e6f5997136fe5"
+    },
+    {
+      "path": "workers-ts/test/bargain-admin-save.test.ts",
+      "sha256": "f714e95c7f6c5b4a698cc0fbe7ee2f25e0f9da762437728759e265237259a3eb"
+    }
+  ],
+  "finalRegression": {
+    "distinctFiles": 8,
+    "tests": 436,
+    "passed": 436,
+    "failed": 0,
+    "skipped": 0,
+    "runs": [
+      "restricted-route-regression:280",
+      "lifecycle-services:48",
+      "rule-statistics-final:56",
+      "bargain-diagnostics-final:52"
+    ],
+    "singleCommand": false
+  }
+}
