@@ -1,4 +1,5 @@
 import { and, eq, inArray, sql, type SQLWrapper } from 'drizzle-orm';
+import { shippingReferenceExpression } from '@/lib/shippingReferenceExpression';
 import { withTx, type Container, type DbClient } from '@/lib/di';
 import { shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery,
   storeProduct, storeSeckill, storeBargain, storeCombination, storeIntegral, storeDiscountsProducts } from '@/models/schema';
@@ -67,17 +68,18 @@ export async function lockActivityShippingSource(tx: DbClient, productId: number
  * count until explicitly unbound, regardless of lifecycle or owner flags.
  */
 export async function assertShippingTemplateUnreferenced(tx: DbClient, id: number) {
+  if (!Number.isSafeInteger(id) || id<=0 || id>2_147_483_647) throw new ValidateException('运费模板ID错误');
   await boundShippingTemplateTransaction(tx);
   await tx.execute(sql`SET LOCAL row_security = off`);
   const reference = (temp: SQLWrapper, freight: SQLWrapper) =>
-    sql`(${temp} = ${id} OR (${temp} <= 0 AND ${freight} NOT IN (1,2) AND ${id} = 1))`;
+    sql`(${shippingReferenceExpression(temp,freight)}) = ${id}`;
   const [row] = await tx.select({ used: sql<boolean>`
     EXISTS(SELECT 1 FROM ${storeProduct} WHERE ${reference(storeProduct.tempId, storeProduct.freight)}) OR
     EXISTS(SELECT 1 FROM ${storeSeckill} WHERE ${reference(storeSeckill.tempId, storeSeckill.freight)}) OR
     EXISTS(SELECT 1 FROM ${storeBargain} WHERE ${reference(storeBargain.tempId, storeBargain.freight)}) OR
     EXISTS(SELECT 1 FROM ${storeCombination} WHERE ${reference(storeCombination.tempId, storeCombination.freight)}) OR
     EXISTS(SELECT 1 FROM ${storeIntegral} WHERE ${reference(storeIntegral.tempId, storeIntegral.freight)}) OR
-    EXISTS(SELECT 1 FROM ${storeDiscountsProducts} WHERE ${storeDiscountsProducts.tempId} = ${id})`
+    EXISTS(SELECT 1 FROM ${storeDiscountsProducts} WHERE (${shippingReferenceExpression(storeDiscountsProducts.tempId)}) = ${id})`
   }).from(sql`(VALUES(1)) shipping_references(n)`);
   if (!row || row.used !== false) throw new ValidateException('运费模板仍被商品或活动引用，请先解除引用');
 }

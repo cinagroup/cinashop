@@ -1,0 +1,266 @@
+{
+  "scope": "A3k12 planner-visible shipping reference checks and actual parent SPI plan stability",
+  "baseCommit": "275dbad1deb0cb55c2ec9fd9db8d5ad13bd9d610",
+  "productionChanged": false,
+  "fullCapacityAcceptance": false,
+  "implementation": {
+    "sharedNonNullCaseExpression": true,
+    "boundaryCombinations": 168,
+    "nullEquivalenceClaim": false,
+    "invalidIdsRejectedBeforeSql": true,
+    "parentFixedSqlExecuteUsingOldId": true,
+    "globalPlannerSettingsChanged": false,
+    "applicationTimeoutsIncreased": false,
+    "lockAndHistoryContractsUnchanged": true,
+    "file0152MirrorsEmbedded0158": true,
+    "existingIncompatibleProtocolsRejectDrift": true
+  },
+  "experiments": {
+    "legacyBaseline": "shipping-lifecycle-capacity-baseline-20260913.json",
+    "caseOnly": {
+      "file": "shipping-lifecycle-capacity-case-only-20260913.json",
+      "sha256": "5248cec5ae8f611e144fb7c1b9f978ec97902e3281840ebd78a1c80882c96eda",
+      "rows": 300000,
+      "baselineRetirement": [
+        {
+          "kind": "database",
+          "samplesMs": [
+            103.59870000000228,
+            108.50940000000264,
+            105.50149999999849
+          ]
+        },
+        {
+          "kind": "application",
+          "samplesMs": [
+            266.16129999999976,
+            251.38270000000193,
+            250.08179999999993
+          ]
+        }
+      ],
+      "indexedRetirement": [
+        {
+          "kind": "database",
+          "samplesMs": [
+            96.05290000000241,
+            90.69750000000204,
+            89.19949999999517
+          ]
+        },
+        {
+          "kind": "application",
+          "samplesMs": [
+            125.24780000000464,
+            147.0196000000069,
+            157.3053
+          ]
+        }
+      ],
+      "absentNestedFiltered": 300000,
+      "absentNestedBuffers": 5749,
+      "observedFilter": "CASE expression = $19"
+    },
+    "final": {
+      "file": "shipping-lifecycle-capacity-final-20260913.json",
+      "sha256": "3b238f7592fc427ea80d49f1864ad13dbab499763729f256567c7718afea7c17",
+      "sourceHashesVerified": true,
+      "reportPath": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-shipping-capacity-485efec7-c0ee-4133-aa45-17ef005cb96d.json",
+      "reportSha256": "3b238f7592fc427ea80d49f1864ad13dbab499763729f256567c7718afea7c17",
+      "capturedAt": "2026-09-13T04:11:53.229Z",
+      "totalReferences": 300000,
+      "installMs": 1762.785100000001,
+      "indexBuildMs": 2473.2848999999987,
+      "baselineRetirement": [
+        {
+          "kind": "database",
+          "samplesMs": [
+            93.96889999999985,
+            95.36379999999917,
+            86.592899999996
+          ]
+        },
+        {
+          "kind": "application",
+          "samplesMs": [
+            218.4513999999981,
+            215.20679999999993,
+            228.6350999999995
+          ]
+        }
+      ],
+      "indexedRetirement": [
+        {
+          "kind": "database",
+          "samplesMs": [
+            2.496500000001106,
+            2.673799999996845,
+            2.7247999999963213
+          ]
+        },
+        {
+          "kind": "application",
+          "samplesMs": [
+            49.59780000000319,
+            42.994400000003225,
+            48.0144999999975
+          ]
+        }
+      ],
+      "sourceBeforeMs": 62.288,
+      "sourceAfterMs": 0.454,
+      "rowsPreserved": true,
+      "exactProtocolPreserved": true,
+      "cleanupConfirmed": true,
+      "absentNestedFiltered": 0,
+      "absentNestedBuffers": 12,
+      "rareNestedBuffers": 3,
+      "observedIndexCondition": "CASE expression = 11",
+      "nestedActualUpdateDeletePlans": 16,
+      "rawParameterMarkerField": "parameterizedPlan detects dollar markers anywhere, including InitPlan outputs; it is not proof of a generic predicate. Compare actual Filter and Index Cond fields.",
+      "candidateIndexCount": 10,
+      "physicalIndexesRegistered": false
+    }
+  },
+  "verification": {
+    "engine": "dedicated loopback PostgreSQL 16.15",
+    "finalTests": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-capacity-final-20260913.json",
+      "sha256": "3281E98D1764B84ABD2463C6EEE6BCC6239EA14EDC415A2505AB98D62E389746",
+      "passed": 382,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "files": [
+        {
+          "name": "brokerage-paid-order-migration.test.ts",
+          "count": 7,
+          "status": "passed"
+        },
+        {
+          "name": "coupon-product-scope-migration.test.ts",
+          "count": 7,
+          "status": "passed"
+        },
+        {
+          "name": "kefu-sequence-registration.test.ts",
+          "count": 31,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-baseline-cli.test.ts",
+          "count": 2,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-baseline.test.ts",
+          "count": 26,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-capacity-cli.test.ts",
+          "count": 1,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-install-environment.test.ts",
+          "count": 23,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-interactions.test.ts",
+          "count": 44,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-migration.test.ts",
+          "count": 52,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-plan-cache.test.ts",
+          "count": 1,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-protocol-catalog.test.ts",
+          "count": 38,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-reference-expression.test.ts",
+          "count": 10,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-runtime-permissions.test.ts",
+          "count": 34,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-write-barrier.test.ts",
+          "count": 22,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-template-lifecycle-candidate.test.ts",
+          "count": 36,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-template-lifecycle-services.test.ts",
+          "count": 48,
+          "status": "passed"
+        }
+      ]
+    },
+    "bothTypechecksPassed": true,
+    "redPlanCacheTest": {
+      "passed": 0,
+      "failed": 1,
+      "sha256": "c788e141e47af4b422a46fb77376e9bd9adc2710e04774c1b4a5e8f9f17f40d1",
+      "reason": "actual UPDATE scans and filters all 30000 fixture references after hot warmup"
+    },
+    "unchangedPlanCacheTestGreen": {
+      "passed": 1,
+      "failed": 0,
+      "sha256": "e2582f912c91cdfc1f22b13c6d86e9cb5e8bdf6788aa8c45b43ee0108a467d81"
+    },
+    "cleanup": {
+      "databases": 0,
+      "auditDatabases": 0,
+      "schemas": 0,
+      "roles": 0
+    },
+    "intermediateFailures": [
+      {
+        "kind": "TypeScript",
+        "detail": "Node fs expected node:url.URL instead of Workers global URL; corrected explicit Node import and final both typechecks passed."
+      },
+      {
+        "kind": "Report capture",
+        "detail": "Initial CASE-only run exited zero but terminal truncated its 63745-token full plan output; not used as full evidence. Unique non-overwriting report-file output added, subsequent complete runs preserved."
+      }
+    ]
+  },
+  "ci": {
+    "status": "not_yet_dispatched_for_this_increment",
+    "deployedSourceMainRun": 34735685981,
+    "deployedSourceSha": "c116838b21324a7f3f7a72debced2772ad9adbf6",
+    "deployedSourceConclusion": "success",
+    "deployedSourceSuccessfulJobs": 11,
+    "notEvidenceForCurrentCode": true
+  },
+  "remaining": [
+    "Register six expression and four source product_id indexes in ORM/external/embedded/standalone upgrade with precise catalog/idempotence/rollback verification",
+    "Broader distributions, scales, write overhead and operational retention policy",
+    "Exact current-commit Linux CI and full lifecycle write/concurrency/role acceptance",
+    "Authorized installation and actual online runtime-role validation"
+  ],
+  "checklist": {
+    "checked": 239,
+    "open": 165,
+    "total": 404,
+    "A3k12Complete": false
+  }
+}

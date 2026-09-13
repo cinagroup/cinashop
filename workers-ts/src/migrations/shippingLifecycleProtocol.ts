@@ -1,3 +1,5 @@
+import { SHIPPING_REFERENCE_EXPRESSION_SQL, SHIPPING_PACKAGE_REFERENCE_EXPRESSION_SQL } from '../lib/shippingReferenceExpression';
+
 /** Fixed protocol definition, installed only through the verified maintenance
  * migration. Historical CANDIDATE name retained for existing tests/imports.
  * Full runtime/maintenance privilege acceptance remains a separate gate. */
@@ -82,6 +84,7 @@ END $$;
 
 CREATE FUNCTION public.shipping_lifecycle_parent() RETURNS trigger
 LANGUAGE plpgsql VOLATILE SECURITY INVOKER SET search_path=pg_catalog,pg_temp SET row_security=off AS $$
+DECLARE referenced boolean;
 BEGIN
  IF TG_TABLE_SCHEMA<>'public' OR TG_TABLE_NAME<>'shipping_templates' THEN RAISE EXCEPTION 'Unexpected shipping parent table'; END IF;
  IF TG_OP='UPDATE' THEN
@@ -95,12 +98,18 @@ BEGIN
  END IF;
  -- VOLATILE SPI reads a fresh RC snapshot after the parent DML lock is held.
  -- Child admission's SHARE lock prevents a successful concurrent retirement.
- IF EXISTS(SELECT 1 FROM public.store_product WHERE public.shipping_lifecycle_ref(temp_id,freight)=OLD.id)
- OR EXISTS(SELECT 1 FROM public.store_seckill WHERE public.shipping_lifecycle_ref(temp_id,freight)=OLD.id)
- OR EXISTS(SELECT 1 FROM public.store_bargain WHERE public.shipping_lifecycle_ref(temp_id,freight)=OLD.id)
- OR EXISTS(SELECT 1 FROM public.store_combination WHERE public.shipping_lifecycle_ref(temp_id,freight)=OLD.id)
- OR EXISTS(SELECT 1 FROM public.store_integral WHERE public.shipping_lifecycle_ref(temp_id,freight)=OLD.id)
- OR EXISTS(SELECT 1 FROM public.store_discounts_products WHERE public.shipping_lifecycle_ref(temp_id,2)=OLD.id) THEN
+ -- Plan for this template ID, not a parameter-insensitive cached EXISTS plan:
+ -- hot references and absent IDs have radically different selectivity. The
+ -- statement and identifiers are fixed; only the typed OLD.id is bound by USING.
+ EXECUTE $shipping_reference_check$
+ SELECT EXISTS(SELECT 1 FROM public.store_product WHERE (${SHIPPING_REFERENCE_EXPRESSION_SQL})=$1)
+ OR EXISTS(SELECT 1 FROM public.store_seckill WHERE (${SHIPPING_REFERENCE_EXPRESSION_SQL})=$1)
+ OR EXISTS(SELECT 1 FROM public.store_bargain WHERE (${SHIPPING_REFERENCE_EXPRESSION_SQL})=$1)
+ OR EXISTS(SELECT 1 FROM public.store_combination WHERE (${SHIPPING_REFERENCE_EXPRESSION_SQL})=$1)
+ OR EXISTS(SELECT 1 FROM public.store_integral WHERE (${SHIPPING_REFERENCE_EXPRESSION_SQL})=$1)
+ OR EXISTS(SELECT 1 FROM public.store_discounts_products WHERE (${SHIPPING_PACKAGE_REFERENCE_EXPRESSION_SQL})=$1)
+ $shipping_reference_check$ INTO referenced USING OLD.id;
+ IF referenced THEN
   RAISE EXCEPTION USING ERRCODE='23503',MESSAGE='Shipping template is still referenced';
  END IF;
  RETURN NULL;

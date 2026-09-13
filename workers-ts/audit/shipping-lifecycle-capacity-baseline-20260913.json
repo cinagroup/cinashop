@@ -1,0 +1,1838 @@
+{
+  "provenance": {
+    "sourceBaseCommit": "c116838b21324a7f3f7a72debced2772ad9adbf6",
+    "phase": "Captured before the planner-visible CASE implementation; not rerun against the new implementation",
+    "scriptWasUncommitted": true,
+    "scriptHashWasNotCaptured": true,
+    "fullPlanTreesWereNotCaptured": true,
+    "candidateParentReplacementOnlyInOwnedFixture": true
+  },
+  "scope": "isolated shipping lifecycle 300000-reference performance experiment",
+  "engine": "PG16",
+  "rowsPerTable": 50000,
+  "totalReferences": 300000,
+  "installMs": 1348.1753000000008,
+  "indexBuildMs": 2646.6941000000006,
+  "baseline": {
+    "plans": [
+      {
+        "table": "store_product",
+        "id": 11,
+        "protocol": {
+          "executionMs": 114.914,
+          "planningMs": 0.107,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 14.114,
+          "planningMs": 0.157,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 12.655,
+          "planningMs": 0.175,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_product",
+        "id": 12,
+        "protocol": {
+          "executionMs": 115.489,
+          "planningMs": 0.167,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 11.341,
+          "planningMs": 0.154,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 12.285,
+          "planningMs": 0.22,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_product",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.066,
+          "planningMs": 0.175,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.011,
+          "planningMs": 0.08,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.011,
+          "planningMs": 0.075,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_seckill",
+        "id": 11,
+        "protocol": {
+          "executionMs": 117.347,
+          "planningMs": 0.06,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 11.562,
+          "planningMs": 0.124,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 14.506,
+          "planningMs": 0.118,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_seckill",
+        "id": 12,
+        "protocol": {
+          "executionMs": 118.563,
+          "planningMs": 0.102,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 11.271,
+          "planningMs": 0.127,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 14.608,
+          "planningMs": 0.113,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_seckill",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.087,
+          "planningMs": 0.103,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.011,
+          "planningMs": 0.058,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.011,
+          "planningMs": 0.046,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_bargain",
+        "id": 11,
+        "protocol": {
+          "executionMs": 117.909,
+          "planningMs": 0.102,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 12.782,
+          "planningMs": 0.119,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 15.242,
+          "planningMs": 0.109,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_bargain",
+        "id": 12,
+        "protocol": {
+          "executionMs": 121.061,
+          "planningMs": 0.104,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 13.056,
+          "planningMs": 0.107,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 14.617,
+          "planningMs": 0.135,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_bargain",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.107,
+          "planningMs": 0.131,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.012,
+          "planningMs": 0.074,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.043,
+          "planningMs": 0.111,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_combination",
+        "id": 11,
+        "protocol": {
+          "executionMs": 120.962,
+          "planningMs": 0.054,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 12.425,
+          "planningMs": 0.105,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 15.186,
+          "planningMs": 0.11,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_combination",
+        "id": 12,
+        "protocol": {
+          "executionMs": 126.777,
+          "planningMs": 0.145,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 12.496,
+          "planningMs": 0.115,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 15.497,
+          "planningMs": 0.111,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_combination",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.062,
+          "planningMs": 0.095,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.011,
+          "planningMs": 0.056,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.011,
+          "planningMs": 0.047,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_integral",
+        "id": 11,
+        "protocol": {
+          "executionMs": 115.039,
+          "planningMs": 0.06,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 10.154,
+          "planningMs": 0.116,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 11.332,
+          "planningMs": 0.142,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_integral",
+        "id": 12,
+        "protocol": {
+          "executionMs": 114.588,
+          "planningMs": 0.141,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 10.304,
+          "planningMs": 0.106,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 11.361,
+          "planningMs": 0.165,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_integral",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.073,
+          "planningMs": 0.127,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.011,
+          "planningMs": 0.059,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.011,
+          "planningMs": 0.043,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_discounts_products",
+        "id": 11,
+        "protocol": {
+          "executionMs": 109.207,
+          "planningMs": 0.046,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 5.181,
+          "planningMs": 0.105,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 5.795,
+          "planningMs": 0.099,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_discounts_products",
+        "id": 12,
+        "protocol": {
+          "executionMs": 109.577,
+          "planningMs": 0.076,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 5.142,
+          "planningMs": 0.087,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 5.767,
+          "planningMs": 0.087,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_discounts_products",
+        "id": 1,
+        "protocol": {
+          "executionMs": 109.052,
+          "planningMs": 0.084,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 5.085,
+          "planningMs": 0.096,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 5.701,
+          "planningMs": 0.072,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        }
+      }
+    ],
+    "source": {
+      "executionMs": 54.239,
+      "planningMs": 0.335,
+      "hits": 3870,
+      "reads": 0,
+      "scans": [
+        {
+          "type": "Seq Scan",
+          "table": "store_seckill",
+          "rows": 1,
+          "removed": 49999
+        },
+        {
+          "type": "Seq Scan",
+          "table": "store_bargain",
+          "rows": 1,
+          "removed": 49999
+        },
+        {
+          "type": "Seq Scan",
+          "table": "store_combination",
+          "rows": 1,
+          "removed": 49999
+        },
+        {
+          "type": "Seq Scan",
+          "table": "store_integral",
+          "rows": 1,
+          "removed": 49999
+        },
+        {
+          "type": "Index Scan",
+          "table": "store_discounts_products",
+          "index": "sdp_product_discount",
+          "rows": 1,
+          "removed": 0
+        }
+      ]
+    },
+    "retirement": [
+      {
+        "kind": "database",
+        "samplesMs": [
+          706.5688999999984,
+          702.8208999999988,
+          698.7644
+        ]
+      },
+      {
+        "kind": "application",
+        "samplesMs": [
+          845.4808000000012,
+          818.1091000000015,
+          817.2271999999975
+        ]
+      }
+    ]
+  },
+  "indexed": {
+    "plans": [
+      {
+        "table": "store_product",
+        "id": 11,
+        "protocol": {
+          "executionMs": 137.177,
+          "planningMs": 0.442,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 11.35,
+          "planningMs": 0.221,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.11,
+          "planningMs": 0.412,
+          "hits": 0,
+          "reads": 2,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_product",
+              "index": "qa_shipping_ref_0",
+              "rows": 0,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_product",
+        "id": 12,
+        "protocol": {
+          "executionMs": 146.451,
+          "planningMs": 0.247,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 11.17,
+          "planningMs": 0.185,
+          "hits": 1563,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.024,
+          "planningMs": 0.182,
+          "hits": 3,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_product",
+              "index": "qa_shipping_ref_0",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_product",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.052,
+          "planningMs": 0.071,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.044,
+          "planningMs": 0.099,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.011,
+          "planningMs": 0.079,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_product",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_seckill",
+        "id": 11,
+        "protocol": {
+          "executionMs": 157.828,
+          "planningMs": 0.154,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 14.83,
+          "planningMs": 0.234,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.093,
+          "planningMs": 0.244,
+          "hits": 0,
+          "reads": 2,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_seckill",
+              "index": "qa_shipping_ref_1",
+              "rows": 0,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_seckill",
+        "id": 12,
+        "protocol": {
+          "executionMs": 157.001,
+          "planningMs": 0.237,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 16.977,
+          "planningMs": 0.204,
+          "hits": 962,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.064,
+          "planningMs": 0.196,
+          "hits": 3,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_seckill",
+              "index": "qa_shipping_ref_1",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_seckill",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.08,
+          "planningMs": 0.114,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.017,
+          "planningMs": 0.13,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.03,
+          "planningMs": 0.241,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_seckill",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_bargain",
+        "id": 11,
+        "protocol": {
+          "executionMs": 161.371,
+          "planningMs": 0.265,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 15.339,
+          "planningMs": 0.149,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.138,
+          "planningMs": 0.365,
+          "hits": 0,
+          "reads": 2,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_bargain",
+              "index": "qa_shipping_ref_2",
+              "rows": 0,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_bargain",
+        "id": 12,
+        "protocol": {
+          "executionMs": 158.024,
+          "planningMs": 0.187,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 18.941,
+          "planningMs": 0.172,
+          "hits": 1021,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.041,
+          "planningMs": 0.209,
+          "hits": 3,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_bargain",
+              "index": "qa_shipping_ref_2",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_bargain",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.113,
+          "planningMs": 0.157,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.048,
+          "planningMs": 0.208,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.014,
+          "planningMs": 0.071,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_bargain",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_combination",
+        "id": 11,
+        "protocol": {
+          "executionMs": 167.644,
+          "planningMs": 0.212,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 17.41,
+          "planningMs": 0.336,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.08,
+          "planningMs": 0.186,
+          "hits": 0,
+          "reads": 2,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_combination",
+              "index": "qa_shipping_ref_3",
+              "rows": 0,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_combination",
+        "id": 12,
+        "protocol": {
+          "executionMs": 158.759,
+          "planningMs": 0.198,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 16.492,
+          "planningMs": 0.157,
+          "hits": 1064,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.039,
+          "planningMs": 0.201,
+          "hits": 3,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_combination",
+              "index": "qa_shipping_ref_3",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_combination",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.07,
+          "planningMs": 0.064,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.013,
+          "planningMs": 0.093,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.017,
+          "planningMs": 0.083,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_combination",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_integral",
+        "id": 11,
+        "protocol": {
+          "executionMs": 152.61,
+          "planningMs": 0.245,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 12.195,
+          "planningMs": 0.186,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.1,
+          "planningMs": 0.276,
+          "hits": 0,
+          "reads": 2,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_integral",
+              "index": "qa_shipping_ref_4",
+              "rows": 0,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_integral",
+        "id": 12,
+        "protocol": {
+          "executionMs": 146.554,
+          "planningMs": 0.091,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 13.476,
+          "planningMs": 0.155,
+          "hits": 820,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.036,
+          "planningMs": 0.179,
+          "hits": 3,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_integral",
+              "index": "qa_shipping_ref_4",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_integral",
+        "id": 1,
+        "protocol": {
+          "executionMs": 0.068,
+          "planningMs": 0.062,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 0.027,
+          "planningMs": 0.273,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.024,
+          "planningMs": 0.151,
+          "hits": 1,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_integral",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_discounts_products",
+        "id": 11,
+        "protocol": {
+          "executionMs": 129.937,
+          "planningMs": 0.219,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 6.635,
+          "planningMs": 0.154,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.094,
+          "planningMs": 0.216,
+          "hits": 0,
+          "reads": 2,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_discounts_products",
+              "index": "qa_shipping_ref_5",
+              "rows": 0,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_discounts_products",
+        "id": 12,
+        "protocol": {
+          "executionMs": 132.987,
+          "planningMs": 0.063,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 6.829,
+          "planningMs": 0.159,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 1,
+              "removed": 49999
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.046,
+          "planningMs": 0.207,
+          "hits": 3,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_discounts_products",
+              "index": "qa_shipping_ref_5",
+              "rows": 1,
+              "removed": 0
+            }
+          ]
+        }
+      },
+      {
+        "table": "store_discounts_products",
+        "id": 1,
+        "protocol": {
+          "executionMs": 131.118,
+          "planningMs": 0.041,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "application": {
+          "executionMs": 5.185,
+          "planningMs": 0.121,
+          "hits": 319,
+          "reads": 0,
+          "scans": [
+            {
+              "type": "Seq Scan",
+              "table": "store_discounts_products",
+              "rows": 0,
+              "removed": 50000
+            }
+          ]
+        },
+        "caseExpression": {
+          "executionMs": 0.079,
+          "planningMs": 0.137,
+          "hits": 1,
+          "reads": 1,
+          "scans": [
+            {
+              "type": "Index Scan",
+              "table": "store_discounts_products",
+              "index": "qa_shipping_ref_5",
+              "rows": 0,
+              "removed": 0
+            }
+          ]
+        }
+      }
+    ],
+    "source": {
+      "executionMs": 0.859,
+      "planningMs": 0.761,
+      "hits": 7,
+      "reads": 8,
+      "scans": [
+        {
+          "type": "Index Scan",
+          "table": "store_seckill",
+          "index": "qa_shipping_source_1",
+          "rows": 1,
+          "removed": 0
+        },
+        {
+          "type": "Index Scan",
+          "table": "store_bargain",
+          "index": "qa_shipping_source_2",
+          "rows": 1,
+          "removed": 0
+        },
+        {
+          "type": "Index Scan",
+          "table": "store_combination",
+          "index": "qa_shipping_source_3",
+          "rows": 1,
+          "removed": 0
+        },
+        {
+          "type": "Index Scan",
+          "table": "store_integral",
+          "index": "qa_shipping_source_4",
+          "rows": 1,
+          "removed": 0
+        },
+        {
+          "type": "Index Scan",
+          "table": "store_discounts_products",
+          "index": "sdp_product_discount",
+          "rows": 1,
+          "removed": 0
+        }
+      ]
+    },
+    "retirement": [
+      {
+        "kind": "database",
+        "samplesMs": [
+          879.5207000000009,
+          889.5981000000029,
+          904.5304000000033
+        ]
+      },
+      {
+        "kind": "application",
+        "samplesMs": [
+          999.8031999999948,
+          956.1488000000027,
+          980.6466999999975
+        ]
+      }
+    ]
+  },
+  "candidateRetirement": [
+    {
+      "kind": "database",
+      "samplesMs": [
+        4.404300000001967,
+        3.4623999999967054,
+        4.729699999996228
+      ]
+    },
+    {
+      "kind": "application",
+      "samplesMs": [
+        135.62550000000192,
+        151.20969999999943,
+        244.1713000000018
+      ]
+    }
+  ],
+  "rowsPreserved": true,
+  "referencedRetirementStillRejected": true,
+  "forcedPlannerSettings": false,
+  "candidateIndexCount": 10,
+  "registeredCapacityMigration": false,
+  "productionChanged": false,
+  "fullCapacityAcceptance": false,
+  "cleanupConfirmed": true,
+  "sourceCommit": "c116838b21324a7f3f7a72debced2772ad9adbf6"
+}
