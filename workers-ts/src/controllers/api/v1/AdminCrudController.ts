@@ -1998,6 +1998,19 @@ export async function adminShippingTemplateList(c: C) {
 }
 
 /** POST /api/admin/shipping_template/save — 新增/编辑模板 (含区域) */
+export async function adminShippingTemplateDetail(c: C) {
+  privateNoStore(c);
+  const rawId = c.req.param('id') ?? '';
+  if (!/^[1-9]\d{0,9}$/.test(rawId) || Number(rawId) > 2_147_483_647) throw new ValidateException('运费模板ID错误');
+  const { detailAdminShippingTemplate } = await import('@/services/admin/AdminShippingTemplateSnapshot');
+  return jsonOk(c, await detailAdminShippingTemplate(c.get('container'), Number(rawId)));
+}
+export async function adminShippingTemplateCities(c: C) {
+  privateNoStore(c);
+  const { SupplierShippingTemplateService } = await import('@/services/supplier/SupplierShippingTemplateService');
+  return jsonOk(c, await new SupplierShippingTemplateService(c.get('container')).cityList());
+}
+
 export async function adminShippingTemplateSave(c: C) {
   privateNoStore(c);
   const { saveAdminShippingTemplate } = await import("@/services/admin/AdminShippingTemplateService");

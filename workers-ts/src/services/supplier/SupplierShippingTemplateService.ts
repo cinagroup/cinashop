@@ -288,7 +288,7 @@ function validSupplierId(value: number): number {
   return value;
 }
 
-async function cityAuthority(tx: DbClient, input: SupplierShippingTemplateInput) {
+export async function cityAuthority(tx: DbClient, input: SupplierShippingTemplateInput) {
   const paths = [
     ...input.regions.flatMap((row) => row.paths),
     ...input.freeRules.flatMap((row) => row.paths),
@@ -321,7 +321,7 @@ async function cityAuthority(tx: DbClient, input: SupplierShippingTemplateInput)
   return byId;
 }
 
-async function replaceRules(
+export async function replaceRules(
   tx: DbClient,
   templateId: number,
   input: SupplierShippingTemplateInput,

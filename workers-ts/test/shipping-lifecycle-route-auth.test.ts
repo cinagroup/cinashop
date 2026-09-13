@@ -10,6 +10,7 @@ import { errorHandler } from '../src/middleware/error';
 import { createToken, md5, type TokenType } from '../src/utils/jwt';
 import * as cache from '../src/utils/cache';
 import { runShippingLifecycle } from '../src/migrations/runShippingLifecycle';
+import { readAdminShippingSnapshot } from '../src/services/admin/AdminShippingTemplateSnapshot';
 
 const surfaces = ['adminapi', 'api/admin', 'supplierapi'] as const;
 type Surface = typeof surfaces[number];
@@ -92,7 +93,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
       region_info: [{ city_ids: [[0]], first: '1', first_price: '9', continue: '1', continue_price: '2' }],
       appoint_info: [], no_delivery_info: [],
       supplierId: 30, relation_id: 30, owner_type: 0 }
-      : { id, name: 'explicit edit', status: 0, adminId: 999, roles: 'shipping.manage' };
+      : { id, name: 'explicit edit', status: 0, adminId: 999, roles: 'shipping.manage',
+        ...(id > 0 && operation === 'save' ? { expectedRevision: (await readAdminShippingSnapshot(f.db,id)).revision } : {}) };
     const response = await app.request(path, { method: operation === 'save' ? 'POST' : 'DELETE',
       headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'x-admin-id': '7', 'x-supplier-id': '30' },
       ...(operation === 'save' ? { body: JSON.stringify({ ...body, ...override }) } : {}) }, env);
@@ -106,6 +108,26 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     no_delivery_info: [{ city_ids: [[101]] }],
   };
   for (const surface of surfaces) describe(surface, () => {
+    if (surface !== 'supplierapi') it('roundtrips complete grouped rules and refuses a stale revision through registered admin routes', async () => {
+      const bearer = await token(surface);
+      const headers = { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' };
+      const full = { ...fullRules, id: 0, name: 'registered groups', type: 3, status: 1, sort: 2 };
+      const saved = await app.request(`/${surface}/shipping_template/save`, { method: 'POST', headers, body: JSON.stringify(full) }, env);
+      const created = await saved.json() as { status: number; data: { id: number } };
+      expect(created.status).toBe(200);
+      const id = created.data.id;
+      const response = await app.request(`/${surface}/shipping_template/${id}/edit`, { headers }, env);
+      const detail = await response.json() as { status: number; data: { revision: string; region_info: unknown[]; appoint_info: unknown[]; no_delivery_info: unknown[] } };
+      expect(detail.status).toBe(200);
+      expect(detail.data.region_info).toHaveLength(1); expect(detail.data.appoint_info).toHaveLength(1); expect(detail.data.no_delivery_info).toHaveLength(1);
+      expect(detail.data.revision).toMatch(/^shipping-v1:[a-f0-9]{64}$/);
+      await f.exec(`UPDATE shipping_templates_free SET price=777 WHERE temp_id=${id}`);
+      const before = await snapshot();
+      const rejected = await app.request(`/${surface}/shipping_template/save`, { method: 'POST', headers,
+        body: JSON.stringify({ ...full, id, expectedRevision: detail.data.revision }) }, env);
+      expect(await rejected.json()).toMatchObject({ status: 400, msg: expect.stringContaining('其他操作修改'), data: null });
+      expect(await snapshot()).toEqual(before);
+    });
     it('creates auto-ID templates, replaces nonempty rules, reads and retires without order-table privileges', async () => {
       const bearer = await token(surface), supplier = surface === 'supplierapi';
       const stable = () => f.query("SELECT jsonb_build_object('orders',(SELECT jsonb_agg(to_jsonb(t)) FROM store_order t),'existing',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM shipping_templates t WHERE id<=30)) AS state");
@@ -185,6 +207,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
       const path = surface === 'supplierapi' ? '/supplierapi/setting/shipping_templates/list' : `/${surface}/shipping_template/list`;
       const response = await app.request(path, { headers: { Authorization: `Bearer ${bearer}` } }, env);
       expect((await response.json() as { status: number }).status).toBe(200);
+      if (surface !== 'supplierapi') for (const suffix of ['10/edit','city_list']) {
+        const detail = await app.request(`/${surface}/shipping_template/${suffix}`, { headers: { Authorization: `Bearer ${bearer}` } }, env);
+        expect((await detail.json() as {status:number}).status).toBe(200);
+        expect(detail.headers.get('cache-control')).toContain('no-store');
+      }
       expect((await request(surface, 'delete', bearer)).body.status).toBe(400011);
       expect(await snapshot()).toEqual(before);
     });

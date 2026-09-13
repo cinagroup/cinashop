@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { createContainerFromDb,withTx,type DbClient } from '../src/lib/di';
 import { StoreOrderCreateService,type CreateOrderParams } from '../src/services/order/StoreOrderCreateService';
 import { saveAdminShippingTemplate } from '../src/services/admin/AdminShippingTemplateService';
+import { readAdminShippingSnapshot } from '../src/services/admin/AdminShippingTemplateSnapshot';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { storeOrderCartInfo,storeOrderStatus,printDocument } from '../src/models/schema';
 import { outcome,waitForFinanceBlock,withFinancePeers } from './helpers/financePeers';
@@ -14,7 +15,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping snapsho
  afterEach(async()=>{await f?.close();});
  const quote=(db:DbClient)=>new StoreOrderCreateService(createContainerFromDb(db),f.env).quoteOrder(params);
  const create=(db:DbClient)=>StoreOrderCreateService.createWithRuntime(createContainerFromDb(db),{CONFIG_KV:f.env.CONFIG_KV,nextOrderId:async()=>params.key},params);
- const edit=(db:DbClient)=>saveAdminShippingTemplate(createContainerFromDb(db),{id:10,regions:[{region_id:101,region_name:'held',first:'2',first_price:'9',continue:'1',continue_price:'1'}]});
+ const edit=async(db:DbClient)=>saveAdminShippingTemplate(createContainerFromDb(db),{id:10,expectedRevision:(await readAdminShippingSnapshot(db,10)).revision,regions:[{region_id:101,region_name:'held',first:'2',first_price:'9',continue:'1',continue_price:'1'}]});
  it('keeps a single-statement quote snapshot when a whole template commits during the parent read',async()=>{
   await f.exec("ALTER TABLE shipping_templates RENAME TO qa_shipping_templates; CREATE FUNCTION qa_snapshot_type(n smallint) RETURNS smallint LANGUAGE plpgsql VOLATILE AS $$ BEGIN PERFORM pg_advisory_xact_lock(731640,10); RETURN n; END $$; CREATE VIEW shipping_templates AS SELECT id,owner_type,relation_id,qa_snapshot_type(type) AS type,appoint,no_delivery,status,is_del FROM qa_shipping_templates");
   await withFinancePeers(f.db,async([holder,reader,editor])=>{

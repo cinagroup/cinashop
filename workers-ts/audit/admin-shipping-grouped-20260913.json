@@ -1,0 +1,77 @@
+{
+  "date": "2026-09-13",
+  "scope": "FE-003L-A3k13 complete grouped admin editor and stale-form conflict detection; candidate, not final acceptance",
+  "baseCommit": "ef4fce393ff43a992286f32f120a1b0002bc7391",
+  "deployed": false,
+  "productionWrites": 0,
+  "contract": {
+    "ruleSets": ["region_info", "appoint_info", "no_delivery_info"],
+    "billingTypes": [1, 2, 3],
+    "editRevision": "shipping-v1:SHA256 of the complete bounded four-table snapshot; mandatory for grouped and flat existing-template edits; compared after parent NO KEY UPDATE lock",
+    "readSnapshot": "one data statement, at most 1001 rows per child table to detect overflow; reject above 1000",
+    "writeBounds": "100 groups and 1000 paths per rule kind, path depth <=4, integer/decimal validation and authoritative city parent chain validation",
+    "legacyFlat": "old clients without a baseline rejected; flat rule replacement or billing-type change cannot erase structured paths/group IDs",
+    "scope": "global-admin visibility and owner retained; new templates platform owner; creation time and order history not rewritten",
+    "corruption": "inconsistent group rates or path IDs rejected, not silently flattened; nationwide empty legacy path only maps to [0] in editable projection",
+    "ui": "province/city grouped selection, decimal string inputs, explicit flags, preserved unsaved rules on toggle, frozen save payload, conflict retains input, unknown transport outcome stops retry"
+  },
+  "red": {
+    "passed": 0, "failed": 2,
+    "findings": ["grouped payload returned success but omitted free/no-delivery rows", "old no-baseline form overwrote template name"],
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-grouped-red-20260913.json",
+    "sha256": "0b8bb3cd6b2454ad62ba1a3bece18ca309540ad704043386f127b1c6332682c5"
+  },
+  "intermediateFailure": {
+    "passed": 302, "failed": 1, "skipped": 0,
+    "test": "admin complete shipping rule contract rejects a changed free baseline without modifying any table",
+    "durationMs": 5010.8112,
+    "reportedError": "STACK_TRACE_ERROR from Vitest timeout wrapper",
+    "resolution": "Per-case database creation/teardown suite explicitly uses 30s, consistent with existing DB fixture budgets; business statement/lock limits remain 5s/2s; all assertions retained",
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-grouped-final-20260913.json",
+    "sha256": "a4c593a8a86487e1fc6b61d28d35b3185c8f61a8a3a75e6259fb0637150c313e"
+  },
+  "finalRegression": {
+    "database": "Dedicated local PostgreSQL 16.15 at 127.0.0.1:55432; temporary databases owned by test harness",
+    "passed": 303, "failed": 0, "skipped": 0,
+    "files": [
+      { "path": "test/admin-shipping-grouped.test.ts", "tests": 14 },
+      { "path": "test/admin-shipping-atomic.test.ts", "tests": 26 },
+      { "path": "test/admin-shipping-atomic-postgres.test.ts", "tests": 7 },
+      { "path": "test/admin-shipping-list.test.ts", "tests": 5 },
+      { "path": "test/shipping-template-quote-postgres.test.ts", "tests": 8 },
+      { "path": "test/shipping-lifecycle-route-auth.test.ts", "tests": 234 },
+      { "path": "test/supplier-shipping-template.test.ts", "tests": 7 },
+      { "path": "test/admin-frontend-api-audit.test.ts", "tests": 2 }
+    ],
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-admin-shipping-grouped-final3-20260913.json",
+    "sha256": "87b55a80e119838c47edea7eac0e8ddf3f2f2d246f76dd82ae216b2fed5b5373",
+    "finalReview": "Explicit null ID/status/flags/sort rejected instead of applying defaults; four added values in existing rejection test, no count inflation",
+    "scopeNote": "Registered auth includes complete grouped create/detail/stale-save on both admin aliases, maintenance and independent restricted LOGIN. Token bucket substituted; not a real login/provider or production-role proof. Supplier seven assertions are parser/contract regression. Tests are not all real business end-to-end cases."
+  },
+  "ui": {
+    "browser": "Playwright 1.62.1 / Edge; Browser skill absent",
+    "frontend": "http://127.0.0.1:18173/shipping",
+    "backend": "http://127.0.0.1:18174, actual Hono controllers, synthetic session and independent real PostgreSQL fixture",
+    "viewports": ["1280x900", "390x844"],
+    "checks": ["identity/nonblank/no overlay", "edit billing type and decimal rates persisted to SQL", "toggle off/on retained unsaved no-delivery rule", "concurrent free-price edit caused conflict with zero changes from rejected save", "conflict kept typed name", "reopen read fresh price 777.00", "new template saved all three rule sets", "province-to-city selections persisted full paths", "mobile picker bounds inside viewport", "zero console errors and warnings"],
+    "perViewport": { "saveRequests": 3, "successfulWrites": 2, "conflictRejections": 1 },
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-grouped-ui-3a97dd85138f4200a1216819130d7281/report.json",
+    "reportSha256": "ecc3f7b94e65d3bb21717259530ab472ccc7dd0a2ed37b16f9a075a85aa008fa",
+    "screenshotDirectory": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-grouped-ui-3a97dd85138f4200a1216819130d7281",
+    "screenshots": ["conflict-1280.png", "editor-1280.png", "conflict-390.png", "editor-390.png"],
+    "harnessCorrections": ["Windows native ESM imports require file URLs", "ElementPlus hidden radio/switch inputs need their visible controls", "scoped named cascader popovers avoid a closing previous popover"],
+    "remaining": ["actual signed-in user browser flow", "identity change and unload browser cases", "unknown transport outcome browser test", "other browsers and real devices", "corrupt or legacy non-nationwide empty-path repair UI"]
+  },
+  "builds": { "workerUnitTypes": "pass", "workerRuntimeTypes": "pass", "adminVueTypesAndViteBuild": "pass", "warning": "existing vueuse PURE annotation warnings" },
+  "previousCI": {
+    "commit": "ef4fce393ff43a992286f32f120a1b0002bc7391", "runId": 34749398563,
+    "status": "completed", "conclusion": "failure", "successfulJobs": 9, "failedJobs": 2,
+    "failedTest": "admin-frontend-api-audit.test.ts deterministic current-source report comparison",
+    "resolution": "Regenerated checked-in frontend API contract manifest with existing audit script, preserving exact equality assertion; two audit tests now pass",
+    "ownCandidateCI": "not yet verified"
+  },
+  "inventories": { "adminCallSites": 345, "adminPathVariants": 365, "adminExecutable": 365, "adminUnregistered": 0, "adminUnresolved": 0,
+    "phpRoutes": 1904, "tsRoutes": 1656, "matched": 881, "executableMatched": 863, "unavailable": 18, "missing": 1023, "retired": 17, "actionableMissing": 1006 },
+  "cleanup": "Browser SQL server exited after closing its owned fixture. Post-run read-only PG check: zero finance_fixture_/cinashop_kefu_runner_/orm_audit_ databases, finance_test_ schemas, cinashop_ roles. Dedicated server retained.",
+  "checklist": { "checked": 240, "open": 164, "total": 404, "A3k13": "open pending exact-SHA Linux, real-role acceptance and remaining full-contract gates" }
+}

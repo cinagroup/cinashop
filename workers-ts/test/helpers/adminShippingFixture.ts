@@ -5,6 +5,8 @@ import { shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, ship
  storeSeckill, storeBargain, storeCombination, storeIntegral, storeDiscountsProducts } from '../../src/models/schema';
 import { adminShippingTemplateSave, adminShippingTemplateDel } from '../../src/controllers/api/v1/AdminCrudController';
 import { financePostgres } from './financePostgres';
+import { readAdminShippingSnapshot } from '../../src/services/admin/AdminShippingTemplateSnapshot';
+import { adminShippingTemplateDetail, adminShippingTemplateCities } from '../../src/controllers/api/v1/AdminCrudController';
 
 /** Actual controller, disposable SQL; authentication is an explicit local fixture. */
 export function shippingAdminApp(db: DbClient) {
@@ -12,10 +14,18 @@ export function shippingAdminApp(db: DbClient) {
  app.use('*',async(c,next)=>{c.set('container',createContainerFromDb(db));await next();});
  app.onError((e,c)=>c.json({status:400,msg:e.message,data:null}));
  app.post('/save',adminShippingTemplateSave);app.delete('/delete/:id',adminShippingTemplateDel);
+ app.get('/:id/edit',adminShippingTemplateDetail);app.get('/city_list',adminShippingTemplateCities);
  return app;
 }
 export const shippingRegion=(name='全国',price='6.00')=>({region_id:0,region_name:name,first:'1',first_price:price,continue:'1',continue_price:'2.00'});
 export async function postShipping(db:DbClient,body:unknown) {
+ // Existing atomicity tests now emulate opening the editor before submission.
+ // Explicit expectedRevision (including invalid/null) is never replaced.
+ if (body && typeof body === 'object' && 'id' in body && Number.isSafeInteger(body.id) && Number(body.id)>0 && !('expectedRevision' in body)) {
+  let revision='shipping-v1:'+ '0'.repeat(64);
+  try { revision=(await readAdminShippingSnapshot(db,Number(body.id))).revision; } catch { /* Missing/retired remains an HTTP rejection. */ }
+  body={...body,expectedRevision:revision};
+ }
  const response=await shippingAdminApp(db).request('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  return response.json() as Promise<{status:number;msg:string;data:{id:number}|null}>;
 }

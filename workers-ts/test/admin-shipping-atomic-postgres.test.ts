@@ -21,12 +21,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('admin shipping w
    expect((await editing).status).toBe(200);expect(await reading).toMatchObject({ok:true});
   });const after=await f.snapshot();expect(after.templates[0]).toMatchObject({name:change.name,type:3,status:1});expect(after.regions).toHaveLength(1);expect(after.regions[0].firstPrice).toBe('8.50');
  },15_000);
- it('serializes a later partial admin edit without overwriting the first editors omitted fields or regions',async()=>{
+ it('rejects a later partial admin edit when its baseline changed during the parent wait',async()=>{
   await barrier();await withFinancePeers(f.db,async([holder,first,second])=>{
    await holder.exec('BEGIN; SELECT pg_advisory_xact_lock(731639,10)');const a=postShipping(first.db,change);
    await waitForFinanceBlock(f.db,first.pid,holder.pid);const b=postShipping(second.db,{id:10,name:'后来改名'});
-   await waitForFinanceBlock(f.db,second.pid,first.pid);await holder.exec('COMMIT');expect((await a).status).toBe(200);expect((await b).status).toBe(200);
-  });const after=await f.snapshot();expect(after.templates[0]).toMatchObject({name:'后来改名',type:3,status:1});expect(after.regions[0].firstPrice).toBe('8.50');
+   await waitForFinanceBlock(f.db,second.pid,first.pid);await holder.exec('COMMIT');expect((await a).status).toBe(200);expect(await b).toMatchObject({status:400,msg:expect.stringContaining('其他操作修改')});
+  });const after=await f.snapshot();expect(after.templates[0]).toMatchObject({name:change.name,type:3,status:1});expect(after.regions[0].firstPrice).toBe('8.50');
  },15_000);
  it('serializes the actual supplier writer on the same parent boundary',async()=>{
   await f.db.update(shippingTemplates).set({ownerType:2,relationId:20}).where(eq(shippingTemplates.id,10));await barrier();

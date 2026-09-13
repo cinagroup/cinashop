@@ -681,6 +681,8 @@ adminapiRoutes.delete("/level/del/:id", adminAuth, AdminCrud.adminLevelDel);
 
 // ─── 运费模板 + 快递公司 (M19) ─────────────────────────────
 adminapiRoutes.get("/shipping_template/list", adminAuth, AdminCrud.adminShippingTemplateList);
+adminapiRoutes.get("/shipping_template/city_list", adminAuth, AdminCrud.adminShippingTemplateCities);
+adminapiRoutes.get("/shipping_template/:id/edit", adminAuth, AdminCrud.adminShippingTemplateDetail);
 adminapiRoutes.post("/shipping_template/save", adminAuth, AdminCrud.adminShippingTemplateSave);
 adminapiRoutes.delete("/shipping_template/del/:id", adminAuth, AdminCrud.adminShippingTemplateDel);
 adminapiRoutes.get("/express/list", adminAuth, AdminCrud.adminExpressList);
