@@ -15,6 +15,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "audit:prod": "node scripts/run-production-dependency-audit.mjs",
+    "audit:supplier-pages": "node scripts/audit-supplier-pages.mjs",
     "data:schema-audit": "tsx scripts/mysql-to-postgres.ts schema-audit",
     "audit:orm": "tsx scripts/orm-ddl-audit.ts",
     "audit:orm:not-valid": "tsx scripts/audit-pg-not-valid.ts",

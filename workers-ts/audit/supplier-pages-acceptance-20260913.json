@@ -1,0 +1,113 @@
+{
+  "capturedAt": "2026-09-13T08:42:47.004Z",
+  "scope": "FE-004K Supplier Pages configuration and same-origin transport",
+  "passed": true,
+  "control": {
+    "name": "cinashop-supplier",
+    "origin": "https://cinashop-supplier.pages.dev",
+    "productionBranch": "main",
+    "deploymentId": "04babf74-a4e2-42d9-b75c-0aad5fc499d9",
+    "sourceCommit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f",
+    "status": "success",
+    "usesFunctions": true,
+    "production": {
+      "inventory": [],
+      "workerMapping": "checked-in-default",
+      "expectedWorker": "https://cinashop-api.cinagroup.workers.dev"
+    },
+    "deployed": {
+      "inventory": [],
+      "workerMapping": "checked-in-default",
+      "expectedWorker": "https://cinashop-api.cinagroup.workers.dev"
+    },
+    "resourceInventory": [],
+    "directResourceBindings": 0,
+    "compatibilityDate": "2026-09-12"
+  },
+  "artifact": {
+    "path": "/assets/index-DHHtNs1E.js",
+    "localSha256": "beadd868e8b40dc65d46c74e28a1d3698934419f06e8a628f8609daef1a1db27",
+    "onlineSha256": "beadd868e8b40dc65d46c74e28a1d3698934419f06e8a628f8609daef1a1db27",
+    "sameOriginBaseUrl": "/supplierapi",
+    "proxySourceSha256": "8bf993452595d060f6f34056c75d98d61022215cbaf2ecc2c8769ca4099f26c9"
+  },
+  "requests": [
+    {
+      "name": "bootstrap",
+      "http": 200,
+      "status": 200,
+      "pass": true
+    },
+    {
+      "name": "anonymous-config",
+      "http": 200,
+      "status": 410000,
+      "pass": true
+    },
+    {
+      "name": "invalid-token-config",
+      "http": 200,
+      "status": 410000,
+      "pass": true
+    }
+  ],
+  "boundaries": {
+    "productionMutations": false,
+    "authenticatedBusinessE2E": false,
+    "providerFlows": false,
+    "browserRenderedQA": false,
+    "deploymentObservationWindow": false,
+    "upstreamRuntimeLeastPrivilege": false
+  },
+  "requirements": [
+    {
+      "id": "formal-project-and-origin",
+      "evidence": "Cloudflare project and canonical deployment: production/main, sole domain, uses_functions and exact source SHA"
+    },
+    {
+      "id": "WORKERS_API",
+      "evidence": "Both project production and deployed env inventories empty; checked-in DEFAULT_WORKER matches expected upstream; source matches deployed commit"
+    },
+    {
+      "id": "same-origin-proxy",
+      "evidence": "Deployed/local entry bytes match; compiled Axios baseURL /supplierapi; live bootstrap succeeds and private calls reject; actual proxy unit tests preserve URL, method and identity headers and remove Host"
+    },
+    {
+      "id": "secrets-and-resources",
+      "evidence": "No configured direct Pages bindings/variables; actual proxy reads only optional WORKERS_API; backend secrets and database resources remain in upstream Worker, whose least privilege is explicitly excluded"
+    }
+  ],
+  "verification": {
+    "unit": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-supplier-pages-acceptance-tests-20260913.json",
+      "sha256": "713DA422DEFE05A1D7763FB97D48F3BB44968524CEA7D0CF2B59593C264612BA",
+      "total": 41,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        {
+          "name": "deployment-shop-origin.test.ts",
+          "count": 17,
+          "status": "passed"
+        },
+        {
+          "name": "supplier-pages-acceptance.test.ts",
+          "count": 24,
+          "status": "passed"
+        }
+      ]
+    },
+    "typecheckUnit": "passed",
+    "typecheckRuntime": "passed",
+    "scriptSyntax": "passed",
+    "currentIncrementCi": "not yet dispatched"
+  },
+  "checklist": {
+    "closed": "FE-004K",
+    "checked": 240,
+    "open": 164,
+    "total": 404
+  },
+  "skill": "Cloudflare: retrieved official Pages configuration/bindings references; audited existing configuration read-only without provisioning redundant resources"
+}
