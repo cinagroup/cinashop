@@ -1,0 +1,174 @@
+{
+  "scope": "Shipping lifecycle installation rejects unreviewed enabled seven-table trigger interactions",
+  "baseCommit": "50a9b565c755bd12fba914b255ad37c71354f88f",
+  "engine": "isolated loopback PostgreSQL 16.15",
+  "observedConstructionPaths": {
+    "paths": [
+      "complete external numbered SQL",
+      "complete embedded 0000–0158",
+      "complete generated ORM with standalone upgrade"
+    ],
+    "otherTargetTableTriggers": 0,
+    "includesInternalAndDisabledTriggersInInventory": true,
+    "firstAndRepeatedInstallVerified": true
+  },
+  "counterexamples": {
+    "directBareProtocolDdlOnlyInOwnedFixtures": true,
+    "exactShippingOnlyCatalogRemainedComplete": true,
+    "cases": [
+      "BEFORE row trigger changes historical order postage 12.34 to 99.99",
+      "AFTER row trigger changes historical order postage 12.34 to 99.99",
+      "ON DELETE CASCADE removes a retained product before the parent AFTER check",
+      "ON DELETE SET DEFAULT rebinds a retained product before the parent AFTER check; valid FK target 0 explicitly seeded",
+      "ON UPDATE CASCADE rebinds a retained product before the parent AFTER check"
+    ],
+    "verifiedRedReport": {
+      "passed": 12,
+      "failed": 26,
+      "skipped": 0,
+      "sha256": "4c42fb5bcb0fff542e4667b7f323c602a5e3758453b8d26cceb15a0bd7cb7a00"
+    },
+    "failureMeaning": "Both existing installers accepted unreviewed interactions, including repeated installs; not a statement that production data changed"
+  },
+  "contract": {
+    "gate": "noUnreviewedRelationTriggers",
+    "sharedInRawFileAndTypeScript": true,
+    "checksBeforeAndAfterSevenTableBarrier": true,
+    "requiresLiteralTrue": true,
+    "rejectsEnabledNonProtocolRowAndStatementTriggers": true,
+    "rejectsInternalRiTriggers": true,
+    "rejectsReplicaAndAlwaysEnabledTriggers": true,
+    "reservedTriggerNamesAndFunctionsStillUseExactProtocolCatalogCheck": true,
+    "disabledTriggersPreserveOidAndDefinition": true,
+    "unrelatedTableTriggersPreserved": true,
+    "postPreflightPeerEnableRejectedWithoutUndoingPeerCommit": true,
+    "peerEnableDuringHeldBarrierGets55P03": true,
+    "appliesToRepeatedInstallation": true,
+    "automaticallyDisablesDeletesOrRepairsObjects": false,
+    "changesExistingProtocolFunctionsOrTriggers": false
+  },
+  "verification": {
+    "newTests": 48,
+    "newPg16InteractionCases": 44,
+    "newFailClosedUnitCases": 4,
+    "regressionFileCount": 13,
+    "files": [
+      {
+        "name": "brokerage-paid-order-migration.test.ts",
+        "count": 7,
+        "status": "passed"
+      },
+      {
+        "name": "coupon-product-scope-migration.test.ts",
+        "count": 7,
+        "status": "passed"
+      },
+      {
+        "name": "kefu-sequence-registration.test.ts",
+        "count": 31,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-baseline-cli.test.ts",
+        "count": 2,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-baseline.test.ts",
+        "count": 26,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-install-environment.test.ts",
+        "count": 23,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-interactions.test.ts",
+        "count": 44,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-migration.test.ts",
+        "count": 52,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-protocol-catalog.test.ts",
+        "count": 38,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-runtime-permissions.test.ts",
+        "count": 34,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-lifecycle-write-barrier.test.ts",
+        "count": 22,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-template-lifecycle-candidate.test.ts",
+        "count": 36,
+        "status": "passed"
+      },
+      {
+        "name": "shipping-template-lifecycle-services.test.ts",
+        "count": 48,
+        "status": "passed"
+      }
+    ],
+    "passed": 370,
+    "failed": 0,
+    "skipped": 0,
+    "sha256": "04e91ecb3316c8da9061335fcab554ec90c064adaa8631753be0986f92480a79",
+    "bothTypechecksPassed": true,
+    "remainingOwnedDatabases": 0,
+    "remainingAuditDatabases": 0,
+    "remainingOwnedSchemas": 0,
+    "remainingOwnedRoles": 0,
+    "installationSqlSha256": "e00b7fc4e92c23ff8996047e56eaf747fdf3006ad6c0f120c2994978317b1ce0"
+  },
+  "intermediateFailuresRetained": [
+    {
+      "passed": 11,
+      "failed": 27,
+      "sha256": "a2cac76033211694939377d90757dda31e1697ac3ad2bf90e8b1467d665a8f41",
+      "note": "One SET DEFAULT counterexample lacked a valid FK default target. Corrected test data before final red run; 26 actual refusal gaps remained."
+    },
+    {
+      "passed": 118,
+      "failed": 1,
+      "total": 119,
+      "sha256": "6cd7361075747310ce5c1a235cbf49524f04498e2459d761a134776146c589d4",
+      "note": "The peer-lock test queried the root max:1 client inside its reserved transaction and waited on itself. Use tx.execute; no timeout increase or assertion relaxation."
+    },
+    {
+      "kind": "typecheck",
+      "note": "Metadata rows are typed unknown; added a type-only annotation for tgisinternal without changing the runtime predicate."
+    }
+  ],
+  "previousRegistrationCi": {
+    "run": 34733912501,
+    "commit": "50a9b565c755bd12fba914b255ad37c71354f88f",
+    "conclusion": "success",
+    "successfulJobs": 11
+  },
+  "limits": {
+    "onlyCurrentConstructionBaselineAndInstallationWindow": true,
+    "arbitraryTriggerSafetyInferred": false,
+    "independentMaintenanceFunctionOrPostCommitDdlFenced": false,
+    "rewriteRulesAndCrossTableInteractionsFullyVerified": false,
+    "fullRuntimeAuthorizationVerified": false,
+    "allWriteSurfacesAndMultirowInterleavingsVerified": false,
+    "capacityVerified": false,
+    "onlineRoleAcceptance": false,
+    "productionSqlExecuted": false,
+    "deploymentExecuted": false,
+    "newCommitCi": "pending",
+    "checklistChecked": 239,
+    "checklistOpen": 165,
+    "checklistTotal": 404
+  }
+}

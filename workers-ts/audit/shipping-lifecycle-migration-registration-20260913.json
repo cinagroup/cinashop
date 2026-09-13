@@ -355,6 +355,13 @@
       "unitDatabases": 0,
       "schemas": 0,
       "roles": 0
+    },
+    "finalCommitLinuxCi": {
+      "run": 34733912501,
+      "commit": "50a9b565c755bd12fba914b255ad37c71354f88f",
+      "conclusion": "success",
+      "successfulJobs": 11,
+      "finalFormattedInputAndNinePathCatalogVerified": true
     }
   },
   "developmentFailuresRetained": [
@@ -399,6 +406,6 @@
     "checklistChecked": 239,
     "checklistOpen": 165,
     "checklistTotal": 404,
-    "newRegistrationCi": "pending"
+    "newRegistrationCi": "success"
   }
 }

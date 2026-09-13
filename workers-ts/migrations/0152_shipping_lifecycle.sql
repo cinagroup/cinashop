@@ -33,10 +33,25 @@ BEGIN
     OR (SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout') NOT BETWEEN 1 AND 5000 THEN
     RAISE EXCEPTION 'Shipping installation requires bounded transaction settings';
   END IF;
-  SELECT "originTriggersActive" AND "noEnabledEventTriggers" INTO environment_ok
+  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO environment_ok
     FROM (SELECT
   pg_catalog.current_setting('session_replication_role') IN ('origin','local') AS "originTriggersActive",
-  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS "noEnabledEventTriggers") e;
+  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS "noEnabledEventTriggers",
+  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger t
+    JOIN pg_catalog.pg_class c ON c.oid=t.tgrelid
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    JOIN pg_catalog.pg_proc p ON p.oid=t.tgfoid
+    JOIN pg_catalog.pg_namespace pn ON pn.oid=p.pronamespace
+    WHERE n.nspname='public' AND c.relname IN
+      ('shipping_templates','store_product','store_seckill','store_bargain',
+       'store_combination','store_integral','store_discounts_products')
+      AND t.tgenabled<>'D'
+      -- Reserved names/functions remain the exact protocol inspector's job.
+      -- Do not waive internal RI triggers: CASCADE can remove/rebind retained
+      -- references before the shipping AFTER trigger observes them.
+      AND NOT pg_catalog.starts_with(t.tgname,'shipping_lifecycle_')
+      AND NOT (pn.nspname='public' AND pg_catalog.starts_with(p.proname,'shipping_lifecycle_'))
+  ) AS "noUnreviewedRelationTriggers") e;
   IF environment_ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping installation environment requires review'; END IF;
   SELECT count(*)=7 AND bool_and(compatible) INTO shape_ok FROM (
 WITH wanted(table_name,columns,types) AS (VALUES
@@ -108,10 +123,25 @@ WITH stored AS MATERIALIZED (
       FROM names LEFT JOIN checks c ON c.table_name=names.table_name GROUP BY names.table_name
 ) b;
   IF baseline_ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping installation baseline is incompatible'; END IF;
-  SELECT "originTriggersActive" AND "noEnabledEventTriggers" INTO environment_ok
+  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO environment_ok
     FROM (SELECT
   pg_catalog.current_setting('session_replication_role') IN ('origin','local') AS "originTriggersActive",
-  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS "noEnabledEventTriggers") e;
+  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS "noEnabledEventTriggers",
+  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger t
+    JOIN pg_catalog.pg_class c ON c.oid=t.tgrelid
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    JOIN pg_catalog.pg_proc p ON p.oid=t.tgfoid
+    JOIN pg_catalog.pg_namespace pn ON pn.oid=p.pronamespace
+    WHERE n.nspname='public' AND c.relname IN
+      ('shipping_templates','store_product','store_seckill','store_bargain',
+       'store_combination','store_integral','store_discounts_products')
+      AND t.tgenabled<>'D'
+      -- Reserved names/functions remain the exact protocol inspector's job.
+      -- Do not waive internal RI triggers: CASCADE can remove/rebind retained
+      -- references before the shipping AFTER trigger observes them.
+      AND NOT pg_catalog.starts_with(t.tgname,'shipping_lifecycle_')
+      AND NOT (pn.nspname='public' AND pg_catalog.starts_with(p.proname,'shipping_lifecycle_'))
+  ) AS "noUnreviewedRelationTriggers") e;
   IF environment_ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping installation environment requires review'; END IF;
   FOR phase IN 0..1 LOOP
     SELECT COALESCE(jsonb_agg(to_jsonb(f)-'common' ORDER BY f.name COLLATE "C",f.args COLLATE "C"),'[]'::jsonb),

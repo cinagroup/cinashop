@@ -47,7 +47,7 @@ BEGIN
     OR (SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout') NOT BETWEEN 1 AND 5000 THEN
     RAISE EXCEPTION 'Shipping installation requires bounded transaction settings';
   END IF;
-  SELECT "originTriggersActive" AND "noEnabledEventTriggers" INTO environment_ok
+  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO environment_ok
     FROM (${SHIPPING_LIFECYCLE_ENVIRONMENT_SQL}) e;
   IF environment_ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping installation environment requires review'; END IF;
   SELECT count(*)=7 AND bool_and(compatible) INTO shape_ok FROM (${SHIPPING_LIFECYCLE_SHAPE_SQL}) s;
@@ -57,7 +57,7 @@ ${SHIPPING_LIFECYCLE_LOCK_SQL};
   IF shape_ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping installation baseline is incompatible'; END IF;
   SELECT count(*)=6 AND bool_and(invalid_references=0) INTO baseline_ok FROM (${SHIPPING_LIFECYCLE_BASELINE_SQL}) b;
   IF baseline_ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping installation baseline is incompatible'; END IF;
-  SELECT "originTriggersActive" AND "noEnabledEventTriggers" INTO environment_ok
+  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO environment_ok
     FROM (${SHIPPING_LIFECYCLE_ENVIRONMENT_SQL}) e;
   IF environment_ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping installation environment requires review'; END IF;
   FOR phase IN 0..1 LOOP
