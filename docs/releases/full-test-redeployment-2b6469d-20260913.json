@@ -290,6 +290,21 @@
     ]
   },
   "previousWorkerVersion": "89286bbd-d8ca-4db1-a952-6f51bc2f6427",
+  "ciFollowup": {
+    "runs": [
+      { "id": 34753660067, "status": "completed", "conclusion": "failure", "shard1ReportSha256": "7a25403628b50bafd80dee1726277cd468231f21398efcb715aad3f9777391a7" },
+      { "id": 34754263804, "status": "completed", "conclusion": "failure", "shard1ReportSha256": "36c19d21dd8174af4a2ade3c129c37f673fb038afd08a2bc99f79f5e3297f0c0" }
+    ],
+    "successfulJobsPerRun": 9,
+    "failedJobsPerRun": 2,
+    "shard1PassedTestsPerRun": 2752,
+    "shard1NotExecutedTestsPerRun": 21,
+    "cause": "admin-shipping-session.test.ts beforeAll bundles actual Admin code; Worker unit jobs lack Admin node_modules and cannot resolve axios",
+    "candidateCorrection": "Install locked Admin dependencies in both unit shards; preserve original test and exact zero-skip partition gates",
+    "cleanLocalReproduction": "Same missing-axios failure before Admin install; all original 21 tests passed after npm ci --prefix ../view/admin-ts",
+    "oldRunsRerun": false,
+    "deployedSourceChanged": false
+  },
   "mainCi": {
     "id": 34754263804,
     "sourceCommit": "2b6469d9135e7771940ea6f83719f0f27d4a3175",

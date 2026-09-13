@@ -93,9 +93,30 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual shipping 
     await f.exec('UPDATE store_product SET temp_id=0,freight=3 WHERE id=100');
     expect((await http(f.db, '/delete/1')).body.status).toBe(400);
     await f.exec('UPDATE store_product SET freight=1 WHERE id=100');
-    expect((await http(f.db, '/delete/1')).body.status).toBe(200);
-    const after = await snapshot(); expect((await http(f.db, '/delete/1')).body.status).toBe(200); expect(await snapshot()).toEqual(after);
+    const unbound = await snapshot();
+    expect((await http(f.db, '/delete/1')).body).toMatchObject({ status: 400, msg: '默认模板不能删除' });
+    expect(await snapshot()).toEqual(unbound);
+    expect((await http(f.db, '/delete/10')).body.status).toBe(200);
+    const after = await snapshot(); expect((await http(f.db, '/delete/10')).body.status).toBe(200); expect(await snapshot()).toEqual(after);
   });
+  it.each(['admin', 'supplier'].flatMap(surface => ['active', 'disabled', 'retired', 'missing'].map(state => [surface, state])))
+   ('%s refuses reserved default ID 1 when %s without altering rules or history', async (surface, state) => {
+      // No explicit or implicit references: reservation is independent of usage.
+      await f.exec(`INSERT INTO shipping_templates_region(template_id,first_price) VALUES(1,'4.00');
+        INSERT INTO shipping_templates_free(temp_id) VALUES(1); INSERT INTO shipping_templates_no_delivery(temp_id) VALUES(1)`);
+      if (surface === 'supplier') await f.exec('UPDATE shipping_templates SET owner_type=2,relation_id=20 WHERE id=1');
+      if (state === 'disabled') await f.exec('UPDATE shipping_templates SET status=0 WHERE id=1');
+      if (state === 'retired') await f.exec('UPDATE shipping_templates SET is_del=1 WHERE id=1');
+      if (state === 'missing') await f.exec('DELETE FROM shipping_templates WHERE id=1');
+      const before = await snapshot();
+      if (surface === 'admin') {
+        const result = await http(f.db, '/delete/1');
+        expect(result).toMatchObject({ status: 200, body: { status: 400, msg: '默认模板不能删除' } });
+        expect(result.cache).toContain('no-store');
+      } else await expect(new SupplierShippingTemplateService(createContainerFromDb(f.db)).delete(20, 1))
+        .rejects.toMatchObject({ code: 400, message: '默认模板不能删除' });
+      expect(await snapshot()).toEqual(before);
+    });
   it('validates IDs and supplier ownership without touching foreign templates', async () => {
     const before = await snapshot();
     for (const id of ['0', '-1', 'NaN', '1.5', '2147483648', '1e1', '0xA']) expect((await http(f.db, '/delete/' + id)).body.status).toBe(400);

@@ -157,6 +157,7 @@ async function submit() {
 }
 
 async function removeTemplate(row: ShippingTemplateRow) {
+  if (row.id === 1) return;
   try {
     await ElMessageBox.confirm(
       `删除“${row.name}”后不能恢复；被商品使用的模板会被服务器拒绝删除。`,
@@ -213,7 +214,9 @@ onMounted(async () => {
     <article class="surface table-card" v-loading="loading">
       <el-table :data="rows" empty-text="暂无运费模板">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="模板名称" min-width="180" />
+        <el-table-column prop="name" label="模板名称" min-width="180">
+          <template #default="{ row }">{{ row.name }} <el-tag v-if="row.id === 1" size="small" type="info">默认模板</el-tag></template>
+        </el-table-column>
         <el-table-column prop="type" label="计费方式" width="110" />
         <el-table-column prop="appoint" label="指定包邮" width="110" />
         <el-table-column prop="sort" label="排序" width="90" />
@@ -221,7 +224,7 @@ onMounted(async () => {
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
             <el-button link type="primary" @click="openEdit(scope.row.id)">编辑</el-button>
-            <el-button link type="danger" @click="removeTemplate(scope.row)">删除</el-button>
+            <el-button v-if="scope.row.id !== 1" link type="danger" @click="removeTemplate(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

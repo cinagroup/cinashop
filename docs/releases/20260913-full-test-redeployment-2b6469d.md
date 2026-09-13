@@ -33,6 +33,10 @@ Admin 上传 68 个新增静态文件，其余同内容资源由 Cloudflare 去�
 推送触发的 [main CI 34754263804](https://github.com/cinagroup/cinashop/actions/runs/34754263804) 也仍运行。
 没有重跑/取消这些任务，不能把本机通过或先前提交 CI 成功外推为本次 CI 全绿。
 
+终态追记：两次 CI 随后均失败（9 作业成功、第一分片及汇总失败）。原始分片均2752项执行通过，
+21项Admin会话测试因单元作业未安装Admin依赖、打包时无法解析axios而未执行。候选分支已补两个单元分片安装Admin锁定依赖，
+干净临时目录复现该失败后21项全过；不修改本次已发布应用，不把旧任务改记成功。详见运费编辑实现文档及相邻JSON的ciFollowup。
+
 采集器初次误用不存在的 `is_functions` 字段而返回验证失败，虽然该次 17 项冒烟已全过。
 只读检查部署详情后改用真实 `uses_functions` 字段，最终控制面与冒烟验证均通过。
 初始证据保留于 `C:/Users/cina/AppData/Local/Temp/cinashop-release-2b6469d-collector-initial.json`；

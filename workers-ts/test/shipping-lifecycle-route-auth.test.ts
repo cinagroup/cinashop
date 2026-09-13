@@ -108,6 +108,32 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     no_delivery_info: [{ city_ids: [[101]] }],
   };
   for (const surface of surfaces) describe(surface, () => {
+    it('reserves default ID 1 independently of references without bypassing authentication or manage permission', async () => {
+      const bearer = await token(surface), before = await snapshot();
+      expect(await request(surface, 'delete', bearer, 1)).toMatchObject({ http: 200,
+        body: { status: 400, msg: '默认模板不能删除', data: null } });
+      expect(await snapshot()).toEqual(before);
+      expect((await request(surface, 'delete', '', 1)).body.status).toBe(410000);
+      const role = surface === 'supplierapi' ? 2 : 1;
+      await f.exec(`UPDATE system_role SET rules='${surface === 'supplierapi' ? 'supplier.shipping.view' : 'shipping.view'}' WHERE id=${role}`);
+      const revoked = await snapshot();
+      expect((await request(surface, 'delete', bearer, 1)).body.status).toBe(400011);
+      expect(await snapshot()).toEqual(revoked);
+    });
+    if (surface !== 'supplierapi') it('keeps the reserved default editable through the revision-checked grouped contract', async () => {
+      await f.exec("INSERT INTO shipping_templates_region(template_id,region_id,billing_group,value,uniqid,first,first_price,continue,continue_price) VALUES(1,0,1,'[0]','default',1,4,1,2)");
+      const bearer = await token(surface);
+      // The older flat-form helper deliberately adds forged fields; grouped
+      // writes reject those. Exercise the actual editor's supported payload.
+      const saved = await app.request(`/${surface}/shipping_template/save`, { method: 'POST',
+        headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...fullRules, id: 1, type: 1, status: 1, sort: 0, name: 'edited default',
+          expectedRevision: (await readAdminShippingSnapshot(f.db, 1)).revision }) }, env);
+      expect(await saved.json()).toMatchObject({ status: 200, data: { id: 1 } });
+      expect((await f.query('SELECT name,is_del,status FROM shipping_templates WHERE id=1')).rows)
+        .toEqual([{ name: 'edited default', is_del: 0, status: 1 }]);
+      expect((await request(surface, 'delete', bearer, 1)).body).toMatchObject({ status: 400, msg: '默认模板不能删除' });
+    });
     if (surface !== 'supplierapi') it('roundtrips complete grouped rules and refuses a stale revision through registered admin routes', async () => {
       const bearer = await token(surface);
       const headers = { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' };

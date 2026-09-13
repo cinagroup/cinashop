@@ -20,7 +20,9 @@
       <p v-if="compactTable" class="table-hint">左右滑动表格可查看全部列和操作</p>
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="name" label="模板名称" min-width="160" />
+        <el-table-column prop="name" label="模板名称" min-width="160">
+          <template #default="{ row }">{{ row.name }} <el-tag v-if="row.id === 1" size="small" type="info">默认模板</el-tag></template>
+        </el-table-column>
         <el-table-column label="计费方式" width="110">
           <template #default="{ row }">{{ row.type === 1 ? "按件" : row.type === 2 ? "按重" : "按体积" }}</template>
         </el-table-column>
@@ -38,7 +40,7 @@
         <el-table-column label="操作" width="140" :fixed="compactTable ? false : 'right'">
           <template #default="{ row }">
             <el-button size="small" :disabled="deletePending || sessionInvalid" @click="openForm(row)">编辑</el-button>
-            <el-button size="small" type="danger" :disabled="deletePending || sessionInvalid || uncertainDelete !== null" @click="del(row)">删除</el-button>
+            <el-button v-if="row.id !== 1" size="small" type="danger" :disabled="deletePending || sessionInvalid || uncertainDelete !== null" @click="del(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -148,6 +150,7 @@ function editorSaved() {
 }
 
 async function del(row: ShippingTemplate) {
+  if (row.id === 1) return;
   if (deletePending.value || uncertainDelete.value !== null || !scope.isCurrent()) return;
   deletePending.value = true;
   const id = row.id;

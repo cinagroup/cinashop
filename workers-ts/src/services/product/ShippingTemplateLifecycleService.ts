@@ -87,6 +87,9 @@ export async function assertShippingTemplateUnreferenced(tx: DbClient, id: numbe
 export async function retireShippingTemplate(container: Container, id: number, supplierId?: number): Promise<void> {
   if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) throw new ValidateException('运费模板ID错误');
   if (supplierId !== undefined && (!Number.isSafeInteger(supplierId) || supplierId <= 0)) throw new ValidateException('供应商ID错误');
+  // PHP reserves ID 1 independently of references, status or owner. Reject
+  // before an idempotent retirement or any transaction; never recreate it here.
+  if (id === 1) throw new ValidateException('默认模板不能删除');
   await shippingLifecycleLock(() => withTx(container, async tx => {
     await boundShippingTemplateTransaction(tx);
     const scope = and(eq(shippingTemplates.id, id), supplierId === undefined ? undefined :
