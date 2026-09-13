@@ -1,0 +1,49 @@
+{
+  "scope": "FE-003L-A3k12 installer-owned write barrier and in-transaction baseline revalidation",
+  "baseCommit": "6bf227eeb934d41bd4005bf4c172c35912370e8e",
+  "published": false,
+  "checklistCompleted": false,
+  "implementation": {
+    "transaction": "PostgreSQL 16 read committed/read write, owned root transaction",
+    "lock": "SHARE ROW EXCLUSIVE NOWAIT",
+    "tablesInLockOrder": ["shipping_templates","store_bargain","store_combination","store_discounts_products","store_integral","store_product","store_seckill"],
+    "onlyPublicFixedTables": true,
+    "recursiveDescendantLockRequested": false,
+    "catalogPrecheckAndLockedRecheck": true,
+    "baselineReusedFromEarlierAudit": false,
+    "candidateInstallerUsesBarrier": true,
+    "sharedReadOnlyCliQueries": true,
+    "stricterSessionTimeoutsPreserved": true,
+    "automaticRetries": false
+  },
+  "tests": {
+    "firstRun": {"files":5,"passed":132,"failed":0,"skipped":0},
+    "finalRun": {
+      "files": 5,
+      "passed": 134,
+      "failed": 0,
+      "skipped": 0,
+      "maxWorkers": 2,
+      "suites": {"write-barrier":22,"baseline":26,"baseline-cli":2,"candidate":36,"application-services":48},
+      "report": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-barrier-final-20260913.json",
+      "sha256": "64a53b7985bcd87c6b83dbb8aa3e3734f2d81e21b50bcf101fb97cb246fb2a98"
+    },
+    "typecheck": {"unit":"passed","runtime":"passed"},
+    "applicationAudit": {"candidateInstalled":true,"passed":8,"mutationObserved":false,"exitCode":0,"directSqlProtectionProven":false}
+  },
+  "evidence": [
+    "each of six invalid reference tables prevents callback/candidate DDL without rewriting records",
+    "a prior healthy read-only snapshot is invalidated by another connection's committed bad reference",
+    "existing writer on each of seven tables causes 55P03; callback never runs and partial locks release",
+    "pg_locks confirms all seven granted ShareRowExclusiveLock entries, ordinary read succeeds, another installer fails NOWAIT",
+    "pg_blocking_pids confirms activity writer waits until installation commits, then new trigger rejects with 23503",
+    "callback failure rolls back temporary test DDL/data; subsequent installer succeeds",
+    "colliding function OID/definition remains intact and earlier candidate DDL rolls back",
+    "incompatible/inherited structure, SELECT-only role, RLS-hidden row and nested transaction fail closed",
+    "strict 4s statement/500ms lock/3500ms idle deadlines preserved; inherited RR overridden only inside owned RC transaction"
+  ],
+  "cleanup": {"postgresVersion":160015,"host":"127.0.0.1","port":55432,"remainingRandomDatabases":0,"remainingSchemas":0,"remainingRoles":0},
+  "previousCiAtCapture": {"runId":34728403545,"headSha":"6bf227eeb934d41bd4005bf4c172c35912370e8e","status":"in_progress","successfulJobs":9,"remainingExistingJob":"unit shard 1/2","newChangesCovered":false},
+  "boundaries": {"productionReadsOrWritesThisTurn":false,"deployment":false,"dataRepair":false,"formalIdempotentInstaller":false,"registeredMigration":false,"completeCatalogAclVerification":false,"capacityProven":false},
+  "remaining": ["exact function/trigger/ACL definitions and ownership drift","idempotent installation and authorized maintenance identity","formal new/upgrade migration registration","remaining write surfaces, multirow interleavings and capacity","new commit Linux CI","online least-privilege identity and acceptance"]
+}

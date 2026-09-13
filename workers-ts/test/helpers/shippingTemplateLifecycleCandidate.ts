@@ -1,8 +1,9 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../../src/lib/di';
+import { withShippingLifecycleWriteBarrier } from '../../src/migrations/withShippingLifecycleWriteBarrier';
 
 /** Experimental database protocol, deliberately restricted to owned test DBs.
- * Not a production installer: baseline validation, catalog drift/idempotence,
+ * Not a production installer: catalog drift/idempotence,
  * migration registration and complete application privilege coverage remain open.
  * Stored references stay protected until explicitly unbound/deleted, including
  * retired records. No rows are rewritten and no privileges are granted here.
@@ -13,8 +14,7 @@ export async function installShippingTemplateLifecycleCandidate(db: DbClient) {
   if (!/^cinashop_kefu_runner_[a-f0-9]{32}$/.test(target?.name ?? '') || Math.floor(Number(target.version) / 10000) !== 16) {
     throw new Error('Shipping lifecycle candidate requires an owned PG16 test database');
   }
-  await db.transaction(async tx => {
-    await tx.execute(sql.raw("SET LOCAL statement_timeout='15000ms'; SET LOCAL lock_timeout='1000ms'; SET LOCAL idle_in_transaction_session_timeout='5000ms'"));
+  await withShippingLifecycleWriteBarrier(db, async tx => {
     await tx.execute(sql.raw(SHIPPING_LIFECYCLE_CANDIDATE_SQL));
   });
 }
