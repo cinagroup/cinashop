@@ -1,0 +1,44 @@
+{
+  "scope": "FE-003L-A3k12 exact reserved protocol catalog and idempotent candidate installation",
+  "baseCommit": "14f7877ba0ca4af8ea35ca72b9eb5b6ed31cc965",
+  "published": false,
+  "checklistCompleted": false,
+  "protocol": {
+    "functionCount": 5,
+    "triggerCount": 9,
+    "states": ["absent","complete","drift"],
+    "appliedOnFirstInstall": true,
+    "appliedOnIdenticalRepeat": false,
+    "overwriteExistingDrift": false,
+    "postCreationVerification": true,
+    "aclPolicy": "Exact PostgreSQL default function EXECUTE ACL for owner and PUBLIC; not a final runtime least-privilege policy.",
+    "runtimePrivilegesVerified": false,
+    "registration": false
+  },
+  "tests": {
+    "initialCandidate": {"files":1,"passed":36,"failed":0,"skipped":0},
+    "initialRegression": {"files":6,"passed":165,"failed":0,"skipped":0},
+    "final": {
+      "files":6,"passed":172,"failed":0,"skipped":0,"maxWorkers":2,
+      "suites":{"protocol-catalog":38,"write-barrier":22,"baseline":26,"baseline-cli":2,"candidate":36,"application-services":48},
+      "report":"C:/Users/cina/AppData/Local/Temp/cinashop-shipping-catalog-final-20260913.json",
+      "sha256":"d926156f92ef6615f66c99ff664f266a6763faa29e6c3f7466169e4bb860ad10"
+    },
+    "typecheck":{"unit":"passed","runtime":"passed"},
+    "applicationAudit":{"candidateInstalled":true,"passed":8,"mutationObserved":false,"exitCode":0,"directSqlProtectionProven":false}
+  },
+  "catalogEvidence": [
+    "repeat installation preserves complete pg_proc/pg_trigger rows including OIDs and ACLs, plus nonempty products/templates/history",
+    "33 function/trigger definition and attachment mutations are classified as drift and left untouched",
+    "partial preexisting function is not classified as absent",
+    "extra grantee, grant option and changed function/table ownership are rejected without repair",
+    "changed default function privileges cause post-install verification failure and rollback all created objects"
+  ],
+  "cleanup":{"postgresVersion":160015,"host":"127.0.0.1","port":55432,"remainingRandomDatabases":0,"remainingSchemas":0,"remainingRoles":0},
+  "previousCi":[
+    {"runId":34728403545,"sha":"6bf227eeb934d41bd4005bf4c172c35912370e8e","conclusion":"success","successfulJobs":11},
+    {"runId":34729230247,"sha":"14f7877ba0ca4af8ea35ca72b9eb5b6ed31cc965","statusAtCapture":"in_progress","successfulJobsAtCapture":8}
+  ],
+  "boundaries":{"productionReadsOrWritesThisTurn":false,"deployment":false,"automaticDataRepair":false,"runtimeLeastPrivilegeApproved":false,"allOtherTriggerInteractionsVerified":false,"formalMigrationRegistered":false,"capacityProven":false},
+  "remaining":["runtime and maintenance least-privilege policy","non-protocol trigger interactions and remaining write surfaces","formal new/upgrade migration registration","capacity and online identity verification","current commit Linux CI"]
+}

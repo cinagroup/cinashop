@@ -1,5 +1,31 @@
 # 运费模板引用与生命周期：A3k12
 
+## 2026-09-13 精确目录与候选幂等（未发布）
+
+固定协议定义移至 `src/migrations/shippingLifecycleProtocol.ts`，未改变触发器SQL语义，
+仍只由限定随机PG16库的测试候选安装。`inspectShippingLifecycleProtocol` 在安装阻写事务内
+比较5函数/9触发器：未安装才创建、完整一致返回applied=false、部分对象或漂移一律拒绝，
+创建后再次核验，禁止OR REPLACE、自动修复或覆盖原对象。正文来自版本控制的固定定义，
+不是把线上目录当期望值；对外只返回状态/计数/布尔，不输出正文、角色或业务数据。
+
+函数核对正文、参数类型/名称、返回值、语言、strict/volatile/security/parallel/leakproof、
+配置、默认参数/支持函数/成本等属性及当前安装者所有权、完整ACL项；触发器核对public表、
+函数绑定、ROW/STATEMENT及事件位、origin启用、约束/延迟/列限制/WHEN/参数/transition表，
+并拒绝额外挂载、同名重载和协议保留前缀中的额外对象。依据
+[PG16 pg_proc](https://www.postgresql.org/docs/16/catalog-pg-proc.html) 与
+[pg_trigger](https://www.postgresql.org/docs/16/catalog-pg-trigger.html) 的字段定义逐项比较。
+
+权限边界须明确：这里精确固定的是当前候选的PostgreSQL默认函数EXECUTE ACL（owner和PUBLIC），
+不是批准正式运行权限；不检查或授予运行角色的表写/DDL/复制权限，runtimePrivilegesVerified始终false。
+函数/触发器DDL仍需受信任维护身份管理；七表锁不能防止不遵守维护协议的高权限人事后改函数。
+最终最小权限策略、非协议触发器交互及注册仍开放，不能把state=complete解释为生产验收通过。
+
+38项新PG16目录测试证明首次applied=true/重复false且OID/定义/ACL/非空历史数据不变，
+33种定义/触发器变异拒绝覆盖，另验证部分安装、额外grantee/grant option、函数及表所有者漂移，
+以及默认权限注入额外授权时全部新对象回滚。原函数冲突测试现改为安装前拒绝（旧阶段是中途DDL失败）。
+最终6文件172项零失败/跳过，双类型及候选开启8应用案例通过，隔离库/schema/角色均0；
+证据 `audit/shipping-lifecycle-protocol-catalog-20260913.json`。未注册正式新建/升级、未执行线上SQL。
+
 ## 2026-09-13 安装阻写与锁内重验（未发布）
 
 `withShippingLifecycleWriteBarrier` 现在作为测试候选安装器的事务边界：PG16根连接独占
@@ -19,8 +45,8 @@ READ COMMITTED/READ WRITE事务，保留更严格的statement/lock/idle期限；
 零观察到修改；该8案例不另算单元测试，也不证明完整直接SQL写面。隔离库/schema/角色零残留。
 证据 `audit/shipping-lifecycle-write-barrier-20260913.json`。
 
-这只完成安装原子性前置，不是正式幂等安装器：现存协议精确函数/触发器/ACL验证、对象所有者与
-维护权限边界、新建/升级注册、剩余写面及容量仍开放。现有同名对象会拒绝，不擅自替换；
+该阶段只完成安装原子性前置；后续已补候选精确目录及幂等，见上。正式权限边界、
+新建/升级注册、剩余写面及容量仍开放。现有异构同名对象会拒绝，不擅自替换；
 未注册0152/0158，未运行旧runAll，未修改线上。下文安装“未接入”是此前阶段状态。
 
 ## 2026-09-13 负引用拒绝及批量/归属竞争补验（未发布）

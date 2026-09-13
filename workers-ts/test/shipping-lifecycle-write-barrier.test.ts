@@ -124,11 +124,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping install
     } finally { await f.exec('DROP TABLE public.qa_barrier_descendant'); }
   });
 
-  it('preserves a colliding function and rolls back every earlier candidate DDL statement', async () => {
+  it('preserves a preexisting colliding function and refuses candidate DDL before installation', async () => {
     await f.exec('CREATE FUNCTION public.shipping_lifecycle_parent() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$');
     const definition = () => f.query("SELECT oid,pg_get_functiondef(oid) AS definition FROM pg_proc WHERE oid='public.shipping_lifecycle_parent()'::regprocedure");
     const before = await definition(), rows = await state();
-    await expect(installShippingTemplateLifecycleCandidate(f.db)).rejects.toMatchObject({ cause: { code: '42723' } });
+    await expect(installShippingTemplateLifecycleCandidate(f.db)).rejects.toThrow('protocol catalog differs');
     expect(await definition()).toEqual(before); expect(await state()).toEqual(rows);
     expect((await installed()).rows).toEqual([{ proname: 'shipping_lifecycle_parent' }]);
   });
