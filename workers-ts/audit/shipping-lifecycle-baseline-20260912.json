@@ -1,0 +1,129 @@
+{
+  "scope": "FE-003L-A3k12 stored-reference prerequisite and candidate source-TRUNCATE correction",
+  "baseCommit": "48105010af4172265a0ac6820cae775c0315c2a2",
+  "published": false,
+  "checklistCompleted": false,
+  "tests": {
+    "files": 4,
+    "passed": 97,
+    "failed": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "file": "shipping-lifecycle-baseline.test.ts",
+        "passed": 26
+      },
+      {
+        "file": "shipping-lifecycle-baseline-cli.test.ts",
+        "passed": 2
+      },
+      {
+        "file": "shipping-template-lifecycle-candidate.test.ts",
+        "passed": 21
+      },
+      {
+        "file": "shipping-template-lifecycle-services.test.ts",
+        "passed": 48
+      }
+    ],
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-baseline-final-20260912.json",
+    "sha256": "fe39cc99583084bb3a919fb049735f8718dc933d4a6ef50f22ac053f41386c3e",
+    "maxWorkers": 2
+  },
+  "types": {
+    "unit": "passed",
+    "runtime": "passed"
+  },
+  "pairedApplicationAcceptance": [
+    {
+      "candidateInstalled": false,
+      "passed": 8,
+      "mutationObserved": false,
+      "exitCode": 0
+    },
+    {
+      "candidateInstalled": true,
+      "passed": 8,
+      "mutationObserved": false,
+      "exitCode": 0
+    }
+  ],
+  "redTest": {
+    "name": "source product TRUNCATE CASCADE",
+    "before": "Statement resolved successfully rather than rejecting; selected test failed.",
+    "after": "Candidate now rejects with 23503 and preserves reference/template/product/order snapshot."
+  },
+  "developmentFailures": [
+    {
+      "scope": "first baseline suite",
+      "failed": 22,
+      "passed": 4,
+      "reason": "New SQL accidentally used reserved REFERENCES as a bare alias, followed by an ambiguous owner_type; corrected before final full validation."
+    }
+  ],
+  "baseline": {
+    "readOnly": true,
+    "isolation": "repeatable read",
+    "catalogTables": 7,
+    "referenceTables": 6,
+    "output": "aggregate counts and compatibility flags only",
+    "failClosed": [
+      "missing/incompatible tables, columns and primary keys",
+      "inherited or partitioned target tables",
+      "RLS would hide records",
+      "missing SELECT access",
+      "wrong PostgreSQL major version",
+      "nested transaction input"
+    ],
+    "cli": "npm run audit:shipping-lifecycle-baseline",
+    "targetVariable": "SHIPPING_BASELINE_DATABASE_URL",
+    "remoteOptInVariable": "SHIPPING_BASELINE_ALLOW_REMOTE",
+    "fallback": false,
+    "remoteTlsVerified": true,
+    "exitCodes": {
+      "0": "stored-reference snapshot compatible, NOT migration ready",
+      "1": "incompatibility found",
+      "2": "invalid invocation, connection/execution/cleanup failure"
+    }
+  },
+  "cleanup": {
+    "postgresVersion": 160015,
+    "host": "127.0.0.1",
+    "port": 55432,
+    "remainingRandomDatabases": 0,
+    "remainingSchemas": 0,
+    "remainingRoles": 0
+  },
+  "ciAtEvidenceCreation": {
+    "previousRun": 34697111300,
+    "previousSha": "48105010af4172265a0ac6820cae775c0315c2a2",
+    "status": "in_progress",
+    "successfulExistingJobs": 9,
+    "runningJob": "unit shard 1/2",
+    "newChangesCovered": false
+  },
+  "ciFollowup": {
+    "runId": 34697111300,
+    "headSha": "48105010af4172265a0ac6820cae775c0315c2a2",
+    "conclusion": "success",
+    "successfulJobs": 11,
+    "newBaselineChangesCovered": false
+  },
+  "remaining": [
+    "repeat data validation under installer-owned write barrier",
+    "exact function/trigger/ACL catalog drift and idempotent installation",
+    "new/upgrade migration registration, runtime/maintenance privilege boundary",
+    "full source-owner, restoration, direct-SQL and multirow interleavings",
+    "capacity/index and online role verification",
+    "exact new commit Linux CI"
+  ],
+  "boundaries": {
+    "productionReadOrWriteThisTurn": false,
+    "automaticDataRepair": false,
+    "formalInstallerCreated": false,
+    "newMigrationRegistered": false,
+    "installedCandidateOnline": false,
+    "baselineReadyDoesNotAuthorizeInstallation": true,
+    "baselineReadyDoesNotProveFutureWriteProtection": true
+  }
+}

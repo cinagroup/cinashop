@@ -1,0 +1,45 @@
+{
+  "scope": "FE-003L-A3k12 negative stored references, multirow rollback and source ownership interleavings",
+  "baseCommit": "442fbbb29839136496d641458f90d2169a99758c",
+  "published": false,
+  "checklistCompleted": false,
+  "redTest": {
+    "files": 1,
+    "passed": 30,
+    "failed": 6,
+    "reason": "Negative template INSERT resolved successfully in each of six reference tables before explicit final-row rejection was added.",
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-candidate-red-20260913.json",
+    "sha256": "c96ad0c9779bf293256d2a07e73bdeed659733d9c9e54c4657d3b94a5f4ba02d"
+  },
+  "finalTests": {
+    "files": 4,
+    "passed": 112,
+    "failed": 0,
+    "skipped": 0,
+    "maxWorkers": 2,
+    "suites": {"shipping-lifecycle-baseline":26,"shipping-lifecycle-baseline-cli":2,"shipping-template-lifecycle-candidate":36,"shipping-template-lifecycle-services":48},
+    "report": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-baseline-final-20260913.json",
+    "sha256": "b1879e88add0251c388f495955ea2b168e0a6fd79093a96c9380d489568655d2"
+  },
+  "typecheck": {"unit":"passed","runtime":"passed"},
+  "newCoverage": [
+    "six tables reject negative INSERT and UPDATE for free, fixed and template freight; packages have no freight column",
+    "six tables roll back two-row binding UPDATE when one row is invalid, then accept a fully valid update",
+    "multi-template retirement rolls back both referenced and unreferenced sibling",
+    "source transfer first: activity NOWAIT rejection, committed foreign template refusal, matching new-owner template accepted",
+    "activity admission first: pg_blocking_pids proves transfer waits; transfer rejects after committed retained activity"
+  ],
+  "cleanup": {"postgresVersion":160015,"host":"127.0.0.1","port":55432,"remainingRandomDatabases":0,"remainingSchemas":0,"remainingRoles":0},
+  "previousMainCi": {"runId":34698489744,"sha":"442fbbb29839136496d641458f90d2169a99758c","conclusion":"success","successfulJobs":11,"currentChangesCovered":false},
+  "boundaries": {
+    "productionReadsOrWritesThisTurn": false,
+    "deployedThisTurn": false,
+    "databaseReset": false,
+    "formalInstallerCreated": false,
+    "migrationRegistered": false,
+    "automaticDataRepair": false,
+    "allMultirowInterleavingsProven": false,
+    "capacityProven": false
+  },
+  "remaining": ["installer-owned write barrier and baseline revalidation","exact function/trigger/ACL drift and idempotence","formal new/upgrade registration","remaining maintenance, direct-SQL and multirow write surfaces","capacity and online least-privilege identity","new commit Linux CI"]
+}

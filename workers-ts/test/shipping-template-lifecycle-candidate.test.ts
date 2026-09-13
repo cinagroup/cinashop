@@ -32,6 +32,70 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping lifecyc
     'bargains',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM store_bargain t),
     'orders',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM store_order t)) AS state`);
 
+  it.each(refs)('rejects negative stored template IDs in every freight mode for %s', async table => {
+    for (const freight of table === 'store_discounts_products' ? [2] : [1, 2, 3]) {
+      const before = await snapshot(), rows = await f.query(`SELECT * FROM ${table} ORDER BY id`);
+      const statement = bindSql(table, 2, -1).replace(',-1,3)', `,-1,${freight})`);
+      await expect(f.exec(statement)).rejects.toMatchObject({ code: '23503' });
+      expect(await snapshot()).toEqual(before);
+      expect(await f.query(`SELECT * FROM ${table} ORDER BY id`)).toEqual(rows);
+      await f.exec(bindSql(table));
+      const bound = await f.query(`SELECT * FROM ${table} ORDER BY id`);
+      await expect(f.exec(`UPDATE ${table} SET temp_id=-1${table === 'store_discounts_products' ? '' : `,freight=${freight}`} WHERE id=2`))
+        .rejects.toMatchObject({ code: '23503' });
+      expect(await f.query(`SELECT * FROM ${table} ORDER BY id`)).toEqual(bound);
+      await f.exec(`DELETE FROM ${table} WHERE id=2`);
+    }
+  });
+
+  it.each(refs)('rolls back the whole multirow binding update when one %s row is invalid', async table => {
+    await f.exec(bindSql(table, 2)); await f.exec(bindSql(table, 3));
+    const before = await snapshot(), rows = await f.query(`SELECT * FROM ${table} ORDER BY id`);
+    await expect(f.exec(`UPDATE ${table} SET temp_id=CASE WHEN id=2 THEN 11 ELSE 99999 END WHERE id IN (2,3)`))
+      .rejects.toMatchObject({ code: '23503' });
+    expect(await snapshot()).toEqual(before);
+    expect(await f.query(`SELECT * FROM ${table} ORDER BY id`)).toEqual(rows);
+    await f.exec(`UPDATE ${table} SET temp_id=11 WHERE id IN (2,3)`);
+    expect((await f.query(`SELECT temp_id FROM ${table} WHERE id IN (2,3) ORDER BY id`)).rows)
+      .toEqual([{ temp_id: 11 }, { temp_id: 11 }]);
+  });
+
+  it('rolls back multi-template retirement including an unreferenced sibling', async () => {
+    await f.exec(bindSql('store_bargain'));
+    const before = await snapshot();
+    await expect(f.exec('UPDATE shipping_templates SET status=0 WHERE id IN (10,11)'))
+      .rejects.toMatchObject({ code: '23503' });
+    expect(await snapshot()).toEqual(before);
+  });
+
+  it('source transfer first: activity admission refuses NOWAIT and validates the committed owner', async () => {
+    await f.withPeer!(async editor => {
+      await editor.exec('BEGIN; UPDATE store_product SET type=2,relation_id=20 WHERE id=1');
+      try {
+        await expect(f.exec(bindSql('store_bargain'))).rejects.toMatchObject({ code: '55P03' });
+        await editor.exec('COMMIT');
+        await expect(f.exec(bindSql('store_bargain'))).rejects.toMatchObject({ code: '23503' });
+        await f.exec('UPDATE shipping_templates SET owner_type=2,relation_id=20 WHERE id=11');
+        await f.exec(bindSql('store_bargain', 2, 11));
+      } finally { await editor.exec('ROLLBACK'); }
+    });
+  }, 15000);
+
+  it('activity admission first: source transfer waits then rejects the committed retained reference', async () => {
+    await f.withPeer!(async binder => f.withPeer!(async editor => {
+      await binder.exec('BEGIN');
+      try {
+        await binder.exec(bindSql('store_bargain'));
+        const editing = outcome(editor.exec('UPDATE store_product SET type=2,relation_id=20 WHERE id=1'));
+        await waitForFinanceBlock(f.db, editor.pid, binder.pid);
+        await binder.exec('COMMIT');
+        expect(await editing).toMatchObject({ ok: false, error: { code: '23503' } });
+        expect((await f.query('SELECT type,relation_id FROM store_product WHERE id=1')).rows)
+          .toEqual([{ type: 0, relation_id: 0 }]);
+      } finally { await binder.exec('ROLLBACK'); }
+    }));
+  }, 15000);
+
   it.each(refs)('rejects actual admin retirement and direct hard deletion while %s still references the template', async table => {
     await f.exec(bindSql(table));
     const before = await snapshot(), rows = await f.query(`SELECT * FROM ${table} ORDER BY id`);
@@ -83,6 +147,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping lifecyc
       try { await expect(peer.exec(bindSql('store_product'))).rejects.toMatchObject({ code: '25000' }); }
       finally { await peer.exec('ROLLBACK'); }
     });
+  });
+  it('rejects source product TRUNCATE CASCADE without orphaning a retained activity', async () => {
+    await f.exec(bindSql('store_bargain'));
+    const before = await snapshot();
+    await expect(f.exec('TRUNCATE store_product CASCADE')).rejects.toMatchObject({ code: '23503' });
+    expect(await snapshot()).toEqual(before);
   });
   it('binding first: parent retirement waits, then rejects after seeing the newly committed reference', async () => {
     await f.withPeer!(async binder => f.withPeer!(async deleter => {

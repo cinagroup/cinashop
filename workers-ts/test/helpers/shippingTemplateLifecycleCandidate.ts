@@ -51,6 +51,11 @@ BEGIN
  END IF;
  IF TG_OP<>'DELETE' THEN incoming=to_jsonb(NEW); END IF;
  IF TG_OP<>'INSERT' THEN previous=to_jsonb(OLD); END IF;
+ -- Zero is the only unbound/default sentinel. Reject negative stored IDs before
+ -- either free/fixed freight or an unchanged-row shortcut can hide invalid data.
+ IF TG_OP<>'DELETE' AND (incoming->>'temp_id')::integer<0 THEN
+  RAISE EXCEPTION USING ERRCODE='23503',MESSAGE='Shipping template ID cannot be negative';
+ END IF;
  -- Final values, not UPDATE's column list: catches a BEFORE trigger rebinding
  -- during an apparently unrelated update. Ordinary price/stock writes are free.
  IF TG_OP='UPDATE' AND (incoming->'id',incoming->'temp_id',incoming->'freight',incoming->'product_id',incoming->'type',incoming->'relation_id')
@@ -135,7 +140,9 @@ CREATE TRIGGER shipping_lifecycle_child AFTER INSERT OR UPDATE OR DELETE ON publ
  FOR EACH ROW EXECUTE FUNCTION public.shipping_lifecycle_child();
 CREATE FUNCTION public.shipping_lifecycle_no_truncate() RETURNS trigger
 LANGUAGE plpgsql VOLATILE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $$
-BEGIN RAISE EXCEPTION USING ERRCODE='23503',MESSAGE='Shipping template TRUNCATE requires a separate maintenance protocol'; END $$;
+BEGIN RAISE EXCEPTION USING ERRCODE='23503',MESSAGE='Shipping template/source TRUNCATE requires a separate maintenance protocol'; END $$;
 CREATE TRIGGER shipping_lifecycle_no_truncate BEFORE TRUNCATE ON public.shipping_templates
+ FOR EACH STATEMENT EXECUTE FUNCTION public.shipping_lifecycle_no_truncate();
+CREATE TRIGGER shipping_lifecycle_no_truncate BEFORE TRUNCATE ON public.store_product
  FOR EACH STATEMENT EXECUTE FUNCTION public.shipping_lifecycle_no_truncate();
 `;
