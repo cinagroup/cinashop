@@ -28,7 +28,10 @@ Worker `89286bbd-d8ca-4db1-a952-6f51bc2f6427` 承接 100% 流量。
 本机切换 main 后还复现审计 AST 取出的多行 handler 保留 CRLF、与 Linux 快照不同；
 审计脚本现统一哈希和解析输入的换行，新增 LF/CRLF/CR 三个回归，保留完整确定性相等断言。
 修正后本机 3 文件 31 项通过、零失败/跳过。修正仅涉及审计工具、快照、测试和文档，应用源码/配置/前端与已发布提交一致。
-main 的首轮 Actions 34751911259 在此记录时仍运行；后续修正提交将触发自己的 main CI，终态需单独核实。
+修正已作为 `ce8739d5955fc2325842856da267fb4cb8149f1b` 推送 main，双类型检查通过；
+[修正后的 Actions 34752548223](https://github.com/cinagroup/cinashop/actions/runs/34752548223) 已开始运行，尚未取得终态。
+main 首轮 Actions 34751911259 被既有同分支 concurrency 策略自动取消；不是通过，也非人为重跑掩盖失败。
+已用 git diff 确认修正提交的 Worker 应用源码、Wrangler 配置和全部前端与已部署 37d3308 一致。
 
 ## 范围及清理
 
