@@ -16,6 +16,11 @@ const request: AxiosInstance = axios.create({
   timeout: 30000,
 });
 
+/** Preserve the business status so mutation UIs can distinguish rejection from an unknown outcome. */
+export class AdminResponseError extends Error {
+  constructor(message: string, readonly status: unknown) { super(message); this.name = 'AdminResponseError'; }
+}
+
 function expireCurrentRequest(response: AxiosResponse | undefined) {
   const bearer = response?.config.headers?.['Authori-zation'];
   // A late 401 from a previous account must not log out the replacement session.
@@ -41,7 +46,7 @@ request.interceptors.response.use(
     if (data && [410000, 410001, 410002].includes(data.status)) {
       expireCurrentRequest(response);
     }
-    return Promise.reject(new Error(data?.msg ?? "请求失败"));
+    return Promise.reject(new AdminResponseError(data?.msg ?? "请求失败", data?.status));
   },
   (error) => {
     if (axios.isAxiosError(error) && (error.response?.status === 401 || [410000, 410001, 410002].includes(error.response?.data?.status))) expireCurrentRequest(error.response);

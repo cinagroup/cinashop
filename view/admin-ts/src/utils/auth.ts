@@ -26,7 +26,9 @@ export interface StoredAdminSession {
 }
 
 export function setToken(token: string): void {
+  const changed = getToken() !== token;
   localStorage.setItem(TOKEN_KEY, token);
+  if (changed) window.dispatchEvent(new Event('admin-session-changed'));
 }
 
 export function getToken(): string | null {
@@ -38,7 +40,10 @@ export function isLoggedIn(): boolean {
 }
 
 export function setAdminSession(session: StoredAdminSession): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  const value = JSON.stringify(session);
+  const changed = localStorage.getItem(SESSION_KEY) !== value;
+  localStorage.setItem(SESSION_KEY, value);
+  if (changed) window.dispatchEvent(new Event('admin-session-changed'));
 }
 
 export function getAdminSession(): StoredAdminSession | null {
@@ -58,4 +63,5 @@ export function getAdminSession(): StoredAdminSession | null {
 export function clearAuth(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(SESSION_KEY);
+  window.dispatchEvent(new Event('admin-session-changed'));
 }

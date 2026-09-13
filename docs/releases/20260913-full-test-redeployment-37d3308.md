@@ -29,7 +29,7 @@ Worker `89286bbd-d8ca-4db1-a952-6f51bc2f6427` 承接 100% 流量。
 审计脚本现统一哈希和解析输入的换行，新增 LF/CRLF/CR 三个回归，保留完整确定性相等断言。
 修正后本机 3 文件 31 项通过、零失败/跳过。修正仅涉及审计工具、快照、测试和文档，应用源码/配置/前端与已发布提交一致。
 修正已作为 `ce8739d5955fc2325842856da267fb4cb8149f1b` 推送 main，双类型检查通过；
-[修正后的 Actions 34752548223](https://github.com/cinagroup/cinashop/actions/runs/34752548223) 已开始运行，尚未取得终态。
+[修正后的 Actions 34752548223](https://github.com/cinagroup/cinashop/actions/runs/34752548223) 后续已核实终态 success，11/11 作业成功。
 main 首轮 Actions 34751911259 被既有同分支 concurrency 策略自动取消；不是通过，也非人为重跑掩盖失败。
 已用 git diff 确认修正提交的 Worker 应用源码、Wrangler 配置和全部前端与已部署 37d3308 一致。
 

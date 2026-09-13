@@ -35,8 +35,8 @@ export interface ShippingTemplateListResult {
   nextCursor: string | null;
 }
 
-export async function apiAdminShippingTemplateList(params: { limit: number; name?: string; cursor?: string }): Promise<ShippingTemplateListResult> {
-  const result = await getData<ShippingTemplateListResult>(request.get("/shipping_template/list", { params }));
+export async function apiAdminShippingTemplateList(params: { limit: number; name?: string; cursor?: string }, signal?: AbortSignal): Promise<ShippingTemplateListResult> {
+  const result = await getData<ShippingTemplateListResult>(request.get("/shipping_template/list", { params, signal }));
   if (!result || !Array.isArray(result.list) || !Array.isArray(result.regions) || result.list.length > params.limit
     || result.regions.length > 1000 || result.limit !== params.limit || !Number.isSafeInteger(result.count) || result.count < result.list.length
     || (result.nextCursor !== null && (typeof result.nextCursor !== 'string' || !/^-?\d{1,10}:[1-9]\d{0,9}$/.test(result.nextCursor)))
@@ -46,8 +46,11 @@ export async function apiAdminShippingTemplateList(params: { limit: number; name
   return result;
 }
 
-export function apiAdminShippingTemplateSave(data: Record<string, unknown>): Promise<{ id: number }> {
-  return getData(request.post<{ id: number }>("/shipping_template/save", data));
+export async function apiAdminShippingTemplateSave(data: Record<string, unknown>, signal?: AbortSignal): Promise<{ id: number }> {
+  const result = await getData<{ id: number }>(request.post("/shipping_template/save", data, { signal }));
+  if (!result || !Number.isSafeInteger(result.id) || result.id <= 0 || result.id > 2147483647
+    || (typeof data.id === 'number' && data.id > 0 && result.id !== data.id)) throw new Error('保存回执不完整，结果未知');
+  return result;
 }
 
 export interface ShippingGroupedRegion { city_ids: number[][]; first: string; first_price: string; continue: string; continue_price: string }
@@ -64,8 +67,8 @@ interface ShippingDetail {
   formData: Omit<ShippingGroupedForm, 'region_info' | 'appoint_info' | 'no_delivery_info' | 'expectedRevision'>;
   region_info: ShippingGroupedRegion[]; appoint_info: ShippingGroupedFree[]; no_delivery_info: ShippingGroupedNoDelivery[];
 }
-export async function apiAdminShippingTemplateDetail(id: number): Promise<ShippingDetail> {
-  const data = await getData<ShippingDetail>(request.get(`/shipping_template/${id}/edit`));
+export async function apiAdminShippingTemplateDetail(id: number, signal?: AbortSignal): Promise<ShippingDetail> {
+  const data = await getData<ShippingDetail>(request.get(`/shipping_template/${id}/edit`, { signal }));
   const paths = (rows: unknown, fields: string[]) => Array.isArray(rows) && rows.length <= 100 && rows.every(row =>
     row && typeof row === 'object' && Array.isArray(row.city_ids) && row.city_ids.length <= 1000
     && row.city_ids.every((path: unknown) => Array.isArray(path) && path.length > 0 && path.length <= 4 && path.every(p => Number.isSafeInteger(p) && p >= 0))
@@ -77,8 +80,8 @@ export async function apiAdminShippingTemplateDetail(id: number): Promise<Shippi
     || !paths(data.no_delivery_info, [])) throw new Error('模板详情不完整，请重新打开后重试');
   return data;
 }
-export async function apiAdminShippingCities(): Promise<ShippingCity[]> {
-  const data = await getData<ShippingCity[]>(request.get('/shipping_template/city_list'));
+export async function apiAdminShippingCities(signal?: AbortSignal): Promise<ShippingCity[]> {
+  const data = await getData<ShippingCity[]>(request.get('/shipping_template/city_list', { signal }));
   if (!Array.isArray(data) || data.length > 64 || data.some(root => !root || !Number.isSafeInteger(root.city_id) || root.city_id <= 0
     || typeof root.name !== 'string' || !Array.isArray(root.children) || root.children.length > 1000
     || root.children.some(city => !city || !Number.isSafeInteger(city.city_id) || city.city_id <= 0 || typeof city.name !== 'string'))) {
@@ -87,8 +90,10 @@ export async function apiAdminShippingCities(): Promise<ShippingCity[]> {
   return data;
 }
 
-export function apiAdminShippingTemplateDel(id: number): Promise<null> {
-  return getData(request.delete<null>(`/shipping_template/del/${id}`));
+export async function apiAdminShippingTemplateDel(id: number, signal?: AbortSignal): Promise<null> {
+  const result = await getData<null>(request.delete(`/shipping_template/del/${id}`, { signal }));
+  if (result !== null) throw new Error('删除回执不完整，结果未知');
+  return result;
 }
 
 export interface ExpressItem {

@@ -261,8 +261,9 @@
     "correctedMainRun": {
       "id": 34752548223,
       "sourceCommit": "ce8739d5955fc2325842856da267fb4cb8149f1b",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
+      "successfulJobs": 11,
       "url": "https://github.com/cinagroup/cinashop/actions/runs/34752548223",
       "runtimeSourceMatchesDeployed": true,
       "localDualTypecheck": "passed"

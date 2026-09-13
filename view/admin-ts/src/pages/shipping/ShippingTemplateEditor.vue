@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { ElMessageBox } from 'element-plus';
-import { isAxiosError } from 'axios';
-import { getToken } from '@/utils/auth';
+import { AdminResponseError } from '@/utils/request';
+import { createAdminSessionScope } from '@/utils/adminSessionScope';
 import { apiAdminShippingCities, apiAdminShippingTemplateDetail, apiAdminShippingTemplateSave,
   type ShippingGroupedForm, type ShippingGroupedRegion, type ShippingCity } from '@/api/shipping';
 
@@ -16,17 +16,21 @@ const loading = ref(true), saving = ref(false), ready = ref(false), error = ref(
 const uncertain = ref(false);
 const errorBanner = ref<HTMLElement | null>(null);
 watch(error, async value => { if (value) { await nextTick(); errorBanner.value?.scrollIntoView({ block: 'nearest' }); } });
-const openedToken = getToken();
 let generation = 0;
+const scope = createAdminSessionScope(() => {
+  generation++; ready.value = false; loading.value = false; saving.value = false;
+  error.value = '登录身份已变化，请关闭后重新打开；已发出的保存可能已完成，请先核对。';
+});
 const unit = computed(() => form.type === 1 ? '件' : form.type === 2 ? 'KG' : 'm³');
 const cascaderProps = { value: 'city_id', label: 'name', children: 'children', multiple: true, checkStrictly: true, emitPath: true };
 const regionOptions = computed(() => [{ city_id: 0, name: '默认全国' }, ...cities.value]);
-const current = (run: number) => run === generation && getToken() === openedToken;
+const current = (run: number) => run === generation && scope.isCurrent();
 async function load() {
+  if (!scope.isCurrent()) return;
   const run = ++generation;
   loading.value = true; ready.value = false; error.value = '';
   try {
-    const [options, detail] = await Promise.all([apiAdminShippingCities(), props.id ? apiAdminShippingTemplateDetail(props.id) : Promise.resolve(null)]);
+    const [options, detail] = await Promise.all([apiAdminShippingCities(scope.signal), props.id ? apiAdminShippingTemplateDetail(props.id, scope.signal) : Promise.resolve(null)]);
     if (!current(run)) return;
     cities.value = options;
     if (detail) Object.assign(form, detail.formData, { expectedRevision: detail.revision, region_info: detail.region_info,
@@ -58,7 +62,7 @@ function validation() {
 }
 async function save() {
   if (saving.value || !ready.value || uncertain.value) return;
-  if (getToken() !== openedToken) { ready.value = false; error.value = '登录身份已变化，请关闭后重新打开'; return; }
+  if (!scope.isCurrent()) return;
   error.value = validation(); if (error.value) return;
   const run = generation;
   saving.value = true;
@@ -66,18 +70,18 @@ async function save() {
     // Freeze this attempt; never rebuild it from inputs while the request is outstanding.
     const payload = JSON.parse(JSON.stringify({ ...form, name: form.name.trim(),
       appoint_info: form.appoint ? form.appoint_info : [], no_delivery_info: form.no_delivery ? form.no_delivery_info : [] }));
-    await apiAdminShippingTemplateSave(payload);
+    await apiAdminShippingTemplateSave(payload, scope.signal);
     if (current(run)) emit('saved');
   } catch (e) {
     if (current(run)) {
-      uncertain.value = isAxiosError(e);
+      uncertain.value = !(e instanceof AdminResponseError && e.status === 400);
       error.value = uncertain.value ? '保存结果未知，已停止重试。请关闭编辑器并刷新列表核对，避免重复创建或覆盖。' : e instanceof Error ? e.message : '保存失败，请核对服务器状态后重试';
     }
   }
   finally { if (run === generation) saving.value = false; }
 }
 onMounted(load);
-onBeforeUnmount(() => { generation++; });
+onBeforeUnmount(() => { generation++; scope.dispose(); });
 </script>
 
 <template>

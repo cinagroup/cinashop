@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>运费模板</span>
-          <el-button type="primary" size="small" @click="openForm()">＋ 新增模板</el-button>
+          <el-button type="primary" size="small" :disabled="sessionInvalid || deletePending" @click="openForm()">＋ 新增模板</el-button>
         </div>
       </template>
 
@@ -37,8 +37,8 @@
         </el-table-column>
         <el-table-column label="操作" width="140" :fixed="compactTable ? false : 'right'">
           <template #default="{ row }">
-            <el-button size="small" @click="openForm(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="del(row)">删除</el-button>
+            <el-button size="small" :disabled="deletePending || sessionInvalid" @click="openForm(row)">编辑</el-button>
+            <el-button size="small" type="danger" :disabled="deletePending || sessionInvalid || uncertainDelete !== null" @click="del(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -57,7 +57,8 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import ShippingTemplateEditor from './ShippingTemplateEditor.vue';
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getToken } from '@/utils/auth';
+import { createAdminSessionScope } from '@/utils/adminSessionScope';
+import { AdminResponseError } from '@/utils/request';
 import {
   apiAdminShippingTemplateList,
   apiAdminShippingTemplateDel,
@@ -81,6 +82,14 @@ const loadError = ref('');
 let loadGeneration = 0;
 const formVisible = ref(false);
 const editId = ref(0);
+const deletePending = ref(false), sessionInvalid = ref(false);
+const uncertainDelete = ref<number | null>(null);
+const scope = createAdminSessionScope(() => {
+  sessionInvalid.value = true; loadGeneration++; loading.value = false;
+  list.value = []; regions.value = []; count.value = null; nextCursor.value = null; formVisible.value = false;
+  if (deletePending.value) ElMessageBox.close();
+  loadError.value = '登录身份已变化，请刷新页面后重新进入；已发出的保存或删除可能已完成，请先核对。';
+});
 
 function regionText(templateId: number) {
   const rs = regions.value.filter((r) => r.templateId === templateId);
@@ -96,8 +105,8 @@ function regionText(templateId: number) {
 }
 
 async function load() {
+  if (!scope.isCurrent()) return;
   const generation = ++loadGeneration;
-  const token = getToken();
   loading.value = true;
   loadError.value = '';
   list.value = [];
@@ -105,14 +114,15 @@ async function load() {
   nextCursor.value = null;
   count.value = null;
   try {
-    const result = await apiAdminShippingTemplateList({ limit: limit.value, name: appliedName.value, cursor: cursors.value.at(-1) });
-    if (generation !== loadGeneration || getToken() !== token) return;
+    const result = await apiAdminShippingTemplateList({ limit: limit.value, name: appliedName.value, cursor: cursors.value.at(-1) }, scope.signal);
+    if (generation !== loadGeneration || !scope.isCurrent()) return;
     list.value = result.list;
     regions.value = result.regions;
     count.value = result.count;
     nextCursor.value = result.nextCursor;
+    if (uncertainDelete.value !== null) loadError.value = `模板 ${uncertainDelete.value} 的删除结果未知，已刷新列表；请核对记录后重新进入页面再操作。`;
   } catch (e) {
-    if (generation === loadGeneration && getToken() === token) loadError.value = e instanceof Error ? e.message : '加载失败';
+    if (generation === loadGeneration && scope.isCurrent()) loadError.value = e instanceof Error ? e.message : '加载失败';
   } finally {
     if (generation === loadGeneration) loading.value = false;
   }
@@ -122,32 +132,38 @@ function refreshFirstPage() { cursors.value = [undefined]; void load(); }
 function search() { appliedName.value = searchName.value.trim(); refreshFirstPage(); }
 function nextPage() { if (!loading.value && nextCursor.value) { cursors.value.push(nextCursor.value); void load(); } }
 function previousPage() { if (!loading.value && cursors.value.length > 1) { cursors.value.pop(); void load(); } }
-onBeforeUnmount(() => { loadGeneration++; window.removeEventListener('resize', updateTableWidth); });
+onBeforeUnmount(() => { loadGeneration++; scope.dispose(); if (deletePending.value) ElMessageBox.close(); window.removeEventListener('resize', updateTableWidth); });
 
 function openForm(row?: ShippingTemplate) {
+  if (!scope.isCurrent() || deletePending.value) return;
   ElMessage.closeAll();
   editId.value = row?.id ?? 0;
   formVisible.value = true;
 }
 function editorSaved() {
+  if (!scope.isCurrent()) return;
   formVisible.value = false;
   ElMessage.success('保存成功');
   refreshFirstPage();
 }
 
 async function del(row: ShippingTemplate) {
+  if (deletePending.value || uncertainDelete.value !== null || !scope.isCurrent()) return;
+  deletePending.value = true;
+  const id = row.id;
   try {
-    await ElMessageBox.confirm(`确认删除模板「${row.name}」?`, "删除确认", { type: "warning" });
-  } catch {
-    return;
-  }
-  try {
-    await apiAdminShippingTemplateDel(row.id);
+    try { await ElMessageBox.confirm(`确认删除模板「${row.name}」?`, "删除确认", { type: "warning" }); }
+    catch { return; }
+    if (!scope.isCurrent()) return;
+    await apiAdminShippingTemplateDel(id, scope.signal);
+    if (!scope.isCurrent()) return;
     ElMessage.success("已删除");
     refreshFirstPage();
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "删除失败");
-  }
+    if (!scope.isCurrent()) return;
+    if (e instanceof AdminResponseError && e.status === 400) ElMessage.error(e.message);
+    else { uncertainDelete.value = id; loadError.value = `模板 ${id} 的删除结果未知，已停止重试；请刷新列表核对后重新进入页面。`; }
+  } finally { deletePending.value = false; }
 }
 
 onMounted(load);
