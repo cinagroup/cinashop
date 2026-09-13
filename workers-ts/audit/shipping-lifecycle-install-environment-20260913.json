@@ -1,0 +1,40 @@
+{
+  "scope": "shipping lifecycle candidate installation environment",
+  "baseCommit": "501bcb97bdc4ccfe88928b9476c934964cbe7e73",
+  "engine": "isolated local PostgreSQL 16.15",
+  "red": {
+    "failed": 3,
+    "ddlCommandStartAndEnd": "installation committed and exact protocol catalog was complete, while historical order postage changed from 12.34 to 99.99",
+    "replicaMode": "installation incorrectly returned applied=true",
+    "reportSha256": "10514ea65dac191ebcc5a4fb40f8bca32f7388e72daf0a5716300af24f823657"
+  },
+  "verification": {
+    "newTests": 19,
+    "newRealPg16Scenarios": 13,
+    "newFailClosedUnitCases": 6,
+    "regressionFiles": 8,
+    "passed": 225,
+    "failed": 0,
+    "skipped": 0,
+    "bothTypechecksPassed": true,
+    "reportSha256": "b7eabcbc81f6c9ff7394434ba96cb1c8b5d6ee4d1ac3fd75d359c043d2dda65e",
+    "remainingOwnedDatabases": 0,
+    "remainingOwnedSchemas": 0,
+    "remainingOwnedRoles": 0
+  },
+  "contract": {
+    "requiresOriginOrLocalReplicationMode": true,
+    "rejectsAllEnabledEventTriggers": true,
+    "checksBeforeTableLocksAndAgainAfterLockedBaseline": true,
+    "peerEnableAfterInitialCheckRejected": true,
+    "disabledEventsPreservedAndFirstRepeatInstallationVerified": true,
+    "installerChangesEventTriggersOrReplicationMode": false
+  },
+  "limits": {
+    "independentMaintenanceIdentitiesFenced": false,
+    "nonProtocolRowTriggerInteractionsFullyVerified": false,
+    "formalMigrationRegistered": false,
+    "productionSqlOrDeploymentExecuted": false,
+    "newCommitCiStatus": "pending"
+  }
+}

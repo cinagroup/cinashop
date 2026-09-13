@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { boundShippingLifecycleInspection, inspectShippingLifecycleBaseline, inspectShippingLifecycleCatalog } from './inspectShippingLifecycleBaseline';
+import { assertShippingLifecycleInstallationEnvironment } from './assertShippingLifecycleInstallationEnvironment';
 
 type Transaction = Parameters<Parameters<DbClient['transaction']>[0]>[0];
 
@@ -23,6 +24,7 @@ export async function withShippingLifecycleWriteBarrier<T>(
     if (!identity || Math.floor(identity.version / 10000) !== 16 || !identity.writable || !identity.readCommitted) {
       throw new Error('Shipping installation requires a PostgreSQL 16 read-write read-committed transaction');
     }
+    await assertShippingLifecycleInstallationEnvironment(tx);
     // Reject known views/partitions/inheritance before requesting relation locks.
     // This initial catalog check is NOT trusted: the locked inspection repeats it.
     const shape = await inspectShippingLifecycleCatalog(tx);
@@ -37,6 +39,9 @@ export async function withShippingLifecycleWriteBarrier<T>(
       ONLY public.store_product, ONLY public.store_seckill IN SHARE ROW EXCLUSIVE MODE NOWAIT`));
     const baseline = await inspectShippingLifecycleBaseline(tx);
     if (!baseline.baselineReady) throw new Error('Shipping installation baseline is incompatible');
+    // The earlier environment snapshot is not an installation permit. Recheck
+    // after the table barriers and baseline work, immediately before trusted DDL.
+    await assertShippingLifecycleInstallationEnvironment(tx);
     return install(tx);
   }, { isolationLevel: 'read committed', accessMode: 'read write' });
 }
