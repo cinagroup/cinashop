@@ -1,0 +1,621 @@
+{
+  "scope": "A3k12 registered shipping-template route authorization on isolated PostgreSQL16",
+  "baseCommit": "92377df3a4f207c3290cb7a17282fd426a9772b9",
+  "source": {
+    "path": "workers-ts/test/shipping-lifecycle-route-auth.test.ts",
+    "sha256NormalizedLf": "e34d831b476fac9c303eb7fe01518c36a1881a7d9de4b2c95ced937226f998e0"
+  },
+  "implementationChanged": false,
+  "coverage": {
+    "registeredRouters": [
+      "adminapiRoutes mounted /adminapi",
+      "v1Routes mounted /api (admin aliases)",
+      "supplierapiRoutes mounted /supplierapi"
+    ],
+    "operations": [
+      "save existing template",
+      "retire template",
+      "view template list"
+    ],
+    "actualExecution": [
+      "JWT creation and signature/type/expiry verification",
+      "database account/status/password-version reads",
+      "database role/capability resolution",
+      "actual registered route middleware and controllers",
+      "lifecycle services and formal installed PostgreSQL protocol"
+    ],
+    "substitutions": [
+      "in-memory token bucket",
+      "deny-all external fetch"
+    ],
+    "identityInjectedIntoContext": false,
+    "fullOrm": true,
+    "formalProtocolEntrypoint": "runShippingLifecycle(rootDb)",
+    "protectedRows": [
+      "template/rule rows",
+      "six reference tables",
+      "historical full orders",
+      "account/role/supplier rows"
+    ],
+    "negativeClaims": "Exact expected business codes and persisted row snapshots; no claim that rejection executes zero SQL"
+  },
+  "verification": {
+    "firstAttempt": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-route-auth-first-20260913.json",
+      "sha256": "B8BC6390CE2B9BDD5016D7853547309271F9D8491E313736AD96961F6357D912",
+      "passed": 77,
+      "failed": 9,
+      "skipped": 0,
+      "assertions": [
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects wrong_type before any shipping/history mutation",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects wrong_type before any shipping/history mutation",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects wrong_type before any shipping/history mutation",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects wrong_type before any shipping/history mutation",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects wrong_type before any shipping/history mutation",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects wrong_type before any shipping/history mutation",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi permitted edit and delete keep historical orders and unrelated owners unchanged",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi reloads revoked role permissions on the next request with the same signed token",
+          "status": "failed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplier save cannot touch another owner despite forged request identity",
+          "status": "failed"
+        }
+      ],
+      "classification": "Fixture contract errors, not application security findings",
+      "causes": [
+        "Six wrong token type assertions expected JWT-layer410002; bucket type correctly rejected first with410000",
+        "Three Supplier requests omitted required appoint_info/no_delivery_info arrays and correctly failed validation"
+      ]
+    },
+    "finalRouteSuite": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-route-auth-final-20260913.json",
+      "sha256": "1839535486D493C06F83325EA9BDBF80B65F08C7AA3DDCDAF7CF7E5BA12BD3E9",
+      "passed": 98,
+      "failed": 0,
+      "skipped": 0,
+      "assertions": [
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects absent before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects signature before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects expired before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects revoked before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects bucket_owner before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects wrong_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects jwt_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects banned before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects deleted before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects password before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects view_only before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects role_disabled before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi save rejects role_missing before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects absent before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects signature before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects expired before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects revoked before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects bucket_owner before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects wrong_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects jwt_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects banned before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects deleted before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects password before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects view_only before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects role_disabled before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi delete rejects role_missing before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi permitted edit and delete keep historical orders and unrelated owners unchanged",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi manage capability does not bypass retained-reference retirement protection",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi reloads revoked role permissions on the next request with the same signed token",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi view-only role can read its registered list without acquiring write capability",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects absent before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects signature before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects expired before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects revoked before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects bucket_owner before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects wrong_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects jwt_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects banned before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects deleted before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects password before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects view_only before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects role_disabled before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin save rejects role_missing before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects absent before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects signature before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects expired before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects revoked before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects bucket_owner before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects wrong_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects jwt_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects banned before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects deleted before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects password before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects view_only before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects role_disabled before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin delete rejects role_missing before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin permitted edit and delete keep historical orders and unrelated owners unchanged",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin manage capability does not bypass retained-reference retirement protection",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin reloads revoked role permissions on the next request with the same signed token",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin view-only role can read its registered list without acquiring write capability",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects absent before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects signature before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects expired before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects revoked before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects bucket_owner before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects wrong_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects jwt_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects banned before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects deleted before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects password before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects view_only before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects role_disabled before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi save rejects role_missing before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects absent before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects signature before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects expired before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects revoked before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects bucket_owner before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects wrong_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects jwt_type before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects banned before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects deleted before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects password before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects view_only before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects role_disabled before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi delete rejects role_missing before any shipping/history mutation",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi permitted edit and delete keep historical orders and unrelated owners unchanged",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi manage capability does not bypass retained-reference retirement protection",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi reloads revoked role permissions on the next request with the same signed token",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplierapi view-only role can read its registered list without acquiring write capability",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 adminapi refuses a non-platform account even with a valid admin JWT and manage role",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 api/admin refuses a non-platform account even with a valid admin JWT and manage role",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplier primary bypasses role assignment but cannot bypass retained references or tenant scope",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplier save cannot touch another owner despite forged request identity",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplier delete cannot touch another owner despite forged request identity",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplier rejects supplier_disabled without changing shipping rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplier rejects foreign_role without changing shipping rows",
+          "status": "passed"
+        },
+        {
+          "fullName": "shipping lifecycle registered-route authorization on full PG16 supplier rejects wrong_admin_type without changing shipping rows",
+          "status": "passed"
+        }
+      ]
+    },
+    "combinedRegression": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-route-auth-regression-20260913.json",
+      "sha256": "6847E69B5EE853B3B78273A4769D9AE97AD91814CF7FD3D6C440B5072171FB66",
+      "passed": 217,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        {
+          "name": "admin-permission.test.ts",
+          "count": 6,
+          "status": "passed"
+        },
+        {
+          "name": "ci-gate-capacity.test.ts",
+          "count": 3,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-route-auth.test.ts",
+          "count": 98,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-rules.test.ts",
+          "count": 55,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-template-lifecycle-services.test.ts",
+          "count": 48,
+          "status": "passed"
+        },
+        {
+          "name": "supplier-shipping-template.test.ts",
+          "count": 7,
+          "status": "passed"
+        }
+      ]
+    },
+    "finalBothTypeScriptConfigurationsPassed": true,
+    "cleanup": {
+      "version": "160015",
+      "databases": 0,
+      "schemas": 0,
+      "roles": 0
+    }
+  },
+  "ci": {
+    "exactIncrement": "pending_commit_and_dispatch",
+    "previousRuleRun": {
+      "runId": 34744193037,
+      "conclusion": "",
+      "headSha": "92377df3a4f207c3290cb7a17282fd426a9772b9",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "Repository secret scan",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "workerd runtime tests",
+          "status": "completed"
+        },
+        {
+          "conclusion": "",
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "status": "in_progress"
+        },
+        {
+          "conclusion": "success",
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "UniApp build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Kefu build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Supplier build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "PC build",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Admin build",
+          "status": "completed"
+        }
+      ],
+      "status": "in_progress"
+    },
+    "previousResultDoesNotVerifyNewTests": true
+  },
+  "boundaries": {
+    "onlineChanged": false,
+    "applicationCodeChanged": false,
+    "realRedis": false,
+    "loginFlow": false,
+    "browser": false,
+    "topLevelWorkerCorsCsrf": false,
+    "realOnlineIdentities": false,
+    "formalRuntimeDatabaseRole": false,
+    "allProductActivityWriters": false,
+    "inFlightRevocationRace": false,
+    "A3k12Complete": false
+  },
+  "checklist": {
+    "checked": 239,
+    "open": 165,
+    "total": 404
+  }
+}

@@ -4,3 +4,4 @@ workers-ts/migrations/*.sql text eol=lf
 # Preserve captured index-audit report hashes across Windows/Linux checkouts.
 workers-ts/audit/shipping-lifecycle-index*.json text eol=lf
 workers-ts/audit/shipping-lifecycle-rules*.json text eol=lf
+workers-ts/audit/shipping-lifecycle-route-auth*.json text eol=lf
