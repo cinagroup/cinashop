@@ -1,5 +1,6 @@
-/** Unregistered protocol definition. Only the owned-test candidate installs it.
- * Registration and complete runtime/maintenance privilege policy remain open. */
+/** Fixed protocol definition, installed only through the verified maintenance
+ * migration. Historical CANDIDATE name retained for existing tests/imports.
+ * Full runtime/maintenance privilege acceptance remains a separate gate. */
 export const SHIPPING_LIFECYCLE_CANDIDATE_SQL = String.raw`
 CREATE FUNCTION public.shipping_lifecycle_ref(temp integer, freight integer) RETURNS integer
 LANGUAGE sql IMMUTABLE STRICT SECURITY INVOKER SET search_path=pg_catalog,pg_temp

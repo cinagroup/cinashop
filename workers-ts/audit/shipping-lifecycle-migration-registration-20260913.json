@@ -1,0 +1,404 @@
+{
+  "scope": "Shipping lifecycle formal migration registration; isolated PG16 only",
+  "baseCommit": "43645a80aa65a17841492b15afa4d8aeab995d1d",
+  "registration": {
+    "filesystem": "0152_shipping_lifecycle.sql",
+    "embedded": "0158",
+    "embeddedSteps": 159,
+    "existingStepsUnchanged": "0000–0157",
+    "existingDatabaseEntrypoint": "runShippingLifecycle(rootDb)",
+    "automaticStartupHook": false,
+    "existingDatabaseHistoricalRunAllAllowed": false,
+    "sharedFixedSqlAndQueries": true,
+    "fileSqlSha256": "7f20077cc2f14d2838d23f034e1f1340795f592864748c2bc3256d9f3feafb18"
+  },
+  "contract": {
+    "engine": "PostgreSQL 16",
+    "isolation": "read committed",
+    "rootReadWriteTransaction": true,
+    "fixedPublicTables": 7,
+    "lockMode": "SHARE ROW EXCLUSIVE NOWAIT",
+    "freshLockedRetainedReferenceCategories": 6,
+    "environmentCheckedBeforeAndAfterLocks": true,
+    "rawSqlIndependentlyChecksEnvironmentBaselineAndCatalog": true,
+    "exactFunctions": 5,
+    "exactTriggers": 9,
+    "completeProtocolIsOidPreservingNoop": true,
+    "partialOrDriftedProtocolRejectedWithoutReplacement": true,
+    "newObjectsPostverifiedOrRolledBack": true,
+    "rawSqlRequiresBoundedSingleTransaction": true,
+    "strictCallerTimeoutsNotLoosened": true,
+    "noBackfillOrGrants": true
+  },
+  "verification": {
+    "finalRegressionFiles": 12,
+    "finalRegressionPassed": 322,
+    "failed": 0,
+    "skipped": 0,
+    "newMigrationFileTests": 52,
+    "rawSqlCatalogMutations": 33,
+    "realFullConstructionPaths": [
+      "external",
+      "embedded",
+      "orm-upgrade"
+    ],
+    "historySnapshots": [
+      "users",
+      "products",
+      "templates",
+      "orders",
+      "sequences"
+    ],
+    "bothTypechecksPassed": true,
+    "regressionReportSha256": "70bc4dbc8440ace5084e6cf86ceec145d445028bff3109e98672e44d6ad909af",
+    "fullNinePathCatalogAudit": {
+      "status": "passed_pre_format",
+      "priorAttempt": {
+        "exitCode": 1,
+        "message": "Catalog audit cleanup incomplete",
+        "remainingDatabase": "orm_audit_table_gate_c6aa12516c9f4844a504d4bd785a906e",
+        "observedInvalidDatconnlimit": -2,
+        "activeConnections": 0,
+        "owner": "finance_test",
+        "originalNestedCauseUnavailable": true,
+        "preciseCleanupSucceeded": true,
+        "remainingAuditDatabasesAfterCleanup": 0
+      },
+      "retryChanges": "none at audit start: same code, SQL, assertions and timeout values",
+      "auditInputFileSqlSha256": "955f54bb6be0585ac01a6724f73a50d19a0b277ae1e2dc35e41fd85b002ec929",
+      "subsequentFormattingOnlyChange": "Removed two trailing spaces on the blank line before LOCK from SQL and generator; captured audit input is pre-format, final commit requires separate CI verification",
+      "exitCode": 0,
+      "serverVersionNum": 160015,
+      "externalInputSha256": "ceeb29de305f574fc7ff610488e36c49df5641de223c69b95c065d9e5f97333b",
+      "generatedSqlSha256": "b2b7cfd6b41c81a6e16c1f1911dc703bf74e43830561b6ef78b4a4ca04290847",
+      "paths": [
+        {
+          "path": "external",
+          "steps": 154
+        },
+        {
+          "path": "embedded",
+          "steps": 159
+        },
+        {
+          "path": "orm",
+          "steps": 1081
+        },
+        {
+          "path": "orm_upgrade",
+          "steps": 1201
+        },
+        {
+          "path": "orm_default_upgrade",
+          "steps": 1082
+        },
+        {
+          "path": "orm_constraints",
+          "steps": 1073
+        },
+        {
+          "path": "orm_fk_names",
+          "steps": 1082
+        },
+        {
+          "path": "orm_checks",
+          "steps": 1074
+        },
+        {
+          "path": "orm_sequences",
+          "steps": 1081
+        }
+      ],
+      "counts": {
+        "external": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "embedded": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "orm": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "orm_upgrade": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "orm_default_upgrade": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "orm_constraints": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "orm_fk_names": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "orm_checks": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        },
+        "orm_sequences": {
+          "tables": 263,
+          "columns": 3701,
+          "constraints": 571,
+          "indexes": 1010,
+          "sequences": 227
+        }
+      },
+      "summary": {
+        "externalVsEmbedded": {
+          "tables": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "columns": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "constraints": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "indexes": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "sequences": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          }
+        },
+        "externalVsOrm": {
+          "tables": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "columns": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "constraints": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "indexes": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          },
+          "sequences": {
+            "referenceOnly": 0,
+            "candidateOnly": 0,
+            "changed": 0,
+            "possibleRenames": 0
+          }
+        }
+      },
+      "shippingLifecycleVerification": {
+        "external": {
+          "initial": "complete",
+          "firstApplied": false,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "embedded": {
+          "initial": "complete",
+          "firstApplied": false,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "orm": {
+          "initial": "absent",
+          "firstApplied": true,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "orm_upgrade": {
+          "initial": "absent",
+          "firstApplied": true,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "orm_default_upgrade": {
+          "initial": "absent",
+          "firstApplied": true,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "orm_constraints": {
+          "initial": "absent",
+          "firstApplied": true,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "orm_fk_names": {
+          "initial": "absent",
+          "firstApplied": true,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "orm_checks": {
+          "initial": "absent",
+          "firstApplied": true,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        },
+        "orm_sequences": {
+          "initial": "absent",
+          "firstApplied": true,
+          "repeatApplied": false,
+          "state": "complete",
+          "functionCount": 5,
+          "triggerCount": 9,
+          "functionsMatch": true,
+          "triggersMatch": true,
+          "runtimePrivilegesVerified": false
+        }
+      },
+      "cleanupConfirmed": true
+    },
+    "formattingFinalRegression": {
+      "files": 2,
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0,
+      "sha256": "e540040b2b6f2ae858a6948bb5a5a775abb5cd030b8bde15f31fc1ceaab44daf"
+    },
+    "remainingOwnedResources": {
+      "auditDatabases": 0,
+      "unitDatabases": 0,
+      "schemas": 0,
+      "roles": 0
+    }
+  },
+  "developmentFailuresRetained": [
+    {
+      "passed": 80,
+      "failed": 1,
+      "total": 81,
+      "cause": "Existing SQL Windows checkout CRLF differed from JavaScript template literal LF; enforced SQL eol=lf without normalizing contract assertions"
+    },
+    {
+      "passed": 319,
+      "failed": 1,
+      "total": 320,
+      "cause": "Shared LOCK query leading newline bypassed a test observer startsWith hook; trimStart fixes the observer and retains real peer-interleaving assertions"
+    },
+    {
+      "kind": "typecheck",
+      "cause": "Schema-configured Drizzle factory did not match DbClient generic in audit; use drizzle(client), no SQL changes"
+    }
+  ],
+  "sourceCi": {
+    "run": 34731627125,
+    "commit": "ba0df78931ae6fa1bebbdb21daf936ed521ccf13",
+    "conclusion": "success",
+    "successfulJobs": 11
+  },
+  "deployedMainCi": {
+    "run": 34732805548,
+    "commit": "d66cd192e66b87e7cf2a7eb9db36bf171e1377bc",
+    "conclusion": "success",
+    "successfulJobs": 11
+  },
+  "boundaries": {
+    "productionSqlExecutedThisIncrement": false,
+    "deploymentExecutedThisIncrement": false,
+    "fullRuntimeAuthorizationVerified": false,
+    "independentHighPrivilegeMaintenanceFenced": false,
+    "nonProtocolRowTriggerInteractionsFullyVerified": false,
+    "allWriteSurfacesAndMultirowInterleavingsVerified": false,
+    "capacityVerified": false,
+    "realOnlineRoleAcceptance": false,
+    "checklistChecked": 239,
+    "checklistOpen": 165,
+    "checklistTotal": 404,
+    "newRegistrationCi": "pending"
+  }
+}

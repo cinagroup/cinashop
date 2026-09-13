@@ -58,9 +58,15 @@ import { BROKERAGE_PAID_ORDER_FENCE_SQL } from "@/migrations/brokeragePaidOrderF
 import { runBrokeragePaidOrderFence } from "@/migrations/runBrokeragePaidOrderFence";
 import { COUPON_PRODUCT_SCOPE_FENCE_SQL } from "@/migrations/couponProductScopeFence";
 import { runCouponProductScopeFence } from "@/migrations/runCouponProductScopeFence";
+import { SHIPPING_LIFECYCLE_INSTALLATION_SQL } from "@/migrations/shippingLifecycleInstallation";
+import { runShippingLifecycle } from "@/migrations/runShippingLifecycle";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  shippingLifecycleMigrationSqlForVerification(): string {
+    return this.migration_0158();
+  }
 
   couponProductScopeFenceMigrationSqlForVerification(): string {
     return this.migration_0157();
@@ -429,10 +435,17 @@ export class MigrationService {
       this.migration_0155(),
       this.migration_0156(),
       this.migration_0157(),
+      this.migration_0158(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 158) {
+          // Filesystem 0152: explicit standalone maintenance transaction.
+          await runShippingLifecycle(this.container.db);
+          executed.push("0158");
+          continue;
+        }
         if (i === 157) {
           // Filesystem 0151: explicit root transaction, never a nested savepoint.
           await runCouponProductScopeFence(this.container.db);
@@ -8513,5 +8526,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0157(): string {
     return COUPON_PRODUCT_SCOPE_FENCE_SQL;
+  }
+  private migration_0158(): string {
+    return SHIPPING_LIFECYCLE_INSTALLATION_SQL;
   }
 }

@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm';
+import { SHIPPING_LIFECYCLE_LOCK_SQL } from './shippingLifecycleInspectionSql';
 import type { DbClient } from '../lib/di';
 import { boundShippingLifecycleInspection, inspectShippingLifecycleBaseline, inspectShippingLifecycleCatalog } from './inspectShippingLifecycleBaseline';
 import { assertShippingLifecycleInstallationEnvironment } from './assertShippingLifecycleInstallationEnvironment';
@@ -34,9 +35,7 @@ export async function withShippingLifecycleWriteBarrier<T>(
     // Fixed schema, stable order, no automatic descendants, no wait/retry loop.
     // Self-conflicting lock serializes installers and excludes DML/DDL while
     // still permitting ordinary readers. A fresh RC inspection follows the lock.
-    await tx.execute(sql.raw(`LOCK TABLE ONLY public.shipping_templates, ONLY public.store_bargain,
-      ONLY public.store_combination, ONLY public.store_discounts_products, ONLY public.store_integral,
-      ONLY public.store_product, ONLY public.store_seckill IN SHARE ROW EXCLUSIVE MODE NOWAIT`));
+    await tx.execute(sql.raw(SHIPPING_LIFECYCLE_LOCK_SQL));
     const baseline = await inspectShippingLifecycleBaseline(tx);
     if (!baseline.baselineReady) throw new Error('Shipping installation baseline is incompatible');
     // The earlier environment snapshot is not an installation permit. Recheck

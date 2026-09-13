@@ -1,0 +1,3 @@
+# SQL routine bodies and embedded migration mirrors are compared byte-for-byte.
+# Keep checkout line endings stable across Windows and Linux.
+workers-ts/migrations/*.sql text eol=lf

@@ -123,7 +123,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping install
               if (field === 'execute') return async (statement: Parameters<typeof tx.execute>[0]) => {
                 const result = await inner.execute(statement);
                 const command = typeof statement === 'string' ? statement : new PgDialect().sqlToQuery(statement.getSQL()).sql;
-                if (command.startsWith('LOCK TABLE ONLY')) {
+                if (command.trimStart().startsWith('LOCK TABLE ONLY')) {
                   intercepted = true;
                   await peer.exec('ALTER EVENT TRIGGER qa_shipping_event ENABLE');
                 }

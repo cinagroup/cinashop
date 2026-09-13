@@ -60,7 +60,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
         } else if (path === 'embedded') {
           const result = await service(owned.db).runAll();
           expect(result.errors.map(error => error.slice(0, 200))).toEqual([]);
-          expect(result.executed).toEqual(steps(158));
+          expect(result.executed).toEqual(steps(159));
         } else {
           const api = await import('drizzle-kit/api'), models = await import('../src/models/schema');
           await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));

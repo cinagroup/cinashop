@@ -7,6 +7,8 @@ import { pathToFileURL } from "node:url";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Container } from "../src/lib/di";
+import { runShippingLifecycle } from "../src/migrations/runShippingLifecycle";
+import { inspectShippingLifecycleProtocol } from "../src/migrations/inspectShippingLifecycleProtocol";
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
 import { extendConstraintNameContracts, assertConstraintNamesAligned } from "./data-migration/constraint-name-contracts";
@@ -48,6 +50,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   let kefuSequenceUpgradeVerification;
   let tableCatalogGateVerification;
   const columnWriteVerification: Record<string, unknown> = {};
+  const shippingLifecycleVerification: Record<string, unknown> = {};
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
     if (identity.database !== "cinashop_finance_test" || identity.role !== "finance_test" || Math.floor(Number(identity.version) / 10_000) !== 16) {
@@ -178,6 +181,20 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           await client.unsafe(generated.join("\n"));
           steps = generated.length;
         }
+        // The catalog's five categories do not include triggers/functions.
+        // Explicitly prove this protocol on every real construction path, with
+        // no repair masking a missing external/embedded registration.
+        const shippingDb = drizzle(client);
+        const initialShipping = await inspectShippingLifecycleProtocol(shippingDb);
+        const shippingExpected = path === "external" || path === "embedded" ? "complete" : "absent";
+        if (initialShipping.state !== shippingExpected) throw new Error(`Shipping protocol registration differs on ${path}`);
+        const shippingFirst = await runShippingLifecycle(shippingDb);
+        if (shippingFirst.applied !== (shippingExpected === "absent")) throw new Error(`Shipping first-install identity differs on ${path}`);
+        const shippingRepeat = await runShippingLifecycle(shippingDb);
+        const verifiedShipping = await inspectShippingLifecycleProtocol(shippingDb);
+        if (shippingRepeat.applied || verifiedShipping.state !== "complete") throw new Error(`Shipping repeat verification differs on ${path}`);
+        shippingLifecycleVerification[path] = { initial: initialShipping.state, firstApplied: shippingFirst.applied,
+          repeatApplied: shippingRepeat.applied, ...verifiedShipping };
         columnWriteVerification[path] = await auditDefaults.verifyDefaultWrites({
           exec: (query: string) => client.unsafe(query),
           query: async (query: string) => ({ rows: Array.from(await client.unsafe(query)) }),
@@ -299,6 +316,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       missingConstraintUpgradeVerification: { ...missingConstraintUpgradeVerification, freshCatalogMatched: true },
       columnDefaultUpgradeVerification: { ...columnDefaultUpgradeVerification, freshCatalogMatched: true },
       columnWriteVerification,
+      shippingLifecycleVerification,
       externalDuplicateIndexRetirement,
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },
       missingIndexEvidence: {
