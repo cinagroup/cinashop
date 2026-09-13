@@ -3,21 +3,15 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { sql } from "drizzle-orm";
 import { setTimeout as delay } from "node:timers/promises";
 import type { DbClient } from "../../src/lib/di";
+import { ownsFinanceFixtureTarget, validateFinanceFixtureUrl } from './financePostgres';
 
 export function validateFinancePeerUrl(value: string): string {
-  let target: URL;
-  try { target = new URL(value); } catch { throw new Error("Invalid finance peer test URL"); }
-  if (!["postgres:", "postgresql:"].includes(target.protocol) ||
-    !["127.0.0.1", "localhost"].includes(target.hostname) ||
-    target.pathname !== "/cinashop_finance_test" || target.username !== "finance_test" || target.search || target.hash) {
-    throw new Error("Peers require the dedicated loopback finance_test PostgreSQL 16 service");
-  }
-  return target.href;
+  return validateFinanceFixtureUrl(value).href;
 }
 
 export interface FinancePeer { db: DbClient; pid: number; exec: (query: string) => Promise<unknown> }
 
-/** Reuse ONLY the random schema already owned by a disposable finance fixture.
+/** Reuse ONLY the registered random database/schema owned by a finance fixture.
  * Each peer has one non-expiring connection. A reserved Sql cannot be used here:
  * postgres-js begin() belongs to the root pool, so reserving its only slot would stall Drizzle.
  */
@@ -27,14 +21,15 @@ export async function withFinancePeers<T>(observer: DbClient,
   const [origin] = await observer.select({ schema: sql<string>`current_schema()`, database: sql<string>`current_database()`,
     role: sql<string>`current_user`, version: sql<string>`current_setting('server_version_num')`, pid: sql<number>`pg_backend_pid()` })
     .from(sql`(values (1)) as probe(n)`);
-  if (!/^finance_test_[a-f0-9]{32}$/.test(origin.schema) || origin.database !== "cinashop_finance_test" ||
+  if (!/^finance_test_[a-f0-9]{32}$/.test(origin.schema) || !ownsFinanceFixtureTarget(origin.database, origin.schema, url) ||
     origin.role !== "finance_test" || Math.floor(Number(origin.version) / 10_000) !== 16) {
     throw new Error("Unexpected finance observer identity/schema/version");
   }
+  const peerUrl = new URL(url); peerUrl.pathname = `/${origin.database}`;
   const clients: ReturnType<typeof postgres>[] = [];
   try {
     const connect = async (): Promise<FinancePeer> => {
-      const client = postgres(url, { max: 1, prepare: false, connect_timeout: 5, idle_timeout: 0, max_lifetime: 0,
+      const client = postgres(peerUrl.href, { max: 1, prepare: false, connect_timeout: 5, idle_timeout: 0, max_lifetime: 0,
         connection: { options: `-c search_path=${origin.schema} -c statement_timeout=10000 -c lock_timeout=8000 -c idle_in_transaction_session_timeout=15000` } });
       clients.push(client);
       const [identity] = await client`select current_schema() as schema, current_database() as database,
