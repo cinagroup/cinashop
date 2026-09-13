@@ -1,0 +1,20 @@
+{
+  "scope": "shipping-lifecycle-runtime-envelope",
+  "database": "isolated local PostgreSQL 16.15",
+  "newTestsPassed": 34,
+  "regressionTestsPassed": 206,
+  "regressionFilesPassed": 7,
+  "failed": 0,
+  "skipped": 0,
+  "bothTypechecksPassed": true,
+  "reportSha256": "4859e90fd4aef3903a0a5fe0318244da96e7b55a9001103a4adb87f88a3c07c5",
+  "auditReadOnly": true,
+  "actualLoginAndReachableRolesTested": true,
+  "requiredWritesAndSoftRetirementTested": true,
+  "ddlTruncateHardDeleteSequenceResetReplicationDenied": true,
+  "protocolCatalogIsSeparateGate": true,
+  "completeServicePrivilegesVerified": false,
+  "productionSqlExecuted": false,
+  "productionGrantsOrCredentialsChanged": false,
+  "formalMigrationRegistered": false
+}

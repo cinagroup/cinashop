@@ -1,5 +1,14 @@
 # 运费模板引用与生命周期：A3k12
 
+## 2026-09-13 运行身份权限边界（本地候选验收）
+
+新增只读 `auditShippingLifecycleRuntimePermissions`，以真实连接身份及可继承/切换角色
+检查七表、ID序列、五函数的必要权限和所有权、DDL、复制绕过、授权传播等危险能力。
+34项新增测试覆盖真实LOGIN的必要写入、应用软删除与权限拒绝；七文件206项全部通过、
+零跳过，双类型检查通过。证据见 `audit/shipping-lifecycle-runtime-permissions-20260913.json`。
+审计不执行GRANT或业务写入，不代表完整服务授权、数据基线或精确协议目录已验收；
+禁用触发器时权限检查仍可通过的反例明确要求独立目录检查。未注册正式迁移、未改线上权限。
+
 ## 2026-09-13 精确目录与候选幂等（未发布）
 
 固定协议定义移至 `src/migrations/shippingLifecycleProtocol.ts`，未改变触发器SQL语义，
