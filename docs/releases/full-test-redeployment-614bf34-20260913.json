@@ -1,0 +1,668 @@
+{
+  "sourceCommit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f",
+  "featureCommits": [
+    "e71138beb240d49fb0d464316fdcc9615e2328f2",
+    "ac5188f"
+  ],
+  "scope": "six-application online test redeployment",
+  "control": {
+    "capturedAt": "2026-09-13T08:32:16.3037757Z",
+    "worker": {
+      "id": "a64078d6-2fd6-4527-bb67-3f7023f87b6d",
+      "created_on": "2026-09-13T08:30:40.786126Z",
+      "versions": [
+        {
+          "version_id": "932cb018-2a26-442c-b01a-b7328f19bd3d",
+          "percentage": 100
+        }
+      ],
+      "annotations": {
+        "workers/message": "Full six-app test redeploy main 614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f",
+        "workers/triggered_by": "deployment"
+      }
+    },
+    "pages": [
+      {
+        "name": "cinashop-admin",
+        "production_branch": "main",
+        "domains": [
+          "cinashop-admin.pages.dev"
+        ],
+        "deployment_id": "aea14962-ff40-4896-ab97-a8a2c2c98c4a",
+        "created_on": "2026-09-13T08:30:18.371002Z",
+        "environment": "production",
+        "status": "success",
+        "commit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f"
+      },
+      {
+        "name": "cinashop-h5",
+        "production_branch": "main",
+        "domains": [
+          "cinashop-h5.pages.dev"
+        ],
+        "deployment_id": "0c12d386-694b-499b-a89c-f0c2ac60be9b",
+        "created_on": "2026-09-13T08:30:19.618539Z",
+        "environment": "production",
+        "status": "success",
+        "commit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f"
+      },
+      {
+        "name": "cinashop-supplier",
+        "production_branch": "main",
+        "domains": [
+          "cinashop-supplier.pages.dev"
+        ],
+        "deployment_id": "04babf74-a4e2-42d9-b75c-0aad5fc499d9",
+        "created_on": "2026-09-13T08:30:19.937938Z",
+        "environment": "production",
+        "status": "success",
+        "commit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f"
+      },
+      {
+        "name": "cinashop-kefu",
+        "production_branch": "main",
+        "domains": [
+          "cinashop-kefu.pages.dev"
+        ],
+        "deployment_id": "e6c69448-7151-4144-8413-0d09b5869a69",
+        "created_on": "2026-09-13T08:30:20.93087Z",
+        "environment": "production",
+        "status": "success",
+        "commit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f"
+      },
+      {
+        "name": "cinashop-pc",
+        "production_branch": "main",
+        "domains": [
+          "cinashop-pc.pages.dev",
+          "shop.cinaseek.ai"
+        ],
+        "deployment_id": "7e1ad405-aaba-4a47-b4b5-d66f83f6ecad",
+        "created_on": "2026-09-13T08:30:21.189435Z",
+        "environment": "production",
+        "status": "success",
+        "commit": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f"
+      }
+    ]
+  },
+  "smoke": {
+    "capturedAt": "2026-09-13T08:31:22.450Z",
+    "mode": "read-only-full-test-redeploy",
+    "passed": true,
+    "results": [
+      {
+        "name": "pc",
+        "origin": "https://shop.cinaseek.ai",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-BKWUsebi.js",
+        "localHash": "d425e347579c322747813b29bc8bc41a54783a571b2f442568eb53e2f5abfd67",
+        "remoteHash": "d425e347579c322747813b29bc8bc41a54783a571b2f442568eb53e2f5abfd67",
+        "pass": true
+      },
+      {
+        "name": "admin",
+        "origin": "https://cinashop-admin.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-DWSX3JjF.js",
+        "localHash": "e699ff11233bbd650c202b50fd243a07f4183f2547dbceb24f1c8d45f85ec1d8",
+        "remoteHash": "e699ff11233bbd650c202b50fd243a07f4183f2547dbceb24f1c8d45f85ec1d8",
+        "pass": true
+      },
+      {
+        "name": "h5",
+        "origin": "https://cinashop-h5.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-BAblUde7.js",
+        "localHash": "05649c947d6b6ba8c970ceff053bf84ca17ce2037d030cdd4c86c77ff4b009d5",
+        "remoteHash": "05649c947d6b6ba8c970ceff053bf84ca17ce2037d030cdd4c86c77ff4b009d5",
+        "pass": true
+      },
+      {
+        "name": "supplier",
+        "origin": "https://cinashop-supplier.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-DHHtNs1E.js",
+        "localHash": "beadd868e8b40dc65d46c74e28a1d3698934419f06e8a628f8609daef1a1db27",
+        "remoteHash": "beadd868e8b40dc65d46c74e28a1d3698934419f06e8a628f8609daef1a1db27",
+        "pass": true
+      },
+      {
+        "name": "kefu",
+        "origin": "https://cinashop-kefu.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-CT8BhVXO.js",
+        "localHash": "074eec1a27445f7f2b1159d2520bb4b4b238db6e6d5d7db47b24cb3f2eff6174",
+        "remoteHash": "074eec1a27445f7f2b1159d2520bb4b4b238db6e6d5d7db47b24cb3f2eff6174",
+        "pass": true
+      },
+      {
+        "name": "health",
+        "http": 200,
+        "observed": true,
+        "pass": true
+      },
+      {
+        "name": "pc-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "pc-products",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "admin-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "h5-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "supplier-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "admin-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "supplier-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "kefu-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "cors-https://shop.cinaseek.ai",
+        "http": 204,
+        "allowed": "https://shop.cinaseek.ai",
+        "pass": true
+      },
+      {
+        "name": "cors-https://cinaseek.ai",
+        "http": 204,
+        "allowed": null,
+        "pass": true
+      },
+      {
+        "name": "cors-https://cinashop-admin.pages.dev",
+        "http": 204,
+        "allowed": null,
+        "pass": true
+      }
+    ]
+  },
+  "ci": [
+    {
+      "capturedAt": "2026-09-13T08:33:20.3370368Z",
+      "id": 34747048162,
+      "headSha": "e71138beb240d49fb0d464316fdcc9615e2328f2",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 103696778143,
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778205,
+          "name": "workerd runtime tests",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778206,
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778214,
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778224,
+          "name": "Repository secret scan",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778260,
+          "name": "UniApp build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778266,
+          "name": "Supplier build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778296,
+          "name": "Admin build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778307,
+          "name": "PC build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103696778334,
+          "name": "Kefu build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103698831306,
+          "name": "Worker type, unit, schema and route gates",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "capturedAt": "2026-09-13T08:33:24.1087981Z",
+      "id": 34747816178,
+      "headSha": "614bf34cafeb7a2b0e9d307b8c1f9f518d350f2f",
+      "status": "in_progress",
+      "conclusion": null,
+      "jobs": [
+        {
+          "id": 103698865943,
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "status": "in_progress",
+          "conclusion": null
+        },
+        {
+          "id": 103698866001,
+          "name": "PC build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103698866028,
+          "name": "UniApp build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103698866037,
+          "name": "Supplier build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103698866040,
+          "name": "Kefu build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103698866049,
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "status": "in_progress",
+          "conclusion": null
+        },
+        {
+          "id": 103698866058,
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "status": "in_progress",
+          "conclusion": null
+        },
+        {
+          "id": 103698866065,
+          "name": "workerd runtime tests",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103698866069,
+          "name": "Admin build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103698866121,
+          "name": "Repository secret scan",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "frontendBuilds": [
+      "pc",
+      "admin",
+      "h5",
+      "supplier",
+      "kefu"
+    ],
+    "workerDryRun": "passed",
+    "workerTypecheckUnit": "passed",
+    "workerTypecheckRuntime": "passed",
+    "sourceSecretScan": "passed",
+    "bundleInputCount": 777,
+    "bundleContainsAuditOrTestScripts": false,
+    "trackedSourceMatchesCommit": true,
+    "pcBuildTests": {
+      "auth": 98,
+      "images": 7
+    },
+    "localRegression": {
+      "command": "npx vitest run --config vitest.config.ts bargain finance-peer-boundary finance-fixture-advisory-isolation --maxWorkers=3 --reporter=json --outputFile=<report>",
+      "postgresVersion": 160015,
+      "files": 36,
+      "passed": 589,
+      "failed": 0,
+      "skipped": 0
+    },
+    "rawReports": [
+      {
+        "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-finance-advisory-isolation-red-20260913.json",
+        "sha256": "8662C477EF5212325B24F0395EB74097D53EB4B071FBCA5DB499FC3441315543",
+        "total": 2,
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0,
+        "files": [
+          {
+            "name": "finance-fixture-advisory-isolation.test.ts",
+            "status": "failed",
+            "count": 2
+          }
+        ]
+      },
+      {
+        "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-finance-advisory-isolation-first-20260913.json",
+        "sha256": "19DFB4099F4D6C2814A2C83E074DAE25D81C980D490CB2470FE094802F42D0BD",
+        "total": 64,
+        "passed": 64,
+        "failed": 0,
+        "skipped": 0,
+        "files": [
+          {
+            "name": "bargain-admin-save.test.ts",
+            "status": "passed",
+            "count": 52
+          },
+          {
+            "name": "bargain-admin-sku-postgres.test.ts",
+            "status": "passed",
+            "count": 7
+          },
+          {
+            "name": "finance-fixture-advisory-isolation.test.ts",
+            "status": "passed",
+            "count": 2
+          },
+          {
+            "name": "finance-peer-boundary.test.ts",
+            "status": "passed",
+            "count": 3
+          }
+        ]
+      },
+      {
+        "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-finance-redeploy-regression-20260913.json",
+        "sha256": "769F7F62FCB8E2373EA6A6DB6C40E8037B24CA5582E2FDB44AF251CFFB29BCC0",
+        "total": 589,
+        "passed": 589,
+        "failed": 0,
+        "skipped": 0,
+        "files": [
+          {
+            "name": "bargain-admin-concurrency-postgres.test.ts",
+            "status": "passed",
+            "count": 9
+          },
+          {
+            "name": "bargain-admin-content-postgres.test.ts",
+            "status": "passed",
+            "count": 3
+          },
+          {
+            "name": "bargain-admin-content.test.ts",
+            "status": "passed",
+            "count": 24
+          },
+          {
+            "name": "bargain-admin-dates-postgres.test.ts",
+            "status": "passed",
+            "count": 8
+          },
+          {
+            "name": "bargain-admin-dates.test.ts",
+            "status": "passed",
+            "count": 18
+          },
+          {
+            "name": "bargain-admin-form.test.ts",
+            "status": "passed",
+            "count": 11
+          },
+          {
+            "name": "bargain-admin-product-postgres.test.ts",
+            "status": "passed",
+            "count": 9
+          },
+          {
+            "name": "bargain-admin-product.test.ts",
+            "status": "passed",
+            "count": 17
+          },
+          {
+            "name": "bargain-admin-retirement.test.ts",
+            "status": "passed",
+            "count": 20
+          },
+          {
+            "name": "bargain-admin-save.test.ts",
+            "status": "passed",
+            "count": 52
+          },
+          {
+            "name": "bargain-admin-shipping-postgres.test.ts",
+            "status": "passed",
+            "count": 5
+          },
+          {
+            "name": "bargain-admin-shipping.test.ts",
+            "status": "passed",
+            "count": 29
+          },
+          {
+            "name": "bargain-admin-sku-form.test.ts",
+            "status": "passed",
+            "count": 3
+          },
+          {
+            "name": "bargain-admin-sku-postgres.test.ts",
+            "status": "passed",
+            "count": 7
+          },
+          {
+            "name": "bargain-admin-sku.test.ts",
+            "status": "passed",
+            "count": 18
+          },
+          {
+            "name": "bargain-cart-binding-concurrency-postgres.test.ts",
+            "status": "passed",
+            "count": 3
+          },
+          {
+            "name": "bargain-cart-binding.test.ts",
+            "status": "passed",
+            "count": 17
+          },
+          {
+            "name": "bargain-cart-participation-migration.test.ts",
+            "status": "passed",
+            "count": 34
+          },
+          {
+            "name": "bargain-help-admission.test.ts",
+            "status": "passed",
+            "count": 12
+          },
+          {
+            "name": "bargain-help-concurrency-postgres.test.ts",
+            "status": "passed",
+            "count": 12
+          },
+          {
+            "name": "bargain-inventory-compensation.test.ts",
+            "status": "passed",
+            "count": 13
+          },
+          {
+            "name": "bargain-order-concurrency-postgres.test.ts",
+            "status": "passed",
+            "count": 23
+          },
+          {
+            "name": "bargain-order-participation.test.ts",
+            "status": "passed",
+            "count": 54
+          },
+          {
+            "name": "bargain-participation-concurrency-postgres.test.ts",
+            "status": "passed",
+            "count": 7
+          },
+          {
+            "name": "bargain-participation-state.test.ts",
+            "status": "passed",
+            "count": 24
+          },
+          {
+            "name": "bargain-pickup-admission.test.ts",
+            "status": "passed",
+            "count": 24
+          },
+          {
+            "name": "bargain-pickup-postgres.test.ts",
+            "status": "passed",
+            "count": 14
+          },
+          {
+            "name": "bargain-selection-catalog.test.ts",
+            "status": "passed",
+            "count": 29
+          },
+          {
+            "name": "bargain-shipping-contract.test.ts",
+            "status": "passed",
+            "count": 25
+          },
+          {
+            "name": "bargain-shipping-postgres.test.ts",
+            "status": "passed",
+            "count": 8
+          },
+          {
+            "name": "bargain-shipping-selection-postgres.test.ts",
+            "status": "passed",
+            "count": 2
+          },
+          {
+            "name": "bargain-shipping-selection.test.ts",
+            "status": "passed",
+            "count": 41
+          },
+          {
+            "name": "bargain-user-help-migration.test.ts",
+            "status": "passed",
+            "count": 5
+          },
+          {
+            "name": "finance-fixture-advisory-isolation.test.ts",
+            "status": "passed",
+            "count": 2
+          },
+          {
+            "name": "finance-peer-boundary.test.ts",
+            "status": "passed",
+            "count": 3
+          },
+          {
+            "name": "pc-bargain-purchase.test.ts",
+            "status": "passed",
+            "count": 4
+          }
+        ]
+      }
+    ]
+  },
+  "fixtureIsolation": {
+    "change": "Use process-registered random databases rather than schemas alone for finance fixtures; business advisory lock constants and within-fixture independent-peer behavior unchanged",
+    "redReproduction": "A separate schema in the same database holds the real SKU advisory lock; otherwise-valid admin creation returns status 400 and 商品规格正在更新，请稍后重试. Same-fixture conflict still rejects and recovers.",
+    "historicalMainFailure": "Mechanism reproduced, but original b6dc8cb CI did not preserve the response message; do not claim that historical failure's unique cause is established.",
+    "cleanup": {
+      "remainingFinanceFixtureDatabases": 0,
+      "remainingOldFinanceRootSchemas": 0
+    },
+    "remainingVerification": "Full Linux main CI pending; local 36-file coverage is not all finance fixture consumers"
+  },
+  "previousWorkerVersion": "92b2edc3-c487-4059-bc02-c64ee900d4c0",
+  "cleanup": {
+    "deletedLocalBranches": [
+      "codex/shipping-restricted-route-runtime-20260913",
+      "codex/finance-fixture-advisory-isolation-20260913"
+    ],
+    "deletedRemoteBranches": [
+      "codex/shipping-restricted-route-runtime-20260913"
+    ],
+    "financeBranchWasNeverPushed": true,
+    "allCommitsRetainedInMain": true,
+    "oldDeploymentVersionsRetained": true,
+    "workingTreeClean": true,
+    "buildArtifactMovedTo": "C:/Users/cina/AppData/Local/Temp/cinashop-release-bundle-614bf34-20260913",
+    "oldDetachedReleaseWorktreePreserved": true
+  },
+  "boundaries": {
+    "databaseReset": false,
+    "databaseMigrationExecuted": false,
+    "shippingProtocolOrIndexesInstalledOnline": false,
+    "secretsOrHyperdriveCredentialsChanged": false,
+    "existingCronAndQueuesRemainEnabled": true,
+    "fullLoginPurchasePaymentAcceptance": false,
+    "migrationChecklistCompleted": false
+  },
+  "notes": [
+    "All five Functions bundles rebuilt/uploaded; identical static assets deduplicated by Cloudflare.",
+    "Wrangler dirty warning arose from untracked dry-run build directory; no tracked deployment source changes.",
+    "Cloudflare/Wrangler skills used for config verification, dry-run, keep-vars deployment and control-plane verification."
+  ]
+}
