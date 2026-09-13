@@ -1,0 +1,271 @@
+{
+  "sourceCommit": "c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+  "mode": "Full six-app redeployment of existing online test environment",
+  "sourceAlreadyOnMain": true,
+  "control": {
+    "capturedAt": "2026-09-13T06:41:27.8804240Z",
+    "pages": [
+      {
+        "project": "cinashop-pc",
+        "domains": [
+          "cinashop-pc.pages.dev",
+          "shop.cinaseek.ai"
+        ],
+        "id": "ddaad8cc-4b56-42d9-8abc-a4c806a49396",
+        "environment": "production",
+        "stage": "success",
+        "metadata": {
+          "branch": "main",
+          "commit_hash": "c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+          "commit_message": "Full test redeploy main c3e366f",
+          "commit_dirty": false
+        }
+      },
+      {
+        "project": "cinashop-admin",
+        "domains": [
+          "cinashop-admin.pages.dev"
+        ],
+        "id": "cc7f33e5-4bba-487e-9dfd-83b6b0125fc0",
+        "environment": "production",
+        "stage": "success",
+        "metadata": {
+          "branch": "main",
+          "commit_hash": "c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+          "commit_message": "Full test redeploy main c3e366f",
+          "commit_dirty": false
+        }
+      },
+      {
+        "project": "cinashop-h5",
+        "domains": [
+          "cinashop-h5.pages.dev"
+        ],
+        "id": "9abdbb58-aeee-4ca2-b404-b1a2718aa661",
+        "environment": "production",
+        "stage": "success",
+        "metadata": {
+          "branch": "main",
+          "commit_hash": "c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+          "commit_message": "Full test redeploy main c3e366f",
+          "commit_dirty": false
+        }
+      },
+      {
+        "project": "cinashop-supplier",
+        "domains": [
+          "cinashop-supplier.pages.dev"
+        ],
+        "id": "c0d96b6d-5060-434f-9576-b9f14a13092f",
+        "environment": "production",
+        "stage": "success",
+        "metadata": {
+          "branch": "main",
+          "commit_hash": "c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+          "commit_message": "Full test redeploy main c3e366f",
+          "commit_dirty": false
+        }
+      },
+      {
+        "project": "cinashop-kefu",
+        "domains": [
+          "cinashop-kefu.pages.dev"
+        ],
+        "id": "b651e25c-85f2-489f-ba19-ed2ab133aef1",
+        "environment": "production",
+        "stage": "success",
+        "metadata": {
+          "branch": "main",
+          "commit_hash": "c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+          "commit_message": "Full test redeploy main c3e366f",
+          "commit_dirty": false
+        }
+      }
+    ],
+    "worker": {
+      "id": "2d8a3823-930b-4a7d-a9a0-e20cf80118d3",
+      "created_on": "2026-09-13T06:40:29.410984Z",
+      "versions": [
+        {
+          "version_id": "62a1c336-9cc6-423c-8895-eb358066a829",
+          "percentage": 100
+        }
+      ],
+      "annotations": {
+        "workers/message": "Full six-app test redeploy main c3e366f589ab980e58aee146f4f3b3bc4f357fbc",
+        "workers/triggered_by": "deployment"
+      }
+    }
+  },
+  "smoke": {
+    "capturedAt": "2026-09-13T06:40:50.182Z",
+    "mode": "read-only-full-test-redeploy",
+    "passed": true,
+    "results": [
+      {
+        "name": "pc",
+        "origin": "https://shop.cinaseek.ai",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-BdnwnOBP.js",
+        "localHash": "408108bf423646721d1e2727f6c9285454d2b3a91dede989e66cae532b53c755",
+        "remoteHash": "408108bf423646721d1e2727f6c9285454d2b3a91dede989e66cae532b53c755",
+        "pass": true
+      },
+      {
+        "name": "admin",
+        "origin": "https://cinashop-admin.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-CSQd5s4l.js",
+        "localHash": "c2cbfac6cf38921d3ccfa866edc5787bc1d6417bfa5513159d9ee6dc0a88a874",
+        "remoteHash": "c2cbfac6cf38921d3ccfa866edc5787bc1d6417bfa5513159d9ee6dc0a88a874",
+        "pass": true
+      },
+      {
+        "name": "h5",
+        "origin": "https://cinashop-h5.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-DhugmxHF.js",
+        "localHash": "d68b10f010107030b62c5af74b9810903db00b4a9fbd55c0fef32e77284b0f1e",
+        "remoteHash": "d68b10f010107030b62c5af74b9810903db00b4a9fbd55c0fef32e77284b0f1e",
+        "pass": true
+      },
+      {
+        "name": "supplier",
+        "origin": "https://cinashop-supplier.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-DonwDvyS.js",
+        "localHash": "be85ecd185bcd4026d7357e0c7cb7586015125f288d296d6db0bd546a8be8cd1",
+        "remoteHash": "be85ecd185bcd4026d7357e0c7cb7586015125f288d296d6db0bd546a8be8cd1",
+        "pass": true
+      },
+      {
+        "name": "kefu",
+        "origin": "https://cinashop-kefu.pages.dev",
+        "http": 200,
+        "assetHttp": 200,
+        "script": "/assets/index-B-wBNqAp.js",
+        "localHash": "cd3d4750912db255eb17a201048adeeb63aef296d0fb2e74d338ae885e49bc76",
+        "remoteHash": "cd3d4750912db255eb17a201048adeeb63aef296d0fb2e74d338ae885e49bc76",
+        "pass": true
+      },
+      {
+        "name": "health",
+        "http": 200,
+        "observed": true,
+        "pass": true
+      },
+      {
+        "name": "pc-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "pc-products",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "admin-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "h5-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "supplier-bootstrap",
+        "http": 200,
+        "observed": 200,
+        "pass": true
+      },
+      {
+        "name": "admin-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "supplier-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "kefu-anonymous",
+        "http": 200,
+        "observed": 410000,
+        "pass": true
+      },
+      {
+        "name": "cors-https://shop.cinaseek.ai",
+        "http": 204,
+        "allowed": "https://shop.cinaseek.ai",
+        "pass": true
+      },
+      {
+        "name": "cors-https://cinaseek.ai",
+        "http": 204,
+        "allowed": null,
+        "pass": true
+      },
+      {
+        "name": "cors-https://cinashop-admin.pages.dev",
+        "http": 204,
+        "allowed": null,
+        "pass": true
+      }
+    ]
+  },
+  "previousWorkerVersionId": "f203772c-3c05-42a7-869f-12976f6a3409",
+  "build": {
+    "allSixApplicationsRebuilt": true,
+    "allFivePagesFunctionsCompiledAndUploaded": true,
+    "workerDryRunPassed": true,
+    "bundleInputs": 774,
+    "testOrAuditInputs": [],
+    "unverifiedIndexInstallerInputs": [],
+    "trackedSourceDiffEmpty": true,
+    "cliDirtyWarningCause": "Only untracked build-release directories in isolated main worktree",
+    "identicalStaticFilesDeduplicated": true,
+    "pcAuthTestsPassed": 98,
+    "pcImageTestsPassed": 7
+  },
+  "ci": {
+    "verifiedApplicationRun": 34739769626,
+    "verifiedApplicationSha": "897136b4fc33ed22d65abdb2bd40f1c0b55a93c6",
+    "conclusion": "success",
+    "successfulJobs": 11,
+    "releaseShaDiffFromVerifiedApplication": "Only two previous release documentation files",
+    "exactReleaseShaNewFullCiRun": false,
+    "excludedIndexBranchRun": 34741866997,
+    "excludedIndexBranchConclusion": "failure"
+  },
+  "boundaries": {
+    "databaseReset": false,
+    "databaseMigrationsExecuted": false,
+    "shippingProtocolInstalledByThisRelease": false,
+    "shippingIndexesInstalledByThisRelease": false,
+    "secretsOrHyperdriveCredentialsChanged": false,
+    "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",
+    "keepVars": true,
+    "cronAndQueuesRemainEnabled": true,
+    "historicalDeploymentsRetained": true,
+    "fullBusinessAcceptance": false,
+    "nativeAppAndMiniProgramBuilt": false,
+    "branchesDeleted": [],
+    "preservedBranches": [
+      "codex/shipping-lifecycle-indexes-20260913",
+      "codex/shipping-rewrite-rule-guards-20260913"
+    ]
+  }
+}
