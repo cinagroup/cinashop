@@ -45,11 +45,34 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('rewrite rules on
       'parents',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.shipping_templates t),
       'products',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.store_product t),
       'functions',(SELECT jsonb_agg(to_jsonb(p) ORDER BY oid) FROM pg_proc p WHERE pronamespace='public'::regnamespace),
-      'indexes',(SELECT jsonb_agg(to_jsonb(c) ORDER BY oid) FROM pg_class c WHERE relnamespace='public'::regnamespace AND relkind='i')) AS state`)});
+      -- Planner estimates change under ANALYZE/autovacuum without DDL. Keep
+      -- identity, owner, ACL, storage/options, definition and all pg_index flags.
+      'indexes',(SELECT jsonb_agg(jsonb_build_object(
+        'relation',to_jsonb(c)-ARRAY['relpages','reltuples','relallvisible'],
+        'definition',pg_get_indexdef(c.oid),'index',to_jsonb(i)) ORDER BY c.oid)
+        FROM pg_class c JOIN pg_index i ON i.indexrelid=c.oid
+        WHERE c.relnamespace='public'::regnamespace AND c.relkind='i')) AS state`)});
   const install=(route:string)=>route==='protocol-runner'?runShippingLifecycle(f.db):route==='index-runner'?runShippingLifecycleIndexes(f.db)
     : f.db.transaction(async tx=>{await tx.execute(sql.raw(readFileSync(`migrations/${route==='protocol-file'?'0152_shipping_lifecycle.sql':'0153_shipping_lifecycle_indexes.sql'}`,'utf8')));},
       {isolationLevel:'read committed',accessMode:'read write'});
   const prepare=async(route:string)=>{if(route.startsWith('index'))await runShippingLifecycle(f.db);};
+
+  it('keeps statistics refresh outside logical index equality but detects a renamed index',async()=>{
+    await f.exec('CREATE INDEX qa_shipping_snapshot_idx ON public.store_product(stock)');
+    try {
+      // Only statistics-vs-definition semantics, not a capacity experiment.
+      await f.exec('INSERT INTO public.store_product(id,stock,freight) SELECT n,n,1 FROM generate_series(2,101) n');
+      const physical=()=>f.query("SELECT relpages,reltuples FROM pg_class WHERE oid='public.qa_shipping_snapshot_idx'::regclass");
+      const stats=await physical(), before=await snapshot();
+      await f.exec('ANALYZE public.store_product');
+      expect(await physical()).not.toEqual(stats);
+      expect(await snapshot()).toEqual(before);
+      await f.exec('ALTER INDEX public.qa_shipping_snapshot_idx RENAME TO qa_shipping_snapshot_changed');
+      expect(await snapshot()).not.toEqual(before);
+    } finally {
+      await f.exec('DROP INDEX IF EXISTS public.qa_shipping_snapshot_idx; DROP INDEX IF EXISTS public.qa_shipping_snapshot_changed; DELETE FROM public.store_product WHERE id>1');
+    }
+  });
 
   it('rejects a peer enabling a rule between initial inspection and relation locks',async()=>{
     await historyRule('shipping_templates');await f.exec('ALTER TABLE public.shipping_templates DISABLE RULE qa_shipping_rule');

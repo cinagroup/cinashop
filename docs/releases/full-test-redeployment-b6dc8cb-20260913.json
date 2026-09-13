@@ -1,4 +1,101 @@
 {
+  "ciFollowup": {
+    "sourceRun": {
+      "id": 34744845166,
+      "headSha": "eaa6773f08e0c2b0aef2f5506101156017ff1da1",
+      "conclusion": "success",
+      "jobsPassed": 11
+    },
+    "mainRun": {
+      "capturedAt": "2026-09-13T07:51:08.7328293Z",
+      "id": 34745307600,
+      "headSha": "b6dc8cb6e68b9e9bc55352632883c1fa87bb797e",
+      "status": "completed",
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "id": 103692048666,
+          "name": "Repository secret scan",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048738,
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048778,
+          "name": "workerd runtime tests",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048782,
+          "name": "Supplier build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048812,
+          "name": "UniApp build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048837,
+          "name": "Admin build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048877,
+          "name": "Kefu build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048903,
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "id": 103692048909,
+          "name": "PC build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 103692048991,
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "id": 103694066861,
+          "name": "Worker type, unit, schema and route gates",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    "issues": [
+      {
+        "jobId": 103692048903,
+        "test": "shipping-lifecycle-rules.test.ts",
+        "cause": "snapshot compares pg_class planner statistics; observed only relpages/reltuples drift in failed diff",
+        "status": "local deterministic reproduction and 56-test corrected regression passed; new Linux CI pending"
+      },
+      {
+        "jobId": 103692048991,
+        "test": "bargain-admin-save.test.ts",
+        "cause": "unknown: creation response status 400, original assertion omitted response message and nested SQL cause",
+        "status": "52 local cases pass; synthetic-only diagnostics added; not declared fixed"
+      }
+    ]
+  },
   "sourceCommit": "b6dc8cb6e68b9e9bc55352632883c1fa87bb797e",
   "sourceFeatureCommit": "eaa6773f08e0c2b0aef2f5506101156017ff1da1",
   "scope": "six-application online test redeployment",

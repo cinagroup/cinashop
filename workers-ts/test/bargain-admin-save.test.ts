@@ -16,7 +16,18 @@ describe('bargain admin edits preserve existing business data', () => {
   const request = async (body: unknown, path = 'save') => {
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use('*', async (c, next) => { c.set('container', f.container); await next(); });
-    app.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
+    app.onError((error, c) => {
+      // Test-only synthetic data: retain nested SQLSTATE/message for a failed
+      // positive assertion; a status-only diff hid the main CI creation error.
+      const diagnostic: Array<{ code?: unknown; message?: unknown }> = [];
+      let cause: unknown = error;
+      for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+        diagnostic.push({ code: 'code' in cause ? cause.code : undefined, message: 'message' in cause ? cause.message : undefined });
+        if (!('cause' in cause) || cause.cause === cause) break;
+        cause = cause.cause;
+      }
+      return c.json({ status: 400, msg: error.message, data: null, diagnostic });
+    });
     app.post('/save', adminActivitySave); app.post('/status', adminActivityStatus);
     return (await app.request('/' + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }, f.env)).json();
   };
@@ -75,7 +86,7 @@ describe('bargain admin edits preserve existing business data', () => {
   it('creates a basic activity with validated submitted rules and zero sales', async () => {
     const response = await request({ type: 'bargain', productId: 70, storeName: '新活动', price: '10', minPrice: '2.5',
       stock: 6, quota: 5, people: 3, num: 2, status: 0, sku:{baseUnique:'qared001'}, startTime: f.startTime.toISOString(), stopTime: f.stopTime.toISOString() });
-    expect(response).toMatchObject({ status: 200 });
+    expect(response, JSON.stringify(response)).toMatchObject({ status: 200 });
     const rows = await f.db.select().from(storeBargain).where(eq(storeBargain.storeName, '新活动'));
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ productId: 70, price: '10.00', minPrice: '2.50', stock: 6, quota: 5,
