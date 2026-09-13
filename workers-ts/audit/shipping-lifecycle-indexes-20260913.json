@@ -1230,7 +1230,7 @@
     }
   ],
   "ci": {
-    "status": "pending_exact_increment_dispatch",
+    "status": "completed",
     "workflow": ".github/workflows/workers-runtime-linux.yml",
     "existingGatesAndTimeoutsPreserved": true,
     "addedSameCapacityExperimentToCatalogJob": true,
@@ -1242,7 +1242,41 @@
     "priorSourceRun": 34737696153,
     "priorMainRun": 34739769626,
     "priorSuccessfulJobsEach": 11,
-    "priorCiNotEvidenceForThisIncrement": true
+    "priorCiNotEvidenceForThisIncrement": true,
+    "headSha": "029cf03b1f3417d836971b816d7a25c64615c4e4",
+    "runId": 34741866997,
+    "conclusion": "failure",
+    "successfulJobs": 9,
+    "totalJobs": 11,
+    "failedUnitJob": 103682800160,
+    "unitShard1": {
+      "passed": 2436,
+      "failed": 2,
+      "filesPassed": 198,
+      "filesFailed": 2,
+      "failures": [
+        {
+          "file": "kefu-sequence-runner.test.ts",
+          "cause": "Stale initialStatements=1080 assertion; ten new registered shipping indexes give1090"
+        },
+        {
+          "file": "table-catalog-gate.test.ts",
+          "cause": "Stale inline DROP source assertion after introducing dropOwnedAuditDatabase"
+        }
+      ]
+    },
+    "catalogJob": {
+      "id": 103682799988,
+      "conclusion": "success",
+      "fullCatalogAndCapacityPassed": true
+    },
+    "linuxCapacityArtifact": {
+      "id": 10312792003,
+      "name": "shipping-index-capacity-029cf03b1f3417d836971b816d7a25c64615c4e4",
+      "repositoryReport": "workers-ts/audit/shipping-lifecycle-index-linux-capacity-20260913.json",
+      "sha256": "1A1D5615B1185177E66BCACC1C27179447D1C1FFA01884C46408F7886B74D805",
+      "fullCiSuccess": false
+    }
   },
   "boundaries": {
     "productionChanged": false,
@@ -1253,7 +1287,7 @@
     "A3k12Complete": false
   },
   "remaining": [
-    "Exact increment Linux CI including the newly added full capacity experiment",
+    "Exact revised increment Linux CI after correcting both stale assertions; previous run remains failed",
     "Broader distributions and scales, realistic sustained/concurrent write load, statistics/retention policy",
     "Full lifecycle service authorization, remaining write/concurrency/rule interactions and high-privilege maintenance coordination",
     "Separately authorized online installation and actual runtime-role/business acceptance"

@@ -20,7 +20,7 @@ BEGIN
     RAISE EXCEPTION 'Shipping indexes require bounded maintenance settings';
   END IF;
   FOR phase IN 0..1 LOOP
-    SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO ready
+    SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" AND "noUnreviewedRelationRules" INTO ready
       FROM (SELECT
   pg_catalog.current_setting('session_replication_role') IN ('origin','local') AS "originTriggersActive",
   NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS "noEnabledEventTriggers",
@@ -38,7 +38,15 @@ BEGIN
       -- references before the shipping AFTER trigger observes them.
       AND NOT pg_catalog.starts_with(t.tgname,'shipping_lifecycle_')
       AND NOT (pn.nspname='public' AND pg_catalog.starts_with(p.proname,'shipping_lifecycle_'))
-  ) AS "noUnreviewedRelationTriggers") e;
+  ) AS "noUnreviewedRelationTriggers",
+  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_rewrite r
+    JOIN pg_catalog.pg_class c ON c.oid=r.ev_class
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND c.relname IN
+      ('shipping_templates','store_product','store_seckill','store_bargain',
+       'store_combination','store_integral','store_discounts_products')
+      AND r.ev_enabled<>'D'
+  ) AS "noUnreviewedRelationRules") e;
     IF ready IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping index installation environment requires review'; END IF;
     SELECT count(*)=7 AND bool_and(compatible) INTO ready FROM (
 WITH wanted(table_name,columns,types) AS (VALUES
@@ -148,7 +156,7 @@ SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_index i
  AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_constraint k WHERE k.conindid=i.indexrelid)) AS compatible
 ) r;
   IF ready IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping package source index requires review'; END IF;
-  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO ready
+  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" AND "noUnreviewedRelationRules" INTO ready
     FROM (SELECT
   pg_catalog.current_setting('session_replication_role') IN ('origin','local') AS "originTriggersActive",
   NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS "noEnabledEventTriggers",
@@ -166,7 +174,15 @@ SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_index i
       -- references before the shipping AFTER trigger observes them.
       AND NOT pg_catalog.starts_with(t.tgname,'shipping_lifecycle_')
       AND NOT (pn.nspname='public' AND pg_catalog.starts_with(p.proname,'shipping_lifecycle_'))
-  ) AS "noUnreviewedRelationTriggers") e;
+  ) AS "noUnreviewedRelationTriggers",
+  NOT EXISTS(SELECT 1 FROM pg_catalog.pg_rewrite r
+    JOIN pg_catalog.pg_class c ON c.oid=r.ev_class
+    JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND c.relname IN
+      ('shipping_templates','store_product','store_seckill','store_bargain',
+       'store_combination','store_integral','store_discounts_products')
+      AND r.ev_enabled<>'D'
+  ) AS "noUnreviewedRelationRules") e;
   IF ready IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping index installation environment requires review'; END IF;
   IF EXISTS(SELECT 1 FROM (
 WITH wanted AS (SELECT * FROM jsonb_to_recordset($shipping_index_manifest$[{"table":"store_product","name":"sp_shipping_ref","ddl":"CREATE INDEX sp_shipping_ref ON public.store_product ((CASE WHEN temp_id>0 THEN temp_id WHEN freight NOT IN(1,2) THEN 1 ELSE 0 END))","definition":"CREATE INDEX sp_shipping_ref ON public.store_product USING btree ((\nCASE\n    WHEN (temp_id > 0) THEN temp_id\n    WHEN (freight <> ALL (ARRAY[1, 2])) THEN 1\n    ELSE 0\nEND))"},{"table":"store_seckill","name":"sseckill_shipping_ref","ddl":"CREATE INDEX sseckill_shipping_ref ON public.store_seckill ((CASE WHEN temp_id>0 THEN temp_id WHEN freight NOT IN(1,2) THEN 1 ELSE 0 END))","definition":"CREATE INDEX sseckill_shipping_ref ON public.store_seckill USING btree ((\nCASE\n    WHEN (temp_id > 0) THEN temp_id\n    WHEN (freight <> ALL (ARRAY[1, 2])) THEN 1\n    ELSE 0\nEND))"},{"table":"store_bargain","name":"sbarg_shipping_ref","ddl":"CREATE INDEX sbarg_shipping_ref ON public.store_bargain ((CASE WHEN temp_id>0 THEN temp_id WHEN freight NOT IN(1,2) THEN 1 ELSE 0 END))","definition":"CREATE INDEX sbarg_shipping_ref ON public.store_bargain USING btree ((\nCASE\n    WHEN (temp_id > 0) THEN temp_id\n    WHEN (freight <> ALL (ARRAY[1, 2])) THEN 1\n    ELSE 0\nEND))"},{"table":"store_combination","name":"scomb_shipping_ref","ddl":"CREATE INDEX scomb_shipping_ref ON public.store_combination ((CASE WHEN temp_id>0 THEN temp_id WHEN freight NOT IN(1,2) THEN 1 ELSE 0 END))","definition":"CREATE INDEX scomb_shipping_ref ON public.store_combination USING btree ((\nCASE\n    WHEN (temp_id > 0) THEN temp_id\n    WHEN (freight <> ALL (ARRAY[1, 2])) THEN 1\n    ELSE 0\nEND))"},{"table":"store_integral","name":"sint_shipping_ref","ddl":"CREATE INDEX sint_shipping_ref ON public.store_integral ((CASE WHEN temp_id>0 THEN temp_id WHEN freight NOT IN(1,2) THEN 1 ELSE 0 END))","definition":"CREATE INDEX sint_shipping_ref ON public.store_integral USING btree ((\nCASE\n    WHEN (temp_id > 0) THEN temp_id\n    WHEN (freight <> ALL (ARRAY[1, 2])) THEN 1\n    ELSE 0\nEND))"},{"table":"store_discounts_products","name":"sdp_shipping_ref","ddl":"CREATE INDEX sdp_shipping_ref ON public.store_discounts_products ((CASE WHEN temp_id>0 THEN temp_id ELSE 0 END))","definition":"CREATE INDEX sdp_shipping_ref ON public.store_discounts_products USING btree ((\nCASE\n    WHEN (temp_id > 0) THEN temp_id\n    ELSE 0\nEND))"},{"table":"store_seckill","name":"sseckill_shipping_source","ddl":"CREATE INDEX sseckill_shipping_source ON public.store_seckill (product_id)","definition":"CREATE INDEX sseckill_shipping_source ON public.store_seckill USING btree (product_id)"},{"table":"store_bargain","name":"sbarg_shipping_source","ddl":"CREATE INDEX sbarg_shipping_source ON public.store_bargain (product_id)","definition":"CREATE INDEX sbarg_shipping_source ON public.store_bargain USING btree (product_id)"},{"table":"store_combination","name":"scomb_shipping_source","ddl":"CREATE INDEX scomb_shipping_source ON public.store_combination (product_id)","definition":"CREATE INDEX scomb_shipping_source ON public.store_combination USING btree (product_id)"},{"table":"store_integral","name":"sint_shipping_source","ddl":"CREATE INDEX sint_shipping_source ON public.store_integral (product_id)","definition":"CREATE INDEX sint_shipping_source ON public.store_integral USING btree (product_id)"}]$shipping_index_manifest$::jsonb)

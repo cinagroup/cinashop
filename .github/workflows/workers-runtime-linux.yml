@@ -107,7 +107,21 @@ jobs:
         run: npm run typecheck
 
       - name: Run Worker unit tests
-        run: npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:unit -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json=unit-shard-results.json 2>&1 | tee unit-shard.log
+
+      - name: Preserve unit shard diagnostics even on failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: unit-shard-${{ matrix.shard }}-${{ github.sha }}
+          path: |
+            workers-ts/unit-shard-results.json
+            workers-ts/unit-shard.log
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Verify exact executed unit shard coverage
         run: node scripts/audit-unit-shards.mjs ${{ matrix.shard }} unit-shard-results.json

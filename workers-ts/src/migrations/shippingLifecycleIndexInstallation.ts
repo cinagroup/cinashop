@@ -35,7 +35,7 @@ BEGIN
     RAISE EXCEPTION 'Shipping indexes require bounded maintenance settings';
   END IF;
   FOR phase IN 0..1 LOOP
-    SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO ready
+    SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" AND "noUnreviewedRelationRules" INTO ready
       FROM (${SHIPPING_LIFECYCLE_ENVIRONMENT_SQL}) e;
     IF ready IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping index installation environment requires review'; END IF;
     SELECT count(*)=7 AND bool_and(compatible) INTO ready FROM (${SHIPPING_LIFECYCLE_SHAPE_SQL}) s;
@@ -55,7 +55,7 @@ ${SHIPPING_LIFECYCLE_LOCK_SQL};
   END IF;
   SELECT compatible INTO ready FROM (${SHIPPING_LIFECYCLE_REUSED_INDEX_SQL}) r;
   IF ready IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping package source index requires review'; END IF;
-  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" INTO ready
+  SELECT "originTriggersActive" AND "noEnabledEventTriggers" AND "noUnreviewedRelationTriggers" AND "noUnreviewedRelationRules" INTO ready
     FROM (${SHIPPING_LIFECYCLE_ENVIRONMENT_SQL}) e;
   IF ready IS DISTINCT FROM true THEN RAISE EXCEPTION 'Shipping index installation environment requires review'; END IF;
   IF EXISTS(SELECT 1 FROM (${SHIPPING_LIFECYCLE_INDEX_CATALOG_SQL}) i WHERE present AND NOT compatible) THEN
