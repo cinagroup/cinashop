@@ -7,6 +7,14 @@ describe('actual admin shipping writes are atomic',()=>{
  let f:Awaited<ReturnType<typeof createAdminShippingFixture>>;
  beforeEach(async()=>{f=await createAdminShippingFixture();},30_000);
  afterEach(async()=>{await f?.close();});
+ it('a missing scope fails before creation even when the key is valid',async()=>{
+  const before=await f.snapshot();
+  const response=await shippingAdminApp(f.db).request('/save',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify({id:0,name:'missing scope',regions:[]})});
+  // This service fixture intentionally maps all errors to business 400; the
+  // full registered-route suite verifies actual HTTP/business 412 separately.
+  expect(await response.json()).toMatchObject({status:400,msg:expect.stringContaining('创建身份已变化或缺失'),data:null});
+  expect(await f.snapshot()).toEqual(before);
+ });
  it.each([0,10])('rolls back template and all regions after a later insert failure, id=%i',async id=>{
   await f.exec("CREATE FUNCTION qa_region_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.region_name='boom' THEN RAISE EXCEPTION 'isolated region failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER qa_region_failure BEFORE INSERT ON shipping_templates_region FOR EACH ROW EXECUTE FUNCTION qa_region_failure()");
   const before=await f.snapshot();

@@ -29,7 +29,7 @@ export async function postShipping(db:DbClient,body:unknown) {
   try { revision=(await readAdminShippingSnapshot(db,Number(body.id))).revision; } catch { /* Missing/retired remains an HTTP rejection. */ }
   body={...body,expectedRevision:revision};
  }
- const response=await shippingAdminApp(db).request('/save',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify(body)});
+ const response=await shippingAdminApp(db).request('/save',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID(),'X-Shipping-Creation-Scope':'v1:0:0:7'},body:JSON.stringify(body)});
  return response.json() as Promise<{status:number;msg:string;data:{id:number}|null}>;
 }
 export async function createAdminShippingFixture() {

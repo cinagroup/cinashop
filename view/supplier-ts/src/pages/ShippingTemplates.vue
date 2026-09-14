@@ -13,6 +13,7 @@ import {
 import { ApiError } from '@/api/http';
 import { useAuthStore } from '@/stores/auth';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
+import { useShippingTemplateList } from '@/utils/shippingTemplateList';
 import { supplierShippingCreation } from '@/api/shippingCreation';
 import type { CreationIntent } from '../../../shared/shippingCreation';
 import type {
@@ -28,7 +29,6 @@ interface TemplateForm extends ShippingTemplatePayload {
   id: number;
 }
 
-const loading = ref(false);
 const saving = ref(false);
 const reading = ref(false);
 const editError = ref('');
@@ -39,15 +39,14 @@ const deleting = ref(false);
 const auth = useAuthStore();
 const canManage = computed(() => !sessionInvalidated.value && (previewMode || auth.can('supplier.shipping.manage')));
 let editGeneration = 0;
-let listGeneration = 0;
 let confirmationPending = false;
 const dialogVisible = ref(false);
 const creation = ref<CreationIntent | null>(null);
 let creator: ReturnType<typeof supplierShippingCreation> | undefined;
-const rows = ref<ShippingTemplateRow[]>([]);
-const count = ref(0);
 const cities = ref<ShippingCityOption[]>([]);
-const filter = reactive({ name: "", page: 1, limit: 20 });
+const filter = reactive({ name: "" });
+const list = useShippingTemplateList(query => getShippingTemplates({ ...query }, session.signal), () => current());
+const { rows, count, loading, error: listError, applied, pages } = list;
 
 const blankRegion = (nationwide = false): ShippingRegionRule => ({
   city_ids: nationwide ? [[0]] : [],
@@ -74,14 +73,14 @@ const form = reactive<TemplateForm>(blankForm());
 const session = createSupplierSessionScope(() => {
   if (confirmationPending) ElMessageBox.close();
   confirmationPending = false;
-  sessionInvalidated.value = true; editGeneration += 1; listGeneration += 1;
-  dialogVisible.value = false; rows.value = []; count.value = 0; cities.value = [];
+  sessionInvalidated.value = true; editGeneration += 1; list.reset();
+  dialogVisible.value = false; cities.value = []; filter.name = '';
   creation.value = null;
   Object.assign(form, blankForm()); loading.value = false; reading.value = false; saving.value = false; deleting.value = false;
 }, previewMode);
 onBeforeUnmount(() => {
   if (confirmationPending) ElMessageBox.close();
-  confirmationPending = false; editGeneration += 1; listGeneration += 1; session.dispose();
+  confirmationPending = false; editGeneration += 1; list.reset(); session.dispose();
 });
 function current() { return session.isCurrent(); }
 function canWrite() { return current() && canManage.value && !uncertainMutation.value; }
@@ -127,22 +126,13 @@ function validationMessage() {
   return "";
 }
 
-async function load() {
-  if (!current()) return;
-  const generation = ++listGeneration;
-  loading.value = true;
-  try {
-    const result = await getShippingTemplates({ ...filter }, session.signal);
-    if (!current() || generation !== listGeneration) return;
-    rows.value = result.data;
-    count.value = result.count;
-  } catch (error) {
-    if (!current() || generation !== listGeneration) return;
-    ElMessage.error(error instanceof Error ? error.message : "运费模板加载失败");
-  } finally {
-    if (current() && generation === listGeneration) loading.value = false;
-  }
+async function load() { await list.load(); }
+async function search() { await list.load({ name: filter.name, page: 1, limit: applied.value.limit }); }
+async function changePage(page: number) { await list.load({ ...applied.value, page }); }
+async function changePageSize(event: Event) {
+  await list.load({ ...applied.value, page: 1, limit: Number((event.target as HTMLSelectElement).value) });
 }
+async function jumpPage(event: Event) { await changePage(Number((event.target as HTMLInputElement).value)); }
 
 async function openCreate() {
   if (!canWrite() || saving.value || deleting.value || reading.value) return;
@@ -356,9 +346,11 @@ onMounted(async () => {
     <el-alert v-if="sessionInvalidated" title="登录身份或权限已改变，当前页面已失效。请重新进入本页。" type="warning" :closable="false" show-icon />
     <el-alert v-else-if="uncertainMutation" :title="uncertainMutation" type="error" :closable="false" show-icon />
     <article class="surface filter-bar">
-      <el-input v-model="filter.name" clearable maxlength="255" placeholder="搜索模板名称" @keyup.enter="load" />
-      <el-button type="primary" :disabled="sessionInvalidated" @click="load">查询</el-button>
+      <el-input v-model="filter.name" clearable maxlength="255" placeholder="搜索模板名称" @keyup.enter="search" />
+      <el-button type="primary" :disabled="sessionInvalidated" @click="search">查询</el-button>
     </article>
+    <el-alert v-if="listError" :title="listError" description="显示内容仍为上次成功查询的结果；重试不会执行任何写入。" type="error" :closable="false" show-icon />
+    <el-button v-if="listError" :disabled="sessionInvalidated || loading" @click="list.retry">重试列表</el-button>
 
     <article class="surface table-card" v-loading="loading">
       <el-table :data="rows" empty-text="暂无运费模板">
@@ -377,7 +369,16 @@ onMounted(async () => {
           </template>
         </el-table-column>
       </el-table>
-      <div class="table-footer"><span>共 {{ count }} 个模板</span></div>
+      <nav class="table-footer" aria-label="运费模板分页">
+        <span>共 {{ count }} 个模板 · 第 {{ applied.page }} / {{ pages }} 页</span>
+        <span v-if="applied.name">当前查询：{{ applied.name }}</span>
+        <label>每页 <select aria-label="每页数量" :value="applied.limit" :disabled="sessionInvalidated || loading" @change="changePageSize"><option v-for="size in [10, 20, 50, 100]" :key="size" :value="size">{{ size }} 条</option></select></label>
+        <div class="page-actions">
+          <el-button :disabled="sessionInvalidated || loading || applied.page <= 1" @click="changePage(applied.page - 1)">上一页</el-button>
+          <label>跳至 <input aria-label="跳转页码" type="number" min="1" :max="Math.min(pages, 1000000)" :value="applied.page" :disabled="sessionInvalidated || loading" @change="jumpPage" /></label>
+          <el-button :disabled="sessionInvalidated || loading || applied.page >= pages || applied.page >= 1000000" @click="changePage(applied.page + 1)">下一页</el-button>
+        </div>
+      </nav>
     </article>
 
     <el-dialog v-if="!sessionInvalidated" v-model="dialogVisible" class="supplier-shipping-dialog" align-center :title="form.id ? '编辑运费模板' : '新增运费模板'" width="min(1080px, 94vw)" destroy-on-close
@@ -455,7 +456,11 @@ onMounted(async () => {
 :global(.supplier-shipping-dialog .el-dialog__header), :global(.supplier-shipping-dialog .el-dialog__footer), .edit-error { flex-shrink: 0; }
 .filter-bar .el-input { max-width: 360px; }
 .table-card { overflow: hidden; }
-.table-footer { display: flex; justify-content: flex-end; padding: 14px 20px; color: var(--text-muted); }
+.table-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; padding: 14px 20px; color: var(--text-muted); }
+.table-footer label, .page-actions { display: flex; align-items: center; gap: 8px; }
+.table-footer select, .table-footer input { min-height: 32px; border: 1px solid var(--border); border-radius: 6px; color: inherit; background: var(--bg); }
+.table-footer input { width: 60px; }
+.page-actions .el-button + .el-button { margin-left: 0; }
 .shipping-form { flex: 1; min-height: 0; max-height: 68vh; overflow-y: auto; padding-right: 8px; }
 .top-grid { grid-template-columns: minmax(240px, 1fr) minmax(300px, 1fr) 160px; }
 .rule-section { padding: 20px 0; border-top: 1px solid var(--border); }
@@ -470,6 +475,7 @@ onMounted(async () => {
 .region-picker { display: grid; gap: 8px; }
 .region-picker .el-cascader, .compact-rule .el-cascader, .no-delivery-row .el-cascader { width: 100%; }
 @media (max-width: 900px) {
+  .table-footer { justify-content: flex-start; padding: 14px 12px; }
   .top-grid { grid-template-columns: 1fr; }
   .region-row, .compact-rule { grid-template-columns: 1fr 1fr; }
   .region-picker, .compact-rule .el-cascader { grid-column: 1 / -1; }

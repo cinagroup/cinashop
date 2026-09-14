@@ -513,7 +513,7 @@ export async function getShippingTemplates(
 ): Promise<ShippingTemplateListResult> {
   if (previewMode) {
     signal?.throwIfAborted();
-    const data = previewShippingTemplates.map((item, index) => ({
+    const all = previewShippingTemplates.map((item, index) => ({
       id: index + 1,
       name: item.formData.name,
       type: item.formData.type === 1 ? "按件数" : item.formData.type === 2 ? "按重量" : "按体积",
@@ -521,7 +521,10 @@ export async function getShippingTemplates(
       sort: item.formData.sort,
       add_time: "2026-09-02 09:00:00",
     }));
-    return { data, count: data.length };
+    const name = String(params.name ?? '').trim().toLowerCase();
+    const page = Number(params.page ?? 1), limit = Number(params.limit ?? 20);
+    const filtered = all.filter(row => !name || row.name.toLowerCase().includes(name)).sort((a, b) => b.sort - a.sort || b.id - a.id);
+    return { data: filtered.slice((page - 1) * limit, page * limit), count: filtered.length };
   }
   return apiRequest<ShippingTemplateListResult>({
     signal,
