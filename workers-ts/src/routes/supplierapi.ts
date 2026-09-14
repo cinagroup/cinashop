@@ -29,6 +29,7 @@ supplierapiRoutes.post("/is_captcha", (c) =>
 supplierapiRoutes.use('/setting/shipping_templates/*', ShippingCreation.privateResponse);
 supplierapiRoutes.use('/product/product/shipping-template-options', ShippingCreation.privateResponse);
 supplierapiRoutes.use('/product/product/shipping-template-options/*', ShippingCreation.privateResponse);
+supplierapiRoutes.use('/product/product/get_template', ShippingCreation.privateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
@@ -168,6 +169,7 @@ supplierapiRoutes.get("/product/product/get_rule", SupplierController.productRul
 // Explicitly paged contract, not an incomplete alias of PHP's full get_template array.
 supplierapiRoutes.get('/product/product/shipping-template-options', ProductShippingOptions.list);
 supplierapiRoutes.get('/product/product/shipping-template-options/:id', ProductShippingOptions.detail);
+supplierapiRoutes.get('/product/product/get_template', ProductShippingOptions.legacy);
 supplierapiRoutes.get("/product/product/rule", SupplierController.productRuleList);
 supplierapiRoutes.post("/product/product/rule/:id", SupplierController.productRuleSave);
 supplierapiRoutes.get("/product/product/rule/:id", SupplierController.productRuleDetail);

@@ -1,5 +1,51 @@
 # 总后台完整运费规则编辑候选
 
+## 旧商品运费完整数组与断连清理（2026-09-14，未部署）
+
+精确 GET `/supplierapi/product/product/get_template` 已接入商品权限、实时供应商归属
+和全响应 no-store。按 PHP 返回完整 `[{id,name}]` 数组，sort DESC/id DESC；不把
+分页接口当旧合同别名，不受客户端 limit/page/name/owner/relation 参数截断或改归属。
+沿用当前退役规则排除 is_del=1，保留 status=0。HEAD 不开数据库流。
+
+实现使用 Hyperdrive 同一 connectionString 的响应专属 max=1 postgres.js 客户端，
+READ ONLY 事务内 NO SCROLL/WITHOUT HOLD 游标，每次 FETCH 128 行；只保留一批，
+同一快照不受跨批插入、改名、退役、改归属影响。成功 COMMIT 后才输出 JSON 尾部。
+连接 5 秒、语句 5 秒、事务空闲 10 秒、整个流 20 秒上限；取消/超时/断连/坏行均不
+形成合法残缺成功 JSON。专属连接关闭和初始准备通过 waitUntil 跟踪，不结束认证池。
+
+初版 reserve() 在真实 pg_terminate_backend 后挂起：16 项中 15 过、1 项 5 秒超时。
+驱动源码确认 reserve 的空闲断连没有 begin 的 onclose 拒绝保护，且 release 不能
+代替销毁。没有延长该测试时限；改用专属客户端 onclose + end({timeout:0}) 后原
+16 项通过，再补已取消请求和初始 SQL 被锁时的期限，最终专项 18 项通过。
+每个场景独立查询 pg_stat_activity，确认专属会话消失；断连场景确认认证 PID 未变。
+
+七文件回归 131 项通过、零失败/跳过，另路由解析/Admin API/RBAC 三文件 17 项通过。
+最终专项18项再次通过，`npm run typecheck`单元与runtime两配置均通过。最初类型检查
+发现测试夹具exec联合类型不能直接读取pid，已改用query.rows并运行时校验，未使用双重断言。
+测试使用随机本机 PG16 数据库和受限 LOGIN、实际注册路由/JWT/身份权限；Redis 令牌
+桶为替身。先前 fbbf696 的 CI34811360502 已 completed/success，不代表本增量 CI。
+路由盘点 PHP1904/TS1662/匹配882/可执行864/缺失1022/退役17/可行动缺口1005。
+
+临时原始 JSON 报告（位于用户 Temp）：
+- `cinashop-legacy-shipping-options-lifecycle-20260914.json`（15过/1超时），SHA256
+  `52aecf349ab850607832217ac8937a3d6ce76b70c823f92b27d925b53054481c`。
+- `cinashop-legacy-shipping-options-owned-20260914.json`（16过），SHA256
+  `af09c5b978c85deb5d0129de1460c6d6b2a3bbc44d2fb7c5cc74d5da65360c63`。
+- `cinashop-legacy-shipping-options-regression-20260914.json`（131过），SHA256
+  `b2211c8405298352da99aefc0fc3f5f041d0c86f89ad4ac71ce230f203642048`。
+- `cinashop-legacy-shipping-options-final-20260914.json`（18过），SHA256
+  `ef66f395b738e8146bc85d318be077df4d6ae80ef6206ed1d1457e1f4767f1fc`。
+
+独立 psql 观察专属流会话0、随机fixture库0；发现既存角色
+`cinashop_runtime_25aecdb9743e4b888f648aaa918806a6`，未证明其归属，本轮不删除，
+不宣称全局测试角色零残留。本轮夹具自身 DROP ROLE 后精确校验均通过。
+
+最近生产浏览器实测商城首页→搜索→商品70详情、后台空表单校验通过，但商品图片仍
+加载失败，商品70无有效规格/库存0、购买禁用；无真实登录/下单/手机验收。未改生产
+数据、权限或部署。旧三个 PHP 页面消费流响应、workerd/Hyperdrive 实际游标兼容、
+高并发容量、完整商品保存及协调发布仍开放。A3k13、SUP-004和240/164/404保持。
+下方“旧全数组接口尚未实现”为此前阶段记录。
+
 ## 商品域运费选项权限（2026-09-14，未部署）
 
 PHP `route/supplier.php:191`、`StoreProduct.php:get_template` 与
