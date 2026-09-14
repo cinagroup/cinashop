@@ -13,6 +13,8 @@ import {
 import { ApiError } from '@/api/http';
 import { useAuthStore } from '@/stores/auth';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
+import { supplierShippingCreation } from '@/api/shippingCreation';
+import type { CreationIntent } from '../../../shared/shippingCreation';
 import type {
   ShippingCityOption,
   ShippingFreeRule,
@@ -40,6 +42,8 @@ let editGeneration = 0;
 let listGeneration = 0;
 let confirmationPending = false;
 const dialogVisible = ref(false);
+const creation = ref<CreationIntent | null>(null);
+let creator: ReturnType<typeof supplierShippingCreation> | undefined;
 const rows = ref<ShippingTemplateRow[]>([]);
 const count = ref(0);
 const cities = ref<ShippingCityOption[]>([]);
@@ -72,6 +76,7 @@ const session = createSupplierSessionScope(() => {
   confirmationPending = false;
   sessionInvalidated.value = true; editGeneration += 1; listGeneration += 1;
   dialogVisible.value = false; rows.value = []; count.value = 0; cities.value = [];
+  creation.value = null;
   Object.assign(form, blankForm()); loading.value = false; reading.value = false; saving.value = false; deleting.value = false;
 }, previewMode);
 onBeforeUnmount(() => {
@@ -139,14 +144,29 @@ async function load() {
   }
 }
 
-function openCreate() {
-  if (!canWrite() || saving.value || deleting.value) return;
-  editGeneration += 1;
-  reading.value = false;
+async function openCreate() {
+  if (!canWrite() || saving.value || deleting.value || reading.value) return;
+  const generation = ++editGeneration;
+  reading.value = true;
   editError.value = '';
   needsReload.value = false;
   Object.assign(form, blankForm());
+  creation.value = null;
   dialogVisible.value = true;
+  try {
+    if (!previewMode) {
+      creator ??= supplierShippingCreation(session);
+      const pending = await creator.load();
+      if (!current() || generation !== editGeneration) return;
+      creation.value = pending;
+      if (pending) Object.assign(form, pending.payload, { id: 0 });
+    }
+  } catch (error) {
+    if (current() && generation === editGeneration) {
+      needsReload.value = true;
+      editError.value = error instanceof Error ? error.message : '无法读取原创建请求，已阻止新建';
+    }
+  } finally { if (current() && generation === editGeneration) reading.value = false; }
 }
 
 async function openEdit(id: number) {
@@ -173,6 +193,7 @@ async function openEdit(id: number) {
       no_delivery_info: detail.noDeliveryList,
     });
     dialogVisible.value = true;
+    creation.value = null;
     editError.value = '';
     needsReload.value = false;
   } catch (error) {
@@ -202,7 +223,7 @@ async function reloadEditor() {
 }
 
 async function submit() {
-  if (!canWrite() || saving.value || deleting.value || reading.value || needsReload.value || !dialogVisible.value) return;
+  if (!canWrite() || saving.value || deleting.value || reading.value || needsReload.value || !dialogVisible.value || creation.value) return;
   const message = validationMessage();
   if (message) return ElMessage.warning(message);
   saving.value = true;
@@ -220,6 +241,19 @@ async function submit() {
       appoint_info: form.appoint ? form.appoint_info : [],
       no_delivery_info: form.no_delivery ? form.no_delivery_info : [],
     };
+    if (!id && !previewMode) {
+      if (!creator) throw new Error('创建恢复未就绪');
+      const pending = await creator.prepare(JSON.parse(JSON.stringify(payload)));
+      if (!current() || generation !== editGeneration) return;
+      creation.value = pending; Object.assign(form, pending.payload, { id: 0 });
+      if (JSON.stringify(pending.payload) !== JSON.stringify(payload)) {
+        editError.value = '另一标签页已有创建请求，已恢复其原始表单。请先恢复查询，不会发送当前未保存输入。';
+        return;
+      }
+      const result = await creator.send(pending.requestKey);
+      if (current() && generation === editGeneration) creation.value = result;
+      return;
+    }
     await saveShippingTemplate(id, JSON.parse(JSON.stringify(payload)), session.signal);
     if (!current() || generation !== editGeneration) return;
     dialogVisible.value = false;
@@ -227,12 +261,34 @@ async function submit() {
     await load();
   } catch (error) {
     if (!current() || generation !== editGeneration) return;
-    editError.value = error instanceof ApiError && error.status === 400 ? error.message : unknownResult('保存');
+    editError.value = !id && !previewMode ? `${error instanceof Error ? error.message : '创建未确认'}。原请求已保留，请恢复查询或使用原请求重试。`
+      : error instanceof ApiError && error.status === 400 ? error.message : unknownResult('保存');
     needsReload.value = /其他操作修改|编辑版本/.test(editError.value);
     ElMessage.error(editError.value);
   } finally {
     if (current() && generation === editGeneration) saving.value = false;
   }
+}
+
+async function creationAction(action: 'recover' | 'send' | 'acknowledge') {
+  if (!creator || !creation.value || saving.value || !current() || !canManage.value) return;
+  const generation = editGeneration, key = creation.value.requestKey;
+  saving.value = true; editError.value = '';
+  try {
+    if (action === 'acknowledge') {
+      await creator.acknowledge(key);
+      if (!current() || generation !== editGeneration) return;
+      creation.value = null; dialogVisible.value = false;
+      ElMessage.success('已确认原创建结果'); await load();
+    } else {
+      const result = await creator[action](key);
+      if (!current() || generation !== editGeneration) return;
+      creation.value = result;
+      if (!result.receipt) editError.value = '暂未查到已提交回执。原请求继续保留，只能使用原键和原内容重试。';
+    }
+  } catch (error) {
+    if (current() && generation === editGeneration) editError.value = error instanceof Error ? error.message : '恢复失败，原请求已保留';
+  } finally { if (current() && generation === editGeneration) saving.value = false; }
 }
 
 async function removeTemplate(row: ShippingTemplateRow) {
@@ -328,7 +384,10 @@ onMounted(async () => {
       :close-on-click-modal="!saving && !reading" :close-on-press-escape="!saving && !reading" :show-close="!saving && !reading">
       <el-alert v-if="editError" class="edit-error" :title="editError" type="error" :closable="false" show-icon
         :description="needsReload ? '当前输入已保留；保存已暂停。请先复制需要的内容，再重新读取最新模板核对。' : '当前输入已保留。'" />
-      <el-form label-position="top" class="shipping-form" :disabled="saving || reading || !canManage">
+      <el-alert v-if="creation" class="edit-error" :title="creation.receipt ? `已确认创建，模板 ID：${creation.receipt.id}` : '已保存原始创建请求，刷新或重入后可恢复'"
+        :type="creation.receipt ? 'success' : 'warning'" :closable="false" show-icon
+        description="当前表单已冻结。回执仅证明曾创建；模板之后被删除或转移时不代表仍可访问。不要清除浏览器数据。" />
+      <el-form label-position="top" class="shipping-form" :disabled="saving || reading || !canManage || !!creation">
         <div class="form-grid top-grid">
           <el-form-item label="模板名称" required><el-input v-model="form.name" maxlength="255" show-word-limit /></el-form-item>
           <el-form-item label="计费方式"><el-radio-group v-model="form.type"><el-radio-button :value="1">按件数</el-radio-button><el-radio-button :value="2">按重量</el-radio-button><el-radio-button :value="3">按体积</el-radio-button></el-radio-group></el-form-item>
@@ -377,7 +436,12 @@ onMounted(async () => {
       <template #footer>
         <el-button :disabled="saving || reading" @click="dialogVisible = false; editGeneration += 1">取消</el-button>
         <el-button v-if="form.id" :disabled="saving || reading" :loading="reading" @click="reloadEditor">重新读取模板</el-button>
-        <el-button type="primary" :loading="saving" :disabled="reading || needsReload || !canManage || !!uncertainMutation" @click="submit">保存模板</el-button>
+        <template v-if="creation">
+          <el-button :disabled="saving || !canManage" @click="creationAction('recover')">恢复查询</el-button>
+          <el-button v-if="!creation.receipt" :disabled="saving || !canManage" @click="creationAction('send')">使用原请求重试</el-button>
+          <el-button v-else type="primary" :disabled="saving || !canManage" @click="creationAction('acknowledge')">确认完成</el-button>
+        </template>
+        <el-button v-else type="primary" :loading="saving" :disabled="reading || needsReload || !canManage || !!uncertainMutation" @click="submit">保存模板</el-button>
       </template>
     </el-dialog>
   </section>
