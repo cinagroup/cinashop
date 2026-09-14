@@ -36,7 +36,7 @@ beforeEach(() => {
     locks.add(key); try { return await action({ name: key }); } finally { locks.delete(key); }
   } } });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 function harness(identity = admin) {
   let current = true;
   const transport = { create: vi.fn(), lookup: vi.fn() };
@@ -185,6 +185,83 @@ describe('client hash compared with actual server normalizer and canonical hash'
 });
 
 describe('real browser transport uses bounded JSON and captured auth', () => {
+  it.each(['send', 'recover'] as const)('%s timeout releases the identity lock and preserves exact intent for recovery', async action => {
+    const session = new AbortController(); let began!: () => void;
+    const started = new Promise<void>(resolve => { began = resolve; });
+    const fetcher = vi.fn((_url: string, { signal }: { signal: AbortSignal }) => {
+      began(); return new Promise<Response>((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    const transport = {
+      create: (body: Record<string, unknown>, key: string) => postShippingCreation('/fixture/save', 'Authorization', 'fixture', key, body, session.signal),
+      lookup: (key: string) => postShippingCreation('/fixture/creation-receipt', 'Authorization', 'fixture', key, {}, session.signal),
+    };
+    const client = createShippingCreation(admin, () => !session.signal.aborted, transport);
+    const intent = await client.prepare(payload()), raw = [...values.entries()];
+    vi.useFakeTimers();
+    const pending = client[action](intent.requestKey).catch(error => error);
+    await started; expect(locks.size).toBe(1);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect((await pending).message).toContain('超时');
+    expect(locks.size).toBe(0); expect([...values.entries()]).toEqual(raw);
+    expect(session.signal.aborted).toBe(false); expect(fetcher).toHaveBeenCalledTimes(1);
+    fetcher.mockResolvedValue(new Response(JSON.stringify({ status: 200, data: success(intent) }), { headers: { 'content-type': 'application/json' } }));
+    const reentered = createShippingCreation(admin, () => true, transport);
+    expect(await reentered.load()).toEqual(intent);
+    expect((await reentered.recover(intent.requestKey)).receipt?.id).toBe(55);
+    expect(fetcher.mock.calls.map(call => call[0])).toEqual([action === 'send' ? '/fixture/save' : '/fixture/creation-receipt', '/fixture/creation-receipt']);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  for (const phase of ['headers', 'body'] as const) {
+    it(`bounds stalled ${phase} to 30 seconds without cancelling the mounted session or retrying`, async () => {
+      vi.useFakeTimers();
+      const session = new AbortController(); let dispatched!: AbortSignal;
+      const fetcher = vi.fn((_url: string, options: { signal: AbortSignal }) => {
+        dispatched = options.signal;
+        if (phase === 'headers') return new Promise((_resolve, reject) => {
+          dispatched.addEventListener('abort', () => reject(dispatched.reason), { once: true });
+        });
+        return Promise.resolve(new Response(new ReadableStream({ start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"status":200,'));
+          dispatched.addEventListener('abort', () => controller.error(dispatched.reason), { once: true });
+        } }), { headers: { 'content-type': 'application/json' } }));
+      });
+      vi.stubGlobal('fetch', fetcher);
+      const pending = postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal).catch(error => error);
+      await vi.advanceTimersByTimeAsync(29_999); expect(dispatched.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      const abortedAtDeadline = dispatched.aborted, sessionStillCurrent = !session.signal.aborted;
+      // Settle the old implementation too, so this regression fails without hanging.
+      if (!abortedAtDeadline) session.abort(new Error('test cleanup: deadline missing'));
+      const error = await pending;
+      expect(abortedAtDeadline).toBe(true); expect(sessionStillCurrent).toBe(true);
+      if (!(error instanceof Error)) throw new Error('Expected a timeout error');
+      expect(error.message).toContain('超时'); expect(error.message).toContain('原请求');
+      expect(fetcher).toHaveBeenCalledTimes(1); expect(vi.getTimerCount()).toBe(0);
+    });
+    it(`session invalidation cancels ${phase} immediately and clears its deadline`, async () => {
+      vi.useFakeTimers(); const session = new AbortController();
+      vi.stubGlobal('fetch', (_url: string, { signal }: { signal: AbortSignal }) => {
+        if (phase === 'headers') return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+        return Promise.resolve(new Response(new ReadableStream({ start(controller) {
+          signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
+        } }), { headers: { 'content-type': 'application/json' } }));
+      });
+      const pending = postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal).catch(error => error);
+      await vi.advanceTimersByTimeAsync(1);
+      const reason = new Error('account changed'); session.abort(reason);
+      expect(await pending).toBe(reason); expect(vi.getTimerCount()).toBe(0);
+    });
+  }
+  it.each([200, 500])('settled HTTP %s removes its timer and mounted-session listener', async status => {
+    vi.useFakeTimers(); const session = new AbortController();
+    const add = vi.spyOn(session.signal, 'addEventListener'), remove = vi.spyOn(session.signal, 'removeEventListener');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"status":200,"data":null}', { status, headers: { 'content-type': 'application/json' } })));
+    await postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal).catch(() => {});
+    expect(add).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
+    expect(remove).toHaveBeenCalledWith('abort', add.mock.calls[0][1]);
+    expect(vi.getTimerCount()).toBe(0); expect(session.signal.aborted).toBe(false);
+  });
   it('POST sends exact key/body and captured authorization without retry/redirect', async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ status: 200, data: null }), { headers: { 'content-type': 'application/json' } }));
     vi.stubGlobal('fetch', fetcher);

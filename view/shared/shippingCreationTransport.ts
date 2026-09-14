@@ -3,6 +3,28 @@ export async function postShippingCreation(url: string, tokenHeader: 'Authori-za
   key: string, body: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
   signal.throwIfAborted();
   if (!token) throw new Error('请重新登录后恢复原创建请求');
+  // Bound the entire response, not just its headers. Abort this attempt, never
+  // the mounted session: the original key must remain available for recovery.
+  const attempt = new AbortController();
+  const cancelSession = () => attempt.abort(signal.reason);
+  signal.addEventListener('abort', cancelSession, { once: true });
+  const timeoutError = new Error('创建或恢复请求超时，结果尚未确认；原请求已保留，请恢复查询');
+  const deadline = setTimeout(() => attempt.abort(timeoutError), 30_000);
+  try {
+    return await request(url, tokenHeader, token, key, body, attempt.signal);
+  } catch (error) {
+    // Body consumption may surface a generic AbortError instead of our reason.
+    if (attempt.signal.aborted) throw attempt.signal.reason;
+    throw error;
+  } finally {
+    clearTimeout(deadline);
+    signal.removeEventListener('abort', cancelSession);
+    attempt.abort(); // also close an unread rejected HTTP response body
+  }
+}
+
+async function request(url: string, tokenHeader: string, token: string, key: string,
+  body: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
   const response = await fetch(url, { method: 'POST', redirect: 'error', credentials: 'omit', cache: 'no-store', signal,
     headers: { [tokenHeader]: `Bearer ${token}`, 'Idempotency-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!response.ok || !response.headers.get('content-type')?.includes('json')) {

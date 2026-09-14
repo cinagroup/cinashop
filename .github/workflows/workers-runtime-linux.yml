@@ -7,6 +7,7 @@ on:
     paths:
       - "workers-ts/**"
       - "view/common/**"
+      - "view/shared/**"
       - "view/admin-ts/**"
       - "view/pc-ts/**"
       - "view/supplier-ts/**"
@@ -19,6 +20,7 @@ on:
     paths:
       - "workers-ts/**"
       - "view/common/**"
+      - "view/shared/**"
       - "view/admin-ts/**"
       - "view/pc-ts/**"
       - "view/supplier-ts/**"

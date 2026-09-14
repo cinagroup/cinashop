@@ -14,6 +14,12 @@ const names=(source:string)=>[...source.matchAll(/^      - name: (.+)$/gm)].map(
 const setup=["Check out repository","Set up Node.js","Verify pinned Node and npm","Install locked dependencies"];
 
 describe("TEST-006 preserve required migration gate while separating catalog capacity",()=>{
+  it.each(["push", "pull_request"])("%s triggers migration gates for shared browser protocol changes", event=>{
+    const trigger=workflow.match(new RegExp(`^  ${event}:\\n([\\s\\S]*?)(?=^  [a-z_]+:|^permissions:)`, "m"));
+    expect(trigger).not.toBeNull();
+    expect(trigger![1]).toContain('      - "view/shared/**"');
+    expect(trigger![1]).toContain('      - "view/common/**"');
+  });
   it("keeps the exact previous required-check name and rejects skipped, failed or cancelled dependencies",()=>{
     const aggregate=job("worker-static");
     expect(workflow.match(/name: Worker type, unit, schema and route gates$/gm)).toHaveLength(1);
