@@ -6,6 +6,58 @@
 必须完成下述迁移和协同发布门禁，不能单独切换 Worker。
 历史阶段“尚未接入 HTTP”的记录保留在后半部分，不代表当前候选状态。
 
+## 浏览器插件 → 实际注册路由 → 受限 LOGIN PostgreSQL（2026-09-14）
+
+本轮业务代码为 `9cb173ea0aed441677d32ea803ab97dc71142821`，未修改或部署运行代码。
+对应 Linux CI [34800821161](https://github.com/cinagroup/cinashop/actions/runs/34800821161)
+已 completed/success，11/11作业成功，包括两单元分片、目录执行、workerd与五前端构建。
+
+浏览器仍使用用户指定的Codex插件，不采用外部Playwright代替。临时服务监听
+`http://127.0.0.1:5395/shipping`（Admin）与 `http://127.0.0.1:5396/shipping-templates`
+（Supplier），加载实际构建；经真实 `adminapiRoutes` / `supplierapiRoutes`、JWT校验、
+数据库账号/角色授权、创建/恢复控制器和正式回执事务访问完整ORM PostgreSQL16.15。
+完整ORM后安装正式运费生命周期协议。登录桥只签发本次合成账号，Redis缓存为显式替身；
+宿主是Node，不是workerd/Hyperdrive/Pages。本服务拒绝外部fetch，业务HTTP只开放运费路由。
+**本轮证据强于先前内存回执夹具，但仍不能声称生产端到端或真实登录/Redis验收。**
+
+本次随机数据库 `cinashop_kefu_runner_12656ec0c3c44c4fb905183773788faf`，运行角色
+`cinashop_runtime_ace8840f48df4f208c106e16d21f3def`；运行连接current_user=session_user，
+PG版本160015，superuser/createdb/createrole/replication/bypassrls全false。
+独立psql只读目录核验回执SELECT/INSERT=true，UPDATE/DELETE=false；订单SELECT、账号
+UPDATE、public schema CREATE均false。请求没有使用维护连接或SET ROLE冒充受限LOGIN。
+这是运费模板管理授权，不等于整个Worker的生产最小权限。
+
+| 实际浏览器交互 | 数据库及HTTP结果 |
+| --- | --- |
+| Admin填写全国首费6.25、甲市包邮计量2/金额99、乙市禁配，提交后断开响应；刷新→新增→恢复查询 | 模板10001，owner0/relation0/actor7；模板与三类非空规则及回执各1条；1次create、1次lookup，同键同摘要，无第二次创建 |
+| Supplier创建首费8.50，数据库提交后只发送JSON前12字符并保持正文未结束；浏览器总期限触发超时→切回正常传输→使用原请求重试 | 同一10002，owner2/relation20/actor27；第二次create返回replayed=true；浏览器读取控制台SQL快照比较，重放前后五表逐字相同 |
+| 两端显式确认完成→列表刷新 | Admin显示默认1与新10001/10002；Supplier仅显示所属10002，共1条，未显示平台模板 |
+
+Admin原键 `f4ca25bc-ee8c-4d38-814a-f4ae808f375e`，摘要
+`168939a6af9eb84cd9fa1610be38c010e05751255140c322681032c369f18206`；
+Supplier原键 `37bf7651-ec38-419e-bf32-01b5c0829061`，摘要
+`35364499b3197721739fd656b395927d0e915281d6c64e5285edf23b6580c541`。
+最终数据库共有3个模板（含初始化默认模板）、2条配送规则、1条包邮、1条禁配及2条回执。
+终态结构化HTTP日志与SQL快照由服务退出时输出，原始工具输出保留在本任务；无合成JWT输出。
+浏览器1280×720截图证明确认回执及所属列表，页面非空且无框架错误遮罩，Supplier日志为空。
+Admin登录桥跳到未开放的Dashboard时留下2项统计请求错误，待办加载失败；夹具还记录
+Supplier缺少favicon.ico的静态文件请求。不能报告全应用控制台/所有资产完全正常。
+插件content.export不受当前in-app实现支持，未伪造独立导出文件；截图和DOM/SQL证据仍在任务中。
+
+首次夹具因Admin发送pwd而非password未能登录，未触发业务路由；修正临时桥后才执行上述测试。
+第一次数据库 `cinashop_kefu_runner_0433d22fcd244c4d816d5e85ec752e32` 及角色
+`cinashop_runtime_0744c330a6c14382a8230f5d3fee34bc` 已先清理。
+第二次完成后服务正常退出0；对两次精确数据库/角色名的独立目录查询均返回0残留。
+没有清除原有本机库、其他测试资源或任何线上数据。临时源码留在Temp：
+`cinashop-shipping-pg-browser-20260914.ts`、同前缀 `-cache-20260914.ts` 与 `-build-20260914.mjs`，
+可复核路由、登录/Redis替身、随机库/角色和故障注入边界；未加入生产依赖或业务源码。
+
+PG技能用于完整模型、受限登录和独立授权/清理核验；Workers技能用于有界请求、真实路由
+与模拟边界审查（核对官方5.20260914.1类型，未升级依赖）；前端测试技能要求插件交互、
+截图及目标日志证据。尚待：真实PG回滚后原键重试、权限/损坏回执/身份与租户变更完整浏览器
+矩阵，真实Redis/Workers/Pages集成、实际线上角色、容量、获准安装及协同发布。
+A3k13保持开放，240完成/164开放/404总项不变。下文“正文未做浏览器验证”等为此前阶段。
+
 ## 前端持久意图与浏览器插件验证（2026-09-14，未部署候选）
 
 `view/shared/shippingCreation.ts` 用每个身份范围的 Web Lock 协调标签页，首次发送前将
