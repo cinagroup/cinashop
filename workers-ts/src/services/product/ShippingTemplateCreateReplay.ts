@@ -1,10 +1,11 @@
 import { sql } from 'drizzle-orm';
 import { withTx, type Container, type DbClient } from '@/lib/di';
-import { shippingTemplates } from '@/models/schema';
+import { shippingTemplates, shippingTemplatesRegion } from '@/models/schema';
 import { HttpApiException, ValidateException } from '@/utils/errors';
 import { normalizeOutRequestKey, outRequestHash } from '../out/OutIdempotency';
 import { boundShippingTemplateTransaction } from '../order/ShippingTemplateSnapshot';
-import { cityAuthority, normalizeSupplierShippingTemplateInput, replaceRules } from '../supplier/SupplierShippingTemplateService';
+import { cityAuthority, normalizeSupplierShippingTemplateInput, replaceRules } from './ShippingTemplateRules';
+import { parseFlatAdminShippingInput, shippingInputRecord } from './FlatShippingTemplateInput';
 
 /** These values must come from fresh authenticated middleware, never the body.
  * Actor IDs are stable database IDs, not session tokens, so recovery survives login.
@@ -62,6 +63,54 @@ export async function createShippingTemplateOnce(container: Container, identity:
   // Hash only server-normalized persisted input, excluding client identity/IDs.
   // Normalization has copied the bounded arrays before the first await.
   const hash = await outRequestHash({ version: 'shipping-create-v1', input, status });
+  return commitCreation(container, actor, key, hash, async tx => {
+    const cities = await cityAuthority(tx, input);
+    const now = Math.floor(Date.now() / 1000);
+    const [created] = await tx.insert(shippingTemplates).values({ ownerType: actor.ownerType,
+      relationId: actor.relationId, name: input.name, type: input.billingType, appoint: input.appoint,
+      noDelivery: input.noDelivery, sort: input.sort, status, isDel: 0, addTime: now }).returning({ id: shippingTemplates.id });
+    if (!created || !Number.isSafeInteger(created.id) || created.id <= 0) throw new Error('运费模板创建失败');
+    await replaceRules(tx, created.id, input, cities, now);
+    return created.id;
+  });
+}
+
+/** Preserve legacy flat creation, including name-only/default fields and empty
+ * regions. Flat and grouped formats share the SAME receipt key scope, but hash
+ * distinct persisted representations. Switching formats cannot mint another ID.
+ * This is not an edit API and does not accept supplier ownership.
+ */
+export async function createFlatShippingTemplateOnce(container: Container, identity: ShippingCreationActor,
+  requestKey: unknown, raw: unknown): Promise<ShippingCreationReceipt & { replayed: boolean }> {
+  const actor = scope(identity), key = normalizeOutRequestKey(requestKey);
+  if (actor.ownerType !== 0) throw new ValidateException('旧扁平模板创建仅支持平台身份');
+  const body = shippingInputRecord(raw);
+  if (['region_info', 'appoint_info', 'no_delivery_info'].some(field => field in body)) {
+    throw new ValidateException('分组模板不能通过旧扁平创建入口提交');
+  }
+  const parsed = parseFlatAdminShippingInput(body);
+  if (parsed.id !== 0 || !parsed.fields.name) throw new ValidateException('创建接口不能编辑已有模板');
+  const input = { name: parsed.fields.name, type: parsed.fields.type ?? 1, sort: parsed.fields.sort ?? 0,
+    status: parsed.fields.status ?? 1, regions: parsed.regions ?? [] };
+  // Defaults and decimals are normalized before hashing, and no caller-owned
+  // objects survive the first await. Preserve legacy region names, not city paths.
+  const hash = await outRequestHash({ version: 'shipping-create-v1', format: 'legacy-flat-v1', input });
+  return commitCreation(container, actor, key, hash, async tx => {
+    const now = Math.floor(Date.now() / 1000);
+    const [created] = await tx.insert(shippingTemplates).values({ name: input.name, type: input.type,
+      sort: input.sort, status: input.status, ownerType: 0, relationId: 0, appoint: 0, noDelivery: 0,
+      isDel: 0, addTime: now }).returning({ id: shippingTemplates.id });
+    if (!created || !Number.isSafeInteger(created.id) || created.id <= 0) throw new Error('运费模板创建失败');
+    if (input.regions.length) await tx.insert(shippingTemplatesRegion).values(
+      input.regions.map(row => ({ ...row, templateId: created.id, billingGroup: input.type, addTime: now })),
+    );
+    return created.id;
+  });
+}
+
+/** Private transaction boundary; callers cannot provide an alternate lock or ledger. */
+async function commitCreation(container: Container, actor: ShippingCreationActor, key: string,
+  hash: string, create: (tx: DbClient) => Promise<number>): Promise<ShippingCreationReceipt & { replayed: boolean }> {
   return withTx(container, async tx => {
     await lock(tx, actor, key);
     const prior = await read(tx, actor, key);
@@ -72,17 +121,11 @@ export async function createShippingTemplateOnce(container: Container, identity:
     // Keep the supplier's existing serialization boundary. Global order is
     // receipt key -> supplier -> newly inserted parent. Editors never lock receipts.
     if (actor.ownerType === 2) await tx.execute(sql`SELECT pg_advisory_xact_lock(731604, ${actor.relationId}::int)`);
-    const cities = await cityAuthority(tx, input);
-    const now = Math.floor(Date.now() / 1000);
-    const [created] = await tx.insert(shippingTemplates).values({ ownerType: actor.ownerType,
-      relationId: actor.relationId, name: input.name, type: input.billingType, appoint: input.appoint,
-      noDelivery: input.noDelivery, sort: input.sort, status, isDel: 0, addTime: now }).returning({ id: shippingTemplates.id });
-    if (!created || !Number.isSafeInteger(created.id) || created.id <= 0) throw new Error('运费模板创建失败');
-    await replaceRules(tx, created.id, input, cities, now);
+    const id = await create(tx);
     await tx.execute(sql`INSERT INTO shipping_template_create_replay(owner_type,relation_id,actor_id,request_key,request_hash,template_id)
-      VALUES (${actor.ownerType},${actor.relationId},${actor.actorId},${key}::uuid,${hash},${created.id})`);
+      VALUES (${actor.ownerType},${actor.relationId},${actor.actorId},${key}::uuid,${hash},${id})`);
     const receipt = await read(tx, actor, key);
-    if (!receipt || receipt.id !== created.id || receipt.requestHash !== hash) throw new Error('运费模板创建回执写入失败');
+    if (!receipt || receipt.id !== id || receipt.requestHash !== hash) throw new Error('运费模板创建回执写入失败');
     return { ...receipt, replayed: false };
   });
 }

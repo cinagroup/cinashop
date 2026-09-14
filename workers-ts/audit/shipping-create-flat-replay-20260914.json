@@ -1,0 +1,170 @@
+{
+  "scope": "A3k13 shared shipping rules and legacy flat creation replay prerequisite",
+  "date": "2026-09-14",
+  "baseCommit": "bef160132019efbcf477e920d0ab40b94f72ed53",
+  "implemented": [
+    "Extract shared grouped rules without supplier service dependency; retain backwards exports",
+    "Extract unchanged legacy flat validation for both old edits and new creation",
+    "Use one private creation transaction and receipt key scope for both payload representations",
+    "Keep original grouped request hash protocol unchanged; discriminate normalized legacy flat hashes",
+    "Preserve legacy name-only, empty regions, decimal defaults and all three billing modes",
+    "Validate scope/key before writes; wait for committed receipt; do not recreate after edit/retire/delete/transfer",
+    "Prove actual cross-format lock races, recovery commit/rollback, atomic failures and restricted LOGIN behavior"
+  ],
+  "reports": [
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-flat-create-red-20260914.json",
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "files": 1,
+      "sha256": "17129df9e643b24aab1f5332c9a0ae0e234d67145ba86149eb8fd85a2f11b669",
+      "suites": [
+        {
+          "name": "shipping-create-flat-replay.test.ts",
+          "tests": 2,
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-flat-create-first-20260914.json",
+      "passed": 95,
+      "failed": 0,
+      "skipped": 0,
+      "files": 3,
+      "sha256": "7f9b29dd5a59b03caa4a9f39ab92ab6a0e8dc6d62b1d44bb13f0b5c4a3c67bca",
+      "suites": [
+        {
+          "name": "shipping-create-flat-replay.test.ts",
+          "tests": 41,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-create-replay-permissions.test.ts",
+          "tests": 18,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-create-replay.test.ts",
+          "tests": 36,
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-flat-create-final-20260914.json",
+      "passed": 428,
+      "failed": 0,
+      "skipped": 0,
+      "files": 10,
+      "sha256": "365750941169112240ec076547ac469d603acfa1a02e6a0e05e4761ddaa46ba1",
+      "suites": [
+        {
+          "name": "admin-shipping-atomic-postgres.test.ts",
+          "tests": 7,
+          "status": "passed"
+        },
+        {
+          "name": "admin-shipping-atomic.test.ts",
+          "tests": 26,
+          "status": "passed"
+        },
+        {
+          "name": "admin-shipping-grouped.test.ts",
+          "tests": 14,
+          "status": "passed"
+        },
+        {
+          "name": "admin-shipping-list.test.ts",
+          "tests": 5,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-create-flat-replay.test.ts",
+          "tests": 43,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-create-replay-permissions.test.ts",
+          "tests": 18,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-create-replay.test.ts",
+          "tests": 36,
+          "status": "passed"
+        },
+        {
+          "name": "shipping-lifecycle-route-auth.test.ts",
+          "tests": 250,
+          "status": "passed"
+        },
+        {
+          "name": "supplier-shipping-snapshot.test.ts",
+          "tests": 22,
+          "status": "passed"
+        },
+        {
+          "name": "supplier-shipping-template.test.ts",
+          "tests": 7,
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "types": {
+    "unit": true,
+    "runtime": true,
+    "finalUnitAfterLastTestEdit": true
+  },
+  "cleanup": {
+    "database": "cinashop_finance_test",
+    "role": "finance_test",
+    "version": "16.15",
+    "temporaryDatabases": 0,
+    "temporaryRoles": 0,
+    "temporarySchemas": 0
+  },
+  "priorCI": {
+    "failedCandidate": {
+      "id": 34793000186,
+      "headSha": "539a828c7d2c45068771f384cfd94efd1027f148",
+      "conclusion": "failure",
+      "reason": "One stale initialStatements count 1090 vs actual 1091; fixed separately in bef1601"
+    },
+    "oldMain": {
+      "id": 34793782371,
+      "headSha": "539a828c7d2c45068771f384cfd94efd1027f148",
+      "conclusion": "cancelled",
+      "reason": "Superseded under main workflow concurrency by bef1601 push"
+    },
+    "fixedMainAtCapture": {
+      "id": 34794350398,
+      "headSha": "bef160132019efbcf477e920d0ab40b94f72ed53",
+      "status": "in_progress",
+      "conclusion": null
+    }
+  },
+  "boundaries": {
+    "candidateDeployed": false,
+    "httpCreationSwitched": false,
+    "recoveryRouteImplemented": false,
+    "frontendPersistentIntentImplemented": false,
+    "onlineLedgerInstalled": false,
+    "productionDatabaseReadOrWrite": false
+  },
+  "nextRequired": [
+    "Authenticated and permission-checked mandatory UUID header for both existing admin aliases and Supplier creation",
+    "Replace every service-level keyless creation path when switching HTTP; do not add an optional key fallback",
+    "Register receipt recovery with the same manage permissions, no-store responses and exact shape",
+    "Persist actor scope, key and payload before sending in both frontends; refresh and unknown results reuse same intent",
+    "Actual HTTP, browser refresh/network loss, permissions, scale, exact-candidate CI and authorized rollout"
+  ],
+  "checklist": {
+    "done": 240,
+    "open": 164,
+    "total": 404,
+    "parentClosed": false
+  }
+}

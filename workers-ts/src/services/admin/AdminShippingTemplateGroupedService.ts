@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { withTx, type Container } from '@/lib/di';
 import { shippingTemplates } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
-import { normalizeSupplierShippingTemplateInput, cityAuthority, replaceRules } from '../supplier/SupplierShippingTemplateService';
+import { normalizeSupplierShippingTemplateInput, cityAuthority, replaceRules } from '../product/ShippingTemplateRules';
 import { assertShippingTemplateUnreferenced } from '../product/ShippingTemplateLifecycleService';
 import { assertShippingRevision, boundShippingTransaction, requireShippingRevision } from './AdminShippingTemplateSnapshot';
 

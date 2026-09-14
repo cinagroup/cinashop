@@ -4,7 +4,7 @@ import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuS
 import { createContainerFromDb } from '../src/lib/di';
 import { shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, systemCity } from '../src/models/schema';
 import { SHIPPING_TEMPLATE_CREATE_REPLAY_SQL } from '../src/migrations/shippingTemplateCreateReplay';
-import { createShippingTemplateOnce, findShippingCreationReceipt } from '../src/services/product/ShippingTemplateCreateReplay';
+import { createFlatShippingTemplateOnce, createShippingTemplateOnce, findShippingCreationReceipt } from '../src/services/product/ShippingTemplateCreateReplay';
 
 const actor = { ownerType: 2 as const, relationId: 20, actorId: 27 };
 const input = () => ({ name: 'permission fixture', type: 1, appoint: 1, no_delivery: 1,
@@ -44,6 +44,29 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping creatio
     return row;
   };
   const empty = { parent: 0, region: 0, free: 0, deny: 0, receipt: 0 };
+  it('legacy flat creation needs no child DELETE, city read or grouped-rule permissions', async () => {
+    await withRole(async peer => {
+      await f.exec(`REVOKE DELETE ON public.shipping_templates_region FROM "${peer.role}";
+        REVOKE ALL ON public.shipping_templates_free,public.shipping_templates_no_delivery,public.system_city FROM "${peer.role}"`);
+      const platform = { ownerType: 0 as const, relationId: 0, actorId: 7 }, key = crypto.randomUUID();
+      const container = createContainerFromDb(peer.db), raw = { name: 'legacy', regions: [{ region_id: 55, region_name: 'old label' }] };
+      const first = await createFlatShippingTemplateOnce(container, platform, key, raw);
+      expect(await createFlatShippingTemplateOnce(container, platform, key, raw)).toEqual({ ...first, replayed: true });
+      expect(await findShippingCreationReceipt(container, platform, key)).toMatchObject({ id: first.id });
+      expect(await counts()).toEqual({ parent: 1, region: 1, free: 0, deny: 0, receipt: 1 });
+    });
+  });
+  for (const grant of [`SELECT ON ${ledger}`, `INSERT ON ${ledger}`, 'INSERT ON public.shipping_templates_region']) {
+    it(`flat creation rolls back without ${grant}`, async () => {
+      await withRole(async peer => {
+        await f.exec(`REVOKE ${grant} FROM "${peer.role}"`);
+        await expect(createFlatShippingTemplateOnce(createContainerFromDb(peer.db),
+          { ownerType: 0, relationId: 0, actorId: 7 }, crypto.randomUUID(),
+          { name: 'legacy', regions: [{ region_id: 0, region_name: '' }] })).rejects.toThrow();
+        expect(await counts()).toEqual(empty);
+      });
+    });
+  }
   it('creates and recovers with SELECT/INSERT-only receipts and cannot erase or change evidence', async () => {
     await withRole(async peer => {
       const container = createContainerFromDb(peer.db), key = crypto.randomUUID();

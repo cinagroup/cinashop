@@ -1,5 +1,5 @@
 import { withTx, type Container } from '@/lib/di';
-import { formatValidatedShippingRuleGroups as groups } from '../supplier/SupplierShippingTemplateService';
+import { formatValidatedShippingRuleGroups as groups } from '../product/ShippingTemplateRules';
 import { boundShippingTransaction, readShippingEditorSnapshot as readAdminShippingSnapshot } from '../product/ShippingTemplateRevision';
 export { boundShippingTransaction, readShippingEditorSnapshot as readAdminShippingSnapshot, requireShippingRevision, assertShippingRevision } from '../product/ShippingTemplateRevision';
 
