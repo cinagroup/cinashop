@@ -1,8 +1,11 @@
-/** Capture authorization at invocation; never substitute a later login during dispatch. */
+import { creationScope, type CreationIdentity } from './shippingCreation';
+
+/** Capture authorization and expected identity before the first await. */
 export async function postShippingCreation(url: string, tokenHeader: 'Authori-zation' | 'Authorization', token: string | null,
-  key: string, body: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
+  key: string, body: Record<string, unknown>, signal: AbortSignal, identity: CreationIdentity): Promise<unknown> {
   signal.throwIfAborted();
   if (!token) throw new Error('请重新登录后恢复原创建请求');
+  const expectedScope = `v1:${creationScope(identity)}`;
   // Bound the entire response, not just its headers. Abort this attempt, never
   // the mounted session: the original key must remain available for recovery.
   const attempt = new AbortController();
@@ -11,7 +14,7 @@ export async function postShippingCreation(url: string, tokenHeader: 'Authori-za
   const timeoutError = new Error('创建或恢复请求超时，结果尚未确认；原请求已保留，请恢复查询');
   const deadline = setTimeout(() => attempt.abort(timeoutError), 30_000);
   try {
-    return await request(url, tokenHeader, token, key, body, attempt.signal);
+    return await request(url, tokenHeader, token, key, body, attempt.signal, expectedScope);
   } catch (error) {
     // Body consumption may surface a generic AbortError instead of our reason.
     if (attempt.signal.aborted) throw attempt.signal.reason;
@@ -24,10 +27,11 @@ export async function postShippingCreation(url: string, tokenHeader: 'Authori-za
 }
 
 async function request(url: string, tokenHeader: string, token: string, key: string,
-  body: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
+  body: Record<string, unknown>, signal: AbortSignal, expectedScope: string): Promise<unknown> {
   const response = await fetch(url, { method: 'POST', redirect: 'error', credentials: 'omit', cache: 'no-store', signal,
-    headers: { [tokenHeader]: `Bearer ${token}`, 'Idempotency-Key': key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    headers: { [tokenHeader]: `Bearer ${token}`, 'Idempotency-Key': key, 'X-Shipping-Creation-Scope': expectedScope, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!response.ok || !response.headers.get('content-type')?.includes('json')) {
+    if (response.status === 412) throw new Error('创建身份已变化或缺失，原请求已保留；请重新登录并核对原账号与供应商归属');
     throw new Error(response.status === 409 ? '创建请求内容冲突，原记录已保留，请联系管理员核对' : '创建结果暂无法确认，请恢复原请求');
   }
   const reader = response.body?.getReader();

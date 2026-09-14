@@ -73,7 +73,7 @@ export class HttpApiException extends ApiException {
   constructor(
     message: string,
     code: number,
-    public readonly httpStatus: 400 | 403 | 409 | 503,
+    public readonly httpStatus: 400 | 403 | 409 | 412 | 503,
   ) {
     super(message, code);
     this.name = "HttpApiException";

@@ -100,7 +100,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
         ...(id > 0 && operation === 'save' ? { expectedRevision: (await readAdminShippingSnapshot(f.db,id)).revision } : {}) };
     const response = await app.request(path, { method: operation === 'save' ? 'POST' : 'DELETE',
       headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'x-admin-id': '7', 'x-supplier-id': '30',
-        ...(id === 0 ? { 'Idempotency-Key': crypto.randomUUID() } : {}) },
+        ...(id === 0 ? { 'Idempotency-Key': crypto.randomUUID(), 'X-Shipping-Creation-Scope': supplier ? 'v1:2:20:27' : 'v1:0:0:7' } : {}) },
       ...(operation === 'save' ? { body: JSON.stringify({ ...body, ...override }) } : {}) }, env);
     return { http: response.status, body: await response.json() as { status: number; msg: string; data: unknown } };
   };
@@ -143,13 +143,42 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     const creationBody = () => surface === 'supplierapi'
       ? { ...fullRules, name: 'durable HTTP creation', type: 1, sort: 0 }
       : { id: 0, name: 'durable HTTP creation' };
-    const creationRequest = async (path: string, bearer: string, key?: string, body: unknown = {}, target = app) => {
+    const initialScope = surface === 'supplierapi' ? 'v1:2:20:27' : 'v1:0:0:7';
+    const creationRequest = async (path: string, bearer: string, key?: string, body: unknown = {}, target = app, expectedScope: string | null = initialScope) => {
       const response = await target.request(path, { method: 'POST', headers: {
         Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json',
         ...(key === undefined ? {} : { 'Idempotency-Key': key }),
+        ...(expectedScope === null ? {} : { 'X-Shipping-Creation-Scope': expectedScope }),
       }, body: JSON.stringify(body) }, env);
       return { response, body: await response.json() as { status: number; msg: string; data: unknown } };
     };
+    it.each([null, '', 'v2:0:0:7', 'v1:0:0:8', 'v1:2:30:27', 'v1:2:20:28', 'v1:0:00:7', 'v1:2:020:27', 'v1:0:0:7, v1:0:0:7'])('rejects missing or mismatched expected scope %s before any creation or lookup', async expected => {
+      const bearer = await token(surface), key = crypto.randomUUID(), before = await snapshot();
+      for (const path of [creationPath, receiptPath]) {
+        const result = await creationRequest(path, bearer, key, path === creationPath ? creationBody() : {}, app, expected);
+        expect(result.response.status).toBe(412);
+        expect(result.body).toMatchObject({ status: 412, data: null });
+        expect(result.response.headers.get('cache-control')).toContain('no-store');
+      }
+      expect(await snapshot()).toEqual(before);
+    });
+    if (surface === 'supplierapi') it('tenant reassignment rejects the stale browser scope then permits recovery after restoration', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID();
+      const first = await creationRequest(creationPath,bearer,key,creationBody());
+      expect(first.body).toMatchObject({status:200,data:{id:10001}});
+      await f.exec("UPDATE system_admin SET relation_id=30,roles='3' WHERE id=27");
+      const reassigned = await snapshot();
+      for (const path of [receiptPath,creationPath]) {
+        const result = await creationRequest(path,bearer,key,path === creationPath ? creationBody() : {});
+        expect(result.response.status).toBe(412);
+        expect(result.body).toMatchObject({status:412,data:null});
+      }
+      expect(await snapshot()).toEqual(reassigned);
+      await f.exec("UPDATE system_admin SET relation_id=20,roles='2' WHERE id=27");
+      expect((await creationRequest(receiptPath,bearer,key)).body).toMatchObject({status:200,data:{id:10001,requestKey:key}});
+      expect((await creationRequest(creationPath,bearer,key,creationBody())).body).toMatchObject({status:200,data:{id:10001,replayed:true}});
+      expect((await f.query('SELECT count(*)::int AS count FROM shipping_template_create_replay')).rows).toEqual([{count:1}]);
+    });
     it('requires a creation key at the registered HTTP boundary without any mutation', async () => {
       const before = await snapshot();
       const result = await creationRequest(creationPath, await token(surface), undefined, creationBody());
@@ -233,11 +262,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
       const found = await creationRequest(receiptPath, renewed.token, key);
       expect(found.body).toMatchObject({ status: 200, data: { id: 10001, requestKey: key } });
       if (!supplier) await f.exec("INSERT INTO system_admin(id,account,admin_type,roles,level) VALUES(8,'other-admin',1,'1',1)");
-      const other = await creationRequest(receiptPath, await token(surface, { id: supplier ? 28 : 8 }), key);
+      const other = await creationRequest(receiptPath, await token(surface, { id: supplier ? 28 : 8 }), key, {}, app, supplier ? 'v1:2:20:28' : 'v1:0:0:8');
       expect(other.body).toEqual({ status: 200, msg: 'ok', data: null });
       if (supplier) {
         await f.exec("UPDATE system_admin SET relation_id=30,roles='3' WHERE id=27");
-        expect((await creationRequest(receiptPath, renewed.token, key)).body).toEqual({ status: 200, msg: 'ok', data: null });
+        expect((await creationRequest(receiptPath, renewed.token, key)).body).toMatchObject({ status: 412, data: null });
+        expect((await creationRequest(receiptPath, renewed.token, key, {}, app, 'v1:2:30:27')).body).toEqual({ status: 200, msg: 'ok', data: null });
       } else {
         const alias = surface === 'adminapi' ? '/api/admin' : '/adminapi';
         expect((await creationRequest(`${alias}/shipping_template/creation-receipt`, renewed.token, key)).body).toEqual(found.body);
@@ -265,7 +295,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
       const bearer = await token(surface), key = crypto.randomUUID(), before = await snapshot();
       for (const [path, body] of [[creationPath, '{broken'], [creationPath, JSON.stringify({ name: 'x'.repeat(300*1024) })],
         [receiptPath, JSON.stringify({ actorId: 7 })], [receiptPath, JSON.stringify({ junk: 'x'.repeat(1024) })]] as const) {
-        const response = await app.request(path, { method:'POST',headers:{Authorization:`Bearer ${bearer}`,'Idempotency-Key':key,'Content-Type':'application/json'},body },env);
+        const response = await app.request(path, { method:'POST',headers:{Authorization:`Bearer ${bearer}`,'Idempotency-Key':key,'Content-Type':'application/json','X-Shipping-Creation-Scope':initialScope},body },env);
         expect(await response.json()).toMatchObject({status:400,data:null});
         expect(response.headers.get('cache-control')).toContain('no-store');
       }
@@ -376,7 +406,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     });
     if (surface !== 'supplierapi') it('roundtrips complete grouped rules and refuses a stale revision through registered admin routes', async () => {
       const bearer = await token(surface);
-      const headers = { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() };
+      const headers = { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID(), 'X-Shipping-Creation-Scope': initialScope };
       const full = { ...fullRules, id: 0, name: 'registered groups', type: 3, status: 1, sort: 2 };
       const saved = await app.request(`/${surface}/shipping_template/save`, { method: 'POST', headers, body: JSON.stringify(full) }, env);
       const created = await saved.json() as { status: number; data: { id: number } };

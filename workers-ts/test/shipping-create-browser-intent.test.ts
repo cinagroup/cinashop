@@ -14,7 +14,7 @@ let creationHash: (payload: Record<string, unknown>, owner: 0 | 2) => Promise<st
 let creationScope: (identity: CreationIdentity) => string;
 let createShippingCreation: (identity: CreationIdentity, current: () => boolean,
   transport: { create: (...args: any[]) => Promise<unknown>; lookup: (...args: any[]) => Promise<unknown> }) => Client;
-let postShippingCreation: (url: string, header: string, token: string | null, key: string, body: Record<string, unknown>, signal: AbortSignal) => Promise<unknown>;
+let postShippingCreation: (url: string, header: string, token: string | null, key: string, body: Record<string, unknown>, signal: AbortSignal, identity: CreationIdentity) => Promise<unknown>;
 beforeAll(async () => {
   const root = resolve(import.meta.dirname, '../../view/shared');
   const output = await build({ stdin: { resolveDir: root, contents: `export * from './shippingCreation'; export * from './shippingCreationTransport';` },
@@ -193,8 +193,8 @@ describe('real browser transport uses bounded JSON and captured auth', () => {
     });
     vi.stubGlobal('fetch', fetcher);
     const transport = {
-      create: (body: Record<string, unknown>, key: string) => postShippingCreation('/fixture/save', 'Authorization', 'fixture', key, body, session.signal),
-      lookup: (key: string) => postShippingCreation('/fixture/creation-receipt', 'Authorization', 'fixture', key, {}, session.signal),
+      create: (body: Record<string, unknown>, key: string) => postShippingCreation('/fixture/save', 'Authorization', 'fixture', key, body, session.signal, admin),
+      lookup: (key: string) => postShippingCreation('/fixture/creation-receipt', 'Authorization', 'fixture', key, {}, session.signal, admin),
     };
     const client = createShippingCreation(admin, () => !session.signal.aborted, transport);
     const intent = await client.prepare(payload()), raw = [...values.entries()];
@@ -227,7 +227,7 @@ describe('real browser transport uses bounded JSON and captured auth', () => {
         } }), { headers: { 'content-type': 'application/json' } }));
       });
       vi.stubGlobal('fetch', fetcher);
-      const pending = postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal).catch(error => error);
+      const pending = postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal, admin).catch(error => error);
       await vi.advanceTimersByTimeAsync(29_999); expect(dispatched.aborted).toBe(false);
       await vi.advanceTimersByTimeAsync(1);
       const abortedAtDeadline = dispatched.aborted, sessionStillCurrent = !session.signal.aborted;
@@ -247,7 +247,7 @@ describe('real browser transport uses bounded JSON and captured auth', () => {
           signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
         } }), { headers: { 'content-type': 'application/json' } }));
       });
-      const pending = postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal).catch(error => error);
+      const pending = postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal, admin).catch(error => error);
       await vi.advanceTimersByTimeAsync(1);
       const reason = new Error('account changed'); session.abort(reason);
       expect(await pending).toBe(reason); expect(vi.getTimerCount()).toBe(0);
@@ -257,7 +257,7 @@ describe('real browser transport uses bounded JSON and captured auth', () => {
     vi.useFakeTimers(); const session = new AbortController();
     const add = vi.spyOn(session.signal, 'addEventListener'), remove = vi.spyOn(session.signal, 'removeEventListener');
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"status":200,"data":null}', { status, headers: { 'content-type': 'application/json' } })));
-    await postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal).catch(() => {});
+    await postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, session.signal, admin).catch(() => {});
     expect(add).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
     expect(remove).toHaveBeenCalledWith('abort', add.mock.calls[0][1]);
     expect(vi.getTimerCount()).toBe(0); expect(session.signal.aborted).toBe(false);
@@ -265,22 +265,44 @@ describe('real browser transport uses bounded JSON and captured auth', () => {
   it('POST sends exact key/body and captured authorization without retry/redirect', async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ status: 200, data: null }), { headers: { 'content-type': 'application/json' } }));
     vi.stubGlobal('fetch', fetcher);
-    await expect(postShippingCreation('/adminapi/shipping_template/creation-receipt', 'Authori-zation', 'fixture', 'key', {}, new AbortController().signal)).resolves.toBeNull();
+    await expect(postShippingCreation('/adminapi/shipping_template/creation-receipt', 'Authori-zation', 'fixture', 'key', {}, new AbortController().signal, admin)).resolves.toBeNull();
     expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(fetcher.mock.calls[0][1]).toMatchObject({ method: 'POST', body: '{}', redirect: 'error', cache: 'no-store', credentials: 'omit', headers: { 'Authori-zation': 'Bearer fixture', 'Idempotency-Key': 'key' } });
+    expect(fetcher.mock.calls[0][1]).toMatchObject({ method: 'POST', body: '{}', redirect: 'error', cache: 'no-store', credentials: 'omit', headers: { 'Authori-zation': 'Bearer fixture', 'Idempotency-Key': 'key', 'X-Shipping-Creation-Scope': 'v1:0:0:7' } });
   });
   it.each(['http409', 'http500', 'html', 'large', 'invalid', 'business500', 'missing-data'])('fails closed on %s', async kind => {
     const status = kind === 'http409' ? 409 : kind === 'http500' ? 500 : 200;
     const body = kind === 'large' ? ' '.repeat(4097) : kind === 'invalid' ? '{' : JSON.stringify(kind === 'missing-data' ? { status: 200 } : { status: 500, data: null });
     const fetcher = vi.fn().mockResolvedValue(new Response(body, { status, headers: { 'content-type': kind === 'html' ? 'text/html' : 'application/json' } }));
     vi.stubGlobal('fetch', fetcher);
-    await expect(postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, new AbortController().signal)).rejects.toBeDefined();
+    await expect(postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, new AbortController().signal, admin)).rejects.toBeDefined();
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it('aborted or unauthenticated request cannot dispatch', async () => {
     const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher); const controller = new AbortController(); controller.abort();
-    await expect(postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, controller.signal)).rejects.toBeDefined();
-    await expect(postShippingCreation('/fixture', 'Authorization', null, 'key', {}, new AbortController().signal)).rejects.toBeDefined();
+    await expect(postShippingCreation('/fixture', 'Authorization', 'fixture', 'key', {}, controller.signal, admin)).rejects.toBeDefined();
+    await expect(postShippingCreation('/fixture', 'Authorization', null, 'key', {}, new AbortController().signal, admin)).rejects.toBeDefined();
     expect(fetcher).not.toHaveBeenCalled();
+  });
+  it.each([admin,supplier])('captures the original scope before dispatch for %j',async identity=>{
+    const mutable={...identity};
+    const fetcher=vi.fn().mockResolvedValue(new Response('{"status":200,"data":null}',{headers:{'content-type':'application/json'}}));
+    vi.stubGlobal('fetch',fetcher);
+    const pending=postShippingCreation('/fixture','Authorization','fixture','key',{},new AbortController().signal,mutable);
+    mutable.actorId=999; mutable.relationId=999;
+    await pending;
+    expect(fetcher.mock.calls[0][1].headers['X-Shipping-Creation-Scope']).toBe(`v1:${creationScope(identity)}`);
+  });
+  it.each(['send','recover'] as const)('%s identity precondition failure preserves the original intent without retry',async action=>{
+    const session=new AbortController();
+    const fetcher=vi.fn().mockResolvedValue(new Response('{"status":412,"data":null}',{status:412,headers:{'content-type':'application/json'}}));
+    vi.stubGlobal('fetch',fetcher);
+    const client=createShippingCreation(supplier,()=>true,{
+      create:(body,key)=>postShippingCreation('/fixture/save','Authorization','fixture',key,body,session.signal,supplier),
+      lookup:key=>postShippingCreation('/fixture/creation-receipt','Authorization','fixture',key,{},session.signal,supplier),
+    });
+    const intent=await client.prepare(payload()), before=[...values.entries()];
+    await expect(client[action](intent.requestKey)).rejects.toThrow('创建身份');
+    expect([...values.entries()]).toEqual(before);expect(locks.size).toBe(0);
+    expect(fetcher).toHaveBeenCalledTimes(1);expect(session.signal.aborted).toBe(false);
   });
 });
