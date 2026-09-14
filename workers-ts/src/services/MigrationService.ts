@@ -62,6 +62,8 @@ import { SHIPPING_LIFECYCLE_INSTALLATION_SQL } from "@/migrations/shippingLifecy
 import { runShippingLifecycle } from "@/migrations/runShippingLifecycle";
 import { SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL } from "@/migrations/shippingLifecycleIndexInstallation";
 import { runShippingLifecycleIndexes } from "@/migrations/runShippingLifecycleIndexes";
+import { SHIPPING_CREATE_REPLAY_INSTALLATION_SQL } from "@/migrations/shippingTemplateCreateReplayInstallation";
+import { runShippingTemplateCreateReplay } from "@/migrations/runShippingTemplateCreateReplay";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -72,6 +74,10 @@ export class MigrationService {
 
   shippingLifecycleIndexMigrationSqlForVerification(): string {
     return this.migration_0159();
+  }
+
+  shippingCreateReplayMigrationSqlForVerification(): string {
+    return this.migration_0160();
   }
 
   couponProductScopeFenceMigrationSqlForVerification(): string {
@@ -443,10 +449,16 @@ export class MigrationService {
       this.migration_0157(),
       this.migration_0158(),
       this.migration_0159(),
+      this.migration_0160(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 160) {
+          await runShippingTemplateCreateReplay(this.container.db);
+          executed.push("0160");
+          continue;
+        }
         if (i === 159) {
           await runShippingLifecycleIndexes(this.container.db);
           executed.push("0159");
@@ -8544,5 +8556,8 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0159(): string {
     return SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL;
+  }
+  private migration_0160(): string {
+    return SHIPPING_CREATE_REPLAY_INSTALLATION_SQL;
   }
 }

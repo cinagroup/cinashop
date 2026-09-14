@@ -18,6 +18,13 @@
     "candidateTables": 263,
     "externalWorkerDefinitionDrift": 0
   },
+  "candidateSchemaWork": {
+    "reviewedAt": "2026-09-14",
+    "candidateTables": 264,
+    "addedSinceHistoricalBaseline": ["shipping_template_create_replay"],
+    "deploymentStatus": "not_deployed",
+    "comparisonScope": "Candidate schema versus the preserved 2026-09-04 snapshot; not a fresh production measurement."
+  },
   "productionBaseline": {
     "database": "PostgreSQL 16.14",
     "hyperdriveId": "9748c294e21c49a99579c9cef70102e0",

@@ -6,7 +6,13 @@ interface DataMigrationScope {
   legacyPhpHistoryRequired: boolean;
   sourceMysqlReconciliation: string;
   notApplicableChecklistItems: string[];
+  candidateSchemaWork: {
+    candidateTables: number;
+    addedSinceHistoricalBaseline: string[];
+    deploymentStatus: string;
+  };
   productionBaseline: {
+    capturedAt: string;
     tables: number;
     missingCandidateTables: string[];
     extraTables: string[];
@@ -42,12 +48,21 @@ describe("fresh-system data migration scope", () => {
     ]);
   });
 
-  it("records the exact current repository-to-production table parity", () => {
+  it("preserves the historical production snapshot and identifies the undeployed candidate addition", () => {
     expect(scope.productionBaseline).toEqual(expect.objectContaining({
+      capturedAt: "2026-09-04T14:55:00Z",
       tables: 263,
       missingCandidateTables: [],
       extraTables: [],
     }));
+    expect(scope.candidateSchemaWork).toEqual(expect.objectContaining({
+      candidateTables: 264,
+      addedSinceHistoricalBaseline: ["shipping_template_create_replay"],
+      deploymentStatus: "not_deployed",
+    }));
+    expect(scope.candidateSchemaWork.candidateTables).toBe(
+      scope.productionBaseline.tables + scope.candidateSchemaWork.addedSinceHistoricalBaseline.length,
+    );
   });
 
   it("keeps every retired source-data checklist item explicitly closed as not applicable", () => {

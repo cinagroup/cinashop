@@ -24,6 +24,8 @@ import { runShippingLifecycle } from "../src/migrations/runShippingLifecycle";
 import { SHIPPING_LIFECYCLE_INSTALLATION_SQL } from "../src/migrations/shippingLifecycleInstallation";
 import { runShippingLifecycleIndexes } from '../src/migrations/runShippingLifecycleIndexes';
 import { SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL } from '../src/migrations/shippingLifecycleIndexInstallation';
+import { runShippingTemplateCreateReplay } from '../src/migrations/runShippingTemplateCreateReplay';
+import { SHIPPING_CREATE_REPLAY_INSTALLATION_SQL } from '../src/migrations/shippingTemplateCreateReplayInstallation';
 
 // These tests cover orchestration only. The real unmocked runner and fresh
 // MigrationService.runAll execute against dedicated PG16 databases in CI.
@@ -36,6 +38,7 @@ vi.mock("../src/migrations/runBrokeragePaidOrderFence", () => ({ runBrokeragePai
 vi.mock("../src/migrations/runCouponProductScopeFence", () => ({ runCouponProductScopeFence: vi.fn() }));
 vi.mock("../src/migrations/runShippingLifecycle", () => ({ runShippingLifecycle: vi.fn() }));
 vi.mock('../src/migrations/runShippingLifecycleIndexes', () => ({ runShippingLifecycleIndexes: vi.fn() }));
+vi.mock('../src/migrations/runShippingTemplateCreateReplay', () => ({ runShippingTemplateCreateReplay: vi.fn() }));
 const runner = vi.mocked(runKefuSequenceAlignment);
 const pinkRunner = vi.mocked(runPinkRecoveryIndex);
 const childRunner = vi.mocked(runForeignKeyChildIndexes);
@@ -45,9 +48,10 @@ const paidRunner = vi.mocked(runBrokeragePaidOrderFence);
 const couponRunner = vi.mocked(runCouponProductScopeFence);
 const shippingRunner = vi.mocked(runShippingLifecycle);
 const shippingIndexRunner = vi.mocked(runShippingLifecycleIndexes);
+const replayRunner = vi.mocked(runShippingTemplateCreateReplay);
 const dialect = new PgDialect();
 const root = resolve(import.meta.dirname, "..");
-const names = Array.from({ length: 160 }, (_, i) => String(i).padStart(4, "0"));
+const names = Array.from({ length: 161 }, (_, i) => String(i).padStart(4, "0"));
 
 function harness(failure?: { index: number; error: unknown }, superseded = false) {
   let depth = 0, index = 0;
@@ -112,6 +116,11 @@ function harness(failure?: { index: number; error: unknown }, superseded = false
     expect(depth, '0159 must receive the root DB').toBe(0);
     expect(shippingRunner).toHaveBeenCalledExactlyOnceWith(container.db);
   });
+  replayRunner.mockImplementation(async db => {
+    expect(db).toBe(container.db);
+    expect(depth, '0160 must receive the root DB').toBe(0);
+    expect(shippingIndexRunner).toHaveBeenCalledExactlyOnceWith(container.db);
+  });
   return { service: new MigrationService(container), transaction, sqlCalls, db: container.db };
 }
 
@@ -125,10 +134,11 @@ beforeEach(() => {
   couponRunner.mockReset();
   shippingRunner.mockReset();
   shippingIndexRunner.mockReset();
+  replayRunner.mockReset();
 });
 
 describe("embedded 0151 sequence registration", () => {
-  it("retains 0151 once, followed by 0152–0159, with the unchanged numeric 0000–0150 registry", () => {
+  it("retains 0151 once, followed by 0152–0160, with the unchanged numeric 0000–0150 registry", () => {
     const source = readFileSync(resolve(root, "src/services/MigrationService.ts"), "utf8");
     const file = ts.createSourceFile("MigrationService.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const service = file.statements.find(s => ts.isClassDeclaration(s) && s.name?.text === "MigrationService");
@@ -153,6 +163,8 @@ describe("embedded 0151 sequence registration", () => {
     expect(SHIPPING_LIFECYCLE_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root, "migrations/0152_shipping_lifecycle.sql"), "utf8").trim());
     expect(setup.service.shippingLifecycleIndexMigrationSqlForVerification()).toBe(SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL);
     expect(SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root, 'migrations/0153_shipping_lifecycle_indexes.sql'), 'utf8').trim());
+    expect(setup.service.shippingCreateReplayMigrationSqlForVerification()).toBe(SHIPPING_CREATE_REPLAY_INSTALLATION_SQL);
+    expect(SHIPPING_CREATE_REPLAY_INSTALLATION_SQL.trim()).toBe(readFileSync(resolve(root, 'migrations/0154_shipping_template_create_replay.sql'), 'utf8').trim());
     expect(setup.transaction).not.toHaveBeenCalled();
     expect(runner).not.toHaveBeenCalled();
     expect(bargainRunner).not.toHaveBeenCalled();
@@ -160,7 +172,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(couponRunner).not.toHaveBeenCalled();
   });
 
-  it("executes all 160 steps in order and dispatches 0151–0159 to independent root transaction runners", async () => {
+  it("executes all 161 steps in order and dispatches 0151–0160 to independent root transaction runners", async () => {
     const setup = harness();
     expect(await setup.service.runAll()).toEqual({ executed: names, errors: [] });
     expect(setup.transaction).toHaveBeenCalledTimes(151);
@@ -173,6 +185,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(couponRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(shippingRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(shippingIndexRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(replayRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
     expect(setup.sqlCalls.filter(c => c.sql === "SET LOCAL search_path TO public, pg_temp")).toHaveLength(151);
     expect(setup.sqlCalls.some(c => c.sql === KEFU_SEQUENCE_ALIGNMENT_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === PINK_RECOVERY_INDEX_SQL)).toBe(false);
@@ -183,6 +196,7 @@ describe("embedded 0151 sequence registration", () => {
     expect(setup.sqlCalls.some(c => c.sql === COUPON_PRODUCT_SCOPE_FENCE_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === SHIPPING_LIFECYCLE_INSTALLATION_SQL)).toBe(false);
     expect(setup.sqlCalls.some(c => c.sql === SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL)).toBe(false);
+    expect(setup.sqlCalls.some(c => c.sql === SHIPPING_CREATE_REPLAY_INSTALLATION_SQL)).toBe(false);
   });
 
   it.each([new Error("already exists"), new Error("sequence drift"), "raw rejection"])(
@@ -319,6 +333,18 @@ describe("embedded 0151 sequence registration", () => {
     const setup=harness(); shippingRunner.mockRejectedValue(new Error('protocol drift'));
     expect(await setup.service.runAll()).toEqual({executed:names.slice(0,158),errors:['0158: protocol drift']});
     expect(shippingIndexRunner).not.toHaveBeenCalled();
+  });
+
+  it.each([new Error('already exists'), new Error('receipt drift'), 'raw rejection'])('fails closed at 0160 (%s)', async error => {
+    const setup = harness(); replayRunner.mockRejectedValue(error);
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0, 160), errors: [`0160: ${error instanceof Error ? error.message : error}`] });
+    expect(replayRunner).toHaveBeenCalledExactlyOnceWith(setup.db);
+    expect(setup.transaction).toHaveBeenCalledTimes(151);
+  });
+  it('does not dispatch receipt installation after indexes fail', async () => {
+    const setup = harness(); shippingIndexRunner.mockRejectedValue(new Error('index drift'));
+    expect(await setup.service.runAll()).toEqual({ executed: names.slice(0,159), errors: ['0159: index drift'] });
+    expect(replayRunner).not.toHaveBeenCalled();
   });
 
   it("preserves the 0118→0119 supersession without shifting the 0151 execution identity", async () => {

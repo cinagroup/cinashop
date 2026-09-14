@@ -1,0 +1,292 @@
+{
+  "scope": "Local PG16 shipping creation receipt migration candidate; no production database access or deployment.",
+  "reviewedAt": "2026-09-14",
+  "baseCommit": "29b7bea106546d7dd4296f72a5b9b983d711a46e",
+  "migration": {
+    "external": "0154_shipping_template_create_replay.sql",
+    "embedded": "0160",
+    "model": "shippingTemplateCreateReplay",
+    "existingDatabaseEntry": "runShippingTemplateCreateReplay(rootDb)"
+  },
+  "verification": {
+    "serverVersionNum": 160015,
+    "externalInputSha256": "a600eb5f092b54188c7cc2da7bfb4a238582c98e9b30e5c6a5cf2bc169d4369b",
+    "generatedSqlSha256": "c434796d80bced1b3f1f2f3e21d5a3c5ba54d171a88e41d78c0c3adbbd11b9ec",
+    "paths": [
+      {
+        "path": "external",
+        "steps": 156
+      },
+      {
+        "path": "embedded",
+        "steps": 161
+      },
+      {
+        "path": "orm",
+        "steps": 1092
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1212
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1093
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1084
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1093
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1085
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1092
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 264,
+        "columns": 3708,
+        "constraints": 577,
+        "indexes": 1022,
+        "sequences": 227
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "shippingReplayVerification": {
+      "external": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "embedded": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_upgrade": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_default_upgrade": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_constraints": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_fk_names": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_checks": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_sequences": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      }
+    },
+    "cleanupConfirmed": true,
+    "ormLog": {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-replay-orm-live-20260914.log",
+      "sha256": "cdadd05bcf555c3bb6c0e7196b18cf78bbf46a6fa658a97857aaa8a2df9eae0a"
+    },
+    "regression": {
+      "files": 13,
+      "passed": 337,
+      "failed": 0,
+      "skipped": 0,
+      "maxWorkers": 2,
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-replay-migration-bounded-20260914.json",
+      "sha256": "1ccfa112eb7f060050a1cee93dd70356c6d3fa50ddd61cd1067b688b8d3eb04d"
+    },
+    "focusedMigration": {
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-replay-migration-final-20260914.json",
+      "sha256": "f7e18546e8ed5a293dcf621699631f8ca1c8ea3b33ee84251f8f2757b5b4fce6"
+    },
+    "typecheck": {
+      "unit": true,
+      "runtime": true
+    },
+    "cleanup": {
+      "fixtureDatabases": 0,
+      "runtimeRoles": 0,
+      "fixtureSchemas": 0
+    }
+  },
+  "priorAttempts": [
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-replay-migration-first-20260913.json",
+      "passed": 114,
+      "failed": 4,
+      "reason": "Table catalog test fixtures still expected 263. Updated exact count to 264; no gate removed."
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-replay-migration-regression-20260914.json",
+      "reason": "Dedicated local PG service stopped: connection refused. Confirmed pg_ctl no server running before starting existing loopback service."
+    },
+    {
+      "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-replay-migration-live-20260914.json",
+      "passed": 331,
+      "failed": 2,
+      "skipped": 0,
+      "reason": "Two engine tests failed in afterEach with STACK_TRACE_ERROR; no application assertion failure reported. Final full rerun used bounded file parallelism without changing assertions or timeouts; exact underlying cleanup error was not captured in first JSON."
+    }
+  ],
+  "remaining": [
+    "Exact candidate Linux CI",
+    "HTTP mandatory idempotency keys and authenticated recovery routes",
+    "Frontend durable intent and cross-refresh recovery",
+    "Actual runtime-role review, maintenance coordination and separately authorized online migration"
+  ],
+  "checklist": {
+    "done": 240,
+    "open": 164,
+    "total": 404
+  }
+}

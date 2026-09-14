@@ -42,6 +42,9 @@ Worker 版本 `ae1ab2be-50b8-451b-b5df-21b98eff79b0` 承接 100% 流量，
 [main CI 34764831865](https://github.com/cinagroup/cinashop/actions/runs/34764831865)
 收尾记录时仍 in_progress，同一 headSha；未取消、重跑或冒称通过。
 
+2026-09-14终态追记：main CI34764831865已completed/success，精确headSha仍为0b9beb9；
+该成功仅对应已发布版本，不能套用于后续正式回执迁移候选。
+
 ## 保留与边界
 
 按照 Cloudflare/Wrangler 技能执行已安装 CLI 参数核验、dry-run、keep-vars 发布及

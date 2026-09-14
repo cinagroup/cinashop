@@ -11,6 +11,7 @@ import { runShippingLifecycle } from "../src/migrations/runShippingLifecycle";
 import { inspectShippingLifecycleProtocol } from "../src/migrations/inspectShippingLifecycleProtocol";
 import { inspectShippingLifecycleIndexes, runShippingLifecycleIndexes } from '../src/migrations/runShippingLifecycleIndexes';
 import { SHIPPING_LIFECYCLE_INDEXES } from '../src/migrations/shippingLifecycleIndexes';
+import { inspectShippingTemplateCreateReplay, runShippingTemplateCreateReplay } from '../src/migrations/runShippingTemplateCreateReplay';
 import { dropOwnedAuditDatabase } from './data-migration/drop-owned-audit-database';
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
@@ -55,6 +56,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const columnWriteVerification: Record<string, unknown> = {};
   const shippingLifecycleVerification: Record<string, unknown> = {};
   const shippingIndexVerification: Record<string, unknown> = {};
+  const shippingReplayVerification: Record<string, unknown> = {};
   const cleanupRecoveries: Array<{ database: string; timeoutRecovered: boolean; retried: boolean }> = [];
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
@@ -190,6 +192,16 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         // Explicitly prove this protocol on every real construction path, with
         // no repair masking a missing external/embedded registration.
         const shippingDb = drizzle(client);
+        const initialReplay = await inspectShippingTemplateCreateReplay(shippingDb);
+        if (!initialReplay.complete) throw new Error(`Shipping receipt registration differs on ${path}`);
+        const replayOids = await client.unsafe("SELECT oid,relfilenode FROM pg_class WHERE oid='public.shipping_template_create_replay'::regclass OR oid IN (SELECT indexrelid FROM pg_index WHERE indrelid='public.shipping_template_create_replay'::regclass) ORDER BY oid");
+        await runShippingTemplateCreateReplay(shippingDb);
+        await runShippingTemplateCreateReplay(shippingDb);
+        const verifiedReplay = await inspectShippingTemplateCreateReplay(shippingDb);
+        const replayAfter = await client.unsafe("SELECT oid,relfilenode FROM pg_class WHERE oid='public.shipping_template_create_replay'::regclass OR oid IN (SELECT indexrelid FROM pg_index WHERE indrelid='public.shipping_template_create_replay'::regclass) ORDER BY oid");
+        if (!verifiedReplay.complete || initialReplay.oid !== verifiedReplay.oid || JSON.stringify(replayOids) !== JSON.stringify(replayAfter))
+          throw new Error(`Shipping receipt repeat changed identity on ${path}`);
+        shippingReplayVerification[path] = { initialComplete: true, repeatComplete: true, oidsAndFilesPreserved: true };
         const initialShippingIndexes = await inspectShippingLifecycleIndexes(shippingDb);
         if (!initialShippingIndexes.complete) throw new Error(`Shipping index registration differs on ${path}`);
         const shippingIndexOidQuery = `SELECT c.relname,c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN (${SHIPPING_LIFECYCLE_INDEXES.map(s=>`'${s.name}'`).join(',')}) ORDER BY c.relname`;
@@ -312,7 +324,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: "all nine paths: exact 263 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: "all nine paths: exact 264 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
@@ -334,6 +346,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       columnWriteVerification,
       shippingLifecycleVerification,
       shippingIndexVerification,
+      shippingReplayVerification,
       cleanupRecoveries,
       externalDuplicateIndexRetirement,
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },

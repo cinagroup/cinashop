@@ -79,3 +79,4 @@ export * from "./wechat_callback";
 export * from "./merchant_shipment_callback";
 export * from "./city_delivery_callback";
 export * from "./short_video";
+export * from "./shipping_create_replay";
