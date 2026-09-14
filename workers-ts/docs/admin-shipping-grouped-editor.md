@@ -1,5 +1,49 @@
 # 总后台完整运费规则编辑候选
 
+## 商品运费选择器超过100条的可达性（2026-09-14，未部署）
+
+对照PHP `product/productEdit/index.vue` 的 `productGetTemplate` 与 temp_id 选择，
+以及 `api/product.js` 的 `product/product/get_template`：当前TS ProductForm只请求
+page1/limit100并对本地选项搜索。插件以125个所属模板复现旧构建：仅100个option，
+商品temp_id=201不在第一页时只回显数字201，搜索“分页测试-01”显示No matching data。
+
+改为独立 `ShippingTemplatePicker.vue`：复用已验证的分页状态，每页20条，提供服务端
+搜索、前后页、键盘跳页、明确选择/取消。`shippingTemplateSelection.ts` 按当前ID
+读取详情，仅用于名称/计费标签回显，不扫描全量、不依赖搜索结果页；读取失败保留ID
+并提供重读，晚到旧ID响应不覆盖新ID/清空状态。组件使用挂载会话signal、失效清私有
+展示并关闭弹窗，卸载取消请求。浏览页面/失败/取消不emit新值，只明确选择或清除才
+更新商品表单。ProductForm不再把运费列表放进基础资料初始化的Promise.all。
+
+实际插件证据（同标签重新加载新构建，1280×720）：
+
+- `http://127.0.0.1:5396/products/71/edit` 原201正确回显名称/计费；首屏125条/7页。
+- 键盘跳第7页显示205..201，选择202回填名称及ID；搜索原201可找到，取消后仍是202。
+- 503列表失败不改绑定201；首次失败出现“暂无匹配模板”的UI缺陷由插件发现，已隐藏错误时空态/总数并复测falseEmpty=0；恢复后点重试显示125条/第一页。
+- 搜索另一个供应商的3个模板返回总0，取消仍保留201。页面身份、非空、无框架遮罩、控制台error/warn空和末页/失败截图通过。
+- 运费五表和序列前后完全相同，业务调用无非GET。未点击商品保存或审核。
+
+新增21项回归：按ID独立回显、125条分页、3种标签、旧成功/失败迟到、清空、重试、
+会话失效、非法ID/响应以及组件接线和失败空态。联合分页22、会话31、既有模板7，
+最终81/81、0失败/跳过；Supplier vue-tsc+Vite完整构建、Worker单元类型通过。
+旧100条静态合同替换为新组件接线及禁止固定100条，不删除原作用域/删除等断言。
+最终临时报告 `cinashop-product-shipping-picker-final-20260914.json` SHA256
+`a0e1693c29d875cc19b61fcd6d4341d11fe97437f790efd6202cd19b78440972`。
+
+隔离夹具 `cinashop-product-shipping-picker-browser-20260914.ts` SHA256
+`b979ad95c10674a76cc93b88e876b4d7d6b739fbcd8317ba91c5d80fec3fc1a8`；保留旧运费夹具未改。
+运费读取仍是真实PG16.15/注册路由/受限LOGIN，商品71、分类和规格读取是显式合成响应，
+登录签发/Redis仍为替身，不能据此声明商品保存/真实身份/Cloudflare端到端验收通过。
+库 `cinashop_kefu_runner_3f9481d591f2496ea37e4b7295f4e306` 与角色
+`cinashop_runtime_0a633f7552c843429725fe28d3242816` 的独立清理检查均0残留。
+服务favicon缺失、构建旧大包/第三方注释警告保留，手机本轮未重测；遵照前端测试技能
+实际使用指定浏览器，未用外部Playwright替代，也未把桌面截图当响应式通过。
+
+仍须推进：PHP get_template精确路由及商品-only角色选择权的完整合同，整个ProductForm
+（而非仅新选择器）的会话/未知保存保护，真实商品保存与报价链、真机和发布验收。
+本轮没有新增服务端路由、放宽shipping权限或改动商品写入合同。e72af20的
+[CI34808890823](https://github.com/cinagroup/cinashop/actions/runs/34808890823)仍运行，
+新增选择器自身CI尚未执行；不并发重启同分支CI。A3k13/SUP-004及240／164／404保持开放。
+
 ## Supplier列表单语句快照（2026-09-14，d985238之后、未部署）
 
 `SupplierShippingTemplateService.list` 原先并行发出页面 SELECT 和 COUNT SELECT。

@@ -153,7 +153,8 @@ describe("supplier shipping-template migration wiring", () => {
     expect(page).not.toContain("deleteShippingTemplate(rule.id");
     expect(page).toContain("被商品使用的模板会被服务器拒绝删除");
     expect(product).toContain('form.freight === 3');
-    expect(product).toContain("getShippingTemplates({ page: 1, limit: 100 })");
+    expect(product).toContain('<ShippingTemplatePicker v-model="form.temp_id"');
+    expect(product).not.toContain('getShippingTemplates({ page: 1, limit: 100 })');
     expect(api).toContain('url: "/setting/shipping_templates/city_list"');
   });
 

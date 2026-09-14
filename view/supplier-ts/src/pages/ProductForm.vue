@@ -7,12 +7,12 @@ import {
   getProductCategories,
   getProductDetail,
   getProductRuleTemplates,
-  getShippingTemplates,
   restoreProductSkus,
   retireProductSkus,
   saveProduct,
 } from "@/api/supplier";
-import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku, ShippingTemplateRow } from "@/types";
+import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku } from "@/types";
+import ShippingTemplatePicker from '@/components/ShippingTemplatePicker.vue';
 import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
@@ -28,7 +28,6 @@ const retiredAttrs = ref<ProductSku[]>([]);
 const selectedActiveSkuIds = ref<number[]>([]);
 const selectedRetiredSkuIds = ref<number[]>([]);
 const categories = ref<ProductCategory[]>([]);
-const shippingTemplates = ref<ShippingTemplateRow[]>([]);
 const ruleTemplates = ref<ProductRuleTemplate[]>([]);
 const selectedRuleId = ref<number | null>(null);
 
@@ -346,13 +345,11 @@ async function submit() {
 async function load() {
   loading.value = true;
   try {
-    const [categoryRows, templateResult, productRuleRows] = await Promise.all([
+    const [categoryRows, productRuleRows] = await Promise.all([
       getProductCategories(),
-      getShippingTemplates({ page: 1, limit: 100 }),
       getProductRuleTemplates(),
     ]);
     categories.value = categoryRows;
-    shippingTemplates.value = templateResult.data;
     ruleTemplates.value = productRuleRows;
     if (editing.value) {
       const detail = await getProductDetail(productId.value);
@@ -542,9 +539,7 @@ onMounted(load);
               </el-form-item>
               <el-form-item v-if="form.freight === 2" label="固定邮费（元）"><el-input v-model="form.postage" /></el-form-item>
               <el-form-item v-if="form.freight === 3" label="运费模板">
-                <el-select v-model="form.temp_id" clearable filterable placeholder="选择当前供应商模板" style="width: 100%">
-                  <el-option v-for="item in shippingTemplates" :key="item.id" :label="`${item.name}（${item.type}）`" :value="item.id" />
-                </el-select>
+                <ShippingTemplatePicker v-model="form.temp_id" :disabled="loading || saving" />
                 <el-button link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
               </el-form-item>
             </template>
