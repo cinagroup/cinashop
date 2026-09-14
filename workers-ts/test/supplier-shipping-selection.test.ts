@@ -13,7 +13,7 @@ beforeAll(async () => {
   const actual = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
   selection = actual.useShippingTemplateSelection; useList = actual.useShippingTemplateList;
 });
-const detail = (name = '第一页之外', type = 2) => ({ formData: { name, type } });
+const detail = (name = '第一页之外', type = 2, id = 201) => ({ id, name, type: ['按件数', '按重量', '按体积'][type - 1] });
 function deferred() { let resolve!: (v: unknown) => void, reject!: (v: Error) => void;
   return { promise: new Promise((yes, no) => { resolve = yes; reject = no; }), resolve: (v: unknown) => resolve(v), reject: (v: Error) => reject(v) }; }
 
@@ -39,7 +39,7 @@ describe('Supplier product shipping selection', () => {
     expect(state.selected.value).toEqual({ id: 201, name: '名称', type: ['按件数', '按重量', '按体积'][type - 1] });
   });
   it.each(['success', 'failure'])('ignores late old %s after a new selected ID resolves', async kind => {
-    const old = deferred(), fetch = vi.fn().mockReturnValueOnce(old.promise).mockResolvedValueOnce(detail('新选择', 3));
+    const old = deferred(), fetch = vi.fn().mockReturnValueOnce(old.promise).mockResolvedValueOnce(detail('新选择', 3, 202));
     const state = selection(fetch, () => true), pending = state.hydrate(201);
     await state.hydrate(202);
     if (kind === 'success') old.resolve(detail()); else old.reject(new Error('旧失败'));
@@ -67,7 +67,7 @@ describe('Supplier product shipping selection', () => {
     const fetch = vi.fn(), state = selection(fetch, () => true); await state.hydrate(id);
     expect(fetch).not.toHaveBeenCalled(); expect(state.error.value).toContain('ID无效');
   });
-  it.each([null, {}, detail('', 1), detail('x'.repeat(256), 1), detail('name', 4)])('rejects malformed selected detail %j', async value => {
+  it.each([null, {}, detail('', 1), detail('x'.repeat(256), 1), detail('name', 4), detail('wrong ID', 1, 202)])('rejects malformed selected detail %j', async value => {
     const state = selection(async () => value, () => true); await state.hydrate(201);
     expect(state.selected.value).toBeNull(); expect(state.error.value).toContain('响应无效');
   });
@@ -79,6 +79,10 @@ describe('Supplier product shipping selection', () => {
     const product = readFileSync(resolve(import.meta.dirname, '../../view/supplier-ts/src/pages/ProductForm.vue'), 'utf8');
     expect(product).toContain('<ShippingTemplatePicker v-model="form.temp_id"');
     expect(product).not.toContain('getShippingTemplates({ page: 1, limit: 100 })');
+    expect(component).toContain('getProductShippingOptions');
+    expect(component).toContain('getProductShippingOption(id, session.signal)');
+    expect(component).not.toContain('getShippingTemplate(');
+    expect(product).toContain('v-if="auth.can(\'supplier.shipping.view\')" link type="primary" @click="router.push(\'/shipping-templates\')"');
   });
   it('does not label a failed request as a successful empty result', () => {
     const component = readFileSync(resolve(import.meta.dirname, '../../view/supplier-ts/src/components/ShippingTemplatePicker.vue'), 'utf8');

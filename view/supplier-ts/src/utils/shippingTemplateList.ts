@@ -1,11 +1,11 @@
-import { computed, ref } from 'vue';
-import type { ShippingTemplateListResult, ShippingTemplateRow } from '@/types';
+import { computed, ref, shallowRef } from 'vue';
+import type { ShippingTemplateRow } from '@/types';
 
 export interface ShippingListQuery { name: string; page: number; limit: number }
 
 /** Commit rows and their query together; failed/late reads never relabel old rows. */
-export function useShippingTemplateList(fetchPage: (query: ShippingListQuery) => Promise<ShippingTemplateListResult>, current: () => boolean) {
-  const rows = ref<ShippingTemplateRow[]>([]), count = ref(0), loading = ref(false), error = ref('');
+export function useShippingTemplateList<Row extends { id: number } = ShippingTemplateRow>(fetchPage: (query: ShippingListQuery) => Promise<{ data: Row[]; count: number }>, current: () => boolean) {
+  const rows = shallowRef<Row[]>([]), count = ref(0), loading = ref(false), error = ref('');
   const applied = ref<ShippingListQuery>({ name: '', page: 1, limit: 20 });
   const pages = computed(() => Math.max(1, Math.ceil(count.value / applied.value.limit)));
   let generation = 0, attempted = { ...applied.value };
@@ -14,7 +14,7 @@ export function useShippingTemplateList(fetchPage: (query: ShippingListQuery) =>
     generation++; rows.value = []; count.value = 0; loading.value = false; error.value = '';
     applied.value = { name: '', page: 1, limit: 20 }; attempted = { ...applied.value };
   }
-  function validate(result: ShippingTemplateListResult, query: ShippingListQuery) {
+  function validate(result: { data: Row[]; count: number }, query: ShippingListQuery) {
     if (!result || !Number.isSafeInteger(result.count) || result.count < 0 || !Array.isArray(result.data)
       || result.data.length > query.limit || result.data.some(row => !row || !Number.isSafeInteger(row.id) || row.id <= 0)) {
       throw new Error('运费列表响应无效，请重试');

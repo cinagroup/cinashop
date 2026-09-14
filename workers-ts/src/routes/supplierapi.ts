@@ -4,6 +4,7 @@ import type { AppVariables, Env } from "@/env";
 import { supplierAuthMiddleware } from "@/middleware/supplier-auth";
 import { supplierPermissionMiddleware } from "@/middleware/supplier-permission";
 import * as SupplierController from "@/controllers/supplier/SupplierController";
+import * as ProductShippingOptions from '@/controllers/supplier/SupplierProductShippingOptionsController';
 import * as SupplierQueueController from "@/controllers/supplier/SupplierQueueController";
 import * as SupplierExportController from "@/controllers/supplier/SupplierExportController";
 import * as SupplierProductReplyController from "@/controllers/supplier/SupplierProductReplyController";
@@ -26,6 +27,8 @@ supplierapiRoutes.post("/is_captcha", (c) =>
 );
 
 supplierapiRoutes.use('/setting/shipping_templates/*', ShippingCreation.privateResponse);
+supplierapiRoutes.use('/product/product/shipping-template-options', ShippingCreation.privateResponse);
+supplierapiRoutes.use('/product/product/shipping-template-options/*', ShippingCreation.privateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
@@ -161,6 +164,10 @@ supplierapiRoutes.get("/product/all_specs", SupplierController.productSpecsAll);
 supplierapiRoutes.get("/form/info/:id", SupplierController.systemFormInfo);
 supplierapiRoutes.get("/form/all_system_form", SupplierController.systemFormAll);
 supplierapiRoutes.get("/product/product/get_rule", SupplierController.productRuleTemplates);
+// Product-view authority only; editor/read-write shipping permissions stay separate.
+// Explicitly paged contract, not an incomplete alias of PHP's full get_template array.
+supplierapiRoutes.get('/product/product/shipping-template-options', ProductShippingOptions.list);
+supplierapiRoutes.get('/product/product/shipping-template-options/:id', ProductShippingOptions.detail);
 supplierapiRoutes.get("/product/product/rule", SupplierController.productRuleList);
 supplierapiRoutes.post("/product/product/rule/:id", SupplierController.productRuleSave);
 supplierapiRoutes.get("/product/product/rule/:id", SupplierController.productRuleDetail);

@@ -540,7 +540,7 @@ onMounted(load);
               <el-form-item v-if="form.freight === 2" label="固定邮费（元）"><el-input v-model="form.postage" /></el-form-item>
               <el-form-item v-if="form.freight === 3" label="运费模板">
                 <ShippingTemplatePicker v-model="form.temp_id" :disabled="loading || saving" />
-                <el-button link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
+                <el-button v-if="auth.can('supplier.shipping.view')" link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
               </el-form-item>
             </template>
             <el-alert v-else :title="isCardProduct ? '自动交付，无需物流和运费' : '人工虚拟交付，无需物流和运费'" type="success" show-icon :closable="false" />

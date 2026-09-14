@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { getShippingTemplate, getShippingTemplates, previewMode } from '@/api/supplier';
+import { previewMode } from '@/api/supplier';
+import { getProductShippingOption, getProductShippingOptions } from '@/api/productShipping';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
 import { useShippingTemplateList } from '@/utils/shippingTemplateList';
 import { useShippingTemplateSelection } from '@/utils/shippingTemplateSelection';
@@ -8,8 +9,8 @@ import { useShippingTemplateSelection } from '@/utils/shippingTemplateSelection'
 const props = defineProps<{ modelValue: number; disabled?: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [id: number] }>();
 const visible = ref(false), filter = ref(''), invalidated = ref(false);
-const list = useShippingTemplateList(query => getShippingTemplates({ ...query }, session.signal), () => session.isCurrent());
-const selection = useShippingTemplateSelection(id => getShippingTemplate(id, session.signal), () => session.isCurrent());
+const list = useShippingTemplateList(query => getProductShippingOptions({ ...query }, session.signal), () => session.isCurrent());
+const selection = useShippingTemplateSelection(id => getProductShippingOption(id, session.signal), () => session.isCurrent());
 const { rows, count, loading, error, applied, pages } = list;
 const { selected, loading: readingSelected, error: selectedError } = selection;
 const session = createSupplierSessionScope(() => {

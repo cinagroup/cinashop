@@ -1,5 +1,68 @@
 # 总后台完整运费规则编辑候选
 
+## 商品域运费选项权限（2026-09-14，未部署）
+
+PHP `route/supplier.php:191`、`StoreProduct.php:get_template` 与
+`ShippingTemplatesDao.php:getTemp` 证明选模板属于商品域，返回所属供应商的
+id/name数组、sort DESC/id DESC。此前TS选择器借用运费管理list/edit，造成仅有
+product.view/manage的子账号无法选择。此增量不向商品角色补发shipping权限：
+
+- GET `/supplierapi/product/product/shipping-template-options`：分页及搜索，复用已有
+  单SQL页面/总数快照，limit最多100，返回`{data:[{id,name,type}],count}`。
+- GET 同路径`/:id`：正整数ID、单行元数据回读，不读取规则、回执或编辑revision。
+- 两端点使用现有真实supplier认证和商品查看权限；归属取实时数据库身份，忽略客户端
+  owner/relation/supplier字段；无认证和权限失败也no-store。商品读不授予shipping
+  list/edit/save/delete/receipt能力，旧运费管理端点及数据库授权均不改。
+- 前端选择器改用上述两端点。ID回读验证响应ID与请求一致；管理入口按shipping.view
+  隐藏；分页状态泛型化但仍保留原运费列表完整行类型、迟到隔离和显式重试。
+
+这是明确的新分页契约，**不是**PHP `get_template` 无参数全数组的别名。旧精确路径
+和三个旧第一方调用者的完整迁移仍开放，不用静默截断或新接口数量宣称旧合同完成。
+已删除项不可选择沿用当前TS退役协议；未改变status=0模板可读规则。
+
+### 验证与限制
+
+`supplier-product-shipping-options.test.ts` 使用真实注册路由、JWT、DB角色判定和
+随机PG16库，每请求独立受限LOGIN，仅四表SELECT、schema USAGE/database CONNECT。
+没有规则表/回执权限、DML或sequence USAGE。新增24项覆盖两种商品权限下125条
+全页遍历、排序、搜索、空页总数、最小字段、外租户/平台/门店/退役/不存在一致拒绝、
+非法参数、shipping域拒绝、无产品权限/无token拒绝、角色停用和同JWT改归属。
+旧实现8过/16失败；新增实现24全过。Redis令牌桶为替身，非线上身份验收。
+
+最终六文件113项零失败/跳过：新增24、selection22、pagination22、session31、
+template7、list7。另四文件22项路由解析、Admin API精确盘点、Supplier RBAC与规格
+前端合同通过。`npm run typecheck`双配置、Supplier `npm run build`通过；既有VueUse
+PURE注释和大chunk警告未处理。最初误用不存在的tsconfig.unit.json返回TS5058，
+随后改用仓库正式脚本通过；首轮会话文件名误写导致仅75项，不作为最终113项证据。
+
+本机临时原始报告（不含生产数据）：
+- `cinashop-product-shipping-options-red-20260914.json` SHA256
+  `5e80ef45859ca565c671efcbabf90b1588657078bef3a31ba4b10b642cf3fc1e`。
+- `cinashop-product-shipping-options-final-20260914.json` SHA256
+  `8ecd05dbb5a61baaf2b3c0ea83f81cff5fb207e73985691fafa0a363af3db92c`。
+
+Browser插件实测`http://127.0.0.1:5396/products/71/edit`，1280×720，最终构建
+ProductForm-CydQBTzS.js。账号只含product.view/manage，导航无运费管理、表单管理
+按钮0个；#201正确回显，第7/7页选择#202、搜索#201后取消仍#202；503明确错误且
+保留#202，恢复后重试搜索成功。外供应商搜索首次观察仍加载中未记通过，另开页等待
+“暂无匹配模板”后确认0条。页面身份/非空/无框架遮罩/截图/交互通过，console warn/error
+为空。注册路由记录13次请求（含最初过期测试token），业务写0、shipping编辑域请求0；
+metadata仅id/name/type，129模板（125所属+3外属+1默认）、序列10000，回执SELECT/INSERT
+均false。未点击商品保存；商品/分类/规格读取仍合成夹具，Node宿主，Redis/登录签发替身。
+商品列表和退出端点未在夹具实现，其请求失败提示不当作生产缺陷。
+
+临时夹具`cinashop-product-shipping-permission-browser-20260914.ts` SHA256
+`e77c1d8db4a163a9ab93b0daf6dbf4e00e4a439ce96d7d2dc4b408f8784dcedd`。
+结束后正常stop、进程exit0；独立psql核验本次库
+`cinashop_kefu_runner_570e23f515514311ba6571d8df5f9e90`及角色
+`cinashop_runtime_bc6f9ab41100401c9869737ed9940ac6`均0残留。
+
+上一ac5131d CI34809884563已completed/success，本增量自身CI待验证。未部署、未改
+线上权限或数据，线上仍9fb7d27且回执表未安装；协调发布要求保持。手机viewport、
+真机/真实角色、整商品保存会话保护/未知结果、旧全数组接口和完整容量门禁继续开放。
+上一浏览器轮次观察到线上商品图片加载失败，另列待查，不由本权限修复解决。
+A3k13、SUP-004及240勾选/164开放/404总项保持。
+
 ## 商品运费选择器超过100条的可达性（2026-09-14，未部署）
 
 对照PHP `product/productEdit/index.vue` 的 `productGetTemplate` 与 temp_id 选择，
