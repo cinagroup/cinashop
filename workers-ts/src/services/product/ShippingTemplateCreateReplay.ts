@@ -9,7 +9,7 @@ import { parseFlatAdminShippingInput, shippingInputRecord } from './FlatShipping
 
 /** These values must come from fresh authenticated middleware, never the body.
  * Actor IDs are stable database IDs, not session tokens, so recovery survives login.
- * This engine is not exposed by HTTP until migration + mandatory-key UI rollout.
+ * HTTP callers require keys; deployment still requires the migration + UI rollout.
  */
 export interface ShippingCreationActor { ownerType: 0 | 2; relationId: number; actorId: number }
 export interface ShippingCreationReceipt {

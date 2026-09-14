@@ -3,7 +3,9 @@ import { createContainerFromDb, type DbClient } from '../../src/lib/di';
 import type { AppVariables, Env } from '../../src/env';
 import { shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, storeProduct, systemCity,
  storeSeckill, storeBargain, storeCombination, storeIntegral, storeDiscountsProducts } from '../../src/models/schema';
-import { adminShippingTemplateSave, adminShippingTemplateDel } from '../../src/controllers/api/v1/AdminCrudController';
+import { adminShippingTemplateDel } from '../../src/controllers/api/v1/AdminCrudController';
+import { adminSave, privateResponse } from '../../src/controllers/product/ShippingTemplateCreationController';
+import { SHIPPING_TEMPLATE_CREATE_REPLAY_SQL } from '../../src/migrations/shippingTemplateCreateReplay';
 import { financePostgres } from './financePostgres';
 import { readAdminShippingSnapshot } from '../../src/services/admin/AdminShippingTemplateSnapshot';
 import { adminShippingTemplateDetail, adminShippingTemplateCities } from '../../src/controllers/api/v1/AdminCrudController';
@@ -11,9 +13,10 @@ import { adminShippingTemplateDetail, adminShippingTemplateCities } from '../../
 /** Actual controller, disposable SQL; authentication is an explicit local fixture. */
 export function shippingAdminApp(db: DbClient) {
  const app = new Hono<{Bindings:Env;Variables:AppVariables}>();
- app.use('*',async(c,next)=>{c.set('container',createContainerFromDb(db));await next();});
+ app.use('*',async(c,next)=>{c.set('container',createContainerFromDb(db));c.set('adminId',7);
+  c.set('adminInfo',{id:7,account:'fixture',roles:'',level:0,realName:'fixture',divisionId:0});await next();});
  app.onError((e,c)=>c.json({status:400,msg:e.message,data:null}));
- app.post('/save',adminShippingTemplateSave);app.delete('/delete/:id',adminShippingTemplateDel);
+ app.post('/save',privateResponse,adminSave);app.delete('/delete/:id',adminShippingTemplateDel);
  app.get('/:id/edit',adminShippingTemplateDetail);app.get('/city_list',adminShippingTemplateCities);
  return app;
 }
@@ -26,13 +29,14 @@ export async function postShipping(db:DbClient,body:unknown) {
   try { revision=(await readAdminShippingSnapshot(db,Number(body.id))).revision; } catch { /* Missing/retired remains an HTTP rejection. */ }
   body={...body,expectedRevision:revision};
  }
- const response=await shippingAdminApp(db).request('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const response=await shippingAdminApp(db).request('/save',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify(body)});
  return response.json() as Promise<{status:number;msg:string;data:{id:number}|null}>;
 }
 export async function createAdminShippingFixture() {
  const f=await financePostgres([shippingTemplates,shippingTemplatesRegion,shippingTemplatesFree,shippingTemplatesNoDelivery,storeProduct,systemCity,
   storeSeckill,storeBargain,storeCombination,storeIntegral,storeDiscountsProducts]);
  try {
+  await f.exec(SHIPPING_TEMPLATE_CREATE_REPLAY_SQL);
   await f.db.insert(shippingTemplates).values({id:10,name:'原模板',type:2,sort:9,status:0,appoint:1,noDelivery:1,addTime:123});
   await f.db.insert(shippingTemplatesRegion).values({id:10,templateId:10,regionId:0,regionName:'全国',first:'1.00',firstPrice:'6.00',continue:'1.00',continuePrice:'2.00'});
   await f.db.insert(shippingTemplatesFree).values({tempId:10,cityId:101,number:'2.00',price:'99.00'});

@@ -5,6 +5,7 @@
  * 命名与 PHP 路由保持一致, 方便前端无感切换。
  */
 import { Hono } from "hono";
+import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
 import { authMiddleware } from "@/middleware/auth";
 import * as LoginController from "@/controllers/api/v1/LoginController";
 import * as AppleAuthController from "@/controllers/api/v1/AppleAuthController";
@@ -1744,7 +1745,8 @@ v1Routes.delete("/admin/level/del/:id", adminAuth, AdminCrud.adminLevelDel);
 v1Routes.get("/admin/shipping_template/list", adminAuth, AdminCrud.adminShippingTemplateList);
 v1Routes.get("/admin/shipping_template/city_list", adminAuth, AdminCrud.adminShippingTemplateCities);
 v1Routes.get("/admin/shipping_template/:id/edit", adminAuth, AdminCrud.adminShippingTemplateDetail);
-v1Routes.post("/admin/shipping_template/save", adminAuth, AdminCrud.adminShippingTemplateSave);
+v1Routes.post("/admin/shipping_template/save", ShippingCreation.privateResponse, adminAuth, ShippingCreation.adminSave);
+v1Routes.post("/admin/shipping_template/creation-receipt", ShippingCreation.privateResponse, adminAuth, ShippingCreation.adminReceipt);
 v1Routes.delete("/admin/shipping_template/del/:id", adminAuth, AdminCrud.adminShippingTemplateDel);
 v1Routes.get("/admin/express/list", adminAuth, AdminCrud.adminExpressList);
 v1Routes.post("/admin/express/save", adminAuth, AdminCrud.adminExpressSave);

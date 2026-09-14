@@ -6,6 +6,8 @@ import { shippingLifecycleLock, retireShippingTemplate } from '../product/Shippi
 import { readShippingEditorSnapshot, boundShippingTransaction, requireShippingRevision, assertShippingRevision } from '../product/ShippingTemplateRevision';
 import { boundShippingTemplateTransaction } from '../order/ShippingTemplateSnapshot';
 import { shippingRuleInteger as integer, normalizeSupplierShippingTemplateInput, formatValidatedShippingRuleGroups, cityAuthority, replaceRules } from '../product/ShippingTemplateRules';
+import { createShippingTemplateOnce } from '../product/ShippingTemplateCreateReplay';
+import { requireShippingCreationContext, type ShippingCreationContext } from '../product/ShippingCreationContext';
 export { normalizeSupplierShippingTemplateInput, formatLegacyShippingRuleGroups, formatValidatedShippingRuleGroups, cityAuthority, replaceRules } from '../product/ShippingTemplateRules';
 export type { SupplierShippingTemplateInput } from '../product/ShippingTemplateRules';
 
@@ -93,13 +95,20 @@ export class SupplierShippingTemplateService {
     }));
   }
 
+  async create(supplierIdValue: number, rawInput: UnknownRecord, creation?: ShippingCreationContext) {
+    const supplierId = validSupplierId(supplierIdValue), context = requireShippingCreationContext(creation);
+    return createShippingTemplateOnce(this.container, { ownerType: 2, relationId: supplierId, actorId: context.actorId }, context.requestKey, rawInput);
+  }
+
   async save(
     supplierIdValue: number,
     templateId: number,
     rawInput: UnknownRecord,
+    creation?: ShippingCreationContext,
   ): Promise<number> {
     const supplierId = validSupplierId(supplierIdValue);
     if (!Number.isSafeInteger(templateId) || templateId < 0 || templateId > 2_147_483_647) throw new ValidateException("运费模板ID错误");
+    if (templateId === 0) return (await this.create(supplierId, rawInput, creation)).id;
     const expectedRevision = templateId > 0 ? requireShippingRevision(rawInput.expectedRevision) : undefined;
     const input = normalizeSupplierShippingTemplateInput(rawInput);
     return shippingLifecycleLock(() => withTx(this.container, async (tx) => {
@@ -129,23 +138,6 @@ export class SupplierShippingTemplateService {
             addTime: now,
           })
           .where(templateScope(supplierId, templateId));
-      } else {
-        const inserted = await tx
-          .insert(shippingTemplates)
-          .values({
-            ownerType: SUPPLIER_OWNER_TYPE,
-            relationId: supplierId,
-            name: input.name,
-            type: input.billingType,
-            appoint: input.appoint,
-            noDelivery: input.noDelivery,
-            sort: input.sort,
-            status: 1,
-            isDel: 0,
-            addTime: now,
-          })
-          .returning({ id: shippingTemplates.id });
-        savedId = inserted[0].id;
       }
       await replaceRules(tx, savedId, input, cities, now);
       return savedId;

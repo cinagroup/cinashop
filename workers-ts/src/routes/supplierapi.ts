@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
 import type { AppVariables, Env } from "@/env";
 import { supplierAuthMiddleware } from "@/middleware/supplier-auth";
 import { supplierPermissionMiddleware } from "@/middleware/supplier-permission";
@@ -24,6 +25,7 @@ supplierapiRoutes.post("/is_captcha", (c) =>
   c.json({ status: 200, msg: "ok", data: { is_captcha: false } }),
 );
 
+supplierapiRoutes.use('/setting/shipping_templates/*', ShippingCreation.privateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
@@ -113,8 +115,9 @@ supplierapiRoutes.get(
 );
 supplierapiRoutes.post(
   "/setting/shipping_templates/save/:id",
-  SupplierController.saveShippingTemplate,
+  ShippingCreation.supplierSave,
 );
+supplierapiRoutes.post('/setting/shipping_templates/creation-receipt', ShippingCreation.supplierReceipt);
 supplierapiRoutes.delete(
   "/setting/shipping_templates/del/:id",
   SupplierController.deleteShippingTemplate,

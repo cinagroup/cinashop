@@ -11,13 +11,14 @@ import { createToken, md5, type TokenType } from '../src/utils/jwt';
 import * as cache from '../src/utils/cache';
 import { runShippingLifecycle } from '../src/migrations/runShippingLifecycle';
 import { readAdminShippingSnapshot } from '../src/services/admin/AdminShippingTemplateSnapshot';
+import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 
 const surfaces = ['adminapi', 'api/admin', 'supplierapi'] as const;
 type Surface = typeof surfaces[number];
 type Operation = 'save' | 'delete';
 const children = ['store_product', 'store_seckill', 'store_bargain', 'store_combination', 'store_integral', 'store_discounts_products'];
 const shippingTables = ['shipping_templates', 'shipping_templates_region', 'shipping_templates_free', 'shipping_templates_no_delivery'];
-const stateTables = [...shippingTables, ...children, 'store_order', 'system_admin', 'system_role', 'system_supplier'];
+const stateTables = [...shippingTables, 'shipping_template_create_replay', ...children, 'store_order', 'system_admin', 'system_role', 'system_supplier'];
 
 // Registered routes, real JWT verification, DB principals/role resolution and
 // controllers/services with the formal protocol installed on full isolated ORM.
@@ -33,6 +34,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     // Template-management scope only: reference tables are read-only. This is
     // deliberately not the broader seven-table writer permission envelope.
     await f.exec(`GRANT SELECT,INSERT,UPDATE ON public.shipping_templates TO "${runtime.role}";
+      GRANT SELECT,INSERT ON public.shipping_template_create_replay TO "${runtime.role}";
       GRANT SELECT ON ${children.map(t => `public.${t}`).join(',')},public.system_admin,public.system_role,public.system_supplier,public.system_city TO "${runtime.role}";
       GRANT SELECT,INSERT,DELETE ON ${shippingTables.slice(1).map(t => `public.${t}`).join(',')} TO "${runtime.role}";
       GRANT USAGE ON SEQUENCE ${shippingTables.map(t => `public.${t}_id_seq`).join(',')} TO "${runtime.role}"`);
@@ -63,7 +65,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     vi.spyOn(cache, 'getTokenBucket').mockImplementation(async key => buckets.get(key) ?? null);
     vi.spyOn(cache, 'clearToken').mockImplementation(async key => buckets.delete(key));
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('External I/O forbidden in shipping authorization acceptance'); }));
-    for (const table of [...children.slice(1), children[0], ...shippingTables.slice(1), shippingTables[0], 'system_admin', 'system_role', 'system_supplier', 'store_order'])
+    for (const table of ['shipping_template_create_replay', ...children.slice(1), children[0], ...shippingTables.slice(1), shippingTables[0], 'system_admin', 'system_role', 'system_supplier', 'store_order'])
       await f.exec(`DELETE FROM public.${table}`);
     await f.exec("DELETE FROM system_city; INSERT INTO system_city(city_id,parent_id,name) VALUES(101,0,'isolated province'),(102,101,'isolated city'); SELECT setval('shipping_templates_id_seq',10000)");
     await f.exec(`INSERT INTO system_role(id,type,relation_id,rules,status) VALUES
@@ -97,7 +99,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
       : { id, name: 'explicit edit', status: 0, adminId: 999, roles: 'shipping.manage',
         ...(id > 0 && operation === 'save' ? { expectedRevision: (await readAdminShippingSnapshot(f.db,id)).revision } : {}) };
     const response = await app.request(path, { method: operation === 'save' ? 'POST' : 'DELETE',
-      headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'x-admin-id': '7', 'x-supplier-id': '30' },
+      headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'x-admin-id': '7', 'x-supplier-id': '30',
+        ...(id === 0 ? { 'Idempotency-Key': crypto.randomUUID() } : {}) },
       ...(operation === 'save' ? { body: JSON.stringify({ ...body, ...override }) } : {}) }, env);
     return { http: response.status, body: await response.json() as { status: number; msg: string; data: unknown } };
   };
@@ -135,6 +138,216 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     expect((await request('supplierapi','save',bearer,20,{expectedRevision:null})).body.status).toBe(400011);
   });
   for (const surface of surfaces) describe(surface, () => {
+    const creationPath = surface === 'supplierapi' ? '/supplierapi/setting/shipping_templates/save/0' : `/${surface}/shipping_template/save`;
+    const receiptPath = surface === 'supplierapi' ? '/supplierapi/setting/shipping_templates/creation-receipt' : `/${surface}/shipping_template/creation-receipt`;
+    const creationBody = () => surface === 'supplierapi'
+      ? { ...fullRules, name: 'durable HTTP creation', type: 1, sort: 0 }
+      : { id: 0, name: 'durable HTTP creation' };
+    const creationRequest = async (path: string, bearer: string, key?: string, body: unknown = {}, target = app) => {
+      const response = await target.request(path, { method: 'POST', headers: {
+        Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json',
+        ...(key === undefined ? {} : { 'Idempotency-Key': key }),
+      }, body: JSON.stringify(body) }, env);
+      return { response, body: await response.json() as { status: number; msg: string; data: unknown } };
+    };
+    it('requires a creation key at the registered HTTP boundary without any mutation', async () => {
+      const before = await snapshot();
+      const result = await creationRequest(creationPath, await token(surface), undefined, creationBody());
+      expect(result.body).toMatchObject({ status: 400, msg: expect.stringContaining('Idempotency-Key'), data: null });
+      expect(await snapshot()).toEqual(before);
+    });
+    it('replays and recovers the exact committed HTTP creation instead of making a second template', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID();
+      const first = await creationRequest(creationPath, bearer, key, creationBody());
+      expect(first.body).toMatchObject({ status: 200, data: { version: 'shipping-create-v1', requestKey: key,
+        requestHash: expect.stringMatching(/^[a-f0-9]{64}$/), id: 10001, replayed: false } });
+      const committed = await snapshot();
+      expect(Object.keys(first.body.data as object).sort()).toEqual(['id','replayed','requestHash','requestKey','version']);
+      const replay = await creationRequest(creationPath, bearer, key.toUpperCase(), creationBody());
+      expect(replay.body).toMatchObject({ status: 200, data: { ...first.body.data as object, replayed: true } });
+      const found = await creationRequest(receiptPath, bearer, key);
+      const { replayed: _, ...receipt } = first.body.data as Record<string, unknown>;
+      expect(found.body).toEqual({ status: 200, msg: 'ok', data: receipt });
+      for (const result of [first, replay, found]) expect(result.response.headers.get('cache-control')).toContain('no-store');
+      expect(await snapshot()).toEqual(committed);
+    });
+    it('returns only null for an absent actor-scoped receipt and never creates on lookup', async () => {
+      const before = await snapshot();
+      const result = await creationRequest(receiptPath, await token(surface), crypto.randomUUID());
+      expect(result.body).toEqual({ status: 200, msg: 'ok', data: null });
+      expect(result.response.headers.get('cache-control')).toContain('no-store');
+      expect(await snapshot()).toEqual(before);
+    });
+    it.each(['', 'not-a-uuid', `${crypto.randomUUID()}, ${crypto.randomUUID()}`])('rejects invalid or duplicate creation/lookup key %s', async key => {
+      const bearer = await token(surface), before = await snapshot();
+      for (const path of [creationPath, receiptPath]) {
+        const result = await creationRequest(path, bearer, key, path === creationPath ? creationBody() : {});
+        expect(result.body).toMatchObject({ status: 400, msg: expect.stringContaining('Idempotency-Key'), data: null });
+        expect(result.response.headers.get('cache-control')).toContain('no-store');
+      }
+      expect(await snapshot()).toEqual(before);
+    });
+    for (const operation of ['create', 'lookup'] as const) it.each(denials)(`${operation} checks %s before key/body validation and cannot reveal receipts`, async kind => {
+      let bearer = await token(surface, { badKey: kind === 'signature', expired: kind === 'expired', type: ['wrong_type','jwt_type'].includes(kind) ? 'api' : undefined });
+      const actorId = surface === 'supplierapi' ? 27 : 7, role = surface === 'supplierapi' ? 2 : 1;
+      if (kind === 'absent') bearer = '';
+      if (kind === 'revoked') buckets.delete(md5(bearer));
+      if (kind === 'bucket_owner') buckets.get(md5(bearer))!.uid = 999;
+      if (kind === 'jwt_type') buckets.get(md5(bearer))!.type = surface === 'supplierapi' ? 'supplier' : 'admin';
+      if (kind === 'banned') await f.exec(`UPDATE system_admin SET status=0 WHERE id=${actorId}`);
+      if (kind === 'deleted') await f.exec(`UPDATE system_admin SET is_del=1 WHERE id=${actorId}`);
+      if (kind === 'password') await f.exec(`UPDATE system_admin SET pwd='changed' WHERE id=${actorId}`);
+      if (kind === 'view_only') await f.exec(`UPDATE system_role SET rules='${surface === 'supplierapi' ? 'supplier.shipping.view' : 'shipping.view'}' WHERE id=${role}`);
+      if (kind === 'role_disabled') await f.exec(`UPDATE system_role SET status=0 WHERE id=${role}`);
+      if (kind === 'role_missing') await f.exec(`DELETE FROM system_role WHERE id=${role}`);
+      const expected = ['view_only','role_disabled','role_missing'].includes(kind) ? 400011
+        : ['signature','expired','password'].includes(kind) ? 410001
+        : ['absent','revoked','wrong_type'].includes(kind) ? 410000 : 410002;
+      const before = await snapshot();
+      // Missing key and malformed JSON must not mask authentication/permission.
+      const response = await app.request(operation === 'create' ? creationPath : receiptPath, {
+        method: 'POST', headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' }, body: '{broken',
+      }, env);
+      expect(await response.json()).toMatchObject({ status: expected, data: null });
+      expect(response.headers.get('cache-control')).toContain('no-store');
+      expect(await snapshot()).toEqual(before);
+    });
+    it('rejects changed content with HTTP 409 and leaves the committed receipt and rules unchanged', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID();
+      expect((await creationRequest(creationPath, bearer, key, creationBody())).body.status).toBe(200);
+      const before = await snapshot();
+      const changed = await creationRequest(creationPath, bearer, key, { ...creationBody(), name: 'different' });
+      expect(changed.response.status).toBe(409);
+      expect(changed.body).toMatchObject({ status: 409, data: null });
+      expect(await snapshot()).toEqual(before);
+    });
+    it('uses stable authenticated actor scope across fresh tokens and does not leak to another account or tenant', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID(), supplier = surface === 'supplierapi';
+      const first = await creationRequest(creationPath, bearer, key, { ...creationBody(), actorId: 999,
+        owner_type: supplier ? 0 : 2, relation_id: 30, requestKey: crypto.randomUUID() });
+      expect(first.body.status).toBe(200);
+      const id = supplier ? 27 : 7, type = supplier ? 'supplier' : 'admin';
+      const renewed = await createToken(id, type, md5(''), env.APP_KEY, 'cinashop', Math.floor(Date.now()/1000)-10);
+      expect(renewed.token).not.toBe(bearer);
+      buckets.delete(md5(bearer)); buckets.set(md5(renewed.token), { ...renewed, uid: id, type });
+      const found = await creationRequest(receiptPath, renewed.token, key);
+      expect(found.body).toMatchObject({ status: 200, data: { id: 10001, requestKey: key } });
+      if (!supplier) await f.exec("INSERT INTO system_admin(id,account,admin_type,roles,level) VALUES(8,'other-admin',1,'1',1)");
+      const other = await creationRequest(receiptPath, await token(surface, { id: supplier ? 28 : 8 }), key);
+      expect(other.body).toEqual({ status: 200, msg: 'ok', data: null });
+      if (supplier) {
+        await f.exec("UPDATE system_admin SET relation_id=30,roles='3' WHERE id=27");
+        expect((await creationRequest(receiptPath, renewed.token, key)).body).toEqual({ status: 200, msg: 'ok', data: null });
+      } else {
+        const alias = surface === 'adminapi' ? '/api/admin' : '/adminapi';
+        expect((await creationRequest(`${alias}/shipping_template/creation-receipt`, renewed.token, key)).body).toEqual(found.body);
+      }
+      expect((await f.query('SELECT owner_type,relation_id,actor_id,template_id FROM shipping_template_create_replay')).rows)
+        .toEqual([{ owner_type: supplier ? 2 : 0, relation_id: supplier ? 20 : 0, actor_id: id, template_id: 10001 }]);
+    });
+    it('retains creation evidence after a template is transferred and deleted without granting current access', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID();
+      const first = await creationRequest(creationPath, bearer, key, creationBody());
+      expect(first.body.status).toBe(200);
+      await f.exec('UPDATE shipping_templates SET owner_type=2,relation_id=30,is_del=1 WHERE id=10001');
+      const found = await creationRequest(receiptPath, bearer, key);
+      expect(found.body).toMatchObject({ status: 200, data: { id: 10001 } });
+      const before = await snapshot();
+      expect((await creationRequest(creationPath, bearer, key, creationBody())).body)
+        .toMatchObject({ status: 200, data: { id: 10001, replayed: true } });
+      expect(await snapshot()).toEqual(before);
+      if (surface === 'supplierapi') {
+        const response = await app.request('/supplierapi/setting/shipping_templates/10001/edit', { headers: { Authorization: `Bearer ${bearer}` } }, env);
+        expect(await response.json()).toMatchObject({ status: 404, data: null });
+      }
+    });
+    it('bounds and validates request bodies and refuses client lookup scope parameters', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID(), before = await snapshot();
+      for (const [path, body] of [[creationPath, '{broken'], [creationPath, JSON.stringify({ name: 'x'.repeat(300*1024) })],
+        [receiptPath, JSON.stringify({ actorId: 7 })], [receiptPath, JSON.stringify({ junk: 'x'.repeat(1024) })]] as const) {
+        const response = await app.request(path, { method:'POST',headers:{Authorization:`Bearer ${bearer}`,'Idempotency-Key':key,'Content-Type':'application/json'},body },env);
+        expect(await response.json()).toMatchObject({status:400,data:null});
+        expect(response.headers.get('cache-control')).toContain('no-store');
+      }
+      expect(await snapshot()).toEqual(before);
+    });
+    if (identity === 'restricted LOGIN') it.each(['SELECT','INSERT'])('fails closed without %s on the receipt ledger', async privilege => {
+      const bearer = await token(surface), key = crypto.randomUUID(), before = await snapshot();
+      omittedGrant = `${privilege} ON public.shipping_template_create_replay`;
+      expect((await creationRequest(creationPath,bearer,key,creationBody())).body).toMatchObject({status:500,data:null});
+      expect(await snapshot()).toEqual(before);
+      if (privilege === 'SELECT') expect((await creationRequest(receiptPath,bearer,key)).body).toMatchObject({status:500,data:null});
+    });
+    it('does not treat a missing receipt table as absence or fall back to unrecorded creation', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID(), before = await snapshot();
+      if (identity === 'maintenance') {
+        await f.exec('ALTER TABLE shipping_template_create_replay RENAME TO qa_missing_receipt');
+        try {
+          for (const path of [receiptPath,creationPath]) {
+            const result = await creationRequest(path,bearer,key,path === creationPath ? creationBody() : {});
+            expect(result.body).toMatchObject({status:500,data:null});
+            expect(result.response.headers.get('cache-control')).toContain('no-store');
+          }
+        } finally { await f.exec('ALTER TABLE qa_missing_receipt RENAME TO shipping_template_create_replay'); }
+      }
+      // Keep the same LOGIN and its grants across the rename, so a missing
+      // relation fails in the real handler rather than during grant setup.
+      if (identity === 'restricted LOGIN') await asRuntime(async runtime => {
+        pooledRuntime = runtime;
+        await f.exec('ALTER TABLE shipping_template_create_replay RENAME TO qa_missing_receipt');
+        try {
+          for (const path of [receiptPath,creationPath]) expect((await creationRequest(path,bearer,key,path === creationPath ? creationBody() : {})).body)
+            .toMatchObject({status:500,data:null});
+        } finally { await f.exec('ALTER TABLE qa_missing_receipt RENAME TO shipping_template_create_replay'); pooledRuntime = undefined; }
+      });
+      expect(await snapshot()).toEqual(before);
+    });
+    if (identity === 'restricted LOGIN') it('refuses hidden RLS receipts instead of minting a duplicate or reporting absence', async () => {
+      const bearer = await token(surface), key = crypto.randomUUID();
+      expect((await creationRequest(creationPath,bearer,key,creationBody())).body.status).toBe(200);
+      const before = await snapshot();
+      await f.exec('ALTER TABLE shipping_template_create_replay ENABLE ROW LEVEL SECURITY');
+      try {
+        for (const path of [receiptPath,creationPath]) expect((await creationRequest(path,bearer,key,path === creationPath ? creationBody() : {})).body)
+          .toMatchObject({status:500,data:null});
+      } finally { await f.exec('ALTER TABLE shipping_template_create_replay DISABLE ROW LEVEL SECURITY'); }
+      expect(await snapshot()).toEqual(before);
+    });
+    it.each(['commit','rollback'] as const)('HTTP recovery waits for an independent in-flight creation to %s', async ending => {
+      const bearer = await token(surface), key = crypto.randomUUID();
+      const peerApp = (peer: SequenceRunnerPeer) => {
+        const target = new Hono<{Bindings:Env;Variables:AppVariables}>();
+        target.use('*',async(c,next)=>{c.set('container',createContainerFromDb(peer.db));await next();});
+        target.onError(errorHandler);
+        target.route('/adminapi',adminapiRoutes);target.route('/api',v1Routes);target.route('/supplierapi',supplierapiRoutes);
+        return target;
+      };
+      const withRequestPeer = (run: (peer: SequenceRunnerPeer) => Promise<void>) => identity === 'maintenance' ? f.withPeer!(run) : asRuntime(run);
+      await f.exec(`CREATE FUNCTION qa_http_creation_hold() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+        PERFORM pg_advisory_xact_lock(731658,1); ${ending === 'rollback' ? "RAISE EXCEPTION 'isolated receipt failure';" : ''} RETURN NEW; END $$;
+        CREATE TRIGGER qa_http_creation_hold BEFORE INSERT ON shipping_template_create_replay FOR EACH ROW EXECUTE FUNCTION qa_http_creation_hold()`);
+      try {
+        await f.withPeer!(async holder => withRequestPeer(async writer => withRequestPeer(async reader => {
+          expect(new Set([holder.pid,writer.pid,reader.pid]).size).toBe(3);
+          await holder.exec('BEGIN; SELECT pg_advisory_xact_lock(731658,1)');
+          const creating = outcome(creationRequest(creationPath,bearer,key,creationBody(),peerApp(writer)));
+          let recovery: ReturnType<typeof outcome<Awaited<ReturnType<typeof creationRequest>>>> | undefined;
+          try {
+            await waitForFinanceBlock(f.db,writer.pid,holder.pid);
+            expect((await f.query('SELECT count(*)::int AS count FROM shipping_templates WHERE id>30')).rows).toEqual([{count:0}]);
+            expect((await f.query('SELECT count(*)::int AS count FROM shipping_template_create_replay')).rows).toEqual([{count:0}]);
+            recovery = outcome(creationRequest(receiptPath,bearer,key,{},peerApp(reader)));
+            await waitForFinanceBlock(f.db,reader.pid,writer.pid);
+          } finally { await holder.exec('COMMIT'); await creating; await recovery; }
+          const created = await creating, recovered = await recovery;
+          expect(created).toMatchObject({ok:true,value:{body:{status:ending === 'commit' ? 200 : 500}}});
+          expect(recovered).toMatchObject({ok:true,value:{body:{status:200,data:ending === 'commit' ? {id:10001,requestKey:key} : null}}});
+        })));
+      } finally {
+        await f.exec('DROP TRIGGER qa_http_creation_hold ON shipping_template_create_replay; DROP FUNCTION qa_http_creation_hold()');
+      }
+      expect((await f.query('SELECT count(*)::int AS count FROM shipping_template_create_replay')).rows).toEqual([{count:ending === 'commit' ? 1 : 0}]);
+    }, 15000);
     it('reserves default ID 1 independently of references without bypassing authentication or manage permission', async () => {
       const bearer = await token(surface), before = await snapshot();
       expect(await request(surface, 'delete', bearer, 1)).toMatchObject({ http: 200,
@@ -163,7 +376,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     });
     if (surface !== 'supplierapi') it('roundtrips complete grouped rules and refuses a stale revision through registered admin routes', async () => {
       const bearer = await token(surface);
-      const headers = { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' };
+      const headers = { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() };
       const full = { ...fullRules, id: 0, name: 'registered groups', type: 3, status: 1, sort: 2 };
       const saved = await app.request(`/${surface}/shipping_template/save`, { method: 'POST', headers, body: JSON.stringify(full) }, env);
       const created = await saved.json() as { status: number; data: { id: number } };

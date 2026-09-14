@@ -35,7 +35,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('supplier shippin
     expect(await f.snapshot()).toEqual(before);
   });
   it('keeps creation available without a baseline', async () => {
-    const id = await service.save(20, 0, input());
+    const id = await service.save(20, 0, input(), { actorId: 27, requestKey: crypto.randomUUID() });
     expect(id).toBeGreaterThan(0);
     expect(await service.detail(20, id)).toMatchObject({ revision: expect.stringMatching(/^shipping-v1:/), formData: { name: input().name } });
   });

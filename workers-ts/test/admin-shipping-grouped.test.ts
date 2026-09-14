@@ -10,7 +10,7 @@ const form = { id: 0, name: '分组模板', type: 3, status: 1, sort: 2, appoint
   appoint_info: [{ city_ids: [[101, 102]], number: '2', price: '99' }],
   no_delivery_info: [{ city_ids: [[101, 103]] }] };
 async function send(f: Awaited<ReturnType<typeof createAdminShippingFixture>>, body: unknown) {
-  const response = await shippingAdminApp(f.db).request('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const response = await shippingAdminApp(f.db).request('/save', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify(body) });
   return response.json() as Promise<{ status: number; msg: string; data: { id: number } | null }>;
 }
 // Each case creates and tears down its own real database; retain the existing

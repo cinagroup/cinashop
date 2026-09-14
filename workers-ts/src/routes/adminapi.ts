@@ -27,6 +27,7 @@
  * 未实现端点返回 501, 前端会提示"接口未迁移"。
  */
 import { Hono } from "hono";
+import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
 import { adminAuthMiddleware } from "@/middleware/admin-auth";
 import { upgradeStaffNotification } from "@/services/notification/StaffNotificationGateway";
 import * as AdminController from "@/controllers/api/v1/AdminController";
@@ -683,7 +684,8 @@ adminapiRoutes.delete("/level/del/:id", adminAuth, AdminCrud.adminLevelDel);
 adminapiRoutes.get("/shipping_template/list", adminAuth, AdminCrud.adminShippingTemplateList);
 adminapiRoutes.get("/shipping_template/city_list", adminAuth, AdminCrud.adminShippingTemplateCities);
 adminapiRoutes.get("/shipping_template/:id/edit", adminAuth, AdminCrud.adminShippingTemplateDetail);
-adminapiRoutes.post("/shipping_template/save", adminAuth, AdminCrud.adminShippingTemplateSave);
+adminapiRoutes.post("/shipping_template/save", ShippingCreation.privateResponse, adminAuth, ShippingCreation.adminSave);
+adminapiRoutes.post("/shipping_template/creation-receipt", ShippingCreation.privateResponse, adminAuth, ShippingCreation.adminReceipt);
 adminapiRoutes.delete("/shipping_template/del/:id", adminAuth, AdminCrud.adminShippingTemplateDel);
 adminapiRoutes.get("/express/list", adminAuth, AdminCrud.adminExpressList);
 adminapiRoutes.post("/express/save", adminAuth, AdminCrud.adminExpressSave);

@@ -1,0 +1,263 @@
+{
+  "scope": "A3k13 mandatory-key shipping creation and actor-scoped HTTP receipt recovery",
+  "date": "2026-09-14",
+  "baseCommit": "9fb7d27f99eac6399b0eea7febc97d5035dcec57",
+  "reports": [
+    {
+      "stage": "red",
+      "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-shipping-http-red-20260914.json",
+      "sha256": "80e2fe64d48acde8402ff69c8a275a5e1357409e4ba16301e7800438658fdddf",
+      "passed": 0,
+      "failed": 18,
+      "skipped": 250,
+      "files": 1,
+      "suites": [
+        {
+          "name": "shipping-lifecycle-route-auth.test.ts",
+          "status": "failed",
+          "tests": 268
+        }
+      ]
+    },
+    {
+      "stage": "first",
+      "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-shipping-http-first-20260914.json",
+      "sha256": "da668a357001b780c703265751df93216adb3a8eedfb3188a7234a1cb5161db1",
+      "passed": 330,
+      "failed": 0,
+      "skipped": 0,
+      "files": 4,
+      "suites": [
+        {
+          "name": "admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "admin-shipping-grouped.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "shipping-lifecycle-route-auth.test.ts",
+          "status": "passed",
+          "tests": 268
+        },
+        {
+          "name": "supplier-shipping-snapshot.test.ts",
+          "status": "passed",
+          "tests": 22
+        }
+      ]
+    },
+    {
+      "stage": "expanded",
+      "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-shipping-http-expanded-20260914.json",
+      "sha256": "13cae8771c448232b339a9d94210ea16e03e72e91e0b7d323c39ca347a28a1cb",
+      "passed": 542,
+      "failed": 0,
+      "skipped": 0,
+      "files": 4,
+      "suites": [
+        {
+          "name": "admin-shipping-atomic-postgres.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "shipping-lifecycle-route-auth.test.ts",
+          "status": "passed",
+          "tests": 472
+        },
+        {
+          "name": "shipping-template-lifecycle-services.test.ts",
+          "status": "passed",
+          "tests": 56
+        },
+        {
+          "name": "supplier-shipping-template.test.ts",
+          "status": "passed",
+          "tests": 7
+        }
+      ]
+    },
+    {
+      "stage": "final",
+      "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-shipping-http-final-20260914.json",
+      "sha256": "19ac755dc977b0a97f66a11d448f8fb11c5765246027e8d15f407b6e9c4a9325",
+      "passed": 763,
+      "failed": 0,
+      "skipped": 0,
+      "files": 14,
+      "suites": [
+        {
+          "name": "admin-shipping-atomic-postgres.test.ts",
+          "status": "passed",
+          "tests": 7
+        },
+        {
+          "name": "admin-shipping-atomic.test.ts",
+          "status": "passed",
+          "tests": 26
+        },
+        {
+          "name": "admin-shipping-grouped.test.ts",
+          "status": "passed",
+          "tests": 14
+        },
+        {
+          "name": "admin-shipping-list.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "deployment-shop-origin.test.ts",
+          "status": "passed",
+          "tests": 17
+        },
+        {
+          "name": "shipping-create-entrypoints.test.ts",
+          "status": "passed",
+          "tests": 11
+        },
+        {
+          "name": "shipping-create-flat-replay.test.ts",
+          "status": "passed",
+          "tests": 43
+        },
+        {
+          "name": "shipping-create-replay-permissions.test.ts",
+          "status": "passed",
+          "tests": 18
+        },
+        {
+          "name": "shipping-create-replay.test.ts",
+          "status": "passed",
+          "tests": 36
+        },
+        {
+          "name": "shipping-lifecycle-route-auth.test.ts",
+          "status": "passed",
+          "tests": 493
+        },
+        {
+          "name": "shipping-template-lifecycle-services.test.ts",
+          "status": "passed",
+          "tests": 56
+        },
+        {
+          "name": "shipping-template-quote-postgres.test.ts",
+          "status": "passed",
+          "tests": 8
+        },
+        {
+          "name": "supplier-shipping-snapshot.test.ts",
+          "status": "passed",
+          "tests": 22
+        },
+        {
+          "name": "supplier-shipping-template.test.ts",
+          "status": "passed",
+          "tests": 7
+        }
+      ]
+    },
+    {
+      "stage": "contracts",
+      "path": "C:\\Users\\cina\\AppData\\Local\\Temp\\cinashop-shipping-http-contracts-20260914.json",
+      "sha256": "859502e6e43a71777b2f91ab44ab84ee09aac8da79736eebb2ad0e91fb0336fb",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "files": 3,
+      "suites": [
+        {
+          "name": "admin-frontend-api-audit.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "admin-frontend-api-contract.test.ts",
+          "status": "passed",
+          "tests": 5
+        },
+        {
+          "name": "shipping-create-pages-proxy.test.ts",
+          "status": "passed",
+          "tests": 12
+        }
+      ]
+    }
+  ],
+  "finalContractsAfterTypeCorrection": {
+    "path": "C:/Users/cina/AppData/Local/Temp/cinashop-shipping-http-contracts-final-20260914.json",
+    "sha256": "8be8253531d45ba89ede9e6c8c3b46a91d1af0dd0724bd61bca87b005c8b5812",
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0,
+    "note": "Request contextual type fixed without a cast; both TypeScript configurations passed before this final contract run. Original runtime report retained."
+  },
+  "redSelection": "18 newly added registered-route cases selected; 250 old cases intentionally not selected only in the red run. Final run selects all cases and has zero skips.",
+  "implemented": [
+    "Replace three registered creation handlers with mandatory original Idempotency-Key and stable authenticated actor scope",
+    "Remove keyless insertion from flat/grouped Admin and Supplier save/create services; edits retain revision locking",
+    "POST manage-permission recovery with exact receipt or null; every related response private/no-store",
+    "493 actual registered-route cases: original 250 plus 243 new, real JWT and full isolated ORM under maintenance and restricted LOGIN",
+    "Actual independent-connection HTTP recovery waits verified through pg_blocking_pids before commit/rollback",
+    "Missing ledger, necessary privileges and RLS hiding fail rather than report absence",
+    "11 direct service entrypoint tests and 12 actual Pages transport-only proxy tests"
+  ],
+  "typecheck": {
+    "unit": true,
+    "runtime": true
+  },
+  "localPostgres": {
+    "version": "16.15",
+    "loopbackOnly": true,
+    "temporaryDatabasesRemaining": 0,
+    "temporaryLoginRolesRemaining": 0,
+    "temporarySchemasRemaining": 0
+  },
+  "adminApi": {
+    "callSites": 345,
+    "pathVariants": 365,
+    "executable": 365,
+    "unregistered": 0,
+    "unresolved": 0
+  },
+  "routeParity": {
+    "php": 1904,
+    "ts": 1659,
+    "matched": 881,
+    "executableMatched": 863,
+    "phpGapClosedByThisIncrement": false
+  },
+  "previousCandidateCI": {
+    "sha": "9fb7d27f99eac6399b0eea7febc97d5035dcec57",
+    "run": 34795252721,
+    "status": "completed",
+    "conclusion": "success",
+    "successfulJobs": 11,
+    "appliesToCurrentPatch": false
+  },
+  "deployment": {
+    "performed": false,
+    "sourceStillLive": "9fb7d27f99eac6399b0eea7febc97d5035dcec57",
+    "previousCandidateDeployment": "User subsequently explicitly authorized 9fb7d27. Six-app deployment and main push completed; both read-only smoke rounds passed 17/17. Current HTTP candidate remains undeployed.",
+    "productionDatabaseWrites": false,
+    "bindingsSecretsDomainsChanged": false
+  },
+  "remaining": [
+    "Frontend durable pre-send identity/key/payload storage and exact receipt verification",
+    "Actual refresh, interrupted response, multi-tab and identity-change browser flows",
+    "Approved production receipt installation and runtime-role review",
+    "Exact new candidate Linux CI",
+    "Coordinated frontend and backend release; this patch alone rejects current keyless browser creation"
+  ],
+  "checklist": {
+    "checked": 240,
+    "open": 164,
+    "total": 404,
+    "parentClosed": false
+  }
+}

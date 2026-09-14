@@ -6,6 +6,8 @@ import { assertShippingTemplateUnreferenced } from '../product/ShippingTemplateL
 import { assertShippingRevision, requireShippingRevision } from './AdminShippingTemplateSnapshot';
 import { saveGroupedAdminShippingTemplate } from './AdminShippingTemplateGroupedService';
 import { parseFlatAdminShippingInput as parse, shippingInputRecord as record } from '../product/FlatShippingTemplateInput';
+import { createFlatShippingTemplateOnce } from '../product/ShippingTemplateCreateReplay';
+import { requireShippingCreationContext, type ShippingCreationContext } from '../product/ShippingCreationContext';
 
 /** Global-admin writer. Scope/creation fields and specialized free/no-delivery
  * rules cannot be overwritten by this legacy flat form. Every child mutation
@@ -13,10 +15,15 @@ import { parseFlatAdminShippingInput as parse, shippingInputRecord as record } f
  * writer's existing FOR UPDATE boundary. No external I/O in this transaction.
  * These are statement/lock/idle bounds, not a total transaction deadline.
  */
-export async function saveAdminShippingTemplate(container: Container, raw: unknown) {
+export async function saveAdminShippingTemplate(container: Container, raw: unknown, creation?: ShippingCreationContext) {
   const rawInput = record(raw);
-  if (['region_info', 'appoint_info', 'no_delivery_info'].some(key => key in rawInput)) return saveGroupedAdminShippingTemplate(container, rawInput);
+  if (['region_info', 'appoint_info', 'no_delivery_info'].some(key => key in rawInput)) return saveGroupedAdminShippingTemplate(container, rawInput, creation);
   const input = parse(raw);
+  if (input.id === 0) {
+    const context = requireShippingCreationContext(creation);
+    const receipt = await createFlatShippingTemplateOnce(container, { ownerType: 0, relationId: 0, actorId: context.actorId }, context.requestKey, raw);
+    return { id: receipt.id, created: !receipt.replayed, receipt };
+  }
   const revision = input.id ? requireShippingRevision(rawInput.expectedRevision) : undefined;
   try {
     return await withTx(container, async tx => {
@@ -38,11 +45,6 @@ export async function saveAdminShippingTemplate(container: Container, raw: unkno
         billingGroup = input.fields.type ?? current.type;
         if (input.fields.status === 0 && current.status !== 0) await assertShippingTemplateUnreferenced(tx, id);
         if (Object.keys(input.fields).length) await tx.update(shippingTemplates).set(input.fields).where(eq(shippingTemplates.id, id));
-      } else {
-        const [created] = await tx.insert(shippingTemplates).values({ ...input.fields, ownerType: 0, relationId: 0,
-          appoint: 0, noDelivery: 0, isDel: 0, addTime: now }).returning({ id: shippingTemplates.id });
-        if (!created) throw new ValidateException('运费模板创建失败');
-        id = created.id;
       }
       // Omission preserves existing rows; an explicit [] intentionally clears them.
       if (input.regions !== undefined) {
@@ -51,7 +53,7 @@ export async function saveAdminShippingTemplate(container: Container, raw: unkno
           input.regions.map(row => ({ ...row, templateId: id, billingGroup, addTime: now })),
         );
       }
-      return { id, created: input.id === 0 };
+      return { id, created: false, receipt: undefined };
     });
   } catch (error) {
     let cause: unknown = error;

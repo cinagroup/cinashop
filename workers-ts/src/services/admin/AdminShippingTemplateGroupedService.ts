@@ -5,6 +5,8 @@ import { ValidateException } from '@/utils/errors';
 import { normalizeSupplierShippingTemplateInput, cityAuthority, replaceRules } from '../product/ShippingTemplateRules';
 import { assertShippingTemplateUnreferenced } from '../product/ShippingTemplateLifecycleService';
 import { assertShippingRevision, boundShippingTransaction, requireShippingRevision } from './AdminShippingTemplateSnapshot';
+import { createShippingTemplateOnce } from '../product/ShippingTemplateCreateReplay';
+import { requireShippingCreationContext, type ShippingCreationContext } from '../product/ShippingCreationContext';
 
 function integer(value: unknown, max: number) {
   if ((typeof value !== 'number' && typeof value !== 'string') || !/^\d+$/.test(String(value))
@@ -12,7 +14,7 @@ function integer(value: unknown, max: number) {
   return Number(value);
 }
 /** Same global-admin authority as the flat endpoint, with complete replacement and mandatory edit baseline. */
-export async function saveGroupedAdminShippingTemplate(container: Container, raw: Record<string, unknown>) {
+export async function saveGroupedAdminShippingTemplate(container: Container, raw: Record<string, unknown>, creation?: ShippingCreationContext) {
   if (Object.keys(raw).some(key => !['id','name','type','status','sort','appoint','no_delivery','region_info','appoint_info','no_delivery_info','expectedRevision'].includes(key))) {
     throw new ValidateException('分组模板包含不支持的字段');
   }
@@ -35,6 +37,11 @@ export async function saveGroupedAdminShippingTemplate(container: Container, raw
   if ((Number(raw.appoint) === 1 && !input.freeRules.length) || (Number(raw.no_delivery) === 1 && !input.noDeliveryRules.length)) {
     throw new ValidateException('开启包邮或禁配时必须设置对应区域');
   }
+  if (id === 0) {
+    const context = requireShippingCreationContext(creation);
+    const receipt = await createShippingTemplateOnce(container, { ownerType: 0, relationId: 0, actorId: context.actorId }, context.requestKey, { ...raw, status });
+    return { id: receipt.id, created: !receipt.replayed, receipt };
+  }
   return withTx(container, async tx => {
     await boundShippingTransaction(tx);
     let savedId = id;
@@ -49,12 +56,7 @@ export async function saveGroupedAdminShippingTemplate(container: Container, raw
     const fields = { name: input.name, type: input.billingType, status, sort: input.sort, appoint: input.appoint, noDelivery: input.noDelivery };
     const now = Math.floor(Date.now() / 1000);
     if (id) await tx.update(shippingTemplates).set(fields).where(eq(shippingTemplates.id, id));
-    else {
-      const [created] = await tx.insert(shippingTemplates).values({ ...fields, ownerType: 0, relationId: 0, addTime: now, isDel: 0 }).returning({ id: shippingTemplates.id });
-      if (!created) throw new ValidateException('模板创建失败');
-      savedId = created.id;
-    }
     await replaceRules(tx, savedId, input, cities, now);
-    return { id: savedId, created: id === 0 };
+    return { id: savedId, created: false, receipt: undefined };
   });
 }
