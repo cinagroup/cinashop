@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">CinaShop test product B</title>
+  <desc id="desc">Orange cup illustration. Synthetic test image, not a real product photograph.</desc>
+  <rect width="600" height="600" rx="32" fill="#fff4e9"/>
+  <circle cx="300" cy="267" r="185" fill="#ffe3c7"/>
+  <ellipse cx="300" cy="434" rx="137" ry="18" fill="#ebcdad"/>
+  <path d="M381 241h20a59 59 0 0 1 0 118h-20" fill="none" stroke="#a94d21" stroke-width="27"/>
+  <path d="M188 218h202v151a55 55 0 0 1-55 55h-92a55 55 0 0 1-55-55Z" fill="#e78a43"/>
+  <path d="M204 236h29v128a42 42 0 0 0 35 42h-23a41 41 0 0 1-41-41Z" fill="#f9b774"/>
+  <ellipse cx="289" cy="218" rx="101" ry="23" fill="#a94d21"/>
+  <ellipse cx="289" cy="218" rx="84" ry="13" fill="#ffe8d2"/>
+  <path d="M263 181c-21-26 23-33 2-61M313 176c-21-26 23-33 2-61" fill="none" stroke="#c9875d" stroke-width="9" stroke-linecap="round"/>
+  <rect x="34" y="32" width="121" height="35" rx="17" fill="#813f23"/>
+  <text x="94" y="55" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="700" letter-spacing="2" fill="#fff">TEST / B</text>
+  <text x="300" y="502" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="700" fill="#813f23">CinaShop Sample</text>
+  <text x="300" y="539" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" letter-spacing="1" fill="#957155">TEST IMAGE · NOT A PRODUCT PHOTO</text>
+</svg>
