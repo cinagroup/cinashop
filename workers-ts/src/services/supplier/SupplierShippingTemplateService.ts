@@ -41,37 +41,46 @@ export class SupplierShippingTemplateService {
     const name = (query.name ?? "").trim();
     if (name.length > 255) throw new ValidateException("搜索名称不能超过255个字符");
     const where = and(templateScope(supplierId), name ? ilike(shippingTemplates.name, `%${name}%`) : undefined);
-    const [rows, countRows] = await Promise.all([
-      this.container.db
-        .select({
-          id: shippingTemplates.id,
-          name: shippingTemplates.name,
-          billingType: shippingTemplates.type,
-          appoint: shippingTemplates.appoint,
-          sort: shippingTemplates.sort,
-          addTime: sql<string>`to_char(to_timestamp(${shippingTemplates.addTime}) AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD HH24:MI:SS')`,
-        })
-        .from(shippingTemplates)
-        .where(where)
-        .orderBy(desc(shippingTemplates.sort), desc(shippingTemplates.id))
-        .limit(limit)
-        .offset((page - 1) * limit),
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(shippingTemplates)
-        .where(where),
-    ]);
+    const pageRows = this.container.db
+      .select({
+        id: shippingTemplates.id,
+        name: shippingTemplates.name,
+        billingType: shippingTemplates.type,
+        appoint: shippingTemplates.appoint,
+        sort: shippingTemplates.sort,
+        addTime: sql<string>`to_char(to_timestamp(${shippingTemplates.addTime}) AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD HH24:MI:SS')`.as('formatted_add_time'),
+      })
+      .from(shippingTemplates)
+      .where(where)
+      .orderBy(desc(shippingTemplates.sort), desc(shippingTemplates.id))
+      .limit(limit)
+      .offset((page - 1) * limit)
+      .as('page_rows');
+    const totals = this.container.db
+      .select({ count: sql<number>`COUNT(*)::int`.as('total_count') })
+      .from(shippingTemplates)
+      .where(where)
+      .as('totals');
+    // One statement gives the page and its full count the same MVCC snapshot.
+    // Start from the aggregate so an empty/out-of-range page retains its count.
+    const rows = await this.container.db.select({
+      template: { id: pageRows.id, name: pageRows.name, billingType: pageRows.billingType,
+        appoint: pageRows.appoint, sort: pageRows.sort },
+      addTime: pageRows.addTime,
+      count: totals.count,
+    }).from(totals).leftJoin(pageRows, sql`true`)
+      .orderBy(desc(pageRows.sort), desc(pageRows.id));
     const typeNames: Record<number, string> = { 1: "按件数", 2: "按重量", 3: "按体积" };
     return {
-      data: rows.map((row) => ({
+      data: rows.flatMap(({ template: row, addTime }) => row === null ? [] : [{
         id: row.id,
         name: row.name,
         type: typeNames[row.billingType] ?? "",
         appoint: row.appoint === 1 ? "开启" : "关闭",
         sort: row.sort,
-        add_time: row.addTime,
-      })),
-      count: countRows[0]?.count ?? 0,
+        add_time: addTime,
+      }]),
+      count: rows[0]?.count ?? 0,
     };
   }
 

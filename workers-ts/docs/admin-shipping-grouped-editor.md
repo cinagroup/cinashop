@@ -1,5 +1,36 @@
 # 总后台完整运费规则编辑候选
 
+## Supplier列表单语句快照（2026-09-14，d985238之后、未部署）
+
+`SupplierShippingTemplateService.list` 原先并行发出页面 SELECT 和 COUNT SELECT。
+独立 PostgreSQL 连接的受控交错复现四项红测：读取旧模板期间另一连接提交新增，
+响应旧行但 count=2；退役、转给其他供应商、改名移出筛选分别响应旧行但 count=0。
+使用仅在随机测试库存在的阻塞视图，明确观察 `pg_blocking_pids` 的 reader/holder
+后才让 writer 提交，没有以定时 sleep、模拟结果或单连接伪并发代替证明。
+
+现在使用 typed Drizzle 子查询，将总数与有界页面 LEFT JOIN 成一条 SELECT，
+两部分共享同一语句快照；从总数聚合出发，空页/超末页返回空数组但不丢总数。
+仍为 owner_type=2、当前 relation_id、is_del=0，保留停用模板可读、默认15/最大100、
+页码最大1000000、sort DESC/id DESC、原 ILIKE 通配符语义和上海时间/PHP标签。
+没有添加事务/业务锁、数据库DDL、索引、权限或网络连接；仍用现有 Hyperdrive 绑定。
+这是**一次响应内部一致性**，不是多次翻页之间冻结全量结果：OFFSET跨请求漂移、
+大偏移成本、全量COUNT容量验证仍未完成，不因此关闭A3k13。
+
+验证证据：
+
+- `supplier-shipping-list.test.ts` 新增7项：3项完整分页/作用域/格式/筛选合同，4项真实独立连接交错。旧实现7项中4失败/3通过，修复后7/7通过。
+- 最终5文件607/607、0失败/跳过：新增列表7、分页状态22、Supplier详情版本22、既有模板合同7、完整注册路由鉴权549（含maintenance/受限LOGIN）。`npm run typecheck` 两套类型检查成功；测试配置与时限未变。
+- 红测报告（临时目录）`cinashop-supplier-list-snapshot-red-20260914.json` SHA256 `d6eeca584be083a0d7871b34392ee7fcd389ec2c8af208ed12fd6003c5d1f0ec`；最终 `cinashop-supplier-list-snapshot-final-20260914.json` SHA256 `bb61118b8f9087e663507e2f01f0c1e9f1d0c5177e34b3e89f47a6a3da5c9467`。
+- 浏览器插件实际加载 `http://127.0.0.1:5396/shipping-templates`：1280×720，经新后端真实注册路由/PG16.15受限LOGIN，45条列表依次进入2/3页，末页5条及总45；搜索不存在显示总0、空列表。页面身份/非空/无框架遮罩、末页截图和error/warn空通过。首次空搜索仍加载时误关闭标签，未当通过，重新打开并再次查询，AX明确显示空状态后才结束。没有本轮UI修改，无需重建未变前端。
+- 浏览器随机库 `cinashop_kefu_runner_4df3563ed31541f385690d2fdae6a11b`、角色 `cinashop_runtime_126ba1ecec5d40af815f7f1937e6d307`，current_user=session_user且五项高权限false；结束后独立psql确认两者及finance_fixture随机库均0残留。合成登录签发/Redis替身、Node宿主及favicon缺失边界保持；手机/真实账号/Cloudflare端到端未在本轮通过。
+
+按PG技能选择单语句快照且不新增锁，按Workers技能核对官方文档、最新类型
+5.20260914.1及现有绑定配置，按前端测试技能使用指定插件而非外部Playwright。
+隔离性依据：[PostgreSQL 16 Read Committed](https://www.postgresql.org/docs/16/transaction-iso.html#XACT-READ-COMMITTED)。
+上一候选d985238的[CI34807854636](https://github.com/cinagroup/cinashop/actions/runs/34807854636)
+已completed/success；不得把它算作本增量自身CI。未部署/合并main，线上仍9fb7d27，
+新回执表和协调发布门禁仍未完成。Checklist保持240／164／404。
+
 ## Supplier列表分页缺口修复（2026-09-14，未部署候选）
 
 对照旧PHP `view/supplier/src/pages/product/shippingTemplates/index.vue` 的Page组件及
