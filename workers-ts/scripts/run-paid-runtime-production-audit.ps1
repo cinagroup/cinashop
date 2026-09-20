@@ -4,7 +4,8 @@
 param(
     [Parameter(ParameterSetName = 'Catalog')][switch]$CatalogOnly,
     [Parameter(ParameterSetName = 'WorkParents')][switch]$WorkParents,
-    [Parameter(ParameterSetName = 'ReleaseProtocols')][switch]$ReleaseProtocols
+    [Parameter(ParameterSetName = 'ReleaseProtocols')][switch]$ReleaseProtocols,
+    [Parameter(ParameterSetName = 'OrphanTestBackup')][switch]$OrphanTestBackup
 )
 $ErrorActionPreference = 'Stop'
 if (-not $env:CLOUDFLARE_API_TOKEN) { throw 'CLOUDFLARE_API_TOKEN is required' }
@@ -29,13 +30,29 @@ $taskWrongMethodStatus = 0
 $taskWrongPathStatus = 0
 $taskUrl = $null
 $taskStage = 'target-absence'
-$taskRoute = if ($CatalogOnly) { 'catalog' } elseif ($WorkParents) { 'work-parents' } elseif ($ReleaseProtocols) { 'release-protocols' } else { 'audit' }
-$taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } elseif ($WorkParents) { 'work-parent-identity-only' } elseif ($ReleaseProtocols) { 'release-protocol-preflight' } else { 'paid-order-runtime-permissions' }
+$taskRoute = if ($CatalogOnly) { 'catalog' } elseif ($WorkParents) { 'work-parents' } elseif ($ReleaseProtocols) { 'release-protocols' } elseif ($OrphanTestBackup) { 'orphan-test-backup' } else { 'audit' }
+$taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } elseif ($WorkParents) { 'work-parent-identity-only' } elseif ($ReleaseProtocols) { 'release-protocol-preflight' } elseif ($OrphanTestBackup) { 'orphan-test-order-backup' } else { 'paid-order-runtime-permissions' }
+$taskBackupDirectory = $null
 $env:CLOUDFLARE_ACCOUNT_ID = $taskAccount
 $env:WRANGLER_SEND_METRICS = 'false'
 $env:WRANGLER_LOG_PATH = Join-Path $env:TEMP "$taskName.log"
 
 try {
+    if ($OrphanTestBackup) {
+        $taskStage = 'private-backup-directory'
+        $taskBackupDirectory = Join-Path (Split-Path -Parent $taskRoot) ('.cache/orphan-test-orders-' + [Guid]::NewGuid().ToString('N'))
+        $null = New-Item -ItemType Directory -Path $taskBackupDirectory -ErrorAction Stop
+        $taskAcl = Get-Acl -LiteralPath $taskBackupDirectory
+        $taskAcl.SetAccessRuleProtection($true, $false)
+        foreach ($taskSid in @([Security.Principal.WindowsIdentity]::GetCurrent().User, [Security.Principal.SecurityIdentifier]::new('S-1-5-18'))) {
+            $taskAcl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($taskSid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow'))
+        }
+        Set-Acl -LiteralPath $taskBackupDirectory -AclObject $taskAcl
+        $taskSavedAcl = Get-Acl -LiteralPath $taskBackupDirectory
+        $taskAllowedSids = @([Security.Principal.WindowsIdentity]::GetCurrent().User.Value, 'S-1-5-18')
+        if (-not $taskSavedAcl.AreAccessRulesProtected -or @($taskSavedAcl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]) |
+            Where-Object { $_.IdentityReference.Value -notin $taskAllowedSids }).Count) { throw 'Private directory ACL verification failed' }
+    }
     # Authoritatively prove this target was absent before claiming cleanup rights.
     $taskBefore = Invoke-WebRequest -Uri $taskApi -Headers $taskApiHeaders -SkipHttpErrorCheck -TimeoutSec 20
     if ([int]$taskBefore.StatusCode -ne 404) { throw 'Temporary target absence was not established' }
@@ -74,8 +91,27 @@ try {
         $taskReport = $null
         throw 'Unexpected audit response shape'
     }
+    if ($OrphanTestBackup) {
+        $taskStage = 'private-backup-write-readback'
+        if ($taskReport.targetCount -ne 12 -or @($taskReport.backup.orders).Count -ne 12 -or
+            $taskReport.snapshotSha256 -notmatch '^[a-f0-9]{64}$' -or $taskResponse.Content.Length -gt 6000000) { throw 'Unexpected private backup' }
+        $taskBytes = [Text.Encoding]::UTF8.GetBytes($taskResponse.Content)
+        $taskBackupPath = Join-Path $taskBackupDirectory 'backup.json'
+        $taskBackupHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($taskBytes)).ToLowerInvariant()
+        $taskFile = [IO.File]::Open($taskBackupPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        try { $taskFile.Write($taskBytes); $taskFile.Flush($true) } finally { $taskFile.Dispose() }
+        $taskReadback = [IO.File]::ReadAllBytes($taskBackupPath)
+        if ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($taskReadback)).ToLowerInvariant() -ne $taskBackupHash) { throw 'Backup readback hash mismatch' }
+        $taskReadbackJson = [Text.Encoding]::UTF8.GetString($taskReadback) | ConvertFrom-Json
+        if ($taskReadbackJson.snapshotSha256 -ne $taskReport.snapshotSha256 -or @($taskReadbackJson.backup.orders).Count -ne 12) { throw 'Backup parse verification failed' }
+        $taskReport = [ordered]@{ scope=$taskScope;ready=$false;targetCount=12;snapshotSha256=$taskReport.snapshotSha256;
+            candidateTables=$taskReport.candidateTables;descendantOrders=$taskReport.descendantOrders;
+            backupPath=$taskBackupPath;backupSha256=$taskBackupHash;backupBytes=$taskReadback.Length;
+            limitation='Private backup only; candidate links require review; no database deletion' }
+    }
     $taskStage = 'audit-completed'
 } catch {
+    if ($OrphanTestBackup) { $taskReport = $null }
     # Never print raw network/CLI exceptions which may contain credential context.
     $taskFailure = 'Deployment or audit did not complete; inspect sanitized stage evidence before retrying.'
 } finally {
@@ -102,4 +138,4 @@ try {
     lastAuditStage = $taskStage
 } | ConvertTo-Json -Depth 8
 if ($taskFailure -or -not $taskMissing -or $null -eq $taskReport) { exit 2 }
-if (-not $CatalogOnly -and -not $ReleaseProtocols -and -not $taskReport.ready) { exit 1 }
+if (-not $CatalogOnly -and -not $ReleaseProtocols -and -not $OrphanTestBackup -and -not $taskReport.ready) { exit 1 }

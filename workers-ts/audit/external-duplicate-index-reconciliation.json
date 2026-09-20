@@ -102,7 +102,7 @@
       },
       "model": {
         "file": "src/models/schema/user_center.ts",
-        "line": 159,
+        "line": 160,
         "sql": "    index(\"ur_uid\").on(t.uid),"
       },
       "consumer": {
@@ -159,7 +159,7 @@
       },
       "consumer": {
         "file": "src/services/wechat/WechatAuthService.ts",
-        "line": 188,
+        "line": 189,
         "sql": "          or(eq(wechatUser.openid, openid), eq(wechatUser.unionid, openid)),"
       }
     },
@@ -263,7 +263,7 @@
       },
       "consumer": {
         "file": "src/services/wechat/WechatAuthService.ts",
-        "line": 1201,
+        "line": 1202,
         "sql": "        .where(and(eq(wechatUser.unionid, identity.unionid), eq(wechatUser.isDel, 0)))"
       }
     }

@@ -43,6 +43,7 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    'test/orphan-test-order-snapshot.test.ts',
     'audit:unit-shard-1', 'audit:unit-shard-2',
     'test/admin-refund-creation-migration.test.ts',
     'test/admin-refund-operation-migration.test.ts', 'test/shipping-create-replay-migration.test.ts',

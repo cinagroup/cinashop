@@ -58,7 +58,9 @@ describe("FE-002E PC purchase selection contracts", () => {
     expect(checkout).toContain("await apiDirectCartList(requested.ids)");
     expect(checkout).toContain("parseCheckoutSelection(route.query)");
     expect(checkout).not.toContain("ids.size > 0");
-    expect(checkout).toContain("apiOrderCreate(orderKey.value");
+    expect(checkout).toContain("cartIds: checkoutItems.value.map((i) => i.id)");
+    expect(checkout).toContain("const intent = journal.assertCurrent(pendingIntent.value)");
+    expect(checkout).toContain("apiOrderCreate(intent.key, intent.payload as Parameters<typeof apiOrderCreate>[1])");
     expect(cart).toContain('scope: "cart"');
     expect(cart).toContain('scope: "buy"');
   });

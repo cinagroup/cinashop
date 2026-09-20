@@ -107,7 +107,9 @@ describe("form uploads own their component and lifecycle", () => {
     const fields = readFileSync("../view/pc-ts/src/components/SystemFormFields.vue", "utf8");
     expect(checkout).toContain("!formValidationError.value");
     expect(checkout).toContain("pendingUploads.value === 0");
-    expect(checkout).toContain("canEditRejectedOrder(e, orderKey.value, submissionUncertain.value)");
+    expect(checkout).toContain("sent && pendingIntent.value && !pendingIntent.value.orderId && canEditRejectedOrder(e, pendingIntent.value.key, submissionUncertain.value)");
+    expect(checkout).toContain("journal.clear(pendingIntent.value)");
+    expect(checkout).toContain("submissionUncertain.value = true");
     expect(checkout).toContain(':key="formRevision"');
     expect(fields).toContain(':disabled="disabled"');
     expect(fields).toContain("onUnmounted(() => uploads.reset())");

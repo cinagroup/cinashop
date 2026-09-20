@@ -95,7 +95,8 @@ describe("FE-002B PC product detail adapter", () => {
     const api = readFileSync("../view/pc-ts/src/api/product.ts", "utf8");
     const page = readFileSync("../view/pc-ts/src/pages/goods/GoodsDetail.vue", "utf8");
     expect(api).toContain("normalizeGoodsDetail(await getData<unknown>(request.get(`/product/detail/${id}`)))");
-    expect(page.match(/:disabled="!canPurchase \|\| purchaseSubmitting"/g)).toHaveLength(2);
+    expect(page.match(/:disabled="!canPurchase \|\| purchaseLocked"/g)).toHaveLength(2);
+    expect(page).toContain("const purchaseLocked = computed(() => purchaseSubmitting.value || packageBuying.value || checkoutNavigating.value || !!preparedCart.value || purchaseNeedsRefresh.value)");
     expect(page).toContain("detail.value?.cart_button === 1");
     expect(page).toContain("Math.max(selectedStock, 1)");
   });

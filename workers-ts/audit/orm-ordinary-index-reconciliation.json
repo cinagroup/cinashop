@@ -212,7 +212,7 @@
       ],
       "queryEvidence": {
         "source": "src/controllers/api/v1/AdminCrudController.ts",
-        "sourceLine": 1471,
+        "sourceLine": 1419,
         "purpose": "Admin bargain participant query",
         "sourceSql": "  const rows = await container.db\n    .select()\n    .from(schema.storeBargainUser)\n    .where(eq(schema.storeBargainUser.bargainId, bargainId))\n    .orderBy(desc(schema.storeBargainUser.addTime))\n    .limit(50);"
       },
@@ -347,9 +347,9 @@
       ],
       "queryEvidence": {
         "source": "src/services/payment/PaymentReconciliationService.ts",
-        "sourceLine": 634,
+        "sourceLine": 707,
         "purpose": "Order number equality lookup",
-        "sourceSql": "      const candidates: number[] = [];\n      if (domain === \"\" || domain === \"store_order\") {\n        const rows = await tx.select({ paid: storeOrder.paid }).from(storeOrder)\n          .where(eq(storeOrder.orderId, orderNo)).limit(2);\n        candidates.push(...rows.map((row) => row.paid));"
+        "sourceSql": "      const candidates: boolean[] = [];\n      if (domain === \"\" || domain === \"store_order\") {\n        const rows = await tx.select({ paid: storeOrder.paid }).from(storeOrder)\n          .where(eq(storeOrder.orderId, orderNo)).limit(2);\n        candidates.push(...rows.map((row) => row.paid === 1));"
       },
       "decision": "remove-redundant-orm-declaration",
       "previousSnapshotIndex": {
@@ -620,9 +620,9 @@
       ],
       "queryEvidence": {
         "source": "src/services/order/OrderBrokerageService.ts",
-        "sourceLine": 647,
+        "sourceLine": 675,
         "purpose": "Order-linked brokerage lookup",
-        "sourceSql": "    .from(userBrokerage)\n    .where(\n      and(\n        eq(userBrokerage.linkId, linkId),\n        eq(userBrokerage.pm, 1),\n        inArray(userBrokerage.type, incomeTypes),\n        eq(userBrokerage.status, 1),\n      ),"
+        "sourceSql": "    .from(userBrokerage)\n    .where(\n      and(\n        eq(userBrokerage.linkId, linkId),\n        eq(userBrokerage.pm, 1),\n        inArray(userBrokerage.type, BROKERAGE_INCOME_TYPES),\n        eq(userBrokerage.status, 1),\n      ),"
       },
       "decision": "restore-worker-query-index",
       "reason": "Existing ORM query index has a code-level filtering, joining or ordering consumer; restore the same full definition to deployment paths. No claim of measured performance benefit or automatic removal based on composite-prefix overlap."

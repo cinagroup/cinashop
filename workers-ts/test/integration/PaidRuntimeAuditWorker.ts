@@ -5,12 +5,14 @@ import { auditPaidOrderRuntimePermissions } from '@/migrations/auditPaidOrderRun
 import { auditReleasePrerequisiteCatalog } from '@/migrations/auditReleasePrerequisiteCatalog';
 import { auditWorkParentIdentityPermissions } from '@/migrations/auditWorkParentIdentityPermissions';
 import { auditReleaseProtocols } from '@/migrations/auditReleaseProtocols';
+import { exportOrphanTestOrderSnapshot } from '@/migrations/orphanTestOrderSnapshot';
 
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 
 /** Temporary, expiring preflight. Never mounted in the application Worker.
  * The imported auditor uses a bounded READ ONLY REPEATABLE READ transaction
- * and fixed catalog queries only. It does not install migrations or grant roles.
+ * and fixed queries only. The private backup route also reads the bounded test
+ * order candidates. It does not delete records, install migrations or grant roles.
  */
 export default {
   async fetch(request: Request, env: PaidRuntimeAuditEnv): Promise<Response> {
@@ -28,7 +30,7 @@ export default {
       return Response.json({ error: 'forbidden' }, { status: 403, headers });
     }
     const url = new URL(request.url);
-    if (!['/audit', '/catalog', '/work-parents', '/release-protocols'].includes(url.pathname) || url.search) {
+    if (!['/audit', '/catalog', '/work-parents', '/release-protocols', '/orphan-test-backup'].includes(url.pathname) || url.search) {
       return Response.json({ error: 'not found' }, { status: 404, headers });
     }
     if (request.method !== 'GET') {
@@ -39,7 +41,9 @@ export default {
       db = createDbFromConnectionString(env.HYPERDRIVE.connectionString, 1, {
         searchPath: 'public,pg_temp', applicationName: 'cinashop_paid_runtime_audit',
       });
-      const result = url.pathname === '/release-protocols'
+      const result = url.pathname === '/orphan-test-backup'
+        ? await exportOrphanTestOrderSnapshot(db)
+        : url.pathname === '/release-protocols'
         ? await auditReleaseProtocols(db)
         : url.pathname === '/catalog'
         ? { scope: 'release-prerequisite-catalog', catalog: await auditReleasePrerequisiteCatalog(db) }

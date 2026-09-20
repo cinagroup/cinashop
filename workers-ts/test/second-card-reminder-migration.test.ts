@@ -114,19 +114,20 @@ describe("second-card reminder migration", () => {
     expect(migration).toContain('"soci_second_card_expired_due"');
   });
 
-  it("returns scoped return contacts and renders them only for return states", () => {
+  it("returns scoped contacts to Admin and renders shopper contacts only for return states", () => {
     const resolver = readFileSync("src/services/order/RefundReturnContactService.ts", "utf8");
     const service = readFileSync("src/services/order/StoreOrderRefundService.ts", "utf8");
+    const customer = readFileSync("src/services/order/CustomerRefundReadService.ts", "utf8");
     const admin = readFileSync("../view/admin-ts/src/pages/refund/RefundList.vue", "utf8");
     const uniapp = readFileSync("../view/uniapp-ts/src/pages/order/refundDetail.vue", "utf8");
     expect(resolver).toContain('"refund_name"');
     expect(resolver).toContain("systemSupplier.supplierName");
     expect(resolver).toContain("systemStore.name");
     expect(service).toContain("resolveRefundReturnContact(this.container, refund)");
-    expect(admin).toContain("退货收货人");
-    expect(admin).toContain("退货电话");
-    expect(admin).toContain("退货地址");
-    expect(uniapp).toContain("status === 4 || status === 5");
+    expect(admin).toContain("商家收件信息");
+    for (const field of ["name", "phone", "address"]) expect(admin).toContain(`current.returnContact.${field}`);
+    expect(customer).toContain("const returnContact = !row.isCancel && [4, 5].includes(row.refundType) ? await resolveRefundReturnContact(container, row) : null");
+    expect(uniapp).toContain('v-if="detail.returnContact"');
     expect(uniapp).toContain("退货收件信息");
   });
 

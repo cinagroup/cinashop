@@ -89,7 +89,11 @@ describe("PC order coupon scope lifecycle", () => {
     expect(checkout).toContain("if (refreshUnselectedQuote) void reloadQuote()");
     expect(checkout).toContain('v-if="!pendingSubmission && couponContext.scope');
     expect(checkout).toContain("提交内容已锁定，确认结果前不能更换优惠券");
-    expect(checkout).toContain("selectedCouponId.value = 0"); expect(checkout).toContain("await apiOrderCreate(orderKey.value, pendingSubmission.value!)");
+    expect(checkout).toContain("selectedCouponId.value = 0");
+    expect(checkout).toContain("pendingIntent.value = journal.begin(uid, orderKey.value, {");
+    expect(checkout).toContain("...quoteOptions.value,");
+    expect(checkout).toContain("const intent = journal.assertCurrent(pendingIntent.value)");
+    expect(checkout).toContain("await apiOrderCreate(intent.key, intent.payload as Parameters<typeof apiOrderCreate>[1])");
     expect(readFileSync("../view/pc-ts/src/pages/user/CouponList.vue", "utf8")).toContain("createCouponWalletView");
     const wallet = readFileSync("../view/pc-ts/src/composables/couponWalletView.ts", "utf8");
     expect(wallet).toContain("new CouponWalletSession");

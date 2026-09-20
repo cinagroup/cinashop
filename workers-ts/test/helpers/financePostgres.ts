@@ -6,7 +6,7 @@ import { SQL, sql } from "drizzle-orm";
 import postgres from "postgres";
 import type { DbClient } from "@/lib/di";
 
-const ownedTargets = new Map<string, { schema: string; baseUrl: string }>();
+const ownedTargets = new Map<string, { schema: string; baseUrl: string; serverHost: string; serverPort: number }>();
 const databaseName = /^finance_fixture_[a-f0-9]{32}$/;
 
 /** Match the raw execute row-array contract used by postgres.js, not its wire
@@ -56,6 +56,14 @@ export function ownsFinanceFixtureTarget(database: string, schema: string, baseU
   const owned = ownedTargets.get(database);
   return databaseName.test(database) && owned?.schema === schema && owned.baseUrl === baseUrl;
 }
+/** Server-side endpoints may be Docker addresses even when the validated client
+ * endpoint is loopback. Compare to this process's coordinator, not a CIDR guess. */
+export function ownsFinanceFixtureEndpoint(database: string, schema: string, baseUrl: string, host: unknown, port: unknown): boolean {
+  const owned = ownedTargets.get(database);
+  if (!owned) return false;
+  return ownsFinanceFixtureTarget(database, schema, baseUrl) && typeof host === 'string'
+    && host === owned.serverHost && typeof port === 'number' && port === owned.serverPort;
+}
 
 /** Local memory by default. CI can opt into its dedicated disposable PostgreSQL 16 service only. */
 export async function financePostgres(tables: PgTable[]) {
@@ -74,10 +82,14 @@ export async function financePostgres(tables: PgTable[]) {
     let created = false;
     let closing: Promise<void> | undefined;
     const verify = async (connection: ReturnType<typeof postgres>, expected: string) => {
-      const [identity] = await connection`select current_database() as database, current_user as role, current_setting('server_version_num') as version`;
+      const [identity] = await connection`select current_database() as database, current_user as role, current_setting('server_version_num') as version,
+        host(inet_server_addr()) AS server_host,inet_server_port() AS server_port`;
       if (identity.database !== expected || identity.role !== "finance_test" || Math.floor(Number(identity.version) / 10_000) !== 16) {
         throw new Error("Unexpected finance test database identity/version");
       }
+      if (typeof identity.server_host !== 'string' || !identity.server_host || !Number.isSafeInteger(identity.server_port))
+        throw Error('Missing finance fixture server identity');
+      return identity;
     };
     close = () => closing ??= (async () => {
       try {
@@ -96,16 +108,18 @@ export async function financePostgres(tables: PgTable[]) {
       } finally { await coordinator.end({ timeout: 5 }); }
     })();
     try {
-      await verify(coordinator, 'cinashop_finance_test');
+      const server = await verify(coordinator, 'cinashop_finance_test');
       // Advisory keys, unlike table names, are database-scoped. A schema alone
       // does not isolate parallel positive scenarios from another fixture's locks.
       await coordinator.unsafe(`CREATE DATABASE "${database}" TEMPLATE template0`);
       created = true;
-      ownedTargets.set(database, { schema, baseUrl: base.href });
+      ownedTargets.set(database, { schema, baseUrl: base.href, serverHost: server.server_host, serverPort: server.server_port });
       const target = new URL(base.href); target.pathname = `/${database}`;
       client = postgres(target.href, { max: 4, prepare: false, connect_timeout: 5,
         connection: { options: `-c search_path=${schema}` } });
-      await verify(client, database);
+      const peer = await verify(client, database);
+      if (!ownsFinanceFixtureEndpoint(database, schema, base.href, peer.server_host, peer.server_port))
+        throw Error('Finance fixture server changed from coordinator');
       await client.unsafe(`CREATE SCHEMA "${schema}"`);
       const checkedClient = client;
       db = drizzlePostgres(checkedClient) as unknown as DbClient;

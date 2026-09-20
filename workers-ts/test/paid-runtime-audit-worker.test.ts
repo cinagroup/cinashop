@@ -2,12 +2,13 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import worker from './integration/PaidRuntimeAuditWorker';
 import type { PaidRuntimeAuditEnv } from './integration/paid-runtime-audit-bindings';
 
-const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), catalog: vi.fn(), work: vi.fn(), protocols: vi.fn(), end: vi.fn() }));
+const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), catalog: vi.fn(), work: vi.fn(), protocols: vi.fn(), backup: vi.fn(), end: vi.fn() }));
 vi.mock('@/lib/di', () => ({ createDbFromConnectionString: mocks.create }));
 vi.mock('@/migrations/auditPaidOrderRuntimePermissions', () => ({ auditPaidOrderRuntimePermissions: mocks.audit }));
 vi.mock('@/migrations/auditReleasePrerequisiteCatalog', () => ({ auditReleasePrerequisiteCatalog: mocks.catalog }));
 vi.mock('@/migrations/auditWorkParentIdentityPermissions', () => ({ auditWorkParentIdentityPermissions: mocks.work }));
 vi.mock('@/migrations/auditReleaseProtocols', () => ({ auditReleaseProtocols: mocks.protocols }));
+vi.mock('@/migrations/orphanTestOrderSnapshot', () => ({ exportOrphanTestOrderSnapshot: mocks.backup }));
 
 const token = 'a'.repeat(64); // synthetic token, not a deployed credential
 let env: PaidRuntimeAuditEnv;
@@ -36,6 +37,26 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('temporary production runtime permission audit', () => {
+  it('protects private backup with expiring authentication, fixed GET route and no query input', async () => {
+    expect((await worker.fetch(request('/orphan-test-backup','GET',''),env)).status).toBe(403);
+    expect((await worker.fetch(request('/orphan-test-backup?ids=1'),env)).status).toBe(404);
+    for(const method of ['POST','PUT','DELETE','HEAD','OPTIONS'])
+      expect((await worker.fetch(request('/orphan-test-backup',method),env)).status).toBe(405);
+    expect(mocks.create).not.toHaveBeenCalled();
+    const result = { scope:'orphan-test-order-backup',ready:false,targetCount:12,backup:{ private:'synthetic' } };
+    mocks.backup.mockResolvedValue(result);
+    const response = await worker.fetch(request('/orphan-test-backup'),env);
+    expect(response.status).toBe(200); expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(await response.json()).toEqual(result); expect(logCalls).toHaveLength(0);
+    expect(mocks.end).toHaveBeenCalledWith({ timeout:1 });
+  });
+  it('redacts private export errors and still closes its client', async () => {
+    mocks.backup.mockRejectedValue(Error('private order record'));
+    const response = await worker.fetch(request('/orphan-test-backup'),env);
+    expect(response.status).toBe(503); expect(await response.json()).toEqual({error:'audit failed'});
+    expect(JSON.stringify(logCalls)).not.toContain('private order record');
+    expect(mocks.end).toHaveBeenCalledWith({timeout:1});
+  });
   it('serves release protocol observations without claiming readiness', async () => {
     const result = { scope: 'release-protocol-preflight', ready: false, protocols: { offline: 'drift' } };
     mocks.protocols.mockResolvedValue(result);

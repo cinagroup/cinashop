@@ -12,6 +12,13 @@ export interface SequenceRunnerPeer {
 }
 
 const prefix = /^cinashop_kefu_runner_[a-f0-9]{32}$/;
+const ownedTargets = new Map<string, { baseUrl: string; host: string; port: number }>();
+export function ownsSequenceRunnerEndpoint(database: string, schema: string, baseUrl: string, host: unknown, port: unknown): boolean {
+  const owned = ownedTargets.get(database);
+  if (!owned) return false;
+  return prefix.test(database) && schema === 'public' && owned.baseUrl === baseUrl
+    && typeof host === 'string' && host === owned.host && typeof port === 'number' && port === owned.port;
+}
 
 export function validateSequenceRunnerTestUrl(value: string): URL {
   let url: URL;
@@ -66,16 +73,24 @@ export async function sequenceRunnerDatabase() {
         const rows = await coordinator`SELECT datname FROM pg_database WHERE datname = ${name}`;
         if (rows.length) throw new Error("Sequence runner test database cleanup not confirmed");
         created = false;
+        ownedTargets.delete(name);
       }
     } finally { await coordinator.end({ timeout: 5 }); }
   }
   try {
     await verify(coordinator, "cinashop_finance_test");
+    const [server] = await coordinator`SELECT host(inet_server_addr()) AS host,inet_server_port() AS port`;
+    if (typeof server.host !== 'string' || !server.host || !Number.isSafeInteger(server.port))
+      throw Error('Missing sequence fixture server identity');
     await coordinator.unsafe(`CREATE DATABASE "${name}" TEMPLATE template0`);
     created = true;
+    ownedTargets.set(name, { baseUrl: base.href, host: server.host, port: server.port });
     const target = new URL(base.href); target.pathname = `/${name}`;
     client = postgres(target.href, options);
     await verify(client, name);
+    const [peerServer] = await client`SELECT host(inet_server_addr()) AS host,inet_server_port() AS port`;
+    if (!ownsSequenceRunnerEndpoint(name, 'public', base.href, peerServer.host, peerServer.port))
+      throw Error('Sequence fixture server changed from coordinator');
     const checkedClient = client;
     return {
       format: "pg16" as const,
