@@ -200,7 +200,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
       let fenced = false; const execute = PostgresJsPreparedQuery.prototype.execute;
       vi.spyOn(PostgresJsPreparedQuery.prototype, 'execute').mockImplementation(async function (this: PostgresJsPreparedQuery<PreparedQueryConfig>, ...args) {
         const statement = this.getQuery().sql, result = await execute.apply(this, args);
-        if (!fenced && statement.startsWith('LOCK TABLE "member_right", "system_config"')) {
+        if (!fenced && /^SELECT "(?:public|finance_test_[a-f0-9]{32})"\.checkout_lock_pricing_v1\(\)$/.test(statement)) {
           fenced = true; saving = save({ whole_free_shipping: '1', store_free_postage: '50' }, writer.db);
           await waitForFinanceBlock(observer.db, writer.pid, buyer.pid); expect(deletes).toEqual([]);
           if (ending === 'rollback') throw new Error('synthetic failure after pricing fence');

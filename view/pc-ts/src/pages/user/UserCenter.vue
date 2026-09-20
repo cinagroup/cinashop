@@ -11,9 +11,14 @@
     </div>
 
     <div class="menu-grid">
+      <router-link to="/user/offline-pay" class="menu-item"><span class="icon">¥</span><span>线下消费收银</span></router-link>
       <router-link to="/order" class="menu-item">
         <span class="icon">📦</span>
         <span>我的订单</span>
+      </router-link>
+      <router-link to="/user/refunds" class="menu-item">
+        <span class="icon">↩</span>
+        <span>售后退款</span>
       </router-link>
       <router-link to="/user/address" class="menu-item">
         <span class="icon">📍</span>

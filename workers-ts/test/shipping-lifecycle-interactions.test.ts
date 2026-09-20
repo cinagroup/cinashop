@@ -8,7 +8,7 @@ import { runShippingLifecycle } from '../src/migrations/runShippingLifecycle';
 import { SHIPPING_LIFECYCLE_CANDIDATE_SQL } from '../src/migrations/shippingLifecycleProtocol';
 import { inspectShippingLifecycleProtocol } from '../src/migrations/inspectShippingLifecycleProtocol';
 import { withShippingLifecycleWriteBarrier } from '../src/migrations/withShippingLifecycleWriteBarrier';
-import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { checkoutPricingMigrationDatabase as sequenceRunnerDatabase } from './helpers/checkoutPricingMigrationDatabase';
 
 const targets = ['shipping_templates','store_product','store_seckill','store_bargain',
   'store_combination','store_integral','store_discounts_products'] as const;
@@ -39,7 +39,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping interac
         }
       } else if(path==='embedded') {
         expect(await new MigrationService({db:f.db} as Container).runAll()).toEqual({
-          executed:Array.from({length:161},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+          executed:Array.from({length: 167},(_,i)=>String(i).padStart(4,'0')),errors:[]});
       } else await orm(f);
       expect((await f.query(otherTriggers)).rows).toEqual([]);
       expect(await runShippingLifecycle(f.db)).toEqual({applied:path==='orm'});
@@ -175,7 +175,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping interac
     });
     it.each(['ON DELETE CASCADE','ON DELETE SET DEFAULT','ON UPDATE CASCADE'])('does not waive internal %s triggers',async kind=>{
       await cascade(kind); await refused(route);
-      expect((await f.query(otherTriggers)).rows.some(t=>(t as {tgisinternal:boolean}).tgisinternal===true)).toBe(true);
+      expect((await f.query(otherTriggers)).rows.some(t=>t.tgisinternal===true)).toBe(true);
     });
     it('rejects a new interaction even when its own protocol is already complete',async()=>{
       await install(route); await sideEffect('shipping_templates'); const before=await snapshot();

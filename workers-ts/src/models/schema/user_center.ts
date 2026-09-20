@@ -122,6 +122,7 @@ export const userMoney = pgTable(
   (t) => [
     index("um_uid_idx").on(t.uid),
     index("um_type_link").on(t.type, t.linkId),
+    uniqueIndex('um_offline_balance_uq').on(t.uid, t.linkId).where(sql`${t.type} = 'offline_scan'`),
     uniqueIndex("um_out_request_uq")
       .on(t.uid, t.linkId, t.type)
       .where(sql`${t.type} IN ('system_add', 'system_sub') AND ${t.linkId} ~ '^[0-9a-f]{32}$'`),

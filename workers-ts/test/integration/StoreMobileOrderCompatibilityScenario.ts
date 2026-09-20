@@ -25,6 +25,7 @@ import {
 } from "@/models/schema";
 import { StoreMobileOrderService } from "@/services/store/StoreMobileOrderService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { INVOICE_EVIDENCE_SQL } from "@/migrations/invoiceEvidence";
 
 export const STORE_MOBILE_ORDER_SCHEMA_PREFIX = "codex_store_mobile_order_";
 export const STORE_MOBILE_ORDER_TABLES = [
@@ -36,6 +37,7 @@ export const STORE_MOBILE_ORDER_TABLES = [
   "store_service_record",
   "store_order",
   "store_order_cart_info",
+  "store_order_invoice",
   "store_order_refund",
   "store_order_status",
   "store_order_promotions",
@@ -57,6 +59,7 @@ const PRIMARY_KEYS: Record<(typeof STORE_MOBILE_ORDER_TABLES)[number], string> =
   store_service_record: "id",
   store_order: "id",
   store_order_cart_info: "id",
+  store_order_invoice: "id",
   store_order_refund: "id",
   store_order_status: "id",
   store_order_promotions: "id",
@@ -252,6 +255,10 @@ async function setupSchema(db: DbClient, schemaName: string): Promise<void> {
         + `SET DEFAULT nextval('${schemaName}.${sequenceBase}'::regclass)`,
       );
     }
+    // New physical splits require captured invoice history even with no active
+    // invoice. This fixture-only installation never modifies public objects.
+    await tx.unsafe(`SET LOCAL search_path TO ${schema}, pg_temp`);
+    await tx.unsafe(INVOICE_EVIDENCE_SQL);
   });
 }
 

@@ -5,7 +5,7 @@ import { withFinancePeers, waitForFinanceBlock, outcome, type FinancePeer } from
 import { createContainerFromDb, type Container } from "../src/lib/di";
 import { StoreOrderCreateService, cancelStoreOrder } from "../src/services/order/StoreOrderCreateService";
 import { applyStoreOrderBalancePayment, applyStoreOrderPayment } from "../src/services/order/StoreOrderPayService";
-import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
+import { ensureAutomaticOrderRefund, finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { PinkTimeoutService } from "../src/services/activity/PinkTimeoutService";
 import { storeCombination, storePink, storeCart, storeOrder, storeOrderCartInfo, storeOrderRefund,
   storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, storeOrderStatus, storeProductAttrValue,
@@ -49,8 +49,8 @@ describe("pink inventory, order and member lock ordering", () => {
     await applyStoreOrderBalancePayment(f.container, { uid: 22, orderId: memberOrder.orderId });
     successorId = (await f.db.select().from(storePink).where(eq(storePink.uid, 22)))[0].id;
     pendingOrder = await create(f.container, 33, 3, leaderOrder.pinkId);
-    await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: leaderOrder.id, uid: 11,
-      orderId: "isolated-leader-refund", refundPrice: "12.50", refundNum: 2, applyType: 1 });
+    expect(await ensureAutomaticOrderRefund(f.container, { uid: 11, orderId: leaderOrder.orderId,
+      refundReason: 'Local leader refund', refundExplain: '', applyType: 1 })).toEqual({ refundId: 1 });
   }, 30_000);
   afterEach(async () => { await f?.close(); });
   const refund = (peer?: FinancePeer, id = 1) => finalizeStoreOrderRefund(peer ? createContainerFromDb(peer.db) : f.container, id);
@@ -80,8 +80,8 @@ describe("pink inventory, order and member lock ordering", () => {
     expect((await f.db.select().from(storeCombination))[0]).toMatchObject({ stock: 19, quota: 19, sales: 1 });
   });
   it("refunds a member before timeout and then settles the failed group without another member credit", async () => {
-    await f.db.insert(storeOrderRefund).values({ id: 2, storeOrderId: memberOrder.id, uid: 22,
-      orderId: "isolated-member-refund", refundPrice: "6.25", refundNum: 1, applyType: 1 });
+    expect(await ensureAutomaticOrderRefund(f.container, { uid: 22, orderId: memberOrder.orderId,
+      refundReason: 'Local member refund', refundExplain: '', applyType: 1 })).toEqual({ refundId: 2 });
     expect(await refund(undefined, 2)).toBe("completed");
     expect((await f.db.select().from(storePink).where(eq(storePink.id, leaderOrder.pinkId)))[0]).toMatchObject({ memberCount: 1, status: 1 });
     await f.db.update(storePink).set({ stopTime: new Date(0) }).where(eq(storePink.id, leaderOrder.pinkId));
@@ -176,8 +176,8 @@ describe("pink inventory, order and member lock ordering", () => {
   }, 20_000);
   pg("waits for the leader before holding a refunded member, compatible with timeout maintenance", async () => {
     await f.db.update(storePink).set({ stopTime: new Date(0) }).where(eq(storePink.id, leaderOrder.pinkId));
-    await f.db.insert(storeOrderRefund).values({ id: 2, storeOrderId: memberOrder.id, uid: 22,
-      orderId: "isolated-member-refund", refundPrice: "6.25", refundNum: 1, applyType: 1 });
+    expect(await ensureAutomaticOrderRefund(f.container, { uid: 22, orderId: memberOrder.orderId,
+      refundReason: 'Local member refund', refundExplain: '', applyType: 1 })).toEqual({ refundId: 2 });
     await withFinancePeers(f.db, async ([blocker, refunder, maintainer]) => {
       await blocker.exec(`BEGIN; SELECT id FROM store_pink WHERE id=${leaderOrder.pinkId} FOR UPDATE`);
       const refunding = outcome(refund(refunder, 2));

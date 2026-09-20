@@ -1,4 +1,5 @@
 import request, { getData } from "@/utils/request";
+import { sendOrderRequest } from '@/utils/orderRequest';
 
 const previewMode = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("preview") === "1";
@@ -234,12 +235,12 @@ export function apiOperatePrintJob(
   }));
 }
 
-export function apiAdminManualPrint(orderId: number, printerId?: number) {
+export function apiAdminManualPrint(orderId: number, printerId?: number, signal?: AbortSignal) {
   if (previewMode) return Promise.resolve({ duplicate: false, jobs: [{ id: 1, status: "PENDING" }] });
-  return getData<{ duplicate: boolean; jobs: Array<{ id: number; status: string }> }>(
-    request.post(`/order/print/${orderId}`, {
+  return sendOrderRequest<{ duplicate: boolean; jobs: Array<{ id: number; status: string }> }>(
+    `/order/print/${orderId}`, 'post', {
       request_key: crypto.randomUUID(),
       printer_id: printerId,
-    }),
+    }, undefined, signal,
   );
 }

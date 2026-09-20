@@ -3,7 +3,7 @@
     <el-card shadow="never" class="filter-card">
       <el-form inline>
         <el-form-item label="订单号">
-          <el-input v-model="query.order_id" placeholder="订单号" clearable />
+          <el-input v-model="query.order_id" aria-label="订单号" placeholder="订单号 / 原支付单号" clearable @keyup.enter="reload" />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" placeholder="全部" clearable style="width: 140px">
@@ -14,12 +14,16 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="reload">搜索</el-button>
+          <el-button type="primary" :disabled="!sessionValid" @click="reload">搜索</el-button>
+          <el-button :disabled="!sessionValid || !query.order_id.trim()" @click="openSearchedOrder">查看此单详情</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card shadow="never">
+      <p class="form-tip">展示当前履约单；输入原支付单号可查找其子单。</p>
+      <el-alert v-if="readError" :title="readError" type="error" :closable="false" show-icon />
+      <el-button v-if="readError && sessionValid" @click="fetch">重新加载</el-button>
       <el-table :data="list" v-loading="loading">
         <el-table-column prop="orderId" label="订单号" min-width="200" />
         <el-table-column prop="realName" label="收货人" width="100" />
@@ -36,19 +40,19 @@
           </template>
         </el-table-column>
         <el-table-column label="订单状态" width="100">
-          <template #default="{ row }">{{ statusText(row.status) }}</template>
+          <template #default="{ row }">{{ adminOrderStatus(row) }}</template>
         </el-table-column>
         <el-table-column label="下单时间" width="160">
           <template #default="{ row }">{{ formatTime(row.addTime) }}</template>
         </el-table-column>
         <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="$router.push(`/order/${row.orderId}`)">
+            <el-button link type="primary" @click="$router.push(`/order/${encodeURIComponent(row.orderId)}`)">
               详情
             </el-button>
-            <el-button link type="primary" @click="printOrder(row)">打印</el-button>
+            <el-button v-if="canManage" :disabled="printingIds.has(row.id)" link type="primary" @click="printOrder(row)">打印</el-button>
             <el-button
-              v-if="row.paid === 1 && row.status === 0 && row.shippingType !== 2"
+              v-if="canDeliver(row)"
               link
               type="primary"
               @click="deliver(row)"
@@ -60,9 +64,12 @@
       </el-table>
 
       <el-pagination
+        v-if="!loading && !readError && sessionValid"
         v-model:current-page="query.page"
         :page-size="query.limit"
         :total="total"
+        :pager-count="5"
+        :disabled="loading || !sessionValid"
         layout="total, prev, pager, next"
         class="pagination"
         @current-change="fetch"
@@ -113,14 +120,15 @@
       </el-form>
       <template #footer>
         <el-button @click="deliveryVisible = false">取消</el-button>
-        <el-button type="primary" :loading="deliverySubmitting" @click="submitDelivery">{{ deliveryForm.delivery_type === 'waybill' ? '创建签发任务' : '确认发货' }}</el-button>
+        <el-button type="primary" :disabled="deliveryOptionsLoading" :loading="deliverySubmitting" @click="submitDelivery">{{ deliveryForm.delivery_type === 'waybill' ? '创建签发任务' : '确认发货' }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { ElMessage } from "element-plus";
 import {
   apiAdminDeliveryOptions,
@@ -133,12 +141,23 @@ import { apiAdminExpressList, type ExpressItem } from "@/api/shipping";
 import { apiAdminManualPrint } from "@/api/printing";
 import type { AdminOrder } from "@/types/admin";
 import dayjs from "dayjs";
+import { createAdminSessionScope } from '@/utils/adminSessionScope';
+import { getAdminSession } from '@/utils/auth';
+import { adminOrderStatus, isCurrentFulfillment, orderNumber } from '@/utils/orderRead';
+
+const router = useRouter();
 
 const list = ref<AdminOrder[]>([]);
 const loading = ref(false);
 const total = ref(0);
+const readError = ref('');
+const sessionValid = ref(true);
+const session = getAdminSession();
+const canManage = computed(() => sessionValid.value && Boolean(session && (session.userInfo.level === 0 || session.uniqueAuth.includes('order.manage'))));
+const printingIds = reactive(new Set<number>());
 const deliveryVisible = ref(false);
 const deliverySubmitting = ref(false);
+const deliveryOptionsLoading = ref(false);
 const deliveryOrder = ref<AdminOrder | null>(null);
 const deliveryOptions = ref<AdminDeliveryOption[]>([]);
 const expressOptions = ref<ExpressItem[]>([]);
@@ -151,15 +170,25 @@ const deliveryForm = reactive({
   fictitious_content: "",
 });
 const query = reactive({ page: 1, limit: 10, order_id: "", status: undefined as number | undefined });
-
-function statusText(status: number): string {
-  switch (status) {
-    case 0: return "待发货";
-    case 1: return "待收货";
-    case 2: return "已收货";
-    case 3: return "已完成";
-    default: return "未知";
-  }
+let epoch = 0, deliveryEpoch = 0;
+let readController: AbortController | undefined;
+const scope = createAdminSessionScope(() => {
+  sessionValid.value = false; reset(); readError.value = '登录状态已变化，请重新打开页面';
+});
+function reset(clearCount = true) {
+  epoch++; readController?.abort(); list.value = []; if (clearCount) total.value = 0; loading.value = false;
+  deliveryVisible.value = false; deliveryOrder.value = null; deliveryEpoch++;
+  deliveryOptions.value = []; expressOptions.value = []; deliveryOptionsLoading.value = false;
+}
+function dispose() { reset(); scope.dispose(); }
+onBeforeUnmount(dispose);
+onBeforeRouteLeave(dispose);
+watch(deliveryVisible, visible => { if (!visible) { deliveryEpoch++; deliveryOrder.value = null; } }, { flush: 'sync' });
+function currentRow(row: AdminOrder) {
+  return scope.isCurrent() && !loading.value && list.value.some(item => item === row);
+}
+function canDeliver(row: AdminOrder) {
+  return canManage.value && isCurrentFulfillment(row) && row.status === 0 && row.shippingType !== 2;
 }
 
 function formatTime(ts: number): string {
@@ -167,23 +196,28 @@ function formatTime(ts: number): string {
 }
 
 async function fetch() {
+  if (!scope.isCurrent()) return;
+  // Retain the last count while the pager is hidden. A transient zero would
+  // make Element Plus clamp current-page back to 1 and emit another request.
+  reset(false);
+  const generation = epoch;
+  const controller = new AbortController(); readController = controller;
+  readError.value = '';
   loading.value = true;
   try {
     const result = await apiAdminOrderList({
       page: query.page,
       limit: query.limit,
-      order_id: query.order_id || undefined,
-      status: query.status,
-    });
+      order_id: query.order_id.trim() || undefined,
+      status: typeof query.status === 'number' ? query.status : undefined,
+    }, controller.signal);
+    if (!scope.isCurrent() || generation !== epoch) return;
     list.value = result.list;
-    total.value =
-      result.list.length < query.limit
-        ? (query.page - 1) * query.limit + result.list.length
-        : query.page * query.limit + 1;
+    total.value = result.total;
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加载失败");
+    if (scope.isCurrent() && generation === epoch) { readError.value = e instanceof Error ? e.message : '加载失败'; total.value = 0; }
   } finally {
-    loading.value = false;
+    if (generation === epoch) loading.value = false;
   }
 }
 
@@ -193,6 +227,9 @@ function reload() {
 }
 
 async function deliver(row: AdminOrder) {
+  if (!currentRow(row) || !canDeliver(row) || deliverySubmitting.value) return;
+  const generation = ++deliveryEpoch;
+  deliveryOptions.value = []; expressOptions.value = []; deliveryOptionsLoading.value = true;
   deliveryOrder.value = row;
   Object.assign(deliveryForm, {
     delivery_type: row.productType === 3 ? "fictitious" : "express",
@@ -206,13 +243,22 @@ async function deliver(row: AdminOrder) {
   try {
     const [deliveries, carriers] = row.productType === 3
       ? [{ list: [] as AdminDeliveryOption[] }, [] as ExpressItem[]]
-      : await Promise.all([apiAdminDeliveryOptions(), apiAdminExpressList()]);
+      : await Promise.all([apiAdminDeliveryOptions(scope.signal), apiAdminExpressList(scope.signal)]);
+    if (!currentRow(row) || generation !== deliveryEpoch || !deliveryVisible.value) return;
     deliveryOptions.value = deliveries.list;
     expressOptions.value = carriers.filter((item) => item.status === 1 && item.isShow === 1);
   } catch (error) {
+    if (!currentRow(row) || generation !== deliveryEpoch) return;
     deliveryOptions.value = [];
     ElMessage.warning(error instanceof Error ? error.message : "配送员列表加载失败");
+  } finally {
+    if (generation === deliveryEpoch) deliveryOptionsLoading.value = false;
   }
+}
+function openSearchedOrder() {
+  if (!scope.isCurrent()) return;
+  try { router.push('/order/' + orderNumber(query.order_id.trim())); }
+  catch (error) { ElMessage.warning(error instanceof Error ? error.message : '订单号无效'); }
 }
 
 function selectCarrier(id: number) {
@@ -221,16 +267,25 @@ function selectCarrier(id: number) {
 }
 
 async function printOrder(row: AdminOrder) {
+  if (!currentRow(row) || !canManage.value || printingIds.has(row.id)) return;
+  printingIds.add(row.id);
+  const generation = epoch;
   try {
-    const result = await apiAdminManualPrint(row.id);
+    const result = await apiAdminManualPrint(row.id, undefined, scope.signal);
+    if (!currentRow(row) || generation !== epoch) return;
     ElMessage.success(result.duplicate ? "该打印请求已受理" : `已创建 ${result.jobs.length} 个打印任务`);
   } catch (error) {
+    if (!currentRow(row) || generation !== epoch) return;
     ElMessage.error(error instanceof Error ? error.message : "创建打印任务失败");
+  } finally {
+    printingIds.delete(row.id);
   }
 }
 
 async function submitDelivery() {
-  if (!deliveryOrder.value || deliverySubmitting.value) return;
+  const row = deliveryOrder.value, generation = deliveryEpoch;
+  if (!row || !deliveryVisible.value || !currentRow(row) || !canDeliver(row) || deliverySubmitting.value || deliveryOptionsLoading.value) return;
+  const current = () => currentRow(row) && generation === deliveryEpoch;
   if (["express", "waybill"].includes(deliveryForm.delivery_type) && deliveryForm.carrier_id <= 0) {
     return ElMessage.warning("请选择快递公司");
   }
@@ -246,22 +301,25 @@ async function submitDelivery() {
   deliverySubmitting.value = true;
   try {
     if (deliveryForm.delivery_type === "waybill") {
-      const result = await apiAdminCreateWaybill(deliveryOrder.value.orderId, deliveryForm.carrier_id);
+      const result = await apiAdminCreateWaybill(row.orderId, deliveryForm.carrier_id, scope.signal);
+      if (!current()) return;
       ElMessage.success(result.duplicate ? "该签发请求已受理" : "电子面单任务已创建，请在面单账本查看结果");
       deliveryVisible.value = false;
       return;
     }
-    await apiAdminOrderDelivery(deliveryOrder.value.orderId, {
+    await apiAdminOrderDelivery(row.orderId, {
       delivery_type: deliveryForm.delivery_type as "express" | "send" | "fictitious",
       delivery_name: deliveryForm.delivery_name.trim(),
       delivery_id: deliveryForm.delivery_id.trim(),
       delivery_uid: deliveryForm.delivery_uid,
       fictitious_content: deliveryForm.fictitious_content.trim(),
-    });
+    }, scope.signal);
+    if (!current()) return;
     ElMessage.success("发货成功");
     deliveryVisible.value = false;
     await fetch();
   } catch (e) {
+    if (!current()) return;
     ElMessage.error(e instanceof Error ? e.message : "发货失败");
   } finally {
     deliverySubmitting.value = false;
@@ -279,6 +337,8 @@ onMounted(fetch);
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .form-tip {

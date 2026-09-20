@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "cinashop-test-image-maintenance",
+  "main": "TestProductImageMaintenanceWorker.ts",
+  "compatibility_date": "2026-09-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "9748c294e21c49a99579c9cef70102e0" }],
+  "vars": { "AUDIT_TOKEN_SHA256": "disabled", "EXPIRES_AT": "0" },
+  "observability": { "enabled": true }
+}

@@ -10,7 +10,8 @@ import { setSeckillCartQuantity } from "@/services/activity/SeckillCartQuantityS
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 import { cartBargainParticipation, findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
-import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
+import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
+import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPolicy";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
   quoteFirstOrderDiscount,
@@ -22,7 +23,7 @@ import {
   StoreDiscountService,
   type DiscountPackageSelectionInput,
 } from "@/services/activity/StoreDiscountService";
-import { decimalToCents } from "@/services/order/OrderBrokerageService";
+import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import {
   calculateMemberUnitPriceCents,
   isPaidMembershipActive,
@@ -38,7 +39,6 @@ import {
   storeCombination,
   storeDiscounts,
   storeDiscountsProducts,
-  memberRight,
   storeOrder,
   storeProduct,
   storeProductAttrValue,
@@ -109,53 +109,39 @@ export class StoreCartService {
     private readonly env?: Env,
   ) {}
 
-  private async legacyCartPricing(uid: number): Promise<{
+  private async cartPricing(uid: number): Promise<{
     levelDiscountPercent: number;
+    levelName: string;
     paidMemberActive: boolean;
     paidMemberPriceEnabled: boolean;
   }> {
     const fallback = {
       levelDiscountPercent: 100,
+      levelName: '',
       paidMemberActive: false,
       paidMemberPriceEnabled: false,
     };
-    if (!this.env) return fallback;
-    const [account, values, rights] = await Promise.all([
+    // SQL is authoritative; ordinary cart reads do not need Worker bindings.
+    if (uid <= 0) return fallback;
+    const [account, policy] = await Promise.all([
       this.container.userDao.findForAuth(uid),
-      new SystemConfigService(this.container, this.env).getMany([
-        "member_func_status",
-        "member_card_status",
-        "svip_price_status",
-      ]),
-      this.container.db
-        .select({ status: memberRight.status, number: memberRight.number })
-        .from(memberRight)
-        .where(eq(memberRight.rightType, "vip_price"))
-        .orderBy(asc(memberRight.id))
-        .limit(1),
+      readMembershipPricingPolicy(this.container.db),
     ]);
     if (!account) return fallback;
-    const enabled = (value: string | undefined, defaultValue = 1) => {
-      const parsed = Number(value ?? defaultValue);
-      return Number.isFinite(parsed) ? Math.trunc(parsed) === 1 : defaultValue === 1;
-    };
-    const memberFunctionEnabled = enabled(values.member_func_status);
-    const paidMemberEnabled = enabled(values.member_card_status);
-    const level = memberFunctionEnabled && account.level > 0
+    const level = policy.memberFunctionEnabled && account.levelStatus === 1 && account.level > 0
       ? await this.container.systemUserLevelDao.getById(account.level)
       : null;
     const discount = level && level.isShow === 1 && level.isDel === 0
       ? (Number(level.discount) || 100)
       : 100;
-    const right = rights[0];
     return {
       levelDiscountPercent: discount,
-      paidMemberActive: paidMemberEnabled && isPaidMembershipActive(
+      levelName: level && level.isShow === 1 && level.isDel === 0 ? level.name : '',
+      paidMemberActive: policy.paidMemberEnabled && isPaidMembershipActive(
         account,
         Math.floor(Date.now() / 1000),
       ),
-      paidMemberPriceEnabled: paidMemberEnabled && enabled(values.svip_price_status) &&
-        right?.status === 1 && right.number > 0,
+      paidMemberPriceEnabled: policy.paidMemberPriceEnabled,
     };
   }
 
@@ -463,6 +449,7 @@ export class StoreCartService {
     }
 
     const result = [];
+    let pricing: Awaited<ReturnType<StoreCartService['cartPricing']>> | undefined;
     for (const cart of carts) {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
@@ -652,7 +639,28 @@ export class StoreCartService {
         else if (cart.type === 3) systemFormId = (await this.container.storeCombinationDao.getById(cart.activityId))?.systemFormId ?? 0;
         else if (cart.type === 4) systemFormId = (await this.container.storeIntegralDao.getById(cart.activityId))?.systemFormId ?? 0;
       }
+      // Preserve raw catalogue amounts consumed by existing checkout adapters.
+      // This additive quote excludes coupons/shipping and does not lock prices.
+      const rawCents = decimalToCents(String(price));
+      let unitCents = rawCents, priceType: '' | 'level' | 'member' = '', levelName = '';
+      if (cart.type === 0 && cart.activityId === 0) {
+        pricing ??= await this.cartPricing(uid);
+        const quoted = calculateMemberUnitPriceCents({
+          basePriceCents: rawCents, levelDiscountPercent: pricing.levelDiscountPercent,
+          paidMemberPriceCents: decimalToCents(sku?.vipPrice ?? product.vipPrice),
+          paidMemberActive: pricing.paidMemberActive, paidMemberPriceEnabled: pricing.paidMemberPriceEnabled,
+          productPaidMemberPriceEnabled: product.isVip === 1,
+        });
+        unitCents = quoted.unitPriceCents; priceType = quoted.priceType;
+        if (priceType === 'level') levelName = pricing.levelName;
+      }
+      const lineCents = unitCents * cart.cartNum;
+      if (!Number.isSafeInteger(lineCents) || lineCents < 0) throw new ValidateException('购物车金额超出安全范围');
       result.push({
+        truePrice: centsToDecimal(unitCents),
+        trueSumPrice: centsToDecimal(lineCents),
+        priceType,
+        levelName,
         id: cart.id,
         productId: cart.productId,
         cartNum: cart.cartNum,
@@ -737,7 +745,7 @@ export class StoreCartService {
     const skuByProductUnique = new Map(
       skus.map((sku) => [`${sku.productId}:${sku.unique}`, sku] as const),
     );
-    const pricing = await this.legacyCartPricing(uid);
+    const pricing = await this.cartPricing(uid);
 
     const result: Record<string, unknown>[] = [];
     for (const cart of carts) {

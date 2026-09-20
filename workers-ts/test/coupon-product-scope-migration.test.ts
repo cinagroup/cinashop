@@ -7,7 +7,7 @@ import { MigrationService } from '../src/services/MigrationService';
 import { COUPON_PRODUCT_SCOPE_FENCE_SQL, COUPON_PRODUCT_SCOPE_FENCE_BODY } from '../src/migrations/couponProductScopeFence';
 import { BROKERAGE_PAID_ORDER_FENCE_SQL } from '../src/migrations/brokeragePaidOrderFence';
 import { runCouponProductScopeFence } from '../src/migrations/runCouponProductScopeFence';
-import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { checkoutPricingMigrationDatabase as sequenceRunnerDatabase } from './helpers/checkoutPricingMigrationDatabase';
 import { assertCheckoutCouponTemplate, couponTemplateSnapshot } from '../src/services/order/CheckoutCouponTemplateAuthority';
 import { storeCouponIssue } from '../src/models/schema';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
@@ -36,7 +36,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('coupon relation 
           await f.exec(`BEGIN; SET LOCAL search_path TO public,pg_temp; SET LOCAL statement_timeout='30s'; ${readFileSync(`migrations/${file}`, 'utf8')}\nCOMMIT;`);
         }
       } else if (path === 'embedded') {
-        expect(await service(f.db).runAll()).toEqual({ executed: steps(161), errors: [] });
+        expect(await service(f.db).runAll()).toEqual({ executed: steps(167), errors: [] });
       } else {
         const api = await import('drizzle-kit/api'), models = await import('../src/models/schema');
         await f.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));

@@ -27,6 +27,7 @@ import {
 } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { md5 } from "@/utils/jwt";
+import { readRegistrationLevelStatus } from "@/services/user/RegistrationLevelActivation";
 
 type UnknownRecord = Record<string, unknown>;
 type UserWriteOperation = "user_create" | "user_update" | "user_give";
@@ -771,6 +772,7 @@ export class OutUserService {
           isFirstOrder: registration.flags.isFirstOrder,
           isNewcomer: registration.flags.isNewcomer,
           level: 0,
+          levelStatus: await readRegistrationLevelStatus(tx),
         }).returning();
         const created = inserted[0];
         if (!created) throw new Error("新增用户失败");

@@ -2,10 +2,13 @@ import { createSSRApp } from "vue";
 import { createPinia } from "pinia";
 import App from "./App.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
+import { bindAuthStores } from '@/stores/session';
 
 export function createApp() {
   const app = createSSRApp(App);
-  app.use(createPinia());
+  const pinia = createPinia();
+  app.use(pinia);
+  bindAuthStores(pinia);
   app.component("DiySuspendedNavigation", DiySuspendedNavigation);
   return {
     app,

@@ -42,6 +42,19 @@ describe("supplier picking-sheet migration", () => {
     }, 2)).toMatchObject({ product_name: "耳机", sku: "白色", subtotal: "28.50" });
   });
 
+  it('requires sale-price evidence and calculates cents without floating-point rounding or settlement substitution', () => {
+    const source = { cartNum: 3, skuUnique: 'legacy', settlePrice: '88.00', cartInfo: JSON.stringify({ sum_price: '0.29' }) };
+    expect(projectPickingSheetCartItem(source, 1)).toMatchObject({ unit_price: '0.29', subtotal: '0.87' });
+    expect(projectPickingSheetCartItem({ ...source, cartNum: 0, cartInfo: JSON.stringify({ cart_num: '3', sum_price: '0.29' }) }, 1))
+      .toMatchObject({ quantity: 3, subtotal: '0.87' });
+    for (const value of [null, '', '{}', '{broken', '[]', 'null', JSON.stringify({ sum_price: -1 }),
+      JSON.stringify({ sum_price: true }), JSON.stringify({ sum_price: 'NaN' }), JSON.stringify({ sum_price: '1.234' })]) {
+      expect(() => projectPickingSheetCartItem({ ...source, cartInfo: value }, 1)).toThrow();
+    }
+    expect(() => projectPickingSheetCartItem({ ...source, cartNum: 0, cartInfo: JSON.stringify({ cart_num: true, sum_price: '1.00' }) }, 1)).toThrow();
+    expect(() => normalizeSupplierPickingSheetIds('2147483648')).toThrow('格式错误');
+  });
+
   it("registers the exact legacy read contract behind order-view permission", () => {
     const routes = readFileSync("src/routes/supplierapi.ts", "utf8");
     expect(routes).toContain('get("/order/distribution_info", SupplierController.pickingSheets)');
@@ -50,14 +63,16 @@ describe("supplier picking-sheet migration", () => {
   });
 
   it("fails the entire batch closed unless every order belongs to the authenticated Supplier", () => {
-    const service = readFileSync("src/services/supplier/SupplierService.ts", "utf8");
+    const service = readFileSync("src/services/supplier/SupplierPickingSheetReadService.ts", "utf8");
+    const support = readFileSync("src/services/supplier/SupplierReadSupport.ts", "utf8");
     expect(service).toContain("inArray(storeOrder.id, ids)");
     expect(service).toContain("eq(storeOrder.supplierId, supplierId)");
     expect(service).toContain("eq(storeOrder.isSystemDel, 0)");
     expect(service).toContain("if (orders.length !== ids.length)");
     expect(service).toContain("MAX_PICKING_SNAPSHOT_BYTES = 256 * 1024");
-    expect(service).toContain("octet_length(${storeOrderCartInfo.cartInfo})");
-    expect(service).toContain("vip_true_price: projectedCarts");
+    expect(support).toContain("octet_length(${storeOrderCartInfo.cartInfo})");
+    expect(service).toContain("projectedCarts.reduce");
+    expect(service).toContain("supplierReadSnapshot(this.container");
   });
 
   it("connects single and selected-order entries to a standalone printable page", () => {

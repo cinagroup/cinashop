@@ -16,8 +16,11 @@ import { containerMiddleware } from "@/middleware/container";
 import { observabilityMiddleware } from "@/middleware/observability";
 import { errorHandler } from "@/middleware/error";
 import { securityHeadersMiddleware } from "@/middleware/security-headers";
+import { responseCacheMiddleware } from "@/middleware/response-cache";
 import { apiRoutes } from "@/routes";
 import { adminapiRoutes } from "@/routes/adminapi";
+import { adminRefundOperationRoutes } from "@/routes/admin-refund-operations";
+import { adminRefundCreationRoutes } from "@/routes/admin-refund-creation";
 import { supplierapiRoutes } from "@/routes/supplierapi";
 import { outapiRoutes } from "@/routes/outapi";
 import { kefuapiRoutes } from "@/routes/kefuapi";
@@ -28,6 +31,10 @@ export function createApp() {
     Bindings: Env;
     Variables: AppVariables;
   }>();
+
+  // Default to no HTTP storage, including early CORS/DI/auth/error responses.
+  // Explicit successful public-resource cache policies remain opt-in.
+  app.use("*", responseCacheMiddleware);
 
   // 1. Critical-flow latency and failures, including container/auth failures.
   app.use("*", observabilityMiddleware);
@@ -45,6 +52,12 @@ export function createApp() {
   app.get("/health", (c) => c.json({ ok: true, ts: Date.now() }));
 
   // 5. 业务路由
+  // Register before legacy catch-alls. Each operation route retains its own
+  // auth/permission boundary; no public path exposes the SQL receipt service.
+  app.route('/api/admin/refund/operations', adminRefundOperationRoutes);
+  app.route('/adminapi/refund/operations', adminRefundOperationRoutes);
+  app.route('/api/admin/refund/creation', adminRefundCreationRoutes);
+  app.route('/adminapi/refund/creation', adminRefundCreationRoutes);
   app.route("/api", apiRoutes);
 
   // 6. Admin 前端兼容路由 (/adminapi/*)

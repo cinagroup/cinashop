@@ -1,4 +1,6 @@
 import { ApiError, apiRequest } from "./http";
+import { parseSupplierRefundDetail } from '@/utils/refundDetail';
+import { parsePickingSheets } from '@/utils/pickingSheet';
 import type {
   DashboardStats,
   ExpressCompany,
@@ -839,9 +841,9 @@ export async function consumeVirtualInventoryExportTicket(
   });
 }
 
-export async function getOrders(params: Record<string, string | number>): Promise<PageResult<OrderRow>> {
+export async function getOrders(params: Record<string, string | number>, signal?: AbortSignal): Promise<PageResult<OrderRow>> {
   if (previewMode) return { list: previewOrders.map((item) => ({ ...item })), count: previewOrders.length, page: 1, limit: 20 };
-  return apiRequest<PageResult<OrderRow>>({ method: "GET", url: "/order/list", params });
+  return apiRequest<PageResult<OrderRow>>({ method: "GET", signal, url: "/order/list", params });
 }
 
 const previewProductReviews: SupplierProductReview[] = [
@@ -1075,15 +1077,15 @@ export async function getSupplierQueueDeliveryLog(
   });
 }
 
-export async function getOrderDetail(id: number): Promise<OrderRow & { cart_info: unknown[] }> {
+export async function getOrderDetail(id: number, signal?: AbortSignal): Promise<OrderRow & { cart_info: unknown[] }> {
   if (previewMode) {
     const order = previewOrders.find((item) => item.id === id) ?? previewOrders[0];
     return { ...order, cart_info: previewOrderCarts.get(order.id) ?? [] };
   }
-  return apiRequest<OrderRow & { cart_info: unknown[] }>({ method: "GET", url: `/order/info/${id}` });
+  return apiRequest<OrderRow & { cart_info: unknown[] }>({ method: "GET", signal, url: `/order/info/${id}` });
 }
 
-export async function getPickingSheets(ids: number[]): Promise<PickingSheetResult> {
+export async function getPickingSheets(ids: number[], signal?: AbortSignal): Promise<PickingSheetResult> {
   if (previewMode) {
     const list = ids.map((id) => {
       const order = previewOrders.find((item) => item.id === id);
@@ -1118,24 +1120,25 @@ export async function getPickingSheets(ids: number[]): Promise<PickingSheetResul
         items,
       };
     });
-    return {
+    return parsePickingSheets({
       supplier: { name: "优选贸易有限公司", phone: "0571-88888888", address: "浙江省杭州市滨江区供应商园区" },
       list,
-    };
+    }, ids);
   }
-  return apiRequest<PickingSheetResult>({
+  return parsePickingSheets(await apiRequest<unknown>({
     method: "GET",
     url: "/order/distribution_info",
     params: { ids: ids.join(",") },
-  });
+    signal,
+  }), ids);
 }
 
-export async function getSplitCartInfo(id: number): Promise<SplitCartItem[]> {
+export async function getSplitCartInfo(id: number, signal?: AbortSignal): Promise<SplitCartItem[]> {
   if (previewMode) return (previewOrderCarts.get(id) ?? []).map((item) => ({ ...item }));
-  return apiRequest<SplitCartItem[]>({ method: "GET", url: `/order/split_cart_info/${id}` });
+  return apiRequest<SplitCartItem[]>({ method: "GET", signal, url: `/order/split_cart_info/${id}` });
 }
 
-export async function getSplitOrders(id: number): Promise<SplitOrder[]> {
+export async function getSplitOrders(id: number, signal?: AbortSignal): Promise<SplitOrder[]> {
   if (previewMode) {
     const order = previewOrders.find((item) => item.id === id) ?? previewOrders[0];
     return [{
@@ -1156,7 +1159,7 @@ export async function getSplitOrders(id: number): Promise<SplitOrder[]> {
       cart_info: (previewOrderCarts.get(order.id) ?? []).map((item) => ({ ...item })),
     }];
   }
-  return apiRequest<SplitOrder[]>({ method: "GET", url: `/order/split_order/${id}` });
+  return apiRequest<SplitOrder[]>({ method: "GET", signal, url: `/order/split_order/${id}` });
 }
 
 export async function updateOrderRemark(id: number, remark: string) {
@@ -1164,13 +1167,13 @@ export async function updateOrderRemark(id: number, remark: string) {
   return apiRequest<null>({ method: "PUT", url: `/order/remark/${id}`, data: { remark } });
 }
 
-export async function getExpressList(): Promise<ExpressCompany[]> {
+export async function getExpressList(signal?: AbortSignal): Promise<ExpressCompany[]> {
   if (previewMode) return [
     { id: 1, code: "SF", name: "顺丰速运" },
     { id: 2, code: "ZTO", name: "中通快递" },
     { id: 3, code: "YTO", name: "圆通速递" },
   ];
-  return apiRequest<ExpressCompany[]>({ method: "GET", url: "/order/express_list" });
+  return apiRequest<ExpressCompany[]>({ method: "GET", signal, url: "/order/express_list" });
 }
 
 export async function deliverOrder(id: number, data: Record<string, string | number>) {
@@ -1215,65 +1218,67 @@ export async function confirmOrderTake(id: number) {
   return apiRequest<null>({ method: "PUT", url: `/order/take/${id}` });
 }
 
-export async function getOrderStatus(id: number): Promise<OrderStatusLog[]> {
+export async function getOrderStatus(id: number, signal?: AbortSignal): Promise<OrderStatusLog[]> {
   if (previewMode) {
     const row = previewOrders.find((item) => item.id === id);
     return row?.status
       ? [{ id: 1, oid: id, changeType: "delivery_goods", changeMessage: `已发货：${row.delivery_name} ${row.delivery_id}`, changeTime: row.pay_time + 3600 }]
       : [];
   }
-  return apiRequest<OrderStatusLog[]>({ method: "GET", url: `/order/status/${id}` });
+  return apiRequest<OrderStatusLog[]>({ method: "GET", signal, url: `/order/status/${id}` });
 }
 
-export async function getRefunds(params: Record<string, string | number>): Promise<PageResult<RefundRow>> {
+export async function getRefunds(params: Record<string, string | number>, signal?: AbortSignal): Promise<PageResult<RefundRow>> {
   if (previewMode) return { list: previewRefunds.map((item) => ({ ...item })), count: previewRefunds.length, page: 1, limit: 20 };
-  return apiRequest<PageResult<RefundRow>>({ method: "GET", url: "/refund/list", params });
+  return apiRequest<PageResult<RefundRow>>({ method: "GET", url: "/refund/list", params, signal });
 }
 
-export async function getRefundReasons(): Promise<string[]> {
+export async function getRefundReasons(signal?: AbortSignal): Promise<string[]> {
   if (previewMode) {
     return [...new Set(previewRefunds.map((item) => item.refund_reason).filter(Boolean))];
   }
-  return apiRequest<string[]>({ method: "GET", url: "/refund/reason" });
+  return apiRequest<string[]>({ method: "GET", url: "/refund/reason", signal });
 }
 
-export async function getRefundDetail(id: number): Promise<RefundDetail> {
+export async function getRefundDetail(id: number, signal?: AbortSignal): Promise<RefundDetail> {
   if (previewMode) {
-    const refund = previewRefunds.find((item) => item.id === id) ?? previewRefunds[0];
+    const refund = previewRefunds.find((item) => item.id === id);
+    if (!refund) throw Error('售后记录不存在');
     const order = previewOrders.find((item) => item.id === refund.store_order_id) ?? previewOrders[0];
-    return { ...refund, cartInfo: null, orderInfo: order };
+    return { ...refund, cartInfo: null, orderInfo: order, is_cancel: 0, refund_explain: '', refund_express: '',
+      refund_express_name: '', refund_phone: '', refund_goods_explain: '', returnImages: [], returnImagesError: '' };
   }
-  return apiRequest<RefundDetail>({ method: "GET", url: `/refund/detail/${id}` });
+  return parseSupplierRefundDetail(await apiRequest<unknown>({ method: "GET", url: `/refund/detail/${id}`, signal }), id);
 }
 
-export async function updateRefundRemark(id: number, remark: string) {
+export async function updateRefundRemark(id: number, remark: string, signal?: AbortSignal) {
   if (previewMode) {
     const row = previewRefunds.find((item) => item.id === id);
     if (row) row.remark = remark;
     return null;
   }
-  return apiRequest<null>({ method: "PUT", url: `/refund/remark/${id}`, data: { remark } });
+  return apiRequest<null>({ method: "PUT", url: `/refund/remark/${id}`, data: { remark }, signal });
 }
 
-export async function agreeRefundReturn(id: number) {
+export async function agreeRefundReturn(id: number, signal?: AbortSignal) {
   if (previewMode) {
     const row = previewRefunds.find((item) => item.id === id);
     if (row) row.refund_type = 4;
     return null;
   }
-  return apiRequest<null>({ method: "PUT", url: `/refund/agree/${id}` });
+  return apiRequest<null>({ method: "PUT", url: `/refund/agree/${id}`, signal });
 }
 
-export async function refuseRefund(id: number, refuseReason: string) {
+export async function refuseRefund(id: number, refuseReason: string, signal?: AbortSignal) {
   if (previewMode) {
     const row = previewRefunds.find((item) => item.id === id);
     if (row) { row.refund_type = 3; row.refuse_reason = refuseReason; }
     return null;
   }
-  return apiRequest<null>({ method: "PUT", url: `/refund/refuse/${id}`, data: { refuse_reason: refuseReason } });
+  return apiRequest<null>({ method: "PUT", url: `/refund/refuse/${id}`, data: { refuse_reason: refuseReason }, signal });
 }
 
-export async function refundOrder(id: number, refundPrice: string) {
+export async function refundOrder(id: number, refundPrice: string, signal?: AbortSignal) {
   if (previewMode) {
     const row = previewRefunds.find((item) => item.id === id);
     if (row?.pay_type === "yue") {
@@ -1293,6 +1298,7 @@ export async function refundOrder(id: number, refundPrice: string) {
     method: "PUT",
     url: `/refund/refund/${id}`,
     data: { type: 1, refund_price: refundPrice },
+    signal,
   });
 }
 

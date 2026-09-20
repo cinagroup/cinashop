@@ -1,8 +1,10 @@
 <template>
   <view class="cart-page">
-    <view v-if="cartStore.items.length" class="cart-list">
+    <view v-if="cartStore.loading" class="empty" role="status">正在读取购物车报价…</view>
+    <view v-else-if="cartStore.error" class="empty" role="alert"><view>{{ cartStore.error }}</view><button @tap="reload">重新读取购物车</button><button v-if="!auth.isLoggedIn" @tap="login">去登录</button></view>
+    <view v-else-if="cartStore.items.length" class="cart-list">
       <view class="cart-item" v-for="item in cartStore.items" :key="item.id">
-        <view class="check" :class="{ checked: item.checked }" @tap="toggle(item.id)">
+        <view class="check" :class="{ checked: item.checked }" :aria-disabled="blocked || !item.isValid" @tap="toggle(item.id)">
           <text v-if="item.checked">✓</text>
         </view>
         <image
@@ -12,13 +14,14 @@
           @tap="goDetail(item.productId)"
         />
         <view class="cart-info">
-          <view class="cart-name">{{ item.productInfo?.storeName }}</view>
+          <view class="cart-name">{{ item.productInfo?.storeName ?? '商品已失效' }}</view>
+          <view>{{ item.productInfo?.suk }}</view>
           <view class="cart-bottom">
-            <text class="cart-price">¥{{ item.productInfo?.price }}</text>
-            <view class="num-control">
-              <view class="num-btn" @tap="changeNum(item, -1)">-</view>
+            <view v-if="item.isValid"><text class="cart-price">¥{{ cartUnitPrice(item) }}</text><view class="price-label">{{ cartPriceLabel(item) }}</view></view><text v-else>已失效</text>
+            <view v-if="item.isValid" class="num-control">
+              <button class="num-btn" :disabled="blocked || item.cartNum <= 1" @tap="changeNum(item, -1)">-</button>
               <text class="num">{{ item.cartNum }}</text>
-              <view class="num-btn" @tap="changeNum(item, 1)">+</view>
+              <button class="num-btn" :disabled="blocked || item.cartNum >= Math.min(item.productInfo?.stock ?? 0, 32767)" @tap="changeNum(item, 1)">+</button>
             </view>
           </view>
         </view>
@@ -26,7 +29,8 @@
     </view>
     <view v-else class="empty">购物车是空的</view>
 
-    <view class="checkout-bar" v-if="cartStore.items.length">
+    <view v-if="cartStore.ready" class="estimate-note">商品预估金额，不含运费及其他优惠，以结算报价为准</view>
+    <view class="checkout-bar" v-if="cartStore.items.length && !cartStore.error && !cartStore.loading">
       <view class="check-all" @tap="toggleAll">
         <view class="check" :class="{ checked: allChecked }">
           <text v-if="allChecked">✓</text>
@@ -37,58 +41,63 @@
         <text class="total-label">合计: </text>
         <text class="total-price">¥{{ cartStore.totalPrice }}</text>
       </view>
-      <view class="checkout-btn" @tap="goCheckout">去结算</view>
+      <button class="checkout-btn" :disabled="blocked || !cartStore.checkedItems.length" @tap="goCheckout">去结算</button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
-import { onShow } from "@dcloudio/uni-app";
+import { computed, ref, watch } from "vue";
+import { onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { useCartStore } from "@/stores/cart";
-import { apiCartNum } from "@/api/order";
-import type { CartItem } from "@/types/order";
+import { useAuthStore } from '@/stores/auth';
+import { cartUnitPrice, cartPriceLabel, type CartDisplayItem } from '../../../../common/cartPrice';
 
 const cartStore = useCartStore();
+const auth = useAuthStore(), visible = ref(false);
+let disposed = false;
+const blocked = computed(() => !visible.value || !cartStore.ready || cartStore.loading || cartStore.updating);
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 
 const allChecked = computed(() =>
-  cartStore.items.length > 0 && cartStore.items.every((i) => i.checked),
+  cartStore.items.some(i => i.isValid) && cartStore.items.filter(i => i.isValid).every((i) => i.checked),
 );
 
 function toggle(id: number) {
+  if (blocked.value) return;
   const item = cartStore.items.find((i) => i.id === id);
   if (item) cartStore.toggleChecked(id, !item.checked);
 }
 
 function toggleAll() {
+  if (blocked.value) return;
   cartStore.toggleAll(!allChecked.value);
 }
 
-async function changeNum(item: CartItem, delta: number) {
-  const num = Math.max(1, item.cartNum + delta);
-  try {
-    await apiCartNum(item.id, num);
-    cartStore.fetchList();
-  } catch (e) {
-    uni.showToast({ title: "修改失败", icon: "none" });
-  }
+async function changeNum(item: CartDisplayItem, delta: number) {
+  if (blocked.value || !cartStore.items.includes(item)) return;
+  await cartStore.updateQuantity(item.id, item.cartNum + delta);
 }
 
 function goDetail(id: number) {
+  if (blocked.value || !cartStore.items.some(row => row.productId === id && row.isValid)) return;
   uni.navigateTo({ url: `/pages/goods/detail?id=${id}` });
 }
 
 function goCheckout() {
+  if (blocked.value) return;
   if (!cartStore.checkedItems.length) {
     return uni.showToast({ title: "请选择商品", icon: "none" });
   }
   uni.navigateTo({ url: "/pages/order/confirm" });
 }
 
-onShow(() => {
-  cartStore.fetchList();
-});
+async function reload() { if (visible.value && !disposed) await cartStore.fetchList().catch(() => {}); }
+function login() { if (visible.value && !disposed && !auth.isLoggedIn) uni.navigateTo({ url: '/pages/auth/login' }); }
+watch(() => auth.sessionVersion, () => { void Promise.resolve().then(reload); }, { flush: 'sync' });
+onShow(() => { visible.value = true; void reload(); });
+onHide(() => { visible.value = false; cartStore.cancelPending(); });
+onUnload(() => { disposed = true; visible.value = false; cartStore.cancelPending(); });
 </script>
 
 <style scoped>
@@ -164,6 +173,8 @@ onShow(() => {
 }
 
 .num-btn {
+  padding: 0;
+  margin: 0;
   width: 48rpx;
   height: 48rpx;
   border: 1rpx solid #ddd;
@@ -181,7 +192,7 @@ onShow(() => {
 
 .checkout-bar {
   position: fixed;
-  bottom: 0;
+  bottom: var(--window-bottom, 0px);
   left: 0;
   right: 0;
   background: #fff;
@@ -211,10 +222,14 @@ onShow(() => {
 }
 
 .checkout-btn {
+  line-height: 1.5;
+  margin: 0;
   background: #e93323;
   color: #fff;
   border-radius: 40rpx;
   padding: 16rpx 50rpx;
   font-size: 28rpx;
 }
+.price-label { color: #9b5717; font-size: 22rpx; }
+.estimate-note { color: #666; font-size: 22rpx; padding: 16rpx 0; }
 </style>

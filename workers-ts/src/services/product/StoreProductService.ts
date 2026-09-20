@@ -6,9 +6,11 @@
  */
 import type { Container } from "@/lib/di";
 import type { Env } from "@/env";
-import { cacheGet, cacheSet } from "@/utils/cache";
-import { NotFoundException } from "@/utils/errors";
+import { NotFoundException, ValidateException } from "@/utils/errors";
 import { UserLevelService } from "@/services/user/UserLevelService";
+import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPolicy";
+import { calculateMemberUnitPriceCents, isPaidMembershipActive } from "@/services/order/StoreOrderCreateService";
+import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
 import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import { UserBehaviorService } from "@/services/user/UserBehaviorService";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
@@ -237,11 +239,11 @@ export class StoreProductService {
     });
 
     // 3.5 取用户会员折扣 (列表级共享, 避免每行查询)
-    const { discount, levelName } = await this.getUserDiscount(_uid);
+    const { discount, levelName, paidMemberPriceEnabled } = await this.getUserDiscount(_uid);
 
     // 4. 后处理: getMinPrice / cart_button / video_link 清理
     for (const item of list) {
-      this.postProcessRow(item, discount, levelName);
+      this.postProcessRow(item, discount, levelName, paidMemberPriceEnabled);
     }
 
     // 5. 精确 count 与 PHP `{list,count}` 契约保持一致。
@@ -280,8 +282,8 @@ export class StoreProductService {
 
     const [page, limit] = this.getPageValue(params.page, params.limit);
     const list = await this.container.storeProductDao.getSearchList({ where, page, limit });
-    const { discount, levelName } = await this.getUserDiscount(uid);
-    for (const item of list) this.postProcessRow(item, discount, levelName);
+    const { discount, levelName, paidMemberPriceEnabled } = await this.getUserDiscount(uid);
+    for (const item of list) this.postProcessRow(item, discount, levelName, paidMemberPriceEnabled);
     return list;
   }
 
@@ -289,26 +291,48 @@ export class StoreProductService {
    * 取用户会员折扣 + 等级名 (对应 PHP getMinPrice 里查 level 的逻辑)
    * 一次列表查询共享, 避免每行重复查。
    */
-  private async getUserDiscount(uid: number): Promise<{ discount: number; levelName: string }> {
-    if (!uid) return { discount: 100, levelName: "" };
+  private async getUserDiscount(uid: number): Promise<{ discount: number; levelName: string; paidMemberPriceEnabled: boolean; paidMemberActive: boolean }> {
+    // One policy snapshot per list/detail, never per row and never from KV.
+    // Paid prices remain advertised offers, not proof of the visitor's eligibility.
+    const policy = await readMembershipPricingPolicy(this.container.db);
+    const fallback = { discount: 100, levelName: "", paidMemberPriceEnabled: policy.paidMemberPriceEnabled, paidMemberActive: false };
+    if (!uid) return fallback;
     const user = await this.container.userDao.findForAuth(uid);
-    if (!user || !user.level) return { discount: 100, levelName: "" };
+    fallback.paidMemberActive = Boolean(user && isPaidMembershipActive(user, Math.floor(Date.now() / 1000)));
+    // An assigned level alone does not activate its pricing entitlement.
+    if (!policy.memberFunctionEnabled || !user || user.levelStatus !== 1 || !user.level) return fallback;
     const levelSvc = new UserLevelService(this.container, this.env);
     const level = await levelSvc.getLevel(user.level);
-    if (!level) return { discount: 100, levelName: "" };
-    return { discount: level.discount, levelName: level.name };
+    if (!level) return fallback;
+    return { ...fallback, discount: level.discount, levelName: level.name };
+  }
+
+  /** Additive ordinary-SKU quote for the current visitor, not the advertised
+   * SVIP offer in vip_price. Reuse checkout arithmetic/eligibility; raw SKU price
+   * stays unchanged. Context is read once per response, never once per SKU.
+   */
+  private skuMemberPrice(price: string, vipPrice: string, isVip: number,
+    context: { discount: number; levelName: string; paidMemberPriceEnabled: boolean; paidMemberActive: boolean }) {
+    const quoted = calculateMemberUnitPriceCents({
+      basePriceCents: decimalToCents(price), levelDiscountPercent: context.discount,
+      paidMemberPriceCents: decimalToCents(vipPrice), paidMemberActive: context.paidMemberActive,
+      paidMemberPriceEnabled: context.paidMemberPriceEnabled, productPaidMemberPriceEnabled: isVip === 1,
+    });
+    return { member_price: centsToDecimal(quoted.unitPriceCents), price_type: quoted.priceType,
+      level_name: quoted.priceType === 'level' ? context.levelName : '' };
   }
 
   /**
    * 计算会员价 (精确移植 PHP getMinPrice)
    *
    * 逻辑:
-   *   - discount ∈ [0,100) → level_price = round(discount/100 * price, 2)
+   *   - discount ∈ [0,100) → PHP bcdiv(discount, 100, 2), then bcmul(price, ratio, 2)
    *   - is_vip=1 → vip_price = product.vip_price
    *   - 两者都有 → 取 min, 标记 price_type
    *   - 返回 { level_name, vip_price, price_type, level_price }
    *
-   * 精度: 用字符串运算 (对应 PHP bcmath), 避免浮点误差。
+   * 精度: both PHP operations truncate, never round. Integer cents avoid
+   * binary floating-point errors; zero display prices do not set checkout policy.
    */
   getMinPrice(
     price: string,
@@ -323,9 +347,16 @@ export class StoreProductService {
 
     // 等级价
     if (discount >= 0 && discount < 100) {
-      // round(discount/100 * price, 2) — 对应 bcmul(bcdiv(discount,'100',2), price, 2)
-      const ratio = (discount / 100).toFixed(2);
-      levelPrice = (Number(ratio) * Number(price)).toFixed(2);
+      const normalized = price.trim();
+      if (normalized.length > 32 || !/^\d+(?:\.\d{1,2})?$/.test(normalized)) {
+        throw new ValidateException("商品价格格式无效");
+      }
+      const [whole, fraction = ""] = normalized.split(".");
+      const cents = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
+      if (cents > BigInt(Number.MAX_SAFE_INTEGER)) throw new ValidateException("商品价格超出安全范围");
+      // bcdiv at scale 2 discards the fractional percent before multiplication.
+      const quotedCents = cents * BigInt(Math.trunc(discount)) / 100n;
+      levelPrice = `${quotedCents / 100n}.${String(quotedCents % 100n).padStart(2, "0")}`;
     }
 
     // svip 价
@@ -365,6 +396,7 @@ export class StoreProductService {
     item: Record<string, unknown>,
     discount: number,
     levelName: string,
+    paidMemberPriceEnabled: boolean,
   ): void {
     // video_open = 0 → video_link 清空
     if (!Number(item.video_open)) {
@@ -379,7 +411,7 @@ export class StoreProductService {
     // 会员价计算 (getMinPrice)
     const minPrice = this.getMinPrice(
       String(item.price ?? "0"),
-      Number(item.is_vip ?? 0),
+      paidMemberPriceEnabled ? Number(item.is_vip ?? 0) : 0,
       String(item.vip_price ?? "0"),
       discount,
       levelName,
@@ -477,6 +509,8 @@ export class StoreProductService {
         attr_value: values.map((value) => ({ attr: value, check: false })),
       };
     });
+    const pricing = await this.getUserDiscount(uid);
+    const { discount, levelName, paidMemberPriceEnabled } = pricing;
     const productValue = Object.fromEntries(skus.map((sku) => [sku.suk, {
       id: sku.id,
       product_id: sku.productId,
@@ -494,7 +528,8 @@ export class StoreProductService {
       cost: String(sku.cost),
       bar_code: sku.barCode,
       ot_price: String(sku.otPrice),
-      vip_price: String(sku.vipPrice),
+      vip_price: paidMemberPriceEnabled && product.isVip ? String(sku.vipPrice) : "0",
+      ...this.skuMemberPrice(String(sku.price), String(sku.vipPrice), product.isVip, pricing),
       weight: String(sku.weight),
       volume: String(sku.volume),
       brokerage: String(sku.brokerage),
@@ -515,10 +550,9 @@ export class StoreProductService {
     const skuPrices = skus.map((sku) => Number(sku.price)).filter(Number.isFinite);
     const minPrice = skuPrices.length > 0 ? Math.min(...skuPrices) : Number(product.price);
     const maxPrice = skuPrices.length > 0 ? Math.max(...skuPrices) : Number(product.price);
-    const { discount, levelName } = await this.getUserDiscount(uid);
     const quoted = this.getMinPrice(
       String(product.specType === 1 ? minPrice : product.price),
-      product.isVip,
+      paidMemberPriceEnabled ? product.isVip : 0,
       String(product.vipPrice),
       discount,
       levelName,
@@ -526,6 +560,9 @@ export class StoreProductService {
     storeInfo.min_price = minPrice;
     storeInfo.max_price = maxPrice;
     storeInfo.price_type = quoted.price_type;
+    storeInfo.vip_price = quoted.vip_price;
+    storeInfo.level_price = quoted.level_price;
+    storeInfo.level_name = quoted.level_name;
     return { storeInfo, productAttr, productValue };
   }
 
@@ -538,25 +575,17 @@ export class StoreProductService {
    *   - 轮播图 JSON 解码
    *   - 收藏/浏览计数
    *
-   * 缓存: Upstash 存 600s (对应 PHP getCacheProductInfo)
+   * Do not cache the assembled detail across requests: it contains current
+   * visibility, SKU stock/prices and user-level enrichment. Product writers do
+   * not share a complete invalidation protocol. Redis TTL is not a substitute
+   * for those checks; read the authoritative DAOs for each request instead.
    */
   async getProductDetail(id: number, uid: number, type = 0): Promise<Record<string, unknown>> {
+    if (!Number.isSafeInteger(id) || id <= 0) throw new NotFoundException("商品不存在");
     if (!Number.isSafeInteger(type) || type < 0 || type > 7) {
       throw new NotFoundException("商品类型不存在");
     }
-    // 1. 缓存
-    const cacheKey = type === 0 ? `product_info_${id}` : `product_info_${id}_${type}`;
-    const cached = await cacheGet<Record<string, unknown>>(cacheKey, this.env);
-    if (cached) {
-      const [ensure, userCollect] = await Promise.all([
-        new ProductExperienceService(this.container).productEnsures(id, cached.ensureId),
-        uid ? this.container.userRelationDao.be({
-          uid, relationId: id, type: "collect", category: "product",
-        }) : false,
-      ]);
-      return { ...cached, ensure, userCollect, userLike: 0, uid };
-    }
-
+    // Legacy product_info_* values are intentionally neither read nor refilled.
     // 2. 查商品
     const product = await this.container.storeProductDao.getById(id);
     if (!product) throw new NotFoundException("商品不存在");
@@ -596,17 +625,21 @@ export class StoreProductService {
     detail.otPrice = String(product.otPrice);
 
     // 5. 会员价计算 (getMinPrice)
-    const { discount, levelName } = await this.getUserDiscount(uid);
+    const pricing = await this.getUserDiscount(uid);
+    const { discount, levelName, paidMemberPriceEnabled } = pricing;
     const minPrice = this.getMinPrice(
       String(detail.price),
-      product.isVip,
+      paidMemberPriceEnabled ? product.isVip : 0,
       String(product.vipPrice),
       discount,
       levelName,
     );
     detail.price_type = minPrice.price_type;
     detail.level_name = minPrice.level_name;
-    detail.vipPrice = minPrice.price_type === "member" ? minPrice.vip_price : (product.isVip ? String(product.vipPrice) : "0");
+    // PHP merges the selected quote after loading base product data. A level
+    // winner must expose that selected price too, not the original SVIP price.
+    detail.vipPrice = minPrice.vip_price;
+    detail.level_price = minPrice.level_price;
 
     // 6. SKU 详情 (M3 完整接入; 这里先返回价格区间供前端用)
     detail.spec_type = product.specType;
@@ -619,7 +652,8 @@ export class StoreProductService {
       suk: s.suk || "默认",
       price: String(s.price),
       ot_price: String(s.otPrice ?? s.price),
-      vip_price: String(s.vipPrice ?? "0"),
+      vip_price: paidMemberPriceEnabled && product.isVip ? String(s.vipPrice ?? "0") : "0",
+      ...(type === 0 ? this.skuMemberPrice(String(s.price), String(s.vipPrice), product.isVip, pricing) : {}),
       stock: s.stock,
       sales: s.sales,
       image: s.image,
@@ -635,13 +669,6 @@ export class StoreProductService {
       uid, relationId: id, type: "collect", category: "product",
     }) : false;
 
-    // 7. 回填缓存 (注意: 缓存不含 userCollect 等用户态字段)
-    const cacheable = { ...detail };
-    delete cacheable.userCollect;
-    delete cacheable.userLike;
-    delete cacheable.uid;
-    delete cacheable.ensure;
-    await cacheSet(cacheKey, cacheable, this.env, 600);
     return detail;
   }
 
@@ -656,9 +683,12 @@ export class StoreProductService {
     }
   }
 
-  /** 失效商品缓存 (后台改商品时调用) */
+  /** Explicit legacy cleanup only; current detail reads do not depend on it. */
   async invalidateProductCache(id: number): Promise<void> {
+    if (!Number.isSafeInteger(id) || id <= 0) throw new NotFoundException("商品不存在");
     const { cacheDelete } = await import("@/utils/cache");
-    await cacheDelete(`product_info_${id}`, this.env);
+    await Promise.all(Array.from({ length: 8 }, (_, type) =>
+      cacheDelete(type === 0 ? `product_info_${id}` : `product_info_${id}_${type}`, this.env),
+    ));
   }
 }

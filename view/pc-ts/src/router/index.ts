@@ -33,6 +33,10 @@ const routes: RouteRecordRaw[] = [
       { path: "forgot-password", name: "forgot-password", component: () => import("@/pages/auth/ForgotPassword.vue"), meta: { title: "找回密码" } },
       // 用户中心
       { path: "user", name: "user", component: () => import("@/pages/user/UserCenter.vue") },
+      { path: "user/offline-pay", name: "offline-cashier", component: () => import("@/pages/order/OfflineCashier.vue"), meta: { title: "线下消费收银" } },
+      { path: "user/offline-result", name: "offline-result", component: () => import("@/pages/order/OfflineResult.vue"), meta: { title: "原消费支付结果" } },
+      { path: "user/refunds", name: "refund-list", component: () => import("@/pages/order/RefundList.vue"), meta: { title: "售后退款记录" } },
+      { path: "user/refunds/:id", name: "refund-detail", component: () => import("@/pages/order/RefundDetail.vue"), meta: { title: "退款详情" } },
       { path: "user/phone", name: "user-phone", component: () => import("@/pages/user/PhoneSettings.vue"), meta: { title: "手机号管理" } },
       { path: "user/address", name: "user-address", component: () => import("@/pages/user/AddressList.vue") },
       { path: "user/collect", name: "user-collect", component: () => import("@/pages/user/CollectList.vue") },

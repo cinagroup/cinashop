@@ -119,7 +119,10 @@ export interface AdminProduct {
 export interface AdminOrder {
   id: number;
   orderId: string;
+  pid: number;
   uid: number;
+  refundStatus: number;
+  refundType: number;
   realName: string;
   userPhone: string;
   totalNum: number;

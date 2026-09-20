@@ -9,6 +9,7 @@ import { BARGAIN_CART_PARTICIPATION_SQL } from "../src/migrations/bargainCartPar
 import { runBargainCartParticipation } from "../src/migrations/runBargainCartParticipation";
 import { financePostgres } from "./helpers/financePostgres";
 import { sequenceRunnerDatabase } from "./helpers/kefuSequenceRunnerDatabase";
+import { checkoutPricingMigrationDatabase } from './helpers/checkoutPricingMigrationDatabase';
 import { outcome, waitForFinanceBlock, withFinancePeers } from "./helpers/financePeers";
 
 const external = readFileSync("migrations/0149_bargain_cart_participation.sql", "utf8");
@@ -223,7 +224,7 @@ describe("0149 durable bargain cart binding schema", () => {
   // PGlite 18 has NOT NULL constraint rows and cannot prove that history.
   for (const path of ["external", "embedded", "orm"] as const) {
     it.skipIf(path !== "orm" && !process.env.TEST_FINANCE_POSTGRES_URL)(`accepts actual complete ${path} construction and repeated upgrade`, async () => {
-      const owned = await sequenceRunnerDatabase();
+      const owned = await (path === 'orm' ? sequenceRunnerDatabase() : checkoutPricingMigrationDatabase());
       try {
         if (path === "external") {
           for (const file of readdirSync("migrations").filter(name => /^\d{4}.*\.sql$/.test(name)).sort())

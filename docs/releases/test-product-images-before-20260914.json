@@ -1,0 +1,417 @@
+{
+  "capturedAt": "2026-09-14T06:52:05.222Z",
+  "mode": "inspect",
+  "rows": [
+    {
+      "id": 1,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "0d481e6c0c4b96d1afc2e504597a648a"
+    },
+    {
+      "id": 2,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "618be18363b35b40bd01c565e81ebcd7"
+    },
+    {
+      "id": 3,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "ffb78584ef60f2892f2b1428a5a6a2b8"
+    },
+    {
+      "id": 4,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "780e92d7da85fa3caad999d62f0eaecb"
+    },
+    {
+      "id": 8,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "9d6aea31ae24c323857ee2fc5495757f"
+    },
+    {
+      "id": 9,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "f8ce084d266751e29e736bdba4cf2c97"
+    },
+    {
+      "id": 10,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "ef3ceedf555911e73448a9ac07e27dd4"
+    },
+    {
+      "id": 11,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "6a1ad57ee8225843710b2572ed9be3f0"
+    },
+    {
+      "id": 12,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "4b13819572c9fdbbf9a30eac3d4e5daf"
+    },
+    {
+      "id": 13,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "f62dcbd3b83c536221d0aef1bbc404a7"
+    },
+    {
+      "id": 14,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "dd036956e1fbb0657605363131de88a7"
+    },
+    {
+      "id": 15,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "532d15b0e70244f19905eecd5eb6c9d6"
+    },
+    {
+      "id": 16,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "8a0594a91f2f60e98a789c705215c283"
+    },
+    {
+      "id": 17,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "1558de0e0b89f72c2a721d7c57a78617"
+    },
+    {
+      "id": 18,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "03d51997607c0c8c8887ddd82777ebab"
+    },
+    {
+      "id": 19,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "73f0615e2d733509f89b9426917e34b6"
+    },
+    {
+      "id": 20,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "8c89445b5e97ece392cb9f3ffdfec746"
+    },
+    {
+      "id": 21,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "d6a492145e2efe3fb11815f5d132a0aa"
+    },
+    {
+      "id": 22,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "781a075dfce8036f17496abef8259e8e"
+    },
+    {
+      "id": 23,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "328de3cbdbc5739bf781a4bc054c6143"
+    },
+    {
+      "id": 24,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "1ba52050c3a28938becd6c1269841aa2"
+    },
+    {
+      "id": 25,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "9711d1db35711d293ef32dbf137a7532"
+    },
+    {
+      "id": 26,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "68e558067d038bb01635cda4712791e7"
+    },
+    {
+      "id": 27,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "835e97c61218a68e72de69a4945555c3"
+    },
+    {
+      "id": 28,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "655b56120b71759ce8161091fc8ae741"
+    },
+    {
+      "id": 29,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "c32d93dfc7fed552d2a01fb9b33ce79d"
+    },
+    {
+      "id": 30,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "0bc9c761268767cec00a16fd6b0cc2e0"
+    },
+    {
+      "id": 31,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "30a1c507e434532d4335f84df708bb62"
+    },
+    {
+      "id": 32,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "d427ba2dbbd504ec1de87fbd4ec08dc7"
+    },
+    {
+      "id": 33,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "b86d9bf74018aadc03147b7b28a21674"
+    },
+    {
+      "id": 34,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "a281e85999c38b6200bf11ce386e1926"
+    },
+    {
+      "id": 35,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "e3f073716f829f9859493b2931f8fba4"
+    },
+    {
+      "id": 36,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "93f74358be457a023293fdd830c857b3"
+    },
+    {
+      "id": 37,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "d777df0be00bdc31d85237d783c8df8e"
+    },
+    {
+      "id": 38,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "cb685d6220899f90dc86474de71c1aa8"
+    },
+    {
+      "id": 39,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "37c24803bf8dcb91aedce42c49d14afd"
+    },
+    {
+      "id": 40,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "7d03de654598c94dae1408bc06ff00c2"
+    },
+    {
+      "id": 41,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "ee190ddee1cc9108f342fab199e74040"
+    },
+    {
+      "id": 42,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "fe766c4e99e36a58a51dd4c6e61a0ea5"
+    },
+    {
+      "id": 43,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "4e5017b8888c488fa16d9e4115281e63"
+    },
+    {
+      "id": 44,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "1253d00c8fe2876edad51a39b847d375"
+    },
+    {
+      "id": 45,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "e668417fe02f325800d7cb7976a5e71e"
+    },
+    {
+      "id": 46,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "178d1d2f017a63680e8c6ba09ff4dd6c"
+    },
+    {
+      "id": 47,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "2f76032fa6279da9c6d5d9222639f1f2"
+    },
+    {
+      "id": 48,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "6ab30000b44e128d92b64617d3caac98"
+    },
+    {
+      "id": 49,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "1ec778709c7feae25debd7d2afc6b344"
+    },
+    {
+      "id": 50,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "0abc7c41a496835cdad82e033ae9c9b9"
+    },
+    {
+      "id": 51,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "35d9e0f61c7cf9c5ab954ce10c408c62"
+    },
+    {
+      "id": 52,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "bea473c68f6dcd2a31e12ffcb5d64e95"
+    },
+    {
+      "id": 53,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "05d090d6e7f627d52598e728fbc04b69"
+    },
+    {
+      "id": 54,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "f127aa1f33341bb6ae716eac055fba59"
+    },
+    {
+      "id": 55,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "0bb6f398b5e80c6f15ab7e966eb9aa65"
+    },
+    {
+      "id": 56,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "b4e7dc072acf9d6e1c962a2a17de4c20"
+    },
+    {
+      "id": 57,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "d367ca312b3f43fd32adf7abbe1677a2"
+    },
+    {
+      "id": 58,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "6d7d035a0abe0941e47111d86a255683"
+    },
+    {
+      "id": 59,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "07bab6acd4d195b4afc2b71310459168"
+    },
+    {
+      "id": 60,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "d5ae363708c97e5d094515bf24bef9cb"
+    },
+    {
+      "id": 61,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "0648f10bdfd09390e9d696dac1c8ab17"
+    },
+    {
+      "id": 62,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "f396f202ad7043e28f45bea4e19b612c"
+    },
+    {
+      "id": 63,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "8300a141034b22de4447573db611678d"
+    },
+    {
+      "id": 64,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "82b28642dc15a4e2543a4d9efc994f45"
+    },
+    {
+      "id": 65,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "21c567ae1c5b13f836dd5274d6abc184"
+    },
+    {
+      "id": 66,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "1b01437f7fdd2e63f64f671d72eac758"
+    },
+    {
+      "id": 67,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "6b986c948488241f8846c25b791d4f41"
+    },
+    {
+      "id": 68,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "6757412de880681c0a0e51fb16915c2b"
+    },
+    {
+      "id": 69,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "e54852b42f884a7e1ab952b9634c2cb6"
+    },
+    {
+      "id": 70,
+      "store_name": "测试商品A",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "37118a48c1c91330bff511d0659a3fee"
+    },
+    {
+      "id": 71,
+      "store_name": "会员专享商品B",
+      "image": "https://via.placeholder.com/300",
+      "other_hash": "635e6b8b2d4b96fc4025dfe6187c0080"
+    }
+  ],
+  "fingerprint": "2272802566d572cbabc920f343915dbe4c8bf41f9d59fee26007bbb2457ece8a",
+  "imageUpdateTriggers": [],
+  "rules": []
+}

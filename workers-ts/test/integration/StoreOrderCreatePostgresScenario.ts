@@ -42,6 +42,8 @@ import {
 import { grantPaidOrderProductCoupons } from "@/services/activity/ProductCouponService";
 import { LegacyOrderCompatibilityService } from "@/services/order/LegacyOrderCompatibilityService";
 import { MigrationService } from "@/services/MigrationService";
+import { installCheckoutPricingLock } from "@/migrations/checkoutPricingLock";
+import { pricingIdentifier } from "@/migrations/checkoutPricingLockCatalog";
 
 const CLONED_TABLES = [
   "user",
@@ -1528,7 +1530,12 @@ async function runPricingAndRewardPolicy(
 
 export async function runStoreOrderCreatePostgresScenario(
   connectionString: string,
+  pricingOwner?: string,
 ): Promise<StoreOrderCreatePostgresReport> {
+  // Maintenance callers must explicitly supply a separate pre-provisioned
+  // NOLOGIN owner for this clone. Never create roles or reuse public's lock.
+  if (!pricingOwner) throw Error("Order scenario requires an explicit clone pricing owner");
+  pricingIdentifier(pricingOwner);
   const schemaName = makeSchemaName();
   const schemaIdentifier = identifier(schemaName);
   const adminDb = createDbFromConnectionString(connectionString, 1);
@@ -1580,6 +1587,7 @@ export async function runStoreOrderCreatePostgresScenario(
       );
     });
     created = true;
+    await installCheckoutPricingLock(adminDb, pricingOwner, schemaName);
 
     const random = new Uint32Array(1);
     crypto.getRandomValues(random);

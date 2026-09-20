@@ -7,8 +7,12 @@ import { createRouter, createMemoryHistory, RouterView } from 'vue-router';
 const script='/src/pages/order/Checkout.shipping-test.ts';
 export function checkoutShippingPlugin(root) {
  const id=root.replaceAll('\\','/').replace(/\/$/,'')+script;
- return {name:'actual-checkout-shipping',resolveId(value){if(value===script)return id;},async load(value){if(value!==id)return;
-  const filename=root+'/src/pages/order/Checkout.vue';return compileScript(parse(await readFile(filename,'utf8'),{filename}).descriptor,{id:'shipping-checkout'}).content;}};
+ return {name:'actual-checkout-shipping',resolveId(value){if(value===script)return id;},async load(value){
+  if(value==='/@test/checkout-messages')return 'export const ElMessage={error:()=>{},success:()=>{}};';
+  if(value!==id)return;
+  // Only toast DOM I/O is substituted; actual page, journal, Axios and router run unchanged.
+  const filename=root+'/src/pages/order/Checkout.vue';return compileScript(parse(await readFile(filename,'utf8'),{filename}).descriptor,{id:'shipping-checkout'}).content
+   .replace(/from (["'])element-plus\1/g,'from "/@test/checkout-messages"');}};
 }
 const renderer=createRenderer({createElement:()=>({children:[]}),createText:text=>({text}),createComment:text=>({text}),
  insert(node,parent){node.parent=parent;(parent.children??=[]).push(node);},remove(node){if(node.parent)node.parent.children=node.parent.children.filter(x=>x!==node);},parentNode:node=>node.parent,nextSibling:()=>null,patchProp(){},setText(){},setElementText(){}});

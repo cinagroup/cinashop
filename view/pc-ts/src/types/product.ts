@@ -1,3 +1,5 @@
+import type { SkuMembershipPrice } from "../../../common/skuMembershipPrice";
+
 /**
  * 商品相关类型
  * 与后端 src/models/schema/product.ts 对齐
@@ -45,7 +47,7 @@ export interface GoodsItem {
 }
 
 /** PC view model, normalized by api/productDetail.ts (not the raw wire response). */
-export interface GoodsSku {
+export interface GoodsSku extends SkuMembershipPrice {
   unique: string;
   suk: string;
   price: string;

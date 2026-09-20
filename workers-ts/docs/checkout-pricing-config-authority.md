@@ -1,5 +1,77 @@
 # 结算计价配置的 SQL 权威来源
 
+## 最新：营销克隆与审计维护入口（2026-09-20，本地未部署）
+
+首单/套餐旧场景已补齐本地依赖、移除public回退、重绑全部serial序列，并显式安装独立NOLOGIN所有者的固定锁能力。四个审计Worker在鉴权后要求X-Audit-Pricing-Owner，缺失/不安全标识在SQL前拒绝，不供应角色或放宽权限。原生PG16三类建单及安装拒绝11项、Node相关133项通过，共144项不同定向用例；完整本地workerd16文件289项及双类型通过，保留所有初始失败及Windows运行库修复记录。详见[场景接线与真实证明范围](checkout-pricing-scenario-integration.md)及[终态证据](../audit/checkout-pricing-scenario-integration-20260920.json)。
+
+下文未接入上述场景/入口的表述为历史状态；真实远程维护执行、完整当前单元/不可变CI、真实客户/Hyperdrive/维护身份、完整权限组合和协调发布仍开放，A3k11d不关闭。无生产访问、暂存提交推送部署，原九暂存保持。
+
+## 此前：普通建单固定锁接线（2026-09-20，本地未部署）
+
+普通建单末端保护已切换到同schema的受审计固定锁能力，先核验实际表解析来源和READ COMMITTED，缺失/漂移时失败关闭，无直接LOCK、配置DML或自动安装回退。完整277表、独立真实LOGIN仅持两张计价表SELECT及精确函数EXECUTE即可建单和幂等重放，直接锁表/更新仍拒绝；两表已有写方、提交/回滚交错、维护竞争、临时schema遮蔽及实际确认/创建控制器均有新证据。客户控制器的uid/KV/订单号仍为本地夹具，不冒充真实客户身份或Hyperdrive。
+
+本轮17文件555项不同定向测试和双Worker类型检查通过；包括完整普通建单克隆schema显式安装与原并发/营销断言。首轮业务红测及91项夹具地址比较失败均保留，修复不放宽断言，阶段重跑不重复累计。8个自建集群已独立确认停止且无运行残留，原九暂存保持，无生产访问、提交推送或部署。详见[服务接线与验证边界](checkout-pricing-service-integration.md)和[本轮终态证据](../audit/checkout-pricing-service-integration-20260920.json)。
+
+FE-003L-A3k11d仍开放：首单/套餐克隆场景、旧远程审计Worker维护参数、当前完整回归/workerd/不可变CI、真实客户/Hyperdrive/维护身份、完整商城权限组合、负载与协调发布尚未全部验收。下文“普通建单仍直接LOCK”等均为此前阶段状态，由本节覆盖；旧报告不作为当前全量证据。
+
+## 此前：编号迁移与九条建库路径（2026-09-20，本地未部署）
+
+固定锁能力现已注册为外部 SQL 0160、内嵌根迁移 0166，与显式安装器复用同一安装定义；角色必须预建，实际维护连接必须明确指定 NOLOGIN 所有者，不自动创建角色或向业务登录加权。真实 PG16 九条完整建库/升级路径通过：外部162文件、内嵌167步及七条ORM路径均为277表，五类目录零差异；每条路径验证完整锁协议、既有对象身份和重复执行不变。七条 ORM 路径需要显式安装，不能将仅生成 ORM 表结构称为协议就绪。
+
+详见[安装与注册合同](checkout-pricing-lock-registration.md)和[本轮测试、失败与清理记录](../audit/checkout-pricing-lock-registration-20260920.json)。下面“编号迁移尚未接入”等表述仅是此前阶段记录；本轮完成其本地注册/建库子步骤。普通建单仍直接 LOCK，SELECT-only 的42501尚在；正式角色/连接供应、服务切换、真实HTTP/workerd、完整当前CI、其它协议/完整商城权限组合、负载与协调发布仍开放，A3k11d不关闭。
+
+## 同日后续：实际连接权限预检接线（2026-09-20，本地候选，未部署）
+
+`auditPaidOrderRuntimePermissions` 现已复用固定锁组件的完整目录和实际连接校验，只有该校验全部通过的精确函数OID可豁免原有“拒绝可执行用户SECURITY DEFINER”检查；不是按函数名、前缀或所有者放行。其它函数和跨schema同名函数仍拒绝。角色权限检查统一保守递归展开全部成员关系，包括禁用和混合INHERIT/SET路径。
+
+新增 `auditCheckoutRuntimePermissions`，将已付订单保护与计价锁能力要求放在同一只读REPEATABLE READ事务中。CLI显式 `--checkout` 调用它；协议缺失、定义/所有者/ACL/RLS漂移、缺SELECT/EXECUTE或配置写权限泄露均不就绪。预检不执行锁函数、DDL或GRANT，不返回身份/URL/对象OID。默认CLI和临时Hyperdrive `/audit` 仍只声称原paid-order范围，不可冒充结算或整套商城授权通过。详见[两种权限范围](paid-order-runtime-permissions.md)。
+
+本轮同时补充非超级用户维护身份测试：只允许具备显式目标对象控制权和NOLOGIN所有者角色分配权的独立维护LOGIN安装；未经授权的维护LOGIN必须原子失败。维护身份不能被认证为业务身份。此证明仍使用本机随机角色，不代表生产维护账号已有所需权限。
+
+普通结算 `protectCheckoutPricingSources` **仍直接LOCK**，原SELECT-only路径42501尚未消除。正式角色供应、编号迁移/全部建库路径、服务切换、真实HTTP/workerd/当前全量CI、其它领域锁函数和完整商城身份组合、负载及协调发布仍开放。上述预检接线仅覆盖前一节列出的权限预检子步骤，不据此关闭A3k11d。后续正式集成不得依赖加配置DML或直接LOCK回退。
+
+最终真实PG16联合两文件76项通过（40项权限/CLI、36项锁协议，session99418，228.31秒），含非超级用户维护身份安装/重装及权限不足回滚；运行器59项和现有审计Worker模拟处理器29项回归通过，两套Worker类型检查退出0，共164项不同用例。首轮74项重跑不累加；Node回归两次因错误配置/项目参数启动失败，改用仓库实际默认配置后88项通过，没有放宽断言。七个选定源文件在最终PG启动前与结束后SHA-256相同，不声称全仓/依赖冻结。两个随机集群均fixtures remaining=0并停止，独立核验无PID/临时口令/监听/自有进程残留，诊断目录保留。详见[终态证据](../audit/checkout-pricing-runtime-preflight-20260920.json)。PostgreSQL/Workers技能要求固定能力例外、独立登录证明和只读审计边界，本轮未更改绑定、前端或生产资源；原九暂存保持，无暂存提交推送部署。
+
+## 固定锁能力协议增量（2026-09-20，本地候选，尚未接入普通结算）
+
+新增 `src/migrations/checkoutPricingLock.ts`，将旧隔离探针推进为可复用的显式安装器、目录校验、实际连接权限预检和事务内取锁组件。**`CheckoutPricingSources.protectCheckoutPricingSources` 仍直接 LOCK；真实 SELECT-only LOGIN 的旧路径仍报42501。** 本节不声明应用权限问题已修复，也不关闭 FE-003L-A3k11d。
+
+### 协议和权限边界
+
+- `checkout_lock_pricing_v1()` 零参数、固定 schema 限定的两表 SHARE NOWAIT 锁、固定 `pg_catalog, pg_temp` 搜索路径；只允许 READ COMMITTED，没有动态 SQL 或业务 DML。
+- 所有者必须显式预建为独立受限 NOLOGIN 角色；组件不创建角色或口令，不给业务登录授予配置写权限。安装器事务内短暂授予所有者 schema CREATE，创建后撤销，PUBLIC EXECUTE 同事务撤销；业务 EXECUTE 仍须另行明确授权。
+- 安装采用专用事务级排他 advisory gate 与两表 ACCESS EXCLUSIVE NOWAIT；业务组件使用共享 gate，并在取锁前复核协议。保留调用方更严格的 statement/lock/idle 超时；拒绝非 PG16、非 origin、启用中的 DDL event trigger，以及关系/函数漂移。同定义重装保持 OID、所有权和 ACL，既有漂移不自动覆盖或“修复”，失败整体回滚。
+- 目录核验函数正文、语言、参数、返回值、执行属性、固定搜索路径、ACL/GRANT OPTION、所有者属性及关系类型、RLS、继承和规则。拒绝所有者的额外业务表写权限、管理能力、成员关系和现存登录连接。NOLOGIN 不终止旧连接，因此测试所有者直接创建为 NOLOGIN；另以真实存量连接证明“先登录再设 NOLOGIN”不能通过。
+- 独立预检检查实际 current_user/session_user/后端登录和保守展开的全部角色成员路径，不把 SET ROLE 当作低权限证明；要求两表 SELECT 和精确函数 EXECUTE，拒绝配置表/列 DML、所有者可达、委派执行权及其它可执行用户 SECURITY DEFINER 函数。
+- 这是两表锁能力的窄合同，不认证全部列定义或完整应用权限。既有 paid-order 权限审计仍保守拒绝可执行用户 SECURITY DEFINER，尚未接入特定协议例外；没有全局豁免。advisory gate 只协调遵循协议的维护操作，不能约束绕开协议的受信维护者改写对象。表锁仍影响两表全部写入，负载影响未验收。
+
+### 本机真实 PG16 验证
+
+新增 `test/checkout-pricing-lock.test.ts`，每例使用当前完整277表 ORM DDL、独立随机测试数据库和真实受限 LOGIN，而非 SET ROLE 模拟业务身份。最终 **34/34** 通过（session56011，159.39秒），覆盖旧42501对照、新能力成功、数据不变、越权SQL拒绝、未授权登录、autocommit/隔离级别拒绝、临时表遮蔽、两表写方在提交/回滚前真实阻塞、已有写方 NOWAIT 失败、定义/ACL/RLS漂移、所有者与调用者权限扩张、维护竞争/原子回滚和存量所有者连接。
+
+运行器显式维护用例白名单新增此测试，不放宽到任意文件；`test/local-finance-postgres-runner.test.ts` **58/58** 通过。Worker 主配置和 `tsconfig.runtime-test.json` 两套类型检查退出0。两套最终测试共92项不同用例；之前24项、32项阶段重跑不累加。
+
+失败记录保留：首轮23项为4通过/19失败，夹具误将 DbClient 传给要求 Container 的 withTx，观察连接参数也不匹配；相应类型检查报9处错误。改用既有 `createContainerFromDb` 与 observer.db 后24项通过，扩大权限和维护边界后32项通过，再新增两个存量连接负例得最终34项。修正未放宽业务或权限断言；首轮运行期间曾编辑测试文件，不宣称该轮源码冻结。最终只记录结束后完整 SHA-256，不把被控制台截断的启动前哈希当作完整冻结证据。
+
+复现入口：
+
+```text
+node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/checkout-pricing-lock.test.ts
+```
+
+本轮四个自建集群 `74aIab`、`6XWls2`、`RoAgWc`、`iTb2Ij` 均报告 fixtures remaining=0 并停止。独立只读核验四处 pg_ctl status 均退出3、无 postmaster.pid/bootstrap-password，59080/60611/59401/60994无监听，自有postgres进程0；诊断目录保留。未访问生产数据库、修改生产授权或发布；原九项暂存保持。
+
+### 仍须接入，不能据此关项
+
+1. 为正式维护身份/NOLOGIN 所有者制定明确供应与权限边界，并将精确协议纳入编号迁移、完整 ORM/各建库升级路径；验证非超级用户维护路径，不能直接假定测试 superuser 安装权限等同生产。
+2. 接入普通建单末端保护与既有 paid-order 运行权限预检，只有通过精确协议校验的函数可以成为特例；不得保留直接 LOCK 或放宽配置 DML 作为兜底。
+3. 更新相关夹具并复跑真实 HTTP、完整 ORM、独立业务身份/并发、workerd和完整当前代码回归；现有简化/PGlite测试不得冒充PG16权限证明。
+4. 验证维护/管理写端与负载竞争，完成不可变 Linux CI、正式身份/存储和协调发布。当前没有新的全量CI或部署证据。
+
+PostgreSQL/Workers技能促使将锁能力和业务写权限分离、固定搜索路径、使用失败关闭目录校验与真实独立连接验证；本轮不改变运行时绑定或前端，因此未重复此前浏览器验收。
+
+## 历史阶段证据（2026-09-10）
+
 终态补充（2026-09-10）：完整单元 90502 已退出 0，371 文件／4287 项全部通过，零失败／跳过／todo，选定源码启动前与结束后哈希一致，详见 admin-config-batch-authority-20260910.json。以下全量运行描述是历史阶段；只读角色直接 LOCK 的 42501 缺口、workerd／自身 CI／正式发布验收仍开放。后续 shop 白名单测试不计入这份冻结全量报告；域名绑定和 PC 预览不等于计价服务上线。
 
 2026-09-10；FE-003L-A3k11c/d 的工作区候选，完整迁移与发布验收尚未完成。旧PHP历史数据继承不适用；本次没有生产写入、部署、提交或推送。
@@ -35,7 +107,7 @@
 
 ## 仍开放的要求
 
-### 只读运行身份的锁能力可行性（未接入）
+### 只读运行身份的锁能力可行性（历史探针，后续协议组件见上）
 
 另一个隔离PG探针现证明：不授予结算登录配置写权限，也可以借助零参数、固定关系的SECURITY DEFINER函数取得原有两表SHARE NOWAIT锁。函数所有者是无登录、无管理属性、非表／schema所有者的独立角色；函数内只有隔离级别检查和固定SQL锁定，没有动态SQL或业务DML。安装时同事务撤销PUBLIC执行权，仅向测试结算角色授予EXECUTE；固定search_path并对关系完全限定。此设计遵循[PostgreSQL安全函数要求](https://www.postgresql.org/docs/16/sql-createfunction.html#SQL-CREATEFUNCTION-SECURITY)。
 

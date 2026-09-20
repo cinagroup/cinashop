@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, or, sql } from "drizzle-orm";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
 import {
@@ -17,6 +17,15 @@ import {
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDeliveryPolicy";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
+import { reserveOrderCartRowIds } from "@/services/order/OrderCartIdentity";
+import { planOrderFinancialSplit } from "@/services/order/OrderSplitFinance";
+import { splitSupplierPendingPayment } from "@/services/supplier/SupplierSplitFinance";
+import { SupplierSplitOrderReadService } from "@/services/supplier/SupplierSplitOrderReadService";
+import { SupplierOperationalReadService } from "@/services/supplier/SupplierOperationalReadService";
+import { captureReturnedPointBills, loadRefundOrderGeneration } from "@/services/order/RefundOrderGeneration";
+import { persistRefundFulfillmentBranches } from "@/services/order/RefundFulfillmentBranch";
+import { prepareSplitInvoice, materializeSplitInvoice } from "@/services/order/SplitInvoiceAllocation";
+import type { RefundWriteoffState } from "@/services/order/RefundSplitAllocation";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 export type SupplierDeliveryType = "express" | "send" | "fictitious";
@@ -348,38 +357,23 @@ function splitSnapshot(
   return [JSON.stringify(selected), JSON.stringify(remaining)];
 }
 
-function cartDisplay(row: CartRow) {
-  const snapshot = parseSnapshot(row.cartInfo);
-  const product = nestedRecord(snapshot?.product);
-  const productInfo = nestedRecord(snapshot?.productInfo);
-  const sku = nestedRecord(snapshot?.sku);
-  const attrInfo = nestedRecord(productInfo?.attrInfo);
-  return {
-    id: row.id,
-    cart_id: row.cartId,
-    product_id: row.productId,
-    sku_unique: row.skuUnique,
-    cart_num: row.cartNum,
-    refund_num: row.refundNum,
-    surplus_num: row.splitSurplusNum,
-    product_name: String(product?.storeName ?? productInfo?.store_name ?? "商品快照"),
-    image: String(product?.image ?? productInfo?.image ?? ""),
-    sku: String(sku?.suk ?? attrInfo?.suk ?? row.skuUnique),
-    cart_info: snapshot,
-  };
-}
-
 function cloneCart(
   row: CartRow,
+  rowId: number,
   oid: number,
   cartId: string,
   cartNum: number,
   cartInfo: string | null,
   delivered: boolean,
+  writeoff?: RefundWriteoffState,
 ): CartInsert {
   const { id: _id, ...base } = row;
+  const snapshot = parseSnapshot(cartInfo);
+  if (snapshot) snapshot.id = cartId;
   return {
     ...base,
+    ...writeoff,
+    id: rowId,
     oid,
     cartId,
     oldCartId: row.oldCartId || row.cartId,
@@ -388,7 +382,7 @@ function cloneCart(
     surplusNum: cartNum,
     splitSurplusNum: delivered ? 0 : cartNum,
     splitStatus: delivered ? 2 : 0,
-    cartInfo,
+    cartInfo: snapshot ? JSON.stringify(snapshot) : cartInfo,
     unique: randomKey(),
   };
 }
@@ -586,6 +580,15 @@ async function assertPresaleEnded(tx: SupplierTx, order: OrderRow): Promise<void
   }
 }
 
+// Supplier allocation keeps the payment/audit root platform-owned. Access via
+// an explicitly scoped child may lock that completed allocation root, but this
+// never grants direct root access or access to another supplier's children.
+function fulfillmentRootScope(supplierId: number, requestedId: number, rootId: number, requestedStoreId: number) {
+  return or(and(eq(storeOrder.supplierId, supplierId), eq(storeOrder.storeId, requestedStoreId)), requestedId !== rootId
+    ? and(eq(storeOrder.supplierId, 0), eq(storeOrder.pid, -1), eq(storeOrder.supplierAllocationStatus, 2))
+    : undefined);
+}
+
 async function resolveLockedOrder(
   tx: SupplierTx,
   supplierId: number,
@@ -598,6 +601,7 @@ async function resolveLockedOrder(
       id: storeOrder.id,
       pid: storeOrder.pid,
       uid: storeOrder.uid,
+      storeId: storeOrder.storeId,
       supplierId: storeOrder.supplierId,
     })
     .from(storeOrder)
@@ -628,7 +632,8 @@ async function resolveLockedOrder(
     .where(
       and(
         eq(storeOrder.id, rootId),
-        eq(storeOrder.supplierId, supplierId),
+        fulfillmentRootScope(supplierId, reference.id, rootId, reference.storeId),
+        eq(storeOrder.uid, reference.uid),
         eq(storeOrder.isSystemDel, 0),
         storeScope(expectedStoreId),
       ),
@@ -645,7 +650,11 @@ async function resolveLockedOrder(
         and(
           eq(storeOrder.id, reference.id),
           eq(storeOrder.pid, root.id),
+          eq(storeOrder.uid, reference.uid),
           eq(storeOrder.supplierId, supplierId),
+          // Revalidate the initially authorized child after waiting for the
+          // root lock; a concurrent store reassignment cannot inherit access.
+          eq(storeOrder.storeId, reference.storeId),
           eq(storeOrder.isSystemDel, 0),
           storeScope(expectedStoreId),
         ),
@@ -664,7 +673,11 @@ async function resolveLockedOrder(
       and(
         eq(storeOrder.pid, root.id),
         eq(storeOrder.supplierId, supplierId),
+        eq(storeOrder.uid, root.uid),
+        eq(storeOrder.storeId, root.storeId),
         eq(storeOrder.status, 0),
+        // Completed refund children retain status=0 but cannot be shipped.
+        sql`${storeOrder.refundStatus} <> 2`,
         eq(storeOrder.isDel, 0),
         eq(storeOrder.isSystemDel, 0),
         storeScope(expectedStoreId),
@@ -758,63 +771,6 @@ async function applyDelivery(
   }, now);
 }
 
-async function readableOrder(
-  container: Container,
-  supplierId: number,
-  requestedOrderId: number,
-): Promise<{ root: OrderRow; active: OrderRow | null }> {
-  const references = await container.db
-    .select()
-    .from(storeOrder)
-    .where(
-      and(
-        eq(storeOrder.id, requestedOrderId),
-        eq(storeOrder.supplierId, supplierId),
-        eq(storeOrder.isSystemDel, 0),
-      ),
-    )
-    .limit(1);
-  const reference = references[0];
-  if (!reference) throw new NotFoundException("订单不存在或不属于当前供应商");
-  const rootId = reference.pid > 0 ? reference.pid : reference.id;
-  const roots =
-    rootId === reference.id
-      ? [reference]
-      : await container.db
-          .select()
-          .from(storeOrder)
-          .where(
-            and(
-              eq(storeOrder.id, rootId),
-              eq(storeOrder.supplierId, supplierId),
-              eq(storeOrder.isSystemDel, 0),
-            ),
-          )
-          .limit(1);
-  const root = roots[0];
-  if (!root) throw new NotFoundException("主订单不存在或不属于当前供应商");
-  if (reference.id !== root.id) {
-    return { root, active: reference.status === 0 ? reference : null };
-  }
-  if (root.pid !== -1) return { root, active: root.status === 0 ? root : null };
-  const pending = await container.db
-    .select()
-    .from(storeOrder)
-    .where(
-      and(
-        eq(storeOrder.pid, root.id),
-        eq(storeOrder.supplierId, supplierId),
-        eq(storeOrder.status, 0),
-        eq(storeOrder.isDel, 0),
-        eq(storeOrder.isSystemDel, 0),
-      ),
-    )
-    .orderBy(asc(storeOrder.id))
-    .limit(2);
-  if (pending.length > 1) throw new ValidateException("订单存在多个待发货子单，请先完成数据核对");
-  return { root, active: pending[0] ?? null };
-}
-
 export class SupplierFulfillmentService {
   constructor(
     private readonly container: Container,
@@ -877,65 +833,11 @@ export class SupplierFulfillmentService {
   }
 
   async splitCartInfo(supplierId: number, orderId: number) {
-    const { active } = await readableOrder(this.container, supplierId, orderId);
-    if (!active) return [];
-    assertDeliverable(active);
-    const rows = await this.container.db
-      .select()
-      .from(storeOrderCartInfo)
-      .where(
-        and(
-          eq(storeOrderCartInfo.oid, active.id),
-          sql`${storeOrderCartInfo.splitStatus} IN (0, 1)`,
-          sql`${storeOrderCartInfo.splitSurplusNum} > 0`,
-        ),
-      )
-      .orderBy(asc(storeOrderCartInfo.id));
-    return rows.map(cartDisplay);
+    return new SupplierOperationalReadService(this.container).splitCartInfo(supplierId, orderId);
   }
 
   async splitOrders(supplierId: number, orderId: number) {
-    const { root } = await readableOrder(this.container, supplierId, orderId);
-    const children = await this.container.db
-      .select()
-      .from(storeOrder)
-      .where(
-        and(
-          eq(storeOrder.pid, root.id),
-          eq(storeOrder.supplierId, supplierId),
-          eq(storeOrder.isSystemDel, 0),
-        ),
-      )
-      .orderBy(asc(storeOrder.id));
-    const orders = children.length > 0 ? children : [root];
-    const cartRows = await this.container.db
-      .select()
-      .from(storeOrderCartInfo)
-      .where(inArray(storeOrderCartInfo.oid, orders.map((order) => order.id)))
-      .orderBy(asc(storeOrderCartInfo.id));
-    const cartsByOrder = new Map<number, ReturnType<typeof cartDisplay>[]>();
-    for (const cart of cartRows) {
-      const list = cartsByOrder.get(cart.oid) ?? [];
-      list.push(cartDisplay(cart));
-      cartsByOrder.set(cart.oid, list);
-    }
-    return orders.map((order) => ({
-      id: order.id,
-      pid: order.pid,
-      order_id: order.orderId,
-      total_num: order.totalNum,
-      pay_price: order.payPrice,
-      paid: order.paid,
-      status: order.status,
-      refund_status: order.refundStatus,
-      product_type: order.productType,
-      delivery_type: order.deliveryType,
-      delivery_name: order.deliveryName,
-      delivery_code: order.deliveryCode,
-      delivery_id: order.deliveryId,
-      fictitious_content: order.fictitiousContent,
-      cart_info: cartsByOrder.get(order.id) ?? [],
-    }));
+    return new SupplierSplitOrderReadService(this.container).read(supplierId, orderId);
   }
 
   async splitDelivery(
@@ -987,6 +889,10 @@ export class SupplierFulfillmentService {
         availableByCartId.set(cart.cartId, cart);
       }
       const selectedByCartId = new Map(selectedCarts.map((cart) => [cart.cartId, cart.cartNum]));
+      if (!selectedCarts.length || selectedCarts.length > 200 || selectedByCartId.size !== selectedCarts.length
+        || selectedCarts.some(cart => !Number.isSafeInteger(cart.cartNum) || cart.cartNum <= 0)) {
+        throw new ValidateException("发货商品数量或标识无效");
+      }
       for (const selected of selectedCarts) {
         const cart = availableByCartId.get(selected.cartId);
         if (!cart) throw new ValidateException("所选商品已拆分，请刷新后重试");
@@ -997,6 +903,10 @@ export class SupplierFulfillmentService {
 
       const totalQuantity = available.reduce((sum, cart) => sum + cart.splitSurplusNum, 0);
       const selectedQuantity = selectedCarts.reduce((sum, cart) => sum + cart.cartNum, 0);
+      // All original rows are locked. Versioned evidence must reconcile before
+      // any child/notice write; it cannot fall back to merchandise weighting.
+      const generation = await loadRefundOrderGeneration(tx, active, cartRows);
+      const financialPlan = planOrderFinancialSplit(active, cartRows, selectedByCartId);
       if (selectedQuantity >= totalQuantity) {
         await applyDelivery(
           tx,
@@ -1027,7 +937,9 @@ export class SupplierFulfillmentService {
         totalWeight += weight * BigInt(cart.splitSurplusNum);
         selectedWeight += weight * BigInt(selectedByCartId.get(cart.cartId) ?? 0);
       }
-      const amounts = allocateSplitOrderAmounts(active, selectedWeight, totalWeight);
+      const legacyAmounts = allocateSplitOrderAmounts(active, selectedWeight, totalWeight);
+      const amounts = { selected: { ...legacyAmounts.selected, ...financialPlan?.selected },
+        remaining: { ...legacyAmounts.remaining, ...financialPlan?.remaining } };
 
       const existingChildren = await tx
         .select({ id: storeOrder.id, orderId: storeOrder.orderId })
@@ -1036,6 +948,7 @@ export class SupplierFulfillmentService {
         .orderBy(asc(storeOrder.id))
         .for("update");
       const firstSplit = root.id === active.id && root.pid === 0;
+      const invoice = await prepareSplitInvoice(tx, active);
       const [selectedOrderId, remainingOrderId] = reserveChildOrderIds(
         root.orderId,
         existingChildren.map((child) => child.orderId),
@@ -1049,40 +962,58 @@ export class SupplierFulfillmentService {
       const selectedCartIds = new Map<string, string>();
       const selectedCartRows: Array<{
         source: CartRow;
+        rowId: number;
         cartId: string;
         quantity: number;
         cartInfo: string | null;
+        writeoff?: RefundWriteoffState;
       }> = [];
       const remainingCartRows: Array<{
         source: CartRow;
+        rowId: number;
         cartId: string;
         quantity: number;
         cartInfo: string | null;
+        writeoff?: RefundWriteoffState;
       }> = [];
+      const newRowCount = available.reduce((count, cart) => {
+        const quantity = selectedByCartId.get(cart.cartId) ?? 0;
+        return count + (quantity > 0 ? 1 : 0) + (firstSplit && quantity < cart.splitSurplusNum ? 1 : 0);
+      }, 0);
+      const newRowIds = await reserveOrderCartRowIds(tx, newRowCount);
+      let identityIndex = 0;
       for (const cart of available) {
         const selected = selectedByCartId.get(cart.cartId) ?? 0;
         const remaining = cart.splitSurplusNum - selected;
-        const [selectedSnapshot, remainingSnapshot] = splitSnapshot(
+        const financialParts = financialPlan?.carts.get(cart.cartId);
+        const [selectedSnapshot, remainingSnapshot] = financialParts
+          ? [financialParts.selected, financialParts.remaining] : splitSnapshot(
           cart.cartInfo,
           selected,
           cart.splitSurplusNum,
         );
         if (selected > 0) {
-          const cartId = randomKey();
+          const rowId = newRowIds[identityIndex++];
+          const cartId = String(rowId);
           selectedCartIds.set(cart.cartId, cartId);
           selectedCartRows.push({
             source: cart,
+            rowId,
             cartId,
             quantity: selected,
             cartInfo: selectedSnapshot,
+            writeoff: financialParts?.selectedWriteoff ?? undefined,
           });
         }
         if (remaining > 0) {
+          const rowId = firstSplit ? newRowIds[identityIndex++] : cart.id;
           remainingCartRows.push({
             source: cart,
-            cartId: firstSplit ? randomKey() : cart.cartId,
+            rowId,
+            cartId: firstSplit ? String(rowId) : cart.cartId,
             quantity: remaining,
             cartInfo: remainingSnapshot,
+            writeoff: financialParts?.remainingWriteoff ?? undefined,
           });
         }
       }
@@ -1118,11 +1049,13 @@ export class SupplierFulfillmentService {
         selectedCartRows.map((cart) =>
           cloneCart(
             cart.source,
+            cart.rowId,
             selectedOrderPk,
             cart.cartId,
             cart.quantity,
             cart.cartInfo,
             true,
+            cart.writeoff,
           ),
         ),
       );
@@ -1155,11 +1088,13 @@ export class SupplierFulfillmentService {
           remainingCartRows.map((cart) =>
             cloneCart(
               cart.source,
+              cart.rowId,
               remainingOrderPk,
               cart.cartId,
               cart.quantity,
               cart.cartInfo,
               false,
+              cart.writeoff,
             ),
           ),
         );
@@ -1191,17 +1126,28 @@ export class SupplierFulfillmentService {
           remainingCartRows.map((cart) =>
             cloneCart(
               cart.source,
+              cart.rowId,
               active.id,
               cart.cartId,
               cart.quantity,
               cart.cartInfo,
               false,
+              cart.writeoff,
             ),
           ),
         );
       }
 
       const now = Math.floor(Date.now() / 1000);
+      await materializeSplitInvoice(tx, active, invoice, [selectedOrderPk, remainingOrderPk], 'fulfillment', now);
+      await splitSupplierPendingPayment(tx, active, [selectedOrderPk, remainingOrderPk], now);
+      await persistRefundFulfillmentBranches(tx, active, cartRows, generation,
+        generation ? await captureReturnedPointBills(tx, active) : [], [
+          { orderId: selectedOrderPk, partitions: selectedCartRows.map(row => ({ sourceRowId: row.source.id,
+            rowId: row.rowId, cartId: row.cartId, quantity: row.quantity })) },
+          { orderId: remainingOrderPk, partitions: remainingCartRows.map(row => ({ sourceRowId: row.source.id,
+            rowId: row.rowId, cartId: row.cartId, quantity: row.quantity })) },
+        ], now);
       const description =
         input.deliveryType === "fictitious"
           ? `虚拟发货：${input.fictitiousContent}`
@@ -1261,23 +1207,7 @@ export class SupplierFulfillmentService {
   }
 
   async statusLogs(supplierId: number, orderId: number) {
-    const scoped = await this.container.db
-      .select({ id: storeOrder.id })
-      .from(storeOrder)
-      .where(
-        and(
-          eq(storeOrder.id, orderId),
-          eq(storeOrder.supplierId, supplierId),
-          eq(storeOrder.isSystemDel, 0),
-        ),
-      )
-      .limit(1);
-    if (!scoped[0]) throw new NotFoundException("订单不存在或不属于当前供应商");
-    return this.container.db
-      .select()
-      .from(storeOrderStatus)
-      .where(eq(storeOrderStatus.oid, orderId))
-      .orderBy(desc(storeOrderStatus.changeTime), desc(storeOrderStatus.id));
+    return new SupplierOperationalReadService(this.container).statusLogs(supplierId, orderId);
   }
 
   async confirmTake(supplierId: number, orderId: number) {

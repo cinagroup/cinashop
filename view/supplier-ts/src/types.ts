@@ -575,6 +575,7 @@ export interface SupplierQueueHistoryResult<T> {
 
 export interface RefundRow {
   id: number;
+  is_cancel?: number;
   refund_order_id: string;
   store_order_id: number;
   order_id: string;
@@ -607,8 +608,17 @@ export interface RefundExecutionResult {
 }
 
 export interface RefundDetail extends RefundRow {
+  refundHistory?: import('../../common/refundHistory').RefundHistory | null;
   cartInfo: unknown;
   orderInfo: unknown;
+  is_cancel: number;
+  refund_explain: string;
+  refund_express: string;
+  refund_express_name: string;
+  refund_phone: string;
+  refund_goods_explain: string;
+  returnImages: Array<{ url: string; src: string }>;
+  returnImagesError: string;
 }
 
 export interface FinanceInfo {

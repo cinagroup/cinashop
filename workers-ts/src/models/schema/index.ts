@@ -80,3 +80,16 @@ export * from "./merchant_shipment_callback";
 export * from "./city_delivery_callback";
 export * from "./short_video";
 export * from "./shipping_create_replay";
+export * from "./admin_refund_operation";
+export * from "./admin_refund_creation";
+export * from "./invoice_evidence";
+export * from "./invoice_allocation";
+export * from "./order_refund_split";
+// Registered structural models; raw ORM construction still needs explicit
+// empty-ledger protection completion via the offline maintenance installer.
+export * from "../candidates/offline_order_admission";
+export * from "../candidates/offline_order_payment_selection";
+export * from "../candidates/offline_order_balance";
+export * from "../candidates/offline_order_query_evidence";
+export * from "../candidates/offline_order_external_payment";
+export * from "../candidates/offline_order_payment_dispatch";

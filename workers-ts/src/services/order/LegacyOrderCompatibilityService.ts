@@ -407,33 +407,37 @@ export class LegacyOrderCompatibilityService {
   }
 
   async orderData(uid: number) {
-    const [orders, refunds, readiness] = await Promise.all([
+    // One SQL statement keeps order and refund counters on the same snapshot.
+    // PHP's pid=0 search attribute means pid>=0, not only unsplit orders.
+    // Payment configuration may touch KV and deliberately stays outside it.
+    const [counters, readiness] = await Promise.all([
       this.container.db.execute(sql`
+        WITH orders AS (
         SELECT
-          count(*) FILTER (WHERE pid = 0)::text AS order_count,
-          COALESCE(sum(pay_price) FILTER (WHERE pid = 0 AND paid = 1), 0)::text AS sum_price,
-          count(*) FILTER (WHERE pid = 0 AND paid = 0 AND status = 0 AND refund_status = 0)::text AS unpaid_count,
-          count(*) FILTER (WHERE pid = 0 AND paid = 1 AND status IN (0, 4) AND refund_status IN (0, 3) AND shipping_type IN (1, 3))::text AS unshipped_count,
-          count(*) FILTER (WHERE pid = 0 AND paid = 1 AND ((status IN (1, 5) AND shipping_type = 1) OR (status IN (0, 5) AND shipping_type = 2)) AND refund_status IN (0, 3))::text AS received_count,
-          count(*) FILTER (WHERE pid = 0 AND paid = 1 AND status = 2 AND refund_status IN (0, 3))::text AS evaluated_count,
+          count(*)::text AS order_count,
+          COALESCE(sum(pay_price) FILTER (WHERE paid = 1), 0)::text AS sum_price,
+          count(*) FILTER (WHERE paid = 0 AND status = 0 AND refund_status = 0)::text AS unpaid_count,
+          count(*) FILTER (WHERE paid = 1 AND status IN (0, 4) AND refund_status IN (0, 3) AND shipping_type IN (1, 3))::text AS unshipped_count,
+          count(*) FILTER (WHERE paid = 1 AND ((status IN (1, 5) AND shipping_type = 1) OR (status IN (0, 5) AND shipping_type = 2)) AND refund_status IN (0, 3))::text AS received_count,
+          count(*) FILTER (WHERE paid = 1 AND status = 2 AND refund_status IN (0, 3))::text AS evaluated_count,
           count(*) FILTER (WHERE paid = 1 AND status IN (0, 1, 5) AND shipping_type = 2 AND refund_status IN (0, 3))::text AS unwritoff_count,
-          count(*) FILTER (WHERE pid = 0 AND paid = 1 AND status = 3 AND refund_status IN (0, 3))::text AS complete_count
+          count(*) FILTER (WHERE paid = 1 AND status = 3 AND refund_status IN (0, 3))::text AS complete_count
         FROM store_order
-        WHERE uid = ${uid} AND is_del = 0 AND is_system_del = 0
-      `),
-      this.container.db.execute(sql`
+        WHERE uid = ${uid} AND is_del = 0 AND is_system_del = 0 AND pid >= 0
+        ), refunds AS (
         SELECT
-          count(*) FILTER (WHERE refund_type IN (0, 1, 2, 4, 5))::text AS refunding_count,
-          count(*) FILTER (WHERE refund_type IN (3, 6))::text AS refunded_count
-        FROM store_order_refund
-        WHERE uid = ${uid} AND is_cancel = 0 AND is_del = 0
+          count(*) FILTER (WHERE refund.refund_type IN (0, 1, 2, 4, 5))::text AS refunding_count,
+          count(*) FILTER (WHERE refund.refund_type IN (3, 6))::text AS refunded_count
+        FROM store_order_refund AS refund
+        JOIN store_order AS original ON original.id = refund.store_order_id AND original.uid = refund.uid
+        WHERE refund.uid = ${uid} AND refund.is_cancel = 0 AND refund.is_del = 0
+        ) SELECT orders.*, refunds.* FROM orders CROSS JOIN refunds
       `),
       getPaymentReadiness(this.container, this.env),
     ]);
-    const order = record(orders[0]);
-    const refund = record(refunds[0]);
-    const refunding = String(refund.refunding_count ?? "0");
-    const refunded = String(refund.refunded_count ?? "0");
+    const order = record(counters[0]);
+    const refunding = String(order.refunding_count ?? "0");
+    const refunded = String(order.refunded_count ?? "0");
     return {
       ...order,
       refunding_count: refunding,

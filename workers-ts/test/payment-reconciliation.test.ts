@@ -145,7 +145,9 @@ describe("CORE-001-C active payment reconciliation", () => {
     const alipay = readFileSync("src/services/payment/AlipayTradeQueryService.ts", "utf8");
     const entry = readFileSync("src/index.ts", "utf8");
     const adminRoutes = readFileSync("src/routes/adminapi.ts", "utf8");
-    expect(callback).toContain("registerPaymentReconciliationTx");
+    const persistence = readFileSync('src/services/payment/PaymentCallbackPersistence.ts', 'utf8');
+    expect(persistence).toContain("registerPaymentReconciliationTx");
+    expect(callback).toContain('persistVerifiedPaymentCallbackTx(tx, callback)');
     expect(callback).toContain("resolvePaymentReconciliationFromCallbackTx");
     expect(reconciliation).toContain("Provider I/O is deliberately outside every PostgreSQL transaction");
     expect(reconciliation).toContain('.for("update", {\n        skipLocked: true,');

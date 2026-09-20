@@ -151,6 +151,11 @@ describe("MySQL to PostgreSQL schema audit", () => {
     );
     expect([...tables.get("users")!.columns.keys()]).toEqual(["id", "name"]);
   });
+  it('recognizes fixed public-qualified PostgreSQL tables without collapsing other schemas', () => {
+    const tables = parseCreateTables('CREATE TABLE public.ledger (id integer PRIMARY KEY); CREATE TABLE "public"."quoted_ledger" (id integer NOT NULL); CREATE TABLE private.ledger (secret text);', 'postgres');
+    expect([...tables.keys()]).toEqual(['ledger', 'quoted_ledger']);
+    expect([...tables.get('ledger')!.columns.keys()]).toEqual(['id']);
+  });
 
   it("audits an explicitly renamed source table as one logical shared table", () => {
     const report = buildSchemaAudit(
@@ -207,12 +212,14 @@ describe("MySQL to PostgreSQL schema audit", () => {
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
 
     expect(report.sourceTableCount).toBe(201);
-    expect(report.targetTableCount).toBe(264);
+    expect(report.targetTableCount).toBe(277);
     expect(report.sharedTableCount).toBe(201);
     expect(report.sourceColumnCompleteTableCount).toBe(201);
     expect(report.sourceColumnGapTableCount).toBe(0);
     expect(report.sourceOnlyTables).toEqual([]);
     expect(report.targetOnlyTables).toEqual([
+      "admin_refund_creation",
+      "admin_refund_operation",
       "admin_user_write_replay",
       "city_delivery_callback_event",
       "city_delivery_callback_outbox",
@@ -225,6 +232,13 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "merchant_shipment_callback_event",
       "merchant_shipment_callback_outbox",
       "merchant_shipment_callback_watermark",
+      "offline_order_admission",
+      "offline_order_balance",
+      "offline_order_callback_binding",
+      "offline_order_external_payment",
+      "offline_order_payment_dispatch",
+      "offline_order_payment_selection",
+      "offline_order_query_evidence",
       "order_notification_delivery",
       "order_notification_delivery_action",
       "order_print_job",
@@ -240,9 +254,13 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "payment_reconciliation_action",
       "payment_reconciliation_case",
       "shipping_template_create_replay",
+      "store_order_fulfillment_branch",
+      "store_order_invoice_allocation",
+      "store_order_invoice_evidence",
       "store_order_outbox",
       "store_order_product_coupon_reward",
       "store_order_refund_payment",
+      "store_order_refund_split",
       "store_product_sku_retirement_log",
       "store_service_transfer",
       "system_queue_dead_letter",
@@ -281,8 +299,8 @@ describe("MySQL to PostgreSQL schema audit", () => {
       report.sharedTables.map((table) => table.table).sort(),
     );
     expect(definitionDrift).toEqual({
-      externalTableCount: 264,
-      workerTableCount: 264,
+      externalTableCount: 277,
+      workerTableCount: 277,
       externalOnlyTables: [],
       workerOnlyTables: [],
       columnDrift: [],

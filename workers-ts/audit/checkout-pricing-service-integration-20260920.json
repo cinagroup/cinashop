@@ -1,0 +1,362 @@
+{
+  "reportVersion": 1,
+  "recordedAt": "2026-09-20 13:44:58 UTC",
+  "status": "local_candidate_not_deployed",
+  "checklist": {
+    "id": "FE-003L-A3k11d",
+    "remainsOpen": true,
+    "checked": 240,
+    "open": 164,
+    "total": 404
+  },
+  "scope": {
+    "productionChange": "Ordinary order final pricing protection now resolves its actual schema and pricing tables, requires READ COMMITTED, and acquires the exact reviewed pricing lock capability inside the existing transaction.",
+    "noFallback": [
+      "direct table LOCK",
+      "configuration DML grant",
+      "automatic runtime installation",
+      "automatic repair of drift"
+    ],
+    "preserved": [
+      "11-key SQL projection and winner precedence",
+      "membership rights precedence",
+      "existing order idempotent replay",
+      "pricing, inventory, coupon, points and commit semantics"
+    ],
+    "offlineDecision": "PHP type=3 scope only; no new refunds; minimum payable remains 0.01.",
+    "productionAccess": false,
+    "stageCommitPushDeploy": false,
+    "preExistingNineStagedEntries": "Unchanged; cached numstat was rechecked. No index writes in this turn."
+  },
+  "evidenceBoundaries": {
+    "serviceRuntime": "Complete 167-step / 277-table fixture and independently authenticated restricted LOGIN. Pricing tables have SELECT only; exact function EXECUTE is explicit. Direct SHARE LOCK and UPDATE still return 42501.",
+    "controller": "Actual Hono confirmation/create controllers and SQL use synthetic uid middleware, local KV and sequence. Not customer authentication, real network, workerd, Hyperdrive or payment provider evidence.",
+    "admin": "Existing actual admin JWT/account/permission paths retained; late interleaving hooks observe return from the actual pricing function.",
+    "concurrency": "Independent PostgreSQL connections; actual blocking checked with pg_blocking_pids; both transaction commit and rollback release the writer.",
+    "explicitFixture": "Owned loopback PG16 identity/address/port and database/schema checks; no generic finance fixture privilege change; no PGlite protocol emulation.",
+    "ordinaryClonedScenario": "Separate pre-provisioned NOLOGIN owner required before connection/schema mutation. Native caller provisions and removes its own random role. Protocol installed in the cloned schema, preserving public row/sequence and cleanup assertions.",
+    "roleComposition": "Does not certify the full application role or exempt other SECURITY DEFINER functions."
+  },
+  "finalTests": {
+    "distinctFiles": 17,
+    "passed": 555,
+    "failed": 0,
+    "counting": "Only final disjoint groups below are summed. Red runs, earlier 47, earlier 66/83 static reruns, and earlier-turn 781 are not added.",
+    "groups": [
+      {
+        "session": 68324,
+        "cluster": "p8HVN5",
+        "port": 63139,
+        "files": [
+          "test/checkout-pricing-service-runtime.test.ts",
+          "test/refund-runtime-permissions.test.ts",
+          "test/checkout-pricing-config-authority.test.ts",
+          "test/admin-config-batch-postgres.test.ts"
+        ],
+        "passed": 91,
+        "durationSeconds": 274.37,
+        "exitCode": 0
+      },
+      {
+        "session": 14415,
+        "cluster": "YyR2Nv",
+        "port": 60398,
+        "files": [
+          "test/checkout-confirmation.test.ts",
+          "test/checkout-confirmation-postgres.test.ts",
+          "test/checkout-confirmation-rules.test.ts",
+          "test/pc-checkout-form-postgres.test.ts"
+        ],
+        "passed": 301,
+        "durationSeconds": 324.29,
+        "exitCode": 0
+      },
+      {
+        "session": 36970,
+        "cluster": "2bBT8N",
+        "port": 63753,
+        "files": [
+          "test/brokerage-paid-business-transactions.test.ts",
+          "test/checkout-member-lifecycle.test.ts",
+          "test/order-member-economize.test.ts",
+          "test/checkout-pricing-lock.test.ts"
+        ],
+        "passed": 75,
+        "durationSeconds": 257.28,
+        "exitCode": 0
+      },
+      {
+        "session": 25268,
+        "cluster": "Ma80kh",
+        "port": 54556,
+        "files": [
+          "test/checkout-pricing-fixture.test.ts"
+        ],
+        "passed": 2,
+        "durationSeconds": 7.56,
+        "exitCode": 0
+      },
+      {
+        "session": 8353,
+        "cluster": "0GOM4S",
+        "port": 51626,
+        "files": [
+          "test/store-order-create-scenario-postgres.test.ts"
+        ],
+        "passed": 3,
+        "durationSeconds": 14.79,
+        "exitCode": 0
+      },
+      {
+        "outputChunk": "9dfd57",
+        "files": [
+          "test/local-finance-postgres-runner.test.ts",
+          "test/checkout-payment.test.ts",
+          "test/store-order-create-postgres-migration.test.ts"
+        ],
+        "passed": 83,
+        "durationSeconds": 6.41,
+        "exitCode": 0
+      }
+    ],
+    "finalTypeChecks": {
+      "session": 86630,
+      "exitCode": 0,
+      "commands": [
+        "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
+        "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit -p tsconfig.runtime-test.json"
+      ],
+      "sequencing": "Second command only runs when first exits zero."
+    },
+    "reproduction": {
+      "nativePrefix": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin",
+      "nativeUsage": "Append the exact file list of one native group above. Explicit runner allowlist is retained.",
+      "static": "node node_modules/vitest/vitest.mjs run test/local-finance-postgres-runner.test.ts test/checkout-payment.test.ts test/store-order-create-postgres-migration.test.ts",
+      "postgresVersion": "16.15"
+    }
+  },
+  "retainedFailuresAndIntermediateRuns": [
+    {
+      "session": 2651,
+      "cluster": "QRmA8w",
+      "port": 64885,
+      "passed": 4,
+      "failed": 7,
+      "exitCode": 1,
+      "durationSeconds": 74.45,
+      "cause": "Original direct LOCK fails for SELECT-only runtime; missing capability is incorrectly bypassed when UPDATE is granted. Four negative drift cases were incidentally blocked by direct LOCK permission and do not prove catalog validation.",
+      "resolution": "Service switched to reviewed capability and cause-specific assertions tightened."
+    },
+    {
+      "session": 85025,
+      "cluster": "SkK5GP",
+      "port": 57721,
+      "passed": 47,
+      "failed": 0,
+      "exitCode": 0,
+      "durationSeconds": 205.63,
+      "note": "First green service/component run before shared fixture change and four additional service cases; overlaps final groups, not counted."
+    },
+    {
+      "session": 97361,
+      "cluster": "lsra8z",
+      "port": 58252,
+      "passed": 0,
+      "failed": 91,
+      "exitCode": 1,
+      "durationSeconds": 266,
+      "cause": "All beforeEach guards rejected the new fixture because inet_server_addr()::text was 127.0.0.1/32, not bare 127.0.0.1. No business assertion result established.",
+      "resolution": "Use pg_catalog.host(pg_catalog.inet_server_addr()); preserve exact address, port, identity, version and ownership guards. New native two-case fixture proof and all 91 rerun pass.",
+      "source": "https://www.postgresql.org/docs/16/functions-net.html"
+    },
+    {
+      "sessions": [
+        17805,
+        87014,
+        76924
+      ],
+      "note": "Earlier type/static checks passed but are superseded by final typecheck 86630 and final 83-test chunk 9dfd57; not separately counted."
+    }
+  ],
+  "cleanup": {
+    "runnerFixtureRemaining": 0,
+    "independentReadOnlyCheckOutput": "12fa4c",
+    "independentCheckExitCode": 0,
+    "entries": [
+      {
+        "cluster": "QRmA8w",
+        "port": 64885,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "SkK5GP",
+        "port": 57721,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "lsra8z",
+        "port": 58252,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "Ma80kh",
+        "port": 54556,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "p8HVN5",
+        "port": 63139,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "YyR2Nv",
+        "port": 60398,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "2bBT8N",
+        "port": 63753,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "0GOM4S",
+        "port": 51626,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      }
+    ],
+    "note": "Only self-owned fixtures/roles were cleaned by runners. Diagnostic directories retained; no production or user database removed."
+  },
+  "selectedEndHashes": {
+    "algorithm": "SHA-256",
+    "baseDirectory": "workers-ts",
+    "scope": "18 selected files at end only; not before/after or whole-workspace/dependency freeze evidence.",
+    "files": [
+      {
+        "path": "src/services/order/CheckoutPricingSources.ts",
+        "sha256": "0e302ec68f3b1ef78eb116ecb5df7cd5b017bc409ddc168d39eb60ad2c774d5b"
+      },
+      {
+        "path": "src/migrations/checkoutPricingLock.ts",
+        "sha256": "170294fe2a4a6b43a423dd12f125af8031871ef5d9a4bc88a53ee4c426e025a7"
+      },
+      {
+        "path": "src/migrations/checkoutPricingLockCatalog.ts",
+        "sha256": "d45dcc36a8c905c01157654c7217c2347af48493f30534cfa48e3ba3665cb502"
+      },
+      {
+        "path": "src/migrations/checkoutPricingLockInstallation.ts",
+        "sha256": "2ab128d09a38729c4c655555fe7639672c8a45127bf1d901e40da15078a634ae"
+      },
+      {
+        "path": "test/checkout-pricing-service-runtime.test.ts",
+        "sha256": "ea020aa649951a77c931dad6a883d29747122c02e99608ea854971c7e0d96277"
+      },
+      {
+        "path": "test/checkout-pricing-fixture.test.ts",
+        "sha256": "cd4c960ec1ee8a1083bce2baa0969c5ea6f017b1de9175ae4b0dd4e187cbd7fd"
+      },
+      {
+        "path": "test/helpers/checkoutPricingFixture.ts",
+        "sha256": "737c9dc3e6844d82908a268f14f5738d892b76f8b0c63c5a605e14f6da22e621"
+      },
+      {
+        "path": "test/helpers/pcCheckoutQuoteFixture.ts",
+        "sha256": "8beb2286699ff080b06a2624784358707161a7ffc52b4ab24cc5f5665b1f3cfe"
+      },
+      {
+        "path": "test/helpers/refundRuntimeFixture.ts",
+        "sha256": "17c993046eaea0471992dfaf91ccb547888e0756bad0a9a2c4570aa186eac5a9"
+      },
+      {
+        "path": "test/refund-runtime-permissions.test.ts",
+        "sha256": "86769683edde1770f9c92c0ca433f84c4497f4c6944bc091b8181d585955d3b4"
+      },
+      {
+        "path": "test/checkout-pricing-lock.test.ts",
+        "sha256": "faa67baa62251f2c807b4298568c7accab5e38efbe97128ef43d0f9adbd9485a"
+      },
+      {
+        "path": "test/checkout-pricing-config-authority.test.ts",
+        "sha256": "6269eb4166da29eadd83abe76e80ae19fd92576aadb98622f3a4386058c9f208"
+      },
+      {
+        "path": "test/admin-config-batch-postgres.test.ts",
+        "sha256": "bcf46054227787d71b6388077bc391e4febe2df983a604b021ef07511df502cd"
+      },
+      {
+        "path": "test/brokerage-paid-business-transactions.test.ts",
+        "sha256": "a00afa8e8dadce0059b0a08313c77149239190f08601fbd5e9cc56ab2bd6d0ac"
+      },
+      {
+        "path": "test/integration/StoreOrderCreatePostgresScenario.ts",
+        "sha256": "cf6cde14f72ccfacb9f099f0b0a7560e0bd01c3dadcfa030b5eaa66327809c9c"
+      },
+      {
+        "path": "test/store-order-create-scenario-postgres.test.ts",
+        "sha256": "a9232323c8bcec3c067af63f191a5f6aecd052ebb206a34981e9e3029c676679"
+      },
+      {
+        "path": "scripts/run-local-finance-postgres.mjs",
+        "sha256": "7f5fe67e2f84c412a324f5879ac16a0f20870d016a6aad531daec15ba9f997db"
+      },
+      {
+        "path": "test/local-finance-postgres-runner.test.ts",
+        "sha256": "92207846c881d7021865d39ada6317282e0270ff138ff8223437b94188846374"
+      }
+    ]
+  },
+  "remainingGates": [
+    "First-order discount and package cloned-schema scenarios still need explicit independent owner provisioning and protocol installation.",
+    "Legacy remote audit Workers do not yet supply the ordinary scenario's new maintenance owner. The ordinary entry point now refuses before connecting when it is absent; do not deploy these audit entry points as operationally complete.",
+    "Complete current-source unit/runtime regression, workerd and immutable Linux CI.",
+    "Real customer authentication, Hyperdrive, provider and formal maintenance connection/role provisioning.",
+    "Full marketplace role composition with other reviewed functions; no name-based SECURITY DEFINER exemption.",
+    "Sustained management-write/load/maintenance contention and coordinated database/application rollout. Never deploy app-only against an uncommissioned database."
+  ],
+  "skillInfluence": "PostgreSQL and Workers guidance retained minimal privileges, short transactional protection, actual-source resolution and independent real-connection evidence; no bindings/frontend/production resources changed.",
+  "documentation": [
+    "docs/checkout-pricing-service-integration.md",
+    "docs/checkout-pricing-config-authority.md",
+    "../MIGRATION_CHECKLIST.md"
+  ]
+}

@@ -4,7 +4,7 @@
  * 对应 wrangler.toml 中的 binding, 运行时由 Cloudflare 注入。
  * 这是整个应用唯一的"外部依赖入口", 所有 service 通过此类型访问基础设施。
  */
-export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS" | "AUTH_ALLOWED_ORIGINS" | "KEFU_AUTH_ALLOWED_ORIGINS"> {
+export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_ALLOWED_ORIGINS" | "AUTH_ALLOWED_ORIGINS" | "KEFU_AUTH_ALLOWED_ORIGINS" | "OFFLINE_PC_RETURN_ORIGIN" | "OFFLINE_H5_RETURN_ORIGIN"> {
   // ─── 密钥 (wrangler secret) ───────────────────────────
   /** JWT 签名密钥, 对应 PHP 的 app.app_key (默认 'crmeb_app_key') */
   APP_KEY: string;
@@ -36,6 +36,9 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   ALIPAY_NOTIFY_URL?: string;
   /** 支付宝 H5 返回地址 (非密钥) */
   ALIPAY_RETURN_URL?: string;
+  /** Operator-approved storefront origins for independent type=3 return bridges. */
+  OFFLINE_PC_RETURN_ORIGIN?: string;
+  OFFLINE_H5_RETURN_ORIGIN?: string;
   /** 阿里云物流市场 AppCode；优先于旧 system_config 中的同名配置。 */
   ALIYUN_EXPRESS_APP_CODE?: string;
   /** Aliyun SMS RPC credentials; secrets must only be injected as Worker secrets. */

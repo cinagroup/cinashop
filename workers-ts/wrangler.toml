@@ -59,6 +59,10 @@ OUT_API_WRITE_LIMIT_PER_MINUTE = "30"
 # Only the approved shop subdomain belongs to this storefront; apex/admin/api are occupied.
 ALLOWED_ORIGINS = "https://cinashop-pc.pages.dev,https://cinashop-h5.pages.dev,https://shop.cinaseek.ai"
 PC_AUTH_ALLOWED_ORIGINS = "https://cinashop-pc.pages.dev,https://shop.cinaseek.ai"
+# Fixed storefront return origins, not browser-supplied redirect URLs.
+# Deploy both Pages return functions before enabling real offline collection.
+OFFLINE_PC_RETURN_ORIGIN = "https://shop.cinaseek.ai"
+OFFLINE_H5_RETURN_ORIGIN = "https://cinashop-h5.pages.dev"
 # Full online test deployment: separate staff Origins, never the occupied custom domains.
 AUTH_ALLOWED_ORIGINS = "https://cinashop-admin.pages.dev"
 KEFU_AUTH_ALLOWED_ORIGINS = "https://cinashop-kefu.pages.dev"

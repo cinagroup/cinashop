@@ -8,6 +8,7 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
+import { CustomerRefundReadService } from "@/services/order/CustomerRefundReadService";
 import { CheckoutCashierService } from "@/services/payment/CheckoutCashierService";
 import { RechargePaymentService } from "@/services/payment/RechargePaymentService";
 import { PaymentCallbackEventService } from "@/services/payment/PaymentCallbackEventService";
@@ -24,6 +25,7 @@ import {
 } from "@/services/order/LegacyOrderCompatibilityService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { readBoundedUtf8Text } from "@/utils/request-body";
+import { ownedReturnImages, parseReturnPayload, returnImageReferences } from '@/services/order/RefundReturnPayload';
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_PAYMENT_CALLBACK_BODY_BYTES = 32 * 1024;
@@ -198,7 +200,7 @@ export async function alipayNotify(c: C) {
       amountCents: notifiedCents,
       currency: "CNY",
       providerEventTime,
-    });
+    }, { appId: params.app_id, merchantId: params.seller_id });
     if (!received.terminalConflict) {
       c.executionCtx.waitUntil(callbackService.dispatchById(received.outboxId).catch((error) => {
         emitOperationalEvent("error", {
@@ -401,6 +403,11 @@ export async function refundCancel(c: C) {
 export async function refundList(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
+  c.header('Cache-Control', 'private, no-store');
+  if (c.req.query('view') === 'customer') {
+    try { return jsonOk(c, await new CustomerRefundReadService(c.get('container')).list(uid, new URL(c.req.url).searchParams)); }
+    catch (error) { if (error instanceof ValidateException) return jsonFail(c, error.message); throw error; }
+  }
   const svc = new StoreOrderRefundService(c.get("container"), c.env);
   const list = await svc.listByUser(uid);
   return jsonOk(c, list);
@@ -412,6 +419,11 @@ export async function refundDetail(c: C) {
   if (!uid) return jsonFail(c, "请先登录");
   const refundId = c.req.param("uni") ?? "";
   if (!refundId) return jsonFail(c, "参数错误");
+  c.header('Cache-Control', 'private, no-store');
+  if (c.req.query('view') === 'customer') {
+    try { return jsonOk(c, await new CustomerRefundReadService(c.get('container'), c.env.APP_KEY).detail(uid, refundId, new URL(c.req.url).searchParams)); }
+    catch (error) { if (error instanceof ValidateException) return jsonFail(c, error.message); throw error; }
+  }
   const svc = new StoreOrderRefundService(c.get("container"), c.env);
   const detail = await svc.detail(uid, refundId);
   return jsonOk(c, detail);
@@ -455,17 +467,14 @@ export async function refundVerify(c: C) {
 export async function refundExpress(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  c.header('Cache-Control', 'private, no-store');
   try {
-    const rawImages = body.refund_goods_img ?? body.refund_img ?? "";
-    await new StoreOrderRefundService(c.get("container"), c.env).submitReturnExpress(uid, {
-      id: Number(body.id ?? 0),
-      refundExpress: String(body.refund_express ?? body.refundExpress ?? ""),
-      refundPhone: String(body.refund_phone ?? body.refundPhone ?? ""),
-      refundExpressName: String(body.refund_express_name ?? body.refundExpressName ?? ""),
-      refundGoodsImg: Array.isArray(rawImages) ? JSON.stringify(rawImages) : String(rawImages),
-      refundGoodsExplain: String(body.refund_goods_explain ?? body.refundGoodsExplain ?? ""),
-    });
+    const raw = await readBoundedUtf8Text(c.req.raw, 32 * 1024);
+    let value: unknown;
+    try { value = JSON.parse(raw); } catch { throw new ValidateException('退货物流格式无效'); }
+    const body = parseReturnPayload(value);
+    await ownedReturnImages(c.get('container'), uid, returnImageReferences(body.refundGoodsImg));
+    await new StoreOrderRefundService(c.get("container"), c.env).submitReturnExpress(uid, body);
     return jsonOk(c, null, "提交成功");
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);

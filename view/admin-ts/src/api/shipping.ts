@@ -2,6 +2,7 @@
  * 运费模板 + 快递公司 API
  */
 import request, { getData } from "@/utils/request";
+import { sendOrderRequest } from '@/utils/orderRequest';
 
 export interface ShippingRegion {
   id?: number;
@@ -106,8 +107,8 @@ export interface ExpressItem {
   addTime: number;
 }
 
-export function apiAdminExpressList(): Promise<ExpressItem[]> {
-  return getData(request.get<ExpressItem[]>("/express/list"));
+export function apiAdminExpressList(signal?: AbortSignal): Promise<ExpressItem[]> {
+  return sendOrderRequest('/express/list', 'get', undefined, undefined, signal);
 }
 
 export function apiAdminExpressSave(data: Record<string, unknown>): Promise<{ id: number }> {

@@ -12,6 +12,8 @@ import {
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { parsePagination } from "@/services/supplier/SupplierService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import type { RefundLineCompensation } from '@/services/order/OrderSplitFinance';
+import { lockSupplierFinance } from '@/services/supplier/SupplierFinanceLock';
 
 type SupplierFinanceDb = Pick<DbClient, "execute" | "insert" | "select" | "update">;
 type FinanceOrder = Pick<
@@ -150,13 +152,15 @@ export async function recordSupplierPayment(
     .onConflictDoNothing({ target: supplierTransactions.orderId });
 }
 
-/** 用户确认收货后，支付流水才进入可提现余额。 */
+/** 收货时同单的待结算收入和已完成退款一起转入余额，不能只转收入。 */
 export async function settleSupplierPayment(
   db: SupplierFinanceDb,
   supplierId: number,
   linkId: string,
   now = Math.floor(Date.now() / 1000),
 ): Promise<void> {
+  if (supplierId <= 0) return;
+  await lockSupplierFinance(db, supplierId);
   await db
     .update(supplierFlowingWater)
     .set({ status: 1, finishTime: now })
@@ -164,14 +168,15 @@ export async function settleSupplierPayment(
       and(
         eq(supplierFlowingWater.supplierId, supplierId),
         eq(supplierFlowingWater.linkId, linkId),
-        eq(supplierFlowingWater.type, 1),
+        inArray(supplierFlowingWater.type, [1, 2]),
         eq(supplierFlowingWater.status, 0),
         eq(supplierFlowingWater.isDel, 0),
       ),
     );
 }
 
-/** 实际退款完成后写供应商负向流水；退款额按原结算额比例折算。 */
+/** 实际退款完成后写供应商负向流水。现代订单按已退商品结算价和运费；
+ * 无版本旧单继续使用原累计现金比例。调用者持有订单锁并传入锁后行级计划。 */
 export async function recordSupplierRefund(
   db: SupplierFinanceDb,
   order: FinanceOrder,
@@ -179,13 +184,20 @@ export async function recordSupplierRefund(
   refundPrice: string,
   cumulativeRefundCents: number,
   now = Math.floor(Date.now() / 1000),
+  lineCompensation?: RefundLineCompensation | null,
 ): Promise<void> {
   if (order.supplierId <= 0) return;
+  await lockSupplierFinance(db, order.supplierId);
   const original = await db
     .select({
       id: supplierFlowingWater.id,
       number: supplierFlowingWater.number,
       status: supplierFlowingWater.status,
+      uid: supplierFlowingWater.uid,
+      payType: supplierFlowingWater.payType,
+      payPrice: supplierFlowingWater.payPrice,
+      totalPrice: supplierFlowingWater.totalPrice,
+      payPostage: supplierFlowingWater.payPostage,
     })
     .from(supplierFlowingWater)
     .where(
@@ -193,12 +205,30 @@ export async function recordSupplierRefund(
         eq(supplierFlowingWater.supplierId, order.supplierId),
         eq(supplierFlowingWater.linkId, order.orderId),
         eq(supplierFlowingWater.type, 1),
+        eq(supplierFlowingWater.pm, 1),
+        inArray(supplierFlowingWater.status, [0, 1]),
         eq(supplierFlowingWater.isDel, 0),
       ),
     )
-    .limit(1);
+    .limit(2).for('update');
+  if (original.length > 1) throw new ValidateException("供应商退款原结算流水不唯一，请先完成核对");
+  const supplierBasis = lineCompensation?.supplierSettlement;
+  if (lineCompensation && !supplierBasis) throw new ValidateException('供应商退款行级结算证据缺失');
+  const strictCents = (value: string): number => {
+    if (!/^\d{1,10}\.\d{2}$/.test(value)) throw new ValidateException('供应商退款结算金额证据无效');
+    const cents = decimalToCents(value);
+    if (!Number.isSafeInteger(cents) || cents < 0) throw new ValidateException('供应商退款结算金额证据无效');
+    return cents;
+  };
+  if (supplierBasis && (!original[0] || original[0].uid !== order.uid || original[0].payType !== order.payType
+    || ['payPrice', 'totalPrice', 'payPostage'].some(field => {
+      const key = field as 'payPrice' | 'totalPrice' | 'payPostage';
+      return strictCents(original[0][key]) !== strictCents(order[key]);
+    }) || strictCents(original[0].number) !== supplierBasis.total
+    || [supplierBasis.total, supplierBasis.refunded].some(value => !Number.isSafeInteger(value) || value < 0)
+    || supplierBasis.refunded > supplierBasis.total)) throw new ValidateException('供应商退款原结算账本与商品证据不一致');
   const previousRows = await db
-    .select({ number: supplierFlowingWater.number })
+    .select({ number: supplierFlowingWater.number, uid: supplierFlowingWater.uid, payType: supplierFlowingWater.payType })
     .from(supplierFlowingWater)
     .where(
       and(
@@ -206,22 +236,24 @@ export async function recordSupplierRefund(
         eq(supplierFlowingWater.linkId, order.orderId),
         eq(supplierFlowingWater.type, 2),
         eq(supplierFlowingWater.pm, 0),
-        eq(supplierFlowingWater.status, 1),
+        inArray(supplierFlowingWater.status, [0, 1]),
         eq(supplierFlowingWater.isDel, 0),
       ),
     );
   const paidCents = decimalToCents(order.payPrice);
   const originalCents = decimalToCents(original[0]?.number);
-  const targetCents = targetSupplierRefundCents(
+  const targetCents = supplierBasis?.refunded ?? targetSupplierRefundCents(
     originalCents,
     cumulativeRefundCents,
     paidCents,
   );
   const previousCents = previousRows.reduce((sum, row) => {
-    const next = sum + Math.max(decimalToCents(row.number), 0);
+    if (supplierBasis && (row.uid !== order.uid || row.payType !== order.payType)) throw new ValidateException('供应商历史退款归属证据不一致');
+    const next = sum + (supplierBasis ? strictCents(row.number) : Math.max(decimalToCents(row.number), 0));
     if (!Number.isSafeInteger(next)) throw new Error("供应商已退结算金额超出安全范围");
     return next;
   }, 0);
+  if (supplierBasis && previousCents > targetCents) throw new ValidateException('供应商历史已退结算额超过商品目标，请先核对');
   const number = centsToDecimal(Math.max(targetCents - previousCents, 0));
   const financeOrderId = `R${refundId}-${order.orderId}`;
   const common = {
@@ -239,24 +271,26 @@ export async function recordSupplierRefund(
     addTime: now,
   } as const;
 
-  // A full refund before settlement must also cancel the original pending
-  // income; otherwise it would remain visible as future withdrawable money.
-  if (cumulativeRefundCents >= paidCents && original[0]?.status === 0) {
-    await db
-      .update(supplierFlowingWater)
-      .set({ status: -1, finishTime: now })
-      .where(
-        and(
-          eq(supplierFlowingWater.id, original[0].id),
-          eq(supplierFlowingWater.supplierId, order.supplierId),
-          eq(supplierFlowingWater.status, 0),
-        ),
-      );
-  }
+  // Pending refunds offset only their own pending entitlement. For a full
+  // refund, recognize the income and all matching reversals together (net zero)
+  // in the caller's settlement transaction. Cancelling the income while posting
+  // a settled expense would consume unrelated received-order balances.
+  const pending = original[0]?.status === 0;
+  const fullyRefunded = supplierBasis?.fullyRefunded ?? cumulativeRefundCents >= paidCents;
+  if (pending && fullyRefunded) await settleSupplierPayment(db, order.supplierId, order.orderId, now);
+  const status = pending && !fullyRefunded ? 0 : 1;
 
+  if (supplierBasis) {
+    // The caller's terminal refund replay returns before this function. A
+    // pre-existing modern identity here is inconsistent evidence, not success:
+    // either collision must roll back both ledgers and the customer refund.
+    await db.insert(supplierFlowingWater).values({ ...common, number, status, finishTime: status === 1 ? now : 0 });
+    await db.insert(supplierTransactions).values(common);
+    return;
+  }
   await db
     .insert(supplierFlowingWater)
-    .values({ ...common, number, status: 1, finishTime: now })
+    .values({ ...common, number, status, finishTime: status === 1 ? now : 0 })
     .onConflictDoNothing({ target: supplierFlowingWater.orderId });
   await db
     .insert(supplierTransactions)
@@ -311,7 +345,8 @@ export class SupplierFinanceService {
         .select({
           settledIncome: sql<string>`COALESCE(SUM(CASE WHEN ${supplierFlowingWater.status} = 1 AND ${supplierFlowingWater.pm} = 1 THEN ${supplierFlowingWater.number} ELSE 0 END), 0)::numeric(12,2)`,
           settledExpense: sql<string>`COALESCE(SUM(CASE WHEN ${supplierFlowingWater.status} = 1 AND ${supplierFlowingWater.pm} = 0 THEN ${supplierFlowingWater.number} ELSE 0 END), 0)::numeric(12,2)`,
-          pendingIncome: sql<string>`COALESCE(SUM(CASE WHEN ${supplierFlowingWater.status} = 0 AND ${supplierFlowingWater.pm} = 1 THEN ${supplierFlowingWater.number} ELSE 0 END), 0)::numeric(12,2)`,
+          pendingIncome: sql<string>`COALESCE(SUM(CASE WHEN ${supplierFlowingWater.status} = 0 THEN CASE WHEN ${supplierFlowingWater.pm} = 1 THEN ${supplierFlowingWater.number} ELSE -${supplierFlowingWater.number} END ELSE 0 END), 0)::numeric(12,2)`,
+          totalRefund: sql<string>`COALESCE(SUM(CASE WHEN ${supplierFlowingWater.status} IN (0, 1) AND ${supplierFlowingWater.pm} = 0 THEN ${supplierFlowingWater.number} ELSE 0 END), 0)::numeric(12,2)`,
         })
         .from(supplierFlowingWater)
         .where(
@@ -341,7 +376,7 @@ export class SupplierFinanceService {
       available: centsToDecimal(available),
       pending_settlement: flow?.pendingIncome ?? "0.00",
       total_income: flow?.settledIncome ?? "0.00",
-      total_refund: flow?.settledExpense ?? "0.00",
+      total_refund: flow?.totalRefund ?? "0.00",
       pending_extract: extract?.pending ?? "0.00",
       paid_extract: extract?.paid ?? "0.00",
     };
@@ -525,7 +560,7 @@ export class SupplierFinanceService {
     }
 
     await this.container.db.transaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${supplierId})`);
+      await lockSupplierFinance(tx, supplierId);
       const supplierRows = await tx
         .select()
         .from(systemSupplier)
@@ -600,7 +635,9 @@ export class SupplierFinanceService {
         addTime: Math.floor(Date.now() / 1000),
         ...snapshot,
       });
-    });
+    // The advisory-lock SELECT can establish an old snapshot while waiting.
+    // Pin admission to fresh per-statement reads, irrespective of role defaults.
+    }, { isolationLevel: 'read committed' });
   }
 
   async updateExtractMark(supplierId: number, id: number, mark: string) {

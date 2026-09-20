@@ -3,7 +3,8 @@
  *
  * 对应 PHP app/services/user/level/SystemUserLevelServices.php::getLevelCache
  *
- * 缓存: KV 存等级信息 (变更频率低), key=level_grade_<id>, TTL 6h。
+ * Price/visibility-bearing definitions are read from PostgreSQL. The legacy
+ * level_<id> KV values are not an authority for current membership prices.
  */
 import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
@@ -26,7 +27,6 @@ import {
   parseLegacyWholeMoney,
 } from "@/services/activity/StoreNewcomerService";
 
-const CACHE_TTL = 6 * 3600;
 const ACTIVATION_CONFIG_KEYS = [
   "member_func_status",
   "level_activate_status",
@@ -225,15 +225,12 @@ export class UserLevelService {
   ) {}
 
   /**
-   * 取会员等级信息 (带缓存, 对应 PHP getLevelCache)
+   * Read the current level definition for catalogue pricing and user-level info.
+   * Do not rely on eventually-consistent KV invalidation after admin changes.
    * @param levelId user.level 字段 (system_user_level.id)
    */
   async getLevel(levelId: number): Promise<LevelInfo | null> {
-    if (!levelId) return null;
-
-    const cacheKey = `level_${levelId}`;
-    const cached = await this.env.CONFIG_KV.get<LevelInfo>(cacheKey, "json");
-    if (cached) return cached;
+    if (!Number.isSafeInteger(levelId) || levelId <= 0) return null;
 
     const row = await this.container.systemUserLevelDao.getById(levelId);
     if (!row || !row.isShow || row.isDel) return null;
@@ -245,14 +242,12 @@ export class UserLevelService {
       grade: row.grade,
     };
 
-    await this.env.CONFIG_KV.put(cacheKey, JSON.stringify(info), {
-      expirationTtl: CACHE_TTL,
-    });
     return info;
   }
 
-  /** 失效缓存 (后台改等级后调用) */
+  /** Explicit legacy cleanup only; current reads do not require a KV delete. */
   async invalidate(levelId: number): Promise<void> {
+    if (!Number.isSafeInteger(levelId) || levelId <= 0) return;
     await this.env.CONFIG_KV.delete(`level_${levelId}`);
   }
 

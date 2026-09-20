@@ -152,6 +152,11 @@ export async function parseAndVerifyAlipayApiResponse<T extends object>(
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`支付宝响应缺少 ${responseKey}`);
   }
+  // The raw extractor and JSON.parse must select the SAME business object.
+  // Duplicate or nested response keys must never verify one value and use another.
+  if (JSON.stringify(value) !== JSON.stringify(JSON.parse(content))) {
+    throw new Error('支付宝响应签名节点不一致');
+  }
   return value as T;
 }
 

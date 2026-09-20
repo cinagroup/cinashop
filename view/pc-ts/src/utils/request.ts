@@ -33,7 +33,8 @@ function guardResponse(response: AxiosResponse): void {
   }
 }
 
-// 请求拦截
+// Bind identity when invoked, before a same-turn account change can run.
+// An asynchronous interceptor could dispatch an old view's write as the new user.
 request.interceptors.request.use((config) => {
   const snapshot = captureAuthSession();
   requestSessions.set(config, snapshot);
@@ -41,7 +42,7 @@ request.interceptors.request.use((config) => {
   else config.headers.delete("Authori-zation");
   config.headers["Form-type"] = "pc";
   return config;
-});
+}, (error) => { throw error; }, { synchronous: true });
 
 // 响应拦截
 request.interceptors.response.use(

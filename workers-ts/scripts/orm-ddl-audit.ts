@@ -12,6 +12,14 @@ import { inspectShippingLifecycleProtocol } from "../src/migrations/inspectShipp
 import { inspectShippingLifecycleIndexes, runShippingLifecycleIndexes } from '../src/migrations/runShippingLifecycleIndexes';
 import { SHIPPING_LIFECYCLE_INDEXES } from '../src/migrations/shippingLifecycleIndexes';
 import { inspectShippingTemplateCreateReplay, runShippingTemplateCreateReplay } from '../src/migrations/runShippingTemplateCreateReplay';
+import { inspectAdminRefundOperation, runAdminRefundOperation } from '../src/migrations/runAdminRefundOperation';
+import { inspectAdminRefundCreation, runAdminRefundCreation } from '../src/migrations/runAdminRefundCreation';
+import { inspectInvoiceEvidenceSchema, runInvoiceEvidenceSchema } from '../src/migrations/runInvoiceEvidence';
+import { inspectRefundOrderSplitSchema, runRefundOrderSplitSchema } from '../src/migrations/runRefundOrderSplit';
+import { inspectOfflineOrderSchema, runOfflineOrderSchema } from '../src/migrations/runOfflineOrder';
+import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
+import { pricingCatalogReady } from '../src/migrations/checkoutPricingLockCatalog';
+import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
 import { dropOwnedAuditDatabase } from './data-migration/drop-owned-audit-database';
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
@@ -43,6 +51,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const options = { max: 1, prepare: false, connect_timeout: 5, idle_timeout: 10, connection: { statement_timeout: 30_000, lock_timeout: 3_000 } };
   const control = postgres(target.href, options);
   const created: string[] = [];
+  const pricingOwners: string[] = [];
   const catalogs: Record<string, Catalog> = {};
   const paths: Array<{ path: string; steps: number }> = [];
   let upgradeVerification;
@@ -57,6 +66,12 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const shippingLifecycleVerification: Record<string, unknown> = {};
   const shippingIndexVerification: Record<string, unknown> = {};
   const shippingReplayVerification: Record<string, unknown> = {};
+  const adminRefundOperationVerification: Record<string, unknown> = {};
+  const adminRefundCreationVerification: Record<string, unknown> = {};
+  const invoiceEvidenceVerification: Record<string, unknown> = {};
+  const refundSplitVerification: Record<string, unknown> = {};
+  const offlineOrderVerification: Record<string, unknown> = {};
+  const checkoutPricingLockVerification: Record<string, unknown> = {};
   const cleanupRecoveries: Array<{ database: string; timeoutRecovered: boolean; retried: boolean }> = [];
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
@@ -97,6 +112,13 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           continue;
         }
         let steps = 0;
+        // Explicit test-only provisioning, not an installer fallback. Each
+        // database has its own never-logged-in owner, removed after DB cleanup.
+        const pricingOwner = `cinashop_runtime_${randomUUID().replaceAll('-', '')}`;
+        if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(pricingOwner)) throw Error('Invalid owned pricing role');
+        await control.unsafe(`CREATE ROLE "${pricingOwner}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`);
+        pricingOwners.push(pricingOwner);
+        await client`SELECT pg_catalog.set_config('cinashop.checkout_pricing_owner',${pricingOwner},false)`;
         if (path === "external") {
           for (let index = 0; index < migrationNames.length; index++) {
             if (migrationNames[index] === "0140_external_duplicate_index_retirement.sql") {
@@ -192,6 +214,91 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         // Explicitly prove this protocol on every real construction path, with
         // no repair masking a missing external/embedded registration.
         const shippingDb = drizzle(client);
+        const initialInvoice=await inspectInvoiceEvidenceSchema(shippingDb);
+        const expectedInvoice=path==='external' || path==='embedded' ? 'v2' : 'orm-pending';
+        if(initialInvoice!==expectedInvoice) throw new Error(`Invoice protection registration differs on ${path}`);
+        if(initialInvoice==='orm-pending') await runInvoiceEvidenceSchema(shippingDb,true);
+        const invoiceIdentityQuery=`SELECT 'relation' AS kind,c.oid::text,c.relfilenode::text FROM pg_class c
+          WHERE c.relnamespace='public'::regnamespace AND (c.relname IN ('store_order_invoice','store_order_invoice_evidence','store_order_invoice_allocation')
+          OR c.oid IN(SELECT indexrelid FROM pg_index WHERE indrelid IN('public.store_order_invoice'::regclass,'public.store_order_invoice_evidence'::regclass,'public.store_order_invoice_allocation'::regclass)))
+          UNION ALL SELECT 'function',p.oid::text,NULL FROM pg_proc p WHERE p.pronamespace='public'::regnamespace
+          AND p.proname IN('capture_invoice_evidence','protect_invoice_evidence') ORDER BY kind,oid`;
+        const invoiceIdentities=await client.unsafe(invoiceIdentityQuery);
+        await runInvoiceEvidenceSchema(shippingDb); await runInvoiceEvidenceSchema(shippingDb);
+        if(await inspectInvoiceEvidenceSchema(shippingDb)!=='v2'
+          || JSON.stringify(invoiceIdentities)!==JSON.stringify(await client.unsafe(invoiceIdentityQuery)))
+          throw new Error(`Invoice protection repeat changed object identity on ${path}`);
+        invoiceEvidenceVerification[path]={initial:initialInvoice,complete:true,repeatPreserved:true};
+        const initialSplit=await inspectRefundOrderSplitSchema(shippingDb);
+        const expectedSplit=path==='external' || path==='embedded' ? 'v1' : 'orm-pending';
+        if(initialSplit.state!==expectedSplit || !initialSplit.invoiceProtectionReady)
+          throw new Error(`Refund split registration differs on ${path}`);
+        if(initialSplit.state==='orm-pending') await runRefundOrderSplitSchema(shippingDb,true);
+        const splitIdentityQuery=`SELECT 'relation' AS kind,c.oid::text,c.relfilenode::text FROM pg_class c
+          WHERE c.relnamespace='public'::regnamespace AND (c.relname IN ('store_order_refund_split','store_order_fulfillment_branch')
+          OR c.oid IN(SELECT indexrelid FROM pg_index WHERE indrelid IN('public.store_order_refund_split'::regclass,'public.store_order_fulfillment_branch'::regclass)))
+          UNION ALL SELECT 'function',p.oid::text,NULL FROM pg_proc p WHERE p.pronamespace='public'::regnamespace
+          AND p.proname='protect_refund_order_split' ORDER BY kind,oid`;
+        const splitIdentities=await client.unsafe(splitIdentityQuery);
+        await runRefundOrderSplitSchema(shippingDb);await runRefundOrderSplitSchema(shippingDb);
+        const finalSplit=await inspectRefundOrderSplitSchema(shippingDb);
+        if(finalSplit.state!=='v1' || !finalSplit.invoiceProtectionReady
+          || JSON.stringify(splitIdentities)!==JSON.stringify(await client.unsafe(splitIdentityQuery)))
+          throw new Error(`Refund split repeat changed object identity on ${path}`);
+        refundSplitVerification[path]={initial:initialSplit.state,complete:true,repeatPreserved:true};
+        const initialOffline = await inspectOfflineOrderSchema(shippingDb);
+        const expectedOffline = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
+        if (initialOffline.state !== expectedOffline) throw new Error(`Offline registration differs on ${path}: ${initialOffline.state}`);
+        // Preserve every existing public relation/index/sequence OID and file during
+        // explicit empty-ORM completion; do not repair missing registered migrations.
+        const offlineIdentityQuery = `SELECT 'relation' AS kind,oid::text,relfilenode::text FROM pg_class WHERE relnamespace='public'::regnamespace
+          UNION ALL SELECT 'function',oid::text,NULL FROM pg_proc WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`;
+        const beforeOffline = await client.unsafe(offlineIdentityQuery);
+        if (initialOffline.state === 'orm-pending') await runOfflineOrderSchema(shippingDb, true);
+        const offlineIdentities = await client.unsafe(offlineIdentityQuery);
+        if (JSON.stringify(offlineIdentities.filter(row => beforeOffline.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeOffline))
+          throw new Error(`Offline completion replaced an existing object on ${path}`);
+        await runOfflineOrderSchema(shippingDb); await runOfflineOrderSchema(shippingDb);
+        if ((await inspectOfflineOrderSchema(shippingDb)).state !== 'v1'
+          || JSON.stringify(offlineIdentities) !== JSON.stringify(await client.unsafe(offlineIdentityQuery)))
+          throw new Error(`Offline repeat changed object identity on ${path}`);
+        offlineOrderVerification[path] = { initial: initialOffline.state, complete: true, completionPreserved: true, repeatPreserved: true };
+        const initialPricing = await inspectCheckoutPricingLock(shippingDb);
+        const registeredPricing = path === 'external' || path === 'embedded';
+        if (registeredPricing ? !pricingCatalogReady(initialPricing) : !initialPricing.absent)
+          throw Error(`Pricing capability registration differs on ${path}`);
+        const beforePricing = await client.unsafe(offlineIdentityQuery);
+        if (!registeredPricing) await runCheckoutPricingLockSchema(shippingDb);
+        const installedPricing = await client.unsafe(offlineIdentityQuery);
+        if (JSON.stringify(installedPricing.filter(row => beforePricing.some(old => old.kind===row.kind && old.oid===row.oid)))!==JSON.stringify(beforePricing))
+          throw Error(`Pricing installation replaced an existing object on ${path}`);
+        await runCheckoutPricingLockSchema(shippingDb); await runCheckoutPricingLockSchema(shippingDb);
+        if (!pricingCatalogReady(await inspectCheckoutPricingLock(shippingDb))
+          || JSON.stringify(installedPricing)!==JSON.stringify(await client.unsafe(offlineIdentityQuery)))
+          throw Error(`Pricing repeat changed object identity on ${path}`);
+        checkoutPricingLockVerification[path] = { initial: initialPricing.absent ? 'absent' : 'v1', complete: true, installationPreserved: true, repeatPreserved: true };
+        const initialCreation = await inspectAdminRefundCreation(shippingDb);
+        if (!initialCreation.complete) throw new Error(`Admin refund creation registration differs on ${path}`);
+        const creationOidQuery = "SELECT oid,relfilenode FROM pg_class WHERE oid='public.admin_refund_creation'::regclass OR oid IN (SELECT indexrelid FROM pg_index WHERE indrelid='public.admin_refund_creation'::regclass) ORDER BY oid";
+        const creationOids = await client.unsafe(creationOidQuery);
+        await runAdminRefundCreation(shippingDb);
+        await runAdminRefundCreation(shippingDb);
+        const verifiedCreation = await inspectAdminRefundCreation(shippingDb);
+        if (!verifiedCreation.complete || initialCreation.oid !== verifiedCreation.oid
+          || JSON.stringify(creationOids) !== JSON.stringify(await client.unsafe(creationOidQuery)))
+          throw new Error(`Admin refund creation repeat changed identity on ${path}`);
+        adminRefundCreationVerification[path] = { initialComplete: true, repeatComplete: true, oidsAndFilesPreserved: true };
+        const initialRefundReceipt = await inspectAdminRefundOperation(shippingDb);
+        if (!initialRefundReceipt.complete) throw new Error(`Admin refund receipt registration differs on ${path}`);
+        const refundReceiptOidQuery = "SELECT oid,relfilenode FROM pg_class WHERE oid='public.admin_refund_operation'::regclass OR oid IN (SELECT indexrelid FROM pg_index WHERE indrelid='public.admin_refund_operation'::regclass) ORDER BY oid";
+        const refundReceiptOids = await client.unsafe(refundReceiptOidQuery);
+        await runAdminRefundOperation(shippingDb);
+        await runAdminRefundOperation(shippingDb);
+        const verifiedRefundReceipt = await inspectAdminRefundOperation(shippingDb);
+        if (!verifiedRefundReceipt.complete || initialRefundReceipt.oid !== verifiedRefundReceipt.oid
+          || JSON.stringify(refundReceiptOids) !== JSON.stringify(await client.unsafe(refundReceiptOidQuery)))
+          throw new Error(`Admin refund receipt repeat changed identity on ${path}`);
+        adminRefundOperationVerification[path] = { initialComplete: true, repeatComplete: true, oidsAndFilesPreserved: true };
         const initialReplay = await inspectShippingTemplateCreateReplay(shippingDb);
         if (!initialReplay.complete) throw new Error(`Shipping receipt registration differs on ${path}`);
         const replayOids = await client.unsafe("SELECT oid,relfilenode FROM pg_class WHERE oid='public.shipping_template_create_replay'::regclass OR oid IN (SELECT indexrelid FROM pg_index WHERE indrelid='public.shipping_template_create_replay'::regclass) ORDER BY oid");
@@ -324,7 +431,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: "all nine paths: exact 264 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: "all nine paths: exact 277 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
@@ -347,6 +454,12 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       shippingLifecycleVerification,
       shippingIndexVerification,
       shippingReplayVerification,
+      adminRefundOperationVerification,
+      adminRefundCreationVerification,
+      invoiceEvidenceVerification,
+      refundSplitVerification,
+      offlineOrderVerification,
+      checkoutPricingLockVerification,
       cleanupRecoveries,
       externalDuplicateIndexRetirement,
       upgradeVerification: { ...upgradeVerification, freshCatalogMatched: true },
@@ -369,6 +482,14 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           const remains = await control`SELECT datname FROM pg_database WHERE datname=${name}`;
           if (remains.length) throw new Error("Isolated database cleanup was not confirmed");
         } catch (error) { cleanupErrors.push(new Error(`Cleanup failed for ${name}`, { cause: error })); }
+      }
+      for (const role of pricingOwners.reverse()) {
+        try {
+          if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(role)) throw Error('Unsafe owned pricing role cleanup');
+          await control.unsafe(`DROP ROLE "${role}"`);
+          if ((await control`SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${role}`).length)
+            throw Error('Owned pricing role cleanup unconfirmed');
+        } catch (error) { cleanupErrors.push(new Error('Pricing owner cleanup failed', { cause: error })); }
       }
     } finally { await control.end({ timeout: 5 }); }
     if (cleanupErrors.length) throw new AggregateError(cleanupErrors, "Catalog audit cleanup incomplete");

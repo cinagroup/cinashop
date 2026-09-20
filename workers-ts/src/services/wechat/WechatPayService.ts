@@ -6,6 +6,7 @@ import {
   aesGcmDecrypt,
   buildV3Authorization,
   rsaVerify,
+  rsaSign,
 } from "@/utils/wechat-crypto";
 import type {
   RefundProviderRequest,
@@ -21,6 +22,11 @@ import {
   isWechatMerchantId,
   WECHAT_PAYMENT_PROFILE_APP_ID_KEYS,
 } from "@/services/payment/PaymentReadinessService";
+import { assertPaymentQueryCredentialIdentity, validatePaymentQueryIdentity, type PaymentQueryOriginalIdentity } from '@/services/payment/PaymentQueryIdentity';
+import { readPaymentProviderResponse } from '@/utils/payment-response';
+import { assertOfflineProviderRequest, checkedOfflineHttps, validateOfflinePaymentTicket,
+  type OfflinePaymentTicket, type PreparedOfflineProvider } from '@/services/payment/OfflinePaymentProviderContract';
+import { prepareOfflineReturn, type OfflineReturnClient } from '@/services/payment/OfflinePaymentReturn';
 
 const BASE_URL = "https://api.mch.weixin.qq.com";
 
@@ -62,6 +68,8 @@ interface WechatTradeQueryResponse {
   trade_state?: string;
   success_time?: string;
   amount?: { total?: number; currency?: string };
+  payer?: { openid?: string };
+  trade_type?: string;
 }
 
 export class WechatPayService {
@@ -69,6 +77,51 @@ export class WechatPayService {
     private readonly container: Container,
     private readonly env: Env,
   ) {}
+
+  /** Frozen request-local credentials for the dedicated offline dispatcher. */
+  async prepareOfflineOrder(profile: 'wechat' | 'routine', currentConfig?: Readonly<Record<string, string>>, returnClient: OfflineReturnClient = 'pc'): Promise<PreparedOfflineProvider> {
+    const cfg = await this.getConfig(profile, true, currentConfig);
+    const returnUrl = profile === 'routine' ? undefined : prepareOfflineReturn(this.env,returnClient);
+    const url = checkedOfflineHttps(cfg.notifyUrl, 255);
+    if (url.search || !/^[A-Za-z0-9_-]{1,32}$/.test(cfg.appId)) throw new ValidateException('线下微信配置无效');
+    const probe = await rsaSign(cfg.privateKey, 'offline-preflight');
+    // Import/algorithm validation only: platform and merchant keys are distinct.
+    await rsaVerify(cfg.platformPublicKey, 'offline-preflight', probe);
+    const identity = { provider: 'wechat' as const, profile, appId: cfg.appId, merchantId: cfg.mchId };
+    return { identity: { ...identity }, initiate: async input => {
+      const request = { ...input }; assertOfflineProviderRequest(request);
+      if (!['jsapi', 'h5'].includes(request.transactionType) || (profile === 'routine' && request.transactionType !== 'jsapi')) {
+        throw new ValidateException('线下微信交易类型无效');
+      }
+      const body: Record<string, unknown> = { appid: cfg.appId, mchid: cfg.mchId, out_trade_no: request.orderNo,
+        description: 'CinaShop线下消费', notify_url: cfg.notifyUrl, attach: 'offline_order',
+        amount: { total: request.amountCents, currency: 'CNY' } };
+      if (request.transactionType === 'jsapi') body.payer = { openid: request.payerId };
+      else {
+        body.scene_info = { payer_client_ip: request.clientIp, h5_info: { type: 'Wap' } };
+      }
+      const result = await this.callApi<Record<string, unknown>>('POST', `/v3/pay/transactions/${request.transactionType}`, body, cfg, true);
+      let ticket: OfflinePaymentTicket;
+      if (request.transactionType === 'h5') {
+        if (typeof result.h5_url !== 'string') throw new ValidateException('微信H5响应缺少支付链接');
+        // Verify the signed provider URL first. Preserve every original byte;
+        // WeChat explicitly permits appending an encoded merchant redirect_url.
+        ticket = { kind: 'wechat-h5', url: result.h5_url };
+        validateOfflinePaymentTicket(ticket,identity,request.transactionType);
+        if (!returnUrl || new URL(result.h5_url).searchParams.has('redirect_url')) throw new ValidateException('微信H5返回参数异常');
+        ticket = {kind:'wechat-h5',url:`${result.h5_url}&redirect_url=${encodeURIComponent(returnUrl(request.orderNo))}`};
+      } else {
+        if (typeof result.prepay_id !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(result.prepay_id)) {
+          throw new ValidateException('微信预支付标识无效');
+        }
+        const { buildJsapiPaySign } = await import('@/utils/wechat-crypto');
+        const signed = await buildJsapiPaySign(cfg.privateKey, cfg.appId, result.prepay_id);
+        if (signed.signType !== 'RSA') throw new ValidateException('微信支付签名类型无效');
+        ticket = { kind: 'wechat-jsapi', appId: cfg.appId, ...signed, signType: 'RSA' };
+      }
+      validateOfflinePaymentTicket(ticket, identity, request.transactionType, request); return ticket;
+    } };
+  }
 
   async createOrder(params: {
     profile: WechatPayProfile;
@@ -121,6 +174,9 @@ export class WechatPayService {
     tradeState: string;
     amountTotal: number;
     providerEventTime: number;
+    appId: string;
+    merchantId: string;
+    payerId?: string;
   }> {
     const { data, cfg, eventId } = await this.verifyAndDecryptNotify<{
       appid?: string;
@@ -130,6 +186,7 @@ export class WechatPayService {
       trade_state?: string;
       success_time?: string;
       amount?: { total?: number; currency?: string };
+      payer?: { openid?: string };
     }>(headers, rawBody, "transaction", profile);
     if (data.mchid !== cfg.mchId || data.appid !== cfg.appId) {
       throw new ValidateException("微信支付回调商户信息不匹配");
@@ -157,6 +214,9 @@ export class WechatPayService {
       tradeState: data.trade_state,
       amountTotal: data.amount?.total ?? 0,
       providerEventTime: providerEventTime ?? 0,
+      appId: data.appid,
+      merchantId: data.mchid,
+      ...(typeof data.payer?.openid === 'string' ? { payerId: data.payer.openid } : {}),
     };
   }
 
@@ -196,16 +256,20 @@ export class WechatPayService {
     }
   }
 
-  async queryOrder(request: PaymentProviderQueryRequest): Promise<PaymentProviderQueryResult> {
+  async queryOrder(request: PaymentProviderQueryRequest, original?: PaymentQueryOriginalIdentity): Promise<PaymentProviderQueryResult> {
     if (request.provider !== "wechat" || !["wechat", "routine", "app"].includes(request.profile)) {
       throw new ValidateException("微信支付查单渠道无效");
     }
+    request = { ...request };
+    original = original ? { ...original } : undefined;
+    validatePaymentQueryIdentity(request, original);
     const cfg = await this.getConfig(request.profile as WechatPayProfile);
+    assertPaymentQueryCredentialIdentity(original, cfg.appId, cfg.mchId);
     const path = `/v3/pay/transactions/out-trade-no/${encodeURIComponent(request.orderNo)}`
       + `?mchid=${encodeURIComponent(cfg.mchId)}`;
     let response: WechatTradeQueryResponse;
     try {
-      response = await this.callApi<WechatTradeQueryResponse>("GET", path, undefined, cfg);
+      response = await this.callApi<WechatTradeQueryResponse>("GET", path, undefined, cfg, true);
     } catch (error) {
       if (
         error instanceof WechatApiError
@@ -222,18 +286,20 @@ export class WechatPayService {
     ) {
       return emptyTradeQueryResult(request, "UNKNOWN", "UNKNOWN", "provider_identity_mismatch");
     }
-    const providerTradeState = response.trade_state ?? "UNKNOWN";
+    const providerTradeState = typeof response.trade_state === 'string' ? response.trade_state : 'UNKNOWN';
     if (["NOTPAY", "USERPAYING"].includes(providerTradeState)) {
       return emptyTradeQueryResult(request, "PENDING", providerTradeState, "");
     }
     if (["CLOSED", "REVOKED", "PAYERROR", "REFUND"].includes(providerTradeState)) {
-      return emptyTradeQueryResult(request, "CLOSED", providerTradeState, "");
+      const uncertain = !!original || ['REVOKED', 'REFUND'].includes(providerTradeState);
+      return emptyTradeQueryResult(request, uncertain ? "UNKNOWN" : "CLOSED", providerTradeState,
+        uncertain ? 'provider_closed_or_refunded' : "");
     }
     if (providerTradeState !== "SUCCESS") {
       return emptyTradeQueryResult(request, "UNKNOWN", providerTradeState, "provider_status_unknown");
     }
-    const transactionId = response.transaction_id ?? "";
-    const amountCents = Number(response.amount?.total ?? -1);
+    const transactionId = typeof response.transaction_id === 'string' ? response.transaction_id : '';
+    const amountCents = typeof response.amount?.total === 'number' ? response.amount.total : -1;
     const providerEventTime = parseProviderTime(response.success_time) ?? 0;
     if (
       !/^[A-Za-z0-9_-]{1,100}$/.test(transactionId)
@@ -241,6 +307,9 @@ export class WechatPayService {
       || amountCents !== request.expectedAmountCents
       || response.amount?.currency !== "CNY"
       || providerEventTime <= 0
+      || (original && (transactionId.length > 50
+        || response.trade_type !== (original.transactionType === 'jsapi' ? 'JSAPI' : 'MWEB')
+        || (original.payerId !== '' && response.payer?.openid !== original.payerId)))
     ) {
       return {
         ...emptyTradeQueryResult(
@@ -263,6 +332,9 @@ export class WechatPayService {
       currency: "CNY",
       providerEventTime,
       errorCode: "",
+      ...(original ? { identityEvidence: { source: 'wechat-signed-query' as const,
+        appId: response.appid, merchantId: response.mchid,
+        ...(original.payerId ? { payerId: response.payer?.openid } : {}) } } : {}),
     };
   }
 
@@ -383,6 +455,7 @@ export class WechatPayService {
     path: string,
     bodyValue: Record<string, unknown> | undefined,
     cfg: WechatPayConfig,
+    verifyErrorResponse = false,
   ): Promise<T> {
     const body = bodyValue ? JSON.stringify(bodyValue) : "";
     const authorization = await buildV3Authorization(
@@ -411,12 +484,14 @@ export class WechatPayService {
     } catch (error) {
       throw new Error(`微信支付请求网络状态未知: ${errorMessage(error)}`);
     }
-    const rawBody = await response.text();
-    if (response.ok) await this.verifyApiResponse(response.headers, rawBody, cfg);
+    const rawBody = await readPaymentProviderResponse(response);
+    if (response.ok || verifyErrorResponse) await this.verifyApiResponse(response.headers, rawBody, cfg);
 
     let result: Record<string, unknown>;
     try {
-      result = rawBody ? (JSON.parse(rawBody) as Record<string, unknown>) : {};
+      const parsed: unknown = rawBody ? JSON.parse(rawBody) : {};
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw Error('Invalid response shape');
+      result = parsed as Record<string, unknown>;
     } catch {
       throw new Error(`微信支付响应不是 JSON (HTTP ${response.status})`);
     }
@@ -426,7 +501,7 @@ export class WechatPayService {
         typeof result.message === "string" ? result.message : response.statusText,
       );
     }
-    return result as unknown as T;
+    return result as T;
   }
 
   private async verifyApiResponse(
@@ -440,6 +515,10 @@ export class WechatPayService {
     const serial = headers.get("Wechatpay-Serial") ?? "";
     if (!timestamp || !nonce || !signature || !serial) {
       throw new Error("微信支付成功响应缺少验签头");
+    }
+    if (!/^\d{1,12}$/.test(timestamp) || Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > 300
+      || nonce.length > 128 || signature.startsWith('WECHATPAY/SIGNTEST/')) {
+      throw new Error('微信支付响应签名时间或签名头无效');
     }
     this.assertPlatformSerial(serial, cfg);
     const valid = await rsaVerify(
@@ -456,19 +535,21 @@ export class WechatPayService {
     }
   }
 
-  private async getConfig(profile: WechatPayProfile): Promise<WechatPayConfig> {
+  private async getConfig(profile: WechatPayProfile, requireEnabled = false, currentConfig?: Readonly<Record<string, string>>): Promise<WechatPayConfig> {
     const svc = new (await import("@/services/system/SystemConfigService")).SystemConfigService(
       this.container,
       this.env,
     );
-    const values = await svc.getMany([
+    const values = currentConfig ?? await svc.getMany([
       "wechat_appid",
       "routine_appId",
       "wechat_app_appid",
       "pay_weixin_mchid",
       "pay_weixin_serial_no",
       "site_url",
+      ...(requireEnabled ? ['pay_weixin_open'] : []),
     ]);
+    if (requireEnabled && values.pay_weixin_open !== '1') throw new ValidateException('微信支付未开启');
     const privateKey = this.env.WECHAT_MCH_PRIVATE_KEY;
     const platformPublicKey =
       this.env.WECHAT_PLATFORM_PUBLIC_KEY ?? this.env.WECHAT_PLATFORM_CERT;
@@ -561,7 +642,7 @@ function validateRefundRequest(request: RefundProviderRequest): void {
 }
 
 function parseProviderTime(value: string | undefined): number | undefined {
-  if (!value) return undefined;
+  if (typeof value !== 'string' || !value) return undefined;
   const milliseconds = Date.parse(value);
   return Number.isFinite(milliseconds) ? Math.floor(milliseconds / 1000) : undefined;
 }

@@ -124,7 +124,11 @@ describe("FE-002E server-authoritative PC checkout quote", () => {
     expect(source).toContain(':disabled="!canSubmit"');
     expect(source).toContain('quoteState.value.result!.key');
     expect(source).toContain('...quoteOptions.value');
-    expect(source).toContain('apiOrderCreate(orderKey.value, pendingSubmission.value!)');
+    expect(source).toContain('journal.begin(uid, orderKey.value, {');
+    expect(source).toContain('const intent = journal.assertCurrent(pendingIntent.value)');
+    expect(source).toContain('apiOrderCreate(intent.key, intent.payload as Parameters<typeof apiOrderCreate>[1])');
+    expect(source).toContain('journal.settled(intent, result)');
+    expect(source).toContain('pendingIntent.value = journal.read(getUid())');
     expect(source).toContain('await Promise.all([loadAddresses(generation), type === 2 ? loadShipping(generation, true) : loadPickupStores(generation), loadSystemForm(rows, generation)])');
     expect(source).toContain('class="checkout-mobile-items" aria-label="结算商品"');
     expect(source).toContain('.checkout-desktop-items { display: none; }');

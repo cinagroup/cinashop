@@ -3,7 +3,7 @@ import { beforeAll, beforeEach, afterAll, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import type { Container, DbClient } from '../src/lib/di';
 import { MigrationService } from '../src/services/MigrationService';
-import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { checkoutPricingMigrationDatabase as sequenceRunnerDatabase } from './helpers/checkoutPricingMigrationDatabase';
 import { runShippingLifecycle } from '../src/migrations/runShippingLifecycle';
 import { inspectShippingLifecycleIndexes, runShippingLifecycleIndexes } from '../src/migrations/runShippingLifecycleIndexes';
 import { SHIPPING_LIFECYCLE_INDEXES } from '../src/migrations/shippingLifecycleIndexes';
@@ -41,7 +41,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('shipping index f
     try {
       if(path==='external') for(const name of readdirSync('migrations').filter(n=>/^\d{4}.*\.sql$/.test(n)).sort())
         await f.db.transaction(async tx=>{await tx.execute(sql.raw('SET LOCAL search_path=public,pg_temp'));await tx.execute(sql.raw(readFileSync(`migrations/${name}`,'utf8')));});
-      else if(path==='embedded') expect(await new MigrationService({db:f.db} as Container).runAll()).toEqual({executed:Array.from({length:161},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+      else if(path==='embedded') expect(await new MigrationService({db:f.db} as Container).runAll()).toEqual({executed:Array.from({length: 167},(_,i)=>String(i).padStart(4,'0')),errors:[]});
       else {await model(f);await runShippingLifecycle(f.db);}
       expect((await inspectShippingLifecycleIndexes(f.db)).complete).toBe(true);
       await f.exec("INSERT INTO shipping_templates(id,name) VALUES(1,'default'),(10,'referenced'); INSERT INTO store_product(id,temp_id,freight) VALUES(1,10,3); INSERT INTO store_order(id,order_id,pay_postage) VALUES(999,'index-history','12.34')");

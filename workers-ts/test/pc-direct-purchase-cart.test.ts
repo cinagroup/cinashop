@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { financePostgres } from "./helpers/financePostgres";
 import { createContainerFromDb } from "../src/lib/di";
-import { storeCart, storeProduct, storeProductAttrValue } from "../src/models/schema";
+import { memberRight, storeCart, storeProduct, storeProductAttrValue, systemConfig, user } from "../src/models/schema";
 import { StoreCartService } from "../src/services/order/StoreCartService";
 import { cartAdd, cartList, cartCount } from "../src/controllers/api/v1/OrderController";
 import type { AppVariables, Env } from "../src/env";
@@ -17,7 +17,7 @@ describe("FE-002E direct purchase cart isolation", () => {
   const input = { uid: 11, productId: 701, unique: "real-red", cartNum: 2 };
 
   beforeAll(async () => {
-    fixture = await financePostgres([storeProduct, storeProductAttrValue, storeCart]);
+    fixture = await financePostgres([storeProduct, storeProductAttrValue, storeCart, user, systemConfig, memberRight]);
     const container = createContainerFromDb(fixture.db);
     service = new StoreCartService(container);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -29,6 +29,7 @@ describe("FE-002E direct purchase cart isolation", () => {
   afterAll(async () => { await fixture?.close(); });
   beforeEach(async () => {
     await fixture.reset();
+    await fixture.db.insert(user).values({ uid: 11, account: "local-direct-cart", level: 0, levelStatus: 0 });
     await fixture.db.insert(storeProduct).values({ id: 701, storeName: "隔离商品", price: "19.90",
       stock: 20, isShow: 1, isVerify: 1, isDel: 0 });
     await fixture.db.insert(storeProductAttrValue).values({ id: 901, productId: 701,

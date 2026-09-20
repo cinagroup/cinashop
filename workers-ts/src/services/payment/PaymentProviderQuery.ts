@@ -3,6 +3,7 @@ import type {
   PaymentCallbackProfile,
   PaymentCallbackProvider,
 } from "@/models/schema";
+import type { PaymentQueryIdentityEvidence } from './PaymentQueryIdentity';
 
 export type PaymentProviderQueryStatus =
   | "SUCCESS"
@@ -20,7 +21,7 @@ export interface PaymentProviderQueryRequest {
   currency: "CNY";
 }
 
-/** Strict allowlist projected from a signed provider response. */
+/** Strict allowlist; identity provenance must not be confused with a callback. */
 export interface PaymentProviderQueryResult {
   status: PaymentProviderQueryStatus;
   providerTradeState: string;
@@ -30,6 +31,7 @@ export interface PaymentProviderQueryResult {
   currency: "CNY";
   providerEventTime: number;
   errorCode: string;
+  identityEvidence?: PaymentQueryIdentityEvidence;
 }
 
 export type PaymentProviderQuery = (

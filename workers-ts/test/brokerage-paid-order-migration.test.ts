@@ -7,7 +7,7 @@ import { MigrationService } from '../src/services/MigrationService';
 import { BROKERAGE_PAID_ORDER_FENCE_BODY, BROKERAGE_PAID_ORDER_FENCE_SQL } from '../src/migrations/brokeragePaidOrderFence';
 import { BARGAIN_CART_PARTICIPATION_SQL } from '../src/migrations/bargainCartParticipation';
 import { runBrokeragePaidOrderFence } from '../src/migrations/runBrokeragePaidOrderFence';
-import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { checkoutPricingMigrationDatabase as sequenceRunnerDatabase } from './helpers/checkoutPricingMigrationDatabase';
 
 const dialect = new PgDialect();
 type Owned = Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -60,7 +60,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
         } else if (path === 'embedded') {
           const result = await service(owned.db).runAll();
           expect(result.errors.map(error => error.slice(0, 200))).toEqual([]);
-          expect(result.executed).toEqual(steps(161));
+          expect(result.executed).toEqual(steps(167));
         } else {
           const api = await import('drizzle-kit/api'), models = await import('../src/models/schema');
           await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));

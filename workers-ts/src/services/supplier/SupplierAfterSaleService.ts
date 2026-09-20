@@ -1,6 +1,6 @@
-import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ilike, or, sql, type SQL } from "drizzle-orm";
 import type { Container } from "@/lib/di";
-import { withTx } from "@/lib/di";
+import { createContainerFromDb, withTx } from "@/lib/di";
 import type { Env } from "@/env";
 import {
   storeOrder,
@@ -16,6 +16,8 @@ import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageS
 import { parsePagination } from "@/services/supplier/SupplierService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { previewReturnImages } from "@/services/order/RefundReturnPayload";
+import { readStaffRefundHistory } from "@/services/order/RefundReadSnapshot";
 
 const MAX_REFUND_REASON_LENGTH = 255;
 const MAX_REFUND_REASONS = 100;
@@ -95,6 +97,8 @@ export class SupplierAfterSaleService {
       eq(storeOrderRefund.isCancel, 0),
       eq(storeOrderRefund.isDel, 0),
       eq(storeOrder.supplierId, supplierId),
+      eq(storeOrderRefund.uid, storeOrder.uid),
+      eq(storeOrderRefund.storeId, storeOrder.storeId),
       eq(storeOrder.isSystemDel, 0),
       eq(storeOrder.isDel, 0),
     ];
@@ -171,8 +175,26 @@ export class SupplierAfterSaleService {
   }
 
   async detail(supplierId: number, refundId: number) {
-    const rows = await this.container.db
-      .select({ refund: storeOrderRefund, order: storeOrder, payment: storeOrderRefundPayment })
+    // Bind refund/order and attachment ownership to one database snapshot.
+    // Deployed Hyperdrive cache/freshness remains a separate acceptance gate;
+    // a local transaction test cannot prove the proxy's caching behavior.
+    return withTx(this.container, async (db) => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true)`);
+      return this.readDetail(createContainerFromDb(db), supplierId, refundId);
+    });
+  }
+
+  private async readDetail(container: Container, supplierId: number, refundId: number) {
+    const rows = await container.db
+      .select({ refund: {
+        ...getTableColumns(storeOrderRefund),
+        // Do not materialize unbounded legacy JSON in the Worker.
+        refundImg: sql<null>`NULL`,
+        cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.cartInfo}) <= 65536 THEN ${storeOrderRefund.cartInfo} ELSE NULL END`,
+        refundGoodsImg: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.refundGoodsImg}) <= 8192 THEN ${storeOrderRefund.refundGoodsImg} WHEN ${storeOrderRefund.refundGoodsImg} IS NULL THEN NULL ELSE '__invalid__' END`,
+      }, order: storeOrder, payment: storeOrderRefundPayment })
       .from(storeOrderRefund)
       .innerJoin(storeOrder, eq(storeOrder.id, storeOrderRefund.storeOrderId))
       .leftJoin(
@@ -185,6 +207,8 @@ export class SupplierAfterSaleService {
           eq(storeOrderRefund.supplierId, supplierId),
           eq(storeOrderRefund.isDel, 0),
           eq(storeOrder.supplierId, supplierId),
+          eq(storeOrderRefund.uid, storeOrder.uid),
+          eq(storeOrderRefund.storeId, storeOrder.storeId),
           eq(storeOrder.isSystemDel, 0),
           eq(storeOrder.isDel, 0),
         ),
@@ -192,6 +216,15 @@ export class SupplierAfterSaleService {
       .limit(1);
     if (!rows[0]) throw new NotFoundException("售后记录不存在或不属于当前供应商");
     const { refund, order, payment } = rows[0];
+    const refundHistory = await readStaffRefundHistory(container.db, refund);
+    let returnImages: Array<{ url: string; src: string }> = [];
+    let returnImagesError = "";
+    try {
+      returnImages = await previewReturnImages(container, refund.uid, refund.refundGoodsImg, this.env.APP_KEY);
+    } catch (error) {
+      if (!(error instanceof ValidateException)) throw error;
+      returnImagesError = "退货凭证暂不可读取，请与用户核对";
+    }
     return {
       id: refund.id,
       refund_order_id: refund.orderId,
@@ -206,6 +239,14 @@ export class SupplierAfterSaleService {
       refund_price: refund.refundPrice,
       refunded_price: refund.refundedPrice,
       refund_reason: refund.refundReason,
+      is_cancel: refund.isCancel,
+      refund_explain: refund.refundExplain,
+      refund_express: refund.refundExpress,
+      refund_express_name: refund.refundExpressName,
+      refund_phone: refund.refundPhone,
+      refund_goods_explain: refund.refundGoodsExplain,
+      returnImages,
+      returnImagesError,
       refuse_reason: refund.refuseReason,
       remark: refund.remark,
       add_time: refund.addTime,
@@ -219,6 +260,7 @@ export class SupplierAfterSaleService {
       provider_error: payment?.lastError ?? null,
       provider_update_time: payment?.updateTime ?? 0,
       cartInfo: parseCartInfo(refund.cartInfo),
+      refundHistory,
       orderInfo: order,
     };
   }

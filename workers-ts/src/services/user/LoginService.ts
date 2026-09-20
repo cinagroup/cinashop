@@ -24,6 +24,7 @@ import {
 import { createToken, md5 } from "@/utils/jwt";
 import { setTokenBucket, type TokenBucket } from "@/utils/cache";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
+import { readRegistrationLevelStatus } from "@/services/user/RegistrationLevelActivation";
 import {
   applyRegistrationGifts,
   StoreNewcomerService,
@@ -201,6 +202,7 @@ export class LoginService {
           lastIp: ip.slice(0, 45),
           userType: userType.slice(0, 32),
           ...registration.flags,
+          levelStatus: await readRegistrationLevelStatus(tx),
         })
         .returning();
       const created = inserted[0];
@@ -269,6 +271,7 @@ export class LoginService {
           nowMoney: "0.00",
           integral: 0,
           ...registration.flags,
+          levelStatus: await readRegistrationLevelStatus(tx),
         }).returning();
         const created = inserted[0];
         if (!created) throw new Error("用户创建失败");

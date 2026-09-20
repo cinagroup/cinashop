@@ -3,6 +3,7 @@ import { runStoreOrderCreatePostgresScenario } from "./StoreOrderCreatePostgresS
 import { runStoreOrderPaymentCancelPostgresScenario } from "./StoreOrderPaymentCancelPostgresScenario";
 import { runStoreOrderRefundPostgresScenario } from "./StoreOrderRefundPostgresScenario";
 import { MigrationService } from "@/services/MigrationService";
+import { checkoutScenarioPricingOwner } from "./CheckoutScenarioPricing";
 
 type AuditEnv = Pick<WorkerBindings, "HYPERDRIVE"> & {
   AUDIT_TOKEN_SHA256: string;
@@ -646,7 +647,8 @@ export default {
     const pathname = new URL(request.url).pathname;
     if (request.method === "POST" && pathname === "/isolated") {
       try {
-        const creation = await runStoreOrderCreatePostgresScenario(env.HYPERDRIVE.connectionString);
+        const pricingOwner = checkoutScenarioPricingOwner(request);
+        const creation = await runStoreOrderCreatePostgresScenario(env.HYPERDRIVE.connectionString, pricingOwner);
         const payment = await runStoreOrderPaymentCancelPostgresScenario(env.HYPERDRIVE.connectionString);
         const refund = await runStoreOrderRefundPostgresScenario(env.HYPERDRIVE.connectionString);
         return Response.json({ creation, payment, refund });

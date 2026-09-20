@@ -1,3 +1,5 @@
+import type { SkuMembershipPrice } from "../../../common/skuMembershipPrice";
+
 /** 商品类型 (与后端对齐) */
 
 export interface GoodsItem {
@@ -16,7 +18,7 @@ export interface GoodsItem {
   star: string;
 }
 
-export interface GoodsSku { unique: string; suk: string; price: string; ot_price: string | null; vip_price: string | null; stock: number }
+export interface GoodsSku extends SkuMembershipPrice { unique: string; suk: string; price: string; ot_price: string | null; vip_price: string | null; stock: number }
 
 export interface GoodsDetail {
   skus: GoodsSku[];

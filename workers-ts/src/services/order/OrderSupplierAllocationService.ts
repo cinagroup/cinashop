@@ -11,6 +11,8 @@ import {
   orderCartUnitWeight,
   reserveChildOrderIds,
 } from "@/services/supplier/SupplierFulfillmentService";
+import { planOrderFinancialSplit } from './OrderSplitFinance';
+import { lockSplitInvoices, prepareSplitInvoice, materializeSplitInvoice } from './SplitInvoiceAllocation';
 
 type OrderRow = typeof storeOrder.$inferSelect;
 type OrderInsert = typeof storeOrder.$inferInsert;
@@ -94,12 +96,13 @@ function randomKey(): string {
   return crypto.randomUUID().replaceAll("-", "");
 }
 
-function cloneAllocatedCart(row: CartRow, oid: number): CartInsert {
+function cloneAllocatedCart(row: CartRow, oid: number, cartInfo = row.cartInfo): CartInsert {
   const { id: _id, ...base } = row;
   const available = Math.max(row.cartNum - row.refundNum, 0);
   return {
     ...base,
     oid,
+    cartInfo,
     oldCartId: row.oldCartId || row.cartId,
     surplusNum: available,
     splitSurplusNum: available,
@@ -111,25 +114,45 @@ function cloneAllocatedCart(row: CartRow, oid: number): CartInsert {
 function allocateGroupAmounts(
   order: OrderRow,
   groups: readonly SupplierAllocationGroup[],
-): Partial<OrderInsert>[] {
+  rows: CartRow[],
+): { amounts: Partial<OrderInsert>[]; snapshots: Map<number, string> } {
   let remainingOrder = order;
+  let remainingRows = rows;
+  const snapshots = new Map<number, string>();
   let remainingWeight = groups.reduce((sum, group) => sum + group.weight, 0n);
   if (remainingWeight <= 0n) throw new Error("订单分配权重无效");
-  return groups.map((group) => {
+  const amounts = groups.map((group) => {
+    const ids = new Set(group.cartIds);
+    const financial = planOrderFinancialSplit(remainingOrder, remainingRows,
+      new Map(remainingRows.filter(row => ids.has(row.id)).map(row => [row.cartId, row.cartNum])));
     const allocation = allocateSplitOrderAmounts(
       remainingOrder,
       group.weight,
       remainingWeight,
     );
-    remainingOrder = { ...remainingOrder, ...allocation.remaining };
+    remainingOrder = { ...remainingOrder, ...allocation.remaining, ...financial?.remaining };
+    if (financial) for (const row of remainingRows) {
+      const part = financial.carts.get(row.cartId);
+      if (ids.has(row.id)) {
+        if (!part?.selected) throw new Error('Supplier 分单行级快照缺失');
+        snapshots.set(row.id, part.selected);
+      }
+    }
+    remainingRows = remainingRows.filter(row => !ids.has(row.id)).map(row => {
+      if (!financial) return row;
+      const part = financial.carts.get(row.cartId);
+      if (!part?.remaining) throw new Error('Supplier 剩余行级快照缺失');
+      return { ...row, cartInfo: part.remaining };
+    });
     remainingWeight -= group.weight;
-    return allocation.selected;
+    return { ...allocation.selected, ...financial?.selected };
   });
+  return { amounts, snapshots };
 }
 
 /**
  * 支付 outbox 事务内执行。调用者先锁 outbox 行，本方法再按
- * advisory lock -> 主单 -> 已有子单 -> 商品快照 -> Supplier 的固定顺序加锁。
+ * advisory lock -> 主单 -> 已有子单 -> 商品快照 -> 发票 -> Supplier 的固定顺序加锁。
  */
 export async function allocatePaidOrderBySupplier(
   tx: DbClient,
@@ -197,6 +220,7 @@ export async function allocatePaidOrderBySupplier(
     candidateSupplierIds.push(root.supplierId);
     candidateSupplierIds.sort((a, b) => a - b);
   }
+  const lockedInvoices = await lockSplitInvoices(tx, root);
   const activeSuppliers = candidateSupplierIds.length
     ? await tx
         .select({ id: systemSupplier.id })
@@ -255,7 +279,8 @@ export async function allocatePaidOrderBySupplier(
     throw new Error("混合订单商品已进入其他拆分流程");
   }
 
-  const amounts = allocateGroupAmounts(root, plan);
+  const { amounts, snapshots } = allocateGroupAmounts(root, plan, cartRows);
+  const invoice = await prepareSplitInvoice(tx, root, lockedInvoices);
   const childOrderIds = reserveChildOrderIds(root.orderId, [], plan.length);
   const cartsById = new Map(cartRows.map((cart) => [cart.id, cart]));
   const { id: _rootId, ...rootBase } = root;
@@ -286,7 +311,7 @@ export async function allocatePaidOrderBySupplier(
     if (!child) throw new Error("Supplier 履约子单创建失败");
     await tx
       .insert(storeOrderCartInfo)
-      .values(groupCarts.map((cart) => cloneAllocatedCart(cart, child.id)));
+      .values(groupCarts.map((cart) => cloneAllocatedCart(cart, child.id, snapshots.get(cart.id) ?? cart.cartInfo)));
     await tx.insert(storeOrderStatus).values({
       oid: child.id,
       changeType: "supplier_split_create_order",
@@ -313,6 +338,7 @@ export async function allocatePaidOrderBySupplier(
     )
     .returning({ id: storeOrder.id });
   if (!marked[0]) throw new Error("Supplier 拆分审计主单标记失败");
+  await materializeSplitInvoice(tx, root, invoice, children.map(child => child.id), 'supplier', now);
   await tx.insert(storeOrderStatus).values({
     oid: root.id,
     changeType: "supplier_order_split",

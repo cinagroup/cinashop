@@ -6,6 +6,7 @@ import {
   systemSupplier,
 } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { lockSupplierFinance } from '@/services/supplier/SupplierFinanceLock';
 
 function parsePositiveInt(value: string | undefined, fallback: number, max: number) {
   if (!value) return fallback;
@@ -159,24 +160,26 @@ export class AdminSupplierFinanceService {
   async review(id: number, adminId: number, input: Record<string, unknown>) {
     const { approved, message } = normalizeSupplierExtractReviewInput(input);
     const now = Math.floor(Date.now() / 1000);
-    const rows = await this.container.db
-      .update(supplierExtract)
-      .set({
+    await this.container.db.transaction(async tx => {
+      // supplierId is immutable in the extract workflow. Discover it without
+      // taking a row lock: all writers must take supplier mutex -> extract row.
+      const [target] = await tx.select({ supplierId: supplierExtract.supplierId })
+        .from(supplierExtract).where(eq(supplierExtract.id, id)).limit(1);
+      if (!target) throw new NotFoundException("提现记录不存在");
+      await lockSupplierFinance(tx, target.supplierId);
+      const rows = await tx.update(supplierExtract).set({
         status: approved ? 1 : -1,
         adminId,
         failMsg: approved ? "" : message,
         failTime: approved ? 0 : now,
-      })
-      .where(and(eq(supplierExtract.id, id), eq(supplierExtract.status, 0)))
-      .returning({ id: supplierExtract.id });
-    if (rows[0]) return;
-    const existing = await this.container.db
-      .select({ status: supplierExtract.status })
-      .from(supplierExtract)
-      .where(eq(supplierExtract.id, id))
-      .limit(1);
-    if (!existing[0]) throw new NotFoundException("提现记录不存在");
-    throw new ValidateException("提现记录已审核，请勿重复操作");
+      }).where(and(eq(supplierExtract.id, id), eq(supplierExtract.supplierId, target.supplierId),
+        eq(supplierExtract.status, 0))).returning({ id: supplierExtract.id });
+      if (rows[0]) return;
+      const [existing] = await tx.select({ id: supplierExtract.id }).from(supplierExtract)
+        .where(eq(supplierExtract.id, id)).limit(1);
+      if (!existing) throw new NotFoundException("提现记录不存在");
+      throw new ValidateException("提现记录已审核，请勿重复操作");
+    });
   }
 
   async transfer(id: number, adminId: number, input: Record<string, unknown>) {

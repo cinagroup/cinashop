@@ -16,6 +16,7 @@ import {
 } from "@/models/schema";
 import { KefuFulfillmentService } from "@/services/kefu/KefuFulfillmentService";
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
+import { INVOICE_EVIDENCE_SQL } from "@/migrations/invoiceEvidence";
 
 const CLONED_TABLES = [
   "user",
@@ -24,6 +25,7 @@ const CLONED_TABLES = [
   "store_service_record",
   "store_order",
   "store_order_cart_info",
+  "store_order_invoice",
   "store_order_refund",
   "store_order_status",
   "store_order_writeoff",
@@ -41,6 +43,7 @@ const PRIMARY_KEYS: Record<(typeof CLONED_TABLES)[number], string> = {
   store_service_record: "id",
   store_order: "id",
   store_order_cart_info: "id",
+  store_order_invoice: "id",
   store_order_refund: "id",
   store_order_status: "id",
   store_order_writeoff: "id",
@@ -58,6 +61,7 @@ const PUBLIC_SEQUENCES: Record<(typeof CLONED_TABLES)[number], string> = {
   store_service_record: "store_service_record_id_seq",
   store_order: "store_order_id_seq",
   store_order_cart_info: "store_order_cart_info_id_seq",
+  store_order_invoice: "store_order_invoice_id_seq",
   store_order_refund: "store_order_refund_id_seq",
   store_order_status: "store_order_status_id_seq",
   store_order_writeoff: "store_order_writeoff_id_seq",
@@ -209,6 +213,7 @@ async function createSchema(db: DbClient, name: string): Promise<void> {
       const key = identifier(PRIMARY_KEYS[table]);
       await tx.unsafe(`CREATE TABLE ${schema}.${tableName} (LIKE public.${tableName} INCLUDING ALL)`);
       await tx.unsafe(`CREATE SEQUENCE ${schema}.${sequence}`);
+      await tx.unsafe(`ALTER SEQUENCE ${schema}.${sequence} OWNED BY ${schema}.${tableName}.${key}`);
       await tx.unsafe(
         `ALTER TABLE ${schema}.${tableName} ALTER COLUMN ${key} SET DEFAULT nextval('${name}.${table}_id_seq_audit'::regclass)`,
       );
@@ -223,6 +228,10 @@ async function createSchema(db: DbClient, name: string): Promise<void> {
         status VARCHAR(16) NOT NULL
       )
     `);
+    // Explicit candidate installation inside the newly owned isolated schema.
+    // Never fall back to public invoice histories or install public DDL here.
+    await tx.unsafe(`SET LOCAL search_path TO ${schema}, pg_temp`);
+    await tx.unsafe(INVOICE_EVIDENCE_SQL);
   });
 }
 

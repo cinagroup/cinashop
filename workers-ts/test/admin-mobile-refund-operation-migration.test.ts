@@ -37,7 +37,7 @@ function context(options: {
       return undefined;
     },
     header,
-    json: (body: unknown) => Response.json(body),
+    json: (body: unknown, status=200) => Response.json(body,{status}),
   } as never;
   return { c, header };
 }
@@ -64,7 +64,7 @@ describe("embedded admin refund/offline write migration", () => {
       .toThrow("请重新选择商品，或件数");
   });
 
-  it("derives all privileged actors from the authenticated admin context", async () => {
+  it("preserves offline confirmation but retires unkeyed embedded refund writes without reading their bodies", async () => {
     const offline = vi.spyOn(AdminMobileRefundOperationService.prototype, "offline")
       .mockResolvedValue({ paid: true, idempotent: false });
     const refund = vi.spyOn(AdminMobileRefundOperationService.prototype, "refund")
@@ -85,15 +85,16 @@ describe("embedded admin refund/offline write migration", () => {
     const openContext = context({ id: "7", body: { refund_price: "8.00", type: 1 } });
 
     expect(await message(await adminMobileOrderOffline(offlineContext.c))).toBe("修改成功!");
-    expect(await message(await adminMobileOrderRefund(refundContext.c))).toBe("审核成功");
-    expect(await message(await adminMobileOrderRefundAgree(agreeContext.c))).toBe("操作成功");
-    expect(await message(await adminMobileOrderOpenRefund(openContext.c)))
-      .toBe("退款已受理，等待渠道确认");
+    for (const [handler,item] of [[adminMobileOrderRefund,refundContext],[adminMobileOrderRefundAgree,agreeContext],[adminMobileOrderOpenRefund,openContext]] as const) {
+      const response=await handler(item.c);
+      expect(response.status).toBe(410);
+      expect(await response.json()).toMatchObject({status:410,data:null,msg:expect.stringContaining('旧版管理员退款写入接口已停用')});
+    }
 
     expect(offline).toHaveBeenCalledWith(17, { order_id: "O-1", uid: 999 });
-    expect(refund).toHaveBeenCalledWith(17, { order_id: "R-1", type: 1, price: "8.00" });
-    expect(agree).toHaveBeenCalledWith(17, "42");
-    expect(open).toHaveBeenCalledWith(17, "7", { refund_price: "8.00", type: 1 });
+    expect(refund).not.toHaveBeenCalled();
+    expect(agree).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
     for (const item of [offlineContext, refundContext, agreeContext, openContext]) {
       expect(item.header).toHaveBeenCalledWith("Cache-Control", "private, no-store, max-age=0");
     }
@@ -105,13 +106,13 @@ describe("embedded admin refund/offline write migration", () => {
       'v1Routes.post("/admin/order/offline", adminAuth, AdminController.adminMobileOrderOffline)',
     );
     expect(routes).toContain(
-      'v1Routes.post("/admin/order/refund", adminAuth, AdminController.adminMobileOrderRefund)',
+      'v1Routes.post("/admin/order/refund", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable)',
     );
     expect(routes).toContain(
-      'v1Routes.post("/admin/order/refund_agree/:id", adminAuth, AdminController.adminMobileOrderRefundAgree)',
+      'v1Routes.post("/admin/order/refund_agree/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable)',
     );
     expect(routes).toContain(
-      'v1Routes.post("/admin/order/open/refund/:id", adminAuth, AdminController.adminMobileOrderOpenRefund)',
+      'v1Routes.post("/admin/order/open/refund/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable)',
     );
     expect(requiredAdminPermission("POST", "/api/admin/order/offline")).toBe("order.manage");
     expect(requiredAdminPermission("POST", "/api/admin/order/refund")).toBe("refund.manage");

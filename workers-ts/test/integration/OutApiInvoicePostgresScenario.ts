@@ -23,6 +23,8 @@ const CLONED_TABLES = [
   "store_order",
   "store_order_invoice",
   "store_order_status",
+  "store_order_cart_info",
+  "store_order_refund",
 ] as const;
 
 const PUBLIC_SEQUENCE_NAMES: Record<(typeof CLONED_TABLES)[number], string> = {
@@ -31,6 +33,8 @@ const PUBLIC_SEQUENCE_NAMES: Record<(typeof CLONED_TABLES)[number], string> = {
   store_order: "store_order_id_seq",
   store_order_invoice: "store_order_invoice_id_seq",
   store_order_status: "store_order_status_id_seq",
+  store_order_cart_info: "store_order_cart_info_id_seq",
+  store_order_refund: "store_order_refund_id_seq",
 };
 
 interface Fingerprint {

@@ -54,7 +54,10 @@ async function main() {
   // Real declarations retain all standalone indexes across snapshot upgrades.
   const models = require("tsx/cjs/api").require("../../src/models/schema/index.ts", __filename);
   const previous = generateDrizzleJson(models);
-  assert.equal(Object.keys(previous.tables).length, 264);
+  // The shared current catalog contract is versioned alongside full migrations;
+  // do not retain the older 264-table cohort after new ledgers are registered.
+  const { TABLE_CATALOG_COUNT } = require("tsx/cjs/api").require("../../scripts/data-migration/table-catalog-contracts.ts", __filename);
+  assert.equal(Object.keys(previous.tables).length, TABLE_CATALOG_COUNT);
   assert.ok(previous.tables["public.store_pink"]);
   assert.equal(previous.tables["public.store_pink_full"], undefined);
   for (const [table, key] of [["work_member_current", "wmc_corp_id_uq"], ["work_client_current", "wcc_corp_external_userid_uq"], ["work_group_chat_current", "wgcc_corp_chat_id_uq"]]) {

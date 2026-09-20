@@ -6,7 +6,7 @@ import { MigrationService } from '../src/services/MigrationService';
 import { runShippingLifecycle } from '../src/migrations/runShippingLifecycle';
 import { SHIPPING_LIFECYCLE_INSTALLATION_SQL } from '../src/migrations/shippingLifecycleInstallation';
 import { inspectShippingLifecycleProtocol } from '../src/migrations/inspectShippingLifecycleProtocol';
-import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { checkoutPricingMigrationDatabase as sequenceRunnerDatabase } from './helpers/checkoutPricingMigrationDatabase';
 import { shippingLifecycleCatalogMutations } from './helpers/shippingLifecycleCatalogMutations';
 
 const fileSql = readFileSync('migrations/0152_shipping_lifecycle.sql', 'utf8');
@@ -34,7 +34,10 @@ const protocol = (f: Owned) => f.query(`SELECT jsonb_build_object(
 const removeProtocol = async (f: Owned) => {
   const rows = (await f.query("SELECT oid::regprocedure::text AS signature FROM pg_proc WHERE pronamespace='public'::regnamespace AND starts_with(proname,'shipping_lifecycle_') ORDER BY oid")).rows;
   // Exact signatures in a helper-owned random database, including test mutations.
-  for (const row of rows as { signature: string }[]) await f.exec(`DROP ROUTINE IF EXISTS ${row.signature} CASCADE`);
+  for (const row of rows) {
+    if (typeof row.signature !== 'string') throw Error('Missing owned fixture routine signature');
+    await f.exec(`DROP ROUTINE IF EXISTS ${row.signature} CASCADE`);
+  }
 };
 
 it('mirrors filesystem 0152 exactly in embedded 0158', () => {
@@ -58,7 +61,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered shipp
         }
       } else if (path === 'embedded') {
         const result = await new MigrationService({ db: f.db } as Container).runAll();
-        expect(result).toEqual({ executed: Array.from({ length: 161 }, (_, i) => String(i).padStart(4,'0')), errors: [] });
+        expect(result).toEqual({ executed: Array.from({ length: 167 }, (_, i) => String(i).padStart(4,'0')), errors: [] });
       } else await orm(f);
       expect((await inspectShippingLifecycleProtocol(f.db)).state).toBe(path === 'orm-upgrade' ? 'absent' : 'complete');
       await seed(f);

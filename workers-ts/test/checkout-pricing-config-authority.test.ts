@@ -169,7 +169,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM checkou
         this: PostgresJsPreparedQuery<PreparedQueryConfig>, ...args
       ) {
         const statement = this.getQuery().sql, result = await execute.apply(this, args);
-        if (!fenced && statement.startsWith('LOCK TABLE "member_right", "system_config"')) {
+        if (!fenced && statement === 'SELECT "public".checkout_lock_pricing_v1()') {
           fenced = true;
           writing = outcome(writer.exec(table === 'system_config'
             ? "UPDATE system_config SET value='1' WHERE menu_name='whole_free_shipping'"

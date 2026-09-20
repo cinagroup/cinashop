@@ -104,7 +104,7 @@
           :key="item.id"
           class="package-card"
           type="button"
-          @click="router.push(`/order/${item.order_id}`)"
+          @click="goPackage(item.order_id)"
         >
           <span class="package-main">
             <strong>{{ item.order_id }}</strong>
@@ -158,7 +158,7 @@
             type="button"
             class="payment-option"
             :class="{ active: payType === method.value, disabled: !method.enabled }"
-            :disabled="!method.enabled"
+            :disabled="!method.enabled || paying || qrVisible || !!actionError"
             @click="payType = method.value"
           >
             <strong>{{ method.label }}</strong>
@@ -167,12 +167,16 @@
         </div>
       </div>
 
+      <div v-if="cashierError || actionError" class="detail-card" role="alert">
+        <p>{{ cashierError || actionError }}</p>
+        <el-button :disabled="paying || taking || reviewing" @click="load">刷新订单核对</el-button>
+      </div>
       <div v-if="order.paid === 0" class="pay-bar">
         <el-button
           type="primary"
           size="large"
           :loading="paying"
-          :disabled="!cashier?.payable || (!cashier?.zero_pay && !selectedMethodEnabled)"
+          :disabled="paying || qrVisible || !!actionError || !cashier?.payable || (!cashier?.zero_pay && !selectedMethodEnabled)"
           @click="pay"
         >
           {{ payButtonText }}
@@ -182,18 +186,21 @@
         v-else-if="order.pid !== -1 && order.supplier_allocation_status !== 1"
         class="pay-bar"
       >
-        <el-button v-if="order.status === 1 && order.shipping_type !== 2 && order.delivery_type !== 'send'" type="primary" size="large" @click="take">
+        <el-button v-if="order.status === 1 && order.shipping_type !== 2 && order.delivery_type !== 'send'" type="primary" size="large" :loading="taking" :disabled="!!actionError" @click="take">
           确认收货
         </el-button>
         <el-button v-if="canApplyRefund" size="large" @click="goRefund">
           申请退款
         </el-button>
-        <el-button v-if="order.status === 2" type="primary" size="large" @click="reviewVisible = true">
+        <el-button v-if="order.status === 2" type="primary" size="large" :disabled="!!actionError" @click="reviewVisible = true">
           评价订单
         </el-button>
       </div>
     </template>
-    <el-empty v-else description="订单不存在" />
+    <div v-else class="detail-card" role="alert">
+      <p>{{ loadError || '暂无订单信息，请重新加载' }}</p>
+      <el-button @click="load">重新加载订单</el-button>
+    </div>
 
     <el-dialog v-model="reviewVisible" title="评价订单" width="min(520px, 92vw)" destroy-on-close>
       <div v-if="order" class="review-products">
@@ -270,6 +277,8 @@ import type {
 } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import dayjs from "dayjs";
+import { captureAuthSession, isCurrentAuthSession, getUid, onAuthChange } from "@/utils/auth";
+import { orderDetailId, assertOrderDetailIdentity, assertOrderCashierIdentity, assertOrderPaymentIdentity } from "../../../../common/orderDetailIdentity";
 
 const route = useRoute();
 const router = useRouter();
@@ -277,6 +286,9 @@ const order = ref<OrderInfo | null>(null);
 const cashier = ref<CheckoutCashier | null>(null);
 const loading = ref(true);
 const paying = ref(false);
+const taking = ref(false);
+const loadError = ref(''), cashierError = ref(''), actionError = ref('');
+let revision = 0, disposed = false, confirming = false;
 const payType = ref<CheckoutPaymentMethod>("yue");
 const qrVisible = ref(false);
 const qrCanvas = ref<HTMLCanvasElement | null>(null);
@@ -422,52 +434,76 @@ function formatTime(ts: number): string {
 }
 
 async function pay() {
-  if (!order.value || !cashier.value || !cashier.value.payable) return;
+  if (!order.value || !cashier.value || !cashier.value.payable || loading.value || paying.value || qrVisible.value || actionError.value) return;
+  const scope = currentView();
+  if (!scope.current()) return;
   const method = cashier.value.zero_pay ? "yue" : payType.value;
   if (!cashier.value.zero_pay && !selectedMethodEnabled.value) return;
+  paying.value = true;
+  confirming = true;
   try {
     await ElMessageBox.confirm(
       `确认使用${paymentLabels[method]}支付 ¥${order.value.pay_price}?`,
       "支付确认",
     );
   } catch {
+    if (scope.current()) { confirming = false; paying.value = false; }
     return;
   }
-  paying.value = true;
+  if (!scope.current()) return;
+  confirming = false;
   try {
-    const result = await apiOrderPay(order.value.order_id, method, "pc");
-    await handlePaymentResult(result);
+    const result = await apiOrderPay(scope.id, method, "pc");
+    if (!scope.current()) return;
+    assertOrderPaymentIdentity(result, scope.id, method);
+    await handlePaymentResult(result, scope);
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "支付失败");
+    if (scope.current()) actionError.value = `支付结果尚未确认，请刷新订单核对后再操作。${errorText(e)}`;
   } finally {
-    paying.value = false;
+    if (scope.current()) paying.value = false;
   }
 }
 
 async function take() {
-  if (!order.value) return;
-  await apiOrderTake(order.value.order_id);
-  ElMessage.success("已确认收货");
-  load();
+  if (!order.value || taking.value || actionError.value || order.value.paid !== 1 || order.value.status !== 1) return;
+  const scope = currentView();
+  if (!scope.current()) return;
+  taking.value = true;
+  try {
+    await apiOrderTake(scope.id);
+    if (!scope.current()) return;
+    ElMessage.success("已确认收货");
+    await load();
+  } catch (error) {
+    if (scope.current()) actionError.value = `收货结果尚未确认，请刷新订单核对。${errorText(error)}`;
+  } finally { if (scope.current()) taking.value = false; }
 }
 
 function goRefund() {
-  if (!order.value) return;
+  if (!order.value || !canApplyRefund.value || !currentView().current()) return;
   router.push(`/refund/${order.value.order_id}`);
 }
 
+function goPackage(id: string) {
+  if (!order.value?.split_orders?.some(item => item.order_id === id) || !currentView().current()) return;
+  try { void router.push(`/order/${orderDetailId(id)}`); } catch { ElMessage.error('包裹订单链接无效'); }
+}
+
 async function copySecret(value: string) {
+  const scope = currentView();
+  if (!order.value || !scope.current()) return;
   const secret = value.trim();
   if (!secret) return;
   try {
     await navigator.clipboard.writeText(secret);
-    ElMessage.success("已复制");
+    if (scope.current()) ElMessage.success("已复制");
   } catch {
-    ElMessage.error("复制失败，请手动选择");
+    if (scope.current()) ElMessage.error("复制失败，请手动选择");
   }
 }
 
-async function handlePaymentResult(result: CheckoutPaymentResult) {
+async function handlePaymentResult(result: CheckoutPaymentResult, scope: ReturnType<typeof currentView>) {
+  if (!scope.current()) return;
   if (result.paid) {
     ElMessage.success("支付成功");
     await load();
@@ -487,13 +523,14 @@ async function handlePaymentResult(result: CheckoutPaymentResult) {
     if (!codeUrl) throw new Error("微信支付二维码创建失败");
     qrVisible.value = true;
     await nextTick();
+    if (!scope.current()) return;
     if (!qrCanvas.value) throw new Error("微信支付二维码画布不可用");
     await QRCode.toCanvas(qrCanvas.value, codeUrl, {
       width: 220,
       margin: 1,
       errorCorrectionLevel: "M",
     });
-    void pollExternalPayment(++paymentPollingToken);
+    if (scope.current() && qrVisible.value) void pollExternalPayment(++paymentPollingToken, scope);
     return;
   }
   if (result.offline) {
@@ -504,12 +541,14 @@ async function handlePaymentResult(result: CheckoutPaymentResult) {
   throw new Error("支付下单结果无效");
 }
 
-async function pollExternalPayment(token: number) {
+async function pollExternalPayment(token: number, scope: ReturnType<typeof currentView>) {
   for (let attempt = 0; attempt < 30 && token === paymentPollingToken; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (token !== paymentPollingToken || !order.value) return;
+    if (token !== paymentPollingToken || !scope.current()) return;
     try {
-      const latest = await apiOrderDetail(order.value.order_id);
+      const latest = await apiOrderDetail(scope.id);
+      if (token !== paymentPollingToken || !scope.current()) return;
+      assertOrderDetailIdentity(latest, scope.id, scope.uid);
       if (latest.paid === 1) {
         order.value = latest;
         qrVisible.value = false;
@@ -528,8 +567,13 @@ function stopPaymentPolling() {
 }
 
 async function confirmExternalPayment() {
-  if (!order.value) return;
-  const latest = await apiOrderDetail(order.value.order_id);
+  if (!order.value || !qrVisible.value) return;
+  const scope = currentView();
+  if (!scope.current()) return;
+  try {
+  const latest = await apiOrderDetail(scope.id);
+  if (!scope.current() || !qrVisible.value) return;
+  assertOrderDetailIdentity(latest, scope.id, scope.uid);
   if (latest.paid !== 1) {
     ElMessage.warning("暂未收到支付结果，请稍后再试");
     return;
@@ -538,10 +582,13 @@ async function confirmExternalPayment() {
   qrVisible.value = false;
   ElMessage.success("支付成功");
   await load();
+  } catch (error) { if (scope.current()) ElMessage.warning(`支付状态读取失败，请重试。${errorText(error)}`); }
 }
 
 async function submitReview() {
-  if (!order.value || reviewing.value) return;
+  if (!order.value || reviewing.value || actionError.value || order.value.paid !== 1 || order.value.status !== 2) return;
+  const scope = currentView();
+  if (!scope.current()) return;
   const comment = reviewForm.value.comment.trim();
   if (!comment) return ElMessage.warning("请填写评价内容");
   const items = order.value.cart_info ?? [];
@@ -549,52 +596,80 @@ async function submitReview() {
     return ElMessage.error("订单商品快照不完整，无法评价");
   }
   reviewing.value = true;
+  const scores = { productScore: reviewForm.value.productScore, serviceScore: reviewForm.value.serviceScore, logisticsScore: reviewForm.value.logisticsScore };
   try {
     for (const item of items) {
+      if (!scope.current()) return;
       await apiReplySubmit({
         unique: item.unique,
         comment,
-        productScore: reviewForm.value.productScore,
-        serviceScore: reviewForm.value.serviceScore,
-        logisticsScore: reviewForm.value.logisticsScore,
+        ...scores,
       });
     }
+    if (!scope.current()) return;
     ElMessage.success("评价成功，感谢你的反馈");
     reviewVisible.value = false;
     reviewForm.value.comment = "";
     await load();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "评价失败");
+    if (scope.current()) actionError.value = `评价可能部分提交，请刷新订单核对。${errorText(error)}`;
   } finally {
-    reviewing.value = false;
+    if (scope.current()) reviewing.value = false;
   }
 }
 
+function errorText(error: unknown): string { return error instanceof Error ? error.message : '读取失败，请稍后重试'; }
+function currentView() {
+  const version = revision, path = route.fullPath, id = String(route.params.orderId ?? ''), owner = captureAuthSession(), uid = getUid();
+  return { id, uid, current: () => !disposed && revision === version && route.fullPath === path && isCurrentAuthSession(owner) && !!owner.token && uid > 0 && getUid() === uid };
+}
+function clearView() {
+  revision++; stopPaymentPolling();
+  order.value = null; cashier.value = null; qrVisible.value = false; reviewVisible.value = false;
+  if (confirming) { confirming = false; ElMessageBox.close(); }
+  paying.value = false; taking.value = false; reviewing.value = false; loading.value = false;
+  loadError.value = ''; cashierError.value = ''; actionError.value = ''; payType.value = 'yue';
+  reviewForm.value = { productScore: 5, serviceScore: 5, logisticsScore: 5, comment: '' };
+}
 async function load() {
+  if (disposed) return;
+  clearView();
+  const scope = currentView();
+  try { orderDetailId(route.params.orderId); } catch (error) { loadError.value = errorText(error); return; }
+  if (!scope.current()) { loadError.value = '请登录后重新加载订单'; return; }
   loading.value = true;
   try {
-    order.value = await apiOrderDetail(String(route.params.orderId));
-    cashier.value = order.value.paid === 0
-      ? await apiOrderCashier(order.value.order_id)
-      : null;
-    const firstEnabled = paymentOptions.value.find((item) => item.enabled);
-    if (firstEnabled) payType.value = firstEnabled.value;
+    const latest = await apiOrderDetail(scope.id);
+    if (!scope.current()) return;
+    assertOrderDetailIdentity(latest, scope.id, scope.uid);
+    order.value = latest;
+    if (latest.paid === 0) {
+      try {
+        const nextCashier = await apiOrderCashier(scope.id);
+        if (!scope.current()) return;
+        assertOrderCashierIdentity(nextCashier, scope.id, latest.pay_price);
+        cashier.value = nextCashier;
+        const firstEnabled = paymentOptions.value.find((item) => item.enabled);
+        if (firstEnabled) payType.value = firstEnabled.value;
+      } catch (error) { if (scope.current()) cashierError.value = `收银信息读取失败，请刷新订单。${errorText(error)}`; }
+    }
   } catch (e) {
-    console.error("订单加载失败", e);
+    if (scope.current()) loadError.value = errorText(e);
   } finally {
-    loading.value = false;
+    if (scope.current()) loading.value = false;
   }
 }
 
+const stopAuth = onAuthChange(() => { clearView(); loadError.value = '登录状态已变化，请重新加载订单'; });
 watch(
-  () => route.params.orderId,
+  () => route.fullPath,
   () => load(),
-  { immediate: true },
+  { immediate: true, flush: 'sync' },
 );
 
 onMounted(() => window.addEventListener("resize", syncDescriptionColumns));
 onBeforeUnmount(() => {
-  stopPaymentPolling();
+  disposed = true; stopAuth(); clearView();
   window.removeEventListener("resize", syncDescriptionColumns);
 });
 </script>

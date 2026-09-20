@@ -738,7 +738,7 @@ export async function generateProductAttrs(c: SupplierContext) {
 
 export async function orderList(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
-  return jsonOk(c, await service(c).orderList(supplierId, c.req.query()));
+  return jsonOk(c, await service(c).orderList(supplierId, c.req.queries()));
 }
 
 export async function pickingSheets(c: SupplierContext) {
@@ -749,6 +749,7 @@ export async function pickingSheets(c: SupplierContext) {
 
 export async function orderDetail(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
+  if (!/^[1-9]\d{0,9}$/.test(c.req.param("id") ?? "")) throw new ValidateException("订单ID错误");
   const orderId = positiveId(c.req.param("id"), "订单ID");
   return jsonOk(c, await service(c).orderDetail(supplierId, orderId));
 }

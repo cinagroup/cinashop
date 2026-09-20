@@ -6,6 +6,8 @@
 
 在 `workers-ts` 目录执行 `npm run audit:paid-runtime-permissions`。必须事先通过受控的秘密注入方式设置 `PAID_RUNTIME_AUDIT_DATABASE_URL` 为拟验收的运行身份连接。不要把凭据写入仓库、命令参数、审计报告或聊天。
 
+2026-09-20 增加显式结算权限范围：`npm run audit:paid-runtime-permissions -- --checkout`，调用 `auditCheckoutRuntimePermissions`。它在同一个只读事务里同时要求已付订单基础权限和固定计价锁协议的目录、实际调用者权限、SELECT/EXECUTE授权及其它提权函数检查全部通过。缺失协议、缺少执行/读取授权或配置写权限泄露都返回退出1，不安装或修补数据库。默认命令仍只认证本文的已付订单权限范围；不能把默认退出0当作结算权限通过。未知或重复参数在连接前退出2。
+
 默认只允许loopback目标；远端还要求显式设置 `PAID_RUNTIME_AUDIT_ALLOW_REMOTE=1`。这只是执行目标确认，不代替组织的生产访问授权。脚本不读取通用 `DATABASE_URL`、`.env` 或自动发现Hyperdrive，不会因缺少专用变量而连接其它数据库。
 
 | 退出码 | 含义 |
@@ -43,14 +45,14 @@
 应先只读定位缺失对象并准备增量迁移，再隔离维护身份与运行身份，验证后受控切换；
 不得直接撤销旧站正在使用的角色权限或执行完整历史 `runAll`。
 
-检查同时考虑上述三个身份直接拥有、立即继承、可SET切换及具ADMIN OPTION而可进一步授予的角色。对可达角色的高权限属性采用保守拒绝策略；这不是对所有PostgreSQL权限组合的完备证明。
+检查同时考虑上述三个身份及递归展开的全部成员角色路径，保守包括当前禁用 INHERIT/SET 和混合选项路径；即使某些权限当前不能立即使用，也要求先审查角色关系。对成员角色的高权限属性采用保守拒绝策略；这不是对所有PostgreSQL权限组合的完备证明。
 
 - 目标schema、普通user／store_order表及保护函数必须存在。这里只检查必要对象存在，不验证完整触发器定义。
 - 不允许可达角色带SUPERUSER、CREATEDB、CREATEROLE、REPLICATION、BYPASSRLS，或具有受检查的服务器写文件／执行程序角色。
 - 不允许控制目标数据库、schema、两张表或保护函数的所有者角色。
 - 不允许在目标schema／数据库CREATE，也不允许在两张表上TRIGGER或TRUNCATE。
 - 不允许设置／ALTER SYSTEM配置 `session_replication_role`，当前复制角色也不得为replica。
-- 可执行的非系统schema SECURITY DEFINER函数须人工审查；即使函数实际上无害，也不自动豁免PUBLIC EXECUTE。系统前缀按字面 `pg_` 识别，不能用未转义的LIKE模式排除普通pgx命名空间。
+- 可执行的非系统schema SECURITY DEFINER函数须人工审查；唯一程序化例外是完整通过[固定计价锁协议校验](checkout-pricing-config-authority.md)及实际连接权限预检的精确函数OID，而不是函数名白名单。定义、所有者、ACL/RLS或调用者权限漂移时不授予例外；第二个函数、跨schema同名函数及PUBLIC EXECUTE不自动豁免。系统前缀按字面 `pg_` 识别，不能用未转义的LIKE模式排除普通pgx命名空间。
 - 当前身份至少需要目标schema USAGE、订单SELECT／INSERT／UPDATE、用户SELECT及用户任意列UPDATE。这只是累计消费协议的基础权限，不是完整商城所有功能的GRANT清单。
 
 保护函数保持SECURITY INVOKER。真实数据库验证表明，即使渠道入账本身不更新用户余额，函数中的用户行锁仍需要UPDATE权限；仅SELECT会使付款事务整体拒绝。对测试用户表显式授予 `UPDATE(now_money)` 后，渠道入账可以正常完成，无须把运行角色提升为所有者或改为SECURITY DEFINER。完整余额、积分、退款及其它业务仍应按实际访问的表／列单独授权。
@@ -79,9 +81,13 @@ SQL仍为独立只读事务，鉴权／过期／超时／清理机制不变。
 - 运行时 `CheckoutPaidOrderAuthority` 另行校验保护源码、触发器、表列／主键、RLS、复制角色、隔离级别和本事务写锁；本命令不替代它。
 - 需要在正式Worker实际身份与Hyperdrive路径复核。专用本机角色、直接PostgreSQL连接和合成支付证据不能代表正式环境。
 - 本命令尚未自动串联进 `deploy`；发布流程必须显式消费失败退出码，并完成其它迁移／CI／业务门禁。不得只凭本命令退出0发布。
+- `--checkout` 是普通结算两项已审计协议的组合权限检查，不是整个建单流程、HTTP或完整应用授权认证；普通结算代码切换及编号迁移仍按 A3k11d 跟踪。临时 Hyperdrive 探针 `/audit` 仍是原有 paid-order 范围，没有自动切换到 `--checkout`。
+- 线下收银 `ooa_lock_pricing()` 等其它领域的提权函数没有被顺带豁免，即使已有各自专项校验，也不能凭本次普通结算校验认定整套商城共享身份可用；后续须按实际角色分工组合完整合同。
 - 另一个维护管理员仍可在预检之后替换函数、停用触发器或改变授权。必须安排受控维护窗口和权限变更审计；本工具不声称阻止管理员。
 - 其它系统／扩展高权限函数、整个应用的最小权限清单、全部活动与账务角色组合、真实支付和回滚发布仍需各自验证。任何未知项不自动视为通过。
 
 本机验证：最终22项权限测试全部通过，真实独立LOGIN覆盖业务／锁／拒绝路径；两个预检漏检先复现后修复，过程及其它回归的版本边界见[审计记录](../audit/brokerage-paid-runtime-permissions-20260910.json)。这不是生产验收记录。
+
+2026-09-20后续本机验证：本文件对应权限/CLI套件扩大到40项，与固定锁协议36项真实PG16联合76项通过；另运行器59项及现有Worker模拟处理器29项通过，双Worker类型通过。验证预检不取业务表SHARE/ACCESS EXCLUSIVE锁、不更改业务数据或目录，缺失/漂移/越权及另一提权函数均不通过。详情及源码/清理边界见[本轮终态记录](../audit/checkout-pricing-runtime-preflight-20260920.json)；不是新的生产、真实workerd或CI验收。
 
 依据：[PostgreSQL 16权限](https://www.postgresql.org/docs/16/ddl-priv.html)、[GRANT与角色选项](https://www.postgresql.org/docs/16/sql-grant.html)、[权限检查函数](https://www.postgresql.org/docs/16/functions-info.html)、[pg_stat_activity连接身份](https://www.postgresql.org/docs/16/monitoring-stats.html)、[LIKE通配符与字面前缀](https://www.postgresql.org/docs/16/functions-matching.html)。

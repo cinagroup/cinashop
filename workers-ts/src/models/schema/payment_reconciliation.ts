@@ -15,7 +15,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { paymentCallbackEvent } from "@/models/schema/payment_callback";
+import { paymentCallbackEvent, type PaymentCallbackOrderDomain } from "@/models/schema/payment_callback";
 
 export type PaymentReconciliationStatus =
   | "OPEN"
@@ -48,7 +48,7 @@ export const paymentReconciliationCase = pgTable(
     profile: varchar("profile", { length: 16 })
       .$type<"wechat" | "routine" | "app" | "alipay">().notNull(),
     orderDomain: varchar("order_domain", { length: 16 })
-      .$type<"" | "store_order" | "recharge" | "membership">().default("").notNull(),
+      .$type<PaymentCallbackOrderDomain>().default("").notNull(),
     orderNo: varchar("order_no", { length: 64 }).notNull(),
     expectedAmountCents: integer("expected_amount_cents").notNull(),
     currency: varchar("currency", { length: 3 }).$type<"CNY">().notNull(),
@@ -86,12 +86,14 @@ export const paymentReconciliationCase = pgTable(
       .where(sql`${table.status} IN ('UNKNOWN', 'CONFLICT', 'DEAD')`),
     index("prc_retention").on(table.retainUntil, table.id)
       .where(sql`${table.status} IN ('SETTLED', 'CONFIRMED', 'NO_PAYMENT', 'CLOSED')`),
+    index('prc_provider_transaction_lookup').on(table.provider, table.providerTransactionId)
+      .where(sql`${table.providerTransactionId} <> ''`),
     check("prc_provider_profile_ck", sql`
       (${table.provider} = 'alipay' AND ${table.profile} = 'alipay')
       OR (${table.provider} = 'wechat' AND ${table.profile} IN ('wechat', 'routine', 'app'))
     `),
     check("prc_order_domain_ck", sql`
-      ${table.orderDomain} IN ('', 'store_order', 'recharge', 'membership')
+      ${table.orderDomain} IN ('', 'store_order', 'recharge', 'membership', 'offline_order')
     `),
     check("prc_business_ck", sql`
       ${table.orderNo} ~ '^[A-Za-z0-9_-]{2,64}$' AND ${table.expectedAmountCents} > 0

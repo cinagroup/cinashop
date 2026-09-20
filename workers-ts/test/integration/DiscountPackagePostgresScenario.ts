@@ -10,6 +10,9 @@ import {
   storeProduct,
   storeProductAttrValue,
   systemStore,
+  userAddress,
+  cityArea,
+  shippingTemplates,
   user,
 } from "@/models/schema";
 import {
@@ -31,6 +34,8 @@ import {
   finalizeStoreOrderRefund,
 } from "@/services/order/StoreOrderRefundService";
 import { ValidateException } from "@/utils/errors";
+import { installCheckoutPricingLock } from "@/migrations/checkoutPricingLock";
+import { requireCheckoutScenarioPricingOwner } from "./CheckoutScenarioPricing";
 
 const CLONED_TABLES = [
   "user",
@@ -47,15 +52,21 @@ const CLONED_TABLES = [
   "store_product_attr_value",
   "store_discounts",
   "store_discounts_products",
-] as const;
-
-const LOCAL_SEQUENCE_TABLES = [
-  "user_bill",
-  "store_cart",
-  "store_order",
-  "store_order_cart_info",
-  "store_order_refund",
-  "store_order_status",
+  "system_config",
+  "member_right",
+  "system_user_level",
+  "store_coupon_issue",
+  "store_coupon_user",
+  "store_coupon_product",
+  "store_product_coupon",
+  "store_coupon_issue_user",
+  "print_document",
+  "user_address",
+  "city_area",
+  "shipping_templates",
+  "shipping_templates_region",
+  "shipping_templates_free",
+  "shipping_templates_no_delivery",
 ] as const;
 
 interface PublicSnapshot {
@@ -291,7 +302,7 @@ async function withSchema<T>(
 ): Promise<T> {
   const root = createContainerFromDb(db);
   return withTx(root, async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL search_path TO ${identifier(schemaName)}, public`));
+    await tx.execute(sql.raw(`SET LOCAL search_path TO ${identifier(schemaName)}`));
     await tx.execute(sql`SET LOCAL lock_timeout = '3s'`);
     await tx.execute(sql`SET LOCAL statement_timeout = '30s'`);
     return fn(createContainerFromDb(tx));
@@ -347,6 +358,7 @@ function orderInput(
     userAddress: shippingType === 1 ? "隔离 schema" : "",
     shippingType,
     storeId: shippingType === 2 ? ids.storeId : 0,
+    addressId: shippingType === 1 ? ids.storeId : undefined,
   };
 }
 
@@ -384,6 +396,14 @@ async function seedFixtures(container: Container, ids: FixtureIds): Promise<void
     ids.nonRefundable,
   ];
   await withTx(container, async (tx) => {
+    await tx.insert(shippingTemplates).values({ id: 1, name: '隔离套餐配送模板', type: 1, status: 1 });
+    await tx.insert(cityArea).values([
+      { id: 1, name: '审计省', parentId: 0, path: '/' },
+      { id: 2, name: '审计市', parentId: 1, path: '/1/' },
+      { id: 3, name: '审计区', parentId: 2, path: '/1/2/' },
+    ]);
+    await tx.insert(userAddress).values({ id: ids.storeId, uid: ids.users[0], realName: '套餐审计',
+      phone: '13000000000', province: '审计省', city: '审计市', district: '审计区', detail: '隔离 schema', cityId: 3 });
     await tx.insert(user).values(ids.users.map((uid, index) => ({
       uid,
       account: `discount-audit-${index}-${uid}`.slice(0, 32),
@@ -647,8 +667,15 @@ async function runForcedRollback(container: Container, ids: FixtureIds, schemaNa
       `rollback-${ids.rollback.id}`,
       carts.cartIds,
     ));
-  } catch {
-    rejected = true;
+  } catch (error) {
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+      if ('code' in cause && cause.code === 'P0001' && 'message' in cause
+        && cause.message === 'forced discount snapshot failure') { rejected = true; break; }
+      if (!('cause' in cause) || cause.cause === cause) break;
+      cause = cause.cause;
+    }
+    if (!rejected) throw error;
   }
   await container.db.execute(sql.raw(`DROP TRIGGER discount_audit_fail_snapshot ON ${schema}.store_order_cart_info`));
   await container.db.execute(sql.raw(`DROP FUNCTION ${schema}.discount_audit_fail_snapshot()`));
@@ -776,7 +803,9 @@ async function runNonRefundable(container: Container, ids: FixtureIds) {
 
 export async function runDiscountPackagePostgresScenario(
   connectionString: string,
+  pricingOwner?: string,
 ): Promise<DiscountPackagePostgresReport> {
+  const owner = requireCheckoutScenarioPricingOwner(pricingOwner);
   const schemaName = makeSchemaName();
   const schema = identifier(schemaName);
   const root = createDbFromConnectionString(connectionString, 1, {
@@ -813,17 +842,23 @@ export async function runDiscountPackagePostgresScenario(
         const tableName = identifier(table);
         await tx.unsafe(`CREATE TABLE ${schema}.${tableName} (LIKE public.${tableName} INCLUDING ALL)`);
       }
-      for (const table of LOCAL_SEQUENCE_TABLES) {
+      for (const table of CLONED_TABLES) {
         const tableName = identifier(table);
-        const sequenceName = identifier(`${table}_id_seq_discount_it`);
-        await tx.unsafe(`CREATE SEQUENCE ${schema}.${sequenceName}`);
-        await tx.unsafe(`ALTER SEQUENCE ${schema}.${sequenceName} OWNED BY ${schema}.${tableName}."id"`);
-        await tx.unsafe(
-          `ALTER TABLE ${schema}.${tableName} ALTER COLUMN "id" SET DEFAULT nextval('${schemaName}.${table}_id_seq_discount_it'::regclass)`,
-        );
+        const columns = await tx<{ name: string }[]>`SELECT attname AS name FROM pg_attribute
+          WHERE attrelid=${`public.${table}`}::regclass AND attnum>0 AND NOT attisdropped AND attidentity=''
+            AND pg_get_serial_sequence(${`public.${table}`},attname) IS NOT NULL ORDER BY attnum`;
+        for (const column of columns) {
+          const columnName = identifier(column.name);
+          const sequence = `${table}_${column.name}_seq_it`;
+          const sequenceName = identifier(sequence);
+          await tx.unsafe(`CREATE SEQUENCE ${schema}.${sequenceName}`);
+          await tx.unsafe(`ALTER SEQUENCE ${schema}.${sequenceName} OWNED BY ${schema}.${tableName}.${columnName}`);
+          await tx.unsafe(`ALTER TABLE ${schema}.${tableName} ALTER COLUMN ${columnName} SET DEFAULT nextval('${schemaName}.${sequence}'::regclass)`);
+        }
       }
     });
     created = true;
+    await installCheckoutPricingLock(root, owner, schemaName);
 
     const random = new Uint32Array(1);
     crypto.getRandomValues(random);

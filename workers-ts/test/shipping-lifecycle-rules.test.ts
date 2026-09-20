@@ -10,6 +10,7 @@ import { runShippingLifecycleIndexes } from '../src/migrations/runShippingLifecy
 import { SHIPPING_LIFECYCLE_CANDIDATE_SQL } from '../src/migrations/shippingLifecycleProtocol';
 import { inspectShippingLifecycleProtocol } from '../src/migrations/inspectShippingLifecycleProtocol';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { checkoutPricingMigrationDatabase } from './helpers/checkoutPricingMigrationDatabase';
 
 const targets=['shipping_templates','store_product','store_seckill','store_bargain','store_combination','store_integral','store_discounts_products'];
 type Fixture=Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -156,13 +157,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('rewrite rules on
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('rule absence on actual complete construction paths',()=>{
   it.each(['external','embedded','orm'])('checks all seven tables on %s before relying on rule rejection',async path=>{
-    const f=await sequenceRunnerDatabase();
+    const f=await checkoutPricingMigrationDatabase();
     try {
       if(path==='external') for(const name of readdirSync('migrations').filter(n=>/^\d{4}.*\.sql$/.test(n)).sort())
         await f.db.transaction(async tx=>{await tx.execute(sql.raw('SET LOCAL search_path=public,pg_temp'));await tx.execute(sql.raw(readFileSync(`migrations/${name}`,'utf8')));});
       else if(path==='embedded') expect((await new MigrationService({db:f.db} as Container).runAll()).errors).toEqual([]);
       else await model(f);
-      expect(((await f.query(rules)).rows as {relname:string}[]).filter(r=>targets.includes(r.relname))).toEqual([]);
+      expect((await f.query(rules)).rows.filter(r=>typeof r.relname==='string' && targets.includes(r.relname))).toEqual([]);
     } finally {await f.close();}
   },120000);
 });

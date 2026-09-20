@@ -3,21 +3,20 @@
  * 对应后端 /adminapi/order/* 和 /adminapi/user/*
  */
 import request, { getData } from "@/utils/request";
-import type { AdminOrder, AdminUser } from "@/types/admin";
+import type { AdminUser } from "@/types/admin";
+import { orderNumber, parseAdminOrderList, parseAdminOrderDetail, type AdminOrderQuery } from '@/utils/orderRead';
+import { sendOrderRequest } from '@/utils/orderRequest';
 
 // ─── 订单管理 ───────────────────────────────────────────────
-export function apiAdminOrderList(params: {
-  page?: number;
-  limit?: number;
-  status?: number;
-  paid?: number;
-  order_id?: string;
-}): Promise<{ list: AdminOrder[]; page: number; limit: number }> {
-  return getData(request.get("/order/list", { params }));
+export async function apiAdminOrderList(params: AdminOrderQuery, signal?: AbortSignal) {
+  const query = { ...params };
+  if (query.order_id) orderNumber(query.order_id);
+  return parseAdminOrderList(await sendOrderRequest('/order/list', 'get', undefined, query, signal), query);
 }
 
-export function apiAdminOrderDetail(orderId: string): Promise<AdminOrder> {
-  return getData(request.get(`/order/detail/${orderId}`));
+export async function apiAdminOrderDetail(orderId: string, signal?: AbortSignal) {
+  orderNumber(orderId);
+  return parseAdminOrderDetail(await sendOrderRequest(`/order/detail/${orderId}`, 'get', undefined, undefined, signal), orderId);
 }
 
 export function apiAdminOrderRemark(orderId: string, remark: string): Promise<null> {
@@ -33,8 +32,9 @@ export function apiAdminOrderDelivery(
     delivery_uid?: number;
     fictitious_content?: string;
   },
+  signal?: AbortSignal,
 ): Promise<null> {
-  return getData(request.post(`/order/delivery/${orderId}`, data));
+  return sendOrderRequest(`/order/delivery/${orderNumber(orderId)}`, 'post', data, undefined, signal);
 }
 
 export type AdminWaybillJobStatus =
@@ -77,13 +77,13 @@ export interface AdminWaybillListResult {
   summary: { pending: number; sent: number; unknown: number; dead: number; closed: number };
 }
 
-export function apiAdminCreateWaybill(orderId: string, carrierId: number) {
-  return getData<{ duplicate: boolean; job: { id: number; status: string } }>(
-    request.post(`/order/waybill/${orderId}`, {
+export function apiAdminCreateWaybill(orderId: string, carrierId: number, signal?: AbortSignal) {
+  return sendOrderRequest<{ duplicate: boolean; job: { id: number; status: string } }>(
+    `/order/waybill/${orderNumber(orderId)}`, 'post', {
       request_key: crypto.randomUUID(),
       fulfillment_mode: "whole",
       carrier_id: carrierId,
-    }),
+    }, undefined, signal,
   );
 }
 
@@ -109,8 +109,8 @@ export interface AdminDeliveryOption {
   phone: string;
 }
 
-export function apiAdminDeliveryOptions(): Promise<{ list: AdminDeliveryOption[]; count: number }> {
-  return getData(request.get("/order/delivery/list", { params: { page: 1, limit: 100 } }));
+export function apiAdminDeliveryOptions(signal?: AbortSignal): Promise<{ list: AdminDeliveryOption[]; count: number }> {
+  return sendOrderRequest('/order/delivery/list', 'get', undefined, { page: 1, limit: 100 }, signal);
 }
 
 export interface AdminWriteoffCart {
@@ -138,15 +138,16 @@ export interface AdminWriteoffPreview {
   cart_info: AdminWriteoffCart[];
 }
 
-export function apiAdminWriteoffInfo(code: string): Promise<AdminWriteoffPreview> {
-  return getData(request.post("/order/writeoff_info", { code }));
+export function apiAdminWriteoffInfo(code: string, signal?: AbortSignal): Promise<AdminWriteoffPreview> {
+  return sendOrderRequest('/order/writeoff_info', 'post', { code }, undefined, signal);
 }
 
 export function apiAdminWriteoff(
   code: string,
   items?: Array<{ order_cart_id: number; quantity: number }>,
+  signal?: AbortSignal,
 ): Promise<{ order_id: string; completed: boolean; status: number }> {
-  return getData(request.post("/order/writeoff", { code, items }));
+  return sendOrderRequest('/order/writeoff', 'post', { code, items }, undefined, signal);
 }
 
 // ─── 用户管理 ───────────────────────────────────────────────

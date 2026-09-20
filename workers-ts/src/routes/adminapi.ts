@@ -27,6 +27,7 @@
  * 未实现端点返回 501, 前端会提示"接口未迁移"。
  */
 import { Hono } from "hono";
+import { privateRefundOperationResponse, retiredAdminRefundMutation as adminRefundMutationUnavailable } from '@/controllers/api/v1/AdminRefundOperationController';
 import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
 import { adminAuthMiddleware } from "@/middleware/admin-auth";
 import { upgradeStaffNotification } from "@/services/notification/StaffNotificationGateway";
@@ -34,6 +35,7 @@ import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
 import * as AdminOrderOutbox from "@/controllers/api/v1/AdminOrderOutboxController";
+import * as AdminOfflineOrder from '@/controllers/api/v1/AdminOfflineOrderController';
 import * as AdminPaymentReconciliation from "@/controllers/api/v1/AdminPaymentReconciliationController";
 import * as AdminNotification from "@/controllers/api/v1/AdminNotificationController";
 import * as AdminDivision from "@/controllers/api/v1/AdminDivisionController";
@@ -302,6 +304,10 @@ adminapiRoutes.put(
 adminapiRoutes.delete("/product/words/:id", adminAuth, AdminProductWords.remove);
 
 // ─── 订单管理 ───────────────────────────────────────────────
+// Modern readonly type=3 contract; never a merchandise order or staff payment.
+adminapiRoutes.get('/order/scan_list', AdminOfflineOrder.privateResponse, adminAuth, AdminOfflineOrder.list);
+adminapiRoutes.get('/order/offline_scan', AdminOfflineOrder.privateResponse, adminAuth, AdminOfflineOrder.scan);
+adminapiRoutes.get('/order/scan_detail/:id', AdminOfflineOrder.privateResponse, adminAuth, AdminOfflineOrder.detail);
 adminapiRoutes.get("/order/list", adminAuth, AdminCrud.adminOrderList);
 adminapiRoutes.get("/order/detail/:id", adminAuth, AdminCrud.adminOrderDetail);
 adminapiRoutes.post("/order/remark/:id", adminAuth, AdminCrud.adminOrderRemark);
@@ -433,8 +439,10 @@ adminapiRoutes.put("/save_set_label", adminAuth, AdminCrud.adminUsersSetLabel);
 // ─── 退款审核 ───────────────────────────────────────────────
 adminapiRoutes.get("/refund/list", adminAuth, AdminCrud.adminRefundList);
 adminapiRoutes.get("/refund/detail/:id", adminAuth, AdminCrud.adminRefundDetail);
-adminapiRoutes.post("/refund/refund/:id", adminAuth, AdminCrud.adminRefundAgree);
-adminapiRoutes.post("/refund/refuse/:id", adminAuth, AdminCrud.adminRefundRefuse);
+// Explicit Unavailable handler keeps route-parity from counting HTTP410 as a
+// functional PHP migration. Old controller exports also fail closed.
+adminapiRoutes.post("/refund/refund/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
+adminapiRoutes.post("/refund/refuse/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
 
 // ─── 系统配置 ───────────────────────────────────────────────
 // PHP-compatible newcomer/register operations use an explicit key whitelist

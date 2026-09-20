@@ -1,5 +1,6 @@
 import { createDbFromConnectionString } from "@/lib/di";
 import { runFirstOrderDiscountPostgresScenario } from "./FirstOrderDiscountPostgresScenario";
+import { checkoutScenarioPricingOwner } from "./CheckoutScenarioPricing";
 
 interface AuditEnv {
   HYPERDRIVE: Hyperdrive;
@@ -89,9 +90,11 @@ export default {
       return Response.json({ error: "not found" }, { status: 404 });
     }
     try {
+      const pricingOwner = checkoutScenarioPricingOwner(request);
       const current = await productionAudit(env.HYPERDRIVE.connectionString);
       const scenario = await runFirstOrderDiscountPostgresScenario(
         env.HYPERDRIVE.connectionString,
+        pricingOwner,
       );
       return Response.json({ current, scenario });
     } catch (error) {

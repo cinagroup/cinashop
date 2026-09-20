@@ -9,6 +9,37 @@ import type { DbClient } from "@/lib/di";
 const ownedTargets = new Map<string, { schema: string; baseUrl: string }>();
 const databaseName = /^finance_fixture_[a-f0-9]{32}$/;
 
+/** Match the raw execute row-array contract used by postgres.js, not its wire
+ * protocol or concurrency. All SQL, parameters, errors, transaction options and
+ * savepoints still execute in PGlite. Native PG16 remains required for locks,
+ * independent sessions, privileges and non-transactional sequence behavior. */
+function memoryRowArrays<T extends object>(database: T): T {
+  return new Proxy(database, {
+    get(target, property, receiver) {
+      const method: unknown = Reflect.get(target, property, receiver);
+      if (typeof method !== 'function') return method;
+      if (property === 'execute') return async (...args: unknown[]) => {
+        const result: unknown = await Reflect.apply(method, target, args);
+        if (!result || typeof result !== 'object' || !('rows' in result) || !Array.isArray(result.rows)) {
+          throw Error('Unexpected PGlite raw query result');
+        }
+        const count = 'rowCount' in result ? result.rowCount : result.rows.length;
+        if (typeof count !== 'number' || !Number.isSafeInteger(count) || count < 0) {
+          throw Error('Unexpected PGlite raw row count');
+        }
+        // Row metadata is derived from the real SQL result; no fabricated rows
+        // or catch-and-return-empty behavior. Do not wrap mapped query builders.
+        return Object.assign(result.rows, { count });
+      };
+      if (property === 'transaction') return (callback: unknown, ...options: unknown[]) => {
+        if (typeof callback !== 'function') throw Error('Missing fixture transaction callback');
+        return Reflect.apply(method, target, [(tx: object) => callback(memoryRowArrays(tx)), ...options]);
+      };
+      return method.bind(target);
+    },
+  });
+}
+
 export function validateFinanceFixtureUrl(value: string): URL {
   let target: URL;
   try { target = new URL(value); } catch { throw new Error('Invalid finance fixture test URL'); }
@@ -82,7 +113,9 @@ export async function financePostgres(tables: PgTable[]) {
     } catch (error) { await close(); throw error; }
   } else {
     const memory = await PGlite.create();
-    db = drizzleMemory(memory) as unknown as DbClient;
+    // Test-only driver boundary. The application intentionally uses postgres.js;
+    // raw results must be adapted before passing the memory driver as DbClient.
+    db = memoryRowArrays(drizzleMemory(memory)) as unknown as DbClient;
     exec = (query) => memory.exec(query);
     close = () => memory.close();
   }

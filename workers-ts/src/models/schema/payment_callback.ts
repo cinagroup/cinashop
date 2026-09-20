@@ -19,7 +19,9 @@ import {
 
 export type PaymentCallbackProvider = "wechat" | "alipay";
 export type PaymentCallbackProfile = "wechat" | "routine" | "app" | "alipay";
-export type PaymentCallbackOrderDomain = "" | "store_order" | "recharge" | "membership";
+// Current ORM includes offline_order; historical migration CHECKs are unchanged.
+// Registered 0159/0165 or explicit empty-ORM completion supplies its protection.
+export type PaymentCallbackOrderDomain = "" | "store_order" | "recharge" | "membership" | "offline_order";
 export type PaymentCallbackEventStatus =
   | "RECEIVED"
   | "PROCESSING"
@@ -97,7 +99,7 @@ export const paymentCallbackEvent = pgTable(
     ),
     check(
       "pce_order_domain_ck",
-      sql`${table.orderDomain} IN ('', 'store_order', 'recharge', 'membership')`,
+      sql`${table.orderDomain} IN ('', 'store_order', 'recharge', 'membership', 'offline_order')`,
     ),
     check(
       "pce_status_ck",

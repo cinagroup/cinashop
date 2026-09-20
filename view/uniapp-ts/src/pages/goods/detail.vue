@@ -1,6 +1,17 @@
 <template>
   <view class="goods-detail">
-    <view v-if="detail">
+    <view v-if="loading" class="empty" role="status">正在加载商品…</view>
+    <view v-else-if="loadError" class="empty" role="alert">
+      <view>{{ loadError }}</view>
+      <button @tap="load">重新加载商品</button>
+    </view>
+    <view v-else-if="detail">
+      <view v-if="preparedCart || purchaseNeedsRefresh" class="purchase-recovery" role="status">
+        <view>{{ preparedCart ? '购买记录已创建，继续结算不会重复加购。' : '本次操作结果未确认，请重新加载商品后再选择。' }}</view>
+        <view v-if="checkoutError" role="alert">{{ checkoutError }}</view>
+        <button v-if="preparedCart" :disabled="navigating" @tap="resumeCheckout">继续结算</button>
+        <button :disabled="navigating || buying || packageBuying" @tap="restartPurchase">{{ preparedCart ? '重新选择商品' : '重新加载商品' }}</button>
+      </view>
       <!-- 轮播图 -->
       <swiper class="swiper" indicator-dots autoplay circular>
         <swiper-item v-for="(img, i) in detail.slider_image" :key="i">
@@ -11,9 +22,10 @@
       <!-- 价格区 -->
       <view class="price-section">
         <view class="price-row">
-          <text class="price">¥{{ selectedSku?.price ?? detail.price }}</text>
+          <text class="price">¥{{ displayPrice }}</text>
+          <text v-if="displayPriceLabel" class="member-label">{{ displayPriceLabel }}</text>
           <text v-if="displayOriginalPrice !== null" class="ot-price">¥{{ displayOriginalPrice }}</text>
-          <text v-if="displayVipPrice !== null" class="vip-tag">SVIP ¥{{ displayVipPrice }}</text>
+          <text v-if="displayVipPrice !== null" class="vip-tag">SVIP专享 ¥{{ displayVipPrice }}</text>
         </view>
         <view class="meta-row">
           <text>已售 {{ detail.fsales }}</text>
@@ -90,8 +102,15 @@
           <text class="action-icon">🛒</text>
           <text class="action-text">购物车</text>
         </view>
-        <view class="add-btn" @tap="openSku('cart')">加入购物车</view>
-        <view class="buy-btn" @tap="openSku('buy')">立即购买</view>
+        <template v-if="preparedCart">
+          <view class="add-btn" :aria-disabled="navigating" @tap="restartPurchase">重新选择商品</view>
+          <view class="buy-btn" :aria-disabled="navigating" @tap="resumeCheckout">继续结算</view>
+        </template>
+        <view v-else-if="purchaseNeedsRefresh" class="buy-btn" @tap="restartPurchase">重新加载商品</view>
+        <template v-else>
+          <view class="add-btn" :aria-disabled="purchaseLocked" @tap="openSku('cart')">加入购物车</view>
+          <view class="buy-btn" :aria-disabled="purchaseLocked" @tap="openSku('buy')">立即购买</view>
+        </template>
       </view>
 
       <!-- SKU 规格弹窗 -->
@@ -104,9 +123,10 @@
               mode="aspectFill"
             />
             <view class="sku-info">
-              <text class="sku-price">¥{{ selectedSku?.price ?? detail.price }}</text>
+              <text class="sku-price">¥{{ displayPrice }}</text>
+              <text v-if="displayPriceLabel" class="member-label">{{ displayPriceLabel }}</text>
               <text v-if="displayOriginalPrice !== null" class="ot-price">¥{{ displayOriginalPrice }}</text>
-              <text v-if="displayVipPrice !== null" class="vip-tag">SVIP ¥{{ displayVipPrice }}</text>
+              <text v-if="displayVipPrice !== null" class="vip-tag">SVIP专享 ¥{{ displayVipPrice }}</text>
               <text class="sku-stock" v-if="selectedSku">库存 {{ selectedSku.stock }}</text>
               <text class="sku-name">{{ selectedSku?.suk || "请选择规格" }}</text>
             </view>
@@ -130,13 +150,13 @@
           <view class="sku-num-row">
             <text>购买数量</text>
             <view class="num-ctrl">
-              <view class="num-btn" @tap="num > 1 && num--">−</view>
+              <view class="num-btn" @tap="!purchaseLocked && num > 1 && num--">−</view>
               <text class="num-val">{{ num }}</text>
-              <view class="num-btn" @tap="num < maxNum && num++">＋</view>
+              <view class="num-btn" @tap="!purchaseLocked && num < maxNum && num++">＋</view>
             </view>
           </view>
 
-          <button class="sheet-btn" :disabled="buying || maxNum <= 0" :loading="buying" @tap="confirmSku">
+          <button class="sheet-btn" :disabled="purchaseLocked || maxNum <= 0" :loading="buying" @tap="confirmSku">
             {{ buying ? "处理中…" : maxNum <= 0 ? "暂无库存" : skuMode === "buy" ? "立即购买" : "加入购物车" }}
           </button>
         </view>
@@ -178,7 +198,7 @@
             <text>已选 {{ selectedPackageCount }} 件</text>
             <text>套餐价 ¥{{ selectedPackageTotal }}</text>
           </view>
-          <view class="sheet-btn" :class="{ disabled: packageBuying }" @tap="buyPackage">
+          <view class="sheet-btn" :class="{ disabled: purchaseLocked }" :aria-disabled="purchaseLocked" @tap="buyPackage">
             {{ packageBuying ? "处理中..." : "立即结算套餐" }}
           </view>
         </view>
@@ -189,8 +209,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { onLoad } from "@dcloudio/uni-app";
+import { ref, computed, watch } from "vue";
+import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiGoodsDetail } from "@/api/product";
 import {
   apiCartAdd,
@@ -202,9 +222,14 @@ import type { ProductReviewListItem } from "@/api/reply";
 import { useAuthStore } from "@/stores/auth";
 import type { GoodsDetail, GoodsSku as SkuItem } from "@/types/product";
 import type { DiscountPackage, DiscountPackageProduct } from "@/types/order";
+import { skuDisplayPrice, skuPriceLabel, skuVipOffer } from "../../../../common/skuMembershipPrice";
+import { productDetailId, productDetailHashId } from "../../../../common/productDetailRoute";
+import { prepareProductCart, type PreparedProductCart } from '../../../../common/preparedProductCart';
 
 const detail = ref<GoodsDetail | null>(null);
 const authStore = useAuthStore();
+const loading = ref(false), loadError = ref(''), visible = ref(false), navigating = ref(false);
+let productId = 0, revision = 0, disposed = false, authRefreshQueued = false;
 const replies = ref<ProductReviewListItem[]>([]);
 const replyStats = ref({ total: 0, avgScore: "0.0", goodRate: 100 });
 const discountPackages = ref<DiscountPackage[]>([]);
@@ -234,33 +259,40 @@ const skuList = ref<SkuItem[]>([]);
 const selectedSku = ref<SkuItem | null>(null);
 const num = ref(1);
 const buying = ref(false);
+const preparedCart = ref<PreparedProductCart | null>(null), checkoutError = ref(''), purchaseNeedsRefresh = ref(false);
+const purchaseLocked = computed(() => buying.value || packageBuying.value || navigating.value || !!preparedCart.value || purchaseNeedsRefresh.value);
+let navigationGeneration = 0;
 const maxNum = computed(() => Math.min(selectedSku.value?.stock ?? 0, detail.value?.stock ?? 0, 32767));
 // A selected SKU is authoritative for display; absent SKU prices must not inherit another price.
-const displayOriginalPrice = computed(() => selectedSku.value?.ot_price && selectedSku.value.ot_price !== "0.00" ? selectedSku.value.ot_price : null);
-// The checkout contract uses zero as no paid-member price, never as a free-item offer.
-const displayVipPrice = computed(() => detail.value?.is_vip === 1 && selectedSku.value?.vip_price && selectedSku.value.vip_price !== "0.00" ? selectedSku.value.vip_price : null);
+const displayPrice = computed(() => selectedSku.value ? skuDisplayPrice(selectedSku.value) : detail.value?.price);
+const displayPriceLabel = computed(() => skuPriceLabel(selectedSku.value));
+const displayOriginalPrice = computed(() => selectedSku.value?.ot_price && Number(selectedSku.value.ot_price) > Number(displayPrice.value) ? selectedSku.value.ot_price : null);
+const displayVipPrice = computed(() => skuVipOffer(selectedSku.value, detail.value?.is_vip === 1));
 
 function openSku(mode: "cart" | "buy") {
-  if (buying.value) return;
-  if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
+  if (!visible.value || disposed || !detail.value || loading.value || purchaseLocked.value) return;
+  if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
   skuMode.value = mode;
   num.value = 1;
   skuVisible.value = true;
 }
 
 function pickSku(sku: SkuItem) {
-  if (buying.value || !skuList.value.includes(sku)) return;
+  if (!visible.value || disposed || purchaseLocked.value || !skuList.value.includes(sku)) return;
   selectedSku.value = sku;
   num.value = Math.max(1, Math.min(num.value, maxNum.value));
 }
 
 async function confirmSku() {
-  if (!detail.value || buying.value) return;
+  if (preparedCart.value?.type === 0) return resumeCheckout();
+  if (!visible.value || disposed || !detail.value || loading.value || purchaseLocked.value) return;
+  if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
   if (!selectedSku.value) return uni.showToast({ title: "请选择规格", icon: "none" });
   const sku = selectedSku.value;
   if (!Number.isSafeInteger(num.value) || num.value < 1 || num.value > Math.min(sku.stock, detail.value.stock, 32767)) return uni.showToast({ title: "数量无效或库存不足", icon: "none" });
 
   buying.value = true;
+  const current = currentView();
   const mode = skuMode.value;
   try {
     const cart = await apiCartAdd({
@@ -269,18 +301,19 @@ async function confirmSku() {
       cartNum: num.value,
       new: mode === "buy" ? 1 : 0,
     });
+    if (!current()) return;
+    const prepared = prepareProductCart(cart, 0);
     skuVisible.value = false;
     if (mode === "buy") {
       // 立即购买 → 确认订单页 (buy 模式, 仅结算当前加购的商品)
-      uni.navigateTo({
-        url: `/pages/order/confirm?mode=buy&cartId=${cart.id}&from=sku`,
-      });
+      preparedCart.value = prepared;
+      resumeCheckout();
     } else {
       uni.showToast({ title: "已加入购物车", icon: "success" });
     }
   } catch (e) {
-    uni.showToast({ title: e instanceof Error ? e.message : "操作失败", icon: "none" });
-  } finally { buying.value = false; }
+    if (current()) { purchaseNeedsRefresh.value = true; checkoutError.value = e instanceof Error ? e.message : '购买记录未确认'; skuVisible.value = false; }
+  } finally { if (current()) buying.value = false; }
 }
 
 function isRequiredPackageEntry(entry: DiscountPackageProduct): boolean {
@@ -288,7 +321,8 @@ function isRequiredPackageEntry(entry: DiscountPackageProduct): boolean {
 }
 
 function openPackage(item: DiscountPackage) {
-  if (!authStore.isLoggedIn) return uni.navigateTo({ url: "/pages/auth/login" });
+  if (!visible.value || disposed || !detail.value || loading.value || purchaseLocked.value || !discountPackages.value.includes(item)) return;
+  if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
   selectedPackage.value = item;
   packageChoices.value = Object.fromEntries(item.products.map((entry) => [
     entry.id,
@@ -301,19 +335,24 @@ function openPackage(item: DiscountPackage) {
 }
 
 function togglePackageProduct(entry: DiscountPackageProduct) {
+  if (!visible.value || disposed || purchaseLocked.value) return;
   if (isRequiredPackageEntry(entry)) return;
   const choice = packageChoices.value[entry.id];
   if (choice) choice.selected = !choice.selected;
 }
 
 function pickPackageSku(entryId: number, unique: string) {
+  if (!visible.value || disposed || purchaseLocked.value) return;
   const choice = packageChoices.value[entryId];
   if (choice) choice.unique = unique;
 }
 
 async function buyPackage() {
+  if (preparedCart.value?.type === 5) return resumeCheckout();
   const item = selectedPackage.value;
-  if (!item || packageBuying.value) return;
+  if (!visible.value || disposed || !detail.value || !item || purchaseLocked.value || !discountPackages.value.includes(item)) return;
+  if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
+  const current = currentView();
   const selected = item.products.filter((entry) => packageChoices.value[entry.id]?.selected);
   if (selected.length < 2) return uni.showToast({ title: "套餐至少选择两件商品", icon: "none" });
   if (selected.some((entry) => !packageChoices.value[entry.id]?.unique)) {
@@ -329,14 +368,14 @@ async function buyPackage() {
         unique: packageChoices.value[entry.id].unique,
       })),
     });
+    if (!current()) return;
+    preparedCart.value = prepareProductCart(result, 5, selected.length);
     packageVisible.value = false;
-    uni.navigateTo({
-      url: `/pages/order/confirm?mode=buy&cartIds=${result.cartIds.join(",")}&type=5`,
-    });
+    resumeCheckout();
   } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "套餐加入结算失败", icon: "none" });
+    if (current()) { purchaseNeedsRefresh.value = true; checkoutError.value = error instanceof Error ? error.message : '套餐购买记录未确认'; packageVisible.value = false; }
   } finally {
-    packageBuying.value = false;
+    if (current()) packageBuying.value = false;
   }
 }
 
@@ -345,52 +384,132 @@ function starText(score: number): string {
   return "★".repeat(n);
 }
 
-async function loadReplies(productId: number) {
+async function loadReplies(id: number, current: () => boolean) {
   try {
-    replyStats.value = await apiReplyConfig(productId);
+    const stats = await apiReplyConfig(id);
+    if (!current()) return;
+    replyStats.value = stats;
   } catch {
     // 静默
   }
   try {
-    replies.value = await apiReplyList(productId);
+    if (!current()) return;
+    const rows = await apiReplyList(id);
+    if (current()) replies.value = rows;
   } catch {
-    replies.value = [];
+    if (current()) replies.value = [];
   }
 }
 
 function goCart() {
+  if (!visible.value || disposed || navigating.value) return;
   uni.switchTab({ url: "/pages/cart/index" });
 }
 
 function goAllComments() {
   if (!detail.value) return;
-  uni.navigateTo({ url: `/pages/goods/commentList?productId=${detail.value.id}` });
+  navigate(`/pages/goods/commentList?productId=${detail.value.id}`);
 }
 
 function goCommentDetail(id: number) {
-  uni.navigateTo({ url: `/pages/goods/commentDetail?id=${id}` });
+  if (!visible.value || disposed || navigating.value || !replies.value.some(row => row.id === id)) return;
+  navigate(`/pages/goods/commentDetail?id=${id}`);
 }
 
-onLoad(async (options) => {
-  const id = Number(options?.id);
-  if (!id) return;
+function currentView() {
+  const current = revision, owner = { version: authStore.sessionVersion, token: authStore.token, uid: authStore.uid }, id = productId;
+  return () => !disposed && visible.value && revision === current && productId === id
+    && owner.version === authStore.sessionVersion && owner.token === authStore.token && owner.uid === authStore.uid;
+}
+function clearView() {
+  revision++; detail.value = null; skuList.value = []; selectedSku.value = null; num.value = 1; skuVisible.value = false;
+  discountPackages.value = []; selectedPackage.value = null; packageChoices.value = {}; packageVisible.value = false;
+  replies.value = []; replyStats.value = { total: 0, avgScore: '0.0', goodRate: 100 };
+  loading.value = false; loadError.value = ''; buying.value = false; packageBuying.value = false; navigating.value = false;
+  navigationGeneration++; preparedCart.value = null; checkoutError.value = ''; purchaseNeedsRefresh.value = false;
+}
+function navigate(url: string, onFailure?: () => void) {
+  if (!visible.value || disposed || navigating.value) return;
+  const current = currentView(), generation = ++navigationGeneration; navigating.value = true;
+  const fail = () => { if (current() && generation === navigationGeneration) { navigating.value = false; if (onFailure) onFailure(); else uni.showToast({ title: '页面打开失败，请重试', icon: 'none' }); } };
+  try { uni.navigateTo({ url, fail }); } catch { fail(); }
+}
+function resumeCheckout() {
+  const prepared = preparedCart.value;
+  if (!visible.value || disposed || !detail.value || !prepared || navigating.value || !authStore.isLoggedIn) return;
+  checkoutError.value = '';
+  navigate(prepared.type === 5 ? `/pages/order/confirm?mode=buy&cartIds=${prepared.ids.join(',')}&type=5`
+    : `/pages/order/confirm?mode=buy&cartId=${prepared.ids[0]}&from=sku`, () => { if (preparedCart.value === prepared) checkoutError.value = '结算页面未打开，请点击继续结算'; });
+}
+function restartPurchase() {
+  if (!visible.value || disposed || navigating.value || buying.value || packageBuying.value) return;
+  void load();
+}
+async function load() {
+  if (!visible.value || disposed || !productId) return;
+  clearView(); loading.value = true;
+  const id = productId, current = currentView();
   try {
     const [goods, packages] = await Promise.all([
       apiGoodsDetail(id),
       apiDiscountPackages(id).catch(() => []),
     ]);
+    if (!current()) return;
+    if (goods.id !== id) throw new Error('商品详情标识不匹配，请重新加载');
     detail.value = goods;
     discountPackages.value = packages;
-    loadReplies(id);
+    void loadReplies(id, current);
     skuList.value = goods.skus;
     selectedSku.value = goods.skus.find((sku) => sku.stock > 0) ?? goods.skus[0] ?? null;
   } catch (e) {
-    console.error("商品详情加载失败", e);
+    if (current()) loadError.value = e instanceof Error ? e.message : '商品详情加载失败';
+  } finally { if (current()) loading.value = false; }
+}
+function setRoute(id: unknown) {
+  if (disposed) return;
+  clearView(); productId = 0;
+  try { productId = productDetailId(id); if (visible.value) void load(); }
+  catch (e) { loadError.value = e instanceof Error ? e.message : '商品链接无效'; }
+}
+function readHashRoute(): boolean {
+  // #ifdef H5
+  if (typeof window !== 'undefined') {
+    try { const id = productDetailHashId(window.location.hash); if (id !== null) { setRoute(String(id)); return true; } }
+    catch (e) { clearView(); productId = 0; loadError.value = e instanceof Error ? e.message : '商品链接无效'; return true; }
   }
+  // #endif
+  return false;
+}
+function hashChanged() {
+  if (!visible.value || disposed) return;
+  if (!readHashRoute()) { clearView(); productId = 0; }
+}
+watch(() => authStore.sessionVersion, () => {
+  clearView();
+  // setLogin publishes its epoch before token/UID. Clear synchronously, then
+  // fetch only after the complete store action; coalesce repeated changes.
+  if (authRefreshQueued) return;
+  authRefreshQueued = true;
+  void Promise.resolve().then(() => { authRefreshQueued = false; if (visible.value && !disposed) void load(); });
+}, { flush: 'sync' });
+onLoad(options => setRoute(options?.id));
+onShow(() => { if (disposed) return; visible.value = true; if (!readHashRoute()) void load(); });
+onHide(() => { visible.value = false; clearView(); });
+// #ifdef H5
+if (typeof window !== 'undefined') window.addEventListener('hashchange', hashChanged);
+// #endif
+onUnload(() => {
+  disposed = true; visible.value = false; clearView();
+  // #ifdef H5
+  if (typeof window !== 'undefined') window.removeEventListener('hashchange', hashChanged);
+  // #endif
 });
 </script>
 
 <style scoped>
+.purchase-recovery { margin: 20rpx; padding: 24rpx; background: #fff6e9; border: 1rpx solid #efd6b3; border-radius: 12rpx; }
+.purchase-recovery button { margin-top: 12rpx; font-size: 28rpx; }
+.action-bar [aria-disabled="true"] { opacity: 0.5; }
 .goods-detail {
   padding-bottom: 140rpx;
 }
@@ -415,6 +534,8 @@ onLoad(async (options) => {
   align-items: baseline;
   gap: 16rpx;
 }
+
+.member-label { color: #9b5717; font-size: 24rpx; }
 
 .price {
   color: #e93323;

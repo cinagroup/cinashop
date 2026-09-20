@@ -140,13 +140,14 @@ export function parseCreateTables(sql: string, dialect: SqlDialect): Map<string,
   // the captured current schema through PostgreSQL format('%I', ...), leaving
   // the table name itself as a static unquoted identifier in the format body.
   // Recognize that narrow dynamic form as well without treating arbitrary
-  // unquoted prose or runtime-built identifiers as auditable schema.
+  // unquoted prose or runtime-built identifiers as auditable schema. Also admit
+  // explicit public-qualified PG DDL, but never collapse an arbitrary schema.
   const createPattern =
-    /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([`"])([^`"]+)\1|%I\.([a-z_][a-z0-9_]*))\s*\(/gi;
+    /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([`"])([^`"]+)\1|(?:%I|public|"public")\.(?:"([a-z_][a-z0-9_]*)"|([a-z_][a-z0-9_]*)))\s*\(/gi;
   let match: RegExpExecArray | null;
 
   while ((match = createPattern.exec(sql)) !== null) {
-    const rawName = match[2] ?? match[3];
+    const rawName = match[2] ?? match[3] ?? match[4];
     const name = dialect === "mysql" ? rawName : rawName.toLowerCase();
     const openIndex = createPattern.lastIndex - 1;
     const closeIndex = findClosingParen(sql, openIndex);

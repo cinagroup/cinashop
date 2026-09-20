@@ -2,6 +2,7 @@
  * 购物车 + 订单 API
  */
 import { http } from "@/utils/request";
+import { orderDeleteRequest, assertOrderDeleteResult } from '../../../common/orderDeletion';
 import type {
   CartItem,
   CheckoutCashier,
@@ -110,7 +111,10 @@ export async function apiOrderList(params: {
   page?: number;
   limit?: number;
 }): Promise<OrderInfo[]> {
-  const list = await http.get<Record<string, unknown>[]>("/order/list", params as Record<string, unknown>);
+  // uni.request serializes undefined values as empty query strings on H5.
+  // An absent status means all orders; status= is interpreted as unpaid by the legacy API.
+  const query = Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined));
+  const list = await http.get<Record<string, unknown>[]>("/order/list", query);
   return list.map((item) => toSnake(item) as OrderInfo);
 }
 
@@ -305,11 +309,16 @@ export function apiOrderCancel(orderId: string): Promise<null> {
   return http.post<null>("/order/cancel", { order_id: orderId });
 }
 
+/** 删除订单；非空成功响应也按结果未知处理，不自动重试。 */
+export async function apiOrderDelete(orderId: string): Promise<void> {
+  assertOrderDeleteResult(await http.post<unknown>('/order/del', orderDeleteRequest(orderId)));
+}
+
 /** 退款申请 (POST /api/order/refund/apply/:orderId) */
 export function apiRefundApply(
   orderId: string,
   params: { refundReason: string; refundExplain?: string; applyType?: number; cartIds?: number[] },
-): Promise<{ id: number }> {
+): Promise<{ refundId: number }> {
   return http.post(`/order/refund/apply/${orderId}`, params);
 }
 
@@ -321,6 +330,15 @@ export function apiRefundCancel(id: number): Promise<null> {
 /** 退款列表 (GET /api/order/refund/list) */
 export function apiRefundList(): Promise<unknown[]> {
   return http.get<unknown[]>("/order/refund/list");
+}
+
+/** Modern bounded, owner-scoped refund read projection; legacy callers keep their old envelope. */
+export function apiRefundRecords(query: import('../../../common/refundRecords').RefundQuery): Promise<unknown> {
+  return http.get('/order/refund/list', { view: 'customer', filter: query.filter, q: query.q, limit: query.limit,
+    ...(query.cursor ? { cursor: query.cursor } : {}) });
+}
+export function apiRefundRecord(id: number): Promise<unknown> {
+  return http.get(`/order/refund/detail/${id}`, { view: 'customer' });
 }
 
 /** 删除地址 (POST /api/address/del) */

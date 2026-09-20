@@ -6,6 +6,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { StoreProductService } from "../src/services/product/StoreProductService";
+import bcmathCases from './fixtures/member-price-bcmath.json';
 
 // 构造一个不依赖 container/env 的 service 实例 (只用 getMinPrice 纯函数)
 const svc = new StoreProductService(
@@ -14,6 +15,17 @@ const svc = new StoreProductService(
 );
 
 describe("getMinPrice (对应 PHP getMinPrice 会员价计算)", () => {
+  it.each(bcmathCases)('preserves PHP two-stage truncation for $price at $discount percent (SVIP $vipPrice)', (row) => {
+    const result = svc.getMinPrice(row.price, row.isVip, row.vipPrice, Number(row.discount), 'Fixture');
+    expect(result.level_price).toBe(row.levelPrice);
+    expect(result.vip_price).toBe(row.priceType === '' ? '0' : row.selectedPrice);
+    expect(result.price_type).toBe(row.priceType);
+  });
+
+  it.each(['-1.00', 'NaN', 'Infinity', '1e2', '1.001', '', '9'.repeat(33), '90071992547409.92'])
+    ('rejects invalid or unsafe decimal input %s instead of producing a rounded quote', price => {
+      expect(() => svc.getMinPrice(price, 0, '0', 88, '')).toThrow(/商品价格/);
+    });
   it("discount=100 且非 svip → 无折扣, vip_price=0", () => {
     const r = svc.getMinPrice("100.00", 0, "0", 100, "");
     expect(r.price_type).toBe("");

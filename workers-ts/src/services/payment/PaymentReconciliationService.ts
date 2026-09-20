@@ -16,6 +16,7 @@ import type {
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import {
   otherOrder,
+  paymentCallbackEvent,
   paymentReconciliationAction,
   paymentReconciliationCase,
   storeOrder,
@@ -46,6 +47,9 @@ import {
 } from "@/services/payment/PaymentProviderQuery";
 import { registerPaymentReconciliationTx } from "@/services/payment/PaymentReconciliationRegistry";
 import { WechatPayService } from "@/services/wechat/WechatPayService";
+import { settleOfflineOrderExternalPayment, settleOfflineOrderQueryPayment } from "@/services/order/OfflineOrderExternalPaymentService";
+import { queryOfflineOrderPayment } from '@/services/order/OfflineOrderPaymentQueryService';
+import { findOfflineQueryEvidence, persistOfflineQueryEvidence } from '@/services/order/OfflineOrderQueryEvidenceService';
 import { ApiException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
@@ -83,6 +87,7 @@ export type PaymentReconciliationProcessResult =
   | { kind: "deferred"; delaySeconds: number };
 
 interface ClaimedCase extends PaymentProviderQueryRequest {
+  callbackEventId: number | null;
   id: number;
   replayKey: string;
   leaseToken: string;
@@ -276,6 +281,10 @@ export class PaymentReconciliationService {
   ): Promise<PaymentReconciliationProcessResult> {
     const claim = await this.claim(message);
     if (typeof claim === "string" || "kind" in claim) return claim;
+    // Dedicated offline evidence/settlement; never fall through to membership.
+    if (claim.orderDomain === 'offline_order' || /^xx[0-9a-f]{30}$/.test(claim.orderNo)) {
+      return this.recoverOfflinePayment(claim);
+    }
     let result: PaymentProviderQueryResult;
     try {
       // Provider I/O is deliberately outside every PostgreSQL transaction.
@@ -368,6 +377,66 @@ export class PaymentReconciliationService {
         });
       }
       return this.finishQueryFailure(claim, error, result);
+    }
+  }
+
+  private async recoverOfflinePayment(claim: ClaimedCase): Promise<PaymentReconciliationProcessResult> {
+    try {
+      const reference = { caseId: claim.id, replayKey: claim.replayKey };
+      const prior = await findOfflineQueryEvidence(this.container, reference);
+      if (prior) {
+        const settled = await settleOfflineOrderQueryPayment(this.container, { queryId: prior.id, replayKey: prior.replayKey });
+        return this.finish(claim, { status: settled.replayed ? 'CONFIRMED' : 'SETTLED', providerStatus: 'SUCCESS',
+          orderDomain: 'offline_order', errorCode: '', result: { status: 'SUCCESS', providerTradeState: prior.tradeState,
+            orderNo: prior.orderNo, transactionId: prior.transactionId, amountCents: prior.amountCents, currency: 'CNY',
+            providerEventTime: prior.providerEventTime, errorCode: '' } });
+      }
+      if (claim.callbackEventId) return this.recoverOfflineCallback(claim);
+      if (!claim.initiatedTime) throw new Error('offline_payment_intent_required');
+      // Authoritative selection read commits before KV/provider I/O. This path
+      // deliberately does not accept the ordinary injectable scalar-only query.
+      const queried = await queryOfflineOrderPayment(this.container, this.env, claim);
+      if (queried.result.status !== 'SUCCESS') {
+        const pending = queried.result.status === 'PENDING';
+        return this.finish(claim, { status: pending ? 'WAITING' : claim.attemptCount >= MAX_QUERY_ATTEMPTS ? 'DEAD' : 'UNKNOWN',
+          providerStatus: queried.result.status, orderDomain: 'offline_order', result: queried.result,
+          errorCode: pending ? '' : queried.result.errorCode || 'offline_provider_result_unknown' });
+      }
+      const stored = await persistOfflineQueryEvidence(this.container, { reference, request: claim, queried });
+      if (stored.terminalConflict) return 'conflict';
+      if (stored.closed) return 'already-terminal';
+      const settled = await settleOfflineOrderQueryPayment(this.container, stored);
+      return this.finish(claim, { status: settled.replayed ? 'CONFIRMED' : 'SETTLED', providerStatus: 'SUCCESS',
+        orderDomain: 'offline_order', errorCode: '', result: queried.result });
+    } catch (error) {
+      return this.finishQueryFailure(claim, error);
+    }
+  }
+
+  private async recoverOfflineCallback(claim: ClaimedCase): Promise<PaymentReconciliationProcessResult> {
+    try {
+      const callbackEventId = claim.callbackEventId;
+      if (!callbackEventId) throw new Error('offline_verified_callback_required');
+      const [event] = await withTx(this.container, tx => tx.select().from(paymentCallbackEvent)
+        .where(eq(paymentCallbackEvent.id, callbackEventId)).limit(1));
+      if (!event || event.orderDomain !== 'offline_order' || event.provider !== claim.provider
+        || event.profile !== claim.profile || event.orderNo !== claim.orderNo || event.currency !== 'CNY'
+        || event.amountCents !== claim.expectedAmountCents || event.transactionId !== claim.providerTransactionId) {
+        throw new Error('offline_recovery_callback_mismatch');
+      }
+      // The settler re-locks and validates original identity, amount, event hash,
+      // recovery conflicts and receipt. This is NOT an active provider query.
+      const settled = await settleOfflineOrderExternalPayment(this.container, { eventId: event.id, replayKey: event.replayKey });
+      return this.finish(claim, {
+        status: settled.replayed ? 'CONFIRMED' : 'SETTLED', providerStatus: 'SUCCESS', orderDomain: 'offline_order', errorCode: '',
+        result: { status: 'SUCCESS', providerTradeState: event.tradeState, orderNo: event.orderNo,
+          transactionId: event.transactionId, amountCents: event.amountCents, currency: 'CNY',
+          providerEventTime: event.providerEventTime, errorCode: '' },
+      });
+    } catch (error) {
+      // Missing evidence is not proof of non-payment. Retain UNKNOWN/DEAD for
+      // retry/attention without issuing a new payment or adopting current config.
+      return this.finishQueryFailure(claim, error);
     }
   }
 
@@ -552,6 +621,7 @@ export class PaymentReconciliationService {
         addTime: row.addTime,
         providerTransactionId: row.providerTransactionId,
         providerEventTime: row.providerEventTime,
+        callbackEventId: row.callbackEventId,
       };
     });
   }
@@ -573,8 +643,11 @@ export class PaymentReconciliationService {
     const updated = await withTx(this.container, (tx) => tx.update(paymentReconciliationCase).set({
       status: outcome.status,
       providerStatus: outcome.providerStatus,
-      providerTransactionId: outcome.result.transactionId || claim.providerTransactionId,
-      providerEventTime: outcome.result.providerEventTime || claim.providerEventTime,
+      // Query evidence may have committed after the claim was read. A later
+      // settlement failure must not erase that durable transaction with the
+      // claim's stale empty identity; retries validate the original evidence.
+      providerTransactionId: outcome.result.transactionId || sql`${paymentReconciliationCase.providerTransactionId}`,
+      providerEventTime: outcome.result.providerEventTime || sql`${paymentReconciliationCase.providerEventTime}`,
       orderDomain: outcome.orderDomain || claim.orderDomain,
       nextCheckTime: terminal ? 0 : now + paymentReconciliationBackoff(claim.attemptCount),
       leaseUntil: 0,
@@ -631,23 +704,23 @@ export class PaymentReconciliationService {
 
   private async localEvidence(orderNo: string, domain: PaymentCallbackOrderDomain) {
     return withTx(this.container, async (tx) => {
-      const candidates: number[] = [];
+      const candidates: boolean[] = [];
       if (domain === "" || domain === "store_order") {
         const rows = await tx.select({ paid: storeOrder.paid }).from(storeOrder)
           .where(eq(storeOrder.orderId, orderNo)).limit(2);
-        candidates.push(...rows.map((row) => row.paid));
+        candidates.push(...rows.map((row) => row.paid === 1));
       }
       if (domain === "" || domain === "recharge") {
         const rows = await tx.select({ paid: userRecharge.paid }).from(userRecharge)
           .where(eq(userRecharge.orderId, orderNo)).limit(2);
-        candidates.push(...rows.map((row) => row.paid));
+        candidates.push(...rows.map((row) => row.paid === 1));
       }
       if (domain === "" || domain === "membership") {
-        const rows = await tx.select({ paid: otherOrder.paid }).from(otherOrder)
+        const rows = await tx.select({ paid: otherOrder.paid, type: otherOrder.type }).from(otherOrder)
           .where(eq(otherOrder.orderId, orderNo)).limit(2);
-        candidates.push(...rows.map((row) => row.paid));
+        candidates.push(...rows.map(isPaidMembershipOrder));
       }
-      return { paid: candidates.length === 1 && candidates[0] === 1 };
+      return { paid: candidates.length === 1 && candidates[0] === true };
     });
   }
 
@@ -727,6 +800,12 @@ function settlementOutcome(
   };
 }
 
+// Match PaidMembershipService's type=0/1 boundary. Do not filter type in SQL:
+// an unsupported same-number row must still make the order identity ambiguous.
+function isPaidMembershipOrder(row: { paid: number; type: number }): boolean {
+  return row.paid === 1 && (row.type === 0 || row.type === 1);
+}
+
 async function localPaidTx(
   tx: DbClient,
   orderNo: string,
@@ -743,9 +822,9 @@ async function localPaidTx(
     return rows.length === 1 && rows[0].paid === 1;
   }
   if (domain === "membership") {
-    const rows = await tx.select({ paid: otherOrder.paid }).from(otherOrder)
+    const rows = await tx.select({ paid: otherOrder.paid, type: otherOrder.type }).from(otherOrder)
       .where(eq(otherOrder.orderId, orderNo)).limit(2).for("update");
-    return rows.length === 1 && rows[0].paid === 1;
+    return rows.length === 1 && isPaidMembershipOrder(rows[0]);
   }
   return false;
 }

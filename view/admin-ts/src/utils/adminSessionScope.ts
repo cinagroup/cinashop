@@ -1,7 +1,7 @@
 import { getToken } from './auth';
 
 /** One mounted operation surface. Invalidations are sticky, including A -> B -> A. */
-export function createAdminSessionScope(onInvalidate: () => void = () => {}) {
+export function createAdminSessionScope(onInvalidate: () => void = () => {}, allowAnonymous = false) {
   const token = getToken(), session = localStorage.getItem('admin_session');
   const controller = new AbortController();
   let active = true;
@@ -24,7 +24,7 @@ export function createAdminSessionScope(onInvalidate: () => void = () => {}) {
   return {
     signal: controller.signal,
     isCurrent() {
-      if (active && (!token || getToken() !== token || localStorage.getItem('admin_session') !== session)) invalidate();
+      if (active && ((!token && !allowAnonymous) || getToken() !== token || localStorage.getItem('admin_session') !== session)) invalidate();
       return active;
     },
     dispose() { active = false; detach(); controller.abort(); },

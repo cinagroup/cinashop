@@ -259,6 +259,8 @@
         "navigationBarTitleText": "付费会员"
       }
     },
+    { "path": "pages/annex/offline_pay/index", "style": { "navigationBarTitleText": "线下消费收银" } },
+    { "path": "pages/annex/offline_result/index", "style": { "navigationBarTitleText": "核对线下消费结果" } },
     {
       "path": "pages/annex/vip_active/index",
       "style": {

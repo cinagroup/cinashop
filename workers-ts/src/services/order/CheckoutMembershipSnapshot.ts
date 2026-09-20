@@ -8,6 +8,8 @@ export interface CheckoutMembershipSnapshot {
   uid: number;
   /** null means this pricing feature is disabled, not an inactive membership. */
   paidActive: boolean | null;
+  levelActive: boolean | null;
+  /** A level definition is relevant only while the level feature/account is active. */
   levelId: number | null;
   level: Pick<typeof systemUserLevel.$inferSelect, 'id' | 'discount' | 'isShow' | 'isDel'> | null;
 }
@@ -25,6 +27,7 @@ export async function assertCheckoutMembershipSnapshot(
   try {
     const [account] = await tx.select({ isEverLevel: user.isEverLevel, isMoneyLevel: user.isMoneyLevel, overdueTime: user.overdueTime })
       .from(user).where(and(eq(user.uid, expected.uid), eq(user.isDel, 0),
+        expected.levelActive !== null ? sql`(${user.levelStatus} = 1) = ${expected.levelActive}` : undefined,
         expected.levelId !== null ? eq(user.level, expected.levelId) : undefined))
       .limit(1).for('share', { noWait: true });
     if (!account) throw new ValidateException('会员资格或等级已变化，请重新确认');

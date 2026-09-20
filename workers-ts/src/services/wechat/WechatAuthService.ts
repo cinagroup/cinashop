@@ -21,6 +21,7 @@ import { decryptMiniProgramData } from "@/utils/wechat-crypto";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { UserBehaviorService } from "@/services/user/UserBehaviorService";
 import { LoginService } from "@/services/user/LoginService";
+import { readRegistrationLevelStatus } from "@/services/user/RegistrationLevelActivation";
 import {
   applyRegistrationGifts,
   StoreNewcomerService,
@@ -1393,6 +1394,7 @@ export class WechatAuthService {
           addTime: now,
           lastTime: now,
           ...registration.flags,
+          levelStatus: await readRegistrationLevelStatus(tx),
         }).returning({ uid: userTable.uid });
         uid = newUser[0]?.uid;
         if (!uid) throw new Error("用户创建失败");

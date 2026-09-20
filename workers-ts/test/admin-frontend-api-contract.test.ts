@@ -18,8 +18,9 @@ describe("Admin frontend API contract", () => {
     expect(backend).toContain('adminapiRoutes.get("/new_push", adminAuth, AdminController.adminNewPush)');
     expect(backend).toContain('adminapiRoutes.delete("/product/del/:id"');
     expect(product).toContain("request.delete(`/product/del/${id}`)");
-    expect(refund).toContain("request.post(`/refund/refund/${id}`)");
-    expect(refund).not.toContain("request.post(`/refund/agree/${id}`)");
+    expect(refund).toContain("send('/refund/operations/' + mode");
+    expect(refund).toContain("'Idempotency-Key': operation.nonce");
+    expect(refund).not.toMatch(/apiAdminRefund(?:Agree|Refuse)|\/refund\/(?:refund|agree|refuse)\//);
   });
 
   it("uses the transactional idempotent user balance contract and quarantines generic config", () => {

@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import { withTx, type Container } from "@/lib/di";
 import {
@@ -806,8 +806,8 @@ export class PaidMembershipService {
             eq(storeCouponIssue.category, 2),
             eq(storeCouponIssue.status, 1),
             eq(storeCouponIssue.isDel, 0),
-            sql`(${storeCouponIssue.startTime} IS NULL OR ${storeCouponIssue.startTime} <= ${now})`,
-            sql`(${storeCouponIssue.endTime} IS NULL OR ${storeCouponIssue.endTime} >= ${now})`,
+            or(isNull(storeCouponIssue.startTime), lte(storeCouponIssue.startTime, now)),
+            or(isNull(storeCouponIssue.endTime), gte(storeCouponIssue.endTime, now)),
           ),
         )
         .orderBy(desc(storeCouponIssue.sort), desc(storeCouponIssue.addTime), desc(storeCouponIssue.id))

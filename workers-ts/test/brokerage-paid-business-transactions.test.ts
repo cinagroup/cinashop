@@ -12,6 +12,7 @@ import { applyOrderRefund, approveStoreOrderReturn, finalizeStoreOrderRefund,
   StoreOrderRefundService } from '../src/services/order/StoreOrderRefundService';
 import { assertCheckoutPaidOrderQualifications } from '../src/services/order/CheckoutPaidOrderAuthority';
 import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
+import { checkoutPricingFixture } from './helpers/checkoutPricingFixture';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 
 // Full ORM DDL (including checks, unique indexes and foreign keys), plus the
@@ -66,6 +67,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
     expect(f.format).toBe('pg16');
     const api = await import('drizzle-kit/api');
     await f.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));
+    f = await checkoutPricingFixture(f);
     await runBrokeragePaidOrderFence(f.db);
     await f.db.insert(user).values({ uid: 11, account: 'isolated-buyer', nowMoney: '100.00', integral: 100 });
     await f.db.insert(storeProduct).values({ id: 70, storeName: 'isolated-product', stock: 8, sales: 2 });

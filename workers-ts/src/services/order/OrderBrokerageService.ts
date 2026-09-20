@@ -10,6 +10,8 @@ import { withTx, type Container, type DbClient } from "@/lib/di";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { settleSupplierPayment } from "@/services/supplier/SupplierFinanceService";
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
+import { loadRefundLineCompensation } from './RefundLineCompensation';
+import { targetLineCompensation, type RefundLineCompensation } from './OrderSplitFinance';
 import type { CheckoutBrokerageAuthority, BrokerageAccountFacts } from "@/services/order/CheckoutBrokerageAuthority";
 import {
   loadOrderRewardConfig,
@@ -19,6 +21,7 @@ import {
 } from "@/services/order/OrderRewardService";
 
 const ORDER_SETTLEMENT_LOCK_NAMESPACE = 63842;
+const BROKERAGE_INCOME_TYPES = ['self_brokerage', 'one_brokerage', 'two_brokerage', 'staff_brokerage', 'agent_brokerage', 'division_brokerage'];
 
 const BROKERAGE_CONFIG_KEYS = [
   "brokerage_func_status",
@@ -43,6 +46,9 @@ export interface BrokerageOrderItem {
 
 export interface OrderBrokerageSnapshot {
   authority: CheckoutBrokerageAuthority | null;
+  /** Exact contributions from the same calculation as the order totals, in
+   * input cart order. Never reallocate specified SKU commissions by gross value. */
+  lineAmounts: OrderBrokerageLineAmounts[];
   /** Create-time dependencies only; not a customer quote or persisted ledger field.
    * null means no recipient can use product/SKU commission rules in this snapshot.
    */
@@ -57,6 +63,14 @@ export interface OrderBrokerageSnapshot {
   divisionAgentBrokerageCents: number;
   divisionStaffId: number;
   divisionStaffBrokerageCents: number;
+}
+
+export interface OrderBrokerageLineAmounts {
+  oneCents: number;
+  twoCents: number;
+  staffCents: number;
+  agentCents: number;
+  divisionCents: number;
 }
 
 export interface DivisionBrokerageRates {
@@ -104,8 +118,18 @@ export async function lockOrderSettlementUsers(
     typeof storeOrder.$inferSelect,
     "uid" | "spreadUid" | "spreadTwoUid" | "divisionId" | "divisionAgentId" | "divisionStaffId"
   >,
+  earnedOrderId?: number,
 ): Promise<void> {
+  // Historical income recipients can differ from the current child's
+  // attribution. Include them BEFORE taking any user lock, in the same order.
+  const historical = earnedOrderId === undefined ? [] : await tx.select({ uid: userBrokerage.uid }).from(userBrokerage)
+    .where(and(eq(userBrokerage.linkId, String(earnedOrderId)), eq(userBrokerage.pm, 1), eq(userBrokerage.status, 1),
+      inArray(userBrokerage.type, BROKERAGE_INCOME_TYPES))).limit(65);
+  if (historical.length > 64 || historical.some(row => !Number.isSafeInteger(row.uid) || row.uid <= 0)) {
+    throw new Error('退款原入账接收人证据无效');
+  }
   const userIds = [...new Set([
+    ...historical.map(row => row.uid),
     order.uid,
     order.spreadUid,
     order.spreadTwoUid,
@@ -188,7 +212,7 @@ export function calculateOrderBrokerage(input: {
   divisionBasisPoints?: number;
   oneEligible: boolean;
   twoEligible: boolean;
-}): {
+}, observeLine?: (line: OrderBrokerageLineAmounts) => void): {
   oneCents: number;
   twoCents: number;
   staffCents: number;
@@ -203,6 +227,7 @@ export function calculateOrderBrokerage(input: {
   let divisionCents = 0;
   for (let i = 0; i < input.items.length; i++) {
     const item = input.items[i];
+    const before = { oneCents, twoCents, staffCents, agentCents, divisionCents };
     if (item.specified) {
       const specifiedOne = item.specifiedOneCents * item.quantity;
       const specifiedTwo = item.specifiedTwoCents * item.quantity;
@@ -211,6 +236,8 @@ export function calculateOrderBrokerage(input: {
       }
       if (input.oneEligible) oneCents += specifiedOne;
       if (input.twoEligible) twoCents += specifiedTwo;
+      observeLine?.({ oneCents: oneCents - before.oneCents, twoCents: twoCents - before.twoCents,
+        staffCents: 0, agentCents: 0, divisionCents: 0 });
       continue;
     }
     const base = input.computeType === 1
@@ -223,6 +250,9 @@ export function calculateOrderBrokerage(input: {
     staffCents += brokerageFromBasisPoints(base, input.staffBasisPoints ?? 0);
     agentCents += brokerageFromBasisPoints(base, input.agentBasisPoints ?? 0);
     divisionCents += brokerageFromBasisPoints(base, input.divisionBasisPoints ?? 0);
+    observeLine?.({ oneCents: oneCents - before.oneCents, twoCents: twoCents - before.twoCents,
+      staffCents: staffCents - before.staffCents, agentCents: agentCents - before.agentCents,
+      divisionCents: divisionCents - before.divisionCents });
   }
   if (
     !Number.isSafeInteger(oneCents)
@@ -348,6 +378,7 @@ export async function buildOrderBrokerageSnapshot(
 ): Promise<OrderBrokerageSnapshot> {
   const empty = {
     authority: null,
+    lineAmounts: input.items.map(() => ({ oneCents: 0, twoCents: 0, staffCents: 0, agentCents: 0, divisionCents: 0 })),
     itemRuleUsage: null,
     spreadUid: 0,
     spreadTwoUid: 0,
@@ -473,6 +504,7 @@ export async function buildOrderBrokerageSnapshot(
     authority.accounts.push({ uid: account.uid, ...(active ? { divisionPercent: account.divisionPercent } : {}) });
     authority.divisionClocks.push({ uid: account.uid, active });
   });
+  const lineAmounts: OrderBrokerageLineAmounts[] = [];
   const brokerage = calculateOrderBrokerage({
     items: input.items,
     actualProductCents: input.actualProductCents,
@@ -484,9 +516,10 @@ export async function buildOrderBrokerageSnapshot(
     divisionBasisPoints: divisionRates.divisionBasisPoints,
     oneEligible,
     twoEligible,
-  });
+  }, line => { lineAmounts.push(line); });
   return {
     authority,
+    lineAmounts,
     itemRuleUsage: oneEligible || twoEligible || divisionRates.staffBasisPoints > 0 ||
       divisionRates.agentBasisPoints > 0 || divisionRates.divisionBasisPoints > 0
       ? { oneEligible, twoEligible } : null,
@@ -624,24 +657,19 @@ export function targetBrokerageReversal(
   return Math.floor(product / payCents);
 }
 
-/** 按累计退款比例回退已入账佣金；多次部分退款只扣本次增量。 */
+/** 按已退商品行累计回退实入佣金；无版本旧单保留比例兼容，只扣本次增量。 */
 export async function reverseOrderBrokerage(
   tx: DbClient,
   order: Pick<typeof storeOrder.$inferSelect, "id" | "orderId" | "payPrice">,
   cumulativeRefundCents: number,
   now: number,
+  preparedLineCompensation?: RefundLineCompensation | null,
 ): Promise<void> {
   const payCents = decimalToCents(order.payPrice);
   if (payCents <= 0 || cumulativeRefundCents <= 0) return;
-  const linkId = String(order.id);
-  const incomeTypes = [
-    "self_brokerage",
-    "one_brokerage",
-    "two_brokerage",
-    "staff_brokerage",
-    "agent_brokerage",
-    "division_brokerage",
-  ];
+  const lineCompensation = preparedLineCompensation === undefined
+    ? await loadRefundLineCompensation(tx, order.id) : preparedLineCompensation;
+  const linkId = String(lineCompensation?.earnedIncome?.orderId ?? order.id);
   const incomes = await tx
     .select()
     .from(userBrokerage)
@@ -649,7 +677,7 @@ export async function reverseOrderBrokerage(
       and(
         eq(userBrokerage.linkId, linkId),
         eq(userBrokerage.pm, 1),
-        inArray(userBrokerage.type, incomeTypes),
+        inArray(userBrokerage.type, BROKERAGE_INCOME_TYPES),
         eq(userBrokerage.status, 1),
       ),
     )
@@ -695,7 +723,8 @@ export async function reverseOrderBrokerage(
   const currentBalance = new Map(accounts.map((account) => [account.uid, decimalToCents(account.brokeragePrice)]));
   for (const income of incomes) {
     const incomeCents = decimalToCents(income.number);
-    const target = targetBrokerageReversal(incomeCents, cumulativeRefundCents, payCents);
+    const target = lineCompensation ? targetLineCompensation(incomeCents, (lineCompensation.earnedIncome ?? lineCompensation).brokerage[income.type])
+      : targetBrokerageReversal(incomeCents, cumulativeRefundCents, payCents);
     const key = `${income.uid}:${income.type}`;
     const explicitPrevious = reversedByKey.get(key) ?? 0;
     const legacyAvailable = legacyReversedByUid.get(income.uid) ?? 0;
@@ -773,14 +802,15 @@ export async function settleCompletedOrderInTx(
   now: number,
   message: string,
 ): Promise<void> {
-  await lockOrderSettlementUsers(tx, order);
+  const cumulativeRefundCents = decimalToCents(order.refundPrice);
+  const lineCompensation = cumulativeRefundCents > 0 ? await loadRefundLineCompensation(tx, order.id) : null;
+  await lockOrderSettlementUsers(tx, order, lineCompensation?.earnedIncome?.orderId);
   await settleSupplierPayment(tx, order.supplierId, order.orderId, now);
   await settleOrderRewards(tx, order, context.rewards, now);
   await settleOrderBrokerage(tx, order, now, context.brokerage);
-  const cumulativeRefundCents = decimalToCents(order.refundPrice);
   if (cumulativeRefundCents > 0) {
-    await reverseOrderRewards(tx, order, cumulativeRefundCents, now);
-    await reverseOrderBrokerage(tx, order, cumulativeRefundCents, now);
+    await reverseOrderRewards(tx, order, cumulativeRefundCents, now, 0, lineCompensation);
+    await reverseOrderBrokerage(tx, order, cumulativeRefundCents, now, lineCompensation);
   }
   await tx.insert(storeOrderStatus).values({
     oid: order.id,

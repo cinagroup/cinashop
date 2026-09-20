@@ -78,6 +78,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "订单管理" },
       },
       {
+        path: "order/offline",
+        name: "offline-orders",
+        component: () => import("@/pages/order/OfflineOrders.vue"),
+        meta: { title: "线下消费" },
+      },
+      {
         path: "order/:orderId",
         name: "order-detail",
         component: () => import("@/pages/order/OrderDetail.vue"),

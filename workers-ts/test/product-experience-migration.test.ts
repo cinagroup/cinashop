@@ -75,7 +75,7 @@ describe("product assurance and visit analytics migration", () => {
     expect(requiredAdminPermission("PUT", "/api/admin/product/ensure/1")).toBe("product.manage");
   });
 
-  it("records visits with a scope lock and keeps product assurance outside stale detail cache", () => {
+  it("records visits with a scope lock and resolves assurance without a shared detail cache", () => {
     const experience = readFileSync("src/services/product/ProductExperienceService.ts", "utf8");
     const product = readFileSync("src/services/product/StoreProductService.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/ProductController.ts", "utf8");
@@ -83,7 +83,9 @@ describe("product assurance and visit analytics migration", () => {
     expect(experience).toContain('.for("update")');
     expect(experience).toContain("existing[0].addTime + VISIT_THROTTLE_SECONDS < now");
     expect(experience).toContain("eq(storeProductLog.type, \"visit\")");
-    expect(product).toContain("delete cacheable.ensure");
+    expect(product).toContain(".productEnsures(id, product.ensureId)");
+    expect(product).not.toContain("await cacheGet");
+    expect(product).not.toContain("await cacheSet");
     expect(controller).toContain("c.executionCtx.waitUntil");
     expect(controller).toContain(".recordVisit(uid, id, id)");
   });

@@ -2,26 +2,40 @@
   <div class="order-detail-page">
     <div class="page-head">
       <h2>订单详情</h2>
+      <el-button v-if="order && canRefund" @click="$router.push({ path: '/refund', query: { creationOrderId: String(order.id) } })">{{ order.pid === -1 ? '查看退款 / 恢复原请求' : '主动退款 / 恢复原请求' }}</el-button>
+      <el-button v-if="sessionValid" :disabled="loading" @click="loadOrder">刷新</el-button>
       <el-button @click="$router.back()">返回</el-button>
     </div>
 
     <el-skeleton v-if="loading" :rows="8" animated />
+    <el-alert v-else-if="readError" :title="readError" type="error" :closable="false" show-icon />
 
     <template v-else-if="order">
+      <el-alert v-if="order.pid === -1" class="section" title="这是已拆分的支付主单：金额和商品是原始历史记录，不代表当前可履约数量。请打开下方子单查看当前状态；不要将主单金额与子单金额重复相加。" type="info" :closable="false" show-icon />
+      <el-card v-if="order.pid === -1" class="section" shadow="never">
+        <template #header>当前子单</template>
+        <ul v-if="order.splitOrders.length" class="split-orders">
+          <li v-for="child in order.splitOrders" :key="child.id">
+            <router-link :to="`/order/${encodeURIComponent(child.orderId)}`">{{ child.orderId }}</router-link>
+            <span>{{ adminOrderStatus(child) }} · {{ child.totalNum }} 件 · ¥{{ child.payPrice }}</span>
+          </li>
+        </ul>
+        <el-empty v-else description="无可见子单，请按子单号核对" />
+      </el-card>
       <!-- 订单信息 -->
       <el-card class="section" shadow="never">
         <template #header>订单信息</template>
-        <el-descriptions :column="3" border>
+        <el-descriptions :column="descriptionColumns" border>
           <el-descriptions-item label="订单号">{{ order.orderId }}</el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag :type="statusType">{{ statusText }}</el-tag>
+            <el-tag>{{ adminOrderStatus(order) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="支付方式">{{ order.payType || "—" }}</el-descriptions-item>
           <el-descriptions-item label="下单用户">
             {{ order.realName }} {{ order.userPhone }}
           </el-descriptions-item>
           <el-descriptions-item label="收货地址">
-            {{ order.province }}{{ order.userAddress || "—" }}
+            {{ order.userAddress || order.province || "—" }}
           </el-descriptions-item>
           <el-descriptions-item label="下单时间">{{ formatTime(order.addTime) }}</el-descriptions-item>
         </el-descriptions>
@@ -53,13 +67,15 @@
       <!-- 金额信息 -->
       <el-card class="section" shadow="never">
         <template #header>金额信息</template>
-        <el-descriptions :column="3" border>
+        <el-descriptions :column="descriptionColumns" border>
           <el-descriptions-item label="商品金额">¥{{ order.totalPrice }}</el-descriptions-item>
           <el-descriptions-item label="运费">¥{{ order.totalPostage }}</el-descriptions-item>
           <el-descriptions-item label="实付金额">
             <span class="pay-price">¥{{ order.payPrice }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="积分抵扣">{{ order.payIntegral || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="积分抵扣金额"><span class="deduction-price">¥{{ order.deductionPrice }}</span></el-descriptions-item>
+          <el-descriptions-item label="使用积分"><span class="used-integral">{{ order.useIntegral }}</span></el-descriptions-item>
+          <el-descriptions-item label="积分支付">{{ order.payIntegral }}</el-descriptions-item>
           <el-descriptions-item label="获得积分">{{ order.gainIntegral || 0 }}</el-descriptions-item>
           <el-descriptions-item label="订单备注">{{ order.mark || "—" }}</el-descriptions-item>
         </el-descriptions>
@@ -67,26 +83,27 @@
 
       <!-- 商品列表 -->
       <el-card class="section" shadow="never">
-        <template #header>商品明细</template>
-        <el-table :data="cartInfo" border>
+        <template #header>{{ order.pid === -1 ? '原支付单商品历史' : '当前订单商品明细' }}</template>
+        <el-table :data="order.cartInfo" border>
+          <el-table-column prop="cartId" label="商品项 ID" width="110" />
           <el-table-column label="商品" min-width="220">
             <template #default="{ row }">
               <div class="goods-cell">
                 <el-image
-                  v-if="row.cartInfo?.product?.image"
-                  :src="row.cartInfo.product.image"
+                  v-if="row.image"
+                  :src="row.image"
                   class="goods-img"
                   fit="cover"
                 />
-                <span>{{ row.cartInfo?.product?.storeName || row.cartInfo?.product?.store_name || "商品" }}</span>
+                <span>{{ row.name }}</span>
               </div>
             </template>
           </el-table-column>
           <el-table-column label="规格" width="160">
-            <template #default="{ row }">{{ row.cartInfo?.product?.attrInfo?.suk || "默认" }}</template>
+            <template #default="{ row }">{{ row.sku }}</template>
           </el-table-column>
           <el-table-column label="单价" width="100">
-            <template #default="{ row }">¥{{ row.cartInfo?.product?.price || "0" }}</template>
+            <template #default="{ row }">{{ row.price === null ? '—' : `¥${row.price}` }}</template>
           </el-table-column>
           <el-table-column prop="cartNum" label="数量" width="80" />
         </el-table>
@@ -96,7 +113,7 @@
 
     <el-dialog v-model="writeoffVisible" title="确认订单核销" width="min(720px, 94vw)" destroy-on-close>
       <template v-if="writeoffPreview">
-        <el-descriptions :column="2" border class="writeoff-summary">
+        <el-descriptions :column="descriptionColumns === 1 ? 1 : 2" border class="writeoff-summary">
           <el-descriptions-item label="订单号">{{ writeoffPreview.order_id }}</el-descriptions-item>
           <el-descriptions-item label="客户">{{ writeoffPreview.real_name }} {{ writeoffPreview.user_phone }}</el-descriptions-item>
         </el-descriptions>
@@ -128,8 +145,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed, watch, onBeforeUnmount } from "vue";
+import { useRoute, onBeforeRouteLeave } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   apiAdminOrderDetail,
@@ -137,53 +154,54 @@ import {
   apiAdminWriteoffInfo,
   type AdminWriteoffPreview,
 } from "@/api/order";
+import { createAdminSessionScope } from '@/utils/adminSessionScope';
+import { getAdminSession } from '@/utils/auth';
+import { adminOrderStatus, isCurrentFulfillment, type AdminOrderDetail } from '@/utils/orderRead';
 
 const route = useRoute();
-// 后端返回 camelCase 字段 (drizzle 映射)
-const order = ref<Record<string, any> | null>(null);
+const order = ref<AdminOrderDetail | null>(null);
 const loading = ref(true);
+const readError = ref('');
+const sessionValid = ref(true);
+const session = getAdminSession();
+const permitted = (permission: string) => sessionValid.value && Boolean(session && (session.userInfo.level === 0 || session.uniqueAuth.includes(permission)));
+const canRefund = computed(() => permitted('refund.manage'));
+const narrowScreen = window.matchMedia('(max-width: 768px)');
+const descriptionColumns = ref(narrowScreen.matches ? 1 : 3);
+const resize = () => { descriptionColumns.value = narrowScreen.matches ? 1 : 3; };
+narrowScreen.addEventListener('change', resize);
 const writeoffCode = ref("");
 const writeoffVisible = ref(false);
 const writeoffLoading = ref(false);
 const writeoffPreview = ref<AdminWriteoffPreview | null>(null);
 const writeoffQuantities = ref<Record<number, number>>({});
 const canAdminWriteoff = computed(() => Boolean(
-  order.value?.paid === 1 &&
+  permitted('order.manage') && order.value && isCurrentFulfillment(order.value) &&
   (
     (order.value.shippingType === 2 && [0, 5].includes(order.value.status)) ||
     (order.value.deliveryType === "send" && [1, 5].includes(order.value.status))
   ),
 ));
 
-const cartInfo = computed(() => {
-  const ci = (order.value as any)?.cartInfo;
-  return Array.isArray(ci) ? ci : [];
+let epoch = 0, writeoffEpoch = 0;
+let previewCode = '';
+let readController: AbortController | undefined;
+const scope = createAdminSessionScope(() => {
+  sessionValid.value = false; reset(); readError.value = '登录状态已变化，请重新打开页面';
 });
-
-const statusText = computed(() => {
-  const o = order.value;
-  if (!o) return "";
-  if (o.paid === 0) return "待支付";
-  if (o.shippingType === 2 && o.status === 0) return "待到店核销";
-  if (o.shippingType === 2 && o.status === 5) return "部分核销";
-  if (o.deliveryType === "send" && o.status === 1) return "配送中，待送达核销";
-  if (o.deliveryType === "send" && o.status === 5) return "部分送达核销";
-  switch (o.status) {
-    case 0: return "待发货";
-    case 1: return "待收货";
-    case 2: return "已收货";
-    case 3: return "已完成";
-    default: return "未知";
-  }
-});
-
-const statusType = computed(() => {
-  const o = order.value;
-  if (!o) return "info";
-  if (o.paid === 0 || o.status === 0) return "warning";
-  if (o.status >= 2) return "success";
-  return "primary";
-});
+function resetWriteoff() {
+  writeoffEpoch++; writeoffVisible.value = false; writeoffPreview.value = null;
+  writeoffQuantities.value = {}; writeoffLoading.value = false; previewCode = '';
+}
+function reset() {
+  epoch++; readController?.abort(); order.value = null; loading.value = false;
+  resetWriteoff(); writeoffCode.value = '';
+}
+function dispose() { reset(); scope.dispose(); }
+onBeforeRouteLeave(dispose);
+onBeforeUnmount(() => { dispose(); narrowScreen.removeEventListener('change', resize); });
+watch(writeoffCode, resetWriteoff, { flush: 'sync' });
+watch(writeoffVisible, visible => { if (!visible) resetWriteoff(); }, { flush: 'sync' });
 
 function formatTime(ts: number): string {
   if (!ts) return "—";
@@ -201,34 +219,49 @@ function writeoffProductName(snapshot: Record<string, unknown> | null): string {
 }
 
 async function previewWriteoff() {
+  if (!scope.isCurrent() || !canAdminWriteoff.value || writeoffLoading.value) return;
   const code = writeoffCode.value.trim();
   if (!/^\d{12}$/.test(code)) return ElMessage.warning("请输入12位核销码");
   writeoffLoading.value = true;
+  const generation = ++writeoffEpoch, currentOrder = order.value!;
+  const current = () => scope.isCurrent() && generation === writeoffEpoch && order.value === currentOrder;
   try {
-    const preview = await apiAdminWriteoffInfo(code);
-    if (preview.order_id !== order.value?.orderId) {
-      return ElMessage.error("核销码不属于当前订单");
-    }
+    const preview = await apiAdminWriteoffInfo(code, scope.signal);
+    if (!current()) return;
+    if (!preview || preview.order_id !== currentOrder.orderId || preview.id !== currentOrder.id || preview.actor_kind !== 'admin'
+      || !Array.isArray(preview.cart_info) || !preview.cart_info.length || preview.cart_info.length > 200
+      || new Set(preview.cart_info.map(item => item.id)).size !== preview.cart_info.length
+      || preview.cart_info.some(item => !currentOrder.cartInfo.some(cart => cart.id === item.id && cart.cartId === item.cart_id)
+        || !Number.isSafeInteger(item.write_surplus_times) || item.write_surplus_times < 0)) throw Error('核销响应不属于当前订单或不完整');
     writeoffPreview.value = preview;
     writeoffQuantities.value = Object.fromEntries(
       preview.cart_info.map((item) => [item.id, item.write_surplus_times]),
     );
     writeoffVisible.value = true;
+    previewCode = code;
   } catch (error) {
+    if (!current()) return;
     ElMessage.error(error instanceof Error ? error.message : "核销码校验失败");
   } finally {
-    writeoffLoading.value = false;
+    if (current()) writeoffLoading.value = false;
   }
 }
 
 async function executeWriteoff(all: boolean) {
-  if (!writeoffPreview.value || writeoffLoading.value) return;
+  if (!scope.isCurrent() || !canAdminWriteoff.value || !writeoffVisible.value || !writeoffPreview.value || writeoffLoading.value) return;
+  const preview = writeoffPreview.value, code = previewCode, generation = writeoffEpoch, orderEpoch = epoch;
+  if (!code || code !== writeoffCode.value.trim()) return;
+  const current = () => scope.isCurrent() && epoch === orderEpoch && writeoffEpoch === generation && writeoffPreview.value === preview && writeoffVisible.value;
+  if (!all && preview.cart_info.some(item => !Number.isSafeInteger(writeoffQuantities.value[item.id])
+    || writeoffQuantities.value[item.id] < 0 || writeoffQuantities.value[item.id] > item.write_surplus_times)) return ElMessage.warning('核销数量无效');
   const items = all
     ? undefined
     : writeoffPreview.value.cart_info
         .map((item) => ({ order_cart_id: item.id, quantity: Number(writeoffQuantities.value[item.id] ?? 0) }))
         .filter((item) => item.quantity > 0);
   if (!all && !items?.length) return ElMessage.warning("请选择本次核销数量");
+  const quantities = JSON.stringify(writeoffQuantities.value);
+  writeoffLoading.value = true;
   try {
     await ElMessageBox.confirm(
       all ? "确认核销该订单全部剩余商品并进入结算？" : "确认核销选定商品数量？",
@@ -236,41 +269,50 @@ async function executeWriteoff(all: boolean) {
       { type: "warning", confirmButtonText: "确认核销" },
     );
   } catch {
+    if (current()) writeoffLoading.value = false;
     return;
   }
-  writeoffLoading.value = true;
+  if (!current()) return;
+  if (quantities !== JSON.stringify(writeoffQuantities.value)) { writeoffLoading.value = false; return ElMessage.warning('数量已变化，请重新确认'); }
   try {
-    const result = await apiAdminWriteoff(writeoffCode.value.trim(), items);
+    const result = await apiAdminWriteoff(code, items, scope.signal);
+    if (!current()) return;
+    if (!result || result.order_id !== preview.order_id || typeof result.completed !== 'boolean' || !Number.isSafeInteger(result.status)) throw Error('核销回执不完整，请刷新核对，不要重复操作');
     ElMessage.success(result.completed ? "订单已全部核销" : "部分核销成功，客户核销码已更新");
     writeoffVisible.value = false;
     writeoffCode.value = "";
     await loadOrder();
   } catch (error) {
+    if (!current()) return;
     ElMessage.error(error instanceof Error ? error.message : "核销失败");
   } finally {
-    writeoffLoading.value = false;
+    if (current()) writeoffLoading.value = false;
   }
 }
 
 async function loadOrder() {
-  const orderId = route.params.orderId as string;
-  order.value = await apiAdminOrderDetail(orderId);
-}
-
-onMounted(async () => {
+  if (!scope.isCurrent()) return;
+  reset(); readError.value = ''; loading.value = true;
+  const generation = epoch, orderId = route.params.orderId;
+  const controller = new AbortController(); readController = controller;
   try {
-    await loadOrder();
+    if (typeof orderId !== 'string') throw Error('订单号无效');
+    const result = await apiAdminOrderDetail(orderId, controller.signal);
+    if (scope.isCurrent() && generation === epoch) order.value = result;
   } catch (e) {
-    console.error("订单详情加载失败", e);
+    if (scope.isCurrent() && generation === epoch) readError.value = e instanceof Error ? e.message : '加载失败';
   } finally {
-    loading.value = false;
+    if (generation === epoch) loading.value = false;
   }
-});
+}
+watch(() => route.params.orderId, loadOrder, { immediate: true, flush: 'sync' });
 </script>
 
 <style scoped>
 .page-head {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
@@ -307,5 +349,15 @@ onMounted(async () => {
 
 .writeoff-summary {
   margin-bottom: 16px;
+}
+.split-orders { list-style: none; margin: 0; padding: 0; }
+.split-orders li { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 10px 0; border-bottom: 1px solid #ebeef5; overflow-wrap: anywhere; }
+.split-orders a { color: #337ecc; }
+:deep(.el-descriptions__content) { overflow-wrap: anywhere; }
+@media (max-width: 768px) {
+  .page-head h2 { width: 100%; }
+  .page-head .el-button { margin-left: 0; }
+  .writeoff-entry { flex-wrap: wrap; }
+  :deep(.el-card__body) { padding: 12px; }
 }
 </style>

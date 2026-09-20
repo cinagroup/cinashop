@@ -25,9 +25,9 @@ describe("UniApp selected SKU display contract from real product detail SQL", ()
       const goods = normalizeMobileGoods(body.data);
       expect(goods.vip_price).toBe("0.00"); expect(goods.ot_price).toBe("99.00");
       expect(goods.skus).toEqual([
-        { unique: "qared001", suk: "红色,大号", price: "10.00", ot_price: "12.00", vip_price: "9.00", stock: 8 },
-        { unique: "qablue02", suk: "蓝色,小号", price: "20.00", ot_price: "25.00", vip_price: "18.00", stock: 2 },
-        { unique: "qaempty3", suk: "售罄", price: "30.00", ot_price: "35.00", vip_price: "0.00", stock: 0 },
+        { unique: "qared001", suk: "红色,大号", price: "10.00", ot_price: "12.00", vip_price: "9.00", stock: 8, member_price: "9.00", price_type: "member", level_name: "" },
+        { unique: "qablue02", suk: "蓝色,小号", price: "20.00", ot_price: "25.00", vip_price: "18.00", stock: 2, member_price: "18.00", price_type: "member", level_name: "" },
+        { unique: "qaempty3", suk: "售罄", price: "30.00", ot_price: "35.00", vip_price: "0.00", stock: 0, member_price: "30.00", price_type: "", level_name: "" },
       ]);
       expect(await f.snapshot()).toEqual(before); expect(f.writes).toEqual([]);
       // Product detail intentionally records analytics, exclusively in this disposable database.

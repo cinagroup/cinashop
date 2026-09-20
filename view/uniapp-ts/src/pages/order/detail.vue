@@ -1,5 +1,6 @@
 <template>
-  <view class="order-detail" v-if="order">
+  <view v-if="loading" class="empty">正在加载订单...</view>
+  <view class="order-detail" v-else-if="order">
     <!-- 状态 -->
     <view class="status-card">
       <text class="status-text">{{ statusText }}</text>
@@ -156,11 +157,16 @@
       </view>
     </view>
 
+    <view v-if="cashierError || actionError" class="section" role="alert">
+      <text>{{ cashierError || actionError }}</text>
+      <button :disabled="paying" @tap="load">刷新订单核对</button>
+    </view>
     <!-- 支付按钮 -->
     <view v-if="order.paid === 0" class="pay-bar">
       <view
         class="pay-btn"
-        :class="{ disabled: paying || !cashier?.payable || (!cashier?.zero_pay && !selectedMethodEnabled) }"
+        :class="{ disabled: paying || !!actionError || !cashier?.payable || (!cashier?.zero_pay && !selectedMethodEnabled) }"
+        :aria-disabled="paying || !!actionError || !cashier?.payable || (!cashier?.zero_pay && !selectedMethodEnabled)"
         @tap="pay"
       >
         {{ payButtonText }}
@@ -189,13 +195,16 @@
       <text class="arrow">›</text>
     </view>
   </view>
-  <view v-else class="empty">订单不存在</view>
+  <view v-else class="empty" role="alert">
+    <text>{{ loadError || '暂无订单信息，请重新加载' }}</text>
+    <button @tap="load">重新加载订单</button>
+  </view>
   <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { ref, computed, watch } from "vue";
+import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { apiOrderCashier, apiOrderDetail, apiOrderPay } from "@/api/order";
 import type {
   CheckoutCashier,
@@ -205,7 +214,14 @@ import type {
 } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
 import { API_BASE, getFormType } from "@/utils/request";
+import { useAuthStore } from "@/stores/auth";
+import { orderDetailId, orderDetailHashId, assertOrderDetailIdentity, assertOrderCashierIdentity, assertOrderPaymentIdentity } from "../../../../common/orderDetailIdentity";
 
+// Route parameters are validated in onLoad; do not forward them onto fragment roots.
+defineOptions({ inheritAttrs: false });
+const authStore = useAuthStore();
+const loading = ref(false), loadError = ref(''), cashierError = ref(''), actionError = ref('');
+let currentOrderId = '', revision = 0, disposed = false, visible = false, paymentAttempt = 0;
 const order = ref<OrderInfo | null>(null);
 const cashier = ref<CheckoutCashier | null>(null);
 const payType = ref<CheckoutPaymentMethod>("yue");
@@ -262,15 +278,18 @@ function assetUrl(value: string): string {
 }
 
 function previewFormImage(current: string, images: string[]) {
+  if (!order.value || !currentView().current()) return;
   uni.previewImage({ current: assetUrl(current), urls: images.map(assetUrl) });
 }
 
 function copyVirtual(value: string) {
+  const scope = currentView();
+  if (!order.value || !scope.current()) return;
   const data = value.trim();
   if (!data) return;
   uni.setClipboardData({
     data,
-    success: () => uni.showToast({ title: "已复制", icon: "success" }),
+    success: () => { if (scope.current()) uni.showToast({ title: "已复制", icon: "success" }); },
   });
 }
 
@@ -371,7 +390,7 @@ const payButtonText = computed(() => {
 });
 
 function selectPayment(method: CheckoutPaymentMethod, enabled: boolean) {
-  if (enabled) payType.value = method;
+  if (enabled && !paying.value && !actionError.value && currentView().current()) payType.value = method;
 }
 
 function packageStatus(status: number): string {
@@ -379,7 +398,9 @@ function packageStatus(status: number): string {
 }
 
 function goPackage(orderId: string) {
-  uni.navigateTo({ url: `/pages/order/detail?orderId=${orderId}` });
+  if (!order.value?.split_orders?.some(item => item.order_id === orderId) || !currentView().current()) return;
+  try { uni.navigateTo({ url: `/pages/order/detail?orderId=${orderDetailId(orderId)}` }); }
+  catch { uni.showToast({ title: '包裹订单链接无效', icon: 'none' }); }
 }
 
 function formatTime(ts: number): string {
@@ -391,43 +412,52 @@ function formatTime(ts: number): string {
 }
 
 async function pay() {
-  if (!order.value || !cashier.value || paying.value || !cashier.value.payable) return;
+  if (!order.value || !cashier.value || paying.value || loading.value || actionError.value || !cashier.value.payable) return;
+  const scope = currentView(), method = cashier.value.zero_pay ? 'yue' : payType.value;
+  if (!scope.current()) return;
   if (!cashier.value.zero_pay && !selectedMethodEnabled.value) {
     uni.showToast({ title: cashier.value.methods[payType.value].reason || "支付方式不可用", icon: "none" });
     return;
   }
   paying.value = true;
+  const attempt = ++paymentAttempt;
   try {
     const result = await apiOrderPay(
-      order.value.order_id,
-      cashier.value.zero_pay ? "yue" : payType.value,
+      scope.id,
+      method,
       paymentChannel(),
     );
-    if (result.paid) return showPaidResult();
-    if (await continueExternalPayment(result)) return;
+    if (!scope.current()) return;
+    assertOrderPaymentIdentity(result, scope.id, method);
+    if (result.paid) return showPaidResult(scope);
+    if (await continueExternalPayment(result, scope)) return;
+    if (!scope.current()) return;
     if (result.offline) {
       uni.showToast({ title: "已提交线下支付，请等待确认", icon: "none" });
       await load();
       return;
     }
-    if (await waitForPaid()) showPaidResult();
-    else uni.showToast({ title: "支付结果确认中，请稍后刷新", icon: "none" });
+    if (await waitForPaid(scope)) showPaidResult(scope);
+    else if (scope.current()) actionError.value = '支付结果确认中，请刷新订单核对后再操作';
   } catch (e) {
-    uni.showToast({ title: e instanceof Error ? e.message : "支付失败", icon: "none" });
+    if (scope.current()) actionError.value = `支付结果尚未确认，请刷新订单核对后再操作。${errorText(e)}`;
   } finally {
-    paying.value = false;
+    // Native payment can hide this page. Keep its lock until that attempt settles,
+    // without letting an older account's callback unlock a newer attempt.
+    if (attempt === paymentAttempt) paying.value = false;
   }
 }
 
 function paymentChannel(): string {
   const platform = getFormType();
   // #ifdef H5
-  if (/MicroMessenger/i.test(window.navigator.userAgent)) return "weixin";
+  if (typeof window !== 'undefined' && /MicroMessenger/i.test(window.navigator.userAgent)) return "weixin";
   // #endif
   return platform;
 }
 
-async function continueExternalPayment(result: CheckoutPaymentResult): Promise<boolean> {
+async function continueExternalPayment(result: CheckoutPaymentResult, scope: ReturnType<typeof currentView>): Promise<boolean> {
+  if (!scope.current()) return true;
   if (result.pay_type === "alipay" && result.payUrl) {
     // #ifdef H5
     window.location.assign(result.payUrl);
@@ -479,10 +509,12 @@ async function continueExternalPayment(result: CheckoutPaymentResult): Promise<b
   return false;
 }
 
-async function waitForPaid(): Promise<boolean> {
-  if (!order.value) return false;
+async function waitForPaid(scope: ReturnType<typeof currentView>): Promise<boolean> {
   for (let attempt = 0; attempt < 6; attempt += 1) {
-    const latest = await apiOrderDetail(order.value.order_id);
+    if (!scope.current()) return false;
+    const latest = await apiOrderDetail(scope.id);
+    if (!scope.current()) return false;
+    assertOrderDetailIdentity(latest, scope.id, scope.uid);
     if (latest.paid === 1) {
       order.value = latest;
       return true;
@@ -492,53 +524,104 @@ async function waitForPaid(): Promise<boolean> {
   return false;
 }
 
-function showPaidResult() {
-  if (!order.value) return;
+function showPaidResult(scope: ReturnType<typeof currentView>) {
+  if (!scope.current()) return;
   uni.redirectTo({
-    url: `/pages/order/payResult?status=ok&orderId=${order.value.order_id}&amount=${order.value.pay_price}`,
+    url: `/pages/order/payResult?orderId=${scope.id}`,
+    fail: () => { if (scope.current()) actionError.value = '支付结果页未打开，请刷新订单核对'; },
   });
 }
 
 function goExpress() {
-  if (!order.value) return;
+  if (!order.value || !canOperate.value || !currentView().current()) return;
   uni.navigateTo({ url: `/pages/order/express?orderId=${order.value.order_id}` });
 }
 
 function goReply() {
-  if (!order.value) return;
+  if (!order.value || !canOperate.value || !currentView().current()) return;
   uni.navigateTo({ url: `/pages/order/reply?orderId=${order.value.order_id}` });
 }
 
 function goRefund() {
-  if (!order.value) return;
+  if (!order.value || !canApplyRefund.value || !currentView().current()) return;
   uni.navigateTo({ url: `/pages/order/refundApply?orderId=${order.value.order_id}` });
 }
 
 function goRefundList() {
+  if (!order.value || !currentView().current()) return;
   uni.navigateTo({ url: "/pages/order/refundList" });
 }
 
+function errorText(error: unknown): string { return error instanceof Error ? error.message : '读取失败，请稍后重试'; }
+function currentView() {
+  const version = revision, id = currentOrderId, owner = authStore.sessionVersion, uid = authStore.uid, token = authStore.token;
+  return { id, uid, current: () => !disposed && visible && revision === version && currentOrderId === id
+    && authStore.sessionVersion === owner && authStore.uid === uid && authStore.token === token && uid > 0 && !!token };
+}
+function clearView() {
+  revision++; order.value = null; cashier.value = null; loading.value = false;
+  loadError.value = ''; cashierError.value = ''; actionError.value = ''; payType.value = 'yue';
+}
 async function load() {
+  if (!visible || disposed) return;
+  const paymentInFlight = paying.value;
+  clearView();
+  const scope = currentView();
+  try { orderDetailId(scope.id); } catch (error) { loadError.value = errorText(error); return; }
+  if (!scope.current()) { loadError.value = '请登录后重新加载订单'; return; }
+  loading.value = true;
   try {
-    order.value = await apiOrderDetail(currentOrderId);
-    cashier.value = order.value.paid === 0
-      ? await apiOrderCashier(currentOrderId)
-      : null;
-    const firstEnabled = paymentOptions.value.find((item) => item.enabled);
-    if (firstEnabled) payType.value = firstEnabled.value;
+    const latest = await apiOrderDetail(scope.id);
+    if (!scope.current()) return;
+    assertOrderDetailIdentity(latest, scope.id, scope.uid);
+    order.value = latest;
+    if (latest.paid === 0) {
+      try {
+        const nextCashier = await apiOrderCashier(scope.id);
+        if (!scope.current()) return;
+        assertOrderCashierIdentity(nextCashier, scope.id, latest.pay_price);
+        cashier.value = nextCashier;
+        const firstEnabled = paymentOptions.value.find((item) => item.enabled);
+        if (firstEnabled) payType.value = firstEnabled.value;
+      } catch (error) { if (scope.current()) cashierError.value = `收银信息读取失败，请刷新订单。${errorText(error)}`; }
+    }
+    if (latest.paid === 0 && paymentInFlight) actionError.value = '支付仍在处理中，请稍后刷新订单核对';
   } catch (e) {
-    console.error("订单加载失败", e);
-  }
+    if (scope.current()) loadError.value = errorText(e);
+  } finally { if (scope.current()) loading.value = false; }
 }
 
-let currentOrderId = "";
-
-onLoad((options) => {
-  currentOrderId = (options?.orderId as string) ?? "";
-});
-
-onShow(() => {
-  if (currentOrderId) void load();
+function setRoute(value: unknown) {
+  clearView(); currentOrderId = '';
+  try { currentOrderId = orderDetailId(value); } catch (error) { loadError.value = errorText(error); }
+}
+function readHashRoute(): boolean {
+  // #ifdef H5
+  if (typeof window !== 'undefined' && window.location.hash) {
+    try {
+      const id = orderDetailHashId(window.location.hash);
+      if (id === null) { clearView(); currentOrderId = ''; return true; }
+      if (id !== currentOrderId) { setRoute(id); void load(); return true; }
+    } catch (error) { clearView(); currentOrderId = ''; loadError.value = errorText(error); return true; }
+  }
+  // #endif
+  return false;
+}
+function hashChanged() { if (visible && !disposed) readHashRoute(); }
+watch(() => authStore.sessionVersion, () => {
+  paymentAttempt++; paying.value = false; clearView(); loadError.value = '登录状态已变化，请重新加载订单';
+}, { flush: 'sync' });
+onLoad(options => setRoute(options?.orderId));
+onShow(() => { if (disposed) return; visible = true; if (!readHashRoute()) void load(); });
+onHide(() => { visible = false; clearView(); });
+// #ifdef H5
+if (typeof window !== 'undefined') window.addEventListener('hashchange', hashChanged);
+// #endif
+onUnload(() => {
+  disposed = true; visible = false; clearView();
+  // #ifdef H5
+  if (typeof window !== 'undefined') window.removeEventListener('hashchange', hashChanged);
+  // #endif
 });
 </script>
 

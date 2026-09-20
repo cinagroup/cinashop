@@ -85,7 +85,7 @@ export async function resolveOrderCoupon(container: Container, uid: number, coup
   const issue = row.issue!, coupon = row.coupon;
   const ordered = (ids: number[]) => [...new Set(ids)].sort((a, b) => a - b);
   const quoteFacts = {
-    id: coupon.id, uid: coupon.uid, issueId: issue.id, discountType: issue.type, scopeType: issue.couponType,
+    id: coupon.id, uid: coupon.uid, issueId: issue.id, discountType: issue.type, scopeType: issue.couponType, memberCoupon: issue.category === 2,
     valueHundredths: decimalToCents(coupon.couponPrice), minimumCents: decimalToCents(coupon.useMinPrice),
     startsAt: coupon.startTime?.getTime() ?? null, endsAt: coupon.endTime?.getTime() ?? null,
     productIds: issue.couponType === 2 ? ordered(reconcileCouponProductScopeIds([issue.legacyProductIds, issue.productId], scope.related.get(issue.id) ?? [])) : [],

@@ -24,6 +24,10 @@
           <el-icon><Tickets /></el-icon>
           <span>订单管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/order')" index="/order/offline" aria-label="线下消费">
+          <el-icon><CreditCard /></el-icon>
+          <span>线下消费</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/user')" index="/user">
           <el-icon><User /></el-icon>
           <span>用户管理</span>
@@ -245,6 +249,7 @@ function canMenu(path: string): boolean {
 const activeMenu = computed(() => {
   const path = route.path;
   if (path.startsWith("/product")) return "/product";
+  if (path === "/order/offline") return "/order/offline";
   if (path.startsWith("/order")) return "/order";
   if (path.startsWith("/user")) return "/user";
   if (path.startsWith("/community")) return "/community";

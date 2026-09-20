@@ -56,6 +56,10 @@ export async function registerPaymentReconciliationTx(
   assertRegistration(input);
   const now = input.now ?? Math.floor(Date.now() / 1_000);
   const replayKey = crypto.randomUUID();
+  // Shared with callback persistence and offline signed queries. An intent with
+  // no transaction never takes this lock; transaction evidence always takes it
+  // BEFORE its provider/order lock.
+  if (input.transactionId) await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${input.provider}:${input.transactionId}`},0))`);
   await tx.execute(sql`SELECT pg_advisory_xact_lock(
     hashtextextended(${`payment-reconciliation:${input.provider}:${input.orderNo}`}, 0)
   )`);
@@ -102,7 +106,10 @@ export async function registerPaymentReconciliationTx(
       && !!input.transactionId
       && existing.providerTransactionId !== input.transactionId
     );
-  const conflict = immutableConflict || input.terminalConflict === true;
+  const [foreignTransaction] = input.transactionId ? await tx.execute<{ present: boolean }>(sql`SELECT EXISTS(
+    SELECT 1 FROM ${paymentReconciliationCase} WHERE provider=${input.provider} AND provider_transaction_id=${input.transactionId}
+      AND order_no<>${input.orderNo}) AS present`) : [{ present: false }];
+  const conflict = immutableConflict || input.terminalConflict === true || foreignTransaction.present;
   const update: Partial<typeof paymentReconciliationCase.$inferInsert> = {
     orderDomain: existing.orderDomain || input.orderDomain,
     callbackEventId: input.callbackEventId ?? existing.callbackEventId,
@@ -172,5 +179,13 @@ export async function resolvePaymentReconciliationFromCallbackTx(
   }).where(and(
     eq(paymentReconciliationCase.provider, input.provider),
     eq(paymentReconciliationCase.orderNo, input.orderNo),
+    // A later conflicting notification can arrive after settlement commits but
+    // before its queue acknowledgement. Never erase that durable evidence, nor
+    // let a delayed non-success callback downgrade a resolved payment.
+    sql`${paymentReconciliationCase.status} NOT IN ('CONFLICT', 'CLOSED')`,
+    sql`(${paymentReconciliationCase.providerTransactionId} = '' OR ${paymentReconciliationCase.providerTransactionId} = ${input.transactionId})`,
+    sql`(${paymentReconciliationCase.orderDomain} = '' OR ${paymentReconciliationCase.orderDomain} = ${input.orderDomain})`,
+    ...(input.callbackStatus === 'IGNORED'
+      ? [sql`${paymentReconciliationCase.status} NOT IN ('SETTLED', 'CONFIRMED')`] : []),
   ));
 }

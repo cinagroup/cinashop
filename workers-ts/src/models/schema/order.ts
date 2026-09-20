@@ -305,6 +305,7 @@ export const userBill = pgTable(
     index("ub_pm").on(t.pm),
     index("ub_cat_type_link_idx").on(t.category, t.type, t.linkId),
     index("ub_event_key").on(t.eventKey),
+    uniqueIndex('ub_offline_integral_uq').on(t.uid, t.linkId).where(sql`${t.eventKey} = 'offline_order_give_integral'`),
     uniqueIndex("ub_order_reward_uq")
       .on(t.uid, t.linkId, t.eventKey)
       .where(sql`${t.eventKey} IN ('pay_give_integral', 'order_give_integral', 'order_give_exp')`),

@@ -72,8 +72,8 @@ describe("attachment and R2 storage migration boundary", () => {
     const source = readFileSync("src/services/system/AttachmentService.ts", "utf8");
     expect(config).toContain('binding = "ASSETS_BUCKET"');
     expect(config).toContain('bucket_name = "cinashop-assets"');
-    expect(config).toContain('[images]\nbinding = "IMAGES"');
-    expect(config).toContain('[cache]\nenabled = true');
+    expect(config).toMatch(/\[images\]\r?\nbinding = "IMAGES"/);
+    expect(config).toMatch(/\[cache\]\r?\nenabled = true/);
     expect(generated).toContain("ASSETS_BUCKET: R2Bucket;");
     expect(generated).toContain("IMAGES: ImagesBinding;");
     expect(source).toContain("this.env.ASSETS_BUCKET.put(key, file.stream()");

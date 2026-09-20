@@ -322,7 +322,13 @@ describe("third-party API migration boundary", () => {
     expect(refundSource).toContain("return withTx(this.container, fn)");
     expect(refundSource).toContain("await lockOrderSettlement(tx, refund.storeOrderId)");
     expect(refundSource).toContain("lockRefundExecutionSnapshot(tx, refundId, scope)");
-    expect(refundSource).toContain("Hyperdrive can cache transaction-external reads");
+    const admission = refundSource.match(/private async prepareProviderAction\([^]*?\n  \}/)?.[0] ?? "";
+    expect(admission).toContain("return this.runInTx(this.container.db, async (tx) => {");
+    expect(admission).toContain("await lockRefundExecutionSnapshot(tx, refundId, scope)");
+    for (const binding of ["request.outTradeNo !== paymentOrder.orderId", "request.transactionId !== currentTransactionId",
+      "request.outRefundNo !== `CNSR${refundId}`", "request.refundAmount !== currentRefundAmount",
+      "request.totalAmount !== currentTotalAmount"]) expect(admission).toContain(binding);
+    expect(admission.indexOf("lockRefundExecutionSnapshot")).toBeLessThan(admission.indexOf("this.getPaymentRow"));
     expect(refundSource).toContain("退款渠道请求与当前订单状态不一致，请重试");
 
     const scenario = readFileSync(

@@ -5,10 +5,10 @@ import { withFinancePeers, waitForFinanceBlock, waitForFinanceClock, outcome, ty
 import { createContainerFromDb, withTx } from "../src/lib/di";
 import { cancelStoreOrder, StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { StoreCartService } from "../src/services/order/StoreCartService";
-import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
+import { ensureAutomaticOrderRefund, finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { storeActivity, storeSeckillTime, storeSeckill, storeProductAttrValue, systemStore,
   storeCart, storeOrderCartInfo, storeOrderStatus, printDocument, storeOrder, storeOrderRefund, storeOrderRefundPayment,
-  storeOrderInvoice, userBrokerage } from "../src/models/schema";
+  storeOrderInvoice, storeOrderOutbox, userBrokerage } from "../src/models/schema";
 
 // PGlite cannot prove independent backend locks. CI supplies its dedicated PG16
 // service to BOTH unit shards; the exact-coverage gate refuses skipped assertions.
@@ -18,7 +18,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     shippingType: 2, storeId: 1, realName: "隔离并发样本", userPhone: "00000000000", userIp: "127.0.0.1" };
   beforeEach(async () => {
     f = await createPcCheckoutQuoteFixture([storeActivity, storeSeckillTime, storeSeckill, storeOrderCartInfo, storeOrderStatus, printDocument,
-      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
+      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, userBrokerage]);
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(systemStore).set({ isStore: 1 });
     await f.db.update(storeCart).set({ type: 1, activityId: 20 });
@@ -40,8 +40,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     await StoreOrderCreateService.createWithRuntime(f.container,
       { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => "isolated_refund_order" }, { ...params, key: "refund_order" });
     const [order] = await f.db.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
-    await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_refund",
-      applyType: 1, refundType: 0, refundPrice: "12.50", refundNum: 2, cartInfo: JSON.stringify({ cartIds: [{ cartId: 1, cartNum: 2 }] }) });
+    expect(await ensureAutomaticOrderRefund(f.container, { uid: 11, orderId: order.orderId,
+      refundReason: 'Local seckill refund', refundExplain: '', applyType: 1 })).toEqual({ refundId: 1 });
     await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2,
       type: 1, activityId: 20, isNew: 1, status: 1 });
   };

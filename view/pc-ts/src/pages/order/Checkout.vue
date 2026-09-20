@@ -4,8 +4,14 @@
     <el-alert v-if="selectionError" :title="selectionError" type="error" :closable="false" show-icon />
     <el-button v-if="selectionError" @click="loadCheckout">重新加载结算信息</el-button>
     <el-skeleton v-if="checkoutLoading" :rows="3" animated />
+    <section v-if="pendingIntent" class="section pending-intent" role="status">
+      <h3>{{ pendingIntent.orderId ? '订单已创建' : '有一笔订单结果待确认' }}</h3>
+      <p>{{ pendingIntent.orderId ? '请查看原订单，不会再次创建订单或自动付款。' : '提交内容已锁定。在当前标签页刷新或返回结算后，仍会复用原订单标识和内容。' }}</p>
+      <p>订单标识：{{ pendingIntent.key }}</p>
+      <p>已锁定 {{ pendingIntent.payload.cartIds.length }} 项商品。关闭标签页或清除浏览器数据后，请先核对订单列表。</p>
+    </section>
 
-    <fieldset class="checkout-controls" :disabled="checkoutLoading || !!pendingSubmission">
+    <fieldset v-if="!pendingIntent && !selectionError" class="checkout-controls" :disabled="checkoutLoading || !!pendingSubmission">
     <section class="section">
       <h3 class="section-title">配送方式</h3>
       <el-alert
@@ -143,7 +149,7 @@
     <p v-if="pendingUploads" role="status">图片正在上传，完成前无法提交订单。</p>
     </fieldset>
 
-    <section class="section quote-section" aria-live="polite" :aria-busy="quoteState.loading">
+    <section v-if="!pendingIntent && !selectionError" class="section quote-section" aria-live="polite" :aria-busy="quoteState.loading">
       <h3 class="section-title">费用明细</h3>
       <p v-if="quoteState.loading">正在计算最新报价，完成前无法提交订单…</p>
       <el-alert v-else-if="deliveryError || quoteState.error" :title="deliveryError || quoteState.error" type="error" :closable="false" show-icon />
@@ -163,18 +169,18 @@
 
     <!-- 备注 + 提交 -->
     <section class="section submit-section">
-      <div class="remark-row">
+      <div v-if="!pendingIntent && !selectionError" class="remark-row">
         <span>订单备注:</span>
         <el-input v-model="remark" placeholder="选填" class="remark-input" :disabled="!!pendingSubmission" />
       </div>
-      <el-alert v-if="submissionError" :title="submissionError" :description="pendingSubmission ? '结果尚未确认；重试会复用相同订单标识和提交内容，不会自动发起付款。' : '服务端已明确拒绝本次结算且未完成建单；请检查信息和最新报价后重新提交。'" type="error" :closable="false" show-icon />
+      <el-alert v-if="submissionError" :title="submissionError" :description="pendingIntent?.orderId ? '订单已创建；重试仅打开订单详情，不会再次下单。' : pendingSubmission ? '结果尚未确认；重试会复用相同订单标识和提交内容，不会自动发起付款。' : '请检查提示并重新加载结算要求；无法保存恢复记录时不会发送新下单请求。'" type="error" :closable="false" show-icon />
       <el-button v-if="submissionError && !pendingSubmission" :disabled="checkoutLoading" @click="loadCheckout">重新加载结算要求</el-button>
       <div class="submit-row">
         <span class="total">
-          应付: <span class="price">{{ quoteReady ? `¥${quoteState.result?.prices.payable}` : '待报价' }}</span>
+          <span class="price">{{ pendingIntent ? '确认原订单结果' : quoteReady ? `应付: ¥${quoteState.result?.prices.payable}` : '待报价' }}</span>
         </span>
         <el-button type="primary" size="large" :loading="submitting" :disabled="!canSubmit" @click="submitOrder">
-          {{ pendingSubmission ? '重试确认订单' : '提交订单' }}
+          {{ pendingIntent?.orderId ? '查看订单' : pendingSubmission ? '重试确认订单' : '提交订单' }}
         </el-button>
       </div>
     </section>
@@ -200,7 +206,7 @@
 <script setup lang="ts">
 import ProductImage from "@/components/ProductImage.vue";
 import { computed, onUnmounted, ref, shallowRef, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { isNavigationFailure, useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useCartStore } from "@/stores/cart";
 import { apiDirectCartList } from "@/api/cart";
@@ -226,10 +232,16 @@ import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "@/a
 import CouponCards from "@/components/CouponCards.vue";
 import type { BargainShippingSelection } from '../../../../common/bargainShipping';
 import { checkoutRequiresAddress } from '../../../../common/checkoutSelection';
+import { CheckoutIntentJournal, type CheckoutIntent } from '../../../../common/checkoutIntent';
+import { captureAuthSession, isCurrentAuthSession, getUid, isLoggedIn, onAuthChange } from '@/utils/auth';
 
 const router = useRouter();
 const route = useRoute();
 const cartStore = useCartStore();
+let checkoutOwner = captureAuthSession(), disposed = false;
+const ownerVersion = ref(0);
+const journal = new CheckoutIntentJournal({ get: key => sessionStorage.getItem(key),
+  set: (key, value) => sessionStorage.setItem(key, value), remove: key => sessionStorage.removeItem(key) });
 
 const addresses = ref<UserAddress[]>([]);
 const selectedAddrId = ref(0);
@@ -268,7 +280,8 @@ const couponPicker = new OrderCouponSession(apiOrderCoupons, (next) => { couponS
 const savingAddress = ref(false);
 const submissionError = ref("");
 const submissionUncertain = ref(false);
-const pendingSubmission = shallowRef<Parameters<typeof apiOrderCreate>[1] | null>(null);
+const pendingIntent = shallowRef<CheckoutIntent | null>(null);
+const pendingSubmission = computed(() => pendingIntent.value?.payload ?? null);
 const activityOptions = ref<Pick<CheckoutQuoteOptions, "type" | "pinkId" | "combinationId" | "seckillId" | "bargainUserId">>({ type: 0 });
 const checkoutItems = computed(() => checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath
   ? [] : selectedItems.value);
@@ -298,12 +311,14 @@ const deliveryError = computed(() => checkoutLoading.value || selectionError.val
   : storeError.value || (!pickupStores.value.some((item) => item.id === selectedStoreId.value) ? "请选择自提门店后获取报价" : "")));
 const quoteState = shallowRef<CheckoutQuoteState>({ loading: false, error: "", fingerprint: "", result: null });
 const quoteSession = new CheckoutQuoteSession({ confirm: apiOrderConfirm, computed: apiOrderComputed }, (state) => { quoteState.value = state; });
-const quoteReady = computed(() => !checkoutLoading.value && !selectionError.value && !deliveryError.value
+const currentOwner = computed(() => { void ownerVersion.value; return !disposed && isLoggedIn() && getUid() > 0 && isCurrentAuthSession(checkoutOwner); });
+const quoteReady = computed(() => currentOwner.value && !pendingIntent.value && !checkoutLoading.value && !selectionError.value && !deliveryError.value
   && !quoteState.value.loading && !!quoteState.value.result
   && quoteState.value.fingerprint === checkoutQuoteFingerprint(checkoutItems.value, quoteOptions.value));
 const displayItems = computed(() => quoteReady.value ? quoteState.value.result!.items : checkoutItems.value);
-const canSubmit = computed(() => quoteReady.value && !systemFormError.value && !formValidationError.value
-  && pendingUploads.value === 0 && !submitting.value && !savingAddress.value);
+const canSubmit = computed(() => currentOwner.value && loadedRoute.value === route.fullPath && !checkoutLoading.value && !selectionError.value
+  && !submitting.value && !savingAddress.value && (pendingIntent.value ? pendingIntent.value.uid === getUid()
+    : quoteReady.value && !systemFormError.value && !formValidationError.value && pendingUploads.value === 0));
 
 function selectCoupon(id: number) {
   if (pendingSubmission.value || couponState.value.loading || couponState.value.fingerprint !== couponContext.value.scope?.fingerprint
@@ -462,67 +477,88 @@ async function saveAddress() {
 
 async function submitOrder() {
   if (!canSubmit.value || loadedRoute.value !== route.fullPath) return;
-  const addr = addresses.value.find((a) => a.id === selectedAddrId.value);
-  if (shippingType.value === 1 && requiresAddress.value && !addr) return ElMessage.error("请选择收货地址");
-  if (shippingType.value === 2 && !selectedStoreId.value) return ElMessage.error("请选择自提门店");
-  if (
-    shippingType.value === 2
-    && (!pickupContact.value.realName.trim() || !pickupContact.value.phone.trim())
-  ) {
-    return ElMessage.error("请填写自提联系人和手机号");
+  if (!pendingIntent.value) {
+    const addr = addresses.value.find((a) => a.id === selectedAddrId.value);
+    if (shippingType.value === 1 && requiresAddress.value && !addr) return ElMessage.error("请选择收货地址");
+    if (shippingType.value === 2 && !selectedStoreId.value) return ElMessage.error("请选择自提门店");
+    if (shippingType.value === 2 && (!pickupContact.value.realName.trim() || !pickupContact.value.phone.trim())) {
+      return ElMessage.error("请填写自提联系人和手机号");
+    }
+    if (!checkoutItems.value.length) return ElMessage.error("请选择商品");
+    if (systemFormError.value) return ElMessage.error(systemFormError.value);
   }
-
-  const items = checkoutItems.value;
-  if (!items.length) return ElMessage.error("请选择商品");
-  if (systemFormError.value) return ElMessage.error(systemFormError.value);
 
   submitting.value = true;
   submissionError.value = "";
   const generation = checkoutGeneration;
+  const owner = captureAuthSession(), uid = getUid();
+  let sent = false;
   try {
-    if (!pendingSubmission.value) {
+    if (!pendingIntent.value) {
       orderKey.value = quoteState.value.result!.key;
       // Freeze the same address/options as the accepted quote. Never send a client total or payType.
-      pendingSubmission.value = JSON.parse(JSON.stringify({
+      pendingIntent.value = journal.begin(uid, orderKey.value, {
         quoteToken: quoteState.value.result!.quoteToken,
         ...quoteOptions.value,
-        cartIds: items.map((i) => i.id),
+        cartIds: checkoutItems.value.map((i) => i.id),
         ...(shippingType.value === 2 ? { realName: pickupContact.value.realName.trim(), userPhone: pickupContact.value.phone.trim() } : {}),
         mark: remark.value,
         customForm: customForm.value,
-      }));
+      });
     }
-    const result = await apiOrderCreate(orderKey.value, pendingSubmission.value!);
-    if (generation !== checkoutGeneration) return;
+    const intent = journal.assertCurrent(pendingIntent.value);
+    if (intent.orderId) { pendingIntent.value = intent; await openOrderResult(intent, owner); return; }
+    sent = true;
+    const result = await apiOrderCreate(intent.key, intent.payload as Parameters<typeof apiOrderCreate>[1]);
+    const settled = journal.settled(intent, result);
+    if (generation !== checkoutGeneration || !isCurrentAuthSession(owner)) return;
+    pendingIntent.value = settled;
     ElMessage.success("订单创建成功");
     // A badge/list refresh failure must not turn a successful order into a failed submission.
-    await cartStore.fetchList().catch(() => {});
-    if (generation === checkoutGeneration) await router.push(`/order/${result.orderId}`);
+    void cartStore.fetchList().catch(() => {});
+    await openOrderResult(settled, owner);
   } catch (e) {
-    if (generation !== checkoutGeneration) return;
+    if (generation !== checkoutGeneration || !isCurrentAuthSession(owner)) return;
     submissionError.value = e instanceof Error ? e.message : "下单结果未确认";
-    if (canEditRejectedOrder(e, orderKey.value, submissionUncertain.value)) {
-      pendingSubmission.value = null;
-      quoteSession.invalidate();
-      await reloadQuote();
-    } else {
+    if (sent && pendingIntent.value && !pendingIntent.value.orderId && canEditRejectedOrder(e, pendingIntent.value.key, submissionUncertain.value)) {
+      try {
+        journal.clear(pendingIntent.value);
+        pendingIntent.value = null;
+        quoteSession.invalidate();
+        await reloadQuote();
+      } catch (storageError) { submissionError.value = storageError instanceof Error ? storageError.message : '待确认记录处理失败'; }
+    } else if (sent) {
       // Even a later explicit rejection cannot settle an earlier transport timeout.
       submissionUncertain.value = true;
+    } else {
+      // A storage operation may write successfully and then fail its read-back.
+      try { pendingIntent.value = journal.read(uid); if (pendingIntent.value) submissionUncertain.value = true; }
+      catch (storageError) { selectionError.value = storageError instanceof Error ? storageError.message : '无法读取待确认记录，请先核对订单列表'; }
     }
   } finally {
     if (generation === checkoutGeneration) submitting.value = false;
   }
 }
 
+async function openOrderResult(intent: CheckoutIntent, owner: ReturnType<typeof captureAuthSession>) {
+  if (!intent.orderId || intent.uid !== getUid() || !isCurrentAuthSession(owner) || disposed) return;
+  const path = `/order/${encodeURIComponent(intent.orderId)}`;
+  const failure = await router.push(path);
+  if (isNavigationFailure(failure) || router.currentRoute.value.path !== path) throw new Error('订单详情未打开，请点击查看订单重试');
+  // Successful navigation may unmount this view; clear only this original owner's validated record.
+  if (isCurrentAuthSession(owner)) journal.clear(intent);
+}
+
 let checkoutGeneration = 0;
-async function loadCheckout() {
+function resetCheckout() {
   const generation = ++checkoutGeneration;
+  checkoutOwner = captureAuthSession(); ownerVersion.value++;
   shippingGeneration++; shippingSelection.value = null; shippingLoading.value = false; shippingError.value = '';
   quoteSession.reset();
   checkoutLoading.value = true;
   selectionError.value = "";
   selectedItems.value = [];
-  pendingSubmission.value = null;
+  pendingIntent.value = null;
   submissionUncertain.value = false;
   pendingUploads.value = 0;
   submissionError.value = "";
@@ -537,7 +573,23 @@ async function loadCheckout() {
   couponPicker.reset();
   customForm.value = [];
   orderKey.value = "";
+  formRevision.value++; systemFormName.value = '';
+  addresses.value = []; pickupStores.value = []; selectedAddrId.value = 0; selectedStoreId.value = 0;
+  pickupContact.value = { realName: '', phone: '' }; remark.value = '';
+  addrForm.value = { realName: '', phone: '', region: '', detail: '' };
+  activityOptions.value = { type: 0 }; loadedRoute.value = '';
+  return generation;
+}
+async function loadCheckout() {
+  if (disposed || (submitting.value && loadedRoute.value === route.fullPath && isCurrentAuthSession(checkoutOwner))) return;
+  const generation = resetCheckout();
   try {
+    if (!isLoggedIn() || getUid() <= 0) throw new Error('请先登录后结算');
+    pendingIntent.value = journal.read(getUid());
+    if (pendingIntent.value) {
+      orderKey.value = pendingIntent.value.key; submissionUncertain.value = true;
+      loadedRoute.value = route.fullPath; return;
+    }
     const requested = parseCheckoutSelection(route.query);
     let rows: CartItem[];
     if (requested.mode === "buy") {
@@ -583,12 +635,18 @@ watch(() => couponContext.value.scope?.fingerprint ?? "", () => {
 }, { flush: "sync" });
 watch(pendingSubmission, (pending) => { if (pending) couponPicker.pause(); }, { flush: "sync" });
 watch(quoteOptions, () => { void reloadQuote(); }, { flush: "sync" });
+const stopAuth = onAuthChange(() => {
+  resetCheckout(); checkoutLoading.value = false;
+  selectionError.value = '登录状态已变化，请重新加载结算';
+});
 watch(() => route.fullPath, loadCheckout, { immediate: true, flush: "sync" });
-onUnmounted(() => { checkoutGeneration++; quoteSession.reset(); couponPicker.reset(); });
+onUnmounted(() => { disposed = true; ownerVersion.value++; stopAuth(); checkoutGeneration++; quoteSession.reset(); couponPicker.reset(); });
 </script>
 
 <style scoped>
 .checkout-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+.pending-intent { border: 1px solid #e8bc73; background: #fff8eb; overflow-wrap: anywhere; }
+.pending-intent p { margin: 10px 0; line-height: 1.6; }
 .checkout-mobile-items { display: none; list-style: none; padding: 0; margin: 0 0 12px; }
 .checkout-mobile-items li + li { border-top: 1px solid #eee; padding-top: 14px; margin-top: 14px; }
 .checkout-mobile-items dl { margin: 12px 0 0; }

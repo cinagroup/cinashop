@@ -22,6 +22,7 @@ export const corsMiddleware = cors({
     "Authorization",
     "Idempotency-Key",
     "X-Shipping-Creation-Scope",
+    "X-Refund-Operation-Scope",
     "X-Scan-Poll-Token",
     "X-Visitor-Token",
     "X-Requested-With",

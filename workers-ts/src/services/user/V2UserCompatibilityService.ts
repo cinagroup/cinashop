@@ -33,6 +33,7 @@ const MAX_KEYWORD_LENGTH = 64;
 
 const MONEY_TYPE_NAMES: Record<string, string> = {
   pay_product: "商城购物",
+  offline_scan: "线下消费",
   pay_product_refund: "商城购物退款",
   system_add: "系统充值",
   system_sub: "系统扣除",

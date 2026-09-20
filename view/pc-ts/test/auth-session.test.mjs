@@ -9,6 +9,14 @@ import { seckillComponentPlugin, registerSeckillPurchaseTests } from "./seckill-
 import { combinationComponentPlugin, registerCombinationPurchaseTests } from './combination-purchase.test.mjs';
 import { bargainComponentPlugin, registerBargainPurchaseTests } from './bargain-purchase.test.mjs';
 import { checkoutShippingPlugin, registerCheckoutShippingTests } from './bargain-checkout-shipping.test.mjs';
+import { productDetailComponentPlugin, registerProductDetailLifecycleTests } from './product-detail-lifecycle.test.mjs';
+import { registerCartStateTests } from './cart-state.test.mjs';
+import { cartTemplatePlugin, registerCartTemplateTests } from './cart-template.test.mjs';
+import { registerCheckoutIntentRecoveryTests } from './checkout-intent-recovery.test.mjs';
+import { orderDetailPlugin, registerOrderDetailTests } from './order-detail-lifecycle.test.mjs';
+import { orderListPlugin, registerOrderListTests } from './order-list-lifecycle.test.mjs';
+import { refundApplyPlugin, registerRefundApplyTests } from './refund-apply-lifecycle.test.mjs';
+import { refundRecordsPlugin, registerRefundRecordsTests } from './refund-records-lifecycle.test.mjs';
 
 // Load the actual PC request layer and Pinia stores with Vite's existing TS/alias support.
 // No HTTP listener, API proxy, external request, new dependency or browser-global mutation in production.
@@ -22,14 +30,14 @@ const navigation = [];
 const descriptors = new Map();
 const location = { origin: "https://shop.example.test", pathname: "/checkout", search: "?mode=buy&cartIds=2", hash: "#details", replace: (url) => navigation.push(url) };
 before(async () => {
-  for (const [key, value] of Object.entries({ sessionStorage: memoryStorage(), localStorage: memoryStorage(), window: { location } })) {
+  for (const [key, value] of Object.entries({ sessionStorage: memoryStorage(), localStorage: memoryStorage(), window: { location, addEventListener() {}, removeEventListener() {} } })) {
     descriptors.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
     Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
   }
   localStorage.setItem("pc_token", "obsolete-persistent-token");
   localStorage.setItem("pc_uid", "99");
   server = await createServer({ configFile: false, root, envFile: false, logLevel: "error",
-    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root)],
+    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root), productDetailComponentPlugin(root), cartTemplatePlugin(root), orderDetailPlugin(root), orderListPlugin(root), refundApplyPlugin(root), refundRecordsPlugin(root)],
     optimizeDeps: { noDiscovery: true, include: [] },
     resolve: { alias: { "@": fileURLToPath(new URL("../src", import.meta.url)) } },
     server: { middlewareMode: true, hmr: false, watch: null } });
@@ -49,8 +57,11 @@ after(async () => {
   }
 });
 beforeEach(() => {
+  for (const uid of [11, 22]) sessionStorage.removeItem(`cinashop_checkout_pending_v1_${uid}`);
   navigation.length = 0;
   location.pathname = "/checkout";
+  location.search = "?mode=buy&cartIds=2";
+  location.hash = "#details";
   authUtils.setAuth("session-a", 11);
   cart.items = [{ id: 1, isValid: true, checked: true }];
   cart.count = 1;
@@ -68,10 +79,42 @@ function delayed() {
 }
 
 describe("actual Axios + storage + Pinia auth-session isolation", { concurrency: false }, () => {
+  it('offline PC API selects the PC return surface in discovery/pay but never sends a browser URL',async()=>{
+    const {offlineApi}=await server.ssrLoadModule('/src/api/offline.ts'),calls=[],id='xx'+'a'.repeat(30);
+    api.defaults.adapter=async config=>{calls.push(config);return response(config,{status:200,data:{}});};
+    await offlineApi.capabilities(id);await offlineApi.pay(id,'weixin');
+    assert.deepEqual(calls[0].params,{order_id:id,return_client:'pc'});
+    assert.deepEqual(JSON.parse(calls[1].data),{order_id:id,pay_type:'weixin',return_client:'pc'});
+    assert.equal(calls[1].headers.get('Authori-zation'),'Bearer session-a');
+  });
+  it('an expired offline result read keeps its original ID through login without any payment POST',async()=>{
+    const {offlineApi}=await server.ssrLoadModule('/src/api/offline.ts'),id='xx'+'a'.repeat(30);const calls=[];
+    location.pathname='/user/offline-result';location.search='?orderId='+id;location.hash='';
+    api.defaults.adapter=async config=>{calls.push(config);return response(config,{status:410000,msg:'expired',data:null});};
+    await assert.rejects(offlineApi.read(id));
+    assert.equal(calls.length,1);assert.equal(calls[0].method,'get');
+    assert.equal(new URL(navigation[0],location.origin).searchParams.get('redirect'),location.pathname+location.search);
+  });
   registerSeckillPurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerCombinationPurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerBargainPurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerCheckoutShippingTests(() => ({ server, authUtils, api, response }));
+  registerCheckoutIntentRecoveryTests(() => ({ server, authUtils, api, response }));
+  registerOrderDetailTests(() => ({ server, authUtils, api, response }));
+  registerOrderListTests(() => ({ server, authUtils, api, response }));
+  registerRefundApplyTests(() => ({ server, authUtils, api, response }));
+  registerRefundRecordsTests(() => ({ server, authUtils, api, response }));
+  registerProductDetailLifecycleTests(() => ({ server, authUtils, api, location, response }));
+  registerCartStateTests(() => ({ cart, authUtils, api, response }));
+  registerCartTemplateTests(() => ({ server, cart, api, response }));
+  it('binds an already-invoked write to the dispatching session before a same-turn account switch', async () => {
+    let sentToken;
+    api.defaults.adapter = async config => { sentToken = config.headers.get('Authori-zation'); return response(config, { status: 200, data: { id: 91 } }); };
+    const pending = api.post('/cart/add', { productId: 70, unique: 'red001', cartNum: 1 });
+    authUtils.setAuth('replacement-session', 22);
+    await assert.rejects(pending, /登录状态已变化/);
+    assert.equal(sentToken, 'Bearer session-a');
+  });
   const walletRow = (change = {}) => ({ id: 60, coupon_title: '九折品类券', coupon_price: '90.00', use_min_price: '10.00', coupon_type: 2, applicable_type: 1,
     start_time: null, end_time: null, availability: 'available', availability_message: '可使用', rule: '第一行\n<script>literal only</script>', rule_truncated: true, ...change });
   const counts = { not_used: 3, used: 1, expired: 2, reserved: 1 };

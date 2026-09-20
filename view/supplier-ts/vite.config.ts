@@ -15,6 +15,7 @@ export default defineConfig({
   server: {
     port: 5181,
     proxy: {
+      "/api/assets/": { target: apiProxyTarget, changeOrigin: true },
       "/supplierapi": {
         target: apiProxyTarget,
         changeOrigin: true,

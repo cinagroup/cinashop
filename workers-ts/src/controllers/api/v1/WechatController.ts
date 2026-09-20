@@ -231,7 +231,7 @@ export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat"
       amountCents: notify.amountTotal,
       currency: "CNY",
       providerEventTime: notify.providerEventTime,
-    });
+    }, { appId: notify.appId, merchantId: notify.merchantId, payerId: notify.payerId });
     if (!received.terminalConflict) {
       c.executionCtx.waitUntil(callbackService.dispatchById(received.outboxId).catch((error) => {
         emitOperationalEvent("error", {

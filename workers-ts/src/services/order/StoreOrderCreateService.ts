@@ -39,6 +39,7 @@ import {
   storePromotions,
   storeOrderWriteoff,
   storeOrderStatus,
+  storeOrderRefund,
   storeNewcomer,
   storeDiscounts,
   systemStore,
@@ -50,6 +51,7 @@ import {
   buildOrderBrokerageSnapshot,
   completeOrderReceipt,
   decimalToCents,
+  lockOrderSettlement,
 } from "@/services/order/OrderBrokerageService";
 import { assertCheckoutBrokerageAuthority } from "@/services/order/CheckoutBrokerageAuthority";
 import {
@@ -57,11 +59,12 @@ import {
   decimalToWholePoints,
 } from "@/services/order/OrderRewardService";
 import {
-  calculateOrderPostageCents,
+  calculateOrderPostageBreakdown,
   expandShippingRegionIds,
   ShippingConfigurationError,
 } from "@/services/order/ShippingCalculator";
 import { resolveOrderCoupon, eligibleOrderCoupons, type OrderCouponQuery, type OrderCouponPage } from "@/services/activity/OrderCouponService";
+import { MEMBER_SAVINGS_VERSION, orderMembershipSavings } from './OrderMembershipSavings';
 import {
   allocateLegacyDiscountCents,
   calculateFirstOrderDiscountCents,
@@ -109,6 +112,7 @@ import { resolveDeliveryAddress, assertDeliveryAddressSnapshot, deliveryAddressT
 import { checkoutFingerprint, readCheckoutConfirmation, assertCheckoutConfirmation, OrderQuoteReconfirmRequired } from './CheckoutConfirmation';
 import { assertCheckoutMembershipSnapshot, type CheckoutMembershipSnapshot } from './CheckoutMembershipSnapshot';
 import { assertCheckoutCouponTemplate } from './CheckoutCouponTemplateAuthority';
+import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -412,6 +416,7 @@ export interface CancelStoreOrderInput {
 export async function cancelStoreOrder(
   container: Container,
   params: CancelStoreOrderInput,
+  action: 'cancel' | 'delete' = 'cancel',
 ): Promise<void> {
   const { uid, orderId } = params;
   await withTx(container, async (tx) => {
@@ -428,7 +433,7 @@ export async function cancelStoreOrder(
       .limit(1)
       .for("update");
     const order = orderRows[0];
-    if (!order || order.uid !== uid) throw new NotFoundException("订单不存在");
+    if (!order || order.uid !== uid || order.isSystemDel) throw new NotFoundException("订单不存在");
     if ((initial?.type === 3 || order.type === 3) &&
         (initial?.type !== order.type || initial.activityId !== order.activityId)) {
       throw new ValidateException("拼团订单活动已变化，请重试");
@@ -746,6 +751,14 @@ export async function cancelStoreOrder(
         : "用户取消订单并恢复占用资源",
       changeTime: Math.floor(Date.now() / 1000),
     });
+    if (action === 'delete') {
+      // Unpaid deletion is cancellation, not a second compensation path.
+      // A late audit failure must roll back the resource release as well.
+      await tx.insert(storeOrderStatus).values({
+        oid: order.id, changeType: 'remove_order', changeMessage: '删除未付款订单',
+        changeTime: Math.floor(Date.now() / 1000),
+      });
+    }
   });
 }
 
@@ -1005,7 +1018,8 @@ export class StoreOrderCreateService {
       loadOrderPricingConfig(c.db),
     ]);
     if (uid > 0 && !user) throw new NotFoundException("用户不存在");
-    const level = user && pricingConfig.memberFunctionEnabled && user.level > 0
+    const activeLevel = pricingConfig.memberFunctionEnabled && user?.levelStatus === 1;
+    const level = user && activeLevel && user.level > 0
       ? await c.systemUserLevelDao.getById(user.level)
       : null;
     const levelDiscountPercent = level && level.isShow === 1 && level.isDel === 0
@@ -1018,7 +1032,10 @@ export class StoreOrderCreateService {
     const considersPaidMemberPrice = type === 0 && activePaidMember && pricingConfig.paidMemberPriceEnabled;
     const membershipSnapshot: CheckoutMembershipSnapshot | null = user && (pricingConfig.memberFunctionEnabled || pricingConfig.paidMemberEnabled)
       ? { uid, paidActive: pricingConfig.paidMemberEnabled ? activePaidMember : null,
-          levelId: pricingConfig.memberFunctionEnabled ? user.level : null,
+          levelActive: pricingConfig.memberFunctionEnabled ? activeLevel : null,
+          // Inactive definitions do not price this order. Bind activation itself
+          // so a later grant/revocation cannot silently change its entitlement.
+          levelId: activeLevel ? user.level : null,
           level: level ? { id: level.id, discount: level.discount, isShow: level.isShow, isDel: level.isDel } : null }
       : null;
     let totalNum = 0;
@@ -1080,6 +1097,7 @@ export class StoreOrderCreateService {
       const rawUnitPriceCents = decimalToCents(sku.price);
       let unitPriceCents = rawUnitPriceCents;
       let priceType: "" | "level" | "member" = "";
+      let memberUnitDiscountCents = 0;
       let integralActivity: typeof storeIntegral.$inferSelect | null = null;
       let discountItem: ResolvedDiscountPackageItem | null = null;
       let activityName = "";
@@ -1343,6 +1361,7 @@ export class StoreOrderCreateService {
         });
         unitPriceCents = memberPrice.unitPriceCents;
         priceType = memberPrice.priceType;
+        memberUnitDiscountCents = memberPrice.discountCents;
       }
 
       if (itemSystemFormId > 0) {
@@ -1355,7 +1374,9 @@ export class StoreOrderCreateService {
       totalNum += cart.cartNum;
       totalCents += unitPriceCents * cart.cartNum;
       rawTotalCents += rawUnitPriceCents * cart.cartNum;
-      const lineMemberDiscount = Math.max(0, rawUnitPriceCents - unitPriceCents) * cart.cartNum;
+      // Activity reductions are not membership benefits. Keep the admitted
+      // membership calculator's unit saving as the quote and stored source.
+      const lineMemberDiscount = memberUnitDiscountCents * cart.cartNum;
       memberDiscountCents += lineMemberDiscount;
       if (priceType === "level") levelDiscountCents += lineMemberDiscount;
       if (priceType === "member") paidMemberDiscountCents += lineMemberDiscount;
@@ -1370,6 +1391,7 @@ export class StoreOrderCreateService {
         rawUnitPriceCents,
         unitPriceCents,
         priceType,
+        memberUnitDiscountCents,
         activityName,
         activityImage,
         activityFreight,
@@ -1502,8 +1524,10 @@ export class StoreOrderCreateService {
 
     // 4. 运费计算: 原始运费、满额/线下包邮和 SVIP 运费权益分层保存。
     let totalPostageCents = 0;
+    let rawLinePostageCents = orderItems.map(() => 0);
     let postageCents = 0;
     let postageDiscountCents = 0;
+    let memberPostageDiscountCents = 0;
     let isStoreFreePostage = false;
     const postageExempt = orderItems.every(({ product }) => [1, 2, 3].includes(product.productType));
     const hasDeliveryAddress = Boolean(
@@ -1526,7 +1550,7 @@ export class StoreOrderCreateService {
       assertShippingTemplateBindings(shippingSnapshot, shippingBindings);
       try {
         const regionIds = expandShippingRegionIds(params.cityId, shippingSnapshot?.cityPath ?? undefined);
-        totalPostageCents = calculateOrderPostageCents(
+        const postageBreakdown = calculateOrderPostageBreakdown(
           orderItems.map(({
             cart, product, sku, integralActivity, unitPriceCents,
             activityFreight, activityPostage, activityTempId,
@@ -1546,6 +1570,8 @@ export class StoreOrderCreateService {
           shippingSnapshot?.noDelivery ?? [],
           { waivePostage: isStoreFreePostage || (type === 5 && discountPackage?.discount.freeShipping === 1) },
         );
+        totalPostageCents = postageBreakdown.totalCents;
+        rawLinePostageCents = postageBreakdown.lineCents;
       } catch (error) {
         if (error instanceof ShippingConfigurationError) {
           throw new ValidateException(error.message);
@@ -1561,6 +1587,7 @@ export class StoreOrderCreateService {
       const percent = pricingConfig.expressDiscountPercent;
       if (percent > 0 && percent < 100) {
         postageCents = Math.floor(postageCents * percent / 100);
+        memberPostageDiscountCents = totalPostageCents - postageCents;
       }
     }
     postageDiscountCents = Math.max(0, totalPostageCents - postageCents);
@@ -1594,6 +1621,7 @@ export class StoreOrderCreateService {
         integralRules: item.integralActivity ? { onceNum: item.integralActivity.onceNum, num: item.integralActivity.num,
           deliveryType: item.integralActivity.deliveryType, systemFormId: item.integralActivity.systemFormId } : null,
         skuId: item.sku.id, unique: item.sku.unique, suk: item.sku.suk, activitySkuId: item.activitySku?.id ?? 0,
+        ...(item.cart.productType === 4 ? { secondCardUnitEntitlements: Math.max(item.sku.writeTimes, 1) } : {}),
         weight: item.sku.weight, volume: item.sku.volume, rawUnitPriceCents: item.rawUnitPriceCents,
         unitPriceCents: item.unitPriceCents, priceType: item.priceType,
         memberPriceRules: considersPaidMemberPrice && item.cart.activityId === 0 && item.rawUnitPriceCents > 0
@@ -1632,11 +1660,11 @@ export class StoreOrderCreateService {
         storeFreePostageCents: pricingConfig.storeFreePostageCents,
         isStoreFreePostage,
         totalNum,
-        items: orderItems.map(({ cart, rawUnitPriceCents, unitPriceCents, priceType }) => ({
+        items: orderItems.map(({ cart, rawUnitPriceCents, unitPriceCents, priceType, memberUnitDiscountCents }) => ({
           cartId: cart.id,
           rawUnitPriceCents,
           unitPriceCents,
-          discountCents: Math.max(0, rawUnitPriceCents - unitPriceCents),
+          discountCents: memberUnitDiscountCents,
           priceType,
         })),
       };
@@ -1666,6 +1694,7 @@ export class StoreOrderCreateService {
         })
       : {
           authority: null,
+          lineAmounts: orderItems.map(() => ({ oneCents: 0, twoCents: 0, staffCents: 0, agentCents: 0, divisionCents: 0 })),
           itemRuleUsage: null,
           spreadUid: 0,
           spreadTwoUid: 0,
@@ -2387,9 +2416,18 @@ export class StoreOrderCreateService {
       const itemGrossCents = orderItems.map(({ cart, unitPriceCents }) =>
         cart.cartNum * unitPriceCents
       );
-      const couponAllocations = allocateLegacyDiscountCents(couponPriceCents, itemGrossCents);
-      const firstOrderAllocations = allocateLegacyDiscountCents(firstOrderPriceCents, itemGrossCents);
-      const deductionAllocations = allocateLegacyDiscountCents(deductionCents, itemGrossCents);
+      const couponAllocations = fitCheckoutLineCapacities(
+        allocateLegacyDiscountCents(couponPriceCents, itemGrossCents), itemGrossCents);
+      const afterCouponCents = itemGrossCents.map((amount, index) => amount - couponAllocations[index]);
+      const firstOrderAllocations = fitCheckoutLineCapacities(
+        allocateLegacyDiscountCents(firstOrderPriceCents, itemGrossCents), afterCouponCents);
+      const afterFirstOrderCents = afterCouponCents.map((amount, index) => amount - firstOrderAllocations[index]);
+      const deductionAllocations = fitCheckoutLineCapacities(
+        allocateLegacyDiscountCents(deductionCents, itemGrossCents), afterFirstOrderCents);
+      // Preserve the actual admitted pricing sources, after the final user/
+      // discount check. These share the order transaction; no new DB/remote read.
+      const pointAllocations = allocateCheckoutLineUnits(usedIntegralPoints, itemGrossCents, 4);
+      const postageAllocations = allocateCheckoutLineUnits(postageCents, rawLinePostageCents, null);
 
       // 5b. 库存扣减 (关键: WHERE stock>=n 守卫, 修复 PHP 超卖 bug)
       for (const [itemIndex, item] of orderItems.entries()) {
@@ -2417,6 +2455,7 @@ export class StoreOrderCreateService {
             eq(storeProductAttrValue.productId, product.id), eq(storeProductAttrValue.type, 0),
             eq(storeProductAttrValue.unique, sku.unique), eq(storeProductAttrValue.suk, sku.suk), eq(storeProductAttrValue.isRetired, 0),
             eq(storeProductAttrValue.price, sku.price),
+            cart.productType === 4 ? eq(storeProductAttrValue.writeTimes, sku.writeTimes) : undefined,
             // Activity ledger sources are guarded at their own write/lock above.
             // Do not freeze unused base costs or turn internal amounts into quote terms.
             !activitySku ? and(eq(storeProductAttrValue.cost, sku.cost),
@@ -2484,6 +2523,33 @@ export class StoreOrderCreateService {
           ...(type === 2 ? { bargainParticipation: {
             version: 1, participantId: bargainParticipantId, activityId: bargainActivityId, uid,
           } satisfies BargainOrderParticipation } : {}),
+          financial_version: 'checkout-line-finance-v1',
+          id: String(cart.id),
+          cart_num: cart.cartNum,
+          sum_price: (unitPriceCents / 100).toFixed(2),
+          // PHP-compatible per-unit benefit: splitting quantities copies this
+          // unchanged, then readers multiply by each child row's own quantity.
+          vip_truePrice: (item.memberUnitDiscountCents / 100).toFixed(2),
+          price_type: item.priceType,
+          member_savings_version: MEMBER_SAVINGS_VERSION,
+          paid_member: activePaidMember ? 1 : 0,
+          // Line totals: distinguish the admitted member freight reduction
+          // from offline/package/threshold waivers and preserve coupon origin.
+          member_postage_price: (memberPostageDiscountCents > 0
+            ? (rawLinePostageCents[itemIndex] - postageAllocations[itemIndex]) / 100 : 0).toFixed(2),
+          member_coupon_price: (activePaidMember && couponResolution.template?.memberCoupon
+            ? lineCouponCents / 100 : 0).toFixed(2),
+          costPrice: String(activitySku?.cost ?? sku.cost),
+          integral: type === 4 ? (activitySku?.integral ?? 0) : 0,
+          promotions_true_price: '0.00',
+          raw_postage_price: (rawLinePostageCents[itemIndex] / 100).toFixed(2),
+          postage_price: (postageAllocations[itemIndex] / 100).toFixed(2),
+          use_integral: String(pointAllocations[itemIndex]),
+          one_brokerage: (brokerage.lineAmounts[itemIndex].oneCents / 100).toFixed(2),
+          two_brokerage: (brokerage.lineAmounts[itemIndex].twoCents / 100).toFixed(2),
+          division_staff_brokerage: (brokerage.lineAmounts[itemIndex].staffCents / 100).toFixed(2),
+          division_agent_brokerage: (brokerage.lineAmounts[itemIndex].agentCents / 100).toFixed(2),
+          division_brokerage: (brokerage.lineAmounts[itemIndex].divisionCents / 100).toFixed(2),
           coupon_price: (lineCouponCents / 100).toFixed(2),
           integral_price: (lineDeductionCents / 100).toFixed(2),
           first_order_price: (lineFirstOrderCents / 100).toFixed(2),
@@ -2503,6 +2569,7 @@ export class StoreOrderCreateService {
             unique: sku.unique,
             suk: sku.suk,
             price: (unitPriceCents / 100).toFixed(2),
+            write_times: Math.max(sku.writeTimes, 1),
             ...(cart.productType === 1 ? {
               // Fulfillment must use this immutable checkout snapshot rather
               // than mutable SKU data after the customer has ordered.
@@ -2664,14 +2731,6 @@ export class StoreOrderCreateService {
     return { orderId: orderRow.orderId, key };
   }
 
-  /** 事务包装器 (类型安全, tx 与 db 同构但无 $client) */
-  private async runInTx<T>(
-    db: DbClient,
-    fn: (tx: DbClient) => Promise<T>,
-  ): Promise<T> {
-    return db.transaction(async (tx) => fn(tx as unknown as DbClient));
-  }
-
   private orderListConditions(
     uid: number,
     opts: {
@@ -2689,7 +2748,8 @@ export class StoreOrderCreateService {
     ];
     if (opts.legacyPcRoot) {
       if (opts.status === undefined || ![-1, -2, -3].includes(opts.status)) {
-        conditions.push(eq(storeOrder.pid, 0));
+        // PHP StoreOrder::searchPidAttr(0) expands to pid >= 0, including children.
+        conditions.push(sql`${storeOrder.pid} >= 0`);
       }
     } else {
       conditions.push(sql`${storeOrder.pid} <> -1`);
@@ -2824,6 +2884,21 @@ export class StoreOrderCreateService {
       legacyPcRoot?: boolean;
     },
   ) {
+    return this.readSnapshot((service) => service.readList(uid, opts));
+  }
+
+  /** Order headers, cart generations and pagination must share one MVCC snapshot.
+   * Only database reads/local attachment signing belong inside this transaction. */
+  private async readSnapshot<T>(read: (service: StoreOrderCreateService) => Promise<T>): Promise<T> {
+    return withTx(this.container, async (db) => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true)`);
+      return read(new StoreOrderCreateService(createContainerFromDb(db), this.env));
+    });
+  }
+
+  private async readList(uid: number, opts: Parameters<StoreOrderCreateService['list']>[1]) {
     const page = Math.max(1, Math.trunc(opts.page ?? 1));
     const limit = Math.max(1, Math.min(Math.trunc(opts.limit ?? 10), 100));
     const conditions = this.orderListConditions(uid, opts);
@@ -2860,18 +2935,24 @@ export class StoreOrderCreateService {
     opts: { status?: number; search?: string; page?: number; limit?: number },
   ) {
     const scoped = { ...opts, legacyPcRoot: true };
-    const [list, countRows] = await Promise.all([
-      this.list(uid, scoped),
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(storeOrder)
-        .where(and(...this.orderListConditions(uid, scoped))),
-    ]);
-    return { list, count: Number(countRows[0]?.count ?? 0) };
+    return this.readSnapshot(async (service) => {
+      const [list, countRows] = await Promise.all([
+        service.readList(uid, scoped),
+        service.container.db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(storeOrder)
+          .where(and(...service.orderListConditions(uid, scoped))),
+      ]);
+      return { list, count: Number(countRows[0]?.count ?? 0) };
+    });
   }
 
   /** 订单详情 */
   async detail(uid: number, orderId: string) {
+    return this.readSnapshot((service) => service.readDetail(uid, orderId));
+  }
+
+  private async readDetail(uid: number, orderId: string) {
     const order = await this.container.storeOrderDao.findByOrderId(orderId);
     if (!order || order.uid !== uid || order.isDel !== 0 || order.isSystemDel !== 0) {
       throw new NotFoundException("订单不存在");
@@ -2887,6 +2968,7 @@ export class StoreOrderCreateService {
                 eq(storeOrder.pid, order.id),
                 eq(storeOrder.uid, uid),
                 eq(storeOrder.isDel, 0),
+                eq(storeOrder.isSystemDel, 0),
               ),
             )
             .orderBy(storeOrder.id)
@@ -2966,6 +3048,7 @@ export class StoreOrderCreateService {
         : Promise.resolve([]),
     ]);
     const economize = economizeRows[0] ?? null;
+    const membershipSavings = order.paid === 1 ? orderMembershipSavings(order, cartInfos) : null;
     const customForm = await readOrderSystemFormSnapshot(
       this.container.db,
       new AttachmentService(this.container, this.env),
@@ -2981,8 +3064,8 @@ export class StoreOrderCreateService {
           : null,
       customForm,
       economize,
-      postagePrice: economize?.postagePrice ?? "0.00",
-      memberPrice: economize?.memberPrice ?? "0.00",
+      postagePrice: membershipSavings?.postagePrice ?? economize?.postagePrice ?? "0.00",
+      memberPrice: membershipSavings?.memberPrice ?? economize?.memberPrice ?? "0.00",
       invoice: invoiceRows[0] ?? null,
       promotionsDetail: promotionsDetail.map(({ allocation, promotion }) => ({
         ...allocation,
@@ -3038,26 +3121,57 @@ export class StoreOrderCreateService {
     await cancelStoreOrder(this.container, { uid, orderId });
   }
 
-  /** 删除订单 (order/del, 已收货/已取消可删) */
+  /** PHP deletion states: unpaid (cancel atomically), fully refunded, completed.
+   * Never compensate a paid/refunded order or delete its payment audit root. */
   async del(uid: number, orderId: string): Promise<void> {
-    const order = await this.container.storeOrderDao.findByOrderId(orderId);
-    if (!order || order.uid !== uid) throw new NotFoundException("订单不存在");
-    if (order.status !== -2 && !(order.paid === 1 && order.status >= 2)) {
-      throw new ValidateException("订单状态不允许删除");
+    if (!Number.isSafeInteger(uid) || uid <= 0 || typeof orderId !== 'string'
+      || !orderId.trim() || orderId.length > 50) throw new ValidateException('订单标识无效');
+    const initial = await this.container.storeOrderDao.findByOrderId(orderId);
+    if (!initial || initial.uid !== uid || initial.isSystemDel) throw new NotFoundException("订单不存在");
+    if (initial.isDel) throw new ValidateException('订单已删除');
+    if (initial.paid === 0 && initial.status === 0) {
+      // The cancellation service rechecks after its own activity/order locks.
+      // Do not lock an order before the pink inventory boundary here.
+      return cancelStoreOrder(this.container, { uid, orderId }, 'delete');
     }
-    const now = Math.floor(Date.now() / 1000);
-    await this.runInTx(this.container.db, async (tx) => {
+    await withTx(this.container, async (tx) => {
+      const rootId = initial.pid > 0 ? initial.pid : initial.id;
+      await lockOrderSettlement(tx, rootId);
+      const [root] = await tx.select().from(storeOrder).where(eq(storeOrder.id, rootId)).limit(1).for('update');
+      if (rootId !== initial.id) await lockOrderSettlement(tx, initial.id);
+      const [order] = rootId === initial.id ? [root] : await tx.select().from(storeOrder)
+        .where(eq(storeOrder.id, initial.id)).limit(1).for('update');
+      if (!order || order.uid !== uid || order.isSystemDel || order.orderId !== orderId) throw new NotFoundException('订单不存在');
+      if (order.isDel) throw new ValidateException('订单已删除');
+      if (!root || order.pid !== initial.pid || root.uid !== uid || root.isSystemDel || root.isDel
+        || (order.pid > 0 && (root.pid !== -1 || order.paid !== root.paid || order.payType !== root.payType))
+        || (root.supplierId !== order.supplierId && !(root.supplierId === 0 && root.supplierAllocationStatus === 2))
+        || (root.storeId !== order.storeId && root.supplierAllocationStatus !== 2)) {
+        throw new ValidateException('订单关联已变化，请刷新后重试');
+      }
+      if (order.pid < 0 || order.supplierAllocationStatus === 1) throw new ValidateException('请从拆分后的履约子单删除订单');
+      // Refund execution owns its refund lock BEFORE order locks. A plain
+      // snapshot read here avoids the reverse lock edge; new applications
+      // serialize on the order settlement lock and recheck isDel afterward.
+      const [pending] = await tx.select({ id: storeOrderRefund.id }).from(storeOrderRefund).where(and(
+        eq(storeOrderRefund.storeOrderId, order.id), eq(storeOrderRefund.isCancel, 0), eq(storeOrderRefund.isDel, 0),
+        inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]),
+      )).limit(1);
+      if (pending || [1, 4].includes(order.refundStatus)) throw new ValidateException('退款处理中，不能删除订单');
+      const cancelled = order.paid === 0 && order.status === -2;
+      const terminal = order.paid === 1 && (order.refundStatus === 2 || (order.status === 3 && order.refundStatus === 0));
+      if (!cancelled && !terminal) throw new ValidateException('订单状态不允许删除');
       const updated = await tx
         .update(storeOrder)
         .set({ isDel: 1 })
-        .where(and(eq(storeOrder.id, order.id), eq(storeOrder.isDel, 0)))
+        .where(and(eq(storeOrder.id, order.id), eq(storeOrder.uid, uid), eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0)))
         .returning({ id: storeOrder.id });
       if (!updated.length) throw new ValidateException("订单已删除");
       await tx.insert(storeOrderStatus).values({
         oid: order.id,
         changeType: "remove_order",
         changeMessage: "删除订单",
-        changeTime: now,
+        changeTime: Math.floor(Date.now() / 1000),
       });
     });
   }
@@ -3098,6 +3212,7 @@ interface OrderItem {
   rawUnitPriceCents: number;
   unitPriceCents: number;
   priceType: "" | "level" | "member";
+  memberUnitDiscountCents: number;
   activityName: string;
   activityImage: string;
   activityFreight: number | null;

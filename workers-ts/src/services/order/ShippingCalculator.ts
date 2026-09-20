@@ -1,4 +1,5 @@
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
+import { allocateCheckoutLineUnits } from './CheckoutLineAllocation';
 
 export interface ShippingItemInput {
   freight: number;
@@ -75,6 +76,7 @@ interface TemplateCharge {
 interface TemplateMeasurement {
   number: number;
   subtotalCents: number;
+  items: Array<{ index: number; number: number; quantity: number }>;
 }
 
 const HUNDREDTHS_PATTERN = /^\d+(?:\.\d{1,2})?$/;
@@ -230,7 +232,7 @@ function secondaryTemplateCharge(charge: TemplateCharge): number {
 /**
  * Reproduces PHP fixed/template freight, designated-free, and no-delivery rules.
  */
-export function calculateOrderPostageCents(
+export function calculateOrderPostageBreakdown(
   items: readonly ShippingItemInput[],
   templates: readonly ShippingTemplateInput[],
   regions: readonly ShippingRegionInput[],
@@ -238,7 +240,7 @@ export function calculateOrderPostageCents(
   freeRules: readonly ShippingFreeRuleInput[] = [],
   noDeliveryRules: readonly ShippingNoDeliveryRuleInput[] = [],
   options: { waivePostage?: boolean } = {},
-): number {
+): { totalCents: number; lineCents: number[] } {
   if (
     destination.cityId !== undefined &&
     (!Number.isSafeInteger(destination.cityId) || destination.cityId < 0)
@@ -257,6 +259,7 @@ export function calculateOrderPostageCents(
   }
 
   let fixedPostageCents = 0;
+  const lineCents = items.map(() => 0);
   const measurements = new Map<number, TemplateMeasurement>();
   const templatesById = new Map(templates.map((template) => [template.id, template]));
 
@@ -279,9 +282,9 @@ export function calculateOrderPostageCents(
 
   // A monetary waiver never grants delivery eligibility. Keep the historical
   // zero raw postage for whole-order/package waivers, after checking no-delivery.
-  if (options.waivePostage) return 0;
+  if (options.waivePostage) return { totalCents: 0, lineCents };
 
-  for (const item of items) {
+  for (const [index, item] of items.entries()) {
     if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
       throw new ShippingConfigurationError("商品数量必须是正整数");
     }
@@ -293,6 +296,7 @@ export function calculateOrderPostageCents(
         "固定运费",
       );
       fixedPostageCents = checkedAdd(fixedPostageCents, itemPostage, "固定运费");
+      lineCents[index] = itemPostage;
       continue;
     }
 
@@ -317,7 +321,7 @@ export function calculateOrderPostageCents(
       item.quantity,
       "模板商品小计",
     );
-    const current = measurements.get(templateId) ?? { number: 0, subtotalCents: 0 };
+    const current = measurements.get(templateId) ?? { number: 0, subtotalCents: 0, items: [] };
     measurements.set(
       templateId,
       {
@@ -327,11 +331,12 @@ export function calculateOrderPostageCents(
           itemSubtotalCents,
           "模板商品小计",
         ),
+        items: [...current.items, { index, number: itemMeasurement, quantity: item.quantity }],
       },
     );
   }
 
-  if (!measurements.size) return fixedPostageCents;
+  if (!measurements.size) return { totalCents: fixedPostageCents, lineCents };
 
   const charges: TemplateCharge[] = [];
   for (const [templateId, measurement] of measurements) {
@@ -356,20 +361,41 @@ export function calculateOrderPostageCents(
     });
   }
 
-  if (!charges.length) return fixedPostageCents;
+  if (!charges.length) return { totalCents: fixedPostageCents, lineCents };
 
   const maxFirstPrice = Math.max(...charges.map((charge) => charge.firstPriceCents));
   let templatePostageCents = 0;
+  let winningCharges = new Map<number, number>();
   for (const primary of charges.filter(
     (charge) => charge.firstPriceCents === maxFirstPrice,
   )) {
     let candidate = primaryTemplateCharge(primary);
+    const candidateCharges = new Map([[primary.templateId, candidate]]);
     for (const secondary of charges) {
       if (secondary === primary) continue;
-      candidate = checkedAdd(candidate, secondaryTemplateCharge(secondary), "模板运费");
+      const amount = secondaryTemplateCharge(secondary);
+      candidateCharges.set(secondary.templateId, amount);
+      candidate = checkedAdd(candidate, amount, "模板运费");
     }
-    templatePostageCents = Math.max(templatePostageCents, candidate);
+    // First winning candidate in existing template order, matching PHP's tie rule.
+    if (candidate > templatePostageCents) {
+      templatePostageCents = candidate;
+      winningCharges = candidateCharges;
+    }
   }
 
-  return checkedAdd(fixedPostageCents, templatePostageCents, "订单运费");
+  for (const [templateId, amount] of winningCharges) {
+    const measurement = measurements.get(templateId)!;
+    // Existing pricing can charge the first fee for zero recorded weight/volume.
+    // Preserve that admitted fee, distributing by quantity only in that case.
+    const shares = allocateCheckoutLineUnits(amount,
+      measurement.items.map(item => measurement.number ? item.number : item.quantity), 6);
+    measurement.items.forEach((item, index) => { lineCents[item.index] = shares[index]; });
+  }
+  return { totalCents: checkedAdd(fixedPostageCents, templatePostageCents, "订单运费"), lineCents };
+}
+
+/** Existing price-only callers retain the same total and eligibility checks. */
+export function calculateOrderPostageCents(...args: Parameters<typeof calculateOrderPostageBreakdown>): number {
+  return calculateOrderPostageBreakdown(...args).totalCents;
 }

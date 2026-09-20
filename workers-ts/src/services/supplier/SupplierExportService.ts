@@ -19,7 +19,6 @@ import {
   queueAuxiliary,
   queueList,
   storeOrder,
-  storeOrderCartInfo,
   storeOrderRefund,
   storePink,
   supplierFlowingWater,
@@ -27,6 +26,7 @@ import {
 } from "@/models/schema";
 import { SUPPLIER_QUEUE_CACHE_TYPE_BY_QUEUE_TYPE } from "@/services/supplier/SupplierQueueHistoryService";
 import { ValidateException } from "@/utils/errors";
+import { readSupplierCarts, supplierReadSnapshot, supplierSnapshotObject } from "./SupplierReadSupport";
 
 const MAX_ORDER_EXPORT_ROWS = 250;
 const MAX_BATCH_EXPORT_ROWS = 1_000;
@@ -52,6 +52,7 @@ export interface LegacyExportManifest {
 
 function positiveInteger(value: unknown, label: string, fallback: number, maximum: number): number {
   if (value === undefined || value === null || value === "") return fallback;
+  if (typeof value === "string" && !/^\d+$/.test(value)) throw new ValidateException(`${label}无效`);
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > maximum) {
     throw new ValidateException(`${label}无效`);
@@ -60,6 +61,7 @@ function positiveInteger(value: unknown, label: string, fallback: number, maximu
 }
 
 function requiredPositiveInteger(value: unknown, label: string): number {
+  if (typeof value === "string" && !/^\d+$/.test(value)) throw new ValidateException(`${label}无效`);
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > 2_147_483_647) {
     throw new ValidateException(`${label}无效`);
@@ -89,9 +91,9 @@ export function parseSupplierExportIds(value: unknown, required = false): number
 /** Neutralize formulas before the browser hands a value to Excel/WPS. */
 export function safeSpreadsheetCell(value: unknown, maximum = MAX_CELL_LENGTH): string {
   const normalized = String(value ?? "")
-    .replace(/\0/g, "")
-    .slice(0, maximum);
-  return /^[\t\r\n ]*[=+\-@]/.test(normalized) ? `'${normalized}` : normalized;
+    .replace(/\0/g, "");
+  if (normalized.length > maximum) throw new ValidateException("导出字段过长，请缩小范围或核对数据");
+  return /^[\s\u0000-\u001f\u007f-\u009f]*[=+\-@]/.test(normalized) ? `'${normalized}` : normalized;
 }
 
 function formatShanghaiEpoch(value: number, withSeconds = true): string {
@@ -164,35 +166,31 @@ export function supplierExportOrderStatus(row: {
   return "未知状态";
 }
 
-function jsonObject(value: string | null): Record<string, unknown> {
-  if (!value || value.length > 256_000) return {};
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed as Record<string, unknown>
-      : {};
-  } catch {
-    return {};
-  }
+function units(value: unknown, precision = 2): bigint {
+  const text = typeof value === "string" || typeof value === "number" ? String(value) : "";
+  const match = text.match(/^(\d{1,10})(?:\.(\d{1,4}))?$/);
+  if (!match || (match[2]?.length ?? 0) > precision) throw new ValidateException("商品快照金额无法读取");
+  const [whole, fraction = ""] = text.split(".");
+  return BigInt(whole) * 10n ** BigInt(precision) + BigInt(fraction.padEnd(precision, "0"));
 }
-
-function objectValue(value: unknown): Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function cartSnapshot(value: string | null) {
-  const cart = jsonObject(value);
-  const product = objectValue(cart.productInfo ?? cart.product_info);
-  const attr = objectValue(product.attrInfo ?? product.attr_info);
+function money(cents: bigint) { return `${cents / 100n}.${String(cents % 100n).padStart(2, "0")}`; }
+function cartSnapshot(row: Awaited<ReturnType<typeof readSupplierCarts>>[number]) {
+  const cart = row.snapshot ?? {}, product = supplierSnapshotObject(cart.product);
+  const legacy = supplierSnapshotObject(cart.productInfo ?? cart.product_info);
+  const sku = supplierSnapshotObject(cart.sku), attr = supplierSnapshotObject(legacy?.attrInfo ?? legacy?.attr_info);
+  const quantity = row.cartNum === 0 ? Number(cart.cart_num) : row.cartNum;
+  if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2147483647) throw new ValidateException("商品快照数量无法读取");
+  const price = units(cart.sum_price ?? cart.truePrice ?? cart.true_price ?? sku?.price ?? attr?.price ?? legacy?.price);
+  const retailPrice = units(cart.sum_price ?? sku?.price ?? attr?.price ?? legacy?.price ?? cart.truePrice ?? cart.true_price);
   return {
-    name: safeSpreadsheetCell(product.store_name ?? product.storeName ?? "", 2_000),
-    sku: safeSpreadsheetCell(attr.suk ?? "", 1_000),
-    barcode: safeSpreadsheetCell(attr.bar_code ?? attr.barCode ?? "", 500),
-    code: safeSpreadsheetCell(attr.code ?? "", 500),
-    price: safeSpreadsheetCell(cart.truePrice ?? cart.true_price ?? attr.price ?? product.price ?? "0.00", 100),
-    vipPrice: Number(cart.vip_truePrice ?? cart.vipTruePrice ?? cart.truePrice ?? 0),
+    quantity,
+    name: safeSpreadsheetCell(product?.storeName ?? product?.store_name ?? legacy?.store_name ?? legacy?.storeName ?? "商品快照", 2000),
+    sku: safeSpreadsheetCell(sku?.suk ?? attr?.suk ?? row.skuUnique, 1000),
+    barcode: safeSpreadsheetCell(sku?.bar_code ?? sku?.barCode ?? attr?.bar_code ?? attr?.barCode ?? "", 500),
+    code: safeSpreadsheetCell(sku?.code ?? attr?.code ?? "", 500),
+    price: money(price), retailPrice: money(retailPrice),
+    // PHP's vip_truePrice is a per-unit discount, never the retail sale price.
+    vipCents: units(cart.vip_truePrice ?? cart.vipTruePrice ?? cart.vip_true_price ?? "0", 4) * BigInt(quantity) / 100n,
   };
 }
 
@@ -257,145 +255,148 @@ export class SupplierExportService {
   async storeOrder(supplierId: number, query: Record<string, string | undefined>): Promise<LegacyExportManifest> {
     assertSupplierId(supplierId);
     const page = positiveInteger(query.page, "页码", 1, 1_000_000);
-    const ids = parseSupplierExportIds(query.ids);
+    const exact = query.selection === "exact";
+    if (query.selection !== undefined && !exact) throw new ValidateException("导出选择方式无效");
+    const ids = parseSupplierExportIds(query.ids, exact);
+    if (exact && (ids.length > MAX_ORDER_EXPORT_ROWS || page !== 1)) throw new ValidateException("精确导出每次最多250个订单，且不允许分页");
+    if (query.type !== undefined && !["", "0", "1"].includes(query.type)) throw new ValidateException("导出类型无效");
+    if (query.status !== undefined && query.status !== "" && !["-4","-3","-2","-1","0","1","2","3","4","5","6","7","8","9"].includes(query.status)) throw new ValidateException("导出订单状态无效");
     const shipping = query.type !== undefined && query.type !== "" && query.type !== "0";
-    const conditions: SQL[] = [
-      eq(storeOrder.supplierId, supplierId),
-      eq(storeOrder.pid, 0),
-      eq(storeOrder.storeId, 0),
-      eq(storeOrder.isSystemDel, 0),
-    ];
-    if (ids.length) conditions.push(inArray(storeOrder.id, ids));
-    const keyword = query.real_name?.trim();
-    if (keyword) {
-      if (keyword.length > 100) throw new ValidateException("订单搜索内容过长");
-      const pattern = `%${keyword}%`;
-      const matches = or(ilike(storeOrder.orderId, pattern), ilike(storeOrder.realName, pattern), ilike(storeOrder.userPhone, pattern));
-      if (matches) conditions.push(matches);
-    }
-    const range = dateRange(query.data ?? query.time);
-    if (range.start !== undefined) conditions.push(gte(storeOrder.addTime, range.start));
-    if (range.end !== undefined) conditions.push(lte(storeOrder.addTime, range.end));
-    if (shipping) {
-      conditions.push(
-        eq(storeOrder.status, 1),
-        eq(storeOrder.paid, 1),
-        eq(storeOrder.isDel, 0),
-        eq(storeOrder.shippingType, 1),
-        or(
-          sql`${storeOrder.type} <> 3`,
-          eq(storeOrder.pinkId, 0),
-          sql`EXISTS (SELECT 1 FROM ${storePink} WHERE ${storePink.id} = ${storeOrder.pinkId} AND ${storePink.status} = 2)`,
-        )!,
-        notExists(this.container.db.select({ id: storeOrderRefund.id }).from(storeOrderRefund).where(and(
-          eq(storeOrderRefund.storeOrderId, storeOrder.id),
-          inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]),
-          eq(storeOrderRefund.isCancel, 0),
-          eq(storeOrderRefund.isDel, 0),
-        ))),
-      );
-    } else addLegacyOrderStatus(conditions, query.status);
-
-    const rows = await this.container.db.select({
-      id: storeOrder.id,
-      orderId: storeOrder.orderId,
-      uid: storeOrder.uid,
-      sex: user.sex,
-      realName: storeOrder.realName,
-      userPhone: storeOrder.userPhone,
-      userAddress: storeOrder.userAddress,
-      totalNum: storeOrder.totalNum,
-      totalPrice: storeOrder.totalPrice,
-      payPrice: storeOrder.payPrice,
-      payPostage: storeOrder.payPostage,
-      couponPrice: storeOrder.couponPrice,
-      deductionPrice: storeOrder.deductionPrice,
-      paid: storeOrder.paid,
-      payType: storeOrder.payType,
-      payTime: storeOrder.payTime,
-      status: storeOrder.status,
-      shippingType: storeOrder.shippingType,
-      refundStatus: storeOrder.refundStatus,
-      addTime: storeOrder.addTime,
-      mark: storeOrder.mark,
-      remark: storeOrder.remark,
-    }).from(storeOrder)
-      .leftJoin(user, eq(user.uid, storeOrder.uid))
-      .where(and(...conditions))
-      .orderBy(desc(storeOrder.id))
-      .limit(MAX_ORDER_EXPORT_ROWS + 1)
-      .offset((page - 1) * MAX_ORDER_EXPORT_ROWS);
-    const hasMore = rows.length > MAX_ORDER_EXPORT_ROWS;
-    const orders = rows.slice(0, MAX_ORDER_EXPORT_ROWS);
-    const orderIds = orders.map((row) => row.id);
-    const cartRows = orderIds.length
-      ? await this.container.db.select({
-          oid: storeOrderCartInfo.oid,
-          productId: storeOrderCartInfo.productId,
-          cartNum: storeOrderCartInfo.cartNum,
-          cartInfo: storeOrderCartInfo.cartInfo,
-        }).from(storeOrderCartInfo).where(inArray(storeOrderCartInfo.oid, orderIds)).orderBy(asc(storeOrderCartInfo.id))
-      : [];
-    const carts = new Map<number, typeof cartRows>();
-    for (const item of cartRows) carts.set(item.oid, [...(carts.get(item.oid) ?? []), item]);
-
-    const exported: ExportRow[] = orders.map((order) => {
-      const items = (carts.get(order.id) ?? []).map((item) => ({ ...item, snapshot: cartSnapshot(item.cartInfo) }));
+    return supplierReadSnapshot(this.container, async db => {
+      const conditions: SQL[] = [
+        eq(storeOrder.supplierId, supplierId),
+        // Explicit TS selections follow the modern visible leaf list. Legacy
+        // unversioned exports retain PHP's root/store filters and pagination.
+        ...(exact ? [gte(storeOrder.pid, 0)] : [eq(storeOrder.pid, 0), eq(storeOrder.storeId, 0)]),
+        eq(storeOrder.isSystemDel, 0),
+      ];
+      if (ids.length) conditions.push(inArray(storeOrder.id, ids));
+      const keyword = query.real_name?.trim();
+      if (keyword) {
+        if (keyword.length > 100) throw new ValidateException("订单搜索内容过长");
+        const pattern = `%${keyword}%`;
+        const matches = or(ilike(storeOrder.orderId, pattern), ilike(storeOrder.realName, pattern), ilike(storeOrder.userPhone, pattern));
+        if (matches) conditions.push(matches);
+      }
+      const range = dateRange(query.data ?? query.time);
+      if (range.start !== undefined) conditions.push(gte(storeOrder.addTime, range.start));
+      if (range.end !== undefined) conditions.push(lte(storeOrder.addTime, range.end));
       if (shipping) {
+        conditions.push(
+          eq(storeOrder.status, 1),
+          eq(storeOrder.paid, 1),
+          eq(storeOrder.isDel, 0),
+          eq(storeOrder.shippingType, 1),
+          or(
+            sql`${storeOrder.type} <> 3`,
+            eq(storeOrder.pinkId, 0),
+            sql`EXISTS (SELECT 1 FROM ${storePink} WHERE ${storePink.id} = ${storeOrder.pinkId} AND ${storePink.status} = 2)`,
+          )!,
+          notExists(db.select({ id: storeOrderRefund.id }).from(storeOrderRefund).where(and(
+            eq(storeOrderRefund.storeOrderId, storeOrder.id),
+            inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5]),
+            eq(storeOrderRefund.isCancel, 0),
+            eq(storeOrderRefund.isDel, 0),
+          ))),
+        );
+      } else addLegacyOrderStatus(conditions, query.status);
+
+      const rows = await db.select({
+        id: storeOrder.id,
+        orderId: storeOrder.orderId,
+        uid: storeOrder.uid,
+        sex: user.sex,
+        realName: storeOrder.realName,
+        userPhone: storeOrder.userPhone,
+        userAddress: storeOrder.userAddress,
+        totalNum: storeOrder.totalNum,
+        totalPrice: storeOrder.totalPrice,
+        payPrice: storeOrder.payPrice,
+        payPostage: storeOrder.payPostage,
+        couponPrice: storeOrder.couponPrice,
+        deductionPrice: storeOrder.deductionPrice,
+        paid: storeOrder.paid,
+        payType: storeOrder.payType,
+        payTime: storeOrder.payTime,
+        status: storeOrder.status,
+        shippingType: storeOrder.shippingType,
+        refundStatus: storeOrder.refundStatus,
+        addTime: storeOrder.addTime,
+        mark: storeOrder.mark,
+        remark: storeOrder.remark,
+      }).from(storeOrder)
+        .leftJoin(user, eq(user.uid, storeOrder.uid))
+        .where(and(...conditions))
+        .orderBy(desc(storeOrder.id))
+        .limit(MAX_ORDER_EXPORT_ROWS + 1)
+        .offset((page - 1) * MAX_ORDER_EXPORT_ROWS);
+      const hasMore = rows.length > MAX_ORDER_EXPORT_ROWS;
+      const orders = rows.slice(0, MAX_ORDER_EXPORT_ROWS);
+      if (exact && orders.length !== ids.length) throw new ValidateException("所选订单不存在、不属于当前供应商或不满足导出条件；未导出部分数据");
+      const cartRows = orders.length ? await readSupplierCarts(db, supplierId, orders, 65536, 2000) : [];
+      const carts = new Map<number, typeof cartRows>();
+      for (const item of cartRows) { const group = carts.get(item.oid) ?? []; group.push(item); carts.set(item.oid, group); }
+
+      const exported: ExportRow[] = orders.map((order) => {
+        const items = (carts.get(order.id) ?? []).map((item) => ({ ...item, snapshot: cartSnapshot(item) }));
+        if (shipping) {
+          return {
+            id: order.id,
+            order_id: safeSpreadsheetCell(order.orderId),
+            a: "",
+            b: "",
+            c: "",
+            user_address: safeSpreadsheetCell(order.userAddress, 2_000),
+            real_name: safeSpreadsheetCell(order.realName, 500),
+            user_phone: safeSpreadsheetCell(order.userPhone, 100),
+            pay_price: order.payPrice,
+            cart_num: items.map((item) => `${item.snapshot.quantity} * ${item.snapshot.retailPrice}`).join("\n"),
+            product_id: items.map((item) => item.productId).join("\n"),
+            goods_name: safeSpreadsheetCell(items.map((item) => `${item.snapshot.name}${item.snapshot.sku ? ` (${item.snapshot.sku}|条码:${item.snapshot.barcode}|编码:${item.snapshot.code})` : ""} [${item.snapshot.quantity} * ${item.snapshot.price}]`).join("\n")),
+            attr: safeSpreadsheetCell(items.map((item) => item.snapshot.sku).join("\n")),
+            remark: safeSpreadsheetCell(order.remark, 2_000),
+            pay_time: formatShanghaiEpoch(order.payTime),
+          };
+        }
+        const vipTotal = items.reduce((sum, item) => sum + item.snapshot.vipCents, 0n);
         return {
           id: order.id,
           order_id: safeSpreadsheetCell(order.orderId),
-          a: "",
-          b: "",
-          c: "",
-          user_address: safeSpreadsheetCell(order.userAddress, 2_000),
+          sex: order.sex === 1 ? "男" : order.sex === 2 ? "女" : "未知",
+          phone: safeSpreadsheetCell(order.userPhone, 100),
           real_name: safeSpreadsheetCell(order.realName, 500),
           user_phone: safeSpreadsheetCell(order.userPhone, 100),
+          user_address: safeSpreadsheetCell(order.userAddress, 2_000),
+          goods_name: safeSpreadsheetCell(items.map((item) => `${item.snapshot.name}${item.snapshot.sku ? ` (${item.snapshot.sku})` : ""} [${item.snapshot.quantity} * ${item.snapshot.price}]`).join("\n")),
+          total_num: order.totalNum,
+          total_price: order.totalPrice,
           pay_price: order.payPrice,
-          cart_num: items.map((item) => `${item.cartNum} * ${item.snapshot.price}`).join("\n"),
-          product_id: items.map((item) => item.productId).join("\n"),
-          goods_name: safeSpreadsheetCell(items.map((item) => `${item.snapshot.name}${item.snapshot.sku ? ` (${item.snapshot.sku}|条码:${item.snapshot.barcode}|编码:${item.snapshot.code})` : ""} [${item.cartNum} * ${item.snapshot.price}]`).join("\n")),
-          attr: safeSpreadsheetCell(items.map((item) => item.snapshot.sku).join("\n")),
-          remark: safeSpreadsheetCell(order.remark, 2_000),
-          pay_time: formatShanghaiEpoch(order.payTime),
+          pay_postage: order.payPostage,
+          vip_sum_price: money(vipTotal),
+          coupon_price: order.couponPrice,
+          deduction_price: order.deductionPrice,
+          pay_type_name: payTypeName(order.paid, order.payType),
+          pay_time: formatShanghaiEpoch(order.payTime, false),
+          status_name: supplierExportOrderStatus(order),
+          add_time: formatShanghaiEpoch(order.addTime),
+          mark: safeSpreadsheetCell(order.mark, 2_000),
         };
-      }
-      const vipTotal = items.reduce((sum, item) => sum + (Number.isFinite(item.snapshot.vipPrice) ? item.snapshot.vipPrice : 0) * Math.max(item.cartNum, 1), 0);
-      return {
-        id: order.id,
-        order_id: safeSpreadsheetCell(order.orderId),
-        sex: order.sex === 1 ? "男" : order.sex === 2 ? "女" : "未知",
-        phone: safeSpreadsheetCell(order.userPhone, 100),
-        real_name: safeSpreadsheetCell(order.realName, 500),
-        user_phone: safeSpreadsheetCell(order.userPhone, 100),
-        user_address: safeSpreadsheetCell(order.userAddress, 2_000),
-        goods_name: safeSpreadsheetCell(items.map((item) => `${item.snapshot.name}${item.snapshot.sku ? ` (${item.snapshot.sku})` : ""} [${item.cartNum} * ${item.snapshot.price}]`).join("\n")),
-        total_num: order.totalNum,
-        total_price: order.totalPrice,
-        pay_price: order.payPrice,
-        pay_postage: order.payPostage,
-        vip_sum_price: vipTotal.toFixed(2),
-        coupon_price: order.couponPrice,
-        deduction_price: order.deductionPrice,
-        pay_type_name: payTypeName(order.paid, order.payType),
-        pay_time: formatShanghaiEpoch(order.payTime, false),
-        status_name: supplierExportOrderStatus(order),
-        add_time: formatShanghaiEpoch(order.addTime),
-        mark: safeSpreadsheetCell(order.mark, 2_000),
-      };
-    });
-    const header = shipping
-      ? ["订单ID", "订单编号", "物流公司", "物流编码", "物流单号", "发货地址", "收货人姓名", "收货人电话", "订单实付金额", "商品数量*售价", "商品ID", "商品名称", "商品规格", "商家备注", "订单成交时间"]
-      : ["订单ID", "订单编号", "性别", "电话", "收货人姓名", "收货人电话", "收货地址", "商品信息", "商品总数", "总价格", "实际支付", "邮费", "会员优惠金额", "优惠卷金额", "积分抵扣金额", "支付状态", "支付时间", "订单状态", "下单时间", "用户备注"];
-    return checkedManifest({
-      header,
-      filekey: exported[0] ? Object.keys(exported[0]) : [],
-      export: exported,
-      filename: filename(shipping ? "发货单导出" : "订单导出"),
-      page,
-      limit: MAX_ORDER_EXPORT_ROWS,
-      has_more: hasMore,
-      bounded: true,
+      });
+      const header = shipping
+        ? ["订单ID", "订单编号", "物流公司", "物流编码", "物流单号", "发货地址", "收货人姓名", "收货人电话", "订单实付金额", "商品数量*售价", "商品ID", "商品名称", "商品规格", "商家备注", "订单成交时间"]
+        : ["订单ID", "订单编号", "性别", "电话", "收货人姓名", "收货人电话", "收货地址", "商品信息", "商品总数", "总价格", "实际支付", "邮费", "会员优惠金额", "优惠卷金额", "积分抵扣金额", "支付状态", "支付时间", "订单状态", "下单时间", "用户备注"];
+      return checkedManifest({
+        header,
+        filekey: shipping
+          ? ["id","order_id","a","b","c","user_address","real_name","user_phone","pay_price","cart_num","product_id","goods_name","attr","remark","pay_time"]
+          : ["id","order_id","sex","phone","real_name","user_phone","user_address","goods_name","total_num","total_price","pay_price","pay_postage","vip_sum_price","coupon_price","deduction_price","pay_type_name","pay_time","status_name","add_time","mark"],
+        export: exported,
+        filename: filename(shipping ? "发货单导出" : "订单导出"),
+        page,
+        limit: MAX_ORDER_EXPORT_ROWS,
+        has_more: hasMore,
+        bounded: true,
+      });
     });
   }
 
@@ -410,7 +411,7 @@ export class SupplierExportService {
     const exported = rows.map((row) => ({ name: safeSpreadsheetCell(row.name), code: safeSpreadsheetCell(row.code) }));
     return checkedManifest({
       header: ["物流公司名称", "物流公司编码"],
-      filekey: exported[0] ? ["name", "code"] : [],
+      filekey: ["name", "code"],
       export: exported,
       filename: filename("物流公司对照表"),
       bounded: true,
@@ -473,7 +474,7 @@ export class SupplierExportService {
         : queueType === 9
           ? ["订单ID", "配送员姓名", "配送员电话", "处理状态", "异常原因"]
           : ["订单ID", "物流公司", "物流单号", "处理状态", "异常原因"],
-      filekey: exported[0] ? Object.keys(exported[0]) : [],
+      filekey: queueType === 10 ? ["order_id","fictitious_content","status_cn","error"] : ["order_id","delivery_name","delivery_id","status_cn","error"],
       export: exported,
       filename: filename("批量任务发货记录"),
       limit: MAX_BATCH_EXPORT_ROWS,
@@ -516,7 +517,7 @@ export class SupplierExportService {
     }));
     return checkedManifest({
       header: ["交易单号", "关联订单", "交易时间", "交易金额", "支出收入", "交易人", "交易类型", "支付方式"],
-      filekey: exported[0] ? Object.keys(exported[0]) : [],
+      filekey: ["order_id","link_id","trade_time","number","pm","user_nickname","type_name","pay_type_name"],
       export: exported,
       filename: filename("账单导出"),
       limit: MAX_FINANCE_EXPORT_ROWS,

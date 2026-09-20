@@ -5,6 +5,7 @@ import { user } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
 import { ValidateException } from "@/utils/errors";
+import { OFFLINE_MINI_PAGE, offlineMiniScanImage } from '@/services/order/OfflineScanCode';
 
 const INVITE_SIGNATURE_TTL_SECONDS = 10 * 60;
 const CODE_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -175,6 +176,11 @@ export class WechatMiniProgramCodeService {
       CODE_CACHE_TTL_SECONDS,
     );
     return `data:${code.contentType};base64,${base64}`;
+  }
+
+  /** Navigation only: no customer, amount, order or payment capability. */
+  async createOfflineCashierDataUrl(): Promise<string | null> {
+    return this.createFixedPathDataUrl('offline_cashier_v1', OFFLINE_MINI_PAGE, '线下收银', image => { offlineMiniScanImage(image, 0); });
   }
 
   /** Build the fixed paid-membership page code used by the legacy PC shop. */
@@ -352,6 +358,7 @@ export class WechatMiniProgramCodeService {
     cacheSuffix: string,
     path: string,
     label: string,
+    validate?: (image: string) => void,
   ): Promise<string | null> {
     const config = new SystemConfigService(this.container, this.env);
     const values = await config.getMany(["routine_appId", "routine_appsecret"]);
@@ -361,7 +368,9 @@ export class WechatMiniProgramCodeService {
     const cacheKey = `routine_code:${cacheSuffix}:${appId}`;
     const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
     if (cached?.base64 && cached.contentType) {
-      return `data:${cached.contentType};base64,${cached.base64}`;
+      const image = `data:${cached.contentType};base64,${cached.base64}`;
+      try { validate?.(image); return image; }
+      catch { await cacheDelete(cacheKey, this.env); }
     }
     const code = await this.fetchWithTokenRefresh(
       appId,
@@ -369,6 +378,7 @@ export class WechatMiniProgramCodeService {
       (token) => this.fetchPathCode(token, path, label),
     );
     const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
+    validate?.(`data:${encoded.contentType};base64,${encoded.base64}`);
     await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
     return `data:${encoded.contentType};base64,${encoded.base64}`;
   }

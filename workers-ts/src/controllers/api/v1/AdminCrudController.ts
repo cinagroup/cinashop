@@ -50,7 +50,8 @@ import { StoreOperationsService } from "@/services/store/StoreOperationsService"
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDeliveryPolicy";
-import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
+import { AdminRefundReadService, adminRefundId } from "@/services/admin/AdminRefundReadService";
+import { AdminOrderReadService } from "@/services/admin/AdminOrderReadService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
 import {
@@ -418,35 +419,16 @@ export async function adminProductDel(c: C) {
 
 /** GET /api/admin/order/list — 订单列表 */
 export async function adminOrderList(c: C) {
-  const q = c.req.query();
-  const page = Number(q.page ?? 1);
-  const limit = Number(q.limit ?? 10);
-  const container = c.get("container");
-
-  const where: Record<string, unknown> = { isDel: 0 };
-  if (q.status !== undefined) where.status = Number(q.status);
-  if (q.paid !== undefined) where.paid = Number(q.paid);
-  if (q.uid) where.uid = Number(q.uid);
-  if (q.order_id) where.orderId = q.order_id;
-
-  const list = await container.storeOrderDao.selectList({ where, page, limit });
-  return jsonOk(c, { list, page, limit });
+  privateNoStore(c);
+  if (Object.values(c.req.queries()).some(values => values.length !== 1)) throw new ValidateException('订单查询参数不能重复');
+  return jsonOk(c, await new AdminOrderReadService(c.get('container')).list(c.req.query()));
 }
 
 /** GET /api/admin/order/detail/:orderId — 订单详情 */
 export async function adminOrderDetail(c: C) {
+  privateNoStore(c);
   const orderId = c.req.param("orderId") ?? c.req.param("id") ?? "";
-  const container = c.get("container");
-  const order = await container.storeOrderDao.findByOrderId(orderId);
-  if (!order) return jsonFail(c, "订单不存在");
-  const cartInfos = await container.storeOrderCartInfoDao.getByOid(order.id);
-  return jsonOk(c, {
-    ...order,
-    cartInfo: cartInfos.map((ci) => ({
-      ...ci,
-      cartInfo: ci.cartInfo ? JSON.parse(ci.cartInfo) : null,
-    })),
-  });
+  return jsonOk(c, await new AdminOrderReadService(c.get('container')).detail(orderId));
 }
 
 /** POST /api/admin/order/remark/:orderId — 订单备注 */
@@ -1033,7 +1015,9 @@ export async function adminRefundOrderRemark(c: C) {
 
 /** GET /api/admin/refund/list — 退款申请列表 */
 export async function adminRefundList(c: C) {
+  privateNoStore(c);
   const container = c.get("container");
+  if (c.req.query('view') === 'admin') return jsonOk(c, await new AdminRefundReadService(container, c.env).list(c.req.query()));
   const list = await container.storeOrderRefundDao.selectList({
     where: { isDel: 0 },
   });
@@ -1043,48 +1027,12 @@ export async function adminRefundList(c: C) {
 /** GET /api/admin/refund/detail/:id — 退款申请详情 */
 export async function adminRefundDetail(c: C) {
   privateNoStore(c);
-  const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  const refund = await c.get("container").storeOrderRefundDao.get(id);
-  if (!refund) return jsonFail(c, "退款记录不存在");
-  const returnContact = await resolveRefundReturnContact(c.get("container"), refund);
-  return jsonOk(c, {
-    ...refund,
-    cartInfo: refund.cartInfo ? JSON.parse(refund.cartInfo) : null,
-    returnContact,
-  });
+  return jsonOk(c, await new AdminRefundReadService(c.get('container'), c.env).detail(adminRefundId(c.req.param('id'))));
 }
 
-/** POST /api/admin/refund/agree/:id — 同意退款 */
-export async function adminRefundAgree(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  const { StoreOrderRefundService } = await import("@/services/order/StoreOrderRefundService");
-  const svc = new StoreOrderRefundService(c.get("container"), c.env);
-  try {
-    const result = await svc.agreeRefund(id);
-    return jsonOk(c, result, result.completed ? "退款成功" : "退款已受理，等待渠道确认");
-  } catch (e) {
-    if (e instanceof Error) return jsonFail(c, e.message);
-    throw e;
-  }
-}
-
-/** POST /api/admin/refund/refuse/:id — 拒绝退款 */
-export async function adminRefundRefuse(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  const body = (await c.req.json().catch(() => ({}))) as { refuse_reason?: string };
-  const { StoreOrderRefundService } = await import("@/services/order/StoreOrderRefundService");
-  const svc = new StoreOrderRefundService(c.get("container"), c.env);
-  try {
-    await svc.refuseRefund(id, body.refuse_reason ?? "不满足退款条件");
-    return jsonOk(c, null, "已拒绝退款");
-  } catch (e) {
-    if (e instanceof Error) return jsonFail(c, e.message);
-    throw e;
-  }
-}
+// Retain the registered names, not their former unkeyed execution paths.
+export { retiredAdminRefundMutation as adminRefundAgree,
+  retiredAdminRefundMutation as adminRefundRefuse } from './AdminRefundOperationController';
 
 /** GET /api/admin/config/:menuName — 取单个配置 */
 export async function adminConfigGet(c: C) {

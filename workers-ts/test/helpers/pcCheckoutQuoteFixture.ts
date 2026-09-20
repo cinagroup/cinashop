@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 import { and, eq } from 'drizzle-orm';
 import { financePostgres } from "./financePostgres";
+import { checkoutPricingFixture } from './checkoutPricingFixture';
 import type { PgTable } from "drizzle-orm/pg-core";
 import { createContainerFromDb } from "../../src/lib/di";
 import { orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderController";
@@ -17,8 +18,13 @@ import type { AppVariables, Env } from "../../src/env";
 type QuoteFixtureDatabase = Pick<Awaited<ReturnType<typeof financePostgres>>, 'db' | 'exec' | 'close'>;
 export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
   createDatabase: (tables: PgTable[]) => Promise<QuoteFixtureDatabase> = financePostgres) {
-  const fixture = await createDatabase([...new Set([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
+  let fixture = await createDatabase([...new Set([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,
     memberRight, systemConfig, shippingTemplates, shippingTemplatesRegion, shippingTemplatesFree, shippingTemplatesNoDelivery, cityArea, systemStore, ...extraTables])]);
+  // Native checkout tests explicitly commission the real protocol. PGlite can
+  // still exercise read-only quotes, but cannot certify/create a PG16 checkout.
+  try {
+    if (process.env.TEST_FINANCE_POSTGRES_URL) fixture = await checkoutPricingFixture(fixture);
+  } catch (error) { await fixture.close(); throw error; }
   const container = createContainerFromDb(fixture.db);
   const cache = new Map<string, string>();
   const pricingKeys = ['member_func_status', 'member_card_status', 'svip_price_status', 'integral_ratio_status',
@@ -53,11 +59,12 @@ export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
       { id: 11, uid: 11, realName: "本地地址甲", phone: "00000000000", province: "本地省", city: "测试甲市", district: "测试甲区", cityId: 101, detail: "隔离样本一号", isDefault: 1 },
       { id: 12, uid: 11, realName: "本地地址乙", phone: "00000000000", province: "本地省", city: "测试乙市", district: "测试乙区", cityId: 102, detail: "隔离样本二号" },
     ]);
+    // Complete registered schemas enforce the template binding at INSERT.
+    await fixture.db.insert(shippingTemplates).values({ id: 10, name: "本地运费", type: 1 });
     await fixture.db.insert(storeProduct).values({ id: 70, storeName: "完整报价隔离样本", stock: 8, price: "10.00", isShow: 1, isVerify: 1, isVip: 1, freight: 3, tempId: 10, image: "/api/qa/image.svg" });
     await fixture.db.insert(storeProductAttrValue).values({ id: 1, productId: 70, type: 0, unique: "qared001", suk: "红色,大号", stock: 8, price: "10.00", vipPrice: "9.00", image: "/api/qa/image.svg" });
     await fixture.db.insert(storeCart).values({ id: 1, uid: 11, productId: 70, productAttrUnique: "qared001", cartNum: 2, isNew: 1, status: 1 });
     await fixture.db.insert(memberRight).values([{ id: 1, rightType: "vip_price", number: 1, status: 1 }, { id: 2, rightType: "express", number: 50, status: 1 }]);
-    await fixture.db.insert(shippingTemplates).values({ id: 10, name: "本地运费", type: 1 });
     await fixture.db.insert(shippingTemplatesRegion).values([
       { id: 1, templateId: 10, regionId: 101, regionName: "测试甲市", first: "2.00", firstPrice: "6.00", continue: "1.00", continuePrice: "1.00" },
       { id: 2, templateId: 10, regionId: 102, regionName: "测试乙市", first: "2.00", firstPrice: "12.00", continue: "1.00", continuePrice: "1.00" },

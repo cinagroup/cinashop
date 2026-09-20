@@ -77,12 +77,15 @@ describe("standalone sequence transaction execution boundary", () => {
   });
 
   it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", () => {
-    // Prior 1090 statements plus the formal 0154 shipping creation receipt table.
-    expect(fullPath.initialStatements).toBe(1091);
+    // Old-sequence baseline1091 plus Admin receipt table and history index.
+    // Fresh aligned ORM additionally emits the sequence ownership statement.
+    expect(fullPath.initialStatements).toBe(1093);
     expect(fullPath.committedUpgradeExecution).toBe("standalone-drizzle-transaction");
     expect(fullPath.driftRefusals).toHaveLength(30);
     expect(fullPath.originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved).toBe(true);
     expect(fullPath.noOpStorageAndCounterConfirmed).toBe(true);
+    expect(fullPath.tempIsolationConfirmed).toBe(true);
+    expect(fullPath.quotedNonPublicSchemaIsolationConfirmed).toBe(true);
     expect(fullPath.syntheticRowsCleanupConfirmed).toBe(true);
     if (fixture.format === "pg16") expect(fullPath.lockVerification).toMatchObject({
       waitRefused: true, directNextvalSetvalAndTableWriterBlocked: true, concurrentDistinctNumbers: 16,

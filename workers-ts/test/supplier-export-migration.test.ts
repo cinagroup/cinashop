@@ -4,8 +4,10 @@ import {
   parseSupplierExportIds,
   safeSpreadsheetCell,
   supplierExportOrderStatus,
+  SupplierExportService,
 } from "@/services/supplier/SupplierExportService";
 import { requiredSupplierPermissions } from "@/services/supplier/SupplierPermissionService";
+import type { Container } from "@/lib/di";
 
 describe("supplier export migration", () => {
   it("parses a strict bounded ID set", () => {
@@ -21,6 +23,14 @@ describe("supplier export migration", () => {
     expect(safeSpreadsheetCell("  @SUM(A1:A2)")).toBe("'  @SUM(A1:A2)");
     expect(safeSpreadsheetCell("ordinary text")).toBe("ordinary text");
     expect(safeSpreadsheetCell("a\0b")).toBe("ab");
+    expect(safeSpreadsheetCell("\u00a0\u000b=1+1")).toBe("'\u00a0\u000b=1+1");
+    expect(() => safeSpreadsheetCell("abcdef", 5)).toThrow("导出字段过长");
+  });
+
+  it.each(['2','1e0','0','-1','1.0',' 1'])('rejects exact export page %s before accessing the database',async page=>{
+    const container=new Proxy({} as Container,{get(){throw Error('Database must not be accessed');}});
+    await expect(new SupplierExportService(container).storeOrder(7,{selection:'exact',ids:'25',page}))
+      .rejects.toThrow(/页码无效|精确导出/);
   });
 
   it("preserves the legacy order-status labels", () => {

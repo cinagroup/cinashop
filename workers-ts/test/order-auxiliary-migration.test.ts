@@ -86,6 +86,8 @@ describe("order auxiliary migration", () => {
   it("restores invoice and audit evidence in order reads and lifecycle updates", () => {
     const detail = readFileSync("src/services/order/StoreOrderCreateService.ts", "utf8");
     const invoice = readFileSync("src/services/order/StoreOrderInvoiceService.ts", "utf8");
+    const lifecycle = readFileSync("src/services/order/InvoiceOrderLifecycle.ts", "utf8");
+    const out = readFileSync("src/services/out/OutApiService.ts", "utf8");
     const pay = readFileSync("src/services/order/StoreOrderPayService.ts", "utf8");
     const refund = readFileSync("src/services/order/StoreOrderRefundService.ts", "utf8");
     const routes = readFileSync("src/routes/v1/index.ts", "utf8");
@@ -96,9 +98,14 @@ describe("order auxiliary migration", () => {
     expect(detail).toContain(".from(storeOrderPromotions)");
     expect(detail).toContain(".from(storeOrderWriteoff)");
 
-    expect(invoice).toContain("pg_advisory_xact_lock");
+    expect(invoice).toContain("await lockOrderSettlement(tx, rootId)");
+    expect(invoice).not.toContain('hashtext(');
     expect(invoice).toContain("eq(userInvoice.uid, uid)");
-    expect(invoice).toContain("invoiceAmount: order.payPrice");
+    expect(invoice).toContain("invoiceAmount: amount");
+    expect(invoice).toContain('await currentInvoiceAmount(tx, order)');
+    expect(out).toContain('return currentInvoiceAmount(tx, order)');
+    expect(lifecycle).toContain('currentGenerationRefunds(history, generation)');
+    expect(lifecycle).toContain('return centsToAmount(paid - refunded)');
     expect(invoice).toContain("eq(storeOrderInvoice.isRefund, 0)");
     expect(pay.match(/\.set\(\{ isPay: 1 \}\)/g)).toHaveLength(2);
     expect(refund).toContain(".set({ isRefund: 1 })");

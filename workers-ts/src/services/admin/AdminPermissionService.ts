@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import type { AppVariables } from "@/env";
 import type { Container } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
@@ -384,6 +384,7 @@ export class AdminPermissionService {
 
   async resolveRoleAssignment(
     value: string | readonly string[] | undefined,
+    lockForDecision = false,
   ): Promise<{
     keys: Set<string>;
     roleIds: number[];
@@ -394,14 +395,15 @@ export class AdminPermissionService {
     if (!roleIds.length) {
       return { keys: new Set(), roleIds: [], missingRoleIds: [], legacyRuleIds: [] };
     }
-    const roles = await this.container.db
+    const roleQuery = this.container.db
       .select({ id: systemRole.id, rules: systemRole.rules })
       .from(systemRole)
       .where(and(inArray(systemRole.id, roleIds), eq(systemRole.status, 1)));
+    const roles = lockForDecision ? await roleQuery.orderBy(asc(systemRole.id)).for("share", { noWait: true }) : await roleQuery;
     const found = new Set(roles.map((role) => role.id));
     const ruleTokens = roles.flatMap((role) => splitRuleTokens(role.rules));
     return {
-      keys: await this.resolveRuleTokens(ruleTokens),
+      keys: await this.resolveRuleTokens(ruleTokens, lockForDecision),
       roleIds,
       missingRoleIds: roleIds.filter((id) => !found.has(id)),
       legacyRuleIds: [...new Set(ruleTokens.filter(isNumericToken).map(Number))],
@@ -472,10 +474,9 @@ export class AdminPermissionService {
     }));
   }
 
-  private async resolveRuleTokens(tokens: readonly string[]): Promise<Set<string>> {
+  private async resolveRuleTokens(tokens: readonly string[], lockForDecision = false): Promise<Set<string>> {
     const legacyIds = tokens.filter(isNumericToken).map(Number);
-    const menus = legacyIds.length
-      ? await this.container.db
+    const menuQuery = this.container.db
           .select({
             id: systemMenus.id,
             apiUrl: systemMenus.apiUrl,
@@ -492,7 +493,9 @@ export class AdminPermissionService {
               eq(systemMenus.access, 1),
               eq(systemMenus.isDel, 0),
             ),
-          )
+          );
+    const menus = legacyIds.length
+      ? lockForDecision ? await menuQuery.orderBy(asc(systemMenus.id)).for("share", { noWait: true }) : await menuQuery
       : [];
     return this.resolveTokensWithMenus(tokens, menus);
   }

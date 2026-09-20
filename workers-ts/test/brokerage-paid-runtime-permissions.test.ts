@@ -1,11 +1,13 @@
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import * as models from '../src/models/schema';
 import { runBrokeragePaidOrderFence } from '../src/migrations/runBrokeragePaidOrderFence';
-import { auditPaidOrderRuntimePermissions } from '../src/migrations/auditPaidOrderRuntimePermissions';
+import { auditCheckoutRuntimePermissions, auditPaidOrderRuntimePermissions } from '../src/migrations/auditPaidOrderRuntimePermissions';
+import { inspectCheckoutPricingLock, installCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { applyStoreOrderPayment, applyStoreOrderBalancePayment } from '../src/services/order/StoreOrderPayService';
 import { applyOrderRefund, finalizeStoreOrderRefund } from '../src/services/order/StoreOrderRefundService';
 import { assertCheckoutPaidOrderQualifications } from '../src/services/order/CheckoutPaidOrderAuthority';
@@ -13,9 +15,13 @@ import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuS
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 
 const exec = promisify(execFile);
-const cli = (connectionString?: string) => exec(process.execPath,
-  ['node_modules/tsx/dist/cli.mjs', 'scripts/audit-paid-runtime-permissions.ts'], {
-    cwd: process.cwd(), timeout: 15_000,
+const CLI_TIMEOUT_MS = 15_000;
+// Each case starts several sequential CLI processes. Keep their individual
+// deadlines, but let the case finish its bounded calls and fixture cleanup.
+const cliCaseTimeout = (calls: number) => calls * CLI_TIMEOUT_MS + 10_000;
+const cli = (connectionString?: string, args: string[] = []) => exec(process.execPath,
+  ['node_modules/tsx/dist/cli.mjs', 'scripts/audit-paid-runtime-permissions.ts', ...args], {
+    cwd: process.cwd(), timeout: CLI_TIMEOUT_MS,
     env: { SystemRoot: process.env.SystemRoot, PATH: process.env.PATH, TEMP: process.env.TEMP, TMP: process.env.TMP,
       // Wrangler augments ProcessEnv with these non-secret app variables.
       // Pass only that narrow set, never DATABASE_URL or host credentials.
@@ -25,6 +31,7 @@ const cli = (connectionString?: string) => exec(process.execPath,
       OUT_API_READ_LIMIT_PER_MINUTE: process.env.OUT_API_READ_LIMIT_PER_MINUTE,
       OUT_API_WRITE_LIMIT_PER_MINUTE: process.env.OUT_API_WRITE_LIMIT_PER_MINUTE,
       ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS, PC_AUTH_ALLOWED_ORIGINS: process.env.PC_AUTH_ALLOWED_ORIGINS,
+      OFFLINE_PC_RETURN_ORIGIN: process.env.OFFLINE_PC_RETURN_ORIGIN, OFFLINE_H5_RETURN_ORIGIN: process.env.OFFLINE_H5_RETURN_ORIGIN,
       AUTH_ALLOWED_ORIGINS: process.env.AUTH_ALLOWED_ORIGINS, KEFU_AUTH_ALLOWED_ORIGINS: process.env.KEFU_AUTH_ALLOWED_ORIGINS,
       PAID_RUNTIME_AUDIT_DATABASE_URL: connectionString },
   });
@@ -41,10 +48,17 @@ it('CLI refuses missing or unauthorized remote target before opening a connectio
   for (const url of [undefined, 'postgresql://invalid@not-a-real-host.invalid/example']) {
     await expect(cli(url)).rejects.toMatchObject({ code: 2, stdout: '', stderr: expect.stringContaining('No database was contacted') });
   }
-});
+}, cliCaseTimeout(2));
+
+it('CLI validates its explicit checkout scope before any connection attempt', async () => {
+  for (const args of [['--checkout'], ['--unknown'], ['--checkout', '--checkout']]) {
+    await expect(cli(undefined, args)).rejects.toMatchObject({ code: 2, stdout: '', stderr: expect.stringContaining('No database was contacted') });
+  }
+}, cliCaseTimeout(3));
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence runtime identity and least-privilege preflight', () => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  const pendingRuntimeWork = new Set<Promise<unknown>>();
   type Runtime = SequenceRunnerPeer & { role: string; connectionString: string };
   const tables = ['user', 'user_bill', 'user_brokerage', 'store_order', 'store_order_cart_info', 'store_order_invoice',
     'store_order_outbox', 'store_order_status', 'store_order_refund', 'store_order_refund_payment', 'store_product',
@@ -55,7 +69,24 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
   }
   const run = <T>(callback: (peer: Runtime) => Promise<T>) => {
     if (!f.withRuntimeRole) throw new Error('Real runtime login required');
-    return f.withRuntimeRole(async peer => { await grant(peer); return callback(peer); });
+    const task = f.withRuntimeRole(async peer => { await grant(peer); return callback(peer); });
+    pendingRuntimeWork.add(task);
+    void task.then(() => pendingRuntimeWork.delete(task), () => pendingRuntimeWork.delete(task));
+    return task;
+  };
+  const withPricing = async <T>(peer: Runtime, callback: (owner: string) => Promise<T>) => {
+    const owner = `cinashop_runtime_${randomUUID().replaceAll('-', '')}`;
+    await f.exec(`CREATE ROLE "${owner}" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`);
+    try {
+      await installCheckoutPricingLock(f.db, owner);
+      await f.exec(`GRANT SELECT ON member_right,system_config TO "${peer.role}";
+        GRANT EXECUTE ON FUNCTION public.checkout_lock_pricing_v1() TO "${peer.role}"`);
+      return await callback(owner);
+    } finally {
+      if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(owner)) throw Error('Unsafe owned pricing test role');
+      await f.exec(`DROP OWNED BY "${owner}"; DROP ROLE "${owner}"`);
+      expect((await f.query(`SELECT oid FROM pg_roles WHERE rolname='${owner}'`)).rows).toEqual([]);
+    }
   };
   const snapshot = () => f.query(`SELECT jsonb_build_object(
     'users',(SELECT jsonb_agg(to_jsonb(u) ORDER BY uid) FROM "user" u),
@@ -75,7 +106,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
     await f.db.insert(models.storeOrderCartInfo).values({ id: 701, oid: 501, uid: 11, productId: 70, cartId: '701',
       cartNum: 2, unique: 'runtime-cart', skuUnique: 'role0001', cartInfo: JSON.stringify({ sku: { id: 1 }, sum_true_price: '20.00' }) });
   }, 30_000);
-  afterEach(async () => { await f?.close(); });
+  afterEach(async () => {
+    // Vitest timeout does not cancel an async body. Let its bounded CLI calls
+    // and role-finally handlers settle before dropping their database.
+    await Promise.allSettled([...pendingRuntimeWork]);
+    await f?.close();
+  }, cliCaseTimeout(4));
 
   it('uses a real non-owner login for readonly audit, qualification, balance payment and full refund', async () => {
     await run(async peer => {
@@ -158,7 +194,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
         stdout: expect.stringContaining('"ready":false'), stderr: '' });
       expect(await snapshot()).toEqual(before);
     });
-  });
+  }, cliCaseTimeout(2));
 
   it('denies destructive trigger/function/table operations and replication bypass to the runtime login', async () => {
     await run(async peer => {
@@ -284,4 +320,109 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid-order fence
     const rows = await f.db.select({ oid: sql<number>`oid` }).from(sql`pg_roles`).where(sql`rolname=${created}`);
     expect(rows).toEqual([]);
   });
+
+  it('keeps the paid-only scope separate and fails checkout closed when the pricing protocol is absent', async () => {
+    await run(async peer => {
+      expect((await auditPaidOrderRuntimePermissions(peer.db)).ready).toBe(true);
+      const result = await auditCheckoutRuntimePermissions(peer.db);
+      expect(result.ready).toBe(false);
+      expect(result.failures).toEqual(expect.arrayContaining(['checkoutPricingCatalog', 'checkoutPricingPrivileges']));
+      expect((await inspectCheckoutPricingLock(f.db)).absent).toBe(true);
+    });
+  });
+
+  it('recognizes only the exact safe pricing capability without executing it, granting or changing business data', async () => {
+    await run(async peer => withPricing(peer, async () => {
+      const before = await snapshot(), catalog = await inspectCheckoutPricingLock(f.db);
+      const observed = new Proxy(peer.db, { get(target, key, receiver) {
+        if (key === 'transaction') return ((callback, config) => target.transaction(async tx => {
+          expect(config).toEqual({ isolationLevel: 'repeatable read', accessMode: 'read only' });
+          const result = await callback(tx);
+          const [locks] = await tx.execute(sql`SELECT count(*)::integer AS count FROM pg_locks
+            WHERE pid=pg_backend_pid() AND mode IN ('ShareLock','AccessExclusiveLock') AND locktype='relation'`);
+          expect(locks?.count).toBe(0);
+          return result;
+        }, config)) satisfies DbClient['transaction'];
+        return Reflect.get(target, key, receiver);
+      } });
+      expect(await auditPaidOrderRuntimePermissions(observed)).toMatchObject({ ready: true, failures: [] });
+      expect(await auditCheckoutRuntimePermissions(observed)).toMatchObject({ ready: true, failures: [], checks: {
+        noUnreviewedDefinerRoutine: true, checkoutPricingCatalog: true, checkoutPricingCaller: true,
+        checkoutPricingPrivileges: true, checkoutPricingDefinerReview: true,
+      } });
+      expect(await snapshot()).toEqual(before);
+      expect(await inspectCheckoutPricingLock(f.db)).toEqual(catalog);
+      const output = JSON.stringify(await auditCheckoutRuntimePermissions(peer.db));
+      expect(output).not.toContain(peer.role); expect(output).not.toContain(catalog.functionOid);
+    }));
+  });
+
+  it.each([
+    ['body', "CREATE OR REPLACE FUNCTION public.checkout_lock_pricing_v1() RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS 'BEGIN NULL; END'"],
+    ['invoker', 'ALTER FUNCTION public.checkout_lock_pricing_v1() SECURITY INVOKER'],
+    ['path', 'ALTER FUNCTION public.checkout_lock_pricing_v1() SET search_path=public,pg_temp'],
+    ['PUBLIC execute', 'GRANT EXECUTE ON FUNCTION public.checkout_lock_pricing_v1() TO PUBLIC'],
+    ['overload', "CREATE FUNCTION public.checkout_lock_pricing_v1(int) RETURNS void LANGUAGE plpgsql AS 'BEGIN NULL; END'"],
+    ['RLS', 'ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY'],
+  ])('does not turn the %s-drifted function name into a checkout permission whitelist', async (_kind, statement) => {
+    await run(async peer => withPricing(peer, async () => {
+      await f.exec(statement);
+      const result = await auditCheckoutRuntimePermissions(peer.db);
+      expect(result.ready).toBe(false); expect(result.failures).toContain('checkoutPricingCatalog');
+      if (_kind !== 'invoker') expect(result.failures).toContain('noUnreviewedDefinerRoutine');
+    }));
+  });
+
+  it.each(['config-write', 'no-execute', 'no-select', 'owner-login', 'owner-membership', 'execute-grant-option'] as const)
+    ('rejects %s in the composed checkout permission envelope', async mode => {
+      await run(async peer => withPricing(peer, async owner => {
+        const mutation = {
+          'config-write': `GRANT UPDATE(value) ON system_config TO "${peer.role}"`,
+          'no-execute': `REVOKE EXECUTE ON FUNCTION public.checkout_lock_pricing_v1() FROM "${peer.role}"`,
+          'no-select': `REVOKE SELECT ON member_right FROM "${peer.role}"`,
+          'owner-login': `ALTER ROLE "${owner}" LOGIN`,
+          'owner-membership': `GRANT "${owner}" TO "${peer.role}" WITH INHERIT FALSE, SET FALSE`,
+          'execute-grant-option': `GRANT EXECUTE ON FUNCTION public.checkout_lock_pricing_v1() TO "${peer.role}" WITH GRANT OPTION`,
+        }[mode];
+        await f.exec(mutation);
+        expect((await auditCheckoutRuntimePermissions(peer.db)).ready).toBe(false);
+      }));
+    });
+
+  it('does not exempt a second callable definer or an identical function name in another schema', async () => {
+    await run(async peer => withPricing(peer, async () => {
+      await f.exec(`CREATE SCHEMA pgx_pricing;
+        CREATE FUNCTION pgx_pricing.checkout_lock_pricing_v1() RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS 'BEGIN NULL; END'`);
+      const result = await auditCheckoutRuntimePermissions(peer.db);
+      expect(result.failures).toContain('noUnreviewedDefinerRoutine');
+      expect(result.failures).toContain('checkoutPricingDefinerReview');
+      await f.exec('REVOKE ALL ON FUNCTION pgx_pricing.checkout_lock_pricing_v1() FROM PUBLIC');
+      expect((await auditCheckoutRuntimePermissions(peer.db)).ready).toBe(true);
+    }));
+  });
+
+  it('conservatively includes mixed and disabled membership ancestry in both permission scopes', async () => {
+    await run(async peer => f.withRuntimeRole!(async bridge => f.withRuntimeRole!(async ancestor => {
+      await f.exec(`ALTER ROLE "${ancestor.role}" CREATEDB;
+        GRANT "${ancestor.role}" TO "${bridge.role}" WITH INHERIT FALSE, SET FALSE;
+        GRANT "${bridge.role}" TO "${peer.role}" WITH INHERIT FALSE, SET TRUE`);
+      expect((await auditPaidOrderRuntimePermissions(peer.db)).failures).toContain('unprivilegedReachableRoles');
+      expect((await auditCheckoutRuntimePermissions(peer.db)).failures).toContain('checkoutPricingCaller');
+    })));
+  });
+
+  it('CLI checkout scope returns zero only with the reviewed installed protocol and preserves the paid-only scope', async () => {
+    await run(async peer => {
+      await expect(cli(peer.connectionString, ['--checkout'])).rejects.toMatchObject({ code: 1, stderr: '',
+        stdout: expect.stringContaining('checkoutPricingCatalog') });
+      await withPricing(peer, async () => {
+        const result = await cli(peer.connectionString, ['--checkout']);
+        expect(JSON.parse(result.stdout)).toMatchObject({ ready: true, failures: [] });
+        expect(result.stderr).toBe(''); expect(result.stdout).not.toContain(peer.role);
+        await f.exec(`REVOKE EXECUTE ON FUNCTION public.checkout_lock_pricing_v1() FROM "${peer.role}"`);
+        await expect(cli(peer.connectionString, ['--checkout'])).rejects.toMatchObject({ code: 1, stderr: '' });
+        expect(JSON.parse((await cli(peer.connectionString)).stdout).ready).toBe(true);
+      });
+    });
+  }, cliCaseTimeout(4));
 });

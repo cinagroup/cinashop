@@ -23,7 +23,7 @@ describe('checkout membership authority', () => {
       { id: 1, name: '等级甲', isShow: 1, discount: '80.00' },
       { id: 2, name: '等级乙', isShow: 1, discount: '70.00' },
     ]);
-    await f.db.update(user).set({ level: 1, isEverLevel: 0, isMoneyLevel: 1, overdueTime: Math.floor(Date.now() / 1000) + 3600 });
+    await f.db.update(user).set({ level: 1, levelStatus: 1, isEverLevel: 0, isMoneyLevel: 1, overdueTime: Math.floor(Date.now() / 1000) + 3600 });
     f.app.post('/api/order/create/:key', orderCreate);
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => {
       await beforeSequence?.(); return new Response(`member_boundary_${++sequence}`);
@@ -92,7 +92,7 @@ describe('checkout membership authority', () => {
   it.each(['55P03', '40P01', '57014', '08006'])('classifies only NOWAIT conflicts, preserving other SQL failures (%s)', async code => {
     const failure = new Error('wrapped driver failure', { cause: { code } });
     vi.spyOn(f.db, 'select').mockImplementationOnce(() => { throw failure; });
-    const checking = assertCheckoutMembershipSnapshot(f.db, { uid: 11, paidActive: true, levelId: 0, level: null });
+    const checking = assertCheckoutMembershipSnapshot(f.db, { uid: 11, paidActive: true, levelActive: true, levelId: 0, level: null });
     if (code === '55P03') await expect(checking).rejects.toBeInstanceOf(ValidateException);
     else await expect(checking).rejects.toBe(failure);
   });

@@ -1,4 +1,5 @@
 import type { GoodsDetail, GoodsSku } from "../types/product";
+import { normalizeSkuMembershipPrice } from "../../../common/skuMembershipPrice";
 
 export function normalizeGoodsSkus(value: unknown): GoodsSku[] {
   if (value === undefined) return [];
@@ -16,7 +17,7 @@ export function normalizeGoodsSkus(value: unknown): GoodsSku[] {
     seen.add(unique);
     const money = (value: unknown) => typeof value === "string" && /^\d+(?:\.\d+)?$/.test(value)
       && Number.isFinite(Number(value)) ? value : "";
-    return { unique, stock, price, suk: typeof row.suk === "string" ? row.suk : "默认规格",
+    return { unique, stock, price, ...normalizeSkuMembershipPrice(row), suk: typeof row.suk === "string" ? row.suk : "默认规格",
       ot_price: money(row.ot_price ?? row.otPrice), vip_price: money(row.vip_price ?? row.vipPrice),
       image: typeof row.image === "string" ? row.image : "" };
   });

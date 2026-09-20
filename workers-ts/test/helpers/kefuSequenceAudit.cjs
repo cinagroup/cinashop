@@ -75,6 +75,7 @@ module.exports=async function auditKefuSequence({api,models,format,database,runA
   };
   const savepoint=async fn=>{await db.exec("SAVEPOINT sequence_probe");try{return await fn();}finally{await db.exec("ROLLBACK TO SAVEPOINT sequence_probe; RELEASE SAVEPOINT sequence_probe");}};
   const refusals=[];let lockVerification=null;
+  const fixtureSharedDependencyAdditions={temp:0,quotedSchema:0};
   try {
     await db.exec(initial.join("\n"));
     const ids=(await query("SELECT 'public.kefu_visitor_uid_seq'::regclass::oid AS seq,'public.kefu_visitor_session'::regclass::oid AS tbl,'pg_class'::regclass::oid AS cls,(SELECT attnum FROM pg_attribute WHERE attrelid='public.kefu_visitor_session'::regclass AND attname='visitor_uid') AS col"))[0];
@@ -149,7 +150,12 @@ module.exports=async function auditKefuSequence({api,models,format,database,runA
         await assert.rejects(db.exec(sql.replace(mutation,mutation+" PERFORM 1/0;")),{code:"P0001"});
       });
       await db.exec("CREATE TEMP TABLE kefu_visitor_session(id integer); CREATE TEMP SEQUENCE kefu_visitor_uid_seq; SET LOCAL search_path TO public,pg_temp");
-      await db.exec(sql);expectAligned(await capture(),fixture);
+      // A non-bootstrap owner has pg_shdepend rows even for temporary objects.
+      // Snapshot after fixture setup; compare every dependency across the actual
+      // migration, not against a snapshot that predates the new test objects.
+      const tempFixture=await capture();
+      fixtureSharedDependencyAdditions.temp=tempFixture.shared.length-fixture.shared.length;
+      await db.exec(sql);expectAligned(await capture(),tempFixture);
       const aligned=await capture();await db.exec(sql);assert.deepEqual(await capture(),aligned,"Repeated aligned migration does not rewrite storage or WAL bookkeeping");
       assert.equal((await query("SELECT to_regclass('pg_temp.kefu_visitor_uid_seq') IS NOT NULL AS kept"))[0].kept,true);
       await savepoint(async()=>{
@@ -168,8 +174,12 @@ module.exports=async function auditKefuSequence({api,models,format,database,runA
       await db.exec(`CREATE SCHEMA "sequence""scope";
         CREATE SEQUENCE "sequence""scope".kefu_visitor_uid_seq AS bigint START WITH 1000000000 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 NO CYCLE;
         CREATE TABLE "sequence""scope".kefu_visitor_session(LIKE public.kefu_visitor_session INCLUDING ALL);
-        ALTER TABLE "sequence""scope".kefu_visitor_session ALTER COLUMN visitor_uid SET DEFAULT nextval('"sequence""scope".kefu_visitor_uid_seq');
-        SET LOCAL search_path TO "sequence""scope",pg_temp,public;`);
+        ALTER TABLE "sequence""scope".kefu_visitor_session ALTER COLUMN visitor_uid SET DEFAULT nextval('"sequence""scope".kefu_visitor_uid_seq');`);
+      // Both captures use the same public search_path: pg_get_expr renders
+      // regclass constants differently when the namesake schema is first.
+      const scopedFixture=await capture();
+      fixtureSharedDependencyAdditions.quotedSchema=scopedFixture.shared.length-fixture.shared.length;
+      await db.exec('SET LOCAL search_path TO "sequence""scope",pg_temp,public');
       const pathBefore=(await query("SHOW search_path"))[0].search_path;
       await db.exec(sql);await db.exec(sql);
       assert.equal((await query("SHOW search_path"))[0].search_path,pathBefore);
@@ -177,7 +187,7 @@ module.exports=async function auditKefuSequence({api,models,format,database,runA
       assert.deepEqual(scoped,{value:"1000000000",is_called:false},"Uncalled first value is preserved in a quoted non-public schema");
       assert.equal((await query(`SELECT nextval('"sequence""scope".kefu_visitor_uid_seq')::text AS value`))[0].value,"1000000000");
       await db.exec("SET LOCAL search_path TO public,pg_temp");
-      assert.deepEqual(await capture(),fixture,"Scoped alignment does not touch public objects or counters");
+      assert.deepEqual(await capture(),scopedFixture,"Scoped alignment does not touch public objects, counters or any shared dependency");
     }finally {await db.exec("ROLLBACK");}
     assert.deepEqual(await capture(),fixture);
     await align();expectAligned(await capture(),fixture);
@@ -219,7 +229,7 @@ module.exports=async function auditKefuSequence({api,models,format,database,runA
       changedSequenceStorageFiles:1,originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved:true,
       committedOldRowsPreserved:2,originalCounterPreserved:true,driftRefusals:refusals,
       failureAfterAlterRollbackConfirmed:true,allPreflightBeforeTypeMutationConfirmed:true,
-      noOpStorageAndCounterConfirmed:true,tempIsolationConfirmed:true,quotedNonPublicSchemaIsolationConfirmed:true,uncalledFirstValuePreserved:true,ownershipDeletionRollbackConfirmed:true,
+      noOpStorageAndCounterConfirmed:true,tempIsolationConfirmed:true,quotedNonPublicSchemaIsolationConfirmed:true,fixtureSharedDependencyAdditions,uncalledFirstValuePreserved:true,ownershipDeletionRollbackConfirmed:true,
       newDefaultWriteConfirmed:true,upperBoundAndExhaustionConfirmed:true,lockVerification,syntheticRowsCleanupConfirmed:true};
     console.log("KEFU_SEQUENCE_AUDIT "+JSON.stringify({format,...report,durationMs:Date.now()-started}));
     return report;

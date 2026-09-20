@@ -5,6 +5,7 @@
  * 命名与 PHP 路由保持一致, 方便前端无感切换。
  */
 import { Hono } from "hono";
+import { privateRefundOperationResponse, retiredAdminRefundMutation as adminRefundMutationUnavailable } from '@/controllers/api/v1/AdminRefundOperationController';
 import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
 import { authMiddleware } from "@/middleware/auth";
 import * as LoginController from "@/controllers/api/v1/LoginController";
@@ -60,6 +61,7 @@ import * as ShortVideoController from "@/controllers/api/v1/ShortVideoController
 import * as DiyHomeController from "@/controllers/api/v1/DiyHomeController";
 import * as PublicArticleController from "@/controllers/api/v1/PublicArticleController";
 import * as MemberCardController from "@/controllers/api/v1/MemberCardController";
+import * as OfflineOrderController from "@/controllers/api/v1/OfflineOrderController";
 import * as PcCompatibilityController from "@/controllers/api/v1/PcCompatibilityController";
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
@@ -344,6 +346,16 @@ v1Routes.get("/marketing/short_video/comment_reply/:pid", authMiddleware({ force
 v1Routes.delete("/marketing/short_video/comment/:id", authMiddleware({ force: true }), ShortVideoController.deleteComment);
 v1Routes.get("/marketing/short_video/comment/:type/:id", authMiddleware({ force: true }), ShortVideoController.commentRelation);
 v1Routes.get("/marketing/short_video/:type/:id", authMiddleware({ force: true }), ShortVideoController.videoRelation);
+v1Routes.post(
+  "/order/offline/check/price",
+  authMiddleware({ force: true }),
+  OfflineOrderController.checkPrice,
+);
+v1Routes.post('/order/offline/create', authMiddleware({ force: true }), OfflineOrderController.create);
+v1Routes.post('/order/offline/pay', authMiddleware({ force: true }), OfflineOrderController.pay);
+v1Routes.get('/order/offline/detail/:orderId', authMiddleware({ force: true }), OfflineOrderController.detail);
+v1Routes.get('/order/offline/pay/type', authMiddleware({ force: true }), OfflineOrderController.payTypes);
+v1Routes.get('/order/offline/history', authMiddleware({ force: true }), OfflineOrderController.history);
 v1Routes.get(
   "/user/member/card/index",
   authMiddleware({ force: true }),
@@ -1445,9 +1457,9 @@ v1Routes.get("/admin/order/export_temp", adminAuth, AdminController.adminMobileO
 v1Routes.put("/admin/order/split_delivery/:id", adminAuth, AdminController.adminMobileOrderSplitDelivery);
 v1Routes.post("/admin/order/order_verific", adminAuth, AdminController.adminMobileOrderVerificationLookup);
 v1Routes.post("/admin/order/offline", adminAuth, AdminController.adminMobileOrderOffline);
-v1Routes.post("/admin/order/refund", adminAuth, AdminController.adminMobileOrderRefund);
-v1Routes.post("/admin/order/refund_agree/:id", adminAuth, AdminController.adminMobileOrderRefundAgree);
-v1Routes.post("/admin/order/open/refund/:id", adminAuth, AdminController.adminMobileOrderOpenRefund);
+v1Routes.post("/admin/order/refund", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
+v1Routes.post("/admin/order/refund_agree/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
+v1Routes.post("/admin/order/open/refund/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
 v1Routes.post("/admin/order/price", adminAuth, AdminController.adminMobileOrderPrice);
 v1Routes.post("/admin/order/remark", adminAuth, AdminController.adminMobileOrderRemark);
 v1Routes.post("/admin/order/remark/:orderId", adminAuth, AdminController.adminMobileOrderRemark);
@@ -1551,8 +1563,8 @@ v1Routes.get("/admin/refund/detail/:id", adminAuth, AdminCrud.adminRefundDetail)
 v1Routes.get("/admin/refund_order/list", adminAuth, AdminCrud.adminRefundOrderList);
 v1Routes.get("/admin/refund_order/detail/:uni", adminAuth, AdminCrud.adminRefundOrderDetail);
 v1Routes.post("/admin/refund_order/remark", adminAuth, AdminCrud.adminRefundOrderRemark);
-v1Routes.post("/admin/refund/agree/:id", adminAuth, AdminCrud.adminRefundAgree);
-v1Routes.post("/admin/refund/refuse/:id", adminAuth, AdminCrud.adminRefundRefuse);
+v1Routes.post("/admin/refund/agree/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
+v1Routes.post("/admin/refund/refuse/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);
 
 // 系统配置
 v1Routes.get("/admin/config/list", adminAuth, AdminCrud.adminConfigList);

@@ -1,5 +1,6 @@
 import { createDbFromConnectionString } from "@/lib/di";
 import { runDiscountPackagePostgresScenario } from "./DiscountPackagePostgresScenario";
+import { checkoutScenarioPricingOwner } from "./CheckoutScenarioPricing";
 
 interface AuditEnv {
   HYPERDRIVE: Hyperdrive;
@@ -66,10 +67,11 @@ export default {
       return Response.json({ error: "not found" }, { status: 404 });
     }
     try {
+      const pricingOwner = checkoutScenarioPricingOwner(request);
       console.log("[discount-package-audit] reading public snapshot");
       const current = await currentState(env.HYPERDRIVE.connectionString);
       console.log("[discount-package-audit] running isolated scenario");
-      const scenario = await runDiscountPackagePostgresScenario(env.HYPERDRIVE.connectionString);
+      const scenario = await runDiscountPackagePostgresScenario(env.HYPERDRIVE.connectionString, pricingOwner);
       console.log("[discount-package-audit] isolated scenario completed");
       return Response.json({ current, scenario });
     } catch (error) {

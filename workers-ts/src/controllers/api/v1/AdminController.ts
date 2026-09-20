@@ -403,41 +403,11 @@ export async function adminMobileOrderOffline(c: C) {
   return jsonOk(c, null, "修改成功!");
 }
 
-/** POST /api/admin/order/refund — exact refund decision by public refund/order number. */
-export async function adminMobileOrderRefund(c: C) {
-  privateAdminResponse(c);
-  const result = await mobileRefundOperationService(c).refund(
-    verifiedAdminId(c),
-    await readBoundedJsonObject(c.req.raw, 32 * 1024),
-  );
-  return jsonOk(
-    c,
-    result,
-    "status" in result && result.status === "PROCESSING" ? "退款已受理，等待渠道确认" : "审核成功",
-  );
-}
-
-/** POST /api/admin/order/refund_agree/:id — approve return shipment, without moving funds. */
-export async function adminMobileOrderRefundAgree(c: C) {
-  privateAdminResponse(c);
-  await mobileRefundOperationService(c).agreeReturn(verifiedAdminId(c), c.req.param("id"));
-  return jsonOk(c, null, "操作成功");
-}
-
-/** POST /api/admin/order/open/refund/:id — proactive whole/split administrator refund. */
-export async function adminMobileOrderOpenRefund(c: C) {
-  privateAdminResponse(c);
-  const result = await mobileRefundOperationService(c).openRefund(
-    verifiedAdminId(c),
-    c.req.param("id"),
-    await readBoundedJsonObject(c.req.raw, 32 * 1024),
-  );
-  return jsonOk(
-    c,
-    result,
-    "status" in result && result.status === "PROCESSING" ? "退款已受理，等待渠道确认" : "操作成功",
-  );
-}
+// Embedded PHP Admin callers have no durable original-operation key. Do not
+// silently translate public order numbers or proactive/split refund requests.
+export { retiredAdminRefundMutation as adminMobileOrderRefund,
+  retiredAdminRefundMutation as adminMobileOrderRefundAgree,
+  retiredAdminRefundMutation as adminMobileOrderOpenRefund } from './AdminRefundOperationController';
 
 /** GET /adminapi/statistic/order/get_basic — PHP 订单统计基础卡片。 */
 export async function adminStatisticOrderBasic(c: C) {

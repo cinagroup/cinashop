@@ -1,0 +1,164 @@
+{
+  "date": "2026-09-15",
+  "status": "local_candidate_not_deployed",
+  "scope": "Actual Hono createApp Request/Response routing, JWT and SQL role authorization, controller/service/transaction graph against isolated native PostgreSQL 16.15. Not a live HTTP listener, browser, workerd, deployed Hyperdrive, Redis or real provider acceptance run.",
+  "productionAccess": false,
+  "productionMutation": false,
+  "stagedCommittedPushedOrDeployed": false,
+  "browserRun": false,
+  "imagesAndCacheUnchanged": true,
+  "routes": {
+    "bases": [
+      "/adminapi/refund/creation",
+      "/api/admin/refund/creation"
+    ],
+    "method": "POST",
+    "addedSuffixes": [
+      "/create",
+      "/execute",
+      "/receipt",
+      "/abandon"
+    ],
+    "existingReadOnlySuffix": "/quote",
+    "protocol": "admin-refund-creation-v1",
+    "requiredPermission": "refund.manage",
+    "requiredHeaders": [
+      "Idempotency-Key: original UUIDv4",
+      "X-Refund-Operation-Scope: v1:admin:<authenticated ID>"
+    ],
+    "bodyLimitsBytes": {
+      "create": 8192,
+      "execute": 8192,
+      "abandon": 8192,
+      "receipt": 512
+    }
+  },
+  "evidence": {
+    "finalTests": {
+      "files": 5,
+      "passed": 131,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 99.45,
+      "breakdown": {
+        "creationHttp": 41,
+        "creationQuote": 16,
+        "creationService": 30,
+        "financialOperationHttp": 31,
+        "legacyRetirement": 13
+      }
+    },
+    "priorRuns": [
+      {
+        "files": 4,
+        "passed": 101,
+        "failed": 0,
+        "seconds": 72.77
+      },
+      {
+        "files": 5,
+        "passed": 131,
+        "failed": 0,
+        "seconds": 92.81
+      }
+    ],
+    "distinctTestsAcrossRuns": 131,
+    "notFullRepositoryRun": true,
+    "initialTypecheckFailure": "Worker all-source typecheck found missing unknown JSON response guards and Hono Response | Promise<Response> handling in the new unit tests. Added runtime object/envelope checks and async send; no any/double cast, suppression, relaxed assertion or tsconfig change. The runtime-only config excludes root unit tests and was not used as a substitute.",
+    "finalTypechecks": {
+      "workerSource": "passed",
+      "runtimeTarget": "passed"
+    },
+    "diffCheck": "passed",
+    "safeguards": [
+      "Create is SQL-only and original key replay spans both aliases.",
+      "Execute commits creation before financial admission/settlement; errors may follow committed creation.",
+      "Missing lookup is not a fence; abandonment fences only an uncreated key and cannot cancel a created application/payment.",
+      "Changed body under original key conflicts; current owner identity is checked in middleware and again after streamed body reads.",
+      "Real native peers verify single application/balance effect and creation-versus-abandonment ordering using observed blocking PIDs.",
+      "WeChat/Alipay UNKNOWN synthetic transport preserves creation and admitted operation; explicit original execution queries and settles without a second request.",
+      "In-flight duplicate sees committed evidence and an existing provider lease.",
+      "Receipt insertion failure proves either full creation rollback or durable creation plus separately rolled-back financial effects.",
+      "Missing schema never triggers HTTP installation.",
+      "Creation/settlement evidence survives business deletion and current policy changes; newly stale source facts are rejected.",
+      "Malformed/oversized/invalid UTF-8/keyless legacy input, alternate methods and post-auth privilege changes do not dispatch unauthorized writes."
+    ],
+    "providerTransport": "Only WechatPayService/AlipayRefundService request/query methods are simulated; unconfigured fetch and provider I/O fail closed. No real payment/refund.",
+    "databaseRole": "finance_test NOSUPERUSER NOCREATEROLE on newly owned loopback clusters; not proof of the production full-application least-privilege role.",
+    "cleanup": {
+      "clusters": [
+        {
+          "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-PCCmBG",
+          "statusExit": 3,
+          "pidExists": false,
+          "passwordExists": false
+        },
+        {
+          "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-GrH2lG",
+          "statusExit": 3,
+          "pidExists": false,
+          "passwordExists": false
+        },
+        {
+          "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-68AEih",
+          "statusExit": 3,
+          "pidExists": false,
+          "passwordExists": false
+        }
+      ],
+      "trustedRuntimeProcessCount": 0
+    }
+  },
+  "unchangedChecklist": {
+    "checked": 240,
+    "open": 164,
+    "total": 404
+  },
+  "remaining": [
+    "Frontend confirmation and durable original intent/recovery/session/multi-tab protocol",
+    "Physical split-order/fulfillment parity, application reservations, activity/postage/zero-cash policies",
+    "Joined rendered browser, actual production roles/Redis/Hyperdrive/provider callbacks and coordinated release"
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminRefundCreationController.ts",
+      "sha256": "4a644c9b7a98e27064abcd3c766ee2bb9916fdf2436bdec85cb40d8efbcd6378"
+    },
+    {
+      "path": "workers-ts/src/routes/admin-refund-creation.ts",
+      "sha256": "0866fa90d74be5b42790ec6b25f503b282139a58f78fd63330ee92f27a73adba"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminRefundOperationController.ts",
+      "sha256": "5d2e6b0a94b9c8ba125ec44219be9792f0dee644b03a89a61404a4c8a7407daa"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminRefundCreationQuoteController.ts",
+      "sha256": "0335538b1c168ef35b494e28e430a41c96bba40ea54d5a4e2a2220eddee1a638"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundCreationService.ts",
+      "sha256": "b83342b65da77a5e4a8bbe1b41370a93526b66498dde7ec8bbbbaa4f63899fb3"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundCreationProtocol.ts",
+      "sha256": "cfaf9bcdd4458216eed5d290b7f93393fb646527993dfaeaf9ff150b00ed3c2c"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundOperationService.ts",
+      "sha256": "b6ebea7b372682335ecb5506c1cffe73dec67b7f826391035769315ebfcd402c"
+    },
+    {
+      "path": "workers-ts/src/app.ts",
+      "sha256": "ebada42d2ee3c8a553aaa7a287960deda830fb81cf6197f54ffd9d7a969ee7d7"
+    },
+    {
+      "path": "workers-ts/test/admin-refund-creation-http.test.ts",
+      "sha256": "bae7abd786e4b6071676ecaa31487e47f09ad3179da82b899dd3b9bad097766b"
+    },
+    {
+      "path": "workers-ts/test/admin-refund-creation-quote.test.ts",
+      "sha256": "514ef658cd9340beb094318a58e16a8a6f67ff68dc532329eebdd4f3c0ca25af"
+    }
+  ]
+}

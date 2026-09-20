@@ -1,0 +1,399 @@
+{
+  "date": "2026-09-15",
+  "status": "local_candidate_not_deployed",
+  "scope": "Guarded admin_refund_creation installation/ORM/external/embedded registration and isolated PG16 runtime receipt ACL verification. Not complete proactive or physical split-refund acceptance.",
+  "productionAccess": false,
+  "productionMutation": false,
+  "browserAcceptanceThisRevision": false,
+  "images": "User confirmed the new images are readable; no image or cache mutation or new image acceptance run.",
+  "registration": {
+    "table": "admin_refund_creation",
+    "externalMigration": "0156_admin_refund_creation.sql",
+    "embeddedStep": "0162",
+    "standaloneRunner": "runAdminRefundCreation",
+    "runtimeLockNamespace": 731609,
+    "installationLockNamespace": 731610
+  },
+  "historicalProductionSnapshot": {
+    "capturedAt": "2026-09-04T14:55:00Z",
+    "tables": 263,
+    "unchanged": true
+  },
+  "tests": {
+    "distinctFiles": 9,
+    "distinctPassingCases": 246,
+    "skipped": 0,
+    "notSingleFullRepositoryRun": true,
+    "batches": [
+      {
+        "files": [
+          "admin-refund-creation-migration.test.ts",
+          "admin-refund-operation-migration.test.ts"
+        ],
+        "cases": 90,
+        "passed": 90,
+        "seconds": 51.48,
+        "host": "isolated PostgreSQL 16.15; maintenance owner and real restricted LOGIN"
+      },
+      {
+        "files": [
+          "kefu-sequence-registration.test.ts",
+          "data-migration-scope.test.ts",
+          "data-migration.test.ts",
+          "local-finance-postgres-runner.test.ts"
+        ],
+        "cases": 97,
+        "passed": 97,
+        "seconds": 2.13,
+        "host": "local offline contract tests"
+      },
+      {
+        "files": [
+          "admin-refund-creation.test.ts",
+          "admin-refund-creation-quote.test.ts",
+          "table-catalog-gate.test.ts"
+        ],
+        "cases": 59,
+        "passed": 59,
+        "seconds": 42.75,
+        "host": "isolated PostgreSQL 16.15 non-superuser for business tests; PGlite for the table-only metadata fixture"
+      }
+    ],
+    "initialFailures": [
+      {
+        "batch": "offline contracts",
+        "failed": 1,
+        "passed": 96,
+        "cause": "Static repository parser did not recognize an unquoted CREATE TABLE name.",
+        "fix": "Quoted the canonical table name in both DDL sources and added the explicit target-only table expectation. No parser gate loosened."
+      },
+      {
+        "batch": "native migration tests",
+        "failed": 1,
+        "passed": 89,
+        "cause": "The new test treated withTx callback DbClient as a container (tx.db was undefined).",
+        "fix": "Passed the actual transaction to the ledger; asserted PostgreSQL permission error 42501 for forbidden writes/DDL/escalation. No runtime ACL relaxed."
+      }
+    ],
+    "typechecks": {
+      "workerSource": "passed",
+      "runtimeTests": "passed"
+    },
+    "diffCheck": "passed"
+  },
+  "catalog": {
+    "serverVersionNum": 160015,
+    "paths": [
+      {
+        "path": "external",
+        "steps": 158
+      },
+      {
+        "path": "embedded",
+        "steps": 163
+      },
+      {
+        "path": "orm",
+        "steps": 1096
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1216
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1097
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1088
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1097
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1089
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1096
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 266,
+        "columns": 3722,
+        "constraints": 587,
+        "indexes": 1026,
+        "sequences": 227
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "externalInputSha256": "1406b160d8936ea5a714e981594293af35fcb6a4fe705bbcb12a397a7baa894f",
+    "generatedSqlSha256": "167eaca2d8682a1d28d95fc71f3bb0268b8952e1fd5b481a526551b81666d59a",
+    "adminRefundCreationVerification": {
+      "external": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "embedded": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_upgrade": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_default_upgrade": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_constraints": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_fk_names": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_checks": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      },
+      "orm_sequences": {
+        "initialComplete": true,
+        "repeatComplete": true,
+        "oidsAndFilesPreserved": true
+      }
+    },
+    "cleanupConfirmed": true
+  },
+  "cleanup": {
+    "clusters": [
+      {
+        "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-LYh0I3",
+        "statusExit": 3,
+        "pidExists": false,
+        "passwordExists": false
+      },
+      {
+        "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-VdR4X1",
+        "statusExit": 3,
+        "pidExists": false,
+        "passwordExists": false
+      },
+      {
+        "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-V0BtmM",
+        "statusExit": 3,
+        "pidExists": false,
+        "passwordExists": false
+      },
+      {
+        "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-89Nmi4",
+        "statusExit": 3,
+        "pidExists": false,
+        "passwordExists": false
+      }
+    ],
+    "trustedRuntimeProcessCount": 0
+  },
+  "invariants": [
+    "No expiry, FK cascade or replacement may erase a used key.",
+    "Created evidence requires positive refund_id; abandoned evidence requires NULL.",
+    "Exact owner catalog and direct table/column ACL drift cause refusal without repair.",
+    "A real restricted LOGIN can append/read both outcomes; UPDATE/DELETE/TRUNCATE/ALTER/SET ROLE maintenance fail with 42501.",
+    "Every full-schema path has the table before standalone repeats; repeat preserves OIDs and storage files."
+  ],
+  "remaining": [
+    "Versioned creation/lookup/abandon write HTTP routes and explicit original intent recovery",
+    "Frontend confirmation/persistence/session and multi-tab safety with joined browser acceptance",
+    "PHP amount/postage/activity and application reservation semantics; physical fulfillment/order split",
+    "Production catalog, default ACL/ownership/role membership/security-definer privilege paths and coordinated standalone installation",
+    "Deployed Hyperdrive freshness, actual payment callbacks and rollout acceptance"
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "workers-ts/src/migrations/adminRefundCreation.ts",
+      "sha256": "9f7760fc4ed4a6499979e2e3ccef54d4251777bfccb18817a94477120e4ed6f0"
+    },
+    {
+      "path": "workers-ts/src/migrations/adminRefundCreationCatalog.ts",
+      "sha256": "cab7cc8ecb3df7208ff11496f383826e2483232e1e643b6a258c476939be6f34"
+    },
+    {
+      "path": "workers-ts/src/migrations/adminRefundCreationInstallation.ts",
+      "sha256": "8953734c9f56dbed01ee54bf37f46e5b825211e6fd6a161511534863b441fd3e"
+    },
+    {
+      "path": "workers-ts/src/migrations/runAdminRefundCreation.ts",
+      "sha256": "3c5d9488767bc796aff3c6cfb9fe39800e71b3444dc38f4bb4ed88c599201a1b"
+    },
+    {
+      "path": "workers-ts/src/models/schema/admin_refund_creation.ts",
+      "sha256": "c14e5f14e0540b4a5a35f051335c6df9c60bbd4ed90d2ffe0a6d3dab3e8090ed"
+    },
+    {
+      "path": "workers-ts/src/models/schema/index.ts",
+      "sha256": "3465c8d5f025984984902ae95d69a8f3037bb02019cf1492ac7ab98882a0adae"
+    },
+    {
+      "path": "workers-ts/src/services/MigrationService.ts",
+      "sha256": "ad313f5c25a489fcc0f01877f765d637ab7bf4d96f1681e41b69ea5a11f1529c"
+    },
+    {
+      "path": "workers-ts/migrations/0156_admin_refund_creation.sql",
+      "sha256": "a423514f93278bb00d61faaf7b9ab9b835d6c26f1e8c78e6f2eec055048af5cf"
+    },
+    {
+      "path": "workers-ts/scripts/orm-ddl-audit.ts",
+      "sha256": "816e8c9ec99f5f912dc3f72e586b42cd8a701746ab06e8380544627808f8ee27"
+    },
+    {
+      "path": "workers-ts/scripts/data-migration/table-catalog-contracts.ts",
+      "sha256": "51c8c54295f75250425b98e079eb776a3b8e7c1849f31064a368748a8d20fd51"
+    },
+    {
+      "path": "workers-ts/test/admin-refund-creation-migration.test.ts",
+      "sha256": "d37182e5590e0bb578a898f35ed01d012f103b59653d218284284a7fad9b4c86"
+    },
+    {
+      "path": "workers-ts/test/kefu-sequence-registration.test.ts",
+      "sha256": "7607f49742bcc562f011b2581cb8dc405a118ee0502141ef70beda9d87c808d9"
+    }
+  ]
+}

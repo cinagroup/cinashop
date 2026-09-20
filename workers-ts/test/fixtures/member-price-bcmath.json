@@ -1,0 +1,16 @@
+[
+  { "price": "100.01", "discount": "88", "isVip": 0, "vipPrice": "0.00", "levelPrice": "88.00", "selectedPrice": "88.00", "priceType": "level", "payPrice": "88.00" },
+  { "price": "99.99", "discount": "88.99", "isVip": 0, "vipPrice": "0.00", "levelPrice": "87.99", "selectedPrice": "87.99", "priceType": "level", "payPrice": "87.99" },
+  { "price": "19.99", "discount": "50", "isVip": 0, "vipPrice": "0.00", "levelPrice": "9.99", "selectedPrice": "9.99", "priceType": "level", "payPrice": "9.99" },
+  { "price": "0.03", "discount": "50", "isVip": 0, "vipPrice": "0.00", "levelPrice": "0.01", "selectedPrice": "0.01", "priceType": "level", "payPrice": "0.01" },
+  { "price": "0.01", "discount": "50", "isVip": 0, "vipPrice": "0.00", "levelPrice": "0.00", "selectedPrice": "0.00", "priceType": "level", "payPrice": "0.01" },
+  { "price": "10000.01", "discount": "88.50", "isVip": 0, "vipPrice": "0.00", "levelPrice": "8800.00", "selectedPrice": "8800.00", "priceType": "level", "payPrice": "8800.00" },
+  { "price": "9999999999.99", "discount": "99.99", "isVip": 0, "vipPrice": "0.00", "levelPrice": "9899999999.99", "selectedPrice": "9899999999.99", "priceType": "level", "payPrice": "9899999999.99" },
+  { "price": "100.01", "discount": "88", "isVip": 1, "vipPrice": "88.00", "levelPrice": "88.00", "selectedPrice": "88.00", "priceType": "member", "payPrice": "88.00" },
+  { "price": "100.01", "discount": "88", "isVip": 1, "vipPrice": "88.01", "levelPrice": "88.00", "selectedPrice": "88.00", "priceType": "level", "payPrice": "88.00" },
+  { "price": "99.99", "discount": "88.99", "isVip": 1, "vipPrice": "88.50", "levelPrice": "87.99", "selectedPrice": "87.99", "priceType": "level", "payPrice": "87.99" },
+  { "price": "100.01", "discount": "88", "isVip": 1, "vipPrice": "87.99", "levelPrice": "88.00", "selectedPrice": "87.99", "priceType": "member", "payPrice": "87.99" },
+  { "price": "100.00", "discount": "0", "isVip": 0, "vipPrice": "0.00", "levelPrice": "0.00", "selectedPrice": "0.00", "priceType": "level", "payPrice": "100.00" },
+  { "price": "100.00", "discount": "100", "isVip": 0, "vipPrice": "0.00", "levelPrice": "100.00", "selectedPrice": "0.00", "priceType": "", "payPrice": "100.00" },
+  { "price": "0.00", "discount": "88", "isVip": 0, "vipPrice": "0.00", "levelPrice": "0.00", "selectedPrice": "0.00", "priceType": "level", "payPrice": "0.00" }
+]

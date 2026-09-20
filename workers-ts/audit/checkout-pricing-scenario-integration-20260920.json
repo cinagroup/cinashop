@@ -1,0 +1,360 @@
+{
+  "reportVersion": 1,
+  "recordedAt": "2026-09-20 14:11:17 UTC",
+  "status": "local_candidate_not_deployed",
+  "objective": "继续推进checklist",
+  "previousGoalTurnClassification": "progress: ordinary checkout capability integration and new verified evidence",
+  "checklist": {
+    "id": "FE-003L-A3k11d",
+    "remainsOpen": true,
+    "checked": 240,
+    "open": 164,
+    "total": 404
+  },
+  "completedLocalScope": [
+    "First-order and package scenarios require explicit pre-provisioned clone pricing owners and install the exact protocol in their owned schema.",
+    "Remove public search-path fallback, clone actual dependencies and rebind all serial columns rather than a partial sequence list.",
+    "Seed real structured address and valid shipping template; retain original delivery, price, quota, cancellation and product-refund assertions.",
+    "Check complete public table row fingerprints, all public sequence values, owner rejection, public protocol identity and clone cleanup.",
+    "Four authenticated audit entry points pass an explicit X-Audit-Pricing-Owner header after token/method/route checks and before database access."
+  ],
+  "nonChanges": {
+    "productionAccess": false,
+    "productionMutations": false,
+    "mainBusinessPricingOrRefundPolicyChanges": false,
+    "bindingChanges": false,
+    "stageCommitPushDeploy": false,
+    "systemRuntimeInstallation": false,
+    "preExistingNineStagedEntries": "Unchanged cached numstat; no index writes."
+  },
+  "maintenanceContract": {
+    "header": "X-Audit-Pricing-Owner",
+    "endpoints": [
+      {
+        "worker": "FirstOrderDiscountAuditWorker",
+        "method": "POST",
+        "path": "/run"
+      },
+      {
+        "worker": "DiscountPackageAuditWorker",
+        "method": "POST",
+        "path": "/run"
+      },
+      {
+        "worker": "StoreOrderPaymentCancelAuditWorker",
+        "method": "POST",
+        "path": "/run"
+      },
+      {
+        "worker": "ApiOrderAfterSaleAuditWorker",
+        "method": "POST",
+        "path": "/isolated"
+      }
+    ],
+    "trustBoundary": "Authenticated maintenance invocation only. Header chooses an already provisioned restricted NOLOGIN role. Identifier syntax is not catalog trust or authority to create roles.",
+    "missingOrUnsafe": "Existing error response returned before opening any SQL connection, reading public snapshots or executing a scenario.",
+    "permissions": "No creation of production roles, grant of business configuration DML or installation fallback. Native installer validates actual owner/ACL/catalog. Public pricing owner cannot be reused.",
+    "connection": "Existing Hyperdrive input retained. Real production maintenance connection, permission provisioning, pool behavior and operation approval remain unverified; do not add maintenance authority to a business login.",
+    "concurrency": "Use a separate owner per concurrent invocation; never assume pooled session settings supply it.",
+    "excludedPaths": "Other ApiOrderAfterSaleAuditWorker read/migration paths unchanged."
+  },
+  "finalTests": {
+    "distinctTargetedNodeAndNativeCases": 144,
+    "counting": "11 native + 133 Node = 144 distinct targeted cases. Full runtime 289 is reported separately; it repeats 29 maintenance cases. Prior-turn 555 and intermediate reruns are not added.",
+    "native": {
+      "session": 22231,
+      "cluster": "HAkIYi",
+      "port": 50767,
+      "exitCode": 0,
+      "files": 2,
+      "passed": 11,
+      "durationSeconds": 51.6,
+      "testFiles": [
+        "test/checkout-marketing-scenarios-postgres.test.ts",
+        "test/store-order-create-scenario-postgres.test.ts"
+      ],
+      "proves": "Original three scenario business contracts on real local PG16; first/package owner rejection; full public rows/sequences unchanged; public protocol unchanged; cleanup.",
+      "doesNotProve": "Remote Hyperdrive or a real low-privilege customer login; scenario execution uses the explicit local maintenance fixture."
+    },
+    "node": {
+      "outputChunk": "741300",
+      "exitCode": 0,
+      "files": 7,
+      "passed": 133,
+      "durationSeconds": 6.5,
+      "testFiles": [
+        "test/local-finance-postgres-runner.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/admin-discount-package.test.ts",
+        "test/api-order-after-sale-migration.test.ts",
+        "test/store-order-create-postgres-migration.test.ts",
+        "test/checkout-scenario-maintenance.test.ts"
+      ],
+      "boundary": "Four maintenance workers use actual request handlers and token digest/comparison, with mocked database/scenario calls. Node uses a constant-time Node crypto adapter only when native timingSafeEqual is absent."
+    },
+    "fullWorkerd": {
+      "session": 98171,
+      "exitCode": 0,
+      "files": 16,
+      "passed": 289,
+      "durationSeconds": 22,
+      "config": "vitest.worker.config.ts",
+      "bindings": "wrangler.test.toml",
+      "testPattern": "test/runtime/**/*.test.ts",
+      "boundary": "Complete current local runtime file selection. New 29 maintenance cases use native workerd Web Crypto, Request and Response, while SQL and scenario calls remain mocked. Not Linux CI, remote Hyperdrive, or customer-login evidence."
+    },
+    "finalTypeChecks": {
+      "session": 12998,
+      "exitCode": 0,
+      "commands": [
+        "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
+        "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit -p tsconfig.runtime-test.json"
+      ],
+      "note": "Second command runs only after first exits zero. Earlier 74945 also passed but is superseded."
+    }
+  },
+  "retainedFailuresAndIntermediateRuns": [
+    {
+      "session": 88239,
+      "cluster": "M5lD4U",
+      "port": 50471,
+      "exitCode": 1,
+      "passed": 0,
+      "failed": 2,
+      "durationSeconds": 19.12,
+      "failures": [
+        "First-order: pricing read sources did not match lock schema because of public fallback.",
+        "Package: legacy free-text address did not meet structured delivery address contract."
+      ],
+      "resolution": "Add strict clone dependencies and real saved address/region fixture; no business guard bypass."
+    },
+    {
+      "session": 50464,
+      "cluster": "RtYCTA",
+      "port": 58362,
+      "exitCode": 1,
+      "passed": 1,
+      "failed": 1,
+      "durationSeconds": 21.29,
+      "failures": [
+        "Package: cloned shipping template was missing or inactive."
+      ],
+      "resolution": "Seed actual valid template. Preserve shipping=1 and free-postage assertion instead of changing to pickup."
+    },
+    {
+      "session": 1241,
+      "cluster": "bixMb3",
+      "port": 51121,
+      "exitCode": 0,
+      "passed": 2,
+      "durationSeconds": 21.22,
+      "note": "Both original marketing scenarios first green; superseded by expanded final 11."
+    },
+    {
+      "outputChunk": "97a02f",
+      "exitCode": 0,
+      "passed": 29,
+      "durationSeconds": 0.623,
+      "note": "Initial Node maintenance cases; superseded by final 133."
+    },
+    {
+      "session": 8524,
+      "exitCode": 1,
+      "executedAssertions": 0,
+      "durationSecondsReported": 0.974,
+      "failures": [
+        "EPERM writing default user-profile Wrangler log.",
+        "Windows workerd access violation 0xc0000005 before test startup.",
+        "Close timed out after 10 seconds; process later confirmed terminal exit 1."
+      ],
+      "resolution": "After terminal confirmation, reuse existing hash-identical workspace workerd with signed local DLLs; direct logs to workspace and disable metrics. No dependency patch or system installation."
+    },
+    {
+      "outputChunk": "3bacef",
+      "exitCode": 0,
+      "passed": 29,
+      "durationSeconds": 1.83,
+      "note": "Targeted actual-workerd green, superseded by full runtime 289."
+    }
+  ],
+  "runtimeEvidence": {
+    "workerdSha256": "cbba402d8fad83b0d70787f115c614549b2466fb7c5a4836cdf124bc35345b4a",
+    "localAndLockedDependencyHashEqual": true,
+    "existingLocalDirectory": ".cache/workerd-local-runtime-20260920-a84d4e6c",
+    "dllVersion": "14.51.36231.0",
+    "dllSignatures": "All 9 independently rechecked Valid",
+    "dlls": [
+      "concrt140.dll",
+      "msvcp140_1.dll",
+      "msvcp140_2.dll",
+      "msvcp140_atomic_wait.dll",
+      "msvcp140_codecvt_ids.dll",
+      "msvcp140.dll",
+      "vcruntime140_1.dll",
+      "vcruntime140_threads.dll",
+      "vcruntime140.dll"
+    ],
+    "localOverrides": [
+      "MINIFLARE_WORKERD_PATH",
+      "WRANGLER_LOG_PATH",
+      "WRANGLER_SEND_METRICS=false"
+    ],
+    "overrideScope": "Test command process only; no persistent environment edit.",
+    "installedWorkersTypes": "5.20260828.1"
+  },
+  "cleanup": {
+    "runnerFixturesRemaining": 0,
+    "independentPostgresCheckChunk": "e57d6c",
+    "independentPostgresCheckExitCode": 0,
+    "clusters": [
+      {
+        "cluster": "M5lD4U",
+        "port": 50471,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "RtYCTA",
+        "port": 58362,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "bixMb3",
+        "port": 51121,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      },
+      {
+        "cluster": "HAkIYi",
+        "port": 50767,
+        "pgCtlStatusExit": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "ownedPostgresProcesses": 0,
+        "diagnosticDirectoryRetained": true
+      }
+    ],
+    "workerdCheckChunk": "bb85e6",
+    "workspaceWorkerdProcesses": 0,
+    "note": "Only fixture-owned random databases, schemas and roles were removed. Diagnostic directories and pre-existing runtime copy retained."
+  },
+  "selectedEndHashes": {
+    "algorithm": "SHA-256",
+    "baseDirectory": "workers-ts",
+    "scope": "20 selected end-state files only. Not a before/after, whole-workspace, immutable commit or dependencies freeze assertion.",
+    "files": [
+      {
+        "path": "test/integration/FirstOrderDiscountPostgresScenario.ts",
+        "sha256": "bb05073daa8c3f0df58949a23dea05bf3c4cde014e3a0a5073722eb8afcc929c"
+      },
+      {
+        "path": "test/integration/DiscountPackagePostgresScenario.ts",
+        "sha256": "55d99b7a7d320d50c42355c17c6ed39965fb983382779cafeed66a4e58181c61"
+      },
+      {
+        "path": "test/integration/CheckoutScenarioPricing.ts",
+        "sha256": "328c20148b3147ab92d265b761c17aa4305bc9b4380b3dd2de6eecdf61ebc231"
+      },
+      {
+        "path": "test/integration/FirstOrderDiscountAuditWorker.ts",
+        "sha256": "a02647ba5bf9ce16a3a90d40561d5dc0b2724fb392487380ec1ebef6f638f494"
+      },
+      {
+        "path": "test/integration/DiscountPackageAuditWorker.ts",
+        "sha256": "0f2d249e34dd0efa532c7b001d5661db0c1fed1cdf7e22fbd73de393e5048e65"
+      },
+      {
+        "path": "test/integration/StoreOrderPaymentCancelAuditWorker.ts",
+        "sha256": "424dbcc271a693fb94ad04e8f50dff709c096a9a016e395d9aa1a097612ba506"
+      },
+      {
+        "path": "test/integration/ApiOrderAfterSaleAuditWorker.ts",
+        "sha256": "3a99c2fb4df7209bd0edd53a5ceda30c85288ee84735578d65404feaf9f8ba00"
+      },
+      {
+        "path": "test/helpers/checkoutPricingScenarioDatabase.ts",
+        "sha256": "feaa536e49da5d5ec165d26cf5aac8c45f9f36dc05e5bb872f3d6cbe4329117e"
+      },
+      {
+        "path": "test/checkout-marketing-scenarios-postgres.test.ts",
+        "sha256": "a9b730d9a10373de3fa7fc33e0ae268d5095c118b4ea2e973be107009888c871"
+      },
+      {
+        "path": "test/checkout-scenario-maintenance.test.ts",
+        "sha256": "d8c7e972d2153307e4621806972cbeacdc1be859956d58bd1275cff6994468a9"
+      },
+      {
+        "path": "test/runtime/checkout-scenario-maintenance.test.ts",
+        "sha256": "f3862cc925133017e19e90c6e31f7fe57e86b826abf3005c5880305d08b9dc65"
+      },
+      {
+        "path": "scripts/run-local-finance-postgres.mjs",
+        "sha256": "57d882409473a708268e2a42e5a9ef02b246e9e88eca5783b6033fd76fa0ed98"
+      },
+      {
+        "path": "test/local-finance-postgres-runner.test.ts",
+        "sha256": "8537dc3d452c8fa10948f93fa70ab6ae120a120d1a15c6a7f16ff88431ec8026"
+      },
+      {
+        "path": "src/services/order/CheckoutPricingSources.ts",
+        "sha256": "0e302ec68f3b1ef78eb116ecb5df7cd5b017bc409ddc168d39eb60ad2c774d5b"
+      },
+      {
+        "path": "src/migrations/checkoutPricingLock.ts",
+        "sha256": "170294fe2a4a6b43a423dd12f125af8031871ef5d9a4bc88a53ee4c426e025a7"
+      },
+      {
+        "path": "src/migrations/checkoutPricingLockCatalog.ts",
+        "sha256": "d45dcc36a8c905c01157654c7217c2347af48493f30534cfa48e3ba3665cb502"
+      },
+      {
+        "path": "src/migrations/checkoutPricingLockInstallation.ts",
+        "sha256": "2ab128d09a38729c4c655555fe7639672c8a45127bf1d901e40da15078a634ae"
+      },
+      {
+        "path": "test/integration/StoreOrderCreatePostgresScenario.ts",
+        "sha256": "cf6cde14f72ccfacb9f099f0b0a7560e0bd01c3dadcfa030b5eaa66327809c9c"
+      },
+      {
+        "path": "vitest.worker.config.ts",
+        "sha256": "c329c7533f837c15ec3b907149522260d666a64dc56204aa7339632b4acb7999"
+      },
+      {
+        "path": "wrangler.test.toml",
+        "sha256": "8a857330803f71245e2ce9b6778c27e7e8a18da7b9ee71a47d1d206b97bc3faf"
+      }
+    ]
+  },
+  "remainingGates": [
+    "Full current-source Node unit regression and immutable Linux CI.",
+    "Real remote audit maintenance runs: provision separate restricted owner and authorized maintenance connection, verify pool behavior and cleanup under explicit approval.",
+    "Real customer identity/Hyperdrive and full marketplace permission composition with all other reviewed functions.",
+    "Sustained write/load/maintenance contention and coordinated database/application rollout.",
+    "Other checklist requirements remain open; neither A3k11d nor the overall goal is complete."
+  ],
+  "skills": {
+    "postgres": "Strict schema isolation, complete local serial ownership, minimal privileges and real PostgreSQL proof.",
+    "workers": "Current official guidance plus installed types/config reviewed; preserve real-runtime vs mocked-SQL distinction.",
+    "reference": "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/"
+  },
+  "reproduction": {
+    "native": "node scripts/run-local-finance-postgres.mjs --schema-maintenance ../.cache/postgres16-20260915/runtime/pgsql/bin test/checkout-marketing-scenarios-postgres.test.ts test/store-order-create-scenario-postgres.test.ts",
+    "node": "node node_modules/vitest/vitest.mjs run test/local-finance-postgres-runner.test.ts test/first-order-discount.test.ts test/discount-package-migration.test.ts test/admin-discount-package.test.ts test/api-order-after-sale-migration.test.ts test/store-order-create-postgres-migration.test.ts test/checkout-scenario-maintenance.test.ts",
+    "workerd": "node node_modules/vitest/vitest.mjs run --config vitest.worker.config.ts"
+  }
+}

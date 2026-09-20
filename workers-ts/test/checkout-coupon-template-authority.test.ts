@@ -15,6 +15,9 @@ import { storeCouponIssue, storeCouponUser, storeCouponProduct, storeProduct, st
 type Issue = typeof storeCouponIssue.$inferInsert;
 const cases: Array<{ name: string; initial?: Partial<Issue>; change?: Partial<Issue>; remove?: boolean; allowed?: boolean }> = [
   { name: 'discount type', change: { type: 2 } },
+  { name: 'ordinary becomes member coupon', change: { category: 2 } },
+  { name: 'member becomes ordinary coupon', initial: { category: 2 }, change: { category: 0 } },
+  { name: 'equivalent nonmember coupon category', change: { category: 1 }, allowed: true },
   { name: 'scope type at same discount', change: { couponType: 2, productId: '70' } },
   { name: 'legacy products', initial: { couponType: 2, legacyProductIds: '70' }, change: { legacyProductIds: '70,71' } },
   { name: 'product alias', initial: { couponType: 2, productId: '70' }, change: { productId: '70,71' } },
@@ -104,6 +107,20 @@ describe('coupon template authority at actual checkout commit boundary', () => {
     const result = await request(`/api/order/create/${receipt.data.orderKey}`, { ...input, quoteToken: receipt.data.quoteToken });
     expect(result.status).toBe(mode === 'consistent' ? 200 : 400);
     expect((await state()).orders).toHaveLength(mode === 'consistent' ? 1 : 0);
+  });
+
+  it.each([0, 2])('requires a new quote for a same-price member-coupon classification change from %s', async category => {
+    await f.db.update(storeCouponIssue).set({ category }).where(eq(storeCouponIssue.id, 1));
+    const receipt = await request('/api/order/confirm', input); expect(receipt.status, receipt.msg).toBe(200);
+    await f.db.update(storeCouponIssue).set({ category: category === 2 ? 0 : 2 }).where(eq(storeCouponIssue.id, 1));
+    const before = await state(), path = `/api/order/create/${receipt.data.orderKey}`;
+    expect(await request(path, { ...input, quoteToken: receipt.data.quoteToken }))
+      .toMatchObject({ status: 400, data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED' } });
+    expect(await state()).toEqual(before);
+    const fresh = await request(`/api/order/computed/${receipt.data.orderKey}`, input); expect(fresh.status, fresh.msg).toBe(200);
+    expect(fresh.data.pay_price).toBe(receipt.data.priceGroup.pay_price);
+    expect(fresh.data.quoteToken).not.toBe(receipt.data.quoteToken);
+    expect((await request(path, { ...input, quoteToken: fresh.data.quoteToken })).status).toBe(200);
   });
 
   it('does not require or lock a template when no coupon is used', async () => {

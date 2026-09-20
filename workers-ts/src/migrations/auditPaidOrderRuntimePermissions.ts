@@ -1,17 +1,32 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
+import { auditCheckoutPricingLockRuntime, inspectCheckoutPricingLock } from './checkoutPricingLock';
+
+type Root = Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>;
 
 /** Explicit, read-only release preflight for the CONNECTION's real identity.
  * Not a GRANT script, request middleware, complete app privilege audit, or proof
  * against a separate maintenance administrator changing the catalog later.
  * Function/trigger definitions and RLS are checked separately by checkout's
  * installed-protocol guard; ready here means this permission envelope only.
- * Callable user SECURITY DEFINER routines conservatively require manual review.
+ * Only the exact, separately validated pricing-lock protocol can be exempted
+ * from the callable SECURITY DEFINER check. This paid-order scope does not
+ * require pricing installation; the explicit checkout scope below does.
  */
 export async function auditPaidOrderRuntimePermissions(
-  db: Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>,
+  db: Root,
   schema = 'public',
 ) {
+  return auditRuntimePermissions(db, schema, false);
+}
+
+/** Combined paid-order fence and checkout pricing permission envelope. Still
+ * not a complete application GRANT contract, deployment or catalog installer. */
+export async function auditCheckoutRuntimePermissions(db: Root, schema = 'public') {
+  return auditRuntimePermissions(db, schema, true);
+}
+
+async function auditRuntimePermissions(db: Root, schema: string, requirePricing: boolean) {
   if (!db.$client) throw new Error('Runtime permission audit requires a root database');
   if (!/^[a-z_][a-z0-9_]{0,62}$/.test(schema) || schema.startsWith('pg_') || schema === 'information_schema') {
     throw new Error('Invalid runtime permission audit schema');
@@ -21,6 +36,10 @@ export async function auditPaidOrderRuntimePermissions(
       pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
       pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),1000)::text || 'ms',true),
       pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+    // All observations share this read-only REPEATABLE READ snapshot. Never
+    // execute the definer function in a permission audit or trust just its name.
+    const pricing = await auditCheckoutPricingLockRuntime(tx, schema);
+    const reviewedPricingOid = pricing.ready ? (await inspectCheckoutPricingLock(tx, schema)).functionOid : null;
     const [checks] = await tx.select({
       connectionIdentityVisible: sql<boolean>`connection_identity_visible`,
       objectsPresent: sql<boolean>`objects_present`,
@@ -33,17 +52,18 @@ export async function auditPaidOrderRuntimePermissions(
       noUnreviewedDefinerRoutine: sql<boolean>`no_definer_routine`,
       protocolReadWritePrivileges: sql<boolean>`protocol_privileges`,
     }).from(sql`(
-      WITH connected AS (
+      WITH RECURSIVE connected AS (
         SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()
       ), identities AS (
         SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
         UNION SELECT usesysid FROM connected
+      ), authority(oid) AS (
+        SELECT oid FROM identities
+        UNION SELECT m.roleid FROM pg_catalog.pg_auth_members m JOIN authority a ON a.oid=m.member
       ), reachable AS (
-        SELECT r.* FROM pg_catalog.pg_roles r WHERE EXISTS (
-          SELECT 1 FROM identities i WHERE pg_catalog.pg_has_role(i.oid,r.oid,'USAGE')
-            OR pg_catalog.pg_has_role(i.oid,r.oid,'SET')
-            OR pg_catalog.pg_has_role(i.oid,r.oid,'MEMBER WITH ADMIN OPTION')
-        )
+        -- Conservative, same as the pricing preflight: include mixed and
+        -- currently disabled INHERIT / SET paths, not only active privileges.
+        SELECT r.* FROM pg_catalog.pg_roles r JOIN authority a ON a.oid=r.oid
       ), objects AS (
         SELECT n.oid AS schema_oid,n.nspowner AS schema_owner,
           o.oid AS order_oid,o.relowner AS order_owner,u.oid AS user_oid,u.relowner AS user_owner,
@@ -74,6 +94,7 @@ export async function auditPaidOrderRuntimePermissions(
             OR pg_catalog.has_parameter_privilege(oid,'session_replication_role','ALTER SYSTEM')) AS no_replication_bypass,
         NOT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
           WHERE p.prosecdef AND NOT pg_catalog.starts_with(n.nspname::text,'pg_') AND n.nspname<>'information_schema'
+            AND p.oid::text IS DISTINCT FROM ${reviewedPricingOid}
             AND EXISTS (SELECT 1 FROM reachable r WHERE pg_catalog.has_function_privilege(r.oid,p.oid,'EXECUTE'))) AS no_definer_routine,
         COALESCE(pg_catalog.has_schema_privilege(current_user,schema_oid,'USAGE')
           AND pg_catalog.has_table_privilege(current_user,order_oid,'SELECT')
@@ -84,7 +105,13 @@ export async function auditPaidOrderRuntimePermissions(
       FROM objects
     ) AS permission_audit`);
     if (!checks) throw new Error('Runtime permission audit returned no catalog result');
-    const failures = Object.entries(checks).filter(([, value]) => value !== true).map(([name]) => name);
-    return { ready: failures.length === 0, checks, failures };
+    const scopedChecks = requirePricing ? { ...checks,
+      checkoutPricingCatalog: pricing.catalogReady,
+      checkoutPricingCaller: pricing.callerSafe,
+      checkoutPricingPrivileges: pricing.requiredPrivileges,
+      checkoutPricingDefinerReview: pricing.noUnreviewedDefinerRoutine,
+    } : checks;
+    const failures = Object.entries(scopedChecks).filter(([, value]) => value !== true).map(([name]) => name);
+    return { ready: failures.length === 0, checks: scopedChecks, failures };
   }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
 }

@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { SupplierExportService } from "@/services/supplier/SupplierExportService";
 import { jsonOk } from "@/utils/json";
+import { supplierSingleQuery } from "@/services/supplier/SupplierReadSupport";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -16,7 +17,7 @@ function service(c: C): SupplierExportService {
 }
 
 export async function storeOrder(c: C) {
-  return jsonOk(c, await service(c).storeOrder(supplierId(c), c.req.query()));
+  return jsonOk(c, await service(c).storeOrder(supplierId(c), supplierSingleQuery(c.req.queries())));
 }
 
 export async function expressList(c: C) {
@@ -33,5 +34,5 @@ export async function batchOrderDelivery(c: C) {
 }
 
 export async function financeRecord(c: C) {
-  return jsonOk(c, await service(c).financeRecord(supplierId(c), c.req.query()));
+  return jsonOk(c, await service(c).financeRecord(supplierId(c), supplierSingleQuery(c.req.queries())));
 }

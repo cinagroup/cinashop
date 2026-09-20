@@ -12,7 +12,7 @@ const table = (key: string): CatalogRow => ({
   forceRowSecurity: false, partition: false, partitionKey: null,
 });
 const synthetic: Catalog = {
-  tables: Array.from({ length: 264 }, (_, i) => table(`comparator_only_${i}`)),
+  tables: Array.from({ length: 277 }, (_, i) => table(`comparator_only_${i}`)),
   columns: [], constraints: [], indexes: [], sequences: [],
 };
 const withRow = (row: CatalogRow): Catalog => ({ ...synthetic, tables: [row, ...synthetic.tables.slice(1)] });
@@ -29,7 +29,7 @@ describe("DB-009F complete table catalog hard gate", () => {
   });
 
   it("refuses empty/contracted/expanded/duplicate cohorts, including identical defects on both sides", () => {
-    expect(TABLE_CATALOG_COUNT).toBe(264);
+    expect(TABLE_CATALOG_COUNT).toBe(277);
     for (const rows of [[], synthetic.tables.slice(1), [...synthetic.tables, table("extra")],
       [synthetic.tables[1], ...synthetic.tables.slice(1)]]) {
       const changed = { ...synthetic, tables: rows };
@@ -75,7 +75,7 @@ describe("DB-009F complete table catalog hard gate", () => {
         query: async statement => (await db.query<CatalogRow>(statement)).rows,
       });
       expect(report).toEqual({
-        fixtureTables: 264,
+        fixtureTables: 277,
         engineDriftRefusals: ["rls-enabled", "rls-forced", "persistence", "kind", "partition-key", "partition-member", "renamed", "missing", "extra"],
         bothComparisonDirectionsRefused: true, tableOnlyChangesInvisibleToOtherCategories: 6,
         allFiveCategoriesRestoredAfterEachRollback: true, temporaryShadowIgnored: true,

@@ -4,13 +4,19 @@ import { normalizeGoodsDetail } from "../../view/pc-ts/src/api/productDetail";
 import { pcDetailFixture as fixture } from "./helpers/pcProductDetailFixture";
 import { StoreProductService } from "../src/services/product/StoreProductService";
 import { ProductExperienceService } from "../src/services/product/ProductExperienceService";
+import * as membershipPolicy from "../src/services/user/MembershipPricingPolicy";
 
 vi.mock("../src/utils/cache", () => ({ cacheGet: vi.fn(async () => null), cacheSet: vi.fn(async () => {}) }));
 
 describe("FE-002B PC product detail adapter", () => {
-  it("consumes actual uncached and cached service outputs with isolated DAOs", async () => {
+  it("consumes current service outputs and ignores legacy cached details with isolated DAOs", async () => {
     const { cacheGet } = await import("../src/utils/cache");
     const assurance = vi.spyOn(ProductExperienceService.prototype, "productEnsures").mockResolvedValue([]);
+    // This adapter-only case uses isolated DAOs; SQL policy coverage lives in
+    // membership-pricing-policy.test.ts and the real-PostgreSQL detail suites.
+    const policy = vi.spyOn(membershipPolicy, "readMembershipPricingPolicy").mockResolvedValue({
+      memberFunctionEnabled: true, paidMemberEnabled: true, paidMemberPriceEnabled: true,
+    });
     const daoProduct = { ...fixture, sliderImage: JSON.stringify(["/test-one.svg"]), deliveryType: "1,2" };
     const container = {
       storeProductDao: { getById: vi.fn(async () => daoProduct) },
@@ -24,16 +30,17 @@ describe("FE-002B PC product detail adapter", () => {
       expect(wire).not.toHaveProperty("store_name");
       expect(wire).not.toHaveProperty("cart_button");
       expect(normalizeGoodsDetail(wire).skus).toEqual([{ unique: "realred1", suk: "红色,大号", price: "19.90",
-        ot_price: "29.90", vip_price: "17.90", stock: 8, image: "" }]);
+        ot_price: "29.90", vip_price: "17.90", stock: 8, image: "", member_price: "19.90", price_type: "", level_name: "" }]);
       expect(normalizeGoodsDetail(wire)).toMatchObject({ store_name: fixture.storeName,
         store_info: fixture.storeInfo, price: "99.90", ot_price: "199.00", vip_price: "79.90",
         slider_image: ["/test-one.svg"], delivery_type: ["1", "2"], cart_button: 1 });
-      vi.mocked(cacheGet).mockResolvedValueOnce(wire);
+      vi.mocked(cacheGet).mockResolvedValueOnce({ ...wire, image: "/stale.svg", level_name: "wrong user" });
       expect(normalizeGoodsDetail(await service.getProductDetail(70, 0))).toEqual(normalizeGoodsDetail(wire));
+      expect(cacheGet).not.toHaveBeenCalled();
       daoProduct.specType = 1;
       expect(normalizeGoodsDetail(await service.getProductDetail(70, 0))).toMatchObject({
         price: "0.1", min_price: 0.1, max_price: 20, spec_type: 1 });
-    } finally { assurance.mockRestore(); vi.mocked(cacheGet).mockReset(); }
+    } finally { assurance.mockRestore(); policy.mockRestore(); vi.mocked(cacheGet).mockReset(); }
   });
 
   it("maps the observed camelCase/computed detail shape without recalculating money", () => {

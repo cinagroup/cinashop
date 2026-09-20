@@ -1,5 +1,6 @@
 import { runStoreOrderPaymentCancelPostgresScenario } from "./StoreOrderPaymentCancelPostgresScenario";
 import { runStoreOrderCreatePostgresScenario } from "./StoreOrderCreatePostgresScenario";
+import { checkoutScenarioPricingOwner } from "./CheckoutScenarioPricing";
 
 interface AuditEnv {
   HYPERDRIVE: Hyperdrive;
@@ -29,7 +30,8 @@ export default {
       return Response.json({ error: "not found" }, { status: 404 });
     }
     try {
-      const creation = await runStoreOrderCreatePostgresScenario(env.HYPERDRIVE.connectionString);
+      const pricingOwner = checkoutScenarioPricingOwner(request);
+      const creation = await runStoreOrderCreatePostgresScenario(env.HYPERDRIVE.connectionString, pricingOwner);
       const payment = await runStoreOrderPaymentCancelPostgresScenario(env.HYPERDRIVE.connectionString);
       return Response.json({ creation, payment });
     } catch (error) {

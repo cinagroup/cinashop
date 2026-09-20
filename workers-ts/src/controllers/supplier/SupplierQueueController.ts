@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { SupplierQueueHistoryService } from "@/services/supplier/SupplierQueueHistoryService";
 import { jsonOk } from "@/utils/json";
+import { supplierSingleQuery } from "@/services/supplier/SupplierReadSupport";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -18,7 +19,7 @@ function supplierId(c: C): number {
 }
 
 export async function queueList(c: C) {
-  return jsonOk(c, await service(c).list(supplierId(c), c.req.query()));
+  return jsonOk(c, await service(c).list(supplierId(c), supplierSingleQuery(c.req.queries())));
 }
 
 export async function deliveryLog(c: C) {
@@ -26,6 +27,6 @@ export async function deliveryLog(c: C) {
     supplierId(c),
     c.req.param("id"),
     c.req.param("type"),
-    c.req.query(),
+    supplierSingleQuery(c.req.queries()),
   ));
 }

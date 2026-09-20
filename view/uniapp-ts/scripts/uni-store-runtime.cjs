@@ -7,6 +7,14 @@ const pinia = require('pinia');
 const root = path.resolve(__dirname, '..');
 const tick = async () => { for (let i = 0; i < 8; i++) { await vue.nextTick(); await new Promise(setImmediate); } };
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
+// Native JSON requests accept Vue-backed arrays/records. Preserve undefined keys
+// for transport-contract assertions while removing only Vue proxy wrappers.
+function plainIo(value) {
+  const raw = vue.toRaw(value);
+  if (Array.isArray(raw)) return raw.map(plainIo);
+  if (raw && Object.getPrototypeOf(raw) === Object.prototype) return Object.fromEntries(Object.entries(raw).map(([key, item]) => [key, plainIo(item)]));
+  return raw;
+}
 
 // Real Vue reactivity, Pinia stores, request layer, API adapters and the selected composable.
 // Only native lifecycle/I/O is replaced. Platform preprocessing is covered by the three builds, not this loader.
@@ -16,7 +24,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, feature =
     getStorageSync: key => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: key => storage.delete(key),
     navigateTo: opts => navigations.push(opts.url), redirectTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail(new Error('navigation failed')); else opts.success(); },
     showToast: opts => toasts.push(opts), switchTab: opts => navigations.push(opts.url),
-    request: call => { calls.push(structuredClone({ url: call.url, data: call.data })); Promise.resolve().then(() => send(call)).then(result => {
+    request: call => { calls.push(structuredClone(plainIo({ url: call.url, data: call.data }))); Promise.resolve().then(() => send(call)).then(result => {
       if (result?.transport) call.fail({ errMsg: result.transport });
       else call.success({ statusCode: result?.httpStatus ?? 200, header: result?.headers ?? {}, data: { status: result?.status ?? 200, msg: result?.msg ?? 'ok', data: result?.data } });
     }).catch(error => call.fail({ errMsg: error.message })); },
@@ -41,7 +49,9 @@ function runtime({ storage = new Map(), send, navigationFails = false, feature =
     }, exports, uni);
     return exports;
   }
-  pinia.setActivePinia(pinia.createPinia());
+  const activePinia = pinia.createPinia();
+  pinia.setActivePinia(activePinia);
+  const unbindAuth = load(path.join(root, 'src/stores/session.ts')).bindAuthStores(activePinia);
   const auth = load(path.join(root, 'src/stores/auth.ts')).useAuthStore();
   if (!auth.isLoggedIn) auth.setLogin('synthetic-local-token', 11);
   const scope = vue.effectScope();
@@ -50,7 +60,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, feature =
     : load(path.join(root, 'src/composables', feature + '.ts'))[feature]());
   return { checkout, auth, storage, calls, navigations, toasts, hooks, load, uni,
     async start(query = { mode: 'buy', cartId: '1' }) { await hooks.onLoad?.(query); hooks.onShow?.(); await tick(); },
-    stop() { hooks.onUnload?.(); scope.stop(); },
+    stop() { hooks.onUnload?.(); scope.stop(); unbindAuth(); },
   };
 }
 

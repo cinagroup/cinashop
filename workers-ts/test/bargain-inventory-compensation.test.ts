@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { createBargainSelectionFixture } from "./helpers/bargainSelectionFixture";
 import { StoreOrderCreateService, cancelStoreOrder, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
-import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
+import { applyOrderRefund, finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { storeBargain, storeCart, storeProductAttrValue, storeOrder, storeOrderCartInfo, storeOrderStatus,
-  printDocument, systemStore, storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage } from "../src/models/schema";
+  printDocument, systemStore, storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, userBrokerage } from "../src/models/schema";
 
 describe("bargain inventory compensation on owned SQL (no provider)", () => {
   let f: Awaited<ReturnType<typeof createBargainSelectionFixture>>;
@@ -12,7 +12,7 @@ describe("bargain inventory compensation on owned SQL (no provider)", () => {
     shippingType: 2, storeId: 1, realName: "隔离库存样本", userPhone: "00000000000", userIp: "127.0.0.1" };
   beforeEach(async () => {
     f = await createBargainSelectionFixture([storeOrderCartInfo, storeOrderStatus, printDocument,
-      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, userBrokerage]);
+      storeOrderRefund, storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, userBrokerage]);
     await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
     await f.db.insert(storeCart).values({ id: 10, uid: 11, productId: 70, productAttrUnique: "qared001",
       cartNum: 2, type: 2, activityId: 40, isNew: 1, status: 1 });
@@ -34,9 +34,11 @@ describe("bargain inventory compensation on owned SQL (no provider)", () => {
     await create();
     // Synthetic paid balance state only; this does not call payment/provider code.
     const [order] = await f.db.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
-    await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_bargain_refund",
-      applyType: 1, refundType: 0, refundPrice: (quantity * 2).toFixed(2), refundNum: quantity,
-      cartInfo: JSON.stringify({ cartIds: [{ cartId: 10, cartNum: quantity }] }) });
+    // Real application supplies the quantity reservation required by the
+    // checkout financial snapshot; do not hand-insert an unreserved refund.
+    expect(await applyOrderRefund(f.container, { uid: 11, orderId: order.orderId,
+      applyType: 1, refundReason: 'Local inventory refund', refundExplain: '',
+      cartSelections: [{ cartId: 10, cartNum: quantity }] })).toEqual({ refundId: 1 });
     return order;
   };
 
@@ -54,9 +56,9 @@ describe("bargain inventory compensation on owned SQL (no provider)", () => {
     expect(await refund()).toBe("completed"); let state = await snapshot();
     expect(state.bargains[0]).toMatchObject({ stock: 7, quota: 7, sales: 1 });
     expect(state.participations.find(row => row.id === 80)?.status).toBe(4);
-    await f.db.insert(storeOrderRefund).values({ id: 2, storeOrderId: order.id, uid: 11, orderId: "isolated_bargain_refund_two",
-      applyType: 1, refundType: 0, refundPrice: "2.00", refundNum: 1,
-      cartInfo: JSON.stringify({ cartIds: [{ cartId: 10, cartNum: 1 }] }) });
+    expect(await applyOrderRefund(f.container, { uid: 11, orderId: order.orderId,
+      applyType: 1, refundReason: 'Local second inventory refund', refundExplain: '',
+      cartSelections: [{ cartId: 10, cartNum: 1 }] })).toEqual({ refundId: 2 });
     expect(await refund(2)).toBe("completed"); state = await snapshot();
     expect(state.bargains[0]).toMatchObject({ stock: 8, quota: 8, sales: 0 });
     expect(state.products[0]).toMatchObject({ stock: 8, sales: 0 });

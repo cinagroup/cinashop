@@ -1,0 +1,551 @@
+{
+  "date": "2026-09-20",
+  "scope": "Local PG16 checkout pricing capability numbered migration registration and targeted regressions; not application cutover, full current CI or production acceptance",
+  "checklist": {
+    "item": "FE-003L-A3k11d",
+    "closed": false,
+    "checked": 240,
+    "open": 164,
+    "total": 404
+  },
+  "implemented": [
+    "One generated installation SQL shared by external 0160, embedded root migration 0166 and explicit installer",
+    "Shared catalog/body/owner envelope; transaction-local safe search_path and bounded maintenance locks",
+    "Explicit pre-provisioned restricted NOLOGIN owner setting required on actual maintenance connection; no role creation or business grants",
+    "Full migration fixture explicitly owns and cleans its isolated NOLOGIN role; generic fixture not elevated",
+    "Nine build/upgrade paths verify protocol and preserve existing relation/function identities on installation/repeat",
+    "Multi-process CLI tests use bounded per-case budgets while retaining 15-second per-process deadlines and joining runtime finally handlers before database cleanup"
+  ],
+  "nativeRuns": [
+    {
+      "session": 88675,
+      "cluster": "finance-postgres-vGlzSK",
+      "port": 64878,
+      "files": [
+        "test/checkout-pricing-lock-registration.test.ts",
+        "test/checkout-pricing-lock.test.ts",
+        "test/brokerage-paid-runtime-permissions.test.ts"
+      ],
+      "passed": 96,
+      "durationSeconds": 380.95,
+      "exitCode": 0,
+      "fixturesRemaining": 0,
+      "stopped": true
+    },
+    {
+      "session": 81887,
+      "cluster": "finance-postgres-CidrbD",
+      "port": 58333,
+      "files": [
+        "test/admin-refund-operation-migration.test.ts",
+        "test/admin-refund-creation-migration.test.ts",
+        "test/invoice-evidence-registration.test.ts"
+      ],
+      "passed": 109,
+      "durationSeconds": 90.78,
+      "exitCode": 0,
+      "fixturesRemaining": 0,
+      "stopped": true
+    },
+    {
+      "session": 83376,
+      "cluster": "finance-postgres-tVxob9",
+      "port": 56076,
+      "files": [
+        "test/invoice-evidence-migration.test.ts",
+        "test/refund-split-migration.test.ts",
+        "test/offline-order-installation.test.ts",
+        "test/refund-runtime-permissions.test.ts"
+      ],
+      "passed": 132,
+      "durationSeconds": 329.74,
+      "exitCode": 0,
+      "fixturesRemaining": 0,
+      "stopped": true
+    },
+    {
+      "session": 69206,
+      "cluster": "finance-postgres-qo81xy",
+      "port": 54581,
+      "files": [
+        "test/shipping-lifecycle-migration.test.ts",
+        "test/shipping-lifecycle-interactions.test.ts",
+        "test/shipping-lifecycle-indexes.test.ts",
+        "test/shipping-lifecycle-rules.test.ts"
+      ],
+      "passed": 200,
+      "durationSeconds": 88.68,
+      "exitCode": 0,
+      "fixturesRemaining": 0,
+      "stopped": true
+    },
+    {
+      "session": 84317,
+      "cluster": "finance-postgres-7IJ2Ob",
+      "port": 63452,
+      "files": [
+        "test/brokerage-paid-order-migration.test.ts",
+        "test/coupon-product-scope-migration.test.ts",
+        "test/bargain-cart-participation-migration.test.ts",
+        "test/store-order-create-scenario-postgres.test.ts"
+      ],
+      "passed": 49,
+      "durationSeconds": 90.7,
+      "exitCode": 0,
+      "fixturesRemaining": 0,
+      "stopped": true
+    },
+    {
+      "session": 78626,
+      "cluster": "finance-postgres-t2Gymz",
+      "port": 61603,
+      "files": [
+        "test/checkout-member-lifecycle.test.ts",
+        "test/order-member-economize.test.ts"
+      ],
+      "passed": 19,
+      "durationSeconds": 113.99,
+      "exitCode": 0,
+      "fixturesRemaining": 0,
+      "stopped": true
+    }
+  ],
+  "nodeRuns": [
+    {
+      "files": [
+        "test/kefu-sequence-registration.test.ts",
+        "test/local-finance-postgres-runner.test.ts"
+      ],
+      "passed": 126,
+      "durationSeconds": 6.87,
+      "exitCode": 0
+    },
+    {
+      "files": [
+        "test/data-migration.test.ts",
+        "test/data-migration-scope.test.ts",
+        "test/table-catalog-gate.test.ts"
+      ],
+      "passed": 50,
+      "durationSeconds": 5.21,
+      "exitCode": 0
+    }
+  ],
+  "totals": {
+    "nativePG16Tests": 605,
+    "nodeTests": 176,
+    "distinctTargetedTestsPassed": 781,
+    "files": 25,
+    "failed": 0,
+    "skipped": 0,
+    "catalogPathsAdditionalNotTests": 9,
+    "notFullCurrentSuite": true
+  },
+  "typeChecks": {
+    "finalSession": 90252,
+    "configs": [
+      "tsconfig.json",
+      "tsconfig.runtime-test.json"
+    ],
+    "nodeMaxOldSpaceSizeMB": 4096,
+    "bothExitZero": true
+  },
+  "catalogAudit": {
+    "session": 58832,
+    "cluster": "finance-postgres-j5I9Pc",
+    "port": 61819,
+    "serverVersionNum": 160015,
+    "paths": [
+      {
+        "path": "external",
+        "steps": 162
+      },
+      {
+        "path": "embedded",
+        "steps": 167
+      },
+      {
+        "path": "orm",
+        "steps": 1156
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1276
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1157
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1148
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1157
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1149
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1156
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 277,
+        "columns": 3868,
+        "constraints": 651,
+        "indexes": 1068,
+        "sequences": 227
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "externalInputSha256": "3645c18c6c26004b8cd2d48807cc82483feed42f6d0af6931d1007347124d5a6",
+    "generatedSqlSha256": "94be7eaae8a8d425c44d2657125dc3e94201ea5430f964f43b888e644ae9b40e",
+    "checkoutPricingLockVerification": {
+      "external": {
+        "initial": "v1",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "embedded": {
+        "initial": "v1",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "orm": {
+        "initial": "absent",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "orm_upgrade": {
+        "initial": "absent",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "orm_default_upgrade": {
+        "initial": "absent",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "orm_constraints": {
+        "initial": "absent",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "orm_fk_names": {
+        "initial": "absent",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "orm_checks": {
+        "initial": "absent",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      },
+      "orm_sequences": {
+        "initial": "absent",
+        "complete": true,
+        "installationPreserved": true,
+        "repeatPreserved": true
+      }
+    },
+    "cleanupConfirmed": true
+  },
+  "earlierRunsNotAddedToFinalTotal": [
+    {
+      "session": 45258,
+      "passed": 76,
+      "files": 2,
+      "durationSeconds": 227.5,
+      "exitCode": 0,
+      "cluster": "finance-postgres-59kwI4",
+      "port": 50062,
+      "note": "Early shared SQL refactor, before final registration/search_path hardening"
+    },
+    {
+      "session": 8910,
+      "passed": 122,
+      "files": 2,
+      "note": "Static tests before four explicit runner allowlist cases; followed by two type errors, fixed"
+    },
+    {
+      "session": 13408,
+      "passed": 95,
+      "failed": 1,
+      "files": 3,
+      "durationSeconds": 339.4,
+      "exitCode": 1,
+      "cluster": "finance-postgres-5ID2cu",
+      "port": 52556,
+      "note": "Four sequential CLI invocations exceeded default 5000ms test budget. Async cleanup raced with fixture shutdown; two self-created roles remained in stopped cluster. Final rerun 88675 passed all 96."
+    }
+  ],
+  "failuresAndCorrections": [
+    "Two legacy fixture row casts failed type checking after native-only fixture narrowing; replaced with direct boolean field/typeof string guards, without changing business assertions.",
+    "CLI case budget corrected to cover its number of bounded subprocess calls; pending runtime operations now settle before fixture database closure. No global Vitest or SQL timeout relaxation; each CLI retains 15000ms deadline.",
+    "Session 30306 main tsc omitted repository 4096MB heap option and exhausted default heap; subsequent wrong tsconfig.runtime.json argument failed. Correct repository configs/heap rerun in 90252 both exit zero; earlier standalone runtime check 76193 also passed.",
+    "Failed cluster 5ID2cu verified stopped with only base databases and exactly two leftover self-created roles; roles removed by exact name without CASCADE in offline single-user mode, then absence confirmed. Diagnostic directory retained."
+  ],
+  "cleanup": {
+    "clusters": [
+      {
+        "cluster": "finance-postgres-59kwI4",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-j5I9Pc",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-5ID2cu",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-CidrbD",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-vGlzSK",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-tVxob9",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-qo81xy",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-7IJ2Ob",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      },
+      {
+        "cluster": "finance-postgres-t2Gymz",
+        "pgCtlExitCode": 3,
+        "pidPresent": false,
+        "bootstrapPasswordPresent": false
+      }
+    ],
+    "ownedPortListeners": 0,
+    "ownedPostgresProcesses": 0,
+    "diagnosticDirectoriesRetained": true
+  },
+  "selectedEndStateHashes": [
+    {
+      "path": "src/migrations/checkoutPricingLock.ts",
+      "sha256": "170294FE2A4A6B43A423DD12F125AF8031871EF5D9A4BC88A53EE4C426E025A7"
+    },
+    {
+      "path": "src/migrations/checkoutPricingLockCatalog.ts",
+      "sha256": "D45DCC36A8C905C01157654C7217C2347AF48493F30534CFA48E3BA3665CB502"
+    },
+    {
+      "path": "src/migrations/checkoutPricingLockInstallation.ts",
+      "sha256": "2AB128D09A38729C4C655555FE7639672C8A45127BF1D901E40DA15078A634AE"
+    },
+    {
+      "path": "src/migrations/runCheckoutPricingLock.ts",
+      "sha256": "0F7B4EB16DD678341FAA80BAA04116C1FC24C856950FB354796952621994D907"
+    },
+    {
+      "path": "migrations/0160_checkout_pricing_lock.sql",
+      "sha256": "9C92E37E96FAD6823527169314A94FD5FFE46559785706741EA8978D84FFC3B7"
+    },
+    {
+      "path": "src/services/MigrationService.ts",
+      "sha256": "60067FE441A1BBB2ABF88E1C503B8BBF8A8B914FBEDB2A53714B338B5F41207D"
+    },
+    {
+      "path": "scripts/orm-ddl-audit.ts",
+      "sha256": "8CC9FC05D02653DB1230375267AE62E042AE0CDC8F05AC2433A422105C64F44F"
+    },
+    {
+      "path": "scripts/run-local-finance-postgres.mjs",
+      "sha256": "5B9E8102D7EDE895FF345DF2DE31084E0656F7D969D53B162BB3A4125F17D54A"
+    },
+    {
+      "path": "test/helpers/checkoutPricingMigrationDatabase.ts",
+      "sha256": "A275007FADAB12A29B912F8E28CD55803281297FA2327E5CB000A5AEA8A8F6F9"
+    },
+    {
+      "path": "test/helpers/refundRuntimeFixture.ts",
+      "sha256": "4215FE76A21D2E621E38A08C31D695EE228EAA1B540967C5A06556FEEF4D5920"
+    },
+    {
+      "path": "test/checkout-pricing-lock-registration.test.ts",
+      "sha256": "4FF02A93C15DF76807AA6C8227E28CE9ADDEF4C788E68A47ECA19A70DD142848"
+    },
+    {
+      "path": "test/brokerage-paid-runtime-permissions.test.ts",
+      "sha256": "13B1533B48BE808ECD503A26F35234DEB0D034636A17770A6BF950A7FA7803D1"
+    },
+    {
+      "path": "test/kefu-sequence-registration.test.ts",
+      "sha256": "D3EA37D4EAD06F8FA99428F68A4F694A204F7B63D20A0050DB56A432E0F78367"
+    },
+    {
+      "path": "test/local-finance-postgres-runner.test.ts",
+      "sha256": "41ABAE26C9590E341ACC972DB618412EBDFA7AD0C2BE04669297229FB1D8B1EB"
+    }
+  ],
+  "hashCaveat": "Fourteen selected end-state files only, not before/after freeze proof, complete worktree/dependency freeze or immutable CI evidence.",
+  "boundaries": [
+    "Ordinary CheckoutPricingSources.protectCheckoutPricingSources still directly LOCKs; SELECT-only still fails 42501",
+    "Formal maintenance connection and NOLOGIN owner provisioning and production grants are not commissioned",
+    "Seven ORM audit paths explicitly install the capability after DDL; generic ORM generation alone is not protocol installation",
+    "Existing service-scenario fixture still has configuration UPDATE for old direct-LOCK path and is not a read-only checkout proof",
+    "Real HTTP/workerd integration, full current CI, whole-shop role/protocol composition, load and coordinated release remain open",
+    "No type=3 offline refund added; keep PHP scope and prior minimum payable 0.01 policy",
+    "No production access, production DDL, deployment, git staging, commit or push; original nine staged entries retained"
+  ]
+}

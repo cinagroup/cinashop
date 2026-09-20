@@ -11,6 +11,7 @@ import {
 import type { Container } from "@/lib/di";
 import { queueAuxiliary, queueList, storeOrder } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
+import { supplierReadSnapshot } from "./SupplierReadSupport";
 
 const MAX_PAGE = 1_000_000;
 const MAX_LIMIT = 100;
@@ -58,6 +59,7 @@ export interface SupplierQueueHistoryQuery {
 
 function positiveInteger(value: unknown, label: string, fallback: number, maximum: number): number {
   if (value === undefined || value === null || value === "") return fallback;
+  if (typeof value === "string" && !/^\d+$/.test(value)) throw new ValidateException(`${label}无效`);
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > maximum) {
     throw new ValidateException(`${label}无效`);
@@ -66,6 +68,7 @@ function positiveInteger(value: unknown, label: string, fallback: number, maximu
 }
 
 function requiredPositiveInteger(value: unknown, label: string, maximum: number): number {
+  if (typeof value === "string" && !/^\d+$/.test(value)) throw new ValidateException(`${label}无效`);
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > maximum) {
     throw new ValidateException(`${label}无效`);
@@ -80,6 +83,7 @@ function optionalInteger(
   maximum: number,
 ): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value === "string" && !/^\d+$/.test(value)) throw new ValidateException(`${label}无效`);
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
     throw new ValidateException(`${label}无效`);
@@ -175,86 +179,88 @@ export class SupplierQueueHistoryService {
     const query = parseSupplierQueueHistoryQuery(rawQuery);
     if (query.unsupportedType) return { list: [], count: 0, ...readOnlyMetadata() };
 
-    const conditions: SQL[] = [
-      inArray(queueList.type, VISIBLE_QUEUE_TYPES),
-      query.status === undefined
-        ? inArray(queueList.status, VISIBLE_QUEUE_STATUSES)
-        : eq(queueList.status, query.status),
-      eq(storeOrder.supplierId, supplierId),
-    ];
-    if (query.type !== undefined) conditions.push(eq(queueList.type, query.type));
-    if (query.startTime !== undefined) conditions.push(gte(queueList.addTime, query.startTime));
-    if (query.endTime !== undefined) conditions.push(lte(queueList.addTime, query.endTime));
-    const where = and(...conditions);
-    const cacheType = sql<number>`CASE ${queueList.type}
-      WHEN 7 THEN 3 WHEN 8 THEN 4 WHEN 9 THEN 5 WHEN 10 THEN 6 ELSE 0 END`;
-    const auxiliaryJoin = and(
-      eq(queueAuxiliary.bindingId, queueList.id),
-      sql`${queueAuxiliary.type} = ${cacheType}`,
-    );
-    const orderJoin = eq(storeOrder.id, queueAuxiliary.relationId);
+    return supplierReadSnapshot(this.container, async db => {
+      const conditions: SQL[] = [
+        inArray(queueList.type, VISIBLE_QUEUE_TYPES),
+        query.status === undefined
+          ? inArray(queueList.status, VISIBLE_QUEUE_STATUSES)
+          : eq(queueList.status, query.status),
+        eq(storeOrder.supplierId, supplierId),
+      ];
+      if (query.type !== undefined) conditions.push(eq(queueList.type, query.type));
+      if (query.startTime !== undefined) conditions.push(gte(queueList.addTime, query.startTime));
+      if (query.endTime !== undefined) conditions.push(lte(queueList.addTime, query.endTime));
+      const where = and(...conditions);
+      const cacheType = sql<number>`CASE ${queueList.type}
+        WHEN 7 THEN 3 WHEN 8 THEN 4 WHEN 9 THEN 5 WHEN 10 THEN 6 ELSE 0 END`;
+      const auxiliaryJoin = and(
+        eq(queueAuxiliary.bindingId, queueList.id),
+        sql`${queueAuxiliary.type} = ${cacheType}`,
+      );
+      const orderJoin = eq(storeOrder.id, queueAuxiliary.relationId);
 
-    const [rows, totals] = await Promise.all([
-      this.container.db
-        .select({
-          id: queueList.id,
-          type: queueList.type,
-          title: queueList.title,
-          status: queueList.status,
-          firstTime: queueList.firstTime,
-          againTime: queueList.againTime,
-          finishTime: queueList.finishTime,
-          addTime: queueList.addTime,
-          totalNum: sql<number>`COUNT(DISTINCT ${queueAuxiliary.id})::int`,
-          successNum: sql<number>`COUNT(DISTINCT ${queueAuxiliary.id}) FILTER (WHERE ${queueAuxiliary.status} = 1)::int`,
-          surplusNum: sql<number>`COUNT(DISTINCT ${queueAuxiliary.id}) FILTER (WHERE ${queueAuxiliary.status} <> 1)::int`,
-        })
-        .from(queueList)
-        .innerJoin(queueAuxiliary, auxiliaryJoin)
-        .innerJoin(storeOrder, orderJoin)
-        .where(where)
-        .groupBy(
-          queueList.id,
-          queueList.type,
-          queueList.title,
-          queueList.status,
-          queueList.firstTime,
-          queueList.againTime,
-          queueList.finishTime,
-          queueList.addTime,
-        )
-        .orderBy(desc(queueList.addTime), desc(queueList.id))
-        .limit(query.limit)
-        .offset((query.page - 1) * query.limit),
-      this.container.db
-        .select({ value: sql<number>`COUNT(DISTINCT ${queueList.id})::int` })
-        .from(queueList)
-        .innerJoin(queueAuxiliary, auxiliaryJoin)
-        .innerJoin(storeOrder, orderJoin)
-        .where(where),
-    ]);
+      const [rows, totals] = await Promise.all([
+        db
+          .select({
+            id: queueList.id,
+            type: queueList.type,
+            title: queueList.title,
+            status: queueList.status,
+            firstTime: queueList.firstTime,
+            againTime: queueList.againTime,
+            finishTime: queueList.finishTime,
+            addTime: queueList.addTime,
+            totalNum: sql<number>`COUNT(DISTINCT ${queueAuxiliary.id})::int`,
+            successNum: sql<number>`COUNT(DISTINCT ${queueAuxiliary.id}) FILTER (WHERE ${queueAuxiliary.status} = 1)::int`,
+            surplusNum: sql<number>`COUNT(DISTINCT ${queueAuxiliary.id}) FILTER (WHERE ${queueAuxiliary.status} <> 1)::int`,
+          })
+          .from(queueList)
+          .innerJoin(queueAuxiliary, auxiliaryJoin)
+          .innerJoin(storeOrder, orderJoin)
+          .where(where)
+          .groupBy(
+            queueList.id,
+            queueList.type,
+            queueList.title,
+            queueList.status,
+            queueList.firstTime,
+            queueList.againTime,
+            queueList.finishTime,
+            queueList.addTime,
+          )
+          .orderBy(desc(queueList.addTime), desc(queueList.id))
+          .limit(query.limit)
+          .offset((query.page - 1) * query.limit),
+        db
+          .select({ value: sql<number>`COUNT(DISTINCT ${queueList.id})::int` })
+          .from(queueList)
+          .innerJoin(queueAuxiliary, auxiliaryJoin)
+          .innerJoin(storeOrder, orderJoin)
+          .where(where),
+      ]);
 
-    return {
-      list: rows.map((row) => ({
-        id: row.id,
-        type: row.type,
-        title: QUEUE_TYPE_NAMES[row.type] ?? row.title,
-        status: row.status,
-        status_cn: QUEUE_STATUS_NAMES[row.status] ?? "未知",
-        first_time: formatShanghaiEpoch(row.firstTime),
-        again_time: formatShanghaiEpoch(row.againTime),
-        finish_time: formatShanghaiEpoch(row.finishTime),
-        add_time: formatShanghaiEpoch(row.addTime),
-        total_num: Number(row.totalNum),
-        success_num: Number(row.successNum),
-        surplus_num: Number(row.surplusNum),
-        cache_type: SUPPLIER_QUEUE_CACHE_TYPE_BY_QUEUE_TYPE[row.type] ?? 0,
-        is_show_log: true,
-        actions_available: [],
-      })),
-      count: Number(totals[0]?.value ?? 0),
-      ...readOnlyMetadata(),
-    };
+      return {
+        list: rows.map((row) => ({
+          id: row.id,
+          type: row.type,
+          title: QUEUE_TYPE_NAMES[row.type] ?? row.title,
+          status: row.status,
+          status_cn: QUEUE_STATUS_NAMES[row.status] ?? "未知",
+          first_time: formatShanghaiEpoch(row.firstTime),
+          again_time: formatShanghaiEpoch(row.againTime),
+          finish_time: formatShanghaiEpoch(row.finishTime),
+          add_time: formatShanghaiEpoch(row.addTime),
+          total_num: Number(row.totalNum),
+          success_num: Number(row.successNum),
+          surplus_num: Number(row.surplusNum),
+          cache_type: SUPPLIER_QUEUE_CACHE_TYPE_BY_QUEUE_TYPE[row.type] ?? 0,
+          is_show_log: true,
+          actions_available: [],
+        })),
+        count: Number(totals[0]?.value ?? 0),
+        ...readOnlyMetadata(),
+      };
+    });
   }
 
   async deliveryLog(
@@ -270,75 +276,77 @@ export class SupplierQueueHistoryService {
     const page = positiveInteger(rawQuery.page, "页码", 1, MAX_PAGE);
     const limit = positiveInteger(rawQuery.limit, "每页数量", 20, MAX_LIMIT);
     const status = optionalInteger(rawQuery.status, "明细状态", 0, 3);
-    const conditions: SQL[] = [
-      eq(queueList.id, bindingId),
-      eq(queueList.type, queueType),
-      eq(queueAuxiliary.bindingId, bindingId),
-      eq(queueAuxiliary.type, cacheType),
-      eq(storeOrder.supplierId, supplierId),
-    ];
-    if (status !== undefined) conditions.push(eq(queueAuxiliary.status, status));
-    const where = and(...conditions);
+    return supplierReadSnapshot(this.container, async db => {
+      const conditions: SQL[] = [
+        eq(queueList.id, bindingId),
+        eq(queueList.type, queueType),
+        eq(queueAuxiliary.bindingId, bindingId),
+        eq(queueAuxiliary.type, cacheType),
+        eq(storeOrder.supplierId, supplierId),
+      ];
+      if (status !== undefined) conditions.push(eq(queueAuxiliary.status, status));
+      const where = and(...conditions);
 
-    const selection = {
-      id: queueAuxiliary.id,
-      bindingId: queueAuxiliary.bindingId,
-      relationId: queueAuxiliary.relationId,
-      status: queueAuxiliary.status,
-      updateTime: queueAuxiliary.updateTime,
-      addTime: queueAuxiliary.addTime,
-      orderNo: storeOrder.orderId,
-      deliveryType: storeOrder.deliveryType,
-      deliveryName: storeOrder.deliveryName,
-      deliveryId: storeOrder.deliveryId,
-      fictitiousContent: storeOrder.fictitiousContent,
-    };
-    const [rows, totals] = await Promise.all([
-      this.container.db
-        .select(selection)
-        .from(queueAuxiliary)
-        .innerJoin(queueList, and(
-          eq(queueList.id, queueAuxiliary.bindingId),
-          eq(queueList.type, queueType),
-        ))
-        .innerJoin(storeOrder, eq(storeOrder.id, queueAuxiliary.relationId))
-        .where(where)
-        .orderBy(desc(queueAuxiliary.addTime), desc(queueAuxiliary.id))
-        .limit(limit)
-        .offset((page - 1) * limit),
-      this.container.db
-        .select({ value: sql<number>`COUNT(*)::int` })
-        .from(queueAuxiliary)
-        .innerJoin(queueList, and(
-          eq(queueList.id, queueAuxiliary.bindingId),
-          eq(queueList.type, queueType),
-        ))
-        .innerJoin(storeOrder, eq(storeOrder.id, queueAuxiliary.relationId))
-        .where(where),
-    ]);
+      const selection = {
+        id: queueAuxiliary.id,
+        bindingId: queueAuxiliary.bindingId,
+        relationId: queueAuxiliary.relationId,
+        status: queueAuxiliary.status,
+        updateTime: queueAuxiliary.updateTime,
+        addTime: queueAuxiliary.addTime,
+        orderNo: storeOrder.orderId,
+        deliveryType: storeOrder.deliveryType,
+        deliveryName: storeOrder.deliveryName,
+        deliveryId: storeOrder.deliveryId,
+        fictitiousContent: storeOrder.fictitiousContent,
+      };
+      const [rows, totals] = await Promise.all([
+        db
+          .select(selection)
+          .from(queueAuxiliary)
+          .innerJoin(queueList, and(
+            eq(queueList.id, queueAuxiliary.bindingId),
+            eq(queueList.type, queueType),
+          ))
+          .innerJoin(storeOrder, eq(storeOrder.id, queueAuxiliary.relationId))
+          .where(where)
+          .orderBy(desc(queueAuxiliary.addTime), desc(queueAuxiliary.id))
+          .limit(limit)
+          .offset((page - 1) * limit),
+        db
+          .select({ value: sql<number>`COUNT(*)::int` })
+          .from(queueAuxiliary)
+          .innerJoin(queueList, and(
+            eq(queueList.id, queueAuxiliary.bindingId),
+            eq(queueList.type, queueType),
+          ))
+          .innerJoin(storeOrder, eq(storeOrder.id, queueAuxiliary.relationId))
+          .where(where),
+      ]);
 
-    return {
-      list: rows.map((row) => ({
-        id: row.id,
-        binding_id: row.bindingId,
-        relation_id: row.relationId,
-        type: cacheType,
-        order_id: row.orderNo,
-        delivery_name: queueType === 10
-          ? ""
-          : row.deliveryType === "fictitious" ? "虚拟发货" : row.deliveryName,
-        delivery_id: queueType === 10
-          ? ""
-          : row.deliveryType === "fictitious" ? "无" : row.deliveryId,
-        fictitious_content: queueType === 10 ? row.fictitiousContent : "",
-        status: row.status,
-        status_cn: AUXILIARY_STATUS_NAMES[row.status] ?? "未知",
-        error: row.status === 1 ? "无" : "队列异常",
-        update_time: formatShanghaiEpoch(row.updateTime),
-        add_time: formatShanghaiEpoch(row.addTime),
-      })),
-      count: Number(totals[0]?.value ?? 0),
-      ...readOnlyMetadata(),
-    };
+      return {
+        list: rows.map((row) => ({
+          id: row.id,
+          binding_id: row.bindingId,
+          relation_id: row.relationId,
+          type: cacheType,
+          order_id: row.orderNo,
+          delivery_name: queueType === 10
+            ? ""
+            : row.deliveryType === "fictitious" ? "虚拟发货" : row.deliveryName,
+          delivery_id: queueType === 10
+            ? ""
+            : row.deliveryType === "fictitious" ? "无" : row.deliveryId,
+          fictitious_content: queueType === 10 ? row.fictitiousContent : "",
+          status: row.status,
+          status_cn: AUXILIARY_STATUS_NAMES[row.status] ?? "未知",
+          error: row.status === 1 ? "无" : "队列异常",
+          update_time: formatShanghaiEpoch(row.updateTime),
+          add_time: formatShanghaiEpoch(row.addTime),
+        })),
+        count: Number(totals[0]?.value ?? 0),
+        ...readOnlyMetadata(),
+      };
+    });
   }
 }

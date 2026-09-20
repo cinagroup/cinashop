@@ -163,13 +163,27 @@ describe("pink cancellation refund recovery through real SQL execution", () => {
     const failed = await snapshot();
     expect(failed.users).toEqual(before.users); expect(failed.pinks).toEqual(before.pinks);
     expect(failed.orders).toEqual(before.orders); expect(failed.skus).toEqual(before.skus);
-    expect(failed.bills).toEqual(before.bills); expect(failed.details).toEqual(before.details);
+    expect(failed.bills).toEqual(before.bills);
+    // Application commits before financial execution. Failed settlement must
+    // preserve its exact quantity hold, while all financial effects roll back.
+    expect(failed.details).toEqual(before.details.map(row => ({ ...row, refundNum: 1 })));
     expect(failed.refunds).toHaveLength(1); expect(failed.refunds[0].refundType).toBe(0);
+    expect(JSON.parse(failed.refunds[0].cartInfo!)).toEqual({
+      cartIds: [{ cartId: 1, cartNum: 1 }],
+      quantityReservation: { version: 'refund-quantity-reservation-v1', orderId: 500, uid: 11,
+        items: [{ rowId: 1, cartId: 1, cartNum: 1, beforeRefundNum: 0, totalNum: 1 }] },
+    });
     expect((await readCancellation()).state).toBe("accepted");
+    await expect(cancel()).rejects.toThrow("退款商品规格库存无法回退");
+    expect(await snapshot()).toEqual(failed);
     await f.db.update(storeOrderCartInfo).set({ cartInfo: JSON.stringify({ truePrice: "6.25", sku: { id: 1 }, activitySku: { id: 2 } }) });
     await f.db.update(storePink).set({ stopTime: new Date(0) });
     expect(await cancel()).toMatchObject({ completed: true });
     expect((await f.db.select().from(storeOrderRefund)).map(row => row.id)).toEqual([failed.refunds[0].id]);
+    const recovered = await snapshot();
+    expect(recovered.details[0].refundNum).toBe(1);
+    expect(recovered.users[0].nowMoney).toBe('6.25');
+    expect(recovered.bills.filter(row => row.type === 'pay_product_refund')).toHaveLength(1);
   });
 
   it("does not resurrect an explicitly withdrawn cancellation application", async () => {

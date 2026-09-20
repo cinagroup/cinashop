@@ -64,6 +64,18 @@ import { SHIPPING_LIFECYCLE_INDEX_INSTALLATION_SQL } from "@/migrations/shipping
 import { runShippingLifecycleIndexes } from "@/migrations/runShippingLifecycleIndexes";
 import { SHIPPING_CREATE_REPLAY_INSTALLATION_SQL } from "@/migrations/shippingTemplateCreateReplayInstallation";
 import { runShippingTemplateCreateReplay } from "@/migrations/runShippingTemplateCreateReplay";
+import { ADMIN_REFUND_OPERATION_INSTALLATION_SQL } from "@/migrations/adminRefundOperationInstallation";
+import { runAdminRefundOperation } from "@/migrations/runAdminRefundOperation";
+import { ADMIN_REFUND_CREATION_INSTALLATION_SQL } from "@/migrations/adminRefundCreationInstallation";
+import { runAdminRefundCreation } from "@/migrations/runAdminRefundCreation";
+import { INVOICE_EVIDENCE_INSTALLATION_SQL } from "@/migrations/invoiceEvidenceInstallation";
+import { runInvoiceEvidenceSchema } from "@/migrations/runInvoiceEvidence";
+import { REFUND_SPLIT_INSTALLATION_SQL } from "@/migrations/refundOrderSplitInstallation";
+import { runRefundOrderSplitSchema } from "@/migrations/runRefundOrderSplit";
+import { OFFLINE_INSTALLATION_SQL } from "@/migrations/offlineOrderInstallation";
+import { runOfflineOrderSchema } from "@/migrations/runOfflineOrder";
+import { CHECKOUT_PRICING_LOCK_INSTALLATION_SQL } from "@/migrations/checkoutPricingLockInstallation";
+import { runCheckoutPricingLockSchema } from "@/migrations/runCheckoutPricingLock";
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
@@ -78,6 +90,30 @@ export class MigrationService {
 
   shippingCreateReplayMigrationSqlForVerification(): string {
     return this.migration_0160();
+  }
+
+  adminRefundOperationMigrationSqlForVerification(): string {
+    return this.migration_0161();
+  }
+
+  adminRefundCreationMigrationSqlForVerification(): string {
+    return this.migration_0162();
+  }
+
+  invoiceEvidenceMigrationSqlForVerification(): string {
+    return this.migration_0163();
+  }
+
+  refundOrderSplitMigrationSqlForVerification(): string {
+    return this.migration_0164();
+  }
+
+  offlineOrderMigrationSqlForVerification(): string {
+    return this.migration_0165();
+  }
+
+  checkoutPricingLockMigrationSqlForVerification(): string {
+    return this.migration_0166();
   }
 
   couponProductScopeFenceMigrationSqlForVerification(): string {
@@ -450,10 +486,46 @@ export class MigrationService {
       this.migration_0158(),
       this.migration_0159(),
       this.migration_0160(),
+      this.migration_0161(),
+      this.migration_0162(),
+      this.migration_0163(),
+      this.migration_0164(),
+      this.migration_0165(),
+      this.migration_0166(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 166) {
+          await runCheckoutPricingLockSchema(this.container.db);
+          executed.push("0166");
+          continue;
+        }
+        if (i === 165) {
+          await runOfflineOrderSchema(this.container.db);
+          executed.push("0165");
+          continue;
+        }
+        if (i === 164) {
+          await runRefundOrderSplitSchema(this.container.db);
+          executed.push("0164");
+          continue;
+        }
+        if (i === 163) {
+          await runInvoiceEvidenceSchema(this.container.db);
+          executed.push("0163");
+          continue;
+        }
+        if (i === 162) {
+          await runAdminRefundCreation(this.container.db);
+          executed.push("0162");
+          continue;
+        }
+        if (i === 161) {
+          await runAdminRefundOperation(this.container.db);
+          executed.push("0161");
+          continue;
+        }
         if (i === 160) {
           await runShippingTemplateCreateReplay(this.container.db);
           executed.push("0160");
@@ -8559,5 +8631,23 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0160(): string {
     return SHIPPING_CREATE_REPLAY_INSTALLATION_SQL;
+  }
+  private migration_0161(): string {
+    return ADMIN_REFUND_OPERATION_INSTALLATION_SQL;
+  }
+  private migration_0162(): string {
+    return ADMIN_REFUND_CREATION_INSTALLATION_SQL;
+  }
+  private migration_0163(): string {
+    return INVOICE_EVIDENCE_INSTALLATION_SQL;
+  }
+  private migration_0164(): string {
+    return REFUND_SPLIT_INSTALLATION_SQL;
+  }
+  private migration_0165(): string {
+    return OFFLINE_INSTALLATION_SQL;
+  }
+  private migration_0166(): string {
+    return CHECKOUT_PRICING_LOCK_INSTALLATION_SQL;
   }
 }

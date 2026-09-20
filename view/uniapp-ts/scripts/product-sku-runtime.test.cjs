@@ -62,3 +62,24 @@ test('SKU decimal adapter preserves explicit zero, accepts equivalent aliases an
     assert.throws(() => map({ otPrice: '11.00' }));
   } finally { r.stop(); }
 });
+
+test('actual page displays the winning membership price and label per selected SKU, with distinct advertised offers', async () => {
+  for (const paid of [false, true]) {
+    const goods = base();
+    goods.attr_value[0] = { ...goods.attr_value[0], price: '19.99', vip_price: '10.00', member_price: paid ? '10.00' : '17.59', price_type: paid ? 'member' : 'level', level_name: paid ? '' : '银卡' };
+    goods.attr_value[1] = { unique: 'blue001', suk: '蓝色', price: '29.99', vip_price: '28.00', stock: 2, member_price: '26.39', price_type: 'level', level_name: '银卡' };
+    const r = setup(goods); try {
+      await r.start({ id: '70' }); const p = r.checkout;
+      assert.equal(p.displayPrice.value, paid ? '10.00' : '17.59');
+      assert.equal(p.displayPriceLabel.value, paid ? 'SVIP价' : '银卡价');
+      assert.equal(p.displayVipPrice.value, paid ? null : '10.00');
+      p.pickSku(p.skuList.value[1]);
+      assert.equal(p.displayPrice.value, '26.39'); assert.equal(p.displayPriceLabel.value, '银卡价');
+      assert.equal(p.displayVipPrice.value, null);
+      p.pickSku(p.skuList.value[2]);
+      assert.equal(p.displayPrice.value, '30.00'); assert.equal(p.displayPriceLabel.value, '');
+      assert.equal(p.displayVipPrice.value, null);
+      assert.ok(r.calls.every(c => !/cart\/add|order\/create|pay/.test(c.url)));
+    } finally { r.stop(); }
+  }
+});

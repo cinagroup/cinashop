@@ -36,6 +36,7 @@
 
     <!-- 功能菜单 -->
     <view class="menu-section">
+      <view class="menu-item" @tap="go('/pages/annex/offline_pay/index')"><text>¥ 线下消费收银</text><text class="arrow">›</text></view>
       <view class="menu-item" @tap="go('/pages/user/profile')">
         <text>👤 个人资料</text>
         <text class="arrow">›</text>

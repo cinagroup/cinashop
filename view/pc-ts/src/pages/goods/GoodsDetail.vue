@@ -1,7 +1,17 @@
 <template>
   <div class="goods-detail container">
     <el-skeleton v-if="loading" :rows="8" animated />
+    <div v-else-if="loadError" role="alert">
+      <p>{{ loadError }}</p>
+      <el-button @click="load">重新加载商品</el-button>
+    </div>
     <template v-else-if="detail">
+      <div v-if="preparedCart || purchaseNeedsRefresh" class="purchase-recovery" role="status">
+        <p>{{ preparedCart ? '购买记录已创建，继续结算不会重复加购。' : '本次操作结果未确认，请重新加载商品后再选择。' }}</p>
+        <p v-if="checkoutError" role="alert">{{ checkoutError }}</p>
+        <el-button v-if="preparedCart" type="primary" :loading="checkoutNavigating" :disabled="checkoutNavigating" @click="resumeCheckout">继续结算</el-button>
+        <el-button :disabled="checkoutNavigating || purchaseSubmitting || packageBuying" @click="restartPurchase">{{ preparedCart ? '重新选择商品' : '重新加载商品' }}</el-button>
+      </div>
       <div class="detail-main">
         <!-- 图片 -->
         <div class="gallery">
@@ -21,12 +31,12 @@
           <p class="subtitle">{{ detail.store_info }}</p>
 
           <div class="price-box">
-            <span class="price-label">价格</span>
-            <span class="price">¥{{ selectedSku?.price ?? detail.price }}</span>
-            <span v-if="displayOriginalPrice && Number(displayOriginalPrice) > Number(selectedSku?.price ?? detail.price)" class="ot-price">
+            <span class="price-label">{{ displayPriceLabel || '价格' }}</span>
+            <span class="price">¥{{ displayPrice }}</span>
+            <span v-if="displayOriginalPrice && Number(displayOriginalPrice) > Number(displayPrice)" class="ot-price">
               ¥{{ displayOriginalPrice }}
             </span>
-            <span v-if="detail.is_vip && displayVipPrice" class="vip-tag">SVIP ¥{{ displayVipPrice }}</span>
+            <span v-if="displayVipPrice" class="vip-tag">SVIP专享 ¥{{ displayVipPrice }}</span>
           </div>
 
           <div class="meta">
@@ -52,33 +62,40 @@
             </button>
           </div>
 
-          <fieldset class="sku-picker" :disabled="purchaseSubmitting">
+          <fieldset class="sku-picker" :disabled="purchaseLocked">
             <legend>选择规格</legend>
             <label v-for="sku in detail.skus" :key="sku.unique" class="sku-choice">
               <input v-model="selectedUnique" type="radio" name="product-sku" :value="sku.unique" :disabled="sku.stock <= 0" />
-              {{ sku.suk }} · ¥{{ sku.price }}{{ sku.stock <= 0 ? '（无库存）' : '' }}
+              {{ sku.suk }} · ¥{{ skuDisplayPrice(sku) }}{{ skuPriceLabel(sku) ? `（${skuPriceLabel(sku)}）` : '' }}{{ sku.stock <= 0 ? '（无库存）' : '' }}
             </label>
             <p v-if="!detail.skus.length">暂无有效规格，暂不可购买</p>
           </fieldset>
 
           <div class="qty-row">
             <span class="qty-label">数量</span>
-            <el-input-number :key="selectedUnique" v-model="qty" aria-label="购买数量" :disabled="purchaseSubmitting || !selectedSku" :min="1" :max="Math.max(selectedStock, 1)" />
+            <el-input-number :key="selectedUnique" v-model="qty" aria-label="购买数量" :disabled="purchaseLocked || !selectedSku" :min="1" :max="Math.max(selectedStock, 1)" />
           </div>
 
           <div class="actions">
+            <template v-if="preparedCart">
+              <el-button type="primary" size="large" :loading="checkoutNavigating" :disabled="checkoutNavigating" @click="resumeCheckout">继续结算</el-button>
+              <el-button size="large" :disabled="checkoutNavigating || purchaseSubmitting || packageBuying" @click="restartPurchase">重新选择商品</el-button>
+            </template>
+            <el-button v-else-if="purchaseNeedsRefresh" type="primary" size="large" @click="restartPurchase">重新加载商品</el-button>
             <el-button
+              v-if="!preparedCart && !purchaseNeedsRefresh"
               type="danger"
               size="large"
-              :disabled="!canPurchase || purchaseSubmitting"
+              :disabled="!canPurchase || purchaseLocked"
               @click="addToCart"
             >
               加入购物车
             </el-button>
             <el-button
+              v-if="!preparedCart && !purchaseNeedsRefresh"
               type="primary"
               size="large"
-              :disabled="!canPurchase || purchaseSubmitting"
+              :disabled="!canPurchase || purchaseLocked"
               @click="buyNow"
             >
               立即购买
@@ -104,7 +121,7 @@
           >
             <el-checkbox
               :model-value="packageChoices[entry.id]?.selected"
-              :disabled="isRequiredPackageEntry(entry)"
+              :disabled="purchaseLocked || isRequiredPackageEntry(entry)"
               @change="togglePackageProduct(entry.id, Boolean($event))"
             >
               {{ isRequiredPackageEntry(entry) ? "必选" : "可选" }}
@@ -114,6 +131,7 @@
               <strong>{{ entry.title }}</strong>
               <el-select
                 v-model="packageChoices[entry.id].unique"
+                :disabled="purchaseLocked"
                 placeholder="选择规格"
                 style="width: 100%"
               >
@@ -133,7 +151,7 @@
         </div>
         <template #footer>
           <el-button @click="packageVisible = false">取消</el-button>
-          <el-button type="danger" :loading="packageBuying" @click="buyPackage">立即结算套餐</el-button>
+          <el-button type="danger" :loading="packageBuying" :disabled="purchaseLocked" @click="buyPackage">立即结算套餐</el-button>
         </template>
       </el-dialog>
 
@@ -178,8 +196,8 @@
 
 <script setup lang="ts">
 import ProductImage from "@/components/ProductImage.vue";
-import { computed, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { isNavigationFailure, useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { apiGoodsDetail, apiReplyConfig, apiReplyList } from "@/api/product";
 import { apiCartAdd, apiDiscountCartAdd } from "@/api/cart";
@@ -191,19 +209,25 @@ import {
   type DiscountPackageProduct,
 } from "@/api/activity";
 import type { GoodsDetail } from "@/types/product";
-import { isLoggedIn } from "@/utils/auth";
+import { isLoggedIn, captureAuthSession, isCurrentAuthSession, onAuthChange } from "@/utils/auth";
+import { skuDisplayPrice, skuPriceLabel, skuVipOffer } from "../../../../common/skuMembershipPrice";
+import { productDetailId } from "../../../../common/productDetailRoute";
+import { prepareProductCart, type PreparedProductCart } from '../../../../common/preparedProductCart';
 
 const route = useRoute();
 const router = useRouter();
 const detail = ref<GoodsDetail | null>(null);
 const loading = ref(true);
+const loadError = ref('');
 const qty = ref(1);
 const selectedUnique = ref("");
 const purchaseSubmitting = ref(false);
 const selectedSku = computed(() => detail.value?.skus.find((sku) => sku.unique === selectedUnique.value));
 const selectedStock = computed(() => Math.min(selectedSku.value?.stock ?? 0, detail.value?.stock ?? 0, 32767));
-const displayOriginalPrice = computed(() => selectedSku.value?.ot_price ?? detail.value?.ot_price);
-const displayVipPrice = computed(() => selectedSku.value?.vip_price ?? detail.value?.vip_price);
+const displayPrice = computed(() => selectedSku.value ? skuDisplayPrice(selectedSku.value) : detail.value?.price);
+const displayPriceLabel = computed(() => skuPriceLabel(selectedSku.value));
+const displayOriginalPrice = computed(() => selectedSku.value?.ot_price);
+const displayVipPrice = computed(() => skuVipOffer(selectedSku.value, detail.value?.is_vip === 1));
 const canPurchase = computed(() => detail.value?.cart_button === 1 && !!selectedSku.value && selectedStock.value > 0
   && Number.isSafeInteger(qty.value) && qty.value > 0 && qty.value <= selectedStock.value);
 watch(selectedUnique, () => { qty.value = Math.max(1, Math.min(qty.value, selectedStock.value)); });
@@ -215,6 +239,8 @@ const discountPackages = ref<DiscountPackage[]>([]);
 const selectedPackage = ref<DiscountPackage | null>(null);
 const packageVisible = ref(false);
 const packageBuying = ref(false);
+const preparedCart = ref<PreparedProductCart | null>(null), checkoutNavigating = ref(false), checkoutError = ref(''), purchaseNeedsRefresh = ref(false);
+const purchaseLocked = computed(() => purchaseSubmitting.value || packageBuying.value || checkoutNavigating.value || !!preparedCart.value || purchaseNeedsRefresh.value);
 const packageChoices = ref<Record<number, { selected: boolean; unique: string }>>({});
 const selectedPackageCount = computed(() =>
   Object.values(packageChoices.value).filter((choice) => choice.selected).length,
@@ -242,33 +268,51 @@ function starText(score: number): string {
   return "★".repeat(n);
 }
 
-async function loadReplies(productId: number) {
+async function loadReplies(productId: number, current: () => boolean) {
   try {
-    replyStats.value = await apiReplyConfig(productId);
+    const stats = await apiReplyConfig(productId);
+    if (!current()) return;
+    replyStats.value = stats;
   } catch {
     // 静默
   }
   try {
-    replies.value = await apiReplyList(productId);
+    if (!current()) return;
+    const rows = await apiReplyList(productId);
+    if (current()) replies.value = rows;
   } catch {
-    replies.value = [];
+    if (current()) replies.value = [];
   }
 }
 
 let loadGeneration = 0;
+let disposed = false;
+function currentView() {
+  const generation = loadGeneration, owner = captureAuthSession(), path = route.fullPath;
+  return () => !disposed && generation === loadGeneration && route.fullPath === path && isCurrentAuthSession(owner);
+}
+function clearView() {
+  loadGeneration++;
+  detail.value = null; selectedUnique.value = ''; qty.value = 1;
+  discountPackages.value = []; selectedPackage.value = null; packageChoices.value = {}; packageVisible.value = false;
+  collected.value = false; replies.value = []; replyStats.value = { total: 0, avgScore: '0.0', goodRate: 100 };
+  purchaseSubmitting.value = false; packageBuying.value = false; collectSubmitting.value = false;
+  preparedCart.value = null; checkoutNavigating.value = false; checkoutError.value = ''; purchaseNeedsRefresh.value = false;
+  loading.value = false; loadError.value = '';
+}
 async function load() {
-  const generation = ++loadGeneration;
+  clearView();
+  if (disposed || route.name !== 'goods-detail') return;
+  const current = currentView();
   loading.value = true;
-  detail.value = null;
-  selectedUnique.value = "";
-  qty.value = 1;
   try {
-    const id = Number(route.params.id);
+    const id = productDetailId(route.params.id);
     const [goods, packages] = await Promise.all([
       apiGoodsDetail(id),
       apiDiscountPackages(id).catch(() => []),
     ]);
-    if (generation !== loadGeneration) return;
+    if (!current()) return;
+    if (goods.id !== id) throw new Error('商品详情标识不匹配，请重新加载');
     detail.value = goods;
     const requested = route.query.sku;
     selectedUnique.value = requested === undefined
@@ -279,11 +323,11 @@ async function load() {
       ? Math.max(1, Math.min(requestedQuantity, selectedStock.value)) : 1;
     discountPackages.value = packages;
     collected.value = detail.value.userCollect;
-    loadReplies(id);
+    void loadReplies(id, current);
   } catch (e) {
-    if (generation === loadGeneration) ElMessage.error(e instanceof Error ? e.message : "商品详情加载失败");
+    if (current()) loadError.value = e instanceof Error ? e.message : "商品详情加载失败";
   } finally {
-    if (generation === loadGeneration) loading.value = false;
+    if (current()) loading.value = false;
   }
 }
 
@@ -292,6 +336,7 @@ function isRequiredPackageEntry(entry: DiscountPackageProduct): boolean {
 }
 
 function openPackage(item: DiscountPackage) {
+  if (disposed || !detail.value || loading.value || purchaseLocked.value || !discountPackages.value.includes(item)) return;
   if (!isLoggedIn()) return router.push({ path: "/login", query: { redirect: route.fullPath } });
   selectedPackage.value = item;
   packageChoices.value = Object.fromEntries(item.products.map((entry) => [
@@ -305,13 +350,17 @@ function openPackage(item: DiscountPackage) {
 }
 
 function togglePackageProduct(entryId: number, selected: boolean) {
+  if (purchaseLocked.value) return;
   const choice = packageChoices.value[entryId];
   if (choice) choice.selected = selected;
 }
 
 async function buyPackage() {
+  if (preparedCart.value?.type === 5) return resumeCheckout();
   const item = selectedPackage.value;
-  if (!item || packageBuying.value) return;
+  if (disposed || !detail.value || !item || purchaseLocked.value || !discountPackages.value.includes(item)) return;
+  if (!isLoggedIn()) return router.push({ path: '/login', query: { redirect: route.fullPath } });
+  const current = currentView();
   const selected = item.products.filter((entry) => packageChoices.value[entry.id]?.selected);
   if (selected.length < 2) return ElMessage.error("套餐至少选择两件商品");
   if (selected.some((entry) => !packageChoices.value[entry.id]?.unique)) {
@@ -327,15 +376,14 @@ async function buyPackage() {
         unique: packageChoices.value[entry.id].unique,
       })),
     });
+    if (!current()) return;
+    preparedCart.value = prepareProductCart(result, 5, selected.length);
     packageVisible.value = false;
-    await router.push({
-      path: "/checkout",
-      query: { mode: "buy", cartIds: result.cartIds.join(","), type: "5" },
-    });
+    await resumeCheckout();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "套餐加入结算失败");
+    if (current()) { purchaseNeedsRefresh.value = true; checkoutError.value = error instanceof Error ? error.message : '套餐购买记录未确认'; packageVisible.value = false; }
   } finally {
-    packageBuying.value = false;
+    if (current()) packageBuying.value = false;
   }
 }
 
@@ -348,7 +396,11 @@ async function buyNow() {
 }
 
 async function purchase(direct: boolean) {
-  if (!detail.value || purchaseSubmitting.value) return;
+  if (direct && preparedCart.value?.type === 0) return resumeCheckout();
+  if (disposed || !detail.value || loading.value || purchaseLocked.value) return;
+  const current = currentView();
+  let sent = false;
+  purchaseSubmitting.value = true;
   try {
     const input = productCartInput(detail.value, selectedUnique.value, qty.value, direct);
     if (!isLoggedIn()) {
@@ -356,40 +408,67 @@ async function purchase(direct: boolean) {
       await router.push({ path: "/login", query: { redirect } });
       return;
     }
-    purchaseSubmitting.value = true;
+    sent = true;
     const result = await apiCartAdd(input);
+    if (!current()) return;
+    const prepared = prepareProductCart(result, 0);
     if (direct) {
-      if (!Number.isSafeInteger(result.id) || result.id <= 0) throw new Error("立即购买返回标识无效，请重新选择");
-      await router.push({ path: "/checkout", query: { mode: "buy", cartIds: String(result.id) } });
+      preparedCart.value = prepared;
+      await resumeCheckout();
     } else ElMessage.success("已加入购物车");
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加入失败");
+    if (current()) {
+      if (sent) { purchaseNeedsRefresh.value = true; checkoutError.value = e instanceof Error ? e.message : '购买记录未确认'; }
+      else ElMessage.error(e instanceof Error ? e.message : '加入失败');
+    }
   } finally {
-    purchaseSubmitting.value = false;
+    if (current()) purchaseSubmitting.value = false;
   }
 }
 
+async function resumeCheckout() {
+  const prepared = preparedCart.value;
+  if (disposed || !detail.value || !prepared || checkoutNavigating.value || !isLoggedIn()) return;
+  const current = currentView(); checkoutNavigating.value = true; checkoutError.value = '';
+  try {
+    const failure = await router.push({ path: '/checkout', query: { mode: 'buy', cartIds: prepared.ids.join(','), ...(prepared.type === 5 ? { type: '5' } : {}) } });
+    if (isNavigationFailure(failure)) throw Error('结算页面未打开，请点击继续结算');
+  } catch {
+    if (current() && preparedCart.value === prepared) checkoutError.value = '结算页面未打开，请点击继续结算';
+  } finally { if (current() && preparedCart.value === prepared) checkoutNavigating.value = false; }
+}
+function restartPurchase() {
+  if (disposed || checkoutNavigating.value || purchaseSubmitting.value || packageBuying.value) return;
+  void load();
+}
+
 async function toggleCollect() {
+  if (disposed || loading.value || !detail.value) return;
   if (!isLoggedIn()) return router.push({ path: "/login", query: { redirect: route.fullPath } });
   if (!detail.value || collectSubmitting.value) return;
   const nextCollected = !collected.value;
+  const current = currentView();
   collectSubmitting.value = true;
   try {
     if (nextCollected) await apiCollectAdd([detail.value.id]);
     else await apiCollectDel([detail.value.id]);
+    if (!current()) return;
     collected.value = nextCollected;
     ElMessage.success(nextCollected ? "收藏成功" : "已取消收藏");
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "收藏操作失败");
+    if (current()) ElMessage.error(error instanceof Error ? error.message : "收藏操作失败");
   } finally {
-    collectSubmitting.value = false;
+    if (current()) collectSubmitting.value = false;
   }
 }
 
-watch(() => route.params.id, load, { immediate: true });
+watch(() => route.fullPath, load, { immediate: true, flush: 'sync' });
+const unbindAuth = onAuthChange(() => { void load(); });
+onBeforeUnmount(() => { disposed = true; unbindAuth(); clearView(); });
 </script>
 
 <style scoped>
+.purchase-recovery { margin-bottom: 20px; padding: 16px; background: #fff6e9; border: 1px solid #efd6b3; border-radius: 8px; }
 .goods-detail {
   padding-top: 20px;
 }

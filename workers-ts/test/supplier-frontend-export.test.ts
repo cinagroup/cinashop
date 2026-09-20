@@ -41,7 +41,8 @@ describe("supplier frontend export and queue-history migration", () => {
   });
 
   it("exports only explicitly selected order and finance rows", () => {
-    expect(orders).toContain('ids: selectedOrders.value.map((row) => row.id).join(",")');
+    expect(orders).toContain('const ids = selectedOrders.value.map(row => row.id)');
+    expect(orders).toContain('ids: ids.join(","), type, page: 1, selection: "exact"');
     expect(orders).toContain('@selection-change="selectOrders"');
     expect(finance).toContain("exportSupplierFinance(selectedFlows.value.map((row) => row.id))");
     expect(finance).toContain('@selection-change="selectFlows"');
@@ -64,7 +65,7 @@ describe("supplier frontend export and queue-history migration", () => {
   });
 
   it("creates a BOM CSV with client-side formula and filename hardening", () => {
-    expect(exporter).toContain('/^[\\t\\r\\n ]*[=+\\-@]/');
+    expect(exporter).toContain('/^[\\s\\u0000-\\u001f\\u007f-\\u009f]*[=+\\-@]/');
     expect(exporter).toContain('.replace(/\\0/g, "")');
     expect(exporter).toContain('["\\uFEFF", lines.join("\\r\\n")]');
     expect(exporter).toContain("URL.revokeObjectURL(url)");

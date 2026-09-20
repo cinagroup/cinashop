@@ -34,6 +34,14 @@ regexes = [
 useDefault = true
 
 [[allowlists]]
+description = "Fixed non-secret Out registration replay UUID fixture; not an authentication key"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = ['''^workers-ts/test/registration-level-activation\.test\.ts$''']
+regexes = ['''^71efb2f8-07ce-4a18-9035-c204af955f47$''']
+
+[[allowlists]]
 description = "Fixed non-secret WebSocket protocol fixture"
 targetRules = ["generic-api-key"]
 condition = "AND"

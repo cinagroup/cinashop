@@ -1,0 +1,673 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-20",
+  "scope": "Local current-worktree full unit attempt and bounded diagnostic fixture corrections; no production access or release",
+  "conclusion": {
+    "fullUnitAccepted": false,
+    "actualFullCoverageCompleted": false,
+    "immutableLinuxCiCompleted": false,
+    "checklist": {
+      "checked": 240,
+      "open": 164,
+      "total": 404
+    },
+    "goalRemainsActive": true
+  },
+  "decisions": {
+    "offlineType3Refunds": "Remain PHP scope; no new refunds",
+    "minimumPayable": "0.01",
+    "productionAccess": false,
+    "stageCommitPushDeploy": false,
+    "originalNineStagedEntriesUnchanged": true
+  },
+  "environment": {
+    "platform": "Windows",
+    "node": "24.19.0",
+    "postgres": "16.15",
+    "vitest": "4.1.11",
+    "perShardMaxWorkers": 2,
+    "shardsRunConcurrentlyOnSameHost": true,
+    "perShardProcessDeadlineMs": 2400000,
+    "ciComparison": {
+      "os": "Ubuntu 24.04",
+      "node": "24.14.1",
+      "postgres": "16.14-alpine",
+      "jobDeadlineMinutes": 40,
+      "defaultTestConcurrencyUnchanged": true
+    },
+    "notCiEnvironmentOrPerformanceParity": true,
+    "workerdSha256": "cbba402d8fad83b0d70787f115c614549b2466fb7c5a4836cdf124bc35345b4a",
+    "systemRuntimeChanged": false
+  },
+  "nativePartition": {
+    "inventoryFiles": 531,
+    "selectedFiles": [
+      266,
+      265
+    ],
+    "inventorySha256": "7bbcf2aee3f3932af064c64ae4a6f8a3073414ae845070c8dbc56bbcb63e8418",
+    "completeAndDisjointInventory": true,
+    "actualCompleteAndDisjointExecutionNotProven": true
+  },
+  "fullRuns": [
+    {
+      "session": 25554,
+      "shard": 1,
+      "cluster": "finance-postgres-guwxgB",
+      "port": 60178,
+      "exitCode": 1,
+      "gate": {
+        "shard": 1,
+        "accepted": false,
+        "execution": {
+          "status": null,
+          "signal": "SIGTERM",
+          "errorCode": "ETIMEDOUT"
+        },
+        "inputFiles": 2378,
+        "inputSha256Before": "aa684f280316d6d4b31083f650fff7f901c870718ba5e890130facc9378e5f22",
+        "inputSha256After": "aa684f280316d6d4b31083f650fff7f901c870718ba5e890130facc9378e5f22",
+        "changedFiles": [],
+        "verificationError": "ENOENT: no such file or directory, open 'C:\\cinagroup\\cinashop\\.cache\\finance-postgres-guwxgB\\unit-shard-results.json'"
+      },
+      "observedModules": [
+        {
+          "file": "test/offline-order-payment-selection.test.ts",
+          "tests": 35,
+          "failed": 0,
+          "durationMs": 244838
+        },
+        {
+          "file": "test/offline-order-balance.test.ts",
+          "tests": 47,
+          "failed": 0,
+          "durationMs": 338557
+        },
+        {
+          "file": "test/offline-order-query-recovery.test.ts",
+          "tests": 38,
+          "failed": 0,
+          "durationMs": 276599
+        },
+        {
+          "file": "test/brokerage-paid-runtime-permissions.test.ts",
+          "tests": 40,
+          "failed": 0,
+          "durationMs": 274359
+        },
+        {
+          "file": "test/offline-order-external-payment.test.ts",
+          "tests": 31,
+          "failed": 0,
+          "durationMs": 216978
+        },
+        {
+          "file": "test/offline-order-installation.test.ts",
+          "tests": 38,
+          "failed": 0,
+          "durationMs": 338391
+        },
+        {
+          "file": "test/supplier-order-generations.test.ts",
+          "tests": 22,
+          "failed": 0,
+          "durationMs": 233401
+        },
+        {
+          "file": "test/offline-runtime-permissions.test.ts",
+          "tests": 29,
+          "failed": 0,
+          "durationMs": 216056
+        },
+        {
+          "file": "test/admin-config-batch-postgres.test.ts",
+          "tests": 46,
+          "failed": 0,
+          "durationMs": 168869
+        },
+        {
+          "file": "test/missing-constraint-alignment.test.ts",
+          "tests": 5,
+          "failed": 1,
+          "durationMs": 360550
+        },
+        {
+          "file": "test/supplier-operational-reads.test.ts",
+          "tests": 21,
+          "failed": 0,
+          "durationMs": 207708
+        },
+        {
+          "file": "test/checkout-coupon-management.test.ts",
+          "tests": 54,
+          "failed": 0,
+          "durationMs": 324018
+        },
+        {
+          "file": "test/supplier-export-history-reads.test.ts",
+          "tests": 19,
+          "failed": 0,
+          "durationMs": 172243
+        },
+        {
+          "file": "test/customer-order-deletion.test.ts",
+          "tests": 20,
+          "failed": 0,
+          "durationMs": 204253
+        },
+        {
+          "file": "test/checkout-brokerage-authority.test.ts",
+          "tests": 109,
+          "failed": 0,
+          "durationMs": 270983
+        },
+        {
+          "file": "test/refund-order-materialization.test.ts",
+          "tests": 76,
+          "failed": 0,
+          "durationMs": 112539
+        },
+        {
+          "file": "test/check-state-alignment.test.ts",
+          "tests": 5,
+          "failed": 0,
+          "durationMs": 243541
+        },
+        {
+          "file": "test/offline-order-callback-pipeline.test.ts",
+          "tests": 32,
+          "failed": 0,
+          "durationMs": 199534
+        }
+      ],
+      "observationCaveat": "Console excerpts only; one large notice-heavy chunk was truncated. These are lower bounds, not complete execution coverage. No final Vitest JSON was generated."
+    },
+    {
+      "session": 21890,
+      "shard": 2,
+      "cluster": "finance-postgres-WtAJ9Q",
+      "port": 60179,
+      "exitCode": 1,
+      "gate": {
+        "shard": 2,
+        "accepted": false,
+        "execution": {
+          "status": null,
+          "signal": "SIGTERM",
+          "errorCode": "ETIMEDOUT"
+        },
+        "inputFiles": 2378,
+        "inputSha256Before": "aa684f280316d6d4b31083f650fff7f901c870718ba5e890130facc9378e5f22",
+        "inputSha256After": "aa684f280316d6d4b31083f650fff7f901c870718ba5e890130facc9378e5f22",
+        "changedFiles": [],
+        "verificationError": "ENOENT: no such file or directory, open 'C:\\cinagroup\\cinashop\\.cache\\finance-postgres-WtAJ9Q\\unit-shard-results.json'"
+      },
+      "observedModules": [
+        {
+          "file": "test/split-order-line-finance.test.ts",
+          "tests": 47,
+          "failed": 0,
+          "durationMs": 90907
+        },
+        {
+          "file": "test/checkout-pricing-lock.test.ts",
+          "tests": 36,
+          "failed": 0,
+          "durationMs": 261294
+        },
+        {
+          "file": "test/checkout-confirmation-rules.test.ts",
+          "tests": 262,
+          "failed": 0,
+          "durationMs": 538417
+        },
+        {
+          "file": "test/foreign-key-name-alignment.test.ts",
+          "tests": 5,
+          "failed": 1,
+          "durationMs": 332854
+        },
+        {
+          "file": "test/offline-order-admission.test.ts",
+          "tests": 28,
+          "failed": 0,
+          "durationMs": 163110
+        },
+        {
+          "file": "test/offline-order-http.test.ts",
+          "tests": 20,
+          "failed": 0,
+          "durationMs": 205326
+        },
+        {
+          "file": "test/offline-order-registration.test.ts",
+          "tests": 21,
+          "failed": 0,
+          "durationMs": 209532
+        },
+        {
+          "file": "test/checkout-out-product-concurrency.test.ts",
+          "tests": 17,
+          "failed": 0,
+          "durationMs": 130941
+        },
+        {
+          "file": "test/checkout-coupon-item-authority.test.ts",
+          "tests": 55,
+          "failed": 0,
+          "durationMs": 150164
+        },
+        {
+          "file": "test/bargain-admin-save.test.ts",
+          "tests": 52,
+          "failed": 0,
+          "durationMs": 111028
+        },
+        {
+          "file": "test/checkout-pricing-lock-registration.test.ts",
+          "tests": 20,
+          "failed": 0,
+          "durationMs": 136816
+        },
+        {
+          "file": "test/customer-order-generations.test.ts",
+          "tests": 12,
+          "failed": 0,
+          "durationMs": 123168
+        },
+        {
+          "file": "test/bargain-order-participation.test.ts",
+          "tests": 54,
+          "failed": 0,
+          "durationMs": 96253
+        },
+        {
+          "file": "test/checkout-pricing-service-runtime.test.ts",
+          "tests": 15,
+          "failed": 0,
+          "durationMs": 137386
+        },
+        {
+          "file": "test/checkout-catalog-management.test.ts",
+          "tests": 25,
+          "failed": 0,
+          "durationMs": 218553
+        },
+        {
+          "file": "test/drizzle-pg-order-patch.test.ts",
+          "tests": 4,
+          "failed": 2,
+          "durationMs": 22262
+        },
+        {
+          "file": "test/checkout-mobile-product-concurrency.test.ts",
+          "tests": 20,
+          "failed": 0,
+          "durationMs": 151466
+        },
+        {
+          "file": "test/checkout-coupon-relations-authority.test.ts",
+          "tests": 47,
+          "failed": 0,
+          "durationMs": 114412
+        },
+        {
+          "file": "test/staff-refund-history.test.ts",
+          "tests": 15,
+          "failed": 0,
+          "durationMs": 142883
+        },
+        {
+          "file": "test/kefu-sequence-alignment.test.ts",
+          "tests": 5,
+          "failed": 0,
+          "durationMs": 158851
+        },
+        {
+          "file": "test/checkout-brokerage-paid-authority.test.ts",
+          "tests": 62,
+          "failed": 0,
+          "durationMs": 79746
+        },
+        {
+          "file": "test/checkout-sku-lifecycle-concurrency.test.ts",
+          "tests": 17,
+          "failed": 0,
+          "durationMs": 134776
+        },
+        {
+          "file": "test/supplier-refund-generations.test.ts",
+          "tests": 52,
+          "failed": 0,
+          "durationMs": 148923
+        },
+        {
+          "file": "test/bargain-shipping-selection.test.ts",
+          "tests": 41,
+          "failed": 0,
+          "durationMs": 51583
+        },
+        {
+          "file": "test/pink-cancellation-authorization-postgres.test.ts",
+          "tests": 56,
+          "failed": 7,
+          "durationMs": 57159
+        },
+        {
+          "file": "test/admin-refund-creation-http.test.ts",
+          "tests": 41,
+          "failed": 0,
+          "durationMs": 58682
+        },
+        {
+          "file": "test/column-default-alignment.test.ts",
+          "tests": 7,
+          "failed": 0,
+          "durationMs": 97550
+        },
+        {
+          "file": "test/admin-refund-frontend.test.ts",
+          "tests": 60,
+          "failed": 0,
+          "durationMs": 51765
+        },
+        {
+          "file": "test/out-stock-candidate-boundary.test.ts",
+          "tests": 13,
+          "failed": 0,
+          "durationMs": 76708
+        },
+        {
+          "file": "test/bargain-selection-catalog.test.ts",
+          "tests": 29,
+          "failed": 0,
+          "durationMs": 45773
+        },
+        {
+          "file": "test/brokerage-paid-order-migration.test.ts",
+          "tests": 7,
+          "failed": 0,
+          "durationMs": 50542
+        },
+        {
+          "file": "test/offline-order-payment-workerd.test.ts",
+          "tests": 7,
+          "failed": 0,
+          "durationMs": 69889
+        },
+        {
+          "file": "test/coupon-product-scope-migration.test.ts",
+          "tests": 7,
+          "failed": 0,
+          "durationMs": 51382
+        },
+        {
+          "file": "test/bargain-shipping-contract.test.ts",
+          "tests": 25,
+          "failed": 0,
+          "durationMs": 36701
+        },
+        {
+          "file": "test/checkout-brokerage-boundary.test.ts",
+          "tests": 40,
+          "failed": 0,
+          "durationMs": 60475
+        }
+      ],
+      "observationCaveat": "Console excerpts only; one large notice-heavy chunk was truncated. These are lower bounds, not complete execution coverage. No final Vitest JSON was generated."
+    }
+  ],
+  "diagnosticRuns": [
+    {
+      "kind": "runner and gate boundary tests",
+      "chunk": "df9e83",
+      "files": 2,
+      "passed": 104,
+      "failed": 0,
+      "exitCode": 0,
+      "durationSeconds": 6.26
+    },
+    {
+      "kind": "initial typecheck",
+      "session": 6013,
+      "exitCode": 2,
+      "reason": "New .mjs helper lacked declaration; fixed by adding .d.mts"
+    },
+    {
+      "kind": "typecheck after declaration",
+      "session": 81714,
+      "exitCode": 0,
+      "configs": [
+        "tsconfig.json",
+        "tsconfig.runtime-test.json"
+      ]
+    },
+    {
+      "kind": "Drizzle unmodified focused reproduction",
+      "session": 30425,
+      "terminalChunk": "541a6b",
+      "passed": 2,
+      "failed": 2,
+      "exitCode": 1,
+      "durationSeconds": 15.3,
+      "reason": "277 !== 264"
+    },
+    {
+      "kind": "pink cancellation unmodified focused reproduction",
+      "session": 4882,
+      "terminalChunk": "679063",
+      "cluster": "finance-postgres-ioamlV",
+      "port": 52027,
+      "passed": 49,
+      "failed": 7,
+      "exitCode": 1,
+      "durationSeconds": 38.95,
+      "reason": "RefundQuantityReservation rejected cart uid=0 versus order uid=11",
+      "automaticFixtureCleanup": true,
+      "automaticClusterStop": true
+    },
+    {
+      "kind": "pink cancellation after fixture correction",
+      "session": 98340,
+      "terminalChunk": "35a63b",
+      "cluster": "finance-postgres-NqIhGb",
+      "port": 55773,
+      "passed": 58,
+      "failed": 0,
+      "exitCode": 0,
+      "durationSeconds": 47.12,
+      "automaticFixtureCleanup": true,
+      "automaticClusterStop": true,
+      "refundExecutionMockedAsBefore": true
+    },
+    {
+      "kind": "three generator suites after table-count correction",
+      "session": 18424,
+      "terminalChunk": "a1ead1",
+      "files": 3,
+      "passed": 13,
+      "failed": 1,
+      "exitCode": 1,
+      "durationSeconds": 523.34,
+      "maxWorkers": 1,
+      "originalChildDeadlinesPreserved": true,
+      "suites": [
+        {
+          "file": "test/drizzle-pg-order-patch.test.ts",
+          "passed": 4,
+          "failed": 0
+        },
+        {
+          "file": "test/missing-constraint-alignment.test.ts",
+          "passed": 5,
+          "failed": 0
+        },
+        {
+          "file": "test/foreign-key-name-alignment.test.ts",
+          "passed": 4,
+          "failed": 1
+        }
+      ],
+      "unresolvedFailure": {
+        "format": "esm",
+        "semanticProbeOutput": "141 drift refusals, 12 raw proposal hazards and FK identity/rows/rollback/schema isolation completed",
+        "errorCode": "ENOENT",
+        "location": "test/helpers/drizzleCliAudit.cjs:50",
+        "operation": "write audit.json on process exit",
+        "causeOfMissingTemporaryDirectory": "not determined",
+        "notAcceptedDespiteSemanticOutput": true
+      }
+    },
+    {
+      "kind": "final dual typecheck after fixture corrections",
+      "session": 76848,
+      "terminalChunk": "023c51",
+      "exitCode": 0,
+      "configs": [
+        "tsconfig.json",
+        "tsconfig.runtime-test.json"
+      ]
+    }
+  ],
+  "cleanup": {
+    "initialAutomaticFullRunCleanupFailed": true,
+    "beforeCleanupReadOnlyChunks": [
+      "0679d8",
+      "8d1f4d",
+      "26165c",
+      "06283d",
+      "db4bd1"
+    ],
+    "singleUserNoNetworkCleanup": [
+      {
+        "cluster": "finance-postgres-guwxgB",
+        "chunk": "46caf5",
+        "databases": [
+          "cinashop_kefu_runner_8551f942221247739edd05e80c7d631c",
+          "cinashop_kefu_runner_eb6a04c4491f4bc4a6203a43db4ff0ef"
+        ],
+        "roles": [
+          "cinashop_runtime_af76ac4bf04b4870b7f75d18eff58503"
+        ],
+        "verifiedOwner": "finance_test",
+        "roleDependencies": 0,
+        "remainingFixtureDatabases": 0,
+        "remainingFixtureRoles": 0
+      },
+      {
+        "cluster": "finance-postgres-WtAJ9Q",
+        "chunk": "4669c9",
+        "databases": [
+          "cinashop_kefu_runner_8c7bf7b15b7743f083c97c054da9dad5"
+        ],
+        "roles": [],
+        "verifiedOwner": "finance_test",
+        "remainingFixtureDatabases": 0,
+        "remainingFixtureRoles": 0
+      }
+    ],
+    "independentFinalChunk": "aa905e",
+    "clusters": [
+      "guwxgB",
+      "WtAJ9Q",
+      "ioamlV",
+      "NqIhGb"
+    ],
+    "allPgCtlStatus": 3,
+    "remainingPidFiles": 0,
+    "remainingBootstrapPasswordFiles": 0,
+    "remainingTestListeners": 0,
+    "remainingTrustedPostgresProcesses": 0,
+    "remainingWorkspaceWorkerdProcesses": 0,
+    "diagnosticDirectoriesRetained": true,
+    "syntheticDatabasesDeletedWithoutBackupAndRecreatableFromTests": true
+  },
+  "readOnlyAudits": {
+    "chunk": "47189a",
+    "routeAuthority": "C:\\cinagroup\\cinashop-php",
+    "phpRoutes": 1904,
+    "typescriptRoutes": 1671,
+    "matched": 887,
+    "executableMatched": 866,
+    "unavailable": 21,
+    "missing": 1017,
+    "retired": 17,
+    "actionableMissing": 1000,
+    "routeCountsNotBusinessCompletionPercent": true,
+    "observability": {
+      "contractPassed": true,
+      "signals": 17,
+      "components": 10,
+      "requiredEvents": 53,
+      "productionAlertsManifestState": "pending",
+      "historicalReleaseBlockers": 6,
+      "productionStateNotRechecked": true
+    }
+  },
+  "changes": {
+    "applicationServicesChanged": false,
+    "fixtureCorrections": [
+      "Drizzle generator reads existing versioned TABLE_CATALOG_COUNT=277, retaining exact equality",
+      "Pink cancellation cart carries correct uid; two wrong-owner refusals and claim/idempotency assertions added"
+    ],
+    "fullUnitRerunAfterFixtureCorrections": false,
+    "perTestDeadlinesRelaxed": false,
+    "failedAssertionsRemoved": false
+  },
+  "limitations": [
+    "Both full shards timed out before final JSON; no complete actual execution or zero-skip claim",
+    "Console observations are lower bounds and one notice-heavy chunk was truncated",
+    "Selected input endpoint equality excludes dependencies, secret env files, external PHP and Worker docs/audit; not a whole-host immutable proof",
+    "Full attempt preceded the two fixture corrections",
+    "Foreign-key ESM audit report lifecycle remains failing; no error swallowed or fabricated report",
+    "Current immutable Linux CI, real merchant/customer/Hyperdrive maintenance, complete production privileges, load and coordinated release remain open"
+  ],
+  "finalVerification": {
+    "hashChecklistAndDiffChunk": "a6dd8f",
+    "selectedHashesMatched": 9,
+    "originalNineStagedEntriesPreserved": true,
+    "finalProcessChunk": "ce7a67",
+    "remainingDiagnosticProcesses": 0,
+    "remainingTrustedPostgresProcesses": 0,
+    "remainingWorkspaceWorkerdProcesses": 0
+  },
+  "selectedEndHashes": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "5531612ed84aab077ef1580986fb1f5d5e9edc8706824bb867c233e41416b5b6"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "3cae4a2747805c3f20a9da12a0eb01f40e58a4a1aad85d9047b657015748c94a"
+    },
+    {
+      "path": "workers-ts/scripts/local-finance-unit-gate.mjs",
+      "sha256": "73bde7cd00833abb7ccd8a9e0eecf5739a7b21a9e23fc8ebd43c3baf84f843a4"
+    },
+    {
+      "path": "workers-ts/scripts/local-finance-unit-gate.d.mts",
+      "sha256": "20517060da538984c41a530f27a8eaf4b22f14ce5b66e4dc1354250e8ff686f7"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "9e6bf77c25098ebaa2d6acec7fe56b9f50045def8fca8fb0d141b41ab139735f"
+    },
+    {
+      "path": "workers-ts/test/local-finance-unit-gate.test.ts",
+      "sha256": "6cd2f1fefec51b12770dbc6e0110e3057da31d78aa8a15dd4a8a4a121a92da45"
+    },
+    {
+      "path": "workers-ts/test/helpers/drizzleApiAudit.cjs",
+      "sha256": "d08cd9d8fb4d7fd8f61b95f95f10367be94771844d3c8570998f1fb810af210c"
+    },
+    {
+      "path": "workers-ts/test/pink-cancellation-authorization-postgres.test.ts",
+      "sha256": "b4889d7d7fe14bf8d1ad034298387f7a24533bab90c365cdeb1e3057b5775b94"
+    },
+    {
+      "path": "workers-ts/docs/local-full-unit-gate.md",
+      "sha256": "abae88ea8ef87fe2e415d4a3d23c2a1dfaa2bc056aa26390e4ef6d7f53350291"
+    }
+  ],
+  "selectedEndHashesScope": "Nine listed files only, after diagnostics/documentation; excludes this report itself. Not a full-suite passing snapshot."
+}

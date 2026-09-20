@@ -43,6 +43,7 @@ import { isWithdrawalNoticeEvent, processWithdrawalNoticeEvent } from "@/service
 import { WITHDRAWAL_APPLICATION_EVENT, processWithdrawalApplication } from "@/services/user/WithdrawalApplicationNoticeService";
 import { deliverStaffRefresh, type StaffPublisher } from "@/services/notification/StaffNotificationDeliveryService";
 import { STAFF_REFRESH_EVENT } from "@/services/notification/StaffNotificationProtocol";
+import { recordPaidOrderMembershipSavings } from './OrderMembershipSavings';
 
 export const ORDER_PAID_EVENT = "order.paid";
 export const OUTBOX_PROCESS_LEASE_SECONDS = 120;
@@ -506,6 +507,7 @@ export class OrderOutboxService {
           now,
         );
         const order = allocation.paymentOrder;
+        await recordPaidOrderMembershipSavings(tx, order, now);
 
       // PHP 的 OrderPayHandelJob 在支付后异步发卡。这里复用同一个可重放
       // outbox，并把卡密认领、订单发货状态和其余支付后置任务放进同一事务。

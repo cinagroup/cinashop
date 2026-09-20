@@ -1,129 +1,46 @@
 <template>
   <view class="refund-list">
-    <view v-if="list.length" class="refund-cards">
-      <view v-for="r in list" :key="(r as any).id" class="refund-card" @tap="goDetail(r)">
-        <view class="refund-head">
-          <text class="refund-id">退款单 #{{ (r as any).id }}</text>
-          <text class="refund-status">{{ statusText(r) }}</text>
-        </view>
-        <view class="refund-body">
-          <view class="refund-reason">{{ (r as any).refundReason || "退款" }}</view>
-          <view class="refund-meta">
-            <text>金额 ¥{{ (r as any).refundPrice || "0" }}</text>
-            <text class="time">{{ formatTime((r as any).addTime) }}</text>
-          </view>
-        </view>
-        <view v-if="(r as any).status === 0" class="refund-action" @tap="cancel(r)">
-          取消申请
-        </view>
-      </view>
+    <scroll-view scroll-x class="filters"><view class="filter-row">
+      <button v-for="item in refundFilters" :key="item.key" size="mini" :class="{ active: state.filter === item.key }"
+        :disabled="state.operating" @tap="setFilter(item.key)">{{ item.label }}</button>
+    </view></scroll-view>
+    <view class="tools"><input v-model="search" placeholder="退款单号或订单编号" :maxlength="80" @confirm="applySearch" />
+      <button size="mini" :disabled="busy" @tap="applySearch">搜索</button></view>
+    <view class="tools"><button size="mini" :disabled="busy" @tap="load()">刷新列表</button>
+      <button v-if="!auth.isLoggedIn" size="mini" :disabled="busy" @tap="login">登录后查看</button></view>
+    <view v-if="routeError || state.error || navigationError" class="notice">{{ routeError || state.error || navigationError }}</view>
+    <view v-if="state.loading" class="notice">正在读取退款记录…</view>
+    <view v-if="state.ready" class="count">已加载 {{ list.length }} 笔记录</view>
+    <view v-for="row in list" :key="row.id" class="refund-card">
+      <view class="heading"><text>{{ row.refundNo }}</text><text class="status">{{ refundStatus(row) }}</text></view>
+      <view>订单编号：{{ row.orderId }}</view><view>{{ row.refundReason }} · {{ row.refundNum }} 件</view>
+      <view>退款金额 ¥{{ row.refundPrice }} · 已退金额 ¥{{ row.refundedPrice }}</view>
+      <view class="count">{{ refundTime(row.addTime) }}</view>
+      <button size="mini" :disabled="busy || !!state.error" @tap="goDetail(row)">查看详情</button>
     </view>
-    <view v-else class="empty">暂无退款记录</view>
+    <view v-if="state.ready && !state.loading && !state.error && !list.length" class="empty">当前筛选下暂无退款记录</view>
+    <button v-if="state.error && auth.isLoggedIn" :disabled="busy" @tap="load(list.length > 0)">重试读取</button>
+    <button v-else-if="state.cursor" :disabled="busy" @tap="load(true)">加载更多</button>
+    <view v-else-if="state.ready && list.length" class="count">已加载全部匹配记录</view>
   </view>
   <DiySuspendedNavigation />
 </template>
-
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { apiRefundList, apiRefundCancel } from "@/api/order";
-
-const list = ref<unknown[]>([]);
-
-function statusText(r: any): string {
-  if (r.isCancel === 1) return "已取消";
-  switch (r.refundType) {
-    case 0: return "待审核";
-    case 3: return "已拒绝";
-    case 6: return "已退款";
-    default: return "处理中";
-  }
-}
-
-function formatTime(ts: number): string {
-  if (!ts) return "";
-  const d = new Date(ts * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-
-function goDetail(r: unknown) {
-  uni.navigateTo({ url: `/pages/order/refundDetail?id=${(r as any).id}` });
-}
-
-async function load() {
-  try {
-    list.value = await apiRefundList();
-  } catch {
-    list.value = [];
-  }
-}
-
-async function cancel(r: unknown) {
-  try {
-    await apiRefundCancel((r as any).id);
-    uni.showToast({ title: "已取消", icon: "success" });
-    load();
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || "取消失败", icon: "none" });
-  }
-}
-
-onMounted(load);
+import { useRefundRecords } from '@/composables/useRefundRecords';
+import { refundFilters, refundStatus, refundTime } from '../../../../common/refundRecords';
+defineOptions({ inheritAttrs: false });
+const { auth, state, list, search, busy, routeError, navigationError, load, goDetail, login, setFilter, applySearch } = useRefundRecords('list');
 </script>
-
 <style scoped>
-.refund-list {
-  padding: 20rpx;
-}
-
-.refund-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-}
-
-.refund-head {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12rpx;
-}
-
-.refund-id {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.refund-status {
-  font-size: 26rpx;
-  color: #e93323;
-  font-weight: 600;
-}
-
-.refund-reason {
-  font-size: 28rpx;
-  color: #333;
-}
-
-.refund-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 12rpx;
-}
-
-.refund-action {
-  text-align: right;
-  color: #e93323;
-  font-size: 26rpx;
-  margin-top: 12rpx;
-}
-
-.empty {
-  text-align: center;
-  color: #999;
-  font-size: 26rpx;
-  padding: 120rpx 0;
-}
+.refund-list { padding: 20rpx; overflow-wrap: anywhere; }
+.filter-row { display: flex; gap: 12rpx; width: max-content; padding: 12rpx 0; }
+.filter-row button { flex: none; margin: 0; } .filter-row .active { color: #e93323; background: #fff0ed; }
+.tools { display: flex; gap: 16rpx; margin: 16rpx 0; align-items: center; }
+.tools input { flex: 1; min-width: 0; background: white; padding: 16rpx; font-size: 26rpx; }
+.tools button { flex: none; margin: 0; }
+.refund-card { padding: 24rpx; margin: 20rpx 0; background: white; border-radius: 16rpx; font-size: 26rpx; line-height: 1.7; }
+.heading { display: flex; flex-wrap: wrap; gap: 12rpx; justify-content: space-between; margin-bottom: 12rpx; }
+.status { color: #c93124; } .count { color: #777; font-size: 24rpx; padding: 12rpx 0; }
+.notice { padding: 20rpx; background: #fff4e5; color: #744500; font-size: 26rpx; }
+.empty { text-align: center; color: #777; padding: 100rpx 0; }
 </style>

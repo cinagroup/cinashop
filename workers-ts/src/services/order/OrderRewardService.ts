@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import {
   memberRight,
   storeOrder,
@@ -11,6 +11,8 @@ import {
 import type { Container, DbClient } from "@/lib/di";
 import { SystemConfigService, type SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
+import { loadRefundLineCompensation } from './RefundLineCompensation';
+import { targetLineCompensation, type RefundLineCompensation } from './OrderSplitFinance';
 
 const RATE_SCALE = 10_000;
 const INTEGRAL_GRANT_EVENTS = ["pay_give_integral", "order_give_integral"] as const;
@@ -266,7 +268,7 @@ export async function settleOrderRewards(
 }
 
 /**
- * 回退确认收货赠送积分，并按累计退款比例返还订单抵扣积分和积分商品必付积分。
+ * 按已退商品行累计回退赠送积分并返还支付/抵扣积分；无版本旧单保留比例兼容。
  * 经验不回退，与 PHP regressionIntegral 行为一致。
  */
 export async function reverseOrderRewards(
@@ -278,6 +280,7 @@ export async function reverseOrderRewards(
   cumulativeRefundCents: number,
   now: number,
   cumulativeRefundNum = 0,
+  preparedLineCompensation?: RefundLineCompensation | null,
 ): Promise<void> {
   const payCents = decimalToHundredths(order.payPrice);
   const pureIntegralRefund =
@@ -288,6 +291,8 @@ export async function reverseOrderRewards(
     Number.isSafeInteger(cumulativeRefundNum) &&
     cumulativeRefundNum > 0;
   if ((payCents <= 0 || cumulativeRefundCents <= 0) && !pureIntegralRefund) return;
+  const lineCompensation = preparedLineCompensation === undefined
+    ? await loadRefundLineCompensation(tx, order.id) : preparedLineCompensation;
   const accounts = await tx
     .select()
     .from(user)
@@ -301,12 +306,12 @@ export async function reverseOrderRewards(
 
   const grants = payCents > 0
     ? await tx
-        .select({ number: userBill.number })
+        .select({ number: userBill.number, eventKey: userBill.eventKey })
         .from(userBill)
         .where(
           and(
             eq(userBill.uid, order.uid),
-            eq(userBill.linkId, linkId),
+            eq(userBill.linkId, String(lineCompensation?.earnedIncome?.orderId ?? order.id)),
             eq(userBill.category, "integral"),
             eq(userBill.pm, 1),
             eq(userBill.status, 1),
@@ -325,7 +330,7 @@ export async function reverseOrderRewards(
       .where(
         and(
           eq(userBill.uid, order.uid),
-          eq(userBill.linkId, linkId),
+          eq(userBill.linkId, String(lineCompensation?.earnedIncome?.orderId ?? order.id)),
           eq(userBill.category, "integral"),
           eq(userBill.pm, 0),
           eq(userBill.status, 1),
@@ -339,14 +344,19 @@ export async function reverseOrderRewards(
       (sum, row) => sum + decimalToWholePoints(row.number),
       0,
     );
-    const target = targetProportionalPoints(grantedPoints, cumulativeRefundCents, payCents);
+    const target = lineCompensation ? grants.reduce((sum, grant) => {
+      const earned = lineCompensation.earnedIncome ?? lineCompensation;
+      const basis = grant.eventKey === 'pay_give_integral' ? earned.productIntegral
+        : grant.eventKey === 'order_give_integral' ? earned.payment : undefined;
+      return sum + targetLineCompensation(decimalToWholePoints(grant.number), basis);
+    }, 0) : targetProportionalPoints(grantedPoints, cumulativeRefundCents, payCents);
     const deduction = Math.min(Math.max(target - previous, 0), integralBalance);
     if (deduction > 0) {
       integralBalance -= deduction;
       await tx.update(user).set({ integral: integralBalance }).where(eq(user.uid, order.uid));
       await tx.insert(userBill).values({
         uid: order.uid,
-        linkId,
+        linkId: String(lineCompensation?.earnedIncome?.orderId ?? order.id),
         pm: 0,
         title: "赠送积分回退",
         category: "integral",
@@ -370,7 +380,8 @@ export async function reverseOrderRewards(
           eq(userBill.uid, order.uid),
           eq(userBill.linkId, linkId),
           eq(userBill.category, "integral"),
-          eq(userBill.type, "order_integral_refund"),
+            eq(userBill.type, "order_integral_refund"),
+            lineCompensation?.returnedPointBillIds?.length ? notInArray(userBill.id, [...lineCompensation.returnedPointBillIds]) : undefined,
           eq(userBill.pm, 1),
           eq(userBill.status, 1),
         ),
@@ -379,7 +390,7 @@ export async function reverseOrderRewards(
       (sum, row) => sum + decimalToWholePoints(row.number),
       0,
     );
-    const targetReturned = payCents > 0
+    const targetReturned = lineCompensation ? lineCompensation.payIntegral : payCents > 0
       ? targetProportionalPoints(order.payIntegral, cumulativeRefundCents, payCents)
       : targetProportionalPoints(order.payIntegral, cumulativeRefundNum, order.totalNum);
     const delta = Math.max(targetReturned - previousReturned, 0);
@@ -415,6 +426,7 @@ export async function reverseOrderRewards(
         eq(storeOrderRefund.refundType, 6),
         eq(storeOrderRefund.isCancel, 0),
         eq(storeOrderRefund.isDel, 0),
+        lineCompensation?.materializedRefundIds?.length ? notInArray(storeOrderRefund.id, [...lineCompensation.materializedRefundIds]) : undefined,
       ),
     );
   const compatibleLinkIds = [linkId, ...completedRefunds.map((row) => row.orderId)];
@@ -427,6 +439,7 @@ export async function reverseOrderRewards(
         inArray(userBill.linkId, compatibleLinkIds),
         eq(userBill.category, "integral"),
         eq(userBill.type, "pay_product_integral_back"),
+        lineCompensation?.returnedPointBillIds?.length ? notInArray(userBill.id, [...lineCompensation.returnedPointBillIds]) : undefined,
         eq(userBill.pm, 1),
         eq(userBill.status, 1),
       ),
@@ -436,7 +449,7 @@ export async function reverseOrderRewards(
     0,
   );
   const previousReturned = Math.max(returnedByBills, decimalToWholePoints(order.backIntegral));
-  const targetReturned = targetProportionalPoints(usedPoints, cumulativeRefundCents, payCents);
+  const targetReturned = lineCompensation?.usedIntegral ?? targetProportionalPoints(usedPoints, cumulativeRefundCents, payCents);
   const delta = Math.max(targetReturned - previousReturned, 0);
   if (delta > 0) {
     integralBalance += delta;

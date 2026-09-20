@@ -1,6 +1,7 @@
 import { compare, hash } from "bcryptjs";
 import {
   and,
+  asc,
   count,
   desc,
   eq,
@@ -46,6 +47,7 @@ import {
   type RefundExecutionScope,
 } from "@/services/order/StoreOrderRefundService";
 import { amountToCents } from "@/services/payment/RefundGateway";
+import { currentInvoiceAmount } from '@/services/order/InvoiceOrderLifecycle';
 import { StoreProductService, type GoodsListParams } from "@/services/product/StoreProductService";
 import { OutProductService } from "@/services/out/OutProductService";
 import { OutCouponService } from "@/services/out/OutCouponService";
@@ -722,7 +724,7 @@ async function recordInvoiceReplay(
 }
 
 async function lockPlatformInvoiceOrder(tx: DbClient, orderId: string) {
-  const references = await tx.select({ id: storeOrder.id, pid: storeOrder.pid })
+  const references = await tx.select({ id: storeOrder.id, pid: storeOrder.pid, uid: storeOrder.uid })
     .from(storeOrder)
     .where(and(
       eq(storeOrder.orderId, orderId),
@@ -730,37 +732,53 @@ async function lockPlatformInvoiceOrder(tx: DbClient, orderId: string) {
       eq(storeOrder.isSystemDel, 0),
       eq(storeOrder.isDel, 0),
     ))
-    .limit(1);
+    .limit(2);
   const reference = references[0];
   if (!reference) throw new NotFoundException("订单不存在");
-  await lockOrderSettlement(tx, reference.pid > 0 ? reference.pid : reference.id);
-  const rows = await tx.select({
-    id: storeOrder.id,
-    orderId: storeOrder.orderId,
-    uid: storeOrder.uid,
-  }).from(storeOrder).where(and(
-    eq(storeOrder.id, reference.id),
-    eq(storeOrder.orderId, orderId),
-    eq(storeOrder.storeId, 0),
-    eq(storeOrder.isSystemDel, 0),
-    eq(storeOrder.isDel, 0),
-  )).limit(1).for("update");
-  if (!rows[0]) throw new NotFoundException("订单不存在");
-  return rows[0];
+  if (references.length !== 1) throw new ValidateException('开票订单号存在歧义，请先核对订单');
+  const rootId = reference.pid > 0 ? reference.pid : reference.id;
+  await lockOrderSettlement(tx, rootId);
+  const [root] = await tx.select().from(storeOrder).where(eq(storeOrder.id, rootId)).limit(1).for('update');
+  if (rootId !== reference.id) await lockOrderSettlement(tx, reference.id);
+  const [order] = rootId === reference.id ? [root] : await tx.select().from(storeOrder)
+    .where(eq(storeOrder.id, reference.id)).limit(1).for('update');
+  if (!root || !order || order.orderId !== orderId || order.pid !== reference.pid || order.uid !== reference.uid
+    || root.uid !== order.uid || order.storeId !== 0 || order.isDel || order.isSystemDel || root.isDel || root.isSystemDel
+    || (order.pid > 0 && (root.pid !== -1 || order.paid !== root.paid || order.payType !== root.payType))
+    || (root.supplierId !== order.supplierId && !(root.supplierId === 0 && root.supplierAllocationStatus === 2))
+    || (root.storeId !== order.storeId && root.supplierAllocationStatus !== 2)) {
+    throw new ValidateException('开票订单关联已变化，请刷新后重试');
+  }
+  return order;
 }
 
-async function lockSingleOrderInvoice(tx: DbClient, orderId: number, uid: number) {
+async function lockSingleOrderInvoice(tx: DbClient, order: OrderRow) {
   const rows = await tx.select().from(storeOrderInvoice).where(and(
-    eq(storeOrderInvoice.orderId, orderId),
+    inArray(storeOrderInvoice.orderId, order.pid > 0 ? [order.pid, order.id] : [order.id]),
     eq(storeOrderInvoice.isDel, 0),
-  )).orderBy(desc(storeOrderInvoice.id)).limit(2).for("update");
+  )).orderBy(asc(storeOrderInvoice.id)).limit(3).for("update");
   if (rows.length === 0) throw new ValidateException("订单未提交开票申请");
   if (rows.length > 1) throw new ValidateException("订单存在重复开票申请，请先完成数据核对");
   const invoice = rows[0];
-  if (invoice.uid !== uid || invoice.category !== "order") {
+  if (invoice.uid !== order.uid || invoice.orderId !== order.id || invoice.category !== "order") {
     throw new ValidateException("订单开票申请关联异常，请先完成数据核对");
   }
   return invoice;
+}
+
+async function invoiceWriteAmount(tx: DbClient, order: OrderRow): Promise<string> {
+  if (order.pid < 0) throw new ValidateException('请先完成支付主单发票与履约子单归属核对');
+  if (order.supplierAllocationStatus === 1 || order.status < 0 || ![0, 1].includes(order.paid)) {
+    throw new ValidateException('订单当前状态不能修改发票');
+  }
+  return currentInvoiceAmount(tx, order);
+}
+
+function assertInvoiceWriteEvidence(order: OrderRow, invoice: typeof storeOrderInvoice.$inferSelect, amount: string) {
+  if (invoice.isPay !== order.paid || invoice.isRefund !== 0 || invoice.invoiceAmount !== amount
+    || ![-1, 0, 1].includes(invoice.isInvoice)) {
+    throw new ValidateException('订单发票状态或金额证据不一致，请先核对订单');
+  }
 }
 
 function refundDecisionReplayPrefix(accountId: number, requestHash: string): string {
@@ -2409,7 +2427,9 @@ export class OutApiService {
         };
       }
 
-      const invoice = await lockSingleOrderInvoice(tx, order.id, order.uid);
+      const amount = await invoiceWriteAmount(tx, order);
+      const invoice = await lockSingleOrderInvoice(tx, order);
+      assertInvoiceWriteEvidence(order, invoice, amount);
       if (![-1, 0, 1].includes(invoice.isInvoice)) {
         throw new ValidateException("订单开票状态异常，请先完成数据核对");
       }
@@ -2508,7 +2528,10 @@ export class OutApiService {
         };
       }
 
-      const invoice = await lockSingleOrderInvoice(tx, order.id, order.uid);
+      const amount = await invoiceWriteAmount(tx, order);
+      const invoice = await lockSingleOrderInvoice(tx, order);
+      assertInvoiceWriteEvidence(order, invoice, amount);
+      if (input.isInvoice === 1 && order.paid !== 1) throw new ValidateException('未支付订单不能标记已开票');
       const unchanged = invoice.isInvoice === input.isInvoice
         && invoice.invoiceNumber === input.invoiceNumber
         && invoice.remark === input.remark;

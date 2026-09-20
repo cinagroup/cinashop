@@ -1,0 +1,93 @@
+{
+  "date": "2026-09-20",
+  "scope": "Local PG16 paid-order and checkout pricing permission preflight integration; not complete application, HTTP, CI or production acceptance",
+  "checklist": "FE-003L-A3k11d",
+  "implemented": [
+    "Exact reviewed pricing function OID exemption only after full catalog and actual-connection permission checks",
+    "Conservative recursive role-membership closure shared by both preflight scopes",
+    "Explicit auditCheckoutRuntimePermissions and --checkout CLI scope requiring installed pricing capability",
+    "Default paid-only scope preserved; absent pricing is not checkout readiness",
+    "Real non-superuser maintenance LOGIN installation/reinstallation and insufficient-authority rollback verification"
+  ],
+  "runs": [
+    {
+      "session": 18728,
+      "kind": "first native PostgreSQL joint suite",
+      "testsPassed": 74,
+      "filesPassed": 2,
+      "durationSeconds": 226.23,
+      "exitCode": 0,
+      "cluster": "finance-postgres-pujTqH",
+      "port": 58218,
+      "countedInFinalDistinctTotal": false
+    },
+    {
+      "session": 99418,
+      "kind": "final native PostgreSQL joint suite",
+      "testsPassed": 76,
+      "filesPassed": 2,
+      "durationSeconds": 228.31,
+      "exitCode": 0,
+      "cluster": "finance-postgres-HeCStf",
+      "port": 57790,
+      "files": {
+        "test/brokerage-paid-runtime-permissions.test.ts": 40,
+        "test/checkout-pricing-lock.test.ts": 36
+      },
+      "countedInFinalDistinctTotal": true
+    },
+    {
+      "kind": "Node command boundary and existing audit Worker mocked-handler regression",
+      "testsPassed": 88,
+      "filesPassed": 2,
+      "durationSeconds": 6.58,
+      "exitCode": 0,
+      "files": {
+        "test/local-finance-postgres-runner.test.ts": 59,
+        "test/paid-runtime-audit-worker.test.ts": 29
+      },
+      "countedInFinalDistinctTotal": true
+    }
+  ],
+  "distinctTestsPassed": 164,
+  "typeChecks": {
+    "sessions": [67709, 41947],
+    "configs": ["tsconfig.json", "tsconfig.runtime-test.json"],
+    "allExitZero": true
+  },
+  "failedCommandAttempts": [
+    "Node regression invoked with nonexistent vitest.unit.config.ts: startup failed, no tests ran",
+    "Node regression invoked with nonexistent unit project filter: startup failed, no tests ran",
+    "Corrected using the actual repository vitest.config.ts default; no test assertions or runtime permissions relaxed"
+  ],
+  "finalRunSelectedFilesSha256BeforeAndAfterEqual": {
+    "src/migrations/auditPaidOrderRuntimePermissions.ts": "60CD6F99FD73DBF72097111266BDB777F8329C720DCE27C04DFA0BD8FFD6F029",
+    "src/migrations/checkoutPricingLock.ts": "E4181D5D2E6E7F64E0D15433E51A2E3C88F1C2CCFEC5222B82D487B5B77E94E6",
+    "scripts/audit-paid-runtime-permissions.ts": "0B9C3641AA748B93B66A91DC78652D585D98C347A2827B20E3EFDB209D505769",
+    "test/brokerage-paid-runtime-permissions.test.ts": "468BBF005EF51204EFCB97C9FEF0E8A583456D7F909DBAA2F3E2CC149B71AC41",
+    "test/checkout-pricing-lock.test.ts": "854BD23B0F7DEAF3D1ACEC5E1DACF2A42AB1FF88C4CA0F90CC364D090ADC3990",
+    "scripts/run-local-finance-postgres.mjs": "12E44D83A2664BBB14D68B3399BA7498B9BE0D23F111B26FD2E410D5ADCC9175",
+    "test/local-finance-postgres-runner.test.ts": "50FB913EF61BCAECA41E66141D5875C86610B2CF4FEA4328A45879B0D0755736"
+  },
+  "hashScopeCaveat": "Seven selected local files only, not the complete worktree, dependencies or an immutable CI commit",
+  "cleanup": {
+    "bothRunnersReportedFixturesRemaining": 0,
+    "independentPgCtlStatusExitCodes": [3, 3],
+    "postmasterPidFilesPresent": false,
+    "bootstrapPasswordFilesPresent": false,
+    "ownedPortListeners": 0,
+    "ownedPostgresProcesses": 0,
+    "diagnosticDirectoriesRetained": true
+  },
+  "remaining": [
+    "Ordinary protectCheckoutPricingSources still uses direct LOCK and SELECT-only login still receives SQLSTATE42501",
+    "Explicit production role provisioning and numbered migration/bootstrap/ORM registration",
+    "Ordinary checkout service switch without DML grants or direct-LOCK fallback",
+    "Real HTTP/workerd checkout verification and current full regression/immutable CI",
+    "Other capability domains including offline cashier and full shared runtime-role composition",
+    "Production maintenance authority, load/maintenance contention and coordinated deployment"
+  ],
+  "productionAccess": false,
+  "stagingCommitPushDeployment": false,
+  "originalNineStagedEntriesPreserved": true
+}

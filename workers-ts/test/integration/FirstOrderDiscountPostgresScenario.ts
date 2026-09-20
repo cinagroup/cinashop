@@ -24,6 +24,8 @@ import {
   type StoreOrderCreationRuntime,
 } from "@/services/order/StoreOrderCreateService";
 import { StoreCartService } from "@/services/order/StoreCartService";
+import { installCheckoutPricingLock } from "@/migrations/checkoutPricingLock";
+import { requireCheckoutScenarioPricingOwner } from "./CheckoutScenarioPricing";
 
 const CLONED_TABLES = [
   "user",
@@ -37,12 +39,13 @@ const CLONED_TABLES = [
   "store_product_attr_value",
   "store_coupon_issue",
   "store_coupon_user",
-] as const;
-
-const LOCAL_SEQUENCE_TABLES = [
-  "store_order",
-  "store_order_cart_info",
-  "store_order_status",
+  "system_config",
+  "member_right",
+  "system_user_level",
+  "store_coupon_product",
+  "store_product_coupon",
+  "store_coupon_issue_user",
+  "print_document",
 ] as const;
 
 const CONFIG = {
@@ -196,7 +199,7 @@ async function withSchema<T>(
 ): Promise<T> {
   const root = createContainerFromDb(db);
   return withTx(root, async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL search_path TO ${identifier(schemaName)}, public`));
+    await tx.execute(sql.raw(`SET LOCAL search_path TO ${identifier(schemaName)}`));
     await tx.execute(sql`SET LOCAL lock_timeout = '3s'`);
     await tx.execute(sql`SET LOCAL statement_timeout = '20s'`);
     return fn(createContainerFromDb(tx));
@@ -539,7 +542,9 @@ async function runRollback(db: DbClient, schemaName: string, ids: FixtureIds) {
 
 export async function runFirstOrderDiscountPostgresScenario(
   connectionString: string,
+  pricingOwner?: string,
 ): Promise<FirstOrderDiscountPostgresReport> {
+  const owner = requireCheckoutScenarioPricingOwner(pricingOwner);
   const schemaName = makeSchemaName();
   const schemaIdentifier = identifier(schemaName);
   const adminDb = createDbFromConnectionString(connectionString, 1);
@@ -568,19 +573,25 @@ export async function runFirstOrderDiscountPostgresScenario(
           `CREATE TABLE ${schemaIdentifier}.${tableIdentifier} (LIKE public.${tableIdentifier} INCLUDING ALL)`,
         );
       }
-      for (const table of LOCAL_SEQUENCE_TABLES) {
+      // LIKE copies serial defaults. Rebind every serial column, including
+      // currently unused tables, so a future branch cannot advance public.
+      for (const table of CLONED_TABLES) {
         const tableIdentifier = identifier(table);
-        const sequenceIdentifier = identifier(`${table}_id_seq_it`);
-        await tx.unsafe(`CREATE SEQUENCE ${schemaIdentifier}.${sequenceIdentifier}`);
-        await tx.unsafe(
-          `ALTER SEQUENCE ${schemaIdentifier}.${sequenceIdentifier} OWNED BY ${schemaIdentifier}.${tableIdentifier}."id"`,
-        );
-        await tx.unsafe(
-          `ALTER TABLE ${schemaIdentifier}.${tableIdentifier} ALTER COLUMN "id" SET DEFAULT nextval('${schemaName}.${table}_id_seq_it'::regclass)`,
-        );
+        const columns = await tx<{ name: string }[]>`SELECT attname AS name FROM pg_attribute
+          WHERE attrelid=${`public.${table}`}::regclass AND attnum>0 AND NOT attisdropped AND attidentity=''
+            AND pg_get_serial_sequence(${`public.${table}`},attname) IS NOT NULL ORDER BY attnum`;
+        for (const column of columns) {
+          const columnIdentifier = identifier(column.name);
+          const sequenceName = `${table}_${column.name}_seq_it`;
+          const sequenceIdentifier = identifier(sequenceName);
+          await tx.unsafe(`CREATE SEQUENCE ${schemaIdentifier}.${sequenceIdentifier}`);
+          await tx.unsafe(`ALTER SEQUENCE ${schemaIdentifier}.${sequenceIdentifier} OWNED BY ${schemaIdentifier}.${tableIdentifier}.${columnIdentifier}`);
+          await tx.unsafe(`ALTER TABLE ${schemaIdentifier}.${tableIdentifier} ALTER COLUMN ${columnIdentifier} SET DEFAULT nextval('${schemaName}.${sequenceName}'::regclass)`);
+        }
       }
     });
     created = true;
+    await installCheckoutPricingLock(adminDb, owner, schemaName);
 
     const random = new Uint32Array(1);
     crypto.getRandomValues(random);

@@ -6,7 +6,7 @@ import { lockCheckoutCouponRelationProtocol, type CouponAuthorityTransaction } f
 import { assertCheckoutCouponItems } from './CheckoutCouponItemAuthority';
 
 type Template = Pick<typeof storeCouponIssue.$inferSelect,
-  'id' | 'type' | 'couponType' | 'legacyProductIds' | 'productId' | 'legacyCategoryId' | 'category_id' | 'legacyBrandId' | 'brandId'>;
+  'id' | 'type' | 'category' | 'couponType' | 'legacyProductIds' | 'productId' | 'legacyCategoryId' | 'category_id' | 'legacyBrandId' | 'brandId'>;
 
 /** Internal creation dependency, not a new customer receipt field. Product-coupon
  * relations are re-read under the validated writer protocol and parent lock.
@@ -17,7 +17,7 @@ export function couponTemplateSnapshot(template: Template, relatedProducts: read
     ? reconcileCouponProductScopeIds([template.legacyProductIds, template.productId], relatedProducts)
     : template.couponType === 1 ? parseCouponScopeIds(template.legacyCategoryId, template.category_id)
     : template.couponType === 3 ? parseCouponScopeIds(template.legacyBrandId, template.brandId) : [];
-  return { id: template.id, discountType: template.type, scopeType: template.couponType,
+  return { id: template.id, discountType: template.type, scopeType: template.couponType, memberCoupon: template.category === 2,
     scopeIds: [...new Set(ids)].sort((a, b) => a - b), relatedProducts: [...relatedProducts],
     items: items?.map(item => ({ ...item, categoryIds: [...item.categoryIds], categoryAncestorIds: [...item.categoryAncestorIds],
       brandAncestorIds: [...item.brandAncestorIds] })) ?? null };
@@ -35,7 +35,7 @@ export async function assertCheckoutCouponTemplate(
   if (tx.$client) throw new Error('Coupon template authority requires the owning transaction');
   try {
     if (expected.scopeType === 2) await lockCheckoutCouponRelationProtocol(tx);
-    const [row] = await tx.select({ id: storeCouponIssue.id, type: storeCouponIssue.type, couponType: storeCouponIssue.couponType,
+    const [row] = await tx.select({ id: storeCouponIssue.id, type: storeCouponIssue.type, category: storeCouponIssue.category, couponType: storeCouponIssue.couponType,
       legacyProductIds: storeCouponIssue.legacyProductIds, productId: storeCouponIssue.productId,
       legacyCategoryId: storeCouponIssue.legacyCategoryId, category_id: storeCouponIssue.category_id,
       legacyBrandId: storeCouponIssue.legacyBrandId, brandId: storeCouponIssue.brandId })
@@ -52,7 +52,7 @@ export async function assertCheckoutCouponTemplate(
       related = relations.map(relation => relation.productId);
     }
     const current = couponTemplateSnapshot(row, related);
-    if (current.discountType !== expected.discountType || current.scopeType !== expected.scopeType
+    if (current.discountType !== expected.discountType || current.scopeType !== expected.scopeType || current.memberCoupon !== expected.memberCoupon
       || current.scopeIds.length !== expected.scopeIds.length
       || current.scopeIds.some((id, index) => id !== expected.scopeIds[index])) {
       throw new ValidateException('优惠券模板规则已变化，请重新确认');

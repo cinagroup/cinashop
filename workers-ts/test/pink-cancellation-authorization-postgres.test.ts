@@ -7,6 +7,7 @@ import { createContainerFromDb, withTx } from "../src/lib/di";
 import { reservePinkJoin } from "../src/services/activity/PinkLifecycleService";
 import { ActivityJoinService } from "../src/services/activity/ActivityJoinService";
 import { StoreOrderRefundService } from "../src/services/order/StoreOrderRefundService";
+import { readRefundQuantityReservation } from "../src/services/order/RefundQuantityReservation";
 import { SystemConfigService } from "../src/services/system/SystemConfigService";
 import { removePink } from "../src/controllers/api/v1/ActivityJoinController";
 import { ApiException } from "../src/utils/errors";
@@ -32,7 +33,7 @@ describe("pink cancellation authorization before privileged refund execution", (
       orderIdKey: "500", orderId: "isolated-pink-order", stopTime: sql`(NOW() AT TIME ZONE 'UTC') + INTERVAL '1 day'` });
     await f.db.insert(storeOrder).values({ id: 500, uid: 11, orderId: "isolated-pink-order", type: 3,
       activityId: 30, pinkId: 400, paid: 1, payPrice: "6.25", totalNum: 1, payType: "yue" });
-    await f.db.insert(storeOrderCartInfo).values({ id: 1, oid: 500, cartId: "1", cartNum: 1,
+    await f.db.insert(storeOrderCartInfo).values({ id: 1, oid: 500, uid: 11, cartId: "1", cartNum: 1,
       productId: 70, cartInfo: JSON.stringify({ truePrice: "6.25" }) });
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use("*", async (c, next) => { c.set("container", container); c.set("uid", Number(c.req.header("x-fixture-user") ?? 11)); await next(); });
@@ -107,12 +108,22 @@ describe("pink cancellation authorization before privileged refund execution", (
     expect(result.body).toMatchObject({ status: 200, msg: "退款处理中", data: { completed: false, status: "PROCESSING" } });
     expect(result.response.headers.get("cache-control")).toBe("private, no-store");
   });
+  it.each([0, 22])('rejects a cart owned by uid %i without reserving quantity or executing a refund', async uid => {
+    await f.db.update(storeOrderCartInfo).set({ uid });
+    await expect(cancel()).rejects.toThrow('退款商品数量预占记录不一致');
+    await untouched();
+    expect(await f.db.select().from(storeOrderRefund)).toHaveLength(0);
+    expect((await f.db.select().from(storeOrderCartInfo))[0].refundNum).toBe(0);
+  });
   it("creates one dedicated full refund application and binds execution on repeat requests", async () => {
     expect(await cancel()).toEqual({ completed: false, status: "PROCESSING" });
     expect(await cancel()).toEqual({ completed: false, status: "PROCESSING" });
     const refunds = await f.db.select().from(storeOrderRefund);
     expect(refunds).toHaveLength(1);
     expect(refunds[0]).toMatchObject({ orderId: "pink_cancel_400_500", refundPrice: "6.25", refundNum: 1, refundType: 0 });
+    expect(readRefundQuantityReservation(refunds[0])).toMatchObject({ orderId: 500, uid: 11,
+      items: [{ rowId: 1, cartId: 1, cartNum: 1, beforeRefundNum: 0, totalNum: 1 }] });
+    expect((await f.db.select().from(storeOrderCartInfo))[0].refundNum).toBe(1);
     expect(execute).toHaveBeenCalledTimes(2);
     expect(execute).toHaveBeenLastCalledWith(refunds[0].id, expect.objectContaining({ expectedUid: 11,
       expectedStoreOrderId: 500, expectedRefundOrderId: "pink_cancel_400_500", expectedRefundAmountCents: 625,

@@ -1,12 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Catalog, CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { assertForeignKeyNamesAligned } from "../scripts/data-migration/foreign-key-name-contracts";
 import { FOREIGN_KEY_NAME_ALIGNMENT_SQL as sql } from "../src/migrations/foreignKeyNameAlignment";
 import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
+import { readDrizzleAuditReport } from "./helpers/drizzleAuditReport";
 
 const root=resolve(import.meta.dirname,"..");
 const read=(path:string)=>readFileSync(join(root,path),"utf8").replace(/\r\n/g,"\n");
@@ -80,24 +80,18 @@ describe("DB-009E3 identity-preserving foreign-key names",()=>{
     expect(runner).toContain("compareCatalogs(catalogs.orm, catalogs.orm_fk_names)");
   });
   it.each(["cjs","esm"])("executes %s full old ORM with network denied and preserves foreign-key identity",format=>{
-    const directory=mkdtempSync(join(tmpdir(),"cinashop-fk-names-")),report=join(directory,"audit.json");
-    try {
       const environment={...process.env};
       const allowed=new Set(["PATH","Path","SystemRoot","WINDIR","COMSPEC","PATHEXT","TEMP","TMP","LOCALAPPDATA"]);
       for(const key of Object.keys(environment))if(!allowed.has(key))delete environment[key];
-      Object.assign(environment,{CI:"1",TSX_DISABLE_CACHE:"1",DATABASE_URL:"postgresql://audit:audit@127.0.0.1:9/audit",CINASHOP_DRIZZLE_AUDIT_REPORT:report});
+      Object.assign(environment,{CI:"1",TSX_DISABLE_CACHE:"1",DATABASE_URL:"postgresql://audit:audit@127.0.0.1:9/audit",CINASHOP_DRIZZLE_AUDIT_REPORT_FD:"3"});
       const result=spawnSync(process.execPath,["--require",join(root,"test/helpers/drizzleCliAudit.cjs"),join(root,"test/helpers/foreignKeyNameLocalAudit.cjs"),format],{
         cwd:root,env:environment,encoding:"utf8",timeout:180_000,windowsHide:true,
+        stdio:['ignore','pipe','pipe','pipe'],
       });
       expect(result.error,result.stdout+result.stderr).toBeUndefined();expect(result.status,result.stdout+result.stderr).toBe(0);
       expect(result.stdout).toContain(`DB-009E3 ${format}: 12 foreign keys renamed;`);
       expect(result.stdout).toContain("141 drift refusals / 12 raw proposal hazards");
-      const audit=JSON.parse(readFileSync(report,"utf8"));expect(audit.networkAttempts).toBe(0);
+      const audit=readDrizzleAuditReport(result);expect(audit.networkAttempts).toBe(0);
       expect(audit.loaded.filter((path:string)=>path.includes("/@esbuild-kit/"))).toEqual([]);
-    } finally {
-      const exact=resolve(directory);
-      if(dirname(exact)!==resolve(tmpdir()) || !/^cinashop-fk-names-[A-Za-z0-9]+$/.test(basename(exact))) throw new Error("Unsafe temporary audit cleanup target");
-      rmSync(exact,{recursive:true,force:true});
-    }
   },210_000);
 });

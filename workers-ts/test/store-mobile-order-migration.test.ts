@@ -58,7 +58,7 @@ describe("API-008 STORE-B mobile order compatibility", () => {
   });
 
   it("registers all six exact PHP routes behind station-open and forced user auth", () => {
-    const routes = readFileSync("src/routes/v1/index.ts", "utf8");
+    const routes = readFileSync("src/routes/v1/index.ts", "utf8").replaceAll("\r\n", "\n");
     for (const [method, path, handler] of [
       ["get", "/store/refund/detail/:id", "StoreMobileOrder.refundDetail"],
       ["get", "/store/order/detail/:id", "StoreMobileOrder.orderDetail"],

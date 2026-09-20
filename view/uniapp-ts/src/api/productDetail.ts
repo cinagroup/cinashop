@@ -1,5 +1,6 @@
 import type { GoodsDetail, GoodsSku } from "../types/product";
 import { quoteMoney } from "../../../common/checkoutQuote";
+import { normalizeSkuMembershipPrice } from "../../../common/skuMembershipPrice";
 
 function optionalSkuMoney(sku: Record<string, unknown>, snake: string, camel: string): string | null {
   const read = (value: unknown) => value === undefined || value === null || value === "" ? null : quoteMoney(value);
@@ -25,7 +26,7 @@ export function normalizeMobileGoods(value: unknown): GoodsDetail {
     if (typeof sku.unique !== "string" || !sku.unique.trim() || sku.unique.length > 16 || seen.has(sku.unique)
       || !Number.isSafeInteger(sku.stock) || Number(sku.stock) < 0 || typeof sku.price !== "string" || !/^\d+(?:\.\d{1,2})?$/.test(sku.price)) throw new Error("商品规格价格、库存或标识无效");
     seen.add(sku.unique);
-    return { unique: sku.unique, suk: typeof sku.suk === "string" ? sku.suk : "默认规格", stock: Number(sku.stock), price: quoteMoney(sku.price),
+    return { unique: sku.unique, suk: typeof sku.suk === "string" ? sku.suk : "默认规格", stock: Number(sku.stock), price: quoteMoney(sku.price), ...normalizeSkuMembershipPrice(sku),
       ot_price: optionalSkuMoney(sku, "ot_price", "otPrice"), vip_price: optionalSkuMoney(sku, "vip_price", "vipPrice") };
   });
   const slider = field("slider_image", "sliderImage");
