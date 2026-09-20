@@ -4,6 +4,7 @@ import { createDbFromConnectionString } from '@/lib/di';
 import { auditPaidOrderRuntimePermissions } from '@/migrations/auditPaidOrderRuntimePermissions';
 import { auditReleasePrerequisiteCatalog } from '@/migrations/auditReleasePrerequisiteCatalog';
 import { auditWorkParentIdentityPermissions } from '@/migrations/auditWorkParentIdentityPermissions';
+import { auditReleaseProtocols } from '@/migrations/auditReleaseProtocols';
 
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 
@@ -27,7 +28,7 @@ export default {
       return Response.json({ error: 'forbidden' }, { status: 403, headers });
     }
     const url = new URL(request.url);
-    if (!['/audit', '/catalog', '/work-parents'].includes(url.pathname) || url.search) {
+    if (!['/audit', '/catalog', '/work-parents', '/release-protocols'].includes(url.pathname) || url.search) {
       return Response.json({ error: 'not found' }, { status: 404, headers });
     }
     if (request.method !== 'GET') {
@@ -38,7 +39,9 @@ export default {
       db = createDbFromConnectionString(env.HYPERDRIVE.connectionString, 1, {
         searchPath: 'public,pg_temp', applicationName: 'cinashop_paid_runtime_audit',
       });
-      const result = url.pathname === '/catalog'
+      const result = url.pathname === '/release-protocols'
+        ? await auditReleaseProtocols(db)
+        : url.pathname === '/catalog'
         ? { scope: 'release-prerequisite-catalog', catalog: await auditReleasePrerequisiteCatalog(db) }
         : url.pathname === '/work-parents'
         ? await auditWorkParentIdentityPermissions(db)

@@ -3,7 +3,8 @@
 [CmdletBinding(DefaultParameterSetName = 'Paid')]
 param(
     [Parameter(ParameterSetName = 'Catalog')][switch]$CatalogOnly,
-    [Parameter(ParameterSetName = 'WorkParents')][switch]$WorkParents
+    [Parameter(ParameterSetName = 'WorkParents')][switch]$WorkParents,
+    [Parameter(ParameterSetName = 'ReleaseProtocols')][switch]$ReleaseProtocols
 )
 $ErrorActionPreference = 'Stop'
 if (-not $env:CLOUDFLARE_API_TOKEN) { throw 'CLOUDFLARE_API_TOKEN is required' }
@@ -28,8 +29,8 @@ $taskWrongMethodStatus = 0
 $taskWrongPathStatus = 0
 $taskUrl = $null
 $taskStage = 'target-absence'
-$taskRoute = if ($CatalogOnly) { 'catalog' } elseif ($WorkParents) { 'work-parents' } else { 'audit' }
-$taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } elseif ($WorkParents) { 'work-parent-identity-only' } else { 'paid-order-runtime-permissions' }
+$taskRoute = if ($CatalogOnly) { 'catalog' } elseif ($WorkParents) { 'work-parents' } elseif ($ReleaseProtocols) { 'release-protocols' } else { 'audit' }
+$taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } elseif ($WorkParents) { 'work-parent-identity-only' } elseif ($ReleaseProtocols) { 'release-protocol-preflight' } else { 'paid-order-runtime-permissions' }
 $env:CLOUDFLARE_ACCOUNT_ID = $taskAccount
 $env:WRANGLER_SEND_METRICS = 'false'
 $env:WRANGLER_LOG_PATH = Join-Path $env:TEMP "$taskName.log"
@@ -101,4 +102,4 @@ try {
     lastAuditStage = $taskStage
 } | ConvertTo-Json -Depth 8
 if ($taskFailure -or -not $taskMissing -or $null -eq $taskReport) { exit 2 }
-if (-not $CatalogOnly -and -not $taskReport.ready) { exit 1 }
+if (-not $CatalogOnly -and -not $ReleaseProtocols -and -not $taskReport.ready) { exit 1 }

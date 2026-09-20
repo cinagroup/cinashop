@@ -2,11 +2,12 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import worker from './integration/PaidRuntimeAuditWorker';
 import type { PaidRuntimeAuditEnv } from './integration/paid-runtime-audit-bindings';
 
-const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), catalog: vi.fn(), work: vi.fn(), end: vi.fn() }));
+const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), catalog: vi.fn(), work: vi.fn(), protocols: vi.fn(), end: vi.fn() }));
 vi.mock('@/lib/di', () => ({ createDbFromConnectionString: mocks.create }));
 vi.mock('@/migrations/auditPaidOrderRuntimePermissions', () => ({ auditPaidOrderRuntimePermissions: mocks.audit }));
 vi.mock('@/migrations/auditReleasePrerequisiteCatalog', () => ({ auditReleasePrerequisiteCatalog: mocks.catalog }));
 vi.mock('@/migrations/auditWorkParentIdentityPermissions', () => ({ auditWorkParentIdentityPermissions: mocks.work }));
+vi.mock('@/migrations/auditReleaseProtocols', () => ({ auditReleaseProtocols: mocks.protocols }));
 
 const token = 'a'.repeat(64); // synthetic token, not a deployed credential
 let env: PaidRuntimeAuditEnv;
@@ -35,6 +36,32 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('temporary production runtime permission audit', () => {
+  it('serves release protocol observations without claiming readiness', async () => {
+    const result = { scope: 'release-protocol-preflight', ready: false, protocols: { offline: 'drift' } };
+    mocks.protocols.mockResolvedValue(result);
+    const response = await worker.fetch(request('/release-protocols'), env);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(await response.json()).toEqual(result);
+    expect(mocks.protocols).toHaveBeenCalledExactlyOnceWith(mocks.create.mock.results[0].value);
+    expect(mocks.audit).not.toHaveBeenCalled(); expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(mocks.work).not.toHaveBeenCalled(); expect(mocks.end).toHaveBeenCalledExactlyOnceWith({ timeout: 1 });
+  });
+  it('rejects anonymous, mutating and parameterized release inspection before connecting', async () => {
+    expect((await worker.fetch(request('/release-protocols','GET',''),env)).status).toBe(403);
+    expect((await worker.fetch(request('/release-protocols?role=admin'),env)).status).toBe(404);
+    for (const method of ['POST','PUT','DELETE','HEAD','OPTIONS'])
+      expect((await worker.fetch(request('/release-protocols',method),env)).status).toBe(405);
+    expect(mocks.create).not.toHaveBeenCalled(); expect(mocks.protocols).not.toHaveBeenCalled();
+  });
+  it.each(['create','protocols','end'] as const)('redacts release inspection %s errors', async stage => {
+    const secret = new Error('private release credentials');
+    if(stage === 'create') mocks.create.mockImplementation(() => { throw secret; });
+    else mocks[stage].mockRejectedValue(secret);
+    expect((await worker.fetch(request('/release-protocols'),env)).status).toBe(503);
+    expect(JSON.stringify(logCalls)).not.toContain(secret.message);
+    if(stage !== 'create') expect(mocks.end).toHaveBeenCalledWith({ timeout: 1 });
+  });
   it.each([false, true])('serves only the work parent envelope with ready=%s and closes its client', async ready => {
     const result = { scope: 'work-parent-identity-only', ready,
       checks: { noReferencedKeyUpdate: ready }, failures: ready ? [] : ['noReferencedKeyUpdate'] };
