@@ -8,9 +8,11 @@ import { createToken, md5, type TokenType } from '../../src/utils/jwt';
 import * as cache from '../../src/utils/cache';
 import { user, storeCart, systemAdmin, systemRole, storeOrderCartInfo, storeOrderStatus, printDocument } from '../../src/models/schema';
 import type { AppVariables, Env } from '../../src/env';
+import * as di from '../../src/lib/di';
 
 /** Actual registered routes, JWT, DB account/role checks, controllers and SQL.
- * Only token-bucket storage, KV and sequence are isolated substitutes. No login/provider I/O. */
+ * Token-bucket storage, KV, sequence and the post-auth SQL-session factory use
+ * explicit owned substitutes. No production connection-isolation/provider claim. */
 export function registerDeliveryAddressAuthTests() {
   describe('delivery address through registered authenticated v1 routes', () => {
     let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -19,6 +21,9 @@ export function registerDeliveryAddressAuthTests() {
     let secret: string;
     beforeEach(async () => {
       f = await createPcCheckoutQuoteFixture([systemAdmin, systemRole, storeOrderCartInfo, storeOrderStatus, printDocument]);
+      // This route fixture owns its SQL session (including PGlite mode). Keep
+      // auth real; only the post-auth connection factory uses the owned session.
+      vi.spyOn(di,'createAdminDatabaseSession').mockImplementation(()=>({container:f.container,close:async()=>{}}));
       buckets = new Map(); secret = crypto.randomUUID();
       await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
       Object.assign(f.env, { APP_KEY: secret, NODE_ENV: 'production', UPSTASH_REDIS_URL: 'https://isolated-redis.invalid', UPSTASH_REDIS_TOKEN: 'isolated-test-only',

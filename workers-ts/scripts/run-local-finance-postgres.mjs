@@ -44,6 +44,8 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 if (schemaMaintenance) {
   const allowed = new Set([
     'test/runtime-business-login.test.ts',
+    'test/shipping-lifecycle-route-auth.test.ts',
+    'test/order-delivery-address.test.ts',
     'test/bargain-pickup-postgres.test.ts',
     'test/bargain-pickup-admission.test.ts',
     'test/checkout-coupon-management.test.ts',

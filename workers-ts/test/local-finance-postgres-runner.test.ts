@@ -53,7 +53,6 @@ describe('local PostgreSQL runner command boundary', () => {
     { args: ['unused-bin', 'test/../admin-refund-decision.test.ts'], error: 'Only explicit unit test paths are accepted' },
     { args: ['unused-bin', 'test/nonexistent-local-finance-probe.test.ts'], error: 'Test does not exist:' },
     { args: ['--schema-maintenance','unused-bin','test/admin-refund-decision.test.ts'], error: 'Schema maintenance accepts only' },
-    { args: ['--schema-maintenance','unused-bin','test/admin-refund-operation-http.test.ts'], error: 'Schema maintenance accepts only' },
     { args: ['unused-bin','--schema-maintenance','test/admin-refund-operation-migration.test.ts'], error: 'Only explicit unit test paths are accepted' },
     { args: ['--schema-maintenance','unused-bin'], error: 'Usage:' },
     { args: ['unused-bin','audit:orm'], error: 'Only explicit unit test paths are accepted' },
@@ -79,5 +78,11 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(result.status).not.toBe(0);
     expect(result.stdout).toBe('');
     expect(result.stderr).toContain(error);
+  });
+  it.each(['admin-refund-operation-http','runtime-business-login','admin-runtime-login'])('admits the reviewed %s maintenance suite before binary validation',name=>{
+    const result=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',`test/${name}.test.ts`],
+      {cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(result.error).toBeUndefined();expect(result.status).not.toBe(0);expect(result.stdout).toBe('');
+    expect(result.stderr).not.toContain('Schema maintenance accepts only');expect(result.stderr).toContain('ENOENT');
   });
 });

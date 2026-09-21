@@ -5,9 +5,9 @@ import * as models from '../src/models/schema';
 import { OFFLINE_TABLES, OFFLINE_DISPATCH_COLUMNS } from '../src/migrations/offlineOrderCatalog';
 import { runtimeBusinessPrivilegePlan, RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY } from '../src/migrations/runtimeBusinessPrivilegePlan';
 
-describe('non-executable draft business privilege inventory', () => {
-  it('cannot be mistaken for a commissioned/approved production grant plan', () => {
-    expect(RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY).toBe(false);
+describe('explicitly reviewed business privilege inventory', () => {
+  it('enables only the separately authenticated fixed commissioning executor', () => {
+    expect(RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY).toBe(true);
   });
   it.each(['app','admin'] as const)('%s references only actual named tables and columns', kind => {
     const tables=new Map<string,readonly string[]>();

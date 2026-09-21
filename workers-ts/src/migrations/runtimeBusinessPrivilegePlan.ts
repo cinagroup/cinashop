@@ -1,6 +1,7 @@
-/** DRAFT whole-shop profile: commissioning is forbidden until the business
- * coverage review and independent LOGIN acceptance tests are complete.
- * No connection or automatic grants.
+/** Reviewed whole-shop v1 profile with independent LOGIN acceptance tests.
+ * Commissioning remains an explicit maintenance operation, never startup or
+ * missing-permission repair. Runtime audit and business acceptance must still
+ * pass on the actual Hyperdrives before switching the application.
  * Application means storefront + supplier + kefu + callbacks + queue workers,
  * not an end-user or tenant role. HTTP authorization remains mandatory.
  * Staff-table DML is conditional on the exact runtimeAdminBoundary protocol.
@@ -11,7 +12,7 @@ import { RUNTIME_TABLE_LOCK_UPDATE } from './runtimeLockOnlyBoundary';
 
 const names = (value: string) => value.trim().split(/\s+/);
 const unique = (...groups: readonly string[][]) => [...new Set(groups.flat())].sort();
-export const RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY = false;
+export const RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY = true;
 
 // Customer/supplier commerce, durable payment state, fulfillment and messaging.
 const sharedInsert = names(`

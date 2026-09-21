@@ -90,13 +90,13 @@ describe('admin offline collection reads on native PG16 and real workerd authori
   type Request = (suffix?: string, token?: string, customerPath?: boolean) => Promise<{ http: number; status: unknown; data: Json | null }>;
   const http = <T>(work: (request: Request, r: Runtime) => Promise<T>, options: {
     provider?: V4FetchHandler; expectedCalls?: number; origin?: string;
-  } = {}) => readonly(async r => {
+  } = {}) => readonly(async r => readonly(async admin => {
     const calls: string[] = [];
     const outbound: V4FetchHandler = async (request, ...args) => {
       calls.push(request.url); return options.provider ? options.provider(request, ...args) : new LocalResponse(null, { status: 503 });
     };
     const mf = new Miniflare(convertV4MiniflareOptions({ script, modules: true, compatibilityDate: '2026-08-09', compatibilityFlags: ['nodejs_compat'],
-      host: '127.0.0.1', port: 0, hyperdrives: { HYPERDRIVE: r.connectionString }, outboundService: outbound, kvNamespaces: ['CONFIG_KV'],
+      host: '127.0.0.1', port: 0, hyperdrives: { HYPERDRIVE: r.connectionString, HYPERDRIVE_ADMIN: admin.connectionString }, outboundService: outbound, kvNamespaces: ['CONFIG_KV'],
       bindings: { APP_KEY: secret, NODE_ENV: 'test', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '',
         OFFLINE_H5_RETURN_ORIGIN: options.origin ?? 'https://cinashop-h5.pages.dev' } }));
     try {
@@ -121,9 +121,11 @@ describe('admin offline collection reads on native PG16 and real workerd authori
         }
         return { http: response.status, status: body.status, data: body.data === null ? null : object(body.data) };
       };
-      return await work(request, r);
+      // Permission-denial scenarios must revoke the LOGIN actually serving
+      // the authenticated admin request, not the ordinary pre-auth connection.
+      return await work(request, admin);
     } finally { await mf.dispose(); expect.soft(calls).toHaveLength(options.expectedCalls ?? 0); }
-  });
+  }));
 
   it('scan entry is fixed, authenticated, readonly and explicitly reports absent mini-program configuration', async () => {
     await create(); const before = await state();

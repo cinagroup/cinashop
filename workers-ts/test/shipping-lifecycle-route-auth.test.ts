@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
-import { createContainerFromDb } from '../src/lib/di';
+import { createContainerFromDb, type Container, type DbClient } from '../src/lib/di';
 import type { AppVariables, Env } from '../src/env';
 import { adminapiRoutes } from '../src/routes/adminapi';
 import { v1Routes } from '../src/routes/v1';
@@ -12,6 +12,15 @@ import * as cache from '../src/utils/cache';
 import { runShippingLifecycle } from '../src/migrations/runShippingLifecycle';
 import { readAdminShippingSnapshot } from '../src/services/admin/AdminShippingTemplateSnapshot';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
+const adminWiring=vi.hoisted(()=>({containers:new WeakMap<object,Container>()}));
+vi.mock('../src/lib/di',async importOriginal=>{
+  const original=await importOriginal<typeof import('../src/lib/di')>();
+  return {...original,createAdminDatabaseSession:(env:Env)=>{
+    const container=adminWiring.containers.get(env);
+    if(!container)throw Error('Owned route SQL session unavailable');
+    return {container,close:async()=>{}};
+  }};
+});
 
 const surfaces = ['adminapi', 'api/admin', 'supplierapi'] as const;
 type Surface = typeof surfaces[number];
@@ -22,7 +31,9 @@ const stateTables = [...shippingTables, 'shipping_template_create_replay', ...ch
 
 // Registered routes, real JWT verification, DB principals/role resolution and
 // controllers/services with the formal protocol installed on full isolated ORM.
-// Only token-bucket storage is substituted. No login/provider/online-role claim.
+// Only token-bucket storage and the post-auth connection factory are substituted.
+// Each request retains its exact owned maintenance/restricted fixture session.
+// No production connection-isolation or provider claim (covered separately).
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenance', 'restricted LOGIN'] as const)('shipping lifecycle registered-route authorization on full PG16: %s', identity => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
   let app: Hono<{ Bindings: Env; Variables: AppVariables }>;
@@ -48,9 +59,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
     await runShippingLifecycle(f.db);
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use('*', async (c, next) => {
-      if (pooledRuntime) { c.set('container', createContainerFromDb(pooledRuntime.db)); await next(); }
-      else if (identity === 'maintenance') { c.set('container', createContainerFromDb(f.db)); await next(); }
-      else await asRuntime(async runtime => { c.set('container', createContainerFromDb(runtime.db)); await next(); });
+      const run=async(db:DbClient)=>{
+        const container=createContainerFromDb(db);c.set('container',container);
+        // A per-request env key keeps concurrent lock peers from sharing wiring.
+        c.env={...c.env};adminWiring.containers.set(c.env,container);
+        try{await next();}finally{adminWiring.containers.delete(c.env);}
+      };
+      if (pooledRuntime) await run(pooledRuntime.db);
+      else if (identity === 'maintenance') await run(f.db);
+      else await asRuntime(async runtime => run(runtime.db));
     });
     app.onError(errorHandler);
     app.route('/adminapi', adminapiRoutes); app.route('/api', v1Routes); app.route('/supplierapi', supplierapiRoutes);
@@ -347,7 +364,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['maintenanc
       const bearer = await token(surface), key = crypto.randomUUID();
       const peerApp = (peer: SequenceRunnerPeer) => {
         const target = new Hono<{Bindings:Env;Variables:AppVariables}>();
-        target.use('*',async(c,next)=>{c.set('container',createContainerFromDb(peer.db));await next();});
+        target.use('*',async(c,next)=>{
+          const container=createContainerFromDb(peer.db);c.set('container',container);
+          c.env={...c.env};adminWiring.containers.set(c.env,container);
+          try{await next();}finally{adminWiring.containers.delete(c.env);}
+        });
         target.onError(errorHandler);
         target.route('/adminapi',adminapiRoutes);target.route('/api',v1Routes);target.route('/supplierapi',supplierapiRoutes);
         return target;

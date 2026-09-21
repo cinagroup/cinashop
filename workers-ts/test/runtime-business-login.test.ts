@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
-import { grantRuntimeBusinessFixture } from './helpers/runtimeBusinessGrantFixture';
 import { createContainerFromDb } from '../src/lib/di';
-import { installRuntimeAdminBoundaryInTransaction } from '../src/migrations/runtimeAdminBoundary';
 import { installRuntimeLockOnlyBoundaryInTransaction, inspectRuntimeLockOnlyBoundary } from '../src/migrations/runtimeLockOnlyBoundary';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
 import { admitOfflineOrder } from '../src/services/order/OfflineOrderAdmissionService';
@@ -13,8 +11,10 @@ import { auditCheckoutRuntimePermissions } from '../src/migrations/auditPaidOrde
 import { auditOfflineOrderRuntimePermissions } from '../src/migrations/auditOfflineOrderRuntimePermissions';
 import { auditWorkParentIdentityPermissions } from '../src/migrations/auditWorkParentIdentityPermissions';
 import { auditRuntimeBusinessPrivileges } from '../src/migrations/auditRuntimeBusinessPrivileges';
+import { installRuntimeBusinessInTransaction, runRuntimeBusinessCommissioning, runRuntimeShippingPrerequisite } from '../src/migrations/runRuntimeBusinessCommissioning';
+import { exerciseRuntimeBusiness } from './integration/RuntimeBusinessProbe';
 
-describe('draft business profiles with two independent real LOGINs (not production commissioning)',()=>{
+describe('business profiles with two independent real LOGINs (isolated native acceptance)',()=>{
   let f:Awaited<ReturnType<typeof refundRuntimeFixture>>;
   beforeEach(async()=>{
     vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('External I/O forbidden'));
@@ -25,22 +25,56 @@ describe('draft business profiles with two independent real LOGINs (not producti
   },60_000);
   afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();}finally{vi.restoreAllMocks();await f?.close();}},30_000);
   type Role=Parameters<NonNullable<typeof f.withRuntimeRole>>[0] extends (r:infer R)=>unknown?R:never;
+  it('reports empty independent LOGINs and an absent shipping receipt as unready without throwing',async()=>{
+    await f.exec('DROP TABLE public.shipping_template_create_replay');
+    await f.withRuntimeRole!(app=>f.withRuntimeRole!(async admin=>{
+      const names={app:app.role,admin:admin.role,maintenance:'finance_test',database:'finance_test',pricingOwner:f.pricingOwner};
+      for(const [kind,peer] of [['app',app],['admin',admin]] as const){
+        const result=await auditRuntimeBusinessPrivileges(peer.db,kind,names);
+        expect(result.ready).toBe(false);
+        expect(result.failures).toContain('missing:shipping_template_create_replay');
+        expect(result.failures).toContain('staff_boundary');
+        expect(result.failures).toContain('lock_only_boundary');
+      }
+      const [identity]=await f.exec('SELECT current_database() AS database');
+      const target={...names,database:String(identity.database)};
+      const installed=await runRuntimeShippingPrerequisite(f.db,target);
+      expect(installed).toMatchObject({applied:true,before:{present:false},after:{complete:true},businessGrantsApplied:false});
+      expect(await runRuntimeShippingPrerequisite(f.db,target)).toMatchObject({applied:false,after:installed.after});
+      expect((await auditRuntimeBusinessPrivileges(app.db,'app',names)).failures).toContain('table:shipping_template_create_replay:INSERT');
+    }));
+  },60_000);
   async function profiles(run:(app:Role,admin:Role)=>Promise<void>){
     await f.withRuntimeRole!(app=>f.withRuntimeRole!(async admin=>{
-      await f.db.transaction(async tx=>{
-        await installRuntimeAdminBoundaryInTransaction(tx,app.role,'finance_test');
-        await installRuntimeLockOnlyBoundaryInTransaction(tx,app.role,admin.role,'finance_test');
-      });
-      await grantRuntimeBusinessFixture(f.db,app.role,'app');
-      await grantRuntimeBusinessFixture(f.db,admin.role,'admin');
+      const [identity]=await f.exec('SELECT current_database() AS database');
+      const target={database:String(identity.database),maintenance:'finance_test',app:app.role,admin:admin.role,pricingOwner:f.pricingOwner};
+      await expect(runRuntimeBusinessCommissioning(f.db,{...target,database:'wrong_target'})).rejects.toThrow('target requires review');
+      expect(await runRuntimeBusinessCommissioning(f.db,target)).toMatchObject({grantsApplied:true,businessValidationRequired:true});
+      await expect(f.db.transaction(tx=>installRuntimeBusinessInTransaction(tx,target))).rejects.toThrow('preflight refused');
       const names={app:app.role,admin:admin.role,maintenance:'finance_test'};
       expect(await auditRuntimeBusinessPrivileges(app.db,'app',names)).toMatchObject({ready:true,failures:[]});
       expect(await auditRuntimeBusinessPrivileges(admin.db,'admin',names)).toMatchObject({ready:true,failures:[]});
       await run(app,admin);
     }));
   }
+  it('rolls back both boundaries and every grant on late column drift',async()=>{
+    await f.withRuntimeRole!(app=>f.withRuntimeRole!(async admin=>{
+      const [identity]=await f.exec('SELECT current_database() AS database');
+      const target={database:String(identity.database),maintenance:'finance_test',app:app.role,admin:admin.role,pricingOwner:f.pricingOwner};
+      await f.exec('ALTER TABLE public.system_menus RENAME COLUMN id TO fixture_renamed_id');
+      await expect(f.db.transaction(tx=>installRuntimeBusinessInTransaction(tx,target))).rejects.toMatchObject({cause:{code:'42703'}});
+      const [remaining]=await f.exec(`SELECT
+        has_table_privilege('${app.role}','public.store_order','SELECT,INSERT,UPDATE,DELETE') AS app_grants,
+        has_table_privilege('${admin.role}','public.system_config','SELECT,INSERT,UPDATE,DELETE') AS admin_grants,
+        to_regprocedure('public.cinashop_runtime_admin_boundary_v1()') IS NULL AS no_staff_boundary,
+        to_regprocedure('public.cinashop_runtime_lock_only_v1()') IS NULL AS no_lock_boundary`);
+      expect(remaining).toEqual({app_grants:false,admin_grants:false,no_staff_boundary:true,no_lock_boundary:true});
+    }));
+  },60_000);
   it('executes checkout, offline wallet/replay and cache upsert under the exact app profile',async()=>{
     await profiles(async(app,admin)=>{
+      expect(await exerciseRuntimeBusiness(app.db,'app',app.role)).toMatchObject({passed:true,rolledBack:true,wallet:'passed',remainingSyntheticRows:0});
+      expect(await exerciseRuntimeBusiness(admin.db,'admin',admin.role)).toMatchObject({passed:true,rolledBack:true,remainingSyntheticRows:0});
       expect(await auditCheckoutRuntimePermissions(app.db,'public','shared-shop')).toMatchObject({ready:true,failures:[]});
       expect(await auditOfflineOrderRuntimePermissions(app.db,'shared-shop')).toMatchObject({ready:true,failures:[]});
       expect(await auditWorkParentIdentityPermissions(app.db,'public','shared-shop')).toMatchObject({ready:true,failures:[]});
@@ -92,6 +126,9 @@ describe('draft business profiles with two independent real LOGINs (not producti
         GRANT SELECT ON outside_runtime.hidden TO "${app.role}"`);
       expect((await auditRuntimeBusinessPrivileges(app.db,'app',names)).failures).toContain('no_other_schema_data');
       await f.exec(`REVOKE SELECT ON outside_runtime.hidden FROM "${app.role}"`);
+      await f.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO "${app.role}"`);
+      expect((await auditRuntimeBusinessPrivileges(app.db,'app',names)).failures).toContain('default_grants');
+      await f.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM "${app.role}"`);
       const before=await inspectRuntimeLockOnlyBoundary(f.db,app.role,admin.role,'finance_test');expect(before.ready).toBe(true);
       expect(await f.db.transaction(tx=>installRuntimeLockOnlyBoundaryInTransaction(tx,app.role,admin.role,'finance_test'))).toMatchObject({applied:false,ready:true});
       await f.exec('ALTER FUNCTION public.cinashop_runtime_lock_only_v1() RESET search_path');

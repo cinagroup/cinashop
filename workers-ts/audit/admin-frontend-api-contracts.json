@@ -7,7 +7,7 @@
   },
   "backend": {
     "file": "workers-ts/src/routes/adminapi.ts",
-    "sha256": "c89bc053041ed98ce08b16e8eacdf45d9a8ad5946cbec68bb2db3bd1b77b858c",
+    "sha256": "b98df6647c73416b7379a4140d19e643b6971d25385035e192b5cd4f3affa4cd",
     "registeredRoutes": [
       {
         "method": "POST",

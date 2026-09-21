@@ -11,7 +11,10 @@ import { responseCacheMiddleware } from '../../src/middleware/response-cache';
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (!/^cinashop_kefu_runner_[a-f0-9]{32}$/.test(env.HYPERDRIVE.database)
-      || !/^cinashop_runtime_[a-f0-9]{32}$/.test(env.HYPERDRIVE.user)) return new Response(null, { status: 503 });
+      || !/^cinashop_runtime_[a-f0-9]{32}$/.test(env.HYPERDRIVE.user)
+      || env.HYPERDRIVE_ADMIN?.database!==env.HYPERDRIVE.database
+      || !/^cinashop_runtime_[a-f0-9]{32}$/.test(env.HYPERDRIVE_ADMIN.user)
+      || env.HYPERDRIVE_ADMIN.user===env.HYPERDRIVE.user) return new Response(null, { status: 503 });
     const db = createDb(env);
     try {
       const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
