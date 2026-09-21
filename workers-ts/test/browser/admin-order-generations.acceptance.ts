@@ -16,6 +16,10 @@ import { storeOrder, storeProduct, storeProductAttrValue, systemAdmin, systemRol
 // app routes, JWT/password checks, permission service, controller and SQL reads.
 const wiring = vi.hoisted(() => ({ container: undefined as Container | undefined }));
 vi.mock('../../src/lib/di', async original => ({ ...await original<typeof import('../../src/lib/di')>(),
+  createAdminDatabaseSession: () => {
+    if (!wiring.container) throw Error('Missing owned read connection');
+    return { container: wiring.container, close: async () => {} };
+  },
   createContainer: () => { if (!wiring.container) throw Error('Missing owned read connection'); return wiring.container; } }));
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('Expected acceptance object');

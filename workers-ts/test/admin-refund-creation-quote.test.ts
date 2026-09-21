@@ -16,7 +16,10 @@ import { lockOrderSettlement } from '../src/services/order/OrderBrokerageService
 const wiring=vi.hoisted(()=>({container:undefined as Container|undefined}));
 vi.mock('../src/lib/di',async importOriginal=>{
   const original=await importOriginal<typeof import('../src/lib/di')>();
-  return {...original,createContainer:()=>{if(!wiring.container)throw Error('Quote SQL fixture unavailable');return wiring.container;}};
+  return {...original,createAdminDatabaseSession:()=>{
+    if(!wiring.container)throw Error('Quote SQL fixture unavailable');
+    return {container:wiring.container,close:async()=>{}};
+  },createContainer:()=>{if(!wiring.container)throw Error('Quote SQL fixture unavailable');return wiring.container;}};
 });
 const aliases=['/adminapi/refund/creation/quote','/api/admin/refund/creation/quote'];
 const input=()=>({version:'admin-refund-creation-quote-v1',orderId:1,mode:'items',items:[{cartId:501,cartNum:1}]});

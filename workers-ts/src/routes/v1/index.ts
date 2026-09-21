@@ -67,7 +67,7 @@ import * as PrintDocumentController from "@/controllers/system/PrintDocumentCont
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
 import * as AttachmentController from "@/controllers/system/AttachmentController";
-import { adminAuthMiddleware } from "@/middleware/admin-auth";
+import { adminRuntimeAuthMiddleware } from "@/middleware/admin-runtime-auth";
 import { operationsAuthMiddleware } from "@/middleware/operations-auth";
 import { stationOpenMiddleware } from "@/middleware/station-open";
 import type { AppVariables, Env } from "@/env";
@@ -1287,7 +1287,7 @@ v1Routes.post("/wechat/auth_binding_phone", authMiddleware({ force: true }), Wec
 // ─── 管理后台 (M7 核心: 登录 + Dashboard + WebSocket 客服) ────
 // 管理员登录 (无需 auth)
 v1Routes.post("/admin/login", AdminController.adminLogin);
-const adminAuth = adminAuthMiddleware();
+const adminAuth = adminRuntimeAuthMiddleware();
 // Dashboard + 通知 (需 admin token)
 v1Routes.get("/admin/home/header", adminAuth, AdminController.adminHomeHeader);
 v1Routes.get("/admin/home/order", adminAuth, AdminController.adminOrderChart);

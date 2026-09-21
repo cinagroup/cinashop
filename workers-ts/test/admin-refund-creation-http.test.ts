@@ -17,7 +17,10 @@ import { lockOrderSettlement } from '../src/services/order/OrderBrokerageService
 const wiring=vi.hoisted(()=>({containers:new Map<Env,Container>()}));
 vi.mock('../src/lib/di',async importOriginal=>{
   const original=await importOriginal<typeof import('../src/lib/di')>();
-  return {...original,createContainer:(env:Env)=>{
+  return {...original,createAdminDatabaseSession:(env:Env)=>{
+    const container=wiring.containers.get(env);if(!container)throw Error('Creation HTTP SQL fixture unavailable');
+    return {container,close:async()=>{}};
+  },createContainer:(env:Env)=>{
     const container=wiring.containers.get(env);if(!container)throw Error('Creation HTTP SQL fixture unavailable');return container;
   }};
 });

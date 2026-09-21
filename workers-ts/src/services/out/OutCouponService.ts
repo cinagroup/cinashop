@@ -19,6 +19,7 @@ import {
 import { configFlag, parseConfigIds } from "@/services/activity/StoreNewcomerService";
 import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { protectCheckoutPricingSources } from "@/services/order/CheckoutPricingSources";
 
 type UnknownRecord = Record<string, unknown>;
 type CouponWriteOperation = "coupon_create" | "coupon_status" | "coupon_delete";
@@ -432,7 +433,7 @@ async function activeConflictNames(tx: DbClient, couponId: number): Promise<stri
     .where(and(
       eq(systemConfig.isStore, 0),
       inArray(systemConfig.menuName, ["newcomer_status", "register_coupon_status", "register_give_coupon"]),
-    )).for("update");
+    )); // Caller already holds the fixed configuration SHARE capability.
   const [productGrant, lottery, promotionMain, promotionAux, configRows] = await Promise.all([
     tx.select({ id: storeProductCoupon.id }).from(storeProductCoupon)
       .innerJoin(storeProduct, eq(storeProduct.id, storeProductCoupon.productId))
@@ -594,19 +595,10 @@ export class OutCouponService {
       // Wait for a checkout's coupon lock BEFORE owning the global config
       // fence; otherwise an unrelated deletion forces that checkout to abort.
       // Once we own the coupon, never wait behind a reverse-order config writer.
-      try {
-        await tx.execute(sql`LOCK TABLE ${systemConfig} IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
-      } catch (error) {
-        let cause: unknown = error;
-        for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
-          if ('code' in cause && cause.code === '55P03') {
-            throw new ValidateException('优惠券发放配置正在更新，请稍后重试');
-          }
-          if (!('cause' in cause) || cause.cause === cause) break;
-          cause = cause.cause;
-        }
-        throw error;
-      }
+      // Coupon writers are already serialized by lockCouponCatalog. SHARE
+      // blocks config UPDATE/DELETE and phantom INSERT equally, while the
+      // ordinary LOGIN retains SELECT-only configuration access.
+      await protectCheckoutPricingSources(tx, '优惠券发放配置正在更新，请稍后重试');
       const preservedUsage = await usageCounts(tx, couponId);
       if (issue.isDel === 1 || issue.status === -1) {
         await recordReplay(tx, account.id, operation, key, hash, couponId, -1);

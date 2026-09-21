@@ -1,5 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
+import { reviewedRuntimePricingCapabilities } from './reviewedRuntimePricingCapabilities';
+import { validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
 
 /** Read-only parent-identity envelope, NOT a complete application grant/RLS
  * audit or automatic GRANT/REVOKE plan. Ordinary non-key updates remain allowed.
@@ -8,7 +10,9 @@ import type { DbClient } from '../lib/di';
 export async function auditWorkParentIdentityPermissions(
   db: Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>,
   schema = 'public',
+  scope: PricingRuntimeScope = 'isolated',
 ) {
+  validatePricingRuntimeScope(scope);
   if (!db.$client) throw new Error('Work parent identity audit requires a root database');
   if (!/^[a-z_][a-z0-9_]{0,62}$/.test(schema) || schema.startsWith('pg_') || schema === 'information_schema') {
     throw new Error('Invalid work parent identity audit schema');
@@ -18,6 +22,7 @@ export async function auditWorkParentIdentityPermissions(
       pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
       pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),1000)::text || 'ms',true),
       pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+    const reviewed = await reviewedRuntimePricingCapabilities(tx,schema,scope);
     const [checks] = await tx.select({
       connectionIdentityVisible: sql<boolean>`connection_identity_visible`,
       objectsAndKeysPresent: sql<boolean>`objects_and_keys_present`,
@@ -75,6 +80,7 @@ export async function auditWorkParentIdentityPermissions(
             OR pg_catalog.has_parameter_privilege(oid,'session_replication_role','ALTER SYSTEM')) AS no_replication_bypass,
         NOT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
           WHERE p.prosecdef AND NOT pg_catalog.starts_with(n.nspname::text,'pg_') AND n.nspname<>'information_schema'
+            AND p.oid::text IS DISTINCT FROM ${reviewed.checkout} AND p.oid::text IS DISTINCT FROM ${reviewed.offline}
             AND EXISTS (SELECT 1 FROM reachable r WHERE pg_catalog.has_function_privilege(r.oid,p.oid,'EXECUTE'))) AS no_definer_routine,
         (SELECT count(*)=2 AND bool_and(COALESCE(pg_catalog.has_table_privilege(current_user,oid,'SELECT'),false)) FROM objects)
           AND EXISTS (SELECT 1 FROM target_schema WHERE pg_catalog.has_schema_privilege(current_user,oid,'USAGE')) AS parent_read_access

@@ -3,6 +3,7 @@ import { withTx, type Container, type DbClient } from '@/lib/di';
 import { storeProduct, systemConfig, systemStore } from '@/models/schema';
 import { normalizeConfigScalar } from '@/utils/config';
 import { ValidateException } from '@/utils/errors';
+import { protectCheckoutPricingSources } from '@/services/order/CheckoutPricingSources';
 
 type PickupProduct = Pick<typeof storeProduct.$inferSelect, 'id' | 'type' | 'relationId' | 'productType'>;
 type PickupSource = PickupProduct & { isShow: number; isDel: number };
@@ -60,7 +61,9 @@ export async function assertBargainPickup(tx: DbClient, quoted: PickupProduct, s
       .from(storeProduct).where(eq(storeProduct.id, quoted.id)).limit(1);
     const [source] = await sourceQuery;
     assertPickupSource(source, quoted, storeId);
-    if (lock) await tx.execute(sql`LOCK TABLE ${systemConfig} IN SHARE MODE NOWAIT`);
+    // Use the same fixed capability as checkout: row locks (or granting the
+    // caller configuration UPDATE) do not preserve the readonly runtime role.
+    if (lock) await protectCheckoutPricingSources(tx, '砍价自提规则正在更新，请稍后重试');
     if (!(await readBargainPickupEnabled(tx))) throw new ValidateException('砍价门店自提已关闭，请重新选择配送方式');
     const storeQuery = tx.select({ id: systemStore.id }).from(systemStore)
       .where(and(eq(systemStore.id, storeId), eq(systemStore.isStore, 1), eq(systemStore.isShow, 1), eq(systemStore.isDel, 0))).limit(1);

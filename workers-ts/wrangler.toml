@@ -22,8 +22,14 @@ enabled = false
 # 新: 腾讯云 PG (Workers VPC → Tunnel → 私有 PG, 2026-08-08 切换)
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "9748c294e21c49a99579c9cef70102e0"  # cinashop-pg (VPC Service 019fe223 → tunnel cinaseek_pg → PG:5432)
+id = "ba7faa6680cd48d4b3a1d36a7a5fc8f7"  # cinashop_app_v1; commission privileges before deploying
 localConnectionString = "postgresql://crmeb:crmeb@localhost:5432/crmeb"
+
+# Selected only after complete Admin authentication AND route authorization.
+[[hyperdrive]]
+binding = "HYPERDRIVE_ADMIN"
+id = "446e94a4de0143f58c8e5178ec55db8b"  # cinashop_admin_v1; no maintenance-role reachability
+localConnectionString = "postgresql://cinashop_admin_v1:local-development-only@localhost:5432/crmeb"
 
 # ─── Upstash Redis (REST API) ─────────────────────────────
 # 创建命令: wrangler kv namespace create CONFIG_KV

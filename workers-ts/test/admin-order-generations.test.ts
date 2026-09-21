@@ -13,7 +13,10 @@ import { AdminOrderReadService } from '../src/services/admin/AdminOrderReadServi
 const wiring = vi.hoisted(() => ({ container: undefined as Container | undefined }));
 vi.mock('../src/lib/di', async importOriginal => {
   const original = await importOriginal<typeof import('../src/lib/di')>();
-  return { ...original, createContainer: () => {
+  return { ...original, createAdminDatabaseSession: () => {
+    if (!wiring.container) throw Error('Missing isolated database');
+    return { container: wiring.container, close: async () => {} };
+  }, createContainer: () => {
     if (!wiring.container) throw Error('Missing isolated database');
     return wiring.container;
   } };

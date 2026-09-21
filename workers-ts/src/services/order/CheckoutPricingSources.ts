@@ -62,7 +62,9 @@ async function readPricingSources(db: DbClient, keys: readonly string[], include
  * sources. Never lock public while reading a shadow/temp or isolated source.
  * Missing/drifted installation fails closed; no direct-LOCK or DML fallback.
  */
-export async function protectCheckoutPricingSources(tx: DbClient): Promise<void> {
+export async function protectCheckoutPricingSources(
+  tx: DbClient, busyMessage = '订单计价配置正在更新，请稍后重新确认',
+): Promise<void> {
   const [context] = await tx.execute(sql`SELECT
     pg_catalog.current_setting('transaction_isolation') AS isolation,
     pg_catalog.current_schema() AS namespace,
@@ -80,7 +82,7 @@ export async function protectCheckoutPricingSources(tx: DbClient): Promise<void>
   } catch (error) {
     let cause: unknown = error;
     for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
-      if ('code' in cause && cause.code === '55P03') throw new ValidateException('订单计价配置正在更新，请稍后重新确认');
+      if ('code' in cause && cause.code === '55P03') throw new ValidateException(busyMessage);
       if (!('cause' in cause) || cause.cause === cause) break;
       cause = cause.cause;
     }

@@ -15,7 +15,10 @@ import { createToken, md5 } from '../src/utils/jwt';
 const wiring = vi.hoisted(() => ({ container: undefined as Container | undefined }));
 vi.mock('../src/lib/di', async importOriginal => {
   const original = await importOriginal<typeof import('../src/lib/di')>();
-  return { ...original, createContainer: () => {
+  return { ...original, createAdminDatabaseSession: () => {
+    if (!wiring.container) throw new Error('HTTP SQL fixture unavailable');
+    return { container: wiring.container, close: async () => {} };
+  }, createContainer: () => {
     if (!wiring.container) throw new Error('HTTP SQL fixture unavailable');
     return wiring.container;
   } };

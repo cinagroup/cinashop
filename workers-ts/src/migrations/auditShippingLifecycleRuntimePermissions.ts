@@ -1,6 +1,8 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { boundShippingLifecycleInspection } from './inspectShippingLifecycleBaseline';
+import { reviewedRuntimePricingCapabilities } from './reviewedRuntimePricingCapabilities';
+import { validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
 
 /** Read-only CONNECTION identity envelope for the seven protected tables.
  * This is not a grant script, full service/RLS authorization audit, protocol
@@ -9,12 +11,15 @@ import { boundShippingLifecycleInspection } from './inspectShippingLifecycleBase
  */
 export async function auditShippingLifecycleRuntimePermissions(
   db: Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>,
+  scope: PricingRuntimeScope = 'isolated',
 ) {
+  validatePricingRuntimeScope(scope);
   if (!db.$client) throw new Error('Shipping runtime permission audit requires a root database');
   return db.transaction(async tx => {
     await boundShippingLifecycleInspection(tx);
     const [version] = await tx.select({ value: sql<number>`current_setting('server_version_num')::int` }).from(sql`(VALUES(1)) q(n)`);
     if (!version || Math.floor(version.value / 10000) !== 16) throw new Error('Shipping runtime permission audit requires PostgreSQL 16');
+    const reviewed = await reviewedRuntimePricingCapabilities(tx,'public',scope);
     const [checks] = await tx.select({
       connectionIdentityVisible: sql<boolean>`identity_visible`, objectsPresent: sql<boolean>`objects_present`,
       unprivilegedReachableRoles: sql<boolean>`unprivileged_roles`, noOwnerControl: sql<boolean>`no_owner_control`,
@@ -72,6 +77,7 @@ export async function auditShippingLifecycleRuntimePermissions(
           AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members m JOIN reachable r ON r.oid=m.member WHERE m.admin_option) AS no_grant_delegation,
         NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
           WHERE p.prosecdef AND NOT pg_catalog.starts_with(n.nspname::text,'pg_') AND n.nspname<>'information_schema'
+            AND p.oid::text IS DISTINCT FROM ${reviewed.checkout} AND p.oid::text IS DISTINCT FROM ${reviewed.offline}
             AND EXISTS(SELECT 1 FROM reachable r WHERE pg_catalog.has_function_privilege(r.oid,p.oid,'EXECUTE'))) AS no_definer_routine,
         (SELECT count(*)=7 AND bool_and(NOT COALESCE(relrowsecurity,true) AND NOT COALESCE(relforcerowsecurity,true)) FROM objects) AS no_rls,
         EXISTS(SELECT 1 FROM target_schema WHERE pg_catalog.has_schema_privilege(current_user,oid,'USAGE'))

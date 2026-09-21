@@ -7,6 +7,9 @@ import { installCheckoutPricingLock } from '../src/migrations/checkoutPricingLoc
 import { offlineRuntimeGrantPlan } from '../src/migrations/offlineOrderRuntimeContract';
 import { auditCheckoutRuntimePermissions } from '../src/migrations/auditPaidOrderRuntimePermissions';
 import { auditOfflineOrderRuntimePermissions } from '../src/migrations/auditOfflineOrderRuntimePermissions';
+import { auditShippingLifecycleRuntimePermissions } from '../src/migrations/auditShippingLifecycleRuntimePermissions';
+import { auditWorkParentIdentityPermissions } from '../src/migrations/auditWorkParentIdentityPermissions';
+import { runShippingLifecycle } from '../src/migrations/runShippingLifecycle';
 
 describe('explicit shared shop role pricing capabilities PG16', () => {
   let f: Awaited<ReturnType<typeof checkoutPricingMigrationDatabase>>, ddl: string;
@@ -31,6 +34,25 @@ describe('explicit shared shop role pricing capabilities PG16', () => {
   };
   const catalog = () => f.db.execute(sql`SELECT 'table' AS kind, oid::text, to_jsonb(c)::text AS value FROM pg_class c WHERE relnamespace='public'::regnamespace
     UNION ALL SELECT 'function', oid::text, to_jsonb(p)::text FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`);
+  it('composes shipping and parent-identity envelopes without permitting unrelated or drifted definers', async () => {
+    await runShippingLifecycle(f.db);
+    await withRole(async r => {
+      const children=['store_product','store_seckill','store_bargain','store_combination','store_integral','store_discounts_products'];
+      await f.exec(`GRANT SELECT ON public.work_client_current,public.work_callback_event TO "${r.role}";
+        GRANT SELECT,INSERT,UPDATE ON public.shipping_templates TO "${r.role}";
+        GRANT SELECT,INSERT,UPDATE,DELETE ON ${children.map(t=>'public.'+t).join(',')} TO "${r.role}";
+        GRANT USAGE ON SEQUENCE ${['shipping_templates',...children].map(t=>'public.'+t+'_id_seq').join(',')} TO "${r.role}"`);
+      expect((await auditShippingLifecycleRuntimePermissions(r.db)).ready).toBe(false);
+      expect((await auditWorkParentIdentityPermissions(r.db)).ready).toBe(false);
+      expect(await auditShippingLifecycleRuntimePermissions(r.db,'shared-shop')).toMatchObject({ready:true,failures:[]});
+      expect(await auditWorkParentIdentityPermissions(r.db,'public','shared-shop')).toMatchObject({ready:true,failures:[]});
+      await f.exec('ALTER FUNCTION public.ooa_lock_pricing() RESET search_path');
+      const before=await catalog();
+      expect((await auditShippingLifecycleRuntimePermissions(r.db,'shared-shop')).ready).toBe(false);
+      expect((await auditWorkParentIdentityPermissions(r.db,'public','shared-shop')).ready).toBe(false);
+      expect(await catalog()).toEqual(before);
+    });
+  });
   it('requires explicit shared scope; verifies both exact capabilities with an independently authenticated LOGIN', async () => {
     await withRole(async r => {
       expect((await auditCheckoutRuntimePermissions(r.db)).ready).toBe(false);

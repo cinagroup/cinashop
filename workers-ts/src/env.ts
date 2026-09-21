@@ -437,6 +437,9 @@ export interface AppVariables {
   visitorSession?: import("@/services/kefu/KefuVisitorSessionService").KefuVisitorIdentity;
   /** DI 容器 (container 中间件注入, 对应 PHP app()->make) */
   container: import("@/lib/di").Container;
+  /** Original least-privileged request connection, retained for assisted checkout.
+   * Only the authenticated Admin runtime boundary sets this server-side value. */
+  applicationContainer?: import("@/lib/di").Container;
   /** 当前登录管理员 ID (adminAuthMiddleware 注入) */
   adminId?: number;
   /** 当前登录管理员信息 (adminAuthMiddleware 注入) */

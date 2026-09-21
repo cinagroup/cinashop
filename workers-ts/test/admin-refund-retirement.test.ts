@@ -15,6 +15,10 @@ import { AlipayRefundService } from '../src/services/payment/AlipayRefundService
 // forbidden external I/O are substituted. Never connect to production.
 const wiring = vi.hoisted(() => ({ container: undefined as Container | undefined }));
 vi.mock('../src/lib/di', async original => ({ ...await original<typeof import('../src/lib/di')>(),
+  createAdminDatabaseSession: () => {
+    if (!wiring.container) throw Error('Retirement fixture unavailable');
+    return { container: wiring.container, close: async () => {} };
+  },
   createContainer: () => { if (!wiring.container) throw Error('Retirement fixture unavailable'); return wiring.container; } }));
 
 const paths = ['/adminapi/refund/refund/28', '/adminapi/refund/refuse/28',

@@ -124,7 +124,9 @@ function mobileRefundOperationService(c: C): AdminMobileRefundOperationService {
 }
 
 function assistedOrderService(c: C): AdminAssistedOrderService {
-  return new AdminAssistedOrderService(c.get("container"), c.env);
+  // The verified Admin actor may operate a cart, but checkout must never gain
+  // configuration-write authority from the Admin management connection.
+  return new AdminAssistedOrderService(c.get("applicationContainer") ?? c.get("container"), c.env);
 }
 
 function verifiedAdminId(c: C): number {

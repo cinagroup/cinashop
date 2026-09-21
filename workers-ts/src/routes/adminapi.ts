@@ -29,7 +29,7 @@
 import { Hono } from "hono";
 import { privateRefundOperationResponse, retiredAdminRefundMutation as adminRefundMutationUnavailable } from '@/controllers/api/v1/AdminRefundOperationController';
 import * as ShippingCreation from '@/controllers/product/ShippingTemplateCreationController';
-import { adminAuthMiddleware } from "@/middleware/admin-auth";
+import { adminRuntimeAuthMiddleware } from "@/middleware/admin-runtime-auth";
 import { upgradeStaffNotification } from "@/services/notification/StaffNotificationGateway";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
@@ -75,7 +75,7 @@ export const adminapiRoutes = new Hono<{
   Variables: AppVariables;
 }>();
 
-const adminAuth = adminAuthMiddleware();
+const adminAuth = adminRuntimeAuthMiddleware();
 
 // ─── 登录 (无 auth) ─────────────────────────────────────────
 adminapiRoutes.post("/login", AdminController.adminLogin);

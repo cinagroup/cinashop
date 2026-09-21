@@ -43,6 +43,19 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    'test/runtime-business-login.test.ts',
+    'test/bargain-pickup-postgres.test.ts',
+    'test/bargain-pickup-admission.test.ts',
+    'test/checkout-coupon-management.test.ts',
+    'test/admin-runtime-login.test.ts',
+    'test/runtime-admin-boundary.test.ts',
+    // These HTTP fixtures now install the real checkout NOLOGIN capability.
+    'test/admin-refund-operation-http.test.ts',
+    'test/admin-refund-creation-http.test.ts',
+    'test/admin-refund-creation-quote.test.ts',
+    'test/admin-refund-retirement.test.ts',
+    'test/admin-runtime-auth.test.ts',
+    'test/release-protocol-schema.test.ts',
     'test/shared-shop-runtime-permissions.test.ts',
     'test/release-shared-indexes.test.ts',
     'test/runtime-role-provisioning.test.ts',

@@ -17,7 +17,10 @@ import { ADMIN_REFUND_CREATION_SQL } from '../../src/migrations/adminRefundCreat
 const wiring = vi.hoisted(() => ({ container: undefined as Container | undefined }));
 vi.mock('../../src/lib/di', async importOriginal => {
   const original = await importOriginal<typeof import('../../src/lib/di')>();
-  return { ...original, createContainer: () => {
+  return { ...original, createAdminDatabaseSession: () => {
+    if (!wiring.container) throw Error('Missing owned acceptance connection');
+    return { container: wiring.container, close: async () => {} };
+  }, createContainer: () => {
     if (!wiring.container) throw Error('Owned browser SQL fixture unavailable');
     return wiring.container;
   } };

@@ -40,7 +40,7 @@ async function inspect(tx: Query) {
   return tables.map(name => {
     const rows = catalog.filter(row => row.name === name && row.kind === 'table');
     const row = rows[0], safe = rows.length === 1 && row.present === true && row.owned === true && row.safe === true;
-    return { name, state: safe && row.fingerprint === OFFLINE_CATALOG_VERSIONS.fresh[name] ? 'ready'
+    return { name, state: safe && [OFFLINE_CATALOG_VERSIONS.fresh[name], OFFLINE_CATALOG_VERSIONS.v1[name]].includes(row.fingerprint as string) ? 'ready'
       : safe && row.fingerprint === RELEASE_PRE_INDEX_HASHES[name] ? 'missing-reviewed-indexes' : 'drift' };
   });
 }
@@ -71,7 +71,12 @@ export async function inspectReleaseSharedIndexes(db: Root) {
 }
 export async function installReleaseSharedIndexes(db: Root) {
   if (!Object.hasOwn(db,'$client') || !db.$client) throw Error('Shared index installation requires root');
-  return db.transaction(async tx => {
+  return db.transaction(installReleaseSharedIndexesInTransaction, { isolationLevel: 'read committed', accessMode: 'read write' });
+}
+/** Compose only inside an explicit maintenance transaction. The same catalog,
+ * lock, budget and fingerprint checks apply; no autocommit repair. */
+export async function installReleaseSharedIndexesInTransaction(tx: Query) {
+    if (Object.hasOwn(tx,'$client')) throw Error('Shared index composition requires a transaction');
     await setup(tx);
     await tx.execute(sql`LOCK TABLE public.system_config,public."user",public.user_bill,public.user_money IN ACCESS EXCLUSIVE MODE NOWAIT`);
     const initial = await inspect(tx);
@@ -89,5 +94,4 @@ export async function installReleaseSharedIndexes(db: Root) {
     if ((await inspect(tx)).some(row => row.state !== 'ready') || JSON.stringify(before) !== JSON.stringify(after))
       throw Error('Shared index postflight mismatch');
     return { ready: true, created, before, after };
-  }, { isolationLevel: 'read committed', accessMode: 'read write' });
 }

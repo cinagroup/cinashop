@@ -218,6 +218,20 @@ export function createContainer(env: Env): Container {
   return createContainerFromDb(createDb(env));
 }
 
+/** Open only after the complete Admin authentication/route-permission check.
+ * Never reuse the application binding or fall back when isolation is missing. */
+export function createAdminDatabaseSession(env: Env) {
+  const binding = env.HYPERDRIVE_ADMIN;
+  if (!binding?.connectionString?.trim() || binding === env.HYPERDRIVE
+    || binding.connectionString === env.HYPERDRIVE?.connectionString) {
+    throw new Error("Independent Admin database binding is required");
+  }
+  const db = createDbFromConnectionString(binding.connectionString, 2, {
+    searchPath: "public,pg_temp", applicationName: "cinashop_admin",
+  });
+  return { container: createContainerFromDb(db), close: () => db.$client.end({ timeout: 5 }) };
+}
+
 /**
  * 安全执行事务 (对应 PHP BaseServices::transaction)。
  * 出错自动回滚。

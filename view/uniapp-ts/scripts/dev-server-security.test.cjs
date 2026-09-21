@@ -9,6 +9,35 @@ const test = require("node:test");
 const WebSocket = require("ws");
 const https = require("node:https");
 
+// Vite 5 can finish an asynchronous watcher registration after server.close().
+// Track the REAL fs.watch handles created in this isolated node:test process;
+// do not replace filesystem reads, watch callbacks or security assertions.
+// Once teardown starts, a late registration is closed immediately as well.
+const fs = require("node:fs");
+const originalWatch = fs.watch;
+const ownedWatchers = new Set();
+let closingWatchers = false;
+fs.watch = function (...args) {
+  const watcher = Reflect.apply(originalWatch, this, args);
+  if (closingWatchers) watcher.close();
+  else {
+    ownedWatchers.add(watcher);
+    watcher.once("close", () => ownedWatchers.delete(watcher));
+  }
+  return watcher;
+};
+test.after(async () => {
+  closingWatchers = true;
+  await Promise.all([...ownedWatchers].map((watcher) => {
+    const closed = once(watcher, "close");
+    watcher.close();
+    return closed;
+  }));
+  assert.equal(ownedWatchers.size, 0);
+  // Retain the late-registration guard until this isolated process drains.
+  process.once("beforeExit", () => { fs.watch = originalWatch; });
+});
+
 // DCloud's CLI otherwise POSTs device/app/build metadata during configResolved.
 const previousCI = process.env.CI;
 process.env.CI = "1";
