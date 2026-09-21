@@ -43,6 +43,14 @@ for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || u
 }
 if (schemaMaintenance) {
   const allowed = new Set([
+    'test/shared-shop-runtime-permissions.test.ts',
+    'test/release-shared-indexes.test.ts',
+    'test/runtime-role-provisioning.test.ts',
+    // Current checkout fixtures create a separate NOLOGIN pricing owner.
+    'test/bargain-order-concurrency-postgres.test.ts',
+    'test/seckill-schedule-postgres.test.ts',
+    'test/refund-line-compensation.test.ts',
+    'test/bargain-admin-retirement.test.ts',
     'test/orphan-test-order-snapshot.test.ts',
     'test/orphan-test-order-cleanup.test.ts',
     'audit:unit-shard-1', 'audit:unit-shard-2',

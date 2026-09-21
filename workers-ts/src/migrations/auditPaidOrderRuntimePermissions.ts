@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { auditCheckoutPricingLockRuntime, inspectCheckoutPricingLock } from './checkoutPricingLock';
+import { reviewedOfflinePricingOid, validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
 
 type Root = Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>;
 
@@ -16,17 +17,19 @@ type Root = Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>;
 export async function auditPaidOrderRuntimePermissions(
   db: Root,
   schema = 'public',
+  scope: PricingRuntimeScope = 'isolated',
 ) {
-  return auditRuntimePermissions(db, schema, false);
+  return auditRuntimePermissions(db, schema, false, scope);
 }
 
 /** Combined paid-order fence and checkout pricing permission envelope. Still
  * not a complete application GRANT contract, deployment or catalog installer. */
-export async function auditCheckoutRuntimePermissions(db: Root, schema = 'public') {
-  return auditRuntimePermissions(db, schema, true);
+export async function auditCheckoutRuntimePermissions(db: Root, schema = 'public', scope: PricingRuntimeScope = 'isolated') {
+  return auditRuntimePermissions(db, schema, true, scope);
 }
 
-async function auditRuntimePermissions(db: Root, schema: string, requirePricing: boolean) {
+async function auditRuntimePermissions(db: Root, schema: string, requirePricing: boolean, scope: PricingRuntimeScope) {
+  validatePricingRuntimeScope(scope);
   if (!db.$client) throw new Error('Runtime permission audit requires a root database');
   if (!/^[a-z_][a-z0-9_]{0,62}$/.test(schema) || schema.startsWith('pg_') || schema === 'information_schema') {
     throw new Error('Invalid runtime permission audit schema');
@@ -38,8 +41,9 @@ async function auditRuntimePermissions(db: Root, schema: string, requirePricing:
       pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
     // All observations share this read-only REPEATABLE READ snapshot. Never
     // execute the definer function in a permission audit or trust just its name.
-    const pricing = await auditCheckoutPricingLockRuntime(tx, schema);
+    const pricing = await auditCheckoutPricingLockRuntime(tx, schema, scope);
     const reviewedPricingOid = pricing.ready ? (await inspectCheckoutPricingLock(tx, schema)).functionOid : null;
+    const reviewedOfflineOid = scope === 'shared-shop' && pricing.ready ? await reviewedOfflinePricingOid(tx, schema) : null;
     const [checks] = await tx.select({
       connectionIdentityVisible: sql<boolean>`connection_identity_visible`,
       objectsPresent: sql<boolean>`objects_present`,
@@ -95,6 +99,7 @@ async function auditRuntimePermissions(db: Root, schema: string, requirePricing:
         NOT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
           WHERE p.prosecdef AND NOT pg_catalog.starts_with(n.nspname::text,'pg_') AND n.nspname<>'information_schema'
             AND p.oid::text IS DISTINCT FROM ${reviewedPricingOid}
+            AND p.oid::text IS DISTINCT FROM ${reviewedOfflineOid}
             AND EXISTS (SELECT 1 FROM reachable r WHERE pg_catalog.has_function_privilege(r.oid,p.oid,'EXECUTE'))) AS no_definer_routine,
         COALESCE(pg_catalog.has_schema_privilege(current_user,schema_oid,'USAGE')
           AND pg_catalog.has_table_privilege(current_user,order_oid,'SELECT')

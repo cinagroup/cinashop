@@ -3,6 +3,8 @@ import type { DbClient } from '../lib/di';
 import { OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS, OFFLINE_FUNCTIONS, OFFLINE_TABLES, OFFLINE_DISPATCH_COLUMNS } from './offlineOrderCatalog';
 import { OFFLINE_RUNTIME_READ_TABLES, OFFLINE_RUNTIME_INSERT_TABLES, OFFLINE_RUNTIME_UPDATE_TABLES,
   OFFLINE_RUNTIME_UPDATE_COLUMNS, OFFLINE_RUNTIME_SEQUENCES } from './offlineOrderRuntimeContract';
+import { auditCheckoutPricingLockRuntime, inspectCheckoutPricingLock } from './checkoutPricingLock';
+import { validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
 
 const literals = (names: readonly string[]) => names.map(n => "'" + n + "'").join(',');
 const values = (names: readonly string[]) => names.map(n => '(' + "'" + n + "'" + ')').join(',');
@@ -19,7 +21,9 @@ const columns = Object.entries(OFFLINE_RUNTIME_UPDATE_COLUMNS).flatMap(([table, 
  * It does not certify all app features, data history or later admin changes. */
 export async function auditOfflineOrderRuntimePermissions(
   db: Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>,
+  scope: PricingRuntimeScope = 'isolated',
 ) {
+  validatePricingRuntimeScope(scope);
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Offline runtime audit requires a root database');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT
@@ -35,6 +39,13 @@ export async function auditOfflineOrderRuntimePermissions(
     const catalogVerified = rows.length === 27 && new Set(rows.map(r => r.name)).size === 27
       && rows.every(r => typeof r.name === 'string' && Object.hasOwn(expected,r.name)
         && r.present === true && r.safe === true && r.fingerprint === expected[r.name]);
+    const offlineOid = catalogVerified ? rows.find(row => row.kind === 'function' && row.name === 'ooa_lock_pricing')?.oid : null;
+    // Explicit shared scope additionally verifies checkout's exact definition,
+    // restricted NOLOGIN owner, ACLs AND this connection's pricing authority.
+    const pricing = scope === 'shared-shop' ? await auditCheckoutPricingLockRuntime(tx, 'public', scope) : null;
+    const checkoutOid = pricing?.ready ? (await inspectCheckoutPricingLock(tx)).functionOid : null;
+    const reviewedOids = [offlineOid, checkoutOid].filter((oid): oid is string => typeof oid === 'string' && /^\d+$/.test(oid));
+    const reviewedDefiners = reviewedOids.length ? `p.oid::text IN (${literals(reviewedOids)})` : 'false';
     // Catalog 'owned' is intentionally not used: the application MUST NOT own
     // these objects. Reachable ownership is checked independently below.
     const [raw] = await tx.execute(sql.raw(`WITH
@@ -95,7 +106,7 @@ export async function auditOfflineOrderRuntimePermissions(
           AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members m JOIN reachable r ON r.oid=m.member WHERE m.admin_option) AS "noGrantDelegation",
         NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
           WHERE p.prosecdef AND n.nspname!~'^pg_' AND n.nspname<>'information_schema'
-            AND NOT(p.pronamespace=(SELECT oid FROM target_schema) AND p.proname='ooa_lock_pricing' AND p.pronargs=0)
+            AND NOT(${reviewedDefiners})
             AND EXISTS(SELECT 1 FROM reachable r WHERE pg_catalog.has_function_privilege(r.oid,p.oid,'EXECUTE'))) AS "noUnreviewedDefinerRoutine",
         EXISTS(SELECT 1 FROM target_schema WHERE pg_catalog.has_schema_privilege(current_user,oid,'USAGE'))
           AND NOT EXISTS(SELECT 1 FROM required r LEFT JOIN objects o ON o.name=r.table_name
@@ -107,7 +118,9 @@ export async function auditOfflineOrderRuntimePermissions(
         EXISTS(SELECT 1 FROM functions WHERE proname='ooa_lock_pricing' AND pg_catalog.has_function_privilege(current_user,oid,'EXECUTE')) AS "requiredFunctionExecute"
     `));
     if (!raw) throw Error('Offline runtime audit returned no result');
-    const checks = { protectedCatalogVerified: catalogVerified, ...Object.fromEntries(Object.entries(raw).map(([key,value]) => [key,value === true])) };
+    const checks = { protectedCatalogVerified: catalogVerified,
+      ...(scope === 'shared-shop' ? { sharedCheckoutPricingReady: pricing?.ready === true } : {}),
+      ...Object.fromEntries(Object.entries(raw).map(([key,value]) => [key,value === true])) };
     const failures = Object.entries(checks).filter(([,value]) => !value).map(([key]) => key);
     return { scope: 'offline-cashier-collection-v1' as const, ready: failures.length === 0, readOnly: true as const,
       completeApplicationVerified: false as const, businessDataVerified: false as const, checks, failures };

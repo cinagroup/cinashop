@@ -6,6 +6,8 @@ import { cancelStoreOrder, StoreOrderCreateService, type CreateOrderParams } fro
 import { assertSeckillSchedule, loadSeckillSchedule } from "../src/services/activity/SeckillScheduleService";
 import * as schedulePolicy from "../src/services/activity/SeckillScheduleService";
 import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
+import { withTx } from "../src/lib/di";
+import { reserveRefundQuantities } from "../src/services/order/RefundQuantityReservation";
 import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, systemStore,
   storeCart, storeOrder, storeOrderCartInfo, storeOrderStatus, printDocument, storeOrderRefund, storeOrderRefundPayment,
   storeOrderInvoice, userBrokerage, user, userBill } from "../src/models/schema";
@@ -57,9 +59,15 @@ describe("seckill schedule admission on disposable SQL", () => {
     StoreOrderCreateService.createWithRuntime(f.container, { CONFIG_KV: f.env.CONFIG_KV, nextOrderId }, params);
   const prepareRefund = async () => {
     await create();
-    const [order] = await f.db.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
-    await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_refund",
-      applyType: 1, refundType: 0, refundPrice: "12.50", refundNum: 2, cartInfo: JSON.stringify({ cartIds: [{ cartId: 1, cartNum: 2 }] }) });
+    // Payment remains synthetic. Preserve the real current-order reservation
+    // contract so the tests reach inventory restoration and lock ordering.
+    await withTx(f.container, async tx => {
+      const [order] = await tx.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
+      const cartInfo = await reserveRefundQuantities(tx, order, [{ cartId: 1, cartNum: 2 }]);
+      await tx.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_refund",
+        storeId: order.storeId, supplierId: order.supplierId,
+        applyType: 1, refundType: 0, refundPrice: "12.50", refundNum: 2, cartInfo });
+    });
   };
   const refundSnapshot = async () => ({ ...await snapshot(), refunds: await f.db.select().from(storeOrderRefund),
     invoices: await f.db.select().from(storeOrderInvoice), brokerage: await f.db.select().from(userBrokerage) });

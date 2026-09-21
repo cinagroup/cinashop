@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { eq, sql } from "drizzle-orm";
 import { createBargainSelectionFixture } from "./helpers/bargainSelectionFixture";
 import { outcome, waitForFinanceBlock, withFinancePeers, type FinancePeer } from "./helpers/financePeers";
-import { createContainerFromDb } from "../src/lib/di";
+import { createContainerFromDb, withTx } from "../src/lib/di";
+import { reserveRefundQuantities } from "../src/services/order/RefundQuantityReservation";
 import { StoreOrderCreateService, cancelStoreOrder, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { ActivityJoinService } from "../src/services/activity/ActivityJoinService";
@@ -41,10 +42,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain order id
   const prepareSecond = async (paid: boolean) => {
     await create();
     if (paid) {
-      const [order] = await f.db.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
-      await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_bargain_refund",
-        applyType: 1, refundType: 0, refundPrice: "2.00", refundNum: 1,
-        cartInfo: JSON.stringify({ cartIds: [{ cartId: 10, cartNum: 1 }] }) });
+      // Synthetic payment, but a current checkout needs the actual durable
+      // quantity claim and matching fulfillment identity before completion.
+      await withTx(f.container, async tx => {
+        const [order] = await tx.update(storeOrder).set({ paid: 1, payType: "yue" }).returning();
+        const cartInfo = await reserveRefundQuantities(tx, order, [{ cartId: 10, cartNum: 1 }]);
+        await tx.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: "isolated_bargain_refund",
+          storeId: order.storeId, supplierId: order.supplierId,
+          applyType: 1, refundType: 0, refundPrice: "2.00", refundNum: 1, cartInfo });
+      });
     }
     await f.db.insert(storeBargainUser).values({ id: 90, bargainId: 40, uid: 11,
       bargainPrice: "10.00", bargainPriceMin: "2.00", price: "8.00", status: 3 });

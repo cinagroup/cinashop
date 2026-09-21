@@ -7,6 +7,7 @@ import { INVOICE_EVIDENCE_STATE_SQL } from './invoiceEvidenceCatalog';
 import { REFUND_SPLIT_STATE_SQL } from './refundOrderSplitCatalog';
 import { OFFLINE_STATE_SQL, OFFLINE_CATALOG_SQL, OFFLINE_CATALOG_VERSIONS } from './offlineOrderCatalog';
 import { inspectTestReleaseSchemaUpgrade } from './runTestReleaseSchemaUpgrade';
+import { RELEASE_PRE_INDEX_HASHES } from './releaseSharedIndexes';
 
 /** Fixed read-only release inventory. No SQL/schema/role input, installation,
  * grants, business mutation or inference that catalog presence means readiness.
@@ -45,7 +46,11 @@ export async function auditReleaseProtocols(db: Pick<DbClient, 'transaction' | '
       return { name, present: matches.length === 1 && matches[0].present === true,
         owned: matches.length === 1 && matches[0].owned === true,
         safe: matches.length === 1 && matches[0].safe === true,
-        fingerprintMatches: matches.length === 1 && matches[0].fingerprint === expected };
+        fingerprintMatches: matches.length === 1 && matches[0].fingerprint === expected,
+        // Independent canonical minus-19-index baseline, never a target-learned
+        // approval. Safe/owned remain separate and must also pass installation.
+        reviewedPreIndexMatches: Object.hasOwn(RELEASE_PRE_INDEX_HASHES, name)
+          && matches.length === 1 && matches[0].fingerprint === RELEASE_PRE_INDEX_HASHES[name] };
     });
     // Fixed, bounded index inventory for dependency drift triage only. Do not
     // expose expression/predicate text: catalog defaults may contain literals.

@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
-import { createContainerFromDb, type Container } from '../src/lib/di';
+import { createContainerFromDb, withTx, type Container } from '../src/lib/di';
+import { reserveRefundQuantities } from '../src/services/order/RefundQuantityReservation';
 import { adminActivityDel, adminBargainList } from '../src/controllers/api/v1/AdminCrudController';
 import { ActivityJoinService } from '../src/services/activity/ActivityJoinService';
 import { retireBargain } from '../src/services/activity/BargainRetirementService';
@@ -78,10 +79,13 @@ describe('admin bargain retirement preserves transaction history', () => {
   it.each(['cancel', 'refund'])('retains exact activity/SKU compensation after retirement and %s', async action => {
     await create();
     if (action === 'refund') {
-      const [order] = await f.db.update(storeOrder).set({ paid: 1, payType: 'yue' }).returning();
-      await f.db.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: 'isolated_retire_refund',
-        applyType: 1, refundType: 0, refundPrice: '2.00', refundNum: 1,
-        cartInfo: JSON.stringify({ cartIds: [{ cartId: 10, cartNum: 1 }] }) });
+      await withTx(f.container, async tx => {
+        const [order] = await tx.update(storeOrder).set({ paid: 1, payType: 'yue' }).returning();
+        const cartInfo = await reserveRefundQuantities(tx, order, [{ cartId: 10, cartNum: 1 }]);
+        await tx.insert(storeOrderRefund).values({ id: 1, storeOrderId: order.id, uid: 11, orderId: 'isolated_retire_refund',
+          storeId: order.storeId, supplierId: order.supplierId,
+          applyType: 1, refundType: 0, refundPrice: '2.00', refundNum: 1, cartInfo });
+      });
     }
     const before = await snapshot();
     expect(await retire()).toMatchObject({ status: 200 });

@@ -3,6 +3,7 @@ import type { DbClient } from '../lib/di';
 import { PRICING_LOCK_FUNCTION, PRICING_LOCK_KEY, PRICING_OWNER_SETTING,
   pricingCatalogQuery, pricingCatalogReady, pricingIdentifier } from './checkoutPricingLockCatalog';
 import { checkoutPricingLockInstallationSql } from './checkoutPricingLockInstallation';
+import { reviewedOfflinePricingOid, validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
 
 const installationErrors = new Set([
   'Pricing installation requires an explicit safe NOLOGIN owner setting',
@@ -71,9 +72,11 @@ export async function installCheckoutPricingLock(db: Root, ownerRole: string | u
 /** Read-only inspection of real connection identity and all membership paths.
  * Deliberately conservative: even NOINHERIT / SET-false ancestry is included.
  * This is the two-configuration-table envelope, not a complete app audit. */
-export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'public') {
+export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'public', scope: PricingRuntimeScope = 'isolated') {
+  validatePricingRuntimeScope(scope);
   pricingIdentifier(schema);
   const state=await inspectCheckoutPricingLock(tx,schema);
+  const offlineOid = scope === 'shared-shop' ? await reviewedOfflinePricingOid(tx, schema) : null;
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()
@@ -96,6 +99,7 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
     NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
       WHERE p.prosecdef AND n.nspname !~ '^pg_' AND n.nspname<>'information_schema'
         AND p.oid::text IS DISTINCT FROM ${state.functionOid}
+        AND p.oid::text IS DISTINCT FROM ${offlineOid}
         AND EXISTS(SELECT 1 FROM authority a WHERE pg_catalog.has_function_privilege(a.oid,p.oid,'EXECUTE'))) AS "noUnreviewedDefinerRoutine",
     (SELECT count(*)=2 AND bool_and(pg_catalog.has_table_privilege(current_user,oid,'SELECT')) FROM relations)
       AND EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE oid::text=${state.functionOid}

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { auditReleaseProtocols } from '../src/migrations/auditReleaseProtocols';
 import { OFFLINE_CATALOG_VERSIONS } from '../src/migrations/offlineOrderCatalog';
+import { RELEASE_PRE_INDEX_HASHES } from '../src/migrations/releaseSharedIndexes';
 
 const mocks = vi.hoisted(() => ({ operation: vi.fn(), creation: vi.fn(), pricing: vi.fn(), predecessor: vi.fn() }));
 vi.mock('../src/migrations/runAdminRefundOperation', () => ({ inspectAdminRefundOperation: mocks.operation }));
@@ -49,6 +50,7 @@ describe('fixed release protocol read-only inventory', () => {
     expect(result.ready).toBe(false);
     expect(result.protocols.offlinePredecessor).toHaveLength(10);
     expect(result.protocols.offlinePredecessor.every(row => row.fingerprintMatches)).toBe(true);
+    expect(result.protocols.offlinePredecessor.every(row => !row.reviewedPreIndexMatches)).toBe(true);
     expect(result.predecessor).not.toHaveProperty('catalog');
     expect(mocks.predecessor).toHaveBeenCalledWith(f.db);
   });
@@ -86,6 +88,16 @@ describe('fixed release protocol read-only inventory', () => {
     const f = fixture(); f.rows[6] = Array.from({ length: 101 }, () => ({}));
     await expect(auditReleaseProtocols(f.db)).rejects.toThrow('budget exceeded');
     expect(mocks.predecessor).not.toHaveBeenCalled();
+  });
+  it('identifies only the independently reviewed pre-index baseline without approving installation', async () => {
+    const f = fixture();
+    f.rows[5] = Object.entries(RELEASE_PRE_INDEX_HASHES).map(([name, fingerprint]) =>
+      ({ name, fingerprint, present: true, owned: true, safe: true }));
+    const result = await auditReleaseProtocols(f.db);
+    expect(result.protocols.offlinePredecessor.filter(row => row.reviewedPreIndexMatches).map(row => row.name).sort())
+      .toEqual(Object.keys(RELEASE_PRE_INDEX_HASHES).sort());
+    expect(result.protocols.offlinePredecessor.every(row => !row.fingerprintMatches)).toBe(true);
+    expect(result.ready).toBe(false);
   });
   it('propagates a failed separate predecessor snapshot instead of returning a partial success', async () => {
     mocks.predecessor.mockRejectedValue(Error('predecessor unavailable'));
