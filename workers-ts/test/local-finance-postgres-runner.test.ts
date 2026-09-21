@@ -25,7 +25,7 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(result.stderr).not.toContain('Schema maintenance accepts only'); expect(result.stderr).toContain('ENOENT');
   });
   it.each([
-    { args: ['audit:admin-refund-browser'] }, { args: ['--schema-maintenance', 'audit:customer-order-browser'] },
+    { args: ['--schema-maintenance', 'audit:admin-refund-browser'] }, { args: ['--schema-maintenance', 'audit:customer-order-browser'] },
     { args: ['--schema-maintenance', 'audit:admin-order-browser'] },
   ])('rejects browser output inside the repository before opening a database: $args', ({ args }) => {
     const command = args[0] === '--schema-maintenance'
@@ -58,9 +58,10 @@ describe('local PostgreSQL runner command boundary', () => {
     { args: ['unused-bin','audit:orm'], error: 'Only explicit unit test paths are accepted' },
     { args: ['--schema-maintenance','unused-bin','audit:orm','test/admin-refund-operation-migration.test.ts'], error: 'Only explicit unit test paths are accepted' },
     { args: ['--schema-maintenance','unused-bin','audit:production'], error: 'Only explicit unit test paths are accepted' },
-    { args: ['--schema-maintenance','unused-bin','audit:admin-refund-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['unused-bin','audit:admin-refund-browser'], error: 'Only explicit unit test paths are accepted' },
     { args: ['unused-bin','audit:admin-refund-browser','test/admin-refund-operation-http.test.ts'], error: 'Only explicit unit test paths are accepted' },
-    { args: ['unused-bin','audit:admin-refund-browser'], error: 'Browser acceptance requires an existing absolute TEST_BROWSER_PACKAGE_JSON' },
+    { args: ['--schema-maintenance','unused-bin','audit:admin-refund-browser'], error: 'Browser acceptance requires an existing absolute TEST_BROWSER_PACKAGE_JSON' },
+    { args: ['--schema-maintenance','unused-bin','audit:admin-refund-browser','test/admin-refund-operation-http.test.ts'], error: 'Only explicit unit test paths are accepted' },
     { args: ['unused-bin','audit:customer-order-browser'], error: 'Only explicit unit test paths are accepted' },
     { args: ['--schema-maintenance','unused-bin','audit:customer-order-browser','test/customer-order-deletion.test.ts'], error: 'Only explicit unit test paths are accepted' },
     { args: ['--schema-maintenance','unused-bin','audit:customer-order-browser'], error: 'Browser acceptance requires an existing absolute TEST_BROWSER_PACKAGE_JSON' },

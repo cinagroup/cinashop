@@ -24,7 +24,9 @@ const unitShard = schemaMaintenance && tests.length === 1 && /^audit:unit-shard-
 // Interactive in-app Browser acceptance. Does not load an external browser,
 // accept a production URL, or launch a Playwright driver.
 const offlineAdminBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-offline-browser';
-const adminBrowserAcceptance = !schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-refund-browser';
+// Refund fixtures now install the reviewed NOLOGIN checkout pricing owner too.
+// Require explicit maintenance of a newly owned local cluster, never elevate an existing host.
+const adminBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-refund-browser';
 const customerBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-order-browser';
 const adminOrderBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-order-browser';
 const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance;
@@ -125,6 +127,7 @@ if (schemaMaintenance) {
     'test/checkout-coupon-relations-authority.test.ts',
     'test/customer-order-deletion.test.ts',
     'audit:customer-order-browser',
+    'audit:admin-refund-browser',
     'audit:admin-order-browser',
     'audit:admin-offline-browser',
   ]);
