@@ -5,10 +5,12 @@ import * as models from "../src/models/schema";
 import { foreignKeyIndexInventory } from "../scripts/foreign-key-index-audit";
 
 describe("complete offline FK candidate inventory", () => {
-  it("includes all 45 model foreign keys and does not discard partial indexes", () => {
+  it("includes all 63 model foreign keys and does not discard partial indexes", () => {
     const result = foreignKeyIndexInventory(models);
-    expect(result.count).toBe(45);
+    expect(result.count).toBe(63);
     expect(result.withoutLeadingCandidate).toEqual([]);
+    expect(result.entries.find(entry => entry.name === "offline_order_query_evidence_selection_key_fkey")?.leadingCandidates)
+      .toContainEqual(expect.objectContaining({ name: "ooqe_selection_idx", columns: ["selection_key"], predicate: null, fullReferencePrefix: true }));
     expect(result.entries.find(entry => entry.name === "wcao_client_fk")?.leadingCandidates)
       .toContainEqual(expect.objectContaining({ name: "wcao_client_ref", columns: ["corp_id", "client_id"], predicate: null, fullReferencePrefix: true }));
     expect(result.partialOnly).toEqual([

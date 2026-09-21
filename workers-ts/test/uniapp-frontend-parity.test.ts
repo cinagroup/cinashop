@@ -32,15 +32,15 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(parity.counting.legacy.pagesTreeVueFiles).toBe(250);
     expect(parity.counting.legacy.logicalManifestRouteRecords).toBe(151);
     expect(parity.counting.legacy.platformActiveRouteRecords).toEqual({ H5: 151, "MP-WEIXIN": 150, "APP-PLUS": 150 });
-    expect(parity.counting.target.pagesTreeVueFiles).toBe(61);
-    expect(parity.counting.target.logicalManifestRouteRecords).toBe(61);
-    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 61, "MP-WEIXIN": 61, "APP-PLUS": 61 });
+    expect(parity.counting.target.pagesTreeVueFiles).toBe(63);
+    expect(parity.counting.target.logicalManifestRouteRecords).toBe(63);
+    expect(parity.counting.target.platformActiveRouteRecords).toEqual({ H5: 63, "MP-WEIXIN": 63, "APP-PLUS": 63 });
     expect(parity.counting.routeLedger).toMatchObject({
-      directRegistered: 4,
+      directRegistered: 6,
       legacyCompatibilityRules: 96,
       candidateCoveredRules: 60,
       partialReplacementRules: 36,
-      unmappedOrCrossSurface: 51,
+      unmappedOrCrossSurface: 49,
       accountedLegacyRoutes: 151,
     });
   });
@@ -70,7 +70,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     ];
     expect(accounted).toHaveLength(151);
     expect(new Set(accounted).size).toBe(151);
-    expect(gapRoutes).toHaveLength(51);
+    expect(gapRoutes).toHaveLength(49);
     expect(parity.gaps.map((gap) => gap.id)).toEqual([
       "FE-003B", "FE-003C", "FE-003D", "FE-003E", "FE-003F", "FE-003G", "FE-003H",
     ]);
@@ -88,6 +88,15 @@ describe("UniApp manifest and legacy-navigation parity", () => {
       .toBe("/pages/goods/search?keyword=tea");
     expect(resolveRegisteredPageRoute("/pages/activity/goods_seckill/index"))
       .toBe("/pages/activity/index");
+  });
+
+  it("resolves both directly registered offline payment deep links without losing query state", () => {
+    for (const path of ["/pages/annex/offline_pay/index", "/pages/annex/offline_result/index"]) {
+      expect(resolveRegisteredPageRoute(path, "order_id=xx123&from=share")).toBe(`${path}?order_id=xx123&from=share`);
+      expect(parity.directRegisteredLegacyRoutes).toContain(path);
+      expect(parity.gaps.flatMap(gap => gap.legacyRoutes)).not.toContain(path);
+    }
+    expect(parity.checklist.find(item => item.id === "FE-003F")?.done).toBe(false);
   });
 
   it("routes all server-managed homepage links through the shared resolver", () => {

@@ -20,6 +20,7 @@ CREATE UNIQUE INDEX ooqe_evidence_uq ON public.offline_order_query_evidence(evid
 CREATE UNIQUE INDEX ooqe_replay_uq ON public.offline_order_query_evidence(replay_key);
 CREATE INDEX ooqe_case_idx ON public.offline_order_query_evidence(case_id,created_at,id);
 CREATE INDEX ooqe_transaction_idx ON public.offline_order_query_evidence(provider,transaction_id);
+CREATE INDEX ooqe_selection_idx ON public.offline_order_query_evidence(selection_key);
 CREATE INDEX prc_provider_transaction_lookup ON public.payment_reconciliation_case(provider,provider_transaction_id)
   WHERE provider_transaction_id<>'';
 REVOKE ALL ON public.offline_order_query_evidence FROM PUBLIC;

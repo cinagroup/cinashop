@@ -5,7 +5,7 @@ import { auditPaidOrderRuntimePermissions } from '@/migrations/auditPaidOrderRun
 import { auditReleasePrerequisiteCatalog } from '@/migrations/auditReleasePrerequisiteCatalog';
 import { auditWorkParentIdentityPermissions } from '@/migrations/auditWorkParentIdentityPermissions';
 import { auditReleaseProtocols } from '@/migrations/auditReleaseProtocols';
-import { exportOrphanTestOrderSnapshot } from '@/migrations/orphanTestOrderSnapshot';
+import { exportOrphanTestOrderSnapshot, inspectOrphanTestCleanup } from '@/migrations/orphanTestOrderSnapshot';
 
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 
@@ -30,7 +30,7 @@ export default {
       return Response.json({ error: 'forbidden' }, { status: 403, headers });
     }
     const url = new URL(request.url);
-    if (!['/audit', '/catalog', '/work-parents', '/release-protocols', '/orphan-test-backup'].includes(url.pathname) || url.search) {
+    if (!['/audit', '/catalog', '/work-parents', '/release-protocols', '/orphan-test-backup', '/orphan-cleanup-preflight'].includes(url.pathname) || url.search) {
       return Response.json({ error: 'not found' }, { status: 404, headers });
     }
     if (request.method !== 'GET') {
@@ -41,7 +41,9 @@ export default {
       db = createDbFromConnectionString(env.HYPERDRIVE.connectionString, 1, {
         searchPath: 'public,pg_temp', applicationName: 'cinashop_paid_runtime_audit',
       });
-      const result = url.pathname === '/orphan-test-backup'
+      const result = url.pathname === '/orphan-cleanup-preflight'
+        ? await inspectOrphanTestCleanup(db)
+        : url.pathname === '/orphan-test-backup'
         ? await exportOrphanTestOrderSnapshot(db)
         : url.pathname === '/release-protocols'
         ? await auditReleaseProtocols(db)

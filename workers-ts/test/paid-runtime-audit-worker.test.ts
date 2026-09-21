@@ -2,13 +2,13 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import worker from './integration/PaidRuntimeAuditWorker';
 import type { PaidRuntimeAuditEnv } from './integration/paid-runtime-audit-bindings';
 
-const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), catalog: vi.fn(), work: vi.fn(), protocols: vi.fn(), backup: vi.fn(), end: vi.fn() }));
+const mocks = vi.hoisted(() => ({ create: vi.fn(), audit: vi.fn(), catalog: vi.fn(), work: vi.fn(), protocols: vi.fn(), backup: vi.fn(), cleanupPreflight: vi.fn(), end: vi.fn() }));
 vi.mock('@/lib/di', () => ({ createDbFromConnectionString: mocks.create }));
 vi.mock('@/migrations/auditPaidOrderRuntimePermissions', () => ({ auditPaidOrderRuntimePermissions: mocks.audit }));
 vi.mock('@/migrations/auditReleasePrerequisiteCatalog', () => ({ auditReleasePrerequisiteCatalog: mocks.catalog }));
 vi.mock('@/migrations/auditWorkParentIdentityPermissions', () => ({ auditWorkParentIdentityPermissions: mocks.work }));
 vi.mock('@/migrations/auditReleaseProtocols', () => ({ auditReleaseProtocols: mocks.protocols }));
-vi.mock('@/migrations/orphanTestOrderSnapshot', () => ({ exportOrphanTestOrderSnapshot: mocks.backup }));
+vi.mock('@/migrations/orphanTestOrderSnapshot', () => ({ exportOrphanTestOrderSnapshot: mocks.backup, inspectOrphanTestCleanup:mocks.cleanupPreflight }));
 
 const token = 'a'.repeat(64); // synthetic token, not a deployed credential
 let env: PaidRuntimeAuditEnv;
@@ -37,6 +37,14 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('temporary production runtime permission audit', () => {
+  it('keeps cleanup dependency inspection read-only and token-gated', async()=>{
+    expect((await worker.fetch(request('/orphan-cleanup-preflight','GET',''),env)).status).toBe(403);
+    expect((await worker.fetch(request('/orphan-cleanup-preflight','POST'),env)).status).toBe(405);
+    expect(mocks.create).not.toHaveBeenCalled();
+    mocks.cleanupPreflight.mockResolvedValue({scope:'orphan-test-cleanup-preflight',ready:false});
+    expect((await worker.fetch(request('/orphan-cleanup-preflight'),env)).status).toBe(200);
+    expect(mocks.cleanupPreflight).toHaveBeenCalledOnce(); expect(mocks.end).toHaveBeenCalledOnce();
+  });
   it('protects private backup with expiring authentication, fixed GET route and no query input', async () => {
     expect((await worker.fetch(request('/orphan-test-backup','GET',''),env)).status).toBe(403);
     expect((await worker.fetch(request('/orphan-test-backup?ids=1'),env)).status).toBe(404);

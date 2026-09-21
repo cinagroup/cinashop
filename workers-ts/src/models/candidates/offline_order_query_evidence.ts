@@ -19,6 +19,7 @@ export const offlineOrderQueryEvidence = pgTable('offline_order_query_evidence',
   createdAt: integer('created_at').notNull(),
 }, t => [uniqueIndex('ooqe_evidence_uq').on(t.evidenceHash), uniqueIndex('ooqe_replay_uq').on(t.replayKey),
   index('ooqe_case_idx').on(t.caseId, t.createdAt, t.id), index('ooqe_transaction_idx').on(t.provider, t.transactionId),
+  index('ooqe_selection_idx').on(t.selectionKey),
   foreignKey({ name: 'offline_order_query_evidence_case_id_fkey', columns: [t.caseId], foreignColumns: [paymentReconciliationCase.id] }).onDelete('restrict'),
   foreignKey({ name: 'offline_order_query_evidence_selection_key_fkey', columns: [t.selectionKey], foreignColumns: [offlineOrderPaymentSelection.selectionKey] }).onDelete('restrict'),
   check('ooqe_identity_ck', sql`version='offline-query-v1' AND case_id>0 AND order_no ~ '^xx[0-9a-f]{30}$'

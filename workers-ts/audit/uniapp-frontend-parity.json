@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "snapshotDate": "2026-09-08",
+  "snapshotDate": "2026-09-21",
   "scope": "legacy cinashop-php UniApp to view/uniapp-ts",
   "counting": {
     "legacy": {
@@ -17,18 +17,18 @@
       ]
     },
     "target": {
-      "pagesTreeVueFiles": 61,
-      "logicalManifestRouteRecords": 61,
-      "platformActiveRouteRecords": { "H5": 61, "MP-WEIXIN": 61, "APP-PLUS": 61 },
+      "pagesTreeVueFiles": 63,
+      "logicalManifestRouteRecords": 63,
+      "platformActiveRouteRecords": { "H5": 63, "MP-WEIXIN": 63, "APP-PLUS": 63 },
       "manifestHashNormalization": "LF",
-      "manifestSha256": "6AE096ACDB2788BFE3C24EE36CFA3155CA3E4A21E187E426C34DCD0862004446"
+      "manifestSha256": "FE80E5D2341EF333BD53551843DBB75D08ED18E1D93EFADB482E98BED9CEBA56"
     },
     "routeLedger": {
-      "directRegistered": 4,
+      "directRegistered": 6,
       "legacyCompatibilityRules": 96,
       "candidateCoveredRules": 60,
       "partialReplacementRules": 36,
-      "unmappedOrCrossSurface": 51,
+      "unmappedOrCrossSurface": 49,
       "accountedLegacyRoutes": 151
     },
     "method": "Use active pages.json records as the denominator. Raw Vue files include embedded components, templates and unrouted files and are never treated as route coverage."
@@ -50,6 +50,8 @@
     "/pages/index/index",
     "/pages/user/index",
     "/pages/annex/vip_active/index",
+    "/pages/annex/offline_pay/index",
+    "/pages/annex/offline_result/index",
     "/pages/activity/goods_combination_status/index"
   ],
   "gaps": [
@@ -123,12 +125,10 @@
         "/pages/users/alipay_invoke/index",
         "/pages/annex/web_view/index",
         "/pages/annex/record_list/index",
-        "/pages/annex/offline_pay/index",
-        "/pages/annex/offline_result/index",
         "/pages/goods/cashier/index",
         "/pages/goods/match_pay/index"
       ],
-      "remaining": "Payment is consolidated into checkout/order detail/membership screens, but provider callbacks and historical deep links require real H5/mini-program E2E. The unrestricted legacy webview remains retired pending an allowlist design."
+      "remaining": "Offline pay/result now have directly registered pages; registration is not provider-payment acceptance. Payment callbacks and the remaining historical deep links still require real H5/mini-program E2E. The unrestricted legacy webview remains retired pending an allowlist design."
     },
     {
       "id": "FE-003G",

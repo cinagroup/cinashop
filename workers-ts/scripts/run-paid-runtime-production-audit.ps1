@@ -5,7 +5,8 @@ param(
     [Parameter(ParameterSetName = 'Catalog')][switch]$CatalogOnly,
     [Parameter(ParameterSetName = 'WorkParents')][switch]$WorkParents,
     [Parameter(ParameterSetName = 'ReleaseProtocols')][switch]$ReleaseProtocols,
-    [Parameter(ParameterSetName = 'OrphanTestBackup')][switch]$OrphanTestBackup
+    [Parameter(ParameterSetName = 'OrphanTestBackup')][switch]$OrphanTestBackup,
+    [Parameter(ParameterSetName = 'OrphanCleanupPreflight')][switch]$OrphanCleanupPreflight
 )
 $ErrorActionPreference = 'Stop'
 if (-not $env:CLOUDFLARE_API_TOKEN) { throw 'CLOUDFLARE_API_TOKEN is required' }
@@ -33,6 +34,7 @@ $taskStage = 'target-absence'
 $taskRoute = if ($CatalogOnly) { 'catalog' } elseif ($WorkParents) { 'work-parents' } elseif ($ReleaseProtocols) { 'release-protocols' } elseif ($OrphanTestBackup) { 'orphan-test-backup' } else { 'audit' }
 $taskScope = if ($CatalogOnly) { 'release-prerequisite-catalog' } elseif ($WorkParents) { 'work-parent-identity-only' } elseif ($ReleaseProtocols) { 'release-protocol-preflight' } elseif ($OrphanTestBackup) { 'orphan-test-order-backup' } else { 'paid-order-runtime-permissions' }
 $taskBackupDirectory = $null
+if ($OrphanCleanupPreflight) { $taskRoute = 'orphan-cleanup-preflight'; $taskScope = 'orphan-test-cleanup-preflight' }
 $env:CLOUDFLARE_ACCOUNT_ID = $taskAccount
 $env:WRANGLER_SEND_METRICS = 'false'
 $env:WRANGLER_LOG_PATH = Join-Path $env:TEMP "$taskName.log"
@@ -138,4 +140,4 @@ try {
     lastAuditStage = $taskStage
 } | ConvertTo-Json -Depth 8
 if ($taskFailure -or -not $taskMissing -or $null -eq $taskReport) { exit 2 }
-if (-not $CatalogOnly -and -not $ReleaseProtocols -and -not $OrphanTestBackup -and -not $taskReport.ready) { exit 1 }
+if (-not $CatalogOnly -and -not $ReleaseProtocols -and -not $OrphanTestBackup -and -not $OrphanCleanupPreflight -and -not $taskReport.ready) { exit 1 }

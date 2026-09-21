@@ -70,6 +70,7 @@ describe('offline controlled PG16 installation', () => {
     'ALTER TABLE public.offline_order_external_payment SET UNLOGGED',
     'ALTER INDEX public.oopd_attempt_uq RENAME TO unexpected',
     'DROP INDEX public.prc_provider_transaction_lookup',
+    'DROP INDEX public.ooqe_selection_idx',
     'ALTER FUNCTION public.ooa_guard() SECURITY INVOKER',
     'ALTER FUNCTION public.ooep_guard() RESET search_path',
     'CREATE FUNCTION public.oopd_guard(integer) RETURNS integer LANGUAGE sql AS $$ SELECT 1 $$',

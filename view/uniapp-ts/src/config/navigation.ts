@@ -56,6 +56,8 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/payPassword",
   "/pages/user/vipOpen",
   "/pages/annex/vip_active/index",
+  "/pages/annex/offline_pay/index",
+  "/pages/annex/offline_result/index",
   "/pages/user/invoice",
   "/pages/goods/search",
   "/pages/goods/commentList",

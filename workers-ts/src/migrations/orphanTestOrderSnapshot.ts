@@ -89,3 +89,55 @@ export async function exportOrphanTestOrderSnapshot(db: Pick<DbClient, '$client'
       limitation: 'Private read-only backup and candidate links; no deletion performed or inferred' };
   });
 }
+
+/** A second read-only pass for dependencies not represented by order-number
+ * columns (refunds, comments and cart-line references). Never returns row data. */
+export async function inspectOrphanTestCleanup(db: Pick<DbClient, '$client'>) {
+  return db.$client.begin('isolation level repeatable read read only', async tx => {
+    await configureOrphanInspection(tx);
+    const snapshot = await collectOrphanTestOrderSnapshot(tx);
+    return orphanCleanupContext(tx, snapshot);
+  });
+}
+export const ORPHAN_CLEANUP_TABLES = ['store_order', 'store_order_cart_info', 'store_order_refund',
+  'store_order_status', 'store_product_reply', 'user_bill', 'user_brokerage'] as const;
+export async function orphanCleanupContext(tx: postgres.TransactionSql, snapshot: Awaited<ReturnType<typeof collectOrphanTestOrderSnapshot>>) {
+    const tableNames: readonly string[] = ORPHAN_CLEANUP_TABLES;
+    const idsFor = (name: string) => snapshot.related.find(t => t.table === name)?.rows.map(s => String(JSON.parse(s).id)) ?? [];
+    const refundIds = idsFor('store_order_refund'), replyIds = idsFor('store_product_reply'), lineIds = idsFor('store_order_cart_info');
+    const tables = Array.from(await tx`SELECT c.relname AS name,c.relkind::text,c.relpersistence::text,
+      c.relrowsecurity,c.relforcerowsecurity,c.relispartition,
+      EXISTS(SELECT 1 FROM pg_catalog.pg_inherits WHERE inhrelid=c.oid OR inhparent=c.oid) AS inheritance,
+      EXISTS(SELECT 1 FROM pg_catalog.pg_rewrite WHERE ev_class=c.oid) AS rules
+      FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relname=ANY(${tableNames}::text[])
+      ORDER BY c.relname COLLATE "C"`);
+    const triggers = Array.from(await tx`SELECT c.relname AS table,t.tgname AS name,t.tgenabled::text AS enabled,
+      pg_get_triggerdef(t.oid,false) AS definition,p.proname AS function,md5(p.prosrc) AS function_hash
+      FROM pg_catalog.pg_trigger t JOIN pg_catalog.pg_class c ON c.oid=t.tgrelid
+      JOIN pg_catalog.pg_proc p ON p.oid=t.tgfoid
+      WHERE c.relnamespace='public'::regnamespace AND c.relname=ANY(${tableNames}::text[]) AND NOT t.tgisinternal
+      ORDER BY c.relname,t.tgname`);
+    const refs = await tx<{ name: string; columns: string[] }[]>`SELECT c.relname AS name,array_agg(a.attname::text) AS columns
+      FROM pg_catalog.pg_class c JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
+      WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND (
+        a.attname IN ('refund_id','previous_refund_id','order_cart_info_id','payload')
+        OR (c.relname='store_product_reply_comment' AND a.attname='reply_id'))
+      GROUP BY c.relname ORDER BY c.relname COLLATE "C" LIMIT 101`;
+    if (refs.length > 100 || refs.some(t => !/^[a-z][a-z0-9_]*$/.test(t.name))) throw Error('Dependency budget');
+    const transitive = [];
+    for (const ref of refs) {
+      const approved = idsFor(ref.name);
+      const [row] = await tx.unsafe<{ rows: number }[]>(`SELECT count(*)::integer AS rows FROM (SELECT 1
+        FROM public."${ref.name}" t CROSS JOIN LATERAL (SELECT to_jsonb(t) AS j) data WHERE NOT COALESCE(j->>'id'=ANY($4::text[]),false)
+        AND (j->>'refund_id'=ANY($1::text[]) OR j->>'previous_refund_id'=ANY($1::text[])
+          OR j->>'order_cart_info_id'=ANY($2::text[])
+          OR ($5 AND j->>'reply_id'=ANY($3::text[]))
+          OR j->'payload'->>'refundId'=ANY($1::text[]) OR j->'payload'->>'orderCartInfoId'=ANY($2::text[])) LIMIT 1001) matches`,
+      [refundIds,lineIds,replyIds,approved,ref.name === 'store_product_reply_comment']);
+      transitive.push({ table: ref.name, columns: ref.columns, rows: row.rows });
+    }
+    return { scope: 'orphan-test-cleanup-preflight', ready: false, snapshotSha256: snapshotHash(snapshot),
+      targetCount: snapshot.orders.length, tables, triggers, transitive,
+      foreignKeys: snapshot.foreignKeys.filter(k => tableNames.includes(String(k.child)) || tableNames.includes(String(k.parent))),
+      limitation: 'Read-only metadata and reference counts; not permission to delete candidates' };
+}

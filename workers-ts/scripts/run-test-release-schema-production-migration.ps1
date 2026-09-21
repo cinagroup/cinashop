@@ -69,7 +69,13 @@ try {
     $taskStage = 'access-boundaries'
     if (-not $InspectOnly) {
     $taskAccess.noToken = [int](Invoke-WebRequest -Uri "$taskUrl/migrate/test-release" -Method Post -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
-    $taskAccess.wrongMethod = [int](Invoke-WebRequest -Uri "$taskUrl/migrate/test-release" -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+    # A new hostname may alternate 403/404 across edge locations. Retry only
+    # this GET method-rejection probe; the actual migration POST remains once.
+    for ($taskBoundaryAttempt=0; $taskBoundaryAttempt -lt 8; $taskBoundaryAttempt++) {
+        $taskAccess.wrongMethod = [int](Invoke-WebRequest -Uri "$taskUrl/migrate/test-release" -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
+        if ($taskAccess.wrongMethod -ne 404) { break }
+        if ($taskBoundaryAttempt -lt 7) { Start-Sleep -Seconds 2 }
+    }
     $taskAccess.noExplicitOperation = [int](Invoke-WebRequest -Uri "$taskUrl/migrate/test-release" -Method Post -Headers $taskAuth -SkipHttpErrorCheck -TimeoutSec 20).StatusCode
     if ($taskAccess.noToken -ne 403 -or $taskAccess.wrongMethod -ne 405 -or $taskAccess.noExplicitOperation -ne 400) {
         throw 'Maintenance access boundary failed.'

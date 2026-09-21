@@ -74,6 +74,7 @@ describe('offline registered schema PG16', () => {
     'ALTER TABLE public.offline_order_balance DROP CONSTRAINT oob_money_ck',
     'ALTER TABLE public.offline_order_payment_selection RENAME CONSTRAINT offline_order_payment_selection_order_id_fkey TO unexpected',
     'DROP INDEX public.prc_provider_transaction_lookup',
+    'DROP INDEX public.ooqe_selection_idx',
     'ALTER TABLE public.offline_order_admission ENABLE ROW LEVEL SECURITY',
     'ALTER TABLE public.offline_order_query_evidence DISABLE TRIGGER ALL',
     'GRANT SELECT ON public.offline_order_payment_dispatch TO PUBLIC',

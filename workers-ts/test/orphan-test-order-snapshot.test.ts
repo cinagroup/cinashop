@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
-import { collectOrphanTestOrderSnapshot, configureOrphanInspection, snapshotHash } from '../src/migrations/orphanTestOrderSnapshot';
+import { collectOrphanTestOrderSnapshot, configureOrphanInspection, inspectOrphanTestCleanup, snapshotHash } from '../src/migrations/orphanTestOrderSnapshot';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('private orphan snapshot on owned native PG16', () => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -45,5 +45,28 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('private orphan s
   it('rejects unexpected quoted identifiers rather than interpolating catalog SQL', async () => {
     await f.exec('CREATE TABLE public."unsafe name"(order_id integer)');
     await expect(snapshot()).rejects.toThrow('identifier or table budget');
+  });
+  it('reports indirect refund/comment references and triggers without returning row payloads', async () => {
+    await f.exec(`CREATE TABLE public.store_order_refund(id integer,store_order_id integer);
+      CREATE TABLE public.store_product_reply(id integer,oid integer,order_cart_info_id integer);
+      CREATE TABLE public.store_order_cart_info(id integer,oid integer);
+      CREATE TABLE public.store_product_reply_comment(id integer,reply_id integer,content text);
+      CREATE TABLE public.store_order_outbox(id integer,payload jsonb);
+      INSERT INTO public.store_order_refund VALUES(2,201);
+      INSERT INTO public.store_product_reply VALUES(3,201,4);
+      INSERT INTO public.store_order_cart_info VALUES(4,201);
+      INSERT INTO public.store_product_reply_comment VALUES(8,3,'PRIVATE TEST CONTENT');
+      INSERT INTO public.store_order_outbox VALUES(9,'{"refundId":2}');
+      CREATE FUNCTION public.fixture_guard() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RETURN OLD; END$$;
+      CREATE TRIGGER fixture_delete BEFORE DELETE ON public.store_order FOR EACH ROW EXECUTE FUNCTION public.fixture_guard();`);
+    const result = await inspectOrphanTestCleanup(f.db);
+    expect(result.transitive).toEqual(expect.arrayContaining([
+      expect.objectContaining({table:'store_product_reply_comment',rows:1}),
+      expect.objectContaining({table:'store_order_outbox',rows:1}),
+      expect.objectContaining({table:'store_product_reply',rows:0}),
+    ]));
+    expect(result.triggers).toEqual([expect.objectContaining({name:'fixture_delete',table:'store_order'})]);
+    expect(JSON.stringify(result)).not.toContain('PRIVATE TEST CONTENT');
+    expect(result.targetCount).toBe(12); expect(result.ready).toBe(false);
   });
 });

@@ -77,9 +77,10 @@ describe("standalone sequence transaction execution boundary", () => {
   });
 
   it("runs the full actual old ORM model, thirty refusals and committed upgrade through the standalone function", () => {
-    // Old-sequence baseline1091 plus Admin receipt table and history index.
+    // Complete current ORM with only the historical sequence declaration restored:
+    // 1155 statements plus the reviewed offline selection-key FK index.
     // Fresh aligned ORM additionally emits the sequence ownership statement.
-    expect(fullPath.initialStatements).toBe(1093);
+    expect(fullPath.initialStatements).toBe(1156);
     expect(fullPath.committedUpgradeExecution).toBe("standalone-drizzle-transaction");
     expect(fullPath.driftRefusals).toHaveLength(30);
     expect(fullPath.originalOidsRowsAclRolesCommentsAndNonTargetObjectsPreserved).toBe(true);

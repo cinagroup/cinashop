@@ -1,0 +1,12 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "cinashop-orphan-cleanup-template",
+  "main": "OrphanTestCleanupWorker.ts",
+  "compatibility_date": "2026-09-21",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "limits": { "cpu_ms": 10000 },
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } },
+  "vars": { "AUDIT_TOKEN_SHA256": "", "AUDIT_EXPIRES_AT": "", "ORPHAN_BACKUP_SHA256": "" },
+  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "9748c294e21c49a99579c9cef70102e0" }]
+}
