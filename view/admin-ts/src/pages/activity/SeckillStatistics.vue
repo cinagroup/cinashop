@@ -57,7 +57,7 @@
           </div>
         </div>
         <el-alert v-if="listError" :title="listError" type="error" :closable="false" show-icon class="notice">
-          <template #default><el-button link type="primary" @click="loadList(page)">重试列表</el-button></template>
+          <template #default><el-button link type="primary" @click="loadList(requestedPage)">重试列表</el-button></template>
         </el-alert>
         <div class="table-scroll">
           <el-table v-if="tab === 'people'" :data="people" v-loading="listLoading" border row-key="uid" empty-text="暂无参与人">
@@ -124,6 +124,7 @@ const people = ref<SeckillParticipant[]>([]);
 const orders = ref<SeckillOrder[]>([]);
 const count = ref(0);
 const page = ref(1);
+const requestedPage = ref(1);
 const listLoading = ref(false);
 const listError = ref("");
 let mounted = false;
@@ -146,7 +147,7 @@ function discard() {
   generation++;
   headAbort?.abort(); listAbort?.abort();
   headAbort = null; listAbort = null;
-  head.value = null; people.value = []; orders.value = []; count.value = 0; page.value = 1;
+  head.value = null; people.value = []; orders.value = []; count.value = 0; page.value = 1; requestedPage.value = 1;
   headLoading.value = false; listLoading.value = false; headError.value = ""; listError.value = "";
 }
 
@@ -173,6 +174,7 @@ async function loadHead() {
 async function loadList(targetPage = page.value) {
   if (!mounted || !canView.value) return;
   if (!validId()) return;
+  requestedPage.value = targetPage;
   const stamp = sessionKey.value;
   const requestedId = id.value;
   const current = generation;
