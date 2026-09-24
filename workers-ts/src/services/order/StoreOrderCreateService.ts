@@ -2582,7 +2582,10 @@ export class StoreOrderCreateService {
             shippingSnapshot ? and(eq(storeProduct.type,product.type),eq(storeProduct.relationId,product.relationId),
               eq(storeProduct.productType,product.productType),eq(storeProduct.isShow,1),eq(storeProduct.isDel,0),
               activityFreightIsInherited(item) ? and(eq(storeProduct.freight,product.freight),eq(storeProduct.postage,product.postage),eq(storeProduct.tempId,product.tempId)) : undefined) : undefined,
-            type === 2 && shippingType === 2 ? and(
+            // Every bargain delivery mode must recheck the source at the final
+            // inventory write. A virtual or non-shipping order has no shipping
+            // snapshot, and retirement may commit after the earlier quote read.
+            type === 2 ? and(
               eq(storeProduct.type, product.type), eq(storeProduct.relationId, product.relationId),
               eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
             ) : undefined,
@@ -2591,7 +2594,7 @@ export class StoreOrderCreateService {
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
           throw new ValidateException(shippingSnapshot ? "配送商品归属或规则已变化，请刷新后重试" : type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
-            : type === 2 && shippingType === 2 ? "砍价自提商品归属已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);
+            : type === 2 ? "砍价商品归属、上架状态已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);
         }
 
         // 5c. 订单商品快照

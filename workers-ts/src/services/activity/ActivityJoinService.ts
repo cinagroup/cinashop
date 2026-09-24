@@ -832,18 +832,21 @@ export class ActivityJoinService {
         startTime: storeBargain.startTime,
         activityStatus: storeBargain.status,
         activityIsDel: storeBargain.isDel,
+        sourceIsDel: storeProduct.isDel,
+        sourceIsShow: storeProduct.isShow,
       })
       .from(storeBargainUser)
       .leftJoin(storeBargain, eq(storeBargain.id, storeBargainUser.bargainId))
+      .leftJoin(storeProduct, eq(storeProduct.id, storeBargain.productId))
       .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0)))
       .orderBy(desc(storeBargainUser.addTime), desc(storeBargainUser.id))
       .limit(safeLimit)
       .offset((safePage - 1) * safeLimit);
     const now = Date.now();
-    return rows.map(({ stopTime, startTime, activityStatus, activityIsDel, ...row }) => {
+    return rows.map(({ stopTime, startTime, activityStatus, activityIsDel, sourceIsDel, sourceIsShow, ...row }) => {
       const residueCents = Math.max(0, decimalToCents(row.bargain_price) - decimalToCents(row.price));
       const effectiveStatus = [1, 3].includes(row.status) && stopTime && stopTime.getTime() < now ? 2 : row.status;
-      const activityAvailable = activityStatus === 1 && activityIsDel === 0
+      const activityAvailable = activityStatus === 1 && activityIsDel === 0 && sourceIsDel === 0 && sourceIsShow === 1
         && (!startTime || startTime.getTime() <= now) && (!stopTime || stopTime.getTime() >= now);
       return {
         ...row,

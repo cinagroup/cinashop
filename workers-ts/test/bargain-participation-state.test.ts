@@ -5,7 +5,7 @@ import { ActivityJoinService } from "../src/services/activity/ActivityJoinServic
 import { BargainSkuCatalogService } from "../src/services/activity/BargainSkuCatalogService";
 import { isBargainParticipationReady } from "../src/services/activity/BargainParticipationState";
 import { StoreCartService } from "../src/services/order/StoreCartService";
-import { storeBargain, storeBargainUser } from "../src/models/schema";
+import { storeBargain, storeBargainUser, storeProduct } from "../src/models/schema";
 
 describe("bargain participation state consistency on isolated SQL", () => {
   let f: Awaited<ReturnType<typeof createBargainSelectionFixture>>;
@@ -95,6 +95,18 @@ describe("bargain participation state consistency on isolated SQL", () => {
       expect(await f.snapshot()).toEqual(before);
     },
   );
+  it("keeps historical participations but stops offering payment after source product retirement", async () => {
+    expect((await own()).pay_status).toBe(true);
+    await f.db.update(storeProduct).set({ isDel: 1 }).where(eq(storeProduct.id, 70));
+    const before = await f.snapshot();
+    const response = await f.app.request("/api/bargain/user/list", { headers: { "x-fixture-user": "11" } }, f.env);
+    const wire = await response.json() as { status: number; data: Array<{ id: number; status: number; pay_status: boolean }> };
+    expect(wire.status).toBe(200);
+    expect(wire.data.map(row => row.id)).toEqual([83, 82, 80]);
+    expect(wire.data.find(row => row.id === 80)).toMatchObject({ status: 3, pay_status: false });
+    expect(wire.data.find(row => row.id === 80)).not.toHaveProperty("sourceIsDel");
+    expect(await f.snapshot()).toEqual(before);
+  });
   it("marks expired live rows closed for display, preserves consumed state and never writes expiry", async () => {
     await f.db.update(storeBargain).set({ stopTime: new Date("2000-01-01") });
     const before = await f.snapshot(), listed = await join().myBargains(11);

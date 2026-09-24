@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
-import { storeBargain, storeBargainUser, storeProduct, user } from '../src/models/schema';
+import { storeBargain, storeBargainUser, storeCart, storeProduct, user } from '../src/models/schema';
 import { ActivityJoinService } from '../src/services/activity/ActivityJoinService';
 import { retirePlatformSourceProduct } from '../src/services/activity/BargainSourceProductLifecycle';
 import { SupplierProductManagementService } from '../src/services/supplier/SupplierProductManagementService';
@@ -10,8 +10,8 @@ import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financ
 
 // Only the fixture-owned loopback PostgreSQL 16 database is eligible. Independent
 // backends and pg_blocking_pids prove the admission/retirement commit order.
-// This suite does not prove checkout's final product guard or the existing
-// supplier product->cart versus checkout cart->product lock order.
+// The cart-first test models checkout's row order; the separate order suite
+// exercises the full final product guard after an actual retirement commit.
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('bargain source retirement admission on PostgreSQL', () => {
   let f: Awaited<ReturnType<typeof createBargainSelectionFixture>>;
 
@@ -91,6 +91,29 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('bargain source r
     expect(after.helps.filter(help => help.bargainUserId === 84)).toHaveLength(1);
     expect(after.products.find(product => product.id === 70)?.isDel).toBe(1);
     await expect(new ActivityJoinService(f.container).helpBargain(11, 81)).rejects.toThrow('关联商品');
+  }, 15_000);
+
+  it('supplier retirement waits for a cart-first checkout without holding the product row', async () => {
+    await f.db.update(storeProduct).set({ type: 2, relationId: 7 }).where(eq(storeProduct.id, 70));
+    await f.db.insert(storeCart).values({ id: 10, uid: 11, productId: 70,
+      productAttrUnique: 'qared001', cartNum: 1, type: 2, activityId: 40,
+      bargainUserId: 80, isNew: 1, status: 1 });
+    await withFinancePeers(f.db, async ([checkout, retiring]) => {
+      await checkout.exec('BEGIN');
+      await checkout.db.update(storeCart).set({ isPay: 1 }).where(eq(storeCart.id, 10));
+      const retirement = outcome(new SupplierProductManagementService(createContainerFromDb(retiring.db)).recycleProduct(7, 70));
+      await waitForFinanceBlock(f.db, retiring.pid, checkout.pid);
+      // Checkout's final write must be free to acquire the product row while
+      // its cart row blocks retirement. The old product->cart order deadlocked.
+      const updated = await checkout.db.update(storeProduct).set({ stock: sql`stock - 1` })
+        .where(and(eq(storeProduct.id, 70), eq(storeProduct.isDel, 0))).returning({ id: storeProduct.id });
+      expect(updated).toEqual([{ id: 70 }]);
+      await checkout.exec('COMMIT');
+      expect(await retirement).toMatchObject({ ok: true });
+    });
+    const after = await state();
+    expect(after.products.find(product => product.id === 70)).toMatchObject({ isDel: 1, stock: 7 });
+    expect((await f.db.select().from(storeCart).where(eq(storeCart.id, 10)))[0]).toMatchObject({ isPay: 1, status: 0 });
   }, 15_000);
 
   it('retirement preserves stricter timeouts, rolls back a busy attempt and allows an explicit retry', async () => {
