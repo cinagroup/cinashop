@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { Container } from "@/lib/di";
 import { agreement } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
@@ -12,7 +12,7 @@ export interface PublicAgreementRecord {
   title: string;
   content: string | null;
   sort: number;
-  status: 1;
+  status: number;
   add_time: number;
 }
 
@@ -22,8 +22,8 @@ export function publicAgreementType(value: unknown): PublicAgreementType {
   throw new ValidateException("协议类型不支持");
 }
 
-/** Public read of the same visible agreement used by the paid membership home. */
-export async function readVisibleAgreement(
+/** Legacy public endpoint returns the record for its type even when disabled. */
+export async function readAgreementByType(
   container: Container,
   value: unknown,
 ): Promise<PublicAgreementRecord | []> {
@@ -39,11 +39,19 @@ export async function readVisibleAgreement(
       add_time: agreement.addTime,
     })
     .from(agreement)
-    .where(and(eq(agreement.type, type), eq(agreement.status, 1)))
+    .where(eq(agreement.type, type))
     .orderBy(desc(agreement.sort), desc(agreement.id))
     .limit(1);
   const row = rows[0];
-  // A missing or disabled document is PHP's empty-array member_explain value.
-  if (!row || row.type !== type || row.status !== 1) return [];
-  return { ...row, type, status: 1 };
+  if (!row || row.type !== type) return [];
+  return { ...row, type };
+}
+
+/** The paid membership home hides disabled agreements after reading by type. */
+export async function readVisibleAgreement(
+  container: Container,
+  value: unknown,
+): Promise<PublicAgreementRecord | []> {
+  const row = await readAgreementByType(container, value);
+  return Array.isArray(row) || row.status !== 1 ? [] : row;
 }

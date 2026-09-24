@@ -30,7 +30,7 @@ test('legacy legal types use the public exact-key Worker contract and sanitize r
   }
 });
 
-test('payVip reads only the public visible member agreement, including without a shopper session', async () => {
+test('payVip reads the public member agreement, including without a shopper session', async () => {
   const r = runtime({ feature: 'useGovernanceAgreement', send: () => memberAgreement({ content: '<p onclick="evil()">会员正文</p>' }) });
   const titles = [];
   r.uni.setNavigationBarTitle = ({ title }) => titles.push(title);
@@ -50,13 +50,20 @@ test('payVip reads only the public visible member agreement, including without a
   assert.equal(empty.checkout.loaded.value, true);
   assert.equal(empty.checkout.content.value, '');
   empty.stop();
+
+  const disabled = await start(() => memberAgreement({ status: 0, content: '<p onclick="evil()">停用协议正文</p>' }), { type: 'payVip' });
+  assert.deepEqual(disabled.calls, [{ url: '/api/agreement/1', data: {} }]);
+  assert.match(disabled.checkout.content.value, /停用协议正文/);
+  assert.doesNotMatch(disabled.checkout.content.value, /onclick/);
+  assert.equal(disabled.checkout.error.value, '');
+  disabled.stop();
 });
 
-test('payVip rejects a user-agreement alias, another agreement type, and disabled or malformed records', async () => {
+test('payVip rejects a user-agreement alias, another agreement type, and malformed records', async () => {
   for (const response of [
     agreement('user', '<p>Wrong document</p>'),
     memberAgreement({ type: 2 }),
-    memberAgreement({ status: 0 }),
+    memberAgreement({ status: 2 }),
     memberAgreement({ content: null }),
     { data: { member_explain: { id: 7, type: 1, title: '会员服务协议', content: '<p>Wrong shape</p>', status: 1 } } },
   ]) {

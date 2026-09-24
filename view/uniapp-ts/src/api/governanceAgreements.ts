@@ -34,7 +34,7 @@ export async function apiGovernanceAgreement(value: unknown): Promise<string> {
     const row = memberExplain as Record<string, unknown>;
     if (Object.keys(row).sort().join(",") !== "add_time,content,id,sort,status,title,type"
       || !Number.isSafeInteger(row.id) || (row.id as number) <= 0
-      || row.type !== 1 || row.status !== 1
+      || row.type !== 1 || (row.status !== 0 && row.status !== 1)
       || typeof row.title !== "string" || row.title.length === 0 || row.title.length > 200
       || typeof row.content !== "string" || row.content.length > 200_000
       || !Number.isSafeInteger(row.sort)

@@ -6,7 +6,7 @@
     "date": "2026-09-24",
     "status": "local-partial-candidate-not-deployed",
     "contracts": [
-      "Public /agreement/:type independently returns the visible membership or agent agreement in member_explain; payVip accepts only the complete visible member agreement, never a user agreement alias",
+      "Public /agreement/:type independently returns the membership or agent agreement in member_explain even when disabled; payVip accepts the exact complete member agreement, never a user agreement alias; the membership home separately hides disabled agreements",
       "Ranking decorates only the current visible page with server-selected activity IDs and expiry; UniApp validates product, priority, type and time before navigating",
       "Password, SMS and social identity lookup plus per-request user authentication exclude both is_del and delete_time soft-deletion markers",
       "Private member and six-digit code responses prohibit storage and referrer disclosure; the QR scan and cashier consumption chain is still missing"
@@ -561,7 +561,7 @@
         "/pages/users/user_cancellation/index",
         "/pages/users/user_member_code/index"
       ],
-      "remaining": "Privacy/user/cancel/supplier agreement content and the old three-link index have local public read-only candidates. Old payVip now uses a separate visible membership agreement rather than the user agreement alias. Account cancellation write and member QR/scan/cashier consumption still lack complete target contracts; deleted-user login and auth are blocked locally. Visit history has authenticated list/delete/favourite contracts, a paginated empty-state hot feed, branding/labels and distinct advertised level/SVIP prices. Versioned metadata resolves seckill/bargain/combination IDs and presale base-product details; expired, mismatched or malformed targets fail closed. Promotion frames, full activity-flow parity, native-device and deployed real-user acceptance remain open."
+      "remaining": "Privacy/user/cancel/supplier agreement content and the old three-link index have local public read-only candidates. Old payVip now uses a separate membership agreement rather than the user agreement alias; the public endpoint and page accept disabled records as old PHP did, while the membership home hides them. Account cancellation write and member QR/scan/cashier consumption still lack complete target contracts; deleted-user login and auth are blocked locally. Visit history has authenticated list/delete/favourite contracts, a paginated empty-state hot feed, branding/labels and distinct advertised level/SVIP prices. Versioned metadata resolves seckill/bargain/combination IDs and presale base-product details; expired, mismatched or malformed targets fail closed. Promotion frames, full activity-flow parity, native-device and deployed real-user acceptance remain open."
     },
     {
       "id": "FE-003C",

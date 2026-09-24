@@ -6,7 +6,7 @@ import type { Container } from "../src/lib/di";
 import type { AppVariables, Env } from "../src/env";
 import { agreement } from "../src/models/schema";
 import { getAgreement } from "../src/controllers/api/v1/PublicController";
-import { readVisibleAgreement } from "../src/services/user/PublicAgreementService";
+import { readAgreementByType, readVisibleAgreement } from "../src/services/user/PublicAgreementService";
 import { financePostgres } from "./helpers/financePostgres";
 
 describe("public PHP agreement contract", () => {
@@ -29,7 +29,7 @@ describe("public PHP agreement contract", () => {
     expect(routes).toContain('v1Routes.get("/user_agreement/:type", PublicController.getUserAgreement)');
   });
 
-  it("returns only visible exact-type rows with PHP field names and envelope", async () => {
+  it("returns exact-type rows with PHP field names and envelope", async () => {
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use("*", async (c, next) => { c.set("container", container); await next(); });
     app.get("/api/agreement/:type", getAgreement);
@@ -47,17 +47,26 @@ describe("public PHP agreement contract", () => {
     }
   });
 
-  it("hides disabled records and fails closed on unsupported or ambiguous types", async () => {
+  it("returns disabled public records while the membership home hides them", async () => {
     // The unrelated agent row stays visible: a disabled member row cannot fall back to it.
     await fixture.db.update(agreement).set({ status: 0 }).where(eq(agreement.type, 1));
+    expect(await readAgreementByType(container, 1)).toMatchObject({ type: 1, status: 0 });
     expect(await readVisibleAgreement(container, 1)).toEqual([]);
     expect((await readVisibleAgreement(container, 2))).toMatchObject({ type: 2, status: 1 });
 
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use("*", async (c, next) => { c.set("container", container); await next(); });
     app.get("/api/agreement/:type", getAgreement);
-    const hidden = await (await app.request("http://localhost/api/agreement/1")).json() as Record<string, unknown>;
-    expect(hidden.data).toEqual({ member_explain: [] });
+    const disabled = await (await app.request("http://localhost/api/agreement/1")).json() as Record<string, unknown>;
+    expect(disabled.data).toMatchObject({ member_explain: { type: 1, status: 0 } });
+    const agent = await (await app.request("http://localhost/api/agreement/2")).json() as Record<string, unknown>;
+    expect(agent.data).toMatchObject({ member_explain: { type: 2, status: 1 } });
+  });
+
+  it("fails closed on unsupported or ambiguous types", async () => {
+    const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    app.use("*", async (c, next) => { c.set("container", container); await next(); });
+    app.get("/api/agreement/:type", getAgreement);
     for (const type of ["0", "3", "01", "payVip", "user"]) {
       const response = await (await app.request(`http://localhost/api/agreement/${type}`)).json() as Record<string, unknown>;
       expect(response.status).toBe(400);
