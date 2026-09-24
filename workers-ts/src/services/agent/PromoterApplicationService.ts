@@ -29,6 +29,12 @@ function enabled(value: string): boolean {
   return value === "1" || value.toLowerCase() === "true";
 }
 
+function assertActivePromoterAgreement(row: { status: number; content: string | null } | undefined): void {
+  if (!row || row.status !== 1 || !row.content?.trim()) {
+    throw new ValidateException("分销说明尚未启用");
+  }
+}
+
 function formatEpoch(value: number): string {
   if (!value) return "";
   return new Date(value * 1000).toISOString().replace("T", " ").slice(0, 19);
@@ -69,7 +75,7 @@ export class PromoterApplicationService {
       this.container.db
         .select()
         .from(agreement)
-        .where(and(eq(agreement.type, 2), eq(agreement.status, 1)))
+        .where(eq(agreement.type, 2))
         .orderBy(desc(agreement.sort), desc(agreement.id))
         .limit(1),
     ]);
@@ -88,7 +94,7 @@ export class PromoterApplicationService {
         status_time: formatEpoch(current?.statusTime ?? 0),
         refusal_reason: current?.refusalReason ?? "",
       },
-      agreement: agreements[0] ?? null,
+      agreement: agreements[0]?.status === 1 && agreements[0].content?.trim() ? agreements[0] : null,
     };
   }
 
@@ -116,13 +122,15 @@ export class PromoterApplicationService {
 
     // Catch normal account, phone and stale-link errors before spending the SMS code.
     // The locked transaction below repeats every check because this read can race.
-    const [userRows, applicationRows] = await Promise.all([
+    const [userRows, applicationRows, agreements] = await Promise.all([
       this.container.db.select({ phone: userTable.phone, isPromoter: userTable.isPromoter })
         .from(userTable).where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0))).limit(1),
       id > 0
         ? this.container.db.select({ id: promoterApply.id, uid: promoterApply.uid })
           .from(promoterApply).where(and(eq(promoterApply.id, id), eq(promoterApply.isDel, 0))).limit(1)
         : Promise.resolve([]),
+      this.container.db.select({ status: agreement.status, content: agreement.content }).from(agreement)
+        .where(eq(agreement.type, 2)).orderBy(desc(agreement.sort), desc(agreement.id)).limit(1),
     ]);
     const currentUser = userRows[0];
     if (!currentUser) throw new NotFoundException("用户不存在");
@@ -130,6 +138,7 @@ export class PromoterApplicationService {
     if (id > 0 && (!applicationRows[0] || applicationRows[0].uid !== uid)) {
       throw new NotFoundException("申请不存在");
     }
+    assertActivePromoterAgreement(agreements[0]);
     if (phone !== currentUser.phone) {
       const phoneOwners = await this.container.db.select({ uid: userTable.uid }).from(userTable)
         .where(and(eq(userTable.phone, phone), eq(userTable.isDel, 0), ne(userTable.uid, uid))).limit(1);
@@ -164,6 +173,10 @@ export class PromoterApplicationService {
           .limit(1);
         if (phoneOwners.length > 0) throw new ValidateException("该手机号已被使用");
       }
+      const agreements = await tx.select({ status: agreement.status, content: agreement.content })
+        .from(agreement).where(eq(agreement.type, 2))
+        .orderBy(desc(agreement.sort), desc(agreement.id)).limit(1);
+      assertActivePromoterAgreement(agreements[0]);
 
       const now = Math.floor(Date.now() / 1000);
       if (id > 0) {

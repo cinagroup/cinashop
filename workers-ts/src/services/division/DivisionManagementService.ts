@@ -895,13 +895,20 @@ export class DivisionManagementService {
     const status = Number(input.divisionStatus ?? 1);
     if (input.approved && ![0, 1].includes(status)) throw new ValidateException("角色状态错误");
     const now = Math.floor(Date.now() / 1000);
-    const candidate = await this.container.db.select({ uid: divisionApply.uid }).from(divisionApply)
+    const candidate = await this.container.db.select({ uid: divisionApply.uid, divisionId: divisionApply.divisionId }).from(divisionApply)
       .where(and(eq(divisionApply.id, input.id), eq(divisionApply.isDel, 0))).limit(1);
     if (!candidate[0]) throw new ValidateException("代理商申请不存在");
 
     return this.container.db.transaction(async (rawTx) => {
       const tx = rawTx as unknown as DbClient;
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${candidate[0].uid})`);
+      // A parent role deletion holds its own advisory key and user row before
+      // marking child applications deleted. Take both role keys before the
+      // application row, in one global order, to avoid the parent/child cycle.
+      const roleUids = [...new Set([candidate[0].uid, candidate[0].divisionId].filter((uid) => uid > 0))]
+        .sort((left, right) => left - right);
+      for (const roleUid of roleUids) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${roleUid})`);
+      }
       await tx.execute(sql`SELECT "id" FROM "division_apply" WHERE "id" = ${input.id} FOR UPDATE`);
       const applicationRows = await tx
         .select()
@@ -910,7 +917,9 @@ export class DivisionManagementService {
         .limit(1);
       const application = applicationRows[0];
       if (!application) throw new ValidateException("代理商申请不存在");
-      if (application.uid !== candidate[0].uid) throw new ValidateException("代理商申请用户已变化，请重试");
+      if (application.uid !== candidate[0].uid || application.divisionId !== candidate[0].divisionId) {
+        throw new ValidateException("代理商申请归属已变化，请重试");
+      }
       if (application.status !== 0) throw new ValidateException("该申请已经审核");
       assertScope(input.scope, application.divisionId);
 

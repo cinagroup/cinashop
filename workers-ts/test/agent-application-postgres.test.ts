@@ -3,12 +3,13 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import type { AppVariables, Env } from "@/env";
 import { createContainerFromDb } from "@/lib/di";
-import { agreement, divisionApply, promoterApply, user } from "@/models/schema";
+import { agreement, divisionApply, promoterApply, systemAdmin, user } from "@/models/schema";
 import { applyAgent } from "@/controllers/api/v1/DivisionController";
 import { applyPromoter } from "@/controllers/api/v1/PromoterApplicationController";
 import { financePostgres } from "./helpers/financePostgres";
 import { outcome, waitForFinanceBlock, withFinancePeers } from "./helpers/financePeers";
 import { DivisionManagementService } from "@/services/division/DivisionManagementService";
+import { PromoterApplicationService } from "@/services/agent/PromoterApplicationService";
 
 const state = vi.hoisted(() => ({
   codes: new Map<string, { uid: number; purpose: string; code: string }>(),
@@ -45,7 +46,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
 
   beforeEach(async () => {
     state.codes.clear(); state.locks.clear();
-    fixture = await financePostgres([user, divisionApply, promoterApply, agreement]);
+    fixture = await financePostgres([user, divisionApply, promoterApply, agreement, systemAdmin]);
     await fixture.db.insert(user).values([
       { uid: 10, account: "local-division", divisionType: 1, divisionStatus: 1,
         divisionInvite: 123456, divisionEndTime: 0, status: 1 },
@@ -130,6 +131,18 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
       return response.json() as Promise<{ status: number; msg: string; data: { id: number } | null }>;
     };
     try {
+      const [disabled] = await fixture.db.insert(agreement).values({ type: 2,
+        title: "最新停用协议", content: "<p>停用</p>", status: 0 }).returning({ id: agreement.id });
+      state.codes.set(promoterKey, { uid: 0, purpose: "user_promoter_application", code: input.code });
+      const info = await new PromoterApplicationService(createContainerFromDb(fixture.db), env).applyInfo(11);
+      expect(info.agreement).toBeNull();
+      const disabledResult = await post();
+      expect(disabledResult.status).not.toBe(200);
+      expect(disabledResult.msg).toContain("分销说明尚未启用");
+      expect(state.codes.has(promoterKey)).toBe(true);
+      expect(await fixture.db.select().from(promoterApply)).toHaveLength(0);
+      await fixture.db.update(agreement).set({ status: 1 }).where(eq(agreement.id, disabled.id));
+      state.codes.delete(promoterKey);
       state.codes.set(divisionKey, { uid: 0, purpose: "user_division_application", code: input.code });
       const wrongPurpose = await post();
       expect(wrongPurpose.status).not.toBe(200);
@@ -203,6 +216,34 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
         const active = await fixture.db.select().from(divisionApply).where(eq(divisionApply.isDel, 0));
         expect(active).toHaveLength(1);
         expect(active[0].uid).toBe(11);
+      } finally { await blocker.exec("ROLLBACK"); }
+    });
+  });
+
+  it("parent role removal cannot deadlock with review of a child application", async () => {
+    await fixture.db.insert(user).values({ uid: 12, account: "local-child", divisionType: 2,
+      divisionStatus: 1, divisionId: 10, agentId: 12, status: 1 });
+    const [application] = await fixture.db.insert(divisionApply).values({ uid: 11, divisionId: 10,
+      divisionName: body.division_name, name: body.name, phone: body.phone, divisionInvite: body.division_invite,
+      images: JSON.stringify(body.images) }).returning({ id: divisionApply.id });
+    await withFinancePeers(fixture.db, async ([blocker, parentPeer, reviewerPeer]) => {
+      await blocker.exec("BEGIN");
+      try {
+        await blocker.exec('SELECT uid FROM "user" WHERE uid = 12 FOR UPDATE');
+        const parent = new DivisionManagementService(createContainerFromDb(parentPeer.db));
+        const reviewer = new DivisionManagementService(createContainerFromDb(reviewerPeer.db));
+        const removed = outcome(parent.deleteRole(10, { level: 0, divisionId: 0 }));
+        await waitForFinanceBlock(fixture.db, parentPeer.pid, blocker.pid);
+        const reviewed = outcome(reviewer.reviewApplication({ id: application.id, approved: true,
+          divisionPercent: 0, divisionEndTime: 0, scope: { level: 0, divisionId: 0 } }));
+        await waitForFinanceBlock(fixture.db, reviewerPeer.pid, parentPeer.pid);
+        await blocker.exec("COMMIT");
+        const [removeResult, reviewResult] = await Promise.all([removed, reviewed]);
+        expect(removeResult.ok, removeResult.ok ? undefined : String(removeResult.error)).toBe(true);
+        expect(reviewResult.ok).toBe(false);
+        if (!reviewResult.ok) expect(String(reviewResult.error)).toContain("代理商申请不存在");
+        const [applicationRow] = await fixture.db.select().from(divisionApply).where(eq(divisionApply.id, application.id));
+        expect(applicationRow.isDel).toBe(1);
       } finally { await blocker.exec("ROLLBACK"); }
     });
   });

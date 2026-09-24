@@ -16,6 +16,6 @@
 
 此烟测不覆盖真实客户账号、短信投递、验证码发送/消费端到端、图片上传、员工实际角色/数据、微信小程序或 App 真机、生产发布。旧 PHP 的 `agent/record` 实际复用了 Supplier 记录和导航，新的双域记录只展示当前未删除申请，不提供已删除历史。上述外部门禁仍归 FE-003J/K。
 
-本地独立 PostgreSQL 16.15 测试 `agent-application-postgres.test.ts` 执行两个真实 Hono 路由与 SQL 写路径：代理申请预检失败、类型 2 协议停用时不消费验证码；错误用途不写记录；正确用途写入 `division_apply` 后不可重放；分销员路径的错误用途、写入 `promoter_apply` 和重放亦核对。另以独立 PG 后端锁竞争验证申请审核／重提和角色删除／重提两种顺序，完成 4/4。Redis OTP 锁/缓存使用测试内存替身，未调用短信服务商。新增专用 purpose 的线上旧客户端需原位升级；真实 AppID、签名、各渠道版本和旧 API 域名仍待 FE-003K 核对。
+本地独立 PostgreSQL 16.15 测试 `agent-application-postgres.test.ts` 执行两个真实 Hono 路由与 SQL 写路径：代理申请预检失败、类型 2 协议停用时不消费验证码；错误用途不写记录；正确用途写入 `division_apply` 后不可重放；分销员按最新类型 2 协议停用时同样在消费前拒绝，错误用途、写入 `promoter_apply` 和重放亦核对。另以独立 PG 后端锁竞争验证申请审核／重提、角色删除／重提和父事业部角色删除／子代理申请审核三种顺序，完成 5/5。Redis OTP 锁/缓存使用测试内存替身，未调用短信服务商。新增专用 purpose 的线上旧客户端需原位升级；真实 AppID、签名、各渠道版本和旧 API 域名仍待 FE-003K 核对。
 
-候选本地门禁：Worker 双类型检查通过；Worker 申请/SMS/协议专项 19/19，通过；隔离 PostgreSQL 16.15 四条路由/并发场景 4/4，通过且 `FINANCE_LOCAL_FIXTURES remaining=0`、`FINANCE_LOCAL_STOPPED`；UniApp 类型检查、完整工具链 752/752、H5/MP-WEIXIN/APP-PLUS 三端生产构建及产物核对 3/3，通过；151 条旧路由台账审计通过。工具链在隔离工作树借用依赖 junction，运行时使用 `NODE_OPTIONS=--preserve-symlinks` 保留本工作树路径；不作为 Linux CI 的替代证据。
+候选本地门禁：Worker 双类型检查通过；Worker 申请/SMS/协议专项 19/19，通过；隔离 PostgreSQL 16.15 五条路由/并发场景 5/5，通过且 `FINANCE_LOCAL_FIXTURES remaining=0`、`FINANCE_LOCAL_STOPPED`；UniApp 类型检查、完整工具链 752/752、H5/MP-WEIXIN/APP-PLUS 三端生产构建及产物核对 3/3，通过；151 条旧路由台账审计通过。工具链在隔离工作树借用依赖 junction，运行时使用 `NODE_OPTIONS=--preserve-symlinks` 保留本工作树路径；不作为 Linux CI 的替代证据。
