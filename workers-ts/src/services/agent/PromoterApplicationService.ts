@@ -4,7 +4,7 @@ import type { Container } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { agreement, promoterApply, user as userTable } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
-import { cacheDelete, cacheGet } from "@/utils/cache";
+import { SmsVerificationService } from "@/services/message/SmsVerificationService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 const PROMOTER_APPLY_LOCK_NAMESPACE = 505_601;
@@ -114,10 +114,30 @@ export class PromoterApplicationService {
       throw new ValidateException("非指定分销模式无需申请推广员");
     }
 
-    const cachedCode = await cacheGet<string | number>(`code_${phone}`, this.env);
-    if (cachedCode === null || String(cachedCode) !== code) {
-      throw new ValidateException("验证码错误");
+    // Catch normal account, phone and stale-link errors before spending the SMS code.
+    // The locked transaction below repeats every check because this read can race.
+    const [userRows, applicationRows] = await Promise.all([
+      this.container.db.select({ phone: userTable.phone, isPromoter: userTable.isPromoter })
+        .from(userTable).where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0))).limit(1),
+      id > 0
+        ? this.container.db.select({ id: promoterApply.id, uid: promoterApply.uid })
+          .from(promoterApply).where(and(eq(promoterApply.id, id), eq(promoterApply.isDel, 0))).limit(1)
+        : Promise.resolve([]),
+    ]);
+    const currentUser = userRows[0];
+    if (!currentUser) throw new NotFoundException("用户不存在");
+    if (currentUser.isPromoter === 1) throw new ValidateException("您已经是推广员");
+    if (id > 0 && (!applicationRows[0] || applicationRows[0].uid !== uid)) {
+      throw new NotFoundException("申请不存在");
     }
+    if (phone !== currentUser.phone) {
+      const phoneOwners = await this.container.db.select({ uid: userTable.uid }).from(userTable)
+        .where(and(eq(userTable.phone, phone), eq(userTable.isDel, 0), ne(userTable.uid, uid))).limit(1);
+      if (phoneOwners.length > 0) throw new ValidateException("该手机号已被使用");
+    }
+
+    await new SmsVerificationService(this.container, this.env)
+      .consumeUserCode("user_promoter_application", phone, code);
 
     const applicationId = await withTx(this.container, async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PROMOTER_APPLY_LOCK_NAMESPACE}, ${uid})`);
@@ -175,7 +195,6 @@ export class PromoterApplicationService {
       return rows[0].id;
     });
 
-    await cacheDelete(`code_${phone}`, this.env);
     return { id: applicationId };
   }
 

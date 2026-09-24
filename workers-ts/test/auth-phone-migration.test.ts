@@ -21,6 +21,8 @@ describe("phone authentication migration", () => {
       purpose: "user_social_binding",
     });
     expect(normalizeUserSmsType("update_phone")).toEqual({ type: "update_phone", purpose: "user_phone_update" });
+    expect(normalizeUserSmsType("promoter_application")).toEqual({ type: "promoter_application", purpose: "user_promoter_application" });
+    expect(normalizeUserSmsType("division_application")).toEqual({ type: "division_application", purpose: "user_division_application" });
     expect(() => normalizeUserSmsType("supplier_application")).toThrow(
       "短信验证码用途错误",
     );
@@ -50,6 +52,8 @@ describe("phone authentication migration", () => {
       "user_phone_binding",
       "user_social_binding",
       "user_phone_update",
+      "user_promoter_application",
+      "user_division_application",
     ] satisfies SmsVerificationMessage["purpose"][]) {
       expect(isSmsVerificationMessage({ ...base, purpose })).toBe(true);
     }

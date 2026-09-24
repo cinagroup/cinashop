@@ -185,6 +185,66 @@ function roleDivisionId(role: Pick<DivisionParentSnapshot, "uid" | "divisionType
   return role.divisionType === 1 ? role.uid : role.divisionId;
 }
 
+export interface DivisionApplicationInput {
+  uid: number;
+  id?: number;
+  divisionName: string;
+  name: string;
+  phone: string;
+  divisionInvite: number;
+  images?: unknown[];
+}
+
+export function validateDivisionApplicationInput(input: DivisionApplicationInput): string {
+  if (!Number.isSafeInteger(input.uid) || input.uid <= 0) throw new ValidateException("请先登录");
+  if (typeof input.divisionName !== "string" || !input.divisionName.trim()) throw new ValidateException("代理商名称不能为空");
+  if (typeof input.name !== "string" || !input.name.trim()) throw new ValidateException("联系人不能为空");
+  if (typeof input.phone !== "string" || !/^1\d{10}$/.test(input.phone.trim())) throw new ValidateException("手机号格式错误");
+  if (!Number.isSafeInteger(input.divisionInvite) || input.divisionInvite <= 0) throw new ValidateException("事业部邀请码错误");
+  if (input.id !== undefined && (!Number.isSafeInteger(input.id) || input.id <= 0)) throw new ValidateException("申请编号错误");
+  const images = JSON.stringify(Array.isArray(input.images) ? input.images : []);
+  if (images.length > 2000) throw new ValidateException("申请图片数据过长");
+  return images;
+}
+
+export function assertDivisionApplicationEligibility(
+  input: DivisionApplicationInput,
+  applicant: { isDel: number; status: number; divisionType: number; phone: string } | undefined,
+  divisions: Array<{ uid: number; divisionEndTime: number }>,
+  now: number,
+): void {
+  if (!applicant || applicant.isDel || !applicant.status) throw new ValidateException("用户不存在或已停用");
+  if (applicant.divisionType !== 0) throw new ValidateException("您已经拥有事业部角色");
+  if (!applicant.phone || applicant.phone !== input.phone.trim()) {
+    throw new ValidateException("申请手机号必须与当前已绑定手机号一致");
+  }
+  if (!divisions[0]) throw new ValidateException("事业部不存在或已停用");
+  if (divisions.length > 1) throw new ValidateException("事业部邀请码重复，请联系平台管理员处理");
+  if (divisions[0].divisionEndTime > 0 && divisions[0].divisionEndTime < now) {
+    throw new ValidateException("事业部已到期");
+  }
+}
+
+function matchingActiveDivisions(invite: number) {
+  return and(
+    eq(user.divisionInvite, invite),
+    eq(user.divisionType, 1),
+    eq(user.divisionStatus, 1),
+    eq(user.status, 1),
+    eq(user.isDel, 0),
+  );
+}
+
+export function assertActiveAgentSelfService<T extends Pick<DivisionParentSnapshot, "divisionType" | "divisionStatus" | "divisionEndTime" | "status" | "isDel">>(
+  agent: T | undefined,
+  now = Math.floor(Date.now() / 1000),
+): asserts agent is T {
+  if (!agent || agent.divisionType !== 2 || agent.isDel || !agent.status || !agent.divisionStatus
+    || (agent.divisionEndTime > 0 && agent.divisionEndTime < now)) {
+    throw new ValidateException("当前用户不是有效代理商");
+  }
+}
+
 function assertScope(scope: DivisionAdminScope, divisionId: number, allowOwnDivision = true): void {
   if (scope.level === 0) return;
   if (!scope.divisionId || scope.divisionId !== divisionId || !allowOwnDivision) {
@@ -915,21 +975,22 @@ export class DivisionManagementService {
     };
   }
 
-  async submitApplication(input: {
-    uid: number;
-    id?: number;
-    divisionName: string;
-    name: string;
-    phone: string;
-    divisionInvite: number;
-    images?: unknown[];
-  }) {
-    if (!input.uid) throw new ValidateException("请先登录");
-    if (!input.divisionName.trim()) throw new ValidateException("代理商名称不能为空");
-    if (!input.name.trim()) throw new ValidateException("联系人不能为空");
-    if (!input.divisionInvite) throw new ValidateException("事业部邀请码错误");
-    const images = JSON.stringify(Array.isArray(input.images) ? input.images : []);
-    if (images.length > 2000) throw new ValidateException("申请图片数据过长");
+  /** Fast, read-only checks before an application consumes its one-time SMS capability. */
+  async prevalidateApplication(input: DivisionApplicationInput): Promise<void> {
+    validateDivisionApplicationInput(input);
+    const [applicants, divisions, existing] = await Promise.all([
+      this.container.db.select().from(user).where(eq(user.uid, input.uid)).limit(1),
+      this.container.db.select({ uid: user.uid, divisionEndTime: user.divisionEndTime })
+        .from(user).where(matchingActiveDivisions(input.divisionInvite)).limit(2),
+      this.container.db.select({ id: divisionApply.id }).from(divisionApply)
+        .where(and(eq(divisionApply.uid, input.uid), eq(divisionApply.isDel, 0))).limit(1),
+    ]);
+    assertDivisionApplicationEligibility(input, applicants[0], divisions, Math.floor(Date.now() / 1000));
+    if (input.id && existing[0]?.id !== input.id) throw new ValidateException("申请记录不匹配");
+  }
+
+  async submitApplication(input: DivisionApplicationInput) {
+    const images = validateDivisionApplicationInput(input);
     const now = Math.floor(Date.now() / 1000);
 
     return this.container.db.transaction(async (rawTx) => {
@@ -938,30 +999,13 @@ export class DivisionManagementService {
       await lockUsers(tx, [input.uid]);
       const applicants = await tx.select().from(user).where(eq(user.uid, input.uid)).limit(1);
       const applicant = applicants[0];
-      if (!applicant || applicant.isDel || !applicant.status) throw new ValidateException("用户不存在或已停用");
-      if (applicant.divisionType !== 0) throw new ValidateException("您已经拥有事业部角色");
-      if (!applicant.phone || applicant.phone !== input.phone.trim()) {
-        throw new ValidateException("申请手机号必须与当前已绑定手机号一致");
-      }
       const divisions = await tx
         .select()
         .from(user)
-        .where(
-          and(
-            eq(user.divisionInvite, input.divisionInvite),
-            eq(user.divisionType, 1),
-            eq(user.divisionStatus, 1),
-            eq(user.status, 1),
-            eq(user.isDel, 0),
-          ),
-        )
+        .where(matchingActiveDivisions(input.divisionInvite))
         .limit(2);
+      assertDivisionApplicationEligibility(input, applicant, divisions, now);
       const division = divisions[0];
-      if (!division) throw new ValidateException("事业部不存在或已停用");
-      if (divisions.length > 1) throw new ValidateException("事业部邀请码重复，请联系平台管理员处理");
-      if (division.divisionEndTime > 0 && division.divisionEndTime < now) {
-        throw new ValidateException("事业部已到期");
-      }
 
       await tx.execute(sql`SELECT "id" FROM "division_apply" WHERE "uid" = ${input.uid} AND "is_del" = 0 FOR UPDATE`);
       const existing = await tx
@@ -969,6 +1013,7 @@ export class DivisionManagementService {
         .from(divisionApply)
         .where(and(eq(divisionApply.uid, input.uid), eq(divisionApply.isDel, 0)))
         .limit(1);
+      if (input.id && existing[0]?.id !== input.id) throw new ValidateException("申请记录不匹配");
       const values = {
         divisionName: input.divisionName.trim(),
         name: input.name.trim(),
@@ -982,7 +1027,6 @@ export class DivisionManagementService {
         refusalReason: "",
       } as const;
       if (existing[0]) {
-        if (input.id && existing[0].id !== input.id) throw new ValidateException("申请记录不匹配");
         await tx.update(divisionApply).set(values).where(eq(divisionApply.id, existing[0].id));
         return { id: existing[0].id };
       }
@@ -995,7 +1039,7 @@ export class DivisionManagementService {
     const { page, limit, offset } = normalizePage(input.page ?? 1, input.limit ?? 20);
     const agents = await this.container.db.select().from(user).where(eq(user.uid, input.agentUid)).limit(1);
     const agent = agents[0];
-    if (!agent || agent.divisionType !== 2) throw new ValidateException("当前用户不是代理商");
+    assertActiveAgentSelfService(agent);
     const conditions: SQL[] = [
       eq(user.agentId, input.agentUid),
       eq(user.divisionType, 3),
@@ -1067,7 +1111,7 @@ export class DivisionManagementService {
         .orderBy(asc(user.uid));
       const agent = rows.find((row) => row.uid === agentUid);
       const staff = rows.find((row) => row.uid === staffUid);
-      if (!agent || agent.divisionType !== 2) throw new ValidateException("当前用户不是代理商");
+      assertActiveAgentSelfService(agent);
       if (!staff || staff.divisionType !== 3 || staff.agentId !== agentUid) {
         throw new ValidateException("员工不存在或不属于当前代理商");
       }
@@ -1085,8 +1129,9 @@ export class DivisionManagementService {
       const tx = rawTx as unknown as DbClient;
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${staffUid})`);
       await lockUsers(tx, [agentUid, staffUid]);
-      const rows = await tx.select().from(user).where(eq(user.uid, staffUid)).limit(1);
-      const staff = rows[0];
+      const rows = await tx.select().from(user).where(inArray(user.uid, [agentUid, staffUid]));
+      assertActiveAgentSelfService(rows.find((row) => row.uid === agentUid));
+      const staff = rows.find((row) => row.uid === staffUid);
       if (!staff || staff.divisionType !== 3 || staff.agentId !== agentUid) {
         throw new ValidateException("员工不存在或不属于当前代理商");
       }
