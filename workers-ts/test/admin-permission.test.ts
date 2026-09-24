@@ -44,6 +44,8 @@ describe("admin permission catalog", () => {
     expect(requiredAdminPermission("POST", "/adminapi/product/add")).toBe("product.manage");
     expect(requiredAdminPermission("POST", "/api/admin/product/create")).toBe("product.manage");
     expect(requiredAdminPermission("GET", "/adminapi/order/outbox")).toBe("outbox.view");
+    expect(requiredAdminPermission("GET", "/adminapi/order/chart")).toBe("order.view");
+    expect(requiredAdminPermission("GET", "/api/admin/order/chart")).toBe("order.view");
     expect(requiredAdminPermission("GET", "/api/admin/order/list")).toBe("order.view");
     expect(requiredAdminPermission("GET", "/adminapi/merchant/store")).toBe("store.view");
     expect(requiredAdminPermission("PUT", "/api/admin/merchant/store_staff/set_show/:id/:status"))

@@ -42,6 +42,7 @@ const order = (id = 25, changes: Record<string, unknown> = {}) => ({ id, orderId
   payType: 'yue', addTime: 1700000000, remark: '', isDel: 0, isSystemDel: 0, province: '', userAddress: '本地地址', totalPostage: '0.00', payIntegral: 0, useIntegral: '0.00', deductionPrice: '0.00', gainIntegral: '0.00', mark: '',
   splitOrders: [], cartInfo: [{ id: id + 100, oid: id, uid: 11, cartId: String(id + 200), cartNum: 1, cartInfo: { product: { storeName: '测试商品' }, sku: { suk: '蓝色', price: '8.00' }, sum_price: '8.00' } }], ...changes });
 const list = (page = 1, total = 21) => ({ list: Array.from({ length: Math.max(0, Math.min(10, total - (page - 1) * 10)) }, (_, i) => order(25 + i + (page - 1) * 10)), page, limit: 10, total });
+const chart = () => ({ all: 21, unpaid: 4, unshipped: 5, untake: 3, unevaluate: 2, complete: 1 });
 const preview = () => ({ id: 25, order_id: 'O25', actor_kind: 'admin', cart_info: [{ id: 125, cart_id: '225', write_surplus_times: 2, write_times: 2 }] });
 const envelope = (data: unknown) => ({ status: 200, data });
 const gate = () => { let resolve!: (value?: unknown) => void; return { promise: new Promise(r => { resolve = r; }), resolve }; };
@@ -50,7 +51,7 @@ async function mount(path = '/order/O25', override: (config: any) => unknown = (
   const calls: any[] = []; let view: any;
   runtime.transport.orderRequest.defaults.adapter = async (config: any) => {
     calls.push(config);
-    const value = await override(config) ?? envelope(config.url === '/order/list' ? list(config.params.page) : config.url === '/order/writeoff_info' ? preview()
+    const value = await override(config) ?? envelope(config.url === '/order/list' ? list(config.params.page) : config.url === '/order/chart' ? chart() : config.url === '/order/writeoff_info' ? preview()
       : config.url === '/order/writeoff' ? { order_id: 'O25', completed: true, status: 2 } : config.url === '/order/delivery/list' ? { list: [], count: 0 }
       : config.url === '/express/list' ? [] : order(Number(config.url.split('/').at(-1).slice(1))));
     return { config, data: value, status: 200, statusText: 'frontend fixture', headers: {} };
@@ -66,6 +67,53 @@ it('consumes exact total on full, last and beyond-last pages; never invents page
   const f = await mount('/order'); try { expect(f.view.total.value).toBe(21); expect(f.view.list.value).toHaveLength(10);
     f.view.query.page = 3; await f.view.fetch(); expect(f.view.total.value).toBe(21); expect(f.view.list.value).toHaveLength(1);
     f.view.query.page = 4; await f.view.fetch(); expect(f.view.total.value).toBe(21); expect(f.view.list.value).toEqual([]);
+  } finally { f.close(); }
+});
+it('renders all six status numbers once on entry and retains them through paging and search', async () => {
+  const delayed = gate(), f = await mount('/order', c => c.url === '/order/list' && c.params?.page === 2 ? delayed.promise : undefined);
+  try {
+    expect(readFileSync(resolve(root, 'src/pages/order/OrderList.vue'), 'utf8')).toContain('v-for="item in chartCards"');
+    expect(f.view.chartCards.value).toEqual([
+      { label: '全部', count: 21 }, { label: '未支付', count: 4 }, { label: '未发货', count: 5 },
+      { label: '待收货', count: 3 }, { label: '待评价', count: 2 }, { label: '交易完成', count: 1 },
+    ]);
+    expect(f.calls.filter(c => c.url === '/order/chart')).toHaveLength(1);
+    f.view.query.page = 2; const paging = f.view.fetch(); await flush();
+    expect(f.view.loading.value).toBe(true);
+    expect(f.view.chartCards.value.map((item: { count: number }) => item.count)).toEqual([21, 4, 5, 3, 2, 1]);
+    expect(f.view.chartLoading.value).toBe(false);
+    delayed.resolve(envelope(list(2))); await paging;
+    f.view.query.order_id = 'O25'; f.view.reload(); await flush();
+    expect(f.view.chartCards.value.map((item: { count: number }) => item.count)).toEqual([21, 4, 5, 3, 2, 1]);
+    expect(f.calls.filter(c => c.url === '/order/chart')).toHaveLength(1);
+  } finally { f.close(); }
+});
+it.each(['missing-count', 'negative', 'exceeds-all'] as const)('rejects malformed %s chart and retries only the chart', async kind => {
+  const bad: any = chart();
+  if (kind === 'missing-count') delete bad.complete;
+  if (kind === 'negative') bad.unpaid = -1;
+  if (kind === 'exceeds-all') bad.all = 1;
+  let broken = true;
+  const f = await mount('/order', c => c.url === '/order/chart' && broken ? envelope(bad) : undefined);
+  try {
+    expect(f.view.chart.value).toBeNull(); expect(f.view.chartError.value).toBeTruthy();
+    expect(f.view.list.value).toHaveLength(10);
+    broken = false; await f.view.fetchChart();
+    expect(f.view.chartError.value).toBe(''); expect(f.view.chart.value).toEqual(chart());
+    expect(f.calls.filter(c => c.url === '/order/chart')).toHaveLength(2);
+    expect(f.calls.filter(c => c.url === '/order/list')).toHaveLength(1);
+  } finally { f.close(); }
+});
+it.each(['session', 'route'] as const)('ignores delayed chart after %s invalidation', async kind => {
+  const delayed = gate(), f = await mount('/order', c => c.url === '/order/chart' ? delayed.promise : undefined);
+  const view = f.view, request = f.calls.find(c => c.url === '/order/chart');
+  try {
+    expect(view.chartLoading.value).toBe(true); expect(view.list.value).toHaveLength(10);
+    if (kind === 'session') runtime.auth.setToken('token-b');
+    else await f.router.push('/away');
+    expect(request.signal.aborted).toBe(true);
+    delayed.resolve(envelope({ ...chart(), all: 999 })); await flush();
+    expect(view.chart.value).toBeNull(); expect(view.chartLoading.value).toBe(false);
   } finally { f.close(); }
 });
 it('clears stale rows and ignores a delayed list after a newer filter', async () => {

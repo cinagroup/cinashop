@@ -141,6 +141,36 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
     });
   });
 
+  it('counts the six effective legacy states over current physical orders without double counting or inventing refunds', async () => {
+    await f.withRuntime(async r => {
+      await wire(r);
+      const supplier = await r.createPaid();
+      expect(supplier).toMatchObject({ pid: expect.any(Number), supplierId: 7, paid: 1, status: 0, shippingType: 1 });
+      expect(supplier.pid).toBeGreaterThan(0);
+      await f.db.insert(storeOrder).values([
+        { orderId: 'chart-unpaid', uid: 11, paid: 0, status: 0 },
+        { orderId: 'chart-store-partial', uid: 11, storeId: 9, paid: 1, status: 4, shippingType: 3 },
+        { orderId: 'chart-delivery', uid: 11, paid: 1, status: 1, shippingType: 1 },
+        { orderId: 'chart-pickup', uid: 11, paid: 1, status: 0, shippingType: 2 },
+        { orderId: 'chart-evaluate', uid: 11, paid: 1, status: 2 },
+        { orderId: 'chart-complete', uid: 11, paid: 1, status: 3 },
+        { orderId: 'chart-refunded', uid: 11, paid: 1, status: 3, refundStatus: 2 },
+        { orderId: 'chart-refunding', uid: 11, paid: 1, status: 0, refundStatus: 1 },
+        { orderId: 'chart-deleted', uid: 11, paid: 1, status: 0, isDel: 1 },
+        { orderId: 'chart-system-deleted', uid: 11, paid: 1, status: 0, isSystemDel: 1 },
+        { orderId: 'chart-payment-parent', uid: 11, pid: -1, paid: 1, status: 0 },
+      ]);
+      const before = await f.state();
+      const expected = { all: 9, unpaid: 1, unshipped: 2, untake: 2, unevaluate: 1, complete: 1 };
+      expect(await read('/adminapi/order/chart')).toEqual(expected);
+      expect(await read('/api/admin/order/chart')).toEqual(expected);
+      // The old default was platform-only and included split payment headers;
+      // this screen follows /order/list: all channels, current physical rows.
+      expect((await read('/adminapi/order/list?limit=100')).total).toBe(expected.all);
+      expect(await f.state()).toEqual(before);
+    });
+  }, 45_000);
+
   it('requires real Admin JWT and order.view for both aliases, without broadening supplier or customer access', async () => {
     await f.withRuntime(async r => {
       await wire(r); const source = await r.createPaid();
@@ -149,7 +179,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
         { token: tokens.get(991)!, status: 400011 }, { token: tokens.get(992)!, status: 410002 },
         { token: customer, status: 410002 }];
       const before = await f.state();
-      for (const base of ['/adminapi', '/api/admin']) for (const path of ['/order/list', `/order/detail/${source.orderId}`]) {
+      for (const base of ['/adminapi', '/api/admin']) for (const path of ['/order/chart', '/order/list', `/order/detail/${source.orderId}`]) {
         for (const sample of cases) {
           const response = await send(base + path, sample.token);
           expect(response.headers.get('Cache-Control')).toContain('no-store');
@@ -157,10 +187,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
         }
       }
       await f.db.update(systemRole).set({ status: 0 }).where(eq(systemRole.id, 990));
-      expect(await (await send('/adminapi/order/list')).json()).toMatchObject({ status: 400011 });
+      expect(await (await send('/adminapi/order/chart')).json()).toMatchObject({ status: 400011 });
       await f.db.update(systemRole).set({ status: 1 }).where(eq(systemRole.id, 990));
       await f.db.update(systemAdmin).set({ pwd: 'changed-local-digest' }).where(eq(systemAdmin.id, 990));
-      expect(await (await send('/api/admin/order/list')).json()).toMatchObject({ status: 410001 });
+      expect(await (await send('/api/admin/order/chart')).json()).toMatchObject({ status: 410001 });
       expect(await f.state()).toEqual(before);
     });
   });
@@ -175,6 +205,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
         expect(await response.json()).toMatchObject({ status: 400, data: null });
       }
       expect(await read('/adminapi/order/list?status=&paid=')).toMatchObject({ total: 1 });
+      for (const query of ['status=1', 'status=', 'start=1', 'status=1&status=2']) {
+        expect(await (await send(`/adminapi/order/chart?${query}`)).json()).toMatchObject({ status: 400, data: null });
+      }
       expect(await f.state()).toEqual(before);
     });
   });
@@ -243,6 +276,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
           expect(settings).toEqual({ readonly: 'on', timeout: '5s' });
         });
         try { expect((await read('/adminapi/order/list')).total).toBe(2); } finally { restore(); }
+        expect((await read('/adminapi/order/chart')).all).toBe(2);
         expect(rows((await read(`/adminapi/order/detail/${source.orderId}`)).splitOrders)).toHaveLength(2);
         await f.exec(`REVOKE SELECT ON store_order_cart_info FROM "${peer.role}"`);
         await expect(new AdminOrderReadService(container).detail(source.orderId)).rejects.toMatchObject({ cause: { code: '42501' } });
@@ -250,6 +284,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Admin 
         expect(settings).toEqual({ readonly: 'off', timeout: '0' });
         await f.exec(`REVOKE SELECT ON store_order FROM "${peer.role}"`);
         await expect(new AdminOrderReadService(container).list({})).rejects.toMatchObject({ cause: { code: '42501' } });
+        await expect(new AdminOrderReadService(container).chart()).rejects.toMatchObject({ cause: { code: '42501' } });
       });
     });
   });

@@ -89,10 +89,10 @@ add("/admin/pages/diy", "partial", ["/content/dise"], ["GET /adminapi/dise/list"
 add("/admin/pages/special/diy", "missing", [], ["GET /adminapi/dise/list"], "",
   "旧专题页有独立装修、保存和重置；新 DIY 目录的新建动作固定 type=1 首页合同，没有专题页可视化编辑入口。",
   ["view/admin-ts/src/pages/content/DiseList.vue"]);
-add("/admin/echarts/trade/order", "partial", ["/order", "/statistic"], ["GET /adminapi/order/list", "GET /adminapi/statistic/order/get_basic"],
-  "旧页确有 GET /order/chart 提供实时订单状态计数；新版订单列表可按部分履约状态筛选并展示匹配总数，订单统计 tab 有支付与退款计数。",
-  "旧页一次展示全部/未付/未发货/待收货/待评价/完成/退款中/已退款八类实时计数，新 Admin 无等量面板且 Worker 未注册旧 GET /adminapi/order/chart；旧 PV/UV 曲线、固定 3 件卡片和 John Brown 样例表格仅是演示内容，按演示部分退役。",
-  ["cinashop-php/view/admin/src/api/order.js:28", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:71", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:229", "view/admin-ts/src/api/order.ts", "view/admin-ts/src/pages/statistic/Dashboard.vue"]);
+add("/admin/echarts/trade/order", "partial", ["/order", "/statistic"], ["GET /adminapi/order/chart", "GET /adminapi/order/list", "GET /adminapi/statistic/order/get_basic"],
+  "旧页挂载时请求一次 GET /order/chart；服务端实际为 all/unpaid/unshipped/untake/unevaluate/complete 六项赋值。新订单页和只读 Worker /order/chart 以当前有效履约单口径提供六数；订单统计 tab 另有支付与退款统计。",
+  "旧 PHP 默认仅平台、pid 0/-1 且含用户删除行；新页跨平台/门店/供应商统计未删除的当前履约单和拆单子单，需用历史数据核对范围差异。旧页的退款中/已退款标签读取 refunding/refund，但服务端对应赋值已注释；日期控件仅本地绑定，时间回调为空，类型/状态选择未重新请求计数。旧 PV/UV 曲线、固定卡片和 John Brown 样例表格仅是演示内容。",
+  ["cinashop-php/view/admin/src/api/order.js:28", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:71", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:174", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:227", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:231", "cinashop-php/app/common/controller/Order.php:56", "cinashop-php/app/services/order/StoreOrderServices.php:1040", "cinashop-php/app/services/order/StoreOrderServices.php:1097", "cinashop-php/app/services/order/StoreOrderServices.php:1101", "workers-ts/src/services/admin/AdminOrderReadService.ts", "view/admin-ts/src/api/order.ts", "view/admin-ts/src/pages/statistic/Dashboard.vue"]);
 add("/admin/echarts/trade/product", "retired", [], [], "",
   "旧组件仅空 template 和 name='product'，没有商品查询、图表或操作；真实商品统计另由 /admin/statistic/product 承担。",
   ["cinashop-php/view/admin/src/pages/echarts/trade/product.vue:1", "view/admin-ts/src/pages/statistic/Dashboard.vue"]);

@@ -84,11 +84,16 @@ describe("legacy Admin cross-module route semantic audit", () => {
 
   it("keeps the live order count partial while retiring only its demo chart and tables", () => {
     expect(byPath.get("/admin/echarts/trade/product")?.status).toBe("retired");
-    expect(byPath.get("/admin/echarts/trade/order")?.status).toBe("partial");
-    expect(byPath.get("/admin/echarts/trade/order")?.targetScreens).toEqual(["/order", "/statistic"]);
-    expect(byPath.get("/admin/echarts/trade/order")?.covered.join(" ")).toMatch(/实时订单状态计数/u);
-    expect(byPath.get("/admin/echarts/trade/order")?.remaining.join(" ")).toMatch(/GET \/adminapi\/order\/chart/u);
-    expect(byPath.get("/admin/echarts/trade/order")?.remaining.join(" ")).toMatch(/演示|样例/u);
+    const order = byPath.get("/admin/echarts/trade/order");
+    expect(order?.status).toBe("partial");
+    expect(order?.targetScreens).toEqual(["/order", "/statistic"]);
+    expect(order?.covered.join(" ")).toMatch(/all\/unpaid\/unshipped\/untake\/unevaluate\/complete 六项赋值/u);
+    expect(order?.remaining.join(" ")).toMatch(/refunding\/refund.*赋值已注释/u);
+    expect(order?.targetApis).toContain("GET /adminapi/order/chart");
+    expect(order?.remaining.join(" ")).toMatch(/范围差异/u);
+    expect(order?.remaining.join(" ")).toMatch(/日期控件仅本地绑定.*类型\/状态选择未重新请求计数/u);
+    expect(order?.remaining.join(" ")).toMatch(/演示|样例/u);
+    expect(order?.evidence).toContain("cinashop-php/app/services/order/StoreOrderServices.php:1101");
     expect(byPath.has("/admin/system/log")).toBe(false);
     expect(byPath.has("/admin/system/user")).toBe(false);
     expect(byPath.has("/admin/setting/system/create")).toBe(false);

@@ -1429,6 +1429,7 @@ v1Routes.put(
 v1Routes.delete("/admin/product/words/:id", adminAuth, AdminProductWords.remove);
 
 // 订单管理
+v1Routes.get("/admin/order/chart", adminAuth, AdminCrud.adminOrderChart);
 v1Routes.get("/admin/order/list", adminAuth, AdminCrud.adminOrderList);
 v1Routes.get("/admin/order/detail/:orderId", adminAuth, AdminCrud.adminOrderDetail);
 v1Routes.get("/admin/order/cart/:uid", adminAuth, AdminController.adminAssistedCartList);

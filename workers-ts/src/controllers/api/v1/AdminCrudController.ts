@@ -419,6 +419,13 @@ export async function adminProductDel(c: C) {
 // 订单管理
 // ═══════════════════════════════════════════════════════════
 
+/** GET /api/admin/order/chart — current fulfillment status counts. */
+export async function adminOrderChart(c: C) {
+  privateNoStore(c);
+  if (Object.keys(c.req.queries()).length) throw new ValidateException('状态计数不支持筛选参数');
+  return jsonOk(c, await new AdminOrderReadService(c.get('container')).chart());
+}
+
 /** GET /api/admin/order/list — 订单列表 */
 export async function adminOrderList(c: C) {
   privateNoStore(c);

@@ -52,6 +52,27 @@ export class AdminOrderReadService {
     });
   }
 
+  /** One database snapshot for the six live status buckets used by the old
+   * order chart. The modern Admin list shows current physical fulfillments:
+   * pid >= 0, including split children, across platform/store/supplier and all
+   * creation dates. Deleted rows and split payment headers (pid = -1) are not
+   * current fulfillments. `all` also contains refunds/cancellations, so it is
+   * intentionally not the sum of the five status buckets. */
+  async chart() {
+    const eligible = sql`${storeOrder.paid}=1 AND ${storeOrder.refundStatus} IN (0,3)`;
+    return this.snapshot(async db => {
+      const [counts] = await db.select({
+        all: sql<number>`COUNT(*)::integer`,
+        unpaid: sql<number>`COUNT(*) FILTER (WHERE ${storeOrder.paid}=0 AND ${storeOrder.status}=0 AND ${storeOrder.refundStatus}=0)::integer`,
+        unshipped: sql<number>`COUNT(*) FILTER (WHERE ${eligible} AND ${storeOrder.status} IN (0,4) AND ${storeOrder.shippingType} IN (1,3))::integer`,
+        untake: sql<number>`COUNT(*) FILTER (WHERE ${eligible} AND ((${storeOrder.status} IN (1,5) AND ${storeOrder.shippingType}=1) OR (${storeOrder.status} IN (0,5) AND ${storeOrder.shippingType}=2)))::integer`,
+        unevaluate: sql<number>`COUNT(*) FILTER (WHERE ${eligible} AND ${storeOrder.status}=2)::integer`,
+        complete: sql<number>`COUNT(*) FILTER (WHERE ${eligible} AND ${storeOrder.status}=3)::integer`,
+      }).from(storeOrder).where(and(visible(), gte(storeOrder.pid, 0)));
+      return counts;
+    });
+  }
+
   async list(query: Record<string, string>) {
     const page = integer(query.page, 1, 1, 10_000), limit = integer(query.limit, 10, 1, 100);
     const conditions: SQL[] = [visible()!, gte(storeOrder.pid, 0)];

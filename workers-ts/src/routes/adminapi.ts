@@ -17,6 +17,7 @@
  *   GET  /adminapi/product/detail/:id → adminProductDetail
  *   POST /adminapi/product/add        → adminProductCreate
  *   POST /adminapi/product/set_show/:id → adminProductSetShow
+ *   GET  /adminapi/order/chart        → adminOrderChart
  *   GET  /adminapi/order/list         → adminOrderList
  *   GET  /adminapi/order/detail/:id   → adminOrderDetail
  *   POST /adminapi/order/remark/:id   → adminOrderRemark
@@ -308,6 +309,7 @@ adminapiRoutes.delete("/product/words/:id", adminAuth, AdminProductWords.remove)
 adminapiRoutes.get('/order/scan_list', AdminOfflineOrder.privateResponse, adminAuth, AdminOfflineOrder.list);
 adminapiRoutes.get('/order/offline_scan', AdminOfflineOrder.privateResponse, adminAuth, AdminOfflineOrder.scan);
 adminapiRoutes.get('/order/scan_detail/:id', AdminOfflineOrder.privateResponse, adminAuth, AdminOfflineOrder.detail);
+adminapiRoutes.get("/order/chart", adminAuth, AdminCrud.adminOrderChart);
 adminapiRoutes.get("/order/list", adminAuth, AdminCrud.adminOrderList);
 adminapiRoutes.get("/order/detail/:id", adminAuth, AdminCrud.adminOrderDetail);
 adminapiRoutes.post("/order/remark/:id", adminAuth, AdminCrud.adminOrderRemark);
