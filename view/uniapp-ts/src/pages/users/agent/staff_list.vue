@@ -42,6 +42,15 @@ const writeNotice = ref("");
 const editing = ref<AgentStaff | null>(null);
 const percent = ref("");
 let epoch = 0;
+let writeEpoch = 0;
+type Owner = { uid: number; token: string; version: number; epoch: number };
+let editingOwner: Owner | null = null;
+function ownerSnapshot(): Owner { return { uid: auth.uid, token: auth.token, version: auth.sessionVersion, epoch }; }
+function sameSession(owner: Owner): boolean {
+  return auth.isLoggedIn && auth.uid === owner.uid && auth.token === owner.token
+    && auth.sessionVersion === owner.version;
+}
+function sameOwner(owner: Owner): boolean { return sameSession(owner) && epoch === owner.epoch; }
 
 async function fetchPage(nextPage: number): Promise<void> {
   if (loading.value || !auth.isLoggedIn) return;
@@ -59,35 +68,45 @@ async function fetchPage(nextPage: number): Promise<void> {
 }
 function refresh(): void {
   ++epoch; loading.value = false; staff.value = []; total.value = 0; page.value = 0;
+  editing.value = null; editingOwner = null; actionError.value = ""; writeNotice.value = "";
   if (!auth.isLoggedIn) { error.value = "请先登录"; return; }
   void fetchPage(1);
 }
 function search(): void { appliedKeyword.value = keyword.value.trim().slice(0, 50); refresh(); }
 function loadMore(): void { if (staff.value.length < total.value) void fetchPage(page.value + 1); }
-function beginPercent(item: AgentStaff): void { editing.value = item; percent.value = String(item.divisionPercent); actionError.value = ""; }
+function beginPercent(item: AgentStaff): void {
+  if (!auth.isLoggedIn) return;
+  editingOwner = ownerSnapshot(); editing.value = item; percent.value = String(item.divisionPercent); actionError.value = "";
+}
 async function savePercent(): Promise<void> {
-  if (!editing.value || writing.value) return;
+  if (!editing.value || !editingOwner || !sameOwner(editingOwner) || writing.value) return;
   if (!/^(?:0|[1-9]\d?)$|^100$/.test(percent.value)) { actionError.value = "请输入 0–100 的整数"; return; }
   const uid = editing.value.uid;
+  const owner = ownerSnapshot();
+  const action = ++writeEpoch;
   writing.value = true; actionError.value = "";
-  try { await apiAgentStaffPercent(uid, Number(percent.value)); editing.value = null; writeNotice.value = ""; refresh(); }
-  catch (cause) { editing.value = null; refresh(); writeNotice.value = `${cause instanceof Error ? cause.message : "修改结果未知"}；请核对刷新后的比例再操作`; }
-  finally { writing.value = false; }
+  try { await apiAgentStaffPercent(uid, Number(percent.value)); if (sameOwner(owner)) refresh(); }
+  catch (cause) {
+    if (sameOwner(owner)) { refresh(); writeNotice.value = `${cause instanceof Error ? cause.message : "修改结果未知"}；请核对刷新后的比例再操作`; }
+  } finally { if (sameSession(owner) && action === writeEpoch) writing.value = false; }
 }
 function remove(item: AgentStaff): void {
-  if (writing.value) return;
+  if (writing.value || !auth.isLoggedIn) return;
+  const owner = ownerSnapshot();
   uni.showModal({ title: "移除员工", content: `确认移除 ${item.nickname || item.uid}？`, success: async (result) => {
-    if (!result.confirm || writing.value) return;
+    if (!result.confirm || writing.value || !sameOwner(owner)) return;
+    const action = ++writeEpoch;
     writing.value = true; actionError.value = "";
-    try { await apiRemoveAgentStaff(item.uid); writeNotice.value = ""; refresh(); }
-    catch (cause) { refresh(); writeNotice.value = cause instanceof Error ? `${cause.message}；请核对刷新后的员工列表` : "操作结果未知，请核对刷新后的员工列表"; }
-    finally { writing.value = false; }
+    try { await apiRemoveAgentStaff(item.uid); if (sameOwner(owner)) refresh(); }
+    catch (cause) {
+      if (sameOwner(owner)) { refresh(); writeNotice.value = cause instanceof Error ? `${cause.message}；请核对刷新后的员工列表` : "操作结果未知，请核对刷新后的员工列表"; }
+    } finally { if (sameSession(owner) && action === writeEpoch) writing.value = false; }
   } });
 }
 onShow(refresh);
-onHide(() => { ++epoch; });
-onUnload(() => { ++epoch; });
-watch(() => [auth.uid, auth.token, auth.sessionVersion], () => { ++epoch; staff.value = []; editing.value = null; refresh(); });
+onHide(() => { ++epoch; ++writeEpoch; writing.value = false; });
+onUnload(() => { ++epoch; ++writeEpoch; writing.value = false; });
+watch(() => [auth.uid, auth.token, auth.sessionVersion], () => { ++writeEpoch; writing.value = false; refresh(); });
 </script>
 
 <style scoped>

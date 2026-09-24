@@ -3,10 +3,12 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import type { AppVariables, Env } from "@/env";
 import { createContainerFromDb } from "@/lib/di";
-import { divisionApply, promoterApply, user } from "@/models/schema";
+import { agreement, divisionApply, promoterApply, user } from "@/models/schema";
 import { applyAgent } from "@/controllers/api/v1/DivisionController";
 import { applyPromoter } from "@/controllers/api/v1/PromoterApplicationController";
 import { financePostgres } from "./helpers/financePostgres";
+import { outcome, waitForFinanceBlock, withFinancePeers } from "./helpers/financePeers";
+import { DivisionManagementService } from "@/services/division/DivisionManagementService";
 
 const state = vi.hoisted(() => ({
   codes: new Map<string, { uid: number; purpose: string; code: string }>(),
@@ -43,12 +45,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
 
   beforeEach(async () => {
     state.codes.clear(); state.locks.clear();
-    fixture = await financePostgres([user, divisionApply, promoterApply]);
+    fixture = await financePostgres([user, divisionApply, promoterApply, agreement]);
     await fixture.db.insert(user).values([
       { uid: 10, account: "local-division", divisionType: 1, divisionStatus: 1,
         divisionInvite: 123456, divisionEndTime: 0, status: 1 },
       { uid: 11, account: "local-applicant", phone: "13800138000", divisionType: 0, status: 1 },
     ]);
+    await fixture.db.insert(agreement).values({ type: 2, title: "本地代理协议", content: "<p>仅隔离测试</p>", status: 1 });
     app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.use("*", async (c, next) => { c.set("container", createContainerFromDb(fixture.db)); c.set("uid", 11); await next(); });
     app.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
@@ -73,6 +76,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
     };
     try {
       state.codes.set(divisionKey, { uid: 0, purpose: "user_division_application", code: body.code });
+      await fixture.db.update(agreement).set({ status: 0 }).where(eq(agreement.type, 2));
+      const disabledAgreement = await post(body);
+      expect(disabledAgreement.status).not.toBe(200);
+      expect(disabledAgreement.msg).toContain("代理商协议尚未启用");
+      expect(state.codes.has(divisionKey)).toBe(true);
+      expect(await fixture.db.select().from(divisionApply)).toHaveLength(0);
+      await fixture.db.update(agreement).set({ status: 1 }).where(eq(agreement.type, 2));
       const badInvite = await post({ ...body, division_invite: 999999 });
       expect(badInvite.status).not.toBe(200);
       expect(badInvite.msg).toContain("事业部不存在");
@@ -140,5 +150,60 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
       expect(replay.msg).toContain("验证码错误或已过期");
       expect(await fixture.db.select().from(promoterApply).where(eq(promoterApply.uid, 11))).toEqual(rows);
     } finally { subtle.timingSafeEqual = original; }
+  });
+
+  it("serializes agent resubmission after admin review via the applicant advisory lock", async () => {
+    const [application] = await fixture.db.insert(divisionApply).values({ uid: 11, divisionId: 10,
+      divisionName: body.division_name, name: body.name, phone: body.phone, divisionInvite: body.division_invite,
+      images: JSON.stringify(body.images) }).returning({ id: divisionApply.id });
+    await withFinancePeers(fixture.db, async ([blocker, adminPeer, applicantPeer]) => {
+      await blocker.exec("BEGIN");
+      try {
+        await blocker.exec("SELECT pg_advisory_xact_lock(1147879249, 11)");
+        const admin = new DivisionManagementService(createContainerFromDb(adminPeer.db));
+        const applicant = new DivisionManagementService(createContainerFromDb(applicantPeer.db));
+        const reviewed = outcome(admin.reviewApplication({ id: application.id, approved: true,
+          divisionPercent: 0, divisionEndTime: 0, scope: { level: 0, divisionId: 0 } }));
+        await waitForFinanceBlock(fixture.db, adminPeer.pid, blocker.pid);
+        const resubmitted = outcome(applicant.submitApplication({ uid: 11, id: application.id,
+          divisionName: body.division_name, name: body.name, phone: body.phone,
+          divisionInvite: body.division_invite, images: body.images }));
+        await waitForFinanceBlock(fixture.db, applicantPeer.pid, blocker.pid);
+        await blocker.exec("COMMIT");
+        const [reviewResult, submitResult] = await Promise.all([reviewed, resubmitted]);
+        expect(reviewResult.ok, reviewResult.ok ? undefined : String(reviewResult.error)).toBe(true);
+        expect(submitResult.ok).toBe(false);
+        if (!submitResult.ok) expect(String(submitResult.error)).toContain("已经拥有事业部角色");
+      } finally { await blocker.exec("ROLLBACK"); }
+    });
+  });
+
+  it("serializes agent resubmission with role removal without a row/advisory deadlock", async () => {
+    await fixture.db.update(user).set({ divisionType: 2, divisionStatus: 1, divisionId: 10,
+      agentId: 11, divisionPercent: 0 }).where(eq(user.uid, 11));
+    await fixture.db.insert(divisionApply).values({ uid: 11, divisionId: 10,
+      divisionName: body.division_name, name: body.name, phone: body.phone, divisionInvite: body.division_invite,
+      images: JSON.stringify(body.images) });
+    await withFinancePeers(fixture.db, async ([blocker, adminPeer, applicantPeer]) => {
+      await blocker.exec("BEGIN");
+      try {
+        await blocker.exec("SELECT pg_advisory_xact_lock(1147879249, 11)");
+        const admin = new DivisionManagementService(createContainerFromDb(adminPeer.db));
+        const applicant = new DivisionManagementService(createContainerFromDb(applicantPeer.db));
+        const removed = outcome(admin.deleteRole(11, { level: 0, divisionId: 0 }));
+        await waitForFinanceBlock(fixture.db, adminPeer.pid, blocker.pid);
+        const submitted = outcome(applicant.submitApplication({ uid: 11,
+          divisionName: body.division_name, name: body.name, phone: body.phone,
+          divisionInvite: body.division_invite, images: body.images }));
+        await waitForFinanceBlock(fixture.db, applicantPeer.pid, blocker.pid);
+        await blocker.exec("COMMIT");
+        const [removeResult, submitResult] = await Promise.all([removed, submitted]);
+        expect(removeResult.ok, removeResult.ok ? undefined : String(removeResult.error)).toBe(true);
+        expect(submitResult.ok, submitResult.ok ? undefined : String(submitResult.error)).toBe(true);
+        const active = await fixture.db.select().from(divisionApply).where(eq(divisionApply.isDel, 0));
+        expect(active).toHaveLength(1);
+        expect(active[0].uid).toBe(11);
+      } finally { await blocker.exec("ROLLBACK"); }
+    });
   });
 });

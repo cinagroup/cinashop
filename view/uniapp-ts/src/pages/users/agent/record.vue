@@ -52,7 +52,7 @@ function open(item: AgentApplication): void {
 onShow(() => { void load(); });
 onHide(() => { ++epoch; });
 onUnload(() => { ++epoch; });
-watch(() => [auth.uid, auth.token, auth.sessionVersion], () => { ++epoch; applications.value = []; if (auth.isLoggedIn) void load(); });
+watch(() => [auth.uid, auth.token, auth.sessionVersion], () => { void load(); });
 </script>
 
 <style scoped>

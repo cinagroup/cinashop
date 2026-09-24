@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import type { Container, DbClient } from "@/lib/di";
-import { divisionApply, storeOrder, systemAdmin, user } from "@/models/schema";
+import { agreement, divisionApply, storeOrder, systemAdmin, user } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
 
 export type DivisionRoleType = 1 | 2 | 3;
@@ -233,6 +233,12 @@ function matchingActiveDivisions(invite: number) {
     eq(user.status, 1),
     eq(user.isDel, 0),
   );
+}
+
+function assertActiveAgentAgreement(row: { status: number; content: string | null } | undefined): void {
+  if (!row || row.status !== 1 || !row.content?.trim()) {
+    throw new ValidateException("代理商协议尚未启用");
+  }
 }
 
 export function assertActiveAgentSelfService<T extends Pick<DivisionParentSnapshot, "divisionType" | "divisionStatus" | "divisionEndTime" | "status" | "isDel">>(
@@ -889,10 +895,13 @@ export class DivisionManagementService {
     const status = Number(input.divisionStatus ?? 1);
     if (input.approved && ![0, 1].includes(status)) throw new ValidateException("角色状态错误");
     const now = Math.floor(Date.now() / 1000);
+    const candidate = await this.container.db.select({ uid: divisionApply.uid }).from(divisionApply)
+      .where(and(eq(divisionApply.id, input.id), eq(divisionApply.isDel, 0))).limit(1);
+    if (!candidate[0]) throw new ValidateException("代理商申请不存在");
 
     return this.container.db.transaction(async (rawTx) => {
       const tx = rawTx as unknown as DbClient;
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${input.id})`);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${candidate[0].uid})`);
       await tx.execute(sql`SELECT "id" FROM "division_apply" WHERE "id" = ${input.id} FOR UPDATE`);
       const applicationRows = await tx
         .select()
@@ -901,6 +910,7 @@ export class DivisionManagementService {
         .limit(1);
       const application = applicationRows[0];
       if (!application) throw new ValidateException("代理商申请不存在");
+      if (application.uid !== candidate[0].uid) throw new ValidateException("代理商申请用户已变化，请重试");
       if (application.status !== 0) throw new ValidateException("该申请已经审核");
       assertScope(input.scope, application.divisionId);
 
@@ -978,14 +988,17 @@ export class DivisionManagementService {
   /** Fast, read-only checks before an application consumes its one-time SMS capability. */
   async prevalidateApplication(input: DivisionApplicationInput): Promise<void> {
     validateDivisionApplicationInput(input);
-    const [applicants, divisions, existing] = await Promise.all([
+    const [applicants, divisions, existing, agreements] = await Promise.all([
       this.container.db.select().from(user).where(eq(user.uid, input.uid)).limit(1),
       this.container.db.select({ uid: user.uid, divisionEndTime: user.divisionEndTime })
         .from(user).where(matchingActiveDivisions(input.divisionInvite)).limit(2),
       this.container.db.select({ id: divisionApply.id }).from(divisionApply)
         .where(and(eq(divisionApply.uid, input.uid), eq(divisionApply.isDel, 0))).limit(1),
+      this.container.db.select({ status: agreement.status, content: agreement.content }).from(agreement)
+        .where(eq(agreement.type, 2)).orderBy(desc(agreement.sort), desc(agreement.id)).limit(1),
     ]);
     assertDivisionApplicationEligibility(input, applicants[0], divisions, Math.floor(Date.now() / 1000));
+    assertActiveAgentAgreement(agreements[0]);
     if (input.id && existing[0]?.id !== input.id) throw new ValidateException("申请记录不匹配");
   }
 
@@ -995,7 +1008,13 @@ export class DivisionManagementService {
 
     return this.container.db.transaction(async (rawTx) => {
       const tx = rawTx as unknown as DbClient;
+      // Role writes and admin review take the applicant advisory lock first;
+      // both application paths then lock the application row before users.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${ROLE_LOCK_NAMESPACE}, ${input.uid})`);
+      const existing = await tx.select().from(divisionApply)
+        .where(and(eq(divisionApply.uid, input.uid), eq(divisionApply.isDel, 0)))
+        .for("update").limit(1);
+      if (input.id && existing[0]?.id !== input.id) throw new ValidateException("申请记录不匹配");
       await lockUsers(tx, [input.uid]);
       const applicants = await tx.select().from(user).where(eq(user.uid, input.uid)).limit(1);
       const applicant = applicants[0];
@@ -1006,14 +1025,11 @@ export class DivisionManagementService {
         .limit(2);
       assertDivisionApplicationEligibility(input, applicant, divisions, now);
       const division = divisions[0];
+      const agreements = await tx.select({ status: agreement.status, content: agreement.content })
+        .from(agreement).where(eq(agreement.type, 2))
+        .orderBy(desc(agreement.sort), desc(agreement.id)).limit(1);
+      assertActiveAgentAgreement(agreements[0]);
 
-      await tx.execute(sql`SELECT "id" FROM "division_apply" WHERE "uid" = ${input.uid} AND "is_del" = 0 FOR UPDATE`);
-      const existing = await tx
-        .select()
-        .from(divisionApply)
-        .where(and(eq(divisionApply.uid, input.uid), eq(divisionApply.isDel, 0)))
-        .limit(1);
-      if (input.id && existing[0]?.id !== input.id) throw new ValidateException("申请记录不匹配");
       const values = {
         divisionName: input.divisionName.trim(),
         name: input.name.trim(),

@@ -118,6 +118,8 @@ async function load(): Promise<void> {
   const epoch = ++requestEpoch;
   loading.value = true;
   submitting.value = false;
+  uploading.value = false;
+  sendingCode.value = false;
   loadError.value = "";
   error.value = "";
   submissionUnknown.value = false;
@@ -156,40 +158,45 @@ async function sendCode(): Promise<void> {
   if (sendingCode.value || countdown.value > 0) return;
   const phone = form.phone.trim();
   if (!/^1\d{10}$/.test(phone)) { error.value = "请输入正确的 11 位手机号"; return; }
-  const owner = { uid: auth.uid, token: auth.token, version: auth.sessionVersion };
+  const owner = { uid: auth.uid, token: auth.token, version: auth.sessionVersion, epoch: requestEpoch };
+  const isCurrent = () => auth.isLoggedIn && auth.uid === owner.uid && auth.token === owner.token
+    && auth.sessionVersion === owner.version && requestEpoch === owner.epoch;
   sendingCode.value = true; error.value = "";
   try {
     const purpose = props.kind === "promoter" ? "promoter_application" : "division_application";
     const key = await requestSmsChallenge(phone, purpose);
-    if (auth.uid !== owner.uid || auth.token !== owner.token || auth.sessionVersion !== owner.version) {
-      throw new Error("登录状态已变化，请重新操作");
-    }
+    if (!isCurrent()) return;
     await apiRequestCode(phone, purpose, key);
-    if (auth.uid !== owner.uid || auth.token !== owner.token || auth.sessionVersion !== owner.version) return;
+    if (!isCurrent()) return;
     countdown.value = 60;
     countdownTimer = setInterval(() => { countdown.value -= 1; if (countdown.value <= 0) stopCountdown(); }, 1000);
     uni.showToast({ title: "验证码任务已提交", icon: "success" });
-  } catch (cause) { error.value = message(cause, "验证码发送失败"); }
-  finally { sendingCode.value = false; }
+  } catch (cause) { if (isCurrent()) error.value = message(cause, "验证码发送失败"); }
+  finally { if (isCurrent()) sendingCode.value = false; }
 }
 async function chooseImages(): Promise<void> {
   if (uploading.value || form.images.length >= 8) return;
+  const owner = { uid: auth.uid, token: auth.token, version: auth.sessionVersion, epoch: requestEpoch };
+  const isCurrent = () => auth.isLoggedIn && auth.uid === owner.uid && auth.token === owner.token
+    && auth.sessionVersion === owner.version && requestEpoch === owner.epoch;
+  if (!isCurrent()) return;
+  uploading.value = true; error.value = "";
   let files: string[];
   try {
     const selected = await new Promise<{ tempFilePaths: string | string[] }>((resolve, reject) => uni.chooseImage({
       count: 8 - form.images.length, success: (result) => resolve(result), fail: reject,
     }));
+    if (!isCurrent()) return;
     files = Array.isArray(selected.tempFilePaths) ? selected.tempFilePaths : [selected.tempFilePaths];
-  } catch { return; }
-  uploading.value = true; error.value = "";
-  try {
     for (const file of files) {
+      if (!isCurrent()) return;
       const uploaded = await apiAgentImageUpload(file);
+      if (!isCurrent()) return;
       form.images.push(uploaded.url);
       imagePreviews.value.push(uploaded.src);
     }
-  } catch (cause) { error.value = message(cause, "图片上传失败"); }
-  finally { uploading.value = false; }
+  } catch (cause) { if (isCurrent()) error.value = message(cause, "图片选择或上传失败"); }
+  finally { if (isCurrent()) uploading.value = false; }
 }
 function removeImage(index: number): void { form.images.splice(index, 1); imagePreviews.value.splice(index, 1); }
 async function submit(): Promise<void> {

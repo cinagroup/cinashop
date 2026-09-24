@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
 import { withTx } from "@/lib/di";
@@ -141,6 +141,11 @@ export class PromoterApplicationService {
 
     const applicationId = await withTx(this.container, async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PROMOTER_APPLY_LOCK_NAMESPACE}, ${uid})`);
+      // Admin examine also locks application before user under this advisory key.
+      const lockedApplications = await tx.select({ id: promoterApply.id, uid: promoterApply.uid })
+        .from(promoterApply).where(and(eq(promoterApply.uid, uid), eq(promoterApply.isDel, 0)))
+        .orderBy(asc(promoterApply.id)).for("update");
+      if (id > 0 && !lockedApplications.some((row) => row.id === id)) throw new NotFoundException("申请不存在");
       const users = await tx
         .select()
         .from(userTable)
@@ -162,14 +167,6 @@ export class PromoterApplicationService {
 
       const now = Math.floor(Date.now() / 1000);
       if (id > 0) {
-        const rows = await tx
-          .select({ id: promoterApply.id, uid: promoterApply.uid })
-          .from(promoterApply)
-          .where(and(eq(promoterApply.id, id), eq(promoterApply.isDel, 0)))
-          .for("update")
-          .limit(1);
-        const existing = rows[0];
-        if (!existing || existing.uid !== uid) throw new NotFoundException("申请不存在");
         await tx
           .update(promoterApply)
           .set({

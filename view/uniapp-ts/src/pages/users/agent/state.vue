@@ -67,7 +67,7 @@ onLoad((query) => {
 onShow(() => { if (error.value !== "申请类型无效") void load(); });
 onHide(() => { ++epoch; });
 onUnload(() => { ++epoch; });
-watch(() => [auth.uid, auth.token, auth.sessionVersion], () => { ++epoch; application.value = null; if (auth.isLoggedIn) void load(); });
+watch(() => [auth.uid, auth.token, auth.sessionVersion], () => { void load(); });
 </script>
 
 <style scoped>

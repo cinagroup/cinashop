@@ -62,7 +62,20 @@ function epoch(value: unknown): number | string {
 }
 
 export function formatAgentApplicationTime(value: number | string): string {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") {
+    // PromoterApplicationService emits UTC without a timezone suffix. Parse it
+    // explicitly as UTC, then use the same Shanghai display as division epochs.
+    const parts = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
+    if (!parts) return "";
+    const utc = Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]),
+      Number(parts[4]), Number(parts[5]), Number(parts[6]));
+    const date = new Date(utc);
+    if (!Number.isFinite(utc) || date.getUTCFullYear() !== Number(parts[1])
+      || date.getUTCMonth() + 1 !== Number(parts[2]) || date.getUTCDate() !== Number(parts[3])
+      || date.getUTCHours() !== Number(parts[4]) || date.getUTCMinutes() !== Number(parts[5])
+      || date.getUTCSeconds() !== Number(parts[6])) return "";
+    value = Math.floor(utc / 1000);
+  }
   if (!Number.isSafeInteger(value) || value <= 0) return "";
   const date = new Date((value + 8 * 60 * 60) * 1000);
   if (!Number.isFinite(date.getTime())) return "";
