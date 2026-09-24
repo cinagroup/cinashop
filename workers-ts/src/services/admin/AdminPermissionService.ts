@@ -97,6 +97,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   { key: "level", label: "会员等级", path: "/level", matches: ["level/"], manage: true },
   { key: "coupon", label: "优惠券管理", path: "/coupon", matches: ["coupon/"], manage: true },
   { key: "coupon_record", label: "用户领取记录", path: "/marketing/coupon-records", matches: ["marketing/coupon-records/"], manage: false },
+  { key: "seckill_statistics", label: "秒杀统计", path: "/activity/seckill-statistics", matches: ["activity/seckill-statistics/"], manage: false },
   {
     key: "activity",
     label: "营销活动",

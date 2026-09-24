@@ -44,6 +44,7 @@ import * as AdminCapitalFlow from "@/controllers/api/v1/AdminCapitalFlowControll
 import * as AdminIntegralLog from "@/controllers/api/v1/AdminIntegralLogController";
 import * as AdminPointStatistic from "@/controllers/api/v1/AdminPointStatisticController";
 import * as AdminCouponRecords from "@/controllers/api/v1/AdminCouponRecordController";
+import * as AdminSeckillStatistics from "@/controllers/api/v1/AdminSeckillStatisticsController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
 import * as ProductExperienceController from "@/controllers/api/v1/ProductExperienceController";
@@ -552,6 +553,9 @@ adminapiRoutes.get("/statistic/balance/get_type", adminAuth, AdminController.adm
 
 // ─── 营销活动管理 (M10) ─────────────────────────────────────
 adminapiRoutes.get("/activity/seckill", adminAuth, AdminCrud.adminSeckillList);
+adminapiRoutes.get("/activity/seckill-statistics/:id/head", adminAuth, AdminSeckillStatistics.head);
+adminapiRoutes.get("/activity/seckill-statistics/:id/people", adminAuth, AdminSeckillStatistics.people);
+adminapiRoutes.get("/activity/seckill-statistics/:id/orders", adminAuth, AdminSeckillStatistics.orders);
 adminapiRoutes.get("/activity/combination", adminAuth, AdminCrud.adminCombinationList);
 adminapiRoutes.get("/activity/bargain", adminAuth, AdminCrud.adminBargainList);
 adminapiRoutes.get("/activity/bargain/sku-options", adminAuth, AdminCrud.adminBargainSkuOptions);

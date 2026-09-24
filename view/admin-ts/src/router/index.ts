@@ -192,6 +192,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "营销活动" },
       },
       {
+        path: "activity/seckill-statistics/:id?",
+        name: "seckill-statistics",
+        component: () => import("@/pages/activity/SeckillStatistics.vue"),
+        meta: { title: "秒杀统计" },
+      },
+      {
         path: "marketing/lottery",
         name: "lottery",
         component: () => import("@/pages/activity/LotteryList.vue"),
