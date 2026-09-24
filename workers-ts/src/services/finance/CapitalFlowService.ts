@@ -128,15 +128,13 @@ export class CapitalFlowService {
     }
     const keywords = query.keywords?.trim();
     if (keywords) {
+      const pattern = literalLikePattern(keywords);
       const keywordConditions: SQL[] = [
-        ilike(capitalFlow.orderId, literalLikePattern(keywords)),
-        ilike(capitalFlow.nickname, literalLikePattern(keywords)),
-        ilike(capitalFlow.phone, literalLikePattern(keywords)),
+        ilike(capitalFlow.orderId, pattern),
+        sql`${capitalFlow.uid}::text ILIKE ${pattern}`,
+        ilike(capitalFlow.nickname, pattern),
+        ilike(capitalFlow.phone, pattern),
       ];
-      const numericUid = Number(keywords);
-      if (Number.isSafeInteger(numericUid) && numericUid >= 0) {
-        keywordConditions.push(eq(capitalFlow.uid, numericUid));
-      }
       conditions.push(or(...keywordConditions)!);
     }
     const where = conditions.length ? and(...conditions) : undefined;

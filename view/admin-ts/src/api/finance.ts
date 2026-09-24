@@ -120,7 +120,7 @@ export interface CapitalFlowItem {
   pay_type_code: string;
   pay_type: string;
   mark: string;
-  /** Server-formatted Asia/Shanghai wall time, YYYY/MM/DD HH:mm:ss. */
+  /** Server-formatted Asia/Shanghai wall time, YYYY-MM-DD HH:mm:ss. */
   add_time: string;
 }
 

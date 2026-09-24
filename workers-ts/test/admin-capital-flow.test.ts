@@ -58,6 +58,7 @@ describe("platform capital-flow admin screen contract", () => {
     }
     expect((await get("?page=2&limit=1")).body.data.list.map((row: { id: number }) => row.id)).toEqual([2]);
     expect((await get("?keywords=ORDERA")).body.data.list.map((row: { id: number }) => row.id)).toEqual([1]);
+    expect((await get("?keywords=2")).body.data.list.map((row: { id: number }) => row.id)).toEqual([2]);
   });
 
   it("rejects malformed filters before selecting a misleading unrestricted list", async () => {
