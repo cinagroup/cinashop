@@ -7,7 +7,6 @@ export interface PointStatisticBasic {
   pay_point: string;
 }
 
-type Projection = "get_basic" | "get_trend" | "get_channel" | "get_type";
 const decimal = /^-?\d+(?:\.\d{1,2})?$/u;
 
 function object(value: unknown): Record<string, unknown> {
@@ -65,7 +64,7 @@ export function parsePointDistribution(value: unknown): StatisticDistribution {
   return row as unknown as StatisticDistribution;
 }
 
-async function read(projection: Projection, time: string, signal?: AbortSignal): Promise<unknown> {
+async function read(projection: "get_basic" | "get_trend" | "get_channel" | "get_type", time: string, signal?: AbortSignal): Promise<unknown> {
   return getData<unknown>(request.get(`/marketing/point/${projection}`, { params: { time }, signal }));
 }
 
