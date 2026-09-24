@@ -33,8 +33,8 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(inventory.legacy.routes.filter((route) => route.path.startsWith("/admin/marketing"))).toHaveLength(52);
     expect(report.routes.map((route) => route.legacy.path)).toEqual(businessPaths);
     expect(report.summary).toEqual({
-      legacyRoutes: 48, reviewed: 48, candidate: 4, partial: 22,
-      missing: 22, retired: 0, unreviewed: 0,
+      legacyRoutes: 48, reviewed: 48, candidate: 5, partial: 22,
+      missing: 21, retired: 0, unreviewed: 0,
     });
   });
 
@@ -116,6 +116,12 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(integralLog?.targetPermissions).toEqual(["integral_log.view"]);
     expect(integralLog?.covered.join(" ")).toContain("统计卡在初始化时单独加载");
     expect(integralLog?.remaining.join(" ")).toContain("导出");
+    const pointStatistic = byPath.get("/admin/marketing/point_statistic");
+    expect(pointStatistic?.status).toBe("candidate");
+    expect(pointStatistic?.targetScreens).toEqual(["/marketing/point-statistic"]);
+    expect(pointStatistic?.targetApis).toHaveLength(4);
+    expect(pointStatistic?.targetPermissions).toEqual(["point_statistic.view"]);
+    expect(pointStatistic?.covered.join(" ")).toContain("gain 双标签");
     for (const path of [
       "/admin/marketing/store_discounts/index",
       "/admin/marketing/store_discounts/create",

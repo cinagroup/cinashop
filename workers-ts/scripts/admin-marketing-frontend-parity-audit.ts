@@ -35,6 +35,7 @@ const screens: Record<string, string> = {
   "/activity/seckill-statistics/:id?": "view/admin-ts/src/pages/activity/SeckillStatistics.vue",
   "/marketing/lottery": "view/admin-ts/src/pages/activity/LotteryList.vue",
   "/marketing/user-point": "view/admin-ts/src/pages/marketing/IntegralLog.vue",
+  "/marketing/point-statistic": "view/admin-ts/src/pages/marketing/PointStatistic.vue",
   "/marketing/coupon-records": "view/admin-ts/src/pages/marketing/CouponRecords.vue",
   "/content/wechat-qrcode": "view/admin-ts/src/pages/content/WechatQrcode.vue",
 };
@@ -44,6 +45,7 @@ const permissionKeys: Record<string, string> = {
   "/activity/seckill-statistics/:id?": "seckill_statistics.view",
   "/marketing/lottery": "lottery.view / lottery.manage",
   "/marketing/user-point": "integral_log.view",
+  "/marketing/point-statistic": "point_statistic.view",
   "/marketing/coupon-records": "coupon_record.view",
   "/content/wechat-qrcode": "wechat_qrcode.view / wechat_qrcode.manage",
 };
@@ -210,7 +212,15 @@ add("/admin/marketing/user_point/index", "partial", ["/marketing/user-point"],
   "旧页由 export-userPoint 授权的积分日志导出按钮及逐页 Excel 导出流程未恢复；真实历史流水、受限角色和发布后行为仍待验收。",
   ["cinashop-php/app/services/user/UserBillServices.php", "cinashop-php/app/controller/admin/v1/other/export/ExportExcel.php"]);
 add("/admin/marketing/integral/signIn", "missing", [], [], "", "旧积分签到视觉和 group_data 配置没有新 Admin 编辑页。");
-add("/admin/marketing/point_statistic", "missing", [], [], "", "旧积分基本、趋势、渠道与类型四组统计没有新 Admin 页面。");
+add("/admin/marketing/point_statistic", "candidate", ["/marketing/point-statistic"], [
+  "GET /adminapi/marketing/point/get_basic",
+  "GET /adminapi/marketing/point/get_trend",
+  "GET /adminapi/marketing/point/get_channel",
+  "GET /adminapi/marketing/point/get_type",
+],
+"独立只读页按上海日期范围展示当前/累计/消耗积分、积累与消耗趋势及五类来源/消耗分布；沿用旧 gain 双标签及退款退回分类，按 point_statistic.view 独立授权。",
+"仅完成本地代码候选；旧 gain 无历史来源判别，3日趋势采用完整聚合而非 PHP 漏日抽样；真实历史数据、受限角色及发布后流程待验收。",
+["cinashop-php/app/services/activity/integral/UserPointServices.php", "workers-ts/src/services/admin/AdminPointStatisticService.ts", "workers-ts/test/admin-point-statistic.test.ts"]);
 add("/admin/marketing/integral/classify", "missing", [], [], "", "旧积分分类新增、编辑和显隐没有新 Admin 管理页。");
 add("/admin/marketing/balance_recharge", "missing", [], [], "", "旧充值金额 group_data 列表/编辑没有新 Admin 页面；支付充值能力不代表运营配置页。");
 
