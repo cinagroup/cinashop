@@ -254,7 +254,7 @@ describe('admin offline collection reads on native PG16 and real workerd authori
       for (const term of ['_', '%', '\\', '13800000011']) {
         expect(rows((await request('scan_list?name='+encodeURIComponent(term))).data?.list).map(row => row.id)).toEqual([a.id]);
       }
-      for (const query of ['name=absent-user', 'uid=13', 'order_id=absent-order', `from=${source.addTime+1}&to=${source.addTime+2}`])
+      for (const query of ['name=absent-user', 'uid=13', 'order_id=absent-order', `from=${source.addTime-1}&to=${source.addTime}`])
         expect(await request('scan_list?'+query)).toMatchObject({ status: 200, data: { list: [], next_cursor: '' } });
       expect(rows((await request('scan_list?uid=12')).data?.list).map(row => row.id)).toEqual([b.id]);
       expect(rows((await request(`scan_list?order_id=${a.order_id}&from=${source.addTime}&to=${source.addTime+1}`)).data?.list).map(row => row.id)).toEqual([a.id]);
