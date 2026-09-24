@@ -22,8 +22,8 @@ function boundedInteger(value: string | undefined, label: string, minimum: numbe
 }
 
 export function parseAdminCapitalFlowQuery(q: Record<string, string>): AdminCapitalFlowQuery {
-  const start = boundedInteger(q.start, "开始时间", 0, 2_147_483_647, 0);
-  const stop = boundedInteger(q.stop, "结束时间", 0, 2_147_483_647, 0);
+  const start = boundedInteger(q.start || undefined, "开始时间", 0, 2_147_483_647, 0);
+  const stop = boundedInteger(q.stop || undefined, "结束时间", 0, 2_147_483_647, 0);
   if (start && stop && start > stop) throw new ValidateException("时间范围无效");
   const keywords = q.keywords?.trim() ?? "";
   if (keywords.length > 100 || /[\u0000-\u001f\u007f]/.test(keywords)) {
@@ -37,7 +37,7 @@ export function parseAdminCapitalFlowQuery(q: Record<string, string>): AdminCapi
     throw new ValidateException("导出参数无效");
   }
   return {
-    tradingType: boundedInteger(q.trading_type, "交易类型", 0, 8, 0),
+    tradingType: boundedInteger(q.trading_type || undefined, "交易类型", 0, 8, 0),
     keywords,
     ids,
     start,

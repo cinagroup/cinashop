@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, or } from "drizzle-orm";
 import type { AppVariables } from "@/env";
 import type { Container } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
@@ -354,6 +354,7 @@ export function assertDelegablePermissions(
 
 function menuPathPermission(menuPath: string): string | null {
   const route = menuPath.trim().toLowerCase();
+  if (route === "/admin/statistic/capital") return "capital_flow.view";
   const group = ADMIN_PERMISSION_GROUPS.find((candidate) =>
     candidate.path === route || route.includes(candidate.path),
   );
@@ -435,6 +436,7 @@ export class AdminPermissionService {
       ? await this.container.db
           .select({
             id: systemMenus.id,
+            authType: systemMenus.authType,
             apiUrl: systemMenus.apiUrl,
             methods: systemMenus.methods,
             menuPath: systemMenus.menuPath,
@@ -445,7 +447,11 @@ export class AdminPermissionService {
             and(
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
-              eq(systemMenus.authType, 2),
+              or(eq(systemMenus.authType, 2), and(
+                eq(systemMenus.authType, 1),
+                eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
+                eq(systemMenus.menuPath, "/admin/statistic/capital"),
+              )),
               eq(systemMenus.access, 1),
               eq(systemMenus.isDel, 0),
             ),
@@ -493,6 +499,7 @@ export class AdminPermissionService {
     const menuQuery = this.container.db
           .select({
             id: systemMenus.id,
+            authType: systemMenus.authType,
             apiUrl: systemMenus.apiUrl,
             methods: systemMenus.methods,
             menuPath: systemMenus.menuPath,
@@ -503,7 +510,11 @@ export class AdminPermissionService {
             and(
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
-              eq(systemMenus.authType, 2),
+              or(eq(systemMenus.authType, 2), and(
+                eq(systemMenus.authType, 1),
+                eq(systemMenus.uniqueAuth, "admin-statistic-capital"),
+                eq(systemMenus.menuPath, "/admin/statistic/capital"),
+              )),
               eq(systemMenus.access, 1),
               eq(systemMenus.isDel, 0),
             ),
@@ -518,6 +529,7 @@ export class AdminPermissionService {
     tokens: readonly string[],
     menus: ReadonlyArray<{
       id: number;
+      authType: number;
       apiUrl: string;
       methods: string;
       menuPath: string;
@@ -529,6 +541,11 @@ export class AdminPermissionService {
     if (allowedLegacyIds.size) {
       for (const menu of menus) {
         if (!allowedLegacyIds.has(menu.id)) continue;
+        if (menu.authType === 1) {
+          // One legacy page-only rule grants visibility, never remark writes.
+          resolved.add("capital_flow.view");
+          continue;
+        }
         if (permissionKeys.has(menu.uniqueAuth)) {
           resolved.add(menu.uniqueAuth);
           continue;

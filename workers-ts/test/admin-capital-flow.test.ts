@@ -62,6 +62,8 @@ describe("platform capital-flow admin screen contract", () => {
   });
 
   it("rejects malformed filters before selecting a misleading unrestricted list", async () => {
+    const legacyEmptyFilters = await get("?trading_type=&start=&stop=&ids=&keywords=");
+    expect(legacyEmptyFilters.body.data.count).toBe(3);
     for (const query of ["?page=0", "?limit=101", "?page=1e2", "?start=1700000200&stop=1700000000", "?ids=1,bad", "?trading_type=9", `?keywords=${"x".repeat(101)}`]) {
       expect((await get(query)).body.status, query).toBe(400);
     }
