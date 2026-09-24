@@ -7,7 +7,7 @@
   },
   "backend": {
     "file": "workers-ts/src/routes/adminapi.ts",
-    "sha256": "6b598b69962bbfb82de7a3727653cc0d21c1eeb711bd109a824911f074ddcb96",
+    "sha256": "8acb9406184273fa9845b554e333fa0e844479bc90d283cd960e2c9a73fec99c",
     "registeredRoutes": [
       {
         "method": "POST",
@@ -3669,6 +3669,13 @@
         "line": 846,
         "handler": "AdminIntegralLog.statistics",
         "availability": "executable"
+      },
+      {
+        "method": "GET",
+        "path": "/marketing/coupon-records/list",
+        "line": 849,
+        "handler": "AdminCouponRecords.list",
+        "availability": "executable"
       }
     ]
   },
@@ -3708,6 +3715,10 @@
     {
       "file": "view/admin-ts/src/api/coupon.ts",
       "sha256": "2264edfee399a7b0643a63dc976a3f0987bce1a3a6f7d10c1b0100d6aca9335f"
+    },
+    {
+      "file": "view/admin-ts/src/api/couponRecords.ts",
+      "sha256": "b9695f1c50a7846657653705efc9fc7c1435fc76d024ff3fa75fa56d9f06f61c"
     },
     {
       "file": "view/admin-ts/src/api/discountPackage.ts",
@@ -3851,10 +3862,10 @@
     }
   ],
   "counts": {
-    "callSites": 339,
-    "pathVariants": 359,
-    "registered": 359,
-    "executable": 359,
+    "callSites": 340,
+    "pathVariants": 360,
+    "registered": 360,
+    "executable": 360,
     "controlledUnavailable": 0,
     "unregistered": 0,
     "unresolved": 0
@@ -4601,6 +4612,16 @@
       "registered": true,
       "matchedRoute": "/statistic/overview",
       "matchedHandler": "AdminController.adminStatisticOverview",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/marketing/coupon-records/list",
+      "source": "view/admin-ts/src/api/couponRecords.ts",
+      "line": 75,
+      "registered": true,
+      "matchedRoute": "/marketing/coupon-records/list",
+      "matchedHandler": "AdminCouponRecords.list",
       "availability": "executable"
     },
     {

@@ -33,8 +33,8 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(inventory.legacy.routes.filter((route) => route.path.startsWith("/admin/marketing"))).toHaveLength(52);
     expect(report.routes.map((route) => route.legacy.path)).toEqual(businessPaths);
     expect(report.summary).toEqual({
-      legacyRoutes: 48, reviewed: 48, candidate: 2, partial: 22,
-      missing: 24, retired: 0, unreviewed: 0,
+      legacyRoutes: 48, reviewed: 48, candidate: 3, partial: 22,
+      missing: 23, retired: 0, unreviewed: 0,
     });
   });
 
@@ -89,7 +89,13 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(byPath.get("/admin/marketing/store_coupon/index")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/store_coupon_issue/index")?.status).toBe("partial");
     expect(byPath.get("/admin/marketing/store_coupon_issue/create/:id?")?.status).toBe("partial");
-    expect(byPath.get("/admin/marketing/store_coupon_user/index")?.status).toBe("missing");
+    const couponRecord = byPath.get("/admin/marketing/store_coupon_user/index");
+    expect(couponRecord?.status).toBe("candidate");
+    expect(couponRecord?.targetScreens).toEqual(["/marketing/coupon-records"]);
+    expect(couponRecord?.targetApis).toEqual(["GET /adminapi/marketing/coupon-records/list"]);
+    expect(couponRecord?.targetPermissions).toEqual(["coupon_record.view"]);
+    expect(couponRecord?.covered.join(" ")).toContain("store_coupon_user");
+    expect(couponRecord?.remaining.join(" ")).toContain("真实历史领取记录");
     expect(byPath.get("/admin/marketing/store_seckill/list")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/store_seckill_data/index")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/sign_rewards")?.status).toBe("missing");

@@ -9,9 +9,9 @@
   "summary": {
     "legacyRoutes": 48,
     "reviewed": 48,
-    "candidate": 2,
+    "candidate": 3,
     "partial": 22,
-    "missing": 24,
+    "missing": 23,
     "retired": 0,
     "unreviewed": 0
   },
@@ -530,12 +530,18 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-store_coupon_user']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/marketing/coupon-records"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/coupon-records/list"
+      ],
+      "covered": [
+        "独立只读领取记录页按状态、领取人和优惠券名筛选，按 ID 倒序每页 15 条展示旧页十项数据；GET 接口只读取 store_coupon_user 领取实例。"
+      ],
       "remaining": [
-        "旧领取记录与用户发券页没有新 Admin 页面；/coupon/list 是发行实例，不是 store_coupon_user 记录。"
+        "仅完成本地代码映射；真实历史领取记录、受限角色及发布后流程仍待验收。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/storeCouponUser/index.vue",
@@ -543,9 +549,16 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/coupon/CouponList.vue"
+        "view/admin-ts/src/pages/marketing/CouponRecords.vue",
+        "cinashop-php/app/services/activity/coupon/StoreCouponUserServices.php",
+        "cinashop-php/app/dao/activity/coupon/StoreCouponUserDao.php",
+        "workers-ts/src/services/admin/AdminCouponRecordService.ts",
+        "workers-ts/scripts/data-migration/manifest.ts",
+        "workers-ts/test/admin-coupon-records.test.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "coupon_record.view"
+      ]
     },
     {
       "legacy": {

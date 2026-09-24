@@ -365,6 +365,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/marketing/IntegralLog.vue"),
         meta: { title: "积分日志" },
       },
+      {
+        path: "marketing/coupon-records",
+        name: "coupon-records",
+        component: () => import("@/pages/marketing/CouponRecords.vue"),
+        meta: { title: "用户领取记录" },
+      },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: "/dashboard" },

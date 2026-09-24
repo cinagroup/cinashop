@@ -34,6 +34,7 @@ const screens: Record<string, string> = {
   "/activity": "view/admin-ts/src/pages/activity/ActivityList.vue",
   "/marketing/lottery": "view/admin-ts/src/pages/activity/LotteryList.vue",
   "/marketing/user-point": "view/admin-ts/src/pages/marketing/IntegralLog.vue",
+  "/marketing/coupon-records": "view/admin-ts/src/pages/marketing/CouponRecords.vue",
   "/content/wechat-qrcode": "view/admin-ts/src/pages/content/WechatQrcode.vue",
 };
 const permissionKeys: Record<string, string> = {
@@ -41,6 +42,7 @@ const permissionKeys: Record<string, string> = {
   "/activity": "activity.view / activity.manage",
   "/marketing/lottery": "lottery.view / lottery.manage",
   "/marketing/user-point": "integral_log.view",
+  "/marketing/coupon-records": "coupon_record.view",
   "/content/wechat-qrcode": "wechat_qrcode.view / wechat_qrcode.manage",
 };
 // Snapshot of meta.auth in marketing.js at the SHA recorded by the inventory.
@@ -157,7 +159,11 @@ add("/admin/marketing/discount/add_discount/:id?", "missing", [], [], "", "旧�
 add("/admin/marketing/discount/add/:id?", "missing", [], [], "", "旧单品折扣编辑页的商品/会员/标签范围没有 Admin 写入表单。");
 add("/admin/marketing/discount/pieces_discount", "missing", [], [], "", "旧多件折扣目录没有 Admin 页面或状态操作面。");
 add("/admin/marketing/discount/add_pieces/:id?", "missing", [], [], "", "旧多件折扣门槛、折扣和商品范围编辑流程没有 Admin 页面。");
-add("/admin/marketing/store_coupon_user/index", "missing", [], [], "", "旧领取记录与用户发券页没有新 Admin 页面；/coupon/list 是发行实例，不是 store_coupon_user 记录。", ["view/admin-ts/src/pages/coupon/CouponList.vue"]);
+add("/admin/marketing/store_coupon_user/index", "candidate", ["/marketing/coupon-records"], ["GET /adminapi/marketing/coupon-records/list"],
+  "独立只读领取记录页按状态、领取人和优惠券名筛选，按 ID 倒序每页 15 条展示旧页十项数据；GET 接口只读取 store_coupon_user 领取实例。",
+  "仅完成本地代码映射；真实历史领取记录、受限角色及发布后流程仍待验收。",
+  ["cinashop-php/app/services/activity/coupon/StoreCouponUserServices.php", "cinashop-php/app/dao/activity/coupon/StoreCouponUserDao.php",
+    "workers-ts/src/services/admin/AdminCouponRecordService.ts", "workers-ts/scripts/data-migration/manifest.ts", "workers-ts/test/admin-coupon-records.test.ts"]);
 add("/admin/marketing/coupon/system_config/:type?/:tab_id?", "missing", [], [], "", "旧优惠券动态配置表单没有逐键核验的新专页；不能借 /coupon 的发行列表推定配置已覆盖。");
 
 add("/admin/marketing/store_bargain/index", "partial", ["/activity"], ["GET /adminapi/activity/bargain", ...activityWrite],
