@@ -131,6 +131,28 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect(state.users[0].nowMoney).toBe("12.50"); expect(state.bills.filter(bill => bill.type === "pay_product_refund")).toHaveLength(1);
   }, 15_000);
 
+  it("refund holds the seckill child before waiting for its buyer while a new order waits for that child", async () => {
+    await prepareOldRefund();
+    await withFinancePeers(f.db, async ([holder, refunder, buyer]) => {
+      await holder.exec('BEGIN; SELECT uid FROM "user" WHERE uid=11 FOR UPDATE');
+      let pending = true;
+      try {
+        const refund = outcome(finalizeStoreOrderRefund(createContainerFromDb(refunder.db), 1));
+        await waitForFinanceBlock(f.db, refunder.pid, holder.pid);
+        const purchase = outcome(create(buyer, { ...params, key: 'after_refund', cartIds: [2] }));
+        await waitForFinanceBlock(f.db, buyer.pid, refunder.pid);
+        await holder.exec('COMMIT');
+        pending = false;
+        expect(await refund).toEqual({ ok: true, value: 'completed' });
+        expect(await purchase).toMatchObject({ ok: true });
+      } finally { if (pending) await holder.exec('ROLLBACK'); }
+    });
+    const state = await snapshot();
+    expect(state.orders).toHaveLength(2);
+    expect(state.orders.find(order => order.orderId === 'isolated_refund_order')).toMatchObject({ refundStatus: 2 });
+    expect(state.orders.find(order => order.orderId === 'isolated_after_refund')).toMatchObject({ status: 0 });
+  }, 20_000);
+
   it("refund waiting for cancellation does not hold a settlement-user lock and both compensate exactly once", async () => {
     await prepareOldRefund();
     await StoreOrderCreateService.createWithRuntime(f.container,
