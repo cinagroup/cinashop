@@ -15,6 +15,11 @@ describe("bargain participation state consistency on isolated SQL", () => {
   const cart = () => new StoreCartService(f.container, f.env);
   const add = () => cart().add({ uid: 11, productId: 70, activityId: 40, type: 2, unique: "actred40", cartNum: 1, isNew: 1 });
   const own = async () => (await join().myBargains(11)).find(row => row.id === 80)!;
+  const post = async (path: string, body: Record<string, unknown>) => {
+    const response = await f.app.request(path, { method: "POST",
+      headers: { "x-fixture-user": "11", "Content-Type": "application/json" }, body: JSON.stringify(body) }, f.env);
+    return response.json();
+  };
 
   it("runs actual start/list controllers with owner scope, no-store and unchanged legacy field names", async () => {
     const before = await f.snapshot();
@@ -128,6 +133,44 @@ describe("bargain participation state consistency on isolated SQL", () => {
     await f.setReady(false); await join().cancelBargain(11, { id: 80 });
     expect((await f.snapshot()).participations.find(row => row.id === 80)).toMatchObject({ status: 2, isDel: 1 });
     await expect(join().cancelBargain(11, { id: 80 })).rejects.toThrow(/状态/);
+  });
+  it("rejects an ambiguous activity-only cancellation and cancels only the exact matching ID", async () => {
+    await f.setReady(false);
+    await f.db.update(storeBargainUser).set({ status: 1 }).where(eq(storeBargainUser.id, 82));
+    const before = await f.snapshot();
+    expect(await post("/api/bargain/user/cancel", { bargainId: 40 })).toMatchObject({ status: 400, msg: expect.stringMatching(/不唯一/) });
+    expect(await f.snapshot()).toEqual(before);
+    expect(await post("/api/bargain/user/cancel", { id: 80, bargainId: 41 })).toMatchObject({ status: 400, msg: expect.stringMatching(/不匹配/) });
+    expect(await f.snapshot()).toEqual(before);
+    expect(await post("/api/bargain/user/cancel", { id: 80, bargainId: 40 })).toMatchObject({ status: 200 });
+    const after = await f.snapshot();
+    expect(after.participations.find(row => row.id === 80)).toMatchObject({ status: 2, isDel: 1 });
+    expect(after.participations.find(row => row.id === 82)).toEqual(before.participations.find(row => row.id === 82));
+  });
+  it("resolves the sole live record instead of a newer used record and rejects multiple live aliases", async () => {
+    await f.setReady(false);
+    const alias = { bargainId: 40, bargainUserUid: 11 };
+    const before = await f.snapshot();
+    expect(await post("/api/bargain/help/count", alias)).toMatchObject({ status: 200, data: { status: 1 } });
+    expect(await f.snapshot()).toEqual(before);
+    await f.db.update(storeBargainUser).set({ status: 1 }).where(eq(storeBargainUser.id, 82));
+    const ambiguous = await f.snapshot();
+    expect(await post("/api/bargain/help/count", alias)).toMatchObject({ status: 400, msg: expect.stringMatching(/不唯一/) });
+    expect(await post("/api/bargain/help/count", { bargain_user_id: 80 })).toMatchObject({ status: 200, data: { status: 1 } });
+    expect(await f.snapshot()).toEqual(ambiguous);
+  });
+  it("keeps a sole historical activity alias readable but rejects several historical candidates", async () => {
+    await f.db.update(storeBargainUser).set({ status: 4 }).where(eq(storeBargainUser.id, 80));
+    await f.db.update(storeBargainUser).set({ isDel: 1 }).where(eq(storeBargainUser.id, 82));
+    const alias = { bargainId: 40, bargainUserUid: 11 };
+    const ambiguous = await f.snapshot();
+    expect(await post("/api/bargain/help/count", alias)).toMatchObject({ status: 400, msg: expect.stringMatching(/不唯一/) });
+    expect(await post("/api/bargain/help/count", { bargain_user_id: 80 })).toMatchObject({ status: 200, data: { status: 4 } });
+    expect(await f.snapshot()).toEqual(ambiguous);
+    await f.db.update(storeBargainUser).set({ isDel: 1 }).where(eq(storeBargainUser.id, 83));
+    const sole = await f.snapshot();
+    expect(await post("/api/bargain/help/count", alias)).toMatchObject({ status: 200, data: { status: 4 } });
+    expect(await f.snapshot()).toEqual(sole);
   });
   it("restores local transaction settings on successful reuse and duplicate rejection", async () => {
     const settings = () => f.db.select({ isolation: sql<string>`current_setting('transaction_isolation')`,

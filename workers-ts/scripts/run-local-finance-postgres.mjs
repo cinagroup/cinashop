@@ -100,6 +100,7 @@ if (schemaMaintenance) {
     'test/assisted-order-list-index.test.ts',
     'test/admin-assisted-order-cursor-postgres.test.ts',
     'test/bargain-order-concurrency-postgres.test.ts',
+    'test/bargain-participation-concurrency-postgres.test.ts',
     'test/seckill-schedule-postgres.test.ts',
     'test/refund-line-compensation.test.ts',
     'test/bargain-admin-retirement.test.ts',

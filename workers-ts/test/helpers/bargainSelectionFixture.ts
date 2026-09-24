@@ -3,7 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import { createPcCheckoutQuoteFixture } from "./pcCheckoutQuoteFixture";
 import { bargainDetail } from "../../src/controllers/api/v1/UserActivityController";
-import { startBargain, myBargains, cancelBargain } from "../../src/controllers/api/v1/ActivityJoinController";
+import { startBargain, myBargains, cancelBargain, bargainHelpCount } from "../../src/controllers/api/v1/ActivityJoinController";
 import { cartAdd, cartList, orderConfirm, orderComputed } from "../../src/controllers/api/v1/OrderController";
 import { storeBargain, storeBargainUser, storeBargainUserHelp, storeProductAttr, storeProductAttrResult, storeProductAttrValue, storeProductDescription, storeCart, systemConfig, user } from "../../src/models/schema";
 import type { AppVariables, Env } from "../../src/env";
@@ -51,6 +51,7 @@ export async function createBargainSelectionFixture(extraTables: PgTable[] = [])
     app.post("/api/bargain/start", startBargain);
     app.get("/api/bargain/user/list", myBargains);
     app.post("/api/bargain/user/cancel", cancelBargain);
+    app.post("/api/bargain/help/count", bargainHelpCount);
     app.post("/api/cart/add", cartAdd); app.get("/api/cart/list", cartList);
     app.post("/api/order/confirm", orderConfirm); app.post("/api/order/computed/:key", orderComputed);
     const snapshot = async () => ({ ...await f.snapshot(),

@@ -33,6 +33,7 @@ import {
 } from "@/services/wechat/WechatMiniProgramCodeService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
+import { findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
 const BARGAIN_HELP_USER_LOCK_NAMESPACE = 731_628;
@@ -679,18 +680,17 @@ export class ActivityJoinService {
     if (!Number.isSafeInteger(bargainId) || bargainId <= 0 || !Number.isSafeInteger(ownerUid) || ownerUid <= 0) {
       throw new ValidateException("砍价参数错误");
     }
-    const rows = await this.container.db
-      .select({ id: storeBargainUser.id })
-      .from(storeBargainUser)
-      .where(and(
-        eq(storeBargainUser.bargainId, bargainId),
-        eq(storeBargainUser.uid, ownerUid),
-        eq(storeBargainUser.isDel, 0),
-      ))
-      .orderBy(desc(storeBargainUser.id))
-      .limit(1);
-    if (!rows[0]) throw new NotFoundException("砍价记录不存在");
-    return rows[0].id;
+    const participant = await findBargainParticipation(this.container.db, ownerUid, bargainId);
+    if (participant) return participant.id;
+    // Historical help/count/list links only carry activity + owner. Keep a
+    // sole completed record readable, but never guess among several records.
+    const historical = await this.container.db.select({ id: storeBargainUser.id })
+      .from(storeBargainUser).where(and(eq(storeBargainUser.uid, ownerUid),
+        eq(storeBargainUser.bargainId, bargainId), eq(storeBargainUser.isDel, 0)))
+      .orderBy(desc(storeBargainUser.id)).limit(2);
+    if (historical.length > 1) throw new ValidateException("砍价记录不唯一，请指定参与记录");
+    if (!historical[0]) throw new NotFoundException("砍价记录不存在");
+    return historical[0].id;
   }
 
   async bargainHelpPrice(uid: number, bargainUserId: number) {
@@ -830,19 +830,41 @@ export class ActivityJoinService {
   async cancelBargain(uid: number, input: { id?: number; bargainId?: number }): Promise<void> {
     const id = Number(input.id ?? 0);
     const bargainId = Number(input.bargainId ?? 0);
-    if ((!Number.isSafeInteger(id) || id < 0) || (!Number.isSafeInteger(bargainId) || bargainId < 0) || (!id && !bargainId)) {
+    if ((!Number.isSafeInteger(uid) || uid <= 0 || uid > 2_147_483_647)
+      || (!Number.isSafeInteger(id) || id < 0 || id > 2_147_483_647)
+      || (!Number.isSafeInteger(bargainId) || bargainId < 0 || bargainId > 2_147_483_647)
+      || (!id && !bargainId)) {
       throw new ValidateException("参数错误");
     }
-    const updated = await this.container.db
-      .update(storeBargainUser)
-      .set({ isDel: 1, status: 2 })
-      .where(and(
-        eq(storeBargainUser.uid, uid),
-        eq(storeBargainUser.isDel, 0),
-        eq(storeBargainUser.status, 1),
-        id ? eq(storeBargainUser.id, id) : eq(storeBargainUser.bargainId, bargainId),
-      ))
-      .returning({ id: storeBargainUser.id });
-    if (!updated[0]) throw new ValidateException("状态错误");
+    await withTx(this.container, async (tx) => {
+      // Match startBargain's bounded, fresh-read transaction. The activity-only
+      // alias must serialize with start before it chooses a participation.
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+      await tx.execute(sql.raw(`SELECT
+        set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true),
+        set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true)`));
+      if (!id) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`bargain-start:${uid}:${bargainId}`}, 0))`);
+      }
+      const rows = await tx.select({ id: storeBargainUser.id, bargainId: storeBargainUser.bargainId,
+        status: storeBargainUser.status })
+        .from(storeBargainUser)
+        .where(and(eq(storeBargainUser.uid, uid), eq(storeBargainUser.isDel, 0),
+          id ? eq(storeBargainUser.id, id) : and(eq(storeBargainUser.bargainId, bargainId),
+            inArray(storeBargainUser.status, [1, 3]))))
+        .orderBy(desc(storeBargainUser.id)).limit(id ? 1 : 2).for("update");
+      if (!id && rows.length > 1) throw new ValidateException("砍价有效记录不唯一，请指定参与记录");
+      const participant = rows[0];
+      if (!participant) throw new ValidateException("状态错误");
+      if (bargainId && participant.bargainId !== bargainId) throw new ValidateException("砍价参与记录与活动不匹配");
+      if (participant.status !== 1) throw new ValidateException("状态错误");
+      const updated = await tx.update(storeBargainUser).set({ isDel: 1, status: 2 })
+        .where(and(eq(storeBargainUser.id, participant.id), eq(storeBargainUser.uid, uid),
+          eq(storeBargainUser.bargainId, participant.bargainId), eq(storeBargainUser.isDel, 0),
+          eq(storeBargainUser.status, 1)))
+        .returning({ id: storeBargainUser.id });
+      if (updated.length !== 1) throw new ValidateException("状态错误");
+    });
   }
 }

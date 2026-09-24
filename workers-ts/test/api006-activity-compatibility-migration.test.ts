@@ -79,7 +79,6 @@ describe("API-006 legacy activity compatibility", () => {
   it("owner-scopes poster and cancellation operations and accepts the old bargainId payload", () => {
     expect(service).toContain("eq(storePink.uid, uid)");
     expect(service).toContain("eq(storeBargainUser.uid, uid)");
-    expect(service).toContain("id ? eq(storeBargainUser.id, id) : eq(storeBargainUser.bargainId, bargainId)");
     expect(controller).toContain("body.bargainId ?? body.bargain_id");
   });
 

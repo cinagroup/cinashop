@@ -33,6 +33,34 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain independ
     expect({ ...after, participations: before.participations, sequences: before.sequences }).toEqual(before);
   }, 15_000);
 
+  it("activity-only cancellation waits for an in-flight start and selects its new exact record", async () => {
+    await f.db.update(storeBargainUser).set({ status: 4 }).where(eq(storeBargainUser.id, 80));
+    await withFinancePeers(f.db, async ([blocker, starter, canceller]) => {
+      await blocker.exec("BEGIN; SELECT pg_advisory_xact_lock(hashtextextended('bargain-start:11:40',0))");
+      const starting = outcome(new ActivityJoinService(createContainerFromDb(starter.db)).startBargain(11, 40));
+      await waitForFinanceBlock(f.db, starter.pid, blocker.pid);
+      const cancelling = outcome(new ActivityJoinService(createContainerFromDb(canceller.db)).cancelBargain(11, { bargainId: 40 }));
+      await waitForFinanceBlock(f.db, canceller.pid, blocker.pid);
+      await blocker.exec("COMMIT");
+      const started = await starting;
+      expect(started).toMatchObject({ ok: true });
+      expect(await cancelling).toEqual({ ok: true, value: undefined });
+      if (!started.ok) throw started.error;
+      const participant = (await f.snapshot()).participations.find(row => row.id === started.value.id);
+      expect(participant).toMatchObject({ uid: 11, bargainId: 40, status: 2, isDel: 1 });
+    });
+  }, 15_000);
+
+  it("keeps the legacy activity-only cancellation usable inside an existing transaction", async () => {
+    await f.db.update(storeBargainUser).set({ status: 1, price: "1.00" }).where(eq(storeBargainUser.id, 80));
+    await f.db.transaction(async tx => {
+      await tx.execute(sql`SELECT 1`);
+      await new ActivityJoinService(createContainerFromDb(tx as unknown as Parameters<typeof createContainerFromDb>[0]))
+        .cancelBargain(11, { bargainId: 40 });
+    });
+    expect((await f.snapshot()).participations.find(row => row.id === 80)).toMatchObject({ status: 2, isDel: 1 });
+  });
+
   it("start waiting behind the final actual help reuses the newly completed record", async () => {
     await f.db.update(storeBargain).set({ people: 1 });
     await f.db.update(storeBargainUser).set({ status: 1, price: "0.00" }).where(eq(storeBargainUser.id, 80));
