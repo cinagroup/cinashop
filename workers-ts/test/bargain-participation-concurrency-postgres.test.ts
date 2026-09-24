@@ -51,6 +51,71 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("bargain independ
     });
   }, 15_000);
 
+  it("rejects help waiting behind a committed cancellation without creating a help detail", async () => {
+    await f.exec(`CREATE FUNCTION qa_cancel_wait() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF OLD.is_del = 0 AND NEW.is_del = 1 AND NEW.id = 81 THEN
+          PERFORM pg_advisory_xact_lock(731630, 81);
+        END IF;
+        RETURN NEW;
+      END $$;
+      CREATE TRIGGER qa_cancel_wait AFTER UPDATE OF is_del ON store_bargain_user
+      FOR EACH ROW EXECUTE FUNCTION qa_cancel_wait()`);
+    const before = await f.snapshot();
+    await withFinancePeers(f.db, async ([blocker, canceller, helper]) => {
+      await blocker.exec("BEGIN; SELECT pg_advisory_xact_lock(731630,81)");
+      const cancelling = outcome(new ActivityJoinService(createContainerFromDb(canceller.db)).cancelBargain(22, { id: 81 }));
+      await waitForFinanceBlock(f.db, canceller.pid, blocker.pid);
+      const helping = outcome(new ActivityJoinService(createContainerFromDb(helper.db)).helpBargain(11, 81));
+      await waitForFinanceBlock(f.db, helper.pid, canceller.pid);
+      await blocker.exec("COMMIT");
+      expect(await cancelling).toEqual({ ok: true, value: undefined });
+      expect(await helping).toMatchObject({ ok: false, error: { message: "砍价记录不存在" } });
+    });
+    const after = await f.snapshot();
+    expect(after.helps).toEqual(before.helps);
+    expect(after.participations).toEqual(before.participations.map(row => row.id === 81
+      ? { ...row, status: 2, isDel: 1 } : row));
+    expect(after.orders).toEqual(before.orders);
+    expect(after.carts).toEqual(before.carts);
+  }, 15_000);
+
+  it("preserves exactly one historical help when cancellation waits for an unfinished cut", async () => {
+    await f.db.update(storeBargainUser).set({ price: "0.00" }).where(eq(storeBargainUser.id, 81));
+    await f.exec(`CREATE FUNCTION qa_help_before_cancel_wait() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF NEW.bargain_user_id = 81 THEN
+          PERFORM pg_advisory_xact_lock(731631, 81);
+        END IF;
+        RETURN NEW;
+      END $$;
+      CREATE TRIGGER qa_help_before_cancel_wait AFTER INSERT ON store_bargain_user_help
+      FOR EACH ROW EXECUTE FUNCTION qa_help_before_cancel_wait()`);
+    const before = await f.snapshot();
+    await withFinancePeers(f.db, async ([blocker, helper, canceller]) => {
+      await blocker.exec("BEGIN; SELECT pg_advisory_xact_lock(731631,81)");
+      const helping = outcome(new ActivityJoinService(createContainerFromDb(helper.db)).helpBargain(11, 81));
+      await waitForFinanceBlock(f.db, helper.pid, blocker.pid);
+      const cancelling = outcome(new ActivityJoinService(createContainerFromDb(canceller.db)).cancelBargain(22, { id: 81 }));
+      await waitForFinanceBlock(f.db, canceller.pid, helper.pid);
+      await blocker.exec("COMMIT");
+      const helped = await helping;
+      expect(helped).toMatchObject({ ok: true, value: { price: expect.any(String) } });
+      expect(await cancelling).toEqual({ ok: true, value: undefined });
+      if (!helped.ok) throw helped.error;
+      const after = await f.snapshot();
+      expect(after.helps).toHaveLength(before.helps.length + 1);
+      expect(after.helps.filter(row => row.bargainUserId === 81)).toHaveLength(1);
+      expect(after.helps.at(-1)).toMatchObject({ bargainUserId: 81, bargainId: 40,
+        uid: 11, type: 0, price: helped.value.price });
+      expect(after.participations.find(row => row.id === 81)).toMatchObject({
+        uid: 22, bargainId: 40, status: 2, isDel: 1, price: helped.value.price,
+      });
+      expect(after.orders).toEqual(before.orders);
+      expect(after.carts).toEqual(before.carts);
+    });
+  }, 15_000);
+
   it("keeps the legacy activity-only cancellation usable inside an existing transaction", async () => {
     await f.db.update(storeBargainUser).set({ status: 1, price: "1.00" }).where(eq(storeBargainUser.id, 80));
     await f.db.transaction(async tx => {

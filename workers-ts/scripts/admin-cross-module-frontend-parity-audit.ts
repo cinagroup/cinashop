@@ -60,6 +60,7 @@ const screens: Record<string, { file: string; marker: string; permission: string
   "/content/dise": { file: "view/admin-ts/src/pages/content/DiseList.vue", marker: 'path: "content/dise"', permission: "dise.view/dise.manage" },
   "/finance/extract": { file: "view/admin-ts/src/pages/finance/ExtractList.vue", marker: 'path: "finance/extract"', permission: "extract.view/extract.manage" },
   "/finance/bill": { file: "view/admin-ts/src/pages/finance/BillList.vue", marker: 'path: "finance/bill"', permission: "bill.view" },
+  "/finance/capital-flow": { file: "view/admin-ts/src/pages/finance/CapitalFlowList.vue", marker: 'path: "finance/capital-flow"', permission: "capital_flow.view/capital_flow.manage" },
   "/statistic": { file: "view/admin-ts/src/pages/statistic/Dashboard.vue", marker: 'path: "statistic"', permission: "statistic.view" },
 };
 const reviews: Record<string, Review> = {};
@@ -125,9 +126,10 @@ add("/admin/statistic/transaction", "candidate", ["/statistic"], ["GET /adminapi
   "新交易统计 tab 使用对应 top/bottom API，展示今日、月度及交易概况，并支持 CSV 导出。",
   "仍需以旧生产数据核对各支付/退款口径、图表时区和导出结果；代码分类不等于上线验收。",
   ["view/admin-ts/src/pages/statistic/components/TradeStatisticsPanel.vue", "view/admin-ts/src/api/statistic.ts"]);
-add("/admin/statistic/capital", "missing", [], ["GET /adminapi/flow/get_list", "POST /adminapi/flow/set_mark/:id"], "",
-  "旧页管理平台外部现金流，支持交易类型/订单号/时间筛选及备注；Worker 保留独立 flow API 和 capital_flow 权限，但新 Admin 没有 /finance/capital-flow 页面。/finance/bill 是 user_bill，不是同一账本。",
-  ["workers-ts/src/controllers/api/v1/AdminCapitalFlowController.ts", "view/admin-ts/src/pages/finance/BillList.vue"]);
+add("/admin/statistic/capital", "candidate", ["/finance/capital-flow"], ["GET /adminapi/flow/get_list", "POST /adminapi/flow/set_mark/:id"],
+  "新平台资金流水页使用独立 capital_flow 账本，可按交易类型、订单/昵称/电话/UID及时间区间筛选，分页显示旧列，并在 capital_flow.manage 权限下编辑备注。",
+  "仍需真实角色浏览器验收及代表性资金流水数据核对，尤其时间边界、权限与备注保存结果；代码候选不等于生产验收。",
+  ["workers-ts/src/controllers/api/v1/AdminCapitalFlowController.ts", "workers-ts/src/services/finance/CapitalFlowService.ts", "view/admin-ts/src/api/finance.ts", "view/admin-ts/src/pages/finance/capitalFlowRange.ts"]);
 add("/admin/statistic/order", "candidate", ["/statistic"], ["GET /adminapi/statistic/order/get_basic", "GET /adminapi/statistic/order/get_channel", "GET /adminapi/statistic/order/get_type"],
   "新订单统计 tab 有支付/退款/优惠指标、营业趋势、来源和类型分布，对应旧统计 API。",
   "仍需用真实订单核对渠道归因、退款口径、统计日期边界和旧图表显示。",
@@ -192,7 +194,7 @@ const report = {
   methodology: {
     scope: "The 18 as-yet-unreviewed surface=page routes from routes.js (2), statistic.js (6), finance.js (4), echarts.js (2), only /admin/login from frameOut.js (1), index.js (1), and system.js (2). Three other routes.js pages already belong to the setting/system ledgers; Kefu frameOut pages belong to the kefu ledger.",
     reviewBasis: "Compare behavior-bearing old Vue components and APIs against actual target Admin screens, registered Worker APIs, data entities and permissions. Static old auth and component lines are pinned to seven router hashes; generation requires only this repository. An API-only route or similarly named screen does not establish parity. Empty or hard-coded demo screens are retired only with source evidence.",
-    validationBoundary: "Code-only semantic review; no real-role browser E2E, historic data reconciliation, production deployment, or publication is claimed. FE-001D stays open.",
+    validationBoundary: "Code-only semantic review; no real-role browser E2E, representative data reconciliation, production deployment, or publication is claimed. Functional acceptance stays open.",
   },
   summary: { legacyRoutes: routes.length, reviewed: routes.length, ...counts, unreviewed: 0 },
   routes,

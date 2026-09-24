@@ -4,14 +4,14 @@
   "methodology": {
     "scope": "The 18 as-yet-unreviewed surface=page routes from routes.js (2), statistic.js (6), finance.js (4), echarts.js (2), only /admin/login from frameOut.js (1), index.js (1), and system.js (2). Three other routes.js pages already belong to the setting/system ledgers; Kefu frameOut pages belong to the kefu ledger.",
     "reviewBasis": "Compare behavior-bearing old Vue components and APIs against actual target Admin screens, registered Worker APIs, data entities and permissions. Static old auth and component lines are pinned to seven router hashes; generation requires only this repository. An API-only route or similarly named screen does not establish parity. Empty or hard-coded demo screens are retired only with source evidence.",
-    "validationBoundary": "Code-only semantic review; no real-role browser E2E, historic data reconciliation, production deployment, or publication is claimed. FE-001D stays open."
+    "validationBoundary": "Code-only semantic review; no real-role browser E2E, representative data reconciliation, production deployment, or publication is claimed. Functional acceptance stays open."
   },
   "summary": {
     "legacyRoutes": 18,
     "reviewed": 18,
-    "candidate": 3,
+    "candidate": 4,
     "partial": 10,
-    "missing": 4,
+    "missing": 3,
     "retired": 1,
     "unreviewed": 0
   },
@@ -515,15 +515,19 @@
         "routerSha256": "caca56271cc861e0a1bb6c5bbb00d1271fb9c20d7b6535014bbf4a3c0640e93f",
         "auth": "['admin-statistic-capital']"
       },
-      "status": "missing",
-      "targetScreens": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/finance/capital-flow"
+      ],
       "targetApis": [
         "GET /adminapi/flow/get_list",
         "POST /adminapi/flow/set_mark/:id"
       ],
-      "covered": [],
+      "covered": [
+        "新平台资金流水页使用独立 capital_flow 账本，可按交易类型、订单/昵称/电话/UID及时间区间筛选，分页显示旧列，并在 capital_flow.manage 权限下编辑备注。"
+      ],
       "remaining": [
-        "旧页管理平台外部现金流，支持交易类型/订单号/时间筛选及备注；Worker 保留独立 flow API 和 capital_flow 权限，但新 Admin 没有 /finance/capital-flow 页面。/finance/bill 是 user_bill，不是同一账本。"
+        "仍需真实角色浏览器验收及代表性资金流水数据核对，尤其时间边界、权限与备注保存结果；代码候选不等于生产验收。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/router/modules/statistic.js",
@@ -532,10 +536,15 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/finance/CapitalFlowList.vue",
         "workers-ts/src/controllers/api/v1/AdminCapitalFlowController.ts",
-        "view/admin-ts/src/pages/finance/BillList.vue"
+        "workers-ts/src/services/finance/CapitalFlowService.ts",
+        "view/admin-ts/src/api/finance.ts",
+        "view/admin-ts/src/pages/finance/capitalFlowRange.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "capital_flow.view/capital_flow.manage"
+      ]
     },
     {
       "legacy": {

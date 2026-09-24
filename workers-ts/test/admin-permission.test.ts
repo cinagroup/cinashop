@@ -47,6 +47,14 @@ describe("admin permission catalog", () => {
     expect(normalizeAdminRoute("/API/Admin/Agent/Division/Detail/:uid")).toBe("agent/division/detail/:uid");
   });
 
+  it("separates platform cash-flow reads from remark edits on both admin route surfaces", () => {
+    for (const prefix of ["/adminapi", "/api/admin"]) {
+      expect(requiredAdminPermission("GET", `${prefix}/flow/get_list`)).toBe("capital_flow.view");
+      expect(requiredAdminPermission("POST", `${prefix}/flow/set_mark/7`)).toBe("capital_flow.manage");
+      expect(requiredAdminPermission("GET", `${prefix}/bill/list`)).toBe("bill.view");
+    }
+  });
+
   it("fails closed for unregistered management routes", () => {
     expect(requiredAdminPermission("GET", "/adminapi/not-registered/list")).toBeNull();
   });

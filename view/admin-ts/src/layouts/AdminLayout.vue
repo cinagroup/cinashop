@@ -132,6 +132,10 @@
           <el-icon><Tickets /></el-icon>
           <span>财务流水</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/finance/capital-flow')" index="/finance/capital-flow">
+          <el-icon><Wallet /></el-icon>
+          <span>平台资金流水</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/level')" index="/level">
           <el-icon><Medal /></el-icon>
           <span>会员等级</span>
@@ -276,6 +280,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/system/log")) return "/system/log";
   if (path.startsWith("/system")) return "/system";
   if (path.startsWith("/finance/supplier-extract")) return "/finance/supplier-extract";
+  if (path.startsWith("/finance/capital-flow")) return "/finance/capital-flow";
   if (path.startsWith("/finance/bill")) return "/finance/bill";
   if (path.startsWith("/finance")) return "/finance/extract";
   if (path.startsWith("/level")) return "/level";

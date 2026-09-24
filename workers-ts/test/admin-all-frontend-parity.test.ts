@@ -44,6 +44,6 @@ describe("complete legacy Admin page semantic inventory", () => {
     expect(reviewed).toHaveLength(274);
     expect(new Set(reviewed).size).toBe(274);
     expect(reviewed.sort()).toEqual(authority.sort());
-    expect(statusCounts).toEqual({ candidate: 38, partial: 120, missing: 109, retired: 7 });
+    expect(statusCounts).toEqual({ candidate: 39, partial: 120, missing: 108, retired: 7 });
   });
 });

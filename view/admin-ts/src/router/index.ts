@@ -252,6 +252,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "财务流水" },
       },
       {
+        path: "finance/capital-flow",
+        name: "finance-capital-flow",
+        component: () => import("@/pages/finance/CapitalFlowList.vue"),
+        meta: { title: "平台资金流水" },
+      },
+      {
         path: "level",
         name: "level",
         component: () => import("@/pages/level/LevelList.vue"),

@@ -39,7 +39,7 @@ describe("legacy Admin cross-module route semantic audit", () => {
     expect(business).toHaveLength(18);
     for (const [file, count] of Object.entries(fileCounts)) expect(business.filter((route) => route.source === file)).toHaveLength(count);
     expect(report.routes.map((route) => route.legacy.path)).toEqual(business.map((route) => route.path));
-    expect(report.summary).toEqual({ legacyRoutes: 18, reviewed: 18, candidate: 3, partial: 10, missing: 4, retired: 1, unreviewed: 0 });
+    expect(report.summary).toEqual({ legacyRoutes: 18, reviewed: 18, candidate: 4, partial: 10, missing: 3, retired: 1, unreviewed: 0 });
   });
 
   it("keeps nine audit ledgers disjoint inside the 274-page authority", () => {
@@ -94,9 +94,12 @@ describe("legacy Admin cross-module route semantic audit", () => {
     expect(byPath.has("/admin/setting/system/create")).toBe(false);
     expect(byPath.get("/admin/finance/user_recharge/index")?.status).toBe("missing");
     expect(byPath.get("/admin/finance/finance/commission")?.status).toBe("missing");
-    expect(byPath.get("/admin/statistic/capital")?.status).toBe("missing");
+    expect(byPath.get("/admin/statistic/capital")?.status).toBe("candidate");
+    expect(byPath.get("/admin/statistic/capital")?.targetScreens).toEqual(["/finance/capital-flow"]);
+    expect(byPath.get("/admin/statistic/capital")?.targetPermissions).toEqual(["capital_flow.view/capital_flow.manage"]);
     expect(byPath.get("/admin/statistic/capital")?.targetApis).toContain("GET /adminapi/flow/get_list");
-    expect(byPath.get("/admin/statistic/capital")?.remaining.join(" ")).toMatch(/user_bill/u);
+    expect(byPath.get("/admin/statistic/capital")?.targetApis).toContain("POST /adminapi/flow/set_mark/:id");
+    expect(byPath.get("/admin/statistic/capital")?.remaining.join(" ")).toMatch(/真实角色/u);
     expect(byPath.get("/admin/finance/finance/bill")?.targetScreens).toEqual(["/finance/bill"]);
     expect(byPath.get("/admin/login")?.status).toBe("partial");
     expect(byPath.get("/")?.status).toBe("partial");

@@ -105,6 +105,53 @@ export function apiAdminBillList(params: {
   );
 }
 
+/** Platform cash movement in capital_flow; /bill/list reads the separate user_bill ledger. */
+export interface CapitalFlowItem {
+  id: number;
+  flow_id: string;
+  order_id: string;
+  store_id: number;
+  uid: number;
+  nickname: string;
+  phone: string;
+  price: string;
+  trading_type_code: number;
+  trading_type: string;
+  pay_type_code: string;
+  pay_type: string;
+  mark: string;
+  /** Server-formatted Asia/Shanghai wall time, YYYY/MM/DD HH:mm:ss. */
+  add_time: string;
+}
+
+export interface CapitalFlowListResult {
+  list: CapitalFlowItem[];
+  count: number;
+  status: string[];
+}
+
+export function apiAdminCapitalFlowList(params: {
+  trading_type?: number;
+  keywords?: string;
+  start?: number;
+  stop?: number;
+  page: number;
+  limit: number;
+}): Promise<CapitalFlowListResult> {
+  return getData(
+    request.get<CapitalFlowListResult>("/flow/get_list", {
+      params: params as Record<string, unknown>,
+    }),
+  );
+}
+
+export function apiAdminCapitalFlowSetMark(id: number, mark: string): Promise<{ id: number; mark: string }> {
+  if (!Number.isSafeInteger(id) || id <= 0 || mark.length > 200) {
+    return Promise.reject(new Error("流水 ID 或备注长度无效"));
+  }
+  return getData(request.post<{ id: number; mark: string }>(`/flow/set_mark/${id}`, { mark }));
+}
+
 export interface SupplierExtractItem {
   id: number;
   supplierId: number;
