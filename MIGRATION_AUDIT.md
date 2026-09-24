@@ -7573,9 +7573,9 @@ A3k11b调用链审查：普通创建OrderController:351先查地址但仅对查�
 
 四个旧 `platform/list|order|bill|setting` 页分别是固定示例数据或空保存函数，才列 retired；旧 `platform/index` 有泛用图表 API 调用，单独保持 partial。DIY 原始 JSON 编辑不等于旧专题、店铺装修、个人中心及商品详情可视编辑器。开屏广告虽有同一 `open_adv` 持久合同，仍缺拖拽、素材和链接选择，列 partial。旧单独隐私协议页的无 `type` 请求是旧缺参错误；新 `privacy` 合同有明确客户端读取，连同客服 HTML 按可编辑内容列 candidate，但生产历史 HTML 与角色仍待验收。
 
-本批只读本地源码及已有审计证据；没有连接生产 Hyperdrive、查询业务表、运行 DDL/DML、发短信/支付请求或部署。`candidate` 是本地迁移候选，不是线上可用或完整迁移验收；`partial`/`missing` 缺口仍需后续实施，特别是动态配置分类、group_data 编辑器、同城配送、DIY 可视编辑和管理权限。FE-001D4 清单保持未勾选，待主线程复核此次分类及后续缺口处理。
+本批只读本地源码及已有审计证据；没有连接生产 Hyperdrive、查询业务表、运行 DDL/DML、发短信/支付请求或部署。`candidate` 是本地迁移候选，不是线上可用或完整迁移验收；`partial`/`missing` 缺口仍需后续实施，特别是动态配置分类、group_data 编辑器、同城配送、DIY 可视编辑和管理权限。FE-001D4 逐屏代码审计项在精确提交 ece6ded6b9b05a2b1d1a5228f5fdbb0b89c14b3e 的 Linux CI 成功后勾选；30 个 missing 和 24 个 partial 的功能补齐与生产验收继续归 FE-001D/G/H。
 
-验证：审计生成器 `--write` 成功；定向 Vitest 1 文件 8 项通过；逐条证据文件路径本地检查 0 缺失；Worker `typecheck:unit` 通过。此次未运行全量 Worker、真实浏览器或 Linux CI，不能借用基线提交结果。
+验证：审计生成器 `--write` 成功；定向 Vitest 1 文件 8 项通过；逐条证据文件路径本地检查 0 缺失；Worker `typecheck:unit` 通过。随后精确提交 ece6ded6b9b05a2b1d1a5228f5fdbb0b89c14b3e 的 [Linux CI](https://github.com/cinagroup/cinashop/actions/runs/35950719144) 11/11 成功，两个 Worker 分片合计 10,716/10,716、零跳过，审计测试 8/8；真实浏览器和生产验收未做。
 
 ## 完成定义
 
