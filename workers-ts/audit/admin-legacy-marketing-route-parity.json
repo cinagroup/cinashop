@@ -9,9 +9,9 @@
   "summary": {
     "legacyRoutes": 48,
     "reviewed": 48,
-    "candidate": 3,
+    "candidate": 4,
     "partial": 22,
-    "missing": 23,
+    "missing": 22,
     "retired": 0,
     "unreviewed": 0
   },
@@ -967,21 +967,36 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-point_statistic-index']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/marketing/point-statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/point/get_basic",
+        "GET /adminapi/marketing/point/get_trend",
+        "GET /adminapi/marketing/point/get_channel",
+        "GET /adminapi/marketing/point/get_type"
+      ],
+      "covered": [
+        "独立只读页按上海日期范围展示当前/累计/消耗积分、积累与消耗趋势及五类来源/消耗分布；沿用旧 gain 双标签及退款退回分类，按 point_statistic.view 独立授权。"
+      ],
       "remaining": [
-        "旧积分基本、趋势、渠道与类型四组统计没有新 Admin 页面。"
+        "仅完成本地代码候选；旧 gain 无历史来源判别，3日趋势采用完整聚合而非 PHP 漏日抽样；真实历史数据、受限角色及发布后流程待验收。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/pointStatistic/index.vue",
         "cinashop-php/view/admin/src/router/modules/marketing.js",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
-        "workers-ts/src/services/admin/AdminPermissionService.ts"
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/marketing/PointStatistic.vue",
+        "cinashop-php/app/services/activity/integral/UserPointServices.php",
+        "workers-ts/src/services/admin/AdminPointStatisticService.ts",
+        "workers-ts/test/admin-point-statistic.test.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "point_statistic.view"
+      ]
     },
     {
       "legacy": {

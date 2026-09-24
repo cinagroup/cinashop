@@ -108,6 +108,10 @@
           <el-icon><Tickets /></el-icon>
           <span>积分日志</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/marketing/point-statistic')" index="/marketing/point-statistic">
+          <el-icon><DataLine /></el-icon>
+          <span>积分统计</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/system/out')" index="/system/out">
           <el-icon><Key /></el-icon>
           <span>对外接口</span>
@@ -288,6 +292,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/marketing/lottery")) return "/marketing/lottery";
   if (path.startsWith("/marketing/live")) return "/marketing/live";
   if (path.startsWith("/marketing/user-point")) return "/marketing/user-point";
+  if (path.startsWith("/marketing/point-statistic")) return "/marketing/point-statistic";
   if (path.startsWith("/system/out")) return "/system/out";
   if (path.startsWith("/kefu")) return "/kefu";
   if (path.startsWith("/reply")) return "/reply";

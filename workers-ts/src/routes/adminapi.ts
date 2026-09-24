@@ -42,6 +42,7 @@ import * as AdminNotification from "@/controllers/api/v1/AdminNotificationContro
 import * as AdminDivision from "@/controllers/api/v1/AdminDivisionController";
 import * as AdminCapitalFlow from "@/controllers/api/v1/AdminCapitalFlowController";
 import * as AdminIntegralLog from "@/controllers/api/v1/AdminIntegralLogController";
+import * as AdminPointStatistic from "@/controllers/api/v1/AdminPointStatisticController";
 import * as AdminCouponRecords from "@/controllers/api/v1/AdminCouponRecordController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
@@ -844,6 +845,12 @@ adminapiRoutes.post(
 // ─── Admin 积分日志（独立只读权限）──────────────────────────
 adminapiRoutes.get("/marketing/user-point/logs", adminAuth, AdminIntegralLog.list);
 adminapiRoutes.get("/marketing/user-point/statistics", adminAuth, AdminIntegralLog.statistics);
+
+// ─── 旧 Admin 积分统计（独立只读权限）──────────────────────
+adminapiRoutes.get("/marketing/point/get_basic", adminAuth, AdminPointStatistic.basic);
+adminapiRoutes.get("/marketing/point/get_trend", adminAuth, AdminPointStatistic.trend);
+adminapiRoutes.get("/marketing/point/get_channel", adminAuth, AdminPointStatistic.channel);
+adminapiRoutes.get("/marketing/point/get_type", adminAuth, AdminPointStatistic.type);
 
 // ─── 用户领取记录（独立只读权限）────────────────────────────
 adminapiRoutes.get("/marketing/coupon-records/list", adminAuth, AdminCouponRecords.list);

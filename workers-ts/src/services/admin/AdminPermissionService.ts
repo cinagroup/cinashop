@@ -123,6 +123,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   { key: "supplier_extract", label: "供应商提现", path: "/finance/supplier-extract", matches: ["supplier/extract/"], manage: true },
   { key: "bill", label: "财务流水", path: "/finance/bill", matches: ["bill/"], manage: false },
   { key: "integral_log", label: "积分日志", path: "/marketing/user-point", matches: ["marketing/user-point/"], manage: false },
+  { key: "point_statistic", label: "积分统计", path: "/marketing/point-statistic", matches: ["marketing/point/"], manage: false },
   { key: "capital_flow", label: "平台资金流水", path: "/finance/capital-flow", matches: ["flow/"], manage: true },
   { key: "shipping", label: "运费模板", path: "/shipping", matches: ["shipping_template/"], manage: true },
   { key: "express", label: "快递公司", path: "/express", matches: ["express/"], manage: true },
