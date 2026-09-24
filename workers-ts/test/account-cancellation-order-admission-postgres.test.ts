@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
@@ -9,7 +9,7 @@ import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchase
 import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 import {
   orderPrintJob, storeCart, storeOrder, storeOrderCartInfo, storeOrderOutbox,
-  storeOrderPurchaseOrigin, storeProduct, storeProductAttrValue, storeIntegral, systemStore, user, userBill,
+  storeOrderPurchaseOrigin, storeProduct, storeProductAttrValue, storeIntegral, user, userBill,
 } from '../src/models/schema';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
@@ -183,8 +183,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
     expect(await durableState()).toEqual(before);
   }, 30_000);
 
-  it.each(['ordinary first', 'points first'])('%s: ordinary and points orders for the same SKU finish without a user/SKU cycle', async first => {
-    await fixture.db.update(systemStore).set({ isStore: 1 });
+  it.each(['ordinary first', 'points first'])('%s: ordinary and points orders sharing a SKU finish without deadlock or partial writes', async first => {
+    await fixture.db.update(storeProduct).set({ freight: 1, tempId: 0 });
     await fixture.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: 'points sample',
       stock: 8, quota: 8, status: 1, isShow: 1, isDel: 0, freight: 1 });
     await fixture.db.insert(storeProductAttrValue).values({ id: 2, productId: 9, type: 4,
@@ -192,11 +192,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
     await fixture.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70,
       productAttrUnique: 'qared001', cartNum: 2, type: 4, activityId: 9, isNew: 1, status: 1 });
     const ordinary: CreateOrderParams = { uid: 11, key: 'ordinary_order', cartIds: [1],
-      shippingType: 2, storeId: 1, realName: 'Local buyer', userPhone: '00000000000', type: 0, userIp: '127.0.0.1' };
+      shippingType: 1, addressId: 11, type: 0, userIp: '127.0.0.1' };
     const points: CreateOrderParams = { uid: 11, key: 'points_order', cartIds: [2],
-      shippingType: 2, storeId: 1, realName: 'Local buyer', userPhone: '00000000000', type: 4, userIp: '127.0.0.1' };
+      shippingType: 1, addressId: 11, type: 4, userIp: '127.0.0.1' };
     const withPeer = owned.withPeer;
     if (!withPeer) throw new Error('Dedicated PostgreSQL peers required');
+    const before = await durableState();
     await withPeer(async holder => withPeer(async buyerA => withPeer(async buyerB => {
       // The second checkout's full quote pre-read can outlast the peers' default
       // eight-second lock timeout while the first request is parked on this fixture.
@@ -213,14 +214,41 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
         const firstOrder = outcome(create(buyerA.db, firstParams));
         await waitForFinanceBlock(fixture.db, buyerA.pid, holder.pid);
         const secondOrder = outcome(create(buyerB.db, secondParams));
-        // The first transaction already owns an incompatible user lock, either
-        // from the order FK or the points balance check. The second waits there.
+        // Both checkouts reach the same base SKU UPDATE. The second queues
+        // behind the first; this must not be a pickup-code advisory wait.
         await waitForFinanceBlock(fixture.db, buyerB.pid, buyerA.pid);
+        const [waiting] = await fixture.db.select({ event: sql<string>`wait_event_type`, query: sql<string>`query` })
+          .from(sql`pg_stat_activity`).where(sql`pid = ${buyerB.pid}`);
+        expect(waiting.event).toBe('Lock');
+        expect(waiting.query).toContain('update "store_product_attr_value"');
         await holder.exec('COMMIT');
         pending = false;
         const [a, b] = await Promise.all([firstOrder, secondOrder]);
-        expect(a).toMatchObject({ ok: true });
-        expect(b).toMatchObject({ ok: true });
+        if (first === 'ordinary first') {
+          expect(a).toMatchObject({ ok: false, error: { message: '用户状态正在变化，请稍后重新确认' } });
+          expect(b).toMatchObject({ ok: true });
+          const pointsOnly = await durableState();
+          const [pointsOrder] = pointsOnly.orders;
+          expect(pointsOrder?.type).toBe(4);
+          expect(pointsOnly.orders).toHaveLength(1);
+          expect(pointsOnly.carts.find(cart => cart.id === 1)).toEqual(before.carts.find(cart => cart.id === 1));
+          expect(pointsOnly.products.find(product => product.id === 70)?.stock).toBe(6);
+          expect(pointsOnly.skus.find(sku => sku.id === 1)?.stock).toBe(6);
+          expect(pointsOnly.lines).toHaveLength(1);
+          expect(pointsOnly.lines.every(line => line.oid === pointsOrder.id)).toBe(true);
+          expect(pointsOnly.origins.every(origin => origin.orderId === pointsOrder.id)).toBe(true);
+          expect(pointsOnly.bills.every(bill => bill.linkId === String(pointsOrder.id))).toBe(true);
+          expect(pointsOnly.outbox.every(event => event.aggregateId === pointsOrder.id)).toBe(true);
+          expect(pointsOnly.printJobs.every(job => job.orderId === pointsOrder.id)).toBe(true);
+          // A new confirmation after the retriable conflict can create the
+          // ordinary order; the earlier failed transaction claimed nothing.
+          const freshReceipt = await confirmation();
+          const retry = await buy(buyerA.db, freshReceipt);
+          expect(retry.status, retry.msg).toBe(200);
+        } else {
+          expect(a).toMatchObject({ ok: true });
+          expect(b).toMatchObject({ ok: true });
+        }
       } finally { if (pending) await holder.exec('ROLLBACK'); }
     })));
     const orders = await fixture.db.select().from(storeOrder);
