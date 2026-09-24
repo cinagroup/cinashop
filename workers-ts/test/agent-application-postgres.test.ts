@@ -99,6 +99,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
       expect(wrongPurpose.msg).toContain("验证码错误或已过期");
       expect(state.codes.has(promoterKey)).toBe(true);
       expect(await fixture.db.select().from(divisionApply)).toHaveLength(0);
+      state.codes.set(`code_${body.phone}`, body.code);
+      const legacyCacheOnly = await post(body);
+      expect(legacyCacheOnly.status).not.toBe(200);
+      expect(legacyCacheOnly.msg).toContain("验证码错误或已过期");
+      expect(state.codes.has(`code_${body.phone}`)).toBe(true);
+      expect(await fixture.db.select().from(divisionApply)).toHaveLength(0);
       state.codes.set(divisionKey, { uid: 0, purpose: "user_division_application", code: body.code });
       const success = await post(body);
       expect(success.status, success.msg).toBe(200);
@@ -148,6 +154,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("agent applicatio
       expect(wrongPurpose.status).not.toBe(200);
       expect(wrongPurpose.msg).toContain("验证码错误或已过期");
       expect(state.codes.has(divisionKey)).toBe(true);
+      expect(await fixture.db.select().from(promoterApply)).toHaveLength(0);
+      state.codes.set(`code_${input.phone}`, input.code);
+      const legacyCacheOnly = await post();
+      expect(legacyCacheOnly.status).not.toBe(200);
+      expect(legacyCacheOnly.msg).toContain("验证码错误或已过期");
+      expect(state.codes.has(`code_${input.phone}`)).toBe(true);
       expect(await fixture.db.select().from(promoterApply)).toHaveLength(0);
       state.codes.set(promoterKey, { uid: 0, purpose: "user_promoter_application", code: input.code });
       const success = await post();

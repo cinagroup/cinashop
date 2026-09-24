@@ -61,13 +61,15 @@ describe("distribution relationship migration", () => {
     ).toBe("distribution.manage");
   });
 
-  it("keeps SMS/config gates and ownership checks on distributor applications", () => {
+  it("keeps purpose-bound SMS, config gates and ownership checks on distributor applications", () => {
     const service = readFileSync("src/services/agent/PromoterApplicationService.ts", "utf8");
     expect(service).toContain("brokerage_func_status");
     expect(service).toContain("store_brokerage_statu");
-    expect(service).toContain("`code_${phone}`");
-    expect(service).toContain("cacheDelete");
-    expect(service).toContain("existing.uid !== uid");
+    expect(service).toContain('.consumeUserCode("user_promoter_application", phone, code)');
+    expect(service).not.toContain("`code_${phone}`");
+    expect(service).not.toContain("cacheDelete");
+    expect(service).toContain("applicationRows[0].uid !== uid");
+    expect(service).toContain("lockedApplications.some((row) => row.id === id)");
     expect(service).toContain('.for("update")');
     expect(service).toContain("pg_advisory_xact_lock");
   });
