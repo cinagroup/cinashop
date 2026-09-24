@@ -93,7 +93,7 @@ async function mount(permissions: string[], respond?: (config: any) => unknown) 
   runtime.request.defaults.adapter = async (config: any) => {
     calls.push(config);
     const id = Number(config.url?.match(/\/(\d+)$/u)?.[1] ?? 0);
-    const data = respond?.(config) ?? (config.url === "/setting/sign/rewards"
+    const data = (await respond?.(config)) ?? (config.url === "/setting/sign/rewards"
       ? rewardPage(config.params.type, config.params.page)
       : config.url === "/setting/sign/add_rewards"
         ? rewardForm(0, config.params.type)
@@ -209,6 +209,88 @@ it("submits only the four approved fields for add/edit, confirms delete, then re
     await fixture.view.remove(reward(1, 0, 7));
     expect(fixture.calls.at(-2)).toMatchObject({ method: "delete", url: "/setting/sign/del_rewards/1" });
     expect(fixture.calls.at(-1).url).toBe("/setting/sign/rewards");
+  } finally { fixture.close(); }
+});
+
+it("lists historical out-of-bound integers but requires correction before saving", async () => {
+  const historical = { id: 9, type: 0, days: 0, point: -1, exp: 1000 };
+  const fixture = await mount(["config.view", "config.manage"], (config) => {
+    if (config.url === "/setting/sign/rewards") {
+      return { list: [historical], count: 1, page: config.params.page, limit: 15 };
+    }
+    if (config.url === "/setting/sign/edit_rewards/9") {
+      return { info: historical, rules: [{ field: "days", props: { min: 1, max: 30 } }] };
+    }
+    return undefined;
+  });
+  try {
+    expect(fixture.view.rows.value).toEqual([historical]);
+    await fixture.view.openForm(9);
+    expect(fixture.view.form.value).toMatchObject(historical);
+    await fixture.view.save();
+    expect(fixture.calls.filter((call) => call.method === "post")).toHaveLength(0);
+    fixture.view.form.value.days = 1;
+    fixture.view.form.value.point = 0;
+    fixture.view.form.value.exp = 999;
+    await fixture.view.save();
+    const saved = fixture.calls.find((call) => call.method === "post");
+    expect(saved.url).toBe("/setting/sign/save_rewards/9");
+    expect(JSON.parse(saved.data)).toEqual({ type: 0, days: 1, point: 0, exp: 999 });
+    await fixture.view.remove(historical);
+    expect(fixture.calls.some((call) => call.method === "delete" &&
+      call.url === "/setting/sign/del_rewards/9")).toBe(true);
+  } finally { fixture.close(); }
+});
+
+it("retries the failed requested page instead of the last successful page", async () => {
+  let failPageTwo = true;
+  const fixture = await mount(["config.view"], (config) => {
+    if (config.url === "/setting/sign/rewards" && config.params.page === 2 && failPageTwo) {
+      failPageTwo = false;
+      throw new Error("page two transient");
+    }
+    return undefined;
+  });
+  try {
+    await fixture.view.loadList(2);
+    expect(fixture.view.page.value).toBe(1);
+    expect(fixture.view.requestedPage.value).toBe(2);
+    expect(fixture.view.listError.value).toContain("page two transient");
+    expect(pageSource).toContain('@click="loadList(requestedPage)"');
+    await fixture.view.loadList(fixture.view.requestedPage.value);
+    expect(fixture.calls.at(-1).params.page).toBe(2);
+    expect(fixture.view.page.value).toBe(2);
+    expect(fixture.view.listError.value).toBe("");
+  } finally { fixture.close(); }
+});
+
+it("keeps a newly opened editor when an older save finishes after its dialog closed", async () => {
+  let releaseSave!: () => void;
+  const delayedSave = new Promise<void>((done) => { releaseSave = done; });
+  const fixture = await mount(["config.view", "config.manage"], async (config) => {
+    if (config.url === "/setting/sign/save_rewards/1") {
+      await delayedSave;
+      return { id: 1 };
+    }
+    return undefined;
+  });
+  try {
+    expect(pageSource).toContain(':close-on-press-escape="!saving"');
+    await fixture.view.openForm(1);
+    const pending = fixture.view.save();
+    await flush();
+    expect(fixture.view.saving.value).toBe(true);
+    fixture.view.dialogOpen.value = false;
+    fixture.view.onDialogClosed();
+    await fixture.view.openForm(2);
+    expect(fixture.view.form.value.id).toBe(2);
+    fixture.view.onDialogClosed();
+    expect(fixture.view.form.value.id).toBe(2);
+    releaseSave();
+    await pending;
+    expect(fixture.view.dialogOpen.value).toBe(true);
+    expect(fixture.view.form.value.id).toBe(2);
+    expect(fixture.view.saving.value).toBe(false);
   } finally { fixture.close(); }
 });
 

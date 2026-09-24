@@ -3806,7 +3806,7 @@
     },
     {
       "file": "view/admin-ts/src/api/signRewards.ts",
-      "sha256": "36cc5093d7613b50b3655b6c8e11463a21dbd653b0d0e2ec0f18966689c5da2f"
+      "sha256": "0f63d6d66afee7b1d8bdd7d7dd98b2733a907ce054c54a18a7314cc24e93da49"
     },
     {
       "file": "view/admin-ts/src/api/statistic.ts",
@@ -6372,7 +6372,7 @@
       "method": "GET",
       "path": "/setting/sign/rewards",
       "source": "view/admin-ts/src/api/signRewards.ts",
-      "line": 73,
+      "line": 76,
       "registered": true,
       "matchedRoute": "/setting/sign/rewards",
       "matchedHandler": "AdminCrud.adminSignRewardList",
@@ -6382,7 +6382,7 @@
       "method": "GET",
       "path": "/setting/sign/add_rewards",
       "source": "view/admin-ts/src/api/signRewards.ts",
-      "line": 80,
+      "line": 83,
       "registered": true,
       "matchedRoute": "/setting/sign/add_rewards",
       "matchedHandler": "AdminCrud.adminSignRewardAdd",
@@ -6392,7 +6392,7 @@
       "method": "GET",
       "path": "/setting/sign/edit_rewards/:param",
       "source": "view/admin-ts/src/api/signRewards.ts",
-      "line": 81,
+      "line": 84,
       "registered": true,
       "matchedRoute": "/setting/sign/edit_rewards/:id",
       "matchedHandler": "AdminCrud.adminSignRewardEdit",
@@ -6402,7 +6402,7 @@
       "method": "POST",
       "path": "/setting/sign/save_rewards/:param",
       "source": "view/admin-ts/src/api/signRewards.ts",
-      "line": 86,
+      "line": 89,
       "registered": true,
       "matchedRoute": "/setting/sign/save_rewards/:id",
       "matchedHandler": "AdminCrud.adminSignRewardSave",
@@ -6412,7 +6412,7 @@
       "method": "DELETE",
       "path": "/setting/sign/del_rewards/:param",
       "source": "view/admin-ts/src/api/signRewards.ts",
-      "line": 90,
+      "line": 93,
       "registered": true,
       "matchedRoute": "/setting/sign/del_rewards/:id",
       "matchedHandler": "AdminCrud.adminSignRewardDelete",

@@ -35,9 +35,12 @@ function integer(value: unknown, min: number, max: number): value is number {
 
 function row(value: unknown, allowEmpty = false): SignRewardRow {
   const data = object(value);
+  // Historical PHP writes were not bounded; read every value representable by the migrated INT columns.
   if (!integer(data.id, allowEmpty ? 0 : 1, Number.MAX_SAFE_INTEGER) ||
-      !integer(data.type, 0, 1) || !integer(data.days, allowEmpty ? 0 : 1, 3650) ||
-      !integer(data.point, 0, 999) || !integer(data.exp, 0, 999)) {
+      !integer(data.type, 0, 1) ||
+      !integer(data.days, -2_147_483_648, 2_147_483_647) ||
+      !integer(data.point, -2_147_483_648, 2_147_483_647) ||
+      !integer(data.exp, -2_147_483_648, 2_147_483_647)) {
     throw new Error("签到奖励响应格式错误");
   }
   return { id: data.id, type: data.type as SignRewardType, days: data.days,

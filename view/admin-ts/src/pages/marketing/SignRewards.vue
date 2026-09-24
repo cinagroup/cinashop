@@ -20,7 +20,7 @@
           <span v-else class="read-only">当前账号仅可查看签到奖励</span>
         </div>
         <el-alert v-if="listError" :title="listError" type="error" :closable="false" show-icon class="notice">
-          <template #default><el-button link type="primary" @click="loadList(page)">重试</el-button></template>
+          <template #default><el-button link type="primary" @click="loadList(requestedPage)">重试</el-button></template>
         </el-alert>
         <div class="table-scroll">
           <el-table v-loading="loading" :data="rows" row-key="id" stripe empty-text="暂无签到奖励" class="reward-table">
@@ -42,12 +42,13 @@
     </el-card>
 
     <el-dialog v-model="dialogOpen" :title="form?.id ? '编辑签到奖励' : '添加签到奖励'"
-      width="min(480px, 94vw)" :close-on-click-modal="false" :show-close="!saving" @closed="closeForm">
+      width="min(480px, 94vw)" :close-on-click-modal="false" :close-on-press-escape="!saving"
+      :show-close="!saving" @closed="onDialogClosed">
       <div v-loading="formLoading">
         <el-alert v-if="formError" :title="formError" type="error" :closable="false" show-icon class="notice">
           <template #default><el-button link type="primary" @click="openForm(formId)">重试</el-button></template>
         </el-alert>
-        <el-form v-if="form" label-position="top">
+        <el-form v-if="form" label-position="top" :disabled="saving">
           <el-form-item label="奖励类型"><span>{{ form.type === 0 ? "连续签到" : "累积签到" }}</span></el-form-item>
           <el-form-item label="签到天数"><el-input-number v-model="form.days" aria-label="签到天数" :min="1" :max="form.maxDays" :step="1" :precision="0" /></el-form-item>
           <el-form-item label="奖励积分"><el-input-number v-model="form.point" aria-label="奖励积分" :min="0" :max="999" :step="1" :precision="0" /></el-form-item>
@@ -86,6 +87,7 @@ const rewardType = computed<SignRewardType>(() => tab.value === "1" ? 1 : 0);
 const rows = ref<SignRewardRow[]>([]);
 const count = ref(0);
 const page = ref(1);
+const requestedPage = ref(1);
 const loading = ref(false);
 const listError = ref("");
 const dialogOpen = ref(false);
@@ -113,6 +115,10 @@ function closeForm(): void {
   formError.value = "";
 }
 
+function onDialogClosed(): void {
+  if (!dialogOpen.value) closeForm();
+}
+
 function discard(): void {
   listGeneration++;
   listAbort?.abort();
@@ -120,6 +126,7 @@ function discard(): void {
   rows.value = [];
   count.value = 0;
   page.value = 1;
+  requestedPage.value = 1;
   loading.value = false;
   listError.value = "";
   dialogOpen.value = false;
@@ -128,6 +135,7 @@ function discard(): void {
 
 async function loadList(targetPage = page.value): Promise<void> {
   if (!mounted || !canView.value) return;
+  requestedPage.value = targetPage;
   const stamp = sessionKey.value;
   const selectedType = rewardType.value;
   const generation = ++listGeneration;
@@ -202,18 +210,24 @@ async function save(): Promise<void> {
     return;
   }
   const stamp = sessionKey.value;
+  const generation = formGeneration;
+  const selectedType = rewardType.value;
   saving.value = true;
   try {
     const result = await apiSaveSignReward(current.id, {
       type: current.type, days: current.days, point: current.point, exp: current.exp,
     });
-    if (!active(stamp) || !canManage.value) return;
+    if (!active(stamp) || !canManage.value || generation !== formGeneration ||
+        !dialogOpen.value || form.value !== current || rewardType.value !== selectedType) return;
     if (!Number.isSafeInteger(result.id) || result.id <= 0) throw new Error("保存结果缺少奖励 ID，请刷新核对");
     dialogOpen.value = false;
     ElMessage.success("签到奖励已保存");
     await loadList(page.value);
   } catch (error) {
-    if (active(stamp)) ElMessage.error(error instanceof Error ? error.message : "保存结果未确认，请刷新列表核对");
+    if (active(stamp) && generation === formGeneration && dialogOpen.value &&
+        form.value === current && rewardType.value === selectedType) {
+      ElMessage.error(error instanceof Error ? error.message : "保存结果未确认，请刷新列表核对");
+    }
   } finally {
     saving.value = false;
   }
