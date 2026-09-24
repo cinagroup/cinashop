@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { verifyPurchaseQuotaPaymentLedger, type PurchaseQuotaPaymentEvidence } from '@/services/order/PurchaseQuotaPaymentLedger';
+import { verifyPurchaseQuotaPaymentLedger, verifyPurchaseQuotaPaymentOrigin, type PurchaseQuotaPaymentEvidence } from '@/services/order/PurchaseQuotaPaymentLedger';
 import type { PurchaseQuotaRefundReceipt } from '@/services/order/PurchaseQuotaRefundReceipt';
+import type { PurchaseOriginEvidence } from '@/services/order/PurchaseOriginEvidence';
 
 const scope = { paymentOrderId: 10, buyerId: 11 }, hash = 'a'.repeat(64), branchA = 'a'.repeat(32), branchB = 'b'.repeat(32);
 function fixture(fork = false) {
@@ -9,7 +10,9 @@ function fixture(fork = false) {
   const cart = (id: number, oid: number, productId: number, quantity: number, cartId: string, oldCartId: string,
     marker: unknown = null, done = false) => ({ id, oid, uid: 11, productId, cartId, oldCartId, cartNum: quantity,
     refundNum: done ? quantity : 0, splitStatus: done ? 2 : 0, splitSurplusNum: done ? 0 : quantity,
-    snapshot: { valid: true, marker, version: marker ? 'refund-order-line-finance-v1' : 'order-line-finance-v1', id: cartId, cartNum: quantity } });
+    skuUnique: productId === 70 ? 'sku70' : 'sku71',
+    snapshot: { valid: true, marker, version: marker ? 'refund-order-line-finance-v1' : 'checkout-line-finance-v1',
+      id: cartId, cartNum: quantity, skuId: productId === 70 ? 1 : 2 } });
   const receipts: PurchaseQuotaRefundReceipt[] = [{ version: 'purchase-quota-refund-receipt-v1', refundId: 5, fingerprint: hash,
     ...scope, supplierId: 7, storeId: 0, sourceOrderId: 10, selectedOrderId: 11, remainingOrderId: 12,
     previousRefundId: 0, baseBranchId: null, disposition: 'split', lines: [
@@ -38,6 +41,27 @@ function replace(value: unknown, path: string, replacement: unknown) {
   (at as Record<string, unknown>)[keys.at(-1)!] = replacement;
 }
 describe('purchase quota quantity lineage, not a quota release decision', () => {
+  const origin: PurchaseOriginEvidence = { version: 'purchase-origin-v1', orderId: 10, buyerId: 11,
+    orderType: 0, totalNum: 3, usedPoints: 0, lines: [
+      { rowId: 101, cartId: '1', productId: 70, skuId: 1, skuUnique: 'sku70', quantity: 2, usedPoints: 0 },
+      { rowId: 102, cartId: '2', productId: 71, skuId: 2, skuUnique: 'sku71', quantity: 1, usedPoints: 0 },
+    ] };
+  it('binds the paid root to every immutable original line and rejects a coherent live rewrite', () => {
+    const { input } = fixture();
+    expect(() => verifyPurchaseQuotaPaymentOrigin(input, origin, scope)).not.toThrow();
+    for (const [field, value] of [['productId', 72], ['cartNum', 1], ['skuUnique', 'other'], ['cartId', '9']] as const) {
+      const changed = structuredClone(input);
+      (changed.carts[0] as Record<string, unknown>)[field] = value;
+      expect(() => verifyPurchaseQuotaPaymentOrigin(changed, origin, scope)).toThrow();
+    }
+    for (const [field, value] of [['skuId', 3], ['version', 'legacy']] as const) {
+      const changed = structuredClone(input);
+      ((changed.carts[0] as Record<string, unknown>).snapshot as Record<string, unknown>)[field] = value;
+      expect(() => verifyPurchaseQuotaPaymentOrigin(changed, origin, scope)).toThrow();
+    }
+    expect(() => verifyPurchaseQuotaPaymentOrigin(input, { ...origin, orderType: 6 }, scope)).toThrow();
+    expect(() => verifyPurchaseQuotaPaymentOrigin(input, { ...origin, lines: origin.lines.slice(0, 1) }, scope)).toThrow();
+  });
   it.each([false, true])('proves original product quantities after a refund and optional fork: %s', async fork => {
     const { input, receipts } = fixture(fork), before = structuredClone(input);
     const result = await verifyPurchaseQuotaPaymentLedger(input, receipts, scope);
