@@ -4,7 +4,9 @@
 
 ## 审计结论
 
-FE-003C 五旧客户路由代码候选（2026-09-25，本分支未合入／未发布）：按复选框独立核算为 **246 勾选／158 开放／404 总项**，仅 FE-003C 从开放改勾选。旧申请、状态、双域当前记录及员工页按原路径直达，代理商与分销员分别接真实 Worker 合同；独立 PostgreSQL 16.15 五项路由/并发场景、UniApp 工具链 752/752、三端构建和 390×844 H5 合成只读路由烟测通过，详见 `workers-ts/audit/fe003c-h5-local-smoke.md`。本候选合入前仍须最终精确头 GitHub Actions 全绿；FE-003J/K 的真实设备、账号、历史数据、旧客户端原位升级和发布门禁维持开放。远端 `main` 在本 PR 合入前仍为 245／159／404。
+FE-003C 五旧客户路由代码主线合入（2026-09-25，未发布）：经批准，[PR #11](https://github.com/cinagroup/cinashop/pull/11) 已合入 `main@211ee4e10b8a0f2c5f3d61660db683a862f68f66`。仅 FE-003C 从开放改勾选；远端原文独立核算为 **246 勾选／158 开放／404 总项**。旧申请、状态、双域当前记录及员工页按原路径直达，代理商与分销员分别接真实 Worker 合同；独立 PostgreSQL 16.15 五项路由/并发场景、UniApp 工具链 752/752、三端构建和 390×844 H5 合成只读路由烟测通过，详见 `workers-ts/audit/fe003c-h5-local-smoke.md`。PR 精确头完整 Linux CI 11/11 成功，主线合并提交的[完整 Linux CI](https://github.com/cinagroup/cinashop/actions/runs/36085034725) 已启动；FE-003J/K 的真实设备、账号、历史数据、旧客户端原位升级和发布门禁仍开放。本次合入未触发部署。
+
+后台营销三项主线合入（2026-09-24，未发布）：经批准，依序合并 [PR #2](https://github.com/cinagroup/cinashop/pull/2)、[PR #3](https://github.com/cinagroup/cinashop/pull/3) 和 [PR #5](https://github.com/cinagroup/cinashop/pull/5)，远端 `main@960f5503bd93256db32eb6ededd2d595d3adb431` 的[完整 Linux CI](https://github.com/cinagroup/cinashop/actions/runs/36019582026) 11/11 成功。积分统计与秒杀统计恢复独立只读权限、无缓存投影和后台候选页；签到奖励恢复连续／累计配置及受限写入。274 条后台旧路由的逐屏审计现为 candidate 44／partial 121／missing 102／retired 7；其中营销 48 屏为 6／22／20。三项仍缺代表性生产数据、真实受限角色、完整业务流程和发布验收，故清单继续为 **245 勾选／159 开放／404 总项**；本次合入未触发部署。
 
 主线合入复核（2026-09-24 13:08 UTC）：经批准，[PR #1](https://github.com/cinagroup/cinashop/pull/1) 已以 merge commit `787bee5a13ca2ef19e61b46273f87923b68ae8b7` 合入远端 `main`；从远端 checklist 原文独立核算为 **245 勾选／159 开放／404 总项**。较合入前 `main@7a5508f` 的 240／164／404，新增勾选 FE-001D 全部后台路由逐屏代码审计、FE-001D4 系统设置76屏审计、FE-002B 商品详情字段合同线上只读复验、FE-003H 社区深链本地范围和 FE-003L-A3e 砍价只读规格目录。其他159项保留真实角色、业务链路、渠道或发布门禁，不因新增候选页自动勾选。
 
