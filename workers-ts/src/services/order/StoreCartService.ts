@@ -16,6 +16,8 @@ import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPo
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
   quoteFirstOrderDiscount,
+  isNewcomerEligibleFromDb,
+  newcomerBaseProductIsEligible,
   StoreNewcomerService,
   type FirstOrderDiscountQuote,
 } from "@/services/activity/StoreNewcomerService";
@@ -40,6 +42,7 @@ import {
   storeCombination,
   storeDiscounts,
   storeDiscountsProducts,
+  storeNewcomer,
   storeOrder,
   storeProduct,
   storeProductAttrValue,
@@ -455,21 +458,34 @@ export class StoreCartService {
 
     const result = [];
     let pricing: Awaited<ReturnType<StoreCartService['cartPricing']>> | undefined;
+    let newcomerEligible: Promise<boolean> | undefined;
     for (const cart of carts) {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
         | undefined;
-      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) || !presaleCartIsCurrent(cart, product)) {
+      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) ||
+        (cart.type === 7 && !newcomerBaseProductIsEligible(product)) || !presaleCartIsCurrent(cart, product)) {
         // 商品失效, 跳过但保留购物车项 (前端可提示)
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
-      const sku = await this.container.storeProductAttrValueDao.getByUnique(
-        cart.productAttrUnique,
-        0,
-        cart.productId,
-      );
-      if ((scope || cart.type === 6) && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {
+      const type7BaseSkus = cart.type === 7
+        ? await this.container.db.select().from(storeProductAttrValue).where(and(
+            eq(storeProductAttrValue.productId, cart.productId),
+            eq(storeProductAttrValue.type, 0),
+            eq(storeProductAttrValue.unique, cart.productAttrUnique),
+            eq(storeProductAttrValue.isRetired, 0),
+          )).limit(2)
+        : null;
+      if (cart.type === 7 && type7BaseSkus?.length !== 1) {
+        result.push({ ...cart, isValid: false, productInfo: null });
+        continue;
+      }
+      const sku = type7BaseSkus
+        ? type7BaseSkus[0]
+        : await this.container.storeProductAttrValueDao.getByUnique(
+            cart.productAttrUnique, 0, cart.productId);
+      if ((scope || cart.type === 6 || cart.type === 7) && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
@@ -600,13 +616,37 @@ export class StoreCartService {
         displayName = entry.title || product.storeName;
         displayImage = packageSku.image || entry.image || product.image;
         displayStock = Math.max(0, Math.min(packageSku.stock, sku.stock, product.stock));
-      } else if (cart.type === 7 && cart.activityId > 0 && sku) {
-        const activitySku = await this.container.storeProductAttrValueDao.getBySuk(
-          cart.activityId,
-          sku.suk,
-          7,
-        );
-        if (activitySku) price = Number(activitySku.price);
+      } else if (cart.type === 7) {
+        // A type=7 cart must never appear as an ordinary product if the
+        // activity or its paired SKU was removed after add. Checkout may use
+        // this row only after validating the exact current campaign identity.
+        const [activities, activitySkus] = cart.activityId > 0 && sku && cart.cartNum === 1
+          ? await Promise.all([
+              this.container.db.select({ productId: storeNewcomer.productId })
+                .from(storeNewcomer)
+                .where(and(eq(storeNewcomer.id, cart.activityId), eq(storeNewcomer.isDel, 0)))
+                .limit(1),
+              this.container.db.select().from(storeProductAttrValue).where(and(
+                eq(storeProductAttrValue.productId, cart.activityId),
+                eq(storeProductAttrValue.type, 7),
+                eq(storeProductAttrValue.suk, sku.suk),
+                eq(storeProductAttrValue.isRetired, 0),
+              )).limit(2),
+            ])
+          : [[], []];
+        const activitySku = activitySkus.length === 1 ? activitySkus[0] : null;
+        const activityPrice = Number(activitySku?.price);
+        if (activities[0]?.productId !== product.id || !activitySku ||
+          !Number.isFinite(activityPrice) || activityPrice < 0 ||
+          !(await (newcomerEligible ??= isNewcomerEligibleFromDb(this.container, uid)))) {
+          result.push({ ...cart, isValid: false, productInfo: null });
+          continue;
+        }
+        price = activityPrice;
+        displayImage = activitySku.image || product.image;
+        // Legacy type=7 stock is decremented only on the base product/SKU.
+        // Activity SKU stock and quota are static campaign metadata.
+        displayStock = Math.min(sku.stock, product.stock);
       } else if (cart.type === 4 && cart.activityId > 0 && sku) {
         const activity = await this.container.storeIntegralDao.getById(cart.activityId);
         const activitySku = await this.container.storeProductAttrValueDao.getBySuk(

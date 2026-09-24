@@ -180,6 +180,8 @@ if (schemaMaintenance) {
     'test/checkout-confirmation.test.ts',
     'test/checkout-confirmation-postgres.test.ts',
     'test/checkout-confirmation-rules.test.ts',
+    // End-to-end newcomer checkout fixture installs the same NOLOGIN pricing owner.
+    'test/newcomer-purchase-postgres.test.ts',
     'test/pc-checkout-form-postgres.test.ts',
     'test/brokerage-paid-runtime-permissions.test.ts',
     'test/payment-reconciliation-membership.test.ts',
