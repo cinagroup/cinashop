@@ -33,8 +33,8 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(inventory.legacy.routes.filter((route) => route.path.startsWith("/admin/marketing"))).toHaveLength(52);
     expect(report.routes.map((route) => route.legacy.path)).toEqual(businessPaths);
     expect(report.summary).toEqual({
-      legacyRoutes: 48, reviewed: 48, candidate: 2, partial: 21,
-      missing: 25, retired: 0, unreviewed: 0,
+      legacyRoutes: 48, reviewed: 48, candidate: 2, partial: 22,
+      missing: 24, retired: 0, unreviewed: 0,
     });
   });
 
@@ -94,6 +94,16 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(byPath.get("/admin/marketing/store_seckill_data/index")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/sign_rewards")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/sign_rewards")?.targetApis).toContain("GET /adminapi/setting/sign/rewards");
+    const integralLog = byPath.get("/admin/marketing/user_point/index");
+    expect(integralLog?.status).toBe("partial");
+    expect(integralLog?.targetScreens).toEqual(["/marketing/user-point"]);
+    expect(integralLog?.targetApis).toEqual([
+      "GET /adminapi/marketing/user-point/logs",
+      "GET /adminapi/marketing/user-point/statistics",
+    ]);
+    expect(integralLog?.targetPermissions).toEqual(["integral_log.view"]);
+    expect(integralLog?.covered.join(" ")).toContain("统计卡在初始化时单独加载");
+    expect(integralLog?.remaining.join(" ")).toContain("导出");
     for (const path of [
       "/admin/marketing/store_discounts/index",
       "/admin/marketing/store_discounts/create",

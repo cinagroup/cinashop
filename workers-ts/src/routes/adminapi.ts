@@ -41,6 +41,7 @@ import * as AdminPaymentReconciliation from "@/controllers/api/v1/AdminPaymentRe
 import * as AdminNotification from "@/controllers/api/v1/AdminNotificationController";
 import * as AdminDivision from "@/controllers/api/v1/AdminDivisionController";
 import * as AdminCapitalFlow from "@/controllers/api/v1/AdminCapitalFlowController";
+import * as AdminIntegralLog from "@/controllers/api/v1/AdminIntegralLogController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
 import * as StoreOrderWriteoff from "@/controllers/api/v1/StoreOrderWriteoffController";
 import * as ProductExperienceController from "@/controllers/api/v1/ProductExperienceController";
@@ -75,7 +76,6 @@ export const adminapiRoutes = new Hono<{
   Bindings: Env;
   Variables: AppVariables;
 }>();
-
 const adminAuth = adminRuntimeAuthMiddleware();
 
 // ─── 登录 (无 auth) ─────────────────────────────────────────
@@ -840,6 +840,10 @@ adminapiRoutes.post(
   adminAuth,
   AdminCommunity.saveFictitiousComment,
 );
+
+// ─── Admin 积分日志（独立只读权限）──────────────────────────
+adminapiRoutes.get("/marketing/user-point/logs", adminAuth, AdminIntegralLog.list);
+adminapiRoutes.get("/marketing/user-point/statistics", adminAuth, AdminIntegralLog.statistics);
 
 // ─── 未实现端点兜底 (必须最后注册, 否则吞掉后续路由) ─────────
 adminapiRoutes.all("/*", (c) =>

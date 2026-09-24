@@ -10,8 +10,8 @@
     "legacyRoutes": 48,
     "reviewed": 48,
     "candidate": 2,
-    "partial": 21,
-    "missing": 25,
+    "partial": 22,
+    "missing": 24,
     "retired": 0,
     "unreviewed": 0
   },
@@ -38,7 +38,7 @@
         "新 Admin 菜单可进入优惠券、活动、抽奖和公众号渠道码。"
       ],
       "remaining": [
-        "旧营销宫格的促销、积分日志/分类/签到、充值及活动边框/背景等目的地仍缺；没有同等的营销总览。"
+        "旧营销宫格的促销、积分分类/签到、充值及活动边框/背景等目的地仍缺；没有同等的营销总览。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/home/index.vue",
@@ -890,21 +890,33 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['marketing-user_point']"
       },
-      "status": "missing",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "partial",
+      "targetScreens": [
+        "/marketing/user-point"
+      ],
+      "targetApis": [
+        "GET /adminapi/marketing/user-point/logs",
+        "GET /adminapi/marketing/user-point/statistics"
+      ],
+      "covered": [
+        "新页按用户 ID/标题、时间及可选精确类型读取分页积分流水，展示同条件的四项统计；旧页有用户 ID/标题和时间筛选，但统计卡在初始化时单独加载，不随筛选刷新。"
+      ],
       "remaining": [
-        "旧积分日志按用户/类型列出明细并展示统计，新 Admin 没有积分流水专页。"
+        "旧页由 export-userPoint 授权的积分日志导出按钮及逐页 Excel 导出流程未恢复；真实历史流水、受限角色和发布后行为仍待验收。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/userPoint/index.vue",
         "cinashop-php/view/admin/src/router/modules/marketing.js",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
-        "workers-ts/src/services/admin/AdminPermissionService.ts"
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/marketing/IntegralLog.vue",
+        "cinashop-php/app/services/user/UserBillServices.php",
+        "cinashop-php/app/controller/admin/v1/other/export/ExportExcel.php"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "integral_log.view"
+      ]
     },
     {
       "legacy": {

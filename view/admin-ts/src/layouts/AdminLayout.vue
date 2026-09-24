@@ -100,6 +100,10 @@
           <el-icon><VideoCamera /></el-icon>
           <span>小程序直播</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/marketing/user-point')" index="/marketing/user-point">
+          <el-icon><Tickets /></el-icon>
+          <span>积分日志</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/system/out')" index="/system/out">
           <el-icon><Key /></el-icon>
           <span>对外接口</span>
@@ -278,6 +282,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/activity")) return "/activity";
   if (path.startsWith("/marketing/lottery")) return "/marketing/lottery";
   if (path.startsWith("/marketing/live")) return "/marketing/live";
+  if (path.startsWith("/marketing/user-point")) return "/marketing/user-point";
   if (path.startsWith("/system/out")) return "/system/out";
   if (path.startsWith("/kefu")) return "/kefu";
   if (path.startsWith("/reply")) return "/reply";

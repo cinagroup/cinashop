@@ -359,6 +359,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/setting/WaybillOperations.vue"),
         meta: { title: "电子面单" },
       },
+      {
+        path: "marketing/user-point",
+        name: "integral-log",
+        component: () => import("@/pages/marketing/IntegralLog.vue"),
+        meta: { title: "积分日志" },
+      },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: "/dashboard" },

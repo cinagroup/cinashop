@@ -2594,6 +2594,7 @@ export class StoreOrderCreateService {
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
           throw new ValidateException(shippingSnapshot ? "配送商品归属或规则已变化，请刷新后重试" : type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
+            : type === 2 && shippingType === 2 ? "砍价自提商品归属、上架状态已变化或库存不足，请刷新后重试"
             : type === 2 ? "砍价商品归属、上架状态已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);
         }
 

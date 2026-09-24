@@ -33,12 +33,14 @@ const screens: Record<string, string> = {
   "/coupon": "view/admin-ts/src/pages/coupon/CouponList.vue",
   "/activity": "view/admin-ts/src/pages/activity/ActivityList.vue",
   "/marketing/lottery": "view/admin-ts/src/pages/activity/LotteryList.vue",
+  "/marketing/user-point": "view/admin-ts/src/pages/marketing/IntegralLog.vue",
   "/content/wechat-qrcode": "view/admin-ts/src/pages/content/WechatQrcode.vue",
 };
 const permissionKeys: Record<string, string> = {
   "/coupon": "coupon.view / coupon.manage",
   "/activity": "activity.view / activity.manage",
   "/marketing/lottery": "lottery.view / lottery.manage",
+  "/marketing/user-point": "integral_log.view",
   "/content/wechat-qrcode": "wechat_qrcode.view / wechat_qrcode.manage",
 };
 // Snapshot of meta.auth in marketing.js at the SHA recorded by the inventory.
@@ -122,7 +124,7 @@ const qrcodeApis = ["GET /adminapi/wechat_qrcode/list", "GET /adminapi/wechat_qr
 // The route is a navigation surface. A partial target means only some destinations exist.
 add("/admin/marketing/home", "partial", ["/coupon", "/activity", "/marketing/lottery", "/content/wechat-qrcode"], [],
   "新 Admin 菜单可进入优惠券、活动、抽奖和公众号渠道码。",
-  "旧营销宫格的促销、积分日志/分类/签到、充值及活动边框/背景等目的地仍缺；没有同等的营销总览。", ["view/admin-ts/src/layouts/AdminLayout.vue"]);
+  "旧营销宫格的促销、积分分类/签到、充值及活动边框/背景等目的地仍缺；没有同等的营销总览。", ["view/admin-ts/src/layouts/AdminLayout.vue"]);
 
 add("/admin/marketing/store_combination/index", "partial", ["/activity"], ["GET /adminapi/activity/combination", ...activityWrite],
   "拼团 tab 可列出活动并进入新增、编辑、启停和删除。",
@@ -186,7 +188,11 @@ add("/admin/marketing/store_seckill/create/:id?/:copy?", "partial", ["/activity"
 add("/admin/marketing/store_seckill/statistics/:id?", "missing", [], [], "",
   "旧秒杀 head、people、order 统计没有新 Admin 统计页；活动目录和时段只读接口不提供该屏语义。");
 
-add("/admin/marketing/user_point/index", "missing", [], [], "", "旧积分日志按用户/类型列出明细并展示统计，新 Admin 没有积分流水专页。");
+add("/admin/marketing/user_point/index", "partial", ["/marketing/user-point"],
+  ["GET /adminapi/marketing/user-point/logs", "GET /adminapi/marketing/user-point/statistics"],
+  "新页按用户 ID/标题、时间及可选精确类型读取分页积分流水，展示同条件的四项统计；旧页有用户 ID/标题和时间筛选，但统计卡在初始化时单独加载，不随筛选刷新。",
+  "旧页由 export-userPoint 授权的积分日志导出按钮及逐页 Excel 导出流程未恢复；真实历史流水、受限角色和发布后行为仍待验收。",
+  ["cinashop-php/app/services/user/UserBillServices.php", "cinashop-php/app/controller/admin/v1/other/export/ExportExcel.php"]);
 add("/admin/marketing/integral/signIn", "missing", [], [], "", "旧积分签到视觉和 group_data 配置没有新 Admin 编辑页。");
 add("/admin/marketing/point_statistic", "missing", [], [], "", "旧积分基本、趋势、渠道与类型四组统计没有新 Admin 页面。");
 add("/admin/marketing/integral/classify", "missing", [], [], "", "旧积分分类新增、编辑和显隐没有新 Admin 管理页。");

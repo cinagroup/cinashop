@@ -3594,7 +3594,7 @@
     "routeFiles": [
       {
         "file": "src/router/index.ts",
-        "sha256": "66711ebb208616fdb6f57be7c007bbab52ec5d27d8253cb31a2383074047ae0b"
+        "sha256": "5d874e5eb4da685e424da8613e828a97ca117f30f6271ccd626bfa5370ebc2bd"
       }
     ],
     "pageVueFiles": [
@@ -3627,6 +3627,7 @@
       "src/pages/kefu/KefuList.vue",
       "src/pages/label/LabelList.vue",
       "src/pages/level/LevelList.vue",
+      "src/pages/marketing/IntegralLog.vue",
       "src/pages/marketing/WechatLiveCatalog.vue",
       "src/pages/operations/EnterpriseWechat.vue",
       "src/pages/operations/LegacyRuntimeHistory.vue",
@@ -4242,6 +4243,16 @@
         "component": "@/pages/setting/WaybillOperations.vue",
         "resolvedComponent": "src/pages/setting/WaybillOperations.vue",
         "surface": "page"
+      },
+      {
+        "source": "src/router/index.ts",
+        "line": 362,
+        "path": "/marketing/user-point",
+        "name": "integral-log",
+        "title": "积分日志",
+        "component": "@/pages/marketing/IntegralLog.vue",
+        "resolvedComponent": "src/pages/marketing/IntegralLog.vue",
+        "surface": "page"
       }
     ],
     "unresolvedComponents": [],
@@ -4279,7 +4290,7 @@
       "label": 1,
       "level": 1,
       "login": 1,
-      "marketing": 2,
+      "marketing": 3,
       "member": 1,
       "operations": 4,
       "order": 3,
@@ -4294,10 +4305,10 @@
       "user": 2
     },
     "counts": {
-      "pageVueFiles": 63,
-      "routeRecords": 58,
-      "businessPageRouteRecords": 57,
-      "distinctRoutedPageComponents": 56,
+      "pageVueFiles": 64,
+      "routeRecords": 59,
+      "businessPageRouteRecords": 58,
+      "distinctRoutedPageComponents": 57,
       "auxiliaryRouteRecords": 0,
       "layoutRouteRecords": 1,
       "otherRouteRecords": 0,

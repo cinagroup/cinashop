@@ -7,7 +7,7 @@
   },
   "backend": {
     "file": "workers-ts/src/routes/adminapi.ts",
-    "sha256": "f5ab0101a2041adaff44848ded52efa3453f5a82b2cdb0f5551b0b0181126457",
+    "sha256": "6b598b69962bbfb82de7a3727653cc0d21c1eeb711bd109a824911f074ddcb96",
     "registeredRoutes": [
       {
         "method": "POST",
@@ -3655,6 +3655,20 @@
         "line": 838,
         "handler": "AdminCommunity.saveFictitiousComment",
         "availability": "executable"
+      },
+      {
+        "method": "GET",
+        "path": "/marketing/user-point/logs",
+        "line": 845,
+        "handler": "AdminIntegralLog.list",
+        "availability": "executable"
+      },
+      {
+        "method": "GET",
+        "path": "/marketing/user-point/statistics",
+        "line": 846,
+        "handler": "AdminIntegralLog.statistics",
+        "availability": "executable"
       }
     ]
   },
@@ -3714,6 +3728,10 @@
     {
       "file": "view/admin-ts/src/api/finance.ts",
       "sha256": "84620352d857108403b912f872620aee3aa3a27a27b06ab157da121d2f3b60b9"
+    },
+    {
+      "file": "view/admin-ts/src/api/integralLog.ts",
+      "sha256": "44969cdac88349f2ac7cea76191a643c7d03628631cc81ffabd8c10ba7690887"
     },
     {
       "file": "view/admin-ts/src/api/kefu.ts",
@@ -3833,10 +3851,10 @@
     }
   ],
   "counts": {
-    "callSites": 337,
-    "pathVariants": 357,
-    "registered": 357,
-    "executable": 357,
+    "callSites": 339,
+    "pathVariants": 359,
+    "registered": 359,
+    "executable": 359,
     "controlledUnavailable": 0,
     "unregistered": 0,
     "unresolved": 0
@@ -5063,6 +5081,26 @@
       "registered": true,
       "matchedRoute": "/supplier/extract/save_transfer/:id",
       "matchedHandler": "AdminSupplierFinance.supplierExtractTransfer",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/marketing/user-point/logs",
+      "source": "view/admin-ts/src/api/integralLog.ts",
+      "line": 79,
+      "registered": true,
+      "matchedRoute": "/marketing/user-point/logs",
+      "matchedHandler": "AdminIntegralLog.list",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/marketing/user-point/statistics",
+      "source": "view/admin-ts/src/api/integralLog.ts",
+      "line": 83,
+      "registered": true,
+      "matchedRoute": "/marketing/user-point/statistics",
+      "matchedHandler": "AdminIntegralLog.statistics",
       "availability": "executable"
     },
     {

@@ -9,8 +9,8 @@
 | 状态 | 屏数 | 判断边界 |
 | --- | ---: | --- |
 | candidate | 2 | 优惠套餐列表和创建/编辑已有本地 Admin、Worker 及既有 PHP/隔离数据库对照；仍待真实角色和生产流程验收。 |
-| partial | 21 | 新页面可承接有意义的部分操作，但旧筛选、字段、统计、发行或渠道闭环尚不完整。 |
-| missing | 25 | 无可执行的新 Admin 整屏替代；仅有 Worker API 或前台业务能力不足以提高状态。 |
+| partial | 22 | 新页面可承接有意义的部分操作，但旧筛选、字段、导出、发行或渠道闭环尚不完整。 |
+| missing | 24 | 无可执行的新 Admin 整屏替代；仅有 Worker API 或前台业务能力不足以提高状态。 |
 | retired | 0 | 未发现足以证明旧路由是无效占位页的证据。 |
 
 容易混淆的映射：
@@ -20,8 +20,8 @@
 - `/activity` 聚合页仍没有分页：砍价固定前 100 条；秒杀、拼团、积分虽传 `limit:100`，但 `BaseDao.ts:162-164` 只在同时传 `page` 时限量，实际无界读取。旧软删行过滤、非砍价编辑保留销量/创建时间与已绑定秒杀时段、三类活动软删除已在本地候选修复；新建秒杀表单仍未选择时段，Worker 默认 `timeId="1"`。完整表单与并发销量变化时的库存/额度边界、真实历史数据和角色仍须验收，partial 不表示整屏已覆盖。
 - 新 `/marketing/lottery` 具备活动和中奖记录操作面，但未恢复旧时间状态筛选、中奖记录完整筛选/翻页，并拒绝新建旧微信红包和未明确等级奖品，因此三屏均为 partial。
 - 旧营销渠道码映射到跨域 `/content/wechat-qrcode`。目录、编辑和统计均有本地入口；公众号扫码回调尚未启用，三屏仍为 partial。
-- 积分日志/分类/统计、签到奖励、充值配置、促销规则及活动边框/背景没有整屏 Admin 替代。签到奖励虽有 Worker 读写 API，仍列 missing。
+- 新 `/marketing/user-point` 的独立只读权限、分页积分流水与四项统计可部分承接旧积分日志。旧页只有用户 ID/标题和时间筛选，统计卡在初始化时单独加载；新页增加可选精确类型并按同条件查询统计。旧 Excel 导出尚未恢复，历史流水和受限角色仍待验收，因此保持 partial。积分分类/独立统计、签到奖励、充值配置、促销规则及活动边框/背景仍无整屏替代；签到奖励虽有 Worker 读写 API，仍列 missing。
 
-本批只完成代码级语义映射。三个既有逐屏台账（setting 76、content 13、product 12）合计 101 条；加上本批，FE-001D 当前为 **149/274 已审、125 未审**。这不是 149 条功能已覆盖：本批的 21 条 partial、25 条 missing 和跨域生产验收仍开放。FE-001D、真实角色/数据 E2E 及发布验收均不因本文件关闭。
+本批只完成代码级语义映射。当前 11 份逐屏台账合计 **274/274 已审**；其中营销域为 2 条 candidate、22 条 partial、24 条 missing。已审不等于功能已覆盖：跨域真实角色/数据 E2E 及发布验收仍开放，FE-001D 不因本文件关闭。
 
 定向复核命令：在 `workers-ts` 下运行 `node node_modules/vitest/vitest.mjs run test/admin-marketing-frontend-parity.test.ts`。重新生成台账用 `node node_modules/tsx/dist/cli.mjs scripts/admin-marketing-frontend-parity-audit.ts --write`。
