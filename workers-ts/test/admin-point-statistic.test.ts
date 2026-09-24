@@ -125,6 +125,14 @@ describe("read-only legacy Admin point statistics", () => {
     expect(parsePointStatisticRange("", at(23, 8)).days).toBe(31);
     expect(parsePointStatisticRange("", at(23, 8)).bucketKeys).toEqual(
       parsePointStatisticRange("2026/08/24-2026/09/23").bucketKeys);
+
+    // PHP strtotime('+1 month', Jan 31) lands on Mar 3. The selected May 2
+    // remains inside the query window but comes before the next May 3 axis tick.
+    const monthEnd = "2026/01/31-2026/05/02";
+    const monthEndRange = parsePointStatisticRange(monthEnd);
+    expect(monthEndRange.days).toBe(92);
+    expect(monthEndRange.labels).toEqual(["2026-01", "2026-03", "2026-04"]);
+    expect((await get("get_trend", monthEnd)).body.data.xAxis).toEqual(monthEndRange.labels);
   });
 
   it("keeps the duplicated gain source and includes positive refund rows in old spend types", async () => {
