@@ -13,6 +13,7 @@ import {
   storeBargain,
   storeBargainUser,
   storeBargainUserHelp,
+  storeProduct,
   storeOrder,
   storeOrderRefund,
   user,
@@ -35,6 +36,7 @@ import { emitOperationalEvent, operationalErrorCode } from "@/utils/observabilit
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 import { findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { lockBargainHelpRuleShared } from "@/services/activity/BargainHelpRuleLock";
+import { lockBargainSourceProductAdmission } from "@/services/activity/BargainSourceProductLifecycle";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
 const BARGAIN_HELP_USER_LOCK_NAMESPACE = 731_628;
@@ -394,6 +396,12 @@ export class ActivityJoinService {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtextextended(${`bargain-start:${uid}:${bargainId}`}, 0))`,
       );
+      // Discover the source without a row lock, then hold its retirement
+      // boundary before either the activity or participation row is locked.
+      const [source] = await tx.select({ productId: storeBargain.productId })
+        .from(storeBargain).where(eq(storeBargain.id, bargainId)).limit(1);
+      if (!source || source.productId <= 0) throw new NotFoundException("砍价活动不存在");
+      await lockBargainSourceProductAdmission(tx, source.productId);
       const bargains = await tx
         .select()
         .from(storeBargain)
@@ -412,6 +420,10 @@ export class ActivityJoinService {
         .for("share");
       const bargain = bargains[0];
       if (!bargain) throw new NotFoundException("砍价活动不存在");
+      if (bargain.productId !== source.productId) throw new ValidateException("砍价关联商品已变化，请重试");
+      const [product] = await tx.select({ id: storeProduct.id }).from(storeProduct)
+        .where(and(eq(storeProduct.id, source.productId), eq(storeProduct.isDel, 0))).limit(1);
+      if (!product) throw new NotFoundException("砍价关联商品不存在或已删除");
 
       const existing = await tx
         .select({ id: storeBargainUser.id })
@@ -580,6 +592,10 @@ export class ActivityJoinService {
         .where(and(eq(storeBargainUser.id, bargainUserId), eq(storeBargainUser.isDel, 0)))
         .limit(1);
       if (!identity) throw new NotFoundException("砍价记录不存在");
+      const [source] = await tx.select({ productId: storeBargain.productId })
+        .from(storeBargain).where(eq(storeBargain.id, identity.bargainId)).limit(1);
+      if (!source || source.productId <= 0) throw new ValidateException("砍价活动已结束");
+      await lockBargainSourceProductAdmission(tx, source.productId);
       await lockBargainHelpRuleShared(tx, identity.bargainId);
       const records = await tx
         .select()
@@ -600,6 +616,10 @@ export class ActivityJoinService {
         .for("key share");
       const bargain = bargainRows[0];
       if (!bargain) throw new ValidateException("砍价活动已结束");
+      if (bargain.productId !== source.productId) throw new ValidateException("砍价关联商品已变化，请重试");
+      const [product] = await tx.select({ id: storeProduct.id }).from(storeProduct)
+        .where(and(eq(storeProduct.id, source.productId), eq(storeProduct.isDel, 0))).limit(1);
+      if (!product) throw new ValidateException("砍价关联商品已删除");
       // Read the database wall clock AFTER the lock wait, not application time
       // or transaction-start NOW(). KEY SHARE must remain compatible with the
       // checkout activity lock; a fresh statement also observes schedule edits.

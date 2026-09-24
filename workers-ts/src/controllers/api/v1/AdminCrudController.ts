@@ -63,6 +63,7 @@ import {
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { retireBargain } from "@/services/activity/BargainRetirementService";
 import { saveBargain, setBargainStatus } from "@/services/activity/BargainAdminService";
+import { retirePlatformSourceProduct } from "@/services/activity/BargainSourceProductLifecycle";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -409,9 +410,11 @@ export async function adminProductSkuRestore(c: C) {
 
 /** DELETE /api/admin/product/del/:id — 删除商品 (软删除) */
 export async function adminProductDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  if (!id) return jsonFail(c, "参数错误");
-  await c.get("container").storeProductDao.update(id, { isDel: 1 });
+  const rawId = c.req.param("id") ?? "";
+  if (!/^[1-9]\d{0,9}$/.test(rawId)) return jsonFail(c, "参数错误");
+  const id = Number(rawId);
+  if (id > 2_147_483_647) return jsonFail(c, "参数错误");
+  await retirePlatformSourceProduct(c.get("container"), id);
   return jsonOk(c, null, "删除成功");
 }
 

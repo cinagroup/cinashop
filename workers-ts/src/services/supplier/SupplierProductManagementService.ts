@@ -9,6 +9,7 @@ import {
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecycleService';
+import { boundBargainSourceProductRetirement, lockBargainSourceProductRetirement } from '@/services/activity/BargainSourceProductLifecycle';
 import {
   storeCart,
   storeProduct,
@@ -767,6 +768,10 @@ export class SupplierProductManagementService {
 
   async recycleProduct(supplierId: number, productId: number) {
     await withTx(this.container, async (tx) => {
+      // Retire every bargain admission on this source before changing the
+      // product row. Cancellation/refund remain independent of this boundary.
+      await boundBargainSourceProductRetirement(tx);
+      await lockBargainSourceProductRetirement(tx, productId);
       await this.lockProduct(tx, supplierId, productId);
       const rows = await tx
         .update(storeProduct)
