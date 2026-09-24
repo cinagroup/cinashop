@@ -378,6 +378,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "积分统计" },
       },
       {
+        path: "marketing/sign-rewards",
+        name: "sign-rewards",
+        component: () => import("@/pages/marketing/SignRewards.vue"),
+        meta: { title: "签到奖励" },
+      },
+      {
         path: "marketing/coupon-records",
         name: "coupon-records",
         component: () => import("@/pages/marketing/CouponRecords.vue"),

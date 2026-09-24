@@ -923,18 +923,22 @@ function signRewards(c: C) {
 }
 
 export async function adminSignRewardList(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await signRewards(c).list(c.req.query()));
 }
 
 export async function adminSignRewardAdd(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await signRewards(c).form(0, c.req.query("type")));
 }
 
 export async function adminSignRewardEdit(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await signRewards(c).form(metadataId(c), undefined));
 }
 
 export async function adminSignRewardSave(c: C) {
+  privateNoStore(c);
   return jsonOk(
     c,
     await signRewards(c).save(metadataId(c, true), await metadataBody(c)),
@@ -943,6 +947,7 @@ export async function adminSignRewardSave(c: C) {
 }
 
 export async function adminSignRewardDelete(c: C) {
+  privateNoStore(c);
   await signRewards(c).delete(metadataId(c));
   return jsonOk(c, null, "删除成功");
 }

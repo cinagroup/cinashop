@@ -9,9 +9,9 @@
   "summary": {
     "legacyRoutes": 48,
     "reviewed": 48,
-    "candidate": 5,
+    "candidate": 6,
     "partial": 22,
-    "missing": 21,
+    "missing": 20,
     "retired": 0,
     "unreviewed": 0
   },
@@ -1594,24 +1594,37 @@
         "routerSha256": "9b1deadb2081e4326af19b4cafbd78afa943e5b99567362c1773a2e8b99e28ed",
         "auth": "['admin-marketing-sign_rewards']"
       },
-      "status": "missing",
-      "targetScreens": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/marketing/sign-rewards"
+      ],
       "targetApis": [
         "GET /adminapi/setting/sign/rewards",
-        "POST /adminapi/setting/sign/save_rewards/:id"
+        "GET /adminapi/setting/sign/add_rewards",
+        "GET /adminapi/setting/sign/edit_rewards/:id",
+        "POST /adminapi/setting/sign/save_rewards/:id",
+        "DELETE /adminapi/setting/sign/del_rewards/:id"
       ],
-      "covered": [],
+      "covered": [
+        "新 Admin 以连续/累积两个页签按天数展示积分与经验，支持每页15条、添加、编辑和确认删除；表单天数上限来自旧服务配置，权限沿用 config.view/manage。"
+      ],
       "remaining": [
-        "Worker 有签到奖励读写合同，但新 Admin 没有签到奖励列表/编辑页面，API-only 不构成整屏覆盖。"
+        "仅完成本地候选；生产非空签到规则、受限角色正反权限、真实签到奖励和发布后浏览器验收仍待完成。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/pages/marketing/signRewards/index.vue",
         "cinashop-php/view/admin/src/router/modules/marketing.js",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
-        "workers-ts/src/services/admin/AdminPermissionService.ts"
+        "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/marketing/SignRewards.vue",
+        "view/admin-ts/src/api/signRewards.ts",
+        "workers-ts/src/services/system/SystemSignRewardService.ts",
+        "workers-ts/test/admin-sign-rewards-frontend.test.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "config.view / config.manage"
+      ]
     }
   ]
 }

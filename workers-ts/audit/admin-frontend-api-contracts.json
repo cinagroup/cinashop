@@ -3862,6 +3862,10 @@
       "sha256": "d5d84c7fa6c3a905b9119ac7190672b81af549e205e48afaf4e519fc9d6e89ec"
     },
     {
+      "file": "view/admin-ts/src/api/signRewards.ts",
+      "sha256": "0f63d6d66afee7b1d8bdd7d7dd98b2733a907ce054c54a18a7314cc24e93da49"
+    },
+    {
       "file": "view/admin-ts/src/api/statistic.ts",
       "sha256": "74ec2249c866a371337dd4a618ccb2f789253bb422dfcc2dc14281d1e2cb67a0"
     },
@@ -3919,10 +3923,10 @@
     }
   ],
   "counts": {
-    "callSites": 344,
-    "pathVariants": 367,
-    "registered": 367,
-    "executable": 367,
+    "callSites": 349,
+    "pathVariants": 372,
+    "registered": 372,
+    "executable": 372,
     "controlledUnavailable": 0,
     "unregistered": 0,
     "unresolved": 0
@@ -6489,6 +6493,56 @@
       "registered": true,
       "matchedRoute": "/express/del/:id",
       "matchedHandler": "AdminCrud.adminExpressDel",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/setting/sign/rewards",
+      "source": "view/admin-ts/src/api/signRewards.ts",
+      "line": 76,
+      "registered": true,
+      "matchedRoute": "/setting/sign/rewards",
+      "matchedHandler": "AdminCrud.adminSignRewardList",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/setting/sign/add_rewards",
+      "source": "view/admin-ts/src/api/signRewards.ts",
+      "line": 83,
+      "registered": true,
+      "matchedRoute": "/setting/sign/add_rewards",
+      "matchedHandler": "AdminCrud.adminSignRewardAdd",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/setting/sign/edit_rewards/:param",
+      "source": "view/admin-ts/src/api/signRewards.ts",
+      "line": 84,
+      "registered": true,
+      "matchedRoute": "/setting/sign/edit_rewards/:id",
+      "matchedHandler": "AdminCrud.adminSignRewardEdit",
+      "availability": "executable"
+    },
+    {
+      "method": "POST",
+      "path": "/setting/sign/save_rewards/:param",
+      "source": "view/admin-ts/src/api/signRewards.ts",
+      "line": 89,
+      "registered": true,
+      "matchedRoute": "/setting/sign/save_rewards/:id",
+      "matchedHandler": "AdminCrud.adminSignRewardSave",
+      "availability": "executable"
+    },
+    {
+      "method": "DELETE",
+      "path": "/setting/sign/del_rewards/:param",
+      "source": "view/admin-ts/src/api/signRewards.ts",
+      "line": 93,
+      "registered": true,
+      "matchedRoute": "/setting/sign/del_rewards/:id",
+      "matchedHandler": "AdminCrud.adminSignRewardDelete",
       "availability": "executable"
     },
     {
