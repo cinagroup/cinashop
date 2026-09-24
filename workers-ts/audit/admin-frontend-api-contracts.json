@@ -3706,7 +3706,7 @@
     },
     {
       "file": "view/admin-ts/src/api/finance.ts",
-      "sha256": "fdc36bc1b5eff81919ea8bc87f2d91a0a656225deaa2f4c305bbcd4befbb7795"
+      "sha256": "84620352d857108403b912f872620aee3aa3a27a27b06ab157da121d2f3b60b9"
     },
     {
       "file": "view/admin-ts/src/api/kefu.ts",
@@ -3822,10 +3822,10 @@
     }
   ],
   "counts": {
-    "callSites": 332,
-    "pathVariants": 352,
-    "registered": 352,
-    "executable": 352,
+    "callSites": 334,
+    "pathVariants": 354,
+    "registered": 354,
+    "executable": 354,
     "controlledUnavailable": 0,
     "unregistered": 0,
     "unresolved": 0
@@ -5006,9 +5006,29 @@
     },
     {
       "method": "GET",
+      "path": "/flow/get_list",
+      "source": "view/admin-ts/src/api/finance.ts",
+      "line": 142,
+      "registered": true,
+      "matchedRoute": "/flow/get_list",
+      "matchedHandler": "AdminCapitalFlow.list",
+      "availability": "executable"
+    },
+    {
+      "method": "POST",
+      "path": "/flow/set_mark/:param",
+      "source": "view/admin-ts/src/api/finance.ts",
+      "line": 152,
+      "registered": true,
+      "matchedRoute": "/flow/set_mark/:id",
+      "matchedHandler": "AdminCapitalFlow.setMark",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
       "path": "/supplier/extract/list",
       "source": "view/admin-ts/src/api/finance.ts",
-      "line": 190,
+      "line": 237,
       "registered": true,
       "matchedRoute": "/supplier/extract/list",
       "matchedHandler": "AdminSupplierFinance.supplierExtractList",
@@ -5018,7 +5038,7 @@
       "method": "POST",
       "path": "/supplier/extract/verify/:param",
       "source": "view/admin-ts/src/api/finance.ts",
-      "line": 210,
+      "line": 257,
       "registered": true,
       "matchedRoute": "/supplier/extract/verify/:id",
       "matchedHandler": "AdminSupplierFinance.supplierExtractReview",
@@ -5028,7 +5048,7 @@
       "method": "POST",
       "path": "/supplier/extract/save_transfer/:param",
       "source": "view/admin-ts/src/api/finance.ts",
-      "line": 227,
+      "line": 274,
       "registered": true,
       "matchedRoute": "/supplier/extract/save_transfer/:id",
       "matchedHandler": "AdminSupplierFinance.supplierExtractTransfer",
