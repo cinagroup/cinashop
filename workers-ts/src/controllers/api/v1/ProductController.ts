@@ -10,6 +10,8 @@ import { StoreProductService, type GoodsListParams } from "@/services/product/St
 import { StoreCategoryService } from "@/services/product/StoreCategoryService";
 import { ProductExperienceService } from "@/services/product/ProductExperienceService";
 import { PublicCatalogService, normalizeCatalogPage } from "@/services/product/PublicCatalogService";
+import { RecommendationNavigationService } from "@/services/product/RecommendationNavigationService";
+import { PresaleSkuCatalogService } from "@/services/activity/PresaleSkuCatalogService";
 import { jsonFail } from "@/utils/json";
 import { NotFoundException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
@@ -52,6 +54,12 @@ export async function lst(c: C) {
  * 对应 PHP StoreProduct::detail
  */
 export async function detail(c: C) {
+  if (c.req.query("view") !== undefined) {
+    c.header("Cache-Control", "private, no-store");
+    if (c.req.query("view") !== "presale" || c.req.queries("view")?.length !== 1 ||
+      (c.req.param("type") !== undefined && c.req.param("type") !== "0")) return jsonFail(c, "商品详情视图无效");
+    return jsonOk(c, await new PresaleSkuCatalogService(c.get("container")).read(c.get("uid") ?? 0, c.req.param("id")));
+  }
   const id = Number(c.req.param("id"));
   if (!id) return jsonOk(c, null, "参数错误");
   const type = Number(c.req.param("type") ?? 0);
@@ -180,10 +188,13 @@ export async function rankList(c: C) {
   const type = Number(c.req.param("type"));
   const rank = type === 2 ? "star" : type === 3 ? "collect" : "sales";
   const paging = normalizeCatalogPage(c.req.query("page"), c.req.query("limit"));
-  return jsonOk(c, await new PublicCatalogService(c.get("container"), c.env).recommend(
+  if (!Number.isSafeInteger(paging.page) || (paging.page - 1) * paging.limit > 2_147_483_647) return jsonFail(c, "页码超出范围");
+  c.header("Cache-Control", "private, no-store");
+  const list = await new PublicCatalogService(c.get("container"), c.env).recommend(
     c.get("uid") ?? 0,
     { rank, selectId: Number(c.req.query("selectId") ?? 0), ...paging },
-  ));
+  );
+  return jsonOk(c, await new RecommendationNavigationService(c.get("container")).decorate(list));
 }
 
 /** GET /api/product/detail/recommend/:id */
@@ -237,12 +248,18 @@ export async function groomList(c: C) {
 
 /** GET /api/product/hot */
 export async function productHot(c: C) {
-  return jsonOk(c, await new PublicCatalogService(c.get("container"), c.env)
-    .recommend(c.get("uid") ?? 0, { flag: "hot", limit: 100 }));
+  const paging = normalizeCatalogPage(c.req.query("page"), c.req.query("limit"));
+  paging.limit = Math.max(1, paging.limit);
+  // Keep legacy offset pagination, but reject offsets that cannot be represented safely.
+  if (!Number.isSafeInteger(paging.page) || (paging.page - 1) * paging.limit > 2_147_483_647) return jsonFail(c, "页码超出范围");
+  const list = await new PublicCatalogService(c.get("container"), c.env)
+    .recommend(c.get("uid") ?? 0, { flag: "hot", ...paging });
+  return jsonOk(c, await new RecommendationNavigationService(c.get("container")).decorate(list));
 }
 
 /** GET /api/presale/list */
 export async function presaleList(c: C) {
+  c.header('Cache-Control', 'private, no-store');
   const q = c.req.query();
   return jsonOk(c, await new PublicCatalogService(c.get("container"), c.env)
     .presale(c.get("uid") ?? 0, Number(q.time_type ?? 0), q.page, q.limit));

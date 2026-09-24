@@ -3,10 +3,20 @@
     <view class="top-bar">
       <text class="top-title">逛逛</text>
       <view class="top-actions">
+        <text class="people-btn" @tap="openSearch">搜索</text>
+        <text class="people-btn" @tap="openVideo">视频</text>
         <text class="people-btn" @tap="openPeople">好友与关注</text>
         <text class="publish-btn" @tap="openPublish">＋ 发布</text>
       </view>
     </view>
+
+    <scroll-view v-if="topics.length" scroll-x class="topic-strip" :show-scrollbar="false">
+      <view class="topic-row">
+        <text v-for="topic in topics" :key="topic.id" class="topic-chip" @tap="openTopic(topic.id)">
+          # {{ topic.name }}
+        </text>
+      </view>
+    </scroll-view>
 
     <scroll-view v-if="highlights.length" scroll-x class="follow-strip" :show-scrollbar="false">
       <view class="follow-row">
@@ -103,10 +113,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { onShow } from "@dcloudio/uni-app";
+import { ref } from "vue";
+import { onLoad, onShow } from "@dcloudio/uni-app";
 import {
   apiCommunityList,
+  apiCommunityDetail,
+  apiCommunityTopics,
   apiCommunityLike,
   apiCommunitySave,
   apiCommentList,
@@ -115,6 +127,7 @@ import {
   communityPreviewMode,
   type CommunityPost,
   type CommunityComment,
+  type CommunityTopic,
 } from "@/api/community";
 import { useAuthStore } from "@/stores/auth";
 
@@ -127,6 +140,9 @@ const commentText = ref("");
 const showPublish = ref(false);
 const publishForm = ref({ title: "", content: "" });
 const highlights = ref<Awaited<ReturnType<typeof apiCommunityFollowHighlights>>>([]);
+const topics = ref<CommunityTopic[]>([]);
+const publishTopicId = ref<number | null>(null);
+let detailGeneration = 0;
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Ccircle cx='36' cy='36' r='36' fill='%23eceff3'/%3E%3Ccircle cx='36' cy='28' r='12' fill='%23c8cdd5'/%3E%3Cpath d='M13 66c3-14 11-22 23-22s20 8 23 22' fill='%23c8cdd5'/%3E%3C/svg%3E";
 
@@ -152,6 +168,11 @@ async function load() {
   } else {
     highlights.value = [];
   }
+  try {
+    topics.value = await apiCommunityTopics();
+  } catch {
+    topics.value = [];
+  }
 }
 
 function requireLogin(): boolean {
@@ -170,6 +191,18 @@ function openPeople() {
   uni.navigateTo({ url: "/pages/discover/people" });
 }
 
+function openTopic(id: number) {
+  uni.navigateTo({ url: `/pages/discover/discoverTopic/index?id=${id}` });
+}
+
+function openSearch() {
+  uni.navigateTo({ url: "/pages/discover/discoverSearch/index" });
+}
+
+function openVideo() {
+  uni.navigateTo({ url: "/pages/discover/discoverVideo/index" });
+}
+
 async function publish() {
   if (!publishForm.value.content.trim()) {
     return uni.showToast({ title: "内容不能为空", icon: "none" });
@@ -179,10 +212,12 @@ async function publish() {
       title: publishForm.value.title.trim() || undefined,
       content: publishForm.value.content.trim(),
       content_type: 1,
+      topic_id: publishTopicId.value ? [publishTopicId.value] : undefined,
     });
     uni.showToast({ title: "发布成功", icon: "success" });
     showPublish.value = false;
     publishForm.value = { title: "", content: "" };
+    publishTopicId.value = null;
     load();
   } catch (e) {
     uni.showToast({ title: (e as Error).message || "发布失败", icon: "none" });
@@ -190,18 +225,38 @@ async function publish() {
 }
 
 async function openDetail(post: CommunityPost) {
+  const requestGeneration = ++detailGeneration;
   detail.value = post;
   liked.value = false;
   try {
-    comments.value = await apiCommentList(post.id);
+    const result = await apiCommentList(post.id);
+    if (requestGeneration === detailGeneration) comments.value = result;
   } catch {
-    comments.value = [];
+    if (requestGeneration === detailGeneration) comments.value = [];
   }
 }
 
 function closeDetail() {
+  detailGeneration++;
   detail.value = null;
 }
+
+onLoad((query) => {
+  const id = Number(query?.id ?? 0);
+  if (Number.isSafeInteger(id) && id > 0) {
+    const requestGeneration = ++detailGeneration;
+    void apiCommunityDetail(id).then((post) => {
+      if (requestGeneration === detailGeneration) void openDetail(post);
+    }).catch(() => uni.showToast({ title: "帖子不存在或无法访问", icon: "none" }));
+  }
+  if (query?.publish === "1") {
+    const topicId = Number(query.topic_id ?? 0);
+    if (Number.isSafeInteger(topicId) && topicId > 0 && requireLogin()) {
+      publishTopicId.value = topicId;
+      showPublish.value = true;
+    }
+  }
+});
 
 async function like() {
   if (!requireLogin() || !detail.value) return;
@@ -232,7 +287,6 @@ async function sendComment() {
 }
 
 onShow(load);
-onMounted(load);
 </script>
 
 <style scoped>
@@ -257,6 +311,10 @@ onMounted(load);
   align-items: center;
   gap: 14rpx;
 }
+
+.topic-strip { width: 100%; margin-bottom: 20rpx; }
+.topic-row { display: flex; min-width: max-content; gap: 12rpx; }
+.topic-chip { padding: 10rpx 18rpx; color: #555; background: #fff; border-radius: 26rpx; font-size: 23rpx; white-space: nowrap; }
 
 .people-btn {
   color: #555;

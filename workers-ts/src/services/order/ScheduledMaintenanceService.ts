@@ -10,7 +10,8 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import { storeOrder, storeOrderStatus, storePink } from "@/models/schema";
+import { paymentReconciliationCase, storeOrder, storeOrderStatus, storePink } from "@/models/schema";
+import { AssistedProviderPaymentPending } from "@/services/payment/AssistedProviderPaymentClaim";
 import type { Container } from "@/lib/di";
 import type {
   Env,
@@ -242,10 +243,21 @@ export class ScheduledMaintenanceService {
           reason: "no_longer_eligible",
         };
       }
-      await new StoreOrderCreateService(this.container, this.env).cancel(
-        rows[0].uid,
-        rows[0].orderId,
-      );
+      try {
+        await new StoreOrderCreateService(this.container, this.env).cancel(
+          rows[0].uid,
+          rows[0].orderId,
+        );
+      } catch (error) {
+        if (!(error instanceof AssistedProviderPaymentPending)) throw error;
+        return {
+          event: "scheduled_order_skipped",
+          job: message.job,
+          runId: message.runId,
+          orderId: message.orderId,
+          reason: "provider_payment_pending",
+        };
+      }
       return {
         event: "scheduled_order_processed",
         job: message.job,
@@ -456,6 +468,14 @@ export class ScheduledMaintenanceService {
           eq(storeOrder.paid, 0),
           eq(storeOrder.status, 0),
           eq(storeOrder.isDel, 0),
+          or(ne(storeOrder.isChannel, 2), sql`NOT EXISTS (
+            SELECT 1 FROM ${paymentReconciliationCase}
+            WHERE ${paymentReconciliationCase.provider} IN ('wechat', 'alipay')
+              AND ${paymentReconciliationCase.orderNo} = ${storeOrder.orderId}
+              AND (${paymentReconciliationCase.initiatedTime} > 0
+                OR ${paymentReconciliationCase.callbackEventId} IS NOT NULL
+                OR ${paymentReconciliationCase.providerTransactionId} <> '')
+          )`),
         ),
       )
       .orderBy(asc(storeOrder.id))

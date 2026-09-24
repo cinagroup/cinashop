@@ -12,7 +12,9 @@ import { storeOrderCartInfo, storeOrderStatus, printDocument, storeCouponIssue, 
   storeDiscounts, storeDiscountsProducts, storeProduct, storeProductAttrValue, storeCart, storeBargain,
   storeSeckill, storeSeckillTime, storeActivity, storeCombination, storePink, storeIntegral, storeNewcomer, user } from '../src/models/schema';
 
-for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'integral', 'newcomer'] as const) describe(`cross-request ${kind} semantic rules`, () => {
+// These scenarios commit orders and require the native purchase-origin schema.
+// PGlite's simplified table generator cannot stand in for its protected SQL.
+for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'integral', 'newcomer'] as const) describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))(`cross-request ${kind} semantic rules`, () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   let beforeSequence: (() => Promise<void>) | undefined;
   const input = kind === 'coupon' ? { cartIds: [1], addressId: 11, couponId: 41, type: 0 }

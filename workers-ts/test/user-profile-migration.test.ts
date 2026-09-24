@@ -4,7 +4,7 @@ import { UserProfileService, type PaymentCodeStore } from "../src/services/user/
 
 describe("PHP user-profile migration", () => {
   it("registers every audited user-centre route with the PHP auth boundary", () => {
-    const routes = readFileSync("src/routes/v1/index.ts", "utf8");
+    const routes = readFileSync("src/routes/v1/index.ts", "utf8").replace(/\r\n/g, "\n");
     expect(routes).toContain('get("/user/activity", authMiddleware({ force: false })');
     for (const fragment of [
       'get("/user/code", authMiddleware({ force: true })',

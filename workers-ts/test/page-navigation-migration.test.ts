@@ -25,8 +25,10 @@ describe("page navigation migration", () => {
   });
 
   it("keeps external 0069 and embedded 0076 SQL exactly equivalent", () => {
-    const migration = readFileSync("migrations/0069_page_navigation.sql", "utf8").trim();
-    const service = readFileSync("src/services/MigrationService.ts", "utf8");
+    // Git may check these files out with different line endings on Windows.
+    // Normalize CRLF only; SQL content must otherwise remain exactly equivalent.
+    const migration = readFileSync("migrations/0069_page_navigation.sql", "utf8").replace(/\r\n/g, "\n").trim();
+    const service = readFileSync("src/services/MigrationService.ts", "utf8").replace(/\r\n/g, "\n");
     const embedded = service.match(
       /private migration_0076\(\): string \{\s*return `([\s\S]*?)`;\s*\}/,
     )?.[1]?.trim();

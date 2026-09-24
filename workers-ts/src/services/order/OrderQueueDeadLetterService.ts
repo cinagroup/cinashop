@@ -15,6 +15,7 @@ import { isSignReminderMessage } from "@/services/message/SignReminderService";
 import {
   isOrderNotificationOutboxMessage,
   isOrderPaidOutboxMessage,
+  isPresaleDeliveryOutboxMessage,
 } from "@/services/order/OrderOutboxService";
 import {
   isPinkTimeoutMessage,
@@ -191,6 +192,10 @@ function messageAction(value: unknown): string {
 
 /** Classify before persistence so sensitive or unsupported messages can never be replayed. */
 export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueDeadLetter {
+  if (isPresaleDeliveryOutboxMessage(value)) {
+    const body = { action: value.action, outboxId: value.outboxId, eventKey: value.eventKey };
+    return { messageType: value.action, replayPolicy: 'ALLOW', body, replayMessage: body };
+  }
   if (isOrderPaidOutboxMessage(value) || isOrderNotificationOutboxMessage(value)) {
     return {
       messageType: value.action,

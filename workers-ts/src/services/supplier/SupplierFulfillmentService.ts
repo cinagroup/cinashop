@@ -16,6 +16,7 @@ import {
 } from "@/services/order/OrderBrokerageService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDeliveryPolicy";
+import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { reserveOrderCartRowIds } from "@/services/order/OrderCartIdentity";
 import { planOrderFinancialSplit } from "@/services/order/OrderSplitFinance";
@@ -561,25 +562,6 @@ async function assertPinkCompleted(tx: SupplierTx, order: OrderRow): Promise<voi
   }
 }
 
-async function assertPresaleEnded(tx: SupplierTx, order: OrderRow): Promise<void> {
-  if (order.type !== 6) return;
-  const rows = await tx
-    .select({ cartInfo: storeOrderCartInfo.cartInfo })
-    .from(storeOrderCartInfo)
-    .where(eq(storeOrderCartInfo.oid, order.id))
-    .orderBy(asc(storeOrderCartInfo.id))
-    .for("key share");
-  const now = Math.floor(Date.now() / 1_000);
-  for (const row of rows) {
-    const snapshot = parseSnapshot(row.cartInfo);
-    const productInfo = nestedRecord(snapshot?.productInfo);
-    const endTime = Number(productInfo?.presale_end_time ?? 0);
-    if (Number.isFinite(endTime) && endTime > now) {
-      throw new ValidateException("预售活动尚未结束，不能发货");
-    }
-  }
-}
-
 // Supplier allocation keeps the payment/audit root platform-owned. Access via
 // an explicitly scoped child may lock that completed allocation root, but this
 // never grants direct root access or access to another supplier's children.
@@ -703,7 +685,7 @@ async function applyDelivery(
   assertDeliverable(order);
   assertManualOrderDeliveryType(order.productType, input.deliveryType);
   await assertPinkCompleted(tx, order);
-  await assertPresaleEnded(tx, order);
+  await assertPresaleDispatchReady(tx, order);
   await assertNoOpenRefund(tx, supplierId, order.id);
   if (input.deliveryType === "send") {
     if (!input.deliveryUid || !input.deliveryName || !input.deliveryId) {
@@ -867,7 +849,7 @@ export class SupplierFulfillmentService {
         throw new ValidateException("手工虚拟商品不支持拆分发货，请整单填写交付内容");
       }
       await assertPinkCompleted(tx, active);
-      await assertPresaleEnded(tx, active);
+      await assertPresaleDispatchReady(tx, active);
       await assertNoOpenRefund(tx, supplierId, active.id);
 
       const cartRows = await tx

@@ -3,6 +3,9 @@ import { createPinia } from "pinia";
 import App from "./App.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
 import { bindAuthStores } from '@/stores/session';
+import { prepareWorkOAuthRoute } from "@/composables/workContext";
+
+prepareWorkOAuthRoute();
 
 export function createApp() {
   const app = createSSRApp(App);

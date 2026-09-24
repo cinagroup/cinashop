@@ -12,6 +12,9 @@ export interface CommunityPost {
   type: number;
   relationId: number;
   contentType: number;
+  videoUrl?: string;
+  video_url?: string;
+  topic_id?: number[];
   title: string;
   content: string;
   image: string;
@@ -39,10 +42,30 @@ export interface CommunityComment {
   addTime: number;
 }
 
-/** 帖子列表 (GET /api/community/list) */
-export function apiCommunityList(page = 1, limit = 10): Promise<CommunityPost[]> {
-  if (communityPreviewMode) return Promise.resolve(previewPage(previewPosts, page, limit));
-  return http.get<CommunityPost[]>("/community/list", { page, limit });
+export interface CommunityListFilters {
+  topic_id?: number;
+  keyword?: string;
+  content_type?: 2;
+  start_id?: number;
+  relation_id?: number;
+  order?: 1 | 2;
+}
+
+/** 帖子列表 (GET /api/community/list) — 对应旧端话题/搜索/视频筛选合同。 */
+export function apiCommunityList(page = 1, limit = 10, filters: CommunityListFilters = {}): Promise<CommunityPost[]> {
+  if (communityPreviewMode) {
+    let rows = previewPosts.filter((item) =>
+      (!filters.topic_id || item.topic_id?.includes(filters.topic_id))
+      && (!filters.keyword || `${item.title} ${item.content}`.toLowerCase().includes(filters.keyword.toLowerCase()))
+      && (!filters.content_type || item.contentType === filters.content_type)
+      && (!filters.start_id || item.id <= filters.start_id)
+      && (!filters.relation_id || item.relationId === filters.relation_id));
+    rows = [...rows].sort((a, b) => filters.order === 1
+      ? b.addTime - a.addTime || b.id - a.id
+      : b.likeNum - a.likeNum || b.addTime - a.addTime || b.id - a.id);
+    return Promise.resolve(previewPage(rows, page, limit));
+  }
+  return http.get<CommunityPost[]>("/community/list", { page, limit, ...filters });
 }
 
 /** 帖子详情 (GET /api/community/detail/:id) */
@@ -94,6 +117,7 @@ const previewPosts: CommunityPost[] = [
     isLike: 0,
     status: 1,
     addTime: 1_786_700_800,
+    topic_id: [1],
   },
   {
     id: 9_002,
@@ -110,6 +134,25 @@ const previewPosts: CommunityPost[] = [
     isLike: 0,
     status: 1,
     addTime: 1_786_614_400,
+    topic_id: [],
+  },
+  {
+    id: 9_003,
+    type: 2,
+    relationId: 101,
+    contentType: 2,
+    title: "周末花市短片",
+    content: "一段周末花市漫游视频。预览数据只验证深链与视频卡片，不包含可播放媒体。",
+    image: "",
+    sliderImage: null,
+    videoUrl: "",
+    likeNum: 42,
+    commentNum: 3,
+    playNum: 321,
+    isLike: 0,
+    status: 1,
+    addTime: 1_786_710_800,
+    topic_id: [1],
   },
 ];
 
@@ -194,6 +237,7 @@ export function apiCommunitySave(params: {
       isLike: 0,
       status: 1,
       addTime: Math.floor(Date.now() / 1_000),
+      topic_id: params.topic_id ?? [],
     });
     return Promise.resolve({ id });
   }

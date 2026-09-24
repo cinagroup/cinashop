@@ -49,6 +49,37 @@ export function parseArray(value: unknown, message: string): unknown[] {
   return parsed;
 }
 
+/** The legacy editor stores timestamp-keyed objects; checkout and preview must
+ * interpret the same ordered components. Submissions themselves remain arrays. */
+export function parseOrderSystemFormTemplate(value: unknown): JsonRecord[] {
+  let parsed = value;
+  if (typeof parsed === "string") {
+    try { parsed = JSON.parse(parsed); }
+    catch { throw new SystemFormValidationError("系统表单配置无效"); }
+  }
+  if (isRecord(parsed)) {
+    parsed = Object.entries(parsed).sort(([leftKey, left], [rightKey, right]) => {
+      const a = Number(isRecord(left) ? left.timestamp ?? leftKey : leftKey);
+      const b = Number(isRecord(right) ? right.timestamp ?? rightKey : rightKey);
+      return Number.isFinite(a) && Number.isFinite(b) ? a - b : 0;
+    }).map(([, component]) => component);
+  }
+  if (!Array.isArray(parsed) || !parsed.length || parsed.length > MAX_FORM_COMPONENTS) {
+    throw new SystemFormValidationError("系统表单配置无效");
+  }
+  jsonBytes(parsed, "系统表单配置无效");
+  const keys = new Set<string>();
+  return parsed.map((component, index) => {
+    if (!isRecord(component) || typeof component.name !== "string" || !COMPONENT_NAMES.has(component.name)) {
+      throw new SystemFormValidationError("系统表单包含不支持的组件");
+    }
+    const key = componentKey(component, index);
+    if (keys.has(key)) throw new SystemFormValidationError("系统表单包含重复项目");
+    keys.add(key);
+    return cloneRecord(component);
+  });
+}
+
 function jsonBytes(value: unknown, message: string): string {
   let json: string;
   try {
@@ -129,6 +160,7 @@ function normalizeComponentValue(component: JsonRecord, value: unknown, title: s
     if (!Array.isArray(value)) throw new SystemFormValidationError(`${title}格式错误`);
     if (value.length !== 0 && value.length !== 2) throw new SystemFormValidationError(`${title}格式错误`);
     const range = value.map((item) => boundedString(item, title));
+    if (range.some(Boolean) && !range.every(Boolean)) throw new SystemFormValidationError(`${title}请填写完整范围`);
     if (range.some((item) => item && !/^\d{4}-\d{2}-\d{2}$/.test(item))) {
       throw new SystemFormValidationError(`${title}格式错误`);
     }
@@ -200,7 +232,7 @@ export function prepareOrderSystemFormSubmission(
   submissionValue: unknown,
   systemFormId: number,
 ): PreparedOrderSystemForm {
-  const template = parseArray(templateValue, "系统表单配置无效");
+  const template = parseOrderSystemFormTemplate(templateValue);
   const submission = parseArray(submissionValue, "自定义表单格式错误");
   if (!template.length || template.length > MAX_FORM_COMPONENTS) {
     throw new SystemFormValidationError("系统表单配置无效");

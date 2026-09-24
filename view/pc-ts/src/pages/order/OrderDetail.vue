@@ -26,7 +26,7 @@
           </el-descriptions-item>
         </el-descriptions>
         <el-alert
-          v-if="order.supplier_allocation_status === 1"
+          v-if="order.paid === 1 && order.supplier_allocation_status === 1"
           class="allocation-alert"
           title="支付成功，正在按供应商生成履约订单"
           type="info"

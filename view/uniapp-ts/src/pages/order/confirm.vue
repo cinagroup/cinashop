@@ -45,7 +45,7 @@
             <view class="price">{{ ready ? `¥${item.sumPrice}` : '待报价' }}</view>
           </view>
         </view>
-        <view v-if="activity.type === 0" class="integral-option">
+        <view v-if="integralEligible" class="integral-option">
           <text>使用积分抵扣（额度由系统计算）</text>
           <switch :checked="useIntegral" :disabled="locked" @change="integralChange" />
         </view>
@@ -104,7 +104,7 @@ import { useCheckout } from "@/composables/useCheckout";
 defineOptions({ inheritAttrs: false });
 const { loading, error, load, locked, formLocked, items, displayItems, addresses, stores, addressId, storeId, shippingType, setShipping, contact, mark,
   allowedShippingTypes, requiresAddress, shippingLoading,
-  customForm, formName, formRevision, formValidation, uploads, activity, useIntegral, quote, ready, deliveryError, refreshQuote,
+  customForm, formName, formRevision, formValidation, uploads, activity, integralEligible, useIntegral, quote, ready, deliveryError, refreshQuote,
   coupons, couponId, couponScope, selectCoupon, loadCoupons, pending, submissionError, submitting, canSubmit, submit } = useCheckout();
 function addAddress() { if (!locked.value) uni.navigateTo({ url: "/pages/user/address" }); }
 function integralChange(event: Event) { if (!locked.value) useIntegral.value = (event as unknown as { detail: { value: boolean } }).detail.value === true; }

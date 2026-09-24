@@ -5,6 +5,7 @@
  * 定时扫描负责补偿“数据库已提交但 Queue 投递失败/结果未知”的窗口。
  */
 import { sql } from "drizzle-orm";
+import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import {
   check,
   index,
@@ -70,6 +71,7 @@ export interface WithdrawalApplicationOutboxPayload {
 
 export type OrderOutboxPayload =
   | OrderPaidOutboxPayload
+  | PresaleDeliveryIntent
   | OrderDeliveryNoticeOutboxPayload
   | OrderRefundRefusedNoticeOutboxPayload
   | OrderSecondCardNoticeOutboxPayload
@@ -110,7 +112,8 @@ export const storeOrderOutbox = pgTable(
       'withdrawal.approved.notice',
       'withdrawal.refused.notice',
       'withdrawal.applied.notice',
-      'withdrawal.staff.refresh'
+      'withdrawal.staff.refresh',
+      'order.presale.fulfillment'
     )`),
     uniqueIndex("soob_event_key_uq").on(t.eventKey),
     index("soob_aggregate").on(t.aggregateType, t.aggregateId),

@@ -5,11 +5,34 @@ import { memberRight, systemConfig } from '../src/models/schema';
 import { financePostgres, ownsFinanceFixtureEndpoint, validateFinanceFixtureUrl } from './helpers/financePostgres';
 import { ownsSequenceRunnerEndpoint, sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { checkoutPricingFixture } from './helpers/checkoutPricingFixture';
+import { purchaseOriginCheckoutFixture } from './helpers/purchaseOriginCheckoutFixture';
+import { withFinancePeers } from './helpers/financePeers';
+import { storeOrder, storeOrderCartInfo } from '../src/models/schema';
+import { inspectPurchaseOriginEvidence } from '../src/migrations/runPurchaseOriginEvidence';
 import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { protectCheckoutPricingSources } from '../src/services/order/CheckoutPricingSources';
 import { createContainerFromDb, withTx } from '../src/lib/di';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('explicit local checkout fixture commissioning', () => {
+  it('keeps public-schema peers inside the exact owned database and installs the real origin protocol without history', async () => {
+    const f = await financePostgres([storeOrder, storeOrderCartInfo], { namespace: 'public' });
+    const base = validateFinanceFixtureUrl(process.env.TEST_FINANCE_POSTGRES_URL!).href;
+    let database = '', host: unknown, port: unknown;
+    try {
+      const [identity] = await f.db.execute(sql`SELECT current_database() AS database,host(inet_server_addr()) AS host,inet_server_port() AS port`);
+      database = String(identity.database); host = identity.host; port = identity.port;
+      expect(ownsFinanceFixtureEndpoint(database, 'public', base, host, port)).toBe(true);
+      expect(ownsFinanceFixtureEndpoint(database, 'public', base, 'unowned', port)).toBe(false);
+      expect(ownsFinanceFixtureEndpoint('finance_fixture_' + 'f'.repeat(32), 'public', base, host, port)).toBe(false);
+      await purchaseOriginCheckoutFixture(f);
+      expect(await inspectPurchaseOriginEvidence(f.db)).toEqual({ state: 'v1', sourcesReady: true });
+      await withFinancePeers(f.db, async peers => {
+        for (const peer of peers) expect(await peer.db.execute(sql`SELECT current_database() AS database,current_schema() AS namespace,
+          (SELECT count(*)::integer FROM public.store_order_purchase_origin) AS n`)).toMatchObject([{ database, namespace: 'public', n: 0 }]);
+      });
+    } finally { await f.close(); }
+    expect(ownsFinanceFixtureEndpoint(database, 'public', base, host, port)).toBe(false);
+  }, 30_000);
   it('normalizes the real inet host and installs once in the exact owned non-public schema', async () => {
     const raw = await financePostgres([memberRight, systemConfig]);
     let f = raw;

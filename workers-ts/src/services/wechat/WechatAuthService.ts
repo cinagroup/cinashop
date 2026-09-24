@@ -1,7 +1,7 @@
 /**
  * 微信用户 Dao + 登录 Service (M6)
  */
-import { eq, or, and, sql } from "drizzle-orm";
+import { eq, or, and, isNull, sql } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
 import { wechatUser, user as userTable } from "@/models/schema";
 import { withTx, type Container } from "@/lib/di";
@@ -1244,6 +1244,7 @@ export class WechatAuthService {
       }).from(userTable).where(and(
         eq(userTable.uid, uid),
         eq(userTable.isDel, 0),
+        isNull(userTable.deleteTime),
       )).limit(1),
       new SystemConfigService(this.container, this.env).get("store_user_avatar"),
     ]);
@@ -1341,6 +1342,7 @@ export class WechatAuthService {
         ? await tx.select({ uid: userTable.uid }).from(userTable)
           .where(and(
             eq(userTable.isDel, 0),
+            isNull(userTable.deleteTime),
             or(eq(userTable.account, phone), eq(userTable.phone, phone)),
           ))
           .for("update")
@@ -1368,6 +1370,7 @@ export class WechatAuthService {
         }).from(userTable).where(and(
           eq(userTable.uid, uid),
           eq(userTable.isDel, 0),
+          isNull(userTable.deleteTime),
         )).for("update").limit(1);
         const user = users[0];
         if (!user) throw new ValidateException("社交身份关联账号不可用，请联系客服处理");

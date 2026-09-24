@@ -1,0 +1,156 @@
+{
+  "date": "2026-09-22",
+  "status": "exact-empty-orm-completion-local-candidate-not-registered-not-deployed",
+  "head": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "branch": "codex/user-visit-history-20260921",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "legacyBackfill": false,
+    "cumulativeQuotaEnabled": false,
+    "registeredMigrationChanged": false,
+    "workersBindingsOrDependenciesChanged": false
+  },
+  "implementation": {
+    "candidateModel": "src/models/candidates/purchase_cancellation_evidence.ts",
+    "exportedFromRegisteredSchema": false,
+    "states": ["fresh", "orm-pending", "v1", "drift"],
+    "ordinaryInstallOrCliCompletesOrm": false,
+    "explicitCompletion": "completePurchaseCancellationEvidenceOrm",
+    "originV1RequiredBeforeCompletion": true,
+    "exactEmptyUnexposedOwnedTableOnly": true,
+    "lockBeforeEmptinessProof": "ACCESS EXCLUSIVE NOWAIT",
+    "sharedFence": [731611, 0],
+    "nowaitLockOrder": ["store_order:SHARE ROW EXCLUSIVE", "store_order_cart_info:SHARE", "store_order_purchase_origin:SHARE", "store_order_status:SHARE", "user_bill:SHARE", "existing store_order_purchase_cancellation:ACCESS EXCLUSIVE"],
+    "completionAddsRuntimeGrants": false,
+    "existingRowsDeletedOrAdopted": false,
+    "lateFailureRollsBackProtectionAndSourceTrigger": true,
+    "canonicalSqlSha256BeforeAndAfterSplit": "21b5bc4b97f56d2ce0b9d093807e8e60324b21ba403d73e7b7305a90f67c64d1",
+    "ormFingerprint": "fa732b88148e7dc49e486a235fa5875b47696317b84b78e6d416a3ba99ec547d",
+    "allSixV1FingerprintsUnchangedAndVerified": true
+  },
+  "schema": {
+    "registeredTables": 278,
+    "embeddedSteps": 170,
+    "externalSteps": 165,
+    "generatedRegisteredPlusCandidateTables": 279,
+    "fullOrmRelationsPreservedDuringOriginThenCancellationCompletion": true,
+    "completeNinePathCatalogAuditRerun": false,
+    "otherProtocolsImplicitlyCompleted": false
+  },
+  "checklist": { "complete": 240, "open": 164, "total": 404 },
+  "tests": {
+    "nativeGroups": [
+      {
+        "testFiles": ["test/purchase-cancellation-evidence-postgres.test.ts"],
+        "passed": 34,
+        "files": 1,
+        "session": 52194,
+        "cluster": "finance-postgres-YvUja1",
+        "port": 53262,
+        "note": "Complete passing service file from two-file batch. The entire failing 88-case installation file is excluded from accepted totals. Later edits affected installation tests only."
+      },
+      {
+        "testFiles": ["test/purchase-cancellation-installation.test.ts"],
+        "passed": 88,
+        "files": 1,
+        "session": 61742,
+        "cluster": "finance-postgres-uWYbZc",
+        "port": 62448,
+        "seconds": 98.06
+      }
+    ],
+    "unit": {
+      "passed": 214,
+      "files": 4,
+      "session": 10135,
+      "seconds": 16.07,
+      "suites": [
+        { "file": "test/purchase-cancellation-evidence.test.ts", "passed": 23 },
+        { "file": "test/purchase-origin-evidence.test.ts", "passed": 29 },
+        { "file": "test/unpaid-order-cancellation-evidence.test.ts", "passed": 54 },
+        { "file": "test/local-finance-postgres-runner.test.ts", "passed": 108 }
+      ]
+    },
+    "nativePassed": 122,
+    "totalPassed": 336,
+    "totalFiles": 6,
+    "newCases": 28,
+    "skipped": 0,
+    "finalUnitAndRuntimeTypesPassed": true,
+    "finalTypecheckSession": 89684,
+    "runnerSyntaxPassed": true,
+    "diffWhitespacePassed": true,
+    "countingPolicy": "Distinct cases from final fully passing files only. No accumulation of repeated files, calibration or historical stage totals."
+  },
+  "developmentFailures": [
+    {
+      "kind": "intentional-native-orm-fingerprint-calibration",
+      "session": 57170,
+      "cluster": "finance-postgres-Lazn6B",
+      "port": 53932,
+      "total": 61,
+      "passed": 60,
+      "failed": 1,
+      "seconds": 54.10,
+      "note": "The placeholder exposed the generated table's actual PG16 fingerprint. Fixed from this result; original canonical SQL hash assertion passed. No accepted counts taken from calibration."
+    },
+    {
+      "kind": "synthetic-order-idempotency-key-collision",
+      "session": 52194,
+      "cluster": "finance-postgres-YvUja1",
+      "port": 53262,
+      "total": 122,
+      "passed": 121,
+      "failed": 1,
+      "seconds": 301.25,
+      "sqlState": "23505",
+      "constraint": "so_unique_uid_uq",
+      "note": "The additional preactivation synthetic order reused the default empty key for buyer 11. Set a distinct synthetic key without changing business validation. Entire 88-case installation file rerun passed; also added an ACCESS SHARE reader conflict to its existing lock test."
+    },
+    {
+      "kind": "test-fixture-return-union-type-errors",
+      "session": 40179,
+      "errors": 2,
+      "note": "Used row-shape assertion for exec union and typed db.execute for backend PID. Final unit/runtime typecheck both passed."
+    }
+  ],
+  "cleanup": {
+    "clusters": [
+      { "name": "finance-postgres-Lazn6B", "port": 53932 },
+      { "name": "finance-postgres-YvUja1", "port": 53262 },
+      { "name": "finance-postgres-uWYbZc", "port": 62448 }
+    ],
+    "fixtureDatabasesAndRolesRemaining": 0,
+    "independentPgCtlStatuses": [3, 3, 3],
+    "pidFiles": false,
+    "bootstrapPasswordFiles": false,
+    "ownedListeners": 0,
+    "ownedPostgresProcesses": 0,
+    "testRunnersOrWorkers": 0,
+    "stoppedDiagnosticDirectoriesRetained": true
+  },
+  "hashScope": "Selected raw source/test/runner SHA-256 only; not a full repository or test-input-closure digest.",
+  "hashes": {
+    "workers-ts/src/models/candidates/purchase_cancellation_evidence.ts": "c9282472d48cd84b9412eb610478e8bf9d6053e44f5a319a5c7442e53b29240d",
+    "workers-ts/src/migrations/purchaseCancellationEvidence.ts": "1c187e45f59b73a7fc1aa2e6fcc95aa9c4219a85957d887c89da259ebbd45373",
+    "workers-ts/src/migrations/purchaseCancellationEvidenceCatalog.ts": "7f75796decf3e48014482c1774a0ed326c3e4f94159b72326c6ac63157f8ec83",
+    "workers-ts/src/migrations/purchaseCancellationEvidenceInstallation.ts": "b6b26eda0f99585e90e9abd3fa6f9654970344db5848e2f30791b952da8e9bbe",
+    "workers-ts/src/migrations/runPurchaseCancellationEvidence.ts": "66c00970cedef246d89c2791716b346bd2ab323fd56c593dfed6fd99545ce049",
+    "workers-ts/scripts/purchase-cancellation-maintenance.ts": "785a3cf6eb1b0683470a5fe112e9e03ec835d3437fbab70337b2593a42fb132d",
+    "workers-ts/test/purchase-cancellation-installation.test.ts": "7e8fa98cffa7b74c1cb1a2c0284184352bec0016649a43d76da944e7cd6750f2",
+    "workers-ts/test/purchase-cancellation-evidence-postgres.test.ts": "c00da04adeda91e04553a764fc7ecfb3b04bcce971b42421d4692ae8b7147c17",
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "b2f317ce2451ad07c4b08ffb84df7a5b9f0b388b2c41b9b66f28081a0e66ddc3",
+    "workers-ts/test/local-finance-postgres-runner.test.ts": "f7fc9e2be971c5884d6e7ad77f23fb9b43b4587a81c1a0888102a1b40f385e6d"
+  },
+  "remaining": [
+    "Formal schema export, external and embedded migration registration",
+    "Full nine-path catalog audit, forward upgrades and affected fixtures",
+    "All actual business entry points and LOGIN permission inventory",
+    "Production commissioning and approved rollout",
+    "Cross-root concurrent quota protocol and explicit quota restoration policy",
+    "Real provider/browser/user acceptance beyond this increment"
+  ]
+}

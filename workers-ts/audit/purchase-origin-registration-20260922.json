@@ -1,0 +1,359 @@
+{
+  "date": "2026-09-22",
+  "scope": "Local registration only; no production access, deployment, commit, push, merge or cleanup of Git branches.",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "registration": {
+    "external": "0163_purchase_origin_evidence.sql",
+    "embedded": "0169",
+    "externalSteps": 165,
+    "embeddedSteps": 170,
+    "model": "src/models/schema/purchase_origin_evidence.ts"
+  },
+  "nativeCatalogAudit": {
+    "serverVersionNum": 160015,
+    "paths": [
+      {
+        "path": "external",
+        "steps": 165
+      },
+      {
+        "path": "embedded",
+        "steps": 170
+      },
+      {
+        "path": "orm",
+        "steps": 1161
+      },
+      {
+        "path": "orm_upgrade",
+        "steps": 1281
+      },
+      {
+        "path": "orm_default_upgrade",
+        "steps": 1162
+      },
+      {
+        "path": "orm_constraints",
+        "steps": 1153
+      },
+      {
+        "path": "orm_fk_names",
+        "steps": 1162
+      },
+      {
+        "path": "orm_checks",
+        "steps": 1155
+      },
+      {
+        "path": "orm_sequences",
+        "steps": 1161
+      }
+    ],
+    "counts": {
+      "external": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "embedded": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "orm": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "orm_upgrade": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "orm_default_upgrade": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "orm_constraints": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "orm_fk_names": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "orm_checks": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      },
+      "orm_sequences": {
+        "tables": 278,
+        "columns": 3876,
+        "constraints": 659,
+        "indexes": 1073,
+        "sequences": 227
+      }
+    },
+    "summary": {
+      "externalVsEmbedded": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      },
+      "externalVsOrm": {
+        "tables": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "columns": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "constraints": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "indexes": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        },
+        "sequences": {
+          "referenceOnly": 0,
+          "candidateOnly": 0,
+          "changed": 0,
+          "possibleRenames": 0
+        }
+      }
+    },
+    "purchaseOriginVerification": {
+      "external": {
+        "initial": "v1",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "embedded": {
+        "initial": "v1",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_upgrade": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_default_upgrade": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_constraints": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_fk_names": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_checks": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      },
+      "orm_sequences": {
+        "initial": "orm-pending",
+        "complete": true,
+        "completionPreserved": true,
+        "repeatPreserved": true,
+        "noBackfill": true
+      }
+    },
+    "externalInputSha256": "db1d26e228b8414064b38e3052f0b4401ef28018552ed430fd188399ad40b471",
+    "generatedSqlSha256": "950b0c1afce539fb75f25552e3820609a926dc07f289bea227f8c554a7c1c9c7",
+    "cleanupConfirmed": true
+  },
+  "currentExternalInputSha256": "b68e86ba71bd12629086aa86b909e8b5807398909a0e8034b5768c9c7a4bcd11",
+  "auditInputDifference": {
+    "externalInputBeforeCommentCorrectionSha256": "db1d26e228b8414064b38e3052f0b4401ef28018552ed430fd188399ad40b471",
+    "explanation": "The nine-path audit loaded SQL before one stale CANDIDATE ONLY header comment was corrected. Reversing exactly that one comment reproduces the audited digest; executable SQL is unchanged. The later 320-test native migration regression and final 238-test unit pass used the corrected files."
+  },
+  "testRuns": [
+    {
+      "kind": "native",
+      "files": 3,
+      "passed": 115,
+      "failed": 0,
+      "skipped": 0,
+      "breakdown": {
+        "installation": 72,
+        "businessEvidence": 18,
+        "supplierIndexes": 25
+      },
+      "durationSeconds": 213.45
+    },
+    {
+      "kind": "unit-final",
+      "files": 6,
+      "passed": 238,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 13.47
+    },
+    {
+      "kind": "native-registered-regression",
+      "files": 8,
+      "passed": 320,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 305.88
+    }
+  ],
+  "uniqueTestsPassed": 673,
+  "newCases": 5,
+  "initialUnitFailure": {
+    "passed": 235,
+    "failed": 3,
+    "resolution": "Added the new worker-only table to schema-scope/test inventories and normalized CRLF in the embedded SQL comparison. The final six-file rerun passed all 238."
+  },
+  "checks": {
+    "unitTypes": true,
+    "runtimeTypes": true,
+    "diffWhitespace": true,
+    "stagedFiles": 0,
+    "checklist": {
+      "done": 240,
+      "open": 164,
+      "total": 404
+    }
+  },
+  "ownedClusters": [
+    {
+      "name": "finance-postgres-HE0AiQ",
+      "port": 60381,
+      "purpose": "115 native tests",
+      "fixtureDatabasesAndRolesRemaining": 0,
+      "independentStopVerification": {
+        "pgCtlStatus": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "processes": 0
+      }
+    },
+    {
+      "name": "finance-postgres-lRljLK",
+      "port": 60514,
+      "purpose": "nine-path audit",
+      "fixtureDatabasesAndRolesRemaining": 0,
+      "independentStopVerification": {
+        "pgCtlStatus": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "processes": 0
+      }
+    },
+    {
+      "name": "finance-postgres-HO6hWG",
+      "port": 60988,
+      "purpose": "320 native migration regression tests",
+      "fixtureDatabasesAndRolesRemaining": 0,
+      "independentStopVerification": {
+        "pgCtlStatus": 3,
+        "postmasterPid": false,
+        "bootstrapPassword": false,
+        "listeners": 0,
+        "processes": 0
+      }
+    }
+  ],
+  "remaining": [
+    "Real checkout service hook and activation/provenance boundary",
+    "Cancellation receipt and cross-root concurrent quota protocol",
+    "Independent cumulative-quota restoration policy decision",
+    "Production runtime role commissioning and release acceptance"
+  ],
+  "limits": [
+    "Exact five-category catalogs and purchase-origin protection, not complete function/trigger/ACL/policy equality for the whole application",
+    "No historical origin backfill or automatic runtime grants",
+    "Real checkout evidence tests still inject capture through the test transaction callback; production services do not yet capture it",
+    "Cumulative quota remains disabled"
+  ]
+}

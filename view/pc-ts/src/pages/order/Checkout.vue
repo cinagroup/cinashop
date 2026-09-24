@@ -115,7 +115,7 @@
           </dl>
         </li>
       </ul>
-      <el-checkbox v-if="checkoutItems.length && checkoutItems.every(item => item.type === 0)" v-model="useIntegral">使用积分抵扣（可用额度由系统计算）</el-checkbox>
+      <el-checkbox v-if="integralEligible" v-model="useIntegral" :disabled="checkoutLoading || !!pendingSubmission">使用积分抵扣（可用额度由系统计算）</el-checkbox>
     </section>
 
     <section class="section" aria-label="结算优惠券">
@@ -231,7 +231,7 @@ import { canEditRejectedOrder } from "@/utils/apiError";
 import { OrderCouponSession, orderCouponScope, type OrderCouponState } from "@/api/orderCoupons";
 import CouponCards from "@/components/CouponCards.vue";
 import type { BargainShippingSelection } from '../../../../common/bargainShipping';
-import { checkoutRequiresAddress } from '../../../../common/checkoutSelection';
+import { checkoutRequiresAddress, checkoutSupportsIntegral } from '../../../../common/checkoutSelection';
 import { CheckoutIntentJournal, type CheckoutIntent } from '../../../../common/checkoutIntent';
 import { captureAuthSession, isCurrentAuthSession, getUid, isLoggedIn, onAuthChange } from '@/utils/auth';
 
@@ -285,6 +285,7 @@ const pendingSubmission = computed(() => pendingIntent.value?.payload ?? null);
 const activityOptions = ref<Pick<CheckoutQuoteOptions, "type" | "pinkId" | "combinationId" | "seckillId" | "bargainUserId">>({ type: 0 });
 const checkoutItems = computed(() => checkoutLoading.value || selectionError.value || loadedRoute.value !== route.fullPath
   ? [] : selectedItems.value);
+const integralEligible = computed(() => checkoutSupportsIntegral(checkoutItems.value));
 const includesSecondCard = computed(() => checkoutItems.value.some(
   (item) => item.productInfo?.productType === 4,
 ));
@@ -302,7 +303,7 @@ const quoteOptions = computed<CheckoutQuoteOptions>(() => ({
   shippingType: shippingType.value,
   storeId: shippingType.value === 2 ? selectedStoreId.value : 0,
   couponId: activityOptions.value.type === 0 ? selectedCouponId.value : 0,
-  useIntegral: useIntegral.value,
+  useIntegral: integralEligible.value && useIntegral.value,
 }));
 const deliveryError = computed(() => checkoutLoading.value || selectionError.value ? "" : shippingLoading.value ? '正在读取活动配送规则' : shippingError.value ||
   (!allowedShippingTypes.value.includes(shippingType.value) ? allowedShippingTypes.value.length ? '原配送方式已不可用，请重新选择' : '当前没有可用配送方式，请刷新或联系商家' : shippingType.value === 1

@@ -7,6 +7,7 @@ import {
   type PaymentCallbackProvider,
   type PaymentReconciliationStatus,
 } from "@/models/schema";
+import { lockStoreOrderPaymentBoundary } from "./StoreOrderPaymentBoundary";
 
 const INITIAL_QUERY_DELAY_SECONDS = 120;
 const RETENTION_SECONDS = 400 * 24 * 60 * 60;
@@ -26,6 +27,22 @@ export interface PaymentReconciliationRegistration {
   terminalConflict?: boolean;
   initiated?: boolean;
   now?: number;
+}
+
+/** Lock order shared by callback, intent and query evidence registrations. */
+export async function lockPaymentReconciliationRegistrationTx(
+  tx: DbClient,
+  provider: PaymentCallbackProvider,
+  orderNo: string,
+  transactionId = "",
+): Promise<void> {
+  await lockStoreOrderPaymentBoundary(tx, orderNo);
+  if (transactionId) {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${provider}:${transactionId}`},0))`);
+  }
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(
+    hashtextextended(${`payment-reconciliation:${provider}:${orderNo}`}, 0)
+  )`);
 }
 
 function assertRegistration(input: PaymentReconciliationRegistration): void {
@@ -56,13 +73,13 @@ export async function registerPaymentReconciliationTx(
   assertRegistration(input);
   const now = input.now ?? Math.floor(Date.now() / 1_000);
   const replayKey = crypto.randomUUID();
-  // Shared with callback persistence and offline signed queries. An intent with
-  // no transaction never takes this lock; transaction evidence always takes it
-  // BEFORE its provider/order lock.
-  if (input.transactionId) await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${input.provider}:${input.transactionId}`},0))`);
-  await tx.execute(sql`SELECT pg_advisory_xact_lock(
-    hashtextextended(${`payment-reconciliation:${input.provider}:${input.orderNo}`}, 0)
-  )`);
+  // Direct store-order intent/query registrations use the same per-order
+  // boundary as callbacks and assisted local writers. The reserved offline
+  // order prefix keeps its own lock order. Callback persistence acquires the
+  // store-order boundary before inserting an event; it is transaction-reentrant.
+  // Shared with callback persistence and offline signed queries. An intent
+  // without a transaction skips only the provider transaction key.
+  await lockPaymentReconciliationRegistrationTx(tx, input.provider, input.orderNo, input.transactionId);
   await tx.insert(paymentReconciliationCase).values({
     replayKey,
     provider: input.provider,

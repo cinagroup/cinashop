@@ -7,6 +7,8 @@ import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
 import { productCreate, productUpdate, productSetShow, productStockUpload } from '../src/controllers/out/OutApiController';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
 import { waitForFinanceBlock } from './helpers/financePeers';
 import { storeProduct, storeProductAttrValue, storeProductCategory, storeCart, storeProductRelation,
@@ -42,6 +44,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out pro
       try {
         const api = await import('drizzle-kit/api'), schema = await import('../src/models/schema');
         await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db);
+        await completePurchaseCancellationEvidenceOrm(owned.db);
         return owned;
       } catch (e) { await owned.close(); throw e; }
     });

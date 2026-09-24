@@ -24,6 +24,78 @@ function server(overrides = {}) {
 }
 const key = 'cinashop_checkout_pending_v1_11';
 
+function integralServer(type = 6, overrides = {}, quote = value => value) {
+  const base = server({ '/api/cart/list': () => ({ data: [{ ...item, type }] }), ...overrides });
+  return async call => {
+    const result = await base(call);
+    if (call.url === '/api/order/confirm' || call.url.startsWith('/api/order/computed/')) {
+      result.data.cartInfo = result.data.cartInfo.map(row => ({ ...row, type }));
+      Object.assign(result.data.priceGroup, { pay_price: call.data.useIntegral ? '20.50' : '21.00',
+        deduction_price: call.data.useIntegral ? '0.50' : '0.00', usedIntegral: call.data.useIntegral ? 50 : 0 });
+      return quote(result, call);
+    }
+    return result;
+  };
+}
+
+for (const type of [0, 1, 3, 4, 5, 6]) test(`UniApp points eligibility and transmitted flag agree for type ${type}`, async () => {
+  const r = runtime({ send: integralServer(type) });
+  try {
+    await r.start(); const eligible = type === 0 || type === 6;
+    assert.equal(r.checkout.integralEligible.value, eligible);
+    r.checkout.useIntegral.value = true; await tick();
+    assert.equal(r.checkout.quote.value.result.prices.usedIntegral, eligible ? 50 : 0);
+    const requests = r.calls.filter(c => c.url === '/api/order/confirm' || c.url.includes('/computed/'));
+    assert.equal(requests.at(-1).data.useIntegral, eligible);
+    if (type !== 0) { assert.equal(requests.at(-1).data.couponId, 0); assert.equal(r.calls.some(c => c.url.includes('/coupons/')), false); }
+  } finally { r.stop(); }
+});
+
+test('points eligibility fails closed for empty, mixed and unsupported selections', () => {
+  const r = runtime({ send: server() });
+  try {
+    const { checkoutSupportsIntegral } = r.load(path.join(root, '../common/checkoutSelection.ts'));
+    for (const types of [[], [0, 6], [6, 4], [2], [99]]) assert.equal(checkoutSupportsIntegral(types.map(type => ({ type }))), false);
+    for (const types of [[0], [0, 0], [6]]) assert.equal(checkoutSupportsIntegral(types.map(type => ({ type }))), true);
+  } finally { r.stop(); }
+});
+
+test('UniApp presale toggle blocks submit until current quote and ignores delayed older points response', async () => {
+  const wait = deferred(); let slow = true;
+  const r = runtime({ send: integralServer(6, {}, async (value, call) => { if (slow && call.data.useIntegral) await wait.promise; return value; }) });
+  try {
+    await r.start(); r.checkout.useIntegral.value = true; assert.equal(r.checkout.canSubmit.value, false); await tick();
+    await r.checkout.submit(); assert.equal(r.calls.some(c => c.url.includes('/create/')), false);
+    r.checkout.useIntegral.value = false; await tick(); assert.equal(r.checkout.canSubmit.value, true);
+    wait.resolve(); await tick(); assert.equal(r.checkout.quote.value.result.prices.usedIntegral, 0);
+    slow = false; r.checkout.useIntegral.value = true; await tick(); assert.equal(r.checkout.quote.value.result.prices.payable, '20.50');
+    r.auth.setLogin('new-points-owner', 22); await tick(); assert.equal(r.checkout.useIntegral.value, false); assert.equal(r.checkout.canSubmit.value, false);
+  } finally { wait.resolve(); r.stop(); }
+});
+
+test('UniApp presale reconfirmation keeps choice and new receipt; uncertain retry restores exact original points payload', async () => {
+  let attempts = 0;
+  const send = integralServer(6, { '/api/order/create/checkout_key1': () => ++attempts === 1
+    ? { status: 400, msg: '积分已变化', data: { errorCode: 'ORDER_QUOTE_RECONFIRM_REQUIRED', orderKey: 'checkout_key1' } }
+    : { transport: 'timeout' } }, value => { value.data.quoteToken = (attempts ? 'b' : 'a').repeat(32); return value; });
+  const r = runtime({ send }); let saved;
+  try {
+    await r.start(); r.checkout.useIntegral.value = true; await tick(); await r.checkout.submit();
+    assert.equal(r.checkout.pending.value, null); assert.equal(r.checkout.useIntegral.value, true);
+    assert.equal(r.checkout.quote.value.result.quoteToken, 'b'.repeat(32));
+    await r.checkout.submit(); const writes = r.calls.filter(c => c.url.includes('/create/'));
+    assert.equal(writes[0].data.quoteToken, 'a'.repeat(32)); assert.equal(writes[1].data.quoteToken, 'b'.repeat(32));
+    saved = writes[1]; assert.equal(saved.data.useIntegral, true); assert.equal(saved.data.couponId, 0);
+    assert.equal(r.checkout.locked.value, true);
+  } finally { r.stop(); }
+  const restored = runtime({ send, storage: r.storage });
+  try {
+    await restored.start(); assert.equal(restored.calls.length, 0);
+    restored.checkout.useIntegral.value = false; await restored.checkout.submit();
+    assert.deepEqual(restored.calls, [saved]); assert.equal(restored.navigations.length, 0);
+  } finally { restored.stop(); }
+});
+
 test('shared delivery eligibility retains physical, mixed, second-card and unknown requirements',()=>{
   const r=runtime({send:server()});
   try{const {checkoutRequiresAddress}=r.load(path.join(root,'../common/checkoutSelection.ts'));

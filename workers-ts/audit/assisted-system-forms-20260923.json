@@ -1,0 +1,229 @@
+{
+  "date": "2026-09-23",
+  "status": "local-assisted-system-form-service-verified-ui-and-upload-incomplete-not-deployed",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "schemaChanged": false,
+    "privilegePlanChanged": false,
+    "bindingsOrDependenciesChanged": false,
+    "frontendPagesChanged": false,
+    "sharedFrontendValidatorChanged": true
+  },
+  "contract": {
+    "quote": "Existing order.assisted authorization and application LOGIN; product-selected active form in the same REPEATABLE READ READ ONLY preview; systemForm version 1 and legacy custom_form",
+    "template": "ID/name/bounded value only; arrays and timestamp-keyed objects interpreted identically; duplicate or unsupported components rejected",
+    "submission": "customForm or custom_form, never both; 1,100,000-byte streaming HTTP cap; existing 1,000,000-byte form and component/text bounds",
+    "transaction": "Authoritative validation, immutable order snapshot and system_form_data in one create transaction; FOR SHARE NOWAIT on template using existing UPDATE(id) lock privilege",
+    "images": "Canonical image references require positive member UID, type 3/module 3/file type 1/R2 image type 8; guest UID=0 is never queried or signed as an image owner",
+    "imageLimitations": "No assisted upload endpoint or R2 object I/O added; existing HTTPS string compatibility is not private-image ownership proof",
+    "recovery": "Only core pre-commit form/quote exceptions receive exact-key correction envelopes; SQL/lock/post-commit readback failures remain unknown; committed-key replay does not recollect forms",
+    "crossRequestTemplateFingerprintComplete": false
+  },
+  "runs": [
+    {
+      "kind": "intermediate-native",
+      "session": 2620,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-FNi7uj",
+      "port": 55603,
+      "startLocal": "2026-09-23 13:28:23 Asia/Singapore",
+      "durationSeconds": 508.97,
+      "passed": 130,
+      "failed": 0,
+      "files": {
+        "test/assisted-purchase-runtime-postgres.test.ts": 58,
+        "test/pc-checkout-form-postgres.test.ts": 5,
+        "test/checkout-confirmation-postgres.test.ts": 7,
+        "test/presale-checkout-postgres.test.ts": 60
+      },
+      "finalSourceEvidence": false,
+      "note": "Additional source/test work occurred during this run; retain as intermediate evidence, do not add to final target total",
+      "fixtureRemainder": 0
+    },
+    {
+      "kind": "native-final-business-code-test-harness-failure",
+      "session": 4577,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-QMuIoa",
+      "port": 52015,
+      "startLocal": "2026-09-23 13:37:49 Asia/Singapore",
+      "durationSeconds": 429.33,
+      "passed": 64,
+      "failed": 1,
+      "files": {
+        "test/assisted-purchase-runtime-postgres.test.ts": {
+          "passed": 59,
+          "failed": 1
+        },
+        "test/pc-checkout-form-postgres.test.ts": {
+          "passed": 5,
+          "failed": 0
+        }
+      },
+      "failure": "The new lock test used withFinancePeers against a sequence-runner-owned fixture; the helper correctly rejected unregistered finance observer identity before the target assertion. Switched only this test to the existing fixture.withPeer; did not relax identity checks or business assertions.",
+      "fixtureRemainder": 0
+    },
+    {
+      "kind": "final-assisted-complete-file",
+      "session": 17167,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-kkgOoV",
+      "port": 53629,
+      "startLocal": "2026-09-23 13:46:01 Asia/Singapore",
+      "durationSeconds": 448.63,
+      "files": {
+        "test/assisted-purchase-runtime-postgres.test.ts": 60
+      },
+      "passed": 60,
+      "failed": 0,
+      "skipped": 0,
+      "fixtureRemainder": 0
+    },
+    {
+      "kind": "initial-unit-failure",
+      "session": 98480,
+      "startLocal": "2026-09-23 13:29:23 Asia/Singapore",
+      "passed": 60,
+      "failed": 1,
+      "failure": "Existing attachment migration identity assertion differed only by Windows CRLF. Normalize CRLF only for comparison; no SQL change."
+    },
+    {
+      "kind": "final-form-unit",
+      "startLocal": "2026-09-23 13:32:53 Asia/Singapore",
+      "durationSeconds": 8.07,
+      "files": [
+        "test/system-form-migration.test.ts",
+        "test/pc-checkout-form.test.ts",
+        "test/admin-system-forms.test.ts",
+        "test/attachment-storage-migration.test.ts"
+      ],
+      "passed": 61,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "kind": "final-assisted-route-contract",
+      "startLocal": "2026-09-23 13:35:50 Asia/Singapore",
+      "durationSeconds": 5.86,
+      "files": {
+        "test/admin-assisted-order-migration.test.ts": 4
+      },
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "kind": "final-client-runtime",
+      "session": 75595,
+      "durationSeconds": 12.2645781,
+      "files": {
+        "view/uniapp-ts/scripts/checkout-runtime.test.cjs": 32,
+        "view/uniapp-ts/scripts/assisted-checkout-runtime.test.cjs": 44
+      },
+      "passed": 76,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "finalCoverage": {
+    "native": 65,
+    "unitAndRoute": 65,
+    "clientRuntime": 76,
+    "distinctPassed": 206,
+    "newTests": 26,
+    "skipped": 0,
+    "counting": "60 final assisted + 5 PC form native already passed on identical final business sources + 61 form units + 4 route contracts + 76 client runtime. Re-runs/intermediate 130/initial 9/failed-batch overlap excluded. Extra earlier 67 presale/receipt regressions excluded from final target total."
+  },
+  "validation": {
+    "workerUnitTypes": true,
+    "workerRuntimeTypes": true,
+    "pcTypes": true,
+    "uniappTypes": true,
+    "diffCheck": true,
+    "renderedBrowser": false,
+    "realR2": false,
+    "provider": false,
+    "actualHyperdrive": false,
+    "linuxCI": false
+  },
+  "clusterShutdown": {
+    "allThreeIndependentlyVerified": true,
+    "eachPgCtlExit": 3,
+    "eachPidFileExists": false,
+    "eachBootstrapPasswordExists": false,
+    "eachListeningPorts": 0,
+    "diagnosticDirectoriesRetained": true
+  },
+  "commands": {
+    "native": "node scripts/run-local-finance-postgres.mjs --schema-maintenance <owned PG16 bin> <explicit files listed above>",
+    "unit": "node node_modules/vitest/vitest.mjs run <explicit files listed above> --maxWorkers=2",
+    "client": "node --test scripts/checkout-runtime.test.cjs scripts/assisted-checkout-runtime.test.cjs",
+    "workerTypes": "npm run typecheck",
+    "uniappTypes": "npm run typecheck",
+    "pcTypes": "node node_modules/vue-tsc/bin/vue-tsc.js --noEmit"
+  },
+  "remaining": [
+    "Assisted upload/read authority bound to administrator, selected member or guest and checkout; no use of shared zero-owner images or shopper tokens",
+    "Render all form controls, validate/normalize definition response, persist minimal frozen answers and preserve exact retry payload",
+    "Handle first definitive form rejection in assisted client while preserving prior unknown attempts",
+    "Bind all relevant template contents to cross-request confirmation; current transaction lock does not establish prior-quote equivalence",
+    "Actual R2 upload/object lifecycle, browser/mobile devices, real auth infrastructure/provider/Hyperdrive and candidate Linux CI",
+    "Existing cashier, coupon/directory pagination, cross-tab coordination and manual unresolved-intent gates"
+  ],
+  "checklist": {
+    "done": 240,
+    "open": 164,
+    "total": 404,
+    "parentClosed": false
+  },
+  "sourceHashes": [
+    {
+      "path": "view/common/order-system-form.ts",
+      "sha256": "3660ddbfa0ab4649609625266164aa183f84426689f0de02c02e2d0130953245"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderSystemFormService.ts",
+      "sha256": "28d61534eb7cb29bf9fff9e739d3d47ef4d17c45d66c1a9678ad024db35aad3c"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminAssistedOrderService.ts",
+      "sha256": "40737872f21c4fc0cd85dccc197eb59d128463ab2589993f557da7659a5bfcda"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminController.ts",
+      "sha256": "e37d99636b4b45b77bde3461a36fbf6c3798c3e1f9eeddb774d395e7116afec9"
+    },
+    {
+      "path": "workers-ts/test/assisted-purchase-runtime-postgres.test.ts",
+      "sha256": "de94beb1d7552d6c49f3cd542e87f0d91b8ac913f5f4b5cb54dc12a281f40572"
+    },
+    {
+      "path": "workers-ts/test/system-form-migration.test.ts",
+      "sha256": "1f1247d9d7b61c58000cc761df3e0ba03fd22220da8103a225e08cea9532f5b8"
+    },
+    {
+      "path": "workers-ts/test/attachment-storage-migration.test.ts",
+      "sha256": "b64656f046db1c7f5331db892e3ec543b913849ad974fa474fba25aec3384048"
+    },
+    {
+      "path": "workers-ts/test/admin-assisted-order-migration.test.ts",
+      "sha256": "751d2854b747c77ddd608257f37bcf93fe067ae48514857c0a145fa635f941a0"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "4ebc01dbce2a5404c01b2ed8f6c3e5f0466657c6216ff2ef359025ccab3b9308"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4e7fa3903bce0df87386d394d986708231f39d8f3b2ed1cd1601703a209c10d8"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "22f84f8bdd279bade78e6a6897df94d42493f7ff58e96ffcd7f86583a30c29d1"
+    },
+    {
+      "path": "workers-ts/test/pc-checkout-form-postgres.test.ts",
+      "sha256": "743698b6a7af34da971c32b66f31de2da5d10a87e9fe8a3c78bf146a047bd8ab"
+    }
+  ]
+}

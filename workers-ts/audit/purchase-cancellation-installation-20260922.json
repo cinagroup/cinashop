@@ -1,0 +1,201 @@
+{
+  "date": "2026-09-22",
+  "status": "controlled-local-candidate-not-registered-not-deployed",
+  "head": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "branch": "codex/user-visit-history-20260921",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "legacyBackfill": false,
+    "cumulativeQuotaEnabled": false,
+    "registeredMigrationChanged": false,
+    "workersBindingsOrDependenciesChanged": false
+  },
+  "implementation": {
+    "catalogComponents": 6,
+    "states": [
+      "fresh",
+      "v1",
+      "drift"
+    ],
+    "originV1Required": true,
+    "ormAdoption": false,
+    "sourceContractChecked": true,
+    "privateFunctionAttachmentsChecked": true,
+    "sharedAdvisoryFence": [
+      731611,
+      0
+    ],
+    "nowaitLockOrder": [
+      "store_order:SHARE ROW EXCLUSIVE",
+      "store_order_cart_info:SHARE",
+      "store_order_purchase_origin:SHARE",
+      "store_order_status:SHARE",
+      "user_bill:SHARE",
+      "existing store_order_purchase_cancellation:ACCESS EXCLUSIVE"
+    ],
+    "newTableDefaultNonOwnerGrantsRejected": true,
+    "explicitExistingLoginOnly": true,
+    "runtimeAddedPrivileges": [
+      "SELECT",
+      "INSERT"
+    ],
+    "sourcePrivilegeRepair": false,
+    "reachableRoleAuthorityChecked": true,
+    "readOnlyInspect": true,
+    "maintenanceUrlFallback": false,
+    "cliEmitsCredentials": false,
+    "runtimeReadyScope": "Only this evidence protocol, not complete inventory/coupon/payment business authority"
+  },
+  "schema": {
+    "registeredTables": 278,
+    "embeddedSteps": 170,
+    "externalSteps": 165,
+    "completeNinePathCatalogAuditRerun": false
+  },
+  "checklist": {
+    "complete": 240,
+    "open": 164,
+    "total": 404
+  },
+  "tests": {
+    "nativeGroups": [
+      {
+        "testFiles": [
+          "test/purchase-cancellation-evidence-postgres.test.ts"
+        ],
+        "passed": 34,
+        "files": 1,
+        "session": 2908,
+        "cluster": "finance-postgres-nswNcm",
+        "port": 57798,
+        "note": "Complete passing service file using controlled schema and role installers. Entire 60-case installation file from this batch excluded from accepted count."
+      },
+      {
+        "testFiles": [
+          "test/purchase-cancellation-installation.test.ts"
+        ],
+        "passed": 60,
+        "files": 1,
+        "session": 51068,
+        "cluster": "finance-postgres-V8YNvN",
+        "port": 53066,
+        "seconds": 59.02
+      }
+    ],
+    "unit": {
+      "passed": 214,
+      "files": 4,
+      "session": 97139,
+      "seconds": 12.18,
+      "suites": [
+        {
+          "file": "test/purchase-cancellation-evidence.test.ts",
+          "passed": 23
+        },
+        {
+          "file": "test/purchase-origin-evidence.test.ts",
+          "passed": 29
+        },
+        {
+          "file": "test/unpaid-order-cancellation-evidence.test.ts",
+          "passed": 54
+        },
+        {
+          "file": "test/local-finance-postgres-runner.test.ts",
+          "passed": 108
+        }
+      ]
+    },
+    "nativePassed": 94,
+    "totalPassed": 308,
+    "totalFiles": 6,
+    "newCases": 61,
+    "skipped": 0,
+    "finalUnitAndRuntimeTypesPassed": true,
+    "finalTypecheckSession": 74575,
+    "runnerSyntaxPassed": true,
+    "diffWhitespacePassed": true,
+    "countingPolicy": "Distinct cases from final fully passing files only. No accumulation of repeated files, calibration or prior-turn totals."
+  },
+  "developmentFailures": [
+    {
+      "kind": "intentional-native-fingerprint-calibration",
+      "session": 87196,
+      "cluster": "finance-postgres-M2mcW6",
+      "port": 50822,
+      "failed": 1,
+      "seconds": 3.01,
+      "note": "One placeholder assertion exposed six fingerprints from reviewed canonical DDL in owned PG16, then fixed constants. Not counted as passed."
+    },
+    {
+      "kind": "fixture-acl-baseline",
+      "session": 2908,
+      "cluster": "finance-postgres-nswNcm",
+      "port": 57798,
+      "total": 94,
+      "passed": 93,
+      "failed": 1,
+      "seconds": 291.05,
+      "note": "Explicit fixture grants and role cleanup normalized NULL source ACL to owner ACL. Moved unchanged-ACL assertions immediately around each rejected installer invocation. Did not relax installer, permissions, assertions or deadlines. Complete 60-case installation suite subsequently passed."
+    }
+  ],
+  "cleanup": {
+    "clusters": [
+      {
+        "name": "finance-postgres-M2mcW6",
+        "port": 50822
+      },
+      {
+        "name": "finance-postgres-nswNcm",
+        "port": 57798
+      },
+      {
+        "name": "finance-postgres-V8YNvN",
+        "port": 53066
+      }
+    ],
+    "fixtureDatabasesAndRolesRemaining": 0,
+    "independentPgCtlStatuses": [
+      3,
+      3,
+      3
+    ],
+    "pidFiles": false,
+    "bootstrapPasswordFiles": false,
+    "ownedListeners": 0,
+    "ownedPostgresProcesses": 0,
+    "testRunnersOrWorkers": 0,
+    "stoppedDiagnosticDirectoriesRetained": true
+  },
+  "fingerprints": {
+    "store_order_purchase_cancellation": "bd28aae90f21d33e47870f977d5de0d8be8ecf85c35dfe26eccdab9aa47f4729",
+    "begin_purchase_cancellation_v1": "f8fa73642f10e09097b498fcd8719de20cb5a902783d95d757dab11e02918c19",
+    "capture_purchase_cancellation_v1": "5212ccba912454c3cdcd3d53b0e8b6d1ee1272d0df10e01fec534815069c71e2",
+    "validate_purchase_cancellation_v1": "62e5541fde33a9c6666dc7e382b6b4355777d7c39a82d172afc9288f5879edfc",
+    "protect_purchase_cancellation_v1": "2666faef1c503cc067a096b147f3070874c2b885ab14a20422bbdb2a430277ec",
+    "sopc_order_transition": "aba99ae49b039104eeb7c079426302ffc5bd25fd8baf1797a7eb65ae1723ce15"
+  },
+  "hashScope": "Selected raw source/test/runner SHA-256 only; not a full repository or test-input-closure digest.",
+  "hashes": {
+    "workers-ts/src/migrations/purchaseCancellationEvidence.ts": "a409b7e1f997e0ff17b43ac4b1ffc80f5ba2ce97505305bf3597398e3e7d66b9",
+    "workers-ts/src/migrations/purchaseCancellationEvidenceCatalog.ts": "2d5bb2bb44036525f08fbbc3f7c512832435060d1cacedfef333dea560ab14d5",
+    "workers-ts/src/migrations/purchaseCancellationEvidenceInstallation.ts": "57f961b2cd621938f4f79ad900150f1b22eae1e05f9aaa45ebb0f16029a0aed1",
+    "workers-ts/src/migrations/runPurchaseCancellationEvidence.ts": "1e865018fae5220be7fecc85f846a6534df16f9dbe36505763391ecee896fd97",
+    "workers-ts/scripts/purchase-cancellation-maintenance.ts": "785a3cf6eb1b0683470a5fe112e9e03ec835d3437fbab70337b2593a42fb132d",
+    "workers-ts/test/purchase-cancellation-installation.test.ts": "06b474e4fed68f18905144612c1d0970eeccca742758e46efea613c736630887",
+    "workers-ts/test/purchase-cancellation-evidence-postgres.test.ts": "c00da04adeda91e04553a764fc7ecfb3b04bcce971b42421d4692ae8b7147c17",
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "b2f317ce2451ad07c4b08ffb84df7a5b9f0b388b2c41b9b66f28081a0e66ddc3",
+    "workers-ts/test/local-finance-postgres-runner.test.ts": "f7fc9e2be971c5884d6e7ad77f23fb9b43b4587a81c1a0888102a1b40f385e6d"
+  },
+  "remaining": [
+    "ORM representation and explicit empty-ORM completion",
+    "Formal external/embedded registration, full construction paths and forward upgrades",
+    "All actual business entry points and LOGIN permission inventory",
+    "Production commissioning and approved rollout",
+    "Cross-root concurrent quota protocol and explicit quota restoration policy",
+    "Real provider/browser/user acceptance beyond this increment"
+  ]
+}

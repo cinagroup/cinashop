@@ -6,10 +6,16 @@ export function canDeleteOrder(order: OrderListRow & { is_del?: number; is_syste
     || typeof order.order_id !== 'string' || !/^[A-Za-z0-9_-]{1,50}$/.test(order.order_id)
     || !Number.isSafeInteger(order.pid) || order.pid < 0
     || !Number.isSafeInteger(order.status)
-    || ![0, 2].includes(order.supplier_allocation_status)
+    || ![0, 1, 2].includes(order.supplier_allocation_status)
     || (order.is_del !== undefined && order.is_del !== 0)
     || (order.is_system_del !== undefined && order.is_system_del !== 0)) return false;
-  if (order.paid === 0) return order.refund_status === 0 && [0, -2].includes(order.status);
+  // Pending allocation on an unpaid root is the original mixed-owner reservation,
+  // not a paid fulfillment split. Cancellation rechecks ancestry under lock.
+  if (order.paid === 0 && order.status === 0) {
+    return order.pid === 0 && [0, 1].includes(order.supplier_allocation_status) && order.refund_status === 0;
+  }
+  if (order.supplier_allocation_status === 1) return false;
+  if (order.paid === 0) return order.refund_status === 0 && order.status === -2;
   return order.paid === 1 && (order.refund_status === 2 || (order.status === 3 && order.refund_status === 0));
 }
 

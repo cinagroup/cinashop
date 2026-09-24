@@ -5,12 +5,13 @@ import { inspectRuntimeAdminBoundary } from './runtimeAdminBoundary';
 import { inspectRuntimeLockOnlyBoundary } from './runtimeLockOnlyBoundary';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
 import { reviewedRuntimePricingCapabilities } from './reviewedRuntimePricingCapabilities';
+import { inspectRuntimePurchaseEvidence } from './runtimePurchaseEvidence';
 
 /** Exact effective ACL comparison for the real connection, not SET ROLE on a
  * maintenance session. Readonly: never grants/revokes/repairs. The result proves
  * the declared profile and its two conditional-write boundaries, NOT complete
  * service coverage, HTTP authorization or production commissioning. */
-export type RuntimeAuditStage = 'root'|'setup'|'identity'|'tables'|'columns'|'sequences'|'pricing'|'routines'|'defaults'|'staff'|'locks';
+export type RuntimeAuditStage = 'root'|'setup'|'identity'|'tables'|'columns'|'sequences'|'pricing'|'routines'|'defaults'|'staff'|'locks'|'purchase_evidence';
 export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'admin', names:{app:string;admin:string;maintenance:string}, onStage?:(stage:RuntimeAuditStage)=>void) {
   onStage?.('root');
   if(!Object.hasOwn(db,'$client') || !db.$client)throw Error('Root connection required');
@@ -110,6 +111,8 @@ export async function auditRuntimeBusinessPrivileges(db: DbClient, kind:'app'|'a
     if(!(await inspectRuntimeAdminBoundary(tx,names.app,names.maintenance)).ready)failures.push('staff_boundary');
     onStage?.('locks');
     if(!(await inspectRuntimeLockOnlyBoundary(tx,names.app,names.admin,names.maintenance)).ready)failures.push('lock_only_boundary');
+    onStage?.('purchase_evidence');
+    if(!(await inspectRuntimePurchaseEvidence(tx,names.maintenance)).ready)failures.push('purchase_evidence_protocols');
     const unique=[...new Set(failures)].sort();
     return {ready:unique.length===0,readOnly:true as const,completeServiceCoverageVerified:false as const,kind,
       failures:unique,tableCount:present.size,sequenceCount:sequences.length};

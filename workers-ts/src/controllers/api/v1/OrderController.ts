@@ -397,7 +397,7 @@ export async function orderCreate(c: C) {
       );
       if (payment.pay_type === "alipay" && payment.paid === false) {
         payment.pay_key = await new LegacyOrderCompatibilityService(c.get("container"), c.env)
-          .createAlipayKey(uid, result.orderId);
+          .createAlipayKey(uid, result.orderId, payment.payUrl);
       }
       return jsonOk(c, { ...result, ...payment }, payment.paid === true ? "支付成功" : "订单创建成功");
     }

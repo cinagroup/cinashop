@@ -14,8 +14,15 @@ import {
   prepareOrderSystemFormSubmission,
   readOrderSystemFormSnapshot,
 } from "../src/services/order/OrderSystemFormService";
+import { parseOrderSystemFormTemplate } from '../../view/common/order-system-form';
 
 describe("system form and configuration-tab migration", () => {
+  it.each([['2026-09-23', ''], ['', '2026-09-23']])('rejects a half-filled date range %s / %s on the shared server validator', (start, end) => {
+    const template = [{ id: 'range', name: 'dateranges', value: [], titleShow: { val: false } }];
+    expect(() => prepareOrderSystemFormSubmission(template, [{ id: 'range', value: [start, end] }], 77)).toThrow('完整范围');
+    expect(() => prepareOrderSystemFormSubmission(template, [{ id: 'range', value: [] }], 77)).not.toThrow();
+    expect(() => prepareOrderSystemFormSubmission(template, [{ id: 'range', value: ['2026-09-23','2026-09-24'] }], 77)).not.toThrow();
+  });
   it("preserves all three source contracts without merging their semantics", () => {
     expect(getTableName(systemConfigTab)).toBe("system_config_tab");
     expect(Object.keys(getTableColumns(systemConfigTab))).toEqual([
@@ -152,6 +159,29 @@ describe("system form and configuration-tab migration", () => {
     ]);
   });
 
+  it('uses the same ordered legacy object template for preview and authoritative answer validation', () => {
+    const legacy = { '200': { id:'second', timestamp:200, name:'texts', value:'' },
+      '100': { id:'first', timestamp:100, name:'texts', titleShow:{val:true}, value:'' } };
+    const parsed = parseOrderSystemFormTemplate(JSON.stringify(legacy));
+    expect(parsed.map(field=>field.id)).toEqual(['first','second']);
+    const prepared=prepareOrderSystemFormSubmission(legacy,[{id:'second',value:'two'},{id:'first',value:'one'}],7);
+    expect(JSON.parse(prepared.snapshotJson).map((field:{value:string})=>field.value)).toEqual(['one','two']);
+    expect(legacy['100'].value).toBe('');
+  });
+
+  it('rejects ambiguous, oversized or unsupported authoritative definitions, without weakening array-only answers', () => {
+    const field={id:'first',name:'texts',value:''};
+    for(const template of [null,{},[],[field,field],[{...field,name:'script'}],[{...field,extra:'x'.repeat(1_000_001)}]])
+      expect(()=>parseOrderSystemFormTemplate(template)).toThrow();
+    expect(()=>prepareOrderSystemFormSubmission([field],{first:{...field,value:'value'}},7)).toThrow('格式错误');
+  });
+
+  it('never signs relation-id-zero pictures for a guest order', async () => {
+    const db={select:()=>{throw Error('Guest UID must not query shared attachment ownership');}} as never;
+    const attachments={signReferences:()=>{throw Error('Guest UID must not sign another principal image');}} as never;
+    expect((await readOrderSystemFormSnapshot(db,attachments,0,[{name:'uploadPicture',value:['/api/assets/42']}]))[0].value).toEqual([]);
+  });
+
   it("restores scoped routes and atomically collects checkout form data", () => {
     expect(buildConfigTabTree([
       { id: 2, pid: 1, title: "child" },
@@ -169,7 +199,7 @@ describe("system form and configuration-tab migration", () => {
     expect(service).toContain("leftJoin(userTable");
     expect(service).toContain("leftJoin(systemForm");
     expect(order).toContain("collectOrderSystemForm");
-    expect(order).toContain("readOrderSystemFormSnapshot");
+    expect(order).toContain("readOrderSystemFormForOrder");
     expect(order).not.toContain("当前下单链路尚未迁移");
     expect(integral).toContain("collectOrderSystemForm");
     expect(integral).not.toContain("当前直兑链路尚未迁移");

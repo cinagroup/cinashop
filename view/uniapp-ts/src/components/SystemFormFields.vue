@@ -3,13 +3,15 @@
     <view class="form-title">{{ title || "补充信息" }}</view>
     <view v-for="(item, index) in modelValue" :key="String(item.id ?? index)" class="form-item">
       <view class="label">
-        <text v-if="item.titleShow?.val" class="required">*</text>
+        <text v-if="required(item)" class="required">*</text>
         {{ item.titleConfig?.value || `表单项 ${index + 1}` }}
       </view>
 
       <input
         v-if="item.name === 'texts' || item.name === 'citys'"
         class="field"
+        :maxlength="10000"
+        :aria-label="item.titleConfig?.value || `表单项 ${index + 1}`"
         :disabled="disabled"
         :value="stringValue(item.value)"
         :type="item.name === 'texts' && Number(item.valConfig?.tabVal) === 4 ? 'number' : 'text'"
@@ -71,6 +73,7 @@
       <view v-else-if="item.name === 'uploadPicture'" class="upload-field">
         <view class="image-list">
           <view v-for="(image, imageIndex) in arrayValue(item.value)" :key="image" class="image-item">
+            <image v-if="previewUrls?.[image]" class="image-preview" :src="previewUrls[image]" mode="aspectFit" />
             <text class="image-ref">{{ image }}</text>
             <text class="remove" @tap="removeImage(index, imageIndex)">移除</text>
           </view>
@@ -96,12 +99,14 @@ import { ref, watch, onUnmounted } from "vue";
 import { apiSupplierImageUpload } from "@/api/supplierApplication";
 import type { SystemFormComponent } from "@/types/systemForm";
 
-const props = defineProps<{ modelValue: SystemFormComponent[]; title?: string; disabled?: boolean }>();
-const emit = defineEmits<{ (event: "update:modelValue", value: SystemFormComponent[]): void; (event: "pending", value: number): void }>();
+const props = defineProps<{ modelValue: SystemFormComponent[]; title?: string; disabled?: boolean;
+  uploadImage?: (path: string) => Promise<{ url: string; src?: string }>; previewUrls?: Record<string, string> }>();
+const emit = defineEmits<{ (event: "update:modelValue", value: SystemFormComponent[]): void;
+  (event: "pending", value: number): void; (event: "choosing", value: boolean): void }>();
 const uploadingIndex = ref(-1);
 let generation = 0, active = true;
-watch(() => props.disabled, (disabled) => { if (disabled) { generation++; uploadingIndex.value = -1; emit("pending", 0); } });
-onUnmounted(() => { active = false; generation++; emit("pending", 0); });
+watch(() => props.disabled, (disabled) => { if (disabled) { generation++; uploadingIndex.value = -1; emit("choosing", false); emit("pending", 0); } }, { flush: 'sync' });
+onUnmounted(() => { active = false; generation++; emit("choosing", false); emit("pending", 0); });
 
 type UniValueEvent = { detail?: { value?: unknown } };
 
@@ -120,7 +125,7 @@ function checkboxValues(value: unknown) {
   return Array.isArray(value) ? value.map(String) : stringValue(value).split(",").map((item) => item.trim()).filter(Boolean);
 }
 function setCheckboxes(index: number, value: unknown) {
-  update(index, Array.isArray(value) ? value.map(String).join(",") : "");
+  update(index, Array.isArray(value) ? value.map(String) : []);
 }
 function choiceText(value: unknown): string {
   if (typeof value === "string" || typeof value === "number") return String(value);
@@ -130,6 +135,10 @@ function choiceText(value: unknown): string {
   return typeof candidate === "string" || typeof candidate === "number" ? String(candidate) : "";
 }
 function choices(item: SystemFormComponent) { return (item.wordsConfig?.list ?? []).map(choiceText).filter(Boolean); }
+function required(item: SystemFormComponent) {
+  const flag: unknown = item.titleShow?.val;
+  return flag === true || flag === 1 || flag === '1';
+}
 function uploadLimit(item: SystemFormComponent) {
   const configured = Number(item.numConfig?.val ?? 9);
   return Number.isSafeInteger(configured) && configured > 0 ? Math.min(configured, 9) : 9;
@@ -147,7 +156,7 @@ function timeParts(value: unknown) {
 function setTimePart(index: number, part: number, value: unknown) {
   const range = timeParts(props.modelValue[index]?.value);
   range[part] = String(value);
-  update(index, range.length === 2 && range.every(Boolean) ? range.join(" - ") : "");
+  update(index, [range[0] ?? '', range[1] ?? ''].join(" - "));
 }
 async function chooseImages(index: number) {
   const current = arrayValue(props.modelValue[index]?.value);
@@ -156,6 +165,7 @@ async function chooseImages(index: number) {
   const revision = ++generation;
   uploadingIndex.value = index;
   emit("pending", 1); // The native chooser itself is pending too, not only the network upload.
+  emit("choosing", true);
   try {
     const selected = await new Promise<{ tempFilePaths: string[] }>((resolve, reject) => uni.chooseImage({
       count: remaining,
@@ -164,21 +174,24 @@ async function chooseImages(index: number) {
       fail: reject,
     }));
     if (!active || revision !== generation || props.disabled) return;
+    emit("choosing", false);
+    if (selected.tempFilePaths.length > remaining) throw Error('选择图片数量超过表单上限');
     const uploaded = [...current];
     for (const path of selected.tempFilePaths) {
-      const result = await apiSupplierImageUpload(path);
+      const result = await (props.uploadImage ?? apiSupplierImageUpload)(path);
       if (!active || revision !== generation || props.disabled) return;
       uploaded.push(result.url);
+      update(index, [...uploaded]);
     }
-    update(index, uploaded);
     uni.showToast({ title: "图片已上传", icon: "success" });
   } catch (error) {
     if (active && revision === generation) uni.showToast({ title: error instanceof Error ? error.message : "图片选择或上传失败", icon: "none" });
   } finally {
-    if (active && revision === generation) { uploadingIndex.value = -1; emit("pending", 0); }
+    if (active && revision === generation) { uploadingIndex.value = -1; emit("choosing", false); emit("pending", 0); }
   }
 }
 function removeImage(index: number, imageIndex: number) {
+  if (uploadingIndex.value >= 0) return;
   update(index, arrayValue(props.modelValue[index]?.value).filter((_, current) => current !== imageIndex));
 }
 </script>
@@ -196,6 +209,7 @@ function removeImage(index: number, imageIndex: number) {
 .upload-field { display: grid; gap: 12rpx; }
 .image-item { display: flex; justify-content: space-between; gap: 12rpx; padding: 12rpx; background: #f7f8fa; border-radius: 8rpx; }
 .image-ref { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.image-preview { width: 140rpx; height: 140rpx; flex: none; }
 .remove { color: #e64340; flex: none; }
 .hint { color: #999; font-size: 22rpx; }
 </style>

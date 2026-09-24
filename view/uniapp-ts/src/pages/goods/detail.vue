@@ -39,13 +39,13 @@
         <view class="goods-subtitle">{{ detail.store_info }}</view>
         <!-- 规格入口 -->
         <view class="spec-entry" @tap="openSku('cart')">
-          <text class="spec-label">已选</text>
-          <text class="spec-value">{{ selectedSku?.suk || "请选择规格" }}</text>
+          <text class="spec-label">{{ detail.is_presale_product ? '预售' : '已选' }}</text>
+          <text class="spec-value">{{ detail.is_presale_product ? '查看预售规则并选择规格' : selectedSku?.suk || "请选择规格" }}</text>
           <text class="spec-arrow">›</text>
         </view>
       </view>
 
-      <view v-if="discountPackages.length" class="package-section">
+      <view v-if="!detail.is_presale_product && discountPackages.length" class="package-section">
         <view class="package-heading">搭配购</view>
         <view
           v-for="item in discountPackages"
@@ -102,7 +102,8 @@
           <text class="action-icon">🛒</text>
           <text class="action-text">购物车</text>
         </view>
-        <template v-if="preparedCart">
+        <button v-if="detail.is_presale_product" class="buy-btn" :disabled="purchaseLocked" @tap="goPresale">查看预售规则</button>
+        <template v-else-if="preparedCart">
           <view class="add-btn" :aria-disabled="navigating" @tap="restartPurchase">重新选择商品</view>
           <view class="buy-btn" :aria-disabled="navigating" @tap="resumeCheckout">继续结算</view>
         </template>
@@ -269,8 +270,13 @@ const displayPriceLabel = computed(() => skuPriceLabel(selectedSku.value));
 const displayOriginalPrice = computed(() => selectedSku.value?.ot_price && Number(selectedSku.value.ot_price) > Number(displayPrice.value) ? selectedSku.value.ot_price : null);
 const displayVipPrice = computed(() => skuVipOffer(selectedSku.value, detail.value?.is_vip === 1));
 
+function goPresale() {
+  if (!visible.value || disposed || !detail.value?.is_presale_product || loading.value || purchaseLocked.value) return;
+  navigate(`/pages/activity/presaleDetail?id=${detail.value.id}`);
+}
 function openSku(mode: "cart" | "buy") {
   if (!visible.value || disposed || !detail.value || loading.value || purchaseLocked.value) return;
+  if (detail.value.is_presale_product) return goPresale();
   if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
   skuMode.value = mode;
   num.value = 1;
@@ -284,6 +290,7 @@ function pickSku(sku: SkuItem) {
 }
 
 async function confirmSku() {
+  if (detail.value?.is_presale_product) return goPresale();
   if (preparedCart.value?.type === 0) return resumeCheckout();
   if (!visible.value || disposed || !detail.value || loading.value || purchaseLocked.value) return;
   if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
@@ -321,6 +328,7 @@ function isRequiredPackageEntry(entry: DiscountPackageProduct): boolean {
 }
 
 function openPackage(item: DiscountPackage) {
+  if (detail.value?.is_presale_product) return;
   if (!visible.value || disposed || !detail.value || loading.value || purchaseLocked.value || !discountPackages.value.includes(item)) return;
   if (!authStore.isLoggedIn) return navigate('/pages/auth/login');
   selectedPackage.value = item;
@@ -348,6 +356,7 @@ function pickPackageSku(entryId: number, unique: string) {
 }
 
 async function buyPackage() {
+  if (detail.value?.is_presale_product) return;
   if (preparedCart.value?.type === 5) return resumeCheckout();
   const item = selectedPackage.value;
   if (!visible.value || disposed || !detail.value || !item || purchaseLocked.value || !discountPackages.value.includes(item)) return;
@@ -457,7 +466,7 @@ async function load() {
     if (!current()) return;
     if (goods.id !== id) throw new Error('商品详情标识不匹配，请重新加载');
     detail.value = goods;
-    discountPackages.value = packages;
+    discountPackages.value = goods.is_presale_product ? [] : packages;
     void loadReplies(id, current);
     skuList.value = goods.skus;
     selectedSku.value = goods.skus.find((sku) => sku.stock > 0) ?? goods.skus[0] ?? null;

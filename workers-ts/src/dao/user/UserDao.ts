@@ -3,7 +3,7 @@
  *
  * 对应 PHP app/dao/user/UserDao.php + app/model/user/User.php 的 searcher。
  */
-import { and, eq, like, or } from "drizzle-orm";
+import { and, eq, isNull, like, or } from "drizzle-orm";
 import { BaseDao, type DB } from "@/dao/BaseDao";
 import { user, type User } from "@/models/schema/user";
 import type { SearcherMap } from "@/models/searchers/types";
@@ -48,7 +48,7 @@ export class UserDao extends BaseDao<typeof user> {
     const rows = await (this.db
       .select({ uid: user.uid, pwd: user.pwd, status: user.status })
       .from(user)
-      .where(and(eq(user.phone, phone), eq(user.isDel, 0)))
+      .where(and(eq(user.phone, phone), eq(user.isDel, 0), isNull(user.deleteTime)))
       .limit(1) as Promise<Pick<User, "uid" | "pwd" | "status">[]>);
     return rows[0] ?? null;
   }
@@ -61,7 +61,7 @@ export class UserDao extends BaseDao<typeof user> {
     const rows = await (this.db
       .select()
       .from(user)
-      .where(and(eq(user.uid, uid), eq(user.isDel, 0)))
+      .where(and(eq(user.uid, uid), eq(user.isDel, 0), isNull(user.deleteTime)))
       .limit(1) as Promise<User[]>);
     return rows[0] ?? null;
   }

@@ -76,9 +76,39 @@ import { OFFLINE_INSTALLATION_SQL } from "@/migrations/offlineOrderInstallation"
 import { runOfflineOrderSchema } from "@/migrations/runOfflineOrder";
 import { CHECKOUT_PRICING_LOCK_INSTALLATION_SQL } from "@/migrations/checkoutPricingLockInstallation";
 import { runCheckoutPricingLockSchema } from "@/migrations/runCheckoutPricingLock";
+import { PRESALE_DELIVERY_OUTBOX_SQL } from '@/migrations/presaleDeliveryOutbox';
+import { runPresaleDeliveryOutbox } from '@/migrations/runPresaleDeliveryOutbox';
+import { SUPPLIER_REFUND_LOOKUP_INDEX_SQL } from '@/migrations/supplierRefundLookupIndexes';
+import { runSupplierRefundLookupIndexes } from '@/migrations/runSupplierRefundLookupIndexes';
+import { PURCHASE_ORIGIN_INSTALLATION_SQL } from '@/migrations/purchaseOriginEvidenceInstallation';
+import { runPurchaseOriginEvidenceSchema } from '@/migrations/runPurchaseOriginEvidence';
+import { PURCHASE_CANCELLATION_INSTALLATION_SQL } from '@/migrations/purchaseCancellationEvidenceInstallation';
+import { runPurchaseCancellationEvidenceSchema } from '@/migrations/runPurchaseCancellationEvidence';
+import { ASSISTED_ORDER_LIST_INDEX_SQL } from '@/migrations/assistedOrderListIndex';
+import { runAssistedOrderListIndex } from '@/migrations/runAssistedOrderListIndex';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  presaleDeliveryOutboxMigrationSqlForVerification(): string {
+    return this.migration_0167();
+  }
+
+  supplierRefundLookupIndexesMigrationSqlForVerification(): string {
+    return this.migration_0168();
+  }
+
+  purchaseOriginEvidenceMigrationSqlForVerification(): string {
+    return this.migration_0169();
+  }
+
+  purchaseCancellationEvidenceMigrationSqlForVerification(): string {
+    return this.migration_0170();
+  }
+
+  assistedOrderListIndexMigrationSqlForVerification(): string {
+    return this.migration_0171();
+  }
 
   shippingLifecycleMigrationSqlForVerification(): string {
     return this.migration_0158();
@@ -322,6 +352,16 @@ export class MigrationService {
     const executed: string[] = [];
     const errors: string[] = [];
 
+    // Bootstrap replays historical narrowing CHECKs. Never downgrade a database
+    // that already accepts presale events, even when it currently has no rows.
+    const presaleCatalog = await this.container.db.execute(sql`SELECT EXISTS (
+      SELECT 1 FROM pg_catalog.pg_constraint WHERE conrelid=to_regclass('public.store_order_outbox')
+        AND conname='soob_event_type_ck' AND position('order.presale.fulfillment' IN pg_get_constraintdef(oid))>0
+    ) AS presale_ready`);
+    if (Array.from(presaleCatalog)[0]?.presale_ready === true) {
+      return { executed, errors: ['Presale outbox already registered; use standalone forward upgrades, not runAll'] };
+    }
+
     // 迁移 SQL 硬编码在代码里 (Workers 不能读文件系统)
     // 按 migration 顺序执行
     const migrations = [
@@ -492,10 +532,40 @@ export class MigrationService {
       this.migration_0164(),
       this.migration_0165(),
       this.migration_0166(),
+      this.migration_0167(),
+      this.migration_0168(),
+      this.migration_0169(),
+      this.migration_0170(),
+      this.migration_0171(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 171) {
+          await runAssistedOrderListIndex(this.container.db);
+          executed.push('0171');
+          continue;
+        }
+        if (i === 170) {
+          await runPurchaseCancellationEvidenceSchema(this.container.db);
+          executed.push('0170');
+          continue;
+        }
+        if (i === 169) {
+          await runPurchaseOriginEvidenceSchema(this.container.db);
+          executed.push('0169');
+          continue;
+        }
+        if (i === 168) {
+          await runSupplierRefundLookupIndexes(this.container.db);
+          executed.push('0168');
+          continue;
+        }
+        if (i === 167) {
+          await runPresaleDeliveryOutbox(this.container.db);
+          executed.push('0167');
+          continue;
+        }
         if (i === 166) {
           await runCheckoutPricingLockSchema(this.container.db);
           executed.push("0166");
@@ -8649,5 +8719,25 @@ $work_member_resolved_rename_fence$;
   }
   private migration_0166(): string {
     return CHECKOUT_PRICING_LOCK_INSTALLATION_SQL;
+  }
+
+  private migration_0167(): string {
+    return PRESALE_DELIVERY_OUTBOX_SQL;
+  }
+
+  private migration_0168(): string {
+    return SUPPLIER_REFUND_LOOKUP_INDEX_SQL;
+  }
+
+  private migration_0169(): string {
+    return PURCHASE_ORIGIN_INSTALLATION_SQL;
+  }
+
+  private migration_0170(): string {
+    return PURCHASE_CANCELLATION_INSTALLATION_SQL;
+  }
+
+  private migration_0171(): string {
+    return ASSISTED_ORDER_LIST_INDEX_SQL;
   }
 }

@@ -29,6 +29,7 @@ import { AdminMobileFulfillmentService } from "@/services/admin/AdminMobileFulfi
 import { AdminMobileRefundOperationService } from "@/services/admin/AdminMobileRefundOperationService";
 import {
   AdminAssistedOrderService,
+  AssistedOrderCreateRejected,
   parseAssistedUid,
 } from "@/services/admin/AdminAssistedOrderService";
 import {
@@ -41,6 +42,7 @@ import { upgradeChatSocket } from "@/services/kefu/KefuSocketGateway";
 import { ErpCapabilityService } from "@/services/system/ErpCapabilityService";
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
+import { boundedMultipartImage } from '@/controllers/system/AttachmentController';
 import {
   ADMIN_LOGIN_POLICY,
   enforceAdminLoginAccountLimit,
@@ -188,10 +190,26 @@ export async function adminAssistedCartNum(c: C) {
   return jsonOk(c, "修改成功");
 }
 
-/** GET /api/admin/order/place/list — only orders created by the current administrator. */
+/** GET /api/admin/order/place/list — only the cursor client may read this
+ * minimal actor-scoped projection; older UniApp clients require removed fields. */
 export async function adminAssistedPlaceList(c: C) {
   privateAdminResponse(c);
-  return jsonOk(c, await assistedOrderService(c).placeList(verifiedAdminId(c), c.req.query()));
+  const adminId = verifiedAdminId(c);
+  const paging = c.req.queries("paging");
+  if (paging?.length !== 1 || paging[0] !== "cursor") {
+    // Old PHP UniApp expects refund/cartInfo on a page/limit array. Never serve
+    // that incompatible shape, or restore those sensitive full-order fields.
+    return c.json({ status: 400, msg: "客户端版本过低，请升级后查看代客订单记录", data: null }, 400);
+  }
+  return jsonOk(c, await assistedOrderService(c).placeList(adminId, c.req.query()));
+}
+
+/** GET /api/admin/order/place/detail/:orderId — minimum fields for the creating administrator. */
+export async function adminAssistedPlaceDetail(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).placeDetail(
+    verifiedAdminId(c), c.req.param("orderId"),
+  ));
 }
 
 /** POST /api/admin/order/confirm/:uid — create an actor-bound checkout snapshot. */
@@ -217,6 +235,34 @@ export async function adminAssistedComputed(c: C) {
   return jsonOk(c, { result: result.result });
 }
 
+/** POST /api/admin/order/form_image/:key/:uid — checkout-scoped private image. */
+export async function adminAssistedFormImage(c: C) {
+  privateAdminResponse(c);
+  const upload = await assistedOrderService(c).prepareFormImageUpload(
+    verifiedAdminId(c), parseAssistedUid(c.req.param('uid')), c.req.param('key') ?? '',
+  );
+  const { file, pid } = await boundedMultipartImage(c);
+  if (pid !== null && pid !== '' && pid !== '0') throw new ValidateException('代客表单图片不使用素材分类');
+  return jsonOk(c, await upload(file), '图片上传成功');
+}
+
+/** POST /api/admin/order/form_preview/:key/:uid — only this actor's live checkout. */
+export async function adminAssistedFormPreview(c: C) {
+  privateAdminResponse(c);
+  const body = await readBoundedJsonObject(c.req.raw, 16_000);
+  return jsonOk(c, await assistedOrderService(c).previewFormImages(
+    verifiedAdminId(c), parseAssistedUid(c.req.param('uid')), c.req.param('key') ?? '', body.ids,
+  ));
+}
+
+/** GET /api/admin/order/form/:orderId/:uid — only this actor's assisted order. */
+export async function adminAssistedOrderForm(c: C) {
+  privateAdminResponse(c);
+  return jsonOk(c, await assistedOrderService(c).orderForm(
+    verifiedAdminId(c), parseAssistedUid(c.req.param('uid')), c.req.param('orderId'),
+  ));
+}
+
 /** GET /api/admin/order/coupons/:uid — server-authoritative applicable coupon list. */
 export async function adminAssistedCoupons(c: C) {
   privateAdminResponse(c);
@@ -230,14 +276,19 @@ export async function adminAssistedCoupons(c: C) {
 /** POST /api/admin/order/create/:key/:uid — atomically claim inventory and create an audited order. */
 export async function adminAssistedCreate(c: C) {
   privateAdminResponse(c);
-  const result = await assistedOrderService(c).create(
-    verifiedAdminId(c),
-    parseAssistedUid(c.req.param("uid")),
-    c.req.param("key") ?? "",
-    await readBoundedJsonObject(c.req.raw, 32 * 1024),
-    boundedClientIp(c),
-  );
-  return jsonOk(c, { result }, result.extended ? "订单已创建，请点击查看完成支付" : "订单创建成功");
+  try {
+    const result = await assistedOrderService(c).create(
+      verifiedAdminId(c),
+      parseAssistedUid(c.req.param("uid")),
+      c.req.param("key") ?? "",
+      await readBoundedJsonObject(c.req.raw, 1_100_000),
+      boundedClientIp(c),
+    );
+    return jsonOk(c, { result }, result.extended ? "订单已创建，请点击查看完成支付" : "订单创建成功");
+  } catch (error) {
+    if (error instanceof AssistedOrderCreateRejected) return jsonFail(c, error.message, error.data);
+    throw error;
+  }
 }
 
 /** POST /api/admin/order/pay/:uid — provider initiation or audited cash settlement. */

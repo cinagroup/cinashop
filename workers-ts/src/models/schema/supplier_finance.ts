@@ -44,6 +44,7 @@ export const supplierFlowingWater = pgTable(
   },
   (t) => [
     uniqueIndex("sfw_order_id_uq").on(t.orderId),
+    index("sfw_link_id_idx").on(t.linkId, t.id),
     index("sfw_supplier_time").on(t.supplierId, t.addTime),
     index("sfw_supplier_status").on(t.supplierId, t.status, t.isDel),
   ],
@@ -71,6 +72,7 @@ export const supplierTransactions = pgTable(
   },
   (t) => [
     uniqueIndex("stx_order_id_uq").on(t.orderId),
+    index("stx_link_id_idx").on(t.linkId, t.id),
     index("stx_supplier_time").on(t.supplierId, t.addTime),
   ],
 );

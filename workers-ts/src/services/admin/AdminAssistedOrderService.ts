@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { Env } from "@/env";
-import type { Container, DbClient } from "@/lib/di";
+import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
 import {
   storeBrand,
   storeCart,
@@ -9,10 +9,10 @@ import {
   storeCouponUser,
   storeOrder,
   storeOrderCartInfo,
-  storeOrderRefund,
   storeProduct,
   storeProductCategory,
   systemStore,
+  systemAttachment,
 } from "@/models/schema";
 import {
   calculateCouponDiscountCents,
@@ -27,14 +27,39 @@ import {
   type OrderPricingQuote,
 } from "@/services/order/StoreOrderCreateService";
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
-import { getPaymentReadiness } from "@/services/payment/PaymentReadinessService";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { getPaymentReadiness, getPaymentReadinessSnapshot } from "@/services/payment/PaymentReadinessService";
+import { claimAssistedProviderPayment, hasInitiatedAssistedProviderPayment } from "@/services/payment/AssistedProviderPaymentClaim";
+import { ApiException, NotFoundException, ValidateException } from "@/utils/errors";
 import { assistedDeliveryAddress, checkoutAddressId } from '@/services/order/OrderDeliveryAddress';
-import { issueCheckoutConfirmation } from '@/services/order/CheckoutConfirmation';
+import { issueCheckoutConfirmation, OrderQuoteReconfirmRequired } from '@/services/order/CheckoutConfirmation';
+import { loadActiveOrderSystemForm, OrderFormRejectedException, readOrderSystemFormForOrder } from '@/services/order/OrderSystemFormService';
+import { loadFirstOrderDiscountConfig, type FirstOrderDiscountConfig } from '@/services/activity/StoreNewcomerService';
+import { AttachmentService, canonicalAttachmentPath, R2_IMAGE_TYPE } from '@/services/system/AttachmentService';
+import { assistedFormAttachmentScope, belongsToAssistedFormScope } from '@/services/system/AssistedFormAttachmentScope';
 
 const ASSISTED_CHECKOUT_TTL_SECONDS = 30 * 60;
 const MAX_CART_ITEMS = 200;
 const MAX_LIST_LIMIT = 100;
+const MAX_LEGACY_LIST_OFFSET = 10_000;
+
+/** An untrusted position, not an authorization token; every page repeats actor filters. */
+function assistedListCursor(value: unknown): { addTime: number; id: number } | null {
+  if (value === undefined || value === "") return null;
+  if (typeof value !== "string" || value.length > 32 || !/^(?:0|-[1-9]\d{0,9}|[1-9]\d{0,9}):[1-9]\d{0,9}$/.test(value)) {
+    throw new ValidateException("订单游标无效");
+  }
+  const [addTime, id] = value.split(":").map(Number);
+  if (!Number.isSafeInteger(addTime) || addTime < -2_147_483_648 || addTime > 2_147_483_647
+    || !Number.isSafeInteger(id) || id > 2_147_483_647) throw new ValidateException("订单游标无效");
+  return { addTime, id };
+}
+
+/** Raised only around the core create call, never its post-commit readback. */
+export class AssistedOrderCreateRejected extends ApiException {
+  constructor(message: string, key: string, errorCode: 'ORDER_FORM_REJECTED' | 'ORDER_QUOTE_RECONFIRM_REQUIRED') {
+    super(message, 400, { errorCode, orderKey: key });
+  }
+}
 
 interface AssistedCheckoutSnapshot {
   version: 1;
@@ -180,15 +205,31 @@ function normalizePayType(value: unknown): "weixin" | "alipay" | "cash" {
   return payType;
 }
 
-function normalizeOrderId(value: unknown): string {
-  const input = boundedText(value, "订单号", 64);
-  if (!input) throw new ValidateException("订单号无效");
-  const orderId = input.replace(/^\d{3}_/, "");
+export function parseExpectedAssistedPayPriceCents(value: unknown): number {
+  if (typeof value !== "string" || !/^(?:0|[1-9]\d{0,9})\.\d{2}$/.test(value)) {
+    throw new ValidateException("请刷新订单并提交预期应付金额");
+  }
+  return decimalToCents(value);
+}
+
+function exactOrderId(value: unknown): string {
+  const orderId = boundedText(value, "订单号", 32);
   if (!/^[A-Za-z0-9_-]{1,32}$/.test(orderId)) throw new ValidateException("订单号无效");
   return orderId;
 }
 
-function statusTitle(order: typeof storeOrder.$inferSelect): string {
+function pollingOrderIds(value: unknown): { exactId: string | null; aliasId: string | null } {
+  const input = boundedText(value, "订单号", 36);
+  const exactId = /^[A-Za-z0-9_-]{1,32}$/.test(input) ? input : null;
+  // The legacy payment provider prefixes three digits and an underscore to
+  // the original (up to 32-byte) store_order.order_id for status polling.
+  const prefixed = /^\d{3}_([A-Za-z0-9_-]{1,32})$/.exec(input);
+  if (!exactId && !prefixed) throw new ValidateException("订单号无效");
+  return { exactId, aliasId: prefixed?.[1] ?? null };
+}
+
+function statusTitle(order: Pick<typeof storeOrder.$inferSelect,
+  "isDel" | "isSystemDel" | "paid" | "refundStatus" | "status" | "shippingType">): string {
   if (order.isDel || order.isSystemDel) return "已取消";
   if (!order.paid) return "待付款";
   if ([1, 4].includes(order.refundStatus)) return "退款中";
@@ -343,41 +384,6 @@ function assistedListPayType(value: unknown): string {
   return legacy[input] ?? input;
 }
 
-function legacyCartSnapshot(row: typeof storeOrderCartInfo.$inferSelect) {
-  const snapshot = parseJson(row.cartInfo);
-  const product = record(snapshot.productInfo ?? snapshot.product);
-  const sku = record(snapshot.sku ?? record(product.attrInfo));
-  const price = String(sku.price ?? (row.cartNum > 0
-    ? (Number(snapshot.sum_true_price ?? 0) / row.cartNum).toFixed(2)
-    : "0.00"));
-  return {
-    id: row.id,
-    oid: row.oid,
-    cart_id: row.cartId,
-    cart_num: row.cartNum,
-    product_id: row.productId,
-    product_type: row.productType,
-    type: row.type,
-    is_gift: row.isGift,
-    refund_num: row.refundNum,
-    surplus_num: row.surplusNum,
-    unique: row.unique,
-    add_time: row.addTime,
-    productInfo: {
-      id: Number(product.id ?? row.productId),
-      image: String(product.image ?? sku.image ?? ""),
-      store_name: String(product.store_name ?? product.storeName ?? ""),
-      price,
-      attrInfo: {
-        product_id: row.productId,
-        suk: String(sku.suk ?? ""),
-        price,
-        image: String(sku.image ?? product.image ?? ""),
-      },
-    },
-  };
-}
-
 export class AdminAssistedOrderService {
   constructor(
     private readonly container: Container,
@@ -525,9 +531,9 @@ export class AdminAssistedOrderService {
 
   private async pickupStoreId(shippingType: number, requestedStoreId: number): Promise<number> {
     if (shippingType !== 2) return 0;
-    if (requestedStoreId > 0) return requestedStoreId;
     const stores = await this.container.db.select({ id: systemStore.id }).from(systemStore)
       .where(and(
+        requestedStoreId > 0 ? eq(systemStore.id, requestedStoreId) : undefined,
         eq(systemStore.isStore, 1),
         eq(systemStore.isShow, 1),
         eq(systemStore.isDel, 0),
@@ -544,6 +550,38 @@ export class AdminAssistedOrderService {
     options: Record<string, unknown>,
     key?: string,
   ) {
+    // Remote config/payment reads precede the SQL transaction; immutable receipts
+    // are issued only after it has committed. No KV/Sequence/provider I/O under RR.
+    // First-order config retains its existing KV authority, unlike SQL pricing.
+    const [readiness, firstOrderConfig] = await Promise.all([
+      getPaymentReadiness(this.container, this.env),
+      selection.uid > 0 ? loadFirstOrderDiscountConfig(this.container, this.env) : undefined,
+    ]);
+    const preview = await withTx(this.container, async db => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        set_config('idle_in_transaction_session_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`);
+      return new AdminAssistedOrderService(createContainerFromDb(db), this.env)
+        .readPreview(adminId, selection, options, firstOrderConfig);
+    });
+    const orderKey = key ?? await this.remember(adminId, selection);
+    const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV,
+      { uid: selection.uid, key: orderKey, adminId, touristUid: selection.touristUid }, preview.quote.confirmationFingerprint);
+    const response = { ...preview.response, orderKey, quoteToken, methods: readiness,
+      pay_weixin_open: readiness.weixin.enabled ? 1 : 0, ali_pay_status: readiness.alipay.enabled };
+    // Preserve computed's legacy flat amounts while returning the complete fresh
+    // confirmation projection. Clients must replace, not merge, quote state.
+    return { quote: preview.quote, response, result: { ...response, ...response.priceGroup } };
+  }
+
+  private async readPreview(
+    adminId: number,
+    selection: AssistedSelection,
+    options: Record<string, unknown>,
+    firstOrderConfig: FirstOrderDiscountConfig | undefined,
+  ) {
     const shippingType = integer(options.shipping_type, "配送方式", { min: 1, max: 2, fallback: 1 });
     const addressId = checkoutAddressId(options.addressId, options.address_id);
     const manualAddress = assistedDeliveryAddress(options);
@@ -551,7 +589,7 @@ export class AdminAssistedOrderService {
     const storeId = await this.pickupStoreId(shippingType, requestedStoreId);
     const couponId = integer(options.couponId, "优惠券", { min: 0, fallback: 0 });
     const useIntegral = parseBooleanSwitch(options.useIntegral ?? 0);
-    const [cartInfo, account, address, readiness] = await Promise.all([
+    const [cartInfo, account, address] = await Promise.all([
       this.cartService().listAssistedLegacyV2({
         adminId,
         uid: selection.uid,
@@ -561,7 +599,6 @@ export class AdminAssistedOrderService {
       }),
       selection.uid > 0 ? this.container.userDao.findForAuth(selection.uid) : Promise.resolve(null),
       manualAddress ? Promise.resolve(null) : this.address(selection.uid, addressId),
-      getPaymentReadiness(this.container, this.env),
     ]);
     if (selection.uid > 0 && !account) throw new NotFoundException("用户不存在");
     const quote = await new StoreOrderCreateService(this.container, this.env).quoteOrder({
@@ -580,13 +617,10 @@ export class AdminAssistedOrderService {
       storeId,
       couponId: couponId || undefined,
       useIntegral,
-      payType: boundedText(options.payType ?? "weixin", "支付方式", 16),
+      payType: normalizePayType(options.payType),
       type: 0,
       assisted: { adminId, touristUid: selection.touristUid },
-    });
-    const orderKey = key ?? await this.remember(adminId, selection);
-    const quoteToken = await issueCheckoutConfirmation(this.env.CONFIG_KV,
-      { uid: selection.uid, key: orderKey, adminId, touristUid: selection.touristUid }, quote.confirmationFingerprint);
+    }, undefined, firstOrderConfig);
     const quoted = new Map(quote.items.map((item) => [item.cartId, item]));
     for (const row of cartInfo) {
       const item = quoted.get(Number(row.id));
@@ -595,14 +629,23 @@ export class AdminAssistedOrderService {
       row.vip_truePrice = item.discountCents / 100;
       row.price_type = item.priceType;
     }
+    const systemForm = quote.systemFormId > 0 ? await loadActiveOrderSystemForm(this.container.db, quote.systemFormId) : null;
     return {
-      result: { ...priceGroup(quote), quoteToken },
       quote,
       response: {
-        addressInfo: legacyAddress(quote.deliveryAddress ?? (shippingType === 2 ? address : null)),
+        addressInfo: quote.deliveryAddress ? legacyAddress(quote.deliveryAddress)
+          : quote.deliveryAddressFields ? { ...quote.deliveryAddressFields, id: 0, uid: selection.uid,
+              real_name: quote.deliveryAddressFields.realName, city_id: quote.deliveryAddressFields.cityId }
+          : null,
+        checkout: { version: 1, adminId, uid: selection.uid, touristUid: selection.touristUid,
+          cartIds: selection.cartIds, isNew: selection.isNew, shippingType, storeId,
+          addressSource: quote.deliveryAddress ? 'saved' : quote.deliveryAddressFields ? 'manual' : 'none',
+          addressRequired: shippingType === 1 && cartInfo.some(item => ![1, 2, 3].includes(Number(record(item.productInfo).product_type))),
+          useIntegral, couponId, payType: normalizePayType(options.payType), systemFormId: quote.systemFormId },
         upgrade_addr: false,
         cartInfo,
-        custom_form: [],
+        systemForm: systemForm ? { version: 1, ...systemForm } : null,
+        custom_form: systemForm?.value ?? [],
         product_type: Math.max(0, ...cartInfo.map((item) => Number(record(item.productInfo).product_type ?? 0))),
         userInfo: account
           ? {
@@ -614,8 +657,6 @@ export class AdminAssistedOrderService {
               vip: account.level > 0 || account.isMoneyLevel === 1,
             }
           : { uid: 0, phone: "", now_money: "0.00", integral: 0, vip: false },
-        orderKey,
-        quoteToken,
         priceGroup: priceGroup(quote),
         valid_count: cartInfo.length,
         type: 0,
@@ -627,15 +668,12 @@ export class AdminAssistedOrderService {
         give_coupon: [],
         give_integral: 0,
         promotions_detail: [],
-        integralRatio: 0,
-        integral_ratio_status: 0,
+        integralRatio: quote.integralPolicy.ratio,
+        integral_ratio_status: quote.integralPolicy.enabled ? 1 : 0,
         store_self_mention: 1,
         svip_status: account?.isMoneyLevel ?? 0,
         svip_price: money(quote.memberDiscountCents),
-        methods: readiness,
         yue_pay_status: 2,
-        pay_weixin_open: readiness.weixin.enabled ? 1 : 0,
-        ali_pay_status: readiness.alipay.enabled,
       },
     };
   }
@@ -643,6 +681,74 @@ export class AdminAssistedOrderService {
   async confirm(adminId: number, uid: number, body: Record<string, unknown>) {
     const selection = await this.selection(adminId, uid, body.cartId, body.tourist_uid, body.new);
     return (await this.preview(adminId, selection, body)).response;
+  }
+
+  /** Authorize before buffering the multipart body, then recheck and pin the
+   * SQL source inside the metadata transaction after R2 finishes. No KV/R2 I/O
+   * occurs while holding SQL locks. No client form ID or guest identity is used. */
+  async prepareFormImageUpload(adminId: number, uid: number, key: string) {
+    const snapshot = await this.snapshot(adminId, uid, key);
+    const scope = await withTx(this.container, async db => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      return this.formImageScope(db, snapshot, key, false);
+    });
+    return (file: File) => new AttachmentService(this.container, this.env).uploadAssistedFormImage(scope, file, async db => {
+      const current = await this.formImageScope(db, snapshot, key, true);
+      if (current.digest !== scope.digest) throw new ValidateException('结算表单已变更，请重新上传');
+    });
+  }
+
+  async previewFormImages(adminId: number, uid: number, key: string, value: unknown) {
+    if (!Array.isArray(value) || !value.length || value.length > 900
+      || value.some(id => !Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647)
+      || new Set(value).size !== value.length) throw new ValidateException('表单图片列表无效');
+    const snapshot = await this.snapshot(adminId, uid, key);
+    return withTx(this.container, async db => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      const scope = await this.formImageScope(db, snapshot, key, false);
+      const rows = await db.select({ id: systemAttachment.attId, name: systemAttachment.name }).from(systemAttachment)
+        .where(and(inArray(systemAttachment.attId, value), eq(systemAttachment.type, scope.type),
+          eq(systemAttachment.relationId, scope.relationId), eq(systemAttachment.moduleType, scope.moduleType),
+          eq(systemAttachment.fileType, 1), eq(systemAttachment.imageType, R2_IMAGE_TYPE)));
+      if (rows.length !== value.length || rows.some(row => !belongsToAssistedFormScope(row.name, scope))) {
+        throw new ValidateException('自定义表单包含无权使用的图片');
+      }
+      const paths = value.map(id => canonicalAttachmentPath(id));
+      const signed = await new AttachmentService(this.container, this.env).signReferences(paths);
+      return value.map((id, index) => ({ att_id: id, reference: paths[index], url: signed[index] }));
+    });
+  }
+
+  private async formImageScope(db: DbClient, snapshot: AssistedCheckoutSnapshot, key: string, pin: boolean) {
+    await db.execute(sql`SELECT set_config('statement_timeout',
+      LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+      set_config('idle_in_transaction_session_timeout',
+      LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`);
+    const { adminId, uid, touristUid, cartIds, isNew, createdAt } = snapshot;
+    const now = Math.floor(Date.now() / 1000);
+    if (createdAt > now || now - createdAt >= ASSISTED_CHECKOUT_TTL_SECONDS) throw new ValidateException('订单已过期,请刷新当前页面');
+    const [used] = await db.select({ id: storeOrder.id }).from(storeOrder)
+      .where(and(eq(storeOrder.uid, uid), eq(storeOrder.unique, key))).limit(1);
+    if (used) throw new ValidateException('订单已经创建，不能继续上传表单图片');
+    const query = db.select().from(storeCart).where(inArray(storeCart.id, cartIds)).orderBy(asc(storeCart.id));
+    const carts = await (pin ? query.for('share', { noWait: true }) : query);
+    if (carts.length !== cartIds.length || carts.some(cart => cart.uid !== uid || cart.staffId !== adminId
+      || cart.touristUid !== touristUid || cart.isNew !== isNew || cart.type !== 0 || cart.activityId !== 0
+      || cart.storeId !== 0 || cart.isDel !== 0 || cart.isPay !== 0 || cart.status !== 1 || cart.cartNum <= 0)) {
+      throw new ValidateException('购物车商品已失效或不属于当前代客会话');
+    }
+    const productIds = [...new Set(carts.map(cart => cart.productId))];
+    const productsQuery = db.select({ id: storeProduct.id, formId: storeProduct.systemFormId, isShow: storeProduct.isShow,
+      isDel: storeProduct.isDel, isVerify: storeProduct.isVerify, isPresale: storeProduct.isPresaleProduct })
+      .from(storeProduct).where(inArray(storeProduct.id, productIds)).orderBy(asc(storeProduct.id));
+    const products = await (pin ? productsQuery.for('share', { noWait: true }) : productsQuery);
+    if (products.length !== productIds.length || products.some(product => product.isDel !== 0 || product.isShow !== 1
+      || product.isVerify !== 1 || product.isPresale !== 0)) throw new ValidateException('结算商品已失效');
+    const formIds = [...new Set(products.map(product => product.formId).filter(id => id > 0))];
+    if (formIds.length !== 1) throw new ValidateException('结算商品没有唯一可用表单');
+    const definition = await loadActiveOrderSystemForm(db, formIds[0], pin);
+    if (!definition.value.some(component => component.name === 'uploadPicture')) throw new ValidateException('当前表单不需要上传图片');
+    return assistedFormAttachmentScope({ adminId, uid, touristUid, key, systemFormId: definition.id });
   }
 
   private async existing(adminId: number, uid: number, key: string) {
@@ -819,35 +925,60 @@ export class AdminAssistedOrderService {
     const realName = boundedText(body.real_name ?? address?.realName, "收货人", 32);
     const phone = boundedText(body.phone ?? address?.phone, "手机号", 18);
     if (shippingType === 2 && (!realName || !phone)) throw new ValidateException("请填写姓名和电话");
-    const result = await new StoreOrderCreateService(this.container, this.env).createOrder({
-      uid,
-      key,
-      cartIds: snapshot.cartIds,
-      quoteToken: body.quoteToken,
-      addressId: address?.id ?? addressId,
-      manualAddress,
-      realName,
-      userPhone: phone,
-      province: address?.province ?? "",
-      cityId: address?.cityId,
-      mark: boundedText(body.mark, "订单备注", 512),
-      shippingType,
-      storeId,
-      useIntegral: parseBooleanSwitch(body.useIntegral ?? 0),
-      payType: normalizePayType(body.payType),
-      from: boundedText(body.from ?? "pc", "下单渠道", 32),
-      userIp,
-      type: 0,
-      couponId: integer(body.couponId, "优惠券", { min: 0, fallback: 0 }) || undefined,
-      assisted: { adminId, touristUid: snapshot.touristUid },
-    });
+    let result: { orderId: string; key: string };
+    try {
+      if (body.customForm !== undefined && body.custom_form !== undefined) throw new OrderFormRejectedException("自定义表单参数重复");
+      result = await new StoreOrderCreateService(this.container, this.env).createOrder({
+        uid,
+        key,
+        cartIds: snapshot.cartIds,
+        quoteToken: body.quoteToken,
+        addressId: address?.id ?? addressId,
+        manualAddress,
+        realName,
+        userPhone: phone,
+        province: address?.province ?? "",
+        cityId: address?.cityId,
+        mark: boundedText(body.mark, "订单备注", 512),
+        customForm: body.customForm ?? body.custom_form,
+        shippingType,
+        storeId,
+        useIntegral: parseBooleanSwitch(body.useIntegral ?? 0),
+        payType: normalizePayType(body.payType),
+        from: boundedText(body.from ?? "pc", "下单渠道", 32),
+        userIp,
+        type: 0,
+        couponId: integer(body.couponId, "优惠券", { min: 0, fallback: 0 }) || undefined,
+        assisted: { adminId, touristUid: snapshot.touristUid },
+      });
+    } catch (error) {
+      if (error instanceof OrderFormRejectedException) throw new AssistedOrderCreateRejected(error.message, key, 'ORDER_FORM_REJECTED');
+      if (error instanceof OrderQuoteReconfirmRequired) throw new AssistedOrderCreateRejected(error.message, key, 'ORDER_QUOTE_RECONFIRM_REQUIRED');
+      throw error;
+    }
     const order = await this.existing(adminId, uid, result.key);
     if (!order || order.orderId !== result.orderId) throw new Error("代客订单创建结果无法核验");
     return { order_id: order.orderId, key: result.key, pay_price: order.payPrice, extended: false };
   }
 
+  async orderForm(adminId: number, uid: number, orderValue: unknown) {
+    return withTx(this.container, async db => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true)`);
+      const [order] = await db.select({ id: storeOrder.id, uid: storeOrder.uid, staffId: storeOrder.staffId,
+        isChannel: storeOrder.isChannel, unique: storeOrder.unique, pid: storeOrder.pid,
+        customForm: sql<string | null>`CASE WHEN octet_length(${storeOrder.customForm}) <= 1000000 THEN ${storeOrder.customForm} ELSE NULL END`,
+      }).from(storeOrder).where(and(eq(storeOrder.orderId, exactOrderId(orderValue)),
+        eq(storeOrder.uid, uid), eq(storeOrder.staffId, adminId), eq(storeOrder.isChannel, 2),
+        eq(storeOrder.isDel, 0), eq(storeOrder.isSystemDel, 0))).limit(1);
+      if (!order) throw new NotFoundException('订单不存在');
+      return readOrderSystemFormForOrder(db, new AttachmentService(this.container, this.env), order);
+    });
+  }
+
   private async assistedOrder(adminId: number, uid: number, orderValue: unknown) {
-    const orderId = normalizeOrderId(orderValue);
+    const orderId = exactOrderId(orderValue);
     const rows = await this.container.db.select().from(storeOrder).where(and(
       eq(storeOrder.orderId, orderId),
       eq(storeOrder.uid, uid),
@@ -860,26 +991,34 @@ export class AdminAssistedOrderService {
     return rows[0];
   }
 
-  private authorizePayment(adminId: number, uid: number) {
-    return async (_tx: DbClient, order: typeof storeOrder.$inferSelect) => {
+  private authorizePayment(adminId: number, uid: number, expectedPayCents: number) {
+    return async (tx: DbClient, order: typeof storeOrder.$inferSelect) => {
       if (
         order.uid !== uid || order.staffId !== adminId || order.isChannel !== 2 ||
         order.isDel !== 0 || order.isSystemDel !== 0
       ) throw new ValidateException("订单不属于当前代客会话");
+      if (decimalToCents(order.payPrice) !== expectedPayCents) {
+        throw new ValidateException("订单应付金额已变化，请刷新后重新确认支付");
+      }
+      if (order.paid === 0 && await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
+        throw new ValidateException("扫码支付已发起，请查询支付状态；结果未知时请先人工对账");
+      }
     };
   }
 
   async pay(adminId: number, uid: number, body: Record<string, unknown>, userIp: string) {
     const order = await this.assistedOrder(adminId, uid, body.uni);
     const payType = normalizePayType(body.paytype);
-    if (order.paid === 1) return { status: "SUCCESS", result: { order_id: order.orderId } };
-    if (order.status !== 0) throw new ValidateException("订单状态不允许支付");
+    const expectedPayCents = parseExpectedAssistedPayPriceCents(body.expected_pay_price);
+    if (decimalToCents(order.payPrice) !== expectedPayCents) {
+      throw new ValidateException("订单应付金额已变化，请刷新后重新确认支付");
+    }
     const service = new StoreOrderPayService(this.container, this.env);
     if (payType === "cash" || decimalToCents(order.payPrice) === 0) {
       const result = await service.applyPayment({
         orderId: order.id,
         payType,
-        authorizeBeforePayment: this.authorizePayment(adminId, uid),
+        authorizeBeforePayment: this.authorizePayment(adminId, uid, expectedPayCents),
         allowAlreadyPaid: (locked) =>
           locked.uid === uid && locked.staffId === adminId && locked.isChannel === 2,
         audit: {
@@ -891,7 +1030,21 @@ export class AdminAssistedOrderService {
       if (result.outcome === "not-payable") throw new ValidateException("订单状态不允许支付");
       return { status: "SUCCESS", result: { order_id: order.orderId } };
     }
-    const provider = await service.pay(uid, order.orderId, payType, "pc", userIp);
+    if (order.paid === 1) return { status: "SUCCESS", result: { order_id: order.orderId } };
+    if (order.status !== 0) throw new ValidateException("订单状态不允许支付");
+    const readiness = await getPaymentReadinessSnapshot(this.container, this.env);
+    const method = readiness.methods[payType];
+    if (!method.enabled) throw new ValidateException(method.reason || "支付方式不可用");
+    if (payType === "weixin" && !readiness.wechatProfiles.wechat.enabled) {
+      throw new ValidateException(readiness.wechatProfiles.wechat.reason || "当前微信支付渠道不可用");
+    }
+    const provider = await service.pay(uid, order.orderId, payType, "pc", userIp,
+      () => claimAssistedProviderPayment(this.container, {
+        adminId, uid, orderId: order.id, orderNo: order.orderId,
+        provider: payType === "weixin" ? "wechat" : "alipay",
+        profile: payType === "weixin" ? "wechat" : "alipay", expectedPayCents,
+      }));
+    if (provider.paid === true) return { status: "SUCCESS", result: { order_id: order.orderId } };
     const invalid = Math.floor(Date.now() / 1000) + 60;
     if (payType === "weixin") {
       const jsConfig = { ...record(provider.jsConfig), invalid };
@@ -912,25 +1065,50 @@ export class AdminAssistedOrderService {
   }
 
   async payStatus(adminId: number, query: Record<string, string>) {
-    const orderId = normalizeOrderId(query.order_id);
-    const rows = await this.container.db.select({ paid: storeOrder.paid }).from(storeOrder).where(and(
-      eq(storeOrder.orderId, orderId),
-      eq(storeOrder.staffId, adminId),
-      eq(storeOrder.isChannel, 2),
-      eq(storeOrder.isDel, 0),
-      eq(storeOrder.isSystemDel, 0),
-    )).limit(1);
-    if (!rows[0]) throw new NotFoundException("订单不存在");
+    const { exactId, aliasId } = pollingOrderIds(query.order_id);
+    const candidates = [exactId, aliasId].filter((id): id is string => id !== null);
+    // The exact ID wins even when it is deleted or belongs to another actor.
+    // One statement sees both candidates in one snapshot, so a concurrent
+    // ownership change cannot turn an exact hit into a different alias order.
+    const rows = await this.container.db.select({
+      orderId: storeOrder.orderId,
+      paid: storeOrder.paid,
+      staffId: storeOrder.staffId,
+      isChannel: storeOrder.isChannel,
+      isDel: storeOrder.isDel,
+      isSystemDel: storeOrder.isSystemDel,
+    }).from(storeOrder)
+      .where(inArray(storeOrder.orderId, candidates))
+      .limit(3);
+    if (rows.length > 2 || new Set(rows.map(row => row.orderId)).size !== rows.length) {
+      throw new NotFoundException("订单不存在");
+    }
+    const order = (exactId ? rows.find(row => row.orderId === exactId) : undefined)
+      ?? (aliasId ? rows.find(row => row.orderId === aliasId) : undefined);
+    if (!order || order.staffId !== adminId || order.isChannel !== 2 || order.isDel !== 0 || order.isSystemDel !== 0) {
+      throw new NotFoundException("订单不存在");
+    }
     const endTime = integer(query.end_time, "支付截止时间", { min: 0, fallback: 0 });
     return {
-      status: rows[0].paid === 1,
+      order_id: order.orderId,
+      status: order.paid === 1,
       time: endTime > 0 ? Math.max(0, endTime - Math.floor(Date.now() / 1000)) : 0,
     };
   }
 
   async placeList(adminId: number, query: Record<string, string>) {
-    const page = integer(query.page, "页码", { min: 1, max: 100_000, fallback: 1 });
+    if (query.paging !== undefined && query.paging !== "" && query.paging !== "cursor") {
+      throw new ValidateException("分页方式无效");
+    }
+    const cursorMode = query.paging === "cursor";
+    if (cursorMode && query.page !== undefined && query.page !== "") throw new ValidateException("分页参数冲突");
+    if (!cursorMode && query.cursor !== undefined) throw new ValidateException("分页参数冲突");
+    const page = cursorMode ? 1 : integer(query.page, "页码", { min: 1, max: 100_000, fallback: 1 });
     const limit = integer(query.limit, "每页数量", { min: 1, max: MAX_LIST_LIMIT, fallback: 10 });
+    if (!cursorMode && (page - 1) * limit > MAX_LEGACY_LIST_OFFSET) {
+      throw new ValidateException("页码过深，请改用游标分页");
+    }
+    const cursor = cursorMode ? assistedListCursor(query.cursor) : null;
     const keyword = boundedText(query.keyword ?? query.field_value, "搜索条件", 100);
     const status = query.status === undefined || query.status === ""
       ? null
@@ -943,7 +1121,7 @@ export class AdminAssistedOrderService {
       eq(storeOrder.isChannel, 2),
       eq(storeOrder.isSystemDel, 0),
     ];
-    if (status === null || ![-3, -2, -1].includes(status)) conditions.push(eq(storeOrder.pid, 0));
+    if (status === null || ![-3, -2, -1].includes(status)) conditions.push(inArray(storeOrder.pid, [0, -1]));
     if (query.is_del !== undefined && query.is_del !== "") {
       conditions.push(eq(storeOrder.isDel, integer(query.is_del, "删除状态", { min: 0, max: 1 })));
     } else if (status !== -4) {
@@ -962,55 +1140,132 @@ export class AdminAssistedOrderService {
         ilike(storeOrder.userPhone, pattern),
       )!);
     }
-    const orders = await this.container.db.select().from(storeOrder)
-      .where(and(...conditions))
-      .orderBy(desc(storeOrder.addTime), desc(storeOrder.id))
-      .limit(limit)
-      .offset((page - 1) * limit);
-    if (!orders.length) return [];
-    const orderIds = orders.map((order) => order.id);
-    const [cartRows, refundRows] = await Promise.all([
-      this.container.db.select().from(storeOrderCartInfo)
-        .where(inArray(storeOrderCartInfo.oid, orderIds)).orderBy(asc(storeOrderCartInfo.id)),
-      this.container.db.select().from(storeOrderRefund)
-        .where(and(inArray(storeOrderRefund.storeOrderId, orderIds), eq(storeOrderRefund.isDel, 0)))
-        .orderBy(asc(storeOrderRefund.id)),
-    ]);
-    const cartsByOrder = new Map<number, ReturnType<typeof legacyCartSnapshot>[]>();
-    const refundableCartNumByOrder = new Map<number, number>();
-    for (const cart of cartRows) {
-      const list = cartsByOrder.get(cart.oid) ?? [];
-      list.push(legacyCartSnapshot(cart));
-      cartsByOrder.set(cart.oid, list);
-      if (cart.isGift !== 1) {
-        refundableCartNumByOrder.set(
-          cart.oid,
-          (refundableCartNumByOrder.get(cart.oid) ?? 0) + cart.cartNum,
-        );
-      }
-    }
-    const refundsByOrder = new Map<number, Array<typeof storeOrderRefund.$inferSelect>>();
-    for (const refund of refundRows) {
-      const list = refundsByOrder.get(refund.storeOrderId) ?? [];
-      list.push(refund);
-      refundsByOrder.set(refund.storeOrderId, list);
-    }
-    return orders.map((order) => {
-      const refunds = refundsByOrder.get(order.id) ?? [];
-      const refundableCartNum = refundableCartNumByOrder.get(order.id) ?? 0;
-      const refundedNum = refunds.reduce((total, refund) => total + refund.refundNum, 0);
+    // A row comparison is one index range condition on the complete sort key.
+    // The equivalent OR predicate scans every earlier row in deep pages on PG16.
+    if (cursor) conditions.push(sql<boolean>`(${storeOrder.addTime}, ${storeOrder.id}) < (${cursor.addTime}, ${cursor.id})`);
+    const orders = await withTx(this.container, async db => {
+      await db.execute(sql`SET TRANSACTION READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        set_config('idle_in_transaction_session_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`);
+      const selection = db.select({
+        id: storeOrder.id,
+        orderId: storeOrder.orderId,
+        uid: storeOrder.uid,
+        paid: storeOrder.paid,
+        payPrice: storeOrder.payPrice,
+        totalNum: storeOrder.totalNum,
+        addTime: storeOrder.addTime,
+        pid: storeOrder.pid,
+        status: storeOrder.status,
+        refundStatus: storeOrder.refundStatus,
+        shippingType: storeOrder.shippingType,
+        isDel: storeOrder.isDel,
+        isSystemDel: storeOrder.isSystemDel,
+      }).from(storeOrder)
+        .where(and(...conditions))
+        .orderBy(desc(storeOrder.addTime), desc(storeOrder.id))
+        .limit(limit + (cursorMode ? 1 : 0));
+      return cursorMode ? selection : selection.offset((page - 1) * limit);
+    });
+    const visible = cursorMode ? orders.slice(0, limit) : orders;
+    const list = visible.map((order) => ({
+      id: order.id,
+      order_id: order.orderId,
+      uid: order.uid,
+      paid: order.paid,
+      pay_price: order.payPrice,
+      total_num: order.totalNum,
+      add_time: order.addTime,
+      pid: order.pid,
+      _status: { _title: order.pid === -1 && ![1, 2, 4].includes(order.refundStatus) ? "已拆分" : statusTitle(order) },
+    }));
+    if (!cursorMode) return list;
+    const hasMore = orders.length > limit;
+    const last = visible.at(-1);
+    return { list, next_cursor: hasMore && last ? `${last.addTime}:${last.id}` : null, has_more: hasMore };
+  }
+
+  /** Minimal actor-scoped mobile detail; never expose the broad admin order projection. */
+  async placeDetail(adminId: number, orderValue: unknown) {
+    const orderId = exactOrderId(orderValue);
+    return withTx(this.container, async db => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true)`);
+      const [order] = await db.select({
+        id: storeOrder.id,
+        orderId: storeOrder.orderId,
+        uid: storeOrder.uid,
+        pid: storeOrder.pid,
+        paid: storeOrder.paid,
+        payPrice: storeOrder.payPrice,
+        totalNum: storeOrder.totalNum,
+        addTime: storeOrder.addTime,
+        payType: storeOrder.payType,
+        shippingType: storeOrder.shippingType,
+        status: storeOrder.status,
+        refundStatus: storeOrder.refundStatus,
+        isDel: storeOrder.isDel,
+        isSystemDel: storeOrder.isSystemDel,
+      }).from(storeOrder).where(and(
+        eq(storeOrder.orderId, orderId),
+        eq(storeOrder.staffId, adminId),
+        eq(storeOrder.isChannel, 2),
+        inArray(storeOrder.pid, [0, -1]),
+        eq(storeOrder.isDel, 0),
+        eq(storeOrder.isSystemDel, 0),
+      )).limit(1);
+      if (!order) throw new NotFoundException("订单不存在");
+
+      const rows = await db.select({
+        id: storeOrderCartInfo.id,
+        productId: storeOrderCartInfo.productId,
+        cartNum: storeOrderCartInfo.cartNum,
+        cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderCartInfo.cartInfo}) <= 65536
+          THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
+      }).from(storeOrderCartInfo)
+        .where(eq(storeOrderCartInfo.oid, order.id))
+        .orderBy(asc(storeOrderCartInfo.id))
+        .limit(MAX_CART_ITEMS + 1);
+      if (rows.length > MAX_CART_ITEMS) throw new ValidateException("订单商品超过展示上限");
+      const items = rows.map((row) => {
+        const snapshot = parseJson(row.cartInfo);
+        const product = record(snapshot.productInfo ?? snapshot.product);
+        const sku = record(snapshot.sku ?? record(product.attrInfo));
+        const storeName = product.store_name ?? product.storeName;
+        const unitPrice = typeof sku.price === "string" || typeof sku.price === "number"
+          ? Number(sku.price) : NaN;
+        const totalPrice = typeof snapshot.sum_true_price === "string" || typeof snapshot.sum_true_price === "number"
+          ? Number(snapshot.sum_true_price) : NaN;
+        const candidate = Number.isFinite(unitPrice) && unitPrice >= 0
+          ? unitPrice
+          : Number.isFinite(totalPrice) && totalPrice >= 0 && row.cartNum > 0
+            ? totalPrice / row.cartNum
+          : 0;
+        const price = candidate <= 9_999_999_999.99 ? candidate : 0;
+        return {
+          id: row.id,
+          product_id: row.productId,
+          store_name: typeof storeName === "string" ? storeName.slice(0, 255) : "",
+          suk: typeof sku.suk === "string" ? sku.suk.slice(0, 255) : "",
+          cart_num: row.cartNum,
+          price: price.toFixed(2),
+        };
+      });
       return {
-        ...order,
         order_id: order.orderId,
-        total_num: order.totalNum,
+        uid: order.uid,
+        paid: order.paid,
         pay_price: order.payPrice,
+        total_num: order.totalNum,
         add_time: order.addTime,
         pay_type: order.payType,
-        refund_status: order.refundStatus,
-        _status: { _title: statusTitle(order), _type: order.status },
-        cartInfo: cartsByOrder.get(order.id) ?? [],
-        refund: refunds,
-        is_all_refund: refunds.length > 0 && refundedNum === refundableCartNum,
+        shipping_type: order.shippingType,
+        _status: { _title: order.pid === -1 && ![1, 2, 4].includes(order.refundStatus) ? "已拆分" : statusTitle(order) },
+        items,
+        split: order.pid === -1,
       };
     });
   }

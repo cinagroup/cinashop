@@ -20,6 +20,11 @@ import { inspectOfflineOrderSchema, runOfflineOrderSchema } from '../src/migrati
 import { inspectCheckoutPricingLock } from '../src/migrations/checkoutPricingLock';
 import { pricingCatalogReady } from '../src/migrations/checkoutPricingLockCatalog';
 import { runCheckoutPricingLockSchema } from '../src/migrations/runCheckoutPricingLock';
+import { runPresaleDeliveryOutbox } from '../src/migrations/runPresaleDeliveryOutbox';
+import { runSupplierRefundLookupIndexes } from '../src/migrations/runSupplierRefundLookupIndexes';
+import { inspectPurchaseOriginEvidence, runPurchaseOriginEvidenceSchema, completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
+import { inspectPurchaseCancellationEvidence, runPurchaseCancellationEvidenceSchema, completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
+import { PRESALE_OUTBOX_CHECK_DEFINITION, withPresaleOutboxContract } from './data-migration/presale-outbox-contract';
 import { dropOwnedAuditDatabase } from './data-migration/drop-owned-audit-database';
 import { extendOrdinaryIndexContracts, assertRetiredIndexesAbsent } from "./data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts, assertOldIndexNamesAbsent } from "./data-migration/index-name-contracts";
@@ -72,6 +77,10 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const refundSplitVerification: Record<string, unknown> = {};
   const offlineOrderVerification: Record<string, unknown> = {};
   const checkoutPricingLockVerification: Record<string, unknown> = {};
+  const presaleOutboxVerification: Record<string, unknown> = {};
+  const supplierRefundLookupVerification: Record<string, unknown> = {};
+  const purchaseOriginVerification: Record<string, unknown> = {};
+  const purchaseCancellationVerification: Record<string, unknown> = {};
   const cleanupRecoveries: Array<{ database: string; timeoutRecovered: boolean; retried: boolean }> = [];
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
@@ -214,6 +223,66 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         // Explicitly prove this protocol on every real construction path, with
         // no repair masking a missing external/embedded registration.
         const shippingDb = drizzle(client);
+        const initialOrigin = await inspectPurchaseOriginEvidence(shippingDb);
+        const expectedOrigin = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
+        if (initialOrigin.state !== expectedOrigin || !initialOrigin.sourcesReady)
+          throw Error(`Purchase origin registration differs on ${path}; no automatic repair`);
+        const originIdentityQuery = `SELECT 'relation' AS kind,oid::text,relfilenode::text,relowner::text,relacl::text
+          FROM pg_class WHERE relnamespace='public'::regnamespace
+          UNION ALL SELECT 'function',oid::text,NULL,proowner::text,proacl::text FROM pg_proc WHERE pronamespace='public'::regnamespace
+          UNION ALL SELECT 'trigger',oid::text,NULL,NULL,NULL FROM pg_trigger WHERE tgrelid IN
+            (SELECT oid FROM pg_class WHERE relnamespace='public'::regnamespace) ORDER BY kind,oid`;
+        const beforeOrigin = await client.unsafe(originIdentityQuery);
+        if (initialOrigin.state === 'orm-pending') await completePurchaseOriginEvidenceOrm(shippingDb);
+        const installedOrigin = await client.unsafe(originIdentityQuery);
+        if (JSON.stringify(installedOrigin.filter(row => beforeOrigin.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeOrigin))
+          throw Error(`Purchase origin completion replaced an existing object on ${path}`);
+        await runPurchaseOriginEvidenceSchema(shippingDb); await runPurchaseOriginEvidenceSchema(shippingDb);
+        if ((await inspectPurchaseOriginEvidence(shippingDb)).state !== 'v1'
+          || JSON.stringify(installedOrigin) !== JSON.stringify(await client.unsafe(originIdentityQuery))
+          || (await client.unsafe('SELECT 1 FROM public.store_order_purchase_origin LIMIT 1')).length)
+          throw Error(`Purchase origin repeat or no-backfill verification differs on ${path}`);
+        purchaseOriginVerification[path] = { initial: initialOrigin.state, complete: true, completionPreserved: true, repeatPreserved: true, noBackfill: true };
+        const initialCancellation = await inspectPurchaseCancellationEvidence(shippingDb);
+        const expectedCancellation = path === 'external' || path === 'embedded' ? 'v1' : 'orm-pending';
+        if (initialCancellation.state !== expectedCancellation || !initialCancellation.sourcesReady)
+          throw Error(`Purchase cancellation registration differs on ${path}; no automatic repair`);
+        const beforeCancellation = await client.unsafe(originIdentityQuery);
+        if (initialCancellation.state === 'orm-pending') await completePurchaseCancellationEvidenceOrm(shippingDb);
+        const installedCancellation = await client.unsafe(originIdentityQuery);
+        if (JSON.stringify(installedCancellation.filter(row => beforeCancellation.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeCancellation))
+          throw Error(`Purchase cancellation completion replaced an existing object on ${path}`);
+        await runPurchaseCancellationEvidenceSchema(shippingDb); await runPurchaseCancellationEvidenceSchema(shippingDb);
+        if ((await inspectPurchaseCancellationEvidence(shippingDb)).state !== 'v1'
+          || JSON.stringify(installedCancellation) !== JSON.stringify(await client.unsafe(originIdentityQuery))
+          || (await client.unsafe('SELECT 1 FROM public.store_order_purchase_cancellation LIMIT 1')).length)
+          throw Error(`Purchase cancellation repeat or no-backfill verification differs on ${path}`);
+        purchaseCancellationVerification[path] = { initial: initialCancellation.state, complete: true, completionPreserved: true, repeatPreserved: true, noBackfill: true };
+        const supplierLookupIdentityQuery = `SELECT c.oid::text,c.relfilenode::text,c.relname,c.relowner::text,c.relacl::text,
+          pg_get_indexdef(c.oid) AS definition FROM pg_class c WHERE c.relnamespace='public'::regnamespace
+          AND c.relname IN ('sfw_link_id_idx','stx_link_id_idx') ORDER BY c.relname`;
+        const supplierLookupBefore = await client.unsafe(supplierLookupIdentityQuery);
+        const supplierLookupDefinitions = [
+          'CREATE INDEX sfw_link_id_idx ON public.supplier_flowing_water USING btree (link_id, id)',
+          'CREATE INDEX stx_link_id_idx ON public.supplier_transactions USING btree (link_id, id)',
+        ];
+        if (supplierLookupBefore.length !== 2 || supplierLookupBefore.some((row,index) => row.definition !== supplierLookupDefinitions[index]))
+          throw Error(`Supplier refund lookup indexes not registered on ${path}; no automatic repair`);
+        // The real runner validates the remaining raw pg_index/column/owner fields.
+        // Missing names must fail above before any CREATE could mask a bad path.
+        await runSupplierRefundLookupIndexes(shippingDb); await runSupplierRefundLookupIndexes(shippingDb);
+        if (JSON.stringify(supplierLookupBefore) !== JSON.stringify(await client.unsafe(supplierLookupIdentityQuery)))
+          throw Error(`Supplier refund lookup repeat changed identity on ${path}`);
+        supplierRefundLookupVerification[path] = { initialRegistered: true, exactTwoIndexes: true, repeatPreserved: true };
+        const presaleIdentityQuery = `SELECT c.oid::text,to_jsonb(c) AS metadata,pg_get_constraintdef(c.oid) AS definition
+          FROM pg_constraint c WHERE c.conrelid='public.store_order_outbox'::regclass AND c.conname='soob_event_type_ck'`;
+        const presaleBefore = await client.unsafe(presaleIdentityQuery);
+        if (presaleBefore.length !== 1 || presaleBefore[0].definition !== PRESALE_OUTBOX_CHECK_DEFINITION)
+          throw new Error(`Presale event registration differs on ${path}; no automatic repair`);
+        await runPresaleDeliveryOutbox(shippingDb); await runPresaleDeliveryOutbox(shippingDb);
+        if (JSON.stringify(presaleBefore) !== JSON.stringify(await client.unsafe(presaleIdentityQuery)))
+          throw new Error(`Presale event repeat changed identity on ${path}`);
+        presaleOutboxVerification[path] = { initialRegistered: true, exactTenEvents: true, repeatPreserved: true };
         const initialInvoice=await inspectInvoiceEvidenceSchema(shippingDb);
         const expectedInvoice=path==='external' || path==='embedded' ? 'v2' : 'orm-pending';
         if(initialInvoice!==expectedInvoice) throw new Error(`Invoice protection registration differs on ${path}`);
@@ -370,10 +439,14 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
     const requiredIndexKeys = [...duplicateContracts.keys, "store_order_refund.sor_pink_recovery_scan"];
     requiredIndexKeys.push("payment_reconciliation_case.prc_callback_event", "store_product_reply.spr_order_cart_info");
     requiredIndexKeys.push("work_contact_action_outbox.wcao_client_ref");
+    requiredIndexKeys.push('supplier_flowing_water.sfw_link_id_idx', 'supplier_transactions.stx_link_id_idx');
+    requiredIndexKeys.push('store_order_purchase_origin.store_order_purchase_origin_pkey', 'store_order_purchase_origin.sopo_buyer_history');
+    requiredIndexKeys.push('store_order_purchase_cancellation.store_order_purchase_cancellation_pkey', 'store_order_purchase_cancellation.sopc_buyer_history');
+    requiredIndexKeys.push('store_order.so_assisted_actor_list');
     const defaultManifest = JSON.parse(await readFile(resolve(root, "audit/orm-column-default-reconciliation.json"), "utf8"));
     const missingConstraintManifest = JSON.parse(await readFile(resolve(root, "audit/orm-missing-constraint-reconciliation.json"), "utf8"));
     const foreignKeyNameManifest = JSON.parse(await readFile(resolve(root, "audit/orm-foreign-key-name-reconciliation.json"), "utf8"));
-    const checkStateManifest = JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8"));
+    const checkStateManifest = withPresaleOutboxContract(JSON.parse(await readFile(resolve(root, "audit/orm-check-state-reconciliation.json"), "utf8")));
     const kefuSequenceManifest = JSON.parse(await readFile(resolve(root, "audit/orm-kefu-sequence-reconciliation.json"), "utf8"));
     for (const catalog of Object.values(catalogs)) assertRetiredIndexesAbsent(catalog, retiredKeys);
     for (const catalog of Object.values(catalogs)) assertOldIndexNamesAbsent(catalog, oldKeys);
@@ -431,7 +504,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       paths,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
       summary: { externalVsEmbedded: summarizeCatalogDiff(externalVsEmbedded), externalVsOrm: summarizeCatalogDiff(externalVsOrm) },
-      fullTableCatalogContract: { mode: "all nine paths: exact 277 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
+      fullTableCatalogContract: { mode: "all nine paths: exact 279 unique public tables and every raw metadata field; no omissions, additions or aliases waived", count: catalogs.external.tables.length, fields: TABLE_CATALOG_FIELDS },
       tableCatalogGateVerification,
       verifiedIndexContracts: { mode: "exact named definitions; reject drift in every embedded, fresh ORM and upgraded ORM path", keys: requiredIndexKeys },
       retiredIndexContracts: { mode: "reject the two retired physical index names in every compared path", keys: retiredKeys },
@@ -442,7 +515,11 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
       missingConstraintContracts: { mode: "all nine paths: exact 39 CHECK and 2 FK including eight NOT VALID states; no other constraint differences waived", keys: missingConstraintManifest.entries.map((e: { key: string }) => e.key) },
       foreignKeyNameContracts: { mode: "all nine paths: exact twelve FK catalog rows and no obsolete physical names or duplicate aliases", keys: foreignKeyNameManifest.entries.map((e: { key: string }) => e.key), oldKeys: foreignKeyNameManifest.entries.map((e: { previousKey: string }) => e.previousKey) },
       foreignKeyNameUpgradeVerification: { ...foreignKeyNameUpgradeVerification, freshCatalogMatched: true },
-      checkStateContracts: { mode: "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated event list; no normalized waiver", keys: checkStateManifest.entries.map((e: { key: string }) => e.key) },
+      checkStateContracts: { mode: "all nine paths: nine exact CHECK definitions/states; eight NOT VALID, one validated ten-event list after standalone 0161; immutable 0144 history independently verified; no normalized waiver", keys: checkStateManifest.entries.map((e: { key: string }) => e.key) },
+      presaleOutboxVerification,
+      supplierRefundLookupVerification,
+      purchaseOriginVerification,
+      purchaseCancellationVerification,
       fullConstraintCatalogContract: { mode: "all nine paths: exact complete constraint catalog including names, types, expressions, validation and inheritance", count: catalogs.external.constraints.length },
       checkStateUpgradeVerification: { ...checkStateUpgradeVerification, freshCatalogMatched: true },
       fullSequenceCatalogContract: { mode: "all nine paths: exact 227 named sequences, type, options and ownership; no omissions or aliases waived", count: catalogs.external.sequences.length },

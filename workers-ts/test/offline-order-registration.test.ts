@@ -32,7 +32,7 @@ describe('offline registered schema PG16', () => {
     UNION ALL SELECT 'function',oid::text,NULL FROM pg_proc WHERE pronamespace='public'::regnamespace ORDER BY kind,oid`);
   const catalog = () => f.db.execute(sql.raw(OFFLINE_CATALOG_SQL));
   it('pins independently generated ORM and protected catalog fingerprints and preserves all existing objects', async () => {
-    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{ count: 277 }]);
+    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{ count: 279 }]);
     expect(await inspectOfflineOrderSchema(f.db)).toEqual({ state: 'orm-pending' });
     let rows = await catalog();
     expect(rows).toHaveLength(27);

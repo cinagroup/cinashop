@@ -8,7 +8,6 @@ import { PaymentReconciliationService } from '../src/services/payment/PaymentRec
 import type { PaymentProviderQuery } from '../src/services/payment/PaymentProviderQuery';
 import { ValidateException } from '../src/utils/errors';
 import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
-import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 
 describe('membership reconciliation evidence on isolated native PG16', () => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -173,26 +172,44 @@ describe('membership reconciliation evidence on isolated native PG16', () => {
       expect(await s.processMessage({ action: 'processPaymentReconciliation', caseId: row.id, replayKey: row.replayKey })).toBe('waiting');
     });
   });
-  it('rechecks the type after waiting on an independently locked order', async () => {
+  it('does not wait backwards from a case lock to a locked membership order', async () => {
     await seedOrder(0); const row = await seedCase();
     await runtime(async r => f.withPeer!(async peer => {
       const s = await service(r);
       await peer.exec('BEGIN');
       let open = true;
-      let pending: ReturnType<typeof outcome<Awaited<ReturnType<typeof decide>>>> | undefined;
       try {
         await peer.exec("UPDATE other_order SET type=3 WHERE order_id='membership-evidence-test'");
-        pending = outcome(decide(s, row.id));
-        await waitForFinanceBlock(f.db, r.pid, peer.pid);
+        await expect(Promise.race([decide(s, row.id),
+          new Promise<never>((_resolve, reject) => setTimeout(() => reject(Error('ACCEPT_LOCAL waited on membership')), 3000))]))
+          .rejects.toThrow('订单正在更新');
         await peer.exec('COMMIT');
         open = false;
-        const result = await pending;
-        expect(result.ok).toBe(false);
-        if (!result.ok) expect(result.error).toBeInstanceOf(ValidateException);
-      } finally { if (open) await peer.exec('ROLLBACK'); await pending; }
+        await expect(decide(s, row.id)).rejects.toThrow(ValidateException);
+      } finally { if (open) await peer.exec('ROLLBACK'); }
     }));
     expect((await f.db.select().from(paymentReconciliationCase))[0].status).toBe('CONFLICT');
     expect(await f.db.select().from(paymentReconciliationAction)).toEqual([]);
+  }, 15_000);
+  it.each(['store_order', 'recharge'] as const)(
+    'does not wait backwards from a case lock to a locked %s order', async domain => {
+    if (domain === 'store_order') await f.db.insert(storeOrder).values({ orderId: orderNo, uid: 11, paid: 1, payPrice: '1.00' });
+    else await f.db.insert(userRecharge).values({ orderId: orderNo, uid: 11, paid: 1, price: '1.00' });
+    const row = await seedCase(domain), table = domain === 'store_order' ? 'store_order' : 'user_recharge';
+    await runtime(async r => f.withPeer!(async peer => {
+      const s = await service(r), key = crypto.randomUUID();
+      await peer.exec('BEGIN');
+      let open = true;
+      try {
+        await peer.exec(`UPDATE ${table} SET paid=paid WHERE order_id='membership-evidence-test'`);
+        await expect(Promise.race([decide(s, row.id, key),
+          new Promise<never>((_resolve, reject) => setTimeout(() => reject(Error('ACCEPT_LOCAL waited on order')), 3000))]))
+          .rejects.toThrow('订单正在更新');
+        expect(await f.db.select().from(paymentReconciliationAction)).toEqual([]);
+        await peer.exec('COMMIT'); open = false;
+        expect(await decide(s, row.id, key)).toEqual({ status: 'CONFIRMED', duplicate: false });
+      } finally { if (open) await peer.exec('ROLLBACK'); }
+    }));
   }, 15_000);
   it('rolls back the action and case together if action persistence is denied', async () => {
     await seedOrder(0); const row = await seedCase(); const before = await state();

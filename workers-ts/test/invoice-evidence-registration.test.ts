@@ -48,12 +48,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('registered invoi
   it.each(['external','embedded','orm'] as const)('complete %s construction proves protection before runtime commissioning',async path=>{
     if(path==='external') {
       const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();
-      expect(files.at(-1)).toBe('0160_checkout_pricing_lock.sql');
+      expect(files.at(-1)).toBe('0165_assisted_order_list_index.sql');
       for(const file of files) await f.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
     } else if(path==='embedded') {
-      expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({executed:Array.from({length: 167},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+      expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({executed:Array.from({length: 172},(_,i)=>String(i).padStart(4,'0')),errors:[]});
     } else await generated(allModels);
-    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:277}]);
+    expect(await f.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:279}]);
     expect(await inspectInvoiceEvidenceSchema(f.db)).toBe(path==='orm'?'orm-pending':'v2');
     if(path==='orm') await runInvoiceEvidenceSchema(f.db,true);
     await f.db.insert(storeOrderInvoice).values({uid:11,orderId:10,isPay:1,invoiceAmount:'10.00'});

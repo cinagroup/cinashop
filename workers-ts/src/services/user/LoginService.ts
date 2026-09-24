@@ -12,7 +12,7 @@
  *   6. 更新 last_time / last_ip / 分销绑定
  *   7. 返回 { token, expires_time }
  */
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { withTx, type Container } from "@/lib/di";
 import type { Env } from "@/env";
 import { user as userTable } from "@/models/schema";
@@ -52,6 +52,7 @@ export class LoginService {
     }).from(userTable).where(and(
       eq(userTable.phone, phone),
       eq(userTable.isDel, 0),
+      isNull(userTable.deleteTime),
     )).limit(2);
     if (rows.length > 1) {
       throw new ValidateException("手机号关联多个账号，请联系客服处理");
@@ -181,6 +182,7 @@ export class LoginService {
         .from(userTable)
         .where(and(
           eq(userTable.isDel, 0),
+          isNull(userTable.deleteTime),
           or(eq(userTable.account, account), eq(userTable.phone, account)),
         ))
         .limit(1);
@@ -250,6 +252,7 @@ export class LoginService {
           status: userTable.status,
         }).from(userTable).where(and(
           eq(userTable.isDel, 0),
+          isNull(userTable.deleteTime),
           or(eq(userTable.account, phone), eq(userTable.phone, phone)),
         )).limit(2);
         if (existing.length > 1) {
@@ -300,6 +303,7 @@ export class LoginService {
       const rows = await tx.select({ uid: userTable.uid }).from(userTable)
         .where(and(
           eq(userTable.isDel, 0),
+          isNull(userTable.deleteTime),
           or(eq(userTable.account, account), eq(userTable.phone, account)),
         )).for("update").limit(2);
       if (rows.length > 1) {
@@ -320,6 +324,7 @@ export class LoginService {
       }).from(userTable).where(and(
         eq(userTable.uid, uid),
         eq(userTable.isDel, 0),
+        isNull(userTable.deleteTime),
       )).for("update").limit(1);
       const current = currentRows[0];
       if (!current) throw new ValidateException("用户不存在");
@@ -335,6 +340,7 @@ export class LoginService {
       const duplicate = await tx.select({ uid: userTable.uid }).from(userTable)
         .where(and(
           eq(userTable.isDel, 0),
+          isNull(userTable.deleteTime),
           sql`${userTable.uid} <> ${uid}`,
           or(eq(userTable.account, phone), eq(userTable.phone, phone)),
         )).limit(1);
@@ -360,6 +366,7 @@ export class LoginService {
       }).from(userTable).where(and(
         eq(userTable.uid, uid),
         eq(userTable.isDel, 0),
+        isNull(userTable.deleteTime),
       )).for("update").limit(1);
       const current = currentRows[0];
       if (!current) throw new ValidateException("用户不存在");
@@ -367,6 +374,7 @@ export class LoginService {
       const duplicate = await tx.select({ uid: userTable.uid }).from(userTable)
         .where(and(
           eq(userTable.isDel, 0),
+          isNull(userTable.deleteTime),
           sql`${userTable.uid} <> ${uid}`,
           or(eq(userTable.account, phone), eq(userTable.phone, phone)),
         )).limit(1);

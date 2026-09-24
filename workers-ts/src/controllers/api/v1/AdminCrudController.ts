@@ -50,8 +50,10 @@ import { StoreOperationsService } from "@/services/store/StoreOperationsService"
 import { generatePickupVerifyCode } from "@/services/order/StoreOrderWriteoffService";
 import { enqueueOrderDeliveryNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { assertManualOrderDeliveryType } from "@/services/order/ManualVirtualDeliveryPolicy";
+import { assertPresaleDispatchReady } from "@/services/activity/PresaleFulfillmentSnapshot";
 import { AdminRefundReadService, adminRefundId } from "@/services/admin/AdminRefundReadService";
 import { AdminOrderReadService } from "@/services/admin/AdminOrderReadService";
+import { listAdminUsers } from "@/services/admin/AdminUserListService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
 import {
@@ -541,6 +543,7 @@ export async function adminOrderDelivery(c: C) {
         throw new ValidateException("拼团尚未成功，不能发货");
       }
     }
+    await assertPresaleDispatchReady(tx, order);
     let verifyCode = "";
     if (deliveryType === "send") {
       const activeDelivery = await tx
@@ -714,18 +717,11 @@ export async function adminUsersSetLabel(c: C) {
 
 /** GET /api/admin/user/list — 用户列表 */
 export async function adminUserList(c: C) {
-  const q = c.req.query();
-  const page = Number(q.page ?? 1);
-  const limit = Number(q.limit ?? 10);
-  const container = c.get("container");
-
-  const where: Record<string, unknown> = { isDel: 0 };
-  if (q.uid) where.uid = Number(q.uid);
-  if (q.phone) where.phone = q.phone;
-  if (q.group_id) where.groupId = Number(q.group_id);
-
-  const list = await container.userDao.selectList({ where, page, limit });
-  return jsonOk(c, { list, page, limit });
+  privateNoStore(c);
+  if (Object.values(c.req.queries()).some(values => values.length !== 1)) {
+    throw new ValidateException('用户查询参数不能重复');
+  }
+  return jsonOk(c, await listAdminUsers(c.get('container'), c.req.query()));
 }
 
 /** GET /api/admin/user/info/:id — 用户详情 */

@@ -188,6 +188,9 @@ export const storeOrder = pgTable(
       .on(t.paid, t.supplierAllocationStatus, t.id)
       .where(sql`${t.supplierAllocationStatus} = 1`),
     index("so_add_time").on(t.addTime),
+    index("so_assisted_actor_list")
+      .on(t.staffId, t.isChannel, t.isSystemDel, t.isDel,
+        t.addTime.desc().nullsFirst(), t.id.desc().nullsFirst()),
     index("so_spread_uid").on(t.spreadUid),
     index("so_spread_two_uid").on(t.spreadTwoUid),
     index("so_division_id").on(t.divisionId),

@@ -1,0 +1,81 @@
+{
+  "date": "2026-09-23",
+  "status": "local-assisted-member-guest-purchase-login-acceptance-passed-not-deployed",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "scope": {
+    "productionConnected": false, "committed": false, "pushed": false, "deployed": false,
+    "businessCodeChanged": false, "schemaOrPrivilegePlanChanged": false,
+    "platformBindingsOrDependenciesChanged": false, "cumulativeQuotaEnabled": false,
+    "newTestFiles": ["test/assisted-purchase-runtime-postgres.test.ts"],
+    "runnerChange": "One exact maintenance-suite allowlist entry and corresponding pre-binary validation test; no timeout/concurrency/ownership relaxation"
+  },
+  "acceptance": {
+    "schema": "Complete registered 279-table owned PG16.15 fixture",
+    "databaseRoles": "Two independent actual LOGINs, installed by reviewed whole-shop commissioning and verified by exact runtime audits before business operations",
+    "httpRoutes": ["POST cart/add/:uid", "POST confirm/:uid", "POST computed/:key/:uid", "POST create/:key/:uid"],
+    "httpMiddleware": "Actual per-route adminRuntimeAuthMiddleware, JWT signature/password claim, live account state and SQL role permissions; level=1 actor with order.assisted only",
+    "purchaseConnection": "Application container, never Admin management fallback; management receipt SELECT and application config UPDATE both denied",
+    "scenarios": ["member/saved-address", "guest/manual-address", "member/manual-address", "member/pickup", "member/virtual", "guest/virtual"],
+    "points": "100 quoted/captured/restored for members; zero for guests even when useIntegral=true",
+    "cancellation": "Actual scheduled close; immutable receipts produced by installed triggers; stock/SKU/cart/user restoration; repeated close has no additional effect",
+    "negativeChecks": [
+      "Cross-admin, cross-target and cross-guest carts and quotes rejected without business writes",
+      "Missing token, absent order.assisted permission, disabled actor and stale password claim rejected",
+      "Saved quote cannot bypass subsequent account disable, password change or role revocation",
+      "Missing origin INSERT rolls back member and guest creation; no higher-privilege fallback",
+      "Missing cancellation INSERT rolls back guest scheduled compensation; explicit reviewed maintenance upgrade enables one retry"
+    ],
+    "requestSessionsRemaining": 0,
+    "externalFetchForbidden": true,
+    "syntheticBoundaries": ["Locally issued JWT, not login endpoint", "KV", "Sequence", "Loopback database URLs instead of Hyperdrive transport", "Redis token storage/revocation disabled"]
+  },
+  "tests": {
+    "uniquePassed": 201, "newCases": 16, "files": 5, "skipped": 0,
+    "counting": "Only final passing file results; previous phase and intermediate/failed executions excluded",
+    "native": {
+      "passed": 73, "seconds": 172.17, "session": 95788, "startedLocal": "10:15:49",
+      "cluster": "finance-postgres-Put36r", "port": 54003,
+      "testFiles": [{"path": "test/assisted-purchase-runtime-postgres.test.ts", "passed": 15}, {"path": "test/order-delivery-address.test.ts", "passed": 58}]
+    },
+    "unit": {
+      "passed": 128, "seconds": 11.15, "session": 85182, "startedLocal": "10:13:08",
+      "testFiles": ["test/admin-assisted-order-migration.test.ts", "test/local-finance-postgres-runner.test.ts", "test/admin-runtime-auth.test.ts"]
+    },
+    "typecheck": {"unit": "passed", "runtime": "passed", "finalSession": 4756},
+    "workerdRunThisPhase": false,
+    "workerdGate": "Prior Windows startup failure remains open; no passing runtime claim",
+    "diffWhitespace": "passed"
+  },
+  "developmentFailures": [
+    {"session": 76956, "cluster": "finance-postgres-yZ5xZE", "port": 59170, "passed": 1, "failed": 7, "seconds": 74.75,
+      "cause": "Test mounted auth through wildcard use(), unlike production per-route auth, changing c.req.routePath and therefore permission selection",
+      "fix": "Use production per-route attachment; no role elevation or business-code change"},
+    {"session": 90264, "cluster": "finance-postgres-x89di8", "port": 57588, "passed": 8, "failed": 0, "seconds": 77.16,
+      "countedSeparately": false, "followup": "Expanded to six delivery/actor scenarios plus three post-quote live-authorization changes before full final rerun"}
+  ],
+  "cleanup": {
+    "clusters": ["finance-postgres-yZ5xZE", "finance-postgres-x89di8", "finance-postgres-Put36r"],
+    "eachRunnerReportedFixtureDatabasesAndRolesRemaining": 0,
+    "eachIndependentPgCtlStatus": 3, "eachPidFilePresent": false, "eachBootstrapPasswordPresent": false,
+    "eachOwnedPostgresProcessCount": 0, "matchingListeners": 0, "matchingTestOrTypeProcesses": 0,
+    "stoppedDiagnosticDirectoriesRetained": true
+  },
+  "sourceSha256": {
+    "test/assisted-purchase-runtime-postgres.test.ts": "00b33b7b3d824d46bf7ed1495f950c557e35f4bed017fe575ee521451cf4ad5a",
+    "scripts/run-local-finance-postgres.mjs": "40e2876df3c6c5d33c0569461fbfba7bf1f74586d49cbe955857d1cb97bad5eb",
+    "test/local-finance-postgres-runner.test.ts": "0870db671121510709fd2772e1f1913920cc8e263d8fe4b30367411032aed444",
+    "src/services/admin/AdminAssistedOrderService.ts": "51693867367379b42efdbfef6befb938b0503987ffbf92234f403e1aefca19f5",
+    "src/controllers/api/v1/AdminController.ts": "e155379aec599cae7504702a6701b4a5f2afb4512c63df0c048bb2193512ffcb",
+    "src/middleware/admin-auth.ts": "b907a4f85ba58eca05c9f9272947dbefa577911d98eeb24aa4de64c11b05bfaa",
+    "src/middleware/admin-runtime-auth.ts": "6f43ddf32c495887e5908d6991b251c1cfaf9118bcd33e54d788353e2a50ff18",
+    "src/migrations/runtimeBusinessPrivilegePlan.ts": "4e7fa3903bce0df87386d394d986708231f39d8f3b2ed1cd1601703a209c10d8"
+  },
+  "checklist": {"completed": 240, "open": 164, "total": 404},
+  "remaining": [
+    "Remaining seven assisted routes and payment/list/coupon/edit/delete flows under full runtime identities",
+    "Other activity types and actual frontend assisted pages (FE-003G)",
+    "Actual login/Redis token revocation/provider/Hyperdrive/browser acceptance",
+    "Current-candidate Linux/workerd/immutable CI, production protocol/role rollout",
+    "Cumulative quota policy and integration; remains disabled"
+  ]
+}

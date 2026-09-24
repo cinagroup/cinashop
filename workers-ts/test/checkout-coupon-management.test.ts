@@ -8,6 +8,8 @@ import { adminCouponSave, adminCategorySave, adminCategoryDel, adminBrandSave } 
 import { couponCreate, couponStatus, couponDelete } from '../src/controllers/out/OutApiController';
 import { runCouponProductScopeFence } from '../src/migrations/runCouponProductScopeFence';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 import { waitForFinanceBlock, withFinancePeers, type FinancePeer } from './helpers/financePeers';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { storeCouponIssue, storeCouponProduct, storeCouponUser, storeCouponIssueUser, storeProduct, storeProductCategory, storeBrand,
@@ -56,6 +58,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL)).each(['columns', 
       try {
         const api = await import('drizzle-kit/api'), models = await import('../src/models/schema');
         await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(models))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db);
+        await completePurchaseCancellationEvidenceOrm(owned.db);
         fullDatabase = owned;
         return owned;
       } catch (error) { await owned.close(); throw error; }

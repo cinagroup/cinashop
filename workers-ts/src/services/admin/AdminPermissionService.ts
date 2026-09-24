@@ -227,7 +227,10 @@ function matchesRoute(route: string, matcher: string): boolean {
 }
 
 function isAssistedOrderRoute(route: string): boolean {
-  return route === "order/place/list" || route === "order/pay/status" ||
+  if (/^order\/form_image\/[^/]+\/[^/]+$/.test(route)) return true;
+  if (/^order\/form_preview\/[^/]+\/[^/]+$/.test(route)) return true;
+  if (/^order\/form\/[^/]+\/[^/]+$/.test(route)) return true;
+  return route === "order/place/list" || /^order\/place\/detail\/[^/]+$/.test(route) || route === "order/pay/status" ||
     /^order\/(?:cart\/[^/]+|cart\/(?:add|del|num)\/[^/]+|confirm\/[^/]+|computed\/[^/]+\/[^/]+|coupons\/[^/]+|create\/[^/]+\/[^/]+|pay\/[^/]+)$/.test(route);
 }
 

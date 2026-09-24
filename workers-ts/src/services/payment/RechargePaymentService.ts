@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { Env } from "@/env";
-import { withTx, type Container } from "@/lib/di";
+import { withTx, type Container, type DbClient } from "@/lib/di";
 import { user as userTable, userBill, userRecharge } from "@/models/schema";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { assertWechatPaymentProfileAvailable } from "@/services/payment/PaymentReadinessService";
@@ -18,6 +18,8 @@ export interface ApplyRechargePaymentInput {
   expectedAmountCents: number;
   uid?: number;
   now?: number;
+  /** Recheck a provider query's evidence while the order row is locked. */
+  authorizeBeforePayment?: (tx: DbClient) => Promise<void>;
 }
 
 export interface ApplyRechargePaymentResult {
@@ -71,6 +73,7 @@ export async function applyRechargePayment(
     if (params.uid !== undefined && order.uid !== params.uid) {
       throw new ValidateException("订单不属于当前用户");
     }
+    await params.authorizeBeforePayment?.(tx);
 
     const priceCents = decimalToCents(order.price);
     const giveCents = decimalToCents(order.givePrice);

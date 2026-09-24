@@ -7,6 +7,8 @@ import { createPinia } from "pinia";
 import { AxiosError } from "axios";
 import { seckillComponentPlugin, registerSeckillPurchaseTests } from "./seckill-purchase.test.mjs";
 import { combinationComponentPlugin, registerCombinationPurchaseTests } from './combination-purchase.test.mjs';
+import { presaleComponentPlugin, registerPresalePurchaseTests } from './presale-purchase.test.mjs';
+import { presaleCatalogPlugin, registerPresaleCatalogTests } from './presale-catalog.test.mjs';
 import { bargainComponentPlugin, registerBargainPurchaseTests } from './bargain-purchase.test.mjs';
 import { checkoutShippingPlugin, registerCheckoutShippingTests } from './bargain-checkout-shipping.test.mjs';
 import { productDetailComponentPlugin, registerProductDetailLifecycleTests } from './product-detail-lifecycle.test.mjs';
@@ -37,7 +39,7 @@ before(async () => {
   localStorage.setItem("pc_token", "obsolete-persistent-token");
   localStorage.setItem("pc_uid", "99");
   server = await createServer({ configFile: false, root, envFile: false, logLevel: "error",
-    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root), productDetailComponentPlugin(root), cartTemplatePlugin(root), orderDetailPlugin(root), orderListPlugin(root), refundApplyPlugin(root), refundRecordsPlugin(root)],
+    plugins: [vue(), seckillComponentPlugin(root), combinationComponentPlugin(root), presaleComponentPlugin(root), presaleCatalogPlugin(root), bargainComponentPlugin(root), checkoutShippingPlugin(root), productDetailComponentPlugin(root), cartTemplatePlugin(root), orderDetailPlugin(root), orderListPlugin(root), refundApplyPlugin(root), refundRecordsPlugin(root)],
     optimizeDeps: { noDiscovery: true, include: [] },
     resolve: { alias: { "@": fileURLToPath(new URL("../src", import.meta.url)) } },
     server: { middlewareMode: true, hmr: false, watch: null } });
@@ -97,6 +99,8 @@ describe("actual Axios + storage + Pinia auth-session isolation", { concurrency:
   });
   registerSeckillPurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerCombinationPurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
+  registerPresalePurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
+  registerPresaleCatalogTests(() => ({ server, authUtils, api, response }));
   registerBargainPurchaseTests(() => ({ server, authUtils, api, location, navigation, response }));
   registerCheckoutShippingTests(() => ({ server, authUtils, api, response }));
   registerCheckoutIntentRecoveryTests(() => ({ server, authUtils, api, response }));

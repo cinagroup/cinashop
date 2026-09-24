@@ -1,0 +1,196 @@
+{
+  "date": "2026-09-23",
+  "status": "local-consumption-and-readback-verified-frontend-incomplete-not-deployed",
+  "baselineHead": "7a5508f2b0935d7be13f40b4ea0fdb7fd37ed38b",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "schemaChanged": false,
+    "privilegePlanChanged": false,
+    "bindingsOrDependenciesChanged": false,
+    "frontendChanged": false
+  },
+  "contract": {
+    "admission": "Assisted module-5 images only; exact authenticated actor, buyer/guest, checkout key and form digest; canonical safe int32 IDs, no HTTPS/signed URL bypass; metadata FOR SHARE NOWAIT inside create transaction.",
+    "snapshot": "Reserved assistedImageScope is discarded from templates/client input and regenerated server-side. Persistent evidence includes no raw tourist identity. The resulting JSON remains <= 1 MB. Collection stays PHP-compatible and atomically commits with order/stock/points.",
+    "read": "New GET /api/admin/order/form/:orderId/:uid requires order.assisted and exact original actor/buyer/visible order on application LOGIN, READ ONLY REPEATABLE READ. Customer detail and nested split detail use the same reader. Split child must retain the exact visible payment-root snapshot and source identity; canonical refs are signed only for matching module-5 metadata. Internal evidence is stripped from these detail outputs, not claimed stripped from every legacy raw/list DTO.",
+    "guestDelivery": "A real split test exposed UID=0 rejection in delivery notification enqueue. Enqueue and consumption now check authoritative ordinary assisted-guest source. Existing configured SMS uses the order phone; guest paths never read a shared UID=0 member/WeChat identity or write shared inbox messages. Other notice types retain positive-user requirements."
+  },
+  "runs": [
+    {
+      "kind": "initial-native-red",
+      "session": 31723,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-8nCCt9",
+      "port": 56627,
+      "startLocal": "2026-09-23 14:56:07 Asia/Singapore",
+      "durationSeconds": 140.32,
+      "passed": 22,
+      "failed": 1,
+      "skipped": 0,
+      "note": "Guest real fulfillment split rolled back because delivery notification required positive user ID. Also not final source evidence: bounded-ID and read projection adjustments were made during this exploratory run.",
+      "fixtureRemainder": 0,
+      "shutdownVerified": {
+        "pgCtlExit": 3,
+        "pidExists": false,
+        "bootstrapPasswordExists": false,
+        "listeners": 0
+      }
+    },
+    {
+      "kind": "final-native-consumption-and-ordinary",
+      "session": 78969,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-CRAyeE",
+      "port": 62425,
+      "startLocal": "2026-09-23 15:01:25 Asia/Singapore",
+      "durationSeconds": 160.84,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        "test/assisted-form-consumption-postgres.test.ts",
+        "test/pc-checkout-form-postgres.test.ts"
+      ],
+      "fixtureRemainder": 0,
+      "shutdownVerified": {
+        "pgCtlExit": 3,
+        "pidExists": false,
+        "bootstrapPasswordExists": false,
+        "listeners": 0
+      }
+    },
+    {
+      "kind": "intermediate-unit-red",
+      "session": 62697,
+      "startLocal": "2026-09-23 15:02:23 Asia/Singapore",
+      "durationSeconds": 13.04,
+      "passed": 175,
+      "failed": 1,
+      "skipped": 0,
+      "note": "Existing notification operation DDL equality differed only in CRLF/LF. Normalize line endings on both inputs; no DDL changed."
+    },
+    {
+      "kind": "final-unit-eight-files",
+      "session": 5866,
+      "startLocal": "2026-09-23 15:04:52 Asia/Singapore",
+      "durationSeconds": 10.9,
+      "passed": 194,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        "test/system-form-migration.test.ts",
+        "test/admin-assisted-order-migration.test.ts",
+        "test/assisted-form-attachment-scope.test.ts",
+        "test/assisted-form-read.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/order-notification-outbox.test.ts",
+        "test/order-notification-delivery.test.ts",
+        "test/supplier-split-fulfillment.test.ts"
+      ]
+    },
+    {
+      "kind": "final-native-assisted-regression",
+      "session": 96341,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-UDSA8z",
+      "port": 52408,
+      "startLocal": "2026-09-23 15:04:48 Asia/Singapore",
+      "durationSeconds": 582.11,
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        "test/assisted-purchase-runtime-postgres.test.ts"
+      ],
+      "fixtureRemainder": 0,
+      "shutdownVerified": {
+        "pgCtlExit": 3,
+        "pidExists": false,
+        "bootstrapPasswordExists": false,
+        "listeners": 0
+      }
+    },
+    {
+      "kind": "customer-generation-regression",
+      "session": 39000,
+      "cluster": "C:/cinagroup/cinashop/.cache/finance-postgres-g6MdPB",
+      "port": 50970,
+      "status": "passed",
+      "files": [
+        "test/customer-order-generations.test.ts"
+      ],
+      "startLocal": "2026-09-23 15:15:08 Asia/Singapore",
+      "durationSeconds": 100.6,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "fixtureRemainder": 0,
+      "shutdownVerified": {
+        "pgCtlExit": 3,
+        "pidExists": false,
+        "bootstrapPasswordExists": false,
+        "listeners": 0
+      }
+    }
+  ],
+  "typecheck": {
+    "unit": "passed",
+    "runtime": "passed",
+    "session": 81025
+  },
+  "sources": {
+    "workers-ts/src/services/system/AssistedFormAttachmentScope.ts": "79e6608502f0c8109086e3808f4daca412e607f4cc8011f0867f3dded52a15cd",
+    "workers-ts/scripts/run-local-finance-postgres.mjs": "2ec4f5c6a1e19f6d7c738d4a71bd9cab5aebb303554f798b0d2a42dc8bd1910a",
+    "workers-ts/test/assisted-form-read.test.ts": "7d84ccbb66d6cd1a95a1ec6d3e4857a8425e38b733c55a260483aa8de73f9513",
+    "workers-ts/test/admin-assisted-order-migration.test.ts": "9e043dc8671e659950da6685cacfa6ec230f17e6462f9aff984dc84e40a7e6ab",
+    "workers-ts/src/services/system/AttachmentService.ts": "454cb187c1cfe0007a909930cd21dcd7a26296cb4e87fe62f5d577baf7ed76e6",
+    "workers-ts/test/order-notification-delivery.test.ts": "07f2c8311aa4cf52bcf296309f641468a40fe69f277f7481e7ec912854381ae2",
+    "workers-ts/test/system-form-migration.test.ts": "de5ba0cb997040ff91bbe97d3c141bf626bb9e5fd89229c1d9ee9b69320a0fc5",
+    "workers-ts/test/customer-order-generations.test.ts": "16fd313161fd68ea7d4d6f19634315c5d918b52612e5cd18a5718de9a398f04a",
+    "workers-ts/test/order-notification-outbox.test.ts": "e9ae49bcb984f80458cd969a5d17ab717485e36bf2e5abaf44e06322da053bb7",
+    "workers-ts/test/assisted-purchase-runtime-postgres.test.ts": "c4e589f39b5046aeafe4e0f71168d82e23ca55ec3119c2c81865648c9674c021",
+    "workers-ts/src/routes/v1/index.ts": "556d745b523a586ef96b44d3d260f36269e989e5466a3f96f9f7260c7871f2aa",
+    "workers-ts/src/services/admin/AdminPermissionService.ts": "8689c8017fce7c69d2b8b131be164bfa02f083b042f94ee7dbfbd6fdf3e9d38f",
+    "workers-ts/src/services/order/StoreOrderCreateService.ts": "3c822c24af6b4e6d9440089b98c49080bb4c3d7bda80d8f5d9dbaab584610e64",
+    "workers-ts/src/services/admin/AdminAssistedOrderService.ts": "1774b1d97a8585b8184c5d84fa5fe14900578a1380d58d7df92bdf6f6354e632",
+    "workers-ts/src/services/order/OrderSystemFormService.ts": "86575743e5c851492af1dd613bd1c6ff5376bc5d6485853c0aa571845c200237",
+    "workers-ts/test/pc-checkout-form-postgres.test.ts": "743698b6a7af34da971c32b66f31de2da5d10a87e9fe8a3c78bf146a047bd8ab",
+    "workers-ts/src/controllers/api/v1/AdminController.ts": "994c64b9139e2f8ff243cefbc78ca5471011f45fd483abf9442c6fa7e9ac6dc2",
+    "workers-ts/test/assisted-form-consumption-postgres.test.ts": "b58cfcff424373720787d179c3f5a5ffea37cf1be0300ac35a1c6e692b632c76",
+    "workers-ts/src/services/order/OrderNotificationOutboxService.ts": "47e44e5cc0e150d7e1183fa113154037dc00eb0b9660b145ac452d83c254d33d"
+  },
+  "evidenceLimits": [
+    "Real local PostgreSQL16.15 registered schema, independent app/admin LOGINs, JWT and SQL authorization. KV/Sequence/R2/Queue/Hyperdrive transport are synthetic and external fetch is forbidden.",
+    "Real supplier allocation, supplier ledger and fulfillment split; the paid transition is synthetic, not a provider acceptance.",
+    "SMS tasks are staged only. No real SMS, WeChat, R2, workerd, browser, current candidate Linux/CI, or production acceptance is claimed.",
+    "Frontend still blocks formId>0; generic admin/supplier display and every raw/list DTO are not claimed completed.",
+    "No original files or unrelated user changes were discarded; no git staging/commits, no production connections."
+  ],
+  "remaining": [
+    "Integrate ten-component assisted form UI and isolated upload; canonical IDs must be separate from expiring preview links.",
+    "Persist minimal original answers under the existing explicit local-plaintext consent and exact-key unknown-outcome replay.",
+    "Add authenticated checkout-scoped draft preview renewal and bounded unused/uncertain object lifecycle without deleting referenced images.",
+    "Bind authoritative template content/version across quote and create.",
+    "Complete rendered browser, actual platform/provider and remaining checklist gates."
+  ],
+  "references": [
+    "https://developers.cloudflare.com/workers/best-practices/workers-best-practices/",
+    "https://www.postgresql.org/docs/16/sql-select.html"
+  ],
+  "typesReference": "Installed @cloudflare/workers-types 5.20260828.1, consistent with the prior blocked latest-package retrieval. No new binding/API/config/dependency shape introduced.",
+  "checklist": {
+    "done": 240,
+    "open": 164,
+    "total": 404,
+    "closedThisTurn": 0
+  },
+  "finalCoverage": {
+    "distinctTests": 308,
+    "newTests": 39,
+    "native": 114,
+    "unitAndContracts": 194,
+    "files": 12,
+    "skipped": 0
+  },
+  "diffCheck": "passed"
+}

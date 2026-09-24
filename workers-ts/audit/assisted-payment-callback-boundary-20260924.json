@@ -1,0 +1,61 @@
+{
+  "date": "2026-09-24",
+  "status": "local-payment-callback-race-gate-passed-release-gate-open",
+  "scope": {
+    "productionConnected": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "schemaChanged": false,
+    "permissionChanged": false,
+    "providerResponses": "synthetic",
+    "signatureBoundary": "Verified callback objects are passed into persistence only after controller verification; real provider signatures were not exercised"
+  },
+  "coordination": {
+    "boundary": "PostgreSQL pg_advisory_xact_lock with order-number namespace store-order-payment-evidence:v1",
+    "registrationLockOrder": "order boundary, provider transaction advisory, provider/order advisory, reconciliation case",
+    "assistedInitiationLockOrder": "store_order row, order boundary, provider reconciliation locks and case",
+    "querySettlementLockOrder": "local order row, order boundary, reconciliation case; all held through paid transaction commit",
+    "manualAccept": "Case row first, then store/recharge/membership order row FOR UPDATE NOWAIT",
+    "offlineException": "Exact xx plus 30 lowercase hex order numbers retain their separate other_order protocol",
+    "queryEvidence": "Successful provider query registers its transaction ID on the already claimed case before settlement; conflicting callback or transaction blocks settlement; finish rechecks and preserves concurrent evidence"
+  },
+  "finalVerification": {
+    "nativePostgresVersion": "16.15",
+    "suites": [
+      {"file": "test/assisted-purchase-flow-postgres.test.ts", "passed": 49, "failed": 0, "cluster": "finance-postgres-hf90L7", "seconds": 470.44},
+      {"file": "test/assisted-payment-race-postgres.test.ts", "passed": 4, "failed": 0, "cluster": "finance-postgres-t5KnuL", "seconds": 48.58},
+      {"file": "test/payment-reconciliation-membership.test.ts", "passed": 35, "failed": 0, "cluster": "finance-postgres-aocjh1", "seconds": 19.01},
+      {"file": "test/offline-order-callback-pipeline.test.ts", "passed": 33, "failed": 0, "cluster": "finance-postgres-hnGKEY", "seconds": 188.84}
+    ],
+    "nativePassedUnique": 121,
+    "eachFinalClusterFixtureRemainder": 0,
+    "eachFinalClusterStopped": true,
+    "independentFinalClusterCheck": "All four: pg_ctl status exit 3, postmaster.pid absent, zero listeners on recorded ports",
+    "reconciliationUnit": {"file": "test/payment-reconciliation.test.ts", "passed": 16, "failed": 0},
+    "unitAndRuntimeTypecheck": "passed",
+    "diffWhitespace": "passed"
+  },
+  "raceAssertions": [
+    "WeChat and Alipay verified callback-first uncommitted transactions block local repricing and provider claims until commit",
+    "Local order writer first blocks a callback until its order-boundary transaction commits",
+    "Rolled-back callback releases the boundary and leaves no event or case",
+    "Duplicate verified notifications deduplicate; missing and ordinary store-order callback branches persist",
+    "ACCEPT_LOCAL on a locked store, recharge or membership order returns promptly without an action",
+    "Callback T1 before queried T2 blocks settlement and preserves T1 case and event identity",
+    "Queried T2 registered first, then callback T1 holding an uncommitted boundary: settlement waits, then rolls back without local paid or payment outbox",
+    "Matching queried T2 settles once; repeated reconciliation message is terminal replay",
+    "Reserved offline xx signed callback does not wait on the store-order boundary"
+  ],
+  "stageFailuresExcludedFromFinalCount": [
+    {"result": "47/49", "cause": "PostgreSQL bigint callback_event_id was returned as a string to a fixture asserting number", "correction": "Cast only the fixture callback ID projection below int32"},
+    {"result": "31/33", "cause": "First query fence reused INSERT ON CONFLICT but the minimal reconciliation runtime role lacked case INSERT", "correction": "Lock and UPDATE the already claimed case under the same advisory order; final 35/35"},
+    {"result": "no tests started", "cluster": "finance-postgres-d9sHe2", "cause": "initdb sync data exceeded the runner's 30-second observation timeout", "followup": "Verified no postmaster.pid, server or port 58401 listener; removed only the resolved disposable directory; used a fresh cluster for final 49/49"},
+    {"result": "15/16", "cause": "Text-only unit assertion matched LF literally against a mixed CRLF/LF Windows source file", "correction": "Normalize line endings only in the test read; final 16/16"}
+  ],
+  "remainingGate": [
+    "Real WeChat and Alipay callbacks and signatures, provider unknown-result recovery, and production lifecycle are unverified",
+    "Historical migrated order-number domains have not been audited against the reserved offline prefix",
+    "Published mini-program and native app identities, signing certificates, maximum released versions and legacy API origin are unavailable; in-place upgrade is unverified"
+  ]
+}

@@ -72,7 +72,8 @@ describe("虚拟卡密商品支付后自动交付", () => {
   it("把原子领取接入既有可重放支付 outbox，而不是请求内浮动执行", () => {
     const outbox = readFileSync("src/services/order/OrderOutboxService.ts", "utf8");
     const delivery = readFileSync("src/services/order/VirtualProductDeliveryService.ts", "utf8");
-    expect(outbox).toContain("await deliverPaidVirtualOrders(tx, allocation.fulfillmentOrders, now)");
+    expect(outbox).toContain("await deliverPaidVirtualOrders(tx, immediate, now)");
+    expect(outbox).toContain("await enqueuePresaleDeliveryIntent(tx, fulfillment, order.id)");
     expect(delivery).toContain('.for("update", { skipLocked: true })');
     expect(delivery).toContain("eq(storeProductVirtual.uid, 0)");
     expect(delivery).toContain('deliveryType: "fictitious"');

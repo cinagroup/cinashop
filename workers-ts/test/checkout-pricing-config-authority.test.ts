@@ -10,6 +10,8 @@ import { memberRight, systemConfig, storeProduct } from '../src/models/schema';
 import { protectCheckoutPricingSources, readCheckoutPricingSources } from '../src/services/order/CheckoutPricingSources';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 import { withTx } from '../src/lib/di';
+import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM checkout pricing SQL authority', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -24,6 +26,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM checkou
       try {
         const api = await import('drizzle-kit/api'), schema = await import('../src/models/schema');
         await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db);
+        await completePurchaseCancellationEvidenceOrm(owned.db);
         return owned;
       } catch (error) { await owned.close(); throw error; }
     });

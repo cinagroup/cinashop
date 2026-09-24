@@ -119,6 +119,7 @@ export interface LiveRoomListItem {
   room_id: number;
   name: string;
   cover_img: string;
+  share_img?: string;
   show_time: string;
   anchor_name: string;
   anchor_img: string;

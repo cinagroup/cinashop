@@ -104,7 +104,10 @@
       </view>
 
       <view v-else-if="block.name === 'ranking' && hasRanks" class="diy-section">
-        <view class="diy-section-title">{{ componentText(block, 'titleTxtConfig', '商品排行榜') }}</view>
+        <view class="diy-rank-heading">
+          <text class="diy-section-title">{{ componentText(block, 'titleTxtConfig', '商品排行榜') }}</text>
+          <text class="diy-rank-more" @tap="open('/pages/columnGoods/rank/index')">查看全部 ›</text>
+        </view>
         <view v-for="group in rankGroups" :key="group.key" v-show="group.items.length" class="diy-rank-group">
           <text class="diy-rank-label">{{ group.label }}</text>
           <scroll-view scroll-x class="diy-horizontal-scroll">
@@ -126,7 +129,7 @@
       <view
         v-else-if="block.name === 'newVip' && hasNewcomer"
         class="diy-section diy-newcomer"
-        @tap="open('/pages/activity/index')"
+        @tap="open('/pages/activity/new_customer/index')"
       >
         <view class="diy-section-title">新人专享福利</view>
         <text v-if="newcomerPoints > 0" class="diy-newcomer-points">注册即得 {{ newcomerPoints }} 积分</text>
@@ -135,7 +138,7 @@
             v-for="product in newcomer.newcomer_products"
             :key="product.id"
             class="diy-rank-product"
-            @tap.stop="goProduct(product.product_id ?? product.id)"
+            @tap.stop="goNewcomerProduct(product.id)"
           >
             <image class="diy-rank-image" :src="safeImage(product.image)" mode="aspectFill" />
             <text class="diy-rank-name">{{ product.store_name }}</text>
@@ -384,6 +387,10 @@ function goProduct(id: number): void {
   if (Number.isSafeInteger(id) && id > 0) open(`/pages/goods/detail?id=${id}`);
 }
 
+function goNewcomerProduct(id: number): void {
+  if (Number.isSafeInteger(id) && id > 0) open(`/pages/activity/newcomerDetail?id=${id}`);
+}
+
 function sanitizedRichText(block: DiyComponent): string {
   const value = diyNestedValue(block, "richText");
   return typeof value === "string"
@@ -520,6 +527,9 @@ watch(() => props.components, () => { void hydrate(); }, { immediate: true });
 .diy-menu-image { width: 92rpx; height: 92rpx; border-radius: 20rpx; background: #f5f5f5; }
 .diy-menu-label { width: 100%; margin-top: 10rpx; overflow: hidden; color: #555; font-size: 23rpx; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .diy-section-title { display: block; margin-bottom: 20rpx; font-size: 31rpx; font-weight: 600; color: #222; }
+.diy-rank-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12rpx; }
+.diy-rank-heading .diy-section-title { min-width: 0; }
+.diy-rank-more { flex-shrink: 0; color: #b84831; font-size: 23rpx; padding: 6rpx 0; }
 .diy-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }
 .diy-product-card { min-width: 0; overflow: hidden; border: 1rpx solid #eee; border-radius: 14rpx; }
 .diy-product-image { width: 100%; height: 280rpx; background: #f5f5f5; }

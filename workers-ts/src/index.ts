@@ -61,6 +61,7 @@ export default {
       OrderOutboxService,
       isOrderNotificationOutboxMessage,
       isOrderPaidOutboxMessage,
+      isPresaleDeliveryOutboxMessage,
     } = await import(
       "./services/order/OrderOutboxService"
     );
@@ -109,6 +110,7 @@ export default {
     const {
       consumeOrderNotificationOutboxQueueMessage,
       consumeOrderPaidOutboxQueueMessage,
+      consumePresaleDeliveryOutboxQueueMessage,
     } = await import(
       "./services/order/OrderPaidOutboxQueueConsumer"
     );
@@ -488,6 +490,11 @@ export default {
 
       if (isOrderPaidOutboxMessage(msg.body)) {
         await consumeOrderPaidOutboxQueueMessage(msg, outbox);
+        continue;
+      }
+
+      if (isPresaleDeliveryOutboxMessage(msg.body)) {
+        await consumePresaleDeliveryOutboxQueueMessage(msg, outbox);
         continue;
       }
 

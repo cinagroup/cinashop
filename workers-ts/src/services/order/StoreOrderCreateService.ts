@@ -76,8 +76,9 @@ import {
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
 import {
   collectOrderSystemForm,
+  loadActiveOrderSystemForm,
   loadOrderSystemFormSubmission,
-  readOrderSystemFormSnapshot,
+  readOrderSystemFormForOrder,
   OrderFormRejectedException,
 } from "@/services/order/OrderSystemFormService";
 import { AttachmentService } from "@/services/system/AttachmentService";
@@ -103,7 +104,9 @@ import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/
 import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
 import { activityRuleQuoteGuard } from "@/services/activity/ActivityRuleQuoteGuard";
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
+import { preparePresalePurchase, presaleProductQuoteGuard, presaleSkuQuoteGuard, protectPresalePrincipal, type PresalePurchaseSnapshot } from "@/services/activity/PresalePurchaseSnapshot";
 import { assertMarketingOfflinePaymentAllowed } from "@/services/payment/OrderPaymentPolicy";
+import { AssistedProviderPaymentPending, hasInitiatedAssistedProviderPayment } from "@/services/payment/AssistedProviderPaymentClaim";
 import { cartBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { assertBargainShippingMethod, assertBargainShippingQuote, type BargainShippingQuote } from "@/services/activity/BargainShippingPolicy";
 import { assertBargainPickup, assertBargainPickupQuote, boundBargainPickupTransaction } from "@/services/activity/BargainPickupPolicy";
@@ -113,6 +116,8 @@ import { checkoutFingerprint, readCheckoutConfirmation, assertCheckoutConfirmati
 import { assertCheckoutMembershipSnapshot, type CheckoutMembershipSnapshot } from './CheckoutMembershipSnapshot';
 import { assertCheckoutCouponTemplate } from './CheckoutCouponTemplateAuthority';
 import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
+import { verifyUnpaidCancellationLines } from './UnpaidOrderCancellationEvidence';
+import { recordPurchaseOriginEvidence } from './PurchaseOriginEvidence';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -142,7 +147,7 @@ export interface CreateOrderParams {
   /** Client channel; marketing orders allow offline payment only on PC. */
   from?: unknown;
   userIp: string;
-  /** 活动类型: 0普通 1秒杀 2砍价 3拼团 4积分 5套餐 7新人专享 */
+  /** 活动类型: 0普通 1秒杀 2砍价 3拼团 4积分 5套餐 6全款预售 7新人专享 */
   type?: number;
   /** 拼团: 参团的团 ID (0=开团) */
   pinkId?: number;
@@ -170,6 +175,8 @@ export interface CreateOrderParams {
 export interface StoreOrderCreationRuntime extends SystemConfigEnv {
   /** All public service entry points require a server-issued receipt. Pure core fixtures may omit this adapter policy. */
   requireConfirmation?: boolean;
+  /** Public checkout always captures. Omission is reserved for isolated core/legacy fixtures, never an HTTP or env option. */
+  requirePurchaseOrigin?: true;
   nextOrderId(): Promise<string>;
 }
 
@@ -191,6 +198,10 @@ export function customerVisibleManualVirtualContent(order: {
 export interface OrderPricingQuote {
   confirmationFingerprint: string;
   deliveryAddress: DeliveryAddressSnapshot['saved'];
+  /** Validated fields also exist for an unsaved assisted address. */
+  deliveryAddressFields: DeliveryAddressSnapshot['fields'] | null;
+  integralPolicy: { enabled: boolean; ratio: string };
+  systemFormId: number;
   /** Only returned to an explicit read-only order-coupon request. Never a reservation. */
   couponPage?: OrderCouponPage;
   rawTotalCents: number;
@@ -411,7 +422,7 @@ export interface CancelStoreOrderInput {
 
 /**
  * Cancel one unpaid order and restore every reserved resource in the same
- * PostgreSQL transaction, including the immutable cancellation status row.
+ * PostgreSQL transaction, including the cancellation status row.
  */
 export async function cancelStoreOrder(
   container: Container,
@@ -438,18 +449,54 @@ export async function cancelStoreOrder(
         (initial?.type !== order.type || initial.activityId !== order.activityId)) {
       throw new ValidateException("拼团订单活动已变化，请重试");
     }
-    if (order.pid === -1 || order.supplierAllocationStatus === 1) {
+    // Mixed-owner checkout marks the original unpaid root as awaiting allocation
+    // (1). That is a reservation, not a paid fulfillment split. Allocation itself
+    // holds this root lock, so recheck paid/ancestry after any competing writer.
+    if (order.pid !== 0 || ![0, 1].includes(order.supplierAllocationStatus)) {
       throw new ValidateException("拆分审计订单不能取消");
     }
     if (order.paid) throw new ValidateException("已支付订单不能取消");
     if (order.status !== 0 || order.isDel) throw new ValidateException("订单状态不允许取消");
+    if (order.isChannel === 2 && await hasInitiatedAssistedProviderPayment(tx, order.orderId)) {
+      throw new AssistedProviderPaymentPending();
+    }
+    const [child] = await tx.select({ id: storeOrder.id }).from(storeOrder)
+      .where(eq(storeOrder.pid, order.id)).limit(1);
+    if (child) throw new ValidateException('订单已存在履约子单，不能取消');
+
+    const usedIntegral = decimalToWholePoints(order.useIntegral);
+    if (usedIntegral > 0) {
+      // Points checkout holds user -> cart -> SKU, including mixed-owner orders. Never restore stock
+      // first and then wait for that user, which would reverse this lock order.
+      // An unrelated user-first writer may also need this order: do not wait.
+      try {
+        const [account] = await tx.select({ uid: userTable.uid }).from(userTable)
+          .where(eq(userTable.uid, uid)).limit(1).for('update', { noWait: true });
+        if (!account) throw new NotFoundException('用户不存在');
+      } catch (error) {
+        let cause: unknown = error;
+        for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+          if ('code' in cause && cause.code === '55P03') throw new ValidateException('积分余额正在更新，请稍后重试取消');
+          if (!('cause' in cause) || cause.cause === cause) break;
+          cause = cause.cause;
+        }
+        throw error;
+      }
+    }
 
     const cartInfos = await tx
-      .select()
+      .select({ id: storeOrderCartInfo.id, oid: storeOrderCartInfo.oid, uid: storeOrderCartInfo.uid,
+        cartId: storeOrderCartInfo.cartId, oldCartId: storeOrderCartInfo.oldCartId, productId: storeOrderCartInfo.productId,
+        skuUnique: storeOrderCartInfo.skuUnique, cartNum: storeOrderCartInfo.cartNum, refundNum: storeOrderCartInfo.refundNum,
+        splitStatus: storeOrderCartInfo.splitStatus, splitSurplusNum: storeOrderCartInfo.splitSurplusNum,
+        surplusNum: storeOrderCartInfo.surplusNum, isWriteoff: storeOrderCartInfo.isWriteoff,
+        cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderCartInfo.cartInfo}) <= 65536 THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
+      })
       .from(storeOrderCartInfo)
       .where(eq(storeOrderCartInfo.oid, order.id))
-      .orderBy(storeOrderCartInfo.id);
+      .orderBy(storeOrderCartInfo.id).limit(201).for('update');
     if (!cartInfos.length) throw new Error(`订单 ${orderId} 缺少商品快照，无法安全取消`);
+    verifyUnpaidCancellationLines(order, cartInfos);
 
     let missingLegacyActivityMain = false;
     let bargainParticipant: { id: number; bargainId: number } | null = null;
@@ -616,7 +663,6 @@ export async function cancelStoreOrder(
       }
     }
 
-    const usedIntegral = decimalToWholePoints(order.useIntegral);
     if (usedIntegral > 0) {
       const integralRows = await tx
         .update(userTable)
@@ -805,6 +851,7 @@ export class StoreOrderCreateService {
       {
         CONFIG_KV: this.env.CONFIG_KV,
         requireConfirmation: true,
+        requirePurchaseOrigin: true,
         nextOrderId: async () => {
           const seqId = this.env.SEQUENCE.idFromName("seq");
           const seq = this.env.SEQUENCE.get(seqId);
@@ -827,6 +874,9 @@ export class StoreOrderCreateService {
   async quoteOrder(
     params: Omit<CreateOrderParams, "key" | "userIp">,
     couponQuery?: OrderCouponQuery,
+    // Trusted service input only, never copied from an HTTP DTO. Lets ordinary
+    // assisted previews read SQL in one snapshot without doing KV I/O inside it.
+    previewFirstOrderConfig?: FirstOrderDiscountConfig,
   ): Promise<OrderPricingQuote> {
     return StoreOrderCreateService.createWithRuntime(
       this.container,
@@ -841,7 +891,7 @@ export class StoreOrderCreateService {
         key: `preview_${crypto.randomUUID().replaceAll("-", "")}`,
         userIp: "0.0.0.0",
       },
-      { preview: true, couponQuery },
+      { preview: true, couponQuery, previewFirstOrderConfig },
     );
   }
 
@@ -855,13 +905,13 @@ export class StoreOrderCreateService {
     c: Container,
     runtime: StoreOrderCreationRuntime,
     params: CreateOrderParams,
-    options: { preview: true; couponQuery?: OrderCouponQuery },
+    options: { preview: true; couponQuery?: OrderCouponQuery; previewFirstOrderConfig?: FirstOrderDiscountConfig },
   ): Promise<OrderPricingQuote>;
   static async createWithRuntime(
     c: Container,
     runtime: StoreOrderCreationRuntime,
     params: CreateOrderParams,
-    options?: { preview?: boolean; couponQuery?: OrderCouponQuery },
+    options?: { preview?: boolean; couponQuery?: OrderCouponQuery; previewFirstOrderConfig?: FirstOrderDiscountConfig },
   ): Promise<{ orderId: string; key: string } | OrderPricingQuote> {
     const { uid, key, cartIds } = params;
     const assisted = params.assisted;
@@ -1029,7 +1079,7 @@ export class StoreOrderCreateService {
     const activePaidMember = user
       ? pricingConfig.paidMemberEnabled && isPaidMembershipActive(user, pricingNow)
       : false;
-    const considersPaidMemberPrice = type === 0 && activePaidMember && pricingConfig.paidMemberPriceEnabled;
+    const considersPaidMemberPrice = (type === 0 || type === 6) && activePaidMember && pricingConfig.paidMemberPriceEnabled;
     const membershipSnapshot: CheckoutMembershipSnapshot | null = user && (pricingConfig.memberFunctionEnabled || pricingConfig.paidMemberEnabled)
       ? { uid, paidActive: pricingConfig.paidMemberEnabled ? activePaidMember : null,
           levelActive: pricingConfig.memberFunctionEnabled ? activeLevel : null,
@@ -1071,6 +1121,9 @@ export class StoreOrderCreateService {
       if (cart.productType !== product.productType) {
         throw new ValidateException(`商品「${product.storeName}」类型已变化，请重新购买`);
       }
+      if (type !== 6 && product.isPresaleProduct !== 0) {
+        throw new ValidateException('预售商品不能通过普通或其它活动订单购买，请重新选择');
+      }
       let itemSystemFormId = product.systemFormId;
       let activitySku: typeof storeProductAttrValue.$inferSelect | null = null;
       let sku = await c.storeProductAttrValueDao.getByUnique(
@@ -1092,6 +1145,7 @@ export class StoreOrderCreateService {
       if (sku.productId !== product.id) {
         throw new ValidateException("商品规格与商品不匹配");
       }
+      const presale = type === 6 ? preparePresalePurchase(cart, product, sku, user) : null;
 
       // 活动价 (M17: 秒杀/砍价/拼团替换 SKU 价)
       const rawUnitPriceCents = decimalToCents(sku.price);
@@ -1350,7 +1404,7 @@ export class StoreOrderCreateService {
         unitPriceCents = Math.round(Number(activitySku.price) * 100);
       }
 
-      if (type === 0 && cart.activityId === 0) {
+      if ((type === 0 || type === 6) && cart.activityId === 0) {
         const memberPrice = calculateMemberUnitPriceCents({
           basePriceCents: rawUnitPriceCents,
           levelDiscountPercent,
@@ -1383,6 +1437,7 @@ export class StoreOrderCreateService {
       supplierIds.add(product.type === 2 ? product.relationId : 0);
       orderItems.push({
         cart,
+        presale,
         product,
         sku,
         activitySku,
@@ -1466,7 +1521,8 @@ export class StoreOrderCreateService {
     const orderMerId = merIds.size === 1 ? [...merIds][0] : 0;
 
     const firstOrderConfig: FirstOrderDiscountConfig = type === 0 && user
-      ? await loadFirstOrderDiscountConfig(c, runtime)
+      ? (options?.preview && options.previewFirstOrderConfig
+          ? options.previewFirstOrderConfig : await loadFirstOrderDiscountConfig(c, runtime))
       : { enabled: false, limitEnabled: true, limitDays: 0, payPercent: 100, limitCents: 0 };
     const preliminaryNow = Math.floor(Date.now() / 1000);
     const preliminaryUsableIntegral = user
@@ -1502,6 +1558,9 @@ export class StoreOrderCreateService {
     const wantsIntegral = rawUseIntegral === true || (
       typeof rawUseIntegral === "number" && rawUseIntegral > 0
     );
+    // Confirmed full-payment presale policy: use the same quote, locked balance
+    // recalculation and atomic points ledger as ordinary orders; not type-4 redemption.
+    const supportsIntegralDeduction = type === 0 || type === 6;
     if (type === 4 && wantsIntegral) {
       throw new ValidateException("积分商品不能叠加普通订单积分抵扣");
     }
@@ -1509,7 +1568,7 @@ export class StoreOrderCreateService {
       throw new ValidateException(`积分不足, 需要 ${requiredIntegral} 积分`);
     }
     let integralQuote = calculateIntegralDeduction({
-      requested: wantsIntegral && type === 0,
+      requested: wantsIntegral && supportsIntegralDeduction,
       enabled: pricingConfig.integralEnabled,
       usablePoints: preliminaryUsableIntegral,
       payableCents: Math.max(0, totalCents - couponPriceCents - firstOrderPriceCents),
@@ -1596,6 +1655,10 @@ export class StoreOrderCreateService {
       totalCents - couponPriceCents - firstOrderPriceCents - deductionCents + postageCents,
     );
     let actualProductCents = Math.max(0, payCents - postageCents);
+    // A form ID alone does not bind an assisted quote to the fields the staff
+    // actually saw. Keep the parsed, bounded definition in the confirmation
+    // projection; the receipt stores only the outer SHA-256 fingerprint.
+    let assistedFormConfirmation: Awaited<ReturnType<typeof loadActiveOrderSystemForm>> | null = null;
     // Re-evaluated after final first-order/integral admission inside the transaction.
     // Mutable inventory and address-default metadata are deliberately not quote facts.
     const confirmationFingerprint = () => checkoutFingerprint({
@@ -1610,6 +1673,7 @@ export class StoreOrderCreateService {
         giveIntegral: seckillPricingSnapshot.giveIntegral, systemFormId: seckillPricingSnapshot.systemFormId,
         deliveryType: seckillPricingSnapshot.deliveryType, isSupportRefund: seckillPricingSnapshot.isSupportRefund } : null,
       combinationConfirmationRules, newcomerConfig, orderSystemFormId,
+      ...(assisted ? { assistedForm: assistedFormConfirmation } : {}),
       integralActivityId, discountActivityId, newcomerActivityId, newcomerActivitySkuId,
       address: deliveryAddress ? { id: deliveryAddress.saved?.id ?? 0, fields: deliveryAddress.fields, regions: deliveryAddress.regions } : null,
       shippingSnapshot, pricingConfig, firstOrderConfig, levelDiscountPercent, activePaidMember, membershipSnapshot,
@@ -1618,6 +1682,7 @@ export class StoreOrderCreateService {
         isNew: item.cart.isNew, productId: item.product.id, productType: item.product.productType,
         ownerType: item.product.type, relationId: item.product.relationId, activityId: item.cart.activityId,
         isSupportRefund: item.product.isSupportRefund,
+        ...(item.presale ? { presale: item.presale } : {}),
         integralRules: item.integralActivity ? { onceNum: item.integralActivity.onceNum, num: item.integralActivity.num,
           deliveryType: item.integralActivity.deliveryType, systemFormId: item.integralActivity.systemFormId } : null,
         skuId: item.sku.id, unique: item.sku.unique, suk: item.sku.suk, activitySkuId: item.activitySku?.id ?? 0,
@@ -1636,9 +1701,16 @@ export class StoreOrderCreateService {
       memberDiscountCents, levelDiscountCents, paidMemberDiscountCents, totalNum, isStoreFreePostage, gainIntegral,
     });
     if (options?.preview) {
+      if (assisted && orderSystemFormId > 0) {
+        assistedFormConfirmation = await loadActiveOrderSystemForm(c.db, orderSystemFormId);
+      }
       return {
         confirmationFingerprint: await confirmationFingerprint(),
         deliveryAddress: deliveryAddress?.saved ?? null,
+        deliveryAddressFields: deliveryAddress?.fields ?? null,
+        integralPolicy: { enabled: Boolean(user) && supportsIntegralDeduction && pricingConfig.integralEnabled,
+          ratio: pricingConfig.integralRatio },
+        systemFormId: orderSystemFormId,
         ...(options.couponQuery ? { couponPage: !user || preliminaryFirstOrderEligible || type !== 0
           ? { list: [], nextCursor: null }
           : await eligibleOrderCoupons(c, uid, orderItems, options.couponQuery) } : {}),
@@ -1673,6 +1745,9 @@ export class StoreOrderCreateService {
     const confirmation = runtime.requireConfirmation || params.quoteToken !== undefined
       ? await readCheckoutConfirmation(runtime.CONFIG_KV, { uid, key, adminId: assisted?.adminId, touristUid: assisted?.touristUid }, params.quoteToken)
       : null;
+    if (confirmation && assisted && orderSystemFormId > 0) {
+      assistedFormConfirmation = await loadActiveOrderSystemForm(c.db, orderSystemFormId);
+    }
     if (confirmation) assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
 
     // 5. 订单号只在真实创建时生成；只读报价不会消耗 Sequence DO 编号。
@@ -1718,7 +1793,7 @@ export class StoreOrderCreateService {
       // Bound values come from activity rows locked/compared below. Their terms stay
       // stable, but time must be evaluated again after every possible business wait.
       let finalActivityWindow: SQL | undefined;
-      if (shippingSnapshot || deliveryAddress) await boundShippingTemplateTransaction(tx);
+      if (shippingSnapshot || deliveryAddress || type === 6) await boundShippingTemplateTransaction(tx);
       if (type === 2 && shippingType === 2) await boundBargainPickupTransaction(tx);
       // 同一用户/幂等键必须在事务内串行化并复查。仅依赖唯一索引会把
       // 并发重试暴露为数据库异常，而不是返回第一次创建的订单。
@@ -1757,7 +1832,7 @@ export class StoreOrderCreateService {
         }
       }
       const now = Math.floor(Date.now() / 1000);
-      if (user && (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && type === 0))) {
+      if (user && (preliminaryFirstOrderEligible || (wantsIntegral && pricingConfig.integralEnabled && supportsIntegralDeduction))) {
         // 不同幂等键也必须按用户串行化首单资格。资格、订单和消费标记同事务提交，
         // 因此库存/快照等后续步骤失败时不会永久吃掉首单优惠。
         const lockedUsers = await tx
@@ -1790,7 +1865,7 @@ export class StoreOrderCreateService {
           now,
         );
         integralQuote = calculateIntegralDeduction({
-          requested: wantsIntegral && type === 0,
+          requested: wantsIntegral && supportsIntegralDeduction,
           enabled: pricingConfig.integralEnabled,
           usablePoints: lockedUsableIntegral,
           payableCents: Math.max(0, totalCents - couponPriceCents - firstOrderPriceCents),
@@ -1845,11 +1920,20 @@ export class StoreOrderCreateService {
         if (!stores[0]) throw new ValidateException("自提门店不存在或已暂停营业");
         verifyCode = await generatePickupVerifyCode(tx);
       }
+      if (confirmation && assisted && orderSystemFormId > 0) {
+        // The early read is only a fast rejection. This NOWAIT row lock is the
+        // decisive check: form management cannot edit between validation and
+        // commit, and changed fields demand a fresh quote before answers are
+        // interpreted against the new template.
+        assistedFormConfirmation = await loadActiveOrderSystemForm(tx, orderSystemFormId, true);
+        assertCheckoutConfirmation(confirmation, await confirmationFingerprint(), key);
+      }
       const preparedSystemForm = await loadOrderSystemFormSubmission(
         tx,
         orderSystemFormId,
         params.customForm,
         uid,
+        params.assisted ? { ...params.assisted, key: params.key } : undefined,
       );
 
       // PHP 在订单创建事件中立即消耗新人资格（不是支付后）。这里先锁用户，
@@ -2021,10 +2105,11 @@ export class StoreOrderCreateService {
             eq(storeCart.isPay, 0),
             eq(storeCart.isDel, 0),
             eq(storeCart.status, 1),
-            // Both are single-cart orders. Recheck the quote in the write itself,
+            // Single-cart activities recheck the quote in the write itself,
             // including after PostgreSQL waits for a concurrent cart editor.
             shippingSnapshot ? or(...carts.map(activityCartQuoteGuard))
-              : type === 1 || type === 2 ? activityCartQuoteGuard(carts[0]) : undefined,
+              : type === 1 || type === 2 || type === 6 ? activityCartQuoteGuard(carts[0]) : undefined,
+            type === 6 ? and(eq(storeCart.bargainUserId, 0), eq(storeCart.storeId, 0)) : undefined,
           ),
         )
         .returning({ id: storeCart.id });
@@ -2468,7 +2553,8 @@ export class StoreOrderCreateService {
             considersPaidMemberPrice && cart.activityId === 0 && item.rawUnitPriceCents > 0 && product.isVip === 1
               ? eq(storeProductAttrValue.vipPrice, sku.vipPrice) : undefined,
             shippingSnapshot ? and(eq(storeProductAttrValue.weight,sku.weight),eq(storeProductAttrValue.volume,sku.volume)) : undefined,
-            type === 1 ? seckillSkuQuoteGuard(sku, true) : undefined))
+            type === 1 ? seckillSkuQuoteGuard(sku, true) : undefined,
+            type === 6 ? presaleSkuQuoteGuard(sku, cart.productType) : undefined))
           .returning({ id: storeProductAttrValue.id });
         if (!skuUpdated.length) {
           throw new ValidateException(shippingSnapshot ? "配送商品规格已变化或库存不足，请刷新后重试" : type === 1 ? "秒杀基础规格已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」库存不足`);
@@ -2482,6 +2568,11 @@ export class StoreOrderCreateService {
             sales: sql`sales + ${cart.cartNum}`,
           })
           .where(and(eq(storeProduct.id, product.id), sql`stock >= ${cart.cartNum}`,
+            // The assisted form row is pinned above. Also pin the product's
+            // choice of that row at its inventory UPDATE, so an editor cannot
+            // swap form IDs between the pre-transaction quote and this commit.
+            assisted && type === 0 && cart.activityId === 0
+              ? eq(storeProduct.systemFormId, product.systemFormId) : undefined,
             // Activity overrides are protected by their existing activity UPDATE.
             // Only freeze the base gift amount when it actually supplies the snapshot.
             activityGiveIntegral === null ? eq(storeProduct.giveIntegral, product.giveIntegral) : undefined,
@@ -2495,7 +2586,8 @@ export class StoreOrderCreateService {
               eq(storeProduct.type, product.type), eq(storeProduct.relationId, product.relationId),
               eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
             ) : undefined,
-            type === 1 ? seckillProductQuoteGuard(product) : undefined))
+            type === 1 ? seckillProductQuoteGuard(product) : undefined,
+            type === 6 ? presaleProductQuoteGuard(product) : eq(storeProduct.isPresaleProduct, 0)))
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
           throw new ValidateException(shippingSnapshot ? "配送商品归属或规则已变化，请刷新后重试" : type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
@@ -2520,6 +2612,7 @@ export class StoreOrderCreateService {
             })
           : { writeStart: sku.writeStart, writeEnd: sku.writeEnd };
         const cartInfoJson = JSON.stringify({
+          ...(item.presale ? { presale: item.presale } : {}),
           ...(type === 2 ? { bargainParticipation: {
             version: 1, participantId: bargainParticipantId, activityId: bargainActivityId, uid,
           } satisfies BargainOrderParticipation } : {}),
@@ -2687,7 +2780,14 @@ export class StoreOrderCreateService {
         }
       }
 
+      // New root only: preview and both idempotent-return paths have already exited.
+      // Capture after resource claims, before final qualification/time guards. Any
+      // missing schema/authority or later rejection must roll back this same transaction.
+      if (runtime.requirePurchaseOrigin) await recordPurchaseOriginEvidence(tx, { orderId: order.id, buyerId: uid });
+
       if (couponResolution.template) await assertCheckoutCouponTemplate(tx, couponResolution.template);
+      const presaleTerms = orderItems[0]?.presale;
+      const finalPresaleWindow = presaleTerms ? await protectPresalePrincipal(tx, uid, presaleTerms) : undefined;
       const finalMembershipWindow = membershipSnapshot ? await assertCheckoutMembershipSnapshot(tx, membershipSnapshot) : undefined;
       const finalBrokerageWindow = brokerage.authority ? await assertCheckoutBrokerageAuthority(tx, brokerage.authority) : undefined;
       if (deliveryAddress) await assertDeliveryAddressSnapshot(tx, deliveryAddress);
@@ -2714,7 +2814,7 @@ export class StoreOrderCreateService {
           throw new ValidateException("优惠券尚未生效或已过期");
         }
       }
-      const finalPricingWindow = and(finalActivityWindow, finalMembershipWindow, finalBrokerageWindow);
+      const finalPricingWindow = and(finalActivityWindow, finalMembershipWindow, finalBrokerageWindow, finalPresaleWindow);
       if (finalPricingWindow) {
         // No user/activity table read or new lock here: only the database wall clock
         // against the already protected bounds, after INSERT/SKU/address/form waits.
@@ -3049,11 +3149,10 @@ export class StoreOrderCreateService {
     ]);
     const economize = economizeRows[0] ?? null;
     const membershipSavings = order.paid === 1 ? orderMembershipSavings(order, cartInfos) : null;
-    const customForm = await readOrderSystemFormSnapshot(
+    const customForm = await readOrderSystemFormForOrder(
       this.container.db,
       new AttachmentService(this.container, this.env),
-      uid,
-      order.customForm,
+      order,
     );
     return {
       ...order,
@@ -3080,15 +3179,16 @@ export class StoreOrderCreateService {
         ...ci,
         cartInfo: parseCartSnapshot(ci.cartInfo),
       })),
-      splitOrders: splitOrders.map((child) => ({
+      splitOrders: await Promise.all(splitOrders.map(async (child) => ({
         ...child,
+        customForm: await readOrderSystemFormForOrder(this.container.db, new AttachmentService(this.container, this.env), child),
         fictitiousContent: customerVisibleManualVirtualContent(child),
         virtualInfo:
           child.productType === 1 && child.paid === 1 && child.deliveryType === "fictitious"
             ? parseVirtualDeliveryInfo(child.virtualInfo)
             : null,
         cartInfo: splitCartsByOrder.get(child.id) ?? [],
-      })),
+      }))),
     };
   }
 
@@ -3203,6 +3303,7 @@ function activityFreightIsInherited(item: OrderItem): boolean {
 }
 
 interface OrderItem {
+  presale: PresalePurchaseSnapshot | null;
   cart: Awaited<ReturnType<Container["storeCartDao"]["getByIds"]>>[number];
   product: NonNullable<Awaited<ReturnType<Container["storeProductDao"]["getById"]>>>;
   sku: NonNullable<Awaited<ReturnType<Container["storeProductAttrValueDao"]["getByUnique"]>>>;

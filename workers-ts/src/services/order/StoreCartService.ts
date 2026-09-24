@@ -7,6 +7,7 @@ import { createContainerFromDb, withTx, type Container, type DbClient } from "@/
 import type { Env } from "@/env";
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { setSeckillCartQuantity } from "@/services/activity/SeckillCartQuantityService";
+import { addPresaleCart, setPresaleCartQuantity, presaleCartIsCurrent } from "@/services/activity/PresaleCartService";
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 import { cartBargainParticipation, findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
@@ -78,12 +79,7 @@ async function normalProductAndSku(tx: DbClient, productId: number, unique: stri
   if (!product || product.isDel !== 0 || product.isShow !== 1 || product.isVerify !== 1) {
     throw new ValidateException("该商品已下架或删除");
   }
-  if (
-    product.isPresaleProduct > 0 && product.presaleEndTime > 0 &&
-    product.presaleEndTime < Math.floor(Date.now() / 1000)
-  ) {
-    throw new ValidateException("预售活动已结束");
-  }
+  if (product.isPresaleProduct !== 0) throw new ValidateException("预售商品请重新选择并使用立即购买");
 
   const predicates = [
     eq(storeProductAttrValue.productId, productId),
@@ -154,6 +150,10 @@ export class StoreCartService {
    *   3. 已存在同 SKU → 合并数量; 否则新建
    */
   async add(params: CartAddParams): Promise<{ id: number; cartNum: number }> {
+    if ((params.type ?? 0) === 6) {
+      if (params.bargainUserId !== undefined) throw new ValidateException("非砍价购物车不能选择砍价记录");
+      return addPresaleCart(this.container, params);
+    }
     if ((params.type ?? 0) !== 2) {
       if (params.bargainUserId !== undefined) throw new ValidateException("非砍价购物车不能选择砍价记录");
       return this.addResolved(params);
@@ -323,6 +323,11 @@ export class StoreCartService {
       product = await this.container.storeProductDao.getById(productId);
     }
     if (!product) throw new NotFoundException("商品不存在");
+    if (type === 0 && product.isPresaleProduct !== 0) {
+      // The unlocked routing read is only a hint. The presale path re-reads the
+      // base SKU/product under its own locks and never trusts client type=6.
+      return addPresaleCart(this.container, params);
+    }
     if (!product.isShow || product.isDel) {
       throw new ValidateException("商品已下架");
     }
@@ -454,7 +459,7 @@ export class StoreCartService {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
         | undefined;
-      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1)) {
+      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) || !presaleCartIsCurrent(cart, product)) {
         // 商品失效, 跳过但保留购物车项 (前端可提示)
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
@@ -464,7 +469,7 @@ export class StoreCartService {
         0,
         cart.productId,
       );
-      if (scope && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {
+      if ((scope || cart.type === 6) && (!sku || sku.stock < cart.cartNum || product.stock < cart.cartNum || cart.status !== 1 || cart.cartNum <= 0)) {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
@@ -472,7 +477,7 @@ export class StoreCartService {
       let integral = 0;
       let displayName = product.storeName;
       let displayImage = product.image;
-      let displayStock = sku?.stock ?? product.stock;
+      let displayStock = cart.type === 6 ? Math.min(sku?.stock ?? 0, product.stock) : sku?.stock ?? product.stock;
       if ([1, 2, 3].includes(cart.type) && cart.activityId > 0 && sku) {
         try {
           const pair = await resolveLegacyActivitySkuPair(this.container.db, {
@@ -643,7 +648,9 @@ export class StoreCartService {
       // This additive quote excludes coupons/shipping and does not lock prices.
       const rawCents = decimalToCents(String(price));
       let unitCents = rawCents, priceType: '' | 'level' | 'member' = '', levelName = '';
-      if (cart.type === 0 && cart.activityId === 0) {
+      // Full-payment presales share checkout's base-SKU membership pricing.
+      // This remains a read-only goods subtotal, not a payable/reserved quote.
+      if ((cart.type === 0 || cart.type === 6) && cart.activityId === 0) {
         pricing ??= await this.cartPricing(uid);
         const quoted = calculateMemberUnitPriceCents({
           basePriceCents: rawCents, levelDiscountPercent: pricing.levelDiscountPercent,
@@ -751,7 +758,7 @@ export class StoreCartService {
     for (const cart of carts) {
       const product = productById.get(cart.productId);
       if (!product) continue;
-      const productValid = product.isDel === 0 && product.isShow === 1 && product.isVerify === 1;
+      const productValid = product.isDel === 0 && product.isShow === 1 && product.isVerify === 1 && presaleCartIsCurrent(cart, product);
       if (!options.includeInvalid && !productValid) continue;
       const sku = skuByProductUnique.get(`${cart.productId}:${cart.productAttrUnique}`);
       const rawPrice = String(sku?.price ?? product.price);
@@ -1274,6 +1281,7 @@ export class StoreCartService {
       throw new NotFoundException("购物车项不存在");
     }
     if (cart.type === 1) return setSeckillCartQuantity(this.container, uid, id, cartNum);
+    if (cart.type === 6) return setPresaleCartQuantity(this.container, uid, id, cartNum);
     if ([5, 7].includes(cart.type) && cartNum !== 1) {
       throw new ValidateException(cart.type === 5 ? "套餐商品每项限购一件" : "新人专享商品限购一件");
     }
