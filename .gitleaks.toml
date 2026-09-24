@@ -80,9 +80,9 @@ regexes = ['''WECHAT_MCH_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nprivate\\n-
 description = "Exact local-only placeholder PEM used by the assisted-purchase provider fixture"
 targetRules = ["private-key"]
 condition = "AND"
-regexTarget = "line"
+regexTarget = "secret"
 paths = ['''^workers-ts/test/assisted-purchase-runtime-cases\.ts$''']
-regexes = ['''WECHAT_MCH_PRIVATE_KEY:'-----BEGIN PRIVATE KEY-----\\nlocal\\n-----END PRIVATE KEY-----',''']
+regexes = ['''^-----BEGIN PRIVATE KEY-----\\nlocal\\n-----END PRIVATE KEY-----',\s*WECHAT_API_V3_KEY:'x'\.repeat\(32\),WECHAT_PLATFORM_PUBLIC_KEY:'-----BEGIN PUBLIC KEY-----$''']
 
 [[allowlists]]
 description = "Fixed non-secret UUID-v4 idempotency test fixture"
