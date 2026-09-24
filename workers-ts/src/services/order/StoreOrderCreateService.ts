@@ -71,6 +71,7 @@ import {
   loadFirstOrderDiscountConfig,
   loadNewcomerEligibilityConfig,
   loadNewcomerEligibilityConfigFromDb,
+  newcomerBaseProductIsEligible,
   type FirstOrderDiscountConfig,
   type NewcomerEligibilityConfig,
 } from "@/services/activity/StoreNewcomerService";
@@ -1117,6 +1118,9 @@ export class StoreOrderCreateService {
       if (!product) throw new NotFoundException(`商品 ${cart.productId} 不存在`);
       if (!product.isShow || product.isDel) {
         throw new ValidateException(`商品「${product.storeName}」已下架`);
+      }
+      if (type === 7 && !newcomerBaseProductIsEligible(product)) {
+        throw new ValidateException("新人专享基础商品已下架、未审核或变更为特殊商品");
       }
       if (type === 1 && product.isVerify !== 1) throw new ValidateException("秒杀基础商品未审核通过");
       if (cart.productType !== product.productType) {
@@ -2625,9 +2629,21 @@ export class StoreOrderCreateService {
               eq(storeProduct.productType, product.productType), eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
             ) : undefined,
             type === 1 ? seckillProductQuoteGuard(product) : undefined,
+            type === 7 ? and(
+              eq(storeProduct.type, product.type),
+              eq(storeProduct.relationId, product.relationId),
+              eq(storeProduct.productType, product.productType),
+              eq(storeProduct.merId, product.merId),
+              eq(storeProduct.isSupportRefund, product.isSupportRefund),
+              eq(storeProduct.systemFormId, product.systemFormId),
+              eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0),
+              eq(storeProduct.isVerify, 1), eq(storeProduct.isVipProduct, 0),
+              eq(storeProduct.isPresaleProduct, 0),
+            ) : undefined,
             type === 6 ? presaleProductQuoteGuard(product) : eq(storeProduct.isPresaleProduct, 0)))
           .returning({ id: storeProduct.id });
         if (!productUpdated.length) {
+          if (type === 7 && confirmation) throw new OrderQuoteReconfirmRequired(key);
           throw new ValidateException(shippingSnapshot ? "配送商品归属或规则已变化，请刷新后重试" : type === 1 ? "秒杀基础商品已变化或库存不足，请刷新后重试"
             : type === 2 && shippingType === 2 ? "砍价自提商品归属、上架状态已变化或库存不足，请刷新后重试"
             : type === 2 ? "砍价商品归属、上架状态已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」总库存不足`);

@@ -10,7 +10,7 @@ export function useNewcomerProduct() {
   const selected = ref(''), buying = ref(false), navigating = ref(false), prepared = ref<number | null>(null);
   const selectedSku = computed(() => detail.value?.skus.find(sku => sku.unique === selected.value));
   const canBuy = computed(() => visible.value && !loading.value && !buying.value && !navigating.value &&
-    (prepared.value !== null || !!detail.value && !!selectedSku.value && detail.value.stock > 0));
+    (prepared.value !== null || !!detail.value && !!selectedSku.value && detail.value.stock > 0 && selectedSku.value.stock > 0));
   let productId = 0, generation = 0, navigationRevision = 0, disposed = false, loginPending = false;
   const routeId = (raw: unknown) => typeof raw === 'string' && /^[1-9]\d{0,9}$/.test(raw) && Number(raw) <= 2_147_483_647 ? Number(raw) : 0;
   function clear() { generation++; navigationRevision++; detail.value = null; selected.value = ''; prepared.value = null; loading.value = false; buying.value = false; navigating.value = false; }

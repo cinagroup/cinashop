@@ -233,6 +233,14 @@ export async function loadNewcomerEligibilityConfig(
   return newcomerEligibilityConfig(values);
 }
 
+/** The Admin catalog admits only ordinary, published, verified base goods.
+ * Legacy PHP enforced this when saving the activity but not after later edits;
+ * the Worker keeps the same admission state through checkout and commit. */
+export function newcomerBaseProductIsEligible(product: typeof storeProduct.$inferSelect): boolean {
+  return product.isShow === 1 && product.isDel === 0 && product.isVerify === 1 &&
+    product.isVipProduct === 0 && product.isPresaleProduct === 0;
+}
+
 /** Checkout's final admission reads SQL after acquiring the Admin config lock.
  * KV may still hold a pre-save value and must not authorize an order. */
 export async function loadNewcomerEligibilityConfigFromDb(
@@ -590,7 +598,9 @@ export class StoreNewcomerService {
     if (newcomer.productId !== params.productId) throw new ValidateException("新人专享商品与活动不匹配");
 
     const product = await this.container.storeProductDao.getById(newcomer.productId);
-    if (!product || !product.isShow || product.isDel) throw new ValidateException("原商品已下架或删除");
+    if (!product || !newcomerBaseProductIsEligible(product)) {
+      throw new ValidateException("原商品已下架、未审核或不支持新人专享");
+    }
 
     const activitySkuRows = await this.container.db
       .select()
@@ -669,6 +679,8 @@ export class StoreNewcomerService {
           eq(storeProduct.isDel, 0),
           eq(storeProduct.isShow, 1),
           eq(storeProduct.isVerify, 1),
+          eq(storeProduct.isVipProduct, 0),
+          eq(storeProduct.isPresaleProduct, 0),
         ),
       )
       .orderBy(desc(storeNewcomer.id))
@@ -695,7 +707,7 @@ export class StoreNewcomerService {
     const newcomer = await this.getActive(id);
     if (!newcomer) throw new NotFoundException("新人商品已下架或删除");
     const product = await this.container.storeProductDao.getById(newcomer.productId);
-    if (!product || !product.isShow || product.isDel || product.isVerify !== 1) {
+    if (!product || !newcomerBaseProductIsEligible(product)) {
       throw new NotFoundException("原商品已下架或删除");
     }
 

@@ -17,6 +17,7 @@ import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
   quoteFirstOrderDiscount,
   isNewcomerEligibleFromDb,
+  newcomerBaseProductIsEligible,
   StoreNewcomerService,
   type FirstOrderDiscountQuote,
 } from "@/services/activity/StoreNewcomerService";
@@ -462,7 +463,8 @@ export class StoreCartService {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
         | undefined;
-      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) || !presaleCartIsCurrent(cart, product)) {
+      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) ||
+        (cart.type === 7 && !newcomerBaseProductIsEligible(product)) || !presaleCartIsCurrent(cart, product)) {
         // 商品失效, 跳过但保留购物车项 (前端可提示)
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;

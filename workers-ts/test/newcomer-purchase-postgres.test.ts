@@ -4,6 +4,7 @@ import { createContainerFromDb } from '../src/lib/di';
 import { cartAdd, cartList, orderCreate } from '../src/controllers/api/v1/OrderController';
 import { AdminConfigBatchService } from '../src/services/system/AdminConfigBatchService';
 import { AdminNewcomerService } from '../src/services/activity/AdminNewcomerService';
+import { StoreNewcomerService } from '../src/services/activity/StoreNewcomerService';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
 import { OrderQuoteReconfirmRequired } from '../src/services/order/CheckoutConfirmation';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
@@ -12,7 +13,7 @@ import {
   legacyCache, printDocument, storeCouponIssue, storeCouponProduct, storeCouponUser, storeDiscounts,
   storeDiscountsProducts, storeNewcomer, storeOrderCartInfo, storeOrderStatus,
   storeSeckill, storeSeckillTime, storeActivity, storeCombination, storePink,
-  storeIntegral, storeProductAttrValue, systemConfig, user,
+  storeIntegral, storeProduct, storeProductAttrValue, systemConfig, systemStore, user,
 } from '../src/models/schema';
 
 type Reply = { status: number; msg: string; data: Record<string, unknown> | null };
@@ -191,6 +192,136 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('newcomer HTTP pu
     expect((await request('/api/order/confirm', 'POST', body(cartId))).status).toBe(400);
     expect((await request(`/api/order/create/${first.key}`, 'POST', { ...body(cartId), quoteToken: first.token })).status).toBe(400);
     expect((await f.snapshot()).orders).toHaveLength(0);
+  }, 30_000);
+
+  it('hides and rejects a configured newcomer product after its base sale state changes', async () => {
+    const cartId = await add();
+    const catalog = new StoreNewcomerService(createContainerFromDb(f.db), f.env);
+    expect(await catalog.list(11)).toEqual(expect.arrayContaining([expect.objectContaining({ id: 40 })]));
+    const readCart = async () => ((await request('/api/cart/list')).data as unknown as Array<{
+      id: number; isValid: boolean; productInfo: unknown;
+    }>).find(row => row.id === cartId);
+    for (const change of [
+      { disabled: { isShow: 0 }, restored: { isShow: 1 } },
+      { disabled: { isDel: 1 }, restored: { isDel: 0 } },
+      { disabled: { isVerify: 0 }, restored: { isVerify: 1 } },
+      { disabled: { isVipProduct: 1 }, restored: { isVipProduct: 0 } },
+      { disabled: { isPresaleProduct: 1 }, restored: { isPresaleProduct: 0 } },
+    ]) {
+      const first = await quote(cartId);
+      await f.db.update(storeProduct).set(change.disabled).where(eq(storeProduct.id, 70));
+      expect(await catalog.list(11)).toEqual([]);
+      await expect(catalog.detail(11, 40)).rejects.toThrow();
+      expect(await readCart()).toMatchObject({ isValid: false, productInfo: null });
+      expect((await request('/api/cart/add', 'POST', addBody)).status).toBe(400);
+      expect((await request('/api/order/confirm', 'POST', body(cartId))).status).toBe(400);
+      expect((await request(`/api/order/create/${first.key}`, 'POST', { ...body(cartId), quoteToken: first.token })).status).toBe(400);
+      await f.db.update(storeProduct).set(change.restored).where(eq(storeProduct.id, 70));
+    }
+    const state = await f.snapshot();
+    expect(state.orders).toHaveLength(0);
+    expect(state.skus.find(row => row.id === 1)).toMatchObject({ stock: 8 });
+  }, 30_000);
+
+  it.each([
+    { label: 'selected duplicate base suk', duplicate: { id: 3, productId: 70, type: 0,
+      unique: 'qablue01', suk: '红色,大号', stock: 8, price: '11.00' },
+      selected: [{ unique: 'qared001', price: '8.00' }, { unique: 'qablue01', price: '9.00' }] },
+    { label: 'base suk duplicated by an unselected row', duplicate: { id: 3, productId: 70, type: 0,
+      unique: 'qablue01', suk: '红色,大号', stock: 8, price: '11.00' },
+      selected: [{ unique: 'qared001', price: '8.00' }] },
+    { label: 'selected duplicate base unique', duplicate: { id: 3, productId: 70, type: 0,
+      unique: 'qared001', suk: '蓝色,大号', stock: 8, price: '11.00' },
+      selected: [{ unique: 'qared001', price: '8.00' }] },
+  ])('Admin catalog rejects $label without changing config or campaign', async ({ duplicate, selected }) => {
+    await f.db.insert(storeProductAttrValue).values(duplicate);
+    const before = await f.snapshot();
+    const beforeConfig = await f.db.select().from(systemConfig).orderBy(systemConfig.id);
+    const beforeCampaign = await f.db.select().from(storeNewcomer).orderBy(storeNewcomer.id);
+    await expect(new AdminNewcomerService(createContainerFromDb(f.db), f.env).saveRegisterConfig({
+      newcomer_status: 0, register_price_status: 0, newcomer_limit_status: 0,
+      newcomer_limit_time: 0, product: [{ product_id: 70, skus: selected }],
+    })).rejects.toThrow(/规格.*重复/);
+    expect(await f.snapshot()).toEqual(before);
+    expect(await f.db.select().from(systemConfig).orderBy(systemConfig.id)).toEqual(beforeConfig);
+    expect(await f.db.select().from(storeNewcomer).orderBy(storeNewcomer.id)).toEqual(beforeCampaign);
+  }, 30_000);
+
+  it('Admin catalog permits an unrelated unselected duplicate base suk', async () => {
+    await f.db.insert(storeProductAttrValue).values([
+      { id: 3, productId: 70, type: 0, unique: 'qablue01', suk: '蓝色,大号', stock: 8, price: '11.00' },
+      { id: 4, productId: 70, type: 0, unique: 'qablue02', suk: '蓝色,大号', stock: 8, price: '12.00' },
+    ]);
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),(SELECT max(id) FROM store_product_attr_value),true)");
+    await new AdminNewcomerService(createContainerFromDb(f.db), f.env).saveRegisterConfig({
+      newcomer_status: 1, register_price_status: 1, newcomer_limit_status: 0,
+      newcomer_limit_time: 0, product: [{ product_id: 70,
+        skus: [{ unique: 'qared001', price: '8.00' }] }],
+    });
+    const state = await f.snapshot();
+    expect(state.skus.filter(row => row.type === 7 && row.productId === 40)).toHaveLength(1);
+    expect(state.skus.find(row => row.type === 7 && row.productId === 40)?.suk).toBe('红色,大号');
+  }, 30_000);
+
+  it('Admin catalog rejects reused historical activity unique across selected suks', async () => {
+    await f.db.insert(storeProductAttrValue).values([
+      { id: 3, productId: 70, type: 0, unique: 'qablue01', suk: '蓝色,大号', stock: 8, price: '11.00' },
+      { id: 4, productId: 40, type: 7, unique: addBody.unique,
+        suk: '蓝色,大号', stock: 0, quota: 0, price: '9.00' },
+    ]);
+    const before = await f.snapshot();
+    const beforeConfig = await f.db.select().from(systemConfig).orderBy(systemConfig.id);
+    const beforeCampaign = await f.db.select().from(storeNewcomer).orderBy(storeNewcomer.id);
+    await expect(new AdminNewcomerService(createContainerFromDb(f.db), f.env).saveRegisterConfig({
+      newcomer_status: 1, register_price_status: 1, newcomer_limit_status: 0,
+      newcomer_limit_time: 0, product: [{ product_id: 70, skus: [
+        { unique: 'qared001', price: '8.00' }, { unique: 'qablue01', price: '9.00' },
+      ] }],
+    })).rejects.toThrow(/历史活动规格标识重复/);
+    expect(await f.snapshot()).toEqual(before);
+    expect(await f.db.select().from(systemConfig).orderBy(systemConfig.id)).toEqual(beforeConfig);
+    expect(await f.db.select().from(storeNewcomer).orderBy(storeNewcomer.id)).toEqual(beforeCampaign);
+  }, 30_000);
+
+  it.each([
+    { label: 'VIP commit', commit: true, change: { isVipProduct: 1 } },
+    { label: 'VIP rollback', commit: false, change: { isVipProduct: 1 } },
+    { label: 'unpublish', commit: true, change: { isShow: 0 } },
+    { label: 'delete', commit: true, change: { isDel: 1 } },
+    { label: 'unverify', commit: true, change: { isVerify: 0 } },
+    { label: 'presale', commit: true, change: { isPresaleProduct: 1 } },
+    { label: 'owner type', commit: true, change: { type: 1 } },
+    { label: 'owner relation', commit: true, change: { relationId: 71 } },
+    { label: 'product type', commit: true, change: { productType: 1 } },
+    { label: 'merchant', commit: true, change: { merId: 71 } },
+    { label: 'refund rule', commit: true, change: { isSupportRefund: 0 } },
+    { label: 'order form', commit: true, change: { systemFormId: 71 } },
+  ])('pickup create serializes with base-product $label edit', async ({ commit, change }) => {
+    const cartId = await add();
+    await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
+    const pickup = { ...body(cartId), addressId: 0, shippingType: 2, storeId: 1,
+      realName: '本地取货人', userPhone: '13800138000' };
+    const confirmed = await request('/api/order/confirm', 'POST', pickup);
+    expect(confirmed.status, confirmed.msg).toBe(200);
+    const key = String(confirmed.data?.orderKey), quoteToken = String(confirmed.data?.quoteToken);
+    await withFinancePeers(f.db, async ([writer, buyer]) => {
+      await writer.exec('BEGIN');
+      await writer.db.update(storeProduct).set(change).where(eq(storeProduct.id, 70));
+      const create = outcome(new StoreOrderCreateService(createContainerFromDb(buyer.db), f.env)
+        .createOrder({ ...pickup, uid: 11, key, quoteToken, userIp: '127.0.0.1' }));
+      let blockError: unknown;
+      try { await waitForFinanceBlock(f.db, buyer.pid, writer.pid); }
+      catch (error) { blockError = error; }
+      finally { await writer.exec(commit ? 'COMMIT' : 'ROLLBACK'); }
+      const result = await create;
+      expect(blockError, result.ok ? 'create returned before product edit released' : String(result.error)).toBeUndefined();
+      expect(result.ok).toBe(!commit);
+      if (commit && !result.ok) expect(result.error).toBeInstanceOf(OrderQuoteReconfirmRequired);
+    });
+    const state = await f.snapshot();
+    expect(state.orders).toHaveLength(commit ? 0 : 1);
+    expect(state.skus.find(row => row.id === 1)).toMatchObject({ stock: commit ? 8 : 7 });
+    expect(state.products.find(row => row.id === 70)).toMatchObject(commit ? change : { isVipProduct: 0 });
   }, 30_000);
 
   it('rechecks ambiguous campaign suk after a concurrent legacy insert commits before create', async () => {

@@ -79,6 +79,21 @@ test('newcomer activity detail selects the exact SKU and enters isolated type-7 
   } finally { r.stop(); }
 });
 
+test('selected base SKU with zero stock disables type-7 purchase despite positive product stock', async () => {
+  const soldOut = detail(81);
+  soldOut.productValue.红色.stock = 0;
+  const r = runtime({ component: 'pages/activity/newcomerDetail.vue', send: () => ({ data: soldOut }) });
+  try {
+    await r.start({ id: '81' });
+    r.checkout.choose('new-sku-1');
+    assert.equal(r.checkout.detail.value.stock, 4);
+    assert.equal(r.checkout.selectedSku.value.stock, 0);
+    assert.equal(r.checkout.canBuy.value, false);
+    await r.checkout.purchase();
+    assert.deepEqual(r.calls.map(call => call.url), ['/api/marketing/newcomer/product_detail/81']);
+  } finally { r.stop(); }
+});
+
 test('failed checkout navigation reuses the prepared cart instead of adding again', async () => {
   const r = runtime({ component: 'pages/activity/newcomerDetail.vue', navigationFails: true,
     send: call => ({ data: call.url.endsWith('/cart/add') ? { id: 15, cartNum: 1 } : detail(81) }) });
