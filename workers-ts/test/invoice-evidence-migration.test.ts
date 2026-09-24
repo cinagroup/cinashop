@@ -125,7 +125,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('invoice evidence
           await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       } else {
         const report=await new MigrationService(createContainerFromDb(whole.db)).runAll();
-        expect(report.errors).toEqual([]); expect(report.executed).toHaveLength(167);
+        expect(report.errors).toEqual([]); expect(report.executed).toHaveLength(172);
+        expect(report.executed.at(-1)).toBe('0171');
       }
       await whole.withRuntimeRole!(async peer => {
         await whole.exec(`GRANT SELECT,INSERT,UPDATE,DELETE ON public.store_order_invoice TO "${peer.role}";

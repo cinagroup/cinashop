@@ -285,7 +285,7 @@ describe("Enterprise WeChat callback durable pipeline", () => {
       const embedded = service.match(
         new RegExp("private migration_" + migration + "\\(\\): string \\{\\s*return `([\\s\\S]*?)`;\\s*\\}"),
       )?.[1];
-      expect(embedded).toBe(external);
+      expect(embedded?.replace(/\r\n/g, "\n")).toBe(external.replace(/\r\n/g, "\n"));
       expect(service).toContain(`this.migration_${migration}()`);
     }
     expect(service).toContain("workCallbackFollowProjectionMigrationSqlForVerification");
@@ -526,7 +526,9 @@ describe("Enterprise WeChat callback durable pipeline", () => {
       if (current === 115) throw new Error("modern_exact_verifier_failed");
       await work({ execute });
     });
-    const service = new MigrationService({ db: { transaction } } as never);
+    const service = new MigrationService({
+      db: { transaction, execute: vi.fn().mockResolvedValue([{ presale_ready: false }]) },
+    } as never);
 
     const result = await service.runAll();
 

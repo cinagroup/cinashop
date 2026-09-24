@@ -27,7 +27,7 @@ describe("FE-002D PC responsive navigation and detail", () => {
     expect(layout).toContain('aria-label="返回商城首页"');
     const nav = layout.match(/<nav\b[^>]*>([\s\S]*?)<\/nav>/)![1];
     expect([...nav.matchAll(/to="([^"]+)"/g)].map((match) => match[1])).toEqual([
-      "/", "/category", "/goods", "/seckill", "/bargain", "/combination", "/community", "/service",
+      "/", "/category", "/goods", "/seckill", "/bargain", "/combination", "/presale", "/community", "/service",
     ]);
   });
 

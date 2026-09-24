@@ -145,7 +145,7 @@ describe('offline durable query collection and recovery on isolated native PG16'
         expect((await t.notify('late_different_transaction')).terminalConflict).toBe(true);
         return result;
       });
-      await expect(t.recovery.processMessage(t.message)).rejects.toThrow('processing_fence_lost');
+      expect(await t.recovery.processMessage(t.message)).toBe('conflict');
       expect((await f.db.select().from(paymentReconciliationCase))[0].status).toBe('CONFLICT');
       await paid(1, 1); expect(await t.recovery.processMessage(t.message)).toBe('already-terminal');
       expect(fetch).toHaveBeenCalledOnce();

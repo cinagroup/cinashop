@@ -12,7 +12,7 @@ import { createContainerFromDb, withTx, type DbClient } from '../src/lib/di';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
 import { agentLevel, printDocument, storeCart, storeOrder, storeOrderCartInfo, storeOrderRefund,
   storeOrderStatus, storeProduct, storeProductAttrValue, storeOrderInvoice, storeOrderRefundPayment,
-  storeOrderOutbox, orderWaybillJob, userBrokerage, systemSupplier, supplierFlowingWater,
+  storeOrderOutbox, orderWaybillJob, userBrokerage, systemSupplier, supplierFlowingWater, paymentReconciliationCase,
   supplierTransactions, supplierExtract } from '../src/models/schema';
 
 let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
@@ -64,7 +64,7 @@ const create = async (mixed = false, price?: string) => {
 beforeEach(async () => {
   f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
     storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage, systemSupplier,
-    supplierFlowingWater, supplierTransactions, supplierExtract]);
+    supplierFlowingWater, supplierTransactions, supplierExtract, paymentReconciliationCase]);
   await f.exec('CREATE UNIQUE INDEX supplier_split_event ON store_order_outbox(event_key); CREATE UNIQUE INDEX supplier_split_flow ON supplier_flowing_water(order_id); CREATE UNIQUE INDEX supplier_split_transaction ON supplier_transactions(order_id)');
   await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
   await f.exec(INVOICE_EVIDENCE_SQL);
