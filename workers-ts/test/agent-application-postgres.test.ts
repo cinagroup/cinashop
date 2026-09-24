@@ -12,7 +12,7 @@ import { DivisionManagementService } from "@/services/division/DivisionManagemen
 import { PromoterApplicationService } from "@/services/agent/PromoterApplicationService";
 
 const state = vi.hoisted(() => ({
-  codes: new Map<string, { uid: number; purpose: string; code: string }>(),
+  codes: new Map<string, string | { uid: number; purpose: string; code: string }>(),
   locks: new Map<string, string>(),
 }));
 
