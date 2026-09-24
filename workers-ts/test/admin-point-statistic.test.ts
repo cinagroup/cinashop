@@ -42,6 +42,7 @@ describe("read-only legacy Admin point statistics", () => {
       { id: 10, uid: 11, category: "integral", type: "storeIntegral_use", pm: 0, number: "8.00", addTime: at(23, 2) },
       { id: 11, uid: 11, category: "now_money", type: "gain", pm: 1, number: "999.00", addTime: at(22, 6) },
       { id: 12, uid: 11, category: "integral", type: "gain", pm: 1, number: "20.00", addTime: at(20, 23) },
+      { id: 13, uid: 11, category: "integral", type: "other", pm: 2, number: "11.00", addTime: at(22, 7) },
     ]);
     await fixture.db.insert(systemRole).values([
       { id: 1, roleName: "积分统计查看", rules: "point_statistic.view" },
@@ -86,7 +87,7 @@ describe("read-only legacy Admin point statistics", () => {
   it("preserves active-user current balance, dated ledger totals and both trend series", async () => {
     expect((await get("get_basic")).body.data).toEqual({ now_point: "109", all_point: "31.00", pay_point: "17.00" });
     const trend = (await get("get_trend")).body.data;
-    expect(trend.xAxis).toEqual(["2026-09-21", "2026-09-22", "2026-09-23"]);
+    expect(trend.xAxis).toEqual(["09-21", "09-22", "09-23"]);
     expect(trend.series.map((row: { name: string; data: number[] }) => row.name)).toEqual(["积分积累", "积分消耗"]);
     expect(trend.series[0].data).toEqual([10, 17, 4]);
     expect(trend.series[1].data).toEqual([7, 2, 8]);
@@ -95,6 +96,35 @@ describe("read-only legacy Admin point statistics", () => {
     const long = (await get("get_trend", "2026/08/23-2026/09/23")).body.data;
     expect(long.xAxis.length).toBe(11);
     expect(long.series[0].data.reduce((sum: number, amount: number) => sum + amount, 0)).toBe(51);
+    expect(long.series[1].data.reduce((sum: number, amount: number) => sum + amount, 0)).toBe(17);
+  });
+
+  it("uses the old date-only trend thresholds and visible labels, including blank default", async () => {
+    const cases = [
+      { time: "2026/09/23-2026/09/23", days: 1, granularity: "day", count: 1, first: "09-23", last: "09-23" },
+      { time: "2026/08/25-2026/09/23", days: 30, granularity: "day", count: 30, first: "08-25", last: "09-23" },
+      { time: "2026/08/24-2026/09/23", days: 31, granularity: "three_day", count: 11, first: "08-24", last: "09-23" },
+      { time: "2026/06/25-2026/09/23", days: 91, granularity: "three_day", count: 31, first: "06-25", last: "09-23" },
+      { time: "2026/06/24-2026/09/23", days: 92, granularity: "month", count: 3, first: "2026-06", last: "2026-08" },
+    ];
+    for (const item of cases) {
+      const range = parsePointStatisticRange(item.time);
+      expect({ days: range.days, granularity: range.granularity, count: range.labels.length,
+        first: range.labels[0], last: range.labels.at(-1) }, item.time).toEqual({
+        days: item.days, granularity: item.granularity, count: item.count, first: item.first, last: item.last,
+      });
+      const response = (await get("get_trend", item.time)).body;
+      expect(response.status, item.time).toBe(200);
+      expect(response.data.xAxis).toEqual(range.labels);
+      if (item.days === 31) {
+        // Unlike the PHP sampled labels, the corrected 3-day buckets retain
+        // ledger rows from the two dates between adjacent axis labels.
+        expect(response.data.series[0].data.reduce((sum: number, amount: number) => sum + amount, 0)).toBe(51);
+      }
+    }
+    expect(parsePointStatisticRange("", at(23, 8)).days).toBe(31);
+    expect(parsePointStatisticRange("", at(23, 8)).bucketKeys).toEqual(
+      parsePointStatisticRange("2026/08/24-2026/09/23").bucketKeys);
   });
 
   it("keeps the duplicated gain source and includes positive refund rows in old spend types", async () => {
@@ -109,8 +139,21 @@ describe("read-only legacy Admin point statistics", () => {
     expect(spend.list[1]).toEqual({ name: "退款退回", value: 7, percent: 29.1 });
   });
 
+  it("computes BCMath-style decimal percentages without floating point underflow", async () => {
+    await fixture.db.delete(userBill);
+    await fixture.db.insert(userBill).values([
+      { id: 21, uid: 11, category: "integral", type: "gain", pm: 1, number: "0.01", addTime: at(22) },
+      { id: 22, uid: 11, category: "integral", type: "system_add", pm: 1, number: "0.01", addTime: at(22) },
+      { id: 23, uid: 11, category: "integral", type: "sign", pm: 1, number: "0.01", addTime: at(22) },
+      { id: 24, uid: 11, category: "integral", type: "lottery_add", pm: 1, number: "0.01", addTime: at(22) },
+    ]);
+    const source = (await get("get_channel")).body.data;
+    expect(source.bing_data.map((row: { value: number }) => row.value)).toEqual([0.01, 0.01, 0.01, 0.01, 0.01]);
+    expect(source.list.map((row: { percent: number }) => row.percent)).toEqual([20, 20, 20, 20, 20]);
+  });
+
   it("rejects malformed and unbounded date input before reading business rows", async () => {
-    expect(parsePointStatisticRange("", at(23, 8)).days).toBe(30);
+    expect(parsePointStatisticRange("", at(23, 8)).days).toBe(31);
     for (const range of ["2026/09/22-2026/09/21", "2026/02/30-2026/03/01",
       "2026/09/21-2026/09/23junk", "2026/09/21-2026/09/23;DROP", "2000/01/01-2026/09/23",
       "x".repeat(40)]) {

@@ -123,6 +123,15 @@ async function mount(permissions = ["point_statistic.view"], respond: (config: a
 it("validates four projections and keeps the point-statistics ACL independent", () => {
   expect(runtime.point.parsePointBasic(basic()).now_point).toBe("109");
   expect(runtime.point.parsePointTrend(trend()).series[1].data).toEqual([17]);
+  const longAxis = Array.from({ length: 121 }, (_, index) => `2020-${index}`);
+  expect(runtime.point.parsePointTrend({ xAxis: longAxis, series: [
+    { name: "积分积累", type: "line", data: Array(121).fill(0) },
+    { name: "积分消耗", type: "line", data: Array(121).fill(0) },
+  ] }).xAxis).toHaveLength(121);
+  expect(() => runtime.point.parsePointTrend({ xAxis: Array(133).fill("2020-01"), series: [
+    { name: "积分积累", type: "line", data: Array(133).fill(0) },
+    { name: "积分消耗", type: "line", data: Array(133).fill(0) },
+  ] })).toThrow("积分趋势响应格式错误");
   expect(runtime.point.parsePointDistribution(distribution()).list).toHaveLength(5);
   expect(() => runtime.point.parsePointBasic({ ...basic(), pay_point: "seventeen" })).toThrow("积分统计响应格式错误");
   expect(() => runtime.point.parsePointTrend({ ...trend(), series: [trend().series[0]] })).toThrow("积分趋势响应格式错误");

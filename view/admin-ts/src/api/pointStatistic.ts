@@ -29,7 +29,10 @@ export function parsePointBasic(value: unknown): PointStatisticBasic {
 
 export function parsePointTrend(value: unknown): StatisticTrend {
   const row = object(value);
-  if (!Array.isArray(row.xAxis) || row.xAxis.length > 120 ||
+  // At most 3660 inclusive days and at least 28 days per PHP monthly step
+  // yield at most 131 labels; 132 allows that bound without accepting an
+  // unbounded chart payload.
+  if (!Array.isArray(row.xAxis) || row.xAxis.length > 132 ||
     !row.xAxis.every((label) => typeof label === "string" && label.length <= 10) ||
     !Array.isArray(row.series) || row.series.length !== 2) throw new Error("积分趋势响应格式错误");
   const expected = ["积分积累", "积分消耗"];

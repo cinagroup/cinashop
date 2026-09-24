@@ -44,7 +44,7 @@
               <el-table :data="channel?.list ?? []" size="small" empty-text="暂无数据">
                 <el-table-column prop="name" label="来源" />
                 <el-table-column prop="value" label="积分" />
-                <el-table-column label="占比"><template #default="scope">{{ scope.row.percent }}%</template></el-table-column>
+                <el-table-column label="占比"><template #default="scope">{{ scope.row.percent.toFixed(1) }}%</template></el-table-column>
               </el-table>
             </el-card>
           </el-col>
@@ -55,7 +55,7 @@
               <el-table :data="type?.list ?? []" size="small" empty-text="暂无数据">
                 <el-table-column prop="name" label="类型" />
                 <el-table-column prop="value" label="积分" />
-                <el-table-column label="占比"><template #default="scope">{{ scope.row.percent }}%</template></el-table-column>
+                <el-table-column label="占比"><template #default="scope">{{ scope.row.percent.toFixed(1) }}%</template></el-table-column>
               </el-table>
             </el-card>
           </el-col>
