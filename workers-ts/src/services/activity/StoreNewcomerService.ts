@@ -230,12 +230,64 @@ export async function loadNewcomerEligibilityConfig(
     "newcomer_limit_status",
     "newcomer_limit_time",
   ]);
+  return newcomerEligibilityConfig(values);
+}
+
+/** Checkout's final admission reads SQL after acquiring the Admin config lock.
+ * KV may still hold a pre-save value and must not authorize an order. */
+export async function loadNewcomerEligibilityConfigFromDb(
+  container: Container,
+): Promise<NewcomerEligibilityConfig> {
+  const values = await container.systemConfigDao.getValues([
+    "newcomer_status",
+    "register_price_status",
+    "newcomer_limit_status",
+    "newcomer_limit_time",
+  ]);
+  return newcomerEligibilityConfig(values);
+}
+
+function newcomerEligibilityConfig(values: Record<string, string>): NewcomerEligibilityConfig {
   return {
     enabled: configFlag(values.newcomer_status),
     priceEnabled: configFlag(values.register_price_status),
     limitEnabled: configFlag(values.newcomer_limit_status, true),
     limitDays: Math.max(0, parseConfigInteger(values.newcomer_limit_time, 0)),
   };
+}
+
+async function newcomerEligibleWithConfig(
+  container: Container,
+  uid: number,
+  now: number,
+  config: NewcomerEligibilityConfig,
+): Promise<boolean> {
+  if (!Number.isSafeInteger(uid) || uid <= 0 || !config.enabled || !config.priceEnabled) return false;
+  const rows = await container.db
+    .select({ addTime: userTable.addTime, isNewcomer: userTable.isNewcomer,
+      isDel: userTable.isDel, deleteTime: userTable.deleteTime })
+    .from(userTable)
+    .where(eq(userTable.uid, uid))
+    .limit(1);
+  const account = rows[0];
+  if (!account || account.isNewcomer !== 0 || account.isDel !== 0 || account.deleteTime !== null) return false;
+  if (config.limitEnabled && config.limitDays > 0 && account.addTime + config.limitDays * 86_400 < now) return false;
+  const paid = await container.db
+    .select({ id: storeOrder.id })
+    .from(storeOrder)
+    .where(and(eq(storeOrder.uid, uid), eq(storeOrder.type, 7), eq(storeOrder.paid, 1)))
+    .limit(1);
+  return paid.length === 0;
+}
+
+/** Cart display uses committed SQL policy; a stale KV entry cannot mark a
+ * disabled or expired type=7 row purchasable. Create still rechecks under lock. */
+export async function isNewcomerEligibleFromDb(
+  container: Container,
+  uid: number,
+  now = Math.floor(Date.now() / 1000),
+): Promise<boolean> {
+  return newcomerEligibleWithConfig(container, uid, now, await loadNewcomerEligibilityConfigFromDb(container));
 }
 
 /** PHP StoreNewcomerServices::checkUserFirstDiscount 所需的配置快照。 */
@@ -506,25 +558,7 @@ export class StoreNewcomerService {
   }
 
   async isEligible(uid: number, now = Math.floor(Date.now() / 1000)): Promise<boolean> {
-    if (!Number.isSafeInteger(uid) || uid <= 0) return false;
-    const config = await this.loadEligibilityConfig();
-    if (!config.enabled || !config.priceEnabled) return false;
-    const rows = await this.container.db
-      .select({ addTime: userTable.addTime, isNewcomer: userTable.isNewcomer })
-      .from(userTable)
-      .where(eq(userTable.uid, uid))
-      .limit(1);
-    const account = rows[0];
-    if (!account || account.isNewcomer !== 0) return false;
-    if (config.limitEnabled && config.limitDays > 0 && account.addTime + config.limitDays * 86_400 < now) {
-      return false;
-    }
-    const paid = await this.container.db
-      .select({ id: storeOrder.id })
-      .from(storeOrder)
-      .where(and(eq(storeOrder.uid, uid), eq(storeOrder.type, 7), eq(storeOrder.paid, 1)))
-      .limit(1);
-    return paid.length === 0;
+    return newcomerEligibleWithConfig(this.container, uid, now, await this.loadEligibilityConfig());
   }
 
   async assertEligible(uid: number): Promise<void> {
@@ -558,20 +592,63 @@ export class StoreNewcomerService {
     const product = await this.container.storeProductDao.getById(newcomer.productId);
     if (!product || !product.isShow || product.isDel) throw new ValidateException("原商品已下架或删除");
 
-    const activitySku = params.activityUnique
-      ? await this.container.storeProductAttrValueDao.getByUnique(
-          params.activityUnique,
-          7,
-          newcomer.id,
-        )
-      : (await this.container.storeProductAttrValueDao.getByProductId(newcomer.id, 7))[0] ?? null;
-    if (!activitySku) throw new ValidateException("请选择有效的新人专享商品属性");
-    const baseSku = await this.container.storeProductAttrValueDao.getBySuk(
-      newcomer.productId,
-      activitySku.suk,
-      0,
-    );
-    if (!baseSku) throw new ValidateException("新人专享规格没有对应的普通商品规格");
+    const activitySkuRows = await this.container.db
+      .select()
+      .from(storeProductAttrValue)
+      .where(and(
+        eq(storeProductAttrValue.productId, newcomer.id),
+        eq(storeProductAttrValue.type, 7),
+        eq(storeProductAttrValue.isRetired, 0),
+        params.activityUnique ? eq(storeProductAttrValue.unique, params.activityUnique) : undefined,
+      ))
+      .limit(2);
+    if (activitySkuRows.length !== 1) {
+      throw new ValidateException(params.activityUnique
+        ? "新人专享规格标识无效或重复，请刷新后重试"
+        : "请选择唯一的新人专享商品规格");
+    }
+    const activitySku = activitySkuRows[0];
+    // Cart rows store the paired base SKU, so later reads recover this SKU by
+    // suk. Reject legacy duplicate campaign rows before losing the submitted
+    // activity unique; an unordered LIMIT 1 could otherwise change its price.
+    const matchingActivitySkus = await this.container.db
+      .select({ id: storeProductAttrValue.id })
+      .from(storeProductAttrValue)
+      .where(and(
+        eq(storeProductAttrValue.productId, newcomer.id),
+        eq(storeProductAttrValue.type, 7),
+        eq(storeProductAttrValue.suk, activitySku.suk),
+        eq(storeProductAttrValue.isRetired, 0),
+      ))
+      .limit(2);
+    if (matchingActivitySkus.length !== 1 || matchingActivitySkus[0].id !== activitySku.id) {
+      throw new ValidateException("新人专享规格配置重复，请联系商家");
+    }
+    const matchingBaseSkus = await this.container.db
+      .select()
+      .from(storeProductAttrValue)
+      .where(and(
+        eq(storeProductAttrValue.productId, newcomer.productId),
+        eq(storeProductAttrValue.type, 0),
+        eq(storeProductAttrValue.suk, activitySku.suk),
+        eq(storeProductAttrValue.isRetired, 0),
+      ))
+      .limit(2);
+    if (matchingBaseSkus.length !== 1) throw new ValidateException("新人专享规格没有唯一对应的普通商品规格");
+    const baseSku = matchingBaseSkus[0];
+    const matchingBaseUniques = await this.container.db
+      .select({ id: storeProductAttrValue.id })
+      .from(storeProductAttrValue)
+      .where(and(
+        eq(storeProductAttrValue.productId, newcomer.productId),
+        eq(storeProductAttrValue.type, 0),
+        eq(storeProductAttrValue.unique, baseSku.unique),
+        eq(storeProductAttrValue.isRetired, 0),
+      ))
+      .limit(2);
+    if (matchingBaseUniques.length !== 1 || matchingBaseUniques[0].id !== baseSku.id) {
+      throw new ValidateException("新人专享基础规格标识重复，请联系商家");
+    }
     if (baseSku.stock < params.quantity || product.stock < params.quantity) {
       throw new ValidateException("该商品库存不足");
     }
@@ -703,6 +780,15 @@ export class StoreNewcomerService {
         replyService.replyList(newcomer.productId, 1, 1, uid),
         replyService.replyConfig(newcomer.productId),
       ]);
+    const activitySuks = new Set<string>();
+    const activityUniques = new Set<string>();
+    for (const sku of activitySkus) {
+      if (activitySuks.has(sku.suk) || activityUniques.has(sku.unique)) {
+        throw new ValidateException("新人专享规格配置重复，请联系商家");
+      }
+      activitySuks.add(sku.suk);
+      activityUniques.add(sku.unique);
+    }
     const baseStockBySuk = new Map(baseSkus.map((sku) => [sku.suk, sku.stock]));
     const baseSkuBySuk = new Map(baseSkus.map((sku) => [sku.suk, sku]));
     const productValue = Object.fromEntries(activitySkus.map((sku) => {

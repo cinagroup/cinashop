@@ -143,7 +143,7 @@ export async function cartAdd(c: C) {
     if (bargainSelection.bargainId && (activityType !== 2 || activityId !== bargainSelection.bargainId)) {
       throw new ValidateException("砍价购物车与活动不匹配");
     }
-    if (!body.productId || (!unique && ![1, 2, 3].includes(activityType))) {
+    if (!body.productId || (!unique && ![1, 2, 3, 7].includes(activityType))) {
       return jsonFail(c, "参数错误");
     }
     const rawIsNew: unknown = body.isNew ?? body.is_new ?? body.new ?? 0;

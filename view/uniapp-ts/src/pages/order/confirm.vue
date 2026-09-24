@@ -75,7 +75,7 @@
         <view v-if="quote.loading">正在获取最新报价，完成前不能提交…</view>
         <view v-if="quote.error" class="error">{{ quote.error }}<button size="mini" :disabled="locked" @tap="refreshQuote(true)">重新获取报价</button></view>
         <template v-if="ready && quote.result">
-          <view class="price-row"><text>商品金额</text><text>¥{{ quote.result.prices.subtotal }}</text></view>
+          <view class="price-row"><text>{{ activity.type === 7 ? '新人专享价' : '商品金额' }}</text><text>¥{{ activity.type === 7 ? quote.result.prices.goodsPayable : quote.result.prices.subtotal }}</text></view>
           <view class="price-row"><text>会员优惠</text><text>-¥{{ quote.result.prices.memberDiscount }}</text></view>
           <view class="price-row"><text>首单优惠</text><text>-¥{{ quote.result.prices.firstOrderDiscount }}</text></view>
           <view class="price-row"><text>优惠券</text><text>-¥{{ quote.result.prices.couponDiscount }}</text></view>
