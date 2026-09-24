@@ -101,6 +101,11 @@ if (schemaMaintenance) {
     'test/admin-assisted-order-cursor-postgres.test.ts',
     'test/bargain-order-concurrency-postgres.test.ts',
     'test/bargain-participation-concurrency-postgres.test.ts',
+    // A3f rule admission tests commission the same isolated checkout owner.
+    'test/bargain-help-rule-concurrency-postgres.test.ts',
+    'test/bargain-help-concurrency-postgres.test.ts',
+    'test/bargain-admin-concurrency-postgres.test.ts',
+    'test/bargain-admin-save.test.ts',
     'test/seckill-schedule-postgres.test.ts',
     'test/refund-line-compensation.test.ts',
     'test/bargain-admin-retirement.test.ts',

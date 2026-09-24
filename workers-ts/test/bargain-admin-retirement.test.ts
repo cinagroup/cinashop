@@ -156,7 +156,7 @@ describe('admin bargain retirement preserves transaction history', () => {
     expect(await snapshot()).toEqual({ ...before, bargains: before.bargains.map(row => ({ ...row, isDel: 1 })) });
   }, 15_000);
 
-  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('permits retirement beside actual help KEY SHARE and rolls back the late help', async () => {
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('waits for an in-flight help to commit before retirement', async () => {
     await f.db.execute(sql.raw(`CREATE FUNCTION qa_help_wait() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN PERFORM pg_advisory_xact_lock(731629,40); RETURN NEW; END $$;
       CREATE TRIGGER qa_help_wait AFTER INSERT ON store_bargain_user_help FOR EACH ROW EXECUTE FUNCTION qa_help_wait()`));
@@ -165,13 +165,15 @@ describe('admin bargain retirement preserves transaction history', () => {
       await blocker.exec('BEGIN; SELECT pg_advisory_xact_lock(731629,40)');
       const helping = outcome(new ActivityJoinService(createContainerFromDb(helper.db)).helpBargain(11, 81));
       await waitForFinanceBlock(f.db, helper.pid, blocker.pid);
-      expect(await retire(createContainerFromDb(admin.db))).toMatchObject({ status: 200 });
+      const deleting = outcome(retire(createContainerFromDb(admin.db)));
+      await waitForFinanceBlock(f.db, admin.pid, helper.pid);
       await blocker.exec('COMMIT');
-      const result = await helping;
-      expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.error.message).toContain('砍价活动');
+      expect(await helping).toMatchObject({ ok: true });
+      expect(await deleting).toMatchObject({ ok: true, value: { status: 200 } });
     });
-    expect(await snapshot()).toEqual({ ...before, bargains: before.bargains.map(row => ({ ...row, isDel: 1 })) });
+    const after = await snapshot();
+    expect(after.bargains).toEqual(before.bargains.map(row => ({ ...row, isDel: 1 })));
+    expect(after.helps).toHaveLength(before.helps.length + 1);
   }, 15_000);
 
   it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('honors a stricter lock timeout, restores settings and permits a later retry', async () => {

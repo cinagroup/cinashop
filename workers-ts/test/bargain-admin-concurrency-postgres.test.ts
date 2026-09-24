@@ -85,7 +85,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('bargain admin wr
     expect(await snapshot()).toEqual({ ...before, bargains: before.bargains.map(row => ({ ...row, isDel: 1 })) });
   }, 15_000);
 
-  it('can disable while actual help holds KEY SHARE and the late help rolls back', async () => {
+  it('waits for an in-flight help to commit before disabling the activity', async () => {
     await f.db.execute(sql.raw(`CREATE FUNCTION qa_admin_wait() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN PERFORM pg_advisory_xact_lock(731630,40); RETURN NEW; END $$;
       CREATE TRIGGER qa_admin_wait AFTER INSERT ON store_bargain_user_help FOR EACH ROW EXECUTE FUNCTION qa_admin_wait()`));
@@ -94,10 +94,15 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('bargain admin wr
       await blocker.exec('BEGIN; SELECT pg_advisory_xact_lock(731630,40)');
       const helping = outcome(new ActivityJoinService(createContainerFromDb(helper.db)).helpBargain(11, 81));
       await waitForFinanceBlock(f.db, helper.pid, blocker.pid);
-      await setBargainStatus(createContainerFromDb(admin.db), { id: 40, status: 0 });
-      await blocker.exec('COMMIT'); await rejected(helping, '砍价活动');
+      const editing = outcome(setBargainStatus(createContainerFromDb(admin.db), { id: 40, status: 0 }));
+      await waitForFinanceBlock(f.db, admin.pid, helper.pid);
+      await blocker.exec('COMMIT');
+      expect(await helping).toMatchObject({ ok: true });
+      expect(await editing).toMatchObject({ ok: true });
     });
-    expect(await snapshot()).toEqual({ ...before, bargains: before.bargains.map(row => ({ ...row, status: 0 })) });
+    const after = await snapshot();
+    expect(after.bargains).toEqual(before.bargains.map(row => ({ ...row, status: 0 })));
+    expect(after.helps).toHaveLength(before.helps.length + 1);
   }, 15_000);
 
   it('rechecks inventory after an actual cancellation restores it', async () => {

@@ -34,6 +34,7 @@ import {
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 import { findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
+import { lockBargainHelpRuleShared } from "@/services/activity/BargainHelpRuleLock";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
 const BARGAIN_HELP_USER_LOCK_NAMESPACE = 731_628;
@@ -571,6 +572,15 @@ export class ActivityJoinService {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(${BARGAIN_HELP_LOCK_NAMESPACE}, ${bargainUserId})`,
       );
+      // Discover the activity without a row lock, then take its shared rule
+      // boundary before the participant. A later row lock verifies the identity
+      // again; no path may wait on this rule lock while owning a participant.
+      const [identity] = await tx.select({ bargainId: storeBargainUser.bargainId })
+        .from(storeBargainUser)
+        .where(and(eq(storeBargainUser.id, bargainUserId), eq(storeBargainUser.isDel, 0)))
+        .limit(1);
+      if (!identity) throw new NotFoundException("砍价记录不存在");
+      await lockBargainHelpRuleShared(tx, identity.bargainId);
       const records = await tx
         .select()
         .from(storeBargainUser)
@@ -579,6 +589,7 @@ export class ActivityJoinService {
         .for("update");
       const record = records[0];
       if (!record) throw new NotFoundException("砍价记录不存在");
+      if (record.bargainId !== identity.bargainId) throw new ValidateException("砍价记录活动已变化，请重试");
       if (record.status !== 1) throw new ValidateException("砍价已结束");
 
       const bargainRows = await tx
