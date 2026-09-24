@@ -96,6 +96,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "用户管理" },
       },
       {
+        path: "user/groups",
+        name: "user-groups",
+        component: () => import("@/pages/user/UserGroups.vue"),
+        meta: { title: "商城用户分组" },
+      },
+      {
         path: "member",
         name: "paid-membership",
         component: () => import("@/pages/user/PaidMembership.vue"),

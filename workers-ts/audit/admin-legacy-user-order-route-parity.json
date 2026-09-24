@@ -13,9 +13,9 @@
       "src/router/modules/user.js": 12,
       "src/router/modules/order.js": 6
     },
-    "candidate": 1,
+    "candidate": 2,
     "partial": 14,
-    "missing": 3,
+    "missing": 2,
     "retired": 0,
     "unreviewed": 0
   },
@@ -362,16 +362,20 @@
         "routerSha256": "006d0e7ee1691bb696b694de425d07b28b829fbeaea90b5e248030651789ba76",
         "auth": "['user-user-group']"
       },
-      "status": "missing",
-      "targetScreens": [],
+      "status": "candidate",
+      "targetScreens": [
+        "/user/groups"
+      ],
       "targetApis": [
         "GET /adminapi/user_group/list",
         "POST /adminapi/user_group/save",
         "DELETE /adminapi/user_group/del/:id"
       ],
-      "covered": [],
+      "covered": [
+        "新用户分组页可按名称查询并分页查看分组，新增、编辑和删除分组；写操作按 user.manage 授权，已关联用户的分组由 Worker 拒绝删除。"
+      ],
       "remaining": [
-        "旧页可增删改用户分组；Worker 有分组 CRUD，但新 Admin 无用户分组目录和编辑入口，用户详情也不提供分组维护。"
+        "旧表单名称上限20字，新页及Worker限64字，需确认运营是否接受扩展；仍需在生产用真实分组和受限角色核对名称、编辑及删除行为；用户批量分组设置属于旧用户列表流程，未因分组目录迁移而完成。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/router/modules/user.js",
@@ -381,7 +385,9 @@
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
-        "view/admin-ts/src/pages/user/UserList.vue"
+        "view/admin-ts/src/pages/user/UserGroups.vue",
+        "view/admin-ts/src/api/userGroups.ts",
+        "workers-ts/src/services/user/UserSegmentationService.ts"
       ],
       "targetPermissions": [
         "user.view",

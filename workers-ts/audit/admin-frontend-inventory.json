@@ -3594,7 +3594,7 @@
     "routeFiles": [
       {
         "file": "src/router/index.ts",
-        "sha256": "c1c42db78947a42558fd28524353df18bff4dc76eb1ed03f37db454c3d7bf055"
+        "sha256": "66711ebb208616fdb6f57be7c007bbab52ec5d27d8253cb31a2383074047ae0b"
       }
     ],
     "pageVueFiles": [
@@ -3659,6 +3659,7 @@
       "src/pages/system/LogList.vue",
       "src/pages/system/SystemList.vue",
       "src/pages/user/PaidMembership.vue",
+      "src/pages/user/UserGroups.vue",
       "src/pages/user/UserList.vue"
     ],
     "routes": [
@@ -3805,6 +3806,16 @@
       {
         "source": "src/router/index.ts",
         "line": 98,
+        "path": "/user/groups",
+        "name": "user-groups",
+        "title": "商城用户分组",
+        "component": "@/pages/user/UserGroups.vue",
+        "resolvedComponent": "src/pages/user/UserGroups.vue",
+        "surface": "page"
+      },
+      {
+        "source": "src/router/index.ts",
+        "line": 104,
         "path": "/member",
         "name": "paid-membership",
         "title": "付费会员",
@@ -3814,7 +3825,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 104,
+        "line": 110,
         "path": "/refund",
         "name": "refund",
         "title": "退款审核",
@@ -3824,7 +3835,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 110,
+        "line": 116,
         "path": "/supplier/applications",
         "name": "supplier-applications",
         "title": "供应商入驻",
@@ -3834,7 +3845,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 116,
+        "line": 122,
         "path": "/operations/outbox",
         "name": "operations-outbox",
         "title": "任务运维",
@@ -3844,7 +3855,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 122,
+        "line": 128,
         "path": "/operations/legacy-runtime",
         "name": "operations-legacy-runtime",
         "title": "迁移运行历史",
@@ -3854,7 +3865,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 128,
+        "line": 134,
         "path": "/operations/work",
         "name": "operations-work",
         "title": "企业微信",
@@ -3864,7 +3875,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 134,
+        "line": 140,
         "path": "/operations/store",
         "name": "operations-store",
         "title": "门店与配送",
@@ -3874,7 +3885,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 140,
+        "line": 146,
         "path": "/config/newcomer",
         "name": "config-newcomer",
         "title": "新人运营",
@@ -3884,7 +3895,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 146,
+        "line": 152,
         "path": "/config/commerce",
         "name": "config-commerce",
         "title": "商城运行设置",
@@ -3894,7 +3905,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 152,
+        "line": 158,
         "path": "/config/forms",
         "name": "config-forms",
         "title": "系统表单",
@@ -3904,7 +3915,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 158,
+        "line": 164,
         "path": "/config/runtime-content",
         "name": "config-runtime-content",
         "title": "客户端内容",
@@ -3914,7 +3925,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 164,
+        "line": 170,
         "path": "/config",
         "name": "config",
         "title": "系统配置",
@@ -3924,7 +3935,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 170,
+        "line": 176,
         "path": "/category",
         "name": "category",
         "title": "商品分类",
@@ -3934,7 +3945,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 176,
+        "line": 182,
         "path": "/coupon",
         "name": "coupon",
         "title": "优惠券管理",
@@ -3944,7 +3955,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 182,
+        "line": 188,
         "path": "/activity",
         "name": "activity",
         "title": "营销活动",
@@ -3954,7 +3965,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 188,
+        "line": 194,
         "path": "/marketing/lottery",
         "name": "lottery",
         "title": "抽奖活动",
@@ -3964,7 +3975,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 194,
+        "line": 200,
         "path": "/marketing/live",
         "name": "wechat-live",
         "title": "小程序直播",
@@ -3974,7 +3985,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 200,
+        "line": 206,
         "path": "/system/out",
         "name": "external-api",
         "title": "对外接口",
@@ -3984,7 +3995,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 206,
+        "line": 212,
         "path": "/kefu",
         "name": "kefu",
         "title": "客服会话",
@@ -3994,7 +4005,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 212,
+        "line": 218,
         "path": "/reply",
         "name": "reply",
         "title": "商品评价",
@@ -4004,7 +4015,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 218,
+        "line": 224,
         "path": "/brand",
         "name": "brand",
         "title": "品牌管理",
@@ -4014,7 +4025,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 224,
+        "line": 230,
         "path": "/system",
         "name": "system",
         "title": "系统管理",
@@ -4024,7 +4035,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 230,
+        "line": 236,
         "path": "/finance/extract",
         "name": "finance-extract",
         "title": "提现审核",
@@ -4034,7 +4045,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 236,
+        "line": 242,
         "path": "/assets",
         "name": "assets",
         "title": "素材中心",
@@ -4044,7 +4055,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 242,
+        "line": 248,
         "path": "/finance/supplier-extract",
         "name": "finance-supplier-extract",
         "title": "供应商提现",
@@ -4054,7 +4065,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 248,
+        "line": 254,
         "path": "/finance/bill",
         "name": "finance-bill",
         "title": "财务流水",
@@ -4064,7 +4075,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 254,
+        "line": 260,
         "path": "/finance/capital-flow",
         "name": "finance-capital-flow",
         "title": "平台资金流水",
@@ -4074,7 +4085,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 260,
+        "line": 266,
         "path": "/level",
         "name": "level",
         "title": "会员等级",
@@ -4084,7 +4095,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 266,
+        "line": 272,
         "path": "/shipping",
         "name": "shipping",
         "title": "运费模板",
@@ -4094,7 +4105,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 272,
+        "line": 278,
         "path": "/express",
         "name": "express",
         "title": "快递公司",
@@ -4104,7 +4115,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 278,
+        "line": 284,
         "path": "/statistic",
         "name": "statistic",
         "title": "统计报表",
@@ -4114,7 +4125,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 284,
+        "line": 290,
         "path": "/label",
         "name": "label",
         "title": "标签管理",
@@ -4124,7 +4135,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 290,
+        "line": 296,
         "path": "/content/article",
         "name": "content-article",
         "title": "CMS 文章",
@@ -4134,7 +4145,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 296,
+        "line": 302,
         "path": "/content/wechat-card",
         "name": "content-wechat-card",
         "title": "公众号会员卡",
@@ -4144,7 +4155,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 302,
+        "line": 308,
         "path": "/content/wechat",
         "name": "content-wechat",
         "title": "公众号内容",
@@ -4154,7 +4165,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 308,
+        "line": 314,
         "path": "/content/wechat-qrcode",
         "name": "content-wechat-qrcode",
         "title": "渠道二维码",
@@ -4164,7 +4175,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 314,
+        "line": 320,
         "path": "/content/dise",
         "name": "content-dise",
         "title": "DIY 装修",
@@ -4174,7 +4185,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 320,
+        "line": 326,
         "path": "/system/log",
         "name": "system-log",
         "title": "操作日志",
@@ -4184,7 +4195,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 326,
+        "line": 332,
         "path": "/agent",
         "name": "agent",
         "title": "分销管理",
@@ -4194,7 +4205,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 332,
+        "line": 338,
         "path": "/division",
         "name": "division",
         "title": "事业部管理",
@@ -4204,7 +4215,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 338,
+        "line": 344,
         "path": "/setting/notification",
         "name": "setting-notification",
         "title": "通知配置",
@@ -4214,7 +4225,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 344,
+        "line": 350,
         "path": "/setting/print",
         "name": "setting-print",
         "title": "小票打印",
@@ -4224,7 +4235,7 @@
       },
       {
         "source": "src/router/index.ts",
-        "line": 350,
+        "line": 356,
         "path": "/setting/waybill",
         "name": "setting-waybill",
         "title": "电子面单",
@@ -4280,13 +4291,13 @@
       "statistic": 1,
       "supplier": 1,
       "system": 3,
-      "user": 1
+      "user": 2
     },
     "counts": {
-      "pageVueFiles": 62,
-      "routeRecords": 57,
-      "businessPageRouteRecords": 56,
-      "distinctRoutedPageComponents": 55,
+      "pageVueFiles": 63,
+      "routeRecords": 58,
+      "businessPageRouteRecords": 57,
+      "distinctRoutedPageComponents": 56,
       "auxiliaryRouteRecords": 0,
       "layoutRouteRecords": 1,
       "otherRouteRecords": 0,

@@ -3796,6 +3796,10 @@
       "sha256": "219d45a380056592a918870defcff3bc568ef251f1b34b86cbf848f4dd06c7bd"
     },
     {
+      "file": "view/admin-ts/src/api/userGroups.ts",
+      "sha256": "ad51ed8744c93cf48b9694838433e15caf1603267ce0809b7a0b99f50d4bd4b9"
+    },
+    {
       "file": "view/admin-ts/src/api/wechatContent.ts",
       "sha256": "2ceee076bc05fc8385e4845d9cdbb07e80f4dca6831682f91e45a68e3aaf4fa8"
     },
@@ -3829,10 +3833,10 @@
     }
   ],
   "counts": {
-    "callSites": 334,
-    "pathVariants": 354,
-    "registered": 354,
-    "executable": 354,
+    "callSites": 337,
+    "pathVariants": 357,
+    "registered": 357,
+    "executable": 357,
     "controlledUnavailable": 0,
     "unregistered": 0,
     "unresolved": 0
@@ -6819,6 +6823,36 @@
       "registered": true,
       "matchedRoute": "/form/data/:id",
       "matchedHandler": "AdminCrud.adminSystemFormData",
+      "availability": "executable"
+    },
+    {
+      "method": "GET",
+      "path": "/user_group/list",
+      "source": "view/admin-ts/src/api/userGroups.ts",
+      "line": 49,
+      "registered": true,
+      "matchedRoute": "/user_group/list",
+      "matchedHandler": "AdminCrud.adminUserGroupList",
+      "availability": "executable"
+    },
+    {
+      "method": "POST",
+      "path": "/user_group/save",
+      "source": "view/admin-ts/src/api/userGroups.ts",
+      "line": 56,
+      "registered": true,
+      "matchedRoute": "/user_group/save",
+      "matchedHandler": "AdminCrud.adminUserGroupSave",
+      "availability": "executable"
+    },
+    {
+      "method": "DELETE",
+      "path": "/user_group/del/:param",
+      "source": "view/admin-ts/src/api/userGroups.ts",
+      "line": 64,
+      "registered": true,
+      "matchedRoute": "/user_group/del/:id",
+      "matchedHandler": "AdminCrud.adminUserGroupDelete",
       "availability": "executable"
     },
     {

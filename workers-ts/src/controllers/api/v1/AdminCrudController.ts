@@ -689,14 +689,17 @@ export async function adminMobileUserDefaultAddress(c: C) {
 }
 
 export async function adminUserGroupList(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await userSegmentation(c).groupList(c.req.query()));
 }
 
 export async function adminUserGroupSave(c: C) {
+  privateNoStore(c);
   return jsonOk(c, await userSegmentation(c).saveGroup(await metadataBody(c)), "提交成功");
 }
 
 export async function adminUserGroupDelete(c: C) {
+  privateNoStore(c);
   await userSegmentation(c).deleteGroup(metadataId(c));
   return jsonOk(c, null, "删除成功");
 }

@@ -32,6 +32,10 @@
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/user')" index="/user/groups">
+          <el-icon><User /></el-icon>
+          <span>商城用户分组</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/community')" index="/community">
           <el-icon><ChatLineRound /></el-icon>
           <span>社区运营</span>
@@ -255,6 +259,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/product")) return "/product";
   if (path === "/order/offline") return "/order/offline";
   if (path.startsWith("/order")) return "/order";
+  if (path.startsWith("/user/groups")) return "/user/groups";
   if (path.startsWith("/user")) return "/user";
   if (path.startsWith("/community")) return "/community";
   if (path.startsWith("/member")) return "/member";

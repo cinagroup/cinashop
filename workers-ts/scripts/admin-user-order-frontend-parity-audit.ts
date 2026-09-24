@@ -50,6 +50,7 @@ const screenFiles: Record<string, string> = {
   "/refund": "view/admin-ts/src/pages/refund/RefundList.vue",
   "/operations/legacy-runtime": "view/admin-ts/src/pages/operations/LegacyRuntimeHistory.vue",
   "/user": "view/admin-ts/src/pages/user/UserList.vue",
+  "/user/groups": "view/admin-ts/src/pages/user/UserGroups.vue",
   "/level": "view/admin-ts/src/pages/level/LevelList.vue",
   "/label": "view/admin-ts/src/pages/label/LabelList.vue",
   "/member": "view/admin-ts/src/pages/user/PaidMembership.vue",
@@ -58,7 +59,7 @@ const screenFiles: Record<string, string> = {
 const screenPermissions: Record<string, string> = {
   "/order": "order.view", "/order/:orderId": "order.view", "/order/offline": "order.view",
   "/refund": "refund.view", "/operations/legacy-runtime": "legacy_runtime.view",
-  "/user": "user.view", "/level": "level.view", "/label": "label.view",
+  "/user": "user.view", "/user/groups": "user.view", "/level": "level.view", "/label": "label.view",
   "/member": "paid_membership.view", "/config/newcomer": "config.view",
 };
 const oldOrderApi = "cinashop-php/view/admin/src/api/order.js";
@@ -111,9 +112,11 @@ add("/admin/vipuser/level/list", "partial", ["/level"], ["GET /adminapi/level/li
 ], [
   "旧页还提供等级任务/奖励明细、筛选与独立状态切换；新 Admin 没有等级任务管理入口，需验证历史等级和消费方。",
 ], ["cinashop-php/view/admin/src/pages/user/level/handle/task.vue", "view/admin-ts/src/api/level.ts"]);
-add("/admin/user/group", "missing", [], ["GET /adminapi/user_group/list", "POST /adminapi/user_group/save", "DELETE /adminapi/user_group/del/:id"], [], [
-  "旧页可增删改用户分组；Worker 有分组 CRUD，但新 Admin 无用户分组目录和编辑入口，用户详情也不提供分组维护。",
-], ["view/admin-ts/src/pages/user/UserList.vue"]);
+add("/admin/user/group", "candidate", ["/user/groups"], ["GET /adminapi/user_group/list", "POST /adminapi/user_group/save", "DELETE /adminapi/user_group/del/:id"], [
+  "新用户分组页可按名称查询并分页查看分组，新增、编辑和删除分组；写操作按 user.manage 授权，已关联用户的分组由 Worker 拒绝删除。",
+], [
+  "旧表单名称上限20字，新页及Worker限64字，需确认运营是否接受扩展；仍需在生产用真实分组和受限角色核对名称、编辑及删除行为；用户批量分组设置属于旧用户列表流程，未因分组目录迁移而完成。",
+], ["view/admin-ts/src/api/userGroups.ts", "workers-ts/src/services/user/UserSegmentationService.ts"]);
 add("/admin/user/label", "partial", ["/label"], ["GET /adminapi/user_label/list", "POST /adminapi/user_label/save", "DELETE /adminapi/user_label/del/:id"], [
   "新标签页的用户 tab 可列出、新增、编辑和删除平面用户标签。",
 ], [

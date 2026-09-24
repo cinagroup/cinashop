@@ -36,7 +36,7 @@ describe("legacy Admin user and order route semantic audit", () => {
     expect(report.routes.map((route) => route.legacy.path)).toEqual(businessRoutes.map((route) => route.path));
     expect(report.summary).toEqual({
       legacyRoutes: 18, reviewed: 18, bySource: { [userRouter]: 12, [orderRouter]: 6 },
-      candidate: 1, partial: 14, missing: 3, retired: 0, unreviewed: 0,
+      candidate: 2, partial: 14, missing: 2, retired: 0, unreviewed: 0,
     });
     expect(report.methodology.scope).toContain("auxiliary components are excluded");
   });
@@ -91,7 +91,7 @@ describe("legacy Admin user and order route semantic audit", () => {
     }
   });
 
-  it("preserves important semantic distinctions and the only candidate gate", () => {
+  it("preserves important semantic distinctions and candidate gates", () => {
     expect(byPath.get("/admin/order/offline")?.status).toBe("candidate");
     expect(byPath.get("/admin/order/offline")?.remaining.join(" ")).toMatch(/真实旧记录/u);
     expect(byPath.get("/admin/order/refund")?.status).toBe("partial");
@@ -99,8 +99,13 @@ describe("legacy Admin user and order route semantic audit", () => {
     expect(byPath.get("/admin/order/refund")?.remaining.join(" ")).toMatch(/410/u);
     expect(byPath.get("/admin/order/invoice/list")?.status).toBe("missing");
     expect(byPath.get("/admin/order/queue/list")?.remaining.join(" ")).toMatch(/只读/u);
-    expect(byPath.get("/admin/user/group")?.status).toBe("missing");
+    expect(byPath.get("/admin/user/group")?.status).toBe("candidate");
+    expect(byPath.get("/admin/user/group")?.targetScreens).toEqual(["/user/groups"]);
     expect(byPath.get("/admin/user/group")?.targetApis).toContain("GET /adminapi/user_group/list");
+    expect(byPath.get("/admin/user/group")?.targetApis).toContain("POST /adminapi/user_group/save");
+    expect(byPath.get("/admin/user/group")?.targetApis).toContain("DELETE /adminapi/user_group/del/:id");
+    expect(byPath.get("/admin/user/group")?.targetPermissions).toEqual(["user.view", "user.manage"]);
+    expect(byPath.get("/admin/user/group")?.remaining.join(" ")).toMatch(/真实分组和受限角色/u);
     expect(byPath.get("/admin/user/recharge/:id")?.status).toBe("missing");
     expect(byPath.get("/admin/vipuser/grade/card")?.remaining.join(" ")).toMatch(/历史卡密/u);
     expect(byPath.get("/admin/vipuser/grade/list/:id")?.remaining.join(" ")).toMatch(/历史卡密码永久隐藏/u);
