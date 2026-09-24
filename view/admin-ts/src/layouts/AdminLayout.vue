@@ -108,6 +108,10 @@
           <el-icon><Tickets /></el-icon>
           <span>积分日志</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/config')" index="/marketing/sign-rewards">
+          <el-icon><Present /></el-icon>
+          <span>签到奖励</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/system/out')" index="/system/out">
           <el-icon><Key /></el-icon>
           <span>对外接口</span>
@@ -288,6 +292,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/marketing/lottery")) return "/marketing/lottery";
   if (path.startsWith("/marketing/live")) return "/marketing/live";
   if (path.startsWith("/marketing/user-point")) return "/marketing/user-point";
+  if (path.startsWith("/marketing/sign-rewards")) return "/marketing/sign-rewards";
   if (path.startsWith("/system/out")) return "/system/out";
   if (path.startsWith("/kefu")) return "/kefu";
   if (path.startsWith("/reply")) return "/reply";

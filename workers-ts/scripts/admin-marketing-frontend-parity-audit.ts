@@ -34,6 +34,7 @@ const screens: Record<string, string> = {
   "/activity": "view/admin-ts/src/pages/activity/ActivityList.vue",
   "/marketing/lottery": "view/admin-ts/src/pages/activity/LotteryList.vue",
   "/marketing/user-point": "view/admin-ts/src/pages/marketing/IntegralLog.vue",
+  "/marketing/sign-rewards": "view/admin-ts/src/pages/marketing/SignRewards.vue",
   "/marketing/coupon-records": "view/admin-ts/src/pages/marketing/CouponRecords.vue",
   "/content/wechat-qrcode": "view/admin-ts/src/pages/content/WechatQrcode.vue",
 };
@@ -42,6 +43,7 @@ const permissionKeys: Record<string, string> = {
   "/activity": "activity.view / activity.manage",
   "/marketing/lottery": "lottery.view / lottery.manage",
   "/marketing/user-point": "integral_log.view",
+  "/marketing/sign-rewards": "config.view / config.manage",
   "/marketing/coupon-records": "coupon_record.view",
   "/content/wechat-qrcode": "wechat_qrcode.view / wechat_qrcode.manage",
 };
@@ -245,8 +247,15 @@ add("/admin/marketing/channel_code/create/:id?", "partial", ["/content/wechat-qr
 add("/admin/marketing/channel_code/statistic/:id?", "partial", ["/content/wechat-qrcode"], ["GET /adminapi/wechat_qrcode/statistic/:qid", "GET /adminapi/wechat_qrcode/user_list/:qid"],
   "公众号渠道码页有扫码统计和用户抽屉。",
   "真实扫码回调未启用，历史数据、受限角色和远端二维码/扫码结果仍需验收。");
-add("/admin/marketing/sign_rewards", "missing", [], ["GET /adminapi/setting/sign/rewards", "POST /adminapi/setting/sign/save_rewards/:id"], "",
-  "Worker 有签到奖励读写合同，但新 Admin 没有签到奖励列表/编辑页面，API-only 不构成整屏覆盖。");
+add("/admin/marketing/sign_rewards", "candidate", ["/marketing/sign-rewards"], [
+  "GET /adminapi/setting/sign/rewards", "GET /adminapi/setting/sign/add_rewards",
+  "GET /adminapi/setting/sign/edit_rewards/:id", "POST /adminapi/setting/sign/save_rewards/:id",
+  "DELETE /adminapi/setting/sign/del_rewards/:id",
+],
+  "新 Admin 以连续/累积两个页签按天数展示积分与经验，支持每页15条、添加、编辑和确认删除；表单天数上限来自旧服务配置，权限沿用 config.view/manage。",
+  "仅完成本地候选；生产非空签到规则、受限角色正反权限、真实签到奖励和发布后浏览器验收仍待完成。",
+  ["view/admin-ts/src/api/signRewards.ts", "workers-ts/src/services/system/SystemSignRewardService.ts",
+    "workers-ts/test/admin-sign-rewards-frontend.test.ts"]);
 
 const inventory = JSON.parse(readFileSync(inventoryFile, "utf8")) as {
   legacy: { routes: InventoryRoute[]; routeFiles: { file: string; sha256: string }[] };

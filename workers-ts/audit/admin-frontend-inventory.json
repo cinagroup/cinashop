@@ -3594,7 +3594,7 @@
     "routeFiles": [
       {
         "file": "src/router/index.ts",
-        "sha256": "e0b72c7b3ba4f7d76ea4872a962ee0ff97a3384a2113bcb37f0f4b387acc3327"
+        "sha256": "e19362ccda95f1a9f4414f0b0ed2631b4485255fa49aa73be9fcfd093b50fdac"
       }
     ],
     "pageVueFiles": [
@@ -3629,6 +3629,7 @@
       "src/pages/level/LevelList.vue",
       "src/pages/marketing/CouponRecords.vue",
       "src/pages/marketing/IntegralLog.vue",
+      "src/pages/marketing/SignRewards.vue",
       "src/pages/marketing/WechatLiveCatalog.vue",
       "src/pages/operations/EnterpriseWechat.vue",
       "src/pages/operations/LegacyRuntimeHistory.vue",
@@ -4258,6 +4259,16 @@
       {
         "source": "src/router/index.ts",
         "line": 368,
+        "path": "/marketing/sign-rewards",
+        "name": "sign-rewards",
+        "title": "签到奖励",
+        "component": "@/pages/marketing/SignRewards.vue",
+        "resolvedComponent": "src/pages/marketing/SignRewards.vue",
+        "surface": "page"
+      },
+      {
+        "source": "src/router/index.ts",
+        "line": 374,
         "path": "/marketing/coupon-records",
         "name": "coupon-records",
         "title": "用户领取记录",
@@ -4301,7 +4312,7 @@
       "label": 1,
       "level": 1,
       "login": 1,
-      "marketing": 4,
+      "marketing": 5,
       "member": 1,
       "operations": 4,
       "order": 3,
@@ -4316,10 +4327,10 @@
       "user": 2
     },
     "counts": {
-      "pageVueFiles": 65,
-      "routeRecords": 60,
-      "businessPageRouteRecords": 59,
-      "distinctRoutedPageComponents": 58,
+      "pageVueFiles": 66,
+      "routeRecords": 61,
+      "businessPageRouteRecords": 60,
+      "distinctRoutedPageComponents": 59,
       "auxiliaryRouteRecords": 0,
       "layoutRouteRecords": 1,
       "otherRouteRecords": 0,

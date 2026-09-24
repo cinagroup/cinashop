@@ -33,8 +33,8 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(inventory.legacy.routes.filter((route) => route.path.startsWith("/admin/marketing"))).toHaveLength(52);
     expect(report.routes.map((route) => route.legacy.path)).toEqual(businessPaths);
     expect(report.summary).toEqual({
-      legacyRoutes: 48, reviewed: 48, candidate: 3, partial: 22,
-      missing: 23, retired: 0, unreviewed: 0,
+      legacyRoutes: 48, reviewed: 48, candidate: 4, partial: 22,
+      missing: 22, retired: 0, unreviewed: 0,
     });
   });
 
@@ -98,8 +98,16 @@ describe("legacy Admin marketing route parity audit", () => {
     expect(couponRecord?.remaining.join(" ")).toContain("真实历史领取记录");
     expect(byPath.get("/admin/marketing/store_seckill/list")?.status).toBe("missing");
     expect(byPath.get("/admin/marketing/store_seckill_data/index")?.status).toBe("missing");
-    expect(byPath.get("/admin/marketing/sign_rewards")?.status).toBe("missing");
-    expect(byPath.get("/admin/marketing/sign_rewards")?.targetApis).toContain("GET /adminapi/setting/sign/rewards");
+    const signRewards = byPath.get("/admin/marketing/sign_rewards");
+    expect(signRewards?.status).toBe("candidate");
+    expect(signRewards?.targetScreens).toEqual(["/marketing/sign-rewards"]);
+    expect(signRewards?.targetApis).toEqual([
+      "GET /adminapi/setting/sign/rewards", "GET /adminapi/setting/sign/add_rewards",
+      "GET /adminapi/setting/sign/edit_rewards/:id", "POST /adminapi/setting/sign/save_rewards/:id",
+      "DELETE /adminapi/setting/sign/del_rewards/:id",
+    ]);
+    expect(signRewards?.targetPermissions).toEqual(["config.view / config.manage"]);
+    expect(signRewards?.remaining.join(" ")).toContain("生产非空签到规则");
     const integralLog = byPath.get("/admin/marketing/user_point/index");
     expect(integralLog?.status).toBe("partial");
     expect(integralLog?.targetScreens).toEqual(["/marketing/user-point"]);
