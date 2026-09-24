@@ -1,8 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { Hono } from "hono";
 import { eq, sql } from "drizzle-orm";
 import { createPcCheckoutQuoteFixture } from "./helpers/pcCheckoutQuoteFixture";
 import { withFinancePeers, waitForFinanceBlock, waitForFinanceClock, outcome, type FinancePeer } from "./helpers/financePeers";
 import { createContainerFromDb, withTx } from "../src/lib/di";
+import type { AppVariables, Env } from "../src/env";
+import { adminActivitySave } from "../src/controllers/api/v1/AdminCrudController";
 import { cancelStoreOrder, StoreOrderCreateService, type CreateOrderParams } from "../src/services/order/StoreOrderCreateService";
 import { StoreCartService } from "../src/services/order/StoreCartService";
 import { ensureAutomaticOrderRefund, finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
@@ -152,6 +155,37 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))("seckill independ
     expect(state.skus.find(sku => sku.id === 2)).toMatchObject({ stock: 7, quota: 6, sales: 0 });
     expect(state.children[0]).toMatchObject({ stock: 7, quota: 6, sales: 0 });
     expect(state.users[0].nowMoney).toBe("12.50"); expect(state.bills.filter(bill => bill.type === "pay_product_refund")).toHaveLength(1);
+  }, 15_000);
+
+  it("a real admin limit save commits during the parent's checkout lock wait and rejects the stale order", async () => {
+    // The Admin handler also validates the retained freight template. Supply the
+    // fixture's real template instead of bypassing that application gate.
+    await f.db.update(storeSeckill).set({ freight: 3, tempId: 10 }).where(eq(storeSeckill.id, 20));
+    const before = await snapshot();
+    await withFinancePeers(f.db, async ([blocker, buyer, editor]) => {
+      const admin = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+      admin.use("*", async (c, next) => { c.set("container", createContainerFromDb(editor.db)); await next(); });
+      admin.onError((error, c) => c.json({ status: 400, msg: error.message, data: null }));
+      admin.post("/activity/save", adminActivitySave);
+
+      await blocker.exec("BEGIN; SELECT id FROM store_activity WHERE id=9 FOR UPDATE");
+      const pending = outcome(create(buyer));
+      await waitForFinanceBlock(f.db, buyer.pid, blocker.pid);
+      const saved = await admin.request("/activity/save", { method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: "seckill", id: 20, num: 1 }),
+      }, f.env);
+      expect(await saved.json()).toMatchObject({ status: 200, data: { id: 20 } });
+      const [changed] = await f.db.select({ num: storeSeckill.num }).from(storeSeckill).where(eq(storeSeckill.id, 20));
+      expect(changed.num).toBe(1);
+
+      await blocker.exec("COMMIT");
+      expect(await pending).toMatchObject({ ok: false,
+        error: { message: "秒杀库存不足、排期或计价规则已变化，请刷新后重试" } });
+    });
+    const after = await snapshot();
+    expect(after).toEqual({ ...before,
+      children: before.children.map(child => child.id === 20 ? { ...child, num: 1 } : child) });
   }, 15_000);
 
   it.each(["parent", "slot"])("rereads a stopped %s after an observed lock wait and rolls back", async target => {
