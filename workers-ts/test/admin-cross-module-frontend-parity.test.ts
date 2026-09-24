@@ -39,7 +39,7 @@ describe("legacy Admin cross-module route semantic audit", () => {
     expect(business).toHaveLength(18);
     for (const [file, count] of Object.entries(fileCounts)) expect(business.filter((route) => route.source === file)).toHaveLength(count);
     expect(report.routes.map((route) => route.legacy.path)).toEqual(business.map((route) => route.path));
-    expect(report.summary).toEqual({ legacyRoutes: 18, reviewed: 18, candidate: 3, partial: 9, missing: 4, retired: 2, unreviewed: 0 });
+    expect(report.summary).toEqual({ legacyRoutes: 18, reviewed: 18, candidate: 3, partial: 10, missing: 4, retired: 1, unreviewed: 0 });
   });
 
   it("keeps nine audit ledgers disjoint inside the 274-page authority", () => {
@@ -82,10 +82,13 @@ describe("legacy Admin cross-module route semantic audit", () => {
     }
   });
 
-  it("separates sample charts, browser logs and three finance ledgers", () => {
+  it("keeps the live order count partial while retiring only its demo chart and tables", () => {
     expect(byPath.get("/admin/echarts/trade/product")?.status).toBe("retired");
-    expect(byPath.get("/admin/echarts/trade/order")?.status).toBe("retired");
-    expect(byPath.get("/admin/echarts/trade/order")?.remaining.join(" ")).toMatch(/硬编码|示例/u);
+    expect(byPath.get("/admin/echarts/trade/order")?.status).toBe("partial");
+    expect(byPath.get("/admin/echarts/trade/order")?.targetScreens).toEqual(["/order", "/statistic"]);
+    expect(byPath.get("/admin/echarts/trade/order")?.covered.join(" ")).toMatch(/实时订单状态计数/u);
+    expect(byPath.get("/admin/echarts/trade/order")?.remaining.join(" ")).toMatch(/GET \/adminapi\/order\/chart/u);
+    expect(byPath.get("/admin/echarts/trade/order")?.remaining.join(" ")).toMatch(/演示|样例/u);
     expect(byPath.has("/admin/system/log")).toBe(false);
     expect(byPath.has("/admin/system/user")).toBe(false);
     expect(byPath.has("/admin/setting/system/create")).toBe(false);

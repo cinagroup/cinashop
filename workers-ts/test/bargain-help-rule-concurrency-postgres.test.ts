@@ -36,7 +36,28 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('bargain people e
     return { people: activity.people, helps: count.helps };
   };
 
+  it('does not strand an unfinished participation by lowering people to its current help count', async () => {
+    const before = await state();
+    await expect(saveBargain(f.container, { id: 40, people: 2 }))
+      .rejects.toThrow('砍价人数调整会使未完成参与无法继续砍价');
+    expect(await state()).toEqual(before);
+    await expect(new ActivityJoinService(f.container).helpBargain(11, 81)).resolves.toMatchObject({ price: '7.00' });
+    expect(await state()).toEqual({ people: 3, helps: 3 });
+  });
+
+  it('does not treat an overcut active record as purchase-ready at the new limit', async () => {
+    await f.db.update(storeBargainUser).set({ price: '9.00' }).where(eq(storeBargainUser.id, 81));
+    const before = await state();
+    await expect(saveBargain(f.container, { id: 40, people: 2 }))
+      .rejects.toThrow('砍价人数调整会使未完成参与无法继续砍价');
+    expect(await state()).toEqual(before);
+  });
+
   it('admin wins: a third helper waits for the committed smaller people limit and is rejected', async () => {
+    // A full two-person cut is already purchase-ready; equal count is legal.
+    await f.db.update(storeBargainUserHelp).set({ price: '4.00' })
+      .where(eq(storeBargainUserHelp.bargainUserId, 81));
+    await f.db.update(storeBargainUser).set({ price: '8.00' }).where(eq(storeBargainUser.id, 81));
     await f.db.execute(sql.raw(`CREATE FUNCTION qa_people_admin_wait() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN PERFORM pg_advisory_xact_lock(731640,40); RETURN NEW; END $$;
       CREATE TRIGGER qa_people_admin_wait AFTER UPDATE OF people ON store_bargain

@@ -44,7 +44,7 @@ const legacyAuth: Record<string, string> = {
 const behaviorLines: Record<string, number> = {
   "/": 5, "/admin/out": 49, "/admin/out_interface": 17,
   "/admin/pages/diy": 31, "/admin/pages/special/diy": 21,
-  "/admin/echarts/trade/order": 78, "/admin/echarts/trade/product": 1,
+  "/admin/echarts/trade/order": 174, "/admin/echarts/trade/product": 1,
   "/admin/finance/user_extract/index": 16, "/admin/finance/user_recharge/index": 16,
   "/admin/finance/finance/bill": 14, "/admin/finance/finance/commission": 15,
   "/admin/login": 119, "/admin/statistic/product": 4, "/admin/statistic/user": 10,
@@ -53,6 +53,7 @@ const behaviorLines: Record<string, number> = {
 };
 const screens: Record<string, { file: string; marker: string; permission: string }> = {
   "/dashboard": { file: "view/admin-ts/src/pages/Dashboard.vue", marker: 'path: "dashboard"', permission: "dashboard.view" },
+  "/order": { file: "view/admin-ts/src/pages/order/OrderList.vue", marker: 'path: "order"', permission: "order.view" },
   "/system/out": { file: "view/admin-ts/src/pages/system/ExternalApi.vue", marker: 'path: "system/out"', permission: "external_api.view/external_api.manage" },
   "/login": { file: "view/admin-ts/src/pages/Login.vue", marker: 'path: "/login"', permission: "public_login" },
   "/config/forms": { file: "view/admin-ts/src/pages/config/SystemForms.vue", marker: 'path: "config/forms"', permission: "config.view/config.manage" },
@@ -87,9 +88,10 @@ add("/admin/pages/diy", "partial", ["/content/dise"], ["GET /adminapi/dise/list"
 add("/admin/pages/special/diy", "missing", [], ["GET /adminapi/dise/list"], "",
   "旧专题页有独立装修、保存和重置；新 DIY 目录的新建动作固定 type=1 首页合同，没有专题页可视化编辑入口。",
   ["view/admin-ts/src/pages/content/DiseList.vue"]);
-add("/admin/echarts/trade/order", "retired", [], [], "",
-  "旧图表页的核心曲线和表格是硬编码示例：两组固定数值、John Brown 等样例行，时间及订单状态回调未连接统计数据；只有订单状态总数来自 API。真实订单统计另由 /admin/statistic/order 承担。",
-  ["cinashop-php/view/admin/src/pages/echarts/trade/order.vue:71", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:229", "view/admin-ts/src/pages/statistic/Dashboard.vue"]);
+add("/admin/echarts/trade/order", "partial", ["/order", "/statistic"], ["GET /adminapi/order/list", "GET /adminapi/statistic/order/get_basic"],
+  "旧页确有 GET /order/chart 提供实时订单状态计数；新版订单列表可按部分履约状态筛选并展示匹配总数，订单统计 tab 有支付与退款计数。",
+  "旧页一次展示全部/未付/未发货/待收货/待评价/完成/退款中/已退款八类实时计数，新 Admin 无等量面板且 Worker 未注册旧 GET /adminapi/order/chart；旧 PV/UV 曲线、固定 3 件卡片和 John Brown 样例表格仅是演示内容，按演示部分退役。",
+  ["cinashop-php/view/admin/src/api/order.js:28", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:71", "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:229", "view/admin-ts/src/api/order.ts", "view/admin-ts/src/pages/statistic/Dashboard.vue"]);
 add("/admin/echarts/trade/product", "retired", [], [], "",
   "旧组件仅空 template 和 name='product'，没有商品查询、图表或操作；真实商品统计另由 /admin/statistic/product 承担。",
   ["cinashop-php/view/admin/src/pages/echarts/trade/product.vue:1", "view/admin-ts/src/pages/statistic/Dashboard.vue"]);

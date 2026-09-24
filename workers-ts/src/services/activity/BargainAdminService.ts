@@ -143,12 +143,24 @@ export async function saveBargain(container: Container, body: Record<string, unk
     if (current && patch.people !== undefined) {
       // Historical purchased rows remain visible. No non-deleted participation
       // may already have more helpers than the new activity limit.
+      const helpCount = sql`(SELECT COUNT(*) FROM ${storeBargainUserHelp}
+        WHERE ${storeBargainUserHelp.bargainUserId} = ${storeBargainUser.id})`;
       const overLimit = await tx.select({ id: storeBargainUser.id }).from(storeBargainUser).where(and(
         eq(storeBargainUser.bargainId, current.id), eq(storeBargainUser.isDel, 0),
-        sql`(SELECT COUNT(*) FROM ${storeBargainUserHelp}
-          WHERE ${storeBargainUserHelp.bargainUserId} = ${storeBargainUser.id}) > ${patch.people}`,
+        sql`${helpCount} > ${patch.people}`,
       )).limit(1);
       if (overLimit[0]) throw new ValidateException("砍价人数不能少于已帮助人数");
+      // At equality helpBargain cannot add another cut. The record must already
+      // be purchase-ready under its own price snapshot, including no overcut.
+      // numeric arithmetic matches the money columns without JS float rounding.
+      const saturatedIncomplete = await tx.select({ id: storeBargainUser.id }).from(storeBargainUser).where(and(
+        eq(storeBargainUser.bargainId, current.id), eq(storeBargainUser.isDel, 0), eq(storeBargainUser.status, 1),
+        sql`${helpCount} >= ${patch.people}`,
+        sql`NOT (${storeBargainUser.bargainPrice} >= 0 AND ${storeBargainUser.bargainPriceMin} >= 0
+          AND ${storeBargainUser.price} >= 0 AND ${storeBargainUser.bargainPrice} >= ${storeBargainUser.bargainPriceMin}
+          AND ${storeBargainUser.bargainPrice} - ${storeBargainUser.price} = ${storeBargainUser.bargainPriceMin})`,
+      )).limit(1);
+      if (saturatedIncomplete[0]) throw new ValidateException("砍价人数调整会使未完成参与无法继续砍价");
     }
     // PHP rechecks the source on every save, even when productId was omitted.
     // Only changed inherited fields are written; ordinary no-op edits stay no-op.

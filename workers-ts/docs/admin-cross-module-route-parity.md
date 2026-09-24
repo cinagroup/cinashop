@@ -5,9 +5,9 @@
 | 状态 | 数量 | 主要结论 |
 | --- | ---: | --- |
 | candidate | 3 | 交易、订单、余额统计的主要视图与旧统计 API 已对应，仍需真实历史数据和口径验收。 |
-| partial | 9 | 旧首页、对外 API 账户与接口文档、首页 DIY、提现、资金记录、管理登录、商品与用户统计有部分屏幕操作。 |
+| partial | 10 | 旧首页、对外 API 账户与接口文档、交易图表页的实时订单计数、首页 DIY、提现、资金记录、管理登录、商品与用户统计有部分屏幕操作。 |
 | missing | 4 | 专题装修、充值订单、佣金汇总、平台资金流水没有同等新屏。 |
-| retired | 2 | 旧 `echarts/trade/product.vue` 是空模板；旧 `echarts/trade/order.vue` 的曲线与表格是硬编码示例。 |
+| retired | 1 | 旧 `echarts/trade/product.vue` 是空模板。旧 `echarts/trade/order.vue` 仍有实时订单状态计数，不能整页退役。 |
 
 容易误判的边界：
 
@@ -16,7 +16,7 @@
 - 旧 `/admin/statistic/capital` 是平台外部现金流，Worker 有 `/flow/get_list`、`/flow/set_mark/:id` 和 `capital_flow` 权限映射，但新路由没有 `/finance/capital-flow`。新 `/finance/bill` 查询 `user_bill`，不能代替平台现金流。旧充值记录包含未付款订单、退款与删除；旧佣金记录按用户聚合，两者也不能由 `user_bill` 简表代替。
 - 旧首页装修和专题装修是可视化组件编辑器。新 `/content/dise` 只编辑 JSON 且新建固定为停用 `type=1` 首页合同，不能把专题页或拖拽编排算作已完成。
 - 旧管理登录同时有短信登录、忘记密码/手机号流程及图形/拼图校验。新登录的账号密码和品牌素材可用，但这条旧路由只算 partial。
-- 两条 `echarts` 页是旧代码中实际可见的示例/空屏，故作有源码依据的 retired；真实交易和商品统计另由 `/admin/statistic/*` 旧页及新 `/statistic` tab 审阅。retired 结论不代替未来产品需求。
+- 旧 `echarts/trade/order.vue` 在挂载时调用 `/order/chart` 并显示八类订单状态实时计数；新 `/order` 有部分状态筛选和匹配总数，`/statistic` 有支付/退款计数，但没有旧八类并列面板或 `/order/chart` 合同，所以整页是 partial。该页 PV/UV 曲线和示例表格单独视为演示内容；`echarts/trade/product.vue` 则是空模板，整页 retired。真实交易和商品统计另由 `/admin/statistic/*` 旧页及新 `/statistic` tab 审阅。
 - `/admin/system/log`、`/admin/system/user`、`/admin/setting/system/create` 已由 system/setting 台账审阅，本批按路径去重后不重复计数。
 
 连同此前 content、product、setting、marketing、work、kefu、app、system 八份台账，当前九份互不重叠地覆盖 **237/274 条**，剩余 37 条待分类。分类不是上线完成数；本批没有真实角色浏览器 E2E、生产历史数据比对或部署证据，FE-001D 保持开放，404 项 checklist 分母不变。

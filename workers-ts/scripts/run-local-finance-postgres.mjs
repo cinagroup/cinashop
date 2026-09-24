@@ -106,6 +106,7 @@ if (schemaMaintenance) {
     'test/bargain-help-concurrency-postgres.test.ts',
     'test/bargain-admin-concurrency-postgres.test.ts',
     'test/bargain-admin-save.test.ts',
+    'test/bargain-admin-dates-postgres.test.ts',
     'test/seckill-schedule-postgres.test.ts',
     'test/refund-line-compensation.test.ts',
     'test/bargain-admin-retirement.test.ts',

@@ -74,6 +74,11 @@ describe("legacy Admin setting route parity audit", () => {
       "/admin/setting/system_form": "candidate",
       "/admin/setting/system_form/data": "candidate",
     });
+    const retiredPrintConfig = report.routes.find((route) => route.legacy.path === "/admin/setting/document/config");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:82");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:192");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:202");
+    expect(retiredPrintConfig?.evidence).toContain("cinashop-php/view/admin/src/pages/setting/document/config.vue:215");
   });
 
   it("classifies all 61 newly reviewed routes with route-specific evidence", () => {

@@ -206,7 +206,10 @@ const reviews: Record<string, Review> = {
     covered: ["确认旧页面是误复制的商品规格代码，不是可工作的单据设置"],
     remaining: [],
     evidence: [
-      "legacy component imports productSpecsList but calls undefined isShowApi/userLabelAddApi and deletes product/specs/:id",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:82",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:192",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:202",
+      "cinashop-php/view/admin/src/pages/setting/document/config.vue:215",
     ],
   },
   "/admin/setting/document/content": {

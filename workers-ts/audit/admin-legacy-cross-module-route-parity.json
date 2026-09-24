@@ -10,9 +10,9 @@
     "legacyRoutes": 18,
     "reviewed": 18,
     "candidate": 3,
-    "partial": 9,
+    "partial": 10,
     "missing": 4,
-    "retired": 2,
+    "retired": 1,
     "unreviewed": 0
   },
   "routes": [
@@ -92,30 +92,44 @@
         "title": "交易统计",
         "component": "@/pages/echarts/trade/order",
         "resolvedComponent": "cinashop-php/view/admin/src/pages/echarts/trade/order.vue",
-        "behaviorSource": "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:78",
+        "behaviorSource": "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:174",
         "source": "cinashop-php/view/admin/src/router/modules/echarts.js:23",
         "routerSha256": "802b0c43086a708e236580a94958b037bf30c27795f5e4fe05144537762afbaa",
         "auth": "['admin-order-storeOrder-index']"
       },
-      "status": "retired",
-      "targetScreens": [],
-      "targetApis": [],
-      "covered": [],
+      "status": "partial",
+      "targetScreens": [
+        "/order",
+        "/statistic"
+      ],
+      "targetApis": [
+        "GET /adminapi/order/list",
+        "GET /adminapi/statistic/order/get_basic"
+      ],
+      "covered": [
+        "旧页确有 GET /order/chart 提供实时订单状态计数；新版订单列表可按部分履约状态筛选并展示匹配总数，订单统计 tab 有支付与退款计数。"
+      ],
       "remaining": [
-        "旧图表页的核心曲线和表格是硬编码示例：两组固定数值、John Brown 等样例行，时间及订单状态回调未连接统计数据；只有订单状态总数来自 API。真实订单统计另由 /admin/statistic/order 承担。"
+        "旧页一次展示全部/未付/未发货/待收货/待评价/完成/退款中/已退款八类实时计数，新 Admin 无等量面板且 Worker 未注册旧 GET /adminapi/order/chart；旧 PV/UV 曲线、固定 3 件卡片和 John Brown 样例表格仅是演示内容，按演示部分退役。"
       ],
       "evidence": [
         "cinashop-php/view/admin/src/router/modules/echarts.js",
         "cinashop-php/view/admin/src/pages/echarts/trade/order.vue",
-        "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:78",
+        "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:174",
         "view/admin-ts/src/router/index.ts",
         "workers-ts/src/routes/adminapi.ts",
         "workers-ts/src/services/admin/AdminPermissionService.ts",
+        "view/admin-ts/src/pages/order/OrderList.vue",
+        "view/admin-ts/src/pages/statistic/Dashboard.vue",
+        "cinashop-php/view/admin/src/api/order.js:28",
         "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:71",
         "cinashop-php/view/admin/src/pages/echarts/trade/order.vue:229",
-        "view/admin-ts/src/pages/statistic/Dashboard.vue"
+        "view/admin-ts/src/api/order.ts"
       ],
-      "targetPermissions": []
+      "targetPermissions": [
+        "order.view",
+        "statistic.view"
+      ]
     },
     {
       "legacy": {

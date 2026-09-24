@@ -272,6 +272,10 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     // never let a view-only role mutate membership inventory or catalog state.
     return "paid_membership.manage";
   }
+  if (group.key === "config" && /^form\/set_show\/[^/]+\/[^/]+$/.test(route)) {
+    // Keep the legacy GET status mutation behind the same capability as PUT.
+    return "config.manage";
+  }
   if (group.key === "activity" && route.startsWith("discounts/set_status/")) {
     // CRMEB exposed this mutation as GET. A view-only role must never be able
     // to change package availability through that compatibility route.
